@@ -599,3 +599,105 @@ the title→menu transition. Fix: a minimal 64-voice AX pool in `melee/pc/platfo
 stealing the lowest-priority voice when full. Audio stays inert. The game now reaches the visible
 Main Menu (1-P Mode / VS. Mode / Trophies / Options / Data); evidence
 `.omo/evidence/task-start-run4-after-mainmenu.png`, `.omo/evidence/task-start-crash-melee-pc-boot-unblock.log`.
+
+---
+
+# 9. Session update, 2026-09-13 ~00:20 PDT: in game, with a black screen
+
+**Milestone: the port reaches an actual match.** Fight logic runs — damage lands both ways,
+projectiles fire, a full match plays out with no crash. What it does not do is draw: the screen is
+black while unpaused. That is now the single open blocker.
+
+This section covers everything after §8.5, which was previously recorded only in
+`.omo/start-work/ledger.jsonl`.
+
+## 9.1 What changed (commits)
+
+Four commits on `melee` `pc-port`, HEAD `7c84fb83a`:
+
+1. `456be389e pc: unblock map loading (ARQ owner, re-armed alarms, ARQ spin)`.
+2. `ceb3d0417 pc: route particle vertices through the named GX entry points`.
+3. `031452c9b pc: address game globals directly where .bss contiguity was assumed`.
+4. `7c84fb83a pc: gx: TEMPORARY diagnostics for the black-screen investigation` — **revert this
+   one** once the black screen is closed out. It is instrumentation, not a fix.
+
+## 9.2 The three map-load stalls (commit 1)
+
+Each was found by freezing a user-supplied run log and resolving the fault through `melee-pc.map`.
+They came out one behind the other: fixing each exposed the next.
+
+- **`ARQ-OWNER-UNSET`.** `gw_ARQPostRequest` discarded its `owner` argument, so `ARQRequest.owner`
+  (offset `0x04`) stayed zero and `lbArqHandle.node` read back NULL — an AV reading `0x4` in
+  `lbArq_80014AC4+0x12`. Stored big-endian via `gw_w32`. Evidence:
+  `.omo/evidence/user-mapload3-run-melee-pc.log`.
+- **Re-armed alarms.** `gw_os_run_alarms` treated "handler unchanged after the callback" as "still
+  idle", so a one-shot that re-arms itself from inside its own handler was cancelled after one
+  firing. lbMemory's chunked memcpy (`fn_80015184`) does exactly that, rescheduling 3 ms out, so
+  the copy and the preload heap compaction it drives stalled forever. Now compares `fire_at` too.
+  Evidence: `.omo/evidence/user-mapload4-run-melee-pc.log` (spin at `lbDvd_800189EC`,
+  `lbdvd.c:647`, retrace frozen at 759 over 15 samples).
+- **The ARQ spin.** The callback-less path in `lbarq.c` spun with no shim call in the loop, so the
+  deferred completion queue never drained. Pumps `wait_idle()` now.
+
+## 9.3 Two classes of port bug worth generalising
+
+Both of these will recur. Check for them first when something faults on garbage.
+
+**Raw hardware-address stores.** `GXWGFifo` is the write-gather pipe at the fixed address
+`0xCC008000` — real on a GameCube, unmapped here. `psdisp.c` had ~20 raw `GXWGFifo.f32 = ...`
+stores emitting particle vertices straight into it. All are now named GX entry points
+(`GXPosition3f32` / `GXTexCoord2f32` / `GXTexCoord1x8`), which `shim_gxvert.c` forwards to Aurora.
+`GXVert.h` poisons the macro under `TARGET_PC`, so any surviving raw store is a self-documenting
+**compile** error instead of a runtime AV. This is the same class as the fixed-address console
+invariants in §7.4 — the systematic sweep proposed there is still the higher-yield method.
+
+**Assumed `.bss` contiguity.** The port links each game global as its own symbol, so globals the
+original `.bss` laid out adjacently no longer are. Any code that reaches one global by offsetting
+from another through a struct view reads unrelated memory. Two instances fixed:
+`particle.c`'s `hsd_8039D0A0` (cast `hsd_804D08E8` to get the list heads and the allocator — this
+was the in-game AV reading `0x400AE148`) and `ftmaterial.c`'s `struct ft_MObjInfo* info = &ftMObj`.
+Grep for casts of one global's address to a struct covering several.
+
+## 9.4 The open blocker: black screen while unpaused
+
+From `.omo/evidence/user-fight2-black.log` and the user's own testing of the current build:
+
+- **(A)** The screen is black while the game is unpaused. Graphics appear **only when paused**.
+- **(B)** Model geometry is corrupt when paused — and corruption was already visible on the
+  "No Memory Card" screen, so it is **fundamental and pre-existing**, not fight-specific. Treat A
+  and B as possibly separate bugs.
+- The pipeline is **not** stalled: frames advance and present (`retrace 6362` / `presented 6360`,
+  2.1 MB of display list, only 3 no-op stubs — `gw_GXSetCopyClamp`, `gw_GXSetMisc`,
+  `gw_PADSetSamplingRate`).
+
+### What has been ruled out
+
+The DIAG instrumentation (commit 4) produced `.omo/evidence/user-diag-mtx.log` and
+`user-diag-ingame.log`, which eliminate the two leading theories:
+
+- **Transforms are sane.** Projection `2.235 / 2.637` with `-0.002 / -10.020` depth terms;
+  `posmtx0` is identity at `z = -29`. Not garbage.
+- **The matrix-index path is unused.** *No* `mtxidx` DIAG line fires in either log, so
+  `PNMTXIDX` / `TEX0..7MTXIDX` are never configured as `INDEX8`/`INDEX16`. That suspect path is out.
+
+### The remaining lead
+
+Present timing: `gw_frame_tick` / `gw_GXCopyDisp` `mark_content` versus Melee's XFB state machine
+in `video.c`. "Visible only when paused" is a strong hint that content is being copied to, or
+presented from, the wrong buffer for the normal double-buffered path, while the paused path happens
+to land on the right one. Start there.
+
+## 9.5 Standing directive: no input or capture tooling
+
+**Agents must never build input-injection (`keybd_event`/`SendKeys`) or screen-capture harnesses.**
+Every interactive step — navigating menus, pressing buttons — and every visual check is performed
+by the human user, who supplies the reproduction and the log. Ask for a run; do not automate one.
+This is recorded in `_research/port-dev-quickref.md`, which every worker prompt must say to read
+first. `_research/scripts/capture_window.ps1` predates this directive and should be deleted.
+
+## 9.6 State of the tree
+
+`melee` `pc-port` is clean at `7c84fb83a`. The built `_build/melee-pc.exe` matches it and has been
+run by the user: a full match, no crashes, black screen. The trailing
+`webgpu_dawn.dll+0x363548` AV in `_build/melee-pc.log` is the **known shutdown-path Dawn fault**
+fired when the window closes (§8.3), not a gameplay regression.
