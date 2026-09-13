@@ -1621,6 +1621,14 @@ proven cross-symbol; likely = cross-symbol by declaration but order-dependent.
 Uncertain: `gr/grmutecity.c` `(grMc_CarState*)grMc_8049F440` (its `cars` lands on
 `grMc_8049F4B8`); the gr sweep judged it a same-object Ground-union view — verify before fixing.
 
+# 18. Card CSS-return hang — FIXED and verified in-game
+`lb_8001CDB4`'s spin (`while (_p(xC) || _p(x10)) lb_8001CC84()`) polled the card state without
+issuing any shim call, so the port's deferred-completion queue never pumped and the CARD write
+behind `hsd_803AAA48`'s busy flag never completed - returning from the results screen to the CSS
+pinned forever with `MELEE_CARD=1`. Fixed by adding `wait_idle()` to the spin (same pattern as the
+waits in `lbcardnew.c`). Verified in-game: Mario ditto on Yoshi's Story -> results -> back to CSS,
+with the card enabled, completes cleanly.
+
 # 17. Documented crashes (not to fix)
 
 ## 17.3 GPU-backend crash in webgpu_dawn.dll (renderer, not game logic)
