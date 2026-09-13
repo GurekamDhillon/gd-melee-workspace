@@ -831,26 +831,45 @@ those assumes fragments exist. None do. Something kills the geometry between the
 the rasteriser, for indexed 3D geometry only -- the HUD, which draws through the immediate path,
 rasterises fine throughout.
 
+### Refined by a follow-up A/B: it is PAUSE, not culling
+
+`MELEE_FORCE_NOCULL=1` / `MELEE_FLIP_FRONTFACE=1` were added to `gx.cpp` (TEMP) to test culling.
+The depth grid across both settings and both pause states:
+
+| game state | culling | depth grid |
+| --- | --- | --- |
+| paused | off | `distinct=8`, min `0xFFB752` -- varies |
+| unpaused | off | `distinct=1`, cleared |
+| unpaused | on | `distinct=1`, cleared |
+
+**Culling is exonerated.** Paused rasterises and unpaused does not, whatever the cull mode. Beware
+the trap that caught this session: comparing "cull on, unpaused" against "cull off, paused" changes
+two variables and looks like a culling fix. Always hold pause state constant.
+
+So the mechanism is: **while the game is running, no triangle survives to the rasteriser; freezing
+animation restores them.** Something recomputed per frame destroys the geometry.
+
 ### Shortlist, in the order worth testing
 
-1. **Inverted backface culling.** `gx.cpp:191-208` maps `GX_CULL_BACK -> CullMode::Back` with
-   `frontFace = CW` hardcoded. If effective winding is flipped (by the Y-negating orthographic
-   projection, the viewport mapping, or GX's own convention), every triangle is culled. This also
-   explains the corrupt geometry seen on static screens, which is what the *inside* of a model
-   looks like.
+1. **Per-frame position matrices going bad (NaN, or huge).** Every vertex would land outside clip
+   space, producing exactly zero fragments, and pausing would freeze the last good values and bring
+   the scene back. Note the matrices validated as orthonormal in 9.7 came from a run whose pause
+   state was never recorded, so that check may have measured a frozen scene and proved nothing
+   about the animated case -- **re-verify with pause state held constant**. This may also connect to
+   the `HSD_AObjSetFlags+0x12` NULL write seen in
+   `.omo/evidence/agent-vertexcache-fix-run1.log`: `AObj` is HSD's *animation* object.
 2. **Empty or wrong scissor/viewport** for the 3D pass specifically.
 3. **Degenerate primitives** -- indices or primitive type decoded such that every triangle has zero
-   area.
-4. **Depth test rejecting everything**, though Aurora's reversed-Z handling is internally
-   consistent (clear value, compare direction, viewport range and the peek conversion all switch
-   together on `UseReversedZ`), so this is the least likely.
+   area while animating.
 
 ### How to test cheaply
 
-Force the suspect off in Aurora and re-read the depth grid -- **the readout is automated**, so a run
-only needs someone to drive into a match, not to judge what is on screen. Forcing
-`wgpu::CullMode::None` is the one-line version of test 1: if depth starts varying, culling was the
-cause.
+Force the suspect off and re-read the depth grid -- **the readout is automated**, so a run needs
+someone to drive into a match but not to judge what is on screen. Log pause state alongside, or
+capture a full unpaused -> paused -> unpaused sequence in one run, so the comparison is never
+confounded.
+
+Evidence: `.omo/evidence/user-nocull-depth-varies.log`, `.omo/evidence/user-nocull-pause-ab-depth.log`.
 
 ### Already ruled out by this measurement
 
