@@ -1219,3 +1219,154 @@ confirmed by a number first was right.
 ### Reproduction
 
 P1 (Mario) vs CPU on Yoshi's Story. All measurements from 9.9 onward use this scene.
+
+## 10. The geometry corruption: found, and it was never the matrices
+
+`344e22d04`. **Fixed and confirmed in play** (Fountain of Dreams, the stage with the most
+reflections and particles, renders correctly).
+
+### The bug
+
+Aurora merges consecutive draws by folding the second into the previous draw command. A merged
+draw never reaches `push_gx_draw`, so it keeps that draw's immediates -- including `arrayStart[]`,
+whose storage was uploaded to cover only the **first** draw's maximum index:
+
+```c
+const u32 needed = max_index_for_attr(i, fmt, vertexData, vtxCount) * array.stride + ...;
+if (array.cachedRange.size < needed) {
+  array.cachedRange = gfx::push_storage(array.data, needed);
+}
+```
+
+When the merged draw indexed further into an array, those vertices read past the end of the
+uploaded snapshot. A few vertices landed on garbage while their neighbours stayed correct: spikes
+through otherwise sound geometry. Characters suffered most because skinned meshes are split into
+many small consecutive POBJs that merge readily; stage platforms showed occasional spikes for the
+same reason. The fix refuses to merge when the incoming draw reaches past what was uploaded.
+
+### Why it took so long to find
+
+Everything measured healthy, because everything *was* healthy. The array contents, the indices,
+the matrices, the vertex data and the primitive topology were all correct; only the GPU's uploaded
+copy was short. Every CPU probe read live memory using that draw's own `needed`, so none of them
+could see a truncation that existed solely in the upload.
+
+`AURORA_ASSERT(needed <= array.size)` should have caught it. It cannot, because `gw_GXSetArray`
+passes everything from the array base to the end of MEM1 as the nominal size, so the assert can
+never fire. **This is still true and worth tightening** -- it is a live hole that hides exactly
+this class of bug.
+
+### Corrections to section 9
+
+- **The three ranked suspects in 9.15 are all disproven.** `jobj->envelopemtx` is a flawless
+  orthonormal rotation (rows *and* columns measured exactly 1.0); `MTXConcat` is faithful;
+  `_HSD_mkEnvelopeModelNodeMtx` is fine. The whole matrix pipeline is exonerated by a decisive
+  experiment: with envelope blending replaced by the single highest-weight joint, the image was
+  **unchanged**. If skinning maths cannot alter the picture, skinning maths is not the bug.
+- **`MELEE_REUPLOAD_ARRAYS` was dead code.** `gw_force_array_reupload()` was defined and never
+  called. The earlier conclusion that "forcing re-upload made it worse" came from a switch that
+  did nothing, and wrongly retired the array-upload hypothesis -- which was, in the end, the right
+  neighbourhood. **Verify a toggle actually engages before trusting a negative result from it.**
+  Both diagnostic toggles added this session log a line on activation for this reason.
+- **The `0.0463333` row collapse was a red herring.** Those joints genuinely have
+  `scale = (1.1, 0.046, 1.1)` with rotation `(0, +/-pi/2, 0)` -- deliberately flattened model data,
+  and only ~3% of slots, far too few to explain whole limbs.
+- **An instrumentation bug produced a false result mid-session.** A mutation detector hashed
+  `min(needed, 2048)` bytes while `needed` varied per draw, so differing lengths read as changed
+  contents and it reported "35% of draws mutate". With a fixed 256-byte window: **zero** mutations
+  in 320,000 checks. Vertex arrays do not change in-frame.
+
+### Diagnostic left in place
+
+`MELEE_NO_MERGE=1` disables draw merging entirely (`_build/run_nomerge.bat`). If geometry
+corruption ever reappears, that toggle is the fastest way to confirm whether merging is involved.
+
+### Incidental finding, unfixed
+
+Joint matrices are stale. `rows pre=0/8060 post=0/8060` every frame -- no joint matrix is *made*
+collapsed -- while the blend reads ~200 collapsed matrices per frame. Those were written during a
+single burst frame and never recomputed, because `HSD_JObjSetupMatrix` is dirty-gated. Same
+sticky-state class as the NaN view matrix in section 9. Benign for rendering as far as we know;
+recorded because it is real.
+
+## 11. Raw GameCube adapter input
+
+`f404c5f8e`. **Working**: mapping correct, lag gone, calibration usable.
+
+`pc/platform/gc_adapter.c` reads the WUP-028 adapter's report bytes directly and builds `PADStatus`
+the way the console does, bypassing SDL's mapping table, deadzones, axis rescaling and trigger
+emulation. Aurora's SDL path remains the fallback when no adapter opens.
+
+Three things were needed beyond the decode:
+
+- **Claim the device before SDL.** `gw_PADInit` opens the adapter before `PADInit()`, and `main()`
+  sets `SDL_JOYSTICK_HIDAPI_GAMECUBE=0` before Aurora starts. Whichever side gets the handle locks
+  the other out; this was the cause of the first "not found on WinUSB" failure even though the
+  device was plainly there. `MELEE_SDL_GAMECUBE=1` hands it back to SDL.
+- **Read on its own thread.** A timeout-bounded USB read on the game thread stalls for the whole
+  timeout whenever the adapter is idle -- up to 32 ms per frame with the original drain loop, which
+  is what "really laggy" was. The reader thread parks in the blocking read; the frame only copies
+  the newest packet under a lock.
+- **Calibrate at runtime.** Resting stick and trigger positions are sampled on first read; triggers
+  are rescaled so rest reads 0 and full press still reaches 255; any button held at that instant is
+  masked as stuck. A trigger with no usable travel (worn, or fitted with plugs -- this controller
+  has both) reports as never pressed rather than permanently held. **F9 re-runs calibration**;
+  release everything first.
+
+`MELEE_PAD_DIAG=1` enables adapter enumeration plus raw report dumps (`DIAG gcraw`), which is how
+any remaining mapping question should be settled -- against the actual report bytes, not by
+guessing.
+
+Build note: `gc_adapter.c` needs `hid.lib`, `winusb.lib` and `setupapi.lib`. The link response
+files are **hand-maintained, not generated** -- a new shim must be added to
+`_build/melee_link_objects.rsp` and any new import library to `_build/melee_link_libs.rsp`.
+Note also that `main.c` needs the SDL3 include path
+(`-I C:/gdm/_build/ax86/_deps/sdl3_prebuilt-src/include`), which the generic shim build line in the
+quickref omits.
+
+## 12. Open items
+
+1. **Frame pacing is not smooth compared to Dolphin.** No profiler exists yet; cause unknown.
+   Candidates worth separating before guessing: present/vsync pacing (section 5's present-timing
+   lead), per-frame GPU cost, the FIFO processing cost per frame, and stalls from un-merged draws
+   introduced by `344e22d04`. Needs measurement first -- a frame-time histogram distinguishes a
+   uniformly slow frame from occasional long spikes, and those have entirely different causes.
+2. **SFX bank crash on stage load.** `synth.c:165`,
+   `hsd_SynthSFXBankHead[bankID + 1] - hsd_SynthSFXBank[bankID] >= hsd_SynthSFXLoadBuf[1]`.
+   Reproducible after several stage loads, not on the first. ARAM is healthy (allocations succeed,
+   9 MB free) and the sibling "bank overflow" assert at 0x158 never fires, so the region is
+   allocated correctly. `hsd_SynthSFXBank[bankID]` is a write cursor that grows on every SFX load
+   (`synth.c:135`) and is only rewound by the unload path (`synth.c:315`). That unload walks a list
+   of `AXVPB` voices, and this port has no audio backend. **Hypothesis: the unload never runs
+   between stage loads and the cursor creeps until the next load does not fit.** Cheap test: log
+   `hsd_SynthSFXBank[2]` and `hsd_SynthSFXBankHead[3]` across several stage loads; if the cursor
+   only ever climbs, confirmed.
+3. **Memory card -- not started, mostly wiring.** Aurora ships a complete kabufuda-based
+   implementation (`extern/aurora/lib/card/`, full `CARD*` API, `CARD_RAWIMAGE` and
+   `CARD_GCIFOLDER` modes) that this build disables with `-DAURORA_ENABLE_CARD=OFF`. `shim_card.c`
+   already stubs **every** CARD entry the game calls, so the surface is known. Work: enable the
+   CMake option, link `aurora_card`, and marshal `CARDFileInfo`/`CARDStat` across the endianness
+   boundary (Aurora writes them natively, the game reads them big-endian). Aurora's async calls
+   invoke the callback synchronously, which satisfies the constraint `shim_card.c` was written
+   around (see its header comment).
+4. **Resize corrupts stage textures.** Resizing the window paints stretched black across parts of
+   the stage. `gpu.cpp:1098` clears the EFB copy-texture cache on any size change; Melee copies
+   some stage textures out of the framebuffer once and samples them for the rest of the match, so
+   once discarded they are never regenerated. Predicts the damage is permanent until the stage
+   reloads. Unverified.
+5. **Load-time jank.** Brief hitching at the start of a stage load, resolved before control is
+   handed over. Plausibly the first frames uploading arrays un-merged before caches warm. Cosmetic.
+6. **`gw_GXSetArray` nominal size.** Passing "base to end of MEM1" defeats Aurora's out-of-range
+   assert entirely. Tighten it to the array's real extent so the next bug of this class is caught
+   rather than silent.
+7. **Latent, unchanged:** `resolveIKJoint1` uses `var_f27`/`var_f28` uninitialised when the
+   `temp_f31 > var_f5` branch is not taken (jobj.c, decomp `@todo`). Real UB, but the values only
+   pick a sign on a vector that is zero in that branch, so it appears benign. Not the cause of
+   anything found so far.
+
+### Method note from this session
+
+The one experiment that broke the deadlock removed a whole subsystem from the picture rather than
+inspecting it: replacing the envelope blend with a single joint proved in one run that matrices
+could not be the cause, after hours of measuring matrices that were all correct. When every
+component measures healthy, stop measuring components and start disabling them.

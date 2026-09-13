@@ -75,3 +75,6 @@ oleaut32.lib
 uuid.lib
 comdlg32.lib
 advapi32.lib
+winusb.lib
+setupapi.lib
+hid.lib

@@ -1000,4 +1000,5 @@
 ../masstest/shimobj/shim_misc.obj
 ../masstest/shimobj/shim_os.obj
 ../masstest/shimobj/shim_pad.obj
+../masstest/shimobj/gc_adapter.obj
 ../masstest/shimobj/shim_vi.obj
