@@ -679,8 +679,9 @@ The DIAG instrumentation (commit 4) produced `.omo/evidence/user-diag-mtx.log` a
 
 - **Transforms are sane.** Projection `2.235 / 2.637` with `-0.002 / -10.020` depth terms;
   `posmtx0` is identity at `z = -29`. Not garbage.
-- **The matrix-index path is unused.** *No* `mtxidx` DIAG line fires in either log, so
-  `PNMTXIDX` / `TEX0..7MTXIDX` are never configured as `INDEX8`/`INDEX16`. That suspect path is out.
+- ~~**The matrix-index path is unused.**~~ **WRONG -- see 9.7.** Those logs simply never reached a
+  scene that used it. `PNMTXIDX` *is* configured, as `GX_DIRECT`, and multiple matrix slots are
+  loaded per frame.
 
 ### The remaining lead
 
@@ -703,3 +704,102 @@ first. `_research/scripts/capture_window.ps1` predates this directive and should
 run by the user: a full match, no crashes, black screen. The trailing
 `webgpu_dawn.dll+0x363548` AV in `_build/melee-pc.log` is the **known shutdown-path Dawn fault**
 fired when the window closes (§8.3), not a gameplay regression.
+
+## 9.7 Black screen: what has been ruled out, with evidence
+
+A long diagnostic session on 2026-09-13 did not find the cause, but eliminated most of the search
+space. **Read this before forming a theory** -- several obvious ones are already dead, and two
+claims in 9.4 above were disproved by it.
+
+All instrumentation is temporary and reverts together: commits `7c84fb83a`, `b02a1c55a`,
+`1044f0021`, `f2ee29190` (port side) plus an uncommitted Aurora-side dump in
+`extern/aurora/lib/gx/command_processor.cpp` and the validation toggle in `lib/webgpu/gpu.cpp`.
+
+### The central fact
+
+**The GPU receives identical work whether the screen is black or not.** A paused/unpaused A/B in
+one run (`.omo/evidence/user-fight3-pause-ab-drawcalls.log`) shows the paused stretch bit-identical
+across ~510 consecutive samples, and the unpaused stretches varying only as animation would:
+
+| State | display lists | Aurora draw calls | vertex bytes |
+| --- | --- | --- | --- |
+| Unpaused (black) | 384-409 | 367-393 | ~172.5k-174.9k |
+| Paused (models visible) | 367 | 368 | 173,554 |
+
+Same draws, same volume, same state. Only the *contents* differ. So the fault is not in what is
+submitted; it is in the values, or in what happens to them after submission.
+
+### Eliminated, each on evidence
+
+1. **Present timing / XFB state machine.** Copies, presents and retraces run 1:1 (`presented` ~=
+   `retrace` ~= `copydisp`). Would explain lag or tearing, not black.
+2. **The `HSD_RP_BOTTOMHALF` garbage copy** (video.c:254-257). `GXSetCopyClamp` fires once per copy
+   per frame, so the game is on the single-copy `HSD_RP_SCREEN` path; no garbage copy occurs.
+3. **GX state.** `colorupd=1 alphaupd=1 zcmp=1 zupd=1 clear=1` on every sampled frame, always.
+4. **Nothing drawn into the presented frame.** ~290-370 `GXCallDisplayList` per frame throughout.
+5. **Display lists not executing.** Aurora issues ~360 real draw calls and ~173 KB of vertex data
+   per frame (`aurora_get_stats()`, which the backend already exports -- no Aurora change needed).
+6. **Mid-frame `GXCopyTex` wiping the EFB.** Melee issues exactly two per frame, both with clear,
+   and a copy-with-clear does wipe the EFB -- but the segment breakdown is
+   `[17 dlists] -> copytex -> [17 dlists] -> copytex -> [359 dlists] -> CopyDisp`. The bulk of the
+   scene is submitted *after* the last clearing copy.
+7. **Matrix lifetime.** `GXLoadPosMtxImm` writes all 12 floats into the FIFO by value at call time
+   (`GXTransform.cpp:56-65`); the port's stack local cannot dangle.
+8. **Wrong transforms.** Verified numerically, not by eye: every logged position matrix has row
+   lengths of exactly 1.100 and pairwise dot products of 0.000 -- a valid orthogonal rotation with
+   uniform scale -- translated to z about -100, inside the near=10/far=5010 frustum.
+9. **Stale cached vertex uploads.** A dead end I pursued and reverted: `command_processor.cpp`
+   re-uploads an indexed array only when its pointer, size or endianness changes, which looks like
+   it would serve stale data to a game that animates in place. It does not, because
+   `recording.cpp:569-571` clears every `cachedRange` at the end of each frame. The cache never
+   survives a frame.
+10. **Illegal GPU usage.** Aurora disables WebGPU validation and robustness in NDEBUG builds
+    (`lib/webgpu/gpu.cpp:937-948`). Rebuilt with both ON: a full match runs with **zero** errors, so
+    bindings and buffer sizes are legal and out-of-bounds reads now return zeros -- still black.
+11. **The D3D11 backend.** Retested D3D12 (see 9.8): it still faults in Dawn at exactly the address
+    documented in 8.3, so it cannot be compared -- but this was worth testing, see the live lead.
+12. **Endianness and format decoding.** Read directly: `bswap16`/`bswap32` handle `le=false`
+    correctly (shader.cpp:1632-1698), and `fetch_s16_3` sign-extends with `<<16 >>16` then divides
+    by `2^frac` (shader.cpp:1867-1870) -- correct for Melee's `S16, frac=10` positions.
+
+### The live lead
+
+**Immediate-mode geometry renders; indexed geometry does not.** The HUD (stock icons, percentages,
+timer, pause UI) is perfect throughout, and the "No Memory Card" screen renders at `dlist=5,
+prim=27` -- essentially all immediate mode. The stage and characters are `dlist~370, prim~4` --
+essentially all indexed display lists -- and are invisible. Aurora feeds indexed arrays to the GPU
+through *storage buffers*, a different path from immediate attributes.
+
+Since the binding of that path is now proven legal (10) and its decoding proven correct (12), the
+open question is whether `GXSetArray`'s base pointer and stride actually point at the vertex data
+the display list expects. The uncommitted `DIAGVTX` dump in `push_gx_draw` decodes the first two
+positions exactly as the shader will and prints them with stride and frac. Sane model-space
+coordinates (order of tens) mean the data is right and the fault is downstream; garbage, zeros or
+huge values mean a port-side `GXSetArray` bug -- which would explain the invisibility *and* the
+corrupt geometry seen on static screens.
+
+### Also worth knowing
+
+- **PNMTXIDX is `GX_DIRECT`**, and slots `posmtx0/3/6...` are loaded per frame. 9.4's claim that the
+  matrix-index path is unused is wrong; those earlier logs never reached a scene that used it.
+- `gw_gx_dlist_count` counts **calls**, not bytes. The ledger's "2.1 MB of display list" was a
+  misreading.
+- **Aurora's `GXCopyDisp` is an empty stub** (`GXFrameBuffer.cpp:210`) while `GXCopyTex` beside it is
+  fully implemented. Harmless today, because Aurora clears the EFB itself each frame
+  (`frame_packet.hpp:72-74`, `recording.cpp:546`) and presents the EFB directly -- but it is a clear
+  sign that Aurora's GX coverage is shaped by the game it was imported for, which is the general
+  shape to suspect here.
+
+## 9.8 Platform-layer changes from the same session
+
+Commit `e3300cc92`:
+
+- **Letterboxing.** Aurora's halves disagreed at init: the GX side defaults to
+  `AURORA_VIEWPORT_FIT` (`gx.hpp:396`) while the window side defaults `g_frameBufferAspectFit` to
+  false (`window.cpp:47`), and the window only learns the policy via `AuroraSetViewportPolicy`.
+  Nobody called it, so GX believed it was fitting while the window stretched. Called explicitly at
+  startup; resizing now preserves 4:3.
+- **`MELEE_BACKEND=d3d12|d3d11|auto|vulkan`** overrides the pinned backend with no rebuild, so 8.3's
+  D3D12 crash can be retested whenever Dawn is updated. Retested 2026-09-13: still faults at
+  `webgpu_dawn.dll+0x363548` about two seconds in, unchanged by `98e49e856`. The D3D11 pin stands.
+  Vulkan is not compiled in (`-DDAWN_ENABLE_VULKAN=OFF`) and would need a Dawn rebuild.
