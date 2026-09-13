@@ -1120,3 +1120,83 @@ values. That names the moment of corruption without needing to know the code pat
 All measurements from 9.9 onward used the same scene: **P1 (one character) vs CPU, Yoshi's Story**,
 driven by the user. Keep to it -- the numbers above are comparable across runs only because the
 scene never varied.
+
+## 9.15 BLACK SCREEN FIXED -- and what is left
+
+### The fix (commit `cae69e085`)
+
+`Camera_ApplyQuake` (camera.c:943) casts `&cm_803BCB18` to a struct spanning **four separate
+statics** -- callbacks, interest, eyepos, desc -- valid only because the original `.data` laid them
+out contiguously at `0x3BCB18, +0x24, +0x14, +0x14`. The port links every global separately, so
+`data->desc` landed in unrelated memory and read as zeros. Then:
+
+```
+aspect * (half_view_height / (0.5f * (xmax - xmin)))
+  = 0 * (62.9 / 0) = 0 * inf = NaN          <- 0xFFC00000, the -nan(ind) seen everywhere
+```
+
+That NaN reaches `game_camera.translation.x/y`, which `Camera_8002AF68` adds into the camera's
+interest and eye position -- **x and y only, which is why z stayed valid all the way down the
+chain**. `C_MTXLookAt` turns those into a NaN view matrix; `HSD_CObjSetupViewingMtx` only recomputes
+when dirty, so it sticks; every model matrix is view x joint, so ~87% of matrices reaching the GPU
+were NaN, every vertex failed its clip test, nothing rasterised.
+
+Verified in a live unpaused match: viewport `[0..640]x[0..480]`, aspect `1.21733`, posmtx
+`nan/inf=0` (was 7836), maxabs `414.973` (was 9936), depth grid `distinct=8` (was 1). Evidence:
+`.omo/evidence/user-BLACKSCREEN-FIXED.log`.
+
+### Two more fixes from the same session
+
+- **`9b4e8d79e`** -- itspawn.c: `HSD_MemAlloc` returns NULL for `size <= 0`, so an empty pick table
+  has NULL `x4`/`xC`, and `bisectValue(val, table, 0, 0)` cannot match its base case (`0 == -1`) and
+  dereferences `xC[0]`. Readable at address 0 on a GameCube, a trap here. Verified fixed.
+- **`da88071cb`** -- gm_1798.c: `ResultsDisplayLayout` cast over `&lbl_8046E1B0` runs past it into
+  `lbl_8046E38C`, `lbl_8046E39C` and `lbl_8046E3AC`. 40 of 48 field accesses were reading unrelated
+  memory. **Untested** -- it is the results screen, which the current test loop never reaches.
+
+### STILL BROKEN: geometry corruption (separate bug)
+
+Survived the camera fix, so it was never the same problem. The symptom localises it precisely:
+playing Mario, **the head renders correctly, the torso is wrong, and the legs spaghettify into
+spiky balls** -- corruption scaling with depth through the envelope list.
+
+`SetupEnvelopeModelMtx` (pobj.c:1125) has exactly that split: a single weight-1 joint is used as-is
+(the head), while multi-joint parts accumulate `mtx += joint_mtx * weight` over the envelope list
+(the limbs).
+
+**Ruled out by measurement, not by reading -- do not redo these:**
+
+- Per-vertex matrix indices are valid: `DIAGBOX pnmtx bad=0` on every draw, raw values `0..27`,
+  every one a multiple of 3 and inside the 10 slots the game loads.
+- Vertex indices stay within the uploaded extent (`outside=0`), and referenced positions have sane
+  bounding boxes (a character part measures about `x[-8.7..8.7] y[0..4.7]`).
+- `HSD_MtxScaledAdd` (mtx.c:437) computes the blend correctly.
+- `calc_vtx_size` and `populate_pipeline_config` agree on vertex stride; `PNMTXIDX` is counted as
+  1 byte in both.
+- Forcing a fresh vertex-array upload at every draw made corruption **worse**, so a stale
+  within-frame snapshot is not the cause (it was reverted).
+
+**Live hypothesis:** the envelope *weights*. They are floats from the DAT file, and if the weights
+for one matrix slot do not sum to 1.0 the blended transform is scaled wrong and the limb stretches.
+Note `posmtx health rowlen=[0.5250..1.1000]` -- a row length near 0.5 is what a half-weighted blend
+looks like. Commit `52b772d76` adds the probe: `envelope: blends=N bad_weight_sum=N` per frame, plus
+the first few offenders. **Run it and read that line first.**
+
+If the weights are sound, the next suspects are `jobj->envelopemtx` (allocated and memcpy'd from
+`joint->mtx` at jobj.c:659) and `_HSD_mkEnvelopeModelNodeMtx` (displayfunc.c:256).
+
+### Method notes that mattered
+
+- **Read game memory through `gw_rf32`, never natively.** Four probes read it natively and produced
+  convincing byte-swap garbage that cost several cycles chasing a bug that did not exist. The
+  quickref's first convention; it is there for a reason.
+- **Print raw bits, not `%.3f`.** A byte-swapped denormal prints as `0.000` and reads as a clean
+  zero. That masked the real NaN in `game_camera.translation` and briefly exonerated the true cause.
+- **Hold pause state constant when comparing.** `CAMERA_PAUSE` is a different branch that never
+  calls `Camera_ApplyQuake`, so pausing changes the code path, not just the data.
+- **`GXPeekZ` gives an automated render check** with no visual judgement: `distinct=1` means nothing
+  rasterised. That measurement is what finally made the hunt tractable.
+
+### Reproduction
+
+P1 (Mario) vs CPU on Yoshi's Story. All measurements from 9.9 onward use this scene.
