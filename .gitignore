@@ -1,0 +1,41 @@
+# This repo tracks only the port's build tooling, notes and research.
+#
+# The game and its references are their own upstream checkouts, and the build
+# outputs are large and fully regenerable, so neither belongs here.
+
+# Sibling checkouts, each its own repository.
+/melee/
+/dusklight/
+/tp/
+/nod/
+/dawn/
+
+# Prebuilt clang/LLVM: ~490 MB, unpacked from the tarball beside it.
+/_toolchains/
+
+# Build trees. ax86 exists only to download Dawn and SDL3 for ax86m to reuse.
+/_build/ax86/
+/_build/ax86m/
+/_build/gwtool/
+/_build/irtest/
+/_build/masstest/out/
+/_build/masstest/shimobj/
+/_build/masstest/extra/
+
+# Generated symbol audits: regenerate with the commands in HANDOFF.md section 4.
+/_build/masstest/*.txt
+!/_build/masstest/files.txt
+
+# Binaries and run artefacts.
+*.exe
+*.dll
+*.pdb
+*.map
+*.log
+*.obj
+*.bc
+*.ll
+*.lib
+
+# OpenCode session state.
+/.omo/
