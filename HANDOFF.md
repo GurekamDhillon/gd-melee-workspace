@@ -1594,6 +1594,33 @@ sysdolphin+rest).
   26 are NULL; entry 26 is reachable via `stage_id_map[21]` = Akaneia).
 - `ftcommon.c` `ftCommon_8007E83C`: bounds+NULL check before `parasol_table_3[arg1]`.
 
+## 16.4 Alias-view sweep results (the class is wide, not just gm)
+Three read-only sweeps (ft+lb / gr+gm+mn / sysdolphin+rest) over the four classes outside §15.
+Each fixes the same way as `51db9bfe9`: reference the real symbol via a TARGET_PC macro. Real =
+proven cross-symbol; likely = cross-symbol by declaration but order-dependent.
+
+| Site | Alias view (source symbol) | Real symbol |
+|---|---|---|
+| `ty/toy.c` ~16 sites (1086,1225,2591,2622,3106,3337,4048,4763,5505,5553,5782,5875,6402,6430,6637,6659) | `_Toy_804A26B8` (12B) as Toy/Toy26B8 (0x404) | `Toy_804A284C`, `Toy_804A2AA8` — real |
+| `ty/toy.c` 1879,2048,2333/2314,2388 | `_Toy_str_TyLight_dat` (12B string) as data tables | `_Toy_803FDDE4/A0/BC/3C/A8` — real |
+| `it/itspawn.c:341,342,344` | `(ItemPickTable*)(&it_804A0E30 + 1)` | `it_804A0E50` — real |
+| `it/kinds/itlinkarrow.c:684,692` | `(f32*)&it_803F6A28 + x9C` | `it_803F6A84` — real (correct form already at :127/:135) |
+| `if/soundtest.c:766` | `un_803F9F28` (string) as `un_803F9F28_t` (0x200) | `un_803F9FA4` — real |
+| `if/soundtest.c:988,1101,1116,1134,1152` | `un_803FA128` (int[76]) as `un_803FA128_t` (0x228) | `un_803FA258` — likely |
+| `pl/player.c:359,447,491,1297,2054` | 9B string as `Unk_Struct_w_Array` (`vec_arr` +0x20) | `ftMapping_list` — real |
+| `ft/kinds/ftKirby/ftkirbyspeciallw.c:150,196,602,648,693,765,815,864` | `ftKb_Init_803CB490` (0x5C) `->vec` at +0x74 | `ftKb_Init_803CB4EC.vec` — real |
+| `gm/gmtoulib.c:1721` | `(CObjData*)&lbl_803D9DAC` | `lbl_803D9DD0` — real |
+| `gm/gm_19EF.c:137,141,563` | `&lbl_80479A98 + 0x28` as `HSD_JObj**` | `lbl_80479B10` — likely |
+| `gm/gm_17EB.c:88,175` | `lbl_80472CB0` (u8[0x78]) as UnkAllstarData (0xA0) | `lbl_80472D28` — likely |
+| `gr/grzebes.c:526,539` | `(grZe_BubbleSpawnPos*)grZe_8049F140` | through `grZe_8049F158` into `grZe_8049F170` — likely |
+| `gr/grvenom.c:1028,1038,1051,1100,1120,1145,1153,1420` | `s32* base = &grVe_803E5348` (+0x170 etc) | `grVe_803E5530` — likely |
+| `mn/mndiagram3.c:67,98,309,318,342` | `&mnDiagram3_803EEC10` (0xC) | `803EEC1C/28/4C` — real |
+| `mn/mnname.c:832..994,1399-1411,1735-1740` | `mnName_803ED538[4]` (+0xC8..+0x4F8) | `mnName_803ED568/574/580/598/600/618`, `mnName_AutoName*/RefuseName*` — real |
+| `mn/mnevent.c:727,728,770-772` | `&mnEvent_803EF740` (+0x70..+0x118) | `mnEvent_803EF7A0` — real |
+
+Uncertain: `gr/grmutecity.c` `(grMc_CarState*)grMc_8049F440` (its `cars` lands on
+`grMc_8049F4B8`); the gr sweep judged it a same-object Ground-union view — verify before fixing.
+
 ## 16.3 Other real/likely findings not yet fixed
 - `ft` Luigi `x222C_cycloneCharge` (`ftluigispeciallw.c:109/228`) read before write (source-annotated).
 - `ft` mode-gated init: the cloak-refraction table (built only in VS scene `fn_8016E730`, `gmvs.c:2000`,
