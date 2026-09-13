@@ -1069,3 +1069,54 @@ Only the first link remains. Next probe goes on whatever writes `game_camera.tra
 per-frame camera tracking, which follows player positions. Since ~4% of joint matrices are NaN
 *before* the camera is involved (9.11), one upstream fault in character position data would explain
 both, and a single root cause is the outcome to bet on.
+
+## 9.14 The NaN view matrix is STICKY -- this reconciles the numbers
+
+The piece that makes the whole picture consistent, and the least obvious thing found all session.
+
+### Read the counters correctly
+
+The DIAG counters accumulate over the 30 frames between samples, **not per frame**. Dividing by 30:
+
+| probe | per frame | NaN rate |
+| --- | --- | --- |
+| `gamecam` (Camera_8002AF68) | 2 calls | bad on roughly **1 frame in 15** |
+| `posmtx` (GXLoadPosMtxImm) | ~25 loads | **87%, every frame** |
+| `jobj` (JObjSetupMatrixSub) | ~215 setups | **3%** |
+
+Two things follow. First, only ~25 of ~215 joint matrices are ever loaded for drawing, so the loaded
+set is a small subset and the populations are not comparable. Second, and more importantly, an
+**intermittently** bad camera cannot explain a **constant** 87% -- unless the damage persists.
+
+### It persists
+
+`HSD_CObjSetupViewingMtx` (cobj.c:469) only recomputes when `HSD_CObjMtxIsDirty(cobj)`. Once
+`C_MTXLookAt` writes a NaN view matrix, **nothing cleans it**; it is reused every frame until
+something marks the camera dirty with good inputs. And `ftparts.c` builds what actually gets loaded
+as `PSMTXConcat(vmtx, pobj->u.jobj->mtx, tmp)` -- view x joint -- so a NaN view poisons every model
+matrix regardless of how healthy the joints are.
+
+So: **rare corruption, permanent consequence.** One bad frame in fifteen is more than enough. This
+is why an earlier reading of "the camera is only occasionally bad, so it cannot be the cause" was
+wrong; the cause is intermittent but the effect is sticky.
+
+It also explains pausing precisely: `CAMERA_PAUSE` is a different branch that recomputes the view
+matrix from frozen, clean values, so the scene returns.
+
+### Still unknown
+
+What writes garbage into `game_camera.transform` on those occasional frames. A probe was placed at
+camera.c:2578 (`get_subject_x1C` / `target_interest`) and **never fired**, so that branch is not
+used in this configuration -- do not re-probe it. The camera tuning constants are known good
+(`cm_803BCCA0.x64 = 0.05`, `x6C = 29`, `x70 = 0.1`, `x3C = 0.15`), so the smoothing coefficient is
+not the problem, and static float data reads correctly -- an earlier byte-swap theory is dead.
+
+**Next instrument:** rather than guessing which branch is active, catch the *transition*. Log
+whenever `game_camera.transform.interest`/`position` go from good to bad, printing old and new
+values. That names the moment of corruption without needing to know the code path.
+
+### Reproduction
+
+All measurements from 9.9 onward used the same scene: **P1 (one character) vs CPU, Yoshi's Story**,
+driven by the user. Keep to it -- the numbers above are comparable across runs only because the
+scene never varied.
