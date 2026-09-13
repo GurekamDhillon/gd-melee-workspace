@@ -1370,3 +1370,158 @@ The one experiment that broke the deadlock removed a whole subsystem from the pi
 inspecting it: replacing the envelope blend with a single joint proved in one run that matrices
 could not be the cause, after hours of measuring matrices that were all correct. When every
 component measures healthy, stop measuring components and start disabling them.
+
+---
+
+# 13. Session update, 2026-09-13 ~12:00 PDT — vsync, memory cards, audio, input
+
+Four workstreams landed and were verified with automated runs (the port now has a scripted pad
+source, so most of this was self-tested without the user). All changes are uncommitted on
+`melee` `pc-port`.
+
+## 13.1 Vsync / frame pacing — FIXED
+
+Symptom: bimodal frame times (p50 ≈ 15.6 ms, ~1 frame in 13 at ≈ 30.6 ms) = judder.
+
+Root cause (Oracle diagnosis, confirmed by measurement): nothing held the game to 60 Hz.
+`gw_VIWaitForRetrace`/`gw_frame_tick` never block — `aurora_end_frame` only enqueues to the render
+worker, and the display is 144 Hz VRR, so `Fifo` Present gives no back-pressure. The game
+free-ran at its own ~15.6 ms frame cost and the soft 1/60 pad alarm inserted one full stall every
+~13 frames.
+
+Fix: a hard field boundary in `shim_vi.c` (`gw_pace_field`), measured from the previous tick, with
+catch-up, called before `aurora_end_frame`. Verified in a live match: `p50=16.67 p95=17.11`,
+histogram `180/180` in `[16,17.5]`, zero spikes (was ~15 frames per window at 30–34 ms).
+
+## 13.2 Memory cards — FIXED (two root-cause bugs)
+
+Cards were brought up this session (`AURORA_ENABLE_CARD=ON`, `aurora_card.lib` linked,
+`shim_card.c` marshalling, `lbcardnew.c` `wait_idle` pumps). Two bugs then blocked save creation:
+
+1. **`.bss` contiguity (the §9.3 class).** The HSD card code casts `hsd_804D1138` to one
+   contiguous `CardContext` (0x1510 bytes), but the port links its three original pieces
+   (`hsd_804D1138[0x10]`, `hsd_804D1148[0x1200]`, `hsd_804D2348[0x300]`) as separate globals, so
+   the command engine and its producers used different memory. Fix: size `hsd_804D1138` to the
+   whole context and alias `hsd_804D1148`/`hsd_804D2348` into it (`hsd_3A94.c`, `hsd_3A94.h`,
+   `hsd_4D11.c`, TARGET_PC-guarded).
+2. **Charset overflow.** `lb_8001C658` (`lbcardgame.c`) `sprintf`s the save name into
+   `_p(_1C)[0x40]`, which sits immediately before `_p(x5C)`. The Japanese literal is 46 bytes in
+   the original Shift-JIS execution charset but **65 in UTF-8**, so it overflowed into `x5C` and
+   the next `_p(x5C)[...]` faulted reading date digits (`read of 0x32303039`). Fix: format into a
+   scratch buffer and cap the copy at `sizeof(_1C)` (TARGET_PC-guarded).
+
+Also fixed in Aurora's `CardGciFolder`: `openFile` returned `NOCARD (-3)` for a missing save
+instead of `NOFILE (-4)` (the game read that as "no card inserted"), the two `deleteFile` stubs
+(later implemented), and `renameFile` now persists.
+
+Verified: `Mount/Check/FreeBlocks/Open -> -4/Create -> 0`, then **11 × `WriteAsync(8192)` covering
+all 90,112 bytes**; a restart shows `Open -> 0`, `GetStatus` enumeration and a full read,
+40 s / `retrace=2402`, `FATAL=0`. Save lands at `_build/card/USA/Card A/*.gci`.
+
+## 13.3 Audio — IMPLEMENTED (audible)
+
+Aurora has no audio; the game's AX/AI surface (35 AX + 4 AI imports, zero DSP) was fully inert.
+A backend was implemented entirely in the shims (no game-source changes):
+
+- **`shim_ax.c` (rewritten) + `shim_ax.h` (new):** DSP-ADPCM decode (8-byte frames → 14 samples),
+  64-voice mixer reading `AXPB` config from big-endian game memory, `ve` volume+delta, `AXPBMIX`
+  L/R pan, `AXPBSRC` ratio resampling (nearest-neighbour for now), write-back of `pb.state`
+  (0x146) and `pb.addr.currentAddress` (0x1B2) big-endian. DSP space = ARAM byte offset ×2 →
+  `gw_aram + d/2`.
+- **Output:** SDL3 `SDL_OpenAudioDeviceStream`, 32 kHz stereo s16; a lock-free SPSC ring buffer
+  between the game thread and SDL's callback (the callback only copies).
+- **Frame driver:** `gw_AXRegisterCallback` stores `HSD_SynthCallback`; `gw_ax_frame_tick`
+  (called once from `gw_frame_tick`) invokes it per 5 ms sub-frame (160 samples) and mixes.
+- **`shim_misc.c`:** the four AI entry points now track master volume / sample rate.
+
+Verified: `AX: audio device open (32 kHz stereo s16)`, `first audible frame, 2 active voice(s),
+peak=3198`, sustained `peak=12000–21000` for the whole run (menu music `.hps` stream + SFX),
+no crash. FX (reverb/chorus/delay) remains stubbed returning 1 (aux buses only).
+
+## 13.4 Input — programmatic + keyboard fix
+
+- **`MELEE_PAD_SCRIPT=<file>`** (`shim_pad.c`): a text script — one segment per line,
+  `<frames> <buttons_hex> [stickX stickY [trigL trigR]]` — drives channel 0 regardless of the
+  physical adapter. This is the automated self-test path used above
+  (`_build/pad_card_test.txt` + `_build/self_test_keys.ps1`).
+- **Keyboard overlay fix:** it was gated on `!gw_gc_adapter_present()`, so with a GameCube adapter
+  connected every key was ignored. The gate is removed; the keyboard now works alongside the
+  adapter (W/A/S/D, J=A, K=B, Enter=Start; F9 recalibrates).
+
+## 13.5 Test tooling added
+
+- `shim_pad.c` `MELEE_PAD_SCRIPT` (above).
+- `main.c` `MELEE_AURORA_VERBOSE=1` now logs Aurora INFO (present mode, adapter) — that is how the
+  `Fifo` + 144 Hz VRR picture was established.
+- `gw_runtime.c` crash handler gained a raw **stack scan** (image-range words from `esp`); the
+  frame-pointer walk cannot unwind `-O2` frames.
+- TEMP probes left in place (remove before the final commit): `diag_aobj_bad`, `diag_card_state`,
+  `diag_card_pending`, `diag_card_dequeue`, `diag_card_read`, `diag_card_engine`,
+  `diag_card_engine_read` (all `diag_*` shims live in `shim_gx.c`).
+
+## 13.6 Remaining / not done
+
+1. **Card `delete`/`rename`** were implemented in `CardGciFolder` but not exercised in-game.
+2. **Audio FX** (reverb/chorus/delay) still return 1; **resampling** is nearest-neighbour.
+3. **`HSD_AObjSetFlags` crash** (the 0x6 pointer) appeared twice before the pacing fix and did
+   **not** recur under correct pacing across ~3 min of attract + matches; instrumented
+   (`diag_aobj_bad`) but not root-caused.
+4. The user reported an error "from loading a replay" that could not be reproduced or located (no
+   replay feature exists in the code); likely the card crash above.
+5. **Save-description date is garbage** (cosmetic). The created save's description reads
+   `Super Smash Bros. Melee         Game Data -821624832/184549377/`, i.e. `time.year`/`time.mon`
+   are huge. The shim's own `gw_OSTicksToCalendarTime` is correct when called
+   (`gw: DIAG CALTIME ticks=121500000 year=1999 mon=11 day=31` = the GC epoch), and `lb_8001C658`'s
+   create-time call is *not* among those logged calls — so that path reaches the SDK's
+   `OSTicksToCalendarTime`/`OSGetTime` without going through the shim. Investigate the
+   game-TU-vs-SDK symbol resolution for `OSTicksToCalendarTime`/`OSSecondsToTicks`/`OSTicksToSeconds`
+   (`extern/dolphin/src/dolphin/os/OSTime.c`). The date is only used in the save name, so this does
+   not affect the save itself.
+6. Everything is **uncommitted**; commit once the user signs off.
+
+# 14. Session update, 2026-09-13 (later) — attract-mode crash sweep
+
+Committed (9 on `pc-port`, so the "uncommitted" note above is now stale): `0e76d563e`,
+`650881218`, `fce9ef81a`, `ec397772a`, `d66c2c531`, `640dcee41`, `01e62e6cd`, `fa15afd5e`,
+`de697938a`. Attract mode went from a FATAL at ~10 s to ~58 s with audio playing.
+
+## 14.1 What was crashing, and why
+- **SFX playback (`HSD_SynthSFXPlayWithGroup`, ~10 s, deterministic).** `HSD_SynthSFXBankDeflag`
+  writes `HSD_Synth_804C2AE0[bank_id + 0x80/4]`, but the array was declared `[0x80/4]`, so the
+  write landed one array past its end — on `HSD_Synth_804C29E0`'s bucket heads (adjacent in
+  `.bss`) — storing a native deflag offset where a game pointer belongs. Fixed by declaring
+  `[0x100/4]`.
+- **SFX bank overflow.** Nothing rewound `hsd_SynthSFXBank[bankID]` between loads, so a later load
+  stopped fitting and the overflow assert ended the game. Re-applied the reclaim (safe now that
+  the unload's bucket unlink works).
+- **Stream advance (`HSD_Synth_8038ADD0`, ~58 s).** `pos` is the stream-ring buffer index used to
+  address `lbl_804C4540[3]`, derived from the voice's current address at `+0x1B2` — 0 until the
+  stream is set up — so the unsigned difference wraps to `0x7FFF` and the read runs far past the
+  array. Bounded `pos`. NOTE: the earlier "node `voice[0]` corruption" diagnosis was WRONG; the
+  voice pointer was valid and the fault was this index.
+- **Kirby hat NULL derefs.** `ft_80459B88.hats[kind]` is NULL on the attract path; sites are
+  guarded individually but the root is 14.3.
+- **AObj garbage DObj.** `grAnime` hands the AObj setters a DObj whose `aobj` is a small integer;
+  guarded `SetFlags`/`SetRewindFrame`/`SetEndFrame`.
+
+## 14.2 Endianness — the system already exists (do not build another)
+Game TUs compile for PowerPC, then pass through `_build/gwtool/gwtool.exe`, which byte-swaps every
+memory access; shims are native x86 and must swap by hand (`gw.h`). Policy + inventory are in
+`_research/port-dev-quickref.md`.
+
+## 14.3 FIXED: the Kirby hat preload (root of the remaining crashes)
+`ftLib_80087610` loads each hat archive into `((HSD_Archive**)&ft_80459B88)[kind]` via
+`ftKb_SpecialN_800EED50(Player_800325C8(i, 0), arg0)`, but its only caller is the VS-match setup
+`gm_8017C838`, whose Kirby branch the attract path never reaches — confirmed empirically: a run
+with a probe in `ftLib_80087610` logged **zero** calls. The hats therefore stayed all-NULL and the
+first Kirby demo NULL-derefed in any of the ~33 `ft_80459B88.hats` consumers (seen in
+`ftKb_SpecialN_800F03DC`, `ftCo_8009D4D4`, `ftCo_8009D074`). Fix (`d2a716caa`, `62a7d21f1`): call
+`ftLib_80087610(0)` once from `Player_80031D2C` before any fighter is set up, and under TARGET_PC
+load **every** valid kind — not just `gm_IsCKindUnlocked` ones, since attract demos include locked
+characters like Koopa — with an exclusive `SELKIND_COUNT` bound. Verified: a full 300 s attract run
+ends with **0 FATAL** (the timeout stops it, not a crash).
+
+## 14.4 Tooling added
+`gw_watch_page` / `gw_watch_tick` (`gw_runtime.c`, `gw.h`) — a `PAGE_GUARD` write watchdog that
+logs the faulting instruction and address of accesses to a region, re-armed once per frame from
+`gw_frame_tick`. Used to rule out a rogue writer into the audio node array.

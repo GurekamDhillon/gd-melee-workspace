@@ -46,6 +46,40 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso 'C:\Users\Gurek\Downloa
 - **Shim boundary.** A shim defines `gw_X`; the pipe/gwtool prefixes *every* symbol in a game TU with `gw_`, so game code must call the **unprefixed** `X`. Declare `extern void wait_idle(void);` and call `wait_idle()` under `TARGET_PC` - NOT `gw_wait_idle`, which double-prefixes to `gw_gw_wait_idle` and fails to link (this exact mistake cost a link cycle).
 - **Deferred completions.** ARQ and DVD completions are queued via `gw_defer` and pumped only in `gw_wait_idle`/`gw_frame_tick`. Any game-side blocking spin that calls no shim deadlocks; fix it by pumping `gw_wait_idle()` inside the spin (TARGET_PC-guarded). Precedents: the pad gate (`shim_dvd.c` `gw_DVDGetDriveStatus` -> `gw_wait_idle`), `lbarq.c` ARQ wait, and `synth.c` deflag sync (see `shim_ar.c:12-14`).
 - **Game-source changes** must be `#if defined(TARGET_PC)`-guarded with the original code kept.
-- **No audio backend.** Aurora has no `ax`/`ai`/`dsp`; `shim_ax.c` and the AI entries in `shim_misc.c` are inert (a voice pool exists only so the synth does not crash). Audio is not a flag.
+- **Audio backend exists** (added 2026-09-12/13). Aurora has no `ax`/`ai`/`dsp`, so `shim_ax.c` implements AX (DSP-ADPCM decode + 64-voice mixer over `gw_aram`) and the AI entries in `shim_misc.c` drive a SDL3 32 kHz stereo output; `HSD_SynthCallback` is pumped per frame from `gw_frame_tick`. Verified audible - audio is not inert.
 - **Commits:** `git -c user.name='GD' -c user.email='gd@gsd.sh' commit -m "pc: ..."` on `pc-port`. Never `git add -A`. The root repo has 3 pre-existing modified files that must stay uncommitted.
 - **Evidence:** each task writes `.omo/evidence/task-<name>.log` with the exact commands and their outputs.
+
+## Endianness: one system exists (`gwtool` + `gw.h`) - do not build a second
+
+**Mechanism.** Game TUs go clang `--target=ppc32-none-eabi ... -DLINT -DTARGET_PC` -> LLVM IR ->
+`_build/gwtool/gwtool.exe` -> x86 COFF. gwtool byte-swaps *every* memory access, so game memory is
+big-endian exactly as on GameCube and values are native only in registers; it also prefixes every
+symbol with `gw_`. The full contract is the header comment of `pc/platform/gw.h` - read it before
+touching a shim.
+
+**Who swaps.** Game `src/` contains no swap code by construction (gwtool does it). Shims are native
+x86 and swap by hand: every multi-byte field behind a game pointer must use `gw_r16/w16`,
+`gw_r32/w32`, `gw_r64/w64`, `gw_rf32/wf32`, `gw_rptr/wptr`. A native LE store the game then
+byte-swaps reads back wrong.
+
+**ABI at the boundary** (`gw.h`): scalars (int/float/pointer) arrive native - declare normally; a
+by-value struct arrives as a byte copy, so its fields are big-endian; a <=8-byte struct return comes
+packed big-endian; a larger struct return uses a BE sret pointer.
+
+**Swap-site inventory (2026-09-13).** Shims: `shim_card` 40, `shim_ax` 23, `shim_gx` 23,
+`shim_dvd` 7, `gw_runtime` 6, `shim_pad` 5, `shim_ar` 4, `shim_libc` 2, `shim_os` 2, `gc_adapter` 1.
+Game `src/`: 0 (by construction).
+
+**Known boundary violation (candidate root cause of the attract SFX crash).**
+`shim_ax.c:503-505,530` store `priority`, `callback`, `userContext` into the game's `AXVPB` with
+*native* stores. The game never writes `vpb->priority` itself - it only reads it (`synth.c:298,400`)
+and passes it back through `AXAcquireVoice`/`AXSetVoicePriority` - so through gwtool it reads a
+byte-swapped count, and `HSD_SynthSFXUnloadBank_inline` (`synth.c:295`) unlinks the wrong sfx ids,
+leaving dangling `HSD_Synth_804C29E0` bucket nodes that `HSD_SynthSFXPlayWithGroup` then walks
+(crash at `1035469D`/`103546CD`). Fix = store those three `AXVPB` fields with `gw_w32` after
+confirming who reads `callback`/`userContext`.
+
+**Rule for new shims:** any field a shim writes that the game can read must go through a `gw_*`
+accessor. When in doubt, use the accessor - a wrong native store surfaces later as a garbage
+pointer, not as an obvious endianness bug.
