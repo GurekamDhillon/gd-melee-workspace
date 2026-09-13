@@ -541,3 +541,51 @@ Still `prim=0`: **no geometry has ever reached Aurora.**
   none was a logic bug in a shim. Walking `dolphin/os.h` and the decomp for every fixed-address
   read and every "the hardware guarantees this" assumption, in one pass, is likely higher yield
   than fixing the next crash and waiting for the one behind it.
+
+---
+
+# 8. Session update, 2026-09-12 ~21:50 PDT: first frame, D3D11 stable
+
+**Milestone: the port reaches the visible Melee title screen and accepts keyboard input.** This
+closes out `.omo/plans/melee-pc-boot-unblock.md`: boot is unblocked, D3D11 is the stable default
+backend, and a keyboard bridge lets the game be driven by hand far enough to confirm it responds.
+
+## 8.1 What changed (commits)
+
+Three commits on `melee` `pc-port` (branch HEAD `8cd84fae4`):
+
+1. `98e49e856 pc: gx: copy only the referenced extent of indexed vertex arrays`. The Aurora
+   `push_gx_draw` array-copy fix that cleared the `0xC0000409` (`STATUS_STACK_BUFFER_OVERRUN`)
+   fastfail from §6.3/§7.3: keep `array.size` as the bounds assert, copy only the indexed extent.
+2. `616aab3af pc: default to the D3D11 backend (D3D12 hits a Dawn frame-encode AV)`. Workaround for
+   the D3D12 present/encode AV (§8.3); D3D11 is stable.
+3. `8cd84fae4 pc: add keyboard controls for testing (WASD/J/K/Enter)`. Keyboard bridge in
+   `shim_pad.c`; user-confirmed by hand (drove the game from "No Memory Card" into the title screen
+   and pressed Start).
+
+## 8.2 Run it
+
+```
+cd C:/gdm/_build && timeout 45s ./melee-pc.exe --iso "C:\Users\Gurek\Downloads\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
+```
+
+Controls (keyboard bridge on channel 0, marked `TARGET_PC test controls` in `shim_pad.c`, easy to
+disable): **W/A/S/D** → analog stick (up/left/down/right), **J** = A, **K** = B, **Enter** = Start.
+
+## 8.3 Known issues (evidence pointers)
+
+- **D3D12 backend AV (ESCALATE to an Aurora/Dawn owner).** Deterministic access violation at
+  `webgpu_dawn.dll+0x363548` in Aurora/Dawn's present/encode path, ~46 frames in. The port's frame
+  contract is correct; the fault is D3D12-backend-specific. Worked around by defaulting to D3D11
+  (§8.1). Proofs: `.omo/evidence/task-10-melee-pc-boot-unblock.log` and
+  `.omo/evidence/task-10-d3d11-run1-melee-pc.log`.
+- **Start-at-title crash.** Pressing Start at the title screen crashes. This is the next blocker.
+  No dump was captured.
+
+## 8.4 Verification gaps
+
+The automated runtime-verification set is INCOMPLETE and its evidence unreliable: todos 8, 9, 11, 12
+were cancelled or left unfinished because two workers collided over the single game instance (runs
+killed; one log froze at `retrace=782`) and the screen capture grabbed the occluding terminal instead
+of the game window. Recommendation: one clean single-worker pass with the game window foregrounded
+and the captured image validated as the game before trusting any of it.
