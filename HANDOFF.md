@@ -480,3 +480,64 @@ so there is no CRT invalid-parameter path left to hit.
 
 Still true: `prim=0`. **No geometry has ever been submitted**, so the GX path into Aurora remains
 completely unexercised. Expect unknowns there once the game gets far enough to draw.
+
+---
+
+# 7. Session update, 2026-09-12 ~19:50 PDT — handing off mid-investigation
+
+Two changes landed since §6, both committed and building. The port still dies; what changed is
+that we now know where.
+
+## 7.1 The clock is no longer call-driven
+
+`gw_ticks` was only stepped inside `gw_frame_tick` and `gw_wait_idle`, so **game time stopped
+whenever the game was computing rather than waiting** — a fourteen-second run advanced about two
+seconds of game time. Every duration the game measured was short by however busy the frame had
+been. `gw_time_ticks` now derives from `QueryPerformanceCounter` at read time, scaled to the same
+40.5 MHz, with the conversion split into whole seconds plus remainder so a long session cannot
+overflow. `gw_time_advance_field` is retained but does nothing. `gw_wait_idle` keeps a
+once-per-millisecond gate so a tight spin does not hammer the alarm queue.
+
+This is worth understanding before trusting any timing behaviour you see: it changed what the game
+does, not just what it reports.
+
+## 7.2 The watchdog now catches the crash site
+
+Sampling moved from every 2 s to every 100 ms, and it logs only when the pc enters a different
+function — so a spin stays quiet, but **the last line in the log names where the game was when it
+died.** Use `_build/masstest/mapsym.sh 0x<addr>` to resolve it (it merges the map's *Publics by
+Value* and *Static symbols* tables; reading only the first gives wrong answers).
+
+## 7.3 What that immediately told us — and it contradicts §6.3
+
+The remaining `0xC0000409` fast-fail leaves:
+
+```
+gw: at melee-pc.map rva 0x1025C190     ->  _gw_lb_800195D0+0x0   (lb_0195.c)
+```
+
+**The crash happens inside the pad-wait spin, not in asset loading.** §6.3 assumed the latter,
+and the DVD `fread` guard added there never fires. `lb_800195D0` calls `lb_800192A8(lb_8001955C)`
+and `lb_8001CC84`; `lb_8001955C` reaches `HSD_PadGetResetSwitch`, `lb_8001B6F8` and `lb_8001CC84`.
+That is the code to instrument next.
+
+Note also `alarms fired` still only reaches ~120 before death even with the free-running clock,
+where 60/s over fourteen seconds should be many times that. Either the game leaves the spin
+without returning to a waiting shim, or something is re-arming the alarm. Worth resolving — it is
+the same class of bug as everything else that has bitten so far.
+
+Still `prim=0`: **no geometry has ever reached Aurora.**
+
+## 7.4 Not done
+
+- **The debuggers were not installed.** The session ended first. `winget install
+  Microsoft.WinDbg` (or the Windows SDK's Debugging Tools) then `cdb -g -G melee-pc.exe --iso ...`
+  would catch the fast-fail live with a real stack, which is still the fastest way to close this
+  out. Everything above was obtained without one, so treat it as a shortcut rather than a
+  prerequisite.
+- The **systematic sweep of console invariants** discussed as the better method than serial crash
+  triage. Every blocker so far has been one of these — ARAM base `0x4000`, MEM1-vs-pointer
+  classification, 32-byte DMA alignment, the low-memory OS globals, the arena start offset — and
+  none was a logic bug in a shim. Walking `dolphin/os.h` and the decomp for every fixed-address
+  read and every "the hardware guarantees this" assumption, in one pass, is likely higher yield
+  than fixing the next crash and waiting for the one behind it.
