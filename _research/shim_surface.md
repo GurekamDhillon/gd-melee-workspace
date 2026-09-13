@@ -1,0 +1,1057 @@
+# Shim surface: every symbol the melee game objects need from outside
+
+335 external symbols. `gw_`-prefixed ones must be provided by native shims;
+unprefixed ones (_alldiv, _chkstk, _fltused, memcpy, memset) come from the MSVC CRT.
+
+## GX (101)
+
+- `gw_GXBegin`
+  - IR: `void (i32, i32, i16)`
+  - C: `void GXBegin(GXPrimitive type, GXVtxFmt vtxfmt, u16 nverts);`  (extern/dolphin/include\dolphin\gx\GXGeometry.h:29)
+- `gw_GXCallDisplayList`
+  - IR: `void (ptr, i32)`
+  - C: `void GXCallDisplayList( void *list, u32 nbytes);`  (extern/dolphin/include\dolphin\gx\GXDispList.h:12)
+- `gw_GXClearVtxDesc`
+  - IR: `void ()`
+  - C: `void GXClearVtxDesc(void);`  (extern/dolphin/include\dolphin\gx\GXGeometry.h:15)
+- `gw_GXCopyDisp`
+  - IR: `void (ptr, i8)`
+  - C: `void GXCopyDisp(void *dest, GXBool clear);`  (extern/dolphin/include\dolphin\gx\GXFrameBuffer.h:48)
+- `gw_GXCopyTex`
+  - IR: `void (ptr, i8)`
+  - C: `void GXCopyTex(void *dest, GXBool clear);`  (extern/dolphin/include\dolphin\gx\GXFrameBuffer.h:49)
+- `gw_GXEnableTexOffsets`
+  - IR: `void (i32, i8, i8)`
+  - C: `void GXEnableTexOffsets(GXTexCoordID coord, u8 line_enable, u8 point_enable);`  (extern/dolphin/include\dolphin\gx\GXGeometry.h:43)
+- `gw_GXGetProjectionv`
+  - IR: `void (ptr)`
+  - C: `void GXGetProjectionv(f32 *ptr);`  (extern/dolphin/include\dolphin\gx\GXGet.h:56)
+- `gw_GXGetTexBufferSize`
+  - IR: `i32 (i16, i16, i32, i8, i8)`
+  - C: `u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, u8 mipmap, u8 max_lod);`  (extern/dolphin/include\dolphin\gx\GXTexture.h:14)
+- `gw_GXGetTexObjFmt`
+  - IR: `i32 (ptr)`
+  - C: `GXTexFmt GXGetTexObjFmt(const GXTexObj *to);`  (extern/dolphin/include\dolphin\gx\GXGet.h:31)
+- `gw_GXGetTexObjHeight`
+  - IR: `i16 (ptr)`
+  - C: `u16 GXGetTexObjHeight(const GXTexObj *to);`  (extern/dolphin/include\dolphin\gx\GXGet.h:33)
+- `gw_GXGetTexObjWidth`
+  - IR: `i16 (ptr)`
+  - C: `u16 GXGetTexObjWidth(const GXTexObj *to);`  (extern/dolphin/include\dolphin\gx\GXGet.h:32)
+- `gw_GXGetViewportv`
+  - IR: `void (ptr)`
+  - C: `void GXGetViewportv(f32 *vp);`  (extern/dolphin/include\dolphin\gx\GXGet.h:57)
+- `gw_GXInit`
+  - IR: `ptr (ptr, i32)`
+  - C: `GXFifoObj *GXInit(void *base, u32 size);`  (extern/dolphin/include\dolphin\gx\GXManage.h:15)
+- `gw_GXInitFogAdjTable`
+  - IR: `void (ptr, i16, ptr)`
+  - C: `void GXInitFogAdjTable(GXFogAdjTable *table, u16 width, f32 projmtx[4][4]);`  (extern/dolphin/include\dolphin\gx\GXPixel.h:11)
+- `gw_GXInitLightAttn`
+  - IR: `void (ptr, float, float, float, float, float, float)`
+  - C: `void GXInitLightAttn(GXLightObj *lt_obj, f32 a0, f32 a1, f32 a2, f32 k0, f32 k1, f32 k2);`  (extern/dolphin/include\dolphin\gx\GXLighting.h:11)
+- `gw_GXInitLightColor`
+  - IR: `void (ptr, ptr)`
+  - C: `void GXInitLightColor(GXLightObj *lt_obj, GXColor color);`  (extern/dolphin/include\dolphin\gx\GXLighting.h:20)
+- `gw_GXInitLightDir`
+  - IR: `void (ptr, float, float, float)`
+  - C: `void GXInitLightDir(GXLightObj *lt_obj, f32 nx, f32 ny, f32 nz);`  (extern/dolphin/include\dolphin\gx\GXLighting.h:17)
+- `gw_GXInitLightDistAttn`
+  - IR: `void (ptr, float, float, i32)`
+  - C: `void GXInitLightDistAttn(GXLightObj *lt_obj, f32 ref_dist, f32 ref_br, GXDistAttnFn dist_func);`  (extern/dolphin/include\dolphin\gx\GXLighting.h:15)
+- `gw_GXInitLightPos`
+  - IR: `void (ptr, float, float, float)`
+  - C: `void GXInitLightPos(GXLightObj *lt_obj, f32 x, f32 y, f32 z);`  (extern/dolphin/include\dolphin\gx\GXLighting.h:16)
+- `gw_GXInitLightSpot`
+  - IR: `void (ptr, float, i32)`
+  - C: `void GXInitLightSpot(GXLightObj *lt_obj, f32 cutoff, GXSpotFn spot_func);`  (extern/dolphin/include\dolphin\gx\GXLighting.h:14)
+- `gw_GXInitTexObj`
+  - IR: `void (ptr, ptr, i16, i16, i32, i32, i32, i8)`
+  - C: `void GXInitTexObj(GXTexObj *obj, void *image_ptr, u16 width, u16 height, GXTexFmt format, GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, u8 mipmap);`  (extern/dolphin/include\dolphin\gx\GXTexture.h:15)
+- `gw_GXInitTexObjCI`
+  - IR: `void (ptr, ptr, i16, i16, i32, i32, i32, i8, i32)`
+  - C: `void GXInitTexObjCI(GXTexObj *obj, void *image_ptr, u16 width, u16 height, GXTexFmt format, GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, u8 mipmap, u32 tlut_name);`  (extern/dolphin/include\dolphin\gx\GXTexture.h:16)
+- `gw_GXInitTexObjLOD`
+  - IR: `void (ptr, i32, i32, float, float, float, i8, i8, i32)`
+  - C: `void GXInitTexObjLOD(GXTexObj *obj, GXTexFilter min_filt, GXTexFilter mag_filt, f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp, GXBool do_edge_lod, GXAnisotropy max_aniso);`  (extern/dolphin/include\dolphin\gx\GXTexture.h:17)
+- `gw_GXInitTlutObj`
+  - IR: `void (ptr, ptr, i32, i16)`
+  - C: `void GXInitTlutObj(GXTlutObj *tlut_obj, void *lut, GXTlutFmt fmt, u16 n_entries);`  (extern/dolphin/include\dolphin\gx\GXTexture.h:27)
+- `gw_GXInvalidateTexAll`
+  - IR: `void ()`
+  - C: `void GXInvalidateTexAll(void);`  (extern/dolphin/include\dolphin\gx\GXTexture.h:33)
+- `gw_GXInvalidateVtxCache`
+  - IR: `void ()`
+  - C: `void GXInvalidateVtxCache(void);`  (extern/dolphin/include\dolphin\gx\GXGeometry.h:19)
+- `gw_GXLoadLightObjImm`
+  - IR: `void (ptr, i32)`
+  - C: `void GXLoadLightObjImm(GXLightObj *lt_obj, GXLightID light);`  (extern/dolphin/include\dolphin\gx\GXLighting.h:21)
+- `gw_GXLoadNrmMtxImm`
+  - IR: `void (ptr, i32)`
+  - C: `void GXLoadNrmMtxImm(f32 mtx[3][4], u32 id);`  (extern/dolphin/include\dolphin\gx\GXTransform.h:18)
+- `gw_GXLoadPosMtxImm`
+  - IR: `void (ptr, i32)`
+  - C: `void GXLoadPosMtxImm(f32 mtx[3][4], u32 id);`  (extern/dolphin/include\dolphin\gx\GXTransform.h:16)
+- `gw_GXLoadTexMtxImm`
+  - IR: `void (ptr, i32, i32)`
+  - C: `void GXLoadTexMtxImm(f32 mtx[][4], u32 id, GXTexMtxType type);`  (extern/dolphin/include\dolphin\gx\GXTransform.h:22)
+- `gw_GXLoadTexObj`
+  - IR: `void (ptr, i32)`
+  - C: `void GXLoadTexObj(GXTexObj *obj, GXTexMapID id);`  (extern/dolphin/include\dolphin\gx\GXTexture.h:26)
+- `gw_GXLoadTlut`
+  - IR: `void (ptr, i32)`
+  - C: `void GXLoadTlut(GXTlutObj *tlut_obj, u32 tlut_name);`  (extern/dolphin/include\dolphin\gx\GXTexture.h:28)
+- `gw_GXNtsc480Int`
+  - IR: `%struct._GXRenderModeObj = type { i32, i16, i16, i16, i16, i16, i16, i16, i32, i8, i8, [12 x [2 x i8]], [7 x i8] }`
+  - C: *(no prototype found in headers)*
+- `gw_GXNtsc480IntDf`
+  - IR: `%struct._GXRenderModeObj = type { i32, i16, i16, i16, i16, i16, i16, i16, i32, i8, i8, [12 x [2 x i8]], [7 x i8] }`
+  - C: *(no prototype found in headers)*
+- `gw_GXNtsc480Prog`
+  - IR: `%struct._GXRenderModeObj = type { i32, i16, i16, i16, i16, i16, i16, i16, i32, i8, i8, [12 x [2 x i8]], [7 x i8] }`
+  - C: *(no prototype found in headers)*
+- `gw_GXPixModeSync`
+  - IR: `void ()`
+  - C: `void GXPixModeSync(void);`  (extern/dolphin/include\dolphin\gx\GXManage.h:27)
+- `gw_GXProject`
+  - IR: `void (float, float, float, ptr, ptr, ptr, ptr, ptr, ptr)`
+  - C: `void GXProject(f32 x, f32 y, f32 z, f32 mtx[3][4], f32 *pm, f32 *vp, f32 *sx, f32 *sy, f32 *sz);`  (extern/dolphin/include\dolphin\gx\GXTransform.h:13)
+- `gw_GXSetAlphaCompare`
+  - IR: `void (i32, i8, i32, i32, i8)`
+  - C: `void GXSetAlphaCompare(GXCompare comp0, u8 ref0, GXAlphaOp op, GXCompare comp1, u8 ref1);`  (extern/dolphin/include\dolphin\gx\GXTev.h:30)
+- `gw_GXSetAlphaUpdate`
+  - IR: `void (i8)`
+  - C: `void GXSetAlphaUpdate(GXBool update_enable);`  (extern/dolphin/include\dolphin\gx\GXPixel.h:15)
+- `gw_GXSetArray`
+  - IR: `void (i32, ptr, i8)`
+  - C: `void GXSetArray(GXAttr attr, const void *base_ptr, u8 stride);`  (extern/dolphin/include\dolphin\gx\GXGeometry.h:18)
+- `gw_GXSetBlendMode`
+  - IR: `void (i32, i32, i32, i32)`
+  - C: `void GXSetBlendMode(GXBlendMode type, GXBlendFactor src_factor, GXBlendFactor dst_factor, GXLogicOp op);`  (extern/dolphin/include\dolphin\gx\GXPixel.h:13)
+- `gw_GXSetChanAmbColor`
+  - IR: `void (i32, ptr)`
+  - C: `void GXSetChanAmbColor(GXChannelID chan, GXColor amb_color);`  (extern/dolphin/include\dolphin\gx\GXLighting.h:23)
+- `gw_GXSetChanCtrl`
+  - IR: `void (i32, i8, i32, i32, i32, i32, i32)`
+  - C: `void GXSetChanCtrl(GXChannelID chan, GXBool enable, GXColorSrc amb_src, GXColorSrc mat_src, u32 light_mask, GXDiffuseFn diff_fn, GXAttnFn attn_fn);`  (extern/dolphin/include\dolphin\gx\GXLighting.h:26)
+- `gw_GXSetChanMatColor`
+  - IR: `void (i32, ptr)`
+  - C: `void GXSetChanMatColor(GXChannelID chan, GXColor mat_color);`  (extern/dolphin/include\dolphin\gx\GXLighting.h:24)
+- `gw_GXSetColorUpdate`
+  - IR: `void (i8)`
+  - C: `void GXSetColorUpdate(GXBool update_enable);`  (extern/dolphin/include\dolphin\gx\GXPixel.h:14)
+- `gw_GXSetCopyClamp`
+  - IR: `void (i32)`
+  - C: `void GXSetCopyClamp(GXFBClamp clamp);`  (extern/dolphin/include\dolphin\gx\GXFrameBuffer.h:43)
+- `gw_GXSetCopyClear`
+  - IR: `void (ptr, i32)`
+  - C: `void GXSetCopyClear(GXColor clear_clr, u32 clear_z);`  (extern/dolphin/include\dolphin\gx\GXFrameBuffer.h:45)
+- `gw_GXSetCopyFilter`
+  - IR: `void (i8, ptr, i8, ptr)`
+  - C: `void GXSetCopyFilter(GXBool aa, const u8 sample_pattern[12][2], GXBool vf, const u8 vfilter[7]);`  (extern/dolphin/include\dolphin\gx\GXFrameBuffer.h:46)
+- `gw_GXSetCullMode`
+  - IR: `void (i32)`
+  - C: `void GXSetCullMode(GXCullMode mode);`  (extern/dolphin/include\dolphin\gx\GXCull.h:11)
+- `gw_GXSetCurrentMtx`
+  - IR: `void (i32)`
+  - C: `void GXSetCurrentMtx(u32 id);`  (extern/dolphin/include\dolphin\gx\GXTransform.h:21)
+- `gw_GXSetDispCopyDst`
+  - IR: `void (i16, i16)`
+  - C: `void GXSetDispCopyDst(u16 wd, u16 ht);`  (extern/dolphin/include\dolphin\gx\GXFrameBuffer.h:40)
+- `gw_GXSetDispCopyGamma`
+  - IR: `void (i32)`
+  - C: `void GXSetDispCopyGamma(GXGamma gamma);`  (extern/dolphin/include\dolphin\gx\GXFrameBuffer.h:47)
+- `gw_GXSetDispCopySrc`
+  - IR: `void (i16, i16, i16, i16)`
+  - C: `void GXSetDispCopySrc(u16 left, u16 top, u16 wd, u16 ht);`  (extern/dolphin/include\dolphin\gx\GXFrameBuffer.h:38)
+- `gw_GXSetDispCopyYScale`
+  - IR: `i32 (float)`
+  - C: `u32 GXSetDispCopyYScale(f32 vscale);`  (extern/dolphin/include\dolphin\gx\GXFrameBuffer.h:44)
+- `gw_GXSetDither`
+  - IR: `void (i8)`
+  - C: `void GXSetDither(GXBool dither);`  (extern/dolphin/include\dolphin\gx\GXPixel.h:19)
+- `gw_GXSetDrawDone`
+  - IR: `void ()`
+  - C: `void GXSetDrawDone(void);`  (extern/dolphin/include\dolphin\gx\GXManage.h:24)
+- `gw_GXSetDrawDoneCallback`
+  - IR: `ptr (ptr)`
+  - C: `GXDrawDoneCallback GXSetDrawDoneCallback(GXDrawDoneCallback cb);`  (extern/dolphin/include\dolphin\gx\GXManage.h:30)
+- `gw_GXSetDstAlpha`
+  - IR: `void (i8, i8)`
+  - C: `void GXSetDstAlpha(GXBool enable, u8 alpha);`  (extern/dolphin/include\dolphin\gx\GXPixel.h:20)
+- `gw_GXSetFieldMode`
+  - IR: `void (i8, i8)`
+  - C: `void GXSetFieldMode(GXBool field_mode, GXBool half_aspect_ratio);`  (extern/dolphin/include\dolphin\gx\GXPixel.h:22)
+- `gw_GXSetFog`
+  - IR: `void (i32, float, float, float, float, ptr)`
+  - C: `void GXSetFog(GXFogType type, f32 startz, f32 endz, f32 nearz, f32 farz, GXColor color);`  (extern/dolphin/include\dolphin\gx\GXPixel.h:10)
+- `gw_GXSetFogRangeAdj`
+  - IR: `void (i8, i16, ptr)`
+  - C: `void GXSetFogRangeAdj(GXBool enable, u16 center, GXFogAdjTable *table);`  (extern/dolphin/include\dolphin\gx\GXPixel.h:12)
+- `gw_GXSetIndTexCoordScale`
+  - IR: `void (i32, i32, i32)`
+  - C: `void GXSetIndTexCoordScale(GXIndTexStageID ind_state, GXIndTexScale scale_s, GXIndTexScale scale_t);`  (extern/dolphin/include\dolphin\gx\GXBump.h:12)
+- `gw_GXSetIndTexMtx`
+  - IR: `void (i32, ptr, i8)`
+  - C: `void GXSetIndTexMtx(GXIndTexMtxID mtx_id, f32 offset[2][3], s8 scale_exp);`  (extern/dolphin/include\dolphin\gx\GXBump.h:11)
+- `gw_GXSetIndTexOrder`
+  - IR: `void (i32, i32, i32)`
+  - C: `void GXSetIndTexOrder(GXIndTexStageID ind_stage, GXTexCoordID tex_coord, GXTexMapID tex_map);`  (extern/dolphin/include\dolphin\gx\GXBump.h:13)
+- `gw_GXSetLineWidth`
+  - IR: `void (i8, i32)`
+  - C: `void GXSetLineWidth(u8 width, GXTexOffset texOffsets);`  (extern/dolphin/include\dolphin\gx\GXGeometry.h:41)
+- `gw_GXSetMisc`
+  - IR: `void (i32, i32)`
+  - C: `void GXSetMisc(GXMiscToken token, u32 val);`  (extern/dolphin/include\dolphin\gx\GXManage.h:18)
+- `gw_GXSetNumChans`
+  - IR: `void (i8)`
+  - C: `void GXSetNumChans(u8 nChans);`  (extern/dolphin/include\dolphin\gx\GXLighting.h:25)
+- `gw_GXSetNumIndStages`
+  - IR: `void (i8)`
+  - C: `void GXSetNumIndStages(u8 nIndStages);`  (extern/dolphin/include\dolphin\gx\GXBump.h:14)
+- `gw_GXSetNumTevStages`
+  - IR: `void (i8)`
+  - C: `void GXSetNumTevStages(u8 nStages);`  (extern/dolphin/include\dolphin\gx\GXTev.h:35)
+- `gw_GXSetNumTexGens`
+  - IR: `void (i8)`
+  - C: `void GXSetNumTexGens(u8 nTexGens);`  (extern/dolphin/include\dolphin\gx\GXGeometry.h:21)
+- `gw_GXSetPixelFmt`
+  - IR: `void (i32, i32)`
+  - C: `void GXSetPixelFmt(GXPixelFmt pix_fmt, GXZFmt16 z_fmt);`  (extern/dolphin/include\dolphin\gx\GXPixel.h:18)
+- `gw_GXSetPointSize`
+  - IR: `void (i8, i32)`
+  - C: `void GXSetPointSize(u8 pointSize, GXTexOffset texOffsets);`  (extern/dolphin/include\dolphin\gx\GXGeometry.h:42)
+- `gw_GXSetProjection`
+  - IR: `void (ptr, i32)`
+  - C: `void GXSetProjection(f32 mtx[4][4], GXProjectionType type);`  (extern/dolphin/include\dolphin\gx\GXTransform.h:14)
+- `gw_GXSetScissor`
+  - IR: `void (i32, i32, i32, i32)`
+  - C: `void GXSetScissor(u32 left, u32 top, u32 wd, u32 ht);`  (extern/dolphin/include\dolphin\gx\GXCull.h:10)
+- `gw_GXSetTevAlphaIn`
+  - IR: `void (i32, i32, i32, i32, i32)`
+  - C: `void GXSetTevAlphaIn(GXTevStageID stage, GXTevAlphaArg a, GXTevAlphaArg b, GXTevAlphaArg c, GXTevAlphaArg d);`  (extern/dolphin/include\dolphin\gx\GXTev.h:13)
+- `gw_GXSetTevAlphaOp`
+  - IR: `void (i32, i32, i32, i32, i8, i32)`
+  - C: `void GXSetTevAlphaOp(GXTevStageID stage, GXTevOp op, GXTevBias bias, GXTevScale scale, GXBool clamp, GXTevRegID out_reg);`  (extern/dolphin/include\dolphin\gx\GXTev.h:17)
+- `gw_GXSetTevClampMode`
+  - IR: `void (i32, i32)`
+  - C: `void GXSetTevClampMode(int, int);`  (extern/dolphin/include\dolphin\gx\GXTev.h:29)
+- `gw_GXSetTevColor`
+  - IR: `void (i32, ptr)`
+  - C: `void GXSetTevColor(GXTevRegID id, GXColor color);`  (extern/dolphin/include\dolphin\gx\GXTev.h:19)
+- `gw_GXSetTevColorIn`
+  - IR: `void (i32, i32, i32, i32, i32)`
+  - C: `void GXSetTevColorIn(GXTevStageID stage, GXTevColorArg a, GXTevColorArg b, GXTevColorArg c, GXTevColorArg d);`  (extern/dolphin/include\dolphin\gx\GXTev.h:11)
+- `gw_GXSetTevColorOp`
+  - IR: `void (i32, i32, i32, i32, i8, i32)`
+  - C: `void GXSetTevColorOp(GXTevStageID stage, GXTevOp op, GXTevBias bias, GXTevScale scale, GXBool clamp, GXTevRegID out_reg);`  (extern/dolphin/include\dolphin\gx\GXTev.h:15)
+- `gw_GXSetTevColorS10`
+  - IR: `void (i32, ptr)`
+  - C: `void GXSetTevColorS10(GXTevRegID id, GXColorS10 color);`  (extern/dolphin/include\dolphin\gx\GXTev.h:20)
+- `gw_GXSetTevDirect`
+  - IR: `void (i32)`
+  - C: `void GXSetTevDirect(GXTevStageID tev_stage);`  (extern/dolphin/include\dolphin\gx\GXBump.h:15)
+- `gw_GXSetTevIndirect`
+  - IR: `void (i32, i32, i32, i32, i32, i32, i32, i8, i8, i32)`
+  - C: `void GXSetTevIndirect(GXTevStageID tev_stage, GXIndTexStageID ind_stage, GXIndTexFormat format, GXIndTexBiasSel bias_sel, GXIndTexMtxID matrix_sel, GXIndTexWrap wrap_s, GXIndTexWrap wrap_t, GXBool add_prev, GXBool utc_lod, GXIndTexAlphaSel alpha_sel);`  (extern/dolphin/include\dolphin\gx\GXBump.h:10)
+- `gw_GXSetTevKAlphaSel`
+  - IR: `void (i32, i32)`
+  - C: `void GXSetTevKAlphaSel(GXTevStageID stage, GXTevKAlphaSel sel);`  (extern/dolphin/include\dolphin\gx\GXTev.h:23)
+- `gw_GXSetTevKColor`
+  - IR: `void (i32, ptr)`
+  - C: `void GXSetTevKColor(GXTevKColorID id, GXColor color);`  (extern/dolphin/include\dolphin\gx\GXTev.h:21)
+- `gw_GXSetTevKColorSel`
+  - IR: `void (i32, i32)`
+  - C: `void GXSetTevKColorSel(GXTevStageID stage, GXTevKColorSel sel);`  (extern/dolphin/include\dolphin\gx\GXTev.h:22)
+- `gw_GXSetTevOp`
+  - IR: `void (i32, i32)`
+  - C: `void GXSetTevOp(GXTevStageID id, GXTevMode mode);`  (extern/dolphin/include\dolphin\gx\GXTev.h:10)
+- `gw_GXSetTevOrder`
+  - IR: `void (i32, i32, i32, i32)`
+  - C: `void GXSetTevOrder(GXTevStageID stage, GXTexCoordID coord, GXTexMapID map, GXChannelID color);`  (extern/dolphin/include\dolphin\gx\GXTev.h:33)
+- `gw_GXSetTevSwapMode`
+  - IR: `void (i32, i32, i32)`
+  - C: `void GXSetTevSwapMode(GXTevStageID stage, GXTevSwapSel ras_sel, GXTevSwapSel tex_sel);`  (extern/dolphin/include\dolphin\gx\GXTev.h:24)
+- `gw_GXSetTevSwapModeTable`
+  - IR: `void (i32, i32, i32, i32, i32)`
+  - C: `void GXSetTevSwapModeTable(GXTevSwapSel table, GXTevColorChan red, GXTevColorChan green, GXTevColorChan blue, GXTevColorChan alpha);`  (extern/dolphin/include\dolphin\gx\GXTev.h:26)
+- `gw_GXSetTexCoordGen2`
+  - IR: `void (i32, i32, i32, i32, i8, i32)`
+  - C: `void GXSetTexCoordGen2(GXTexCoordID dst_coord, GXTexGenType func, GXTexGenSrc src_param, u32 mtx, GXBool normalize, u32 pt_texmtx);`  (extern/dolphin/include\dolphin\gx\GXGeometry.h:20)
+- `gw_GXSetTexCopyDst`
+  - IR: `void (i16, i16, i32, i8)`
+  - C: `void GXSetTexCopyDst(u16 wd, u16 ht, GXTexFmt fmt, GXBool mipmap);`  (extern/dolphin/include\dolphin\gx\GXFrameBuffer.h:41)
+- `gw_GXSetTexCopySrc`
+  - IR: `void (i16, i16, i16, i16)`
+  - C: `void GXSetTexCopySrc(u16 left, u16 top, u16 wd, u16 ht);`  (extern/dolphin/include\dolphin\gx\GXFrameBuffer.h:39)
+- `gw_GXSetViewport`
+  - IR: `void (float, float, float, float, float, float)`
+  - C: `void GXSetViewport(f32 left, f32 top, f32 wd, f32 ht, f32 nearz, f32 farz);`  (extern/dolphin/include\dolphin\gx\GXTransform.h:25)
+- `gw_GXSetViewportJitter`
+  - IR: `void (float, float, float, float, float, float, i32)`
+  - C: `void GXSetViewportJitter(f32 left, f32 top, f32 wd, f32 ht, f32 nearz, f32 farz, u32 field);`  (extern/dolphin/include\dolphin\gx\GXTransform.h:24)
+- `gw_GXSetVtxAttrFmt`
+  - IR: `void (i32, i32, i32, i32, i8)`
+  - C: `void GXSetVtxAttrFmt(GXVtxFmt vtxfmt, GXAttr attr, GXCompCnt cnt, GXCompType type, u8 frac);`  (extern/dolphin/include\dolphin\gx\GXGeometry.h:16)
+- `gw_GXSetVtxDesc`
+  - IR: `void (i32, i32)`
+  - C: `void GXSetVtxDesc(GXAttr attr, GXAttrType type);`  (extern/dolphin/include\dolphin\gx\GXGeometry.h:13)
+- `gw_GXSetZCompLoc`
+  - IR: `void (i8)`
+  - C: `void GXSetZCompLoc(GXBool before_tex);`  (extern/dolphin/include\dolphin\gx\GXPixel.h:17)
+- `gw_GXSetZMode`
+  - IR: `void (i8, i32, i8)`
+  - C: `void GXSetZMode(GXBool compare_enable, GXCompare func, GXBool update_enable);`  (extern/dolphin/include\dolphin\gx\GXPixel.h:16)
+- `gw_GXSetZTexture`
+  - IR: `void (i32, i32, i32)`
+  - C: `void GXSetZTexture(GXZTexOp op, GXTexFmt fmt, u32 bias);`  (extern/dolphin/include\dolphin\gx\GXTev.h:32)
+- `gw_GXWaitDrawDone`
+  - IR: `void ()`
+  - C: `void GXWaitDrawDone(void);`  (extern/dolphin/include\dolphin\gx\GXManage.h:25)
+
+## OS (44)
+
+- `gw_OSAllocFromArenaHi`
+  - IR: `ptr (i32, i32)`
+  - C: `void* OSAllocFromArenaHi(u32 size, u32 align);`  (extern/dolphin/include\dolphin\os.h:98)
+- `gw_OSAllocFromArenaLo`
+  - IR: `ptr (i32, i32)`
+  - C: `void* OSAllocFromArenaLo(u32 size, u32 align);`  (extern/dolphin/include\dolphin\os.h:97)
+- `gw_OSAllocFromHeap`
+  - IR: `ptr (i32, i32)`
+  - C: `void * OSAllocFromHeap(int heap, unsigned long size);`  (extern/dolphin/include\dolphin\os\OSAlloc.h:10)
+- `gw_OSCancelAlarm`
+  - IR: `void (ptr)`
+  - C: `void OSCancelAlarm(OSAlarm* alarm);`  (extern/dolphin/include\dolphin\os\OSAlarm.h:28)
+- `gw_OSCheckActiveThreads`
+  - IR: `i32 ()`
+  - C: `long OSCheckActiveThreads(void);`  (extern/dolphin/include\dolphin\os\OSThread.h:82)
+- `gw_OSCheckHeap`
+  - IR: `i32 (i32)`
+  - C: `long OSCheckHeap(int heap);`  (extern/dolphin/include\dolphin\os\OSAlloc.h:18)
+- `gw_OSClearContext`
+  - IR: `void (ptr)`
+  - C: `void OSClearContext(OSContext *context);`  (extern/dolphin/include\dolphin\os\OSContext.h:159)
+- `gw_OSCreateAlarm`
+  - IR: `void (ptr)`
+  - C: `void OSCreateAlarm(OSAlarm* alarm);`  (extern/dolphin/include\dolphin\os\OSAlarm.h:22)
+- `gw_OSCreateHeap`
+  - IR: `i32 (ptr, ptr)`
+  - C: `int OSCreateHeap(void * start, void * end);`  (extern/dolphin/include\dolphin\os\OSAlloc.h:15)
+- `gw_OSCreateThread`
+  - IR: `i32 (ptr, ptr, ptr, ptr, i32, i32, i16)`
+  - C: `int OSCreateThread(struct OSThread * thread, void * (* func)(void *), void * param, void * stack, unsigned long stackSize, long priority, unsigned short attr);`  (extern/dolphin/include\dolphin\os\OSThread.h:83)
+- `gw_OSDestroyHeap`
+  - IR: `void (i32)`
+  - C: `void OSDestroyHeap(int heap);`  (extern/dolphin/include\dolphin\os\OSAlloc.h:16)
+- `gw_OSDisableInterrupts`
+  - IR: `i32 ()`
+  - C: `BOOL OSDisableInterrupts(void);`  (extern/dolphin/include\dolphin\os.h:138)
+- `gw_OSFreeToHeap`
+  - IR: `void (i32, ptr)`
+  - C: `void OSFreeToHeap(int heap, void * ptr);`  (extern/dolphin/include\dolphin\os\OSAlloc.h:12)
+- `gw_OSGetArenaHi`
+  - IR: `ptr ()`
+  - C: `void* OSGetArenaHi(void);`  (extern/dolphin/include\dolphin\os.h:93)
+- `gw_OSGetArenaLo`
+  - IR: `ptr ()`
+  - C: `void* OSGetArenaLo(void);`  (extern/dolphin/include\dolphin\os.h:94)
+- `gw_OSGetConsoleSimulatedMemSize`
+  - IR: `i32 ()`
+  - C: `u32 OSGetConsoleSimulatedMemSize(void);`  (extern/dolphin/include\dolphin\os.h:53)
+- `gw_OSGetCurrentContext`
+  - IR: `ptr ()`
+  - C: `OSContext *OSGetCurrentContext(void);`  (extern/dolphin/include\dolphin\os\OSContext.h:160)
+- `gw_OSGetPhysicalMemSize`
+  - IR: `i32 ()`
+  - C: `u32 OSGetPhysicalMemSize(void);`  (extern/dolphin/include\dolphin\os.h:52)
+- `gw_OSGetProgressiveMode`
+  - IR: `i32 ()`
+  - C: `unsigned long OSGetProgressiveMode(void);`  (extern/dolphin/include\dolphin\os\OSRtc.h:53)
+- `gw_OSGetResetCode`
+  - IR: `i32 (...)`
+  - C: `unsigned long OSGetResetCode();`  (extern/dolphin/include\dolphin\os\OSReset.h:33)
+- `gw_OSGetResetSwitchState`
+  - IR: `i32 (...)`
+  - C: `BOOL OSGetResetSwitchState();`  (extern/dolphin/include\dolphin\os\OSResetSW.h:13)
+- `gw_OSGetSoundMode`
+  - IR: `i32 ()`
+  - C: `u32 OSGetSoundMode(void);`  (extern/dolphin/include\dolphin\os.h:166)
+- `gw_OSGetTick`
+  - IR: `i32 ()`
+  - C: `OSTick OSGetTick(void);`  (extern/dolphin/include\dolphin\os.h:133)
+- `gw_OSGetTime`
+  - IR: `i64 ()`
+  - C: `OSTime OSGetTime(void);`  (extern/dolphin/include\dolphin\os.h:134)
+- `gw_OSInit`
+  - IR: `void ()`
+  - C: `void OSInit(void);`  (extern/dolphin/include\dolphin\os.h:91)
+- `gw_OSInitAlarm`
+  - IR: `void ()`
+  - C: `void OSInitAlarm(void);`  (extern/dolphin/include\dolphin\os\OSAlarm.h:21)
+- `gw_OSInitAlloc`
+  - IR: `ptr (ptr, ptr, i32)`
+  - C: `void * OSInitAlloc(void * arenaStart, void * arenaEnd, int maxHeaps);`  (extern/dolphin/include\dolphin\os\OSAlloc.h:14)
+- `gw_OSLoadFPUContext`
+  - IR: `void (ptr)`
+  - C: `void OSLoadFPUContext(OSContext *fpuContext);`  (extern/dolphin/include\dolphin\os\OSContext.h:162)
+- `gw_OSPanic`
+  - IR: `void (ptr, i32, ptr, ...)`
+  - C: `DOLPHIN_ATTRIBUTE_NORETURN void OSPanic(char* file, int line, char* msg, ...);`  (extern/dolphin/include\dolphin\os.h:178)
+- `gw_OSReport`
+  - IR: `void (ptr, ...)`
+  - C: `void OSReport(char*, ...);`  (extern/dolphin/include\dolphin\os.h:177)
+- `gw_OSResetSystem`
+  - IR: `void (i32, i32, i32)`
+  - C: `void OSResetSystem(int reset, u32 resetCode, BOOL forceMenu);`  (extern/dolphin/include\dolphin\os\OSReset.h:32)
+- `gw_OSRestoreInterrupts`
+  - IR: `i32 (i32)`
+  - C: `BOOL OSRestoreInterrupts(BOOL level);`  (extern/dolphin/include\dolphin\os.h:139)
+- `gw_OSResumeThread`
+  - IR: `i32 (ptr)`
+  - C: `s32 OSResumeThread(OSThread* thread);`  (extern/dolphin/include\dolphin\os\OSThread.h:77)
+- `gw_OSSaveContext`
+  - IR: `i32 (ptr)`
+  - C: `u32 OSSaveContext(OSContext *context);`  (extern/dolphin/include\dolphin\os\OSContext.h:158)
+- `gw_OSSaveFPUContext`
+  - IR: `void (ptr)`
+  - C: `void OSSaveFPUContext(OSContext *fpuContext);`  (extern/dolphin/include\dolphin\os\OSContext.h:163)
+- `gw_OSSetAlarm`
+  - IR: `void (ptr, i64, ptr)`
+  - C: `void OSSetAlarm(OSAlarm* alarm, OSTime tick, OSAlarmHandler handler);`  (extern/dolphin/include\dolphin\os\OSAlarm.h:23)
+- `gw_OSSetArenaLo`
+  - IR: `void (ptr)`
+  - C: `void OSSetArenaLo(void*);`  (extern/dolphin/include\dolphin\os.h:96)
+- `gw_OSSetCurrentContext`
+  - IR: `void (ptr)`
+  - C: `void OSSetCurrentContext(OSContext *context);`  (extern/dolphin/include\dolphin\os\OSContext.h:161)
+- `gw_OSSetCurrentHeap`
+  - IR: `i32 (i32)`
+  - C: `int OSSetCurrentHeap(int heap);`  (extern/dolphin/include\dolphin\os\OSAlloc.h:13)
+- `gw_OSSetErrorHandler`
+  - IR: `ptr (i16, ptr)`
+  - C: `OSErrorHandler OSSetErrorHandler(OSError error, OSErrorHandler handler);`  (extern/dolphin/include\dolphin\os\OSError.h:32)
+- `gw_OSSetPeriodicAlarm`
+  - IR: `void (ptr, i64, i64, ptr)`
+  - C: `void OSSetPeriodicAlarm(OSAlarm* alarm, OSTime start, OSTime period, OSAlarmHandler handler);`  (extern/dolphin/include\dolphin\os\OSAlarm.h:26)
+- `gw_OSSetProgressiveMode`
+  - IR: `void (i32)`
+  - C: `void OSSetProgressiveMode(u32 mode);`  (extern/dolphin/include\dolphin\os\OSRtc.h:54)
+- `gw_OSSetSoundMode`
+  - IR: `void (i32)`
+  - C: `void OSSetSoundMode(u32 mode);`  (extern/dolphin/include\dolphin\os.h:167)
+- `gw_OSTicksToCalendarTime`
+  - IR: `void (i64, ptr)`
+  - C: `void OSTicksToCalendarTime(OSTime ticks, OSCalendarTime* td);`  (extern/dolphin/include\dolphin\os.h:135)
+
+## libc/other (40)
+
+- `_alldiv`
+  - IR: `?`
+  - C: *(no prototype found in headers)*
+- `_chkstk`
+  - IR: `?`
+  - C: *(no prototype found in headers)*
+- `_fltused`
+  - IR: `?`
+  - C: *(no prototype found in headers)*
+- `gw_MSL_TrigF_80400770`
+  - IR: `[0 x float]`
+  - C: *(no prototype found in headers)*
+- `gw_MSL_TrigF_80400774`
+  - IR: `[0 x float]`
+  - C: *(no prototype found in headers)*
+- `gw___OSCurrHeap`
+  - IR: `i32`
+  - C: *(no prototype found in headers)*
+- `gw___builtin_va_info`
+  - IR: `void (ptr)`
+  - C: `extern void __builtin_va_info(void*);`  (src/MSL\stdarg.h:13)
+- `gw___ctype_map`
+  - IR: `[0 x i8]`
+  - C: *(no prototype found in headers)*
+- `gw___cvt_dbl_usll`
+  - IR: `i64 (double)`
+  - C: `ASM u64 __cvt_dbl_usll(double);`  (src\Runtime\runtime.h:17)
+- `gw___files`
+  - IR: `[3 x %struct._IO_FILE]`
+  - C: *(no prototype found in headers)*
+- `gw___longjmp`
+  - IR: `void (ptr, i32)`
+  - C: `void __longjmp(register jmp_buf* env, int val);`  (src\Runtime\Gecko_setjmp.h:33)
+- `gw___setjmp`
+  - IR: `i32 (ptr)`
+  - C: `int __setjmp(register jmp_buf* env);`  (src\Runtime\Gecko_setjmp.h:34)
+- `gw___va_arg`
+  - IR: `ptr (ptr, i8)`
+  - C: `void* __va_arg(va_list v_list, unsigned char type);`  (src/MSL\stdarg.h:15)
+- `gw__stack_addr`
+  - IR: `[0 x i8]`
+  - C: *(no prototype found in headers)*
+- `gw__stack_end`
+  - IR: `[0 x i8]`
+  - C: *(no prototype found in headers)*
+- `gw_atanf`
+  - IR: `float (float)`
+  - C: `float atanf(float);`  (src/MSL\math.h:76)
+- `gw_cosf`
+  - IR: `float (float)`
+  - C: `float cosf(float x);`  (extern/dolphin/include\libc\math.h:13)
+- `gw_fabs`
+  - IR: `double (double)`
+  - C: `double fabs(double x);`  (extern/dolphin/include\libc\math.h:8)
+- `gw_fabsf`
+  - IR: `float (float)`
+  - C: `float fabsf(float x);`  (extern/dolphin/include\libc\math.h:80)
+- `gw_itCoin_ResetRotation`
+  - IR: `void (ptr)`
+  - C: *(no prototype found in headers)*
+- `gw_logf`
+  - IR: `float (float)`
+  - C: `float logf(float);`  (src/MSL\math.h:82)
+- `gw_memcmp`
+  - IR: `i32 (ptr, ptr, i32)`
+  - C: `int memcmp(const void* p1, const void* p2, size_t n);`  (src/MSL\string.h:15)
+- `gw_memcpy`
+  - IR: `ptr (ptr, ptr, i32)`
+  - C: `void* memcpy(void* dst, const void* src, size_t n);`  (src/MSL\string.h:17)
+- `gw_memset`
+  - IR: `ptr (ptr, i32, i32)`
+  - C: `void* memset(void* dst, int val, size_t n);`  (src/MSL\string.h:16)
+- `gw_mnInfo_CreateEntries`
+  - IR: `void (i32)`
+  - C: *(no prototype found in headers)*
+- `gw_printf`
+  - IR: `i32 (ptr, ...)`
+  - C: `int printf(const char* format, ...);`  (src/MSL\stdio.h:128)
+- `gw_sinf`
+  - IR: `float (float)`
+  - C: `float sinf(float x);`  (extern/dolphin/include\libc\math.h:12)
+- `gw_sprintf`
+  - IR: `i32 (ptr, ptr, ...)`
+  - C: `int sprintf(char* s, const char* format, ...);`  (src/MSL\stdio.h:129)
+- `gw_sqrt`
+  - IR: `float (double)`
+  - C: `extern inline float sqrt(float x) { static const double _half = .5;`  (extern/dolphin/include\libc\math.h:53)
+- `gw_sqrtf`
+  - IR: `float (float)`
+  - C: `extern inline float sqrtf(float x) { static const double _half = .5;`  (extern/dolphin/include\libc\math.h:30)
+- `gw_strcmp`
+  - IR: `i32 (ptr, ptr)`
+  - C: `int strcmp(const char* s1, const char* s2);`  (src/MSL\string.h:10)
+- `gw_strcpy`
+  - IR: `ptr (ptr, ptr)`
+  - C: `char* strcpy(char* dst, const char* src);`  (src/MSL\string.h:6)
+- `gw_strlen`
+  - IR: `i32 (ptr)`
+  - C: `size_t strlen(const char* s);`  (src/MSL\string.h:9)
+- `gw_strncmp`
+  - IR: `i32 (ptr, ptr, i32)`
+  - C: `int strncmp(const char* s1, const char* s2, size_t n);`  (src/MSL\string.h:11)
+- `gw_strncpy`
+  - IR: `ptr (ptr, ptr, i32)`
+  - C: `char* strncpy(char* dst, const char* src, size_t num);`  (src/MSL\string.h:7)
+- `gw_strtoul`
+  - IR: `i32 (ptr, ptr, i32)`
+  - C: `unsigned long strtoul(const char* str, char** end, int base);`  (src/MSL\strtoul.h:9)
+- `gw_tanf`
+  - IR: `float (float)`
+  - C: `f32 tanf(f32);`  (extern/dolphin/include\cmath.h:5)
+- `gw_vsnprintf`
+  - IR: `i32 (ptr, i32, ptr, ptr)`
+  - C: `/* 323DC8 */ int vsnprintf(char* s, size_t n, const char* format, va_list);`  (src/MSL\printf.h:7)
+- `memcpy`
+  - IR: `?`
+  - C: `void* memcpy(void* dst, const void* src, size_t n);`  (src/MSL\string.h:17)
+- `memset`
+  - IR: `?`
+  - C: `void* memset(void* dst, int val, size_t n);`  (src/MSL\string.h:16)
+
+## AX (35)
+
+- `gw_AXAcquireVoice`
+  - IR: `ptr (i32, ptr, i32)`
+  - C: `AXVPB* AXAcquireVoice(u32 priority, void (*callback)(void*), u32 userContext);`  (extern/dolphin/include\dolphin\ax.h:246)
+- `gw_AXFXChorusCallback`
+  - IR: `void (ptr, ptr)`
+  - C: `void AXFXChorusCallback(struct AXFX_BUFFERUPDATE* bufferUpdate, struct AXFX_CHORUS* chorus);`  (extern/dolphin/include\dolphin\axfx.h:133)
+- `gw_AXFXChorusInit`
+  - IR: `i32 (ptr)`
+  - C: `int AXFXChorusInit(struct AXFX_CHORUS* c);`  (extern/dolphin/include\dolphin\axfx.h:130)
+- `gw_AXFXChorusShutdown`
+  - IR: `i32 (ptr)`
+  - C: `int AXFXChorusShutdown(struct AXFX_CHORUS* c);`  (extern/dolphin/include\dolphin\axfx.h:131)
+- `gw_AXFXDelayCallback`
+  - IR: `void (ptr, ptr)`
+  - C: `void AXFXDelayCallback(struct AXFX_BUFFERUPDATE* bufferUpdate, struct AXFX_DELAY* delay);`  (extern/dolphin/include\dolphin\axfx.h:137)
+- `gw_AXFXDelayInit`
+  - IR: `i32 (ptr)`
+  - C: `int AXFXDelayInit(struct AXFX_DELAY* delay);`  (extern/dolphin/include\dolphin\axfx.h:140)
+- `gw_AXFXDelayShutdown`
+  - IR: `i32 (ptr)`
+  - C: `int AXFXDelayShutdown(struct AXFX_DELAY* delay);`  (extern/dolphin/include\dolphin\axfx.h:141)
+- `gw_AXFXReverbHiCallback`
+  - IR: `void (ptr, ptr)`
+  - C: `void AXFXReverbHiCallback(struct AXFX_BUFFERUPDATE* bufferUpdate, struct AXFX_REVERBHI* reverb);`  (extern/dolphin/include\dolphin\axfx.h:148)
+- `gw_AXFXReverbHiInit`
+  - IR: `i32 (ptr)`
+  - C: `int AXFXReverbHiInit(struct AXFX_REVERBHI* rev);`  (extern/dolphin/include\dolphin\axfx.h:145)
+- `gw_AXFXReverbHiShutdown`
+  - IR: `i32 (ptr)`
+  - C: `int AXFXReverbHiShutdown(struct AXFX_REVERBHI* rev);`  (extern/dolphin/include\dolphin\axfx.h:146)
+- `gw_AXFXReverbStdCallback`
+  - IR: `void (ptr, ptr)`
+  - C: `void AXFXReverbStdCallback(struct AXFX_BUFFERUPDATE* bufferUpdate, struct AXFX_REVERBSTD* reverb);`  (extern/dolphin/include\dolphin\axfx.h:155)
+- `gw_AXFXReverbStdInit`
+  - IR: `i32 (ptr)`
+  - C: `int AXFXReverbStdInit(struct AXFX_REVERBSTD* rev);`  (extern/dolphin/include\dolphin\axfx.h:152)
+- `gw_AXFXReverbStdShutdown`
+  - IR: `i32 (ptr)`
+  - C: `int AXFXReverbStdShutdown(struct AXFX_REVERBSTD* rev);`  (extern/dolphin/include\dolphin\axfx.h:153)
+- `gw_AXFXSetHooks`
+  - IR: `void (ptr, ptr)`
+  - C: `void AXFXSetHooks(void* (*alloc_hook)(unsigned long), void (*free_hook)(void*));`  (extern/dolphin/include\dolphin\axfx.h:161)
+- `gw_AXFreeVoice`
+  - IR: `void (ptr)`
+  - C: `void AXFreeVoice(AXVPB* p);`  (extern/dolphin/include\dolphin\ax.h:245)
+- `gw_AXInit`
+  - IR: `void ()`
+  - C: `void AXInit(void);`  (extern/dolphin/include\dolphin\ax.h:241)
+- `gw_AXRegisterAuxACallback`
+  - IR: `void (ptr, ptr)`
+  - C: `void AXRegisterAuxACallback(void (*callback)(void*, void*), void* context);`  (extern/dolphin/include\dolphin\ax.h:250)
+- `gw_AXRegisterAuxBCallback`
+  - IR: `void (ptr, ptr)`
+  - C: `void AXRegisterAuxBCallback(void (*callback)(void*, void*), void* context);`  (extern/dolphin/include\dolphin\ax.h:251)
+- `gw_AXRegisterCallback`
+  - IR: `void (ptr)`
+  - C: `void AXRegisterCallback(void (*callback)());`  (extern/dolphin/include\dolphin\ax.h:262)
+- `gw_AXSetVoiceAddr`
+  - IR: `void (ptr, ptr)`
+  - C: `void AXSetVoiceAddr(AXVPB* p, AXPBADDR* addr);`  (extern/dolphin/include\dolphin\ax.h:281)
+- `gw_AXSetVoiceAdpcm`
+  - IR: `void (ptr, ptr)`
+  - C: `void AXSetVoiceAdpcm(AXVPB* p, AXPBADPCM* adpcm);`  (extern/dolphin/include\dolphin\ax.h:286)
+- `gw_AXSetVoiceAdpcmLoop`
+  - IR: `void (ptr, ptr)`
+  - C: `void AXSetVoiceAdpcmLoop(AXVPB* p, AXPBADPCMLOOP* adpcmloop);`  (extern/dolphin/include\dolphin\ax.h:289)
+- `gw_AXSetVoiceCurrentAddr`
+  - IR: `void (ptr, i32)`
+  - C: `void AXSetVoiceCurrentAddr(AXVPB* p, u32 addr);`  (extern/dolphin/include\dolphin\ax.h:285)
+- `gw_AXSetVoiceEndAddr`
+  - IR: `void (ptr, i32)`
+  - C: `void AXSetVoiceEndAddr(AXVPB* p, u32 addr);`  (extern/dolphin/include\dolphin\ax.h:284)
+- `gw_AXSetVoiceItdOn`
+  - IR: `void (ptr)`
+  - C: `void AXSetVoiceItdOn(AXVPB* p);`  (extern/dolphin/include\dolphin\ax.h:273)
+- `gw_AXSetVoiceItdTarget`
+  - IR: `void (ptr, i16, i16)`
+  - C: `void AXSetVoiceItdTarget(AXVPB* p, u16 lShift, u16 rShift);`  (extern/dolphin/include\dolphin\ax.h:274)
+- `gw_AXSetVoiceLoop`
+  - IR: `void (ptr, i16)`
+  - C: `void AXSetVoiceLoop(AXVPB* p, u16 loop);`  (extern/dolphin/include\dolphin\ax.h:282)
+- `gw_AXSetVoiceLoopAddr`
+  - IR: `void (ptr, i32)`
+  - C: `void AXSetVoiceLoopAddr(AXVPB* p, u32 addr);`  (extern/dolphin/include\dolphin\ax.h:283)
+- `gw_AXSetVoiceMix`
+  - IR: `void (ptr, ptr)`
+  - C: `void AXSetVoiceMix(AXVPB* p, AXPBMIX* mix);`  (extern/dolphin/include\dolphin\ax.h:272)
+- `gw_AXSetVoicePriority`
+  - IR: `void (ptr, i32)`
+  - C: `void AXSetVoicePriority(AXVPB* p, u32 priority);`  (extern/dolphin/include\dolphin\ax.h:247)
+- `gw_AXSetVoiceSrc`
+  - IR: `void (ptr, ptr)`
+  - C: `void AXSetVoiceSrc(AXVPB* p, AXPBSRC* src_);`  (extern/dolphin/include\dolphin\ax.h:287)
+- `gw_AXSetVoiceSrcRatio`
+  - IR: `void (ptr, float)`
+  - C: `void AXSetVoiceSrcRatio(AXVPB* p, float ratio);`  (extern/dolphin/include\dolphin\ax.h:288)
+- `gw_AXSetVoiceState`
+  - IR: `void (ptr, i16)`
+  - C: `void AXSetVoiceState(AXVPB* p, u16 state);`  (extern/dolphin/include\dolphin\ax.h:270)
+- `gw_AXSetVoiceVe`
+  - IR: `void (ptr, ptr)`
+  - C: `void AXSetVoiceVe(AXVPB* p, AXPBVE* ve);`  (extern/dolphin/include\dolphin\ax.h:278)
+- `gw_AXSetVoiceVeDelta`
+  - IR: `void (ptr, i16)`
+  - C: `void AXSetVoiceVeDelta(AXVPB* p, s16 delta);`  (extern/dolphin/include\dolphin\ax.h:279)
+
+## MTX (26)
+
+- `gw_C_MTXLookAt`
+  - IR: `void (ptr, ptr, ptr, ptr)`
+  - C: `void C_MTXLookAt(Mtx m, Point3dPtr camPos, VecPtr camUp, Point3dPtr target);`  (extern/dolphin/include\dolphin\mtx.h:66)
+- `gw_MTXFrustum`
+  - IR: `void (ptr, float, float, float, float, float, float)`
+  - C: `void MTXFrustum(Mtx m, f32 t, f32 b, f32 l, f32 r, f32 n, f32 f);`  (extern/dolphin/include\dolphin\mtx.h:62)
+- `gw_MTXLightFrustum`
+  - IR: `void (ptr, float, float, float, float, float, float, float, float, float)`
+  - C: `void MTXLightFrustum(Mtx m, f32 t, f32 b, f32 l, f32 r, f32 n, f32 scaleS, f32 scaleT, f32 transS, f32 transT);`  (extern/dolphin/include\dolphin\mtx.h:130)
+- `gw_MTXLightOrtho`
+  - IR: `void (ptr, float, float, float, float, float, float, float, float)`
+  - C: `void MTXLightOrtho(Mtx m, f32 t, f32 b, f32 l, f32 r, f32 scaleS, f32 scaleT, f32 transS, f32 transT);`  (extern/dolphin/include\dolphin\mtx.h:134)
+- `gw_MTXLightPerspective`
+  - IR: `void (ptr, float, float, float, float, float, float)`
+  - C: `void MTXLightPerspective(Mtx m, f32 fovY, f32 aspect, f32 scaleS, f32 scaleT, f32 transS, f32 transT);`  (extern/dolphin/include\dolphin\mtx.h:132)
+- `gw_MTXOrtho`
+  - IR: `void (ptr, float, float, float, float, float, float)`
+  - C: `void MTXOrtho(Mtx m, f32 t, f32 b, f32 l, f32 r, f32 n, f32 f);`  (extern/dolphin/include\dolphin\mtx.h:64)
+- `gw_MTXPerspective`
+  - IR: `void (ptr, float, float, float, float)`
+  - C: `void MTXPerspective(Mtx m, f32 fovY, f32 aspect, f32 n, f32 f);`  (extern/dolphin/include\dolphin\mtx.h:63)
+- `gw_MTXRotRad`
+  - IR: `void (ptr, i8, float)`
+  - C: `void MTXRotRad(Mtx m, char axis, f32 rad);`  (extern/dolphin/include\dolphin\mtx.h:124)
+- `gw_PSMTXConcat`
+  - IR: `void (ptr, ptr, ptr)`
+  - C: `void PSMTXConcat(Mtx mA, Mtx mB, Mtx mAB);`  (extern/dolphin/include\dolphin\mtx.h:152)
+- `gw_PSMTXCopy`
+  - IR: `void (ptr, ptr)`
+  - C: `void PSMTXCopy(Mtx src, Mtx dst);`  (extern/dolphin/include\dolphin\mtx.h:151)
+- `gw_PSMTXIdentity`
+  - IR: `void (ptr)`
+  - C: `void PSMTXIdentity(Mtx m);`  (extern/dolphin/include\dolphin\mtx.h:150)
+- `gw_PSMTXInverse`
+  - IR: `i32 (ptr, ptr)`
+  - C: `u32 PSMTXInverse(Mtx src, Mtx inv);`  (extern/dolphin/include\dolphin\mtx.h:158)
+- `gw_PSMTXMultVec`
+  - IR: `void (ptr, ptr, ptr)`
+  - C: `void PSMTXMultVec(Mtx44 m, Vec* src, Vec* dst);`  (extern/dolphin/include\dolphin\mtx.h:186)
+- `gw_PSMTXMultVecSR`
+  - IR: `void (ptr, ptr, ptr)`
+  - C: `void PSMTXMultVecSR(Mtx44 m, Vec* src, Vec* dst);`  (extern/dolphin/include\dolphin\mtx.h:178)
+- `gw_PSMTXQuat`
+  - IR: `void (ptr, ptr)`
+  - C: `void PSMTXQuat(Mtx m, QuaternionPtr q);`  (extern/dolphin/include\dolphin\mtx.h:157)
+- `gw_PSMTXRotAxisRad`
+  - IR: `void (ptr, ptr, float)`
+  - C: `void PSMTXRotAxisRad(Mtx m, Vec* axis, f32 rad);`  (extern/dolphin/include\dolphin\mtx.h:155)
+- `gw_PSMTXScale`
+  - IR: `void (ptr, float, float, float)`
+  - C: `void PSMTXScale(Mtx m, f32 xS, f32 yS, f32 zS);`  (extern/dolphin/include\dolphin\mtx.h:154)
+- `gw_PSMTXTrans`
+  - IR: `void (ptr, float, float, float)`
+  - C: *(no prototype found in headers)*
+- `gw_PSMTXTranspose`
+  - IR: `void (ptr, ptr)`
+  - C: `void PSMTXTranspose(Mtx src, Mtx xPose);`  (extern/dolphin/include\dolphin\mtx.h:153)
+- `gw_PSVECAdd`
+  - IR: `void (ptr, ptr, ptr)`
+  - C: `void PSVECAdd(Vec* a, Vec* b, Vec* c);`  (extern/dolphin/include\dolphin\mtx.h:216)
+- `gw_PSVECCrossProduct`
+  - IR: `void (ptr, ptr, ptr)`
+  - C: `void PSVECCrossProduct(Vec* vec1, Vec* vec2, Vec* dst);`  (extern/dolphin/include\dolphin\mtx.h:222)
+- `gw_PSVECDotProduct`
+  - IR: `float (ptr, ptr)`
+  - C: `f32 PSVECDotProduct(Vec* vec1, Vec* vec2);`  (extern/dolphin/include\dolphin\mtx.h:221)
+- `gw_PSVECMag`
+  - IR: `float (ptr)`
+  - C: `f32 PSVECMag(Vec* v);`  (extern/dolphin/include\dolphin\mtx.h:200)
+- `gw_PSVECNormalize`
+  - IR: `void (ptr, ptr)`
+  - C: `void PSVECNormalize(Vec* vec1, Vec* dst);`  (extern/dolphin/include\dolphin\mtx.h:219)
+- `gw_PSVECScale`
+  - IR: `void (ptr, ptr, float)`
+  - C: `void PSVECScale(Vec* src, Vec* dst, f32 scale);`  (extern/dolphin/include\dolphin\mtx.h:218)
+- `gw_PSVECSubtract`
+  - IR: `void (ptr, ptr, ptr)`
+  - C: `void PSVECSubtract(Vec* a, Vec* b, Vec* c);`  (extern/dolphin/include\dolphin\mtx.h:217)
+
+## CARD (21)
+
+- `gw_CARDCheckAsync`
+  - IR: `i32 (i32, ptr)`
+  - C: `s32 CARDCheckAsync(s32 chan, CARDCallback callback);`  (extern/dolphin/include\dolphin\card.h:197)
+- `gw_CARDClose`
+  - IR: `i32 (ptr)`
+  - C: `s32 CARDClose(CARDFileInfo *fileInfo);`  (extern/dolphin/include\dolphin\card\CARDOpen.h:6)
+- `gw_CARDCreateAsync`
+  - IR: `i32 (i32, ptr, i32, ptr, ptr)`
+  - C: `s32 CARDCreateAsync(s32 chan, const char* fileName, u32 size, CARDFileInfo* fileInfo, CARDCallback callback);`  (extern/dolphin/include\dolphin\card\CARDCreate.h:4)
+- `gw_CARDDeleteAsync`
+  - IR: `i32 (i32, ptr, ptr)`
+  - C: `s32 CARDDeleteAsync(s32 chan, char *fileName, CARDCallback callback);`  (extern/dolphin/include\dolphin\card\CARDDelete.h:6)
+- `gw_CARDFastOpen`
+  - IR: `i32 (i32, i32, ptr)`
+  - C: `s32 CARDFastOpen(s32 chan, s32 fileNo, CARDFileInfo *fileInfo);`  (extern/dolphin/include\dolphin\card\CARDOpen.h:4)
+- `gw_CARDFormatAsync`
+  - IR: `i32 (i32, ptr)`
+  - C: `s32 CARDFormatAsync(s32 chan, CARDCallback callback);`  (extern/dolphin/include\dolphin\card.h:201)
+- `gw_CARDFreeBlocks`
+  - IR: `i32 (i32, ptr, ptr)`
+  - C: `s32 CARDFreeBlocks(s32 chan, s32* byteNotUsed, s32* filesNotUsed);`  (extern/dolphin/include\dolphin\card.h:198)
+- `gw_CARDGetStatus`
+  - IR: `i32 (i32, i32, ptr)`
+  - C: `s32 CARDGetStatus(s32 chan, s32 fileNo, CARDStat *stat);`  (extern/dolphin/include\dolphin\card\CARDStat.h:23)
+- `gw_CARDGetXferredBytes`
+  - IR: `i32 (i32)`
+  - C: `long CARDGetXferredBytes(long chan);`  (extern/dolphin/include\dolphin\card\CARDRdwr.h:4)
+- `gw_CARDInit`
+  - IR: `void ()`
+  - C: `void CARDInit(void);`  (extern/dolphin/include\dolphin\card.h:195)
+- `gw_CARDMountAsync`
+  - IR: `i32 (i32, ptr, ptr, ptr)`
+  - C: `s32 CARDMountAsync(s32 chan, void* workArea, CARDCallback detachCallback, CARDCallback attachCallback);`  (extern/dolphin/include\dolphin\card\CARDMount.h:8)
+- `gw_CARDOpen`
+  - IR: `i32 (i32, ptr, ptr)`
+  - C: `s32 CARDOpen(s32 chan, char *fileName, CARDFileInfo *fileInfo);`  (extern/dolphin/include\dolphin\card\CARDOpen.h:5)
+- `gw_CARDProbe`
+  - IR: `i32 (i32)`
+  - C: `int CARDProbe(long chan);`  (extern/dolphin/include\dolphin\card\CARDMount.h:6)
+- `gw_CARDProbeEx`
+  - IR: `i32 (i32, ptr, ptr)`
+  - C: `s32 CARDProbeEx(s32 chan, s32* memSize, s32* sectorSize);`  (extern/dolphin/include\dolphin\card\CARDMount.h:7)
+- `gw_CARDRead`
+  - IR: `i32 (ptr, ptr, i32, i32)`
+  - C: `long CARDRead(struct CARDFileInfo * fileInfo, void * buf, long length, long offset);`  (extern/dolphin/include\dolphin\card\CARDRead.h:5)
+- `gw_CARDReadAsync`
+  - IR: `i32 (ptr, ptr, i32, i32, ptr)`
+  - C: `s32 CARDReadAsync(CARDFileInfo *fileInfo, void *buf, s32 length, s32 offset, CARDCallback callback);`  (extern/dolphin/include\dolphin\card\CARDRead.h:4)
+- `gw_CARDRenameAsync`
+  - IR: `i32 (i32, ptr, ptr, ptr)`
+  - C: `s32 CARDRenameAsync(s32 chan, const char* oldName, const char* newName, CARDCallback callback);`  (extern/dolphin/include\dolphin\card.h:199)
+- `gw_CARDSetStatusAsync`
+  - IR: `i32 (i32, i32, ptr, ptr)`
+  - C: `s32 CARDSetStatusAsync(s32 chan, s32 fileNo, CARDStat *stat, CARDCallback callback);`  (extern/dolphin/include\dolphin\card\CARDStat.h:24)
+- `gw_CARDUnmount`
+  - IR: `i32 (i32)`
+  - C: `s32 CARDUnmount(s32 chan);`  (extern/dolphin/include\dolphin\card\CARDMount.h:11)
+- `gw_CARDWrite`
+  - IR: `i32 (ptr, ptr, i32, i32)`
+  - C: `long CARDWrite(struct CARDFileInfo * fileInfo, void * buf, long length, long offset);`  (extern/dolphin/include\dolphin\card\CARDWrite.h:5)
+- `gw_CARDWriteAsync`
+  - IR: `i32 (ptr, ptr, i32, i32, ptr)`
+  - C: `long CARDWriteAsync(struct CARDFileInfo * fileInfo, void * buf, long length, long offset, void (* callback)(long, long));`  (extern/dolphin/include\dolphin\card\CARDWrite.h:4)
+
+## MCC (12)
+
+- `gw_MCCClose`
+  - IR: `i32 (i32)`
+  - C: `int MCCClose(enum MCC_CHANNEL chID);`  (extern/dolphin/include\dolphin\mcc.h:162)
+- `gw_MCCEnumDevices`
+  - IR: `i32 (ptr)`
+  - C: `int MCCEnumDevices(MCC_CBEnumDevices callbackEnumDevices);`  (extern/dolphin/include\dolphin\mcc.h:154)
+- `gw_MCCExit`
+  - IR: `void ()`
+  - C: `void MCCExit(void);`  (extern/dolphin/include\dolphin\mcc.h:152)
+- `gw_MCCGetConnectionStatus`
+  - IR: `i32 (i32, ptr)`
+  - C: `int MCCGetConnectionStatus(enum MCC_CHANNEL chID, enum MCC_CONNECT *connect);`  (extern/dolphin/include\dolphin\mcc.h:158)
+- `gw_MCCGetFreeBlocks`
+  - IR: `i8 (i32)`
+  - C: `u8 MCCGetFreeBlocks(enum MCC_MODE mode);`  (extern/dolphin/include\dolphin\mcc.h:155)
+- `gw_MCCGetLastError`
+  - IR: `i8 ()`
+  - C: `u8 MCCGetLastError(void);`  (extern/dolphin/include\dolphin\mcc.h:156)
+- `gw_MCCInit`
+  - IR: `i32 (i32, i8, ptr)`
+  - C: `int MCCInit(enum MCC_EXI exiChannel, u8 timeout, MCC_CBSysEvent callbackSysEvent);`  (extern/dolphin/include\dolphin\mcc.h:151)
+- `gw_MCCNotify`
+  - IR: `i32 (i32, i32)`
+  - C: `int MCCNotify(enum MCC_CHANNEL chID, u32 notify);`  (extern/dolphin/include\dolphin\mcc.h:159)
+- `gw_MCCOpen`
+  - IR: `i32 (i32, i8, ptr)`
+  - C: `int MCCOpen(enum MCC_CHANNEL chID, u8 blockSize, MCC_CBEvent callbackEvent);`  (extern/dolphin/include\dolphin\mcc.h:161)
+- `gw_MCCRead`
+  - IR: `i32 (i32, i32, ptr, i32, i32)`
+  - C: `int MCCRead(enum MCC_CHANNEL chID, u32 offset, void *data, long size, enum MCC_SYNC_STATE async);`  (extern/dolphin/include\dolphin\mcc.h:165)
+- `gw_MCCStreamOpen`
+  - IR: `i32 (i32, i8)`
+  - C: `int MCCStreamOpen(enum MCC_CHANNEL chID, u8 blockSize);`  (extern/dolphin/include\dolphin\mcc.h:147)
+- `gw_MCCWrite`
+  - IR: `i32 (i32, i32, ptr, i32, i32)`
+  - C: `int MCCWrite(enum MCC_CHANNEL chID, u32 offset, void *data, long size, enum MCC_SYNC_STATE async);`  (extern/dolphin/include\dolphin\mcc.h:166)
+
+## VI (12)
+
+- `gw_VIConfigure`
+  - IR: `void (ptr)`
+  - C: `void VIConfigure(GXRenderModeObj *rm);`  (extern/dolphin/include\dolphin\vi\vifuncs.h:16)
+- `gw_VIFlush`
+  - IR: `void ()`
+  - C: `void VIFlush(void);`  (extern/dolphin/include\dolphin\vi\vifuncs.h:18)
+- `gw_VIGetDTVStatus`
+  - IR: `i32 ()`
+  - C: `u32 VIGetDTVStatus(void);`  (extern/dolphin/include\dolphin\vi\vifuncs.h:27)
+- `gw_VIGetNextField`
+  - IR: `i32 ()`
+  - C: `u32 VIGetNextField(void);`  (extern/dolphin/include\dolphin\vi\vifuncs.h:24)
+- `gw_VIGetRetraceCount`
+  - IR: `i32 ()`
+  - C: `u32 VIGetRetraceCount(void);`  (extern/dolphin/include\dolphin\vi\vifuncs.h:23)
+- `gw_VIGetTvFormat`
+  - IR: `i32 ()`
+  - C: `u32 VIGetTvFormat(void);`  (extern/dolphin/include\dolphin\vi\vifuncs.h:26)
+- `gw_VIInit`
+  - IR: `void ()`
+  - C: `void VIInit(void);`  (extern/dolphin/include\dolphin\vi\vifuncs.h:14)
+- `gw_VISetBlack`
+  - IR: `void (i32)`
+  - C: `void VISetBlack(BOOL black);`  (extern/dolphin/include\dolphin\vi\vifuncs.h:21)
+- `gw_VISetNextFrameBuffer`
+  - IR: `void (ptr)`
+  - C: `void VISetNextFrameBuffer(void *fb);`  (extern/dolphin/include\dolphin\vi\vifuncs.h:19)
+- `gw_VISetPostRetraceCallback`
+  - IR: `ptr (ptr)`
+  - C: `VIRetraceCallback VISetPostRetraceCallback(VIRetraceCallback cb);`  (extern/dolphin/include\dolphin\vi\vifuncs.h:13)
+- `gw_VISetPreRetraceCallback`
+  - IR: `ptr (ptr)`
+  - C: `VIRetraceCallback VISetPreRetraceCallback(VIRetraceCallback cb);`  (extern/dolphin/include\dolphin\vi\vifuncs.h:12)
+- `gw_VIWaitForRetrace`
+  - IR: `void ()`
+  - C: `void VIWaitForRetrace(void);`  (extern/dolphin/include\dolphin\vi\vifuncs.h:15)
+
+## DVD (8)
+
+- `gw_DVDCheckDisk`
+  - IR: `i32 ()`
+  - C: `BOOL DVDCheckDisk(void);`  (extern/dolphin/include\dolphin\dvd.h:130)
+- `gw_DVDClose`
+  - IR: `i32 (ptr)`
+  - C: `BOOL DVDClose(DVDFileInfo* fileInfo);`  (extern/dolphin/include\dolphin\dvd.h:136)
+- `gw_DVDConvertPathToEntrynum`
+  - IR: `i32 (ptr)`
+  - C: `s32 DVDConvertPathToEntrynum(const char* pathPtr);`  (extern/dolphin/include\dolphin\dvd.h:133)
+- `gw_DVDFastOpen`
+  - IR: `i32 (i32, ptr)`
+  - C: `BOOL DVDFastOpen(s32 entrynum, DVDFileInfo* fileInfo);`  (extern/dolphin/include\dolphin\dvd.h:134)
+- `gw_DVDGetCurrentDiskID`
+  - IR: `ptr ()`
+  - C: `struct DVDDiskID * DVDGetCurrentDiskID(void);`  (extern/dolphin/include\dolphin\dvd.h:129)
+- `gw_DVDGetDriveStatus`
+  - IR: `i32 (...)`
+  - C: `long DVDGetDriveStatus();`  (extern/dolphin/include\dolphin\dvd.h:121)
+- `gw_DVDInit`
+  - IR: `void (...)`
+  - C: `void DVDInit();`  (extern/dolphin/include\dolphin\dvd.h:95)
+- `gw_DVDReadAsyncPrio`
+  - IR: `i32 (ptr, ptr, i32, i32, ptr, i32)`
+  - C: `BOOL DVDReadAsyncPrio(DVDFileInfo* fileInfo, void* addr, s32 length, s32 offset, DVDCallback callback, s32 prio);`  (extern/dolphin/include\dolphin\dvd.h:139)
+
+## PAD (8)
+
+- `gw_PADClamp`
+  - IR: `void (ptr)`
+  - C: `void PADClamp(PADStatus* status);`  (extern/dolphin/include\dolphin\pad.h:93)
+- `gw_PADControlMotor`
+  - IR: `void (i32, i32)`
+  - C: `void PADControlMotor(s32 chan, u32 command);`  (extern/dolphin/include\dolphin\pad.h:83)
+- `gw_PADInit`
+  - IR: `i32 (...)`
+  - C: `BOOL PADInit();`  (extern/dolphin/include\dolphin\pad.h:78)
+- `gw_PADRead`
+  - IR: `i32 (ptr)`
+  - C: `u32 PADRead(struct PADStatus* status);`  (extern/dolphin/include\dolphin\pad.h:79)
+- `gw_PADRecalibrate`
+  - IR: `i32 (i32)`
+  - C: `BOOL PADRecalibrate(u32 mask);`  (extern/dolphin/include\dolphin\pad.h:77)
+- `gw_PADReset`
+  - IR: `i32 (i32)`
+  - C: `int PADReset(unsigned long mask);`  (extern/dolphin/include\dolphin\pad.h:76)
+- `gw_PADSetSamplingRate`
+  - IR: `void (i32)`
+  - C: `void PADSetSamplingRate(unsigned long msec);`  (extern/dolphin/include\dolphin\pad.h:80)
+- `gw_PADSetSpec`
+  - IR: `void (i32)`
+  - C: `void PADSetSpec(u32 spec);`  (extern/dolphin/include\dolphin\pad.h:84)
+
+## AR (6)
+
+- `gw_ARAlloc`
+  - IR: `i32 (i32)`
+  - C: `u32 ARAlloc(u32 length);`  (extern/dolphin/include\dolphin\ar.h:44)
+- `gw_ARFree`
+  - IR: `i32 (ptr)`
+  - C: `u32 ARFree(u32 * length);`  (extern/dolphin/include\dolphin\ar.h:45)
+- `gw_ARGetSize`
+  - IR: `i32 ()`
+  - C: `u32 ARGetSize(void);`  (extern/dolphin/include\dolphin\ar.h:51)
+- `gw_ARInit`
+  - IR: `i32 (ptr, i32)`
+  - C: `u32 ARInit(u32 * stack_index_addr, u32 num_entries);`  (extern/dolphin/include\dolphin\ar.h:47)
+- `gw_ARQInit`
+  - IR: `void ()`
+  - C: `void ARQInit(void);`  (extern/dolphin/include\dolphin\ar.h:54)
+- `gw_ARQPostRequest`
+  - IR: `void (ptr, i32, i32, i32, i32, i32, i32, ptr)`
+  - C: `void ARQPostRequest(struct ARQRequest * request, u32 owner, u32 type, u32 priority, u32 source, u32 dest, u32 length, ARQCallback callback);`  (extern/dolphin/include\dolphin\ar.h:56)
+
+## FIO (6)
+
+- `gw_FIOExit`
+  - IR: `void ()`
+  - C: `void FIOExit(void);`  (extern/dolphin/include\dolphin\mcc.h:127)
+- `gw_FIOFclose`
+  - IR: `i32 (i32)`
+  - C: `int FIOFclose(int handle);`  (extern/dolphin/include\dolphin\mcc.h:131)
+- `gw_FIOFopen`
+  - IR: `i32 (ptr, i32)`
+  - C: `int FIOFopen(const char *filename, u32 mode);`  (extern/dolphin/include\dolphin\mcc.h:130)
+- `gw_FIOFwrite`
+  - IR: `i32 (i32, ptr, i32)`
+  - C: `u32 FIOFwrite(int handle, void * data, u32 size);`  (extern/dolphin/include\dolphin\mcc.h:133)
+- `gw_FIOInit`
+  - IR: `i32 (i32, i32, i8)`
+  - C: `int FIOInit(enum MCC_EXI exiChannel, enum MCC_CHANNEL chID, u8 blockSize);`  (extern/dolphin/include\dolphin\mcc.h:126)
+- `gw_FIOQuery`
+  - IR: `i32 ()`
+  - C: `int FIOQuery(void);`  (extern/dolphin/include\dolphin\mcc.h:128)
+
+## THP (6)
+
+- `gw_THPDec_8032F8D4`
+  - IR: `i32 (ptr, ptr)`
+  - C: `s32 THPDec_8032F8D4(u8* data, THPDec_8032FD40_Data* out);`  (extern/dolphin/include\dolphin\thp\thp.h:88)
+- `gw_THPDec_8032FD40`
+  - IR: `i32 (ptr, i16)`
+  - C: `s32 THPDec_8032FD40(THPDec_8032FD40_Data* arg0, u16 arg1);`  (extern/dolphin/include\dolphin\thp\thp.h:87)
+- `gw_THPDec_80331340`
+  - IR: `void (i32, ptr, ptr, ptr)`
+  - C: `void THPDec_80331340(s32, void*, void*, void*);`  (extern/dolphin/include\dolphin\thp\thp.h:90)
+- `gw_THPDec_803313D0`
+  - IR: `void (i32, ptr, ptr, ptr, i32)`
+  - C: `void THPDec_803313D0(s32, void*, void*, void*, u32);`  (extern/dolphin/include\dolphin\thp\thp.h:91)
+- `gw_THPInit`
+  - IR: `void ()`
+  - C: `void THPInit(void);`  (extern/dolphin/include\dolphin\thp\thp.h:93)
+- `gw_THPVideoDecode`
+  - IR: `i32 (ptr, ptr, ptr, ptr, ptr)`
+  - C: `s32 THPVideoDecode(void* file, void* tileY, void* tileU, void* tileV, void* work);`  (extern/dolphin/include\dolphin\thp\thp.h:85)
+
+## CACHE (5)
+
+- `gw_DCFlushRange`
+  - IR: `void (ptr, i32)`
+  - C: `void DCFlushRange(void* addr, u32 nBytes);`  (extern/dolphin/include\dolphin\os\OSCache.h:7)
+- `gw_DCInvalidateRange`
+  - IR: `void (ptr, i32)`
+  - C: `void DCInvalidateRange(void* addr, u32 nBytes);`  (extern/dolphin/include\dolphin\os\OSCache.h:6)
+- `gw_DCStoreRange`
+  - IR: `void (ptr, i32)`
+  - C: `void DCStoreRange(void* addr, u32 nBytes);`  (extern/dolphin/include\dolphin\os\OSCache.h:8)
+- `gw_PPCMfmsr`
+  - IR: `i32 (...)`
+  - C: `u32 PPCMfmsr();`  (extern/dolphin/include\dolphin\base\PPCArch.h:476)
+- `gw_PPCMtmsr`
+  - IR: `void (i32)`
+  - C: `void PPCMtmsr(u32 newMSR);`  (extern/dolphin/include\dolphin\base\PPCArch.h:477)
+
+## AI (4)
+
+- `gw_AIInit`
+  - IR: `void (ptr)`
+  - C: `void AIInit(u8 *stack);`  (extern/dolphin/include\dolphin\ai.h:43)
+- `gw_AISetDSPSampleRate`
+  - IR: `void (i32)`
+  - C: `void AISetDSPSampleRate(u32 rate);`  (extern/dolphin/include\dolphin\ai.h:35)
+- `gw_AISetStreamVolLeft`
+  - IR: `void (i8)`
+  - C: `void AISetStreamVolLeft(u8 vol);`  (extern/dolphin/include\dolphin\ai.h:39)
+- `gw_AISetStreamVolRight`
+  - IR: `void (i8)`
+  - C: `void AISetStreamVolRight(u8 vol);`  (extern/dolphin/include\dolphin\ai.h:41)
+
+## DB (1)
+
+- `gw_DBIsDebuggerPresent`
+  - IR: `i32 ()`
+  - C: `BOOL DBIsDebuggerPresent(void);`  (extern/dolphin/include\dolphin\db.h:13)
