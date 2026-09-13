@@ -1623,6 +1623,13 @@ Uncertain: `gr/grmutecity.c` `(grMc_CarState*)grMc_8049F440` (its `cars` lands o
 
 # 17. Documented crashes (not to fix)
 
+## 17.2 Results-screen per-player stats are corrupted (deferred - user says don't fix yet)
+After the results crash fixes (§16.4 camera/`pl` aliases, commits e6faf4f30 chain), the results
+screen displays but the per-player stats (damage dealt and the "for fun" end-of-match values) show
+garbage/maxed values. Likely another results-data source/alias issue in `gmresult.c` /
+`gmresultplayer.c` (`MatchEnd`/`ResultsData` fields) - same family as the aliases above. Deliberately
+deferred per the user's request; log only. Evidence: `.omo/evidence/results-hang-css.log` (same run).
+
 ## 17.1 Zelda/Sheik side-B — motion-state table walk off the rails (fun/harmless to leave)
 Reported while testing characters: `ftSk_SpecialLw_80114758` (Sheik's side-B) →
 `Fighter_ChangeMotionState+0x835`, `read of 0x0B528E88`, `ebp=0x2A0`, `eax=0x506C795A`
