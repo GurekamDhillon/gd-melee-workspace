@@ -1623,6 +1623,13 @@ Uncertain: `gr/grmutecity.c` `(grMc_CarState*)grMc_8049F440` (its `cars` lands o
 
 # 17. Documented crashes (not to fix)
 
+## 17.3 GPU-backend crash in webgpu_dawn.dll (renderer, not game logic)
+A no-card session crashed with `FATAL ... at 6F263548 webgpu_dawn.dll+0x363548`, `read of
+0x000050E6` (near NULL), called from `gw_frame_tick+0x1143` (shim_vi present path). The fault is
+inside Aurora's Dawn/WebGPU backend, not game code - a different class from the semantic/alias
+work. Possible causes: a resource-lifetime/backend bug in Dawn or the Aurora WebGPU driver, or a
+driver-specific issue. Evidence: `.omo/evidence/dawn-crash.log`. Not investigated.
+
 ## 17.2 Results-screen per-player stats are corrupted (deferred - user says don't fix yet)
 After the results crash fixes (§16.4 camera/`pl` aliases, commits e6faf4f30 chain), the results
 screen displays but the per-player stats (damage dealt and the "for fun" end-of-match values) show
