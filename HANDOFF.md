@@ -412,3 +412,71 @@ natively, so a swapped load from game code would read garbage. Same hazard as th
 
 After that: `psdisp.c`'s 36 raw FIFO sites, then real audio, then the GX path gets exercised for
 the first time — nothing has drawn yet, so that is where the unknown-unknowns are.
+
+---
+
+# 6. Session update, 2026-09-12 ~19:30 PDT — the black screen
+
+Boot got past the banner and into `gm_801A4510()`, and the window came up **black**. Cause found
+and fixed; a different failure now sits behind it.
+
+## 6.1 Why it was black
+
+`gw_arena_ensure` (`shim_os.c`) started the arena at `gw_mem1` itself, i.e. `0x80000000`. A real
+GameCube reserves the bottom of MEM1 for the OS globals, the exception vectors and the disc
+header, and `OSInit` leaves `__OSArenaLo` above all of it. Starting at zero meant the game's first
+allocation landed on that region. Nothing was filling it in either.
+
+`dolphin/os.h` reads those globals through raw pointers -- `__OSBusClock` is literally
+`*(u32*)0x800000F8` -- so on PC they were zero. `OS_TIMER_CLOCK` is `OS_BUS_CLOCK / 4`, so **every
+`OSSecondsToTicks` and `OSMillisecondsToTicks` in the game evaluated to zero.** `lb_0195.c:87` then
+computed a pad sampling period of 0, found it already equalled the stored period, returned early,
+and never armed the pad alarm. With the pad queue permanently empty, the scene loop
+
+```c
+while ((pad_queue_count = lb_80019894()) == 0) { lb_800195D0(); }   /* gmscene.c:292 */
+```
+
+spun forever without reaching the rendering below it. No crash, no log, no frame — 3.2 billion
+`gw_wait_idle` calls in twenty seconds.
+
+Fixes: arena now starts at `+0x3100`; `gw_init_lomem` writes the bus clock (162 MHz), core clock,
+memory sizes and TV mode, big-endian; and `gw_os_run_alarms` gained the re-entrancy guard
+`gw_run_deferred` already had. The alarm now arms and fires.
+
+**Note for §2 of the original handoff:** `melee-boot.md`'s claim that there are no `0x800000xx`
+low-memory reads in game code is wrong. It is a grep-negative, and `dolphin/os.h` reaches them
+through macros, not literals.
+
+## 6.2 Diagnostics added
+
+Because none of this produced any output, the tooling matters as much as the fix:
+
+- **Watchdog thread** (`gw_start_watchdog`) samples the game thread's pc every two seconds and
+  names it, flagging an unchanged pc as a spin. This is what found the loop.
+- **Counters**, logged with each watchdog sample: retraces, frames actually presented,
+  `gw_wait_idle` calls, alarms armed/fired, and `GXCopyDisp`/`GXBegin`/display-list counts. The
+  line `retrace=2 presented=1 alarms armed=0 fired=0 prim=0` is what made the diagnosis obvious.
+- **`_set_invalid_parameter_handler`**, since the CRT's fast-fail path bypasses SEH entirely.
+- **`MELEE_PC_TRACE_OSREPORT=1`** logs every OSReport format string before it is expanded, for
+  crashes inside the formatter. Off by default.
+
+## 6.3 Where it stops now — unresolved
+
+The process dies about 14 seconds in with **`0xC0000409` (STATUS_STACK_BUFFER_OVERRUN)**, faulting
+module `ucrtbase.dll+0x2da71` per the Windows Application event log. `__fastfail` bypasses SEH, so
+nothing is logged and no handler runs.
+
+Ruled out:
+- the CRT invalid-parameter handler is installed and never fires (release ucrtbase's
+  `_invalid_parameter_noinfo_noreturn` calls `__fastfail` without consulting it);
+- not OSReport formatting — with the trace on, the last format completes;
+- not `fread` with a NULL destination — guarded in `shim_dvd.c`, never triggers.
+
+Game objects carry no stack cookies (clang does not add them), so whatever failed the check
+belongs to the CRT or to Aurora/Dawn. Two ways forward: install the Windows SDK debuggers and
+catch it under `cdb`, or replace the CRT calls in `shim_libc.c` with bounded local implementations
+so there is no CRT invalid-parameter path left to hit.
+
+Still true: `prim=0`. **No geometry has ever been submitted**, so the GX path into Aurora remains
+completely unexercised. Expect unknowns there once the game gets far enough to draw.
