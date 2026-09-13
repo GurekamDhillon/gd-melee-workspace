@@ -1176,14 +1176,33 @@ spiky balls** -- corruption scaling with depth through the envelope list.
 - Forcing a fresh vertex-array upload at every draw made corruption **worse**, so a stale
   within-frame snapshot is not the cause (it was reverted).
 
-**Live hypothesis:** the envelope *weights*. They are floats from the DAT file, and if the weights
+**Envelope weights: RULED OUT (measured 2026-09-13 ~02:40).** The probe reports
+`envelope: blends=7200 bad_weight_sum=0` every frame in a live match -- 7200 blends per frame, not
+one with a weight sum outside 1.0 +/- 0.01. Evidence: `.omo/evidence/user-envelope-weights-clean.log`.
+So the blend inputs' weights are correct and the scaling theory below is dead; the row length of
+0.525 has some other explanation. **Start from the next paragraph, not here.**
+
+~~Live hypothesis:~~ the envelope *weights*. They are floats from the DAT file, and if the weights
 for one matrix slot do not sum to 1.0 the blended transform is scaled wrong and the limb stretches.
 Note `posmtx health rowlen=[0.5250..1.1000]` -- a row length near 0.5 is what a half-weighted blend
 looks like. Commit `52b772d76` adds the probe: `envelope: blends=N bad_weight_sum=N` per frame, plus
 the first few offenders. **Run it and read that line first.**
 
-If the weights are sound, the next suspects are `jobj->envelopemtx` (allocated and memcpy'd from
-`joint->mtx` at jobj.c:659) and `_HSD_mkEnvelopeModelNodeMtx` (displayfunc.c:256).
+**So the next suspects, in order:**
+
+1. **`jobj->envelopemtx`** -- allocated and `memcpy`'d from `joint->mtx` at jobj.c:659-660, then
+   used as `MTXConcat(jp->mtx, jp->envelopemtx, tmp)`. It is the inverse bind matrix; if it is
+   wrong or stale, every blended vertex is displaced by a joint-dependent amount, and error would
+   compound down a limb exactly as observed. A `memcpy` preserves byte order, so this is not an
+   endianness question -- check *when* it is captured relative to the joint's own matrix setup.
+2. **`_HSD_mkEnvelopeModelNodeMtx`** (displayfunc.c:256) -- computes the `right` matrix applied
+   after the blend, and calls `MTXInverse`, which is a plausible place to produce a degenerate
+   result.
+3. The weight-1 branch is known good (Mario's head), so **diff the two branches**: whatever the
+   blended path does that the rigid path does not is where the fault must be.
+
+Measure before fixing. Every theory this session that merely fit the symptoms was wrong; every one
+confirmed by a number first was right.
 
 ### Method notes that mattered
 
