@@ -1008,3 +1008,64 @@ Item spawning dereferences NULL. Seen twice at the identical address, with the d
 present and absent, so it is not an artefact of the instrumentation. Evidence:
 `.omo/evidence/user-cobj-nan-inputs.log` and `.omo/evidence/agent-vertexcache-fix-run1.log`.
 Reproducible bugs are cheap to fix; worth picking up once the renderer is unblocked.
+
+## 9.13 Item-spawn crash fixed, and the camera traced one link further
+
+### FIXED: the itspawn.c crash (commit `9b4e8d79e`)
+
+The 9.12 crash is resolved. `HSD_MemAlloc` returns NULL for `size <= 0` (memory.c:18), so a pick
+table built with a count of zero has NULL `x4`/`xC` as well as `size` 0. `bisectValue` is then
+called as `(val, table, 0, 0)`, its base case `lo == hi - 1` is `0 == -1` and therefore false, so it
+computes `mid = 0` and dereferences `xC[0]` at once. On a GameCube address 0 is mapped and readable,
+so that returned garbage without faulting; under the port NULL is unmapped and it traps. **Same
+class as the console invariants in 7.4** -- game code relying on low memory being readable.
+
+Guarded at the two call sites (`it_8026C75C` in itspawn.c, and itdrop.c:151) rather than inside
+`it_8026C65C`. Returning a sentinel kind from that function would flow into `spawn.kind` and index
+the item tables -- a quieter and worse bug -- whereas both call sites already have a "nothing to
+spawn" return (`-1` and `NULL`).
+
+Verified: 1800 frames of a match with no fault, well past where two earlier runs died at the same
+address. Evidence: `.omo/evidence/user-itemfix-gamecam-pause-ab.log`.
+
+### The camera is a courier, not the culprit
+
+A probe inside `Camera_8002AF68` -- the `CAMERA_STANDARD` path a normal match uses, so it reports
+only the main game camera rather than all ~90 cobjs -- finds its source data already corrupt:
+
+```
+gamecam BAD interest=(16974681736908535496704.000, 2779265138848526907218464069386240.000, 0.000)
+            position=(8339487532777472.000, -0.000, nan)
+            translation=(0.000, 0.000, 0.000)
+```
+
+`game_camera`'s transform is garbage **before** the camera code touches it. `translation` is clean,
+so the corruption is specifically in `transform->interest` and `transform->position`.
+
+**Read the printed values, not the counters.** The `bad_*` counts flag only NaN and infinity, so
+finite garbage like `1.7e22` passes as "good". The true corruption rate is higher than
+`bad_position=2..4 of 60` suggests, and that mix of NaN with absurd-but-finite values is exactly
+what produces `maxabs=9936` on surviving matrices alongside 86% outright NaN.
+
+### Pausing takes a different camera branch -- a useful accident
+
+While paused the `gamecam` lines disappear entirely: `game_camera.mode` becomes `CAMERA_PAUSE`,
+which is a different branch of the switch and never calls `Camera_8002AF68`. That branch reads
+**the same** `transform->position`/`interest` fields and produces clean matrices
+(`nan/inf=0`, `maxabs=403.130`, `rowlen=[0.5250..1.1500]`, `depth grid distinct=8`).
+
+So the transform is not permanently corrupt in memory, and this is **not** a struct-layout or
+storage problem: the running camera update rewrites it with garbage every frame, and pausing simply
+stops that update.
+
+### The chain, and the one unknown left
+
+```
+???  ->  game_camera.transform (NaN + 1e33 magnitudes)  ->  view matrix
+     ->  ~87% NaN modelview  ->  NaN vertices  ->  zero fragments  ->  black screen
+```
+
+Only the first link remains. Next probe goes on whatever writes `game_camera.transform` -- Melee's
+per-frame camera tracking, which follows player positions. Since ~4% of joint matrices are NaN
+*before* the camera is involved (9.11), one upstream fault in character position data would explain
+both, and a single root cause is the outcome to bet on.
