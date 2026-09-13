@@ -1645,6 +1645,13 @@ garbage/maxed values. Likely another results-data source/alias issue in `gmresul
 `gmresultplayer.c` (`MatchEnd`/`ResultsData` fields) - same family as the aliases above. Deliberately
 deferred per the user's request; log only. Evidence: `.omo/evidence/results-hang-css.log` (same run).
 
+## 17.4 Classic-mode crash: light-animation descriptor holds garbage
+Classic mode crashed at `HSD_WObjAddAnim+0x24`, `read of 0x3A83126F` (= float 0.001 read as a
+pointer), `ebp=0x80990900`, called from `HSD_LObjAddAnimAll+0x55` - i.e. a light/WObj animation
+descriptor field is a float where a pointer is expected. Not the `CLASSIC_MATCHUPS` alias fix
+(that is the matchup table); likely a stage/light descriptor built from wrong memory, possibly one
+of the unfixed aliases in §16.4. Evidence: `.omo/evidence/classic-crash.log`. Logged, not fixed.
+
 ## 17.1 Zelda/Sheik side-B — motion-state table walk off the rails (fun/harmless to leave)
 Reported while testing characters: `ftSk_SpecialLw_80114758` (Sheik's side-B) →
 `Fighter_ChangeMotionState+0x835`, `read of 0x0B528E88`, `ebp=0x2A0`, `eax=0x506C795A`
