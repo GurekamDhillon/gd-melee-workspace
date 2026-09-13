@@ -666,8 +666,10 @@ From `.omo/evidence/user-fight2-black.log` and the user's own testing of the cur
 - **(B)** Model geometry is corrupt when paused — and corruption was already visible on the
   "No Memory Card" screen, so it is **fundamental and pre-existing**, not fight-specific. Treat A
   and B as possibly separate bugs.
-- The pipeline is **not** stalled: frames advance and present (`retrace 6362` / `presented 6360`,
-  2.1 MB of display list, only 3 no-op stubs — `gw_GXSetCopyClamp`, `gw_GXSetMisc`,
+- The pipeline is **not** stalled: frames advance and present (`retrace 6362` / `presented 6360`),
+  and the game is genuinely submitting geometry: roughly **291 `GXCallDisplayList` calls and 12
+  `GXBegin` per frame**, which for Melee (whose stage and character geometry goes through display
+  lists) is a real, populated scene. Only 3 no-op stubs are reached — `gw_GXSetCopyClamp`, `gw_GXSetMisc`,
   `gw_PADSetSamplingRate`).
 
 ### What has been ruled out
