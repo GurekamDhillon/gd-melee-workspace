@@ -1621,6 +1621,17 @@ proven cross-symbol; likely = cross-symbol by declaration but order-dependent.
 Uncertain: `gr/grmutecity.c` `(grMc_CarState*)grMc_8049F440` (its `cars` lands on
 `grMc_8049F4B8`); the gr sweep judged it a same-object Ground-union view — verify before fixing.
 
+# 17. Documented crashes (not to fix)
+
+## 17.1 Zelda/Sheik side-B — motion-state table walk off the rails (fun/harmless to leave)
+Reported while testing characters: `ftSk_SpecialLw_80114758` (Sheik's side-B) →
+`Fighter_ChangeMotionState+0x835`, `read of 0x0B528E88`, `ebp=0x2A0`, `eax=0x506C795A`
+(= ASCII "ZylP" byte-swapped — a string fragment read as a pointer), `ebx=0x81272E08`. So the
+motion-state change looks up a char-state entry that isn't valid for Sheik's copy/transform case
+and the walk dereferences garbage. Same family as the `ftData_CharacterStateTables` concern
+(§16.3). Deliberately **not fixed** — the user asked to keep/document it. Evidence:
+`.omo/evidence/zelda-sheik-crash.log`.
+
 ## 16.3 Other real/likely findings not yet fixed
 - `ft` Luigi `x222C_cycloneCharge` (`ftluigispeciallw.c:109/228`) read before write (source-annotated).
 - `ft` mode-gated init: the cloak-refraction table (built only in VS scene `fn_8016E730`, `gmvs.c:2000`,
