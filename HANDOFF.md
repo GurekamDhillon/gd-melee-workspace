@@ -928,3 +928,83 @@ The depth grid plus matrix health, logged together on the same frames, makes the
 working states **self-identifying** (`distinct=1` is the broken state). That removed the human
 visual check from the loop entirely and is what finally isolated this after a dozen dead ends. When
 comparing anything here, hold pause state constant -- see the trap in 9.9.
+
+## 9.11 Tracing the NaN to its source: the camera's input vectors are garbage
+
+Continuing from 9.10, which established that the black screen is NaN position matrices. The chain is
+now traced end to end, each link measured rather than assumed:
+
+```
+garbage camera eye/interest  ->  NaN view matrix  ->  NaN modelview for ~87% of matrices
+                             ->  NaN vertices     ->  zero fragments  ->  black screen
+```
+
+### The IK solvers are innocent
+
+`HSD_JObjSetupMatrixSub` was instrumented (TARGET_PC-guarded, reads and counters only) to compare
+the matrix straight out of `make_mtx` against the same matrix after the joint branch runs. In every
+sample the two counts are identical -- `premake nan=197/6149  postjoint nan=197/6149` and so on --
+so the IK branches change nothing.
+
+**`resolveIKJoint1`'s uninitialised `var_f27`/`var_f28` (jobj.c:1102, flagged by a decomp `@todo`)
+are NOT the cause.** They are still a genuine latent UB bug worth fixing one day, but confirming
+before patching is what kept that from becoming another wasted cycle. Only the `default` branch runs
+in a match; JOINT1/JOINT2/EFFECTOR never appear.
+
+### The 4% -> 87% amplification points at a shared multiplier
+
+| measurement | NaN rate |
+| --- | --- |
+| JObj matrices at setup | ~250 / 6100 = **~4%** |
+| position matrices at `GXLoadPosMtxImm` | ~7900 / 9100 = **~87%** |
+
+The matrix loaded for drawing is the modelview, camera view x joint world. Only a shared factor can
+turn 4% into 87%, and that factor is the camera.
+
+### What the camera probe found
+
+A probe after `C_MTXLookAt` in `HSD_CObjSetupViewingMtx` (cobj.c) reports its inputs and output.
+Evidence: `.omo/evidence/user-cobj-nan-inputs.log`.
+
+```
+cobj BAD eye=(-0.343, 27553183029345865826427879204847616.000, -0.000)
+         up=(-0.021,-0.000,0.000)
+         interest=(0.000,-nan,-3384079.500)
+cobj BAD interest=(-29868203436192308749490308393214148608.000, 366838944113366031945514876928.000, ...)
+```
+
+`nan_inputs` is regularly non-zero while `nan_viewmtx` is often zero, so **`C_MTXLookAt` is not the
+problem -- it is being fed garbage and faithfully producing garbage.** A degenerate-LookAt theory
+(eye == interest, or up parallel to the view direction) was considered and is not what is happening.
+
+Two distinct failure modes appear:
+
+1. **Per-component corruption.** `eye.x = -0.343` is plausible while `eye.y = 2.7e34` is not, inside
+   the same `Vec3`, and `up` is often entirely sane. Field-level, not a wild pointer -- a wild
+   pointer corrupts uniformly. Magnitudes of 1e34/1e37 are the signature of misread floats, which is
+   this port's recurring bug class (see the big-endian rule in `_research/port-dev-quickref.md` and
+   the fixes in 9.1-9.3).
+2. **Entirely zeroed cameras.** Some calls show `eye`, `up` and `interest` all `0.000` with a
+   zeroed view matrix. A zero `up` and zero direction genuinely *is* degenerate for LookAt, so that
+   one is uninitialised camera data rather than misread data.
+
+### Next step
+
+Find who writes `cobj->eyepos` and `cobj->interest` -- Melee's camera code, likely reading player or
+bone positions -- and determine whether those sources are misread (endianness/offset/stride) or
+genuinely uninitialised. Note the ~4% of joint matrices that are NaN *before* the camera is involved
+is a second, smaller fault that will still need fixing after the camera is fixed.
+
+## 9.12 Separate reproducible crash: itspawn.c
+
+Independent of the black screen, and reproducible: a match crashes after roughly 20-25 seconds with
+
+```
+FATAL ACCESS_VIOLATION (0xC0000005) read of 0x00000000
+_bisectValue+0x27   [src_melee_it_itspawn.c.obj]
+```
+
+Item spawning dereferences NULL. Seen twice at the identical address, with the diagnostics both
+present and absent, so it is not an artefact of the instrumentation. Evidence:
+`.omo/evidence/user-cobj-nan-inputs.log` and `.omo/evidence/agent-vertexcache-fix-run1.log`.
+Reproducible bugs are cheap to fix; worth picking up once the renderer is unblocked.
