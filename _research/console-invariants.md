@@ -96,10 +96,61 @@ fix site.
 
 ---
 
-## B. (pending)
+## B. Hardware guarantees
 
-To be appended by todo 14 (hardware guarantees: 32-byte DMA alignment of globals, ARAM rules,
-timebase coherence, arena/heap layout, 24 MB simulated memsize).
+The GameCube makes a set of hardware promises that game code relies on *implicitly* — no fixed
+address, just "the hardware guarantees this". Every one of them has bitten or could bite the port,
+because the PC runtime supplies none of them for free. Each row cites where the game assumes the
+guarantee, where the port reproduces it, and the current-source evidence (never a HANDOFF claim).
+
+| invariant | where assumed/used (`file:line`) | how the port satisfies it (`file:line`) | status | evidence |
+|---|---|---|---|---|
+| 32-byte DMA alignment of globals | `devcom.c:422-424` asserts `src % 32 == 0`, `dest % 32 == 0`, `size % 32 == 0`; `devcom.c:148-151` DCStoreRange + `ARQPostRequest` on `HSD_DevCom_804C6330_bufs`; `synth.c:191` passes `hsd_SynthSFXLoadBuf` as a DVD/DevCom destination | gwtool widens every global *definition* to `Align(32)` (`gwtool.cpp:580-588`, the `fixAttributes` pass) | OK | `gwtool.cpp:587-588`; map symbol addresses both 32-aligned: `_HSD_DevCom_804C6330_bufs` = `0x10716de0` (%32==0), `_hsd_SynthSFXLoadBuf` = `0x10721140` (%32==0) |
+| ARAM rules: 16 MB window, offsets `< 0x80000000`, `gw_ar_addr` bound, image base above ARAM | the game's own ARAM-vs-MRAM test `lbmemory.c:68` (`arenaLo < 0x80000000`), `lbfile.c:126`; ARQ source/dest are ARAM offsets or MEM1/native pointers | 16 MB buffer `gw_runtime.c:48,63-67`; `gw_ar_addr` bounds by `gw_aram_size` (`shim_ar.c:94-106`); image pinned at `/BASE:0x10000000 /DYNAMICBASE:NO` (`build_melee_pc.bat:17`, `gw_runtime.c:227`) so no real pointer is ever below the ARAM window | OK | `gw_runtime.c:48`; `shim_ar.c:94-106`; `build_melee_pc.bat:17` |
+| Timebase coherence (40.5 MHz; `OS_TIMER_CLOCK` = bus/4; seconds↔ms round-trip) | `os.h:79` `OS_TIMER_CLOCK (OS_BUS_CLOCK/4)`; real readers `lb_0195.c:77,85-86` (`OSSecondsToTicks`) and `:96` (`OSTicksToMilliseconds`), plus `lbtime.c:56`, `perf.c`, `hsd_392C.c:205` | virtual clock `GW_TIMER_CLOCK = 40500000` (`shim_vi.c:42`); `__OSBusClock` written 162 MHz (`gw_runtime.c:92`), so `OS_TIMER_CLOCK` = 40.5 MHz matches the actual `gw_time_ticks()` rate (`shim_os.c:135` → `gw_OSGetTime`) | OK | `shim_vi.c:42`; `gw_runtime.c:92`; `os.h:79`; round-trip `OSSecondsToTicks(1)`=40500000 → `OSTicksToMilliseconds`=1000 ms exact |
+| Arena/heap layout: start `0x3100`, XFB/FIFO/audio-heap sizes, fb math | `HSD_OSInit` carves the arena (`initialize.c:161-187`): XFB `fb_size = ((fbWidth+0xF)&0xFFF0)*xfbHeight*2` (`initialize.c:97`), audio heap `HSD_DEFAULT_AUDIO_SIZE = 512 KB` (`initialize.h:12`, `initialize.c:177-179`), main heap = remainder (`initialize.c:182`); FIFO 256 KB (`initialize.h:10`, `gmmain.c:150`) | arena lo = `gw_mem1 + 0x3100` (`shim_os.c:47,52-57`), above the OS globals/vectors the arena must not cover; XFB 2 buffers of 640×480×2 = 0x96000 each (`gmmain.c:159`) | OK | `shim_os.c:47`; `initialize.c:97,177-179,182`; `initialize.h:10-12` |
+| 24 MB simulated memsize (retail) | `gmmain.c:143` branches on `OSGetConsoleSimulatedMemSize()/1 MB == 48` (devkit reserve); `leak.c:68` computes MEM1 start from it | `gw_OSGetConsoleSimulatedMemSize` returns `24*1024*1024` (`shim_os.c:131`), so the devkit 48 MB path is never taken; also written to `__OSSimulatedMemSize` lomem slot (`gw_runtime.c:95`) | OK | `shim_os.c:131`; `gmmain.c:143` |
+
+### B.1 Finding — "Arena Size 23 MB" vs HANDOFF §5's "24 MB" (correct; do NOT fix)
+
+The current build's banner prints `# Arena Size 23 MB` (`melee-pc.log:61`), while HANDOFF §5 records
+`24 MB`. The 23 is **correct**; §5 was written before the arena-offset fix. `arena_size` is
+`OSGetArenaHi() - OSGetArenaLo()` (`gmmain.c:146`): `OSGetArenaHi()` = `gw_mem1 + 24 MB`, and
+`OSGetArenaLo()` = `gw_mem1 + 0x3100` (`shim_os.c:47,52-57`), so the arena is `24 MB − 0x3100` =
+25,153,280 bytes, which integer-divides to 23 MB. The whole delta is exactly the 0x3100 (12,544 B)
+low region the arena deliberately no longer covers (the §6.1 fix: OS globals + exception vectors +
+boot info). Nothing to fix — this is the invariant working as intended, not a regression.
+
+### B.2 Open question — the banner's "GC Calendar Year 0"
+
+The banner also prints (`melee-pc.log:67-69`):
+
+```
+# GC Calendar Year 0 Month 1 Day 0
+#             Hour 0 Min 0 Sec 59
+```
+
+The call chain is `gmmain.c:208-213` → `gm_801692E8` (`gm_1601.c:4197`) →
+`lbTime_8000B028` (`lbtime.c:63-65`) → `OSTicksToCalendarTime`, which the shim forwards unmodified
+to Aurora (`shim_os.c:139-141`). `lbTime_GetTimeInSeconds` feeds it `OSTicksToSeconds(OSGetTime())`
+(`lbtime.c:54-56`), i.e. seconds since boot (≈0 at the banner).
+
+Both the console and Aurora should yield **year 2000** here, not 0: the console `OSTicksToCalendarTime`
+adds `BIAS = 0xB2575` (730,997 days — the GameCube epoch offset; `OSTime.h:32`, `OSTime.c:180`), and
+Aurora converts against `kGcnEpochUnix = 946684800s` = 2000-01-01 (`OSTime.cpp:18,115,128`). A year-0
+answer is impossible for either, so the printed `Year 0` (and `Sec 59`, which `gm_801692E8` only
+produces by clamping a `tm.sec > 59`) indicates the `OSCalendarTime` out-param is crossing the
+endianness boundary garbled.
+
+Most likely cause (hypothesis, not yet proven): Aurora writes the ten `int` fields of `OSCalendarTime`
+in native little-endian byte order (`OSTime.cpp:123-136`), while game code reads them through gwtool's
+big-endian byte-swap — and `gw_OSTicksToCalendarTime` (`shim_os.c:139-141`) passes the game's `td`
+through with no swap. The two `OSCalendarTime` definitions are layout-identical (`os.h:105-116` in both
+trees), so a byte-order mismatch on the out-param is the remaining explanation. This is **cosmetic**
+(the banner date plus snapshot/save timestamps in `lbsnap.c:344-365` / `lbcardgame.c:51-57`), not on
+the boot critical path, so it is recorded here as an open question rather than fixed in this audit.
+Note the banner's own `DATE Feb 13 2002 TIME 22:06:27` line is the compile-time `__DATE__`/`__TIME__`
+(`db_build_timestamp`, `gmmain.c:206`) and is unrelated to the calendar.
 
 ## C. (pending)
 
