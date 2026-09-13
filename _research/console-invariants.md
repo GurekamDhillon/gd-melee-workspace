@@ -152,7 +152,42 @@ the boot critical path, so it is recorded here as an open question rather than f
 Note the banner's own `DATE Feb 13 2002 TIME 22:06:27` line is the compile-time `__DATE__`/`__TIME__`
 (`db_build_timestamp`, `gmmain.c:206`) and is unrelated to the calendar.
 
-## C. (pending)
+## C. Async / callback contracts
 
-To be appended by todo 15 (async/callback contracts: VI/XFB transitions, DVD status mapping, ARQ
-completion + `gw_defer` ordering, alarm re-entrancy, pad sampling, CARD pending-counter).
+Sections A and B cover values the game reads at fixed addresses and guarantees the hardware makes
+about memory and time. This section covers the *ordering* contracts: on the console, every async
+completion arrives later, from an interrupt (VI retrace, GX draw-done, DVD/ARQ DMA), and the game's
+state machines are written around that "call me back later, never re-enter me" shape. The port has
+no interrupts, so every one of these is reproduced by the frame driver (`gw_frame_tick`) and the
+`gw_defer`/`gw_os_run_alarms` queues it drains. A row is OK only when both the assumption site (game
+`file:line`) and the satisfying code (shim `file:line`) are cited from current source.
+
+| contract | where assumed/used (`file:line`) | how the port satisfies it (`file:line`) | status | evidence |
+|---|---|---|---|---|
+| VI pre/post-retrace ordering + draw-done callback clears HSD's waiting flag | `HSD_VIWaitXFBDrawEnable` spins `HSD_VIGetXFBDrawEnable()` until an XFB is FREE/DRAWING, pumping `VIWaitForRetrace` (`video.c:186-200`); `HSD_VIGXSetDrawDone` spins `GXWaitDrawDone` while `drawdone.waiting`, then sets `waiting=1` + `GXSetDrawDone()` (`video.c:267-275`); the waiting flag is cleared by `HSD_VIGXDrawDoneCB` (`video.c:142-149`), registered via `GXSetDrawDoneCallback(HSD_VIGXDrawDoneCB)` (`video.c:429`); XFB rotation happens in `HSD_VIPreRetraceCB`/`HSD_VIPostRetraceCB` (`video.c:63-115,117-140`) | `gw_VIWaitForRetrace` → `gw_frame_tick` (`shim_vi.c:263`), which presents, drains alarms+deferred, then calls `gw_pre_retrace_cb` **before** `gw_post_retrace_cb` (`shim_vi.c:194-199`) — the console's pre→swap→post order; callbacks stored by `gw_VISetPre/PostRetraceCallback` (`shim_vi.c:269-279`); `gw_gx_set_draw_done`/`gw_gx_wait_draw_done` flush Aurora then fire `gw_draw_done_cb` synchronously (`shim_vi.c:229-241`), so `HSD_VIGXDrawDoneCB` clears `waiting` and `HSD_VIGXSetDrawDone`'s spin exits instead of deadlocking; routed by `gw_GXSetDrawDone`/`gw_GXWaitDrawDone`/`gw_GXSetDrawDoneCallback` (`shim_gx.c:94-96`) | OK | `video.c:186-200,267-275,142-149,429,63-140`; `shim_vi.c:194-199,229-241,263,269-279`; `shim_gx.c:94-96` |
+| DVD drive-status mapping + async read-callback result semantics | `lb_80019230` maps `DVDGetDriveStatus()`: 5→0, 4→1, 6→2, 11→3, -1→4, 1→5, default→-1 (`lb_0192.c:89-107`); `lb_800192A8` shows a message only for `i != -1 && i != 5` (`lb_0192.c:119`); devcom's DVD callbacks treat `result == -1` as a fatal disc error and set `HSD_DevCom_804D7804` (`devcom.c:242-244,275-277`) | `gw_DVDGetDriveStatus` returns `GW_DVD_STATE_END` (0) after `gw_wait_idle()` (`shim_dvd.c:129-132`) — 0 hits the `default` → -1 arm of `lb_80019230`, so no spurious disc-error message ever appears; reads complete synchronously (`shim_dvd.c:241-245`) and the callback is queued through `gw_defer` so it runs after devcom sets its in-flight flag (`shim_dvd.c:250`); the callback passes `(int)(int32_t)result` where 0=ok, -1=fail (`shim_dvd.c:205-209,238,244,247`), matching devcom's `-1` error test; a NULL destination is reported and turned into `result=-1` instead of faulting the CRT (`shim_dvd.c:233-239`) | OK | `lb_0192.c:89-107,119`; `devcom.c:242-244,275-277`; `shim_dvd.c:129-132,205-209,233-245,250` |
+| ARQ completion deferred until after devcom sets its in-flight flag | `HSD_DevComARAMWakeUp` posts `ARQPostRequest(..., HSD_DevComARAMCallback)` **then** sets `aramstate = 1` (`devcom.c:150-155`, and `:156-167,168-194` for the other types); `HSD_DevComStdCallback` clears `aramstate = 0` and re-wakes both queues (`devcom.c:42-57`); the DVD path sets `HSD_DevCom_804D77F5 = 1` after `DVDReadAsyncPrio` (`devcom.c:346-349,356-359`) | `gw_ARQPostRequest` does the memcpy inline then queues `gw_arq_complete` through `gw_defer` (`shim_ar.c:113-123`), so the callback never runs inside the `ARQPostRequest` call frame — by the time `gw_run_deferred` drains it (`shim_vi.c:192` in `gw_frame_tick`, `:221` in `gw_wait_idle`), `aramstate`/`HSD_DevCom_804D77F5` are already 1 and the node is not freed under the outer frame (the HANDOFF §1.20 `HSD_DevComARAMWakeUp+0x1E1` crash) | OK | `devcom.c:42-57,150-155,346-359`; `shim_ar.c:113-123`; `shim_vi.c:192,221` |
+| Alarm re-entrancy / catch-up / cancel-and-re-arm semantics | the pad heartbeat arms a periodic alarm and re-arms by `OSCancelAlarm`+`OSCreateAlarm`+`OSSetPeriodicAlarm` (`lb_0195.c:106-112`); one-shot alarms are load-bearing (3 ms in `lmemory.c`, HANDOFF §1.2); a handler may itself reach `gw_wait_idle` via `DVDGetDriveStatus` (`shim_dvd.c:130`) | `gw_os_run_alarms` is guarded non-re-entrant (`shim_os.c:249-253`, mirroring a timer interrupt that cannot preempt itself); a `while (ticks >= fire_at)` catches up multiple periods (`shim_os.c:256,271`); it detects a handler that cancelled or re-armed the alarm (`a->handler != handler` → break, `:263-265`) and clears one-shots vs advancing periodics (`:266-271`); `OSCancelAlarm`/`OSSetAlarm`/`OSSetPeriodicAlarm` manage the same slots (`shim_os.c:196-229`) | OK | `lb_0195.c:106-112`; `shim_os.c:196-229,244-275`; `shim_dvd.c:130` |
+| CARD async pending counter settles (never left dangling) | `lb_8001A184` zeroes `_p(x8AC)`, then bumps it only when an async mount is *accepted* (`lbcardnew.c:246,264`), and the completion callbacks decrement it (`lbcardnew.c:183,229`); a nonzero count returns `0xB` (busy) instead of settling (`lbcardnew.c:267-274`) | every CARD async entry returns `CARD_RESULT_NOCARD` (-3) synchronously and never calls back (`shim_card.c:61-160`, mount at `:133-139`); `lb_80019BB8(-3)` → 0xF (`lbcardnew.c:19-22`), so the accept path is skipped, `_p(x8AC)` stays 0, and the spin at `lbcardnew.c:272` never engages | OK | `lbcardnew.c:246,264,183,229,267-274,19-22`; `shim_card.c:133-139` (and `:23-32` for the probe) |
+
+### C.1 Regression-check rows (already-fixed invariants — do NOT re-fix)
+
+| invariant | fix site (`file:line`) | status | notes |
+|---|---|---|---|
+| Pad-alarm `period == 0` never arms (the black-window spin) | `gw_init_lomem` writes `__OSBusClock` = 162 MHz (`gw_runtime.c:92`), so `OSSecondsToTicks(1/60)` in `lb_0195.c:85` is nonzero | regression-check | `lb_0195.c:77-93`: with a zero bus clock the period computes to 0, `lb_0195.c:89` (`x40 == period`) returns early and the pad alarm is never armed, leaving `lb_80019894()` empty and `gmscene.c:292` spinning (HANDOFF §6.1). Verified only — `__OSBusClock` is already written, nothing re-fixed here. |
+
+Notes on the C-table rows:
+
+- **DVD status (row 2)**: `GW_DVD_STATE_END = 0` is returned *after* `gw_wait_idle()` drains alarms and
+  deferred callbacks, which is what lets the pad-wait spin (`lb_0195.c` → `lb_800195D0` →
+  `lb_800192A8` → `lb_80019230`) double as the pump for DVD/ARQ completions. The `0` value itself is
+  not load-bearing beyond mapping to "no error message".
+- **Draw-done (row 1)**: the shim fires the draw-done callback synchronously inside
+  `GXSetDrawDone`/`GXWaitDrawDone` (the port renders synchronously), which is the one place it is
+  *not* deferred. That is required: `HSD_VIGXSetDrawDone` (`video.c:269`) spins on `GXWaitDrawDone`
+  until the callback clears `waiting`, so deferring it would deadlock. The deferred queue is only
+  for callbacks the game expects to arrive *between* fields (DVD/ARQ), never for the in-call draw-done.
+- **Alarm cadence caveat (row 4)**: §7.3 of the last HANDOFF session notes `alarms fired` only
+  reaches ~120 before the (then-unfixed) crash even with the free-running clock. That is a symptom
+  of the boot not returning to a waiting shim, not an alarm-semantics violation, so it is left as a
+  note rather than a row; the alarm contract here (re-entrancy, catch-up, cancel/re-arm) is satisfied.
