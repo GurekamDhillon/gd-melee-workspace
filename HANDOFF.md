@@ -589,3 +589,13 @@ were cancelled or left unfinished because two workers collided over the single g
 killed; one log froze at `retrace=782`) and the screen capture grabbed the occluding terminal instead
 of the game window. Recommendation: one clean single-worker pass with the game window foregrounded
 and the captured image validated as the game before trusting any of it.
+
+## 8.5 Start-at-title crash: FIXED
+
+The §8.3 blocker is resolved. Root cause: `gw_AXAcquireVoice` returned NULL, and the menu-music
+stream path `HSD_Synth_8038B5AC` dereferences `voice->index` immediately, faulting at NULL+0x18 on
+the title→menu transition. Fix: a minimal 64-voice AX pool in `melee/pc/platform/shim_ax.c` (commit
+`83d96fbc0`) that returns a distinct `AXVPB`-layout voice, `index` written big-endian via `gw_w32`,
+stealing the lowest-priority voice when full. Audio stays inert. The game now reaches the visible
+Main Menu (1-P Mode / VS. Mode / Trophies / Options / Data); evidence
+`.omo/evidence/task-start-run4-after-mainmenu.png`, `.omo/evidence/task-start-crash-melee-pc-boot-unblock.log`.
