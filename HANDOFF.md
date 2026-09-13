@@ -1561,3 +1561,44 @@ audio playing. Evidence in `.omo/evidence/` (`audit-fix1.log`, `hatguard.log`, `
 ## 15.3 False positive
 - Array-size audit's `table[...]` hit was a cross-file name collision, not an OOB. No definite new
   declaration/index mismatch remains (the canonical `synth.c` spot is already patched).
+
+# 16. Directory-depth audit (ft/gr/gm) and the GC-layout alias-view class
+
+After §15, three directory-depth agents swept `src/melee/{ft,gr,gm}` for classes §15 did NOT cover:
+lifetime/ownership, state-machine sequencing, mode-gated init, and id-indexed function-pointer
+tables. `ft` and `gr` reported; `gm` surfaced the biggest systemic finding.
+
+## 16.1 THE CLASS: "GC-layout alias views" (important)
+Code casts a pointer and indexes/offsets past a global assuming the original GameCube's contiguous
+symbol layout. On PC the globals are separate, non-adjacent symbols, so the view reads/writes
+**unrelated memory**. Already fixed before this session: `gmmain.c`, `gm_1798.c` (results screen),
+`gm_1832.c`. This session fixed `ftdata.c` `ft_800852B0` (commit `5cfe0e05c`). Still to fix (confirmed,
+real, mechanical - reference the real symbol under TARGET_PC):
+| Site | Alias view | Intended symbol |
+|---|---|---|
+| `gm/gmtoumode.c:198` | `(MatchExitInfo*)(src+1)` past `gm_804876D8` | `gm_80487810.match_end` |
+| `gm/gmclassic.c:607,694` | `(gmClassicSceneData*)gm_Mode_Classic_States` | `gmClassic_803DDEC8` |
+| `gm/gmtoulib.c:2431` | `(TmData*)&((BracketData*)lbl_80473AB8)->srcs[3]` | `gm_804771C4` |
+| `gm/gm_180A.c:95,252,312` | `state->ec8[4]` past `lbl_80472E48` | `lbl_80472EC8` |
+| `gm/gm_181A.c:693,924` | `record` past `lbl_80472ED8` | `lbl_80473594` |
+| `gm/gmcameramode.c:231` | preload entries not registered on state 3 | unknown (ordering holds) |
+Symptom is not only crashes: Classic's matchup table, and the Homerun/Multiman records, silently
+read/write wrong memory. A project-wide sweep for this pattern is in progress (ft+lb, gr+gm+mn,
+sysdolphin+rest).
+
+## 16.2 Other audit fixes landed (commit `5cfe0e05c`)
+- `grpstadium.c` `grStadium_801D4548`: free+null `xD0` (the UnkArchiveStruct) instead of `xCC` (the
+  persistent .dat staging buffer) - Pokemon Stadium use-after-free.
+- `ground.c` `Ground_801BFFB0`: zero `Ground_804D6950` (per-map collision flags) on stage load.
+- `ground.c`: NULL-check `stage_datas[pair->grkind]` at the unguarded dispatch entries (entries 23,
+  26 are NULL; entry 26 is reachable via `stage_id_map[21]` = Akaneia).
+- `ftcommon.c` `ftCommon_8007E83C`: bounds+NULL check before `parasol_table_3[arg1]`.
+
+## 16.3 Other real/likely findings not yet fixed
+- `ft` Luigi `x222C_cycloneCharge` (`ftluigispeciallw.c:109/228`) read before write (source-annotated).
+- `ft` mode-gated init: the cloak-refraction table (built only in VS scene `fn_8016E730`, `gmvs.c:2000`,
+  read unguarded from `ftmaterial.c:71`), plus crowd-SFX (`gmvs.c:2025`) and bg-flash (`gmvs.c:2031`)
+  with the same VS-only-init shape.
+- `ft` `ftdemo.c:83` `ftData_UnkDemoCallbacks0[kind]` called with 29/33 slots NULL (all shipped callers
+  use Mr/Kb/Lg/Gk).
+- `gr` class C was empty (no mode-gated-init candidate).
