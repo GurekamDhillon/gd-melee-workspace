@@ -27,6 +27,22 @@ Game TUs go clang (PPC frontend) -> gwtool -> `.obj`. Compiling a game TU direct
 cmd.exe /c "cd /d C:\gdm\_build\ax86m && ..\build_melee_pc.bat"   # expect MELEE_PC_LINK_OK
 ```
 
+## Run (interactive, e.g. for the user to play) - env vars must be EXPORTED
+```
+cd /mnt/c/gdm/_build
+export MELEE_CARD=1            # memory card (GCI folder at _build/card)
+export MELEE_PAD_IGNORE_ADAPTER=1   # only when using scripted/keyboard, not a real controller
+export WSLENV="MELEE_CARD:MELEE_PAD_IGNORE_ADAPTER"
+nohup ./melee-pc.exe --iso 'C:\iso\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso' > /tmp/opencode/live.log 2>&1 &
+disown
+```
+- **Gotcha:** `env MELEE_CARD=1 ./melee-pc.exe` does NOT propagate - `WSLENV` shares vars from the
+  WSL *shell* environment, so the var must be `export`ed first (or already exported in the shell).
+  Symptom of getting it wrong: the log says `card: disabled ... reporting no card`.
+- Success looks like `gw: card: initialised (GCI folder) at ...\_build\card`; the
+  `aurora::card: Failed to get status of file at idx: 1/2` errors are just empty slots.
+- Kill before relaunch: `cmd.exe /c "taskkill /IM melee-pc.exe /F"`.
+
 ## Run (ONE instance only)
 ```
 cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso 'C:\Users\Gurek\Downloads\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso'
