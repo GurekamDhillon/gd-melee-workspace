@@ -1,4 +1,11 @@
-# HANDOFF — Melee PC port, 2026-09-12 ~18:10 PDT
+# HANDOFF — Melee PC port
+
+> **Update, 2026-09-12 ~18:50 PDT (Claude Code session).** Boot now reaches the game's own
+> startup banner. Read section 5 at the bottom first — it supersedes section 3, corrects two
+> claims in sections 1 and 2, and records the fix for the current blocker. Everything above it is
+> the original 18:10 handoff, left as written.
+
+## Original handoff, 2026-09-12 ~18:10 PDT
 
 **Milestone this session: the port now links and runs.** `_build/melee-pc.exe` launches, brings up
 Aurora (D3D12 backend, 1280x960), maps MEM1 at 0x80000000, loads the disc FST, and boots far enough
@@ -302,3 +309,106 @@ The fault offset is an RVA, so add the image base (0x400000) before searching `m
 powershell.exe -NoProfile -Command "Get-WinEvent -FilterHashtable @{LogName='Application'; ProviderName='Application Error'} -MaxEvents 1 | Select-Object -ExpandProperty Message"
 # then find the map entry with the greatest address <= 0x400000 + offset
 ```
+
+---
+
+# 5. Session update, 2026-09-12 ~18:50 PDT
+
+**Milestone: the game prints its own boot banner.** `main()` now runs to completion and enters
+`gm_801A4510()`, the scene loop. Log:
+
+```
+gw: ARAlloc(1280) -> 0x4000
+gw: ARAlloc(6248864) -> 0x4500
+gw: ARAlloc(196608) -> 0x5F9EA0
+gw: ARAlloc(32) -> 0x629EA0
+# ---------------------------------------------
+#    Super Smash Bros. Melee
+# Distribution 1
+# Language 1
+# Arena Size 24 MB
+# ARAM Free Size 9 MB
+# DATE Feb 13 2002  TIME 22:06:27
+```
+
+Everything from `lbAudioAx_8002838C` (gmmain.c:165) through `gmMainLib_8015FBA4` and the banner
+at gmmain.c:278 now runs. Reproducible across runs.
+
+## 5.1 What was wrong
+
+**ARAM base and `ARFree` (`shim_ar.c`).** `ARInit` returned 0; `ar.c:117` sets the stack pointer
+to `0x4000` and returns it, reserving the low 16 KB. And `ARFree`'s argument is an **out**
+parameter (`ar.c:88`) — the shim was reading it, so it consumed the uninitialised local that
+`lbmemory.c:343` passes. Both fixed, with the real block-length stack kept in the game's
+`ar_stack[0x10]` and written through `gw_w32`.
+
+**ARAM vs pointer disambiguation (`shim_ar.c`, `gw_ar_addr`) — this was the big one.** The shim
+classified any address below `0x80000000` as an ARAM offset. That is the game's own rule and it
+holds for memory carved out of MEM1, but **statically linked game globals live in the exe image**,
+far below that line. `devcom.c:151` hands ARQ exactly such an address (`&HSD_DevCom_804C6330_bufs[i]`,
+a BSS array), so `memcpy` read ~20 MB past the end of ARAM. Now bounded by `gw_aram_size`, and the
+image is linked at a fixed high base so no real pointer can ever be smaller than an ARAM offset.
+
+**32-byte alignment of game globals (`gwtool.cpp`).** On hardware the DOL's data layout gave
+DMA-touched globals 32-byte alignment and the SDK asserts it (`devcom.c:420-423`); MSVC gave 4.
+gwtool now widens every global *definition* to 32. This is what cleared the `dest % 32 == 0`
+assert that section 3 named as the stopping point. It costs a few hundred KB of padding.
+
+## 5.2 Corrections to the sections above
+
+- **Section 1.10 is stale.** It says `ARQPostRequest` is synchronous "on purpose", overriding
+  `shim_vi.h`'s deferral advice. The code defers through `gw_defer`, and section 20 says so.
+- **Section 2's varargs claim is wrong in an important way.** It says gwtool rejects clang's
+  native `va_arg` IR "so this cannot be bypassed". True of `__builtin_va_arg`, which the PPC
+  frontend expands inline — but **not of `llvm.va_start`**, which survives gwtool intact and is
+  lowered correctly by the x86 backend. Verified: `leal 20(%esp), %eax; movl %eax, (%esp)`.
+  That makes real varargs achievable; see 5.4.
+- **TU count is 989**, not the 984/987 quoted in sections 0 and 1.8. (1003 objects is right.)
+- `melee-pc.log` did not correspond to `melee-pc.exe` — the log predated the final link by a
+  minute, which is why it showed one `ARAlloc` where section 3 describes four.
+
+## 5.3 New tooling
+
+- **Crash handler** (`gw_runtime.c`, installed first thing in `main`). Previously a fault just
+  stopped the log mid-line, indistinguishable from a hang. Now logs exception code, faulting
+  address resolved either to a `melee-pc.map` address or to `module+offset`, the access-violation
+  target, registers, and a frame-pointer walk. Section 4's Event-Log procedure is no longer needed.
+- **`/BASE:0x10000000 /DYNAMICBASE:NO`** — pins the image above ARAM (see 5.1) and makes runtime
+  addresses equal the map's third column exactly.
+- **`/OPT:NOICF`** — `/INCREMENTAL:NO` had turned on identical-COMDAT folding, which makes
+  thousands of small game functions share an address and report the wrong name on lookup.
+- **`_build/masstest/mapsym.sh <addr>`** — resolves a crash address to a symbol. It merges the
+  map's *Publics by Value* **and** *Static symbols* tables; reading only the first attributes
+  faults to whatever global precedes the real function, and most game functions are statics.
+- **`_build/masstest/pipe_win.sh`** — Git Bash port of `pipe_wsl.sh`, same flags. No WSL needed,
+  and a full rebuild of all 989 TUs takes **~30 seconds** at `-P 8`, not four minutes.
+  `cc1.sh` and `pipe1.sh` are deleted; they were missing `-fgnu89-inline` and the `math_ppc.h`
+  force-include and silently produced wrong objects.
+- **Everything is now in git.** The port layer is four commits on `melee`'s `pc-port` branch; the
+  build scripts, research and these notes are a separate repository at the workspace root.
+
+## 5.4 Where it stops now, and the fix
+
+`gw___va_arg` returns zeros, and the first caller is **`lbArchive_80017040`** (resolved via
+`mapsym.sh`, `lbarchive.c:181`) — not `efLib_Create` as section 3.2 predicted. The zeroed section
+names reach a CRT format routine as a NULL `%s` and it faults in `ucrtbase`.
+
+This blocks **asset loading**, so it is the one thing standing between here and anything on
+screen. `lbarchive.c`'s variadic loaders all share a shape: `va_start(args, symbols)` then forward
+the `va_list` straight to `lbArchive_vLoadSections`/`Fatal`.
+
+Design for the fix, given 5.2:
+
+1. Under `TARGET_PC`, make `src/MSL/stdarg.h` use `__builtin_va_start` / `__builtin_va_end`
+   (**not** `__builtin_va_arg`), and define `va_arg(ap, t)` as `*(t*)__va_arg(&(ap), sizeof(t))`.
+2. Rewrite `gw___va_arg` in `shim_libc.c` to read the native pointer out of the `va_list`, advance
+   it by `round4(size)`, and return a **byte-swapped** copy in a scratch buffer — game code does a
+   swapped load on whatever it gets back.
+3. Watch float promotion: the PPC frontend promotes `float` to `double` in variadic calls, so x86
+   pushes 8 bytes where the game may ask for 4.
+
+The `va_list` object itself must only ever be touched by the shim: `llvm.va_start` writes it
+natively, so a swapped load from game code would read garbage. Same hazard as the `jmp_buf`.
+
+After that: `psdisp.c`'s 36 raw FIFO sites, then real audio, then the GX path gets exercised for
+the first time — nothing has drawn yet, so that is where the unknown-unknowns are.
