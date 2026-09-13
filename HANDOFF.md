@@ -803,3 +803,56 @@ Commit `e3300cc92`:
   D3D12 crash can be retested whenever Dawn is updated. Retested 2026-09-13: still faults at
   `webgpu_dawn.dll+0x363548` about two seconds in, unchanged by `98e49e856`. The D3D11 pin stands.
   Vulkan is not compiled in (`-DDAWN_ENABLE_VULKAN=OFF`) and would need a Dawn rebuild.
+
+## 9.9 The black screen produces ZERO FRAGMENTS -- start here
+
+The single most useful measurement of the 2026-09-13 session, and the one to build on.
+
+`GXPeekZ` is exported by Aurora (`GXCpu2Efb.cpp`) and reads the depth buffer, so the port can
+sample depth **without anyone looking at the screen**. `shim_gx.c` reads a 7x5 grid across the
+frame once every 30 copies. In a live match, every sample, every frame:
+
+```
+gw: DIAG   depth grid: distinct=1 min=0xFFFFFF max=0xFFFFFF
+```
+
+`0xFFFFFF` is the cleared value. The depth buffer is **completely untouched after ~350 draw
+calls**. Depth writes are enabled (`zupd=1` on every sampled frame), so rasterised triangles would
+have to leave varying depth behind. They leave none.
+
+This is not a sampling artefact: `recording.cpp:1095` (`finish()`) sets `captureDepthSnapshot` on
+the **final** render pass of the frame, so the snapshot is taken after every draw, not during the
+early `GXCopyTex` passes. Evidence: `.omo/evidence/user-depthgrid-zero-fragments.log`.
+
+### What this means
+
+The problem is **not** colour, TEV, materials, textures, blending or presentation. Every one of
+those assumes fragments exist. None do. Something kills the geometry between the vertex shader and
+the rasteriser, for indexed 3D geometry only -- the HUD, which draws through the immediate path,
+rasterises fine throughout.
+
+### Shortlist, in the order worth testing
+
+1. **Inverted backface culling.** `gx.cpp:191-208` maps `GX_CULL_BACK -> CullMode::Back` with
+   `frontFace = CW` hardcoded. If effective winding is flipped (by the Y-negating orthographic
+   projection, the viewport mapping, or GX's own convention), every triangle is culled. This also
+   explains the corrupt geometry seen on static screens, which is what the *inside* of a model
+   looks like.
+2. **Empty or wrong scissor/viewport** for the 3D pass specifically.
+3. **Degenerate primitives** -- indices or primitive type decoded such that every triangle has zero
+   area.
+4. **Depth test rejecting everything**, though Aurora's reversed-Z handling is internally
+   consistent (clear value, compare direction, viewport range and the peek conversion all switch
+   together on `UseReversedZ`), so this is the least likely.
+
+### How to test cheaply
+
+Force the suspect off in Aurora and re-read the depth grid -- **the readout is automated**, so a run
+only needs someone to drive into a match, not to judge what is on screen. Forcing
+`wgpu::CullMode::None` is the one-line version of test 1: if depth starts varying, culling was the
+cause.
+
+### Already ruled out by this measurement
+
+Everything downstream of rasterisation. In particular, do not spend time on the present path, the
+XFB state machine, TEV/material setup, or texture binding -- 9.7 lists what else is dead and why.
