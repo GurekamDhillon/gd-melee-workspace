@@ -875,3 +875,56 @@ Evidence: `.omo/evidence/user-nocull-depth-varies.log`, `.omo/evidence/user-nocu
 
 Everything downstream of rasterisation. In particular, do not spend time on the present path, the
 XFB state machine, TEV/material setup, or texture binding -- 9.7 lists what else is dead and why.
+
+## 9.10 SOLVED (cause): the black screen is NaN position matrices
+
+The hunt ends here. `shim_gx.c` now checks every position matrix as it is loaded and reports the
+per-frame totals on the same sampled frames as the depth grid, so the two lines correlate without
+any visual check. A single run, unpaused then paused:
+
+| state | nan/inf elements | maxabs | rowlen | depth grid |
+| --- | --- | --- | --- | --- |
+| unpaused | **8013 of 9300 (86%)** | 9936.000 | [1.0000..10.0000] | `distinct=1`, nothing rasterises |
+| paused | **0** | 417.051 | [0.5250..1.1000] | `distinct=8`, renders |
+
+**While the game runs, 86% of every position-matrix element is NaN or infinite.** NaN vertices fail
+every clip test, so no triangle reaches the rasteriser -- exactly the zero-fragment result of 9.9.
+Pausing stops animation recomputing them, the matrices are clean, and the scene appears.
+
+Evidence: `.omo/evidence/user-posmtx-nan-pause-ab.log`.
+
+### Why every renderer theory failed
+
+Nothing downstream was ever wrong. Aurora was faithfully drawing ~350 draw calls of NaN. The twelve
+eliminations in 9.7 were all correct *and* all irrelevant: bindings, formats, endianness of vertex
+data, culling, depth range, present timing and TEV are fine. **Do not reopen them.**
+
+### What it also explains
+
+- **Corrupt geometry on static screens** -- the same computation partially poisoned, where some
+  matrices survive and others do not.
+- **The `HSD_AObjSetFlags+0x12` NULL write** (`.omo/evidence/agent-vertexcache-fix-run1.log`):
+  `AObj` is HSD's *animation* object, and the animation path is where this originates.
+- **The corruption is graded, not binary.** Even the surviving unpaused matrices are inflated
+  (`maxabs` 9936 vs 417 paused, row lengths to 10.0 vs 1.1), so this is a computation going
+  progressively wrong rather than a single bad pointer.
+
+### Where to look next
+
+This is **game-side, in HSD's animation evaluation** feeding `HSD_JObjSetupMatrix` -- not the
+renderer. Given that big-endian and struct-layout mistakes have been the recurring class in this
+port (9.3, and the ARQ/alarm/particle fixes in 9.1-9.2), the first suspicion is animation keyframe
+data (`FObj`) being read with the wrong endianness or stride: misread big-endian floats decode to
+NaN readily, and that would poison animated joints while leaving static objects intact.
+
+Instrument *upstream* of the matrix load -- at the point animation produces the value -- since
+`gw_GXLoadPosMtxImm` already sees the damage after the fact. Remember the `TARGET_PC` rule: game
+source changes stay behind `#if defined(TARGET_PC)` with the original kept, and the user's standing
+directive is that agents do not change game logic without asking.
+
+### Method worth keeping
+
+The depth grid plus matrix health, logged together on the same frames, makes the failing and
+working states **self-identifying** (`distinct=1` is the broken state). That removed the human
+visual check from the loop entirely and is what finally isolated this after a dozen dead ends. When
+comparing anything here, hold pause state constant -- see the trap in 9.9.
