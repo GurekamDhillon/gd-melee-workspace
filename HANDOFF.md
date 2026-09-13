@@ -1525,3 +1525,39 @@ ends with **0 FATAL** (the timeout stops it, not a crash).
 `gw_watch_page` / `gw_watch_tick` (`gw_runtime.c`, `gw.h`) — a `PAGE_GUARD` write watchdog that
 logs the faulting instruction and address of accesses to a region, re-armed once per frame from
 `gw_frame_tick`. Used to rule out a rogue writer into the audio node array.
+
+# 15. Semantic audit (bug-class sweeps) — findings and fixes
+
+Four parallel class-based audits over `melee/src` + `pc/platform`: (a) declared array size vs index
+range, (b) unbounded computed indices, (c) loader-set pointer deref'd before/without a NULL check,
+(d) shim↔game endianness boundary violations. Commits: `2586eccbc`, `bdcace0ab`, `eb1f568c6`.
+
+## 15.1 Fixed
+- **`shim_ax.c` AXVPB endianness siblings** (`2586eccbc`). `AXVPB.callback` and `AXVPB.userContext`
+  were native while the game reads/writes both big-endian (`synth.c:420,425,441,453,456`) — the same
+  miss already fixed for `priority`. Now `gw_wptr`/`gw_w32` stores + `gw_rptr` read.
+- **`axdriver.c` use-after-free** (`2586eccbc`). `AXDriver_8038DCFC` freed `AXDriver_804D7798` but
+  left the bank/sample tables `B0/B4/B8/BC` pointing into it; a free→reload→play with an early
+  reload return dereferenced freed memory. Now cleared.
+- **Every remaining raw `ft_80459B88.hats[...]` deref** (`bdcace0ab`). ~30 sites across
+  `ftdynamics.c` + `ftkirbyspecial*`; guarded via the `ftCo_8009D4D4` template / `ftKb_hatTable`.
+- **`efLib_Create` unloaded EF bank** (`eb1f568c6`). `efAsync_DatEntries[gfx_id/1000].data` is NULL
+  until `efAsync_OnLoad`; now bounded + NULL-checked (also fixes the previously-unbounded bank
+  index against the 51-entry table). This was the crash the hat guards had been masking.
+
+**Verified:** a full 300 s attract run ends with **0 FATAL** (timeout, not a crash), retrace 17160,
+audio playing. Evidence in `.omo/evidence/` (`audit-fix1.log`, `hatguard.log`, `eflib-fix-300s.log`).
+
+## 15.2 Not yet fixed (lower confidence / needs per-site verification)
+- `particle.c:1586` `hsd_804D08E8[*pc++ + pp->pJObjOfs]` (8-entry table) and `:1648`.
+- `gmtoulib.c:2349` `lbl_80473AB8[i + 1]` where `i` can reach 64 (array is 64).
+- `ftKb_SpecialN_800F16D0` (`ftkirby.c`) still derefs `g->hats[...]` / `g->x0->xC` raw (~19 sites,
+  different syntactic form from the guarded ones).
+- `shim_os.c` `gw_OSTicksToCalendarTime` forwards a game buffer to Aurora's native writer;
+  `shim_pad.c`/Aurora `PADRead` writes `button`/`extButton` native (masked today by the GC-adapter
+  path rewriting ch0 via `gw_w16`).
+- `texp.c` `a_in[cnst->reg-4]`, `tobj.c` `imagetbl[...]`, `psdisp.c` palettes — signed/derived indices.
+
+## 15.3 False positive
+- Array-size audit's `table[...]` hit was a cross-file name collision, not an OOB. No definite new
+  declaration/index mismatch remains (the canonical `synth.c` spot is already patched).
