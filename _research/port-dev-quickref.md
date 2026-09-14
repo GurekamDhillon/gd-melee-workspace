@@ -1,8 +1,8 @@
 # Port dev quick-reference (agents: READ THIS FIRST)
 
-Workspace root: `C:\gdm` = `/mnt/c/gdm` = `/mnt/c/Users/Gurek/Desktop/GD's Melee` (a junction; same tree).
-Game repo: `C:\gdm\melee` (branch `pc-port`). Build dir: `C:\gdm\_build`. Docs: `_research/`, `HANDOFF.md`.
-Commands digest: `HANDOFF.md` §4. Boot gates / SDK notes: `_research/melee-boot.md`. Invariants: `_research/console-invariants.md`.
+Workspace root: `C:\gdm` = `/mnt/c/gdm` (a junction to the same checkout).
+Game repo: `C:\gdm\melee` (branch `pc-port`). Build dir: `C:\gdm\_build`. Docs: `_research/`, `docs/DEVLOG.md`.
+Commands digest: `docs/DEVLOG.md` §4. Boot gates / SDK notes: `_research/melee-boot.md`. Invariants: `_research/console-invariants.md`.
 
 ## Toolchain
 - Clang: `/mnt/c/gdm/_toolchains/llvm/bin/clang.exe` (a Windows binary; run it directly from WSL, `--target=i686-pc-windows-msvc`).
@@ -45,7 +45,7 @@ disown
 
 ## Run (ONE instance only)
 ```
-cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso 'C:\Users\Gurek\Downloads\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso'
+cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso'
 ```
 - Before every run: `cmd.exe /c "tasklist | findstr /i melee-pc"` and wait until none. Two concurrent instances kill each other's runs.
 - DO NOT take or capture screenshots. DO NOT build any input-injection (keybd_event/SendKeys) or capture harness. Interactive steps (navigating menus, pressing buttons) and all visual checks are performed by the human user - ASK them via the orchestrator instead of building tooling to do it. The human supplies the reproduction (they can drive the game and hand you the log).
@@ -63,7 +63,7 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso 'C:\Users\Gurek\Downloa
 - **Deferred completions.** ARQ and DVD completions are queued via `gw_defer` and pumped only in `gw_wait_idle`/`gw_frame_tick`. Any game-side blocking spin that calls no shim deadlocks; fix it by pumping `gw_wait_idle()` inside the spin (TARGET_PC-guarded). Precedents: the pad gate (`shim_dvd.c` `gw_DVDGetDriveStatus` -> `gw_wait_idle`), `lbarq.c` ARQ wait, and `synth.c` deflag sync (see `shim_ar.c:12-14`).
 - **Game-source changes** must be `#if defined(TARGET_PC)`-guarded with the original code kept.
 - **Audio backend exists** (added 2026-09-12/13). Aurora has no `ax`/`ai`/`dsp`, so `shim_ax.c` implements AX (DSP-ADPCM decode + 64-voice mixer over `gw_aram`) and the AI entries in `shim_misc.c` drive a SDL3 32 kHz stereo output; `HSD_SynthCallback` is pumped per frame from `gw_frame_tick`. Verified audible - audio is not inert.
-- **Commits:** `git -c user.name='GD' -c user.email='gd@gsd.sh' commit -m "pc: ..."` on `pc-port`. Never `git add -A`. The root repo has 3 pre-existing modified files that must stay uncommitted.
+- **Commits:** commit on `pc-port` with a short `pc: ...` subject. Never `git add -A`; stage paths explicitly.
 - **Evidence:** each task writes `.omo/evidence/task-<name>.log` with the exact commands and their outputs.
 
 ## Endianness: one system exists (`gwtool` + `gw.h`) - do not build a second

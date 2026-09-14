@@ -4,6 +4,7 @@ aurora_main.lib
 aurora_vi.lib
 aurora_os.lib
 aurora_pad.lib
+aurora_card.lib
 aurora_si.lib
 _deps\png-build\libpng16_static.lib
 aurora_core.lib

@@ -1,4 +1,4 @@
-# HANDOFF — Melee PC port
+# DEVLOG — Melee PC port
 
 > **Update, 2026-09-12 ~18:50 PDT (Claude Code session).** Boot now reaches the game's own
 > startup banner. Read section 5 at the bottom first — it supersedes section 3, corrects two
@@ -18,7 +18,7 @@ real time to discover.
 
 ## 0. Environment / where things live
 
-- Workspace root: `C:\Users\Gurek\Desktop\GD's Melee` (WSL: `/mnt/c/Users/Gurek/Desktop/GD's Melee`)
+- Workspace root: `C:\gdm` (WSL: `/mnt/c/gdm`; `C:\gdm` is a junction to the checkout).
 - `C:\gdm` is a junction to that root. All port docs/tooling use `C:\gdm\...`; use it too
   (it avoids the apostrophe in "GD's Melee").
 - Game repo: `C:\gdm\melee` (doldecomp/melee). Port layer: `C:\gdm\melee\pc`.
@@ -52,8 +52,8 @@ real time to discover.
     (`imports_all.pre-opencode.txt`).
 - Research reports: `C:\gdm\_research\{melee-boot,aurora,shim_surface}.md`. The first two are the
   boot-gate/API bibles; `shim_surface.md` is the curated external-symbol list with prototypes.
-- Previous Claude Code session: `baee277b-47a0-4abc-8652-1166575f103e` ("gd-s-melee-05"), state on
-  the Windows side under `C:\Users\Gurek\.claude\projects\C--Users-Gurek-Desktop-GD-s-Melee\`.
+- Previous Claude Code session: `baee277b-47a0-4abc-8652-1166575f103e` ("gd-s-melee-05"), state
+  kept on the Windows side under the Claude Code project directory for this checkout.
 
 ## 1. What was completed this session
 
@@ -566,7 +566,7 @@ Three commits on `melee` `pc-port` (branch HEAD `8cd84fae4`):
 ## 8.2 Run it
 
 ```
-cd C:/gdm/_build && timeout 45s ./melee-pc.exe --iso "C:\Users\Gurek\Downloads\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
+cd C:/gdm/_build && timeout 45s ./melee-pc.exe --iso "C:\iso\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
 ```
 
 Controls (keyboard bridge on channel 0, marked `TARGET_PC test controls` in `shim_pad.c`, easy to
@@ -1688,3 +1688,34 @@ and the walk dereferences garbage. Same family as the `ftData_CharacterStateTabl
 - `ft` `ftdemo.c:83` `ftData_UnkDemoCallbacks0[kind]` called with 29/33 slots NULL (all shipped callers
   use Mr/Kb/Lg/Gk).
 - `gr` class C was empty (no mode-gated-init candidate).
+
+## 18.1 Crash logs are archived (`crashlogs/`)
+
+`melee-pc.log` is truncated on every launch, so a crash's only record was lost on the next run.
+`gw_archive_crash_log()` (`pc/platform/gw_runtime.c`) now copies the session log to
+`crashlogs/crash-<YYYYMMDD-HHMMSS>.log` (one-line `==== crash <time> <reason> ====` header then the
+log) from every fatal path: `gw_panic` (all game `OSPanic`/asserts), the SEH handler
+(`gw_unhandled_exception`), and the CRT invalid-parameter handler (`gw_invalid_parameter`). Files are
+never overwritten and never rotated. The folder is created on demand next to the exe.
+
+Gap: a hard `__fastfail` death (e.g. a raw stack-buffer overrun) bypasses SEH and archives nothing.
+The CRT's own overrun path is caught by the invalid-parameter handler; not every fastfail is.
+
+## 18.2 PAGE_GUARD watchdog is opt-in (`MELEE_WATCH=1`)
+
+`gw_watch_page`/`gw_watch_tick` (`pc/platform/gw_runtime.c`) now no-op unless `MELEE_WATCH=1`. The
+watchdog was always-on and flooded `melee-pc.log` with `gw: GUARD access ...` lines (one per re-arm
+per frame) and perturbed frame timing. With it off, a normal boot logs ~128 KB instead of ~500 KB.
+Set `MELEE_WATCH=1` only when chasing what writes a watched field.
+
+## 18.3 Debug menu: Unlock All Characters / Unlock All Stages (commit `ab1e3c9f1`)
+
+Two rows in the debug-menu root table `un_803FA4E0` (`if/soundtest.c`) call `gm_80164F18()` /
+`gm_8016468C()` and persist via `lb_8001C87C()` after `lbCardNew_AllocWorkArea()`. The save needs the
+card work area (the memcard scene normally allocates it) but not the card archive, which is why
+`lb_8001C87C` works here and the asserting `lb_8001C8BC` does not. On a retail ISO `DbLevel` is forced
+to `Master` (no `/develop.ini`), so the debug menu is unreachable; TARGET_PC branches in `gmtitle.c`
+(the title scene exits on Y/B) and both title mode exits (`gmtitlemode.c onExit`,
+`gmopeningmode.c onExitTitle`) route Y/B to `GM_DEBUG`. Keyboard Y/Z/L/R are not in the pad overlay,
+so B (key `K`) is the keyboard entry point.
+

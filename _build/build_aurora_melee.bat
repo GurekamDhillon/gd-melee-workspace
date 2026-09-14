@@ -10,7 +10,7 @@ cmake -S C:\gdm\melee\extern\aurora -B C:\gdm\_build\ax86m -G Ninja ^
   -DAURORA_SDL3_PACKAGE_URL=https://github.com/encounter/sdl3-build/releases/download/v3.4.10/SDL3-windows-x86.tar.gz ^
   -DDAWN_ENABLE_VULKAN=OFF ^
   -DAURORA_ENABLE_DVD=OFF ^
-  -DAURORA_ENABLE_CARD=OFF ^
+  -DAURORA_ENABLE_CARD=ON ^
   -DAURORA_ENABLE_THP=OFF ^
   -DAURORA_ENABLE_RMLUI=OFF ^
   -DFETCHCONTENT_SOURCE_DIR_DAWN=C:/gdm/_build/ax86/_deps/dawn-src ^

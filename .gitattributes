@@ -1,0 +1,6 @@
+# Normalise text files to LF in the repository so line endings do not churn.
+* text=auto
+
+# Windows batch/shims are authoring-side only; keep them as text too.
+*.bat text
+*.sh text

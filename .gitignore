@@ -22,7 +22,7 @@
 /_build/masstest/shimobj/
 /_build/masstest/extra/
 
-# Generated symbol audits: regenerate with the commands in HANDOFF.md section 4.
+# Generated symbol audits: regenerate with the commands in docs/DEVLOG.md section 4.
 /_build/masstest/*.txt
 !/_build/masstest/files.txt
 
@@ -33,9 +33,22 @@
 *.map
 *.log
 *.obj
+*.o
+*.bin
+*.lib
 *.bc
 *.ll
-*.lib
+
+# Runtime state: live pad feed, memory-card saves, scratch objects.
+pad_live.txt
+_build/pad_live.txt
+_build/card/
+
+# Generated research dumps; regenerate locally with the commands in docs/DEVLOG.md.
+/_research/scripts/_psdisp.i
+/_research/scripts/common.txt
+/_research/scripts/dl_*.txt
+/_research/scripts/tp_*.txt
 
 # OpenCode session state.
 /.omo/

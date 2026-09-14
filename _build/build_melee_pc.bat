@@ -2,7 +2,7 @@
 rem Links melee-pc.exe from the gwtool-transformed game objects, the platform shims, and the
 rem 32-bit Aurora/Dawn/SDL3 libraries built by build_aurora_melee.bat.
 rem
-rem The two response files are generated (see HANDOFF.md): melee_link_objects.rsp lists every
+rem The two response files are generated (see docs/DEVLOG.md): melee_link_objects.rsp lists every
 rem out/*.obj and shimobj/*.obj, melee_link_libs.rsp mirrors the library set Aurora's own
 rem "simple" example links with.
 call "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" amd64_x86 >nul

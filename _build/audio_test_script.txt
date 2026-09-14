@@ -1,0 +1,12 @@
+# audio demo: wait for boot, press Start (title -> menu), navigate to trigger SFX/music
+600 0000 0 0
+10 1000 0 0
+120 0000 0 0
+10 0100 0 0
+30 0000 0 0
+10 0100 0 0
+30 0000 0 0
+10 1000 0 0
+30 0000 0 0
+10 0100 0 0
+600 0000 0 0
