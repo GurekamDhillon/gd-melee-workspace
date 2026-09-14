@@ -1,10 +1,11 @@
 @echo off
-rem Test build: Aurora "simple" example for 32-bit x86 Windows with Dawn built from source (vendor).
+rem Bootstrap: builds the vendored Aurora's "simple" example for 32-bit x86, which fetches Dawn and
+rem SDL3 into _build\ax86 for the port build (build_aurora_melee.bat) to reuse. No other checkout.
 call "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" amd64_x86
 if errorlevel 1 exit /b 1
 set "PATH=C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin;C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja;%PATH%"
 cmake --version
-cmake -S C:\gdm\dusklight\extern\aurora -B C:\gdm\_build\ax86 -G Ninja ^
+cmake -S C:\gdm\melee\extern\aurora -B C:\gdm\_build\ax86 -G Ninja ^
   -DCMAKE_BUILD_TYPE=RelWithDebInfo ^
   -DAURORA_DAWN_PROVIDER=vendor ^
   -DAURORA_SDL3_PROVIDER=package ^

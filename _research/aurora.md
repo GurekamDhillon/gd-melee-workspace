@@ -1,6 +1,8 @@
-# Aurora (dusklight fork) — driving it from a new C app, and what its GX layer expects
+# Aurora (vendored) — driving it from a new C app, and what its GX layer expects
 
-All paths below are relative to `C:\gdm\dusklight\extern\aurora` unless noted.
+All paths below are relative to `C:\gdm\melee\extern\aurora` unless noted. That is the port's
+vendored copy of encounter/aurora (base commit `749d6ee`, MIT) with seven port patches; see
+`extern/aurora/PORT_PATCHES.md` and `DEPENDENCIES.md`.
 Verified by reading source; line cites are `file:line`.
 
 **Headline finding:** this fork of Aurora is *not* the old metaforce-style "GX call → immediate

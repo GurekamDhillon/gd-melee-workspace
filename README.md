@@ -48,6 +48,7 @@ PORT_BOOTSTRAP.md     project origin and the feasibility analysis
 _research/            boot gates, SDK/console invariants, shim surface, port dev quickref
 _build/               Windows build scripts (Aurora, per-TU pipeline, link, run)
 _research/scripts/    research tooling (e.g. count_constructs.py)
+DEPENDENCIES.md       every third-party component, its version/pin, and its licence
 ```
 
 The port source itself lives in the `melee` fork of `doldecomp/melee`, on the `pc-port` branch,
