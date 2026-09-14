@@ -1645,12 +1645,16 @@ garbage/maxed values. Likely another results-data source/alias issue in `gmresul
 `gmresultplayer.c` (`MatchEnd`/`ResultsData` fields) - same family as the aliases above. Deliberately
 deferred per the user's request; log only. Evidence: `.omo/evidence/results-hang-css.log` (same run).
 
-## 17.4 Classic-mode crash: light-animation descriptor holds garbage
-Classic mode crashed at `HSD_WObjAddAnim+0x24`, `read of 0x3A83126F` (= float 0.001 read as a
-pointer), `ebp=0x80990900`, called from `HSD_LObjAddAnimAll+0x55` - i.e. a light/WObj animation
-descriptor field is a float where a pointer is expected. Not the `CLASSIC_MATCHUPS` alias fix
-(that is the matchup table); likely a stage/light descriptor built from wrong memory, possibly one
-of the unfixed aliases in §16.4. Evidence: `.omo/evidence/classic-crash.log`. Logged, not fixed.
+## 17.4 Single-player crashes: animation descriptor holds garbage (Classic + Adventure)
+The same family, twice, both non-VS:
+- Classic: `HSD_WObjAddAnim+0x24`, `read of 0x3A83126F` (= float 0.001 as a pointer), from
+  `HSD_LObjAddAnimAll+0x55`. Evidence `.omo/evidence/classic-crash.log`.
+- Adventure (after Bowser / at the ending): `HSD_AObjLoadDesc+0x48`, `read of 0x00B5CF3F`, with
+  `edx=0x3A51B717` and `ebx=0x00B5CF3F` both float bit patterns, from `HSD_WObjAddAnim+0x2E`.
+  Evidence `.omo/evidence/adventure-crash.log`.
+A stage/light/animation descriptor is built from wrong memory (floats read as pointers), likely one
+of the unfixed `gr/`/`mn/` alias views in §16.4. Non-VS, so logged and left per the user's VS
+priority - not the `CLASSIC_MATCHUPS` fix.
 
 ## 17.1 Zelda/Sheik side-B — motion-state table walk off the rails (fun/harmless to leave)
 Reported while testing characters: `ftSk_SpecialLw_80114758` (Sheik's side-B) →
