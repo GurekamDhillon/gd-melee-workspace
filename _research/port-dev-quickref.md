@@ -65,6 +65,7 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash
 - **Audio backend exists** (added 2026-09-12/13). Aurora has no `ax`/`ai`/`dsp`, so `shim_ax.c` implements AX (DSP-ADPCM decode + 64-voice mixer over `gw_aram`) and the AI entries in `shim_misc.c` drive a SDL3 32 kHz stereo output; `HSD_SynthCallback` is pumped per frame from `gw_frame_tick`. Verified audible - audio is not inert.
 - **Commits:** commit on `pc-port` with a short `pc: ...` subject. Never `git add -A`; stage paths explicitly.
 - **Evidence:** each task writes `.omo/evidence/task-<name>.log` with the exact commands and their outputs.
+- **Aurora bootstrap cache.** `build_aurora_x86.bat` builds the vendored `melee/extern/aurora`. If `_build/ax86` was previously configured from another Aurora checkout (`dusklight/extern/aurora`), CMake refuses the stale cache ("does not match the source ... used to generate cache") - delete `_build/ax86/CMakeCache.txt` and `_build/ax86/CMakeFiles/` and re-run. Keep `_build/ax86/_deps`: `ax86m` reuses its `dawn-src` and SDL3 package.
 
 ## Endianness: one system exists (`gwtool` + `gw.h`) - do not build a second
 
