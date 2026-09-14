@@ -1645,6 +1645,12 @@ garbage/maxed values. Likely another results-data source/alias issue in `gmresul
 `gmresultplayer.c` (`MatchEnd`/`ResultsData` fields) - same family as the aliases above. Deliberately
 deferred per the user's request; log only. Evidence: `.omo/evidence/results-hang-css.log` (same run).
 
+## 17.6 Opening pre-rendered cinematic is corrupted
+The boot/opening pre-rendered cutscene (THP movie) plays but the video is visibly corrupted. Movie
+playback is a separate subsystem: `src/melee/lb/lbmthp.c` (+ the THP decode / texture-upload path
+and its `OSGetTick` timing). Likely a decode or colour-space/texture-upload gap on the port rather
+than game logic - investigate separately from the alias/crash work. Logged, not investigated.
+
 ## 17.5 Zelda/Sheik respawn spawns BOTH as independent fighters (real gameplay bug, VS)
 Observed in VS: player on Fox kills Zelda. Zelda respawns on the revival platform, and an
 **independent Sheik respawns with her** - two separate controllable characters on the field. Both
