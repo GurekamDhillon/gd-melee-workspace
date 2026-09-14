@@ -1645,6 +1645,15 @@ garbage/maxed values. Likely another results-data source/alias issue in `gmresul
 `gmresultplayer.c` (`MatchEnd`/`ResultsData` fields) - same family as the aliases above. Deliberately
 deferred per the user's request; log only. Evidence: `.omo/evidence/results-hang-css.log` (same run).
 
+## 17.5 Zelda/Sheik respawn spawns BOTH as independent fighters (real gameplay bug, VS)
+Observed in VS: player on Fox kills Zelda. Zelda respawns on the revival platform, and an
+**independent Sheik respawns with her** - two separate controllable characters on the field. Both
+count for kill credit, and the stock only fully respawns after both are killed. Root cause is
+presumably the transform/respawn pairing: Zelda and Sheik share one player slot via the transform,
+and the revival path appears to spawn the paired fighter as a second entity instead of swapping the
+existing one. Related handling exists in `gm_1798.c` `fn_8017A67C` (`if ((u32)(kind - 0x12) <= 1U)`
+special-cases ZKind 0x12/0x13 = Zelda/Sheik). Real bug, VS-relevant; not yet investigated.
+
 ## 17.4 Single-player crashes: animation descriptor holds garbage (Classic + Adventure)
 The same family, twice, both non-VS:
 - Classic: `HSD_WObjAddAnim+0x24`, `read of 0x3A83126F` (= float 0.001 as a pointer), from
