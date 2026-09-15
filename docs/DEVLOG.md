@@ -1657,6 +1657,36 @@ proven cross-symbol; likely = cross-symbol by declaration but order-dependent.
 Uncertain: `gr/grmutecity.c` `(grMc_CarState*)grMc_8049F440` (its `cars` lands on
 `grMc_8049F4B8`); the gr sweep judged it a same-object Ground-union view — verify before fixing.
 
+### 16.4a Fix pass (2026-09-14/15)
+Fixed (all `TARGET_PC`-guarded, original kept under `#else`; every touched TU compiles, relink OK,
+100 s off-screen smoke: **0 FATAL**, retrace 5400):
+- **`ty/toy.c`** — all 16 `_Toy_804A26B8` views (`Toy`/`Toy26B8`/`u16*`/`s32*`/`u8*`) now go through
+  `Toy_804A284C` (u16[302], covering the console range 0x194..0x3EF) and `Toy_804A2AA8`; the five
+  `_Toy_str_TyLight_dat` table views reference the real `_Toy_803FDD**` data. Named `TOY_*` accessors.
+- **`mn/mndiagram3.c`, `mn/mnname.c`, `mn/mnevent.c`** — rewritten against `mnDiagram3_803EEC1C/28/4C`,
+  `mnName_803ED568/574/580/598/600/618` (+ the AutoName/RefuseName string symbols), `mnEvent_803EF7A0`.
+- **`gr/grvenom.c`** — the `(s32*)&grVe_803E5348` spawn-table views now index `grVe_803E5530` (offset +0x1E8).
+- **`if/soundtest.c`** — `un_803F9F28`→`un_803F9FA4` and `un_803FA128`→`un_803FA258`, both confirmed by
+  offset math (the second was only "likely" before).
+- **`gm/gmtoulib.c:1721`** — `lbl_803D9DD0`; **`it/itspawn.c`**, **`it/kinds/itlinkarrow.c`**,
+  **`ft/kinds/ftKirby/ftkirbyspeciallw.c`** — verified already fixed in-tree.
+- **`gr/grmutecity.c`** — verified: `grMc_8049F440` (s32[30], 0x78) and `grMc_8049F4B8` are separate
+  globals and `cars` at +0x78 is a genuine cross-symbol alias; the existing fix is correct.
+
+**False positives — verified against `config/GALE01/symbols.txt`; do NOT "fix" these:**
+- `gm/gm_19EF.c:137,141,563` — `(u8*)&lbl_80479A98 + 0x28` indexed by i lands at 0x2C..0x50, inside the
+  0x78-byte `lbl_80479A98` (its own `x28` jobj array). The sweep's "+0x78 = `lbl_80479B10`" assumed
+  8-byte pointers; guest pointers are 4-byte, so it never leaves the struct.
+- `gm/gm_17EB.c:88,175` — `(UnkAllstarData*)lbl_80472CB0` reads only within the 0x78 buffer. The real
+  0xA0 `UnkAllstarData` is `gm_80473A18` (+0x168), **not** the sweep's `lbl_80472D28` (0x120 bytes of
+  regclear/results *rendering* data). The accessor backs Classic mode; the name is a misnomer, not a bug.
+
+**Newly found, same class, still unfixed (not in the original sweep):**
+- `gr/grzebes.c:612` `(grZe_BubbleState*)grZe_8049F140` (reads `grZe_8049F170` / `grZe_8049F158`) and
+  `:2326` `Vec3* base = grZe_8049F140` indexed `[2]`/`[3]`. `grZe_8049F140` is only 0x18 bytes.
+- `gr/grvenom.c` other-symbol views: `base[xC8+14]` → `grVe_803E5380` (+0x38) at
+  1433/1465/1479/1487/1523/1536/1626, and `base[idx0+0xD6]` → `grVe_803E56A0` (+0x358) at 1488/1524/1537.
+
 # 18. Card CSS-return hang — FIXED and verified in-game
 `lb_8001CDB4`'s spin (`while (_p(xC) || _p(x10)) lb_8001CC84()`) polled the card state without
 issuing any shim call, so the port's deferred-completion queue never pumped and the CARD write
