@@ -1,11 +1,47 @@
 # DEVLOG — Melee PC port
 
-> **Update, 2026-09-12 ~18:50 PDT (Claude Code session).** Boot now reaches the game's own
-> startup banner. Read section 5 at the bottom first — it supersedes section 3, corrects two
-> claims in sections 1 and 2, and records the fix for the current blocker. Everything above it is
-> the original 18:10 handoff, left as written.
+> **Handoff, current as of 2026-09-14.** The port boots, renders, plays VS matches, has working
+> audio with effects, memory-card saves, GameCube-adapter input, hard 60 Hz pacing, and plays the
+> pre-rendered cutscenes. This banner is the orientation; everything below is the running log,
+> oldest first, and §8 onward supersedes the original 2026-09-12 handoff that follows it.
+>
+> **Read in this order.** `_research/port-dev-quickref.md` first (build/run commands, endianness
+> contract, the conventions that have bitten people). Then, for whatever you are touching:
+>
+> | Area | Where |
+> |---|---|
+> | Build/run/relink, env vars | `_research/port-dev-quickref.md` |
+> | Endianness (gwtool + `gw.h`) | quickref, plus the header comment of `pc/platform/gw.h` |
+> | Boot gates, SDK behaviour | `_research/melee-boot.md`, `_research/console-invariants.md` |
+> | Shim inventory + prototypes | `_research/shim_surface.md` |
+> | Audio (AX mixer, aux buses, AXFX) | §19 |
+> | Frame pacing / CPU cost | §20, and §13.1 for the original vsync fix |
+> | THP cutscene decode | §21 |
+> | Memory cards | §13.2, §18 |
+> | Input (adapter, keyboard, pad scripts) | §13.4 |
+> | Bug classes worth knowing before editing game source | §15, §16 (esp. §16.1) |
+> | Known-bad things deliberately left alone | §17 |
+>
+> **The two bug classes that keep recurring**, both worth internalising before editing game source:
+> the **GC-layout alias view** (§16.1 — code casts a pointer and indexes past a global assuming the
+> console's contiguous symbol layout; on PC those are separate symbols, so it reads and writes
+> unrelated memory), and **shim↔game endianness boundary violations** (quickref — any field a shim
+> writes that game code can read must go through a `gw_*` accessor).
+>
+> **Open, known, not fixed:** §17 lists them. The live ones are the Zelda/Sheik double-respawn
+> (§17.5, real VS bug), corrupted results-screen per-player stats (§17.2, deferred by request),
+> the two single-player animation-descriptor crashes (§17.4), and a Dawn/WebGPU backend crash that
+> is not game logic (§17.3). §16.3 and §16.4 list alias-view and audit findings that are identified
+> but not yet fixed.
+>
+> **Not started:** netplay, replays, launcher/packaging, widescreen/upscaling, high-framerate sim.
 
 ## Original handoff, 2026-09-12 ~18:10 PDT
+
+> **Stale — kept for the record.** This was written when the port had just linked for the first
+> time and had not yet booted to a frame. Its environment notes (§0) are still broadly right but
+> the quickref supersedes them; its status and next-steps are long since overtaken. §5 corrects
+> two specific claims in §1 and §2.
 
 **Milestone this session: the port now links and runs.** `_build/melee-pc.exe` launches, brings up
 Aurora (D3D12 backend, 1280x960), maps MEM1 at 0x80000000, loads the disc FST, and boots far enough
@@ -1629,6 +1665,316 @@ pinned forever with `MELEE_CARD=1`. Fixed by adding `wait_idle()` to the spin (s
 waits in `lbcardnew.c`). Verified in-game: Mario ditto on Yoshi's Story -> results -> back to CSS,
 with the card enabled, completes cleanly.
 
+# 19. Audio pass (2026-09-14) — mixer, aux effects, output pacing
+
+A broad pass over the audio path after the user reported it "still not perfect, lots of issues".
+Everything is in `pc/platform/shim_ax.c` (rewritten) plus window-placement support in `main.c`; no
+game-source changes.
+
+## 19.1 The stream tick: a `>=` where the hardware uses an exact match (the audible one)
+
+`HSD_Synth_8038ADD0` (synth.c:1289) plays the `.hps` stream out of a three-block ARAM ring. It only
+moves `pb.addr.endAddress` onto a block **after** it has seen the voice's current address arrive
+there, while `loopAddress` already points at the *next* block. So for up to one AX frame after every
+block transition the end address sits a whole block *behind* the cursor.
+
+The shim tested `cur_addr >= end_addr`, so during that window the test fired on **every sample**:
+the voice re-looped once per sample for up to 5 ms. Blocks are ~3.6 s and two transitions in three
+go forwards, so music produced a tick roughly every 3.6 s. Fixed by testing an exact match with a
+one-ADPCM-frame (16-nibble) tolerance (`gw_ax_at_end`), which is what the hardware decoder does and
+why the game's scheme works at all. The same test now also covers the PCM16/PCM8 formats.
+
+## 19.2 Output pacing: no cushion at all
+
+`gw_ax_frame_tick` generated sub-frames from the wall clock, so production averaged exactly real
+time with **zero** latency cushion in front of the SDL callback. Any frame jitter emptied the ring
+and the callback padded silence — a continuous crackle — and nothing primed the buffer at startup.
+
+Generation is now driven by the ring's fill level, i.e. by the audio device clock, which is the
+clock the DSP's 5 ms interrupt runs on; it self-corrects against every source of drift. Measured
+over the same scripted 60 s menu run:
+
+| target cushion | underruns |
+|---|---|
+| 35 ms | 321, still climbing in steady state |
+| 60 ms (new default) | 14, all during boot; **flat zero** thereafter |
+
+Tunable with `MELEE_AUDIO_LATENCY_MS`. The remaining boot/scene-load underruns are the game thread
+blocking in synchronous DVD/ARQ reads for longer than any buffer covers, not a mixer problem.
+Without a device the wall clock still drives the synth callback, so the game's audio state machine
+keeps running either way. The ring also gained proper release/acquire barriers — `volatile` alone
+does not order the `memcpy` against the cursor store.
+
+## 19.3 The aux buses were being thrown away
+
+`AXPBMIX.vAuxA*`/`vAuxB*` were never read, so every voice's reverb and echo send was dropped. Melee
+sends heavily to both (`HSD_SynthSFXUpdateMix`, synth.c:1091-1113), which cost both the effects
+themselves and a chunk of the level balance.
+
+Both buses are now real, laid out exactly like the DSP's (`AXAux.c`: L/R/S contiguous, 160 samples
+each), and the AXFX processors are implemented natively:
+
+- **AUX A = AXFX reverb (std)** — a faithful C port of `reverb_std.c` `HandleReverb`: two feedback
+  combs into two Schroeder all-passes with a one-pole damping filter between them, per channel,
+  plus the pre-delay line (including its wrap-one-element-early quirk, which sets the real
+  pre-delay length).
+- **AUX B = AXFX delay** — `delay.c` `AXFXDelayCallback`.
+
+The SDK's own sources are in `extern/dolphin/src/dolphin/axfx/` but **cannot** be built through the
+gwtool pipeline: their inner loops are MWERKS `asm` blocks, which clang's PowerPC front end will
+not accept. Hence the native reimplementation. Parameters are read out of the game-memory `AXFX_*`
+struct, and the log confirms the game's own settings arrive intact:
+`reverb-std (col=0.500 time=1.880 mix=1.000 damp=0.640 pre=0.0020)` and
+`delay (260/310/6 ms, fb 24/24/0%, out 35/35/0%)` — matching `lbaudio_ax.c:2126,2134` and
+`axdriver.c:1128-1149`. Reverb-hi and chorus stay unimplemented and now return **0** from Init so
+axdriver leaves the bus unregistered, rather than returning 1 and leaving a live send feeding a
+processor that is not there. An aux bus with no callback is dropped, as the DSP drops it.
+
+## 19.4 The music slider was turning the sound effects down
+
+`shim_misc.c` tracks `AISetStreamVolLeft/Right` and the mixer applied them as a master gain. On
+hardware that call governs the AI's own DVD-streaming channel; Melee calls it from
+`HSD_SynthStreamSetVolume` with the **music** volume (`HSD_Synth_804D6030`). This port plays the
+stream through ordinary AX voices, and 804D6030 is already folded into every node's
+`ve.currentVolume` (synth.c:986, :1345) — so the master gain both double-attenuated the music and
+dragged every sound effect down with the music slider. The AI values are now tracked for logging
+only. Harmless at the default (255), wrong as soon as the user touches the music volume.
+
+## 19.5 Mixer quality
+
+- **Linear interpolation** replaces the zero-order hold. The old resampler kept only the last
+  decoded sample and *discarded* samples when pitching up, which aliases on every pitched voice —
+  most of them. AX's own SRC interpolates (`AX_SRC_TYPE_LINEAR`).
+- **ADPCM framing** now finds the frame header by nibble alignment (`cur_addr & 0xF`), as the
+  hardware does, instead of a `samples_left` counter. Equivalent for a well-formed stream but
+  self-resynchronising after an arbitrary seek — which `AXSetVoiceCurrentAddr` does on every
+  stream block.
+- **All nine AXPBMIX targets** are read (was: L and R only), with their `vDelta*` ramps.
+- **De-pop**: a stopping voice's contribution used to step to zero in one sample. Its last value is
+  now ramped out across the following sub-frame, as AX does through `AXPBDPOP`.
+- **ITD** is implemented (was a no-op): up to a 31-sample independent delay on the main L/R sends,
+  stepped one sample per sub-frame towards the target. `AXSetVoiceItdOn` now also sets
+  `pb.itd.flag`, which is what `HSD_SynthSFXUpdateMix` tests to choose the interpolating path.
+- `pb.ve.currentVolume` is written back alongside `pb.state` and `pb.addr.currentAddress`.
+- The interpolation product needed 64 bits: `(next - prev) * frac` reaches 65535*65535, which
+  overflows `int32`.
+
+## 19.6 Tooling
+
+- `MELEE_AUDIO_DUMP=<path>` writes the final mix to a 32 kHz stereo WAV (header refreshed about
+  once a second, so it stays playable after a crash). `MELEE_AUDIO_NOFX=1` bypasses the aux
+  processors.
+- `main.c` gained `MELEE_WINDOW_X/Y/W/H`. Non-negative positions go through `AuroraConfig`, so the
+  window never flashes on the wrong display; negative ones (a monitor left of or above the primary)
+  are applied right after `aurora_initialize`, because Aurora reads a negative `windowPosX/Y` as
+  "undefined" and centres the window (`window.cpp:342`). Parking it at 30000,30000 gives an
+  effectively headless run, which is how this pass was verified.
+- `MELEE_WINDOW_HIDE=1` exists but **does not work**: a hidden window makes the D3D11 swapchain
+  present block forever and the frame loop never leaves `retrace=0`. Use off-screen placement.
+
+## 19.7 Verification
+
+Scripted 110 s menu run, window off-screen, `MELEE_AUDIO_DUMP` on: **0 FATAL**, 60 Hz pacing,
+underruns flat at 526 for the final 36 s (all accrued during boot and scene loads), clipping
+0.0011% of samples, peak 32768, no dropouts in the capture. Both AXFX processors initialise with
+the game's own parameters.
+
+Note for future runs: with no pad script the port sits on the opening cinematic, where the game
+requests **no** voices at all — `AXAcquireVoice` is never called and the mixer is legitimately
+silent. Always drive audio tests with `MELEE_PAD_SCRIPT` (e.g. `_build/audio_test_script.txt`).
+
+Not done: reverb-hi and chorus (Melee uses neither); the surround bus is mixed but has no output
+path; the aux return is summed in the same sub-frame rather than one behind as the DSP's triple
+buffer does.
+
+# 20. Performance pass (2026-09-14) — the frame pacer was spinning a full core
+
+Requested: "work on performance." The existing `MELEE_PROFILE=1` frame profiler
+(`pc/platform/shim_vi.c`, §12 note "no profiler exists yet" is stale — one was added in the §13.1
+pacing fix session) already showed a hard 60 Hz frame with excellent percentiles, so this pass
+measured rather than guessed, per the §12 method note.
+
+## 20.1 What the profiler + per-thread CPU accounting showed
+
+A 240 s idle run (`MELEE_PROFILE=1`, no input, off-screen): frame timing was already excellent —
+`p50=16.67 p95=16.97-17.02 p99=17.04-17.15`, histogram entirely in the `<17.5` bucket. The split
+told a different story: `game=0.1-0.2 present=16.5 events=0.01 begin=0.03`. "game" (the game's own
+simulation + FIFO writes between ticks) and the GPU submit together cost a fraction of a
+millisecond; "present" — which wraps `gw_pace_field()`'s wait for the 60 Hz boundary plus the
+actual submit — accounted for essentially the whole frame.
+
+Cross-checked against real OS accounting (`Get-Process` per-thread `TotalProcessorTime` over a 10 s
+window, not just the internal profiler's math): the process burned **0.96 of a full CPU core**,
+continuously, with one thread alone responsible for **8.91 of those 10 CPU-seconds (89%)** — the
+game thread. That thread does almost no real work per frame; it was spending ~16 ms of every
+16.67 ms frame in a tight `while` loop calling `YieldProcessor()`, added by the §13.1 pacing fix to
+hold the game to 60 Hz against a free-running VRR present. `YieldProcessor()` (a `pause`
+instruction) is a spin hint, not a yield — the thread never leaves the run queue, so the OS
+scheduler cannot idle that core. Wasted heat, battery and fan noise for zero smoothness benefit,
+and on a machine with fewer than 20 logical cores (this dev box) it can cost the render worker
+thread, or any other app running alongside the game, real cycles.
+
+## 20.2 Fix: sleep for the bulk of the wait, spin only the final ~3 ms
+
+`gw_pace_field()` (`shim_vi.c`) now sleeps through most of the remaining time and only spins for
+precision once the boundary is close:
+
+```c
+if (target - now > GW_PACE_SPIN_TICKS) {   /* > ~3 ms remaining */
+  Sleep(1);
+} else {
+  YieldProcessor();                        /* final stretch: spin for exact timing */
+}
+```
+
+`Sleep(1)` on stock Windows timer resolution (~15.6 ms default) would sleep far longer than 1 ms
+and blow the frame budget, so the process now calls `timeBeginPeriod(1)` once (lazily, on the first
+pace call) to get ~1-2 ms wakeups; Windows resets a process's timer-resolution request
+automatically on exit, so there is no matching `timeEndPeriod`. `winmm.lib` was added to
+`_build/melee_link_libs.rsp` for it (same hand-maintained-`.rsp` pattern as the GC-adapter's
+`hid.lib`/`winusb.lib`/`setupapi.lib`, noted in §11). The periodic pump of alarms/deferred work
+(`gw_os_run_alarms`/`gw_run_deferred`) keeps the exact same ~1 ms cadence it had before, just
+checked after each wake instead of after each spin iteration — no behavior change there.
+
+`GW_PACE_SPIN_TICKS` = 3 ms, sized comfortably above `Sleep(1)`'s typical overshoot under load so
+the spin-tail absorbs the imprecision and the boundary is still hit exactly, same as before.
+
+Audited the rest of `pc/platform` for the same bug class (a `while`/`for(;;)` loop with no blocking
+wait): none found. The watchdog thread already sleeps 100 ms per poll; the two other unbounded
+loops (`gw_runtime.c`'s watchdog body, `shim_dvd.c`'s FST path walk) are a periodic sleep and a
+bounded tree walk respectively, not spins.
+
+## 20.3 Verified
+
+- **CPU, idle title screen, 10 s window:** 0.96 cores -> **0.23 cores** (process total); the
+  spinning thread's share: 89% of a core -> **15.5%** of a core.
+- **Frame timing, 240 s idle run, post-fix:** `p50=16.66-16.67 p95=16.93-16.96 p99=16.99-17.10`,
+  histogram still entirely in `<17.5` at steady state — as good as before the change, marginally
+  better in the tail. Zero FATAL, zero new empty ticks, wall-clock `present` unchanged (~16.5 ms,
+  as it must be — only the CPU spent during that wall time dropped, not the wait itself).
+- **Frame timing under real rendering load** (90 s run via the known-safe
+  `audio_test_script.txt` pad script, into the menu with character models rendering — 151 frames
+  with nonzero envelope-blend counts confirm skinned meshes were actually drawn):
+  `p50=16.66 p95=17.1-17.4 p99=17.6-17.7 max<18.6`, zero FATAL, zero empty ticks, `game` cost still
+  under 0.6 ms. The wider tail here is real GPU/game variance under load, comfortably inside one
+  frame period either way.
+- Audio unaffected: device opens at the same 60 ms target latency, no underruns, no ordering
+  change (`gw_ax_frame_tick` is still called from the same point in `gw_frame_tick`).
+
+One boot-time outlier remains and is unrelated to this change: the very first profiled frame after
+disc load shows `game=3292 ms` (a one-time FST/boot stall, not `present`/pacing) — present before
+this fix too, unaffected by it, and out of scope for a pacing change.
+
+Not investigated this pass: GPU-bound cost in a real 4-player VS match (menu load is the heaviest
+rendering scene actually profiled here); reaching one unattended needs either a much longer idle
+wait for the attract-mode demo timer or CSS/SSS pad-script navigation, both deferred to keep this
+pass fast and low-risk.
+
+# 21. THP video decode ported — the cutscenes play for real (2026-09-14)
+
+§17.6 left THP decode unimplemented and the movies showing a placeholder. The decoder is now
+ported and every THP clip plays correctly, including the opening cinematic, which is enabled by
+default again.
+
+## 21.1 What was blocking it
+
+`extern/dolphin/src/dolphin/thp/THPDec.c` is a complete, matching decompilation of the SDK's THP
+decoder — but ~37 of its inner loops are MWERKS inline PowerPC `asm`, which clang's PPC front end
+refuses outright, so the TU could not go through gwtool at all. Six functions were affected:
+
+| Function | What the assembly was |
+|---|---|
+| `__THPInverseDCTNoYPos`, `__THPInverseDCTY8` | paired-single (Gekko SIMD) AAN float IDCT + tiled store |
+| `__THPHuffDecodeTab` | one Huffman symbol, 5-bit quick table + maxCode fallback |
+| `__THPHuffDecodeDCTCompY/U/V` | a full baseline-JPEG block: DC predictor, AC run/size loop |
+| `THPInit` | locked-cache setup, plus GQR configuration |
+
+## 21.2 The port
+
+Each is now a `TARGET_PC` branch in `THPDec.c` carrying a plain-C implementation, with the
+original assembly kept under `#else` so the decomp still builds for its real target. These are not
+instruction-by-instruction transliterations — they are the standard algorithms the assembly
+implements, which is both far less error-prone and much shorter (~300 lines total):
+
+- **IDCT.** This is libjpeg's `jidctflt` AAN float IDCT. `__THPReadQuantizationTable` pre-scales
+  the quantisation tables by `__THPAANScaleFactor[row] * __THPAANScaleFactor[col]` and deliberately
+  omits the 1/8 — which is exactly the AAN setup — and the assembly's output stage supplies the
+  rest: a bias of 1024.0 folded into the even half of the column butterfly, and a store through
+  `GQR6 = 0x3D043D04`, i.e. u8 with store scale 2^-3. That is "divide by 8, clamp to 0..255", and
+  the bias then lands as the +128 JPEG level shift. Both collapse into one `__THPStoreSample`.
+  The assembly's extra zero-coefficient shortcut tiers (`_quarterIDCT`/`_halfIDCT`, picked by how
+  many coefficients in a row are zero) are pure optimisations; they became a single all-AC-zero
+  fast path.
+- **Output layout is unchanged:** 8x4 `GX_TF_I8` tiles, 32 bytes each, `Gwid` pixels per row, so a
+  tile row is `Gwid*4` bytes and `__THPInverseDCTY8` simply starts `Gwid*8` lower.
+- **Huffman.** Baseline JPEG, over the same 5-bit `quick`/`increment` lookup and `maxCode`/`valPtr`
+  fallback that `__THPPrepBitStream` builds. The bit reader keeps the original state exactly
+  (`cnt` a 1-based cursor into the big-endian word `currByte`, so `33 - cnt` bits remain), with
+  `__THPSlw`/`__THPSrw` reproducing PowerPC's "shift count with bit 5 set yields zero" where C
+  would be UB. All stream loads stay ordinary C loads so gwtool byte-swaps them, which is what
+  makes the big-endian bitstream read correctly without any manual swapping.
+- **`THPInit`.** Two problems at once: it addresses the locked cache at `0xE0000000`, and its
+  `__THPLC` setup is a **GC-layout alias view** of the §16.1 class — it writes `work672[]` past the
+  end of `__THPLC` expecting `__THPLCWork672` to be the next symbol in memory. The PC branch skips
+  both and points `__THPLCWork672[0..2]` at a static buffer, sized for 672-wide (Y is `width*16`
+  bytes per MCU row, U and V `(width/2)*8` each).
+
+Supporting shims in `shim_misc.c`: `gw_DCZeroRange` (the one cache op with a real side effect —
+`dcbz` establishes zeroed lines, and `THPVideoDecode` relies on it to clear its 0x920-byte state),
+plus `gw_LCStoreData` (a memcpy, since the "locked cache" is now ordinary memory) and
+`gw_LCQueueWait` (a no-op). The THP stubs are gone from `shim_dev.c`; `THPDec.c` is in
+`files.txt` and `melee_link_objects.rsp`.
+
+## 21.3 The opening movie plays again by default
+
+`gw_OSGetResetCode` had been hardcoded since the port's first commit to `0x80000000`, the
+"rebooted from the IPL" code, which makes `gmmain_lib.c` set `skip_intro` and `bootOnLoad` jump
+straight to `GM_TITLE`. That was the right call while THP drew garbage. It now reports a cold boot
+— which is what launching the executable actually is — so `MvOpen.mth` plays, Start-skippable
+exactly as on console. `MELEE_SKIP_INTRO=1` restores straight-to-title.
+
+The `MELEE_FORCE_INTRO` knob added earlier in the session is gone, replaced by its inverse.
+
+## 21.4 Verified
+
+Full opening cinematic, off-screen capture, memory card enabled: plays start to finish, hands off
+to the title screen, and attract mode follows with a live 4-player demo. **0 FATAL.** Frame pacing
+holds at `p50=16.67 p95≈18.0 p99≈18.7` throughout playback.
+
+Picture quality checked against content that would expose any decoder error: the sky/lens-flare
+opening shot (smooth gradients — banding or DC drift would show), the "Nintendo's All-Stars in"
+title card (crisp white-on-black text — any high-frequency coefficient error would ring or smear),
+the Link sage-medallion card (fine engraving detail, correct skin/tunic/Triforce colours), and
+Pikachu's Thunder (high-contrast lightning over cloud). All clean, correct colours, no tiling
+seams, no chroma misregistration.
+
+Cost: steady-state `game` time during playback is **under 1 ms per frame** (640x480), so the scalar
+C decoder is comfortably fast enough; the profiler's remaining spikes attribute to disc I/O and
+window-event pumping, not decode. The one-time ~700 ms spike at movie start is the file load.
+
+Also fixed as a consequence: the same decoder backs the How-To-Play video, the Vault movies, and
+the post-game "Congrats" still (`gm_1A9B.c` via `lb_01F8.c`), all of which previously drew
+uninitialised heap. Those paths are not individually exercised here, but they share this code.
+
+## 21.5 Why port the 2001 decoder rather than write a modern one
+
+THP video is just baseline JPEG frames (intra-only, 4:2:0) in a simple container, so "porting the
+decoder" meant porting a JPEG decoder — the same AAN IDCT maths any modern decoder uses. Only the
+two asm-only inner loops were missing; the container parsing, frame scheduling, disc streaming and
+GX upload were already real C in the decomp and already worked.
+
+The alternative — transcoding the disc's `.thp` files to a modern codec and writing a new player —
+was worse on every axis that matters here: it breaks the project's "bring your own ISO, read it
+directly" model by requiring a conversion step and somewhere to put the output, it adds a large
+third-party codec dependency to a 32-bit build, and it would still have to reproduce the game's
+own movie state machine (`lbmthp.c`'s alarm-driven scheduling and `HSD_DevComRequest` streaming).
+
+This does not cost anything for custom cutscenes later. It is strictly additive: the pipeline from
+compressed frame → Y/U/V planes → GX tiles → screen → the game's scene state machine now works end
+to end, which is the hard game-specific part. A modern codec can be dropped in later by filling the
+same three planes and reusing all of it. And custom cutscenes are possible today by encoding to
+THP, which is a documented format with existing encoders.
+
 # 17. Documented crashes (not to fix)
 
 ## 17.3 GPU-backend crash in webgpu_dawn.dll (renderer, not game logic)
@@ -1645,11 +1991,42 @@ garbage/maxed values. Likely another results-data source/alias issue in `gmresul
 `gmresultplayer.c` (`MatchEnd`/`ResultsData` fields) - same family as the aliases above. Deliberately
 deferred per the user's request; log only. Evidence: `.omo/evidence/results-hang-css.log` (same run).
 
-## 17.6 Opening pre-rendered cinematic is corrupted
-The boot/opening pre-rendered cutscene (THP movie) plays but the video is visibly corrupted. Movie
-playback is a separate subsystem: `src/melee/lb/lbmthp.c` (+ the THP decode / texture-upload path
-and its `OSGetTick` timing). Likely a decode or colour-space/texture-upload gap on the port rather
-than game logic - investigate separately from the alias/crash work. Logged, not investigated.
+## 17.6 Opening pre-rendered cinematic is corrupted - FIXED (2026-09-14, see section 21)
+Root cause: THP video decode is not implemented on this port. `pc/platform/shim_dev.c`'s
+`gw_THPVideoDecode`/`gw_THPDec_80331340`/`gw_THPDec_803313D0` are stubs that do nothing (the real
+decoder, `extern/dolphin/src/dolphin/thp/THPDec.c`, is ~2800 lines with ~37 inline PPC `asm` blocks
+in its DCT/Huffman/MCU decode path - the same class of blocker as the AXFX reverb/delay port in the
+audio pass, clang's PPC front end will not accept `asm`). Both THP call sites
+(`lbmthp.c`'s `fn_8001EF5C`, the multi-frame player used for the boot intro/How-To-Play/Vault
+movies, and `lb_01F8.c`'s `lbMthp8001FAA0`, the single-frame decoder used for the post-game
+"Congrats" still) call the stub unconditionally and use its result with **no success check**, so
+the Y/U/V planes they hand to GX as three `GX_TF_I8` textures are never written by decode at all -
+they display whatever `HSD_MemAlloc` handed back. Confirmed empirically (`MELEE_FORCE_INTRO=1`,
+below): a flat **solid green** frame for the whole clip, which is exactly what the port's (correct)
+YCbCr->RGB TEV conversion produces from all-zero planes (Y=Cb=Cr=0 -> R=0, G=~135, B=0 by the
+standard BT.601 matrix) - i.e. the color-conversion path itself is fine; only the source content is
+missing. That rules out the "colour-space/texture-upload gap" guess this note originally made.
+
+**Partial fix** (`src/melee/lb/lbmthp.c` `fn_8001ECF4`, `src/melee/lb/lb_01F8.c`
+`lbMthp8001FAA0`, both `TARGET_PC`-guarded): seed the Y/U/V planes with a flat black frame
+(Y=0x10, Cb=Cr=0x80) once, right after allocation. Since nothing else ever writes them, every THP
+clip now displays as a stable black frame instead of solid green/garbage. This does **not** make
+movies play - it converts "visibly corrupted" into "plays as black" - real playback needs the
+~2800-line decoder ported by hand (large, not attempted here).
+
+**The boot-time opening (`MvOpen.mth`) is not reachable in normal play anyway**: `gw_OSGetResetCode`
+(`shim_os.c`) has hardcoded `skip_intro = true` since the port's first commit, so `bootOnLoad`
+(`gmboot.c`) always jumps straight to `GM_TITLE` and `GM_OPENING_MV` (`gmopening.c`, which is the
+only caller of `lbMthp_8001F410("MvOpen.mth", ...)`) never runs. A normal user never sees this path
+at all, corrupted or otherwise - confirmed with an off-screen boot capture (`PrintWindow`, no window
+ever shown): title renders correctly, no THP attempt in the log. Added `MELEE_FORCE_INTRO=1` (same
+shim) to force it on for testing without editing source; verified the fix through it (screenshots
+in session, not committed - green before, black after, matching the hand-computed matrix exactly).
+Still corrupted/black-instead-of-playing, reachable in normal play without the env var: the
+How-To-Play video and Vault movies (`gmhowto.c`, `mngallery.c`) and the post-game "Congrats" still
+(`gm_1A9B.c`), all through the same unchecked-decode path - not individually verified in-game this
+session (menu navigation to reach them was judged not worth the risk for this pass; the fix is the
+same code path already confirmed via the forced intro).
 
 ## 17.5 Zelda/Sheik respawn spawns BOTH as independent fighters (real gameplay bug, VS)
 Observed in VS: player on Fox kills Zelda. Zelda respawns on the revival platform, and an
