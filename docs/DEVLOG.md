@@ -2278,3 +2278,24 @@ A mod can now add floating, stand-on **platforms**.
 - Character names use the same table as the port loader, so `mario`→8, `fox`→2, `zelda`→18 resolve
   identically on both sides.
 
+# 28. In-game verification pass (2026-09-15)
+
+Driven headlessly with `MELEE_PAD_SCRIPT` + `PrintWindow` captures (window parked off every monitor).
+Harness: `_build/tt_script.txt` (boot → title → 1-P Mode → Stadium → Target Test CSS).
+
+**Verified in-game**
+- The Target Test mod loader runs: `gw: targettest: loaded 1 mods from C:\gdm\_build\mods\targettest`.
+- The Target Test CSS renders, and the **C-stick CSS toggle works end-to-end**: it shows
+  `C-STICK: CAMERA`, and pressing **L** flips it to `C-STICK: SMASH` (captured).
+- No crash across the whole navigation (boot → title → 1-P Mode → Stadium → Target Test CSS), 0 FATAL.
+
+**Not verified — needs hands-on play**
+- Entering the Target Test match itself, so **target placement, platform stand-on collision and the
+  platform box visuals are still unconfirmed**. The script reaches the Target Test character-select
+  screen reliably, but the roster cursor could not be moved onto a character via scripted input
+  (DPad, analog stick and repeated A all failed to select), so the match never started.
+- Priority for the first hands-on test: pick Mario, enter Target Test, and check (a) three targets at
+  `0 30 0` / `45 60 0` / `-45 60 0`, (b) the two platform boxes at `0 40 0` and `-50 70 0` are visible
+  and standable. If the boxes do not render, the map-GObj-0 attach assumption in §27 is wrong (no
+  crash expected).
+

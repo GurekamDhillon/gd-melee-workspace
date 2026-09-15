@@ -1,0 +1,32 @@
+# Drive to Target Test: wait for title -> Start -> 1-P Mode -> Down x2 -> Stadium -> Target Test -> CSS.
+# Format: <frames> <buttons_hex> [stickX stickY [triggerL triggerR]]
+# A=0x0100 Start=0x1000 Down=0x0004
+1200 0000
+8   1000
+240 0000
+8   1000
+240 0000
+8   0100
+240 0000
+8   0004
+150 0000
+8   0004
+150 0000
+8   0100
+300 0000
+8   0100
+420 0000
+8   0100
+240 0000
+8   1000
+900 0000
+8   0002
+90  0000
+8   0002
+90  0000
+8   0002
+90  0000
+8   0100
+240 0000
+8   1000
+3000 0000
