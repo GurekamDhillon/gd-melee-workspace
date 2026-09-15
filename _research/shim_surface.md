@@ -1,6 +1,6 @@
 # Shim surface: every symbol the melee game objects need from outside
 
-335 external symbols. `gw_`-prefixed ones must be provided by native shims;
+332 external symbols. `gw_`-prefixed ones must be provided by native shims;
 unprefixed ones (_alldiv, _chkstk, _fltused, memcpy, memset) come from the MSVC CRT.
 
 ## GX (101)
@@ -900,6 +900,33 @@ unprefixed ones (_alldiv, _chkstk, _fltused, memcpy, memset) come from the MSVC 
   - IR: `void ()`
   - C: `void VIWaitForRetrace(void);`  (extern/dolphin/include\dolphin\vi\vifuncs.h:15)
 
+## CACHE (8)
+
+- `gw_DCFlushRange`
+  - IR: `void (ptr, i32)`
+  - C: `void DCFlushRange(void* addr, u32 nBytes);`  (extern/dolphin/include\dolphin\os\OSCache.h:7)
+- `gw_DCInvalidateRange`
+  - IR: `void (ptr, i32)`
+  - C: `void DCInvalidateRange(void* addr, u32 nBytes);`  (extern/dolphin/include\dolphin\os\OSCache.h:6)
+- `gw_DCStoreRange`
+  - IR: `void (ptr, i32)`
+  - C: `void DCStoreRange(void* addr, u32 nBytes);`  (extern/dolphin/include\dolphin\os\OSCache.h:8)
+- `gw_DCZeroRange`
+  - IR: `void (ptr, i32)`
+  - C: `void DCZeroRange(void* addr, u32 nBytes);`  (extern/dolphin/include\dolphin\os\OSCache.h:11)
+- `gw_LCQueueWait`
+  - IR: `void (i32)`
+  - C: `void LCQueueWait(u32 len);`  (extern/dolphin/include\dolphin\os\OSCache.h:26)
+- `gw_LCStoreData`
+  - IR: `i32 (ptr, ptr, i32)`
+  - C: `u32 LCStoreData(void* destAddr, void* srcAddr, u32 nBytes);`  (extern/dolphin/include\dolphin\os\OSCache.h:24)
+- `gw_PPCMfmsr`
+  - IR: `i32 (...)`
+  - C: `u32 PPCMfmsr();`  (extern/dolphin/include\dolphin\base\PPCArch.h:476)
+- `gw_PPCMtmsr`
+  - IR: `void (i32)`
+  - C: `void PPCMtmsr(u32 newMSR);`  (extern/dolphin/include\dolphin\base\PPCArch.h:477)
+
 ## DVD (8)
 
 - `gw_DVDCheckDisk`
@@ -995,45 +1022,6 @@ unprefixed ones (_alldiv, _chkstk, _fltused, memcpy, memset) come from the MSVC 
 - `gw_FIOQuery`
   - IR: `i32 ()`
   - C: `int FIOQuery(void);`  (extern/dolphin/include\dolphin\mcc.h:128)
-
-## THP (6)
-
-- `gw_THPDec_8032F8D4`
-  - IR: `i32 (ptr, ptr)`
-  - C: `s32 THPDec_8032F8D4(u8* data, THPDec_8032FD40_Data* out);`  (extern/dolphin/include\dolphin\thp\thp.h:88)
-- `gw_THPDec_8032FD40`
-  - IR: `i32 (ptr, i16)`
-  - C: `s32 THPDec_8032FD40(THPDec_8032FD40_Data* arg0, u16 arg1);`  (extern/dolphin/include\dolphin\thp\thp.h:87)
-- `gw_THPDec_80331340`
-  - IR: `void (i32, ptr, ptr, ptr)`
-  - C: `void THPDec_80331340(s32, void*, void*, void*);`  (extern/dolphin/include\dolphin\thp\thp.h:90)
-- `gw_THPDec_803313D0`
-  - IR: `void (i32, ptr, ptr, ptr, i32)`
-  - C: `void THPDec_803313D0(s32, void*, void*, void*, u32);`  (extern/dolphin/include\dolphin\thp\thp.h:91)
-- `gw_THPInit`
-  - IR: `void ()`
-  - C: `void THPInit(void);`  (extern/dolphin/include\dolphin\thp\thp.h:93)
-- `gw_THPVideoDecode`
-  - IR: `i32 (ptr, ptr, ptr, ptr, ptr)`
-  - C: `s32 THPVideoDecode(void* file, void* tileY, void* tileU, void* tileV, void* work);`  (extern/dolphin/include\dolphin\thp\thp.h:85)
-
-## CACHE (5)
-
-- `gw_DCFlushRange`
-  - IR: `void (ptr, i32)`
-  - C: `void DCFlushRange(void* addr, u32 nBytes);`  (extern/dolphin/include\dolphin\os\OSCache.h:7)
-- `gw_DCInvalidateRange`
-  - IR: `void (ptr, i32)`
-  - C: `void DCInvalidateRange(void* addr, u32 nBytes);`  (extern/dolphin/include\dolphin\os\OSCache.h:6)
-- `gw_DCStoreRange`
-  - IR: `void (ptr, i32)`
-  - C: `void DCStoreRange(void* addr, u32 nBytes);`  (extern/dolphin/include\dolphin\os\OSCache.h:8)
-- `gw_PPCMfmsr`
-  - IR: `i32 (...)`
-  - C: `u32 PPCMfmsr();`  (extern/dolphin/include\dolphin\base\PPCArch.h:476)
-- `gw_PPCMtmsr`
-  - IR: `void (i32)`
-  - C: `void PPCMtmsr(u32 newMSR);`  (extern/dolphin/include\dolphin\base\PPCArch.h:477)
 
 ## AI (4)
 
