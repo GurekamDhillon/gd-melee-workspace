@@ -2,8 +2,12 @@
 # Phase 1: reuses Mario's vanilla Target Test stage geometry (GrTMr.dat);
 # only the targets move. Coordinates are world/console stage units
 # (X right, Y up, Z depth).
+# Phase 2: `platform <cx> <cy> <cz> <w> <d>` adds a floating platform with its
+# top surface at cy, X extent w and Z depth d (drop-through, stand-on).
 name Mario 3-target sample
 character mario
 target 0 30 0
 target 45 60 0
 target -45 60 0
+platform 0 40 0 60 40
+platform -50 70 0 50 30

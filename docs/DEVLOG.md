@@ -2243,3 +2243,38 @@ Target Test stage geometry and only moves the targets.
 and re-running `mpLibLoad` at stage load (collision is a 2D XY line DB with no append API — see the
 collision notes), plus the Blender round-trip exporter.
 
+# 27. Custom Break the Targets geometry + Blender authoring — Phase C (2026-09-15)
+
+A mod can now add floating, stand-on **platforms**.
+
+- **Format** — `platform <cx> <cy> <cz> <w> <d>`: top surface at `cy`, X extent `w`, Z extent `d`
+  (depth is display-only; collision is 2D XY). Loader API `gw_TTMod_PlatformCount` /
+  `gw_TTMod_Platform` (limit 16).
+- **Collision** — at stage load (`Ground_801C0800`, Target Test stages only, only when the active mod
+  has platforms) a **merged `MapCollData`** is built in guest memory: the original `coll_data` copied
+  verbatim plus one floor joint/line/vert-pair appended per platform, then `mpLibLoad` is re-run on
+  it. Append-only, so no existing joint's per-kind ranges and no line-adjacency ids change. The
+  appended lines' `groundCollLine` entries are initialised right after `mpLibLoad` via
+  `mpGetGroundCollLine()`, reproducing what `mpLibLoad` does for the top-level ranges. Platforms get
+  no `mpIsland` segment (fine for static single-player geometry; friction comes from `lo_flags`).
+- **Visual** — a unit-cube HSD `Joint`/`DObj`/`MObj`/`PObj` (constant-diffuse material,
+  `GX_CULL_NONE`) is built in game code and attached under map GObj 0's root JObj, scaled per
+  platform.
+- **Coordinates** — world→collision via `1/Ground_801C0498()`, the same factor `mpLibLoad` applies
+  and the map JObj tree is under, so collision and visual coincide.
+- **Verified** — compiles, links, boot **0 FATAL**, loader reports the mod. **In-game stand-on
+  collision and the box visuals are NOT yet verified** (needs driving into Target Test); the
+  "map GObj 0 is the visible root" assumption is the main thing to confirm on first play.
+
+## 27.1 Blender authoring (`tools/blender/`)
+- `melee_target_test_io.py` — Blender 4.x add-on: Export/Import `.tt` (File menu) plus a View3D
+  sidebar panel. The parse/serialize layer has no `bpy` dependency, so it is testable outside Blender.
+- Coordinate mapping, symmetric so a round trip is identity: `melee_x = bx`, `melee_y = bz`,
+  `melee_z = -by`.
+- `README.md` — install, usage, format reference. `test_roundtrip.py` — standalone, **all 42 checks
+  pass**.
+- Platform `cy` is the top surface; the vertical thickness is a documented default (2.0) and is not
+  stored in `.tt`.
+- Character names use the same table as the port loader, so `mario`→8, `fox`→2, `zelda`→18 resolve
+  identically on both sides.
+
