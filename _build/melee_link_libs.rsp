@@ -79,3 +79,4 @@ advapi32.lib
 winusb.lib
 setupapi.lib
 hid.lib
+winmm.lib
