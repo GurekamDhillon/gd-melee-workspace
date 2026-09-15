@@ -1,13 +1,11 @@
 # Sample custom Break-the-Targets layout for Mario (character 8).
-# Phase 1: reuses Mario's vanilla Target Test stage geometry (GrTMr.dat);
-# only the targets move. Coordinates are world/console stage units
-# (X right, Y up, Z depth).
-# Phase 2: `platform <cx> <cy> <cz> <w> <d>` adds a floating platform with its
-# top surface at cy, X extent w and Z depth d (drop-through, stand-on).
-name Mario 3-target sample
+# Reuses Mario's vanilla Target Test geometry (GrTMr.dat); only targets and
+# platforms are custom. Coordinates are world/stage units (X right, Y up, Z depth).
+# `platform <cx> <cy> <cz> <w> <d>`: top surface at cy, X extent w, Z depth d.
+name Mario sample
 character mario
 target 0 30 0
 target 45 60 0
 target -45 60 0
-platform 0 40 0 60 40
-platform -50 70 0 50 30
+platform -60 30 0 80 40
+platform 60 30 0 80 40

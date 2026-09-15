@@ -2323,8 +2323,14 @@ A/B on Mario's Target Test, captured off-screen:
 → the `.tt` loader + the `Ground_801C4210` hook do control target spawning: **verified**.
 Evidence: `.omo/evidence/tt-vanilla-10targets.png`, `.omo/evidence/tt-mod-3targets.png`.
 
-**Still unverified:** the custom **platform boxes** were not clearly visible in the capture — either
-the sample coordinates are misplaced in the stage frame, or the "map GObj 0 is the visible root"
-attach assumption (§27) is wrong. Next test: a platform at an obvious height near the player start,
-and if it still does not render, re-point the attach.
+**Platforms — verified too.** A deliberate 200x100 test platform at a known-good coordinate rendered
+as a large plain slab. The re-tuned sample (`3 targets`; platforms `-60 30 0 80 40` and
+`60 30 0 80 40`) renders as **3 HUD target icons, 3 target balloons and 2 plain platform slabs**
+(`.omo/evidence/tt-sample-3targets-2platforms.png`). So the original sample's platforms were merely
+misplaced coordinates — not a rendering or attach bug; the map-GObj-0 attach in §27 is correct.
+Stand-on collision is implemented (merged `MapCollData`, §27) and did not fault, but was not directly
+exercised by standing on a box.
+
+**Sample coordinates** in `_build/mods/targettest/mario-sample.tt` were re-tuned to this
+demonstrably visible layout.
 
