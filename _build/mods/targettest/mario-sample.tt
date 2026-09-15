@@ -1,0 +1,9 @@
+# Sample custom Break-the-Targets layout for Mario (character 8).
+# Phase 1: reuses Mario's vanilla Target Test stage geometry (GrTMr.dat);
+# only the targets move. Coordinates are world/console stage units
+# (X right, Y up, Z depth).
+name Mario 3-target sample
+character mario
+target 0 30 0
+target 45 60 0
+target -45 60 0

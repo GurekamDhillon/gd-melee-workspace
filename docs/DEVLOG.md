@@ -2214,3 +2214,32 @@ GameCube pad bitfield, so `shim_pad.c`'s keyboard overlay maps it onto the reser
 Each toggle logs `C-STICK: SMASH` / `C-STICK: CAMERA` via `OSReport` (an in-match SisLib text was
 judged disproportionate). Gated on `GM_TARGET_TEST` so it never fires in VS.
 
+# 26. Custom Break the Targets levels — mod loader, Phase 1 (2026-09-15)
+
+A data-driven loader for custom Target Test target layouts. Phase 1 reuses each character's existing
+Target Test stage geometry and only moves the targets.
+
+- **Format** — `mods/targettest/<name>.tt` next to the executable, plain line-based text (`#`
+  comments): `name <text>`, `character <ckind | name>` (e.g. `mario`), `target <x> <y> <z>` (up to
+  21), and an optional `basestage <name>` accepted-and-ignored for forward compatibility with Phase 2
+  geometry. No JSON dependency (this build is 32-bit). One mod per character; duplicates are logged
+  and ignored.
+- **Loader** — `pc/platform/gw_runtime.c`: `gw_TTMod_Count/ForCharacter/TargetCount/Target`, scanning
+  `mods/targettest/` resolved next to the exe (same `GetModuleFileNameA` pattern as `shim_card.c`'s
+  `card/`). Coordinates are stored native and marshalled to big-endian guest memory with `gw_wf32`.
+  `main.c` triggers the scan at boot so the result is visible without entering Target Test.
+- **Hook** — `gr/ground.c` `Ground_801C4210`: if a mod claims the loading Target Test character, spawn
+  each target with `it_8027B5B0(It_Kind_Mato, &pos, NULL, NULL, 0)` at the mod's bare world
+  coordinates and set `stage_info.x6D2/x6D4`. A NULL joint is deliberate: `itMato_UnkMotion0_Phys`
+  only follows a joint when one is stored, so a joint-less target stays where it spawned. The vanilla
+  `x280[199..219]` joint loop remains the PC fallback and the non-PC path.
+- **Cross-boundary calls** — game code declares/calls the **unprefixed** `TTMod_*`; gwtool prefixes
+  every game symbol, yielding `gw_TTMod_*`, matching the shim's definition.
+- **Verified** — boot logs `gw: targettest: loaded 1 mods from C:\gdm\_build\mods\targettest`,
+  0 FATAL. In-match target placement was not yet exercised (needs driving to Target Test).
+
+**Known limits / Phase 2** — geometry is reused, so a mod can only move targets; max 21 targets
+(`x280[199..219]`); one mod per character. Custom platforms require building a merged `MapCollData`
+and re-running `mpLibLoad` at stage load (collision is a 2D XY line DB with no append API — see the
+collision notes), plus the Blender round-trip exporter.
+
