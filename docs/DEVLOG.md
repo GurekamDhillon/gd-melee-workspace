@@ -2065,7 +2065,13 @@ count for kill credit, and the stock only fully respawns after both are killed. 
 presumably the transform/respawn pairing: Zelda and Sheik share one player slot via the transform,
 and the revival path appears to spawn the paired fighter as a second entity instead of swapping the
 existing one. Related handling exists in `gm_1798.c` `fn_8017A67C` (`if ((u32)(kind - 0x12) <= 1U)`
-special-cases ZKind 0x12/0x13 = Zelda/Sheik). Real bug, VS-relevant; not yet investigated.
+special-cases ZKind 0x12/0x13 = Zelda/Sheik). **FIXED (2026-09-13, `b7612f1f7`)** — the real cause was
+in `pl/player.c` `Player_80032070`, which reads `unkStruct->vec_arr[ckind].z` (an alias of
+`ftMapping_list[ckind].has_transformation`) to decide whether to also revive the dormant partner. On
+the port that alias reads unrelated memory, so the companion-revive branch fired for Zelda and
+revived Sheik as a second fighter. It now reads `ftMapping_list[ckind].has_transformation` under
+`TARGET_PC` (Ice Climbers still revive Nana via `has_transformation == 0`). Re-confirmed by
+investigation on 2026-09-15; this note had gone stale during the public-release docs aggregation.
 
 ## 17.4 Single-player crashes: animation descriptor holds garbage (Classic + Adventure)
 The same family, twice, both non-VS:
@@ -2189,4 +2195,22 @@ smoke 0 FATAL.
   latent only; guarded anyway.
 
 The §17 list (documented crashes, deliberately unfixed) is unchanged.
+
+# 25. Endianness boundary (last 15.2 item) + C-stick hotkey (2026-09-15)
+
+## 25.1 Shim endianness
+- `shim_os.c`: `gw_OSTicksToCalendarTime` now byte-swaps all ten `OSCalendarTime` fields after
+  Aurora's native write, so the game reads the date big-endian (the save-description date was
+  garbage — §13.6.5). Swapped by field name, not a raw byte loop.
+- `shim_pad.c`: `gw_PADRead` byte-swaps the `u16 button` of **all four channels** immediately after
+  `PADRead`, before the adapter/keyboard/script overlays (which already write big-endian with
+  `gw_w16`). `extButton` is left native — the game (`HSD_PadRenewMasterStatus`) never reads it.
+
+## 25.2 C-stick smash toggle: in-game hotkey
+`ft/fighter.c` `Fighter_Spaghetti_8006AD10` (Target Test, player 0) flips `gm_CStickSmashTargetTest`
+on the rising edge of either the controller combo `L + R + Start` or keyboard `F1`. F1 is not in the
+GameCube pad bitfield, so `shim_pad.c`'s keyboard overlay maps it onto the reserved pad bit
+`HSD_PAD_7` (0x0080), which flows through `HSD_PadRenewMasterStatus` into `HSD_PadGameStatus[0]`.
+Each toggle logs `C-STICK: SMASH` / `C-STICK: CAMERA` via `OSReport` (an in-match SisLib text was
+judged disproportionate). Gated on `GM_TARGET_TEST` so it never fires in VS.
 
