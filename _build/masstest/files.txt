@@ -983,6 +983,7 @@ src/sysdolphin/baselib/util.c
 src/sysdolphin/baselib/video.c
 src/sysdolphin/baselib/wobj.c
 extern/dolphin/src/dolphin/mtx/mtx44.c
+extern/dolphin/src/dolphin/thp/THPDec.c
 pc/gameworld/mtx_pc.c
 pc/gameworld/gekko_fp.c
 src/MSL/float.c

@@ -1,4 +1,5 @@
 ../masstest/out/extern_dolphin_src_dolphin_mtx_mtx44.c.obj
+../masstest/out/extern_dolphin_src_dolphin_thp_THPDec.c.obj
 ../masstest/out/pc_gameworld_gekko_fp.c.obj
 ../masstest/out/pc_gameworld_mtx_pc.c.obj
 ../masstest/out/src_melee_cm_camera.c.obj
