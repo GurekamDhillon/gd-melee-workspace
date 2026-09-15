@@ -44,15 +44,14 @@ cmd.exe /c "cd /d C:\gdm\_build\ax86m && ..\build_melee_pc.bat"   # expect MELEE
 ## Run (interactive, e.g. for the user to play) - env vars must be EXPORTED
 ```
 cd /mnt/c/gdm/_build
-export MELEE_CARD=1            # memory card (GCI folder at _build/card)
 export MELEE_PAD_IGNORE_ADAPTER=1   # only when using scripted/keyboard, not a real controller
-export WSLENV="MELEE_CARD:MELEE_PAD_IGNORE_ADAPTER"
+export WSLENV="MELEE_PAD_IGNORE_ADAPTER"
 nohup ./melee-pc.exe --iso 'C:\iso\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso' > /tmp/opencode/live.log 2>&1 &
 disown
 ```
-- **Gotcha:** `env MELEE_CARD=1 ./melee-pc.exe` does NOT propagate - `WSLENV` shares vars from the
+- **Memory card is on by default** (GCI folder at `_build/card`); set `MELEE_CARD=0` to disable it.
+- **Gotcha:** `env MELEE_CARD=0 ./melee-pc.exe` does NOT propagate - `WSLENV` shares vars from the
   WSL *shell* environment, so the var must be `export`ed first (or already exported in the shell).
-  Symptom of getting it wrong: the log says `card: disabled ... reporting no card`.
 - Success looks like `gw: card: initialised (GCI folder) at ...\_build\card`; the
   `aurora::card: Failed to get status of file at idx: 1/2` errors are just empty slots.
 - Kill before relaunch: `cmd.exe /c "taskkill /IM melee-pc.exe /F"`.
@@ -76,7 +75,7 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash
 | Variable | Effect |
 |---|---|
 | `MELEE_ISO=<path>` | disc image, if not passed as `--iso` |
-| `MELEE_CARD=1` | enable the memory card (GCI folder at `_build/card`) |
+| `MELEE_CARD=0` | disable the memory card (on by default; GCI folder at `_build/card`) |
 | `MELEE_SKIP_INTRO=1` | skip the opening movie and boot straight to the title |
 | `MELEE_PAD_SCRIPT=<file>` | drive channel 0 from a text script; see `_build/audio_test_script.txt` |
 | `MELEE_PAD_IGNORE_ADAPTER=1` | ignore a physical adapter (use with scripted/keyboard input) |
