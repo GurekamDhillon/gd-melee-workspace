@@ -2299,3 +2299,32 @@ Harness: `_build/tt_script.txt` (boot → title → 1-P Mode → Stadium → Tar
   and standable. If the boxes do not render, the map-GObj-0 attach assumption in §27 is wrong (no
   crash expected).
 
+# 29. Direct Target Test launch (dev hook) + level verification (2026-09-15)
+
+`MELEE_TARGET_TEST=<ckind int or name>` boots straight into Target Test with that character, skipping
+the menus and the character-select screen. Useful for headless verification and for fast iteration
+while authoring levels (`MELEE_TARGET_TEST=mario ./melee-pc.exe`).
+
+- **Port side** (`pc/platform/gw_runtime.c`): `gw_TestTargetTestCKind()` reads the env var once
+  (cached), parses int-or-name with the same table as the `.tt` files, returns the ckind or `-1`.
+- **Game side** (`#if defined(TARGET_PC)`): `gm/gmboot.c` sets the pending mode to `GM_TARGET_TEST`;
+  `gm/gmmultiman.c` `gm_Mode_TargetTest_OnLoad` writes the character and replicates the CSS state's
+  setup (`gm_SetupRulesDefaults`, `gm_801B06B0`, `game_cache.entries[0]`,
+  `lbDvd_SetupVsPreloadCache`) then `gm_SetGameModeStateId(1)` to jump straight to the `GS_VS` state.
+  The CSS scene must be **skipped, not auto-confirmed**: its `on_frame` spins on pad input (it would
+  hang headless) and it owns the character preload cache (skipping it without reproducing that
+  assert-fails in `lbmemory.c:154`).
+- Unset/invalid → `-1` → normal play is byte-identical.
+
+## 29.1 Verification of the mod system (headless, via the direct launch)
+A/B on Mario's Target Test, captured off-screen:
+- **Vanilla** (mod removed): **10** target icons in the HUD.
+- **With `mario-sample.tt`** (3 targets): **3** target icons.
+→ the `.tt` loader + the `Ground_801C4210` hook do control target spawning: **verified**.
+Evidence: `.omo/evidence/tt-vanilla-10targets.png`, `.omo/evidence/tt-mod-3targets.png`.
+
+**Still unverified:** the custom **platform boxes** were not clearly visible in the capture — either
+the sample coordinates are misplaced in the stage frame, or the "map GObj 0 is the visible root"
+attach assumption (§27) is wrong. Next test: a platform at an obvious height near the player start,
+and if it still does not render, re-point the attach.
+

@@ -77,6 +77,7 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash
 | `MELEE_ISO=<path>` | disc image, if not passed as `--iso` |
 | `MELEE_CARD=0` | disable the memory card (on by default; GCI folder at `_build/card`) |
 | `MELEE_SKIP_INTRO=1` | skip the opening movie and boot straight to the title |
+| `MELEE_TARGET_TEST=<char>` | boot straight into Target Test with that character (name or ckind; dev/testing) |
 | `MELEE_PAD_SCRIPT=<file>` | drive channel 0 from a text script; see `_build/audio_test_script.txt` |
 | `MELEE_PAD_IGNORE_ADAPTER=1` | ignore a physical adapter (use with scripted/keyboard input) |
 | `MELEE_PAD_DIAG=1` | adapter enumeration + raw report dumps |
