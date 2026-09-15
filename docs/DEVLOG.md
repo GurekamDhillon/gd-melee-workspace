@@ -2126,3 +2126,21 @@ to `Master` (no `/develop.ini`), so the debug menu is unreachable; TARGET_PC bra
 `gmopeningmode.c onExitTitle`) route Y/B to `GM_DEBUG`. Keyboard Y/Z/L/R are not in the pad overlay,
 so B (key `K`) is the keyboard entry point.
 
+# 22. Stock icons showed Captain Falcon for every character — decomp UB, port-only (2026-09-15)
+
+`gm_80168B34` (per-character frame index into the shared stock-icon / character-art texture atlas)
+left its `base` local **uninitialised** for ordinary characters, and `gm_80168BF8` (player → icon
+frame) had **no `return`**, relying on the tail call. Both are matching-decomp artifacts: mwcc kept
+`ckind` in the register so `base` was accidentally right, and the missing return rode the tail call.
+clang's `-ftrivial-auto-var-init=zero` (see `pipe_wsl.sh`) makes `base` 0, so
+`return base + costume * 30` maps *every* character to frame 0 — which is **Captain Falcon**
+(`CKind_Captain = 0`). Every HUD stock icon, status icon and results-screen art showed Falcon.
+Fixed with `int base = ckind;` and an explicit `return`, both `TARGET_PC`-guarded (original kept for
+the matching build); `if/ifstock.c`, `if/ifstatus.c` and `gm/gmresultplayer.c` all call through it.
+
+New bug class to watch for: **decompiled C whose semantics depended on register reuse or a tail
+call** — correct in the matching build, wrong here. Different from the GC-layout alias views (§16.1):
+there the *address* is wrong, here the *value* is uninitialised. Worth a sweep for non-void functions
+with no `return` and locals read before assignment. Not a regression from the audio/pacing/THP or
+§16.4 passes — `gm_1601.c` was untouched by them.
+
