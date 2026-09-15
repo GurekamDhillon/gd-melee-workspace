@@ -4,8 +4,9 @@ A native PC port of *Super Smash Bros. Melee* (NTSC 1.02, `GALE01`), built **fro
 decompilation** rather than by emulation or by recompiling the retail binary.
 
 > **Status: work in progress — research/engineering project, not a release.** It boots, renders,
-> plays VS matches, and has audio, memory-card saves, GameCube-adapter input and hard 60 Hz frame
-> pacing. Netplay, replays, packaging and distribution are not started.
+> plays VS matches, and has audio with effects, the pre-rendered cutscenes, memory-card saves,
+> GameCube-adapter input and hard 60 Hz frame pacing. Netplay, replays, packaging and distribution
+> are not started.
 
 ## What this is
 
@@ -20,7 +21,9 @@ retail binary. This project takes a third road — **compiled decompilation**:
 - The GameCube SDK surface (GX, OS, PAD, CARD, AX, DVD, AR, …) is replaced by native shims over
   [Aurora](https://github.com/encounter/aurora) (a GC/Wii SDK reimplementation on top of
   [Dawn](https://dawn.googlesource.com/dawn)), so rendering goes straight to D3D12 with no emulated
-  GPU.
+  GPU. Where the SDK's own decompiled source is worth keeping, it is built as a translation unit
+  like any other — the THP video decoder is, with its Gekko paired-single IDCT rewritten in
+  portable C.
 
 The payoff over static recompilation is a **fully editable game** — every line of engine code is C
 you can change. The price is that all ~980 translation units must be made correct by hand, which is
@@ -32,10 +35,11 @@ where most of the engineering goes (see the GC-layout alias-view class in the de
 |---|---|
 | Boot → title → VS match | working |
 | Rendering (GX → D3D12 via Aurora/Dawn) | working |
-| Audio (own AX / DSP-ADPCM mixer over SDL3) | audible |
+| Audio (own AX / DSP-ADPCM mixer over SDL3) | working, incl. both aux buses + AXFX reverb/delay |
+| Cutscenes (THP video, own decoder) | working |
 | Memory-card saves (GCI) | working |
 | GameCube adapter input | working |
-| Frame pacing | hard 60 Hz (p50 = 16.67 ms) |
+| Frame pacing | hard 60 Hz (p50 = 16.67 ms, p95 = 16.9 ms) |
 | Attract mode | 300 s, zero fatal errors |
 | Netplay / replays / launcher / packaging | not started |
 | Widescreen / upscaling / high-framerate sim | not started |
