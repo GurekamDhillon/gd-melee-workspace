@@ -2144,3 +2144,22 @@ there the *address* is wrong, here the *value* is uninitialised. Worth a sweep f
 with no `return` and locals read before assignment. Not a regression from the audio/pacing/THP or
 §16.4 passes — `gm_1601.c` was untouched by them.
 
+# 23. Name-entry keyboard alias views + the Target Test C-stick toggle (2026-09-15)
+
+## 23.1 The name-entry keyboard rendered no glyphs and crashed (same class as 16.4)
+`mn/mnnamenew.c` casts `mnNameNew_803EDA58` (an `AnimLoopSettings[3]`, 0x803EDA58, 0x24 bytes) to a
+reconstructed `MnNameNewDataLayout` whose `key_jobj_ids`/`x34`/`xFC`/`character_bytes`/`lower_glyphs`/
+`upper_glyphs` fields actually live at 0x803EDA7C (`mnNameNew_KeyMap`) and 0x803EDCE4
+(`mnNameNew_GlyphTable`). Those are separate symbols on the port, so the keyboard read unrelated
+memory: no characters rendered, and `mnNameNew_MainInput` dereferenced a NULL glyph and crashed
+(0x102A8459, `mnNameNew_MainInput+0xC9`). Fixed by reaching the real
+`mnNameNew_KeyMap`/`mnNameNew_GlyphTable`/`unk_vec` symbols by name under TARGET_PC (`MNNAMENEW_*`
+accessors). Same class as §16.1/§16.4 — `mnnamenew.c` was simply not in the 16.4 sweep table.
+
+## 23.2 Target Test C-stick smash toggle
+In 1P modes `Fighter_Spaghetti_8006AD10` (`ft/fighter.c`) zeroes `fp->input.cstick[0]`, and
+`Camera_8002B0E0` (`cm/camera.c`) reads the raw pad for the zoom, so Target Test has no C-stick
+smashes/aerials. New global `gm_CStickSmashTargetTest` (default off) plus a `C-STICK: SMASH` /
+`C-STICK: CAMERA` label on the `STADIUM_TARGET` CSS (toggled with L/R) gates both: the fighter copies
+the C-stick through, and the camera zoom is skipped. All `TARGET_PC`-guarded.
+
