@@ -2163,3 +2163,30 @@ smashes/aerials. New global `gm_CStickSmashTargetTest` (default off) plus a `C-S
 `C-STICK: CAMERA` label on the `STADIUM_TARGET` CSS (toggled with L/R) gates both: the fighter copies
 the C-stick through, and the camera zoom is skipped. All `TARGET_PC`-guarded.
 
+# 24. Audit wrap-up: 16.4 follow-ups, 15.2 and 16.3 (2026-09-15)
+
+Closed the remaining audit items. All `TARGET_PC`-guarded; TUs compile, relink OK, 100 s off-screen
+smoke 0 FATAL.
+
+**Fixed**
+- **§16.4 follow-ups** — `grzebes.c`: `(grZe_BubbleState*)grZe_8049F140` (`bubbles` → `grZe_8049F170`)
+  and the `Vec3* base = grZe_8049F140` views (`base[2]/[3]` → `grZe_8049F158[0..1]`). `grvenom.c`:
+  `base[xC8+14]` → `grVe_803E5380[xC8]`, `base[idx0+0xD6]`/`anim_ids` → `grVe_803E56A0`, and
+  `grVe_GetAnimArg` → `grVe_803E5644[...]` (+0x2FC).
+- **§15.2** — `particle.c` `hsd_804D08E8[...]` masked to `& 7` (8-entry table); `gmtoulib.c`
+  `lbl_80473AB8[i + 1]` bounded (`i < 0x40` / `i < 0x3F`).
+- **§16.3** — Luigi `x222C_cycloneCharge` zeroed in `ftLg_Init_OnLoad` (read-before-write; the block is
+  never cleared); `ftdemo.c` `ftData_UnkDemoCallbacks0[kind]` NULL-guarded (latent).
+
+**False positives — do NOT "fix" these**
+- §15.2 `ftkinds/ftKirby/ftkirby.c` `ftKb_SpecialN_800F16D0` — already fully guarded
+  (`de5fdc11a` / `bdcace0ab`); no raw `g->hats[...]` deref remains. The note was stale.
+- §15.2 `texp.c` `a_in[cnst->reg-4]` — `cnst->reg` is only ever `0..7` or `0xFF`, so the index is
+  provably 0..3. `tobj.c`/`psdisp.c` indices are data-driven and cannot be shown out of range.
+- §16.3 "VS-only init" (cloak-refraction / crowd-SFX / bg-flash) — `fn_8016E730` runs for **every**
+  fight (all 1P modes use `GS_VS`), so the reads are always preceded by the init.
+- §16.3 `ftdemo.c` callbacks — 29/33 slots are NULL but no shipped caller passes those kinds, so it is
+  latent only; guarded anyway.
+
+The §17 list (documented crashes, deliberately unfixed) is unchanged.
+
