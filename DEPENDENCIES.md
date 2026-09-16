@@ -47,6 +47,22 @@ googletest (BSD), abseil (Apache-2.0).
 tables from Dolphin Emulator's `Common/FloatUtils.cpp` (GPL-2.0-or-later); it
 carries SPDX and attribution headers and is the only GPL-derived source in the port.
 
+## Specification references (not built)
+
+- **[akaneia/m-ex](https://github.com/akaneia/m-ex)** — the community *Melee* content
+  expansion framework (PowerPC assembly patches against the retail DOL, plus a C header
+  API and tooling). It is used **only as a specification**: m-ex shows *where* the retail
+  game is modified and *what* the modification is, and the port reimplements that behavior
+  as original C in the decomp fork. **No m-ex source, assembly or header is vendored,
+  copied, or compiled into this project**, and nothing here links against it.
+
+  m-ex publishes **no licence**, so upstream grants no rights by default. It is therefore
+  consulted, not redistributed; every ported behavior carries attribution to m-ex and its
+  contributors at the point of the change. Tooling for this (address→symbol resolution of
+  the m-ex patch set) is in `tools/mex_port/`, and the resulting inventory is
+  `_research/mex-port-triage.md`. If m-ex later adopts a licence, the arrangement should be
+  revisited — and upstream authors credited directly.
+
 ## Not dependencies
 
 `dusklight/`, `tp/`, `nod/` and `dawn/` in the workspace are reference checkouts of

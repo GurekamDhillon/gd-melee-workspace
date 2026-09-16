@@ -114,6 +114,76 @@ the title screen; the game requests no AX voices there, so the mixer is legitima
 looks exactly like broken audio. Use `MELEE_PAD_SCRIPT` and confirm `gw: AX: first audible frame`
 in the log before concluding anything.
 
+## Stage `.dat` tooling (HSD): read, edit, re-emit — see DEVLOG §30–§33
+
+Outside-game tooling for stage `.dat` files, built on [HSDLib](https://github.com/Ploaj/HSDLib) (MIT).
+Blender is the mesh authoring tool; the `.dat` stays the source of truth.
+
+```
+# build the library (one-off). Windows .NET SDK 10. 0 errors; a missing GCILib reference is a harmless warning.
+cp -r <HSDLib clone> C:\gdm\_build\HSDLib
+cmd.exe /c "cd /d C:\gdm\_build\HSDLib && dotnet build HSDLib.sln -c Release"
+
+# tools (both net8.0-windows7.0 console apps that ProjectReference HSDRawViewer.csproj)
+C:\gdm\_build\hsd_export\bin\Release\net8.0-windows7.0\hsd_export.exe <dat> <outdir>   # DAT -> per-group glTF
+C:\gdm\_build\stagec\bin\Release\net8.0-windows7.0\stagec.exe  <verb> ...            # the compiler
+```
+
+`stagec` verbs: `rt <in> <out>` (round-trip + compare), `coll <dat>` (dump collision),
+`load <file>` (headless scene-load probe), `objim <in.obj> <out.dat>` (OBJ -> HSD, tests the GX
+encoder), `build <base.dat> <out.dat> <mesh.obj> <groupIndex> [clear] [material] [floor]`.
+**`floor` panics the game — do not use it (DEVLOG §32.2).**
+
+**Three HSDLlib patches are required** (fork-diff, DEVLOG §30.6): `NewModel` private->public,
+`Work()`'s `MessageBox.Show` -> stderr, and `HSD_POBJ`'s `DisplayListSize`/`DisplayListBuffer`
+setters internal->public.
+
+### Gotchas learned the hard way
+- The `IONET.dll` vendored in `HSDRawViewer/lib/` has **no glTF importer** (only Fbx/Obj/SMD), so
+  `IOManager.LoadScene()` returns null for any `.glb`. **Mesh interchange is OBJ.** glTF *export*
+  works (it uses SharpGLTF directly).
+- `ImportModelFromScene` opens GUI dialogs – drive `ModelImporter` directly (ctor + `Work(bw)`), and
+  pass `new BackgroundWorker { WorkerReportsProgress = true }`. With the default `false`,
+  `ReportProgress` throws into a catch that pops a **modal MessageBox = infinite headless hang**.
+- Root symbols are typed **by name** (`HSDRawFile.cs:896`); an emitted root must match an existing
+  rule (e.g. `*_joint` -> `HSD_JOBJ`), or it reloads as nothing.
+- `HSD_DOBJ`/`HSD_POBJ` are `Next`-linked; "keep one" means setting `Next = null`.
+- **Mesh space != world space** — the JOBJ tree carries the scale (collision says the stage is
+  ~281x306 units; raw mesh verts span ~1335x690). Apply or reset joint transforms deliberately.
+
+### Testing a modified stage in-game without touching the port
+The port reads the ISO by path and trusts the FST, so patch a **copy** of the disc image: write the
+rebuilt `.dat` at the original offset and update that FST entry's length. Rebuilt stages are usually
+*smaller*, so they fit in place.
+
+| | |
+|---|---|
+| disc image copy | `_build/melee_mod.iso` |
+| `GrTFx.dat` FST entry | `435` |
+| FST start | `0x456e00` (node = `FST + entry*12`; length field at `+8`) |
+| `GrTFx.dat` disc offset | `1296203776` |
+
+Restore vanilla before handing the machine back (same write, with the original 633,100-byte file).
+
+### Windows/Blender helpers in `_build/`
+- `launch_stage.ps1 -Iso <iso> -TT <char>` — launch on the **primary monitor** with
+  `MELEE_TARGET_TEST` set. `capture_stage.ps1` / `capture_now.ps1` — PrintWindow captures;
+  `press_start.ps1` — focus the window and send Enter; `self_test_keys.ps1`.
+- Blender (Steam, v5.2.2): `D:\SteamLibrary\steamapps\common\Blender\blender.exe`. Headless:
+  `blender.exe --background --python <script.py>`; script and arguments must be **Windows paths**.
+  `bpy.ops.wm.obj_export` in 5.x takes **no** `export_format` argument.
+- **Two PowerShell/`cmd` traps that cost 15-minute timeouts each:** `Start-Process ... -PassThru
+  -RedirectStandardOutput <f>` makes PowerShell **block until the child exits** (never use it for a
+  long-running game); and `cmd.exe /c "tasklist /FI \"IMAGENAME eq x.exe\""` from WSL mangles its
+  quoting and hangs. Use a plain `cmd.exe /c tasklist | grep -i melee` instead.
+
+### Scripted keyboard input (the port's keyboard overlay)
+`shim_pad.c` maps, on **channel 0**, when the window is **focused** (`GetAsyncKeyState` is global, so
+there is a focus gate): `WASD` = stick, `J` = A, `K` = B, **`Enter` = Start**, `F1` = 0x0080, arrows =
+d-pad. To advance a menu unattended: focus the window (`SetForegroundWindow` after
+`AttachThreadInput`), then `keybd_event(0x0D, ...)`.
+`MELEE_PAD_SCRIPT` is the more reliable alternative for fully unattended runs.
+
 ## Conventions that have bitten workers
 - **Big-endian game memory.** Native shims must read/write game-visible scalars with `gw_r32`/`gw_w32` (and `gw_r16`/`gw_w16`, `gw_rf32`/`gw_wf32`). A native little-endian store the game then byte-swaps reads back wrong (e.g. `AXVPB.index`).
 - **Shim boundary.** A shim defines `gw_X`; the pipe/gwtool prefixes *every* symbol in a game TU with `gw_`, so game code must call the **unprefixed** `X`. Declare `extern void wait_idle(void);` and call `wait_idle()` under `TARGET_PC` - NOT `gw_wait_idle`, which double-prefixes to `gw_gw_wait_idle` and fails to link (this exact mistake cost a link cycle).

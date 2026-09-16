@@ -2334,3 +2334,220 @@ exercised by standing on a box.
 **Sample coordinates** in `_build/mods/targettest/mario-sample.tt` were re-tuned to this
 demonstrably visible layout.
 
+---
+
+# 30. HSD DAT tooling: reading *and writing* stages from outside the game (2026-09-15)
+
+Goal: the map-authoring loop should not require the game to be running — parse a stage `.dat`,
+convert it to something Blender can open, and write a modified `.dat` back. Blender is the *mesh*
+authoring tool; the `.dat` remains the source of truth (see §33 for why that split is deliberate).
+
+## 30.1 HSDLlib, built from source
+
+[Ploaj/HSDLib](https://github.com/Ploaj/HSDLib) (MIT) is the mature HSD reader/writer. Built it
+locally with the **.NET 10 SDK** already on the machine:
+
+```
+cp -r <clone> C:\gdm\_build\HSDLib
+cmd.exe /c "cd /d C:\gdm\_build\HSDLib && dotnet build HSDLib.sln -c Release"
+```
+
+Builds clean (0 errors). One non-fatal warning: the `GCILib` assembly reference in
+`HSDRawViewer.csproj` cannot be resolved — nothing we use depends on it. Output:
+`HSDLib\HSDRawViewer\bin\Release\net8.0-windows7.0\`. Target framework is `net8.0-windows7.0`
+(WinForms), so it is Windows-only; that is fine, the build host is Windows.
+
+## 30.2 The two tools (`_build/`, Windows-side, console)
+
+Both are small `net8.0-windows7.0` console projects that `ProjectReference` `HSDRawViewer.csproj`.
+
+- **`_build/hsd_export`** — `hsd_export <dat> <outdir> [prefix]`
+  Reads a stage `.dat`, walks `map_head.ModelGroups`, and exports **each model group** to its own
+  glTF via `ModelExporter.ExportFile(path, jobj, settings, jointMap)` (the overload that takes an
+  explicit path — no dialog). Reports joints/DObj/PObj/DL-byte/vertex counts per group.
+
+- **`_build/stagec`** — the DAT↔mesh compiler. Verbs:
+  | verb | meaning |
+  |---|---|
+  | `rt <in.dat> <out.dat>` | read → `Save` → reload; compares symbols and geometry counts |
+  | `load <file>` | `IOManager.LoadScene` probe (headless, no dialogs) |
+  | `objim <in.obj> <out.dat>` | OBJ → HSD JOBJ → DAT; proves the GX **encoder** |
+  | `build <base.dat> <out.dat> <mesh.obj> <groupIndex> [flags]` | the compiler (see §31) |
+  | `coll <dat>` | dump `coll_data` (vertices/links/groups) — see §32 |
+  | `meshim` | glTF path; retained only to document the failure in 30.4 |
+
+## 30.3 Structural round-trip: **PASS**
+
+`GrTFx.dat` (Fox's Target Test) → `Save` → reload:
+
+| | source | emitted |
+|---|---|---|
+| file bytes | 633,100 | 618,032 |
+| root symbols | 21 | 21 (**identical set**) |
+| g1 joints/DObj/PObj | 7 / 6 / 6, 17,280 DL bytes, 2,424 verts | identical |
+| g2 joints/DObj/PObj | 21 / 42 / 42, 22,240 DL bytes, 5,313 verts | identical |
+
+`Save(optimize: true)` repacks buffers, so the output is not byte-identical — but nothing is lost.
+**Real vertex count for the stage is 7,737**, not the 18,945 Blender showed: the glTF importer
+splits vertices per face for normals/UVs. Trust HSDLlib's numbers.
+
+## 30.4 The mesh interchange format is **OBJ**, not glTF
+
+The `IONET.dll` vendored in `HSDRawViewer/lib/` (275,968 bytes) contains only **`.Fbx`, `.Obj` and
+`.SMD`** loaders — `strings`/grep on the DLL shows no glTF importer at all. `IOManager.LoadScene()`
+on any `.glb` therefore returns **null**, which surfaces as a `NullReferenceException` inside
+`ImportModelFromScene`. So the mesh input path must be **OBJ** (Blender exports it natively).
+glTF *export* still works, because the exporter uses `SharpGLTF` directly rather than IONET.
+
+## 30.5 Three traps in HSDLlib's import path (all hit, all worked around)
+
+1. **`ImportModelFromScene` is GUI-bound** — it opens `ModelImportDialog` and a `ProgressBarDisplay`.
+   Headless, drive `ModelImporter` **directly**: construct it with the ctor
+   `(folder, scene, model, ModelImportSettings, IEnumerable<MeshImportSettings>,
+   IEnumerable<MaterialImportSettings>, materialOverride)` and call `Work(bw)`.
+2. **`w.ReportProgress` throws** on a default `BackgroundWorker` (`WorkerReportsProgress` defaults to
+   `false`). The throw lands in `Work`'s catch, which pops a **modal `MessageBox`** — headless that
+   is an *infinite hang* (hit three times before spotting it). Always pass
+   `new BackgroundWorker { WorkerReportsProgress = true }`.
+3. **Root types are resolved by symbol name.** `HSDRawFile.cs:896` builds `symbol_switch` from a list
+   of `Func<string,HSDAccessor>` predicates; an unrecognised root name yields no type. There is
+   already a rule `x.EndsWith("_joint") => new HSD_JOBJ()`, so an emitted root must be named to match
+   (we use `stage_joint`). Naming it `root` silently reloads as nothing.
+
+## 30.6 Patches applied to the vendored HSDLlib (fork-diff — document these)
+
+| file | change | why |
+|---|---|---|
+| `HSDRawViewer/IO/ModelImporter.cs` | `private HSD_JOBJ NewModel` → `public` | read the import result headlessly |
+| `HSDRawViewer/IO/ModelImporter.cs` | `Work()` catch: `MessageBox.Show` → `Console.Error.WriteLine` | a modal dialog is an infinite hang with no desktop |
+| `HSDRaw/Common/HSD_POBJ.cs` | `DisplayListSize` / `DisplayListBuffer` setters `internal` → `public` | needed for DL surgery; see §31.3 for why this did **not** pan out |
+
+These keep the GUI usable. `stagec` depends on #1 and #3; #2 is a safety fix.
+
+---
+
+# 31. Swapping stage geometry: what works and what does not (2026-09-15)
+
+`stagec build <base.dat> <out.dat> <mesh.obj> <groupIndex> [clear] [material] [floor]` — load the
+base stage, graft a Blender-authored mesh in, save. Flags: `clear` wipes the rest of the stage's
+geometry, `material` borrows one of the stage's own `MObj`s, `floor` replaces `coll_data` (see §32 —
+**this panics; do not use**).
+
+## 31.1 What works (verified)
+
+- **Removing** a stage's geometry. Setting `Dobj = null` on every JOBJ of every model group makes the
+  stage render **empty** — only the targets and the HUD remain. Verified in-game:
+  `.omo/evidence/` stage captures of Fox's Target Test with no geometry.
+- **The emitted DAT loads and plays.** With the collision left untouched, the game boots into the
+  stage, Fox **spawns and stands** on the (now invisible) original collision, and the HUD works. So a
+  `stagec`-produced DAT is a valid, engine-loadable stage.
+- **Mesh → HSD encoding.** A cube OBJ imports to `joints=1 dobjs=1 pobjs=1 dlBytes=160 verts=36`
+  (36 = 12 triangles) and survives save → reload unchanged. The GX **display-list encoder** is real.
+
+## 31.2 What does not work (the open problem)
+
+**Grafted meshes do not render.** Four variants tried, all invisible in-game:
+
+1. Graft onto model group 0 — the group has 8 joints but **0 DObjs**; it is an anchor/container, not
+   a draw group.
+2. Graft onto group 2 (which genuinely renders, 42 PObs) with the target JOBJ's transform reset to
+   identity → still invisible.
+3. Re-point the PObj's `SingleBoundJOBJ` (at struct offset `0x14`) at the receiving JOBJ, on the
+   theory the renderer resolves the bound JOBJ → still invisible.
+4. **Clone-and-swap**: take a *known-good* donor DObj/PObj from group 2 (928-byte DL, renders fine)
+   and replace only its DL buffer with the imported mesh's (160 bytes). At file level this looks
+   right — 1 DObj, 1 PObj, 160-byte DL — but on **reload the DL decodes to 4 verts, not 36**, and the
+   game **crashes on launch**.
+
+Conclusion from (4): HSDLlib's `DisplayListBuffer` setter (`_s.SetBuffer(0x10, value)`) does **not**
+produce a buffer its own reader decodes identically. It is not a safe in-place DL edit. Note also
+that `HSD_DOBJ`/`HSD_POBJ` are `Next`-linked lists — keeping "one DObj" requires truncating
+`Next` to `null`, or the whole sibling chain comes back.
+
+**Recommended next experiment** (small, self-contained, cheap to run): take group 2's existing 928-byte
+DL and **patch vertex values in place** — leave every opcode, attribute descriptor and offset
+byte-identical and overwrite only the position floats with a box's corners. The renderer then sees a
+structurally identical display list with a new shape. If that renders, custom maps are solved;
+if it does not, the next step is to author a DL explicitly via `GX_Attribute` /
+`HSD_POBJ.FromDisplayList`.
+
+## 31.3 Mesh space ≠ world space (important for the format design)
+
+The stage's collision puts its world extent at roughly **281 × 306 units**, but the raw mesh vertices
+span about **1335 × 690**. The difference is carried by the JOBJ tree's transforms — raw mesh space is
+*not* world space. Any compiler must therefore either apply the joint hierarchy or deliberately reset
+each joint's transform; placing a mesh correctly requires knowing which. Every placement attempt in
+this session was made without that knowledge, which is part of why nothing could be confirmed visible.
+
+---
+
+# 32. The Melee collision format, and the authoring trap (2026-09-15)
+
+## 32.1 Format (`SBM_Coll_Data`, `HSDRaw/Melee/Gr/SBM_Coll_Data.cs`)
+
+Melee collision is **2D** — geometry in the **X/Y plane, extruded along Z**. A "floor" is a horizontal
+line segment.
+
+- `Vertices` — `SBM_CollVertex { float X; float Y; }`, 8 bytes. **No Z.**
+- `Links` — `SBM_CollLine`, 16 bytes: `VertexIndex1/2`, `NextLine`, `PreviousLine`,
+  `NextLineAltGroup`/`PreviousLineAltGroup` (usually `-1`), `CollisionFlag` (`CollPhysics`: Top=1,
+  Bottom=2, Right=4, Left=8, Disabled=16), `Flag` (`CollProperty`), `Material` (`CollMaterial`).
+- `LineGroups` — `SBM_CollLineGroup`, 0x28 bytes: per-category index+count for
+  top/bottom/right/left/dynamic, an AABB (`XMin/YMin/XMax/YMax`), and a vertex range.
+- The header holds category **offsets and counts** into the link array; links are ordered
+  **Top, Bottom, Right, Left, Dynamic**.
+
+Vanilla Fox's Target Test: **73 vertices, 72 links, 2 groups**;
+top `off=0,n=18`, bottom `off=18,n=17`, right `off=35,n=19`, left `off=54,n=18`, dynamic `n=0`.
+Group AABBs: g0 `x[-128,153] y[-138,148]`, g1 `x[-28,78] y[-158,-62]`.
+
+The main floor near the origin sits at **y = 10** — top links `(-80,10)→(-60,10)`,
+`(-15,10)→(-5,10)`, `(-5,10)→(15,10)`.
+
+## 32.2 The trap: a single authored link **panics the game**
+
+Substituting `coll_data` with one authored `Top` link (two vertices at `x = ±1500, y = 20`) crashes
+on stage load:
+
+```
+src/melee/mp/mplib.c:5459: not found lineID=18
+assertion "0" failed  in src/melee/mp/mplib.c on line 5229
+gw: PANIC src/melee/mp/mplib.c:5229
+```
+
+Reproduced with **both** a hand-rolled link and HSDLlib's own
+`CollDataBuilder.GenerateCollData(...)` (a single `CollLine`). `GenerateCollData` also tells us the
+intended conventions: links ordered by category, per-group index/count fields, and `NextLine`/
+`PreviousLine` computed from vertex connectivity — **not** self-referential (the hand-rolled version
+wrongly set them to `0`; for a lone segment they should be `-1`).
+
+So a valid `coll_data` must satisfy Melee's traversal/loop invariants, and one lone segment does not.
+**Until a correct multi-link loop is emitted, reuse an existing collision** — that is what made the
+stage playable in §31.1. The fast diagnostic is `stagec coll <dat>`, which dumps
+vertices/links/groups/category offsets of any stage's collision.
+
+---
+
+# 33. Architecture decision: Blender for meshes, a purpose-built editor for stage semantics (2026-09-15)
+
+Recorded because it frames all of the above. A Melee stage is **not** a mesh — it is an HSD tree
+(`map_head` with GeneralPoints/ModelGroups/Splines, `coll_data`, `grGroundParam`, `itemdata`,
+`yakumono_param`, spawn points, camera bounds, plus the `Gr*` ground-function semantics). glTF carries
+geometry and UVs and **silently drops all of it**. The expensive direction is Blender → `.dat`, which
+is a compiler, not a converter.
+
+So the split, agreed with the user:
+
+| Layer | Owner |
+|---|---|
+| geometry, UVs, textures, materials (the art) | **Blender** — do not build a modeler |
+| `map_head`, `coll_data`, ground params, spawns, camera, group composition | **custom editor** |
+| the `.dat` compile step | **`stagec`** (single source of truth) |
+
+Sequencing agreed: **(C)** sidecar format + compiler first, to derisk `.dat` emission before any UI;
+then **(A)** a standalone editor on HSDLlib in C#. Also noted up front, and confirmed the hard way in
+§31/§32: **visuals and collision are separate concerns** — do not let a tool conflate them just
+because a mesh editor makes them look like one thing.
+
+The `.tt` mod loader (§26, §28) stays useful as a lightweight target/platform path, but it is a
+bootstrap, not the destination.

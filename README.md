@@ -48,6 +48,7 @@ where most of the engineering goes (see the GC-layout alias-view class in the de
 
 ```
 docs/DEVLOG.md        engineering log: every hard-won fact, bug and fix (read this first)
+docs/HANDOFF.md       current state + next experiment for stage authoring (resume here)
 PORT_BOOTSTRAP.md     project origin and the feasibility analysis
 _research/            boot gates, SDK/console invariants, shim surface, port dev quickref
 _build/               Windows build scripts (Aurora, per-TU pipeline, link, run)
@@ -88,5 +89,9 @@ short:
 - [google/dawn](https://dawn.googlesource.com/dawn) — WebGPU implementation.
 - [TwilitRealm/dusklight](https://github.com/TwilitRealm/dusklight) — precedent for turning a
   GameCube decomp into a native cross-platform port.
+- [akaneia/m-ex](https://github.com/akaneia/m-ex) and its contributors — the content-expansion
+  framework whose patches are used as the **specification** for behaviors reimplemented in the
+  port (no m-ex source is vendored or built; see
+  [`DEPENDENCIES.md`](DEPENDENCIES.md#specification-references-not-built)).
 - Dolphin Emulator — `pc/gameworld/gekko_fp.c` derives from `Common/FloatUtils.cpp`
   (GPL-2.0-or-later); attribution is in that file.
