@@ -12,7 +12,7 @@ d_wsl="/mnt/c/gdm/_build/masstest/out"
   -ftrivial-auto-var-init=zero -O2 -Xclang -disable-llvm-passes -emit-llvm -c -w \
   -Isrc -isystem src/MSL -isystem extern/dolphin/include -isystem extern/dolphin/src -isystem build/GALE01/include \
   -include src/MSL/math_ppc.h \
-  "$f" -o "$d_win/$n.bc" 2> "$d_wsl/$n.cc.err" || { echo "CC_FAIL $f"; rm -f "$d_wsl/$n.cc.err"; exit 0; }
+  "$f" -o "$d_win/$n.bc" 2> "$d_wsl/$n.cc.err" || { echo "CC_FAIL $f"; cat "$d_wsl/$n.cc.err"; rm -f "$d_wsl/$n.cc.err"; exit 1; }
 rm -f "$d_wsl/$n.cc.err"
-/mnt/c/gdm/_build/gwtool/gwtool.exe "$d_win/$n.bc" -o "$d_win/$n.obj" --imports="$d_win/$n.imports" 2> "$d_wsl/$n.gw.err" || { echo "GW_FAIL $f"; rm -f "$d_wsl/$n.gw.err"; exit 0; }
+/mnt/c/gdm/_build/gwtool/gwtool.exe "$d_win/$n.bc" -o "$d_win/$n.obj" --imports="$d_win/$n.imports" 2> "$d_wsl/$n.gw.err" || { echo "GW_FAIL $f"; cat "$d_wsl/$n.gw.err"; rm -f "$d_wsl/$n.gw.err"; exit 1; }
 rm -f "$d_wsl/$n.gw.err"

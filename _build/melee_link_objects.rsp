@@ -1003,3 +1003,6 @@
 ../masstest/shimobj/shim_pad.obj
 ../masstest/shimobj/gc_adapter.obj
 ../masstest/shimobj/shim_vi.obj
+../masstest/shimobj/gw_test.obj
+../masstest/shimobj/gw_tests_core.obj
+../masstest/out/pc_tests_mex_tests.c.obj

@@ -986,5 +986,6 @@ extern/dolphin/src/dolphin/mtx/mtx44.c
 extern/dolphin/src/dolphin/thp/THPDec.c
 pc/gameworld/mtx_pc.c
 pc/gameworld/gekko_fp.c
+pc/tests/mex_tests.c
 src/MSL/float.c
 src/MSL/ansi_files.c
