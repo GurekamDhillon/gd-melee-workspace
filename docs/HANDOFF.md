@@ -1,160 +1,118 @@
 # Handoff — m-ex port / Sonic proof-of-life
 
-**Written: 2026-09-15 20:29 PDT (2026-09-16 03:29 UTC).**
-Supersedes the previous stage-authoring handoff, which is preserved in git history
-(`docs/HANDOFF.md` as of commit `d665c31`). **Stage authoring / Blender-as-level-editor is
-DROPPED by user decision** — do not resume it. Existing committed work (the `.tt` mod loader,
-`MELEE_TARGET_TEST`, `hsd_export`/`stagec`, Blender I/O tooling) remains in the tree and functional;
-dropping means no further development, not removal.
+**Written: 2026-09-16.** Supersedes the 2026-09-15 handoff (preserved in git,
+`docs/HANDOFF.md` as of `d665c31`). **Stage authoring / Blender-as-level-editor remains DROPPED
+by user decision** — do not resume it; the existing committed work is retained, not removed.
 
 Read `_research/port-dev-quickref.md` (commands, env vars, toolchain) and `docs/MEX_PORT_STATUS.md`
-(the 49-flag inventory + verification results) before touching anything.
+(the 49-flag inventory) before touching anything.
 
 ---
 
 ## 1. Committed baseline
 
-Committing was explicitly authorised and is **done**. Both repos are clean apart from the items in
-§4 and §5.
+Both repos are clean.
 
 ```
-ROOT  (master)                          MELEE FORK (pc-port)
-───────────────────────────────         ─────────────────────────────────────────
-6645c59 build: surface per-TU           c204fa4b2 pc: port m-ex behaviors behind
-        compile failures;                       MELEE_MEX flags
-        refresh manifests               c9f044983 pc: add an in-engine unit test suite
-d665c31 docs: m-ex port status,
-        handoff and research;
-        drop stage authoring
-17db6d2 tools: m-ex patch
-        resolution, PPC disasm,
-        verify and lint
+ROOT  (master)                                   MELEE FORK (pc-port)
+──────────────────────────────────────           ────────────────────────────────────────────
+d374ee3 docs: rewrite the handoff for the …      54727c190 pc: add a content-probe dev hook; …
+ba29781 tools: add a GameCube disc FST           4e68452ca pc: complete the m-ex Tier C predicate dispatch
+        extractor; ignore disc artefacts         f6255d9ee pc: add the m-ex Tier C fighter hook surface
+6645c59 build: surface per-TU compile failures   c204fa4b2 pc: port m-ex behaviors behind MELEE_MEX flags
 ```
 
-Verified at commit time: 33 files compile in **both** `TARGET_PC` and non-`TARGET_PC` (0 failures);
-lint 50 call sites / 0 violations; `MELEE_PC_LINK_OK`; tests 15/15 exit 0 in both flag
-configurations; boots and renders with flags enabled (0 FATAL).
+Verified at commit time: `verify_changed.sh` 0 failures in **both** compile modes (`src/` and
+`pc/`); lint 50 call sites / 0 violations; `MELEE_PC_LINK_OK`; tests **17/17** exit 0.
 
-## 2. IN FLIGHT — Tier C hooks (agent was still running at handoff)
+## 2. Tier C hooks — DONE and verified
 
-Agent `bg_ee8bfe51`, session `ses_f57eb454effe01zDNEdpb7VWYu` — **still active when this was
-written** (56 messages, 7 todos). It is implementing step 1 of `_research/mex-tier-c-hooks.md`
-§7: the `OnFrame` hook via the `ftData_UnkMotionStates3` table at `Fighter_8006A360`, plus the
-§5 native API (`gw_Mex_HookRegister` / `gw_Mex_PredicateRegister`).
+The `Fighter On*` table-slot overrides (`OnLoad`, `OnDeath`, `OnDestroy/OnUserDataRemove`,
+`OnFrame/UnkMotionStates3`, `OnAbsorb`, head-item, item-visibility, knockback) are re-expressed as a
+flat native `[event][kind]` override array dispatched from the 11 decomp call sites. NULL clears a
+slot; hooks live out-of-band so `ftData_*` reinit cannot clobber them. The §5 native API is complete
+(`gw_Mex_HookRegister` / `gw_Mex_PredicateRegister` + `gw_Mex_GObjDispatch` /
+`gw_Mex_GObjPredDispatch`) and both halves are unit-tested.
 
-**Uncommitted, UNVERIFIED, all-additive (+329 / -0):**
+## 3. Sonic proof of life — extraction + file-level PoL DONE
 
-| File | Δ | What |
+Prerequisites (unchanged): clean ISO MD5 `0e63d4223b01d9aba596259dc155a174`; `Akaneia.iso` MD5
+**`63ea8e113e451c9369f17f7a49012412`** (v1.0.1).
+
+- `tools/gc_extract.py` is **fixed and committed**: a name offset of 0 is the first string in the
+  table (the `audio/` directory), and a directory's length field is the index of the **last**
+  in-subtree entry. Extraction now matches FST ground truth — Akaneia: root 1308 / `audio` 195 /
+  `audio/us` 80 / `plugins` 9 = **1592**; vanilla: root 998 / `audio` 154 / `audio/us` 57 = 1209.
+  Extraction lives at `/tmp/akaneia-fixed` (regenerate with `python3 tools/gc_extract.py
+  /mnt/c/iso/Akaneia.iso <outdir>`).
+- **File-level PoL works.** `MELEE_CONTENT_PROBE=PlSn.dat` against `Akaneia.iso` logs
+  `gw: content probe: PlSn.dat -> parsed by lbArchive_LoadArchive` — the port's own HSD loader
+  consumes m-ex-produced fighter data from the disc FST.
+- Sonic data (recon): fighter **031**, joint `PlySonic5K_Share_joint`, stage **082** = `Targets!Sonic`
+  (`/GrTSn.dat`). Music is **105 / 125 / 134** (`sonic.hps` / `ff_sonic.hps` / `sonic2.hps`) — the
+  2026-09-15 handoff's "51 / 66 / 74" was wrong (66 is the sound **bank**, `sounds/066.json`).
+
+## 4. BLOCKER FOUND — Akaneia.iso OOMs at boot when a save exists
+
+Running the port against `Akaneia.iso`:
+
+```
+lbMemory_80014FC8: ALLOC_FAIL size=0xE9B20 lo=0x801F1940 hi=0x806EBFD0
+assertion "memp_kouho" failed   (src/melee/lb/lbmemory.c:163)
+```
+
+Isolation (40 s off-screen boot, `MELEE_SKIP_INTRO=1`):
+
+| ISO | card | result |
 |---|---|---|
-| `pc/platform/gw.h` | +55 | the new API declarations |
-| `pc/platform/gw_runtime.c` | +98 | dispatch implementation |
-| `pc/tests/mex_tests.c` | +72 | tests |
-| `src/melee/ft/fighter.c` | +63 | OnFrame call site |
-| `src/melee/ft/ftcommon.c` | +28 | |
-| `src/melee/ft/ftdemo.c` | +13 | |
+| Akaneia | on (save present) | **ALLOC_FAIL at retrace=4** |
+| Akaneia | off (`MELEE_CARD=0`) | boots, renders ~1800 frames |
+| Akaneia | empty `MELEE_CARD_PATH` | boots, renders 1830 frames |
+| vanilla | on (same save) | boots, renders ~1980 frames |
 
-**Do NOT trust this until verified.** Run, in order:
+So the crash is **m-ex content + an existing save**, not the content probe and not the card code per
+se. The engine's memory budget is vanilla-sized; the card-save boot path (stack reaches
+`lbcardgame.c` and the `lb_800192A8` DVD spin) then needs ~956 KB the `memp` pool cannot supply.
+This is the content-expansion **memory plumbing** work — §6.1 grew `lbHeap` for 7 heaps, but the
+`lbMemory` pool / file sizes are the next thing to size for m-ex content. **Dev workaround:
+`MELEE_CARD=0`.**
 
-```bash
-cd "/mnt/c/Users/Gurek/Desktop/GD's Melee"
-bash tools/mex_port/verify_changed.sh          # both compile modes
-python3 tools/mex_port/lint_ports.py melee/src
-cd melee && cmd.exe /c "cd /d C:\gdm\_build\ax86m && ..\build_melee_pc.bat"
-cmd.exe /c "cd /d C:\gdm\_build && run_tests.bat"
-```
+## 5. Traps (still true)
 
-The design's §6 risks are the acceptance criteria — all three compile perfectly while failing
-silently: **flat table dispatch** (not a linked list — this runs n_fighters × 60 Hz); **NULL must be
-clearable** (vanilla's `cmpli/beq` means "no callback", so a set-only API destroys vanilla
-behaviour); **re-apply after mode reinit** (`ftData_*` are static tables).
-
-## 3. Sonic port — FULLY UNBLOCKED, ready to start
-
-Goal (user): port Sonic as a **file proof of life** that the whole m-ex content pipeline works.
-
-**All three prerequisites are now done and verified:**
-
-| Prerequisite | State |
-|---|---|
-| `xdelta3` | installed at `~/.local/tools/xdelta3/usr/bin/xdelta3` (3.0.11, unpacked from a .deb — **no root needed**, `sudo` requires a password here) |
-| Clean ISO | `/mnt/c/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso` — MD5 verified `0e63d4223b01d9aba596259dc155a174` ✓ |
-| Akaneia disc | **BUILT**: `/mnt/c/iso/Akaneia.iso`, 1,459,978,240 B, MD5 **`63ea8e113e451c9369f17f7a49012412`** ✓ (the exact documented v1.0.1 hash). Took 11m40s. |
-
-Reproduce the disc with:
-
-```bash
-~/.local/tools/xdelta3/usr/bin/xdelta3 -d -f \
-  -s "/mnt/c/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso" \
-  patch.xdelta /mnt/c/iso/Akaneia.iso
-```
-
-**IMMEDIATE NEXT STEP — extract the disc.** `tools/gc_extract.py` was just written for this
-(GameCube FST walker, stdlib only, `--list` / `--only <prefix>` supported). It is **untested** —
-run `--list` first to sanity-check, then extract:
-
-```bash
-python3 tools/gc_extract.py /mnt/c/iso/Akaneia.iso /tmp/akaneia-extract --list | head -40
-python3 tools/gc_extract.py /mnt/c/iso/Akaneia.iso /tmp/akaneia-extract
-```
-
-That yields the `files/` and `sys/` that the repo cannot ship (Nintendo's assets aren't
-redistributable — the patch is a diff against a disc you own, which is why this route is legitimate).
-`pyisotools 2.4.7` + `dolreader` are also installed user-level as a fallback/validator.
-
-**Where Sonic is (confirmed by reconnaissance):**
-- Fighter **031** = `"Sonic"`, joint symbols `PlySonic5K_Share_joint` / `PlySonic5KRe_Share_joint`
-  (two models).
-- Series: `"Sonic the Hedgehog"`; stage **082** = `"Targets!Sonic"`; music ids 51/66/74.
-- Metadata lives in `akaneia-build/data/`, portraits in `akaneia-build/assets/`
-  (428 CSPs, 68 CSS entries).
-- The actual fighter/stage **data files are NOT in the repo** — they only exist inside
-  `Akaneia.iso`. Extraction (above) is what produces them.
-
-## 4. Uncommitted / needs attention
-
-- `akaneia-build/` — 60 MB, 1592 dirty files right after clone (CRLF normalisation). **Not
-  gitignored.** Add an entry before any `git add -A`-adjacent work.
-- `patch.xdelta` — 244 MB, untracked, in the project root.
-- `tools/gc_extract.py` — untracked, written this session, **untested**.
-- `_build/` — 153 untracked artefacts (Blender/HSDLib/glTF/PNG/DAT). **Deliberately never
-  committed.** Do not `git add` them.
-
-## 5. Known traps (each cost real time)
-
-- **`pipe_wsl.sh` `$?` is meaningless** — the script `exit 0`s regardless. The **only** failure
-  signal is `CC_FAIL`/`GW_FAIL` in the output **text**. Same class of bug appeared in five separate
-  checks this project (a `grep` for the wrong assert wording, a never-reached loop, a
-  `git --porcelain` that hid untracked dirs). **Treat any green result as untrusted until you have
-  shown the check can fail.**
-- **Never poll a background task.** Absence of a completion notification is **not** evidence of
-  progress. Five agents in this project died silently and were reported as "running" for hours; one
-  had finished the answer 3h20m earlier and its result was recovered only by reading its session
-  transcript. Check `session_info` timestamps and inspect the working tree ("are files on disk?").
-- **Batch agents must be told to write incrementally.** The first attempt produced **zero files**
-  from four agents because they planned everything and wrote nothing at the end. Adding "save each
-  edit as you make it" turned it into two successful deliveries.
-- **`taskkill`/`Start-Process -PassThru` from WSL hang.** Read logs with WSL-side tools; kill with
-  `cmd.exe /c taskkill /F /IM melee-pc.exe` at most, and never wait on it.
-- **CRLF**: the melee fork normalises CRLF→LF; ~33 files will be rewritten on next touch. Consider
-  `.gitattributes` rather than discovering churn later.
+- **`pipe_wsl.sh`** now exits non-zero (commit `6645c59`), but the reliable signal remains
+  `CC_FAIL`/`GW_FAIL` in the text. Treat any green result as untrusted until you have shown the
+  check can fail (`verify_changed.sh` was re-falsified this session).
+- **Never poll a background task.** Absence of a completion notice is not progress.
+- **`MELEE_WINDOW_HIDE` does not work** (present blocks forever) — park the window off-screen with
+  `MELEE_WINDOW_X/Y=30000`.
+- **The memory card is on by default**; `MELEE_CARD=0` disables it, `MELEE_CARD_PATH` points it at
+  another folder. **Run at most one `melee-pc.exe`; kill with `taskkill /F /IM melee-pc.exe`.**
+- **CRLF**: the fork normalises CRLF→LF; changed `src/` files show a rewrite warning on commit.
 
 ## 6. Conventions
 
-- All game-source changes `#if defined(TARGET_PC)`-guarded with the original under `#else`, so the
-  non-PC matching build stays byte-identical. Pattern: `src/melee/gr/ground.c` near `Ground_801C4210`.
-- Runtime gating: `extern int Mex_Enabled(const char *); if (Mex_Enabled("<snake_case_name>"))`.
-  Flag names must be **globally unique** — 49 are taken, see `docs/MEX_PORT_STATUS.md`.
+- Game-source changes `#if defined(TARGET_PC)`-guarded with the original under `#else`.
+- Runtime gating: `extern int Mex_Enabled(const char *); if (Mex_Enabled("<snake_case_name>"))`;
+  flag names globally unique (49 taken).
 - Attribution at every change site:
   `Ported from m-ex (https://github.com/akaneia/m-ex): <path>, @ <address>. <what changes>.`
-- **m-ex has NO LICENCE** (upstream issue #20 unanswered). It is a **specification only** —
-  reimplement behaviour in original C; never vendor, copy or transcribe its `.asm`/`.h`/`.dat`.
-- `GIT_MASTER=1` on git commands; per-command `-c user.name="GD" -c user.email="gd@gsd.sh"`;
-  melee subjects `pc:`, root subjects `docs:`/`build:`/`tools:`. **Never `git add -A`.**
-- Compile check a single game TU: `bash /mnt/c/gdm/_build/masstest/pipe_wsl.sh <file>` (silent = OK).
+- **m-ex has NO LICENCE** — specification only; never vendor/copy/transcribe its `.asm`/`.h`/`.dat`.
+- `GIT_MASTER=1`; per-command `-c user.name="GD" -c user.email="gd@gsd.sh"`; melee subjects `pc:`,
+  root subjects `docs:`/`build:`/`tools:`. **Never `git add -A`.**
 
 ## 7. What is NOT proven
 
-The 49 flags are **compile/link/run** clean, with flags enabled, no faults. Only 4 families were
-hand-audited against the m-ex originals (`default_*`, the four `unlock_*`, `stage_music_5050`,
-`skip_result_screen`) — all faithful. **The other ~45 are not behaviourally verified.** 15 tests are
-not load-bearing for 49 flags. Per-flag play testing is outstanding.
+- **Sonic is not playable** — only his fighter DAT parses through the loader. Adding a character
+  needs the Tier B data plumbing in `_research/mex-content-expansion.md` §6.3.
+- The Akaneia-save OOM (§4) is **not fixed**.
+- The content probe fires on the memcard-scene leave path (`bootOnLeave`), so it does not run in a
+  card-disabled boot; move it to a card-independent hook if that matters.
+- ~45 of the 49 flags remain behaviourally unverified.
+
+## 8. Next steps
+
+1. Root-cause the Akaneia + save OOM (§4): find what needs ~956 KB on the save path and size the
+   memory budget for m-ex content.
+2. Extend the content probe to the stage (`GrTSn.dat`) and target-test files; make it
+   card-independent.
+3. Then the first real character add (Sonic) per `_research/mex-content-expansion.md`.

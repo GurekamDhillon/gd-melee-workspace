@@ -242,3 +242,15 @@ defaults live at `0x803D4A48`, outside that range).
   prints diagnostics instead of swallowing them). Review before relying on it.
 - `melee/pc/` carries the test runner, tests, and the `--test` branch in `main.c`.
 - Nothing is committed.
+
+## 8. Session additions (2026-09-16)
+
+- **Tier C hook surface** (see `HANDOFF.md` §2) — the `Fighter On*` families are re-expressed as a
+  native per-`(event, kind)` override array with `gw_Mex_HookRegister` / `gw_Mex_PredicateRegister`
+  and their dispatches. This is *not* part of the 49-flag family: the hooks do not use `Mex_Enabled`,
+  so the inventory and the 50-call-site lint are unaffected.
+- Tests are now **17/17** (adds `mex_onframe_hook_register_and_clear` and
+  `mex_predicate_register_and_clear`).
+- The baseline is now **committed** (root `d374ee3`, melee `54727c190`); the "Nothing is committed"
+  note above is superseded.
+- New blocker: `Akaneia.iso` boot OOMs when a save exists (`HANDOFF.md` §4).
