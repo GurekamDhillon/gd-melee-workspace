@@ -44,6 +44,11 @@ pad_live.txt
 _build/pad_live.txt
 _build/card/
 
+# Disc-modding artefacts: the built disc and its patch are regenerable from the
+# user-supplied clean ISO (see docs/HANDOFF.md §3). Never commit either.
+/akaneia-build/
+/patch.xdelta
+
 # Generated research dumps; regenerate locally with the commands in docs/DEVLOG.md.
 /_research/scripts/_psdisp.i
 /_research/scripts/common.txt
