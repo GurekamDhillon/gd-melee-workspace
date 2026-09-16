@@ -1,118 +1,100 @@
-# Handoff — m-ex port / Sonic proof-of-life
+# Handoff — Sonic port (m-ex content into the native PC port)
 
-**Written: 2026-09-16.** Supersedes the 2026-09-15 handoff (preserved in git,
-`docs/HANDOFF.md` as of `d665c31`). **Stage authoring / Blender-as-level-editor remains DROPPED
-by user decision** — do not resume it; the existing committed work is retained, not removed.
+**Written: 2026-09-16.** Supersedes the 2026-09-15 handoff (in git). Stage authoring / Blender-as-
+level-editor remains DROPPED.
 
-Read `_research/port-dev-quickref.md` (commands, env vars, toolchain) and `docs/MEX_PORT_STATUS.md`
-(the 49-flag inventory) before touching anything.
+Read `_research/port-dev-quickref.md` (commands, env vars, traps), `_research/mex-ppc-interpreter.md`
+(option B architecture) and `_research/sonic-clone-boot.md` (the fighter plumbing findings) before
+touching anything.
 
 ---
 
-## 1. Committed baseline
-
-Both repos are clean.
+## 1. Committed baseline (melee fork `pc-port`)
 
 ```
-ROOT  (master)                                   MELEE FORK (pc-port)
-──────────────────────────────────────           ────────────────────────────────────────────
-d374ee3 docs: rewrite the handoff for the …      54727c190 pc: add a content-probe dev hook; …
-ba29781 tools: add a GameCube disc FST           4e68452ca pc: complete the m-ex Tier C predicate dispatch
-        extractor; ignore disc artefacts         f6255d9ee pc: add the m-ex Tier C fighter hook surface
-6645c59 build: surface per-TU compile failures   c204fa4b2 pc: port m-ex behaviors behind MELEE_MEX flags
+8ca550072 pc: load Sonic's real data (model, costumes, anims); behaviour still Fox
+9de877025 pc: render Sonic's model - fix Aurora's indexed-draw buffer growth
+9a3922df1 pc: grow heap 3 for the Akaneia item archive (fixes the match-setup OOM)
+4a417fe9f pc: add an m-ex ftFunction blob loader (option B, phase 2)
+6ca8fa92b pc: boot the new Ft_Kind_Sonic slot in Target Test (fox-clone renders)
+dee0280e5 pc: add a PowerPC interpreter core and its end-to-end test (option B, phase 1)
+0c41100eb pc: add an internal Ft_Kind_Sonic slot as a pure Fox clone
 ```
 
-Verified at commit time: `verify_changed.sh` 0 failures in **both** compile modes (`src/` and
-`pc/`); lint 50 call sites / 0 violations; `MELEE_PC_LINK_OK`; tests **17/17** exit 0.
+Root repo: `1097b20` (B design doc), `24dc590`/`d374ee3`/`ba29781` (handoff, extractor, ignores).
+Verified at each commit: `verify_changed.sh` 0 failures both modes; `MELEE_PC_LINK_OK`; tests green
+(now **21/21**).
 
-## 2. Tier C hooks — DONE and verified
+## 2. What WORKS now
 
-The `Fighter On*` table-slot overrides (`OnLoad`, `OnDeath`, `OnDestroy/OnUserDataRemove`,
-`OnFrame/UnkMotionStates3`, `OnAbsorb`, head-item, item-visibility, knockback) are re-expressed as a
-flat native `[event][kind]` override array dispatched from the 11 decomp call sites. NULL clears a
-slot; hooks live out-of-band so `ftData_*` reinit cannot clobber them. The §5 native API is complete
-(`gw_Mex_HookRegister` / `gw_Mex_PredicateRegister` + `gw_Mex_GObjDispatch` /
-`gw_Mex_GObjPredDispatch`) and both halves are unit-tested.
+- **The Akaneia ISO boots a match** (`MELEE_TARGET_TEST=32`). The match-setup OOM was `IfAll.usd`
+  growing ~55 KB on Akaneia (custom items) overflowing heap 3; heap 3 grown 128 KB (donated from
+  the main heap).
+- **Sonic's real model renders in-game**: `PlSn.dat`/`ftDataSonic`, `PlSnNr.dat` /
+  `PlySonic5K_Share_joint`, 7 costumes. Screenshot: `.omo/evidence/sonic-renders.png`.
+- **PPC interpreter core** (`pc/platform/gw_ppc.{h,c}`) — big-endian guest fetch/execute, bridge
+  seam, reentrant; test green.
+- **ftFunction blob loader** (`pc/platform/gw_mex_ftfunction.{h,c}`) — loads `PlSn.dat`'s
+  `ftFunction`, relocates it, resolves **25 overrides**, surfaces the func-address case; tests green
+  on both discs.
+- **Aurora patch** (`extern/aurora/lib/gx/command_processor.cpp`): geometric growth of the indexed
+  draw buffer (m-ex models push per-triangle indexed draws; the old exact-size re-upload was O(n²)
+  and overflowed the 8 MiB staging buffer → `abort()`).
 
-## 3. Sonic proof of life — extraction + file-level PoL DONE
+## 3. What is NOT done — the remaining work
 
-Prerequisites (unchanged): clean ISO MD5 `0e63d4223b01d9aba596259dc155a174`; `Akaneia.iso` MD5
-**`63ea8e113e451c9369f17f7a49012412`** (v1.0.1).
+**Sonic's BEHAVIOUR is still Fox's.** Running his real moveset is option B phase 3: install the
+interpreted `ftFunction` overrides into the engine dispatch so the game calls the PPC. Checklist
+(from the phase-2 report):
+1. heap-allocate the interpreted code (not the test's fixed pin);
+2. build the guest→native bridge table (`melee/config/GALE01/symbols.txt` × `melee-pc.map`) —
+   **a partial, 658 KB `pc/platform/gw_mex_bridge.c` + `gw_mex_ftfunction_runtime.c` exist but were
+   NEVER wired into the build or verified** (a prior agent stalled); judge whether to reuse them;
+3. install overrides into dispatch (11 existing `gw_Mex_GObjDispatch` events + MoveLogic, the 8
+   specials, onActionStateChange, onReapplyAttr, onDoubleJump, onUSmash) — only the slots this
+   fighter's functionRelocTable overrides;
+4. re-express the func-address reloc case as a native hook;
+5. marshal float args/returns + struct/sret across the bridge;
+6. set r2 to the guest mexData base and populate the `OFST_*` slots the blob reads.
 
-- `tools/gc_extract.py` is **fixed and committed**: a name offset of 0 is the first string in the
-  table (the `audio/` directory), and a directory's length field is the index of the **last**
-  in-subtree entry. Extraction now matches FST ground truth — Akaneia: root 1308 / `audio` 195 /
-  `audio/us` 80 / `plugins` 9 = **1592**; vanilla: root 998 / `audio` 154 / `audio/us` 57 = 1209.
-  Extraction lives at `/tmp/akaneia-fixed` (regenerate with `python3 tools/gc_extract.py
-  /mnt/c/iso/Akaneia.iso <outdir>`).
-- **File-level PoL works.** `MELEE_CONTENT_PROBE=PlSn.dat` against `Akaneia.iso` logs
-  `gw: content probe: PlSn.dat -> parsed by lbArchive_LoadArchive` — the port's own HSD loader
-  consumes m-ex-produced fighter data from the disc FST.
-- Sonic data (recon): fighter **031**, joint `PlySonic5K_Share_joint`, stage **082** = `Targets!Sonic`
-  (`/GrTSn.dat`). Music is **105 / 125 / 134** (`sonic.hps` / `ff_sonic.hps` / `sonic2.hps`) — the
-  2026-09-15 handoff's "51 / 66 / 74" was wrong (66 is the sound **bank**, `sounds/066.json`).
+Phase 3 is being attempted in a narrow form first (prove ONE override — `onLoad` — runs in-game,
+with log proof) before doing all 25. If that has not landed, resume there; the narrow proof is the
+gate.
 
-## 4. BLOCKER FOUND — Akaneia.iso OOMs at boot when a save exists
+## 4. Traps (still true, each cost time)
 
-Running the port against `Akaneia.iso`:
+- **`pipe_wsl.sh` `$?` is meaningless** — the signal is `CC_FAIL`/`GW_FAIL` in the *text*. Treat
+  green as untrusted until falsified.
+- **Agents stall and write nothing.** Two subagents did; the fix is a hard "write each file to disk
+  before moving on, build/verify incrementally" instruction. Check the working tree, not the story.
+- **A new kind index is outside EVERY vanilla-sized per-kind structure.** Two classes: C tables
+  (`[Ft_Kind_Max]`) and **disc-loaded** tables inside `PlCo.dat` (`ftPartsTable`, `Fighter_804D6540`,
+  widened by `ftCommonData_ExtendKindTable`), plus the **figatree-kind bits** packed MSB-first in
+  `x10_animCurrFlags` (low 6 bits) — Fox's data says kind 1, the port's kind is 33, so they must be
+  rewritten (`ftData_8008572C`). Expect more of these when behaviour is wired.
+- **A `/GS`-looking crash may be `abort()`.** `0xC0000409` here was `ByteBuffer::resize`'s
+  `if (!m_owned) abort()`, not a stack cookie — override `__security_check_cookie` to tell them apart.
+- **Memory budget**: the card and the match setup both allocate from `memp`; heap sizes live in
+  `lbHeap_803BA380[]` (`src/melee/lb/lbheap.c`, TARGET_PC block). Changing a size value is
+  layout-safe; the total must fit MEM1.
+- **Build races**: never run two agents that build+link concurrently (they clobber `melee-pc.exe`).
+- **`C:\gdm` is a junction to the repo root**; launch env vars must be `export`ed and in `WSLENV`.
+  `MELEE_WINDOW_HIDE` does not work — park off-screen with `MELEE_WINDOW_X/Y=30000`.
+- Resolve crash RVAs with the quickref's `mapsym.sh` via Git Bash.
 
-```
-lbMemory_80014FC8: ALLOC_FAIL size=0xE9B20 lo=0x801F1940 hi=0x806EBFD0
-assertion "memp_kouho" failed   (src/melee/lb/lbmemory.c:163)
-```
+## 5. Conventions
 
-Isolation (40 s off-screen boot, `MELEE_SKIP_INTRO=1`):
-
-| ISO | card | result |
-|---|---|---|
-| Akaneia | on (save present) | **ALLOC_FAIL at retrace=4** |
-| Akaneia | off (`MELEE_CARD=0`) | boots, renders ~1800 frames |
-| Akaneia | empty `MELEE_CARD_PATH` | boots, renders 1830 frames |
-| vanilla | on (same save) | boots, renders ~1980 frames |
-
-So the crash is **m-ex content + an existing save**, not the content probe and not the card code per
-se. The engine's memory budget is vanilla-sized; the card-save boot path (stack reaches
-`lbcardgame.c` and the `lb_800192A8` DVD spin) then needs ~956 KB the `memp` pool cannot supply.
-This is the content-expansion **memory plumbing** work — §6.1 grew `lbHeap` for 7 heaps, but the
-`lbMemory` pool / file sizes are the next thing to size for m-ex content. **Dev workaround:
-`MELEE_CARD=0`.**
-
-## 5. Traps (still true)
-
-- **`pipe_wsl.sh`** now exits non-zero (commit `6645c59`), but the reliable signal remains
-  `CC_FAIL`/`GW_FAIL` in the text. Treat any green result as untrusted until you have shown the
-  check can fail (`verify_changed.sh` was re-falsified this session).
-- **Never poll a background task.** Absence of a completion notice is not progress.
-- **`MELEE_WINDOW_HIDE` does not work** (present blocks forever) — park the window off-screen with
-  `MELEE_WINDOW_X/Y=30000`.
-- **The memory card is on by default**; `MELEE_CARD=0` disables it, `MELEE_CARD_PATH` points it at
-  another folder. **Run at most one `melee-pc.exe`; kill with `taskkill /F /IM melee-pc.exe`.**
-- **CRLF**: the fork normalises CRLF→LF; changed `src/` files show a rewrite warning on commit.
-
-## 6. Conventions
-
-- Game-source changes `#if defined(TARGET_PC)`-guarded with the original under `#else`.
-- Runtime gating: `extern int Mex_Enabled(const char *); if (Mex_Enabled("<snake_case_name>"))`;
-  flag names globally unique (49 taken).
-- Attribution at every change site:
-  `Ported from m-ex (https://github.com/akaneia/m-ex): <path>, @ <address>. <what changes>.`
-- **m-ex has NO LICENCE** — specification only; never vendor/copy/transcribe its `.asm`/`.h`/`.dat`.
+- Game-source changes `#if defined(TARGET_PC)`-guarded, original under `#else`.
+- Native platform shims (`pc/platform/*.c`) are compiled directly and listed in
+  `_build/melee_link_objects.rsp` (outside version control) — **not** in `files.txt` (which is only
+  for PPC→x86 pipe TUs).
+- **m-ex has NO LICENCE** — specification only; reimplement in original C; never vendor/copy its
+  `.asm`/`.h`/`.dat`.
 - `GIT_MASTER=1`; per-command `-c user.name="GD" -c user.email="gd@gsd.sh"`; melee subjects `pc:`,
-  root subjects `docs:`/`build:`/`tools:`. **Never `git add -A`.**
+  root `docs:`/`build:`/`tools:`. **Never `git add -A`.**
 
-## 7. What is NOT proven
+## 6. Not proven
 
-- **Sonic is not playable** — only his fighter DAT parses through the loader. Adding a character
-  needs the Tier B data plumbing in `_research/mex-content-expansion.md` §6.3.
-- The Akaneia-save OOM (§4) is **not fixed**.
-- The content probe fires on the memcard-scene leave path (`bootOnLeave`), so it does not run in a
-  card-disabled boot; move it to a card-independent hook if that matters.
-- ~45 of the 49 flags remain behaviourally unverified.
-
-## 8. Next steps
-
-1. Root-cause the Akaneia + save OOM (§4): find what needs ~956 KB on the save path and size the
-   memory budget for m-ex content.
-2. Extend the content probe to the stage (`GrTSn.dat`) and target-test files; make it
-   card-independent.
-3. Then the first real character add (Sonic) per `_research/mex-content-expansion.md`.
+- Sonic's real moveset (phase 3). Sonic currently renders with Fox's behaviour.
+- The other ~45 of the 49 m-ex flags (unchanged).
+- The partial `gw_mex_bridge.c` is unverified and not linked.
