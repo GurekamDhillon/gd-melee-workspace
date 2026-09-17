@@ -444,6 +444,7 @@ src/melee/ft/kinds/ftSeak/ftseakspecialhi.c
 src/melee/ft/kinds/ftSeak/ftseakspeciallw.c
 src/melee/ft/kinds/ftSeak/ftseakspecialn.c
 src/melee/ft/kinds/ftSeak/ftseakspecials.c
+src/melee/ft/kinds/ftSonic/ftsonic.c
 src/melee/ft/kinds/ftYoshi/ftyoshi.c
 src/melee/ft/kinds/ftYoshi/ftyoshiguard.c
 src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c

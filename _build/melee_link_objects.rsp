@@ -448,6 +448,7 @@
 ../masstest/out/src_melee_ft_kinds_ftSeak_ftseakspeciallw.c.obj
 ../masstest/out/src_melee_ft_kinds_ftSeak_ftseakspecialn.c.obj
 ../masstest/out/src_melee_ft_kinds_ftSeak_ftseakspecials.c.obj
+../masstest/out/src_melee_ft_kinds_ftSonic_ftsonic.c.obj
 ../masstest/out/src_melee_ft_kinds_ftYoshi_ftyoshi.c.obj
 ../masstest/out/src_melee_ft_kinds_ftYoshi_ftyoshiguard.c.obj
 ../masstest/out/src_melee_ft_kinds_ftYoshi_ftyoshispecialhi.c.obj
@@ -1004,5 +1005,9 @@
 ../masstest/shimobj/gc_adapter.obj
 ../masstest/shimobj/shim_vi.obj
 ../masstest/shimobj/gw_test.obj
+../masstest/shimobj/gw_ppc.obj
+../masstest/shimobj/gw_mex_ftfunction.obj
 ../masstest/shimobj/gw_tests_core.obj
+../masstest/shimobj/gw_mex_bridge.obj
+../masstest/shimobj/gw_mex_ftfunction_runtime.obj
 ../masstest/out/pc_tests_mex_tests.c.obj

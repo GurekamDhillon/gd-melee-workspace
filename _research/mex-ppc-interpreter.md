@@ -110,10 +110,12 @@ containing an `ftFunction` public symbol.
 
 1. **Interpreter core + guest memory + bridge seam** — integer/memory/branch subset; a native
    `gw_ppc_call(guest_fn, r3..)` entry; memory access through guest (big-endian) accessors.
+   **[DONE — phase 1]**
 2. **Smallest proof** — a hand-built PPC test blob in the in-engine test suite (`--test`): a function
    that calls one bridged native function and stores a result to a guest address; assert the side
-   effect. Proves core + memory + bridge.
+   effect. Proves core + memory + bridge. **[DONE — phase 1, `ppc_call_bridged_helper`]**
 3. **Blob loader** — `Reloc` + `Overload` over a real `ftFunction` symbol from `PlSn.dat`.
+   **[DONE — phase 2, `gw_mex_ftfunction.c`; see §9]**
 4. **Install into the OnLoad slot** for `Ft_Kind_Sonic`, boot `MELEE_TARGET_TEST=sonic`, observe.
 5. **Grow coverage** driven by Sonic's `functionRelocTable` (specials, MoveLogic, onActionStateChange…).
 6. **Float/paired-single** as content demands.
@@ -134,3 +136,44 @@ containing an `ftFunction` public symbol.
 - **Address validation**: interpreter-generated loads must be bounds-checked and raise a clean panic
   with the guest PC + EA, not a bare native fault.
 - `rtoc` (r2) unset → `OFST_*` loads read garbage near NULL (usually a crash, sometimes silent zeros).
+
+## 9. Phase 2 done — blob loader (2026-09-16)
+
+`pc/platform/gw_mex_ftfunction.c/.h` loads a fighter `.dat`, extracts the HSD `ftFunction` public
+symbol, copies the code into guest MEM1, applies `Reloc` + `Overload`, and reports the structure.
+Evidence: `.omo/evidence/task-b-phase2.log`.
+
+**Verified struct** (PlSn.dat on Akaneia; `ftFunction` at `data + 0x3BB70`; all pointer fields are
+offsets from the HSD *data section* base, not the file start):
+
+| off | field | PlSn.dat value |
+|---|---|---|
+| 0x00 | code | 0x23E0 |
+| 0x04 | instructionRelocTable | 0x660 |
+| 0x08 | instructionRelocTableCount | 944 |
+| 0x0C | functionRelocTable | 0x7B60 |
+| 0x10 | functionRelocTableCount | 25 |
+| 0x14 | codeSize | 0x5778 |
+
+**Reloc** flag decode confirmed on the real table: flag = top byte of entry word 0, code offset =
+low 24 bits; target top nibble 0x8 → absolute guest address, else `code_base + target`. Flags 0x01
+(store abs), 0x04/0x06 (low/high 16 with lis/addi sign adjustment), 0x0A (branch: OR the LI field),
+0x1A (relative-32); others skipped. Histogram: 0x01=155, 0x04=250, 0x06=250, 0x0A=289.
+
+**Overload** — Sonic's 25 entries are all the table-index case (top bit clear), i.e.
+`Arch_FighterFunc[slot][31] = code + ReplaceWith`, covering slots
+0-11, 13-18, 21-25, 32, 36 (onLoad..all 8 specials, the item hooks, knockback, onFrame,
+onActionStateChange, onReapplyAttr, onDoubleJump, onUSmash). onAbsorb (12) and most bespoke slots
+are NOT overridden — the table is the per-fighter to-do list, as predicted.
+
+**Phase 3 must now do:**
+1. Allocate the code from the fighter heap (phase 2 pins it at guest 0x802F0000 / mexData 0x802E0000).
+2. Build the build-time guest→native bridge table (§4): pair `symbols.txt` (guest addr → name) with
+   `melee-pc.map` (gw_<name> → RVA) so the interpreter's absolute `bl` targets (0x800031F4, …) and the
+   func-address hook sites resolve to native `gw_` functions.
+3. Install the resolved overrides into the per-kind dispatch sites — the 11 `gw_Mex_GObjDispatch`
+   events plus new sites for MoveLogic, the specials, onActionStateChange, onReapplyAttr (Sonic's set).
+4. Re-express the func-address case as a native hook registration (the loader already surfaces it,
+   it does not write).
+5. Marshal float args/returns and struct/sret across the bridge (phase 1 marshals integer args only).
+6. Set r2 = guest mexData base before interpreting so rtoc-relative (`OFST_*`) loads hit guest memory.
