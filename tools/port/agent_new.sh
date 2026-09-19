@@ -10,8 +10,15 @@
 #
 # The objects are HARDLINKED from the shared baseline, not copied. A full set is ~1 GB and ~989
 # TUs; hardlinking costs a second and no disk, and the first time the agent rebuilds a TU the
-# pipeline writes a NEW file over the link, so the baseline is never modified. (This is why
-# pipe_win.sh writes its output rather than appending to it - worth keeping that way.)
+# pipeline replaces the directory entry, so the baseline is never modified.
+#
+# THAT INVARIANT IS LOAD-BEARING AND IT IS NOT AUTOMATIC. gwtool truncates its -o path in place
+# rather than unlinking it, so writing objects directly would mutate the inode every agent
+# shares. pipe_win.sh and pipe_wsl.sh therefore write "$n.obj.tmp" and `mv` it into place; a
+# rename replaces only that one directory entry. Do not "simplify" those two lines back into a
+# direct -o, and be suspicious of any new tool that writes into $GW_OUT. The failure is quiet:
+# builds stay green, one agent's objects link into another's exe, and the generated bridge comes
+# out too small. It cost most of an evening once - docs/HANDOFF.md section 6.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 . ./portlib.sh

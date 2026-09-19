@@ -14,5 +14,10 @@ d_wsl="/mnt/c/gdm/_build/masstest/out"
   -include src/MSL/math_ppc.h \
   "$f" -o "$d_win/$n.bc" 2> "$d_wsl/$n.cc.err" || { echo "CC_FAIL $f"; cat "$d_wsl/$n.cc.err"; rm -f "$d_wsl/$n.cc.err"; exit 1; }
 rm -f "$d_wsl/$n.cc.err"
-/mnt/c/gdm/_build/gwtool/gwtool.exe "$d_win/$n.bc" -o "$d_win/$n.obj" --imports="$d_win/$n.imports" 2> "$d_wsl/$n.gw.err" || { echo "GW_FAIL $f"; cat "$d_wsl/$n.gw.err"; rm -f "$d_wsl/$n.gw.err"; exit 1; }
+/mnt/c/gdm/_build/gwtool/gwtool.exe "$d_win/$n.bc" -o "$d_win/$n.obj.tmp" --imports="$d_win/$n.imports.tmp" 2> "$d_wsl/$n.gw.err" || { echo "GW_FAIL $f"; cat "$d_wsl/$n.gw.err"; rm -f "$d_wsl/$n.gw.err"; exit 1; }
 rm -f "$d_wsl/$n.gw.err"
+# Write-then-rename, NOT write-in-place - see the matching note in pipe_win.sh. gwtool truncates
+# its -o path instead of unlinking it, and agent_new.sh hardlinks this baseline into every
+# agent's build root, so a direct write lands this TU in every other agent's build at once.
+mv -f "$d_wsl/$n.obj.tmp" "$d_wsl/$n.obj"
+mv -f "$d_wsl/$n.imports.tmp" "$d_wsl/$n.imports"
