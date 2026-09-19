@@ -22,6 +22,12 @@
 /_build/masstest/shimobj/
 /_build/masstest/extra/
 
+# Per-agent build roots and run sandboxes (tools/port/agent_new.sh, tools/port/run.sh):
+# objects, an exe and a log per parallel worker, all regenerable.
+/_build/agents/
+/_build/runs/
+/worktrees/
+
 # Generated symbol audits: regenerate with the commands in docs/DEVLOG.md section 4.
 /_build/masstest/*.txt
 !/_build/masstest/files.txt

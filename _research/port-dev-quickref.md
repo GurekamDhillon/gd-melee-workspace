@@ -8,6 +8,42 @@ Commands digest: `docs/DEVLOG.md` §4. Boot gates / SDK notes: `_research/melee-
 - Clang: `/mnt/c/gdm/_toolchains/llvm/bin/clang.exe` (a Windows binary; run it directly from WSL, `--target=i686-pc-windows-msvc`).
 - Windows-side steps run via `cmd.exe` from WSL. Visual Studio Build Tools supply `vcvarsall` for the link step.
 
+## Build and run: use the scripts (they get the bridge right)
+
+```
+bash C:/gdm/tools/port/build.sh --tu src/melee/ft/ftdata.c --shim shim_dvd.c
+bash C:/gdm/tools/port/run.sh sonic --iso C:/iso/Akaneia.iso
+bash C:/gdm/tools/port/run.sh --test t --iso "C:/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
+```
+
+`build.sh` does compile -> link -> **regenerate `gw_mex_bridge.c`** -> compile it -> link again,
+then proves the bridge is a fixpoint. Skipping that regeneration is the single nastiest mistake in
+this tree: the build succeeds, the game boots, and a guest address silently calls the wrong native
+function. The raw commands below still work and are worth understanding, but prefer the scripts.
+
+`run.sh` runs a COPY of the exe in `_build/runs/<name>/`, so the game's log, crash logs, memory
+card and mods never collide with another run - and a running game can never block the next link
+with `LNK1104`.
+
+## Two agents at once
+
+```
+bash C:/gdm/tools/port/agent_new.sh stages     # worktree + build root, objects hardlinked
+export GW_MELEE=C:/gdm/worktrees/stages
+export GW_BUILD_ROOT=C:/gdm/_build/agents/stages
+```
+
+`GW_BUILD_ROOT` is the whole trick: it holds that agent's objects, link response file and
+`melee-pc.exe`, so two agents share nothing they write. What stays shared is read-only - the
+Aurora/Dawn/SDL3 libraries in `_build/ax86m` (the link always runs there because
+`melee_link_libs.rsp` names them relative to it; only the outputs move) and the ISOs.
+
+`--test` needs no window or GPU, so test runs parallelise freely. Gameplay runs each open a window
+and share one audio device, so keep audio checks serial.
+
+Clean up with `agent_rm.sh <name>`; it refuses if the worktree has uncommitted work and never
+deletes the branch.
+
 ## Rebuild a platform shim (`melee/pc/platform/<shim>.c`)
 ```
 C:/gdm/_toolchains/llvm/bin/clang.exe --target=i686-pc-windows-msvc -c -O2 -DTARGET_PC \

@@ -150,3 +150,21 @@ Checks every `Mex_Enabled()` site for:
 Both scripts were falsified against deliberately broken input before being relied on, and both exit
 non-zero on failure.
 
+
+## Bridge call signatures (`gen_sigs.py`)
+
+The PPC interpreter bridges guest `bl`s out to native `gw_` functions. Without a signature the
+bridge assumes every argument is an integer in r3..r10 and the return is a word in r3, which is
+wrong for anything taking or returning a float (PPC passes those in f1..f8 / returns in f1).
+`gen_sigs.py` derives `{float_args, n_args, ret_float}` from the decomp prototypes:
+
+```
+python3 tools/mex_port/gen_sigs.py                 # the m-ex blob's bridged targets
+python3 tools/mex_port/gen_sigs.py --all-symbols   # every function in symbols.txt
+```
+
+It writes `_build/gw_mex_sigs_gen.inc` plus a `.report.txt` audit, and exits non-zero if it
+disagrees with the hand-written `gw_mex_sigs` table. Anything it cannot parse confidently
+(varargs, `double`, by-value structs, unknown typedefs, >8 slots) is left out rather than
+guessed. Unlike `gen_bridge.py` it does not read the linker map, so a relink does not require
+re-running it. See `_research/bridge-signatures.md`.

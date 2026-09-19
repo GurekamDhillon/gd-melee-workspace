@@ -444,7 +444,6 @@ src/melee/ft/kinds/ftSeak/ftseakspecialhi.c
 src/melee/ft/kinds/ftSeak/ftseakspeciallw.c
 src/melee/ft/kinds/ftSeak/ftseakspecialn.c
 src/melee/ft/kinds/ftSeak/ftseakspecials.c
-src/melee/ft/kinds/ftSonic/ftsonic.c
 src/melee/ft/kinds/ftYoshi/ftyoshi.c
 src/melee/ft/kinds/ftYoshi/ftyoshiguard.c
 src/melee/ft/kinds/ftYoshi/ftyoshispecialhi.c
@@ -540,7 +539,7 @@ src/melee/gm/gm_1A3F.c
 src/melee/gm/gm_1A7A.c
 src/melee/gm/gm_1A9B.c
 src/melee/gm/gm_1ADD.c
-src/melee/gm/gm_1AED.c
+src/melee/gm/gmscmemcard.c
 src/melee/gm/gm_1B03.c
 src/melee/gm/gm_1BFA.c
 src/melee/gr/granime.c
@@ -940,14 +939,10 @@ src/sysdolphin/baselib/hsd_397E.c
 src/sysdolphin/baselib/hsd_3982.c
 src/sysdolphin/baselib/hsd_3A64.c
 src/sysdolphin/baselib/hsd_3A76.c
-src/sysdolphin/baselib/hsd_3A94.c
-src/sysdolphin/baselib/hsd_3B27.c
-src/sysdolphin/baselib/hsd_3B2B.c
-src/sysdolphin/baselib/hsd_3B2E.c
+src/sysdolphin/baselib/crypt.c
 src/sysdolphin/baselib/hsd_3B33.c
 src/sysdolphin/baselib/hsd_3B34.c
 src/sysdolphin/baselib/hsd_3B5C.c
-src/sysdolphin/baselib/hsd_4D11.c
 src/sysdolphin/baselib/id.c
 src/sysdolphin/baselib/initialize.c
 src/sysdolphin/baselib/jobj.c
@@ -983,10 +978,11 @@ src/sysdolphin/baselib/tobj.c
 src/sysdolphin/baselib/util.c
 src/sysdolphin/baselib/video.c
 src/sysdolphin/baselib/wobj.c
-extern/dolphin/src/dolphin/mtx/mtx44.c
-extern/dolphin/src/dolphin/thp/THPDec.c
+libs/dolphin/src/dolphin/mtx/mtx44.c
 pc/gameworld/mtx_pc.c
 pc/gameworld/gekko_fp.c
-pc/tests/mex_tests.c
 src/MSL/float.c
 src/MSL/ansi_files.c
+src/sysdolphin/baselib/card.c
+libs/dolphin/src/dolphin/thp/THPDec.c
+pc/tests/mex_tests.c

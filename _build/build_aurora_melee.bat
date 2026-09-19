@@ -16,6 +16,8 @@ cmake -S C:\gdm\melee\extern\aurora -B C:\gdm\_build\ax86m -G Ninja ^
   -DFETCHCONTENT_SOURCE_DIR_DAWN=C:/gdm/_build/ax86/_deps/dawn-src ^
   -DFETCHCONTENT_SOURCE_DIR_SDL3_PREBUILT=C:/gdm/_build/ax86/_deps/sdl3_prebuilt-src
 if errorlevel 1 exit /b 1
-cmake --build C:\gdm\_build\ax86m --target simple
+rem The port also links aurora_os/pad/si/card, which the "simple" example does not pull in;
+rem build them explicitly or they go stale across Aurora updates.
+cmake --build C:\gdm\_build\ax86m --target simple aurora_os aurora_pad aurora_si aurora_card
 if errorlevel 1 exit /b 1
 echo AURORA_MELEE_BUILD_OK
