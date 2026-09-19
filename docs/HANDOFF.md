@@ -61,8 +61,11 @@ Launch visibly on the main desktop — the user wants to watch. Pad scripts live
 and `run.sh` resolves a bare name against that directory. They start consuming frames at the first
 `PADRead`, during boot, so a short burst never reaches the match; use a repeating one.
 
-Useful env: `MELEE_TRAINING=38` (Sonic), `MELEE_TARGET_TEST=32`, `MELEE_MODS=0/1`,
+Useful env: `MELEE_TRAINING=37` (Sonic), `MELEE_TARGET_TEST=32`, `MELEE_MODS=0/1`,
 `MELEE_DVD_TRACE`, `MELEE_HEAP_TRACE`, `MELEE_MEX_TRACE_CALLS`, `MELEE_MEX_DUMP_CODE=<path>`,
+(`MELEE_TRAINING=38` was Sonic only while he was the sole registered slot. With all 7 registered
+the port kinds are Wolf 33, Diddy 34, Charizard 35, Lucas 36, **Sonic 37**, Dedede 38, Tails 39,
+from m-ex internal **27–33**. A stale 38 cost one play-test, which loaded Dedede and crashed.)
 `MELEE_MEX_TRACE_PARTS`, `MELEE_MEX_TRACE_SCALE`, `MELEE_PPC_TRACE_FP`.
 
 ## 3. What changed since the last handoff
@@ -135,7 +138,7 @@ depends on #23's findings, so stage it second. Every prompt must carry the same 
 
 | agent | task | scope |
 |---|---|---|
-| `fighters-akaneia` | #23 | Wolf, Diddy, Charizard, Lucas, Dedede, Tails (m-ex internal 27–32). The table path already registers them; find what each one needs beyond Sonic's path — per-kind items, Kirby hats, demo tables. One fighter fully working before starting the next. |
+| `fighters-akaneia` | #23 | Wolf, Diddy, Charizard, Lucas, Dedede, Tails (m-ex internal 27–33, Sonic 31 among them). The table path already registers them; find what each one needs beyond Sonic's path — per-kind items, Kirby hats, demo tables. One fighter fully working before starting the next. |
 | `fighters-ace` | #24 | ACE's additional fighters. ACE's `MxDt.dat` defines 31 new fighters in total, Akaneia's 7 included — start by dumping it and reconciling the two index spaces, then report the real list before importing. |
 | `stages` | #25 | m-ex custom stages (Akaneia + ACE): `grFunction`, stage tables, SSS expansion, stage audio. Research first, land the smallest stage end to end second. |
 | `content` | #26 | Remaining m-ex content: items, music, trophies, menus. Mostly data-table plumbing; likely the easiest to finish. |
@@ -151,8 +154,18 @@ report needed shared-file changes back rather than landing them independently, a
 
 ## 6. Traps (each cost time; still true unless struck)
 
-- ~~**Build races**: never run two agents that build+link concurrently.~~ **Fixed** by
-  `GW_BUILD_ROOT` (§5). Two agents may now build and test at the same time.
+- **Build races: NOT fixed — `agent_new.sh`'s hardlinks leak between agents.** The claim that
+  `GW_BUILD_ROOT` isolates agents was wrong, and it cost most of an evening. `agent_new.sh`
+  HARDLINKS the object baseline into each agent's root; `pipe_win.sh:16` then runs
+  `gwtool.exe ... -o "$d/$n.obj"`, and gwtool TRUNCATES that path in place instead of unlinking
+  it, so a write through any one link mutates the shared inode — baseline and every agent at
+  once. clang (used for `--shim`) unlinks and replaces, so shims are safe and only game TUs leak,
+  which is why `--test` "verified" it. Symptom: a link failing on unresolved externals that
+  belong to a DIFFERENT agent's work, and a bridge that silently comes out too small (17,675
+  entries instead of 22,273) and links green. **Until `pipe_win.sh` writes to a temp and renames
+  (cheap, correct) or `agent_new.sh` copies instead of hardlinking (~1 GB per agent), treat every
+  parallel green build and green `--test` as unverified.** Two agents hit this independently; one
+  de-linked its own root by hand with `cp --no-preserve=links` and carried on.
 - **LNK1104 "cannot open melee-pc.exe"** = a run still holds it. `run.sh` makes this impossible;
   outside it, `taskkill /IM melee-pc.exe /F`. A failed link leaves the OLD exe and tests then
   silently run old code — `build.sh` now detects this and refuses to continue.
