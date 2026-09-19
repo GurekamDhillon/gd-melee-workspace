@@ -1,115 +1,114 @@
-# Handoff — Sonic port (m-ex content into the native PC port)
+# Handoff — m-ex content in the native PC port (Sonic)
 
-**Written: 2026-09-16.** Supersedes the 2026-09-15 handoff (in git). Stage authoring / Blender-as-
-level-editor remains DROPPED.
+**Written: 2026-09-19.** Supersedes the 2026-09-16 handoff (in git history). Stage authoring /
+Blender-as-level-editor remains DROPPED.
 
-Read `_research/port-dev-quickref.md` (commands, env vars, traps), `_research/mex-ppc-interpreter.md`
-(option B architecture) and `_research/sonic-clone-boot.md` (the fighter plumbing findings) before
-touching anything.
+Read `_research/port-dev-quickref.md` (commands, env vars, traps) first. The m-ex research, all
+current and each with explicit open questions: `mex-ppc-interpreter.md` (architecture),
+`mex-data-layer-design.md` + `mex-dump-tools.md` (mexData/MxDt.dat), `mex-item-spawn.md`
+(itFunction, custom items), `akaneia-dependency-scope.md` (what Sonic needs from the disc),
+`bridge-signatures.md` (float signatures), `mex-css.md` (character select).
 
 ---
 
-## 1. Committed baseline (melee fork `pc-port`)
+## 1. State in one paragraph
+
+**Sonic is playable end to end, user-verified.** Pick him from the character select screen
+(dev toggle, below), play a VS match, reach the results screen, return to the CSS. The user played
+hands-on: "everything I tested in gameplay looked, and felt right". All eight specials run and
+complete, including the spring (his item) and the homing attack's on-hit. His mouth and idle face
+render, the jab fist animates correctly, model scale and movement physics look right. In-engine
+tests: **33/33** on both discs. What is NOT done is presentation and packaging: his CSS icon and
+portraits, his voice/stock icon/emblem/victory animation, and running him from a vanilla disc.
+
+Baseline: melee fork `pc-port` @ `504be24aa`, root @ `f8ea7a0` (plus this handoff). 16 melee
+commits today, each with a detailed message — `git log 64cf61c92..504be24aa` is the change log.
+
+## 2. How to run it
 
 ```
-b05c5af08 pc: fix the double-jump crash - bound m-ex hook re-entry
-64cf61c92 pc: regenerate the m-ex bridge table
-108fa831e pc: bridge static-global reads in the interpreter (option B)
-b88705b38 pc: wire MoveLogic so Sonic's locomotion is his own (option B)
-fc3f5663b pc: close the last bridge gaps; directional specials complete (option B)
-0e0171e5b pc: wire onDoubleJump/onUSmash/OnItemPickup; full override set registered (phase 3e)
-8ca550072 pc: load Sonic's real data (model, costumes, anims); behaviour still Fox
-9de877025 pc: render Sonic's model - fix Aurora's indexed-draw buffer growth
-9a3922df1 pc: grow heap 3 for the Akaneia item archive (fixes the match-setup OOM)
-4a417fe9f pc: add an m-ex ftFunction blob loader (option B, phase 2)
-6ca8fa92b pc: boot the new Ft_Kind_Sonic slot in Target Test (fox-clone renders)
-dee0280e5 pc: add a PowerPC interpreter core and its end-to-end test (option B, phase 1)
-0c41100eb pc: add an internal Ft_Kind_Sonic slot as a pure Fox clone
+MELEE_CSS_SONIC=pichu   # that character's CSS icon selects Sonic (any name/ckind; art stays Pichu's)
+MELEE_TARGET_TEST=32    # or: boot straight into Target Test as Sonic
+--iso C:\iso\Akaneia.iso   # REQUIRED - Sonic's files exist only on the Akaneia disc
 ```
+Launch visibly on the main desktop (the user wants to watch; the old off-screen rule is retired).
+Pad scripts for unattended runs live in `_build/pad_*.txt`; they are consumed from the first
+PADRead, during BOOT, so a short burst never reaches the match — repeat the cycle and put A presses
+first to clear the no-memory-card prompt. Good ones: `pad_specials_repeat.txt`, `pad_upb.txt`,
+`pad_idle_jab_turn.txt`, `pad_dj_repeat.txt`. Use `WaitForExit()` rather than fixed sleeps.
 
-Root repo: `1097b20` (B design doc), `24dc590`/`d374ee3`/`ba29781` (handoff, extractor, ignores).
-Verified at each commit: `verify_changed.sh` 0 failures both modes; `MELEE_PC_LINK_OK`; tests green
-(now **29/29**).
+Diagnostics (all env-gated, off by default):
+| var | shows |
+|---|---|
+| `MELEE_PPC_TRACE_FP=1` | every bridged float call with its marshalled args and result |
+| `MELEE_MEX_DUMP_CODE=<path>` | writes the RELOCATED ftFunction blob, for `ppc_disasm.py --raw` |
+| `MELEE_MEX_TRACE_PARTS=1` | model-part visibility table (mouth/eyes) on change |
+| `MELEE_MEX_TRACE_SCALE=1` | any joint with abnormal scale, with its animation tracks |
 
-## 2. What WORKS now
+Always on: the execute trap logs the first call per target and the first 48 return values; the
+instruction-budget panic dumps the guest registers; every guest address prints with its function
+name (the blob's own debug symbols).
 
-- **The Akaneia ISO boots a match** (`MELEE_TARGET_TEST=32`). The match-setup OOM was `IfAll.usd`
-  growing ~55 KB on Akaneia (custom items) overflowing heap 3; heap 3 grown 128 KB (donated from
-  the main heap).
-- **Sonic's real model renders in-game**: `PlSn.dat`/`ftDataSonic`, `PlSnNr.dat` /
-  `PlySonic5K_Share_joint`, 7 costumes. Screenshot: `.omo/evidence/sonic-renders.png`.
-- **PPC interpreter core** (`pc/platform/gw_ppc.{h,c}`) — big-endian guest fetch/execute, bridge
-  seam, reentrant; test green.
-- **ftFunction blob loader** (`pc/platform/gw_mex_ftfunction.{h,c}`) — loads `PlSn.dat`'s
-  `ftFunction`, relocates it, resolves **25 overrides**, surfaces the func-address case; tests green
-  on both discs.
-- **Aurora patch** (`extern/aurora/lib/gx/command_processor.cpp`): geometric growth of the indexed
-  draw buffer (m-ex models push per-triangle indexed draws; the old exact-size re-upload was O(n²)
-  and overflowed the 8 MiB staging buffer → `abort()`).
-- **Sonic's real PPC `ftFunction` RUNS in-game** via the interpreter, through real engine dispatch:
-  `onLoad`, `onFrame` (per-frame), `onActionStateChange`, `onReapplyAttr`, `special_hi` (completes),
-  and **`MoveLogic`** — his own `MotionState[31]` move table is installed, with **his** anim ids
-  (`0x127`). **But see gap 5: that table's callbacks are never actually invoked**, so "his
-  locomotion is his own" is NOT supported by any run. The bridge marshals calls, float args (`f1-f8`), and **static globals**
-  (game statics live in native memory but their guest addresses fall inside the MEM1 window).
-  In-engine tests are at **29/29**.
+## 3. What was built (the architecture you now have)
 
-## 3. What is NOT done — the remaining work
+Interpreter correctness — each of these silently produced wrong numbers, not crashes:
+- `fcmpu` set the LT bit for GREATER-than (every guest float compare was backwards for >).
+- opcode 59/63 decoded with a 10-bit XO; A-form is 5-bit, so `fmul` with frC != 0 was
+  "unimplemented"; `fmul` also used frB instead of frC. `xoris` was missing (the ONLY missing class
+  reachable in Sonic's code, per a reachability audit).
+- bridged calls defaulted to "8 integer args": float args came from r3.. and float returns were
+  discarded. Now prototype-derived (`tools/mex_port/gen_sigs.py` -> `gw_mex_sigs_gen.inc`, 115
+  targets across ftFunction + the spring blob, 0 disagreements with the hand table). **Regenerate
+  it whenever a new blob is added** — the spring died on frame 1 until its own blob was scanned.
 
-**Sonic's BEHAVIOUR is still Fox's.** Running his real moveset is option B phase 3: install the
-interpreted `ftFunction` overrides into the engine dispatch so the game calls the PPC. Checklist
-(from the phase-2 report):
-1. heap-allocate the interpreted code (not the test's fixed pin);
-2. build the guest→native bridge table (`melee/config/GALE01/symbols.txt` × `melee-pc.map`) —
-   **a partial, 658 KB `pc/platform/gw_mex_bridge.c` + `gw_mex_ftfunction_runtime.c` exist but were
-   NEVER wired into the build or verified** (a prior agent stalled); judge whether to reuse them;
-3. install overrides into dispatch (11 existing `gw_Mex_GObjDispatch` events + MoveLogic, the 8
-   specials, onActionStateChange, onReapplyAttr, onDoubleJump, onUSmash) — only the slots this
-   fighter's functionRelocTable overrides;
-4. re-express the func-address reloc case as a native hook;
-5. marshal float args/returns + struct/sret across the bridge;
-6. set r2 to the guest mexData base and populate the `OFST_*` slots the blob reads.
+Native code <-> guest code:
+- guest -> native: the bridge (`gw_mex_bridge.c`, generated; regenerate after every relink).
+- native -> guest via an API (GObj_SetupGXLink, HSD_GObj_SetupProc): a pool of 64 native thunks.
+- native -> guest via a raw store (e.g. `fp->deal_dmg_cb = SpecialNHit_Enter`): a vectored
+  exception handler. MEM1 is non-executable, so such a call faults cleanly with EIP = the target;
+  the trap redirects EIP to an interpreting trampoline (target in blob code) or to the function's
+  native build (target is a VANILLA GameCube address — m-ex does this constantly: Sonic has 64
+  stores like `pre_hitlag_cb = efLib_PauseAll`). Anything else still reaches the crash logger.
+- guest code is a SET of ranges (`gw_ppc_add_code_range`): ftFunction + one per item article.
+- re-entry: a hook already on the stack runs vanilla instead (`gw_Mex_GObjDispatch`), plus a
+  depth cap and a 50M-instruction budget, both of which dump the guest chain/registers.
 
-**Known crashes / gaps (verified by playing, not guessed):**
-1. ~~Double jump → STACK_OVERFLOW~~ **FIXED (2026-09-19, `b05c5af08`).** The cause was hook
-   re-entry, not the interpreter alone: Sonic's `onDoubleJump` override calls `ftCo_800CBAC4`, the
-   very engine function whose dispatch site invoked it, so the hook re-triggered itself until the
-   native stack was gone. `gw_Mex_GObjDispatch` now skips a hook already on the stack for that
-   (event, kind) and runs vanilla instead — the standard detour rule, which covers every registered
-   slot. `GW_PPC_MAX_DEPTH` (16) in `gw_ppc_call` is the backstop: at the cap the call is refused
-   and the guest chain is logged once, so a new cycle is diagnosable instead of fatal. The same
-   change fixed a latent corruption — every `gw_ppc_call` restarted on one fixed guest stack top,
-   so a nested run clobbered the interrupted frame; a nested run now continues below the
-   interrupted frame's own r1. Regression test: `ppc_reentry_cap`.
-2. **Neutral-B (`special_n`) → guest access violation** walking an m-ex item list: an item gobj's
-   `user_data` is NULL (`ea=0x00000010`). The m-ex item system / `mexData` item tables are not built
-   (the item shims no-op, e.g. `MEX_GetFtItemID → 0`). Root-cause it in the item system, do NOT
-   null-guard the guest code.
-3. **Guest render/proc callbacks** re-enter fine but hang the render loop without m-ex's
-   render-context tables; currently deferred via logged shims.
-5. **MoveLogic's callbacks never fire — NEW, and the top open item (2026-09-19).** The table is
-   rewritten at install (`interp: MoveLogic table @ guest 0x807F4F34 (31 MotionState entries)`),
-   but across 1700+ fighter frames including jumps, double jumps and landings **not one** of the
-   four trampolines (`anim`/`input`/`phys`/`coll`) logs an invocation — `gw_mex_move_call`'s
-   first-invocation log never appears at all. So Sonic's moveset is still running Fox's state
-   callbacks. Start at `gw_mex_movelogic_setup` (`gw_mex_ftfunction_runtime.c`): establish whether
-   the engine reads `ftData_CharacterStateTables[33]` for this kind at all, i.e. whether the table
-   swap is wired into the lookup the engine actually performs or only written where nothing reads.
+m-ex content:
+- `MxDt.dat` loaded as mexData (it IS the m-ex data; field paths verified from the file).
+- `MEX_GetFtItemID` / `MEX_IndexFighterItem` real; `itFunction` loaded (fills `item.Custom`).
+- item.c: the custom-item kind range (>= 237), its renderer, and `Item` grown to 0xFD0 with
+  m-ex's original-owner word at +0xFCC.
+- jobj.c: m-ex joint scale compensation (flag bit 26), re-expressed from the hook Akaneia ships.
+  This was the first ENGINE patch from `codes.gct` the port needed — Akaneia's 1,163 codes are
+  not all irrelevant after all; check that inventory when content misrenders.
+- 21 of Sonic's 25 override slots wired. Wire by the vanilla TABLE a slot overrides (Header.s
+  names: onDeath, onKnockbackEnter...), not by his function's name (OnRespawn, EyeTextureDamaged).
+  An unregistered slot silently runs the Fox clone's handler — that is how his idle mouth broke.
 
-4. `special_lw`/`special_s` don't fire in the headless pad-script setup (a pre-existing vanilla
-   input-routing asymmetry in `ftCo_Attack100`/`ftCo_SpecialS`), not a bridge gap.
+## 4. Open work, in recommended order
 
-**Honest scope:** this is **not a finished Sonic port**. Assets + code load and many real behaviours
-run, and he is controllable with his own locomotion — but gameplay fidelity is **unverified** (no
-full-match play test), and the three gaps above are open.
+1. **Proper m-ex CSS (task #17 phase 2).** `_research/mex-css.md` has the plan. Retires the dev
+   toggle; gives Sonic his icon, portraits (the retail ones show "corrupted Captain Falcon" on
+   Akaneia), emblem, voice and stock icon.
+2. **Mods folder (#10) then vanilla-disc acceptance (#12).** Two mechanisms: additive files and a
+   per-record override for `PlCo.dat` (Sonic's ftPartsTable[31]). Now also: engine patches like
+   the scale compensation are native code, so they come with the port, not the mod.
+3. **Unwired slots 16/17/18** (item release/catch/unknown): no dispatch site yet; only matter while
+   Sonic holds an item. Untested: items, teams, 1P/Classic, Training.
+4. **Hit-reaction eyes** (slots 21/22) are wired; the user has played VS but nobody has
+   specifically checked his eye texture when hit.
+5. Bridge gaps recorded, not fixed: float VARARGS (`HSD_ForeachAnim`), double args, struct returns.
 
-**Bridge maintenance:** `gw_mex_bridge.c` is generated by `tools/mex_port/gen_bridge.py`
-(committed as of `32d59c6`; it used to be untracked) and keyed to native VAs;
-its `.obj` is compiled by `verify_changed.sh`, **not** by the link step. Correct order after any
-pc/platform change: `gen_bridge.py` → `verify_changed.sh pc/` → `build_melee_pc.bat`. A stale bridge
-causes non-deterministic garbage-pointer crashes.
+## 5. The lesson of the day
 
-## 4. Traps (still true, each cost time)
+Most of the day's bugs were silent: wrong numbers, wrong index spaces, a fallback running the
+wrong character's handler. None of them crashed where the bug was. What found them was
+instrumentation (the instruction budget, the register dump, the symbol table, the parts and scale
+traces), not reading code harder. Two causes were misattributed first (the item system for the
+neutral-B hang; MoveLogic "never firing" - it fires only in character-specific states). Measure,
+then conclude.
+
+## 6. Traps (still true; each cost time)
 
 - **`pipe_wsl.sh` `$?` is meaningless** — the signal is `CC_FAIL`/`GW_FAIL` in the *text*. Treat
   green as untrusted until falsified.
@@ -141,7 +140,24 @@ causes non-deterministic garbage-pointer crashes.
 - **`vswhere.exe is not recognized`** from `build_melee_pc.bat` is benign noise from `vcvarsall`;
   the signal is still `MELEE_PC_LINK_OK` on the last line.
 
-## 5. Conventions
+Added 2026-09-19:
+- **This machine's shell is Git Bash, not WSL.** No `/mnt/c`. Link with
+  `cd C:/gdm/_build/ax86m && cmd.exe //c "..\build_melee_pc.bat"` (the `vswhere` line in its output
+  is noise; `MELEE_PC_LINK_OK` is the signal). Game TUs: `bash C:/gdm/_build/masstest/pipe_win.sh <src>`.
+- **LNK1104 "cannot open melee-pc.exe"** = a hung game still holds it. `taskkill /IM melee-pc.exe /F`
+  first. A failed link leaves the OLD exe, and tests then run the old code silently.
+- **Build order after any pc/platform change:** compile -> link -> `gen_bridge.py` -> compile
+  `gw_mex_bridge.c` -> link again (the bridge is keyed to native VAs). Check the fixpoint by
+  regenerating and diffing.
+- **Never pipe clang through `head`** — SIGPIPE kills it mid-write and leaves no .obj.
+- **Mixed line endings:** `src/` files are often CRLF, `pc/platform/` LF. Patch scripts must match
+  the file's endings or their `old in s` asserts fail (safely, before writing).
+- **Write patch scripts with the Write tool**, not bash heredocs: `\n` / `\0` inside nested
+  quoting landed as real newlines and a literal NUL byte (twice) — the NUL still compiled.
+- **An unregistered m-ex slot does not fail** — it runs the Fox clone's handler. Audit all of a
+  fighter's override slots when adding one.
+
+## 7. Conventions
 
 - Game-source changes `#if defined(TARGET_PC)`-guarded, original under `#else`.
 - Native platform shims (`pc/platform/*.c`) are compiled directly and listed in
@@ -152,8 +168,3 @@ causes non-deterministic garbage-pointer crashes.
 - `GIT_MASTER=1`; per-command `-c user.name="GD" -c user.email="gd@gsd.sh"`; melee subjects `pc:`,
   root `docs:`/`build:`/`tools:`. **Never `git add -A`.**
 
-## 6. Not proven
-
-- Sonic's real moveset (phase 3). Sonic currently renders with Fox's behaviour.
-- The other ~45 of the 49 m-ex flags (unchanged).
-- The partial `gw_mex_bridge.c` is unverified and not linked.
