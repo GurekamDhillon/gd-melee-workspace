@@ -225,16 +225,36 @@ def va_to_offset(va):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--dol", required=True)
+    # --dol disassembles the game's main.dol by virtual address. --raw disassembles a flat code
+    # blob (e.g. an m-ex ftFunction dumped from the port with MELEE_MEX_DUMP_CODE), where
+    # --base is the virtual address the blob was relocated to, so --start is still a real VA.
+    ap.add_argument("--dol")
+    ap.add_argument("--raw", help="flat code blob instead of a DOL")
+    ap.add_argument("--base", help="VA the --raw blob is loaded at (e.g. 0x807F4D60)")
     ap.add_argument("--start", required=True)
     ap.add_argument("--count", type=int, default=16)
     args = ap.parse_args()
     va = int(args.start, 0)
-    off = va_to_offset(va)
-    if off is None:
-        print(f"0x{va:08X} is outside the mapped text sections", file=sys.stderr)
-        return 1
-    data = open(args.dol, "rb").read()
+    if args.raw:
+        if args.base is None:
+            print("--raw requires --base", file=sys.stderr)
+            return 1
+        base = int(args.base, 0)
+        data = open(args.raw, "rb").read()
+        off = va - base
+        if off < 0 or off >= len(data):
+            print(f"0x{va:08X} is outside the blob "
+                  f"(0x{base:08X}..0x{base + len(data):08X})", file=sys.stderr)
+            return 1
+    else:
+        if not args.dol:
+            print("pass either --dol or --raw", file=sys.stderr)
+            return 1
+        off = va_to_offset(va)
+        if off is None:
+            print(f"0x{va:08X} is outside the mapped text sections", file=sys.stderr)
+            return 1
+        data = open(args.dol, "rb").read()
     for i in range(args.count):
         o = off + i * 4
         w = struct.unpack(">I", data[o:o + 4])[0]
