@@ -74,7 +74,7 @@ for f in "${files[@]}"; do
   out="$("$CLANG" --target=ppc32-none-eabi -std=c99 -nostdinc -fno-builtin -DLINT \
       -fno-short-enums -fsigned-char -mlong-double-64 -fno-strict-aliasing -fwrapv -fcommon \
       -fgnu89-inline -ftrivial-auto-var-init=zero -O2 -Xclang -disable-llvm-passes -emit-llvm -c -w \
-      -Isrc -isystem src/MSL -isystem extern/dolphin/include -isystem extern/dolphin/src \
+      -Isrc -isystem src/MSL -isystem libs/dolphin/include -isystem libs/dolphin/src \
       -isystem build/GALE01/include -include src/MSL/math_ppc.h \
       "$f" -o "C:/gdm/_build/masstest/out/nonpc_check.bc" 2>&1)"
   if [ -n "$out" ]; then

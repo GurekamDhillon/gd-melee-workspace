@@ -106,15 +106,15 @@ def scan_blob_targets(path, base):
 #
 # Include roots are exactly the ones the PC port compiles with
 # (melee/pc/build/masstest/pipe_win.sh):
-#     -Isrc -isystem src/MSL -isystem extern/dolphin/include -isystem extern/dolphin/src
+#     -Isrc -isystem src/MSL -isystem libs/dolphin/include -isystem libs/dolphin/src
 #     -isystem build/GALE01/include
 # Scanning a root the build does NOT use (extern/aurora, dusklight/) would let a
 # *different* project's prototype win, so those are excluded deliberately.
 # --------------------------------------------------------------------------------------
 INCLUDE_ROOTS = [
     "melee/src",
-    "melee/extern/dolphin/include",
-    "melee/extern/dolphin/src",
+    "melee/libs/dolphin/include",
+    "melee/libs/dolphin/src",
     "melee/build/GALE01/include",
 ]
 
