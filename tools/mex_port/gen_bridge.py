@@ -16,10 +16,15 @@ import os
 import re
 import sys
 
+# `scope:` is OPTIONAL: 1454 symbols.txt lines carry only `type:`/`size:`, and requiring scope
+# silently dropped every one of them (guest 0x8003E998 among them, which Diddy calls).
 SYMBOL_RE = re.compile(
     r"^\s*(?P<name>\S+)\s*=\s*\.\S+:(?P<addr>0x[0-9A-Fa-f]+)\s*;"
-    r".*?type:(?P<typ>\w+).*?scope:(?P<scope>\w+)"
+    r".*?type:(?P<typ>\w+)"
 )
+SCOPE_RE = re.compile(r"scope:(?P<scope>\w+)")
+# MWERKS mangling: `sqrtf__Ff`, `func__FPi` ... The port's C symbol is the bare name.
+MANGLE_RE = re.compile(r"^(?P<base>[A-Za-z_][A-Za-z0-9_]*)__F[A-Za-z0-9_]*$")
 # melee-pc.map public-symbol line: " 0001:00309e40       _gw_OSReport_PrintSpaces   1030ae40 f  obj"
 # (data-section lines have no `f`/`d` type letter, so it is optional)
 MAP_RE = re.compile(
@@ -38,7 +43,8 @@ def parse_symbols(path):
         name = m.group("name")
         addr = int(m.group("addr"), 16)
         typ = m.group("typ")
-        scope = m.group("scope")
+        sm = SCOPE_RE.search(line)
+        scope = sm.group("scope") if sm else "global"
         # A decomp symbol may be listed more than once (per section); keep the first.
         if name not in out:
             out[name] = (addr, typ, scope)
@@ -46,8 +52,20 @@ def parse_symbols(path):
 
 
 def parse_map(path):
-    out = {}  # gw_name -> native addr
+    """-> (public {gw_name: addr}, statics {name: addr or None}).
+
+    MSVC's map has a "Static symbols" section after the public one. Internal-linkage functions
+    appear there under their PLAIN C name (gwtool only prefixes externally visible symbols), so
+    it is the only place a `scope:local` decomp symbol can be found. A name that occurs more
+    than once there is ambiguous (two TUs, two different functions) and is recorded as None so
+    it is never paired.
+    """
+    public, statics = {}, {}
+    in_static = False
     for line in open(path, "r", encoding="utf-8", errors="replace"):
+        if line.strip() == "Static symbols":
+            in_static = True
+            continue
         m = MAP_RE.match(line)
         if not m:
             continue
@@ -56,9 +74,11 @@ def parse_map(path):
         # MSVC prefixes a leading underscore; strip it to get the C symbol name.
         if name.startswith("_"):
             name = name[1:]
-        if name not in out:
-            out[name] = addr
-    return out
+        if in_static:
+            statics[name] = None if name in statics else addr
+        elif name not in public:
+            public[name] = addr
+    return public, statics
 
 
 def main():
@@ -73,12 +93,30 @@ def main():
     args = ap.parse_args()
 
     syms = parse_symbols(args.symbols)
-    mp = parse_map(args.map)
+    mp, statics = parse_map(args.map)
 
     entries = []  # (guest, native, kind)
+    n_demangled = n_static = 0
     for name, (guest, typ, scope) in syms.items():
-        gw = "gw_" + name
-        native = mp.get(gw)
+        native = mp.get("gw_" + name)
+        if native is None:
+            # MWERKS-mangled decomp name -> the port's plain C name (sqrtf__Ff -> gw_sqrtf).
+            mm = MANGLE_RE.match(name)
+            if mm is not None:
+                native = mp.get("gw_" + mm.group("base"))
+                if native is not None:
+                    n_demangled += 1
+        if native is None:
+            # Static in the port: no gw_ public symbol, but the map's static section has it under
+            # its plain name. `scope:` in symbols.txt is not a reliable predictor - the port makes
+            # its own linkage decisions (grLast_8021B2D8 is scope:global there and static here),
+            # so the static section is consulted whenever the public lookup fails. Only when that
+            # name is unambiguous. This can only ADD entries for
+            # addresses that previously resolved to nothing, so it cannot change a call that
+            # already worked.
+            native = statics.get(name)
+            if native is not None:
+                n_static += 1
         if native is None:
             continue
         kind = "fn" if typ == "function" else "obj"
@@ -157,6 +195,7 @@ uint32_t gw_mex_bridge_count(void);
     with open(args.out_c, "w") as f:
         f.write("".join(c_src))
 
+    print("bridge: +%d demangled, +%d static-section" % (n_demangled, n_static))
     print("bridge: %d entries (%d functions, %d objects) -> %s" %
           (len(entries), fn_count, obj_count, args.out_c))
     return 0
