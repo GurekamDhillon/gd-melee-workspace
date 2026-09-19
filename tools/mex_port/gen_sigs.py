@@ -35,6 +35,11 @@ confidence this tool EMITS NOTHING for it and records it in the warnings list. I
 
 Usage:
   python3 tools/mex_port/gen_sigs.py [--blob PATH --blob-base ADDR] [--out-c PATH] [--report PATH]
+  python3 tools/mex_port/gen_sigs.py --all-symbols --out-c PATH
+
+Outputs (defaults): _build/gw_mex_sigs_gen.inc (the table) and <out-c>.report.txt (the audit:
+coverage, the hand-written cross-check, the call-site cross-check, and every refusal with its
+reason). Exit status is 1 if any derived entry disagrees with the hand-written gw_mex_sigs table.
 """
 import argparse
 import os
@@ -184,6 +189,12 @@ def find_prototypes(text, wanted):
         # `(*name)(...)` is a function-pointer declarator, not a function declaration
         if ret.rstrip().endswith("(*") or ret.rstrip().endswith("( *"):
             continue
+        # A call statement (`foo(x);`, `y = foo(x);`, `return foo(x);`) also ends in `;`.
+        # A real declaration always has a return type and never an operator or a statement
+        # keyword in front of the name.
+        rs = ret.strip()
+        if not rs or re.search(r"[=:?!<>+\-/%&|^.]|\b(return|else|case|goto|sizeof|do)\b", rs):
+            continue
         tag = None
         for off, a in addr_at.items():
             if 0 <= s - off <= 80 and src[off:s].strip().replace("*", "").replace(" ", "") \
@@ -232,6 +243,9 @@ def collect_prototypes(repo, wanted):
 # and gw_ppc_bridge_call only ever writes 4.
 # --------------------------------------------------------------------------------------
 INT, FLOAT, DOUBLE, STRUCT, UNKNOWN, VOID = "INT", "FLOAT", "DOUBLE", "STRUCT", "UNKNOWN", "VOID"
+# An array typedef (`typedef f32 Mtx[3][4];`): as a PARAMETER it decays to a pointer (INT); it
+# can never be a return type. Kept distinct so the two positions can be told apart.
+ARRAY = "ARRAY"
 
 # Builtin / fixed-width scalars the decomp uses everywhere.
 BASE_TYPES = {
@@ -240,7 +254,8 @@ BASE_TYPES = {
     "short": INT, "short int": INT, "unsigned short": INT, "unsigned short int": INT,
     "int": INT, "signed": INT, "signed int": INT, "unsigned": INT, "unsigned int": INT,
     "long": INT, "long int": INT, "unsigned long": INT, "unsigned long int": INT,
-    "long long": INT, "unsigned long long": INT,
+    "long long": INT, "unsigned long long": INT, "signed long long": INT,
+    "signed long": INT, "signed long int": INT, "signed short": INT, "signed short int": INT,
     "_Bool": INT, "bool": INT,
     "s8": INT, "u8": INT, "s16": INT, "u16": INT, "s32": INT, "u32": INT,
     "s64": INT, "u64": INT, "size_t": INT, "ptrdiff_t": INT, "intptr_t": INT,
@@ -250,14 +265,23 @@ BASE_TYPES = {
     "float": FLOAT, "f32": FLOAT, "vf32": FLOAT,
     "double": DOUBLE, "long double": DOUBLE, "f64": DOUBLE, "vf64": DOUBLE,
     # placeholder.h: #define UNK_T void* / UNK_RET void
-    "UNK_T": INT, "UNK_RET": VOID, "UNK_PARAMS": VOID,
+    "UNK_T": INT, "UNK_RET": VOID,
 }
+# placeholder.h: `#define UNK_PARAMS` (empty under M2CTX) / `void`. It is the decomp's explicit
+# marker for "parameters not yet known", so a prototype using it is refused outright.
+UNKNOWN_PARAM_MARKERS = {"UNK_PARAMS"}
 
 TYPEDEF_RE = re.compile(
     r"\btypedef\s+(?P<body>[^;{}()]+?)\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*;")
 TYPEDEF_TAG_RE = re.compile(
     r"\btypedef\s+(?P<kw>struct|union|enum)\b[^;{}]*\{.*?\}\s*(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*;",
     re.S)
+# `typedef f32 Mtx[3][4];` - an array typedef.
+TYPEDEF_ARRAY_RE = re.compile(
+    r"\btypedef\s+[^;{}()]+?\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\[[^;{}]*\]\s*;")
+# `typedef f32 (*MtxPtr)[4];` - a pointer to an array.
+TYPEDEF_PTR_ARRAY_RE = re.compile(
+    r"\btypedef\s+[^;{}()]+?\(\s*\*\s*(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\)\s*\[")
 TYPEDEF_FNPTR_RE = re.compile(
     r"\btypedef\s+[^;{}]*?\(\s*\*\s*(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\)\s*\(")
 ENUM_TAG_RE = re.compile(r"\benum\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\{")
@@ -283,6 +307,10 @@ def collect_typedefs(repo):
                 except OSError:
                     continue
                 text, _ = strip_comments_keep_addr(text)
+                for m in TYPEDEF_ARRAY_RE.finditer(text):
+                    direct.setdefault(m.group("name"), ARRAY)
+                for m in TYPEDEF_PTR_ARRAY_RE.finditer(text):
+                    direct.setdefault(m.group("name"), INT)
                 for m in TYPEDEF_FNPTR_RE.finditer(text):
                     direct.setdefault(m.group("name"), INT)  # function pointer == a pointer
                 for m in TYPEDEF_TAG_RE.finditer(text):
@@ -338,7 +366,7 @@ def collect_typedefs(repo):
 # cannot change how an argument is passed.
 QUALIFIERS = {"const", "volatile", "restrict", "__restrict", "register", "static", "inline",
               "extern", "__attribute__", "ATTRIBUTE_ALIGN", "ATTRIBUTE_NORETURN",
-              "__declspec", "noreturn", "aligned"}
+              "__declspec", "noreturn", "aligned", "SECTION_INIT", "asm", "__asm", "ASM"}
 # Longest-first so "unsigned long long" wins over "unsigned long" and "unsigned".
 MULTIWORD = sorted((k for k in BASE_TYPES if " " in k), key=lambda s: -len(s.split()))
 
@@ -370,6 +398,13 @@ def classify_decl(decl, typedefs):
         return UNKNOWN, "varargs"
     if d in ("void",):
         return VOID, "void"
+    words0 = re.findall(r"[A-Za-z_][A-Za-z0-9_]*", d)
+    if any(w in UNKNOWN_PARAM_MARKERS for w in words0):
+        return UNKNOWN, "decomp marks the parameters as unknown (UNK_PARAMS)"
+    # A parameter declared with function type (`void cb(s32, s32)`) decays to a function
+    # pointer, exactly like an array parameter decays to a data pointer.
+    if "(" in d:
+        return INT, "function-typed parameter (decays to a pointer)"
     # Pointers and arrays (including function pointers) are one GPR-sized integer slot.
     if "*" in d or "[" in d:
         return INT, "pointer/array"
@@ -413,6 +448,8 @@ def derive_sig(ret_text, params_text, typedefs):
         cat, why = classify_decl(p, typedefs)
         if cat == VOID:
             return None, None, None, "`void` among several parameters (%r)" % params_text
+        if cat == ARRAY:
+            cat = INT  # array parameter decays to a pointer
         if cat == FLOAT:
             mask |= 1 << slots
             detail.append("f:" + p.strip())
@@ -434,6 +471,8 @@ def derive_sig(ret_text, params_text, typedefs):
         ret_float = 0
     elif rcat == FLOAT:
         ret_float = 1
+    elif rcat == ARRAY:
+        return None, None, None, "return type %r is an array typedef" % ret_text
     elif rcat == DOUBLE:
         return None, None, None, "returns a double: the bridge captures a 4-byte float only"
     elif rcat == STRUCT:
@@ -465,7 +504,6 @@ def derive_sig(ret_text, params_text, typedefs):
 # --------------------------------------------------------------------------------------
 FPR_DEST_OPS = {48, 49, 50, 51}          # lfs, lfsu, lfd, lfdu  -> frD in bits 6..10
 FPR_ARITH_OPS = {59, 63}                 # float arithmetic      -> frD in bits 6..10
-BRANCH_OPS = {16, 18, 19}
 
 
 def callsite_float_counts(blob_path, base):
@@ -487,8 +525,12 @@ def callsite_float_counts(blob_path, base):
         for k in range(idx - 1, max(-1, idx - 13), -1):
             ww = words[k]
             op = ww >> 26
-            if op in BRANCH_OPS:
-                break
+            if op in (16, 18):
+                break  # bc / b / bl: control flow reached here from elsewhere
+            if op == 19 and ((ww >> 1) & 0x3FF) in (16, 528):
+                break  # bclr / bcctr. (Other opcode-19 forms are CR ops - notably
+                       # `crset 6` / `crclr 6`, the varargs "floats in FPRs" flag - and
+                       # must NOT end the walk.)
             if op in FPR_DEST_OPS or op in FPR_ARITH_OPS:
                 frd = (ww >> 21) & 31
                 if 1 <= frd <= 8:
@@ -570,7 +612,7 @@ HANDWRITTEN = {
 
 def emit_c(entries, path, blob_info):
     L = []
-    L.append("/* gw_mex_sigs_gen.c - GENERATED by tools/mex_port/gen_sigs.py - do not edit.\n")
+    L.append("/* gw_mex_sigs_gen.inc - GENERATED by tools/mex_port/gen_sigs.py - do not edit.\n")
     L.append(" *\n")
     L.append(" * PowerPC->native call signatures for the guest addresses the m-ex blob bridges\n")
     L.append(" * out to, derived from the decomp C prototypes. Each entry tells\n")
@@ -581,6 +623,9 @@ def emit_c(entries, path, blob_info):
     L.append(" * Functions whose prototype could not be parsed with confidence are deliberately\n")
     L.append(" * ABSENT: they keep the interpreter's integer default, which is what they already\n")
     L.append(" * had. See _research/bridge-signatures.md for the list and the reasons.\n")
+    L.append(" *\n")
+    L.append(" * An .inc, not a .c: #include it from exactly one translation unit\n")
+    L.append(" * (gw_mex_ftfunction_runtime.c). It must never be compiled on its own.\n")
     L.append(" */\n")
     L.append("#include <stdint.h>\n\n")
     L.append("typedef struct gw_mex_gen_sig {\n")
@@ -604,9 +649,14 @@ def main():
     repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     ap = argparse.ArgumentParser()
     ap.add_argument("--symbols", default=os.path.join(repo, "melee/config/GALE01/symbols.txt"))
-    ap.add_argument("--blob", default=os.path.join(repo, "_build/sonic_ftfunction_reloc.bin"))
-    ap.add_argument("--blob-base", default="0x807F4D60")
-    ap.add_argument("--out-c", default=os.path.join(repo, "_build/gw_mex_sigs_gen.c"))
+    # Repeatable: a fighter's guest code is several blobs - ftFunction plus one per item article
+    # (itFunction). Scanning only ftFunction left every call the spring makes on the integer
+    # default, and it_80275158(gobj, f32 lifetime) then took its lifetime from r4 instead of f1 -
+    # the spring was created with a ~0 lifetime and destroyed on its first frame.
+    ap.add_argument("--blob", action="append", default=None,
+                    help="relocated guest code blob; repeat with a matching --blob-base per blob")
+    ap.add_argument("--blob-base", action="append", default=None)
+    ap.add_argument("--out-c", default=os.path.join(repo, "_build/gw_mex_sigs_gen.inc"))
     ap.add_argument("--report", default=None,
                     help="where to write the audit (default: <out-c>.report.txt)")
     ap.add_argument("--all-symbols", action="store_true",
@@ -631,11 +681,19 @@ def main():
         targets = sorted(by_addr)
         blob_info = "Scope: every function symbol in symbols.txt (--all-symbols)."
     else:
-        tset, blen = scan_blob_targets(args.blob, int(args.blob_base, 16))
+        blobs = args.blob or [os.path.join(repo, "_build/sonic_ftfunction_reloc.bin")]
+        bases = args.blob_base or ["0x807F4D60"]
+        if len(blobs) != len(bases):
+            sys.exit("gen_sigs: give exactly one --blob-base per --blob")
+        tset, parts = set(), []
+        for bpath, bbase in zip(blobs, bases):
+            t, blen = scan_blob_targets(bpath, int(bbase, 16))
+            tset |= t
+            parts.append("%s (base 0x%08X, %d bytes, %d targets)"
+                         % (os.path.basename(bpath), int(bbase, 16), blen, len(t)))
         targets = sorted(tset)
-        blob_info = ("Scope: the %d distinct out-of-blob bl targets in %s (base 0x%08X, %d "
-                     "bytes)." % (len(targets), os.path.basename(args.blob),
-                                  int(args.blob_base, 16), blen))
+        blob_info = ("Scope: the %d distinct out-of-blob bl targets across %s."
+                     % (len(targets), "; ".join(parts)))
 
     # Always resolve the hand-written entries too, even when they are outside the blob scope:
     # the cross-check below is the tool's only ground truth and must cover all of them.
@@ -654,8 +712,8 @@ def main():
         name = by_addr.get(addr)
         if name is None:
             unparseable.append((addr, "<no symbol>",
-                                "address is not a function in symbols.txt (data, or a false "
-                                "bl decoded out of an in-blob data word)"))
+                                "no function symbol in symbols.txt: an m-ex routine the mod "
+                                "installed over vanilla .data (nothing to derive from)"))
             continue
         if name in ambiguous:
             unparseable.append((addr, name, "name denotes %d different addresses in "
@@ -712,7 +770,11 @@ def main():
     if args.all_symbols:
         lines.append("  skipped (--all-symbols has no blob to scan)")
     else:
-        obs = callsite_float_counts(args.blob, int(args.blob_base, 16))
+        obs = {}
+        for bpath, bbase in zip(args.blob or [os.path.join(repo, "_build/sonic_ftfunction_reloc.bin")],
+                                args.blob_base or ["0x807F4D60"]):
+            for tgt, seen in callsite_float_counts(bpath, int(bbase, 16)).items():
+                obs.setdefault(tgt, set()).update(seen)
         agree = flagged = 0
         flags = []
         for addr, name, mask, nargs, rf, note in entries:
@@ -729,6 +791,11 @@ def main():
                                          "/f".join(str(x) for x in sorted(seen))))
         lines.append("  agree: %d   worth a look: %d" % (agree, flagged))
         lines.extend(flags)
+        lines.append("  unresolved targets, highest FPR the guest loads before calling:")
+        for addr, name, _why in unparseable:
+            if addr in obs:
+                lines.append("    0x%08X %-40s f%s" % (addr, name,
+                             "/f".join(str(x) for x in sorted(obs[addr]))))
     lines.append("")
     lines.append("== resolved ==")
     for addr, name, mask, nargs, rf, note in entries:
