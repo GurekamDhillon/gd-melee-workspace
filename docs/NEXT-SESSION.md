@@ -1,70 +1,100 @@
 # Next session — start here
 
-**Written 2026-09-19, late. The tree is committed, the build is green, and there is a harvest of
-crash logs waiting in `_build/crashlogs/`.** `docs/HANDOFF.md` is still the architecture document
-and its §6 traps and §7 conventions are unchanged; this file is only what happened at the end of
-this session and what to do first.
+**Written 2026-09-20, after an 86-commit day.** `docs/HANDOFF.md` remains the architecture
+document; its §6 Traps and §7 Conventions still hold and this file does not repeat them. This is
+the state of things and what to do first.
 
-## The build is current and gated
+## The build is green and both repos are backed up
 
-- gwtool was rebuilt **with the ABI pin** (`pinInternalAbi`), then **all 988 TUs** were rebuilt
-  through it, then relinked. This ordering is mandatory; `_build/build_gwtool.bat` says why.
-- `tools/port/build.sh` ends `abi ... reads ECX/EDX in prologue : 0 ... OK`. First time.
-  Bridge: 18,510 entries, fixpoint reached.
-- **Tests 63/63 on vanilla, Akaneia AND ACE.**
+- **70/70 headless on vanilla, Akaneia and ACE.** `tools/port/build.sh` ends `abi … OK`.
+- Port: `pub` = `GurekamDhillon/melee`, branch **`pc-port`** (public).
+- Workspace: `origin-ws` = `GurekamDhillon/gd-melee-workspace` (**private**, created today).
+  122 commits of build system, tooling, research and docs. Audited before pushing: zero
+  disc-derived files locally or on the remote.
 
-The harness was lying before today: `gw_apply_fixups()` is a toggle and was being re-applied after
-every test, so game globals were correct or byte-swapped **by the parity of the test index**. Any
-green result older than this session that touched a game global was a coin flip. It is fixed.
+## READ THIS FIRST: three ways this tree lies to you
 
-## Run it
+Every one of these cost hours today, and two of them produced confident, wrong reports that
+became the premise for further work.
+
+**1. A stale artifact is not the one being used.** `build.sh` rebuilt stale *shims* but not stale
+*game TUs*, so four fixes — the CSS portraits, `tlut_no`, Kirby, and the ACE stage work — were
+"verified" against binaries that had never contained them. One of those false verifications was
+written up as established evidence and handed to an agent as a thing not to re-derive.
+*Now fixed*: `build.sh` rebuilds a stale game TU as well as a stale shim.
+**The habit that catches it: grep the EXE for a string the fix adds, not the source.**
 
 ```
-_build\play.bat akaneia
-_build\play.bat ace
-_build\play.bat akaneia "mode=vs;p1=ck:34/c0/hu;p2=ck:2/c0/cpu1"
+grep -a "your new log text" _build/melee-pc.exe
 ```
 
-`play.bat` now sets `MELEE_CARD_PATH` (`_build/card`, or `_build/card-ace` for ACE). **It did not
-before**, and `shim_card.c` falls back to `card/` next to the exe — which lives in a per-run
-sandbox. So every launch had an empty card: the memcard prompt on boot and a **fully locked
-roster**, which re-flows the CSS grid. That, not a table bug, is where "Fox is missing" and
-"Sonic is unselectable" came from. If a roster ever looks wrong again, **check the card first.**
+Same class, different costume: the GitHub front page showed upstream's README for weeks because
+`.github/README.md` outranks the root one. The file was committed and correct; it just was not
+the one being served.
 
-To re-harvest: `& "_build\harvest.ps1"` (all 17 scenes) or `-Only wolf`. It runs **off-screen**
-on purpose because it is unattended; a single scene you want to watch goes through `play.bat`.
+**2. The harness under-reports.** A sweep called 150 runs "failed, no fault logged"; 52 of them
+had a plain `gw: FATAL ACCESS_VIOLATION` in their logs. The fault text was being scraped from
+selftest's *console output*, which prints only the first three matches and is wrapped.
+*Now fixed*: faults are parsed from the log. Before dismissing a class of failure as an artifact,
+read one of the logs.
 
-## What the harvest found — 13 of 17 green
+**3. Concurrency breaks things that were implicitly single-instance.** Running four games at once
+surfaced: a shared Dawn pipeline cache that corrupted and made every later run die at its first
+draw (looked exactly like a dead GPU — a reboot was recommended and would not have helped); a
+spin watchdog whose 4-second wall-clock threshold fired falsely under load; volume set by process
+*name*, so each run turned a sibling down and left itself at full; and two sweeps running at once
+because one was believed stopped. All fixed, mostly by making the tooling assert the invariant
+instead of relying on memory.
 
-**Green, and these are real results, not absence of evidence:** Diddy, Charizard, Lucas, Dedede
-and Tails all reach a match on Akaneia; **Fox c4/c5 and Jigglypuff c5/c6 load**, which is the
-per-costume table fix working, including the hat path that had never been run; Game & Watch c4/c5
-and the Falcon c6 / Yoshi c7 spread load; both deliberate bad costumes are refused as designed;
-vanilla is unaffected; ACE boots to the CSS.
+## What works now that did not this morning
 
-**Four reds, in the order I would take them:**
+| | before | after |
+|---|---|---|
+| added stages loading | 19/109 | **~81/109** |
+| headless tests | 63 | **70** |
+| trophies | never executed | gallery, collection, lottery, unlock popup |
+| m-ex off a vanilla ISO | not possible | **works, both discs** |
+| PNG → GX texture → drawn | did not exist | **works, verified on screen** |
 
-1. **Wolf (`ck:34`, Akaneia) — `_gw_ftParts_80074A4C+0xD`, a NULL `gobj`.** Unchanged by the
-   tail-call fix. The `gw_ppc.c` tail-call bug was real and is fixed and tested on its own terms
-   (`ppc_tail_branch_returns`), but **it was not Wolf's cause**, or not all of it. The tell: both
-   `MEX_IndexFighterItem` calls still log before the fault, which does not fit a story where the
-   terminal `b` is the branch being taken. Trace the interpreter; do not re-assume the theory.
-2. **Kirby c6 inhaling DK — `_gw_lbFileGetFullName+0x10`.** Suspect a **regression from this
-   session's merge**: `ftKb_Init_803C9FC8[kind][costume]` now goes through `FT_COSTUME_VIS_IDX`.
-   The copy table may belong with the archive-loading tables that must keep the *real* costume id.
-3. **Metal Sonic (ACE) — the symptom MOVED.** No longer `GObjProc_QueueProc`; now
-   `unimplemented opcode at ip=0x81269014 word=0x00000127`, from `entry[0] = 0x81269008`. `0x127`
-   is not a PowerPC instruction, so this is data being executed — a wrong entry point, not a
-   missing opcode. **Do not go add an opcode.**
-4. **Sonic (Akaneia) faulted inside `webgpu_dawn.dll+0x363548`**, not in game code, on the one
-   scene that was already user-verified working. Treat as GPU/driver flake until it repeats;
-   re-run it before spending time on it.
+Highlights, with the cause rather than the symptom:
 
-Every one of those has its full log at `_build/crashlogs/<tag>.log`, plus a frame capture.
+- **The float signature table was scoped to Sonic's two blobs.** Every other fighter read `f32`
+  arguments out of integer registers. That was the NaN collision box. Regenerated with
+  `--all-symbols`: 19,355 rows.
+- **Articles with `codeSize == 0` were refused, not recovered** — which is what "the port does not
+  load itFunction yet" actually was. Three ACE fighter groups went 0/7 → clean.
+- **The execute trap was armed only by the fighter install**, so every added stage with guest code
+  died in MEM1. Two lines.
+- **The CSP formula was inverted**: `animateJoint` takes a *frame*, the code computed an *image
+  index*, and an `HSD_A_T_TIMG` track maps between them. The original formula was right.
+- **Trophies needed no new code** — 12k lines of `ty/` had simply never been reached. Two decomp
+  artifacts that depended on retail's `.data` layout were in the way.
 
-## Still open, unchanged by today
+## Do these first
 
-CSS portraits for added characters render as rainbow corruption (#13). Trophies, rollback, the
-remaining bridge gaps and perf (#10). The root repo still has **no remote and exists only as this
-copy** (#7) — that is the largest unmanaged risk in the project and it is a decision, not a task.
-Akaneia's spare costumes still need writing up in `_research` (#3).
+1. **#20 — two stages left.** `ext:302` exhausts the HSD heap at ~frame 273 *after rendering*,
+   which implies the port over-allocates somewhere an ordinary match does not. That is the most
+   interesting bug on the board. `ext:306` faults in `ucrtbase` — a pointer crossing the
+   host/guest boundary that the `gw_ppc_call` mirror does not cover.
+2. **#23 — the loading screen**, now that the texture path exists. Hold the scene until aurora's
+   pipelines are warm rather than letting the match fill in piece by piece.
+3. **#22 — m-ex trophies 293..341.** Invisible, not broken: `TY_TROPHY_COUNT` bounds every loop.
+   Raising it is a **save-format** change, so decide the format deliberately.
+4. **#10 — rollback, bridge gaps, perf.** Nobody has profiled the port yet. A design doc exists at
+   `_research/rollback-port-design.md` and a branch at `agent/rollback`.
+
+## Facts that are easy to get wrong
+
+- **`ck:41` is Wario. Metal Sonic is `ck:55`.** A task was mislabelled for a day over this.
+- **ACE fits exactly**: 31 added fighters into 31 slots, zero spare. The ceiling is 43, set by a
+  6-bit `x597_bits` field; going past that means widening it.
+- **ACE is a superset of Akaneia** for fighters — same seven files, more costumes. Combining the
+  discs would add nothing.
+- **`TyExt.dat` is not a table**, it is a display asset. The extended trophy table is
+  `TyDataf.dat`'s `tyModelFileTbl`: 293 vanilla, 342 on both mod discs, and **ACE adds none of its
+  own**.
+- **`MELEE_MODS_DIR` points at the pack's *parent*.** Pointing at the pack itself gives
+  `MxDt.dat not on this disc` and a green-looking 70/70 that proves nothing.
+- **`skipmemcard=0` is required for trophy scenes**, or saving *and* loading are both disabled.
+- `_build/card` is the fully-unlocked card. Use `_build/card-trophy` or a copy for anything that
+  writes.

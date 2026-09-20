@@ -1,8 +1,11 @@
 # Handoff — m-ex content in the native PC port
 
-**Written: 2026-09-19 (late evening).** Supersedes the earlier 2026-09-19 handoffs, in git
-history.
-Stage authoring / Blender-as-level-editor remains DROPPED.
+**Written: 2026-09-19, gaps section rewritten 2026-09-20 after an 86-commit day.** Supersedes the
+earlier handoffs, in git history. Stage authoring / Blender-as-level-editor remains DROPPED.
+
+**Read `docs/NEXT-SESSION.md` first** — it carries the current state, what changed, and the three
+ways this tree lies to you. This document is the architecture; §6 (Traps) and §7 (Conventions)
+below are still current and are the reason most of those bugs were findable at all.
 
 Read `_research/port-dev-quickref.md` (commands, env vars, traps) first — it now documents the
 build/run scripts and the parallel-agent setup, and those supersede the raw command lines. The
@@ -16,8 +19,9 @@ m-ex research: `mex-ppc-interpreter.md` (architecture), `mex-data-layer-design.m
 
 ## 0. FIRST ACTION ON RESUME
 
-**Everything is committed and the tree is green: tests 39/39 on both vanilla and Akaneia.**
-Nothing is blocking. The five-agent fan-out has been run, reported and MERGED.
+**Everything is committed and the tree is green: 70/70 on vanilla, Akaneia AND ACE.** Both repos
+are backed up — the port to `pub` (public), the workspace to `origin-ws` (private). Nothing is
+blocking. See `docs/NEXT-SESSION.md` for what to pick up.
 
 The first action is a **windowed run**, because a pile of work is now code-complete and
 screen-unverified. In this order, each on Akaneia:
@@ -62,40 +66,46 @@ Three findings from this session are worth carrying forward as *lessons*, not ju
 
 ### Known gaps, largest first
 
-1. **Kirby hats** — `Mex_FtBaseKind` falls back to Mario for six of the seven Akaneia fighters, so
-   Kirby swallowing Wolf gets Mario's cap and fireball. Akaneia ships all seven `PlKbCp*.dat` and
-   every file is on the disc; the fix is to read `MexData.kirby_data.capfiles[k]`/`effectids[k]`
-   per internal kind instead of copying the base. Not started.
-2. **Category-2 hook slots** — 26 `onModelRender`, 33 `onZair`, 34 `onLanding`, 35 `onFSmash`, 41
-   `onIntroL`, 43 `onTaunt`, 44 `onCatch` have no vanilla per-kind table, so each needs a new
-   dispatch site in engine source (pattern: `ftCo_JumpAerial.c:147`, `ftCo_AttackHi4.c:94`).
-   Tails needs 26/34; Lucas needs 33/35/41/43/44. Every install now LOGS the ones it is missing.
-3. **SSS expansion** — until it lands, a custom stage is only reachable programmatically. Fully
-   characterised: stride 0x20 vs the port's 0x1C, external id moves from a `u8` to an `s32` at
-   `+0x1C`, `NUM_STAGES` 29 -> 66.
-4. **Stage audio** — `s32_arr_803BB6B0[71..]` needs filling, AND `lbAudioAx_80026EBC` does
-   `1ULL << ssm_id` where the added stages' ids run to 77 on Akaneia and **100 on ACE** (11 of
-   ACE's 84 added stages are above 63). Undefined; the bank never loads. The fighter side already
-   hit this and uses a by-index request path.
-5. **ACE stage sizing — SIZE AGAINST ACE, NOT AKANEIA.** Verified from both discs:
-   Akaneia is 96 internal / 313 external, **ACE is 155 / 372** (`sss_icon_count` 67 vs 163). ACE
-   preserves Akaneia's 0..95 numbering and appends at 96..154, so the layout work transfers, but
-   three constants sized off Akaneia are all too small: `GW_MEX_GR_MAX` 111, `GR_MEX_ROWS` 64
-   (`ground.c`) and `s32_arr_803BB6B0[0x6F]` = 111 rows. An earlier note called the last two
-   "already big enough" — true at 96, false at 155. **Today ACE stages are silently DISABLED,
-   not broken**: the guard logs "implausible stage counts" and turns m-ex stages off, which is
-   the right failure but is easy to misread as "ACE has no stages".
-6. **ACE fighters** — 31 fit `GW_MEX_SLOTS` exactly, zero spare, and **31 is a hard ceiling**:
-   a FighterKind must fit `Fighter.x597_bits : 6`. A 32nd needs that field widened first, not just
-   the four constants. 16 of ACE's 31 blobs have `codeSize == 0` (built by an older MexTK) and the
-   loader rejects them outright - recoverable from the instruction-reloc table's max offset.
-   ACE's ISO is at `C:/iso/SSBM ACE Build v2.0.0.iso`.
-7. **Trophies** — NOT data plumbing. 34 m-ex patches, a save-data-format change plus a menu-scene
-   rewrite. Wants its own task.
-8. Bridge gaps recorded, not fixed: float varargs (`HSD_ForeachAnim`), double args, struct returns.
-9. `gw_ppc_static_native` gates its bridge lookup at `0x80300000` but the main heap starts near
-   `0x806A0000`, so every interpreted access to a fighter struct pays a ~15-probe binary search
-   (8.6 ns). Raising the gate would speed up all m-ex content.
+**Rewritten 2026-09-20.** Most of the previous list is closed; what follows is what is actually
+left. Items are removed when a capture or a targeted run proves them done, not when the code is
+written.
+
+1. **Two added stages still fail.** `ext:302` (GrGh.dat) renders for ~273 frames and then
+   exhausts the HSD heap — `HSD_MemAlloc` returns NULL. That implies the port over-allocates or
+   leaks somewhere an ordinary match does not, which makes it the most interesting bug on the
+   board. `ext:306` (GrGc.dat, 34,844 bytes of stage code) faults inside `ucrtbase` — a pointer
+   crossing the host/guest boundary that the `gw_ppc_call` mirror does not cover. ACE internal
+   stage 100 (GrKcs.dat) is degraded rather than broken: its `StageCallbacks[]` at guest
+   `0x803E6328` has no bridge data entry, so it loads without fog, lighting or per-model camera
+   and says so by name.
+
+2. **m-ex trophies 293..341 are invisible.** `TyDataf.dat`'s `tyModelFileTbl` is 293 on vanilla
+   and 342 on both mod discs (ACE adds none of its own). `TY_TROPHY_COUNT = 293` bounds every
+   loop, so the extra ids are ignored rather than crashing — the right failure. Raising it is a
+   **save-format change**: it sizes the save block's `trophy_flags[293]`, two `[(293+31)/32]`
+   bitfields, `times[293]`, an `HSD_MemAlloc`, ~20 loops and two 293-entry stack arrays. Decide
+   whether an m-ex card stays readable by a vanilla build before touching it.
+
+3. **Rollback, and performance.** Design at `_research/rollback-port-design.md`, branch
+   `agent/rollback`. **Nobody has profiled the port yet** — there is no perf baseline at all.
+   Related and still true: `gw_ppc_static_native` gates its bridge lookup at `0x80300000` while
+   the main heap starts near `0x806A0000`, so every interpreted access to a fighter struct pays a
+   ~15-probe binary search. Raising the gate would speed up all m-ex content.
+
+4. **Remaining bridge gaps.** Doubles and by-value struct arguments are still unsupported in
+   `gw_ppc_bridge_call` (472 symbols have no derived signature for those reasons and keep the
+   integer default). 14 of the 20 m-ex API entries at `0x803D7058..0x803D70A8` still have no
+   shim; `MEX_GetFtItemID`, `MEX_GetGrItemID`, `MEX_GetData` (ids 10..16), `SFX_PlayStageSFX`,
+   `MEX_GetStagePlaylist` and `calloc` are done. Unanswered `MEX_GetData` ids name themselves in
+   the log the first time they are asked for.
+
+5. **Not built, but now unblocked.** The PNG → GX texture → HSD scene path exists and is verified
+   on screen (`pc/tools/png2gx.py`, `gw_GxTex_*`, an `HSD_SObj` draw). The loading screen, the
+   trophy popup and a modpack selector are all scenes to be written on top of it.
+
+6. **Untested rather than broken.** The mod packer runs both discs off a vanilla ISO, but only VS
+   matches, one custom stage and the headless suite were exercised — not the CSS with a full
+   roster, single-player modes, `.thp` video or the results screen.
 
 ## 2. How to run it
 
