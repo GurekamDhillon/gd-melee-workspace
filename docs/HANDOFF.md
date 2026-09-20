@@ -1,6 +1,7 @@
 # Handoff — m-ex content in the native PC port
 
-**Written: 2026-09-19 (evening).** Supersedes the 2026-09-19 (morning) handoff, in git history.
+**Written: 2026-09-19 (late evening).** Supersedes the earlier 2026-09-19 handoffs, in git
+history.
 Stage authoring / Blender-as-level-editor remains DROPPED.
 
 Read `_research/port-dev-quickref.md` (commands, env vars, traps) first — it now documents the
@@ -14,34 +15,72 @@ m-ex research: `mex-ppc-interpreter.md` (architecture), `mex-data-layer-design.m
 
 ## 0. FIRST ACTION ON RESUME
 
-The #21 work is **uncommitted** (29 files in `melee/`, plus `tools/port/` and three build files in
-the root repo). `agent_new.sh` branches worktrees off `HEAD`, so **every fan-out agent would start
-from a tree that still has the old Sonic-specific code**. Commit before creating any worktree.
+**Everything is committed and the tree is green: tests 39/39 on both vanilla and Akaneia.**
+Nothing is blocking. The five-agent fan-out has been run, reported and MERGED.
 
-Ask the user first, then:
+The first action is a **windowed run**, because a pile of work is now code-complete and
+screen-unverified. In this order, each on Akaneia:
 
-```
-git -C C:/gdm/melee add -u && git -C C:/gdm/melee add pc/platform/gw_mex_bridge.c
-git -C C:/gdm/melee commit        # subject: "pc: generalize m-ex fighter support (table-driven)"
-git -C C:/gdm      add tools/port .gitignore _build/build_melee_pc.bat _build/masstest/pipe_win.sh \
-                       _research/port-dev-quickref.md docs/HANDOFF.md
-git -C C:/gdm      commit         # subject: "tools: per-agent build roots and run sandboxes"
-```
+1. **Meta Crystal** — external stage 293 / internal 76. The first m-ex custom stage; it has never
+   executed. Expect `grfunction:` lines naming the install and each overridden `StageData` word.
+2. **Charizard** (`MELEE_TRAINING=35`) — the cheapest Akaneia fighter, zero known gaps. Then Wolf
+   (33) and **Dedede (38)**, the one whose `onLoad` crashed and is now fixed.
+3. **CSS cursor scale** — a 5% shrink plus a sub-pixel nudge; only eyes can confirm it.
+4. **An item throw/catch as Sonic** — slots 16/17/18 are newly wired. The log should show
+   `interp: onItemRelease/onItemCatch/onItemDrop ... invocation 1 running`.
 
-Never `git add -A` (see §7).
+Sonic's spring (up-B, custom item 277) is **user-verified** as of this handoff.
 
 ## 1. State in one paragraph
 
-**The m-ex fighter path is now table-driven, and Sonic runs entirely through it.** He is no longer
-special-cased anywhere: he loads as port kind 37 / m-ex internal 31 purely from `MxDt.dat` rows,
-and 7 m-ex kinds (33..39) are registered from Akaneia's data. `src/melee/ft/kinds/ftSonic/` is
-deleted. His spring (up-B, custom item kind 277) spawns and runs. In-engine tests **33/33**.
-Also landed today: announcer + victory theme + results screen, the Aurora update, the upstream
-doldecomp merge, the mods folder (#10), vanilla-disc + mods Sonic (#12), and — new this evening —
-**parallel build/run infrastructure so several agents can work at once** (§5).
+**The m-ex fighter path is table-driven, the stage path now exists alongside it, and all five
+agent branches are merged into `pc-port`.** Sonic is not special-cased anywhere: port kind 37 /
+m-ex internal 31, loaded purely from `MxDt.dat` rows, spring verified in a real match. Merged this
+session: m-ex custom **stages** (`gw_mex_grfunction.[ch]`, Meta Crystal wired end to end), item
+slots 16/17/18, per-fighter BGM and the weighted menu playlist, CSS cursor scaling, **conditional
+hook registration**, m-ex's `calloc` and five more resolver gaps, and the `anim_num` stride fix.
+Rollback has a concrete port-specific design (`_research/rollback-port-design.md`, on
+`agent/rollback`): 11.75 MB snapshot, ~535 us each way, 3.2% of a frame.
 
-Not verified by the user since the spring fix: he play-tested before it, not after. The change is
-narrow (see §3) and `--test` is green, but a hands-on VS match is the right first move.
+Three findings from this session are worth carrying forward as *lessons*, not just fixes:
+
+- **Registering a hook unconditionally is not conservative.** A registered hook REPLACES the
+  vanilla callback, so registering every slot for every fighter silently turned engine behaviour
+  into a no-op wherever a blob leaves a slot empty. Sonic fills all of them, which is why it hid.
+  Lucas was losing his per-frame callback outright.
+- **A count that is not in the fighter's own data is probably the wrong count.** `anim_num` is
+  stride 8, was read at stride 4, and every Akaneia fighter had a wrong animation bound - three of
+  them read 0. Same shape as the demo-motion crash the morning before.
+- **Platform statics outlive MEM1.** The test harness restores a MEM1 snapshot between tests but
+  not platform statics, so any cached guest pointer names wiped memory. See §6.
+
+### Known gaps, largest first
+
+1. **Kirby hats** — `Mex_FtBaseKind` falls back to Mario for six of the seven Akaneia fighters, so
+   Kirby swallowing Wolf gets Mario's cap and fireball. Akaneia ships all seven `PlKbCp*.dat` and
+   every file is on the disc; the fix is to read `MexData.kirby_data.capfiles[k]`/`effectids[k]`
+   per internal kind instead of copying the base. Not started.
+2. **Category-2 hook slots** — 26 `onModelRender`, 33 `onZair`, 34 `onLanding`, 35 `onFSmash`, 41
+   `onIntroL`, 43 `onTaunt`, 44 `onCatch` have no vanilla per-kind table, so each needs a new
+   dispatch site in engine source (pattern: `ftCo_JumpAerial.c:147`, `ftCo_AttackHi4.c:94`).
+   Tails needs 26/34; Lucas needs 33/35/41/43/44. Every install now LOGS the ones it is missing.
+3. **SSS expansion** — until it lands, a custom stage is only reachable programmatically. Fully
+   characterised: stride 0x20 vs the port's 0x1C, external id moves from a `u8` to an `s32` at
+   `+0x1C`, `NUM_STAGES` 29 -> 66.
+4. **Stage audio** — `s32_arr_803BB6B0[71..95]` needs filling, AND `lbAudioAx_80026EBC` does
+   `1ULL << ssm_id` where the added stages' ids are 56..77. Undefined; the bank never loads. The
+   fighter side already hit this and uses a by-index request path.
+5. **ACE** — 31 fighters fit `GW_MEX_SLOTS` exactly, zero spare, and **31 is a hard ceiling**:
+   a FighterKind must fit `Fighter.x597_bits : 6`. A 32nd needs that field widened first, not just
+   the four constants. 16 of ACE's 31 blobs have `codeSize == 0` (built by an older MexTK) and the
+   loader rejects them outright - recoverable from the instruction-reloc table's max offset.
+   ACE's ISO is at `C:/iso/SSBM ACE Build v2.0.0.iso`.
+6. **Trophies** — NOT data plumbing. 34 m-ex patches, a save-data-format change plus a menu-scene
+   rewrite. Wants its own task.
+7. Bridge gaps recorded, not fixed: float varargs (`HSD_ForeachAnim`), double args, struct returns.
+8. `gw_ppc_static_native` gates its bridge lookup at `0x80300000` but the main heap starts near
+   `0x806A0000`, so every interpreted access to a fighter struct pays a ~15-probe binary search
+   (8.6 ns). Raising the gate would speed up all m-ex content.
 
 ## 2. How to run it
 
@@ -63,10 +102,12 @@ and `run.sh` resolves a bare name against that directory. They start consuming f
 
 Useful env: `MELEE_TRAINING=37` (Sonic), `MELEE_TARGET_TEST=32`, `MELEE_MODS=0/1`,
 `MELEE_DVD_TRACE`, `MELEE_HEAP_TRACE`, `MELEE_MEX_TRACE_CALLS`, `MELEE_MEX_DUMP_CODE=<path>`,
-(`MELEE_TRAINING=38` was Sonic only while he was the sole registered slot. With all 7 registered
-the port kinds are Wolf 33, Diddy 34, Charizard 35, Lucas 36, **Sonic 37**, Dedede 38, Tails 39,
-from m-ex internal **27–33**. A stale 38 cost one play-test, which loaded Dedede and crashed.)
 `MELEE_MEX_TRACE_PARTS`, `MELEE_MEX_TRACE_SCALE`, `MELEE_PPC_TRACE_FP`.
+
+**The fighter kind numbers**, confirmed in-engine: Wolf 33, Diddy 34, Charizard 35, Lucas 36,
+**Sonic 37**, Dedede 38, Tails 39, from m-ex internal **27–33**. `MELEE_TRAINING=38` was Sonic
+only while he was the sole registered slot; with all 7 registered it is Dedede, and the stale
+number cost one play-test that loaded Dedede and crashed.
 
 ## 3. What changed since the last handoff
 
@@ -94,16 +135,20 @@ re-broken the results screen. Dump the disc before trusting a discriminator.
 
 ## 4. Open work
 
-Tasks #23–#26 plus rollback are the fan-out in §5. Smaller items, none blocking:
+The big items are §1's "Known gaps". Smaller ones, none blocking:
 
-1. **Stale Sonic-specific comments** in `gw_mex_ftfunction_runtime.c` (~lines 4, 231, 1985) and
-   `ftdata.h:77` — the code is generic now, the prose still says "Sonic".
-2. **#17 leftovers**: CSS cursor scaling, icon blink, unwired slots 16/17/18 (item release/catch).
-3. **Bridge gaps** recorded, not fixed: float varargs (`HSD_ForeachAnim`), double args, struct
-   returns.
-4. **Temporary debug traces** in the runtime can go once the other fighters are in.
+1. **Stale Sonic-specific comments** in `gw_mex_ftfunction_runtime.c` and `ftdata.h:77` — the
+   code is generic now, the prose still says "Sonic".
+2. **Temporary debug traces** in the runtime can go once the other fighters are in.
+3. **CSS icon blink is DONE** — it needed nothing. Every icon-joint site already goes through
+   `MNCS_ICON_ROOT()` and `MNCS_NUM_SK` is already dynamic. The old open-work entry was wrong.
+4. **`item.RuntimeIndex`'s zero run** is 49 entries for Akaneia but would need 120 for ACE
+   (custom article ItemKinds run 253..356 there vs 253..285). Nothing hardcodes 49 today; check
+   when ACE articles get wired.
+5. **`css_icon_count` is 56 against 65 external ids** on ACE, so the CSS does not show
+   everything. Do not assume a 1:1 mapping.
 
-## 5. Parallel agents (new) and the fan-out plan
+## 5. Parallel agents — the mechanism, and what the fan-out produced
 
 ### The mechanism
 
@@ -113,44 +158,37 @@ export GW_MELEE=C:/gdm/worktrees/<name>
 export GW_BUILD_ROOT=C:/gdm/_build/agents/<name>
 ```
 
-`GW_BUILD_ROOT` holds that agent's objects, link response file and `melee-pc.exe`, so two agents
-share nothing they write. Shared and read-only: the Aurora/Dawn/SDL3 libraries in `_build/ax86m`
-(the link always runs there because `melee_link_libs.rsp` names them relative to it — only the
-outputs move) and the ISOs. `agent_rm.sh <name>` cleans up, refuses on uncommitted work, and never
-deletes the branch.
+`GW_BUILD_ROOT` holds that agent's objects, link response file and `melee-pc.exe`. Shared and
+read-only: the Aurora/Dawn/SDL3 libraries in `_build/ax86m` (the link always runs there because
+`melee_link_libs.rsp` names them relative to it — only the outputs move) and the ISOs.
+`agent_rm.sh <name>` cleans up, refuses on uncommitted work, and never deletes the branch.
 
-Verified end to end: a second agent built into its own root and ran its own `--test` (33/33) while
-the main tree linked concurrently. `--test` is headless (no window, no GPU) so test runs
-parallelise freely; **gameplay runs each open a window and share one audio device, so keep audio
-checks serial.**
+`--test` is headless and parallelises freely. **Gameplay runs open a window and share one audio
+device, so keep them serial** — give agents an explicit instruction not to launch one, or several
+will fight over the screen.
 
-### The fan-out (launch these on resume, after §0's commit)
+**The isolation had a hole and it is now fixed** — see §6's hardlink entry. Any new tool that
+writes into `$GW_OUT` must write-then-rename, not write in place.
 
-Five agents, each in its own worktree. #23 and #25 are the two that actually need the engine; #24
-depends on #23's findings, so stage it second. Every prompt must carry the same preamble:
+### What the five agents produced (all merged into `pc-port`)
 
-> Work only in your own worktree. `export GW_MELEE=C:/gdm/worktrees/<name>` and
-> `export GW_BUILD_ROOT=C:/gdm/_build/agents/<name>` before anything else, and build only with
-> `tools/port/build.sh` and run only with `tools/port/run.sh`. Read
-> `_research/port-dev-quickref.md` and `docs/HANDOFF.md` first. m-ex is a SPECIFICATION ONLY — no
-> copied `.asm`/`.h`/`.dat`. Write each file to disk as you go and build incrementally; do not
-> report success you have not seen a green build and a green `--test` for.
+| agent | outcome |
+|---|---|
+| `fighters-akaneia` | Dedede's `onLoad` crash fixed (m-ex `calloc` at `0x803D706C`), 5 more resolver gaps, **conditional hook registration**, slots 12/19/20, a headless test that walks every blob's absolute branches. Kirby hats identified, not started. |
+| `fighters-ace` | Research only. The reconciled 31-fighter list, the `x597_bits` ceiling, the `codeSize == 0` blocker, and the `anim_num` stride bug — which turned out to be live and wrong for every fighter. |
+| `stages` | `gw_mex_grfunction.[ch]`, the stage tables, Meta Crystal wired end to end. The key finding: `mexData.stage_desc` is byte-for-byte the port's own `StageData`, and stages have only TWO index spaces. |
+| `content` | Item slots 16/17/18, per-fighter BGM, menu playlist, CSS cursor scale. Two negatives worth as much: icon blink needed nothing, trophies are not cheap. |
+| `rollback` | `_research/rollback-port-design.md` on `agent/rollback`. Design only. |
 
-| agent | task | scope |
-|---|---|---|
-| `fighters-akaneia` | #23 | Wolf, Diddy, Charizard, Lucas, Dedede, Tails (m-ex internal 27–33, Sonic 31 among them). The table path already registers them; find what each one needs beyond Sonic's path — per-kind items, Kirby hats, demo tables. One fighter fully working before starting the next. |
-| `fighters-ace` | #24 | ACE's additional fighters. ACE's `MxDt.dat` defines 31 new fighters in total, Akaneia's 7 included — start by dumping it and reconciling the two index spaces, then report the real list before importing. |
-| `stages` | #25 | m-ex custom stages (Akaneia + ACE): `grFunction`, stage tables, SSS expansion, stage audio. Research first, land the smallest stage end to end second. |
-| `content` | #26 | Remaining m-ex content: items, music, trophies, menus. Mostly data-table plumbing; likely the easiest to finish. |
-| `rollback` | — | Rollback netcode. `_research/rollback-netcode.md` already exists (delivered, never summarised to the user). Next step is a concrete port-specific design: what state must be snapshotted (MEM1 regions, the PPC interpreter's state, allocator state), and what it costs per frame. **Design only, no implementation.** |
+**The merge order that worked:** `stages` (clean), `content` (clean), `fighters-akaneia` (one real
+conflict), then regenerate the bridge once from the merged link. Each agent's regenerated
+`gw_mex_bridge.c` is merge noise — keep one side, regenerate at the end.
 
-`GW_MEX_SLOTS` is 31 and `GW_MEX_KIND_MAX` is `0x21 + 31`, which exactly fits ACE's 31 added
-fighters with nothing spare. #24 should check that first; if ACE needs more, the constant and
-`Ft_Kind_None`/`ChKind_Cap` move together.
-
-Two agents must not edit the same file. `ftdata.c`, `forward.h` and
-`gw_mex_ftfunction_runtime.c` are the likely collisions between #23, #24 and #25 — have them
-report needed shared-file changes back rather than landing them independently, and integrate here.
+**The conflict worth remembering:** `content` added three unconditional item-slot registrations to
+the same block `fighters-akaneia` was rewriting to be conditional. Both sides merged cleanly if
+taken verbatim, and doing so would have silently reintroduced the exact bug on three fresh slots.
+The resolution was to fold content's three into akaneia's conditional form. **A clean auto-merge
+between two agents is not evidence that the result is correct.**
 
 ## 6. Traps (each cost time; still true unless struck)
 
@@ -176,6 +214,18 @@ report needed shared-file changes back rather than landing them independently, a
   (`[Ft_Kind_Max]`), disc-loaded tables in `PlCo.dat` (`ftPartsTable`, `Fighter_804D6540`, widened
   by `ftCommonData_ExtendKindTable`), and the figatree-kind bits packed MSB-first in
   `x10_animCurrFlags` (low 6 bits). Expect more of these.
+- **Platform statics outlive MEM1, and the test harness exploits that.** `gw_test.c` snapshots
+  MEM1 and restores it around every test, but deliberately does NOT restore platform statics —
+  its own comment says "a test must set up any platform state it depends on". So any guest
+  pointer cached in a `pc/platform` static keeps naming an address whose contents are gone. The
+  m-ex runtime and the stage tables both did this; `gw_Mex_InvalidateAfterMem1Restore()` now
+  drops them and `gw_test.c` calls it after the restore. **Any new module that caches a guest
+  pointer must hook into that function.** The symptom is nasty: the cache says the table is live
+  while every word in it reads zero, and an accessor that merely degrades (as the fighter ones
+  did) hides it until something stricter reads the same data.
+- **`gw_mex_persist_alloc` is a bump allocator that never frees.** Re-initialising the m-ex
+  runtime therefore leaks the whole 384 KB region in about three cycles. The invalidation above
+  rewinds it; anything else that re-inits must too. Rollback cares about this as well.
 - **A per-kind count from the clone base can overrun the real table** — that was tonight's crash
   (§3). When a count is not in the fighter's own data, derive the end from the data, and bound it
   by the archive.
