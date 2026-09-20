@@ -22,10 +22,15 @@ Nothing is blocking. The five-agent fan-out has been run, reported and MERGED.
 The first action is a **windowed run**, because a pile of work is now code-complete and
 screen-unverified. In this order, each on Akaneia:
 
+Every one of these is now a `MELEE_SCENE` one-liner (`_research/scene-launch.md`), and every
+character number below is a **CharacterKind** — write `ck:` and it cannot be misread.
+
 1. **Meta Crystal** — external stage 293 / internal 76. The first m-ex custom stage; it has never
-   executed. Expect `grfunction:` lines naming the install and each overridden `StageData` word.
-2. **Charizard** (`MELEE_TRAINING=35`) — the cheapest Akaneia fighter, zero known gaps. Then Wolf
-   (33) and **Dedede (38)**, the one whose `onLoad` crashed and is now fixed.
+   executed. `MELEE_SCENE="mode=training;p1=fox;stage=ext:293"`. Expect `grfunction:` lines
+   naming the install and each overridden `StageData` word.
+2. **Charizard** `MELEE_SCENE="mode=training;p1=ck:36"` — the cheapest Akaneia fighter, zero
+   known gaps. Then Wolf (`ck:34`) and **Dedede (`ck:39`)**, the one whose `onLoad` crashed and
+   is now fixed. (As FighterKinds those are 35, 33 and 38 — the numbers this file used to give.)
 3. **CSS cursor scale** — a 5% shrink plus a sub-pixel nudge; only eyes can confirm it.
 4. **An item throw/catch as Sonic** — slots 16/17/18 are newly wired. The log should show
    `interp: onItemRelease/onItemCatch/onItemDrop ... invocation 1 running`.
@@ -110,14 +115,53 @@ Launch visibly on the main desktop — the user wants to watch. Pad scripts live
 and `run.sh` resolves a bare name against that directory. They start consuming frames at the first
 `PADRead`, during boot, so a short burst never reaches the match; use a repeating one.
 
-Useful env: `MELEE_TRAINING=37` (Sonic), `MELEE_TARGET_TEST=32`, `MELEE_MODS=0/1`,
-`MELEE_DVD_TRACE`, `MELEE_HEAP_TRACE`, `MELEE_MEX_TRACE_CALLS`, `MELEE_MEX_DUMP_CODE=<path>`,
+**Boot into a screen: `MELEE_SCENE`** — the general mechanism, `_research/scene-launch.md`.
+One env var names the mode, the screen, up to four players and the stage:
+
+```
+MELEE_SCENE="mode=training;p1=fox"
+MELEE_SCENE="mode=training;p1=ck:38;stage=ext:293"          # Sonic on Meta Crystal
+MELEE_SCENE="mode=vs;at=css;p1=fox;p2=marth;p3=random;p4=random"
+MELEE_SCENE="mode=vs;p1=fox/hu;p2=falco/cpu5;p3=ck:38/cpu9;stage=fd"
+```
+
+A number in a character or stage field **must** name its index space (`ck:`/`fk:`/`mex:`/
+`mexext:`, `ext:`/`int:`); a bare integer is rejected. Names (`fox`, `battlefield`) are always
+fine. The old `MELEE_TRAINING` / `MELEE_TARGET_TEST` / `MELEE_STAGE` still work and are folded
+into the same config. `MELEE_SCENE_TRACE` (on by default) logs every mode/state transition by
+name, plus the memory-card prompt’s highlighted option and the main menu’s hovered entry, so
+an unattended run says what screen it is on.
+
+**Why a scripted launch used to do nothing:** the boot scene *is* the memory-card prompt, and
+with an empty card it waits for a button forever — before `bootOnLeave`, where the scene hook
+lives. A configured scene now skips that prompt (saving disabled for the run);
+`MELEE_SKIP_MEMCARD=1` does it without a scene. `run.sh` gives each sandbox a *fresh, empty*
+card folder, which is why every sandboxed launch hit it and the older `_build/` ones did not.
+
+Other useful env: `MELEE_TARGET_TEST=fox`, `MELEE_MODS=0/1`, `MELEE_DVD_TRACE`,
+`MELEE_HEAP_TRACE`, `MELEE_MEX_TRACE_CALLS`, `MELEE_MEX_DUMP_CODE=<path>`,
 `MELEE_MEX_TRACE_PARTS`, `MELEE_MEX_TRACE_SCALE`, `MELEE_PPC_TRACE_FP`.
 
-**The fighter kind numbers**, confirmed in-engine: Wolf 33, Diddy 34, Charizard 35, Lucas 36,
-**Sonic 37**, Dedede 38, Tails 39, from m-ex internal **27–33**. `MELEE_TRAINING=38` was Sonic
-only while he was the sole registered slot; with all 7 registered it is Dedede, and the stale
-number cost one play-test that loaded Dedede and crashed.
+**THE KIND NUMBERS — two spaces, both real.** An earlier version of this section said
+"`MELEE_TRAINING=37` (Sonic)" and, before that, "`=38` is now Dedede". Both were wrong, in
+opposite directions, because they mixed the two port index spaces. Established from the code
+(`ft/forward.h`, `ftdata.c:1733` `Player_MexSetMapping(ChKind_Mex0 + slot, Ft_Kind_Mex0 + slot)`)
+and pinned by the `scene_ckind_fkind_table` test:
+
+| fighter | m-ex internal | **FighterKind** (`Fighter::kind`) | **CharacterKind** (`MELEE_TRAINING`, `ck:`) |
+|---|---|---|---|
+| Wolf | 27 | 33 | 34 |
+| Diddy | 28 | 34 | 35 |
+| Charizard | 29 | 35 | 36 |
+| Lucas | 30 | 36 | 37 |
+| **Sonic** | 31 | **37** | **38** |
+| Dedede | 32 | 38 | 39 |
+| Tails | 33 | 39 | 40 |
+
+`Ft_Kind_Mex0 = 0x21`, `ChKind_Mex0 = 0x22`, so for m-ex slots `ck = fk + 1`. For the retail
+cast the two are a different permutation, not an offset (Fox is ck 2, fk 1).
+`MELEE_TRAINING` and `p1=ck:` take the **CharacterKind**, so Sonic is **38**;
+`MELEE_TRAINING=37` is Lucas. Write `p1=fk:37` or `p1=ck:38` and the question cannot come up.
 
 ## 3. What changed since the last handoff
 

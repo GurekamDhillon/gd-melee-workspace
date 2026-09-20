@@ -58,6 +58,18 @@ if [ -n "${MELEE_PAD_SCRIPT:-}" ] && [ ! -f "$sandbox/${MELEE_PAD_SCRIPT}" ] &&
     export MELEE_PAD_SCRIPT="$GW_ROOT/_build/${MELEE_PAD_SCRIPT}"
 fi
 
+# A Windows binary launched from WSL does NOT inherit a WSL shell variable unless the variable
+# is named in WSLENV. That is a silent failure: the game starts, reads nothing, and boots
+# normally, which looks exactly like a broken hook. Name every MELEE_* variable that is
+# currently set. Harmless from Git Bash or PowerShell, where the environment is already shared.
+for v in $(compgen -v | grep "^MELEE_" || true); do
+    case ":${WSLENV:-}:" in
+    *":$v:"* | *":$v/"*) ;;
+    *) WSLENV="${WSLENV:+$WSLENV:}$v" ;;
+    esac
+done
+export WSLENV
+
 echo "sandbox   $sandbox"
 echo "log       $sandbox/melee-pc.log"
 set +e

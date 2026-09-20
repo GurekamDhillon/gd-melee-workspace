@@ -114,6 +114,10 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash
 | `MELEE_CARD=0` | disable the memory card (on by default; GCI folder at `_build/card`) |
 | `MELEE_SKIP_INTRO=1` | skip the opening movie and boot straight to the title |
 | `MELEE_TARGET_TEST=<char>` | boot straight into Target Test with that character (name or ckind; dev/testing) |
+| `MELEE_SCENE=<config>` | **boot straight into any screen** - mode, screen, players, stage. See `_research/scene-launch.md` |
+| `MELEE_SCENE_FILE=<path>` | the same config from a file |
+| `MELEE_SCENE_TRACE=0` | turn off the scene/cursor trace (on by default) |
+| `MELEE_SKIP_MEMCARD=1` | skip the boot memory-card prompt (saving off). A `MELEE_SCENE` implies it |
 | `MELEE_PAD_SCRIPT=<file>` | drive channel 0 from a text script; see `_build/audio_test_script.txt` |
 | `MELEE_PAD_IGNORE_ADAPTER=1` | ignore a physical adapter (use with scripted/keyboard input) |
 | `MELEE_PAD_DIAG=1` | adapter enumeration + raw report dumps |
@@ -125,6 +129,13 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash
 | `MELEE_AUDIO_NOFX=1` | bypass the aux effect processors |
 | `MELEE_BACKEND=d3d12\|auto\|vulkan` | override the default D3D11 backend |
 | `MELEE_AURORA_VERBOSE=1` | log Aurora INFO (present mode, adapter) |
+
+**The boot memory-card prompt blocks every unattended run.** The boot scene *is* the prompt,
+and with an empty card it asks "There is no save data. Create one?" and waits for a button -
+before any straight-to-scene hook can run. `run.sh` gives each sandbox a fresh, empty card
+folder, so this hits every sandboxed launch. A `MELEE_SCENE` skips it automatically;
+otherwise set `MELEE_SKIP_MEMCARD=1`. The log says `scene: cursor memcard ... WAITING FOR A
+BUTTON` when it is sitting there.
 
 `MELEE_WINDOW_HIDE=1` exists but **does not work**: a hidden window makes the D3D11 present block
 forever and the frame loop never leaves `retrace=0`. Park the window off-screen instead.
