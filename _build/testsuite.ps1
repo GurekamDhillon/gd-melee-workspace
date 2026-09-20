@@ -34,6 +34,27 @@ $build = $PSScriptRoot
 $out   = Join-Path $build "suite"
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 
+# SNAPSHOT THE BUILD ONCE, AND TEST ONLY THAT.
+#
+# selftest.ps1 copies _build\melee-pc.exe per run, so a rebuild part-way through a sweep silently
+# splits the results: earlier runs tested one binary, later runs another, and the summary says
+# nothing about it. That happened twice in one night - both times while fixing bugs the sweep had
+# just found, which is exactly when a rebuild is most likely.
+#
+# So the sweep takes its own immutable copy up front and points every run at it with -ExeDir.
+# Rebuilding mid-sweep is now harmless, and build.txt records what was actually under test.
+$snapshot = Join-Path $out "build"
+New-Item -ItemType Directory -Force -Path $snapshot | Out-Null
+foreach ($f in @("melee-pc.exe", "melee-pc.map", "SDL3.dll", "webgpu_dawn.dll")) {
+  $src = Join-Path $build $f
+  if (Test-Path $src) { Copy-Item $src $snapshot -Force }
+}
+$exeHash = (Get-FileHash (Join-Path $snapshot "melee-pc.exe") -Algorithm SHA256).Hash.Substring(0, 16)
+$stamp = "{0}  sha256:{1}  {2}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $exeHash,
+         (git -C $PSScriptRoot\..\melee rev-parse --short HEAD 2>$null)
+Set-Content -Encoding utf8 (Join-Path $out "build.txt") $stamp
+Write-Output ("build under test: " + $stamp)
+
 $padDir = Join-Path $build "pads"
 if (-not (Test-Path (Join-Path $padDir "unit_specials.txt"))) {
   python (Join-Path $build "gen_pad_units.py") $padDir --lead 300 | Out-Null
@@ -142,7 +163,7 @@ for ($i = $From; $i -lt $runs.Count; $i++) {
   $env:MELEE_LOG_MOTION   = "1"
   $env:MELEE_PAD_CHANNELS = $p.chans
   $a = @{ Scene = $p.scene; Disc = $p.disc; Tag = "s-$($p.tag)"; Seconds = $p.secs
-          CaptureAt = $p.at; OffScreen = (-not $Visible) }
+          CaptureAt = $p.at; OffScreen = (-not $Visible); ExeDir = $snapshot }
   if ($p.pad) { $a["Pad"] = $p.pad }
   $res = & (Join-Path $build "selftest.ps1") @a 2>&1
   $text = $res | Out-String
