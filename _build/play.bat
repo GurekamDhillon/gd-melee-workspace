@@ -41,15 +41,36 @@ if "%ISO%"=="" (
 
 if not "%~2"=="" set "MELEE_SCENE=%~2"
 if "%MELEE_MODS_DIR%"=="" set "MELEE_MODS_DIR=%GW_ROOT%\_build\mods"
+rem WITHOUT THIS THE CARD IS EMPTY. shim_card.c falls back to "card/" NEXT TO THE EXE, and the
+rem exe runs from a per-run sandbox - so every launch got a fresh card, which means the memcard
+rem prompt on boot AND a fully LOCKED roster. A locked roster re-flows the character grid, and
+rem that is what produced an evening of "Fox is missing" / "Sonic is unselectable" reports.
+rem Point it at the shared card, which is unlocked. ACE keeps its own, since its roster differs.
+if "%MELEE_CARD_PATH%"=="" (
+  if /i "%DISC%"=="ace" ( set "MELEE_CARD_PATH=%GW_ROOT%\_build\card-ace" ) else ( set "MELEE_CARD_PATH=%GW_ROOT%\_build\card" )
+)
 if "%MELEE_SKIP_INTRO%"=="" set "MELEE_SKIP_INTRO=1"
 
 set "SANDBOX=%GW_ROOT%\_build\runs\play"
 if not exist "%SANDBOX%" mkdir "%SANDBOX%"
 if not exist "%MELEE_MODS_DIR%" mkdir "%MELEE_MODS_DIR%"
-copy /y "%GW_ROOT%\_build\melee-pc.exe" "%SANDBOX%\" >nul || (
-  echo error: no melee-pc.exe - run tools/port/build.sh first 1>&2
+rem A previous instance holds the sandbox exe open, and for a moment AFTER it is killed too. A
+rem failed copy here is the worst outcome available: the old exe stays and you play a stale build
+rem while believing you are testing the new one. So stop it, then retry, then refuse.
+taskkill /IM melee-pc.exe /F >nul 2>&1
+set /a _try=0
+:copyexe
+copy /y "%GW_ROOT%\_build\melee-pc.exe" "%SANDBOX%\" >nul 2>&1
+if not errorlevel 1 goto copied
+set /a _try+=1
+if %_try% GEQ 10 (
+  echo error: could not copy melee-pc.exe into the sandbox after 10 tries. 1>&2
+  echo        Is it still running, or has the build not been run yet? 1>&2
   exit /b 1
 )
+ping -n 2 127.0.0.1 >nul
+goto copyexe
+:copied
 copy /y "%GW_ROOT%\_build\melee-pc.map" "%SANDBOX%\" >nul 2>&1
 copy /y "%GW_ROOT%\_build\SDL3.dll" "%SANDBOX%\" >nul
 copy /y "%GW_ROOT%\_build\webgpu_dawn.dll" "%SANDBOX%\" >nul
@@ -57,6 +78,7 @@ copy /y "%GW_ROOT%\_build\webgpu_dawn.dll" "%SANDBOX%\" >nul
 echo disc    %ISO%
 echo mods    %MELEE_MODS_DIR%
 if not "%MELEE_SCENE%"=="" echo scene   %MELEE_SCENE%
+echo card    %MELEE_CARD_PATH%
 echo log     %SANDBOX%\melee-pc.log
 echo.
 cd /d "%SANDBOX%"
