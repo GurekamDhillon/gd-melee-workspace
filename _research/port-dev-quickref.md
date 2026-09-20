@@ -101,6 +101,27 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash
 - `_build/melee-pc.log` is truncated on every run: copy it into `.omo/evidence/` immediately after a run.
 - Never redirect stdout into `melee-pc.log` (two writers).
 
+## TRAP: the mods folder masks the disc's own `MxDt.dat`
+
+`run.sh` points every sandbox at the shared `_build/mods`, and the `sonic` mod overrides
+`/MxDt.dat` on **every** disc it is run against. So a run on the ACE ISO silently reads
+**Akaneia's** mexData and proves nothing about ACE:
+
+```
+# WRONG - reports 96 internal stages (Akaneia's), on the ACE disc
+bash tools/port/run.sh --test t --iso "C:/iso/SSBM ACE Build v2.0.0.iso"
+    graudio: mexData stage audio ready: 96 internal stages
+
+# RIGHT - point MELEE_MODS_DIR at an empty directory
+mkdir -p /tmp/nomods && export MELEE_MODS_DIR=/tmp/nomods
+bash tools/port/run.sh --test t --iso "C:/iso/SSBM ACE Build v2.0.0.iso"
+    graudio: mexData stage audio ready: 155 internal stages
+```
+
+Both outputs above are real, from the same build minutes apart. Anything measured about ACE
+through `run.sh` without this is about Akaneia. Offline dumps of the ACE ISO (`tools/mex_port`)
+are unaffected - they read the disc directly.
+
 ## Resolve an rva/crash address to a symbol (needs Git Bash gawk; WSL mawk fails)
 ```
 "/mnt/c/Program Files/Git/bin/bash.exe" -lc 'bash /c/gdm/_build/masstest/mapsym.sh 0x10355E93'

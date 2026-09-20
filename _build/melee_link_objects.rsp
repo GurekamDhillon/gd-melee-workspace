@@ -1008,4 +1008,6 @@
 ../masstest/shimobj/gw_mex_bridge.obj
 ../masstest/shimobj/gw_mex_ftfunction_runtime.obj
 ../masstest/shimobj/gw_mex_grfunction.obj
+../masstest/shimobj/gw_mex_graudio.obj
 ../masstest/shimobj/gw_overlay.obj
+../masstest/shimobj/gw_mex_sss.obj
