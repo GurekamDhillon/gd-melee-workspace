@@ -35,6 +35,7 @@ GW_LINK_OBJECTS="${GW_LINK_OBJECTS:-$GW_BUILD_ROOT/melee_link_objects.rsp}"
 
 GW_CLANG="${GW_CLANG:-$GW_ROOT/_toolchains/llvm/bin/clang.exe}"
 GW_SDL_INCLUDE="${GW_SDL_INCLUDE:-$GW_ROOT/_build/ax86/_deps/sdl3_prebuilt-src/include}"
+GW_IMGUI_INCLUDE="${GW_IMGUI_INCLUDE:-$GW_ROOT/_build/ax86m/_deps/imgui-src}"  # C++ shims only
 
 gw_die() {
     echo "error: $*" >&2
@@ -52,11 +53,30 @@ gw_env_summary() {
 # A shim .c under pc/platform -> its object. Shim sources are native x86, NOT gwtool input, and
 # they need the SDL3 headers: main.c, shim_ax.c and shim_vi.c reach them through aurora/event.h.
 gw_build_shim() {
-    local src="$1" name
-    name="$(basename "$src" .c)"
+    local src="$1" name extra=""
+    case "$src" in
+    *.cpp)
+        # gw_overlay.cpp is the only C++ shim: it drives Dear ImGui, which Aurora already links
+        # (extern\imgui.lib) and already pumps around every frame. It needs ImGui's own headers,
+        # which live in Aurora's CMake dependency tree rather than anywhere on the include path.
+        name="$(basename "$src" .cpp)"
+        # -fms-runtime-lib=dll (/MD) is required, not cosmetic. clang defaults this target to the
+        # STATIC CRT, while Aurora and ImGui are built against the DYNAMIC one (their objects ask
+        # for MSVCRT + msvcprt). Getting it wrong fails the link in two different ways: as static,
+        # a wall of LNK2005 "already defined in libcpmt.lib(cout.obj)"; as static-with-/MT, a wall
+        # of unresolved __imp__ symbols from imgui/absl/png instead.
+        extra="-std=c++17 -fms-runtime-lib=dll -I $GW_IMGUI_INCLUDE"
+        [ -d "$GW_IMGUI_INCLUDE" ] ||
+            gw_die "no ImGui headers at $GW_IMGUI_INCLUDE - set GW_IMGUI_INCLUDE"
+        ;;
+    *)
+        name="$(basename "$src" .c)"
+        ;;
+    esac
     [ -f "$GW_MELEE/pc/platform/$src" ] || gw_die "no such shim: pc/platform/$src"
     mkdir -p "$GW_SHIMOBJ"
-    "$GW_CLANG" --target=i686-pc-windows-msvc -c -O2 -DTARGET_PC \
+    # shellcheck disable=SC2086 # $extra is a deliberate word-split argument list
+    "$GW_CLANG" --target=i686-pc-windows-msvc -c -O2 -DTARGET_PC $extra \
         -I "$GW_MELEE/extern/aurora/include" -I "$GW_MELEE/pc/platform" -I "$GW_SDL_INCLUDE" \
         "$GW_MELEE/pc/platform/$src" -o "$GW_SHIMOBJ/$name.obj" 2>&1 |
         grep -E "error|warning: .*(uninitialized|implicit)" || true
