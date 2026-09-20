@@ -137,7 +137,7 @@ Five of the six are INTERNAL; only `StageIDs` is EXTERNAL.
 |---|---|---|---|---|
 | `StageIDs` | `+0x00` | **EXTERNAL** | 12 | `{GrKind grkind; s32; s32}` |
 | `Audio` | `+0x04` | **INTERNAL** | 3 | `{u8 ssm_id; u8 echo; u8 echo2}` |
-| `LineTypeData` | `+0x08` | **INTERNAL** | 8 | `{s32 index; void* }` (an absolute `0x803Bxxxx` vanilla address, not a data offset, not relocated) |
+| `LineTypeData` | `+0x08` | **INTERNAL** | 8 | `{s32 index; void* }` (an absolute `0x803Bxxxx` vanilla address, not a data offset, not relocated) — **this table IS the port's `mpLib_803BF248`, extended**; see §6 |
 | `StageItemLookup` | `+0x0C` | **INTERNAL** | 8 | `{s32 count; u16* global_item_kinds}` |
 | `StageNames` | `+0x10` | **INTERNAL** | 4 | `char*` |
 | `Playlists` | `+0x14` | **INTERNAL** | 8 | `{s32 count; PlaylistEntry* }` |
@@ -188,9 +188,10 @@ none of the 25 stage files.
 |---|---|---|---|---|
 | `stage_datas[]` | `gr/ground.c` | **111** | 96 — fits | **155 — OVERFLOWS** |
 | `stage_id_map[]` | `gr/stage.c` | **286** | 313 — overflows | 372 — overflows |
-| `s32_arr_803BB6B0[0x6F][3]` | `lb/lbaudio_ax.static.h` | **111** | 96 — fits | **155 — OVERFLOWS** |
+| `s32_arr_803BB6B0[0x6F][3]` | `lb/lbaudio_ax.static.h` | **111** | 96 — fits | **155 — OVERFLOWS** — FIXED, now `LBAX_STAGE_CAP` = 256 under `TARGET_PC` |
 | `mnStageSel_803F06D0[]` | `mn/mnstagesel.static.h` | **30** | 67 — overflows | 163 — overflows |
-| `1ULL << ssm_id` | `lbAudioAx_80026EBC` | **64 banks** | ids to 77 — overflows | ids to 100 — overflows |
+| `1ULL << ssm_id` | `lbAudioAx_80026EBC` | **64 banks** | ids to 77 — overflows | ids to 100 — overflows — FIXED, by-index request |
+| `mpLib_803BF248[0x47]` | `mp/mplib.c` | **71** | 96 — OVERFLOWS | 155 — OVERFLOWS — FIXED, see §6 |
 
 Sizing off Akaneia alone gives the wrong answer twice: `stage_datas[]` and the audio table look
 "already big enough" at 96 and are not at 155. **Size against ACE, not Akaneia.**
@@ -201,10 +202,18 @@ Sizing off Akaneia alone gives the wrong answer twice: `stage_datas[]` and the a
 
 ### SFX — `Arch_Map_Audio[internal]`, 3 bytes
 
-The vanilla counterpart is **`s32_arr_803BB6B0[0x6F][3]`** in `src/melee/lb/lbaudio_ax.static.h`,
-and its first rows are byte-identical to the dumped table (`{0x37,0x01,0x01}`, `{0x37,0x01,0x01}`,
-`{0x22,0x01,0x01}`, `{0x37,0x01,0x01}`, `{0x25,0x01,0x01}` …). Filling `[71..]` from mexData is a
-short loop.
+The vanilla counterpart is **`s32_arr_803BB6B0[0x6F][3]`** in `src/melee/lb/lbaudio_ax.static.h`.
+**Verified, not assumed:** rows `0..70` of `Arch_Map_Audio` are byte-identical to the port's
+compiled rows — **0 mismatches on Akaneia AND on ACE**, all 71 rows, not just the first few. That
+identity is what pins both the stride and the index space, so the whole table can be rewritten
+from mexData exactly as `lbAudioAx_MexTables` already does for the sound banks.
+
+**DONE** (`lbAudioAx_MexStageAudio`, called from `lbAudioAx_8002838C`): the array is
+`LBAX_STAGE_CAP` = 256 rows under `TARGET_PC` (**sized against ACE's 155, not Akaneia's 96** —
+the vanilla 111 looked "already big enough" only because Akaneia fits), filled `[0..count)` from
+`Arch_Map_Audio`, with every row past the last real stage set to `{55,1,1}`. That tail matters:
+rows left at zero would read as **bank 0, which is a real bank**, not as "no bank". The four sites
+that index the table by `grkind` were all unguarded and now go through one bounds-checked reader.
 
 | byte | meaning | evidence |
 |---|---|---|
@@ -212,7 +221,7 @@ short loop.
 | 1 | echo / reverb | `StageAudio References/SetEcho.asm` reads `0x1(row)` |
 | 2 | second echo parameter | always equal to byte 1 in every row sampled |
 
-### The `1ULL << ssm_id` overflow (FOUND, NOT FIXED)
+### The `1ULL << ssm_id` overflow (FIXED)
 
 ```c
 u64 lbAudioAx_80026EBC(StKind stkind) {
@@ -228,14 +237,46 @@ above 63). `1ULL << 77` is undefined behaviour and the bank never loads, silentl
 
 This is the **identical** bug the fighter side already hit and worked around — see the `TARGET_PC`
 block in `lbAudioAx_8002785C`, whose comment reads "each player's bank is requested BY INDEX, which
-reaches the banks past the u64 mask", and the one in `lbAudioAx_80027648` ("a bank past the u64
-mask (Sonic's 66) has no bit to set"). Stage banks need the same by-index request path.
-Expect *no stage SFX at all* on the affected stages until this is done.
+reaches the banks past the u64 mask". Stage banks now take the same route, with one difference
+that matters: a stage mask is built by **ten** different scene files (training, classic,
+adventure, all-star, event, tournament, camera mode, stamina, opening …), and every one of them
+funnels through the same two calls. So `lbAudioAx_80026EBC` records a bank whose index is past 63
+in a small pending set and contributes nothing to the mask, and `lbAudioAx_8002702C` — the
+function that applies the mask, which every one of those callers uses — drains the set into
+`lbl_804337C4[]` straight after its mask loop. No `gm/` file had to change.
+
+Note the failure mode before the fix was worse than "undefined": on x86 the shift count wraps mod
+64, so `1ULL << 77` set bit 13 — the stage's own bank never loaded *and* an unrelated one was
+requested.
+
+### Line types — `Arch_Map_LineTypeData[internal]` *is* `mpLib_803BF248`
+
+Not stage audio, but it lives in `Arch_Map` and it is what actually crashed first, so it belongs
+here. `mpLib_803BF248` in `src/melee/mp/mplib.c` is `{ GrKind id; struct …(*x4)[20]; }` × **71**,
+indexed straight by `stage_info.grkind` at seven sites. `Arch_Map_LineTypeData` is the same struct
+at the same stride for `internal_stage_count` rows — Meta Crystal (76) read off the end and
+faulted with an ACCESS_VIOLATION inside `mpLib_800569EC`.
+
+Dumped from both discs:
+
+- `LineTypeData[i].index == i` for **every** row, on Akaneia and on ACE.
+- `LineTypeData[i].rows` is always an absolute vanilla address in `0x803BDC18 … 0x803BF1F8` — the
+  71 `mpLib_803BDxxx` arrays the port already compiles in. **m-ex authors no new line-type data.**
+  All 155 ACE rows draw on exactly the same 71 distinct pointers the 71 vanilla rows do (71
+  distinct pointers across 155 rows; 71 across Akaneia's 96).
+
+So an added stage's line types are always *some vanilla stage's*, and the port expresses that as a
+**row index**, not an address: `gw_Mex_GrLineTypeRow(grkind)` matches the row's pointer against the
+table's own rows 0..70 and returns the `j` that matched. Nothing takes a pointer from a shim, so
+there is no byte-order question and no way to land outside `mpLib_803BF248[0x47]`. Observed on
+Akaneia: 71..75 → vanilla 28, 76/77 → 60, 78..80 → 46.
 
 ### BGM — `Arch_Map_Playlists[internal]`
 
-`{ s32 count; PlaylistEntry* entries; }`, entry = 4 bytes `{ u16 bgm_id; u8 unk; u8 chance; }` where
-`chance` is a percentage weight. `count == 0` means no playlist. Track names come from
+`{ s32 count; PlaylistEntry* entries; }`, entry = 4 bytes **`{ u16 bgm_id; u16 chance; }`** where
+`chance` is a percentage weight. (An earlier revision of this file said `{ u16; u8 unk; u8 chance }`
+and was **WRONG**: byte 2 is the HIGH byte of a 16-bit `chance`, and only looks like padding
+because it is always zero in the shipped data. `00 62 00 64` is bgm 0x62 / chance 100.) `count == 0` means no playlist. Track names come from
 `mexData.music +0x0C` (`Arch_BGM_Labels`); `bgm_count` is 139 on Akaneia, 231 on ACE.
 
 Decoded examples (Akaneia):
@@ -380,10 +421,17 @@ Not done, roughly in dependency order:
 
 1. **Meta Crystal has never been run.** A windowed run on external 293 is the outstanding
    verification. Expect `grfunction:` log lines naming the install and each overridden word.
-2. **Stage audio**: fill `s32_arr_803BB6B0[71..]`, and fix the `1ULL << ssm_id` overflow (§6) —
-   without it the affected stages are silent.
+2. ~~**Stage audio**~~ — DONE (§6): the table is filled from mexData, sized for ACE, and banks
+   past index 63 are requested by index. Still needs a **windowed run** to confirm audibly.
 3. **SSS expansion** (§7) — until then a custom stage is not selectable.
-4. **ACE sizing** (§5, §9): `stage_datas[]` and `s32_arr_803BB6B0` both need 155 rows, and
-   `GW_MEX_GR_MAX` / `GR_MEX_ROWS` in the port move with them.
-5. `LineTypeData` (§3) is dumped but unused by the port; m-ex's `Line Type References/` patches
-   repoint the vanilla 0x50-stride `mpLib_803BDC18`-family table at it.
+4. **ACE sizing** (§5, §9): `stage_datas[]` still needs 155 rows, and `GW_MEX_GR_MAX` /
+   `GR_MEX_ROWS` move with it. `s32_arr_803BB6B0` and `mpLib_803BF248` are done.
+   Note that `gw_mex_graudio.c` deliberately does **not** share `gw_mex_grfunction.c`'s table
+   cache, so stage audio keeps working on ACE even while the grFunction path stands itself down
+   over `GW_MEX_GR_MAX` — verified: `graudio: mexData stage audio ready: 155 internal stages`.
+5. ~~`LineTypeData` (§3) is dumped but unused~~ — DONE (§6).
+
+**Harness note for anyone testing on ACE:** `run.sh` points every sandbox at the shared
+`_build/mods` folder, and the `sonic` mod overrides `/MxDt.dat` — so a `--test` run on the ACE
+disc reads **Akaneia's** 96-stage mexData unless `MELEE_MODS_DIR` is pointed at an empty
+directory. That is how the 155-row path was exercised.
