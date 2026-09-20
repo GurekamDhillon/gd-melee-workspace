@@ -188,9 +188,25 @@ for ($i = $From; $i -lt $runs.Count; $i++) {
   $states = ($perPlayer.Keys | Sort-Object | ForEach-Object { "$_=$($perPlayer[$_].Count)" }) -join " "
 
   $ok = $text -match "RESULT: OK"
+  # READ THE FAULT OUT OF THE LOG, NOT OUT OF selftest's CONSOLE OUTPUT. $text is what
+  # selftest printed, and it prints only the first three matching lines and is wrapped by
+  # Out-String - so a run whose first three were something else recorded an EMPTY fault and
+  # read as "failed, reason unknown". 52 runs in one sweep looked like that while their logs
+  # held a plain "gw: FATAL ACCESS_VIOLATION", and I nearly dismissed the lot as a harness
+  # artifact. The log is the primary record; parse that.
   $fault = ""
-  $m = [regex]::Match($text, "(?m)^\s*(gw: FATAL.*|ppc: .*|.*unimplemented opcode.*)$")
-  if ($m.Success) { $fault = $m.Groups[1].Value.Trim() }
+  if (Test-Path $log) {
+    $hit = Select-String -Path $log -Pattern ("gw: FATAL|^ppc: |unimplemented opcode|" +
+            "assertion .* failed|access violation|panic|spinning|outside blob code range|" +
+            "resolver returned NULL|unmapped vtx attr") | Select-Object -First 1
+    if ($hit) { $fault = $hit.Line.Trim() }
+    if (-not $fault) {
+      $asrt = Select-String -Path $log -Pattern "in (src/[\w/]+\.c) on line (\d+)" |
+               Select-Object -First 1
+      if ($asrt) { $fault = "assert " + $asrt.Matches[0].Groups[1].Value + ":" +
+                             $asrt.Matches[0].Groups[2].Value }
+    }
+  }
   $lastFrame = 0
   if ($text -match "frames advanced\s*:\s*\d+\s*->\s*(\d+)") { $lastFrame = [int]$Matches[1] }
   $action = if ($p.kind -eq "moveset" -and -not $ok) { ActionAt $p.unit $lastFrame } else { "" }
