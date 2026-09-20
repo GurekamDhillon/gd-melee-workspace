@@ -308,6 +308,12 @@ uint32_t gw_mex_bridge_count(void);
  * would miss those and succeed only for i == 0. */
 int gw_mex_bridge_is_native_data(uint32_t native_addr, uint32_t size);
 
+/* The forward question by RANGE: for a GUEST address that may be interior to one of the game's
+ * globals, the native address of that same byte, or 0. The exact-base lookup above misses
+ * `global[i]` for every i != 0, which made the interpreter read MEM1 instead of this exe's
+ * .data - silently, and wrongly, on every interior access. */
+uint32_t gw_mex_bridge_guest_data(uint32_t guest_addr);
+
 #ifdef __cplusplus
 }
 #endif
@@ -357,6 +363,60 @@ int gw_mex_bridge_is_native_data(uint32_t native_addr, uint32_t size);
     c_src.append(" * symbols.txt's own size: fields. %d object(s) had no recorded size and are\n"
                  % len(no_size))
     c_src.append(" * deliberately absent - dereferencing one still faults, which is honest. */\n")
+    # --- the GUEST extents of the same objects ------------------------------------------------
+    # The forward direction has the identical interior-pointer problem the native side documents,
+    # and until now had only an exact-base lookup. An interpreted `lwz rD, 0x34(rA)` where rA is a
+    # bridged global computes guest base+0x34, which missed the exact match and fell through to
+    # MEM1 - where the object is NOT, because the game's statics live in this exe's .data. That is
+    # a silent wrong read on every interior access to a global, and it surfaced as branches to
+    # addresses inside data objects (gmResultCharacterData +0x20 and +0x34 both turned up as
+    # "resolver returned NULL for guest address ...").
+    gruns = []
+    for guest, native, kind, size in entries:
+        if kind == "obj" and size > 0:
+            gruns.append((guest, guest + size, native))
+    gruns.sort()
+    gcovered = sum(h - l for l, h, _ in gruns)
+    g_lo = gruns[0][0]
+    g_hi = max(h for _, h, _ in gruns)
+
+    c_src.append("/* GUEST extents of the game's globals, sorted: [lo, hi) in the GUEST address\n")
+    c_src.append(" * space, each with the native base of the same object. %d objects, %d bytes.\n"
+                 % (len(gruns), gcovered))
+    c_src.append(" *\n")
+    c_src.append(" * This is what makes an INTERIOR guest pointer resolvable. gw_mex_bridge_lookup\n")
+    c_src.append(" * matches an object's BASE only, so `global[i]` for i != 0 missed it and the\n")
+    c_src.append(" * interpreter fell through to MEM1 - where the object is not, because the game's\n")
+    c_src.append(" * statics live in this exe's .data. A silent wrong value on every interior\n")
+    c_src.append(" * access to a global. The native side has had a range test for exactly this\n")
+    c_src.append(" * reason; the forward direction simply never got one. */\n")
+    c_src.append("typedef struct gw_mex_bridge_grun {\n")
+    c_src.append("    uint32_t lo;\n")
+    c_src.append("    uint32_t hi;\n")
+    c_src.append("    uint32_t native;\n")
+    c_src.append("} gw_mex_bridge_grun;\n\n")
+    c_src.append("static const gw_mex_bridge_grun gw_mex_bridge_guest_tbl[] = {\n")
+    for glo, ghi, gnat in gruns:
+        c_src.append("    { 0x%08Xu, 0x%08Xu, 0x%08Xu },\n" % (glo, ghi, gnat))
+    c_src.append("};\n\n")
+    c_src.append("uint32_t gw_mex_bridge_guest_data(uint32_t guest_addr)\n")
+    c_src.append("{\n")
+    c_src.append("    uint32_t lo = 0;\n")
+    c_src.append("    uint32_t hi = (uint32_t)(sizeof gw_mex_bridge_guest_tbl /\n")
+    c_src.append("                            sizeof gw_mex_bridge_guest_tbl[0]);\n")
+    c_src.append("    if (guest_addr < 0x%08Xu || guest_addr >= 0x%08Xu) {\n" % (g_lo, g_hi))
+    c_src.append("        return 0;\n")
+    c_src.append("    }\n")
+    c_src.append("    while (lo < hi) {\n")
+    c_src.append("        uint32_t mid = lo + (hi - lo) / 2;\n")
+    c_src.append("        const gw_mex_bridge_grun *r = &gw_mex_bridge_guest_tbl[mid];\n")
+    c_src.append("        if (guest_addr < r->lo) { hi = mid; continue; }\n")
+    c_src.append("        if (guest_addr >= r->hi) { lo = mid + 1; continue; }\n")
+    c_src.append("        return r->native + (guest_addr - r->lo);\n")
+    c_src.append("    }\n")
+    c_src.append("    return 0;\n")
+    c_src.append("}\n\n")
+
     c_src.append("typedef struct gw_mex_bridge_run {\n")
     c_src.append("    uint32_t lo;\n")
     c_src.append("    uint32_t hi;\n")
@@ -398,6 +458,7 @@ int gw_mex_bridge_is_native_data(uint32_t native_addr, uint32_t size);
           "splits.txt)" % (n_demangled, n_static, n_split))
     print("bridge: %d entries (%d functions, %d objects) -> %s" %
           (len(entries), fn_count, obj_count, args.out_c))
+    print("bridge: guest game-global extents: %d objects, %d bytes" % (len(gruns), gcovered))
     print("bridge: native game-global extents: %d runs, %d bytes, %d object(s) with no size" %
           (len(merged), covered, len(no_size)))
     return 0
