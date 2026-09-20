@@ -9,7 +9,8 @@ build/run scripts and the parallel-agent setup, and those supersede the raw comm
 m-ex research: `mex-ppc-interpreter.md` (architecture), `mex-data-layer-design.md` +
 `mex-dump-tools.md` (mexData/MxDt.dat), `mex-item-spawn.md` (itFunction, custom items),
 `akaneia-dependency-scope.md`, `bridge-signatures.md`, `mex-css.md`, `mex-sound-banks.md`,
-`rollback-netcode.md`.
+`rollback-netcode.md`, **`mex-stages.md`** (grFunction, stage tables, SSS, stage audio) and
+`rollback-port-design.md` (on `agent/rollback`).
 
 ---
 
@@ -67,18 +68,27 @@ Three findings from this session are worth carrying forward as *lessons*, not ju
 3. **SSS expansion** — until it lands, a custom stage is only reachable programmatically. Fully
    characterised: stride 0x20 vs the port's 0x1C, external id moves from a `u8` to an `s32` at
    `+0x1C`, `NUM_STAGES` 29 -> 66.
-4. **Stage audio** — `s32_arr_803BB6B0[71..95]` needs filling, AND `lbAudioAx_80026EBC` does
-   `1ULL << ssm_id` where the added stages' ids are 56..77. Undefined; the bank never loads. The
-   fighter side already hit this and uses a by-index request path.
-5. **ACE** — 31 fighters fit `GW_MEX_SLOTS` exactly, zero spare, and **31 is a hard ceiling**:
+4. **Stage audio** — `s32_arr_803BB6B0[71..]` needs filling, AND `lbAudioAx_80026EBC` does
+   `1ULL << ssm_id` where the added stages' ids run to 77 on Akaneia and **100 on ACE** (11 of
+   ACE's 84 added stages are above 63). Undefined; the bank never loads. The fighter side already
+   hit this and uses a by-index request path.
+5. **ACE stage sizing — SIZE AGAINST ACE, NOT AKANEIA.** Verified from both discs:
+   Akaneia is 96 internal / 313 external, **ACE is 155 / 372** (`sss_icon_count` 67 vs 163). ACE
+   preserves Akaneia's 0..95 numbering and appends at 96..154, so the layout work transfers, but
+   three constants sized off Akaneia are all too small: `GW_MEX_GR_MAX` 111, `GR_MEX_ROWS` 64
+   (`ground.c`) and `s32_arr_803BB6B0[0x6F]` = 111 rows. An earlier note called the last two
+   "already big enough" — true at 96, false at 155. **Today ACE stages are silently DISABLED,
+   not broken**: the guard logs "implausible stage counts" and turns m-ex stages off, which is
+   the right failure but is easy to misread as "ACE has no stages".
+6. **ACE fighters** — 31 fit `GW_MEX_SLOTS` exactly, zero spare, and **31 is a hard ceiling**:
    a FighterKind must fit `Fighter.x597_bits : 6`. A 32nd needs that field widened first, not just
    the four constants. 16 of ACE's 31 blobs have `codeSize == 0` (built by an older MexTK) and the
    loader rejects them outright - recoverable from the instruction-reloc table's max offset.
    ACE's ISO is at `C:/iso/SSBM ACE Build v2.0.0.iso`.
-6. **Trophies** — NOT data plumbing. 34 m-ex patches, a save-data-format change plus a menu-scene
+7. **Trophies** — NOT data plumbing. 34 m-ex patches, a save-data-format change plus a menu-scene
    rewrite. Wants its own task.
-7. Bridge gaps recorded, not fixed: float varargs (`HSD_ForeachAnim`), double args, struct returns.
-8. `gw_ppc_static_native` gates its bridge lookup at `0x80300000` but the main heap starts near
+8. Bridge gaps recorded, not fixed: float varargs (`HSD_ForeachAnim`), double args, struct returns.
+9. `gw_ppc_static_native` gates its bridge lookup at `0x80300000` but the main heap starts near
    `0x806A0000`, so every interpreted access to a fighter struct pays a ~15-probe binary search
    (8.6 ns). Raising the gate would speed up all m-ex content.
 
