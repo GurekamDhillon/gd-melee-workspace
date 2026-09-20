@@ -47,6 +47,39 @@ if [ ${#shims[@]} -gt 0 ]; then
     done
 fi
 
+# REBUILD ANY SHIM WHOSE SOURCE IS NEWER THAN ITS OBJECT.
+#
+# This used to rebuild a shim only when --shim named it, so editing pc/platform/*.c and running
+# build.sh produced a green build of the OLD code. That is not a slow build, it is a WRONG one:
+# a night was spent concluding that a committed interpreter fix "did not fix Wolf", from an exe
+# that had never contained it - and then re-testing the same stale binary on three discs and
+# calling it 63/63. A stale object here does not announce itself anywhere.
+#
+# Header changes are handled by touching every shim whose object predates the newest header,
+# since these sources have no dependency scanner.
+newest_hdr=""
+for h in "$GW_MELEE"/pc/platform/*.h; do
+    [ -e "$h" ] || continue
+    if [ -z "$newest_hdr" ] || [ "$h" -nt "$newest_hdr" ]; then newest_hdr="$h"; fi
+done
+stale=()
+for src in "$GW_MELEE"/pc/platform/*.c "$GW_MELEE"/pc/platform/*.cpp; do
+    [ -e "$src" ] || continue
+    name="$(basename "$src")"
+    obj="$GW_SHIMOBJ/${name%.*}.obj"
+    if [ ! -f "$obj" ] || [ "$src" -nt "$obj" ] ||
+       { [ -n "$newest_hdr" ] && [ "$newest_hdr" -nt "$obj" ]; }; then
+        stale+=("$name")
+    fi
+done
+if [ ${#stale[@]} -gt 0 ]; then
+    echo "shims stale: ${#stale[@]}"
+    for s in "${stale[@]}"; do
+        echo "shim  $s"
+        gw_build_shim "$s"
+    done
+fi
+
 # A running game holds melee-pc.exe open and the link fails with LNK1104. Say so plainly rather
 # than letting the linker's message stand on its own - and only ever complain about THIS build's
 # exe, never kill someone else's run.
