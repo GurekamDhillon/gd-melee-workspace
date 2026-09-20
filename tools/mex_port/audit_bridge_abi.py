@@ -8,7 +8,16 @@ free to give an internal function a private convention, and on i686 LLVM passes 
 arguments in ECX/EDX. The callee then reads registers the bridge never set.
 
 This prints, for every bridge function entry, whether its map symbol is `_gw_`-prefixed (external,
-cdecl) or bare (internal), and for the bare ones whether the prologue actually reads ECX.
+cdecl) or bare (internal), and for the bare ones whether the prologue actually reads ECX or EDX.
+
+It should now always find none, because gwtool pins internal functions to the C ABI before it
+runs the optimization pipeline (`pinInternalAbi`) and verifies per TU that nothing changed a
+function's convention or signature. This is the backstop for what that per-TU check cannot see:
+an exe linked from objects an older gwtool built. `tools/port/build.sh` runs it after the final
+link, so a regression fails the build rather than turning up months later as a bridged call whose
+arguments are all zero.
+
+Exits non-zero, and lists them, when it finds any.
 """
 import re
 import struct
@@ -70,14 +79,30 @@ def pe_reader(path):
     return sl
 
 
-def reads_ecx(b):
-    """True if the prologue moves ECX into a callee-saved register (mov r32, ecx = 89 C?)."""
+def reads_argreg(b):
+    """The argument register this prologue reads before writing, or None.
+
+    On i686 LLVM's `fastcc` the first two integer arguments arrive in ECX and EDX, and such a
+    callee opens by moving them somewhere it can keep them: `mov r32, ecx` / `mov r32, edx`,
+    encoded 89 /r with the reg field naming the source. Immediately after the push block, before
+    anything has written either register, that is unambiguous - nothing else can have put a value
+    there. So this test has no false positives, which is what lets the build gate on it.
+
+    It is deliberately NOT a general convention detector. A fastcc callee whose only register
+    arguments are floats takes them in XMM0-2 and this will not see it; so will one that reads
+    ECX a few instructions in. Guessing at those from a disassembly is how an audit starts being
+    confidently wrong. The exhaustive check lives in the compiler instead: gwtool pins every
+    internal function to the C ABI and verifies per TU that the pipeline did not change any
+    function's convention or signature. This is the backstop for the one thing gwtool cannot
+    see - an exe linked from objects an older gwtool built.
+    """
     i = 0
     while i < len(b) and b[i] in PUSHES:
         i += 1
-    # 89 /r with reg field = ECX (001) -> modrm 0xC8..0xCF with (modrm>>3)&7 == 1
-    return i + 1 < len(b) and b[i] == 0x89 and (b[i + 1] & 0xC0) == 0xC0 \
-        and ((b[i + 1] >> 3) & 7) == 1
+    # 89 /r, mod == 11: reg field 001 = ECX, 010 = EDX.
+    if i + 1 < len(b) and b[i] == 0x89 and (b[i + 1] & 0xC0) == 0xC0:
+        return {1: "ecx", 2: "edx"}.get((b[i + 1] >> 3) & 7)
+    return None
 
 
 def main():
@@ -93,23 +118,31 @@ def main():
     funcs = [(g, n) for g, n, kind in load_bridge(a.bridge) if kind == 1]
     resolved = [(g, n, va2sym[n]) for g, n in funcs if n in va2sym]
     bare = [(g, n, s) for g, n, s in resolved if not s.startswith("_gw_")]
-    risky = [(g, n, s) for g, n, s in bare if reads_ecx(sl(n, 12))]
+    risky = [(g, n, s) for g, n, s in bare if reads_argreg(sl(n, 12)) is not None]
 
-    print(f"bridge function entries         : {len(funcs)}")
-    print(f"  resolved against the live map : {len(resolved)}")
-    print(f"  symbol is NOT _gw_-prefixed   : {len(bare)}  (static in its TU)")
-    print(f"  ... and reads ECX in prologue : {len(risky)}  <-- called wrong by the bridge")
+    print(f"bridge function entries          : {len(funcs)}")
+    print(f"  resolved against the live map  : {len(resolved)}")
+    print(f"  symbol is NOT _gw_-prefixed    : {len(bare)}  (static in its TU)")
+    print(f"  ... reads ECX/EDX in prologue  : {len(risky)}  <-- called wrong by the bridge")
+    if not risky and not a.all:
+        return 0
     print()
     for g, n, s in sorted(a.all and bare or risky)[:40]:
         print(f"   guest 0x{g:08X} -> {s:<40} {' '.join('%02X' % x for x in sl(n, 8))}")
     shown = bare if a.all else risky
     if len(shown) > 40:
         print(f"   ... and {len(shown) - 40} more")
+    if not risky:
+        return 0
     print()
     print("A target listed above is called with arguments on the stack but reads them from")
-    print("registers. Give it external linkage (which forces the platform C ABI), or teach")
-    print("gen_bridge.py to mark it so the interpreter can call it __fastcall.")
-    return 1 if risky else 0
+    print("registers, so every one of its calls through the bridge gets the wrong arguments.")
+    print("gwtool is supposed to make this impossible: pinInternalAbi gives every internal")
+    print("function an external, address-taking reference before the optimization pipeline, so")
+    print("no pass will retarget it to fastcc or rewrite its signature, and gwtool then verifies")
+    print("that per TU. Seeing one here means this exe was linked from objects an OLDER gwtool")
+    print("built: rebuild gwtool (melee/pc/tools/gwtool/build.bat), rebuild those TUs and relink.")
+    return 1
 
 
 if __name__ == "__main__":

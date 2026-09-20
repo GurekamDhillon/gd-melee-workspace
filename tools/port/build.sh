@@ -82,4 +82,25 @@ if [ "$before" != "$after" ]; then
     gw_build_shim gw_mex_bridge.c
     gw_link
 fi
+
+# THE BRIDGE ABI, which is the other thing that is silently wrong rather than loudly broken.
+# gw_ppc_bridge_call invokes every target as cdecl, arguments on the stack. A game function that
+# is `static` in its TU has no caller LLVM can see, so the optimizer used to be free to give it a
+# private convention - on i686, `fastcc`: the first two integer arguments in ECX and EDX, floats
+# in XMM0-2. grTSeak_80223908 got exactly that, and every m-ex custom stage built map model 0
+# three times instead of 0, 1 and 2, so Meta Crystal rendered black.
+#
+# gwtool now pins internal functions to the C ABI (pinInternalAbi) and verifies it per TU, so
+# this should always pass. It is checked here anyway, against the EXE that will actually run,
+# because that is the artefact the bridge indexes - and because the commonest way to lose the pin
+# is to link objects built by an older gwtool.exe, which no per-TU check can see.
+#
+# Not through a pipe: `$?` after a pipe is the pipe's status, which has already fooled someone.
+echo "abi"
+if ! python "$GW_ROOT/tools/mex_port/audit_bridge_abi.py" \
+    --map "$GW_MAP" --exe "$GW_EXE" --bridge "$GW_MELEE/pc/platform/gw_mex_bridge.c"; then
+    gw_die "the bridge calls a target that reads its arguments from registers (listed above).
+       Rebuild gwtool (melee/pc/tools/gwtool/build.bat) and rebuild the TUs those functions
+       live in; if it persists, the pin no longer holds and gwtool needs a look."
+fi
 echo "OK    $GW_EXE"
