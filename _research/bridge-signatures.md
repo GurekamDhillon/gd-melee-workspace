@@ -58,7 +58,7 @@ parser, which is duplicated rather than coupling the two tools.
 | … that are vanilla functions in symbols.txt | 98 |
 | … that are m-ex's own routines over vanilla `.data` (no symbol) | 3 |
 | **Resolved (emitted)** | **96** (96/98 vanilla functions) |
-| Not emitted | 5 (3 m-ex routines + 2 varargs) |
+| Not emitted | 3 (the m-ex routines; the 2 varargs are now derived - see below) |
 | Resolved entries with a float argument or float return | 14 |
 | **Float-bearing targets NOT covered by the hand-written table** | **10** |
 
@@ -94,8 +94,6 @@ The full 96-entry list with the prototype each came from is in
 
 | guest | name | reason |
 |---|---|---|
-| 0x8005FDDC | efSync_Spawn | varargs (`...`) |
-| 0x80364C08 | HSD_ForeachAnim | varargs (`...`), **with a float vararg at one call site (see Q1)** |
 | 0x803D7058 | (m-ex `MEX_IndexFighterItem`) | no vanilla symbol; m-ex code over `gmResultCharacterData` |
 | 0x803D7088 | (m-ex `MEX_GetFtItemID`) | no vanilla symbol |
 | 0x803D7094 | (m-ex `MEX_GetData`) | no vanilla symbol |
@@ -185,14 +183,25 @@ The build owner still has to do all of this. Nothing under `melee/pc/platform/` 
 
 ## Open questions
 
-- **Q1: float varargs are broken, and no per-function signature can fix them.** At 0x807F7C04 the
-  guest calls `HSD_ForeachAnim(..., AOBJ_ARG_AF, frame)` with `lfs f1,...` and `crset 6`. The float
-  vararg is in f1, promoted to double. The native callee reads the vararg with
-  `va_arg(ap, double)`, which is 8 bytes. With the integer default the bridge passes a GPR (garbage)
-  in a single 4-byte slot. Fixing it means marshalling per call site: check CR bit 6, and pass FPR
-  varargs as 8-byte doubles taking two slots. That is outside what `gw_ppc_sig` can express.
-  `efSync_Spawn`'s call sites all use `crclr 6` (no float varargs), so it is probably fine on the
-  integer default, provided the GPR varargs it receives are integers. That is **inferred**.
+- ~~**Q1: float varargs**~~ **- FIXED (2026-09-19).** The premise was right and the conclusion
+  was wrong: it *is* marshalled per call site, and the call site states its own shape. The
+  PowerPC EABI requires a variadic caller to record in CR bit 6 whether it put any argument in an
+  FPR (`creqv 6,6,6` = crset) or not (`crxor 6,6,6` = crclr), and MWCC emits that instruction
+  immediately before every variadic `bl`, so the bit is still live when `gw_ppc_bridge_call` runs.
+  CR6 set -> the first variadic value is a double in the next FPR and takes two native slots;
+  CR6 clear -> the tail is words from the remaining GPRs, which is what the integer default
+  happened to do (and why `efSync_Spawn` worked - now confirmed, not inferred: all five of its
+  call sites in PlSn.dat assemble `crxor 6,6,6`).
+
+  Carried as bit 31 of `float_args` (`GW_PPC_SIG_VARARGS`) - argument slots are 0..7, so the
+  mask's high bits are free and every existing signature table keeps its wire format byte for
+  byte. `gen_sigs.py` derives variadic prototypes instead of refusing them and emits exactly two
+  entries: `efSync_Spawn` (2 fixed) and `HSD_ForeachAnim` (5 fixed). Covered headlessly by the
+  `ppc_varargs_bridge` test, which exercises both halves against a genuinely variadic helper.
+
+  Only the FIRST variadic value's class is knowable this way: the PowerPC register assignment has
+  already lost the relative order of a mixed tail. A call site that passed a float vararg followed
+  by values of other classes would need a hand-written adapter; none does today.
 - **Q2: `__cvt_fp2unsigned`.** If a future blob calls it, what should the native side be? The PPC
   argument is a double in f1. A native `gw_` shim would need `double` (8 bytes), and the bridge
   can't express that today.
@@ -222,6 +231,5 @@ The build owner still has to do all of this. Nothing under `melee/pc/platform/` 
 **Inferred** (not observed, because the game was not run):
 - that the 10 newly covered float targets are producing wrong physics today, and that the table
   fixes them at runtime
-- that `efSync_Spawn`'s varargs are safe on the integer default
 - that the i686 cdecl float-slot trick used by `gw_ppc_bridge_call` behaves for every new target
   exactly as it does for the libm entries (same mechanism, not re-tested)
