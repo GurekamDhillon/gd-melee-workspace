@@ -27,7 +27,10 @@ param(
   [string]$Unit = "",
   [int]$From = 0,
   [switch]$Plan,
-  [switch]$Visible,
+  # ON THE MAIN DESKTOP ALWAYS. GD watches these runs; a sweep nobody can see is a sweep
+  # whose mistakes nobody catches - the four-identical-windows confusion that produced the
+  # run label was only noticed because the runs were visible. -OffScreen is opt-in now.
+  [switch]$OffScreen,
   [ValidateRange(1,8)] [int]$Parallel = 4
 )
 $ErrorActionPreference = "Continue"
@@ -120,7 +123,7 @@ function DiscCounts($disc) {
   $probe = Join-Path $build "runs\probe-$disc\melee-pc.log"
   if (-not (Test-Path $probe)) {
     & (Join-Path $build "selftest.ps1") -Disc $disc -Tag "probe-$disc" -Seconds 14 `
-        -CaptureAt @() -OffScreen:(-not $Visible) | Out-Null
+        -CaptureAt @() -OffScreen:$OffScreen | Out-Null
   }
   $fk = 0; $st = 0
   foreach ($l in (Get-Content $probe -ErrorAction SilentlyContinue)) {
@@ -233,7 +236,8 @@ function Complete-Run($p, $text) {
   if (Test-Path $log) {
     $hit = Select-String -Path $log -Pattern ("gw: FATAL|^ppc: |unimplemented opcode|" +
             "assertion .* failed|access violation|panic|spinning|outside blob code range|" +
-            "resolver returned NULL|unmapped vtx attr") | Select-Object -First 1
+            "resolver returned NULL|unmapped vtx attr|aurora fatal|" +
+            "is EMPTY \(no state table\)") | Select-Object -First 1
     if ($hit) { $fault = $hit.Line.Trim() }
     if (-not $fault) {
       $asrt = Select-String -Path $log -Pattern "in (src/[\w/]+\.c) on line (\d+)" |
@@ -291,10 +295,17 @@ function Run-Phase($list, $label) {
           $p.scene = ("mode=vs;{0};stage=fd" -f $p.players)
         }
       }
+      # A caption the watcher can read at a glance: which disc, what is being tested, where, and
+      # with whom. Two runs on the same stage testing different move types are indistinguishable
+      # without it, which reads as a repeated test.
+      $who = if ($p.kinds.Count) { "ck " + ($p.kinds -join ",") } else { "fox" }
+      $what = if ($p.unit) { $p.unit } else { "stage load" }
+      $where = if ($p.stage -ge 0) { "ext:$($p.stage)" } else { "fd" }
+      $label = "{0}  |  {1}  |  {2}  |  {3}" -f $p.disc.ToUpper(), $what, $where, $who
       $p | Add-Member -NotePropertyName args -NotePropertyValue @{
         Scene = $p.scene; Disc = $p.disc; Tag = "s-$($p.tag)"; Seconds = $p.secs
-        CaptureAt = $p.at; OffScreen = (-not $Visible); ExeDir = $snapshot
-        Pad = $p.pad } -Force
+        CaptureAt = $p.at; OffScreen = $OffScreen; ExeDir = $snapshot
+        Label = $label; Pad = $p.pad } -Force
       if (-not $p.pad) { $p.args.Remove("Pad") }
     }
     Write-Host ("[{0}-{1} / {2}]" -f ($i + 1), [math]::Min($i + $Parallel, $list.Count), $list.Count)

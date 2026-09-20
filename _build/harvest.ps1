@@ -1,11 +1,11 @@
 # Run every scene in the play-test queue back to back and keep each run's log.
 #
-# Off-screen ON PURPOSE: this is an unattended harvest that runs while the machine is in use.
-# For watching a single scene, use play.bat or selftest.ps1 without -OffScreen.
+# Visible by default: GD watches these runs. -OffScreen is opt-in, for a harvest that has to
+# run while the machine is being used for something else.
 #
 #   & "<root>\_build\harvest.ps1"            everything
 #   & "<root>\_build\harvest.ps1" -Only wolf just the scenes whose tag matches
-param([string]$Only = "", [int]$Seconds = 22)
+param([string]$Only = "", [int]$Seconds = 22, [switch]$Visible)
 $ErrorActionPreference = "Continue"
 $build = $PSScriptRoot
 $out   = Join-Path $build "crashlogs"
@@ -37,7 +37,7 @@ foreach ($q in $queue) {
   $tag, $disc, $scene = $q
   if ($Only -and $tag -notlike "*$Only*") { continue }
   Write-Output "=== $tag ($disc)"
-  $args = @{ Disc = $disc; Tag = "h-$tag"; Seconds = $Seconds; CaptureAt = @([int]($Seconds - 4)); OffScreen = $true }
+  $args = @{ Disc = $disc; Tag = "h-$tag"; Seconds = $Seconds; CaptureAt = @([int]($Seconds - 4)); OffScreen = (-not $Visible) }
   if ($scene) { $args["Scene"] = $scene }
   $res = & (Join-Path $build "selftest.ps1") @args 2>&1
   $res | Select-String -Pattern 'alive at end|faults/asserts|frames advanced|RESULT|FATAL|ACCESS_VIOL' |

@@ -32,7 +32,10 @@ param(
   # prompt on boot AND a character-select screen with everything still locked - and a locked
   # roster re-flows the icon grid, which is exactly the kind of thing that gets mistaken for a
   # bug. Point this elsewhere to test first-boot behaviour deliberately.
-  [string]$CardPath = ""
+  [string]$CardPath = "",
+  # Drawn on the window itself (MELEE_RUN_LABEL). With four games side by side, an
+  # unlabelled window says nothing about what it is testing. Defaults to the tag.
+  [string]$Label = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -119,6 +122,7 @@ if ($CardPath) {
   }
   $env:MELEE_CARD_PATH = $cardDst
 }
+$env:MELEE_RUN_LABEL = if ($Label) { $Label } else { $Tag }
 if ($Scene) { $env:MELEE_SCENE = $Scene } else { Remove-Item Env:MELEE_SCENE -ErrorAction SilentlyContinue }
 if ($Pad)   { $env:MELEE_PAD_SCRIPT = $Pad } else { Remove-Item Env:MELEE_PAD_SCRIPT -ErrorAction SilentlyContinue }
 
@@ -192,7 +196,10 @@ $lines = @(Get-Content $log -ErrorAction SilentlyContinue)
 # the suite reports green on a dead process.
 $bad = @($lines | Select-String -Pattern ('FATAL|access violation|assertion|spinning|' +
         'not found stage param|panic|outside blob code range|unimplemented opcode|' +
-        'resolver returned NULL|no resolver|reported \d+ args'))
+        'resolver returned NULL|no resolver|reported \d+ args|' +
+        # An aurora fatal ends the process just as surely as a game fault, and the m-ex
+        # item gap below terminates a run with a paragraph of prose and no keyword.
+        'aurora fatal|aurora\[fatal\]|is EMPTY \(no state table\)'))
 $retrace = @($lines | Select-String -Pattern 'retrace=(\d+)' -AllMatches)
 $first = $null; $last = $null
 if ($retrace.Count -gt 0) {
