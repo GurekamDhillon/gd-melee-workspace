@@ -88,7 +88,10 @@ fi
 # Anchor to the OLDEST object, not the newest: a source newer than ANY object it feeds is stale,
 # so the whole checkout has to predate the earliest one. Using the newest left most of the tree
 # looking stale and the backdating did nothing.
-oldest_obj="$(ls -1tr "$GW_ROOT/_build/masstest/out"/*.obj 2>/dev/null | head -1)"
+# sed -n 1p, NOT head -1: head exits after one line, ls then dies of SIGPIPE writing the other
+# ~1000, and under `set -o pipefail` that 141 kills this whole script - silently, between
+# "includes" and the backdating, leaving a worktree that looks set up and is not.
+oldest_obj="$(ls -1tr "$GW_ROOT/_build/masstest/out"/*.obj 2>/dev/null | sed -n 1p)"
 if [ -n "$oldest_obj" ]; then
     # A full minute before the oldest object. Matching it exactly would also work - build.sh
     # tests -nt, which is strictly-newer - but sub-second timestamps make equality a coin flip.
