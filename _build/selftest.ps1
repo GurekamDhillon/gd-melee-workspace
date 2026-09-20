@@ -57,8 +57,15 @@ if (-not $iso) { Write-Output "FAIL: no ISO for '$Disc' - set it in $root\.env";
 
 $sandbox = Join-Path $build "runs\$Tag"
 New-Item -ItemType Directory -Force -Path $sandbox | Out-Null
-Stop-Process -Name melee-pc -Force -ErrorAction SilentlyContinue
-Start-Sleep -Seconds 2
+# KILL ONLY THIS SANDBOX'S OWN LEFTOVERS, never every melee-pc on the machine.
+# A blanket Stop-Process meant two runs could not coexist: testing a fix by hand while the sweep
+# was running had each one shooting the other's process, and the results looked like real crashes
+# - a stage that "died mid-audio", another that "ran 360 frames then stopped". Both were just the
+# other run starting. Matching on the sandbox path keeps concurrent runs independent.
+Get-Process melee-pc -ErrorAction SilentlyContinue | Where-Object {
+  try { $_.MainModule.FileName -like (Join-Path $sandbox "*") } catch { $false }
+} | Stop-Process -Force -ErrorAction SilentlyContinue
+Start-Sleep -Seconds 1
 $exesrc = if ($ExeDir) { $ExeDir } else { $build }
 foreach ($f in @("melee-pc.exe", "melee-pc.map")) {
   $src = Join-Path $exesrc $f
