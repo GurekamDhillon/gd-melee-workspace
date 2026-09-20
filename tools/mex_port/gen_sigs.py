@@ -237,12 +237,24 @@ def collect_prototypes(repo, wanted):
 # only when it is either:
 #   INT   - an integer, enum or pointer: rides the next GPR (r3..r10), one slot.
 #   FLOAT - a 4-byte float: rides the next FPR (f1..f8), one slot (bits copied verbatim).
-# Everything else (double, by-value struct, varargs, unknown typedef) is UNSUPPORTED and
-# makes the whole function unparseable. `double` in particular is NOT just "a wider float":
-# PPC would pass it in an FPR but the native callee expects 8 bytes across two cdecl slots,
-# and gw_ppc_bridge_call only ever writes 4.
+# Everything else (double, by-value struct, unknown typedef) is UNSUPPORTED and makes the whole
+# function unparseable. `double` in particular is NOT just "a wider float": PPC would pass it in
+# an FPR but the native callee expects 8 bytes across two cdecl slots, and gw_ppc_bridge_call
+# only ever writes 4.
+#
+# A trailing `...` is the one exception. The variadic tail is a property of the CALL SITE, not of
+# the function, so no prototype can describe it - but it does not have to: the PowerPC EABI makes
+# the caller record in CR bit 6 whether it put any argument in an FPR, and gw_ppc_bridge_call
+# reads that bit. So a variadic function is emitted with its FIXED parameters in n_args and the
+# GW_PPC_SIG_VARARGS flag set, and the interpreter marshals the tail from the bit. Refusing them
+# was not conservative: the integer default silently DROPPED a float vararg, which is exactly what
+# made HSD_ForeachAnim(..., AOBJ_ARG_AF, frame) request a garbage animation frame.
 # --------------------------------------------------------------------------------------
 INT, FLOAT, DOUBLE, STRUCT, UNKNOWN, VOID = "INT", "FLOAT", "DOUBLE", "STRUCT", "UNKNOWN", "VOID"
+
+# Must match GW_PPC_SIG_VARARGS in pc/platform/gw_ppc.h. Argument slots are 0..7, so the
+# mask's high bits are free and a table that predates varargs keeps its exact wire format.
+SIG_VARARGS = 0x80000000
 # An array typedef (`typedef f32 Mtx[3][4];`): as a PARAMETER it decays to a pointer (INT); it
 # can never be a return type. Kept distinct so the two positions can be told apart.
 ARRAY = "ARRAY"
@@ -443,6 +455,15 @@ def derive_sig(ret_text, params_text, typedefs):
         # unknown prototypes, so refuse rather than assume zero.
         return None, None, None, "empty () parameter list: prototype is unspecified"
 
+    # A trailing `...` leaves the fixed parameters to be derived as usual and sets the flag that
+    # tells gw_ppc_bridge_call to marshal the tail from CR bit 6. `...` anywhere else is not C.
+    variadic = False
+    if params and params[-1].strip() == "...":
+        variadic = True
+        params = params[:-1]
+        if not params:
+            return None, None, None, "`...` with no fixed parameter: va_start has nothing to anchor"
+
     slots, mask, detail = 0, 0, []
     for p in params:
         cat, why = classify_decl(p, typedefs)
@@ -482,6 +503,9 @@ def derive_sig(ret_text, params_text, typedefs):
         return None, None, None, "returns a by-value struct/union (hidden sret pointer)"
     else:
         return None, None, None, "return type %r: %s" % (ret_text, rwhy)
+    if variadic:
+        mask |= SIG_VARARGS
+        detail.append("...")
     return mask, slots, ret_float, ", ".join(detail) if detail else "(void)"
 
 
@@ -630,8 +654,9 @@ def emit_c(entries, path, blob_info):
     L.append("#include <stdint.h>\n\n")
     L.append("typedef struct gw_mex_gen_sig {\n")
     L.append("    uint32_t guest;      /* guest address, as in config/GALE01/symbols.txt */\n")
-    L.append("    uint32_t float_args; /* bit i => arg slot i is a float from the next FPR */\n")
-    L.append("    uint32_t n_args;     /* 0..8 */\n")
+    L.append("    uint32_t float_args; /* bit i => arg slot i is a float from the next FPR;\n")
+    L.append("                          * | 0x80000000 (GW_PPC_SIG_VARARGS) => variadic */\n")
+    L.append("    uint32_t n_args;     /* 0..8; for a variadic target, the FIXED count */\n")
     L.append("    int      ret_float;  /* callee returns a float, captured into f1 */\n")
     L.append("} gw_mex_gen_sig;\n\n")
     L.append("/* Sorted by guest address; binary-searchable. */\n")
