@@ -54,9 +54,16 @@ link_dir "$GW_ROOT/_build/masstest/shimobj" "$root/masstest/shimobj"
 # The link response file is hand-maintained and lists exactly the right objects, so rewrite that
 # curated list for this root instead of globbing the directory (which would also pick up stale
 # objects from abandoned experiments).
+#
+# Each path is QUOTED on the way out. The shared file's entries are relative (../masstest/...) and
+# so never contain a space; an agent root's are absolute, and link.exe splits an unquoted response
+# -file line on whitespace. With a checkout at "C:/Users/.../GD's Melee" that produced
+# `LNK1181: cannot open input file 'C:\Users\Gurek\Desktop\GD's.obj'` and no agent could link
+# at all. link.exe accepts quotes around every path, space or not, so quote unconditionally.
 src_rsp="$GW_ROOT/_build/melee_link_objects.rsp"
 [ -f "$src_rsp" ] || gw_die "missing $src_rsp"
-sed -e "s#^\.\./masstest/#$root/masstest/#" "$src_rsp" >"$root/melee_link_objects.rsp"
+sed -e "s#^\.\./masstest/#$root/masstest/#" -e 's#^\(..*\)$#"\1"#' \
+    "$src_rsp" >"$root/melee_link_objects.rsp"
 echo "          $(wc -l <"$root/melee_link_objects.rsp") entries in melee_link_objects.rsp"
 
 cat <<EOF
