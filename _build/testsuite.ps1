@@ -7,7 +7,10 @@
 #   & "_build\testsuite.ps1" -From 12              resume at index 12 of the plan
 #   & "_build\testsuite.ps1" -Plan                 print the plan and exit, running nothing
 #
-# OFF-SCREEN, because it is an hour of unattended runs. Watch a single case with play.bat.
+#   & "_build	estsuite.ps1" -Visible              run ON THE MAIN DESKTOP, so it can be watched
+#
+# Off-screen by default, because it is an hour and a half of unattended runs. -Visible puts every
+# window on the main desktop instead, so the whole suite becomes a thing you can sit and watch.
 #
 # WHY A FRAME MAP: a pad script cannot log, so a crash would otherwise say only "Dedede died".
 # pad_moveset.txt.map.txt gives frame-range -> action, and every run's retrace= counter is in its
@@ -17,7 +20,8 @@ param(
   [ValidateSet("all", "movesets", "stages")] [string]$Mode = "all",
   [ValidateSet("both", "akaneia", "ace")]    [string]$Disc = "both",
   [int]$From = 0,
-  [switch]$Plan
+  [switch]$Plan,
+  [switch]$Visible
 )
 $ErrorActionPreference = "Continue"
 $build = $PSScriptRoot
@@ -49,7 +53,7 @@ function ActionAt([int]$frame) {
 function DiscCounts($disc) {
   $probe = Join-Path $build "runs\probe-$disc\melee-pc.log"
   if (-not (Test-Path $probe)) {
-    & (Join-Path $build "selftest.ps1") -Disc $disc -Tag "probe-$disc" -Seconds 14 -CaptureAt @() -OffScreen | Out-Null
+    & (Join-Path $build "selftest.ps1") -Disc $disc -Tag "probe-$disc" -Seconds 14 -CaptureAt @() -OffScreen:(-not $Visible) | Out-Null
   }
   $log = Get-Content $probe -ErrorAction SilentlyContinue
   $fk = 0; $st = 0
@@ -92,7 +96,7 @@ for ($i = $From; $i -lt $runs.Count; $i++) {
   $p = $runs[$i]
   Write-Output ("[{0}/{1}] {2}  {3}" -f ($i + 1), $runs.Count, $p.tag, $p.scene)
   $a = @{ Scene = $p.scene; Disc = $p.disc; Tag = "s-$($p.tag)"; Seconds = $p.secs
-          CaptureAt = $p.at; OffScreen = $true }
+          CaptureAt = $p.at; OffScreen = (-not $Visible) }
   if ($p.pad) { $a["Pad"] = $p.pad }
   $res = & (Join-Path $build "selftest.ps1") @a 2>&1
   $text = $res | Out-String
