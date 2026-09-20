@@ -9,7 +9,12 @@ Output: `pc/platform/gw_mex_bridge.c` + `.h` (checked in). Each entry is {guest,
 sorted by guest address; the runtime binary-searches it. Re-run after the game relinks (the map
 changes): `python3 tools/mex_port/gen_bridge.py`.
 
-Usage: gen_bridge.py [--symbols PATH] [--map PATH]
+`melee/config/GALE01/splits.txt` is the third input: it says which source file owns a guest
+address, which is the only way to tell apart the many decomp statics that SHARE A NAME across
+TUs (`stageGObj0_OnInit` is `static` in 44 stage files). Address -> owning source file ->
+`src_..._<file>.c.obj` -> the one map entry from that object.
+
+Usage: gen_bridge.py [--symbols PATH] [--splits PATH] [--map PATH]
 """
 import argparse
 import os
@@ -35,11 +40,29 @@ MAP_RE = re.compile(
     r"^\s*[0-9A-Fa-f]{4}:[0-9A-Fa-f]{8}\s+"
     r"(?P<name>_[A-Za-z0-9_$@?.]+)\s+"
     r"(?P<addr>[0-9A-Fa-f]{8})\b"
+    # The trailing columns are an optional type letter or two ("f", "f i") and then the object
+    # file the symbol came from. That last column is what tells two same-named statics apart,
+    # so it is captured rather than ignored.
+    r"(?:(?:\s+[a-z])*\s+(?P<obj>\S+))?\s*$"
+)
+# A splits.txt stanza: `melee/gr/grtseak.c:` followed by indented `<section> start:0x.. end:0x..`
+SPLIT_FILE_RE = re.compile(r"^(?P<path>\S[^\s:]*\.(?:c|cpp))\s*:\s*$")
+SPLIT_RANGE_RE = re.compile(
+    r"^\s+\S+\s+start:(?P<start>0x[0-9A-Fa-f]+)\s+end:(?P<end>0x[0-9A-Fa-f]+)"
 )
 
 
 def parse_symbols(path):
-    out = {}  # name -> (addr, kind, scope, size)
+    """-> {name: [(addr, kind, scope, size), ...]}, one entry per DISTINCT guest address.
+
+    A name is not unique in symbols.txt. `stageGObj0_OnInit` is `static` in 44 different stage
+    TUs and so appears at 44 guest addresses, all of them real, all of them different functions.
+    This used to keep only the first, which silently threw away 377 guest addresses before the
+    map was ever consulted - so no amount of map-side cleverness could have bridged them.
+    (The first-only rule was aimed at a symbol LISTED TWICE FOR ONE ADDRESS, per section; that
+    case is still collapsed, by address.)
+    """
+    out = {}  # name -> [(addr, kind, scope, size), ...]
     for line in open(path, "r", encoding="utf-8", errors="replace"):
         m = SYMBOL_RE.match(line)
         if not m:
@@ -51,22 +74,23 @@ def parse_symbols(path):
         scope = sm.group("scope") if sm else "global"
         zm = SIZE_RE.search(line)
         size = int(zm.group("size"), 16) if zm else 0
-        # A decomp symbol may be listed more than once (per section); keep the first.
-        if name not in out:
-            out[name] = (addr, typ, scope, size)
+        occs = out.setdefault(name, [])
+        if not any(o[0] == addr for o in occs):
+            occs.append((addr, typ, scope, size))
     return out
 
 
 def parse_map(path):
-    """-> (public {gw_name: addr}, statics {name: addr or None}).
+    """-> (public {gw_name: addr}, statics {name: [(addr, obj), ...]}).
 
     MSVC's map has a "Static symbols" section after the public one. Internal-linkage functions
     appear there under their PLAIN C name (gwtool only prefixes externally visible symbols), so
     it is the only place a `scope:local` decomp symbol can be found. A name that occurs more
-    than once there is ambiguous (two TUs, two different functions) and is recorded as None so
-    it is never paired.
+    than once there is ambiguous BY NAME (two TUs, two different functions), so every
+    occurrence is kept along with the object file it came from and resolve_static() below picks
+    between them using the guest address's owning source file.
     """
-    public, statics = {}, {}
+    public, statics, public_objs = {}, {}, {}
     in_static = False
     for line in open(path, "r", encoding="utf-8", errors="replace"):
         if line.strip() == "Static symbols":
@@ -81,10 +105,91 @@ def parse_map(path):
         if name.startswith("_"):
             name = name[1:]
         if in_static:
-            statics[name] = None if name in statics else addr
-        elif name not in public:
-            public[name] = addr
-    return public, statics
+            statics.setdefault(name, []).append((addr, m.group("obj") or ""))
+        else:
+            # Kept with its object as well: gwtool exports SOME same-named statics publicly (one
+            # of the seven `doEnter`s is `gw_doEnter`), so the public section holds candidates
+            # the object-file match has to be able to choose from too.
+            public_objs.setdefault(name, []).append((addr, m.group("obj") or ""))
+            if name not in public:
+                public[name] = addr
+    return public, statics, public_objs
+
+
+def parse_splits(path):
+    """-> a sorted list of (start, end, obj_stem), one per section of each source file.
+
+    melee/config/GALE01/splits.txt records, for every decomp TU, the guest address range it owns
+    in each section. That is the disambiguator the map alone cannot supply: a guest address falls
+    in exactly one file's .text (or .data, .bss, ...), and the link turns that file into exactly
+    one object - `melee/gr/grtseak.c` -> `src_melee_gr_grtseak.c.obj`.
+
+    That transform is checked against the real map rather than assumed: 973 of the 1126 stanzas
+    name an object melee-pc.map actually contains. The other 153 are MSL/Runtime/SDK files the
+    port shims natively instead of building, so they have no object and simply never match.
+    """
+    ranges = []
+    stem = None
+    for line in open(path, "r", encoding="utf-8", errors="replace"):
+        m = SPLIT_FILE_RE.match(line)
+        if m:
+            stem = "src_" + m.group("path").replace("/", "_") + ".obj"
+            continue
+        if stem is None:
+            continue
+        m = SPLIT_RANGE_RE.match(line)
+        if m:
+            ranges.append((int(m.group("start"), 16), int(m.group("end"), 16), stem))
+        elif not line.strip():
+            stem = None
+    ranges.sort()
+    return ranges
+
+
+def owning_obj(ranges, guest):
+    """The .obj stem of the source file whose splits.txt range contains `guest`, or None."""
+    lo, hi = 0, len(ranges)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if ranges[mid][0] > guest:
+            hi = mid
+        else:
+            lo = mid + 1
+    if lo == 0:
+        return None
+    start, end, stem = ranges[lo - 1]
+    return stem if start <= guest < end else None
+
+
+def resolve_static(statics, ranges, name, guest, strict=False, extra=()):
+    """-> (native addr, was_disambiguated) for a `static` in the port, or (None, False).
+
+    A single occurrence of the name in the map's static section is unambiguous and is taken as
+    is; that is the long-standing path and it is unchanged. SEVERAL occurrences used to be
+    dropped outright, because a name shared by five TUs names five different functions and
+    nothing in the map alone says which one a guest address means. splits.txt does say: the
+    address belongs to one source file, that file becomes one object, and the map names each
+    candidate's object. When exactly one candidate came from the owning object, that is the
+    function - no guessing. When none or more than one does, it stays dropped, which remains
+    the honest answer for a static that really is unresolvable.
+
+    `strict` demands the object match even when there is only one candidate. It is used when the
+    GUEST side is ambiguous too - when symbols.txt gives the same name to several addresses -
+    because then "the only static with this name" is not evidence that it is THIS address's.
+    """
+    cands = statics.get(name) or []
+    if len(cands) == 1 and not strict:
+        return cands[0][0], False
+    cands = cands + list(extra)
+    if not cands:
+        return None, False
+    stem = owning_obj(ranges, guest)
+    if stem is None:
+        return None, False
+    hits = [a for a, obj in cands if obj == stem]
+    if len(hits) != 1:
+        return None, False
+    return hits[0], True
 
 
 def main():
@@ -93,40 +198,49 @@ def main():
     # generator works from WSL, Git Bash and cmd alike; a hardcoded /mnt/c path did not.
     repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     ap.add_argument("--symbols", default=os.path.join(repo, "melee/config/GALE01/symbols.txt"))
+    ap.add_argument("--splits", default=os.path.join(repo, "melee/config/GALE01/splits.txt"))
     ap.add_argument("--map", default=os.path.join(repo, "_build/melee-pc.map"))
     ap.add_argument("--out-c", default=os.path.join(repo, "melee/pc/platform/gw_mex_bridge.c"))
     ap.add_argument("--out-h", default=os.path.join(repo, "melee/pc/platform/gw_mex_bridge.h"))
     args = ap.parse_args()
 
     syms = parse_symbols(args.symbols)
-    mp, statics = parse_map(args.map)
+    mp, statics, mp_objs = parse_map(args.map)
+    ranges = parse_splits(args.splits)
 
     entries = []  # (guest, native, kind)
-    n_demangled = n_static = 0
-    for name, (guest, typ, scope, size) in syms.items():
-        native = mp.get("gw_" + name)
-        if native is None:
-            # MWERKS-mangled decomp name -> the port's plain C name (sqrtf__Ff -> gw_sqrtf).
-            mm = MANGLE_RE.match(name)
-            if mm is not None:
-                native = mp.get("gw_" + mm.group("base"))
+    n_demangled = n_static = n_split = 0
+    for name, occs in syms.items():
+        # Several guest addresses sharing one name are several different statics. A name-based
+        # lookup - public OR single-candidate static - cannot be right for more than one of
+        # them, so those are resolved ONLY through the object file splits.txt names.
+        multi = len(occs) > 1
+        for guest, typ, scope, size in occs:
+            native = None if multi else mp.get("gw_" + name)
+            if native is None and not multi:
+                # MWERKS-mangled decomp name -> the port's plain C name (sqrtf__Ff -> gw_sqrtf).
+                mm = MANGLE_RE.match(name)
+                if mm is not None:
+                    native = mp.get("gw_" + mm.group("base"))
+                    if native is not None:
+                        n_demangled += 1
+            if native is None:
+                # Static in the port: no gw_ public symbol, but the map's static section has it
+                # under its plain name. `scope:` in symbols.txt is not a reliable predictor - the
+                # port makes its own linkage decisions (grLast_8021B2D8 is scope:global there and
+                # static here), so the static section is consulted whenever the public lookup
+                # fails. Unambiguous by name, or else pinned to one object by splits.txt.
+                native, by_split = resolve_static(
+                    statics, ranges, name, guest, strict=multi,
+                    extra=(mp_objs.get("gw_" + name, []) if multi else ()))
                 if native is not None:
-                    n_demangled += 1
-        if native is None:
-            # Static in the port: no gw_ public symbol, but the map's static section has it under
-            # its plain name. `scope:` in symbols.txt is not a reliable predictor - the port makes
-            # its own linkage decisions (grLast_8021B2D8 is scope:global there and static here),
-            # so the static section is consulted whenever the public lookup fails. Only when that
-            # name is unambiguous. This can only ADD entries for
-            # addresses that previously resolved to nothing, so it cannot change a call that
-            # already worked.
-            native = statics.get(name)
-            if native is not None:
-                n_static += 1
-        if native is None:
-            continue
-        kind = "fn" if typ == "function" else "obj"
-        entries.append((guest, native, kind, size))
+                    n_static += 1
+                    if by_split:
+                        n_split += 1
+            if native is None:
+                continue
+            kind = "fn" if typ == "function" else "obj"
+            entries.append((guest, native, kind, size))
 
     entries.sort(key=lambda e: e[0])
     fn_count = sum(1 for e in entries if e[2] == "fn")
@@ -280,7 +394,8 @@ int gw_mex_bridge_is_native_data(uint32_t native_addr, uint32_t size);
     with open(args.out_c, "w") as f:
         f.write("".join(c_src))
 
-    print("bridge: +%d demangled, +%d static-section" % (n_demangled, n_static))
+    print("bridge: +%d demangled, +%d static-section (%d of them name-ambiguous, resolved by "
+          "splits.txt)" % (n_demangled, n_static, n_split))
     print("bridge: %d entries (%d functions, %d objects) -> %s" %
           (len(entries), fn_count, obj_count, args.out_c))
     print("bridge: native game-global extents: %d runs, %d bytes, %d object(s) with no size" %

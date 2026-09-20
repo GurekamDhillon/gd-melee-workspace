@@ -98,7 +98,13 @@ fi
 
 bridge_c="$GW_MELEE/pc/platform/gw_mex_bridge.c"
 echo "bridge"
+# symbols.txt and splits.txt come from THIS build's melee worktree, not from $GW_ROOT/melee.
+# An agent builds its own checkout's objects, so taking the decomp metadata from the default
+# checkout would describe a different tree - and splits.txt is now load-bearing, since it is what
+# tells two same-named statics apart.
 python "$GW_ROOT/tools/mex_port/gen_bridge.py" --map "$GW_MAP" \
+    --symbols "$GW_MELEE/config/GALE01/symbols.txt" \
+    --splits "$GW_MELEE/config/GALE01/splits.txt" \
     --out-c "$bridge_c" --out-h "$GW_MELEE/pc/platform/gw_mex_bridge.h" | tail -1
 gw_build_shim gw_mex_bridge.c
 echo "link  2/2"
@@ -108,6 +114,8 @@ gw_link
 # the bridge still matches the exe that will actually run.
 before="$(md5sum <"$bridge_c")"
 python "$GW_ROOT/tools/mex_port/gen_bridge.py" --map "$GW_MAP" \
+    --symbols "$GW_MELEE/config/GALE01/symbols.txt" \
+    --splits "$GW_MELEE/config/GALE01/splits.txt" \
     --out-c "$bridge_c" --out-h "$GW_MELEE/pc/platform/gw_mex_bridge.h" >/dev/null
 after="$(md5sum <"$bridge_c")"
 if [ "$before" != "$after" ]; then
