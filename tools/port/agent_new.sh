@@ -60,6 +60,52 @@ link_dir "$GW_ROOT/_build/masstest/shimobj" "$root/masstest/shimobj"
 # -file line on whitespace. With a checkout at "C:/Users/.../GD's Melee" that produced
 # `LNK1181: cannot open input file 'C:\Users\Gurek\Desktop\GD's.obj'` and no agent could link
 # at all. link.exe accepts quotes around every path, space or not, so quote unconditionally.
+# THREE THINGS A FRESH WORKTREE GETS WRONG. Each cost a separate agent real time before this
+# existed, and two of them look nothing like what they are.
+#
+# 1. EVERY TU LOOKS STALE. build.sh rebuilds a TU whose source is newer than its object, and a
+#    fresh `git worktree add` stamps every file with the checkout time - so the whole 988-TU set
+#    looks stale and the agent's first build is a full rebuild. Backdate the checkout to before
+#    the hardlinked baseline. Edits get fresh mtimes, so this is self-correcting and only affects
+#    files nobody has touched.
+# 2. TWO GENERATED HEADERS ARE NOT IN GIT. src/sysdolphin/baselib/{debug_font,sislib_font}.inc
+#    are produced by pc/tools/extract_assets.py into build/GALE01/include/. Without them a real
+#    full rebuild fails on those two TUs, long after setup, with an error that says nothing about
+#    worktrees. Copy them across.
+# 3. AURORA MUST BE BUILT THROUGH C:\gdm. _build/ax86m is configured against that junction, which
+#    avoids the apostrophe in "GD's Melee". Building it through the real path poisons the cmake
+#    cache and the next regenerate fails deep inside Dawn's third-party tree - a failure that
+#    looks like a broken dependency, not a path problem. Noted in the ready-message below.
+inc_src="$GW_ROOT/melee/build/GALE01/include"
+if [ -d "$inc_src" ]; then
+    inc_dst="$worktree/build/GALE01/include"
+    mkdir -p "$inc_dst"
+    ( cd "$inc_src" && find . -name '*.inc' -print0 ) |
+        ( cd "$inc_src" && xargs -0 -I{} sh -c 'mkdir -p "$2/$(dirname "$1")" && cp -f "$1" "$2/$1"' _ {} "$inc_dst" )
+    echo "includes  $(find "$inc_dst" -name '*.inc' | wc -l | tr -d ' ') generated .inc copied"
+fi
+
+# Anchor to the OLDEST object, not the newest: a source newer than ANY object it feeds is stale,
+# so the whole checkout has to predate the earliest one. Using the newest left most of the tree
+# looking stale and the backdating did nothing.
+oldest_obj="$(ls -1tr "$GW_ROOT/_build/masstest/out"/*.obj 2>/dev/null | head -1)"
+if [ -n "$oldest_obj" ]; then
+    # A full minute before the oldest object. Matching it exactly would also work - build.sh
+    # tests -nt, which is strictly-newer - but sub-second timestamps make equality a coin flip.
+    obj_epoch="$(date -r "$oldest_obj" +%s 2>/dev/null)"
+    stamp=""
+    [ -n "$obj_epoch" ] && stamp="$(date -d "@$((obj_epoch - 60))" +%Y%m%d%H%M.%S 2>/dev/null)"
+    if [ -n "$stamp" ]; then
+        n=0
+        for d in src pc extern include; do
+            [ -d "$worktree/$d" ] || continue
+            find "$worktree/$d" -type f \( -name '*.c' -o -name '*.h' -o -name '*.cpp'                  -o -name '*.inc' \) -exec touch -t "$stamp" {} + 2>/dev/null
+            n=$((n + 1))
+        done
+        echo "mtimes    $n source trees backdated to $stamp (before the object baseline)"
+    fi
+fi
+
 src_rsp="$GW_ROOT/_build/melee_link_objects.rsp"
 [ -f "$src_rsp" ] || gw_die "missing $src_rsp"
 sed -e "s#^\.\./masstest/#$root/masstest/#" -e 's#^\(..*\)$#"\1"#' \
@@ -76,6 +122,11 @@ Ready. In that agent's shell:
   cd "\$GW_MELEE"
   bash "$GW_ROOT/tools/port/build.sh" --tu src/melee/ft/ftdata.c
   bash "$GW_ROOT/tools/port/run.sh" --test t --iso "C:/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
+
+If you need to rebuild vendored aurora, do it THROUGH THE JUNCTION or you will poison the
+cmake cache and the next regenerate will fail inside Dawn's third-party tree:
+
+  GW_ROOT=C:/gdm cmd //c "C:\gdm\_build\build_aurora_melee.bat"
 
 Remove it with: tools/port/agent_rm.sh $name
 EOF
