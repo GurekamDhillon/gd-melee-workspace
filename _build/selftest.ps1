@@ -25,6 +25,10 @@ param(
   # OWN data: the sonic mod overrides /MxDt.dat on EVERY disc, so with mods on even a vanilla run
   # has mexData and an ACE run reads Akaneia's tables.
   [switch]$NoMods,
+  # -ModsDir runs against a mods folder OTHER than the shared _build/mods - e.g. a pack
+  # built by tools/mex_port/make_mod_from_disc.py in _build/packs. The shared folder is
+  # shared: dropping a 350 MB pack into it changes every other agent's run too.
+  [string]$ModsDir = "",
   # -ExeDir runs an AGENT's build instead of the main one, so its instrumentation can be
   # exercised without merging it first.
   [string]$ExeDir = "",
@@ -103,7 +107,10 @@ if ($OffScreen) {
   Remove-Item Env:MELEE_WINDOW_X -ErrorAction SilentlyContinue
   Remove-Item Env:MELEE_WINDOW_Y -ErrorAction SilentlyContinue
 }
-$env:MELEE_MODS_DIR = if ($NoMods -or $Disc -eq "ace") { Join-Path $build "nomods" } else { Join-Path $build "mods" }
+$env:MELEE_MODS_DIR = if ($ModsDir) { $ModsDir }
+  elseif ($NoMods -or $Disc -eq "ace") { Join-Path $build "nomods" }
+  else { Join-Path $build "mods" }
+Write-Output "mods   $env:MELEE_MODS_DIR"
 New-Item -ItemType Directory -Force -Path $env:MELEE_MODS_DIR | Out-Null
 $env:MELEE_SKIP_INTRO = "1"
 # A PER-SANDBOX CARD, SEEDED FROM THE SHARED UNLOCKED ONE.

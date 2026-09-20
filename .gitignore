@@ -93,6 +93,8 @@ __pycache__/
 
 # Disc content, extracted assets and mod payloads.
 /_build/mods/
+# Packs built by tools/mex_port/make_mod_from_disc.py from a user's own mod disc.
+/_build/packs/
 /_build/ace/
 /_build/HSDLib/
 /_build/hsd_export/
