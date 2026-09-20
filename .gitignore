@@ -68,6 +68,11 @@ _build/card/
 __pycache__/
 *.pyc
 
+# Per-machine settings: ISO locations and any toolchain override, sourced by
+# tools/port/portlib.sh. Never tracked - it names paths on your disk, and the
+# whole point of SETUP.md is that nobody inherits the author's.
+/.env
+
 # ---- NEVER COMMIT GAME DATA ------------------------------------------------
 # Nintendo's, or derived from a Nintendo disc, or m-ex's (which ships with NO
 # LICENCE). None of it is ours to publish, and every bit of it is regenerable

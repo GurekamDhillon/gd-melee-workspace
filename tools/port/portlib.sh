@@ -8,14 +8,29 @@
 # C:/gdm/_build/agents/<name> instead, and from then on two agents never write the same file.
 #
 # What stays shared on purpose:
-#   - C:/gdm/_build/ax86m       the Aurora/Dawn/SDL3 import libraries. melee_link_libs.rsp names
+#   - $GW_ROOT/_build/ax86m     the Aurora/Dawn/SDL3 import libraries. melee_link_libs.rsp names
 #                               them relative to that directory, so the link always runs there;
 #                               only its OUTPUTS move per agent. They are read-only here and cost
 #                               gigabytes to duplicate.
-#   - the ISOs under C:/iso     read-only.
+#   - the ISOs ($GW_ISO_*)      read-only.
 #   - melee/config/GALE01/symbols.txt via the worktree, which each agent has its own copy of.
+#
+# NOTHING HERE IS TIED TO A PARTICULAR CHECKOUT PATH. GW_ROOT defaults to the directory two levels
+# above this script, so a fresh clone works with no setup and no C:/gdm symlink; exporting GW_ROOT
+# still wins. See SETUP.md.
 
-GW_ROOT="${GW_ROOT:-C:/gdm}"
+# The toolchain (clang.exe, gwtool.exe, link.exe) is native Windows and cannot read /c/... paths,
+# so the root must be a Windows-style path even though this is bash. `pwd -W` gives that under Git
+# Bash; the fallback rewrites an MSYS /c/... prefix by hand for other shells.
+gw_win_path() {
+    local d="$1"
+    ( cd "$d" 2>/dev/null && { pwd -W 2>/dev/null || pwd; } ) |
+        sed -E 's#^/([a-zA-Z])/#\1:/#'
+}
+
+if [ -z "${GW_ROOT:-}" ]; then
+    GW_ROOT="$(gw_win_path "$(dirname "${BASH_SOURCE[0]}")/../..")"
+fi
 GW_BUILD_ROOT="${GW_BUILD_ROOT:-$GW_ROOT/_build}"
 
 # The melee worktree to build FROM: an explicit GW_MELEE wins, then the git repo the caller is
@@ -32,6 +47,20 @@ GW_SHIMOBJ="${GW_SHIMOBJ:-$GW_BUILD_ROOT/masstest/shimobj}"  # native platform s
 GW_EXE="$GW_BUILD_ROOT/melee-pc.exe"
 GW_MAP="$GW_BUILD_ROOT/melee-pc.map"
 GW_LINK_OBJECTS="${GW_LINK_OBJECTS:-$GW_BUILD_ROOT/melee_link_objects.rsp}"
+
+# Optional per-machine settings: ISO paths and any toolchain override. Not tracked (see
+# .gitignore); SETUP.md documents it. Sourced before the defaults below so it can set anything.
+if [ -f "$GW_ROOT/.env" ]; then
+    # shellcheck disable=SC1091
+    . "$GW_ROOT/.env"
+fi
+
+# The discs. Supply your own legally dumped images; none is distributed with this repo.
+# GW_ISO is what run.sh uses when --iso is not given.
+GW_ISO_VANILLA="${GW_ISO_VANILLA:-}"
+GW_ISO_AKANEIA="${GW_ISO_AKANEIA:-}"
+GW_ISO_ACE="${GW_ISO_ACE:-}"
+GW_ISO="${GW_ISO:-$GW_ISO_VANILLA}"
 
 GW_CLANG="${GW_CLANG:-$GW_ROOT/_toolchains/llvm/bin/clang.exe}"
 GW_SDL_INCLUDE="${GW_SDL_INCLUDE:-$GW_ROOT/_build/ax86/_deps/sdl3_prebuilt-src/include}"
@@ -53,7 +82,8 @@ gw_env_summary() {
 # A shim .c under pc/platform -> its object. Shim sources are native x86, NOT gwtool input, and
 # they need the SDL3 headers: main.c, shim_ax.c and shim_vi.c reach them through aurora/event.h.
 gw_build_shim() {
-    local src="$1" name extra=""
+    local src="$1" name
+    local -a extra=()
     case "$src" in
     *.cpp)
         # gw_overlay.cpp is the only C++ shim: it drives Dear ImGui, which Aurora already links
@@ -65,7 +95,10 @@ gw_build_shim() {
         # for MSVCRT + msvcprt). Getting it wrong fails the link in two different ways: as static,
         # a wall of LNK2005 "already defined in libcpmt.lib(cout.obj)"; as static-with-/MT, a wall
         # of unresolved __imp__ symbols from imgui/absl/png instead.
-        extra="-std=c++17 -fms-runtime-lib=dll -I $GW_IMGUI_INCLUDE"
+        # An ARRAY, not a word-split string: the checkout path may contain spaces (the author's
+        # does - "GD's Melee"), and the old `extra="... -I $GW_IMGUI_INCLUDE"` silently split it,
+        # so clang looked for "Melee/_build/..." and the build linked a STALE object instead.
+        extra=(-std=c++17 -fms-runtime-lib=dll -I "$GW_IMGUI_INCLUDE")
         [ -d "$GW_IMGUI_INCLUDE" ] ||
             gw_die "no ImGui headers at $GW_IMGUI_INCLUDE - set GW_IMGUI_INCLUDE"
         ;;
@@ -75,12 +108,17 @@ gw_build_shim() {
     esac
     [ -f "$GW_MELEE/pc/platform/$src" ] || gw_die "no such shim: pc/platform/$src"
     mkdir -p "$GW_SHIMOBJ"
-    # shellcheck disable=SC2086 # $extra is a deliberate word-split argument list
-    "$GW_CLANG" --target=i686-pc-windows-msvc -c -O2 -DTARGET_PC $extra \
+    # Remove the old object FIRST. Otherwise a failed compile leaves the previous one in place,
+    # the existence check below passes, and the link silently produces an exe built from stale
+    # code - the same class of lie as a failed link leaving the old exe, which build.sh already
+    # guards against. This was not hypothetical: it happened the first time a checkout path with
+    # a space was used.
+    rm -f "$GW_SHIMOBJ/$name.obj"
+    "$GW_CLANG" --target=i686-pc-windows-msvc -c -O2 -DTARGET_PC "${extra[@]}" \
         -I "$GW_MELEE/extern/aurora/include" -I "$GW_MELEE/pc/platform" -I "$GW_SDL_INCLUDE" \
         "$GW_MELEE/pc/platform/$src" -o "$GW_SHIMOBJ/$name.obj" 2>&1 |
         grep -E "error|warning: .*(uninitialized|implicit)" || true
-    [ -f "$GW_SHIMOBJ/$name.obj" ] || gw_die "shim $src did not produce an object"
+    [ -f "$GW_SHIMOBJ/$name.obj" ] || gw_die "shim $src did not compile"
 }
 
 # A game TU (path relative to the melee worktree) through clang -> gwtool -> object.
@@ -98,6 +136,7 @@ gw_link() {
     local out
     mkdir -p "$GW_BUILD_ROOT"
     out="$( cd "$GW_ROOT/_build/ax86m" &&
+        GW_ROOT="$(cygpath -w "$GW_ROOT" 2>/dev/null || echo "$GW_ROOT")" \
         GW_BUILD_ROOT="$(cygpath -w "$GW_BUILD_ROOT" 2>/dev/null || echo "$GW_BUILD_ROOT")" \
         GW_LINK_OBJECTS="$(cygpath -w "$GW_LINK_OBJECTS" 2>/dev/null || echo "$GW_LINK_OBJECTS")" \
             cmd.exe //c "$(cygpath -w "$GW_ROOT/_build/build_melee_pc.bat")" 2>&1 )" || true

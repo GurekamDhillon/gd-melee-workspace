@@ -17,8 +17,11 @@ import sys
 import argparse
 import os
 
-DEF_BUILD = os.environ.get("GW_BUILD_ROOT", "C:/gdm/_build")
-DEF_MELEE = os.environ.get("GW_MELEE", "C:/gdm/melee")
+# Default off this script's own location (tools/mex_port -> the repo root) rather than a fixed
+# path, so a fresh clone works anywhere; GW_BUILD_ROOT / GW_MELEE still win. See SETUP.md.
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DEF_BUILD = os.environ.get("GW_BUILD_ROOT", os.path.join(_ROOT, "_build"))
+DEF_MELEE = os.environ.get("GW_MELEE", os.path.join(_ROOT, "melee"))
 
 PUSHES = (0x55, 0x53, 0x57, 0x56)  # push ebp / ebx / edi / esi
 

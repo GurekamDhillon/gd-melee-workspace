@@ -7,7 +7,12 @@
 # both and reports the nearest preceding symbol with its offset.
 #
 # Usage: mapsym.sh 0x1025EA8A [more addresses...]
-map="${MAP:-C:/gdm/_build/melee-pc.map}"
+# GW_ROOT defaults to this script's grandparent; MAP or GW_BUILD_ROOT override. See SETUP.md.
+if [ -z "${GW_ROOT:-}" ]; then
+    GW_ROOT="$( cd "$(dirname "${BASH_SOURCE[0]}")/../.." && { pwd -W 2>/dev/null || pwd; } |
+        sed -E 's#^/([a-zA-Z])/#\1:/#' )"
+fi
+map="${MAP:-${GW_BUILD_ROOT:-$GW_ROOT/_build}/melee-pc.map}"
 [ -f "$map" ] || { echo "no map at $map" >&2; exit 1; }
 
 syms=$(mktemp)
