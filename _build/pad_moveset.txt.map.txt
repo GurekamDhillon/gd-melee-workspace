@@ -1,0 +1,34 @@
+# frame ranges -> action, for reading a crash's retrace= against
+     0    300  lead-in (load + countdown)
+   300    327  jab 1-2-3
+   372    387  dash attack
+   432    435  ftilt
+   475    478  utilt
+   518    521  dtilt
+   561    566  fsmash
+   621    626  usmash
+   681    686  dsmash
+   741    744  grab
+   789    819  shield
+   839    846  roll right
+   886    893  roll left
+   933    940  spotdodge
+   980   1000  jump + nair
+  1070   1090  jump + fair
+  1160   1180  jump + bair
+  1250   1270  jump + uair
+  1340   1364  jump + dair
+  1444   1462  double jump
+  1532   1536  neutral B
+  1616   1620  side B
+  1710   1714  up B
+  1824   1828  down B
+  1918   1939  air neutral B
+  2039   2060  air side B
+  2160   2181  air up B
+  2301   2322  air down B
+  2442   2445  taunt
+  2515   2565  crouch
+  2585   2617  dash dance
+  2657   2697  walk right
+  2727   2877  settle
