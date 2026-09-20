@@ -106,10 +106,10 @@ foreach ($d in $discs) {
         $used[$stg] = $true
         $secs = UnitSeconds $u
         $runs += [pscustomobject]@{
-          kind = "moveset"; disc = $d; unit = $u
+          kind = "moveset"; disc = $d; unit = $u; isRetry = $false
           tag = "$d-ck$($grp[0])-$u"
           scene = ("mode=vs;{0};stage=ext:{1}" -f ($ps -join ";"), $stg)
-          pad = (Join-Path $padDir "unit_$u.txt"); chans = $chans
+          pad = (Join-Path $padDir "unit_$u.txt"); chans = $chans; kinds = $grp; stage = $stg
           secs = $secs; at = @($secs - 5) }
       }
     }
@@ -118,9 +118,9 @@ foreach ($d in $discs) {
     foreach ($e in $stages) {
       if ($used[$e]) { continue }
       $runs += [pscustomobject]@{
-        kind = "stage"; disc = $d; unit = ""
+        kind = "stage"; disc = $d; unit = ""; isRetry = $false
         tag = "$d-ext$e"; scene = "mode=training;p1=fox/c0/hu;stage=ext:$e"
-        pad = ""; chans = "0"; secs = 18; at = @(14) }
+        pad = ""; chans = "0"; kinds = @(); stage = $e; secs = 18; at = @(14) }
     }
   }
 }
@@ -178,6 +178,32 @@ for ($i = $From; $i -lt $runs.Count; $i++) {
                                  result = $(if ($ok) { "OK" } else { "PROBLEM" })
                                  states = $states; frame = $lastFrame; action = $action; fault = $fault }
   Write-Output ("      {0}  states[{1}]  frame {2}  {3} {4}" -f $results[-1].result, $states, $lastFrame, $action, $fault)
+  # A group run that fails tells you something broke - not WHICH of the four fighters, or whether
+  # it was the stage at all. Run 1 of the first sweep died at grTSeak_80223908+0xE8 before a
+  # single fighter loaded: the stage, with four healthy fighters blamed for it.
+  #
+  # So on a group failure, bisect: re-run the same unit for each fighter ALONE on Final
+  # Destination. FD is the control - it is retail and every fighter has already reached it. If
+  # every solo run then passes, the stage is the culprit and the fighters are fine; if one fails,
+  # that fighter owns the crash. The retries are appended to the queue rather than run inline so
+  # -From still resumes cleanly, and they are never themselves bisected.
+  if ($p.kind -eq "moveset" -and -not $ok -and $p.kinds.Count -gt 1 -and -not $p.isRetry) {
+    Write-Output ("      bisecting: {0} solo runs on fd" -f $p.kinds.Count)
+    foreach ($k in $p.kinds) {
+      $runs += [pscustomobject]@{
+        kind = "moveset"; disc = $p.disc; unit = $p.unit; isRetry = $true
+        tag = "$($p.disc)-ck$k-$($p.unit)-solo"
+        scene = "mode=vs;p1=ck:$k/c0/hu;p2=ck:2/c0/cpu1;stage=fd"
+        pad = $p.pad; chans = "0"; kinds = @($k); stage = -1
+        secs = $p.secs; at = $p.at }
+    }
+    $runs += [pscustomobject]@{
+      kind = "stage"; disc = $p.disc; unit = ""; isRetry = $true
+      tag = "$($p.disc)-ext$($p.stage)-solo"
+      scene = "mode=training;p1=fox/c0/hu;stage=ext:$($p.stage)"
+      pad = ""; chans = "0"; kinds = @(); stage = $p.stage; secs = 18; at = @(14) }
+  }
+
   $results | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 (Join-Path $out "summary.json")
 }
 
