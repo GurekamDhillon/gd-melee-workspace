@@ -67,3 +67,38 @@ _build/card/
 # Python bytecode.
 __pycache__/
 *.pyc
+
+# ---- NEVER COMMIT GAME DATA ------------------------------------------------
+# Nintendo's, or derived from a Nintendo disc, or m-ex's (which ships with NO
+# LICENCE). None of it is ours to publish, and every bit of it is regenerable
+# locally from a user-supplied clean ISO. These are belt-and-braces on top of
+# "never git add -A" (docs/HANDOFF.md section 7): the paths below all existed
+# untracked-but-unignored, which is one careless add away from shipping.
+*.iso
+*.gcm
+*.dol
+*.dat
+*.usd
+*.ssm
+*.sem
+*.hps
+*.thp
+*.gci
+*.xdelta
+
+# Disc content, extracted assets and mod payloads.
+/_build/mods/
+/_build/ace/
+/_build/HSDLib/
+/_build/hsd_export/
+/_build/gltf/
+/_build/sonic_capture/
+/_build/stage_capture*/
+
+# m-ex's own tree: SPECIFICATION ONLY, never vendored (docs/HANDOFF.md section 7).
+/_build/m-ex/
+
+# Captures and renders of game content.
+*.png
+*.glb
+*.mtl
