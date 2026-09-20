@@ -47,6 +47,48 @@ if [ ${#shims[@]} -gt 0 ]; then
     done
 fi
 
+# REBUILD ANY GAME TU WHOSE SOURCE IS NEWER THAN ITS OBJECT.
+#
+# The shim loop below has existed for a while; game TUs never got the same treatment, and that
+# gap silently invalidated a day's work. Four TUs sat with sources from 07:43 against objects
+# from the previous night - mncharsel.c, tobj.c, ftkirby.c and ground.c - so the CSS fix, the
+# tlut_no widening, the Kirby fix and the ACE stage work were NEVER IN A BINARY. Each was then
+# "verified" against an exe that did not contain it, and one of those verifications became the
+# premise for a whole follow-up investigation that was chasing a ghost. The tell was findable all
+# along: the exe did not contain the format string the fix added.
+#
+# Header changes have no dependency scanner here either, so a TU whose object predates the newest
+# header under src/ or include/ is rebuilt too. That is blunt - a header touch can mean all 988 -
+# but the full set takes about a minute in parallel, and it is the difference between a slow
+# build and a WRONG one.
+tu_list="$GW_ROOT/_build/masstest/files.txt"
+if [ -f "$tu_list" ]; then
+    newest_inc=""
+    for h in $(find "$GW_MELEE/src" "$GW_MELEE/include" -name '*.h' -newer "$tu_list" 2>/dev/null); do
+        if [ -z "$newest_inc" ] || [ "$h" -nt "$newest_inc" ]; then newest_inc="$h"; fi
+    done
+    stale_tus="$GW_BUILD_ROOT/.stale_tus"
+    : >"$stale_tus"
+    while IFS= read -r f; do
+        [ -n "$f" ] || continue
+        obj="$GW_OUT/$(echo "$f" | tr '/' '_').obj"
+        src="$GW_MELEE/$f"
+        [ -e "$src" ] || continue
+        if [ ! -f "$obj" ] || [ "$src" -nt "$obj" ] ||
+           { [ -n "$newest_inc" ] && [ "$newest_inc" -nt "$obj" ]; }; then
+            printf '%s
+' "$f" >>"$stale_tus"
+        fi
+    done <"$tu_list"
+    n_stale=$(wc -l <"$stale_tus" | tr -d ' ')
+    if [ "$n_stale" -gt 0 ]; then
+        echo "TUs stale: $n_stale"
+        ( cd "$GW_MELEE" && GW_OUT="$GW_OUT" xargs -P 8 -I{} bash "$GW_ROOT/_build/masstest/pipe_win.sh" {} <"$stale_tus" ) ||
+            gw_die "a stale TU failed to rebuild"
+    fi
+    rm -f "$stale_tus"
+fi
+
 # REBUILD ANY SHIM WHOSE SOURCE IS NEWER THAN ITS OBJECT.
 #
 # This used to rebuild a shim only when --shim named it, so editing pc/platform/*.c and running
