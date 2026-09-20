@@ -67,14 +67,22 @@ Get-Process melee-pc -ErrorAction SilentlyContinue | Where-Object {
 } | Stop-Process -Force -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 1
 $exesrc = if ($ExeDir) { $ExeDir } else { $build }
-foreach ($f in @("melee-pc.exe", "melee-pc.map")) {
-  $src = Join-Path $exesrc $f
-  if (Test-Path $src) { Copy-Item $src $sandbox -Force }
+# Copy only what actually differs. These four are 34 MB together, and a sweep re-copied all of
+# them into every sandbox - roughly 15 GB of pointless I/O over a long run, on files that change
+# at most once per build. Compare length and write time; that is enough to catch a rebuild and
+# cheap enough to be free.
+function Sync-RunFile($src, $dstDir) {
+  if (-not (Test-Path $src)) { return }
+  $s = Get-Item $src
+  $d = Join-Path $dstDir $s.Name
+  if (Test-Path $d) {
+    $t = Get-Item $d
+    if ($t.Length -eq $s.Length -and $t.LastWriteTimeUtc -eq $s.LastWriteTimeUtc) { return }
+  }
+  Copy-Item $src $d -Force
 }
-foreach ($f in @("SDL3.dll", "webgpu_dawn.dll")) {
-  $src = Join-Path $build $f
-  if (Test-Path $src) { Copy-Item $src $sandbox -Force }
-}
+foreach ($f in @("melee-pc.exe", "melee-pc.map")) { Sync-RunFile (Join-Path $exesrc $f) $sandbox }
+foreach ($f in @("SDL3.dll", "webgpu_dawn.dll")) { Sync-RunFile (Join-Path $build $f) $sandbox }
 if ($ExeDir) { Write-Output "exe    $exesrc" }
 # Start each run from an EMPTY pipeline cache. The cache is per-sandbox now, but this harness
 # kills the game at the end of every run, and killing a process mid-write can leave its own
@@ -95,7 +103,22 @@ if ($OffScreen) {
 $env:MELEE_MODS_DIR = if ($NoMods -or $Disc -eq "ace") { Join-Path $build "nomods" } else { Join-Path $build "mods" }
 New-Item -ItemType Directory -Force -Path $env:MELEE_MODS_DIR | Out-Null
 $env:MELEE_SKIP_INTRO = "1"
-$env:MELEE_CARD_PATH = if ($CardPath) { $CardPath } else { Join-Path $build "card" }
+# A PER-SANDBOX CARD, SEEDED FROM THE SHARED UNLOCKED ONE.
+#
+# Sharing one card directory is what stopped runs being parallelisable: two games writing the same
+# save at once is a corruption waiting to happen. But a FRESH card is not an option either - it
+# boots with everything locked, which re-flows the CSS grid and produces exactly the "Fox is
+# missing" class of phantom bug. So copy the unlocked card in (96 KB) and let each run own it.
+if ($CardPath) {
+  $env:MELEE_CARD_PATH = $CardPath
+} else {
+  $cardSrc = Join-Path $build $(if ($Disc -eq "ace") { "card-ace" } else { "card" })
+  $cardDst = Join-Path $sandbox "card"
+  if (-not (Test-Path $cardDst) -and (Test-Path $cardSrc)) {
+    Copy-Item $cardSrc $cardDst -Recurse -Force
+  }
+  $env:MELEE_CARD_PATH = $cardDst
+}
 if ($Scene) { $env:MELEE_SCENE = $Scene } else { Remove-Item Env:MELEE_SCENE -ErrorAction SilentlyContinue }
 if ($Pad)   { $env:MELEE_PAD_SCRIPT = $Pad } else { Remove-Item Env:MELEE_PAD_SCRIPT -ErrorAction SilentlyContinue }
 

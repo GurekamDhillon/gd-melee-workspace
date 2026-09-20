@@ -27,7 +27,8 @@ param(
   [string]$Unit = "",
   [int]$From = 0,
   [switch]$Plan,
-  [switch]$Visible
+  [switch]$Visible,
+  [ValidateRange(1,8)] [int]$Parallel = 4
 )
 $ErrorActionPreference = "Continue"
 $build = $PSScriptRoot
@@ -140,8 +141,24 @@ foreach ($d in $discs) {
   Write-Output ("{0}: {1} added fighters (ck {2}..{3}), {4} added stages (ext {5}..{6})" -f
                 $d, $c.fighters, $kinds[0], $kinds[-1], $stages.Count, $stages[0], $stages[-1])
 
-  $si = 0
-  $used = @{}
+  # STAGES FIRST, THEN MOVESETS ON STAGES THAT SURVIVED.
+  #
+  # Rotating an untested stage into every moveset run was the single biggest cost in the sweep:
+  # most added stages are still broken, so most GROUP runs died on the stage, and each one queued
+  # five bisect retries to prove the fighters were innocent. 109 planned runs became 410.
+  #
+  # Testing every stage first with Fox costs 109 short runs and yields the healthy set. The
+  # moveset runs then rotate over THAT, so a moveset failure means a fighter - which is the whole
+  # point of the exercise - and the bisect tail all but disappears. Stage variety is kept; only
+  # the broken ones are left out, and they are reported in their own right by the stage pass.
+  if ($Mode -ne "movesets") {
+    foreach ($e in $stages) {
+      $runs += [pscustomobject]@{
+        kind = "stage"; disc = $d; unit = ""; isRetry = $false; phase = 1
+        tag = "$d-ext$e"; scene = "mode=training;p1=fox/c0/hu;stage=ext:$e"
+        pad = ""; chans = "0"; kinds = @(); stage = $e; secs = 18; at = @(14) }
+    }
+  }
   if ($Mode -ne "stages") {
     for ($g = 0; $g -lt $kinds.Count; $g += 4) {
       $grp = @($kinds[$g..([math]::Min($g + 3, $kinds.Count - 1))])
@@ -149,25 +166,16 @@ foreach ($d in $discs) {
       for ($i = 0; $i -lt $grp.Count; $i++) { $ps += ("p{0}=ck:{1}/c0/hu" -f ($i + 1), $grp[$i]) }
       $chans = -join (0..($grp.Count - 1))
       foreach ($u in $unitNames) {
-        $stg = $stages[$si % $stages.Count]; $si++
-        $used[$stg] = $true
         $secs = UnitSeconds $u
+        # stage is resolved at RUN time from the healthy set; -1 means "pick then".
         $runs += [pscustomobject]@{
-          kind = "moveset"; disc = $d; unit = $u; isRetry = $false
+          kind = "moveset"; disc = $d; unit = $u; isRetry = $false; phase = 2
           tag = "$d-ck$($grp[0])-$u"
-          scene = ("mode=vs;{0};stage=ext:{1}" -f ($ps -join ";"), $stg)
-          pad = (Join-Path $padDir "unit_$u.txt"); chans = $chans; kinds = $grp; stage = $stg
+          scene = ""
+          pad = (Join-Path $padDir "unit_$u.txt"); chans = $chans; kinds = $grp; stage = -1
+          players = ($ps -join ";")
           secs = $secs; at = @($secs - 5) }
       }
-    }
-  }
-  if ($Mode -ne "movesets") {
-    foreach ($e in $stages) {
-      if ($used[$e]) { continue }
-      $runs += [pscustomobject]@{
-        kind = "stage"; disc = $d; unit = ""; isRetry = $false
-        tag = "$d-ext$e"; scene = "mode=training;p1=fox/c0/hu;stage=ext:$e"
-        pad = ""; chans = "0"; kinds = @(); stage = $e; secs = 18; at = @(14) }
     }
   }
 }
@@ -182,27 +190,33 @@ if ($Plan) {
   exit 0
 }
 
-$results = @()
-for ($i = $From; $i -lt $runs.Count; $i++) {
-  $p = $runs[$i]
-  Write-Output ("[{0}/{1}] {2}  {3}" -f ($i + 1), $runs.Count, $p.tag, $p.scene)
-  $env:MELEE_LOG_MOTION   = "1"
-  $env:MELEE_PAD_CHANNELS = $p.chans
-  $a = @{ Scene = $p.scene; Disc = $p.disc; Tag = "s-$($p.tag)"; Seconds = $p.secs
-          CaptureAt = $p.at; OffScreen = (-not $Visible); ExeDir = $snapshot }
-  if ($p.pad) { $a["Pad"] = $p.pad }
-  $res = & (Join-Path $build "selftest.ps1") @a 2>&1
-  $text = $res | Out-String
+# ---- execution -------------------------------------------------------------------------------
+#
+# Runs go out in WAVES of -Parallel. Every shared resource a run touches is now per-sandbox - the
+# exe, the map, the DLLs, the pipeline cache, the memory card, the log - so N games at once are
+# independent, and this box has 20 cores against one game's appetite for about one and a half.
+# A run is ~26s wall clock of which only ~18s is the game, so the serial sweep spent most of its
+# time waiting; four at a time turns 78 minutes into about 20.
+#
+# Phase 1 (stages) must finish before phase 2 (movesets), because phase 2 picks its stage from
+# whatever phase 1 proved healthy. Within a phase there are no dependencies at all.
+# Scale the in-game spin watchdog with the load. It calls a spin after N seconds at the same
+# PC, which is right for one game alone and wrong for four sharing the CPU - a stage that
+# loads fine solo reported "spinning" at frame 240 under -Parallel 4. A false fault in an
+# unattended sweep is worse than no check, so give it room proportional to the contention.
+$env:MELEE_SPIN_SECONDS = [string](4 * [math]::Max(1, $Parallel))
+Write-Host ("spin watchdog: {0}s (scaled for -Parallel {1})" -f $env:MELEE_SPIN_SECONDS, $Parallel)
 
+$results = @()
+$stageCursor = 0
+
+function Complete-Run($p, $text) {
   $dir = Join-Path $build "runs\s-$($p.tag)"
   $log = Join-Path $dir "melee-pc.log"
   if (Test-Path $log) { Copy-Item $log (Join-Path $out "$($p.tag).log") -Force }
   foreach ($png in (Get-ChildItem $dir -Filter *.png -ErrorAction SilentlyContinue)) {
     Copy-Item $png.FullName (Join-Path $out "$($p.tag)-$($png.Name)") -Force
   }
-
-  # The motion oracle, per player: how many distinct action states each fighter actually entered.
-  # A moveset run where a player shows almost none did not test that fighter, whatever else says.
   $perPlayer = @{}
   foreach ($l in (Get-Content $log -ErrorAction SilentlyContinue)) {
     if ($l -match "^motion: p(\d+) kind=(\d+) \d+ -> (\d+)") {
@@ -212,14 +226,9 @@ for ($i = $From; $i -lt $runs.Count; $i++) {
     }
   }
   $states = ($perPlayer.Keys | Sort-Object | ForEach-Object { "$_=$($perPlayer[$_].Count)" }) -join " "
-
   $ok = $text -match "RESULT: OK"
-  # READ THE FAULT OUT OF THE LOG, NOT OUT OF selftest's CONSOLE OUTPUT. $text is what
-  # selftest printed, and it prints only the first three matching lines and is wrapped by
-  # Out-String - so a run whose first three were something else recorded an EMPTY fault and
-  # read as "failed, reason unknown". 52 runs in one sweep looked like that while their logs
-  # held a plain "gw: FATAL ACCESS_VIOLATION", and I nearly dismissed the lot as a harness
-  # artifact. The log is the primary record; parse that.
+  # The LOG is the primary record; selftest's console output prints only the first three matches
+  # and is wrapped, which is how 52 access violations once recorded an empty reason.
   $fault = ""
   if (Test-Path $log) {
     $hit = Select-String -Path $log -Pattern ("gw: FATAL|^ppc: |unimplemented opcode|" +
@@ -230,50 +239,77 @@ for ($i = $From; $i -lt $runs.Count; $i++) {
       $asrt = Select-String -Path $log -Pattern "in (src/[\w/]+\.c) on line (\d+)" |
                Select-Object -First 1
       if ($asrt) { $fault = "assert " + $asrt.Matches[0].Groups[1].Value + ":" +
-                             $asrt.Matches[0].Groups[2].Value }
+                            $asrt.Matches[0].Groups[2].Value }
     }
   }
   $lastFrame = 0
   if ($text -match "frames advanced\s*:\s*\d+\s*->\s*(\d+)") { $lastFrame = [int]$Matches[1] }
   $action = if ($p.kind -eq "moveset" -and -not $ok) { ActionAt $p.unit $lastFrame } else { "" }
-
-  $results += [pscustomobject]@{ idx = $i; tag = $p.tag; unit = $p.unit
-                                 result = $(if ($ok) { "OK" } else { "PROBLEM" })
-                                 states = $states; frame = $lastFrame; action = $action; fault = $fault }
-  Write-Output ("      {0}  states[{1}]  frame {2}  {3} {4}" -f $results[-1].result, $states, $lastFrame, $action, $fault)
-  # A group run that fails tells you something broke - not WHICH of the four fighters, or whether
-  # it was the stage at all. Run 1 of the first sweep died at grTSeak_80223908+0xE8 before a
-  # single fighter loaded: the stage, with four healthy fighters blamed for it.
-  #
-  # So on a group failure, bisect: re-run the same unit for each fighter ALONE on Final
-  # Destination. FD is the control - it is retail and every fighter has already reached it. If
-  # every solo run then passes, the stage is the culprit and the fighters are fine; if one fails,
-  # that fighter owns the crash. The retries are appended to the queue rather than run inline so
-  # -From still resumes cleanly, and they are never themselves bisected.
-  if ($p.kind -eq "moveset" -and -not $ok -and $p.kinds.Count -gt 1 -and -not $p.isRetry) {
-    Write-Output ("      bisecting: {0} solo runs on fd" -f $p.kinds.Count)
-    foreach ($k in $p.kinds) {
-      $runs += [pscustomobject]@{
-        kind = "moveset"; disc = $p.disc; unit = $p.unit; isRetry = $true
-        tag = "$($p.disc)-ck$k-$($p.unit)-solo"
-        scene = "mode=vs;p1=ck:$k/c0/hu;p2=ck:2/c0/cpu1;stage=fd"
-        pad = $p.pad; chans = "0"; kinds = @($k); stage = -1
-        secs = $p.secs; at = $p.at }
-    }
-    $runs += [pscustomobject]@{
-      kind = "stage"; disc = $p.disc; unit = ""; isRetry = $true
-      tag = "$($p.disc)-ext$($p.stage)-solo"
-      scene = "mode=training;p1=fox/c0/hu;stage=ext:$($p.stage)"
-      pad = ""; chans = "0"; kinds = @(); stage = $p.stage; secs = 18; at = @(14) }
-  }
-
-  $results | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 (Join-Path $out "summary.json")
+  $row = [pscustomobject]@{ tag = $p.tag; unit = $p.unit; kind = $p.kind; disc = $p.disc
+                            stage = $p.stage; result = $(if ($ok) { "OK" } else { "PROBLEM" })
+                            states = $states; frame = $lastFrame; action = $action; fault = $fault }
+  # Write-HOST, not Write-Output: anything written to the pipeline inside a function becomes
+  # part of its RETURN VALUE, so these progress lines were being collected as results and a
+  # 25-run pass reported "9 of 75 OK".
+  Write-Host ("      {0,-7} {1,-34} states[{2}] {3} {4}" -f $row.result, $p.tag, $states, $action, $fault)
+  return $row
 }
+
+function Invoke-Wave($batch) {
+  $jobs = @()
+  foreach ($p in $batch) {
+    Write-Host ("  -> {0}  {1}" -f $p.tag, $p.scene)
+    $jobs += @{ p = $p; job = (Start-Job -ScriptBlock {
+      param($st, $a, $chans)
+      $env:MELEE_LOG_MOTION = "1"
+      $env:MELEE_PAD_CHANNELS = $chans
+      & $st @a 2>&1 | Out-String
+    } -ArgumentList (Join-Path $build "selftest.ps1"), $p.args, $p.chans) }
+  }
+  $rows = @()
+  foreach ($j in $jobs) {
+    $text = (Receive-Job $j.job -Wait -AutoRemoveJob) -join "`n"
+    $rows += Complete-Run $j.p $text
+  }
+  return $rows
+}
+
+function Run-Phase($list, $label) {
+  if ($list.Count -eq 0) { return }
+  Write-Host ""
+  Write-Host ("==== {0}: {1} runs, {2} at a time ====" -f $label, $list.Count, $Parallel)
+  for ($i = 0; $i -lt $list.Count; $i += $Parallel) {
+    $batch = @($list[$i..([math]::Min($i + $Parallel - 1, $list.Count - 1))])
+    foreach ($p in $batch) {
+      if ($p.kind -eq "moveset" -and $p.stage -eq -1) {
+        $healthy = @($script:results | Where-Object { $_.kind -eq "stage" -and $_.result -eq "OK" -and
+                                                      $_.disc -eq $p.disc } | ForEach-Object { $_.stage })
+        if ($healthy.Count -gt 0) {
+          $p.stage = $healthy[$script:stageCursor % $healthy.Count]; $script:stageCursor++
+          $p.scene = ("mode=vs;{0};stage=ext:{1}" -f $p.players, $p.stage)
+        } else {
+          $p.scene = ("mode=vs;{0};stage=fd" -f $p.players)
+        }
+      }
+      $p | Add-Member -NotePropertyName args -NotePropertyValue @{
+        Scene = $p.scene; Disc = $p.disc; Tag = "s-$($p.tag)"; Seconds = $p.secs
+        CaptureAt = $p.at; OffScreen = (-not $Visible); ExeDir = $snapshot
+        Pad = $p.pad } -Force
+      if (-not $p.pad) { $p.args.Remove("Pad") }
+    }
+    Write-Host ("[{0}-{1} / {2}]" -f ($i + 1), [math]::Min($i + $Parallel, $list.Count), $list.Count)
+    $script:results += Invoke-Wave $batch
+    $script:results | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 (Join-Path $out "summary.json")
+  }
+}
+
+Run-Phase @($runs | Where-Object { $_.phase -eq 1 } | Select-Object -Skip $From) "phase 1 - stages"
+Run-Phase @($runs | Where-Object { $_.phase -eq 2 }) "phase 2 - movesets"
 
 Write-Output ""
 Write-Output "==== failures ===="
 $results | Where-Object { $_.result -ne "OK" } |
-  Format-Table -AutoSize idx, tag, unit, frame, action, fault | Out-String -Width 220 | Write-Output
+  Format-Table -AutoSize tag, unit, stage, frame, action, fault | Out-String -Width 220 | Write-Output
 Write-Output ("{0} of {1} OK.  logs: {2}" -f ($results | Where-Object { $_.result -eq "OK" }).Count, $results.Count, $out)
 
 } finally {
