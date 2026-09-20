@@ -1,0 +1,9 @@
+# frame ranges -> action
+   300    304  neutral B (pass 1)
+   394    398  side B (pass 1)
+   498    502  up B (pass 1)
+   622    626  down B (pass 1)
+   726    730  neutral B (pass 2)
+   820    824  side B (pass 2)
+   924    928  up B (pass 2)
+  1048   1052  down B (pass 2)

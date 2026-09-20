@@ -1,0 +1,11 @@
+# frame ranges -> action
+   300    327  jab 1-2-3 (pass 1)
+   372    387  dash attack (pass 1)
+   432    435  ftilt (pass 1)
+   475    478  utilt (pass 1)
+   518    521  dtilt (pass 1)
+   561    588  jab 1-2-3 (pass 2)
+   633    648  dash attack (pass 2)
+   693    696  ftilt (pass 2)
+   736    739  utilt (pass 2)
+   779    782  dtilt (pass 2)

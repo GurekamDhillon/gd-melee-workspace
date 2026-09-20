@@ -1,65 +1,83 @@
-# The moveset/stage sweep. Drives every ADDED fighter through its whole moveset on Final
-# Destination, and loads every ADDED stage with Fox, keeping a log and a frame for each.
+# The moveset/stage sweep.
 #
-#   & "_build\testsuite.ps1"                       everything, both discs
-#   & "_build\testsuite.ps1" -Mode movesets        fighters only
-#   & "_build\testsuite.ps1" -Mode stages -Disc ace
-#   & "_build\testsuite.ps1" -From 12              resume at index 12 of the plan
-#   & "_build\testsuite.ps1" -Plan                 print the plan and exit, running nothing
+#   & "_build\testsuite.ps1"                  everything, both discs
+#   & "_build\testsuite.ps1" -Visible         on the main desktop, so it can be watched
+#   & "_build\testsuite.ps1" -Mode movesets   fighters only   (-Mode stages for the stage pass)
+#   & "_build\testsuite.ps1" -Unit specials   one move type across every fighter
+#   & "_build\testsuite.ps1" -From 12         resume at index 12
+#   & "_build\testsuite.ps1" -Plan            print the plan and run nothing
 #
-#   & "_build	estsuite.ps1" -Visible              run ON THE MAIN DESKTOP, so it can be watched
+# THREE THINGS MAKE THIS CHEAP ENOUGH TO RUN OFTEN:
 #
-# Off-screen by default, because it is an hour and a half of unattended runs. -Visible puts every
-# window on the main desktop instead, so the whole suite becomes a thing you can sit and watch.
+# 1. FOUR FIGHTERS PER MATCH. shim_pad.c broadcasts the pad script to every channel in
+#    MELEE_PAD_CHANNELS, so one run tests four fighters at once - a 4x cut, and it exercises what
+#    a solo run never does: four fighters allocating articles, effects and item slots together.
+# 2. ONE MOVE TYPE PER RUN. A single all-in-one script is all-or-nothing - Diddy died entering a
+#    special and took the aerials and everything after it down with him, leaving them untested for
+#    that fighter. Seven short units mean a fighter that cannot do specials still gets the rest.
+# 3. A DIFFERENT STAGE EVERY RUN. Stage coverage rides along with the moveset pass instead of
+#    costing a run each, and whatever stages are left over get a short pass of their own.
 #
-# WHY A FRAME MAP: a pad script cannot log, so a crash would otherwise say only "Dedede died".
-# pad_moveset.txt.map.txt gives frame-range -> action, and every run's retrace= counter is in its
-# log, so this script converts the last retrace into the action that was executing. That is the
-# difference between "Dedede is broken" and "Dedede's double jump is broken".
+# Every run carries the motion oracle (MELEE_LOG_MOTION). It is the only honest answer to "did
+# that input actually produce a move?" - before it existed, a fighter that performed 33 actions
+# and one that stood still for 48 seconds both finished with no fault and both were reported OK.
 param(
   [ValidateSet("all", "movesets", "stages")] [string]$Mode = "all",
   [ValidateSet("both", "akaneia", "ace")]    [string]$Disc = "both",
+  [string]$Unit = "",
   [int]$From = 0,
   [switch]$Plan,
   [switch]$Visible
 )
 $ErrorActionPreference = "Continue"
 $build = $PSScriptRoot
-$root  = Split-Path -Parent $build
 $out   = Join-Path $build "suite"
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 
-$pad = Join-Path $build "pad_moveset.txt"
-if (-not (Test-Path $pad)) { python (Join-Path $build "gen_pad_moveset.py") $pad --lead 300 | Out-Null }
-
-# frame -> action, read back from the generator's map file.
-$map = @()
-foreach ($l in (Get-Content ($pad + ".map.txt") -ErrorAction SilentlyContinue)) {
-  if ($l -match '^\s*(\d+)\s+(\d+)\s+(.+)$') {
-    $map += [pscustomobject]@{ a = [int]$Matches[1]; b = [int]$Matches[2]; label = $Matches[3].Trim() }
-  }
+$padDir = Join-Path $build "pads"
+if (-not (Test-Path (Join-Path $padDir "unit_specials.txt"))) {
+  python (Join-Path $build "gen_pad_units.py") $padDir --lead 300 | Out-Null
 }
-function ActionAt([int]$frame) {
-  foreach ($m in $map) { if ($frame -ge $m.a -and $frame -lt $m.b) { return $m.label } }
-  if ($map.Count -and $frame -ge $map[-1].b) { return "after the last action" }
+$unitNames = @(Get-ChildItem $padDir -Filter "unit_*.txt" |
+                Where-Object { $_.Name -notlike "*.map.txt" } |
+                ForEach-Object { $_.BaseName -replace "^unit_", "" } | Sort-Object)
+if ($Unit) { $unitNames = @($unitNames | Where-Object { $_ -like "*$Unit*" }) }
+
+$maps = @{}
+foreach ($u in $unitNames) {
+  $rows = @()
+  foreach ($l in (Get-Content (Join-Path $padDir "unit_$u.txt.map.txt") -ErrorAction SilentlyContinue)) {
+    if ($l -match "^\s*(\d+)\s+(\d+)\s+(.+)$") {
+      $rows += [pscustomobject]@{ a = [int]$Matches[1]; b = [int]$Matches[2]; label = $Matches[3].Trim() }
+    }
+  }
+  $maps[$u] = $rows
+}
+function ActionAt($unit, [int]$frame) {
+  foreach ($m in $maps[$unit]) { if ($frame -ge $m.a -and $frame -lt $m.b) { return $m.label } }
+  if ($maps[$unit].Count -and $frame -ge $maps[$unit][-1].b) { return "after the last action" }
   return ""
 }
+function UnitSeconds($u) {
+  $f = 0
+  foreach ($l in (Get-Content (Join-Path $padDir "unit_$u.txt"))) {
+    if ($l -match "^\s*(\d+)\s+[0-9A-Fa-f]{4}\s") { $f += [int]$Matches[1] }
+  }
+  return [int][math]::Ceiling($f / 60.0) + 8
+}
 
-# ---- the plan -------------------------------------------------------------------------------
-# Added fighters are the m-ex slots: ChKind_Mex0 = 0x22 = 34, contiguous from there. Added stages
-# are EXTERNAL 288 + k (external 288+k -> internal 71+k on both discs; _research/mex-stages.md).
-# Both counts come from the disc's own boot log rather than being hardcoded - ACE and Akaneia
-# differ, and sizing one off the other is the mistake this port keeps making.
+# Counts come from each disc's OWN boot log. Akaneia has 7 added fighters and 313 externals, ACE
+# 31 and 372; sizing one off the other is the mistake this port keeps repeating.
 function DiscCounts($disc) {
   $probe = Join-Path $build "runs\probe-$disc\melee-pc.log"
   if (-not (Test-Path $probe)) {
-    & (Join-Path $build "selftest.ps1") -Disc $disc -Tag "probe-$disc" -Seconds 14 -CaptureAt @() -OffScreen:(-not $Visible) | Out-Null
+    & (Join-Path $build "selftest.ps1") -Disc $disc -Tag "probe-$disc" -Seconds 14 `
+        -CaptureAt @() -OffScreen:(-not $Visible) | Out-Null
   }
-  $log = Get-Content $probe -ErrorAction SilentlyContinue
   $fk = 0; $st = 0
-  foreach ($l in $log) {
-    if ($l -match 'm-ex fighter kinds from MxDt\.dat \(kinds (\d+)\.\.(\d+)\)') { $fk = [int]$Matches[2] - [int]$Matches[1] + 1 }
-    if ($l -match 'stage tables ready: (\d+) internal, (\d+) external')          { $st = [int]$Matches[2] }
+  foreach ($l in (Get-Content $probe -ErrorAction SilentlyContinue)) {
+    if ($l -match "m-ex fighter kinds from MxDt\.dat \(kinds (\d+)\.\.(\d+)\)") { $fk = [int]$Matches[2] - [int]$Matches[1] + 1 }
+    if ($l -match "stage tables ready: (\d+) internal, (\d+) external")          { $st = [int]$Matches[2] }
   }
   return @{ fighters = $fk; externals = $st }
 }
@@ -68,33 +86,61 @@ $discs = if ($Disc -eq "both") { @("akaneia", "ace") } else { @($Disc) }
 $runs = @()
 foreach ($d in $discs) {
   $c = DiscCounts $d
-  Write-Output ("{0}: {1} added fighters, {2} external stages" -f $d, $c.fighters, $c.externals)
+  # Added fighters are the m-ex slots: ChKind_Mex0 = 0x22 = 34, contiguous. Added stages are
+  # EXTERNAL 288 + k (external 288+k -> internal 71+k; _research/mex-stages.md).
+  $kinds  = @(34..(34 + $c.fighters - 1))
+  $stages = @(288..($c.externals - 1))
+  Write-Output ("{0}: {1} added fighters (ck {2}..{3}), {4} added stages (ext {5}..{6})" -f
+                $d, $c.fighters, $kinds[0], $kinds[-1], $stages.Count, $stages[0], $stages[-1])
+
+  $si = 0
+  $used = @{}
   if ($Mode -ne "stages") {
-    for ($i = 0; $i -lt $c.fighters; $i++) {
-      $ck = 34 + $i
-      $runs += [pscustomobject]@{ kind = "moveset"; disc = $d; tag = "$d-ck$ck"
-                                  scene = "mode=training;p1=ck:$ck/c0/hu;stage=fd"
-                                  pad = $pad; secs = 58; at = @(20, 40, 54) }
+    for ($g = 0; $g -lt $kinds.Count; $g += 4) {
+      $grp = @($kinds[$g..([math]::Min($g + 3, $kinds.Count - 1))])
+      $ps = @()
+      for ($i = 0; $i -lt $grp.Count; $i++) { $ps += ("p{0}=ck:{1}/c0/hu" -f ($i + 1), $grp[$i]) }
+      $chans = -join (0..($grp.Count - 1))
+      foreach ($u in $unitNames) {
+        $stg = $stages[$si % $stages.Count]; $si++
+        $used[$stg] = $true
+        $secs = UnitSeconds $u
+        $runs += [pscustomobject]@{
+          kind = "moveset"; disc = $d; unit = $u
+          tag = "$d-ck$($grp[0])-$u"
+          scene = ("mode=vs;{0};stage=ext:{1}" -f ($ps -join ";"), $stg)
+          pad = (Join-Path $padDir "unit_$u.txt"); chans = $chans
+          secs = $secs; at = @($secs - 5) }
+      }
     }
   }
   if ($Mode -ne "movesets") {
-    for ($e = 288; $e -lt $c.externals; $e++) {
-      $runs += [pscustomobject]@{ kind = "stage"; disc = $d; tag = "$d-ext$e"
-                                  scene = "mode=training;p1=fox/c0/hu;stage=ext:$e"
-                                  pad = ""; secs = 20; at = @(15) }
+    foreach ($e in $stages) {
+      if ($used[$e]) { continue }
+      $runs += [pscustomobject]@{
+        kind = "stage"; disc = $d; unit = ""
+        tag = "$d-ext$e"; scene = "mode=training;p1=fox/c0/hu;stage=ext:$e"
+        pad = ""; chans = "0"; secs = 18; at = @(14) }
     }
   }
 }
 
-Write-Output ("plan: {0} runs, about {1:n0} minutes" -f $runs.Count,
-              (($runs | Measure-Object -Property secs -Sum).Sum / 60.0 + $runs.Count * 0.12))
-if ($Plan) { $runs | Format-Table -AutoSize | Out-String -Width 200 | Write-Output; exit 0 }
+Write-Output ("plan: {0} runs ({1} moveset, {2} stage), about {3:n0} minutes" -f $runs.Count,
+  ($runs | Where-Object { $_.kind -eq "moveset" }).Count,
+  ($runs | Where-Object { $_.kind -eq "stage" }).Count,
+  (($runs | Measure-Object -Property secs -Sum).Sum / 60.0 + $runs.Count * 0.12))
+if ($Plan) {
+  $runs | Select-Object -First 16 | Format-Table -AutoSize tag, unit, chans, secs, scene |
+    Out-String -Width 200 | Write-Output
+  exit 0
+}
 
-# ---- run ------------------------------------------------------------------------------------
 $results = @()
 for ($i = $From; $i -lt $runs.Count; $i++) {
   $p = $runs[$i]
   Write-Output ("[{0}/{1}] {2}  {3}" -f ($i + 1), $runs.Count, $p.tag, $p.scene)
+  $env:MELEE_LOG_MOTION   = "1"
+  $env:MELEE_PAD_CHANNELS = $p.chans
   $a = @{ Scene = $p.scene; Disc = $p.disc; Tag = "s-$($p.tag)"; Seconds = $p.secs
           CaptureAt = $p.at; OffScreen = (-not $Visible) }
   if ($p.pad) { $a["Pad"] = $p.pad }
@@ -108,22 +154,35 @@ for ($i = $From; $i -lt $runs.Count; $i++) {
     Copy-Item $png.FullName (Join-Path $out "$($p.tag)-$($png.Name)") -Force
   }
 
+  # The motion oracle, per player: how many distinct action states each fighter actually entered.
+  # A moveset run where a player shows almost none did not test that fighter, whatever else says.
+  $perPlayer = @{}
+  foreach ($l in (Get-Content $log -ErrorAction SilentlyContinue)) {
+    if ($l -match "^motion: p(\d+) kind=(\d+) \d+ -> (\d+)") {
+      $k = "p$($Matches[1])"
+      if (-not $perPlayer[$k]) { $perPlayer[$k] = @{} }
+      $perPlayer[$k][$Matches[3]] = $true
+    }
+  }
+  $states = ($perPlayer.Keys | Sort-Object | ForEach-Object { "$_=$($perPlayer[$_].Count)" }) -join " "
+
   $ok = $text -match "RESULT: OK"
   $fault = ""
-  $m = [regex]::Match($text, '(?m)^\s*(gw: FATAL.*|ppc: .*|.*unimplemented opcode.*)$')
+  $m = [regex]::Match($text, "(?m)^\s*(gw: FATAL.*|ppc: .*|.*unimplemented opcode.*)$")
   if ($m.Success) { $fault = $m.Groups[1].Value.Trim() }
   $lastFrame = 0
-  if ($text -match 'frames advanced\s*:\s*\d+\s*->\s*(\d+)') { $lastFrame = [int]$Matches[1] }
-  $action = if ($p.kind -eq "moveset" -and -not $ok) { ActionAt $lastFrame } else { "" }
+  if ($text -match "frames advanced\s*:\s*\d+\s*->\s*(\d+)") { $lastFrame = [int]$Matches[1] }
+  $action = if ($p.kind -eq "moveset" -and -not $ok) { ActionAt $p.unit $lastFrame } else { "" }
 
-  $results += [pscustomobject]@{ idx = $i; tag = $p.tag; kind = $p.kind; result = $(if ($ok) { "OK" } else { "PROBLEM" })
-                              lastFrame = $lastFrame; action = $action; fault = $fault }
-  Write-Output ("      {0}  frame {1}  {2} {3}" -f $results[-1].result, $lastFrame, $action, $fault)
+  $results += [pscustomobject]@{ idx = $i; tag = $p.tag; unit = $p.unit
+                                 result = $(if ($ok) { "OK" } else { "PROBLEM" })
+                                 states = $states; frame = $lastFrame; action = $action; fault = $fault }
+  Write-Output ("      {0}  states[{1}]  frame {2}  {3} {4}" -f $results[-1].result, $states, $lastFrame, $action, $fault)
   $results | ConvertTo-Json -Depth 4 | Set-Content -Encoding utf8 (Join-Path $out "summary.json")
 }
 
 Write-Output ""
 Write-Output "==== failures ===="
-$results | Where-Object { $_.result -ne "OK" } | Format-Table -AutoSize idx, tag, kind, lastFrame, action, fault |
-  Out-String -Width 220 | Write-Output
+$results | Where-Object { $_.result -ne "OK" } |
+  Format-Table -AutoSize idx, tag, unit, frame, action, fault | Out-String -Width 220 | Write-Output
 Write-Output ("{0} of {1} OK.  logs: {2}" -f ($results | Where-Object { $_.result -eq "OK" }).Count, $results.Count, $out)

@@ -1,0 +1,11 @@
+# frame ranges -> action
+   300    303  grab (pass 1)
+   353    383  shield (pass 1)
+   408    415  roll right (pass 1)
+   460    467  roll left (pass 1)
+   512    519  spotdodge (pass 1)
+   564    567  grab (pass 2)
+   617    647  shield (pass 2)
+   672    679  roll right (pass 2)
+   724    731  roll left (pass 2)
+   776    783  spotdodge (pass 2)

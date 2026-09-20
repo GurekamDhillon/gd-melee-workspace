@@ -1,0 +1,11 @@
+# frame ranges -> action
+   300    320  nair (pass 1)
+   390    410  fair (pass 1)
+   480    500  bair (pass 1)
+   570    590  uair (pass 1)
+   660    684  dair (pass 1)
+   764    784  nair (pass 2)
+   854    874  fair (pass 2)
+   944    964  bair (pass 2)
+  1034   1054  uair (pass 2)
+  1124   1148  dair (pass 2)

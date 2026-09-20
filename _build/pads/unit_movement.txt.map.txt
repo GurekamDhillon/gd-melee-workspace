@@ -1,0 +1,11 @@
+# frame ranges -> action
+   300    340  walk right (pass 1)
+   370    402  dash dance (pass 1)
+   442    460  double jump (pass 1)
+   540    590  crouch (pass 1)
+   615    618  taunt (pass 1)
+   688    728  walk right (pass 2)
+   758    790  dash dance (pass 2)
+   830    848  double jump (pass 2)
+   928    978  crouch (pass 2)
+  1003   1006  taunt (pass 2)

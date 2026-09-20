@@ -1,0 +1,9 @@
+# frame ranges -> action
+   300    321  air neutral B (pass 1)
+   431    452  air side B (pass 1)
+   562    583  air up B (pass 1)
+   713    734  air down B (pass 1)
+   864    885  air neutral B (pass 2)
+   995   1016  air side B (pass 2)
+  1126   1147  air up B (pass 2)
+  1277   1298  air down B (pass 2)

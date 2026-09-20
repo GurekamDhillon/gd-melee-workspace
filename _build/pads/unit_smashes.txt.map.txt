@@ -1,0 +1,7 @@
+# frame ranges -> action
+   300    305  fsmash (pass 1)
+   365    370  usmash (pass 1)
+   430    435  dsmash (pass 1)
+   495    500  fsmash (pass 2)
+   560    565  usmash (pass 2)
+   625    630  dsmash (pass 2)
