@@ -34,6 +34,32 @@ $build = $PSScriptRoot
 $out   = Join-Path $build "suite"
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 
+# ONE SWEEP AT A TIME, ENFORCED.
+#
+# Two sweeps ran concurrently for two hours because one was believed stopped and was not. They
+# use the same tags, so they shared sandbox directories, overwrote the same summary.json, killed
+# each other's game processes (the per-sandbox kill matches when the sandbox IS the same) and
+# wrote each other's pipeline caches. The result was a summary full of runs that failed for no
+# reason anyone could name. Nothing in the tooling objected.
+$lockFile = Join-Path $out "sweep.lock"
+if (Test-Path $lockFile) {
+  $held = Get-Content $lockFile -ErrorAction SilentlyContinue
+  $pidLine = ($held | Where-Object { $_ -match "^pid=(\d+)" })
+  $stale = $true
+  if ($pidLine -and ($pidLine -match "^pid=(\d+)")) {
+    $stale = -not (Get-Process -Id ([int]$Matches[1]) -ErrorAction SilentlyContinue)
+  }
+  if (-not $stale) {
+    Write-Output "REFUSING TO START: another sweep is already running."
+    $held | ForEach-Object { Write-Output ("  " + $_) }
+    Write-Output "Stop it first, or delete $lockFile if you are certain it is dead."
+    exit 2
+  }
+  Write-Output "note: clearing a stale sweep lock from a process that is gone"
+}
+Set-Content -Encoding utf8 $lockFile @("pid=$PID", "started=$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
+try {
+
 # SNAPSHOT THE BUILD ONCE, AND TEST ONLY THAT.
 #
 # selftest.ps1 copies _build\melee-pc.exe per run, so a rebuild part-way through a sweep silently
@@ -249,3 +275,7 @@ Write-Output "==== failures ===="
 $results | Where-Object { $_.result -ne "OK" } |
   Format-Table -AutoSize idx, tag, unit, frame, action, fault | Out-String -Width 220 | Write-Output
 Write-Output ("{0} of {1} OK.  logs: {2}" -f ($results | Where-Object { $_.result -eq "OK" }).Count, $results.Count, $out)
+
+} finally {
+  Remove-Item $lockFile -Force -ErrorAction SilentlyContinue
+}
