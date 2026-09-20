@@ -216,6 +216,68 @@ The build owner still has to do all of this. Nothing under `melee/pc/platform/` 
   call-site check agrees with it, but it is the one blob entry that doesn't come from a header
   declaration.
 
+## Pointers RETURNED by a bridged function (2026-09-19)
+
+A signature says how arguments go in and what class the result is. It says nothing about what a
+returned pointer POINTS AT, and in this port that is a second ABI question with its own answer.
+
+The game's static globals live in the exe's `.data`, not in guest MEM1. `gw_ppc_static_native`
+translates guest -> native at the point of ACCESS, which covers interpreted code that names a
+static by its guest address. It cannot cover a pointer an engine function hands back:
+
+```c
+UnkArchiveStruct* grDatFiles_801C6330(s32 arg0)   /* grdatfiles.c:145 */
+{
+    ...
+    return &grDatFiles_8049EE10[i];
+}
+```
+
+The blob gets a host address in r3 and dereferences it. Found by play-testing Akaneia's **Gamecube**
+stage (`/GrGc.dat`, internal 89):
+
+```
+0x812CD90C  bl   0x801C6330        ; grDatFiles_801C6330(0)
+0x812CD910  lwz  r31, 0(r3)        ; ppc: guest access violation ea=0x107819A0
+```
+
+**Fixed in the interpreter, not per function.** `gw_ppc_resolve_ea` now resolves three cases: a
+guest address naming a static, a guest address in MEM1, and *an address that is already native*.
+The third is a RANGE test over the game globals' native extents, which `gen_bridge.py` emits from
+symbols.txt's own `size:` field (3,711 disjoint runs, 763,219 bytes, nothing guessed). Range, not
+exact base: `grDatFiles_8049EE10` is `[4]` of a 12-byte struct, so `&global[i]` is interior for
+three elements out of four, and a base-keyed reverse lookup would have worked *only* at `i == 0`.
+
+Testing the ADDRESS rather than its provenance is also what makes the late case work - guest code
+may store the pointer into a struct in MEM1 and dereference it many frames later, which a fix at
+the bridge boundary could not cover. Covered by the `ppc_native_pointer` test.
+
+### How big the class is
+
+`tools/mex_port/audit_native_returns.py` (re-runnable; two confidence tiers, because a bare
+`return X;` is a native pointer only when `X` is an array):
+
+| | count |
+|---|---:|
+| Game globals carried by the bridge | 4,033 |
+| `return <global>` sites in `src/` | 358 |
+| … inside a function symbols.txt names | 295 |
+| **Tier A - certain (`&X`, `X[i]`, `X + i`, `&X.f`)** | **220 functions** |
+| Tier B - bare `return X;`, needs the declaration | 42 functions |
+
+Tier A by subsystem: `gm` 88, **`gr` 50**, `lb` 20, `sysdolphin` 17, `cm` 12, `ft`/`if`/`mn` 7 each,
+`mp`/`pl` 4, `db` 3, `vi` 1.
+
+**This was never going to be rare.** `gr` alone has 50, including `Ground_GetMapGObj` and
+`Ground_GetYakumonoParam`, which stage blobs call constantly - and ACE's 42 stage blobs are now
+reachable. It surfaced only now because no shipped blob had yet called a bridged accessor that
+returns a pointer to a global.
+
+Tier B is reported rather than guessed at. `HSD_CObjGetCurrent` is `return current;` where
+`current` is a static `HSD_CObj*`: that returns the pointer's VALUE, a heap object in MEM1, and is
+a false positive. Sonic's `ftFunction` calls exactly one tier-B function (that one) and no tier-A
+function, which is why the fighter path never hit this.
+
 ## Verified vs inferred
 
 **Verified** (static, reproducible by re-running the tool):
@@ -227,6 +289,7 @@ The build owner still has to do all of this. Nothing under `melee/pc/platform/` 
 - the three m-ex shims are all-integer
 - the `__cvt_fp2unsigned` entry is unreachable
 - `HSD_ForeachAnim` passes a float vararg in f1
+- the returned-pointer census: 220 tier-A functions, 50 of them in `gr`
 
 **Inferred** (not observed, because the game was not run):
 - that the 10 newly covered float targets are producing wrong physics today, and that the table
