@@ -143,8 +143,12 @@ $p = Start-Process -FilePath (Join-Path $sandbox "melee-pc.exe") `
 # Keep test launches quiet: these run while someone is using the machine, and an off-screen
 # window is still audible. Windows remembers per-app levels by exe path, but a fresh sandbox is a
 # fresh path, so set it every time. Failure here must not fail the run.
+#
+# BY PID, not by name: several runs go at once now, and name matching set whichever
+# instance Get-Process happened to return first - so a run would quietly leave its own
+# audio at full while turning a sibling down.
 try {
-  & (Join-Path $build "set_app_volume.ps1") -ProcessName melee-pc -Volume $Volume -TimeoutSec 20 |
+  & (Join-Path $build "set_app_volume.ps1") -ProcessId $p.Id -Volume $Volume -TimeoutSec 20 |
     Out-Null
 } catch { Write-Output "note: could not set volume ($_)" }
 
