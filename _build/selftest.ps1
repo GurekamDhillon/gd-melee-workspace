@@ -19,6 +19,11 @@ param(
   # seconds), -StopOnLog when a log line matches the regex (e.g. a replay reaching its end).
   [switch]$ExitOnDeath,
   [string]$StopOnLog = "",
+  # A run is OVER once the match is: the results screen, or a MELEE_SLP replay passing its last
+  # frame. Without this, runs sat idle on the results screen until -Seconds ran out (GD watched a
+  # desktop full of them). -KeepAfterEnd keeps the old behaviour, e.g. to exercise the results
+  # screen itself.
+  [switch]$KeepAfterEnd,
   [string]$Tag = "selftest",
   [double]$Volume = 0.03,
   # VISIBLE ON THE MAIN DESKTOP BY DEFAULT - GD wants to watch these runs. -OffScreen parks the
@@ -214,11 +219,21 @@ function Capture($proc, $path) {
 
 $shots = @()
 $stoppedOnLog = $false
+$stopPattern = $StopOnLog
+if (-not $KeepAfterEnd) {
+  $endPattern = "screen=GS_RESULTS|replay: past the replay's last frame"
+  $stopPattern = if ($stopPattern) { "$stopPattern|$endPattern" } else { $endPattern }
+}
 for ($t = 1; $t -le $Seconds; $t++) {
   Start-Sleep -Seconds 1
   if ($ExitOnDeath -and $p.HasExited) { break }
-  if ($StopOnLog -and ($t % 3) -eq 0 -and (Test-Path $log) -and
-      (Select-String -Path $log -Pattern $StopOnLog -Quiet)) { $stoppedOnLog = $true; break }
+  if ($stopPattern -and ($t % 2) -eq 0 -and (Test-Path $log) -and
+      (Select-String -Path $log -Pattern $stopPattern -Quiet)) {
+    $stoppedOnLog = $true
+    $why = (Select-String -Path $log -Pattern $stopPattern | Select-Object -First 1).Line.Trim()
+    Write-Output ("ended at {0}s: {1}" -f $t, $why)
+    break
+  }
   if ($CaptureAt -contains $t) {
     $png = Join-Path $sandbox ("frame_{0:d2}s.png" -f $t)
     if (Capture $p $png) { $shots += $png }
