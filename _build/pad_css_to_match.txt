@@ -1,0 +1,9 @@
+# CSS (fighters already picked by MELEE_SCENE at=css) > Start > SSS > cursor onto a stage > A > match
+# frames buttons_hex stickX stickY   (Start 1000, A 0100)
+300 0000 0 0
+8 1000 0 0
+150 0000 0 0
+16 0000 70 80
+20 0000 0 0
+8 0100 0 0
+1200 0000 0 0

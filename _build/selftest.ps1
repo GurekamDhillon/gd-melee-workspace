@@ -89,14 +89,17 @@ function Sync-RunFile($src, $dstDir) {
   Copy-Item $src $d -Force
 }
 foreach ($f in @("melee-pc.exe", "melee-pc.map")) { Sync-RunFile (Join-Path $exesrc $f) $sandbox }
-foreach ($f in @("SDL3.dll", "webgpu_dawn.dll", "initial_pipeline_cache.db")) { Sync-RunFile (Join-Path $build $f) $sandbox }
+foreach ($f in @("SDL3.dll", "webgpu_dawn.dll", "initial_pipeline_cache.db", "initial_pipeline_cache.core")) { Sync-RunFile (Join-Path $build $f) $sandbox }
 if ($ExeDir) { Write-Output "exe    $exesrc" }
 # Start each run from an EMPTY pipeline cache. The cache is per-sandbox now, but this harness
 # kills the game at the end of every run, and killing a process mid-write can leave its own
 # SQLite cache corrupt - after which that sandbox fails at its first draw forever. Deleting
 # it costs a few seconds of shader compilation and removes a whole class of phantom result.
-Remove-Item (Join-Path $sandbox "*.db"), (Join-Path $sandbox "*.db-shm"),
-            (Join-Path $sandbox "*.db-wal") -Force -ErrorAction SilentlyContinue
+# The pipeline seed (initial_pipeline_cache.db) is opened read-only, so it cannot be left corrupt
+# and is kept; only the caches a run writes are cleared.
+Get-ChildItem $sandbox -Filter "*.db*" -ErrorAction SilentlyContinue |
+  Where-Object { $_.Name -notlike "initial_pipeline_cache.db*" } |
+  Remove-Item -Force -ErrorAction SilentlyContinue
 $log = Join-Path $sandbox "melee-pc.log"
 Remove-Item $log -ErrorAction SilentlyContinue
 

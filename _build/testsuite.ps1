@@ -75,7 +75,7 @@ try {
 # Rebuilding mid-sweep is now harmless, and build.txt records what was actually under test.
 $snapshot = Join-Path $out "build"
 New-Item -ItemType Directory -Force -Path $snapshot | Out-Null
-foreach ($f in @("melee-pc.exe", "melee-pc.map", "SDL3.dll", "webgpu_dawn.dll", "initial_pipeline_cache.db")) {
+foreach ($f in @("melee-pc.exe", "melee-pc.map", "SDL3.dll", "webgpu_dawn.dll", "initial_pipeline_cache.db", "initial_pipeline_cache.core")) {
   $src = Join-Path $build $f
   if (Test-Path $src) { Copy-Item $src $snapshot -Force }
 }

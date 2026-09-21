@@ -51,6 +51,9 @@ seed="$GW_ROOT/_build/initial_pipeline_cache.db"
 if [ -f "$seed" ] && [ "$seed" -nt "$sandbox/initial_pipeline_cache.db" ]; then
     cp -f "$seed" "$sandbox/initial_pipeline_cache.db"
 fi
+if [ -f "${seed%.db}.core" ]; then
+    cp -f "${seed%.db}.core" "$sandbox/initial_pipeline_cache.core"
+fi
 
 # mods/ is found next to the executable, so a sandbox sees no mods unless it is told where they
 # are. Point it at the shared folder by default; an agent testing its own mods sets MELEE_MODS_DIR.

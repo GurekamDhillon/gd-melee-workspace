@@ -9,7 +9,15 @@ built from a full sweep - every stage and every fighter on every disc - therefor
 install drops into a match with its pipelines already built.
 
   python tools/port/build_pipeline_seed.py            # after a sweep
+
+ORDER MATTERS MORE THAN SIZE. Aurora warms the seed in first_frame_used order, and warming all of
+it takes minutes. One match uses ~90 pipelines spread across the whole seed, so a first-use order
+is useless for "the next match". What does work is commonness: ~180 pipelines (those used by at
+least 5% of the sweep's runs) cover about three quarters of a typical match. So first_frame_used is
+rewritten to a rank by how many runs used the pipeline, the core compiles first, and its size goes
+to initial_pipeline_cache.core for the loading screen to wait on (gw_Gfx_SeedCoreCount).
 """
+import collections
 import glob
 import os
 import sqlite3
@@ -28,6 +36,8 @@ if os.path.exists(tmp):
     os.remove(tmp)
 db = sqlite3.connect(tmp)
 schema = None
+freq = collections.Counter()
+n_runs = 0
 for src in sources:
     s = sqlite3.connect("file:%s?mode=ro" % src.replace("\\", "/"), uri=True)
     try:
@@ -46,14 +56,27 @@ for src in sources:
         continue
     rows = s.execute("SELECT type, hash, config_version, config_size, config, first_frame_used "
                      "FROM pipeline_cache").fetchall()
+    if rows:
+        n_runs += 1
+        freq.update(set((r[0], r[1]) for r in rows))
     # Keep the earliest first use: aurora warms in that order, so what a match draws first builds first.
     db.executemany("INSERT INTO pipeline_cache VALUES (?,?,?,?,?,?) "
                    "ON CONFLICT(type, hash) DO UPDATE SET "
                    "first_frame_used = MIN(first_frame_used, excluded.first_frame_used)", rows)
     s.close()
 db.commit()
+# Re-rank: most-used first (ties keep their earliest first use), so aurora warms the core first.
+ranked = db.execute("SELECT type, hash, first_frame_used FROM pipeline_cache").fetchall()
+ranked.sort(key=lambda r: (-freq[(r[0], r[1])], r[2]))
+db.executemany("UPDATE pipeline_cache SET first_frame_used = ? WHERE type = ? AND hash = ?",
+               [(i, r[0], r[1]) for i, r in enumerate(ranked)])
+core = sum(1 for r in ranked if freq[(r[0], r[1])] >= 0.05 * max(n_runs, 1))
+db.commit()
 n = db.execute("SELECT COUNT(*) FROM pipeline_cache").fetchone()[0]
 db.execute("VACUUM")
 db.close()
 os.replace(tmp, out)
-print("seed: %d pipelines from %d caches -> %s" % (n, len(sources), out))
+with open(os.path.join(build, "initial_pipeline_cache.core"), "w") as f:
+    f.write("%d\n" % core)
+print("seed: %d pipelines from %d caches (%d runs), core %d -> %s" % (n, len(sources), n_runs,
+                                                                     core, out))
