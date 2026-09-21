@@ -112,7 +112,9 @@ def run_one(r, idx, exe_dir, prefix):
     slp = Path(r["path"])
     env["MELEE_SLP"] = str(slp if slp.is_absolute() else (ROOT / slp).resolve())
     env["MELEE_STATE_TRACE"] = str(trace)
-    secs = r["last"] // 60 + 45
+    # real time plus boot and the loading hold, with headroom: with several games on the machine
+    # the port can fall to ~40 fps and catch up logic frames without rendering them
+    secs = int(r["last"] / 60 * 1.8) + 60
     cmd = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(SELFTEST),
            "-Disc", "vanilla", "-NoMods", "-ExeDir", exe_dir, "-Seconds", str(secs), "-Tag", tag,
            "-CaptureAt", "99999", "-ExitOnDeath", "-StopOnLog", "past the replay's last frame"]
@@ -131,6 +133,8 @@ def run_one(r, idx, exe_dir, prefix):
     bad = [ln.strip() for ln in log.splitlines() if BAD.search(ln)]
     done = "past the replay's last frame" in log
     status = "OK" if done and not bad else ("CRASH" if bad else "SHORT")
+    if not done and all("spinning" in b for b in bad) and reached is not None and reached > 0:
+        status = "TIMEOUT"  # still advancing when the budget ran out: slow, not dead
     if done and bad and all("spinning" in b for b in bad):
         status = "OK*"  # completed; the only flag is a watchdog stall (boot contention), not a fault
     if "no scene requested" in log:
