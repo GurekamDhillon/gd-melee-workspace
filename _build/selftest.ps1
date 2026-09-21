@@ -89,7 +89,7 @@ function Sync-RunFile($src, $dstDir) {
   Copy-Item $src $d -Force
 }
 foreach ($f in @("melee-pc.exe", "melee-pc.map")) { Sync-RunFile (Join-Path $exesrc $f) $sandbox }
-foreach ($f in @("SDL3.dll", "webgpu_dawn.dll")) { Sync-RunFile (Join-Path $build $f) $sandbox }
+foreach ($f in @("SDL3.dll", "webgpu_dawn.dll", "initial_pipeline_cache.db")) { Sync-RunFile (Join-Path $build $f) $sandbox }
 if ($ExeDir) { Write-Output "exe    $exesrc" }
 # Start each run from an EMPTY pipeline cache. The cache is per-sandbox now, but this harness
 # kills the game at the end of every run, and killing a process mid-write can leave its own

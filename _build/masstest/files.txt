@@ -487,6 +487,7 @@ src/melee/gm/gmopeningmode.c
 src/melee/gm/gmpause.c
 src/melee/gm/gmprogressive.c
 src/melee/gm/gmprogressivemode.c
+src/melee/gm/gmfrontend.c
 src/melee/gm/gmregclear.c
 src/melee/gm/gmregcommon.c
 src/melee/gm/gmregenddisp.c

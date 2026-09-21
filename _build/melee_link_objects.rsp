@@ -487,6 +487,7 @@
 ../masstest/out/src_melee_gm_gmpause.c.obj
 ../masstest/out/src_melee_gm_gmprogressive.c.obj
 ../masstest/out/src_melee_gm_gmprogressivemode.c.obj
+../masstest/out/src_melee_gm_gmfrontend.c.obj
 ../masstest/out/src_melee_gm_gmregclear.c.obj
 ../masstest/out/src_melee_gm_gmregcommon.c.obj
 ../masstest/out/src_melee_gm_gmregenddisp.c.obj

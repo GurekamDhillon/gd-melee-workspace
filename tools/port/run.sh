@@ -46,6 +46,11 @@ for dll in SDL3.dll webgpu_dawn.dll; do
         cp -f "$GW_ROOT/_build/$dll" "$sandbox/$dll"
     fi
 done
+# The pipeline seed (tools/port/build_pipeline_seed.py), optional, also next to the exe.
+seed="$GW_ROOT/_build/initial_pipeline_cache.db"
+if [ -f "$seed" ] && [ "$seed" -nt "$sandbox/initial_pipeline_cache.db" ]; then
+    cp -f "$seed" "$sandbox/initial_pipeline_cache.db"
+fi
 
 # mods/ is found next to the executable, so a sandbox sees no mods unless it is told where they
 # are. Point it at the shared folder by default; an agent testing its own mods sets MELEE_MODS_DIR.
