@@ -15,6 +15,10 @@ param(
   [string]$Pad = "",
   [int]$Seconds = 25,
   [int[]]$CaptureAt = @(12, 20),
+  # Stop waiting early: -ExitOnDeath when the process has exited (a crash needs no more
+  # seconds), -StopOnLog when a log line matches the regex (e.g. a replay reaching its end).
+  [switch]$ExitOnDeath,
+  [string]$StopOnLog = "",
   [string]$Tag = "selftest",
   [double]$Volume = 0.03,
   # VISIBLE ON THE MAIN DESKTOP BY DEFAULT - GD wants to watch these runs. -OffScreen parks the
@@ -88,8 +92,25 @@ function Sync-RunFile($src, $dstDir) {
   }
   Copy-Item $src $d -Force
 }
+# The two DLLs are HARDLINKED, not copied: 34 MB per sandbox added up to 25 GB across ~1200
+# sandboxes and filled the disk (2026-09-21). They are read-only to the game and change only when
+# Dawn/SDL are rebuilt, so sharing the file costs nothing. The exe and map stay real copies - a
+# running game locks its exe, which is the whole reason sandboxes exist.
+function Link-RunFile($src, $dstDir) {
+  if (-not (Test-Path $src)) { return }
+  $s = Get-Item $src
+  $d = Join-Path $dstDir $s.Name
+  if (Test-Path $d) {
+    $t = Get-Item $d
+    if ($t.Length -eq $s.Length -and $t.LastWriteTimeUtc -eq $s.LastWriteTimeUtc) { return }
+    Remove-Item $d -Force -ErrorAction SilentlyContinue
+  }
+  try { New-Item -ItemType HardLink -Path $d -Target $s.FullName -ErrorAction Stop | Out-Null }
+  catch { Copy-Item $src $d -Force }
+}
 foreach ($f in @("melee-pc.exe", "melee-pc.map")) { Sync-RunFile (Join-Path $exesrc $f) $sandbox }
-foreach ($f in @("SDL3.dll", "webgpu_dawn.dll", "initial_pipeline_cache.db", "initial_pipeline_cache.core")) { Sync-RunFile (Join-Path $build $f) $sandbox }
+foreach ($f in @("SDL3.dll", "webgpu_dawn.dll")) { Link-RunFile (Join-Path $build $f) $sandbox }
+foreach ($f in @("initial_pipeline_cache.db", "initial_pipeline_cache.core")) { Sync-RunFile (Join-Path $build $f) $sandbox }
 if ($ExeDir) { Write-Output "exe    $exesrc" }
 # Start each run from an EMPTY pipeline cache. The cache is per-sandbox now, but this harness
 # kills the game at the end of every run, and killing a process mid-write can leave its own
@@ -192,15 +213,19 @@ function Capture($proc, $path) {
 }
 
 $shots = @()
+$stoppedOnLog = $false
 for ($t = 1; $t -le $Seconds; $t++) {
   Start-Sleep -Seconds 1
+  if ($ExitOnDeath -and $p.HasExited) { break }
+  if ($StopOnLog -and ($t % 3) -eq 0 -and (Test-Path $log) -and
+      (Select-String -Path $log -Pattern $StopOnLog -Quiet)) { $stoppedOnLog = $true; break }
   if ($CaptureAt -contains $t) {
     $png = Join-Path $sandbox ("frame_{0:d2}s.png" -f $t)
     if (Capture $p $png) { $shots += $png }
   }
 }
 
-$alive = -not $p.HasExited
+$alive = (-not $p.HasExited) -or $stoppedOnLog
 Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
 
 $lines = @(Get-Content $log -ErrorAction SilentlyContinue)
