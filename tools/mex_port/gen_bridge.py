@@ -47,6 +47,9 @@ MAP_RE = re.compile(
 )
 # A splits.txt stanza: `melee/gr/grtseak.c:` followed by indented `<section> start:0x.. end:0x..`
 SPLIT_FILE_RE = re.compile(r"^(?P<path>\S[^\s:]*\.(?:c|cpp))\s*:\s*$")
+# A function-local static in symbols.txt: MWCC names `static HSD_TevDesc tev` inside a function
+# `tev$297`. clang names the same object `<function>.tev`, which is how it appears in the map.
+LOCAL_STATIC_RE = re.compile(r"^(?P<var>[A-Za-z_][A-Za-z0-9_]*)\$\d+$")
 SPLIT_RANGE_RE = re.compile(
     r"^\s+\S+\s+start:(?P<start>0x[0-9A-Fa-f]+)\s+end:(?P<end>0x[0-9A-Fa-f]+)"
 )
@@ -208,8 +211,21 @@ def main():
     mp, statics, mp_objs = parse_map(args.map)
     ranges = parse_splits(args.splits)
 
+    # Function-local statics by (object, variable name). The two compilers disagree on the
+    # function part of the name (MWCC keeps none, only a counter), so the pairing is: the object
+    # splits.txt says owns the guest address, and the one `*.<var>` in it. GrSp.dat (ext:307)
+    # passes `tev$297` - HSD_ShadowStartRender's TEV descriptor - to HSD_SetupTevStageAll, and
+    # with no entry the native side read MEM1 at the guest address instead of the static.
+    local_by_obj = {}
+    for nm, occs2 in list(statics.items()) + list(mp_objs.items()):
+        if "." not in nm:
+            continue
+        var = nm.rsplit(".", 1)[1]
+        for a, obj in occs2:
+            local_by_obj.setdefault((obj, var), set()).add(a)
+
     entries = []  # (guest, native, kind)
-    n_demangled = n_static = n_split = 0
+    n_demangled = n_static = n_split = n_local = 0
     for name, occs in syms.items():
         # Several guest addresses sharing one name are several different statics. A name-based
         # lookup - public OR single-candidate static - cannot be right for more than one of
@@ -237,6 +253,13 @@ def main():
                     n_static += 1
                     if by_split:
                         n_split += 1
+            if native is None:
+                lm = LOCAL_STATIC_RE.match(name)
+                if lm is not None:
+                    hits = local_by_obj.get((owning_obj(ranges, guest), lm.group("var")), set())
+                    if len(hits) == 1:
+                        native = next(iter(hits))
+                        n_local += 1
             if native is None:
                 continue
             kind = "fn" if typ == "function" else "obj"
@@ -455,7 +478,7 @@ uint32_t gw_mex_bridge_guest_data(uint32_t guest_addr);
         f.write("".join(c_src))
 
     print("bridge: +%d demangled, +%d static-section (%d of them name-ambiguous, resolved by "
-          "splits.txt)" % (n_demangled, n_static, n_split))
+          "splits.txt), +%d function-local statics" % (n_demangled, n_static, n_split, n_local))
     print("bridge: %d entries (%d functions, %d objects) -> %s" %
           (len(entries), fn_count, obj_count, args.out_c))
     print("bridge: guest game-global extents: %d objects, %d bytes" % (len(gruns), gcovered))
