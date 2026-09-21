@@ -69,7 +69,9 @@ def parse(path: str | Path) -> Replay:
     if data[pos : pos + 2] != b"[$":
         raise ValueError(f"{path}: raw block is not a UBJSON array")
     length = struct.unpack(">I", data[pos + 5 : pos + 9])[0]
-    raw = data[pos + 9 : pos + 9 + length]
+    # 0 = a replay still being written (Slippi's convention; the port's recorder leaves it so when
+    # a run is killed): the events run to the end of the file
+    raw = data[pos + 9 : pos + 9 + length] if length else data[pos + 9 :]
     if not raw or raw[0] != EVENT_PAYLOADS:
         raise ValueError(f"{path}: raw block does not start with the event-size table")
 
@@ -84,6 +86,8 @@ def parse(path: str | Path) -> Replay:
         if size is None:
             break
         body = raw[cursor : cursor + 1 + size]
+        if len(body) < 1 + size:
+            break  # the last event of a replay cut off mid-write
         if command == GAME_START:
             settings = bytes(body)
         elif command == PRE_FRAME:
