@@ -445,6 +445,125 @@ def classify_decl(decl, typedefs):
     return cat, d
 
 
+# --------------------------------------------------------------------------------------
+# Extended signatures (`ext` in pc/platform/gw_ppc.h): what the word slots above cannot say.
+#
+# Tried ONLY for a function the word-slot derivation refused outright, so no signature that
+# already resolved can change. Classes, one per C parameter: i (word: GPR, then the caller's stack
+# parameter area), f (float, FPR), d (double, FPR, two native words), a<N> (N-byte aggregate by
+# value: PPC passes a pointer to a copy, i686 cdecl the bytes inline). Return: i, f or d.
+#
+# Aggregates are sized from this table rather than parsed, because a size wrong by one word
+# shifts every argument after it. `bytes_only` matters for WHO the callee is: a gwtool-retargeted
+# game function reads its inline copy big-endian (the caller materialised it that way, see
+# docs/DEVLOG.md "Struct-by-value ABI"), so raw guest bytes are right for it; a native SDK shim
+# (aurora GX etc.) reads native-endian fields, where raw bytes are right only if every field is a
+# byte. So a multi-byte-field aggregate is emitted only for a prototype under the game's own
+# sources.
+# --------------------------------------------------------------------------------------
+AGG_SIZES = {  # name -> (bytes, bytes_only); libs/dolphin/include/dolphin/{gx/GXStruct,mtx}.h
+    "GXColor": (4, True),
+    "GXColorS10": (8, False),
+    "Vec2": (8, False), "Point2d": (8, False),
+    "Vec": (12, False), "Vec3": (12, False), "Point3d": (12, False),
+}
+GAME_SOURCE_DIRS = ("/src/melee/", "/src/sysdolphin/")
+XSIG_MAX_WORDS = 16   # GW_PPC_EXT_MAX_WORDS
+WIDE_INTS = {"long long", "unsigned long long", "signed long long", "s64", "u64"}
+
+
+def _agg_name(decl):
+    words = [w for w in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", decl) if w not in QUALIFIERS]
+    if words and words[0] in ("struct", "union"):
+        words = words[1:]
+        if words and words[0].startswith("_"):
+            words[0] = words[0][1:]  # struct _GXColor
+    return words[0] if words else None
+
+
+def derive_xsig(ret_text, params_text, typedefs, path):
+    """-> (ext_string, detail) or (None, reason). See the block comment above."""
+    params = split_params(params_text)
+    if len(params) == 1 and params[0].strip() == "void":
+        params = []
+    if not params and params_text.strip() == "":
+        return None, "empty () parameter list: prototype is unspecified"
+    if params and params[-1].strip() == "...":
+        return None, "variadic (the extended path does not take varargs)"
+    game = any(d in path.replace("\\", "/") for d in GAME_SOURCE_DIRS)
+
+    def agg(decl):
+        name = _agg_name(decl)
+        if name not in AGG_SIZES:
+            return None, "by-value aggregate %r of unknown size" % decl.strip()
+        size, bytes_only = AGG_SIZES[name]
+        if not bytes_only and not game:
+            return None, ("by-value %s to a non-game (native SDK) callee: its fields would need "
+                          "swapping, not a raw copy" % name)
+        return size, None
+
+    cls, detail, words, fprs = [], [], 0, 0
+    for p in params:
+        d = " ".join(p.split())
+        if "*" not in d and "[" not in d and "(" not in d and any(
+                re.search(r"\b%s\b" % re.escape(w), d) for w in WIDE_INTS):
+            return None, "parameter %r is a 64-bit integer (a GPR pair)" % p.strip()
+        cat, why = classify_decl(p, typedefs)
+        if cat == ARRAY:
+            cat = INT
+        if cat == UNKNOWN and _agg_name(p) in AGG_SIZES:
+            cat = STRUCT  # `Vec3` is one of several names on its typedef; the parser misses it
+        if cat == INT:
+            cls.append("i")
+            words += 1
+        elif cat == FLOAT:
+            cls.append("f")
+            words += 1
+            fprs += 1
+        elif cat == DOUBLE:
+            cls.append("d")
+            words += 2
+            fprs += 1
+        elif cat == STRUCT:
+            size, err = agg(p)
+            if err:
+                return None, err
+            cls.append("a%d" % size)
+            words += (size + 3) // 4
+        elif cat == VOID:
+            return None, "`void` among several parameters (%r)" % params_text
+        else:
+            return None, "parameter %r: %s" % (p.strip(), why)
+        detail.append("%s:%s" % (cls[-1], p.strip()))
+    if fprs > 8:
+        return None, "more than 8 floating-point arguments (the EABI spills them to the stack)"
+    if words > XSIG_MAX_WORDS:
+        return None, "more than %d native argument words" % XSIG_MAX_WORDS
+
+    rcat, rwhy = classify_decl(ret_text, typedefs)
+    if rcat == UNKNOWN and _agg_name(ret_text) in AGG_SIZES:
+        rcat = STRUCT
+    if rcat in (VOID, INT):
+        if rcat == INT and any(re.search(r"\b%s\b" % re.escape(w), ret_text) for w in WIDE_INTS) \
+                and "*" not in ret_text:
+            return None, "returns a 64-bit integer (r3:r4)"
+        ret = "i"
+    elif rcat == FLOAT:
+        ret = "f"
+    elif rcat == DOUBLE:
+        ret = "d"
+    elif rcat == STRUCT:
+        name = _agg_name(ret_text)
+        if name not in AGG_SIZES or AGG_SIZES[name][0] > 4:
+            # <= 4 bytes: r3 on PowerPC, EAX on the retargeted callee, the same big-endian word
+            # (checked on DevText_SetTextColor). Larger returns differ between the ABIs.
+            return None, "returns a by-value struct/union larger than 4 bytes"
+        ret = "i"
+    else:
+        return None, "return type %r: %s" % (ret_text, rwhy)
+    return "%s:%s" % (ret, "".join(cls)), ", ".join(detail) if detail else "(void)"
+
+
 def derive_sig(ret_text, params_text, typedefs):
     """-> (float_args, n_args, ret_float, detail) or (None, None, None, reason)."""
     params = split_params(params_text)
@@ -614,6 +733,29 @@ def resolve_one(name, addr, cands, typedefs):
     return None, "no candidate parsed"
 
 
+def resolve_one_x(name, addr, cands, typedefs):
+    """resolve_one's tier logic over derive_xsig. Called only where resolve_one refused, so an
+    already-resolved signature can never change. -> (ext_string, note) or (None, None)."""
+    ranked = {}
+    for c in cands:
+        ranked.setdefault(tier_of(c, addr), []).append(c)
+    for tier in sorted(t for t in ranked if t != 9):
+        parsed = {}
+        for ret, params, _tag, _kind, path in ranked[tier]:
+            ext, why = derive_xsig(ret, params, typedefs, path)
+            if ext is not None:
+                parsed.setdefault(ext, []).append((path, why))
+        if len(parsed) == 1:
+            ext, info = list(parsed.items())[0]
+            rel = info[0][0].replace("\\", "/")
+            return ext, "tier%d %s [%s]" % (tier, rel.split("/melee/")[-1], info[0][1])
+        if parsed:
+            return None, None  # conflicting prototypes stay refused
+        # the first tier with candidates decides, as in resolve_one
+        return None, None
+    return None, None
+
+
 # The hand-written table already in pc/platform/gw_mex_ftfunction_runtime.c. The generator MUST
 # agree with every one of these; a disagreement is a bug in the generator, not license to
 # special-case the entry.
@@ -634,7 +776,7 @@ HANDWRITTEN = {
 }
 
 
-def emit_c(entries, path, blob_info):
+def emit_c(entries, path, blob_info, xentries=()):
     L = []
     L.append("/* gw_mex_sigs_gen.inc - GENERATED by tools/mex_port/gen_sigs.py - do not edit.\n")
     L.append(" *\n")
@@ -667,6 +809,21 @@ def emit_c(entries, path, blob_info):
     L.append("};\n\n")
     L.append("#define GW_MEX_GEN_SIG_COUNT "
              "((uint32_t)(sizeof gw_mex_gen_sigs / sizeof gw_mex_gen_sigs[0]))\n")
+    # Appended AFTER everything above, so adding extended signatures changes no existing line.
+    L.append("\n/* EXTENDED signatures (gw_ppc_sig.ext, see gw_ppc.h): targets the word slots\n")
+    L.append(" * above cannot express - more than 8 argument slots, doubles, by-value aggregates.\n")
+    L.append(" * Consulted only when gw_mex_gen_sigs has no entry. \"<ret>:<args>\", one class per\n")
+    L.append(" * parameter. Sorted by guest address; binary-searchable. */\n")
+    L.append("typedef struct gw_mex_gen_xsig {\n")
+    L.append("    uint32_t guest;\n")
+    L.append("    const char *sig;\n")
+    L.append("} gw_mex_gen_xsig;\n\n")
+    L.append("static const gw_mex_gen_xsig gw_mex_gen_xsigs[] = {\n")
+    for addr, name, ext, _note, _was in sorted(xentries):
+        L.append("    { 0x%08Xu, \"%s\" }, /* %s */\n" % (addr, ext, name))
+    if not xentries:
+        L.append("    { 0u, \"i:\" }, /* placeholder: C has no empty arrays */\n")
+    L.append("};\n")
     open(path, "w").write("".join(L))
 
 
@@ -732,7 +889,7 @@ def main():
     sys.stderr.write("typedefs resolved: %d; names with candidates: %d\n"
                      % (len(typedefs), len(protos)))
 
-    entries, unparseable = [], []
+    entries, unparseable, xentries = [], [], []
     for addr in targets:
         name = by_addr.get(addr)
         if name is None:
@@ -747,7 +904,11 @@ def main():
             continue
         sig, note = resolve_one(name, addr, protos.get(name, []), typedefs)
         if sig is None:
-            unparseable.append((addr, name, note))
+            ext, xnote = resolve_one_x(name, addr, protos.get(name, []), typedefs)
+            if ext is not None:
+                xentries.append((addr, name, ext, xnote, note))
+            else:
+                unparseable.append((addr, name, note))
         else:
             mask, nargs, rf = sig
             entries.append((addr, name, mask, nargs, rf, note))
@@ -767,7 +928,7 @@ def main():
         else:
             confirmed.append((a, nm))
 
-    emit_c(entries, args.out_c, blob_info)
+    emit_c(entries, args.out_c, blob_info, xentries)
 
     lines = []
     lines.append(blob_info)
@@ -780,6 +941,7 @@ def main():
                  "unresolved: %d" % (len(targets), len(entries), len(unparseable)))
     lines.append("with float args or a float return: %d"
                  % sum(1 for e in entries if e[2] or e[4]))
+    lines.append("extended signatures (gw_mex_gen_xsigs): %d" % len(xentries))
     lines.append("")
     lines.append("== hand-written cross-check (%d entries) ==" % len(HANDWRITTEN))
     lines.append("confirmed: %d   disagreements: %d   not covered: %d"
@@ -826,6 +988,10 @@ def main():
     for addr, name, mask, nargs, rf, note in entries:
         lines.append("  0x%08X %-46s mask=0x%02X n=%d rf=%d  %s"
                      % (addr, name, mask, nargs, rf, note))
+    lines.append("")
+    lines.append("== resolved as EXTENDED signatures (gw_mex_gen_xsigs) ==")
+    for addr, name, ext, note, was in sorted(xentries):
+        lines.append("  0x%08X %-46s %-16s %s   (word slots: %s)" % (addr, name, ext, note, was))
     lines.append("")
     lines.append("== NOT emitted (these keep the integer default) ==")
     for addr, name, why in unparseable:
