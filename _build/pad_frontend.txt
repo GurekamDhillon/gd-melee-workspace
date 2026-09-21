@@ -1,0 +1,25 @@
+# frontend check - menu > VS Mode > Melee > MATCH SETUP, change rules, back out, re-enter, continue
+# frames buttons_hex stickX stickY   (A 0100, B 0200, dpad down 0004, right 0002)
+420 0000 0 0
+6 0000 0 -100
+40 0000 0 0
+6 0100 0 0
+70 0000 0 0
+6 0100 0 0
+90 0000 0 0
+6 0004 0 0
+20 0000 0 0
+6 0002 0 0
+20 0000 0 0
+6 0002 0 0
+20 0000 0 0
+6 0004 0 0
+20 0000 0 0
+6 0002 0 0
+90 0000 0 0
+6 0200 0 0
+120 0000 0 0
+6 0100 0 0
+90 0000 0 0
+6 0100 0 0
+200 0000 0 0
