@@ -25,7 +25,7 @@ mkdir -p "$d"
   "$f" -o "$d/$n.bc.tmp" 2> "$d/$n.cc.err" || { echo "CC_FAIL $f"; cat "$d/$n.cc.err"; exit 1; }
 rm -f "$d/$n.cc.err"
 mv -f "$d/$n.bc.tmp" "$d/$n.bc"
-"$GW_GWTOOL" "$d/$n.bc" -o "$d/$n.obj.tmp" --imports="$d/$n.imports.tmp" 2> "$d/$n.gw.err" || { echo "GW_FAIL $f"; cat "$d/$n.gw.err"; exit 1; }
+"$GW_GWTOOL" ${GW_GWTOOL_FLAGS:-} "$d/$n.bc" -o "$d/$n.obj.tmp" --imports="$d/$n.imports.tmp" 2> "$d/$n.gw.err" || { echo "GW_FAIL $f"; cat "$d/$n.gw.err"; exit 1; }
 rm -f "$d/$n.gw.err"
 # Write-then-rename, NOT write-in-place. tools/port/agent_new.sh HARDLINKS this baseline into
 # every agent's build root, and gwtool truncates its -o path rather than unlinking it - so
