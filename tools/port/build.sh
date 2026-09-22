@@ -82,10 +82,11 @@ if [ -f "$tu_list" ]; then
         done
         if [ ! -f "$obj" ] || [ "$src" -nt "$obj" ] || [ "$inc_newer" = 1 ] ||
            { [ -n "$newest_inc" ] && [ "$newest_inc" -nt "$obj" ]; }; then
-            printf '%s
-' "$f" >>"$stale_tus"
+            printf '%s\n' "$f" >>"$stale_tus"
         fi
-    done <"$tu_list"
+    # Strip CR: git checks files.txt out with CRLF on Windows, and a name ending in \r never
+    # exists, which once made every game TU look up to date (lanes ran exes missing synced code).
+    done < <(tr -d '\r' <"$tu_list")
     n_stale=$(wc -l <"$stale_tus" | tr -d ' ')
     if [ "$n_stale" -gt 0 ]; then
         echo "TUs stale: $n_stale"
