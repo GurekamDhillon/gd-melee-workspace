@@ -1,0 +1,1073 @@
+{
+ "name": "loading",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "section": "versus",
+ "element_format": "see pipeline/lobby.py docstring: <axis.key> lookups and 'when'",
+ "chrome": {
+  "template": "chrome_layout.json",
+  "title": "GET READY",
+  "crumbs": {
+   "local": [
+    "VERSUS",
+    "MELEE",
+    "LOADING"
+   ],
+   "online": [
+    "VERSUS",
+    "ONLINE PLAY",
+    "ROOM KQ7X"
+   ]
+  },
+  "crumb_icon": "ico_versus",
+  "hints": [],
+  "description": "the status line: 'Loading the match...', then 'Here we go!'"
+ },
+ "cards": {
+  "big": {
+   "id": "card_big",
+   "size": [
+    200,
+    200
+   ],
+   "lift_joint": null,
+   "quads": [
+    {
+     "id": "card_outline",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       -3,
+       -3
+      ],
+      [
+       203,
+       -3
+      ],
+      [
+       203,
+       203
+      ],
+      [
+       -3,
+       203
+      ]
+     ],
+     "colour": "ink",
+     "joint": "card_<p>"
+    },
+    {
+     "id": "card_face",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       200,
+       0
+      ],
+      [
+       200,
+       200
+      ],
+      [
+       0,
+       200
+      ]
+     ],
+     "colour": "@face",
+     "joint": "card_<p>"
+    },
+    {
+     "id": "port_band",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       200,
+       0
+      ],
+      [
+       200,
+       6
+      ],
+      [
+       0,
+       6
+      ]
+     ],
+     "colour": "port:<p>",
+     "joint": "card_<p>"
+    },
+    {
+     "id": "port_tab",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       12,
+       12
+      ],
+      [
+       44,
+       12
+      ],
+      [
+       44,
+       28
+      ],
+      [
+       12,
+       28
+      ]
+     ],
+     "colour": "port:<p>",
+     "joint": "card_<p>"
+    },
+    {
+     "id": "portrait_frame",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       12,
+       32
+      ],
+      [
+       188,
+       32
+      ],
+      [
+       188,
+       154
+      ],
+      [
+       12,
+       154
+      ]
+     ],
+     "colour": "ink",
+     "joint": "card_<p>"
+    },
+    {
+     "id": "portrait_art",
+     "kind": "disc_art",
+     "role": "chrome",
+     "verts": [
+      [
+       35.0,
+       36.5
+      ],
+      [
+       165.0,
+       36.5
+      ],
+      [
+       165.0,
+       149.5
+      ],
+      [
+       35.0,
+       149.5
+      ]
+     ],
+     "colour": "#ffffff",
+     "joint": "card_<p>",
+     "size_1x": [
+      130,
+      113
+     ],
+     "note": "the fighter's CSS icon, captured on the CSS (the engine's)"
+    },
+    {
+     "id": "cpu_band",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       12,
+       140
+      ],
+      [
+       188,
+       140
+      ],
+      [
+       188,
+       154
+      ],
+      [
+       12,
+       154
+      ]
+     ],
+     "colour": "ink",
+     "joint": "card_<p>",
+     "opacity": 0.75,
+     "when": {
+      "kind": [
+       "cpu"
+      ]
+     }
+    }
+   ],
+   "slots": [
+    {
+     "id": "port_label",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      28,
+      24.96
+     ],
+     "align": "centre",
+     "max": "P4",
+     "max_chars": 2,
+     "max_width_1x": 28,
+     "colour": "ink",
+     "joint": "card_<p>"
+    },
+    {
+     "id": "you_tag",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      52,
+      24.96
+     ],
+     "align": "left",
+     "max": "YOU",
+     "max_chars": 3,
+     "max_width_1x": 22.27,
+     "colour": "gold",
+     "joint": "card_<p>",
+     "when": {
+      "you": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "tag",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      188,
+      24.96
+     ],
+     "align": "right",
+     "max": "GUEST",
+     "max_chars": 5,
+     "max_width_1x": 104,
+     "colour": "muted",
+     "joint": "card_<p>",
+     "note": "HOST / GUEST online; CPU for a computer player; empty otherwise"
+    },
+    {
+     "id": "cpu_text",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      100.0,
+      150.96
+     ],
+     "align": "centre",
+     "max": "CPU LV 9",
+     "max_chars": 8,
+     "max_width_1x": 168,
+     "colour": "bone",
+     "joint": "card_<p>",
+     "when": {
+      "kind": [
+       "cpu"
+      ]
+     }
+    },
+    {
+     "id": "name",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      100.0,
+      178
+     ],
+     "align": "centre",
+     "max": "Captain Falcon Alt 2",
+     "max_chars": 20,
+     "max_width_1x": 176,
+     "colour": "bone",
+     "joint": "card_<p>",
+     "note": "the fighter's name (m-ex names from the fighter table); fit rule - a compact card holds 14 characters at caption, longer names end in an ellipsis"
+    }
+   ],
+   "states": {
+    "you": {
+     "yes": {},
+     "no": {}
+    },
+    "kind": {
+     "human": {},
+     "cpu": {
+      "note": "a computer player: its level on a band over the portrait"
+     }
+    }
+   }
+  },
+  "small": {
+   "id": "card_small",
+   "size": [
+    112,
+    200
+   ],
+   "lift_joint": null,
+   "quads": [
+    {
+     "id": "card_outline",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       -3,
+       -3
+      ],
+      [
+       115,
+       -3
+      ],
+      [
+       115,
+       203
+      ],
+      [
+       -3,
+       203
+      ]
+     ],
+     "colour": "ink",
+     "joint": "card_<p>"
+    },
+    {
+     "id": "card_face",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       112,
+       0
+      ],
+      [
+       112,
+       200
+      ],
+      [
+       0,
+       200
+      ]
+     ],
+     "colour": "@face",
+     "joint": "card_<p>"
+    },
+    {
+     "id": "port_band",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       112,
+       0
+      ],
+      [
+       112,
+       6
+      ],
+      [
+       0,
+       6
+      ]
+     ],
+     "colour": "port:<p>",
+     "joint": "card_<p>"
+    },
+    {
+     "id": "port_tab",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       8,
+       12
+      ],
+      [
+       40,
+       12
+      ],
+      [
+       40,
+       28
+      ],
+      [
+       8,
+       28
+      ]
+     ],
+     "colour": "port:<p>",
+     "joint": "card_<p>"
+    },
+    {
+     "id": "portrait_frame",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       8,
+       32
+      ],
+      [
+       104,
+       32
+      ],
+      [
+       104,
+       154
+      ],
+      [
+       8,
+       154
+      ]
+     ],
+     "colour": "ink",
+     "joint": "card_<p>"
+    },
+    {
+     "id": "portrait_art",
+     "kind": "disc_art",
+     "role": "chrome",
+     "verts": [
+      [
+       12.0,
+       54.5
+      ],
+      [
+       100.0,
+       54.5
+      ],
+      [
+       100.0,
+       131.5
+      ],
+      [
+       12.0,
+       131.5
+      ]
+     ],
+     "colour": "#ffffff",
+     "joint": "card_<p>",
+     "size_1x": [
+      88,
+      77
+     ],
+     "note": "the fighter's CSS icon, captured on the CSS (the engine's)"
+    },
+    {
+     "id": "cpu_band",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       8,
+       140
+      ],
+      [
+       104,
+       140
+      ],
+      [
+       104,
+       154
+      ],
+      [
+       8,
+       154
+      ]
+     ],
+     "colour": "ink",
+     "joint": "card_<p>",
+     "opacity": 0.75,
+     "when": {
+      "kind": [
+       "cpu"
+      ]
+     }
+    }
+   ],
+   "slots": [
+    {
+     "id": "port_label",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      24,
+      24.96
+     ],
+     "align": "centre",
+     "max": "P4",
+     "max_chars": 2,
+     "max_width_1x": 28,
+     "colour": "ink",
+     "joint": "card_<p>"
+    },
+    {
+     "id": "you_tag",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      48,
+      24.96
+     ],
+     "align": "left",
+     "max": "YOU",
+     "max_chars": 3,
+     "max_width_1x": 22.27,
+     "colour": "gold",
+     "joint": "card_<p>",
+     "when": {
+      "you": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "tag",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      104,
+      24.96
+     ],
+     "align": "right",
+     "max": "GUEST",
+     "max_chars": 5,
+     "max_width_1x": 60,
+     "colour": "muted",
+     "joint": "card_<p>",
+     "note": "HOST / GUEST online; CPU for a computer player; empty otherwise"
+    },
+    {
+     "id": "cpu_text",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      56.0,
+      150.96
+     ],
+     "align": "centre",
+     "max": "CPU LV 9",
+     "max_chars": 8,
+     "max_width_1x": 88,
+     "colour": "bone",
+     "joint": "card_<p>",
+     "when": {
+      "kind": [
+       "cpu"
+      ]
+     }
+    },
+    {
+     "id": "name",
+     "kind": "text",
+     "role": "body",
+     "anchor": [
+      56.0,
+      178
+     ],
+     "align": "centre",
+     "max": "Captain Falcon",
+     "max_chars": 14,
+     "max_width_1x": 96,
+     "colour": "bone",
+     "joint": "card_<p>",
+     "note": "the fighter's name (m-ex names from the fighter table); fit rule - a compact card holds 14 characters at caption, longer names end in an ellipsis"
+    }
+   ],
+   "states": {
+    "you": {
+     "yes": {},
+     "no": {}
+    },
+    "kind": {
+     "human": {},
+     "cpu": {
+      "note": "a computer player: its level on a band over the portrait"
+     }
+    }
+   }
+  }
+ },
+ "card_places": {
+  "two": {
+   "template": "card_big",
+   "origins": [
+    [
+     92,
+     84
+    ],
+    [
+     348,
+     84
+    ]
+   ]
+  },
+  "up_to_four": {
+   "template": "card_small",
+   "origins": [
+    [
+     92,
+     84
+    ],
+    [
+     212,
+     84
+    ],
+    [
+     332,
+     84
+    ],
+    [
+     452,
+     84
+    ]
+   ],
+   "rule": "n cards centred as a group on x = 320 + (4 - n) * 60 / 2 shift; with 3, the first three origins moved right by 60"
+  }
+ },
+ "vs_mark": {
+  "id": "vs_mark",
+  "quads": [
+   {
+    "id": "vs_bolt",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      300,
+      146
+     ],
+     [
+      340,
+      146
+     ],
+     [
+      340,
+      206
+     ],
+     [
+      300,
+      206
+     ]
+    ],
+    "colour": "gold",
+    "texture": "ico_bolt",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "vs"
+   }
+  ],
+  "slots": [
+   {
+    "id": "vs_text",
+    "kind": "text",
+    "role": "title",
+    "anchor": [
+     320,
+     234.92
+    ],
+    "align": "centre",
+    "max": "VS",
+    "max_chars": 2,
+    "max_width_1x": 27.02,
+    "colour": "bone",
+    "joint": "vs"
+   }
+  ]
+ },
+ "stage_plate": {
+  "id": "stage_plate",
+  "quads": [
+   {
+    "id": "stage_ink",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      89,
+      295
+     ],
+     [
+      551,
+      295
+     ],
+     [
+      551,
+      353
+     ],
+     [
+      89,
+      353
+     ]
+    ],
+    "colour": "ink",
+    "joint": "stage"
+   },
+   {
+    "id": "stage_face",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      92,
+      298
+     ],
+     [
+      548,
+      298
+     ],
+     [
+      548,
+      350
+     ],
+     [
+      92,
+      350
+     ]
+    ],
+    "colour": "@face",
+    "joint": "stage"
+   },
+   {
+    "id": "stage_accent",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      92,
+      298
+     ],
+     [
+      96,
+      298
+     ],
+     [
+      96,
+      350
+     ],
+     [
+      92,
+      350
+     ]
+    ],
+    "colour": "gold",
+    "joint": "stage"
+   },
+   {
+    "id": "icon_frame",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      102,
+      302
+     ],
+     [
+      158,
+      302
+     ],
+     [
+      158,
+      346
+     ],
+     [
+      102,
+      346
+     ]
+    ],
+    "colour": "ink",
+    "joint": "stage"
+   },
+   {
+    "id": "stage_art",
+    "kind": "disc_art",
+    "role": "chrome",
+    "verts": [
+     [
+      104,
+      304
+     ],
+     [
+      156,
+      304
+     ],
+     [
+      156,
+      344
+     ],
+     [
+      104,
+      344
+     ]
+    ],
+    "colour": "#ffffff",
+    "joint": "stage",
+    "size_1x": [
+     52,
+     40
+    ],
+    "optional": true,
+    "note": "the stage's select icon, captured on the SSS; absent (online) -> @face_hi at 0.35"
+   }
+  ],
+  "slots": [
+   {
+    "id": "stage_label",
+    "kind": "text",
+    "role": "caption",
+    "anchor": [
+     168,
+     315.96
+    ],
+    "align": "left",
+    "max": "STAGE",
+    "max_chars": 5,
+    "max_width_1x": 33.61,
+    "colour": "muted",
+    "joint": "stage"
+   },
+   {
+    "id": "stage_name",
+    "kind": "text",
+    "role": "title",
+    "anchor": [
+     168,
+     340.92
+    ],
+    "align": "left",
+    "max": "Princess Peach's Castle",
+    "max_chars": 23,
+    "max_width_1x": 236,
+    "colour": "bone",
+    "joint": "stage"
+   },
+   {
+    "id": "set_line",
+    "kind": "text",
+    "role": "caption",
+    "anchor": [
+     536,
+     315.96
+    ],
+    "align": "right",
+    "max": "GAME 5 - SET 2 - 2",
+    "max_chars": 18,
+    "max_width_1x": 91.45,
+    "colour": "gold",
+    "joint": "stage",
+    "when": {
+     "view": [
+      "online"
+     ]
+    }
+   },
+   {
+    "id": "room_line",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     536,
+     339.62
+    ],
+    "align": "right",
+    "max": "ROOM KQ7X",
+    "max_chars": 9,
+    "max_width_1x": 74.33,
+    "colour": "bone",
+    "joint": "stage",
+    "when": {
+     "view": [
+      "online"
+     ]
+    }
+   }
+  ],
+  "states": {
+   "view": {
+    "local": {},
+    "online": {}
+   }
+  }
+ },
+ "progress": {
+  "id": "progress",
+  "quads": [
+   {
+    "id": "bar_track",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      92,
+      362
+     ],
+     [
+      548,
+      362
+     ],
+     [
+      548,
+      372
+     ],
+     [
+      92,
+      372
+     ]
+    ],
+    "colour": "ink",
+    "joint": "bar"
+   },
+   {
+    "id": "bar_fill",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      92,
+      362
+     ],
+     [
+      548,
+      362
+     ],
+     [
+      548,
+      372
+     ],
+     [
+      92,
+      372
+     ]
+    ],
+    "colour": "<bar.fill>",
+    "joint": "bar_fill",
+    "note": "the engine sets its right edge: x1 = x0 + (x1 - x0) * progress"
+   }
+  ],
+  "slots": [
+   {
+    "id": "bar_label",
+    "kind": "text",
+    "role": "caption",
+    "anchor": [
+     92,
+     387.96
+    ],
+    "align": "left",
+    "max": "WARMING UP",
+    "max_chars": 10,
+    "max_width_1x": 69.91,
+    "colour": "muted",
+    "joint": "bar",
+    "note": "WARMING UP while below 100%, READY at 100%"
+   },
+   {
+    "id": "bar_pct",
+    "kind": "text",
+    "role": "caption",
+    "anchor": [
+     548,
+     387.96
+    ],
+    "align": "right",
+    "max": "100%",
+    "max_chars": 4,
+    "max_width_1x": 29.29,
+    "colour": "bone",
+    "joint": "bar"
+   }
+  ],
+  "states": {
+   "bar": {
+    "working": {
+     "fill": "gold"
+    },
+    "ready": {
+     "fill": "ok"
+    }
+   }
+  }
+ },
+ "slots_engine_fills": {
+  "chrome_crumbs": "local: VERSUS / MELEE / LOADING; online: VERSUS / ONLINE PLAY / ROOM <code>",
+  "card": {
+   "port_label": "P1..P4",
+   "you_tag": "online: this machine's card",
+   "tag": "HOST / GUEST online, CPU for a computer",
+   "name": "fighter name",
+   "portrait_art": "captured CSS icon",
+   "cpu_text": "CPU LV n"
+  },
+  "vs_mark": "two fighters only",
+  "stage": {
+   "stage_art": "captured SSS icon (local)",
+   "stage_name": "the stage",
+   "set_line": "online: GAME n - SET a - b",
+   "room_line": "online: ROOM <code>"
+  },
+  "progress": "fill from the real warm-up progress; bar_pct 'n%'; bar state ready at 100%",
+  "status": "the description strip"
+ },
+ "rules": [
+  "Shown after the stage select (local) and after the lobby's countdown (online), until the renderer has built what the match draws first (the pipeline seed's core), with a minimum so it never flashes and a ceiling so it never traps.",
+  "Two fighters: the big cards and the VS mark. Three or four: the compact cards, no VS mark.",
+  "Online both machines show the same screen; each marks its own card YOU."
+ ],
+ "textures": [
+  {
+   "name": "ico_bolt",
+   "file_2x": "out_loading/2x/ico_bolt.png",
+   "file_1x": "out_loading/1x/ico_bolt.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "min_draw_1x": 24,
+   "why": "the VS mark between the two fighters' cards: a lightning bolt",
+   "topology": [
+    1,
+    0
+   ]
+  }
+ ]
+}
