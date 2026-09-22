@@ -14,9 +14,20 @@ Protocol (all packets start with a 4-byte magic):
     guest -> JOIN <code> <lan-addr>     server -> PEER <other-public> <other-lan>   (to BOTH)
                                         server -> ERR <reason>
     either -> KA                        keepalive (holds the router mapping and the room)
+    any   -> RAND <mods-hash> <lan-addr> random opponent: queue, repeated every ~2 s while waiting
+                                        server -> QUEUED <players-waiting-with-this-hash>
+                                        server -> MATCH HOST|GUEST <code> <other-public> <other-lan>
+    any   -> RANDCANCEL                 leave the queue      server -> CANCELED
     either -> RELAY                     "no direct path": the server relays for this pair
     either -> BYE                       leave
   relay, binary:  b"GDMD" + payload     forwarded verbatim to the partner, as b"GDMD" + payload
+
+RANDOM MATCHMAKING pairs two queued players whose <mods-hash> (the hash of the global game data -
+codes, physics, global sim tables; fighters and stages are intersected per match) is identical. The
+one who waited longer becomes HOST. The pair gets an ordinary persistent room with a code, so
+everything after MATCH is the REG/JOIN flow: the host re-registers from the same address and keeps
+the code, the guest rejoins with JOIN <code>. A queue entry is dropped after QUEUE_IDLE seconds
+without a RAND and after QUEUE_MAX seconds in all (the client is told TIMEOUT).
 
 A room lives while its host keeps it alive (keepalives every few seconds) and ends after
 ROOM_IDLE seconds of silence. Rooms are PERSISTENT: the same code survives match after match -
@@ -35,7 +46,10 @@ MAGIC_DATA = b"GDMD"
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no I, O, 0, 1: easy to read out loud
 CODE_LEN = 4
 ROOM_IDLE = 120.0      # seconds without a packet from the host before a room is dropped
-PAIR_IDLE = 60.0       # seconds without traffic before a relay pair is dropped
+PAIR_IDLE = 900.0      # seconds without traffic before a PAIRED room is dropped: long enough for a
+                       # results screen, where the game closes its match socket (persistent rooms)
+QUEUE_IDLE = 10.0      # random queue: seconds without a RAND before an entry is dropped
+QUEUE_MAX = 300.0      # random queue: longest wait before the client is told TIMEOUT
 MAX_ROOMS = 5000
 
 log = logging.getLogger("gdmelee")
@@ -56,10 +70,20 @@ class Room:
         self.seen = time.monotonic()
 
 
+class Waiter:
+    def __init__(self, addr, mods, lan):
+        self.addr = addr
+        self.mods = mods
+        self.lan = lan
+        self.since = time.monotonic()
+        self.seen = self.since
+
+
 class Server(asyncio.DatagramProtocol):
     def __init__(self):
         self.rooms = {}      # code -> Room
         self.by_addr = {}    # addr -> Room (host or guest)
+        self.queue = {}      # addr -> Waiter (random matchmaking)
         self.transport = None
         self.relayed = 0
 
@@ -158,6 +182,48 @@ class Server(asyncio.DatagramProtocol):
                 other = room.guest if addr == room.host else room.host
                 self.send(other, "RELAY")
                 log.info("room %s: relaying", room.code)
+        elif cmd == "RAND":
+            mods = words[1] if len(words) > 1 else "-"
+            lan = words[2] if len(words) > 2 else ""
+            me = self.queue.get(addr)
+            if me is None:
+                if room is not None:
+                    self.drop(room, "%s went to random matchmaking" % fmt(addr))
+                me = Waiter(addr, mods, lan)
+                self.queue[addr] = me
+                log.info("random: %s queued (mods %s, %d waiting)", fmt(addr), mods, len(self.queue))
+            else:
+                me.seen = time.monotonic()
+                me.mods, me.lan = mods, lan or me.lan
+            other = None
+            for w in self.queue.values():
+                if w is not me and w.mods == me.mods and (other is None or w.since < other.since):
+                    other = w
+            if other is None:
+                waiting = sum(1 for w in self.queue.values() if w.mods == me.mods)
+                self.send(addr, "QUEUED %d" % waiting)
+                return
+            host, guest = (other, me) if other.since <= me.since else (me, other)
+            del self.queue[host.addr]
+            del self.queue[guest.addr]
+            if len(self.rooms) >= MAX_ROOMS:
+                self.send(host.addr, "ERR server full")
+                self.send(guest.addr, "ERR server full")
+                return
+            pair = Room(self.new_code(), host.addr, host.lan)
+            pair.guest = guest.addr
+            pair.guest_lan = guest.lan
+            self.rooms[pair.code] = pair
+            self.by_addr[host.addr] = pair
+            self.by_addr[guest.addr] = pair
+            self.send(host.addr, "MATCH HOST %s %s %s" % (pair.code, fmt(guest.addr), guest.lan or "-"))
+            self.send(guest.addr, "MATCH GUEST %s %s %s" % (pair.code, fmt(host.addr), host.lan or "-"))
+            log.info("random: room %s - host %s, guest %s (mods %s)", pair.code, fmt(host.addr),
+                     fmt(guest.addr), host.mods)
+        elif cmd == "RANDCANCEL":
+            if self.queue.pop(addr, None) is not None:
+                log.info("random: %s left the queue", fmt(addr))
+            self.send(addr, "CANCELED")
         elif cmd == "BYE":
             if room is not None:
                 other = room.guest if addr == room.host else room.host
@@ -169,6 +235,14 @@ class Server(asyncio.DatagramProtocol):
         while True:
             await asyncio.sleep(10)
             now = time.monotonic()
+            for w in list(self.queue.values()):
+                if now - w.since > QUEUE_MAX:
+                    self.send(w.addr, "TIMEOUT")
+                    del self.queue[w.addr]
+                    log.info("random: %s timed out after %d s", fmt(w.addr), QUEUE_MAX)
+                elif now - w.seen > QUEUE_IDLE:
+                    del self.queue[w.addr]
+                    log.info("random: %s dropped (silent)", fmt(w.addr))
             for room in list(self.rooms.values()):
                 idle = now - room.seen
                 if idle > (PAIR_IDLE if room.guest else ROOM_IDLE):
