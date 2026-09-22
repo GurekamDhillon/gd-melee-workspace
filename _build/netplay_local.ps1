@@ -35,7 +35,8 @@ param(
   [string]$LiveHost = "", # MELEE_PAD_LIVE file for each side: drive it by writing "<buttons_hex>" into it
   [string]$LiveGuest = "",
   [hashtable]$EnvHost = @{},  # extra environment per side, e.g. @{MELEE_LOBBY_AUTOPLAY="1"}
-  [hashtable]$EnvGuest = @{}
+  [hashtable]$EnvGuest = @{},
+  [string]$Label = ""    # the windows' run label starts with this, e.g. "alpha / A1" -> "alpha / A1 - HOST P1 ..."
 )
 $ErrorActionPreference = "Stop"
 $build = $PSScriptRoot
@@ -127,7 +128,7 @@ function Start-Side($tag, $label, $netplay, $device, $x, $pad, $vol) {
   if ($RealNetwork) { Remove-Item Env:MELEE_NETPLAY_BIND -ErrorAction SilentlyContinue } else { $env:MELEE_NETPLAY_BIND = "127.0.0.1" }
   $env:MELEE_INPUT = $device
   $env:MELEE_NET_SIM_FILE = $netsimFile
-  $env:MELEE_RUN_LABEL = $label
+  $env:MELEE_RUN_LABEL = if ($Label) { "$Label - $label" } else { $label }
   $env:MELEE_WINDOW_X = "$($wa.X + $x)"
   $env:MELEE_WINDOW_Y = "$($wa.Y)"
   $env:MELEE_WINDOW_W = "$w"
