@@ -25,7 +25,8 @@ param(
   [int]$Seconds = 0,
   [string]$PadHost = "",
   [string]$PadGuest = "",
-  [string]$NetSim = "off"
+  [string]$NetSim = "off",
+  [switch]$Menu    # boot both to the main menu and connect through ONLINE PLAY instead
 )
 $ErrorActionPreference = "Stop"
 $build = $PSScriptRoot
@@ -105,8 +106,10 @@ function Start-Side($tag, $label, $netplay, $device, $x, $pad, $vol) {
   New-Item -ItemType Directory -Force -Path $env:MELEE_MODS_DIR | Out-Null
   $env:MELEE_SKIP_INTRO = "1"
   $env:MELEE_SCENE = $Scene
-  $env:MELEE_NETPLAY = $netplay
+  $env:MELEE_NETPLAY = if ($Menu) { "" } else { $netplay }
+  if ($Menu) { $env:MELEE_SCENE = "mode=menu" }
   $env:MELEE_NETPLAY_DELAY = "$Delay"
+  $env:MELEE_NETPLAY_BIND = "127.0.0.1"   # both on this machine: loopback, no firewall prompt, no STUN
   $env:MELEE_INPUT = $device
   $env:MELEE_NET_SIM_FILE = $netsimFile
   $env:MELEE_RUN_LABEL = $label

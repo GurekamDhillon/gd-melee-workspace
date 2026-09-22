@@ -109,3 +109,6 @@ __pycache__/
 *.png
 *.glb
 *.mtl
+
+# the menu pipeline: its Melee-derived index (names, hashes) is never committed
+/menu/meleedump/
