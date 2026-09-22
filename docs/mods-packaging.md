@@ -274,8 +274,9 @@ keeps CharacterKinds in its own numbering.
 
 ## 7. What was tested
 
-- Headless suite: 104/104 on the ACE ISO (97 before + mods/mexid/net tests), 104/104 on the vanilla
-  ISO with the split ACE mods (ace-base, ace-wolf, ace-sonic, ace-stage-bowser-s-castle-paper-mario).
+- Headless suite (after syncing with pc-port): 108/108 on the ACE ISO (with and without run.sh's
+  default `_build/mods`), 108/108 on the vanilla ISO with the split ACE mods (ace-base, ace-wolf,
+  ace-sonic, ace-stage-bowser-s-castle-paper-mario), 108/108 on the vanilla ISO with no mods.
 - Vanilla ISO + those split mods: Wolf and Sonic on the CSS (25 retail + 2), a Wolf vs Sonic match
   on Bowser's Castle (Paper Mario).
 - Two local netplay clients (`_build/netplay_local.ps1 -Exe ... -EnvHost @{MELEE_MODS_DIR=...}`):
