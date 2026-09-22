@@ -127,6 +127,9 @@ foreach ($e in $entries) {
     $ok = ($dirs.Count -eq 1) -and ($ext -eq ".txt")
   } elseif ($dirs[0] -eq "mods") {
     $ok = ($rel -eq "mods/README.txt")
+  } elseif ($dirs[0] -eq "scripts") {
+    $ok = ($rel -eq "scripts/README.txt") -or
+          ($dirs.Count -ge 2 -and $dirs[1] -eq "examples" -and ($ext -eq ".lua" -or $ext -eq ".json"))
   }
   if (-not $ok) { Fail "$rel : not on the release allowlist (tools/release/check_release.ps1)" }
   if (($ext -eq ".exe" -or $ext -eq ".dll") -and -not ($dirs.Count -eq 0 -and $AllowedBinaries -contains $name)) {

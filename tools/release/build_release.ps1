@@ -4,6 +4,7 @@
 #   powershell -File tools\release\build_release.ps1 -Version 0.2.0   # override
 #   ... -Server host:port       ship a netplay_server.txt (room codes work out of the box)
 #   ... -GameDir <dir>          take melee-pc.exe and its DLLs from <dir> instead of _build
+#   ... -MeleeDir <dir>         the melee checkout that exe was built from (a lane worktree)
 #   ... -Strict                 warnings (dirty melee tree, commit not on the public fork) become errors
 #
 # It packages what is ALREADY BUILT (_build\melee-pc.exe and friends): rebuild first if you changed
@@ -17,6 +18,7 @@ param(
   [string]$Server = "",
   [string]$GameDir = "",
   [string]$OutDir = "",
+  [string]$MeleeDir = "",   # the melee checkout the exe was built from (default <root>\melee)
   [switch]$Strict
 )
 $ErrorActionPreference = "Stop"
@@ -48,7 +50,7 @@ function Copy-In([string]$src, [string]$rel) {
 }
 
 # ---- provenance of the game build ---------------------------------------------------------------
-$melee = Join-Path $root "melee"
+$melee = if ($MeleeDir) { (Resolve-Path $MeleeDir).Path } else { Join-Path $root "melee" }
 $meleeRev = (git -C $melee rev-parse HEAD).Trim()
 $meleeShort = $meleeRev.Substring(0, 9)
 $wsRev = (git -C $root rev-parse --short=9 HEAD).Trim()
@@ -110,6 +112,23 @@ Mods go in this folder; the game always loads them, online too. Fighters and sta
 with your opponent by their content, so anything you both have can be picked online. A mods
 browser that downloads and installs mods for you is coming.
 '@
+# Lua example scripts (melee/pc/scripts/examples, the same ones compiled in as builtin:<name>)
+$examples = Join-Path $melee "pc\scripts\examples"
+if (Test-Path $examples) {
+  $exBase = (Resolve-Path $examples).Path.TrimEnd('\') + '\'
+  foreach ($f in Get-ChildItem $examples -Recurse -File | Where-Object { $_.Extension -in ".lua", ".json" }) {
+    Copy-In $f.FullName ("scripts\examples\" + $f.FullName.Substring($exBase.Length))
+  }
+  Set-Content -Path (Join-Path $stage "scripts\README.txt") -Encoding ascii -Value @'
+Lua scripts. Every scripts\<name>.lua and scripts\<id>\ (with a mod.json) here loads when the game
+starts. examples\ is not loaded automatically: press ` in the game for the console and type
+  load examples/state_overlay      (a frame-data overlay, F2 toggles)
+  load examples/tm_lite            (F5/F6 save/load state, F9 reset percent)
+The scripting reference: https://github.com/GurekamDhillon/gd-melee-workspace/blob/master/docs/scripting.md
+'@
+} else {
+  Warn "no pc/scripts/examples in the melee checkout: the release has no example scripts"
+}
 if ($Server) {
   if ($Server -notmatch '^[A-Za-z0-9.\-\[\]:]+:[0-9]{1,5}$') { throw "-Server must be host:port" }
   Set-Content -Path (Join-Path $stage "netplay_server.txt") -Value $Server -Encoding ascii
