@@ -62,15 +62,16 @@ lane_root="$GW_ROOT/_build/agents/$name"
 lane_rsp="$lane_root/melee_link_objects.rsp"
 if [ -f "$src_rsp" ] && [ -f "$lane_rsp" ]; then
     new_rsp="$lane_rsp.new"
-    sed -e "s#^\.\./masstest/#$lane_root/masstest/#" -e 's#^\(..*\)$#""#' "$src_rsp" >"$new_rsp"
-    shared_names="$(grep -o '[^/"]*\.obj' "$new_rsp" | sort -u)"
-    extra=0
-    while IFS= read -r line; do
-        obj="$(echo "$line" | grep -o '[^/"]*\.obj' || true)"
-        [ -n "$obj" ] || continue
-        if ! echo "$shared_names" | grep -qxF "$obj"; then echo "$line" >>"$new_rsp"; extra=$((extra + 1)); fi
-    done <"$lane_rsp"
+    sed -e "s#^\.\./masstest/#$lane_root/masstest/#" -e 's#^\(..*\)$#"\1"#' "$src_rsp" | tr -d '\r' >"$new_rsp"
+    # Append the lines whose object name the shared list lacks (one awk pass; a per-line grep loop
+    # took minutes on Windows).
+    extra="$(awk -F'[/"]' '
+        FNR == NR { for (i = 1; i <= NF; i++) if ($i ~ /\.obj$/) have[$i] = 1; next }
+        { for (i = 1; i <= NF; i++) if ($i ~ /\.obj$/ && !($i in have)) { print; break } }
+    ' "$new_rsp" <(tr -d '\r' <"$lane_rsp"))"
+    [ -z "$extra" ] || printf '%s\n' "$extra" >>"$new_rsp"
+    n_extra=0; [ -z "$extra" ] || n_extra="$(printf '%s\n' "$extra" | wc -l)"
     mv -f "$new_rsp" "$lane_rsp"
-    echo "link list regenerated from _build/ ($(wc -l <"$lane_rsp") entries, $extra only in this lane -"
+    echo "link list regenerated from _build/ ($(wc -l <"$lane_rsp") entries, $n_extra only in this lane -"
     echo "          add those to _build/melee_link_objects.rsp when you publish them)"
 fi
