@@ -15,8 +15,8 @@
 # next build links underneath it. The map is copied alongside so a crash log's RVAs can still be
 # resolved against the exact build that produced them.
 #
-# The log is left in the sandbox and printed at the end; nothing is cleaned up, because the log of
-# a run that just crashed is the whole point.
+# The log is left in the sandbox and printed at the end; this run's sandbox is never cleaned up,
+# because the log of a run that just crashed is the whole point. Old sandboxes are pruned (below).
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 . ./portlib.sh
@@ -34,6 +34,21 @@ shift
 
 sandbox="$GW_BUILD_ROOT/runs/$name"
 mkdir -p "$sandbox"
+# Each sandbox holds its own exe copy, so they add up (1,656 of them once reached 49 GB). Stamp
+# this run, then keep only the GW_RUNS_KEEP (default 50) most recently STARTED sandboxes. The
+# stamp, not the directory mtime, orders them: directory dates drift (a bulk copy once re-dated
+# every sandbox to one day). Unstamped sandboxes (made by other launchers, e.g. netplay_local.ps1,
+# possibly with a game still running in them) are never touched; nor is this run's.
+touch "$sandbox/.last_run"
+(
+    cd "$GW_BUILD_ROOT/runs" || exit 0
+    for d in */; do
+        d="${d%/}"
+        [ -f "$d/.last_run" ] && echo "$(date -r "$d/.last_run" +%s) $d"
+    done | sort -rn | tail -n +"$(( ${GW_RUNS_KEEP:-50} + 1 ))" | while read -r _ d; do
+        [ "$d" = "$name" ] || rm -rf "./$d"
+    done
+) || true
 cp -f "$GW_EXE" "$sandbox/melee-pc.exe"
 if [ -f "$GW_MAP" ]; then cp -f "$GW_MAP" "$sandbox/melee-pc.map"; fi
 
