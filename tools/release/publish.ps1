@@ -63,10 +63,15 @@ $ver = Get-Content (Join-Path $out "$name\version.txt")
 $meleeRev = ($ver[1] -split '\s+')[1]
 $zipHash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
 $notes = Join-Path $out "$name-notes.md"
+# What's new / known issues for this version, written by hand in tools/release/notes/<version>.md.
+$versionNotesFile = Join-Path $PSScriptRoot "notes\$Version.md"
+$versionNotes = if (Test-Path $versionNotesFile) { (Get-Content $versionNotesFile -Raw).Trim() } else { "" }
 $body = @"
 ## GD's Melee $Version
 
 A native Windows port of Super Smash Bros. Melee, built from the community decompilation.
+
+$versionNotes
 
 **This download contains no Nintendo game data.** You need your own disc image of Super Smash Bros. Melee, NTSC-U (USA) revision 1.02 (``GALE01``), as a plain ``.iso``. The ACE and Akaneia builds made from it work too.
 
