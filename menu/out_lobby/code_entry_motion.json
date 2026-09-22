@@ -1,0 +1,711 @@
+{
+ "fps": 60,
+ "format": "hub_motion.json: tracks, from_current, interpolation and transform rules are identical; see out_kit/kit_motion.json. 'loop' as in out_online/online_motion.json",
+ "space": "unsheared",
+ "events": {
+  "code_slot_move": {
+   "applies_to": "left/right: caret, arrows and the active lift move to the new slot",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_cursor_move"
+    }
+   ],
+   "note": "delta = new - old slot (+-1); code_slot_<new> lifts, code_slot_<old> drops",
+   "tracks": [
+    {
+     "target": "code_arrows",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": "82*delta + 3*delta",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": "82*delta",
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_caret",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": "82*delta",
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_slot_<new>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_slot_<new>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_slot_<old>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_slot_<old>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 10
+  },
+  "code_letter_step": {
+   "applies_to": "up/down on the active slot",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_value_change"
+    }
+   ],
+   "note": "dir = +1 up (next letter), -1 down; the old character draws on code_char_out, the new on code_char_<i>",
+   "tracks": [
+    {
+     "target": "code_char_out",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": "14*dir",
+       "interp": "SPL",
+       "slope": 0
+      }
+     ]
+    },
+    {
+     "target": "code_char_out",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_char_<i>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "-14*dir",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": "2*dir",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_char_<i>",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_arrow_<up|down>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 2,
+       "value": "-4*dir",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_arrow_<up|down>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "gold_lt",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": "gold",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 10
+  },
+  "code_type": {
+   "applies_to": "a typed character lands in the active slot (then code_slot_move +1)",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_value_tick"
+    }
+   ],
+   "pivot": "slot centre",
+   "tracks": [
+    {
+     "target": "code_char_<i>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1.35,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_char_<i>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1.35,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_slot_<i>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "gold_lt",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": "<slot face>",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 7
+  },
+  "code_paste": {
+   "applies_to": "Y / Ctrl+V with a code on the clipboard: all four slots fill",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_value_change"
+    }
+   ],
+   "note": "slot i starts at frame 3*i; the field accent flashes gold_lt",
+   "tracks": [
+    {
+     "target": "code_char_<i>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": -12,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_char_<i>",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "field_accent",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "gold_lt",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 16,
+       "value": "<field accent>",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 17
+  },
+  "code_invalid": {
+   "applies_to": "the server has no such room (or the code is malformed)",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_error"
+    }
+   ],
+   "tracks": [
+    {
+     "target": "code_field",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 2,
+       "value": 6,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": -5,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 4,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 11,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 14,
+       "value": 2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 17,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "field_accent",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "danger",
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "invalid_bar",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 18
+  },
+  "code_caret_blink": {
+   "applies_to": "the caret on the active slot",
+   "loop": {
+    "from_frame": 0,
+    "to_frame": 48
+   },
+   "note": "restarts at frame 0 (fully on) on every move, step or type",
+   "tracks": [
+    {
+     "target": "code_caret",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 28,
+       "value": 0.2,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 48,
+       "value": 0.2,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 49
+  },
+  "code_join": {
+   "applies_to": "A with all 4 filled: the field commits",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_menu_confirm"
+    }
+   ],
+   "pivot": "field centre",
+   "tracks": [
+    {
+     "target": "code_field",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1.03,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_field",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1.03,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_arrows",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 9
+  }
+ },
+ "value_expressions": "delta, dir; <...> from the layout's state tables",
+ "sequences": {
+  "move": [
+   {
+    "event": "code_slot_move"
+   },
+   {
+    "event": "code_caret_blink",
+    "restart": true
+   }
+  ],
+  "step": [
+   {
+    "event": "code_letter_step"
+   },
+   {
+    "event": "code_caret_blink",
+    "restart": true
+   }
+  ],
+  "type": [
+   {
+    "event": "code_type"
+   },
+   {
+    "event": "code_slot_move",
+    "delta": 1,
+    "when": "not the last slot"
+   }
+  ],
+  "join": [
+   {
+    "event": "code_join"
+   },
+   {
+    "event": "status_set (online)",
+    "state": "working"
+   },
+   {
+    "note": "then the waiting room, guest view"
+   }
+  ],
+  "not_found": [
+   {
+    "event": "code_invalid"
+   },
+   {
+    "event": "status_set (online)",
+    "state": "failed"
+   }
+  ],
+  "hold_repeat": {
+   "delay_frames": 24,
+   "interval_frames": 4,
+   "note": "up/down held repeats through the alphabet"
+  }
+ }
+}

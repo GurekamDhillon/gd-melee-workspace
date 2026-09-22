@@ -1,0 +1,541 @@
+{
+ "provenance": "Original. Masks, layouts and motion from pipeline/lobby.py; nothing traced, sampled or recoloured from Melee or any other game.",
+ "convert": "from melee/: python pc/tools/png2gx.py --layout ../menu/out_lobby/waiting_room_layout.json --layout ../menu/out_lobby/code_entry_layout.json --layout ../menu/out_lobby/lobby_layout.json --outdir ../_build/ui  (never pass this manifest.json: its basename clobbers the kit's)",
+ "layouts": {
+  "waiting_room": "waiting_room_layout.json + waiting_room_motion.json",
+  "code_entry": "code_entry_layout.json + code_entry_motion.json",
+  "lobby": "lobby_layout.json + lobby_motion.json"
+ },
+ "textures": [
+  {
+   "name": "ico_strike_x",
+   "file_2x": "out_lobby/2x/ico_strike_x.png",
+   "file_1x": "out_lobby/1x/ico_strike_x.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "size_1x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 8192,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "stage tile struck by P1: a cross (P1's strike shape)",
+   "min_draw_1x": 24,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_strike_o",
+   "file_2x": "out_lobby/2x/ico_strike_o.png",
+   "file_1x": "out_lobby/1x/ico_strike_o.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "size_1x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 8192,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "stage tile struck by P2: a barred ring (P2's strike shape - never the same shape as P1's)",
+   "min_draw_1x": 24,
+   "legibility": {
+    "full": [
+     1,
+     2
+    ],
+    "at_2x_draw": [
+     1,
+     2
+    ],
+    "at_1x_draw": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_lock",
+   "file_2x": "out_lobby/2x/ico_lock.png",
+   "file_1x": "out_lobby/1x/ico_lock.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "size_1x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 8192,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "stage ban mark (tile) and the LOCKED IN badge: a padlock",
+   "min_draw_1x": 12,
+   "legibility": {
+    "full": [
+     1,
+     2
+    ],
+    "at_2x_draw": [
+     1,
+     2
+    ],
+    "at_1x_draw": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_pick",
+   "file_2x": "out_lobby/2x/ico_pick.png",
+   "file_1x": "out_lobby/1x/ico_pick.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "picked / final stage tab, READY badge: a heavy check",
+   "min_draw_1x": 12,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_crown",
+   "file_2x": "out_lobby/2x/ico_crown.png",
+   "file_1x": "out_lobby/1x/ico_crown.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "previous game's winner, on the player card",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_coin",
+   "file_2x": "out_lobby/2x/ico_coin.png",
+   "file_1x": "out_lobby/1x/ico_coin.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "size_1x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 8192,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "coin flip badge: a coin with a milled rim; the port label is set on it from strings",
+   "min_draw_1x": 32,
+   "legibility": {
+    "full": [
+     2,
+     1
+    ],
+    "at_2x_draw": [
+     2,
+     1
+    ],
+    "at_1x_draw": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_wait",
+   "file_2x": "out_lobby/2x/ico_wait.png",
+   "file_1x": "out_lobby/1x/ico_wait.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "WAITING badge, opponent's turn: an hourglass",
+   "min_draw_1x": 12,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_turn",
+   "file_2x": "out_lobby/2x/ico_turn.png",
+   "file_1x": "out_lobby/1x/ico_turn.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "turn indicator between the cards; points right as drawn, the engine flips U for left",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_keyboard",
+   "file_2x": "out_lobby/2x/ico_keyboard.png",
+   "file_1x": "out_lobby/1x/ico_keyboard.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "code entry: 'type on a keyboard' hint",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     10
+    ],
+    "at_2x_draw": [
+     1,
+     10
+    ],
+    "at_1x_draw": [
+     1,
+     10
+    ]
+   }
+  }
+ ],
+ "reused_from_online": [
+  "ico_copy",
+  "ico_link",
+  "ico_warning",
+  "sig_bar_1",
+  "sig_bar_2",
+  "sig_bar_3",
+  "sig_bar_4"
+ ],
+ "requires_from_kit": [
+  {
+   "name": "font_body_latin_0",
+   "format": "I4",
+   "bytes_2x": 32768
+  },
+  {
+   "name": "font_caption_latin_0",
+   "format": "I4",
+   "bytes_2x": 32768
+  },
+  {
+   "name": "font_display_latin_0",
+   "format": "I4",
+   "bytes_2x": 262144
+  },
+  {
+   "name": "font_heading_latin_0",
+   "format": "I4",
+   "bytes_2x": 131072
+  },
+  {
+   "name": "font_label_latin_0",
+   "format": "I4",
+   "bytes_2x": 65536
+  },
+  {
+   "name": "font_row_latin_0",
+   "format": "I4",
+   "bytes_2x": 32768
+  },
+  {
+   "name": "font_title_latin_0",
+   "format": "I4",
+   "bytes_2x": 65536
+  },
+  {
+   "name": "glyph_a",
+   "format": "I4",
+   "bytes_2x": 512
+  },
+  {
+   "name": "glyph_b",
+   "format": "I4",
+   "bytes_2x": 512
+  },
+  {
+   "name": "glyph_check",
+   "format": "I4",
+   "bytes_2x": 512
+  },
+  {
+   "name": "glyph_dpad",
+   "format": "I4",
+   "bytes_2x": 512
+  },
+  {
+   "name": "glyph_start",
+   "format": "I4",
+   "bytes_2x": 1024
+  },
+  {
+   "name": "glyph_x",
+   "format": "I4",
+   "bytes_2x": 512
+  },
+  {
+   "name": "glyph_y",
+   "format": "I4",
+   "bytes_2x": 512
+  }
+ ],
+ "memory_2x_per_screen": {
+  "waiting_host": 417.5,
+  "waiting_host_found": 429.0,
+  "waiting_guest": 416.5,
+  "code_empty": 324.0,
+  "code_partial": 580.0,
+  "code_invalid": 550.0,
+  "lobby_g1_blind": 305.0,
+  "lobby_g1_reveal": 177.0,
+  "lobby_g1_coin": 241.5,
+  "lobby_g1_strike": 219.5,
+  "lobby_g1_strike_remote": 211.5,
+  "lobby_g1_final": 187.5,
+  "lobby_g2_ban": 213.5,
+  "lobby_g2_char": 217.0,
+  "lobby_ready": 215.5,
+  "lobby_countdown": 469.5,
+  "parts_tiles": 90.0,
+  "parts_cards": 206.0,
+  "parts_action": 139.0,
+  "parts_code": 288.0
+ },
+ "checks": {
+  "names": {
+   "Mr. Game & Watch Jr.": "caption",
+   "Captain Falcon Alt 2": "body",
+   "Princess Daisy (SSB)": "caption",
+   "Dark Samus & Metroid": "caption",
+   "Wario Man, Microgame": "caption",
+   "Young Link (Classic)": "caption"
+  },
+  "stages": {
+   "Battlefield": 65.1,
+   "Dream Land": 74.3,
+   "Final Destination": 104.8,
+   "Fountain of Dreams": 120.2,
+   "Pokemon Stadium": 112.6,
+   "Yoshi's Story": 78.5
+  },
+  "stage_worst_28": [
+   "Princess Peach's Castle",
+   "caption",
+   true
+  ],
+  "room_char_max_px": [
+   46.1,
+   64
+  ],
+  "contrast": {
+   "tile available name": 8.95,
+   "tile hovered name": 10.35,
+   "tile hover_remote name": 8.95,
+   "tile hover_remote tab text (p1)": 4.89,
+   "tile hover_remote tab text (p2)": 4.83,
+   "tile struck_p1 name": 5.46,
+   "tile struck_p1 tab text (p1)": 4.89,
+   "tile struck_p1 mark (p1)": 4.89,
+   "tile struck_p1 tab text (p2)": 4.89,
+   "tile struck_p1 mark (p2)": 4.89,
+   "tile struck_p2 name": 5.46,
+   "tile struck_p2 tab text (p1)": 4.83,
+   "tile struck_p2 mark (p1)": 4.83,
+   "tile struck_p2 tab text (p2)": 4.83,
+   "tile struck_p2 mark (p2)": 4.83,
+   "tile banned name": 5.46,
+   "tile banned tab text (p1)": 4.89,
+   "tile banned mark (p1)": 4.89,
+   "tile banned tab text (p2)": 4.83,
+   "tile banned mark (p2)": 4.83,
+   "tile picked name": 10.35,
+   "tile picked tab icon": 13.93,
+   "tile picked tab on face": 10.35,
+   "tile unavailable name": 5.46,
+   "card port label p1": 4.89,
+   "tile hover_remote outline vs gutter p1": 4.89,
+   "tile hover_remote outline vs face p1": 2.61,
+   "card port label p2": 4.83,
+   "tile hover_remote outline vs gutter p2": 4.83,
+   "tile hover_remote outline vs face p2": 2.58,
+   "badge waiting text": 10.83,
+   "badge waiting icon": 10.83,
+   "badge picking text": 13.93,
+   "badge picking icon": 10.35,
+   "badge locked text": 16.75,
+   "badge locked icon": 16.75,
+   "badge ready text": 7.63,
+   "badge ready icon": 7.63,
+   "card name": 8.95,
+   "card you tag": 5.78,
+   "card hidden '?'": 8.23,
+   "card crown": 5.52,
+   "card outline active": 7.67,
+   "banner title": 16.75,
+   "banner instruction": 10.83,
+   "score label": 10.83,
+   "score": 16.75,
+   "turn arrow": 7.67,
+   "coin caption": 5.78,
+   "coin text": 8.95,
+   "coin label p1": 4.89,
+   "coin label p2": 4.83,
+   "coin label spinning": 10.35,
+   "countdown numeral": 10.35,
+   "countdown stage line": 16.75,
+   "lobby status": 16.75,
+   "lobby ping ms": 10.83,
+   "action your_turn text": 10.35,
+   "action their_turn text": 8.95,
+   "action ready_off text": 8.95,
+   "action ready_off icon": 8.95,
+   "action ready_on text": 7.63,
+   "action ready_on icon": 7.63,
+   "action ready_wait text": 7.63,
+   "action ready_wait icon": 7.63,
+   "action ready_both text": 10.35,
+   "action ready_both icon": 10.35,
+   "room code ng": 12.42,
+   "room accent ng": 8.23,
+   "room code copied": 12.42,
+   "room accent copied": 7.63,
+   "room code joining": 10.33,
+   "room accent joining": 10.35,
+   "room code failed": 12.42,
+   "room accent failed": 4.89,
+   "copy row copied text": 8.95,
+   "copy row copied icon": 4.08,
+   "copy row idle text": 5.78,
+   "copy row idle icon": 5.78,
+   "room label": 5.52,
+   "room share line": 5.78,
+   "code slot empty char": 12.42,
+   "code slot empty dash": 8.03,
+   "code slot filled char": 12.42,
+   "code slot active_empty char": 10.35,
+   "code slot active_empty caret": 10.35,
+   "code slot active_filled char": 10.35,
+   "code slot active_filled caret": 10.35,
+   "code slot invalid char": 12.42,
+   "code slot invalid bar": 3.62,
+   "code arrows": 5.52,
+   "code instruction": 8.95,
+   "code hints": 5.78,
+   "code keyboard icon": 5.78
+  },
+  "p1_p2_cvd_dE": {
+   "normal": 45.9,
+   "deuteranopia": 58.1,
+   "protanopia": 50.3,
+   "tritanopia": 71.6
+  },
+  "strike_shape_overlap_iou": 0.374
+ }
+}

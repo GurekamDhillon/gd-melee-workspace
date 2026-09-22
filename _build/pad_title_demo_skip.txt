@@ -1,0 +1,11 @@
+# title screen: idle until the attract demo, then Start to skip it
+2700 0000 0 0
+4 1000 0 0
+240 0000 0 0
+4 1000 0 0
+240 0000 0 0
+4 1000 0 0
+240 0000 0 0
+4 1000 0 0
+240 0000 0 0
+3000 0000 0 0

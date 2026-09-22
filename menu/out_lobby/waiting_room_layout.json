@@ -1,0 +1,631 @@
+{
+ "name": "waiting_room",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "section": "versus",
+ "element_format": "see pipeline/lobby.py docstring: <axis.key> lookups and 'when'",
+ "chrome": {
+  "template": "chrome_layout.json",
+  "title": {
+   "host": "WAITING ROOM",
+   "guest": "JOINING ROOM"
+  },
+  "crumbs": {
+   "host": [
+    "VERSUS",
+    "ONLINE PLAY",
+    "HOST"
+   ],
+   "guest": [
+    "VERSUS",
+    "ONLINE PLAY",
+    "JOIN"
+   ]
+  },
+  "crumb_icon": "ico_versus",
+  "hints": {
+   "host": [
+    [
+     "b",
+     "Leave"
+    ],
+    [
+     "x",
+     "Copy Code"
+    ]
+   ],
+   "guest": [
+    [
+     "b",
+     "Cancel"
+    ]
+   ]
+  },
+  "description": {
+   "host": "Your room stays open until you leave.",
+   "guest": "The host sees you as soon as you're in."
+  }
+ },
+ "room_plate": {
+  "id": "room_plate",
+  "origin": [
+   0,
+   0
+  ],
+  "lift_joint": null,
+  "quads": [
+   {
+    "id": "panel_ink",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      116,
+      88
+     ],
+     [
+      524,
+      88
+     ],
+     [
+      524,
+      350
+     ],
+     [
+      116,
+      350
+     ]
+    ],
+    "colour": "ink",
+    "joint": "room_panel"
+   },
+   {
+    "id": "panel_face",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      120,
+      92
+     ],
+     [
+      520,
+      92
+     ],
+     [
+      520,
+      346
+     ],
+     [
+      120,
+      346
+     ]
+    ],
+    "colour": "@face",
+    "joint": "room_panel"
+   },
+   {
+    "id": "plate",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      149,
+      132
+     ],
+     [
+      491,
+      132
+     ],
+     [
+      491,
+      240
+     ],
+     [
+      149,
+      240
+     ]
+    ],
+    "colour": "<plate.plate>",
+    "joint": "room_plate"
+   },
+   {
+    "id": "accent",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      149,
+      132
+     ],
+     [
+      153,
+      132
+     ],
+     [
+      153,
+      240
+     ],
+     [
+      149,
+      240
+     ]
+    ],
+    "colour": "<plate.accent>",
+    "joint": "room_plate"
+   },
+   {
+    "id": "cell_0",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      161,
+      140
+     ],
+     [
+      233,
+      140
+     ],
+     [
+      233,
+      232
+     ],
+     [
+      161,
+      232
+     ]
+    ],
+    "colour": "@bg",
+    "joint": "room_plate"
+   },
+   {
+    "id": "cell_1",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      243,
+      140
+     ],
+     [
+      315,
+      140
+     ],
+     [
+      315,
+      232
+     ],
+     [
+      243,
+      232
+     ]
+    ],
+    "colour": "@bg",
+    "joint": "room_plate"
+   },
+   {
+    "id": "cell_2",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      325,
+      140
+     ],
+     [
+      397,
+      140
+     ],
+     [
+      397,
+      232
+     ],
+     [
+      325,
+      232
+     ]
+    ],
+    "colour": "@bg",
+    "joint": "room_plate"
+   },
+   {
+    "id": "cell_3",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      407,
+      140
+     ],
+     [
+      479,
+      140
+     ],
+     [
+      479,
+      232
+     ],
+     [
+      407,
+      232
+     ]
+    ],
+    "colour": "@bg",
+    "joint": "room_plate"
+   },
+   {
+    "id": "sweep",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      153,
+      237
+     ],
+     [
+      193,
+      237
+     ],
+     [
+      193,
+      240
+     ],
+     [
+      153,
+      240
+     ]
+    ],
+    "colour": "gold",
+    "joint": "plate_sweep",
+    "when": {
+     "view": [
+      "guest"
+     ]
+    }
+   },
+   {
+    "id": "copy_icon",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      149,
+      252.0
+     ],
+     [
+      165,
+      252.0
+     ],
+     [
+      165,
+      268.0
+     ],
+     [
+      149,
+      268.0
+     ]
+    ],
+    "colour": "<copy.icon_colour>",
+    "texture": "<copy.icon>",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "copy_row",
+    "when": {
+     "view": [
+      "host"
+     ]
+    }
+   }
+  ],
+  "slots": [
+   {
+    "id": "code_label",
+    "kind": "text",
+    "role": "caption",
+    "anchor": [
+     149,
+     124
+    ],
+    "align": "left",
+    "max": "ROOM CODE",
+    "max_chars": 9,
+    "max_width_1x": 342,
+    "colour": "gold",
+    "joint": "room_panel",
+    "note": "strings: 'ROOM CODE'"
+   },
+   {
+    "id": "char_0",
+    "kind": "text",
+    "role": "display",
+    "anchor": [
+     197.0,
+     204.48
+    ],
+    "align": "centre",
+    "max": "W",
+    "max_chars": 1,
+    "max_width_1x": 64,
+    "colour": "<plate.char>",
+    "joint": "room_plate",
+    "note": "one character of the room code (ABCDEFGHJKLMNPQRSTUVWXYZ23456789); display role, caps only; centred in its cell so every code draws in the same four places"
+   },
+   {
+    "id": "char_1",
+    "kind": "text",
+    "role": "display",
+    "anchor": [
+     279.0,
+     204.48
+    ],
+    "align": "centre",
+    "max": "W",
+    "max_chars": 1,
+    "max_width_1x": 64,
+    "colour": "<plate.char>",
+    "joint": "room_plate",
+    "note": "one character of the room code (ABCDEFGHJKLMNPQRSTUVWXYZ23456789); display role, caps only; centred in its cell so every code draws in the same four places"
+   },
+   {
+    "id": "char_2",
+    "kind": "text",
+    "role": "display",
+    "anchor": [
+     361.0,
+     204.48
+    ],
+    "align": "centre",
+    "max": "W",
+    "max_chars": 1,
+    "max_width_1x": 64,
+    "colour": "<plate.char>",
+    "joint": "room_plate",
+    "note": "one character of the room code (ABCDEFGHJKLMNPQRSTUVWXYZ23456789); display role, caps only; centred in its cell so every code draws in the same four places"
+   },
+   {
+    "id": "char_3",
+    "kind": "text",
+    "role": "display",
+    "anchor": [
+     443.0,
+     204.48
+    ],
+    "align": "centre",
+    "max": "W",
+    "max_chars": 1,
+    "max_width_1x": 64,
+    "colour": "<plate.char>",
+    "joint": "room_plate",
+    "note": "one character of the room code (ABCDEFGHJKLMNPQRSTUVWXYZ23456789); display role, caps only; centred in its cell so every code draws in the same four places"
+   },
+   {
+    "id": "copy_text",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     171,
+     264.62
+    ],
+    "align": "left",
+    "max": "Copied to clipboard",
+    "max_chars": 19,
+    "max_width_1x": 320,
+    "colour": "<copy.text>",
+    "joint": "copy_row",
+    "note": "copy.text_string from strings",
+    "when": {
+     "view": [
+      "host"
+     ]
+    }
+   },
+   {
+    "id": "share_line",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     149,
+     296
+    ],
+    "align": "left",
+    "max": "Send it to your opponent. They pick Join and type it in.",
+    "max_chars": 56,
+    "max_width_1x": 342,
+    "colour": "muted",
+    "joint": "room_panel",
+    "note": "host: the share hint; guest: 'Joining room KQ7X...'"
+   },
+   {
+    "id": "sub_line",
+    "kind": "text",
+    "role": "caption",
+    "anchor": [
+     149,
+     318
+    ],
+    "align": "left",
+    "max": "Codes use A-Z and 2-9, never I, O, 0 or 1.",
+    "max_chars": 42,
+    "max_width_1x": 342,
+    "colour": "muted",
+    "joint": "room_panel",
+    "note": "optional second line (strings)"
+   }
+  ],
+  "states": {
+   "view": {
+    "host": {
+     "note": "your room: code, copy row, share hint"
+    },
+    "guest": {
+     "note": "joining someone's room: the code you typed, the sweep runs under the plate, no copy row"
+    }
+   },
+   "plate": {
+    "ng": {
+     "plate": "ink",
+     "accent": "@face_hi",
+     "char": "bone"
+    },
+    "copied": {
+     "plate": "ink",
+     "accent": "ok",
+     "char": "bone",
+     "note": "40 frames after the code reaches the clipboard"
+    },
+    "joining": {
+     "plate": "ink",
+     "accent": "gold",
+     "char": "gold_lt"
+    },
+    "failed": {
+     "plate": "ink",
+     "accent": "danger",
+     "char": "bone"
+    }
+   },
+   "copy": {
+    "copied": {
+     "icon": "glyph_check",
+     "icon_colour": "ok",
+     "text": "bone",
+     "text_string": "Copied to clipboard"
+    },
+    "idle": {
+     "icon": "ico_copy",
+     "icon_colour": "muted",
+     "text": "muted",
+     "text_string": "Press X to copy it again"
+    }
+   }
+  },
+  "contrast_pairs": [
+   [
+    "plate.char",
+    "@bg"
+   ],
+   [
+    "copy.text",
+    "@face"
+   ],
+   [
+    "copy.icon_colour",
+    "@face",
+    "graphic"
+   ]
+  ]
+ },
+ "status_strip": {
+  "template": "online_layout.json status_strip (unchanged: rect, block, pips, sweep, ping)",
+  "rect": [
+   90,
+   358,
+   596,
+   388
+  ],
+  "states_used": {
+   "waiting": "working",
+   "found": "connected",
+   "connecting": "working",
+   "joining": "working",
+   "failed": "failed"
+  },
+  "examples": {
+   "waiting": "Waiting for an opponent...",
+   "found": "Opponent found: Wario Man, Microgame",
+   "connecting": "Connecting to your opponent...",
+   "joining": "Joining room KQ7X...",
+   "failed": "No room KQ7X. Check the code with your host."
+  }
+ },
+ "slots_engine_fills": {
+  "char_0_3": "the room code, one character per cell (4 from ABCDEFGHJKLMNPQRSTUVWXYZ23456789)",
+  "copy_text": "copy.text_string of the copy state",
+  "share_line": "host: share hint; guest: 'Joining room %s...'",
+  "status": "online status strip text (60 chars at body, fit rule beyond)",
+  "ping_ms": "status strip readout once connected"
+ },
+ "rules": [
+  "The room plate reuses the online code plate's look (ink plate, 4px accent, bone code) at hero size: 4 cells of 72x92, the display role, one character centred per cell. The code entry field uses the same cell rects, so a code looks identical on both players' screens.",
+  "Host: code_copied plays when the room code reaches the clipboard (on open and on X); the copy row shows the 'copied' state for 40 frames, then 'idle'.",
+  "Guest: the same plate shows the code being joined, plate 'joining', and join_sweep loops under it until the server answers.",
+  "B leaves the room (host) or cancels (guest): kit dialog_close-style exit, then back to ONLINE PLAY.",
+  "When the opponent arrives: status 'connected' (online status_connected), opponent_found here, then the lobby opens after 45 frames."
+ ],
+ "textures": [
+  {
+   "name": "ico_copy",
+   "file_2x": "out_online/2x/ico_copy.png",
+   "file_1x": "out_online/1x/ico_copy.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_link",
+   "file_2x": "out_online/2x/ico_link.png",
+   "file_1x": "out_online/1x/ico_link.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "sig_bar_1",
+   "file_2x": "out_online/2x/sig_bar_1.png",
+   "file_1x": "out_online/1x/sig_bar_1.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "sig_bar_2",
+   "file_2x": "out_online/2x/sig_bar_2.png",
+   "file_1x": "out_online/1x/sig_bar_2.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "sig_bar_3",
+   "file_2x": "out_online/2x/sig_bar_3.png",
+   "file_1x": "out_online/1x/sig_bar_3.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "sig_bar_4",
+   "file_2x": "out_online/2x/sig_bar_4.png",
+   "file_1x": "out_online/1x/sig_bar_4.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  }
+ ]
+}

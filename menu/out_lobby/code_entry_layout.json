@@ -1,0 +1,688 @@
+{
+ "name": "code_entry",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "section": "versus",
+ "element_format": "see pipeline/lobby.py docstring",
+ "chrome": {
+  "template": "chrome_layout.json",
+  "title": "JOIN ROOM",
+  "crumbs": [
+   "VERSUS",
+   "ONLINE PLAY",
+   "JOIN"
+  ],
+  "crumb_icon": "ico_versus",
+  "hints": [
+   [
+    "dpad",
+    "Move"
+   ],
+   [
+    "a",
+    "Join"
+   ],
+   [
+    "y",
+    "Paste"
+   ],
+   [
+    "b",
+    "Back"
+   ]
+  ],
+  "description": "Up/down change a letter, left/right move between slots."
+ },
+ "panel": {
+  "rect": [
+   120,
+   92,
+   520,
+   346
+  ],
+  "quads": [
+   {
+    "id": "panel_ink",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      116,
+      88
+     ],
+     [
+      524,
+      88
+     ],
+     [
+      524,
+      350
+     ],
+     [
+      116,
+      350
+     ]
+    ],
+    "colour": "ink",
+    "joint": "room_panel"
+   },
+   {
+    "id": "panel_face",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      120,
+      92
+     ],
+     [
+      520,
+      92
+     ],
+     [
+      520,
+      346
+     ],
+     [
+      120,
+      346
+     ]
+    ],
+    "colour": "@face",
+    "joint": "room_panel"
+   }
+  ]
+ },
+ "field": {
+  "id": "code_field",
+  "rect": [
+   149,
+   142,
+   491,
+   250
+  ],
+  "quads": [
+   {
+    "id": "field_plate",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      149,
+      142
+     ],
+     [
+      491,
+      142
+     ],
+     [
+      491,
+      250
+     ],
+     [
+      149,
+      250
+     ]
+    ],
+    "colour": "ink",
+    "joint": "code_field"
+   },
+   {
+    "id": "field_accent",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      149,
+      142
+     ],
+     [
+      153,
+      142
+     ],
+     [
+      153,
+      250
+     ],
+     [
+      149,
+      250
+     ]
+    ],
+    "colour": "<field.accent>",
+    "joint": "code_field"
+   }
+  ],
+  "slots": [
+   {
+    "id": "instruction",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     149,
+     108
+    ],
+    "align": "left",
+    "max": "Type the 4-character room code from your host.",
+    "max_chars": 46,
+    "max_width_1x": 342,
+    "colour": "bone",
+    "joint": "room_panel"
+   }
+  ],
+  "cells": [
+   [
+    161,
+    150,
+    233,
+    242
+   ],
+   [
+    243,
+    150,
+    315,
+    242
+   ],
+   [
+    325,
+    150,
+    397,
+    242
+   ],
+   [
+    407,
+    150,
+    479,
+    242
+   ]
+  ],
+  "states": {
+   "field": {
+    "ng": {
+     "accent": "@face_hi"
+    },
+    "editing": {
+     "accent": "gold"
+    },
+    "invalid": {
+     "accent": "danger"
+    },
+    "joining": {
+     "accent": "gold_lt"
+    }
+   }
+  },
+  "slot_template": {
+   "id": "slot",
+   "origin": "cell i top-left: x = 161 + i * 82, y = 150",
+   "size": [
+    72,
+    92
+   ],
+   "lift_joint": "code_slot_<i>",
+   "quads": [
+    {
+     "id": "slot_plate",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       72,
+       0
+      ],
+      [
+       72,
+       92
+      ],
+      [
+       0,
+       92
+      ]
+     ],
+     "colour": "<slot.plate>",
+     "joint": "code_slot_plate_<i>",
+     "when": {
+      "slot": [
+       "active_empty",
+       "active_filled"
+      ]
+     }
+    },
+    {
+     "id": "slot_face",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       72,
+       0
+      ],
+      [
+       72,
+       92
+      ],
+      [
+       0,
+       92
+      ]
+     ],
+     "colour": "<slot.face>",
+     "joint": "code_slot_<i>"
+    },
+    {
+     "id": "dash",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       24.0,
+       62
+      ],
+      [
+       48.0,
+       62
+      ],
+      [
+       48.0,
+       66
+      ],
+      [
+       24.0,
+       66
+      ]
+     ],
+     "colour": "<slot.dash>",
+     "joint": "code_slot_<i>",
+     "when": {
+      "slot": [
+       "empty"
+      ]
+     }
+    },
+    {
+     "id": "caret",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       12,
+       80
+      ],
+      [
+       60,
+       80
+      ],
+      [
+       60,
+       85
+      ],
+      [
+       12,
+       85
+      ]
+     ],
+     "colour": "<slot.caret>",
+     "joint": "code_caret",
+     "when": {
+      "slot": [
+       "active_empty",
+       "active_filled"
+      ]
+     }
+    },
+    {
+     "id": "invalid_bar",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       6,
+       86
+      ],
+      [
+       66,
+       86
+      ],
+      [
+       66,
+       90
+      ],
+      [
+       6,
+       90
+      ]
+     ],
+     "colour": "danger",
+     "joint": "code_slot_<i>",
+     "when": {
+      "slot": [
+       "invalid"
+      ]
+     }
+    }
+   ],
+   "slots": [
+    {
+     "id": "char",
+     "kind": "text",
+     "role": "display",
+     "anchor": [
+      36.0,
+      64.48
+     ],
+     "align": "centre",
+     "max": "W",
+     "max_chars": 1,
+     "max_width_1x": 64,
+     "colour": "<slot.char>",
+     "joint": "code_char_<i>",
+     "note": "one of ABCDEFGHJKLMNPQRSTUVWXYZ23456789; display role (caps only). Anything typed outside the alphabet is refused with kit bump on the slot",
+     "when": {
+      "slot": [
+       "filled",
+       "active_filled",
+       "invalid"
+      ]
+     }
+    }
+   ],
+   "states": {
+    "slot": {
+     "empty": {
+      "face": "@bg",
+      "dash": "muted",
+      "char": "bone"
+     },
+     "filled": {
+      "face": "@bg",
+      "char": "bone"
+     },
+     "active_empty": {
+      "face": "gold",
+      "plate": "gold_dk",
+      "caret": "ink",
+      "char": "ink",
+      "offset": [
+       -3,
+       -3
+      ]
+     },
+     "active_filled": {
+      "face": "gold",
+      "plate": "gold_dk",
+      "caret": "ink",
+      "char": "ink",
+      "offset": [
+       -3,
+       -3
+      ]
+     },
+     "invalid": {
+      "face": "@bg",
+      "char": "bone",
+      "note": "every filled slot, while code_invalid plays and until the next edit"
+     }
+    }
+   },
+   "contrast_pairs": [
+    [
+     "slot.char",
+     "slot.face"
+    ],
+    [
+     "slot.dash",
+     "slot.face",
+     "graphic"
+    ],
+    [
+     "slot.caret",
+     "slot.face",
+     "graphic"
+    ]
+   ]
+  },
+  "arrows": {
+   "id": "slot_arrows",
+   "joint": "code_arrows",
+   "origin": "centred on the active cell: x = cell centre",
+   "slots": [
+    {
+     "id": "arrow_up",
+     "kind": "text",
+     "role": "heading",
+     "anchor": [
+      0,
+      138
+     ],
+     "align": "centre",
+     "max": "↑",
+     "max_chars": 1,
+     "max_width_1x": 19.71,
+     "colour": "<arrows.colour>",
+     "joint": "code_arrow_up",
+     "note": "atlas glyph U+2191"
+    },
+    {
+     "id": "arrow_down",
+     "kind": "text",
+     "role": "heading",
+     "anchor": [
+      0,
+      275.12
+     ],
+     "align": "centre",
+     "max": "↓",
+     "max_chars": 1,
+     "max_width_1x": 19.71,
+     "colour": "<arrows.colour>",
+     "joint": "code_arrow_down",
+     "note": "atlas glyph U+2193"
+    }
+   ],
+   "states": {
+    "arrows": {
+     "ng": {
+      "colour": "gold"
+     },
+     "blocked": {
+      "colour": "disabled"
+     },
+     "hidden": {
+      "colour": null
+     }
+    }
+   },
+   "rules": [
+    "Up/down step the active slot through the alphabet (wraps; an empty slot starts at A going up, 9 going down). The arrows ride with the active slot (code_slot_move) and flash on a step (code_letter_step)."
+   ],
+   "contrast_pairs": [
+    [
+     "arrows.colour",
+     "@face",
+     "graphic"
+    ]
+   ]
+  }
+ },
+ "hints_row": {
+  "quads": [
+   {
+    "id": "keyboard_icon",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      149,
+      284
+     ],
+     [
+      165,
+      284
+     ],
+     [
+      165,
+      300
+     ],
+     [
+      149,
+      300
+     ]
+    ],
+    "colour": "muted",
+    "texture": "ico_keyboard",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "room_panel"
+   },
+   {
+    "id": "paste_glyph",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      "x1 - 4 - advance(paste) - 16",
+      284
+     ],
+     [
+      "x1 - 4 - advance(paste)",
+      284
+     ],
+     [
+      "x1 - 4 - advance(paste)",
+      300
+     ],
+     [
+      "x1 - 4 - advance(paste) - 16",
+      300
+     ]
+    ],
+    "colour": "bone",
+    "texture": "glyph_y",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "room_panel"
+   }
+  ],
+  "slots": [
+   {
+    "id": "keyboard_text",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     171,
+     296.62
+    ],
+    "align": "left",
+    "max": "Or type it on a keyboard",
+    "max_chars": 24,
+    "max_width_1x": 180,
+    "colour": "muted",
+    "joint": "room_panel"
+   },
+   {
+    "id": "paste_text",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     491,
+     296.62
+    ],
+    "align": "right",
+    "max": "Paste",
+    "max_chars": 5,
+    "max_width_1x": 100,
+    "colour": "bone",
+    "joint": "room_panel"
+   },
+   {
+    "id": "alphabet_note",
+    "kind": "text",
+    "role": "caption",
+    "anchor": [
+     149,
+     322
+    ],
+    "align": "left",
+    "max": "Codes use A-Z and 2-9, never I, O, 0 or 1.",
+    "max_chars": 42,
+    "max_width_1x": 342,
+    "colour": "muted",
+    "joint": "room_panel"
+   }
+  ],
+  "rules": [
+   "Y (or Ctrl+V) pastes: the clipboard's first 4 alphabet characters (case-folded, spaces and dashes dropped) fill the slots, code_paste plays, the caret goes to the end. Anything else: kit bump on the field and the strip's 'no code' text.",
+   "A keyboard types straight into the active slot and moves right; Backspace clears the slot left of the caret and moves there."
+  ]
+ },
+ "status_strip": {
+  "template": "online_layout.json status_strip",
+  "rect": [
+   90,
+   358,
+   596,
+   388
+  ],
+  "examples": {
+   "idle": "Enter the code, then press A to join.",
+   "joining": "Joining room KQ7X...",
+   "failed": "No room KQ7X. Check the code with your host.",
+   "no_code": "The clipboard doesn't hold a room code."
+  }
+ },
+ "slots_engine_fills": {
+  "char": "per slot, when filled: one character of ABCDEFGHJKLMNPQRSTUVWXYZ23456789",
+  "slot_state": "per slot: empty / filled / active_empty / active_filled / invalid",
+  "field_state": "ng / editing / invalid / joining",
+  "arrows_state": "ng (active slot) / blocked (never: the alphabet wraps) / hidden (while joining)",
+  "status": "online status strip text"
+ },
+ "rules": [
+  "Left/right (d-pad or arrow keys) move the active slot; it stops at the ends with kit bump. A joins when all 4 slots are filled; with gaps, A moves the caret to the first empty slot (kit bump on it).",
+  "Invalid (the server has no such room, or the code is malformed): every filled slot takes 'invalid', the field accent turns danger, code_invalid shakes the field, the strip shows 'failed'. The first edit clears it.",
+  "The four cell rects equal the waiting room's, so the code a guest types sits exactly where the host's plate shows it."
+ ],
+ "textures": [
+  {
+   "name": "ico_keyboard",
+   "file_2x": "out_lobby/2x/ico_keyboard.png",
+   "file_1x": "out_lobby/1x/ico_keyboard.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_warning",
+   "file_2x": "out_online/2x/ico_warning.png",
+   "file_1x": "out_online/1x/ico_warning.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  }
+ ]
+}

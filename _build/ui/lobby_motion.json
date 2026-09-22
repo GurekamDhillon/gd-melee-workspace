@@ -1,0 +1,2696 @@
+{
+ "fps": 60,
+ "format": "hub_motion.json: tracks, from_current, interpolation and transform rules are identical; see out_kit/kit_motion.json. 'loop' as in out_online/online_motion.json",
+ "space": "unsheared - applied before the screen shear",
+ "value_expressions": "dir; <p>, <i>, <new>, <old>, <winner> name instances; colours are kit tokens; <...> values come from the layout's state tables",
+ "extension": "'loop' as in online_motion.json (badge_pips)",
+ "events": {
+  "phase_change": {
+   "applies_to": "phase banner, on any phase or instruction change",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_value_change"
+    }
+   ],
+   "note": "old text on phase_title_out, new on phase_title",
+   "tracks": [
+    {
+     "target": "phase_title_out",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": -12,
+       "interp": "SPL",
+       "slope": 0
+      }
+     ]
+    },
+    {
+     "target": "phase_title_out",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "phase_title",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 14,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": -1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "phase_title",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "banner_accent",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "banner_accent",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "bone",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": "<phase accent>",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 11
+  },
+  "badge_set": {
+   "applies_to": "a card's status badge changes (PICKING -> LOCKED IN etc.)",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_toggle"
+    }
+   ],
+   "pivot": "badge centre",
+   "tracks": [
+    {
+     "target": "card_badge_<p>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.6,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1.15,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_badge_<p>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.6,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1.15,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 10
+  },
+  "badge_pips": {
+   "applies_to": "PICKING badge pips and the ready_wait pips (same keys as online activity_loop, 6 px pitch)",
+   "loop": {
+    "from_frame": 0,
+    "to_frame": 36
+   },
+   "tracks": [
+    {
+     "target": "badge_pip_0",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1.0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 2,
+       "value": 1.0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": 1.0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 18,
+       "value": 0.3,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 36,
+       "value": 0.3,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "badge_pip_1",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.3,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": 0.3,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 14,
+       "value": 1.0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 24,
+       "value": 1.0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 30,
+       "value": 0.3,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 36,
+       "value": 0.3,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "badge_pip_2",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.3,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 24,
+       "value": 0.3,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 26,
+       "value": 1.0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 36,
+       "value": 1.0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 42,
+       "value": 0.3,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 36,
+       "value": 0.3,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 43
+  },
+  "card_reveal": {
+   "applies_to": "both cards when both players have locked in (blind pick)",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_value_change"
+    },
+    {
+     "frame": 7,
+     "cue": "sfx_reveal"
+    }
+   ],
+   "pivot": "portrait centre",
+   "note": "portrait state switches hidden -> shown at frame 7 (edge-on); P2 starts 4 frames after P1",
+   "tracks": [
+    {
+     "target": "card_portrait_<p>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0
+      },
+      {
+       "frame": 7,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": 1.12,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 16,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_portrait_<p>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": 1.08,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 16,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_<p>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 14,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_face_<p>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 7,
+       "value": "gold_lt",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 18,
+       "value": "@face",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 19
+  },
+  "turn_handoff": {
+   "applies_to": "turn passes: arrow flips, the new card lifts, the old drops, the action plate swaps words",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_turn"
+    }
+   ],
+   "note": "dir = +1 when P2 gets the turn, -1 for P1 (the arrow's SCA_X runs through 0 and lands on 1 with the new UV)",
+   "tracks": [
+    {
+     "target": "turn_arrow",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1.25,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "turn_arrow",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 4,
+       "value": "-6*dir",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_<new>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_<new>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_<old>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_<old>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_outline_<new>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "ink",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": "gold",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_outline_<old>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "gold",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": "ink",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "action_text",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "14*dir",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": "-1*dir",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "action_text",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "action_plate",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "<old face>",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": "<new face>",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 13
+  },
+  "tile_hover": {
+   "applies_to": "stage tile under this machine's cursor",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_cursor_move"
+    }
+   ],
+   "tracks": [
+    {
+     "target": "tile_<i>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_<i>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_plate_<i>",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_face_<i>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "@face",
+       "interp": "LIN",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 1,
+       "value": "gold_lt",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": "gold",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 10
+  },
+  "tile_unhover": {
+   "applies_to": "stage tile the cursor left",
+   "sfx": [],
+   "tracks": [
+    {
+     "target": "tile_<i>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_<i>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_plate_<i>",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_face_<i>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "gold",
+       "interp": "LIN",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 2,
+       "value": "@face",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 6
+  },
+  "tile_hover_remote": {
+   "applies_to": "the opponent's cursor moves (their turn): outline + tab in their colour",
+   "sfx": [],
+   "tracks": [
+    {
+     "target": "tile_outline_<i>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "ink",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": "port:<p>",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_tab_<i>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 6,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 6
+  },
+  "strike_stamp": {
+   "applies_to": "a tile is struck: the mark stamps down, the tile thumps, the tab pops",
+   "sfx": [
+    {
+     "frame": 3,
+     "cue": "sfx_strike"
+    }
+   ],
+   "pivot": "mark centre (tile centre for tile_<i>)",
+   "note": "the tile drops its hover lift at frame 0 (tile_unhover's position keys)",
+   "tracks": [
+    {
+     "target": "tile_mark_<i>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1.7,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 0.92,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_mark_<i>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1.7,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 0.92,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_mark_<i>",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_<i>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 3,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_face_<i>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "<from>",
+       "interp": "LIN",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 3,
+       "value": "ink",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_tab_<i>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1.2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 11,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_tab_<i>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1.2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 11,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 12
+  },
+  "ban_lock": {
+   "applies_to": "a tile is banned: the padlock drops in and snaps shut",
+   "sfx": [
+    {
+     "frame": 6,
+     "cue": "sfx_lock"
+    }
+   ],
+   "pivot": "mark bottom",
+   "tracks": [
+    {
+     "target": "tile_mark_<i>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": -14,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0
+      }
+     ]
+    },
+    {
+     "target": "tile_mark_<i>",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_mark_<i>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 0.86,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_mark_<i>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1.08,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_face_<i>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "<from>",
+       "interp": "LIN",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 6,
+       "value": "ink",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_tab_<i>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 1.2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_tab_<i>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 1.2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 13
+  },
+  "pick_confirm": {
+   "applies_to": "the stage is decided (last one standing, or the counterpick)",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_menu_confirm"
+    }
+   ],
+   "pivot": "tile centre",
+   "note": "the other tiles still 'available' switch to 'unavailable' at frame 4",
+   "tracks": [
+    {
+     "target": "tile_<i>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1.07,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_<i>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1.07,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_face_<i>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "gold_lt",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": "gold",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_tab_<i>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1.2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 11,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_tab_<i>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1.2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 11,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_<i>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "tile_<i>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 12
+  },
+  "ready_toggle": {
+   "applies_to": "READY button pressed (dir +1) or cancelled with B (dir -1)",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_toggle"
+    }
+   ],
+   "pivot": "plate centre",
+   "tracks": [
+    {
+     "target": "action_plate",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1.07,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "action_plate",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1.07,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "action_face",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "gold_lt",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": "<new face>",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "action_plate",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "action_plate",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 10
+  },
+  "coin_flip": {
+   "applies_to": "coin badge, game 1 stage phase start",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_coin"
+    },
+    {
+     "frame": 48,
+     "cue": "sfx_land"
+    }
+   ],
+   "pivot": "coin centre",
+   "note": "SCA_X runs 1 -> 0 -> -1 -> 0 -> 1 ...; each time it passes 0 the coin swaps label (P1/P2) and colour (spinning = gold). It passes 0 an even number of times (6), so START it on the winner's face and it lands there; coin_text fades in after.",
+   "tracks": [
+    {
+     "target": "coin",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": -1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 15,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 18,
+       "value": -1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 22,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 26,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 31,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 36,
+       "value": -1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 42,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 48,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 52,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "coin",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": -28,
+       "interp": "SPL",
+       "slope": 0
+      },
+      {
+       "frame": 24,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 44,
+       "value": -5,
+       "interp": "SPL",
+       "slope": 0
+      },
+      {
+       "frame": 48,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 52,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "coin_text",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 50,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 56,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "coin_text",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 50,
+       "value": 12,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 58,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 59
+  },
+  "coin_badge_in": {
+   "applies_to": "coin badge appears",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_dialog_open"
+    }
+   ],
+   "pivot": "badge centre",
+   "tracks": [
+    {
+     "target": "coin_dim",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0.45,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "coin_badge",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.9,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 1.02,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "coin_badge",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.9,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 1.02,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "coin_badge",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 10
+  },
+  "coin_badge_out": {
+   "applies_to": "coin badge leaves (then turn_handoff to the winner)",
+   "sfx": [],
+   "tracks": [
+    {
+     "target": "coin_dim",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.45,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "coin_badge",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "coin_badge",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 0.94,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "coin_badge",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 0.94,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 7
+  },
+  "countdown_in": {
+   "applies_to": "both ready",
+   "sfx": [],
+   "tracks": [
+    {
+     "target": "countdown_dim",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 0.55,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "countdown_slab",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.6,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1.06,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "countdown_slab",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.6,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1.06,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "countdown_strip",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 40,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": -2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 11,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "countdown_strip",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 12
+  },
+  "countdown_tick": {
+   "applies_to": "each numeral 3, 2, 1 (60 frames each)",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_tick"
+    }
+   ],
+   "pivot": "numeral centre",
+   "tracks": [
+    {
+     "target": "countdown_numeral",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1.5,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0.94,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "countdown_numeral",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1.5,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0.94,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "countdown_numeral",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 50,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 59,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "countdown_slab",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1.08,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "countdown_slab",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1.08,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 60
+  },
+  "countdown_out": {
+   "applies_to": "cancelled (either B) or the match loads",
+   "sfx": [],
+   "tracks": [
+    {
+     "target": "countdown_dim",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.55,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "countdown_slab",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "countdown_strip",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 7
+  },
+  "score_update": {
+   "applies_to": "set score after a game",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_value_change"
+    }
+   ],
+   "pivot": "score centre",
+   "tracks": [
+    {
+     "target": "set_score",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1.4,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0.95,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "set_score",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1.4,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0.95,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "set_score",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "gold_lt",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 20,
+       "value": "bone",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 21
+  },
+  "game_advance": {
+   "applies_to": "header GAME counter after a match; crown moves to the winner",
+   "sfx": [],
+   "note": "the chrome title draws the old string on title_out",
+   "tracks": [
+    {
+     "target": "title_out",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": -8,
+       "interp": "SPL",
+       "slope": 0
+      }
+     ]
+    },
+    {
+     "target": "title_out",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "title",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 8,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": -1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "title",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_crown_<winner>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1.3,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_crown_<winner>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1.3,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 11
+  }
+ },
+ "sequences": {
+  "blind_lock": [
+   {
+    "event": "badge_set",
+    "on": "the player who locked",
+    "badge": "locked"
+   }
+  ],
+  "reveal": [
+   {
+    "event": "card_reveal",
+    "on": "p1"
+   },
+   {
+    "event": "card_reveal",
+    "on": "p2",
+    "at_frame": 4
+   },
+   {
+    "event": "phase_change",
+    "at_frame": 30,
+    "phase": "stage"
+   }
+  ],
+  "stage_phase_game1": [
+   {
+    "event": "coin_badge_in"
+   },
+   {
+    "event": "coin_flip",
+    "at_frame": 10
+   },
+   {
+    "hold_frames": 60
+   },
+   {
+    "event": "coin_badge_out"
+   },
+   {
+    "event": "turn_handoff",
+    "on": "coin winner"
+   }
+  ],
+  "strike": [
+   {
+    "event": "strike_stamp",
+    "on": "tile"
+   },
+   {
+    "event": "turn_handoff",
+    "when": "the striker's quota is done"
+   },
+   {
+    "event": "pick_confirm",
+    "when": "one tile is left"
+   }
+  ],
+  "ban": [
+   {
+    "event": "ban_lock"
+   },
+   {
+    "event": "turn_handoff",
+    "when": "2 bans done"
+   }
+  ],
+  "counterpick": [
+   {
+    "event": "pick_confirm"
+   },
+   {
+    "event": "phase_change",
+    "phase": "character"
+   }
+  ],
+  "ready": [
+   {
+    "event": "ready_toggle",
+    "dir": 1
+   },
+   {
+    "event": "badge_set",
+    "badge": "ready"
+   }
+  ],
+  "both_ready": [
+   {
+    "event": "countdown_in"
+   },
+   {
+    "event": "countdown_tick",
+    "numeral": "3"
+   },
+   {
+    "event": "countdown_tick",
+    "numeral": "2",
+    "at_frame": 60
+   },
+   {
+    "event": "countdown_tick",
+    "numeral": "1",
+    "at_frame": 120
+   },
+   {
+    "note": "frame 180: the match"
+   }
+  ],
+  "after_match": [
+   {
+    "event": "game_advance"
+   },
+   {
+    "event": "score_update"
+   },
+   {
+    "event": "phase_change",
+    "phase": "stage (counterpick)"
+   }
+  ]
+ }
+}

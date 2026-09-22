@@ -1,0 +1,4474 @@
+{
+ "name": "lobby",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "section": "versus",
+ "element_format": "see pipeline/lobby.py docstring: <axis.key> lookups and 'when'",
+ "chrome": {
+  "template": "chrome_layout.json",
+  "title_slot": "the GAME counter: strings 'GAME %d' (title role; the slab follows its width)",
+  "title_max": "GAME 5",
+  "crumbs": [
+   "VERSUS",
+   "ONLINE PLAY",
+   "ROOM KQ7X"
+  ],
+  "crumb_icon": "ico_versus",
+  "hints": [
+   [
+    "a",
+    "Strike"
+   ],
+   [
+    "b",
+    "Back"
+   ],
+   [
+    "start",
+    "Ready"
+   ],
+   [
+    "dpad",
+    "Move"
+   ]
+  ],
+  "hints_by_phase": {
+   "character": [
+    [
+     "a",
+     "Pick"
+    ],
+    [
+     "b",
+     "Leave"
+    ]
+   ],
+   "stage_strike": [
+    [
+     "a",
+     "Strike"
+    ],
+    [
+     "dpad",
+     "Move"
+    ],
+    [
+     "b",
+     "Leave"
+    ]
+   ],
+   "stage_ban": [
+    [
+     "a",
+     "Ban"
+    ],
+    [
+     "dpad",
+     "Move"
+    ],
+    [
+     "b",
+     "Leave"
+    ]
+   ],
+   "stage_pick": [
+    [
+     "a",
+     "Pick"
+    ],
+    [
+     "dpad",
+     "Move"
+    ],
+    [
+     "b",
+     "Leave"
+    ]
+   ],
+   "ready": [
+    [
+     "start",
+     "Ready"
+    ],
+    [
+     "b",
+     "Leave"
+    ]
+   ]
+  },
+  "description": "replaced by lobby_status (same rect)"
+ },
+ "score_plaque": {
+  "id": "score_plaque",
+  "rect": [
+   446,
+   24,
+   550,
+   52
+  ],
+  "quads": [
+   {
+    "id": "plaque",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      446,
+      24
+     ],
+     [
+      550,
+      24
+     ],
+     [
+      550,
+      52
+     ],
+     [
+      446,
+      52
+     ]
+    ],
+    "colour": "ink",
+    "joint": "score_plaque"
+   }
+  ],
+  "slots": [
+   {
+    "id": "set_label",
+    "kind": "text",
+    "role": "caption",
+    "anchor": [
+     456,
+     41.96
+    ],
+    "align": "left",
+    "max": "SET",
+    "max_chars": 3,
+    "max_width_1x": 19.92,
+    "colour": "muted",
+    "joint": "score_plaque",
+    "note": "strings 'SET'"
+   },
+   {
+    "id": "set_score",
+    "kind": "text",
+    "role": "title",
+    "anchor": [
+     540,
+     45.92
+    ],
+    "align": "right",
+    "max": "2 - 1",
+    "max_chars": 5,
+    "max_width_1x": 58,
+    "colour": "bone",
+    "joint": "set_score",
+    "note": "'<P1 wins> - <P2 wins>', P1 always left like the cards; tabular digits"
+   }
+  ]
+ },
+ "phase_banner": {
+  "id": "phase_banner",
+  "rect": [
+   88,
+   80,
+   392,
+   126
+  ],
+  "quads": [
+   {
+    "id": "banner_plate",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      88,
+      80
+     ],
+     [
+      392,
+      80
+     ],
+     [
+      392,
+      126
+     ],
+     [
+      88,
+      126
+     ]
+    ],
+    "colour": "ink",
+    "joint": "phase_banner"
+   },
+   {
+    "id": "banner_accent",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      88,
+      80
+     ],
+     [
+      94,
+      80
+     ],
+     [
+      94,
+      126
+     ],
+     [
+      88,
+      126
+     ]
+    ],
+    "colour": "<phase.accent>",
+    "joint": "phase_banner"
+   }
+  ],
+  "slots": [
+   {
+    "id": "phase_title",
+    "kind": "text",
+    "role": "title",
+    "anchor": [
+     106,
+     102
+    ],
+    "align": "left",
+    "max": "CHARACTER PICK",
+    "max_chars": 14,
+    "max_width_1x": 274,
+    "colour": "bone",
+    "joint": "phase_title",
+    "note": "strings: CHARACTER PICK / STAGE STRIKING / COUNTERPICK / READY CHECK"
+   },
+   {
+    "id": "instruction",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     106,
+     119
+    ],
+    "align": "left",
+    "max": "Pick on the character screen - kept hidden.",
+    "max_chars": 43,
+    "max_width_1x": 274,
+    "colour": "muted",
+    "joint": "phase_title",
+    "note": "e.g. 'P1 strikes 1 stage', 'Counterpick: P2 bans 2', 'Both ready?'"
+   }
+  ],
+  "states": {
+   "phase": {
+    "character": {
+     "accent": "@face_hi"
+    },
+    "stage": {
+     "accent": "gold"
+    },
+    "ready": {
+     "accent": "ok"
+    }
+   }
+  },
+  "contrast_pairs": [
+   [
+    "bone",
+    "ink"
+   ],
+   [
+    "muted",
+    "ink"
+   ]
+  ]
+ },
+ "action_plate": {
+  "id": "action_plate",
+  "rect": [
+   400,
+   80,
+   556,
+   126
+  ],
+  "lift_joint": "action_plate",
+  "lift_joints": [
+   "action_plate",
+   "action_text"
+  ],
+  "quads": [
+   {
+    "id": "action_plate_dk",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      397,
+      77
+     ],
+     [
+      559,
+      77
+     ],
+     [
+      559,
+      129
+     ],
+     [
+      397,
+      129
+     ]
+    ],
+    "colour": "<action.plate>",
+    "joint": "action_plate_rest",
+    "when": {
+     "action": [
+      "your_turn",
+      "ready_on",
+      "ready_both"
+     ]
+    }
+   },
+   {
+    "id": "action_outline",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      397,
+      77
+     ],
+     [
+      559,
+      77
+     ],
+     [
+      559,
+      129
+     ],
+     [
+      397,
+      129
+     ]
+    ],
+    "colour": "ink",
+    "joint": "action_plate"
+   },
+   {
+    "id": "action_face",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      400,
+      80
+     ],
+     [
+      556,
+      80
+     ],
+     [
+      556,
+      126
+     ],
+     [
+      400,
+      126
+     ]
+    ],
+    "colour": "<action.face>",
+    "joint": "action_plate"
+   },
+   {
+    "id": "action_icon",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      "group rule",
+      95.0
+     ],
+     [
+      "group rule",
+      95.0
+     ],
+     [
+      "group rule",
+      111.0
+     ],
+     [
+      "group rule",
+      111.0
+     ]
+    ],
+    "colour": "<action.icon_colour>",
+    "texture": "<action.icon>",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "action_plate",
+    "when": {
+     "action": [
+      "ready_off",
+      "ready_on",
+      "ready_both"
+     ]
+    }
+   }
+  ],
+  "slots": [
+   {
+    "id": "action_text",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     478.0,
+     108.28
+    ],
+    "align": "centre",
+    "max": "OPPONENT'S TURN",
+    "max_chars": 15,
+    "max_width_1x": 144,
+    "colour": "<action.text>",
+    "joint": "action_text",
+    "note": "action.string from strings; with an icon, icon + 6 + text are centred as one group"
+   }
+  ],
+  "states": {
+   "action": {
+    "your_turn": {
+     "face": "gold",
+     "plate": "gold_dk",
+     "text": "ink",
+     "icon": null,
+     "offset": [
+      -3,
+      -3
+     ],
+     "string": "YOUR TURN"
+    },
+    "their_turn": {
+     "face": "@face",
+     "text": "bone",
+     "icon": null,
+     "string": "OPPONENT'S TURN"
+    },
+    "ready_off": {
+     "face": "@face",
+     "text": "bone",
+     "icon": "glyph_start",
+     "icon_colour": "bone",
+     "icon_w": 32,
+     "string": "READY",
+     "note": "press START (or A) to ready up"
+    },
+    "ready_on": {
+     "face": "ok",
+     "plate": "ink",
+     "text": "ink",
+     "icon": "ico_pick",
+     "icon_colour": "ink",
+     "icon_w": 16,
+     "offset": [
+      -3,
+      -3
+     ],
+     "string": "READY",
+     "note": "30 frames after the press, then ready_wait (or ready_both)"
+    },
+    "ready_wait": {
+     "face": "ok",
+     "text": "ink",
+     "icon": "pips",
+     "icon_colour": "ink",
+     "icon_w": 16,
+     "string": "WAITING",
+     "note": "you are ready, the opponent is not"
+    },
+    "ready_both": {
+     "face": "gold",
+     "plate": "gold_dk",
+     "text": "ink",
+     "icon": "ico_pick",
+     "icon_colour": "ink",
+     "icon_w": 16,
+     "offset": [
+      -3,
+      -3
+     ],
+     "string": "GO!",
+     "note": "both ready: holds while the countdown runs"
+    }
+   }
+  },
+  "rules": [
+   "One rect, two jobs: the TURN indicator during pick/strike/ban phases (your_turn / their_turn) and the READY button in the ready phase (ready_off / ready_on / ready_wait / ready_both). It always says what is needed from this player now.",
+   "ready_wait shows 3 ink pips (lobby badge_pips) in the icon's place."
+  ],
+  "contrast_pairs": [
+   [
+    "action.text",
+    "action.face"
+   ],
+   [
+    "action.icon_colour",
+    "action.face",
+    "graphic"
+   ]
+  ]
+ },
+ "cards": [
+  {
+   "id": "card_p1",
+   "port": "p1",
+   "origin": [
+    88,
+    134
+   ],
+   "size": [
+    220,
+    72
+   ],
+   "lift_joint": "card_p1",
+   "lift_joints": [
+    "card_p1",
+    "card_portrait_p1",
+    "card_badge_p1",
+    "card_crown_p1"
+   ],
+   "quads": [
+    {
+     "id": "card_plate",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       -3,
+       -3
+      ],
+      [
+       223,
+       -3
+      ],
+      [
+       223,
+       75
+      ],
+      [
+       -3,
+       75
+      ]
+     ],
+     "colour": "<turn.plate>",
+     "joint": "card_plate_p1",
+     "when": {
+      "turn": [
+       "active"
+      ]
+     }
+    },
+    {
+     "id": "card_outline",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       -3,
+       -3
+      ],
+      [
+       223,
+       -3
+      ],
+      [
+       223,
+       75
+      ],
+      [
+       -3,
+       75
+      ]
+     ],
+     "colour": "<turn.outline>",
+     "joint": "card_p1"
+    },
+    {
+     "id": "card_face",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       220,
+       0
+      ],
+      [
+       220,
+       72
+      ],
+      [
+       0,
+       72
+      ]
+     ],
+     "colour": "@face",
+     "joint": "card_p1"
+    },
+    {
+     "id": "port_stripe",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       6,
+       0
+      ],
+      [
+       6,
+       72
+      ],
+      [
+       0,
+       72
+      ]
+     ],
+     "colour": "port:p1",
+     "joint": "card_p1"
+    },
+    {
+     "id": "portrait_frame",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       10,
+       6
+      ],
+      [
+       78,
+       6
+      ],
+      [
+       78,
+       66
+      ],
+      [
+       10,
+       66
+      ]
+     ],
+     "colour": "ink",
+     "joint": "card_p1"
+    },
+    {
+     "id": "portrait_empty",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       12,
+       8
+      ],
+      [
+       76,
+       8
+      ],
+      [
+       76,
+       64
+      ],
+      [
+       12,
+       64
+      ]
+     ],
+     "colour": "@bg",
+     "joint": "card_portrait_p1",
+     "when": {
+      "portrait": [
+       "empty"
+      ]
+     }
+    },
+    {
+     "id": "portrait_art",
+     "kind": "disc_art",
+     "role": "chrome",
+     "verts": [
+      [
+       12,
+       8
+      ],
+      [
+       76,
+       8
+      ],
+      [
+       76,
+       64
+      ],
+      [
+       12,
+       64
+      ]
+     ],
+     "colour": "#ffffff",
+     "joint": "card_portrait_p1",
+     "when": {
+      "portrait": [
+       "shown"
+      ]
+     },
+     "size_1x": [
+      64,
+      56
+     ],
+     "note": "the engine's captured 64x56 CSS icon of the fighter"
+    },
+    {
+     "id": "port_tab",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       90,
+       8
+      ],
+      [
+       114,
+       8
+      ],
+      [
+       114,
+       22
+      ],
+      [
+       90,
+       22
+      ]
+     ],
+     "colour": "port:p1",
+     "joint": "card_p1"
+    },
+    {
+     "id": "crown",
+     "kind": "textured",
+     "role": "chrome",
+     "verts": [
+      [
+       118,
+       7
+      ],
+      [
+       134,
+       7
+      ],
+      [
+       134,
+       23
+      ],
+      [
+       118,
+       23
+      ]
+     ],
+     "colour": "gold",
+     "texture": "ico_crown",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "card_crown_p1",
+     "when": {
+      "crown": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "badge",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       "x per rule",
+       47
+      ],
+      [
+       "x per rule",
+       47
+      ],
+      [
+       "x per rule",
+       65
+      ],
+      [
+       "x per rule",
+       65
+      ]
+     ],
+     "colour": "<badge.block>",
+     "joint": "card_badge_p1",
+     "when": {
+      "badge": [
+       "waiting",
+       "picking",
+       "locked",
+       "ready"
+      ]
+     }
+    },
+    {
+     "id": "badge_icon",
+     "kind": "textured",
+     "role": "chrome",
+     "verts": [
+      [
+       95,
+       50
+      ],
+      [
+       107,
+       50
+      ],
+      [
+       107,
+       62
+      ],
+      [
+       95,
+       62
+      ]
+     ],
+     "colour": "<badge.icon_colour>",
+     "texture": "<badge.icon>",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "card_badge_p1",
+     "when": {
+      "badge": [
+       "waiting",
+       "locked",
+       "ready"
+      ]
+     }
+    },
+    {
+     "id": "badge_pip_0",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       95,
+       53
+      ],
+      [
+       98.5,
+       53
+      ],
+      [
+       98.5,
+       59
+      ],
+      [
+       95,
+       59
+      ]
+     ],
+     "colour": "<badge.icon_colour>",
+     "joint": "card_badge_p1",
+     "when": {
+      "badge": [
+       "picking"
+      ]
+     }
+    },
+    {
+     "id": "badge_pip_1",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       100,
+       53
+      ],
+      [
+       103.5,
+       53
+      ],
+      [
+       103.5,
+       59
+      ],
+      [
+       100,
+       59
+      ]
+     ],
+     "colour": "<badge.icon_colour>",
+     "joint": "card_badge_p1",
+     "when": {
+      "badge": [
+       "picking"
+      ]
+     }
+    },
+    {
+     "id": "badge_pip_2",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       105,
+       53
+      ],
+      [
+       108.5,
+       53
+      ],
+      [
+       108.5,
+       59
+      ],
+      [
+       105,
+       59
+      ]
+     ],
+     "colour": "<badge.icon_colour>",
+     "joint": "card_badge_p1",
+     "when": {
+      "badge": [
+       "picking"
+      ]
+     }
+    }
+   ],
+   "slots": [
+    {
+     "id": "port_label",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      102,
+      18.96
+     ],
+     "align": "centre",
+     "max": "P2",
+     "max_chars": 2,
+     "max_width_1x": 22,
+     "colour": "ink",
+     "joint": "card_p1",
+     "note": "strings 'P1' / 'P2'"
+    },
+    {
+     "id": "you_tag",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      138,
+      18.96
+     ],
+     "align": "left",
+     "max": "YOU",
+     "max_chars": 3,
+     "max_width_1x": 74,
+     "colour": "muted",
+     "joint": "card_p1",
+     "note": "strings 'YOU' on this machine's card only",
+     "when": {
+      "you": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "hidden_mark",
+     "kind": "text",
+     "role": "heading",
+     "anchor": [
+      44,
+      46.56
+     ],
+     "align": "centre",
+     "max": "?",
+     "max_chars": 1,
+     "max_width_1x": 15.3,
+     "colour": "@face_hi",
+     "joint": "card_portrait_p1",
+     "note": "the blind-pick placeholder, drawn on ink",
+     "when": {
+      "portrait": [
+       "hidden"
+      ]
+     }
+    },
+    {
+     "id": "name",
+     "kind": "text",
+     "role": "body",
+     "anchor": [
+      90,
+      37.62
+     ],
+     "align": "left",
+     "max": "Captain Falcon Alt 2",
+     "max_chars": 20,
+     "max_width_1x": 122,
+     "colour": "bone",
+     "joint": "card_p1",
+     "note": "player name, max 20 characters; fit rule body -> caption -> '…'"
+    },
+    {
+     "id": "badge_text",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      111,
+      59.96
+     ],
+     "align": "left",
+     "max": "LOCKED IN",
+     "max_chars": 9,
+     "max_width_1x": 56.53,
+     "colour": "<badge.text>",
+     "joint": "card_badge_p1",
+     "note": "strings: WAITING / PICKING / LOCKED IN / READY",
+     "when": {
+      "badge": [
+       "waiting",
+       "picking",
+       "locked",
+       "ready"
+      ]
+     }
+    }
+   ],
+   "badge_rule": "badge rect: x from the text column edge (left = 90) over 5 + 12 (icon or pips) + 4 + advance(badge_text) + 6; widest (LOCKED IN) = 83.5",
+   "states": {
+    "turn": {
+     "active": {
+      "outline": "gold",
+      "plate": "gold_dk",
+      "offset": [
+       -3,
+       -3
+      ],
+      "note": "whose turn it is: gold outline, lifted"
+     },
+     "idle": {
+      "outline": "ink"
+     }
+    },
+    "portrait": {
+     "empty": {
+      "note": "no fighter yet: the frame over @bg"
+     },
+     "hidden": {
+      "note": "blind pick, locked: ink + '?', until the reveal"
+     },
+     "shown": {
+      "note": "the disc art"
+     }
+    },
+    "badge": {
+     "waiting": {
+      "block": "ink",
+      "text": "muted",
+      "icon": "ico_wait",
+      "icon_colour": "muted"
+     },
+     "picking": {
+      "block": "ink",
+      "text": "gold_lt",
+      "icon": null,
+      "icon_colour": "gold",
+      "note": "3 pips run lobby badge_pips"
+     },
+     "locked": {
+      "block": "bone",
+      "text": "ink",
+      "icon": "ico_lock",
+      "icon_colour": "ink"
+     },
+     "ready": {
+      "block": "ok",
+      "text": "ink",
+      "icon": "ico_pick",
+      "icon_colour": "ink"
+     },
+     "none": {
+      "note": "no badge (stage phases)"
+     }
+    },
+    "crown": {
+     "yes": {},
+     "no": {}
+    },
+    "you": {
+     "yes": {},
+     "no": {}
+    }
+   },
+   "contrast_pairs": [
+    [
+     "badge.text",
+     "badge.block"
+    ],
+    [
+     "badge.icon_colour",
+     "badge.block",
+     "graphic"
+    ]
+   ]
+  },
+  {
+   "id": "card_p2",
+   "port": "p2",
+   "origin": [
+    336,
+    134
+   ],
+   "size": [
+    220,
+    72
+   ],
+   "lift_joint": "card_p2",
+   "lift_joints": [
+    "card_p2",
+    "card_portrait_p2",
+    "card_badge_p2",
+    "card_crown_p2"
+   ],
+   "quads": [
+    {
+     "id": "card_plate",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       -3,
+       -3
+      ],
+      [
+       223,
+       -3
+      ],
+      [
+       223,
+       75
+      ],
+      [
+       -3,
+       75
+      ]
+     ],
+     "colour": "<turn.plate>",
+     "joint": "card_plate_p2",
+     "when": {
+      "turn": [
+       "active"
+      ]
+     }
+    },
+    {
+     "id": "card_outline",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       -3,
+       -3
+      ],
+      [
+       223,
+       -3
+      ],
+      [
+       223,
+       75
+      ],
+      [
+       -3,
+       75
+      ]
+     ],
+     "colour": "<turn.outline>",
+     "joint": "card_p2"
+    },
+    {
+     "id": "card_face",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       220,
+       0
+      ],
+      [
+       220,
+       72
+      ],
+      [
+       0,
+       72
+      ]
+     ],
+     "colour": "@face",
+     "joint": "card_p2"
+    },
+    {
+     "id": "port_stripe",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       214,
+       0
+      ],
+      [
+       220,
+       0
+      ],
+      [
+       220,
+       72
+      ],
+      [
+       214,
+       72
+      ]
+     ],
+     "colour": "port:p2",
+     "joint": "card_p2"
+    },
+    {
+     "id": "portrait_frame",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       142,
+       6
+      ],
+      [
+       210,
+       6
+      ],
+      [
+       210,
+       66
+      ],
+      [
+       142,
+       66
+      ]
+     ],
+     "colour": "ink",
+     "joint": "card_p2"
+    },
+    {
+     "id": "portrait_empty",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       144,
+       8
+      ],
+      [
+       208,
+       8
+      ],
+      [
+       208,
+       64
+      ],
+      [
+       144,
+       64
+      ]
+     ],
+     "colour": "@bg",
+     "joint": "card_portrait_p2",
+     "when": {
+      "portrait": [
+       "empty"
+      ]
+     }
+    },
+    {
+     "id": "portrait_art",
+     "kind": "disc_art",
+     "role": "chrome",
+     "verts": [
+      [
+       144,
+       8
+      ],
+      [
+       208,
+       8
+      ],
+      [
+       208,
+       64
+      ],
+      [
+       144,
+       64
+      ]
+     ],
+     "colour": "#ffffff",
+     "joint": "card_portrait_p2",
+     "when": {
+      "portrait": [
+       "shown"
+      ]
+     },
+     "size_1x": [
+      64,
+      56
+     ],
+     "note": "the engine's captured 64x56 CSS icon of the fighter"
+    },
+    {
+     "id": "port_tab",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       106,
+       8
+      ],
+      [
+       130,
+       8
+      ],
+      [
+       130,
+       22
+      ],
+      [
+       106,
+       22
+      ]
+     ],
+     "colour": "port:p2",
+     "joint": "card_p2"
+    },
+    {
+     "id": "crown",
+     "kind": "textured",
+     "role": "chrome",
+     "verts": [
+      [
+       86,
+       7
+      ],
+      [
+       102,
+       7
+      ],
+      [
+       102,
+       23
+      ],
+      [
+       86,
+       23
+      ]
+     ],
+     "colour": "gold",
+     "texture": "ico_crown",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "card_crown_p2",
+     "when": {
+      "crown": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "badge",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       "x per rule",
+       47
+      ],
+      [
+       "x per rule",
+       47
+      ],
+      [
+       "x per rule",
+       65
+      ],
+      [
+       "x per rule",
+       65
+      ]
+     ],
+     "colour": "<badge.block>",
+     "joint": "card_badge_p2",
+     "when": {
+      "badge": [
+       "waiting",
+       "picking",
+       "locked",
+       "ready"
+      ]
+     }
+    },
+    {
+     "id": "badge_icon",
+     "kind": "textured",
+     "role": "chrome",
+     "verts": [
+      [
+       113,
+       50
+      ],
+      [
+       125,
+       50
+      ],
+      [
+       125,
+       62
+      ],
+      [
+       113,
+       62
+      ]
+     ],
+     "colour": "<badge.icon_colour>",
+     "texture": "<badge.icon>",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "card_badge_p2",
+     "when": {
+      "badge": [
+       "waiting",
+       "locked",
+       "ready"
+      ]
+     }
+    },
+    {
+     "id": "badge_pip_0",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       121.5,
+       53
+      ],
+      [
+       125,
+       53
+      ],
+      [
+       125,
+       59
+      ],
+      [
+       121.5,
+       59
+      ]
+     ],
+     "colour": "<badge.icon_colour>",
+     "joint": "card_badge_p2",
+     "when": {
+      "badge": [
+       "picking"
+      ]
+     }
+    },
+    {
+     "id": "badge_pip_1",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       116.5,
+       53
+      ],
+      [
+       120,
+       53
+      ],
+      [
+       120,
+       59
+      ],
+      [
+       116.5,
+       59
+      ]
+     ],
+     "colour": "<badge.icon_colour>",
+     "joint": "card_badge_p2",
+     "when": {
+      "badge": [
+       "picking"
+      ]
+     }
+    },
+    {
+     "id": "badge_pip_2",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       111.5,
+       53
+      ],
+      [
+       115,
+       53
+      ],
+      [
+       115,
+       59
+      ],
+      [
+       111.5,
+       59
+      ]
+     ],
+     "colour": "<badge.icon_colour>",
+     "joint": "card_badge_p2",
+     "when": {
+      "badge": [
+       "picking"
+      ]
+     }
+    }
+   ],
+   "slots": [
+    {
+     "id": "port_label",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      118,
+      18.96
+     ],
+     "align": "centre",
+     "max": "P2",
+     "max_chars": 2,
+     "max_width_1x": 22,
+     "colour": "ink",
+     "joint": "card_p2",
+     "note": "strings 'P1' / 'P2'"
+    },
+    {
+     "id": "you_tag",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      82,
+      18.96
+     ],
+     "align": "right",
+     "max": "YOU",
+     "max_chars": 3,
+     "max_width_1x": 74,
+     "colour": "muted",
+     "joint": "card_p2",
+     "note": "strings 'YOU' on this machine's card only",
+     "when": {
+      "you": [
+       "yes"
+      ]
+     }
+    },
+    {
+     "id": "hidden_mark",
+     "kind": "text",
+     "role": "heading",
+     "anchor": [
+      176,
+      46.56
+     ],
+     "align": "centre",
+     "max": "?",
+     "max_chars": 1,
+     "max_width_1x": 15.3,
+     "colour": "@face_hi",
+     "joint": "card_portrait_p2",
+     "note": "the blind-pick placeholder, drawn on ink",
+     "when": {
+      "portrait": [
+       "hidden"
+      ]
+     }
+    },
+    {
+     "id": "name",
+     "kind": "text",
+     "role": "body",
+     "anchor": [
+      130,
+      37.62
+     ],
+     "align": "right",
+     "max": "Captain Falcon Alt 2",
+     "max_chars": 20,
+     "max_width_1x": 122,
+     "colour": "bone",
+     "joint": "card_p2",
+     "note": "player name, max 20 characters; fit rule body -> caption -> '…'"
+    },
+    {
+     "id": "badge_text",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      109,
+      59.96
+     ],
+     "align": "right",
+     "max": "LOCKED IN",
+     "max_chars": 9,
+     "max_width_1x": 56.53,
+     "colour": "<badge.text>",
+     "joint": "card_badge_p2",
+     "note": "strings: WAITING / PICKING / LOCKED IN / READY",
+     "when": {
+      "badge": [
+       "waiting",
+       "picking",
+       "locked",
+       "ready"
+      ]
+     }
+    }
+   ],
+   "badge_rule": "badge rect: x from the text column edge (right = 130) over 5 + 12 (icon or pips) + 4 + advance(badge_text) + 6; widest (LOCKED IN) = 83.5",
+   "states": {
+    "turn": {
+     "active": {
+      "outline": "gold",
+      "plate": "gold_dk",
+      "offset": [
+       -3,
+       -3
+      ],
+      "note": "whose turn it is: gold outline, lifted"
+     },
+     "idle": {
+      "outline": "ink"
+     }
+    },
+    "portrait": {
+     "empty": {
+      "note": "no fighter yet: the frame over @bg"
+     },
+     "hidden": {
+      "note": "blind pick, locked: ink + '?', until the reveal"
+     },
+     "shown": {
+      "note": "the disc art"
+     }
+    },
+    "badge": {
+     "waiting": {
+      "block": "ink",
+      "text": "muted",
+      "icon": "ico_wait",
+      "icon_colour": "muted"
+     },
+     "picking": {
+      "block": "ink",
+      "text": "gold_lt",
+      "icon": null,
+      "icon_colour": "gold",
+      "note": "3 pips run lobby badge_pips"
+     },
+     "locked": {
+      "block": "bone",
+      "text": "ink",
+      "icon": "ico_lock",
+      "icon_colour": "ink"
+     },
+     "ready": {
+      "block": "ok",
+      "text": "ink",
+      "icon": "ico_pick",
+      "icon_colour": "ink"
+     },
+     "none": {
+      "note": "no badge (stage phases)"
+     }
+    },
+    "crown": {
+     "yes": {},
+     "no": {}
+    },
+    "you": {
+     "yes": {},
+     "no": {}
+    }
+   },
+   "contrast_pairs": [
+    [
+     "badge.text",
+     "badge.block"
+    ],
+    [
+     "badge.icon_colour",
+     "badge.block",
+     "graphic"
+    ]
+   ]
+  }
+ ],
+ "turn_arrow": {
+  "id": "turn_arrow",
+  "rect": [
+   310,
+   158.0,
+   334,
+   182.0
+  ],
+  "quads": [
+   {
+    "id": "turn_arrow",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      310,
+      158.0
+     ],
+     [
+      334,
+      158.0
+     ],
+     [
+      334,
+      182.0
+     ],
+     [
+      310,
+      182.0
+     ]
+    ],
+    "colour": "gold",
+    "texture": "ico_turn",
+    "uv": "<turn.uv>",
+    "joint": "turn_arrow",
+    "when": {
+     "turn": [
+      "p1",
+      "p2"
+     ]
+    }
+   }
+  ],
+  "states": {
+   "turn": {
+    "p1": {
+     "uv": [
+      1,
+      0,
+      0,
+      1
+     ],
+     "note": "points left, at P1"
+    },
+    "p2": {
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "note": "points right, at P2"
+    },
+    "none": {
+     "note": "hidden (both act: blind pick, ready)"
+    }
+   }
+  },
+  "rules": [
+   "Sits in the 28 px gap between the cards. With the active card's gold outline and lift, and the action plate's words, turn is never colour only."
+  ]
+ },
+ "stage_grid": {
+  "id": "stage_grid",
+  "rect": [
+   88,
+   214,
+   556,
+   394
+  ],
+  "columns": 3,
+  "rows": 2,
+  "tile": [
+   148,
+   86
+  ],
+  "gutter": [
+   12,
+   8
+  ],
+  "why_3x2": [
+   "Names fit on one line at body (14) in a 148 px tile - 6x1 tiles would be 68 px wide and every name would need 2 lines at caption.",
+   "Each tile keeps a full 64x56 image slot above its name.",
+   "The d-pad moves in 2D, 3 steps at most, and the 1-2-2 strike order reads across two short rows.",
+   "It fits between the cards and the status strip with the kit lift."
+  ],
+  "order": "row-major: Battlefield, Dream Land, Final Destination, Fountain of Dreams, Pokemon Stadium, Yoshi's Story",
+  "tiles": [
+   {
+    "id": "tile_0",
+    "index": 0,
+    "origin": [
+     88,
+     214
+    ],
+    "size": [
+     148,
+     86
+    ],
+    "lift_joint": "tile_0",
+    "lift_joints": [
+     "tile_0",
+     "tile_mark_0",
+     "tile_tab_0"
+    ],
+    "quads": [
+     {
+      "id": "tile_plate",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        -3,
+        -3
+       ],
+       [
+        151,
+        -3
+       ],
+       [
+        151,
+        89
+       ],
+       [
+        -3,
+        89
+       ]
+      ],
+      "colour": "<tile.plate>",
+      "joint": "tile_plate_0",
+      "when": {
+       "tile": [
+        "hovered",
+        "picked"
+       ]
+      }
+     },
+     {
+      "id": "tile_outline",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        -3,
+        -3
+       ],
+       [
+        151,
+        -3
+       ],
+       [
+        151,
+        89
+       ],
+       [
+        -3,
+        89
+       ]
+      ],
+      "colour": "<tile.outline>",
+      "joint": "tile_0"
+     },
+     {
+      "id": "tile_face",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        0,
+        0
+       ],
+       [
+        148,
+        0
+       ],
+       [
+        148,
+        86
+       ],
+       [
+        0,
+        86
+       ]
+      ],
+      "colour": "<tile.face>",
+      "joint": "tile_0"
+     },
+     {
+      "id": "art",
+      "kind": "disc_art",
+      "role": "chrome",
+      "verts": [
+       [
+        42.0,
+        6
+       ],
+       [
+        106.0,
+        6
+       ],
+       [
+        106.0,
+        62
+       ],
+       [
+        42.0,
+        62
+       ]
+      ],
+      "colour": "<tile.art>",
+      "joint": "tile_0",
+      "opacity": "<tile.art_opacity>",
+      "size_1x": [
+       64,
+       56
+      ],
+      "optional": true,
+      "note": "the stage's 64x56 select icon from the disc; if absent, draw this quad flat in @face_hi at art_opacity * 0.5"
+     },
+     {
+      "id": "mark",
+      "kind": "textured",
+      "role": "chrome",
+      "verts": [
+       [
+        54.0,
+        14
+       ],
+       [
+        94.0,
+        14
+       ],
+       [
+        94.0,
+        54
+       ],
+       [
+        54.0,
+        54
+       ]
+      ],
+      "colour": "<tile.mark_colour>",
+      "texture": "<tile.mark>",
+      "uv": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "joint": "tile_mark_0",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned"
+       ]
+      }
+     },
+     {
+      "id": "tab",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        118,
+        0
+       ],
+       [
+        148,
+        0
+       ],
+       [
+        148,
+        16
+       ],
+       [
+        118,
+        16
+       ]
+      ],
+      "colour": "<tile.tab>",
+      "joint": "tile_tab_0",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned",
+        "picked",
+        "hover_remote"
+       ]
+      }
+     },
+     {
+      "id": "tab_icon",
+      "kind": "textured",
+      "role": "chrome",
+      "verts": [
+       [
+        126,
+        1
+       ],
+       [
+        140,
+        1
+       ],
+       [
+        140,
+        15
+       ],
+       [
+        126,
+        15
+       ]
+      ],
+      "colour": "<tile.tab_icon>",
+      "texture": "ico_pick",
+      "uv": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "joint": "tile_tab_0",
+      "when": {
+       "tile": [
+        "picked"
+       ]
+      }
+     }
+    ],
+    "slots": [
+     {
+      "id": "tab_text",
+      "kind": "text",
+      "role": "caption",
+      "anchor": [
+       133,
+       11.96
+      ],
+      "align": "centre",
+      "max": "P2",
+      "max_chars": 2,
+      "max_width_1x": 26,
+      "colour": "<tile.tab_text>",
+      "joint": "tile_tab_0",
+      "note": "port label of who struck / banned / is hovering: strings 'P1' / 'P2'",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned",
+        "hover_remote"
+       ]
+      }
+     },
+     {
+      "id": "name",
+      "kind": "text",
+      "role": "body",
+      "anchor": [
+       74.0,
+       78.62
+      ],
+      "align": "centre",
+      "max": "Fountain of Dreams",
+      "max_chars": 18,
+      "max_width_1x": 136,
+      "colour": "<tile.name>",
+      "joint": "tile_0",
+      "note": "stage name from strings; fit rule body -> caption -> '…'"
+     }
+    ]
+   },
+   {
+    "id": "tile_1",
+    "index": 1,
+    "origin": [
+     248,
+     214
+    ],
+    "size": [
+     148,
+     86
+    ],
+    "lift_joint": "tile_1",
+    "lift_joints": [
+     "tile_1",
+     "tile_mark_1",
+     "tile_tab_1"
+    ],
+    "quads": [
+     {
+      "id": "tile_plate",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        -3,
+        -3
+       ],
+       [
+        151,
+        -3
+       ],
+       [
+        151,
+        89
+       ],
+       [
+        -3,
+        89
+       ]
+      ],
+      "colour": "<tile.plate>",
+      "joint": "tile_plate_1",
+      "when": {
+       "tile": [
+        "hovered",
+        "picked"
+       ]
+      }
+     },
+     {
+      "id": "tile_outline",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        -3,
+        -3
+       ],
+       [
+        151,
+        -3
+       ],
+       [
+        151,
+        89
+       ],
+       [
+        -3,
+        89
+       ]
+      ],
+      "colour": "<tile.outline>",
+      "joint": "tile_1"
+     },
+     {
+      "id": "tile_face",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        0,
+        0
+       ],
+       [
+        148,
+        0
+       ],
+       [
+        148,
+        86
+       ],
+       [
+        0,
+        86
+       ]
+      ],
+      "colour": "<tile.face>",
+      "joint": "tile_1"
+     },
+     {
+      "id": "art",
+      "kind": "disc_art",
+      "role": "chrome",
+      "verts": [
+       [
+        42.0,
+        6
+       ],
+       [
+        106.0,
+        6
+       ],
+       [
+        106.0,
+        62
+       ],
+       [
+        42.0,
+        62
+       ]
+      ],
+      "colour": "<tile.art>",
+      "joint": "tile_1",
+      "opacity": "<tile.art_opacity>",
+      "size_1x": [
+       64,
+       56
+      ],
+      "optional": true,
+      "note": "the stage's 64x56 select icon from the disc; if absent, draw this quad flat in @face_hi at art_opacity * 0.5"
+     },
+     {
+      "id": "mark",
+      "kind": "textured",
+      "role": "chrome",
+      "verts": [
+       [
+        54.0,
+        14
+       ],
+       [
+        94.0,
+        14
+       ],
+       [
+        94.0,
+        54
+       ],
+       [
+        54.0,
+        54
+       ]
+      ],
+      "colour": "<tile.mark_colour>",
+      "texture": "<tile.mark>",
+      "uv": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "joint": "tile_mark_1",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned"
+       ]
+      }
+     },
+     {
+      "id": "tab",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        118,
+        0
+       ],
+       [
+        148,
+        0
+       ],
+       [
+        148,
+        16
+       ],
+       [
+        118,
+        16
+       ]
+      ],
+      "colour": "<tile.tab>",
+      "joint": "tile_tab_1",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned",
+        "picked",
+        "hover_remote"
+       ]
+      }
+     },
+     {
+      "id": "tab_icon",
+      "kind": "textured",
+      "role": "chrome",
+      "verts": [
+       [
+        126,
+        1
+       ],
+       [
+        140,
+        1
+       ],
+       [
+        140,
+        15
+       ],
+       [
+        126,
+        15
+       ]
+      ],
+      "colour": "<tile.tab_icon>",
+      "texture": "ico_pick",
+      "uv": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "joint": "tile_tab_1",
+      "when": {
+       "tile": [
+        "picked"
+       ]
+      }
+     }
+    ],
+    "slots": [
+     {
+      "id": "tab_text",
+      "kind": "text",
+      "role": "caption",
+      "anchor": [
+       133,
+       11.96
+      ],
+      "align": "centre",
+      "max": "P2",
+      "max_chars": 2,
+      "max_width_1x": 26,
+      "colour": "<tile.tab_text>",
+      "joint": "tile_tab_1",
+      "note": "port label of who struck / banned / is hovering: strings 'P1' / 'P2'",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned",
+        "hover_remote"
+       ]
+      }
+     },
+     {
+      "id": "name",
+      "kind": "text",
+      "role": "body",
+      "anchor": [
+       74.0,
+       78.62
+      ],
+      "align": "centre",
+      "max": "Fountain of Dreams",
+      "max_chars": 18,
+      "max_width_1x": 136,
+      "colour": "<tile.name>",
+      "joint": "tile_1",
+      "note": "stage name from strings; fit rule body -> caption -> '…'"
+     }
+    ]
+   },
+   {
+    "id": "tile_2",
+    "index": 2,
+    "origin": [
+     408,
+     214
+    ],
+    "size": [
+     148,
+     86
+    ],
+    "lift_joint": "tile_2",
+    "lift_joints": [
+     "tile_2",
+     "tile_mark_2",
+     "tile_tab_2"
+    ],
+    "quads": [
+     {
+      "id": "tile_plate",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        -3,
+        -3
+       ],
+       [
+        151,
+        -3
+       ],
+       [
+        151,
+        89
+       ],
+       [
+        -3,
+        89
+       ]
+      ],
+      "colour": "<tile.plate>",
+      "joint": "tile_plate_2",
+      "when": {
+       "tile": [
+        "hovered",
+        "picked"
+       ]
+      }
+     },
+     {
+      "id": "tile_outline",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        -3,
+        -3
+       ],
+       [
+        151,
+        -3
+       ],
+       [
+        151,
+        89
+       ],
+       [
+        -3,
+        89
+       ]
+      ],
+      "colour": "<tile.outline>",
+      "joint": "tile_2"
+     },
+     {
+      "id": "tile_face",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        0,
+        0
+       ],
+       [
+        148,
+        0
+       ],
+       [
+        148,
+        86
+       ],
+       [
+        0,
+        86
+       ]
+      ],
+      "colour": "<tile.face>",
+      "joint": "tile_2"
+     },
+     {
+      "id": "art",
+      "kind": "disc_art",
+      "role": "chrome",
+      "verts": [
+       [
+        42.0,
+        6
+       ],
+       [
+        106.0,
+        6
+       ],
+       [
+        106.0,
+        62
+       ],
+       [
+        42.0,
+        62
+       ]
+      ],
+      "colour": "<tile.art>",
+      "joint": "tile_2",
+      "opacity": "<tile.art_opacity>",
+      "size_1x": [
+       64,
+       56
+      ],
+      "optional": true,
+      "note": "the stage's 64x56 select icon from the disc; if absent, draw this quad flat in @face_hi at art_opacity * 0.5"
+     },
+     {
+      "id": "mark",
+      "kind": "textured",
+      "role": "chrome",
+      "verts": [
+       [
+        54.0,
+        14
+       ],
+       [
+        94.0,
+        14
+       ],
+       [
+        94.0,
+        54
+       ],
+       [
+        54.0,
+        54
+       ]
+      ],
+      "colour": "<tile.mark_colour>",
+      "texture": "<tile.mark>",
+      "uv": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "joint": "tile_mark_2",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned"
+       ]
+      }
+     },
+     {
+      "id": "tab",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        118,
+        0
+       ],
+       [
+        148,
+        0
+       ],
+       [
+        148,
+        16
+       ],
+       [
+        118,
+        16
+       ]
+      ],
+      "colour": "<tile.tab>",
+      "joint": "tile_tab_2",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned",
+        "picked",
+        "hover_remote"
+       ]
+      }
+     },
+     {
+      "id": "tab_icon",
+      "kind": "textured",
+      "role": "chrome",
+      "verts": [
+       [
+        126,
+        1
+       ],
+       [
+        140,
+        1
+       ],
+       [
+        140,
+        15
+       ],
+       [
+        126,
+        15
+       ]
+      ],
+      "colour": "<tile.tab_icon>",
+      "texture": "ico_pick",
+      "uv": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "joint": "tile_tab_2",
+      "when": {
+       "tile": [
+        "picked"
+       ]
+      }
+     }
+    ],
+    "slots": [
+     {
+      "id": "tab_text",
+      "kind": "text",
+      "role": "caption",
+      "anchor": [
+       133,
+       11.96
+      ],
+      "align": "centre",
+      "max": "P2",
+      "max_chars": 2,
+      "max_width_1x": 26,
+      "colour": "<tile.tab_text>",
+      "joint": "tile_tab_2",
+      "note": "port label of who struck / banned / is hovering: strings 'P1' / 'P2'",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned",
+        "hover_remote"
+       ]
+      }
+     },
+     {
+      "id": "name",
+      "kind": "text",
+      "role": "body",
+      "anchor": [
+       74.0,
+       78.62
+      ],
+      "align": "centre",
+      "max": "Fountain of Dreams",
+      "max_chars": 18,
+      "max_width_1x": 136,
+      "colour": "<tile.name>",
+      "joint": "tile_2",
+      "note": "stage name from strings; fit rule body -> caption -> '…'"
+     }
+    ]
+   },
+   {
+    "id": "tile_3",
+    "index": 3,
+    "origin": [
+     88,
+     308
+    ],
+    "size": [
+     148,
+     86
+    ],
+    "lift_joint": "tile_3",
+    "lift_joints": [
+     "tile_3",
+     "tile_mark_3",
+     "tile_tab_3"
+    ],
+    "quads": [
+     {
+      "id": "tile_plate",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        -3,
+        -3
+       ],
+       [
+        151,
+        -3
+       ],
+       [
+        151,
+        89
+       ],
+       [
+        -3,
+        89
+       ]
+      ],
+      "colour": "<tile.plate>",
+      "joint": "tile_plate_3",
+      "when": {
+       "tile": [
+        "hovered",
+        "picked"
+       ]
+      }
+     },
+     {
+      "id": "tile_outline",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        -3,
+        -3
+       ],
+       [
+        151,
+        -3
+       ],
+       [
+        151,
+        89
+       ],
+       [
+        -3,
+        89
+       ]
+      ],
+      "colour": "<tile.outline>",
+      "joint": "tile_3"
+     },
+     {
+      "id": "tile_face",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        0,
+        0
+       ],
+       [
+        148,
+        0
+       ],
+       [
+        148,
+        86
+       ],
+       [
+        0,
+        86
+       ]
+      ],
+      "colour": "<tile.face>",
+      "joint": "tile_3"
+     },
+     {
+      "id": "art",
+      "kind": "disc_art",
+      "role": "chrome",
+      "verts": [
+       [
+        42.0,
+        6
+       ],
+       [
+        106.0,
+        6
+       ],
+       [
+        106.0,
+        62
+       ],
+       [
+        42.0,
+        62
+       ]
+      ],
+      "colour": "<tile.art>",
+      "joint": "tile_3",
+      "opacity": "<tile.art_opacity>",
+      "size_1x": [
+       64,
+       56
+      ],
+      "optional": true,
+      "note": "the stage's 64x56 select icon from the disc; if absent, draw this quad flat in @face_hi at art_opacity * 0.5"
+     },
+     {
+      "id": "mark",
+      "kind": "textured",
+      "role": "chrome",
+      "verts": [
+       [
+        54.0,
+        14
+       ],
+       [
+        94.0,
+        14
+       ],
+       [
+        94.0,
+        54
+       ],
+       [
+        54.0,
+        54
+       ]
+      ],
+      "colour": "<tile.mark_colour>",
+      "texture": "<tile.mark>",
+      "uv": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "joint": "tile_mark_3",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned"
+       ]
+      }
+     },
+     {
+      "id": "tab",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        118,
+        0
+       ],
+       [
+        148,
+        0
+       ],
+       [
+        148,
+        16
+       ],
+       [
+        118,
+        16
+       ]
+      ],
+      "colour": "<tile.tab>",
+      "joint": "tile_tab_3",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned",
+        "picked",
+        "hover_remote"
+       ]
+      }
+     },
+     {
+      "id": "tab_icon",
+      "kind": "textured",
+      "role": "chrome",
+      "verts": [
+       [
+        126,
+        1
+       ],
+       [
+        140,
+        1
+       ],
+       [
+        140,
+        15
+       ],
+       [
+        126,
+        15
+       ]
+      ],
+      "colour": "<tile.tab_icon>",
+      "texture": "ico_pick",
+      "uv": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "joint": "tile_tab_3",
+      "when": {
+       "tile": [
+        "picked"
+       ]
+      }
+     }
+    ],
+    "slots": [
+     {
+      "id": "tab_text",
+      "kind": "text",
+      "role": "caption",
+      "anchor": [
+       133,
+       11.96
+      ],
+      "align": "centre",
+      "max": "P2",
+      "max_chars": 2,
+      "max_width_1x": 26,
+      "colour": "<tile.tab_text>",
+      "joint": "tile_tab_3",
+      "note": "port label of who struck / banned / is hovering: strings 'P1' / 'P2'",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned",
+        "hover_remote"
+       ]
+      }
+     },
+     {
+      "id": "name",
+      "kind": "text",
+      "role": "body",
+      "anchor": [
+       74.0,
+       78.62
+      ],
+      "align": "centre",
+      "max": "Fountain of Dreams",
+      "max_chars": 18,
+      "max_width_1x": 136,
+      "colour": "<tile.name>",
+      "joint": "tile_3",
+      "note": "stage name from strings; fit rule body -> caption -> '…'"
+     }
+    ]
+   },
+   {
+    "id": "tile_4",
+    "index": 4,
+    "origin": [
+     248,
+     308
+    ],
+    "size": [
+     148,
+     86
+    ],
+    "lift_joint": "tile_4",
+    "lift_joints": [
+     "tile_4",
+     "tile_mark_4",
+     "tile_tab_4"
+    ],
+    "quads": [
+     {
+      "id": "tile_plate",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        -3,
+        -3
+       ],
+       [
+        151,
+        -3
+       ],
+       [
+        151,
+        89
+       ],
+       [
+        -3,
+        89
+       ]
+      ],
+      "colour": "<tile.plate>",
+      "joint": "tile_plate_4",
+      "when": {
+       "tile": [
+        "hovered",
+        "picked"
+       ]
+      }
+     },
+     {
+      "id": "tile_outline",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        -3,
+        -3
+       ],
+       [
+        151,
+        -3
+       ],
+       [
+        151,
+        89
+       ],
+       [
+        -3,
+        89
+       ]
+      ],
+      "colour": "<tile.outline>",
+      "joint": "tile_4"
+     },
+     {
+      "id": "tile_face",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        0,
+        0
+       ],
+       [
+        148,
+        0
+       ],
+       [
+        148,
+        86
+       ],
+       [
+        0,
+        86
+       ]
+      ],
+      "colour": "<tile.face>",
+      "joint": "tile_4"
+     },
+     {
+      "id": "art",
+      "kind": "disc_art",
+      "role": "chrome",
+      "verts": [
+       [
+        42.0,
+        6
+       ],
+       [
+        106.0,
+        6
+       ],
+       [
+        106.0,
+        62
+       ],
+       [
+        42.0,
+        62
+       ]
+      ],
+      "colour": "<tile.art>",
+      "joint": "tile_4",
+      "opacity": "<tile.art_opacity>",
+      "size_1x": [
+       64,
+       56
+      ],
+      "optional": true,
+      "note": "the stage's 64x56 select icon from the disc; if absent, draw this quad flat in @face_hi at art_opacity * 0.5"
+     },
+     {
+      "id": "mark",
+      "kind": "textured",
+      "role": "chrome",
+      "verts": [
+       [
+        54.0,
+        14
+       ],
+       [
+        94.0,
+        14
+       ],
+       [
+        94.0,
+        54
+       ],
+       [
+        54.0,
+        54
+       ]
+      ],
+      "colour": "<tile.mark_colour>",
+      "texture": "<tile.mark>",
+      "uv": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "joint": "tile_mark_4",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned"
+       ]
+      }
+     },
+     {
+      "id": "tab",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        118,
+        0
+       ],
+       [
+        148,
+        0
+       ],
+       [
+        148,
+        16
+       ],
+       [
+        118,
+        16
+       ]
+      ],
+      "colour": "<tile.tab>",
+      "joint": "tile_tab_4",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned",
+        "picked",
+        "hover_remote"
+       ]
+      }
+     },
+     {
+      "id": "tab_icon",
+      "kind": "textured",
+      "role": "chrome",
+      "verts": [
+       [
+        126,
+        1
+       ],
+       [
+        140,
+        1
+       ],
+       [
+        140,
+        15
+       ],
+       [
+        126,
+        15
+       ]
+      ],
+      "colour": "<tile.tab_icon>",
+      "texture": "ico_pick",
+      "uv": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "joint": "tile_tab_4",
+      "when": {
+       "tile": [
+        "picked"
+       ]
+      }
+     }
+    ],
+    "slots": [
+     {
+      "id": "tab_text",
+      "kind": "text",
+      "role": "caption",
+      "anchor": [
+       133,
+       11.96
+      ],
+      "align": "centre",
+      "max": "P2",
+      "max_chars": 2,
+      "max_width_1x": 26,
+      "colour": "<tile.tab_text>",
+      "joint": "tile_tab_4",
+      "note": "port label of who struck / banned / is hovering: strings 'P1' / 'P2'",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned",
+        "hover_remote"
+       ]
+      }
+     },
+     {
+      "id": "name",
+      "kind": "text",
+      "role": "body",
+      "anchor": [
+       74.0,
+       78.62
+      ],
+      "align": "centre",
+      "max": "Fountain of Dreams",
+      "max_chars": 18,
+      "max_width_1x": 136,
+      "colour": "<tile.name>",
+      "joint": "tile_4",
+      "note": "stage name from strings; fit rule body -> caption -> '…'"
+     }
+    ]
+   },
+   {
+    "id": "tile_5",
+    "index": 5,
+    "origin": [
+     408,
+     308
+    ],
+    "size": [
+     148,
+     86
+    ],
+    "lift_joint": "tile_5",
+    "lift_joints": [
+     "tile_5",
+     "tile_mark_5",
+     "tile_tab_5"
+    ],
+    "quads": [
+     {
+      "id": "tile_plate",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        -3,
+        -3
+       ],
+       [
+        151,
+        -3
+       ],
+       [
+        151,
+        89
+       ],
+       [
+        -3,
+        89
+       ]
+      ],
+      "colour": "<tile.plate>",
+      "joint": "tile_plate_5",
+      "when": {
+       "tile": [
+        "hovered",
+        "picked"
+       ]
+      }
+     },
+     {
+      "id": "tile_outline",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        -3,
+        -3
+       ],
+       [
+        151,
+        -3
+       ],
+       [
+        151,
+        89
+       ],
+       [
+        -3,
+        89
+       ]
+      ],
+      "colour": "<tile.outline>",
+      "joint": "tile_5"
+     },
+     {
+      "id": "tile_face",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        0,
+        0
+       ],
+       [
+        148,
+        0
+       ],
+       [
+        148,
+        86
+       ],
+       [
+        0,
+        86
+       ]
+      ],
+      "colour": "<tile.face>",
+      "joint": "tile_5"
+     },
+     {
+      "id": "art",
+      "kind": "disc_art",
+      "role": "chrome",
+      "verts": [
+       [
+        42.0,
+        6
+       ],
+       [
+        106.0,
+        6
+       ],
+       [
+        106.0,
+        62
+       ],
+       [
+        42.0,
+        62
+       ]
+      ],
+      "colour": "<tile.art>",
+      "joint": "tile_5",
+      "opacity": "<tile.art_opacity>",
+      "size_1x": [
+       64,
+       56
+      ],
+      "optional": true,
+      "note": "the stage's 64x56 select icon from the disc; if absent, draw this quad flat in @face_hi at art_opacity * 0.5"
+     },
+     {
+      "id": "mark",
+      "kind": "textured",
+      "role": "chrome",
+      "verts": [
+       [
+        54.0,
+        14
+       ],
+       [
+        94.0,
+        14
+       ],
+       [
+        94.0,
+        54
+       ],
+       [
+        54.0,
+        54
+       ]
+      ],
+      "colour": "<tile.mark_colour>",
+      "texture": "<tile.mark>",
+      "uv": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "joint": "tile_mark_5",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned"
+       ]
+      }
+     },
+     {
+      "id": "tab",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+       [
+        118,
+        0
+       ],
+       [
+        148,
+        0
+       ],
+       [
+        148,
+        16
+       ],
+       [
+        118,
+        16
+       ]
+      ],
+      "colour": "<tile.tab>",
+      "joint": "tile_tab_5",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned",
+        "picked",
+        "hover_remote"
+       ]
+      }
+     },
+     {
+      "id": "tab_icon",
+      "kind": "textured",
+      "role": "chrome",
+      "verts": [
+       [
+        126,
+        1
+       ],
+       [
+        140,
+        1
+       ],
+       [
+        140,
+        15
+       ],
+       [
+        126,
+        15
+       ]
+      ],
+      "colour": "<tile.tab_icon>",
+      "texture": "ico_pick",
+      "uv": [
+       0,
+       0,
+       1,
+       1
+      ],
+      "joint": "tile_tab_5",
+      "when": {
+       "tile": [
+        "picked"
+       ]
+      }
+     }
+    ],
+    "slots": [
+     {
+      "id": "tab_text",
+      "kind": "text",
+      "role": "caption",
+      "anchor": [
+       133,
+       11.96
+      ],
+      "align": "centre",
+      "max": "P2",
+      "max_chars": 2,
+      "max_width_1x": 26,
+      "colour": "<tile.tab_text>",
+      "joint": "tile_tab_5",
+      "note": "port label of who struck / banned / is hovering: strings 'P1' / 'P2'",
+      "when": {
+       "tile": [
+        "struck_p1",
+        "struck_p2",
+        "banned",
+        "hover_remote"
+       ]
+      }
+     },
+     {
+      "id": "name",
+      "kind": "text",
+      "role": "body",
+      "anchor": [
+       74.0,
+       78.62
+      ],
+      "align": "centre",
+      "max": "Fountain of Dreams",
+      "max_chars": 18,
+      "max_width_1x": 136,
+      "colour": "<tile.name>",
+      "joint": "tile_5",
+      "note": "stage name from strings; fit rule body -> caption -> '…'"
+     }
+    ]
+   }
+  ],
+  "tile_states": {
+   "available": {
+    "outline": "ink",
+    "face": "@face",
+    "art": "#ffffff",
+    "art_opacity": 1.0,
+    "name": "bone"
+   },
+   "hovered": {
+    "outline": "ink",
+    "face": "gold",
+    "plate": "gold_dk",
+    "art": "#ffffff",
+    "art_opacity": 1.0,
+    "name": "ink",
+    "offset": [
+     -3,
+     -3
+    ],
+    "note": "this machine's cursor (kit selection)"
+   },
+   "hover_remote": {
+    "outline": "port:<p>",
+    "face": "@face",
+    "art": "#ffffff",
+    "art_opacity": 1.0,
+    "name": "bone",
+    "tab": "port:<p>",
+    "tab_text": "ink",
+    "note": "the opponent's cursor during their turn: port outline + port tab"
+   },
+   "struck_p1": {
+    "outline": "ink",
+    "face": "ink",
+    "art": "#8a8a8a",
+    "art_opacity": 0.35,
+    "name": "disabled",
+    "mark": "ico_strike_x",
+    "mark_colour": "port:p1",
+    "tab": "port:p1",
+    "tab_text": "ink"
+   },
+   "struck_p2": {
+    "outline": "ink",
+    "face": "ink",
+    "art": "#8a8a8a",
+    "art_opacity": 0.35,
+    "name": "disabled",
+    "mark": "ico_strike_o",
+    "mark_colour": "port:p2",
+    "tab": "port:p2",
+    "tab_text": "ink"
+   },
+   "banned": {
+    "outline": "ink",
+    "face": "ink",
+    "art": "#8a8a8a",
+    "art_opacity": 0.35,
+    "name": "disabled",
+    "mark": "ico_lock",
+    "mark_colour": "port:<p>",
+    "tab": "port:<p>",
+    "tab_text": "ink",
+    "note": "<p> = the banning player (the previous game's winner)"
+   },
+   "picked": {
+    "outline": "gold_dk",
+    "face": "gold",
+    "plate": "gold_dk",
+    "art": "#ffffff",
+    "art_opacity": 1.0,
+    "name": "ink",
+    "tab": "ink",
+    "tab_icon": "gold_lt",
+    "offset": [
+     -3,
+     -3
+    ],
+    "note": "the stage to play (strike survivor or counterpick): gold, lifted, a check tab"
+   },
+   "unavailable": {
+    "outline": "ink",
+    "face": "ink",
+    "art": "#8a8a8a",
+    "art_opacity": 0.2,
+    "name": "disabled",
+    "note": "not selectable now and not struck (e.g. READY phase, others)"
+   }
+  },
+  "contrast_pairs": [
+   [
+    "name",
+    "face"
+   ],
+   [
+    "tab_text",
+    "tab"
+   ],
+   [
+    "mark_colour",
+    "face"
+   ]
+  ],
+  "rules": [
+   "Draw order: tiles 0-5, the hovered or picked tile last.",
+   "Strikes: P1's mark is the cross (ico_strike_x) in P1 colour, P2's the barred ring (ico_strike_o) in P2 colour, and the tab names the player - shape, label and colour all differ.",
+   "Ban: the padlock (ico_lock) in the banning player's colour, tab names them. Picked: gold, lifted, check tab.",
+   "Stage images come from the disc later: the art quad is optional."
+  ]
+ },
+ "coin_badge": {
+  "id": "coin_badge",
+  "rect": [
+   186,
+   262,
+   454,
+   346
+  ],
+  "quads": [
+   {
+    "id": "coin_dim",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      -60,
+      -20
+     ],
+     [
+      700,
+      -20
+     ],
+     [
+      700,
+      500
+     ],
+     [
+      -60,
+      500
+     ]
+    ],
+    "colour": "ink",
+    "joint": "coin_dim",
+    "opacity": 0.45
+   },
+   {
+    "id": "coin_ink",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      182,
+      258
+     ],
+     [
+      458,
+      258
+     ],
+     [
+      458,
+      350
+     ],
+     [
+      182,
+      350
+     ]
+    ],
+    "colour": "ink",
+    "joint": "coin_badge"
+   },
+   {
+    "id": "coin_face",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      186,
+      262
+     ],
+     [
+      454,
+      262
+     ],
+     [
+      454,
+      346
+     ],
+     [
+      186,
+      346
+     ]
+    ],
+    "colour": "@face",
+    "joint": "coin_badge"
+   },
+   {
+    "id": "coin",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      198,
+      280
+     ],
+     [
+      246,
+      280
+     ],
+     [
+      246,
+      328
+     ],
+     [
+      198,
+      328
+     ]
+    ],
+    "colour": "<coin.colour>",
+    "texture": "ico_coin",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "coin"
+   }
+  ],
+  "slots": [
+   {
+    "id": "coin_label",
+    "kind": "text",
+    "role": "title",
+    "anchor": [
+     222.0,
+     311.92
+    ],
+    "align": "centre",
+    "max": "P2",
+    "max_chars": 2,
+    "max_width_1x": 27.55,
+    "colour": "ink",
+    "joint": "coin",
+    "note": "the port label on the coin's face ('P1' / 'P2')"
+   },
+   {
+    "id": "coin_caption",
+    "kind": "text",
+    "role": "caption",
+    "anchor": [
+     260,
+     284
+    ],
+    "align": "left",
+    "max": "COIN FLIP",
+    "max_chars": 9,
+    "max_width_1x": 52.01,
+    "colour": "muted",
+    "joint": "coin_badge",
+    "note": "strings 'COIN FLIP'"
+   },
+   {
+    "id": "coin_text",
+    "kind": "text",
+    "role": "label",
+    "anchor": [
+     260,
+     312
+    ],
+    "align": "left",
+    "max": "P2 STRIKES FIRST",
+    "max_chars": 16,
+    "max_width_1x": 182,
+    "colour": "bone",
+    "joint": "coin_text",
+    "note": "strings '%s STRIKES FIRST'"
+   }
+  ],
+  "states": {
+   "coin": {
+    "p1": {
+     "colour": "port:p1"
+    },
+    "p2": {
+     "colour": "port:p2"
+    },
+    "spinning": {
+     "colour": "gold",
+     "note": "label alternates P1/P2 each half turn"
+    }
+   }
+  },
+  "rules": [
+   "Game 1 only, when the stage phase starts. coin_flip plays (48 frames), coin_text fades in, holds 60 frames, then coin_badge_out and the turn goes to the winner (turn_handoff)."
+  ],
+  "contrast_pairs": [
+   [
+    "ink",
+    "coin.colour"
+   ],
+   [
+    "bone",
+    "@face"
+   ],
+   [
+    "muted",
+    "@face"
+   ]
+  ]
+ },
+ "countdown": {
+  "id": "countdown",
+  "rect": [
+   272,
+   246,
+   368,
+   334
+  ],
+  "quads": [
+   {
+    "id": "countdown_dim",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      -60,
+      -20
+     ],
+     [
+      700,
+      -20
+     ],
+     [
+      700,
+      500
+     ],
+     [
+      -60,
+      500
+     ]
+    ],
+    "colour": "ink",
+    "joint": "countdown_dim",
+    "opacity": 0.55
+   },
+   {
+    "id": "countdown_ink",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      268,
+      242
+     ],
+     [
+      372,
+      242
+     ],
+     [
+      372,
+      338
+     ],
+     [
+      268,
+      338
+     ]
+    ],
+    "colour": "ink",
+    "joint": "countdown_slab"
+   },
+   {
+    "id": "countdown_slab",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      272,
+      246
+     ],
+     [
+      368,
+      246
+     ],
+     [
+      368,
+      334
+     ],
+     [
+      272,
+      334
+     ]
+    ],
+    "colour": "gold",
+    "joint": "countdown_slab"
+   },
+   {
+    "id": "countdown_strip",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      212,
+      344
+     ],
+     [
+      428,
+      344
+     ],
+     [
+      428,
+      364
+     ],
+     [
+      212,
+      364
+     ]
+    ],
+    "colour": "ink",
+    "joint": "countdown_strip"
+   }
+  ],
+  "slots": [
+   {
+    "id": "numeral",
+    "kind": "text",
+    "role": "display",
+    "anchor": [
+     320.0,
+     308.48
+    ],
+    "align": "centre",
+    "max": "3",
+    "max_chars": 1,
+    "max_width_1x": 30.24,
+    "colour": "ink",
+    "joint": "countdown_numeral",
+    "note": "'3', '2', '1' from the display atlas"
+   },
+   {
+    "id": "stage_line",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     320.0,
+     358.62
+    ],
+    "align": "centre",
+    "max": "Fountain of Dreams",
+    "max_chars": 18,
+    "max_width_1x": 200,
+    "colour": "bone",
+    "joint": "countdown_strip",
+    "note": "the stage being loaded"
+   }
+  ],
+  "rules": [
+   "Both ready: countdown_in, then countdown_tick three times (60 frames each, numeral 3, 2, 1), then the match. Either player's B during the count cancels it (countdown_out, both back to ready_off)."
+  ],
+  "contrast_pairs": [
+   [
+    "ink",
+    "gold"
+   ],
+   [
+    "bone",
+    "ink"
+   ]
+  ]
+ },
+ "lobby_status": {
+  "id": "lobby_status",
+  "rect": [
+   90,
+   398,
+   596,
+   422
+  ],
+  "quads": [
+   {
+    "id": "status_plate",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      90,
+      398
+     ],
+     [
+      596,
+      398
+     ],
+     [
+      596,
+      422
+     ],
+     [
+      90,
+      422
+     ]
+    ],
+    "colour": "ink",
+    "joint": "lobby_status"
+   },
+   {
+    "id": "bar_1",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      526.992,
+      402
+     ],
+     [
+      542.992,
+      402
+     ],
+     [
+      542.992,
+      418
+     ],
+     [
+      526.992,
+      418
+     ]
+    ],
+    "colour": "<ping bar colour>",
+    "texture": "sig_bar_1",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "ping"
+   },
+   {
+    "id": "bar_2",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      526.992,
+      402
+     ],
+     [
+      542.992,
+      402
+     ],
+     [
+      542.992,
+      418
+     ],
+     [
+      526.992,
+      418
+     ]
+    ],
+    "colour": "<ping bar colour>",
+    "texture": "sig_bar_2",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "ping"
+   },
+   {
+    "id": "bar_3",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      526.992,
+      402
+     ],
+     [
+      542.992,
+      402
+     ],
+     [
+      542.992,
+      418
+     ],
+     [
+      526.992,
+      418
+     ]
+    ],
+    "colour": "<ping bar colour>",
+    "texture": "sig_bar_3",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "ping"
+   },
+   {
+    "id": "bar_4",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      526.992,
+      402
+     ],
+     [
+      542.992,
+      402
+     ],
+     [
+      542.992,
+      418
+     ],
+     [
+      526.992,
+      418
+     ]
+    ],
+    "colour": "<ping bar colour>",
+    "texture": "sig_bar_4",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "ping"
+   }
+  ],
+  "slots": [
+   {
+    "id": "status_text",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     106,
+     414.62
+    ],
+    "align": "left",
+    "max": "Opponent: Wario Man, Microgame. Winner of game 2 bans first.",
+    "max_chars": 60,
+    "max_width_1x": 410.99,
+    "colour": "bone",
+    "joint": "status_text",
+    "note": "one line of context from strings; fit rule beyond"
+   },
+   {
+    "id": "ping_ms",
+    "kind": "text",
+    "role": "caption",
+    "anchor": [
+     586,
+     413.96
+    ],
+    "align": "right",
+    "max": "999 ms",
+    "max_chars": 6,
+    "max_width_1x": 37.01,
+    "colour": "muted",
+    "joint": "ping"
+   }
+  ],
+  "rules": [
+   "Takes the chrome description strip's rect on this screen. Ping levels and bar colours as online_layout.json status_strip.ping."
+  ]
+ },
+ "phases": {
+  "game1": [
+   {
+    "phase": "character",
+    "blind": true,
+    "cards": "each: PICKING until locked, then LOCKED IN; the opponent's portrait 'hidden', your own 'shown'. Both locked -> card_reveal on both, then the stage phase",
+    "banner": [
+     "CHARACTER PICK",
+     "Pick on the character screen - kept hidden."
+    ],
+    "action": "hidden (both act)",
+    "grid": "all tiles 'available', no cursor (a preview of the legal list)"
+   },
+   {
+    "phase": "stage",
+    "kind": "strike",
+    "coin_flip": true,
+    "order": "1-2-2: the coin winner strikes 1, the other 2, the winner 2",
+    "banner": [
+     "STAGE STRIKING",
+     "P1 strikes 1 stage"
+    ],
+    "action": "your_turn / their_turn",
+    "end": "the last available tile becomes 'picked' (pick_confirm)"
+   },
+   {
+    "phase": "ready"
+   }
+  ],
+  "game2_plus": [
+   {
+    "phase": "stage",
+    "kind": "ban_pick",
+    "order": "previous winner bans 2 (banned), loser picks 1 of the 4 left (picked)",
+    "banner": [
+     "COUNTERPICK",
+     "Counterpick: P2 bans 2"
+    ],
+    "cards": "crown on the previous winner"
+   },
+   {
+    "phase": "character",
+    "blind": false,
+    "order": "winner picks first (PICKING, loser WAITING), then the loser; portraits shown as they lock",
+    "banner": [
+     "CHARACTER PICK",
+     "P2 picks first, then P1"
+    ]
+   },
+   {
+    "phase": "ready"
+   }
+  ],
+  "ready": {
+   "banner": [
+    "READY CHECK",
+    "Both ready?"
+   ],
+   "action": "ready_off -> ready_on -> ready_wait / ready_both",
+   "cards": "badge READY or WAITING",
+   "grid": "picked tile + the rest 'unavailable' (struck/banned keep their marks)"
+  },
+  "after_match": "the room returns here: set_score updates (score_update), the header counter advances (game_advance), crown moves to the winner"
+ },
+ "slots_engine_fills": {
+  "chrome_title": "GAME counter 'GAME n'",
+  "set_score": "'a - b'",
+  "phase_title": "phase name",
+  "instruction": "whose move, how many",
+  "card_p1_p2": {
+   "name": "player name (20 chars max)",
+   "portrait_art": "64x56 disc icon",
+   "port_label": "P1/P2",
+   "you_tag": "YOU (this machine)",
+   "badge_text": "WAITING/PICKING/LOCKED IN/READY",
+   "states": "turn, portrait, badge, crown, you"
+  },
+  "action_text": "action.string",
+  "tile_i": {
+   "name": "stage name",
+   "art": "optional 64x56",
+   "tab_text": "P1/P2",
+   "state": "tile_states"
+  },
+  "coin": {
+   "coin_label": "P1/P2",
+   "coin_text": "'Pn STRIKES FIRST'"
+  },
+  "countdown": {
+   "numeral": "3/2/1",
+   "stage_line": "stage name"
+  },
+  "lobby_status": {
+   "status_text": "context line",
+   "ping_ms": "round trip"
+  }
+ },
+ "textures": [
+  {
+   "name": "ico_coin",
+   "file_2x": "out_lobby/2x/ico_coin.png",
+   "file_1x": "out_lobby/1x/ico_coin.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_crown",
+   "file_2x": "out_lobby/2x/ico_crown.png",
+   "file_1x": "out_lobby/1x/ico_crown.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_lock",
+   "file_2x": "out_lobby/2x/ico_lock.png",
+   "file_1x": "out_lobby/1x/ico_lock.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_pick",
+   "file_2x": "out_lobby/2x/ico_pick.png",
+   "file_1x": "out_lobby/1x/ico_pick.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_strike_o",
+   "file_2x": "out_lobby/2x/ico_strike_o.png",
+   "file_1x": "out_lobby/1x/ico_strike_o.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_strike_x",
+   "file_2x": "out_lobby/2x/ico_strike_x.png",
+   "file_1x": "out_lobby/1x/ico_strike_x.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_turn",
+   "file_2x": "out_lobby/2x/ico_turn.png",
+   "file_1x": "out_lobby/1x/ico_turn.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_wait",
+   "file_2x": "out_lobby/2x/ico_wait.png",
+   "file_1x": "out_lobby/1x/ico_wait.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "sig_bar_1",
+   "file_2x": "out_online/2x/sig_bar_1.png",
+   "file_1x": "out_online/1x/sig_bar_1.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "sig_bar_2",
+   "file_2x": "out_online/2x/sig_bar_2.png",
+   "file_1x": "out_online/1x/sig_bar_2.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "sig_bar_3",
+   "file_2x": "out_online/2x/sig_bar_3.png",
+   "file_1x": "out_online/1x/sig_bar_3.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "sig_bar_4",
+   "file_2x": "out_online/2x/sig_bar_4.png",
+   "file_1x": "out_online/1x/sig_bar_4.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  }
+ ]
+}

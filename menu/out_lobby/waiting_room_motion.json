@@ -1,0 +1,529 @@
+{
+ "fps": 60,
+ "format": "hub_motion.json: tracks, from_current, interpolation and transform rules are identical; see out_kit/kit_motion.json. 'loop' as in out_online/online_motion.json",
+ "space": "unsheared",
+ "events": {
+  "room_plate_in": {
+   "applies_to": "room plate when the screen opens",
+   "sfx": [],
+   "pivot": "plate centre",
+   "note": "char_<i> start 4 frames apart",
+   "tracks": [
+    {
+     "target": "room_plate",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.9,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1.03,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "room_plate",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.9,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1.03,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "room_plate",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "char_<i>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 14,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": -2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "char_<i>",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 11
+  },
+  "room_code_copied": {
+   "applies_to": "room plate + copy row, when the code reaches the clipboard",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_toast"
+    }
+   ],
+   "pivot": "plate centre",
+   "note": "plate state 'copied' and copy state 'copied' for 40 frames, then ng / idle",
+   "tracks": [
+    {
+     "target": "room_plate",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1.04,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "room_plate",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1.04,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "accent",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "ok",
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 40,
+       "value": "@face_hi",
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "copy_row",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": -8,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "copy_row",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 41
+  },
+  "join_sweep": {
+   "applies_to": "guest: the sweep under the plate while joining",
+   "loop": {
+    "from_frame": 0,
+    "to_frame": 60
+   },
+   "tracks": [
+    {
+     "target": "plate_sweep",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0
+      },
+      {
+       "frame": 44,
+       "value": 294,
+       "interp": "SPL",
+       "slope": 0
+      },
+      {
+       "frame": 60,
+       "value": 294,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "plate_sweep",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 38,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 44,
+       "value": 0,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 60,
+       "value": 0,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 61
+  },
+  "opponent_found": {
+   "applies_to": "room panel when the opponent connects (with online status_connected)",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_connected"
+    }
+   ],
+   "pivot": "panel centre",
+   "tracks": [
+    {
+     "target": "room_panel",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1.02,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "room_panel",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1.02,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "accent",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "ok",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 20,
+       "value": "@face_hi",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 21
+  },
+  "room_leave": {
+   "applies_to": "room panel on B",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_dialog_close"
+    }
+   ],
+   "tracks": [
+    {
+     "target": "room_panel",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "room_panel",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0.96,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "room_panel",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0.96,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 7
+  }
+ },
+ "sequences": {
+  "host_open": [
+   {
+    "event": "room_plate_in"
+   },
+   {
+    "event": "room_code_copied",
+    "at_frame": 12
+   }
+  ],
+  "guest_open": [
+   {
+    "event": "room_plate_in"
+   },
+   {
+    "event": "join_sweep"
+   },
+   {
+    "event": "status_set (online)",
+    "state": "working"
+   }
+  ],
+  "found": [
+   {
+    "event": "status_set (online)",
+    "state": "connected"
+   },
+   {
+    "event": "status_connected (online)"
+   },
+   {
+    "event": "opponent_found"
+   },
+   {
+    "note": "45 frames, then the lobby"
+   }
+  ],
+  "join_failed": [
+   {
+    "event": "status_set (online)",
+    "state": "failed"
+   },
+   {
+    "event": "status_failed (online)"
+   },
+   {
+    "note": "back to code entry with field 'invalid' and code_invalid"
+   }
+  ]
+ }
+}

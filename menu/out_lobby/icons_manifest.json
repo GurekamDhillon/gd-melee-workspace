@@ -1,0 +1,302 @@
+{
+ "provenance": "Original pictograms drawn in pipeline/lobby.py (SVG on a 64 grid); nothing traced, sampled or recoloured from Melee or any other game.",
+ "textures": [
+  {
+   "name": "ico_strike_x",
+   "file_2x": "out_lobby/2x/ico_strike_x.png",
+   "file_1x": "out_lobby/1x/ico_strike_x.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "size_1x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 8192,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "stage tile struck by P1: a cross (P1's strike shape)",
+   "min_draw_1x": 24,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_strike_o",
+   "file_2x": "out_lobby/2x/ico_strike_o.png",
+   "file_1x": "out_lobby/1x/ico_strike_o.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "size_1x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 8192,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "stage tile struck by P2: a barred ring (P2's strike shape - never the same shape as P1's)",
+   "min_draw_1x": 24,
+   "legibility": {
+    "full": [
+     1,
+     2
+    ],
+    "at_2x_draw": [
+     1,
+     2
+    ],
+    "at_1x_draw": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_lock",
+   "file_2x": "out_lobby/2x/ico_lock.png",
+   "file_1x": "out_lobby/1x/ico_lock.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "size_1x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 8192,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "stage ban mark (tile) and the LOCKED IN badge: a padlock",
+   "min_draw_1x": 12,
+   "legibility": {
+    "full": [
+     1,
+     2
+    ],
+    "at_2x_draw": [
+     1,
+     2
+    ],
+    "at_1x_draw": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_pick",
+   "file_2x": "out_lobby/2x/ico_pick.png",
+   "file_1x": "out_lobby/1x/ico_pick.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "picked / final stage tab, READY badge: a heavy check",
+   "min_draw_1x": 12,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_crown",
+   "file_2x": "out_lobby/2x/ico_crown.png",
+   "file_1x": "out_lobby/1x/ico_crown.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "previous game's winner, on the player card",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_coin",
+   "file_2x": "out_lobby/2x/ico_coin.png",
+   "file_1x": "out_lobby/1x/ico_coin.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "size_1x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 8192,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "coin flip badge: a coin with a milled rim; the port label is set on it from strings",
+   "min_draw_1x": 32,
+   "legibility": {
+    "full": [
+     2,
+     1
+    ],
+    "at_2x_draw": [
+     2,
+     1
+    ],
+    "at_1x_draw": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_wait",
+   "file_2x": "out_lobby/2x/ico_wait.png",
+   "file_1x": "out_lobby/1x/ico_wait.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "WAITING badge, opponent's turn: an hourglass",
+   "min_draw_1x": 12,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_turn",
+   "file_2x": "out_lobby/2x/ico_turn.png",
+   "file_1x": "out_lobby/1x/ico_turn.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "turn indicator between the cards; points right as drawn, the engine flips U for left",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_keyboard",
+   "file_2x": "out_lobby/2x/ico_keyboard.png",
+   "file_1x": "out_lobby/1x/ico_keyboard.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "code entry: 'type on a keyboard' hint",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     10
+    ],
+    "at_2x_draw": [
+     1,
+     10
+    ],
+    "at_1x_draw": [
+     1,
+     10
+    ]
+   }
+  }
+ ]
+}
