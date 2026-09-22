@@ -1,0 +1,23 @@
+# air specials: jump, then B in the air (N neutral / S side / Hi up / Lw down)
+90 0000 0 0
+# cycle 1: jump then SpecialNAir (B neutral in air)
+8 0400 0 0
+25 0000 0 0
+8 0200 0 0
+60 0000 0 0
+# cycle 2: jump then SpecialSAir (B + side)
+8 0400 0 0
+25 0000 0 0
+8 0200 100 0
+60 0000 0 0
+# cycle 3: jump then SpecialHiAir (B + up)
+8 0400 0 0
+25 0000 0 0
+8 0200 0 100
+60 0000 0 0
+# cycle 4: jump then SpecialLwAir (B + down)
+8 0400 0 0
+25 0000 0 0
+8 0200 0 -100
+60 0000 0 0
+300 0000 0 0

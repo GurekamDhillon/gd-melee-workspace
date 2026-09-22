@@ -1,0 +1,303 @@
+{
+ "name": "chrome",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "quads": [
+  {
+   "id": "header_rule",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     382.304,
+     46
+    ],
+    [
+     550,
+     46
+    ],
+    [
+     550,
+     52
+    ],
+    [
+     382.304,
+     52
+    ]
+   ],
+   "colour": "ink"
+  },
+  {
+   "id": "header_slab",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     84,
+     24
+    ],
+    [
+     386.304,
+     24
+    ],
+    [
+     386.304,
+     52
+    ],
+    [
+     84,
+     52
+    ]
+   ],
+   "colour": "gold"
+  },
+  {
+   "id": "crumb_icon",
+   "kind": "textured",
+   "role": "chrome",
+   "verts": [
+    [
+     96,
+     56
+    ],
+    [
+     112,
+     56
+    ],
+    [
+     112,
+     72
+    ],
+    [
+     96,
+     72
+    ]
+   ],
+   "colour": "@face_hi",
+   "texture": "ico_<section>",
+   "uv": [
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "id": "desc_strip",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     90,
+     398
+    ],
+    [
+     596,
+     398
+    ],
+    [
+     596,
+     422
+    ],
+    [
+     90,
+     422
+    ]
+   ],
+   "colour": "ink"
+  },
+  {
+   "id": "footer_strip",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     90,
+     430
+    ],
+    [
+     596,
+     430
+    ],
+    [
+     596,
+     456
+    ],
+    [
+     90,
+     456
+    ]
+   ],
+   "colour": "ink"
+  },
+  {
+   "id": "footer_mark",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     100,
+     437
+    ],
+    [
+     106,
+     437
+    ],
+    [
+     106,
+     449
+    ],
+    [
+     100,
+     449
+    ]
+   ],
+   "colour": "gold"
+  }
+ ],
+ "backdrop": {
+  "clear": "@bg",
+  "bands": "kit.sections[<section>].bands",
+  "band_rect": "(x, -40, x + w, 520)",
+  "colour": "@band",
+  "role": "decor"
+ },
+ "slots": [
+  {
+   "id": "title",
+   "kind": "text",
+   "role": "title",
+   "anchor": [
+    100,
+    45.92
+   ],
+   "align": "left",
+   "max": "RANDOM STAGE SWITCH!",
+   "max_chars": 20,
+   "max_width_1x": 410,
+   "colour": "ink"
+  },
+  {
+   "id": "breadcrumb",
+   "kind": "text",
+   "role": "body",
+   "anchor": [
+    118,
+    68.62
+   ],
+   "align": "left",
+   "max": "VERSUS / MORE RULES / RANDOM STAGE SWITCH / PAGE 12",
+   "max_chars": 51,
+   "max_width_1x": 432,
+   "colour": "muted",
+   "note": "crumbs joined by a separator; the last crumb is bone"
+  },
+  {
+   "id": "description",
+   "kind": "text",
+   "role": "body",
+   "anchor": [
+    106,
+    414.62
+   ],
+   "align": "left",
+   "max": "Choose how many stocks each player starts with, from 1 to 99. L+R resets it.",
+   "max_chars": 76,
+   "max_width_1x": 474,
+   "colour": "bone"
+  },
+  {
+   "id": "hint_0",
+   "kind": "hint",
+   "glyph_slot": "glyph_<button>",
+   "glyph_h_1x": 16,
+   "glyph_y0": 435.0,
+   "text": {
+    "id": "hint_0_text",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     0,
+     447.62
+    ],
+    "align": "left",
+    "max": "Defaults",
+    "max_chars": 8,
+    "max_width_1x": 72,
+    "colour": "bone"
+   }
+  },
+  {
+   "id": "hint_1",
+   "kind": "hint",
+   "glyph_slot": "glyph_<button>",
+   "glyph_h_1x": 16,
+   "glyph_y0": 435.0,
+   "text": {
+    "id": "hint_1_text",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     0,
+     447.62
+    ],
+    "align": "left",
+    "max": "Defaults",
+    "max_chars": 8,
+    "max_width_1x": 72,
+    "colour": "bone"
+   }
+  },
+  {
+   "id": "hint_2",
+   "kind": "hint",
+   "glyph_slot": "glyph_<button>",
+   "glyph_h_1x": 16,
+   "glyph_y0": 435.0,
+   "text": {
+    "id": "hint_2_text",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     0,
+     447.62
+    ],
+    "align": "left",
+    "max": "Defaults",
+    "max_chars": 8,
+    "max_width_1x": 72,
+    "colour": "bone"
+   }
+  },
+  {
+   "id": "hint_3",
+   "kind": "hint",
+   "glyph_slot": "glyph_<button>",
+   "glyph_h_1x": 16,
+   "glyph_y0": 435.0,
+   "text": {
+    "id": "hint_3_text",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     0,
+     447.62
+    ],
+    "align": "left",
+    "max": "Defaults",
+    "max_chars": 8,
+    "max_width_1x": 72,
+    "colour": "bone"
+   }
+  }
+ ],
+ "rules": [
+  "Header slab width follows the title: slab.x1 = title.x + advance(title) + 20; the ink rule starts 4px inside the slab's end.",
+  "Breadcrumb: crumbs separated by 6px gap, a 2x10 gold bar quad, 6px gap. Earlier crumbs muted, the current one bone. If it exceeds max_width_1x, replace middle crumbs with '…' until it fits.",
+  "Footer hints lay out left to right from x = footer.x0 + 24: glyph (16 or 32 wide), 4px, text, 12px. At most 4 hints, each text at most 72 px (fit rule beyond that).",
+  "The description strip is one line; longer copy belongs on a detail panel."
+ ]
+}

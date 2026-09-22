@@ -1,0 +1,385 @@
+{
+ "name": "dialog",
+ "space": "unsheared",
+ "origin": "panel top-left; the panel is centred on (320, 240) for its height",
+ "height_rule": "h = 28 + 22 + (lines - 1) * 18 + 18 + 30 + 16  (lines 1-4)",
+ "quads": [
+  {
+   "id": "dim",
+   "kind": "flat",
+   "role": "decor",
+   "verts": [
+    [
+     -60,
+     -20
+    ],
+    [
+     700,
+     -20
+    ],
+    [
+     700,
+     500
+    ],
+    [
+     -60,
+     500
+    ]
+   ],
+   "colour": "ink",
+   "joint": "dialog_dim",
+   "opacity": 0.65
+  },
+  {
+   "id": "panel_ink",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     -4,
+     -4
+    ],
+    [
+     424,
+     -4
+    ],
+    [
+     424,
+     "h+4"
+    ],
+    [
+     -4,
+     "h+4"
+    ]
+   ],
+   "colour": "ink",
+   "joint": "dialog_panel"
+  },
+  {
+   "id": "panel_face",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     0,
+     0
+    ],
+    [
+     420,
+     0
+    ],
+    [
+     420,
+     "h"
+    ],
+    [
+     0,
+     "h"
+    ]
+   ],
+   "colour": "@face",
+   "joint": "dialog_panel"
+  },
+  {
+   "id": "title_slab",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     0,
+     0
+    ],
+    [
+     389.616,
+     0
+    ],
+    [
+     389.616,
+     28
+    ],
+    [
+     0,
+     28
+    ]
+   ],
+   "colour": "gold",
+   "joint": "dialog_panel"
+  }
+ ],
+ "slots": [
+  {
+   "id": "title",
+   "kind": "text",
+   "role": "title",
+   "anchor": [
+    16,
+    21.92
+   ],
+   "align": "left",
+   "max": "OVERWRITE THE DATA IN SLOT B?",
+   "max_chars": 29,
+   "max_width_1x": 384,
+   "colour": "ink",
+   "joint": "dialog_panel"
+  },
+  {
+   "id": "line_0",
+   "kind": "text",
+   "role": "body",
+   "anchor": [
+    16,
+    50
+   ],
+   "align": "left",
+   "max": "All records, unlocks, names and snapshots will be erased.",
+   "max_chars": 57,
+   "max_width_1x": 388,
+   "colour": "bone",
+   "joint": "dialog_panel"
+  },
+  {
+   "id": "line_1",
+   "kind": "text",
+   "role": "body",
+   "anchor": [
+    16,
+    68
+   ],
+   "align": "left",
+   "max": "All records, unlocks, names and snapshots will be erased.",
+   "max_chars": 57,
+   "max_width_1x": 388,
+   "colour": "bone",
+   "joint": "dialog_panel"
+  },
+  {
+   "id": "line_2",
+   "kind": "text",
+   "role": "body",
+   "anchor": [
+    16,
+    86
+   ],
+   "align": "left",
+   "max": "All records, unlocks, names and snapshots will be erased.",
+   "max_chars": 57,
+   "max_width_1x": 388,
+   "colour": "bone",
+   "joint": "dialog_panel"
+  },
+  {
+   "id": "line_3",
+   "kind": "text",
+   "role": "body",
+   "anchor": [
+    16,
+    104
+   ],
+   "align": "left",
+   "max": "All records, unlocks, names and snapshots will be erased.",
+   "max_chars": 57,
+   "max_width_1x": 388,
+   "colour": "bone",
+   "joint": "dialog_panel"
+  },
+  {
+   "id": "button_0",
+   "kind": "button",
+   "size": [
+    110,
+    30
+   ],
+   "origin": "right-aligned: x1 = W - 16 - i * (110 + 10), y = body_top + (lines - 1) * 18 + 18",
+   "label": {
+    "id": "button_0_label",
+    "kind": "text",
+    "role": "label",
+    "anchor": [
+     55.0,
+     21.6
+    ],
+    "align": "centre",
+    "max": "Continue",
+    "max_chars": 8,
+    "max_width_1x": 82.04,
+    "colour": "bone"
+   },
+   "joint": "dialog_button"
+  },
+  {
+   "id": "button_1",
+   "kind": "button",
+   "size": [
+    110,
+    30
+   ],
+   "origin": "right-aligned: x1 = W - 16 - i * (110 + 10), y = body_top + (lines - 1) * 18 + 18",
+   "label": {
+    "id": "button_1_label",
+    "kind": "text",
+    "role": "label",
+    "anchor": [
+     55.0,
+     21.6
+    ],
+    "align": "centre",
+    "max": "Continue",
+    "max_chars": 8,
+    "max_width_1x": 82.04,
+    "colour": "bone"
+   },
+   "joint": "dialog_button"
+  },
+  {
+   "id": "button_2",
+   "kind": "button",
+   "size": [
+    110,
+    30
+   ],
+   "origin": "right-aligned: x1 = W - 16 - i * (110 + 10), y = body_top + (lines - 1) * 18 + 18",
+   "label": {
+    "id": "button_2_label",
+    "kind": "text",
+    "role": "label",
+    "anchor": [
+     55.0,
+     21.6
+    ],
+    "align": "centre",
+    "max": "Continue",
+    "max_chars": 8,
+    "max_width_1x": 82.04,
+    "colour": "bone"
+   },
+   "joint": "dialog_button"
+  }
+ ],
+ "button_states": {
+  "ng": {
+   "face": "@bg",
+   "label": "bone",
+   "offset": [
+    0,
+    0
+   ],
+   "plate": null
+  },
+  "sel": {
+   "face": "gold",
+   "label": "ink",
+   "offset": [
+    -3,
+    -3
+   ],
+   "plate": "gold_dk"
+  },
+  "danger_ng": {
+   "face": "@bg",
+   "label": "bone",
+   "accent": "danger",
+   "offset": [
+    0,
+    0
+   ],
+   "plate": null
+  },
+  "danger_sel": {
+   "face": "danger",
+   "label": "ink",
+   "accent": "ink",
+   "offset": [
+    -3,
+    -3
+   ],
+   "plate": "ink"
+  },
+  "accent_rect": "(0, 0, 6, h): a stripe at the button's left edge, danger buttons only; red text on the dark face failed 4.5:1 in every section"
+ },
+ "toast": {
+  "rect": [
+   90,
+   398,
+   596,
+   422
+  ],
+  "space": "unsheared",
+  "quads": [
+   {
+    "id": "toast_plate",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      90,
+      398
+     ],
+     [
+      596,
+      398
+     ],
+     [
+      596,
+      422
+     ],
+     [
+      90,
+      422
+     ]
+    ],
+    "colour": "ink",
+    "joint": "toast"
+   },
+   {
+    "id": "toast_accent",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      90,
+      398
+     ],
+     [
+      96,
+      398
+     ],
+     [
+      96,
+      422
+     ],
+     [
+      90,
+      422
+     ]
+    ],
+    "colour": "ok",
+    "joint": "toast"
+   }
+  ],
+  "slots": [
+   {
+    "id": "toast_text",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     106,
+     414.62
+    ],
+    "align": "left",
+    "max": "Saved to the Memory Card in Slot A. Your rules will be used from now on.",
+    "max_chars": 72,
+    "max_width_1x": 474,
+    "colour": "bone",
+    "joint": "toast"
+   }
+  ],
+  "rules": [
+   "Covers the description strip exactly, sliding in from the right; the description underneath is hidden once the toast lands. accent is 'ok' or 'danger'.",
+   "toast_in, hold 90 frames (or until the next toast), toast_out."
+  ]
+ },
+ "rules": [
+  "Default selection is the non-destructive button.",
+  "The dim quad and the panel are drawn above everything, cursor included."
+ ]
+}

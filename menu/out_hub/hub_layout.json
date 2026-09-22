@@ -1,0 +1,1240 @@
+{
+  "framebuffer": [
+    640,
+    480
+  ],
+  "units": "1x framebuffer pixels, origin top-left, y down",
+  "shear": {
+    "S": 0.25,
+    "Y0": 240,
+    "formula": "x' = x + (Y0 - y) * S"
+  },
+  "clear_colour": "#14265c",
+  "safe_area": [
+    32,
+    24,
+    608,
+    456
+  ],
+  "states": {
+    "ng": {
+      "face": "#1e3a8c",
+      "icon": "#4a7ae0",
+      "label": "#f2efe4",
+      "offset": [
+        0,
+        0
+      ],
+      "plate": null,
+      "z": 0
+    },
+    "sel": {
+      "face": "#f0b429",
+      "icon": "#a9761a",
+      "label": "#0a0e18",
+      "offset": [
+        -5,
+        -5
+      ],
+      "plate": "#a9761a",
+      "z": 1
+    }
+  },
+  "state_rules": [
+    "Exactly one tile is 'sel'; the rest are 'ng'.",
+    "On 'sel': face/icon/label take the sel colours, the face, icon and label quads translate by 'offset', the plate quad becomes visible in 'plate' colour at rest position, and the tile draws above its neighbours (z).",
+    "Only the selected tile's 'desc' quad is visible.",
+    "No state adds or swaps a texture. Selection is colour + translate: material colour animation and a joint translate."
+  ],
+  "quads": [
+    {
+      "id": "band_l",
+      "kind": "flat",
+      "role": "decor",
+      "verts": [
+        [
+          88.0,
+          -40
+        ],
+        [
+          110.0,
+          -40
+        ],
+        [
+          -30.0,
+          520
+        ],
+        [
+          -52.0,
+          520
+        ]
+      ],
+      "colour": "#1a307a"
+    },
+    {
+      "id": "band_r",
+      "kind": "flat",
+      "role": "decor",
+      "verts": [
+        [
+          642.0,
+          -40
+        ],
+        [
+          682.0,
+          -40
+        ],
+        [
+          542.0,
+          520
+        ],
+        [
+          502.0,
+          520
+        ]
+      ],
+      "colour": "#1a307a"
+    },
+    {
+      "id": "header_rule",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+        [
+          275.5,
+          46
+        ],
+        [
+          598.5,
+          46
+        ],
+        [
+          597.0,
+          52
+        ],
+        [
+          274.0,
+          52
+        ]
+      ],
+      "colour": "#0a0e18"
+    },
+    {
+      "id": "header_slab",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+        [
+          138.0,
+          24
+        ],
+        [
+          285.0,
+          24
+        ],
+        [
+          278.0,
+          52
+        ],
+        [
+          131.0,
+          52
+        ]
+      ],
+      "colour": "#f0b429"
+    },
+    {
+      "id": "header_title",
+      "kind": "textured",
+      "role": "chrome",
+      "texture": "lbl_title",
+      "verts": [
+        [
+          152.0,
+          32.0
+        ],
+        [
+          263.0,
+          32.0
+        ],
+        [
+          260.0,
+          44.0
+        ],
+        [
+          149.0,
+          44.0
+        ]
+      ],
+      "uv": [
+        0.003906,
+        0.03125,
+        0.871094,
+        0.78125
+      ],
+      "colour": "#0a0e18"
+    },
+    {
+      "id": "backplate",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+        [
+          128.5,
+          62
+        ],
+        [
+          606.5,
+          62
+        ],
+        [
+          515.5,
+          426
+        ],
+        [
+          37.5,
+          426
+        ]
+      ],
+      "colour": "#0a0e18"
+    },
+    {
+      "id": "footer_strip",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+        [
+          42.5,
+          430
+        ],
+        [
+          548.5,
+          430
+        ],
+        [
+          542.0,
+          456
+        ],
+        [
+          36.0,
+          456
+        ]
+      ],
+      "colour": "#0a0e18"
+    },
+    {
+      "id": "footer_mark",
+      "kind": "flat",
+      "role": "chrome",
+      "verts": [
+        [
+          50.75,
+          437
+        ],
+        [
+          62.75,
+          437
+        ],
+        [
+          59.75,
+          449
+        ],
+        [
+          47.75,
+          449
+        ]
+      ],
+      "colour": "#f0b429"
+    }
+  ],
+  "tiles": [
+    {
+      "id": "versus",
+      "rank": 0,
+      "hero": true,
+      "rect_unsheared": [
+        90,
+        68,
+        352,
+        420
+      ],
+      "quads": [
+        {
+          "id": "versus_plate",
+          "kind": "flat",
+          "role": "plate",
+          "verts": [
+            [
+              133.0,
+              68
+            ],
+            [
+              395.0,
+              68
+            ],
+            [
+              307.0,
+              420
+            ],
+            [
+              45.0,
+              420
+            ]
+          ],
+          "colour": null
+        },
+        {
+          "id": "versus_face",
+          "kind": "flat",
+          "role": "face",
+          "verts": [
+            [
+              133.0,
+              68
+            ],
+            [
+              395.0,
+              68
+            ],
+            [
+              307.0,
+              420
+            ],
+            [
+              45.0,
+              420
+            ]
+          ],
+          "colour": "#1e3a8c"
+        },
+        {
+          "id": "versus_icon",
+          "kind": "textured",
+          "role": "icon",
+          "texture": "ico_versus",
+          "verts": [
+            [
+              247.0,
+              84
+            ],
+            [
+              375.0,
+              84
+            ],
+            [
+              343.0,
+              212.0
+            ],
+            [
+              215.0,
+              212.0
+            ]
+          ],
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "colour": "#4a7ae0"
+        },
+        {
+          "id": "versus_label",
+          "kind": "textured",
+          "role": "label",
+          "texture": "lbl_versus",
+          "verts": [
+            [
+              75.375,
+              370.5
+            ],
+            [
+              285.375,
+              370.5
+            ],
+            [
+              277.0,
+              404
+            ],
+            [
+              67.0,
+              404
+            ]
+          ],
+          "uv": [
+            0.001953,
+            0.007812,
+            0.822266,
+            0.53125
+          ],
+          "colour": "#f2efe4"
+        }
+      ],
+      "desc": {
+        "id": "versus_desc",
+        "kind": "textured",
+        "role": "desc",
+        "texture": "desc_versus",
+        "verts": [
+          [
+            72.75,
+            437.0
+          ],
+          [
+            311.25,
+            437.0
+          ],
+          [
+            308.25,
+            449.0
+          ],
+          [
+            69.75,
+            449.0
+          ]
+        ],
+        "uv": [
+          0.001953,
+          0.03125,
+          0.933594,
+          0.78125
+        ],
+        "colour": "#f2efe4"
+      }
+    },
+    {
+      "id": "solo",
+      "rank": 1,
+      "hero": false,
+      "rect_unsheared": [
+        360,
+        68,
+        556,
+        212
+      ],
+      "quads": [
+        {
+          "id": "solo_plate",
+          "kind": "flat",
+          "role": "plate",
+          "verts": [
+            [
+              403.0,
+              68
+            ],
+            [
+              599.0,
+              68
+            ],
+            [
+              563.0,
+              212
+            ],
+            [
+              367.0,
+              212
+            ]
+          ],
+          "colour": null
+        },
+        {
+          "id": "solo_face",
+          "kind": "flat",
+          "role": "face",
+          "verts": [
+            [
+              403.0,
+              68
+            ],
+            [
+              599.0,
+              68
+            ],
+            [
+              563.0,
+              212
+            ],
+            [
+              367.0,
+              212
+            ]
+          ],
+          "colour": "#1e3a8c"
+        },
+        {
+          "id": "solo_icon",
+          "kind": "textured",
+          "role": "icon",
+          "texture": "ico_solo",
+          "verts": [
+            [
+              522.5,
+              78
+            ],
+            [
+              586.5,
+              78
+            ],
+            [
+              570.5,
+              142.0
+            ],
+            [
+              506.5,
+              142.0
+            ]
+          ],
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "colour": "#4a7ae0"
+        },
+        {
+          "id": "solo_label",
+          "kind": "textured",
+          "role": "label",
+          "texture": "lbl_solo",
+          "verts": [
+            [
+              385.0,
+              188.0
+            ],
+            [
+              443.0,
+              188.0
+            ],
+            [
+              439.5,
+              202
+            ],
+            [
+              381.5,
+              202
+            ]
+          ],
+          "uv": [
+            0.007812,
+            0.03125,
+            0.914062,
+            0.90625
+          ],
+          "colour": "#f2efe4"
+        }
+      ],
+      "desc": {
+        "id": "solo_desc",
+        "kind": "textured",
+        "role": "desc",
+        "texture": "desc_solo",
+        "verts": [
+          [
+            72.75,
+            437.0
+          ],
+          [
+            270.25,
+            437.0
+          ],
+          [
+            267.25,
+            449.0
+          ],
+          [
+            69.75,
+            449.0
+          ]
+        ],
+        "uv": [
+          0.001953,
+          0.03125,
+          0.773438,
+          0.78125
+        ],
+        "colour": "#f2efe4"
+      }
+    },
+    {
+      "id": "collection",
+      "rank": 2,
+      "hero": false,
+      "rect_unsheared": [
+        360,
+        220,
+        556,
+        330
+      ],
+      "quads": [
+        {
+          "id": "collection_plate",
+          "kind": "flat",
+          "role": "plate",
+          "verts": [
+            [
+              365.0,
+              220
+            ],
+            [
+              561.0,
+              220
+            ],
+            [
+              533.5,
+              330
+            ],
+            [
+              337.5,
+              330
+            ]
+          ],
+          "colour": null
+        },
+        {
+          "id": "collection_face",
+          "kind": "flat",
+          "role": "face",
+          "verts": [
+            [
+              365.0,
+              220
+            ],
+            [
+              561.0,
+              220
+            ],
+            [
+              533.5,
+              330
+            ],
+            [
+              337.5,
+              330
+            ]
+          ],
+          "colour": "#1e3a8c"
+        },
+        {
+          "id": "collection_icon",
+          "kind": "textured",
+          "role": "icon",
+          "texture": "ico_collection",
+          "verts": [
+            [
+              484.5,
+              230
+            ],
+            [
+              548.5,
+              230
+            ],
+            [
+              532.5,
+              294.0
+            ],
+            [
+              468.5,
+              294.0
+            ]
+          ],
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "colour": "#4a7ae0"
+        },
+        {
+          "id": "collection_label",
+          "kind": "textured",
+          "role": "label",
+          "texture": "lbl_collection",
+          "verts": [
+            [
+              355.5,
+              306.0
+            ],
+            [
+              494.0,
+              306.0
+            ],
+            [
+              490.5,
+              320
+            ],
+            [
+              352.0,
+              320
+            ]
+          ],
+          "uv": [
+            0.001953,
+            0.03125,
+            0.542969,
+            0.90625
+          ],
+          "colour": "#f2efe4"
+        }
+      ],
+      "desc": {
+        "id": "collection_desc",
+        "kind": "textured",
+        "role": "desc",
+        "texture": "desc_collection",
+        "verts": [
+          [
+            72.75,
+            437.0
+          ],
+          [
+            314.25,
+            437.0
+          ],
+          [
+            311.25,
+            449.0
+          ],
+          [
+            69.75,
+            449.0
+          ]
+        ],
+        "uv": [
+          0.001953,
+          0.03125,
+          0.945312,
+          0.78125
+        ],
+        "colour": "#f2efe4"
+      }
+    },
+    {
+      "id": "options",
+      "rank": 3,
+      "hero": false,
+      "rect_unsheared": [
+        360,
+        338,
+        556,
+        420
+      ],
+      "quads": [
+        {
+          "id": "options_plate",
+          "kind": "flat",
+          "role": "plate",
+          "verts": [
+            [
+              335.5,
+              338
+            ],
+            [
+              531.5,
+              338
+            ],
+            [
+              511.0,
+              420
+            ],
+            [
+              315.0,
+              420
+            ]
+          ],
+          "colour": null
+        },
+        {
+          "id": "options_face",
+          "kind": "flat",
+          "role": "face",
+          "verts": [
+            [
+              335.5,
+              338
+            ],
+            [
+              531.5,
+              338
+            ],
+            [
+              511.0,
+              420
+            ],
+            [
+              315.0,
+              420
+            ]
+          ],
+          "colour": "#1e3a8c"
+        },
+        {
+          "id": "options_icon",
+          "kind": "textured",
+          "role": "icon",
+          "texture": "ico_options",
+          "verts": [
+            [
+              455.0,
+              348
+            ],
+            [
+              519.0,
+              348
+            ],
+            [
+              503.0,
+              412.0
+            ],
+            [
+              439.0,
+              412.0
+            ]
+          ],
+          "uv": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "colour": "#4a7ae0"
+        },
+        {
+          "id": "options_label",
+          "kind": "textured",
+          "role": "label",
+          "texture": "lbl_options",
+          "verts": [
+            [
+              333.0,
+              396.0
+            ],
+            [
+              430.0,
+              396.0
+            ],
+            [
+              426.5,
+              410
+            ],
+            [
+              329.5,
+              410
+            ]
+          ],
+          "uv": [
+            0.003906,
+            0.03125,
+            0.761719,
+            0.90625
+          ],
+          "colour": "#f2efe4"
+        }
+      ],
+      "desc": {
+        "id": "options_desc",
+        "kind": "textured",
+        "role": "desc",
+        "texture": "desc_options",
+        "verts": [
+          [
+            72.75,
+            437.0
+          ],
+          [
+            299.25,
+            437.0
+          ],
+          [
+            296.25,
+            449.0
+          ],
+          [
+            69.75,
+            449.0
+          ]
+        ],
+        "uv": [
+          0.001953,
+          0.03125,
+          0.886719,
+          0.78125
+        ],
+        "colour": "#f2efe4"
+      }
+    }
+  ],
+  "textures": [
+    {
+      "name": "lbl_title",
+      "file_2x": "out_hub/tex/2x/lbl_title.png",
+      "file_1x": "out_hub/tex/1x/lbl_title.png",
+      "size_2x": [
+        256,
+        32
+      ],
+      "size_1x": [
+        128,
+        16
+      ],
+      "uv": [
+        0.003906,
+        0.03125,
+        0.871094,
+        0.78125
+      ],
+      "uv_texels_2x": [
+        1,
+        1,
+        223,
+        25
+      ],
+      "format": "I4",
+      "fallback": "IA4",
+      "bytes_2x_I4": 4096
+    },
+    {
+      "name": "lbl_versus",
+      "file_2x": "out_hub/tex/2x/lbl_versus.png",
+      "file_1x": "out_hub/tex/1x/lbl_versus.png",
+      "size_2x": [
+        512,
+        128
+      ],
+      "size_1x": [
+        256,
+        64
+      ],
+      "uv": [
+        0.001953,
+        0.007812,
+        0.822266,
+        0.53125
+      ],
+      "uv_texels_2x": [
+        1,
+        1,
+        421,
+        68
+      ],
+      "format": "I4",
+      "fallback": "IA4",
+      "bytes_2x_I4": 32768
+    },
+    {
+      "name": "desc_versus",
+      "file_2x": "out_hub/tex/2x/desc_versus.png",
+      "file_1x": "out_hub/tex/1x/desc_versus.png",
+      "size_2x": [
+        512,
+        32
+      ],
+      "size_1x": [
+        256,
+        16
+      ],
+      "uv": [
+        0.001953,
+        0.03125,
+        0.933594,
+        0.78125
+      ],
+      "uv_texels_2x": [
+        1,
+        1,
+        478,
+        25
+      ],
+      "format": "I4",
+      "fallback": "IA4",
+      "bytes_2x_I4": 8192
+    },
+    {
+      "name": "lbl_solo",
+      "file_2x": "out_hub/tex/2x/lbl_solo.png",
+      "file_1x": "out_hub/tex/1x/lbl_solo.png",
+      "size_2x": [
+        128,
+        32
+      ],
+      "size_1x": [
+        64,
+        16
+      ],
+      "uv": [
+        0.007812,
+        0.03125,
+        0.914062,
+        0.90625
+      ],
+      "uv_texels_2x": [
+        1,
+        1,
+        117,
+        29
+      ],
+      "format": "I4",
+      "fallback": "IA4",
+      "bytes_2x_I4": 2048
+    },
+    {
+      "name": "desc_solo",
+      "file_2x": "out_hub/tex/2x/desc_solo.png",
+      "file_1x": "out_hub/tex/1x/desc_solo.png",
+      "size_2x": [
+        512,
+        32
+      ],
+      "size_1x": [
+        256,
+        16
+      ],
+      "uv": [
+        0.001953,
+        0.03125,
+        0.773438,
+        0.78125
+      ],
+      "uv_texels_2x": [
+        1,
+        1,
+        396,
+        25
+      ],
+      "format": "I4",
+      "fallback": "IA4",
+      "bytes_2x_I4": 8192
+    },
+    {
+      "name": "lbl_collection",
+      "file_2x": "out_hub/tex/2x/lbl_collection.png",
+      "file_1x": "out_hub/tex/1x/lbl_collection.png",
+      "size_2x": [
+        512,
+        32
+      ],
+      "size_1x": [
+        256,
+        16
+      ],
+      "uv": [
+        0.001953,
+        0.03125,
+        0.542969,
+        0.90625
+      ],
+      "uv_texels_2x": [
+        1,
+        1,
+        278,
+        29
+      ],
+      "format": "I4",
+      "fallback": "IA4",
+      "bytes_2x_I4": 8192
+    },
+    {
+      "name": "desc_collection",
+      "file_2x": "out_hub/tex/2x/desc_collection.png",
+      "file_1x": "out_hub/tex/1x/desc_collection.png",
+      "size_2x": [
+        512,
+        32
+      ],
+      "size_1x": [
+        256,
+        16
+      ],
+      "uv": [
+        0.001953,
+        0.03125,
+        0.945312,
+        0.78125
+      ],
+      "uv_texels_2x": [
+        1,
+        1,
+        484,
+        25
+      ],
+      "format": "I4",
+      "fallback": "IA4",
+      "bytes_2x_I4": 8192
+    },
+    {
+      "name": "lbl_options",
+      "file_2x": "out_hub/tex/2x/lbl_options.png",
+      "file_1x": "out_hub/tex/1x/lbl_options.png",
+      "size_2x": [
+        256,
+        32
+      ],
+      "size_1x": [
+        128,
+        16
+      ],
+      "uv": [
+        0.003906,
+        0.03125,
+        0.761719,
+        0.90625
+      ],
+      "uv_texels_2x": [
+        1,
+        1,
+        195,
+        29
+      ],
+      "format": "I4",
+      "fallback": "IA4",
+      "bytes_2x_I4": 4096
+    },
+    {
+      "name": "desc_options",
+      "file_2x": "out_hub/tex/2x/desc_options.png",
+      "file_1x": "out_hub/tex/1x/desc_options.png",
+      "size_2x": [
+        512,
+        32
+      ],
+      "size_1x": [
+        256,
+        16
+      ],
+      "uv": [
+        0.001953,
+        0.03125,
+        0.886719,
+        0.78125
+      ],
+      "uv_texels_2x": [
+        1,
+        1,
+        454,
+        25
+      ],
+      "format": "I4",
+      "fallback": "IA4",
+      "bytes_2x_I4": 8192
+    },
+    {
+      "name": "ico_versus",
+      "file_2x": "out_hub/tex/2x/ico_versus.png",
+      "file_1x": "out_hub/tex/1x/ico_versus.png",
+      "size_2x": [
+        256,
+        256
+      ],
+      "size_1x": [
+        128,
+        128
+      ],
+      "uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "uv_texels_2x": [
+        0,
+        0,
+        256,
+        256
+      ],
+      "format": "I4",
+      "fallback": "IA4",
+      "bytes_2x_I4": 32768
+    },
+    {
+      "name": "ico_solo",
+      "file_2x": "out_hub/tex/2x/ico_solo.png",
+      "file_1x": "out_hub/tex/1x/ico_solo.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "uv_texels_2x": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "format": "I4",
+      "fallback": "IA4",
+      "bytes_2x_I4": 8192
+    },
+    {
+      "name": "ico_collection",
+      "file_2x": "out_hub/tex/2x/ico_collection.png",
+      "file_1x": "out_hub/tex/1x/ico_collection.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "uv_texels_2x": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "format": "I4",
+      "fallback": "IA4",
+      "bytes_2x_I4": 8192
+    },
+    {
+      "name": "ico_options",
+      "file_2x": "out_hub/tex/2x/ico_options.png",
+      "file_1x": "out_hub/tex/1x/ico_options.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "uv": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "uv_texels_2x": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "format": "I4",
+      "fallback": "IA4",
+      "bytes_2x_I4": 8192
+    }
+  ],
+  "texture_notes": [
+    "Every texture is a white mask. Convert to I4 (4bpp): GX expands I4 to I in all four channels, so TEV must take RGB from the material colour and only ALPHA from the texture. Taking RGB from the texture as well would darken every anti-aliased edge a second time.",
+    "IA4 (8bpp) is the fallback if that TEV setup is awkward: intensity fixed at 15, alpha carries coverage.",
+    "UVs are normalised, so the same layout works for the 1x and 2x textures unchanged."
+  ],
+  "provenance": "Original. Layout, pictograms and text generated from pipeline/hub_layout.py and pipeline/hub.py. Design principles only (hierarchy, single shear angle, flat colour); no layout or asset taken from any shipped game."
+}

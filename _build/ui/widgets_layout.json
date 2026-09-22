@@ -1,0 +1,609 @@
+{
+ "name": "widgets",
+ "space": "unsheared",
+ "origin": "value area left edge, vertical centre of the row",
+ "states_from": "the hosting row: ng / sel / disabled",
+ "colours": {
+  "ng": {
+   "row": "@face",
+   "text": "bone",
+   "aux": "muted",
+   "track": "ink",
+   "track_text": "muted",
+   "fill": "@face_hi",
+   "knob": "bone",
+   "toggle_knob": "bone",
+   "knob_text": "ink",
+   "plate": "ink",
+   "plate_glyph": "bone"
+  },
+  "sel": {
+   "row": "gold",
+   "text": "ink",
+   "aux": "ink",
+   "track": "ink",
+   "track_text": "gold_dk",
+   "fill": "gold_dk",
+   "knob": "ink",
+   "toggle_knob": "gold_lt",
+   "knob_text": "ink",
+   "plate": "ink",
+   "plate_glyph": "gold_lt"
+  },
+  "disabled": {
+   "row": "@face",
+   "text": "disabled",
+   "aux": "disabled",
+   "track": "ink",
+   "track_text": "disabled",
+   "fill": "disabled",
+   "knob": "disabled",
+   "toggle_knob": "disabled",
+   "knob_text": "ink",
+   "plate": "ink",
+   "plate_glyph": "disabled"
+  }
+ },
+ "contrast_pairs": [
+  [
+   "text",
+   "row"
+  ],
+  [
+   "aux",
+   "row"
+  ],
+  [
+   "track_text",
+   "track"
+  ],
+  [
+   "knob_text",
+   "toggle_knob"
+  ],
+  [
+   "plate_glyph",
+   "plate"
+  ]
+ ],
+ "widgets": {
+  "toggle": {
+   "quads": [
+    {
+     "id": "track",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       -10
+      ],
+      [
+       120,
+       -10
+      ],
+      [
+       120,
+       10
+      ],
+      [
+       0,
+       10
+      ]
+     ],
+     "colour": "track"
+    },
+    {
+     "id": "knob",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       62,
+       -8
+      ],
+      [
+       118,
+       -8
+      ],
+      [
+       118,
+       8
+      ],
+      [
+       62,
+       8
+      ]
+     ],
+     "colour": "toggle_knob",
+     "joint": "toggle_knob"
+    }
+   ],
+   "slots": [
+    {
+     "id": "off",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      30,
+      5.28
+     ],
+     "align": "centre",
+     "max": "OFF",
+     "max_chars": 3,
+     "max_width_1x": 28.22,
+     "colour": "track_text"
+    },
+    {
+     "id": "on",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      90,
+      5.28
+     ],
+     "align": "centre",
+     "max": "ON",
+     "max_chars": 2,
+     "max_width_1x": 21.82,
+     "colour": "track_text"
+    }
+   ],
+   "rules": [
+    "knob covers the active half: x 2..58 (off) or 62..118 (on).",
+    "The active half's text uses knob_text and draws above the knob."
+   ]
+  },
+  "choice": {
+   "slots": [
+    {
+     "id": "left",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      0,
+      5.28
+     ],
+     "align": "left",
+     "max": "←",
+     "max_chars": 1,
+     "max_width_1x": 9.86,
+     "colour": "aux",
+     "joint": "choice_left"
+    },
+    {
+     "id": "value",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      95.0,
+      5.28
+     ],
+     "align": "centre",
+     "max": "Tournament Mod",
+     "max_chars": 14,
+     "max_width_1x": 122.4,
+     "colour": "text",
+     "joint": "choice_value"
+    },
+    {
+     "id": "right",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      190,
+      5.28
+     ],
+     "align": "right",
+     "max": "→",
+     "max_chars": 1,
+     "max_width_1x": 9.86,
+     "colour": "aux",
+     "joint": "choice_right"
+    }
+   ],
+   "rules": [
+    "wrap: true cycles; wrap: false stops at the ends, where the blocked arrow takes 'disabled' and a press plays choice_bump."
+   ]
+  },
+  "slider": {
+   "quads": [
+    {
+     "id": "track",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       -3
+      ],
+      [
+       130,
+       -3
+      ],
+      [
+       130,
+       3
+      ],
+      [
+       0,
+       3
+      ]
+     ],
+     "colour": "track"
+    },
+    {
+     "id": "fill",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       -3
+      ],
+      [
+       130,
+       -3
+      ],
+      [
+       130,
+       3
+      ],
+      [
+       0,
+       3
+      ]
+     ],
+     "colour": "fill",
+     "joint": "slider_fill"
+    },
+    {
+     "id": "knob",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       126,
+       -9
+      ],
+      [
+       134,
+       -9
+      ],
+      [
+       134,
+       9
+      ],
+      [
+       126,
+       9
+      ]
+     ],
+     "colour": "knob",
+     "joint": "slider_knob"
+    }
+   ],
+   "slots": [
+    {
+     "id": "readout",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      190,
+      5.28
+     ],
+     "align": "right",
+     "max": "100%",
+     "max_chars": 4,
+     "max_width_1x": 39.84,
+     "colour": "text",
+     "note": "tabular digits; format from the engine"
+    }
+   ],
+   "rules": [
+    "fill SCA_X = value/max about x=0; knob TRA_X = 130 * value/max - 130."
+   ]
+  },
+  "stepper": {
+   "quads": [
+    {
+     "id": "minus",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       -10
+      ],
+      [
+       24,
+       -10
+      ],
+      [
+       24,
+       10
+      ],
+      [
+       0,
+       10
+      ]
+     ],
+     "colour": "plate",
+     "joint": "stepper_minus"
+    },
+    {
+     "id": "plus",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       166,
+       -10
+      ],
+      [
+       190,
+       -10
+      ],
+      [
+       190,
+       10
+      ],
+      [
+       166,
+       10
+      ]
+     ],
+     "colour": "plate",
+     "joint": "stepper_plus"
+    }
+   ],
+   "slots": [
+    {
+     "id": "minus_g",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      12,
+      5.28
+     ],
+     "align": "centre",
+     "max": "-",
+     "max_chars": 1,
+     "max_width_1x": 5.44,
+     "colour": "plate_glyph",
+     "joint": "stepper_minus"
+    },
+    {
+     "id": "plus_g",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      178,
+      5.28
+     ],
+     "align": "centre",
+     "max": "+",
+     "max_chars": 1,
+     "max_width_1x": 8.64,
+     "colour": "plate_glyph",
+     "joint": "stepper_plus"
+    },
+    {
+     "id": "value",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      95.0,
+      5.28
+     ],
+     "align": "centre",
+     "max": "99:59",
+     "max_chars": 5,
+     "max_width_1x": 39.68,
+     "colour": "text",
+     "joint": "stepper_value"
+    }
+   ],
+   "rules": [
+    "Held input repeats after 24 frames, then every 4 frames; after 60 frames held, the step size multiplies by 10 if the engine allows."
+   ]
+  },
+  "check_cell": {
+   "size": [
+    72,
+    64
+   ],
+   "origin": "cell top-left; grid pitch 76 x 68",
+   "quads": [
+    {
+     "id": "plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       72,
+       0
+      ],
+      [
+       72,
+       64
+      ],
+      [
+       0,
+       64
+      ]
+     ],
+     "colour": null,
+     "joint": "cell_plate"
+    },
+    {
+     "id": "outline",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       72,
+       0
+      ],
+      [
+       72,
+       64
+      ],
+      [
+       0,
+       64
+      ]
+     ],
+     "colour": "ink",
+     "joint": "cell"
+    },
+    {
+     "id": "face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       3,
+       3
+      ],
+      [
+       69,
+       3
+      ],
+      [
+       69,
+       61
+      ],
+      [
+       3,
+       61
+      ]
+     ],
+     "colour": "@face",
+     "joint": "cell"
+    },
+    {
+     "id": "tab",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       50,
+       0
+      ],
+      [
+       72,
+       0
+      ],
+      [
+       72,
+       16
+      ],
+      [
+       50,
+       16
+      ]
+     ],
+     "colour": "ink",
+     "joint": "cell_tab"
+    },
+    {
+     "id": "mark",
+     "kind": "textured",
+     "role": "chrome",
+     "verts": [
+      [
+       54,
+       1
+      ],
+      [
+       68,
+       1
+      ],
+      [
+       68,
+       15
+      ],
+      [
+       54,
+       15
+      ]
+     ],
+     "colour": "ink",
+     "texture": "glyph_check",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "cell_tab"
+    }
+   ],
+   "slots": [
+    {
+     "id": "art",
+     "kind": "disc_art",
+     "rect": [
+      4,
+      4,
+      68,
+      60
+     ],
+     "size_1x": [
+      64,
+      56
+     ],
+     "joint": "cell",
+     "note": "the disc's item or stage icon"
+    }
+   ],
+   "states": {
+    "on": {
+     "tab": "gold",
+     "mark": "visible",
+     "art": {
+      "colour": "#ffffff",
+      "opacity": 1.0
+     }
+    },
+    "off": {
+     "tab": "ink",
+     "mark": "hidden",
+     "art": {
+      "colour": "#8a8a8a",
+      "opacity": 0.45
+     }
+    },
+    "sel": {
+     "face": "gold",
+     "plate": "gold_dk",
+     "offset": [
+      -3,
+      -3
+     ]
+    },
+    "disabled": {
+     "face": "@face",
+     "art": {
+      "colour": "#8a8a8a",
+      "opacity": 0.25
+     },
+     "tab": "ink",
+     "mark": "hidden"
+    }
+   },
+   "rules": [
+    "sel combines with on/off. Colour-blind safe: on/off differ by the mark and the art's brightness, not only the tab colour."
+   ]
+  }
+ }
+}

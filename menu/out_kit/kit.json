@@ -1,0 +1,625 @@
+{
+  "units": "colours are sRGB hex; material colour 0..1 = hex/255",
+  "palette": {
+    "ink": "#0a0e18",
+    "bone": "#f2efe4",
+    "muted": "#b8c2dc",
+    "disabled": "#7d88a6",
+    "gold": "#f0b429",
+    "gold_lt": "#ffd766",
+    "gold_dk": "#a9761a",
+    "danger": "#e5483b",
+    "ok": "#27b88a"
+  },
+  "sections": {
+    "versus": {
+      "face": "#1e3a8c",
+      "bg": "#032568",
+      "band": "#012d7b",
+      "face_hi": "#9da2f8",
+      "bands": [
+        [
+          18,
+          22
+        ],
+        [
+          572,
+          40
+        ]
+      ]
+    },
+    "solo": {
+      "face": "#6a4308",
+      "bg": "#4c2e01",
+      "band": "#583601",
+      "face_hi": "#dead77",
+      "bands": [
+        [
+          0,
+          64
+        ]
+      ]
+    },
+    "collection": {
+      "face": "#5a2a6e",
+      "bg": "#411255",
+      "band": "#4b1c5f",
+      "face_hi": "#c795d9",
+      "bands": [
+        [
+          560,
+          8
+        ],
+        [
+          576,
+          8
+        ],
+        [
+          592,
+          8
+        ]
+      ]
+    },
+    "options": {
+      "face": "#2e3640",
+      "bg": "#19212a",
+      "band": "#212933",
+      "face_hi": "#959da7",
+      "bands": []
+    },
+    "data": {
+      "face": "#1c5a4a",
+      "bg": "#004234",
+      "band": "#084c3c",
+      "face_hi": "#90c7b5",
+      "bands": [
+        [
+          16,
+          6
+        ],
+        [
+          30,
+          6
+        ],
+        [
+          44,
+          6
+        ],
+        [
+          586,
+          22
+        ]
+      ]
+    }
+  },
+  "section_rules": [
+    "A section changes bg, band, face, face_hi and its band rhythm only. Gold selection, ink structure and bone text are identical everywhere.",
+    "Three cues per section: colour, band rhythm, and the section's hub icon at the root of the breadcrumb. Colour alone is not enough under red-green colour blindness (see checks.section_face_closest).",
+    "bands are (x, width) in the hub's unsheared space, full screen height, pushed through the hub shear; they may bleed off-screen."
+  ],
+  "ports": {
+    "colours": {
+      "p1": "#e5483b",
+      "p2": "#2f7cf0",
+      "p3": "#f4d23a",
+      "p4": "#27b88a",
+      "cpu": "#7e8490"
+    },
+    "closed": {
+      "fill": "#1b2130",
+      "hatch": "#2a3244",
+      "text": "disabled",
+      "note": "closed slot: dark fill + diagonal hatch mask + the word from strings; never port-coloured"
+    },
+    "teams": {
+      "red": "p1",
+      "blue": "p2",
+      "green": "p4"
+    },
+    "label_text": {
+      "p1": {
+        "text": "ink",
+        "contrast": 4.89
+      },
+      "p2": {
+        "text": "ink",
+        "contrast": 4.83
+      },
+      "p3": {
+        "text": "ink",
+        "contrast": 12.97
+      },
+      "p4": {
+        "text": "ink",
+        "contrast": 7.63
+      },
+      "cpu": {
+        "text": "ink",
+        "contrast": 5.13
+      }
+    },
+    "rules": [
+      "Every port-coloured element also carries its port number (P1-P4, or CPU) from strings, so colour is never the only cue.",
+      "Port colours are never used for selection; selection is gold plus the lift-and-plate motion.",
+      "P3 yellow and the selection gold sit close under red-green colour blindness (see checks.port_vs_gold); the number and the plate extrusion carry the difference."
+    ]
+  },
+  "type": {
+    "fonts": {
+      "sans": {
+        "name": "Source Sans 3",
+        "licence": "SIL OFL 1.1",
+        "files": {
+          "bold": "SourceSans3/SourceSans3-Bold.otf",
+          "black": "SourceSans3/SourceSans3-Black.otf"
+        }
+      },
+      "mono": {
+        "name": "Hasklug Nerd Font (Hasklig)",
+        "licence": "SIL OFL 1.1",
+        "files": {
+          "bold": "Hasklug/HasklugNerdFont-Bold.otf",
+          "black": "Hasklug/HasklugNerdFont-Black.otf"
+        }
+      }
+    },
+    "scale": [
+      {
+        "role": "caption",
+        "size": 12,
+        "face": "sans",
+        "weight": "bold",
+        "charset": "full",
+        "use": "badges, section-divider labels, table footnotes; the smallest size allowed"
+      },
+      {
+        "role": "body",
+        "size": 14,
+        "face": "sans",
+        "weight": "bold",
+        "charset": "full",
+        "use": "descriptions, footer hints, dialog body, breadcrumb, table cells, character names on player panels"
+      },
+      {
+        "role": "row",
+        "size": 16,
+        "face": "sans",
+        "weight": "black",
+        "charset": "full",
+        "use": "list rows and widget values, stage name plate"
+      },
+      {
+        "role": "label",
+        "size": 20,
+        "face": "sans",
+        "weight": "black",
+        "charset": "full",
+        "use": "secondary hub tiles, dialog buttons"
+      },
+      {
+        "role": "title",
+        "size": 24,
+        "face": "sans",
+        "weight": "black",
+        "charset": "full",
+        "use": "header titles, dialog titles, ordinal suffixes"
+      },
+      {
+        "role": "heading",
+        "size": 32,
+        "face": "sans",
+        "weight": "black",
+        "charset": "full",
+        "use": "panel headings, banners"
+      },
+      {
+        "role": "hero",
+        "size": 44,
+        "face": "sans",
+        "weight": "black",
+        "charset": "caps",
+        "use": "hero tile labels (always set in capitals)"
+      },
+      {
+        "role": "display",
+        "size": 56,
+        "face": "sans",
+        "weight": "black",
+        "charset": "caps",
+        "use": "placement numerals, READY banner"
+      },
+      {
+        "role": "tag",
+        "size": 20,
+        "face": "mono",
+        "weight": "black",
+        "charset": "full",
+        "use": "name tags and the name-entry field: 4 fixed-width cells, so the caret and the plate never move as letters change"
+      }
+    ],
+    "fit": [
+      "Slots are sized in px (max_width_1x); a character count is only a guide for proportional text.",
+      "If a string is wider than its slot: set it one role smaller (same face); if still too wide, truncate with '…'. Never squash horizontally."
+    ],
+    "min_size": 12,
+    "italic": {
+      "method": "shear glyph quads",
+      "S": 0.25,
+      "formula": "x' = x + (baseline_y - y) * S"
+    },
+    "ordinal": {
+      "numeral": "display",
+      "suffix": "title",
+      "align": "suffix cap top = numeral cap top",
+      "suffixes": [
+        "st",
+        "nd",
+        "rd",
+        "th"
+      ]
+    },
+    "charsets": {
+      "full": "printable ASCII 0x20-0x7E + extras",
+      "caps": "ASCII without a-z + extras; engine uppercases hero/display text",
+      "extras": "×%°…–—←→↑↓★"
+    }
+  },
+  "checks": {
+    "port_distance": {
+      "normal": {
+        "closest": [
+          19.5,
+          "p2",
+          "cpu"
+        ],
+        "all": [
+          [
+            19.5,
+            "p2",
+            "cpu"
+          ],
+          [
+            29.4,
+            "p4",
+            "cpu"
+          ],
+          [
+            32.3,
+            "p1",
+            "cpu"
+          ],
+          [
+            36.3,
+            "p3",
+            "p4"
+          ],
+          [
+            42.0,
+            "p3",
+            "cpu"
+          ],
+          [
+            45.1,
+            "p2",
+            "p4"
+          ],
+          [
+            45.9,
+            "p1",
+            "p2"
+          ],
+          [
+            48.8,
+            "p1",
+            "p3"
+          ],
+          [
+            66.9,
+            "p1",
+            "p4"
+          ],
+          [
+            67.5,
+            "p2",
+            "p3"
+          ]
+        ]
+      },
+      "deuteranopia": {
+        "closest": [
+          17.4,
+          "p4",
+          "cpu"
+        ],
+        "all": [
+          [
+            17.4,
+            "p4",
+            "cpu"
+          ],
+          [
+            17.7,
+            "p1",
+            "p4"
+          ],
+          [
+            21.6,
+            "p2",
+            "cpu"
+          ],
+          [
+            22.0,
+            "p1",
+            "p3"
+          ],
+          [
+            27.0,
+            "p3",
+            "p4"
+          ],
+          [
+            31.2,
+            "p1",
+            "cpu"
+          ],
+          [
+            39.6,
+            "p2",
+            "p4"
+          ],
+          [
+            43.1,
+            "p3",
+            "cpu"
+          ],
+          [
+            58.1,
+            "p1",
+            "p2"
+          ],
+          [
+            69.6,
+            "p2",
+            "p3"
+          ]
+        ]
+      },
+      "protanopia": {
+        "closest": [
+          20.8,
+          "p2",
+          "cpu"
+        ],
+        "all": [
+          [
+            20.8,
+            "p2",
+            "cpu"
+          ],
+          [
+            20.9,
+            "p3",
+            "p4"
+          ],
+          [
+            23.2,
+            "p1",
+            "p4"
+          ],
+          [
+            24.1,
+            "p4",
+            "cpu"
+          ],
+          [
+            27.4,
+            "p1",
+            "cpu"
+          ],
+          [
+            34.7,
+            "p1",
+            "p3"
+          ],
+          [
+            42.0,
+            "p3",
+            "cpu"
+          ],
+          [
+            44.7,
+            "p2",
+            "p4"
+          ],
+          [
+            50.3,
+            "p1",
+            "p2"
+          ],
+          [
+            65.7,
+            "p2",
+            "p3"
+          ]
+        ]
+      },
+      "tritanopia": {
+        "closest": [
+          15.2,
+          "p2",
+          "p4"
+        ],
+        "all": [
+          [
+            15.2,
+            "p2",
+            "p4"
+          ],
+          [
+            16.9,
+            "p2",
+            "cpu"
+          ],
+          [
+            22.8,
+            "p4",
+            "cpu"
+          ],
+          [
+            29.9,
+            "p1",
+            "p3"
+          ],
+          [
+            30.8,
+            "p1",
+            "cpu"
+          ],
+          [
+            34.4,
+            "p3",
+            "cpu"
+          ],
+          [
+            44.2,
+            "p2",
+            "p3"
+          ],
+          [
+            46.0,
+            "p3",
+            "p4"
+          ],
+          [
+            69.2,
+            "p1",
+            "p4"
+          ],
+          [
+            71.6,
+            "p1",
+            "p2"
+          ]
+        ]
+      }
+    },
+    "port_vs_gold": {
+      "normal": {
+        "p1": 39.4,
+        "p2": 62.1,
+        "p3": 9.7,
+        "p4": 39.9,
+        "cpu": 38.7
+      },
+      "deuteranopia": {
+        "p1": 17.4,
+        "p2": 67.7,
+        "p3": 4.9,
+        "p4": 24.4,
+        "cpu": 40.5
+      },
+      "protanopia": {
+        "p1": 28.9,
+        "p2": 63.3,
+        "p3": 6.4,
+        "p4": 18.2,
+        "cpu": 38.7
+      },
+      "tritanopia": {
+        "p1": 22.5,
+        "p2": 58.2,
+        "p3": 8.3,
+        "p4": 53.1,
+        "cpu": 31.4
+      }
+    },
+    "port_label_text": {
+      "p1": {
+        "text": "ink",
+        "contrast": 4.89
+      },
+      "p2": {
+        "text": "ink",
+        "contrast": 4.83
+      },
+      "p3": {
+        "text": "ink",
+        "contrast": 12.97
+      },
+      "p4": {
+        "text": "ink",
+        "contrast": 7.63
+      },
+      "cpu": {
+        "text": "ink",
+        "contrast": 5.13
+      }
+    },
+    "sections": {
+      "versus": {
+        "bone_on_face": 8.95,
+        "bone_on_bg": 12.42,
+        "muted_on_face": 5.78,
+        "icon_on_face": 4.39,
+        "disabled_on_face": 2.92,
+        "face_vs_bg": 1.39
+      },
+      "solo": {
+        "bone_on_face": 7.54,
+        "bone_on_bg": 10.74,
+        "muted_on_face": 4.87,
+        "icon_on_face": 4.28,
+        "disabled_on_face": 2.46,
+        "face_vs_bg": 1.42
+      },
+      "collection": {
+        "bone_on_face": 9.16,
+        "bone_on_bg": 12.65,
+        "muted_on_face": 5.92,
+        "icon_on_face": 4.38,
+        "disabled_on_face": 2.99,
+        "face_vs_bg": 1.38
+      },
+      "options": {
+        "bone_on_face": 10.62,
+        "bone_on_bg": 14.12,
+        "muted_on_face": 6.86,
+        "icon_on_face": 4.46,
+        "disabled_on_face": 3.46,
+        "face_vs_bg": 1.33
+      },
+      "data": {
+        "bone_on_face": 6.99,
+        "bone_on_bg": 9.97,
+        "muted_on_face": 4.52,
+        "icon_on_face": 4.22,
+        "disabled_on_face": 2.28,
+        "face_vs_bg": 1.43
+      }
+    },
+    "ink_on_gold": 10.35,
+    "ink_on_gold_dk_icon": 2.13,
+    "section_face_closest": {
+      "normal": [
+        14.6,
+        "versus",
+        "options"
+      ],
+      "deuteranopia": [
+        5.5,
+        "versus",
+        "collection"
+      ],
+      "protanopia": [
+        4.8,
+        "versus",
+        "collection"
+      ],
+      "tritanopia": [
+        11.0,
+        "versus",
+        "data"
+      ]
+    }
+  }
+}

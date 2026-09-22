@@ -1,0 +1,1403 @@
+{
+ "fps": 60,
+ "format": "hub_motion.json: tracks, from_current, interpolation and transform rules are identical; see out_hub/hub_motion.json",
+ "space": "unsheared - motion is applied before the screen shear",
+ "value_expressions": "string values are evaluated by the player: dir, value, max, delta, target; colour values are kit tokens",
+ "events": {
+  "row_select": {
+   "applies_to": "row",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_cursor_move"
+    }
+   ],
+   "tracks": [
+    {
+     "target": "row",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "row",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "row_plate",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "row_face",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "@face",
+       "interp": "LIN",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 1,
+       "value": "gold_lt",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": "gold",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "row_label",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "bone",
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 1,
+       "value": "ink",
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 10
+  },
+  "row_deselect": {
+   "applies_to": "row",
+   "sfx": [],
+   "tracks": [
+    {
+     "target": "row",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "row",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "row_plate",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "row_face",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "gold",
+       "interp": "LIN",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 2,
+       "value": "@face",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "row_label",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "ink",
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 2,
+       "value": "bone",
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 6
+  },
+  "scroll": {
+   "applies_to": "list rows and thumb",
+   "sfx": [],
+   "note": "rows TRA_Y by -pitch * delta; thumb TRA_Y to its new position",
+   "tracks": [
+    {
+     "target": "rows",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 6,
+       "value": "-34*delta",
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "thumb",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 6,
+       "value": "target",
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 7
+  },
+  "toggle_set": {
+   "applies_to": "toggle",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_toggle"
+    }
+   ],
+   "note": "dir = +1 to on, -1 to off; knob travels 60px",
+   "tracks": [
+    {
+     "target": "toggle_knob",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": "60*dir + 3*dir",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": "60*dir",
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "toggle_knob",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 2,
+       "value": 1.12,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 9
+  },
+  "choice_step": {
+   "applies_to": "choice",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_value_change"
+    }
+   ],
+   "note": "the old string draws on value_out, the new on value; dir = +1 right, -1 left",
+   "tracks": [
+    {
+     "target": "choice_value_out",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": "16*dir",
+       "interp": "SPL",
+       "slope": 0
+      }
+     ]
+    },
+    {
+     "target": "choice_value_out",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "choice_value",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "-16*dir",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": "2*dir",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "choice_value",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "choice_arrow_<dir>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "gold_lt",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": "aux",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "choice_arrow_<dir>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 2,
+       "value": "3*dir",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 10
+  },
+  "bump": {
+   "applies_to": "choice, slider, stepper at an end ('can't go further')",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_bump"
+    }
+   ],
+   "note": "<value> is choice_value, slider_knob or stepper_value; no value change",
+   "tracks": [
+    {
+     "target": "<value>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 2,
+       "value": "3*dir",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": "-1*dir",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "<blocked_arrow>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "danger",
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": "disabled",
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 9
+  },
+  "slider_step": {
+   "applies_to": "slider",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_value_tick"
+    }
+   ],
+   "tracks": [
+    {
+     "target": "slider_fill",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": "value/max",
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "slider_knob",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": "130*value/max-130",
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "slider_knob",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 2,
+       "value": 1.2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 7
+  },
+  "stepper_step": {
+   "applies_to": "stepper",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_value_tick"
+    }
+   ],
+   "note": "dir = +1 plus, -1 minus",
+   "tracks": [
+    {
+     "target": "stepper_value",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "3*dir",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "stepper_<plus|minus>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.85,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "stepper_<plus|minus>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.85,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 6
+  },
+  "check_toggle": {
+   "applies_to": "check_cell",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_toggle"
+    }
+   ],
+   "tracks": [
+    {
+     "target": "cell_tab",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.6,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1.15,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "cell_tab",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.6,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1.15,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "cell_art",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "#8a8a8a|#ffffff",
+       "interp": "LIN",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": "target",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 8
+  },
+  "cell_select": {
+   "applies_to": "check_cell",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_cursor_move"
+    }
+   ],
+   "tracks": [
+    {
+     "target": "cell",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "cell",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "cell_plate",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 10
+  },
+  "cell_deselect": {
+   "applies_to": "check_cell",
+   "sfx": [],
+   "tracks": [
+    {
+     "target": "cell",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "cell",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "cell_plate",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 6
+  },
+  "dialog_open": {
+   "applies_to": "dialog",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_dialog_open"
+    }
+   ],
+   "pivot": "panel centre",
+   "tracks": [
+    {
+     "target": "dialog_dim",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0.65,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "dialog_panel",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "dialog_panel",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.92,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 1.02,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "dialog_panel",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.92,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 1.02,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 10
+  },
+  "dialog_close": {
+   "applies_to": "dialog",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_dialog_close"
+    }
+   ],
+   "tracks": [
+    {
+     "target": "dialog_panel",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "dialog_panel",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 0.96,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "dialog_panel",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 0.96,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "dialog_dim",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.65,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 7
+  },
+  "button_select": {
+   "applies_to": "dialog button",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_cursor_move"
+    }
+   ],
+   "note": "same as row_select on the button's joints",
+   "tracks": [
+    {
+     "target": "dialog_button",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "dialog_button",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -3.9000000000000004,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 10
+  },
+  "button_deselect": {
+   "applies_to": "dialog button",
+   "sfx": [],
+   "tracks": [
+    {
+     "target": "dialog_button",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "dialog_button",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 6
+  },
+  "toast_in": {
+   "applies_to": "toast",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_toast"
+    }
+   ],
+   "offscreen": true,
+   "tracks": [
+    {
+     "target": "toast",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 600,
+       "interp": "SPL",
+       "slope": -110
+      },
+      {
+       "frame": 9,
+       "value": -4,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 13,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 14
+  },
+  "toast_out": {
+   "applies_to": "toast",
+   "sfx": [],
+   "offscreen": true,
+   "tracks": [
+    {
+     "target": "toast",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 9,
+       "value": 600,
+       "interp": "SPL",
+       "slope": 120
+      }
+     ]
+    }
+   ],
+   "length_frames": 10
+  },
+  "cursor_press": {
+   "applies_to": "cursor",
+   "sfx": [],
+   "pivot": "hotspot",
+   "tracks": [
+    {
+     "target": "cursor",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 2,
+       "value": 0.88,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "cursor",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 2,
+       "value": 0.88,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 8
+  }
+ },
+ "sequences": {
+  "list_cursor_move": [
+   {
+    "event": "row_deselect",
+    "on": "previous"
+   },
+   {
+    "event": "row_select",
+    "on": "new"
+   },
+   {
+    "event": "scroll",
+    "when": "the new row is within one row of an edge"
+   }
+  ],
+  "value_change": [
+   {
+    "event": "toggle_set | choice_step | slider_step | stepper_step",
+    "on": "selected row",
+    "when": "the value can change"
+   },
+   {
+    "event": "bump",
+    "on": "selected row",
+    "when": "it cannot"
+   }
+  ],
+  "dialog": [
+   {
+    "event": "dialog_open"
+   },
+   {
+    "event": "button_select",
+    "on": "default button"
+   },
+   {
+    "event": "dialog_close",
+    "when": "confirmed or cancelled"
+   }
+  ],
+  "toast": [
+   {
+    "event": "toast_in"
+   },
+   {
+    "hold_frames": 90
+   },
+   {
+    "event": "toast_out"
+   }
+  ],
+  "hold_repeat": {
+   "delay_frames": 24,
+   "interval_frames": 4
+  }
+ }
+}

@@ -112,3 +112,19 @@ __pycache__/
 
 # the menu pipeline: its Melee-derived index (names, hashes) is never committed
 /menu/meleedump/
+
+# never published: other people's replays, caches, crash logs, test output, generated files
+/Gang-Steals/
+/_build/dawn_cache.db*
+/_build/pipeline_cache.db*
+/_build/initial_pipeline_cache.*
+/_build/crashlogs/
+/_build/tmp/
+/_build/suite/
+/_build/suite_rerun/
+/_build/stagec/bin/
+/_build/stagec/obj/
+/_build/replays/
+/_build/replay_batch/
+/_build/replay_batch_*.err
+/_build/gw_mex_sigs_gen.inc*

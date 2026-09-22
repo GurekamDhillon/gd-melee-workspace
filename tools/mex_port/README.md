@@ -180,6 +180,6 @@ per-texture `.dat` vs `.usd` comparison (the language-specific baked-text list).
     python tools/mex_port/dump_menu_assets.py --only MnMaAll.usd --no-raw --index-out tmp/idx
 
 Defaults: `raw/` and `textures/` -> `~/Desktop/meleedump` (never committed, never inside the original-art
-`Desktop/menu` pipeline); `index/` and `MANIFEST.md` (metadata only, no pixels) ->
-`~/Desktop/menu/meleedump`. Textures are found by a typed structural walk (pointers validated against the
+`menu/` pipeline); `index/` and `MANIFEST.md` (metadata only, no pixels) ->
+`<repo>/menu/meleedump`. Textures are found by a typed structural walk (pointers validated against the
 reloc table) and cross-checked by an independent ImageDesc scan; scan-only finds are decoded as `ORPHAN_*`.

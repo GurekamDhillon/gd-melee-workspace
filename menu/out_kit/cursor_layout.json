@@ -1,0 +1,108 @@
+{
+ "name": "cursor",
+ "space": "screen (never sheared: the hand points where it points)",
+ "size_1x": [
+  32,
+  32
+ ],
+ "hotspot_1x": [
+  14,
+  4
+ ],
+ "layers": [
+  {
+   "texture": "cursor_ink",
+   "colour": "ink",
+   "offset_1x": [
+    1.5,
+    1.5
+   ],
+   "role": "shadow"
+  },
+  {
+   "texture": "cursor_ink",
+   "colour": "ink",
+   "role": "outline"
+  },
+  {
+   "texture": "cursor_fill",
+   "colour": "bone | port colour",
+   "role": "fill"
+  },
+  {
+   "texture": "cursor_detail",
+   "colour": "ink",
+   "role": "detail"
+  }
+ ],
+ "variants": {
+  "default": {
+   "fill": "bone",
+   "badge": null
+  },
+  "p1": {
+   "fill": "p1",
+   "badge": {
+    "text": "1",
+    "colour": "p1"
+   }
+  },
+  "p2": {
+   "fill": "p2",
+   "badge": {
+    "text": "2",
+    "colour": "p2"
+   }
+  },
+  "p3": {
+   "fill": "p3",
+   "badge": {
+    "text": "3",
+    "colour": "p3"
+   }
+  },
+  "p4": {
+   "fill": "p4",
+   "badge": {
+    "text": "4",
+    "colour": "p4"
+   }
+  },
+  "cpu": {
+   "fill": "cpu",
+   "badge": {
+    "text": "CPU",
+    "colour": "cpu"
+   }
+  }
+ },
+ "badge": {
+  "kind": "flat sheared quad",
+  "colour": "ink",
+  "anchor_1x": [
+   22,
+   22
+  ],
+  "height_1x": 14,
+  "pad_x_1x": 4,
+  "text_role": "caption",
+  "text_colour": "the variant's port colour",
+  "note": "width = text advance + 2*pad; sheared by kit SHEAR like every other plate; port strings come from the engine"
+ },
+ "slots": [
+  {
+   "id": "badge_text",
+   "kind": "text",
+   "role": "caption",
+   "anchor": [
+    26,
+    32.96
+   ],
+   "align": "left",
+   "max": "CPU",
+   "max_chars": 3,
+   "max_width_1x": 22.12,
+   "colour": "port:<port>"
+  }
+ ]
+}

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>stagec</AssemblyName>
+    <RootNamespace>stagec</RootNamespace>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HSDLib\HSDRawViewer\HSDRawViewer.csproj" />
+    <Reference Include="IONET">
+      <HintPath>..\HSDLib\HSDRawViewer\lib\IONET.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

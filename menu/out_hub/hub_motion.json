@@ -1,0 +1,1419 @@
+{
+  "fps": 60,
+  "units": "1x framebuffer pixels; colours and alpha 0..1; alpha = opacity",
+  "joints": [
+    {
+      "name": "header",
+      "parent": null,
+      "pivot": null,
+      "channels": [
+        "TRA_Y"
+      ],
+      "draws": [
+        "header_rule",
+        "header_slab",
+        "header_title"
+      ]
+    },
+    {
+      "name": "footer",
+      "parent": null,
+      "pivot": null,
+      "channels": [
+        "TRA_Y"
+      ],
+      "draws": [
+        "footer_strip",
+        "footer_mark"
+      ]
+    },
+    {
+      "name": "cluster",
+      "parent": null,
+      "pivot": null,
+      "channels": [
+        "TRA_X"
+      ],
+      "draws": [
+        "backplate"
+      ]
+    },
+    {
+      "name": "tile_versus",
+      "parent": null,
+      "pivot": null,
+      "channels": [
+        "TRA_X",
+        "RECOIL"
+      ],
+      "draws": []
+    },
+    {
+      "name": "plate_versus",
+      "parent": "tile_versus",
+      "pivot": null,
+      "channels": [
+        "ALPHA"
+      ],
+      "draws": [
+        "versus_plate"
+      ]
+    },
+    {
+      "name": "lift_versus",
+      "parent": "tile_versus",
+      "pivot": [
+        220.0,
+        244.0
+      ],
+      "channels": [
+        "TRA_X",
+        "TRA_Y",
+        "SCA_X",
+        "SCA_Y"
+      ],
+      "draws": [
+        "versus_face",
+        "versus_icon",
+        "versus_label"
+      ]
+    },
+    {
+      "name": "desc_versus",
+      "parent": "footer",
+      "pivot": null,
+      "channels": [
+        "TRA_X",
+        "ALPHA"
+      ],
+      "draws": [
+        "versus_desc"
+      ]
+    },
+    {
+      "name": "tile_solo",
+      "parent": null,
+      "pivot": null,
+      "channels": [
+        "TRA_X",
+        "RECOIL"
+      ],
+      "draws": []
+    },
+    {
+      "name": "plate_solo",
+      "parent": "tile_solo",
+      "pivot": null,
+      "channels": [
+        "ALPHA"
+      ],
+      "draws": [
+        "solo_plate"
+      ]
+    },
+    {
+      "name": "lift_solo",
+      "parent": "tile_solo",
+      "pivot": [
+        483.0,
+        140.0
+      ],
+      "channels": [
+        "TRA_X",
+        "TRA_Y",
+        "SCA_X",
+        "SCA_Y"
+      ],
+      "draws": [
+        "solo_face",
+        "solo_icon",
+        "solo_label"
+      ]
+    },
+    {
+      "name": "desc_solo",
+      "parent": "footer",
+      "pivot": null,
+      "channels": [
+        "TRA_X",
+        "ALPHA"
+      ],
+      "draws": [
+        "solo_desc"
+      ]
+    },
+    {
+      "name": "tile_collection",
+      "parent": null,
+      "pivot": null,
+      "channels": [
+        "TRA_X",
+        "RECOIL"
+      ],
+      "draws": []
+    },
+    {
+      "name": "plate_collection",
+      "parent": "tile_collection",
+      "pivot": null,
+      "channels": [
+        "ALPHA"
+      ],
+      "draws": [
+        "collection_plate"
+      ]
+    },
+    {
+      "name": "lift_collection",
+      "parent": "tile_collection",
+      "pivot": [
+        449.25,
+        275.0
+      ],
+      "channels": [
+        "TRA_X",
+        "TRA_Y",
+        "SCA_X",
+        "SCA_Y"
+      ],
+      "draws": [
+        "collection_face",
+        "collection_icon",
+        "collection_label"
+      ]
+    },
+    {
+      "name": "desc_collection",
+      "parent": "footer",
+      "pivot": null,
+      "channels": [
+        "TRA_X",
+        "ALPHA"
+      ],
+      "draws": [
+        "collection_desc"
+      ]
+    },
+    {
+      "name": "tile_options",
+      "parent": null,
+      "pivot": null,
+      "channels": [
+        "TRA_X",
+        "RECOIL"
+      ],
+      "draws": []
+    },
+    {
+      "name": "plate_options",
+      "parent": "tile_options",
+      "pivot": null,
+      "channels": [
+        "ALPHA"
+      ],
+      "draws": [
+        "options_plate"
+      ]
+    },
+    {
+      "name": "lift_options",
+      "parent": "tile_options",
+      "pivot": [
+        423.25,
+        379.0
+      ],
+      "channels": [
+        "TRA_X",
+        "TRA_Y",
+        "SCA_X",
+        "SCA_Y"
+      ],
+      "draws": [
+        "options_face",
+        "options_icon",
+        "options_label"
+      ]
+    },
+    {
+      "name": "desc_options",
+      "parent": "footer",
+      "pivot": null,
+      "channels": [
+        "TRA_X",
+        "ALPHA"
+      ],
+      "draws": [
+        "options_desc"
+      ]
+    }
+  ],
+  "materials": {
+    "note": "material target -> the quad id whose colour it drives",
+    "map": {
+      "face_versus": "versus_face",
+      "icon_versus": "versus_icon",
+      "label_versus": "versus_label",
+      "face_solo": "solo_face",
+      "icon_solo": "solo_icon",
+      "label_solo": "solo_label",
+      "face_collection": "collection_face",
+      "icon_collection": "collection_icon",
+      "label_collection": "collection_label",
+      "face_options": "options_face",
+      "icon_options": "options_icon",
+      "label_options": "options_label"
+    }
+  },
+  "transform": [
+    "A joint's local transform maps a rest-space point p to pivot + S * (p - pivot) + T, with pivot = [0,0] where null and S = 1 where it has no SCA channel.",
+    "World transform = parent's world transform applied after the child's local one. Tile quads: lift_<id>, then tile_<id>.",
+    "RECOIL is a scalar r; tile_<id> adds r * 2 * unit(pivot(tile) - pivot(selected)) to its translation. Pivots are lift_<id>.pivot.",
+    "Draw order: tiles by rank, then the previously selected tile, then the selected tile last (it is lifted over its neighbours)."
+  ],
+  "interpolation": [
+    "Keys are (frame, value, interp, slope); interp applies to the segment starting at that key. Before the first key: its value. After the last: the last value.",
+    "CON: hold the key's value until the next key's frame.",
+    "LIN: linear between the two values.",
+    "SPL: cubic Hermite, u = (t - f0)/(f1 - f0), d = f1 - f0: v = h00*v0 + h10*d*s0 + h01*v1 + h11*d*s1, slopes in value/frame.",
+    "from_current: when the event starts, replace that key's value with the channel's current value. This is what stops an interrupted motion from popping.",
+    "A channel plays the most recently started event that covers it; events on other channels of the same joint keep playing."
+  ],
+  "events": {
+    "select": {
+      "applies_to": "the newly selected tile",
+      "length_frames": 11,
+      "sfx": [
+        {
+          "frame": 0,
+          "cue": "sfx_cursor_move"
+        }
+      ],
+      "tracks": [
+        {
+          "target": "lift_<id>",
+          "kind": "joint",
+          "channel": "TRA_X",
+          "keys": [
+            {
+              "frame": 0,
+              "value": -0.0,
+              "interp": "SPL",
+              "slope": 0,
+              "from_current": true
+            },
+            {
+              "frame": 4,
+              "value": -6.5,
+              "interp": "SPL",
+              "slope": 0
+            },
+            {
+              "frame": 9,
+              "value": -5.0,
+              "interp": "SPL",
+              "slope": 0
+            }
+          ]
+        },
+        {
+          "target": "lift_<id>",
+          "kind": "joint",
+          "channel": "TRA_Y",
+          "keys": [
+            {
+              "frame": 0,
+              "value": -0.0,
+              "interp": "SPL",
+              "slope": 0,
+              "from_current": true
+            },
+            {
+              "frame": 4,
+              "value": -6.5,
+              "interp": "SPL",
+              "slope": 0
+            },
+            {
+              "frame": 9,
+              "value": -5.0,
+              "interp": "SPL",
+              "slope": 0
+            }
+          ]
+        },
+        {
+          "target": "lift_<id>",
+          "kind": "joint",
+          "channel": "SCA_X",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 1.0,
+              "interp": "SPL",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 3,
+              "value": 1.03,
+              "interp": "SPL",
+              "slope": 0.0
+            },
+            {
+              "frame": 10,
+              "value": 1.0,
+              "interp": "SPL",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "lift_<id>",
+          "kind": "joint",
+          "channel": "SCA_Y",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 1.0,
+              "interp": "SPL",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 3,
+              "value": 1.03,
+              "interp": "SPL",
+              "slope": 0.0
+            },
+            {
+              "frame": 10,
+              "value": 1.0,
+              "interp": "SPL",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "face_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_R",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.11765,
+              "interp": "LIN",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 1,
+              "value": 1.0,
+              "interp": "LIN",
+              "slope": 0.0
+            },
+            {
+              "frame": 8,
+              "value": 0.94118,
+              "interp": "LIN",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "face_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_G",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.22745,
+              "interp": "LIN",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 1,
+              "value": 0.84314,
+              "interp": "LIN",
+              "slope": 0.0
+            },
+            {
+              "frame": 8,
+              "value": 0.70588,
+              "interp": "LIN",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "face_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_B",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.54902,
+              "interp": "LIN",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 1,
+              "value": 0.4,
+              "interp": "LIN",
+              "slope": 0.0
+            },
+            {
+              "frame": 8,
+              "value": 0.16078,
+              "interp": "LIN",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "icon_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_R",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.2902,
+              "interp": "CON",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 1,
+              "value": 0.66275,
+              "interp": "CON",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "icon_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_G",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.47843,
+              "interp": "CON",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 1,
+              "value": 0.46275,
+              "interp": "CON",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "icon_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_B",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.87843,
+              "interp": "CON",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 1,
+              "value": 0.10196,
+              "interp": "CON",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "plate_<id>",
+          "kind": "material",
+          "channel": "ALPHA",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 1.0,
+              "interp": "CON",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "label_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_R",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.94902,
+              "interp": "CON",
+              "slope": 0.0
+            },
+            {
+              "frame": 1,
+              "value": 0.03922,
+              "interp": "CON",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "label_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_G",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.93725,
+              "interp": "CON",
+              "slope": 0.0
+            },
+            {
+              "frame": 1,
+              "value": 0.0549,
+              "interp": "CON",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "label_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_B",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.89412,
+              "interp": "CON",
+              "slope": 0.0
+            },
+            {
+              "frame": 1,
+              "value": 0.09412,
+              "interp": "CON",
+              "slope": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    "deselect": {
+      "applies_to": "the previously selected tile",
+      "length_frames": 6,
+      "sfx": [],
+      "tracks": [
+        {
+          "target": "lift_<id>",
+          "kind": "joint",
+          "channel": "TRA_X",
+          "keys": [
+            {
+              "frame": 0,
+              "value": -5.0,
+              "interp": "SPL",
+              "slope": 0,
+              "from_current": true
+            },
+            {
+              "frame": 5,
+              "value": -0.0,
+              "interp": "SPL",
+              "slope": 0
+            }
+          ]
+        },
+        {
+          "target": "lift_<id>",
+          "kind": "joint",
+          "channel": "TRA_Y",
+          "keys": [
+            {
+              "frame": 0,
+              "value": -5.0,
+              "interp": "SPL",
+              "slope": 0,
+              "from_current": true
+            },
+            {
+              "frame": 5,
+              "value": -0.0,
+              "interp": "SPL",
+              "slope": 0
+            }
+          ]
+        },
+        {
+          "target": "lift_<id>",
+          "kind": "joint",
+          "channel": "SCA_X",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 1.0,
+              "interp": "SPL",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 5,
+              "value": 1.0,
+              "interp": "SPL",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "lift_<id>",
+          "kind": "joint",
+          "channel": "SCA_Y",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 1.0,
+              "interp": "SPL",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 5,
+              "value": 1.0,
+              "interp": "SPL",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "face_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_R",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.94118,
+              "interp": "LIN",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 2,
+              "value": 0.11765,
+              "interp": "LIN",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "face_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_G",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.70588,
+              "interp": "LIN",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 2,
+              "value": 0.22745,
+              "interp": "LIN",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "face_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_B",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.16078,
+              "interp": "LIN",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 2,
+              "value": 0.54902,
+              "interp": "LIN",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "icon_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_R",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.66275,
+              "interp": "CON",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 2,
+              "value": 0.2902,
+              "interp": "CON",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "icon_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_G",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.46275,
+              "interp": "CON",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 2,
+              "value": 0.47843,
+              "interp": "CON",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "icon_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_B",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.10196,
+              "interp": "CON",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 2,
+              "value": 0.87843,
+              "interp": "CON",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "plate_<id>",
+          "kind": "material",
+          "channel": "ALPHA",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 1.0,
+              "interp": "CON",
+              "slope": 0.0
+            },
+            {
+              "frame": 5,
+              "value": 0.0,
+              "interp": "CON",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "label_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_R",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.03922,
+              "interp": "CON",
+              "slope": 0.0
+            },
+            {
+              "frame": 2,
+              "value": 0.94902,
+              "interp": "CON",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "label_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_G",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.0549,
+              "interp": "CON",
+              "slope": 0.0
+            },
+            {
+              "frame": 2,
+              "value": 0.93725,
+              "interp": "CON",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "label_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_B",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.09412,
+              "interp": "CON",
+              "slope": 0.0
+            },
+            {
+              "frame": 2,
+              "value": 0.89412,
+              "interp": "CON",
+              "slope": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    "recoil": {
+      "applies_to": "every other tile",
+      "length_frames": 11,
+      "sfx": [],
+      "tracks": [
+        {
+          "target": "tile_<id>",
+          "kind": "joint",
+          "channel": "TRA_X/TRA_Y",
+          "note": "scale keys by the unit vector from the selected tile's centre * 2 px",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.0,
+              "interp": "SPL",
+              "slope": 0
+            },
+            {
+              "frame": 3,
+              "value": 1.0,
+              "interp": "SPL",
+              "slope": 0
+            },
+            {
+              "frame": 10,
+              "value": 0.0,
+              "interp": "SPL",
+              "slope": 0
+            }
+          ]
+        }
+      ]
+    },
+    "desc_in": {
+      "applies_to": "selected tile's description",
+      "length_frames": 7,
+      "sfx": [],
+      "tracks": [
+        {
+          "target": "desc_<id>",
+          "kind": "material",
+          "channel": "ALPHA",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.0,
+              "interp": "LIN",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 6,
+              "value": 1.0,
+              "interp": "LIN",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "desc_<id>",
+          "kind": "joint",
+          "channel": "TRA_X",
+          "keys": [
+            {
+              "frame": 0,
+              "value": -12.0,
+              "interp": "SPL",
+              "slope": 0.0
+            },
+            {
+              "frame": 6,
+              "value": 0.0,
+              "interp": "SPL",
+              "slope": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    "desc_out": {
+      "applies_to": "previous tile's description",
+      "length_frames": 4,
+      "sfx": [],
+      "tracks": [
+        {
+          "target": "desc_<id>",
+          "kind": "material",
+          "channel": "ALPHA",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 1.0,
+              "interp": "LIN",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 3,
+              "value": 0.0,
+              "interp": "LIN",
+              "slope": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    "confirm": {
+      "applies_to": "the selected tile",
+      "length_frames": 13,
+      "sfx": [
+        {
+          "frame": 3,
+          "cue": "sfx_confirm"
+        }
+      ],
+      "tracks": [
+        {
+          "target": "lift_<id>",
+          "kind": "joint",
+          "channel": "TRA_X",
+          "keys": [
+            {
+              "frame": 0,
+              "value": -5.0,
+              "interp": "SPL",
+              "slope": 0,
+              "from_current": true
+            },
+            {
+              "frame": 3,
+              "value": -0.0,
+              "interp": "SPL",
+              "slope": 0
+            },
+            {
+              "frame": 6,
+              "value": -1.75,
+              "interp": "SPL",
+              "slope": 0
+            },
+            {
+              "frame": 10,
+              "value": -0.0,
+              "interp": "SPL",
+              "slope": 0
+            }
+          ]
+        },
+        {
+          "target": "lift_<id>",
+          "kind": "joint",
+          "channel": "TRA_Y",
+          "keys": [
+            {
+              "frame": 0,
+              "value": -5.0,
+              "interp": "SPL",
+              "slope": 0,
+              "from_current": true
+            },
+            {
+              "frame": 3,
+              "value": -0.0,
+              "interp": "SPL",
+              "slope": 0
+            },
+            {
+              "frame": 6,
+              "value": -1.75,
+              "interp": "SPL",
+              "slope": 0
+            },
+            {
+              "frame": 10,
+              "value": -0.0,
+              "interp": "SPL",
+              "slope": 0
+            }
+          ]
+        },
+        {
+          "target": "lift_<id>",
+          "kind": "joint",
+          "channel": "SCA_X",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 1.0,
+              "interp": "SPL",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 3,
+              "value": 0.97,
+              "interp": "SPL",
+              "slope": 0.0
+            },
+            {
+              "frame": 10,
+              "value": 1.0,
+              "interp": "SPL",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "lift_<id>",
+          "kind": "joint",
+          "channel": "SCA_Y",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 1.0,
+              "interp": "SPL",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 3,
+              "value": 0.97,
+              "interp": "SPL",
+              "slope": 0.0
+            },
+            {
+              "frame": 10,
+              "value": 1.0,
+              "interp": "SPL",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "face_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_R",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.94118,
+              "interp": "LIN",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 3,
+              "value": 0.94902,
+              "interp": "LIN",
+              "slope": 0.0
+            },
+            {
+              "frame": 12,
+              "value": 0.94118,
+              "interp": "LIN",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "face_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_G",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.70588,
+              "interp": "LIN",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 3,
+              "value": 0.93725,
+              "interp": "LIN",
+              "slope": 0.0
+            },
+            {
+              "frame": 12,
+              "value": 0.70588,
+              "interp": "LIN",
+              "slope": 0.0
+            }
+          ]
+        },
+        {
+          "target": "face_<id>",
+          "kind": "material",
+          "channel": "DIFFUSE_B",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.16078,
+              "interp": "LIN",
+              "slope": 0.0,
+              "from_current": true
+            },
+            {
+              "frame": 3,
+              "value": 0.89412,
+              "interp": "LIN",
+              "slope": 0.0
+            },
+            {
+              "frame": 12,
+              "value": 0.16078,
+              "interp": "LIN",
+              "slope": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    "slide_out": {
+      "applies_to": "each tile, stagger 2f, chosen tile last; backplate at 0",
+      "length_frames": 13,
+      "sfx": [
+        {
+          "frame": 0,
+          "cue": "sfx_screen_whoosh"
+        }
+      ],
+      "tracks": [
+        {
+          "target": "tile_<id>",
+          "kind": "joint",
+          "channel": "TRA_X",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 0.0,
+              "interp": "SPL",
+              "slope": 0.0
+            },
+            {
+              "frame": 12,
+              "value": -720.0,
+              "interp": "SPL",
+              "slope": -120.0
+            }
+          ]
+        }
+      ]
+    },
+    "slide_in": {
+      "applies_to": "each tile by rank, stagger 0/3/5/7f; backplate with hero",
+      "length_frames": 18,
+      "sfx": [
+        {
+          "frame": 0,
+          "cue": "sfx_screen_whoosh"
+        }
+      ],
+      "tracks": [
+        {
+          "target": "tile_<id>",
+          "kind": "joint",
+          "channel": "TRA_X",
+          "keys": [
+            {
+              "frame": 0,
+              "value": 720.0,
+              "interp": "SPL",
+              "slope": -120.0
+            },
+            {
+              "frame": 12,
+              "value": -6.0,
+              "interp": "SPL",
+              "slope": 0.0
+            },
+            {
+              "frame": 17,
+              "value": 0.0,
+              "interp": "SPL",
+              "slope": 0.0
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "sequences": {
+    "cursor_move": [
+      {
+        "event": "deselect",
+        "on": "previous",
+        "at": 0
+      },
+      {
+        "event": "desc_out",
+        "on": "previous",
+        "at": 0
+      },
+      {
+        "event": "select",
+        "on": "new",
+        "at": 0
+      },
+      {
+        "event": "desc_in",
+        "on": "new",
+        "at": 0
+      },
+      {
+        "event": "recoil",
+        "on": "others",
+        "at": 0
+      }
+    ],
+    "confirm": [
+      {
+        "event": "confirm",
+        "on": "selected",
+        "at": 0
+      },
+      {
+        "sequence": "screen_out",
+        "at": 14
+      }
+    ],
+    "screen_out": {
+      "cluster": {
+        "event": "slide_out",
+        "at": 0
+      },
+      "header": {
+        "channel": "TRA_Y",
+        "keys": [
+          [
+            0,
+            0,
+            "SPL",
+            0
+          ],
+          [
+            10,
+            -60,
+            "SPL",
+            0
+          ]
+        ]
+      },
+      "footer": {
+        "channel": "TRA_Y",
+        "keys": [
+          [
+            0,
+            0,
+            "SPL",
+            0
+          ],
+          [
+            10,
+            60,
+            "SPL",
+            0
+          ]
+        ]
+      },
+      "tiles": {
+        "event": "slide_out",
+        "order": "unselected by rank, then selected",
+        "stagger_frames": 2
+      }
+    },
+    "screen_in": {
+      "cluster": {
+        "event": "slide_in",
+        "at": 0
+      },
+      "header": {
+        "channel": "TRA_Y",
+        "keys": [
+          [
+            0,
+            -60,
+            "SPL",
+            0
+          ],
+          [
+            10,
+            0,
+            "SPL",
+            0
+          ]
+        ]
+      },
+      "footer": {
+        "channel": "TRA_Y",
+        "keys": [
+          [
+            0,
+            60,
+            "SPL",
+            0
+          ],
+          [
+            10,
+            0,
+            "SPL",
+            0
+          ]
+        ]
+      },
+      "tiles": {
+        "event": "slide_in",
+        "order": "by rank",
+        "offsets": [
+          0,
+          3,
+          5,
+          7
+        ],
+        "before_start": "hold TRA_X at 720 (off-screen)"
+      },
+      "initial_state": "the selected tile is already at its 'sel' rest values"
+    }
+  },
+  "notes": [
+    "Label and icon colours switch instantly (CON) instead of tweening: a tween passes through a grey that reads on neither face. The label switch frame is the first frame where the new colour contrasts more with the face than the old one.",
+    "Sound cues are frame markers only; no audio assets exist yet."
+  ],
+  "checks": {
+    "min_label_contrast": 4.42,
+    "at": [
+      41,
+      "versus"
+    ],
+    "required": 3.0
+  }
+}

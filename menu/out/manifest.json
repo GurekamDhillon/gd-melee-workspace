@@ -1,0 +1,543 @@
+{
+  "project": "placeholder menu art - pipeline bring-up",
+  "status": "PLACEHOLDER. Proves the PNG -> GX texture -> HSD quad path. Not shipping art; the written spec still goes to a human artist.",
+  "provenance": "100% generated from the HTML/CSS in pipeline/. No traced, recoloured or referenced Nintendo assets of any kind.",
+  "design_canvas_1x": [
+    640,
+    480
+  ],
+  "presentation_2x": [
+    1280,
+    960
+  ],
+  "title_safe_1x": [
+    576,
+    432
+  ],
+  "colour_space": "sRGB, straight (non-premultiplied) alpha, PNG-32",
+  "elements": [
+    {
+      "name": "panel_bg",
+      "file_2x": "out/2x/panel_bg.png",
+      "file_1x": "out/1x/panel_bg.png",
+      "layered": "out/ora/panel_bg.ora",
+      "size_2x": [
+        1024,
+        512
+      ],
+      "size_1x": [
+        512,
+        256
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "CI8 (RGB5A3 TLUT)",
+      "format_rationale": "Measured: the whole panel is 74 distinct colours after an RGB5A3 quantise, so a CI8 index + RGB5A3 palette reproduces it exactly - byte-identical to straight RGB5A3 at half the memory (512 KB vs 1 MB @2x). Costs one TLUT slot. Fall back to RGB5A3 if TLUT slots are the scarcer resource; the art is unaffected either way.",
+      "layers": [
+        "shadow",
+        "base",
+        "plate",
+        "hatch",
+        "bevel",
+        "outline",
+        "trim",
+        "tab",
+        "rivets"
+      ],
+      "notes": "Caption plate for the loading screen and the trophy-get popup. Diagonal hatch verified against RGB5A3: max delta 8/255, the stripe separation survives at 8.0 luma, no banding."
+    },
+    {
+      "name": "btn_play_ng",
+      "file_2x": "out/2x/btn_play_ng.png",
+      "file_1x": "out/1x/btn_play_ng.png",
+      "layered": "out/ora/btn_play_ng.ora",
+      "size_2x": [
+        512,
+        128
+      ],
+      "size_1x": [
+        256,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGBA8",
+      "format_rationale": "Carries text. CMPR chews glyph edges and RGB5A3's 5-bit channels shift the bone-white label off-white. CI8 is out too - hover measures 258 colours, just over the 256 limit.",
+      "layers": [
+        "shadow",
+        "base",
+        "hatch",
+        "bevel",
+        "trim",
+        "chev",
+        "label"
+      ],
+      "notes": "TexAnim frame 0 of 4 (ng, hover, press, disabled) on one HSD_A_T_TIMG track. Same canvas, same quad, same UV rect: 'press' is offset +8,+8 @2x inside its own image rather than being a smaller texture, so a state change is one animateJoint(joint, TOBJ_MASK, 0) call and nothing moves."
+    },
+    {
+      "name": "btn_play_hover",
+      "file_2x": "out/2x/btn_play_hover.png",
+      "file_1x": "out/1x/btn_play_hover.png",
+      "layered": "out/ora/btn_play_hover.ora",
+      "size_2x": [
+        512,
+        128
+      ],
+      "size_1x": [
+        256,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGBA8",
+      "format_rationale": "Carries text. CMPR chews glyph edges and RGB5A3's 5-bit channels shift the bone-white label off-white. CI8 is out too - hover measures 258 colours, just over the 256 limit.",
+      "layers": [
+        "shadow",
+        "base",
+        "hatch",
+        "bevel",
+        "trim",
+        "chev",
+        "label"
+      ],
+      "notes": "TexAnim frame 1 of 4 (ng, hover, press, disabled) on one HSD_A_T_TIMG track. Same canvas, same quad, same UV rect: 'press' is offset +8,+8 @2x inside its own image rather than being a smaller texture, so a state change is one animateJoint(joint, TOBJ_MASK, 1) call and nothing moves."
+    },
+    {
+      "name": "btn_play_press",
+      "file_2x": "out/2x/btn_play_press.png",
+      "file_1x": "out/1x/btn_play_press.png",
+      "layered": "out/ora/btn_play_press.ora",
+      "size_2x": [
+        512,
+        128
+      ],
+      "size_1x": [
+        256,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGBA8",
+      "format_rationale": "Carries text. CMPR chews glyph edges and RGB5A3's 5-bit channels shift the bone-white label off-white. CI8 is out too - hover measures 258 colours, just over the 256 limit.",
+      "layers": [
+        "shadow",
+        "base",
+        "hatch",
+        "bevel",
+        "trim",
+        "chev",
+        "label"
+      ],
+      "notes": "TexAnim frame 2 of 4 (ng, hover, press, disabled) on one HSD_A_T_TIMG track. Same canvas, same quad, same UV rect: 'press' is offset +8,+8 @2x inside its own image rather than being a smaller texture, so a state change is one animateJoint(joint, TOBJ_MASK, 2) call and nothing moves."
+    },
+    {
+      "name": "btn_play_disabled",
+      "file_2x": "out/2x/btn_play_disabled.png",
+      "file_1x": "out/1x/btn_play_disabled.png",
+      "layered": "out/ora/btn_play_disabled.ora",
+      "size_2x": [
+        512,
+        128
+      ],
+      "size_1x": [
+        256,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGBA8",
+      "format_rationale": "Carries text. CMPR chews glyph edges and RGB5A3's 5-bit channels shift the bone-white label off-white. CI8 is out too - hover measures 258 colours, just over the 256 limit.",
+      "layers": [
+        "shadow",
+        "base",
+        "hatch",
+        "bevel",
+        "trim",
+        "chev",
+        "label"
+      ],
+      "notes": "TexAnim frame 3 of 4 (ng, hover, press, disabled) on one HSD_A_T_TIMG track. Same canvas, same quad, same UV rect: 'press' is offset +8,+8 @2x inside its own image rather than being a smaller texture, so a state change is one animateJoint(joint, TOBJ_MASK, 3) call and nothing moves."
+    },
+    {
+      "name": "btn_continue_ng",
+      "file_2x": "out/2x/btn_continue_ng.png",
+      "file_1x": "out/1x/btn_continue_ng.png",
+      "layered": "out/ora/btn_continue_ng.ora",
+      "size_2x": [
+        512,
+        128
+      ],
+      "size_1x": [
+        256,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGBA8",
+      "format_rationale": "Carries text, same reasons as btn_play.",
+      "layers": [
+        "shadow",
+        "base",
+        "hatch",
+        "bevel",
+        "trim",
+        "chev",
+        "label"
+      ],
+      "notes": "The frontend's 'continue' action (Match Setup -> character select). Same canvas and state conventions as btn_play."
+    },
+    {
+      "name": "btn_continue_hover",
+      "file_2x": "out/2x/btn_continue_hover.png",
+      "file_1x": "out/1x/btn_continue_hover.png",
+      "layered": "out/ora/btn_continue_hover.ora",
+      "size_2x": [
+        512,
+        128
+      ],
+      "size_1x": [
+        256,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGBA8",
+      "format_rationale": "Carries text, same reasons as btn_play.",
+      "layers": [
+        "shadow",
+        "base",
+        "hatch",
+        "bevel",
+        "trim",
+        "chev",
+        "label"
+      ],
+      "notes": "The frontend's 'continue' action (Match Setup -> character select). Same canvas and state conventions as btn_play."
+    },
+    {
+      "name": "btn_continue_press",
+      "file_2x": "out/2x/btn_continue_press.png",
+      "file_1x": "out/1x/btn_continue_press.png",
+      "layered": "out/ora/btn_continue_press.ora",
+      "size_2x": [
+        512,
+        128
+      ],
+      "size_1x": [
+        256,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGBA8",
+      "format_rationale": "Carries text, same reasons as btn_play.",
+      "layers": [
+        "shadow",
+        "base",
+        "hatch",
+        "bevel",
+        "trim",
+        "chev",
+        "label"
+      ],
+      "notes": "The frontend's 'continue' action (Match Setup -> character select). Same canvas and state conventions as btn_play."
+    },
+    {
+      "name": "row_ng",
+      "file_2x": "out/2x/row_ng.png",
+      "file_1x": "out/1x/row_ng.png",
+      "layered": "out/ora/row_ng.ora",
+      "size_2x": [
+        1024,
+        64
+      ],
+      "size_1x": [
+        512,
+        32
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGB5A3",
+      "format_rationale": "No text, hard edges, a handful of colours; the slanted ends need only 1-bit alpha, which RGB5A3's opaque mode gives exactly.",
+      "layers": [
+        "shadow",
+        "base",
+        "hatch",
+        "trim",
+        "chev"
+      ],
+      "notes": "Frontend list row, drawn at ~528x34 @1x under the game's own label/value text. 'sel' is the cursor row."
+    },
+    {
+      "name": "row_sel",
+      "file_2x": "out/2x/row_sel.png",
+      "file_1x": "out/1x/row_sel.png",
+      "layered": "out/ora/row_sel.ora",
+      "size_2x": [
+        1024,
+        64
+      ],
+      "size_1x": [
+        512,
+        32
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGB5A3",
+      "format_rationale": "No text, hard edges, a handful of colours; the slanted ends need only 1-bit alpha, which RGB5A3's opaque mode gives exactly.",
+      "layers": [
+        "shadow",
+        "base",
+        "hatch",
+        "trim",
+        "chev"
+      ],
+      "notes": "Frontend list row, drawn at ~528x34 @1x under the game's own label/value text. 'sel' is the cursor row."
+    },
+    {
+      "name": "glyph_a",
+      "file_2x": "out/2x/glyph_a.png",
+      "file_1x": "out/1x/glyph_a.png",
+      "layered": "out/ora/glyph_a.ora",
+      "size_2x": [
+        64,
+        64
+      ],
+      "size_1x": [
+        32,
+        32
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGBA8",
+      "format_rationale": "Tiny; carries a letter, so keep it lossless.",
+      "layers": [
+        "shadow",
+        "ink",
+        "face",
+        "bevel",
+        "letter"
+      ],
+      "notes": "Footer hint glyph, drawn at 24x24 @1x."
+    },
+    {
+      "name": "glyph_b",
+      "file_2x": "out/2x/glyph_b.png",
+      "file_1x": "out/1x/glyph_b.png",
+      "layered": "out/ora/glyph_b.ora",
+      "size_2x": [
+        64,
+        64
+      ],
+      "size_1x": [
+        32,
+        32
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGBA8",
+      "format_rationale": "Tiny; carries a letter, so keep it lossless.",
+      "layers": [
+        "shadow",
+        "ink",
+        "face",
+        "bevel",
+        "letter"
+      ],
+      "notes": "Footer hint glyph, drawn at 24x24 @1x."
+    },
+    {
+      "name": "cursor_hand",
+      "file_2x": "out/2x/cursor_hand.png",
+      "file_1x": "out/1x/cursor_hand.png",
+      "layered": "out/ora/cursor_hand.ora",
+      "size_2x": [
+        64,
+        64
+      ],
+      "size_1x": [
+        32,
+        32
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGBA8",
+      "format_rationale": "Tiny (16 KB at 2x) and needs clean alpha on a stepped silhouette; CMPR's 1-bit alpha would jag the outline.",
+      "layers": [
+        "shadow",
+        "outline",
+        "fill",
+        "detail",
+        "cuff"
+      ],
+      "notes": "Hotspot (14,4) @1x / (28,8) @2x - tip of the index finger.",
+      "hotspot_1x": [
+        14,
+        4
+      ]
+    },
+    {
+      "name": "frame_corner_tl",
+      "file_2x": "out/2x/frame_corner_tl.png",
+      "file_1x": "out/1x/frame_corner_tl.png",
+      "layered": "out/ora/frame_corner_tl.ora",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGB5A3",
+      "format_rationale": "Large transparent region, hard-edged art, no text. Only 5 colours, so CI8 would halve it - but that saves 16 KB for a whole TLUT slot, which is the worse trade. Stay RGB5A3.",
+      "layers": [
+        "ink",
+        "cob",
+        "gold"
+      ],
+      "notes": "9-slice piece. Emitted per orientation rather than relying on runtime UV flips - collapse to one texture with mirrored UVs if that turns out cheaper."
+    },
+    {
+      "name": "frame_corner_tr",
+      "file_2x": "out/2x/frame_corner_tr.png",
+      "file_1x": "out/1x/frame_corner_tr.png",
+      "layered": "out/ora/frame_corner_tr.ora",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGB5A3",
+      "format_rationale": "Large transparent region, hard-edged art, no text. Only 5 colours, so CI8 would halve it - but that saves 16 KB for a whole TLUT slot, which is the worse trade. Stay RGB5A3.",
+      "layers": [
+        "ink",
+        "cob",
+        "gold"
+      ],
+      "notes": "9-slice piece. Emitted per orientation rather than relying on runtime UV flips - collapse to one texture with mirrored UVs if that turns out cheaper."
+    },
+    {
+      "name": "frame_corner_br",
+      "file_2x": "out/2x/frame_corner_br.png",
+      "file_1x": "out/1x/frame_corner_br.png",
+      "layered": "out/ora/frame_corner_br.ora",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGB5A3",
+      "format_rationale": "Large transparent region, hard-edged art, no text. Only 5 colours, so CI8 would halve it - but that saves 16 KB for a whole TLUT slot, which is the worse trade. Stay RGB5A3.",
+      "layers": [
+        "ink",
+        "cob",
+        "gold"
+      ],
+      "notes": "9-slice piece. Emitted per orientation rather than relying on runtime UV flips - collapse to one texture with mirrored UVs if that turns out cheaper."
+    },
+    {
+      "name": "frame_corner_bl",
+      "file_2x": "out/2x/frame_corner_bl.png",
+      "file_1x": "out/1x/frame_corner_bl.png",
+      "layered": "out/ora/frame_corner_bl.ora",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGB5A3",
+      "format_rationale": "Large transparent region, hard-edged art, no text. Only 5 colours, so CI8 would halve it - but that saves 16 KB for a whole TLUT slot, which is the worse trade. Stay RGB5A3.",
+      "layers": [
+        "ink",
+        "cob",
+        "gold"
+      ],
+      "notes": "9-slice piece. Emitted per orientation rather than relying on runtime UV flips - collapse to one texture with mirrored UVs if that turns out cheaper."
+    },
+    {
+      "name": "frame_edge_h",
+      "file_2x": "out/2x/frame_edge_h.png",
+      "file_1x": "out/1x/frame_edge_h.png",
+      "layered": "out/ora/frame_edge_h.ora",
+      "size_2x": [
+        128,
+        32
+      ],
+      "size_1x": [
+        64,
+        16
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGB5A3",
+      "format_rationale": "Constant along U, so it stays crisp stretched between corners.",
+      "layers": [
+        "ink",
+        "cob",
+        "gold"
+      ],
+      "notes": "9-slice piece. Tileable / stretchable on X."
+    },
+    {
+      "name": "frame_edge_v",
+      "file_2x": "out/2x/frame_edge_v.png",
+      "file_1x": "out/1x/frame_edge_v.png",
+      "layered": "out/ora/frame_edge_v.ora",
+      "size_2x": [
+        32,
+        128
+      ],
+      "size_1x": [
+        16,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGB5A3",
+      "format_rationale": "Constant along V, so it stays crisp stretched between corners.",
+      "layers": [
+        "ink",
+        "cob",
+        "gold"
+      ],
+      "notes": "9-slice piece. Tileable / stretchable on Y."
+    }
+  ]
+}

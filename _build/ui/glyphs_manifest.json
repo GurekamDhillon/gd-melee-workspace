@@ -1,0 +1,378 @@
+{
+  "button_glyphs": {
+    "names": [
+      "glyph_a",
+      "glyph_b",
+      "glyph_x",
+      "glyph_y",
+      "glyph_z",
+      "glyph_l",
+      "glyph_r",
+      "glyph_start",
+      "glyph_stick",
+      "glyph_cstick",
+      "glyph_dpad"
+    ],
+    "marks": [
+      "glyph_check"
+    ],
+    "height_1x": 16,
+    "placement": "vertically centred on the text's cap-height middle; 4px gap before the hint text",
+    "tint": {
+      "default": "bone",
+      "suggested": {
+        "a": "ok",
+        "b": "danger"
+      },
+      "why": "A/B tints are optional kit colours for confirm/back, never hardware colours; everything else is bone, or disabled when the action is unavailable"
+    },
+    "replaces": [
+      "glyph_a",
+      "glyph_b"
+    ],
+    "note": "Directional hints: pair glyph_dpad or glyph_stick with an arrow from the font atlas; no per-direction textures."
+  },
+  "cursor": {
+    "hotspot_1x": [
+      14,
+      4
+    ],
+    "layers": [
+      {
+        "texture": "cursor_ink",
+        "colour": "ink",
+        "offset_1x": [
+          1.5,
+          1.5
+        ],
+        "role": "shadow"
+      },
+      {
+        "texture": "cursor_ink",
+        "colour": "ink",
+        "role": "outline"
+      },
+      {
+        "texture": "cursor_fill",
+        "colour": "bone | port colour",
+        "role": "fill"
+      },
+      {
+        "texture": "cursor_detail",
+        "colour": "ink",
+        "role": "detail"
+      }
+    ],
+    "variants": {
+      "default": {
+        "fill": "bone",
+        "badge": null
+      },
+      "p1": {
+        "fill": "p1",
+        "badge": {
+          "text": "1",
+          "colour": "p1"
+        }
+      },
+      "p2": {
+        "fill": "p2",
+        "badge": {
+          "text": "2",
+          "colour": "p2"
+        }
+      },
+      "p3": {
+        "fill": "p3",
+        "badge": {
+          "text": "3",
+          "colour": "p3"
+        }
+      },
+      "p4": {
+        "fill": "p4",
+        "badge": {
+          "text": "4",
+          "colour": "p4"
+        }
+      },
+      "cpu": {
+        "fill": "cpu",
+        "badge": {
+          "text": "CPU",
+          "colour": "cpu"
+        }
+      }
+    },
+    "badge": {
+      "kind": "flat sheared quad",
+      "colour": "ink",
+      "anchor_1x": [
+        22,
+        22
+      ],
+      "height_1x": 14,
+      "pad_x_1x": 4,
+      "text_role": "caption",
+      "text_colour": "the variant's port colour",
+      "note": "width = text advance + 2*pad; sheared by kit SHEAR like every other plate; port strings come from the engine"
+    }
+  },
+  "textures": [
+    {
+      "name": "glyph_a",
+      "size_2x": [
+        32,
+        32
+      ],
+      "size_1x": [
+        16,
+        16
+      ],
+      "format": "I4",
+      "why": "white mask, tinted; 16 edge levels are plenty at 16px",
+      "kind": "button_glyph",
+      "file_2x": "out_kit/2x/glyph_a.png",
+      "file_1x": "out_kit/1x/glyph_a.png",
+      "bytes_2x": 512
+    },
+    {
+      "name": "glyph_b",
+      "size_2x": [
+        32,
+        32
+      ],
+      "size_1x": [
+        16,
+        16
+      ],
+      "format": "I4",
+      "why": "white mask, tinted; 16 edge levels are plenty at 16px",
+      "kind": "button_glyph",
+      "file_2x": "out_kit/2x/glyph_b.png",
+      "file_1x": "out_kit/1x/glyph_b.png",
+      "bytes_2x": 512
+    },
+    {
+      "name": "glyph_x",
+      "size_2x": [
+        32,
+        32
+      ],
+      "size_1x": [
+        16,
+        16
+      ],
+      "format": "I4",
+      "why": "white mask, tinted; 16 edge levels are plenty at 16px",
+      "kind": "button_glyph",
+      "file_2x": "out_kit/2x/glyph_x.png",
+      "file_1x": "out_kit/1x/glyph_x.png",
+      "bytes_2x": 512
+    },
+    {
+      "name": "glyph_y",
+      "size_2x": [
+        32,
+        32
+      ],
+      "size_1x": [
+        16,
+        16
+      ],
+      "format": "I4",
+      "why": "white mask, tinted; 16 edge levels are plenty at 16px",
+      "kind": "button_glyph",
+      "file_2x": "out_kit/2x/glyph_y.png",
+      "file_1x": "out_kit/1x/glyph_y.png",
+      "bytes_2x": 512
+    },
+    {
+      "name": "glyph_z",
+      "size_2x": [
+        64,
+        32
+      ],
+      "size_1x": [
+        32,
+        16
+      ],
+      "format": "I4",
+      "why": "white mask, tinted; 16 edge levels are plenty at 16px",
+      "kind": "button_glyph",
+      "file_2x": "out_kit/2x/glyph_z.png",
+      "file_1x": "out_kit/1x/glyph_z.png",
+      "bytes_2x": 1024
+    },
+    {
+      "name": "glyph_l",
+      "size_2x": [
+        64,
+        32
+      ],
+      "size_1x": [
+        32,
+        16
+      ],
+      "format": "I4",
+      "why": "white mask, tinted; 16 edge levels are plenty at 16px",
+      "kind": "button_glyph",
+      "file_2x": "out_kit/2x/glyph_l.png",
+      "file_1x": "out_kit/1x/glyph_l.png",
+      "bytes_2x": 1024
+    },
+    {
+      "name": "glyph_r",
+      "size_2x": [
+        64,
+        32
+      ],
+      "size_1x": [
+        32,
+        16
+      ],
+      "format": "I4",
+      "why": "white mask, tinted; 16 edge levels are plenty at 16px",
+      "kind": "button_glyph",
+      "file_2x": "out_kit/2x/glyph_r.png",
+      "file_1x": "out_kit/1x/glyph_r.png",
+      "bytes_2x": 1024
+    },
+    {
+      "name": "glyph_start",
+      "size_2x": [
+        64,
+        32
+      ],
+      "size_1x": [
+        32,
+        16
+      ],
+      "format": "I4",
+      "why": "white mask, tinted; 16 edge levels are plenty at 16px",
+      "kind": "button_glyph",
+      "file_2x": "out_kit/2x/glyph_start.png",
+      "file_1x": "out_kit/1x/glyph_start.png",
+      "bytes_2x": 1024
+    },
+    {
+      "name": "glyph_stick",
+      "size_2x": [
+        32,
+        32
+      ],
+      "size_1x": [
+        16,
+        16
+      ],
+      "format": "I4",
+      "why": "white mask, tinted; 16 edge levels are plenty at 16px",
+      "kind": "button_glyph",
+      "file_2x": "out_kit/2x/glyph_stick.png",
+      "file_1x": "out_kit/1x/glyph_stick.png",
+      "bytes_2x": 512
+    },
+    {
+      "name": "glyph_cstick",
+      "size_2x": [
+        32,
+        32
+      ],
+      "size_1x": [
+        16,
+        16
+      ],
+      "format": "I4",
+      "why": "white mask, tinted; 16 edge levels are plenty at 16px",
+      "kind": "button_glyph",
+      "file_2x": "out_kit/2x/glyph_cstick.png",
+      "file_1x": "out_kit/1x/glyph_cstick.png",
+      "bytes_2x": 512
+    },
+    {
+      "name": "glyph_dpad",
+      "size_2x": [
+        32,
+        32
+      ],
+      "size_1x": [
+        16,
+        16
+      ],
+      "format": "I4",
+      "why": "white mask, tinted; 16 edge levels are plenty at 16px",
+      "kind": "button_glyph",
+      "file_2x": "out_kit/2x/glyph_dpad.png",
+      "file_1x": "out_kit/1x/glyph_dpad.png",
+      "bytes_2x": 512
+    },
+    {
+      "name": "glyph_check",
+      "size_2x": [
+        32,
+        32
+      ],
+      "size_1x": [
+        16,
+        16
+      ],
+      "format": "I4",
+      "why": "white mask, tinted; 16 edge levels are plenty at 16px",
+      "kind": "button_glyph",
+      "file_2x": "out_kit/2x/glyph_check.png",
+      "file_1x": "out_kit/1x/glyph_check.png",
+      "bytes_2x": 512
+    },
+    {
+      "name": "cursor_ink",
+      "size_2x": [
+        64,
+        64
+      ],
+      "size_1x": [
+        32,
+        32
+      ],
+      "format": "I4",
+      "why": "white mask; the old cursor_hand was RGBA8 with colour baked in, which cannot be tinted per port",
+      "kind": "cursor",
+      "file_2x": "out_kit/2x/cursor_ink.png",
+      "file_1x": "out_kit/1x/cursor_ink.png",
+      "bytes_2x": 2048
+    },
+    {
+      "name": "cursor_fill",
+      "size_2x": [
+        64,
+        64
+      ],
+      "size_1x": [
+        32,
+        32
+      ],
+      "format": "I4",
+      "why": "white mask; the old cursor_hand was RGBA8 with colour baked in, which cannot be tinted per port",
+      "kind": "cursor",
+      "file_2x": "out_kit/2x/cursor_fill.png",
+      "file_1x": "out_kit/1x/cursor_fill.png",
+      "bytes_2x": 2048
+    },
+    {
+      "name": "cursor_detail",
+      "size_2x": [
+        64,
+        64
+      ],
+      "size_1x": [
+        32,
+        32
+      ],
+      "format": "I4",
+      "why": "white mask; the old cursor_hand was RGBA8 with colour baked in, which cannot be tinted per port",
+      "kind": "cursor",
+      "file_2x": "out_kit/2x/cursor_detail.png",
+      "file_1x": "out_kit/1x/cursor_detail.png",
+      "bytes_2x": 2048
+    }
+  ]
+}

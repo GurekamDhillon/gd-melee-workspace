@@ -19,7 +19,8 @@ WHAT IT WRITES (all outside the repo; nothing this tool writes is ever committed
                               in only one version
   <index-out>/../MANIFEST.md  the itemized list, the layout and the headline numbers
 
-Defaults: raw/tex to ~/Desktop/meleedump, index to ~/Desktop/menu/meleedump/index.
+Defaults: raw/tex to ~/Desktop/meleedump, index to <repo>/menu/meleedump/index (the art pipeline
+folder beside this repo's tools/, found relative to this file).
 
 HOW TEXTURES ARE FOUND. Two independent ways, cross-checked:
   1. A structural walk from every public entry with typed walkers (JObjDesc trees -> DObj -> MObj ->
@@ -59,7 +60,8 @@ DEFAULT_ISO = r"C:/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
 HOME = os.path.expanduser("~")
 DEF_RAW = os.path.join(HOME, "Desktop", "meleedump", "raw")
 DEF_TEX = os.path.join(HOME, "Desktop", "meleedump", "textures")
-DEF_INDEX = os.path.join(HOME, "Desktop", "menu", "meleedump", "index")
+REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DEF_INDEX = os.path.join(REPO, "menu", "meleedump", "index")
 
 # ---------------------------------------------------------------------------- the 75 files
 BASES_PAIRED = ("MnMaAll MnExtAll MnSlChr MnSlMap GmTitle GmTtAll IfAll IfVsCam IfComSn IfHrNoCn "

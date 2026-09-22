@@ -1,0 +1,167 @@
+/* ------------------------------------------------------------------
+   Placeholder menu art - cobalt/gold
+   Constraint-driven: flat fills, hard edges, no blur, no soft shadow,
+   no smooth gradients. Everything here survives CMPR / RGB5A3 / CI8.
+   Authored at 2x (1280x960 presentation); 1x is a filtered downscale.
+   ------------------------------------------------------------------ */
+
+:root{
+  --ink:        #0a0e18;  /* outlines, hard drop shadow            */
+  --cobalt-dk:  #14265c;
+  --cobalt:     #1e3a8c;
+  --cobalt-lt:  #2f55b8;
+  --cobalt-hi:  #4a7ae0;
+  --gold:       #f0b429;
+  --gold-lt:    #ffd766;
+  --gold-dk:    #a9761a;
+  --bone:       #f2efe4;
+  --steel-dk:   #2a3140;
+  --steel:      #4a5468;
+  --steel-lt:   #7c8798;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:transparent}
+body{
+  font-family:"Arial Black","Segoe UI Black","Impact",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+.el{position:relative;overflow:hidden}
+.lyr{position:absolute;inset:0}
+
+/* Shared hard-edge helpers ---------------------------------------- */
+.fill{position:absolute;inset:0}
+.stripes{
+  position:absolute;inset:0;
+  /* hard stops only - this quantises cleanly, a smooth gradient does not */
+  background:repeating-linear-gradient(
+    -45deg,
+    rgba(255,255,255,0.00) 0px, rgba(255,255,255,0.00) 14px,
+    rgba(255,255,255,0.055) 14px, rgba(255,255,255,0.055) 28px);
+}
+
+/* ---------------- panel_bg (1024x512 @2x) ------------------------ */
+.panel .clip{
+  position:absolute;inset:0;
+  clip-path:polygon(0 40px, 40px 0, calc(100% - 72px) 0, 100% 72px,
+                    100% calc(100% - 40px), calc(100% - 40px) 100%,
+                    72px 100%, 0 calc(100% - 72px));
+}
+.panel .shadow{transform:translate(10px,10px);background:var(--ink)}
+.panel .base{background:var(--cobalt-dk)}
+.panel .plate{inset:12px;background:var(--cobalt)}
+.panel .bevel-lt{inset:12px;border-top:8px solid var(--cobalt-lt);border-left:8px solid var(--cobalt-lt)}
+.panel .bevel-dk{inset:12px;border-bottom:8px solid var(--cobalt-dk);border-right:8px solid var(--cobalt-dk)}
+.panel .outline{border:8px solid var(--ink)}
+.panel .trim{inset:30px;border:4px solid var(--gold)}
+.panel .tab{
+  position:absolute;left:56px;top:-4px;width:340px;height:58px;
+  background:var(--gold);
+  clip-path:polygon(0 0,100% 0,calc(100% - 28px) 100%,0 100%);
+}
+.panel .tab-ink{
+  position:absolute;left:52px;top:-4px;width:348px;height:66px;
+  background:var(--ink);
+  clip-path:polygon(0 0,100% 0,calc(100% - 28px) 100%,0 100%);
+}
+.panel .rivet{position:absolute;width:16px;height:16px;background:var(--gold-dk);border:4px solid var(--ink)}
+
+/* ---------------- btn_play (512x128 @2x) ------------------------- */
+.btn .body{position:absolute;inset:0}   /* must be positioned: .press puts a
+     transform on it, which makes it a containing block for the layers inside */
+.btn .clip{
+  position:absolute;inset:0;
+  clip-path:polygon(28px 0, 100% 0, calc(100% - 28px) 100%, 0 100%);
+}
+.btn .shadow{transform:translate(8px,8px);background:var(--ink)}
+.btn .base{background:var(--cobalt)}
+.btn .outline{background:var(--ink)}
+.btn .inner{inset:8px;background:var(--cobalt)}
+.btn .bevel{inset:8px;border-top:6px solid var(--cobalt-lt);border-left:6px solid var(--cobalt-lt);
+            border-bottom:6px solid var(--cobalt-dk);border-right:6px solid var(--cobalt-dk)}
+.btn .label{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:var(--bone);font-size:52px;letter-spacing:6px;
+  /* hard 1-step outline, not a blurred shadow */
+  text-shadow:4px 4px 0 var(--ink);
+  padding-left:4px;
+}
+.btn .chev{
+  position:absolute;left:26px;top:50%;width:26px;height:34px;margin-top:-17px;
+  background:var(--gold);clip-path:polygon(0 0,100% 50%,0 100%,0 68%,55% 50%,0 32%);
+  visibility:hidden;
+}
+
+/* states */
+.btn.hover .inner{background:var(--cobalt-lt)}
+.btn.hover .bevel{border-top-color:var(--cobalt-hi);border-left-color:var(--cobalt-hi)}
+.btn.hover .trim{inset:8px;border:4px solid var(--gold)}
+.btn.hover .label{color:#fff8e0}
+.btn.hover .chev{visibility:visible}
+
+.btn.press .shadow{visibility:hidden}
+.btn.press .body{transform:translate(8px,8px)}
+.btn.press .inner{background:var(--cobalt-dk)}
+.btn.press .bevel{border-top-color:var(--cobalt-dk);border-left-color:var(--cobalt-dk);
+                  border-bottom-color:var(--cobalt-lt);border-right-color:var(--cobalt-lt)}
+.btn.press .trim{inset:8px;border:4px solid var(--gold-dk)}
+.btn.press .label{color:var(--gold-lt)}
+.btn.press .chev{visibility:visible;background:var(--gold-lt)}
+
+/* disabled stays fully opaque on purpose - RGB5A3 has 15 alpha steps,
+   a 50%-alpha "greyed out" button bands. Desaturate instead. */
+.btn.disabled .base{background:var(--steel)}
+.btn.disabled .inner{background:var(--steel)}
+.btn.disabled .bevel{border-top-color:var(--steel-lt);border-left-color:var(--steel-lt);
+                     border-bottom-color:var(--steel-dk);border-right-color:var(--steel-dk)}
+.btn.disabled .label{color:#aeb6c2;text-shadow:4px 4px 0 var(--steel-dk)}
+.btn.disabled .shadow{background:var(--steel-dk)}
+
+/* ---------------- frame pieces ----------------------------------- */
+.fr .ink{background:var(--ink)}
+.fr .cob{background:var(--cobalt)}
+.fr .gld{background:var(--gold)}
+.corner .ink{clip-path:polygon(0 0,100% 0,100% 28px,28px 28px,28px 100%,0 100%)}
+.corner .cob{inset:8px;clip-path:polygon(0 0,100% 0,100% 20px,20px 20px,20px 100%,0 100%)}
+.corner .gld{inset:8px;clip-path:polygon(0 0,16px 0,16px 96px,0 96px,0 0,96px 0,96px 16px,0 16px)}
+.corner .cap{position:absolute;left:8px;top:8px;width:36px;height:36px;background:var(--gold);
+             clip-path:polygon(0 0,100% 0,0 100%)}
+
+.edge-h .ink{position:absolute;left:0;right:0;top:0;height:28px;background:var(--ink)}
+.edge-h .cob{position:absolute;left:0;right:0;top:8px;height:12px;background:var(--cobalt)}
+.edge-h .gld{position:absolute;left:0;right:0;top:8px;height:4px;background:var(--gold)}
+.edge-v .ink{position:absolute;top:0;bottom:0;left:0;width:28px;background:var(--ink)}
+.edge-v .cob{position:absolute;top:0;bottom:0;left:8px;width:12px;background:var(--cobalt)}
+.edge-v .gld{position:absolute;top:0;bottom:0;left:8px;width:4px;background:var(--gold)}
+
+/* ---------------- row (1024x64 @2x) ------------------------------ */
+.row .clip{
+  position:absolute;inset:0 8px 8px 0;
+  clip-path:polygon(20px 0, 100% 0, calc(100% - 20px) 100%, 0 100%);
+}
+.row .shadow{transform:translate(8px,8px);background:var(--ink)}
+.row .outline{background:var(--ink)}
+.row .inner{inset:6px;background:var(--cobalt-dk)}
+.row .trim{inset:6px;border:4px solid transparent}
+.row .chev{
+  position:absolute;left:30px;top:50%;width:18px;height:24px;margin-top:-16px;
+  background:var(--gold);clip-path:polygon(0 0,100% 50%,0 100%,0 68%,55% 50%,0 32%);
+  opacity:0;
+}
+.row.sel .inner{background:var(--cobalt-lt)}
+.row.sel .trim{border-color:var(--gold)}
+.row.sel .chev{opacity:1}
+
+/* ---------------- glyph (64x64 @2x) ------------------------------ */
+.glyph .disc{position:absolute;left:2px;top:2px;width:54px;height:54px;border-radius:50%}
+.glyph .shadow{transform:translate(5px,5px);background:var(--ink)}
+.glyph .ink{background:var(--ink)}
+.glyph .face{left:7px;top:7px;width:44px;height:44px}
+.glyph .bevel{left:7px;top:7px;width:44px;height:44px;
+              border-top:4px solid rgba(255,255,255,0.28);border-bottom:4px solid rgba(0,0,0,0.30)}
+.glyph .letter{
+  position:absolute;left:2px;top:2px;width:54px;height:54px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--bone);font-size:30px;text-shadow:3px 3px 0 var(--ink);
+}

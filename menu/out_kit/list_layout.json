@@ -1,0 +1,311 @@
+{
+ "name": "list",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "panel": {
+  "rows_top": 84,
+  "row_h": 30,
+  "pitch": 34,
+  "visible": 9,
+  "x0": 96,
+  "x1": 540
+ },
+ "templates": [
+  {
+   "name": "row",
+   "space": "unsheared",
+   "origin": "row top-left at (96, 84 + i * 34)",
+   "quads": [
+    {
+     "id": "row_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       444,
+       0
+      ],
+      [
+       444,
+       30
+      ],
+      [
+       0,
+       30
+      ]
+     ],
+     "colour": null,
+     "joint": "row_plate"
+    },
+    {
+     "id": "row_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       444,
+       0
+      ],
+      [
+       444,
+       30
+      ],
+      [
+       0,
+       30
+      ]
+     ],
+     "colour": "@face",
+     "joint": "row"
+    }
+   ],
+   "slots": [
+    {
+     "id": "label",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      16,
+      20.28
+     ],
+     "align": "left",
+     "max": "Stock Time Limit (min)",
+     "max_chars": 22,
+     "max_width_1x": 216,
+     "colour": "bone",
+     "joint": "row"
+    },
+    {
+     "id": "value",
+     "kind": "widget",
+     "origin": [
+      244,
+      15.0
+     ],
+     "size": [
+      190,
+      22
+     ],
+     "joint": "row",
+     "accepts": [
+      "toggle",
+      "choice",
+      "slider",
+      "stepper",
+      "none"
+     ]
+    }
+   ],
+   "states": {
+    "ng": {
+     "face": "@face",
+     "label": "bone",
+     "plate": null,
+     "offset": [
+      0,
+      0
+     ]
+    },
+    "sel": {
+     "face": "gold",
+     "label": "ink",
+     "plate": "gold_dk",
+     "offset": [
+      -3,
+      -3
+     ]
+    },
+    "disabled": {
+     "face": "@face",
+     "label": "disabled",
+     "plate": null,
+     "offset": [
+      0,
+      0
+     ],
+     "note": "the cursor skips disabled rows"
+    }
+   }
+  },
+  {
+   "name": "divider",
+   "space": "unsheared",
+   "origin": "takes one row slot",
+   "quads": [
+    {
+     "id": "div_rule",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       14.0
+      ],
+      [
+       444,
+       14.0
+      ],
+      [
+       444,
+       16.0
+      ],
+      [
+       0,
+       16.0
+      ]
+     ],
+     "colour": "gold"
+    },
+    {
+     "id": "div_plate",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       8,
+       7.0
+      ],
+      [
+       119.46,
+       7.0
+      ],
+      [
+       119.46,
+       23.0
+      ],
+      [
+       8,
+       23.0
+      ]
+     ],
+     "colour": "@bg"
+    }
+   ],
+   "slots": [
+    {
+     "id": "label",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      16,
+      18.96
+     ],
+     "align": "left",
+     "max": "ITEMS & HAZARDS",
+     "max_chars": 15,
+     "max_width_1x": 95.46,
+     "colour": "gold"
+    }
+   ],
+   "rules": [
+    "div_plate width = label advance + 16; it knocks the rule out behind the label."
+   ]
+  },
+  {
+   "name": "scroll",
+   "space": "unsheared",
+   "quads": [
+    {
+     "id": "track",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       548,
+       96
+      ],
+      [
+       554,
+       96
+      ],
+      [
+       554,
+       380
+      ],
+      [
+       548,
+       380
+      ]
+     ],
+     "colour": "ink"
+    },
+    {
+     "id": "thumb",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       548,
+       96
+      ],
+      [
+       554,
+       96
+      ],
+      [
+       554,
+       176
+      ],
+      [
+       548,
+       176
+      ]
+     ],
+     "colour": "@face_hi",
+     "joint": "thumb"
+    }
+   ],
+   "slots": [
+    {
+     "id": "more_up",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      546.9,
+      92
+     ],
+     "align": "left",
+     "max": "↑",
+     "max_chars": 1,
+     "max_width_1x": 7.4,
+     "colour": "gold"
+    },
+    {
+     "id": "more_down",
+     "kind": "text",
+     "role": "caption",
+     "anchor": [
+      546.9,
+      392
+     ],
+     "align": "left",
+     "max": "↓",
+     "max_chars": 1,
+     "max_width_1x": 7.4,
+     "colour": "gold"
+    }
+   ],
+   "rules": [
+    "Shown only when rows exceed the 9 visible.",
+    "thumb.h = max(16, track.h * visible / total); thumb.y slides with the first visible row (motion: scroll).",
+    "more_up / more_down are visible only when rows are hidden that way."
+   ]
+  }
+ ],
+ "rules": [
+  "Rows stack at pitch 34 from y=84; up to 9 visible. Scrolling keeps the selected row at least one row from either edge.",
+  "Exactly one row is 'sel'. Draw order: rows top to bottom, the selected row last.",
+  "A row's value slot hosts one widget from widgets_layout.json, in the row's state."
+ ]
+}
