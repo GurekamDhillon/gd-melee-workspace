@@ -16,9 +16,9 @@ reads the run's log and checks:
               reopen on the item
   MATCH SETUP the setup screen shows; B goes back to VS with the cursor on MELEE
 
-The navigation model is the frontend's own (gmfrontend_menus.inc): hubs cycle through tiles in
-rank order (the hero first, then vanilla order) with Down; lists go top to bottom; every menu
-opens on its first visible item. Locked items (All-Star, Sound Test) are assumed visible, which
+The navigation model is the frontend's own (gmfrontend_menus.inc): Down steps through the
+visible items in vanilla's order, hubs and lists alike; every menu opens on its first visible
+item. Locked items (All-Star, Sound Test) are assumed visible, which
 is true of the shared unlocked card selftest.ps1 seeds each sandbox with - a locked card shows
 up as a failed check for those two items, and the run log says "N of M items shown".
 """
@@ -102,9 +102,8 @@ def ranks(kind):
 
 def downs(kind, frm, to):
     """Down presses from the first visible item to item index `to`."""
-    r = ranks(kind)
     v = visible(kind)
-    return (r[v.index(to)] - r[0]) % len(r)
+    return v.index(to)  # up/down follow vanilla's order from the first visible item
 
 
 def path_to(kind):
