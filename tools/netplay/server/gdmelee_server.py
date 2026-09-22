@@ -19,7 +19,9 @@ Protocol (all packets start with a 4-byte magic):
   relay, binary:  b"GDMD" + payload     forwarded verbatim to the partner, as b"GDMD" + payload
 
 A room lives while its host keeps it alive (keepalives every few seconds) and ends after
-ROOM_IDLE seconds of silence. Relaying is per pair and costs about 60 small packets a second
+ROOM_IDLE seconds of silence. Rooms are PERSISTENT: the same code survives match after match -
+the host re-registers from the same address and keeps its code, and a returning guest (new port)
+takes the seat again. Relaying is per pair and costs about 60 small packets a second
 each way during a match.
 """
 import argparse
@@ -105,7 +107,12 @@ class Server(asyncio.DatagramProtocol):
         if cmd == "REG":
             lan = words[1] if len(words) > 1 else ""
             if room is not None and room.host == addr:
-                room.host_lan = lan or room.host_lan  # a repeat: same code
+                # the host again - a repeat, or a rematch: same code, the room waits for its guest
+                room.host_lan = lan or room.host_lan
+                if room.guest is not None and self.by_addr.get(room.guest) is room:
+                    del self.by_addr[room.guest]
+                room.guest = None
+                room.relay = False
             else:
                 if room is not None:
                     self.drop(room, "host re-registered")
@@ -128,8 +135,10 @@ class Server(asyncio.DatagramProtocol):
                 self.send(addr, "ERR no room with that code")
                 return
             if target.guest is not None and target.guest != addr:
-                self.send(addr, "ERR that room is already playing")
-                return
+                # PERSISTENT ROOMS: a guest coming back for a rematch arrives from a new port;
+                # the newest guest takes the seat (the game's own handshake admits one peer)
+                if self.by_addr.get(target.guest) is target:
+                    del self.by_addr[target.guest]
             if target.host == addr:
                 self.send(addr, "ERR that is your own room")
                 return
