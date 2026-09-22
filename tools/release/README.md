@@ -1,0 +1,129 @@
+# tools/release - public releases
+
+How GD's Melee is packaged for people who are not us: a zip with the game, a launcher that asks
+for the user's own disc image, and nothing of Nintendo's. Owned by lane charlie.
+
+## One command
+
+```powershell
+powershell -File tools\release\publish.ps1 -DryRun   # build + check + show the gh command and notes
+powershell -File tools\release\publish.ps1 -Draft    # publish as a draft release (look it over on GitHub, then Publish)
+powershell -File tools\release\publish.ps1           # publish for real
+```
+
+`publish.ps1` refuses to publish when:
+- the tag `v<VERSION>` already exists on the repo (bump `tools/release/VERSION`);
+- the workspace commit is not on `origin-ws` (the release notes link to it);
+- the melee commit in the exe is not on the public fork `pub`, the melee tree has uncommitted
+  changes, or `_build/melee-pc.exe` is older than melee HEAD (`-Strict` build; the GPL source
+  offer in the zip points at that commit, so it must be public and must be what was built);
+- `check_release.ps1` finds anything it does not recognise.
+
+`-Force` publishes past the provenance checks (never past `check_release.ps1`). `-Repo` picks
+another repo (default `GurekamDhillon/gd-melee-workspace`; the fork `GurekamDhillon/melee` would
+also work). `-Server host:port` bakes a `netplay_server.txt` into the zip; that address is then
+public, so it is off by default.
+
+Before publishing: rebuild the exe (`bash tools/port/build.sh`), push `pc-port` to `pub`, push
+`master` to `origin-ws`.
+
+## The pieces
+
+| file | what |
+|---|---|
+| `VERSION` | the release version (`0.1.0` -> tag `v0.1.0`, zip `GDMelee-0.1.0-win64.zip`) |
+| `build_release.ps1` | stages `_build/release/GDMelee-<v>-win64/`, writes `version.txt` + `MANIFEST.sha256`, checks the folder, zips it (forward-slash entries, one top folder), checks the zip, writes `<zip>.sha256` |
+| `check_release.ps1` | the disc-data guard; runs on a folder or a zip; exit 1 = do not ship |
+| `publish.ps1` | build (strict) + check + release notes + `gh release create` |
+| `build_launcher.ps1` | compiles the launcher with Windows' own `csc.exe` (.NET Framework 4.x) |
+| `launcher/GDMeleeLauncher.cs` | the launcher (C# 5 WinForms, one file) |
+| `README-user.txt` | becomes `README.txt` in the zip |
+| `THIRD-PARTY-NOTICES.txt`, `licenses/` | become `LICENSES/` in the zip |
+
+`build_release.ps1` packages what is **already built**: `_build/melee-pc.exe`, `melee-pc.map`
+(the game reads it for rollback snapshots), `SDL3.dll`, `webgpu_dawn.dll`, the
+`initial_pipeline_cache.*` seed, the x86 MSVC runtime (`msvcp140.dll`,
+`msvcp140_atomic_wait.dll`, `vcruntime140.dll`, app-local from the newest installed
+`VC\Redist\MSVC\<ver>\x86\Microsoft.VC*.CRT` - melee-pc.exe and Dawn import them, and a PC
+without the VC++ redistributable would otherwise fail to start), the committed `_build/ui` art,
+docs and licences. `-GameDir` packages a lane's build instead.
+
+## What keeps disc data out
+
+Three independent layers; any one of them failing stops the release.
+
+1. `build_release.ps1` copies from an explicit list only, and `Copy-In` throws on any source under
+   `_build/ace`, `_build/packs`, `_build/m-ex`, `_build/hsd_export`, `_build/card*`, `_build/USA`,
+   `akaneia-build`, `menu/meleedump`, `melee/orig`, or with a disc extension.
+2. `check_release.ps1` on the staged folder: an allowlist (the named binaries, `ui/*.gxtex|json`,
+   `LICENSES/*.txt`, a few named docs), a denylist of disc extensions (`.iso .gcm .rvz .dol .dat
+   .usd .hps .thp .gci .png ...`) and folder names, content sniffing (GameCube/Wii disc header,
+   RVZ/WIA/CISO, a leading game ID as in a GCI save, an HSD archive whose first word is its own
+   size, a DOL header), `ui/` byte-identical to `_build/ui` at HEAD, no file over 64 MB, no
+   `C:\Users\<name>` paths inside binaries, the licence files present, and every file matching
+   `MANIFEST.sha256`.
+3. The same check on the finished zip, and once more in `publish.ps1` on the exact upload.
+
+Memory-card saves are **not** shipped (the friends package used to include unlocked-everything
+saves): a GCI embeds Melee's own banner and icon graphics. Each player starts a fresh save.
+
+Tested negatives (all caught): an ISO chunk renamed `.txt`, a GCI renamed `.txt`, a DOL chunk, a
+fake HSD archive named `.gxtex`, a `.dat`, a file in an `ace/` folder, an unlisted `ui/` file, a
+tampered README.
+
+## The launcher
+
+`GD Melee.exe`, a single 50 KB exe that runs on any Windows 10/11 with nothing installed (.NET
+Framework 4.8 ships with the OS).
+
+- First run: explains that no game data is included, then asks for the `.iso`.
+- Every picked file is probed: disc magic, game ID `GALE01`, revision 2, then the file table.
+  Detected: `Melee 1.02 (vanilla)` (1212 FST entries), `ACE (m-ex mod)` (`MxDt.dat` + ACE-only
+  files such as `AltSlippiCSS.dat`), `Akaneia (m-ex mod)`, other m-ex or 1.02 mods (allowed with a
+  warning), and refusals with the reason (PAL/NTSC-J, 1.00/1.01, TM-CE, not GameCube, Wii,
+  RVZ/WIA/CISO with the Dolphin conversion hint).
+- Several discs ("modpacks"): Add disc / Change ISO (keeps the disc's saves) / Rename / Make
+  default / Forget. Double-click or PLAY boots the selected one.
+- One memory card per disc: `MELEE_CARD_PATH = userdata\saves\<disc id>`.
+- Options: skip intro (`MELEE_SKIP_INTRO`), keyboard (`MELEE_INPUT=keyboard`), close on play.
+- Online tab: edits `netplay_server.txt` beside the game (what `gw_netplay.c` reads).
+- Mods tab: the hook for the mods browser (charlie C2). All mod logic is in `class Mods`
+  (`ApplyEnvironment`, `BuildTab`). Mods are always loaded (`MELEE_MODS_DIR = mods\`), online
+  too: the game matches fighters and stages per content hash, so there is deliberately no
+  "mods off for online" switch.
+- About tab: version (first line of `version.txt`), folders, log, licences, source link.
+- A non-zero exit offers the log, except when the log shows the window was closed first: the
+  current exe faults in `webgpu_dawn.dll` while shutting down after a window close (0xC0000005),
+  which is not worth alarming anyone over.
+- Settings live in `userdata\launcher.cfg` next to the launcher (portable); if that folder is
+  read-only (Program Files) they go to `%LOCALAPPDATA%\GDMelee`, and the game then runs with its
+  log and shader cache there too.
+- Paths with non-ASCII characters are passed as 8.3 short names (the game takes ANSI paths).
+
+Command line: `--play [disc name]` boots without the window (for shortcuts), `--add-iso <path>`,
+`--forget-all`, `--shots <dir>` renders each tab to a PNG and exits (for docs).
+
+## Why no GitHub Actions build
+
+A CI build is not feasible today, so there is no `.github/workflows/release.yml`:
+- the compiler is a clang/LLVM 23 build unpacked into `_toolchains/llvm` (~490 MB, in no repo);
+- the game links against the Aurora/Dawn/SDL3/ImGui build tree in `_build/ax86m` (gigabytes,
+  built by `_build/build_aurora_melee.bat` with MSVC + CMake + Ninja, Dawn alone is a long build);
+- the per-TU pipeline (`_build/masstest/pipe_win.sh`, `gwtool`) and the bridge fixpoint in
+  `tools/port/build.sh` assume that local layout;
+- the test suite needs a disc image, which can never be on a runner.
+
+No disc data is needed to *compile*, so it becomes possible once the toolchain and a prebuilt
+Aurora/Dawn are downloadable (e.g. release assets of a toolchain repo) and the build scripts can
+run from a clean clone. Until then: build locally, `publish.ps1` uploads.
+
+## Licences in the zip (checked 2026-09-22)
+
+GPL-2.0-or-later port (+ Dolphin-derived `gekko_fp.c`), shipped under GPLv3-or-later terms as a
+whole because it links Apache-2.0 abseil; Aurora MIT; Dawn BSD-3 with abseil / SPIRV-Tools /
+Vulkan-Headers (Apache-2.0), SPIRV-Headers, DirectX-Headers (MIT), webgpu-headers (BSD-3); SDL3
+zlib; ImGui, fmt MIT; FreeType FTL (credit line included); libpng; zlib; zstd BSD-3; xxHash
+BSD-2; Tracy BSD-3; SQLite public domain; MSVC runtime under Visual Studio's Distributable Code
+terms; UI glyphs from Source Sans 3 and Hasklug (SIL OFL 1.1). Details:
+`THIRD-PARTY-NOTICES.txt`. The decompiled game code itself has no upstream licence; that is
+stated plainly in the notices rather than papered over.

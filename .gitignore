@@ -134,3 +134,6 @@ __pycache__/
 
 # your matchmaking server address (goes into the friends package, not the public repo)
 /_build/netplay_server.txt
+
+# Release staging and zips (tools/release/build_release.ps1).
+/_build/release/
