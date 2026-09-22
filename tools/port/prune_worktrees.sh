@@ -24,8 +24,17 @@ check() { # repo base worktree
         return
     fi
     if [ $apply = 1 ]; then
-        git -C "$repo" worktree remove "$w" && echo "gone  $w (branch $br kept)"
-        case "$w" in */worktrees/*) [ -d "$GW_ROOT/_build/agents/$name" ] && rm -rf "$GW_ROOT/_build/agents/$name" && echo "gone  _build/agents/$name";; esac
+        # core.longpaths: agent worktrees hold paths past MAX_PATH ("Filename too long")
+        if git -c core.longpaths=true -C "$repo" worktree remove "$w"; then
+            echo "gone  $w (branch $br kept)"
+            case "$w" in */worktrees/*)
+                if [ -d "$GW_ROOT/_build/agents/$name" ]; then
+                    rm -rf "$GW_ROOT/_build/agents/$name" && echo "gone  _build/agents/$name"
+                fi;;
+            esac
+        else
+            echo "FAIL  $w (left in place)"
+        fi
     else
         echo "would remove  $w (clean, merged; branch $br kept)"
     fi
