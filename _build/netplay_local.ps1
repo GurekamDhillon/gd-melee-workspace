@@ -29,11 +29,18 @@ param(
   [switch]$Menu,   # boot both to the main menu and connect through ONLINE PLAY instead
   [switch]$RealNetwork,  # no loopback shortcut: real STUN codes, as two copies of the package would
   [int]$HostChar = -1,   # CharacterKind for each side when connecting at boot (m-ex fighters too)
-  [int]$GuestChar = -1
+  [int]$GuestChar = -1,
+  [string]$Exe = "",     # run this melee-pc.exe (a lane's build) instead of _build's; sandboxes go beside it
+  [string]$Server = "",  # MELEE_NETPLAY_SERVER for both (default: netplay_server.txt beside the exe)
+  [string]$LiveHost = "", # MELEE_PAD_LIVE file for each side: drive it by writing "<buttons_hex>" into it
+  [string]$LiveGuest = "",
+  [hashtable]$EnvHost = @{},  # extra environment per side, e.g. @{MELEE_LOBBY_AUTOPLAY="1"}
+  [hashtable]$EnvGuest = @{}
 )
 $ErrorActionPreference = "Stop"
 $build = $PSScriptRoot
 $root = Split-Path $build -Parent
+$exeDir = if ($Exe) { Split-Path (Resolve-Path $Exe) -Parent } else { $build }
 
 Get-Content (Join-Path $root ".env") -ErrorAction SilentlyContinue | ForEach-Object {
   if ($_ -match '^\s*(?:export\s+)?(GW_ISO_\w+)\s*=\s*"?([^"]*)"?\s*$') {
@@ -83,17 +90,20 @@ New-Item -ItemType Directory -Force -Path (Split-Path $netsimFile) | Out-Null
 $h = [int]([Math]::Min($wa.Height, $w * 3 / 4))
 
 function Start-Side($tag, $label, $netplay, $device, $x, $pad, $vol) {
-  $sandbox = Join-Path $build "runs\$tag"
+  $sandbox = Join-Path $exeDir "runs\$tag"
   New-Item -ItemType Directory -Force -Path $sandbox | Out-Null
   # By executable path from the process table: Get-Process's MainModule can throw for a process
   # that is starting or exiting, which silently skipped it and left its exe locked.
   # C:\gdm is a junction to the project folder: match the run folder, not the full path.
   Get-CimInstance Win32_Process -Filter "Name = 'melee-pc.exe'" -ErrorAction SilentlyContinue |
-    Where-Object { $_.ExecutablePath -like "*\runs\$tag\melee-pc.exe" } | ForEach-Object {
+    Where-Object { $_.ExecutablePath -like ("*" + $sandbox.Substring($root.Length) + "\melee-pc.exe") } | ForEach-Object {
       Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
       Wait-Process -Id $_.ProcessId -Timeout 10 -ErrorAction SilentlyContinue   # its exe stays locked until it exits
     }
-  foreach ($f in @("melee-pc.exe", "melee-pc.map")) { Sync-RunFile (Join-Path $build $f) $sandbox }
+  foreach ($f in @("melee-pc.exe", "melee-pc.map")) { Sync-RunFile (Join-Path $exeDir $f) $sandbox }
+  if ($Server) { $env:MELEE_NETPLAY_SERVER = $Server } else { Remove-Item Env:MELEE_NETPLAY_SERVER -ErrorAction SilentlyContinue }
+  $srvFile = Join-Path $build "netplay_server.txt"
+  if (-not $Server -and (Test-Path $srvFile)) { Sync-RunFile $srvFile $sandbox }
   foreach ($f in @("SDL3.dll", "webgpu_dawn.dll")) { Link-RunFile (Join-Path $build $f) $sandbox }
   foreach ($f in @("initial_pipeline_cache.db", "initial_pipeline_cache.core")) { Sync-RunFile (Join-Path $build $f) $sandbox }
   Get-ChildItem $sandbox -Filter "*.db*" -ErrorAction SilentlyContinue |
@@ -125,6 +135,11 @@ function Start-Side($tag, $label, $netplay, $device, $x, $pad, $vol) {
   # the keyboard side must not let SDL grab the GameCube adapter either
   if ($device -eq "keyboard") { $env:SDL_JOYSTICK_HIDAPI_GAMECUBE = "0" } else { Remove-Item Env:SDL_JOYSTICK_HIDAPI_GAMECUBE -ErrorAction SilentlyContinue }
   if ($pad) { $env:MELEE_PAD_SCRIPT = $pad } else { Remove-Item Env:MELEE_PAD_SCRIPT -ErrorAction SilentlyContinue }
+  $live = if ($tag -eq "np_host") { $LiveHost } else { $LiveGuest }
+  if ($live) { Set-Content -Path $live -Value "0000"; $env:MELEE_PAD_LIVE = $live } else { Remove-Item Env:MELEE_PAD_LIVE -ErrorAction SilentlyContinue }
+  foreach ($v in @("MELEE_LOBBY_AUTOPLAY")) { Remove-Item "Env:$v" -ErrorAction SilentlyContinue }
+  $extra = if ($tag -eq "np_host") { $EnvHost } else { $EnvGuest }
+  foreach ($k in $extra.Keys) { Set-Item -Path ("Env:" + $k) -Value $extra[$k] }
   foreach ($v in @("MELEE_SLP", "MELEE_RB_FAKE", "MELEE_SYNCTEST", "MELEE_STATE_TRACE", "MELEE_WINDOW_HIDE")) {
     Remove-Item "Env:$v" -ErrorAction SilentlyContinue
   }
