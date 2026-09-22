@@ -1026,3 +1026,4 @@
 ../masstest/shimobj/gw_script.obj
 ../masstest/shimobj/gw_script_pad.obj
 ../masstest/shimobj/gw_console.obj
+../masstest/shimobj/gw_settings.obj
