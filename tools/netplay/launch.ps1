@@ -18,7 +18,8 @@ if (-not $iso -or -not (Test-Path $iso)) {
   }
   Set-Content -Path $isoFile -Value $iso -Encoding ascii
 }
-$env:MELEE_CARD_PATH = Join-Path $here "card"
+# an m-ex disc (ACE) keeps its own save: its roster and unlocks differ
+$env:MELEE_CARD_PATH = Join-Path $here $(if ((Split-Path $iso -Leaf) -match "ACE" -and (Test-Path (Join-Path $here "card-ace"))) { "card-ace" } else { "card" })
 $env:MELEE_MODS_DIR = Join-Path $here "nomods"   # both players must run the same game
 $env:MELEE_SKIP_INTRO = "1"
 if ($Keyboard) { $env:MELEE_INPUT = "keyboard" } else { Remove-Item Env:MELEE_INPUT -ErrorAction SilentlyContinue }

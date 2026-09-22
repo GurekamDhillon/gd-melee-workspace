@@ -26,7 +26,10 @@ param(
   [string]$PadHost = "",
   [string]$PadGuest = "",
   [string]$NetSim = "off",
-  [switch]$Menu    # boot both to the main menu and connect through ONLINE PLAY instead
+  [switch]$Menu,   # boot both to the main menu and connect through ONLINE PLAY instead
+  [switch]$RealNetwork,  # no loopback shortcut: real STUN codes, as two copies of the package would
+  [int]$HostChar = -1,   # CharacterKind for each side when connecting at boot (m-ex fighters too)
+  [int]$GuestChar = -1
 )
 $ErrorActionPreference = "Stop"
 $build = $PSScriptRoot
@@ -97,7 +100,7 @@ function Start-Side($tag, $label, $netplay, $device, $x, $pad, $vol) {
     Where-Object { $_.Name -notlike "initial_pipeline_cache.db*" } |
     Remove-Item -Force -ErrorAction SilentlyContinue
   Remove-Item (Join-Path $sandbox "melee-pc.log") -ErrorAction SilentlyContinue
-  $cardSrc = Join-Path $build "card"
+  $cardSrc = Join-Path $build $(if ($Disc -eq "ace") { "card-ace" } else { "card" })
   $cardDst = Join-Path $sandbox "card"
   if (-not (Test-Path $cardDst) -and (Test-Path $cardSrc)) { Copy-Item $cardSrc $cardDst -Recurse -Force }
 
@@ -109,7 +112,9 @@ function Start-Side($tag, $label, $netplay, $device, $x, $pad, $vol) {
   $env:MELEE_NETPLAY = if ($Menu) { "" } else { $netplay }
   if ($Menu) { $env:MELEE_SCENE = "mode=menu" }
   $env:MELEE_NETPLAY_DELAY = "$Delay"
-  $env:MELEE_NETPLAY_BIND = "127.0.0.1"   # both on this machine: loopback, no firewall prompt, no STUN
+  $c = if ($tag -eq "np_host") { $HostChar } else { $GuestChar }
+  if ($c -ge 0) { $env:MELEE_NETPLAY_CHAR = "$c" } else { Remove-Item Env:MELEE_NETPLAY_CHAR -ErrorAction SilentlyContinue }
+  if ($RealNetwork) { Remove-Item Env:MELEE_NETPLAY_BIND -ErrorAction SilentlyContinue } else { $env:MELEE_NETPLAY_BIND = "127.0.0.1" }
   $env:MELEE_INPUT = $device
   $env:MELEE_NET_SIM_FILE = $netsimFile
   $env:MELEE_RUN_LABEL = $label
