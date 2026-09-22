@@ -71,7 +71,9 @@ if [ -f "${seed%.db}.core" ]; then
 fi
 
 # mods/ is found next to the executable, so a sandbox sees no mods unless it is told where they
-# are. Point it at the shared folder by default; an agent testing its own mods sets MELEE_MODS_DIR.
+# are. The default is the shared _build/mods folder, which is kept EMPTY so a test on a disc tests
+# that disc: it once held an old Akaneia Sonic mod that silently mounted over ACE in every run
+# (moved to _build/mods-legacy). To test mods, set MELEE_MODS_DIR (e.g. _build/mods-split/ace).
 export MELEE_MODS_DIR="${MELEE_MODS_DIR:-$GW_ROOT/_build/mods}"
 
 # The caption drawn on the window (gw_overlay.cpp run_label). With several lanes' windows open at
