@@ -1021,3 +1021,8 @@
 ../masstest/shimobj/gw_uigen.obj
 ../masstest/shimobj/gw_mods.obj
 ../masstest/shimobj/gw_mexid.obj
+../masstest/out/pc_gameworld_script_game.c.obj
+../masstest/shimobj/gw_lua.obj
+../masstest/shimobj/gw_script.obj
+../masstest/shimobj/gw_script_pad.obj
+../masstest/shimobj/gw_console.obj

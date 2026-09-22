@@ -987,3 +987,4 @@ src/MSL/ansi_files.c
 src/sysdolphin/baselib/card.c
 libs/dolphin/src/dolphin/thp/THPDec.c
 pc/tests/mex_tests.c
+pc/gameworld/script_game.c
