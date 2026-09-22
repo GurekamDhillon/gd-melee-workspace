@@ -37,6 +37,14 @@ if ! git -C "$wt" rebase pc-port >/dev/null 2>&1; then
 fi
 echo "rebased   agent/$name: $(git -C "$wt" log --oneline -1)"
 echo "picked up $(git -C "$wt" rev-list --count "$before".."$(git -C "$wt" rev-parse pc-port)" 2>/dev/null || echo '?') commit(s) from pc-port"
+# Re-stamp every source file the sync brought in, so build.sh's staleness check can never miss
+# one (a lane once had to --tu other lanes' files by hand before its link would succeed).
+changed="$(git -C "$wt" diff --name-only "$before" HEAD -- '*.c' '*.h' '*.inc' 2>/dev/null || true)"
+if [ -n "$changed" ]; then
+    (cd "$wt" && echo "$changed" | while read -r f; do [ ! -f "$f" ] || touch "$f"; done)
+    echo "touched   $(echo "$changed" | wc -l) changed source file(s); the next build.sh rebuilds them"
+    echo "$changed" | grep '^pc/platform/.*\.c$' | sed 's|^pc/platform/|          shim changed - pass --shim |' || true
+fi
 
 if [ "$mode" != "--pull" ]; then
     [ -z "$(git -C "$main" status --porcelain --untracked-files=no)" ] ||
