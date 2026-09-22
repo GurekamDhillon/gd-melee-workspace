@@ -83,6 +83,10 @@ export MELEE_MODS_DIR="${MELEE_MODS_DIR:-$GW_ROOT/_build/mods}"
 lane="$(basename "$GW_BUILD_ROOT")"; [ "$lane" = "_build" ] && lane="main"
 export MELEE_RUN_LABEL="${MELEE_RUN_LABEL:-$lane / $name}"
 
+# Test windows play quietly: MELEE_VOLUME is the game's master volume in percent. The user plays
+# while lanes test; a full-volume window is the first complaint. Callers can override it.
+export MELEE_VOLUME="${MELEE_VOLUME:-3}"
+
 # Pad scripts are named relative to the working directory, and they all live in _build. Resolve a
 # bare name against that so callers can keep writing MELEE_PAD_SCRIPT=pad_specialhi.txt.
 if [ -n "${MELEE_PAD_SCRIPT:-}" ] && [ ! -f "$sandbox/${MELEE_PAD_SCRIPT}" ] &&
