@@ -74,6 +74,12 @@ fi
 # are. Point it at the shared folder by default; an agent testing its own mods sets MELEE_MODS_DIR.
 export MELEE_MODS_DIR="${MELEE_MODS_DIR:-$GW_ROOT/_build/mods}"
 
+# The caption drawn on the window (gw_overlay.cpp run_label). With several lanes' windows open at
+# once an unlabelled one is anonymous, so default it to "<lane> / <sandbox>"; callers that know
+# more (the test, the disc, the fighters) set MELEE_RUN_LABEL themselves.
+lane="$(basename "$GW_BUILD_ROOT")"; [ "$lane" = "_build" ] && lane="main"
+export MELEE_RUN_LABEL="${MELEE_RUN_LABEL:-$lane / $name}"
+
 # Pad scripts are named relative to the working directory, and they all live in _build. Resolve a
 # bare name against that so callers can keep writing MELEE_PAD_SCRIPT=pad_specialhi.txt.
 if [ -n "${MELEE_PAD_SCRIPT:-}" ] && [ ! -f "$sandbox/${MELEE_PAD_SCRIPT}" ] &&
