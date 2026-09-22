@@ -54,10 +54,23 @@ if [ "$mode" != "--pull" ]; then
     echo "published pc-port -> $(git -C "$main" log --oneline -1)"
 fi
 
-# Remind about the one shared file that is not in the melee repo.
-if ! diff -q <(grep -o '[^/"]*\.obj' "$GW_ROOT/_build/melee_link_objects.rsp" | sort) \
-              <(grep -o '[^/"]*\.obj' "$GW_ROOT/_build/agents/$name/melee_link_objects.rsp" | sort) >/dev/null; then
-    echo "NOTE      the link lists differ between _build/ and _build/agents/$name/ - a lane added or"
-    echo "          removed a TU/shim. Add it to _build/melee_link_objects.rsp (root repo, commit it)"
-    echo "          and to the other lane's _build/agents/<lane>/melee_link_objects.rsp (quoted, absolute)."
+# Regenerate this lane's link list from the shared one (the same transform agent_new.sh uses), so
+# objects other lanes added reach this lane without anyone editing its list by hand. Entries only
+# this lane has (objects it hasn't published yet) are kept at the end.
+src_rsp="$GW_ROOT/_build/melee_link_objects.rsp"
+lane_root="$GW_ROOT/_build/agents/$name"
+lane_rsp="$lane_root/melee_link_objects.rsp"
+if [ -f "$src_rsp" ] && [ -f "$lane_rsp" ]; then
+    new_rsp="$lane_rsp.new"
+    sed -e "s#^\.\./masstest/#$lane_root/masstest/#" -e 's#^\(..*\)$#""#' "$src_rsp" >"$new_rsp"
+    shared_names="$(grep -o '[^/"]*\.obj' "$new_rsp" | sort -u)"
+    extra=0
+    while IFS= read -r line; do
+        obj="$(echo "$line" | grep -o '[^/"]*\.obj' || true)"
+        [ -n "$obj" ] || continue
+        if ! echo "$shared_names" | grep -qxF "$obj"; then echo "$line" >>"$new_rsp"; extra=$((extra + 1)); fi
+    done <"$lane_rsp"
+    mv -f "$new_rsp" "$lane_rsp"
+    echo "link list regenerated from _build/ ($(wc -l <"$lane_rsp") entries, $extra only in this lane -"
+    echo "          add those to _build/melee_link_objects.rsp when you publish them)"
 fi
