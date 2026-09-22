@@ -69,9 +69,14 @@ $h = [int]([Math]::Min($wa.Height, $w * 3 / 4))
 function Start-Side($tag, $label, $netplay, $device, $x, $pad, $vol) {
   $sandbox = Join-Path $build "runs\$tag"
   New-Item -ItemType Directory -Force -Path $sandbox | Out-Null
-  Get-Process melee-pc -ErrorAction SilentlyContinue | Where-Object {
-    try { $_.MainModule.FileName -like (Join-Path $sandbox "*") } catch { $false }
-  } | Stop-Process -Force -ErrorAction SilentlyContinue
+  # By executable path from the process table: Get-Process's MainModule can throw for a process
+  # that is starting or exiting, which silently skipped it and left its exe locked.
+  # C:\gdm is a junction to the project folder: match the run folder, not the full path.
+  Get-CimInstance Win32_Process -Filter "Name = 'melee-pc.exe'" -ErrorAction SilentlyContinue |
+    Where-Object { $_.ExecutablePath -like "*\runs\$tag\melee-pc.exe" } | ForEach-Object {
+      Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+      Wait-Process -Id $_.ProcessId -Timeout 10 -ErrorAction SilentlyContinue   # its exe stays locked until it exits
+    }
   foreach ($f in @("melee-pc.exe", "melee-pc.map")) { Sync-RunFile (Join-Path $build $f) $sandbox }
   foreach ($f in @("SDL3.dll", "webgpu_dawn.dll")) { Link-RunFile (Join-Path $build $f) $sandbox }
   foreach ($f in @("initial_pipeline_cache.db", "initial_pipeline_cache.core")) { Sync-RunFile (Join-Path $build $f) $sandbox }
