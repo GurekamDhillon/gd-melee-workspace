@@ -1,6 +1,6 @@
 # Frontend menus: the player, the JSON contract, the routing
 
-Written 2026-09-21. Code in `melee/src/melee/gm/`: `gmfrontend.c` (scene, routing, the MATCH SETUP toolkit), plus three files it includes, `gmfrontend_player.inc`, `gmfrontend_kit.inc` and `gmfrontend_menus.inc`. Hooks live in `gmmenumode.c` and `mnmain.c`. The host side is `gw_UiFile_Read` and the two switches in `pc/platform/gw_runtime.c`. Art import is `pc/tools/png2gx.py --layout`. The sweep is `tools/port/fe_menu_sweep.py`.
+Written 2026-09-21. Code in `melee/src/melee/gm/`: `gmfrontend.c` (scene, routing, the MATCH SETUP / ONLINE PLAY toolkit), plus four files it includes, `gmfrontend_player.inc`, `gmfrontend_kit.inc`, `gmfrontend_menus.inc` and `gmfrontend_kitlist.inc`. Hooks live in `gmmenumode.c` and `mnmain.c`. The host side is `gw_UiFile_Read` and the two switches in `pc/platform/gw_runtime.c`. Art import is `pc/tools/png2gx.py --layout`. The sweep is `tools/port/fe_menu_sweep.py`.
 
 The `.inc` files belong to the `gmfrontend.c` translation unit. Build them with `tools/port/build.sh --tu src/melee/gm/gmfrontend.c`. Adding a real TU would mean editing the shared link list that every agent uses.
 
@@ -14,9 +14,11 @@ The `.inc` files belong to the `gmfrontend.c` translation unit. Build them with 
 
 ## Importing art
 
+The art pipeline lives in the repo at `menu/` (`menu/meleedump/` is gitignored and is never committed). From the melee worktree:
+
 ```
 python pc/tools/png2gx.py --layout <menu>/out_kit/manifest.json --layout <menu>/out_hub/hub_layout.json \
-    --outdir _build/ui --copy <menu>/out_kit/{kit.json,font/font_manifest.json,chrome_layout.json,list_layout.json,kit_motion.json}
+    --outdir _build/ui --copy <menu>/out_kit/{kit.json,font/font_manifest.json,chrome_layout.json,list_layout.json,kit_motion.json,widgets_layout.json,dialog_layout.json}
 ```
 
 `--layout` accepts any JSON with a `textures` list (a `*_layout.json` or a section's `manifest.json`). It converts each texture at its own GX format, including the new `I4` and `IA4`, and copies the file along with a sibling `*_motion.json`. The game reads these files from `ui/` beside the exe, then `../../ui`, then `../../../../ui`, so agent sandboxes find `_build/ui`.
@@ -72,6 +74,31 @@ python pc/tools/png2gx.py --layout <menu>/out_kit/manifest.json --layout <menu>/
 - **Lists:** `list_layout.json` supplies the rows (x 96–540, pitch 34, 9 visible). Lists scroll past nine rows, keeping the cursor one row from either edge, over 7 frames as the kit's scroll event does. List cursor moves play `kit_motion`'s `row_select` and `row_deselect`.
 - **Hubs:** hubs use `hub_motion.json`. The hub's own number colours are mapped to each tile's section colours.
 - **Space convention:** kit templates are unsheared, while `hub_layout.json` is still in screen space and its motion is applied in screen space. Generated screens build unsheared, shear, then apply the screen-space hub motion. When section 2 moves the hub to the kit's convention, the joint transforms should move before the shear. That is one place: `fp_evaluate` and `fp_draw_text`.
+
+## MATCH SETUP and ONLINE PLAY on the kit
+
+The toolkit's rows (`FrontendItem`: actions, `FE_DO_CALL` calls, choices, sliders, toggles, and read-only status rows) keep their data, input and online-play logic in `gmfrontend.c`. `gmfrontend_kitlist.inc` draws them with the kit whenever its files are present, and falls back to the old art pack with SisLib otherwise.
+
+- **Chrome:** Versus section. The breadcrumb is VERSUS / MELEE / MATCH SETUP [/ ONLINE PLAY]. The row's help sits in the description strip. Hints are A Select, D-pad Change, B Back.
+- **Rows:** the list template. The continue action is the first row and the cursor starts on it, as it started on the old button. Nine rows are visible at once, and the list scrolls beyond that.
+- **Widgets** (`widgets_layout.json`, in the value slot at x 244):
+  - choice: arrows ← and →, with the value centred;
+  - slider: track, fill, knob and readout;
+  - toggle: track, knob, OFF/ON, with the active half in `knob_text`;
+  - read-only readout: the online codes.
+  - Colours follow the row state, ng or sel.
+- **Motion** (`kit_motion.json`):
+  - `row_select` / `row_deselect` on a cursor move.
+  - On a change: `choice_step` (the old string slides out on its own quad), `slider_step`, and `toggle_set` (its squash). The knob's travel is played explicitly, because the event's `60*dir` is ambiguous about the knob's rest position.
+  - `bump` when a slider is held at its end.
+  - Value expressions (`dir`, `value`, `max`, + - * /, parentheses) are evaluated by the player.
+- **Connection status:** while ONLINE PLAY connects, `Netplay_MenuStatus` is shown in the kit's toast over the description strip. The toast slides in and out with `toast_in` / `toast_out`, with an `ok` accent, or `danger` when the connection failed.
+- **Rebuilds:** the screen is rebuilt when the visible rows change (Mode → Stock adds Stocks; Play As swaps the host's and the guest's rows).
+- **Row order:** the order and the cursor's start are the same as before, so `pad_np_menu_*.txt` still drive VS > Melee > Match Setup > Online Play. A two-window run through the menus connected into the agreed match with 0 desyncs.
+
+## Navigation
+
+Up and Down step through the items in vanilla's own order and wrap, on hubs and lists alike. That is how the native menus behave, and how existing pad scripts and players' hands expect them to. On a hub, Left and Right cross between the hero tile and the column.
 
 ## Routing
 
