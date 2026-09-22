@@ -1,0 +1,857 @@
+{
+ "fps": 60,
+ "format": "hub_motion.json: tracks, from_current, interpolation and transform rules unchanged; see out_hub/hub_motion.json",
+ "space": "unsheared (the kit convention): joint transforms apply before the shear",
+ "converted_from": "out_hub/hub_motion.json (screen space). The lift (-5, -5) on screen is (-6.25, -5) unsheared; everything else is identical in value and timing.",
+ "value_expressions": "colour values are kit tokens resolved per tile (see hubs_layout state_rules)",
+ "events": {
+  "tile_select": {
+   "applies_to": "the newly selected tile",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_cursor_move"
+    }
+   ],
+   "pivot": "tile centre",
+   "tracks": [
+    {
+     "target": "lift_<id>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -8.125,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -6.25,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "lift_<id>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": -6.5,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": -5.0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "lift_<id>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 3,
+       "value": 1.03,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "lift_<id>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 3,
+       "value": 1.03,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "face_<id>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "@face",
+       "interp": "LIN",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 1,
+       "value": "gold_lt",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": "gold",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "icon_<id>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "@face_hi",
+       "interp": "CON",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 1,
+       "value": "gold_dk",
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "label_<id>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "bone",
+       "interp": "CON",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 1,
+       "value": "ink",
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "plate_<id>",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 11
+  },
+  "tile_deselect": {
+   "applies_to": "the previously selected tile",
+   "sfx": [],
+   "tracks": [
+    {
+     "target": "lift_<id>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": -6.25,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "lift_<id>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": -5.0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "lift_<id>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "lift_<id>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 5,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "face_<id>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "gold",
+       "interp": "LIN",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 2,
+       "value": "@face",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "icon_<id>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "gold_dk",
+       "interp": "CON",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 2,
+       "value": "@face_hi",
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "label_<id>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "ink",
+       "interp": "CON",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 2,
+       "value": "bone",
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "plate_<id>",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 0,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 6
+  },
+  "tile_recoil": {
+   "applies_to": "every other tile",
+   "note": "value r scales the unit vector from the selected tile's pivot to this tile's pivot, times 2 px (unsheared)",
+   "tracks": [
+    {
+     "target": "tile_<id>",
+     "kind": "joint",
+     "channel": "RECOIL",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 11
+  },
+  "desc_in": {
+   "applies_to": "the description strip text, for the new selection",
+   "tracks": [
+    {
+     "target": "desc_<id>",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "desc_<id>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": -12,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 7
+  },
+  "desc_out": {
+   "applies_to": "the description strip text, for the previous selection",
+   "tracks": [
+    {
+     "target": "desc_<id>",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 3,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 4
+  },
+  "tile_confirm": {
+   "applies_to": "the selected tile, on A",
+   "sfx": [
+    {
+     "frame": 3,
+     "cue": "sfx_confirm"
+    }
+   ],
+   "tracks": [
+    {
+     "target": "lift_<id>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": -6.25,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 3,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": -2.1875,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "lift_<id>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": -5.0,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 3,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": -1.75,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "lift_<id>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 3,
+       "value": 0.97,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "lift_<id>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 3,
+       "value": 0.97,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "face_<id>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "gold",
+       "interp": "LIN",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 3,
+       "value": "bone",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": "gold",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 13
+  },
+  "tile_slide_out": {
+   "applies_to": "each tile; stagger 2 frames by rank, the chosen tile last; backplate with the first",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_screen_whoosh"
+    }
+   ],
+   "offscreen": true,
+   "tracks": [
+    {
+     "target": "tile_<id>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": -720,
+       "interp": "SPL",
+       "slope": -120
+      }
+     ]
+    }
+   ],
+   "length_frames": 13
+  },
+  "tile_slide_in": {
+   "applies_to": "each tile by rank, starting at slide_in_offsets[rank]; backplate with the hero",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_screen_whoosh"
+    }
+   ],
+   "offscreen": true,
+   "tracks": [
+    {
+     "target": "tile_<id>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 720,
+       "interp": "SPL",
+       "slope": -120
+      },
+      {
+       "frame": 12,
+       "value": -6,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 17,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 18
+  },
+  "chrome_out": {
+   "applies_to": "header up, footer and description down",
+   "offscreen": true,
+   "tracks": [
+    {
+     "target": "header",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": -60,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "footer",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 60,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 11
+  },
+  "chrome_in": {
+   "applies_to": "header and footer back",
+   "offscreen": true,
+   "tracks": [
+    {
+     "target": "header",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": -60,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "footer",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 60,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 11
+  }
+ },
+ "slide_in_offsets": [
+  0,
+  3,
+  5,
+  7,
+  9,
+  11,
+  12,
+  13,
+  14
+ ],
+ "sequences": {
+  "cursor_move": [
+   {
+    "event": "tile_deselect",
+    "on": "previous"
+   },
+   {
+    "event": "desc_out",
+    "on": "previous"
+   },
+   {
+    "event": "tile_select",
+    "on": "new"
+   },
+   {
+    "event": "desc_in",
+    "on": "new"
+   },
+   {
+    "event": "tile_recoil",
+    "on": "others"
+   }
+  ],
+  "confirm": [
+   {
+    "event": "tile_confirm",
+    "on": "selected"
+   },
+   {
+    "sequence": "screen_out",
+    "at": 14
+   }
+  ],
+  "screen_out": [
+   {
+    "event": "chrome_out"
+   },
+   {
+    "event": "tile_slide_out",
+    "order": "by rank, selected last",
+    "stagger_frames": 2
+   }
+  ],
+  "screen_in": [
+   {
+    "event": "chrome_in"
+   },
+   {
+    "event": "tile_slide_in",
+    "order": "by rank",
+    "offsets": "slide_in_offsets",
+    "before_start": "hold TRA_X at 720"
+   },
+   {
+    "initial_state": "the selected tile starts at its sel rest values"
+   }
+  ]
+ }
+}

@@ -1,0 +1,736 @@
+{
+ "name": "hub_main",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "rule": "hubs_layout.json",
+ "section": "per tile (main menu)",
+ "chrome": {
+  "template": "chrome_layout.json",
+  "title": "MAIN MENU",
+  "crumbs": [],
+  "crumb_icon": null,
+  "description": "the selected tile's desc, in the description strip"
+ },
+ "cluster": {
+  "rect": [
+   90,
+   82,
+   556,
+   390
+  ],
+  "backplate": {
+   "id": "backplate",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     84,
+     76
+    ],
+    [
+     562,
+     76
+    ],
+    [
+     562,
+     396
+    ],
+    [
+     84,
+     396
+    ]
+   ],
+   "colour": "ink",
+   "joint": "cluster"
+  }
+ },
+ "tiles": [
+  {
+   "id": "versus",
+   "rank": 0,
+   "hero": true,
+   "size_class": "hero",
+   "section": "versus",
+   "rect_unsheared": [
+    90,
+    82,
+    352,
+    390
+   ],
+   "pivot": [
+    221.0,
+    236.0
+   ],
+   "quads": [
+    {
+     "id": "versus_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       90,
+       82
+      ],
+      [
+       352,
+       82
+      ],
+      [
+       352,
+       390
+      ],
+      [
+       90,
+       390
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_versus"
+    },
+    {
+     "id": "versus_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       90,
+       82
+      ],
+      [
+       352,
+       82
+      ],
+      [
+       352,
+       390
+      ],
+      [
+       90,
+       390
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_versus"
+    },
+    {
+     "id": "versus_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       240,
+       98
+      ],
+      [
+       336,
+       98
+      ],
+      [
+       336,
+       194
+      ],
+      [
+       240,
+       194
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_versus",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_versus"
+    }
+   ],
+   "slots": [
+    {
+     "id": "versus_label_0",
+     "kind": "text",
+     "role": "hero",
+     "anchor": [
+      108,
+      374.0
+     ],
+     "align": "left",
+     "max": "VERSUS",
+     "max_chars": 6,
+     "max_width_1x": 226,
+     "colour": "bone",
+     "joint": "lift_versus",
+     "line_of": 1
+    }
+   ],
+   "label": "VERSUS",
+   "desc": "Up to four players. Your rules, your stage."
+  },
+  {
+   "id": "solo",
+   "rank": 1,
+   "hero": false,
+   "size_class": "mid",
+   "section": "solo",
+   "rect_unsheared": [
+    360,
+    82,
+    556,
+    175
+   ],
+   "pivot": [
+    458.0,
+    128.5
+   ],
+   "quads": [
+    {
+     "id": "solo_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       82
+      ],
+      [
+       556,
+       82
+      ],
+      [
+       556,
+       175
+      ],
+      [
+       360,
+       175
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_solo"
+    },
+    {
+     "id": "solo_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       82
+      ],
+      [
+       556,
+       82
+      ],
+      [
+       556,
+       175
+      ],
+      [
+       360,
+       175
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_solo"
+    },
+    {
+     "id": "solo_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       518,
+       114.5
+      ],
+      [
+       546,
+       114.5
+      ],
+      [
+       546,
+       142.5
+      ],
+      [
+       518,
+       142.5
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_solo",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_solo"
+    }
+   ],
+   "slots": [
+    {
+     "id": "solo_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      370,
+      135.1
+     ],
+     "align": "left",
+     "max": "SOLO",
+     "max_chars": 4,
+     "max_width_1x": 140,
+     "colour": "bone",
+     "joint": "lift_solo",
+     "line_of": 1
+    }
+   ],
+   "label": "SOLO",
+   "desc": "Classic, Adventure, events, training and more."
+  },
+  {
+   "id": "collection",
+   "rank": 2,
+   "hero": false,
+   "size_class": "mid",
+   "section": "collection",
+   "rect_unsheared": [
+    360,
+    183,
+    556,
+    260
+   ],
+   "pivot": [
+    458.0,
+    221.5
+   ],
+   "quads": [
+    {
+     "id": "collection_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       183
+      ],
+      [
+       556,
+       183
+      ],
+      [
+       556,
+       260
+      ],
+      [
+       360,
+       260
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_collection"
+    },
+    {
+     "id": "collection_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       183
+      ],
+      [
+       556,
+       183
+      ],
+      [
+       556,
+       260
+      ],
+      [
+       360,
+       260
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_collection"
+    },
+    {
+     "id": "collection_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       518,
+       207.5
+      ],
+      [
+       546,
+       207.5
+      ],
+      [
+       546,
+       235.5
+      ],
+      [
+       518,
+       235.5
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_collection",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_collection"
+    }
+   ],
+   "slots": [
+    {
+     "id": "collection_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      370,
+      228.1
+     ],
+     "align": "left",
+     "max": "COLLECTION",
+     "max_chars": 10,
+     "max_width_1x": 140,
+     "colour": "bone",
+     "joint": "lift_collection",
+     "line_of": 1
+    }
+   ],
+   "label": "COLLECTION",
+   "desc": "Trophies: gallery, lottery and your collection."
+  },
+  {
+   "id": "options",
+   "rank": 3,
+   "hero": false,
+   "size_class": "mid",
+   "section": "options",
+   "rect_unsheared": [
+    360,
+    268,
+    556,
+    331
+   ],
+   "pivot": [
+    458.0,
+    299.5
+   ],
+   "quads": [
+    {
+     "id": "options_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       268
+      ],
+      [
+       556,
+       268
+      ],
+      [
+       556,
+       331
+      ],
+      [
+       360,
+       331
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_options"
+    },
+    {
+     "id": "options_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       268
+      ],
+      [
+       556,
+       268
+      ],
+      [
+       556,
+       331
+      ],
+      [
+       360,
+       331
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_options"
+    },
+    {
+     "id": "options_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       518,
+       285.5
+      ],
+      [
+       546,
+       285.5
+      ],
+      [
+       546,
+       313.5
+      ],
+      [
+       518,
+       313.5
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_options",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_options"
+    }
+   ],
+   "slots": [
+    {
+     "id": "options_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      370,
+      306.1
+     ],
+     "align": "left",
+     "max": "OPTIONS",
+     "max_chars": 7,
+     "max_width_1x": 140,
+     "colour": "bone",
+     "joint": "lift_options",
+     "line_of": 1
+    }
+   ],
+   "label": "OPTIONS",
+   "desc": "Rumble, sound, display, language and save data."
+  },
+  {
+   "id": "data",
+   "rank": 4,
+   "hero": false,
+   "size_class": "mid",
+   "section": "data",
+   "rect_unsheared": [
+    360,
+    339,
+    556,
+    390
+   ],
+   "pivot": [
+    458.0,
+    364.5
+   ],
+   "quads": [
+    {
+     "id": "data_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       339
+      ],
+      [
+       556,
+       339
+      ],
+      [
+       556,
+       390
+      ],
+      [
+       360,
+       390
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_data"
+    },
+    {
+     "id": "data_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       339
+      ],
+      [
+       556,
+       339
+      ],
+      [
+       556,
+       390
+      ],
+      [
+       360,
+       390
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_data"
+    },
+    {
+     "id": "data_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       518,
+       350.5
+      ],
+      [
+       546,
+       350.5
+      ],
+      [
+       546,
+       378.5
+      ],
+      [
+       518,
+       378.5
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_data",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_data"
+    }
+   ],
+   "slots": [
+    {
+     "id": "data_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      370,
+      371.1
+     ],
+     "align": "left",
+     "max": "DATA",
+     "max_chars": 4,
+     "max_width_1x": 140,
+     "colour": "bone",
+     "joint": "lift_data",
+     "line_of": 1
+    }
+   ],
+   "label": "DATA",
+   "desc": "Snapshots, movies, sound test, records, messages."
+  }
+ ],
+ "states": {
+  "ng": {
+   "face": "@face",
+   "icon": "@face_hi",
+   "label": "bone",
+   "plate": null,
+   "offset": [
+    0,
+    0
+   ]
+  },
+  "sel": {
+   "face": "gold",
+   "icon": "gold_dk",
+   "label": "ink",
+   "plate": "gold_dk",
+   "offset": [
+    -6.25,
+    -5.0
+   ]
+  }
+ },
+ "textures": [
+  {
+   "name": "ico_collection",
+   "file_2x": "out_nav/2x/ico_collection.png",
+   "file_1x": "out_nav/1x/ico_collection.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_data",
+   "file_2x": "out_nav/2x/ico_data.png",
+   "file_1x": "out_nav/1x/ico_data.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_options",
+   "file_2x": "out_nav/2x/ico_options.png",
+   "file_1x": "out_nav/1x/ico_options.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_solo",
+   "file_2x": "out_nav/2x/ico_solo.png",
+   "file_1x": "out_nav/1x/ico_solo.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_versus",
+   "file_2x": "out_nav/2x/ico_versus.png",
+   "file_1x": "out_nav/1x/ico_versus.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  }
+ ]
+}

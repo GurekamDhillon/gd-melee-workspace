@@ -1,0 +1,633 @@
+{
+ "name": "hub_solo",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "rule": "hubs_layout.json",
+ "section": "solo",
+ "chrome": {
+  "template": "chrome_layout.json",
+  "title": "SOLO",
+  "crumbs": [
+   "SOLO"
+  ],
+  "crumb_icon": "ico_solo",
+  "description": "the selected tile's desc, in the description strip"
+ },
+ "cluster": {
+  "rect": [
+   90,
+   82,
+   556,
+   390
+  ],
+  "backplate": {
+   "id": "backplate",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     84,
+     76
+    ],
+    [
+     562,
+     76
+    ],
+    [
+     562,
+     396
+    ],
+    [
+     84,
+     396
+    ]
+   ],
+   "colour": "ink",
+   "joint": "cluster"
+  }
+ },
+ "tiles": [
+  {
+   "id": "regular",
+   "rank": 0,
+   "hero": true,
+   "size_class": "hero",
+   "section": "solo",
+   "rect_unsheared": [
+    90,
+    82,
+    352,
+    390
+   ],
+   "pivot": [
+    221.0,
+    236.0
+   ],
+   "quads": [
+    {
+     "id": "regular_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       90,
+       82
+      ],
+      [
+       352,
+       82
+      ],
+      [
+       352,
+       390
+      ],
+      [
+       90,
+       390
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_regular"
+    },
+    {
+     "id": "regular_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       90,
+       82
+      ],
+      [
+       352,
+       82
+      ],
+      [
+       352,
+       390
+      ],
+      [
+       90,
+       390
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_regular"
+    },
+    {
+     "id": "regular_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       240,
+       98
+      ],
+      [
+       336,
+       98
+      ],
+      [
+       336,
+       194
+      ],
+      [
+       240,
+       194
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_regular",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_regular"
+    }
+   ],
+   "slots": [
+    {
+     "id": "regular_label_0",
+     "kind": "text",
+     "role": "hero",
+     "anchor": [
+      108,
+      326.48
+     ],
+     "align": "left",
+     "max": "REGULAR",
+     "max_chars": 7,
+     "max_width_1x": 226,
+     "colour": "bone",
+     "joint": "lift_regular",
+     "line_of": 2
+    },
+    {
+     "id": "regular_label_1",
+     "kind": "text",
+     "role": "hero",
+     "anchor": [
+      108,
+      374.0
+     ],
+     "align": "left",
+     "max": "MATCH",
+     "max_chars": 5,
+     "max_width_1x": 226,
+     "colour": "bone",
+     "joint": "lift_regular",
+     "line_of": 2
+    }
+   ],
+   "label": "REGULAR MATCH",
+   "desc": "Classic, Adventure and All-Star."
+  },
+  {
+   "id": "event",
+   "rank": 1,
+   "hero": false,
+   "size_class": "tall",
+   "section": "solo",
+   "rect_unsheared": [
+    360,
+    82,
+    556,
+    207
+   ],
+   "pivot": [
+    458.0,
+    144.5
+   ],
+   "quads": [
+    {
+     "id": "event_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       82
+      ],
+      [
+       556,
+       82
+      ],
+      [
+       556,
+       207
+      ],
+      [
+       360,
+       207
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_event"
+    },
+    {
+     "id": "event_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       82
+      ],
+      [
+       556,
+       82
+      ],
+      [
+       556,
+       207
+      ],
+      [
+       360,
+       207
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_event"
+    },
+    {
+     "id": "event_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       506,
+       92
+      ],
+      [
+       546,
+       92
+      ],
+      [
+       546,
+       132
+      ],
+      [
+       506,
+       132
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_event",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_event"
+    }
+   ],
+   "slots": [
+    {
+     "id": "event_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      372,
+      197.0
+     ],
+     "align": "left",
+     "max": "EVENT MATCH",
+     "max_chars": 11,
+     "max_width_1x": 176,
+     "colour": "bone",
+     "joint": "lift_event",
+     "line_of": 1
+    }
+   ],
+   "label": "EVENT MATCH",
+   "desc": "Special battles with their own rules."
+  },
+  {
+   "id": "stadium",
+   "rank": 2,
+   "hero": false,
+   "size_class": "mid",
+   "section": "solo",
+   "rect_unsheared": [
+    360,
+    215,
+    556,
+    310
+   ],
+   "pivot": [
+    458.0,
+    262.5
+   ],
+   "quads": [
+    {
+     "id": "stadium_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       215
+      ],
+      [
+       556,
+       215
+      ],
+      [
+       556,
+       310
+      ],
+      [
+       360,
+       310
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_stadium"
+    },
+    {
+     "id": "stadium_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       215
+      ],
+      [
+       556,
+       215
+      ],
+      [
+       556,
+       310
+      ],
+      [
+       360,
+       310
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_stadium"
+    },
+    {
+     "id": "stadium_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       518,
+       248.5
+      ],
+      [
+       546,
+       248.5
+      ],
+      [
+       546,
+       276.5
+      ],
+      [
+       518,
+       276.5
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_stadium",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_stadium"
+    }
+   ],
+   "slots": [
+    {
+     "id": "stadium_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      370,
+      269.1
+     ],
+     "align": "left",
+     "max": "STADIUM",
+     "max_chars": 7,
+     "max_width_1x": 140,
+     "colour": "bone",
+     "joint": "lift_stadium",
+     "line_of": 1
+    }
+   ],
+   "label": "STADIUM",
+   "desc": "Target Test, Home-Run Contest and Multi-Man."
+  },
+  {
+   "id": "training",
+   "rank": 3,
+   "hero": false,
+   "size_class": "mid",
+   "section": "solo",
+   "rect_unsheared": [
+    360,
+    318,
+    556,
+    390
+   ],
+   "pivot": [
+    458.0,
+    354.0
+   ],
+   "quads": [
+    {
+     "id": "training_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       318
+      ],
+      [
+       556,
+       318
+      ],
+      [
+       556,
+       390
+      ],
+      [
+       360,
+       390
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_training"
+    },
+    {
+     "id": "training_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       318
+      ],
+      [
+       556,
+       318
+      ],
+      [
+       556,
+       390
+      ],
+      [
+       360,
+       390
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_training"
+    },
+    {
+     "id": "training_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       518,
+       340.0
+      ],
+      [
+       546,
+       340.0
+      ],
+      [
+       546,
+       368.0
+      ],
+      [
+       518,
+       368.0
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_training",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_training"
+    }
+   ],
+   "slots": [
+    {
+     "id": "training_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      370,
+      360.6
+     ],
+     "align": "left",
+     "max": "TRAINING",
+     "max_chars": 8,
+     "max_width_1x": 140,
+     "colour": "bone",
+     "joint": "lift_training",
+     "line_of": 1
+    }
+   ],
+   "label": "TRAINING",
+   "desc": "Practice against a dummy, any stage, any speed."
+  }
+ ],
+ "states": {
+  "ng": {
+   "face": "@face",
+   "icon": "@face_hi",
+   "label": "bone",
+   "plate": null,
+   "offset": [
+    0,
+    0
+   ]
+  },
+  "sel": {
+   "face": "gold",
+   "icon": "gold_dk",
+   "label": "ink",
+   "plate": "gold_dk",
+   "offset": [
+    -6.25,
+    -5.0
+   ]
+  }
+ },
+ "textures": [
+  {
+   "name": "ico_event",
+   "file_2x": "out_nav/2x/ico_event.png",
+   "file_1x": "out_nav/1x/ico_event.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_regular",
+   "file_2x": "out_nav/2x/ico_regular.png",
+   "file_1x": "out_nav/1x/ico_regular.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_solo",
+   "file_2x": "out_nav/2x/ico_solo.png",
+   "file_1x": "out_nav/1x/ico_solo.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_stadium",
+   "file_2x": "out_nav/2x/ico_stadium.png",
+   "file_1x": "out_nav/1x/ico_stadium.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_training",
+   "file_2x": "out_nav/2x/ico_training.png",
+   "file_1x": "out_nav/1x/ico_training.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  }
+ ]
+}

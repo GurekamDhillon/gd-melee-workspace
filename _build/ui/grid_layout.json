@@ -1,0 +1,50 @@
+{
+ "name": "grid",
+ "space": "unsheared",
+ "cell_template": "widgets_layout.json check_cell",
+ "grid": {
+  "x0": 104,
+  "y0": 122,
+  "cell": [
+   72,
+   64
+  ],
+  "pitch": [
+   76,
+   68
+  ],
+  "cols": 6,
+  "visible_rows": 4,
+  "header_row": {
+   "rect": [
+    96,
+    84,
+    540,
+    114
+   ],
+   "note": "Item Switch: the frequency choice row; Stage Switch: a page/count row ('24 of 80 on')"
+  },
+  "track": [
+   572,
+   122,
+   578,
+   390
+  ],
+  "rect": [
+   104,
+   122,
+   556,
+   390
+  ]
+ },
+ "rules": [
+  "Cells run left to right, top to bottom: col = i % 6, row = i // 6; cell top-left = (104 + col * 76, 122 + (row - first_row) * 68).",
+  "4 rows show at a time (24 cells). More rows scroll by one row (kit scroll event, pitch 68), keeping the cursor one row from either edge; the kit scroll track sits at x 572.",
+  "Any count fits: vanilla Item Switch is 31 cells (6 rows), m-ex Random Stage Switch up to 80+ (14 rows). The disc art is the cell's 64x56 slot.",
+  "Footer: A toggle, X all on, Y all off, B back. The header row is a normal list row (its widget: choice for frequency)."
+ ],
+ "max_counts": {
+  "item_switch": 40,
+  "stage_switch": 96
+ }
+}

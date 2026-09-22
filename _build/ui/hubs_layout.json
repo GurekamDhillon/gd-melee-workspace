@@ -1,0 +1,1033 @@
+{
+ "name": "hubs",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "what": "The layout rule every hub (2-9 tiles) is generated from. hub_<screen>_layout.json are its output for the vanilla hubs; any other hub follows the same steps.",
+ "cluster": {
+  "rect": [
+   90,
+   82,
+   556,
+   390
+  ],
+  "hero_x1": 352,
+  "secondary_x0": 360,
+  "gutter": 8,
+  "backplate_overhang": 6
+ },
+ "steps": [
+  "Order the items by rank: the menu's hero item first, then the others in menu order.",
+  "n = 1: the tile fills the cluster (hero class).",
+  "n >= 2: rank 0 is the hero, x 90..352, full cluster height. The other s = n - 1 tiles stack in one column, x 360..556.",
+  "Column heights: avail = cluster height - gutter * (s - 1); r = min(1, 0.76 + 0.06 * max(0, s - 3)). Tile i spans edge(i-1)..edge(i) with edge(i) = round(avail * sum(r^0..r^i) / sum(r^0..r^(s-1))), offset by gutter * i (cumulative rounding: the column ends exactly at the cluster bottom and no tile is more than 1 px off its share).",
+  "Each tile's size class comes from its height: hero; tall h >= 96; mid 44 <= h < 96; short h < 44. The class sets padding, icon size and placement, and the label chain.",
+  "Labels are set from the atlas, caps. The hero tries its chain in order - (role, lines) - and takes the first where every line fits the label width and the block fits the label height. The secondaries share ONE role per hub, so the column reads evenly: the largest of label / row / body at which every secondary label fits, in one line or (except short tiles) two. Two-line labels break at a space, balancing the lines. If nothing fits, truncate with '…' (the checks prove no vanilla hub and no 1-9 tile hub of 'SPECIAL MESSAGES' needs it).",
+  "Draw order: backplate, tiles by rank, the previous selection, the selection last. A tile draws plate, face, icon, label."
+ ],
+ "ratio_by_s": {
+  "1": 0.76,
+  "2": 0.76,
+  "3": 0.76,
+  "4": 0.8200000000000001,
+  "5": 0.88,
+  "6": 0.94,
+  "7": 1.0,
+  "8": 1.0
+ },
+ "classes": {
+  "hero": {
+   "pad": 16,
+   "icon": 96,
+   "place": "icon top-right, label bottom-left",
+   "chain": [
+    [
+     "hero",
+     1
+    ],
+    [
+     "hero",
+     2
+    ],
+    [
+     "heading",
+     1
+    ],
+    [
+     "heading",
+     2
+    ],
+    [
+     "title",
+     1
+    ]
+   ]
+  },
+  "tall": {
+   "min_h": 96,
+   "pad": 10,
+   "icon": 40,
+   "place": "icon top-right, label bottom-left",
+   "chain": [
+    [
+     "label",
+     1
+    ],
+    [
+     "label",
+     2
+    ],
+    [
+     "row",
+     1
+    ],
+    [
+     "row",
+     2
+    ]
+   ]
+  },
+  "mid": {
+   "min_h": 44,
+   "pad": 10,
+   "icon": 28,
+   "place": "icon right, centred; label left, centred",
+   "chain": [
+    [
+     "label",
+     1
+    ],
+    [
+     "row",
+     1
+    ],
+    [
+     "row",
+     2
+    ],
+    [
+     "body",
+     1
+    ]
+   ]
+  },
+  "short": {
+   "min_h": 0,
+   "pad": 8,
+   "icon": 24,
+   "place": "icon right, centred; label left, centred",
+   "chain": [
+    [
+     "row",
+     1
+    ],
+    [
+     "body",
+     1
+    ]
+   ]
+  }
+ },
+ "secondary_roles": [
+  "label",
+  "row",
+  "body"
+ ],
+ "line_pitch": {
+  "hero": 47.52,
+  "heading": 34.56,
+  "title": 25.92,
+  "label": 21.6,
+  "row": 17.28,
+  "body": 15.12
+ },
+ "states": {
+  "ng": {
+   "face": "@face",
+   "icon": "@face_hi",
+   "label": "bone",
+   "plate": null,
+   "offset": [
+    0,
+    0
+   ]
+  },
+  "sel": {
+   "face": "gold",
+   "icon": "gold_dk",
+   "label": "ink",
+   "plate": "gold_dk",
+   "offset": [
+    -6.25,
+    -5.0
+   ]
+  }
+ },
+ "state_rules": [
+  "Exactly one tile is 'sel'. Selection is colour + translate, no texture change.",
+  "sel: face, icon and label take the sel colours; the lift joint translates by offset [-6.25, -5.0] (unsheared; = (-5, -5) on screen); the plate appears at rest in gold_dk.",
+  "Colour tokens resolve per tile: on the main menu every tile takes the colours of the section it leads to; elsewhere the screen's section.",
+  "The description strip (chrome) shows the selected tile's desc."
+ ],
+ "joints": "per tile i: tile_<i> (slide, recoil) > plate_<i> (alpha) and lift_<i> (lift, scale about the tile centre) > face/icon/label; desc_<i> for the description",
+ "examples": {
+  "1": [
+   [
+    90,
+    82,
+    556,
+    390
+   ]
+  ],
+  "2": [
+   [
+    90,
+    82,
+    352,
+    390
+   ],
+   [
+    360,
+    82,
+    556,
+    390
+   ]
+  ],
+  "3": [
+   [
+    90,
+    82,
+    352,
+    390
+   ],
+   [
+    360,
+    82,
+    556,
+    252
+   ],
+   [
+    360,
+    260,
+    556,
+    390
+   ]
+  ],
+  "4": [
+   [
+    90,
+    82,
+    352,
+    390
+   ],
+   [
+    360,
+    82,
+    556,
+    207
+   ],
+   [
+    360,
+    215,
+    556,
+    310
+   ],
+   [
+    360,
+    318,
+    556,
+    390
+   ]
+  ],
+  "5": [
+   [
+    90,
+    82,
+    352,
+    390
+   ],
+   [
+    360,
+    82,
+    556,
+    175
+   ],
+   [
+    360,
+    183,
+    556,
+    260
+   ],
+   [
+    360,
+    268,
+    556,
+    331
+   ],
+   [
+    360,
+    339,
+    556,
+    390
+   ]
+  ],
+  "6": [
+   [
+    90,
+    82,
+    352,
+    390
+   ],
+   [
+    360,
+    82,
+    556,
+    152
+   ],
+   [
+    360,
+    160,
+    556,
+    222
+   ],
+   [
+    360,
+    230,
+    556,
+    284
+   ],
+   [
+    360,
+    292,
+    556,
+    340
+   ],
+   [
+    360,
+    348,
+    556,
+    390
+   ]
+  ],
+  "7": [
+   [
+    90,
+    82,
+    352,
+    390
+   ],
+   [
+    360,
+    82,
+    556,
+    134
+   ],
+   [
+    360,
+    142,
+    556,
+    191
+   ],
+   [
+    360,
+    199,
+    556,
+    244
+   ],
+   [
+    360,
+    252,
+    556,
+    295
+   ],
+   [
+    360,
+    303,
+    556,
+    344
+   ],
+   [
+    360,
+    352,
+    556,
+    390
+   ]
+  ],
+  "8": [
+   [
+    90,
+    82,
+    352,
+    390
+   ],
+   [
+    360,
+    82,
+    556,
+    119
+   ],
+   [
+    360,
+    127,
+    556,
+    164
+   ],
+   [
+    360,
+    172,
+    556,
+    209
+   ],
+   [
+    360,
+    217,
+    556,
+    255
+   ],
+   [
+    360,
+    263,
+    556,
+    300
+   ],
+   [
+    360,
+    308,
+    556,
+    345
+   ],
+   [
+    360,
+    353,
+    556,
+    390
+   ]
+  ],
+  "9": [
+   [
+    90,
+    82,
+    352,
+    390
+   ],
+   [
+    360,
+    82,
+    556,
+    114
+   ],
+   [
+    360,
+    122,
+    556,
+    153
+   ],
+   [
+    360,
+    161,
+    556,
+    192
+   ],
+   [
+    360,
+    200,
+    556,
+    232
+   ],
+   [
+    360,
+    240,
+    556,
+    272
+   ],
+   [
+    360,
+    280,
+    556,
+    311
+   ],
+   [
+    360,
+    319,
+    556,
+    350
+   ],
+   [
+    360,
+    358,
+    556,
+    390
+   ]
+  ]
+ },
+ "icon_textures": "ico_<name>, 256x256 I4 (128 px at 1x); drawn at 24-96 px",
+ "label_results": {
+  "main": {
+   "versus": {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "VERSUS"
+    ]
+   },
+   "solo": {
+    "cls": "mid",
+    "role": "label",
+    "lines": [
+     "SOLO"
+    ]
+   },
+   "collection": {
+    "cls": "mid",
+    "role": "label",
+    "lines": [
+     "COLLECTION"
+    ]
+   },
+   "options": {
+    "cls": "mid",
+    "role": "label",
+    "lines": [
+     "OPTIONS"
+    ]
+   },
+   "data": {
+    "cls": "mid",
+    "role": "label",
+    "lines": [
+     "DATA"
+    ]
+   }
+  },
+  "solo": {
+   "regular": {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "REGULAR",
+     "MATCH"
+    ]
+   },
+   "event": {
+    "cls": "tall",
+    "role": "label",
+    "lines": [
+     "EVENT MATCH"
+    ]
+   },
+   "stadium": {
+    "cls": "mid",
+    "role": "label",
+    "lines": [
+     "STADIUM"
+    ]
+   },
+   "training": {
+    "cls": "mid",
+    "role": "label",
+    "lines": [
+     "TRAINING"
+    ]
+   }
+  },
+  "regular": {
+   "classic": {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "CLASSIC"
+    ]
+   },
+   "adventure": {
+    "cls": "tall",
+    "role": "label",
+    "lines": [
+     "ADVENTURE"
+    ]
+   },
+   "allstar": {
+    "cls": "tall",
+    "role": "label",
+    "lines": [
+     "ALL-STAR"
+    ]
+   }
+  },
+  "stadium": {
+   "target": {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "TARGET",
+     "TEST"
+    ]
+   },
+   "homerun": {
+    "cls": "tall",
+    "role": "label",
+    "lines": [
+     "HOME-RUN",
+     "CONTEST"
+    ]
+   },
+   "multiman": {
+    "cls": "tall",
+    "role": "label",
+    "lines": [
+     "MULTI-MAN MELEE"
+    ]
+   }
+  },
+  "versus": {
+   "melee": {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "MELEE"
+    ]
+   },
+   "online": {
+    "cls": "mid",
+    "role": "label",
+    "lines": [
+     "ONLINE"
+    ]
+   },
+   "tournament": {
+    "cls": "mid",
+    "role": "label",
+    "lines": [
+     "TOURNAMENT"
+    ]
+   },
+   "special": {
+    "cls": "mid",
+    "role": "label",
+    "lines": [
+     "SPECIAL MELEE"
+    ]
+   },
+   "rules": {
+    "cls": "mid",
+    "role": "label",
+    "lines": [
+     "RULES"
+    ]
+   },
+   "names": {
+    "cls": "short",
+    "role": "label",
+    "lines": [
+     "NAME ENTRY"
+    ]
+   }
+  },
+  "collection": {
+   "trophies": {
+    "cls": "hero",
+    "role": "heading",
+    "lines": [
+     "COLLECTION"
+    ]
+   },
+   "gallery": {
+    "cls": "tall",
+    "role": "label",
+    "lines": [
+     "GALLERY"
+    ]
+   },
+   "lottery": {
+    "cls": "tall",
+    "role": "label",
+    "lines": [
+     "LOTTERY"
+    ]
+   }
+  },
+  "data": {
+   "records": {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "RECORDS"
+    ]
+   },
+   "snapshots": {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "SNAPSHOTS"
+    ]
+   },
+   "movies": {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "MOVIES"
+    ]
+   },
+   "soundtest": {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "SOUND TEST"
+    ]
+   },
+   "messages": {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   }
+  }
+ },
+ "worst_label_by_n": {
+  "1": [
+   {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   }
+  ],
+  "2": [
+   {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "SPECIAL",
+     "MESSAGES"
+    ]
+   },
+   {
+    "cls": "tall",
+    "role": "label",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   }
+  ],
+  "3": [
+   {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "SPECIAL",
+     "MESSAGES"
+    ]
+   },
+   {
+    "cls": "tall",
+    "role": "label",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "tall",
+    "role": "label",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   }
+  ],
+  "4": [
+   {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "SPECIAL",
+     "MESSAGES"
+    ]
+   },
+   {
+    "cls": "tall",
+    "role": "label",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "mid",
+    "role": "label",
+    "lines": [
+     "SPECIAL",
+     "MESSAGES"
+    ]
+   },
+   {
+    "cls": "mid",
+    "role": "label",
+    "lines": [
+     "SPECIAL",
+     "MESSAGES"
+    ]
+   }
+  ],
+  "5": [
+   {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "SPECIAL",
+     "MESSAGES"
+    ]
+   },
+   {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   }
+  ],
+  "6": [
+   {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "SPECIAL",
+     "MESSAGES"
+    ]
+   },
+   {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   }
+  ],
+  "7": [
+   {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "SPECIAL",
+     "MESSAGES"
+    ]
+   },
+   {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "mid",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   }
+  ],
+  "8": [
+   {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "SPECIAL",
+     "MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   }
+  ],
+  "9": [
+   {
+    "cls": "hero",
+    "role": "hero",
+    "lines": [
+     "SPECIAL",
+     "MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   },
+   {
+    "cls": "short",
+    "role": "row",
+    "lines": [
+     "SPECIAL MESSAGES"
+    ]
+   }
+  ]
+ }
+}

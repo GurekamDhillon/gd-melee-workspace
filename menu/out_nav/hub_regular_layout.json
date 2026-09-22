@@ -1,0 +1,486 @@
+{
+ "name": "hub_regular",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "rule": "hubs_layout.json",
+ "section": "solo",
+ "chrome": {
+  "template": "chrome_layout.json",
+  "title": "REGULAR MATCH",
+  "crumbs": [
+   "SOLO",
+   "REGULAR MATCH"
+  ],
+  "crumb_icon": "ico_solo",
+  "description": "the selected tile's desc, in the description strip"
+ },
+ "cluster": {
+  "rect": [
+   90,
+   82,
+   556,
+   390
+  ],
+  "backplate": {
+   "id": "backplate",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     84,
+     76
+    ],
+    [
+     562,
+     76
+    ],
+    [
+     562,
+     396
+    ],
+    [
+     84,
+     396
+    ]
+   ],
+   "colour": "ink",
+   "joint": "cluster"
+  }
+ },
+ "tiles": [
+  {
+   "id": "classic",
+   "rank": 0,
+   "hero": true,
+   "size_class": "hero",
+   "section": "solo",
+   "rect_unsheared": [
+    90,
+    82,
+    352,
+    390
+   ],
+   "pivot": [
+    221.0,
+    236.0
+   ],
+   "quads": [
+    {
+     "id": "classic_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       90,
+       82
+      ],
+      [
+       352,
+       82
+      ],
+      [
+       352,
+       390
+      ],
+      [
+       90,
+       390
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_classic"
+    },
+    {
+     "id": "classic_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       90,
+       82
+      ],
+      [
+       352,
+       82
+      ],
+      [
+       352,
+       390
+      ],
+      [
+       90,
+       390
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_classic"
+    },
+    {
+     "id": "classic_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       240,
+       98
+      ],
+      [
+       336,
+       98
+      ],
+      [
+       336,
+       194
+      ],
+      [
+       240,
+       194
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_classic",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_classic"
+    }
+   ],
+   "slots": [
+    {
+     "id": "classic_label_0",
+     "kind": "text",
+     "role": "hero",
+     "anchor": [
+      108,
+      374.0
+     ],
+     "align": "left",
+     "max": "CLASSIC",
+     "max_chars": 7,
+     "max_width_1x": 226,
+     "colour": "bone",
+     "joint": "lift_classic",
+     "line_of": 1
+    }
+   ],
+   "label": "CLASSIC",
+   "desc": "A series of battles, then the final boss."
+  },
+  {
+   "id": "adventure",
+   "rank": 1,
+   "hero": false,
+   "size_class": "tall",
+   "section": "solo",
+   "rect_unsheared": [
+    360,
+    82,
+    556,
+    252
+   ],
+   "pivot": [
+    458.0,
+    167.0
+   ],
+   "quads": [
+    {
+     "id": "adventure_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       82
+      ],
+      [
+       556,
+       82
+      ],
+      [
+       556,
+       252
+      ],
+      [
+       360,
+       252
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_adventure"
+    },
+    {
+     "id": "adventure_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       82
+      ],
+      [
+       556,
+       82
+      ],
+      [
+       556,
+       252
+      ],
+      [
+       360,
+       252
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_adventure"
+    },
+    {
+     "id": "adventure_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       506,
+       92
+      ],
+      [
+       546,
+       92
+      ],
+      [
+       546,
+       132
+      ],
+      [
+       506,
+       132
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_adventure",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_adventure"
+    }
+   ],
+   "slots": [
+    {
+     "id": "adventure_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      372,
+      242.0
+     ],
+     "align": "left",
+     "max": "ADVENTURE",
+     "max_chars": 9,
+     "max_width_1x": 176,
+     "colour": "bone",
+     "joint": "lift_adventure",
+     "line_of": 1
+    }
+   ],
+   "label": "ADVENTURE",
+   "desc": "Side-scrolling stages between the battles."
+  },
+  {
+   "id": "allstar",
+   "rank": 2,
+   "hero": false,
+   "size_class": "tall",
+   "section": "solo",
+   "rect_unsheared": [
+    360,
+    260,
+    556,
+    390
+   ],
+   "pivot": [
+    458.0,
+    325.0
+   ],
+   "quads": [
+    {
+     "id": "allstar_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       260
+      ],
+      [
+       556,
+       260
+      ],
+      [
+       556,
+       390
+      ],
+      [
+       360,
+       390
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_allstar"
+    },
+    {
+     "id": "allstar_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       260
+      ],
+      [
+       556,
+       260
+      ],
+      [
+       556,
+       390
+      ],
+      [
+       360,
+       390
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_allstar"
+    },
+    {
+     "id": "allstar_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       506,
+       270
+      ],
+      [
+       546,
+       270
+      ],
+      [
+       546,
+       310
+      ],
+      [
+       506,
+       310
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_allstar",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_allstar"
+    }
+   ],
+   "slots": [
+    {
+     "id": "allstar_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      372,
+      380.0
+     ],
+     "align": "left",
+     "max": "ALL-STAR",
+     "max_chars": 8,
+     "max_width_1x": 176,
+     "colour": "bone",
+     "joint": "lift_allstar",
+     "line_of": 1
+    }
+   ],
+   "label": "ALL-STAR",
+   "desc": "Every fighter, one after another."
+  }
+ ],
+ "states": {
+  "ng": {
+   "face": "@face",
+   "icon": "@face_hi",
+   "label": "bone",
+   "plate": null,
+   "offset": [
+    0,
+    0
+   ]
+  },
+  "sel": {
+   "face": "gold",
+   "icon": "gold_dk",
+   "label": "ink",
+   "plate": "gold_dk",
+   "offset": [
+    -6.25,
+    -5.0
+   ]
+  }
+ },
+ "textures": [
+  {
+   "name": "ico_adventure",
+   "file_2x": "out_nav/2x/ico_adventure.png",
+   "file_1x": "out_nav/1x/ico_adventure.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_allstar",
+   "file_2x": "out_nav/2x/ico_allstar.png",
+   "file_1x": "out_nav/1x/ico_allstar.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_classic",
+   "file_2x": "out_nav/2x/ico_classic.png",
+   "file_1x": "out_nav/1x/ico_classic.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_solo",
+   "file_2x": "out_nav/2x/ico_solo.png",
+   "file_1x": "out_nav/1x/ico_solo.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  }
+ ]
+}

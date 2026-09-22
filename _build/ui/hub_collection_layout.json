@@ -1,0 +1,485 @@
+{
+ "name": "hub_collection",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "rule": "hubs_layout.json",
+ "section": "collection",
+ "chrome": {
+  "template": "chrome_layout.json",
+  "title": "COLLECTION",
+  "crumbs": [
+   "COLLECTION"
+  ],
+  "crumb_icon": "ico_collection",
+  "description": "the selected tile's desc, in the description strip"
+ },
+ "cluster": {
+  "rect": [
+   90,
+   82,
+   556,
+   390
+  ],
+  "backplate": {
+   "id": "backplate",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     84,
+     76
+    ],
+    [
+     562,
+     76
+    ],
+    [
+     562,
+     396
+    ],
+    [
+     84,
+     396
+    ]
+   ],
+   "colour": "ink",
+   "joint": "cluster"
+  }
+ },
+ "tiles": [
+  {
+   "id": "trophies",
+   "rank": 0,
+   "hero": true,
+   "size_class": "hero",
+   "section": "collection",
+   "rect_unsheared": [
+    90,
+    82,
+    352,
+    390
+   ],
+   "pivot": [
+    221.0,
+    236.0
+   ],
+   "quads": [
+    {
+     "id": "trophies_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       90,
+       82
+      ],
+      [
+       352,
+       82
+      ],
+      [
+       352,
+       390
+      ],
+      [
+       90,
+       390
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_trophies"
+    },
+    {
+     "id": "trophies_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       90,
+       82
+      ],
+      [
+       352,
+       82
+      ],
+      [
+       352,
+       390
+      ],
+      [
+       90,
+       390
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_trophies"
+    },
+    {
+     "id": "trophies_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       240,
+       98
+      ],
+      [
+       336,
+       98
+      ],
+      [
+       336,
+       194
+      ],
+      [
+       240,
+       194
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_trophies",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_trophies"
+    }
+   ],
+   "slots": [
+    {
+     "id": "trophies_label_0",
+     "kind": "text",
+     "role": "heading",
+     "anchor": [
+      108,
+      374.0
+     ],
+     "align": "left",
+     "max": "COLLECTION",
+     "max_chars": 10,
+     "max_width_1x": 226,
+     "colour": "bone",
+     "joint": "lift_trophies",
+     "line_of": 1
+    }
+   ],
+   "label": "COLLECTION",
+   "desc": "Arrange trophies on a stand."
+  },
+  {
+   "id": "gallery",
+   "rank": 1,
+   "hero": false,
+   "size_class": "tall",
+   "section": "collection",
+   "rect_unsheared": [
+    360,
+    82,
+    556,
+    252
+   ],
+   "pivot": [
+    458.0,
+    167.0
+   ],
+   "quads": [
+    {
+     "id": "gallery_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       82
+      ],
+      [
+       556,
+       82
+      ],
+      [
+       556,
+       252
+      ],
+      [
+       360,
+       252
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_gallery"
+    },
+    {
+     "id": "gallery_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       82
+      ],
+      [
+       556,
+       82
+      ],
+      [
+       556,
+       252
+      ],
+      [
+       360,
+       252
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_gallery"
+    },
+    {
+     "id": "gallery_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       506,
+       92
+      ],
+      [
+       546,
+       92
+      ],
+      [
+       546,
+       132
+      ],
+      [
+       506,
+       132
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_gallery",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_gallery"
+    }
+   ],
+   "slots": [
+    {
+     "id": "gallery_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      372,
+      242.0
+     ],
+     "align": "left",
+     "max": "GALLERY",
+     "max_chars": 7,
+     "max_width_1x": 176,
+     "colour": "bone",
+     "joint": "lift_gallery",
+     "line_of": 1
+    }
+   ],
+   "label": "GALLERY",
+   "desc": "Look at the trophies you have."
+  },
+  {
+   "id": "lottery",
+   "rank": 2,
+   "hero": false,
+   "size_class": "tall",
+   "section": "collection",
+   "rect_unsheared": [
+    360,
+    260,
+    556,
+    390
+   ],
+   "pivot": [
+    458.0,
+    325.0
+   ],
+   "quads": [
+    {
+     "id": "lottery_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       260
+      ],
+      [
+       556,
+       260
+      ],
+      [
+       556,
+       390
+      ],
+      [
+       360,
+       390
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_lottery"
+    },
+    {
+     "id": "lottery_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       260
+      ],
+      [
+       556,
+       260
+      ],
+      [
+       556,
+       390
+      ],
+      [
+       360,
+       390
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_lottery"
+    },
+    {
+     "id": "lottery_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       506,
+       270
+      ],
+      [
+       546,
+       270
+      ],
+      [
+       546,
+       310
+      ],
+      [
+       506,
+       310
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_lottery",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_lottery"
+    }
+   ],
+   "slots": [
+    {
+     "id": "lottery_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      372,
+      380.0
+     ],
+     "align": "left",
+     "max": "LOTTERY",
+     "max_chars": 7,
+     "max_width_1x": 176,
+     "colour": "bone",
+     "joint": "lift_lottery",
+     "line_of": 1
+    }
+   ],
+   "label": "LOTTERY",
+   "desc": "Spend coins on new trophies."
+  }
+ ],
+ "states": {
+  "ng": {
+   "face": "@face",
+   "icon": "@face_hi",
+   "label": "bone",
+   "plate": null,
+   "offset": [
+    0,
+    0
+   ]
+  },
+  "sel": {
+   "face": "gold",
+   "icon": "gold_dk",
+   "label": "ink",
+   "plate": "gold_dk",
+   "offset": [
+    -6.25,
+    -5.0
+   ]
+  }
+ },
+ "textures": [
+  {
+   "name": "ico_collection",
+   "file_2x": "out_nav/2x/ico_collection.png",
+   "file_1x": "out_nav/1x/ico_collection.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_gallery",
+   "file_2x": "out_nav/2x/ico_gallery.png",
+   "file_1x": "out_nav/1x/ico_gallery.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_lottery",
+   "file_2x": "out_nav/2x/ico_lottery.png",
+   "file_1x": "out_nav/1x/ico_lottery.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_trophies",
+   "file_2x": "out_nav/2x/ico_trophies.png",
+   "file_1x": "out_nav/1x/ico_trophies.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  }
+ ]
+}

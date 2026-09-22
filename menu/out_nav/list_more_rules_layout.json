@@ -1,0 +1,245 @@
+{
+ "name": "list_more_rules",
+ "space": "unsheared",
+ "template": "list_layout.json",
+ "section": "versus",
+ "chrome": {
+  "title": "MORE RULES",
+  "crumbs": [
+   "VERSUS",
+   "RULES",
+   "MORE RULES"
+  ],
+  "crumb_icon": "ico_versus"
+ },
+ "rows": [
+  {
+   "label": "Stock Time Limit",
+   "widget": "stepper",
+   "value_max": "99:00",
+   "help": "A clock for stock matches.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Stock Time Limit",
+    "max_chars": 16,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Friendly Fire",
+   "widget": "toggle",
+   "value_max": null,
+   "help": "Team attacks hit teammates.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Friendly Fire",
+    "max_chars": 13,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Pause",
+   "widget": "toggle",
+   "value_max": null,
+   "help": "Allow pausing during the match.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Pause",
+    "max_chars": 5,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Score Display",
+   "widget": "toggle",
+   "value_max": null,
+   "help": "Show scores during the match.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Score Display",
+    "max_chars": 13,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Self-Destructs",
+   "widget": "choice",
+   "value_max": "-2",
+   "help": "What falling off costs.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Self-Destructs",
+    "max_chars": 14,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Random Stage Select",
+   "widget": "action",
+   "value_max": null,
+   "help": "Which stages Random picks.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Random Stage Select",
+    "max_chars": 19,
+    "max_width_1x": 388,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Launch Speed",
+   "widget": "slider",
+   "value_max": "100%",
+   "help": "How fast launched fighters fly.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Launch Speed",
+    "max_chars": 12,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Tournament Rules",
+   "widget": "toggle",
+   "value_max": null,
+   "help": "Common tournament defaults.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Tournament Rules",
+    "max_chars": 16,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   }
+  }
+ ],
+ "row_variants": {
+  "action": {
+   "note": "does something on A; a gold chevron '→' in the value area right edge (atlas), aux colour"
+  },
+  "danger": {
+   "note": "destructive (Erase Data): a 6 px danger stripe at the row's left edge, like the dialog's danger button; the label stays bone/ink - red text fails 4.5:1 on the faces",
+   "quads": [
+    {
+     "id": "danger_stripe",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       6,
+       0
+      ],
+      [
+       6,
+       30
+      ],
+      [
+       0,
+       30
+      ]
+     ],
+     "colour": "danger",
+     "joint": "row"
+    }
+   ]
+  },
+  "record": {
+   "note": "Multi-Man: the best result, right-aligned in the value area (body, muted / ink when selected), e.g. '100 KOs' or '14:59.99'",
+   "slot": {
+    "id": "record",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     190,
+     4.62
+    ],
+    "align": "right",
+    "max": "14:59.99",
+    "max_chars": 8,
+    "max_width_1x": 52.75,
+    "colour": "aux"
+   }
+  },
+  "completed": {
+   "note": "mark_completed (12 px) after the label when the mode is cleared; mark_new (burst + 'NEW' from strings) for newly unlocked items"
+  }
+ },
+ "marks": {
+  "completed": "mark_completed",
+  "locked": "mark_locked",
+  "new": "mark_new"
+ }
+}

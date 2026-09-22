@@ -1,12 +1,76 @@
 # GD's Melee
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/readme/banner_dark@2x.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/readme/banner_light@2x.png">
+    <img alt="GD's Melee - A native PC port — rollback netplay, HD rendering, Slippi replays" src="docs/readme/banner_light@2x.png" width="800">
+  </picture>
+</p>
+
+
 A native PC port of *Super Smash Bros. Melee* (NTSC 1.02, `GALE01`), built **from the matching
 decompilation** rather than by emulation or by recompiling the retail binary.
 
-> **Status: work in progress — research/engineering project, not a release.** It boots, renders,
-> plays VS matches, and has audio with effects, the pre-rendered cutscenes, memory-card saves,
-> GameCube-adapter input and hard 60 Hz frame pacing. Netplay, replays, packaging and distribution
-> are not started.
+> **Status: first shareable beta.** It boots, renders in HD, plays VS matches with audio,
+> cutscenes, memory-card saves and GameCube-adapter input at a hard 60 Hz - and now plays **online
+> with rollback netcode** from an in-game ONLINE PLAY menu, plays back **Slippi replays**
+> frame-accurately, and runs **m-ex** builds. Expect rough edges: see Known issues below.
+
+<table>
+  <tr>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_rollback_dark.png">
+      <img alt="Rollback netplay: Play a friend online: swap a code, connect, and rollback hides the lag." src="docs/readme/feature_rollback_light.png" width="400">
+    </picture></td>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_hd_dark.png">
+      <img alt="HD at any resolution: Native PC rendering at any window size, sharp at every scale." src="docs/readme/feature_hd_light.png" width="400">
+    </picture></td>
+  </tr>
+  <tr>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_replays_dark.png">
+      <img alt="Slippi replays: Frame-accurate playback of .slp replays, straight from the game." src="docs/readme/feature_replays_light.png" width="400">
+    </picture></td>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_mex_dark.png">
+      <img alt="m-ex mod support: Custom characters and stages from m-ex builds, loaded like the originals." src="docs/readme/feature_mex_light.png" width="400">
+    </picture></td>
+  </tr>
+  <tr>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_ucf_dark.png">
+      <img alt="UCF + tournament rules: Universal Controller Fix and tournament rule sets, built in." src="docs/readme/feature_ucf_light.png" width="400">
+    </picture></td>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_determinism_dark.png">
+      <img alt="Deterministic engine: Bit-exact simulation, checked frame by frame with SyncTest." src="docs/readme/feature_determinism_light.png" width="400">
+    </picture></td>
+  </tr>
+</table>
+
+## Play online (beta)
+
+Build the shareable package with `powershell -File tools
+etplay\make_package.ps1` - it writes
+`GDMelee-Online.zip` to the Desktop (the game, the menu art and a launcher; no disc data). Both
+players use the same package and each supplies their own NTSC 1.02 ISO. In game: **VS Mode >
+Melee > Match Setup > Online Play** - the host presses *Host Match* (its code is copied to the
+clipboard), the guest pastes it and presses *Connect*. Full instructions, including what to do
+when a router blocks the connection, are in
+[`tools/netplay/HOW TO PLAY ONLINE.txt`](tools/netplay/HOW%20TO%20PLAY%20ONLINE.txt).
+
+### Known issues (beta)
+
+- One match per connection: after a match, Host / Connect again for a rematch.
+- The results screen can show wrong stats after an online match.
+- Only the main-menu tree, Match Setup and Online Play use the new menus; character select, stage
+  select, rules and the other screens are still Melee's own.
+- Three native Melee screens crash in the port (Options > Rumble, Erase Data, Records > VS.
+  Records) - with or without the new menus.
+- Online play has been tested between two copies on one machine (including simulated lag and
+  packet loss); a real two-network session is the next test.
 
 ## What this is
 

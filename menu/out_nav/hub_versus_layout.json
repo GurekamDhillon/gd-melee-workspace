@@ -1,0 +1,881 @@
+{
+ "name": "hub_versus",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "rule": "hubs_layout.json",
+ "section": "versus",
+ "chrome": {
+  "template": "chrome_layout.json",
+  "title": "VERSUS",
+  "crumbs": [
+   "VERSUS"
+  ],
+  "crumb_icon": "ico_versus",
+  "description": "the selected tile's desc, in the description strip"
+ },
+ "cluster": {
+  "rect": [
+   90,
+   82,
+   556,
+   390
+  ],
+  "backplate": {
+   "id": "backplate",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     84,
+     76
+    ],
+    [
+     562,
+     76
+    ],
+    [
+     562,
+     396
+    ],
+    [
+     84,
+     396
+    ]
+   ],
+   "colour": "ink",
+   "joint": "cluster"
+  }
+ },
+ "tiles": [
+  {
+   "id": "melee",
+   "rank": 0,
+   "hero": true,
+   "size_class": "hero",
+   "section": "versus",
+   "rect_unsheared": [
+    90,
+    82,
+    352,
+    390
+   ],
+   "pivot": [
+    221.0,
+    236.0
+   ],
+   "quads": [
+    {
+     "id": "melee_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       90,
+       82
+      ],
+      [
+       352,
+       82
+      ],
+      [
+       352,
+       390
+      ],
+      [
+       90,
+       390
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_melee"
+    },
+    {
+     "id": "melee_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       90,
+       82
+      ],
+      [
+       352,
+       82
+      ],
+      [
+       352,
+       390
+      ],
+      [
+       90,
+       390
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_melee"
+    },
+    {
+     "id": "melee_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       240,
+       98
+      ],
+      [
+       336,
+       98
+      ],
+      [
+       336,
+       194
+      ],
+      [
+       240,
+       194
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_melee",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_melee"
+    }
+   ],
+   "slots": [
+    {
+     "id": "melee_label_0",
+     "kind": "text",
+     "role": "hero",
+     "anchor": [
+      108,
+      374.0
+     ],
+     "align": "left",
+     "max": "MELEE",
+     "max_chars": 5,
+     "max_width_1x": 226,
+     "colour": "bone",
+     "joint": "lift_melee",
+     "line_of": 1
+    }
+   ],
+   "label": "MELEE",
+   "desc": "Up to four players. Your rules, your stage."
+  },
+  {
+   "id": "online",
+   "rank": 1,
+   "hero": false,
+   "size_class": "mid",
+   "section": "versus",
+   "rect_unsheared": [
+    360,
+    82,
+    556,
+    152
+   ],
+   "pivot": [
+    458.0,
+    117.0
+   ],
+   "quads": [
+    {
+     "id": "online_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       82
+      ],
+      [
+       556,
+       82
+      ],
+      [
+       556,
+       152
+      ],
+      [
+       360,
+       152
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_online"
+    },
+    {
+     "id": "online_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       82
+      ],
+      [
+       556,
+       82
+      ],
+      [
+       556,
+       152
+      ],
+      [
+       360,
+       152
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_online"
+    },
+    {
+     "id": "online_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       518,
+       103.0
+      ],
+      [
+       546,
+       103.0
+      ],
+      [
+       546,
+       131.0
+      ],
+      [
+       518,
+       131.0
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_online",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_online"
+    }
+   ],
+   "slots": [
+    {
+     "id": "online_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      370,
+      123.6
+     ],
+     "align": "left",
+     "max": "ONLINE",
+     "max_chars": 6,
+     "max_width_1x": 140,
+     "colour": "bone",
+     "joint": "lift_online",
+     "line_of": 1
+    }
+   ],
+   "label": "ONLINE",
+   "desc": "Play a friend over the internet."
+  },
+  {
+   "id": "tournament",
+   "rank": 2,
+   "hero": false,
+   "size_class": "mid",
+   "section": "versus",
+   "rect_unsheared": [
+    360,
+    160,
+    556,
+    222
+   ],
+   "pivot": [
+    458.0,
+    191.0
+   ],
+   "quads": [
+    {
+     "id": "tournament_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       160
+      ],
+      [
+       556,
+       160
+      ],
+      [
+       556,
+       222
+      ],
+      [
+       360,
+       222
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_tournament"
+    },
+    {
+     "id": "tournament_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       160
+      ],
+      [
+       556,
+       160
+      ],
+      [
+       556,
+       222
+      ],
+      [
+       360,
+       222
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_tournament"
+    },
+    {
+     "id": "tournament_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       518,
+       177.0
+      ],
+      [
+       546,
+       177.0
+      ],
+      [
+       546,
+       205.0
+      ],
+      [
+       518,
+       205.0
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_tournament",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_tournament"
+    }
+   ],
+   "slots": [
+    {
+     "id": "tournament_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      370,
+      197.6
+     ],
+     "align": "left",
+     "max": "TOURNAMENT",
+     "max_chars": 10,
+     "max_width_1x": 140,
+     "colour": "bone",
+     "joint": "lift_tournament",
+     "line_of": 1
+    }
+   ],
+   "label": "TOURNAMENT",
+   "desc": "A bracket for up to 64 players."
+  },
+  {
+   "id": "special",
+   "rank": 3,
+   "hero": false,
+   "size_class": "mid",
+   "section": "versus",
+   "rect_unsheared": [
+    360,
+    230,
+    556,
+    284
+   ],
+   "pivot": [
+    458.0,
+    257.0
+   ],
+   "quads": [
+    {
+     "id": "special_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       230
+      ],
+      [
+       556,
+       230
+      ],
+      [
+       556,
+       284
+      ],
+      [
+       360,
+       284
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_special"
+    },
+    {
+     "id": "special_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       230
+      ],
+      [
+       556,
+       230
+      ],
+      [
+       556,
+       284
+      ],
+      [
+       360,
+       284
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_special"
+    },
+    {
+     "id": "special_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       518,
+       243.0
+      ],
+      [
+       546,
+       243.0
+      ],
+      [
+       546,
+       271.0
+      ],
+      [
+       518,
+       271.0
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_special",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_special"
+    }
+   ],
+   "slots": [
+    {
+     "id": "special_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      370,
+      263.6
+     ],
+     "align": "left",
+     "max": "SPECIAL MELEE",
+     "max_chars": 13,
+     "max_width_1x": 140,
+     "colour": "bone",
+     "joint": "lift_special",
+     "line_of": 1
+    }
+   ],
+   "label": "SPECIAL MELEE",
+   "desc": "Melee with a twist."
+  },
+  {
+   "id": "rules",
+   "rank": 4,
+   "hero": false,
+   "size_class": "mid",
+   "section": "versus",
+   "rect_unsheared": [
+    360,
+    292,
+    556,
+    340
+   ],
+   "pivot": [
+    458.0,
+    316.0
+   ],
+   "quads": [
+    {
+     "id": "rules_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       292
+      ],
+      [
+       556,
+       292
+      ],
+      [
+       556,
+       340
+      ],
+      [
+       360,
+       340
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_rules"
+    },
+    {
+     "id": "rules_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       292
+      ],
+      [
+       556,
+       292
+      ],
+      [
+       556,
+       340
+      ],
+      [
+       360,
+       340
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_rules"
+    },
+    {
+     "id": "rules_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       518,
+       302.0
+      ],
+      [
+       546,
+       302.0
+      ],
+      [
+       546,
+       330.0
+      ],
+      [
+       518,
+       330.0
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_rules",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_rules"
+    }
+   ],
+   "slots": [
+    {
+     "id": "rules_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      370,
+      322.6
+     ],
+     "align": "left",
+     "max": "RULES",
+     "max_chars": 5,
+     "max_width_1x": 140,
+     "colour": "bone",
+     "joint": "lift_rules",
+     "line_of": 1
+    }
+   ],
+   "label": "RULES",
+   "desc": "Stock, time, items and stages."
+  },
+  {
+   "id": "names",
+   "rank": 5,
+   "hero": false,
+   "size_class": "short",
+   "section": "versus",
+   "rect_unsheared": [
+    360,
+    348,
+    556,
+    390
+   ],
+   "pivot": [
+    458.0,
+    369.0
+   ],
+   "quads": [
+    {
+     "id": "names_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       348
+      ],
+      [
+       556,
+       348
+      ],
+      [
+       556,
+       390
+      ],
+      [
+       360,
+       390
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_names"
+    },
+    {
+     "id": "names_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       348
+      ],
+      [
+       556,
+       348
+      ],
+      [
+       556,
+       390
+      ],
+      [
+       360,
+       390
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_names"
+    },
+    {
+     "id": "names_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       524,
+       357.0
+      ],
+      [
+       548,
+       357.0
+      ],
+      [
+       548,
+       381.0
+      ],
+      [
+       524,
+       381.0
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_names",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_names"
+    }
+   ],
+   "slots": [
+    {
+     "id": "names_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      368,
+      375.6
+     ],
+     "align": "left",
+     "max": "NAME ENTRY",
+     "max_chars": 10,
+     "max_width_1x": 148,
+     "colour": "bone",
+     "joint": "lift_names",
+     "line_of": 1
+    }
+   ],
+   "label": "NAME ENTRY",
+   "desc": "Make a name tag."
+  }
+ ],
+ "states": {
+  "ng": {
+   "face": "@face",
+   "icon": "@face_hi",
+   "label": "bone",
+   "plate": null,
+   "offset": [
+    0,
+    0
+   ]
+  },
+  "sel": {
+   "face": "gold",
+   "icon": "gold_dk",
+   "label": "ink",
+   "plate": "gold_dk",
+   "offset": [
+    -6.25,
+    -5.0
+   ]
+  }
+ },
+ "textures": [
+  {
+   "name": "ico_melee",
+   "file_2x": "out_nav/2x/ico_melee.png",
+   "file_1x": "out_nav/1x/ico_melee.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_names",
+   "file_2x": "out_nav/2x/ico_names.png",
+   "file_1x": "out_nav/1x/ico_names.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_online",
+   "file_2x": "out_nav/2x/ico_online.png",
+   "file_1x": "out_nav/1x/ico_online.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_rules",
+   "file_2x": "out_nav/2x/ico_rules.png",
+   "file_1x": "out_nav/1x/ico_rules.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_special",
+   "file_2x": "out_nav/2x/ico_special.png",
+   "file_1x": "out_nav/1x/ico_special.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_tournament",
+   "file_2x": "out_nav/2x/ico_tournament.png",
+   "file_1x": "out_nav/1x/ico_tournament.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_versus",
+   "file_2x": "out_nav/2x/ico_versus.png",
+   "file_1x": "out_nav/1x/ico_versus.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  }
+ ]
+}

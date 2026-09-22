@@ -1,0 +1,1061 @@
+{
+ "provenance": "Original pictograms drawn in pipeline/icons.py (SVG on a 64 grid); nothing traced, sampled or recoloured from Melee or any other game.",
+ "textures": [
+  {
+   "name": "ico_online",
+   "file_2x": "out_nav/2x/ico_online.png",
+   "file_1x": "out_nav/1x/ico_online.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Versus hub tile 'Online'; online screen breadcrumb root; status strip idle",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     6
+    ],
+    "at_2x_draw": [
+     1,
+     6
+    ],
+    "at_1x_draw": [
+     1,
+     6
+    ]
+   }
+  },
+  {
+   "name": "ico_versus",
+   "file_2x": "out_nav/2x/ico_versus.png",
+   "file_1x": "out_nav/1x/ico_versus.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "main menu tile, versus breadcrumb root",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_solo",
+   "file_2x": "out_nav/2x/ico_solo.png",
+   "file_1x": "out_nav/1x/ico_solo.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "main menu tile, solo breadcrumb root",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     3,
+     2
+    ],
+    "at_2x_draw": [
+     3,
+     2
+    ],
+    "at_1x_draw": [
+     3,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_collection",
+   "file_2x": "out_nav/2x/ico_collection.png",
+   "file_1x": "out_nav/1x/ico_collection.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "main menu tile, collection breadcrumb root",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     3,
+     0
+    ],
+    "at_2x_draw": [
+     3,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_options",
+   "file_2x": "out_nav/2x/ico_options.png",
+   "file_1x": "out_nav/1x/ico_options.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "main menu tile, options breadcrumb root",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     1
+    ],
+    "at_2x_draw": [
+     1,
+     1
+    ],
+    "at_1x_draw": [
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_data",
+   "file_2x": "out_nav/2x/ico_data.png",
+   "file_1x": "out_nav/1x/ico_data.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "main menu tile 'Data', Data breadcrumb root",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     3,
+     0
+    ],
+    "at_2x_draw": [
+     3,
+     0
+    ],
+    "at_1x_draw": [
+     3,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_regular",
+   "file_2x": "out_nav/2x/ico_regular.png",
+   "file_1x": "out_nav/1x/ico_regular.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Solo > Regular Match: a climb of stages to a flag",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_event",
+   "file_2x": "out_nav/2x/ico_event.png",
+   "file_1x": "out_nav/1x/ico_event.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Solo > Event Match: a date page with a star",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     2,
+     1
+    ],
+    "at_2x_draw": [
+     2,
+     1
+    ],
+    "at_1x_draw": [
+     4,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_stadium",
+   "file_2x": "out_nav/2x/ico_stadium.png",
+   "file_1x": "out_nav/1x/ico_stadium.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Solo > Stadium: an arena on columns",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     7,
+     0
+    ],
+    "at_2x_draw": [
+     7,
+     0
+    ],
+    "at_1x_draw": [
+     7,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_training",
+   "file_2x": "out_nav/2x/ico_training.png",
+   "file_1x": "out_nav/1x/ico_training.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Solo > Training: a dumbbell",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_classic",
+   "file_2x": "out_nav/2x/ico_classic.png",
+   "file_1x": "out_nav/1x/ico_classic.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Regular Match > Classic: a crown over a run of steps",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     5,
+     0
+    ],
+    "at_2x_draw": [
+     5,
+     0
+    ],
+    "at_1x_draw": [
+     4,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_adventure",
+   "file_2x": "out_nav/2x/ico_adventure.png",
+   "file_1x": "out_nav/1x/ico_adventure.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Regular Match > Adventure: mountains and a trail flag",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_allstar",
+   "file_2x": "out_nav/2x/ico_allstar.png",
+   "file_1x": "out_nav/1x/ico_allstar.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Regular Match > All-Star: a constellation of stars",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     3,
+     0
+    ],
+    "at_2x_draw": [
+     3,
+     0
+    ],
+    "at_1x_draw": [
+     5,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_target",
+   "file_2x": "out_nav/2x/ico_target.png",
+   "file_1x": "out_nav/1x/ico_target.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Stadium > Target Test: a reticle",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     2,
+     1
+    ],
+    "at_2x_draw": [
+     2,
+     1
+    ],
+    "at_1x_draw": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_homerun",
+   "file_2x": "out_nav/2x/ico_homerun.png",
+   "file_1x": "out_nav/1x/ico_homerun.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Stadium > Home-Run Contest: a ball on a long arc",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     3,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_multiman",
+   "file_2x": "out_nav/2x/ico_multiman.png",
+   "file_1x": "out_nav/1x/ico_multiman.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Stadium > Multi-Man Melee: a crowd of three",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     6,
+     0
+    ],
+    "at_2x_draw": [
+     6,
+     0
+    ],
+    "at_1x_draw": [
+     6,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_melee",
+   "file_2x": "out_nav/2x/ico_melee.png",
+   "file_1x": "out_nav/1x/ico_melee.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Versus > Melee: four players round a spark",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     5,
+     0
+    ],
+    "at_2x_draw": [
+     5,
+     0
+    ],
+    "at_1x_draw": [
+     5,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_tournament",
+   "file_2x": "out_nav/2x/ico_tournament.png",
+   "file_1x": "out_nav/1x/ico_tournament.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Versus > Tournament: a bracket",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_special",
+   "file_2x": "out_nav/2x/ico_special.png",
+   "file_1x": "out_nav/1x/ico_special.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Versus > Special Melee: a twist of sparkles",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     3,
+     0
+    ],
+    "at_2x_draw": [
+     3,
+     0
+    ],
+    "at_1x_draw": [
+     3,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_rules",
+   "file_2x": "out_nav/2x/ico_rules.png",
+   "file_1x": "out_nav/1x/ico_rules.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Versus > Rules: ticked setting lines",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     6,
+     0
+    ],
+    "at_2x_draw": [
+     6,
+     0
+    ],
+    "at_1x_draw": [
+     6,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_names",
+   "file_2x": "out_nav/2x/ico_names.png",
+   "file_1x": "out_nav/1x/ico_names.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Versus > Name Entry: a luggage tag",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     3
+    ],
+    "at_2x_draw": [
+     1,
+     3
+    ],
+    "at_1x_draw": [
+     1,
+     3
+    ]
+   }
+  },
+  {
+   "name": "ico_gallery",
+   "file_2x": "out_nav/2x/ico_gallery.png",
+   "file_1x": "out_nav/1x/ico_gallery.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Collection > Gallery: a framed picture",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     2,
+     1
+    ],
+    "at_2x_draw": [
+     2,
+     1
+    ],
+    "at_1x_draw": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_lottery",
+   "file_2x": "out_nav/2x/ico_lottery.png",
+   "file_1x": "out_nav/1x/ico_lottery.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Collection > Lottery: a prize ticket",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     5
+    ],
+    "at_2x_draw": [
+     1,
+     5
+    ],
+    "at_1x_draw": [
+     1,
+     4
+    ]
+   }
+  },
+  {
+   "name": "ico_trophies",
+   "file_2x": "out_nav/2x/ico_trophies.png",
+   "file_1x": "out_nav/1x/ico_trophies.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Collection > Collection: a trophy cup on a base",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     2,
+     2
+    ],
+    "at_2x_draw": [
+     2,
+     2
+    ],
+    "at_1x_draw": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_snapshots",
+   "file_2x": "out_nav/2x/ico_snapshots.png",
+   "file_1x": "out_nav/1x/ico_snapshots.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Data > Snapshots: a camera",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     2,
+     2
+    ],
+    "at_2x_draw": [
+     2,
+     2
+    ],
+    "at_1x_draw": [
+     2,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_movies",
+   "file_2x": "out_nav/2x/ico_movies.png",
+   "file_1x": "out_nav/1x/ico_movies.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Data > Movies: a film strip",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     12
+    ],
+    "at_2x_draw": [
+     1,
+     12
+    ],
+    "at_1x_draw": [
+     1,
+     12
+    ]
+   }
+  },
+  {
+   "name": "ico_soundtest",
+   "file_2x": "out_nav/2x/ico_soundtest.png",
+   "file_1x": "out_nav/1x/ico_soundtest.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Data > Sound Test: a pair of notes",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_records",
+   "file_2x": "out_nav/2x/ico_records.png",
+   "file_1x": "out_nav/1x/ico_records.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Data > Records: a podium",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     4,
+     0
+    ],
+    "at_2x_draw": [
+     4,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_messages",
+   "file_2x": "out_nav/2x/ico_messages.png",
+   "file_1x": "out_nav/1x/ico_messages.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "size_1x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 32768,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "Data > Special Messages: a sealed envelope",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "name": "mark_completed",
+   "file_2x": "out_nav/2x/mark_completed.png",
+   "file_1x": "out_nav/1x/mark_completed.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 512,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "completed mark: event rows, cleared modes",
+   "min_draw_1x": 12,
+   "legibility": {
+    "full": [
+     1,
+     1
+    ],
+    "at_2x_draw": [
+     1,
+     1
+    ],
+    "at_1x_draw": [
+     1,
+     1
+    ]
+   }
+  },
+  {
+   "name": "mark_locked",
+   "file_2x": "out_nav/2x/mark_locked.png",
+   "file_1x": "out_nav/1x/mark_locked.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "size_1x": [
+    16,
+    16
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 512,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "locked mark: items not yet unlocked (if ever shown)",
+   "min_draw_1x": 12,
+   "legibility": {
+    "full": [
+     1,
+     2
+    ],
+    "at_2x_draw": [
+     1,
+     2
+    ],
+    "at_1x_draw": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "name": "mark_new",
+   "file_2x": "out_nav/2x/mark_new.png",
+   "file_1x": "out_nav/1x/mark_new.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "'new' badge: a burst; the word comes from strings, set on it in ink at caption size",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  }
+ ]
+}

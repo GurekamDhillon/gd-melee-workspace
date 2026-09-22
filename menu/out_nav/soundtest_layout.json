@@ -1,0 +1,242 @@
+{
+ "name": "soundtest",
+ "space": "unsheared",
+ "template": "list_layout.json rows",
+ "row": {
+  "slots": [
+   {
+    "id": "track_no",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "99",
+    "max_chars": 2,
+    "max_width_1x": 17.28,
+    "colour": "muted"
+   },
+   {
+    "id": "title",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     52,
+     20.28
+    ],
+    "align": "left",
+    "max": "Princess Peach's Castle",
+    "max_chars": 23,
+    "max_width_1x": 332,
+    "colour": "bone",
+    "note": "fit rule"
+   }
+  ],
+  "playing": {
+   "quads": [
+    {
+     "id": "eq_0",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       400,
+       8
+      ],
+      [
+       406,
+       8
+      ],
+      [
+       406,
+       22
+      ],
+      [
+       400,
+       22
+      ]
+     ],
+     "colour": "gold",
+     "joint": "eq_0"
+    },
+    {
+     "id": "eq_1",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       409,
+       8
+      ],
+      [
+       415,
+       8
+      ],
+      [
+       415,
+       22
+      ],
+      [
+       409,
+       22
+      ]
+     ],
+     "colour": "gold",
+     "joint": "eq_1"
+    },
+    {
+     "id": "eq_2",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       418,
+       8
+      ],
+      [
+       424,
+       8
+      ],
+      [
+       424,
+       22
+      ],
+      [
+       418,
+       22
+      ]
+     ],
+     "colour": "gold",
+     "joint": "eq_2"
+    }
+   ],
+   "note": "three bars at the row's right; only on the playing track; soundtest_playing loop scales them on Y about their bottom edge"
+  }
+ },
+ "motion": {
+  "soundtest_playing": {
+   "loop": {
+    "from_frame": 0,
+    "to_frame": 48
+   },
+   "tracks": [
+    {
+     "target": "eq_0",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.3,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1.0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 20,
+       "value": 0.4,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 34,
+       "value": 0.85,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 48,
+       "value": 0.3,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "eq_1",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.5,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": 1.0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 23,
+       "value": 0.4,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 34,
+       "value": 0.7,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 48,
+       "value": 0.5,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "eq_2",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.7,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 16,
+       "value": 1.0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 26,
+       "value": 0.4,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 34,
+       "value": 0.55,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 48,
+       "value": 0.7,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ]
+  }
+ },
+ "rules": [
+  "The playing track's number turns gold and the bars show, in any row state; on a selected (gold) row the bars are ink."
+ ]
+}

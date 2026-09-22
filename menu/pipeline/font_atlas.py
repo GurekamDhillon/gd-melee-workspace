@@ -322,13 +322,16 @@ def specimen(manifest, pages, path):
     muted = kit.K.hexrgb(kit.PALETTE["muted"])
     y = 12
     sample = {"full": "Princess Peach's Castle 1234567890 ×% … ←→ ★",
-              "caps": "VERSUS 1ST 2ND ★ ×4 100%"}
+              "caps": "VERSUS 1ST 2ND ★ ×4 100%",
+              "code": "203.0.113.7:51500 255.255.255.255:65535 [fe80::1]:51500"}
     for name, r in manifest["roles"].items():
         lh = r["metrics"]["line_height"]
         base = y / 2 + r["metrics"]["ascent"] * 0.8
         dr.line((0, round(base * 2), W, round(base * 2)), fill=(40, 60, 120))
         w = draw_text(img, pages[name], r, sample[r["charset"]], 16, base, bone)
         label = "%s %d" % (name, r["size"])
+        if r["charset"] == "code":
+            label = "%d" % r["size"]
         draw_text(img, pages[name], r, label.upper() if r["charset"] == "caps" else label,
                   16 + w + 12, base, muted)
         base2 = base + lh
@@ -413,6 +416,21 @@ def main():
         if w > limit - 12:
             errs.append("'%s' is %.1f px at body, plate is %d" % (s, w, limit))
 
+    # section 3: 20-character character names on the 136 px portrait plate, by the fit rule
+    nf = kit.NAME_FIT
+    avail = nf["plate_1x"] - 2 * nf["pad_1x"]
+    name_report = {}
+    for s in nf["test_names"]:
+        if len(s) != nf["max_chars"]:
+            errs.append("name test '%s' is %d characters, not %d" % (s, len(s), nf["max_chars"]))
+        widths = {r: round(text_width(manifest["roles"][r], s), 1) for r in nf["roles"]}
+        fits = next((r for r in nf["roles"] if widths[r] <= avail), None)
+        name_report[s] = dict(widths, set_in=fits or "truncated")
+        if fits is None:
+            errs.append("20-char name '%s' does not fit %d px even at %s (%s)"
+                        % (s, avail, nf["roles"][-1], widths))
+    manifest["name_fit"] = dict(avail_1x=avail, results=name_report)
+
     manifest["bytes_2x_total"] = total
     with open(os.path.join(OUT, "font_manifest.json"), "w", encoding="utf-8") as fh:
         json.dump(manifest, fh, indent=1, ensure_ascii=False)
@@ -430,6 +448,11 @@ def main():
     print("  total @2x I4: %.1f KB" % (total / 1024))
     for s in ("Mr. Game & Watch", "Princess Peach's Castle"):
         print("  '%s' at body: %.1f px" % (s, text_width(manifest["roles"]["body"], s)))
+    print("  20-char names on a %d px plate (body -> caption):" % avail)
+    for s, r in name_report.items():
+        print("    %-22s body %5.1f  caption %5.1f  -> %s" % (s, r["body"], r["caption"], r["set_in"]))
+    print("  21-char code at 'code': %.1f px"
+          % text_width(manifest["roles"]["code"], "255.255.255.255:65535"))
     if errs:
         print("\nCHECKS FAILED:")
         for e in errs:

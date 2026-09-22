@@ -1,0 +1,1021 @@
+{
+ "fps": 60,
+ "format": "hub_motion.json: tracks, from_current, interpolation and transform rules are identical; see out_hub/hub_motion.json and out_kit/kit_motion.json",
+ "space": "unsheared - motion is applied before the screen shear",
+ "extension": "'loop' {from_frame, to_frame}: new in this file - the event restarts at from_frame when it reaches to_frame, until another event takes its channels",
+ "value_expressions": "strings in <> are resolved by the engine from the layout's state tables; colour values are kit tokens",
+ "events": {
+  "activity_loop": {
+   "applies_to": "status strip pips (working) and the connecting dialog's pips",
+   "loop": {
+    "from_frame": 0,
+    "to_frame": 36
+   },
+   "note": "LOOP: when the frame reaches to_frame, restart at from_frame with no from_current. Stops when the state leaves 'working' (status_set).",
+   "sfx": [],
+   "tracks": [
+    {
+     "target": "activity_pip_0",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.25,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 2,
+       "value": 1.0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": 1.0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 18,
+       "value": 0.25,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 36,
+       "value": 0.25,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "activity_pip_0",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1.0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1.35,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1.0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 36,
+       "value": 1.0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "activity_pip_1",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.25,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": 0.25,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 14,
+       "value": 1.0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 24,
+       "value": 1.0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 30,
+       "value": 0.25,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 36,
+       "value": 0.25,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "activity_pip_1",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 12,
+       "value": 1.0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 15,
+       "value": 1.35,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 20,
+       "value": 1.0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 36,
+       "value": 1.0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "activity_pip_2",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.25,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 24,
+       "value": 0.25,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 26,
+       "value": 1.0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 36,
+       "value": 1.0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 42,
+       "value": 0.25,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 36,
+       "value": 0.25,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "activity_pip_2",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 24,
+       "value": 1.0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 27,
+       "value": 1.35,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 32,
+       "value": 1.0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 36,
+       "value": 1.0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 43
+  },
+  "sweep_loop": {
+   "applies_to": "strip_sweep (and dialog_sweep, with its own length)",
+   "loop": {
+    "from_frame": 0,
+    "to_frame": 72
+   },
+   "tracks": [
+    {
+     "target": "strip_sweep",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0
+      },
+      {
+       "frame": 54,
+       "value": 430,
+       "interp": "SPL",
+       "slope": 0
+      },
+      {
+       "frame": 72,
+       "value": 430,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "strip_sweep",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 46,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 54,
+       "value": 0,
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 72,
+       "value": 0,
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "note": "dialog_sweep runs the same keys with length 380 (panel width - 40).",
+   "length_frames": 73
+  },
+  "status_set": {
+   "applies_to": "status strip, on any change of state or text",
+   "sfx": [],
+   "note": "the old text draws on status_text_out; the new on status_text",
+   "tracks": [
+    {
+     "target": "status_text_out",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": -10,
+       "interp": "SPL",
+       "slope": 0
+      }
+     ]
+    },
+    {
+     "target": "status_text_out",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "status_text",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 12,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": -1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "status_text",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "status_block",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "<old block>",
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 1,
+       "value": "bone",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": "<state.block>",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 11
+  },
+  "status_connected": {
+   "applies_to": "status strip entering 'connected' (after status_set)",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_connected"
+    }
+   ],
+   "pivot": "block centre",
+   "tracks": [
+    {
+     "target": "status_block",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1.15,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "status_block",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1.15,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "strip",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "ok",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": "ink",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 11
+  },
+  "status_failed": {
+   "applies_to": "status strip entering 'failed' (after status_set)",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_error"
+    }
+   ],
+   "tracks": [
+    {
+     "target": "strip",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 2,
+       "value": 4,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": -3,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 11,
+       "value": -1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 14,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "strip",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "danger",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": "ink",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 15
+  },
+  "ping_update": {
+   "applies_to": "ping bars, when the level changes",
+   "tracks": [
+    {
+     "target": "bar_<i>",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "<old>",
+       "interp": "LIN",
+       "slope": 0.0,
+       "from_current": true
+      },
+      {
+       "frame": 4,
+       "value": "<new>",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "ping",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 2,
+       "value": 1.2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "pivot": "bars' bottom edge",
+   "length_frames": 7
+  },
+  "code_copied": {
+   "applies_to": "code plate ('Your Code'), when the code reaches the clipboard",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_toast"
+    }
+   ],
+   "pivot": "plate centre",
+   "note": "colours switch to code_plate.colours.copied for 40 frames, then back; copy_icon shows glyph_check meanwhile",
+   "tracks": [
+    {
+     "target": "code_plate",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1.06,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_plate",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 3,
+       "value": 1.06,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_plate",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "ok",
+       "interp": "CON",
+       "slope": 0.0
+      },
+      {
+       "frame": 40,
+       "value": "<state plate>",
+       "interp": "CON",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_icon",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.6,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1.2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_icon",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0.6,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1.2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 41
+  },
+  "code_paste": {
+   "applies_to": "code plate ('Host Code'), when a code is pasted",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_value_change"
+    }
+   ],
+   "tracks": [
+    {
+     "target": "code_text",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": -16,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 9,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_text",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "code_plate",
+     "kind": "material",
+     "channel": "COLOUR",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "gold_lt",
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": "<state plate>",
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 10
+  },
+  "pips_step": {
+   "applies_to": "pips widget",
+   "sfx": [
+    {
+     "frame": 0,
+     "cue": "sfx_value_change"
+    }
+   ],
+   "tracks": [
+    {
+     "target": "pip_<new>",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1.5,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "pip_<new>",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1.5,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 6,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 7
+  },
+  "rows_reflow": {
+   "applies_to": "list rows when Play As changes the view",
+   "sfx": [],
+   "note": "rows that stay slide to their new slot (TRA_Y from their old y); rows that appear fade in 2 frames apart top to bottom; rows that go vanish at frame 0",
+   "tracks": [
+    {
+     "target": "row_<staying>",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": "old_y - new_y",
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "row_<new>",
+     "kind": "material",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 5,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "row_<new>",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 14,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 7,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 8
+  }
+ },
+ "sequences": {
+  "start": [
+   {
+    "event": "dialog_open (kit)",
+    "on": "connect_dialog"
+   },
+   {
+    "event": "status_set",
+    "on": "strip",
+    "state": "working"
+   },
+   {
+    "event": "activity_loop",
+    "on": "strip + dialog"
+   },
+   {
+    "event": "sweep_loop",
+    "on": "strip + dialog"
+   }
+  ],
+  "connected": [
+   {
+    "event": "status_set",
+    "state": "connected"
+   },
+   {
+    "event": "status_connected"
+   },
+   {
+    "note": "dialog variant 'connected' for 30 frames, then the match"
+   }
+  ],
+  "failed": [
+   {
+    "event": "status_set",
+    "state": "failed"
+   },
+   {
+    "event": "status_failed"
+   },
+   {
+    "note": "dialog variant 'failed'; B closes it (kit dialog_close)"
+   }
+  ],
+  "cancel": [
+   {
+    "event": "dialog_close (kit)"
+   },
+   {
+    "event": "status_set",
+    "state": "idle"
+   }
+  ],
+  "copy": [
+   {
+    "event": "code_copied",
+    "on": "your_code"
+   },
+   {
+    "event": "toast_in (kit)",
+    "text": "Code copied",
+    "optional": true
+   }
+  ]
+ }
+}

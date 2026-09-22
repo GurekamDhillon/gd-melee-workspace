@@ -1,0 +1,518 @@
+{
+ "name": "hub_stadium",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "rule": "hubs_layout.json",
+ "section": "solo",
+ "chrome": {
+  "template": "chrome_layout.json",
+  "title": "STADIUM",
+  "crumbs": [
+   "SOLO",
+   "STADIUM"
+  ],
+  "crumb_icon": "ico_solo",
+  "description": "the selected tile's desc, in the description strip"
+ },
+ "cluster": {
+  "rect": [
+   90,
+   82,
+   556,
+   390
+  ],
+  "backplate": {
+   "id": "backplate",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     84,
+     76
+    ],
+    [
+     562,
+     76
+    ],
+    [
+     562,
+     396
+    ],
+    [
+     84,
+     396
+    ]
+   ],
+   "colour": "ink",
+   "joint": "cluster"
+  }
+ },
+ "tiles": [
+  {
+   "id": "target",
+   "rank": 0,
+   "hero": true,
+   "size_class": "hero",
+   "section": "solo",
+   "rect_unsheared": [
+    90,
+    82,
+    352,
+    390
+   ],
+   "pivot": [
+    221.0,
+    236.0
+   ],
+   "quads": [
+    {
+     "id": "target_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       90,
+       82
+      ],
+      [
+       352,
+       82
+      ],
+      [
+       352,
+       390
+      ],
+      [
+       90,
+       390
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_target"
+    },
+    {
+     "id": "target_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       90,
+       82
+      ],
+      [
+       352,
+       82
+      ],
+      [
+       352,
+       390
+      ],
+      [
+       90,
+       390
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_target"
+    },
+    {
+     "id": "target_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       240,
+       98
+      ],
+      [
+       336,
+       98
+      ],
+      [
+       336,
+       194
+      ],
+      [
+       240,
+       194
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_target",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_target"
+    }
+   ],
+   "slots": [
+    {
+     "id": "target_label_0",
+     "kind": "text",
+     "role": "hero",
+     "anchor": [
+      108,
+      326.48
+     ],
+     "align": "left",
+     "max": "TARGET",
+     "max_chars": 6,
+     "max_width_1x": 226,
+     "colour": "bone",
+     "joint": "lift_target",
+     "line_of": 2
+    },
+    {
+     "id": "target_label_1",
+     "kind": "text",
+     "role": "hero",
+     "anchor": [
+      108,
+      374.0
+     ],
+     "align": "left",
+     "max": "TEST",
+     "max_chars": 4,
+     "max_width_1x": 226,
+     "colour": "bone",
+     "joint": "lift_target",
+     "line_of": 2
+    }
+   ],
+   "label": "TARGET TEST",
+   "desc": "Break every target as fast as you can."
+  },
+  {
+   "id": "homerun",
+   "rank": 1,
+   "hero": false,
+   "size_class": "tall",
+   "section": "solo",
+   "rect_unsheared": [
+    360,
+    82,
+    556,
+    252
+   ],
+   "pivot": [
+    458.0,
+    167.0
+   ],
+   "quads": [
+    {
+     "id": "homerun_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       82
+      ],
+      [
+       556,
+       82
+      ],
+      [
+       556,
+       252
+      ],
+      [
+       360,
+       252
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_homerun"
+    },
+    {
+     "id": "homerun_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       82
+      ],
+      [
+       556,
+       82
+      ],
+      [
+       556,
+       252
+      ],
+      [
+       360,
+       252
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_homerun"
+    },
+    {
+     "id": "homerun_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       506,
+       92
+      ],
+      [
+       546,
+       92
+      ],
+      [
+       546,
+       132
+      ],
+      [
+       506,
+       132
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_homerun",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_homerun"
+    }
+   ],
+   "slots": [
+    {
+     "id": "homerun_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      372,
+      220.4
+     ],
+     "align": "left",
+     "max": "HOME-RUN",
+     "max_chars": 8,
+     "max_width_1x": 176,
+     "colour": "bone",
+     "joint": "lift_homerun",
+     "line_of": 2
+    },
+    {
+     "id": "homerun_label_1",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      372,
+      242.0
+     ],
+     "align": "left",
+     "max": "CONTEST",
+     "max_chars": 7,
+     "max_width_1x": 176,
+     "colour": "bone",
+     "joint": "lift_homerun",
+     "line_of": 2
+    }
+   ],
+   "label": "HOME-RUN CONTEST",
+   "desc": "Launch the Sandbag as far as it will go."
+  },
+  {
+   "id": "multiman",
+   "rank": 2,
+   "hero": false,
+   "size_class": "tall",
+   "section": "solo",
+   "rect_unsheared": [
+    360,
+    260,
+    556,
+    390
+   ],
+   "pivot": [
+    458.0,
+    325.0
+   ],
+   "quads": [
+    {
+     "id": "multiman_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       260
+      ],
+      [
+       556,
+       260
+      ],
+      [
+       556,
+       390
+      ],
+      [
+       360,
+       390
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_multiman"
+    },
+    {
+     "id": "multiman_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       260
+      ],
+      [
+       556,
+       260
+      ],
+      [
+       556,
+       390
+      ],
+      [
+       360,
+       390
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_multiman"
+    },
+    {
+     "id": "multiman_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       506,
+       270
+      ],
+      [
+       546,
+       270
+      ],
+      [
+       546,
+       310
+      ],
+      [
+       506,
+       310
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_multiman",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_multiman"
+    }
+   ],
+   "slots": [
+    {
+     "id": "multiman_label_0",
+     "kind": "text",
+     "role": "label",
+     "anchor": [
+      372,
+      380.0
+     ],
+     "align": "left",
+     "max": "MULTI-MAN MELEE",
+     "max_chars": 15,
+     "max_width_1x": 176,
+     "colour": "bone",
+     "joint": "lift_multiman",
+     "line_of": 1
+    }
+   ],
+   "label": "MULTI-MAN MELEE",
+   "desc": "Take on a whole team of fighters."
+  }
+ ],
+ "states": {
+  "ng": {
+   "face": "@face",
+   "icon": "@face_hi",
+   "label": "bone",
+   "plate": null,
+   "offset": [
+    0,
+    0
+   ]
+  },
+  "sel": {
+   "face": "gold",
+   "icon": "gold_dk",
+   "label": "ink",
+   "plate": "gold_dk",
+   "offset": [
+    -6.25,
+    -5.0
+   ]
+  }
+ },
+ "textures": [
+  {
+   "name": "ico_homerun",
+   "file_2x": "out_nav/2x/ico_homerun.png",
+   "file_1x": "out_nav/1x/ico_homerun.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_multiman",
+   "file_2x": "out_nav/2x/ico_multiman.png",
+   "file_1x": "out_nav/1x/ico_multiman.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_solo",
+   "file_2x": "out_nav/2x/ico_solo.png",
+   "file_1x": "out_nav/1x/ico_solo.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_target",
+   "file_2x": "out_nav/2x/ico_target.png",
+   "file_1x": "out_nav/1x/ico_target.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  }
+ ]
+}

@@ -580,17 +580,28 @@ def shear_pt(x, y):
     return (x + (Y0 - y) * S, y)
 
 
+# where a texture name is found, first match wins: kit, section 2 (out_nav), online,
+# then the hub prototype (out_hub) for anything not yet re-issued
+TEX_DIRS = [os.path.join(OUT, "font", "2x"), os.path.join(OUT, "2x"),
+            os.path.join(ROOT, "out_nav", "2x"), os.path.join(ROOT, "out_online", "2x"),
+            os.path.join(ROOT, "out_hub", "tex", "2x")]
+
+
+def tex_path(name):
+    for d in TEX_DIRS:
+        p = os.path.join(d, name + ".png")
+        if os.path.exists(p):
+            return p
+    return None
+
+
 class Textures:
     def __init__(self):
         self.b64, self.size = {}, {}
 
     def get(self, name):
         if name not in self.b64:
-            path = os.path.join(OUT, "font", "2x", name + ".png")
-            if not os.path.exists(path):
-                path = os.path.join(OUT, "2x", name + ".png")
-            if not os.path.exists(path):
-                path = os.path.join(ROOT, "out_hub", "tex", "2x", name + ".png")
+            path = tex_path(name)
             img = Image.open(path)
             self.size[name] = img.size
             self.b64[name] = base64.b64encode(open(path, "rb").read()).decode()
@@ -644,8 +655,8 @@ def draw_chrome(sc, ch, title, crumbs, hints, desc):
     sc.quad((slab_x1 - 4, hy1 - 6, hx1, hy1), "ink")
     sc.quad((hx0, hy0, slab_x1, hy1), "gold")
     sc.text("title", title, title_x, ch["slots"][0]["anchor"][1], "ink")
-    icon = "ico_" + sc.section
-    if os.path.exists(os.path.join(ROOT, "out_hub", "tex", "2x", icon + ".png")):
+    icon = getattr(sc, "crumb_icon", None) or "ico_" + sc.section
+    if tex_path(icon):
         sc.quad(q["crumb_icon"]["verts"][0] + q["crumb_icon"]["verts"][2], "@face_hi", tex=icon)
     bx, by = ch["slots"][1]["anchor"]
     for i, c in enumerate(crumbs):
@@ -1076,7 +1087,9 @@ def main():
         names = used(sc)
         b = sum(rows[n]["bytes_2x"] for n in names if n in rows)
         extra = [n for n in names if n not in rows]
-        b += sum(8192 for _ in extra)            # hub icons, 128x128 I4
+        for n in extra:                          # section icons: I4 masks, w*h/2 bytes
+            w, h = Image.open(tex_path(n)).size
+            b += w * h // 2
         print("   %-14s %6.1f KB  %s" % (name, b / 1024, "OVER BUDGET" if b > BUDGET else ""))
         if b > BUDGET:
             errs.append("%s uses %.0f KB > 1 MB" % (name, b / 1024))

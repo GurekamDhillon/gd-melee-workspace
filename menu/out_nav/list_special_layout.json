@@ -1,0 +1,286 @@
+{
+ "name": "list_special",
+ "space": "unsheared",
+ "template": "list_layout.json",
+ "section": "versus",
+ "chrome": {
+  "title": "SPECIAL MELEE",
+  "crumbs": [
+   "VERSUS",
+   "SPECIAL MELEE"
+  ],
+  "crumb_icon": "ico_versus"
+ },
+ "rows": [
+  {
+   "label": "Camera Mode",
+   "widget": "action",
+   "value_max": null,
+   "help": "Take pictures during the match.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Camera Mode",
+    "max_chars": 11,
+    "max_width_1x": 388,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Stamina Mode",
+   "widget": "action",
+   "value_max": null,
+   "help": "Knock out an opponent's health.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Stamina Mode",
+    "max_chars": 12,
+    "max_width_1x": 388,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Super Sudden Death",
+   "widget": "action",
+   "value_max": null,
+   "help": "Everyone starts at 300%.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Super Sudden Death",
+    "max_chars": 18,
+    "max_width_1x": 388,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Giant Melee",
+   "widget": "action",
+   "value_max": null,
+   "help": "Everyone is huge.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Giant Melee",
+    "max_chars": 11,
+    "max_width_1x": 388,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Tiny Melee",
+   "widget": "action",
+   "value_max": null,
+   "help": "Everyone is tiny.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Tiny Melee",
+    "max_chars": 10,
+    "max_width_1x": 388,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Invisible Melee",
+   "widget": "action",
+   "value_max": null,
+   "help": "Now you see them...",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Invisible Melee",
+    "max_chars": 15,
+    "max_width_1x": 388,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Fixed-Camera Mode",
+   "widget": "action",
+   "value_max": null,
+   "help": "The camera does not follow.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Fixed-Camera Mode",
+    "max_chars": 17,
+    "max_width_1x": 388,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Single-Button Mode",
+   "widget": "action",
+   "value_max": null,
+   "help": "One attack button.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Single-Button Mode",
+    "max_chars": 18,
+    "max_width_1x": 388,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Lightning Melee",
+   "widget": "action",
+   "value_max": null,
+   "help": "Everything moves faster.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Lightning Melee",
+    "max_chars": 15,
+    "max_width_1x": 388,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Slo-Mo Melee",
+   "widget": "action",
+   "value_max": null,
+   "help": "Everything moves slower.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Slo-Mo Melee",
+    "max_chars": 12,
+    "max_width_1x": 388,
+    "colour": "bone",
+    "joint": "row"
+   }
+  }
+ ],
+ "row_variants": {
+  "action": {
+   "note": "does something on A; a gold chevron '→' in the value area right edge (atlas), aux colour"
+  },
+  "danger": {
+   "note": "destructive (Erase Data): a 6 px danger stripe at the row's left edge, like the dialog's danger button; the label stays bone/ink - red text fails 4.5:1 on the faces",
+   "quads": [
+    {
+     "id": "danger_stripe",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       6,
+       0
+      ],
+      [
+       6,
+       30
+      ],
+      [
+       0,
+       30
+      ]
+     ],
+     "colour": "danger",
+     "joint": "row"
+    }
+   ]
+  },
+  "record": {
+   "note": "Multi-Man: the best result, right-aligned in the value area (body, muted / ink when selected), e.g. '100 KOs' or '14:59.99'",
+   "slot": {
+    "id": "record",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     190,
+     4.62
+    ],
+    "align": "right",
+    "max": "14:59.99",
+    "max_chars": 8,
+    "max_width_1x": 52.75,
+    "colour": "aux"
+   }
+  },
+  "completed": {
+   "note": "mark_completed (12 px) after the label when the mode is cleared; mark_new (burst + 'NEW' from strings) for newly unlocked items"
+  }
+ },
+ "marks": {
+  "completed": "mark_completed",
+  "locked": "mark_locked",
+  "new": "mark_new"
+ }
+}

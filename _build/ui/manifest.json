@@ -119,6 +119,19 @@
    "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
   },
   {
+   "name": "font_code_latin_0",
+   "file_2x": "out_kit/font/2x/font_code_latin_0.png",
+   "file_1x": "out_kit/font/1x/font_code_latin_0.png",
+   "size_2x": [
+    256,
+    128
+   ],
+   "format": "I4",
+   "bytes_2x": 16384,
+   "kind": "font",
+   "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
+  },
+  {
    "name": "glyph_a",
    "size_2x": [
     32,

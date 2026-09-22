@@ -1,0 +1,749 @@
+{
+ "name": "hub_data",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "rule": "hubs_layout.json",
+ "section": "data",
+ "chrome": {
+  "template": "chrome_layout.json",
+  "title": "DATA",
+  "crumbs": [
+   "DATA"
+  ],
+  "crumb_icon": "ico_data",
+  "description": "the selected tile's desc, in the description strip"
+ },
+ "cluster": {
+  "rect": [
+   90,
+   82,
+   556,
+   390
+  ],
+  "backplate": {
+   "id": "backplate",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     84,
+     76
+    ],
+    [
+     562,
+     76
+    ],
+    [
+     562,
+     396
+    ],
+    [
+     84,
+     396
+    ]
+   ],
+   "colour": "ink",
+   "joint": "cluster"
+  }
+ },
+ "tiles": [
+  {
+   "id": "records",
+   "rank": 0,
+   "hero": true,
+   "size_class": "hero",
+   "section": "data",
+   "rect_unsheared": [
+    90,
+    82,
+    352,
+    390
+   ],
+   "pivot": [
+    221.0,
+    236.0
+   ],
+   "quads": [
+    {
+     "id": "records_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       90,
+       82
+      ],
+      [
+       352,
+       82
+      ],
+      [
+       352,
+       390
+      ],
+      [
+       90,
+       390
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_records"
+    },
+    {
+     "id": "records_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       90,
+       82
+      ],
+      [
+       352,
+       82
+      ],
+      [
+       352,
+       390
+      ],
+      [
+       90,
+       390
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_records"
+    },
+    {
+     "id": "records_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       240,
+       98
+      ],
+      [
+       336,
+       98
+      ],
+      [
+       336,
+       194
+      ],
+      [
+       240,
+       194
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_records",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_records"
+    }
+   ],
+   "slots": [
+    {
+     "id": "records_label_0",
+     "kind": "text",
+     "role": "hero",
+     "anchor": [
+      108,
+      374.0
+     ],
+     "align": "left",
+     "max": "RECORDS",
+     "max_chars": 7,
+     "max_width_1x": 226,
+     "colour": "bone",
+     "joint": "lift_records",
+     "line_of": 1
+    }
+   ],
+   "label": "RECORDS",
+   "desc": "VS, bonus and other records."
+  },
+  {
+   "id": "snapshots",
+   "rank": 1,
+   "hero": false,
+   "size_class": "mid",
+   "section": "data",
+   "rect_unsheared": [
+    360,
+    82,
+    556,
+    175
+   ],
+   "pivot": [
+    458.0,
+    128.5
+   ],
+   "quads": [
+    {
+     "id": "snapshots_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       82
+      ],
+      [
+       556,
+       82
+      ],
+      [
+       556,
+       175
+      ],
+      [
+       360,
+       175
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_snapshots"
+    },
+    {
+     "id": "snapshots_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       82
+      ],
+      [
+       556,
+       82
+      ],
+      [
+       556,
+       175
+      ],
+      [
+       360,
+       175
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_snapshots"
+    },
+    {
+     "id": "snapshots_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       518,
+       114.5
+      ],
+      [
+       546,
+       114.5
+      ],
+      [
+       546,
+       142.5
+      ],
+      [
+       518,
+       142.5
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_snapshots",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_snapshots"
+    }
+   ],
+   "slots": [
+    {
+     "id": "snapshots_label_0",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      370,
+      133.78
+     ],
+     "align": "left",
+     "max": "SNAPSHOTS",
+     "max_chars": 9,
+     "max_width_1x": 140,
+     "colour": "bone",
+     "joint": "lift_snapshots",
+     "line_of": 1
+    }
+   ],
+   "label": "SNAPSHOTS",
+   "desc": "Pictures saved to the memory card."
+  },
+  {
+   "id": "movies",
+   "rank": 2,
+   "hero": false,
+   "size_class": "mid",
+   "section": "data",
+   "rect_unsheared": [
+    360,
+    183,
+    556,
+    260
+   ],
+   "pivot": [
+    458.0,
+    221.5
+   ],
+   "quads": [
+    {
+     "id": "movies_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       183
+      ],
+      [
+       556,
+       183
+      ],
+      [
+       556,
+       260
+      ],
+      [
+       360,
+       260
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_movies"
+    },
+    {
+     "id": "movies_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       183
+      ],
+      [
+       556,
+       183
+      ],
+      [
+       556,
+       260
+      ],
+      [
+       360,
+       260
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_movies"
+    },
+    {
+     "id": "movies_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       518,
+       207.5
+      ],
+      [
+       546,
+       207.5
+      ],
+      [
+       546,
+       235.5
+      ],
+      [
+       518,
+       235.5
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_movies",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_movies"
+    }
+   ],
+   "slots": [
+    {
+     "id": "movies_label_0",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      370,
+      226.78
+     ],
+     "align": "left",
+     "max": "MOVIES",
+     "max_chars": 6,
+     "max_width_1x": 140,
+     "colour": "bone",
+     "joint": "lift_movies",
+     "line_of": 1
+    }
+   ],
+   "label": "MOVIES",
+   "desc": "Watch the movies you have seen."
+  },
+  {
+   "id": "soundtest",
+   "rank": 3,
+   "hero": false,
+   "size_class": "mid",
+   "section": "data",
+   "rect_unsheared": [
+    360,
+    268,
+    556,
+    331
+   ],
+   "pivot": [
+    458.0,
+    299.5
+   ],
+   "quads": [
+    {
+     "id": "soundtest_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       268
+      ],
+      [
+       556,
+       268
+      ],
+      [
+       556,
+       331
+      ],
+      [
+       360,
+       331
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_soundtest"
+    },
+    {
+     "id": "soundtest_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       268
+      ],
+      [
+       556,
+       268
+      ],
+      [
+       556,
+       331
+      ],
+      [
+       360,
+       331
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_soundtest"
+    },
+    {
+     "id": "soundtest_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       518,
+       285.5
+      ],
+      [
+       546,
+       285.5
+      ],
+      [
+       546,
+       313.5
+      ],
+      [
+       518,
+       313.5
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_soundtest",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_soundtest"
+    }
+   ],
+   "slots": [
+    {
+     "id": "soundtest_label_0",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      370,
+      304.78
+     ],
+     "align": "left",
+     "max": "SOUND TEST",
+     "max_chars": 10,
+     "max_width_1x": 140,
+     "colour": "bone",
+     "joint": "lift_soundtest",
+     "line_of": 1
+    }
+   ],
+   "label": "SOUND TEST",
+   "desc": "Listen to music, effects and voices."
+  },
+  {
+   "id": "messages",
+   "rank": 4,
+   "hero": false,
+   "size_class": "mid",
+   "section": "data",
+   "rect_unsheared": [
+    360,
+    339,
+    556,
+    390
+   ],
+   "pivot": [
+    458.0,
+    364.5
+   ],
+   "quads": [
+    {
+     "id": "messages_plate",
+     "kind": "flat",
+     "role": "plate",
+     "verts": [
+      [
+       360,
+       339
+      ],
+      [
+       556,
+       339
+      ],
+      [
+       556,
+       390
+      ],
+      [
+       360,
+       390
+      ]
+     ],
+     "colour": null,
+     "joint": "plate_messages"
+    },
+    {
+     "id": "messages_face",
+     "kind": "flat",
+     "role": "face",
+     "verts": [
+      [
+       360,
+       339
+      ],
+      [
+       556,
+       339
+      ],
+      [
+       556,
+       390
+      ],
+      [
+       360,
+       390
+      ]
+     ],
+     "colour": "@face",
+     "joint": "lift_messages"
+    },
+    {
+     "id": "messages_icon",
+     "kind": "textured",
+     "role": "icon",
+     "verts": [
+      [
+       518,
+       350.5
+      ],
+      [
+       546,
+       350.5
+      ],
+      [
+       546,
+       378.5
+      ],
+      [
+       518,
+       378.5
+      ]
+     ],
+     "colour": "@face_hi",
+     "texture": "ico_messages",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "lift_messages"
+    }
+   ],
+   "slots": [
+    {
+     "id": "messages_label_0",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      370,
+      369.78
+     ],
+     "align": "left",
+     "max": "SPECIAL MESSAGES",
+     "max_chars": 16,
+     "max_width_1x": 140,
+     "colour": "bone",
+     "joint": "lift_messages",
+     "line_of": 1
+    }
+   ],
+   "label": "SPECIAL MESSAGES",
+   "desc": "Messages you have unlocked."
+  }
+ ],
+ "states": {
+  "ng": {
+   "face": "@face",
+   "icon": "@face_hi",
+   "label": "bone",
+   "plate": null,
+   "offset": [
+    0,
+    0
+   ]
+  },
+  "sel": {
+   "face": "gold",
+   "icon": "gold_dk",
+   "label": "ink",
+   "plate": "gold_dk",
+   "offset": [
+    -6.25,
+    -5.0
+   ]
+  }
+ },
+ "textures": [
+  {
+   "name": "ico_data",
+   "file_2x": "out_nav/2x/ico_data.png",
+   "file_1x": "out_nav/1x/ico_data.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_messages",
+   "file_2x": "out_nav/2x/ico_messages.png",
+   "file_1x": "out_nav/1x/ico_messages.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_movies",
+   "file_2x": "out_nav/2x/ico_movies.png",
+   "file_1x": "out_nav/1x/ico_movies.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_records",
+   "file_2x": "out_nav/2x/ico_records.png",
+   "file_1x": "out_nav/1x/ico_records.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_snapshots",
+   "file_2x": "out_nav/2x/ico_snapshots.png",
+   "file_1x": "out_nav/1x/ico_snapshots.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_soundtest",
+   "file_2x": "out_nav/2x/ico_soundtest.png",
+   "file_1x": "out_nav/1x/ico_soundtest.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  }
+ ]
+}

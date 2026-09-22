@@ -1,0 +1,20 @@
+{
+  "note": "Edit the words here and run  python pipeline/readme.py  - every README image is rebuilt from this file. Text must fit its box; the build fails and names the box if it doesn't.",
+  "wordmark": {"tag": "GD's", "name": "Melee"},
+  "tagline": "A native PC port — rollback netplay, HD rendering, Slippi replays",
+  "social_tagline": "A native PC port — rollback netplay, HD rendering, Slippi replays",
+  "features": [
+    {"id": "rollback", "icon": "rollback", "title": "Rollback netplay",
+     "text": "Play a friend online: swap a code, connect, and rollback hides the lag."},
+    {"id": "hd", "icon": "hd", "title": "HD at any resolution",
+     "text": "Native PC rendering at any window size, sharp at every scale."},
+    {"id": "replays", "icon": "replay", "title": "Slippi replays",
+     "text": "Frame-accurate playback of .slp replays, straight from the game."},
+    {"id": "mex", "icon": "mex", "title": "m-ex mod support",
+     "text": "Custom characters and stages from m-ex builds, loaded like the originals."},
+    {"id": "ucf", "icon": "ucf", "title": "UCF + tournament rules",
+     "text": "Universal Controller Fix and tournament rule sets, built in."},
+    {"id": "determinism", "icon": "sync", "title": "Deterministic engine",
+     "text": "Bit-exact simulation, checked frame by frame with SyncTest."}
+  ]
+}

@@ -1,0 +1,223 @@
+{
+ "name": "list_rules",
+ "space": "unsheared",
+ "template": "list_layout.json",
+ "section": "versus",
+ "chrome": {
+  "title": "RULES",
+  "crumbs": [
+   "VERSUS",
+   "RULES"
+  ],
+  "crumb_icon": "ico_versus"
+ },
+ "rows": [
+  {
+   "label": "Mode",
+   "widget": "choice",
+   "value_max": "Stock",
+   "help": "How a match is won.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Mode",
+    "max_chars": 4,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Stocks",
+   "widget": "stepper",
+   "value_max": "99",
+   "help": "Lives each player starts with.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Stocks",
+    "max_chars": 6,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Handicap",
+   "widget": "choice",
+   "value_max": "Auto",
+   "help": "Auto evens out winners and losers.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Handicap",
+    "max_chars": 8,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Damage Ratio",
+   "widget": "slider",
+   "value_max": "2.0x",
+   "help": "How far hits send fighters.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Damage Ratio",
+    "max_chars": 12,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Stage Selection",
+   "widget": "choice",
+   "value_max": "Random",
+   "help": "How the stage is chosen.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Stage Selection",
+    "max_chars": 15,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "Items",
+   "widget": "action",
+   "value_max": null,
+   "help": "Which items appear, and how often.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Items",
+    "max_chars": 5,
+    "max_width_1x": 388,
+    "colour": "bone",
+    "joint": "row"
+   }
+  },
+  {
+   "label": "More Rules",
+   "widget": "action",
+   "value_max": null,
+   "help": "Pause, score display, self-destructs and more.",
+   "label_slot": {
+    "id": "label",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "More Rules",
+    "max_chars": 10,
+    "max_width_1x": 388,
+    "colour": "bone",
+    "joint": "row"
+   }
+  }
+ ],
+ "row_variants": {
+  "action": {
+   "note": "does something on A; a gold chevron '→' in the value area right edge (atlas), aux colour"
+  },
+  "danger": {
+   "note": "destructive (Erase Data): a 6 px danger stripe at the row's left edge, like the dialog's danger button; the label stays bone/ink - red text fails 4.5:1 on the faces",
+   "quads": [
+    {
+     "id": "danger_stripe",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       0
+      ],
+      [
+       6,
+       0
+      ],
+      [
+       6,
+       30
+      ],
+      [
+       0,
+       30
+      ]
+     ],
+     "colour": "danger",
+     "joint": "row"
+    }
+   ]
+  },
+  "record": {
+   "note": "Multi-Man: the best result, right-aligned in the value area (body, muted / ink when selected), e.g. '100 KOs' or '14:59.99'",
+   "slot": {
+    "id": "record",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     190,
+     4.62
+    ],
+    "align": "right",
+    "max": "14:59.99",
+    "max_chars": 8,
+    "max_width_1x": 52.75,
+    "colour": "aux"
+   }
+  },
+  "completed": {
+   "note": "mark_completed (12 px) after the label when the mode is cleared; mark_new (burst + 'NEW' from strings) for newly unlocked items"
+  }
+ },
+ "marks": {
+  "completed": "mark_completed",
+  "locked": "mark_locked",
+  "new": "mark_new"
+ }
+}

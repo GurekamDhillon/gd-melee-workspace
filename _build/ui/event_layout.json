@@ -1,0 +1,209 @@
+{
+ "name": "event",
+ "space": "unsheared",
+ "list_template": "list_layout.json rows, narrowed",
+ "list": {
+  "x0": 96,
+  "x1": 318,
+  "rows_top": 84,
+  "pitch": 34,
+  "row_h": 30,
+  "visible": 9
+ },
+ "row": {
+  "slots": [
+   {
+    "id": "number",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     12,
+     20.28
+    ],
+    "align": "left",
+    "max": "51",
+    "max_chars": 2,
+    "max_width_1x": 17.28,
+    "colour": "muted",
+    "note": "tabular; ink on sel"
+   },
+   {
+    "id": "name",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     42,
+     19.62
+    ],
+    "align": "left",
+    "max": "Trouble King 2: Return",
+    "max_chars": 22,
+    "max_width_1x": 156,
+    "colour": "bone"
+   },
+   {
+    "id": "completed",
+    "kind": "mark",
+    "texture": "mark_completed",
+    "size": [
+     12,
+     12
+    ],
+    "x": 204
+   }
+  ]
+ },
+ "detail": {
+  "rect": [
+   330,
+   84,
+   556,
+   390
+  ],
+  "quads": [
+   {
+    "id": "panel",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      330,
+      84
+     ],
+     [
+      556,
+      84
+     ],
+     [
+      556,
+      390
+     ],
+     [
+      330,
+      390
+     ]
+    ],
+    "colour": "ink"
+   },
+   {
+    "id": "title_slab",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      330,
+      84
+     ],
+     [
+      556,
+      84
+     ],
+     [
+      556,
+      112
+     ],
+     [
+      330,
+      112
+     ]
+    ],
+    "colour": "gold"
+   }
+  ],
+  "slots": [
+   {
+    "id": "title",
+    "kind": "text",
+    "role": "label",
+    "anchor": [
+     340,
+     104.6
+    ],
+    "align": "left",
+    "max": "TROUBLE KING 2: RETURN",
+    "max_chars": 22,
+    "max_width_1x": 206,
+    "colour": "ink",
+    "note": "fit rule; caps from strings"
+   },
+   {
+    "id": "art",
+    "kind": "disc_art",
+    "rect": [
+     340,
+     122,
+     546,
+     222
+    ],
+    "note": "the event's disc image if the disc has one; a 9-slice frame the engine sizes; hidden (and the text moves up) if none"
+   },
+   {
+    "id": "paragraph",
+    "kind": "text_block",
+    "role": "body",
+    "x": 340,
+    "top": 242,
+    "width": 206,
+    "max_lines": 7,
+    "line_pitch": 18,
+    "wrap": "break at spaces; beyond max_lines, truncate the last line with '…'"
+   },
+   {
+    "id": "best_label",
+    "kind": "text",
+    "role": "caption",
+    "anchor": [
+     340,
+     380
+    ],
+    "align": "left",
+    "max": "BEST",
+    "max_chars": 4,
+    "max_width_1x": 26.94,
+    "colour": "muted"
+   },
+   {
+    "id": "best",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     546,
+     380
+    ],
+    "align": "right",
+    "max": "99:59.99",
+    "max_chars": 8,
+    "max_width_1x": 62.08,
+    "colour": "bone"
+   }
+  ]
+ },
+ "rules": [
+  "The list is the kit row template, 222 px wide; the detail panel follows the selection (no motion beyond a 4-frame text fade).",
+  "Locked events show mark_locked in place of the number and '???' from strings."
+ ],
+ "textures": [
+  {
+   "name": "mark_completed",
+   "file_2x": "out_nav/2x/mark_completed.png",
+   "file_1x": "out_nav/1x/mark_completed.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "mark_locked",
+   "file_2x": "out_nav/2x/mark_locked.png",
+   "file_1x": "out_nav/1x/mark_locked.png",
+   "size_2x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  }
+ ]
+}

@@ -235,8 +235,55 @@
         "weight": "black",
         "charset": "full",
         "use": "name tags and the name-entry field: 4 fixed-width cells, so the caret and the plate never move as letters change"
+      },
+      {
+        "role": "code",
+        "size": 16,
+        "face": "mono",
+        "weight": "bold",
+        "charset": "code",
+        "use": "network codes and addresses (code plate): max 21 characters, 255.255.255.255:65535 = 201.6 px"
       }
     ],
+    "choice": {
+      "proportional": {
+        "face": "sans",
+        "why": [
+          "Hasklug is monospaced (0.6 em a cell), so a 20-character name at body size is 168 px against a 136 px portrait; proportional Source Sans 3 sets the longest vanilla name, 'Mr. Game & Watch', in 110.5 px.",
+          "Same designer and skeleton as Source Code Pro, which Hasklig is built on: the two faces share letter shapes and weights, so the switch between them does not show.",
+          "SIL OFL 1.1 (licence text in SourceSans3/LICENSE.md, files from Adobe's official 3.052R release). Its CJK companion, Source Han Sans, is also OFL - the second-script pages can come from the same family.",
+          "Its default figures are tabular (540 units in Black), so numbers and stats do not need a separate monospaced face; font_atlas.py checks digits in every role."
+        ]
+      },
+      "monospaced": {
+        "face": "mono",
+        "roles": [
+          "tag",
+          "code"
+        ],
+        "why": [
+          "Only where fixed cells are the point: the 4-character name tag and name entry (the caret and plate never move), and network codes (digits line up, and a code that changes never shifts the copy icon; the zero is dotted)."
+        ]
+      }
+    },
+    "names": {
+      "plate_1x": 136,
+      "pad_1x": 6,
+      "roles": [
+        "body",
+        "caption"
+      ],
+      "max_chars": 20,
+      "rule": "Set in body; if wider than plate - 2*pad, caption; if still wider, truncate with '…'. font_atlas.py checks the 20-character test names below.",
+      "test_names": [
+        "Mr. Game & Watch Jr.",
+        "Captain Falcon Alt 2",
+        "Princess Daisy (SSB)",
+        "Dark Samus & Metroid",
+        "Wario Man, Microgame",
+        "Young Link (Classic)"
+      ]
+    },
     "fit": [
       "Slots are sized in px (max_width_1x); a character count is only a guide for proportional text.",
       "If a string is wider than its slot: set it one role smaller (same face); if still too wide, truncate with '…'. Never squash horizontally."
@@ -261,6 +308,7 @@
     "charsets": {
       "full": "printable ASCII 0x20-0x7E + extras",
       "caps": "ASCII without a-z + extras; engine uppercases hero/display text",
+      "code": "network codes only:  -.0123456789:?[]ABCDEFabcdefx… (anything else -> '?')",
       "extras": "×%°…–—←→↑↓★"
     }
   },

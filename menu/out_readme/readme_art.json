@@ -1,0 +1,158 @@
+{
+ "files": [
+  {
+   "file": "banner_dark.png",
+   "size": [
+    1600,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "banner_dark@2x.png",
+   "size": [
+    3200,
+    800
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "feature_rollback_dark.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "feature_hd_dark.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "feature_replays_dark.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "feature_mex_dark.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "feature_ucf_dark.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "feature_determinism_dark.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "banner_light.png",
+   "size": [
+    1600,
+    400
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "banner_light@2x.png",
+   "size": [
+    3200,
+    800
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "feature_rollback_light.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "feature_hd_light.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "feature_replays_light.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "feature_mex_light.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "feature_ucf_light.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "feature_determinism_light.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "social_preview.png",
+   "size": [
+    1280,
+    640
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "divider.png",
+   "size": [
+    1600,
+    32
+   ],
+   "variant": "both"
+  }
+ ],
+ "contrast": {
+  "tagline (bone on ink strip)": 16.75,
+  "feature title (gold_lt on cobalt)": 7.44,
+  "feature text (bone on cobalt)": 8.95,
+  "wordmark tag (ink on gold)": 10.35,
+  "wordmark name on dark bg": 12.42,
+  "wordmark name on light bg": 8.95,
+  "banner dark vs GitHub page": 1.32,
+  "banner light vs GitHub page": 1.15
+ }
+}

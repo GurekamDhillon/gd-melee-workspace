@@ -1,0 +1,368 @@
+{
+ "provenance": "Original pictograms drawn in pipeline/icons.py (SVG on a 64 grid); nothing traced, sampled or recoloured from Melee or any other game.",
+ "textures": [
+  {
+   "name": "ico_host",
+   "file_2x": "out_online/2x/ico_host.png",
+   "file_1x": "out_online/1x/ico_host.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "'Host Match' row; Play As = Host",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     5,
+     0
+    ],
+    "at_2x_draw": [
+     5,
+     0
+    ],
+    "at_1x_draw": [
+     5,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_join",
+   "file_2x": "out_online/2x/ico_join.png",
+   "file_1x": "out_online/1x/ico_join.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "'Connect' row; Play As = Join",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     2,
+     0
+    ],
+    "at_2x_draw": [
+     2,
+     0
+    ],
+    "at_1x_draw": [
+     2,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_paste",
+   "file_2x": "out_online/2x/ico_paste.png",
+   "file_1x": "out_online/1x/ico_paste.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "'Paste Host Code', 'Paste Friend's Code' rows",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     2,
+     1
+    ],
+    "at_2x_draw": [
+     2,
+     1
+    ],
+    "at_1x_draw": [
+     2,
+     1
+    ]
+   }
+  },
+  {
+   "name": "ico_copy",
+   "file_2x": "out_online/2x/ico_copy.png",
+   "file_1x": "out_online/1x/ico_copy.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "code plate copy affordance; 'Your Code' row",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     2
+    ],
+    "at_2x_draw": [
+     1,
+     2
+    ],
+    "at_1x_draw": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_link",
+   "file_2x": "out_online/2x/ico_link.png",
+   "file_1x": "out_online/1x/ico_link.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "status strip connected; dialog when connected",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     3
+    ],
+    "at_2x_draw": [
+     1,
+     3
+    ],
+    "at_1x_draw": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "name": "ico_unlink",
+   "file_2x": "out_online/2x/ico_unlink.png",
+   "file_1x": "out_online/1x/ico_unlink.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "status strip disconnected (peer lost)",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     4,
+     0
+    ],
+    "at_2x_draw": [
+     4,
+     0
+    ],
+    "at_1x_draw": [
+     4,
+     0
+    ]
+   }
+  },
+  {
+   "name": "ico_warning",
+   "file_2x": "out_online/2x/ico_warning.png",
+   "file_1x": "out_online/1x/ico_warning.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "status strip failed; failed dialog title",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     2
+    ],
+    "at_2x_draw": [
+     1,
+     2
+    ],
+    "at_1x_draw": [
+     1,
+     2
+    ]
+   }
+  },
+  {
+   "name": "sig_bar_1",
+   "file_2x": "out_online/2x/sig_bar_1.png",
+   "file_1x": "out_online/1x/sig_bar_1.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "ping bar 1 of 4; draw all four at one rect, lit ones in the quality colour",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "sig_bar_2",
+   "file_2x": "out_online/2x/sig_bar_2.png",
+   "file_1x": "out_online/1x/sig_bar_2.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "ping bar 2 of 4; draw all four at one rect, lit ones in the quality colour",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "sig_bar_3",
+   "file_2x": "out_online/2x/sig_bar_3.png",
+   "file_1x": "out_online/1x/sig_bar_3.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "ping bar 3 of 4; draw all four at one rect, lit ones in the quality colour",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  },
+  {
+   "name": "sig_bar_4",
+   "file_2x": "out_online/2x/sig_bar_4.png",
+   "file_1x": "out_online/1x/sig_bar_4.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "size_1x": [
+    32,
+    32
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "bytes_2x": 2048,
+   "why": "white mask tinted by material colour; 16 edge levels are plenty",
+   "use": "ping bar 4 of 4; draw all four at one rect, lit ones in the quality colour",
+   "min_draw_1x": 16,
+   "legibility": {
+    "full": [
+     1,
+     0
+    ],
+    "at_2x_draw": [
+     1,
+     0
+    ],
+    "at_1x_draw": [
+     1,
+     0
+    ]
+   }
+  }
+ ]
+}

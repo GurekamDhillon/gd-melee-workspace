@@ -1,0 +1,1852 @@
+{
+ "name": "online",
+ "space": "unsheared",
+ "shear": {
+  "S": 0.25,
+  "Y0": 240
+ },
+ "section": "versus",
+ "engine": "gmfrontend.c fe_screen_online / fe_items_online",
+ "chrome": {
+  "template": "chrome_layout.json",
+  "title_max": "ONLINE PLAY",
+  "crumbs": [
+   "VERSUS",
+   "ONLINE PLAY"
+  ],
+  "crumb_icon": "ico_versus",
+  "hints_worst": [
+   [
+    "a",
+    "Choose"
+   ],
+   [
+    "b",
+    "Back"
+   ],
+   [
+    "x",
+    "Copy Code"
+   ],
+   [
+    "y",
+    "Paste"
+   ]
+  ],
+  "description": "the selected row's help line (item.help)"
+ },
+ "panel": {
+  "template": "list_layout.json",
+  "rows_top": 84,
+  "row_h": 30,
+  "pitch": 34,
+  "visible": 8,
+  "x0": 96,
+  "x1": 540,
+  "track": [
+   548,
+   96,
+   554,
+   346
+  ]
+ },
+ "views": {
+  "host": [
+   "play_as",
+   "character",
+   "costume",
+   "stage",
+   "stocks",
+   "time",
+   "delay",
+   "host_match",
+   "your_code",
+   "paste_friend"
+  ],
+  "join": [
+   "play_as",
+   "character",
+   "costume",
+   "paste_host",
+   "host_code",
+   "connect",
+   "your_code"
+  ],
+  "rule": "Play As picks the view; rows of the other view are hidden, and the rest reflow with online rows_reflow."
+ },
+ "rows": [
+  {
+   "id": "play_as",
+   "label": "Play As",
+   "widget": "choice_icon",
+   "view": "both",
+   "value_max": "Join",
+   "icons": {
+    "Host": "ico_host",
+    "Join": "ico_join"
+   },
+   "help": "Host a match, or join a friend's.",
+   "label_slot": {
+    "id": "label_play_as",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Play As",
+    "max_chars": 7,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   },
+   "value_slot": null
+  },
+  {
+   "id": "character",
+   "label": "Character",
+   "widget": "choice",
+   "view": "both",
+   "value_max": "Mr. Game & Watch",
+   "value_worst": "Mr. Game & Watch Jr.",
+   "note": "26 vanilla names; m-ex names up to 20 characters take the fit rule",
+   "help": "Who you play.",
+   "label_slot": {
+    "id": "label_character",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Character",
+    "max_chars": 9,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   },
+   "value_slot": {
+    "id": "value_character",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     95.0,
+     5.28
+    ],
+    "align": "centre",
+    "max": "Mr. Game & Watch",
+    "max_chars": 16,
+    "max_width_1x": 154.29,
+    "colour": "text",
+    "joint": "choice_value"
+   }
+  },
+  {
+   "id": "costume",
+   "label": "Costume",
+   "widget": "pips",
+   "view": "both",
+   "value_max": "Color 8",
+   "note": "one pip per costume the character has (vanilla 4-6, m-ex up to 8); readout from the engine",
+   "help": "Your fighter's colors.",
+   "label_slot": {
+    "id": "label_costume",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Costume",
+    "max_chars": 7,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   },
+   "value_slot": null
+  },
+  {
+   "id": "stage",
+   "label": "Stage",
+   "widget": "choice",
+   "view": "host",
+   "value_max": "Fountain of Dreams",
+   "value_worst": "Princess Peach's Castle",
+   "help": "Where you both play.",
+   "label_slot": {
+    "id": "label_stage",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Stage",
+    "max_chars": 5,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   },
+   "value_slot": {
+    "id": "value_stage",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     95.0,
+     5.28
+    ],
+    "align": "centre",
+    "max": "Fountain of Dreams",
+    "max_chars": 18,
+    "max_width_1x": 154.29,
+    "colour": "text",
+    "joint": "choice_value"
+   }
+  },
+  {
+   "id": "stocks",
+   "label": "Stocks",
+   "widget": "slider_long",
+   "view": "host",
+   "value_max": "9",
+   "help": "Lives each player starts with.",
+   "label_slot": {
+    "id": "label_stocks",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Stocks",
+    "max_chars": 6,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   },
+   "value_slot": null
+  },
+  {
+   "id": "time",
+   "label": "Time Limit",
+   "widget": "slider_long",
+   "view": "host",
+   "value_max": "20 min",
+   "help": "The match clock.",
+   "label_slot": {
+    "id": "label_time",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Time Limit",
+    "max_chars": 10,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   },
+   "value_slot": null
+  },
+  {
+   "id": "delay",
+   "label": "Input Delay",
+   "widget": "slider_long",
+   "view": "host",
+   "value_max": "8 frames",
+   "help": "2 suits most connections; raise it if it stutters.",
+   "label_slot": {
+    "id": "label_delay",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Input Delay",
+    "max_chars": 11,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   },
+   "value_slot": null
+  },
+  {
+   "id": "paste_host",
+   "label": "Paste Host Code",
+   "widget": "action",
+   "view": "join",
+   "icon": "ico_paste",
+   "help": "Copy your friend's code, then press A here.",
+   "label_slot": {
+    "id": "label_paste_host",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Paste Host Code",
+    "max_chars": 15,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   },
+   "value_slot": null
+  },
+  {
+   "id": "host_code",
+   "label": "Host Code",
+   "widget": "code_plate",
+   "view": "join",
+   "copy": false,
+   "help": "The code you pasted.",
+   "label_slot": {
+    "id": "label_host_code",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Host Code",
+    "max_chars": 9,
+    "max_width_1x": 166,
+    "colour": "bone",
+    "joint": "row"
+   },
+   "value_slot": null
+  },
+  {
+   "id": "host_match",
+   "label": "Host Match",
+   "widget": "action",
+   "view": "host",
+   "icon": "ico_host",
+   "help": "Start hosting; your code is copied for your friend.",
+   "label_slot": {
+    "id": "label_host_match",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Host Match",
+    "max_chars": 10,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   },
+   "value_slot": null
+  },
+  {
+   "id": "connect",
+   "label": "Connect",
+   "widget": "action",
+   "view": "join",
+   "icon": "ico_join",
+   "help": "Join the host whose code you pasted.",
+   "label_slot": {
+    "id": "label_connect",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Connect",
+    "max_chars": 7,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   },
+   "value_slot": null
+  },
+  {
+   "id": "your_code",
+   "label": "Your Code",
+   "widget": "code_plate",
+   "view": "both",
+   "copy": true,
+   "help": "Your address; it is copied to the clipboard.",
+   "label_slot": {
+    "id": "label_your_code",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Your Code",
+    "max_chars": 9,
+    "max_width_1x": 166,
+    "colour": "bone",
+    "joint": "row"
+   },
+   "value_slot": null
+  },
+  {
+   "id": "paste_friend",
+   "label": "Paste Friend's Code",
+   "widget": "action",
+   "view": "host",
+   "icon": "ico_paste",
+   "help": "Only if they can't connect: paste their code here.",
+   "label_slot": {
+    "id": "label_paste_friend",
+    "kind": "text",
+    "role": "row",
+    "anchor": [
+     16,
+     20.28
+    ],
+    "align": "left",
+    "max": "Paste Friend's Code",
+    "max_chars": 19,
+    "max_width_1x": 216,
+    "colour": "bone",
+    "joint": "row"
+   },
+   "value_slot": null
+  }
+ ],
+ "widgets": {
+  "code_plate": {
+   "size": [
+    240,
+    22
+   ],
+   "origin": "right-aligned in the value area: x -50..190 local",
+   "quads": [
+    {
+     "id": "plate",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       -50,
+       -11.0
+      ],
+      [
+       190,
+       -11.0
+      ],
+      [
+       190,
+       11.0
+      ],
+      [
+       -50,
+       11.0
+      ]
+     ],
+     "colour": "plate",
+     "joint": "code_plate"
+    },
+    {
+     "id": "accent",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       -50,
+       -11.0
+      ],
+      [
+       -47,
+       -11.0
+      ],
+      [
+       -47,
+       11.0
+      ],
+      [
+       -50,
+       11.0
+      ]
+     ],
+     "colour": "accent",
+     "joint": "code_plate"
+    },
+    {
+     "id": "copy_icon",
+     "kind": "textured",
+     "role": "chrome",
+     "verts": [
+      [
+       166,
+       -8
+      ],
+      [
+       182,
+       -8
+      ],
+      [
+       182,
+       8
+      ],
+      [
+       166,
+       8
+      ]
+     ],
+     "colour": "icon",
+     "texture": "ico_copy",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "code_icon"
+    }
+   ],
+   "slots": [
+    {
+     "id": "code",
+     "kind": "text",
+     "role": "code",
+     "anchor": [
+      -42,
+      5.28
+     ],
+     "align": "left",
+     "max": "255.255.255.255:65535",
+     "max_chars": 21,
+     "max_width_1x": 202,
+     "colour": "code_text",
+     "joint": "code_plate",
+     "note": "mono cells: every code draws at the same x; never the fit rule - a code that is too long is not a code (show the placeholder)"
+    },
+    {
+     "id": "placeholder",
+     "kind": "text",
+     "role": "body",
+     "anchor": [
+      -42,
+      4.62
+     ],
+     "align": "left",
+     "max": "Press A to paste",
+     "max_chars": 16,
+     "max_width_1x": 202,
+     "colour": "placeholder",
+     "joint": "code_plate",
+     "note": "shown instead of the code while there is none"
+    }
+   ],
+   "colours": {
+    "ng": {
+     "plate": "ink",
+     "accent": "@face_hi",
+     "code_text": "bone",
+     "placeholder": "muted",
+     "icon": "muted"
+    },
+    "sel": {
+     "plate": "ink",
+     "accent": "gold",
+     "code_text": "gold_lt",
+     "placeholder": "muted",
+     "icon": "gold_lt"
+    },
+    "disabled": {
+     "plate": "ink",
+     "accent": "disabled",
+     "code_text": "disabled",
+     "placeholder": "disabled",
+     "icon": "disabled"
+    },
+    "copied": {
+     "plate": "ok",
+     "accent": "ok",
+     "code_text": "ink",
+     "placeholder": "ink",
+     "icon": "ink",
+     "note": "held 40 frames by code_copied, then back to ng/sel"
+    }
+   },
+   "rules": [
+    "copy_icon only on 'Your Code' (copy: true). 'Host Code' has no copy icon; its plate reaches the same width so the two codes line up.",
+    "code_copied swaps copy_icon for glyph_check (same rect) for 40 frames.",
+    "The empty state shows 'placeholder' (strings) instead of 'code'."
+   ]
+  },
+  "action": {
+   "quads": [
+    {
+     "id": "icon",
+     "kind": "textured",
+     "role": "chrome",
+     "verts": [
+      [
+       174,
+       -8
+      ],
+      [
+       190,
+       -8
+      ],
+      [
+       190,
+       8
+      ],
+      [
+       174,
+       8
+      ]
+     ],
+     "colour": "aux",
+     "texture": "<row icon>",
+     "uv": [
+      0,
+      0,
+      1,
+      1
+     ],
+     "joint": "action_icon"
+    }
+   ],
+   "rules": [
+    "A row that does something when A is pressed. The icon names the action (ico_paste, ico_host, ico_join) and takes the widget 'aux' colour of the row state. Press plays kit bump on the icon if the action cannot run (e.g. Connect with no code)."
+   ]
+  },
+  "pips": {
+   "quads": [
+    {
+     "id": "pip_<i>",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       -5
+      ],
+      [
+       10,
+       -5
+      ],
+      [
+       10,
+       5
+      ],
+      [
+       0,
+       5
+      ]
+     ],
+     "colour": "pip",
+     "joint": "pip_<i>"
+    }
+   ],
+   "slots": [
+    {
+     "id": "readout",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      190,
+      5.28
+     ],
+     "align": "right",
+     "max": "Color 8",
+     "max_chars": 7,
+     "max_width_1x": 65,
+     "colour": "text"
+    }
+   ],
+   "pitch": 15,
+   "max": 8,
+   "colours": {
+    "ng": {
+     "pip": "ink",
+     "pip_on": "bone",
+     "text": "bone"
+    },
+    "sel": {
+     "pip": "gold_dk",
+     "pip_on": "ink",
+     "text": "ink"
+    },
+    "disabled": {
+     "pip": "ink",
+     "pip_on": "disabled",
+     "text": "disabled"
+    }
+   },
+   "rules": [
+    "One pip per costume, x = 15 * i, i from 0; the current one is pip_on and 2px taller (y -6..6).",
+    "Stepping plays pips_step; at the ends, kit bump."
+   ]
+  },
+  "slider_long": {
+   "quads": [
+    {
+     "id": "track",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       -3
+      ],
+      [
+       96,
+       -3
+      ],
+      [
+       96,
+       3
+      ],
+      [
+       0,
+       3
+      ]
+     ],
+     "colour": "track"
+    },
+    {
+     "id": "fill",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       0,
+       -3
+      ],
+      [
+       96,
+       -3
+      ],
+      [
+       96,
+       3
+      ],
+      [
+       0,
+       3
+      ]
+     ],
+     "colour": "fill",
+     "joint": "slider_fill"
+    },
+    {
+     "id": "knob",
+     "kind": "flat",
+     "role": "chrome",
+     "verts": [
+      [
+       92,
+       -9
+      ],
+      [
+       100,
+       -9
+      ],
+      [
+       100,
+       9
+      ],
+      [
+       92,
+       9
+      ]
+     ],
+     "colour": "knob",
+     "joint": "slider_knob"
+    }
+   ],
+   "slots": [
+    {
+     "id": "readout",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      190,
+      5.28
+     ],
+     "align": "right",
+     "max": "20 frames",
+     "max_chars": 9,
+     "max_width_1x": 82,
+     "colour": "text"
+    }
+   ],
+   "track_w": 96,
+   "rules": [
+    "The kit slider with a 96 px track, for readouts with units ('20 min', '8 frames'). fill SCA_X = value/max; knob TRA_X = 96 * value/max - 96. kit slider_step and bump apply with 96 in place of 130."
+   ]
+  },
+  "choice_icon": {
+   "slots": [
+    {
+     "id": "value",
+     "kind": "text",
+     "role": "row",
+     "anchor": [
+      106.0,
+      5.28
+     ],
+     "align": "centre",
+     "max": "Join",
+     "max_chars": 4,
+     "max_width_1x": 31.2,
+     "colour": "text",
+     "joint": "choice_value"
+    },
+    {
+     "id": "value_icon",
+     "kind": "icon",
+     "size": [
+      16,
+      16
+     ],
+     "colour": "text",
+     "joint": "choice_value",
+     "rule": "16 px mask centred with the text as one group: group width = 16 + 6 + advance(value); icon x0 = VALUE_W/2 - group/2"
+    }
+   ],
+   "rules": [
+    "The kit choice (arrows at 0 and VALUE_W) whose value carries an icon per option (the row's 'icons' map). Play As: ico_host / ico_join."
+   ]
+  },
+  "kit": "toggle, choice, slider, stepper: widgets_layout.json"
+ },
+ "status_strip": {
+  "rect": [
+   90,
+   358,
+   596,
+   388
+  ],
+  "space": "unsheared",
+  "quads": [
+   {
+    "id": "strip_plate",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      90,
+      358
+     ],
+     [
+      596,
+      358
+     ],
+     [
+      596,
+      388
+     ],
+     [
+      90,
+      388
+     ]
+    ],
+    "colour": "ink",
+    "joint": "strip"
+   },
+   {
+    "id": "block",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      90,
+      358
+     ],
+     [
+      126,
+      358
+     ],
+     [
+      126,
+      388
+     ],
+     [
+      90,
+      388
+     ]
+    ],
+    "colour": "<state.block>",
+    "joint": "status_block"
+   },
+   {
+    "id": "state_icon",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      100,
+      365.0
+     ],
+     [
+      116,
+      365.0
+     ],
+     [
+      116,
+      381.0
+     ],
+     [
+      100,
+      381.0
+     ]
+    ],
+    "colour": "<state.icon_colour>",
+    "texture": "<state.icon>",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "status_block"
+   },
+   {
+    "id": "pip_0",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      96,
+      370.0
+     ],
+     [
+      102,
+      370.0
+     ],
+     [
+      102,
+      376.0
+     ],
+     [
+      96,
+      376.0
+     ]
+    ],
+    "colour": "ink",
+    "joint": "activity_pip_0"
+   },
+   {
+    "id": "pip_1",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      105,
+      370.0
+     ],
+     [
+      111,
+      370.0
+     ],
+     [
+      111,
+      376.0
+     ],
+     [
+      105,
+      376.0
+     ]
+    ],
+    "colour": "ink",
+    "joint": "activity_pip_1"
+   },
+   {
+    "id": "pip_2",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      114,
+      370.0
+     ],
+     [
+      120,
+      370.0
+     ],
+     [
+      120,
+      376.0
+     ],
+     [
+      114,
+      376.0
+     ]
+    ],
+    "colour": "ink",
+    "joint": "activity_pip_2"
+   },
+   {
+    "id": "sweep",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      126,
+      386
+     ],
+     [
+      166,
+      386
+     ],
+     [
+      166,
+      388
+     ],
+     [
+      126,
+      388
+     ]
+    ],
+    "colour": "gold",
+    "joint": "strip_sweep"
+   },
+   {
+    "id": "bar_1",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      526.992,
+      365.0
+     ],
+     [
+      542.992,
+      365.0
+     ],
+     [
+      542.992,
+      381.0
+     ],
+     [
+      526.992,
+      381.0
+     ]
+    ],
+    "colour": "<bar colour>",
+    "texture": "sig_bar_1",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "ping"
+   },
+   {
+    "id": "bar_2",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      526.992,
+      365.0
+     ],
+     [
+      542.992,
+      365.0
+     ],
+     [
+      542.992,
+      381.0
+     ],
+     [
+      526.992,
+      381.0
+     ]
+    ],
+    "colour": "<bar colour>",
+    "texture": "sig_bar_2",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "ping"
+   },
+   {
+    "id": "bar_3",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      526.992,
+      365.0
+     ],
+     [
+      542.992,
+      365.0
+     ],
+     [
+      542.992,
+      381.0
+     ],
+     [
+      526.992,
+      381.0
+     ]
+    ],
+    "colour": "<bar colour>",
+    "texture": "sig_bar_3",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "ping"
+   },
+   {
+    "id": "bar_4",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      526.992,
+      365.0
+     ],
+     [
+      542.992,
+      365.0
+     ],
+     [
+      542.992,
+      381.0
+     ],
+     [
+      526.992,
+      381.0
+     ]
+    ],
+    "colour": "<bar colour>",
+    "texture": "sig_bar_4",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "ping"
+   }
+  ],
+  "slots": [
+   {
+    "id": "status",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     138,
+     377.62
+    ],
+    "align": "left",
+    "max": "Refused: your friend is running a different disc image, v1.0",
+    "max_chars": 60,
+    "max_width_1x": 378.99,
+    "colour": "bone",
+    "joint": "status_text",
+    "note": "the engine's status line (Netplay_MenuStatus); the fit rule's caption step holds about 72 characters"
+   },
+   {
+    "id": "ping_ms",
+    "kind": "text",
+    "role": "caption",
+    "anchor": [
+     586,
+     376.96
+    ],
+    "align": "right",
+    "max": "999 ms",
+    "max_chars": 6,
+    "max_width_1x": 37.01,
+    "colour": "muted",
+    "joint": "ping",
+    "note": "round-trip in ms, tabular digits"
+   }
+  ],
+  "states": {
+   "idle": {
+    "block": "@face",
+    "icon": "ico_online",
+    "icon_colour": "@face_hi",
+    "pips": false,
+    "sweep": false,
+    "ping": false,
+    "engine": "FE_NP_IDLE",
+    "example": "Choose Host or Join, then pick your fighter."
+   },
+   "working": {
+    "block": "gold",
+    "icon": null,
+    "icon_colour": "ink",
+    "pips": true,
+    "sweep": true,
+    "ping": false,
+    "engine": "FE_NP_WORKING",
+    "example": "Connecting..."
+   },
+   "connected": {
+    "block": "ok",
+    "icon": "ico_link",
+    "icon_colour": "ink",
+    "pips": false,
+    "sweep": false,
+    "ping": true,
+    "engine": "FE_NP_CONNECTED",
+    "example": "Connected! Starting..."
+   },
+   "failed": {
+    "block": "danger",
+    "icon": "ico_warning",
+    "icon_colour": "ink",
+    "pips": false,
+    "sweep": false,
+    "ping": false,
+    "engine": "FE_NP_FAILED",
+    "example": "Refused: different disc image",
+    "alt_icon": {
+     "icon": "ico_unlink",
+     "when": "a live connection dropped (Disconnected: ...)"
+    }
+   }
+  },
+  "ping": {
+   "levels": [
+    {
+     "max_ms": 60,
+     "bars": 4,
+     "colour": "ok"
+    },
+    {
+     "max_ms": 100,
+     "bars": 3,
+     "colour": "ok"
+    },
+    {
+     "max_ms": 150,
+     "bars": 2,
+     "colour": "gold"
+    },
+    {
+     "max_ms": null,
+     "bars": 1,
+     "colour": "danger"
+    }
+   ],
+   "unlit": "@face",
+   "rules": [
+    "All four bar masks draw at one rect; the first `bars` take the level's colour, the rest 'unlit'. The bar count is the cue, colour second, so red-green colour-blind players read it too.",
+    "Shown only in 'connected' (and in-match later); ping_ms updates at most twice a second, and ping_update plays only when the level changes."
+   ]
+  },
+  "rules": [
+   "Replaces the list's ninth row slot on this screen: the list shows 8 rows and its scroll track ends at y=346.",
+   "block, state_icon and the pips belong to the state; 'working' shows the three pips (activity loop) instead of an icon, plus the sweep under the strip.",
+   "Text is always from strings. The text slot is sized for 60 characters at body; longer text steps to caption (fit rule), then truncates."
+  ]
+ },
+ "connect_dialog": {
+  "name": "connect_dialog",
+  "space": "unsheared",
+  "base": "dialog_layout.json (section 1)",
+  "origin": "panel top-left; centred on (320, 240): x0 = 110, y0 = 171 for h = 138",
+  "height": 138,
+  "width": 420,
+  "quads": [
+   {
+    "id": "dim",
+    "kind": "flat",
+    "role": "decor",
+    "verts": [
+     [
+      -60,
+      -20
+     ],
+     [
+      700,
+      -20
+     ],
+     [
+      700,
+      500
+     ],
+     [
+      -60,
+      500
+     ]
+    ],
+    "colour": "ink",
+    "joint": "dialog_dim",
+    "opacity": 0.65
+   },
+   {
+    "id": "panel_ink",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      -4,
+      -4
+     ],
+     [
+      424,
+      -4
+     ],
+     [
+      424,
+      142
+     ],
+     [
+      -4,
+      142
+     ]
+    ],
+    "colour": "ink",
+    "joint": "dialog_panel"
+   },
+   {
+    "id": "panel_face",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      0,
+      0
+     ],
+     [
+      420,
+      0
+     ],
+     [
+      420,
+      138
+     ],
+     [
+      0,
+      138
+     ]
+    ],
+    "colour": "@face",
+    "joint": "dialog_panel"
+   },
+   {
+    "id": "title_slab",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      0,
+      0
+     ],
+     [
+      "36 + advance(title) + 20 (or 16 + ... with no icon)",
+      0
+     ],
+     [
+      "36 + advance(title) + 20 (or 16 + ... with no icon)",
+      28
+     ],
+     [
+      0,
+      28
+     ]
+    ],
+    "colour": "<variant.slab>",
+    "joint": "dialog_panel"
+   },
+   {
+    "id": "title_icon",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      14,
+      6
+     ],
+     [
+      30,
+      6
+     ],
+     [
+      30,
+      22
+     ],
+     [
+      14,
+      22
+     ]
+    ],
+    "colour": "ink",
+    "texture": "<variant.icon>",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "dialog_panel"
+   },
+   {
+    "id": "code_plate",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      16,
+      78
+     ],
+     [
+      256,
+      78
+     ],
+     [
+      256,
+      100
+     ],
+     [
+      16,
+      100
+     ]
+    ],
+    "colour": "ink",
+    "joint": "dialog_panel",
+    "note": "the code_plate widget, ng colours, drawn here"
+   },
+   {
+    "id": "pip_0",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      272,
+      85.0
+     ],
+     [
+      280,
+      85.0
+     ],
+     [
+      280,
+      93.0
+     ],
+     [
+      272,
+      93.0
+     ]
+    ],
+    "colour": "gold",
+    "joint": "activity_pip_0"
+   },
+   {
+    "id": "pip_1",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      284,
+      85.0
+     ],
+     [
+      292,
+      85.0
+     ],
+     [
+      292,
+      93.0
+     ],
+     [
+      284,
+      93.0
+     ]
+    ],
+    "colour": "gold",
+    "joint": "activity_pip_1"
+   },
+   {
+    "id": "pip_2",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      296,
+      85.0
+     ],
+     [
+      304,
+      85.0
+     ],
+     [
+      304,
+      93.0
+     ],
+     [
+      296,
+      93.0
+     ]
+    ],
+    "colour": "gold",
+    "joint": "activity_pip_2"
+   },
+   {
+    "id": "sweep",
+    "kind": "flat",
+    "role": "chrome",
+    "verts": [
+     [
+      0,
+      136
+     ],
+     [
+      40,
+      136
+     ],
+     [
+      40,
+      138
+     ],
+     [
+      0,
+      138
+     ]
+    ],
+    "colour": "gold",
+    "joint": "dialog_sweep"
+   },
+   {
+    "id": "cancel_glyph",
+    "kind": "textured",
+    "role": "chrome",
+    "verts": [
+     [
+      343.064,
+      113.38
+     ],
+     [
+      359.064,
+      113.38
+     ],
+     [
+      359.064,
+      129.38
+     ],
+     [
+      343.064,
+      129.38
+     ]
+    ],
+    "colour": "danger",
+    "texture": "glyph_b",
+    "uv": [
+     0,
+     0,
+     1,
+     1
+    ],
+    "joint": "dialog_panel"
+   }
+  ],
+  "slots": [
+   {
+    "id": "title",
+    "kind": "text",
+    "role": "title",
+    "anchor": [
+     36,
+     21.92
+    ],
+    "align": "left",
+    "max": "WAITING FOR YOUR FRIEND",
+    "max_chars": 23,
+    "max_width_1x": 364,
+    "colour": "ink",
+    "joint": "dialog_panel",
+    "note": "x = 16 when the variant has no icon"
+   },
+   {
+    "id": "status",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     16,
+     50
+    ],
+    "align": "left",
+    "max": "Connecting to 255.255.255.255:65535... this can take a while",
+    "max_chars": 60,
+    "max_width_1x": 388,
+    "colour": "bone",
+    "joint": "dialog_panel"
+   },
+   {
+    "id": "code_label",
+    "kind": "text",
+    "role": "caption",
+    "anchor": [
+     16,
+     72
+    ],
+    "align": "left",
+    "max": "HOST CODE",
+    "max_chars": 9,
+    "max_width_1x": 60.74,
+    "colour": "muted",
+    "joint": "dialog_panel",
+    "note": "'YOUR CODE' or 'HOST CODE' from strings"
+   },
+   {
+    "id": "code",
+    "kind": "text",
+    "role": "code",
+    "anchor": [
+     24,
+     94.28
+    ],
+    "align": "left",
+    "max": "255.255.255.255:65535",
+    "max_chars": 21,
+    "max_width_1x": 224,
+    "colour": "bone",
+    "joint": "dialog_panel"
+   },
+   {
+    "id": "cancel",
+    "kind": "text",
+    "role": "body",
+    "anchor": [
+     404,
+     126
+    ],
+    "align": "right",
+    "max": "Cancel",
+    "max_chars": 6,
+    "max_width_1x": 40.94,
+    "colour": "bone",
+    "joint": "dialog_panel",
+    "note": "glyph_b + 4 px + this text, right-aligned"
+   }
+  ],
+  "variants": {
+   "connecting": {
+    "slab": "gold",
+    "icon": null,
+    "pips": true,
+    "plate": "host_code",
+    "cancel": true,
+    "title": "CONNECTING",
+    "status": "Connecting to 203.0.113.7:51500..."
+   },
+   "waiting": {
+    "slab": "gold",
+    "icon": null,
+    "pips": true,
+    "plate": "your_code",
+    "cancel": true,
+    "title": "WAITING FOR YOUR FRIEND",
+    "status": "Your code is copied - send it to your friend."
+   },
+   "connected": {
+    "slab": "ok",
+    "icon": "ico_link",
+    "pips": false,
+    "plate": "context",
+    "cancel": false,
+    "title": "CONNECTED",
+    "status": "Connected! Starting..."
+   },
+   "failed": {
+    "slab": "danger",
+    "icon": "ico_warning",
+    "pips": false,
+    "plate": "context",
+    "cancel": true,
+    "title": "CONNECTION REFUSED",
+    "status": "Refused: different disc image",
+    "cancel_label": "Back"
+   }
+  },
+  "rules": [
+   "The section 1 dialog with no buttons: B cancels (Netplay_MenuCancel) and closes with kit dialog_close. It opens with kit dialog_open when Host Match or Connect starts (FE_NP_WORKING).",
+   "Variants change slab colour, title icon and which parts show; the panel keeps its size so a variant change never jumps. plate 'context' keeps whichever code the dialog opened with (the host's when joining, yours when hosting). 'connected' hides the pips and the cancel hint; 'failed' hides the pips and shows B = Back.",
+   "The pips and sweep play online activity_loop, the same loop as the strip."
+  ]
+ },
+ "strings": {
+  "note": "All text is from strings. These are the worst cases the layout is checked against, and suggestions where the engine's current strings run long.",
+  "status_max_chars": 60,
+  "engine_status_today": [
+   "Waiting for friend (code 255.255.255.255:65535 copied) - no auto port forward - if they can't join, paste their code",
+   "Connecting to 255.255.255.255:65535... If it takes long, send your code 255.255.255.255:65535 to the host"
+  ],
+  "suggested": {
+   "waiting": "Waiting for your friend. Your code is copied.",
+   "waiting_no_upnp": "No auto port forward: if they can't join, paste their code.",
+   "connecting": "Connecting... If it takes long, send the host your code.",
+   "connected": "Connected! Starting...",
+   "refused": "Refused: different disc image",
+   "disconnected": "Disconnected: your friend left",
+   "no_code": "The clipboard doesn't hold a code (like 1.2.3.4:51500)"
+  },
+  "code_placeholder": "Press A to paste"
+ },
+ "textures": [
+  {
+   "name": "ico_host",
+   "file_2x": "out_online/2x/ico_host.png",
+   "file_1x": "out_online/1x/ico_host.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_join",
+   "file_2x": "out_online/2x/ico_join.png",
+   "file_1x": "out_online/1x/ico_join.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_paste",
+   "file_2x": "out_online/2x/ico_paste.png",
+   "file_1x": "out_online/1x/ico_paste.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_copy",
+   "file_2x": "out_online/2x/ico_copy.png",
+   "file_1x": "out_online/1x/ico_copy.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_link",
+   "file_2x": "out_online/2x/ico_link.png",
+   "file_1x": "out_online/1x/ico_link.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_unlink",
+   "file_2x": "out_online/2x/ico_unlink.png",
+   "file_1x": "out_online/1x/ico_unlink.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_warning",
+   "file_2x": "out_online/2x/ico_warning.png",
+   "file_1x": "out_online/1x/ico_warning.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "sig_bar_1",
+   "file_2x": "out_online/2x/sig_bar_1.png",
+   "file_1x": "out_online/1x/sig_bar_1.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "sig_bar_2",
+   "file_2x": "out_online/2x/sig_bar_2.png",
+   "file_1x": "out_online/1x/sig_bar_2.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "sig_bar_3",
+   "file_2x": "out_online/2x/sig_bar_3.png",
+   "file_1x": "out_online/1x/sig_bar_3.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "sig_bar_4",
+   "file_2x": "out_online/2x/sig_bar_4.png",
+   "file_1x": "out_online/1x/sig_bar_4.png",
+   "size_2x": [
+    64,
+    64
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_online",
+   "file_2x": "out_nav/2x/ico_online.png",
+   "file_1x": "out_nav/1x/ico_online.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  },
+  {
+   "name": "ico_versus",
+   "file_2x": "out_nav/2x/ico_versus.png",
+   "file_1x": "out_nav/1x/ico_versus.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "fallback": "IA4"
+  }
+ ]
+}

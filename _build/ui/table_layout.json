@@ -1,0 +1,181 @@
+{
+ "name": "table",
+ "space": "unsheared",
+ "geometry": {
+  "x0": 96,
+  "x1": 540,
+  "header_y": 84,
+  "header_h": 22,
+  "row_h": 26,
+  "pitch": 28,
+  "visible": 10,
+  "icon": 24,
+  "name_w": 150,
+  "num_w": 64
+ },
+ "quads": [
+  {
+   "id": "header",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     96,
+     84
+    ],
+    [
+     540,
+     84
+    ],
+    [
+     540,
+     106
+    ],
+    [
+     96,
+     106
+    ]
+   ],
+   "colour": "ink"
+  },
+  {
+   "id": "row_even",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     96,
+     0
+    ],
+    [
+     540,
+     0
+    ],
+    [
+     540,
+     26
+    ],
+    [
+     96,
+     26
+    ]
+   ],
+   "colour": "@face",
+   "joint": "row"
+  },
+  {
+   "id": "row_odd",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     96,
+     0
+    ],
+    [
+     540,
+     0
+    ],
+    [
+     540,
+     26
+    ],
+    [
+     96,
+     26
+    ]
+   ],
+   "colour": "@bg",
+   "joint": "row"
+  },
+  {
+   "id": "totals_rule",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     96,
+     -3
+    ],
+    [
+     540,
+     -3
+    ],
+    [
+     540,
+     -1
+    ],
+    [
+     96,
+     -1
+    ]
+   ],
+   "colour": "gold"
+  },
+  {
+   "id": "sel_frame",
+   "kind": "flat",
+   "role": "chrome",
+   "verts": [
+    [
+     94,
+     -2
+    ],
+    [
+     542,
+     -2
+    ],
+    [
+     542,
+     28
+    ],
+    [
+     94,
+     28
+    ]
+   ],
+   "colour": "gold",
+   "joint": "row_sel"
+  }
+ ],
+ "columns": [
+  {
+   "id": "icon",
+   "kind": "disc_art",
+   "size_1x": [
+    24,
+    24
+   ],
+   "x": 104,
+   "note": "stock icon from the disc (per costume)"
+  },
+  {
+   "id": "name",
+   "kind": "text",
+   "role": "body",
+   "x": 136,
+   "width": 150,
+   "max": "Mr. Game & Watch Jr.",
+   "fit": "body -> caption -> truncate"
+  },
+  {
+   "id": "num_<i>",
+   "kind": "text",
+   "role": "body",
+   "align": "right",
+   "width": 64,
+   "max": "99999",
+   "header_role": "caption",
+   "header_max": "LOSSES",
+   "x_rule": "right edge of column i = x1 - 8 - (ncols - 1 - i) * 64"
+  }
+ ],
+ "rules": [
+  "Header row: ink, caption labels in gold (strings), numbers' headers right-aligned.",
+  "Rows alternate @face / @bg; up to 10 visible, then the kit scroll.",
+  "Numbers are body, tabular (the atlas's digits share one advance): a column never jitters.",
+  "The selected row draws a 2 px gold frame (no lift - a table row is not a button).",
+  "Totals row: the last row, with a gold rule above it and labels in bone Black ('row' role).",
+  "Columns: up to 4 numeric columns of 64 px fit beside a 150 px name at 640x480."
+ ]
+}

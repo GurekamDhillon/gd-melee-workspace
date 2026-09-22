@@ -92,7 +92,8 @@ TEAMS = {"red": "p1", "blue": "p2", "green": "p4"}
 # Two faces from one family. Source Sans 3 (proportional) sets names, labels,
 # sentences and numbers - its default figures are tabular, which the atlas
 # build checks. Hasklug (Hasklig = Source Code Pro, the monospaced sibling)
-# is kept only where fixed width is the point: name tags and name entry.
+# is kept only where fixed width is the point: name tags, name entry and
+# network codes.
 FONTS = {
     "sans": dict(name="Source Sans 3", licence="SIL OFL 1.1", dir="SourceSans3",
                  files={"bold": "SourceSans3-Bold.otf", "black": "SourceSans3-Black.otf"}),
@@ -127,7 +128,42 @@ TYPE_SCALE = [
     dict(role="tag",     size=20, face="mono", weight="black", charset="full",
          use="name tags and the name-entry field: 4 fixed-width cells, so the caret "
              "and the plate never move as letters change"),
+    # Online (out_kit ONLINE.md): addresses like 203.0.113.7:51500 are read aloud and
+    # typed back, so they get fixed cells - digits, dots and the colon line up between
+    # the two players' screens, and a changing code never shifts the copy icon. Hasklug's
+    # zero is dotted, so 0/O never confuse. Bold, not Black: at 16px Black fills the
+    # counters of 6/8/9 and the '.'/':' pair loses its gap.
+    dict(role="code",    size=16, face="mono", weight="bold",  charset="code",
+         use="network codes and addresses (code plate): max 21 characters, "
+             "255.255.255.255:65535 = 201.6 px"),
 ]
+FONT_CHOICE = dict(
+    proportional=dict(
+        face="sans", why=[
+            "Hasklug is monospaced (0.6 em a cell), so a 20-character name at body size is "
+            "168 px against a 136 px portrait; proportional Source Sans 3 sets the longest "
+            "vanilla name, 'Mr. Game & Watch', in 110.5 px.",
+            "Same designer and skeleton as Source Code Pro, which Hasklig is built on: the two "
+            "faces share letter shapes and weights, so the switch between them does not show.",
+            "SIL OFL 1.1 (licence text in SourceSans3/LICENSE.md, files from Adobe's official "
+            "3.052R release). Its CJK companion, Source Han Sans, is also OFL - the second-"
+            "script pages can come from the same family.",
+            "Its default figures are tabular (540 units in Black), so numbers and stats do not "
+            "need a separate monospaced face; font_atlas.py checks digits in every role."]),
+    monospaced=dict(
+        face="mono", roles=["tag", "code"], why=[
+            "Only where fixed cells are the point: the 4-character name tag and name entry "
+            "(the caret and plate never move), and network codes (digits line up, and a code "
+            "that changes never shifts the copy icon; the zero is dotted)."]),
+)
+# Character names on CSS player panels (section 3): the plate is the portrait's width.
+NAME_FIT = dict(
+    plate_1x=136, pad_1x=6, roles=["body", "caption"], max_chars=20,
+    rule="Set in body; if wider than plate - 2*pad, caption; if still wider, truncate "
+         "with '…'. font_atlas.py checks the 20-character test names below.",
+    test_names=["Mr. Game & Watch Jr.", "Captain Falcon Alt 2", "Princess Daisy (SSB)",
+                "Dark Samus & Metroid", "Wario Man, Microgame", "Young Link (Classic)"],
+)
 MIN_SIZE = 12
 SHEAR = 0.25     # italic: drawn by shearing the glyph quads, same angle as the hub
 
@@ -135,8 +171,12 @@ ORDINAL = dict(numeral="display", suffix="title", align="suffix cap top = numera
                suffixes=["st", "nd", "rd", "th"])
 
 
+# IPv4 "a.b.c.d:port" plus room for IPv6 "[hex:...]:port"; anything else falls back to '?'
+CODE = " -.0123456789:?[]ABCDEFabcdefx…"
+
+
 def charset(name):
-    return {"full": ASCII + EXTRA, "caps": CAPS}[name]
+    return {"full": ASCII + EXTRA, "caps": CAPS, "code": CODE}[name]
 
 
 # ------------------------------------------------------------------ checks
@@ -269,6 +309,8 @@ def kit_dict(report):
                            files={w: "%s/%s" % (v["dir"], f) for w, f in v["files"].items()})
                    for k, v in FONTS.items()},
             scale=TYPE_SCALE,
+            choice=FONT_CHOICE,
+            names=NAME_FIT,
             fit=["Slots are sized in px (max_width_1x); a character count is only a guide "
                  "for proportional text.",
                  "If a string is wider than its slot: set it one role smaller (same face); "
@@ -279,6 +321,7 @@ def kit_dict(report):
             ordinal=ORDINAL,
             charsets=dict(full="printable ASCII 0x20-0x7E + extras",
                           caps="ASCII without a-z + extras; engine uppercases hero/display text",
+                          code="network codes only: " + CODE + " (anything else -> '?')",
                           extras=EXTRA),
         ),
         checks=report,
