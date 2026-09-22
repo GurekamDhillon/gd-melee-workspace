@@ -74,7 +74,13 @@ if [ -f "$tu_list" ]; then
         obj="$GW_OUT/$(echo "$f" | tr '/' '_').obj"
         src="$GW_MELEE/$f"
         [ -e "$src" ] || continue
-        if [ ! -f "$obj" ] || [ "$src" -nt "$obj" ] ||
+        # A TU can include its own <stem>_*.inc parts (gmfrontend.c does), which the header
+        # rule above does not see.
+        inc_newer=0
+        for part in "${src%.c}"_*.inc; do
+            if [ -e "$part" ] && [ "$part" -nt "$obj" ]; then inc_newer=1; fi
+        done
+        if [ ! -f "$obj" ] || [ "$src" -nt "$obj" ] || [ "$inc_newer" = 1 ] ||
            { [ -n "$newest_inc" ] && [ "$newest_inc" -nt "$obj" ]; }; then
             printf '%s
 ' "$f" >>"$stale_tus"

@@ -120,8 +120,10 @@ def pad_for(kind, idx, backs):
         for _ in range(downs(k, 0, i)):
             press(lines, "0004")
         press(lines, "0100", gap=110 if (k, i) != (kind, idx) else 400)
+    act = MENUS[kind][4][idx][2]
     for _ in range(backs):
-        press(lines, "0200", gap=200)
+        # a character select screen leaves only on a HELD B (about a second); a tap elsewhere
+        press(lines, "0200", hold=100 if act == "mode" else 6, gap=260)
     lines.append("200 0000 0 0")
     return "\n".join(lines) + "\n"
 
