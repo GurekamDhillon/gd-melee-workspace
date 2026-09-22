@@ -1,0 +1,64 @@
+# pad_np_ready_host.txt - HOST, by hand, a whole game 1 through the lobby (ACE: netplay_local.ps1 -Menu
+# -RealNetwork -Disc ace -PadHost this -PadGuest pad_np_ready_guest.txt). Main menu (cursor on SOLO)
+# > VERSUS > ONLINE > Host a Room; then in the lobby: A = pick (the CSS opens), START = confirm the
+# fighter; A a few times = strike on this side's turns (the coin decides who starts; on the other
+# side's turn A only says whose turn it is); A = ready (A never takes it back); the countdown; GO.
+300 0000 0 0
+4 0004 0 0
+25 0000 0 0
+4 0100 0 0
+90 0000 0 0
+4 0004 0 0
+25 0000 0 0
+4 0100 0 0
+110 0000 0 0
+4 0100 0 0
+1000 0000 0 0
+# lobby, game 1: pick on the CSS (Wolf; one fighter is enough online)
+4 0100 0 0
+260 0000 0 0
+# on the CSS: the coin from Fox to Wolf (ACE), then START
+30 0000 50 80
+18 0000 0 0
+17 0000 0 70
+18 0000 0 0
+10 0000 0 -70
+18 0000 0 0
+10 0000 -70 0
+15 0000 0 0
+4 0100 0 0
+18 0000 0 0
+10 0000 70 0
+15 0000 0 0
+4 0100 0 0
+36 0000 0 0
+4 1000 0 0
+60 0000 0 0
+4 1000 0 0
+400 0000 0 0
+# strikes (and, once the stage is settled, ready): A every 50 frames
+4 0100 0 0
+50 0000 0 0
+4 0100 0 0
+50 0000 0 0
+4 0100 0 0
+50 0000 0 0
+4 0100 0 0
+50 0000 0 0
+4 0100 0 0
+50 0000 0 0
+4 0100 0 0
+50 0000 0 0
+4 0100 0 0
+50 0000 0 0
+4 0100 0 0
+50 0000 0 0
+4 0100 0 0
+50 0000 0 0
+4 0100 0 0
+50 0000 0 0
+4 0100 0 0
+50 0000 0 0
+4 0100 0 0
+50 0000 0 0
+20000 0000 0 0

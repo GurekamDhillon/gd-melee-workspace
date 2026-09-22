@@ -1,27 +1,13 @@
-# host: Online Play > Host Match (rows: Play As, Character, Stage, Stocks, Time, Delay, Host Match)
+# pad_np_menu_host.txt - HOST: main menu (cursor on SOLO) > VERSUS > ONLINE > Host a Room, then idle in
+# the waiting room / lobby (pair with pad_np_menu_guest.txt; the whole game: pad_np_ready_*.txt).
 300 0000 0 0
 4 0004 0 0
 25 0000 0 0
 4 0100 0 0
-70 0000 0 0
+90 0000 0 0
+4 0004 0 0
+25 0000 0 0
 4 0100 0 0
 110 0000 0 0
-4 0004 0 0
-20 0000 0 0
 4 0100 0 0
-60 0000 0 0
-4 0004 0 0
-12 0000 0 0
-4 0004 0 0
-12 0000 0 0
-4 0004 0 0
-12 0000 0 0
-4 0004 0 0
-12 0000 0 0
-4 0004 0 0
-12 0000 0 0
-4 0004 0 0
-12 0000 0 0
-4 0100 0 0
-60 0000 0 0
 20000 0000 0 0
