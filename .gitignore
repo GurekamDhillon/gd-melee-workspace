@@ -128,3 +128,6 @@ __pycache__/
 /_build/replay_batch/
 /_build/replay_batch_*.err
 /_build/gw_mex_sigs_gen.inc*
+
+# README artwork (original, docs/readme) is the one place PNGs are committed
+!docs/readme/*.png
