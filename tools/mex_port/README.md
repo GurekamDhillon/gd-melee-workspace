@@ -168,3 +168,18 @@ disagrees with the hand-written `gw_mex_sigs` table. Anything it cannot parse co
 (varargs, `double`, by-value structs, unknown typedefs, >8 slots) is left out rather than
 guessed. Unlike `gen_bridge.py` it does not read the linker map, so a relink does not require
 re-running it. See `_research/bridge-signatures.md`.
+
+## dump_menu_assets.py
+
+Extracts the 75 vanilla menu/UI archives (MnMaAll, MnSlChr, IfAll, GmRst, ...) from the NTSC-U 1.02 ISO:
+raw copies, decoded texture PNGs (`.usd` files plus `.dat` files without a `.usd`), and a structural
+index (joints/meshes/animations, TexAnim-animated textures, per-texture format/size/tags) plus a
+per-texture `.dat` vs `.usd` comparison (the language-specific baked-text list).
+
+    python tools/mex_port/dump_menu_assets.py            # defaults below
+    python tools/mex_port/dump_menu_assets.py --only MnMaAll.usd --no-raw --index-out tmp/idx
+
+Defaults: `raw/` and `textures/` -> `~/Desktop/meleedump` (never committed, never inside the original-art
+`Desktop/menu` pipeline); `index/` and `MANIFEST.md` (metadata only, no pixels) ->
+`~/Desktop/menu/meleedump`. Textures are found by a typed structural walk (pointers validated against the
+reloc table) and cross-checked by an independent ImageDesc scan; scan-only finds are decoded as `ORPHAN_*`.
