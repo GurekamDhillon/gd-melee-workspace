@@ -131,3 +131,6 @@ __pycache__/
 
 # README artwork (original, docs/readme) is the one place PNGs are committed
 !docs/readme/*.png
+
+# your matchmaking server address (goes into the friends package, not the public repo)
+/_build/netplay_server.txt

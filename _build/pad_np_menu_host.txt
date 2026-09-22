@@ -1,4 +1,4 @@
-# boot to the main menu, then VS Mode > Melee > Match Setup > Online Play
+# host: Online Play > Host Match (rows: Play As, Character, Stage, Stocks, Time, Delay, Host Match)
 300 0000 0 0
 4 0004 0 0
 25 0000 0 0
@@ -9,9 +9,7 @@
 4 0004 0 0
 20 0000 0 0
 4 0100 0 0
-40 0000 0 0
-4 0004 0 0
-12 0000 0 0
+60 0000 0 0
 4 0004 0 0
 12 0000 0 0
 4 0004 0 0
