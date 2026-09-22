@@ -27,7 +27,9 @@ if [ -d "$worktree" ]; then
     echo "removed   $worktree"
 fi
 if [ -d "$root" ]; then
-    rm -rf "$root"
+    # cmd's rmdir /s removes junctions without entering them; rm -rf may follow one into the tree
+    # it points at. The doubled slashes stop Git Bash rewriting the switches as paths.
+    cmd //c rmdir //s //q "$(cygpath -w "$root")"
     echo "removed   $root"
 fi
 echo "branch agent/$name kept; delete with: git -C \"$GW_ROOT/melee\" branch -D agent/$name"

@@ -29,7 +29,11 @@ check() { # repo base worktree
             echo "gone  $w (branch $br kept)"
             case "$w" in */worktrees/*)
                 if [ -d "$GW_ROOT/_build/agents/$name" ]; then
-                    rm -rf "$GW_ROOT/_build/agents/$name" && echo "gone  _build/agents/$name"
+                    # cmd's rmdir /s removes a junction without entering it; rm -rf may follow
+                    # one into the tree it points at (a likely cause of _build/ax86 being wiped
+                    # partway on 2026-09-22 while this script pruned old agent roots).
+                    cmd //c rmdir //s //q "$(cygpath -w "$GW_ROOT/_build/agents/$name")" &&
+                        echo "gone  _build/agents/$name"
                 fi;;
             esac
         else
