@@ -1012,6 +1012,8 @@
 ../masstest/shimobj/gw_replay.obj
 ../masstest/shimobj/gw_snap.obj
 ../masstest/shimobj/gw_rollback.obj
+../masstest/shimobj/gw_net.obj
+../masstest/shimobj/gw_net_tests.obj
 ../masstest/shimobj/gw_mex_graudio.obj
 ../masstest/shimobj/gw_overlay.obj
 ../masstest/shimobj/gw_mex_sss.obj
