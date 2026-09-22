@@ -260,6 +260,8 @@ namespace GDMelee
         public bool UnlockAll = true;
         public bool Keyboard = false;
         public bool CloseOnPlay = false;
+        public int Volume = 50;            // MELEE_VOLUME, 0-100
+        public bool ConsoleSocket = false; // MELEE_CONSOLE_PORT=51700 (scripts console for tools)
 
         public static string AppDir = System.IO.Path.GetDirectoryName(Application.ExecutablePath);
         public static string UserDir = PickUserDir();
@@ -318,6 +320,8 @@ namespace GDMelee
                     case "unlock_all": s.UnlockAll = v == "1"; break;
                     case "keyboard": s.Keyboard = v == "1"; break;
                     case "close_on_play": s.CloseOnPlay = v == "1"; break;
+                    case "volume": { int vol; if (int.TryParse(v, out vol)) s.Volume = Math.Max(0, Math.Min(100, vol)); } break;
+                    case "console_socket": s.ConsoleSocket = v == "1"; break;
                     case "disc":
                         // id|name|kind|path  ('|' cannot appear in a Windows path)
                         string[] p = v.Split(new[] { '|' }, 4);
@@ -337,6 +341,8 @@ namespace GDMelee
             sb.AppendLine("unlock_all=" + (UnlockAll ? "1" : "0"));
             sb.AppendLine("keyboard=" + (Keyboard ? "1" : "0"));
             sb.AppendLine("close_on_play=" + (CloseOnPlay ? "1" : "0"));
+            sb.AppendLine("volume=" + Volume);
+            sb.AppendLine("console_socket=" + (ConsoleSocket ? "1" : "0"));
             foreach (Disc d in Discs)
                 sb.AppendLine("disc=" + d.Id + "|" + d.Name.Replace("|", "/") + "|" + d.Kind.Replace("|", "/") + "|" + d.Path);
             Directory.CreateDirectory(UserDir);
@@ -449,6 +455,9 @@ namespace GDMelee
             // every character, stage and unlockable rule, without touching the save (gmmain_lib.c)
             if (s.UnlockAll) psi.EnvironmentVariables["MELEE_UNLOCK_ALL"] = "1";
             else psi.EnvironmentVariables.Remove("MELEE_UNLOCK_ALL");
+            psi.EnvironmentVariables["MELEE_VOLUME"] = s.Volume.ToString(); // percent of full volume
+            if (s.ConsoleSocket) psi.EnvironmentVariables["MELEE_CONSOLE_PORT"] = "51700"; /* 127.0.0.1 only */
+            else psi.EnvironmentVariables.Remove("MELEE_CONSOLE_PORT");
             if (s.SkipIntro) psi.EnvironmentVariables["MELEE_SKIP_INTRO"] = "1";
             else psi.EnvironmentVariables.Remove("MELEE_SKIP_INTRO");
             if (s.Keyboard) psi.EnvironmentVariables["MELEE_INPUT"] = "keyboard";
@@ -479,22 +488,9 @@ namespace GDMelee
             psi.EnvironmentVariables.Remove("MELEE_MODS");
         }
 
-        public static void BuildTab(TabPage page, MainForm form)
+        public static ModsTab BuildTab(TabPage page, MainForm form, Settings s)
         {
-            Label l = UI.Para(
-                "A mods browser is coming: pick mods from a list, and they are downloaded, checked and installed for you.\r\n\r\n" +
-                "Until then, mods you already have go in the \"mods\" folder next to the game. They are always loaded.\r\n\r\n" +
-                "Your mods work online. The game compares fighters and stages with your opponent by their content, so any " +
-                "fighter or stage you both have can be picked, whether it came from a mod disc or from the mods folder; one " +
-                "only you have is greyed out on the online select screens. Mods that change the rules of the whole game " +
-                "(codes, physics) must match exactly on both sides.");
-            Button open = UI.Btn("Open mods folder", delegate
-            {
-                Directory.CreateDirectory(Game.ModsDir);
-                Process.Start("explorer.exe", "\"" + Game.ModsDir + "\"");
-            });
-            FlowLayoutPanel flow = UI.Column(l, open);
-            page.Controls.Add(flow);
+            return new ModsTab(page, form, s); // ModsBrowser.cs
         }
     }
 
@@ -581,7 +577,7 @@ namespace GDMelee
             Font = UI.Body;
             AutoScaleMode = AutoScaleMode.Dpi;
             StartPosition = FormStartPosition.CenterScreen;
-            ClientSize = new Size(720, 540);
+            ClientSize = new Size(760, 600);
             MinimumSize = new Size(640, 480);
             try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
@@ -618,7 +614,7 @@ namespace GDMelee
             tabs.TabPages.Add(BuildPlayTab());
             tabs.TabPages.Add(BuildOnlineTab());
             TabPage mods = new TabPage("Mods");
-            Mods.BuildTab(mods, this);
+            modsTab = Mods.BuildTab(mods, this, s);
             tabs.TabPages.Add(mods);
             tabs.TabPages.Add(BuildAboutTab());
 
@@ -630,13 +626,24 @@ namespace GDMelee
             SetStatus(Game.MissingFiles().Length > 0
                 ? "Missing game files: " + string.Join(", ", Game.MissingFiles()) + ". Unzip the whole release again."
                 : "Ready.");
-            Shown += delegate { FirstRun(); };
+            Shown += delegate
+            {
+                FirstRun();
+                if (OpenModsOnShow)
+                {
+                    tabs.SelectedIndex = 2;
+                    modsTab.Refresh();
+                }
+            };
             FormClosing += delegate { SaveOptions(); };
         }
 
         public TabControl Tabs { get { return tabs; } }
+        ModsTab modsTab;
+        public bool OpenModsOnShow; // --mods: open on the Mods tab and read the sources
 
         void SetStatus(string t) { status.Text = t; }
+        public void Status(string t) { SetStatus(t); }
 
         // --- Play tab ------------------------------------------------------------------------------
 
@@ -695,6 +702,13 @@ namespace GDMelee
             opts.FlowDirection = FlowDirection.TopDown;
             opts.AutoSize = true;
             opts.Controls.AddRange(new Control[] { unlockAll, skipIntro, keyboard, closeOnPlay });
+            Label volLabel = new Label { AutoSize = true, Margin = new Padding(0, 6, 6, 0), Text = "Game volume: " + s.Volume + "%" };
+            TrackBar vol = new TrackBar { Minimum = 0, Maximum = 100, TickFrequency = 10, SmallChange = 5, LargeChange = 10,
+                                          Value = s.Volume, Width = 180, Height = 30, AutoSize = false, Margin = new Padding(0) };
+            vol.ValueChanged += delegate { s.Volume = vol.Value; volLabel.Text = "Game volume: " + vol.Value + "%"; };
+            vol.MouseUp += delegate { SaveOptions(); };
+            vol.KeyUp += delegate { SaveOptions(); };
+            opts.Controls.Add(UI.Row(volLabel, vol));
 
             playBtn = new Button();
             playBtn.Text = "PLAY";
@@ -709,7 +723,7 @@ namespace GDMelee
 
             TableLayoutPanel bottom = new TableLayoutPanel();
             bottom.Dock = DockStyle.Bottom;
-            bottom.Height = 116;
+            bottom.Height = 150;
             bottom.ColumnCount = 2;
             bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             bottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -1150,6 +1164,7 @@ namespace GDMelee
             Settings s = Settings.Load();
 
             string addIso = null, playName = null, shots = null;
+            bool openMods = false;
             bool play = false;
             for (int i = 0; i < args.Length; i++)
             {
@@ -1158,9 +1173,23 @@ namespace GDMelee
                 else if (a == "--add-iso" && i + 1 < args.Length) addIso = args[++i];
                 else if (a == "--forget-all") { s.Discs.Clear(); s.DefaultId = ""; try { s.Save(); } catch { } }
                 else if (a == "--shots" && i + 1 < args.Length) shots = args[++i];
+                else if (a == "--list-mods") return ModsCli.Run(new string[0], true);
+                else if ((a == "--enable-mod" || a == "--disable-mod") && i + 1 < args.Length)
+                {
+                    ModStore.SetEnabled(args[++i], a == "--enable-mod");
+                    return 0;
+                }
+                else if (a == "--mods") openMods = true;
+                else if (a == "--install-mod" && i + 1 < args.Length)
+                {
+                    List<string> ids = new List<string>();
+                    while (i + 1 < args.Length && !args[i + 1].StartsWith("--")) ids.Add(args[++i]);
+                    return ModsCli.Run(ids.ToArray(), false);
+                }
             }
 
             MainForm form = new MainForm(s);
+            form.OpenModsOnShow = openMods;
             if (addIso != null)
             {
                 Disc d = form.AddPath(addIso, true);

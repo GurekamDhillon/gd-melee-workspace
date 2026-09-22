@@ -99,10 +99,15 @@ Framework 4.8 ships with the OS).
   unlockable rule reports unlocked in `gmmain_lib.c` without writing the save; always on in
   netplay), skip intro (`MELEE_SKIP_INTRO`), keyboard (`MELEE_INPUT=keyboard`), close on play.
 - Online tab: edits `netplay_server.txt` beside the game (what `gw_netplay.c` reads).
-- Mods tab: the hook for the mods browser (charlie C2). All mod logic is in `class Mods`
-  (`ApplyEnvironment`, `BuildTab`). Mods are always loaded (`MELEE_MODS_DIR = mods\`), online
-  too: the game matches fighters and stages per content hash, so there is deliberately no
-  "mods off for online" switch.
+- Mods tab (`launcher/ModsBrowser.cs`): installed mods from `mods/*/mod.json` + `enabled.txt`
+  (tick = enabled for the next boot, Remove), and a browser for the sources in `mods/sources.txt`
+  (Refresh, Install/Update with requirements, conflicts disabled). HTTPS only, sha256 + size
+  checked before opening, zips unpacked entry by entry with path/symlink/size checks into a
+  staging folder. Nothing downloaded is executed. Author docs: `docs/mods-browser.md`; schema and
+  `make_index.py` in `tools/mods_browser/`. Mods are always loaded (`MELEE_MODS_DIR = mods\`),
+  online too - there is deliberately no "mods off for online" switch.
+- Also on the Mods tab: "Console socket for tools" (`MELEE_CONSOLE_PORT=51700`, 127.0.0.1) and
+  "Open scripts folder". On the Play tab: game volume (`MELEE_VOLUME`, default 50).
 - About tab: version (first line of `version.txt`), folders, log, licences, source link.
 - A non-zero exit offers the log, except when the log shows the window was closed first: the
   current exe faults in `webgpu_dawn.dll` while shutting down after a window close (0xC0000005),
@@ -113,7 +118,9 @@ Framework 4.8 ships with the OS).
 - Paths with non-ASCII characters are passed as 8.3 short names (the game takes ANSI paths).
 
 Command line: `--play [disc name]` boots without the window (for shortcuts), `--add-iso <path>`,
-`--forget-all`, `--shots <dir>` renders each tab to a PNG and exits (for docs).
+`--forget-all`, `--shots <dir>` renders each tab to a PNG and exits (for docs), `--mods` opens on
+the Mods tab and reads the sources, `--install-mod <id>...`, `--list-mods`, `--enable-mod <id>`,
+`--disable-mod <id>` (results in `userdata/mods.log`, exit code 1 on a failure).
 
 ## Why no GitHub Actions build
 

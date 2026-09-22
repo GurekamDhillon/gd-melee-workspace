@@ -56,8 +56,9 @@ $w.Close()
 # --- compile --------------------------------------------------------------------------------------
 $cscArgs = @("/nologo", "/target:winexe", "/optimize+", "/platform:anycpu",
           "/out:$Out", "/win32icon:$ico", "/win32manifest:$(Join-Path $src 'app.manifest')",
-          "/r:System.dll", "/r:System.Drawing.dll", "/r:System.Windows.Forms.dll",
-          (Join-Path $src "GDMeleeLauncher.cs"))
+          "/r:System.dll", "/r:System.Core.dll", "/r:System.Drawing.dll", "/r:System.Windows.Forms.dll",
+          "/r:System.IO.Compression.dll", "/r:System.IO.Compression.FileSystem.dll", "/r:System.Web.Extensions.dll",
+          (Join-Path $src "GDMeleeLauncher.cs"), (Join-Path $src "ModsBrowser.cs"))
 & $csc @cscArgs
 if ($LASTEXITCODE -ne 0) { throw "csc failed ($LASTEXITCODE)" }
 Remove-Item $obj -Recurse -Force

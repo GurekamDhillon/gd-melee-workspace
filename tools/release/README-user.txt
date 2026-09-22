@@ -53,6 +53,16 @@ CONTROLS
     L = R (shield)    U = L (shield)    ; = Z (grab)    Enter = Start
 
 
+MODS AND SCRIPTS
+  The Mods tab lists the mods in the mods folder: untick one to switch it off at the next start,
+  or Remove it. To get new mods, "Edit sources..." and add sources you trust (a GitHub repo like
+  owner/repo, or an https link to an index) - none are listed by default. "Refresh sources" shows
+  what they offer; Install downloads a mod and anything it needs, checks it and unpacks it.
+  Nothing downloaded is run by the launcher; mod scripts run in the game's sandbox.
+  Lua scripts: scripts\ next to the game (examples in scripts\examples). Press ` in the game for
+  the console.
+
+
 ONLINE
   See "HOW TO PLAY ONLINE.txt". Both players need this same release of GD's Melee.
   Mods are welcome online: fighters and stages are matched with your opponent by their content,
@@ -75,7 +85,8 @@ FILES
   GD Melee.exe        the launcher
   melee-pc.exe        the game (you can also run it directly: melee-pc.exe --iso "C:\path\melee.iso")
   ui\                 GD's Melee's own menu art
-  mods\               your mods, always loaded (a mods browser is coming)
+  mods\               your mods (the Mods tab manages them), sources.txt says where to find more
+  scripts\            Lua scripts; examples\ holds the examples
   userdata\           your settings and saves (created on first run)
   LICENSES\           licences of the port and every library in it
   MANIFEST.sha256     checksums of every file in this release

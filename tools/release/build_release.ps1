@@ -88,8 +88,13 @@ New-Item -ItemType Directory -Force -Path $stage | Out-Null
 Write-Output "staging $name"
 Write-Output "  melee $meleeShort, workspace $wsRev, MSVC runtime from $crt"
 
-foreach ($f in "melee-pc.exe", "melee-pc.map", "SDL3.dll", "webgpu_dawn.dll", "initial_pipeline_cache.db", "initial_pipeline_cache.core") {
-  Copy-In (Join-Path $GameDir $f) $f
+foreach ($f in "melee-pc.exe", "melee-pc.map") { Copy-In (Join-Path $GameDir $f) $f }
+# the runtime libraries and the pipeline seed: from -GameDir when it has them (a lane's build root
+# usually does not), else from _build
+foreach ($f in "SDL3.dll", "webgpu_dawn.dll", "initial_pipeline_cache.db", "initial_pipeline_cache.core") {
+  $src = Join-Path $GameDir $f
+  if (-not (Test-Path $src)) { $src = Join-Path $build $f }
+  Copy-In $src $f
 }
 foreach ($f in "msvcp140.dll", "msvcp140_atomic_wait.dll", "vcruntime140.dll") { Copy-In (Join-Path $crt $f) $f }
 
@@ -108,10 +113,12 @@ Copy-In (Join-Path $PSScriptRoot "THIRD-PARTY-NOTICES.txt") "LICENSES\THIRD-PART
 foreach ($l in Get-ChildItem (Join-Path $PSScriptRoot "licenses") -Filter *.txt) { Copy-In $l.FullName ("LICENSES\" + $l.Name) }
 New-Item -ItemType Directory -Force -Path (Join-Path $stage "mods") | Out-Null
 Set-Content -Path (Join-Path $stage "mods\README.txt") -Encoding ascii -Value @'
-Mods go in this folder; the game always loads them, online too. Fighters and stages are matched
-with your opponent by their content, so anything you both have can be picked online. A mods
-browser that downloads and installs mods for you is coming.
+Mods go in this folder, one folder per mod (mod.json + files\ and/or scripts\). The launcher's Mods
+tab installs, updates, enables and removes them; sources.txt says where it looks for mods to
+install (none are listed by default - add the ones you trust). The game loads every enabled mod,
+online too: fighters and stages are matched with your opponent by their content.
 '@
+Copy-In (Join-Path $root "tools\mods_browser\sources.example.txt") "mods\sources.txt"
 # Lua example scripts (melee/pc/scripts/examples, the same ones compiled in as builtin:<name>)
 $examples = Join-Path $melee "pc\scripts\examples"
 if (Test-Path $examples) {

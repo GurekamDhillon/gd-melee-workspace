@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/GurekamDhillon/gd-melee-workspace/blob/master/tools/mods_browser/gdmelee-mods.schema.json",
+  "title": "GD's Melee mod source index (gdmelee-mods.json)",
+  "description": "The list of mods one source offers to the GD's Melee mods browser. See docs/mods-browser.md.",
+  "type": "object",
+  "required": ["schema", "mods"],
+  "properties": {
+    "schema": { "const": 1, "description": "Index format version." },
+    "name": { "type": "string", "description": "The source's display name." },
+    "homepage": { "type": "string", "format": "uri" },
+    "mods": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/mod" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+      "not": { "const": "targettest" },
+      "description": "The mod's id: also its folder name in mods/. Lower-case letters, digits, '.', '_' and '-'."
+    },
+    "mod": {
+      "type": "object",
+      "required": ["id", "version", "url", "sha256", "size"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "version": { "type": "string", "description": "Any string; a different string than the installed one offers an update." },
+        "kind": {
+          "enum": ["base", "fighter", "stage", "misc", "script"],
+          "default": "misc",
+          "description": "As in mod.json (docs/mods-packaging.md). 'script' = only Lua scripts."
+        },
+        "pack": { "type": "string", "description": "The family a mod belongs to (e.g. a split mod disc)." },
+        "description": { "type": "string" },
+        "authors": { "type": "string" },
+        "homepage": { "type": "string", "format": "uri" },
+        "requires": { "type": "array", "items": { "$ref": "#/$defs/id" }, "default": [] },
+        "conflicts": { "type": "array", "items": { "$ref": "#/$defs/id" }, "default": [] },
+        "api_version": {
+          "type": "integer", "minimum": 1,
+          "description": "Scripts only: the scripting API the mod needs (docs/scripting.md)."
+        },
+        "url": {
+          "type": "string",
+          "description": "The mod's zip: an https URL, or a path relative to the index's own URL. The zip has mod.json at its top level (or inside one top folder), then files/ and/or scripts/."
+        },
+        "sha256": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$", "description": "Of the zip." },
+        "size": { "type": "integer", "minimum": 1, "description": "The zip's size in bytes." }
+      },
+      "additionalProperties": true
+    }
+  }
+}

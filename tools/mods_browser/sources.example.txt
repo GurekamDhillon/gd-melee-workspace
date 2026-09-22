@@ -1,0 +1,11 @@
+# GD's Melee mod sources - where the Mods tab looks for mods to install.
+# One source per line; '#' starts a comment. No source is listed by default: GD's Melee does
+# not vouch for anyone's mods. Add the ones you trust.
+#
+#   owner/repo                     a GitHub repo: its gdmelee-mods.json (at the repo root, or
+#                                  as an asset of its latest release)
+#   owner/repo@v1.2                the same at a tag or branch
+#   https://github.com/owner/repo  the same, as a URL
+#   https://example.org/my-index.json   any index file served over https
+#
+# The index format is docs/mods-browser.md in the GD's Melee workspace repository.
