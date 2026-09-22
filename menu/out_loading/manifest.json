@@ -1,0 +1,31 @@
+{
+ "provenance": "Original. Layout, motion and mask from pipeline/loading.py.",
+ "convert": "from melee/: python pc/tools/png2gx.py --layout ../menu/out_loading/loading_layout.json --outdir ../_build/ui",
+ "textures": [
+  {
+   "name": "ico_bolt",
+   "file_2x": "out_loading/2x/ico_bolt.png",
+   "file_1x": "out_loading/1x/ico_bolt.png",
+   "size_2x": [
+    128,
+    128
+   ],
+   "format": "I4",
+   "fallback": "IA4",
+   "min_draw_1x": 24,
+   "why": "the VS mark between the two fighters' cards: a lightning bolt",
+   "topology": [
+    1,
+    0
+   ]
+  }
+ ],
+ "memory_2x_per_screen_kb": {
+  "loading_local": 264.0,
+  "loading_online": 232.0,
+  "loading_four": 224.0
+ },
+ "checks": {
+  "errors": []
+ }
+}

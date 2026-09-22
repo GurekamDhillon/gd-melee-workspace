@@ -1,0 +1,270 @@
+{
+ "fps": 60,
+ "format": "hub_motion.json: tracks, from_current, interpolation and transform rules are identical; see out_kit/kit_motion.json. 'loop' as in out_online/online_motion.json",
+ "space": "unsheared - applied before the screen shear",
+ "events": {
+  "cards_in": {
+   "applies_to": "on arrival: P1 slides in from the left, P2 from the right (compact cards: each from below, 3 frames apart)",
+   "tracks": [
+    {
+     "target": "card_p1",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": -48,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": 4,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 16,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_p1",
+     "kind": "joint",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_p2",
+     "kind": "joint",
+     "channel": "TRA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 48,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 12,
+       "value": -4,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 16,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "card_p2",
+     "kind": "joint",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 16
+  },
+  "vs_pop": {
+   "applies_to": "the VS mark, after the cards land",
+   "tracks": [
+    {
+     "target": "vs",
+     "kind": "joint",
+     "channel": "SCA_X",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 16,
+       "value": 1.3,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 22,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "vs",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 16,
+       "value": 1.3,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 22,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 22
+  },
+  "stage_in": {
+   "applies_to": "the stage plate rises into place",
+   "tracks": [
+    {
+     "target": "stage",
+     "kind": "joint",
+     "channel": "TRA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 16,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": -2,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 14,
+       "value": 0,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    },
+    {
+     "target": "stage",
+     "kind": "joint",
+     "channel": "ALPHA",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 0,
+       "interp": "LIN",
+       "slope": 0.0
+      },
+      {
+       "frame": 8,
+       "value": 1,
+       "interp": "LIN",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 14
+  },
+  "ready": {
+   "applies_to": "the bar tops out: the fill pops (state 'ready' turns it ok-green)",
+   "tracks": [
+    {
+     "target": "bar_fill",
+     "kind": "joint",
+     "channel": "SCA_Y",
+     "keys": [
+      {
+       "frame": 0,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 4,
+       "value": 1.8,
+       "interp": "SPL",
+       "slope": 0.0
+      },
+      {
+       "frame": 10,
+       "value": 1,
+       "interp": "SPL",
+       "slope": 0.0
+      }
+     ]
+    }
+   ],
+   "length_frames": 10
+  }
+ },
+ "sequences": {
+  "arrive": [
+   {
+    "event": "cards_in"
+   },
+   {
+    "event": "vs_pop",
+    "at_frame": 6
+   },
+   {
+    "event": "stage_in",
+    "at_frame": 8
+   }
+  ],
+  "ready": [
+   {
+    "event": "ready"
+   }
+  ]
+ }
+}

@@ -671,6 +671,7 @@ def draw_chrome(sc, ch, title, crumbs, hints, desc):
     sc.quad((FOOTER[0] + 10, FOOTER[1] + 7, FOOTER[0] + 16, FOOTER[3] - 7), "gold")
     fb = base_for("body", FOOTER[1], FOOTER[3])
     hx = FOOTER[0] + 24
+    end = hx                                   # a screen with no hints (the loading screen)
     gy0 = fb - cap("body") / 2 - 8
     for g, t in hints:
         gw = GLY_W[g]
