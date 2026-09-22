@@ -10,6 +10,12 @@
 #
 # -Seconds N closes both after N seconds (for scripted tests); -PadHost/-PadGuest drive either side
 # from a pad script instead of the device; -Delay sets the input delay (frames).
+#
+# SIMULATED NETWORK: -NetSim <preset | settings>, applied to both copies' outgoing packets (so the
+# round trip is twice the lag). Change it mid-match with:  powershell -File _build\netsim.ps1 bad
+# (it rewrites runs\netsim.txt, which both copies re-read every second).
+#   presets: off, lan, good, wifi, far, bad, awful   (see netsim.ps1)
+#   settings: "lag=60,jitter=15,loss=5,burst=2,dup=1,spike=5000:300"  (ms, ms, %, packets, %, ms:ms)
 param(
   [string]$Scene = "mode=vs;at=match;p1=fox/c0/hu;p2=marth/c0/hu;stage=battlefield;time=480",
   [int]$Delay = 2,
@@ -18,7 +24,8 @@ param(
   [double]$Volume = 0.03,
   [int]$Seconds = 0,
   [string]$PadHost = "",
-  [string]$PadGuest = ""
+  [string]$PadGuest = "",
+  [string]$NetSim = "off"
 )
 $ErrorActionPreference = "Stop"
 $build = $PSScriptRoot
@@ -64,6 +71,11 @@ function Link-RunFile($src, $dstDir) {
 Add-Type -AssemblyName System.Windows.Forms
 $wa = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
 $w = [int]($wa.Width / 2)
+
+# The live network-conditions file both copies watch. Start it from -NetSim.
+$netsimFile = Join-Path $build "runs\netsim.txt"
+New-Item -ItemType Directory -Force -Path (Split-Path $netsimFile) | Out-Null
+& (Join-Path $build "netsim.ps1") $NetSim
 $h = [int]([Math]::Min($wa.Height, $w * 3 / 4))
 
 function Start-Side($tag, $label, $netplay, $device, $x, $pad, $vol) {
@@ -96,6 +108,7 @@ function Start-Side($tag, $label, $netplay, $device, $x, $pad, $vol) {
   $env:MELEE_NETPLAY = $netplay
   $env:MELEE_NETPLAY_DELAY = "$Delay"
   $env:MELEE_INPUT = $device
+  $env:MELEE_NET_SIM_FILE = $netsimFile
   $env:MELEE_RUN_LABEL = $label
   $env:MELEE_WINDOW_X = "$($wa.X + $x)"
   $env:MELEE_WINDOW_Y = "$($wa.Y)"
