@@ -7,8 +7,8 @@ WHAT YOU NEED
   - A GameCube controller (Wii U / Mayflash adapter in Wii U mode), an Xbox-style pad, or a keyboard.
 
 START THE GAME
-  Double-click "Play GD Melee.bat". The first time, pick your .iso file (it is remembered).
-  Keyboard players: use "Play GD Melee (keyboard).bat" instead.
+  Double-click "GD Melee.exe". The first time, pick your .iso file (it is remembered), then PLAY.
+  Keyboard players: tick "Keyboard controls" on the Play tab first.
   If Windows says "Windows protected your PC": More info > Run anyway.
   If Windows Firewall asks about melee-pc.exe: tick BOTH Private and Public, then Allow.
   (Without that, your friend's connection is blocked.)

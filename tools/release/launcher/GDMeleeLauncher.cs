@@ -133,13 +133,14 @@ namespace GDMelee
                     d.Title = CStr(h, 0x20, 0x3E0);
                     bool nkit = Encoding.ASCII.GetString(h, 0x200, 4) == "NKIT";
 
-                    if (!d.GameId.StartsWith("GAL"))
+                    // Training Mode - Community Edition is Melee NTSC 1.02 under its own game ID.
+                    bool tmce = d.GameId == "GTME01";
+                    if (!d.GameId.StartsWith("GAL") && !tmce)
                     {
-                        d.Message = "This disc is \"" + d.Title + "\" (" + d.GameId + "), not Super Smash Bros. Melee." +
-                                    (d.GameId.StartsWith("GTM") ? "\r\nTraining Mode (TM-CE) discs are not supported yet." : "");
+                        d.Message = "This disc is \"" + d.Title + "\" (" + d.GameId + "), not Super Smash Bros. Melee.";
                         return d;
                     }
-                    if (d.GameId != "GALE01")
+                    if (d.GameId != "GALE01" && !tmce)
                     {
                         string region = d.GameId[3] == 'P' ? "PAL (Europe)" : d.GameId[3] == 'J' ? "Japanese" : "\"" + d.GameId + "\"";
                         d.Message = "This is the " + region + " version of Melee. GD's Melee needs the NTSC-U (USA) disc, game ID GALE01.";
@@ -181,6 +182,18 @@ namespace GDMelee
                             d.Verdict = DiscVerdict.Warn;
                             d.Message = "The disc is Melee 1.02 but its files differ from the retail disc. Mods that patch the game's code may not work.";
                         }
+                    }
+                    else if (tmce)
+                    {
+                        d.Kind = "Training Mode (TM-CE)";
+                        d.Verdict = DiscVerdict.Warn;
+                        d.Message = "This disc boots, but its special features (the training lab and its menus) aren't supported yet: it plays like vanilla Melee for now.";
+                    }
+                    else if (d.Title.IndexOf("20XX", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        d.Kind = "20XX: " + d.Title;
+                        d.Verdict = DiscVerdict.Warn;
+                        d.Message = "This disc boots, but its special features (the 20XX menus and codes) aren't supported yet: it plays like vanilla Melee for now.";
                     }
                     else
                     {
@@ -244,6 +257,7 @@ namespace GDMelee
         public List<Disc> Discs = new List<Disc>();
         public string DefaultId = "";
         public bool SkipIntro = true;
+        public bool UnlockAll = true;
         public bool Keyboard = false;
         public bool CloseOnPlay = false;
 
@@ -301,6 +315,7 @@ namespace GDMelee
                 {
                     case "default": s.DefaultId = v; break;
                     case "skip_intro": s.SkipIntro = v == "1"; break;
+                    case "unlock_all": s.UnlockAll = v == "1"; break;
                     case "keyboard": s.Keyboard = v == "1"; break;
                     case "close_on_play": s.CloseOnPlay = v == "1"; break;
                     case "disc":
@@ -319,6 +334,7 @@ namespace GDMelee
             sb.AppendLine("# GD's Melee launcher settings. Delete this file to start over (your saves are kept in saves\\).");
             sb.AppendLine("default=" + DefaultId);
             sb.AppendLine("skip_intro=" + (SkipIntro ? "1" : "0"));
+            sb.AppendLine("unlock_all=" + (UnlockAll ? "1" : "0"));
             sb.AppendLine("keyboard=" + (Keyboard ? "1" : "0"));
             sb.AppendLine("close_on_play=" + (CloseOnPlay ? "1" : "0"));
             foreach (Disc d in Discs)
@@ -430,6 +446,9 @@ namespace GDMelee
             psi.UseShellExecute = false;
             psi.EnvironmentVariables["MELEE_CARD_PATH"] = AnsiSafe(saves);   // one memory card per disc
             if (RunDir != Settings.AppDir) psi.EnvironmentVariables["MELEE_CACHE_DIR"] = AnsiSafe(RunDir);
+            // every character, stage and unlockable rule, without touching the save (gmmain_lib.c)
+            if (s.UnlockAll) psi.EnvironmentVariables["MELEE_UNLOCK_ALL"] = "1";
+            else psi.EnvironmentVariables.Remove("MELEE_UNLOCK_ALL");
             if (s.SkipIntro) psi.EnvironmentVariables["MELEE_SKIP_INTRO"] = "1";
             else psi.EnvironmentVariables.Remove("MELEE_SKIP_INTRO");
             if (s.Keyboard) psi.EnvironmentVariables["MELEE_INPUT"] = "keyboard";
@@ -547,7 +566,7 @@ namespace GDMelee
         TabControl tabs;
         ListView list;
         Button playBtn, changeBtn, renameBtn, forgetBtn, defaultBtn;
-        CheckBox skipIntro, keyboard, closeOnPlay;
+        CheckBox unlockAll, skipIntro, keyboard, closeOnPlay;
         Label status, detail;
         TextBox serverBox;
         Label serverState;
@@ -562,7 +581,7 @@ namespace GDMelee
             Font = UI.Body;
             AutoScaleMode = AutoScaleMode.Dpi;
             StartPosition = FormStartPosition.CenterScreen;
-            ClientSize = new Size(720, 520);
+            ClientSize = new Size(720, 540);
             MinimumSize = new Size(640, 480);
             try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
@@ -663,10 +682,11 @@ namespace GDMelee
             detail.ForeColor = Color.DimGray;
             detail.AutoEllipsis = true;
 
+            unlockAll = new CheckBox { Text = "Unlock every character and stage (your save is not changed)", Checked = s.UnlockAll, AutoSize = true };
             skipIntro = new CheckBox { Text = "Skip the intro movie", Checked = s.SkipIntro, AutoSize = true };
             keyboard = new CheckBox { Text = "Keyboard controls (no controller)", Checked = s.Keyboard, AutoSize = true };
             closeOnPlay = new CheckBox { Text = "Close this launcher when the game starts", Checked = s.CloseOnPlay, AutoSize = true };
-            foreach (CheckBox c in new[] { skipIntro, keyboard, closeOnPlay })
+            foreach (CheckBox c in new[] { unlockAll, skipIntro, keyboard, closeOnPlay })
             {
                 c.Margin = new Padding(0, 0, 18, 2);
                 c.CheckedChanged += delegate { SaveOptions(); };
@@ -674,7 +694,7 @@ namespace GDMelee
             FlowLayoutPanel opts = new FlowLayoutPanel();
             opts.FlowDirection = FlowDirection.TopDown;
             opts.AutoSize = true;
-            opts.Controls.AddRange(new Control[] { skipIntro, keyboard, closeOnPlay });
+            opts.Controls.AddRange(new Control[] { unlockAll, skipIntro, keyboard, closeOnPlay });
 
             playBtn = new Button();
             playBtn.Text = "PLAY";
@@ -689,7 +709,7 @@ namespace GDMelee
 
             TableLayoutPanel bottom = new TableLayoutPanel();
             bottom.Dock = DockStyle.Bottom;
-            bottom.Height = 96;
+            bottom.Height = 116;
             bottom.ColumnCount = 2;
             bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             bottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -769,6 +789,7 @@ namespace GDMelee
         void SaveOptions()
         {
             if (skipIntro == null) return;
+            s.UnlockAll = unlockAll.Checked;
             s.SkipIntro = skipIntro.Checked;
             s.Keyboard = keyboard.Checked;
             s.CloseOnPlay = closeOnPlay.Checked;
@@ -834,7 +855,9 @@ namespace GDMelee
             d.Kind = info.Kind;
             d.Name = info.Kind.StartsWith("Melee 1.02 (vanilla)") ? "Melee" :
                      info.Kind.StartsWith("ACE") ? "ACE" :
-                     info.Kind.StartsWith("Akaneia") ? "Akaneia" : Path.GetFileNameWithoutExtension(path);
+                     info.Kind.StartsWith("Akaneia") ? "Akaneia" :
+                     info.Kind.StartsWith("Training Mode") ? "TM-CE" :
+                     info.Kind.StartsWith("20XX") ? "20XX" : Path.GetFileNameWithoutExtension(path);
             d.Id = s.NewId(d.Name);
             d.Path = path;
             s.Discs.Add(d);

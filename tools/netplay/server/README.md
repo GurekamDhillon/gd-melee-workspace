@@ -34,7 +34,7 @@ The online package carries the server address in `netplay_server.txt` next to `m
 your.vps.address:51600
 ```
 
-Build the package with it filled in: `powershell -File tools\netplay\make_package.ps1 -Server your.vps.address:51600`.
+Build the package with it filled in: `powershell -File tools\netplay\make_package.ps1 -Server your.vps.address:51600` (a wrapper over `tools\release\build_release.ps1`; players can also change the server in the launcher's Online tab).
 (`MELEE_NETPLAY_SERVER` overrides the file.) Without a server, the game falls back to swapping
 addresses by hand.
 

@@ -65,7 +65,16 @@ Three independent layers; any one of them failing stops the release.
 3. The same check on the finished zip, and once more in `publish.ps1` on the exact upload.
 
 Memory-card saves are **not** shipped (the friends package used to include unlocked-everything
-saves): a GCI embeds Melee's own banner and icon graphics. Each player starts a fresh save.
+saves): a GCI embeds Melee's own banner and icon graphics. Each player starts a fresh save, and
+the launcher's "Unlock every character and stage" (MELEE_UNLOCK_ALL) does in code what the card
+did.
+
+## The friends zip
+
+`tools/netplay/make_package.ps1` (and `_build/Build zip for friends.bat`, copied to the Desktop)
+is now a wrapper: `build_release.ps1 -Version <VERSION>-friends -Server <_build/netplay_server.txt>`
+into `_build/release/friends/`, then copied to `Desktop/GDMelee-Online[.zip]`. Same guard, same
+launcher; the old `launch.ps1`, the `nomods` folder and the shipped `card/` saves are gone.
 
 Tested negatives (all caught): an ISO chunk renamed `.txt`, a GCI renamed `.txt`, a DOL chunk, a
 fake HSD archive named `.gxtex`, a `.dat`, a file in an `ace/` folder, an unlisted `ui/` file, a
@@ -79,13 +88,16 @@ Framework 4.8 ships with the OS).
 - First run: explains that no game data is included, then asks for the `.iso`.
 - Every picked file is probed: disc magic, game ID `GALE01`, revision 2, then the file table.
   Detected: `Melee 1.02 (vanilla)` (1212 FST entries), `ACE (m-ex mod)` (`MxDt.dat` + ACE-only
-  files such as `AltSlippiCSS.dat`), `Akaneia (m-ex mod)`, other m-ex or 1.02 mods (allowed with a
-  warning), and refusals with the reason (PAL/NTSC-J, 1.00/1.01, TM-CE, not GameCube, Wii,
-  RVZ/WIA/CISO with the Dolphin conversion hint).
+  files such as `AltSlippiCSS.dat`), `Akaneia (m-ex mod)`, `Training Mode (TM-CE)` (game ID
+  `GTME01`) and `20XX` (title) - both allowed with "boots, but its special features aren't
+  supported yet" - other m-ex or 1.02 mods (allowed with a warning), and refusals with the reason
+  (PAL/NTSC-J, 1.00/1.01, not Melee, not GameCube, Wii, RVZ/WIA/CISO with the Dolphin hint).
 - Several discs ("modpacks"): Add disc / Change ISO (keeps the disc's saves) / Rename / Make
   default / Forget. Double-click or PLAY boots the selected one.
 - One memory card per disc: `MELEE_CARD_PATH = userdata\saves\<disc id>`.
-- Options: skip intro (`MELEE_SKIP_INTRO`), keyboard (`MELEE_INPUT=keyboard`), close on play.
+- Options: unlock everything (`MELEE_UNLOCK_ALL=1`, default on: every character, stage and
+  unlockable rule reports unlocked in `gmmain_lib.c` without writing the save; always on in
+  netplay), skip intro (`MELEE_SKIP_INTRO`), keyboard (`MELEE_INPUT=keyboard`), close on play.
 - Online tab: edits `netplay_server.txt` beside the game (what `gw_netplay.c` reads).
 - Mods tab: the hook for the mods browser (charlie C2). All mod logic is in `class Mods`
   (`ApplyEnvironment`, `BuildTab`). Mods are always loaded (`MELEE_MODS_DIR = mods\`), online

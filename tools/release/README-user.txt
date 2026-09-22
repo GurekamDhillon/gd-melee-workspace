@@ -10,6 +10,8 @@ WHAT YOU NEED
   - A disc image of Super Smash Bros. Melee, NTSC-U (USA) revision 1.02, as a plain .iso
     (game ID GALE01). Dump it from your own disc (a Wii with CleanRip, or Dolphin).
     The ACE and Akaneia builds, which are made from that disc, work too.
+    Training Mode (TM-CE) and 20XX discs boot too, but their own features (the training lab,
+    the 20XX menus) are not supported yet: they play like vanilla Melee for now.
     Compressed images (.rvz, .ciso) must be converted to .iso first: in Dolphin, right-click the
     game > Convert File... > ISO.
   - A controller: a GameCube controller through a Wii U / Mayflash adapter (Wii U mode), an Xbox-
@@ -32,6 +34,9 @@ MORE THAN ONE DISC ("MODPACKS")
     Change ISO...  point a disc at a different file (a newer version of a mod, or the file moved).
                    Its saves stay.
     Forget         remove it from the list. The .iso itself is never touched, and its saves stay.
+  "Unlock every character and stage" (on by default) opens the whole roster, all stages and the
+  unlockable rules without touching your save; untick it to play the unlocks the normal way.
+  Online matches always have everything unlocked for both players.
   Each disc keeps its own memory card, in userdata\saves\<disc>. Deleting userdata\launcher.cfg
   makes the launcher forget everything and ask again (saves are kept).
 
