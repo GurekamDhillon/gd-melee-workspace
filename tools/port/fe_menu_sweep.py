@@ -80,8 +80,16 @@ MENUS = {
 }
 
 
+HIDDEN = set()  # labels locked on this card (--hide): vanilla, and the frontend, leave them out
+
+
+def visible(kind):
+    return [i for i, it in enumerate(MENUS[kind][4]) if it[1] not in HIDDEN]
+
+
 def ranks(kind):
     title, style, hero, back, items = MENUS[kind]
+    items = [items[i] for i in visible(kind)]
     if style == "list":
         return list(range(len(items)))
     order = [i for i, it in enumerate(items) if it[0] == hero] or [0]
@@ -93,8 +101,10 @@ def ranks(kind):
 
 
 def downs(kind, frm, to):
+    """Down presses from the first visible item to item index `to`."""
     r = ranks(kind)
-    return (r[to] - r[frm]) % len(r)
+    v = visible(kind)
+    return (r[v.index(to)] - r[0]) % len(r)
 
 
 def path_to(kind):
@@ -140,6 +150,11 @@ def check(kind, idx, log):
     title, style, hero, back, items = MENUS[kind]
     sel, label, act, arg = items[idx]
     esc = re.escape
+    if label in HIDDEN:
+        n = len(items)
+        hid = re.search(r"frontend: menu %s \(kind %d, \w+\), %d of %d items shown" %
+                        (esc(title), kind, len(visible(kind)), n), log) is not None
+        return hid, "locked on this card - hidden (%d of %d shown): %s" % (len(visible(kind)), n, hid)
     reopened = re.search(r'frontend: menu %s \(kind %d.*cursor on "%s"' % (esc(title), kind, esc(label)),
                          log.split('confirm "%s"' % label, 1)[-1]) is not None
     if act == "mode":
@@ -168,7 +183,10 @@ def main():
     ap.add_argument("--jobs", type=int, default=3)
     ap.add_argument("--list", action="store_true")
     ap.add_argument("--seconds", type=int, default=0)
+    ap.add_argument("--hide", default="", help="comma-separated labels locked on this card, "
+                    "e.g. ALL-STAR,SOUND TEST (the ACE card)")
     a = ap.parse_args()
+    HIDDEN.update(x.strip() for x in a.hide.split(",") if x.strip())
     todo = [(k, i) for k, i in plan()
             if a.only in "%s/%s" % (MENUS[k][0], MENUS[k][4][i][1])]
     outdir = os.path.join(ROOT, "_build", "tmp", "fe_sweep", a.disc)
@@ -177,6 +195,13 @@ def main():
     for n, (k, i) in enumerate(todo):
         act = MENUS[k][4][i][2]
         backs = {"mode": 3, "native": 3, "sub": 1, "setup": 1}[act]
+        if MENUS[k][4][i][1] in HIDDEN:
+            k2, i2 = path_to(k)[-1] if path_to(k) else (0, 0)
+            # a locked item: just open its menu and look
+            with open(os.path.join(outdir, "%02d.txt" % n), "w") as f:
+                f.write(pad_for(k2, i2, 0))
+            jobs.append((n, k, i, os.path.join(outdir, "%02d.txt" % n)))
+            continue
         pad = os.path.join(outdir, "%02d.txt" % n)
         with open(pad, "w") as f:
             f.write(pad_for(k, i, backs))
