@@ -1019,3 +1019,5 @@
 ../masstest/shimobj/gw_overlay.obj
 ../masstest/shimobj/gw_mex_sss.obj
 ../masstest/shimobj/gw_uigen.obj
+../masstest/shimobj/gw_mods.obj
+../masstest/shimobj/gw_mexid.obj
