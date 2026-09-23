@@ -460,7 +460,7 @@ namespace GDMelee
             else psi.EnvironmentVariables.Remove("MELEE_CONSOLE_PORT");
             if (s.SkipIntro) psi.EnvironmentVariables["MELEE_SKIP_INTRO"] = "1";
             else psi.EnvironmentVariables.Remove("MELEE_SKIP_INTRO");
-            if (s.Keyboard) psi.EnvironmentVariables["MELEE_INPUT"] = "keyboard";
+            if (s.Keyboard) psi.EnvironmentVariables["MELEE_INPUT"] = "keyboard+"; // keyboard on the first empty port; controllers keep working
             else psi.EnvironmentVariables.Remove("MELEE_INPUT");
             Mods.ApplyEnvironment(s, disc, psi);
             return Process.Start(psi);
@@ -691,7 +691,7 @@ namespace GDMelee
 
             unlockAll = new CheckBox { Text = "Unlock every character and stage (your save is not changed)", Checked = s.UnlockAll, AutoSize = true };
             skipIntro = new CheckBox { Text = "Skip the intro movie", Checked = s.SkipIntro, AutoSize = true };
-            keyboard = new CheckBox { Text = "Keyboard controls (no controller)", Checked = s.Keyboard, AutoSize = true };
+            keyboard = new CheckBox { Text = "Keyboard controls (controllers still work)", Checked = s.Keyboard, AutoSize = true };
             closeOnPlay = new CheckBox { Text = "Close this launcher when the game starts", Checked = s.CloseOnPlay, AutoSize = true };
             foreach (CheckBox c in new[] { unlockAll, skipIntro, keyboard, closeOnPlay })
             {
