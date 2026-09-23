@@ -97,7 +97,9 @@ Framework 4.8 ships with the OS).
 - One memory card per disc: `MELEE_CARD_PATH = userdata\saves\<disc id>`.
 - Options: unlock everything (`MELEE_UNLOCK_ALL=1`, default on: every character, stage and
   unlockable rule reports unlocked in `gmmain_lib.c` without writing the save; always on in
-  netplay), skip intro (`MELEE_SKIP_INTRO`), keyboard (`MELEE_INPUT=keyboard`), close on play.
+  netplay), skip intro (`MELEE_SKIP_INTRO`), keyboard only (`MELEE_INPUT=keyboard`; the game's
+  own default is keyboard + controllers), "Keyboard plays as" port (`MELEE_KEYBOARD_PORT`), close
+  on play.
 - Online tab: edits `netplay_server.txt` beside the game (what `gw_netplay.c` reads).
 - Mods tab (`launcher/ModsBrowser.cs`): installed mods from `mods/*/mod.json` + `enabled.txt`
   (tick = enabled for the next boot, Remove), and a browser for the sources in `mods/sources.txt`
@@ -108,10 +110,29 @@ Framework 4.8 ships with the OS).
   online too - there is deliberately no "mods off for online" switch.
 - Also on the Mods tab: "Console socket for tools" (`MELEE_CONSOLE_PORT=51700`, 127.0.0.1) and
   "Open scripts folder". On the Play tab: game volume (`MELEE_VOLUME`, default 50).
+- Diagnostics tab: every log switch a player may be asked to turn on, grouped, with tooltips -
+  the game's log categories (`MELEE_LOG`, melee `pc/platform/gw_log.c`: watchdog, mex, heap, dvd,
+  tex, frontend, audio, snap, the render DIAG block once-per-scene/every/none, scene, everything),
+  controllers (`MELEE_PAD_DIAG` 0/1/2, `MELEE_PAD_RELEASE_ON_BLUR`), deeper traces
+  (`MELEE_RB_LOG`, `MELEE_GR_TRACE`, `MELEE_MEX_TRACE_CALLS`, `MELEE_CARD_DIAG`, `MELEE_PROFILE`,
+  `MELEE_SHOW_FPS`, `MELEE_AURORA_VERBOSE`, `MELEE_PC_TRACE_OSREPORT`), the crash-report consent,
+  and Open log folder / Open game log / Open or Copy latest crash report / Reset to defaults.
+  Anything left at "Game default" is not passed, so the game's own default (and settings.cfg)
+  applies.
 - About tab: version (first line of `version.txt`), folders, log, licences, source link.
-- A non-zero exit offers the log, except when the log shows the window was closed first: the
-  current exe faults in `webgpu_dawn.dll` while shutting down after a window close (0xC0000005),
-  which is not worth alarming anyone over.
+- Crashes: the game writes `crashlogs\crash-<time>.log` (compact, at most 64 KB, user paths already
+  `%USERPROFILE%`) and `crash-<time>-full.log` (the whole log). The launcher calls it a crash only
+  when a NEW compact report appears during the session and is not marked `during shutdown: yes`;
+  closing the window (exit 0, no report) never is one, nor is a fault while tearing down after the
+  window was closed. After the first crash it asks once "Send crash reports to help fix bugs?"
+  (Yes / No / View report; stored as `crash_reports=` in launcher.cfg, changeable on the
+  Diagnostics tab). With Yes, pending compact reports (never the -full log, never a shutdown
+  fault, at most 30 days old) are POSTed to `http://<netplay_server.txt>/crash` right after the
+  crash and on the next start, and marked with a `.sent` file. The receiving end is
+  `crash_upload_server.py` (below); it is NOT deployed.
+- A non-zero exit without a report offers the log, except when the log shows the window was
+  closed first: the current exe faults in `webgpu_dawn.dll` while shutting down after a window
+  close (0xC0000005), which is not worth alarming anyone over.
 - Settings live in `userdata\launcher.cfg` next to the launcher (portable); if that folder is
   read-only (Program Files) they go to `%LOCALAPPDATA%\GDMelee`, and the game then runs with its
   log and shader cache there too.
@@ -120,7 +141,20 @@ Framework 4.8 ships with the OS).
 Command line: `--play [disc name]` boots without the window (for shortcuts), `--add-iso <path>`,
 `--forget-all`, `--shots <dir>` renders each tab to a PNG and exits (for docs), `--mods` opens on
 the Mods tab and reads the sources, `--install-mod <id>...`, `--list-mods`, `--enable-mod <id>`,
-`--disable-mod <id>` (results in `userdata/mods.log`, exit code 1 on a failure).
+`--disable-mod <id>` (results in `userdata/mods.log`, exit code 1 on a failure),
+`--upload-crashes` sends pending crash reports if the player agreed (result appended to
+`userdata\crash-upload.txt`, exit code 1 when nothing could be sent).
+
+## Crash reports server (not deployed)
+
+`crash_upload_server.py` is plain HTTP on TCP, on the same host:port as the UDP matchmaking server
+(TCP and UDP ports do not collide): `POST /crash`, text body starting with the report header, at
+most 64 KB. Limits: 3 reports an hour and 10 a day per address (keyed on a salted hash kept only
+in memory - addresses are never written), 300 a day overall, 200 MB on disk. Stored as
+`<dir>/<date>/<time>-<sha>.log` + `.json` (version, build id, exit path, reason). Standalone:
+`python3 crash_upload_server.py --port 51600 --dir /var/lib/gdmelee/crashes`, or from
+`gdmelee_server.py`'s event loop with `await start_crash_upload(bind, port, dir)`. Deploying it
+needs TCP 51600 open on the VPS and a service unit beside `gdmelee.service`.
 
 ## Why no GitHub Actions build
 

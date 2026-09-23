@@ -15,6 +15,8 @@
 //   "GD Melee.exe" --add-iso <path>      add a disc (and make it the default), then open the window
 //   "GD Melee.exe" --forget-all          forget every saved disc (saves are kept), then open
 //   "GD Melee.exe" --shots <dir>         render each tab to <dir>\launcher-<tab>.png and exit (docs)
+//   "GD Melee.exe" --upload-crashes      send pending crash reports (only if the player said yes),
+//                                        result appended to userdata\crash-upload.txt
 
 using System;
 using System.Collections.Generic;
@@ -258,10 +260,21 @@ namespace GDMelee
         public string DefaultId = "";
         public bool SkipIntro = true;
         public bool UnlockAll = true;
-        public bool Keyboard = false;
+        public bool KeyboardOnly = false;  // MELEE_INPUT=keyboard: controllers ignored (the game's default is keyboard + controllers)
+        public int KeyboardPort = 0;         // MELEE_KEYBOARD_PORT 1-4, 0 = the game's default (1)
         public bool CloseOnPlay = false;
         public int Volume = 50;            // MELEE_VOLUME, 0-100
         public bool ConsoleSocket = false; // MELEE_CONSOLE_PORT=51700 (scripts console for tools)
+
+        // Diagnostics tab (see class Diagnostics): what the game writes to melee-pc.log
+        public int LogRender = 0;           // 0 one DIAG block per scene (the game's default), 1 every block, -1 none
+        public bool LogScene = true;        // scene changes and menu cursors
+        public bool LogAll = false;         // MELEE_LOG=all
+        public string LogCategories = "";   // opt-in categories, comma-separated (Diagnostics.Categories)
+        public int PadDiag = -1;            // MELEE_PAD_DIAG 0/1/2, -1 = the game's default
+        public int PadReleaseOnBlur = -1;   // MELEE_PAD_RELEASE_ON_BLUR 0/1, -1 = the game's default
+        public string Traces = "";          // extra switches, comma-separated (Diagnostics.TraceList)
+        public string CrashReports = "";    // "" not asked yet, "yes", "no"
 
         public static string AppDir = System.IO.Path.GetDirectoryName(Application.ExecutablePath);
         public static string UserDir = PickUserDir();
@@ -318,10 +331,19 @@ namespace GDMelee
                     case "default": s.DefaultId = v; break;
                     case "skip_intro": s.SkipIntro = v == "1"; break;
                     case "unlock_all": s.UnlockAll = v == "1"; break;
-                    case "keyboard": s.Keyboard = v == "1"; break;
+                    case "keyboard_only": s.KeyboardOnly = v == "1"; break;
+                    case "keyboard_port": { int r; if (int.TryParse(v, out r)) s.KeyboardPort = Math.Max(0, Math.Min(4, r)); } break;
                     case "close_on_play": s.CloseOnPlay = v == "1"; break;
                     case "volume": { int vol; if (int.TryParse(v, out vol)) s.Volume = Math.Max(0, Math.Min(100, vol)); } break;
                     case "console_socket": s.ConsoleSocket = v == "1"; break;
+                    case "log_render": { int r; if (int.TryParse(v, out r)) s.LogRender = Math.Max(-1, Math.Min(1, r)); } break;
+                    case "log_scene": s.LogScene = v != "0"; break;
+                    case "log_all": s.LogAll = v == "1"; break;
+                    case "log_categories": s.LogCategories = v; break;
+                    case "pad_diag": { int r; if (int.TryParse(v, out r)) s.PadDiag = Math.Max(-1, Math.Min(2, r)); } break;
+                    case "pad_release_on_blur": { int r; if (int.TryParse(v, out r)) s.PadReleaseOnBlur = Math.Max(-1, Math.Min(1, r)); } break;
+                    case "traces": s.Traces = v; break;
+                    case "crash_reports": s.CrashReports = (v == "yes" || v == "no") ? v : ""; break;
                     case "disc":
                         // id|name|kind|path  ('|' cannot appear in a Windows path)
                         string[] p = v.Split(new[] { '|' }, 4);
@@ -339,10 +361,19 @@ namespace GDMelee
             sb.AppendLine("default=" + DefaultId);
             sb.AppendLine("skip_intro=" + (SkipIntro ? "1" : "0"));
             sb.AppendLine("unlock_all=" + (UnlockAll ? "1" : "0"));
-            sb.AppendLine("keyboard=" + (Keyboard ? "1" : "0"));
+            sb.AppendLine("keyboard_only=" + (KeyboardOnly ? "1" : "0"));
+            sb.AppendLine("keyboard_port=" + KeyboardPort);
             sb.AppendLine("close_on_play=" + (CloseOnPlay ? "1" : "0"));
             sb.AppendLine("volume=" + Volume);
             sb.AppendLine("console_socket=" + (ConsoleSocket ? "1" : "0"));
+            sb.AppendLine("log_render=" + LogRender);
+            sb.AppendLine("log_scene=" + (LogScene ? "1" : "0"));
+            sb.AppendLine("log_all=" + (LogAll ? "1" : "0"));
+            sb.AppendLine("log_categories=" + LogCategories);
+            sb.AppendLine("pad_diag=" + PadDiag);
+            sb.AppendLine("pad_release_on_blur=" + PadReleaseOnBlur);
+            sb.AppendLine("traces=" + Traces);
+            sb.AppendLine("crash_reports=" + CrashReports);
             foreach (Disc d in Discs)
                 sb.AppendLine("disc=" + d.Id + "|" + d.Name.Replace("|", "/") + "|" + d.Kind.Replace("|", "/") + "|" + d.Path);
             Directory.CreateDirectory(UserDir);
@@ -460,10 +491,272 @@ namespace GDMelee
             else psi.EnvironmentVariables.Remove("MELEE_CONSOLE_PORT");
             if (s.SkipIntro) psi.EnvironmentVariables["MELEE_SKIP_INTRO"] = "1";
             else psi.EnvironmentVariables.Remove("MELEE_SKIP_INTRO");
-            if (s.Keyboard) psi.EnvironmentVariables["MELEE_INPUT"] = "keyboard+"; // keyboard on the first empty port; controllers keep working
+            // unset = keyboard and controllers together (the game's default since 0.1.2)
+            if (s.KeyboardOnly) psi.EnvironmentVariables["MELEE_INPUT"] = "keyboard";
             else psi.EnvironmentVariables.Remove("MELEE_INPUT");
+            if (s.KeyboardPort >= 1) psi.EnvironmentVariables["MELEE_KEYBOARD_PORT"] = s.KeyboardPort.ToString();
+            else psi.EnvironmentVariables.Remove("MELEE_KEYBOARD_PORT");
             Mods.ApplyEnvironment(s, disc, psi);
+            Diagnostics.ApplyEnvironment(s, psi);
             return Process.Start(psi);
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Diagnostics: the game's log categories and trace switches (melee pc/platform/gw_log.c), passed
+    // as environment variables at launch. The game's own default keeps melee-pc.log short: scene
+    // changes, loads, warnings, netplay and pad events; everything else is opt-in here.
+    // ---------------------------------------------------------------------------------------------
+
+    class Choice
+    {
+        public string Key, Label, Tip;
+        public Choice(string key, string label, string tip) { Key = key; Label = label; Tip = tip; }
+    }
+
+    static class Diagnostics
+    {
+        // MELEE_LOG categories that are quiet unless turned on
+        public static readonly Choice[] Categories = {
+            new Choice("watchdog", "Watchdog samples", "Where the game thread is, sampled ten times a second (\"gw: at ...\"), and a stats line every 2 s. Helps with freezes and silent exits."),
+            new Choice("mex", "m-ex internals", "Fighter and stage code from m-ex discs and mods: hooks installed, calls into their code, item and effect registration. For crashes with ACE/Akaneia fighters or stages."),
+            new Choice("heap", "Memory (heap) trace", "Every allocation from the game's heaps (MELEE_HEAP_TRACE). For \"out of memory\" / ALLOC_FAIL crashes. Large."),
+            new Choice("dvd", "Disc file trace", "Every file the game opens and where it came from, the disc or a mod (MELEE_DVD_TRACE). For missing or wrong files in mods."),
+            new Choice("tex", "UI texture loads", "Every menu texture the game opens (gxtex)."),
+            new Choice("frontend", "Menu layout files", "Sizes of the menu layout and animation files as they load."),
+            new Choice("audio", "Sound bank loads", "Each sound bank as it is loaded (synth: bank ...)."),
+            new Choice("snap", "Rollback snapshot internals", "Object pool bookkeeping inside rollback snapshots. For online desyncs, when asked."),
+        };
+
+        // switches that are not log categories: key -> environment variable = 1
+        public static readonly Choice[] TraceList = {
+            new Choice("rb", "Rollback log (MELEE_RB_LOG)", "Rollback and netplay frame decisions: rollbacks, input arrival, desync checks. For online problems."),
+            new Choice("gr", "Stage code trace (MELEE_GR_TRACE)", "Every call into an m-ex stage's own code. Very large; for a stage that crashes."),
+            new Choice("mexcalls", "m-ex engine call trace (MELEE_MEX_TRACE_CALLS)", "The first engine calls an m-ex fighter or stage makes, with arguments."),
+            new Choice("card", "Memory card diagnostics (MELEE_CARD_DIAG)", "Saves and loads of the memory card files. For lost settings or saves."),
+            new Choice("profile", "Frame timing profile (MELEE_PROFILE)", "Where each frame's time goes, every 600 frames. For stutter or low frame rate."),
+            new Choice("fps", "Show the frame rate (MELEE_SHOW_FPS)", "An FPS counter on the game window."),
+            new Choice("aurora", "Renderer log (MELEE_AURORA_VERBOSE)", "The graphics backend's own messages. For a black or broken screen."),
+            new Choice("osreport", "Report format trace (MELEE_PC_TRACE_OSREPORT)", "Every game report's format string before it is printed. Doubles the log; for a crash inside logging."),
+        };
+
+        static readonly Dictionary<string, string> TraceEnv = new Dictionary<string, string> {
+            { "rb", "MELEE_RB_LOG" }, { "gr", "MELEE_GR_TRACE" }, { "mexcalls", "MELEE_MEX_TRACE_CALLS" },
+            { "card", "MELEE_CARD_DIAG" }, { "profile", "MELEE_PROFILE" }, { "fps", "MELEE_SHOW_FPS" },
+            { "aurora", "MELEE_AURORA_VERBOSE" }, { "osreport", "MELEE_PC_TRACE_OSREPORT" },
+        };
+
+        public static bool Has(string list, string key)
+        {
+            foreach (string k in list.Split(',')) if (k.Trim() == key) return true;
+            return false;
+        }
+
+        public static string Set(string list, string key, bool on)
+        {
+            List<string> keys = new List<string>();
+            foreach (string k in list.Split(',')) if (k.Trim().Length > 0 && k.Trim() != key) keys.Add(k.Trim());
+            if (on) keys.Add(key);
+            return string.Join(",", keys.ToArray());
+        }
+
+        // The MELEE_LOG value for these settings, "" when it is the game's default.
+        public static string LogSpec(Settings s)
+        {
+            List<string> t = new List<string>();
+            if (s.LogAll) t.Add("all");
+            foreach (Choice c in Categories) if (!s.LogAll && Has(s.LogCategories, c.Key)) t.Add(c.Key);
+            if (s.LogRender > 0 && !s.LogAll) t.Add("render");
+            if (s.LogRender < 0) t.Add("-render");
+            if (!s.LogScene) t.Add("-scene");
+            return string.Join(",", t.ToArray());
+        }
+
+        public static void ApplyEnvironment(Settings s, ProcessStartInfo psi)
+        {
+            string spec = LogSpec(s);
+            if (spec.Length > 0) psi.EnvironmentVariables["MELEE_LOG"] = spec;
+            else psi.EnvironmentVariables.Remove("MELEE_LOG");
+            // the game maps these categories onto the old switches itself; set them too, so an
+            // older build honours them
+            bool heap = s.LogAll || Has(s.LogCategories, "heap"), dvd = s.LogAll || Has(s.LogCategories, "dvd");
+            if (heap) psi.EnvironmentVariables["MELEE_HEAP_TRACE"] = "1"; else psi.EnvironmentVariables.Remove("MELEE_HEAP_TRACE");
+            if (dvd) psi.EnvironmentVariables["MELEE_DVD_TRACE"] = "1"; else psi.EnvironmentVariables.Remove("MELEE_DVD_TRACE");
+            if (!s.LogScene) psi.EnvironmentVariables["MELEE_SCENE_TRACE"] = "0"; else psi.EnvironmentVariables.Remove("MELEE_SCENE_TRACE");
+            if (s.PadDiag >= 0) psi.EnvironmentVariables["MELEE_PAD_DIAG"] = s.PadDiag.ToString();
+            else psi.EnvironmentVariables.Remove("MELEE_PAD_DIAG");
+            if (s.PadReleaseOnBlur >= 0) psi.EnvironmentVariables["MELEE_PAD_RELEASE_ON_BLUR"] = s.PadReleaseOnBlur.ToString();
+            else psi.EnvironmentVariables.Remove("MELEE_PAD_RELEASE_ON_BLUR");
+            foreach (KeyValuePair<string, string> kv in TraceEnv)
+            {
+                if (Has(s.Traces, kv.Key)) psi.EnvironmentVariables[kv.Value] = "1";
+                else psi.EnvironmentVariables.Remove(kv.Value);
+            }
+        }
+
+        // One line for the status bar / About: what is switched on beyond the defaults.
+        public static string Summary(Settings s)
+        {
+            List<string> on = new List<string>();
+            string spec = LogSpec(s);
+            if (spec.Length > 0) on.Add("MELEE_LOG=" + spec);
+            if (s.PadDiag >= 0) on.Add("pad diagnostics " + s.PadDiag);
+            if (s.PadReleaseOnBlur >= 0) on.Add("release adapter on focus loss " + (s.PadReleaseOnBlur == 1 ? "on" : "off"));
+            foreach (Choice c in TraceList) if (Has(s.Traces, c.Key)) on.Add(c.Key);
+            return on.Count == 0 ? "Diagnostics: the game's defaults." : "Diagnostics on: " + string.Join(", ", on.ToArray()) + ".";
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Crash reports: crashlogs\crash-<time>.log is the game's compact report (at most 64 KB, user
+    // paths already replaced); crash-<time>-full.log beside it is the whole log and never leaves the
+    // machine. With the player's consent (Settings.CrashReports == "yes") the compact report is
+    // POSTed to the matchmaking server named in netplay_server.txt (http://<host:port>/crash,
+    // tools/release/crash_upload_server.py) and marked sent with a .sent file. A fault while the
+    // game was already shutting down (the window was closed) is marked "during shutdown: yes" by
+    // the game; those neither alarm the player nor get uploaded.
+    // ---------------------------------------------------------------------------------------------
+
+    static class Crashes
+    {
+        public static string Dir { get { return Path.Combine(Game.RunDir, "crashlogs"); } }
+        public const int MaxUpload = 64 * 1024;
+
+        public static List<FileInfo> Reports()
+        {
+            List<FileInfo> r = new List<FileInfo>();
+            try
+            {
+                if (!Directory.Exists(Dir)) return r;
+                foreach (FileInfo f in new DirectoryInfo(Dir).GetFiles("crash-*.log"))
+                    if (!f.Name.EndsWith("-full.log", StringComparison.OrdinalIgnoreCase)) r.Add(f);
+            }
+            catch { }
+            r.Sort(delegate(FileInfo a, FileInfo b) { return a.LastWriteTimeUtc.CompareTo(b.LastWriteTimeUtc); });
+            return r;
+        }
+
+        public static FileInfo Latest()
+        {
+            List<FileInfo> r = Reports();
+            return r.Count > 0 ? r[r.Count - 1] : null;
+        }
+
+        static string Head(FileInfo f)
+        {
+            try
+            {
+                using (StreamReader rd = new StreamReader(f.FullName))
+                {
+                    char[] b = new char[2048];
+                    int n = rd.Read(b, 0, b.Length);
+                    return new string(b, 0, Math.Max(0, n));
+                }
+            }
+            catch { return ""; }
+        }
+
+        // An old-style report (the whole log, before 0.1.2) has no header; it is never uploaded.
+        public static bool IsCompact(FileInfo f) { return Head(f).StartsWith("==== GD's Melee crash report ===="); }
+        public static bool DuringShutdown(FileInfo f) { return Head(f).Contains("during shutdown: yes"); }
+        public static bool Sent(FileInfo f) { return File.Exists(f.FullName + ".sent"); }
+
+        // Reports the player should hear about / that may be uploaded: compact, not a teardown fault.
+        public static List<FileInfo> Real(DateTime sinceUtc)
+        {
+            List<FileInfo> r = new List<FileInfo>();
+            foreach (FileInfo f in Reports())
+                if (f.LastWriteTimeUtc >= sinceUtc && IsCompact(f) && !DuringShutdown(f)) r.Add(f);
+            return r;
+        }
+
+        public static List<FileInfo> Pending()
+        {
+            List<FileInfo> r = new List<FileInfo>();
+            foreach (FileInfo f in Real(DateTime.UtcNow.AddDays(-30)))
+                if (!Sent(f) && f.Length <= MaxUpload) r.Add(f);
+            return r;
+        }
+
+        public static string Server()
+        {
+            try
+            {
+                if (File.Exists(Game.ServerFile))
+                {
+                    foreach (string line in File.ReadAllLines(Game.ServerFile))
+                        if (line.Trim().Length > 0 && !line.Trim().StartsWith("#")) return line.Trim();
+                }
+            }
+            catch { }
+            return "";
+        }
+
+        // Defence in depth: the game already replaced these, but the launcher checks again.
+        public static string Scrub(string text)
+        {
+            string profile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            if (profile.Length > 3)
+            {
+                text = System.Text.RegularExpressions.Regex.Replace(text, System.Text.RegularExpressions.Regex.Escape(profile), "%USERPROFILE%",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                text = System.Text.RegularExpressions.Regex.Replace(text, System.Text.RegularExpressions.Regex.Escape(profile.Replace('\\', '/')), "%USERPROFILE%",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            }
+            string user = Environment.UserName;
+            if (user.Length >= 3)
+                text = System.Text.RegularExpressions.Regex.Replace(text, System.Text.RegularExpressions.Regex.Escape(user), "<user>",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            return text;
+        }
+
+        // POSTs one report. Returns null on success (and writes the .sent marker), else why not.
+        public static string Upload(FileInfo f)
+        {
+            string server = Server();
+            if (server.Length == 0) return "no matchmaking server is set (netplay_server.txt)";
+            try
+            {
+                byte[] body = new UTF8Encoding(false).GetBytes(Scrub(File.ReadAllText(f.FullName)));
+                if (body.Length > MaxUpload) return "the report is over 64 KB";
+                System.Net.HttpWebRequest rq = (System.Net.HttpWebRequest)System.Net.WebRequest.Create("http://" + server + "/crash");
+                rq.Method = "POST";
+                rq.ContentType = "text/plain; charset=utf-8";
+                rq.Timeout = 10000;
+                rq.ReadWriteTimeout = 10000;
+                rq.UserAgent = "GDMeleeLauncher/" + Game.Version();
+                rq.ContentLength = body.Length;
+                using (Stream st = rq.GetRequestStream()) st.Write(body, 0, body.Length);
+                using (System.Net.HttpWebResponse rs = (System.Net.HttpWebResponse)rq.GetResponse())
+                using (StreamReader rd = new StreamReader(rs.GetResponseStream()))
+                {
+                    string answer = rd.ReadToEnd().Trim();
+                    File.WriteAllText(f.FullName + ".sent", DateTime.Now.ToString("s") + " " + server + " " + answer + "\r\n");
+                    return null;
+                }
+            }
+            catch (System.Net.WebException e)
+            {
+                System.Net.HttpWebResponse rs = e.Response as System.Net.HttpWebResponse;
+                if (rs != null && (int)rs.StatusCode == 400)
+                    try { File.WriteAllText(f.FullName + ".sent", "refused by the server (400)\r\n"); } catch { }
+                return rs != null ? "the server answered " + (int)rs.StatusCode : e.Message;
+            }
+            catch (Exception e) { return e.Message; }
+        }
+
+        // Uploads every pending report (consent is the caller's check). Returns "sent N" / the error.
+        public static string UploadPending()
+        {
+            int sent = 0;
+            string err = null;
+            foreach (FileInfo f in Pending())
+            {
+                err = Upload(f);
+                if (err != null) break;
+                sent++;
+            }
+            return err == null ? "sent " + sent : "sent " + sent + ", stopped: " + err;
         }
     }
 
@@ -616,6 +909,7 @@ namespace GDMelee
             TabPage mods = new TabPage("Mods");
             modsTab = Mods.BuildTab(mods, this, s);
             tabs.TabPages.Add(mods);
+            tabs.TabPages.Add(BuildDiagnosticsTab());
             tabs.TabPages.Add(BuildAboutTab());
 
             Controls.Add(tabs);
@@ -629,6 +923,7 @@ namespace GDMelee
             Shown += delegate
             {
                 FirstRun();
+                CrashesOnStart();
                 if (OpenModsOnShow)
                 {
                     tabs.SelectedIndex = 2;
@@ -691,7 +986,7 @@ namespace GDMelee
 
             unlockAll = new CheckBox { Text = "Unlock every character and stage (your save is not changed)", Checked = s.UnlockAll, AutoSize = true };
             skipIntro = new CheckBox { Text = "Skip the intro movie", Checked = s.SkipIntro, AutoSize = true };
-            keyboard = new CheckBox { Text = "Keyboard controls (controllers still work)", Checked = s.Keyboard, AutoSize = true };
+            keyboard = new CheckBox { Text = "Keyboard only (ignore controllers and the adapter)", Checked = s.KeyboardOnly, AutoSize = true };
             closeOnPlay = new CheckBox { Text = "Close this launcher when the game starts", Checked = s.CloseOnPlay, AutoSize = true };
             foreach (CheckBox c in new[] { unlockAll, skipIntro, keyboard, closeOnPlay })
             {
@@ -709,6 +1004,12 @@ namespace GDMelee
             vol.MouseUp += delegate { SaveOptions(); };
             vol.KeyUp += delegate { SaveOptions(); };
             opts.Controls.Add(UI.Row(volLabel, vol));
+            Label kpLabel = new Label { AutoSize = true, Margin = new Padding(0, 6, 6, 0), Text = "Keyboard plays as:" };
+            ComboBox kp = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300, Margin = new Padding(0, 2, 0, 0) };
+            kp.Items.AddRange(new object[] { "Port 1, shared with a controller (default)", "Port 2 (a separate player)", "Port 3", "Port 4" });
+            kp.SelectedIndex = s.KeyboardPort <= 1 ? 0 : s.KeyboardPort - 1;
+            kp.SelectedIndexChanged += delegate { s.KeyboardPort = kp.SelectedIndex == 0 ? 0 : kp.SelectedIndex + 1; TrySave(); };
+            opts.Controls.Add(UI.Row(kpLabel, kp));
 
             playBtn = new Button();
             playBtn.Text = "PLAY";
@@ -723,7 +1024,7 @@ namespace GDMelee
 
             TableLayoutPanel bottom = new TableLayoutPanel();
             bottom.Dock = DockStyle.Bottom;
-            bottom.Height = 150;
+            bottom.Height = 184;
             bottom.ColumnCount = 2;
             bottom.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             bottom.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -805,7 +1106,7 @@ namespace GDMelee
             if (skipIntro == null) return;
             s.UnlockAll = unlockAll.Checked;
             s.SkipIntro = skipIntro.Checked;
-            s.Keyboard = keyboard.Checked;
+            s.KeyboardOnly = keyboard.Checked;
             s.CloseOnPlay = closeOnPlay.Checked;
             TrySave();
         }
@@ -995,7 +1296,22 @@ namespace GDMelee
             if (WindowState == FormWindowState.Minimized) WindowState = FormWindowState.Normal;
             Activate();
             UpdateButtons();
-            if (code != 0 && Game.ClosedByUser())
+            // A crash is a NEW compact report from this session that the game did not mark "during
+            // shutdown". Closing the window (exit 0, no report) is never one, and neither is a fault
+            // while the game was already tearing down after the window was closed.
+            List<FileInfo> fresh = Crashes.Real(runningSince.ToUniversalTime().AddSeconds(-2));
+            if (fresh.Count > 0)
+            {
+                FileInfo f = fresh[fresh.Count - 1];
+                SetStatus("The game crashed after " + (int)secs + " s. Report: " + f.FullName);
+                AskCrashConsent(f);
+                if (s.CrashReports == "yes") UploadInBackground();
+                if (MessageBox.Show(this, "The game stopped with an error" + (code != 0 ? " (exit code 0x" + code.ToString("X8") + ")" : "") + ".\r\n\r\n" +
+                        "A short crash report was written to\r\n" + f.FullName + "\r\n(the whole log is beside it, ending in -full.log).\r\n\r\nOpen the report?",
+                        "GD's Melee", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                    Process.Start("notepad.exe", "\"" + f.FullName + "\"");
+            }
+            else if (code != 0 && Game.ClosedByUser())
             {
                 // The window was closed and the game then faulted while tearing the renderer down
                 // (a known Dawn shutdown crash). Nothing was lost; don't alarm the user.
@@ -1098,6 +1414,208 @@ namespace GDMelee
             }
         }
 
+        // --- Diagnostics tab -----------------------------------------------------------------------
+
+        ToolTip tips;
+        CheckBox sendReports;
+        Label diagSummary;
+
+        static Label Heading(string text)
+        {
+            return new Label { Text = text, Font = UI.Bold, AutoSize = true, Margin = new Padding(0, 10, 0, 4) };
+        }
+
+        CheckBox Toggle(string label, string tip, bool on, EventHandler changed)
+        {
+            CheckBox c = new CheckBox { Text = label, Checked = on, AutoSize = true, Margin = new Padding(12, 0, 18, 2) };
+            tips.SetToolTip(c, tip);
+            c.CheckedChanged += changed;
+            return c;
+        }
+
+        ComboBox Pick(string tip, string[] items, int index, EventHandler changed)
+        {
+            ComboBox b = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300, Margin = new Padding(0, 0, 0, 4) };
+            b.Items.AddRange(items);
+            b.SelectedIndex = Math.Max(0, Math.Min(items.Length - 1, index));
+            tips.SetToolTip(b, tip);
+            b.SelectedIndexChanged += changed;
+            return b;
+        }
+
+        void DiagChanged()
+        {
+            TrySave();
+            if (diagSummary != null) diagSummary.Text = Diagnostics.Summary(s) + " Changes apply the next time the game starts.";
+        }
+
+        TabPage BuildDiagnosticsTab()
+        {
+            TabPage page = new TabPage("Diagnostics");
+            tips = new ToolTip { AutoPopDelay = 20000, InitialDelay = 400 };
+            List<Control> col = new List<Control>();
+            col.Add(UI.Para("The game writes melee-pc.log in its folder. By default it keeps it short: scene changes, fighter, stage " +
+                            "and mod loads, warnings and errors, online and controller events. If you are asked for more detail " +
+                            "for a bug report, turn on what you were asked for here, play until it happens, then send the log. " +
+                            "Hover over an option for what it adds."));
+
+            col.Add(Heading("Game log"));
+            col.Add(Toggle("Scene changes and menu cursors (on by default)", "Every screen change and the menu cursor positions. Turn off only if asked.",
+                s.LogScene, delegate(object o, EventArgs e) { s.LogScene = ((CheckBox)o).Checked; DiagChanged(); }));
+            foreach (Choice c in Diagnostics.Categories)
+            {
+                string key = c.Key;
+                col.Add(Toggle(c.Label, c.Tip, Diagnostics.Has(s.LogCategories, key),
+                    delegate(object o, EventArgs e) { s.LogCategories = Diagnostics.Set(s.LogCategories, key, ((CheckBox)o).Checked); DiagChanged(); }));
+            }
+            Label rl = new Label { Text = "Rendering diagnostics (DIAG blocks):", AutoSize = true, Margin = new Padding(12, 6, 0, 2) };
+            col.Add(rl);
+            ComboBox render = Pick("The renderer's DIAG block: matrices, EFB copies, a depth grid and the camera. The first one after each scene change is enough to tell why a screen is black.",
+                new[] { "One block per scene (default)", "Every block (every half second)", "None" },
+                s.LogRender == 0 ? 0 : s.LogRender > 0 ? 1 : 2,
+                delegate(object o, EventArgs e) { int i = ((ComboBox)o).SelectedIndex; s.LogRender = i == 0 ? 0 : i == 1 ? 1 : -1; DiagChanged(); });
+            render.Margin = new Padding(12, 0, 0, 4);
+            col.Add(render);
+            col.Add(Toggle("Everything (MELEE_LOG=all)", "Every line from every category above, no flood limit. The log gets large quickly.",
+                s.LogAll, delegate(object o, EventArgs e) { s.LogAll = ((CheckBox)o).Checked; DiagChanged(); }));
+
+            col.Add(Heading("Controllers"));
+            Label pl = new Label { Text = "Controller diagnostics (MELEE_PAD_DIAG):", AutoSize = true, Margin = new Padding(12, 0, 0, 2) };
+            col.Add(pl);
+            ComboBox pad = Pick("What the game logs about controllers and the GameCube adapter. Level 1, the event log (plugged in, unplugged, device switches), is the game's default; level 2 adds the old verbose dump of every pad every 30 frames.",
+                new[] { "Game default (1, events)", "0 - off", "1 - events: plug, unplug, device switches", "2 - verbose: every pad every 30 frames (large)" },
+                s.PadDiag + 1,
+                delegate(object o, EventArgs e) { s.PadDiag = ((ComboBox)o).SelectedIndex - 1; DiagChanged(); });
+            pad.Margin = new Padding(12, 0, 0, 4);
+            col.Add(pad);
+            Label bl = new Label { Text = "Let go of the GameCube adapter when the game window loses focus (MELEE_PAD_RELEASE_ON_BLUR):", AutoSize = true, MaximumSize = new Size(560, 0), Margin = new Padding(12, 4, 0, 2) };
+            col.Add(bl);
+            ComboBox blur = Pick("On (the game's default): switching to another window hands the adapter to Dolphin or another copy of the game, and it is taken back when you return. Off: the game keeps it, as Dolphin does. During online play it is always kept.",
+                new[] { "Game default (on)", "Off - keep the adapter", "On - release it" },
+                s.PadReleaseOnBlur + 1,
+                delegate(object o, EventArgs e) { s.PadReleaseOnBlur = ((ComboBox)o).SelectedIndex - 1; DiagChanged(); });
+            blur.Margin = new Padding(12, 0, 0, 4);
+            col.Add(blur);
+
+            col.Add(Heading("Deeper traces (only when asked)"));
+            foreach (Choice c in Diagnostics.TraceList)
+            {
+                string key = c.Key;
+                col.Add(Toggle(c.Label, c.Tip, Diagnostics.Has(s.Traces, key),
+                    delegate(object o, EventArgs e) { s.Traces = Diagnostics.Set(s.Traces, key, ((CheckBox)o).Checked); DiagChanged(); }));
+            }
+
+            col.Add(Heading("Crash reports"));
+            sendReports = Toggle("Send crash reports to help fix bugs", "When the game crashes it writes a short report (at most 64 KB) to crashlogs: " +
+                "version, disc and mods, settings, the error and the last log lines. Your Windows user name and player name are left out. " +
+                "With this on, the launcher sends new reports to the matchmaking server (netplay_server.txt) the next time it runs.",
+                s.CrashReports == "yes", delegate(object o, EventArgs e) { s.CrashReports = ((CheckBox)o).Checked ? "yes" : "no"; DiagChanged(); });
+            col.Add(sendReports);
+            col.Add(UI.Row(
+                UI.Btn("Open log folder", delegate { OpenRunDir(); }),
+                UI.Btn("Open game log", delegate { OpenLog(); }),
+                UI.Btn("Open latest crash report", delegate { OpenLatestCrash(); }),
+                UI.Btn("Copy latest crash report", delegate { CopyLatestCrash(); }),
+                UI.Btn("Reset to defaults", delegate { ResetDiagnostics(); })));
+            diagSummary = new Label { AutoSize = true, MaximumSize = new Size(560, 0), ForeColor = Color.DimGray, Margin = new Padding(0, 6, 0, 0) };
+            col.Add(diagSummary);
+            DiagChanged();
+            page.Controls.Add(UI.Column(col.ToArray()));
+            return page;
+        }
+
+        void ResetDiagnostics()
+        {
+            s.LogRender = 0; s.LogScene = true; s.LogAll = false; s.LogCategories = ""; s.PadDiag = -1; s.PadReleaseOnBlur = -1; s.Traces = "";
+            TrySave();
+            int i = tabs.TabPages.IndexOf(tabs.SelectedTab);
+            TabPage old = tabs.TabPages[i];
+            tabs.TabPages.RemoveAt(i);
+            tabs.TabPages.Insert(i, BuildDiagnosticsTab());
+            tabs.SelectedIndex = i;
+            old.Dispose();
+            SetStatus("Diagnostics are back to the game's defaults.");
+        }
+
+        void OpenRunDir()
+        {
+            Directory.CreateDirectory(Game.RunDir);
+            Process.Start("explorer.exe", "\"" + Game.RunDir + "\"");
+        }
+
+        void OpenLatestCrash()
+        {
+            FileInfo f = Crashes.Latest();
+            if (f != null) Process.Start("notepad.exe", "\"" + f.FullName + "\"");
+            else MessageBox.Show(this, "No crash reports in " + Crashes.Dir + ".", "GD's Melee");
+        }
+
+        void CopyLatestCrash()
+        {
+            FileInfo f = Crashes.Latest();
+            if (f == null) { MessageBox.Show(this, "No crash reports in " + Crashes.Dir + ".", "GD's Melee"); return; }
+            try
+            {
+                Clipboard.SetText(Crashes.Scrub(File.ReadAllText(f.FullName)));
+                SetStatus("Copied " + f.Name + " (" + (f.Length / 1024) + " KB) to the clipboard.");
+            }
+            catch (Exception e) { SetStatus("Could not copy the report: " + e.Message); }
+        }
+
+        // The one-time question, asked after the first crash (never on a clean close). The answer
+        // is kept in launcher.cfg and can be changed on the Diagnostics tab.
+        void AskCrashConsent(FileInfo report)
+        {
+            if (s.CrashReports.Length > 0) return;
+            using (Form f = new Form())
+            {
+                f.Text = "Send crash reports?";
+                f.Font = UI.Body;
+                f.FormBorderStyle = FormBorderStyle.FixedDialog;
+                f.StartPosition = FormStartPosition.CenterParent;
+                f.MinimizeBox = f.MaximizeBox = false;
+                f.ClientSize = new Size(470, 200);
+                Label l = new Label { Left = 14, Top = 12, Width = 440, Height = 130, Text =
+                    "The game crashed and wrote a short report. Send crash reports to help fix bugs?\r\n\r\n" +
+                    "A report is at most 64 KB: the game version, your disc (its ID, not the file), the mods you use, your settings, " +
+                    "the error and the last lines of the log. Your Windows user name and your player name are left out. It goes to the " +
+                    "matchmaking server and nowhere else.\r\n\r\nYou can change this later on the Diagnostics tab." };
+                Button view = new Button { Text = "View report", Left = 14, Top = 160, Width = 100 };
+                view.Click += delegate { Process.Start("notepad.exe", "\"" + report.FullName + "\""); };
+                Button yes = new Button { Text = "Yes, send", DialogResult = DialogResult.Yes, Left = 262, Top = 160, Width = 95 };
+                Button no = new Button { Text = "No", DialogResult = DialogResult.No, Left = 363, Top = 160, Width = 95 };
+                f.Controls.AddRange(new Control[] { l, view, yes, no });
+                f.AcceptButton = yes;
+                f.CancelButton = no;
+                DialogResult r = f.ShowDialog(this);
+                if (r == DialogResult.Yes || r == DialogResult.No)
+                {
+                    s.CrashReports = r == DialogResult.Yes ? "yes" : "no";
+                    if (sendReports != null) sendReports.Checked = s.CrashReports == "yes";
+                    TrySave();
+                }
+            }
+        }
+
+        void UploadInBackground()
+        {
+            System.Threading.ThreadPool.QueueUserWorkItem(delegate
+            {
+                if (Crashes.Pending().Count == 0) return;
+                string result = Crashes.UploadPending();
+                try { BeginInvoke(new MethodInvoker(delegate { SetStatus("Crash reports: " + result + "."); })); } catch { }
+            });
+        }
+
+        // Crashes from sessions the launcher did not watch (--play, "close on play"): ask once, send.
+        void CrashesOnStart()
+        {
+            List<FileInfo> pending = Crashes.Pending();
+            if (pending.Count == 0) return;
+            if (s.CrashReports.Length == 0) AskCrashConsent(pending[pending.Count - 1]);
+            if (s.CrashReports == "yes") UploadInBackground();
+        }
+
         // --- About tab -----------------------------------------------------------------------------
 
         TabPage BuildAboutTab()
@@ -1180,6 +1698,14 @@ namespace GDMelee
                     return 0;
                 }
                 else if (a == "--mods") openMods = true;
+                else if (a == "--upload-crashes")
+                {
+                    // send pending crash reports now, if the player agreed; the result goes to
+                    // userdata\crash-upload.txt (this is a windowed program: there is no console)
+                    string result = s.CrashReports == "yes" ? Crashes.UploadPending() : "not sent: crash reports are off (" + (s.CrashReports.Length > 0 ? s.CrashReports : "not asked yet") + ")";
+                    try { File.AppendAllText(Path.Combine(Settings.UserDir, "crash-upload.txt"), DateTime.Now.ToString("s") + " " + result + "\r\n"); } catch { }
+                    return result.StartsWith("sent ") && !result.Contains("stopped") ? 0 : 1;
+                }
                 else if (a == "--install-mod" && i + 1 < args.Length)
                 {
                     List<string> ids = new List<string>();
