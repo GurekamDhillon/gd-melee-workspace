@@ -1,6 +1,8 @@
 """crash_upload_server.py - receives opt-in crash reports from GD's Melee launchers.
 
-NOT DEPLOYED. Uploads are manual: a player who ticked "Allow uploading crash reports" on the
+DEPLOYED (2026-09-23) on the VPS as systemd unit gdmelee-crash (/opt/gdmelee/crash_upload_server.py,
+reports in /var/lib/gdmelee-crashes, ufw allows 51600/tcp). Update: scp it to the VPS, sudo cp to
+/opt/gdmelee/, sudo systemctl restart gdmelee-crash. Uploads are manual: a player who ticked "Allow uploading crash reports" on the
 launcher's Diagnostics tab and clicks "Upload last 3 crash logs" sends their three newest COMPACT
 crash reports (crashlogs/crash-<time>.log, at most 64 KB, user paths already replaced by
 %USERPROFILE%, no player name). Nothing is sent automatically. This is the other end.
