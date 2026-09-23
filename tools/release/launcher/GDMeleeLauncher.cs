@@ -15,8 +15,8 @@
 //   "GD Melee.exe" --add-iso <path>      add a disc (and make it the default), then open the window
 //   "GD Melee.exe" --forget-all          forget every saved disc (saves are kept), then open
 //   "GD Melee.exe" --shots <dir>         render each tab to <dir>\launcher-<tab>.png and exit (docs)
-//   "GD Melee.exe" --upload-crashes      send pending crash reports (only if the player said yes),
-//                                        result appended to userdata\crash-upload.txt
+//   "GD Melee.exe" --upload-crashes      what "Upload last 3 crash logs" does (only with the opt-in
+//                                        on), result appended to userdata\crash-upload.txt
 
 using System;
 using System.Collections.Generic;
@@ -274,7 +274,7 @@ namespace GDMelee
         public int PadDiag = -1;            // MELEE_PAD_DIAG 0/1/2, -1 = the game's default
         public int PadReleaseOnBlur = -1;   // MELEE_PAD_RELEASE_ON_BLUR 0/1, -1 = the game's default
         public string Traces = "";          // extra switches, comma-separated (Diagnostics.TraceList)
-        public string CrashReports = "";    // "" not asked yet, "yes", "no"
+        public bool CrashUpload = false;    // the Diagnostics tab's opt-in: enables "Upload last 3 crash logs"
 
         public static string AppDir = System.IO.Path.GetDirectoryName(Application.ExecutablePath);
         public static string UserDir = PickUserDir();
@@ -343,7 +343,7 @@ namespace GDMelee
                     case "pad_diag": { int r; if (int.TryParse(v, out r)) s.PadDiag = Math.Max(-1, Math.Min(2, r)); } break;
                     case "pad_release_on_blur": { int r; if (int.TryParse(v, out r)) s.PadReleaseOnBlur = Math.Max(-1, Math.Min(1, r)); } break;
                     case "traces": s.Traces = v; break;
-                    case "crash_reports": s.CrashReports = (v == "yes" || v == "no") ? v : ""; break;
+                    case "crash_upload": s.CrashUpload = v == "1"; break;
                     case "disc":
                         // id|name|kind|path  ('|' cannot appear in a Windows path)
                         string[] p = v.Split(new[] { '|' }, 4);
@@ -373,7 +373,7 @@ namespace GDMelee
             sb.AppendLine("pad_diag=" + PadDiag);
             sb.AppendLine("pad_release_on_blur=" + PadReleaseOnBlur);
             sb.AppendLine("traces=" + Traces);
-            sb.AppendLine("crash_reports=" + CrashReports);
+            sb.AppendLine("crash_upload=" + (CrashUpload ? "1" : "0"));
             foreach (Disc d in Discs)
                 sb.AppendLine("disc=" + d.Id + "|" + d.Name.Replace("|", "/") + "|" + d.Kind.Replace("|", "/") + "|" + d.Path);
             Directory.CreateDirectory(UserDir);
@@ -610,11 +610,12 @@ namespace GDMelee
     // ---------------------------------------------------------------------------------------------
     // Crash reports: crashlogs\crash-<time>.log is the game's compact report (at most 64 KB, user
     // paths already replaced); crash-<time>-full.log beside it is the whole log and never leaves the
-    // machine. With the player's consent (Settings.CrashReports == "yes") the compact report is
+    // machine. NOTHING is uploaded automatically: only when the player has ticked the opt-in on the
+    // Diagnostics tab AND clicks "Upload last 3 crash logs" are the three newest compact reports
     // POSTed to the matchmaking server named in netplay_server.txt (http://<host:port>/crash,
-    // tools/release/crash_upload_server.py) and marked sent with a .sent file. A fault while the
+    // tools/release/crash_upload_server.py); each sent one gets a .sent file. A fault while the
     // game was already shutting down (the window was closed) is marked "during shutdown: yes" by
-    // the game; those neither alarm the player nor get uploaded.
+    // the game; those do not alarm the player and are not uploaded.
     // ---------------------------------------------------------------------------------------------
 
     static class Crashes
@@ -670,11 +671,12 @@ namespace GDMelee
             return r;
         }
 
-        public static List<FileInfo> Pending()
+        // The newest n compact reports that may be uploaded (not teardown faults), newest first.
+        public static List<FileInfo> Newest(int n)
         {
-            List<FileInfo> r = new List<FileInfo>();
-            foreach (FileInfo f in Real(DateTime.UtcNow.AddDays(-30)))
-                if (!Sent(f) && f.Length <= MaxUpload) r.Add(f);
+            List<FileInfo> all = Real(DateTime.MinValue), r = new List<FileInfo>();
+            for (int i = all.Count - 1; i >= 0 && r.Count < n; i--)
+                if (all[i].Length <= MaxUpload) r.Add(all[i]);
             return r;
         }
 
@@ -745,18 +747,23 @@ namespace GDMelee
             catch (Exception e) { return e.Message; }
         }
 
-        // Uploads every pending report (consent is the caller's check). Returns "sent N" / the error.
-        public static string UploadPending()
+        // Uploads the newest three reports (the opt-in is the caller's check). Returns what happened.
+        public static string UploadNewest(out bool ok)
         {
+            List<FileInfo> files = Newest(3);
             int sent = 0;
             string err = null;
-            foreach (FileInfo f in Pending())
+            ok = false;
+            if (files.Count == 0) return "no crash reports to send (in " + Dir + ")";
+            foreach (FileInfo f in files)
             {
                 err = Upload(f);
                 if (err != null) break;
                 sent++;
             }
-            return err == null ? "sent " + sent : "sent " + sent + ", stopped: " + err;
+            ok = err == null;
+            return err == null ? "sent " + sent + " crash report" + (sent == 1 ? "" : "s")
+                               : "sent " + sent + " of " + files.Count + ", then failed: " + err;
         }
     }
 
@@ -923,7 +930,6 @@ namespace GDMelee
             Shown += delegate
             {
                 FirstRun();
-                CrashesOnStart();
                 if (OpenModsOnShow)
                 {
                     tabs.SelectedIndex = 2;
@@ -1304,8 +1310,6 @@ namespace GDMelee
             {
                 FileInfo f = fresh[fresh.Count - 1];
                 SetStatus("The game crashed after " + (int)secs + " s. Report: " + f.FullName);
-                AskCrashConsent(f);
-                if (s.CrashReports == "yes") UploadInBackground();
                 if (MessageBox.Show(this, "The game stopped with an error" + (code != 0 ? " (exit code 0x" + code.ToString("X8") + ")" : "") + ".\r\n\r\n" +
                         "A short crash report was written to\r\n" + f.FullName + "\r\n(the whole log is beside it, ending in -full.log).\r\n\r\nOpen the report?",
                         "GD's Melee", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
@@ -1418,6 +1422,7 @@ namespace GDMelee
 
         ToolTip tips;
         CheckBox sendReports;
+        Button uploadBtn;
         Label diagSummary;
 
         static Label Heading(string text)
@@ -1506,11 +1511,25 @@ namespace GDMelee
             }
 
             col.Add(Heading("Crash reports"));
-            sendReports = Toggle("Send crash reports to help fix bugs", "When the game crashes it writes a short report (at most 64 KB) to crashlogs: " +
-                "version, disc and mods, settings, the error and the last log lines. Your Windows user name and player name are left out. " +
-                "With this on, the launcher sends new reports to the matchmaking server (netplay_server.txt) the next time it runs.",
-                s.CrashReports == "yes", delegate(object o, EventArgs e) { s.CrashReports = ((CheckBox)o).Checked ? "yes" : "no"; DiagChanged(); });
+            uploadBtn = UI.Btn("Upload last 3 crash logs", delegate { UploadCrashes(); });
+            sendReports = Toggle("Allow uploading crash reports", "Off by default. Nothing is ever sent on its own: only the button below sends anything.",
+                s.CrashUpload, delegate(object o, EventArgs e) { s.CrashUpload = ((CheckBox)o).Checked; uploadBtn.Enabled = s.CrashUpload; DiagChanged(); });
             col.Add(sendReports);
+            Label consent = UI.Para(
+                "What is sent: the short crash reports the game writes to crashlogs (crash-<time>.log, at most 64 KB each) - the game " +
+                "version, the disc's ID and title, the mods you use, your settings, the error with the code it happened in, and the last " +
+                "lines of the log. Your Windows user name is removed from every path and your player name is left out; the full log " +
+                "(-full.log) is never sent.\r\n" +
+                "Where: the matchmaking server this game uses for online play (netplay_server.txt).\r\n" +
+                "Why: so crashes can be found and fixed without you having to send files by hand.\r\n" +
+                "Nothing is sent automatically. The button sends your three newest reports (not faults that happened while the game was " +
+                "closing), once, when you click it.");
+            consent.Margin = new Padding(12, 2, 0, 6);
+            consent.ForeColor = Color.DimGray;
+            col.Add(consent);
+            uploadBtn.Enabled = s.CrashUpload;
+            uploadBtn.Margin = new Padding(12, 0, 6, 10);
+            col.Add(uploadBtn);
             col.Add(UI.Row(
                 UI.Btn("Open log folder", delegate { OpenRunDir(); }),
                 UI.Btn("Open game log", delegate { OpenLog(); }),
@@ -1562,58 +1581,26 @@ namespace GDMelee
             catch (Exception e) { SetStatus("Could not copy the report: " + e.Message); }
         }
 
-        // The one-time question, asked after the first crash (never on a clean close). The answer
-        // is kept in launcher.cfg and can be changed on the Diagnostics tab.
-        void AskCrashConsent(FileInfo report)
+        // "Upload last 3 crash logs": the only way anything leaves the machine.
+        void UploadCrashes()
         {
-            if (s.CrashReports.Length > 0) return;
-            using (Form f = new Form())
+            if (!s.CrashUpload) return;
+            string server = Crashes.Server();
+            if (server.Length == 0)
             {
-                f.Text = "Send crash reports?";
-                f.Font = UI.Body;
-                f.FormBorderStyle = FormBorderStyle.FixedDialog;
-                f.StartPosition = FormStartPosition.CenterParent;
-                f.MinimizeBox = f.MaximizeBox = false;
-                f.ClientSize = new Size(470, 200);
-                Label l = new Label { Left = 14, Top = 12, Width = 440, Height = 130, Text =
-                    "The game crashed and wrote a short report. Send crash reports to help fix bugs?\r\n\r\n" +
-                    "A report is at most 64 KB: the game version, your disc (its ID, not the file), the mods you use, your settings, " +
-                    "the error and the last lines of the log. Your Windows user name and your player name are left out. It goes to the " +
-                    "matchmaking server and nowhere else.\r\n\r\nYou can change this later on the Diagnostics tab." };
-                Button view = new Button { Text = "View report", Left = 14, Top = 160, Width = 100 };
-                view.Click += delegate { Process.Start("notepad.exe", "\"" + report.FullName + "\""); };
-                Button yes = new Button { Text = "Yes, send", DialogResult = DialogResult.Yes, Left = 262, Top = 160, Width = 95 };
-                Button no = new Button { Text = "No", DialogResult = DialogResult.No, Left = 363, Top = 160, Width = 95 };
-                f.Controls.AddRange(new Control[] { l, view, yes, no });
-                f.AcceptButton = yes;
-                f.CancelButton = no;
-                DialogResult r = f.ShowDialog(this);
-                if (r == DialogResult.Yes || r == DialogResult.No)
-                {
-                    s.CrashReports = r == DialogResult.Yes ? "yes" : "no";
-                    if (sendReports != null) sendReports.Checked = s.CrashReports == "yes";
-                    TrySave();
-                }
+                MessageBox.Show(this, "No matchmaking server is set (Online tab), so there is nowhere to send the reports.", "Upload crash logs",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
             }
-        }
-
-        void UploadInBackground()
-        {
-            System.Threading.ThreadPool.QueueUserWorkItem(delegate
-            {
-                if (Crashes.Pending().Count == 0) return;
-                string result = Crashes.UploadPending();
-                try { BeginInvoke(new MethodInvoker(delegate { SetStatus("Crash reports: " + result + "."); })); } catch { }
-            });
-        }
-
-        // Crashes from sessions the launcher did not watch (--play, "close on play"): ask once, send.
-        void CrashesOnStart()
-        {
-            List<FileInfo> pending = Crashes.Pending();
-            if (pending.Count == 0) return;
-            if (s.CrashReports.Length == 0) AskCrashConsent(pending[pending.Count - 1]);
-            if (s.CrashReports == "yes") UploadInBackground();
+            uploadBtn.Enabled = false;
+            Cursor = Cursors.WaitCursor;
+            bool ok = false;
+            string result;
+            try { result = Crashes.UploadNewest(out ok); }
+            finally { Cursor = Cursors.Default; uploadBtn.Enabled = s.CrashUpload; }
+            SetStatus("Crash logs: " + result + ".");
+            MessageBox.Show(this, char.ToUpper(result[0]) + result.Substring(1) + (ok ? " to " + server + ". Thank you." : "."), "Upload crash logs",
+                MessageBoxButtons.OK, ok ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
         }
 
         // --- About tab -----------------------------------------------------------------------------
@@ -1700,11 +1687,13 @@ namespace GDMelee
                 else if (a == "--mods") openMods = true;
                 else if (a == "--upload-crashes")
                 {
-                    // send pending crash reports now, if the player agreed; the result goes to
-                    // userdata\crash-upload.txt (this is a windowed program: there is no console)
-                    string result = s.CrashReports == "yes" ? Crashes.UploadPending() : "not sent: crash reports are off (" + (s.CrashReports.Length > 0 ? s.CrashReports : "not asked yet") + ")";
+                    // the button's action from a command line (tools, tests): the newest three, only
+                    // with the opt-in on; the result goes to userdata\crash-upload.txt (a windowed
+                    // program has no console)
+                    bool ok = false;
+                    string result = s.CrashUpload ? Crashes.UploadNewest(out ok) : "not sent: uploading crash reports is off (Diagnostics tab)";
                     try { File.AppendAllText(Path.Combine(Settings.UserDir, "crash-upload.txt"), DateTime.Now.ToString("s") + " " + result + "\r\n"); } catch { }
-                    return result.StartsWith("sent ") && !result.Contains("stopped") ? 0 : 1;
+                    return ok ? 0 : 1;
                 }
                 else if (a == "--install-mod" && i + 1 < args.Length)
                 {

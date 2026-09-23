@@ -115,8 +115,8 @@ Framework 4.8 ships with the OS).
   tex, frontend, audio, snap, the render DIAG block once-per-scene/every/none, scene, everything),
   controllers (`MELEE_PAD_DIAG` 0/1/2, `MELEE_PAD_RELEASE_ON_BLUR`), deeper traces
   (`MELEE_RB_LOG`, `MELEE_GR_TRACE`, `MELEE_MEX_TRACE_CALLS`, `MELEE_CARD_DIAG`, `MELEE_PROFILE`,
-  `MELEE_SHOW_FPS`, `MELEE_AURORA_VERBOSE`, `MELEE_PC_TRACE_OSREPORT`), the crash-report consent,
-  and Open log folder / Open game log / Open or Copy latest crash report / Reset to defaults.
+  `MELEE_SHOW_FPS`, `MELEE_AURORA_VERBOSE`, `MELEE_PC_TRACE_OSREPORT`), crash-report uploading
+  (below), and Open log folder / Open game log / Open or Copy latest crash report / Reset to defaults.
   Anything left at "Game default" is not passed, so the game's own default (and settings.cfg)
   applies.
 - About tab: version (first line of `version.txt`), folders, log, licences, source link.
@@ -124,12 +124,14 @@ Framework 4.8 ships with the OS).
   `%USERPROFILE%`) and `crash-<time>-full.log` (the whole log). The launcher calls it a crash only
   when a NEW compact report appears during the session and is not marked `during shutdown: yes`;
   closing the window (exit 0, no report) never is one, nor is a fault while tearing down after the
-  window was closed. After the first crash it asks once "Send crash reports to help fix bugs?"
-  (Yes / No / View report; stored as `crash_reports=` in launcher.cfg, changeable on the
-  Diagnostics tab). With Yes, pending compact reports (never the -full log, never a shutdown
-  fault, at most 30 days old) are POSTed to `http://<netplay_server.txt>/crash` right after the
-  crash and on the next start, and marked with a `.sent` file. The receiving end is
-  `crash_upload_server.py` (below); it is NOT deployed.
+  window was closed. It then says where the report is - it never asks to send it.
+- Uploading is opt-in and manual: the Diagnostics tab's "Allow uploading crash reports" (off by
+  default, `crash_upload=` in launcher.cfg) with the consent text (what, where, why) enables the
+  "Upload last 3 crash logs" button. Only that click sends anything: the three newest compact
+  reports (never a -full log, never a shutdown fault) are POSTed to
+  `http://<netplay_server.txt>/crash`, each marked with a `.sent` file, and the result is shown.
+  There is no automatic upload and no prompt. The receiving end is `crash_upload_server.py`
+  (below); it is NOT deployed.
 - A non-zero exit without a report offers the log, except when the log shows the window was
   closed first: the current exe faults in `webgpu_dawn.dll` while shutting down after a window
   close (0xC0000005), which is not worth alarming anyone over.
@@ -142,8 +144,8 @@ Command line: `--play [disc name]` boots without the window (for shortcuts), `--
 `--forget-all`, `--shots <dir>` renders each tab to a PNG and exits (for docs), `--mods` opens on
 the Mods tab and reads the sources, `--install-mod <id>...`, `--list-mods`, `--enable-mod <id>`,
 `--disable-mod <id>` (results in `userdata/mods.log`, exit code 1 on a failure),
-`--upload-crashes` sends pending crash reports if the player agreed (result appended to
-`userdata\crash-upload.txt`, exit code 1 when nothing could be sent).
+`--upload-crashes` does what the "Upload last 3 crash logs" button does, only with the opt-in on
+(result appended to `userdata\crash-upload.txt`, exit code 1 when nothing was sent).
 
 ## Crash reports server (not deployed)
 

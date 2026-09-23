@@ -1,8 +1,9 @@
 """crash_upload_server.py - receives opt-in crash reports from GD's Melee launchers.
 
-NOT DEPLOYED. A player who said "Yes" to "Send crash reports?" in the launcher gets the COMPACT
-crash report (crashlogs/crash-<time>.log, at most 64 KB, user paths already replaced by
-%USERPROFILE%, no player name) uploaded by the launcher on its next start. This is the other end.
+NOT DEPLOYED. Uploads are manual: a player who ticked "Allow uploading crash reports" on the
+launcher's Diagnostics tab and clicks "Upload last 3 crash logs" sends their three newest COMPACT
+crash reports (crashlogs/crash-<time>.log, at most 64 KB, user paths already replaced by
+%USERPROFILE%, no player name). Nothing is sent automatically. This is the other end.
 
 It is plain HTTP on TCP, on the same host:port as the UDP matchmaking server (netplay_server.txt,
 e.g. netplay.gsd.sh:51600) - TCP and UDP port numbers are separate, so nothing collides. It runs
