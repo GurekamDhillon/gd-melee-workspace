@@ -139,6 +139,13 @@ Framework 4.8 ships with the OS).
   read-only (Program Files) they go to `%LOCALAPPDATA%\GDMelee`, and the game then runs with its
   log and shader cache there too.
 - Paths with non-ASCII characters are passed as 8.3 short names (the game takes ANSI paths).
+- Languages: English and Spanish (the launcher only; the game stays English). `launcher/Lang.cs`
+  holds the table - the key is the English text, every visible string goes through `L.T` / `L.F`
+  (format) / `L.N` (marks a key shown later). `language=auto|en|es` in launcher.cfg (auto = Spanish
+  when the Windows display language is Spanish), set from the About tab's Language box, applied at
+  the next launcher start; `--lang en|es` overrides it for one run. After adding or changing a
+  string run `python tools/release/launcher/check_strings.py` (missing Spanish entries, placeholder
+  mismatches, duplicate keys).
 
 Command line: `--play [disc name]` boots without the window (for shortcuts), `--add-iso <path>`,
 `--forget-all`, `--shots <dir>` renders each tab to a PNG and exits (for docs), `--mods` opens on

@@ -123,7 +123,7 @@ namespace GDMelee
                         Dictionary<string, object> j = ModJson.Parse(File.ReadAllText(mj));
                         if (j != null) m = ModJson.FromDict(j);
                     }
-                    catch { m.Description = "(mod.json is not valid JSON)"; }
+                    catch { m.Description = L.T("(mod.json is not valid JSON)"); }
                 }
                 m.Id = id; // the folder name is the id
                 if (m.Name.Length == 0) m.Name = id;
@@ -176,7 +176,7 @@ namespace GDMelee
 
         public static void Remove(string id)
         {
-            if (!IdRe.IsMatch(id)) throw new ArgumentException("bad mod id " + id);
+            if (!IdRe.IsMatch(id)) throw new ArgumentException(L.F("bad mod id {0}", id));
             string d = Path.Combine(Dir, id);
             if (Directory.Exists(d)) Directory.Delete(d, true);
             HashSet<string> s = EnabledSet();
@@ -210,7 +210,7 @@ namespace GDMelee
         {
             if (u.Scheme == Uri.UriSchemeHttps) return;
             if ((u.Scheme == Uri.UriSchemeHttp || u.IsFile) && IsLocal(u)) return; // testing
-            throw new Exception("refusing " + u.Scheme + "://" + " (only https downloads are allowed): " + u);
+            throw new Exception(L.F("refusing {0}:// (only https downloads are allowed): {1}", u.Scheme, u));
         }
 
         static Stream Open(Uri u, out Uri final, out long length)
@@ -248,7 +248,7 @@ namespace GDMelee
                 while ((n = s.Read(buf, 0, buf.Length)) > 0)
                 {
                     ms.Write(buf, 0, n);
-                    if (ms.Length > maxBytes) throw new Exception("the index is larger than " + maxBytes + " bytes");
+                    if (ms.Length > maxBytes) throw new Exception(L.F("the index is larger than {0} bytes", maxBytes));
                 }
                 return Encoding.UTF8.GetString(ms.ToArray());
             }
@@ -263,13 +263,13 @@ namespace GDMelee
             using (Stream s = Open(u, out final, out len))
             using (FileStream f = File.Create(path))
             {
-                if (len > maxBytes) throw new Exception("the download is larger than declared (" + len + " bytes)");
+                if (len > maxBytes) throw new Exception(L.F("the download is larger than declared ({0} bytes)", len));
                 byte[] buf = new byte[1 << 16];
                 int n;
                 while ((n = s.Read(buf, 0, buf.Length)) > 0)
                 {
                     total += n;
-                    if (total > maxBytes) throw new Exception("the download is larger than declared");
+                    if (total > maxBytes) throw new Exception(L.T("the download is larger than declared"));
                     sha.TransformBlock(buf, 0, n, null, 0);
                     f.Write(buf, 0, n);
                     if (progress != null) progress(total, len > 0 ? len : maxBytes);
@@ -293,17 +293,17 @@ namespace GDMelee
         /// <summary>Why an entry name is refused, or null when it is safe. Exposed for the tests.</summary>
         public static string Check(string name)
         {
-            if (name.Length == 0) return "empty name";
+            if (name.Length == 0) return L.T("empty name");
             foreach (char c in name) if (c < 32 || c == ':' || c == '*' || c == '?' || c == '"' || c == '<' || c == '>' || c == '|')
-                return "a character that is not allowed in a file name";
+                return L.T("a character that is not allowed in a file name");
             string n = name.Replace('\\', '/');
-            if (n.StartsWith("/")) return "an absolute path";
+            if (n.StartsWith("/")) return L.T("an absolute path");
             foreach (string seg in n.Split('/'))
             {
-                if (seg == "..") return "a '..' step out of the folder";
-                if (seg == ".") return "a '.' segment";
-                if (seg.Length > 0 && (seg.EndsWith(".") || seg.EndsWith(" "))) return "a name ending in '.' or ' '";
-                if (Reserved.IsMatch(seg)) return "a reserved device name (" + seg + ")";
+                if (seg == "..") return L.T("a '..' step out of the folder");
+                if (seg == ".") return L.T("a '.' segment");
+                if (seg.Length > 0 && (seg.EndsWith(".") || seg.EndsWith(" "))) return L.T("a name ending in '.' or ' '");
+                if (Reserved.IsMatch(seg)) return L.F("a reserved device name ({0})", seg);
             }
             return null;
         }
@@ -330,10 +330,10 @@ namespace GDMelee
                 foreach (ZipArchiveEntry e in z.Entries)
                 {
                     string why = Check(e.FullName);
-                    if (why != null) throw new Exception("unsafe entry \"" + e.FullName + "\" in the zip: " + why);
-                    if (IsSymlink(e)) throw new Exception("the zip contains a symbolic link (" + e.FullName + ")");
+                    if (why != null) throw new Exception(L.F("unsafe entry \"{0}\" in the zip: {1}", e.FullName, why));
+                    if (IsSymlink(e)) throw new Exception(L.F("the zip contains a symbolic link ({0})", e.FullName));
                     total += e.Length;
-                    if (e.Length < 0 || total > MaxTotal) throw new Exception("the zip unpacks to more than 3 GB");
+                    if (e.Length < 0 || total > MaxTotal) throw new Exception(L.T("the zip unpacks to more than 3 GB"));
                     string n = e.FullName.Replace('\\', '/');
                     if (n.Equals("mod.json", StringComparison.OrdinalIgnoreCase)) rootMod = true;
                     int slash = n.IndexOf('/');
@@ -356,7 +356,7 @@ namespace GDMelee
                     if (n.Length == 0) continue;
                     string target = Path.GetFullPath(Path.Combine(root, n.Replace('/', '\\')));
                     if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase))
-                        throw new Exception("zip entry escapes the mod folder: " + e.FullName);
+                        throw new Exception(L.F("zip entry escapes the mod folder: {0}", e.FullName));
                     if (n.EndsWith("/"))
                     {
                         Directory.CreateDirectory(target);
@@ -446,7 +446,7 @@ namespace GDMelee
             List<Uri> cands = Candidates(entry);
             if (cands.Count == 0)
             {
-                error = "not a GitHub repo or a URL";
+                error = L.T("not a GitHub repo or a URL");
                 return r;
             }
             foreach (Uri u in cands)
@@ -456,11 +456,11 @@ namespace GDMelee
                 catch (Exception e) { error = e.Message; continue; }
                 Dictionary<string, object> j;
                 try { j = ModJson.Parse(text); }
-                catch (Exception e) { error = "the index is not valid JSON (" + e.Message + ")"; return r; }
+                catch (Exception e) { error = L.F("the index is not valid JSON ({0})", e.Message); return r; }
                 object mods;
                 if (j == null || !j.TryGetValue("mods", out mods) || !(mods is object[]))
                 {
-                    error = "the index has no \"mods\" list";
+                    error = L.T("the index has no \"mods\" list");
                     return r;
                 }
                 foreach (object o in (object[])mods)
@@ -472,19 +472,19 @@ namespace GDMelee
                     Uri dl;
                     if (!ModStore.IdRe.IsMatch(m.Id) || m.Id == "targettest")
                     {
-                        error = "skipped a mod with a bad id \"" + m.Id + "\" (lower-case letters, digits, . _ -)";
+                        error = L.F("skipped a mod with a bad id \"{0}\" (lower-case letters, digits, . _ -)", m.Id);
                         continue;
                     }
                     if (m.Sha256.Length != 64 || !Regex.IsMatch(m.Sha256, "^[0-9a-f]{64}$") || m.Size <= 0 ||
                         !Uri.TryCreate(u, m.Url, out dl))
                     {
-                        error = "skipped " + m.Id + ": it needs url, sha256 and size";
+                        error = L.F("skipped {0}: it needs url, sha256 and size", m.Id);
                         continue;
                     }
                     m.Url = dl.ToString();
                     r.Add(m);
                 }
-                error = r.Count == 0 && error == null ? "the index lists no mods" : error;
+                error = r.Count == 0 && error == null ? L.T("the index lists no mods") : error;
                 return r;
             }
             return r;
@@ -502,9 +502,9 @@ namespace GDMelee
         /// Throws with a message a player can read.</summary>
         public static void Install(ModInfo m, Action<long, long> progress)
         {
-            if (!ModStore.IdRe.IsMatch(m.Id)) throw new Exception("bad mod id " + m.Id);
+            if (!ModStore.IdRe.IsMatch(m.Id)) throw new Exception(L.F("bad mod id {0}", m.Id));
             if (m.Kind == "script" && m.ApiVersion > ScriptApi)
-                throw new Exception(m.Name + " needs scripting API " + m.ApiVersion + "; this game has " + ScriptApi + ". Update GD's Melee first.");
+                throw new Exception(L.F("{0} needs scripting API {1}; this game has {2}. Update GD's Melee first.", m.Name, m.ApiVersion, ScriptApi));
             Directory.CreateDirectory(ModStore.Dir);
             string tmp = Path.Combine(ModStore.Dir, ".download-" + m.Id + ".zip");
             string stage = Path.Combine(ModStore.Dir, ".staging-" + m.Id);
@@ -515,15 +515,15 @@ namespace GDMelee
                 if (Directory.Exists(stage)) Directory.Delete(stage, true);
                 string sha = Net.Download(new Uri(m.Url), tmp, m.Size, progress);
                 long got = new FileInfo(tmp).Length;
-                if (got != m.Size) throw new Exception("the download is " + got + " bytes; the index says " + m.Size);
-                if (sha != m.Sha256) throw new Exception("the download's sha256 does not match the index - not installed");
+                if (got != m.Size) throw new Exception(L.F("the download is {0} bytes; the index says {1}", got, m.Size));
+                if (sha != m.Sha256) throw new Exception(L.T("the download's sha256 does not match the index - not installed"));
                 SafeZip.Extract(tmp, stage);
                 string mj = Path.Combine(stage, "mod.json");
-                if (!File.Exists(mj)) throw new Exception("the zip has no mod.json at its top level");
+                if (!File.Exists(mj)) throw new Exception(L.T("the zip has no mod.json at its top level"));
                 Dictionary<string, object> j = ModJson.Parse(File.ReadAllText(mj));
                 ModInfo inside = j != null ? ModJson.FromDict(j) : null;
                 if (inside != null && inside.Id.Length > 0 && !inside.Id.Equals(m.Id, StringComparison.OrdinalIgnoreCase))
-                    throw new Exception("the zip's mod.json says id \"" + inside.Id + "\", the index says \"" + m.Id + "\"");
+                    throw new Exception(L.F("the zip's mod.json says id \"{0}\", the index says \"{1}\"", inside.Id, m.Id));
                 if (Directory.Exists(old)) Directory.Delete(old, true);
                 if (Directory.Exists(final)) Directory.Move(final, old);
                 Directory.Move(stage, final);
@@ -560,27 +560,27 @@ namespace GDMelee
             page.Padding = new Padding(10);
 
             installed = MakeList(true);
-            installed.Columns.Add("Installed mod", 190);
-            installed.Columns.Add("Version", 70);
-            installed.Columns.Add("Kind", 60);
-            installed.Columns.Add("Needs", 160);
+            installed.Columns.Add(L.T("Installed mod"), 190);
+            installed.Columns.Add(L.T("Version"), 70);
+            installed.Columns.Add(L.T("Kind"), 60);
+            installed.Columns.Add(L.T("Needs"), 160);
             installed.ItemChecked += delegate(object o, ItemCheckedEventArgs e) { OnChecked(e.Item); };
             installed.SelectedIndexChanged += delegate { ShowDetail(Sel(installed)); UpdateButtons(); };
 
             available = MakeList(false);
-            available.Columns.Add("Available mod", 190);
-            available.Columns.Add("Version", 70);
-            available.Columns.Add("Kind", 60);
-            available.Columns.Add("Status", 90);
-            available.Columns.Add("Source", 150);
+            available.Columns.Add(L.T("Available mod"), 190);
+            available.Columns.Add(L.T("Version"), 70);
+            available.Columns.Add(L.T("Kind"), 60);
+            available.Columns.Add(L.T("Status"), 110);
+            available.Columns.Add(L.T("Source"), 150);
             available.SelectedIndexChanged += delegate { ShowDetail(Sel(available)); UpdateButtons(); };
             available.DoubleClick += delegate { InstallSelected(); };
 
-            removeBtn = UI.Btn("Remove", delegate { RemoveSelected(); });
-            Button folder = UI.Btn("Open mods folder", delegate { Directory.CreateDirectory(ModStore.Dir); Process.Start("explorer.exe", "\"" + ModStore.Dir + "\""); });
-            refreshBtn = UI.Btn("Refresh sources", delegate { Refresh(); });
-            installBtn = UI.Btn("Install", delegate { InstallSelected(); });
-            Button sources = UI.Btn("Edit sources...", delegate
+            removeBtn = UI.Btn(L.T("Remove"), delegate { RemoveSelected(); });
+            Button folder = UI.Btn(L.T("Open mods folder"), delegate { Directory.CreateDirectory(ModStore.Dir); Process.Start("explorer.exe", "\"" + ModStore.Dir + "\""); });
+            refreshBtn = UI.Btn(L.T("Refresh sources"), delegate { Refresh(); });
+            installBtn = UI.Btn(L.T("Install"), delegate { InstallSelected(); });
+            Button sources = UI.Btn(L.T("Edit sources..."), delegate
             {
                 ModSources.EnsureExample();
                 Process.Start("notepad.exe", "\"" + ModSources.File_ + "\"");
@@ -591,9 +591,9 @@ namespace GDMelee
             detail = new Label { Dock = DockStyle.Fill, ForeColor = Color.DimGray, AutoEllipsis = true };
 
             // the scripts corner: the console socket for tools, and the scripts folder
-            CheckBox socket = new CheckBox { Text = "Console socket for tools (127.0.0.1:51700)", Checked = s.ConsoleSocket, AutoSize = true, Margin = new Padding(0, 4, 12, 0) };
+            CheckBox socket = new CheckBox { Text = L.T("Console socket for tools (127.0.0.1:51700)"), Checked = s.ConsoleSocket, AutoSize = true, Margin = new Padding(0, 4, 12, 0) };
             socket.CheckedChanged += delegate { s.ConsoleSocket = socket.Checked; try { s.Save(); } catch { } };
-            Button scripts = UI.Btn("Open scripts folder", delegate
+            Button scripts = UI.Btn(L.T("Open scripts folder"), delegate
             {
                 string p = Path.Combine(Settings.AppDir, "scripts");
                 Directory.CreateDirectory(p);
@@ -617,8 +617,8 @@ namespace GDMelee
 
             ReloadInstalled();
             sourceState.Text = ModSources.Read().Count == 0
-                ? "No sources yet: \"Edit sources...\" to add the ones you trust."
-                : ModSources.Read().Count + " source(s). \"Refresh sources\" to see their mods.";
+                ? L.T("No sources yet: \"Edit sources...\" to add the ones you trust.")
+                : L.F("{0} source(s). \"Refresh sources\" to see their mods.", ModSources.Read().Count);
             UpdateButtons();
         }
 
@@ -648,17 +648,17 @@ namespace GDMelee
             if (a != null)
             {
                 ModInfo have = ModStore.Find(inst, a.Id);
-                installBtn.Text = have == null ? "Install" : (have.Version == a.Version ? "Reinstall" : "Update");
+                installBtn.Text = have == null ? L.T("Install") : (have.Version == a.Version ? L.T("Reinstall") : L.T("Update"));
             }
         }
 
         void ShowDetail(ModInfo m)
         {
             if (m == null) { detail.Text = ""; return; }
-            detail.Text = m.Name + (m.Version.Length > 0 ? " " + m.Version : "") + (m.Pack.Length > 0 ? "  (pack " + m.Pack + ")" : "") +
-                          (m.Authors.Length > 0 ? "  by " + m.Authors : "") + "\r\n" +
+            detail.Text = m.Name + (m.Version.Length > 0 ? " " + m.Version : "") + (m.Pack.Length > 0 ? L.F("  (pack {0})", m.Pack) : "") +
+                          (m.Authors.Length > 0 ? L.F("  by {0}", m.Authors) : "") + "\r\n" +
                           (m.Description.Length > 0 ? m.Description + "\r\n" : "") +
-                          "Needs: " + m.RequiresText + "    Conflicts with: " + m.ConflictsText +
+                          L.F("Needs: {0}    Conflicts with: {1}", m.RequiresText, m.ConflictsText) +
                           (m.Size > 0 ? string.Format("    {0:0.0} MB", m.Size / 1048576.0) : "");
         }
 
@@ -675,7 +675,7 @@ namespace GDMelee
                 it.SubItems.Add(m.Kind);
                 List<string> missing = new List<string>();
                 foreach (string r in m.Requires) if (ModStore.Find(inst, r) == null) missing.Add(r);
-                it.SubItems.Add(missing.Count > 0 ? "MISSING " + string.Join(", ", missing.ToArray()) : m.RequiresText);
+                it.SubItems.Add(missing.Count > 0 ? L.F("MISSING {0}", string.Join(", ", missing.ToArray())) : m.RequiresText);
                 if (missing.Count > 0) it.ForeColor = Color.Firebrick;
                 it.Checked = m.Enabled;
                 it.Tag = m;
@@ -696,7 +696,7 @@ namespace GDMelee
                 ListViewItem it = new ListViewItem(m.Name);
                 it.SubItems.Add(m.Version);
                 it.SubItems.Add(m.Kind);
-                it.SubItems.Add(have == null ? "" : (have.Version == m.Version ? "installed" : "update " + have.Version + " > " + m.Version));
+                it.SubItems.Add(have == null ? "" : (have.Version == m.Version ? L.T("installed") : L.F("update {0} > {1}", have.Version, m.Version)));
                 it.SubItems.Add(m.Source);
                 it.Tag = m;
                 available.Items.Add(it);
@@ -714,9 +714,9 @@ namespace GDMelee
             {
                 ModStore.SetEnabled(m.Id, item.Checked);
                 m.Enabled = item.Checked;
-                form.Status((item.Checked ? "Enabled " : "Disabled ") + m.Id + " for the next start of the game.");
+                form.Status(item.Checked ? L.F("Enabled {0} for the next start of the game.", m.Id) : L.F("Disabled {0} for the next start of the game.", m.Id));
             }
-            catch (Exception e) { MessageBox.Show(form, e.Message, "Mods"); }
+            catch (Exception e) { MessageBox.Show(form, e.Message, L.T("Mods")); }
         }
 
         void RemoveSelected()
@@ -725,11 +725,11 @@ namespace GDMelee
             if (m == null) return;
             List<string> dependents = new List<string>();
             foreach (ModInfo o in inst) if (o.Requires.Contains(m.Id)) dependents.Add(o.Id);
-            string q = "Remove " + m.Id + "? Its folder is deleted." +
-                       (dependents.Count > 0 ? "\r\n\r\nThese installed mods need it: " + string.Join(", ", dependents.ToArray()) : "");
-            if (MessageBox.Show(form, q, "Remove mod", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
-            try { ModStore.Remove(m.Id); form.Status("Removed " + m.Id + "."); }
-            catch (Exception e) { MessageBox.Show(form, "Could not remove " + m.Id + ":\r\n" + e.Message, "Mods"); }
+            string q = L.F("Remove {0}? Its folder is deleted.", m.Id) +
+                       (dependents.Count > 0 ? L.F("\r\n\r\nThese installed mods need it: {0}", string.Join(", ", dependents.ToArray())) : "");
+            if (MessageBox.Show(form, q, L.T("Remove mod"), MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
+            try { ModStore.Remove(m.Id); form.Status(L.F("Removed {0}.", m.Id)); }
+            catch (Exception e) { MessageBox.Show(form, L.F("Could not remove {0}:\r\n{1}", m.Id, e.Message), L.T("Mods")); }
             ReloadInstalled();
         }
 
@@ -738,12 +738,12 @@ namespace GDMelee
             List<string> srcs = ModSources.Read();
             if (srcs.Count == 0)
             {
-                sourceState.Text = "No sources in mods\\sources.txt - \"Edit sources...\" to add some.";
+                sourceState.Text = L.T("No sources in mods\\sources.txt - \"Edit sources...\" to add some.");
                 return;
             }
             busy = true;
             UpdateButtons();
-            sourceState.Text = "Reading " + srcs.Count + " source(s)...";
+            sourceState.Text = L.F("Reading {0} source(s)...", srcs.Count);
             List<string> errors = new List<string>();
             List<ModInfo> found = await Task.Run(() =>
             {
@@ -759,9 +759,9 @@ namespace GDMelee
             });
             avail = found;
             busy = false;
-            sourceState.Text = found.Count + " mod(s) from " + srcs.Count + " source(s)" + (errors.Count > 0 ? " - " + errors.Count + " problem(s)" : "");
+            sourceState.Text = L.F("{0} mod(s) from {1} source(s)", found.Count, srcs.Count) + (errors.Count > 0 ? L.F(" - {0} problem(s)", errors.Count) : "");
             FillAvailable();
-            if (errors.Count > 0) MessageBox.Show(form, string.Join("\r\n", errors.ToArray()), "Mod sources", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            if (errors.Count > 0) MessageBox.Show(form, string.Join("\r\n", errors.ToArray()), L.T("Mod sources"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
         async void InstallSelected()
@@ -775,29 +775,29 @@ namespace GDMelee
             List<string> clash = new List<string>();
             foreach (ModInfo p in plan)
                 foreach (ModInfo o in inst)
-                    if (o.Enabled && (p.Conflicts.Contains(o.Id) || o.Conflicts.Contains(p.Id))) clash.Add(o.Id + " (conflicts with " + p.Id + ")");
+                    if (o.Enabled && (p.Conflicts.Contains(o.Id) || o.Conflicts.Contains(p.Id))) clash.Add(L.F("{0} (conflicts with {1})", o.Id, p.Id));
             StringBuilder q = new StringBuilder();
-            q.AppendLine("Install " + m.Name + " " + m.Version + "?");
-            q.AppendLine("From: " + m.Source);
+            q.AppendLine(L.F("Install {0} {1}?", m.Name, m.Version));
+            q.AppendLine(L.F("From: {0}", m.Source));
             if (plan.Count > 1)
             {
                 q.AppendLine();
-                q.AppendLine("It needs, and these are installed too:");
+                q.AppendLine(L.T("It needs, and these are installed too:"));
                 foreach (ModInfo p in plan) if (p != m) q.AppendLine("  " + p.Id + " " + p.Version);
             }
             if (unknown.Count > 0)
             {
                 q.AppendLine();
-                q.AppendLine("It needs mods none of your sources offer: " + string.Join(", ", unknown.ToArray()) + ". It will not load without them.");
+                q.AppendLine(L.F("It needs mods none of your sources offer: {0}. It will not load without them.", string.Join(", ", unknown.ToArray())));
             }
             if (clash.Count > 0)
             {
                 q.AppendLine();
-                q.AppendLine("These enabled mods conflict and will be disabled: " + string.Join(", ", clash.ToArray()));
+                q.AppendLine(L.F("These enabled mods conflict and will be disabled: {0}", string.Join(", ", clash.ToArray())));
             }
             q.AppendLine();
-            q.AppendLine("Mods are other people's work: install the ones you trust. Downloads are checked against the source's sha256; nothing downloaded is run by the launcher.");
-            if (MessageBox.Show(form, q.ToString(), "Install mod", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
+            q.AppendLine(L.T("Mods are other people's work: install the ones you trust. Downloads are checked against the source's sha256; nothing downloaded is run by the launcher."));
+            if (MessageBox.Show(form, q.ToString(), L.T("Install mod"), MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
 
             busy = true;
             bar.Visible = true;
@@ -806,7 +806,7 @@ namespace GDMelee
             foreach (ModInfo p in plan)
             {
                 ModInfo cur = p;
-                sourceState.Text = "Downloading " + cur.Id + "...";
+                sourceState.Text = L.F("Downloading {0}...", cur.Id);
                 try
                 {
                     await Task.Run(() => ModInstaller.Install(cur, (done, total) =>
@@ -826,12 +826,12 @@ namespace GDMelee
             ReloadInstalled();
             if (error != null)
             {
-                sourceState.Text = "Install failed.";
-                MessageBox.Show(form, "Not installed - " + error, "Install mod", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                sourceState.Text = L.T("Install failed.");
+                MessageBox.Show(form, L.F("Not installed - {0}", error), L.T("Install mod"), MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             else
             {
-                sourceState.Text = "Installed " + m.Id + ". It loads at the next start of the game.";
+                sourceState.Text = L.F("Installed {0}. It loads at the next start of the game.", m.Id);
                 form.Status(sourceState.Text);
             }
         }

@@ -15,6 +15,7 @@
 //   "GD Melee.exe" --add-iso <path>      add a disc (and make it the default), then open the window
 //   "GD Melee.exe" --forget-all          forget every saved disc (saves are kept), then open
 //   "GD Melee.exe" --shots <dir>         render each tab to <dir>\launcher-<tab>.png and exit (docs)
+//   "GD Melee.exe" --lang en|es          this run only, whatever launcher.cfg says (Lang.cs)
 //   "GD Melee.exe" --upload-crashes      what "Upload last 3 crash logs" does (only with the opt-in
 //                                        on), result appended to userdata\crash-upload.txt
 
@@ -58,10 +59,10 @@ namespace GDMelee
         {
             StringBuilder sb = new StringBuilder();
             if (GameId.Length > 0)
-                sb.AppendFormat("Game ID: {0}   revision: {1}\r\nTitle: {2}\r\n", GameId,
+                sb.AppendFormat(L.T("Game ID: {0}   revision: {1}\r\nTitle: {2}\r\n"), GameId,
                     Revision >= 0 ? "1.0" + Revision : "?", Title);
-            if (FileCount > 0) sb.AppendFormat("Files on disc: {0}   size: {1:0.00} GB\r\n", FileCount, Size / 1073741824.0);
-            if (Kind.Length > 0) sb.AppendFormat("Detected: {0}\r\n", Kind);
+            if (FileCount > 0) sb.AppendFormat(L.T("Files on disc: {0}   size: {1:0.00} GB\r\n"), FileCount, Size / 1073741824.0);
+            if (Kind.Length > 0) sb.AppendFormat(L.T("Detected: {0}\r\n"), L.Kind(Kind));
             if (Message.Length > 0) sb.Append("\r\n" + Message);
             return sb.ToString().TrimEnd();
         }
@@ -110,24 +111,23 @@ namespace GDMelee
                 {
                     d.Size = fs.Length;
                     byte[] h = ReadAt(fs, 0, 0x440);
-                    if (h == null) { d.Message = "The file is too small to be a GameCube disc image."; return d; }
+                    if (h == null) { d.Message = L.T("The file is too small to be a GameCube disc image."); return d; }
                     string magic = Encoding.ASCII.GetString(h, 0, 4);
                     if (magic == "RVZ\u0001" || magic == "WIA\u0001")
                     {
-                        d.Message = "This is a compressed Dolphin image (" + magic.Substring(0, 3) + "). GD's Melee reads plain disc images.\r\n" +
-                                    "In Dolphin: right-click the game > Convert File... > Format: ISO, then pick the .iso.";
+                        d.Message = L.F("This is a compressed Dolphin image ({0}). GD's Melee reads plain disc images.\r\nIn Dolphin: right-click the game > Convert File... > Format: ISO, then pick the .iso.", magic.Substring(0, 3));
                         return d;
                     }
                     if (magic == "CISO")
                     {
-                        d.Message = "This is a compressed CISO image. Convert it to a plain .iso first (Dolphin: Convert File... > ISO).";
+                        d.Message = L.T("This is a compressed CISO image. Convert it to a plain .iso first (Dolphin: Convert File... > ISO).");
                         return d;
                     }
                     if (BE32(h, 0x1C) != 0xC2339F3Du)
                     {
                         d.Message = BE32(h, 0x18) == 0x5D1C9EA3u
-                            ? "This is a Wii disc image, not a GameCube one."
-                            : "This is not a GameCube disc image (the disc header's magic number is missing).";
+                            ? L.T("This is a Wii disc image, not a GameCube one.")
+                            : L.T("This is not a GameCube disc image (the disc header's magic number is missing).");
                         return d;
                     }
                     d.GameId = Encoding.ASCII.GetString(h, 0, 6);
@@ -139,25 +139,25 @@ namespace GDMelee
                     bool tmce = d.GameId == "GTME01";
                     if (!d.GameId.StartsWith("GAL") && !tmce)
                     {
-                        d.Message = "This disc is \"" + d.Title + "\" (" + d.GameId + "), not Super Smash Bros. Melee.";
+                        d.Message = L.F("This disc is \"{0}\" ({1}), not Super Smash Bros. Melee.", d.Title, d.GameId);
                         return d;
                     }
                     if (d.GameId != "GALE01" && !tmce)
                     {
-                        string region = d.GameId[3] == 'P' ? "PAL (Europe)" : d.GameId[3] == 'J' ? "Japanese" : "\"" + d.GameId + "\"";
-                        d.Message = "This is the " + region + " version of Melee. GD's Melee needs the NTSC-U (USA) disc, game ID GALE01.";
+                        string region = d.GameId[3] == 'P' ? L.T("PAL (Europe)") : d.GameId[3] == 'J' ? L.T("Japanese") : "\"" + d.GameId + "\"";
+                        d.Message = L.F("This is the {0} version of Melee. GD's Melee needs the NTSC-U (USA) disc, game ID GALE01.", region);
                         return d;
                     }
                     if (d.Revision != 2)
                     {
-                        d.Message = "This is Melee NTSC 1.0" + d.Revision + ". GD's Melee needs revision 1.02 (the last USA revision, and the one every mod builds on).";
+                        d.Message = L.F("This is Melee NTSC 1.0{0}. GD's Melee needs revision 1.02 (the last USA revision, and the one every mod builds on).", d.Revision);
                         return d;
                     }
 
                     HashSet<string> names = ReadFstNames(fs, BE32(h, 0x424), BE32(h, 0x428), out d.FileCount);
                     if (names == null)
                     {
-                        d.Message = "The disc's file table is unreadable. The image may be truncated or damaged; dump it again.";
+                        d.Message = L.T("The disc's file table is unreadable. The image may be truncated or damaged; dump it again.");
                         return d;
                     }
                     d.Mex = names.Contains("MxDt.dat");
@@ -166,54 +166,54 @@ namespace GDMelee
                     {
                         bool ace = Path.GetFileName(path).IndexOf("ACE", StringComparison.Ordinal) >= 0;
                         foreach (string m in AceMarkers) if (names.Contains(m)) ace = true;
-                        if (ace) d.Kind = "ACE (m-ex mod)";
-                        else if (d.Title.IndexOf("Akaneia", StringComparison.OrdinalIgnoreCase) >= 0) d.Kind = "Akaneia (m-ex mod)";
+                        if (ace) d.Kind = L.N("ACE (m-ex mod)");
+                        else if (d.Title.IndexOf("Akaneia", StringComparison.OrdinalIgnoreCase) >= 0) d.Kind = L.N("Akaneia (m-ex mod)");
                         else
                         {
                             d.Kind = "m-ex mod: " + d.Title;
                             d.Verdict = DiscVerdict.Warn;
-                            d.Message = "This is an m-ex mod disc other than ACE or Akaneia. It may work, but only ACE and Akaneia are tested.";
+                            d.Message = L.T("This is an m-ex mod disc other than ACE or Akaneia. It may work, but only ACE and Akaneia are tested.");
                         }
                     }
                     else if (d.Title == "Super Smash Bros Melee")
                     {
-                        if (d.FileCount == VanillaFstEntries) d.Kind = "Melee 1.02 (vanilla)";
+                        if (d.FileCount == VanillaFstEntries) d.Kind = L.N("Melee 1.02 (vanilla)");
                         else
                         {
-                            d.Kind = "Melee 1.02 (modified)";
+                            d.Kind = L.N("Melee 1.02 (modified)");
                             d.Verdict = DiscVerdict.Warn;
-                            d.Message = "The disc is Melee 1.02 but its files differ from the retail disc. Mods that patch the game's code may not work.";
+                            d.Message = L.T("The disc is Melee 1.02 but its files differ from the retail disc. Mods that patch the game's code may not work.");
                         }
                     }
                     else if (tmce)
                     {
-                        d.Kind = "Training Mode (TM-CE)";
+                        d.Kind = L.N("Training Mode (TM-CE)");
                         d.Verdict = DiscVerdict.Warn;
-                        d.Message = "This disc boots, but its special features (the training lab and its menus) aren't supported yet: it plays like vanilla Melee for now.";
+                        d.Message = L.T("This disc boots, but its special features (the training lab and its menus) aren't supported yet: it plays like vanilla Melee for now.");
                     }
                     else if (d.Title.IndexOf("20XX", StringComparison.OrdinalIgnoreCase) >= 0)
                     {
                         d.Kind = "20XX: " + d.Title;
                         d.Verdict = DiscVerdict.Warn;
-                        d.Message = "This disc boots, but its special features (the 20XX menus and codes) aren't supported yet: it plays like vanilla Melee for now.";
+                        d.Message = L.T("This disc boots, but its special features (the 20XX menus and codes) aren't supported yet: it plays like vanilla Melee for now.");
                     }
                     else
                     {
                         d.Kind = "Melee 1.02 mod: " + d.Title;
                         d.Verdict = DiscVerdict.Warn;
-                        d.Message = "This is a mod built on Melee 1.02. Most mods patch the game's code, which GD's Melee does not run; expect it to behave like vanilla or to fail. Tested: vanilla 1.02, ACE, Akaneia.";
+                        d.Message = L.T("This is a mod built on Melee 1.02. Most mods patch the game's code, which GD's Melee does not run; expect it to behave like vanilla or to fail. Tested: vanilla 1.02, ACE, Akaneia.");
                     }
                     if (nkit)
                     {
                         d.Verdict = DiscVerdict.Warn;
-                        d.Message = (d.Message + "\r\nThis is an NKit image. If the game fails to start, restore it to a full ISO with NKit.").Trim();
+                        d.Message = (d.Message + "\r\n" + L.T("This is an NKit image. If the game fails to start, restore it to a full ISO with NKit.")).Trim();
                     }
                 }
             }
             catch (Exception e)
             {
                 d.Verdict = DiscVerdict.Bad;
-                d.Message = "Could not read the file: " + e.Message;
+                d.Message = L.F("Could not read the file: {0}", e.Message);
             }
             return d;
         }
@@ -275,6 +275,7 @@ namespace GDMelee
         public int PadReleaseOnBlur = -1;   // MELEE_PAD_RELEASE_ON_BLUR 0/1, -1 = the game's default
         public string Traces = "";          // extra switches, comma-separated (Diagnostics.TraceList)
         public bool CrashUpload = false;    // the Diagnostics tab's opt-in: enables "Upload last 3 crash logs"
+        public string Language = "auto";    // launcher language: auto (Windows) | en | es (Lang.cs), from the next start
 
         public static string AppDir = System.IO.Path.GetDirectoryName(Application.ExecutablePath);
         public static string UserDir = PickUserDir();
@@ -344,6 +345,7 @@ namespace GDMelee
                     case "pad_release_on_blur": { int r; if (int.TryParse(v, out r)) s.PadReleaseOnBlur = Math.Max(-1, Math.Min(1, r)); } break;
                     case "traces": s.Traces = v; break;
                     case "crash_upload": s.CrashUpload = v == "1"; break;
+                    case "language": s.Language = (v == "en" || v == "es") ? v : "auto"; break;
                     case "disc":
                         // id|name|kind|path  ('|' cannot appear in a Windows path)
                         string[] p = v.Split(new[] { '|' }, 4);
@@ -374,6 +376,7 @@ namespace GDMelee
             sb.AppendLine("pad_release_on_blur=" + PadReleaseOnBlur);
             sb.AppendLine("traces=" + Traces);
             sb.AppendLine("crash_upload=" + (CrashUpload ? "1" : "0"));
+            sb.AppendLine("language=" + Language);
             foreach (Disc d in Discs)
                 sb.AppendLine("disc=" + d.Id + "|" + d.Name.Replace("|", "/") + "|" + d.Kind.Replace("|", "/") + "|" + d.Path);
             Directory.CreateDirectory(UserDir);
@@ -444,7 +447,7 @@ namespace GDMelee
                 }
             }
             catch { }
-            return "development build";
+            return L.T("development build");
         }
 
         public static string[] MissingFiles()
@@ -518,26 +521,26 @@ namespace GDMelee
     {
         // MELEE_LOG categories that are quiet unless turned on
         public static readonly Choice[] Categories = {
-            new Choice("watchdog", "Watchdog samples", "Where the game thread is, sampled ten times a second (\"gw: at ...\"), and a stats line every 2 s. Helps with freezes and silent exits."),
-            new Choice("mex", "m-ex internals", "Fighter and stage code from m-ex discs and mods: hooks installed, calls into their code, item and effect registration. For crashes with ACE/Akaneia fighters or stages."),
-            new Choice("heap", "Memory (heap) trace", "Every allocation from the game's heaps (MELEE_HEAP_TRACE). For \"out of memory\" / ALLOC_FAIL crashes. Large."),
-            new Choice("dvd", "Disc file trace", "Every file the game opens and where it came from, the disc or a mod (MELEE_DVD_TRACE). For missing or wrong files in mods."),
-            new Choice("tex", "UI texture loads", "Every menu texture the game opens (gxtex)."),
-            new Choice("frontend", "Menu layout files", "Sizes of the menu layout and animation files as they load."),
-            new Choice("audio", "Sound bank loads", "Each sound bank as it is loaded (synth: bank ...)."),
-            new Choice("snap", "Rollback snapshot internals", "Object pool bookkeeping inside rollback snapshots. For online desyncs, when asked."),
+            new Choice("watchdog", L.N("Watchdog samples"), L.N("Where the game thread is, sampled ten times a second (\"gw: at ...\"), and a stats line every 2 s. Helps with freezes and silent exits.")),
+            new Choice("mex", L.N("m-ex internals"), L.N("Fighter and stage code from m-ex discs and mods: hooks installed, calls into their code, item and effect registration. For crashes with ACE/Akaneia fighters or stages.")),
+            new Choice("heap", L.N("Memory (heap) trace"), L.N("Every allocation from the game's heaps (MELEE_HEAP_TRACE). For \"out of memory\" / ALLOC_FAIL crashes. Large.")),
+            new Choice("dvd", L.N("Disc file trace"), L.N("Every file the game opens and where it came from, the disc or a mod (MELEE_DVD_TRACE). For missing or wrong files in mods.")),
+            new Choice("tex", L.N("UI texture loads"), L.N("Every menu texture the game opens (gxtex).")),
+            new Choice("frontend", L.N("Menu layout files"), L.N("Sizes of the menu layout and animation files as they load.")),
+            new Choice("audio", L.N("Sound bank loads"), L.N("Each sound bank as it is loaded (synth: bank ...).")),
+            new Choice("snap", L.N("Rollback snapshot internals"), L.N("Object pool bookkeeping inside rollback snapshots. For online desyncs, when asked.")),
         };
 
         // switches that are not log categories: key -> environment variable = 1
         public static readonly Choice[] TraceList = {
-            new Choice("rb", "Rollback log (MELEE_RB_LOG)", "Rollback and netplay frame decisions: rollbacks, input arrival, desync checks. For online problems."),
-            new Choice("gr", "Stage code trace (MELEE_GR_TRACE)", "Every call into an m-ex stage's own code. Very large; for a stage that crashes."),
-            new Choice("mexcalls", "m-ex engine call trace (MELEE_MEX_TRACE_CALLS)", "The first engine calls an m-ex fighter or stage makes, with arguments."),
-            new Choice("card", "Memory card diagnostics (MELEE_CARD_DIAG)", "Saves and loads of the memory card files. For lost settings or saves."),
-            new Choice("profile", "Frame timing profile (MELEE_PROFILE)", "Where each frame's time goes, every 600 frames. For stutter or low frame rate."),
-            new Choice("fps", "Show the frame rate (MELEE_SHOW_FPS)", "An FPS counter on the game window."),
-            new Choice("aurora", "Renderer log (MELEE_AURORA_VERBOSE)", "The graphics backend's own messages. For a black or broken screen."),
-            new Choice("osreport", "Report format trace (MELEE_PC_TRACE_OSREPORT)", "Every game report's format string before it is printed. Doubles the log; for a crash inside logging."),
+            new Choice("rb", L.N("Rollback log (MELEE_RB_LOG)"), L.N("Rollback and netplay frame decisions: rollbacks, input arrival, desync checks. For online problems.")),
+            new Choice("gr", L.N("Stage code trace (MELEE_GR_TRACE)"), L.N("Every call into an m-ex stage's own code. Very large; for a stage that crashes.")),
+            new Choice("mexcalls", L.N("m-ex engine call trace (MELEE_MEX_TRACE_CALLS)"), L.N("The first engine calls an m-ex fighter or stage makes, with arguments.")),
+            new Choice("card", L.N("Memory card diagnostics (MELEE_CARD_DIAG)"), L.N("Saves and loads of the memory card files. For lost settings or saves.")),
+            new Choice("profile", L.N("Frame timing profile (MELEE_PROFILE)"), L.N("Where each frame's time goes, every 600 frames. For stutter or low frame rate.")),
+            new Choice("fps", L.N("Show the frame rate (MELEE_SHOW_FPS)"), L.N("An FPS counter on the game window.")),
+            new Choice("aurora", L.N("Renderer log (MELEE_AURORA_VERBOSE)"), L.N("The graphics backend's own messages. For a black or broken screen.")),
+            new Choice("osreport", L.N("Report format trace (MELEE_PC_TRACE_OSREPORT)"), L.N("Every game report's format string before it is printed. Doubles the log; for a crash inside logging.")),
         };
 
         static readonly Dictionary<string, string> TraceEnv = new Dictionary<string, string> {
@@ -600,10 +603,10 @@ namespace GDMelee
             List<string> on = new List<string>();
             string spec = LogSpec(s);
             if (spec.Length > 0) on.Add("MELEE_LOG=" + spec);
-            if (s.PadDiag >= 0) on.Add("pad diagnostics " + s.PadDiag);
-            if (s.PadReleaseOnBlur >= 0) on.Add("release adapter on focus loss " + (s.PadReleaseOnBlur == 1 ? "on" : "off"));
+            if (s.PadDiag >= 0) on.Add(L.F("pad diagnostics {0}", s.PadDiag));
+            if (s.PadReleaseOnBlur >= 0) on.Add(s.PadReleaseOnBlur == 1 ? L.T("release adapter on focus loss: on") : L.T("release adapter on focus loss: off"));
             foreach (Choice c in TraceList) if (Has(s.Traces, c.Key)) on.Add(c.Key);
-            return on.Count == 0 ? "Diagnostics: the game's defaults." : "Diagnostics on: " + string.Join(", ", on.ToArray()) + ".";
+            return on.Count == 0 ? L.T("Diagnostics: the game's defaults.") : L.F("Diagnostics on: {0}.", string.Join(", ", on.ToArray()));
         }
     }
 
@@ -716,11 +719,11 @@ namespace GDMelee
         public static string Upload(FileInfo f)
         {
             string server = Server();
-            if (server.Length == 0) return "no matchmaking server is set (netplay_server.txt)";
+            if (server.Length == 0) return L.T("no matchmaking server is set (netplay_server.txt)");
             try
             {
                 byte[] body = new UTF8Encoding(false).GetBytes(Scrub(File.ReadAllText(f.FullName)));
-                if (body.Length > MaxUpload) return "the report is over 64 KB";
+                if (body.Length > MaxUpload) return L.T("the report is over 64 KB");
                 System.Net.HttpWebRequest rq = (System.Net.HttpWebRequest)System.Net.WebRequest.Create("http://" + server + "/crash");
                 rq.Method = "POST";
                 rq.ContentType = "text/plain; charset=utf-8";
@@ -742,7 +745,7 @@ namespace GDMelee
                 System.Net.HttpWebResponse rs = e.Response as System.Net.HttpWebResponse;
                 if (rs != null && (int)rs.StatusCode == 400)
                     try { File.WriteAllText(f.FullName + ".sent", "refused by the server (400)\r\n"); } catch { }
-                return rs != null ? "the server answered " + (int)rs.StatusCode : e.Message;
+                return rs != null ? L.F("the server answered {0}", (int)rs.StatusCode) : e.Message;
             }
             catch (Exception e) { return e.Message; }
         }
@@ -754,7 +757,7 @@ namespace GDMelee
             int sent = 0;
             string err = null;
             ok = false;
-            if (files.Count == 0) return "no crash reports to send (in " + Dir + ")";
+            if (files.Count == 0) return L.F("no crash reports to send (in {0})", Dir);
             foreach (FileInfo f in files)
             {
                 err = Upload(f);
@@ -762,8 +765,8 @@ namespace GDMelee
                 sent++;
             }
             ok = err == null;
-            return err == null ? "sent " + sent + " crash report" + (sent == 1 ? "" : "s")
-                               : "sent " + sent + " of " + files.Count + ", then failed: " + err;
+            return err == null ? (sent == 1 ? L.T("sent 1 crash report") : L.F("sent {0} crash reports", sent))
+                               : L.F("sent {0} of {1}, then failed: {2}", sent, files.Count, err);
         }
     }
 
@@ -913,7 +916,8 @@ namespace GDMelee
             tabs.Padding = new Point(14, 5);
             tabs.TabPages.Add(BuildPlayTab());
             tabs.TabPages.Add(BuildOnlineTab());
-            TabPage mods = new TabPage("Mods");
+            TabPage mods = new TabPage(L.T("Mods"));
+            mods.Name = "mods";
             modsTab = Mods.BuildTab(mods, this, s);
             tabs.TabPages.Add(mods);
             tabs.TabPages.Add(BuildDiagnosticsTab());
@@ -925,8 +929,8 @@ namespace GDMelee
 
             RefreshList();
             SetStatus(Game.MissingFiles().Length > 0
-                ? "Missing game files: " + string.Join(", ", Game.MissingFiles()) + ". Unzip the whole release again."
-                : "Ready.");
+                ? L.F("Missing game files: {0}. Unzip the whole release again.", string.Join(", ", Game.MissingFiles()))
+                : L.T("Ready."));
             Shown += delegate
             {
                 FirstRun();
@@ -950,7 +954,8 @@ namespace GDMelee
 
         TabPage BuildPlayTab()
         {
-            TabPage page = new TabPage("Play");
+            TabPage page = new TabPage(L.T("Play"));
+            page.Name = "play";
             page.Padding = new Padding(12);
 
             list = new ListView();
@@ -959,27 +964,27 @@ namespace GDMelee
             list.HideSelection = false;
             list.MultiSelect = false;
             list.Dock = DockStyle.Fill;
-            list.Columns.Add("Disc", 190);
-            list.Columns.Add("Detected", 160);
-            list.Columns.Add("File", 300);
+            list.Columns.Add(L.T("Disc"), 190);
+            list.Columns.Add(L.T("Detected"), 160);
+            list.Columns.Add(L.T("File"), 300);
             list.SelectedIndexChanged += delegate { UpdateButtons(); };
             list.Resize += delegate { FitColumns(); };
             list.DoubleClick += delegate { Play(); };
 
-            Button add = UI.Btn("&Add disc...", delegate { AddDisc(); });
-            changeBtn = UI.Btn("&Change ISO...", delegate { ChangeIso(); });
-            renameBtn = UI.Btn("&Rename...", delegate { Rename(); });
-            defaultBtn = UI.Btn("Make &default", delegate { MakeDefault(); });
-            forgetBtn = UI.Btn("&Forget", delegate { Forget(); });
+            Button add = UI.Btn(L.T("&Add disc..."), delegate { AddDisc(); });
+            changeBtn = UI.Btn(L.T("&Change ISO..."), delegate { ChangeIso(); });
+            renameBtn = UI.Btn(L.T("&Rename..."), delegate { Rename(); });
+            defaultBtn = UI.Btn(L.T("Make &default"), delegate { MakeDefault(); });
+            forgetBtn = UI.Btn(L.T("&Forget"), delegate { Forget(); });
             foreach (Button b in new[] { add, changeBtn, renameBtn, defaultBtn, forgetBtn })
             {
                 b.AutoSize = false;
-                b.Size = new Size(124, 30);
+                b.Size = new Size(150, 30);
             }
             FlowLayoutPanel side = new FlowLayoutPanel();
             side.FlowDirection = FlowDirection.TopDown;
             side.Dock = DockStyle.Right;
-            side.Width = 140;
+            side.Width = 166;
             side.Padding = new Padding(10, 0, 0, 0);
             side.Controls.AddRange(new Control[] { add, changeBtn, renameBtn, defaultBtn, forgetBtn });
 
@@ -990,10 +995,10 @@ namespace GDMelee
             detail.ForeColor = Color.DimGray;
             detail.AutoEllipsis = true;
 
-            unlockAll = new CheckBox { Text = "Unlock every character and stage (your save is not changed)", Checked = s.UnlockAll, AutoSize = true };
-            skipIntro = new CheckBox { Text = "Skip the intro movie", Checked = s.SkipIntro, AutoSize = true };
-            keyboard = new CheckBox { Text = "Keyboard only (ignore controllers and the adapter)", Checked = s.KeyboardOnly, AutoSize = true };
-            closeOnPlay = new CheckBox { Text = "Close this launcher when the game starts", Checked = s.CloseOnPlay, AutoSize = true };
+            unlockAll = new CheckBox { Text = L.T("Unlock every character and stage (your save is not changed)"), Checked = s.UnlockAll, AutoSize = true };
+            skipIntro = new CheckBox { Text = L.T("Skip the intro movie"), Checked = s.SkipIntro, AutoSize = true };
+            keyboard = new CheckBox { Text = L.T("Keyboard only (ignore controllers and the adapter)"), Checked = s.KeyboardOnly, AutoSize = true };
+            closeOnPlay = new CheckBox { Text = L.T("Close this launcher when the game starts"), Checked = s.CloseOnPlay, AutoSize = true };
             foreach (CheckBox c in new[] { unlockAll, skipIntro, keyboard, closeOnPlay })
             {
                 c.Margin = new Padding(0, 0, 18, 2);
@@ -1003,22 +1008,22 @@ namespace GDMelee
             opts.FlowDirection = FlowDirection.TopDown;
             opts.AutoSize = true;
             opts.Controls.AddRange(new Control[] { unlockAll, skipIntro, keyboard, closeOnPlay });
-            Label volLabel = new Label { AutoSize = true, Margin = new Padding(0, 6, 6, 0), Text = "Game volume: " + s.Volume + "%" };
+            Label volLabel = new Label { AutoSize = true, Margin = new Padding(0, 6, 6, 0), Text = L.F("Game volume: {0}%", s.Volume) };
             TrackBar vol = new TrackBar { Minimum = 0, Maximum = 100, TickFrequency = 10, SmallChange = 5, LargeChange = 10,
                                           Value = s.Volume, Width = 180, Height = 30, AutoSize = false, Margin = new Padding(0) };
-            vol.ValueChanged += delegate { s.Volume = vol.Value; volLabel.Text = "Game volume: " + vol.Value + "%"; };
+            vol.ValueChanged += delegate { s.Volume = vol.Value; volLabel.Text = L.F("Game volume: {0}%", vol.Value); };
             vol.MouseUp += delegate { SaveOptions(); };
             vol.KeyUp += delegate { SaveOptions(); };
             opts.Controls.Add(UI.Row(volLabel, vol));
-            Label kpLabel = new Label { AutoSize = true, Margin = new Padding(0, 6, 6, 0), Text = "Keyboard plays as:" };
-            ComboBox kp = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300, Margin = new Padding(0, 2, 0, 0) };
-            kp.Items.AddRange(new object[] { "Port 1, shared with a controller (default)", "Port 2 (a separate player)", "Port 3", "Port 4" });
+            Label kpLabel = new Label { AutoSize = true, Margin = new Padding(0, 6, 6, 0), Text = L.T("Keyboard plays as:") };
+            ComboBox kp = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 360, Margin = new Padding(0, 2, 0, 0) };
+            kp.Items.AddRange(new object[] { L.T("Port 1, shared with a controller (default)"), L.T("Port 2 (a separate player)"), L.T("Port 3"), L.T("Port 4") });
             kp.SelectedIndex = s.KeyboardPort <= 1 ? 0 : s.KeyboardPort - 1;
             kp.SelectedIndexChanged += delegate { s.KeyboardPort = kp.SelectedIndex == 0 ? 0 : kp.SelectedIndex + 1; TrySave(); };
             opts.Controls.Add(UI.Row(kpLabel, kp));
 
             playBtn = new Button();
-            playBtn.Text = "PLAY";
+            playBtn.Text = L.T("PLAY");
             playBtn.Font = new Font("Segoe UI Semibold", 14f);
             playBtn.Size = new Size(140, 56);
             playBtn.BackColor = UI.Accent;
@@ -1080,7 +1085,7 @@ namespace GDMelee
             {
                 bool present = File.Exists(d.Path);
                 ListViewItem it = new ListViewItem((d == def ? "\u2605 " : "     ") + d.Name);
-                it.SubItems.Add(present ? d.Kind : "FILE MISSING");
+                it.SubItems.Add(present ? L.Kind(d.Kind) : L.T("FILE MISSING"));
                 it.SubItems.Add(d.Path);
                 it.Tag = d;
                 if (!present) it.ForeColor = Color.Firebrick;
@@ -1101,10 +1106,10 @@ namespace GDMelee
             defaultBtn.Enabled = has && d != s.Default;
             playBtn.Enabled = has && running == null;
             if (!has)
-                detail.Text = s.Discs.Count == 0 ? "No disc yet. Click \"Add disc...\" and pick your Melee .iso." : "";
+                detail.Text = s.Discs.Count == 0 ? L.T("No disc yet. Click \"Add disc...\" and pick your Melee .iso.") : "";
             else
-                detail.Text = (File.Exists(d.Path) ? "" : "The file is gone. Use \"Change ISO...\" to point at its new place.\r\n") +
-                              "Saves for this disc: " + Path.Combine(Path.Combine(Settings.UserDir, "saves"), d.Id);
+                detail.Text = (File.Exists(d.Path) ? "" : L.T("The file is gone. Use \"Change ISO...\" to point at its new place.\r\n")) +
+                              L.F("Saves for this disc: {0}", Path.Combine(Path.Combine(Settings.UserDir, "saves"), d.Id));
         }
 
         void SaveOptions()
@@ -1120,7 +1125,7 @@ namespace GDMelee
         void TrySave()
         {
             try { s.Save(); }
-            catch (Exception e) { SetStatus("Could not save settings: " + e.Message); }
+            catch (Exception e) { SetStatus(L.F("Could not save settings: {0}", e.Message)); }
         }
 
         string PickIso(string title)
@@ -1128,7 +1133,7 @@ namespace GDMelee
             using (OpenFileDialog dlg = new OpenFileDialog())
             {
                 dlg.Title = title;
-                dlg.Filter = "GameCube disc images (*.iso;*.gcm)|*.iso;*.gcm|All files (*.*)|*.*";
+                dlg.Filter = L.T("GameCube disc images (*.iso;*.gcm)|*.iso;*.gcm|All files (*.*)|*.*");
                 dlg.CheckFileExists = true;
                 if (Selected != null && File.Exists(Selected.Path)) dlg.InitialDirectory = Path.GetDirectoryName(Selected.Path);
                 return dlg.ShowDialog(this) == DialogResult.OK ? dlg.FileName : null;
@@ -1143,14 +1148,14 @@ namespace GDMelee
             Cursor = Cursors.Default;
             if (info.Verdict == DiscVerdict.Bad)
             {
-                MessageBox.Show(this, Path.GetFileName(path) + "\r\n\r\n" + info.Describe(), "This disc can't be used",
+                MessageBox.Show(this, Path.GetFileName(path) + "\r\n\r\n" + info.Describe(), L.T("This disc can't be used"),
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return null;
             }
             if (info.Verdict == DiscVerdict.Warn)
             {
-                DialogResult r = MessageBox.Show(this, Path.GetFileName(path) + "\r\n\r\n" + info.Describe() + "\r\n\r\nUse it anyway?",
-                    "Check this disc", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                DialogResult r = MessageBox.Show(this, Path.GetFileName(path) + "\r\n\r\n" + info.Describe() + "\r\n\r\n" + L.T("Use it anyway?"),
+                    L.T("Check this disc"), MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 return r == DialogResult.Yes ? info : null;
             }
             return info;
@@ -1163,13 +1168,13 @@ namespace GDMelee
                 if (string.Equals(existing.Path, path, StringComparison.OrdinalIgnoreCase))
                 {
                     RefreshList(existing.Id);
-                    if (!quiet) SetStatus("That disc is already in the list: " + existing.Name);
+                    if (!quiet) SetStatus(L.F("That disc is already in the list: {0}", existing.Name));
                     return existing;
                 }
             DiscInfo info = quiet ? DiscProbe.Probe(path) : CheckIso(path);
             if (info == null || info.Verdict == DiscVerdict.Bad)
             {
-                if (quiet && info != null) SetStatus("Not added: " + info.Message);
+                if (quiet && info != null) SetStatus(L.F("Not added: {0}", info.Message));
                 return null;
             }
             Disc d = new Disc();
@@ -1185,13 +1190,13 @@ namespace GDMelee
             if (s.Find(s.DefaultId) == null) s.DefaultId = d.Id;
             TrySave();
             RefreshList(d.Id);
-            SetStatus("Added " + d.Name + ": " + d.Kind + ".");
+            SetStatus(L.F("Added {0}: {1}.", d.Name, L.Kind(d.Kind)));
             return d;
         }
 
         void AddDisc()
         {
-            string p = PickIso("Pick a Super Smash Bros. Melee disc image (NTSC 1.02, or an ACE/Akaneia build)");
+            string p = PickIso(L.T("Pick a Super Smash Bros. Melee disc image (NTSC 1.02, or an ACE/Akaneia build)"));
             if (p != null) AddPath(p, false);
         }
 
@@ -1200,10 +1205,8 @@ namespace GDMelee
             if (firstRunPrompted || s.Discs.Count > 0 || Game.MissingFiles().Length > 0) return;
             firstRunPrompted = true;
             MessageBox.Show(this,
-                "Welcome to GD's Melee.\r\n\r\nGD's Melee contains no Nintendo game data. It runs from your own disc image of " +
-                "Super Smash Bros. Melee: NTSC-U (USA) revision 1.02, as a plain .iso (or an ACE / Akaneia build made from it).\r\n\r\n" +
-                "Pick the file next. It is remembered; you can add more discs, change or forget them later.",
-                "GD's Melee - first run", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                L.T("Welcome to GD's Melee.\r\n\r\nGD's Melee contains no Nintendo game data. It runs from your own disc image of Super Smash Bros. Melee: NTSC-U (USA) revision 1.02, as a plain .iso (or an ACE / Akaneia build made from it).\r\n\r\nPick the file next. It is remembered; you can add more discs, change or forget them later."),
+                L.T("GD's Melee - first run"), MessageBoxButtons.OK, MessageBoxIcon.Information);
             AddDisc();
         }
 
@@ -1211,7 +1214,7 @@ namespace GDMelee
         {
             Disc d = Selected;
             if (d == null) return;
-            string p = PickIso("Pick the new disc image for \"" + d.Name + "\"");
+            string p = PickIso(L.F("Pick the new disc image for \"{0}\"", d.Name));
             if (p == null) return;
             DiscInfo info = CheckIso(p);
             if (info == null) return;
@@ -1219,14 +1222,14 @@ namespace GDMelee
             d.Kind = info.Kind;
             TrySave();
             RefreshList(d.Id);
-            SetStatus(d.Name + " now boots " + Path.GetFileName(p) + " (" + info.Kind + "). Its saves are unchanged.");
+            SetStatus(L.F("{0} now boots {1} ({2}). Its saves are unchanged.", d.Name, Path.GetFileName(p), L.Kind(info.Kind)));
         }
 
         void Rename()
         {
             Disc d = Selected;
             if (d == null) return;
-            string n = Prompt("Rename disc", "Name shown in the list:", d.Name);
+            string n = Prompt(L.T("Rename disc"), L.T("Name shown in the list:"), d.Name);
             if (string.IsNullOrEmpty(n)) return;
             d.Name = n.Trim();
             TrySave();
@@ -1240,21 +1243,21 @@ namespace GDMelee
             s.DefaultId = d.Id;
             TrySave();
             RefreshList(d.Id);
-            SetStatus(d.Name + " is the default (\"--play\" and double-click boot it).");
+            SetStatus(L.F("{0} is the default (\"--play\" and double-click boot it).", d.Name));
         }
 
         void Forget()
         {
             Disc d = Selected;
             if (d == null) return;
-            if (MessageBox.Show(this, "Forget \"" + d.Name + "\"?\r\n\r\nThe disc image itself is not touched, and its saves stay in\r\n" +
-                    Path.Combine(Path.Combine(Settings.UserDir, "saves"), d.Id), "Forget disc",
+            if (MessageBox.Show(this, L.F("Forget \"{0}\"?\r\n\r\nThe disc image itself is not touched, and its saves stay in\r\n{1}", d.Name,
+                    Path.Combine(Path.Combine(Settings.UserDir, "saves"), d.Id)), L.T("Forget disc"),
                     MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK) return;
             s.Discs.Remove(d);
             if (s.DefaultId == d.Id) s.DefaultId = s.Discs.Count > 0 ? s.Discs[0].Id : "";
             TrySave();
             RefreshList();
-            SetStatus("Forgot " + d.Name + ".");
+            SetStatus(L.F("Forgot {0}.", d.Name));
         }
 
         public void Play()
@@ -1264,14 +1267,14 @@ namespace GDMelee
             string[] missing = Game.MissingFiles();
             if (missing.Length > 0)
             {
-                MessageBox.Show(this, "These game files are missing next to the launcher:\r\n\r\n" + string.Join("\r\n", missing) +
-                    "\r\n\r\nUnzip the whole release into one folder.", "GD's Melee", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, L.F("These game files are missing next to the launcher:\r\n\r\n{0}\r\n\r\nUnzip the whole release into one folder.", string.Join("\r\n", missing)),
+                    "GD's Melee", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
             if (!File.Exists(d.Path))
             {
-                if (MessageBox.Show(this, "The disc image for \"" + d.Name + "\" is no longer at\r\n" + d.Path + "\r\n\r\nFind it now?",
-                        "Disc not found", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes) ChangeIso();
+                if (MessageBox.Show(this, L.F("The disc image for \"{0}\" is no longer at\r\n{1}\r\n\r\nFind it now?", d.Name, d.Path),
+                        L.T("Disc not found"), MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes) ChangeIso();
                 return;
             }
             SaveOptions();
@@ -1281,7 +1284,7 @@ namespace GDMelee
                 runningSince = DateTime.Now;
                 running.EnableRaisingEvents = true;
                 running.Exited += delegate { BeginInvoke(new MethodInvoker(GameExited)); };
-                SetStatus("Running " + d.Name + " (" + Path.GetFileName(d.Path) + ").");
+                SetStatus(L.F("Running {0} ({1}).", d.Name, Path.GetFileName(d.Path)));
                 UpdateButtons();
                 if (s.CloseOnPlay) Close();
                 else WindowState = FormWindowState.Minimized;
@@ -1289,7 +1292,7 @@ namespace GDMelee
             catch (Exception e)
             {
                 running = null;
-                MessageBox.Show(this, "Could not start melee-pc.exe:\r\n" + e.Message, "GD's Melee", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(this, L.F("Could not start melee-pc.exe:\r\n{0}", e.Message), "GD's Melee", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -1309,9 +1312,9 @@ namespace GDMelee
             if (fresh.Count > 0)
             {
                 FileInfo f = fresh[fresh.Count - 1];
-                SetStatus("The game crashed after " + (int)secs + " s. Report: " + f.FullName);
-                if (MessageBox.Show(this, "The game stopped with an error" + (code != 0 ? " (exit code 0x" + code.ToString("X8") + ")" : "") + ".\r\n\r\n" +
-                        "A short crash report was written to\r\n" + f.FullName + "\r\n(the whole log is beside it, ending in -full.log).\r\n\r\nOpen the report?",
+                SetStatus(L.F("The game crashed after {0} s. Report: {1}", (int)secs, f.FullName));
+                string codeText = code != 0 ? L.F(" (exit code 0x{0})", code.ToString("X8")) : "";
+                if (MessageBox.Show(this, L.F("The game stopped with an error{0}.\r\n\r\nA short crash report was written to\r\n{1}\r\n(the whole log is beside it, ending in -full.log).\r\n\r\nOpen the report?", codeText, f.FullName),
                         "GD's Melee", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                     Process.Start("notepad.exe", "\"" + f.FullName + "\"");
             }
@@ -1319,22 +1322,21 @@ namespace GDMelee
             {
                 // The window was closed and the game then faulted while tearing the renderer down
                 // (a known Dawn shutdown crash). Nothing was lost; don't alarm the user.
-                SetStatus("The game closed.");
+                SetStatus(L.T("The game closed."));
             }
             else if (code != 0)
             {
-                SetStatus("The game stopped with an error (code 0x" + code.ToString("X8") + ") after " + (int)secs + " s.");
-                if (MessageBox.Show(this, "The game stopped with an error (exit code 0x" + code.ToString("X8") + ").\r\n\r\n" +
-                        "Its log is " + Game.LogFile + " (crash logs are in the crashlogs folder beside it).\r\nOpen the log?",
+                SetStatus(L.F("The game stopped with an error (code 0x{0}) after {1} s.", code.ToString("X8"), (int)secs));
+                if (MessageBox.Show(this, L.F("The game stopped with an error (exit code 0x{0}).\r\n\r\nIts log is {1} (crash logs are in the crashlogs folder beside it).\r\nOpen the log?", code.ToString("X8"), Game.LogFile),
                         "GD's Melee", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes) OpenLog();
             }
-            else SetStatus("The game closed.");
+            else SetStatus(L.T("The game closed."));
         }
 
         void OpenLog()
         {
             if (File.Exists(Game.LogFile)) Process.Start("notepad.exe", "\"" + Game.LogFile + "\"");
-            else MessageBox.Show(this, "No log yet: " + Game.LogFile, "GD's Melee");
+            else MessageBox.Show(this, L.F("No log yet: {0}", Game.LogFile), "GD's Melee");
         }
 
         static string Prompt(string title, string label, string value)
@@ -1349,8 +1351,8 @@ namespace GDMelee
                 f.ClientSize = new Size(380, 110);
                 Label l = new Label { Text = label, Left = 12, Top = 12, AutoSize = true };
                 TextBox t = new TextBox { Text = value, Left = 12, Top = 36, Width = 356 };
-                Button ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Left = 212, Top = 70, Width = 75 };
-                Button cancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Left = 293, Top = 70, Width = 75 };
+                Button ok = new Button { Text = L.T("OK"), DialogResult = DialogResult.OK, Left = 212, Top = 70, Width = 75 };
+                Button cancel = new Button { Text = L.T("Cancel"), DialogResult = DialogResult.Cancel, Left = 293, Top = 70, Width = 75 };
                 f.Controls.AddRange(new Control[] { l, t, ok, cancel });
                 f.AcceptButton = ok;
                 f.CancelButton = cancel;
@@ -1362,18 +1364,15 @@ namespace GDMelee
 
         TabPage BuildOnlineTab()
         {
-            TabPage page = new TabPage("Online");
-            Label intro = UI.Para(
-                "Online play is in the game: Main Menu > VS. Mode > Melee > Online Play. Both players need this same release " +
-                "of GD's Melee. Mods are welcome online: any fighter or stage you both have can be picked (see the Mods tab).\r\n\r\n" +
-                "Room codes (short codes instead of IP addresses) need a matchmaking server. Enter its address here as " +
-                "host:port, or leave it empty to swap addresses by hand. The setting is stored in netplay_server.txt next to the game.");
-            Label lbl = new Label { Text = "Matchmaking server (host:port):", AutoSize = true, Margin = new Padding(0, 4, 0, 4) };
+            TabPage page = new TabPage(L.T("Online"));
+            page.Name = "online";
+            Label intro = UI.Para(L.T("Online play is in the game: Main Menu > VS. Mode > Melee > Online Play. Both players need this same release of GD's Melee. Mods are welcome online: any fighter or stage you both have can be picked (see the Mods tab).\r\n\r\nRoom codes (short codes instead of IP addresses) need a matchmaking server. Enter its address here as host:port, or leave it empty to swap addresses by hand. The setting is stored in netplay_server.txt next to the game."));
+            Label lbl = new Label { Text = L.T("Matchmaking server (host:port):"), AutoSize = true, Margin = new Padding(0, 4, 0, 4) };
             serverBox = new TextBox { Width = 320, Margin = new Padding(0, 0, 0, 6) };
             serverState = new Label { AutoSize = true, ForeColor = Color.DimGray, Margin = new Padding(0, 0, 0, 10) };
-            Button save = UI.Btn("Save", delegate { SaveServer(serverBox.Text.Trim()); });
-            Button clear = UI.Btn("Clear", delegate { serverBox.Text = ""; SaveServer(""); });
-            Button howto = UI.Btn("How to play online", delegate
+            Button save = UI.Btn(L.T("Save"), delegate { SaveServer(serverBox.Text.Trim()); });
+            Button clear = UI.Btn(L.T("Clear"), delegate { serverBox.Text = ""; SaveServer(""); });
+            Button howto = UI.Btn(L.T("How to play online"), delegate
             {
                 string f = Path.Combine(Settings.AppDir, "HOW TO PLAY ONLINE.txt");
                 if (File.Exists(f)) Process.Start("notepad.exe", "\"" + f + "\"");
@@ -1388,7 +1387,7 @@ namespace GDMelee
             string v = "";
             try { if (File.Exists(Game.ServerFile)) v = File.ReadAllText(Game.ServerFile).Trim(); } catch { }
             serverBox.Text = v;
-            serverState.Text = v.Length > 0 ? "Room codes use " + v + "." : "No server set: players swap addresses (the Online Play screen shows yours).";
+            serverState.Text = v.Length > 0 ? L.F("Room codes use {0}.", v) : L.T("No server set: players swap addresses (the Online Play screen shows yours).");
         }
 
         void SaveServer(string v)
@@ -1399,7 +1398,7 @@ namespace GDMelee
                 int port;
                 if (colon <= 0 || !int.TryParse(v.Substring(colon + 1), out port) || port < 1 || port > 65535 || v.Contains(" "))
                 {
-                    MessageBox.Show(this, "Write it as host:port, for example play.example.net:51500", "Matchmaking server",
+                    MessageBox.Show(this, L.T("Write it as host:port, for example play.example.net:51500"), L.T("Matchmaking server"),
                         MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
@@ -1409,12 +1408,12 @@ namespace GDMelee
                 if (v.Length > 0) File.WriteAllText(Game.ServerFile, v + "\r\n", Encoding.ASCII);
                 else if (File.Exists(Game.ServerFile)) File.Delete(Game.ServerFile);
                 LoadServer();
-                SetStatus("Server setting saved.");
+                SetStatus(L.T("Server setting saved."));
             }
             catch (Exception e)
             {
-                MessageBox.Show(this, "Could not write " + Game.ServerFile + ":\r\n" + e.Message +
-                    "\r\n\r\nMove the game to a folder you can write to (not Program Files).", "Matchmaking server");
+                MessageBox.Show(this, L.F("Could not write {0}:\r\n{1}\r\n\r\nMove the game to a folder you can write to (not Program Files).", Game.ServerFile, e.Message),
+                    L.T("Matchmaking server"));
             }
         }
 
@@ -1432,18 +1431,18 @@ namespace GDMelee
 
         CheckBox Toggle(string label, string tip, bool on, EventHandler changed)
         {
-            CheckBox c = new CheckBox { Text = label, Checked = on, AutoSize = true, Margin = new Padding(12, 0, 18, 2) };
-            tips.SetToolTip(c, tip);
+            CheckBox c = new CheckBox { Text = L.T(label), Checked = on, AutoSize = true, Margin = new Padding(12, 0, 18, 2) };
+            tips.SetToolTip(c, L.T(tip));
             c.CheckedChanged += changed;
             return c;
         }
 
         ComboBox Pick(string tip, string[] items, int index, EventHandler changed)
         {
-            ComboBox b = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 300, Margin = new Padding(0, 0, 0, 4) };
-            b.Items.AddRange(items);
+            ComboBox b = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 420, Margin = new Padding(0, 0, 0, 4) };
+            foreach (string item in items) b.Items.Add(L.T(item));
             b.SelectedIndex = Math.Max(0, Math.Min(items.Length - 1, index));
-            tips.SetToolTip(b, tip);
+            tips.SetToolTip(b, L.T(tip));
             b.SelectedIndexChanged += changed;
             return b;
         }
@@ -1451,21 +1450,19 @@ namespace GDMelee
         void DiagChanged()
         {
             TrySave();
-            if (diagSummary != null) diagSummary.Text = Diagnostics.Summary(s) + " Changes apply the next time the game starts.";
+            if (diagSummary != null) diagSummary.Text = Diagnostics.Summary(s) + " " + L.T("Changes apply the next time the game starts.");
         }
 
         TabPage BuildDiagnosticsTab()
         {
-            TabPage page = new TabPage("Diagnostics");
+            TabPage page = new TabPage(L.T("Diagnostics"));
+            page.Name = "diagnostics";
             tips = new ToolTip { AutoPopDelay = 20000, InitialDelay = 400 };
             List<Control> col = new List<Control>();
-            col.Add(UI.Para("The game writes melee-pc.log in its folder. By default it keeps it short: scene changes, fighter, stage " +
-                            "and mod loads, warnings and errors, online and controller events. If you are asked for more detail " +
-                            "for a bug report, turn on what you were asked for here, play until it happens, then send the log. " +
-                            "Hover over an option for what it adds."));
+            col.Add(UI.Para(L.T("The game writes melee-pc.log in its folder. By default it keeps it short: scene changes, fighter, stage and mod loads, warnings and errors, online and controller events. If you are asked for more detail for a bug report, turn on what you were asked for here, play until it happens, then send the log. Hover over an option for what it adds.")));
 
-            col.Add(Heading("Game log"));
-            col.Add(Toggle("Scene changes and menu cursors (on by default)", "Every screen change and the menu cursor positions. Turn off only if asked.",
+            col.Add(Heading(L.T("Game log")));
+            col.Add(Toggle(L.N("Scene changes and menu cursors (on by default)"), L.N("Every screen change and the menu cursor positions. Turn off only if asked."),
                 s.LogScene, delegate(object o, EventArgs e) { s.LogScene = ((CheckBox)o).Checked; DiagChanged(); }));
             foreach (Choice c in Diagnostics.Categories)
             {
@@ -1473,36 +1470,36 @@ namespace GDMelee
                 col.Add(Toggle(c.Label, c.Tip, Diagnostics.Has(s.LogCategories, key),
                     delegate(object o, EventArgs e) { s.LogCategories = Diagnostics.Set(s.LogCategories, key, ((CheckBox)o).Checked); DiagChanged(); }));
             }
-            Label rl = new Label { Text = "Rendering diagnostics (DIAG blocks):", AutoSize = true, Margin = new Padding(12, 6, 0, 2) };
+            Label rl = new Label { Text = L.T("Rendering diagnostics (DIAG blocks):"), AutoSize = true, Margin = new Padding(12, 6, 0, 2) };
             col.Add(rl);
-            ComboBox render = Pick("The renderer's DIAG block: matrices, EFB copies, a depth grid and the camera. The first one after each scene change is enough to tell why a screen is black.",
-                new[] { "One block per scene (default)", "Every block (every half second)", "None" },
+            ComboBox render = Pick(L.N("The renderer's DIAG block: matrices, EFB copies, a depth grid and the camera. The first one after each scene change is enough to tell why a screen is black."),
+                new[] { L.N("One block per scene (default)"), L.N("Every block (every half second)"), L.N("None") },
                 s.LogRender == 0 ? 0 : s.LogRender > 0 ? 1 : 2,
                 delegate(object o, EventArgs e) { int i = ((ComboBox)o).SelectedIndex; s.LogRender = i == 0 ? 0 : i == 1 ? 1 : -1; DiagChanged(); });
             render.Margin = new Padding(12, 0, 0, 4);
             col.Add(render);
-            col.Add(Toggle("Everything (MELEE_LOG=all)", "Every line from every category above, no flood limit. The log gets large quickly.",
+            col.Add(Toggle(L.N("Everything (MELEE_LOG=all)"), L.N("Every line from every category above, no flood limit. The log gets large quickly."),
                 s.LogAll, delegate(object o, EventArgs e) { s.LogAll = ((CheckBox)o).Checked; DiagChanged(); }));
 
-            col.Add(Heading("Controllers"));
-            Label pl = new Label { Text = "Controller diagnostics (MELEE_PAD_DIAG):", AutoSize = true, Margin = new Padding(12, 0, 0, 2) };
+            col.Add(Heading(L.T("Controllers")));
+            Label pl = new Label { Text = L.T("Controller diagnostics (MELEE_PAD_DIAG):"), AutoSize = true, Margin = new Padding(12, 0, 0, 2) };
             col.Add(pl);
-            ComboBox pad = Pick("What the game logs about controllers and the GameCube adapter. Level 1, the event log (plugged in, unplugged, device switches), is the game's default; level 2 adds the old verbose dump of every pad every 30 frames.",
-                new[] { "Game default (1, events)", "0 - off", "1 - events: plug, unplug, device switches", "2 - verbose: every pad every 30 frames (large)" },
+            ComboBox pad = Pick(L.N("What the game logs about controllers and the GameCube adapter. Level 1, the event log (plugged in, unplugged, device switches), is the game's default; level 2 adds the old verbose dump of every pad every 30 frames."),
+                new[] { L.N("Game default (1, events)"), L.N("0 - off"), L.N("1 - events: plug, unplug, device switches"), L.N("2 - verbose: every pad every 30 frames (large)") },
                 s.PadDiag + 1,
                 delegate(object o, EventArgs e) { s.PadDiag = ((ComboBox)o).SelectedIndex - 1; DiagChanged(); });
             pad.Margin = new Padding(12, 0, 0, 4);
             col.Add(pad);
-            Label bl = new Label { Text = "Let go of the GameCube adapter when the game window loses focus (MELEE_PAD_RELEASE_ON_BLUR):", AutoSize = true, MaximumSize = new Size(560, 0), Margin = new Padding(12, 4, 0, 2) };
+            Label bl = new Label { Text = L.T("Let go of the GameCube adapter when the game window loses focus (MELEE_PAD_RELEASE_ON_BLUR):"), AutoSize = true, MaximumSize = new Size(560, 0), Margin = new Padding(12, 4, 0, 2) };
             col.Add(bl);
-            ComboBox blur = Pick("On (the game's default): switching to another window hands the adapter to Dolphin or another copy of the game, and it is taken back when you return. Off: the game keeps it, as Dolphin does. During online play it is always kept.",
-                new[] { "Game default (on)", "Off - keep the adapter", "On - release it" },
+            ComboBox blur = Pick(L.N("On (the game's default): switching to another window hands the adapter to Dolphin or another copy of the game, and it is taken back when you return. Off: the game keeps it, as Dolphin does. During online play it is always kept."),
+                new[] { L.N("Game default (on)"), L.N("Off - keep the adapter"), L.N("On - release it") },
                 s.PadReleaseOnBlur + 1,
                 delegate(object o, EventArgs e) { s.PadReleaseOnBlur = ((ComboBox)o).SelectedIndex - 1; DiagChanged(); });
             blur.Margin = new Padding(12, 0, 0, 4);
             col.Add(blur);
 
-            col.Add(Heading("Deeper traces (only when asked)"));
+            col.Add(Heading(L.T("Deeper traces (only when asked)")));
             foreach (Choice c in Diagnostics.TraceList)
             {
                 string key = c.Key;
@@ -1510,20 +1507,12 @@ namespace GDMelee
                     delegate(object o, EventArgs e) { s.Traces = Diagnostics.Set(s.Traces, key, ((CheckBox)o).Checked); DiagChanged(); }));
             }
 
-            col.Add(Heading("Crash reports"));
-            uploadBtn = UI.Btn("Upload last 3 crash logs", delegate { UploadCrashes(); });
-            sendReports = Toggle("Allow uploading crash reports", "Off by default. Nothing is ever sent on its own: only the button below sends anything.",
+            col.Add(Heading(L.T("Crash reports")));
+            uploadBtn = UI.Btn(L.T("Upload last 3 crash logs"), delegate { UploadCrashes(); });
+            sendReports = Toggle(L.N("Allow uploading crash reports"), L.N("Off by default. Nothing is ever sent on its own: only the button below sends anything."),
                 s.CrashUpload, delegate(object o, EventArgs e) { s.CrashUpload = ((CheckBox)o).Checked; uploadBtn.Enabled = s.CrashUpload; DiagChanged(); });
             col.Add(sendReports);
-            Label consent = UI.Para(
-                "What is sent: the short crash reports the game writes to crashlogs (crash-<time>.log, at most 64 KB each) - the game " +
-                "version, the disc's ID and title, the mods you use, your settings, the error with the code it happened in, and the last " +
-                "lines of the log. Your Windows user name is removed from every path and your player name is left out; the full log " +
-                "(-full.log) is never sent.\r\n" +
-                "Where: the matchmaking server this game uses for online play (netplay_server.txt).\r\n" +
-                "Why: so crashes can be found and fixed without you having to send files by hand.\r\n" +
-                "Nothing is sent automatically. The button sends your three newest reports (not faults that happened while the game was " +
-                "closing), once, when you click it.");
+            Label consent = UI.Para(L.T("What is sent: the short crash reports the game writes to crashlogs (crash-<time>.log, at most 64 KB each) - the game version, the disc's ID and title, the mods you use, your settings, the error with the code it happened in, and the last lines of the log. Your Windows user name is removed from every path and your player name is left out; the full log (-full.log) is never sent.\r\nWhere: the matchmaking server this game uses for online play (netplay_server.txt).\r\nWhy: so crashes can be found and fixed without you having to send files by hand.\r\nNothing is sent automatically. The button sends your three newest reports (not faults that happened while the game was closing), once, when you click it."));
             consent.Margin = new Padding(12, 2, 0, 6);
             consent.ForeColor = Color.DimGray;
             col.Add(consent);
@@ -1531,11 +1520,11 @@ namespace GDMelee
             uploadBtn.Margin = new Padding(12, 0, 6, 10);
             col.Add(uploadBtn);
             col.Add(UI.Row(
-                UI.Btn("Open log folder", delegate { OpenRunDir(); }),
-                UI.Btn("Open game log", delegate { OpenLog(); }),
-                UI.Btn("Open latest crash report", delegate { OpenLatestCrash(); }),
-                UI.Btn("Copy latest crash report", delegate { CopyLatestCrash(); }),
-                UI.Btn("Reset to defaults", delegate { ResetDiagnostics(); })));
+                UI.Btn(L.T("Open log folder"), delegate { OpenRunDir(); }),
+                UI.Btn(L.T("Open game log"), delegate { OpenLog(); }),
+                UI.Btn(L.T("Open latest crash report"), delegate { OpenLatestCrash(); }),
+                UI.Btn(L.T("Copy latest crash report"), delegate { CopyLatestCrash(); }),
+                UI.Btn(L.T("Reset to defaults"), delegate { ResetDiagnostics(); })));
             diagSummary = new Label { AutoSize = true, MaximumSize = new Size(560, 0), ForeColor = Color.DimGray, Margin = new Padding(0, 6, 0, 0) };
             col.Add(diagSummary);
             DiagChanged();
@@ -1553,7 +1542,7 @@ namespace GDMelee
             tabs.TabPages.Insert(i, BuildDiagnosticsTab());
             tabs.SelectedIndex = i;
             old.Dispose();
-            SetStatus("Diagnostics are back to the game's defaults.");
+            SetStatus(L.T("Diagnostics are back to the game's defaults."));
         }
 
         void OpenRunDir()
@@ -1566,19 +1555,19 @@ namespace GDMelee
         {
             FileInfo f = Crashes.Latest();
             if (f != null) Process.Start("notepad.exe", "\"" + f.FullName + "\"");
-            else MessageBox.Show(this, "No crash reports in " + Crashes.Dir + ".", "GD's Melee");
+            else MessageBox.Show(this, L.F("No crash reports in {0}.", Crashes.Dir), "GD's Melee");
         }
 
         void CopyLatestCrash()
         {
             FileInfo f = Crashes.Latest();
-            if (f == null) { MessageBox.Show(this, "No crash reports in " + Crashes.Dir + ".", "GD's Melee"); return; }
+            if (f == null) { MessageBox.Show(this, L.F("No crash reports in {0}.", Crashes.Dir), "GD's Melee"); return; }
             try
             {
                 Clipboard.SetText(Crashes.Scrub(File.ReadAllText(f.FullName)));
-                SetStatus("Copied " + f.Name + " (" + (f.Length / 1024) + " KB) to the clipboard.");
+                SetStatus(L.F("Copied {0} ({1} KB) to the clipboard.", f.Name, f.Length / 1024));
             }
-            catch (Exception e) { SetStatus("Could not copy the report: " + e.Message); }
+            catch (Exception e) { SetStatus(L.F("Could not copy the report: {0}", e.Message)); }
         }
 
         // "Upload last 3 crash logs": the only way anything leaves the machine.
@@ -1588,7 +1577,7 @@ namespace GDMelee
             string server = Crashes.Server();
             if (server.Length == 0)
             {
-                MessageBox.Show(this, "No matchmaking server is set (Online tab), so there is nowhere to send the reports.", "Upload crash logs",
+                MessageBox.Show(this, L.T("No matchmaking server is set (Online tab), so there is nowhere to send the reports."), L.T("Upload last 3 crash logs"),
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -1598,8 +1587,9 @@ namespace GDMelee
             string result;
             try { result = Crashes.UploadNewest(out ok); }
             finally { Cursor = Cursors.Default; uploadBtn.Enabled = s.CrashUpload; }
-            SetStatus("Crash logs: " + result + ".");
-            MessageBox.Show(this, char.ToUpper(result[0]) + result.Substring(1) + (ok ? " to " + server + ". Thank you." : "."), "Upload crash logs",
+            SetStatus(L.F("Crash logs: {0}.", result));
+            string cap = char.ToUpper(result[0]) + result.Substring(1);
+            MessageBox.Show(this, ok ? L.F("{0} to {1}. Thank you.", cap, server) : L.F("{0}.", cap), L.T("Upload last 3 crash logs"),
                 MessageBoxButtons.OK, ok ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
         }
 
@@ -1607,31 +1597,39 @@ namespace GDMelee
 
         TabPage BuildAboutTab()
         {
-            TabPage page = new TabPage("About");
+            TabPage page = new TabPage(L.T("About"));
+            page.Name = "about";
             Label v = new Label { Text = "GD's Melee " + Game.Version(), Font = new Font("Segoe UI Semibold", 12f), AutoSize = true, Margin = new Padding(0, 0, 0, 8) };
-            Label about = UI.Para(
-                "A native PC port of Super Smash Bros. Melee, built from the community decompilation.\r\n\r\n" +
-                "This download contains no Nintendo game data: no disc image, no game files, no textures, music or models. " +
-                "Everything the game shows comes from the disc image you pick. Super Smash Bros. Melee is (c) Nintendo / HAL " +
-                "Laboratory; this project is not affiliated with or endorsed by them.\r\n\r\n" +
-                "Licences for the port and the libraries it uses are in the LICENSES folder.");
-            Button folder = UI.Btn("Open game folder", delegate { Process.Start("explorer.exe", "\"" + Settings.AppDir + "\""); });
-            Button saves = UI.Btn("Open saves folder", delegate
+            Label about = UI.Para(L.T("A native PC port of Super Smash Bros. Melee, built from the community decompilation.\r\n\r\nThis download contains no Nintendo game data: no disc image, no game files, no textures, music or models. Everything the game shows comes from the disc image you pick. Super Smash Bros. Melee is (c) Nintendo / HAL Laboratory; this project is not affiliated with or endorsed by them.\r\n\r\nLicences for the port and the libraries it uses are in the LICENSES folder."));
+            Button folder = UI.Btn(L.T("Open game folder"), delegate { Process.Start("explorer.exe", "\"" + Settings.AppDir + "\""); });
+            Button saves = UI.Btn(L.T("Open saves folder"), delegate
             {
                 string p = Path.Combine(Settings.UserDir, "saves");
                 Directory.CreateDirectory(p);
                 Process.Start("explorer.exe", "\"" + p + "\"");
             });
-            Button log = UI.Btn("Open game log", delegate { OpenLog(); });
-            Button lic = UI.Btn("Licences", delegate
+            Button log = UI.Btn(L.T("Open game log"), delegate { OpenLog(); });
+            Button lic = UI.Btn(L.T("Licences"), delegate
             {
                 string p = Path.Combine(Settings.AppDir, "LICENSES");
                 if (Directory.Exists(p)) Process.Start("explorer.exe", "\"" + p + "\"");
             });
-            Button src = UI.Btn("Source code", delegate { Process.Start("https://github.com/GurekamDhillon/melee/tree/pc-port"); });
+            Button src = UI.Btn(L.T("Source code"), delegate { Process.Start("https://github.com/GurekamDhillon/melee/tree/pc-port"); });
             Label paths = new Label { AutoSize = true, ForeColor = Color.DimGray, Margin = new Padding(0, 10, 0, 0),
-                Text = "Game folder: " + Settings.AppDir + "\r\nSettings and saves: " + Settings.UserDir };
-            page.Controls.Add(UI.Column(v, about, UI.Row(folder, saves, log, lic, src), paths));
+                Text = L.F("Game folder: {0}\r\nSettings and saves: {1}", Settings.AppDir, Settings.UserDir) };
+            // Language: English / Español / follow Windows. Applies at the next start of the launcher.
+            Label langLabel = new Label { Text = L.T("Language:"), AutoSize = true, Margin = new Padding(0, 6, 6, 0) };
+            ComboBox lang = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 260, Margin = new Padding(0, 2, 0, 0) };
+            lang.Items.AddRange(new object[] { L.T("Automatic (Windows language)"), "English", "Español" });
+            lang.SelectedIndex = s.Language == "en" ? 1 : s.Language == "es" ? 2 : 0;
+            Label langNote = new Label { AutoSize = true, ForeColor = Color.DimGray, Margin = new Padding(0, 4, 0, 10) };
+            lang.SelectedIndexChanged += delegate
+            {
+                s.Language = lang.SelectedIndex == 1 ? "en" : lang.SelectedIndex == 2 ? "es" : "auto";
+                TrySave();
+                langNote.Text = L.T("The language changes the next time the launcher starts.");
+            };
+            page.Controls.Add(UI.Column(v, UI.Row(langLabel, lang), langNote, about, UI.Row(folder, saves, log, lic, src), paths));
             return page;
         }
 
@@ -1649,7 +1647,7 @@ namespace GDMelee
                 using (Bitmap bmp = new Bitmap(Width, Height))
                 {
                     DrawToBitmap(bmp, new Rectangle(0, 0, Width, Height));
-                    bmp.Save(Path.Combine(dir, "launcher-" + tabs.TabPages[i].Text.ToLowerInvariant() + ".png"), ImageFormat.Png);
+                    bmp.Save(Path.Combine(dir, "launcher-" + tabs.TabPages[i].Name + ".png"), ImageFormat.Png);
                 }
             }
         }
@@ -1667,6 +1665,7 @@ namespace GDMelee
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Settings s = Settings.Load();
+            L.Apply(s.Language);
 
             string addIso = null, playName = null, shots = null;
             bool openMods = false;
@@ -1678,6 +1677,7 @@ namespace GDMelee
                 else if (a == "--add-iso" && i + 1 < args.Length) addIso = args[++i];
                 else if (a == "--forget-all") { s.Discs.Clear(); s.DefaultId = ""; try { s.Save(); } catch { } }
                 else if (a == "--shots" && i + 1 < args.Length) shots = args[++i];
+                else if (a == "--lang" && i + 1 < args.Length) L.Apply(args[++i]);
                 else if (a == "--list-mods") return ModsCli.Run(new string[0], true);
                 else if ((a == "--enable-mod" || a == "--disable-mod") && i + 1 < args.Length)
                 {
@@ -1726,7 +1726,7 @@ namespace GDMelee
                 if (d != null && File.Exists(d.Path) && Game.MissingFiles().Length == 0)
                 {
                     try { Game.Start(s, d); return 0; }
-                    catch (Exception e) { MessageBox.Show("Could not start melee-pc.exe:\r\n" + e.Message, "GD's Melee"); }
+                    catch (Exception e) { MessageBox.Show(L.F("Could not start melee-pc.exe:\r\n{0}", e.Message), "GD's Melee"); }
                 }
                 // otherwise fall through to the window so the user can fix it
             }
