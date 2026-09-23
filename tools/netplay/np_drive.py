@@ -84,7 +84,7 @@ def main():
 
     env_host = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_host';MELEE_VOLUME='3'}" % HOST_PORT
     env_guest = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_guest';MELEE_VOLUME='3'}" % GUEST_PORT
-    cmd = ("& '%s' -Menu -RealNetwork -Disc %s -Label '%s' -EnvHost %s -EnvGuest %s%s" %
+    cmd = ("& '%s' -Menu -RealNetwork -HostDevice gc -GuestDevice keyboard -Disc %s -Label '%s' -EnvHost %s -EnvGuest %s%s" %
            (os.path.join(ROOT, "_build", "netplay_local.ps1").replace("'", "''"), a.disc, a.label.replace("'", "''"),
             env_host, env_guest,
             (" -Exe '%s'" % os.path.abspath(a.exe).replace("'", "''")) if a.exe else ""))

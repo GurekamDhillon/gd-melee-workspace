@@ -1,6 +1,7 @@
 # netplay_local.ps1 - two copies of the port on this machine, playing one match over loopback UDP
-# (gw_netplay.c). The HOST window is P1 on the GameCube controller; the GUEST window is P2 on the
-# keyboard. Each copy runs from its own sandbox (its own exe copy, log, card and pipeline cache).
+# (gw_netplay.c). HOST is P1, GUEST is P2. Both use keyboard + controllers: the GameCube adapter
+# goes to whichever window has focus (released on blur). -HostDevice/-GuestDevice gc|keyboard pin a
+# side, as the old default did (host gc, guest keyboard). Each copy runs from its own sandbox (its own exe copy, log, card and pipeline cache).
 #
 #   powershell -File _build\netplay_local.ps1                       # Fox vs Marth, Battlefield
 #   powershell -File _build\netplay_local.ps1 -Scene "mode=vs;p1=falco/hu;p2=sheik/hu;stage=fd"
@@ -36,6 +37,8 @@ param(
   [string]$LiveGuest = "",
   [hashtable]$EnvHost = @{},  # extra environment per side, e.g. @{MELEE_LOBBY_AUTOPLAY="1"}
   [hashtable]$EnvGuest = @{},
+  [string]$HostDevice = "",  # MELEE_INPUT per side; "" = the game default (keyboard + controllers, the
+  [string]$GuestDevice = "", # adapter follows the focused window); "keyboard" / "gc" pin a side
   [string]$Label = ""    # the windows' run label starts with this, e.g. "alpha / A1" -> "alpha / A1 - HOST P1 ..."
 )
 $ErrorActionPreference = "Stop"
@@ -126,7 +129,7 @@ function Start-Side($tag, $label, $netplay, $device, $x, $pad, $vol) {
   $c = if ($tag -eq "np_host") { $HostChar } else { $GuestChar }
   if ($c -ge 0) { $env:MELEE_NETPLAY_CHAR = "$c" } else { Remove-Item Env:MELEE_NETPLAY_CHAR -ErrorAction SilentlyContinue }
   if ($RealNetwork) { Remove-Item Env:MELEE_NETPLAY_BIND -ErrorAction SilentlyContinue } else { $env:MELEE_NETPLAY_BIND = "127.0.0.1" }
-  $env:MELEE_INPUT = $device
+  if ($device) { $env:MELEE_INPUT = $device } else { Remove-Item Env:MELEE_INPUT -ErrorAction SilentlyContinue }
   $env:MELEE_NET_SIM_FILE = $netsimFile
   $env:MELEE_RUN_LABEL = if ($Label) { "$Label - $label" } else { $label }
   $env:MELEE_WINDOW_X = "$($wa.X + $x)"
@@ -155,9 +158,9 @@ function Start-Side($tag, $label, $netplay, $device, $x, $pad, $vol) {
 
 # The host first: it claims the GameCube adapter and listens. The guest plays silently - both
 # windows play the same sounds, and two copies a frame or two apart sound like an echo.
-$hostP = Start-Side "np_host" "HOST P1 - GC controller" "host:$Port" "gc" 0 $PadHost $Volume
+$hostP = Start-Side "np_host" "HOST P1" "host:$Port" $HostDevice 0 $PadHost $Volume
 Start-Sleep -Seconds 3
-$guestP = Start-Side "np_guest" "GUEST P2 - keyboard" "join:127.0.0.1:$Port" "keyboard" $w $PadGuest 0.0
+$guestP = Start-Side "np_guest" "GUEST P2" "join:127.0.0.1:$Port" $GuestDevice $w $PadGuest 0.0
 
 if ($Seconds -gt 0) {
   Start-Sleep -Seconds $Seconds
