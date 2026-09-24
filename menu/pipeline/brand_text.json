@@ -1,0 +1,19 @@
+{
+  "note": "Words for the brand kit. Edit and run  python pipeline/build_brand.py  - every out_brand/ image is rebuilt from this file.",
+  "version": "v0.1.4",
+  "tagline": "Native PC port · rollback netplay · HD · Slippi replays",
+  "features": ["ROLLBACK NETPLAY", "HD RENDERING", "SLIPPI REPLAYS", "M-EX MODS", "ONLINE LOBBY", "LUA SCRIPTING"],
+  "port_title": "DECOMP TO NATIVE PC",
+  "port_sub": "The decompiled game, built as a native Windows x64 program",
+  "headline": ["YOUR HEADLINE", "GOES HERE"],
+  "subhead": "Supporting line for the post, one sentence",
+  "yt_headline": ["BIG", "HEADLINE"],
+  "badges": [
+    {"id": "rollback", "icon": "rollback", "label": "NETPLAY", "value": "ROLLBACK", "style": "cobalt"},
+    {"id": "windows", "icon": "pc", "label": "PLATFORM", "value": "WINDOWS X64", "style": "cobalt"},
+    {"id": "version", "icon": "tag", "label": "RELEASE", "value": "V0.1.4", "style": "gold"},
+    {"id": "mex", "icon": "mex", "label": "MODS", "value": "M-EX COMPATIBLE", "style": "cobalt"},
+    {"id": "slippi", "icon": "replay", "label": "REPLAYS", "value": "SLIPPI", "style": "cobalt"},
+    {"id": "discord", "icon": "chat", "label": "COMMUNITY", "value": "JOIN DISCORD", "style": "gold"}
+  ]
+}
