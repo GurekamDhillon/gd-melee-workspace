@@ -126,7 +126,10 @@ foreach ($e in $entries) {
   } elseif ($dirs[0] -eq "LICENSES") {
     $ok = ($dirs.Count -eq 1) -and ($ext -eq ".txt")
   } elseif ($dirs[0] -eq "mods") {
-    $ok = ($rel -eq "mods/README.txt") -or ($rel -eq "mods/sources.txt")
+    $ok = ($rel -eq "mods/README.txt") -or ($rel -eq "mods/sources.txt") -or
+          ($rel -eq "mods/geno-lab/mod.json") -or
+          ($dirs.Count -eq 3 -and $dirs[1] -eq "geno-lab" -and $dirs[2] -eq "scripts" -and $ext -eq ".lua") -or
+          ($dirs.Count -eq 3 -and $dirs[1] -eq "geno-lab" -and $dirs[2] -eq "ui" -and ($ext -eq ".gxtex" -or $name -eq "lab_ui.json"))
   } elseif ($dirs[0] -eq "scripts") {
     $ok = ($rel -eq "scripts/README.txt") -or
           ($dirs.Count -ge 2 -and $dirs[1] -eq "examples" -and ($ext -eq ".lua" -or $ext -eq ".json"))

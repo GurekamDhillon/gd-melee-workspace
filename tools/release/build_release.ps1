@@ -119,6 +119,18 @@ install (none are listed by default - add the ones you trust). The game loads ev
 online too: fighters and stages are matched with your opponent by their content.
 '@
 Copy-In (Join-Path $root "tools\mods_browser\sources.example.txt") "mods\sources.txt"
+# the LAB (SOLO > LAB) is a script mod: mod.json, scripts\*.lua, ui\*.gxtex and ui\lab_ui.json from the
+# melee checkout (never its art\ sources or preview). Its menu icon ico_lab.gxtex is committed under _build\ui.
+$lab = Join-Path $melee "pc\geno\mods\geno-lab"
+if (Test-Path (Join-Path $lab "mod.json")) {
+  Copy-In (Join-Path $lab "mod.json") "mods\geno-lab\mod.json"
+  foreach ($f in Get-ChildItem (Join-Path $lab "scripts") -Filter *.lua -File) { Copy-In $f.FullName ("mods\geno-lab\scripts\" + $f.Name) }
+  foreach ($f in Get-ChildItem (Join-Path $lab "ui") -File | Where-Object { $_.Extension -eq ".gxtex" -or $_.Name -eq "lab_ui.json" }) {
+    Copy-In $f.FullName ("mods\geno-lab\ui\" + $f.Name)
+  }
+} else {
+  Warn "no pc/geno/mods/geno-lab in the melee checkout: the release has no LAB mode"
+}
 # Lua example scripts (melee/pc/scripts/examples, the same ones compiled in as builtin:<name>)
 $examples = Join-Path $melee "pc\scripts\examples"
 if (Test-Path $examples) {
