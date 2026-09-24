@@ -29,6 +29,9 @@ out = os.path.join(build, "initial_pipeline_cache.db")
 tmp = out + ".tmp"
 
 sources = sorted(glob.glob(os.path.join(build, "runs", "*", "pipeline_cache.db")))
+# Extra sandbox roots (e.g. a lane's _build/agents/<lane>/runs) as arguments.
+for extra in sys.argv[1:]:
+    sources += sorted(glob.glob(os.path.join(extra, "*", "pipeline_cache.db")))
 if not sources:
     sys.exit("no _build/runs/*/pipeline_cache.db to merge - run a sweep first")
 
@@ -48,12 +51,23 @@ for src in sources:
         continue
     if schema is None:
         schema = ver
-        for _, sql in ddl:
-            db.execute(sql)
+        for name, sql in ddl:
+            if name != "pipeline_tags":
+                db.execute(sql)
         db.execute("INSERT INTO aurora_schema VALUES (?)", ver)
+        # Tag bits per pipeline (AURORA_PIPELINE_TAG_*: 1 = drawn by an item model, which the
+        # match loading screen prewarms). A side table, so older caches without it still merge.
+        db.execute("CREATE TABLE pipeline_tags (type INTEGER NOT NULL, hash INTEGER NOT NULL, "
+                   "tags INTEGER NOT NULL, PRIMARY KEY (type, hash))")
     elif ver != schema:
         s.close()
         continue
+    try:
+        tags = s.execute("SELECT type, hash, tags FROM pipeline_tags").fetchall()
+    except sqlite3.DatabaseError:
+        tags = []
+    db.executemany("INSERT INTO pipeline_tags VALUES (?,?,?) ON CONFLICT(type, hash) DO UPDATE SET "
+                   "tags = tags | excluded.tags", tags)
     rows = s.execute("SELECT type, hash, config_version, config_size, config, first_frame_used "
                      "FROM pipeline_cache").fetchall()
     if rows:
@@ -73,10 +87,12 @@ db.executemany("UPDATE pipeline_cache SET first_frame_used = ? WHERE type = ? AN
 core = sum(1 for r in ranked if freq[(r[0], r[1])] >= 0.05 * max(n_runs, 1))
 db.commit()
 n = db.execute("SELECT COUNT(*) FROM pipeline_cache").fetchone()[0]
+n_tagged = db.execute("SELECT COUNT(*) FROM pipeline_tags t JOIN pipeline_cache c "
+                      "ON c.type = t.type AND c.hash = t.hash WHERE t.tags & 1").fetchone()[0]
 db.execute("VACUUM")
 db.close()
 os.replace(tmp, out)
 with open(os.path.join(build, "initial_pipeline_cache.core"), "w") as f:
     f.write("%d\n" % core)
-print("seed: %d pipelines from %d caches (%d runs), core %d -> %s" % (n, len(sources), n_runs,
-                                                                     core, out))
+print("seed: %d pipelines from %d caches (%d runs), core %d, item-tagged %d -> %s" % (
+    n, len(sources), n_runs, core, n_tagged, out))

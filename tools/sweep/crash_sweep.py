@@ -131,20 +131,22 @@ def probe_counts(out, exe, iso, disc, label):
     return fighters, externals
 
 
-def plan(disc, fighters, externals, only, secs):
+def plan(disc, fighters, externals, only, secs, items="0"):
+    # items: the scene grammar's item frequency (0 = the old default here; 4 = very high). A sweep
+    # with items records the item models' pipelines, tagged MUST_DRAW, for the pipeline seed.
     runs = []
     if only in ("all", "stages"):
         stages = [(n, "%s" % n) for n, _ in VANILLA_STAGES] + [("ext%d" % e, "ext:%d" % e) for e in range(MEX_EXT0, externals)]
         for name, ref in stages:
             runs.append(Run(disc, "stage", "%s-st-%s" % (disc, name),
-                            "mode=vs;p1=fox/cpu9;p2=falco/cpu9;stage=%s;time=0;items=0" % ref, secs, name))
+                            "mode=vs;p1=fox/cpu9;p2=falco/cpu9;stage=%s;time=0;items=%s" % (ref, items), secs, name))
     if only in ("all", "fighters"):
         cks = VANILLA_FIGHTERS + list(range(MEX_CK0, MEX_CK0 + fighters))
         for g in range(0, len(cks), 4):
             grp = cks[g:g + 4]
             ps = ";".join("p%d=ck:%d/cpu9" % (i + 1, c) for i, c in enumerate(grp))
             runs.append(Run(disc, "fighters", "%s-ck%d-%d" % (disc, grp[0], grp[-1]),
-                            "mode=vs;%s;stage=battlefield;time=0;items=0" % ps, secs + 5,
+                            "mode=vs;%s;stage=battlefield;time=0;items=%s" % (ps, items), secs + 5,
                             ",".join(str(c) for c in grp)))
     return runs
 
@@ -157,6 +159,7 @@ def main():
     ap.add_argument("--only", choices=("all", "stages", "fighters"), default="all")
     ap.add_argument("--parallel", type=int, default=4)
     ap.add_argument("--secs", type=int, default=24, help="seconds per stage run (fighter runs +5)")
+    ap.add_argument("--items", default="0", help="item frequency per match (0..4, or off)")
     ap.add_argument("--label", default="crash sweep")
     ap.add_argument("--plan", action="store_true")
     ap.add_argument("--match", default="", help="only runs whose tag contains this")
@@ -172,7 +175,7 @@ def main():
             print("no ISO for %s in .env" % disc)
             return 2
         fighters, externals = (0, 0) if a.plan else probe_counts(out, exe, iso, disc, a.label)
-        runs = plan(disc, fighters, externals, a.only, a.secs)
+        runs = plan(disc, fighters, externals, a.only, a.secs, a.items)
         if a.match:
             runs = [r for r in runs if a.match in r.tag]
         print("%s: %d m-ex fighters, %d external stages -> %d runs" % (disc, fighters, externals, len(runs)))
