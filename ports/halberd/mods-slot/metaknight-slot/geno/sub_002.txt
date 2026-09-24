@@ -1,0 +1,2 @@
+# Meta Knight (Brawl) subaction 2 overlay (build_mk_slot.py step 10)
+0xECA24000 0x00000003 0xEF020100 0x2000000F 0xEF130700 0x00000040 0x00000000 0xED310000

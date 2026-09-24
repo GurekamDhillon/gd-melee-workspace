@@ -1,0 +1,1 @@
+static class Program { static int Main(string[] a){ if(a[0]=="inspect"){ Inspect.Run(a[1], a.Length>2?int.Parse(a[2]):999); return 0;} if(a[0]=="ptcl"){ PtclDump.Run(a[1], a.Length>2?int.Parse(a[2]):999); return 0;} if(a[0]=="tex"){ TexDump.Run(a[1], int.Parse(a[2]), a[3]); return 0;} if(a[0]=="build") return Build.Run(a[1],a[2],a.Length>3?a[3]:null); return 1; } }

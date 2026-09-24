@@ -1,0 +1,9015 @@
+{
+ "legend": "anim/vis_events.json: Meta Knight's Brawl visibility events for every converted clip, in Melee ModelVis terms.\n\nModel-part visibility of the MK costume files (model/tools/mkbuild, ftData x8 table written by install_mk.py):\n  model 0 = cape switch  (Brawl BoneSwitch2):  0 closed cape (MantM, DObj 10)   1 wings (WingM, DObjs 11-12)\n                                               2 merged cape article (DObj 13; Brawl: no cape bone + the article)\n  model 1 = body switch  (Brawl BoneSwitch1):  0 body (DObjs 0-6)               1 mantle ball (DObj 9)\n  the sword (DObjs 7-8) is in no list and always drawn (a model's states may not share DObjs in Melee's table).\n  Brawl group -> Melee state: 0 body+sword -> 0, 1 ball only -> 1, 2 body+sword+ball -> 0 (ball dropped),\n  3 body without sword -> 0 (sword stays).\nBrawl PSA 'Model Changer 2 {Switch 2, Group g}' == Melee ModelVis(0, g) and 'Model Changer 1 {Switch 1, Group g}'\n-> ModelVis(1, BODY_STATE[g]) (Melee script command 0x7C: (31 << 26) | (index << 19) | value).\nModel 0 is the cape on purpose: Kirby's clone code (OnDeath: both models -> 0, the multi-jump puff ModelVis(0, 1))\nthen gives MK his closed cape at spawn and his wings on multi-jumps - exactly Brawl's JumpAerialF* state.\n\nThe cape article: Brawl shows it with Generate Article / Article Visibility and anchors its clip to the fighter's\n(Set Anchored Article SubAction); here its bones are animated inside the MK clip (mk_anim.ARTICLE) and it is shown\nby ModelVis(0, 2). 'Article Visibility false' / 'Remove Article' while the cape switch is on group 2 means Brawl shows\nNO cape (group 2 has no bones); model 0 has no empty state, so those frames are only reported (article_hidden_frames)\nand the article cape stays visible.\n'Visibility {false/true}' (the whole fighter vanishes, Dimensional Cape teleport, ThrowB) has no ModelVis\nequivalent: listed as body_invisible_frames for the script translator.",
+ "clips": [
+  {
+   "brawl_clip": "WallDamage",
+   "symbol": "PlyKirby5K_Share_ACTION_WallDamage_figatree",
+   "rows": [
+    0
+   ],
+   "frames": 41,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "DamageFall",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageFall_figatree",
+   "rows": [
+    1,
+    29,
+    137,
+    287
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "Wait1",
+   "symbol": "PlyKirby5K_Share_ACTION_Wait1_figatree",
+   "rows": [
+    2
+   ],
+   "frames": 270,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [
+    0
+   ],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Wait1",
+     "meaning": "closed cape"
+    },
+    {
+     "frame": 0,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": false
+     },
+     "subaction": "Wait1"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Wait2",
+   "symbol": "PlyKirby5K_Share_ACTION_Wait2_figatree",
+   "rows": [
+    3
+   ],
+   "frames": 60,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [
+    0
+   ],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Wait2",
+     "meaning": "closed cape"
+    },
+    {
+     "frame": 0,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": false
+     },
+     "subaction": "Wait2"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "WaitItem",
+   "symbol": "PlyKirby5K_Share_ACTION_WaitItem_figatree",
+   "rows": [
+    6
+   ],
+   "frames": 270,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "WaitItem",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "WalkSlow",
+   "symbol": "PlyKirby5K_Share_ACTION_WalkSlow_figatree",
+   "rows": [
+    7
+   ],
+   "frames": 33,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "WalkSlow",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "WalkMiddle",
+   "symbol": "PlyKirby5K_Share_ACTION_WalkMiddle_figatree",
+   "rows": [
+    8
+   ],
+   "frames": 25,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "WalkMiddle",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "WalkFast",
+   "symbol": "PlyKirby5K_Share_ACTION_WalkFast_figatree",
+   "rows": [
+    9
+   ],
+   "frames": 21,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "WalkFast",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Turn",
+   "symbol": "PlyKirby5K_Share_ACTION_Turn_figatree",
+   "rows": [
+    10
+   ],
+   "frames": 12,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Turn",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "TurnRun",
+   "symbol": "PlyKirby5K_Share_ACTION_TurnRun_figatree",
+   "rows": [
+    11
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "TurnRun",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Dash",
+   "symbol": "PlyKirby5K_Share_ACTION_Dash_figatree",
+   "rows": [
+    12
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "Dash",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Run",
+   "symbol": "PlyKirby5K_Share_ACTION_Run_figatree",
+   "rows": [
+    13
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "Run",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "RunBrake",
+   "symbol": "PlyKirby5K_Share_ACTION_RunBrake_figatree",
+   "rows": [
+    14
+   ],
+   "frames": 26,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    },
+    {
+     "frame": 17,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "RunBrake",
+     "meaning": "wings"
+    },
+    {
+     "frame": 17,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "RunBrake",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "JumpSquat",
+   "symbol": "PlyKirby5K_Share_ACTION_Landing_figatree",
+   "rows": [
+    15
+   ],
+   "frames": 5,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "JumpSquat",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "JumpF",
+   "symbol": "PlyKirby5K_Share_ACTION_JumpF_figatree",
+   "rows": [
+    16
+   ],
+   "frames": 44,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "JumpF",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "JumpB",
+   "symbol": "PlyKirby5K_Share_ACTION_JumpB_figatree",
+   "rows": [
+    17
+   ],
+   "frames": 41,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "JumpB",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Fall",
+   "symbol": "PlyKirby5K_Share_ACTION_Fall_figatree",
+   "rows": [
+    20
+   ],
+   "frames": 49,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "FallF",
+   "symbol": "PlyKirby5K_Share_ACTION_FallF_figatree",
+   "rows": [
+    21
+   ],
+   "frames": 48,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "FallB",
+   "symbol": "PlyKirby5K_Share_ACTION_FallB_figatree",
+   "rows": [
+    22
+   ],
+   "frames": 49,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "FallAerial",
+   "symbol": "PlyKirby5K_Share_ACTION_FallAerial_figatree",
+   "rows": [
+    23
+   ],
+   "frames": 49,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "FallAerial",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "FallAerialF",
+   "symbol": "PlyKirby5K_Share_ACTION_FallAerialF_figatree",
+   "rows": [
+    24
+   ],
+   "frames": 49,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "FallAerialB",
+   "symbol": "PlyKirby5K_Share_ACTION_FallAerialB_figatree",
+   "rows": [
+    25
+   ],
+   "frames": 49,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "FallSpecial",
+   "symbol": "PlyKirby5K_Share_ACTION_FallSpecial_figatree",
+   "rows": [
+    26
+   ],
+   "frames": 5,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "FallSpecialF",
+   "symbol": "PlyKirby5K_Share_ACTION_FallSpecialF_figatree",
+   "rows": [
+    27
+   ],
+   "frames": 5,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "FallSpecialB",
+   "symbol": "PlyKirby5K_Share_ACTION_FallSpecialB_figatree",
+   "rows": [
+    28
+   ],
+   "frames": 6,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "Squat",
+   "symbol": "PlyKirby5K_Share_ACTION_Squat_figatree",
+   "rows": [
+    30
+   ],
+   "frames": 8,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Squat",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SquatWait",
+   "symbol": "PlyKirby5K_Share_ACTION_SquatWait1_figatree",
+   "rows": [
+    31
+   ],
+   "frames": 46,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "SquatWait",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SquatWait",
+   "symbol": "PlyKirby5K_Share_ACTION_SquatWait2_figatree",
+   "rows": [
+    32
+   ],
+   "frames": 46,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "SquatWait",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SquatWaitItem",
+   "symbol": "PlyKirby5K_Share_ACTION_SquatWaitItem_figatree",
+   "rows": [
+    33
+   ],
+   "frames": 46,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "SquatWaitItem",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SquatRv",
+   "symbol": "PlyKirby5K_Share_ACTION_SquatRv_figatree",
+   "rows": [
+    34
+   ],
+   "frames": 8,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "SquatRv",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LandingHeavy",
+   "symbol": "PlyKirby5K_Share_ACTION_Landing_figatree",
+   "rows": [
+    35
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 8,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 8,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LandingHeavy",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LandingFallSpecial",
+   "symbol": "PlyKirby5K_Share_ACTION_Landing_figatree",
+   "rows": [
+    36
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LandingFallSpecial",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "GuardOn",
+   "symbol": "PlyKirby5K_Share_ACTION_GuardOn_figatree",
+   "rows": [
+    37
+   ],
+   "frames": 8,
+   "article_clip": "WpnMetaknightMantleB00GuardOn",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "GuardOn",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 0,
+     "event": "Generate Article",
+     "args": {
+      "Article ID": 0
+     },
+     "subaction": "GuardOn"
+    },
+    {
+     "frame": 0,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 11
+     },
+     "subaction": "GuardOn"
+    },
+    {
+     "frame": 5,
+     "event": "Item Visibility",
+     "args": {
+      "Item Visibility": false
+     },
+     "subaction": "GuardOn"
+    },
+    {
+     "frame": 9,
+     "event": "Item Visibility",
+     "args": {
+      "Item Visibility": true
+     },
+     "subaction": "GuardOn"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Guard",
+   "symbol": "PlyKirby5K_Share_ACTION_Guard_figatree",
+   "rows": [
+    38
+   ],
+   "frames": 360,
+   "article_clip": "WpnMetaknightMantleB00Guard",
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 12
+     },
+     "subaction": "Guard"
+    },
+    {
+     "frame": 0,
+     "event": "Item Visibility",
+     "args": {
+      "Item Visibility": false
+     },
+     "subaction": "Guard"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "GuardOff",
+   "symbol": "PlyKirby5K_Share_ACTION_GuardOff_figatree",
+   "rows": [
+    39
+   ],
+   "frames": 16,
+   "article_clip": "WpnMetaknightMantleB00GuardOff",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "GuardOff",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 0,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 13
+     },
+     "subaction": "GuardOff"
+    },
+    {
+     "frame": 0,
+     "event": "Item Visibility",
+     "args": {
+      "Item Visibility": false
+     },
+     "subaction": "GuardOff"
+    },
+    {
+     "frame": 4,
+     "event": "Item Visibility",
+     "args": {
+      "Item Visibility": true
+     },
+     "subaction": "GuardOff"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "GuardDamage",
+   "symbol": "PlyKirby5K_Share_ACTION_GuardDamage_figatree",
+   "rows": [
+    40
+   ],
+   "frames": 21,
+   "article_clip": "WpnMetaknightMantleB01GuardDamage",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "GuardDamage",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 0,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 14
+     },
+     "subaction": "GuardDamage"
+    },
+    {
+     "frame": 0,
+     "event": "Item Visibility",
+     "args": {
+      "Item Visibility": false
+     },
+     "subaction": "GuardDamage"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "EscapeN",
+   "symbol": "PlyKirby5K_Share_ACTION_EscapeN_figatree",
+   "rows": [
+    41
+   ],
+   "frames": 32,
+   "article_clip": "WpnMetaknightMantleB02EscapeN",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "EscapeN",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 0,
+     "event": "Generate Article",
+     "args": {
+      "Article ID": 0
+     },
+     "subaction": "EscapeN"
+    },
+    {
+     "frame": 0,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 15
+     },
+     "subaction": "EscapeN"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "EscapeF",
+   "symbol": "PlyKirby5K_Share_ACTION_EscapeF_figatree",
+   "rows": [
+    42
+   ],
+   "frames": 24,
+   "article_clip": "WpnMetaknightMantleB02EscapeF",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "EscapeF",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 0,
+     "event": "Generate Article",
+     "args": {
+      "Article ID": 0
+     },
+     "subaction": "EscapeF"
+    },
+    {
+     "frame": 0,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 16
+     },
+     "subaction": "EscapeF"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "EscapeB",
+   "symbol": "PlyKirby5K_Share_ACTION_EscapeB_figatree",
+   "rows": [
+    43
+   ],
+   "frames": 34,
+   "article_clip": "WpnMetaknightMantleB02EscapeB",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "EscapeB",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 0,
+     "event": "Generate Article",
+     "args": {
+      "Article ID": 0
+     },
+     "subaction": "EscapeB"
+    },
+    {
+     "frame": 0,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 17
+     },
+     "subaction": "EscapeB"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "EscapeAir",
+   "symbol": "PlyKirby5K_Share_ACTION_EscapeAir_figatree",
+   "rows": [
+    44
+   ],
+   "frames": 40,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "Rebound",
+   "symbol": "PlyKirby5K_Share_ACTION_Rebound_figatree",
+   "rows": [
+    45
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "Attack100Start",
+   "symbol": "PlyKirby5K_Share_ACTION_Attack11_figatree",
+   "rows": [
+    46
+   ],
+   "frames": 6,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Attack100Start",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Attack100Start",
+   "symbol": "PlyKirby5K_Share_ACTION_Attack12_figatree",
+   "rows": [
+    47
+   ],
+   "frames": 6,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Attack100Start",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Attack100Start",
+   "symbol": "PlyKirby5K_Share_ACTION_Attack100Start_figatree",
+   "rows": [
+    49
+   ],
+   "frames": 6,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Attack100Start",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Attack100",
+   "symbol": "PlyKirby5K_Share_ACTION_Attack100Loop_figatree",
+   "rows": [
+    50
+   ],
+   "frames": 22,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Attack100",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_Attack100End_figatree",
+   "rows": [
+    51
+   ],
+   "frames": 12,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackEnd",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackDash",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackDash_figatree",
+   "rows": [
+    52
+   ],
+   "frames": 32,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    },
+    {
+     "frame": 4,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "AttackDash",
+     "meaning": "wings"
+    },
+    {
+     "frame": 4,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackDash",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackS3S",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackS3Hi_figatree",
+   "rows": [
+    53
+   ],
+   "frames": 24,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "AttackS3S",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackS3S_figatree",
+   "rows": [
+    55
+   ],
+   "frames": 24,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "AttackS3S",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackS3Lw_figatree",
+   "rows": [
+    57
+   ],
+   "frames": 24,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "AttackHi3",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackHi3_figatree",
+   "rows": [
+    58
+   ],
+   "frames": 36,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackHi3",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackLw3",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackLw3_figatree",
+   "rows": [
+    59
+   ],
+   "frames": 26,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackLw3",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackS4Start+AttackS4S",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackS4Hi_figatree",
+   "rows": [
+    60
+   ],
+   "frames": 43,
+   "article_clip": [
+    null,
+    null
+   ],
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackS4Start",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackS4Start+AttackS4S",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackS4S_figatree",
+   "rows": [
+    62
+   ],
+   "frames": 43,
+   "article_clip": [
+    null,
+    null
+   ],
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackS4Start",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackS4Start+AttackS4S",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackS4Lw_figatree",
+   "rows": [
+    64
+   ],
+   "frames": 43,
+   "article_clip": [
+    null,
+    null
+   ],
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackS4Start",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackHi4Start+AttackHi4",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackHi4_figatree",
+   "rows": [
+    66
+   ],
+   "frames": 51,
+   "article_clip": [
+    null,
+    null
+   ],
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    },
+    {
+     "frame": 4,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackHi4Start",
+     "meaning": "closed cape"
+    },
+    {
+     "frame": 4,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackHi4",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackLw4Start+AttackLw4",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackLw4_figatree",
+   "rows": [
+    67
+   ],
+   "frames": 35,
+   "article_clip": [
+    null,
+    null
+   ],
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    },
+    {
+     "frame": 1,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackLw4Start",
+     "meaning": "closed cape"
+    },
+    {
+     "frame": 1,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackLw4",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackAirN",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackAirN_figatree",
+   "rows": [
+    68
+   ],
+   "frames": 48,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "AttackAirF",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackAirF_figatree",
+   "rows": [
+    69
+   ],
+   "frames": 40,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "AttackAirB",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackAirB_figatree",
+   "rows": [
+    70
+   ],
+   "frames": 48,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "AttackAirHi",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackAirHi_figatree",
+   "rows": [
+    71
+   ],
+   "frames": 24,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "AttackAirLw",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackAirLw_figatree",
+   "rows": [
+    72
+   ],
+   "frames": 26,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "LandingAirN",
+   "symbol": "PlyKirby5K_Share_ACTION_LandingAirN_figatree",
+   "rows": [
+    73
+   ],
+   "frames": 36,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 1,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 1,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LandingAirN",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LandingAirF",
+   "symbol": "PlyKirby5K_Share_ACTION_LandingAirF_figatree",
+   "rows": [
+    74
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 8,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 8,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LandingAirF",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LandingAirB",
+   "symbol": "PlyKirby5K_Share_ACTION_LandingAirB_figatree",
+   "rows": [
+    75
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 9,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 9,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LandingAirB",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LandingAirHi",
+   "symbol": "PlyKirby5K_Share_ACTION_LandingAirHi_figatree",
+   "rows": [
+    76
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 10,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 10,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LandingAirHi",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LandingAirLw",
+   "symbol": "PlyKirby5K_Share_ACTION_LandingAirLw_figatree",
+   "rows": [
+    77
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 9,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 9,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LandingAirLw",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LightGet",
+   "symbol": "PlyKirby5K_Share_ACTION_LightGet_figatree",
+   "rows": [
+    78
+   ],
+   "frames": 8,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LightGet",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LightThrowF",
+   "symbol": "PlyKirby5K_Share_ACTION_LightThrowF_figatree",
+   "rows": [
+    79
+   ],
+   "frames": 33,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LightThrowF",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LightThrowB",
+   "symbol": "PlyKirby5K_Share_ACTION_LightThrowB_figatree",
+   "rows": [
+    80
+   ],
+   "frames": 33,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LightThrowB",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LightThrowHi",
+   "symbol": "PlyKirby5K_Share_ACTION_LightThrowHi_figatree",
+   "rows": [
+    81
+   ],
+   "frames": 32,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LightThrowHi",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LightThrowLw",
+   "symbol": "PlyKirby5K_Share_ACTION_LightThrowLw_figatree",
+   "rows": [
+    82,
+    99
+   ],
+   "frames": 28,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LightThrowLw",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LightThrowDash",
+   "symbol": "PlyKirby5K_Share_ACTION_LightThrowDash_figatree",
+   "rows": [
+    83
+   ],
+   "frames": 44,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    },
+    {
+     "frame": 32,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "LightThrowDash",
+     "meaning": "wings"
+    },
+    {
+     "frame": 32,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LightThrowDash",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LightThrowDrop",
+   "symbol": "PlyKirby5K_Share_ACTION_LightThrowDrop_figatree",
+   "rows": [
+    84
+   ],
+   "frames": 28,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LightThrowDrop",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LightThrowAirF",
+   "symbol": "PlyKirby5K_Share_ACTION_LightThrowAirF_figatree",
+   "rows": [
+    85,
+    100
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "LightThrowAirB",
+   "symbol": "PlyKirby5K_Share_ACTION_LightThrowAirB_figatree",
+   "rows": [
+    86,
+    101
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "LightThrowAirHi",
+   "symbol": "PlyKirby5K_Share_ACTION_LightThrowAirHi_figatree",
+   "rows": [
+    87,
+    102
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "LightThrowAirLw",
+   "symbol": "PlyKirby5K_Share_ACTION_LightThrowAirLw_figatree",
+   "rows": [
+    88,
+    103
+   ],
+   "frames": 26,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "HeavyGet",
+   "symbol": "PlyKirby5K_Share_ACTION_HeavyGet_figatree",
+   "rows": [
+    89
+   ],
+   "frames": 25,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "HeavyGet",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "HeavyWalk1",
+   "symbol": "PlyKirby5K_Share_ACTION_HeavyWalk1_figatree",
+   "rows": [
+    90
+   ],
+   "frames": 22,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "HeavyWalk1",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "HeavyWalk2",
+   "symbol": "PlyKirby5K_Share_ACTION_HeavyWalk2_figatree",
+   "rows": [
+    91
+   ],
+   "frames": 22,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "HeavyWalk2",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "HeavyThrowF",
+   "symbol": "PlyKirby5K_Share_ACTION_HeavyThrowF_figatree",
+   "rows": [
+    92,
+    104
+   ],
+   "frames": 40,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "HeavyThrowF",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "HeavyThrowB",
+   "symbol": "PlyKirby5K_Share_ACTION_HeavyThrowB_figatree",
+   "rows": [
+    93,
+    105
+   ],
+   "frames": 40,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "HeavyThrowB",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "HeavyThrowHi",
+   "symbol": "PlyKirby5K_Share_ACTION_HeavyThrowHi_figatree",
+   "rows": [
+    94,
+    106
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "HeavyThrowHi",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "HeavyThrowLw",
+   "symbol": "PlyKirby5K_Share_ACTION_HeavyThrowLw_figatree",
+   "rows": [
+    95,
+    107
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "HeavyThrowLw",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LightThrowF",
+   "symbol": "PlyKirby5K_Share_ACTION_LightThrowF_figatree",
+   "rows": [
+    96
+   ],
+   "frames": 33,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LightThrowF",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LightThrowB",
+   "symbol": "PlyKirby5K_Share_ACTION_LightThrowB_figatree",
+   "rows": [
+    97
+   ],
+   "frames": 33,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LightThrowB",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LightThrowHi",
+   "symbol": "PlyKirby5K_Share_ACTION_LightThrowHi_figatree",
+   "rows": [
+    98
+   ],
+   "frames": 32,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LightThrowHi",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Swing1",
+   "symbol": "PlyKirby5K_Share_ACTION_Swing1_figatree",
+   "rows": [
+    108,
+    112,
+    116,
+    120,
+    124,
+    128
+   ],
+   "frames": 24,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Swing1",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Swing3",
+   "symbol": "PlyKirby5K_Share_ACTION_Swing3_figatree",
+   "rows": [
+    109,
+    113,
+    117,
+    121,
+    125,
+    129
+   ],
+   "frames": 42,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Swing3",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Swing4",
+   "symbol": "PlyKirby5K_Share_ACTION_Swing4_figatree",
+   "rows": [
+    110,
+    114,
+    118,
+    122,
+    126,
+    130
+   ],
+   "frames": 54,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Swing4",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SwingDash",
+   "symbol": "PlyKirby5K_Share_ACTION_SwingDash_figatree",
+   "rows": [
+    111,
+    115,
+    119,
+    123,
+    127,
+    131
+   ],
+   "frames": 46,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    },
+    {
+     "frame": 36,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SwingDash",
+     "meaning": "wings"
+    },
+    {
+     "frame": 36,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "SwingDash",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ItemHammerWait",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemHammerWait_figatree",
+   "rows": [
+    132
+   ],
+   "frames": 16,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "ItemHammerWait",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ItemHammerMove",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemHammerMove_figatree",
+   "rows": [
+    133
+   ],
+   "frames": 16,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "ItemHammerMove",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Fall",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemParasolOpen_figatree",
+   "rows": [
+    134
+   ],
+   "frames": 49,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "Fall",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemParasolFall_figatree",
+   "rows": [
+    135,
+    136
+   ],
+   "frames": 49,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "ItemShoot",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemShoot_figatree",
+   "rows": [
+    138,
+    140,
+    142
+   ],
+   "frames": 25,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "ItemShoot",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ItemShootAir",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemShootAir_figatree",
+   "rows": [
+    139,
+    141,
+    143
+   ],
+   "frames": 25,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "ItemScrew",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemScrew_figatree",
+   "rows": [
+    144
+   ],
+   "frames": 41,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "ItemScrew",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ItemScrew",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemScrewAir_figatree",
+   "rows": [
+    145
+   ],
+   "frames": 41,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "ItemScrew",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ItemScrewFall",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemScrewDamage_figatree",
+   "rows": [
+    146,
+    147
+   ],
+   "frames": 81,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "ItemScrewFall",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "FuraFura",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemBlind_figatree",
+   "rows": [
+    148
+   ],
+   "frames": 140,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "FuraFura",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ItemScopeStart",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemScopeStart_figatree",
+   "rows": [
+    149,
+    157
+   ],
+   "frames": 16,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "ItemScopeStart",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ItemScopeRapid",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemScopeRapid_figatree",
+   "rows": [
+    150,
+    158
+   ],
+   "frames": 8,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "ItemScopeRapid",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ItemScopeFire",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemScopeFire_figatree",
+   "rows": [
+    151,
+    159
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "ItemScopeFire",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ItemScopeEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemScopeEnd_figatree",
+   "rows": [
+    152,
+    160
+   ],
+   "frames": 21,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "ItemScopeEnd",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ItemScopeAirStart",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemScopeAirStart_figatree",
+   "rows": [
+    153,
+    161
+   ],
+   "frames": 16,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "ItemScopeAirRapid",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemScopeAirRapid_figatree",
+   "rows": [
+    154,
+    162
+   ],
+   "frames": 8,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "ItemScopeAirFire",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemScopeAirFire_figatree",
+   "rows": [
+    155,
+    163
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "ItemScopeAirEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_ItemScopeAirEnd_figatree",
+   "rows": [
+    156,
+    164
+   ],
+   "frames": 21,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "DamageHi1",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageHi1_figatree",
+   "rows": [
+    165
+   ],
+   "frames": 12,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DamageHi1",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DamageHi2",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageHi2_figatree",
+   "rows": [
+    166
+   ],
+   "frames": 24,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DamageHi2",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DamageHi3",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageHi3_figatree",
+   "rows": [
+    167
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DamageHi3",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DamageN1",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageN1_figatree",
+   "rows": [
+    168
+   ],
+   "frames": 12,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DamageN1",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DamageN2",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageN2_figatree",
+   "rows": [
+    169
+   ],
+   "frames": 24,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DamageN2",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DamageN3",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageN3_figatree",
+   "rows": [
+    170
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DamageN3",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DamageLw1",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageLw1_figatree",
+   "rows": [
+    171
+   ],
+   "frames": 12,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DamageLw1",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DamageLw2",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageLw2_figatree",
+   "rows": [
+    172
+   ],
+   "frames": 24,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DamageLw2",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DamageLw3",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageLw3_figatree",
+   "rows": [
+    173
+   ],
+   "frames": 42,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DamageLw3",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DamageAir1",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageAir1_figatree",
+   "rows": [
+    174
+   ],
+   "frames": 12,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "DamageAir2",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageAir2_figatree",
+   "rows": [
+    175
+   ],
+   "frames": 24,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "DamageAir3",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageAir3_figatree",
+   "rows": [
+    176
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "DamageFlyHi",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageFlyHi_figatree",
+   "rows": [
+    177
+   ],
+   "frames": 37,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "DamageFlyN",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageFlyN_figatree",
+   "rows": [
+    178
+   ],
+   "frames": 37,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "DamageFlyLw",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageFlyLw_figatree",
+   "rows": [
+    179
+   ],
+   "frames": 37,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "DamageFlyTop",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageFlyTop_figatree",
+   "rows": [
+    180,
+    286
+   ],
+   "frames": 81,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DamageFlyTop",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DamageFlyRoll",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageFlyRoll_figatree",
+   "rows": [
+    181
+   ],
+   "frames": 17,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "DownBoundU",
+   "symbol": "PlyKirby5K_Share_ACTION_DownBoundU_figatree",
+   "rows": [
+    183,
+    288
+   ],
+   "frames": 27,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownBoundU",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownWaitU",
+   "symbol": "PlyKirby5K_Share_ACTION_DownWaitU_figatree",
+   "rows": [
+    184
+   ],
+   "frames": 70,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownWaitU",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownDamageU",
+   "symbol": "PlyKirby5K_Share_ACTION_DownDamageU_figatree",
+   "rows": [
+    185
+   ],
+   "frames": 14,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownDamageU",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownStandU",
+   "symbol": "PlyKirby5K_Share_ACTION_DownStandU_figatree",
+   "rows": [
+    186,
+    290
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownStandU",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownAttackU",
+   "symbol": "PlyKirby5K_Share_ACTION_DownAttackU_figatree",
+   "rows": [
+    187
+   ],
+   "frames": 50,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownAttackU",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownForwardU",
+   "symbol": "PlyKirby5K_Share_ACTION_DownFowardU_figatree",
+   "rows": [
+    188
+   ],
+   "frames": 36,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownForwardU",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownBackU",
+   "symbol": "PlyKirby5K_Share_ACTION_DownBackU_figatree",
+   "rows": [
+    189
+   ],
+   "frames": 36,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownBackU",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownSpotU",
+   "symbol": "PlyKirby5K_Share_ACTION_DownSpotU_figatree",
+   "rows": [
+    190
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownSpotU",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownBoundD",
+   "symbol": "PlyKirby5K_Share_ACTION_DownBoundD_figatree",
+   "rows": [
+    191,
+    289
+   ],
+   "frames": 27,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownBoundD",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownWaitD",
+   "symbol": "PlyKirby5K_Share_ACTION_DownWaitD_figatree",
+   "rows": [
+    192
+   ],
+   "frames": 81,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownWaitD",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownDamageD",
+   "symbol": "PlyKirby5K_Share_ACTION_DownDamageD_figatree",
+   "rows": [
+    193
+   ],
+   "frames": 14,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownDamageD",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownStandD",
+   "symbol": "PlyKirby5K_Share_ACTION_DownStandD_figatree",
+   "rows": [
+    194,
+    291
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownStandD",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownAttackD",
+   "symbol": "PlyKirby5K_Share_ACTION_DownAttackD_figatree",
+   "rows": [
+    195
+   ],
+   "frames": 50,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownAttackD",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownForwardD",
+   "symbol": "PlyKirby5K_Share_ACTION_DownFowardD_figatree",
+   "rows": [
+    196
+   ],
+   "frames": 36,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownForwardD",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownBackD",
+   "symbol": "PlyKirby5K_Share_ACTION_DownBackD_figatree",
+   "rows": [
+    197
+   ],
+   "frames": 36,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownBackD",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Passive",
+   "symbol": "PlyKirby5K_Share_ACTION_Passive_figatree",
+   "rows": [
+    199
+   ],
+   "frames": 27,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Passive",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "PassiveStandF",
+   "symbol": "PlyKirby5K_Share_ACTION_PassiveStandF_figatree",
+   "rows": [
+    200
+   ],
+   "frames": 41,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "PassiveStandF",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "PassiveStandB",
+   "symbol": "PlyKirby5K_Share_ACTION_PassiveStandB_figatree",
+   "rows": [
+    201
+   ],
+   "frames": 41,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "PassiveStandB",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "PassiveWall",
+   "symbol": "PlyKirby5K_Share_ACTION_PassiveWall_figatree",
+   "rows": [
+    202
+   ],
+   "frames": 27,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "PassiveWallJump",
+   "symbol": "PlyKirby5K_Share_ACTION_PassiveWallJump_figatree",
+   "rows": [
+    203
+   ],
+   "frames": 41,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "PassiveCeil",
+   "symbol": "PlyKirby5K_Share_ACTION_PassiveCeil_figatree",
+   "rows": [
+    204
+   ],
+   "frames": 27,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "FuraFura",
+   "symbol": "PlyKirby5K_Share_ACTION_FuraFura_figatree",
+   "rows": [
+    205
+   ],
+   "frames": 140,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "FuraFura",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "FuraSleepStart",
+   "symbol": "PlyKirby5K_Share_ACTION_FuraSleepStart_figatree",
+   "rows": [
+    206
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "FuraSleepStart",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "FuraSleepLoop",
+   "symbol": "PlyKirby5K_Share_ACTION_FuraSleepLoop_figatree",
+   "rows": [
+    207
+   ],
+   "frames": 280,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "FuraSleepLoop",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "FuraSleepEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_FuraSleepEnd_figatree",
+   "rows": [
+    208
+   ],
+   "frames": 60,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "FuraSleepEnd",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Pass",
+   "symbol": "PlyKirby5K_Share_ACTION_Pass_figatree",
+   "rows": [
+    209
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Pass",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Ottotto",
+   "symbol": "PlyKirby5K_Share_ACTION_Ottotto_figatree",
+   "rows": [
+    210
+   ],
+   "frames": 6,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Ottotto",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "OttottoWait",
+   "symbol": "PlyKirby5K_Share_ACTION_OttottoWait_figatree",
+   "rows": [
+    211
+   ],
+   "frames": 100,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "OttottoWait",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "WallDamage",
+   "symbol": "PlyKirby5K_Share_ACTION_WallDamage_figatree",
+   "rows": [
+    212
+   ],
+   "frames": 41,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "StopWall",
+   "symbol": "PlyKirby5K_Share_ACTION_StopWall_figatree",
+   "rows": [
+    213
+   ],
+   "frames": 21,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "StopWall",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "StopCeil",
+   "symbol": "PlyKirby5K_Share_ACTION_StopCeil_figatree",
+   "rows": [
+    214
+   ],
+   "frames": 9,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "MissFoot",
+   "symbol": "PlyKirby5K_Share_ACTION_MissFoot_figatree",
+   "rows": [
+    215
+   ],
+   "frames": 27,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "MissFoot",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CliffCatch",
+   "symbol": "PlyKirby5K_Share_ACTION_CliffCatch_figatree",
+   "rows": [
+    216
+   ],
+   "frames": 21,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 4,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 4,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CliffCatch",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CliffWait",
+   "symbol": "PlyKirby5K_Share_ACTION_CliffWait_figatree",
+   "rows": [
+    217
+   ],
+   "frames": 151,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CliffWait",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CliffClimbSlow",
+   "symbol": "PlyKirby5K_Share_ACTION_CliffClimbSlow_figatree",
+   "rows": [
+    219
+   ],
+   "frames": 60,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CliffClimbSlow",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CliffClimbQuick",
+   "symbol": "PlyKirby5K_Share_ACTION_CliffClimbQuick_figatree",
+   "rows": [
+    220
+   ],
+   "frames": 35,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CliffClimbQuick",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CliffAttackSlow",
+   "symbol": "PlyKirby5K_Share_ACTION_CliffAttackSlow_figatree",
+   "rows": [
+    221
+   ],
+   "frames": 70,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CliffAttackSlow",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CliffAttackQuick",
+   "symbol": "PlyKirby5K_Share_ACTION_CliffAttackQuick_figatree",
+   "rows": [
+    222
+   ],
+   "frames": 56,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CliffAttackQuick",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CliffEscapeSlow",
+   "symbol": "PlyKirby5K_Share_ACTION_CliffEscapeSlow_figatree",
+   "rows": [
+    223
+   ],
+   "frames": 80,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CliffEscapeSlow",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CliffEscapeQuick",
+   "symbol": "PlyKirby5K_Share_ACTION_CliffEscapeQuick_figatree",
+   "rows": [
+    224
+   ],
+   "frames": 50,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CliffEscapeQuick",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CliffJumpSlow1",
+   "symbol": "PlyKirby5K_Share_ACTION_CliffJumpSlow1_figatree",
+   "rows": [
+    225
+   ],
+   "frames": 20,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CliffJumpSlow1",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CliffJumpSlow2",
+   "symbol": "PlyKirby5K_Share_ACTION_CliffJumpSlow2_figatree",
+   "rows": [
+    226
+   ],
+   "frames": 46,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CliffJumpSlow2",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CliffJumpQuick1",
+   "symbol": "PlyKirby5K_Share_ACTION_CliffJumpQuick1_figatree",
+   "rows": [
+    227
+   ],
+   "frames": 16,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CliffJumpQuick1",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CliffJumpQuick2",
+   "symbol": "PlyKirby5K_Share_ACTION_CliffJumpQuick2_figatree",
+   "rows": [
+    228
+   ],
+   "frames": 25,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CliffJumpQuick2",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Wait1",
+   "symbol": "PlyKirby5K_Share_ACTION_Entry_figatree",
+   "rows": [
+    238
+   ],
+   "frames": 270,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [
+    0
+   ],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Wait1",
+     "meaning": "closed cape"
+    },
+    {
+     "frame": 0,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": false
+     },
+     "subaction": "Wait1"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AppealLw",
+   "symbol": "PlyKirby5K_Share_ACTION_AppealR_figatree",
+   "rows": [
+    239
+   ],
+   "frames": 120,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "AppealLw",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AppealLw",
+   "symbol": "PlyKirby5K_Share_ACTION_AppealL_figatree",
+   "rows": [
+    240
+   ],
+   "frames": 120,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "AppealLw",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Catch",
+   "symbol": "PlyKirby5K_Share_ACTION_Catch_figatree",
+   "rows": [
+    242
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Catch",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CatchDash",
+   "symbol": "PlyKirby5K_Share_ACTION_CatchDash_figatree",
+   "rows": [
+    243
+   ],
+   "frames": 40,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "CatchDash",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CatchWait",
+   "symbol": "PlyKirby5K_Share_ACTION_CatchWait_figatree",
+   "rows": [
+    244
+   ],
+   "frames": 75,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CatchWait",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CatchAttack",
+   "symbol": "PlyKirby5K_Share_ACTION_CatchAttack_figatree",
+   "rows": [
+    245
+   ],
+   "frames": 24,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    },
+    {
+     "frame": 20,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "CatchAttack",
+     "meaning": "wings"
+    },
+    {
+     "frame": 20,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CatchAttack",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CatchCut",
+   "symbol": "PlyKirby5K_Share_ACTION_CatchCut_figatree",
+   "rows": [
+    246
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CatchCut",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ThrowF",
+   "symbol": "PlyKirby5K_Share_ACTION_ThrowF_figatree",
+   "rows": [
+    247
+   ],
+   "frames": 28,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "ThrowF",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ThrowB",
+   "symbol": "PlyKirby5K_Share_ACTION_ThrowB_figatree",
+   "rows": [
+    248
+   ],
+   "frames": 35,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [
+    {
+     "frame": 5,
+     "visible": false
+    },
+    {
+     "frame": 11,
+     "visible": true
+    }
+   ],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "ThrowB",
+     "meaning": "closed cape"
+    },
+    {
+     "frame": 5,
+     "event": "Visibility",
+     "args": {
+      "Visibility": false
+     },
+     "subaction": "ThrowB"
+    },
+    {
+     "frame": 11,
+     "event": "Visibility",
+     "args": {
+      "Visibility": true
+     },
+     "subaction": "ThrowB"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ThrowHi",
+   "symbol": "PlyKirby5K_Share_ACTION_ThrowHi_figatree",
+   "rows": [
+    249
+   ],
+   "frames": 78,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "ThrowHi",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ThrowLw",
+   "symbol": "PlyKirby5K_Share_ACTION_ThrowLw_figatree",
+   "rows": [
+    250
+   ],
+   "frames": 88,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "ThrowLw",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CapturePulledHi",
+   "symbol": "PlyKirby5K_Share_ACTION_CapturePulledHi_figatree",
+   "rows": [
+    251
+   ],
+   "frames": 20,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CapturePulledHi",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CaptureWaitHi",
+   "symbol": "PlyKirby5K_Share_ACTION_CaptureWaitHi_figatree",
+   "rows": [
+    252
+   ],
+   "frames": 90,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CaptureWaitHi",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CaptureDamageHi",
+   "symbol": "PlyKirby5K_Share_ACTION_CaptureDamageHi_figatree",
+   "rows": [
+    253
+   ],
+   "frames": 20,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CaptureDamageHi",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CapturePulledLw",
+   "symbol": "PlyKirby5K_Share_ACTION_CapturePulledLw_figatree",
+   "rows": [
+    254
+   ],
+   "frames": 20,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CapturePulledLw",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CaptureWaitLw",
+   "symbol": "PlyKirby5K_Share_ACTION_CaptureWaitLw_figatree",
+   "rows": [
+    255
+   ],
+   "frames": 90,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CaptureWaitLw",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CaptureDamageLw",
+   "symbol": "PlyKirby5K_Share_ACTION_CaptureDamageLw_figatree",
+   "rows": [
+    256
+   ],
+   "frames": 20,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CaptureDamageLw",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CaptureCut",
+   "symbol": "PlyKirby5K_Share_ACTION_CaptureCut_figatree",
+   "rows": [
+    257
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "CaptureCut",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CaptureJump",
+   "symbol": "PlyKirby5K_Share_ACTION_CaptureJump_figatree",
+   "rows": [
+    258
+   ],
+   "frames": 51,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "CaptureJump",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "ThrownF",
+   "symbol": "PlyTaro_Share_ACTION_TKirbyThrowF_figatree",
+   "rows": [
+    262
+   ],
+   "frames": 28,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "ThrownB",
+   "symbol": "PlyTaro_Share_ACTION_TKirbyThrowB_figatree",
+   "rows": [
+    263
+   ],
+   "frames": 35,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "ThrownHi",
+   "symbol": "PlyTaro_Share_ACTION_TKirbyThrowHi_figatree",
+   "rows": [
+    264
+   ],
+   "frames": 78,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "ThrownLw",
+   "symbol": "PlyTaro_Share_ACTION_TKirbyThrowLw_figatree",
+   "rows": [
+    265
+   ],
+   "frames": 88,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "Swallowed",
+   "symbol": "PlyTaro_Share_ACTION_TKirbySpecialNDrink_figatree",
+   "rows": [
+    284
+   ],
+   "frames": 11,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Swallowed",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Swallowed",
+   "symbol": "PlyTaro_Share_ACTION_TKirbySpecialNSpit_figatree",
+   "rows": [
+    285
+   ],
+   "frames": 11,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Swallowed",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Swallowed",
+   "symbol": "PlyTaro_Share_ACTION_TYoshiSpecialN_figatree",
+   "rows": [
+    294
+   ],
+   "frames": 11,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Swallowed",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "JumpAerialF",
+   "symbol": "PlyKirby5K_Share_ACTION_JumpAerialF1_figatree",
+   "rows": [
+    295
+   ],
+   "frames": 34,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "JumpAerialF",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "JumpAerialF2",
+   "symbol": "PlyKirby5K_Share_ACTION_JumpAerialF2_figatree",
+   "rows": [
+    296
+   ],
+   "frames": 34,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "JumpAerialF2",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "JumpAerialF3",
+   "symbol": "PlyKirby5K_Share_ACTION_JumpAerialF3_figatree",
+   "rows": [
+    297
+   ],
+   "frames": 34,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "JumpAerialF3",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "JumpAerialF4",
+   "symbol": "PlyKirby5K_Share_ACTION_JumpAerialF4_figatree",
+   "rows": [
+    298
+   ],
+   "frames": 34,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "JumpAerialF4",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "JumpAerialF5",
+   "symbol": "PlyKirby5K_Share_ACTION_JumpAerialF5_figatree",
+   "rows": [
+    299
+   ],
+   "frames": 34,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "JumpAerialF5",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "JumpAerialF",
+   "symbol": "PlyKirby5K_Share_ACTION_JumpAerialF1Met_figatree",
+   "rows": [
+    300
+   ],
+   "frames": 34,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "JumpAerialF",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "JumpAerialF2",
+   "symbol": "PlyKirby5K_Share_ACTION_JumpAerialF2Met_figatree",
+   "rows": [
+    301
+   ],
+   "frames": 34,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "JumpAerialF2",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "JumpAerialF3",
+   "symbol": "PlyKirby5K_Share_ACTION_JumpAerialF3Met_figatree",
+   "rows": [
+    302
+   ],
+   "frames": 34,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "JumpAerialF3",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "JumpAerialF4",
+   "symbol": "PlyKirby5K_Share_ACTION_JumpAerialF4Met_figatree",
+   "rows": [
+    303
+   ],
+   "frames": 34,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "JumpAerialF4",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "JumpAerialF5",
+   "symbol": "PlyKirby5K_Share_ACTION_JumpAerialF5Met_figatree",
+   "rows": [
+    304
+   ],
+   "frames": 34,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "JumpAerialF5",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialNStart",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialN_figatree",
+   "rows": [
+    305
+   ],
+   "frames": 12,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "SpecialNStart",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialNSpin",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialNLoop_figatree",
+   "rows": [
+    306,
+    308,
+    321
+   ],
+   "frames": 361,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "SpecialNSpin",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialNEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialNEnd_figatree",
+   "rows": [
+    307
+   ],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "SpecialNEnd",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialAirNStart",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialN_figatree",
+   "rows": [
+    320
+   ],
+   "frames": 12,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialAirNStart",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialSStart",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialS_figatree",
+   "rows": [
+    322
+   ],
+   "frames": 22,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    },
+    {
+     "frame": 15,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "SpecialSStart",
+     "meaning": "closed cape"
+    },
+    {
+     "frame": 15,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialSStart",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialAirSStart",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialAirS_figatree",
+   "rows": [
+    323
+   ],
+   "frames": 22,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialAirSStart",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialHi",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialHi1_figatree",
+   "rows": [
+    324
+   ],
+   "frames": 32,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "SpecialHi",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialHiLoop",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialHi2_figatree",
+   "rows": [
+    325
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialHiLoop",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialHiEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialHi3_figatree",
+   "rows": [
+    326
+   ],
+   "frames": 32,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialHiEnd",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialHiEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialHi4_figatree",
+   "rows": [
+    327
+   ],
+   "frames": 32,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialHiEnd",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialAirHiStart",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialAirHi1_figatree",
+   "rows": [
+    328
+   ],
+   "frames": 8,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialAirHiStart",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialHiLoop",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialAirHi2_figatree",
+   "rows": [
+    329
+   ],
+   "frames": 31,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialHiLoop",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialHiEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialAirHi3_figatree",
+   "rows": [
+    330
+   ],
+   "frames": 32,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialHiEnd",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialHiEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialAirHi4_figatree",
+   "rows": [
+    331
+   ],
+   "frames": 32,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialHiEnd",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialLwStart",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialLw1_figatree",
+   "rows": [
+    332
+   ],
+   "frames": 20,
+   "article_clip": "WpnMetaknightMantleD03SpecialLwStart",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article shown again"
+    },
+    {
+     "frame": 12,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 3,
+     "why": "cape article hidden (no cape)"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [
+    12
+   ],
+   "body_invisible_frames": [
+    {
+     "frame": 12,
+     "visible": false
+    }
+   ],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "SpecialLwStart",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 0,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": true
+     },
+     "subaction": "SpecialLwStart"
+    },
+    {
+     "frame": 0,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 0
+     },
+     "subaction": "SpecialLwStart"
+    },
+    {
+     "frame": 5,
+     "event": "Item Visibility",
+     "args": {
+      "Item Visibility": false
+     },
+     "subaction": "SpecialLwStart"
+    },
+    {
+     "frame": 12,
+     "event": "Visibility",
+     "args": {
+      "Visibility": false
+     },
+     "subaction": "SpecialLwStart"
+    },
+    {
+     "frame": 12,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": false
+     },
+     "subaction": "SpecialLwStart"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialLw",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialLw2_figatree",
+   "rows": [
+    333
+   ],
+   "frames": 56,
+   "article_clip": "WpnMetaknightMantleD03SpecialLw",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article"
+    },
+    {
+     "frame": 1,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article shown again"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [
+    {
+     "frame": 1,
+     "visible": true
+    }
+   ],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "SpecialLw",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 1,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": true
+     },
+     "subaction": "SpecialLw"
+    },
+    {
+     "frame": 1,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 3
+     },
+     "subaction": "SpecialLw"
+    },
+    {
+     "frame": 1,
+     "event": "Visibility",
+     "args": {
+      "Visibility": true
+     },
+     "subaction": "SpecialLw"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialLwEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialLw2_figatree",
+   "rows": [
+    334
+   ],
+   "frames": 36,
+   "article_clip": "WpnMetaknightMantleD03SpecialLwEnd",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article shown again"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [
+    {
+     "frame": 0,
+     "visible": true
+    }
+   ],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Visibility",
+     "args": {
+      "Visibility": true
+     },
+     "subaction": "SpecialLwEnd"
+    },
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "SpecialLwEnd",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 0,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": true
+     },
+     "subaction": "SpecialLwEnd"
+    },
+    {
+     "frame": 0,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 8
+     },
+     "subaction": "SpecialLwEnd"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialAirLwStart",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialAirLw1_figatree",
+   "rows": [
+    335
+   ],
+   "frames": 20,
+   "article_clip": "WpnMetaknightMantleD03SpecialAirLwStart",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    },
+    {
+     "frame": 8,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article shown again"
+    },
+    {
+     "frame": 12,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 3,
+     "why": "cape article hidden (no cape)"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [
+    0,
+    12
+   ],
+   "body_invisible_frames": [
+    {
+     "frame": 12,
+     "visible": false
+    }
+   ],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialAirLwStart",
+     "meaning": "wings"
+    },
+    {
+     "frame": 0,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": false
+     },
+     "subaction": "SpecialAirLwStart"
+    },
+    {
+     "frame": 0,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 0
+     },
+     "subaction": "SpecialAirLwStart"
+    },
+    {
+     "frame": 5,
+     "event": "Item Visibility",
+     "args": {
+      "Item Visibility": false
+     },
+     "subaction": "SpecialAirLwStart"
+    },
+    {
+     "frame": 8,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "SpecialAirLwStart",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 8,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": true
+     },
+     "subaction": "SpecialAirLwStart"
+    },
+    {
+     "frame": 12,
+     "event": "Visibility",
+     "args": {
+      "Visibility": false
+     },
+     "subaction": "SpecialAirLwStart"
+    },
+    {
+     "frame": 12,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": false
+     },
+     "subaction": "SpecialAirLwStart"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialAirLw",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialAirLw2_figatree",
+   "rows": [
+    336
+   ],
+   "frames": 56,
+   "article_clip": "WpnMetaknightMantleD03SpecialAirLw",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article"
+    },
+    {
+     "frame": 1,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article shown again"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [
+    {
+     "frame": 1,
+     "visible": true
+    }
+   ],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "SpecialAirLw",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 1,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": true
+     },
+     "subaction": "SpecialAirLw"
+    },
+    {
+     "frame": 1,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 3
+     },
+     "subaction": "SpecialAirLw"
+    },
+    {
+     "frame": 1,
+     "event": "Visibility",
+     "args": {
+      "Visibility": true
+     },
+     "subaction": "SpecialAirLw"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialAirLwEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialAirLw2_figatree",
+   "rows": [
+    337
+   ],
+   "frames": 36,
+   "article_clip": "WpnMetaknightMantleD03SpecialAirLwEnd",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article shown again"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [
+    {
+     "frame": 0,
+     "visible": true
+    }
+   ],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Visibility",
+     "args": {
+      "Visibility": true
+     },
+     "subaction": "SpecialAirLwEnd"
+    },
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "SpecialAirLwEnd",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 0,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": true
+     },
+     "subaction": "SpecialAirLwEnd"
+    },
+    {
+     "frame": 0,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 8
+     },
+     "subaction": "SpecialAirLwEnd"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AppealHi",
+   "symbol": "PlyKirby5K_Share_ACTION_AppealHi_figatree",
+   "rows": [],
+   "frames": 120,
+   "article_clip": "WpnMetaknightMantleJ01AppealU",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article"
+    },
+    {
+     "frame": 21,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 3,
+     "why": "cape switch on the article while it is hidden (no cape)"
+    },
+    {
+     "frame": 21,
+     "cmd": "ModelVis",
+     "index": 1,
+     "value": 1,
+     "why": "mantle ball only"
+    },
+    {
+     "frame": 75,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article shown again"
+    },
+    {
+     "frame": 75,
+     "cmd": "ModelVis",
+     "index": 1,
+     "value": 0,
+     "why": "body + sword"
+    },
+    {
+     "frame": 118,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [
+    21,
+    118
+   ],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "AppealHi",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 0,
+     "event": "Generate Article",
+     "args": {
+      "Article ID": 0,
+      "Subaction Exclusive?": true
+     },
+     "subaction": "AppealHi"
+    },
+    {
+     "frame": 0,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 20
+     },
+     "subaction": "AppealHi"
+    },
+    {
+     "frame": 21,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": false
+     },
+     "subaction": "AppealHi"
+    },
+    {
+     "frame": 21,
+     "event": "Model Changer 1",
+     "args": {
+      "Switch Index": 1,
+      "Bone Group Index": 1
+     },
+     "subaction": "AppealHi",
+     "meaning": "mantle ball only"
+    },
+    {
+     "frame": 21,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "AppealHi",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 21,
+     "event": "Item Visibility",
+     "args": {
+      "Item Visibility": false
+     },
+     "subaction": "AppealHi"
+    },
+    {
+     "frame": 75,
+     "event": "Model Changer 1",
+     "args": {
+      "Switch Index": 1,
+      "Bone Group Index": 0
+     },
+     "subaction": "AppealHi",
+     "meaning": "body + sword"
+    },
+    {
+     "frame": 75,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": true
+     },
+     "subaction": "AppealHi"
+    },
+    {
+     "frame": 75,
+     "event": "Item Visibility",
+     "args": {
+      "Item Visibility": true
+     },
+     "subaction": "AppealHi"
+    },
+    {
+     "frame": 118,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AppealHi",
+     "meaning": "closed cape"
+    },
+    {
+     "frame": 118,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": false
+     },
+     "subaction": "AppealHi"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AppealS",
+   "symbol": "PlyKirby5K_Share_ACTION_AppealS_figatree",
+   "rows": [],
+   "frames": 120,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AppealS",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackHi4Hold",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackHi4Hold_figatree",
+   "rows": [],
+   "frames": 61,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackHi4Hold",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackLw4Hold",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackLw4Hold_figatree",
+   "rows": [],
+   "frames": 61,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackLw4Hold",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackS3S2",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackS3S2_figatree",
+   "rows": [],
+   "frames": 28,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackS3S2",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackS3S3",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackS3S3_figatree",
+   "rows": [],
+   "frames": 34,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackS3S3",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "AttackS4Hold",
+   "symbol": "PlyKirby5K_Share_ACTION_AttackS4Hold_figatree",
+   "rows": [],
+   "frames": 61,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "AttackS4Hold",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "CatchTurn",
+   "symbol": "PlyKirby5K_Share_ACTION_CatchTurn_figatree",
+   "rows": [],
+   "frames": 36,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "CatchTurn",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DamageElec",
+   "symbol": "PlyKirby5K_Share_ACTION_DamageElec_figatree",
+   "rows": [],
+   "frames": 28,
+   "article_clip": null,
+   "melee_modelvis_suggested": [],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": []
+  },
+  {
+   "brawl_clip": "DownDamageD3",
+   "symbol": "PlyKirby5K_Share_ACTION_DownDamageD3_figatree",
+   "rows": [],
+   "frames": 40,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownDamageD3",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownDamageU3",
+   "symbol": "PlyKirby5K_Share_ACTION_DownDamageU3_figatree",
+   "rows": [],
+   "frames": 40,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownDamageU3",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownEatD",
+   "symbol": "PlyKirby5K_Share_ACTION_DownEatD_figatree",
+   "rows": [],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownEatD",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "DownEatU",
+   "symbol": "PlyKirby5K_Share_ACTION_DownEatU_figatree",
+   "rows": [],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "DownEatU",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "FuraFuraEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_FuraFuraEnd_figatree",
+   "rows": [],
+   "frames": 50,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "FuraFuraEnd",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "FuraFuraStartD",
+   "symbol": "PlyKirby5K_Share_ACTION_FuraFuraStartD_figatree",
+   "rows": [],
+   "frames": 50,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "FuraFuraStartD",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "FuraFuraStartU",
+   "symbol": "PlyKirby5K_Share_ACTION_FuraFuraStartU_figatree",
+   "rows": [],
+   "frames": 50,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "FuraFuraStartU",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "GlideAttack",
+   "symbol": "PlyKirby5K_Share_ACTION_GlideAttack_figatree",
+   "rows": [],
+   "frames": 24,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "GlideAttack",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "GlideDirection",
+   "symbol": "PlyKirby5K_Share_ACTION_GlideDirection_figatree",
+   "rows": [],
+   "frames": 181,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "GlideDirection",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "GlideEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_GlideEnd_figatree",
+   "rows": [],
+   "frames": 25,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    },
+    {
+     "frame": 20,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "GlideEnd",
+     "meaning": "wings"
+    },
+    {
+     "frame": 20,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "GlideEnd",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "GlideLanding",
+   "symbol": "PlyKirby5K_Share_ACTION_GlideLanding_figatree",
+   "rows": [],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 20,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 20,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "GlideLanding",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "GlideStart",
+   "symbol": "PlyKirby5K_Share_ACTION_GlideStart_figatree",
+   "rows": [],
+   "frames": 20,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "GlideStart",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "GlideWing",
+   "symbol": "PlyKirby5K_Share_ACTION_GlideWing_figatree",
+   "rows": [],
+   "frames": 160,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "GlideWing",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "LandingLight",
+   "symbol": "PlyKirby5K_Share_ACTION_LandingLight_figatree",
+   "rows": [],
+   "frames": 16,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 7,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 7,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "LandingLight",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialAirLwB",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialAirLwB_figatree",
+   "rows": [],
+   "frames": 56,
+   "article_clip": "WpnMetaknightMantleD03SpecialAirLwB",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article"
+    },
+    {
+     "frame": 1,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article shown again"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [
+    {
+     "frame": 1,
+     "visible": true
+    }
+   ],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "SpecialAirLwB",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 1,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": true
+     },
+     "subaction": "SpecialAirLwB"
+    },
+    {
+     "frame": 1,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 6
+     },
+     "subaction": "SpecialAirLwB"
+    },
+    {
+     "frame": 1,
+     "event": "Visibility",
+     "args": {
+      "Visibility": true
+     },
+     "subaction": "SpecialAirLwB"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialAirLwF",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialAirLwF_figatree",
+   "rows": [],
+   "frames": 56,
+   "article_clip": "WpnMetaknightMantleD03SpecialAirLwF",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article"
+    },
+    {
+     "frame": 1,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article shown again"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [
+    {
+     "frame": 1,
+     "visible": true
+    }
+   ],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "SpecialAirLwF",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 1,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": true
+     },
+     "subaction": "SpecialAirLwF"
+    },
+    {
+     "frame": 1,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 5
+     },
+     "subaction": "SpecialAirLwF"
+    },
+    {
+     "frame": 1,
+     "event": "Visibility",
+     "args": {
+      "Visibility": true
+     },
+     "subaction": "SpecialAirLwF"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialAirNEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialAirNEnd_figatree",
+   "rows": [],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialAirNEnd",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialAirSEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialAirSEnd_figatree",
+   "rows": [],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialAirSEnd",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialLwB",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialLwB_figatree",
+   "rows": [],
+   "frames": 56,
+   "article_clip": "WpnMetaknightMantleD03SpecialLwB",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article"
+    },
+    {
+     "frame": 1,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article shown again"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [
+    {
+     "frame": 1,
+     "visible": true
+    }
+   ],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "SpecialLwB",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 1,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": true
+     },
+     "subaction": "SpecialLwB"
+    },
+    {
+     "frame": 1,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 6
+     },
+     "subaction": "SpecialLwB"
+    },
+    {
+     "frame": 1,
+     "event": "Visibility",
+     "args": {
+      "Visibility": true
+     },
+     "subaction": "SpecialLwB"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialLwF",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialLwF_figatree",
+   "rows": [],
+   "frames": 56,
+   "article_clip": "WpnMetaknightMantleD03SpecialLwF",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article"
+    },
+    {
+     "frame": 1,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article shown again"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [
+    {
+     "frame": 1,
+     "visible": true
+    }
+   ],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "SpecialLwF",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 1,
+     "event": "Article Visibility",
+     "args": {
+      "Article": 0,
+      "Visibility": true
+     },
+     "subaction": "SpecialLwF"
+    },
+    {
+     "frame": 1,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 5
+     },
+     "subaction": "SpecialLwF"
+    },
+    {
+     "frame": 1,
+     "event": "Visibility",
+     "args": {
+      "Visibility": true
+     },
+     "subaction": "SpecialLwF"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialSDrill",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialSDrill_figatree",
+   "rows": [],
+   "frames": 45,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialSDrill",
+     "meaning": "wings"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "SpecialSEnd",
+   "symbol": "PlyKirby5K_Share_ACTION_SpecialSEnd_figatree",
+   "rows": [],
+   "frames": 30,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    },
+    {
+     "frame": 10,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "SpecialSEnd",
+     "meaning": "wings"
+    },
+    {
+     "frame": 10,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "SpecialSEnd",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "StepPose",
+   "symbol": "PlyKirby5K_Share_ACTION_StepPose_figatree",
+   "rows": [],
+   "frames": 9,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "StepPose",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Swing4Bat",
+   "symbol": "PlyKirby5K_Share_ACTION_Swing4Bat_figatree",
+   "rows": [],
+   "frames": 90,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Swing4Bat",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Swing4Hold",
+   "symbol": "PlyKirby5K_Share_ACTION_Swing4Hold_figatree",
+   "rows": [],
+   "frames": 60,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Swing4Hold",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Swing4Start",
+   "symbol": "PlyKirby5K_Share_ACTION_Swing4Start_figatree",
+   "rows": [],
+   "frames": 15,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "Swing4Start",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "TurnRunBrake",
+   "symbol": "PlyKirby5K_Share_ACTION_TurnRunBrake_figatree",
+   "rows": [],
+   "frames": 21,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 1,
+     "why": "wings"
+    },
+    {
+     "frame": 16,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 1
+     },
+     "subaction": "TurnRunBrake",
+     "meaning": "wings"
+    },
+    {
+     "frame": 16,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "TurnRunBrake",
+     "meaning": "closed cape"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "Wait3",
+   "symbol": "PlyKirby5K_Share_ACTION_Wait3_figatree",
+   "rows": [],
+   "frames": 120,
+   "article_clip": "WpnMetaknightMantleA00Wait3",
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 2,
+     "why": "cape article"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 2
+     },
+     "subaction": "Wait3",
+     "meaning": "cape article"
+    },
+    {
+     "frame": 0,
+     "event": "Generate Article",
+     "args": {
+      "Article ID": 0
+     },
+     "subaction": "Wait3"
+    },
+    {
+     "frame": 0,
+     "event": "Set Anchored Article SubAction",
+     "args": {
+      "Article ID": 0,
+      "Action": 10
+     },
+     "subaction": "Wait3"
+    },
+    {
+     "frame": 22,
+     "event": "Item Visibility",
+     "args": {
+      "Item Visibility": false
+     },
+     "subaction": "Wait3"
+    },
+    {
+     "frame": 81,
+     "event": "Item Visibility",
+     "args": {
+      "Item Visibility": true
+     },
+     "subaction": "Wait3"
+    }
+   ]
+  },
+  {
+   "brawl_clip": "WalkBrake",
+   "symbol": "PlyKirby5K_Share_ACTION_WalkBrake_figatree",
+   "rows": [],
+   "frames": 2,
+   "article_clip": null,
+   "melee_modelvis_suggested": [
+    {
+     "frame": 0,
+     "cmd": "ModelVis",
+     "index": 0,
+     "value": 0,
+     "why": "closed cape"
+    }
+   ],
+   "melee_modelvis_vanilla": [],
+   "article_hidden_frames": [],
+   "body_invisible_frames": [],
+   "brawl_events": [
+    {
+     "frame": 0,
+     "event": "Model Changer 2",
+     "args": {
+      "Switch Index": 2,
+      "Bone Group Index": 0
+     },
+     "subaction": "WalkBrake",
+     "meaning": "closed cape"
+    }
+   ]
+  }
+ ],
+ "demo": [
+  {
+   "index": 0,
+   "name": "Win1",
+   "brawl_clip": "Win1",
+   "frames": 121,
+   "melee_modelvis": [
+    {
+     "frame": 0,
+     "index": 0,
+     "value": 2
+    },
+    {
+     "frame": 0,
+     "index": 1,
+     "value": 0
+    },
+    {
+     "frame": 75,
+     "index": 0,
+     "value": 3
+    },
+    {
+     "frame": 75,
+     "index": 1,
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": 1,
+   "name": "Win1Wait",
+   "brawl_clip": "Win1Wait",
+   "frames": 6,
+   "melee_modelvis": [
+    {
+     "frame": 0,
+     "index": 0,
+     "value": 3
+    },
+    {
+     "frame": 0,
+     "index": 1,
+     "value": 1
+    }
+   ]
+  },
+  {
+   "index": 2,
+   "name": "Win2",
+   "brawl_clip": "Win2",
+   "frames": 121,
+   "melee_modelvis": [
+    {
+     "frame": 0,
+     "index": 0,
+     "value": 1
+    },
+    {
+     "frame": 0,
+     "index": 1,
+     "value": 0
+    },
+    {
+     "frame": 39,
+     "index": 0,
+     "value": 2
+    }
+   ]
+  },
+  {
+   "index": 3,
+   "name": "Win2Wait",
+   "brawl_clip": "Win2Wait",
+   "frames": 111,
+   "melee_modelvis": [
+    {
+     "frame": 0,
+     "index": 0,
+     "value": 0
+    },
+    {
+     "frame": 0,
+     "index": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "index": 5,
+   "name": "Win3",
+   "brawl_clip": "Win3",
+   "frames": 121,
+   "melee_modelvis": [
+    {
+     "frame": 0,
+     "index": 0,
+     "value": 0
+    },
+    {
+     "frame": 0,
+     "index": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "index": 6,
+   "name": "Win3Wait",
+   "brawl_clip": "Win3Wait",
+   "frames": 111,
+   "melee_modelvis": [
+    {
+     "frame": 0,
+     "index": 0,
+     "value": 0
+    },
+    {
+     "frame": 0,
+     "index": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "index": 7,
+   "name": "Selected",
+   "brawl_clip": "Wait1",
+   "frames": 271,
+   "melee_modelvis": [
+    {
+     "frame": 0,
+     "index": 0,
+     "value": 0
+    },
+    {
+     "frame": 0,
+     "index": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "index": 8,
+   "name": "SelectedWait",
+   "brawl_clip": "Wait1",
+   "frames": 271,
+   "melee_modelvis": [
+    {
+     "frame": 0,
+     "index": 0,
+     "value": 0
+    },
+    {
+     "frame": 0,
+     "index": 1,
+     "value": 0
+    }
+   ]
+  },
+  {
+   "index": 9,
+   "name": "Lose",
+   "brawl_clip": "Lose",
+   "frames": 121,
+   "melee_modelvis": [
+    {
+     "frame": 0,
+     "index": 0,
+     "value": 0
+    },
+    {
+     "frame": 0,
+     "index": 1,
+     "value": 0
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,2754 @@
+{
+ "moves": [
+  {
+   "move": "jab",
+   "row": 46,
+   "brawl": "0x4B Attack100Start (entry)",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "rapid_jab_start",
+   "row": 49,
+   "brawl": "0x4B Attack100Start",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "rapid_jab",
+   "row": 50,
+   "brawl": "0x4C Attack100",
+   "hitboxes_expected": 11,
+   "hitboxes_decoded": 11,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     2,
+     2,
+     [
+      2,
+      2
+     ]
+    ],
+    [
+     6,
+     6,
+     [
+      2,
+      1
+     ]
+    ],
+    [
+     10,
+     10,
+     [
+      1,
+      2,
+      2
+     ]
+    ],
+    [
+     15,
+     15,
+     [
+      2,
+      1
+     ]
+    ],
+    [
+     19,
+     19,
+     [
+      2,
+      1
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     2,
+     2
+    ],
+    [
+     6,
+     6
+    ],
+    [
+     10,
+     10
+    ],
+    [
+     15,
+     15
+    ],
+    [
+     19,
+     19
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "rapid_jab_end",
+   "row": 51,
+   "brawl": "0x4D AttackEnd",
+   "hitboxes_expected": 3,
+   "hitboxes_decoded": 3,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     1,
+     1,
+     [
+      2,
+      2,
+      2
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     1,
+     1
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "dash_attack",
+   "row": 52,
+   "brawl": "0x4E AttackDash",
+   "hitboxes_expected": 3,
+   "hitboxes_decoded": 3,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     5,
+     11,
+     [
+      8,
+      7,
+      6
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     5,
+     11
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "ftilt",
+   "row": 53,
+   "brawl": "0x50 AttackS3S",
+   "hitboxes_expected": 3,
+   "hitboxes_decoded": 3,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     3,
+     3,
+     [
+      4,
+      4,
+      4
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     3,
+     3
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "ftilt",
+   "row": 55,
+   "brawl": "0x50 AttackS3S",
+   "hitboxes_expected": 3,
+   "hitboxes_decoded": 3,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     3,
+     3,
+     [
+      4,
+      4,
+      4
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     3,
+     3
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "ftilt",
+   "row": 57,
+   "brawl": "0x50 AttackS3S",
+   "hitboxes_expected": 3,
+   "hitboxes_decoded": 3,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     3,
+     3,
+     [
+      4,
+      4,
+      4
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     3,
+     3
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "ftilt2",
+   "row": 47,
+   "brawl": "0x51 AttackS3S2",
+   "hitboxes_expected": 3,
+   "hitboxes_decoded": 3,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     2,
+     2,
+     [
+      3,
+      3,
+      3
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     2,
+     2
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "ftilt3",
+   "row": 48,
+   "brawl": "0x52 AttackS3S3",
+   "hitboxes_expected": 4,
+   "hitboxes_decoded": 4,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     2,
+     2,
+     [
+      5,
+      5,
+      5,
+      4
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     2,
+     2
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "utilt",
+   "row": 58,
+   "brawl": "0x54 AttackHi3",
+   "hitboxes_expected": 5,
+   "hitboxes_decoded": 5,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     7,
+     7,
+     [
+      7
+     ]
+    ],
+    [
+     8,
+     12,
+     [
+      6
+     ]
+    ],
+    [
+     8,
+     18,
+     [
+      7,
+      8
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     7,
+     7
+    ],
+    [
+     8,
+     12
+    ],
+    [
+     8,
+     18
+    ],
+    [
+     13,
+     18
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "dtilt",
+   "row": 59,
+   "brawl": "0x55 AttackLw3",
+   "hitboxes_expected": 4,
+   "hitboxes_decoded": 4,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     3,
+     4,
+     [
+      4,
+      5,
+      6,
+      7
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     3,
+     4
+    ]
+   ],
+   "decoded_iasa": 16,
+   "expected_iasa": 16,
+   "ok": true
+  },
+  {
+   "move": "fsmash",
+   "row": 60,
+   "brawl": "0x58 AttackS4S",
+   "hitboxes_expected": 4,
+   "hitboxes_decoded": 4,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     25,
+     26,
+     [
+      14,
+      14,
+      14,
+      14
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     25,
+     26
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "fsmash",
+   "row": 62,
+   "brawl": "0x58 AttackS4S",
+   "hitboxes_expected": 4,
+   "hitboxes_decoded": 4,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     25,
+     26,
+     [
+      14,
+      14,
+      14,
+      14
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     25,
+     26
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "fsmash",
+   "row": 64,
+   "brawl": "0x58 AttackS4S",
+   "hitboxes_expected": 4,
+   "hitboxes_decoded": 4,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     25,
+     26,
+     [
+      14,
+      14,
+      14,
+      14
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     25,
+     26
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "usmash",
+   "row": 66,
+   "brawl": "0x5D AttackHi4",
+   "hitboxes_expected": 12,
+   "hitboxes_decoded": 12,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     9,
+     9,
+     [
+      3,
+      3,
+      3,
+      3
+     ]
+    ],
+    [
+     13,
+     13,
+     [
+      2,
+      2,
+      2,
+      2
+     ]
+    ],
+    [
+     18,
+     18,
+     [
+      4,
+      4,
+      4,
+      4
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     9,
+     9
+    ],
+    [
+     13,
+     13
+    ],
+    [
+     18,
+     18
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "dsmash",
+   "row": 67,
+   "brawl": "0x60 AttackLw4",
+   "hitboxes_expected": 8,
+   "hitboxes_decoded": 8,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     5,
+     6,
+     [
+      11,
+      11,
+      11,
+      11
+     ]
+    ],
+    [
+     10,
+     11,
+     [
+      13,
+      13,
+      13,
+      13
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     5,
+     6
+    ],
+    [
+     10,
+     11
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "nair",
+   "row": 68,
+   "brawl": "0x62 AttackAirN",
+   "hitboxes_expected": 6,
+   "hitboxes_decoded": 6,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     3,
+     4,
+     [
+      12,
+      12,
+      12
+     ]
+    ],
+    [
+     5,
+     24,
+     [
+      7,
+      6,
+      5
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     3,
+     4
+    ],
+    [
+     5,
+     24
+    ]
+   ],
+   "decoded_iasa": 32,
+   "expected_iasa": 32,
+   "ok": true
+  },
+  {
+   "move": "fair",
+   "row": 69,
+   "brawl": "0x63 AttackAirF",
+   "hitboxes_expected": 12,
+   "hitboxes_decoded": 12,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     6,
+     6,
+     [
+      3,
+      3,
+      3,
+      3
+     ]
+    ],
+    [
+     10,
+     10,
+     [
+      3,
+      3,
+      3,
+      3
+     ]
+    ],
+    [
+     13,
+     13,
+     [
+      4,
+      4,
+      4,
+      4
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     6,
+     6
+    ],
+    [
+     10,
+     10
+    ],
+    [
+     13,
+     13
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "bair",
+   "row": 70,
+   "brawl": "0x64 AttackAirB",
+   "hitboxes_expected": 9,
+   "hitboxes_decoded": 9,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     7,
+     8,
+     [
+      3,
+      3,
+      3
+     ]
+    ],
+    [
+     13,
+     14,
+     [
+      3,
+      3,
+      3
+     ]
+    ],
+    [
+     20,
+     21,
+     [
+      4,
+      4,
+      4
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     7,
+     8
+    ],
+    [
+     13,
+     14
+    ],
+    [
+     20,
+     21
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "uair",
+   "row": 71,
+   "brawl": "0x65 AttackAirHi",
+   "hitboxes_expected": 4,
+   "hitboxes_decoded": 4,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     2,
+     3,
+     [
+      6,
+      6,
+      6,
+      6
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     2,
+     3
+    ]
+   ],
+   "decoded_iasa": 14,
+   "expected_iasa": 14,
+   "ok": true
+  },
+  {
+   "move": "dair",
+   "row": 72,
+   "brawl": "0x66 AttackAirLw",
+   "hitboxes_expected": 4,
+   "hitboxes_decoded": 4,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     4,
+     5,
+     [
+      7,
+      7,
+      9,
+      9
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     4,
+     5
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "nair_land",
+   "row": 73,
+   "brawl": "0x67 LandingAirN",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "fair_land",
+   "row": 74,
+   "brawl": "0x68 LandingAirF",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "bair_land",
+   "row": 75,
+   "brawl": "0x69 LandingAirB",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "uair_land",
+   "row": 76,
+   "brawl": "0x6A LandingAirHi",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "dair_land",
+   "row": 77,
+   "brawl": "0x6B LandingAirLw",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "pummel",
+   "row": 245,
+   "brawl": "0x70 CatchAttack",
+   "hitboxes_expected": 1,
+   "hitboxes_decoded": 1,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     4,
+     4,
+     [
+      3
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     4,
+     4
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "ledge_attack_fast",
+   "row": 222,
+   "brawl": "0x0D7 CliffAttackQuick",
+   "hitboxes_expected": 4,
+   "hitboxes_decoded": 4,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     25,
+     28,
+     [
+      8,
+      8,
+      8,
+      8
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     25,
+     28
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "ledge_attack_slow",
+   "row": 221,
+   "brawl": "0x0DC CliffAttackSlow",
+   "hitboxes_expected": 4,
+   "hitboxes_decoded": 4,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     39,
+     42,
+     [
+      10,
+      10,
+      10,
+      10
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     39,
+     42
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "getup_attack_up",
+   "row": 187,
+   "brawl": "0x0B0 DownAttackU",
+   "hitboxes_expected": 8,
+   "hitboxes_decoded": 8,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     16,
+     17,
+     [
+      6,
+      6,
+      6,
+      6
+     ]
+    ],
+    [
+     26,
+     27,
+     [
+      6,
+      6,
+      6,
+      6
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     16,
+     17
+    ],
+    [
+     26,
+     27
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "getup_attack_down",
+   "row": 195,
+   "brawl": "0x0B9 DownAttackD",
+   "hitboxes_expected": 8,
+   "hitboxes_decoded": 8,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     16,
+     17,
+     [
+      6,
+      6,
+      6,
+      6
+     ]
+    ],
+    [
+     26,
+     27,
+     [
+      6,
+      6,
+      6,
+      6
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     16,
+     17
+    ],
+    [
+     26,
+     27
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "jumpaerial",
+   "row": 295,
+   "brawl": "0x1B JumpAerialF",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "jumpaerial",
+   "row": 300,
+   "brawl": "0x1B JumpAerialF",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "jumpaerial",
+   "row": 296,
+   "brawl": "0x1C JumpAerialF2",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "jumpaerial",
+   "row": 301,
+   "brawl": "0x1C JumpAerialF2",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "jumpaerial",
+   "row": 297,
+   "brawl": "0x1D JumpAerialF3",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "jumpaerial",
+   "row": 302,
+   "brawl": "0x1D JumpAerialF3",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "jumpaerial",
+   "row": 298,
+   "brawl": "0x1E JumpAerialF4",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "jumpaerial",
+   "row": 303,
+   "brawl": "0x1E JumpAerialF4",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "throwf",
+   "row": 247,
+   "brawl": "0x73 ThrowF",
+   "hitboxes_expected": 2,
+   "hitboxes_decoded": 2,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     4,
+     4,
+     [
+      6,
+      6
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     4,
+     4
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "throwb",
+   "row": 248,
+   "brawl": "0x72 ThrowB",
+   "hitboxes_expected": 2,
+   "hitboxes_decoded": 2,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     16,
+     16,
+     [
+      7,
+      7
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     16,
+     16
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "throwhi",
+   "row": 249,
+   "brawl": "0x74 ThrowHi",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "throwlw",
+   "row": 250,
+   "brawl": "0x75 ThrowLw",
+   "hitboxes_expected": 10,
+   "hitboxes_decoded": 10,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     11,
+     13,
+     [
+      1
+     ]
+    ],
+    [
+     17,
+     19,
+     [
+      1
+     ]
+    ],
+    [
+     23,
+     25,
+     [
+      1
+     ]
+    ],
+    [
+     29,
+     31,
+     [
+      1
+     ]
+    ],
+    [
+     35,
+     37,
+     [
+      1
+     ]
+    ],
+    [
+     41,
+     43,
+     [
+      1
+     ]
+    ],
+    [
+     47,
+     49,
+     [
+      1
+     ]
+    ],
+    [
+     53,
+     55,
+     [
+      1
+     ]
+    ],
+    [
+     59,
+     61,
+     [
+      1
+     ]
+    ],
+    [
+     73,
+     73,
+     [
+      1
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     11,
+     13
+    ],
+    [
+     17,
+     19
+    ],
+    [
+     23,
+     25
+    ],
+    [
+     29,
+     31
+    ],
+    [
+     35,
+     37
+    ],
+    [
+     41,
+     43
+    ],
+    [
+     47,
+     49
+    ],
+    [
+     53,
+     55
+    ],
+    [
+     59,
+     61
+    ],
+    [
+     73,
+     73
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "tornado_start",
+   "row": 305,
+   "brawl": "0x1CE SpecialNStart",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "tornado_start",
+   "row": 320,
+   "brawl": "0x1CF SpecialAirNStart",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "tornado",
+   "row": 306,
+   "brawl": "0x1D0 SpecialNSpin",
+   "hitboxes_expected": 4,
+   "hitboxes_decoded": 4,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     1,
+     10,
+     [
+      1,
+      1,
+      1,
+      1
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     1,
+     10
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "tornado",
+   "row": 321,
+   "brawl": "0x1D0 SpecialNSpin",
+   "hitboxes_expected": 4,
+   "hitboxes_decoded": 4,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     1,
+     10,
+     [
+      1,
+      1,
+      1,
+      1
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     1,
+     10
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "tornado_end",
+   "row": 307,
+   "brawl": "0x1D1 SpecialNEnd",
+   "hitboxes_expected": 1,
+   "hitboxes_decoded": 1,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     1,
+     3,
+     [
+      3
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     1,
+     3
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "drill_rush",
+   "row": 322,
+   "brawl": "0x1D5 SpecialSDrill + 0x1D6 SpecialSEnd",
+   "hitboxes_expected": 23,
+   "hitboxes_decoded": 23,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     5,
+     10,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     11,
+     16,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     17,
+     22,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     23,
+     28,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     29,
+     34,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     35,
+     40,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     41,
+     41,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     42,
+     43,
+     [
+      3,
+      2
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     5,
+     10
+    ],
+    [
+     11,
+     16
+    ],
+    [
+     17,
+     22
+    ],
+    [
+     23,
+     28
+    ],
+    [
+     29,
+     34
+    ],
+    [
+     35,
+     40
+    ],
+    [
+     41,
+     41
+    ],
+    [
+     42,
+     43
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "drill_rush_air",
+   "row": 323,
+   "brawl": "0x1D5 SpecialSDrill + 0x1D7 SpecialAirSEnd",
+   "hitboxes_expected": 20,
+   "hitboxes_decoded": 20,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     5,
+     10,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     11,
+     16,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     17,
+     22,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     23,
+     28,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     29,
+     34,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     35,
+     38,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     39,
+     43,
+     [
+      3,
+      3
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     5,
+     10
+    ],
+    [
+     11,
+     16
+    ],
+    [
+     17,
+     22
+    ],
+    [
+     23,
+     28
+    ],
+    [
+     29,
+     34
+    ],
+    [
+     35,
+     38
+    ],
+    [
+     39,
+     43
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "shuttle_loop_rise",
+   "row": 324,
+   "brawl": "0x1E2 SpecialHi",
+   "hitboxes_expected": 5,
+   "hitboxes_decoded": 5,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     8,
+     9,
+     [
+      9,
+      9
+     ]
+    ],
+    [
+     10,
+     12,
+     [
+      6,
+      6
+     ]
+    ],
+    [
+     22,
+     32,
+     [
+      6
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     8,
+     9
+    ],
+    [
+     10,
+     12
+    ],
+    [
+     22,
+     32
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "shuttle_loop_rise",
+   "row": 328,
+   "brawl": "0x1E2 SpecialHi",
+   "hitboxes_expected": 5,
+   "hitboxes_decoded": 5,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     8,
+     9,
+     [
+      9,
+      9
+     ]
+    ],
+    [
+     10,
+     12,
+     [
+      6,
+      6
+     ]
+    ],
+    [
+     22,
+     32,
+     [
+      6
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     8,
+     9
+    ],
+    [
+     10,
+     12
+    ],
+    [
+     22,
+     32
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "shuttle_loop_loop",
+   "row": 325,
+   "brawl": "0x1E4 SpecialHiLoop",
+   "hitboxes_expected": 2,
+   "hitboxes_decoded": 2,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     1,
+     7,
+     [
+      9
+     ]
+    ],
+    [
+     8,
+     31,
+     [
+      5
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     1,
+     7
+    ],
+    [
+     8,
+     31
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "shuttle_loop_loop",
+   "row": 329,
+   "brawl": "0x1E4 SpecialHiLoop",
+   "hitboxes_expected": 2,
+   "hitboxes_decoded": 2,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     1,
+     7,
+     [
+      9
+     ]
+    ],
+    [
+     8,
+     31,
+     [
+      5
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     1,
+     7
+    ],
+    [
+     8,
+     31
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "shuttle_loop_fall",
+   "row": 326,
+   "brawl": "0x1E5 SpecialHiEnd",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "shuttle_loop_fall",
+   "row": 330,
+   "brawl": "0x1E5 SpecialHiEnd",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "shuttle_loop_land",
+   "row": 327,
+   "brawl": "0x1E5 SpecialHiEnd",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "shuttle_loop_land",
+   "row": 331,
+   "brawl": "0x1E5 SpecialHiEnd",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "cape_start",
+   "row": 332,
+   "brawl": "0x1D8 SpecialLwStart",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "cape_start",
+   "row": 335,
+   "brawl": "0x1D9 SpecialAirLwStart",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "cape_vanish",
+   "row": 333,
+   "brawl": "(vanished: between SpecialLwStart and SpecialLw)",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "cape_vanish",
+   "row": 336,
+   "brawl": "(vanished: between SpecialLwStart and SpecialLw)",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "cape_attack",
+   "row": 334,
+   "brawl": "0x1DA SpecialLw (neutral)",
+   "hitboxes_expected": 2,
+   "hitboxes_decoded": 2,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     6,
+     7,
+     [
+      14,
+      14
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     6,
+     7
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "cape_attack",
+   "row": 337,
+   "brawl": "0x1DB SpecialAirLw (neutral)",
+   "hitboxes_expected": 2,
+   "hitboxes_decoded": 2,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     6,
+     7,
+     [
+      14,
+      14
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     6,
+     7
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "glide",
+   "row": 338,
+   "brawl": "0x39 GlideStart",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "glide",
+   "row": 339,
+   "brawl": "0x3A GlideDirection",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "glide",
+   "row": 341,
+   "brawl": "0x3E GlideLanding",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "glide",
+   "row": 342,
+   "brawl": "0x3D GlideEnd",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "glide_attack",
+   "row": 340,
+   "brawl": "0x3C GlideAttack",
+   "hitboxes_expected": 3,
+   "hitboxes_decoded": 3,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     5,
+     7,
+     [
+      12,
+      12,
+      12
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     5,
+     7
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "drill_start",
+   "row": 343,
+   "brawl": "0x1D3 SpecialSStart",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "drill_start",
+   "row": 344,
+   "brawl": "0x1D4 SpecialAirSStart",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "drill_rush",
+   "row": 345,
+   "brawl": "0x1D5 SpecialSDrill",
+   "hitboxes_expected": 21,
+   "hitboxes_decoded": 21,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     5,
+     10,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     11,
+     16,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     17,
+     22,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     23,
+     28,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     29,
+     34,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     35,
+     40,
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    [
+     41,
+     45,
+     [
+      1,
+      1,
+      1
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     5,
+     10
+    ],
+    [
+     11,
+     16
+    ],
+    [
+     17,
+     22
+    ],
+    [
+     23,
+     28
+    ],
+    [
+     29,
+     34
+    ],
+    [
+     35,
+     40
+    ],
+    [
+     41,
+     45
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "drill_rush_air",
+   "row": 346,
+   "brawl": "0x1D7 SpecialAirSEnd",
+   "hitboxes_expected": 2,
+   "hitboxes_decoded": 2,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     1,
+     5,
+     [
+      3,
+      3
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     1,
+     5
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "drill_rush",
+   "row": 347,
+   "brawl": "0x1D6 SpecialSEnd",
+   "hitboxes_expected": 2,
+   "hitboxes_decoded": 2,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     1,
+     2,
+     [
+      3,
+      2
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     1,
+     2
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "tornado_end",
+   "row": 348,
+   "brawl": "0x1D2 SpecialAirNEnd",
+   "hitboxes_expected": 1,
+   "hitboxes_decoded": 1,
+   "mismatches": [],
+   "decoded_windows": [
+    [
+     1,
+     2,
+     [
+      3
+     ]
+    ]
+   ],
+   "expected_windows": [
+    [
+     1,
+     2
+    ]
+   ],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "taunt",
+   "row": 349,
+   "brawl": "0x1BC AppealHi",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "taunt",
+   "row": 350,
+   "brawl": "0x1BE AppealS",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "wait3",
+   "row": 351,
+   "brawl": "0x2 Wait3",
+   "hitboxes_expected": 0,
+   "hitboxes_decoded": 0,
+   "mismatches": [],
+   "decoded_windows": [],
+   "expected_windows": [],
+   "decoded_iasa": null,
+   "expected_iasa": null,
+   "ok": true
+  },
+  {
+   "move": "throwf",
+   "row": 247,
+   "throws": [
+    {
+     "type": "throw",
+     "type_raw": 0,
+     "damage": 3,
+     "angle": 65,
+     "knockback_growth": 140,
+     "weight_dependent_set_knockback": 0,
+     "base_knockback": 50,
+     "element_raw": 0,
+     "hit_sfx": {
+      "level": 2,
+      "kind": 2
+     },
+     "layout": "decomp set_throw_hitbox_0..2"
+    },
+    {
+     "type": "release",
+     "type_raw": 1,
+     "damage": 3,
+     "angle": 361,
+     "knockback_growth": 100,
+     "weight_dependent_set_knockback": 0,
+     "base_knockback": 60,
+     "element_raw": 0,
+     "hit_sfx": {
+      "level": 0,
+      "kind": 2
+     },
+     "layout": "decomp set_throw_hitbox_0..2"
+    }
+   ],
+   "mismatches": [],
+   "ok": true
+  },
+  {
+   "move": "throwb",
+   "row": 248,
+   "throws": [
+    {
+     "type": "throw",
+     "type_raw": 0,
+     "damage": 3,
+     "angle": 45,
+     "knockback_growth": 140,
+     "weight_dependent_set_knockback": 0,
+     "base_knockback": 60,
+     "element_raw": 0,
+     "hit_sfx": {
+      "level": 2,
+      "kind": 2
+     },
+     "layout": "decomp set_throw_hitbox_0..2"
+    },
+    {
+     "type": "release",
+     "type_raw": 1,
+     "damage": 3,
+     "angle": 361,
+     "knockback_growth": 100,
+     "weight_dependent_set_knockback": 0,
+     "base_knockback": 60,
+     "element_raw": 0,
+     "hit_sfx": {
+      "level": 0,
+      "kind": 2
+     },
+     "layout": "decomp set_throw_hitbox_0..2"
+    }
+   ],
+   "mismatches": [],
+   "ok": true
+  },
+  {
+   "move": "throwhi",
+   "row": 249,
+   "throws": [
+    {
+     "type": "throw",
+     "type_raw": 0,
+     "damage": 12,
+     "angle": 77,
+     "knockback_growth": 60,
+     "weight_dependent_set_knockback": 0,
+     "base_knockback": 70,
+     "element_raw": 0,
+     "hit_sfx": {
+      "level": 2,
+      "kind": 2
+     },
+     "layout": "decomp set_throw_hitbox_0..2"
+    },
+    {
+     "type": "release",
+     "type_raw": 1,
+     "damage": 3,
+     "angle": 361,
+     "knockback_growth": 100,
+     "weight_dependent_set_knockback": 0,
+     "base_knockback": 60,
+     "element_raw": 0,
+     "hit_sfx": {
+      "level": 0,
+      "kind": 2
+     },
+     "layout": "decomp set_throw_hitbox_0..2"
+    }
+   ],
+   "mismatches": [],
+   "ok": true
+  },
+  {
+   "move": "throwlw",
+   "row": 250,
+   "throws": [
+    {
+     "type": "throw",
+     "type_raw": 0,
+     "damage": 1,
+     "angle": 50,
+     "knockback_growth": 110,
+     "weight_dependent_set_knockback": 0,
+     "base_knockback": 60,
+     "element_raw": 0,
+     "hit_sfx": {
+      "level": 2,
+      "kind": 2
+     },
+     "layout": "decomp set_throw_hitbox_0..2"
+    },
+    {
+     "type": "release",
+     "type_raw": 1,
+     "damage": 3,
+     "angle": 361,
+     "knockback_growth": 100,
+     "weight_dependent_set_knockback": 100,
+     "base_knockback": 0,
+     "element_raw": 0,
+     "hit_sfx": {
+      "level": 0,
+      "kind": 2
+     },
+     "layout": "decomp set_throw_hitbox_0..2"
+    }
+   ],
+   "mismatches": [],
+   "ok": true
+  }
+ ],
+ "unchanged_rows": {
+  "identical": 388,
+  "different": 0,
+  "different_rows": [],
+  "note": "throw rows ThrowF/B/Hi are patched in place and listed under moves; they appear here as different"
+ },
+ "attributes": [
+  {
+   "name": "walk_accel_mul",
+   "vanilla": 0.16,
+   "written": 0.176,
+   "decoded": 0.176,
+   "ok": true
+  },
+  {
+   "name": "walk_accel_base",
+   "vanilla": 0.1,
+   "written": 0.1,
+   "decoded": 0.1,
+   "ok": true
+  },
+  {
+   "name": "walk_max_vel",
+   "vanilla": 0.85,
+   "written": 1.228,
+   "decoded": 1.228,
+   "ok": true
+  },
+  {
+   "name": "ground_friction",
+   "vanilla": 0.08,
+   "written": 0.06963,
+   "decoded": 0.06963,
+   "ok": true
+  },
+  {
+   "name": "dash_initial_velocity",
+   "vanilla": 1.4,
+   "written": 1.752,
+   "decoded": 1.752,
+   "ok": true
+  },
+  {
+   "name": "dash_accel_mul",
+   "vanilla": 0.08,
+   "written": 0.06947,
+   "decoded": 0.06947,
+   "ok": true
+  },
+  {
+   "name": "dash_accel_base",
+   "vanilla": 0.02,
+   "written": 0.02418,
+   "decoded": 0.02418,
+   "ok": true
+  },
+  {
+   "name": "dash_max_velocity",
+   "vanilla": 1.4,
+   "written": 1.804,
+   "decoded": 1.804,
+   "ok": true
+  },
+  {
+   "name": "jump_startup_time",
+   "vanilla": 3.0,
+   "written": 4,
+   "decoded": 4.0,
+   "ok": true
+  },
+  {
+   "name": "jump_h_initial_velocity",
+   "vanilla": 0.9,
+   "written": 0.8832,
+   "decoded": 0.8832,
+   "ok": true
+  },
+  {
+   "name": "jump_v_initial_velocity",
+   "vanilla": 2.0,
+   "written": 2.563,
+   "decoded": 2.563,
+   "ok": true
+  },
+  {
+   "name": "ground_to_air_jump_momentum_multiplier",
+   "vanilla": 0.8,
+   "written": 0.8027,
+   "decoded": 0.8027,
+   "ok": true
+  },
+  {
+   "name": "jump_h_max_velocity",
+   "vanilla": 1.4,
+   "written": 1.475,
+   "decoded": 1.475,
+   "ok": true
+  },
+  {
+   "name": "hop_v_initial_velocity",
+   "vanilla": 1.5,
+   "written": 1.62,
+   "decoded": 1.62,
+   "ok": true
+  },
+  {
+   "name": "air_jump_v_multiplier",
+   "vanilla": 0.0,
+   "written": 0.0,
+   "decoded": 0.0,
+   "ok": true
+  },
+  {
+   "name": "air_jump_h_multiplier",
+   "vanilla": 0.0,
+   "written": 0.0,
+   "decoded": 0.0,
+   "ok": true
+  },
+  {
+   "name": "max_jumps",
+   "vanilla": 6,
+   "written": 6,
+   "decoded": 6,
+   "ok": true
+  },
+  {
+   "name": "gravity",
+   "vanilla": 0.08,
+   "written": 0.1207,
+   "decoded": 0.1207,
+   "ok": true
+  },
+  {
+   "name": "terminal_velocity",
+   "vanilla": 1.6,
+   "written": 1.9,
+   "decoded": 1.9,
+   "ok": true
+  },
+  {
+   "name": "air_drift_stick_mul",
+   "vanilla": 0.04,
+   "written": 0.03591,
+   "decoded": 0.03591,
+   "ok": true
+  },
+  {
+   "name": "aerial_drift_base",
+   "vanilla": 0.02,
+   "written": 0.0175,
+   "decoded": 0.0175,
+   "ok": true
+  },
+  {
+   "name": "air_drift_max",
+   "vanilla": 0.78,
+   "written": 0.73,
+   "decoded": 0.73,
+   "ok": true
+  },
+  {
+   "name": "aerial_friction",
+   "vanilla": 0.02,
+   "written": 0.01814,
+   "decoded": 0.01814,
+   "ok": true
+  },
+  {
+   "name": "fast_fall_velocity",
+   "vanilla": 2.0,
+   "written": 2.432,
+   "decoded": 2.432,
+   "ok": true
+  },
+  {
+   "name": "weight",
+   "vanilla": 70.0,
+   "written": 74.98,
+   "decoded": 74.98,
+   "ok": true
+  },
+  {
+   "name": "model_scaling",
+   "vanilla": 0.92,
+   "written": 0.95,
+   "decoded": 0.95,
+   "ok": true
+  },
+  {
+   "name": "rapid_jab_window",
+   "vanilla": 4,
+   "written": 0,
+   "decoded": 0,
+   "ok": true
+  },
+  {
+   "name": "normal_landing_lag",
+   "vanilla": 4.0,
+   "written": 3,
+   "decoded": 3.0,
+   "ok": true
+  },
+  {
+   "name": "landingairn_lag",
+   "vanilla": 15.0,
+   "written": 15,
+   "decoded": 15.0,
+   "ok": true
+  },
+  {
+   "name": "landingairf_lag",
+   "vanilla": 20.0,
+   "written": 15,
+   "decoded": 15.0,
+   "ok": true
+  },
+  {
+   "name": "landingairb_lag",
+   "vanilla": 15.0,
+   "written": 12,
+   "decoded": 12.0,
+   "ok": true
+  },
+  {
+   "name": "landingairhi_lag",
+   "vanilla": 15.0,
+   "written": 12,
+   "decoded": 12.0,
+   "ok": true
+  },
+  {
+   "name": "landingairlw_lag",
+   "vanilla": 20.0,
+   "written": 15,
+   "decoded": 15.0,
+   "ok": true
+  }
+ ],
+ "tuning": {
+  "preset": "tuning.json",
+  "checked": 2090,
+  "mismatches": [],
+  "kept_vanilla": []
+ },
+ "special_attributes_changed": [
+  [
+   "0x014",
+   2.0,
+   2.3494
+  ],
+  [
+   "0x018",
+   2.0,
+   2.2426
+  ],
+  [
+   "0x01C",
+   1.73,
+   2.1358
+  ],
+  [
+   "0x020",
+   1.56,
+   2.0077
+  ],
+  [
+   "0x024",
+   1.33,
+   1.8689
+  ],
+  [
+   "0x0EC",
+   150,
+   8
+  ],
+  [
+   "0x0F0",
+   18,
+   8
+  ],
+  [
+   "0x104",
+   4.5,
+   0.4
+  ],
+  [
+   "0x114",
+   0.0,
+   20.0
+  ]
+ ],
+ "fails": 0
+}

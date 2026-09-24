@@ -1,0 +1,630 @@
+{
+ "mapping": {
+  "Nr": "FitMetaknight00",
+  "Ye": "FitMetaknight05",
+  "Bu": "FitMetaknight03",
+  "Re": "FitMetaknight01",
+  "Gr": "FitMetaknight02",
+  "Wh": "FitMetaknight04"
+ },
+ "costumes": {
+  "Nr": {
+   "brawl": "FitMetaknight00.pac",
+   "file": "PlBmNr.dat",
+   "check": {
+    "bytes": 681492,
+    "publics": [
+     "PlyMetaknight5K_Share_joint",
+     "PlyMetaknight5K_Share_matanim_joint"
+    ],
+    "joints": 105,
+    "dobjs": 14,
+    "pobjs": 181,
+    "pobj_types": {
+     "2": 181
+    },
+    "max_env_per_pobj": 10,
+    "images": 8,
+    "formats": {
+     "CMPR": 4,
+     "RGB565": 2,
+     "CI8": 1,
+     "RGBA8": 1
+    }
+   },
+   "eyecheck": [
+    "both eyes: 275 + 268 opaque samples, centroids (-1.302,5.904,4.426) / (1.281,5.898,4.434), mirror err 0.0237, apart 2.583",
+    "EYES OK"
+   ],
+   "verify": "joints 105 ibm_vs_fk_max_err 3.81E-006 dobjs 14 verts 11856 worst_bbox_err 0.0000",
+   "verify_ok": true
+  },
+  "Ye": {
+   "brawl": "FitMetaknight05.pac",
+   "file": "PlBmYe.dat",
+   "check": {
+    "bytes": 681492,
+    "publics": [
+     "PlyMetaknight5K_Share_joint",
+     "PlyMetaknight5K_Share_matanim_joint"
+    ],
+    "joints": 105,
+    "dobjs": 14,
+    "pobjs": 181,
+    "pobj_types": {
+     "2": 181
+    },
+    "max_env_per_pobj": 10,
+    "images": 8,
+    "formats": {
+     "CMPR": 4,
+     "RGB565": 2,
+     "CI8": 1,
+     "RGBA8": 1
+    }
+   },
+   "eyecheck": [
+    "both eyes: 275 + 268 opaque samples, centroids (-1.302,5.904,4.426) / (1.281,5.898,4.434), mirror err 0.0237, apart 2.583",
+    "EYES OK"
+   ],
+   "verify": "joints 105 ibm_vs_fk_max_err 3.81E-006 dobjs 14 verts 11856 worst_bbox_err 0.0000",
+   "verify_ok": true
+  },
+  "Bu": {
+   "brawl": "FitMetaknight03.pac",
+   "file": "PlBmBu.dat",
+   "check": {
+    "bytes": 681492,
+    "publics": [
+     "PlyMetaknight5K_Share_joint",
+     "PlyMetaknight5K_Share_matanim_joint"
+    ],
+    "joints": 105,
+    "dobjs": 14,
+    "pobjs": 181,
+    "pobj_types": {
+     "2": 181
+    },
+    "max_env_per_pobj": 10,
+    "images": 8,
+    "formats": {
+     "CMPR": 4,
+     "RGB565": 2,
+     "CI8": 1,
+     "RGBA8": 1
+    }
+   },
+   "eyecheck": [
+    "both eyes: 275 + 268 opaque samples, centroids (-1.302,5.904,4.426) / (1.281,5.898,4.434), mirror err 0.0237, apart 2.583",
+    "EYES OK"
+   ],
+   "verify": "joints 105 ibm_vs_fk_max_err 3.81E-006 dobjs 14 verts 11856 worst_bbox_err 0.0000",
+   "verify_ok": true
+  },
+  "Re": {
+   "brawl": "FitMetaknight01.pac",
+   "file": "PlBmRe.dat",
+   "check": {
+    "bytes": 681492,
+    "publics": [
+     "PlyMetaknight5K_Share_joint",
+     "PlyMetaknight5K_Share_matanim_joint"
+    ],
+    "joints": 105,
+    "dobjs": 14,
+    "pobjs": 181,
+    "pobj_types": {
+     "2": 181
+    },
+    "max_env_per_pobj": 10,
+    "images": 8,
+    "formats": {
+     "CMPR": 4,
+     "RGB565": 2,
+     "CI8": 1,
+     "RGBA8": 1
+    }
+   },
+   "eyecheck": [
+    "both eyes: 275 + 268 opaque samples, centroids (-1.302,5.904,4.426) / (1.281,5.898,4.434), mirror err 0.0237, apart 2.583",
+    "EYES OK"
+   ],
+   "verify": "joints 105 ibm_vs_fk_max_err 3.81E-006 dobjs 14 verts 11856 worst_bbox_err 0.0000",
+   "verify_ok": true
+  },
+  "Gr": {
+   "brawl": "FitMetaknight02.pac",
+   "file": "PlBmGr.dat",
+   "check": {
+    "bytes": 681492,
+    "publics": [
+     "PlyMetaknight5K_Share_joint",
+     "PlyMetaknight5K_Share_matanim_joint"
+    ],
+    "joints": 105,
+    "dobjs": 14,
+    "pobjs": 181,
+    "pobj_types": {
+     "2": 181
+    },
+    "max_env_per_pobj": 10,
+    "images": 8,
+    "formats": {
+     "CMPR": 4,
+     "RGB565": 2,
+     "CI8": 1,
+     "RGBA8": 1
+    }
+   },
+   "eyecheck": [
+    "both eyes: 275 + 268 opaque samples, centroids (-1.302,5.904,4.426) / (1.281,5.898,4.434), mirror err 0.0237, apart 2.583",
+    "EYES OK"
+   ],
+   "verify": "joints 105 ibm_vs_fk_max_err 3.81E-006 dobjs 14 verts 11856 worst_bbox_err 0.0000",
+   "verify_ok": true
+  },
+  "Wh": {
+   "brawl": "FitMetaknight04.pac",
+   "file": "PlBmWh.dat",
+   "check": {
+    "bytes": 681492,
+    "publics": [
+     "PlyMetaknight5K_Share_joint",
+     "PlyMetaknight5K_Share_matanim_joint"
+    ],
+    "joints": 105,
+    "dobjs": 14,
+    "pobjs": 181,
+    "pobj_types": {
+     "2": 181
+    },
+    "max_env_per_pobj": 10,
+    "images": 8,
+    "formats": {
+     "CMPR": 4,
+     "RGB565": 2,
+     "CI8": 1,
+     "RGBA8": 1
+    }
+   },
+   "eyecheck": [
+    "both eyes: 275 + 268 opaque samples, centroids (-1.302,5.904,4.426) / (1.281,5.898,4.434), mirror err 0.0237, apart 2.583",
+    "EYES OK"
+   ],
+   "verify": "joints 105 ibm_vs_fk_max_err 3.81E-006 dobjs 14 verts 11856 worst_bbox_err 0.0000",
+   "verify_ok": true
+  }
+ },
+ "build": {
+  "dobjs": [
+   {
+    "dobj": 0,
+    "obj": "polygon0",
+    "group": "body",
+    "material": "armer_line",
+    "texture": "metaknight_body",
+    "fmt": "CMP",
+    "tlut": false,
+    "render": "DIFFUSE, TEX0",
+    "first_tobj": 0,
+    "layers": [
+     {
+      "layer": 0,
+      "texture": "metaknight_body",
+      "coord": "TexCoord0",
+      "vtx": "TEX0",
+      "op": "REPLACE",
+      "fmt": "CMP"
+     }
+    ],
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "verts": 4512,
+    "tris": 1504,
+    "single_bound_verts": 2170,
+    "pobjs": 24
+   },
+   {
+    "dobj": 1,
+    "obj": "polygon1",
+    "group": "body",
+    "material": "armer",
+    "texture": "metaknight_body",
+    "fmt": "CMP",
+    "tlut": false,
+    "render": "DIFFUSE, TEX0, TEX1",
+    "first_tobj": 1,
+    "layers": [
+     {
+      "layer": 0,
+      "texture": "metaknight_body",
+      "coord": "TexCoord0",
+      "vtx": "TEX0",
+      "op": "REPLACE",
+      "fmt": "CMP"
+     },
+     {
+      "layer": 1,
+      "texture": "siro",
+      "coord": "REFLECTION (normals)",
+      "vtx": "-",
+      "op": "ADD x0.741,0.78,0.918",
+      "fmt": "RGB565"
+     }
+    ],
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "verts": 756,
+    "tris": 252,
+    "single_bound_verts": 756,
+    "pobjs": 1
+   },
+   {
+    "dobj": 2,
+    "obj": "polygon4",
+    "group": "body",
+    "material": "armer_line",
+    "texture": "metaknight_body",
+    "fmt": "CMP",
+    "tlut": false,
+    "render": "DIFFUSE, TEX0",
+    "first_tobj": 3,
+    "layers": [
+     {
+      "layer": 0,
+      "texture": "metaknight_body",
+      "coord": "TexCoord0",
+      "vtx": "TEX0",
+      "op": "REPLACE",
+      "fmt": "CMP"
+     }
+    ],
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "verts": 1848,
+    "tris": 616,
+    "single_bound_verts": 1848,
+    "pobjs": 1
+   },
+   {
+    "dobj": 3,
+    "obj": "polygon5",
+    "group": "body",
+    "material": "medama",
+    "texture": "metaknight_body",
+    "fmt": "CMP",
+    "tlut": false,
+    "render": "CONSTANT, TEX0, TEX1, TEX2",
+    "first_tobj": 4,
+    "layers": [
+     {
+      "layer": 0,
+      "texture": "metaknight_body",
+      "coord": "TexCoord2",
+      "vtx": "TEX0",
+      "op": "REPLACE",
+      "fmt": "CMP"
+     },
+     {
+      "layer": 1,
+      "texture": "metaknight_eye",
+      "coord": "TexCoord1",
+      "vtx": "TEX1",
+      "op": "ALPHA_MASK",
+      "fmt": "CI8"
+     },
+     {
+      "layer": 2,
+      "texture": "metaknight_eye",
+      "coord": "TexCoord0",
+      "vtx": "TEX2",
+      "op": "ALPHA_MASK",
+      "fmt": "CI8"
+     }
+    ],
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "verts": 78,
+    "tris": 26,
+    "single_bound_verts": 78,
+    "pobjs": 1
+   },
+   {
+    "dobj": 4,
+    "obj": "polygon7",
+    "group": "body",
+    "material": "shoe",
+    "texture": "metaknight_foot",
+    "fmt": "CMP",
+    "tlut": false,
+    "render": "DIFFUSE, TEX0",
+    "first_tobj": 7,
+    "layers": [
+     {
+      "layer": 0,
+      "texture": "metaknight_foot",
+      "coord": "TexCoord0",
+      "vtx": "TEX0",
+      "op": "REPLACE",
+      "fmt": "CMP"
+     }
+    ],
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "verts": 1992,
+    "tris": 664,
+    "single_bound_verts": 1356,
+    "pobjs": 4
+   },
+   {
+    "dobj": 5,
+    "obj": "polygon10",
+    "group": "body",
+    "material": "mask",
+    "texture": "metaknight_body",
+    "fmt": "CMP",
+    "tlut": false,
+    "render": "DIFFUSE, SPECULAR, TEX0",
+    "first_tobj": 8,
+    "layers": [
+     {
+      "layer": 0,
+      "texture": "metaknight_body",
+      "coord": "TexCoord0",
+      "vtx": "TEX0",
+      "op": "REPLACE",
+      "fmt": "CMP"
+     }
+    ],
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "verts": 1254,
+    "tris": 418,
+    "single_bound_verts": 1254,
+    "pobjs": 1
+   },
+   {
+    "dobj": 6,
+    "obj": "polygon16",
+    "group": "body",
+    "material": "nuki",
+    "texture": "nuki",
+    "fmt": "RGBA8",
+    "tlut": false,
+    "render": "DIFFUSE, TEX0, ALPHA_MAT, XLU",
+    "first_tobj": 9,
+    "layers": [
+     {
+      "layer": 0,
+      "texture": "nuki",
+      "coord": "TexCoord0",
+      "vtx": "TEX0",
+      "op": "REPLACE",
+      "fmt": "RGBA8"
+     }
+    ],
+    "cull": "Cull_Inside",
+    "xlu": true,
+    "verts": 48,
+    "tris": 16,
+    "single_bound_verts": 48,
+    "pobjs": 1
+   },
+   {
+    "dobj": 7,
+    "obj": "polygon12",
+    "group": "sword",
+    "material": "Sword_M",
+    "texture": "metaknight_wing",
+    "fmt": "CMP",
+    "tlut": false,
+    "render": "DIFFUSE, TEX0",
+    "first_tobj": 10,
+    "layers": [
+     {
+      "layer": 0,
+      "texture": "metaknight_wing",
+      "coord": "TexCoord0",
+      "vtx": "TEX0",
+      "op": "REPLACE",
+      "fmt": "CMP"
+     }
+    ],
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "verts": 2274,
+    "tris": 758,
+    "single_bound_verts": 2274,
+    "pobjs": 1
+   },
+   {
+    "dobj": 8,
+    "obj": "polygon13",
+    "group": "sword",
+    "material": "kenn_akai",
+    "texture": "metaknight_wing",
+    "fmt": "CMP",
+    "tlut": false,
+    "render": "CONSTANT, TEX0, TEX1",
+    "first_tobj": 11,
+    "layers": [
+     {
+      "layer": 0,
+      "texture": "metaknight_wing",
+      "coord": "TexCoord0",
+      "vtx": "TEX0",
+      "op": "REPLACE",
+      "fmt": "CMP"
+     },
+     {
+      "layer": 1,
+      "texture": "Ref",
+      "coord": "REFLECTION (normals)",
+      "vtx": "-",
+      "op": "ADD x0.196,0.133,0.133",
+      "fmt": "RGB565"
+     }
+    ],
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "verts": 240,
+    "tris": 80,
+    "single_bound_verts": 240,
+    "pobjs": 1
+   },
+   {
+    "dobj": 9,
+    "obj": "polygon15",
+    "group": "mantle_ball",
+    "material": "metaMantleMT",
+    "texture": "metaknight_mantle",
+    "fmt": "CMP",
+    "tlut": false,
+    "render": "DIFFUSE, TEX0",
+    "first_tobj": 13,
+    "layers": [
+     {
+      "layer": 0,
+      "texture": "metaknight_mantle",
+      "coord": "TexCoord0",
+      "vtx": "TEX0",
+      "op": "REPLACE",
+      "fmt": "CMP"
+     }
+    ],
+    "cull": "Cull_None",
+    "xlu": false,
+    "verts": 2922,
+    "tris": 974,
+    "single_bound_verts": 2922,
+    "pobjs": 1
+   },
+   {
+    "dobj": 10,
+    "obj": "polygon8",
+    "group": "closed_cape",
+    "material": "Sword_M",
+    "texture": "metaknight_wing",
+    "fmt": "CMP",
+    "tlut": false,
+    "render": "DIFFUSE, TEX0",
+    "first_tobj": 14,
+    "layers": [
+     {
+      "layer": 0,
+      "texture": "metaknight_wing",
+      "coord": "TexCoord0",
+      "vtx": "TEX0",
+      "op": "REPLACE",
+      "fmt": "CMP"
+     }
+    ],
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "verts": 2304,
+    "tris": 768,
+    "single_bound_verts": 520,
+    "pobjs": 52
+   },
+   {
+    "dobj": 11,
+    "obj": "polygon17",
+    "group": "wings",
+    "material": "Sword_M",
+    "texture": "metaknight_wing",
+    "fmt": "CMP",
+    "tlut": false,
+    "render": "DIFFUSE, TEX0",
+    "first_tobj": 15,
+    "layers": [
+     {
+      "layer": 0,
+      "texture": "metaknight_wing",
+      "coord": "TexCoord0",
+      "vtx": "TEX0",
+      "op": "REPLACE",
+      "fmt": "CMP"
+     }
+    ],
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "verts": 2118,
+    "tris": 706,
+    "single_bound_verts": 698,
+    "pobjs": 34
+   },
+   {
+    "dobj": 12,
+    "obj": "polygon18",
+    "group": "wings",
+    "material": "armer_line",
+    "texture": "metaknight_body",
+    "fmt": "CMP",
+    "tlut": false,
+    "render": "DIFFUSE, TEX0",
+    "first_tobj": 16,
+    "layers": [
+     {
+      "layer": 0,
+      "texture": "metaknight_body",
+      "coord": "TexCoord0",
+      "vtx": "TEX0",
+      "op": "REPLACE",
+      "fmt": "CMP"
+     }
+    ],
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "verts": 240,
+    "tris": 80,
+    "single_bound_verts": 240,
+    "pobjs": 1
+   },
+   {
+    "dobj": 13,
+    "obj": "polygon0",
+    "group": "article_cape",
+    "material": "model_wing",
+    "texture": "metaknight_wing",
+    "fmt": "CMP",
+    "tlut": false,
+    "render": "DIFFUSE, TEX0",
+    "first_tobj": 17,
+    "layers": [
+     {
+      "layer": 0,
+      "texture": "metaknight_wing",
+      "coord": "TexCoord0",
+      "vtx": "TEX0",
+      "op": "REPLACE",
+      "fmt": "CMP"
+     }
+    ],
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "verts": 2304,
+    "tris": 768,
+    "single_bound_verts": 460,
+    "pobjs": 58
+   }
+  ],
+  "joints": 105,
+  "root_flags": "SKELETON_ROOT, ENVELOPE_MODEL, CLASSICAL_SCALING, LIGHTING, SPECULAR, OPA, XLU, TEXEDGE",
+  "template_root_flags": "SKELETON_ROOT, ENVELOPE_MODEL, CLASSICAL_SCALING, LIGHTING, SPECULAR, OPA, ROOT_OPA",
+  "template_joint1_flags": "SKELETON, CLASSICAL_SCALING, ROOT_OPA",
+  "joint1_flags": "SKELETON, CLASSICAL_SCALING",
+  "eye_dobj": 3,
+  "eye_tobjs": [
+   6,
+   5
+  ],
+  "eye_states": 848,
+  "matanim": "tree 105 nodes; DObj 3: texanims on the eye TObjs (GX_TEXMAP2, GX_TEXMAP1), SCAU/SCAV/TRAU/TRAV linear keys, frame k = eye state k (848 states)"
+ },
+ "mesh_stats": {
+  "tris": 7630,
+  "verts_trimmed": 24,
+  "max_weight_dropped": 0.06,
+  "max_infl_in": 5
+ }
+}

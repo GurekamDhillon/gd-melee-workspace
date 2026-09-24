@@ -1,0 +1,62 @@
+{
+ "_readme": [
+  "Brawl Meta Knight tuning (Phase 1, Kirby host). Edit, then rebuild the slot:  python tools\\build_mk_slot.py [--preset tuning.melee-feel.json]",
+  "Same format and sources as experiment\\brawl-kirby\\tuning.json (tools\\tuning.py of the Kirby port does the resolving).",
+  "As shipped this file is the identity: Brawl MK's hitboxes/timing/IASA, cast-scaled physics.",
+  "MOVE POLICY  \"brawl\" = Brawl MK hitboxes, timing and IASA | \"melee\" = keep Melee KIRBY's vanilla script (the host; it then runs on MK's clip) | {...} = blend",
+  "HITBOX FIELDS  damage angle kbg wdsk bkb size element shield  plus  iasa (frame number)  and  windows {\"2\": {...}} (per hit, 1-based)",
+  "SOURCES  \"brawl\" | \"melee\" (= the Kirby hitbox it was mapped onto) | 12 | \"x1.2 brawl\" | \"+2 brawl\" | \"-1 melee\"",
+  "MOVE KEYS  jab rapid_jab_start rapid_jab rapid_jab_end dash_attack ftilt ftilt2 ftilt3 utilt dtilt fsmash usmash dsmash nair fair bair uair dair",
+  "           nair_land fair_land bair_land uair_land dair_land grab dash_grab pummel throwf throwb throwhi throwlw",
+  "           ledge_attack_fast ledge_attack_slow getup_attack_up getup_attack_down",
+  "           tornado_start tornado tornado_end drill_rush drill_rush_air shuttle_loop_rise shuttle_loop_loop shuttle_loop_fall",
+  "           shuttle_loop_land cape_start cape_vanish cape_attack jumpaerial",
+  "           glide glide_attack drill_start taunt wait3   (Geno v2 rows; aliases fthrow bthrow uthrow dthrow neutral_b side_b up_b down_b; globs)",
+  "ATTRIBUTES  common: gravity weight jump_v_initial_velocity fast_fall_velocity dash_max_velocity air_drift_max ... (CHANGES.json attributes[].name)",
+  "            + rapid_jab_window (0 = MK's rapid-only jab), model_scaling",
+  "            multi-jump: jumpaerial_jump1_vertical_momentum .. jumpaerial_jump5_vertical_momentum (Brawl hops x jump scale)",
+  "            special hosts (Kirby's code runs MK's specials): speciallw_max_time_in_stone / speciallw_min_time_in_stone (cape vanish frames),",
+  "            speciallw_gravity (cape air sink), speciallw_freefall_toggle (cape fall-special landing lag; 0 = plain fall)",
+  "            sources: \"brawl\" (cast-scaled, Phase 1) | \"melee\" (Melee Kirby's) | \"brawl_raw\" | number | \"x0.95 brawl\" | \"ratio\" | \"zscore\"",
+  "MK KNOBS (\"mk\" block): hitbox_scale (1.0: MK's own skeleton, Brawl units), model_scaling (MK's Brawl Size 0.95),",
+  "            autolink_angle (Drill Rush 365 stand-in in the Pl file; the Geno exe uses LINK), tornado_rehit, drill_rehit (null = Brawl 6),",
+  "            geno_v1 (write the v1 overlays into geno.json), geno_v2 (v2 states / specials / glide-tornado-drill blocks), upb_glide (Glide | GlideStart),",
+  "            taunt_stick (stick past this at the taunt press = up / side taunt), wait3_chance (1 in N Wait1 cycles -> Wait3)"
+ ],
+ "name": "default",
+ "description": "pure Brawl Meta Knight targets",
+ "defaults": {
+  "move": "brawl",
+  "attribute": "brawl"
+ },
+ "moves": {
+  "_examples (drop the leading _ to use)": null,
+  "_fsmash": {
+   "damage": "x1.1 brawl"
+  },
+  "_dair": {
+   "iasa": 20
+  },
+  "_*_land": {
+   "iasa": "melee"
+  }
+ },
+ "attributes": {
+  "_gravity": "melee",
+  "_jump_startup_time": "melee",
+  "_speciallw_max_time_in_stone": 12
+ },
+ "mk": {
+  "_readme": "Meta Knight structural knobs (build_mk.py MK_KNOBS)",
+  "hitbox_scale": 1.0,
+  "model_scaling": 0.95,
+  "autolink_angle": 80,
+  "tornado_rehit": 10,
+  "drill_rehit": null,
+  "geno_v1": true,
+  "geno_v2": true,
+  "upb_glide": "Glide",
+  "taunt_stick": 0.5,
+  "wait3_chance": 3
+ }
+}

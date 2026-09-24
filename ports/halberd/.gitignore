@@ -1,0 +1,67 @@
+# Halberd tracks research only: notes, tools, hand-written configs and the IR.
+# Every Brawl/Melee asset, build output and machine dump of game data stays local.
+
+# 1. Ignore everything, then allow research file types back in.
+*
+!*/
+!.gitignore
+!*.md
+!*.py
+!*.sh
+!*.cs
+!*.csproj
+!*.props
+!*.targets
+!.editorconfig
+!*.txt
+!*.json
+
+# 2. Assets and binaries (listed explicitly as a second guard).
+*.dat
+*.usd
+*.png
+*.rgba
+*.bin
+*.gxtex
+*.ssm
+*.sem
+*.wav
+*.dsp
+*.brres
+*.pac
+*.dll
+*.exe
+*.so
+*.dylib
+*.pdb
+*.cache
+*.pyc
+__pycache__/
+bin/
+obj/
+
+# 3. Build output, run sandboxes, backups and raw dumps.
+/_backup/
+/_run/
+/dump/
+/build/*
+!/build/*.py
+/model/brawl/
+/model/work/
+/model/test/
+/anim/brawl/
+/anim/brawl_mantle/
+/anim/brawl_mantle_result/
+/anim/brawl_srt0/
+/anim/out/
+/effects/work/
+/sound/work/
+/mods-slot/*/files/
+/mods-slot/*/CHANGES.json
+/mods-slot/*/MK_INSTALL.json
+
+# 4. Analysis: machine dumps of Brawl data and raw in-game captures.
+/analysis/brawl_metaknight*.json
+/analysis/_host_kirby_vanilla.json
+/analysis/*_decoded.json
+/analysis/ingame_v*.json

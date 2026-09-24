@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gd-melee.local/character-ir/code.schema.json",
+  "title": "Character IR - code",
+  "description": "Executable content the character ships (Melee: m-ex ftFunction / itFunction / kbFunction blobs; Brawl: the fighter's .rel module or Gecko codes). A code unit is described as a relocatable object - bytes, relocations, symbols, override-table entries - plus a semantic layer (functions, what they do, what they call, what they hand to the engine). External references stay symbolic engine addresses; how a host binds them is recorded on the EngineAddress (host_binding) and in integration.",
+  "$defs": {
+    "Code": {
+      "type": "object",
+      "properties": {
+        "units": { "type": "array", "items": { "$ref": "#/$defs/CodeUnit" } }
+      },
+      "additionalProperties": false
+    },
+
+    "CodeUnit": {
+      "type": "object",
+      "required": ["id", "kind", "arch"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/Id" },
+        "name": { "type": "string" },
+        "kind": { "enum": ["fighter_function", "item_function", "copy_function", "stage_function", "module", "gecko_codes", "other"] },
+        "arch": { "type": "string", "description": "e.g. 'ppc750cl' (Gekko), 'broadway'." },
+        "file": { "$ref": "common.schema.json#/$defs/Ref" },
+        "symbol": { "type": "string", "description": "Header symbol ('ftFunction', 'itFunction', 'kbFunction')." },
+        "header_offset": { "$ref": "common.schema.json#/$defs/Hex" },
+        "code": {
+          "type": "object",
+          "properties": {
+            "offset": { "$ref": "common.schema.json#/$defs/Hex" },
+            "size": { "type": "integer" },
+            "size_source": { "enum": ["declared", "recovered", "declared_and_checked"] },
+            "declared_size": { "type": "integer" },
+            "recovery": {
+              "type": "object",
+              "properties": {
+                "method": { "type": "string" },
+                "upper_bound": { "$ref": "common.schema.json#/$defs/Hex" },
+                "lower_bound": { "$ref": "common.schema.json#/$defs/Hex" },
+                "agrees_with": { "type": "string", "description": "Independent confirmation (e.g. a host log line)." }
+              },
+              "additionalProperties": false
+            },
+            "bytes": { "$ref": "common.schema.json#/$defs/BlobRef" },
+            "rodata": { "type": "array", "items": { "type": "string" }, "description": "Constant regions inside the code range (e.g. 'code+0x3AA0..0x3AE0 floats')." }
+          },
+          "additionalProperties": false
+        },
+        "relocations": {
+          "type": "object",
+          "properties": {
+            "count": { "type": "integer" },
+            "table_offset": { "$ref": "common.schema.json#/$defs/Hex" },
+            "by_type": {
+              "description": "Counts per relocation kind (abs32, lo16, hi16_adjusted, branch24, rel32, other).",
+              "type": "object", "additionalProperties": { "type": "integer" }
+            },
+            "code_relative": { "type": "integer" },
+            "absolute": { "type": "integer" },
+            "distinct_absolute_targets": { "type": "integer" },
+            "reach": { "$ref": "common.schema.json#/$defs/Hex", "description": "Highest relocated offset." },
+            "table": { "$ref": "common.schema.json#/$defs/BlobRef" },
+            "semantics": { "type": "string", "description": "Relocation rules (e.g. m-ex flags 01/04/06/0A/1A; top-nibble-8 targets are absolute engine addresses)." }
+          },
+          "additionalProperties": false
+        },
+        "hidden_imports": {
+          "description": "Absolute engine addresses built in code WITHOUT a relocation (lis/ori pairs). Invisible to reloc-driven tooling, so a host must still resolve them at run time.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["site", "target"],
+            "properties": {
+              "site": { "type": "string", "description": "e.g. 'code+0x8B0'." },
+              "target": { "$ref": "common.schema.json#/$defs/EngineAddress" },
+              "pattern": { "type": "string", "description": "e.g. 'lis/ori/mtctr/bctrl'." }
+            },
+            "additionalProperties": false
+          }
+        },
+        "overrides": {
+          "description": "The unit's own override table: which framework slots it fills.",
+          "type": "object",
+          "properties": {
+            "table": { "type": "string", "description": "e.g. 'm-ex Arch_FighterFunc (46 slots)', 'm-ex ItemLogicTable (15)', 'm-ex Arch_KirbyFunction (8)'." },
+            "offset": { "$ref": "common.schema.json#/$defs/Hex" },
+            "entries": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["slot"],
+                "properties": {
+                  "slot": { "type": "integer" },
+                  "name": { "type": "string" },
+                  "target_offset": { "$ref": "common.schema.json#/$defs/Hex" },
+                  "target": { "$ref": "common.schema.json#/$defs/Ref" },
+                  "shape": { "enum": ["function", "trampoline", "data_table", "noop"] },
+                  "addressing": { "enum": ["table_index", "function_address"], "description": "m-ex: top bit clear = slot index; set = patch an engine function (hardware only; the port records but never applies these)." }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "debug_symbols": {
+          "type": "object",
+          "properties": {
+            "count": { "type": "integer" },
+            "stripped": { "type": "boolean" },
+            "symbols": { "type": "array", "items": { "type": "object", "properties": { "name": { "type": "string" }, "start": { "$ref": "common.schema.json#/$defs/Hex" }, "end": { "$ref": "common.schema.json#/$defs/Hex" } }, "additionalProperties": false } }
+          },
+          "additionalProperties": false
+        },
+        "functions": { "type": "array", "items": { "$ref": "#/$defs/Function" } },
+        "data_objects": {
+          "description": "Tables and constants inside the unit that behave as data (MoveLogic rows, item state tables, jump tables).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "offset"],
+            "properties": {
+              "id": { "$ref": "common.schema.json#/$defs/Id" },
+              "offset": { "$ref": "common.schema.json#/$defs/Hex" },
+              "kind": { "type": "string" },
+              "rows": { "type": "integer" },
+              "row_size": { "type": "integer" },
+              "row_count_source": { "enum": ["declared", "inferred_from_layout", "explicit"] },
+              "note": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "imports": {
+          "description": "Engine functions/data the unit references, with use counts.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["target"],
+            "properties": {
+              "target": { "$ref": "common.schema.json#/$defs/EngineAddress" },
+              "count": { "type": "integer" },
+              "via": { "enum": ["relocation", "hidden_lis_ori", "table", "stored_pointer"] }
+            },
+            "additionalProperties": false
+          }
+        },
+        "intrinsics": {
+          "description": "Framework API calls (named, with argument values seen).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "count": { "type": "integer" },
+              "arguments_seen": { "type": "array", "items": {} },
+              "note": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "escapes": {
+          "description": "Places the unit hands a code address to the engine (incoming-call edges the host must route).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["mechanism"],
+            "properties": {
+              "mechanism": { "enum": ["store_to_field", "api_argument", "return_value", "table_entry"] },
+              "field_or_api": { "type": "string" },
+              "callee": { "$ref": "common.schema.json#/$defs/Ref" },
+              "engine_callee": { "$ref": "common.schema.json#/$defs/EngineAddress" },
+              "count": { "type": "integer" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "disassembly": { "$ref": "common.schema.json#/$defs/BlobRef" },
+        "call_graph": { "$ref": "common.schema.json#/$defs/BlobRef" },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" },
+        "engine": { "$ref": "common.schema.json#/$defs/EngineExtensions" }
+      },
+      "additionalProperties": false
+    },
+
+    "Function": {
+      "type": "object",
+      "required": ["id", "offset"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/Id" },
+        "offset": { "$ref": "common.schema.json#/$defs/Hex" },
+        "size": { "type": "integer" },
+        "label": { "type": "string", "description": "Analysis label (fn_<offset>) or debug symbol name." },
+        "label_source": { "enum": ["debug_symbol", "override_slot", "state_table", "call_target", "prologue_heuristic"] },
+        "role": { "type": "string", "description": "Semantic summary: what it does." },
+        "signature": { "$ref": "common.schema.json#/$defs/CallSignature" },
+        "calls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "callee": { "$ref": "common.schema.json#/$defs/Ref" },
+              "engine_symbol": { "type": "string" },
+              "intrinsic": { "type": "string" },
+              "count": { "type": "integer" },
+              "tail": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "reads": { "type": "array", "items": { "type": "string" } },
+        "writes": { "type": "array", "items": { "type": "string" } },
+        "pseudocode": { "type": "string" },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

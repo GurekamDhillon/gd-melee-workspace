@@ -1,0 +1,366 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gd-melee.local/character-ir/resources.schema.json",
+  "title": "Character IR - resources (files and containers)",
+  "description": "The packaging layer: which files make up the character, what container format each is, what symbols/sections they expose, and how the engine finds them. Everything in assets/behavior/code points back here for its bytes.",
+  "$defs": {
+    "Resources": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/File"
+          }
+        },
+        "shared_dependencies": {
+          "description": "Files the character needs but does not own (common fighter data, shared effect banks, a base fighter's files it borrows).",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Dependency"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "File": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "role",
+        "container"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "name": {
+          "type": "string",
+          "description": "File name as the engine requests it (e.g. 'PlSh.dat', 'FitShadow.pac')."
+        },
+        "disc_path": {
+          "type": "string"
+        },
+        "local_path": {
+          "type": "string",
+          "description": "Where the analysed copy lives."
+        },
+        "role": {
+          "enum": [
+            "fighter_data",
+            "fighter_code",
+            "animation_bank",
+            "costume_model",
+            "costume_textures",
+            "effect_bank",
+            "sound_bank",
+            "sound_scripts",
+            "copy_ability",
+            "demo_animation",
+            "result_animation",
+            "menu_animation",
+            "ui_texture",
+            "trophy",
+            "still_image",
+            "movie",
+            "module",
+            "motion_bank",
+            "article_data",
+            "config",
+            "other"
+          ]
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "variant_of": {
+          "$ref": "common.schema.json#/$defs/Ref",
+          "description": "For per-costume/per-slot copies of the same logical file."
+        },
+        "container": {
+          "$ref": "#/$defs/Container"
+        },
+        "located_by": {
+          "description": "How the engine finds this file: which table row names it, by which index space.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Locator"
+          }
+        },
+        "residency": {
+          "description": "When it is loaded and where it lives (host-specific detail goes in integration.host_runtime.load_lifecycle).",
+          "type": "object",
+          "properties": {
+            "load_when": {
+              "enum": [
+                "boot",
+                "css",
+                "match_setup",
+                "match",
+                "on_demand",
+                "results",
+                "menu",
+                "never_observed"
+              ]
+            },
+            "memory": {
+              "$ref": "common.schema.json#/$defs/AddressSpace"
+            },
+            "heap": {
+              "type": "string"
+            },
+            "note": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "identical_to": {
+          "description": "Other files known to be byte-identical (e.g. the same file on another disc).",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        },
+        "engine": {
+          "$ref": "common.schema.json#/$defs/EngineExtensions"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Locator": {
+      "type": "object",
+      "required": [
+        "table"
+      ],
+      "properties": {
+        "table": {
+          "type": "string",
+          "description": "e.g. 'mex.fighter.pl_file', 'mex.fighter.costume_file', 'brawlex.FighterConfig.pac_name'."
+        },
+        "index": {
+          "$ref": "common.schema.json#/$defs/IndexSpace"
+        },
+        "field": {
+          "type": "string"
+        },
+        "by": {
+          "enum": [
+            "name",
+            "entry_number",
+            "hash",
+            "path_pattern"
+          ]
+        },
+        "pattern": {
+          "type": "string",
+          "description": "For path_pattern: e.g. 'Fit{name}{costume:02}.pac'."
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Container": {
+      "description": "The file's container format. 'sections' is the engine-neutral view (named regions with offsets); format-specific headers go in 'detail'.",
+      "type": "object",
+      "required": [
+        "format"
+      ],
+      "properties": {
+        "format": {
+          "enum": [
+            "hsd_archive",
+            "hsd_archive_concat",
+            "ssm",
+            "sem_scripts",
+            "jpeg",
+            "mthp",
+            "thp",
+            "arc_pac",
+            "brres",
+            "rel_module",
+            "brsar_group",
+            "sawnd",
+            "tpl",
+            "raw",
+            "other"
+          ]
+        },
+        "endianness": {
+          "enum": [
+            "big",
+            "little"
+          ]
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "offset"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "offset": {
+                "$ref": "common.schema.json#/$defs/Hex"
+              },
+              "size": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "kind": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "symbols": {
+          "description": "Named entry points into the file (HSD public/extern symbols; ARC entry names; BRRES resource names).",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Symbol"
+          }
+        },
+        "relocations": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "table": {
+              "$ref": "common.schema.json#/$defs/BlobRef"
+            }
+          },
+          "additionalProperties": false
+        },
+        "children": {
+          "description": "Nested containers: a concatenated HSD archive's sub-archives, an ARC's entries, a BRRES's folders.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ChildContainer"
+          }
+        },
+        "padding": {
+          "type": "string",
+          "description": "e.g. '0xFF to 0x20 between sub-archives'."
+        },
+        "detail": {
+          "type": "object",
+          "description": "Format-specific header fields (HSD: file_size, data_size, nb_reloc, nb_public, nb_extern)."
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        },
+        "internal_name": {
+          "type": "string",
+          "description": "Name stored inside the container (a Brawl ARC's own name, e.g. 'FitSonic00' inside FitShadow00.pac) - reveals the slot the content was built for."
+        },
+        "compression": {
+          "type": "string",
+          "description": "e.g. 'lz77_type11'."
+        }
+      },
+      "additionalProperties": false
+    },
+    "ChildContainer": {
+      "type": "object",
+      "required": [
+        "offset",
+        "container"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "offset": {
+          "$ref": "common.schema.json#/$defs/Hex"
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "container": {
+          "$ref": "#/$defs/Container"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Symbol": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "visibility": {
+          "enum": [
+            "public",
+            "extern",
+            "internal",
+            "entry"
+          ]
+        },
+        "offset": {
+          "$ref": "common.schema.json#/$defs/Hex",
+          "description": "Data offset inside the container."
+        },
+        "target": {
+          "$ref": "common.schema.json#/$defs/Ref",
+          "description": "The IR entity this symbol is (a skeleton, an effect table, a code unit)."
+        },
+        "authored_name_note": {
+          "type": "string",
+          "description": "When the symbol name reveals lineage (Shadow's costumes are named PlySonic5K_*)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Dependency": {
+      "type": "object",
+      "required": [
+        "name",
+        "why"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string",
+          "description": "Who owns it: 'engine', 'framework', or another character."
+        },
+        "why": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

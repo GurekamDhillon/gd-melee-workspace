@@ -1,0 +1,1062 @@
+{
+ "v1_encodings": "geno_v1_encodings.md (used: CHG, PUT, LINK; overlays in geno.json 'subactions')",
+ "overlays": [
+  {
+   "row": 53,
+   "move": "ftilt",
+   "escapes": [
+    "CHG PRESSED(A) -> Attack12 motion = ftilt 2 (Brawl RA.Bit[16] @4)"
+   ]
+  },
+  {
+   "row": 55,
+   "move": "ftilt",
+   "escapes": [
+    "CHG PRESSED(A) -> Attack12 motion = ftilt 2 (Brawl RA.Bit[16] @4)"
+   ]
+  },
+  {
+   "row": 57,
+   "move": "ftilt",
+   "escapes": [
+    "CHG PRESSED(A) -> Attack12 motion = ftilt 2 (Brawl RA.Bit[16] @4)"
+   ]
+  },
+  {
+   "row": 47,
+   "move": "ftilt2",
+   "escapes": [
+    "CHG PRESSED(A) -> Attack13 motion = ftilt 3 (Brawl RA.Bit[16] @3)"
+   ]
+  },
+  {
+   "row": 334,
+   "move": "cape_attack",
+   "escapes": [
+    "PUT FACING 0 (Brawl Reverse Direction @1)"
+   ]
+  },
+  {
+   "row": 337,
+   "move": "cape_attack",
+   "escapes": [
+    "PUT FACING 0 (Brawl Reverse Direction @1)"
+   ]
+  },
+  {
+   "row": 345,
+   "move": "drill_rush",
+   "escapes": [
+    "PUT LEDGE 1 (Brawl Allow/Disallow Ledgegrab 1 @20)",
+    "LINK after autolink hitboxes"
+   ]
+  },
+  {
+   "row": 348,
+   "move": "tornado_end",
+   "escapes": [
+    "CHG GROUND ONCE -> GENO(TornadoEndGround) KEEP_FRAME (row 307)"
+   ]
+  },
+  {
+   "row": 352,
+   "move": "shuttle_loop_rise",
+   "escapes": [
+    "CHG ANIM_END & AIR -> GENO(Glide) (Brawl Change Action 0x85)",
+    "CHG ANIM_END -> Fall (Brawl Change Action 0xE on the ground)",
+    "PUT LEDGE 2 (Brawl Allow/Disallow Ledgegrab 2 @7)"
+   ]
+  },
+  {
+   "row": 354,
+   "move": "shuttle_loop_loop",
+   "escapes": [
+    "CHG ANIM_END & AIR -> GENO(Glide) (Brawl Change Action 0x85)",
+    "CHG ANIM_END -> Fall (Brawl Change Action 0xE on the ground)",
+    "PUT LEDGE 2 (Brawl Allow/Disallow Ledgegrab 2 @7)"
+   ]
+  },
+  {
+   "row": 356,
+   "move": "cape_start",
+   "escapes": [
+    "PUT HIDDEN 1 (Brawl Visibility off @12, kept across the Geno states)"
+   ]
+  },
+  {
+   "row": 357,
+   "move": "cape_start",
+   "escapes": [
+    "PUT HIDDEN 1 (Brawl Visibility off @12, kept across the Geno states)"
+   ]
+  },
+  {
+   "row": 358,
+   "move": "cape_attack",
+   "escapes": [
+    "PUT HIDDEN 0 (Brawl Visibility on @1)",
+    "PUT FACING 0 (Brawl Reverse Direction @1)"
+   ]
+  },
+  {
+   "row": 359,
+   "move": "cape_attack",
+   "escapes": [
+    "PUT HIDDEN 0 (Brawl Visibility on @1)",
+    "PUT FACING 0 (Brawl Reverse Direction @1)"
+   ]
+  },
+  {
+   "row": 360,
+   "move": "cape_attack",
+   "escapes": [
+    "PUT HIDDEN 0 (Brawl Visibility on @1)"
+   ]
+  },
+  {
+   "row": 361,
+   "move": "cape_attack",
+   "escapes": [
+    "PUT HIDDEN 0 (Brawl Visibility on @1)"
+   ]
+  },
+  {
+   "row": 362,
+   "move": "cape_attack",
+   "escapes": [
+    "PUT HIDDEN 0 (Brawl Visibility on @1)",
+    "PUT FACING 0 (Brawl Reverse Direction @1)"
+   ]
+  },
+  {
+   "row": 363,
+   "move": "cape_attack",
+   "escapes": [
+    "PUT HIDDEN 0 (Brawl Visibility on @1)",
+    "PUT FACING 0 (Brawl Reverse Direction @1)"
+   ]
+  },
+  {
+   "row": 364,
+   "move": "cape_end",
+   "escapes": [
+    "PUT HIDDEN 0 (Brawl Visibility on @0)",
+    "PUT LEDGE 2 (Brawl Allow/Disallow Ledgegrab 2 @0)"
+   ]
+  },
+  {
+   "row": 365,
+   "move": "cape_end_air",
+   "escapes": [
+    "PUT HIDDEN 0 (Brawl Visibility on @0)",
+    "PUT LEDGE 2 (Brawl Allow/Disallow Ledgegrab 2 @0)",
+    "PUT MOTION_GRAVITY 0 (no gravity yet)",
+    "PUT MOTION_GRAVITY 1 (Brawl Enable Horizontal Gravity? @10: falls from here)"
+   ]
+  },
+  {
+   "row": 239,
+   "escapes": "taunt: stick up -> AppealHi, sideways -> AppealS (Brawl's up / side taunts)"
+  },
+  {
+   "row": 240,
+   "escapes": "taunt: stick up -> AppealHi, sideways -> AppealS (Brawl's up / side taunts)"
+  },
+  {
+   "row": 2,
+   "escapes": "idle: 1 in 3 Wait1 cycles ends in Wait3 (Brawl's idle variation)"
+  }
+ ],
+ "note": "the Pl file stays plain Melee ftcmd; these entries still have no v1 expression",
+ "stubs": [
+  {
+   "geno": "later",
+   "where": "rapid_jab_end",
+   "frame": 1.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "dash_attack",
+   "frame": 3.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "dash_attack",
+   "frame": 4.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "dash_attack",
+   "frame": 4.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "ftilt",
+   "frame": 0.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "ftilt",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "ftilt",
+   "frame": 1.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "ftilt",
+   "frame": 5.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "ftilt",
+   "frame": 2.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "utilt",
+   "frame": 6.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "utilt",
+   "frame": 7.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "utilt",
+   "frame": 11.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "utilt",
+   "frame": 6.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "dtilt",
+   "frame": 0.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "dtilt",
+   "frame": 0.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "dtilt",
+   "frame": 6.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "dtilt",
+   "frame": 0.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "fsmash",
+   "frame": 1.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "fsmash",
+   "frame": 2.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "fsmash",
+   "frame": 2.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "fsmash",
+   "frame": 6.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "fsmash",
+   "frame": 3.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "usmash",
+   "frame": 1.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "usmash",
+   "frame": 3.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "usmash",
+   "frame": 3.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "usmash",
+   "frame": 16.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "usmash",
+   "frame": 1.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "dsmash",
+   "frame": 1.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "dsmash",
+   "frame": 2.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "dsmash",
+   "frame": 2.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "dsmash",
+   "frame": 11.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "dsmash",
+   "frame": 3.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "nair",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "nair",
+   "frame": 1.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "nair",
+   "frame": 25.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "nair",
+   "frame": 2.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "fair",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "fair",
+   "frame": 4.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "fair",
+   "frame": 7.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "fair",
+   "frame": 5.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "bair",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "bair",
+   "frame": 5.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "bair",
+   "frame": 9.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "bair",
+   "frame": 6.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "uair",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "uair",
+   "frame": 0.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "uair",
+   "frame": 4.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "uair",
+   "frame": 1.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "dair",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "dair",
+   "frame": 2.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "dair",
+   "frame": 6.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "dair",
+   "frame": 0.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "nair_land",
+   "frame": 0.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "nair_land",
+   "frame": 4.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "ledge_attack_fast",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "ledge_attack_fast",
+   "frame": 23.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "ledge_attack_fast",
+   "frame": 27.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "ledge_attack_fast",
+   "frame": 4.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "ledge_attack_slow",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "ledge_attack_slow",
+   "frame": 37.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "ledge_attack_slow",
+   "frame": 41.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "ledge_attack_slow",
+   "frame": 27.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "getup_attack_up",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "getup_attack_up",
+   "frame": 14.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "getup_attack_up",
+   "frame": 14.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "getup_attack_up",
+   "frame": 18.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "getup_attack_up",
+   "frame": 15.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "getup_attack_down",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "getup_attack_down",
+   "frame": 14.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "getup_attack_down",
+   "frame": 14.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "getup_attack_down",
+   "frame": 18.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "getup_attack_down",
+   "frame": 15.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "throwf",
+   "frame": 4.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "throwf",
+   "frame": 1.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "v1",
+   "where": "throwb",
+   "frame": 15.0,
+   "brawl_event": "Reverse Direction",
+   "needs": "PUT FACING 0"
+  },
+  {
+   "geno": "later",
+   "where": "throwb",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "throwb",
+   "frame": 14.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "throwb",
+   "frame": 21.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "throwb",
+   "frame": 1.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "throwhi",
+   "frame": 5.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "throwhi",
+   "frame": 5.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "throwhi",
+   "frame": 1.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "throwlw",
+   "frame": 72.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "throwlw",
+   "frame": 1.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "v2",
+   "where": "tornado",
+   "frame": null,
+   "brawl_event": "ftMetaknightStatusUniqProcessSpecialNSpin::execStatus",
+   "needs": "native physics callback (rise on B taps, drift, fixed duration)"
+  },
+  {
+   "geno": "later",
+   "where": "drill_rush",
+   "frame": 20.0,
+   "brawl_event": "Allow/Disallow Ledgegrab",
+   "needs": "no v1 value (ledge grab flag)"
+  },
+  {
+   "geno": "later",
+   "where": "drill_rush",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "drill_rush",
+   "frame": 0.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "drill_rush",
+   "frame": null,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "drill_rush",
+   "frame": 0.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "drill_rush_air",
+   "frame": 0.0,
+   "brawl_event": "Allow/Disallow Ledgegrab",
+   "needs": "no v1 value (ledge grab flag)"
+  },
+  {
+   "geno": "later",
+   "where": "drill_rush_air",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "drill_rush_air",
+   "frame": 0.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "v1",
+   "where": "shuttle_loop_rise",
+   "frame": 5.0,
+   "brawl_event": "Set Air/Ground",
+   "needs": "PUT AIR"
+  },
+  {
+   "geno": "later",
+   "where": "shuttle_loop_rise",
+   "frame": 7.0,
+   "brawl_event": "Allow/Disallow Ledgegrab",
+   "needs": "no v1 value (ledge grab flag)"
+  },
+  {
+   "geno": "later",
+   "where": "shuttle_loop_rise",
+   "frame": 6.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "shuttle_loop_rise",
+   "frame": 6.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "shuttle_loop_rise",
+   "frame": 7.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "shuttle_loop_rise",
+   "frame": 20.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "shuttle_loop_rise",
+   "frame": 7.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "shuttle_loop_loop",
+   "frame": 7.0,
+   "brawl_event": "Allow/Disallow Ledgegrab",
+   "needs": "no v1 value (ledge grab flag)"
+  },
+  {
+   "geno": "later",
+   "where": "shuttle_loop_loop",
+   "frame": 0.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "shuttle_loop_loop",
+   "frame": 1.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "shuttle_loop_loop",
+   "frame": 29.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "v2",
+   "where": "shuttle_loop_loop",
+   "frame": 31,
+   "brawl_event": "Change Action 133 (Glide) on Animation End + In Air (actions 0x114 / 0x11D)",
+   "needs": "Geno glide state; v1 overlay sends it to FallSpecial"
+  },
+  {
+   "geno": "v1",
+   "where": "cape_start",
+   "frame": 12.0,
+   "brawl_event": "Set Air/Ground",
+   "needs": "PUT AIR"
+  },
+  {
+   "geno": "later",
+   "where": "cape_start",
+   "frame": 0.0,
+   "brawl_event": "Article Visibility",
+   "needs": "cape article: merged into MK's model, shown by ModelVis(0,2) (vis_events)"
+  },
+  {
+   "geno": "later",
+   "where": "cape_start",
+   "frame": 12.0,
+   "brawl_event": "Character Specific 17",
+   "needs": "MK native"
+  },
+  {
+   "geno": "later",
+   "where": "cape_start",
+   "frame": 5.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "cape_start",
+   "frame": 5.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "cape_start",
+   "frame": 0.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "v1",
+   "where": "cape_start",
+   "frame": 12.0,
+   "brawl_event": "Set Air/Ground",
+   "needs": "PUT AIR"
+  },
+  {
+   "geno": "later",
+   "where": "cape_start",
+   "frame": 0.0,
+   "brawl_event": "Article Visibility",
+   "needs": "cape article: merged into MK's model, shown by ModelVis(0,2) (vis_events)"
+  },
+  {
+   "geno": "later",
+   "where": "cape_start",
+   "frame": 12.0,
+   "brawl_event": "Character Specific 17",
+   "needs": "MK native"
+  },
+  {
+   "geno": "later",
+   "where": "cape_start",
+   "frame": 0.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "cape_attack",
+   "frame": 1.0,
+   "brawl_event": "Article Visibility",
+   "needs": "cape article: merged into MK's model, shown by ModelVis(0,2) (vis_events)"
+  },
+  {
+   "geno": "later",
+   "where": "cape_attack",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "cape_attack",
+   "frame": 0.0,
+   "brawl_event": "Graphic Effect",
+   "needs": "MK effect bank (EfMk) not ported"
+  },
+  {
+   "geno": "later",
+   "where": "cape_attack",
+   "frame": 4.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "cape_attack",
+   "frame": 30.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "cape_attack",
+   "frame": 5.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  },
+  {
+   "geno": "later",
+   "where": "cape_attack",
+   "frame": 20.0,
+   "brawl_event": "Disable Horizontal Gravity",
+   "needs": "no v1 value (gravity)"
+  },
+  {
+   "geno": "later",
+   "where": "cape_attack",
+   "frame": 1.0,
+   "brawl_event": "Article Visibility",
+   "needs": "cape article: merged into MK's model, shown by ModelVis(0,2) (vis_events)"
+  },
+  {
+   "geno": "later",
+   "where": "cape_attack",
+   "frame": 0.0,
+   "brawl_event": "External Graphic Effect",
+   "needs": "effect bank not ported"
+  },
+  {
+   "geno": "later",
+   "where": "cape_attack",
+   "frame": 4.0,
+   "brawl_event": "Sword Glow",
+   "needs": "sword trail (m-ex trail data / Geno)"
+  },
+  {
+   "geno": "later",
+   "where": "cape_attack",
+   "frame": 30.0,
+   "brawl_event": "Terminate Sword Glow",
+   "needs": "sword trail"
+  },
+  {
+   "geno": "later",
+   "where": "cape_attack",
+   "frame": 5.0,
+   "brawl_event": "Sound Effect",
+   "needs": "MK sound bank not extracted (BRSAR)"
+  }
+ ]
+}

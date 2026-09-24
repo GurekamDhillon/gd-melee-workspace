@@ -1,0 +1,427 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gd-melee.local/character-ir/character.schema.json",
+  "title": "Character IR",
+  "description": "A semantic, evidence-backed intermediate representation of one fighter as a particular engine/mod ships it, and of how the surrounding framework and host runtime handle it. Layers: identity -> resources (files) -> assets (what it is made of) -> behavior (how it plays) -> code (executable content) -> integration (framework + host). Engine-neutral fields are comparable across games (Melee m-ex, Brawl BrawlEx/PSA); engine-specific detail lives in 'engine' extension blocks. Every fact can cite evidence and carry a confidence.",
+  "type": "object",
+  "required": [
+    "ir_version",
+    "document_id",
+    "subject",
+    "evidence",
+    "identity",
+    "coverage"
+  ],
+  "properties": {
+    "ir_version": {
+      "const": "0.1.0"
+    },
+    "document_id": {
+      "description": "Stable id other IR documents use in cross-document refs ('<document_id>#ns:path').",
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+$"
+    },
+    "subject": {
+      "type": "object",
+      "required": [
+        "character",
+        "game",
+        "engine"
+      ],
+      "properties": {
+        "character": {
+          "type": "string"
+        },
+        "game": {
+          "enum": [
+            "ssbm",
+            "ssbb",
+            "ssb64",
+            "ssb4",
+            "ssbu",
+            "other"
+          ]
+        },
+        "engine": {
+          "$ref": "common.schema.json#/$defs/EngineId",
+          "description": "Primary engine the content targets."
+        },
+        "distribution": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Mod/pack name (e.g. 'SSBM ACE Build', 'SSBB Shadow Redux')."
+            },
+            "version": {
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "retail",
+                "disc_mod",
+                "mod_pack",
+                "standalone_mod",
+                "port_builtin",
+                "costume_pack"
+              ]
+            },
+            "media": {
+              "type": "string",
+              "description": "Disc image / archive analysed."
+            },
+            "authors": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "analysed_with": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "tool": {
+                "type": "string"
+              },
+              "revision": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/Evidence"
+      }
+    },
+    "identity": {
+      "$ref": "#/$defs/Identity"
+    },
+    "resources": {
+      "$ref": "resources.schema.json#/$defs/Resources"
+    },
+    "assets": {
+      "$ref": "assets.schema.json#/$defs/Assets"
+    },
+    "behavior": {
+      "$ref": "behavior.schema.json#/$defs/Behavior"
+    },
+    "code": {
+      "$ref": "code.schema.json#/$defs/Code"
+    },
+    "integration": {
+      "$ref": "integration.schema.json#/$defs/Integration"
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/Issue"
+      }
+    },
+    "coverage": {
+      "description": "How complete each section is, so a partial document is never mistaken for a full one.",
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "identity",
+          "resources",
+          "assets",
+          "assets.skeletons",
+          "assets.models",
+          "assets.textures",
+          "assets.costumes",
+          "assets.animations",
+          "assets.effects",
+          "assets.audio",
+          "assets.ui",
+          "assets.media",
+          "behavior",
+          "behavior.attributes",
+          "behavior.body",
+          "behavior.actions",
+          "behavior.subactions",
+          "behavior.scripts",
+          "behavior.moves",
+          "behavior.articles",
+          "behavior.copy_abilities",
+          "code",
+          "integration",
+          "issues"
+        ]
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "enum": [
+              "complete",
+              "representative",
+              "summary",
+              "skeleton",
+              "absent"
+            ]
+          },
+          "note": {
+            "type": "string"
+          },
+          "full_data": {
+            "type": "string",
+            "description": "Where the full data lives when the document holds a summary (e.g. an analysis artifact)."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "parity": {
+      "description": "Cross-engine correspondences: this document's entities mapped to another document's (e.g. Melee Shadow <-> Brawl Shadow). Filled when two IRs are compared.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "here",
+          "there",
+          "relation"
+        ],
+        "properties": {
+          "here": {
+            "$ref": "common.schema.json#/$defs/Ref"
+          },
+          "there": {
+            "$ref": "common.schema.json#/$defs/Ref"
+          },
+          "relation": {
+            "enum": [
+              "equivalent",
+              "analogous",
+              "partial",
+              "no_counterpart"
+            ]
+          },
+          "differences": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Identity": {
+      "type": "object",
+      "required": [
+        "names",
+        "indices"
+      ],
+      "properties": {
+        "names": {
+          "type": "object",
+          "properties": {
+            "display": {
+              "type": "object",
+              "description": "Locale -> display name.",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "internal": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Names used in file/symbol naming (e.g. 'Sh', 'Shadow', 'Sonic5K')."
+            },
+            "series": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "indices": {
+          "description": "The character's number in every index space it has one in.",
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/IndexSpace"
+          }
+        },
+        "index_mappings": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/IndexMapping"
+          }
+        },
+        "lineage": {
+          "description": "Where the character's parts come from - asset lineage and code lineage can differ.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "source",
+              "relation"
+            ],
+            "properties": {
+              "source": {
+                "type": "string",
+                "description": "Another character (name or cross-doc Ref)."
+              },
+              "relation": {
+                "enum": [
+                  "model_base",
+                  "skeleton_base",
+                  "animation_base",
+                  "moveset_base",
+                  "code_base",
+                  "sound_reuse",
+                  "effect_reuse",
+                  "ui_reuse",
+                  "runtime_fallback",
+                  "port_of",
+                  "behavior_host",
+                  "slot_host"
+                ]
+              },
+              "extent": {
+                "type": "string"
+              },
+              "provenance": {
+                "$ref": "common.schema.json#/$defs/Provenance"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "content_identity": {
+          "description": "Stable content hashes used by hosts to name the character across installs (the port's netplay id).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "host",
+              "value"
+            ],
+            "properties": {
+              "host": {
+                "$ref": "common.schema.json#/$defs/EngineId"
+              },
+              "algorithm": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              },
+              "covers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        },
+        "behavior_host": {
+          "description": "Where the character's behaviour (moveset, animations, sound, code) comes from when the content does not ship it - e.g. a costume/model pack that is installed over another fighter's slot and plays that fighter's moveset. 'self' = the document describes its own behaviour.",
+          "type": "object",
+          "required": [
+            "mode"
+          ],
+          "properties": {
+            "mode": {
+              "enum": [
+                "self",
+                "fixed_host",
+                "user_choice"
+              ]
+            },
+            "binding": {
+              "enum": [
+                "authored",
+                "install_time_user_choice",
+                "runtime"
+              ]
+            },
+            "candidates": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "character"
+                ],
+                "properties": {
+                  "character": {
+                    "type": "string"
+                  },
+                  "document": {
+                    "type": "string",
+                    "description": "IR document id describing the host, when one exists."
+                  },
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "common.schema.json#/$defs/IndexSpace"
+                    }
+                  },
+                  "files": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "requirements": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "known_problems": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "source": {
+                    "type": "string"
+                  },
+                  "provenance": {
+                    "$ref": "common.schema.json#/$defs/Provenance"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "missing_to_describe": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Files needed to describe the behaviour, absent from the analysed content."
+            },
+            "provenance": {
+              "$ref": "common.schema.json#/$defs/Provenance"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

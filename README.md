@@ -145,10 +145,7 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
 **Graphics and input**
 - Native D3D12 rendering at any render scale, vsync off, and an experimental uncapped frame rate.
 - About 13 ms from controller to screen, steadily.
-- GameCube adapter (plug in any time, clones supported) and any gamepad. The keyboard does not
-  play: it is hotkeys only (F9, F10, the console, and mods' own keys via `gd.key`).
-- The mouse works in every menu: point, click, right-click to go back, scroll lists. Matches
-  ignore it.
+- GameCube adapter (plug in any time, clones supported) and any gamepad.
 
 **Scripting**
 - Lua scripts and a console (the backtick key). Scripts can read the match, draw, wait on the game,
@@ -163,6 +160,24 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
 - English and Spanish; the language follows Windows by default.
 - Diagnostics tab, short logs, and crash reports with your Windows user name removed. Optional crash
   report upload, off by default; nothing is ever sent automatically.
+
+### New since 0.1.4 (next release)
+
+- **The keyboard is hotkeys only.** It no longer plays: controllers play, and the keyboard keeps
+  F9, F10, the console and mods' own keys (`gd.key`).
+- **"Connect a controller":** a window with no controller shows a notice instead of sitting there
+  unplayable.
+- **The mouse works in every menu:** point, click, right-click to go back, scroll lists. Matches
+  ignore it, and scripts can read it with `gd.mouse`.
+- **Items no longer hitch** when they first spawn: their GPU pipelines are compiled in parallel and
+  prewarmed at match load.
+- **Crash fixes:** m-ex fighters whose motion tables or model part trees are shorter than the
+  engine assumed, m-ex costume data (`MEX_GetData`), and the stage select's name model outliving
+  its scene.
+- **Bit-exact with the console:** matrix maths now rounds exactly like the GameCube's paired-single
+  instructions, and six real console replays (Slippi `.slp`) play back matching to the bit, frame
+  by frame: action, position, facing, percent, stocks and the RNG.
+- **The Geno engine and the LAB mode** (below).
 
 ## Screenshots
 
@@ -195,12 +210,57 @@ All captured from the running port (1280x960 window unless noted).
   </tr>
 </table>
 
-## Coming soon: the Geno engine
+## The Geno engine
 
-Native fighter extensions beyond m-ex: new action states, new moves and behaviours, defined per
-fighter in data. It stays 100% m-ex compatible and is opt-in per fighter, and everything it adds is
-rollback-safe. It comes with the **Geno Lab**, a frame-data lab with hitbox and hurtbox overlays,
-frame stepping and step-back, and a timeline.
+**Geno** is the port's own layer for fighter content that m-ex can't express. A fighter opts in
+through a `geno.json` next to its m-ex files; a fighter without one runs exactly as m-ex defines it,
+so Geno stays 100% m-ex compatible. Everything it adds lives in the rollback snapshot and is
+deterministic, so it works online. Geno adds *character* abilities inside Melee's rules: it never
+changes Melee's physics, hitstun, knockback, air dodge or ledge rules.
+
+- **v0, the foundation:** a registry with stable ids (salted into the netplay handshake), a
+  per-fighter state block, a script escape in the fighter's own move scripts (variables, if/else,
+  calls), attribute overrides, and multi-jump past Melee's table.
+- **v1, script features:** script overlays for any subaction, engine values (read, write and
+  test), change-action with Brawl-style requirements, rehit, autolink, special-attribute overrides
+  and on-land handlers.
+- **v2, action states:** brand-new action states with native behaviours: glide, and Brawl-style
+  specials such as Mach Tornado and Drill Rush.
+- **v3, root motion:** states that follow their animation's root motion on the ground and in the
+  air, hidden and intangible values (Dimensional Cape), and Drill Rush rebuilt from Brawl's own code.
+- **v4, the model follows the move:** the model pitches with a drill and spins at a tornado's spin
+  rate.
+
+The full reference is [`docs/geno.md`](https://github.com/GurekamDhillon/melee/blob/pc-port/docs/geno.md)
+in the melee fork.
+
+### LAB, the frame-data lab
+
+**SOLO > LAB** is a game mode of its own for studying any fighter (vanilla, m-ex or Geno): any
+fighters and CPUs on any stage, KOs respawn, and the clock never runs out.
+
+- **Display modes** (hitboxes, hurtboxes, ECB, skeleton and more), a HUD drawn in the menus' own
+  style, and a full-screen **pause menu** styled after Sakurai's move-list screens.
+- **Rewind** a long way back and step frame by frame, a persistent **savestate library**, and **hot
+  reload** of a fighter's files mid-match.
+- **The state browser:** every action state the fighter has (common, special, m-ex, Geno), played
+  from neutral, looped or slowed down, with its script windows beside it.
+- **Knockback preview:** where a hitbox will send the victim, with DI, hitstun, tumble and the
+  frame it crosses a blast zone, computed by the game's own knockback code.
+- **A/B compare:** two fighters, or two versions of one, in lock-step.
+- **Frame-data export** and diff.
+- **Rollback visualiser:** see what a rollback re-simulates.
+- **Vanilla-parity checks** against real Slippi replays recorded on a console: the port plays them
+  back and compares every frame.
+
+## Ports: Halberd (Meta Knight)
+
+[`ports/halberd/`](ports/halberd/) is **Halberd**, Meta Knight ported from *Super Smash Bros.
+Brawl* as an m-ex fighter on Geno: his normals, grabs and throws, his four specials, glide, six
+jumps, and his own effects, sounds and menu art. This repository carries the **research only**:
+notes, the character IR, the conversion tools and configs. **No Nintendo assets are included**;
+rebuilding him requires your own legally obtained copies of the games. The shared character IR
+schema is in [`ports/ir/`](ports/ir/).
 
 ## Known issues
 
@@ -247,7 +307,9 @@ where most of the engineering goes (see the devlog).
 | Audio (own AX / DSP-ADPCM mixer over SDL3) | working, incl. both aux buses + AXFX reverb/delay |
 | Cutscenes (THP video, own decoder) | working |
 | Memory-card saves (GCI) | working |
-| GameCube adapter, gamepads (keyboard = hotkeys only) | working |
+| GameCube adapter, gamepads (keyboard = hotkeys only), mouse in menus | working |
+| Vanilla parity (console Slippi replays, bit-exact) | working |
+| Geno engine + LAB mode | next release |
 | Frame pacing | hard 60 Hz; experimental uncapped frame rate |
 | Rollback netplay + competitive lobby | public test |
 | Slippi replay playback | working |
@@ -268,6 +330,7 @@ _build/               Windows build scripts (Aurora, per-TU pipeline, link, run)
 tools/port/           build.sh (build + bridge fixpoint), run.sh (sandboxed runs)
 tools/release/        the launcher, release build/check/publish scripts, release notes
 tools/netplay/        the matchmaking server and netplay test drivers
+ports/               fighter ports (research only, no assets): halberd/ (Meta Knight), ir/ (character IR)
 DEPENDENCIES.md       every third-party component, its version/pin, and its licence
 ```
 
@@ -293,6 +356,9 @@ short:
 - **No copyrighted material is included.** You must supply your own legally dumped ISO of
   *Super Smash Bros. Melee* (NTSC 1.02). No ROM, no game assets and no Nintendo SDK code are
   distributed here. The screenshots show the port running on the author's own discs.
+- **Ports carry research only.** `ports/` holds notes, tools and configs, never game files; a port
+  such as Halberd is built locally from your own legally obtained copy of the source game
+  (*Super Smash Bros. Brawl*), and `.gitignore` keeps every built asset out of the repository.
 - Not affiliated with, endorsed by or sponsored by Nintendo. *Super Smash Bros.* and *Melee* are
   trademarks of Nintendo.
 - The underlying decompilation is a pre-existing, openly published, research-oriented effort.

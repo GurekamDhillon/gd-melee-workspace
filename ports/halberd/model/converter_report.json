@@ -1,0 +1,5052 @@
+{
+ "files": {
+  "costumes": {
+   "Nr": "PlBmNr.dat",
+   "Ye": "PlBmYe.dat",
+   "Bu": "PlBmBu.dat",
+   "Re": "PlBmRe.dat",
+   "Gr": "PlBmGr.dat",
+   "Wh": "PlBmWh.dat"
+  },
+  "costume_source": {
+   "Nr": "FitMetaknight00",
+   "Ye": "FitMetaknight05",
+   "Bu": "FitMetaknight03",
+   "Re": "FitMetaknight01",
+   "Gr": "FitMetaknight02",
+   "Wh": "FitMetaknight04"
+  },
+  "animations": "anim/out/PlBmAJ.dat (4930912 bytes, 268 sub-archives)",
+  "install": "model/tools/install_mk.py <mod dir> (fighter data x8/x1C/x20/x30/x34/x38/x44/x54/x58/x5C, motion table, scripts bone remap + ModelVis, PlCo parts table, MxDt costumes/anim file)"
+ },
+ "skeleton": {
+  "joint_count": 105,
+  "max_depth": 12,
+  "order": "DFS; 0..76 = FitMetaknight00 bone index; 77..103 merged cape article; 104 TransN2",
+  "fk_vs_brawllib_bind_max_err": 0.015625965720273527,
+  "joints": [
+   [
+    0,
+    "TopN",
+    -1,
+    "body"
+   ],
+   [
+    1,
+    "MantM",
+    0,
+    "body"
+   ],
+   [
+    2,
+    "TransN",
+    0,
+    "body"
+   ],
+   [
+    3,
+    "XRotN",
+    2,
+    "body"
+   ],
+   [
+    4,
+    "YRotN",
+    3,
+    "body"
+   ],
+   [
+    5,
+    "HipN",
+    4,
+    "body"
+   ],
+   [
+    6,
+    "BodyN",
+    5,
+    "body"
+   ],
+   [
+    7,
+    "BodyBN",
+    6,
+    "body"
+   ],
+   [
+    8,
+    "HeadItmN",
+    7,
+    "body"
+   ],
+   [
+    9,
+    "LShoulderN",
+    6,
+    "body"
+   ],
+   [
+    10,
+    "LShoulderArmorN",
+    9,
+    "body"
+   ],
+   [
+    11,
+    "LShoulderJ",
+    9,
+    "body"
+   ],
+   [
+    12,
+    "LArmJ",
+    11,
+    "body"
+   ],
+   [
+    13,
+    "LHandN",
+    12,
+    "body"
+   ],
+   [
+    14,
+    "L1stNa",
+    13,
+    "body"
+   ],
+   [
+    15,
+    "LHaveN",
+    13,
+    "body"
+   ],
+   [
+    16,
+    "LThumbNa",
+    13,
+    "body"
+   ],
+   [
+    17,
+    "LThumbNb",
+    16,
+    "body"
+   ],
+   [
+    18,
+    "MantbaseN",
+    6,
+    "body"
+   ],
+   [
+    19,
+    "CeriNa",
+    18,
+    "body"
+   ],
+   [
+    20,
+    "CeriNb",
+    19,
+    "body"
+   ],
+   [
+    21,
+    "CmantNa",
+    18,
+    "body"
+   ],
+   [
+    22,
+    "CmantNb",
+    21,
+    "body"
+   ],
+   [
+    23,
+    "CmantNc",
+    22,
+    "body"
+   ],
+   [
+    24,
+    "LeriNa",
+    18,
+    "body"
+   ],
+   [
+    25,
+    "LeriNb",
+    24,
+    "body"
+   ],
+   [
+    26,
+    "LmantNa",
+    18,
+    "body"
+   ],
+   [
+    27,
+    "LmantNb",
+    26,
+    "body"
+   ],
+   [
+    28,
+    "LmantNc",
+    27,
+    "body"
+   ],
+   [
+    29,
+    "ReriNa",
+    18,
+    "body"
+   ],
+   [
+    30,
+    "ReriNb",
+    29,
+    "body"
+   ],
+   [
+    31,
+    "RmantNa",
+    18,
+    "body"
+   ],
+   [
+    32,
+    "RmantNb",
+    31,
+    "body"
+   ],
+   [
+    33,
+    "RmantNc",
+    32,
+    "body"
+   ],
+   [
+    34,
+    "RShoulderN",
+    6,
+    "body"
+   ],
+   [
+    35,
+    "RShoulderArmorN",
+    34,
+    "body"
+   ],
+   [
+    36,
+    "RShoulderJ",
+    34,
+    "body"
+   ],
+   [
+    37,
+    "RArmJ",
+    36,
+    "body"
+   ],
+   [
+    38,
+    "RHandN",
+    37,
+    "body"
+   ],
+   [
+    39,
+    "R1stNa",
+    38,
+    "body"
+   ],
+   [
+    40,
+    "RHaveN",
+    38,
+    "body"
+   ],
+   [
+    41,
+    "SwordM",
+    40,
+    "body"
+   ],
+   [
+    42,
+    "RthumbNa",
+    38,
+    "body"
+   ],
+   [
+    43,
+    "RthumbNb",
+    42,
+    "body"
+   ],
+   [
+    44,
+    "WingbaseN",
+    6,
+    "body"
+   ],
+   [
+    45,
+    "LwingMNa",
+    44,
+    "body"
+   ],
+   [
+    46,
+    "LwingMNb",
+    45,
+    "body"
+   ],
+   [
+    47,
+    "LwingMNc",
+    46,
+    "body"
+   ],
+   [
+    48,
+    "LwingANa",
+    47,
+    "body"
+   ],
+   [
+    49,
+    "LwingANb",
+    48,
+    "body"
+   ],
+   [
+    50,
+    "LwingANc",
+    49,
+    "body"
+   ],
+   [
+    51,
+    "LwingBNa",
+    47,
+    "body"
+   ],
+   [
+    52,
+    "LwingBNb",
+    51,
+    "body"
+   ],
+   [
+    53,
+    "LwingBNend",
+    52,
+    "body"
+   ],
+   [
+    54,
+    "LwingCNa",
+    47,
+    "body"
+   ],
+   [
+    55,
+    "LwingCNb",
+    54,
+    "body"
+   ],
+   [
+    56,
+    "RwingMNa",
+    44,
+    "body"
+   ],
+   [
+    57,
+    "RwingMNb",
+    56,
+    "body"
+   ],
+   [
+    58,
+    "RwingMNc",
+    57,
+    "body"
+   ],
+   [
+    59,
+    "RwingANa",
+    58,
+    "body"
+   ],
+   [
+    60,
+    "RwingANb",
+    59,
+    "body"
+   ],
+   [
+    61,
+    "RwingANc",
+    60,
+    "body"
+   ],
+   [
+    62,
+    "RwingBNa",
+    58,
+    "body"
+   ],
+   [
+    63,
+    "RwingBNb",
+    62,
+    "body"
+   ],
+   [
+    64,
+    "RwingCNa",
+    58,
+    "body"
+   ],
+   [
+    65,
+    "RwingCNb",
+    64,
+    "body"
+   ],
+   [
+    66,
+    "LLegJ",
+    5,
+    "body"
+   ],
+   [
+    67,
+    "LKneeJ",
+    66,
+    "body"
+   ],
+   [
+    68,
+    "LFootJ",
+    67,
+    "body"
+   ],
+   [
+    69,
+    "LToeN",
+    68,
+    "body"
+   ],
+   [
+    70,
+    "RLegJ",
+    5,
+    "body"
+   ],
+   [
+    71,
+    "RKneeJ",
+    70,
+    "body"
+   ],
+   [
+    72,
+    "RFootJ",
+    71,
+    "body"
+   ],
+   [
+    73,
+    "RToeN",
+    72,
+    "body"
+   ],
+   [
+    74,
+    "ThrowN",
+    4,
+    "body"
+   ],
+   [
+    75,
+    "metaMantleM",
+    4,
+    "body"
+   ],
+   [
+    76,
+    "WingM",
+    0,
+    "body"
+   ],
+   [
+    77,
+    "MtHaveN",
+    0,
+    "mantle_article"
+   ],
+   [
+    78,
+    "MtRotN",
+    77,
+    "mantle_article"
+   ],
+   [
+    79,
+    "MtmantleC1H",
+    78,
+    "mantle_article"
+   ],
+   [
+    80,
+    "MtmantleC2H",
+    79,
+    "mantle_article"
+   ],
+   [
+    81,
+    "MtmantleC3H",
+    80,
+    "mantle_article"
+   ],
+   [
+    82,
+    "MtmantleC4H",
+    81,
+    "mantle_article"
+   ],
+   [
+    83,
+    "MtmantleC5H",
+    82,
+    "mantle_article"
+   ],
+   [
+    84,
+    "MtmantleC7H",
+    78,
+    "mantle_article"
+   ],
+   [
+    85,
+    "MtmantleC8H",
+    84,
+    "mantle_article"
+   ],
+   [
+    86,
+    "MtmantleCL1H",
+    78,
+    "mantle_article"
+   ],
+   [
+    87,
+    "MtmantleCL2H",
+    86,
+    "mantle_article"
+   ],
+   [
+    88,
+    "MtmantleCL3H",
+    87,
+    "mantle_article"
+   ],
+   [
+    89,
+    "MtmantleCL4H",
+    88,
+    "mantle_article"
+   ],
+   [
+    90,
+    "MtmantleL1H",
+    78,
+    "mantle_article"
+   ],
+   [
+    91,
+    "MtmantleL2H",
+    90,
+    "mantle_article"
+   ],
+   [
+    92,
+    "MtmantleL3H",
+    91,
+    "mantle_article"
+   ],
+   [
+    93,
+    "MtmantleL4H",
+    92,
+    "mantle_article"
+   ],
+   [
+    94,
+    "MtmantleL5H",
+    93,
+    "mantle_article"
+   ],
+   [
+    95,
+    "MtmantleL7H",
+    78,
+    "mantle_article"
+   ],
+   [
+    96,
+    "MtmantleL8H",
+    95,
+    "mantle_article"
+   ],
+   [
+    97,
+    "MtmantleR1H",
+    78,
+    "mantle_article"
+   ],
+   [
+    98,
+    "MtmantleR2H",
+    97,
+    "mantle_article"
+   ],
+   [
+    99,
+    "MtmantleR3H",
+    98,
+    "mantle_article"
+   ],
+   [
+    100,
+    "MtmantleR4H",
+    99,
+    "mantle_article"
+   ],
+   [
+    101,
+    "MtmantleR5H",
+    100,
+    "mantle_article"
+   ],
+   [
+    102,
+    "MtmantleR7H",
+    78,
+    "mantle_article"
+   ],
+   [
+    103,
+    "MtmantleR8H",
+    102,
+    "mantle_article"
+   ],
+   [
+    104,
+    "TransN2",
+    0,
+    "added"
+   ]
+  ]
+ },
+ "parts_table": {
+  "parts_num": 105,
+  "insert_slots_table5": null,
+  "role_to_joint": {
+   "Top": [
+    0,
+    "TopN"
+   ],
+   "Trans": [
+    2,
+    "TransN"
+   ],
+   "XRot": [
+    3,
+    "XRotN"
+   ],
+   "YRot": [
+    4,
+    "YRotN"
+   ],
+   "Hip": [
+    5,
+    "HipN"
+   ],
+   "Waist": [
+    6,
+    "BodyN"
+   ],
+   "LLegA": [
+    66,
+    "LLegJ"
+   ],
+   "LLeg": [
+    66,
+    "LLegJ"
+   ],
+   "LKnee": [
+    67,
+    "LKneeJ"
+   ],
+   "LFootA": [
+    68,
+    "LFootJ"
+   ],
+   "LFoot": [
+    68,
+    "LFootJ"
+   ],
+   "RLegA": [
+    70,
+    "RLegJ"
+   ],
+   "RLeg": [
+    70,
+    "RLegJ"
+   ],
+   "RKnee": [
+    71,
+    "RKneeJ"
+   ],
+   "RFootA": [
+    72,
+    "RFootJ"
+   ],
+   "RFoot": [
+    72,
+    "RFootJ"
+   ],
+   "WaistB": [
+    255,
+    null
+   ],
+   "Bust": [
+    255,
+    null
+   ],
+   "LClavicle": [
+    9,
+    "LShoulderN"
+   ],
+   "LShoulderA": [
+    11,
+    "LShoulderJ"
+   ],
+   "LShoulder": [
+    11,
+    "LShoulderJ"
+   ],
+   "LArm": [
+    12,
+    "LArmJ"
+   ],
+   "LHand": [
+    13,
+    "LHandN"
+   ],
+   "LIndex1": [
+    255,
+    null
+   ],
+   "LIndex2": [
+    255,
+    null
+   ],
+   "LMiddle1": [
+    255,
+    null
+   ],
+   "LMiddle2": [
+    255,
+    null
+   ],
+   "LRing1": [
+    255,
+    null
+   ],
+   "LRing2": [
+    255,
+    null
+   ],
+   "LPinky1": [
+    255,
+    null
+   ],
+   "LPinky2": [
+    255,
+    null
+   ],
+   "LHave": [
+    15,
+    "LHaveN"
+   ],
+   "LThumb1": [
+    255,
+    null
+   ],
+   "LThumb2": [
+    255,
+    null
+   ],
+   "NeckN": [
+    255,
+    null
+   ],
+   "HeadN": [
+    7,
+    "BodyBN"
+   ],
+   "RClavicle": [
+    34,
+    "RShoulderN"
+   ],
+   "RShoulderA": [
+    36,
+    "RShoulderJ"
+   ],
+   "RShoulder": [
+    36,
+    "RShoulderJ"
+   ],
+   "RArm": [
+    37,
+    "RArmJ"
+   ],
+   "RHand": [
+    38,
+    "RHandN"
+   ],
+   "RIndex1": [
+    255,
+    null
+   ],
+   "RIndex2": [
+    255,
+    null
+   ],
+   "RMiddle1": [
+    255,
+    null
+   ],
+   "RMiddle2": [
+    255,
+    null
+   ],
+   "RRing1": [
+    255,
+    null
+   ],
+   "RRing2": [
+    255,
+    null
+   ],
+   "RPinky1": [
+    255,
+    null
+   ],
+   "RPinky2": [
+    255,
+    null
+   ],
+   "RHave": [
+    40,
+    "RHaveN"
+   ],
+   "RThumb1": [
+    255,
+    null
+   ],
+   "RThumb2": [
+    255,
+    null
+   ],
+   "Throw": [
+    74,
+    "ThrowN"
+   ],
+   "Extra": [
+    104,
+    "TransN2"
+   ]
+  },
+  "joint_to_role": {
+   "TopN": "Top",
+   "TransN": "Trans",
+   "XRotN": "XRot",
+   "YRotN": "YRot",
+   "HipN": "Hip",
+   "BodyN": "Waist",
+   "BodyBN": "HeadN",
+   "LShoulderN": "LClavicle",
+   "LShoulderJ": "LShoulder",
+   "LArmJ": "LArm",
+   "LHandN": "LHand",
+   "LHaveN": "LHave",
+   "RShoulderN": "RClavicle",
+   "RShoulderJ": "RShoulder",
+   "RArmJ": "RArm",
+   "RHandN": "RHand",
+   "RHaveN": "RHave",
+   "LLegJ": "LLeg",
+   "LKneeJ": "LKnee",
+   "LFootJ": "LFoot",
+   "RLegJ": "RLeg",
+   "RKneeJ": "RKnee",
+   "RFootJ": "RFoot",
+   "ThrowN": "Throw",
+   "TransN2": "Extra"
+  }
+ },
+ "model": {
+  "dobjs": [
+   {
+    "dobj": 0,
+    "obj": "polygon0",
+    "group": "body",
+    "material": "armer_line",
+    "texture": "metaknight_body",
+    "fmt": "CMP",
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "tris": 1504,
+    "pobjs": 24
+   },
+   {
+    "dobj": 1,
+    "obj": "polygon1",
+    "group": "body",
+    "material": "armer",
+    "texture": "metaknight_body",
+    "fmt": "CMP",
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "tris": 252,
+    "pobjs": 1
+   },
+   {
+    "dobj": 2,
+    "obj": "polygon4",
+    "group": "body",
+    "material": "armer_line",
+    "texture": "metaknight_body",
+    "fmt": "CMP",
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "tris": 616,
+    "pobjs": 1
+   },
+   {
+    "dobj": 3,
+    "obj": "polygon5",
+    "group": "body",
+    "material": "medama",
+    "texture": "metaknight_body",
+    "fmt": "CMP",
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "tris": 26,
+    "pobjs": 1
+   },
+   {
+    "dobj": 4,
+    "obj": "polygon7",
+    "group": "body",
+    "material": "shoe",
+    "texture": "metaknight_foot",
+    "fmt": "CMP",
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "tris": 664,
+    "pobjs": 4
+   },
+   {
+    "dobj": 5,
+    "obj": "polygon10",
+    "group": "body",
+    "material": "mask",
+    "texture": "metaknight_body",
+    "fmt": "CMP",
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "tris": 418,
+    "pobjs": 1
+   },
+   {
+    "dobj": 6,
+    "obj": "polygon16",
+    "group": "body",
+    "material": "nuki",
+    "texture": "nuki",
+    "fmt": "RGBA8",
+    "cull": "Cull_Inside",
+    "xlu": true,
+    "tris": 16,
+    "pobjs": 1
+   },
+   {
+    "dobj": 7,
+    "obj": "polygon12",
+    "group": "sword",
+    "material": "Sword_M",
+    "texture": "metaknight_wing",
+    "fmt": "CMP",
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "tris": 758,
+    "pobjs": 1
+   },
+   {
+    "dobj": 8,
+    "obj": "polygon13",
+    "group": "sword",
+    "material": "kenn_akai",
+    "texture": "metaknight_wing",
+    "fmt": "CMP",
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "tris": 80,
+    "pobjs": 1
+   },
+   {
+    "dobj": 9,
+    "obj": "polygon15",
+    "group": "mantle_ball",
+    "material": "metaMantleMT",
+    "texture": "metaknight_mantle",
+    "fmt": "CMP",
+    "cull": "Cull_None",
+    "xlu": false,
+    "tris": 974,
+    "pobjs": 1
+   },
+   {
+    "dobj": 10,
+    "obj": "polygon8",
+    "group": "closed_cape",
+    "material": "Sword_M",
+    "texture": "metaknight_wing",
+    "fmt": "CMP",
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "tris": 768,
+    "pobjs": 52
+   },
+   {
+    "dobj": 11,
+    "obj": "polygon17",
+    "group": "wings",
+    "material": "Sword_M",
+    "texture": "metaknight_wing",
+    "fmt": "CMP",
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "tris": 706,
+    "pobjs": 34
+   },
+   {
+    "dobj": 12,
+    "obj": "polygon18",
+    "group": "wings",
+    "material": "armer_line",
+    "texture": "metaknight_body",
+    "fmt": "CMP",
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "tris": 80,
+    "pobjs": 1
+   },
+   {
+    "dobj": 13,
+    "obj": "polygon0",
+    "group": "article_cape",
+    "material": "model_wing",
+    "texture": "metaknight_wing",
+    "fmt": "CMP",
+    "cull": "Cull_Inside",
+    "xlu": false,
+    "tris": 768,
+    "pobjs": 58
+   }
+  ],
+  "visibility": {
+   "model 0 (cape, Brawl BoneSwitch2)": {
+    "0": "closed cape: DObj 10",
+    "1": "wings: DObjs 11, 12",
+    "2": "merged cape article: DObj 13"
+   },
+   "model 1 (body, Brawl BoneSwitch1)": {
+    "0": "body: DObjs 0-6",
+    "1": "mantle ball: DObj 9"
+   },
+   "always drawn": "sword DObjs 7, 8",
+   "metal": "no metal twin meshes: Melee swaps every MObj for its metal material; the table's metal-main column = the normal lists, the metal-parts column is empty"
+  },
+  "checks": {
+   "Nr": {
+    "verify": "joints 105 ibm_vs_fk_max_err 3.81E-006 dobjs 14 verts 11856 worst_bbox_err 0.0000",
+    "ok": true,
+    "cos_py": {
+     "bytes": 681492,
+     "publics": [
+      "PlyMetaknight5K_Share_joint",
+      "PlyMetaknight5K_Share_matanim_joint"
+     ],
+     "joints": 105,
+     "dobjs": 14,
+     "pobjs": 181,
+     "pobj_types": {
+      "2": 181
+     },
+     "max_env_per_pobj": 10,
+     "images": 8,
+     "formats": {
+      "CMPR": 4,
+      "RGB565": 2,
+      "CI8": 1,
+      "RGBA8": 1
+     }
+    }
+   },
+   "Ye": {
+    "verify": "joints 105 ibm_vs_fk_max_err 3.81E-006 dobjs 14 verts 11856 worst_bbox_err 0.0000",
+    "ok": true,
+    "cos_py": {
+     "bytes": 681492,
+     "publics": [
+      "PlyMetaknight5K_Share_joint",
+      "PlyMetaknight5K_Share_matanim_joint"
+     ],
+     "joints": 105,
+     "dobjs": 14,
+     "pobjs": 181,
+     "pobj_types": {
+      "2": 181
+     },
+     "max_env_per_pobj": 10,
+     "images": 8,
+     "formats": {
+      "CMPR": 4,
+      "RGB565": 2,
+      "CI8": 1,
+      "RGBA8": 1
+     }
+    }
+   },
+   "Bu": {
+    "verify": "joints 105 ibm_vs_fk_max_err 3.81E-006 dobjs 14 verts 11856 worst_bbox_err 0.0000",
+    "ok": true,
+    "cos_py": {
+     "bytes": 681492,
+     "publics": [
+      "PlyMetaknight5K_Share_joint",
+      "PlyMetaknight5K_Share_matanim_joint"
+     ],
+     "joints": 105,
+     "dobjs": 14,
+     "pobjs": 181,
+     "pobj_types": {
+      "2": 181
+     },
+     "max_env_per_pobj": 10,
+     "images": 8,
+     "formats": {
+      "CMPR": 4,
+      "RGB565": 2,
+      "CI8": 1,
+      "RGBA8": 1
+     }
+    }
+   },
+   "Re": {
+    "verify": "joints 105 ibm_vs_fk_max_err 3.81E-006 dobjs 14 verts 11856 worst_bbox_err 0.0000",
+    "ok": true,
+    "cos_py": {
+     "bytes": 681492,
+     "publics": [
+      "PlyMetaknight5K_Share_joint",
+      "PlyMetaknight5K_Share_matanim_joint"
+     ],
+     "joints": 105,
+     "dobjs": 14,
+     "pobjs": 181,
+     "pobj_types": {
+      "2": 181
+     },
+     "max_env_per_pobj": 10,
+     "images": 8,
+     "formats": {
+      "CMPR": 4,
+      "RGB565": 2,
+      "CI8": 1,
+      "RGBA8": 1
+     }
+    }
+   },
+   "Gr": {
+    "verify": "joints 105 ibm_vs_fk_max_err 3.81E-006 dobjs 14 verts 11856 worst_bbox_err 0.0000",
+    "ok": true,
+    "cos_py": {
+     "bytes": 681492,
+     "publics": [
+      "PlyMetaknight5K_Share_joint",
+      "PlyMetaknight5K_Share_matanim_joint"
+     ],
+     "joints": 105,
+     "dobjs": 14,
+     "pobjs": 181,
+     "pobj_types": {
+      "2": 181
+     },
+     "max_env_per_pobj": 10,
+     "images": 8,
+     "formats": {
+      "CMPR": 4,
+      "RGB565": 2,
+      "CI8": 1,
+      "RGBA8": 1
+     }
+    }
+   },
+   "Wh": {
+    "verify": "joints 105 ibm_vs_fk_max_err 3.81E-006 dobjs 14 verts 11856 worst_bbox_err 0.0000",
+    "ok": true,
+    "cos_py": {
+     "bytes": 681492,
+     "publics": [
+      "PlyMetaknight5K_Share_joint",
+      "PlyMetaknight5K_Share_matanim_joint"
+     ],
+     "joints": 105,
+     "dobjs": 14,
+     "pobjs": 181,
+     "pobj_types": {
+      "2": 181
+     },
+     "max_env_per_pobj": 10,
+     "images": 8,
+     "formats": {
+      "CMPR": 4,
+      "RGB565": 2,
+      "CI8": 1,
+      "RGBA8": 1
+     }
+    }
+   }
+  },
+  "mesh_stats": {
+   "tris": 7630,
+   "verts_trimmed": 24,
+   "max_weight_dropped": 0.06,
+   "max_infl_in": 5
+  }
+ },
+ "animations": {
+  "brawl_clips": 331,
+  "brawl_clips_converted": 241,
+  "converted_by_kind": {
+   "common": 206,
+   "jump": 5,
+   "special": 24,
+   "glide": 6
+  },
+  "sub_archives": 268,
+  "rows_pointed": 433,
+  "rows_on_fallback_pose": 152,
+  "rows_without_animation": 46,
+  "failed": [],
+  "skipped": [
+   "EntryL",
+   "EntryR",
+   "FinalAirEndL",
+   "FinalAirEndR",
+   "FinalAirStart",
+   "FinalEndL",
+   "FinalEndR",
+   "FinalStart",
+   "GekikaraWait",
+   "ItemAssist",
+   "ItemBig",
+   "ItemDragoonGet",
+   "ItemDragoonRide",
+   "ItemHammerAir",
+   "ItemHandGrip",
+   "ItemHandHave",
+   "ItemHandPickUp",
+   "ItemHandSmash",
+   "ItemLauncher",
+   "ItemLauncherAirFire",
+   "ItemLauncherFall",
+   "ItemLauncherFire",
+   "ItemLegsBrakeB",
+   "ItemLegsBrakeF",
+   "ItemLegsDashB",
+   "ItemLegsDashF",
+   "ItemLegsFastB",
+   "ItemLegsFastF",
+   "ItemLegsJumpSquat",
+   "ItemLegsLanding",
+   "ItemLegsMiddleB",
+   "ItemLegsMiddleF",
+   "ItemLegsSlowB",
+   "ItemLegsSlowF",
+   "ItemLegsWait",
+   "ItemSmall",
+   "LadderCatchAirL",
+   "LadderCatchAirR",
+   "LadderCatchEndL",
+   "LadderCatchEndR",
+   "LadderCatchL",
+   "LadderCatchR",
+   "LadderDown",
+   "LadderUp",
+   "LadderWait",
+   "LightEat",
+   "LightWalkEat",
+   "LightWalkGet",
+   "Lose",
+   "Slip",
+   "SlipAttack",
+   "SlipDash",
+   "SlipDown",
+   "SlipEscapeB",
+   "SlipEscapeF",
+   "SlipStand",
+   "SlipTurn",
+   "SlipWait",
+   "SmashThrowAirB",
+   "SmashThrowAirF",
+   "SmashThrowAirHi",
+   "SmashThrowAirLw",
+   "SmashThrowB",
+   "SmashThrowDash",
+   "SmashThrowF",
+   "SmashThrowHi",
+   "SmashThrowLw",
+   "StepAirPose",
+   "StepBack",
+   "StepFall",
+   "StepJump",
+   "Swim",
+   "SwimDrown",
+   "SwimDrownOut",
+   "SwimEnd",
+   "SwimF",
+   "SwimRise",
+   "SwimTurn",
+   "SwimUp",
+   "SwimUpDamage",
+   "ThrownDxB",
+   "ThrownDxF",
+   "ThrownDxHi",
+   "ThrownDxLw",
+   "Win1",
+   "Win1Wait",
+   "Win2",
+   "Win2Wait",
+   "Win3",
+   "Win3Wait"
+  ],
+  "skipped_why": "no Melee state (ladder/swim/Final Smash/Brawl-only item, tripping, footstool, result screen / entrance: those use the fighter demo files, not this AJ)",
+  "max_track_error": 0.00194,
+  "dense_tracks": 27,
+  "largest_tree_bytes": 48158,
+  "trees_over_retail_0x8000": [
+   "AppealHi",
+   "GlideWing"
+  ],
+  "row_map": [
+   {
+    "rows": [
+     0
+    ],
+    "clip": "WallDamage",
+    "frames": 41,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     1,
+     29,
+     137,
+     287
+    ],
+    "clip": "DamageFall",
+    "frames": 31,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     2
+    ],
+    "clip": "Wait1",
+    "frames": 270,
+    "kirby_frames": 110.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     3
+    ],
+    "clip": "Wait2",
+    "frames": 60,
+    "kirby_frames": 90.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     6
+    ],
+    "clip": "WaitItem",
+    "frames": 270,
+    "kirby_frames": 110.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     7
+    ],
+    "clip": "WalkSlow",
+    "frames": 33,
+    "kirby_frames": 45.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     8
+    ],
+    "clip": "WalkMiddle",
+    "frames": 25,
+    "kirby_frames": 45.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     9
+    ],
+    "clip": "WalkFast",
+    "frames": 21,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     10
+    ],
+    "clip": "Turn",
+    "frames": 12,
+    "kirby_frames": 12.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     11
+    ],
+    "clip": "TurnRun",
+    "frames": 30,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     12
+    ],
+    "clip": "Dash",
+    "frames": 30,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     13
+    ],
+    "clip": "Run",
+    "frames": 31,
+    "kirby_frames": 20.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     14
+    ],
+    "clip": "RunBrake",
+    "frames": 26,
+    "kirby_frames": 23.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     15
+    ],
+    "clip": "JumpSquat",
+    "frames": 5,
+    "kirby_frames": 30.0,
+    "note": "row 15 (Kneebend) shares the Melee Landing figatree; gets Brawl JumpSquat"
+   },
+   {
+    "rows": [
+     16
+    ],
+    "clip": "JumpF",
+    "frames": 44,
+    "kirby_frames": 52.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     17
+    ],
+    "clip": "JumpB",
+    "frames": 41,
+    "kirby_frames": 52.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     20
+    ],
+    "clip": "Fall",
+    "frames": 49,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     21
+    ],
+    "clip": "FallF",
+    "frames": 48,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     22
+    ],
+    "clip": "FallB",
+    "frames": 49,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     23
+    ],
+    "clip": "FallAerial",
+    "frames": 49,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     24
+    ],
+    "clip": "FallAerialF",
+    "frames": 49,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     25
+    ],
+    "clip": "FallAerialB",
+    "frames": 49,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     26
+    ],
+    "clip": "FallSpecial",
+    "frames": 5,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     27
+    ],
+    "clip": "FallSpecialF",
+    "frames": 5,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     28
+    ],
+    "clip": "FallSpecialB",
+    "frames": 6,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     30
+    ],
+    "clip": "Squat",
+    "frames": 8,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     31
+    ],
+    "clip": "SquatWait",
+    "frames": 46,
+    "kirby_frames": 40.0,
+    "note": "alias SquatWait1 -> Brawl SquatWait"
+   },
+   {
+    "rows": [
+     32
+    ],
+    "clip": "SquatWait",
+    "frames": 46,
+    "kirby_frames": 60.0,
+    "note": "no SquatWait2: SquatWait"
+   },
+   {
+    "rows": [
+     33
+    ],
+    "clip": "SquatWaitItem",
+    "frames": 46,
+    "kirby_frames": 40.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     34
+    ],
+    "clip": "SquatRv",
+    "frames": 8,
+    "kirby_frames": 10.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     35
+    ],
+    "clip": "LandingHeavy",
+    "frames": 31,
+    "kirby_frames": 30.0,
+    "note": "row 35 (Landing) shares the Melee Landing figatree; gets Brawl LandingHeavy"
+   },
+   {
+    "rows": [
+     36
+    ],
+    "clip": "LandingFallSpecial",
+    "frames": 31,
+    "kirby_frames": 30.0,
+    "note": "row 36 (LandingFallSpecial) shares the Melee Landing figatree; gets Brawl LandingFallSpecial"
+   },
+   {
+    "rows": [
+     37
+    ],
+    "clip": "GuardOn",
+    "frames": 8,
+    "kirby_frames": 7.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     38
+    ],
+    "clip": "Guard",
+    "frames": 360,
+    "kirby_frames": 370.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     39
+    ],
+    "clip": "GuardOff",
+    "frames": 16,
+    "kirby_frames": 15.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     40
+    ],
+    "clip": "GuardDamage",
+    "frames": 21,
+    "kirby_frames": 20.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     41
+    ],
+    "clip": "EscapeN",
+    "frames": 32,
+    "kirby_frames": 23.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     42
+    ],
+    "clip": "EscapeF",
+    "frames": 24,
+    "kirby_frames": 32.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     43
+    ],
+    "clip": "EscapeB",
+    "frames": 34,
+    "kirby_frames": 32.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     44
+    ],
+    "clip": "EscapeAir",
+    "frames": 40,
+    "kirby_frames": 50.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     45
+    ],
+    "clip": "Rebound",
+    "frames": 31,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     46
+    ],
+    "clip": "Attack100Start",
+    "frames": 6,
+    "kirby_frames": 18.0,
+    "note": "MK has no single jab (Brawl slots 0x48-0x4A empty): Attack11 plays the rapid-jab start"
+   },
+   {
+    "rows": [
+     47
+    ],
+    "clip": "Attack100Start",
+    "frames": 6,
+    "kirby_frames": 20.0,
+    "note": "no Attack12 either: rapid-jab start"
+   },
+   {
+    "rows": [
+     49
+    ],
+    "clip": "Attack100Start",
+    "frames": 6,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     50
+    ],
+    "clip": "Attack100",
+    "frames": 22,
+    "kirby_frames": 20.0,
+    "note": "Brawl loop clip 21f vs Melee 20f"
+   },
+   {
+    "rows": [
+     51
+    ],
+    "clip": "AttackEnd",
+    "frames": 12,
+    "kirby_frames": 10.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     52
+    ],
+    "clip": "AttackDash",
+    "frames": 32,
+    "kirby_frames": 64.0,
+    "note": "Brawl 55f vs Melee 64f"
+   },
+   {
+    "rows": [
+     53
+    ],
+    "clip": "AttackS3S",
+    "frames": 24,
+    "kirby_frames": 33.0,
+    "note": "MK has no angled forward tilt: AttackS3Hi = AttackS3S"
+   },
+   {
+    "rows": [
+     55
+    ],
+    "clip": "AttackS3S",
+    "frames": 24,
+    "kirby_frames": 33.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     57
+    ],
+    "clip": "AttackS3S",
+    "frames": 24,
+    "kirby_frames": 33.0,
+    "note": "MK has no angled forward tilt: AttackS3Lw = AttackS3S"
+   },
+   {
+    "rows": [
+     58
+    ],
+    "clip": "AttackHi3",
+    "frames": 36,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     59
+    ],
+    "clip": "AttackLw3",
+    "frames": 26,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     60
+    ],
+    "clip": "AttackS4Start+AttackS4S",
+    "frames": 43,
+    "kirby_frames": 50.0,
+    "note": "no angled forward smash: AttackS4Hi = AttackS4S. Brawl Start + attack clips joined; the Melee script's SmashCharge frame must equal the Start length (21) or the charge pose freezes mid-swing"
+   },
+   {
+    "rows": [
+     62
+    ],
+    "clip": "AttackS4Start+AttackS4S",
+    "frames": 43,
+    "kirby_frames": 50.0,
+    "note": "Brawl Start + attack clips joined; the Melee script's SmashCharge frame must equal the Start length (21) or the charge pose freezes mid-swing"
+   },
+   {
+    "rows": [
+     64
+    ],
+    "clip": "AttackS4Start+AttackS4S",
+    "frames": 43,
+    "kirby_frames": 50.0,
+    "note": "no angled forward smash: AttackS4Lw = AttackS4S. Brawl Start + attack clips joined; the Melee script's SmashCharge frame must equal the Start length (21) or the charge pose freezes mid-swing"
+   },
+   {
+    "rows": [
+     66
+    ],
+    "clip": "AttackHi4Start+AttackHi4",
+    "frames": 51,
+    "kirby_frames": 50.0,
+    "note": "Brawl Start + attack clips joined; the Melee script's SmashCharge frame must equal the Start length (4) or the charge pose freezes mid-swing"
+   },
+   {
+    "rows": [
+     67
+    ],
+    "clip": "AttackLw4Start+AttackLw4",
+    "frames": 35,
+    "kirby_frames": 56.0,
+    "note": "Brawl Start + attack clips joined; the Melee script's SmashCharge frame must equal the Start length (1) or the charge pose freezes mid-swing"
+   },
+   {
+    "rows": [
+     68
+    ],
+    "clip": "AttackAirN",
+    "frames": 48,
+    "kirby_frames": 80.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     69
+    ],
+    "clip": "AttackAirF",
+    "frames": 40,
+    "kirby_frames": 50.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     70
+    ],
+    "clip": "AttackAirB",
+    "frames": 48,
+    "kirby_frames": 44.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     71
+    ],
+    "clip": "AttackAirHi",
+    "frames": 24,
+    "kirby_frames": 40.0,
+    "note": "aerial now lasts 48f (Melee 40f): action ends on anim end"
+   },
+   {
+    "rows": [
+     72
+    ],
+    "clip": "AttackAirLw",
+    "frames": 26,
+    "kirby_frames": 60.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     73
+    ],
+    "clip": "LandingAirN",
+    "frames": 36,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     74
+    ],
+    "clip": "LandingAirF",
+    "frames": 31,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     75
+    ],
+    "clip": "LandingAirB",
+    "frames": 31,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     76
+    ],
+    "clip": "LandingAirHi",
+    "frames": 31,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     77
+    ],
+    "clip": "LandingAirLw",
+    "frames": 31,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     78
+    ],
+    "clip": "LightGet",
+    "frames": 8,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     79
+    ],
+    "clip": "LightThrowF",
+    "frames": 33,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     80
+    ],
+    "clip": "LightThrowB",
+    "frames": 33,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     81
+    ],
+    "clip": "LightThrowHi",
+    "frames": 32,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     82,
+     99
+    ],
+    "clip": "LightThrowLw",
+    "frames": 28,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     83
+    ],
+    "clip": "LightThrowDash",
+    "frames": 44,
+    "kirby_frames": 40.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     84
+    ],
+    "clip": "LightThrowDrop",
+    "frames": 28,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     85,
+     100
+    ],
+    "clip": "LightThrowAirF",
+    "frames": 31,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     86,
+     101
+    ],
+    "clip": "LightThrowAirB",
+    "frames": 31,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     87,
+     102
+    ],
+    "clip": "LightThrowAirHi",
+    "frames": 30,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     88,
+     103
+    ],
+    "clip": "LightThrowAirLw",
+    "frames": 26,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     89
+    ],
+    "clip": "HeavyGet",
+    "frames": 25,
+    "kirby_frames": 34.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     90
+    ],
+    "clip": "HeavyWalk1",
+    "frames": 22,
+    "kirby_frames": 45.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     91
+    ],
+    "clip": "HeavyWalk2",
+    "frames": 22,
+    "kirby_frames": 45.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     92,
+     104
+    ],
+    "clip": "HeavyThrowF",
+    "frames": 40,
+    "kirby_frames": 40.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     93,
+     105
+    ],
+    "clip": "HeavyThrowB",
+    "frames": 40,
+    "kirby_frames": 40.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     94,
+     106
+    ],
+    "clip": "HeavyThrowHi",
+    "frames": 30,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     95,
+     107
+    ],
+    "clip": "HeavyThrowLw",
+    "frames": 30,
+    "kirby_frames": 35.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     96
+    ],
+    "clip": "LightThrowF",
+    "frames": 33,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     97
+    ],
+    "clip": "LightThrowB",
+    "frames": 33,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     98
+    ],
+    "clip": "LightThrowHi",
+    "frames": 32,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     108,
+     112,
+     116,
+     120,
+     124,
+     128
+    ],
+    "clip": "Swing1",
+    "frames": 24,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     109,
+     113,
+     117,
+     121,
+     125,
+     129
+    ],
+    "clip": "Swing3",
+    "frames": 42,
+    "kirby_frames": 42.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     110,
+     114,
+     118,
+     122,
+     126,
+     130
+    ],
+    "clip": "Swing4",
+    "frames": 54,
+    "kirby_frames": 60.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     111,
+     115,
+     119,
+     123,
+     127,
+     131
+    ],
+    "clip": "SwingDash",
+    "frames": 46,
+    "kirby_frames": 46.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     132
+    ],
+    "clip": "ItemHammerWait",
+    "frames": 16,
+    "kirby_frames": 16.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     133
+    ],
+    "clip": "ItemHammerMove",
+    "frames": 16,
+    "kirby_frames": 16.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     134
+    ],
+    "clip": "Fall",
+    "frames": 49,
+    "kirby_frames": 25.0,
+    "note": "no parasol in Brawl: Fall"
+   },
+   {
+    "rows": [
+     135,
+     136
+    ],
+    "clip": "Fall",
+    "frames": 49,
+    "kirby_frames": 80.0,
+    "note": "no parasol in Brawl: Fall"
+   },
+   {
+    "rows": [
+     138,
+     140,
+     142
+    ],
+    "clip": "ItemShoot",
+    "frames": 25,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     139,
+     141,
+     143
+    ],
+    "clip": "ItemShootAir",
+    "frames": 25,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     144
+    ],
+    "clip": "ItemScrew",
+    "frames": 41,
+    "kirby_frames": 40.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     145
+    ],
+    "clip": "ItemScrew",
+    "frames": 41,
+    "kirby_frames": 40.0,
+    "note": "no air screw clip: ItemScrew"
+   },
+   {
+    "rows": [
+     146,
+     147
+    ],
+    "clip": "ItemScrewFall",
+    "frames": 81,
+    "kirby_frames": 40.0,
+    "note": "ItemScrewDamage -> ItemScrewFall"
+   },
+   {
+    "rows": [
+     148
+    ],
+    "clip": "FuraFura",
+    "frames": 140,
+    "kirby_frames": 331.0,
+    "note": "ItemBlind (no Brawl clip): FuraFura"
+   },
+   {
+    "rows": [
+     149,
+     157
+    ],
+    "clip": "ItemScopeStart",
+    "frames": 16,
+    "kirby_frames": 16.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     150,
+     158
+    ],
+    "clip": "ItemScopeRapid",
+    "frames": 8,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     151,
+     159
+    ],
+    "clip": "ItemScopeFire",
+    "frames": 31,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     152,
+     160
+    ],
+    "clip": "ItemScopeEnd",
+    "frames": 21,
+    "kirby_frames": 20.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     153,
+     161
+    ],
+    "clip": "ItemScopeAirStart",
+    "frames": 16,
+    "kirby_frames": 16.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     154,
+     162
+    ],
+    "clip": "ItemScopeAirRapid",
+    "frames": 8,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     155,
+     163
+    ],
+    "clip": "ItemScopeAirFire",
+    "frames": 31,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     156,
+     164
+    ],
+    "clip": "ItemScopeAirEnd",
+    "frames": 21,
+    "kirby_frames": 20.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     165
+    ],
+    "clip": "DamageHi1",
+    "frames": 12,
+    "kirby_frames": 12.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     166
+    ],
+    "clip": "DamageHi2",
+    "frames": 24,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     167
+    ],
+    "clip": "DamageHi3",
+    "frames": 30,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     168
+    ],
+    "clip": "DamageN1",
+    "frames": 12,
+    "kirby_frames": 12.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     169
+    ],
+    "clip": "DamageN2",
+    "frames": 24,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     170
+    ],
+    "clip": "DamageN3",
+    "frames": 30,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     171
+    ],
+    "clip": "DamageLw1",
+    "frames": 12,
+    "kirby_frames": 12.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     172
+    ],
+    "clip": "DamageLw2",
+    "frames": 24,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     173
+    ],
+    "clip": "DamageLw3",
+    "frames": 42,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     174
+    ],
+    "clip": "DamageAir1",
+    "frames": 12,
+    "kirby_frames": 12.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     175
+    ],
+    "clip": "DamageAir2",
+    "frames": 24,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     176
+    ],
+    "clip": "DamageAir3",
+    "frames": 30,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     177
+    ],
+    "clip": "DamageFlyHi",
+    "frames": 37,
+    "kirby_frames": 60.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     178
+    ],
+    "clip": "DamageFlyN",
+    "frames": 37,
+    "kirby_frames": 60.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     179
+    ],
+    "clip": "DamageFlyLw",
+    "frames": 37,
+    "kirby_frames": 60.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     180,
+     286
+    ],
+    "clip": "DamageFlyTop",
+    "frames": 81,
+    "kirby_frames": 84.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     181
+    ],
+    "clip": "DamageFlyRoll",
+    "frames": 17,
+    "kirby_frames": 16.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     183,
+     288
+    ],
+    "clip": "DownBoundU",
+    "frames": 27,
+    "kirby_frames": 26.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     184
+    ],
+    "clip": "DownWaitU",
+    "frames": 70,
+    "kirby_frames": 60.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     185
+    ],
+    "clip": "DownDamageU",
+    "frames": 14,
+    "kirby_frames": 14.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     186,
+     290
+    ],
+    "clip": "DownStandU",
+    "frames": 30,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     187
+    ],
+    "clip": "DownAttackU",
+    "frames": 50,
+    "kirby_frames": 50.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     188
+    ],
+    "clip": "DownForwardU",
+    "frames": 36,
+    "kirby_frames": 36.0,
+    "note": "alias DownFowardU -> Brawl DownForwardU"
+   },
+   {
+    "rows": [
+     189
+    ],
+    "clip": "DownBackU",
+    "frames": 36,
+    "kirby_frames": 36.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     190
+    ],
+    "clip": "DownSpotU",
+    "frames": 30,
+    "kirby_frames": 20.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     191,
+     289
+    ],
+    "clip": "DownBoundD",
+    "frames": 27,
+    "kirby_frames": 26.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     192
+    ],
+    "clip": "DownWaitD",
+    "frames": 81,
+    "kirby_frames": 75.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     193
+    ],
+    "clip": "DownDamageD",
+    "frames": 14,
+    "kirby_frames": 14.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     194,
+     291
+    ],
+    "clip": "DownStandD",
+    "frames": 30,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     195
+    ],
+    "clip": "DownAttackD",
+    "frames": 50,
+    "kirby_frames": 50.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     196
+    ],
+    "clip": "DownForwardD",
+    "frames": 36,
+    "kirby_frames": 36.0,
+    "note": "alias DownFowardD -> Brawl DownForwardD"
+   },
+   {
+    "rows": [
+     197
+    ],
+    "clip": "DownBackD",
+    "frames": 36,
+    "kirby_frames": 36.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     199
+    ],
+    "clip": "Passive",
+    "frames": 27,
+    "kirby_frames": 26.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     200
+    ],
+    "clip": "PassiveStandF",
+    "frames": 41,
+    "kirby_frames": 40.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     201
+    ],
+    "clip": "PassiveStandB",
+    "frames": 41,
+    "kirby_frames": 40.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     202
+    ],
+    "clip": "PassiveWall",
+    "frames": 27,
+    "kirby_frames": 26.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     203
+    ],
+    "clip": "PassiveWallJump",
+    "frames": 41,
+    "kirby_frames": 40.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     204
+    ],
+    "clip": "PassiveCeil",
+    "frames": 27,
+    "kirby_frames": 25.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     205
+    ],
+    "clip": "FuraFura",
+    "frames": 140,
+    "kirby_frames": 100.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     206
+    ],
+    "clip": "FuraSleepStart",
+    "frames": 30,
+    "kirby_frames": 33.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     207
+    ],
+    "clip": "FuraSleepLoop",
+    "frames": 280,
+    "kirby_frames": 76.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     208
+    ],
+    "clip": "FuraSleepEnd",
+    "frames": 60,
+    "kirby_frames": 76.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     209
+    ],
+    "clip": "Pass",
+    "frames": 31,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     210
+    ],
+    "clip": "Ottotto",
+    "frames": 6,
+    "kirby_frames": 12.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     211
+    ],
+    "clip": "OttottoWait",
+    "frames": 100,
+    "kirby_frames": 63.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     212
+    ],
+    "clip": "WallDamage",
+    "frames": 41,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     213
+    ],
+    "clip": "StopWall",
+    "frames": 21,
+    "kirby_frames": 15.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     214
+    ],
+    "clip": "StopCeil",
+    "frames": 9,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     215
+    ],
+    "clip": "MissFoot",
+    "frames": 27,
+    "kirby_frames": 26.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     216
+    ],
+    "clip": "CliffCatch",
+    "frames": 21,
+    "kirby_frames": 8.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     217
+    ],
+    "clip": "CliffWait",
+    "frames": 151,
+    "kirby_frames": 60.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     219
+    ],
+    "clip": "CliffClimbSlow",
+    "frames": 60,
+    "kirby_frames": 60.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     220
+    ],
+    "clip": "CliffClimbQuick",
+    "frames": 35,
+    "kirby_frames": 34.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     221
+    ],
+    "clip": "CliffAttackSlow",
+    "frames": 70,
+    "kirby_frames": 70.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     222
+    ],
+    "clip": "CliffAttackQuick",
+    "frames": 56,
+    "kirby_frames": 56.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     223
+    ],
+    "clip": "CliffEscapeSlow",
+    "frames": 80,
+    "kirby_frames": 80.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     224
+    ],
+    "clip": "CliffEscapeQuick",
+    "frames": 50,
+    "kirby_frames": 50.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     225
+    ],
+    "clip": "CliffJumpSlow1",
+    "frames": 20,
+    "kirby_frames": 18.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     226
+    ],
+    "clip": "CliffJumpSlow2",
+    "frames": 46,
+    "kirby_frames": 31.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     227
+    ],
+    "clip": "CliffJumpQuick1",
+    "frames": 16,
+    "kirby_frames": 15.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     228
+    ],
+    "clip": "CliffJumpQuick2",
+    "frames": 25,
+    "kirby_frames": 24.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     238
+    ],
+    "clip": "Wait1",
+    "frames": 270,
+    "kirby_frames": 10.0,
+    "note": "Melee Entry is a 10f code-driven stub; MK EntryL/R (121f warp entrance) is an extra"
+   },
+   {
+    "rows": [
+     239
+    ],
+    "clip": "AppealLw",
+    "frames": 120,
+    "kirby_frames": 60.0,
+    "note": "Melee taunt = Brawl down taunt (as the Brawl Kirby port)"
+   },
+   {
+    "rows": [
+     240
+    ],
+    "clip": "AppealLw",
+    "frames": 120,
+    "kirby_frames": 60.0,
+    "note": "Melee taunt = Brawl down taunt (as the Brawl Kirby port)"
+   },
+   {
+    "rows": [
+     242
+    ],
+    "clip": "Catch",
+    "frames": 30,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     243
+    ],
+    "clip": "CatchDash",
+    "frames": 40,
+    "kirby_frames": 40.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     244
+    ],
+    "clip": "CatchWait",
+    "frames": 75,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     245
+    ],
+    "clip": "CatchAttack",
+    "frames": 24,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     246
+    ],
+    "clip": "CatchCut",
+    "frames": 30,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     247
+    ],
+    "clip": "ThrowF",
+    "frames": 28,
+    "kirby_frames": 62.0,
+    "note": "Throw joint (44) animation now Brawl's: victim path follows Brawl"
+   },
+   {
+    "rows": [
+     248
+    ],
+    "clip": "ThrowB",
+    "frames": 35,
+    "kirby_frames": 50.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     249
+    ],
+    "clip": "ThrowHi",
+    "frames": 78,
+    "kirby_frames": 80.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     250
+    ],
+    "clip": "ThrowLw",
+    "frames": 88,
+    "kirby_frames": 88.0,
+    "note": "Brawl 95f vs Melee 88f"
+   },
+   {
+    "rows": [
+     251
+    ],
+    "clip": "CapturePulledHi",
+    "frames": 20,
+    "kirby_frames": 20.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     252
+    ],
+    "clip": "CaptureWaitHi",
+    "frames": 90,
+    "kirby_frames": 100.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     253
+    ],
+    "clip": "CaptureDamageHi",
+    "frames": 20,
+    "kirby_frames": 20.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     254
+    ],
+    "clip": "CapturePulledLw",
+    "frames": 20,
+    "kirby_frames": 20.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     255
+    ],
+    "clip": "CaptureWaitLw",
+    "frames": 90,
+    "kirby_frames": 130.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     256
+    ],
+    "clip": "CaptureDamageLw",
+    "frames": 20,
+    "kirby_frames": 20.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     257
+    ],
+    "clip": "CaptureCut",
+    "frames": 31,
+    "kirby_frames": 30.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     258
+    ],
+    "clip": "CaptureJump",
+    "frames": 51,
+    "kirby_frames": 50.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     262
+    ],
+    "clip": "ThrownF",
+    "frames": 28,
+    "kirby_frames": 44.0,
+    "note": "TKirbyThrowF: victim pose this fighter provides (remapped by parts table) - MK ThrownF"
+   },
+   {
+    "rows": [
+     263
+    ],
+    "clip": "ThrownB",
+    "frames": 35,
+    "kirby_frames": 30.0,
+    "note": "TKirbyThrowB -> MK ThrownB"
+   },
+   {
+    "rows": [
+     264
+    ],
+    "clip": "ThrownHi",
+    "frames": 78,
+    "kirby_frames": 50.0,
+    "note": "TKirbyThrowHi -> MK ThrownHi"
+   },
+   {
+    "rows": [
+     265
+    ],
+    "clip": "ThrownLw",
+    "frames": 88,
+    "kirby_frames": 56.0,
+    "note": "TKirbyThrowLw -> MK ThrownLw"
+   },
+   {
+    "rows": [
+     284
+    ],
+    "clip": "Swallowed",
+    "frames": 11,
+    "kirby_frames": 30.0,
+    "note": "TKirbySpecialNDrink -> MK Swallowed"
+   },
+   {
+    "rows": [
+     285
+    ],
+    "clip": "Swallowed",
+    "frames": 11,
+    "kirby_frames": 30.0,
+    "note": "TKirbySpecialNSpit -> MK Swallowed"
+   },
+   {
+    "rows": [
+     294
+    ],
+    "clip": "Swallowed",
+    "frames": 11,
+    "kirby_frames": 8.0,
+    "note": "TYoshiSpecialN -> MK Swallowed"
+   },
+   {
+    "rows": [
+     295
+    ],
+    "clip": "JumpAerialF",
+    "frames": 34,
+    "kirby_frames": 50.0,
+    "note": "alias JumpAerialF1 -> Brawl JumpAerialF"
+   },
+   {
+    "rows": [
+     296
+    ],
+    "clip": "JumpAerialF2",
+    "frames": 34,
+    "kirby_frames": 50.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     297
+    ],
+    "clip": "JumpAerialF3",
+    "frames": 34,
+    "kirby_frames": 50.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     298
+    ],
+    "clip": "JumpAerialF4",
+    "frames": 34,
+    "kirby_frames": 50.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     299
+    ],
+    "clip": "JumpAerialF5",
+    "frames": 34,
+    "kirby_frames": 50.0,
+    "note": ""
+   },
+   {
+    "rows": [
+     300
+    ],
+    "clip": "JumpAerialF",
+    "frames": 34,
+    "kirby_frames": 50.0,
+    "note": "alias JumpAerialF1Met -> Brawl JumpAerialF"
+   },
+   {
+    "rows": [
+     301
+    ],
+    "clip": "JumpAerialF2",
+    "frames": 34,
+    "kirby_frames": 50.0,
+    "note": "alias JumpAerialF2Met -> Brawl JumpAerialF2"
+   },
+   {
+    "rows": [
+     302
+    ],
+    "clip": "JumpAerialF3",
+    "frames": 34,
+    "kirby_frames": 50.0,
+    "note": "alias JumpAerialF3Met -> Brawl JumpAerialF3"
+   },
+   {
+    "rows": [
+     303
+    ],
+    "clip": "JumpAerialF4",
+    "frames": 34,
+    "kirby_frames": 51.0,
+    "note": "alias JumpAerialF4Met -> Brawl JumpAerialF4"
+   },
+   {
+    "rows": [
+     304
+    ],
+    "clip": "JumpAerialF5",
+    "frames": 34,
+    "kirby_frames": 50.0,
+    "note": "alias JumpAerialF5Met -> Brawl JumpAerialF5"
+   },
+   {
+    "rows": [
+     305
+    ],
+    "clip": "SpecialNStart",
+    "frames": 12,
+    "kirby_frames": 20.0,
+    "note": "N-B start (Mach Tornado)"
+   },
+   {
+    "rows": [
+     306,
+     308,
+     321
+    ],
+    "clip": "SpecialNSpin",
+    "frames": 361,
+    "kirby_frames": 18.0,
+    "note": "Mach Tornado spin loop; Mach Tornado spin loop (air); Mach Tornado spin loop (capture row)"
+   },
+   {
+    "rows": [
+     307
+    ],
+    "clip": "SpecialNEnd",
+    "frames": 30,
+    "kirby_frames": 20.0,
+    "note": "Mach Tornado end"
+   },
+   {
+    "rows": [
+     309,
+     310,
+     311,
+     312,
+     313,
+     316,
+     317,
+     318,
+     319,
+     338,
+     340,
+     341,
+     342,
+     346,
+     347,
+     348,
+     349,
+     352,
+     353,
+     354,
+     358,
+     359,
+     360,
+     364,
+     366,
+     368,
+     370,
+     371,
+     372,
+     373,
+     378,
+     379,
+     380,
+     384,
+     385,
+     388,
+     390,
+     391,
+     392,
+     393,
+     394,
+     400,
+     402,
+     403,
+     404,
+     405,
+     410,
+     411,
+     412,
+     413,
+     414,
+     415,
+     416,
+     417,
+     423,
+     426,
+     427,
+     428,
+     429,
+     430,
+     435,
+     436,
+     437,
+     438,
+     439,
+     445,
+     447,
+     449,
+     450,
+     451,
+     455,
+     456,
+     457,
+     461,
+     463,
+     465,
+     466,
+     467,
+     468,
+     473,
+     474,
+     475
+    ],
+    "clip": "pose:Wait1",
+    "frames": 2,
+    "kirby_frames": 20.0,
+    "note": "FALLBACK (copy_ability row, no MK clip): still pose, frame 0 of Wait1; FALLBACK (kirby_special row, no MK clip): still pose, frame 0 of Wait1"
+   },
+   {
+    "rows": [
+     314,
+     315,
+     339,
+     343,
+     344,
+     345,
+     350,
+     351,
+     355,
+     356,
+     357,
+     361,
+     362,
+     363,
+     365,
+     367,
+     369,
+     374,
+     375,
+     376,
+     377,
+     381,
+     382,
+     383,
+     386,
+     387,
+     389,
+     395,
+     396,
+     397,
+     398,
+     399,
+     401,
+     406,
+     407,
+     408,
+     409,
+     418,
+     419,
+     420,
+     421,
+     422,
+     424,
+     425,
+     431,
+     432,
+     433,
+     434,
+     440,
+     441,
+     442,
+     443,
+     444,
+     446,
+     448,
+     452,
+     453,
+     454,
+     458,
+     459,
+     460,
+     462,
+     464,
+     469,
+     470,
+     471,
+     472,
+     476,
+     477,
+     478
+    ],
+    "clip": "pose:Fall",
+    "frames": 2,
+    "kirby_frames": 17.0,
+    "note": "FALLBACK (copy_ability row, no MK clip): still pose, frame 0 of Fall; FALLBACK (kirby_special row, no MK clip): still pose, frame 0 of Fall"
+   },
+   {
+    "rows": [
+     320
+    ],
+    "clip": "SpecialAirNStart",
+    "frames": 12,
+    "kirby_frames": 20.0,
+    "note": "air N-B start"
+   },
+   {
+    "rows": [
+     322
+    ],
+    "clip": "SpecialSStart",
+    "frames": 22,
+    "kirby_frames": 60.0,
+    "note": "S-B start (Drill Rush); SpecialSDrill / SpecialSEnd are extras"
+   },
+   {
+    "rows": [
+     323
+    ],
+    "clip": "SpecialAirSStart",
+    "frames": 22,
+    "kirby_frames": 70.0,
+    "note": "air S-B start; SpecialAirSEnd is an extra"
+   },
+   {
+    "rows": [
+     324
+    ],
+    "clip": "SpecialHi",
+    "frames": 32,
+    "kirby_frames": 23.0,
+    "note": "Shuttle Loop (ground)"
+   },
+   {
+    "rows": [
+     325
+    ],
+    "clip": "SpecialHiLoop",
+    "frames": 31,
+    "kirby_frames": 35.0,
+    "note": "Shuttle Loop loop"
+   },
+   {
+    "rows": [
+     326
+    ],
+    "clip": "SpecialHiEnd",
+    "frames": 32,
+    "kirby_frames": 5.0,
+    "note": "Shuttle Loop end"
+   },
+   {
+    "rows": [
+     327
+    ],
+    "clip": "SpecialHiEnd",
+    "frames": 32,
+    "kirby_frames": 34.0,
+    "note": "Shuttle Loop end"
+   },
+   {
+    "rows": [
+     328
+    ],
+    "clip": "SpecialAirHiStart",
+    "frames": 8,
+    "kirby_frames": 23.0,
+    "note": "Shuttle Loop (air start)"
+   },
+   {
+    "rows": [
+     329
+    ],
+    "clip": "SpecialHiLoop",
+    "frames": 31,
+    "kirby_frames": 35.0,
+    "note": "Shuttle Loop loop (air)"
+   },
+   {
+    "rows": [
+     330
+    ],
+    "clip": "SpecialHiEnd",
+    "frames": 32,
+    "kirby_frames": 5.0,
+    "note": "Shuttle Loop end (air)"
+   },
+   {
+    "rows": [
+     331
+    ],
+    "clip": "SpecialHiEnd",
+    "frames": 32,
+    "kirby_frames": 34.0,
+    "note": "Shuttle Loop end (air)"
+   },
+   {
+    "rows": [
+     332
+    ],
+    "clip": "SpecialLwStart",
+    "frames": 20,
+    "kirby_frames": 29.0,
+    "note": "Dimensional Cape start"
+   },
+   {
+    "rows": [
+     333
+    ],
+    "clip": "SpecialLw",
+    "frames": 56,
+    "kirby_frames": 31.0,
+    "note": "Dimensional Cape (neutral)"
+   },
+   {
+    "rows": [
+     334
+    ],
+    "clip": "SpecialLwEnd",
+    "frames": 36,
+    "kirby_frames": 31.0,
+    "note": "Dimensional Cape end"
+   },
+   {
+    "rows": [
+     335
+    ],
+    "clip": "SpecialAirLwStart",
+    "frames": 20,
+    "kirby_frames": 29.0,
+    "note": "Dimensional Cape start (air)"
+   },
+   {
+    "rows": [
+     336
+    ],
+    "clip": "SpecialAirLw",
+    "frames": 56,
+    "kirby_frames": 31.0,
+    "note": "Dimensional Cape (air)"
+   },
+   {
+    "rows": [
+     337
+    ],
+    "clip": "SpecialAirLwEnd",
+    "frames": 36,
+    "kirby_frames": 31.0,
+    "note": "Dimensional Cape end (air)"
+   }
+  ],
+  "extras": [
+   {
+    "clip": "AppealHi",
+    "symbol": "PlyKirby5K_Share_ACTION_AppealHi_figatree",
+    "offset": "0x3F5AC0",
+    "size": "0xBC1E",
+    "frames": 120,
+    "note": "up taunt"
+   },
+   {
+    "clip": "AppealS",
+    "symbol": "PlyKirby5K_Share_ACTION_AppealS_figatree",
+    "offset": "0x4016E0",
+    "size": "0x50E5",
+    "frames": 120,
+    "note": "side taunt"
+   },
+   {
+    "clip": "AttackHi4Hold",
+    "symbol": "PlyKirby5K_Share_ACTION_AttackHi4Hold_figatree",
+    "offset": "0x4067E0",
+    "size": "0x4FFF",
+    "frames": 61,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "AttackLw4Hold",
+    "symbol": "PlyKirby5K_Share_ACTION_AttackLw4Hold_figatree",
+    "offset": "0x40B7E0",
+    "size": "0x5493",
+    "frames": 61,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "AttackS3S2",
+    "symbol": "PlyKirby5K_Share_ACTION_AttackS3S2_figatree",
+    "offset": "0x410C80",
+    "size": "0x4260",
+    "frames": 28,
+    "note": "forward tilt hit 2"
+   },
+   {
+    "clip": "AttackS3S3",
+    "symbol": "PlyKirby5K_Share_ACTION_AttackS3S3_figatree",
+    "offset": "0x414EE0",
+    "size": "0x3F4C",
+    "frames": 34,
+    "note": "forward tilt hit 3"
+   },
+   {
+    "clip": "AttackS4Hold",
+    "symbol": "PlyKirby5K_Share_ACTION_AttackS4Hold_figatree",
+    "offset": "0x418E40",
+    "size": "0x629A",
+    "frames": 61,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "CatchTurn",
+    "symbol": "PlyKirby5K_Share_ACTION_CatchTurn_figatree",
+    "offset": "0x41F0E0",
+    "size": "0x4BFF",
+    "frames": 36,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "DamageElec",
+    "symbol": "PlyKirby5K_Share_ACTION_DamageElec_figatree",
+    "offset": "0x423CE0",
+    "size": "0x4290",
+    "frames": 28,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "DownDamageD3",
+    "symbol": "PlyKirby5K_Share_ACTION_DownDamageD3_figatree",
+    "offset": "0x427F80",
+    "size": "0x4EDA",
+    "frames": 40,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "DownDamageU3",
+    "symbol": "PlyKirby5K_Share_ACTION_DownDamageU3_figatree",
+    "offset": "0x42CE60",
+    "size": "0x50E2",
+    "frames": 40,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "DownEatD",
+    "symbol": "PlyKirby5K_Share_ACTION_DownEatD_figatree",
+    "offset": "0x431F60",
+    "size": "0x3FD6",
+    "frames": 30,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "DownEatU",
+    "symbol": "PlyKirby5K_Share_ACTION_DownEatU_figatree",
+    "offset": "0x435F40",
+    "size": "0x4026",
+    "frames": 30,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "FuraFuraEnd",
+    "symbol": "PlyKirby5K_Share_ACTION_FuraFuraEnd_figatree",
+    "offset": "0x439F80",
+    "size": "0x3DA1",
+    "frames": 50,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "FuraFuraStartD",
+    "symbol": "PlyKirby5K_Share_ACTION_FuraFuraStartD_figatree",
+    "offset": "0x43DD40",
+    "size": "0x359C",
+    "frames": 50,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "FuraFuraStartU",
+    "symbol": "PlyKirby5K_Share_ACTION_FuraFuraStartU_figatree",
+    "offset": "0x4412E0",
+    "size": "0x39D8",
+    "frames": 50,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "GlideAttack",
+    "symbol": "PlyKirby5K_Share_ACTION_GlideAttack_figatree",
+    "offset": "0x444CC0",
+    "size": "0x4619",
+    "frames": 24,
+    "note": "glide attack"
+   },
+   {
+    "clip": "GlideDirection",
+    "symbol": "PlyKirby5K_Share_ACTION_GlideDirection_figatree",
+    "offset": "0x4492E0",
+    "size": "0x2AD8",
+    "frames": 181,
+    "note": "glide"
+   },
+   {
+    "clip": "GlideEnd",
+    "symbol": "PlyKirby5K_Share_ACTION_GlideEnd_figatree",
+    "offset": "0x44BDC0",
+    "size": "0x42F6",
+    "frames": 25,
+    "note": "glide end"
+   },
+   {
+    "clip": "GlideLanding",
+    "symbol": "PlyKirby5K_Share_ACTION_GlideLanding_figatree",
+    "offset": "0x4500C0",
+    "size": "0x3BA6",
+    "frames": 30,
+    "note": "glide landing"
+   },
+   {
+    "clip": "GlideStart",
+    "symbol": "PlyKirby5K_Share_ACTION_GlideStart_figatree",
+    "offset": "0x453C80",
+    "size": "0x44E0",
+    "frames": 20,
+    "note": "glide (Geno v2 state)"
+   },
+   {
+    "clip": "GlideWing",
+    "symbol": "PlyKirby5K_Share_ACTION_GlideWing_figatree",
+    "offset": "0x458160",
+    "size": "0xAE23",
+    "frames": 160,
+    "note": "glide"
+   },
+   {
+    "clip": "LandingLight",
+    "symbol": "PlyKirby5K_Share_ACTION_LandingLight_figatree",
+    "offset": "0x462FA0",
+    "size": "0x4206",
+    "frames": 16,
+    "note": "light landing"
+   },
+   {
+    "clip": "SpecialAirLwB",
+    "symbol": "PlyKirby5K_Share_ACTION_SpecialAirLwB_figatree",
+    "offset": "0x4671C0",
+    "size": "0x70F7",
+    "frames": 56,
+    "note": "Dimensional Cape back (air)"
+   },
+   {
+    "clip": "SpecialAirLwF",
+    "symbol": "PlyKirby5K_Share_ACTION_SpecialAirLwF_figatree",
+    "offset": "0x46E2C0",
+    "size": "0x72C3",
+    "frames": 56,
+    "note": "Dimensional Cape forward (air)"
+   },
+   {
+    "clip": "SpecialAirNEnd",
+    "symbol": "PlyKirby5K_Share_ACTION_SpecialAirNEnd_figatree",
+    "offset": "0x4755A0",
+    "size": "0x4578",
+    "frames": 30,
+    "note": "Mach Tornado end (air)"
+   },
+   {
+    "clip": "SpecialAirSEnd",
+    "symbol": "PlyKirby5K_Share_ACTION_SpecialAirSEnd_figatree",
+    "offset": "0x479B20",
+    "size": "0x4B4C",
+    "frames": 30,
+    "note": "Drill Rush end (air)"
+   },
+   {
+    "clip": "SpecialLwB",
+    "symbol": "PlyKirby5K_Share_ACTION_SpecialLwB_figatree",
+    "offset": "0x47E680",
+    "size": "0x6C0C",
+    "frames": 56,
+    "note": "Dimensional Cape back"
+   },
+   {
+    "clip": "SpecialLwF",
+    "symbol": "PlyKirby5K_Share_ACTION_SpecialLwF_figatree",
+    "offset": "0x4852A0",
+    "size": "0x6980",
+    "frames": 56,
+    "note": "Dimensional Cape forward"
+   },
+   {
+    "clip": "SpecialSDrill",
+    "symbol": "PlyKirby5K_Share_ACTION_SpecialSDrill_figatree",
+    "offset": "0x48BC20",
+    "size": "0x2F73",
+    "frames": 45,
+    "note": "Drill Rush loop"
+   },
+   {
+    "clip": "SpecialSEnd",
+    "symbol": "PlyKirby5K_Share_ACTION_SpecialSEnd_figatree",
+    "offset": "0x48EBA0",
+    "size": "0x4CA9",
+    "frames": 30,
+    "note": "Drill Rush end"
+   },
+   {
+    "clip": "StepPose",
+    "symbol": "PlyKirby5K_Share_ACTION_StepPose_figatree",
+    "offset": "0x493860",
+    "size": "0x5C0A",
+    "frames": 9,
+    "note": "footstool"
+   },
+   {
+    "clip": "Swing4Bat",
+    "symbol": "PlyKirby5K_Share_ACTION_Swing4Bat_figatree",
+    "offset": "0x499480",
+    "size": "0x4517",
+    "frames": 90,
+    "note": "bat smash"
+   },
+   {
+    "clip": "Swing4Hold",
+    "symbol": "PlyKirby5K_Share_ACTION_Swing4Hold_figatree",
+    "offset": "0x49D9A0",
+    "size": "0x40F0",
+    "frames": 60,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "Swing4Start",
+    "symbol": "PlyKirby5K_Share_ACTION_Swing4Start_figatree",
+    "offset": "0x4A1AA0",
+    "size": "0x326D",
+    "frames": 15,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "TurnRunBrake",
+    "symbol": "PlyKirby5K_Share_ACTION_TurnRunBrake_figatree",
+    "offset": "0x4A4D20",
+    "size": "0x4986",
+    "frames": 21,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   },
+   {
+    "clip": "Wait3",
+    "symbol": "PlyKirby5K_Share_ACTION_Wait3_figatree",
+    "offset": "0x4A96C0",
+    "size": "0x7C83",
+    "frames": 120,
+    "note": "idle 3 (cape article)"
+   },
+   {
+    "clip": "WalkBrake",
+    "symbol": "PlyKirby5K_Share_ACTION_WalkBrake_figatree",
+    "offset": "0x4B1360",
+    "size": "0x29FF",
+    "frames": 2,
+    "note": "MK clip with no Kirby motion row (extra, not pointed to)"
+   }
+  ]
+ },
+ "transn": {
+  "policy": "anim/transn_policy.json",
+  "axis_decisions": {
+   "strip by default": 18,
+   "keep by anim_driven_rows": 50,
+   "keep by default": 1,
+   "keep by extras": 16
+  },
+  "clips": [
+   {
+    "clip": "WalkSlow",
+    "rows": [
+     7
+    ],
+    "rule": "default",
+    "axes": {
+     "z": [
+      "strip",
+      0,
+      15.676,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "WalkMiddle",
+    "rows": [
+     8
+    ],
+    "rule": "default",
+    "axes": {
+     "z": [
+      "strip",
+      0,
+      17.516,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "WalkFast",
+    "rows": [
+     9
+    ],
+    "rule": "default",
+    "axes": {
+     "z": [
+      "strip",
+      0,
+      24.394,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "Run",
+    "rows": [
+     13
+    ],
+    "rule": "default",
+    "axes": {
+     "z": [
+      "strip",
+      0,
+      55.396,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "EscapeF",
+    "rows": [
+     42
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "z": [
+      "keep",
+      0,
+      35.623,
+      0.0,
+      35.003
+     ]
+    }
+   },
+   {
+    "clip": "EscapeB",
+    "rows": [
+     43
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "z": [
+      "keep",
+      -35.265,
+      0.264,
+      -35.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "AttackDash",
+    "rows": [
+     52
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "z": [
+      "keep",
+      0,
+      49.444,
+      0.0,
+      65.026
+     ]
+    }
+   },
+   {
+    "clip": "AttackS3S",
+    "rows": [
+     53
+    ],
+    "rule": "default",
+    "axes": {
+     "z": [
+      "strip",
+      0,
+      4.499,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "AttackS3S",
+    "rows": [
+     55
+    ],
+    "rule": "default",
+    "axes": {
+     "z": [
+      "strip",
+      0,
+      4.499,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "AttackS3S",
+    "rows": [
+     57
+    ],
+    "rule": "default",
+    "axes": {
+     "z": [
+      "strip",
+      0,
+      4.499,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "AttackLw3",
+    "rows": [
+     59
+    ],
+    "rule": "default",
+    "axes": {
+     "z": [
+      "strip",
+      -0.038,
+      5.999,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "AttackLw4Start+AttackLw4",
+    "rows": [
+     67
+    ],
+    "rule": "default",
+    "axes": {
+     "x": [
+      "strip",
+      0.143,
+      0.332,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "LightThrowDash",
+    "rows": [
+     83
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "z": [
+      "keep",
+      0,
+      44.989,
+      0.0,
+      14.504
+     ]
+    }
+   },
+   {
+    "clip": "Swing3",
+    "rows": [
+     109,
+     113,
+     117,
+     121,
+     125,
+     129
+    ],
+    "rule": "default",
+    "axes": {
+     "z": [
+      "strip",
+      -0.028,
+      4.999,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "Swing4",
+    "rows": [
+     110,
+     114,
+     118,
+     122,
+     126,
+     130
+    ],
+    "rule": "default",
+    "axes": {
+     "z": [
+      "keep",
+      -0.039,
+      6.013,
+      0.0,
+      5.0
+     ]
+    }
+   },
+   {
+    "clip": "SwingDash",
+    "rows": [
+     111,
+     115,
+     119,
+     123,
+     127,
+     131
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "z": [
+      "keep",
+      0,
+      44.989,
+      0.0,
+      30.0
+     ]
+    }
+   },
+   {
+    "clip": "ItemShootAir",
+    "rows": [
+     139,
+     141,
+     143
+    ],
+    "rule": "default",
+    "axes": {
+     "x": [
+      "strip",
+      0.017,
+      0.29,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "DownForwardU",
+    "rows": [
+     188
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "z": [
+      "keep",
+      0,
+      34.226,
+      0.0,
+      30.003
+     ]
+    }
+   },
+   {
+    "clip": "DownBackU",
+    "rows": [
+     189
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "z": [
+      "keep",
+      -37.085,
+      -1.508,
+      -30.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "DownSpotU",
+    "rows": [
+     190
+    ],
+    "rule": "default",
+    "axes": {
+     "y": [
+      "strip",
+      -0.189,
+      -0.001,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "DownForwardD",
+    "rows": [
+     196
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "z": [
+      "keep",
+      0.271,
+      32.693,
+      0.0,
+      30.0
+     ]
+    }
+   },
+   {
+    "clip": "DownBackD",
+    "rows": [
+     197
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "z": [
+      "keep",
+      -37.783,
+      -1.584,
+      -30.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "PassiveStandF",
+    "rows": [
+     200
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "x": [
+      "keep",
+      0,
+      0.294,
+      0.0,
+      0.0
+     ],
+     "y": [
+      "keep",
+      0,
+      1.867,
+      0.0,
+      0.0
+     ],
+     "z": [
+      "keep",
+      -0.084,
+      39.994,
+      -2.67,
+      35.0
+     ]
+    }
+   },
+   {
+    "clip": "PassiveStandB",
+    "rows": [
+     201
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "x": [
+      "keep",
+      0,
+      0.295,
+      -0.234,
+      0.007
+     ],
+     "y": [
+      "keep",
+      -0.009,
+      1.868,
+      0.0,
+      0.0
+     ],
+     "z": [
+      "keep",
+      -40.286,
+      2.915,
+      -37.614,
+      3.48
+     ]
+    }
+   },
+   {
+    "clip": "PassiveWallJump",
+    "rows": [
+     203
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "z": [
+      "keep",
+      6.228,
+      15.998,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "Pass",
+    "rows": [
+     209
+    ],
+    "rule": "default",
+    "axes": {
+     "z": [
+      "strip",
+      0,
+      0.068,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "StopCeil",
+    "rows": [
+     214
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "y": [
+      "keep",
+      -15,
+      -9.709,
+      -10.429,
+      -10.12
+     ]
+    }
+   },
+   {
+    "clip": "MissFoot",
+    "rows": [
+     215
+    ],
+    "rule": "default",
+    "axes": {
+     "x": [
+      "strip",
+      0,
+      0.778,
+      0.0,
+      0.0
+     ],
+     "y": [
+      "strip",
+      0,
+      2.667,
+      0.0,
+      0.0
+     ],
+     "z": [
+      "strip",
+      0,
+      1.342,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "CliffCatch",
+    "rows": [
+     216
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "y": [
+      "keep",
+      -13.038,
+      -5.904,
+      -10.0,
+      -8.5
+     ],
+     "z": [
+      "keep",
+      -11.329,
+      -4.482,
+      -6.5,
+      -5.0
+     ]
+    }
+   },
+   {
+    "clip": "CliffClimbSlow",
+    "rows": [
+     219
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "y": [
+      "keep",
+      -13,
+      -0.003,
+      -10.892,
+      0.0
+     ],
+     "z": [
+      "keep",
+      -4.504,
+      7.028,
+      -5.0,
+      3.006
+     ]
+    }
+   },
+   {
+    "clip": "CliffClimbQuick",
+    "rows": [
+     220
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "y": [
+      "keep",
+      -12.586,
+      0.021,
+      -10.0,
+      4.634
+     ],
+     "z": [
+      "keep",
+      -4.504,
+      6.997,
+      -6.502,
+      3.016
+     ]
+    }
+   },
+   {
+    "clip": "CliffAttackSlow",
+    "rows": [
+     221
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "y": [
+      "keep",
+      -12.958,
+      0.023,
+      -10.892,
+      0.0
+     ],
+     "z": [
+      "keep",
+      -4.5,
+      9.996,
+      -5.0,
+      11.997
+     ]
+    }
+   },
+   {
+    "clip": "CliffAttackQuick",
+    "rows": [
+     222
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "y": [
+      "keep",
+      -11.863,
+      0.027,
+      -10.0,
+      4.667
+     ],
+     "z": [
+      "keep",
+      -4.504,
+      9.996,
+      -6.502,
+      9.612
+     ]
+    }
+   },
+   {
+    "clip": "CliffEscapeSlow",
+    "rows": [
+     223
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "y": [
+      "keep",
+      -13,
+      0.028,
+      -10.892,
+      0.0
+     ],
+     "z": [
+      "keep",
+      -4.505,
+      38.993,
+      -5.0,
+      40.002
+     ]
+    }
+   },
+   {
+    "clip": "CliffEscapeQuick",
+    "rows": [
+     224
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "y": [
+      "keep",
+      -12.93,
+      -0.003,
+      -10.0,
+      3.195
+     ],
+     "z": [
+      "keep",
+      -4.505,
+      40.008,
+      -5.133,
+      40.001
+     ]
+    }
+   },
+   {
+    "clip": "CliffJumpSlow1",
+    "rows": [
+     225
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "y": [
+      "keep",
+      -12.636,
+      -0.003,
+      -10.0,
+      0.0
+     ],
+     "z": [
+      "keep",
+      -4.5,
+      -0.001,
+      -5.0,
+      0.001
+     ]
+    }
+   },
+   {
+    "clip": "CliffJumpQuick1",
+    "rows": [
+     227
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "y": [
+      "keep",
+      -12.441,
+      -0.003,
+      -10.0,
+      1.621
+     ],
+     "z": [
+      "keep",
+      -4.5,
+      -0.001,
+      -5.594,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "CatchDash",
+    "rows": [
+     243
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "z": [
+      "keep",
+      0,
+      40.036,
+      -0.072,
+      22.927
+     ]
+    }
+   },
+   {
+    "clip": "ThrowHi",
+    "rows": [
+     249
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "y": [
+      "keep",
+      0,
+      271.152,
+      0.0,
+      271.041
+     ],
+     "z": [
+      "keep",
+      -24.76,
+      -0.006,
+      -20.004,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "JumpAerialF5",
+    "rows": [
+     299
+    ],
+    "rule": "default",
+    "axes": {
+     "y": [
+      "strip",
+      0,
+      0.227,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "JumpAerialF5",
+    "rows": [
+     304
+    ],
+    "rule": "default",
+    "axes": {
+     "y": [
+      "strip",
+      0,
+      0.227,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "SpecialHi",
+    "rows": [
+     324
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "y": [
+      "keep",
+      -0.313,
+      53.514,
+      0.0,
+      1.764
+     ],
+     "z": [
+      "keep",
+      -25.476,
+      3.475,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "SpecialHiLoop",
+    "rows": [
+     325
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "x": [
+      "keep",
+      -0.272,
+      0.377,
+      0.0,
+      0.0
+     ],
+     "y": [
+      "keep",
+      6.293,
+      63.443,
+      3.57,
+      59.999
+     ],
+     "z": [
+      "keep",
+      -21.118,
+      14.278,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "SpecialHiLoop",
+    "rows": [
+     329
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "x": [
+      "keep",
+      -0.272,
+      0.377,
+      0.0,
+      0.0
+     ],
+     "y": [
+      "keep",
+      6.293,
+      63.443,
+      3.57,
+      59.999
+     ],
+     "z": [
+      "keep",
+      -21.118,
+      14.278,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "SpecialLw",
+    "rows": [
+     333
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "y": [
+      "keep",
+      -1,
+      17.519,
+      0.0,
+      9.0
+     ],
+     "z": [
+      "keep",
+      0,
+      10.997,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "SpecialAirLw",
+    "rows": [
+     336
+    ],
+    "rule": "anim_driven_rows",
+    "axes": {
+     "y": [
+      "keep",
+      -1,
+      17.174,
+      0.0,
+      9.0
+     ],
+     "z": [
+      "keep",
+      0,
+      10.997,
+      0.0,
+      0.0
+     ]
+    }
+   },
+   {
+    "clip": "AttackLw4Hold",
+    "rows": [],
+    "rule": "extras",
+    "axes": {
+     "x": [
+      "keep",
+      0.143,
+      0.332,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "clip": "AttackS3S3",
+    "rows": [],
+    "rule": "extras",
+    "axes": {
+     "z": [
+      "keep",
+      -0.039,
+      2.799,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "clip": "FuraFuraStartD",
+    "rows": [],
+    "rule": "extras",
+    "axes": {
+     "x": [
+      "keep",
+      0.09,
+      0.295,
+      null,
+      null
+     ],
+     "y": [
+      "keep",
+      -0.335,
+      1.868,
+      null,
+      null
+     ],
+     "z": [
+      "keep",
+      0.007,
+      0.088,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "clip": "FuraFuraStartU",
+    "rows": [],
+    "rule": "extras",
+    "axes": {
+     "x": [
+      "keep",
+      -0.02,
+      0.295,
+      null,
+      null
+     ],
+     "y": [
+      "keep",
+      -0.186,
+      1.868,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "clip": "SpecialAirLwB",
+    "rows": [],
+    "rule": "extras",
+    "axes": {
+     "y": [
+      "keep",
+      -1,
+      5.548,
+      null,
+      null
+     ],
+     "z": [
+      "keep",
+      0,
+      25.509,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "clip": "SpecialAirLwF",
+    "rows": [],
+    "rule": "extras",
+    "axes": {
+     "y": [
+      "keep",
+      -1,
+      4.784,
+      null,
+      null
+     ],
+     "z": [
+      "keep",
+      -24.856,
+      -0.006,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "clip": "SpecialLwB",
+    "rows": [],
+    "rule": "extras",
+    "axes": {
+     "y": [
+      "keep",
+      -1,
+      5.628,
+      null,
+      null
+     ],
+     "z": [
+      "keep",
+      0,
+      25.509,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "clip": "SpecialLwF",
+    "rows": [],
+    "rule": "extras",
+    "axes": {
+     "y": [
+      "keep",
+      -1,
+      4.684,
+      null,
+      null
+     ],
+     "z": [
+      "keep",
+      -24.856,
+      -0.006,
+      null,
+      null
+     ]
+    }
+   },
+   {
+    "clip": "SpecialSDrill",
+    "rows": [],
+    "rule": "extras",
+    "axes": {
+     "z": [
+      "keep",
+      2.285,
+      89.979,
+      null,
+      null
+     ]
+    }
+   }
+  ]
+ },
+ "vis_events": {
+  "file": "anim/vis_events.json",
+  "clips_with_modelvis": 217
+ }
+}

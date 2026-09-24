@@ -1,0 +1,38 @@
+{
+ "_readme": [
+  "TransN (root motion) policy for Meta Knight's Brawl -> Melee clips (tools/mk_anim.py apply_transn_policy).",
+  "Same idea as brawl-kirby/tools/anim/transn_policy.json: Brawl clips carry the fighter's travel on TransN and Brawl",
+  "consumes it as movement; Melee consumes TransN only on motion rows with flag 0x80000000 (fp->x594_b0: TransN is",
+  "zeroed and its per-frame delta fed to physics). On every other row the TransN translation is SHOWN on the model,",
+  "so Brawl root motion there slides the model away from the fighter and snaps back when the clip restarts.",
+  "",
+  "default          = rule for a row that is not animation-driven.",
+  "anim_driven_rows = rule for a row whose Melee flags have 0x80000000 (MK rule: the engine turns TransN into movement,",
+  "                   so Brawl's travel is kept on every axis - e.g. Shuttle Loop on Kirby's Final Cutter rows).",
+  "extras           = rule for MK clips that no Kirby row points to (glide, Drill Rush loop, ...): kept as authored;",
+  "                   whoever adds a row for them re-runs with a policy.",
+  "auto  = match vanilla Melee Kirby's clip for the same Melee motion, per axis: keep Brawl's axis if Kirby's TransN",
+  "        moves or holds an offset (> eps) on it, else strip it (hold Brawl's frame-0 value for the whole clip).",
+  "keep / strip = force. overrides: key = Brawl clip name or Melee figatree name; value = 'auto'|'keep'|'strip' or",
+  "        {\"x\": .., \"y\": .., \"z\": .., \"scale\": {\"z\": 1.6}}.",
+  "Rebuild: python anim/tools/mk_anim.py   (report: anim/transn_report.json)",
+  "ledge_floor      = ledge get-up clips whose TransN.y values in [-within, 0) snap to 0: Melee lands a CliffClimb/Attack/Escape",
+  "                   only when TransN.z >= 0 and TransN.y >= 0 (ftCo_CliffClimb_Phys); Brawl's clips rest at y = -0.003."
+ ],
+ "default": "auto",
+ "anim_driven_rows": "keep",
+ "extras": "keep",
+ "eps": 0.05,
+ "overrides": {},
+ "ledge_floor": {
+  "within": 0.05,
+  "clips": [
+   "CliffClimbQuick",
+   "CliffClimbSlow",
+   "CliffAttackQuick",
+   "CliffAttackSlow",
+   "CliffEscapeQuick",
+   "CliffEscapeSlow"
+  ]
+ }
+}

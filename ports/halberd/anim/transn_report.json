@@ -1,0 +1,2700 @@
+{
+ "policy": "anim/transn_policy.json",
+ "clips": [
+  {
+   "clip": "WalkSlow",
+   "melee_base": "PlyKirby5K_Share_ACTION_WalkSlow_figatree",
+   "melee_base_found": true,
+   "rows": [
+    7
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 15.676,
+     "brawl_net": 15.676,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0
+    }
+   },
+   "brawl_clip": "WalkSlow",
+   "extra": false
+  },
+  {
+   "clip": "WalkMiddle",
+   "melee_base": "PlyKirby5K_Share_ACTION_WalkMiddle_figatree",
+   "melee_base_found": true,
+   "rows": [
+    8
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 17.516,
+     "brawl_net": 17.516,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0
+    }
+   },
+   "brawl_clip": "WalkMiddle",
+   "extra": false
+  },
+  {
+   "clip": "WalkFast",
+   "melee_base": "PlyKirby5K_Share_ACTION_WalkFast_figatree",
+   "melee_base_found": true,
+   "rows": [
+    9
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 24.394,
+     "brawl_net": 24.394,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0
+    }
+   },
+   "brawl_clip": "WalkFast",
+   "extra": false
+  },
+  {
+   "clip": "Run",
+   "melee_base": "PlyKirby5K_Share_ACTION_Run_figatree",
+   "melee_base_found": true,
+   "rows": [
+    13
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 55.396,
+     "brawl_net": 55.396,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0
+    }
+   },
+   "brawl_clip": "Run",
+   "extra": false
+  },
+  {
+   "clip": "EscapeF",
+   "melee_base": "PlyKirby5K_Share_ACTION_EscapeF_figatree",
+   "melee_base_found": true,
+   "rows": [
+    42
+   ],
+   "rows_anim_driven_0x80000000": [
+    42
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 35.623,
+     "brawl_net": 35.591,
+     "melee_min": 0.0,
+     "melee_max": 35.003,
+     "melee_net": 35.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "EscapeF",
+   "extra": false
+  },
+  {
+   "clip": "EscapeB",
+   "melee_base": "PlyKirby5K_Share_ACTION_EscapeB_figatree",
+   "melee_base_found": true,
+   "rows": [
+    43
+   ],
+   "rows_anim_driven_0x80000000": [
+    43
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": -35.265,
+     "brawl_max": 0.264,
+     "brawl_net": -35.304,
+     "melee_min": -35.0,
+     "melee_max": 0.0,
+     "melee_net": -35.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "EscapeB",
+   "extra": false
+  },
+  {
+   "clip": "AttackDash",
+   "melee_base": "PlyKirby5K_Share_ACTION_AttackDash_figatree",
+   "melee_base_found": true,
+   "rows": [
+    52
+   ],
+   "rows_anim_driven_0x80000000": [
+    52
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 49.444,
+     "brawl_net": 49.444,
+     "melee_min": 0.0,
+     "melee_max": 65.026,
+     "melee_net": 65.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "AttackDash",
+   "extra": false
+  },
+  {
+   "clip": "AttackS3S",
+   "melee_base": "PlyKirby5K_Share_ACTION_AttackS3Hi_figatree",
+   "melee_base_found": true,
+   "rows": [
+    53
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 4.499,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0
+    }
+   },
+   "brawl_clip": "AttackS3S",
+   "extra": false
+  },
+  {
+   "clip": "AttackS3S",
+   "melee_base": "PlyKirby5K_Share_ACTION_AttackS3S_figatree",
+   "melee_base_found": true,
+   "rows": [
+    55
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 4.499,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0
+    }
+   },
+   "brawl_clip": "AttackS3S",
+   "extra": false
+  },
+  {
+   "clip": "AttackS3S",
+   "melee_base": "PlyKirby5K_Share_ACTION_AttackS3Lw_figatree",
+   "melee_base_found": true,
+   "rows": [
+    57
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 4.499,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0
+    }
+   },
+   "brawl_clip": "AttackS3S",
+   "extra": false
+  },
+  {
+   "clip": "AttackLw3",
+   "melee_base": "PlyKirby5K_Share_ACTION_AttackLw3_figatree",
+   "melee_base_found": true,
+   "rows": [
+    59
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": -0.038,
+     "brawl_max": 5.999,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0
+    }
+   },
+   "brawl_clip": "AttackLw3",
+   "extra": false
+  },
+  {
+   "clip": "AttackLw4Start+AttackLw4",
+   "melee_base": "PlyKirby5K_Share_ACTION_AttackLw4_figatree",
+   "melee_base_found": true,
+   "rows": [
+    67
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0.143,
+     "brawl_max": 0.332,
+     "brawl_net": 0.152,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0.1428
+    },
+    "y": {
+     "brawl_min": 1.868,
+     "brawl_max": 1.868,
+     "brawl_net": 0.0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": -0.012,
+     "brawl_max": -0.012,
+     "brawl_net": 0.0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    }
+   },
+   "brawl_clip": "AttackLw4Start+AttackLw4",
+   "extra": false
+  },
+  {
+   "clip": "LightThrowDash",
+   "melee_base": "PlyKirby5K_Share_ACTION_LightThrowDash_figatree",
+   "melee_base_found": true,
+   "rows": [
+    83
+   ],
+   "rows_anim_driven_0x80000000": [
+    83
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 44.989,
+     "brawl_net": 44.989,
+     "melee_min": 0.0,
+     "melee_max": 14.504,
+     "melee_net": 14.5,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "LightThrowDash",
+   "extra": false
+  },
+  {
+   "clip": "Swing3",
+   "melee_base": "PlyKirby5K_Share_ACTION_Swing3_figatree",
+   "melee_base_found": true,
+   "rows": [
+    109,
+    113,
+    117,
+    121,
+    125,
+    129
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": -0.028,
+     "brawl_max": 4.999,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0
+    }
+   },
+   "brawl_clip": "Swing3",
+   "extra": false
+  },
+  {
+   "clip": "Swing4",
+   "melee_base": "PlyKirby5K_Share_ACTION_Swing4_figatree",
+   "melee_base_found": true,
+   "rows": [
+    110,
+    114,
+    118,
+    122,
+    126,
+    130
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": -0.039,
+     "brawl_max": 6.013,
+     "brawl_net": -0.961,
+     "melee_min": 0.0,
+     "melee_max": 5.0,
+     "melee_net": 0.0,
+     "melee_has": true,
+     "rule": "auto: Melee base moves/offsets on this axis",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "Swing4",
+   "extra": false
+  },
+  {
+   "clip": "SwingDash",
+   "melee_base": "PlyKirby5K_Share_ACTION_SwingDash_figatree",
+   "melee_base_found": true,
+   "rows": [
+    111,
+    115,
+    119,
+    123,
+    127,
+    131
+   ],
+   "rows_anim_driven_0x80000000": [
+    111,
+    115,
+    119,
+    123,
+    127,
+    131
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 44.989,
+     "brawl_net": 44.989,
+     "melee_min": 0.0,
+     "melee_max": 30.0,
+     "melee_net": 30.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "SwingDash",
+   "extra": false
+  },
+  {
+   "clip": "ItemShootAir",
+   "melee_base": "PlyKirby5K_Share_ACTION_ItemShootAir_figatree",
+   "melee_base_found": true,
+   "rows": [
+    139,
+    141,
+    143
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0.017,
+     "brawl_max": 0.29,
+     "brawl_net": 0.01,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0.2796
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0.01,
+     "brawl_max": 0.01,
+     "brawl_net": 0.0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    }
+   },
+   "brawl_clip": "ItemShootAir",
+   "extra": false
+  },
+  {
+   "clip": "DownForwardU",
+   "melee_base": "PlyKirby5K_Share_ACTION_DownFowardU_figatree",
+   "melee_base_found": true,
+   "rows": [
+    188
+   ],
+   "rows_anim_driven_0x80000000": [
+    188
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 34.226,
+     "brawl_net": 34.21,
+     "melee_min": 0.0,
+     "melee_max": 30.003,
+     "melee_net": 30.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "DownForwardU",
+   "extra": false
+  },
+  {
+   "clip": "DownBackU",
+   "melee_base": "PlyKirby5K_Share_ACTION_DownBackU_figatree",
+   "melee_base_found": true,
+   "rows": [
+    189
+   ],
+   "rows_anim_driven_0x80000000": [
+    189
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": -37.085,
+     "brawl_max": -1.508,
+     "brawl_net": -35.492,
+     "melee_min": -30.0,
+     "melee_max": 0.0,
+     "melee_net": -30.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "DownBackU",
+   "extra": false
+  },
+  {
+   "clip": "DownSpotU",
+   "melee_base": "PlyKirby5K_Share_ACTION_DownSpotU_figatree",
+   "melee_base_found": true,
+   "rows": [
+    190
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": -0.0,
+     "brawl_max": -0.0,
+     "brawl_net": 0.0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -0.189,
+     "brawl_max": -0.001,
+     "brawl_net": -0.188,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": -0.0006
+    },
+    "z": {
+     "brawl_min": 0.0,
+     "brawl_max": 0.0,
+     "brawl_net": 0.0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    }
+   },
+   "brawl_clip": "DownSpotU",
+   "extra": false
+  },
+  {
+   "clip": "DownForwardD",
+   "melee_base": "PlyKirby5K_Share_ACTION_DownFowardD_figatree",
+   "melee_base_found": true,
+   "rows": [
+    196
+   ],
+   "rows_anim_driven_0x80000000": [
+    196
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0.271,
+     "brawl_max": 32.693,
+     "brawl_net": 32.423,
+     "melee_min": 0.0,
+     "melee_max": 30.0,
+     "melee_net": 30.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "DownForwardD",
+   "extra": false
+  },
+  {
+   "clip": "DownBackD",
+   "melee_base": "PlyKirby5K_Share_ACTION_DownBackD_figatree",
+   "melee_base_found": true,
+   "rows": [
+    197
+   ],
+   "rows_anim_driven_0x80000000": [
+    197
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": -37.783,
+     "brawl_max": -1.584,
+     "brawl_net": -36.199,
+     "melee_min": -30.0,
+     "melee_max": 0.0,
+     "melee_net": -30.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "DownBackD",
+   "extra": false
+  },
+  {
+   "clip": "PassiveStandF",
+   "melee_base": "PlyKirby5K_Share_ACTION_PassiveStandF_figatree",
+   "melee_base_found": true,
+   "rows": [
+    200
+   ],
+   "rows_anim_driven_0x80000000": [
+    200
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0.294,
+     "brawl_net": -0.294,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 1.867,
+     "brawl_net": -1.867,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -0.084,
+     "brawl_max": 39.994,
+     "brawl_net": 39.983,
+     "melee_min": -2.67,
+     "melee_max": 35.0,
+     "melee_net": 35.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "PassiveStandF",
+   "extra": false
+  },
+  {
+   "clip": "PassiveStandB",
+   "melee_base": "PlyKirby5K_Share_ACTION_PassiveStandB_figatree",
+   "melee_base_found": true,
+   "rows": [
+    201
+   ],
+   "rows_anim_driven_0x80000000": [
+    201
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0.295,
+     "brawl_net": -0.295,
+     "melee_min": -0.234,
+     "melee_max": 0.007,
+     "melee_net": 0.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "y": {
+     "brawl_min": -0.009,
+     "brawl_max": 1.868,
+     "brawl_net": -1.868,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -40.286,
+     "brawl_max": 2.915,
+     "brawl_net": -40.007,
+     "melee_min": -37.614,
+     "melee_max": 3.48,
+     "melee_net": -35.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "PassiveStandB",
+   "extra": false
+  },
+  {
+   "clip": "PassiveWallJump",
+   "melee_base": "PlyKirby5K_Share_ACTION_PassiveWallJump_figatree",
+   "melee_base_found": true,
+   "rows": [
+    203
+   ],
+   "rows_anim_driven_0x80000000": [
+    203
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 6.228,
+     "brawl_max": 15.998,
+     "brawl_net": 9.738,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "PassiveWallJump",
+   "extra": false
+  },
+  {
+   "clip": "Pass",
+   "melee_base": "PlyKirby5K_Share_ACTION_Pass_figatree",
+   "melee_base_found": true,
+   "rows": [
+    209
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": -0.005,
+     "brawl_max": -0.005,
+     "brawl_net": 0.0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 0.068,
+     "brawl_net": -0.068,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0.0677
+    }
+   },
+   "brawl_clip": "Pass",
+   "extra": false
+  },
+  {
+   "clip": "StopCeil",
+   "melee_base": "PlyKirby5K_Share_ACTION_StopCeil_figatree",
+   "melee_base_found": true,
+   "rows": [
+    214
+   ],
+   "rows_anim_driven_0x80000000": [
+    214
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -15,
+     "brawl_max": -9.709,
+     "brawl_net": -5.291,
+     "melee_min": -10.429,
+     "melee_max": -10.12,
+     "melee_net": 0.309,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    }
+   },
+   "brawl_clip": "StopCeil",
+   "extra": false
+  },
+  {
+   "clip": "MissFoot",
+   "melee_base": "PlyKirby5K_Share_ACTION_MissFoot_figatree",
+   "melee_base_found": true,
+   "rows": [
+    215
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0.778,
+     "brawl_net": 0.778,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 2.667,
+     "brawl_net": 2.667,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 1.342,
+     "brawl_net": 1.342,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0
+    }
+   },
+   "brawl_clip": "MissFoot",
+   "extra": false
+  },
+  {
+   "clip": "CliffCatch",
+   "melee_base": "PlyKirby5K_Share_ACTION_CliffCatch_figatree",
+   "melee_base_found": true,
+   "rows": [
+    216
+   ],
+   "rows_anim_driven_0x80000000": [
+    216
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -13.038,
+     "brawl_max": -5.904,
+     "brawl_net": -7.096,
+     "melee_min": -10.0,
+     "melee_max": -8.5,
+     "melee_net": -1.5,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -11.329,
+     "brawl_max": -4.482,
+     "brawl_net": 6.827,
+     "melee_min": -6.5,
+     "melee_max": -5.0,
+     "melee_net": 1.5,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "CliffCatch",
+   "extra": false
+  },
+  {
+   "clip": "CliffClimbSlow",
+   "melee_base": "PlyKirby5K_Share_ACTION_CliffClimbSlow_figatree",
+   "melee_base_found": true,
+   "rows": [
+    219
+   ],
+   "rows_anim_driven_0x80000000": [
+    219
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -13,
+     "brawl_max": -0.003,
+     "brawl_net": 12.997,
+     "melee_min": -10.892,
+     "melee_max": 0.0,
+     "melee_net": 10.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -4.504,
+     "brawl_max": 7.028,
+     "brawl_net": 11.502,
+     "melee_min": -5.0,
+     "melee_max": 3.006,
+     "melee_net": 8.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "ledge_floor": {
+    "axis": "y",
+    "within": 0.05,
+    "snapped": 23
+   },
+   "brawl_clip": "CliffClimbSlow",
+   "extra": false
+  },
+  {
+   "clip": "CliffClimbQuick",
+   "melee_base": "PlyKirby5K_Share_ACTION_CliffClimbQuick_figatree",
+   "melee_base_found": true,
+   "rows": [
+    220
+   ],
+   "rows_anim_driven_0x80000000": [
+    220
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -12.586,
+     "brawl_max": 0.021,
+     "brawl_net": 12.583,
+     "melee_min": -10.0,
+     "melee_max": 4.634,
+     "melee_net": 10.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -4.504,
+     "brawl_max": 6.997,
+     "brawl_net": 11.501,
+     "melee_min": -6.502,
+     "melee_max": 3.016,
+     "melee_net": 8.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "ledge_floor": {
+    "axis": "y",
+    "within": 0.05,
+    "snapped": 15
+   },
+   "brawl_clip": "CliffClimbQuick",
+   "extra": false
+  },
+  {
+   "clip": "CliffAttackSlow",
+   "melee_base": "PlyKirby5K_Share_ACTION_CliffAttackSlow_figatree",
+   "melee_base_found": true,
+   "rows": [
+    221
+   ],
+   "rows_anim_driven_0x80000000": [
+    221
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -12.958,
+     "brawl_max": 0.023,
+     "brawl_net": 12.954,
+     "melee_min": -10.892,
+     "melee_max": 0.0,
+     "melee_net": 10.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -4.5,
+     "brawl_max": 9.996,
+     "brawl_net": 14.496,
+     "melee_min": -5.0,
+     "melee_max": 11.997,
+     "melee_net": 10.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "ledge_floor": {
+    "axis": "y",
+    "within": 0.05,
+    "snapped": 40
+   },
+   "brawl_clip": "CliffAttackSlow",
+   "extra": false
+  },
+  {
+   "clip": "CliffAttackQuick",
+   "melee_base": "PlyKirby5K_Share_ACTION_CliffAttackQuick_figatree",
+   "melee_base_found": true,
+   "rows": [
+    222
+   ],
+   "rows_anim_driven_0x80000000": [
+    222
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -11.863,
+     "brawl_max": 0.027,
+     "brawl_net": 11.86,
+     "melee_min": -10.0,
+     "melee_max": 4.667,
+     "melee_net": 10.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -4.504,
+     "brawl_max": 9.996,
+     "brawl_net": 14.501,
+     "melee_min": -6.502,
+     "melee_max": 9.612,
+     "melee_net": 12.5,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "ledge_floor": {
+    "axis": "y",
+    "within": 0.05,
+    "snapped": 41
+   },
+   "brawl_clip": "CliffAttackQuick",
+   "extra": false
+  },
+  {
+   "clip": "CliffEscapeSlow",
+   "melee_base": "PlyKirby5K_Share_ACTION_CliffEscapeSlow_figatree",
+   "melee_base_found": true,
+   "rows": [
+    223
+   ],
+   "rows_anim_driven_0x80000000": [
+    223
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -13,
+     "brawl_max": 0.028,
+     "brawl_net": 13.0,
+     "melee_min": -10.892,
+     "melee_max": 0.0,
+     "melee_net": 10.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -4.505,
+     "brawl_max": 38.993,
+     "brawl_net": 43.496,
+     "melee_min": -5.0,
+     "melee_max": 40.002,
+     "melee_net": 45.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "ledge_floor": {
+    "axis": "y",
+    "within": 0.05,
+    "snapped": 5
+   },
+   "brawl_clip": "CliffEscapeSlow",
+   "extra": false
+  },
+  {
+   "clip": "CliffEscapeQuick",
+   "melee_base": "PlyKirby5K_Share_ACTION_CliffEscapeQuick_figatree",
+   "melee_base_found": true,
+   "rows": [
+    224
+   ],
+   "rows_anim_driven_0x80000000": [
+    224
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -12.93,
+     "brawl_max": -0.003,
+     "brawl_net": 12.927,
+     "melee_min": -10.0,
+     "melee_max": 3.195,
+     "melee_net": 10.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -4.505,
+     "brawl_max": 40.008,
+     "brawl_net": 44.494,
+     "melee_min": -5.133,
+     "melee_max": 40.001,
+     "melee_net": 45.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "ledge_floor": {
+    "axis": "y",
+    "within": 0.05,
+    "snapped": 37
+   },
+   "brawl_clip": "CliffEscapeQuick",
+   "extra": false
+  },
+  {
+   "clip": "CliffJumpSlow1",
+   "melee_base": "PlyKirby5K_Share_ACTION_CliffJumpSlow1_figatree",
+   "melee_base_found": true,
+   "rows": [
+    225
+   ],
+   "rows_anim_driven_0x80000000": [
+    225
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -12.636,
+     "brawl_max": -0.003,
+     "brawl_net": 12.633,
+     "melee_min": -10.0,
+     "melee_max": 0.0,
+     "melee_net": 10.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -4.5,
+     "brawl_max": -0.001,
+     "brawl_net": 4.499,
+     "melee_min": -5.0,
+     "melee_max": 0.001,
+     "melee_net": 5.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "CliffJumpSlow1",
+   "extra": false
+  },
+  {
+   "clip": "CliffJumpQuick1",
+   "melee_base": "PlyKirby5K_Share_ACTION_CliffJumpQuick1_figatree",
+   "melee_base_found": true,
+   "rows": [
+    227
+   ],
+   "rows_anim_driven_0x80000000": [
+    227
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -12.441,
+     "brawl_max": -0.003,
+     "brawl_net": 12.438,
+     "melee_min": -10.0,
+     "melee_max": 1.621,
+     "melee_net": 10.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -4.5,
+     "brawl_max": -0.001,
+     "brawl_net": 4.499,
+     "melee_min": -5.594,
+     "melee_max": 0.0,
+     "melee_net": 5.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "CliffJumpQuick1",
+   "extra": false
+  },
+  {
+   "clip": "CatchDash",
+   "melee_base": "PlyKirby5K_Share_ACTION_CatchDash_figatree",
+   "melee_base_found": true,
+   "rows": [
+    243
+   ],
+   "rows_anim_driven_0x80000000": [
+    243
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 40.036,
+     "brawl_net": 39.99,
+     "melee_min": -0.072,
+     "melee_max": 22.927,
+     "melee_net": 22.999,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "CatchDash",
+   "extra": false
+  },
+  {
+   "clip": "ThrowHi",
+   "melee_base": "PlyKirby5K_Share_ACTION_ThrowHi_figatree",
+   "melee_base_found": true,
+   "rows": [
+    249
+   ],
+   "rows_anim_driven_0x80000000": [
+    249
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 271.152,
+     "brawl_net": 7.477,
+     "melee_min": 0.0,
+     "melee_max": 271.041,
+     "melee_net": 18.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -24.76,
+     "brawl_max": -0.006,
+     "brawl_net": -24.754,
+     "melee_min": -20.004,
+     "melee_max": 0.0,
+     "melee_net": -20.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "ThrowHi",
+   "extra": false
+  },
+  {
+   "clip": "JumpAerialF5",
+   "melee_base": "PlyKirby5K_Share_ACTION_JumpAerialF5_figatree",
+   "melee_base_found": true,
+   "rows": [
+    299
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0.227,
+     "brawl_net": -0.227,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0.2275
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    }
+   },
+   "brawl_clip": "JumpAerialF5",
+   "extra": false
+  },
+  {
+   "clip": "JumpAerialF5",
+   "melee_base": "PlyKirby5K_Share_ACTION_JumpAerialF5Met_figatree",
+   "melee_base_found": true,
+   "rows": [
+    304
+   ],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "default",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0.227,
+     "brawl_net": -0.227,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "strip",
+     "held_at": 0.2275
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "auto: Melee base still on this axis",
+     "decision": "none"
+    }
+   },
+   "brawl_clip": "JumpAerialF5",
+   "extra": false
+  },
+  {
+   "clip": "SpecialHi",
+   "melee_base": "PlyKirby5K_Share_ACTION_SpecialHi1_figatree",
+   "melee_base_found": true,
+   "rows": [
+    324
+   ],
+   "rows_anim_driven_0x80000000": [
+    324
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -0.313,
+     "brawl_max": 53.514,
+     "brawl_net": 39.588,
+     "melee_min": 0.0,
+     "melee_max": 1.764,
+     "melee_net": 1.764,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -25.476,
+     "brawl_max": 3.475,
+     "brawl_net": -16.943,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "SpecialHi",
+   "extra": false
+  },
+  {
+   "clip": "SpecialHiLoop",
+   "melee_base": "PlyKirby5K_Share_ACTION_SpecialHi2_figatree",
+   "melee_base_found": true,
+   "rows": [
+    325
+   ],
+   "rows_anim_driven_0x80000000": [
+    325
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": -0.272,
+     "brawl_max": 0.377,
+     "brawl_net": -0.09,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "y": {
+     "brawl_min": 6.293,
+     "brawl_max": 63.443,
+     "brawl_net": 18.867,
+     "melee_min": 3.57,
+     "melee_max": 59.999,
+     "melee_net": -1.43,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -21.118,
+     "brawl_max": 14.278,
+     "brawl_net": -13.818,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "SpecialHiLoop",
+   "extra": false
+  },
+  {
+   "clip": "SpecialHiLoop",
+   "melee_base": "PlyKirby5K_Share_ACTION_SpecialAirHi2_figatree",
+   "melee_base_found": true,
+   "rows": [
+    329
+   ],
+   "rows_anim_driven_0x80000000": [
+    329
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": -0.272,
+     "brawl_max": 0.377,
+     "brawl_net": -0.09,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "y": {
+     "brawl_min": 6.293,
+     "brawl_max": 63.443,
+     "brawl_net": 18.867,
+     "melee_min": 3.57,
+     "melee_max": 59.999,
+     "melee_net": -1.43,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -21.118,
+     "brawl_max": 14.278,
+     "brawl_net": -13.818,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "SpecialHiLoop",
+   "extra": false
+  },
+  {
+   "clip": "SpecialLw",
+   "melee_base": "PlyKirby5K_Share_ACTION_SpecialLw2_figatree",
+   "melee_base_found": true,
+   "rows": [
+    333
+   ],
+   "rows_anim_driven_0x80000000": [
+    333
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -1,
+     "brawl_max": 17.519,
+     "brawl_net": -1.0,
+     "melee_min": 0.0,
+     "melee_max": 9.0,
+     "melee_net": 9.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 10.997,
+     "brawl_net": 10.997,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "SpecialLw",
+   "extra": false
+  },
+  {
+   "clip": "SpecialAirLw",
+   "melee_base": "PlyKirby5K_Share_ACTION_SpecialAirLw2_figatree",
+   "melee_base_found": true,
+   "rows": [
+    336
+   ],
+   "rows_anim_driven_0x80000000": [
+    336
+   ],
+   "rule_source": "anim_driven_rows",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -1,
+     "brawl_max": 17.174,
+     "brawl_net": -0.999,
+     "melee_min": 0.0,
+     "melee_max": 9.0,
+     "melee_net": 9.0,
+     "melee_has": true,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 10.997,
+     "brawl_net": 10.997,
+     "melee_min": 0.0,
+     "melee_max": 0.0,
+     "melee_net": 0.0,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "SpecialAirLw",
+   "extra": false
+  },
+  {
+   "clip": "AttackLw4Hold",
+   "melee_base": null,
+   "melee_base_found": false,
+   "rows": [],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "extras",
+   "axes": {
+    "x": {
+     "brawl_min": 0.143,
+     "brawl_max": 0.332,
+     "brawl_net": 0.152,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "y": {
+     "brawl_min": 1.868,
+     "brawl_max": 1.868,
+     "brawl_net": 0.0,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": -0.012,
+     "brawl_max": -0.012,
+     "brawl_net": 0.0,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    }
+   },
+   "brawl_clip": "AttackLw4Hold",
+   "extra": true
+  },
+  {
+   "clip": "AttackS3S3",
+   "melee_base": null,
+   "melee_base_found": false,
+   "rows": [],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "extras",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": -0.039,
+     "brawl_max": 2.799,
+     "brawl_net": 0,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "AttackS3S3",
+   "extra": true
+  },
+  {
+   "clip": "FuraFuraStartD",
+   "melee_base": null,
+   "melee_base_found": false,
+   "rows": [],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "extras",
+   "axes": {
+    "x": {
+     "brawl_min": 0.09,
+     "brawl_max": 0.295,
+     "brawl_net": 0.205,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "y": {
+     "brawl_min": -0.335,
+     "brawl_max": 1.868,
+     "brawl_net": 2.203,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": 0.007,
+     "brawl_max": 0.088,
+     "brawl_net": -0.08,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "FuraFuraStartD",
+   "extra": true
+  },
+  {
+   "clip": "FuraFuraStartU",
+   "melee_base": null,
+   "melee_base_found": false,
+   "rows": [],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "extras",
+   "axes": {
+    "x": {
+     "brawl_min": -0.02,
+     "brawl_max": 0.295,
+     "brawl_net": 0.315,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "y": {
+     "brawl_min": -0.186,
+     "brawl_max": 1.868,
+     "brawl_net": 2.054,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": 0.025,
+     "brawl_max": 0.025,
+     "brawl_net": 0.0,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    }
+   },
+   "brawl_clip": "FuraFuraStartU",
+   "extra": true
+  },
+  {
+   "clip": "SpecialAirLwB",
+   "melee_base": null,
+   "melee_base_found": false,
+   "rows": [],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "extras",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -1,
+     "brawl_max": 5.548,
+     "brawl_net": -1.0,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 25.509,
+     "brawl_net": 16.998,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "SpecialAirLwB",
+   "extra": true
+  },
+  {
+   "clip": "SpecialAirLwF",
+   "melee_base": null,
+   "melee_base_found": false,
+   "rows": [],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "extras",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -1,
+     "brawl_max": 4.784,
+     "brawl_net": -0.999,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -24.856,
+     "brawl_max": -0.006,
+     "brawl_net": -14.999,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "SpecialAirLwF",
+   "extra": true
+  },
+  {
+   "clip": "SpecialLwB",
+   "melee_base": null,
+   "melee_base_found": false,
+   "rows": [],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "extras",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -1,
+     "brawl_max": 5.628,
+     "brawl_net": -0.999,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": 0,
+     "brawl_max": 25.509,
+     "brawl_net": 16.998,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "SpecialLwB",
+   "extra": true
+  },
+  {
+   "clip": "SpecialLwF",
+   "melee_base": null,
+   "melee_base_found": false,
+   "rows": [],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "extras",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": -1,
+     "brawl_max": 4.684,
+     "brawl_net": -1.0,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    },
+    "z": {
+     "brawl_min": -24.856,
+     "brawl_max": -0.006,
+     "brawl_net": -14.999,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "SpecialLwF",
+   "extra": true
+  },
+  {
+   "clip": "SpecialSDrill",
+   "melee_base": null,
+   "melee_base_found": false,
+   "rows": [],
+   "rows_anim_driven_0x80000000": [],
+   "rule_source": "extras",
+   "axes": {
+    "x": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "y": {
+     "brawl_min": 0,
+     "brawl_max": 0,
+     "brawl_net": 0,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "none"
+    },
+    "z": {
+     "brawl_min": 2.285,
+     "brawl_max": 89.979,
+     "brawl_net": 87.693,
+     "melee_min": null,
+     "melee_max": null,
+     "melee_net": null,
+     "melee_has": false,
+     "rule": "keep",
+     "decision": "keep"
+    }
+   },
+   "brawl_clip": "SpecialSDrill",
+   "extra": true
+  }
+ ]
+}

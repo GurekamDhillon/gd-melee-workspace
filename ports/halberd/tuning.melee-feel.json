@@ -1,0 +1,79 @@
+{
+ "_readme": [
+  "melee-feel: Brawl Meta Knight's hitbox timing, IASA, angles and sizes, re-weighted for Melee's engine.",
+  "Why: Brawl MK's damage is low because Brawl lets victims act out of hitstun (hitstun cancelling) and his speed makes up for it.",
+  "In Melee there is no hitstun cancel and L-cancelling halves landing lag, so the same numbers combo harder and hit softer.",
+  "This preset: +15% damage on every move and throw (MK's kills and punish still read), knockback growth -5% on the fast",
+  "multi-hit / combo moves so they do not chain for free, rapid jab stays 1-2%, landing lags and jump squat from Melee Kirby",
+  "(the host), gravity/fall speeds stay the cast-scaled values. Syntax reference: tuning.json. There is no Melee Meta Knight,",
+  "so 'melee' for a hitbox means the Kirby hitbox it was mapped onto - use it sparingly.",
+  "Build + verify:  python tools\\build_mk_slot.py --preset tuning.melee-feel.json"
+ ],
+ "name": "melee-feel",
+ "description": "Brawl MK timing/angles/sizes, +15% damage, lighter growth on combo moves, Melee-Kirby landing lag and jump squat",
+ "defaults": {
+  "move": {
+   "base": "brawl",
+   "damage": "x1.15 brawl"
+  },
+  "attribute": "brawl"
+ },
+ "moves": {
+  "rapid_jab": "brawl",
+  "tornado": "brawl",
+  "drill_rush": "brawl",
+  "drill_rush_air": "brawl",
+  "fair": {
+   "base": "brawl",
+   "damage": "x1.15 brawl",
+   "kbg": "x0.95 brawl"
+  },
+  "bair": {
+   "base": "brawl",
+   "damage": "x1.15 brawl",
+   "kbg": "x0.95 brawl"
+  },
+  "usmash": {
+   "base": "brawl",
+   "damage": "x1.15 brawl",
+   "kbg": "x0.95 brawl"
+  },
+  "dtilt": {
+   "base": "brawl",
+   "damage": "x1.15 brawl",
+   "kbg": "x0.95 brawl"
+  },
+  "throw*": {
+   "base": "brawl",
+   "damage": "x1.15 brawl"
+  },
+  "_ideas (drop the leading _ to enable)": null,
+  "_nair": {
+   "iasa": "melee"
+  },
+  "_*_land": {
+   "iasa": "melee"
+  }
+ },
+ "attributes": {
+  "jump_startup_time": "melee",
+  "landingair*_lag": "melee",
+  "normal_landing_lag": "melee",
+  "_ideas": null,
+  "_gravity": "x0.95 brawl",
+  "_speciallw_max_time_in_stone": 12
+ },
+ "mk": {
+  "_readme": "Meta Knight structural knobs (build_mk.py MK_KNOBS)",
+  "hitbox_scale": 1.0,
+  "model_scaling": 0.95,
+  "autolink_angle": 80,
+  "tornado_rehit": 10,
+  "drill_rehit": null,
+  "geno_v1": true,
+  "geno_v2": true,
+  "upb_glide": "Glide",
+  "taunt_stick": 0.5,
+  "wait3_chance": 3
+ }
+}

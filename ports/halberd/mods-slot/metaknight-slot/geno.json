@@ -1,0 +1,480 @@
+{
+ "geno": 3,
+ "fighters": [
+  {
+   "attach": "PlBm.dat",
+   "name": "Meta Knight (Brawl)",
+   "jumps": {
+    "max": 6,
+    "air_vy": [
+     2.3494,
+     2.2426,
+     2.1358,
+     2.0077,
+     1.8689
+    ]
+   },
+   "geno_v2_note": "Geno v2 (geno_v2_encodings.md): glide / Mach Tornado / Drill Rush as Geno states on MK's own clips; glide/tornado/drill blocks are MK's Brawl words (Misc Glide, paramSpecialN, paramSpecialS) from the IR. drill.speed is not set: the Drill row is animation-driven, its SpecialSDrill TransN is the speed.",
+   "subactions": [
+    {
+     "index": 53,
+     "file": "geno/sub_053.txt"
+    },
+    {
+     "index": 55,
+     "file": "geno/sub_055.txt"
+    },
+    {
+     "index": 57,
+     "file": "geno/sub_057.txt"
+    },
+    {
+     "index": 47,
+     "file": "geno/sub_047.txt"
+    },
+    {
+     "index": 334,
+     "file": "geno/sub_334.txt"
+    },
+    {
+     "index": 337,
+     "file": "geno/sub_337.txt"
+    },
+    {
+     "index": 345,
+     "file": "geno/sub_345.txt"
+    },
+    {
+     "index": 348,
+     "file": "geno/sub_348.txt"
+    },
+    {
+     "index": 352,
+     "file": "geno/sub_352.txt"
+    },
+    {
+     "index": 354,
+     "file": "geno/sub_354.txt"
+    },
+    {
+     "index": 356,
+     "file": "geno/sub_356.txt"
+    },
+    {
+     "index": 357,
+     "file": "geno/sub_357.txt"
+    },
+    {
+     "index": 358,
+     "file": "geno/sub_358.txt"
+    },
+    {
+     "index": 359,
+     "file": "geno/sub_359.txt"
+    },
+    {
+     "index": 360,
+     "file": "geno/sub_360.txt"
+    },
+    {
+     "index": 361,
+     "file": "geno/sub_361.txt"
+    },
+    {
+     "index": 362,
+     "file": "geno/sub_362.txt"
+    },
+    {
+     "index": 363,
+     "file": "geno/sub_363.txt"
+    },
+    {
+     "index": 364,
+     "file": "geno/sub_364.txt"
+    },
+    {
+     "index": 365,
+     "file": "geno/sub_365.txt"
+    },
+    {
+     "index": 239,
+     "file": "geno/sub_239.txt"
+    },
+    {
+     "index": 240,
+     "file": "geno/sub_240.txt"
+    },
+    {
+     "index": 2,
+     "file": "geno/sub_002.txt"
+    }
+   ],
+   "states": [
+    {
+     "name": "GlideStart",
+     "subaction": 338,
+     "behavior": "geno.glide.start"
+    },
+    {
+     "name": "Glide",
+     "subaction": 339,
+     "behavior": "geno.glide"
+    },
+    {
+     "name": "GlideAttack",
+     "subaction": 340,
+     "behavior": "geno.glide.attack",
+     "like": "motion:65",
+     "move_id": 48
+    },
+    {
+     "name": "GlideLanding",
+     "subaction": 341,
+     "behavior": "geno.glide.landing"
+    },
+    {
+     "name": "GlideEnd",
+     "subaction": 342,
+     "behavior": "geno.glide.end",
+     "next": "auto"
+    },
+    {
+     "name": "Tornado",
+     "subaction": 306,
+     "behavior": "geno.tornado",
+     "move_id": 18,
+     "next": "geno:TornadoEnd"
+    },
+    {
+     "name": "TornadoEnd",
+     "subaction": 348,
+     "behavior": "geno.air",
+     "phys": "auto",
+     "coll": "both",
+     "next": "helpless",
+     "move_id": 18
+    },
+    {
+     "name": "TornadoEndGround",
+     "subaction": 307,
+     "behavior": "geno.air",
+     "phys": "auto",
+     "coll": "both",
+     "next": "helpless",
+     "move_id": 18
+    },
+    {
+     "name": "DrillStart",
+     "subaction": 343,
+     "behavior": "geno.drill.start",
+     "move_id": 19
+    },
+    {
+     "name": "DrillStartAir",
+     "subaction": 344,
+     "behavior": "geno.drill.start",
+     "move_id": 19
+    },
+    {
+     "name": "Drill",
+     "subaction": 345,
+     "behavior": "geno.drill",
+     "move_id": 19
+    },
+    {
+     "name": "DrillEndGround",
+     "subaction": 347,
+     "behavior": "geno.drill.end",
+     "move_id": 19,
+     "coll": "ground",
+     "next": "auto"
+    },
+    {
+     "name": "DrillEnd",
+     "subaction": 346,
+     "behavior": "geno.drill.end",
+     "move_id": 19,
+     "coll": "anim_motion",
+     "ledge": "both",
+     "land": "motion:43",
+     "next": "helpless"
+    },
+    {
+     "name": "AppealHi",
+     "subaction": 349,
+     "behavior": "geno.ground",
+     "like": "motion:264"
+    },
+    {
+     "name": "AppealS",
+     "subaction": 350,
+     "behavior": "geno.ground",
+     "like": "motion:264"
+    },
+    {
+     "name": "Wait3",
+     "subaction": 351,
+     "behavior": "geno.ground",
+     "like": "motion:14",
+     "iasa": "like",
+     "phys": "like",
+     "coll": "like"
+    },
+    {
+     "name": "UpB",
+     "subaction": 352,
+     "behavior": "geno.anim_motion",
+     "like": "motion:385",
+     "liftoff": true,
+     "origin": true,
+     "ledge": "none",
+     "land": "geno:UpBLand",
+     "next": "auto"
+    },
+    {
+     "name": "UpBAir",
+     "subaction": 353,
+     "behavior": "geno.anim_motion",
+     "like": "motion:389",
+     "ledge": "none",
+     "land": "geno:UpBLand",
+     "next": "geno:UpBLoop"
+    },
+    {
+     "name": "UpBLoop",
+     "subaction": 354,
+     "behavior": "geno.anim_motion",
+     "like": "motion:386",
+     "origin": true,
+     "ledge": "none",
+     "land": "geno:UpBLand",
+     "next": "auto"
+    },
+    {
+     "name": "UpBLand",
+     "subaction": 355,
+     "behavior": "geno.ground",
+     "like": "motion:43",
+     "next": "auto"
+    },
+    {
+     "name": "CapeStart",
+     "subaction": 356,
+     "behavior": "geno.cape",
+     "like": "motion:393"
+    },
+    {
+     "name": "CapeStartAir",
+     "subaction": 357,
+     "behavior": "geno.cape",
+     "like": "motion:396"
+    },
+    {
+     "name": "CapeN",
+     "subaction": 358,
+     "behavior": "geno.cape.attack",
+     "like": "motion:394",
+     "facing": "entry",
+     "liftoff": false
+    },
+    {
+     "name": "CapeNAir",
+     "subaction": 359,
+     "behavior": "geno.cape.attack",
+     "like": "motion:397",
+     "facing": "entry"
+    },
+    {
+     "name": "CapeF",
+     "subaction": 360,
+     "behavior": "geno.cape.attack",
+     "like": "motion:394",
+     "facing": "entry",
+     "liftoff": false
+    },
+    {
+     "name": "CapeFAir",
+     "subaction": 361,
+     "behavior": "geno.cape.attack",
+     "like": "motion:397",
+     "facing": "entry"
+    },
+    {
+     "name": "CapeB",
+     "subaction": 362,
+     "behavior": "geno.cape.attack",
+     "like": "motion:394",
+     "facing": "entry",
+     "liftoff": false
+    },
+    {
+     "name": "CapeBAir",
+     "subaction": 363,
+     "behavior": "geno.cape.attack",
+     "like": "motion:397",
+     "facing": "entry"
+    },
+    {
+     "name": "CapeEnd",
+     "subaction": 364,
+     "behavior": "geno.cape.end",
+     "like": "motion:395",
+     "ledge": "both",
+     "liftoff": false
+    },
+    {
+     "name": "CapeEndAir",
+     "subaction": 365,
+     "behavior": "geno.cape.end",
+     "like": "motion:398",
+     "ledge": "both"
+    }
+   ],
+   "specials": {
+    "n": "geno:Tornado",
+    "s": "geno:DrillStart",
+    "air_s": "geno:DrillStartAir",
+    "hi": "geno:UpB",
+    "air_hi": "geno:UpBAir",
+    "lw": "geno:CapeStart",
+    "air_lw": "geno:CapeStartAir"
+   },
+   "glide": {
+    "w00": 80.0,
+    "w01": -70.0,
+    "w02": 0.75,
+    "w03": 1.0,
+    "w04": 1.0,
+    "w05": 1.7,
+    "w06": 0.04,
+    "w07": 2.2,
+    "w08": 0.7,
+    "w09": 0.03,
+    "w10": 0.6,
+    "w11": 15.0,
+    "w12": -25.0,
+    "w13": 0.03,
+    "w14": 0.15,
+    "w15": 0.25,
+    "w16": 0.55,
+    "w17": 0.75,
+    "w18": 7.0,
+    "w19": 1.0,
+    "w20": 44,
+    "w21": 0,
+    "hold_frames": 16,
+    "pose_center": 90
+   },
+   "tornado": {
+    "w00": 1.0,
+    "w01": 0.7,
+    "w02": 80.0,
+    "w03": 0.12,
+    "w04": 2.0,
+    "w05": 0.1,
+    "w06": 1.7,
+    "w07": 0.008,
+    "w08": -0.08,
+    "w09": 0.5,
+    "w10": 1.0,
+    "w11": 10,
+    "w12": 1.4,
+    "w13": 16.0,
+    "w14": 80.0,
+    "w15": 1.5,
+    "w16": 70,
+    "w17": 2.0,
+    "w18": 10.0,
+    "w19": 0,
+    "spin_anim": 1,
+    "spin_period": 360
+   },
+   "drill": {
+    "w00": 0.5,
+    "w01": 1.0,
+    "w02": -0.08,
+    "w03": 3.0,
+    "w04": 10,
+    "w05": 0,
+    "bounce": 0,
+    "pitch_model": 1
+   },
+   "cape": {
+    "w00": 0.5,
+    "w01": 0.4,
+    "w02": 0.5,
+    "w03": 2.5,
+    "w04": 0.5,
+    "w05": 2.5
+   },
+   "mk_special_attributes": {
+    "_status": "INACTIVE on purpose: v1 'special_attributes' would overwrite the host's (Kirby's) dat_attrs, which Kirby's code reads. paramSpecialN / paramSpecialS and the Misc Glide block now live in the v2 'tornado' / 'drill' / 'glide' blocks above (the Geno behaviours own those specials). What remains here has no MK-native reader yet: paramSpecialLw (Dimensional Cape runs on Kirby's stone code, tuned through the host knobs speciallw_*) and Misc MultiJump (Kirby's multi-jump table + jumps.air_vy carry the hops).",
+    "words": [
+     {
+      "index": 26,
+      "name": "special_lw.w00",
+      "float": 0.5
+     },
+     {
+      "index": 27,
+      "name": "special_lw.w01",
+      "float": 0.4
+     },
+     {
+      "index": 28,
+      "name": "special_lw.w02",
+      "float": 0.5
+     },
+     {
+      "index": 29,
+      "name": "special_lw.w03",
+      "float": 2.5
+     },
+     {
+      "index": 30,
+      "name": "special_lw.w04",
+      "float": 0.5
+     },
+     {
+      "index": 31,
+      "name": "special_lw.w05",
+      "float": 2.5
+     }
+    ],
+    "multijump": {
+     "unk1": 0.3,
+     "unk2": 0.5,
+     "unk3": 0.8,
+     "horizontal_boost": 0.8,
+     "turn_frames": 12,
+     "hop_velocities": [
+      2.2,
+      2.1,
+      2.0,
+      1.88,
+      1.75
+     ],
+     "unk_list": [
+      15.0,
+      30.0,
+      45.0,
+      60.0,
+      75.0,
+      90.0,
+      105.0,
+      120.0,
+      135.0,
+      150.0,
+      165.0,
+      180.0
+     ]
+    }
+   },
+   "hooks": {
+    "on_init": [],
+    "on_frame": [],
+    "on_action": []
+   }
+  }
+ ]
+}

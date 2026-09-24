@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gd-melee.local/character-ir/common.schema.json",
+  "title": "Character IR - shared definitions",
+  "description": "Building blocks used by every layer of the character IR: identifiers and typed references, evidence and confidence, index spaces, engine addresses, quantities, encodings, and the per-engine extension slot that lets Melee (m-ex / GD's Melee port) and Brawl (BrawlEx / PSA) data live side by side in one engine-neutral document.",
+  "$defs": {
+
+    "Id": {
+      "description": "A document-local identifier: '<namespace>:<path>'. The namespace names the entity kind (e.g. 'joint', 'motion', 'state', 'script', 'tex', 'file', 'fn', 'slot'); the path is free-form but stable within the document. Every entity that anything else may point at carries an 'id'.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*:[A-Za-z0-9_.@/+-]+$"
+    },
+    "Ref": {
+      "description": "A reference to an entity in this document (an Id), or in another IR document ('<document id>#<Id>'), e.g. another fighter that this one clones.",
+      "type": "string",
+      "pattern": "^([A-Za-z0-9_.-]+#)?[a-z][a-z0-9_]*:[A-Za-z0-9_.@/+-]+$"
+    },
+    "Confidence": {
+      "description": "How much a fact can be trusted. verified: parsed and cross-checked against a second source (another file, a run, a log). observed: seen at runtime/in a log but not cross-checked. inferred: read from code or structure, not run. assumed: a working assumption (say why in a note). unknown: not determined (the value, if any, is a placeholder).",
+      "enum": ["verified", "observed", "inferred", "assumed", "unknown"]
+    },
+    "EvidenceRef": {
+      "description": "Id of an entry in the document's evidence registry ('ev:<name>').",
+      "type": "string",
+      "pattern": "^ev:[A-Za-z0-9_.@/+-]+$"
+    },
+    "Evidence": {
+      "description": "One source a fact rests on. Kept in a registry at the document root and referenced by id, so a single tool run or file offset can back many facts.",
+      "type": "object",
+      "required": ["id", "kind"],
+      "properties": {
+        "id": { "$ref": "#/$defs/EvidenceRef" },
+        "kind": {
+          "enum": ["file_bytes", "disc_image", "source_code", "decomp", "runtime_log", "tool_output", "documentation", "community_knowledge", "analysis_report", "human"]
+        },
+        "path": { "type": "string", "description": "File path (relative to the repo root where possible) or URL." },
+        "offset": { "$ref": "#/$defs/Hex" },
+        "length": { "type": "integer", "minimum": 0 },
+        "symbol": { "type": "string" },
+        "lines": { "type": "string", "description": "Line range for source evidence, e.g. '1336-1351'." },
+        "revision": { "type": "string", "description": "Commit / build / disc revision the evidence was taken from." },
+        "command": { "type": "string", "description": "Tool invocation that produced the evidence." },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "Provenance": {
+      "description": "Attach to any object: how sure we are and why. Omitted = inherit from the enclosing object.",
+      "type": "object",
+      "properties": {
+        "confidence": { "$ref": "#/$defs/Confidence" },
+        "evidence": { "type": "array", "items": { "$ref": "#/$defs/EvidenceRef" }, "uniqueItems": true },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "Hex": {
+      "description": "An integer written as hex ('0x...'); used for addresses, offsets, flags and ids where the hex form is the one people search for.",
+      "type": "string",
+      "pattern": "^0x[0-9A-Fa-f]+$"
+    },
+    "IntOrHex": {
+      "oneOf": [ { "type": "integer" }, { "$ref": "#/$defs/Hex" } ]
+    },
+
+    "EngineId": {
+      "description": "An engine/runtime a fact is specific to. 'melee.gc' = retail SSBM (GALE01 v1.02) on GameCube hardware; 'melee.mex' = the m-ex framework's semantics; 'melee.gdport' = GD's Melee PC port; 'brawl.wii' = retail SSBB (RSBE01); 'brawl.brawlex' = BrawlEx / P+Ex style fighter expansion; 'brawl.psa' = the Project Smash Attacks move-set format. New engines use the same dotted form.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)*$"
+    },
+    "EngineExtensions": {
+      "description": "Engine-specific detail that has no engine-neutral meaning. Keys are EngineIds; values are free-form objects whose shape is documented per engine in schema/engines/*.md. Semantic fields stay outside this block so that two engines' versions of the same concept can be compared field by field.",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/EngineId" },
+      "additionalProperties": { "type": "object" }
+    },
+
+    "IndexSpace": {
+      "description": "A named numbering. The IR never stores a bare index: it says which space the number is in, because the same fighter is 56 in one space and 61 in another (Shadow: m-ex internal 56, m-ex external 55, port slot 28, port FighterKind 61, port CharacterKind 62).",
+      "type": "object",
+      "required": ["space", "value"],
+      "properties": {
+        "space": {
+          "type": "string",
+          "description": "Dotted space name. Known spaces: melee.retail.character_kind, melee.retail.fighter_kind, melee.mex.internal, melee.mex.external, melee.mex.css_icon, melee.gdport.mex_slot, melee.gdport.fighter_kind, melee.gdport.character_kind, melee.item_kind, melee.effect_bank, melee.ssm_bank, melee.sfx_id, melee.gfx_id, melee.motion_id, melee.stage.external, melee.stage.internal, brawl.fighter_id, brawl.slot_id, brawl.css_slot_id, brawl.cosmetic_id, brawl.soundbank_id, brawl.action_id, brawl.subaction_id, brawl.article_id, brawl.effect_bank.",
+          "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"
+        },
+        "value": { "$ref": "#/$defs/IntOrHex" },
+        "stability": {
+          "description": "stable: fixed by the content. install_relative: depends on what else is installed/enabled (the port's dense m-ex slots shift when a mod is disabled). session_relative: assigned at run time.",
+          "enum": ["stable", "install_relative", "session_relative"],
+          "default": "stable"
+        },
+        "provenance": { "$ref": "#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+    "IndexMapping": {
+      "description": "An explicit function between two index spaces, with its rule and where it is implemented.",
+      "type": "object",
+      "required": ["from", "to", "rule"],
+      "properties": {
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "rule": { "type": "string", "description": "Human-readable rule, e.g. 'fk = 0x21 + slot'." },
+        "implemented_by": { "type": "array", "items": { "$ref": "#/$defs/CodeLocation" } },
+        "partial": { "type": "boolean", "description": "True when some inputs have no image (e.g. an external id the port has no slot for returns -1)." },
+        "provenance": { "$ref": "#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+
+    "CodeLocation": {
+      "description": "A place in a code base (decomp, port, framework asm, tool).",
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string" },
+        "symbol": { "type": "string" },
+        "lines": { "type": "string" },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "EngineAddress": {
+      "description": "An address in an engine's own address space (e.g. a GameCube retail function 0x800693AC), kept symbolic so it can be re-targeted: the IR never assumes the address is callable as-is on another host.",
+      "type": "object",
+      "required": ["engine", "address"],
+      "properties": {
+        "engine": { "$ref": "#/$defs/EngineId" },
+        "address": { "$ref": "#/$defs/Hex" },
+        "symbol": { "type": "string", "description": "Decomp / symbol-map name." },
+        "unit": { "type": "string", "description": "Owning translation unit, needed to tell same-named statics apart." },
+        "class": { "enum": ["function", "data", "data_interior", "table", "code_interior", "mmio", "unknown"] },
+        "base_symbol": { "type": "string", "description": "For data_interior: the object the address points into." },
+        "base_offset": { "$ref": "#/$defs/IntOrHex" },
+        "host_binding": {
+          "description": "How a host runtime resolves it (e.g. GD's Melee: bridged native gw_<symbol>, redirected static, API shim).",
+          "type": "object",
+          "properties": {
+            "runtime": { "$ref": "#/$defs/EngineId" },
+            "resolution": { "enum": ["bridge_native", "static_redirect", "api_shim", "abi_repair_shim", "callback_translating_shim", "exe_text_passthrough", "unresolved"] },
+            "target": { "type": "string" },
+            "signature": { "$ref": "#/$defs/CallSignature" }
+          },
+          "additionalProperties": false
+        },
+        "provenance": { "$ref": "#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+
+    "CallSignature": {
+      "description": "Argument/return classes of a callable as the calling convention sees them. Engine-neutral classes; the ABI mapping (PPC EABI GPR/FPR, x86 cdecl, ...) is given by 'abi'.",
+      "type": "object",
+      "properties": {
+        "abi": { "type": "string", "description": "e.g. 'ppc.eabi', 'x86.cdecl', 'ppc.eabi.variadic'." },
+        "returns": { "$ref": "#/$defs/ValueClass" },
+        "params": { "type": "array", "items": { "$ref": "#/$defs/ValueClass" } },
+        "variadic": { "type": "boolean" },
+        "variadic_rule": { "type": "string", "description": "How variadic floats are detected (PPC: CR6 bit set before the call; printf-style: from the format string)." },
+        "quirks": {
+          "type": "array",
+          "description": "Call-site ABI quirks content relies on, e.g. a callee reading a register the caller never set (it_80276174 reads r4).",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "ValueClass": {
+      "description": "i32/u32: integer register; ptr: pointer (address space in 'space'); f32/f64: float register; void; agg:<size>: by-value aggregate of <size> bytes.",
+      "type": "object",
+      "required": ["class"],
+      "properties": {
+        "class": { "type": "string", "pattern": "^(void|i8|u8|i16|u16|i32|u32|i64|u64|bool|f32|f64|ptr|agg:[0-9]+)$" },
+        "name": { "type": "string" },
+        "space": { "$ref": "#/$defs/AddressSpace" },
+        "type_name": { "type": "string", "description": "Source-level type, e.g. 'HSD_GObj*'." }
+      },
+      "additionalProperties": false
+    },
+    "AddressSpace": {
+      "description": "Where a pointer points. guest.mem1 = emulated GameCube main RAM (big-endian, snapshotted); guest.aram = audio RAM; engine.static = a retail static whose bytes the port keeps in native .data at the retail address; host.stack / host.heap = native memory; guest.persist = the port's never-freed m-ex region; mmio = hardware registers (e.g. the GX write-gather pipe); file = offset inside a file.",
+      "enum": ["guest.mem1", "guest.aram", "guest.persist", "engine.static", "host.stack", "host.heap", "host.text", "mmio", "file", "wii.mem1", "wii.mem2", "unknown"]
+    },
+
+    "Quantity": {
+      "description": "A number with a unit. Game-space distances are in the engine's units (Melee/Brawl: 1 unit ~ 1 'stage unit').",
+      "type": "object",
+      "required": ["value", "unit"],
+      "properties": {
+        "value": { "type": "number" },
+        "unit": {
+          "enum": ["frames", "seconds", "milliseconds", "units", "units_per_frame", "units_per_frame2", "degrees", "radians", "percent", "damage", "ratio", "bytes", "hz", "samples", "count", "none"]
+        },
+        "raw": { "description": "The stored value before unit conversion (e.g. fixed-point), when it differs.", "type": ["number", "string"] },
+        "provenance": { "$ref": "#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+    "Vec3": {
+      "type": "array", "items": { "type": "number" }, "minItems": 3, "maxItems": 3
+    },
+    "Vec2": {
+      "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2
+    },
+    "ColorRGBA": {
+      "description": "'#RRGGBBAA'.",
+      "type": "string", "pattern": "^#[0-9A-Fa-f]{8}$"
+    },
+    "Matrix3x4": {
+      "type": "array", "items": { "type": "number" }, "minItems": 12, "maxItems": 12
+    },
+
+    "Encoding": {
+      "description": "How a value or stream is stored, so a writer can reproduce it byte-exactly. Semantic fields hold the decoded value; this records the storage.",
+      "type": "object",
+      "properties": {
+        "endianness": { "enum": ["big", "little", "mixed"] },
+        "numeric": { "enum": ["f32", "f64", "s8", "u8", "s16", "u16", "s32", "u32", "fixed"] },
+        "fixed_shift": { "type": "integer", "minimum": 0, "maximum": 31, "description": "value = stored / 2^shift." },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "BlobRef": {
+      "description": "Bulk data kept out of the JSON (vertex buffers, decoded keyframes, pixels, disassembly). Points at a sidecar file next to the IR document, or at a byte range in a source file.",
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["sidecar", "source_range", "omitted"] },
+        "path": { "type": "string" },
+        "format": { "type": "string", "description": "e.g. 'json', 'npy', 'png', 'wav', 'txt.disasm', 'raw'." },
+        "offset": { "$ref": "#/$defs/Hex" },
+        "length": { "type": "integer", "minimum": 0 },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "note": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+
+    "Issue": {
+      "description": "A defect, gap or risk found while building the IR - in the content, the framework, or the host runtime.",
+      "type": "object",
+      "required": ["id", "title", "layer", "severity", "status"],
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "title": { "type": "string" },
+        "layer": { "enum": ["content", "framework", "host_runtime", "tooling", "ir"] },
+        "severity": { "enum": ["crash", "wrong_behavior", "cosmetic", "latent", "perf", "info"] },
+        "status": { "enum": ["open", "suspected", "confirmed", "fixed", "wont_fix", "false_positive"] },
+        "affects": { "type": "array", "items": { "$ref": "#/$defs/Ref" } },
+        "description": { "type": "string" },
+        "reproduce": { "type": "string" },
+        "locations": { "type": "array", "items": { "$ref": "#/$defs/CodeLocation" } },
+        "provenance": { "$ref": "#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+
+    "Named": {
+      "description": "Common header for addressable entities.",
+      "type": "object",
+      "properties": {
+        "id": { "$ref": "#/$defs/Id" },
+        "name": { "type": "string" },
+        "aliases": { "type": "array", "items": { "type": "string" } },
+        "description": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/Provenance" },
+        "engine": { "$ref": "#/$defs/EngineExtensions" }
+      }
+    }
+  }
+}

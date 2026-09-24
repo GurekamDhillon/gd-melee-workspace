@@ -1,0 +1,9 @@
+{
+ "id": "metaknight-slot",
+ "name": "META KNIGHT (Brawl, own fighter slot)",
+ "version": "0.3.0",
+ "kind": "fighter",
+ "description": "Adds 'Brawl Meta Knight' as an m-ex fighter on the ACE disc (internal 52 / external 51, a Kirby clone; replaces ACE's 'Wolf SSBU' row). Meta Knight's own model and clips (PlBm<cc>.dat, PlBmAJ.dat) with Brawl Meta Knight's numbers and scripts (PlBm.dat, tuning.json); Kirby's code runs his specials on the main exe. On the Geno exe, geno.json (v3) runs every special as Geno states on MK's own clips (no Kirby special code): the glide, Mach Tornado, Drill Rush (Brawl's code), Shuttle Loop (root motion -> glide), Dimensional Cape (stick-steered vanish, N/F/B slash or plain reappear), up/side taunts, the Wait3 idle, and the v1 overlays (ftilt chain). Carries brawl-kirby-slot's shared tables too, so both mods can be on together. Built by ports/halberd/tools/build_mk_slot.py.",
+ "requires": [],
+ "conflicts": []
+}

@@ -1,0 +1,336 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gd-melee.local/character-ir/integration.schema.json",
+  "title": "Character IR - integration (framework + host runtime)",
+  "description": "What sits around the character: the expansion framework that registers it (Melee: m-ex; Brawl: BrawlEx/fighter-slot config), and the host runtime that loads and runs it (retail hardware/Dolphin, or GD's Melee's PC port). The same content can have several 'frameworks' and 'hosts' entries - one per engine it was analysed under.",
+  "$defs": {
+    "Integration": {
+      "type": "object",
+      "properties": {
+        "frameworks": { "type": "array", "items": { "$ref": "#/$defs/Framework" } },
+        "hosts": { "type": "array", "items": { "$ref": "#/$defs/HostRuntime" } }
+      },
+      "additionalProperties": false
+    },
+
+    "Framework": {
+      "type": "object",
+      "required": ["engine"],
+      "properties": {
+        "engine": { "$ref": "common.schema.json#/$defs/EngineId" },
+        "name": { "type": "string" },
+        "version": { "type": "string" },
+        "licence_note": { "type": "string", "description": "e.g. 'm-ex has no licence: behaviour reimplemented, asm never copied'." },
+        "registration": {
+          "description": "Every table row that registers the character, with the index space each table is keyed by.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/RegistrationRow" }
+        },
+        "hook_slots": {
+          "description": "The per-character override points the framework offers (m-ex Arch_FighterFunc's 46 slots; BrawlEx has none - code lives in the fighter module - so there the list maps module entry points).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/HookSlot" }
+        },
+        "inheritance": { "$ref": "#/$defs/Inheritance" },
+        "relative_id_rules": {
+          "description": "Rules that turn a character-relative id in content into a global one.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["domain", "rule"],
+            "properties": {
+              "domain": { "enum": ["sfx", "gfx_model", "gfx_generator", "gfx_copy_model", "gfx_copy_generator", "item", "stage_sfx", "motion", "other"] },
+              "range": { "type": "string", "description": "e.g. '5000..9999'." },
+              "rule": { "type": "string", "description": "e.g. 'id - 5000 + ssm_id(owner)*10000'." },
+              "owner_lookup": { "type": "string", "description": "How the owner is found (fighter kind, item original owner, Kirby hat kind)." },
+              "implemented_by": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/CodeLocation" } },
+              "host_status": { "enum": ["implemented", "partial", "missing", "unknown"] },
+              "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "api_surface": {
+          "description": "Framework helper functions content calls by address; the IR treats them as named intrinsics.",
+          "type": "array",
+          "items": { "$ref": "#/$defs/Intrinsic" }
+        },
+        "engine_patches": {
+          "description": "Engine changes the framework makes that this character depends on (table-base swaps, id rebases, heap growth).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "effect"],
+            "properties": {
+              "name": { "type": "string" },
+              "site": { "$ref": "common.schema.json#/$defs/EngineAddress" },
+              "effect": { "type": "string" },
+              "host_status": { "enum": ["implemented", "partial", "missing", "not_needed", "unknown"] },
+              "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" },
+        "engine_detail": { "$ref": "common.schema.json#/$defs/EngineExtensions" }
+      },
+      "additionalProperties": false
+    },
+
+    "RegistrationRow": {
+      "type": "object",
+      "required": ["table", "index"],
+      "properties": {
+        "table": { "type": "string", "description": "e.g. 'mexData.fighter.pl_file'." },
+        "index": { "$ref": "common.schema.json#/$defs/IndexSpace" },
+        "offset": { "$ref": "common.schema.json#/$defs/Hex" },
+        "fields": { "type": "object", "description": "Decoded row values; references to IR entities use Ref strings." },
+        "placeholder": { "type": "boolean", "description": "Row exists but holds placeholder values (Shadow's trophy ids 0/1/2)." },
+        "layout_traps": { "type": "array", "items": { "type": "string" }, "description": "e.g. 'anim_num has stride 8 with the count in word 2'." },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+
+    "HookSlot": {
+      "description": "One override point and how it resolves for this character. Precedence (m-ex): content override > framework default (a vanilla function named in the registration table) > inferred base character's entry.",
+      "type": "object",
+      "required": ["slot", "name", "kind"],
+      "properties": {
+        "slot": { "type": "integer", "minimum": 0 },
+        "name": { "type": "string" },
+        "alt_names": { "type": "array", "items": { "type": "string" }, "description": "Names other sources use (MexTK Header.s vs blob symbols)." },
+        "kind": { "enum": ["callback", "table", "data"] },
+        "signature": { "$ref": "common.schema.json#/$defs/CallSignature" },
+        "framework_default": {
+          "oneOf": [ { "$ref": "common.schema.json#/$defs/EngineAddress" }, { "type": "null" } ]
+        },
+        "override": {
+          "description": "The content's own implementation (a function or table in a code unit).",
+          "oneOf": [ { "$ref": "common.schema.json#/$defs/Ref" }, { "type": "null" } ]
+        },
+        "effective": {
+          "description": "What actually runs on this host after precedence and dispatch.",
+          "type": "object",
+          "properties": {
+            "source": { "enum": ["override", "framework_default", "inherited_from_base", "engine_default", "nothing"] },
+            "target": { "type": "string", "description": "Ref or engine symbol." },
+            "via_base": { "$ref": "common.schema.json#/$defs/Ref" }
+          },
+          "additionalProperties": false
+        },
+        "dispatch": {
+          "description": "Whether the host actually calls this slot, and from where.",
+          "type": "object",
+          "properties": {
+            "host": { "$ref": "common.schema.json#/$defs/EngineId" },
+            "status": { "enum": ["dispatched", "not_dispatched", "default_only", "table_swap", "partial", "unknown"] },
+            "event": { "type": "string" },
+            "call_sites": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/CodeLocation" } },
+            "retail_site": { "$ref": "common.schema.json#/$defs/EngineAddress" },
+            "diagnostic_note": { "type": "string", "description": "e.g. 'reported as unwired but is dispatched (false positive)'." }
+          },
+          "additionalProperties": false
+        },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+
+    "Inheritance": {
+      "description": "Which existing character this one falls back to where it provides nothing, stated explicitly - the port infers it (onLoad match, else Mario), which silently changes behaviour when the inference is wrong.",
+      "type": "object",
+      "properties": {
+        "declared_base": { "oneOf": [ { "$ref": "common.schema.json#/$defs/Ref" }, { "type": "null" } ] },
+        "inferred_base": {
+          "type": "object",
+          "properties": {
+            "host": { "$ref": "common.schema.json#/$defs/EngineId" },
+            "character": { "type": "string" },
+            "rule": { "type": "string" },
+            "why": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "inherited": {
+          "description": "What comes from the base (tables, callbacks, articles, demo counts).",
+          "type": "array", "items": { "type": "string" }
+        },
+        "asset_lineage": {
+          "description": "Where assets came from - independent of code inheritance (Shadow: model/animations derive from Sonic while code falls back to Mario).",
+          "type": "array", "items": { "type": "string" }
+        },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+
+    "Intrinsic": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "$ref": "common.schema.json#/$defs/EngineAddress" },
+        "signature": { "$ref": "common.schema.json#/$defs/CallSignature" },
+        "semantics": { "type": "string" },
+        "used_by_content": { "type": "boolean" },
+        "host_status": { "enum": ["implemented", "partial", "stub", "missing"] },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+
+    "HostRuntime": {
+      "type": "object",
+      "required": ["engine"],
+      "properties": {
+        "engine": { "$ref": "common.schema.json#/$defs/EngineId" },
+        "revision": { "type": "string" },
+        "index_mappings": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/IndexMapping" } },
+        "load_lifecycle": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["step", "what"],
+            "properties": {
+              "step": { "type": "integer" },
+              "phase": { "enum": ["boot", "registration", "preload_request", "file_load", "fixup", "code_install", "article_install", "hook_install", "spawn", "per_frame", "unload"] },
+              "what": { "type": "string" },
+              "where": { "$ref": "common.schema.json#/$defs/CodeLocation" },
+              "effects": { "type": "array", "items": { "type": "string" } },
+              "failure_mode": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "memory_model": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["space", "what"],
+            "properties": {
+              "space": { "$ref": "common.schema.json#/$defs/AddressSpace" },
+              "what": { "type": "string" },
+              "lifetime": { "enum": ["process", "scene", "file_residency", "frame", "call"] },
+              "size": { "type": "integer" },
+              "snapshotted": { "type": "boolean" },
+              "note": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "execution": { "$ref": "#/$defs/ExecutionModel" },
+        "determinism": { "$ref": "#/$defs/DeterminismContract" },
+        "content_identity": {
+          "type": "object",
+          "properties": {
+            "algorithm": { "type": "string" },
+            "covers": { "type": "array", "items": { "type": "string" } },
+            "excludes": { "type": "array", "items": { "type": "string" } },
+            "known_gaps": { "type": "array", "items": { "type": "string" } },
+            "value": { "type": "string" },
+            "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+          },
+          "additionalProperties": false
+        },
+        "diagnostics": {
+          "description": "Log lines/switches that report on this character, useful to verify IR facts at runtime.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "line": { "type": "string" },
+              "meaning": { "type": "string" },
+              "switch": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" },
+        "engine_detail": { "$ref": "common.schema.json#/$defs/EngineExtensions" }
+      },
+      "additionalProperties": false
+    },
+
+    "ExecutionModel": {
+      "description": "How content code runs on this host.",
+      "type": "object",
+      "properties": {
+        "mode": { "enum": ["native_hardware", "emulated", "interpreted_guest", "recompiled", "reimplemented_native"] },
+        "guest_isa": { "type": "string", "description": "e.g. 'ppc750cl (Gekko)', 'Broadway'." },
+        "context": {
+          "description": "Register/stack conventions per guest call (m-ex: r2 = the shared Arch_FighterFunc holder, r1 = a shared guest stack, nested frames below the interrupted r1).",
+          "type": "array", "items": { "type": "string" }
+        },
+        "per_character_state_selection": { "type": "string", "description": "How the host knows which character's runtime state a call belongs to (the port selects gw_mex_k and restores it on the way out)." },
+        "reentrancy": { "type": "string" },
+        "limits": { "type": "object", "additionalProperties": { "type": ["integer", "string"] } },
+        "incoming_routes": {
+          "description": "How native engine code reaches content code.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["route"],
+            "properties": {
+              "route": { "enum": ["hook_dispatch", "table_trampoline", "callback_thunk", "exec_trap", "direct_call"] },
+              "description": { "type": "string" },
+              "cost": { "type": "string" },
+              "capacity": { "type": "integer" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "outgoing_routes": {
+          "description": "How content code reaches engine code/data.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["route"],
+            "properties": {
+              "route": { "enum": ["bridge_table", "api_shim", "abi_repair_shim", "static_redirect", "exe_passthrough", "tail_call_return", "mmio_forward"] },
+              "description": { "type": "string" },
+              "table_size": { "type": "integer" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "float_semantics": {
+          "type": "object",
+          "properties": {
+            "hardware_exact": { "type": "boolean" },
+            "deviations": { "type": "array", "items": { "type": "string" } },
+            "deterministic_across_hosts": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "unsupported_instructions": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+
+    "DeterminismContract": {
+      "description": "What rollback/netplay rely on for this character.",
+      "type": "object",
+      "properties": {
+        "simulation_state": { "type": "array", "items": { "type": "string" } },
+        "install_time_state": { "type": "array", "items": { "type": "string" } },
+        "lazily_bound_state": { "type": "array", "items": { "type": "string" } },
+        "invariants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["statement", "enforced"],
+            "properties": {
+              "statement": { "type": "string" },
+              "enforced": { "enum": ["asserted", "logged_only", "assumed", "by_construction"] },
+              "where": { "$ref": "common.schema.json#/$defs/CodeLocation" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "peer_requirements": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  }
+}

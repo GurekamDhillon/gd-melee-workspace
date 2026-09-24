@@ -1,0 +1,793 @@
+{
+ "moves": [
+  {
+   "move": "jab",
+   "brawl_subaction": "- (no Attack11 in Brawl)",
+   "melee_rows": [
+    "46 Attack11 (Attack100Start)"
+   ],
+   "status": "translated",
+   "verdict": "restructure: Melee jab 1 -> rapid-jab entry",
+   "what": "Attack11 = rapid-jab entry (RapidJab flag @2, rapid_jab_window 0): every A press starts the rapid jab",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "rapid_jab_start",
+   "brawl_subaction": "0x4B Attack100Start",
+   "melee_rows": [
+    "49 Attack100Start (Attack100Start)"
+   ],
+   "status": "translated",
+   "verdict": "direct: 0 window(s) in both",
+   "what": "0 hitbox events on MK's 6-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "rapid_jab",
+   "brawl_subaction": "0x4C Attack100",
+   "melee_rows": [
+    "50 Attack100Loop (Attack100)"
+   ],
+   "status": "translated",
+   "verdict": "direct: 5 rehit windows per loop",
+   "what": "MK's 5 windows (2%/1%), checkpoints at MK's RA.Bit[25] frames",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "rapid_jab_end",
+   "brawl_subaction": "0x4D AttackEnd",
+   "melee_rows": [
+    "51 Attack100End (AttackEnd)"
+   ],
+   "status": "translated",
+   "verdict": "restructure: Brawl 1 window(s) vs Melee Kirby 0",
+   "what": "3 hitbox events on MK's 12-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "dash_attack",
+   "brawl_subaction": "0x4E AttackDash",
+   "melee_rows": [
+    "52 AttackDash (AttackDash)"
+   ],
+   "status": "translated",
+   "verdict": "direct: 1 window(s) in both",
+   "what": "3 hitbox events on MK's 32-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "ftilt",
+   "brawl_subaction": "0x50 AttackS3S",
+   "melee_rows": [
+    "53 AttackS3Hi (AttackS3S)",
+    "55 AttackS3S (AttackS3S)",
+    "57 AttackS3Lw (AttackS3S)"
+   ],
+   "status": "translated",
+   "verdict": "direct: 1 window(s) in both",
+   "what": "3 hitbox events on MK's 24-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "ftilt2",
+   "brawl_subaction": "0x51 AttackS3S2",
+   "melee_rows": [
+    "47 Attack12 (AttackS3S2)"
+   ],
+   "status": "translated (Geno exe)",
+   "verdict": "unsupported in plain Melee: no ftilt chain state",
+   "what": "3 hitboxes on row 47; reached by v1 CHG PRESSED(A) from the previous hit",
+   "approximated": [
+    "plain exe: unreachable (ftilt 1 only)"
+   ],
+   "stubbed": []
+  },
+  {
+   "move": "ftilt3",
+   "brawl_subaction": "0x52 AttackS3S3",
+   "melee_rows": [
+    "48 Attack13 (AttackS3S3)"
+   ],
+   "status": "translated (Geno exe)",
+   "verdict": "unsupported in plain Melee: no ftilt chain state",
+   "what": "4 hitboxes on row 48; reached by v1 CHG PRESSED(A) from the previous hit",
+   "approximated": [
+    "plain exe: unreachable (ftilt 1 only)"
+   ],
+   "stubbed": []
+  },
+  {
+   "move": "utilt",
+   "brawl_subaction": "0x54 AttackHi3",
+   "melee_rows": [
+    "58 AttackHi3 (AttackHi3)"
+   ],
+   "status": "translated",
+   "verdict": "restructure: Brawl 3 window(s) vs Melee Kirby 1",
+   "what": "5 hitbox events on MK's 36-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "dtilt",
+   "brawl_subaction": "0x55 AttackLw3",
+   "melee_rows": [
+    "59 AttackLw3 (AttackLw3)"
+   ],
+   "status": "translated",
+   "verdict": "direct: 1 window(s) in both",
+   "what": "4 hitbox events on MK's 26-frame clip, IASA 16 (brawl Allow Interrupt)",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "fsmash",
+   "brawl_subaction": "0x58 AttackS4S",
+   "melee_rows": [
+    "60 AttackS4Hi (AttackS4Start+AttackS4S)",
+    "62 AttackS4S (AttackS4Start+AttackS4S)",
+    "64 AttackS4Lw (AttackS4Start+AttackS4S)"
+   ],
+   "status": "translated",
+   "verdict": "direct: 1 window(s) in both",
+   "what": "4 hitbox events on MK's 43-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "usmash",
+   "brawl_subaction": "0x5D AttackHi4",
+   "melee_rows": [
+    "66 AttackHi4 (AttackHi4Start+AttackHi4)"
+   ],
+   "status": "translated",
+   "verdict": "restructure: Brawl 3 window(s) vs Melee Kirby 1",
+   "what": "12 hitbox events on MK's 51-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "dsmash",
+   "brawl_subaction": "0x60 AttackLw4",
+   "melee_rows": [
+    "67 AttackLw4 (AttackLw4Start+AttackLw4)"
+   ],
+   "status": "translated",
+   "verdict": "restructure: Brawl 2 window(s) vs Melee Kirby 1",
+   "what": "8 hitbox events on MK's 35-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "nair",
+   "brawl_subaction": "0x62 AttackAirN",
+   "melee_rows": [
+    "68 AttackAirN (AttackAirN)"
+   ],
+   "status": "translated",
+   "verdict": "restructure: Brawl 2 window(s) vs Melee Kirby 1",
+   "what": "6 hitbox events on MK's 48-frame clip, IASA 32 (brawl Allow Interrupt)",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "fair",
+   "brawl_subaction": "0x63 AttackAirF",
+   "melee_rows": [
+    "69 AttackAirF (AttackAirF)"
+   ],
+   "status": "translated",
+   "verdict": "direct: 3 window(s) in both",
+   "what": "12 hitbox events on MK's 40-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "bair",
+   "brawl_subaction": "0x64 AttackAirB",
+   "melee_rows": [
+    "70 AttackAirB (AttackAirB)"
+   ],
+   "status": "translated",
+   "verdict": "restructure: Brawl 3 window(s) vs Melee Kirby 1",
+   "what": "9 hitbox events on MK's 48-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "uair",
+   "brawl_subaction": "0x65 AttackAirHi",
+   "melee_rows": [
+    "71 AttackAirHi (AttackAirHi)"
+   ],
+   "status": "translated",
+   "verdict": "direct: 1 window(s) in both",
+   "what": "4 hitbox events on MK's 24-frame clip, IASA 14 (brawl Allow Interrupt)",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "dair",
+   "brawl_subaction": "0x66 AttackAirLw",
+   "melee_rows": [
+    "72 AttackAirLw (AttackAirLw)"
+   ],
+   "status": "translated",
+   "verdict": "restructure: Brawl 1 window(s) vs Melee Kirby 6",
+   "what": "4 hitbox events on MK's 26-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "nair_land",
+   "brawl_subaction": "0x67 LandingAirN",
+   "melee_rows": [
+    "73 LandingAirN (LandingAirN)"
+   ],
+   "status": "translated",
+   "verdict": "restructure: Brawl 0 window(s) vs Melee Kirby 1",
+   "what": "0 hitbox events on MK's 36-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "fair_land",
+   "brawl_subaction": "0x68 LandingAirF",
+   "melee_rows": [
+    "74 LandingAirF (LandingAirF)"
+   ],
+   "status": "translated",
+   "verdict": "restructure: Brawl 0 window(s) vs Melee Kirby 1",
+   "what": "0 hitbox events on MK's 31-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "bair_land",
+   "brawl_subaction": "0x69 LandingAirB",
+   "melee_rows": [
+    "75 LandingAirB (LandingAirB)"
+   ],
+   "status": "translated",
+   "verdict": "direct: 0 window(s) in both",
+   "what": "0 hitbox events on MK's 31-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "uair_land",
+   "brawl_subaction": "0x6A LandingAirHi",
+   "melee_rows": [
+    "76 LandingAirHi (LandingAirHi)"
+   ],
+   "status": "translated",
+   "verdict": "restructure: Brawl 0 window(s) vs Melee Kirby 1",
+   "what": "0 hitbox events on MK's 31-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "dair_land",
+   "brawl_subaction": "0x6B LandingAirLw",
+   "melee_rows": [
+    "77 LandingAirLw (LandingAirLw)"
+   ],
+   "status": "translated",
+   "verdict": "restructure: Brawl 0 window(s) vs Melee Kirby 1",
+   "what": "0 hitbox events on MK's 31-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "pummel",
+   "brawl_subaction": "0x70 CatchAttack",
+   "melee_rows": [
+    "245 CatchAttack (CatchAttack)"
+   ],
+   "status": "translated",
+   "verdict": "direct: 1 window(s) in both",
+   "what": "1 hitbox events on MK's 24-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "ledge_attack_fast",
+   "brawl_subaction": "0x0D7 CliffAttackQuick",
+   "melee_rows": [
+    "222 CliffAttackQuick (CliffAttackQuick)"
+   ],
+   "status": "translated",
+   "verdict": "direct: 1 window(s) in both",
+   "what": "4 hitbox events on MK's 56-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "ledge_attack_slow",
+   "brawl_subaction": "0x0DC CliffAttackSlow",
+   "melee_rows": [
+    "221 CliffAttackSlow (CliffAttackSlow)"
+   ],
+   "status": "translated",
+   "verdict": "direct: 1 window(s) in both",
+   "what": "4 hitbox events on MK's 70-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "getup_attack_up",
+   "brawl_subaction": "0x0B0 DownAttackU",
+   "melee_rows": [
+    "187 DownAttackU (DownAttackU)"
+   ],
+   "status": "translated",
+   "verdict": "direct: 2 window(s) in both",
+   "what": "8 hitbox events on MK's 50-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "getup_attack_down",
+   "brawl_subaction": "0x0B9 DownAttackD",
+   "melee_rows": [
+    "195 DownAttackD (DownAttackD)"
+   ],
+   "status": "translated",
+   "verdict": "restructure: Brawl 2 window(s) vs Melee Kirby 3",
+   "what": "8 hitbox events on MK's 50-frame clip, IASA None (none (clip end))",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "jumpaerial",
+   "brawl_subaction": "0x1B-0x1E JumpAerialF1-F4",
+   "melee_rows": [
+    "295 JumpAerialF1 (JumpAerialF)",
+    "296 JumpAerialF2 (JumpAerialF2)",
+    "297 JumpAerialF3 (JumpAerialF3)",
+    "298 JumpAerialF4 (JumpAerialF4)"
+   ],
+   "status": "translated",
+   "verdict": "direct: one gate event",
+   "what": "next air jump allowed at MK's counter 24; wings ModelVis; hop impulses in special attrs / geno.json",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "grab",
+   "brawl_subaction": "0x6C Catch",
+   "melee_rows": [
+    "242 Catch (Catch)"
+   ],
+   "status": "translated",
+   "verdict": "direct: one grab window",
+   "what": "2 catch boxes, active 6-7",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "dash_grab",
+   "brawl_subaction": "0x6D CatchDash",
+   "melee_rows": [
+    "243 CatchDash (CatchDash)"
+   ],
+   "status": "translated",
+   "verdict": "direct: one grab window",
+   "what": "2 catch boxes, active 8-9",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "pivot_grab",
+   "brawl_subaction": "0x6E CatchTurn",
+   "melee_rows": [],
+   "status": "stubbed-for-v2",
+   "verdict": "unsupported",
+   "what": "Brawl pivot grab: no Melee motion (Melee turns, then grabs)",
+   "approximated": [],
+   "stubbed": [
+    "a Geno state"
+   ]
+  },
+  {
+   "move": "throwf",
+   "brawl_subaction": "0x73 ThrowF",
+   "melee_rows": [
+    "247 ThrowF (ThrowF)"
+   ],
+   "status": "translated",
+   "verdict": "direct: ThrowHitbox values map 1:1 (Throw Specifier)",
+   "what": "throw {'damage': 3, 'angle': 65, 'kbg': 140, 'wdsk': 0, 'bkb': 50}, release @4, 2 MK hitboxes",
+   "approximated": [
+    "Kirby's throw code (victim attach) on MK's clip"
+   ],
+   "stubbed": []
+  },
+  {
+   "move": "throwb",
+   "brawl_subaction": "0x72 ThrowB",
+   "melee_rows": [
+    "248 ThrowB (ThrowB)"
+   ],
+   "status": "translated",
+   "verdict": "direct: ThrowHitbox values map 1:1 (Throw Specifier)",
+   "what": "throw {'damage': 3, 'angle': 45, 'kbg': 140, 'wdsk': 0, 'bkb': 60}, release @16, 2 MK hitboxes",
+   "approximated": [
+    "Kirby's throw code (victim attach) on MK's clip"
+   ],
+   "stubbed": []
+  },
+  {
+   "move": "throwhi",
+   "brawl_subaction": "0x74 ThrowHi",
+   "melee_rows": [
+    "249 ThrowHi (ThrowHi)"
+   ],
+   "status": "translated",
+   "verdict": "direct: ThrowHitbox values map 1:1 (Throw Specifier)",
+   "what": "throw {'damage': 12, 'angle': 77, 'kbg': 60, 'wdsk': 0, 'bkb': 70}, release @43, 0 MK hitboxes",
+   "approximated": [
+    "Kirby's throw code (victim attach) on MK's clip"
+   ],
+   "stubbed": []
+  },
+  {
+   "move": "throwlw",
+   "brawl_subaction": "0x75 ThrowLw",
+   "melee_rows": [
+    "250 ThrowLw (ThrowLw)"
+   ],
+   "status": "translated",
+   "verdict": "direct: ThrowHitbox values map 1:1 (Throw Specifier)",
+   "what": "throw {'damage': 1, 'angle': 50, 'kbg': 110, 'wdsk': 0, 'bkb': 60}, release @73, 10 MK hitboxes",
+   "approximated": [
+    "Kirby's throw code (victim attach) on MK's clip"
+   ],
+   "stubbed": []
+  },
+  {
+   "move": "tornado_start",
+   "brawl_subaction": "0x1CE/0x1CF SpecialNStart",
+   "melee_rows": [
+    "305 SpecialN (SpecialNStart)",
+    "320 SpecialAirN (SpecialAirNStart)"
+   ],
+   "status": "translated",
+   "verdict": "direct: no hitbox in either",
+   "what": "MK start clip; Kirby's inhale code runs it",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "tornado",
+   "brawl_subaction": "0x1D0 SpecialNSpin",
+   "melee_rows": [
+    "306 SpecialNLoop (SpecialNSpin)",
+    "321 SpecialAirNLoop (SpecialNSpin)"
+   ],
+   "status": "approximated",
+   "verdict": "unsupported: native tornado physics (sora_melee execStatus)",
+   "what": "4 hitboxes x 1% rehit every 10 frames while B held (MK spin clip, 361 frames)",
+   "approximated": [
+    "placeholder physics: Kirby's inhale loop (stands still, no rise/drift, no tap-to-rise); lasts while B is held"
+   ],
+   "stubbed": [
+    "Phase 4: tornado phys/input callbacks (tap to rise, params 4012-4015)"
+   ]
+  },
+  {
+   "move": "tornado_end",
+   "brawl_subaction": "0x1D1 SpecialNEnd (+0x1D2 air)",
+   "melee_rows": [
+    "307 SpecialNEnd (SpecialNEnd)"
+   ],
+   "status": "translated",
+   "verdict": "direct",
+   "what": "3% finisher 0-3",
+   "approximated": [
+    "air end shares the ground row and clip"
+   ],
+   "stubbed": []
+  },
+  {
+   "move": "drill_rush",
+   "brawl_subaction": "0x1D5/0x1D6",
+   "melee_rows": [
+    "322 SpecialS (SpecialSDrill)"
+   ],
+   "status": "approximated",
+   "verdict": "unsupported: native drill steering (SpecialSRush::execStatus)",
+   "what": "drill 3 hitboxes rehit 6 from frame 5, end hit at 42; Geno exe: LINK (autolink 365)",
+   "approximated": [
+    "no 22-frame start (the row plays the drill clip; SpecialSStart is unused)",
+    "Pl file: autolink 365 -> fixed 80",
+    "placeholder physics: Kirby's hammer code (ground: in place; air: 1.5 hop, fall-special landing)"
+   ],
+   "stubbed": [
+    "Phase 4: steering/bounce phys (param 4020), start phase"
+   ]
+  },
+  {
+   "move": "drill_rush_air",
+   "brawl_subaction": "0x1D5/0x1D7",
+   "melee_rows": [
+    "323 SpecialAirS (SpecialSDrill)"
+   ],
+   "status": "approximated",
+   "verdict": "unsupported: native drill steering (SpecialSRush::execStatus)",
+   "what": "drill 3 hitboxes rehit 6 from frame 5, end hit at 39; Geno exe: LINK (autolink 365)",
+   "approximated": [
+    "no 22-frame start (the row plays the drill clip; SpecialSStart is unused)",
+    "Pl file: autolink 365 -> fixed 80",
+    "placeholder physics: Kirby's hammer code (ground: in place; air: 1.5 hop, fall-special landing)"
+   ],
+   "stubbed": [
+    "Phase 4: steering/bounce phys (param 4020), start phase"
+   ]
+  },
+  {
+   "move": "shuttle_loop_rise",
+   "brawl_subaction": "0x1E2 SpecialHi",
+   "melee_rows": [
+    "324 SpecialHi1 (SpecialHi)",
+    "328 SpecialAirHi1 (SpecialHi)"
+   ],
+   "status": "approximated",
+   "verdict": "restructure: Brawl subactions -> Kirby Hi1/Hi2 rows",
+   "what": "5 hitbox events on MK's clip",
+   "approximated": [
+    "path/physics = Kirby's Final Cutter code (rise, then the plunge on the plain exe), not MK's loop"
+   ],
+   "stubbed": [
+    "v2 glide hand-off at the loop end"
+   ]
+  },
+  {
+   "move": "shuttle_loop_loop",
+   "brawl_subaction": "0x1E4 SpecialHiLoop",
+   "melee_rows": [
+    "325 SpecialHi2 (SpecialHiLoop)",
+    "329 SpecialAirHi2 (SpecialHiLoop)"
+   ],
+   "status": "approximated",
+   "verdict": "restructure: Brawl subactions -> Kirby Hi1/Hi2 rows",
+   "what": "2 hitbox events on MK's clip",
+   "approximated": [
+    "path/physics = Kirby's Final Cutter code (rise, then the plunge on the plain exe), not MK's loop"
+   ],
+   "stubbed": [
+    "v2 glide hand-off at the loop end"
+   ]
+  },
+  {
+   "move": "shuttle_loop_fall",
+   "brawl_subaction": "0x1E5 SpecialHiEnd",
+   "melee_rows": [
+    "326 SpecialHi3 (SpecialHiEnd)",
+    "330 SpecialAirHi3 (SpecialHiEnd)"
+   ],
+   "status": "approximated",
+   "verdict": "unsupported: Brawl ends in Glide or FallSpecial",
+   "what": "plain exe: Kirby's straight-down plunge / landing (MK SpecialHiEnd clip)",
+   "approximated": [
+    "plunge instead of FallSpecial on the plain exe"
+   ],
+   "stubbed": [
+    "v2 glide"
+   ]
+  },
+  {
+   "move": "shuttle_loop_land",
+   "brawl_subaction": "0x1E5 SpecialHiEnd",
+   "melee_rows": [
+    "327 SpecialHi4 (SpecialHiEnd)",
+    "331 SpecialAirHiEnd (SpecialHiEnd)"
+   ],
+   "status": "approximated",
+   "verdict": "unsupported: Brawl ends in Glide or FallSpecial",
+   "what": "plain exe: Kirby's straight-down plunge / landing (MK SpecialHiEnd clip)",
+   "approximated": [
+    "plunge instead of FallSpecial on the plain exe"
+   ],
+   "stubbed": [
+    "v2 glide"
+   ]
+  },
+  {
+   "move": "cape_start",
+   "brawl_subaction": "0x1D8/0x1D9 SpecialLwStart",
+   "melee_rows": [
+    "332 SpecialLw1 (SpecialLwStart)",
+    "335 SpecialAirLwStart (SpecialAirLwStart)"
+   ],
+   "status": "translated",
+   "verdict": "direct: no hitbox",
+   "what": "cape article (ModelVis 0,2), intangible @17, hidden @12",
+   "approximated": [],
+   "stubbed": [
+    "v1 Set Air/Ground @12 (not needed on Kirby's stone code)"
+   ]
+  },
+  {
+   "move": "cape_vanish",
+   "brawl_subaction": "(vanish)",
+   "melee_rows": [
+    "333 SpecialLw (SpecialLwEnd)",
+    "336 SpecialAirLw (SpecialAirLwEnd)"
+   ],
+   "status": "approximated",
+   "verdict": "unsupported: host = Kirby stone hold",
+   "what": "intangible + invisible for speciallw_max_time_in_stone frames; air sink speciallw_gravity",
+   "approximated": [
+    "no stick-steered teleport (Brawl moves MK N/F/B)"
+   ],
+   "stubbed": [
+    "Phase 4: teleport distance/direction from the stick (v1 has the stick values, not a position write)"
+   ]
+  },
+  {
+   "move": "cape_attack",
+   "brawl_subaction": "0x1DA/0x1DB SpecialLw (neutral)",
+   "melee_rows": [
+    "334 SpecialLwEnd (SpecialLw)",
+    "337 SpecialAirLwEnd (SpecialAirLw)"
+   ],
+   "status": "approximated",
+   "verdict": "direct: one 2-hitbox window",
+   "what": "14% f6-7 on MK's clip; Geno exe: Reverse Direction @1; then FallSpecial",
+   "approximated": [
+    "F/B variants (stick) not chosen: neutral only",
+    "plain exe: MK does not turn around (the hit lands behind him, matching the clip)",
+    "ground reappear also ends in FallSpecial -> LandingFallSpecial"
+   ],
+   "stubbed": [
+    "v1 CHG to F/B variants needs host rows for SpecialLwF/B (extras exist, no free Kirby row wired)"
+   ]
+  },
+  {
+   "move": "glide_attack",
+   "brawl_subaction": "0x3C GlideAttack",
+   "melee_rows": [],
+   "status": "stubbed-for-v2",
+   "verdict": "unsupported: glide is a Geno v2 state",
+   "what": "12% f5-7 once the glide states exist",
+   "approximated": [],
+   "stubbed": [
+    "Geno v2 action states"
+   ]
+  },
+  {
+   "move": "final_smash",
+   "brawl_subaction": "0x1E6.. Final*",
+   "melee_rows": [],
+   "status": "not ported",
+   "verdict": "Brawl global mechanic",
+   "what": "no Smash Ball in Melee",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "trip_attack",
+   "brawl_subaction": "0xE7 SlipAttack",
+   "melee_rows": [],
+   "status": "not ported",
+   "verdict": "Brawl global mechanic",
+   "what": "tripping",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "glide_attack",
+   "brawl_subaction": "0x3C GlideAttack",
+   "melee_rows": [
+    "340 LkSpecialNStart (GlideAttack)"
+   ],
+   "status": "translated (Geno exe)",
+   "verdict": "unsupported in plain Melee: Geno v2 state",
+   "what": "3 hitboxes on MK's GlideAttack clip; entered from the glide on A (geno.glide)",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "glide",
+   "brawl_subaction": "0x39-0x3E Glide*",
+   "melee_rows": [
+    "338 MrSpecialN (GlideStart)",
+    "339 MrSpecialAirN (GlideDirection)",
+    "341 LkSpecialNLoop (GlideLanding)",
+    "342 LkSpecialNEnd (GlideEnd)"
+   ],
+   "status": "translated (Geno exe)",
+   "verdict": "unsupported in plain Melee: Geno v2 states",
+   "what": "GlideStart / Glide (posed by angle, pose_center 90) / GlideLanding / GlideEnd rows",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "drill_rush_v2",
+   "brawl_subaction": "0x1D3-0x1D7 SpecialS*",
+   "melee_rows": [
+    "343 LkSpecialAirNStart (SpecialSStart)",
+    "344 LkSpecialAirNLoop (SpecialAirSStart)",
+    "345 LkSpecialAirNEnd (SpecialSDrill)",
+    "346 SsSpecialNStart (SpecialAirSEnd)",
+    "347 SsSpecialNHold (SpecialSEnd)"
+   ],
+   "status": "translated (Geno exe)",
+   "verdict": "native steering: geno.drill.start / geno.drill / geno.drill.end",
+   "what": "22-frame start, the rush steered by the stick at the clip's TransN speed (LINK = 365), end hits; plain exe: rows 322/323 (Kirby's hammer code)",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "tornado_v2",
+   "brawl_subaction": "0x1D0-0x1D2 SpecialN*",
+   "melee_rows": [
+    "306 SpecialNLoop (SpecialNSpin)",
+    "348 SsSpecialNCancel (SpecialAirNEnd)",
+    "307 SpecialNEnd (SpecialNEnd)"
+   ],
+   "status": "translated (Geno exe)",
+   "verdict": "native physics: geno.tornado",
+   "what": "spin on row 306 (4 x 1% re-created every 10), rise on B taps, drift; ends when the spin rate runs down -> TornadoEnd (air row) / row 307",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "shuttle_loop_v3",
+   "brawl_subaction": "0x1E2-0x1E5 SpecialHi*",
+   "melee_rows": [
+    "352 YsSpecialN1 (SpecialHi)",
+    "353 YsSpecialNCapture1 (SpecialAirHiStart)",
+    "354 YsSpecialNCapture2 (SpecialHiLoop)",
+    "355 YsSpecialAirNCapture2 (SpecialHiEnd)"
+   ],
+   "status": "translated (Geno exe)",
+   "verdict": "Geno v3 states: geno.anim_motion (no Kirby Up-B code)",
+   "what": "ground: SpecialHi (rise+loop, TransN) -> Glide in the air; air: SpecialAirHiStart -> SpecialHiLoop -> Glide (helpless after); landing -> SpecialHiEnd (32f); ledge grab from frame 7 (front and back); plain exe: Kirby's Final Cutter rows 324-331",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "cape_v3",
+   "brawl_subaction": "0x1D8-0x1E1 SpecialLw*",
+   "melee_rows": [
+    "356 YsSpecialAirCapture1 (SpecialLwStart)",
+    "357 YsSpecialAirN2 (SpecialAirLwStart)",
+    "358 FxSpecialNStart (SpecialLw)",
+    "359 FxSpecialNLoop (SpecialAirLw)",
+    "360 FxSpecialNEnd (SpecialLwF)",
+    "361 FxSpecialAirNStart (SpecialAirLwF)",
+    "362 FxSpecialAirNLoop (SpecialLwB)",
+    "363 FxSpecialAirNEnd (SpecialAirLwB)",
+    "364 PkSpecialN (SpecialLwEnd)",
+    "365 PkSpecialAirN (SpecialAirLwEnd)"
+   ],
+   "status": "translated (Geno exe)",
+   "verdict": "Geno v3 states: geno.cape (vanish, stick-steered), geno.cape.attack x6, geno.cape.end x2 (no Kirby stone code)",
+   "what": "start: momentum kept at 0.5 / 0.4, hidden @12, intangible @17, stick-steered vanish (0.5 accel, 2.5 max per axis); @26 B/A held -> slash (N / back=F / forward=B clips, root motion), else plain reappear; ground -> Wait, air -> FallSpecial; plain exe: Kirby's stone rows 332-337",
+   "approximated": [],
+   "stubbed": []
+  },
+  {
+   "move": "taunts_idle",
+   "brawl_subaction": "0x1BC/0x1BE AppealHi/S, 0x2 Wait3",
+   "melee_rows": [
+    "349 SsSpecialN (AppealHi)",
+    "350 SsSpecialAirNStart (AppealS)",
+    "351 SsSpecialAirN (Wait3)"
+   ],
+   "status": "translated (Geno exe)",
+   "verdict": "Geno v2 states",
+   "what": "up / side taunt by stick at the taunt press; Wait3 idle; the down taunt (AppealLw) is Melee's own taunt row",
+   "approximated": [],
+   "stubbed": []
+  }
+ ]
+}

@@ -1,0 +1,1663 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gd-melee.local/character-ir/assets.schema.json",
+  "title": "Character IR - assets",
+  "description": "What the character is made of, independent of how it behaves: skeleton, models, materials, textures, costumes, the animation library, effects, audio, UI art and media. Every entity says which file holds it (resources) and keeps bulk data in BlobRefs. Semantic fields are engine-neutral; storage details sit in 'encoding' / 'engine'.",
+  "$defs": {
+    "Assets": {
+      "type": "object",
+      "properties": {
+        "skeletons": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Skeleton"
+          }
+        },
+        "bone_roles": {
+          "description": "Semantic names for bones the engine or scripts address by role (Melee: ftPartsTable Fighter_Part ids; Brawl: the bone references in the fighter's attribute/misc data). This is the bridge that lets two engines' skeletons be compared.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/BoneRole"
+          }
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Model"
+          }
+        },
+        "materials": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Material"
+          }
+        },
+        "textures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Texture"
+          }
+        },
+        "material_animations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MaterialAnimation"
+          }
+        },
+        "part_visibility": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PartVisibilityTable"
+          }
+        },
+        "costumes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Costume"
+          }
+        },
+        "animations": {
+          "$ref": "#/$defs/AnimationLibrary"
+        },
+        "effects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EffectBank"
+          }
+        },
+        "audio": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SoundBank"
+          }
+        },
+        "ui": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UiAsset"
+          }
+        },
+        "media": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Media"
+          }
+        },
+        "collectibles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Collectible"
+          }
+        },
+        "costume_sets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CostumeSet"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Skeleton": {
+      "type": "object",
+      "required": [
+        "id",
+        "joints"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "file": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "symbol": {
+          "type": "string"
+        },
+        "joint_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "order": {
+          "enum": [
+            "depth_first",
+            "breadth_first",
+            "file_order"
+          ],
+          "description": "The order joint indices follow; animations and parts tables index in this order."
+        },
+        "joints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Joint"
+          }
+        },
+        "same_as": {
+          "description": "Other skeletons with identical topology/rest pose (e.g. Shadow's = ACE Sonic's), and how they differ.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "skeleton"
+            ],
+            "properties": {
+              "skeleton": {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              "topology": {
+                "type": "boolean"
+              },
+              "rest_pose": {
+                "type": "boolean"
+              },
+              "differences": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        },
+        "engine": {
+          "$ref": "common.schema.json#/$defs/EngineExtensions"
+        },
+        "derived_from": {
+          "type": "string",
+          "description": "The skeleton this one was edited from (e.g. vBrawl Sonic's, with quill bones changed)."
+        },
+        "rest_pose_variants": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "key"
+            ],
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "used_by": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "topology_signature": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Joint": {
+      "type": "object",
+      "required": [
+        "index"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Null when the format stores no names (Melee costumes): the index is then the only identity."
+        },
+        "parent": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "rest": {
+          "type": "object",
+          "properties": {
+            "translation": {
+              "$ref": "common.schema.json#/$defs/Vec3"
+            },
+            "rotation_euler_rad": {
+              "$ref": "common.schema.json#/$defs/Vec3"
+            },
+            "scale": {
+              "$ref": "common.schema.json#/$defs/Vec3"
+            }
+          },
+          "additionalProperties": false
+        },
+        "inverse_bind": {
+          "$ref": "common.schema.json#/$defs/Matrix3x4"
+        },
+        "traits": {
+          "description": "Semantic joint flags.",
+          "type": "array",
+          "items": {
+            "enum": [
+              "skeleton_root",
+              "skinned_bone",
+              "has_inverse_bind",
+              "envelope_model",
+              "classical_scale",
+              "billboard",
+              "lighting",
+              "specular",
+              "hidden",
+              "effector",
+              "ik_chain",
+              "physics",
+              "opaque_pass",
+              "translucent_pass",
+              "texture_edge_pass",
+              "visibility_gate",
+              "quill",
+              "item_hold",
+              "throw_anchor"
+            ]
+          }
+        },
+        "raw_flags": {
+          "$ref": "common.schema.json#/$defs/Hex"
+        },
+        "role_guess": {
+          "type": "string",
+          "description": "Inferred anatomical role when there is no name (e.g. 'right hand, finger 2'), with confidence in provenance."
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        }
+      },
+      "additionalProperties": false
+    },
+    "BoneRole": {
+      "type": "object",
+      "required": [
+        "role",
+        "joint"
+      ],
+      "properties": {
+        "role": {
+          "description": "Canonical role. Engine-neutral names: root, trans_n, hip, waist, spine, chest, neck, head, jaw, eye_l/r, shoulder_l/r, arm_l/r, elbow_l/r, hand_l/r, hand_item_l/r, thumb_l/r, finger_*_l/r, leg_l/r, knee_l/r, foot_l/r, toe_l/r, tail_*, throw_position, throw_n, hat_attach, top_n, effect_*.",
+          "type": "string"
+        },
+        "joint": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "skeleton": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "engine_index": {
+          "$ref": "common.schema.json#/$defs/IndexSpace",
+          "description": "The engine's own id for the role (Melee Fighter_Part n)."
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Model": {
+      "type": "object",
+      "required": [
+        "id",
+        "skeleton",
+        "meshes"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "skeleton": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "shared_by_costumes": {
+          "type": "boolean",
+          "description": "True when every costume uses this geometry and only swaps textures."
+        },
+        "meshes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Mesh"
+          }
+        },
+        "vertex_buffers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "common.schema.json#/$defs/Id"
+              },
+              "attribute": {
+                "enum": [
+                  "position",
+                  "normal",
+                  "binormal",
+                  "tangent",
+                  "color0",
+                  "color1",
+                  "uv0",
+                  "uv1",
+                  "uv2",
+                  "uv3",
+                  "matrix_index"
+                ]
+              },
+              "count": {
+                "type": "integer"
+              },
+              "encoding": {
+                "$ref": "common.schema.json#/$defs/Encoding"
+              },
+              "data": {
+                "$ref": "common.schema.json#/$defs/BlobRef"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "meshes": {
+              "type": "integer"
+            },
+            "primitive_groups": {
+              "type": "integer"
+            },
+            "display_list_bytes": {
+              "type": "integer"
+            },
+            "unique_images": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": {
+            "type": "integer"
+          }
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        },
+        "engine": {
+          "$ref": "common.schema.json#/$defs/EngineExtensions"
+        },
+        "role": {
+          "enum": [
+            "body",
+            "drop_shadow",
+            "kirby_hat",
+            "copy_projectile",
+            "final_smash_form",
+            "effect",
+            "trophy",
+            "other"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "Mesh": {
+      "description": "One drawable unit (Melee DObj; Brawl MDL0 object). 'index' is the stable order that visibility tables address - reordering meshes breaks those tables.",
+      "type": "object",
+      "required": [
+        "index"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "attached_joint": {
+          "type": "integer"
+        },
+        "material": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "primitive_groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "skinning": {
+                "enum": [
+                  "rigid",
+                  "envelope",
+                  "single_bind",
+                  "shape_blend"
+                ]
+              },
+              "max_influences": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "attributes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "attribute"
+                  ],
+                  "properties": {
+                    "attribute": {
+                      "type": "string"
+                    },
+                    "index_format": {
+                      "enum": [
+                        "direct",
+                        "index8",
+                        "index16"
+                      ]
+                    },
+                    "components": {
+                      "type": "integer"
+                    },
+                    "encoding": {
+                      "$ref": "common.schema.json#/$defs/Encoding"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "influence_histogram": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              },
+              "display_list": {
+                "$ref": "common.schema.json#/$defs/BlobRef"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "lod": {
+          "enum": [
+            "high",
+            "low",
+            "any"
+          ],
+          "description": "Filled from part_visibility when the mesh belongs to one detail level."
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        },
+        "engine": {
+          "$ref": "common.schema.json#/$defs/EngineExtensions"
+        },
+        "draws": {
+          "description": "Material draw calls of this mesh, each gated by a visibility bone (Brawl MDL0 objects draw several materials, each shown/hidden by a bone's visibility).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "material": {
+                "type": "string"
+              },
+              "visibility_bone": {
+                "type": "string"
+              },
+              "pass": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "single_bind": {
+          "type": [
+            "string",
+            "integer",
+            "null"
+          ]
+        },
+        "vertices": {
+          "type": "integer"
+        },
+        "faces": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Material": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "shading": {
+          "type": "object",
+          "properties": {
+            "lighting": {
+              "enum": [
+                "none",
+                "diffuse",
+                "diffuse_specular",
+                "unknown"
+              ]
+            },
+            "alpha": {
+              "enum": [
+                "opaque",
+                "cutout",
+                "blend",
+                "unknown"
+              ]
+            },
+            "cull": {
+              "enum": [
+                "none",
+                "back",
+                "front",
+                "both",
+                "unknown"
+              ]
+            },
+            "raw_render_mode": {
+              "$ref": "common.schema.json#/$defs/Hex"
+            }
+          },
+          "additionalProperties": false
+        },
+        "colors": {
+          "type": "object",
+          "properties": {
+            "ambient": {
+              "$ref": "common.schema.json#/$defs/ColorRGBA"
+            },
+            "diffuse": {
+              "$ref": "common.schema.json#/$defs/ColorRGBA"
+            },
+            "specular": {
+              "$ref": "common.schema.json#/$defs/ColorRGBA"
+            },
+            "shininess": {
+              "type": "number"
+            },
+            "alpha": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false
+        },
+        "layers": {
+          "description": "Texture stages in order.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "texture_slot": {
+                "type": "string",
+                "description": "A costume-overridable slot name; costumes map slots to textures."
+              },
+              "default_texture": {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              "coord_source": {
+                "type": "string"
+              },
+              "wrap": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "clamp",
+                    "repeat",
+                    "mirror"
+                  ]
+                }
+              },
+              "blend": {
+                "type": "string"
+              },
+              "raw_flags": {
+                "$ref": "common.schema.json#/$defs/Hex"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        },
+        "engine": {
+          "$ref": "common.schema.json#/$defs/EngineExtensions"
+        },
+        "variant_of": {
+          "type": "string"
+        },
+        "variant_role": {
+          "enum": [
+            "metal",
+            "team",
+            "other"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "Texture": {
+      "type": "object",
+      "required": [
+        "id",
+        "width",
+        "height",
+        "format"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "format": {
+          "enum": [
+            "I4",
+            "I8",
+            "IA4",
+            "IA8",
+            "RGB565",
+            "RGB5A3",
+            "RGBA8",
+            "CI4",
+            "CI8",
+            "CI14X2",
+            "CMPR"
+          ]
+        },
+        "palette": {
+          "type": "object",
+          "properties": {
+            "format": {
+              "enum": [
+                "IA8",
+                "RGB565",
+                "RGB5A3"
+              ]
+            },
+            "entries": {
+              "type": "integer"
+            },
+            "count": {
+              "type": "integer",
+              "description": "Number of alternate palettes (animated/expression swaps)."
+            }
+          },
+          "additionalProperties": false
+        },
+        "mipmaps": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pixels": {
+          "$ref": "common.schema.json#/$defs/BlobRef"
+        },
+        "content_hash": {
+          "type": "string",
+          "description": "Hash of the decoded pixels; lets costumes be compared semantically even when files store buffers in different orders."
+        },
+        "semantic": {
+          "type": "string",
+          "description": "What it depicts: 'body', 'eyes', 'quills', 'shoes', 'face', ..."
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        }
+      },
+      "additionalProperties": false
+    },
+    "MaterialAnimation": {
+      "description": "Texture/colour animation bound to meshes (Melee MatAnimJoint + TexAnim; Brawl SRT0/PAT0/CLR0). 'driver' says what advances it: its own clock, the current animation, or fighter code (e.g. blinking eyes).",
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "Mesh indices."
+        },
+        "channels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "enum": [
+                  "texture_swap",
+                  "palette_swap",
+                  "uv_translate",
+                  "uv_rotate",
+                  "uv_scale",
+                  "color",
+                  "alpha"
+                ]
+              },
+              "frames": {
+                "type": "integer"
+              },
+              "images": {
+                "type": "array",
+                "items": {
+                  "$ref": "common.schema.json#/$defs/Ref"
+                }
+              },
+              "palettes": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "driver": {
+          "enum": [
+            "clock",
+            "animation",
+            "fighter_code",
+            "script",
+            "unknown"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "description": "e.g. 'eye expressions', 'blink', 'charge glow'."
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        },
+        "engine": {
+          "$ref": "common.schema.json#/$defs/EngineExtensions"
+        }
+      },
+      "additionalProperties": false
+    },
+    "PartVisibilityTable": {
+      "description": "Mesh show/hide sets per model part and state (Melee: ftData model-part lookups; Brawl: bone visibility / 'model changer' toggles in PSA). Lets scripts/code say 'hand part -> state 2' without naming meshes.",
+      "type": "object",
+      "required": [
+        "id",
+        "parts"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "row": {
+          "type": "integer",
+          "description": "The variant row costumes select (Melee costume_file.vis_idx)."
+        },
+        "column": {
+          "enum": [
+            "high_detail",
+            "low_detail",
+            "metal",
+            "conditional",
+            "default"
+          ]
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "part"
+            ],
+            "properties": {
+              "part": {
+                "type": "integer"
+              },
+              "semantic": {
+                "type": "string",
+                "description": "body, hand_l, hand_r, eyes, mouth, ..."
+              },
+              "states": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "state": {
+                      "type": "integer"
+                    },
+                    "meshes": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer"
+                      }
+                    },
+                    "semantic": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "gate_bone": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "hazards": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "e.g. 'rows 5-6 would read unrelated data'."
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        },
+        "driver": {
+          "enum": [
+            "table_lookup",
+            "visibility_bones",
+            "script",
+            "code"
+          ],
+          "description": "Melee: a table of mesh index sets looked up by part/state; Brawl: bones whose visibility gates draw calls, toggled by animations/scripts."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Costume": {
+      "type": "object",
+      "required": [
+        "id",
+        "index"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "index": {
+          "$ref": "common.schema.json#/$defs/IndexSpace"
+        },
+        "name": {
+          "type": "string",
+          "description": "Colour name ('Nr', 'Blue', 'Red'...)."
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/Ref"
+          }
+        },
+        "model": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "kind": {
+          "description": "texture_swap: same geometry/skeleton/materials, other images. palette_swap: same images, other palettes. model_swap: different geometry.",
+          "enum": [
+            "base",
+            "texture_swap",
+            "palette_swap",
+            "model_swap",
+            "mixed"
+          ]
+        },
+        "texture_overrides": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "slot": {
+                "type": "string"
+              },
+              "texture": {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              "meshes_affected": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "material_animation": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "visibility_row": {
+          "type": "integer"
+        },
+        "team_color": {
+          "enum": [
+            "red",
+            "blue",
+            "green",
+            "none"
+          ]
+        },
+        "ui": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/Ref"
+          }
+        },
+        "size_delta_explained": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        },
+        "engine": {
+          "$ref": "common.schema.json#/$defs/EngineExtensions"
+        },
+        "set": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "shipped_name": {
+          "type": "string",
+          "description": "File name as distributed (before the user renames it into a slot)."
+        },
+        "install_target": {
+          "type": "object",
+          "description": "Where the file must go to be used: which costume slot of which host.",
+          "properties": {
+            "index": {
+              "$ref": "common.schema.json#/$defs/IndexSpace"
+            },
+            "pattern": {
+              "type": "string"
+            },
+            "host": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "AnimationLibrary": {
+      "type": "object",
+      "properties": {
+        "container": {
+          "$ref": "common.schema.json#/$defs/Ref",
+          "description": "The file that stores the clips."
+        },
+        "indexing": {
+          "type": "string",
+          "description": "How a clip is found (Melee: the fighter data's motion table holds (symbol, offset, size) triples - the bank file has no index of its own; Brawl: by name inside a BRRES CHR0 folder)."
+        },
+        "clips": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AnimationClip"
+          }
+        },
+        "stats": {
+          "type": "object"
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        }
+      },
+      "additionalProperties": false
+    },
+    "AnimationClip": {
+      "type": "object",
+      "required": [
+        "id",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "name": {
+          "type": "string",
+          "description": "Canonical action name (e.g. 'SpecialNSpin', 'AttackDash')."
+        },
+        "symbol": {
+          "type": "string"
+        },
+        "file": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "offset": {
+          "$ref": "common.schema.json#/$defs/Hex"
+        },
+        "size": {
+          "type": "integer"
+        },
+        "frames": {
+          "type": "number"
+        },
+        "loop": {
+          "type": "boolean"
+        },
+        "authored_for": {
+          "description": "Skeleton the clip was authored for (Melee: low 6 bits of the motion flags name a FighterKind). Clips authored for another skeleton only drive the joints both share.",
+          "type": "object",
+          "properties": {
+            "skeleton": {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            "engine_kind": {
+              "$ref": "common.schema.json#/$defs/IndexSpace"
+            },
+            "joint_count": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        },
+        "tracks": {
+          "description": "Summary of channels; decoded keys live in 'keys'.",
+          "type": "object",
+          "properties": {
+            "per_channel": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "encodings": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            },
+            "interpolations": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "integer"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "keys": {
+          "$ref": "common.schema.json#/$defs/BlobRef",
+          "description": "Decoded keys (joint, channel, frame, value, slope, interpolation) plus the original quantisation for lossless re-encoding."
+        },
+        "origin": {
+          "description": "Lineage against a reference character's clip of the same name.",
+          "type": "object",
+          "properties": {
+            "relation": {
+              "enum": [
+                "identical",
+                "reauthored",
+                "new",
+                "retargeted",
+                "unknown"
+              ]
+            },
+            "reference": {
+              "$ref": "common.schema.json#/$defs/Ref"
+            }
+          },
+          "additionalProperties": false
+        },
+        "used_by": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/Ref"
+          },
+          "description": "Subactions/motions that play it (many can share one clip)."
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        },
+        "engine": {
+          "$ref": "common.schema.json#/$defs/EngineExtensions"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EffectBank": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "index": {
+          "$ref": "common.schema.json#/$defs/IndexSpace"
+        },
+        "file": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "owner": {
+          "enum": [
+            "self",
+            "shared",
+            "borrowed"
+          ]
+        },
+        "id_scheme": {
+          "description": "How script effect ids map to this bank's entries, e.g. Melee m-ex: 5000+n model n, 6000+n generator n, 7000/8000 Kirby copy; final = bank*1000 + n. Brawl: bank:id pairs in the effect command.",
+          "type": "string"
+        },
+        "id_base_stored": {
+          "type": "integer",
+          "description": "The id base written in the file (Shadow: 22000, copied from Sonic)."
+        },
+        "id_base_effective": {
+          "type": "integer",
+          "description": "The base the framework actually uses (m-ex: bank*1000)."
+        },
+        "models": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "local_index"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "common.schema.json#/$defs/Id"
+              },
+              "local_index": {
+                "type": "integer"
+              },
+              "script_id": {
+                "type": "integer"
+              },
+              "lifetime": {
+                "$ref": "common.schema.json#/$defs/Quantity"
+              },
+              "skeleton_joints": {
+                "type": "integer"
+              },
+              "meshes": {
+                "type": "integer"
+              },
+              "animated": {
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "joint",
+                    "material",
+                    "shape"
+                  ]
+                }
+              },
+              "placement": {
+                "$ref": "#/$defs/EffectPlacement"
+              },
+              "used_by": {
+                "type": "array",
+                "items": {
+                  "$ref": "common.schema.json#/$defs/Ref"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "generators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "local_index"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "common.schema.json#/$defs/Id"
+              },
+              "local_index": {
+                "type": "integer"
+              },
+              "script_id": {
+                "type": "integer"
+              },
+              "placement": {
+                "$ref": "#/$defs/EffectPlacement"
+              },
+              "program": {
+                "$ref": "common.schema.json#/$defs/BlobRef",
+                "description": "Particle command list."
+              },
+              "used_by": {
+                "type": "array",
+                "items": {
+                  "$ref": "common.schema.json#/$defs/Ref"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "texture_groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "index": {
+                "type": "integer"
+              },
+              "images": {
+                "type": "integer"
+              },
+              "format": {
+                "type": "string"
+              },
+              "width": {
+                "type": "integer"
+              },
+              "height": {
+                "type": "integer"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        },
+        "engine": {
+          "$ref": "common.schema.json#/$defs/EngineExtensions"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EffectPlacement": {
+      "description": "How a spawned effect is placed/attached (m-ex behaviour types; Brawl effect-command flags).",
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "world",
+            "joint_position",
+            "joint_position_rotation",
+            "follow_joint_position",
+            "follow_joint_position_rotation",
+            "joint_position_fighter_facing",
+            "follow_joint_position_fighter_facing",
+            "follow_joint_position_copy_scale",
+            "none",
+            "unknown"
+          ]
+        },
+        "raw": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "SoundBank": {
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "index": {
+          "$ref": "common.schema.json#/$defs/IndexSpace"
+        },
+        "file": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "scripts_file": {
+          "type": "string",
+          "description": "Where the sound-event scripts live (Melee smash2.sem; Brawl brsar)."
+        },
+        "memory_bytes": {
+          "type": "integer",
+          "description": "Audio RAM the bank needs."
+        },
+        "load_policy": {
+          "type": "object",
+          "description": "Group / priorities as the framework records them."
+        },
+        "samples": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "index"
+            ],
+            "properties": {
+              "index": {
+                "type": "integer"
+              },
+              "global_id": {
+                "type": "integer"
+              },
+              "codec": {
+                "enum": [
+                  "dsp_adpcm",
+                  "pcm16",
+                  "pcm8",
+                  "unknown"
+                ]
+              },
+              "channels": {
+                "type": "integer"
+              },
+              "sample_rate": {
+                "type": "integer"
+              },
+              "loop": {
+                "type": "boolean"
+              },
+              "duration": {
+                "$ref": "common.schema.json#/$defs/Quantity"
+              },
+              "bytes": {
+                "type": "integer"
+              },
+              "audio": {
+                "$ref": "common.schema.json#/$defs/BlobRef"
+              },
+              "semantic": {
+                "type": "string",
+                "description": "voice line / swing / hit / footstep ... when known."
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "sound_events": {
+          "description": "The ids scripts play; each resolves to one or more samples through the event script.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "event_id"
+            ],
+            "properties": {
+              "event_id": {
+                "type": "integer"
+              },
+              "relative_id": {
+                "type": "integer",
+                "description": "The id as the character's scripts write it (m-ex: 5000+n)."
+              },
+              "samples": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                }
+              },
+              "used_by": {
+                "type": "array",
+                "items": {
+                  "$ref": "common.schema.json#/$defs/Ref"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "id_scheme": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        },
+        "engine": {
+          "$ref": "common.schema.json#/$defs/EngineExtensions"
+        }
+      },
+      "additionalProperties": false
+    },
+    "UiAsset": {
+      "type": "object",
+      "required": [
+        "id",
+        "role"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "role": {
+          "enum": [
+            "css_icon",
+            "css_portrait",
+            "css_name",
+            "stock_icon",
+            "emblem",
+            "results_portrait",
+            "results_name",
+            "victory_theme",
+            "announcer_call",
+            "menu_idle_animation",
+            "series_logo",
+            "franchise_icon",
+            "loading_portrait",
+            "other",
+            "battle_portrait",
+            "render"
+          ]
+        },
+        "costume": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "file": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "texture": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "index": {
+          "$ref": "common.schema.json#/$defs/IndexSpace"
+        },
+        "reuses": {
+          "type": "string",
+          "description": "When it borrows another character's (Shadow uses Sonic's victory theme and announcer call)."
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        },
+        "engine": {
+          "$ref": "common.schema.json#/$defs/EngineExtensions"
+        },
+        "pose_set": {
+          "type": "string"
+        },
+        "resolution": {
+          "type": "string"
+        },
+        "path_pattern": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Media": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "kind": {
+          "enum": [
+            "still",
+            "movie",
+            "audio_stream"
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "description": "e.g. 'classic clear still', 'ending movie'."
+        },
+        "file": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "width": {
+          "type": "integer"
+        },
+        "height": {
+          "type": "integer"
+        },
+        "frames": {
+          "type": "integer"
+        },
+        "fps": {
+          "type": "number"
+        },
+        "codec": {
+          "type": "string"
+        },
+        "misnamed": {
+          "type": "string",
+          "description": "e.g. '.thp file that is a single JPEG'."
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Collectible": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "kind": {
+          "enum": [
+            "trophy",
+            "sticker",
+            "other"
+          ]
+        },
+        "index": {
+          "$ref": "common.schema.json#/$defs/IndexSpace"
+        },
+        "file": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "origin": {
+          "type": "string",
+          "description": "Who added it (e.g. Akaneia's trophy table, not the fighter's pack)."
+        },
+        "reachable": {
+          "type": "boolean",
+          "description": "Whether the host actually shows it."
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CostumeSet": {
+      "description": "A group of costumes sharing one geometry (texture swaps within the set; geometry differs between sets). Melee packs have one implicit set.",
+      "type": "object",
+      "required": [
+        "id",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "file_prefix": {
+          "type": "string"
+        },
+        "model": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "shadow_model": {
+          "type": "string"
+        },
+        "rest_pose_variant": {
+          "type": "string"
+        },
+        "costumes": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/Ref"
+          }
+        },
+        "pose_sets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "within_set_variation": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "common.schema.json#/$defs/Provenance"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

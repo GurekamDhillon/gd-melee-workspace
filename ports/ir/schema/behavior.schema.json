@@ -1,0 +1,574 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gd-melee.local/character-ir/behavior.schema.json",
+  "title": "Character IR - behavior",
+  "description": "How the character plays. The model follows the split both Melee and Brawl make: ACTIONS are logic states (what callbacks run each frame, which move they belong to, how they are entered/left); SUBACTIONS bind an animation clip to event scripts (hitboxes, effects, sounds, timers). An action names the subaction it plays BY INDEX - never by name: Shadow's Special-S actions play clips named SpecialLw*, and one of his states plays the common RunBrake clip. Scripts are decoded into engine-neutral events with the raw encoding kept alongside.",
+  "$defs": {
+    "Behavior": {
+      "type": "object",
+      "properties": {
+        "attributes": { "$ref": "#/$defs/Attributes" },
+        "body": { "$ref": "#/$defs/Body" },
+        "actions": { "type": "array", "items": { "$ref": "#/$defs/Action" } },
+        "subactions": { "type": "array", "items": { "$ref": "#/$defs/Subaction" } },
+        "scripts": { "type": "array", "items": { "$ref": "#/$defs/Script" } },
+        "script_languages": { "type": "array", "items": { "$ref": "#/$defs/ScriptLanguage" } },
+        "moves": { "type": "array", "items": { "$ref": "#/$defs/Move" } },
+        "variables": { "type": "array", "items": { "$ref": "#/$defs/Variable" } },
+        "runtime_callbacks": { "type": "array", "items": { "$ref": "#/$defs/RuntimeCallback" } },
+        "sound_roles": {
+          "description": "Named sound slots the engine plays on the character's behalf (Melee FtSFX: smash voice, damage, death, ...).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["role"],
+            "properties": {
+              "role": { "type": "string" },
+              "ids": { "type": "array", "items": { "type": "integer" } },
+              "id_space": { "type": "string" },
+              "none_marker": { "type": "boolean", "description": "The value is the engine's 'no sound' marker." },
+              "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "articles": { "type": "array", "items": { "$ref": "#/$defs/Article" } },
+        "copy_abilities": { "type": "array", "items": { "$ref": "#/$defs/CopyAbility" } },
+        "presentation": { "type": "array", "items": { "$ref": "#/$defs/PresentationBinding" } }
+      },
+      "additionalProperties": false
+    },
+
+    "Attribute": {
+      "description": "One tunable. 'key' is a canonical engine-neutral name (e.g. 'air.gravity', 'jump.squat_frames', 'ground.walk.max_speed'); 'engine_name' / 'offset' pin it in the source format. Unknown attributes keep key 'unknown.<offset>' so nothing is dropped.",
+      "type": "object",
+      "required": ["key"],
+      "properties": {
+        "key": { "type": "string", "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)*$" },
+        "value": {},
+        "unit": { "type": "string" },
+        "type": { "enum": ["f32", "s32", "u32", "u8", "s8", "u16", "s16", "bool", "vec2", "vec3", "struct", "blob"] },
+        "offset": { "$ref": "common.schema.json#/$defs/Hex" },
+        "engine_name": { "type": "string" },
+        "meaning": { "type": "string" },
+        "read_by": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/Ref" }, "description": "Functions/scripts that read it (how an unnamed special attribute's meaning was inferred)." },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+    "Attributes": {
+      "type": "object",
+      "properties": {
+        "common": { "type": "array", "items": { "$ref": "#/$defs/Attribute" } },
+        "special": {
+          "description": "Character-specific block the engine does not type (Melee ext_attr): kept as a sized blob plus a typed per-offset view that grows as meanings are established.",
+          "type": "object",
+          "properties": {
+            "size": { "type": "integer" },
+            "location": { "$ref": "common.schema.json#/$defs/BlobRef" },
+            "copied_to": { "type": "string", "description": "Where code copies it at load (Shadow: fp->dat_attrs_backup, fp->dat_attrs points at the copy)." },
+            "fields": { "type": "array", "items": { "$ref": "#/$defs/Attribute" } },
+            "coverage": { "type": "string", "description": "e.g. '~20 of 85 words have established meanings'." }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "Body": {
+      "description": "Physical description: hurtboxes, environment collision, ledge grab, shield, camera, item handling, IK, bone dynamics. Bones are referenced by skeleton joint index and, where known, by role.",
+      "type": "object",
+      "properties": {
+        "hurtboxes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["index", "joint"],
+            "properties": {
+              "index": { "type": "integer" },
+              "joint": { "type": "integer" },
+              "role": { "type": "string" },
+              "zone": { "enum": ["low", "mid", "high"] },
+              "grabbable": { "type": "boolean" },
+              "a": { "$ref": "common.schema.json#/$defs/Vec3" },
+              "b": { "$ref": "common.schema.json#/$defs/Vec3" },
+              "radius_scale": { "type": "number" },
+              "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "environment_collision": {
+          "type": "object",
+          "properties": {
+            "joints": { "type": "array", "items": { "type": "integer" } },
+            "boxes": { "type": "array", "items": { "type": "object" }, "description": "Alternate collision boxes some states use (Shadow's ball form box lives in special attributes)." },
+            "ledge_grab": {
+              "type": "object",
+              "properties": {
+                "snap_x": { "type": "number" }, "snap_y": { "type": "number" }, "height": { "type": "number" }
+              },
+              "additionalProperties": false
+            },
+            "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+          },
+          "additionalProperties": false
+        },
+        "shield": {
+          "type": "object",
+          "properties": {
+            "size": { "type": "number" },
+            "pose": { "type": "string", "description": "Ref or note: the joint tree used as the shielding pose." },
+            "break_velocity": { "type": "number" }
+          },
+          "additionalProperties": false
+        },
+        "camera_box": { "type": "object" },
+        "item_handling": { "type": "object", "description": "Pickup ranges (ground light/heavy, air), hold bones, throw multipliers." },
+        "ik": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "joints": { "type": "array", "items": { "type": "integer" } },
+              "length": { "type": "number" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "dynamics": {
+          "description": "Secondary-motion bone chains (hair, quills, cloth). 'enabled' separates 'present in the file' from 'actually used' (Shadow: a descriptor exists but the count is 0).",
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "chains": { "type": "array", "items": { "type": "object" } },
+            "note": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "special_joints": {
+          "description": "Joints the engine uses for fixed purposes (footsteps, effect origin, nametag, camera).",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["purpose", "joint"],
+            "properties": {
+              "purpose": { "type": "string" },
+              "joint": { "type": "integer" },
+              "engine_field": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "models": {
+          "description": "Alternate whole-body models the engine switches to (metal box, shield pose).",
+          "type": "array",
+          "items": { "type": "object", "properties": { "purpose": { "type": "string" }, "location": { "type": "string" } }, "additionalProperties": false }
+        },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+
+    "Callable": {
+      "description": "Something an action slot or callback field points at. content_function: a function in this character's code unit. engine_function: a retail/engine function by address+symbol. noop: an empty function (a bare blr). tail_call: a one-instruction stub that jumps elsewhere ('via' says where). table: data, not code. none: null.",
+      "type": "object",
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["content_function", "engine_function", "noop", "tail_call", "table", "none", "unknown"] },
+        "function": { "$ref": "common.schema.json#/$defs/Ref" },
+        "engine": { "$ref": "common.schema.json#/$defs/EngineAddress" },
+        "via": { "type": "string", "description": "For tail_call: the final target (a Ref or engine symbol)." },
+        "shared_with": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/Ref" }, "description": "Other actions using the same callable." }
+      },
+      "additionalProperties": false
+    },
+
+    "Action": {
+      "description": "A logic state (Melee MotionState row / action state id; Brawl action). Common actions come from the engine; special ones from the character.",
+      "type": "object",
+      "required": ["id", "index"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/Id" },
+        "index": { "$ref": "common.schema.json#/$defs/IndexSpace" },
+        "name": { "type": "string" },
+        "source": { "enum": ["engine_common", "content", "framework", "inherited"] },
+        "category": { "enum": ["movement", "ground_attack", "aerial_attack", "smash", "special", "grab", "throw", "shield", "damage", "ledge", "item", "taunt", "entry_exit", "misc"] },
+        "move": { "$ref": "common.schema.json#/$defs/Ref" },
+        "engine_move_id": { "type": "integer", "description": "The engine's move id used for stale-move queues (Melee FtMoveId)." },
+        "subaction": { "$ref": "common.schema.json#/$defs/Ref" },
+        "subaction_index": { "$ref": "common.schema.json#/$defs/IndexSpace" },
+        "situation": { "enum": ["ground", "air", "either"] },
+        "flags": {
+          "type": "object",
+          "properties": {
+            "semantic": { "type": "array", "items": { "type": "string" }, "description": "e.g. keep_fastfall, keep_gfx, skip_throw_exception, keep_color_anim_hit_status, skip_parasol, special_move." },
+            "raw": { "$ref": "common.schema.json#/$defs/Hex" }
+          },
+          "additionalProperties": false
+        },
+        "callbacks": {
+          "description": "Per-frame hooks, in the engine's order. Melee: animation (end/IASA-like frame logic), interrupt (IASA), physics, collision, camera. Brawl: the action's main/entry/exit/interrupt scripts are 'scripts' instead.",
+          "type": "object",
+          "properties": {
+            "animation": { "$ref": "#/$defs/Callable" },
+            "interrupt": { "$ref": "#/$defs/Callable" },
+            "physics": { "$ref": "#/$defs/Callable" },
+            "collision": { "$ref": "#/$defs/Callable" },
+            "camera": { "$ref": "#/$defs/Callable" },
+            "enter": { "$ref": "#/$defs/Callable" },
+            "exit": { "$ref": "#/$defs/Callable" }
+          },
+          "additionalProperties": false
+        },
+        "scripts": {
+          "description": "Action-level scripts (Brawl PSA action entry/exit); Melee actions have none.",
+          "type": "array", "items": { "$ref": "common.schema.json#/$defs/Ref" }
+        },
+        "enters": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/Ref" }, "description": "Actions this one can transition to (from code/scripts)." },
+        "entered_from": { "type": "array", "items": { "type": "string" } },
+        "summary": { "type": "string", "description": "What the state does, in words." },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" },
+        "engine": { "$ref": "common.schema.json#/$defs/EngineExtensions" }
+      },
+      "additionalProperties": false
+    },
+
+    "Subaction": {
+      "description": "Animation + scripts binding (Melee action/motion table row in ftData->xC; Brawl subaction). Many subactions may share one clip; some rows are empty.",
+      "type": "object",
+      "required": ["id", "index"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/Id" },
+        "index": { "$ref": "common.schema.json#/$defs/IndexSpace" },
+        "name": { "type": "string" },
+        "empty": { "type": "boolean", "description": "Row present but has no animation (and possibly no script)." },
+        "clip": { "oneOf": [ { "$ref": "common.schema.json#/$defs/Ref" }, { "type": "null" } ] },
+        "scripts": {
+          "description": "Script per channel. Melee has one script per subaction ('main'); Brawl has main/gfx/sfx/other.",
+          "type": "object",
+          "properties": {
+            "main": { "$ref": "common.schema.json#/$defs/Ref" },
+            "gfx": { "$ref": "common.schema.json#/$defs/Ref" },
+            "sfx": { "$ref": "common.schema.json#/$defs/Ref" },
+            "other": { "$ref": "common.schema.json#/$defs/Ref" }
+          },
+          "additionalProperties": false
+        },
+        "playback": {
+          "type": "object",
+          "properties": {
+            "loop": { "type": "boolean" },
+            "blend_frames": { "type": "integer" },
+            "transition_in_frames": { "type": "number" },
+            "dynamics_index": { "type": "integer" },
+            "authored_for_kind": { "$ref": "common.schema.json#/$defs/IndexSpace" }
+          },
+          "additionalProperties": false
+        },
+        "flags": {
+          "type": "object",
+          "properties": {
+            "semantic": { "type": "array", "items": { "type": "string" } },
+            "raw": { "$ref": "common.schema.json#/$defs/Hex" }
+          },
+          "additionalProperties": false
+        },
+        "parallel_table_hazards": { "type": "string", "description": "e.g. 'x10 pair for this index aliases the next block'." },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" },
+        "engine": { "$ref": "common.schema.json#/$defs/EngineExtensions" }
+      },
+      "additionalProperties": false
+    },
+
+    "ScriptLanguage": {
+      "description": "Describes an event-script language once, so scripts can store opcodes compactly. Each opcode maps to a canonical event op.",
+      "type": "object",
+      "required": ["id", "unit"],
+      "properties": {
+        "id": { "type": "string", "description": "e.g. 'melee.ftcmd', 'melee.itcmd', 'brawl.psa'." },
+        "unit": { "enum": ["word32", "byte", "command_record"] },
+        "opcode_field": { "type": "string", "description": "e.g. 'top 6 bits of the first word'." },
+        "decoder": { "$ref": "common.schema.json#/$defs/CodeLocation" },
+        "opcodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["opcode", "op"],
+            "properties": {
+              "opcode": { "$ref": "common.schema.json#/$defs/IntOrHex" },
+              "engine_name": { "type": "string" },
+              "op": { "$ref": "#/$defs/EventOp" },
+              "length": { "type": "integer", "description": "In the language's unit." },
+              "fields": { "type": "string", "description": "Bit layout summary." }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "EventOp": {
+      "description": "Canonical event operations shared across engines. Anything without a canonical meaning uses 'engine.<name>' and keeps its raw form.",
+      "type": "string",
+      "pattern": "^(end|timer\\.sync_wait|timer\\.async_wait|timer\\.set_anim_rate|loop\\.begin|loop\\.end|control\\.goto|control\\.subroutine|control\\.return|control\\.if|control\\.else|control\\.end_if|hitbox\\.create|hitbox\\.adjust_damage|hitbox\\.adjust_size|hitbox\\.clear|hitbox\\.remove|hitbox\\.special|throw\\.set|throw\\.release|grab\\.box|body\\.state|hurtbox\\.state|interrupt\\.enable|interrupt\\.jab_combo|interrupt\\.rapid_jab|smash\\.charge|sfx\\.play|sfx\\.random_smash|sfx\\.stop|gfx\\.spawn|gfx\\.remove|gfx\\.color_overlay|gfx\\.screen_flash|gfx\\.footstep|gfx\\.landing|model\\.part_state|model\\.texture_anim|model\\.visibility|model\\.part_anim|var\\.set|var\\.add|var\\.flag|rumble|article\\.spawn|article\\.action|move\\.reverse|move\\.velocity|air\\.state|engine\\.[a-z0-9_]+)$"
+    },
+
+    "Event": {
+      "type": "object",
+      "required": ["op"],
+      "properties": {
+        "op": { "$ref": "#/$defs/EventOp" },
+        "frame": { "type": "number", "description": "Value of the script's frame counter when the event executes (Melee: 0-based; AsyncWait n sets it to n, SyncWait n adds n). Present only while statically determinable (up to the first loop/goto)." },
+        "args": { "type": "object", "description": "Decoded arguments; hitbox.create uses the Hitbox shape." },
+        "hitbox": { "$ref": "#/$defs/Hitbox" },
+        "target": { "type": "string", "description": "For control flow: Ref of the target script, or an offset." },
+        "resource": {
+          "description": "For sfx/gfx: the id as written, and the resolved resource.",
+          "type": "object",
+          "properties": {
+            "written_id": { "type": "integer" },
+            "id_kind": { "enum": ["relative_own", "relative_copy", "absolute_engine", "absolute_shared"] },
+            "resolved_id": { "type": "integer" },
+            "resolves_to": { "$ref": "common.schema.json#/$defs/Ref" }
+          },
+          "additionalProperties": false
+        },
+        "raw": {
+          "type": "object",
+          "properties": {
+            "opcode": { "$ref": "common.schema.json#/$defs/IntOrHex" },
+            "engine_name": { "type": "string" },
+            "words": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/Hex" } },
+            "offset": { "$ref": "common.schema.json#/$defs/Hex" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "Hitbox": {
+      "description": "Engine-neutral hitbox. 'angle' 361 is Melee's/Brawl's auto ('sakurai') angle; kept numeric with angle_kind for clarity.",
+      "type": "object",
+      "properties": {
+        "slot": { "type": "integer" },
+        "group": { "type": "integer" },
+        "joint": { "type": "integer" },
+        "joint_role": { "type": "string" },
+        "damage": { "type": "number" },
+        "angle": { "type": "number" },
+        "angle_kind": { "enum": ["fixed", "sakurai", "autolink", "other"] },
+        "knockback_growth": { "type": "number" },
+        "weight_dependent_set_knockback": { "type": "number" },
+        "base_knockback": { "type": "number" },
+        "size": { "type": "number" },
+        "offset": { "$ref": "common.schema.json#/$defs/Vec3" },
+        "element": { "enum": ["normal", "fire", "electric", "slash", "coin", "ice", "sleep", "sleep_long", "grounded", "grounded_long", "cape", "empty", "disable", "darkness", "screw_attack", "flower", "aura", "dark", "paralyze", "other"] },
+        "element_raw": { "type": "integer" },
+        "shield_damage": { "type": "number" },
+        "hit_sfx": { "type": "object", "properties": { "kind": { "type": "integer" }, "level": { "type": "integer" } }, "additionalProperties": false },
+        "targets": {
+          "type": "object",
+          "properties": { "ground": { "type": "boolean" }, "air": { "type": "boolean" } },
+          "additionalProperties": false
+        },
+        "flags": {
+          "type": "array",
+          "items": { "enum": ["clank", "rebound", "hits_items", "ignore_thrown", "ignore_scale", "reflectable", "absorbable", "blockable", "direct", "hits_self", "no_hitlag", "no_gfx", "flinchless"] }
+        },
+        "engine": { "$ref": "common.schema.json#/$defs/EngineExtensions" }
+      },
+      "additionalProperties": false
+    },
+
+    "Script": {
+      "type": "object",
+      "required": ["id", "language"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/Id" },
+        "language": { "type": "string" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "file": { "$ref": "common.schema.json#/$defs/Ref" },
+            "offset": { "$ref": "common.schema.json#/$defs/Hex" }
+          },
+          "additionalProperties": false
+        },
+        "role": { "enum": ["subaction_main", "subaction_gfx", "subaction_sfx", "subaction_other", "action_entry", "action_exit", "subroutine", "article", "copy", "shared"] },
+        "events": { "type": "array", "items": { "$ref": "#/$defs/Event" } },
+        "events_blob": { "$ref": "common.schema.json#/$defs/BlobRef", "description": "Alternative to 'events' for bulk: a sidecar with the decoded stream." },
+        "calls": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/Ref" } },
+        "shared_by": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/Ref" } },
+        "timeline": {
+          "description": "Derived per-frame summary: active hitbox windows, IASA frame, total length.",
+          "type": "object",
+          "properties": {
+            "hit_windows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "start": { "type": "number", "description": "First active frame, 1-based (counter + 1)." }, "end": { "type": "number", "description": "Last active frame, 1-based." },
+                  "slots": { "type": "array", "items": { "type": "integer" } },
+                  "damage": { "type": "array", "items": { "type": "number" } }
+                },
+                "additionalProperties": false
+              }
+            },
+            "interruptible_from": { "type": "number", "description": "First actionable frame (1-based) after the interrupt/IASA event." },
+            "length": { "type": "number", "description": "Frame counter at the script's End event - not the clip length, which is on the clip." },
+            "static": { "type": "boolean", "description": "False when timing depends on runtime state (loops on variables, code-driven transitions)." }
+          },
+          "additionalProperties": false
+        },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+
+    "Move": {
+      "description": "A player-facing move grouping the actions/subactions it uses. The canonical 'input' names are engine-neutral.",
+      "type": "object",
+      "required": ["id", "input"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/Id" },
+        "input": {
+          "enum": ["jab", "rapid_jab", "dash_attack", "ftilt", "utilt", "dtilt", "fsmash", "usmash", "dsmash", "nair", "fair", "bair", "uair", "dair", "grab", "pummel", "fthrow", "bthrow", "uthrow", "dthrow", "special_n", "special_s", "special_hi", "special_lw", "final_smash", "taunt", "ledge_attack", "getup_attack", "trip_attack", "other"]
+        },
+        "name": { "type": "string", "description": "Community/design name (e.g. 'Homing Attack', 'Chaos Control')." },
+        "actions": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/Ref" } },
+        "subactions": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/Ref" } },
+        "articles": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/Ref" } },
+        "entry": { "$ref": "#/$defs/Callable", "description": "What pressing the input calls (Melee special slots)." },
+        "description": { "type": "string" },
+        "mechanics": { "type": "array", "items": { "type": "string" }, "description": "Algorithmic notes (e.g. 'targets nearest opponent within 58 units, then Break-the-Targets targets')." },
+        "derived_from": { "type": "string", "description": "e.g. 'Sonic's homing attack'." },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+
+    "Variable": {
+      "description": "Per-character runtime storage the character's code/scripts use (Melee: fighter-var block at fp+0x222C, motion-var block at fp+0x2340, cmd_vars; Brawl: LA/RA/IC variables).",
+      "type": "object",
+      "required": ["name", "scope"],
+      "properties": {
+        "name": { "type": "string" },
+        "scope": { "enum": ["fighter", "motion", "script", "article", "global"] },
+        "storage": { "type": "string", "description": "Engine location, e.g. 'fp+0x2230', 'LA-Basic[21]'." },
+        "type": { "type": "string" },
+        "lifetime": { "enum": ["match", "stock", "action", "script", "frame"] },
+        "reset_by": { "type": "array", "items": { "type": "string" } },
+        "meaning": { "type": "string" },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+
+    "RuntimeCallback": {
+      "description": "A callback the character's code installs into engine data at run time (function pointer as a value). These are the edges a host must route (the port's exec trap / thunks).",
+      "type": "object",
+      "required": ["field", "values"],
+      "properties": {
+        "field": { "type": "string", "description": "e.g. 'Fighter.pre_hitlag_cb (+0x21D4)'." },
+        "values": { "type": "array", "items": { "$ref": "#/$defs/Callable" } },
+        "set_by": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/Ref" } },
+        "store_count": { "type": "integer" },
+        "idiom": { "type": "string", "description": "e.g. 'pause own effects during hitlag'." },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+
+    "Article": {
+      "description": "A spawnable object owned by the character (projectile, item, platform, companion). Melee: m-ex item via itFunction + item_lookup; Brawl: article in the fighter's module/PSA.",
+      "type": "object",
+      "required": ["id", "local_index"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/Id" },
+        "local_index": { "type": "integer" },
+        "global_index": { "$ref": "common.schema.json#/$defs/IndexSpace" },
+        "name": { "type": "string" },
+        "kind": { "enum": ["projectile", "item", "platform", "companion", "effect_object", "unknown"] },
+        "descriptor": { "type": "string", "description": "Where its data is (Melee struct Article at ftData->x48[n])." },
+        "model": { "type": "string" },
+        "attributes": { "type": "array", "items": { "$ref": "#/$defs/Attribute" } },
+        "states": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "index": { "type": "integer" },
+              "name": { "type": "string" },
+              "clip": { "type": "string" },
+              "script": { "$ref": "common.schema.json#/$defs/Ref" },
+              "callbacks": { "type": "object", "additionalProperties": { "$ref": "#/$defs/Callable" } }
+            },
+            "additionalProperties": false
+          }
+        },
+        "logic_slots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["slot"],
+            "properties": {
+              "slot": { "type": "string" },
+              "callable": { "$ref": "#/$defs/Callable" }
+            },
+            "additionalProperties": false
+          }
+        },
+        "code_unit": { "$ref": "common.schema.json#/$defs/Ref" },
+        "spawned_by": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/Ref" } },
+        "status": { "enum": ["active", "vestigial", "declared_only", "unknown"], "description": "vestigial: registered but nothing spawns it; declared_only: listed in a table with no descriptor/code." },
+        "derived_from": { "type": "string" },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" },
+        "engine": { "$ref": "common.schema.json#/$defs/EngineExtensions" }
+      },
+      "additionalProperties": false
+    },
+
+    "CopyAbility": {
+      "description": "What another character gains from this one (Melee Kirby hat; Brawl Kirby hat).",
+      "type": "object",
+      "required": ["id", "recipient"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/Id" },
+        "recipient": { "type": "string", "description": "e.g. 'Kirby'." },
+        "files": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/Ref" } },
+        "hat_model": { "type": "string" },
+        "actions": { "type": "array", "items": { "$ref": "#/$defs/Action" } },
+        "subactions": { "type": "array", "items": { "$ref": "#/$defs/Subaction" } },
+        "clips_inline": { "type": "boolean", "description": "Clips stored inside the copy file rather than in an animation bank." },
+        "code_unit": { "$ref": "common.schema.json#/$defs/Ref" },
+        "effect_bank": { "$ref": "common.schema.json#/$defs/Ref" },
+        "effect_bank_note": { "type": "string" },
+        "derived_from": { "type": "string" },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    },
+
+    "PresentationBinding": {
+      "description": "Non-gameplay animation slots: entry, victory poses, results, menu idle, ending.",
+      "type": "object",
+      "required": ["role"],
+      "properties": {
+        "role": { "enum": ["entry_left", "entry_right", "victory_1", "victory_1_loop", "victory_2", "victory_2_loop", "victory_3", "victory_3_loop", "lose", "clap", "menu_idle", "ending", "results_idle", "other"] },
+        "index": { "$ref": "common.schema.json#/$defs/IndexSpace" },
+        "clip": { "oneOf": [ { "$ref": "common.schema.json#/$defs/Ref" }, { "type": "null" } ] },
+        "name": { "type": "string" },
+        "file": { "$ref": "common.schema.json#/$defs/Ref" },
+        "frames": { "type": "number" },
+        "note": { "type": "string" },
+        "provenance": { "$ref": "common.schema.json#/$defs/Provenance" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
