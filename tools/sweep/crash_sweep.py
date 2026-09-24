@@ -82,7 +82,7 @@ def start(run, out, exe, iso, slot, label):
     env = {k: v for k, v in os.environ.items() if not k.startswith("MELEE_")}
     x, y = (slot % 2) * 660, (slot // 2) * 520
     env.update({
-        "MELEE_SCENE": run.scene, "MELEE_VOLUME": "0", "MELEE_INPUT": "keyboard",
+        "MELEE_SCENE": run.scene, "MELEE_VOLUME": "0", "MELEE_INPUT": "none",
         "MELEE_PAD_IGNORE_ADAPTER": "1", "SDL_JOYSTICK_HIDAPI_GAMECUBE": "0",
         "MELEE_RUN_LABEL": "%s - %s" % (label, run.tag), "MELEE_MODS_DIR": os.path.join(ROOT, "_build", "nomods"),
         "MELEE_WINDOW_X": str(x), "MELEE_WINDOW_Y": str(y + 30), "MELEE_WINDOW_W": "640", "MELEE_WINDOW_H": "480",

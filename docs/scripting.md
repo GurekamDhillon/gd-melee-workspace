@@ -264,7 +264,7 @@ end
 
 | function | |
 |---|---|
-| `gd.key(name)`, `gd.key_pressed(name)` | the keyboard, only while the game window is focused and the console is closed. Names: `A`-`Z`, `0`-`9`, `F1`-`F12`, `KP0`-`KP9`, `SPACE`, `ENTER`, `TAB`, `ESCAPE`, `SHIFT`, `CTRL`, `ALT`, `LEFT`/`RIGHT`/`UP`/`DOWN`, `HOME`, `END`, `PAGEUP`, `PAGEDOWN`, `INSERT`, `DELETE`, `BACKSPACE` |
+| `gd.key(name)`, `gd.key_pressed(name)` | the keyboard, only while the game window is focused, the console is closed and nothing is being typed (a name, a room code). The keyboard never drives the game, so every key is free for hotkeys. Names: `A`-`Z`, `0`-`9`, `F1`-`F12`, `KP0`-`KP9`, `SPACE`, `ENTER`, `TAB`, `ESCAPE`, `SHIFT`, `CTRL`, `ALT`, `LEFT`/`RIGHT`/`UP`/`DOWN`, `HOME`, `END`, `PAGEUP`, `PAGEDOWN`, `INSERT`, `DELETE`, `BACKSPACE` |
 | `gd.input(port, spec [, frames])` | *gameplay.* Override a controller for `frames` pad samples (default 1). `spec` is `"A+B"`, a number (bits) or `{buttons="A", x=, y=, cx=, cy=, l=, r=}` (sticks -127..127, triggers 0..255) |
 | `gd.release(port)` | end an override early |
 | `gd.press(port, buttons [, frames [, spec]])` | *in a task:* `gd.input` then wait that many frames |

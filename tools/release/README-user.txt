@@ -14,8 +14,8 @@ WHAT YOU NEED
     the 20XX menus) are not supported yet: they play like vanilla Melee for now.
     Compressed images (.rvz, .ciso) must be converted to .iso first: in Dolphin, right-click the
     game > Convert File... > ISO.
-  - A controller: a GameCube controller through a Wii U / Mayflash adapter (Wii U mode), an Xbox-
-    style pad, or the keyboard.
+  - A controller: a GameCube controller through a Wii U / Mayflash adapter (Wii U mode), or an
+    Xbox-style pad. The keyboard does not play (hotkeys only).
 
 
 START
@@ -45,12 +45,14 @@ MORE THAN ONE DISC ("MODPACKS")
 
 
 CONTROLS
-  GameCube controller: plug the adapter in before starting (Wii U mode on Mayflash adapters).
-  Keyboard: tick "Keyboard controls" on the Play tab.
-    W A S D      control stick     (hold Left Shift for half tilt: walk, tilts)
-    Arrow keys   C-stick
-    J = A    K = B    I or Space = X (jump)    O = Y (jump)
-    L = R (shield)    U = L (shield)    ; = Z (grab)    Enter = Start
+  Play with a controller: a GameCube controller through an adapter (Wii U mode on Mayflash
+  adapters; plug it in any time), or any gamepad. With no controller the game says
+  "Connect a controller".
+  The keyboard does not play. It is for hotkeys only:
+    F9           controller panel (and, with an adapter, recalibrate)
+    F10          put every overlay back on screen
+    `            the console (the key left of 1)
+  Mods and scripts can add their own hotkeys.
 
 
 MODS AND SCRIPTS

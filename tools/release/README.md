@@ -97,9 +97,8 @@ Framework 4.8 ships with the OS).
 - One memory card per disc: `MELEE_CARD_PATH = userdata\saves\<disc id>`.
 - Options: unlock everything (`MELEE_UNLOCK_ALL=1`, default on: every character, stage and
   unlockable rule reports unlocked in `gmmain_lib.c` without writing the save; always on in
-  netplay), skip intro (`MELEE_SKIP_INTRO`), keyboard only (`MELEE_INPUT=keyboard`; the game's
-  own default is keyboard + controllers), "Keyboard plays as" port (`MELEE_KEYBOARD_PORT`), close
-  on play.
+  netplay), skip intro (`MELEE_SKIP_INTRO`), close on play. No input options: controllers play
+  and the keyboard is hotkeys only (old `keyboard_only` / `keyboard_port` lines are ignored).
 - Online tab: edits `netplay_server.txt` beside the game (what `gw_netplay.c` reads).
 - Mods tab (`launcher/ModsBrowser.cs`): installed mods from `mods/*/mod.json` + `enabled.txt`
   (tick = enabled for the next boot, Remove), and a browser for the sources in `mods/sources.txt`

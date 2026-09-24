@@ -145,8 +145,8 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
 **Graphics and input**
 - Native D3D12 rendering at any render scale, vsync off, and an experimental uncapped frame rate.
 - About 13 ms from controller to screen, steadily.
-- GameCube adapter (plug in any time, clones supported), keyboard and controllers together by
-  default.
+- GameCube adapter (plug in any time, clones supported) and any gamepad. The keyboard does not
+  play: it is hotkeys only (F9, F10, the console, and mods' own keys via `gd.key`).
 
 **Scripting**
 - Lua scripts and a console (the backtick key). Scripts can read the match, draw, wait on the game,
@@ -245,7 +245,7 @@ where most of the engineering goes (see the devlog).
 | Audio (own AX / DSP-ADPCM mixer over SDL3) | working, incl. both aux buses + AXFX reverb/delay |
 | Cutscenes (THP video, own decoder) | working |
 | Memory-card saves (GCI) | working |
-| GameCube adapter, keyboard | working |
+| GameCube adapter, gamepads (keyboard = hotkeys only) | working |
 | Frame pacing | hard 60 Hz; experimental uncapped frame rate |
 | Rollback netplay + competitive lobby | public test |
 | Slippi replay playback | working |

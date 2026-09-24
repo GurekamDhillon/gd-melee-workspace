@@ -260,8 +260,6 @@ namespace GDMelee
         public string DefaultId = "";
         public bool SkipIntro = true;
         public bool UnlockAll = true;
-        public bool KeyboardOnly = false;  // MELEE_INPUT=keyboard: controllers ignored (the game's default is keyboard + controllers)
-        public int KeyboardPort = 0;         // MELEE_KEYBOARD_PORT 1-4, 0 = the game's default (1)
         public bool CloseOnPlay = false;
         public int Volume = 50;            // MELEE_VOLUME, 0-100
         public bool ConsoleSocket = false; // MELEE_CONSOLE_PORT=51700 (scripts console for tools)
@@ -332,8 +330,7 @@ namespace GDMelee
                     case "default": s.DefaultId = v; break;
                     case "skip_intro": s.SkipIntro = v == "1"; break;
                     case "unlock_all": s.UnlockAll = v == "1"; break;
-                    case "keyboard_only": s.KeyboardOnly = v == "1"; break;
-                    case "keyboard_port": { int r; if (int.TryParse(v, out r)) s.KeyboardPort = Math.Max(0, Math.Min(4, r)); } break;
+                    // keyboard_only / keyboard_port (0.1.4 and older): the keyboard no longer plays; ignored
                     case "close_on_play": s.CloseOnPlay = v == "1"; break;
                     case "volume": { int vol; if (int.TryParse(v, out vol)) s.Volume = Math.Max(0, Math.Min(100, vol)); } break;
                     case "console_socket": s.ConsoleSocket = v == "1"; break;
@@ -363,8 +360,6 @@ namespace GDMelee
             sb.AppendLine("default=" + DefaultId);
             sb.AppendLine("skip_intro=" + (SkipIntro ? "1" : "0"));
             sb.AppendLine("unlock_all=" + (UnlockAll ? "1" : "0"));
-            sb.AppendLine("keyboard_only=" + (KeyboardOnly ? "1" : "0"));
-            sb.AppendLine("keyboard_port=" + KeyboardPort);
             sb.AppendLine("close_on_play=" + (CloseOnPlay ? "1" : "0"));
             sb.AppendLine("volume=" + Volume);
             sb.AppendLine("console_socket=" + (ConsoleSocket ? "1" : "0"));
@@ -494,11 +489,9 @@ namespace GDMelee
             else psi.EnvironmentVariables.Remove("MELEE_CONSOLE_PORT");
             if (s.SkipIntro) psi.EnvironmentVariables["MELEE_SKIP_INTRO"] = "1";
             else psi.EnvironmentVariables.Remove("MELEE_SKIP_INTRO");
-            // unset = keyboard and controllers together (the game's default since 0.1.2)
-            if (s.KeyboardOnly) psi.EnvironmentVariables["MELEE_INPUT"] = "keyboard";
-            else psi.EnvironmentVariables.Remove("MELEE_INPUT");
-            if (s.KeyboardPort >= 1) psi.EnvironmentVariables["MELEE_KEYBOARD_PORT"] = s.KeyboardPort.ToString();
-            else psi.EnvironmentVariables.Remove("MELEE_KEYBOARD_PORT");
+            // controllers play; the keyboard is hotkeys only (no input setting to pass)
+            psi.EnvironmentVariables.Remove("MELEE_INPUT");
+            psi.EnvironmentVariables.Remove("MELEE_KEYBOARD_PORT");
             Mods.ApplyEnvironment(s, disc, psi);
             Diagnostics.ApplyEnvironment(s, psi);
             return Process.Start(psi);
@@ -865,7 +858,7 @@ namespace GDMelee
         TabControl tabs;
         ListView list;
         Button playBtn, changeBtn, renameBtn, forgetBtn, defaultBtn;
-        CheckBox unlockAll, skipIntro, keyboard, closeOnPlay;
+        CheckBox unlockAll, skipIntro, closeOnPlay;
         Label status, detail;
         TextBox serverBox;
         Label serverState;
@@ -997,9 +990,8 @@ namespace GDMelee
 
             unlockAll = new CheckBox { Text = L.T("Unlock every character and stage (your save is not changed)"), Checked = s.UnlockAll, AutoSize = true };
             skipIntro = new CheckBox { Text = L.T("Skip the intro movie"), Checked = s.SkipIntro, AutoSize = true };
-            keyboard = new CheckBox { Text = L.T("Keyboard only (ignore controllers and the adapter)"), Checked = s.KeyboardOnly, AutoSize = true };
             closeOnPlay = new CheckBox { Text = L.T("Close this launcher when the game starts"), Checked = s.CloseOnPlay, AutoSize = true };
-            foreach (CheckBox c in new[] { unlockAll, skipIntro, keyboard, closeOnPlay })
+            foreach (CheckBox c in new[] { unlockAll, skipIntro, closeOnPlay })
             {
                 c.Margin = new Padding(0, 0, 18, 2);
                 c.CheckedChanged += delegate { SaveOptions(); };
@@ -1007,7 +999,7 @@ namespace GDMelee
             FlowLayoutPanel opts = new FlowLayoutPanel();
             opts.FlowDirection = FlowDirection.TopDown;
             opts.AutoSize = true;
-            opts.Controls.AddRange(new Control[] { unlockAll, skipIntro, keyboard, closeOnPlay });
+            opts.Controls.AddRange(new Control[] { unlockAll, skipIntro, closeOnPlay });
             Label volLabel = new Label { AutoSize = true, Margin = new Padding(0, 6, 6, 0), Text = L.F("Game volume: {0}%", s.Volume) };
             TrackBar vol = new TrackBar { Minimum = 0, Maximum = 100, TickFrequency = 10, SmallChange = 5, LargeChange = 10,
                                           Value = s.Volume, Width = 180, Height = 30, AutoSize = false, Margin = new Padding(0) };
@@ -1015,12 +1007,8 @@ namespace GDMelee
             vol.MouseUp += delegate { SaveOptions(); };
             vol.KeyUp += delegate { SaveOptions(); };
             opts.Controls.Add(UI.Row(volLabel, vol));
-            Label kpLabel = new Label { AutoSize = true, Margin = new Padding(0, 6, 6, 0), Text = L.T("Keyboard plays as:") };
-            ComboBox kp = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 360, Margin = new Padding(0, 2, 0, 0) };
-            kp.Items.AddRange(new object[] { L.T("Port 1, shared with a controller (default)"), L.T("Port 2 (a separate player)"), L.T("Port 3"), L.T("Port 4") });
-            kp.SelectedIndex = s.KeyboardPort <= 1 ? 0 : s.KeyboardPort - 1;
-            kp.SelectedIndexChanged += delegate { s.KeyboardPort = kp.SelectedIndex == 0 ? 0 : kp.SelectedIndex + 1; TrySave(); };
-            opts.Controls.Add(UI.Row(kpLabel, kp));
+            opts.Controls.Add(new Label { AutoSize = true, Margin = new Padding(0, 6, 0, 0), ForeColor = Color.DimGray,
+                                          Text = L.T("Play with a controller: a GameCube adapter or any gamepad. The keyboard is for hotkeys only.") });
 
             playBtn = new Button();
             playBtn.Text = L.T("PLAY");
@@ -1117,7 +1105,6 @@ namespace GDMelee
             if (skipIntro == null) return;
             s.UnlockAll = unlockAll.Checked;
             s.SkipIntro = skipIntro.Checked;
-            s.KeyboardOnly = keyboard.Checked;
             s.CloseOnPlay = closeOnPlay.Checked;
             TrySave();
         }
