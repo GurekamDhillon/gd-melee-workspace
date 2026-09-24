@@ -53,6 +53,7 @@ CONTROLS
     F10          put every overlay back on screen
     `            the console (the key left of 1)
   Mods and scripts can add their own hotkeys.
+  The mouse works in the menus: point and click, right-click goes back, the wheel scrolls.
 
 
 MODS AND SCRIPTS

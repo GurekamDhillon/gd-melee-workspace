@@ -147,6 +147,8 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
 - About 13 ms from controller to screen, steadily.
 - GameCube adapter (plug in any time, clones supported) and any gamepad. The keyboard does not
   play: it is hotkeys only (F9, F10, the console, and mods' own keys via `gd.key`).
+- The mouse works in every menu: point, click, right-click to go back, scroll lists. Matches
+  ignore it.
 
 **Scripting**
 - Lua scripts and a console (the backtick key). Scripts can read the match, draw, wait on the game,
