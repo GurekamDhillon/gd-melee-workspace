@@ -1029,3 +1029,7 @@
 ../masstest/shimobj/gw_settings.obj
 ../masstest/shimobj/gw_log.obj
 ../masstest/shimobj/gw_kit.obj
+../masstest/out/pc_geno_geno_game.c.obj
+../masstest/out/pc_geno_geno_tests.c.obj
+../masstest/out/pc_geno_geno_lab_mode.c.obj
+../masstest/shimobj/geno_registry.obj

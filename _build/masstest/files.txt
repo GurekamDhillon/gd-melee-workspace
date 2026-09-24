@@ -988,3 +988,6 @@ src/sysdolphin/baselib/card.c
 libs/dolphin/src/dolphin/thp/THPDec.c
 pc/tests/mex_tests.c
 pc/gameworld/script_game.c
+pc/geno/geno_game.c
+pc/geno/geno_tests.c
+pc/geno/geno_lab_mode.c
