@@ -1028,3 +1028,4 @@
 ../masstest/shimobj/gw_console.obj
 ../masstest/shimobj/gw_settings.obj
 ../masstest/shimobj/gw_log.obj
+../masstest/shimobj/gw_kit.obj

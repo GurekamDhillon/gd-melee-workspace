@@ -136,6 +136,7 @@ rejected.** This is the one rule the mechanism exists to enforce.
 | `time` | seconds | leave alone | 0 disables the timer |
 | `items` | item frequency | leave alone | |
 | `skipmemcard` | `0`/`1` | `1` when a scene is configured | §1 |
+| `select` | `kit`, `native` | leave alone | Training's character / stage select on the port's kit screens or the native ones (gw_uigen.c `gw_Frontend_TrainingSelect`). Applied as the text is read and kept for later Training launches; `mode=training;at=css;select=kit` opens Training on the kit's CSS |
 
 ### Player options (`/`-separated, after the character)
 
