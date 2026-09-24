@@ -2,55 +2,47 @@ GD's Melee - playing online
 ============================
 
 WHAT YOU NEED
-  - This whole folder. Both of you must use the SAME package (the game refuses a different build).
+  - This whole folder. Both of you must use the SAME release (the game refuses a different build).
   - Your own Super Smash Bros. Melee disc image: NTSC 1.02 (USA). Both of you need the same version.
-  - A GameCube controller (Wii U / Mayflash adapter in Wii U mode), an Xbox-style pad, or a keyboard.
+  - A controller: a GameCube controller through an adapter (Wii U mode on Mayflash adapters), or
+    any gamepad. The keyboard does not play; it is for hotkeys only.
 
 START THE GAME
   Double-click "GD Melee.exe". The first time, pick your .iso file (it is remembered), then PLAY.
-  Keyboard players: tick "Keyboard controls" on the Play tab first.
+  The first time the game starts it opens SETTINGS > CONTROLS: plug in your controller, press
+  some buttons and move the sticks to see that they read, then press B. "How to Play Online"
+  on that page has these steps too.
   If Windows says "Windows protected your PC": More info > Run anyway.
   If Windows Firewall asks about melee-pc.exe: tick BOTH Private and Public, then Allow.
-  (Without that, your friend's connection is blocked.)
+  (Without that, your opponent's connection is blocked.)
 
-CONNECT (takes about 30 seconds)
-  Both players:  Main Menu > VS. Mode > Melee > (Match Setup screen) > Online Play
+YOUR NAME
+  SETTINGS > ONLINE > Player Name: what your opponent sees in the lobby and before matches.
 
-  HOST (one of you):
-    1. Play As: Host. Pick your Character, Costume, Stage, Stocks, Time Limit.
-    2. Press A on "Host Match". Your code (like 203.0.113.7:51500) is now in your clipboard -
-       paste it to your friend (Discord, text...). It is also shown on the "Your Code" row.
+PLAY SOMEONE YOU KNOW
+  One of you:     VERSUS > ONLINE > Host a Room. You get a room code: send it to your opponent
+                  (Discord, text...).
+  The other one:  VERSUS > ONLINE > Join a Room, then type in that code.
+  The rooms use the matchmaking server set in SETTINGS > ONLINE > Server (and the launcher's
+  Online tab). Both of you need the same server.
 
-  GUEST (the other):
-    1. Play As: Join. Pick your Character and Costume.
-    2. Copy the host's code, then press A on "Paste Host Code".
-    3. Press A on "Connect".
+PLAY ANYONE
+  VERSUS > ONLINE > Random Opponent: you are matched with whoever else is looking right now.
 
-  The match starts on both screens as soon as you are connected.
-  After the match, go back to Online Play and do Host Match / Connect again for a rematch
-  (your choices are remembered).
-
-IF IT DOESN'T CONNECT (after ~15 seconds)
-  The line at the bottom of the screen says what is happening.
-  1. Guest: send the host YOUR code (the "Your Code" row - it is also in your clipboard).
-     Host: copy it and press A on "Paste Friend's Code". Guest: press Connect again.
-     This opens a path through both routers and fixes most home connections.
-  2. Still nothing? One of you may be on a network that blocks direct connections
-     (mobile hotspots, some dorm/ISP networks). Install Tailscale (free, tailscale.com) on
-     both PCs, sign in to the same Tailscale network, and use the host's Tailscale IP
-     (100.x.y.z) as the code - e.g. 100.64.1.2:51500.
-  3. "different disc image": you are not using the same ISO version.
-     "different melee-pc.exe build": you are not using the same package.
-
-KEYBOARD CONTROLS (keyboard .bat)
-  W A S D      control stick     (hold Left Shift for half tilt: walk, tilts)
-  Arrow keys   C-stick
-  J = A    K = B    I or Space = X (jump)    O = Y (jump)
-  L = R (shield)    U = L (shield)    ; = Z (grab)    Enter = Start
-  The game window must be focused for the keyboard to work.
+THE LOBBY
+  Blind character picks, starters and counterpicks, 1-2-1 stage strikes and bans, then the game.
+  Rematches stay in the room. The host's Stage List (the legal six, or every stage you both have),
+  Stocks and Time Limit apply.
 
 WHAT IT FEELS LIKE
-  Rollback netcode: your own inputs are instant (after the Input Delay the host picked - 2 frames
-  suits most connections). If the other player's input arrives late, the game quietly corrects
-  itself a few frames back. Very high ping (> ~150 ms) will show as brief pauses; the host can
-  raise Input Delay to 3-4 to smooth that out.
+  Rollback netcode: your own inputs are instant after the Input Delay (2 frames suits most
+  connections). If your opponent's input arrives late, the game quietly corrects itself a few
+  frames back. If it stutters, raise Input Delay (SETTINGS > ONLINE, or on the ONLINE screen for
+  rooms you host) to 3 or 4.
+
+IF IT DOESN'T CONNECT
+  The line at the bottom of the screen says what is happening.
+  - Check the firewall question above (both Private and Public).
+  - "different disc image": you are not using the same ISO version.
+    "different melee-pc.exe build": you are not using the same release.
+  - Both of you on the same server? (SETTINGS > ONLINE > Server.)

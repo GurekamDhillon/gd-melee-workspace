@@ -231,14 +231,14 @@ namespace GDMelee
             { "Cancel", "Cancelar" },
 
             // --- Online tab ---
-            { "Online play is in the game: Main Menu > VS. Mode > Melee > Online Play. Both players need this same release of GD's Melee. Mods are welcome online: any fighter or stage you both have can be picked (see the Mods tab).\r\n\r\nRoom codes (short codes instead of IP addresses) need a matchmaking server. Enter its address here as host:port, or leave it empty to swap addresses by hand. The setting is stored in netplay_server.txt next to the game.",
-              "El juego en línea está dentro del juego: Main Menu > VS. Mode > Melee > Online Play. Los dos jugadores necesitan esta misma versión de GD's Melee. Los mods son bienvenidos en línea: se puede elegir cualquier personaje o escenario que tengan los dos (mira la pestaña Mods).\r\n\r\nLos códigos de sala (códigos cortos en lugar de direcciones IP) necesitan un servidor de emparejamiento. Escribe aquí su dirección como host:puerto, o déjalo vacío para intercambiar direcciones a mano. El ajuste se guarda en netplay_server.txt junto al juego." },
+            { "Online play is in the game: VERSUS > ONLINE (Host a Room, Join a Room, Random Opponent). Both players need this same release of GD's Melee. Mods are welcome online: any fighter or stage you both have can be picked (see the Mods tab).\r\n\r\nRoom codes (short codes instead of IP addresses) need a matchmaking server. Enter its address here as host:port, or leave it empty to swap addresses by hand. The setting is stored in netplay_server.txt next to the game.",
+              "El juego en línea está dentro del juego: VERSUS > ONLINE (Host a Room, Join a Room, Random Opponent). Los dos jugadores necesitan esta misma versión de GD's Melee. Los mods son bienvenidos en línea: se puede elegir cualquier personaje o escenario que tengan los dos (mira la pestaña Mods).\r\n\r\nLos códigos de sala (códigos cortos en lugar de direcciones IP) necesitan un servidor de emparejamiento. Escribe aquí su dirección como host:puerto, o déjalo vacío para intercambiar direcciones a mano. El ajuste se guarda en netplay_server.txt junto al juego." },
             { "Matchmaking server (host:port):", "Servidor de emparejamiento (host:puerto):" },
             { "Save", "Guardar" },
             { "Clear", "Borrar" },
             { "How to play online", "Cómo jugar en línea" },
             { "Room codes use {0}.", "Los códigos de sala usan {0}." },
-            { "No server set: players swap addresses (the Online Play screen shows yours).", "No hay servidor: los jugadores intercambian direcciones (la pantalla Online Play muestra la tuya)." },
+            { "No server set: players swap addresses (the ONLINE screen shows yours).", "No hay servidor: los jugadores intercambian direcciones (la pantalla ONLINE muestra la tuya)." },
             { "Write it as host:port, for example play.example.net:51500", "Escríbelo como host:puerto, por ejemplo play.example.net:51500" },
             { "Matchmaking server", "Servidor de emparejamiento" },
             { "Server setting saved.", "Se guardó el servidor." },

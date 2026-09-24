@@ -1,20 +1,83 @@
 {
-  "note": "Edit the words here and run  python pipeline/readme.py  - every README image is rebuilt from this file. Text must fit its box; the build fails and names the box if it doesn't.",
-  "wordmark": {"tag": "GD's", "name": "Melee"},
-  "tagline": "A native PC port — rollback netplay, HD rendering, Slippi replays",
-  "social_tagline": "A native PC port — rollback netplay, HD rendering, Slippi replays",
-  "features": [
-    {"id": "rollback", "icon": "rollback", "title": "Rollback netplay",
-     "text": "Play a friend online: swap a code, connect, and rollback hides the lag."},
-    {"id": "hd", "icon": "hd", "title": "HD at any resolution",
-     "text": "Native PC rendering at any window size, sharp at every scale."},
-    {"id": "replays", "icon": "replay", "title": "Slippi replays",
-     "text": "Frame-accurate playback of .slp replays, straight from the game."},
-    {"id": "mex", "icon": "mex", "title": "m-ex mod support",
-     "text": "Custom characters and stages from m-ex builds, loaded like the originals."},
-    {"id": "ucf", "icon": "ucf", "title": "UCF + tournament rules",
-     "text": "Universal Controller Fix and tournament rule sets, built in."},
-    {"id": "determinism", "icon": "sync", "title": "Deterministic engine",
-     "text": "Bit-exact simulation, checked frame by frame with SyncTest."}
-  ]
+ "note": "Edit the words here and run  python pipeline/readme.py  - every README image is rebuilt from this file. Text must fit its box; the build fails and names the box if it doesn't.",
+ "wordmark": {
+  "tag": "GD's",
+  "name": "Melee"
+ },
+ "tagline": "A native PC port — rollback netplay, HD, m-ex mods, Lua scripting",
+ "social_tagline": "A native PC port — rollback netplay, HD, m-ex mods, Lua scripting",
+ "features": [
+  {
+   "id": "rollback",
+   "icon": "rollback",
+   "title": "Rollback netplay",
+   "text": "Play a friend with a room code, or press Random Opponent. Rollback hides the lag."
+  },
+  {
+   "id": "lobby",
+   "icon": "strike",
+   "title": "Competitive lobby",
+   "text": "Blind picks, starters and counterpicks, 1-2-1 strikes, bans and rematches."
+  },
+  {
+   "id": "hd",
+   "icon": "hd",
+   "title": "HD at any resolution",
+   "text": "Native D3D12 rendering at any render scale, with vsync off and ~13 ms input."
+  },
+  {
+   "id": "mex",
+   "icon": "mex",
+   "title": "m-ex mod support",
+   "text": "Mod discs and loose mods: fighters, stages, items and music, online too."
+  },
+  {
+   "id": "roster",
+   "icon": "roster",
+   "title": "94 fighter slots",
+   "text": "Room for big m-ex rosters, with their names, emblems and stock icons."
+  },
+  {
+   "id": "scripting",
+   "icon": "code",
+   "title": "Lua scripting + kit UI",
+   "text": "Scripts, a console and gd.kit: draw panels in the menus' own style."
+  },
+  {
+   "id": "training",
+   "icon": "ico_training",
+   "title": "Training on the kit",
+   "text": "Training can run through the new character and stage select screens."
+  },
+  {
+   "id": "launcher",
+   "icon": "launcher",
+   "title": "Launcher, EN / ES",
+   "text": "Mods browser, diagnostics and crash reports. In English and Spanish."
+  },
+  {
+   "id": "replays",
+   "icon": "replay",
+   "title": "Slippi replays",
+   "text": "Frame-accurate playback of .slp replays, straight from the game."
+  },
+  {
+   "id": "settings",
+   "icon": "ico_options",
+   "title": "Settings screen",
+   "text": "Video, audio, controls and online options, applied right away."
+  },
+  {
+   "id": "ucf",
+   "icon": "ucf",
+   "title": "UCF + tournament rules",
+   "text": "Universal Controller Fix and tournament rule sets, built in."
+  },
+  {
+   "id": "determinism",
+   "icon": "sync",
+   "title": "Deterministic engine",
+   "text": "Bit-exact simulation, checked frame by frame with SyncTest."
+  }
+ ]
 }

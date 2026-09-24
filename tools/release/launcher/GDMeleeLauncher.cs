@@ -1353,7 +1353,7 @@ namespace GDMelee
         {
             TabPage page = new TabPage(L.T("Online"));
             page.Name = "online";
-            Label intro = UI.Para(L.T("Online play is in the game: Main Menu > VS. Mode > Melee > Online Play. Both players need this same release of GD's Melee. Mods are welcome online: any fighter or stage you both have can be picked (see the Mods tab).\r\n\r\nRoom codes (short codes instead of IP addresses) need a matchmaking server. Enter its address here as host:port, or leave it empty to swap addresses by hand. The setting is stored in netplay_server.txt next to the game."));
+            Label intro = UI.Para(L.T("Online play is in the game: VERSUS > ONLINE (Host a Room, Join a Room, Random Opponent). Both players need this same release of GD's Melee. Mods are welcome online: any fighter or stage you both have can be picked (see the Mods tab).\r\n\r\nRoom codes (short codes instead of IP addresses) need a matchmaking server. Enter its address here as host:port, or leave it empty to swap addresses by hand. The setting is stored in netplay_server.txt next to the game."));
             Label lbl = new Label { Text = L.T("Matchmaking server (host:port):"), AutoSize = true, Margin = new Padding(0, 4, 0, 4) };
             serverBox = new TextBox { Width = 320, Margin = new Padding(0, 0, 0, 6) };
             serverState = new Label { AutoSize = true, ForeColor = Color.DimGray, Margin = new Padding(0, 0, 0, 10) };
@@ -1374,7 +1374,7 @@ namespace GDMelee
             string v = "";
             try { if (File.Exists(Game.ServerFile)) v = File.ReadAllText(Game.ServerFile).Trim(); } catch { }
             serverBox.Text = v;
-            serverState.Text = v.Length > 0 ? L.F("Room codes use {0}.", v) : L.T("No server set: players swap addresses (the Online Play screen shows yours).");
+            serverState.Text = v.Length > 0 ? L.F("Room codes use {0}.", v) : L.T("No server set: players swap addresses (the ONLINE screen shows yours).");
         }
 
         void SaveServer(string v)

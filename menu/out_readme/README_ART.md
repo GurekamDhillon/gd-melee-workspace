@@ -17,17 +17,29 @@ they go elsewhere. Nothing here has been placed in any README.
 | `banner_dark.png` | 1600x400 | dark (pair: `banner_light.png`) | hero banner, top of the README |
 | `banner_dark@2x.png` | 3200x800 | dark (pair: `banner_light@2x.png`) | hero banner, top of the README |
 | `feature_rollback_dark.png` | 800x400 | dark (pair: `feature_rollback_light.png`) | feature tile |
+| `feature_lobby_dark.png` | 800x400 | dark (pair: `feature_lobby_light.png`) | feature tile |
 | `feature_hd_dark.png` | 800x400 | dark (pair: `feature_hd_light.png`) | feature tile |
-| `feature_replays_dark.png` | 800x400 | dark (pair: `feature_replays_light.png`) | feature tile |
 | `feature_mex_dark.png` | 800x400 | dark (pair: `feature_mex_light.png`) | feature tile |
+| `feature_roster_dark.png` | 800x400 | dark (pair: `feature_roster_light.png`) | feature tile |
+| `feature_scripting_dark.png` | 800x400 | dark (pair: `feature_scripting_light.png`) | feature tile |
+| `feature_training_dark.png` | 800x400 | dark (pair: `feature_training_light.png`) | feature tile |
+| `feature_launcher_dark.png` | 800x400 | dark (pair: `feature_launcher_light.png`) | feature tile |
+| `feature_replays_dark.png` | 800x400 | dark (pair: `feature_replays_light.png`) | feature tile |
+| `feature_settings_dark.png` | 800x400 | dark (pair: `feature_settings_light.png`) | feature tile |
 | `feature_ucf_dark.png` | 800x400 | dark (pair: `feature_ucf_light.png`) | feature tile |
 | `feature_determinism_dark.png` | 800x400 | dark (pair: `feature_determinism_light.png`) | feature tile |
 | `banner_light.png` | 1600x400 | light (pair: `banner_dark.png`) | hero banner, top of the README |
 | `banner_light@2x.png` | 3200x800 | light (pair: `banner_dark@2x.png`) | hero banner, top of the README |
 | `feature_rollback_light.png` | 800x400 | light (pair: `feature_rollback_dark.png`) | feature tile |
+| `feature_lobby_light.png` | 800x400 | light (pair: `feature_lobby_dark.png`) | feature tile |
 | `feature_hd_light.png` | 800x400 | light (pair: `feature_hd_dark.png`) | feature tile |
-| `feature_replays_light.png` | 800x400 | light (pair: `feature_replays_dark.png`) | feature tile |
 | `feature_mex_light.png` | 800x400 | light (pair: `feature_mex_dark.png`) | feature tile |
+| `feature_roster_light.png` | 800x400 | light (pair: `feature_roster_dark.png`) | feature tile |
+| `feature_scripting_light.png` | 800x400 | light (pair: `feature_scripting_dark.png`) | feature tile |
+| `feature_training_light.png` | 800x400 | light (pair: `feature_training_dark.png`) | feature tile |
+| `feature_launcher_light.png` | 800x400 | light (pair: `feature_launcher_dark.png`) | feature tile |
+| `feature_replays_light.png` | 800x400 | light (pair: `feature_replays_dark.png`) | feature tile |
+| `feature_settings_light.png` | 800x400 | light (pair: `feature_settings_dark.png`) | feature tile |
 | `feature_ucf_light.png` | 800x400 | light (pair: `feature_ucf_dark.png`) | feature tile |
 | `feature_determinism_light.png` | 800x400 | light (pair: `feature_determinism_dark.png`) | feature tile |
 | `social_preview.png` | 1280x640 | one file (GitHub shows it on neither theme) | repo Settings > Social preview (upload; not referenced in the README) |
@@ -45,7 +57,7 @@ GitHub picks the source through `prefers-color-scheme`:
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/readme/banner_dark@2x.png">
     <source media="(prefers-color-scheme: light)" srcset="docs/readme/banner_light@2x.png">
-    <img alt="GD's Melee - A native PC port — rollback netplay, HD rendering, Slippi replays" src="docs/readme/banner_light@2x.png" width="800">
+    <img alt="GD's Melee - A native PC port — rollback netplay, HD, m-ex mods, Lua scripting" src="docs/readme/banner_light@2x.png" width="800">
   </picture>
 </p>
 ```
@@ -60,11 +72,41 @@ repeat in `alt` for screen readers:
   <tr>
     <td><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_rollback_dark.png">
-      <img alt="Rollback netplay: Play a friend online: swap a code, connect, and rollback hides the lag." src="docs/readme/feature_rollback_light.png" width="400">
+      <img alt="Rollback netplay: Play a friend with a room code, or press Random Opponent. Rollback hides the lag." src="docs/readme/feature_rollback_light.png" width="400">
     </picture></td>
     <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_lobby_dark.png">
+      <img alt="Competitive lobby: Blind picks, starters and counterpicks, 1-2-1 strikes, bans and rematches." src="docs/readme/feature_lobby_light.png" width="400">
+    </picture></td>
+  </tr>
+  <tr>
+    <td><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_hd_dark.png">
-      <img alt="HD at any resolution: Native PC rendering at any window size, sharp at every scale." src="docs/readme/feature_hd_light.png" width="400">
+      <img alt="HD at any resolution: Native D3D12 rendering at any render scale, with vsync off and ~13 ms input." src="docs/readme/feature_hd_light.png" width="400">
+    </picture></td>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_mex_dark.png">
+      <img alt="m-ex mod support: Mod discs and loose mods: fighters, stages, items and music, online too." src="docs/readme/feature_mex_light.png" width="400">
+    </picture></td>
+  </tr>
+  <tr>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_roster_dark.png">
+      <img alt="94 fighter slots: Room for big m-ex rosters, with their names, emblems and stock icons." src="docs/readme/feature_roster_light.png" width="400">
+    </picture></td>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_scripting_dark.png">
+      <img alt="Lua scripting + kit UI: Scripts, a console and gd.kit: draw panels in the menus' own style." src="docs/readme/feature_scripting_light.png" width="400">
+    </picture></td>
+  </tr>
+  <tr>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_training_dark.png">
+      <img alt="Training on the kit: Training can run through the new character and stage select screens." src="docs/readme/feature_training_light.png" width="400">
+    </picture></td>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_launcher_dark.png">
+      <img alt="Launcher, EN / ES: Mods browser, diagnostics and crash reports. In English and Spanish." src="docs/readme/feature_launcher_light.png" width="400">
     </picture></td>
   </tr>
   <tr>
@@ -73,8 +115,8 @@ repeat in `alt` for screen readers:
       <img alt="Slippi replays: Frame-accurate playback of .slp replays, straight from the game." src="docs/readme/feature_replays_light.png" width="400">
     </picture></td>
     <td><picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_mex_dark.png">
-      <img alt="m-ex mod support: Custom characters and stages from m-ex builds, loaded like the originals." src="docs/readme/feature_mex_light.png" width="400">
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_settings_dark.png">
+      <img alt="Settings screen: Video, audio, controls and online options, applied right away." src="docs/readme/feature_settings_light.png" width="400">
     </picture></td>
   </tr>
   <tr>

@@ -72,10 +72,23 @@ def _body(name):
                 P(r(22, 30, 20, 4.5)) + P(r(22, 37, 20, 4.5)))
     if name == "online":
         return I.ICONS["ico_online"]["body"]
+    if name == "strike":   # the lobby's stage strikes: four stages, one picked, one struck
+        return (S(r(6, 8, 22, 20), 5) + P(r(36, 8, 22, 20)) + S(r(6, 36, 22, 20), 5) +
+                S(r(36, 36, 22, 20), 5) + S("M8 38 L26 54 M26 38 L8 54", 5))
+    if name == "roster":   # a grid of fighter slots, the last one open
+        cells = "".join(P(r(1 + col * 16, 8 + row * 16, 13, 13))
+                        for row in range(3) for col in range(4) if (row, col) != (2, 3))
+        return cells + S(r(50, 42, 10, 10), 3.5)
+    if name == "code":     # </>
+        return S("M18 18 L4 32 L18 46 M46 18 L60 32 L46 46 M38 12 L26 52", 7)
+    if name == "launcher":  # a window with a play button
+        return (S(rr(4, 10, 56, 44, 4), 5) + P(r(4, 10, 56, 9)) + P("M26 26 L42 36 L26 46 Z"))
     raise KeyError(name)
 
 
 def icon_svg(name, colour, px):
+    if name.startswith("ico_"):  # a kit menu icon (training, options...), as the hub draws it
+        return hub_icon(name, colour, px)
     b = _body(name)
     if isinstance(b, dict):
         inner = ('<defs><mask id="k_%s" maskUnits="userSpaceOnUse" x="-2" y="-2" width="68" '

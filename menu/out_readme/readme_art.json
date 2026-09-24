@@ -25,7 +25,55 @@
    "variant": "dark"
   },
   {
+   "file": "feature_lobby_dark.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
    "file": "feature_hd_dark.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "feature_mex_dark.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "feature_roster_dark.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "feature_scripting_dark.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "feature_training_dark.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "feature_launcher_dark.png",
    "size": [
     800,
     400
@@ -41,7 +89,7 @@
    "variant": "dark"
   },
   {
-   "file": "feature_mex_dark.png",
+   "file": "feature_settings_dark.png",
    "size": [
     800,
     400
@@ -89,7 +137,55 @@
    "variant": "light"
   },
   {
+   "file": "feature_lobby_light.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "light"
+  },
+  {
    "file": "feature_hd_light.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "feature_mex_light.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "feature_roster_light.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "feature_scripting_light.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "feature_training_light.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "feature_launcher_light.png",
    "size": [
     800,
     400
@@ -105,7 +201,7 @@
    "variant": "light"
   },
   {
-   "file": "feature_mex_light.png",
+   "file": "feature_settings_light.png",
    "size": [
     800,
     400

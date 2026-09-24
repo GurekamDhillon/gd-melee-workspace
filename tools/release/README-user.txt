@@ -48,6 +48,9 @@ CONTROLS
   Play with a controller: a GameCube controller through an adapter (Wii U mode on Mayflash
   adapters; plug it in any time), or any gamepad. With no controller the game says
   "Connect a controller".
+  The first time the game starts it opens SETTINGS > CONTROLS: each port shows what it reads
+  live (press buttons, move the sticks), with the adapter's recalibrate, a stick dead zone for
+  Xbox / PlayStation-style pads, and How to Play Online. It is always there under SETTINGS.
   The keyboard does not play. It is for hotkeys only:
     F9           controller panel (and, with an adapter, recalibrate)
     F10          put every overlay back on screen
