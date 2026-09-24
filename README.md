@@ -1,18 +1,19 @@
 # GD's Melee
 
-<!-- TODO(brand): swap this banner for the logo/banner from menu/out_brand/ once that kit lands. -->
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/readme/banner_dark@2x.png">
-    <source media="(prefers-color-scheme: light)" srcset="docs/readme/banner_light@2x.png">
-    <img alt="GD's Melee - A native PC port — rollback netplay, HD, m-ex mods, Lua scripting" src="docs/readme/banner_light@2x.png" width="800">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/readme/brand/logo_horizontal_dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/readme/brand/logo_horizontal_light.png">
+    <img alt="GD's Melee" src="docs/readme/brand/logo_horizontal_light.png" width="600">
   </picture>
 </p>
 
-<!-- TODO(brand): replace these shields.io badges with the brand kit's badges (menu/out_brand/). -->
 <p align="center">
-  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Version 0.1.4" src="https://img.shields.io/badge/version-0.1.4-f0b429"></a>
-  <img alt="Platform: Windows x64" src="https://img.shields.io/badge/platform-Windows%20x64-2a4bb8">
+  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.1.4" src="docs/readme/brand/version.svg" height="28"></a>
+  <img alt="Platform: Windows x64" src="docs/readme/brand/windows.svg" height="28">
+  <img alt="Netplay: rollback" src="docs/readme/brand/rollback.svg" height="28">
+  <img alt="Mods: m-ex compatible" src="docs/readme/brand/mex.svg" height="28">
+  <img alt="Replays: Slippi" src="docs/readme/brand/slippi.svg" height="28">
   <a href="LICENSE"><img alt="License: GPL-2.0-or-later" src="https://img.shields.io/badge/license-GPL--2.0--or--later-3a3f4b"></a>
 </p>
 
@@ -31,7 +32,8 @@ loose mods, and can be scripted in **Lua**.
 
 ## Quick start
 
-<!-- TODO(brand): a "Download for Windows" button from menu/out_brand/ can replace step 1's link. -->
+<p><a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Download for Windows" src="docs/readme/brand/download_windows.svg" height="60"></a></p>
+
 1. **Download** the latest `GDMelee-<version>-win64.zip` from
    [Releases](https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest) and unzip it anywhere.
 2. **Point it at your own disc.** Start `GD Melee.exe`, click *Add disc...* and pick your own
