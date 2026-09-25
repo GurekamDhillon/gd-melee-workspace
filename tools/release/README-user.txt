@@ -59,6 +59,14 @@ CONTROLS
   The mouse works in the menus: point and click, right-click goes back, the wheel scrolls.
 
 
+LAB
+  SOLO > LAB is an offline practice and fighter-inspection mode. Pause with START to open its
+  full-screen menu for display modes, frame stepping, rewind, saved states and creator tools.
+  TRAINING shows frame advantage, move data, inputs and technique feedback. Set up a human-port
+  dummy for DI, techs, reactions or recorded inputs; use COMBO to review follow-ups and DRILLS
+  for scored practice. A controller is required to play; the keyboard is for LAB hotkeys only.
+
+
 MODS AND SCRIPTS
   The Mods tab lists the mods in the mods folder: untick one to switch it off at the next start,
   or Remove it. To get new mods, "Edit sources..." and add sources you trust (a GitHub repo like

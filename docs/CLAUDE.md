@@ -4,7 +4,8 @@ Which document is current, and what goes where.
 
 | file | status | what |
 |---|---|---|
-| `NEXT-SESSION.md` | **read first** | the state of things, the three ways the tree lies to you, what to do first |
+| `NEXT-SESSION.md` | **read first** | the current baseline, operating rules and historical traps |
+| `HANDOFF-2026-09-24.md` | **current** | current backlog, decisions and validation limits |
 | `HANDOFF.md` | current for its §6 Traps and §7 Conventions; its §0-§4 state is dated at the top | the architecture of m-ex content in the port |
 | `HANDOFF-2026-09-20.md`, `-21.md` | superseded snapshots, kept for the record | |
 | `DEVLOG.md` | history; the numbered sections are dated, later corrects earlier (§5.2 corrects §1-4) | how each blocker was found and fixed |

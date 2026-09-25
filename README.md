@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.1.4" src="docs/readme/brand/version.svg" height="28"></a>
+  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.1.5" src="docs/readme/brand/version.svg" height="28"></a>
   <img alt="Platform: Windows x64" src="docs/readme/brand/windows.svg" height="28">
   <img alt="Netplay: rollback" src="docs/readme/brand/rollback.svg" height="28">
   <img alt="Mods: m-ex compatible" src="docs/readme/brand/mex.svg" height="28">
@@ -27,7 +27,7 @@ decompilation** rather than by emulation or by recompiling the retail binary. It
 **rollback netcode** from a competitive lobby, renders natively in HD, runs **m-ex** mod discs and
 loose mods, and can be scripted in **Lua**.
 
-> **Status: public test build (0.1.4).** Expect rough edges and please report bugs: what you did,
+> **Status: public test build (0.1.5).** Expect rough edges and please report bugs: what you did,
 > which disc, and the crash report from the `crashlogs` folder (or `melee-pc.log`).
 
 ## Quick start
@@ -39,7 +39,7 @@ loose mods, and can be scripted in **Lua**.
 2. **Point it at your own disc.** Start `GD Melee.exe`, click *Add disc...* and pick your own
    legally dumped *Melee* NTSC 1.02 `.iso` (mod discs such as ACE or Akaneia work too). No game data
    ships with the port.
-3. **Play.** Press *PLAY*. For online play: **Versus > Online Play**, then host a room and send the
+3. **Play.** Press *PLAY*. For online play: **VERSUS > ONLINE**, then host a room and send the
    code, join one, or press *Random Opponent*.
 
 The launcher is in English and Spanish (it follows Windows by default; English or Spanish can be chosen in the launcher).
@@ -110,7 +110,7 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
   </tr>
 </table>
 
-### Everything in 0.1.4
+### Features in the current release
 
 **Online**
 - Rollback netcode. Play a friend with a short room code, or press **Random Opponent** to be paired
@@ -161,14 +161,15 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
 - Diagnostics tab, short logs, and crash reports with your Windows user name removed. Optional crash
   report upload, off by default; nothing is ever sent automatically.
 
-### New since 0.1.4 (next release)
+### Added in 0.1.5
 
 - **The keyboard is hotkeys only.** It no longer plays: controllers play, and the keyboard keeps
   F9, F10, the console and mods' own keys (`gd.key`).
 - **"Connect a controller":** a window with no controller shows a notice instead of sitting there
   unplayable.
-- **The mouse works in every menu:** point, click, right-click to go back, scroll lists. Matches
-  ignore it, and scripts can read it with `gd.mouse`.
+- **The mouse works in the main menu, settings, online lobby and character and stage select:**
+  point, click, right-click to go back and scroll lists. Matches ignore it, and scripts can read
+  it with `gd.mouse()`.
 - **Items no longer hitch** when they first spawn: their GPU pipelines are compiled in parallel and
   prewarmed at match load.
 - **Crash fixes:** m-ex fighters whose motion tables or model part trees are shorter than the
@@ -253,6 +254,9 @@ fighters and CPUs on any stage, KOs respawn, and the clock never runs out.
 - **Vanilla-parity checks** against real Slippi replays recorded on a console: the port plays them
   back and compares every frame.
 
+Training readouts, a configurable dummy, combo analysis and scored drills are implemented for the
+upcoming 0.1.6 release; they are not in the published 0.1.5 download.
+
 ## Ports: Halberd (Meta Knight)
 
 [`ports/halberd/`](ports/halberd/) is **Halberd**, Meta Knight ported from *Super Smash Bros.
@@ -264,8 +268,8 @@ schema is in [`ports/ir/`](ports/ir/).
 
 ## Known issues
 
-- Training-mode features like UnclePunch's Training Mode aren't here yet; `tm_lite` is a small
-  stand-in. TM-CE and 20XX discs boot, but their special features don't work.
+- UnclePunch's Training Mode features are not fully ported; LAB and `tm_lite` cover different
+  practice workflows. TM-CE and 20XX discs boot, but their disc-specific features don't work.
 - Fighter and stage mods from different packs (for example ACE fighters with Akaneia stages) can't
   be mixed yet.
 - The uncapped frame rate is experimental: the picture trails the game by one frame.
@@ -309,13 +313,13 @@ where most of the engineering goes (see the devlog).
 | Memory-card saves (GCI) | working |
 | GameCube adapter, gamepads (keyboard = hotkeys only), mouse in menus | working |
 | Vanilla parity (console Slippi replays, bit-exact) | working |
-| Geno engine + LAB mode | next release |
+| Geno engine + LAB mode | public test (0.1.5); LAB training, dummy, combos and drills in upcoming 0.1.6 |
 | Frame pacing | hard 60 Hz; experimental uncapped frame rate |
 | Rollback netplay + competitive lobby | public test |
 | Slippi replay playback | working |
 | m-ex discs and loose mods (94 fighter slots) | public test |
 | Lua scripting + console | working (API 1) |
-| Launcher, release packaging | public test (0.1.4) |
+| Launcher, release packaging | public test (0.1.5) |
 | Widescreen | not started |
 
 ## Repository layout
