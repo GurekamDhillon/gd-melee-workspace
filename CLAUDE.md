@@ -11,7 +11,7 @@ described lives here. `SETUP.md` gets a machine ready; `bootstrap.sh` checks it.
 |---|---|
 | build or run the game | `tools/port/build.sh`, `run.sh` (never raw clang; see `melee/pc/docs/PORT_DEV_QUICKREF.md`) |
 | the state of things and the traps | `docs/NEXT-SESSION.md` (read first), `docs/HANDOFF.md` §6 Traps, §7 Conventions |
-| the scripting API (`gd.*`, `gd.kit`) | `docs/scripting.md`; the LAB's private API is `melee/docs/geno.md` §14 |
+| the scripting API (`gd.*`, `gd.kit`) | `docs/scripting.md`; the LAB API is `melee/docs/geno.md` §14 |
 | m-ex research | `_research/mex-*.md`, `docs/MEX_PORT_STATUS.md`, `tools/mex_port/README.md` |
 | the menus' art | `menu/` (`menu/README.md`); `docs/ART-BRIEF-menus.md` |
 | a release, the launcher, the friends zip | `tools/release/` (`README.md` there), `tools/netplay/` |
