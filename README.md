@@ -14,8 +14,11 @@
   <img alt="Netplay: rollback" src="docs/readme/brand/rollback.svg" height="28">
   <img alt="Mods: m-ex compatible" src="docs/readme/brand/mex.svg" height="28">
   <img alt="Replays: Slippi" src="docs/readme/brand/slippi.svg" height="28">
+  <a href="https://discord.gg/FU4KTGQS5m"><img alt="Join GD's Workshop on Discord" src="docs/readme/brand/discord.svg" height="28"></a>
   <a href="LICENSE"><img alt="License: GPL-2.0-or-later" src="https://img.shields.io/badge/license-GPL--2.0--or--later-3a3f4b"></a>
 </p>
+
+<p align="center">Join <a href="https://discord.gg/FU4KTGQS5m">GD's Workshop on Discord</a> for matchmaking, setup help, bug reports, and modding.</p>
 
 <p align="center">
   <a href="docs/readme/gameplay.mp4"><img alt="Four seconds of a Fox vs Marth match on Battlefield, running in the port at 3x render scale" src="docs/readme/gameplay.gif" width="480"></a><br>
