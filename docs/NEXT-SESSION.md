@@ -15,8 +15,9 @@ Conventions; its early status sections are historical.
   The existing Alpha and Beta development worktrees are clean and synced to that commit.
 - The **pre-stage-D executable** passed 185/185 headless tests on vanilla, Akaneia and ACE.
   Stage D has prior GD testing, 47 passing offline Lua checks, passing beta and main builds,
-  and **185/185 on ACE** with the merged executable. A live LAB launch reached Fox/Fox on FD
-  without a FATAL log entry; GD still owns its visual/controller check.
+  and **185/185 on ACE** with the merged executable. A controller-enabled live LAB launch
+  reached Fox/Fox on FD in `_build/runs/stage_d_lab_gd` without a FATAL log entry; GD still
+  owns its visual/controller check.
 - The three VPS crash reports remain untouched per GD's instruction.
 
 ## Working rules
