@@ -8,7 +8,8 @@ Conventions; its early status sections are historical.
 ## Baseline
 
 - GD reports **v0.1.5 published**. `tools/release/VERSION` is now `0.1.6` for an unpublished
-  draft. Stage D and corrected launcher online directions are prepared for that release.
+  draft. Stage D and corrected launcher online directions are prepared for that release. A
+  local strict package passed both disc-data guards; rebuild after later workspace changes.
 - Workspace `master` began this catch-up at `7979c48`; the release and handoff edits are local
   until separately pushed. Game `pc-port` is at `919e345ac` and has been pushed to `pub/pc-port`.
   The existing Alpha and Beta development worktrees are clean and synced to that commit.
