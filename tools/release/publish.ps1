@@ -65,7 +65,7 @@ $zipHash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
 $notes = Join-Path $out "$name-notes.md"
 # What's new / known issues for this version, written by hand in tools/release/notes/<version>.md.
 $versionNotesFile = Join-Path $PSScriptRoot "notes\$Version.md"
-$versionNotes = if (Test-Path $versionNotesFile) { (Get-Content $versionNotesFile -Raw).Trim() } else { "" }
+$versionNotes = if (Test-Path $versionNotesFile) { (Get-Content $versionNotesFile -Raw -Encoding UTF8).Trim() } else { "" }
 $body = @"
 ## GD's Melee $Version
 
