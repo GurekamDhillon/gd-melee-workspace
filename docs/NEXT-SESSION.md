@@ -9,14 +9,21 @@ For the newer Slippi work, read [HANDOFF-2026-09-24-SLIPPI.md](HANDOFF-2026-09-2
 first. A complete two-native-client replay has passed public Slippi Direct
 matchmaking, with exact processed inputs, game states and finalized checksums;
 the Slippi handoff tracks final regression/integration status and remaining scope.
+Two additional unchanged public Direct replay runs passed all 9,120 and 9,126
+frames exactly; a third long replay was rejected at startup for non-neutral P1
+processed input in the initial delay window and does not count as a pass. GD's
+earlier one-time cleanup deleted 104 used `.slp` files, including the six old
+`parity.local.conf` fixtures (4,396 recordings remained at the time).
 
 ## Baseline
 
 - **v0.1.6 is published**, with stage D and corrected launcher online directions. The release
   targets workspace `75f0863` and game `919e345ac`; the strict package passed both disc-data
   guards. See the current handoff for the GitHub release link and validation limits.
-- Game `pc-port` is now `9ec3c7397`, containing the tested experimental Slippi
-  replay-pair adapter and the current Discord community links. It has been pushed
+- Game `pc-port` is now `1cf87fe4b`, containing the tested experimental Slippi
+  replay-pair adapter, the current Discord community links, and the Windows
+  title-bar drag fix. Both clients kept advancing during active/inactive window
+  movement in a complete exact Direct replay; ACE remained 185/185. It has been pushed
   to `pub/pc-port`; workspace `master` contains the accompanying build/verification
   tools and handoff. Development lanes remain available with their task history.
 - The **pre-stage-D executable** passed 185/185 headless tests on vanilla, Akaneia and ACE.

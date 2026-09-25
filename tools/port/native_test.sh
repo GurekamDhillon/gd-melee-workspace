@@ -19,6 +19,8 @@ slippi-rb)
     sources=(pc/tests/slippi_rb_test.c pc/platform/gw_slippi_pad.c) ;;
 slippi-mode)
     sources=(pc/tests/slippi_mode_test.c) ;;
+window-drag)
+    sources=(pc/tests/window_drag_test.c) ;;
 slippi-wire)
     sources=(pc/tests/slippi_wire_test.c pc/platform/gw_slippi_wire.c) ;;
 slippi-peer)
@@ -27,7 +29,7 @@ slippi-peer)
 slippi-match)
     sources=(pc/tests/slippi_match_test.c pc/platform/gw_slippi_match_json.c pc/platform/gw_slippi_match.c)
     uses_enet=1 ;;
-*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match)" ;;
+*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag)" ;;
 esac
 
 if [ "$uses_enet" = 1 ]; then
