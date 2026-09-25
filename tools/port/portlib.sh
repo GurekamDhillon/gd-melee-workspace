@@ -116,6 +116,7 @@ gw_build_shim() {
     rm -f "$GW_SHIMOBJ/$name.obj"
     "$GW_CLANG" --target=i686-pc-windows-msvc -c -O2 -DTARGET_PC "${extra[@]}" \
         -I "$GW_MELEE/extern/aurora/include" -I "$GW_MELEE/pc/platform" -I "$GW_SDL_INCLUDE" \
+        -I "$GW_MELEE/extern/enet/include" \
         "$GW_MELEE/pc/platform/$src" -o "$GW_SHIMOBJ/$name.obj" 2>&1 |
         grep -E "error|warning: .*(uninitialized|implicit)" || true
     [ -f "$GW_SHIMOBJ/$name.obj" ] || gw_die "shim $src did not compile"

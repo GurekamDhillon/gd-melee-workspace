@@ -5,6 +5,7 @@
 #   tools/port/build.sh --tu src/melee/ft/ftdata.c --tu src/melee/it/item.c
 #   tools/port/build.sh --shim shim_dvd.c
 #   tools/port/build.sh --tu ... --shim ... --no-bridge
+#   tools/port/build.sh --native-test slippi-wire   build and run an isolated native test
 #
 # THE BRIDGE FIXPOINT, which is the reason this script exists: gw_mex_bridge.c maps guest PPC
 # addresses to the native functions in THIS exe, and it is generated from melee-pc.map. Any link
@@ -26,6 +27,12 @@ while [ $# -gt 0 ]; do
     --tu) tus+=("$2"); shift 2 ;;
     --shim) shims+=("$2"); shift 2 ;;
     --no-bridge) bridge=0; shift ;;          # only for a link whose addresses cannot have moved
+    --native-test)
+        [ $# -eq 2 ] || gw_die "--native-test requires exactly one test name and no other options"
+        GW_ROOT="$GW_ROOT" GW_MELEE="$GW_MELEE" GW_BUILD_ROOT="$GW_BUILD_ROOT" \
+            GW_CLANG="$GW_CLANG" bash "$GW_ROOT/tools/port/native_test.sh" "$2"
+        exit $?
+        ;;
     -h | --help) sed -n '2,16p' "$0"; exit 0 ;;
     *) gw_die "unknown argument: $1 (see --help)" ;;
     esac
@@ -131,6 +138,11 @@ if [ ${#stale[@]} -gt 0 ]; then
         gw_build_shim "$s"
     done
 fi
+
+# Optional Slippi native sources and their ENet dependency. The derived response
+# file includes only sources present in this checkout, so switching a lane back
+# to an older branch cannot silently link a stale experimental object.
+. "$GW_ROOT/tools/port/slippi_build.sh"
 
 # A running game holds melee-pc.exe open and the link fails with LNK1104. Say so plainly rather
 # than letting the linker's message stand on its own - and only ever complain about THIS build's

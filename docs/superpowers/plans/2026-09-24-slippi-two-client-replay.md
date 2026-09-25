@@ -10,6 +10,22 @@
 
 **Spec:** `docs/superpowers/specs/2026-09-24-slippi-two-client-replay-design.md`
 
+**Implementation status (2026-09-24):** Native fixture, PAD, rollback, wire, peer,
+matchmaking and mode tests pass through `build.sh`; the runner has 39 Python tests.
+The Direct pair `slippi-20260924-220354-7653e8-{1,2}` completed fixture frames
+-123..902 with 2,052 player records, exact processed inputs/post-frame state and
+matching hashes. Each client sent and received 1,026 applied PAD frames, read
+1,024 local fixture pads and zero remote fixture pads; roles were server-assigned
+P2/P1, with 16/120 rollbacks and zero desyncs. A 60 ms, 2% loss loopback run
+`slippi-20260924-220451-39ac8e` passed with 126 dropped relay packets. These
+GD/GD results do not establish compatibility with stock Slippi Dolphin. The
+final six ordinary console replay parity cases passed on the current Delta
+build (1,026, 1,118, 1,149, 1,232, 1,270 and 1,549 frames), with exact
+post-frame state and RNG. The live input negative control passed: the altered P1
+A press caused the first input and action divergence at frame 45, while both
+clients agreed through frame 902. The final ACE suite passed 185/185. Tested game
+source is `c1b08a92a`; `pc-port` also preserves the current Discord documentation.
+
 ## Global Constraints
 
 - The final acceptance uses a vanilla NTSC 1.02 disc, two distinct existing Slippi Launcher accounts, and one private online `.slp` recorded on Slippi 3.17 or later.
@@ -33,68 +49,145 @@
 
 **Files:** Modify `melee/pc/platform/gw_replay.c` and `melee/pc/platform/gw_rollback.h`; create `melee/pc/platform/gw_slippi_pad.h`, `melee/pc/platform/gw_slippi_pad.c`, and `melee/pc/tests/slippi_pad_test.c` (test runner location may follow current test harness). Update the game worktree's build response file if a new shim object is needed.
 
-**Interfaces:** `int gw_Replay_SlippiFixtureInfo(GwSlippiFixtureInfo *out)` returns version, online flag, first/last frames, two human ports, seed and a copy of Game Start bytes without exposing the raw file. `int gw_Replay_SlippiPad(int port, int slp_frame, GwSlippiPad *out)` returns only the named port's eight-byte wire pad and rejects missing physical fields. `int gw_SlippiPad_ToRb(const GwSlippiPad *, GwRbInput *)` converts received bytes to native raw-pad input. `int gw_SlippiPad_RoundTrip(int port, int frame)` compares a decoded raw pad's processed result with recorded Pre-Frame input. Define `GwSlippiPad` as exactly eight unsigned bytes in wire order; document every byte from official source.
+**Interfaces:** `int gw_Replay_SlippiFixtureInfo(GwSlippiFixtureInfo *out)` returns version, online flag, first/last frames, two human ports, seed and a copy of Game Start bytes without exposing the raw file. `int gw_Replay_SlippiPad(int port, int slp_frame, GwSlippiPad *out)` returns only the named port's eight-byte wire pad and rejects missing physical fields. `int gw_SlippiPad_ToRb(const GwSlippiPad *, GwRbInput *)` converts received bytes to native raw-pad input. Define `GwSlippiPad` as exactly eight unsigned bytes in wire order; document every byte from official source. Stateful processed-input equivalence must be checked through the running game's PAD pipeline during integration; a host-only conversion helper cannot certify it.
 
-- [ ] Read the official `.slp` Pre-Frame offsets and official Slippi PAD serializer; record byte order, quantization and minimum event size in the new header with pinned source links.
-- [ ] Write failing tests for a valid two-human online frame, missing physical fields, absent player input, truncated event, trigger 0/1/half-step, and game-frame to online-PAD-frame mapping (`-123` to online frame `1 + delay`). Run the focused test and capture its expected failure.
-- [ ] Extend replay storage to retain physical buttons and L/R floats; implement the eight-byte encoder/decoder and fixture rejection. Use bounds checks before reading each optional field. Run focused tests to green.
-- [ ] Run the six-case replay parity script and inspect failures; the new fields must not alter ordinary playback. Commit the lane change with the required footer.
+- [x] Read the official `.slp` Pre-Frame offsets and official Slippi PAD serializer; record byte order, quantization and minimum event size in the new header with pinned source links.
+- [x] Write failing tests for a valid two-human online frame, missing physical fields, absent player input, truncated event, trigger 0/1/half-step, and applied game-frame to online-PAD-frame mapping (`-123` to online frame `1`, independent of delay). Run the focused test and capture its expected failure.
+- [x] Extend replay storage to retain physical buttons and L/R floats; implement the eight-byte encoder/decoder and fixture rejection. Use bounds checks before reading each optional field. Run focused tests to green.
+- [x] Run the six-case ordinary replay parity script after integration. All six
+  cases passed with exact post-frame state and RNG on the current Delta build;
+  the Alpha implementation is committed.
 
 ### Task 2: Replay-backed local source for rollback (Alpha lane, after Task 1)
 
 **Files:** Modify `melee/pc/platform/gw_rollback.c`, `gw_rollback.h`, `gw_replay.c`; focused tests in `melee/pc/tests/`.
 
-**Interfaces:** `MELEE_SLIPPI_REPLAY_ROLE=1|2` activates this source only with the experimental Slippi mode. `gw_rb_submit_local_input` receives only the assigned port's decoded raw pad; the remote port's confirmation is exclusively `gw_rb_submit_remote_input`. Add counters `gw_rb_local_fixture_reads(port)` so the verifier can assert remote reads remain zero.
+**Interfaces:** `gw_rb_slippi_configure(local_port, delay, peer_tick)` selects the
+local source after fixture validation. `gw_rb_slippi_local_pad(online_frame, out)`
+exposes sampled local raw truth; `gw_rb_slippi_receive(epoch, remote_port,
+online_frame, pad)` accepts and confirms only checked peer delivery. The mode
+calls `gw_rb_slippi_finalized()` after the last simulation to flush trace and
+recording, and reads `gw_rb_local_fixture_reads(port)` for source evidence.
+`MELEE_SLIPPI_REPLAY_ROLE=1|2` selects the role in loopback; Direct uses the
+server-assigned role. Initial delay frames use canonical neutral PADs after
+checking both ports' recorded processed controls, since separately recorded
+physical startup fields can contain noise.
 
-- [ ] Write a test in which role 1 requests P2 locally and assert refusal; also test role 2 and off-mode behavior. Run to see the expected failure.
-- [ ] Change `rb_init` so experimental Slippi playback does not force `rb.src=live` and does not mirror the existing fake-network path. Seed the delay window with neutral pads and use the tested `.slp`/online frame mapping.
-- [ ] Assert both roles use the same Game Start and seed and that only network delivery confirms the remote slot. Run focused rollback tests and replay parity to green. Commit.
+- [x] Test role 1 refusal of P2 remote input as local, role 2 source isolation,
+  off-mode refusal, and startup physical noise with neutral processed input.
+- [x] Give the experimental mode its own rollback source, seed local neutral
+  PADs for the initial delay, and retain -123 to online PAD frame 1 mapping.
+- [x] Test that remote initial PADs remain unconfirmed until peer delivery,
+  malformed/duplicate deliveries are refused, and both roles read only their
+  assigned local fixture controls. Direct pair evidence confirms common fixture
+  Game Start/seed behavior; focused rollback and fixture tests pass. The final
+  six-case ordinary replay parity run passed and is recorded in Task 1/5.
 
 ### Task 3: Slippi ENet peer and packet codec (Beta lane)
 
 **Files:** Create `melee/pc/platform/gw_slippi_wire.h/.c`, `gw_slippi_peer.h/.c` (or `.cpp` if required by ENet), focused codec tests, and dependency notice in `melee/pc/DEPENDENCIES.md`. Add shim objects to each lane's curated `_build/.../melee_link_objects.rsp` and the shared template at integration; add ENet library to the link list if linked separately.
 
-**Interfaces:** `gw_slippi_peer_start(const GwSlippiPeerConfig *)`, `gw_slippi_peer_poll(int current_online_frame)`, `gw_slippi_peer_send_pad(int online_frame, const GwSlippiPad *, uint32_t checksum)`, `gw_slippi_peer_stats(GwSlippiPeerStats *)`, `gw_slippi_peer_close()`. `GwSlippiPeerConfig` contains local/remote address, assigned port, remote port, match ID and an explicit loopback/public mode; no credential fields. Receive path calls `gw_rb_submit_remote_input_e` only after validating packet length, player and frame.
+**Interfaces:** `gw_slippi_peer_start(const GwSlippiPeerConfig *)`,
+`gw_slippi_peer_poll(peer, current_online_frame)`,
+`gw_slippi_peer_send_pad(peer, online_frame, pad_bytes, checksum_frame, checksum)`,
+`gw_slippi_peer_stats(peer, out)`, and `gw_slippi_peer_close(peer)`.
+`GwSlippiPeerConfig` carries addresses, assigned port indices, match ID,
+loopback/public mode and callbacks, with no credentials. The mode's remote-PAD
+callback calls `gw_rb_slippi_receive`; the peer ACKs only a stored or identical
+duplicate pad after wire and frame validation.
 
-- [ ] Pin official Dolphin's ENet channel and PAD/ACK/selections/preparation wire semantics; obtain a compatible ENet source/library with license and reproducible build instructions.
-- [ ] Write failing codec vectors for PAD header/endian order, multiple newest-first eight-byte pads, ACK, bad size, bad index, stale epoch, out-of-window frame and bounded resend queue. Run focused tests to see expected failures.
-- [ ] Implement codec and three-channel ENet peer, reliable control messages, unsequenced PAD/ACK, retransmission and checksum exchange. Run codec and two-process loopback peer tests to green; verify the second process receives non-neutral changing input and a bad packet is discarded. Commit.
+- [x] Pin official Dolphin wire semantics; vendor ENet with its license and
+  reproducible `build.sh` link inputs.
+- [x] Test PAD header/endian order, newest-first pads, ACK, bad size/index,
+  out-of-window and noncontiguous frames, bounded resend queue and rollback's
+  epoch/refusal guard. These checks span wire, peer and rollback tests.
+- [x] Implement three-channel ENet transport, control messages, unsequenced
+  PAD/ACK, retransmission and checksums. Native wire and two-process peer tests
+  pass, including changing non-neutral input and malformed-packet refusal.
 
 ### Task 4: Slippi Direct matchmaking (Charlie lane)
 
-**Files:** Create `melee/pc/platform/gw_slippi_match.h/.c` (or `.cpp`), a private-profile JSON loader, focused response/parser tests and dependency notice. No credential files belong in the worktree.
+**Files:** Create `melee/pc/platform/gw_slippi_match.h/.c` and
+`gw_slippi_match_json.c`, with focused response/parser tests and dependency
+notice. No credential files belong in the worktree.
 
-**Interfaces:** `gw_slippi_match_start(const char *user_json_path, const char *direct_code)`, `gw_slippi_match_poll(GwSlippiMatchAssignment *)`, `gw_slippi_match_close()`. `GwSlippiMatchAssignment` carries assigned P1/P2 port, peer public/LAN addresses and match ID. The separate peer match-selection handshake carries stage/rules/seed and agreed input delay. Error strings redact play key and token values.
+**Interfaces:** `gw_slippi_match_start(user_json_path, direct_code)` or
+`gw_slippi_match_start_profile(profile, direct_code)` for in-memory profiles,
+`gw_slippi_match_poll(out)`, `gw_slippi_match_close()` and sanitized
+`gw_slippi_match_error()`. Assignment carries P1/P2 ports, peer public/LAN
+addresses, match ID, UDP port and private UID fingerprints. The separate peer
+selection handshake checks stage, character and seed; the native mode uses its
+configured input delay. Errors redact play keys and tokens.
 
-- [ ] Pin official create-ticket/get-ticket packet schema and Direct search mode, then create sanitized fixture responses for tests. Do not hard-code a guessed current app version or print profile contents.
-- [ ] Write failing tests for successful assignment, two distinct profiles, malformed JSON, missing key, expired key, rejected version, timeout, and no secret in logs. Run focused tests to see expected failures.
-- [ ] Implement Launcher profile parsing and ENet matchmaking against `mm.slippi.gg:43113`; keep credentials in memory only. Run parser tests and a read-only authentication probe using the user's existing profile if reachable. Commit. If only one profile exists, mark paired public test pending without creating or modifying an account.
+- [x] Pin create-ticket/get-ticket schema and Direct search mode; use the
+  profile's `latestVersion` and sanitized synthetic responses.
+- [x] Native parser tests cover assignment, distinct profiles, malformed JSON,
+  missing key, expired-key and rejected-version responses, timeout boundaries
+  and secret redaction.
+- [x] Implement Launcher profile parsing and ENet matchmaking against
+  `mm.slippi.gg:43113`, with credentials in memory. The paired Direct run used
+  two existing accounts and received reciprocal server-assigned P1/P2 roles.
 
 ### Task 5: Native mode integration (integration lane, after Tasks 1–4)
 
-**Files:** Modify `melee/pc/platform/gw_runtime.c`, `gw_replay.c`, `gw_rollback.c`, `gw_netplay.c` only at explicit integration hooks; create `gw_slippi_mode.c/.h`. Update `tools/port/build.sh` link inputs or curated response files as required, plus `melee/pc/DEPENDENCIES.md`.
+**Files:** `melee/pc/platform/gw_runtime.c`, `gw_replay.c`,
+`gw_rollback.c`, new `gw_slippi_mode.c/.h` and
+`gw_slippi_mode_config.h`, plus `tools/port/build.sh` link inputs and
+`melee/pc/DEPENDENCIES.md`. The ordinary `gw_netplay.c` service is unchanged.
 
-**Interfaces:** `MELEE_SLIPPI_MODE=loopback|direct` gates all new behavior; loopback consumes explicit peer UDP ports, Direct consumes profile path and code. `gw_SlippiMode_Scene()` supplies the match scene; `gw_SlippiMode_Tick()` pumps the peer on the game thread; `gw_SlippiMode_MatchOver()` closes it. The mode logs role, peer identity, accepted fixture, confirmed frame and checksum without secrets.
+**Interfaces:** `MELEE_SLIPPI_MODE=loopback|direct` gates all new behavior;
+loopback consumes explicit peer UDP ports, while Direct consumes a profile path
+or in-memory profile and connect code. `gw_SlippiMode_Scene()` supplies the
+match scene and `gw_SlippiMode_Tick(online_frame)` pumps ENet on the game thread.
+After final confirmation, the mode finalizes the recorder and evidence and exits
+with a diagnostic status. It records role, redacted peer identity, confirmed
+frame and checksums without logging credentials.
 
-- [ ] Write a failing headless boot test proving off-mode still takes GD's existing netplay path and invalid mode/fixture fails before launch.
-- [ ] Wire mode initialization, scene selection, Game Start/seed, rollback lifecycle, local replay source and peer tick. Handle mismatch or match end with a nonzero diagnostic status. Run the focused boot test and a build; inspect the log for `error` and `FAIL`, bridge fixpoint, and missing shim objects.
-- [ ] Run the six-case replay parity script and 185 ACE tests after integration. Commit only when they pass or a precisely isolated preexisting failure is documented.
+- [x] Test off-mode gating and invalid/conflicting Slippi configuration before
+  network initialization. The native mode test covers configuration; fixture
+  rejection is covered by fixture and rollback tests.
+- [x] Wire scene selection, Game Start/seed, rollback lifecycle, local fixture
+  source and peer tick. Native mode and integration tests pass; the Delta full
+  build log is clean and bridge regeneration reaches its fixpoint. Mismatches
+  and incomplete matches exit nonzero.
+- [x] Run the six-case ordinary replay parity script after integration; all
+  six cases passed on the current Delta build with exact post-frame state and RNG.
+- [x] Run the final 185 ACE tests after integration: 185/185, exit 0, FATAL 0.
 
 ### Task 6: Two-client acceptance runner (integration lane)
 
 **Files:** Create `tools/slippi/two_client_replay.py`, `tools/slippi/compare_finalized.py`, and `tools/slippi/README.md`; private fixture/account paths supplied at runtime and ignored.
 
-**Interfaces:** `two_client_replay.py --fixture <private.slp> --iso <vanilla.iso> --mode loopback|direct --user-a <user.json> --user-b <user.json> --code-a <code> --code-b <code>` emits a JSON result with `match_started`, `last_frame`, `received_remote_frames`, `remote_fixture_reads`, `checksums_equal`, `postframes_equal`, `rollbacks`, `first_divergence` and SLP output validation. The runner never prints credential values.
+**Interfaces:** `two_client_replay.py --fixture <private.slp> --iso
+<vanilla.iso> --game-root <checkout> --build-root <lane-build> --mode
+loopback|direct`; Direct also takes `--user-a`/`--user-b` or
+`--accounts-helper`. Loopback accepts `--latency-ms`, `--loss-percent`,
+`--require-rollback` and `--negative-control`. The runner writes `result.json`
+with handshake, complete frame/input/post-state, checksum, rollback and first
+divergence results without printing credentials. `compare_finalized.py` checks
+every processed Pre-Frame control and exact frame/player shape as well as final
+post-frame traces and hashes.
 
-- [ ] Write failing verifier fixtures: identical title-screen logs, remote-fixture-read violation, all-neutral pads, missing final frame, mismatch and truncated output `.slp`; only a complete pair can pass.
-- [ ] Implement two-process launcher with separate run/build roots, 8 GB free-RAM preflight, PID/path-tracked cleanup and timed exit. Compare both clients' finalized traces against each other and source for action, position, facing, damage and stocks; require complete Game Start/End event sequences in each output.
-- [ ] Run loopback with one private online `.slp`; inject one altered P1 pad for a deterministic first divergence, then latency/loss to force rollback with identical final state. Save sanitized JSON logs in an ignored run directory and commit the runner.
-- [ ] Run public Direct with two distinct existing Slippi profiles and the same fixture; record both peer identities, P1/P2 roles, packet counts, confirmed frames, complete result, and two readable `.slp` outputs. If a second profile or service acceptance is unavailable, report that exact acceptance blocker rather than call loopback success full compatibility.
+- [x] Verifier tests reject identical title-screen evidence, remote fixture
+  reads, all-neutral controls, missing/extra final rows, processed-input or
+  checksum mismatch, truncated/malformed output `.slp` and reused artifacts.
+  Mutation and first-divergence logic has unit tests and a passing live control.
+- [x] Implement two-process launch with separate run directories, 8 GB RAM
+  preflight, PID/path-scoped cleanup and timed exit. Require complete Game
+  Start/End, processed Pre-Frames, post-frame traces and hashes.
+- [x] Run the live altered-P1-input negative control. The separate 60 ms,
+  2% loss loopback run passed with rollback and identical final artifacts;
+  run `slippi-20260924-221022-1ade6d` rejects the original at the altered input's
+  frame 45 while both clients agree on the complete changed match.
+- [x] Run public Direct with two distinct existing profiles and the same
+  fixture. The paired run completed both server-assigned roles, full frame
+  range, reciprocal account tags, packet counts and readable `.slp` outputs.
+  Stock-Dolphin interoperability remains unproven.
 
 ### Task 7: Review and integration
 
 **Files:** The game branch containing Tasks 1–6 and its build/link inputs; this plan's checkboxes.
 
-- [ ] Have an independent agent review protocol conformance, credential handling, remote-only input guarantee and the verifier's false-green guards. Fix findings and rerun affected tests.
-- [ ] Run clean build, replay parity, 185 ACE tests, and the paired run once after the final code change. Review changed files for fixtures, credentials, disc bytes and license notices.
-- [ ] Merge the tested branch to `pc-port` and push only after the explicit acceptance evidence exists; report any unproven stock-Dolphin interoperability separately.
+- [x] Have an independent agent review protocol conformance, credential handling, remote-only input guarantee and the verifier's false-green guards. Fix findings and rerun affected tests.
+- [x] Run the supported full build, replay parity, 185 ACE tests, and the paired run after the final game code change. Review changed files for fixtures, credentials, disc bytes and license notices. The final integration adds only Discord documentation to the tested game source.
+- [x] Merge the tested branch to `pc-port` and push after the explicit acceptance evidence exists: `9ec3c7397`, including the independently published Discord documentation. Stock-Dolphin interoperability is explicitly unverified.

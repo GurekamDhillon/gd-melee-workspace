@@ -5,14 +5,20 @@ current slate and its evidence. It supersedes this file's 2026-09-20 state and t
 handoffs of 2026-09-20 and 2026-09-21. `HANDOFF.md` remains useful for its §6 Traps and §7
 Conventions; its early status sections are historical.
 
+For the newer Slippi work, read [HANDOFF-2026-09-24-SLIPPI.md](HANDOFF-2026-09-24-SLIPPI.md)
+first. A complete two-native-client replay has passed public Slippi Direct
+matchmaking, with exact processed inputs, game states and finalized checksums;
+the Slippi handoff tracks final regression/integration status and remaining scope.
+
 ## Baseline
 
 - **v0.1.6 is published**, with stage D and corrected launcher online directions. The release
   targets workspace `75f0863` and game `919e345ac`; the strict package passed both disc-data
   guards. See the current handoff for the GitHub release link and validation limits.
-- Workspace `master` contains the release source and current handoff. Game `pc-port` is at
-  `919e345ac` and has been pushed to `pub/pc-port`.
-  The existing Alpha and Beta development worktrees are clean and synced to that commit.
+- Game `pc-port` is now `9ec3c7397`, containing the tested experimental Slippi
+  replay-pair adapter and the current Discord community links. It has been pushed
+  to `pub/pc-port`; workspace `master` contains the accompanying build/verification
+  tools and handoff. Development lanes remain available with their task history.
 - The **pre-stage-D executable** passed 185/185 headless tests on vanilla, Akaneia and ACE.
   Stage D has prior GD testing, 47 passing offline Lua checks, passing beta and main builds,
   and **185/185 on ACE** with the merged executable. A controller-enabled live LAB launch
