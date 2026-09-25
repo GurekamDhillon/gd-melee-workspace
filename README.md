@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.1.5" src="docs/readme/brand/version.svg" height="28"></a>
+  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.1.6" src="docs/readme/brand/version.svg" height="28"></a>
   <img alt="Platform: Windows x64" src="docs/readme/brand/windows.svg" height="28">
   <img alt="Netplay: rollback" src="docs/readme/brand/rollback.svg" height="28">
   <img alt="Mods: m-ex compatible" src="docs/readme/brand/mex.svg" height="28">
@@ -27,7 +27,7 @@ decompilation** rather than by emulation or by recompiling the retail binary. It
 **rollback netcode** from a competitive lobby, renders natively in HD, runs **m-ex** mod discs and
 loose mods, and can be scripted in **Lua**.
 
-> **Status: public test build (0.1.5).** Expect rough edges and please report bugs: what you did,
+> **Status: public test build (0.1.6).** Expect rough edges and please report bugs: what you did,
 > which disc, and the crash report from the `crashlogs` folder (or `melee-pc.log`).
 
 ## Quick start
@@ -254,8 +254,9 @@ fighters and CPUs on any stage, KOs respawn, and the clock never runs out.
 - **Vanilla-parity checks** against real Slippi replays recorded on a console: the port plays them
   back and compares every frame.
 
-Training readouts, a configurable dummy, combo analysis and scored drills are implemented for the
-upcoming 0.1.6 release; they are not in the published 0.1.5 download.
+**New in 0.1.6:** TRAINING shows frame advantage, move data, inputs and technique feedback. A
+configurable dummy supports DI, techs, reactions and recorded inputs; COMBO reviews follow-ups,
+and DRILLS provides scored practice. LAB remains offline only.
 
 ## Ports: Halberd (Meta Knight)
 
@@ -313,13 +314,13 @@ where most of the engineering goes (see the devlog).
 | Memory-card saves (GCI) | working |
 | GameCube adapter, gamepads (keyboard = hotkeys only), mouse in menus | working |
 | Vanilla parity (console Slippi replays, bit-exact) | working |
-| Geno engine + LAB mode | public test (0.1.5); LAB training, dummy, combos and drills in upcoming 0.1.6 |
+| Geno engine + LAB mode | public test (0.1.6), including LAB training, dummy, combos and drills |
 | Frame pacing | hard 60 Hz; experimental uncapped frame rate |
 | Rollback netplay + competitive lobby | public test |
 | Slippi replay playback | working |
 | m-ex discs and loose mods (94 fighter slots) | public test |
 | Lua scripting + console | working (API 1) |
-| Launcher, release packaging | public test (0.1.5) |
+| Launcher, release packaging | public test (0.1.6) |
 | Widescreen | not started |
 
 ## Repository layout

@@ -137,7 +137,7 @@ wordmark in another font, or combine it with any Nintendo mark or character art.
 | `badges/rollback@2x.png` | 410x56 | README badge PNG fallback |
 | `badges/windows.svg` | vector | README badge: PLATFORM WINDOWS X64 |
 | `badges/windows@2x.png` | 482x56 | README badge PNG fallback |
-| `badges/version.svg` | vector | README badge: RELEASE V0.1.4 |
+| `badges/version.svg` | vector | README badge: RELEASE V0.1.6 |
 | `badges/version@2x.png` | 354x56 | README badge PNG fallback |
 | `badges/mex.svg` | vector | README badge: MODS M-EX COMPATIBLE |
 | `badges/mex@2x.png` | 474x56 | README badge PNG fallback |
