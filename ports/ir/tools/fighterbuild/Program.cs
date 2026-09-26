@@ -1,4 +1,5 @@
-// fighterbuild build <mesh.json> <template costume .dat> <out.dat> <joint symbol> [report.json]
+// fighterbuild build <mesh.json> <template costume .dat> <out.dat> <joint symbol> [matanim symbol] [report.json]
+// fighterbuild verify <out.dat> <mesh.json>
 //
 // A Melee costume file on a ported fighter's OWN joint tree, from the neutral mesh JSON that
 // ports/ir/tools/export_ultimate_mesh.py writes. The generic counterpart of Halberd's mkbuild
@@ -16,6 +17,7 @@
 using System.Text.Json;
 using HSDRaw;
 using HSDRaw.Common;
+using HSDRaw.Common.Animation;
 using HSDRaw.GX;
 using HSDRaw.Tools;
 
@@ -26,8 +28,8 @@ static class P
         if (a.Length >= 3 && a[0] == "verify")
             return Verify.Run(a[1], a[2]);
         if (a.Length >= 5 && a[0] == "build")
-            return Build(a[1], a[2], a[3], a[4], a.Length > 5 ? a[5] : null);
-        Console.Error.WriteLine("usage: fighterbuild build <mesh.json> <template.dat> <out.dat> <joint symbol> [report.json]");
+            return Build(a[1], a[2], a[3], a[4], a.Length > 5 ? a[5] : null, a.Length > 6 ? a[6] : null);
+        Console.Error.WriteLine("usage: fighterbuild build <mesh.json> <template.dat> <out.dat> <joint symbol> [matanim symbol] [report.json]");
         return 2;
     }
 
@@ -35,7 +37,7 @@ static class P
 
     static GXWrapMode Wrap(string s) => s switch { "ClampToEdge" => GXWrapMode.CLAMP, "MirroredRepeat" => GXWrapMode.MIRROR, _ => GXWrapMode.REPEAT };
 
-    static int Build(string meshPath, string templatePath, string outPath, string jointSym, string reportPath)
+    static int Build(string meshPath, string templatePath, string outPath, string jointSym, string matAnimSym, string reportPath)
     {
         var mesh = JsonDocument.Parse(File.ReadAllText(meshPath)).RootElement;
         var tf = new HSDRawFile(templatePath);
@@ -176,6 +178,31 @@ static class P
 
         var f = new HSDRawFile();
         f.Roots.Add(new HSDRootNode { Name = jointSym, Data = root });
+        // An empty material-animation tree (same shape as the joints, one empty MatAnim per DObj on the
+        // root, as mkbuild's): m-ex's costume row always names a matanim symbol, and the costume loader
+        // (ftData_80085820) looks it up whenever the name is set.
+        if (matAnimSym != null)
+        {
+            HSD_MatAnimJoint Chain(HSD_JOBJ jo)
+            {
+                HSD_MatAnimJoint head = null, prev = null;
+                for (var c = jo; c != null; c = c.Next)
+                {
+                    var n = new HSD_MatAnimJoint();
+                    if (c.Child != null) n.Child = Chain(c.Child);
+                    if (prev == null) head = n; else prev.Next = n;
+                    prev = n;
+                }
+                return head;
+            }
+            var mroot = new HSD_MatAnimJoint();
+            HSD_MatAnim first = null, last = null;
+            for (int i = 0; i < dlist.Count; i++) { var ma = new HSD_MatAnim(); if (last == null) first = ma; else last.Next = ma; last = ma; }
+            mroot.MaterialAnimation = first;
+            if (root.Child != null) mroot.Child = Chain(root.Child);
+            f.Roots.Add(new HSDRootNode { Name = matAnimSym, Data = mroot });
+            report["matanim_symbol"] = matAnimSym;
+        }
         f.Save(outPath);
         report["joint_symbol"] = jointSym;
         report["joints"] = root.TreeList.Count;
