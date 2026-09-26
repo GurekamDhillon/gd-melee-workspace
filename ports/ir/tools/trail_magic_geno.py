@@ -45,6 +45,7 @@ VL = os.path.join(ULT, "workspace", "extracted", "fighter", "trail", "param", "v
 sys.path.insert(0, HERE)
 from acmd_to_ftcmd import ELEM, hitbox_words  # noqa: E402
 
+MODEL = {"Fire": "Fire", "Ice": "Ice", "Cloud": "Cloud", "Bolt": "Bolt"}  # trail_magic_models.py
 ICE_LIFE = 30                       # INFERRED
 CLOUD_SPAWNS = [[15, 32], [26, 32], [37, 32]]   # INFERRED: strikes 1-3, [forward, up]
 CLOUD_LIFE = 30                     # INFERRED
@@ -123,6 +124,7 @@ def main():
     ap.add_argument("--acmd", default=os.path.join(ROOT, "_build", "tmp", "ir", "trail.acmd.json"))
     ap.add_argument("--attach", default="PlWf.dat")
     ap.add_argument("--scale", type=float, default=1.0)
+    ap.add_argument("--no-models", action="store_true", help="invisible articles (no trail_magic_models.py files)")
     ap.add_argument("-o", "--out", required=True)
     a = ap.parse_args()
     rows = json.load(open(a.acmd, encoding="utf-8"))
@@ -135,6 +137,9 @@ def main():
     # ---- articles (indices are stable: the cast scripts name them) ----
     arts = []
     def art(d):
+        m = MODEL.get(d["name"].replace("Air", "").replace("Last", ""))
+        if m and not a.no_models:
+            d["model"] = {"file": "GnTrail%s.dat" % m, "symbol": "GnTrail%s_joint" % m}
         arts.append(d)
         return len(arts) - 1
     fire_hits = hitboxes_of(game[("trail_fire", "game_fly")], S, rep, "fire")
