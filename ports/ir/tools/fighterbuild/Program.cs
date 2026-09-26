@@ -15,6 +15,8 @@
 // Winding: FIGHTERBUILD_FLIP=1 reverses it (mkbuild needed that for BrawlLib); Ultimate's is
 // unverified until the model is seen in game.
 using System.Text.Json;
+using System.Numerics;
+using System.Globalization;
 using HSDRaw;
 using HSDRaw.Common;
 using HSDRaw.Common.Animation;
@@ -27,9 +29,12 @@ static class P
     {
         if (a.Length >= 3 && a[0] == "verify")
             return Verify.Run(a[1], a[2]);
+        if (a.Length >= 3 && a[0] == "compare")
+            return TriangleEquality.Run(a[1], a[2]);
         if (a.Length >= 5 && a[0] == "build")
             return Build(a[1], a[2], a[3], a[4], a.Length > 5 ? a[5] : null, a.Length > 6 ? a[6] : null);
         Console.Error.WriteLine("usage: fighterbuild build <mesh.json> <template.dat> <out.dat> <joint symbol> [matanim symbol] [report.json]");
+        Console.Error.WriteLine("       fighterbuild compare <strips.dat> <triangles.dat>");
         return 2;
     }
 
@@ -91,10 +96,13 @@ static class P
         }
 
         // ---- DObjs ----------------------------------------------------------------------------------
-        var gen = new POBJ_Generator { UseTriangleStrips = true };
+        bool strips = Environment.GetEnvironmentVariable("FIGHTERBUILD_STRIPS") == "1";
+        var gen = new POBJ_Generator { UseTriangleStrips = strips, BatchTriangleLists = !strips };
         var ibm = jobjs.Select(j => j.InverseWorldTransform).ToList();
         bool flip = Environment.GetEnvironmentVariable("FIGHTERBUILD_FLIP") == "1";
         var dlist = new List<HSD_DOBJ>(); var per = new List<object>();
+        int beforePobjs = 0, beforePrimitives = 0, beforeVertices = 0;
+        int afterPobjs = 0, afterPrimitives = 0, afterVertices = 0;
         foreach (var d in mesh.GetProperty("dobjs").EnumerateArray())
         {
             var texs = d.GetProperty("textures").EnumerateArray().Select(x => x.GetString()).ToList();
@@ -140,7 +148,15 @@ static class P
                 }
             string cull = d.GetProperty("cull").GetString();
             gen.CullMode = cull == "Cull_None" ? GenCullMode.None : cull == "Cull_Outside" ? GenCullMode.Back : GenCullMode.Front;
-            var pobj = gen.CreatePOBJsFromTriangleList(verts, attrs.ToArray(), bones, wts);
+            var otherGen = new POBJ_Generator { UseTriangleStrips = !strips, BatchTriangleLists = strips,
+                                                CullMode = gen.CullMode };
+            var names = attrs.ToArray();
+            var otherPobj = otherGen.CreatePOBJsFromTriangleList(new List<GX_Vertex>(verts), names, bones, wts);
+            var pobj = gen.CreatePOBJsFromTriangleList(new List<GX_Vertex>(verts), names, bones, wts);
+            var before = strips ? gen.GetCounts(pobj) : otherGen.GetCounts(otherPobj);
+            var after = strips ? otherGen.GetCounts(otherPobj) : gen.GetCounts(pobj);
+            beforePobjs += before.POBJs; beforePrimitives += before.Primitives; beforeVertices += before.Vertices;
+            afterPobjs += after.POBJs; afterPrimitives += after.Primitives; afterVertices += after.Vertices;
 
             var mobj = new HSD_MOBJ { _s = tMobj._s.DeepClone() };
             var tobj = mobj.Textures; tobj.Next = null;
@@ -193,7 +209,9 @@ static class P
                 dobj = dlist.Count - 1, obj = d.GetProperty("object").GetString(), sub = d.GetProperty("subindex").GetInt32(),
                 group = d.GetProperty("group").ValueKind == JsonValueKind.String ? d.GetProperty("group").GetString() : null,
                 texture = hasTex ? texs[0] : null, layer2 = layer?.GetProperty("texture").GetString(), xlu, cull, verts = verts.Count, tris = verts.Count / 3,
-                single_bound_verts = single, pobjs = pobj.List.Count,
+                single_bound_verts = single, pobjs = strips ? before.POBJs : after.POBJs,
+                before = new { pobjs = before.POBJs, primitives = before.Primitives, vertices = before.Vertices },
+                after = new { pobjs = after.POBJs, primitives = after.Primitives, vertices = after.Vertices },
             });
         }
         if (dlist.Count > 124)
@@ -201,6 +219,10 @@ static class P
         for (int i = 0; i < dlist.Count - 1; i++) dlist[i].Next = dlist[i + 1];
         root.Dobj = dlist[0];
         gen.SaveChanges();
+        report["totals"] = new {
+            before = new { pobjs = beforePobjs, primitives = beforePrimitives, vertices = beforeVertices },
+            after = new { pobjs = afterPobjs, primitives = afterPrimitives, vertices = afterVertices },
+        };
         root.UpdateFlags();
         foreach (var j in root.TreeList) j.Flags |= JOBJ_FLAG.CLASSICAL_SCALING;
 
@@ -241,5 +263,132 @@ static class P
             File.WriteAllText(reportPath, JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
         Console.WriteLine($"{outPath}: {root.TreeList.Count} joints, {dlist.Count} DObjs, {texRep.Count} textures, {report["bytes"]} bytes");
         return 0;
+    }
+}
+
+// Compare the serialized DATs, including strip winding and envelope weights.
+// A vertex key contains its rest-skinned position, stored normal/UV/colour,
+// and the joints and weights that animate it. Cyclic triangle rotations match;
+// reversed winding does not.
+static class TriangleEquality
+{
+    static Matrix4x4 Local(HSD_JOBJ j) =>
+        Matrix4x4.CreateScale(j.SX, j.SY, j.SZ) * Matrix4x4.CreateRotationX(j.RX)
+        * Matrix4x4.CreateRotationY(j.RY) * Matrix4x4.CreateRotationZ(j.RZ)
+        * Matrix4x4.CreateTranslation(j.TX, j.TY, j.TZ);
+
+    static Matrix4x4 FromIbm(HSD_Matrix4x3 m) => new(
+        m.M11, m.M21, m.M31, 0, m.M12, m.M22, m.M32, 0,
+        m.M13, m.M23, m.M33, 0, m.M14, m.M24, m.M34, 1);
+
+    static string Triangle(string a, string b, string c)
+    {
+        var ab = a + "|" + b + "|" + c;
+        var bc = b + "|" + c + "|" + a;
+        var ca = c + "|" + a + "|" + b;
+        return new[] { ab, bc, ca }.Min(StringComparer.Ordinal);
+    }
+
+    static Dictionary<string, int> ReadTriangles(string path, bool expectLists, out int count)
+    {
+        var f = new HSDRawFile(path);
+        var root = (HSD_JOBJ)f.Roots[0].Data;
+        var joints = root.TreeList;
+        var jointIds = joints.Select((j, i) => (j, i)).ToDictionary(x => x.j._s, x => x.i);
+        var world = new Dictionary<HSD_JOBJ, Matrix4x4>();
+        void Walk(HSD_JOBJ j, Matrix4x4 parent)
+        {
+            for (var c = j; c != null; c = c.Next)
+            {
+                var w = Local(c) * parent;
+                world[c] = w;
+                if (c.Child != null) Walk(c.Child, w);
+            }
+        }
+        Walk(root, Matrix4x4.Identity);
+
+        var triangles = new Dictionary<string, int>(StringComparer.Ordinal);
+        int total = 0;
+        int dobjIndex = 0;
+        foreach (var dobj in root.Dobj.List)
+        {
+            foreach (var pobj in dobj.Pobj.List)
+            {
+                var dl = pobj.ToDisplayList();
+                var envelopes = pobj.EnvelopeWeights;
+                if (expectLists && (dl.Primitives.Count != 1
+                    || dl.Primitives[0].PrimitiveType != GXPrimitiveType.Triangles
+                    || dl.Primitives[0].Count > 32766 || envelopes.Length > 10))
+                    throw new InvalidDataException("triangle POBJ exceeds its primitive or envelope limit");
+                string Vertex(GX_Vertex v)
+                {
+                    var env = envelopes[v.PNMTXIDX / 3];
+                    var pos = new Vector3(v.POS.X, v.POS.Y, v.POS.Z);
+                    var skinned = Vector3.Zero;
+                    var influences = new List<(int Joint, int Weight)>();
+                    for (int i = 0; i < env.EnvelopeCount; i++)
+                    {
+                        var joint = env.JOBJs[i];
+                        influences.Add((jointIds[joint._s], BitConverter.SingleToInt32Bits(env.Weights[i])));
+                        var transform = env.EnvelopeCount == 1 ? world[joint]
+                            : FromIbm(joint.InverseWorldTransform) * world[joint];
+                        skinned += (env.EnvelopeCount == 1 ? 1 : env.Weights[i])
+                            * Vector3.Transform(pos, transform);
+                    }
+                    static string F(float x) => MathF.Round(x, 4).ToString("F4", CultureInfo.InvariantCulture);
+                    static int B(float x) => BitConverter.SingleToInt32Bits(x);
+                    return string.Join(";", dobjIndex, F(skinned.X), F(skinned.Y), F(skinned.Z),
+                        B(v.POS.X), B(v.POS.Y), B(v.POS.Z),
+                        B(v.NRM.X), B(v.NRM.Y), B(v.NRM.Z),
+                        B(v.TEX0.X), B(v.TEX0.Y), B(v.TEX1.X), B(v.TEX1.Y),
+                        B(v.CLR0.R), B(v.CLR0.G), B(v.CLR0.B), B(v.CLR0.A),
+                        string.Join(",", influences.OrderBy(x => x.Joint).Select(x => $"{x.Joint}:{x.Weight}")));
+                }
+                int offset = 0;
+                foreach (var primitive in dl.Primitives)
+                {
+                    var keys = dl.Vertices.Skip(offset).Take(primitive.Count).Select(Vertex).ToArray();
+                    offset += primitive.Count;
+                    void Add(int a, int b, int c)
+                    {
+                        var key = Triangle(keys[a], keys[b], keys[c]);
+                        triangles.TryGetValue(key, out int old);
+                        triangles[key] = old + 1;
+                        total++;
+                    }
+                    if (primitive.PrimitiveType == GXPrimitiveType.Triangles)
+                    {
+                        if (keys.Length % 3 != 0) throw new InvalidDataException("incomplete triangle list");
+                        for (int i = 0; i < keys.Length; i += 3) Add(i, i + 1, i + 2);
+                    }
+                    else if (primitive.PrimitiveType == GXPrimitiveType.TriangleStrip)
+                    {
+                        for (int i = 2; i < keys.Length; i++)
+                            if (i % 2 == 0) Add(i - 2, i - 1, i);
+                            else Add(i - 1, i - 2, i);
+                    }
+                    else throw new InvalidDataException($"unexpected primitive {primitive.PrimitiveType}");
+                }
+            }
+            dobjIndex++;
+        }
+        count = total;
+        return triangles;
+    }
+
+    public static int Run(string stripsPath, string trianglesPath)
+    {
+        var before = ReadTriangles(stripsPath, false, out int beforeCount);
+        var after = ReadTriangles(trianglesPath, true, out int afterCount);
+        int differences = 0;
+        foreach (var (key, count) in before)
+        {
+            after.TryGetValue(key, out int other);
+            differences += Math.Abs(count - other);
+            after.Remove(key);
+        }
+        differences += after.Values.Sum();
+        Console.WriteLine($"triangle multiset: strips {beforeCount}, triangles {afterCount}, differences {differences}");
+        return differences == 0 ? 0 : 2;
     }
 }
