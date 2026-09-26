@@ -200,7 +200,11 @@ def remap_scripts(w, fd, slot_to_joint, hurt_bones, J):
 # Melee common motion -> Ultimate action, where the names differ outright (Melee's common motion names
 # are shared by every fighter, so this table is not Kirby's). Choices, not facts: 'Landing' is the
 # normal landing, which Ultimate plays as landingheavy after a full fall.
-ALIAS = {"landing": "landingheavy", "attack100loop": "attack100", "attack100end": "attack100"}
+ALIAS = {"landing": "landingheavy", "attack100loop": "attack100", "attack100end": "attack100",
+         # charge-start specials whose Ultimate clip carries 'start' (Kirby's inhale); only used when
+         # the fighter has no clip of the exact name (Mario's SpecialN is his own 'specialn')
+         "specialn": "specialnstart", "specialairn": "specialairnstart",
+         "eat": "specialneat"}
 COPY_ROW = re.compile(r"^(Mr|Lk|Ss|Ys|Fx|Pk|Lg|Ca|Ns|Kp|Pe|Pp|Dk|Zd|Sk|Pr|Ms|Mt|Gw|Dr|Cl|Fc|Pc|Gn|Fe|Gk|Sd)Special|^T[A-Z]")
 
 
@@ -368,8 +372,14 @@ def main():
             m = re.search(r"_ACTION_(\w+?)_figatree", w.str_at(w.u32(o)))
             rows[r_] = m.group(1) if m else None
     wanted, unmatched, fuzzy = {}, [], {}
+    # The decomp's row name first (the figatree name repeats for ground and air rows: Kirby's 320
+    # 'SpecialAirN' plays a figatree named SpecialN), then the figatree's.
+    host_names = {s["index"]["value"]: s["name"] for s in json.load(open(os.path.join(
+        CA.INSTANCES, "kirby.melee.ir.json"), encoding="utf-8"))["behavior"]["subactions"]}
     for r_, act in rows.items():
-        c, how_ = match_clip(act, by_key)
+        c, how_ = match_clip(host_names.get(r_), by_key)
+        if c is None:
+            c, how_ = match_clip(act, by_key)
         if c is None: unmatched.append(act); c = a.fallback
         elif how_ != "exact": fuzzy[act] = f"{c} ({how_})"
         wanted.setdefault(c, []).append(r_)
