@@ -72,11 +72,32 @@ def curve(C, S, name, table, count, const):
 # ---- textures ----------------------------------------------------------------------------------------------
 def texture_png(path, out_dir):
     import trail_vfx_melee as V
-    name, img = V.bntx(path)
     d = open(path, 'rb').read()
     i = d.find(b'BRTI')
     comp = list(d[i + 0x58:i + 0x5c])        # component selector per output channel r, g, b, a
     fmt = struct.unpack_from('<I', d, i + 0x1c)[0]
+    if fmt == 0x701:  # BNTX RGB565_UNORM; the older particle-bank decoder handles only RGBA8/BCn.
+        from PIL import Image
+        w, h = struct.unpack_from('<II', d, i + 0x24)
+        layout = struct.unpack_from('<I', d, i + 0x34)[0]
+        name_off, _, ptrs = struct.unpack_from('<QQQ', d, i + 0x60)
+        name = d[name_off + 2:name_off + 2 + struct.unpack_from('<H', d, name_off)[0]].decode()
+        mip0 = struct.unpack_from('<Q', d, ptrs)[0]
+        bh = 1 << (layout & 7)
+        while bh > 1 and h <= (bh // 2) * 8:
+            bh //= 2
+        rgb = bytearray(w * h * 3)
+        for y in range(h):
+            for x in range(w):
+                src = mip0 + V._gob(x, y, w * 2, 2, bh)
+                px = struct.unpack_from('<H', d, src)[0]
+                dst = (y * w + x) * 3
+                rgb[dst:dst + 3] = (round(((px >> 11) & 31) * 255 / 31),
+                                    round(((px >> 5) & 63) * 255 / 63),
+                                    round((px & 31) * 255 / 31))
+        img = Image.frombytes('RGB', (w, h), bytes(rgb)).convert('RGBA')
+    else:
+        name, img = V.bntx(path)
     os.makedirs(out_dir, exist_ok=True)
     img.save(os.path.join(out_dir, name + ".png"))
     # selector codes: 0 zero, 1 one, 2 red, 3 green, 4 blue, 5 alpha (NVN)
@@ -446,6 +467,7 @@ def main():
         textures, meshes, emitters, tex_ids = [], [], [], {}
         report = {"emitters": 0, "translated_programs": 0, "kept_listings": 0, "meshes": 0, "extensions": [],
                   "shader_types": {}}
+        approximated = []
         for n, em in enumerate(order):
             ed = os.path.join(sd, em)
             d = json.load(open(os.path.join(ed, "EmitterData.json")))
@@ -501,6 +523,9 @@ def main():
             e["material"]["shader"] = shader_type(d, e["samplers"], frag, vouts) or {
                 "type": "sprite", "color": "modulate", "offset": -1, "offset_targets": [], "color_textures": [0],
                 "alpha_textures": [0], "fresnel": False, "alpha_test": False}
+            if frag is None:
+                e["approx"] = "fragment program has unsupported instructions or control flow; sprite fallback"
+                approximated.append(em)
             e["material"]["bloom"] = e.pop("_bloom")
             ty = e["material"]["shader"]["type"]
             report["shader_types"][ty] = report["shader_types"].get(ty, 0) + 1
@@ -512,6 +537,9 @@ def main():
                # turns these onto the owner's facing direction and up)
                "space": {"forward": [0, 0, 1], "up": [0, 1, 0]},
                "textures": textures, "meshes": meshes, "emitters": emitters}
+        if approximated:
+            pkg["approx"] = "sprite fallback for untranslatable fragment programs: " + ", ".join(approximated)
+        report["approximated_emitters"] = approximated
         json.dump(pkg, open(os.path.join(a.out, st + ".gfx.json"), "w"), indent=1)
         summary[st] = report
         print("%s: %d emitters, %d textures, %d meshes, %d fragment programs translated, %d kept as listings, "

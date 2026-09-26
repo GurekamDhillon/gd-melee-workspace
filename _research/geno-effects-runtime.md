@@ -154,3 +154,83 @@ part over 1.0; spark2 2.0, fireline1 1.0, the fire bodies 0.1-0.5).
    composite) is the only renderer change; it lands after Codex's performance work.
 2. Effects re-simulate on rollback instead of snapshotting (cheaper, exact with the seeded PRNG).
 3. Particle budget above (2 000 / match).
+
+
+## 8. Fighter effect bindings and sword trails (2026-09-26)
+
+`fx_bindings.json` sits beside the fighter's `.gfx.json` packages. Version 1 has `fighter`,
+`host`, `unit_scale`, and `states[]`. Each state names its Melee `subaction`, Ultimate
+`script`, and ordered `calls[]`. A call records its ACMD `frame`, `macro`, effect name,
+package, source `bone` and mapped Melee `joint`, bone-local `offset` and `rotation`,
+uniform `scale`, `follow`, ACMD branch conditions in `when`, and `end_frame`/`end_event`.
+The engine should spawn the package at the indicated frame of the state's clock, transform its
+offset by the live joint when `follow` is true, and detach at the explicit off/detach
+frame or state exit. `emitter_life` lets a world-fixed burst finish naturally. The
+`owner_destroy` end event retains an `EFFECT_FOLLOW_NO_STOP` instance until its
+owner is destroyed or another action explicitly turns that effect off. The
+offset scale is 1.0 for Sora's Ultimate rig, matching `acmd_to_ftcmd.py`; `+Z` is
+source forward and `+Y` is up, as declared by each package's `space`. Schema:
+`ports/ir/schema/fx_bindings.schema.json`. `when` preserves branches from the
+decompiled script; the runtime must evaluate those conditions or explicitly choose
+the same branch as the move implementation. Common `sys_*` effects are omitted from
+bindings and remain Melee common-effect work.
+
+### Sword trails from AFTER_IMAGE4_ON_arg29
+
+Sora's effect scripts contain 27 ON and 27 OFF calls. Every pair is below; the
+complete 29 arguments of each ON and argument of each OFF are also in
+`_build/tmp/codex-fx/effect_census.json`. Texture hashes could not be resolved to
+filenames in the fighter EffectLibrary dump. No explicit RGB colour appears in these
+calls: colour is texture/material driven; the final two numeric macro parameters
+are preserved raw in the census rather than mislabeled as RGB.
+
+| Script | ON frame | Textures (Hash40) | Bones, local endpoints | Length | Colour | OFF frame, argument |
+|---|---:|---|---|---:|---|---|
+| trail/effect_attack11 | 8 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 7 | texture driven | 16, [4] |
+| trail/effect_attackhi3 | 33 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 7 | texture driven | 37, [4] |
+| trail/effect_attacklw3 | 8 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 7 | texture driven | 15, [4] |
+| trail/effect_attacks4hi | 14 | 0x1332cbbbcd / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 20 | texture driven | 25, [4] |
+| trail/effect_attacks4 | 14 | 0x1332cbbbcd / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 20 | texture driven | 25, [4] |
+| trail/effect_attacks4lw | 14 | 0x1332cbbbcd / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 20 | texture driven | 25, [4] |
+| trail/effect_attackairn | 6 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 7 | texture driven | 22, [3] |
+| trail/effect_attackairn2 | 6 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 7 | texture driven | 13, [6] |
+| trail/effect_attackairn3 | 7 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 7 | texture driven | 14, [3] |
+| trail/effect_attackairf2 | 6 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 7 | texture driven | 13, [6] |
+| trail/effect_attackairf3 | 7 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 7 | texture driven | 14, [3] |
+| trail/effect_attackairhi | 9 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 7 | texture driven | 19, [3] |
+| trail/effect_attackairlw | 10 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 7 | texture driven | 45, [3] |
+| trail/effect_downattacku | 17 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 7 | texture driven | 22, [3] |
+| trail/effect_downattacku | 23 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 7 | texture driven | 26, [4] |
+| trail/effect_downattackd | 17 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 7 | texture driven | 22, [3] |
+| trail/effect_downattackd | 23 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 7 | texture driven | 26, [4] |
+| trail/effect_slipattack | 16 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 8 | texture driven | 22, [4] |
+| trail/effect_slipattack | 23 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 8 | texture driven | 28, [4] |
+| trail/effect_specialhi | 6 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 14 | texture driven | 31, [3] |
+| trail/effect_specialhi | 35 | 0xd5b4336ac / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 14 | texture driven | 41, [2] |
+| trail/effect_specialairhi | 6 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 14 | texture driven | 31, [3] |
+| trail/effect_specialairhi | 35 | 0xd5b4336ac / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 14 | texture driven | 41, [2] |
+| trail/effect_speciallw | 4 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 14 | texture driven | 8, [3] |
+| trail/effect_speciallw | 8 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0.5] → haver [0, 19, 1] | 14 | texture driven | 14, [0] |
+| trail/effect_specialairlw | 4 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0] → haver [0, 13.8, 0] | 14 | texture driven | 8, [3] |
+| trail/effect_specialairlw | 8 | 0x13dcc5dae1 / 0x1345cc8b5b | haver [0, 2, 0.5] → haver [0, 19, 1] | 14 | texture driven | 14, [0] |
+
+An eventual trail renderer needs to sample both listed bone-local endpoints each
+animation frame, retain the specified number of samples, construct a ribbon between
+successive samples, UV-map the two textures, apply their colour and alpha with the
+macro's blend/cull settings, and stop the matching trail on `AFTER_IMAGE_OFF` or
+state exit. Rollback must reconstruct the same sample history. This importer does
+not implement sword-trail rendering.
+
+### Binding clock clarification
+
+Each state also declares `clock`: `animation` means its call frames follow the
+fighter clip, and `game` means frames since state entry. The six Firaga, Blizzaga,
+and Thundaga Geno cast states use `game`, because their stand-in clips do not carry
+Sora's animation frames. Their ACMD effect frames are converted through the same
+`game_time()` motion-rate segments and Firaga start/cast/end offsets used by
+`trail_magic_geno.py`.
+
+`situation` optionally limits a call to `ground` or `air` when one Geno state
+serves both. Sonic Blade's start uses it because the airborne `SonicStart`
+effect is one unit higher than the grounded version; the later dash effects
+have identical parameters in both scripts.
