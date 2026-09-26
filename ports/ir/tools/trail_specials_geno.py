@@ -59,6 +59,32 @@ from acmd_to_ftcmd import ELEM, hitbox_words, default_path  # noqa: E402
 LOCK_RANGE = 50         # the SEARCH box radius in game_specialssearch (a sphere approximates it)
 MAX_LOCK_DEG = 40       # INFERRED: steepest locked-on dash
 STICK_DEG = 25          # INFERRED: stick up / down without a target
+# ---- Sonic Blade steering (echo, from _research/ultimate-sonic-blade-steering.md) ----------------
+# Confirmed (vl.prc param_special_s, checked against our own decode): search_stick 0.25 (a stick-vector
+# length threshold), attack_up_angle_min/max 40/140 (the heading range that gets attack_up_speed_mul
+# 0.85). The heading is the stick's polar angle (the note's reading of the status code, Astra-assisted).
+# BEST-FIT (not in the data; tune here): the steepest heading up / down, whether the stick may turn Sora.
+STEER_MAX_UP = 60       # BEST-FIT: degrees above the horizontal
+STEER_MAX_DOWN = 60     # BEST-FIT: degrees below (never down on the ground: Geno's rule)
+STEER_TURN = True       # BEST-FIT: a stick pointing behind turns Sora (the note: set_lr when the aim is behind)
+HOOK_AIM_STICK = 7      # geno.aim_stick (melee docs/geno.md 19.12)
+V_MOVE_I0, V_MOVE_I2 = 0x28, 0x2A
+
+
+def steer_words(S):
+    """The steering step, run where the lock-on runs (search_frame in SStart, attack_turn_frame in the
+    hover): a locked-on target wins (geno.lockon's MOVE_I0 = 1); otherwise the stick's polar heading
+    past search_stick, else the previous dash's saved heading (MOVE_I2), else level."""
+    arg = (int(round(S["search_stick"] * 100)) & 0xFF) | ((STEER_MAX_UP & 0xFF) << 8) |           ((STEER_MAX_DOWN & 0xFF) << 16) | ((1 if STEER_TURN else 0) << 24)
+    call = CALL(HOOK_AIM_STICK, arg)
+    return IFV(V_MOVE_I0, EQ, 0, len(call)) + call
+
+
+def steer_up_mul_test(S):
+    """Heading inside attack_up_angle_min..max (40-140 deg) <=> up component above sin(40 deg)."""
+    return fb(math.sin(math.radians(S["attack_up_angle_min"])))
+# ---- end of steering --------------------------------------------------------------------------------
+
 HOVER = 8               # d01specialsstart2's length: the pause between dashes (clip frames)
 
 # Geno ids (docs/geno.md 15-19; pc/geno/geno.h)
@@ -293,11 +319,11 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
     lock = lockon_arg(LOCK_RANGE, MAX_LOCK_DEG, STICK_DEG)
     n_start, _ = clip_info(CLIPS["SStart"])
     tl = Timeline()
-    tl.at(0, SET(var(LAI, DASH_N), 0)
+    tl.at(0, PUTI(V_MOVE_I2, 0) + SET(var(LAI, DASH_N), 0)
           + GET(var(RAF, 0), V_GROUND_VEL) + MULF(var(RAF, 0), S["start_speed_x_mul_ground"]) + PUTV(V_GROUND_VEL, var(RAF, 0))
           + GET(var(RAF, 0), V_VEL_X) + MULF(var(RAF, 0), S["start_speed_x_mul_air"]) + PUTV(V_VEL_X, var(RAF, 0))
           + GET(var(RAF, 1), V_VEL_Y) + MULF(var(RAF, 1), S["start_speed_y_mul_air"]) + PUTV(V_VEL_Y, var(RAF, 1)))
-    tl.at(S["search_frame"], CALL(HOOK_LOCKON, lock))
+    tl.at(S["search_frame"], CALL(HOOK_LOCKON, lock) + steer_words(S))
     state("SStart", "geno.air", tl.words(n_start, CHG(GENO(idx["SDash1"])) ), phys="auto", coll="both")
     rep.append("SStart: %d frames (d01specialsstart), speed x%.1f ground / x%.1f air, vy x%.1f; lock-on at f%d "
                "(range %d, clamp %d deg, stick %d deg: INFERRED)" % (n_start, S["start_speed_x_mul_ground"],
@@ -306,7 +332,7 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
     tl = Timeline()
     tl.at(0, (GET(var(LAI, SONIC_PREV_N), V_ATTACK_CONNECTED_PREV) if sonic_hit_branch else [])
           + PUTF(V_FWD_VEL, 0) + PUTF(V_VEL_Y, 0) + PUTF(V_GROUND_VEL, 0))
-    tl.at(S["attack_turn_frame"], CALL(HOOK_LOCKON, lock))
+    tl.at(S["attack_turn_frame"], CALL(HOOK_LOCKON, lock) + steer_words(S))
     # LA1 = dashes done: 1 -> Dash2, else Dash3
     state("SStart2", "geno.air", tl.words(HOVER, IF(var(LAI, DASH_N), EQ, 1, 2) + CHG(GENO(idx["SDash2"]))
                                           + CHG(GENO(idx["SDash3"]))), phys="none", coll="both")
@@ -321,8 +347,9 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
         v = (SET(var(LAI, DASH_N), n)
              + GET(var(RAF, 0), V_MOVE_F0) + MULF(var(RAF, 0), speed)
              + GET(var(RAF, 1), V_MOVE_F1) + MULF(var(RAF, 1), speed))
-        upblk = MULF(var(RAF, 0), up_mul) + MULF(var(RAF, 1), up_mul) + PUTI(V_AIR, 1)
-        v += IFV(V_MOVE_F1, GT, fb(0.05), len(upblk)) + upblk
+        upblk = MULF(var(RAF, 0), up_mul) + MULF(var(RAF, 1), up_mul)
+        v += IFV(V_MOVE_F1, GT, steer_up_mul_test(S), len(upblk)) + upblk       # 40-140 deg: x0.85
+        v += IFV(V_MOVE_F1, GT, fb(0.05), 3) + PUTI(V_AIR, 1)                   # aimed up: lift off
         v += (PUTV(V_FWD_VEL, var(RAF, 0)) + PUTV(V_VEL_Y, var(RAF, 1))
               + GET(var(RAF, 2), V_FACING) + MULV(var(RAF, 2), var(RAF, 0)) + PUTV(V_GROUND_VEL, var(RAF, 2)))
         tl.at(0, v, 0)
