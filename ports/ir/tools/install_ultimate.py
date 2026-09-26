@@ -48,6 +48,7 @@ from scipy.spatial.transform import Rotation
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+import acmd_parse as AP  # noqa: E402
 import convert_ultimate_anim as CA  # noqa: E402
 import export_ultimate_mesh as EM  # noqa: E402
 import figatree as F  # noqa: E402
@@ -514,7 +515,23 @@ def main():
     # Root motion: a row the host drives from the animation (flag 0x80000000, the host IR's subaction
     # flags) keeps the root's travel; every other row gets the clip with it held at frame 0
     # (convert_ultimate_anim.strip_root). A clip used both ways is converted twice.
+    # Ultimate's motion_list marks the motions whose clip moves the fighter (`move`); on a common
+    # ground row whose physics reads the extracted TransN (ground friction / attack physics,
+    # ft_80085030) those become animation-driven too, and the row gets 0x80000000. Walk, run,
+    # turn, jumps, falls, air, ledge, down and wall rows keep Melee's physics (their clips carry
+    # `move` for Ultimate's own locomotion); special rows are Geno states with their own physics.
     host_flags = {s["index"]["value"]: int(s["flags"]["raw"], 16) for s in host_ir()["behavior"]["subactions"]}
+    ml = AP.motion_list(a.fighter)
+    move_clips = {v["clip"] for v in ml.values() if v["clip"] and v["move"]} -                  {v["clip"] for v in ml.values() if v["clip"] and not v["move"]}
+    physics_rows = re.compile(r"^(Wait|Walk|Turn|Run|Dash$|Kneebend|Jump|Fall|Squat|Landing|Guard|Escape|"
+                              r"AttackAir|Damage|Down|Passive|Cliff|Ceil|Wall|Stop|Swim|Ladder|Pass|Ottotto|Entry|Dead|Rebound)")
+    move_rows = {}
+    for c, rs in wanted.items():
+        if c in move_clips:
+            for r_ in rs:
+                if r_ < COMMON_ROWS and not host_flags.get(r_, 0) & 0x80000000 and                    not physics_rows.match(host_names.get(r_) or ""):
+                    host_flags[r_] = host_flags.get(r_, 0) | 0x80000000
+                    move_rows[r_] = (host_names.get(r_), c)
     root = CA.root_joint(plan)
     variants = {}
     for c, rs in wanted.items():
@@ -552,6 +569,7 @@ def main():
         for r_ in rs:
             o = mt + r_ * 0x18
             w.ptr(o, sym_str[sym]); w.put(o + 4, off); w.put(o + 8, size)
+            if r_ in move_rows: w.put(o + 0x10, w.u32(o + 0x10) | 0x80000000)
     rep["animations"] = {"file": f"{stem}AJ.dat", "bytes": len(aj), "clips": len(clip_at), "rows": len(rows),
                          "unmatched_rows_played_as_fallback": sorted({u for u in unmatched if u}),
                          "matched_by_rule": fuzzy,
@@ -559,6 +577,7 @@ def main():
                          "worst_world_error": round(worst, 4),
                          "bytes_common_clips": sum(x["bytes"] for x in conv if x["common"]),
                          "helpers": "folded" if a.fold_helpers else f"{len(orient)} orient constraints baked",
+                         "anim_driven_by_move_flag": {str(k): v for k, v in sorted(move_rows.items())},
                          "root_travel_stripped": {"joint": root, "per_clip": root_report,
                                                   "max_per_axis": {ax: max([v[ax] for v in root_report.values()] or [0]) for ax in "xyz"},
                                                   "anim_driven_clips": sorted({c for c, d in wanted if d})},
