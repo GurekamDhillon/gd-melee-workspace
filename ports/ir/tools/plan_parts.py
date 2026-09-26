@@ -159,7 +159,7 @@ def plan(doc, overrides=None):
             "parts": {"parts_num": len(joints), "joint_to_part": j2p, "part_to_joint": p2j,
                       "placeholder_slots": None},
             "ftdata": ftdata, "unresolved": unresolved,
-            "limits": {"max_ft_parts": 140, "over": len(joints) > 140}}
+            "limits": {"max_ft_parts": 255, "over": len(joints) > 255}}  # MAX_FT_PARTS on PC (melee b8326c66c)
 
 
 def main():
@@ -175,7 +175,7 @@ def main():
         open(args.out, "w", encoding="utf-8").write(text)
     print(f"{result['fighter']}: {result['joint_count']} joints (+{result['synthesized']}), "
           f"{sum(v != 255 for v in result['parts']['part_to_joint'])}/54 common parts mapped, "
-          f"{len(result['unresolved'])} unresolved" + (", OVER the 140-joint cap" if result['limits']['over'] else ""))
+          f"{len(result['unresolved'])} unresolved" + (", OVER the 255-joint cap" if result['limits']['over'] else ""))
     return 0
 
 
