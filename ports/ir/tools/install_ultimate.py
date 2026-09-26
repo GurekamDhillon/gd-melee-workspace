@@ -181,6 +181,10 @@ def remap_scripts(w, fd, slot_to_joint, hurt_bones, J):
             elif op == 10 and not (word >> 17) & 1 and not (word >> 15) & 1: sub(18, "gfx")
             elif op == 28: sub(18, "hurt_state", to_hurt)
             elif op == 58: sub(0, "wind")
+            elif op == 31:
+                # the host's ModelVis names the host model's groups (Kirby's); the ported model's
+                # model 0 is the expression states, set from the clips' Visibility (merge_vis)
+                w.put(o, 1 << 26); st["modelvis_dropped"] = st.get("modelvis_dropped", 0) + 1
             elif op == 40:
                 # SetTexAnim drives the host's costume texture anims (Kirby's Melee eyes). The ported
                 # model has none (its expressions are meshes, ModelVis), and with no costume TObjs
@@ -228,6 +232,56 @@ def match_clip(act, by_key):
 
 
 # ------------------------------------------------------------------ visibility -> ModelVis
+def merge_vis(w, src, events, frames, rep):
+    """A copy of script `src` with ModelVis(0, state) at each event frame: Halberd's apply_vis
+    (install_mk.py), which splits timers so a command lands on its frame. Frames after a loop,
+    subroutine or animation-rate command are placed approximately (reported); events after a Goto
+    are dropped (counted). A row with no script gets one made of the events alone."""
+    MV = lambda i, v: (31 << 26) | ((i & 0x7F) << 19) | (v & 0x7FFFF)
+    if src is None:
+        ws, fr = [], 0
+        for f, v in events:
+            if f > fr: ws.append((2 << 26) | f); fr = f
+            ws.append(MV(0, v))
+        return w.alloc(b"".join(struct.pack(">I", x) for x in ws + [0]))
+    words, pend, frame, approx, o, seen = [], list(events), 0, False, src, 0
+    def emit_until(f_lim, timer_async):
+        nonlocal frame
+        while pend and pend[0][0] < f_lim:
+            f, v = pend.pop(0)
+            if f > frame:
+                words.append((((2 << 26) | f) if timer_async else ((1 << 26) | (f - frame)), False)); frame = f
+            words.append((MV(0, v), False))
+    while seen < 4000:
+        seen += 1
+        word = w.u32(o); op = word >> 26
+        while pend and pend[0][0] <= frame:
+            f, v = pend.pop(0); words.append((MV(0, v), False))
+        if op == 0:
+            emit_until(frames, True); words.append((word, False)); break
+        if op == 1:
+            n = word & 0x3FFFFFF; start = frame
+            emit_until(start + n, False)
+            if frame < start + n: words.append(((1 << 26) | (start + n - frame), False))
+            frame = start + n; o += 4; continue
+        if op == 2:
+            n = word & 0x3FFFFFF
+            emit_until(n, True); words.append((word, False)); frame = max(frame, n); o += 4; continue
+        if op == 7:
+            rep["dropped_after_goto"] += len(pend); pend = []
+            words.append((word, False)); words.append((w.u32(o + 4), (o + 4) in w.relocs)); break
+        if op in (3, 4, 5, 8): approx = True
+        ln = FLOW_LEN[op] if op < 10 else (OP_LEN[op - 10] if op - 10 < len(OP_LEN) else 1)
+        for k in range(ln): words.append((w.u32(o + 4 * k), (o + 4 * k) in w.relocs))
+        o += 4 * ln
+    at = w.alloc(bytes(4 * len(words)))
+    for k, (v, isp) in enumerate(words):
+        if isp: w.ptr(at + 4 * k, v)
+        else: w.put(at + 4 * k, v)
+    if approx: rep["approx_rows"].append(src)
+    return at
+
+
 def vis_frames(anim, base):
     g = [g for g in anim["groups"] if g["group_type"] == "Visibility"]
     tr = {}
@@ -301,10 +355,16 @@ def main():
     w = Writer(open(os.path.join(files, a.pl), "rb").read())
     fd = w.ar.public([s for s, _ in w.ar.publics if s.startswith("ftData")][0])
     mt = w.u32(fd + 0xC)
-    rows = {}
+    rows, foreign = {}, {}
     for r_ in range(479):
         o = mt + r_ * 0x18
         if o in w.relocs and w.u32(o + 8):
+            if w.u32(o + 0x10) & 0x3F != KIRBY_INTERNAL:
+                # authored for another skeleton (0x21: the generic thrown skeleton - ThrownF/B/Hi/Lw,
+                # the star-spit and Yoshi-egg victims). These play on the VICTIM, so they keep the
+                # host's own clip; pointing them at the fighter's clips crashed the victim of a throw.
+                foreign[r_] = (w.u32(o + 4), w.u32(o + 8))
+                continue
             m = re.search(r"_ACTION_(\w+?)_figatree", w.str_at(w.u32(o)))
             rows[r_] = m.group(1) if m else None
     wanted, unmatched, fuzzy = {}, [], {}
@@ -325,6 +385,13 @@ def main():
         clip_at[c] = (len(aj), len(arc), sym); aj += arc
         vis_of[c] = vis_frames(anim, base)
         conv.append({"clip": c, "rows": wanted[c], "bytes": len(arc), "world_err": round(chk["world"], 4)})
+    host_aj = g.read("PlKbAJ.dat")
+    kept = {}
+    for r_, (off, size) in sorted(foreign.items()):
+        if (off, size) not in kept:
+            while len(aj) % 0x20: aj.append(0)
+            kept[(off, size)] = len(aj); aj += host_aj[off:off + size]
+        w.put(mt + r_ * 0x18 + 4, kept[(off, size)])
     open(os.path.join(files, f"{stem}AJ.dat"), "wb").write(aj)
     sym_str = {}
     for c, rs in wanted.items():
@@ -336,6 +403,7 @@ def main():
     rep["animations"] = {"file": f"{stem}AJ.dat", "bytes": len(aj), "clips": len(clip_at), "rows": len(rows),
                          "unmatched_rows_played_as_fallback": sorted({u for u in unmatched if u}),
                          "matched_by_rule": fuzzy,
+                         "host_clips_kept_for_other_skeletons": sorted(foreign),
                          "worst_world_error": round(worst, 4)}
 
     # 5. ftData joint fields
@@ -413,23 +481,20 @@ def main():
 
     # 6. scripts + frame-0 ModelVis
     rep["scripts"] = remap_scripts(w, fd, slot_to_joint, hurt_bones, J)
-    MV = lambda i, v: (31 << 26) | ((i & 0x7F) << 19) | (v & 0x7FFFF)
     idx_of = {s: k for k, s in enumerate(states)}
-    changing = 0; cache = {}
+    cache = {}; mv = {"rows": 0, "events": 0, "approx_rows": [], "dropped_after_goto": 0}
     for c, rs in wanted.items():
-        first = idx_of[vis_of[c][0]]
-        changing += len(set(vis_of[c])) > 1
+        seq = [idx_of[s] for s in vis_of[c]]
+        events = [(f, st) for f, st in enumerate(seq) if f == 0 or st != seq[f - 1]]
         for r_ in rs:
             po = mt + r_ * 0x18 + 0xC
             src = w.u32(po) if po in w.relocs else None
-            k_ = (first, src)
-            if k_ not in cache:
-                if src is None: cache[k_] = w.alloc(struct.pack(">II", MV(0, first), 0))
-                else:
-                    at = w.alloc(struct.pack(">III", MV(0, first), 7 << 26, 0)); w.ptr(at + 8, src); cache[k_] = at
-            w.ptr(po, cache[k_])
-    rep["modelvis"] = {"rows_given_frame0_state": sum(len(v) for v in wanted.values()),
-                       "clips_with_later_changes_not_carried": changing}
+            key_ = (src, tuple(events))
+            if key_ not in cache:
+                cache[key_] = merge_vis(w, src, events, len(seq), mv)
+            w.ptr(po, cache[key_])
+            mv["rows"] += 1; mv["events"] += len(events)
+    rep["modelvis"] = mv
     w.save(os.path.join(files, a.pl))
 
     # 7. PlCo parts table

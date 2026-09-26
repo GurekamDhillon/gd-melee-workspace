@@ -1,0 +1,11 @@
+{
+  "id": "joint-probe",
+  "name": "Joint probe",
+  "version": "0.1.0",
+  "author": "GD",
+  "kind": "script",
+  "description": "Logs port 1's animation, frame and joint world positions every few frames (JP lines in melee-pc.log) for ports/ir/tools/compare_joints.py. Read-only; offline only.",
+  "api_version": 1,
+  "gameplay": false,
+  "rollback_safe": true
+}
