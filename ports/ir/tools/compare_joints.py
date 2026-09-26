@@ -27,6 +27,8 @@ sys.path.insert(0, HERE)
 import convert_ultimate_anim as CA  # noqa: E402
 import plan_parts  # noqa: E402
 
+CHUNK = re.compile(r"JPC (\d+) (\S+)$")
+END = re.compile(r"JPE (\S+) (-?[\d.]+) (-?\d+) (\d+)")
 LINE = re.compile(r"JP(F?) (\S+) (-?[\d.]+) (-?\d+) (.+)$")
 
 
@@ -72,6 +74,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("fighter")
     ap.add_argument("log")
+    ap.add_argument("--root-kept", action="store_true", help="the mod predates root-motion stripping")
     ap.add_argument("--folded-helpers", action="store_true", help="the mod was installed with --fold-helpers")
     args = ap.parse_args()
     ir = json.load(open(os.path.join(CA.INSTANCES, f"{args.fighter}.ultimate-body.ir.json"), encoding="utf-8"))
@@ -91,13 +94,27 @@ def main():
     motion = os.path.join(CA.FIGHTERS, args.fighter, "motion", "body", "c00")
     anims, per_clip, per_joint, samples, skipped = {}, defaultdict(list), defaultdict(list), 0, defaultdict(int)
     valid_counts = []
+    chunks = {}
+    root = CA.root_joint(plan)
     for line in open(args.log, encoding="utf-8", errors="replace"):
+        # the log caps a line at 2047 bytes: the probe splits the joints into "JPC <first> ..." lines
+        # and ends a sample with "JPE <sym> <frame> <facing> <count>"
+        mc = CHUNK.search(line)
+        if mc:
+            chunks[int(mc.group(1))] = mc.group(2); continue
+        me = END.search(line)
+        if me:
+            cells_ = [x for k in sorted(chunks) for x in chunks[k].split(";")]; chunks = {}
+            if len(cells_) != int(me.group(4)):
+                skipped["incomplete chunked sample"] += 1; continue
+            line = f"JPF {me.group(1)} {me.group(2)} {me.group(3)} " + ";".join(cells_)
         m = LINE.search(line)
         if not m:
             continue
         fresh, sym, frame = m.group(1) == "F", m.group(2), float(m.group(3))
         c = re.search(r"_ACTION_(\w+?)_figatree", sym)
-        clip = c.group(1) if c else None
+        drv = bool(c) and c.group(1).endswith("_drv")
+        clip = re.sub(r"_drv$", "", c.group(1)) if c else None   # anim-driven variant (root kept)
         if not clip or not os.path.exists(os.path.join(motion, clip + ".nuanmb")):
             skipped[sym] += 1; continue
         cells = m.group(5).split(";")
@@ -109,11 +126,14 @@ def main():
         use = [i for i in (real if fresh else skin_only) if not np.isnan(game[i]).any()]
         if len(use) < 8:
             skipped["fewer than 8 valid joints"] += 1; continue
-        if clip not in anims:
-            anims[clip] = CA.decode(os.path.join(motion, clip + ".nuanmb"))
-            CA.bake_helpers(anims[clip], plan, rest, orient)   # as the installer baked them
-        last = anims[clip]["final_frame_index"]
-        src = source_pose(anims[clip], plan, rest, min(max(frame, 0.0), last))
+        if (clip, drv) not in anims:
+            an = CA.decode(os.path.join(motion, clip + ".nuanmb"))
+            CA.bake_helpers(an, plan, rest, orient)   # as the installer baked them
+            if not drv and root and not args.root_kept:
+                CA.strip_root(an, root)               # as the installer stripped it
+            anims[(clip, drv)] = an
+        last = anims[(clip, drv)]["final_frame_index"]
+        src = source_pose(anims[(clip, drv)], plan, rest, min(max(frame, 0.0), last))
         fitted, sc = fit(src[use], game[use])
         err = np.linalg.norm(fitted - game[use], axis=1) / sc           # in source units
         per_clip[clip].append((float(err.max()), frame))

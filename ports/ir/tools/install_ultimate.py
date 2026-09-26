@@ -11,7 +11,7 @@ The generic counterpart of Halberd's install_mk.py, driven by the IR tools inste
     Row 52/51 is the one Meta Knight uses (it replaces ACE's duplicate "Wolf SSBU"): every added
     fighter displaces an ACE fighter while the port has 31 m-ex slots, so this mod and
     metaknight-slot are mounted one at a time.
- 2. <pl> = the ACE disc's PlKb.dat: Kirby's fighter data and scripts are the host behaviour.
+ 2. <pl> = the ACE disc's host fighter file (--host kirby: PlKb.dat, marth: PlMs.dat): its fighter data and scripts are the host behaviour.
  3. costume: export_ultimate_mesh.py + fighterbuild (every costume row -> the c00 model).
  4. animations: convert_ultimate_anim.py per clip into <pl stem>AJ.dat; every motion row that has
     a clip is pointed at the Ultimate clip of the same action name (Melee 'AttackS4S' = Ultimate
@@ -59,7 +59,12 @@ import mex_hsd  # noqa: E402
 
 ISO_ACE = "C:/iso/SSBM ACE Build v2.0.0.iso"   # mk_slot_files.py reads this path too
 HALBERD = os.path.join(ROOT, "ports", "halberd")
-KIRBY_INTERNAL = 4
+# Host fighters: the Melee fighter whose data, scripts and m-ex row the slot clones.
+# internal = FighterKind (also the low 6 bits of a motion row authored for its skeleton),
+# external = the m-ex CSS id, icon = the CSS icon joint (ACE MxDt/MnSlChr), code = file letters.
+HOSTS = {"kirby": {"internal": 4, "external": 4, "icon": 20, "code": "Kb"},
+         "marth": {"internal": 18, "external": 9, "icon": 47, "code": "Ms"}}
+HOST = HOSTS["kirby"]   # set from --host in main()
 COMMON_ROWS = 295   # motion rows 0..294 are the common actions (ftCo); 295 on are the fighter's own
 FLOW_LEN = [1, 1, 1, 1, 1, 2, 1, 2, 1, 1]
 OP_LEN = [5, 5, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 7, 4, 1, 1, 1, 1,
@@ -121,9 +126,13 @@ def joint_tree(w, J):
 
 
 # ------------------------------------------------------------------ host (Melee Kirby) joint spaces
+def host_ir():
+    return json.load(open(os.path.join(CA.INSTANCES, f"{HOST['name']}.melee.ir.json"), encoding="utf-8"))
+
+
 def host_slot_map(fj, plan):
     """Kirby part slot -> fighter joint: same common part, else nearest by rest position."""
-    host = json.load(open(os.path.join(CA.INSTANCES, "kirby.melee.ir.json"), encoding="utf-8"))["assets"]["skeletons"][0]
+    host = host_ir()["assets"]["skeletons"][0]
     hw = []
     for j in host["joints"]:
         r = j["rest"]; m = np.eye(4)
@@ -160,7 +169,7 @@ def remap_scripts(w, fd, slot_to_joint, hurt_bones, J):
         while j is not None and j not in hurt_bones: j = J[j]["parent"]
         return j if j is not None else min(hurt_bones)
     mt = w.u32(fd + 0xC)
-    starts = [w.u32(mt + r * 0x18 + 0xC) for r in range(479) if (mt + r * 0x18 + 0xC) in w.relocs]
+    starts = [w.u32(mt + r * 0x18 + 0xC) for r in range(HOST["rows"]) if (mt + r * 0x18 + 0xC) in w.relocs]
     done = set(); st = {"hitbox": 0, "gfx": 0, "hurt_state": 0, "wind": 0, "texanim_dropped": 0, "unmapped": 0}
     def walk(o):
         while o not in done and o + 4 <= len(w.data):
@@ -310,6 +319,8 @@ def main():
     ap.add_argument("--dst-k", type=int, default=52); ap.add_argument("--dst-e", type=int, default=51)
     ap.add_argument("--out", default=None)
     ap.add_argument("--fallback", default="a00wait1")
+    ap.add_argument("--host", choices=sorted(HOSTS), default="kirby", help="the Melee fighter whose data, "
+                    "scripts and m-ex row the slot clones (its IR: build_melee_fighter.py <host>)")
     ap.add_argument("--clip-list", help="ship only these clips (one per line, see convert_ultimate_anim."
                     "read_clip_list); rows matched to any other clip play --fallback and are listed")
     ap.add_argument("--write-clip-list", help="write the clips the host's rows match (the used set, with "
@@ -327,6 +338,9 @@ def main():
                     "nearest non-helper ancestor instead of baking model.nuhlpb into the clips (saves "
                     "~25%% of animation bytes on Sora; skin error up to ~5%% of body height at the feet)")
     a = ap.parse_args()
+    global HOST
+    HOST = dict(HOSTS[a.host], name=a.host)
+    HOST["rows"] = len(host_ir()["behavior"]["subactions"])
     name = a.name or f"Ultimate {a.fighter.capitalize()}"
     stem = a.pl[:-4]
     out = a.out or os.path.join(ROOT, "_build", "tmp", "ultimate-mods", f"ultimate-{a.fighter}-slot")
@@ -340,17 +354,19 @@ def main():
     # 1-2. slot files + host fighter data
     log = subprocess.run([sys.executable, os.path.join(HALBERD, "tools", "mk_slot_files.py"), "--out", files,
                           "--base", os.path.join(out, "_nobase"), "--pl", a.pl, "--name", name,
-                          "--dst-k", str(a.dst_k), "--dst-e", str(a.dst_e)], capture_output=True, text=True)
+                          "--dst-k", str(a.dst_k), "--dst-e", str(a.dst_e),
+                          "--src-k", str(HOST["internal"]), "--src-e", str(HOST["external"]),
+                          "--src-icon-joint", str(HOST["icon"])], capture_output=True, text=True)
     if log.returncode: sys.exit("mk_slot_files failed: " + log.stderr[-1500:])
     rep["slot_files"] = json.loads(log.stdout)
     g = mex_hsd.Gcm(ISO_ACE)
-    open(os.path.join(files, a.pl), "wb").write(g.read("PlKb.dat"))
+    open(os.path.join(files, a.pl), "wb").write(g.read(f"Pl{HOST['code']}.dat"))
 
     # 3. costume
     mesh = EM.export(a.fighter, "c00", fold_helpers=a.fold_helpers, lod=a.lod)
     mpath = os.path.join(out, "_work", "mesh_c00.json"); os.makedirs(os.path.dirname(mpath), exist_ok=True)
     json.dump(mesh, open(mpath, "w"))
-    tmpl = os.path.join(out, "_work", "PlKbNr.dat"); open(tmpl, "wb").write(g.read("PlKbNr.dat"))
+    tmpl = os.path.join(out, "_work", "template_Nr.dat"); open(tmpl, "wb").write(g.read(f"Pl{HOST['code']}Nr.dat"))
     fb = glob.glob(os.path.join(HERE, "fighterbuild", "bin", "**", "fighterbuild.exe"), recursive=True)
     if not fb: sys.exit("build ports/ir/tools/fighterbuild first (dotnet build -c Release)")
     jsym, msym = "Ply%s5K_Share_joint" % name.replace(" ", ""), "Ply%s5K_Share_matanim_joint" % name.replace(" ", "")
@@ -377,10 +393,10 @@ def main():
     fd = w.ar.public([s for s, _ in w.ar.publics if s.startswith("ftData")][0])
     mt = w.u32(fd + 0xC)
     rows, foreign = {}, {}
-    for r_ in range(479):
+    for r_ in range(HOST["rows"]):
         o = mt + r_ * 0x18
         if o in w.relocs and w.u32(o + 8):
-            if w.u32(o + 0x10) & 0x3F != KIRBY_INTERNAL:
+            if w.u32(o + 0x10) & 0x3F != HOST["internal"]:
                 # authored for another skeleton (0x21: the generic thrown skeleton - ThrownF/B/Hi/Lw,
                 # the star-spit and Yoshi-egg victims). These play on the VICTIM, so they keep the
                 # host's own clip; pointing them at the fighter's clips crashed the victim of a throw.
@@ -391,8 +407,7 @@ def main():
     wanted, unmatched, fuzzy = {}, [], {}
     # The decomp's row name first (the figatree name repeats for ground and air rows: Kirby's 320
     # 'SpecialAirN' plays a figatree named SpecialN), then the figatree's.
-    host_names = {s["index"]["value"]: s["name"] for s in json.load(open(os.path.join(
-        CA.INSTANCES, "kirby.melee.ir.json"), encoding="utf-8"))["behavior"]["subactions"]}
+    host_names = {s["index"]["value"]: s["name"] for s in host_ir()["behavior"]["subactions"]}
     allowed = set(CA.read_clip_list(a.clip_list)) | {a.fallback} if a.clip_list else None
     moveset = {int(k): v for k, v in json.load(open(a.moveset))["rows"].items()} if a.moveset else {}
     if allowed is not None:
@@ -422,21 +437,35 @@ def main():
                 fh.write(f"{c:28} # {tag}: {', '.join(sorted({host_names.get(r_, str(r_)) for r_ in rs}))[:150]}\n")
     orient, aim = ({}, []) if a.fold_helpers else CA.helper_constraints(a.fighter)
     if aim: sys.exit(f"{len(aim)} aim constraints: not baked yet, rerun with --fold-helpers")
+    # Root motion: a row the host drives from the animation (flag 0x80000000, the host IR's subaction
+    # flags) keeps the root's travel; every other row gets the clip with it held at frame 0
+    # (convert_ultimate_anim.strip_root). A clip used both ways is converted twice.
+    host_flags = {s["index"]["value"]: int(s["flags"]["raw"], 16) for s in host_ir()["behavior"]["subactions"]}
+    root = CA.root_joint(plan)
+    variants = {}
+    for c, rs in wanted.items():
+        for r_ in rs:
+            variants.setdefault((c, bool(host_flags.get(r_, 0) & 0x80000000)), []).append(r_)
+    wanted = variants
+    root_report = {}
     aj = bytearray(); clip_at = {}; vis_of = {}; worst = 0.0; conv = []
-    for c in sorted(wanted):
+    for key_c in sorted(wanted):
+        c, driven = key_c
         anim = CA.decode(os.path.join(motion, c + ".nuanmb"))
+        if not driven and root:
+            root_report[c] = CA.strip_root(anim, root)
         CA.bake_helpers(anim, plan, rest, orient)
-        sym = f"Ply{name.replace(' ', '')}5K_Share_ACTION_{c}_figatree"
+        sym = f"Ply{name.replace(' ', '')}5K_Share_ACTION_{c}{'_drv' if driven else ''}_figatree"
         arc, cr, poses = CA.convert_clip(anim, plan, rest, sym)
         chk = CA.check(arc, plan, rest, poses, cr["frames"], False)
         worst = max(worst, chk["world"])
         if len(arc) > 0x20000: sys.exit(f"{c}: {len(arc)} bytes, over FT_ANIM_BUF_SIZE")
         while len(aj) % 0x20: aj.append(0)
-        clip_at[c] = (len(aj), len(arc), sym); aj += arc
-        vis_of[c] = vis_frames(anim, base)
-        conv.append({"clip": c, "rows": wanted[c], "bytes": len(arc), "world_err": round(chk["world"], 4),
-                     "common": any(r_ < COMMON_ROWS for r_ in wanted[c])})
-    host_aj = g.read("PlKbAJ.dat")
+        clip_at[key_c] = (len(aj), len(arc), sym); aj += arc
+        vis_of[key_c] = vis_frames(anim, base)
+        conv.append({"clip": c, "anim_driven": driven, "rows": wanted[key_c], "bytes": len(arc), "world_err": round(chk["world"], 4),
+                     "common": any(r_ < COMMON_ROWS for r_ in wanted[key_c])})
+    host_aj = g.read(f"Pl{HOST['code']}AJ.dat")
     kept = {}
     for r_, (off, size) in sorted(foreign.items()):
         if (off, size) not in kept:
@@ -458,6 +487,9 @@ def main():
                          "worst_world_error": round(worst, 4),
                          "bytes_common_clips": sum(x["bytes"] for x in conv if x["common"]),
                          "helpers": "folded" if a.fold_helpers else f"{len(orient)} orient constraints baked",
+                         "root_travel_stripped": {"joint": root, "per_clip": root_report,
+                                                  "max_per_axis": {ax: max([v[ax] for v in root_report.values()] or [0]) for ax in "xyz"},
+                                                  "anim_driven_clips": sorted({c for c, d in wanted if d})},
                          "clips_not_shipped": {c: sorted(set(v)) for c, v in not_shipped.items()}}
 
     # 5. ftData joint fields
@@ -465,7 +497,7 @@ def main():
     jn = lambda e: e["joint"]
     # x8: ModelVis model 0 = every distinct visible set (states); part bytes item/shield/head/feet
     all_sets = sorted({s for v in vis_of.values() for s in v}, key=lambda s: sorted(s))
-    default = vis_of.get(a.fallback, [frozenset()])[0]
+    default = (vis_of.get((a.fallback, False)) or vis_of.get((a.fallback, True)) or [frozenset()])[0]
     if default in all_sets: all_sets.remove(default)
     states = [default] + all_sets
     controlled = sorted({g_ for s in states for g_ in s} | set(base))
@@ -524,6 +556,11 @@ def main():
         vals = struct.unpack(">7f", w.data[o + 0xC:o + 0x28])
         w.data[o + 0xC:o + 0x28] = struct.pack(">7f", *[v / scale for v in vals])
         hb.append({"host_slot": b, "joint": J[nb]["name"]})
+    # x2C bone dynamics (Marth's cape and hair chains): the host's chains name ITS part slots; the
+    # ported model's own swinging bones are animated by its clips, so the host's chains are cut
+    x2c = w.u32(fd + 0x2C)
+    rep["host_bone_dynamics_dropped"] = w.u32(x2c) if x2c else 0
+    if x2c: w.put(x2c, 0)
     # in-place joint fields
     w.put(w.u32(fd + 0x34), jn(ftd["x34_centre"][0]))
     x38 = w.u32(fd + 0x38); w.put(x38, jn(ftd["x38_coin"][0])); w.put(x38 + 4, jn(ftd["x38_coin"][1]))
@@ -601,7 +638,7 @@ def main():
     json.dump({"id": f"ultimate-{a.fighter}-slot", "name": f"{name.upper()} (Ultimate, own skeleton)", "version": "0.1.0",
                "kind": "fighter", "requires": [], "conflicts": ["metaknight-slot"],
                "description": f"{name} from Smash Ultimate on its own skeleton, as an m-ex fighter replacing ACE's row "
-                              f"{a.dst_k}/{a.dst_e} (the row metaknight-slot uses). Kirby's fighter data and scripts are the "
+                              f"{a.dst_k}/{a.dst_e} (the row metaknight-slot uses). {a.host.capitalize()}'s fighter data and scripts are the "
                               f"host behaviour. Built by ports/ir/tools/install_ultimate.py."},
               open(os.path.join(out, "mod.json"), "w"), indent=1)
     rep["conversion"] = conv

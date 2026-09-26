@@ -37,9 +37,13 @@ ap.add_argument("--base", default=BKSLOT, help="folder with the base MxDt/PlCo/M
 ap.add_argument("--pl", default="PlBm.dat")
 ap.add_argument("--name", default="Brawl Meta Knight")
 ap.add_argument("--dst-k", type=int, default=52); ap.add_argument("--dst-e", type=int, default=51)
+# the row the new one clones (default Kirby, internal 4 / external 4, CSS icon joint 20); ports/ir's
+# install_ultimate.py passes another host (Marth: 18 / 9 / 47)
+ap.add_argument("--src-k", type=int, default=4); ap.add_argument("--src-e", type=int, default=4)
+ap.add_argument("--src-icon-joint", type=int, default=20)
 a = ap.parse_args()
 os.makedirs(a.out, exist_ok=True)
-SRC_K = SRC_E = 4
+SRC_K, SRC_E = a.src_k, a.src_e
 log = {"row": {"internal": a.dst_k, "external": a.dst_e, "replaces": None}, "base": {}}
 
 def base_bytes(name):
@@ -100,7 +104,7 @@ def clone(node, size, nx):
         if node + i in mrel: mrel.add(at + i)
     mput(at + nx, 0); mrel.discard(at + nx)
     return at
-KIRBY_ICON = 20
+KIRBY_ICON = a.src_icon_joint
 new_joint = None
 for field, ch, nx, size in ((0, 8, 0xC, 0x40), (4, 0, 4, 0x14), (8, 0, 4, 0xC)):
     root = mu(msc + field); kids = chain(root, ch, nx)

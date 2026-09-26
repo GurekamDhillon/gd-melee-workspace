@@ -242,6 +242,33 @@ def bake_helpers(anim, plan, rest, orient):
     return todo
 
 
+def root_joint(plan):
+    """The plan joint Melee reads root motion from (common part TransN)."""
+    j = dict(zip(plan_parts.COMMON, plan["parts"]["part_to_joint"])).get("TransN", 255)
+    return None if j == 255 else plan["joints"][j]["name"]
+
+
+def strip_root(anim, name):
+    """Hold the root's translation at its frame-0 value (in `anim`, in place): Ultimate clips carry
+    the fighter's travel on the root (Trans) and the game consumes it as movement; Melee moves the
+    fighter by physics and SHOWS the root's translation, so kept travel moves the model twice. Only
+    rows whose Melee flags have 0x80000000 (the engine turns TransN's delta into movement) keep it.
+    Returns the travel removed per axis (max |value - frame 0|)."""
+    for g in anim["groups"]:
+        if g["group_type"] != "Transform":
+            continue
+        for n in g["nodes"]:
+            if n["name"] != name:
+                continue
+            vals = n["tracks"][0]["values"]["Transform"]
+            t0 = dict(vals[0]["translation"])
+            out = {a: round(max(abs(v["translation"][a] - t0[a]) for v in vals), 4) for a in "xyz"}
+            for v in vals:
+                v["translation"] = dict(t0)
+            return out
+    return {a: 0.0 for a in "xyz"}
+
+
 def convert_clip(anim, plan, rest, symbol):
     frames = int(round(anim["final_frame_index"])) + 1
     nodes = {n["name"]: n for g in anim["groups"] if g["group_type"] == "Transform" for n in g["nodes"]}

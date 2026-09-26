@@ -15,12 +15,16 @@ function on_frame()
   for i, j in ipairs(js) do
     -- a joint whose matrix the game did not compute this frame (valid = false) is logged as "-"
     if j.valid then
-      parts[i] = string.format("%.4f,%.4f,%.4f", j.x or 0, j.y or 0, j.z or 0)
+      parts[i] = string.format("%.3f,%.3f,%.3f", j.x or 0, j.y or 0, j.z or 0)
     else
       parts[i] = "-"
     end
   end
-  gd.log(string.format("JPF %s %.3f %d %s", p.anim_symbol, p.anim_frame_f or -1, p.facing or 0,
-                       table.concat(parts, ";")))
+  -- the log caps a line at 2047 bytes (a 175-joint line is ~5 KB): 40 joints per "JPC <first>" line,
+  -- then "JPE <sym> <frame> <facing> <count>" closes the sample (compare_joints.py joins them)
+  for k = 1, #parts, 40 do
+    gd.log(string.format("JPC %d %s", k - 1, table.concat(parts, ";", k, math.min(k + 39, #parts))))
+  end
+  gd.log(string.format("JPE %s %.3f %d %d", p.anim_symbol, p.anim_frame_f or -1, p.facing or 0, #parts))
   n = n + 1
 end
