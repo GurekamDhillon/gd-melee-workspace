@@ -248,6 +248,39 @@ def parse_body(text, nro, hashes, helpers=None):
     return out
 
 
+def motion_list(fighter):
+    """The fighter's motion_list.bin (motion/body/c00), via upstream yamlist, keyed by the game
+    script's Hash40 - the key the ACMD dump uses: cancel frame (Melee's IASA), intangibility
+    window, blend frames, the clip it plays (Hash40 of the .nuanmb name) and its flags."""
+    import shutil
+    import subprocess
+    import tempfile
+    src = os.path.join(FIGHTERS, fighter, "motion", "body", "c00", "motion_list.bin")
+    exe = os.path.join(TOOL, "apps", "yamlist", "yamlist.exe")
+    clips = {}
+    for f in os.listdir(os.path.dirname(src)):
+        if f.endswith(".nuanmb"):
+            clips[hash40(f)] = f[:-7]
+    with tempfile.TemporaryDirectory() as tmp:     # yamlist rejects the workspace path
+        b, y = os.path.join(tmp, "ml.bin"), os.path.join(tmp, "ml.yml")
+        shutil.copy(src, b)
+        subprocess.run([exe, "disasm", b, "-o", y], check=True, capture_output=True)
+        text = open(y, encoding="utf-8").read()
+    out = {}
+    for blk in re.split(r'\n  "0x', text)[1:]:
+        g = re.search(r'game_script: "(0x[0-9a-f]+)"', blk)
+        if not g:
+            continue
+        num = lambda k: int(re.search(rf"{k}: (\d+)", blk).group(1)) if re.search(rf"{k}: (\d+)", blk) else None
+        anim = re.search(r'- name: "(0x[0-9a-f]+)"', blk)
+        out[int(g.group(1), 16)] = {
+            "cancel_frame": num("cancel_frame"), "xlu_start": num("xlu_start"), "xlu_end": num("xlu_end"),
+            "blend_frames": num("blend_frames"),
+            "clip": clips.get(int(anim.group(1), 16)) if anim else None,
+            "loop": "loop: true" in blk, "move": "move: true" in blk}
+    return out
+
+
 def load_index(dump):
     return list(csv.DictReader(open(os.path.join(dump, "index.tsv"), encoding="utf-8"), delimiter="\t"))
 
@@ -291,6 +324,10 @@ def main():
     for r in rows:
         path = os.path.join(a.dump, r["kind"], f"{r['agent_hash']}__{r['script_hash']}.c")
         r["commands"] = parse_body(open(path, encoding="utf-8").read(), nro, hashes, helpers)
+    ml = motion_list(a.fighter)
+    for r in rows:
+        r["motion"] = ml.get(int(r["script_hash"], 16))
+    print(f"motion list: {len(ml)} motions; {sum(1 for r in rows if r['motion'])} scripts joined to one")
     n_attack = sum(1 for r in rows for c in r["commands"] if c["cmd"] in ("ATTACK", "ATTACK_ABS"))
     print(f"parsed {len(rows)} scripts, {n_attack} ATTACK commands")
     if a.check_against:
