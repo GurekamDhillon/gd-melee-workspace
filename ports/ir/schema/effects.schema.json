@@ -9,6 +9,11 @@
     "geno_fx": {"const": 1},
     "name": {"type": "string"},
     "source": {"type": "object", "description": "where it came from (informational)"},
+    "space": {
+      "type": "object",
+      "description": "the effect's own axes: which local axis is the owner's travel direction (turned to its facing) and which is up. Absent: +X forward, +Y up (a Melee owner's own). Ultimate: +Z forward, +Y up.",
+      "properties": {"forward": {"$ref": "#/$defs/Vec3"}, "up": {"$ref": "#/$defs/Vec3"}}
+    },
     "textures": {
       "type": "array",
       "items": {
@@ -54,11 +59,13 @@
       "description": "a type of the Geno effect shader library + its parameters",
       "properties": {
         "type": {"enum": ["sprite", "warp", "distortion"],
-                 "description": "sprite: texture(s) x colour ramps; warp: texture 'offset' displaces texture 'base' UVs by 'strength'; distortion: displaces the frame copy (heat haze)"},
-        "color": {"enum": ["modulate", "lerp"], "description": "modulate: color0 x texture; lerp: lerp(color1, color0, texture)"},
-        "alpha": {"enum": ["texture", "texture_product"], "description": "alpha from sampler 0, or the product of all samplers"},
-        "strength": {"$ref": "#/$defs/Vec2"},
-        "base": {"type": "integer"}, "offset": {"type": "integer"},
+                 "description": "sprite: texture(s) x colour ramps; warp: sampler 'offset' displaces the 'offset_targets' samplers' UVs by 'strength'; distortion: displaces the frame copy (heat haze)"},
+        "color": {"enum": ["flat", "modulate", "lerp"], "description": "flat: color0 (textures shape only alpha); modulate: color0 x the color_textures; lerp: lerp(color1, color0, the first color texture)"},
+        "offset": {"type": "integer", "description": "the sampler slot whose sample (r, a) offsets other samples' UVs (warp) or the frame copy (distortion); -1 none"},
+        "offset_targets": {"type": "array", "items": {"type": "integer"}},
+        "color_textures": {"type": "array", "items": {"type": "integer"}},
+        "alpha_textures": {"type": "array", "items": {"type": "integer"}, "description": "slots whose alpha multiplies the output alpha"},
+                "strength": {"$ref": "#/$defs/Vec2", "description": "offset scale (Coefficient0/1), x the particle's param curve"},
         "fresnel": {"type": "boolean"},
         "alpha_test": {"type": "boolean"}
       }

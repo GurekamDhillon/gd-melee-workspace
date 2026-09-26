@@ -65,6 +65,10 @@ GW_ISO="${GW_ISO:-$GW_ISO_VANILLA}"
 GW_CLANG="${GW_CLANG:-$GW_ROOT/_toolchains/llvm/bin/clang.exe}"
 GW_SDL_INCLUDE="${GW_SDL_INCLUDE:-$GW_ROOT/_build/ax86/_deps/sdl3_prebuilt-src/include}"
 GW_IMGUI_INCLUDE="${GW_IMGUI_INCLUDE:-$GW_ROOT/_build/ax86m/_deps/imgui-src}"  # C++ shims only
+# Dawn's C++ WebGPU headers, for C++ shims that use Aurora's public draw API (aurora/gfx.hpp: gw_fx_render.cpp).
+# The source tree's include/ plus the build's generated one - the same pair Aurora itself compiles with.
+GW_DAWN_INCLUDE="${GW_DAWN_INCLUDE:-$(sed -n 's/^Dawn_SOURCE_DIR:STATIC=//p' "$GW_ROOT/_build/ax86m/CMakeCache.txt" 2>/dev/null)/include}"
+GW_DAWN_GEN_INCLUDE="${GW_DAWN_GEN_INCLUDE:-$GW_ROOT/_build/ax86m/_deps/dawn-build/gen/include}"
 
 gw_die() {
     echo "error: $*" >&2
@@ -98,7 +102,10 @@ gw_build_shim() {
         # An ARRAY, not a word-split string: the checkout path may contain spaces (the author's
         # does - "GD's Melee"), and the old `extra="... -I $GW_IMGUI_INCLUDE"` silently split it,
         # so clang looked for "Melee/_build/..." and the build linked a STALE object instead.
-        extra=(-std=c++17 -fms-runtime-lib=dll -I "$GW_IMGUI_INCLUDE")
+        extra=(-std=c++17 -fms-runtime-lib=dll -DWEBGPU_DAWN -I "$GW_IMGUI_INCLUDE" -I "$GW_DAWN_INCLUDE"
+               -I "$GW_DAWN_GEN_INCLUDE")
+        # Dawn's C++ header needs C++20 (std::span); the older C++ shims stay on C++17
+        case "$src" in gw_fx_*.cpp) extra[0]=-std=c++20 ;; esac
         [ -d "$GW_IMGUI_INCLUDE" ] ||
             gw_die "no ImGui headers at $GW_IMGUI_INCLUDE - set GW_IMGUI_INCLUDE"
         ;;

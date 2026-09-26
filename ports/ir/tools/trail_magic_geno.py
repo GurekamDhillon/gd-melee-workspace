@@ -128,6 +128,8 @@ def main():
     ap.add_argument("--vfx-effects", help="trail_vfx_melee.py's vfx_effects.json (v2: per-generator frame and joint)")
     ap.add_argument("--vfx", type=int, default=0, help="Firaga carries the slot's generators 6000..6000+N-1 "
                     "(trail_vfx_melee.py --slot) and the FireCore model, instead of the placeholder flame")
+    ap.add_argument("--fx", action="store_true", help="bind the Geno effect packages (geno.md 20: fx/<set>/ in the "
+                    "mod, from ultimate_vfx_geno.py) to every article variant, aerial and last-hit ones included")
     ap.add_argument("-o", "--out", required=True)
     a = ap.parse_args()
     rows = json.load(open(a.acmd, encoding="utf-8"))
@@ -143,6 +145,12 @@ def main():
         m = MODEL.get(d["name"].replace("Air", "").replace("Last", ""))
         if m and not a.no_models:
             d["model"] = {"file": "GnTrail%s.dat" % m, "symbol": "GnTrail%s_joint" % m}
+        if a.fx:
+            base = d["name"].replace("Air", "").replace("Last", "")
+            pkg = {"Fire": "P_TrailFireBullet", "Ice": "P_TrailIceBullet", "Bolt": "P_TrailThunderBullet",
+                   "Cloud": "P_TrailThunderCloud"}.get(base)
+            if pkg:
+                d["fx"] = pkg
         arts.append(d)
         return len(arts) - 1
     fire_hits = hitboxes_of(game[("trail_fire", "game_fly")], S, rep, "fire")

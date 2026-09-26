@@ -237,29 +237,69 @@ def vertex_outputs(listing):
     return out
 
 
+def texture_flow(frag, nslots):
+    """Forward dataflow over the straight-line fragment program: which sampler slots (texture handle 0x8 + 2k =
+    slot k; any other handle = the frame copy, slot "frame") feed the output colour ($r0..$r2), the output alpha
+    ($r3), and the coordinates of another sample (the offset / indirect texture, and which samples it moves)."""
+    deps, offset, targets = {}, set(), set()
+    for o in frag:
+        op, args = o["op"], [x.lstrip("-|") for x in o.get("args", [])]
+        regs = [x for x in args if x.startswith("$r") and x != "$r255"]
+        if op == "exit":
+            break
+        if op == "texs":
+            h = int(args[-1], 16)
+            k = (h - 8) // 2 if h >= 8 and (h - 8) % 2 == 0 and (h - 8) // 2 < nslots else "frame"
+            coord = set().union(*[deps.get(r, set()) for r in args[2:4]])
+            if coord:
+                offset |= coord
+                targets.add(k)
+            mask = next((m[5:] for m in o["mod"] if m.startswith("mask=")), "r")
+            base = int(args[1][2:])
+            for i in range(len(mask)):
+                deps["$r%d" % (base + i)] = {k}
+            continue
+        if op in ("fsetp", "kil") or not regs:
+            continue
+        dst, src = regs[0], regs[1:]
+        deps[dst] = set().union(*[deps.get(r, set()) for r in src]) if src else set()
+    rgb = set().union(*[deps.get("$r%d" % i, set()) for i in range(3)])
+    return {"color": sorted(x for x in rgb if x != "frame"), "alpha": sorted(x for x in deps.get("$r3", set()) if x != "frame"),
+            "frame": "frame" in rgb or "frame" in targets, "offset": sorted(offset - {"frame"}),
+            "offset_targets": sorted(x for x in targets if x != "frame")}
+
+
 def shader_type(d, samplers, frag, vouts):
-    """The Geno effect shader library type for an emitter (geno.md 20.2), from what its programs read:
-      distortion  samples more textures than the emitter has samplers (the extra one is the frame copy) or reads
-                  the screen-size bank c1: a heat haze / refraction over the frame
-      warp        reads c9 Coefficient0/1 (c9[0x100/0x104]): texture 1 offsets texture 0's UVs by that strength
-      sprite      everything else: texture(s) x colour ramps
-    colour: "lerp" (lerp(color1, color0, tex), when the vertex program feeds color1) or "modulate" (color0 x tex);
-    fresnel when it reads c9[0x5c8] (FresnelAlphaParam). None when no program could be read (the runtime then
-    uses sprite + modulate)."""
+    """The Geno effect shader library type for an emitter (geno.md 20.2) + its parameters, from the dataflow of its
+    compiled fragment program (texture_flow):
+      distortion  the frame copy is sampled (a heat haze / refraction over the frame), moved by the offset texture
+      warp        an offset (indirect) texture moves another texture's UVs, by Coefficient0/1 (c9[0x100/0x104])
+                  x the ParamAnim curve
+      sprite      everything else
+    color_textures / alpha_textures: the slots whose samples reach the output colour / alpha (their product);
+    color: "flat" (color0, no texture), "modulate" (color0 x textures) or "lerp" (lerp(color1, color0, texture),
+    when the vertex program feeds color1). fresnel / alpha_test when it reads FresnelAlphaParam / AlphaThreshold.
+    None when no program could be read (the runtime then uses sprite + modulate on sampler 0)."""
     if frag is None:
         return None
     args = {a.lstrip("-|") for o in frag for a in o.get("args", [])}
-    ntex = sum(o["op"] == "texs" for o in frag)
     S = d['EmitterStatic']
-    if ntex > len(samplers) or any(a.startswith("c1[") for a in args):
-        t = {"type": "distortion", "strength": [S.get('Coefficient0', 0.0), S.get('Coefficient1', 0.0)]}
-    elif "c9[0x100]" in args or "c9[0x104]" in args:
-        t = {"type": "warp", "strength": [S.get('Coefficient0', 0.0), S.get('Coefficient1', 0.0)],
-             "base": 0, "offset": 1 if len(samplers) > 1 else 0}
+    f = texture_flow(frag, 3)
+    strength = [S.get('Coefficient0', 0.0), S.get('Coefficient1', 0.0)]
+    if f["frame"]:
+        t = {"type": "distortion", "strength": strength}
+    elif f["offset"]:
+        t = {"type": "warp", "strength": strength}
     else:
         t = {"type": "sprite"}
-    t["color"] = "lerp" if any(str(v).startswith("color1") for v in (vouts or {}).values()) else "modulate"
-    t["alpha"] = "texture_product" if len(samplers) > 1 else "texture"
+    t["offset"] = f["offset"][0] if f["offset"] else -1
+    t["offset_targets"] = f["offset_targets"]
+    t["color_textures"] = f["color"]
+    t["alpha_textures"] = f["alpha"]
+    if not f["color"]:
+        t["color"] = "flat"
+    else:
+        t["color"] = "lerp" if any(str(v).startswith("color1") for v in (vouts or {}).values()) else "modulate"
     t["fresnel"] = "c9[0x5c8]" in args
     t["alpha_test"] = "c9[0x5e8]" in args
     return t
@@ -459,7 +499,8 @@ def main():
                     program["vertex_outputs"] = vouts
             e = emitter(d, em, n, tex_ids, mesh_ref, program, ext)
             e["material"]["shader"] = shader_type(d, e["samplers"], frag, vouts) or {
-                "type": "sprite", "color": "modulate", "alpha": "texture", "fresnel": False, "alpha_test": False}
+                "type": "sprite", "color": "modulate", "offset": -1, "offset_targets": [], "color_textures": [0],
+                "alpha_textures": [0], "fresnel": False, "alpha_test": False}
             e["material"]["bloom"] = e.pop("_bloom")
             ty = e["material"]["shader"]["type"]
             report["shader_types"][ty] = report["shader_types"].get(ty, 0) + 1
@@ -467,6 +508,9 @@ def main():
             report["emitters"] += 1
         pkg = {"geno_fx": FORMAT_VERSION, "name": st,
                "source": {"format": "eft2/VFXB (Nintendo), via EffectLibrary", "set": st},
+               # the effect's own axes: an Ultimate article / bone frame has +Z along the travel, +Y up (the runtime
+               # turns these onto the owner's facing direction and up)
+               "space": {"forward": [0, 0, 1], "up": [0, 1, 0]},
                "textures": textures, "meshes": meshes, "emitters": emitters}
         json.dump(pkg, open(os.path.join(a.out, st + ".gfx.json"), "w"), indent=1)
         summary[st] = report
