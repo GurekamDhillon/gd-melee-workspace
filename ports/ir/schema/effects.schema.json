@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gd-melee.local/character-ir/effects.schema.json",
+  "title": "Geno effect IR (.gfx.json, format v1)",
+  "description": "A game-neutral effect package: one stage of the port pipeline (source game -> importer -> effect IR -> Geno effect runtime -> Aurora), the same shape as the character IR. Emission, motion, colour/alpha curves, textures and blend modes are carried faithfully; every material is a shader TYPE from the runtime's shader library plus parameters. There is no IR of source shader programs: importers read them only to pick the type. Importers: ports/ir/tools/ultimate_vfx_geno.py (Ultimate eft2/VFXB); a Brawl REFF importer (Halberd) would write the same format. Reference: melee docs/geno.md section 20; runtime design: _research/geno-effects-runtime.md.",
+  "type": "object",
+  "required": ["geno_fx", "name", "emitters"],
+  "properties": {
+    "geno_fx": {"const": 1},
+    "name": {"type": "string"},
+    "source": {"type": "object", "description": "where it came from (informational)"},
+    "textures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "file"],
+        "properties": {
+          "name": {"type": "string"},
+          "file": {"type": "string", "description": "tex/<name>.png, relative to the package"},
+          "w": {"type": "integer"}, "h": {"type": "integer"},
+          "swizzle": {"type": "string", "pattern": "^[rgba01]{4}$", "description": "which source channel feeds r, g, b, a"}
+        }
+      }
+    },
+    "meshes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "file"],
+        "properties": {"name": {"type": "string"}, "file": {"type": "string"}, "verts": {"type": "integer"}, "tris": {"type": "integer"}}
+      }
+    },
+    "emitters": {"type": "array", "items": {"$ref": "#/$defs/Emitter"}}
+  },
+  "$defs": {
+    "Vec2": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2},
+    "Vec3": {"type": "array", "items": {"type": "number"}, "minItems": 3, "maxItems": 3},
+    "Keys": {
+      "type": "array", "maxItems": 8,
+      "items": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
+      "description": "up to 8 keys [x, y, z, t], t = life ratio 0..1, linear between keys"
+    },
+    "Curve": {
+      "type": "object",
+      "properties": {
+        "kind": {"anyOf": [{"enum": ["constant", "random", "keys"]}, {"type": "integer", "description": "a source kind the importer does not map (runtime: constant)"}]},
+        "value": {},
+        "keys": {"$ref": "#/$defs/Keys"}
+      }
+    },
+    "Shader": {
+      "type": "object",
+      "required": ["type"],
+      "description": "a type of the Geno effect shader library + its parameters",
+      "properties": {
+        "type": {"enum": ["sprite", "warp", "distortion"],
+                 "description": "sprite: texture(s) x colour ramps; warp: texture 'offset' displaces texture 'base' UVs by 'strength'; distortion: displaces the frame copy (heat haze)"},
+        "color": {"enum": ["modulate", "lerp"], "description": "modulate: color0 x texture; lerp: lerp(color1, color0, texture)"},
+        "alpha": {"enum": ["texture", "texture_product"], "description": "alpha from sampler 0, or the product of all samplers"},
+        "strength": {"$ref": "#/$defs/Vec2"},
+        "base": {"type": "integer"}, "offset": {"type": "integer"},
+        "fresnel": {"type": "boolean"},
+        "alpha_test": {"type": "boolean"}
+      }
+    },
+    "Emitter": {
+      "type": "object",
+      "required": ["name", "kind", "emission", "particle", "material"],
+      "properties": {
+        "name": {"type": "string"},
+        "order": {"type": "integer"},
+        "kind": {"enum": ["particle", "mesh"]},
+        "mesh": {"type": ["string", "null"]},
+        "follow": {"enum": ["srt", "none", "translate"]},
+        "transform": {"type": "object"},
+        "emission": {
+          "type": "object",
+          "properties": {
+            "start": {"type": "number"}, "duration": {"type": "number"}, "one_time": {"type": "boolean"},
+            "rate": {"type": "number"}, "rate_random": {"type": "number"}, "interval": {"type": "number"},
+            "by_distance": {"oneOf": [{"const": false}, {"type": "object"}]},
+            "fade": {"type": "object"}
+          }
+        },
+        "shape": {"type": "object"},
+        "particle": {"type": "object", "properties": {"life": {"type": "number"}, "shape": {"type": ["string", "integer"]}}},
+        "color": {
+          "type": "object",
+          "properties": {
+            "scale": {"type": "number", "description": "HDR multiplier"},
+            "color0": {"$ref": "#/$defs/Curve"}, "alpha0": {"$ref": "#/$defs/Curve"},
+            "color1": {"$ref": "#/$defs/Curve"}, "alpha1": {"$ref": "#/$defs/Curve"}
+          }
+        },
+        "samplers": {"type": "array", "items": {"type": "object"}},
+        "material": {
+          "type": "object",
+          "required": ["blend", "shader"],
+          "properties": {
+            "blend": {"enum": ["alpha", "add", "sub", "mul", "screen"]},
+            "shader": {"$ref": "#/$defs/Shader"},
+            "bloom": {
+              "type": "object",
+              "description": "effect-only bloom: colour above 'threshold' goes to the bloom buffer at 'intensity'",
+              "properties": {"threshold": {"type": "number"}, "intensity": {"type": "number", "minimum": 0}}
+            },
+            "soft_particle": {}, "fresnel_alpha": {}, "alpha_test": {}
+          }
+        },
+        "wave": {"type": "object"},
+        "inherit": {"type": "object"},
+        "program": {
+          "type": "object",
+          "description": "OPTIONAL reference only (never read by the runtime): the source shader kind, and with --keep-programs the fragment op list and vertex-output map the importer chose the type from"
+        },
+        "extensions": {"type": "object"}
+      }
+    }
+  }
+}

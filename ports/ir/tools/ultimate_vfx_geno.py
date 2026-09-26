@@ -22,9 +22,12 @@ does with it: geno.md 20. What this tool does per part:
   textures          -> PNG (BNTX decoded: Tegra block linear + BCn), the BNTX component selector recorded
                        ("swizzle": which source channel feeds r, g, b, a) - the runtime samples exactly as the GPU did
   primitives        -> mesh JSON (positions, normals, uvs, colours, indices) from the emitter's bfres
-  fragment program  -> "program": the Maxwell fragment code (envytools envydis) translated into a small expression
-                       IR when it is straight-line (the eft2 user shaders are); inputs named as varyings v<addr>,
-                       uniform words c<bank>[<off>], samplers t<n>; kept as disassembly when it is not
+  shader            -> "material.shader": the nearest type of the Geno effect shader library (sprite / warp /
+                       distortion; geno.md 20.2) + its parameters, CHOSEN by reading the emitter's compiled programs
+                       (envytools envydis): no source program is carried into the IR. The disassembly is written
+                       beside the package for review (shader/*.txt); --keep-programs also puts the fragment op list
+                       and the vertex-output map in "program" (reference only; the runtime never reads them)
+  HDR colour        -> "material.bloom" {intensity, threshold}: the effect-only bloom's parameters
   sub-sections      -> "extensions"{magic: raw float/int words} (plugins / fields whose layouts are not mapped yet)
 """
 import argparse
@@ -150,6 +153,126 @@ def translate_fragment(listing):
     return ops
 
 
+# c9 = the emitter's static uniform block: a 0x50-byte header + the emitter record's EmitterStatic block (v22
+# layout, EffectLibrary's field order). Confirmed on the programs: c9[0x5e8] = AlphaThreshold (the alpha-test
+# kill), c9[0x5c8/0x5cc] = FresnelAlphaParam1/2, c9[0x100/0x104] = Coefficient0/1 (the UV warp strength),
+# c9[0x3c0..] = the Color0 keys.
+STATIC_V22 = [("Flags", 16), ("NumKeys", 32), ("LoopRates", 20), ("LoopRandoms", 20), ("Unknown34", 8),
+              ("GravityDir", 12), ("GravityScale", 4), ("AirRes", 4), ("val_0x74", 12), ("Center", 8), ("Offset", 4),
+              ("Padding", 4), ("Amplitude", 8), ("Cycle", 8), ("PhaseRnd", 8), ("PhaseInit", 8), ("Coefficient", 8),
+              ("val_0xB8", 8), ("TexPatternAnim0", 144), ("TexPatternAnim1", 144), ("TexPatternAnim2", 144),
+              ("TexScrollAnim0", 80), ("TexScrollAnim1", 80), ("TexScrollAnim2", 80), ("ColorScale", 4), ("val_0x364", 12),
+              ("Color0", 128), ("Alpha0", 128), ("Color1", 128), ("Alpha1", 128), ("SoftEdgeParam", 8),
+              ("FresnelAlphaParam", 8), ("NearDistAlphaParam", 8), ("FarDistAlphaParam", 8), ("DecalParam", 8),
+              ("AlphaThreshold", 4), ("Padding2", 4), ("AddVelToScale", 4), ("SoftParticle", 8), ("Padding3", 4),
+              ("ScaleAnim", 128), ("ParamAnim", 128), ("RotateInit", 16), ("RotateInitRand", 16), ("RotateAdd", 16),
+              ("RotateAddRand", 16), ("ScaleLimitDist", 16)]
+
+
+def c9_field(off):
+    o, at = off - 0x50, 0
+    for name, size in STATIC_V22:
+        if at <= o < at + size:
+            return name, o - at
+        at += size
+    return None, off
+
+
+def vertex_outputs(listing):
+    """What each varying the vertex program writes is made of: a backward slice from every `st a[X] $rN` to the
+    c9 fields (the emitter record) and vertex inputs it reads. Classified as color0.r/g/b, alpha0, color1.*,
+    alpha1, uv<k>.u/v (TexScrollAnim<k>: even words = u, odd = v), param (ParamAnim), vertex_color (vertex
+    inputs only), position / view (rotation, scale, centre, wave), constant (nothing)."""
+    ins = []
+    for l in listing:
+        p = l.split(None, 3)
+        if len(p) == 4 and not p[3].startswith("sched"):
+            ins.append(p[3])
+    out = {}
+    for i, s_ in enumerate(ins):
+        m = re.match(r'st b32 a\[(0x[0-9a-f]+)\] (\$r\d+)', s_)
+        if not m:
+            continue
+        addr, reg = m.group(1), m.group(2)
+        need, fields, inputs, j = {reg}, {}, set(), i - 1
+        while j >= 0 and need and i - j < 400:
+            w = ins[j].split()
+            dst = next((x for x in w[1:] if x.startswith("$r")), None)
+            if dst in need and not w[0].startswith("st"):
+                need.discard(dst)
+                for x in w[w.index(dst) + 1:]:
+                    if x.startswith("$r") and x != "$r255":
+                        need.add(x)
+                for c in re.findall(r'c9\[(0x[0-9a-f]+)\]', ins[j]):
+                    n, rel = c9_field(int(c, 16))
+                    if n:
+                        fields.setdefault(n, set()).add(rel)
+                inputs |= set(re.findall(r'a\[(0x[0-9a-f]+)\]', ins[j]))
+            j -= 1
+        keys_ = set(fields)
+        comp = None
+        if keys_ == {"ColorScale"}:
+            comp = "color_scale"
+        elif keys_ and keys_ <= {"Color0", "ColorScale"} or keys_ and keys_ <= {"Color1", "ColorScale"}:
+            nm = "color0" if "Color0" in keys_ else "color1"
+            k = min(r for r in fields[nm.capitalize()]) % 16 // 4
+            comp = "%s.%s" % (nm, "rgba"[k])
+        elif keys_ and keys_ <= {"Alpha0"}:
+            comp = "alpha0"
+        elif keys_ and keys_ <= {"Alpha1"}:
+            comp = "alpha1"
+        elif any(k.startswith("TexScrollAnim") for k in keys_):
+            # the sampler whose scroll block feeds it most; u / v by the varying pair (x at +0, y at +4)
+            k = max((k for k in keys_ if k.startswith("TexScrollAnim")), key=lambda k: len(fields[k]))
+            comp = "uv%s.%s" % (k[-1], "v" if int(addr, 16) % 8 else "u")
+        elif keys_ == {"ParamAnim"}:
+            comp = "param"
+        elif not keys_ and inputs:
+            comp = "vertex_input " + ",".join(sorted(inputs))
+        elif not keys_:
+            comp = "constant"
+        else:
+            comp = "position/view (%s)" % ",".join(sorted(keys_)[:6])
+        out[addr] = comp
+    return out
+
+
+def shader_type(d, samplers, frag, vouts):
+    """The Geno effect shader library type for an emitter (geno.md 20.2), from what its programs read:
+      distortion  samples more textures than the emitter has samplers (the extra one is the frame copy) or reads
+                  the screen-size bank c1: a heat haze / refraction over the frame
+      warp        reads c9 Coefficient0/1 (c9[0x100/0x104]): texture 1 offsets texture 0's UVs by that strength
+      sprite      everything else: texture(s) x colour ramps
+    colour: "lerp" (lerp(color1, color0, tex), when the vertex program feeds color1) or "modulate" (color0 x tex);
+    fresnel when it reads c9[0x5c8] (FresnelAlphaParam). None when no program could be read (the runtime then
+    uses sprite + modulate)."""
+    if frag is None:
+        return None
+    args = {a.lstrip("-|") for o in frag for a in o.get("args", [])}
+    ntex = sum(o["op"] == "texs" for o in frag)
+    S = d['EmitterStatic']
+    if ntex > len(samplers) or any(a.startswith("c1[") for a in args):
+        t = {"type": "distortion", "strength": [S.get('Coefficient0', 0.0), S.get('Coefficient1', 0.0)]}
+    elif "c9[0x100]" in args or "c9[0x104]" in args:
+        t = {"type": "warp", "strength": [S.get('Coefficient0', 0.0), S.get('Coefficient1', 0.0)],
+             "base": 0, "offset": 1 if len(samplers) > 1 else 0}
+    else:
+        t = {"type": "sprite"}
+    t["color"] = "lerp" if any(str(v).startswith("color1") for v in (vouts or {}).values()) else "modulate"
+    t["alpha"] = "texture_product" if len(samplers) > 1 else "texture"
+    t["fresnel"] = "c9[0x5c8]" in args
+    t["alpha_test"] = "c9[0x5e8]" in args
+    return t
+
+
+def bloom(d):
+    """Effect-only bloom: what of this emitter's colour is over 1.0 (HDR). Ultimate's ColorScale multiplies the
+    particle colour; the part above the threshold goes to the bloom buffer at `intensity`."""
+    S, C = d['EmitterStatic'], d['ParticleColor']
+    peak = max([C['Color0R'], C['Color0G'], C['Color0B']] + [0.0]) * S['ColorScale']
+    return {"threshold": 1.0, "intensity": round(max(0.0, peak - 1.0), 4)}
+
+
 def disassemble(envydis, code, tmp):
     open(tmp, 'wb').write(code)
     return subprocess.run([envydis, tmp], capture_output=True, text=True).stdout.splitlines()
@@ -259,6 +382,7 @@ def emitter(d, name, order, tex_ids, mesh_ref, program, ext):
                                         "VelocityRate", "ScaleRate")},
         "program": program,
         "extensions": ext,
+        "_bloom": bloom(d),
     }
 
 
@@ -268,6 +392,8 @@ def main():
     ap.add_argument("--set", action="append", help="emitter set(s); default every set in the dump")
     ap.add_argument("--envydis", help="envytools disassembler (envydis_min.exe) for the fragment programs")
     ap.add_argument("--bfdump", help="the BfresLibrary mesh dumper (bfdump.dll) for primitive meshes")
+    ap.add_argument("--keep-programs", action="store_true",
+                    help="also put the fragment op list + vertex-output map in each emitter's program (reference)")
     ap.add_argument("-o", "--out", required=True)
     a = ap.parse_args()
     sets = a.set or sorted(x for x in os.listdir(a.dump) if os.path.isdir(os.path.join(a.dump, x)))
@@ -278,7 +404,8 @@ def main():
         sd = os.path.join(a.dump, st)
         order = json.load(open(os.path.join(sd, "EmitterOrder.txt")))["Order"]
         textures, meshes, emitters, tex_ids = [], [], [], {}
-        report = {"emitters": 0, "translated_programs": 0, "kept_listings": 0, "meshes": 0, "extensions": []}
+        report = {"emitters": 0, "translated_programs": 0, "kept_listings": 0, "meshes": 0, "extensions": [],
+                  "shader_types": {}}
         for n, em in enumerate(order):
             ed = os.path.join(sd, em)
             d = json.load(open(os.path.join(ed, "EmitterData.json")))
@@ -300,9 +427,12 @@ def main():
                     report["meshes"] += 1
             program = {"kind": SHADER_KIND.get(d['Combiner']['ShaderType'], d['Combiner']['ShaderType']),
                        "shader_index": d['ShaderReferences']['ShaderIndex']}
+            frag, vouts = None, None
             sh = os.path.join(ed, "Shader.bnsh")
             if a.envydis and os.path.exists(sh):
                 blocks = nvn_blocks(sh)
+                if len(blocks) >= 2:
+                    vouts = vertex_outputs(disassemble(a.envydis, blocks[0], tmp))
                 if blocks:
                     listing = disassemble(a.envydis, blocks[-1], tmp)
                     os.makedirs(os.path.join(a.out, "shader"), exist_ok=True)
@@ -311,7 +441,7 @@ def main():
                     ir = translate_fragment(listing)
                     program["fragment_listing"] = lp
                     if ir is not None:
-                        program["fragment"] = ir
+                        frag = ir
                         report["translated_programs"] += 1
                     else:
                         report["kept_listings"] += 1
@@ -322,7 +452,18 @@ def main():
                     ext[f[:-4]] = {"words_hex": raw.hex(), "as_float": [round(x, 6) for x in
                                    struct.unpack("<%df" % (len(raw) // 4), raw[:len(raw) // 4 * 4])]}
                     report["extensions"].append(f[:-4])
-            emitters.append(emitter(d, em, n, tex_ids, mesh_ref, program, ext))
+            if a.keep_programs:
+                if frag is not None:
+                    program["fragment"] = frag
+                if vouts is not None:
+                    program["vertex_outputs"] = vouts
+            e = emitter(d, em, n, tex_ids, mesh_ref, program, ext)
+            e["material"]["shader"] = shader_type(d, e["samplers"], frag, vouts) or {
+                "type": "sprite", "color": "modulate", "alpha": "texture", "fresnel": False, "alpha_test": False}
+            e["material"]["bloom"] = e.pop("_bloom")
+            ty = e["material"]["shader"]["type"]
+            report["shader_types"][ty] = report["shader_types"].get(ty, 0) + 1
+            emitters.append(e)
             report["emitters"] += 1
         pkg = {"geno_fx": FORMAT_VERSION, "name": st,
                "source": {"format": "eft2/VFXB (Nintendo), via EffectLibrary", "set": st},
@@ -330,8 +471,9 @@ def main():
         json.dump(pkg, open(os.path.join(a.out, st + ".gfx.json"), "w"), indent=1)
         summary[st] = report
         print("%s: %d emitters, %d textures, %d meshes, %d fragment programs translated, %d kept as listings, "
-              "extensions %s" % (st, report["emitters"], len(textures), report["meshes"],
-                                 report["translated_programs"], report["kept_listings"], sorted(set(report["extensions"]))))
+              "shader types %s, extensions %s" % (st, report["emitters"], len(textures), report["meshes"],
+                                 report["translated_programs"], report["kept_listings"], report["shader_types"],
+                                 sorted(set(report["extensions"]))))
     if os.path.exists(tmp):
         os.remove(tmp)
     json.dump(summary, open(os.path.join(a.out, "summary.json"), "w"), indent=1)
