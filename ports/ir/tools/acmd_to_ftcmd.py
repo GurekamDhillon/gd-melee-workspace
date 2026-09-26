@@ -46,6 +46,20 @@ def hitbox_words(slot, joint, dmg, size, x, y, z, ang, kbg, fkb, bkb, elem, shie
     return [w0, w1, w2, w3, w4]
 
 
+def throw_words(idx, dmg, ang, kbg, fkb, bkb, elem):
+    """set_throw_hitbox_0..2 (lb/types.h): idx 0 = the throw, 1 = the grab release."""
+    w0 = (34 << 26) | ((idx & 7) << 23) | min(int(round(dmg)), 0x7FFFFF)
+    w1 = ((int(ang) & 0x1FF) << 23) | ((int(kbg) & 0x1FF) << 14) | ((int(fkb) & 0x1FF) << 5)
+    w2 = ((int(bkb) & 0x1FF) << 23) | ((elem & 0xF) << 19)
+    return [w0, w1, w2]
+
+
+# ATTACK_ABS kinds (const_value_table offsets, named by where they appear: every throw script sets
+# one of each at frame 0, the first with the throw's own numbers, the second the grab release)
+ABS_THROW, ABS_CATCH = "0x396c", "0xe7a0"
+THROW_RELEASE = 20 << 26          # Marth's throws release with op 20 (0x50000000), then ClearHitboxes
+
+
 def default_path(when):
     """True if a command runs on the path a move takes by default (every flag test false)."""
     for c in when:
@@ -61,6 +75,7 @@ def translate(row, joint_of_bone, scale=1.0):
            "unknown": {}}
     cancel = (row.get("motion") or {}).get("cancel_frame") or 0
     events = []
+    catch_only = False
     for c in row["commands"]:
         if not default_path(c.get("when", [])):
             rep["other_path_commands"] += 1
@@ -68,7 +83,9 @@ def translate(row, joint_of_bone, scale=1.0):
         cmd = c["cmd"]
         if cmd in ("frame", "wait") and not c.get("unresolved_frame"):
             events.append((c["frame"], "time", None))
-        elif cmd in ("ATTACK",) and c.get("named"):
+        elif cmd in ("ATTACK", "ATTACK_IGNORE_THROW") and c.get("named"):
+            # ATTACK_IGNORE_THROW hits bystanders, not the thrown opponent: in Melee a thrower's
+            # ordinary hitbox does not hit its thrown opponent, so it is an ordinary hitbox
             n = c["named"]
             if not isinstance(n["id"], int):
                 continue
@@ -78,15 +95,35 @@ def translate(row, joint_of_bone, scale=1.0):
                 rep["unmapped_bones"].add(str(bone)); j = joint_of_bone.get("top", 0)
             shield = n.get("shield_damage") if isinstance(n.get("shield_damage"), (int, float)) else 0
             elem = ELEM.get(n.get("effect"), 0)
-            events.append((c["frame"], "hit", hitbox_words(
+            hw = hitbox_words(
                 n["id"], j, n["damage"], n["size"] * scale, n["x"] * scale, n["y"] * scale, n["z"] * scale,
-                n["angle"], n["kbg"], n["fkb"], n["bkb"], elem, shield)))
+                n["angle"], n["kbg"], n["fkb"], n["bkb"], elem, shield)
+            if catch_only:                               # Melee's only_hit_grabbed (spawn_hitbox_0)
+                hw[0] |= 1 << 19
+            events.append((c["frame"], "hit", hw))
             rep["hitboxes"] += 1
             rep["dropped_ultimate_only"] += 1           # hitlag/SDI multipliers etc. on this hitbox
         elif cmd.endswith("clear_all") or cmd == "AttackModule::clear_all":
             events.append((c["frame"], "clear", [16 << 26]))
         elif cmd == "AttackModule::clear" and c["args"] and isinstance(c["args"][0], int):
             events.append((c["frame"], "clear", [(15 << 26) | ((c["args"][0] & 7) << 23)]))   # RemoveHitbox id
+        elif cmd == "ATTACK_ABS" and len(c["args"]) >= 7 and isinstance(c["args"][0], dict):
+            kind = c["args"][0].get("const")
+            a_ = c["args"]
+            idx = 0 if kind == ABS_THROW else 1 if kind == ABS_CATCH else None
+            if idx is None:
+                rep["unknown"]["ATTACK_ABS " + str(kind)] = rep["unknown"].get("ATTACK_ABS " + str(kind), 0) + 1
+            else:
+                elem = ELEM.get(next((x for x in a_ if isinstance(x, str) and x.startswith("collision_attr")), ""), 0)
+                events.append((c["frame"], "hit", throw_words(idx, a_[2], a_[3], a_[4], a_[5], a_[6], elem)))
+                rep["throw_hitboxes"] = rep.get("throw_hitboxes", 0) + 1
+        elif cmd == "ATK_HIT_ABS":
+            events.append((c["frame"], "clear", [THROW_RELEASE]))
+            rep["throw_release_frame"] = c["frame"]
+        elif cmd == "AttackModule::set_catch_only_all":
+            catch_only = bool(c["args"] and c["args"][0] is True)
+        elif cmd == "REVERSE_LR":
+            rep["dropped_ultimate_only"] += 1           # Melee's back-throw logic turns the fighter
         elif cmd == "WorkModule::on_flag" and c["args"] and c["args"][0] == {"const": "0x720"}:
             # const_value_table + 0x720: the first flag a jab sets after its hitboxes (Sora's jab 1
             # frame 20, jab 2 frame 16), i.e. the combo window opening - Melee's JabCombo. Named by
@@ -125,7 +162,8 @@ ROWS = {"Attack11": "game_attack11", "Attack12": "game_attack12", "Attack13": "g
         "AttackS4": "game_attacks4", "AttackS4LwS": "game_attacks4", "AttackS4Lw": "game_attacks4",
         "AttackHi4": "game_attackhi4", "AttackLw4": "game_attacklw4", "AttackAirN": "game_attackairn",
         "AttackAirF": "game_attackairf", "AttackAirB": "game_attackairb", "AttackAirHi": "game_attackairhi",
-        "AttackAirLw": "game_attackairlw"}
+        "AttackAirLw": "game_attackairlw", "CatchAttack": "game_catchattack", "ThrowF": "game_throwf",
+        "ThrowB": "game_throwb", "ThrowHi": "game_throwhi", "ThrowLw": "game_throwlw"}
 
 
 def main():
@@ -135,6 +173,7 @@ def main():
     from convert_ultimate_anim import INSTANCES
     ap = argparse.ArgumentParser()
     ap.add_argument("fighter"); ap.add_argument("acmd_json"); ap.add_argument("-o", "--out")
+    ap.add_argument("--host", default="kirby", help="the Melee host fighter whose rows receive the scripts")
     a = ap.parse_args()
     plan = plan_parts.plan(json.load(open(os.path.join(INSTANCES, f"{a.fighter}.ultimate-body.ir.json"), encoding="utf-8")))
     joint_of = {j["name"].lower(): i for i, j in enumerate(plan["joints"])}
@@ -142,7 +181,7 @@ def main():
     rows = [r for r in json.load(open(a.acmd_json)) if r["kind"] == "game" and r["owner"] == "fighter"
             and not r["share"] and r["agent"] == a.fighter]
     by_script = {r["script"]: r for r in rows}
-    host = json.load(open(os.path.join(INSTANCES, "kirby.melee.ir.json"), encoding="utf-8"))["behavior"]["subactions"]
+    host = json.load(open(os.path.join(INSTANCES, f"{a.host}.melee.ir.json"), encoding="utf-8"))["behavior"]["subactions"]
     out = {"fighter": a.fighter, "rows": {}, "report": {}}
     for s in host:
         script = ROWS.get(s["name"])

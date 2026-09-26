@@ -247,7 +247,7 @@ def parse_body(text, nro, hashes, helpers=None):
         if m and "L2CValue" not in line:
             out.append({"frame": frame, "cmd": f"{m.group(1)}::{m.group(2)}", "args": pending, "when": when}); pending = []
     for c in out:
-        if c["cmd"] in ("ATTACK", "ATTACK_ABS") and len(c["args"]) in (33, 36):
+        if c["cmd"] in ("ATTACK", "ATTACK_IGNORE_THROW") and len(c["args"]) in (33, 36):
             names = ATTACK_ARGS if len(c["args"]) == 36 else [n for n in ATTACK_ARGS if n not in ("x2", "y2", "z2")]
             c["named"] = dict(zip(names, c["args"]))
     return out
