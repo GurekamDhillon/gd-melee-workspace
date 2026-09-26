@@ -43,7 +43,7 @@ OUT_DIR = os.path.join(ROOT, "_build", "tmp", "ir")  # disc-derived: git-ignored
 SKEL = "skel:body"
 
 # Ultimate bone name -> (IR role, Melee common part it stands for or None).
-# The Melee names are PlCo's common part ids as build_kirby_melee.py lists them.
+# The Melee names are PlCo's common part ids as build_melee_fighter.py lists them.
 ROLE = {
     "Trans": ("trans_n", "TransN"), "Rot": ("x_rot", "XRotN"),
     "Hip": ("hip", "HipN"), "Waist": ("waist", "WaistN"), "Bust": ("chest", "BustN"),

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""build_kirby_melee.py - generate _build/tmp/ir/kirby.melee.ir.json from the vanilla disc.
+"""build_melee_fighter.py - a Melee fighter's IR from the vanilla disc: _build/tmp/ir/<fighter>.melee.ir.json.
+
+    python ports/ir/tools/build_melee_fighter.py marth      (or kirby; see FIGHTERS)
+
+Generalised from build_kirby_melee.py so any fighter can be a port's host (Sora uses Marth).
 
 The retarget target for ports/kirby-ultimate. Until now nothing described Melee Kirby: the animation
 converter's joint numbers (ports/kirby-ultimate/animations/convert.py BONE_MAP) had no recorded
@@ -30,8 +34,11 @@ sys.path.insert(0, os.path.join(ROOT, "tools", "mex_port"))
 import mex_hsd  # noqa: E402
 
 SRC = os.path.join(ROOT, "melee", "src", "melee")
-OUT = os.path.join(ROOT, "_build", "tmp", "ir", "kirby.melee.ir.json")
-KIND = 4  # internal FighterKind of Kirby
+OUT = os.path.join(ROOT, "_build", "tmp", "ir", "%s.melee.ir.json")
+# name -> (internal FighterKind, file code, decomp folder, submotion enum prefix)
+FIGHTERS = {"kirby": (4, "Kb", "ftKirby", "ftKb"), "marth": (18, "Ms", "ftMars", "ftMs")}
+NAME = "kirby"
+KIND, CODE, KDIR, KPRE = FIGHTERS[NAME]
 SKEL = "skel:body"
 
 # Common part ids as PlCo's joint_to_part holds them. The decomp's Fighter_Part enum
@@ -119,7 +126,7 @@ def read_joints(nr):
                 walk(child, j["index"])
             off = ptr(nr, off + 0xC)
 
-    walk(nr.public("PlyKirby5K_Share_joint"), None)
+    walk(nr.public([s for s, _ in nr.publics if s.endswith("_Share_joint")][0]), None)
     return joints
 
 
@@ -127,7 +134,7 @@ def submotion_names():
     names = []
     for path, enum, prefix, drop in (
             ("ft/kinds/ftCommon/forward.h", "ftCo_Submotion", "ftCo_SM_", ("None", "Count")),
-            ("ft/kinds/ftKirby/forward.h", "ftKb_Submotion", "ftKb_SM_", ("Count", "SelfCount"))):
+            (f"ft/kinds/{KDIR}/forward.h", f"{KPRE}_Submotion", f"{KPRE}_SM_", ("Count", "SelfCount"))):
         text = open(os.path.join(SRC, path), encoding="utf-8").read()
         block = text[text.index("typedef enum %s {" % enum):]
         block = block[:block.index("} %s;" % enum)]
@@ -136,7 +143,7 @@ def submotion_names():
 
 
 def read_motions(pl, aj_raw, names):
-    root = pl.public("ftDataKirby")
+    root = pl.public([s for s, _ in pl.publics if s.startswith("ftData")][0])
     table = ptr(pl, root + 0xC)
     rows = []
     for i, dn in enumerate(names):
@@ -156,12 +163,18 @@ def read_motions(pl, aj_raw, names):
 
 
 def main():
+    global NAME, KIND, CODE, KDIR, KPRE, OUT
+    if len(sys.argv) > 1:
+        NAME = sys.argv[1]
+    KIND, CODE, KDIR, KPRE = FIGHTERS[NAME]
+    OUT = OUT % NAME
     iso = os.environ.get("GW_ISO_VANILLA")
     if not iso:
         sys.exit("GW_ISO_VANILLA is not set (source .env)")
     disc = mex_hsd.Gcm(iso)
-    raw = {n: disc.read(n) for n in ("PlCo.dat", "PlKb.dat", "PlKbNr.dat", "PlKbAJ.dat")}
-    co, pl, nr = (mex_hsd.Archive(raw[n]) for n in ("PlCo.dat", "PlKb.dat", "PlKbNr.dat"))
+    F = {k: f"Pl{CODE}{k}.dat" for k in ("", "Nr", "AJ")}
+    raw = {n: disc.read(n) for n in ("PlCo.dat", F[""], F["Nr"], F["AJ"])}
+    co, pl, nr = (mex_hsd.Archive(raw[n]) for n in ("PlCo.dat", F[""], F["Nr"]))
 
     joint_to_part, holes, parts_num = read_parts(co)
     joints = read_joints(nr)
@@ -203,7 +216,7 @@ def main():
             joint["provenance"] = prov("verified", "ev:disc", note=f"part slot {s}: no common part; role unknown")
         ir_joints.append(joint)
 
-    motions = read_motions(pl, raw["PlKbAJ.dat"], submotion_names())
+    motions = read_motions(pl, raw[F["AJ"]], submotion_names())
     clips, clip_ids, subactions = [], {}, []
     for m in motions:
         sub_id = f"subaction:{m['index']}"
@@ -217,7 +230,7 @@ def main():
                     clip_ref += f"@{m['offset']:X}"
                 clip_ids[m["figatree"]] = clip_ref
                 clips.append({"id": clip_ref, "name": clip_ref[5:], "symbol": m["figatree"],
-                              "file": "file:plkbaj", "offset": "0x%X" % m["offset"], "size": m["size"],
+                              "file": f"file:pl{CODE.lower()}aj", "offset": "0x%X" % m["offset"], "size": m["size"],
                               "frames": m["frames"],
                               "authored_for": {"skeleton": SKEL if m["flags"] & 0x3F == KIND else None,
                                                "engine_kind": {"space": "melee.retail.fighter_kind",
@@ -236,8 +249,8 @@ def main():
         subactions.append(sub)
 
     files = []
-    for name, role in (("PlKb.dat", "fighter_data"), ("PlKbNr.dat", "costume_model"),
-                       ("PlKbAJ.dat", "animation_bank"), ("PlCo.dat", "other")):
+    for name, role in ((F[""], "fighter_data"), (F["Nr"], "costume_model"),
+                       (F["AJ"], "animation_bank"), ("PlCo.dat", "other")):
         files.append({"id": "file:" + name[:-4].lower(), "name": name, "role": role,
                       "size": len(raw[name]), "sha256": hashlib.sha256(raw[name]).hexdigest(),
                       "container": {"format": "hsd_archive", "endianness": "big"},
@@ -246,8 +259,8 @@ def main():
     unknown = [j["index"] for j in ir_joints if "role_guess" not in j]
     doc = {
         "ir_version": "0.1.0",
-        "document_id": "kirby.melee",
-        "subject": {"character": "Kirby", "game": "ssbm", "engine": "melee.gc",
+        "document_id": f"{NAME}.melee",
+        "subject": {"character": NAME.capitalize(), "game": "ssbm", "engine": "melee.gc",
                     "distribution": {"name": "Super Smash Bros. Melee NTSC 1.02", "kind": "retail",
                                      "media": "GW_ISO_VANILLA"},
                     "analysed_with": [{"tool": "ports/ir/tools/build_kirby_melee.py"}],
@@ -255,19 +268,19 @@ def main():
                              "motion table only; attributes and scripts are in the brawl-kirby dump."},
         "evidence": [
             {"id": "ev:disc", "kind": "disc_image", "path": "GW_ISO_VANILLA",
-             "note": "PlKb.dat, PlKbNr.dat, PlKbAJ.dat read directly"},
+             "note": ", ".join(F.values()) + " read directly"},
             {"id": "ev:plco", "kind": "disc_image", "path": "GW_ISO_VANILLA:PlCo.dat",
              "note": "ftLoadCommonData[4] parts table and [5] placeholder slots for internal kind 4; "
                      "slot assignment follows ftParts_80074B0C's walk (melee/src/melee/ft/ftparts.c)"},
-            {"id": "ev:decomp", "kind": "decomp", "path": "melee/src/melee/ft/kinds/ftKirby/forward.h",
-             "note": "submotion names (ftCo_Submotion + ftKb_Submotion)"}],
-        "identity": {"names": {"display": {"en": "Kirby"}, "internal": ["Kirby", "Kb"], "series": "Kirby"},
+            {"id": "ev:decomp", "kind": "decomp", "path": f"melee/src/melee/ft/kinds/{KDIR}/forward.h",
+             "note": f"submotion names (ftCo_Submotion + {KPRE}_Submotion)"}],
+        "identity": {"names": {"display": {"en": NAME.capitalize()}, "internal": [NAME, CODE]},
                      "indices": [{"space": "melee.retail.fighter_kind", "value": KIND, "stability": "stable",
                                   "provenance": prov("verified", "ev:decomp")}],
                      "provenance": prov("verified", "ev:disc")},
         "resources": {"files": files},
         "assets": {
-            "skeletons": [{"id": SKEL, "name": "PlyKirby5K_Share_joint", "file": "file:plkbnr",
+            "skeletons": [{"id": SKEL, "name": "PlyKirby5K_Share_joint", "file": f"file:pl{CODE.lower()}nr",
                            "symbol": "PlyKirby5K_Share_joint", "joint_count": len(ir_joints),
                            "order": "depth_first", "joints": ir_joints,
                            "engine": {"melee.gc": {"part_slots": part_slots,
@@ -277,7 +290,7 @@ def main():
                                "matrices compose parent * T * R * S with classical scale on every joint "
                                "that has the trait. Joints without a common part: %s." % unknown))}],
             "bone_roles": roles,
-            "animations": {"container": "file:plkbaj",
+            "animations": {"container": f"file:pl{CODE.lower()}aj",
                            "indexing": "ftDataKirby+0xC motion table: (figatree symbol, offset, size) per "
                                        "subaction row; the low 6 bits of the row flags name the authoring "
                                        "fighter kind",
