@@ -38,8 +38,10 @@ def s16(v):
 
 def hitbox_words(slot, joint, dmg, size, x, y, z, ang, kbg, fkb, bkb, elem, shield, gnd=True, air=True):
     w0 = (11 << 26) | ((slot & 7) << 23) | (joint << 11) | min(int(round(dmg)), 1023)
-    w1 = (min(int(round(size * 256)), 0xFFFF) << 16) | s16(z)
-    w2 = (s16(y) << 16) | s16(x)
+    # In game (gd.hitboxes ox/oy/oz, alpha 2026-09-26): word 1's low half is read as the bone-local X
+    # offset and word 2 as Y (high) / Z (low) - not z / y<<16|x as the decomp names the fields.
+    w1 = (min(int(round(size * 256)), 0xFFFF) << 16) | s16(x)
+    w2 = (s16(y) << 16) | s16(z)
     w3 = ((int(ang) & 0x1FF) << 23) | ((int(kbg) & 0x1FF) << 14) | ((int(fkb) & 0x1FF) << 5)
     w4 = ((int(bkb) & 0x1FF) << 23) | ((elem & 0x1F) << 18) | ((int(shield) & 0xFF) << 10) | \
          (1 << 7) | (SFX_KIND.get(elem, 1) << 2) | (int(gnd) << 1) | int(air)
@@ -106,7 +108,9 @@ def translate(row, joint_of_bone, scale=1.0):
         elif cmd.endswith("clear_all") or cmd == "AttackModule::clear_all":
             events.append((c["frame"], "clear", [16 << 26]))
         elif cmd == "AttackModule::clear" and c["args"] and isinstance(c["args"][0], int):
-            events.append((c["frame"], "clear", [(15 << 26) | ((c["args"][0] & 7) << 23)]))   # RemoveHitbox id
+            # RemoveHitbox: the engine reads the id from the low 26 bits (alpha, 2026-09-26: the id at
+            # <<23 wrote fp->x914[huge] in AttackLw4)
+            events.append((c["frame"], "clear", [(15 << 26) | (c["args"][0] & 0x3FFFFFF)]))
         elif cmd == "ATTACK_ABS" and len(c["args"]) >= 7 and isinstance(c["args"][0], dict):
             kind = c["args"][0].get("const")
             a_ = c["args"]
