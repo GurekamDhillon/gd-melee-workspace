@@ -116,7 +116,7 @@ def value(tok, env, nro, hashes):
 
 HELPER_CALL = re.compile(r"(?:func_0x0*|FUN_)([0-9a-f]{8,})\(param_2,(.*)\);", re.S)  # FUN_ once Ghidra defined it
 PTR_CALL = re.compile(r"PTR_(\w+?)_[0-9a-f]{8,}\)")
-CTOR_VAR = re.compile(r"lib::L2CValue::L2CValue\((\w+),(.+)\);\s*$")
+CTOR_VAR = re.compile(r"lib::L2CValue::L2CValue\(\s*(?:\([^)]*\)\s*)?&?(\w+),(.+)\);\s*$")  # (L2CValue *)&uStack_60 too
 
 
 def helper_names(dump):
@@ -142,31 +142,82 @@ def statements(body):
             buf = ""
 
 
+BIND = re.compile(r"app::lua_bind::(\w+?)_impl\((.*)")
+COND = re.compile(r"^(?:\}\s*)?(?:else\s+)?if\s*\((.*)\)\s*\{$")
+
+
 def parse_body(text, nro, hashes, helpers=None):
-    """Flatten a script body into commands. Conditionals are flattened (every branch's commands in
-    source order); frame/wait carry the timeline. Returns [{frame, cmd, args}]."""
+    """A script body as a timeline of commands. frame/wait carry the frame. A branch on the game's
+    state (a work flag, a status...) is kept as such: each command carries the conditions it runs
+    under ('when': [{test, holds}]), and an else restarts from the frame its if started at, so each
+    path has its own timeline. The is_excute guards around every command block are transparent.
+    Returns [{frame, cmd, args, when}]."""
     helpers = helpers or {}
     body = text.split("// BODY @", 1)[-1]
     env, pending, out, frame, var = {}, [], [], 0.0, {}
+    guards, tests = set(), {}              # is_excute bool vars; bool var -> the test that set it
+    stack = []                             # open blocks: {test, holds, start, transparent}
+    last_bind = last_closed = last_test = None
     for line in statements(body):
+        # ---- block structure ----------------------------------------------------------------
+        m = re.match(r"^(\w+)\s*=\s*lib::L2CValue::operator_cast_to_bool", line)
+        if m:
+            guards.add(m.group(1))
+        m = re.match(r"^(\w+)\s*=\s*app::lua_bind::(\w+?)_impl\s*\((.*)\);$", line)
+        if m:
+            arg = m.group(3).split(",", 1)[-1].strip().rstrip(")")
+            shown = env.get(arg, arg)
+            tests[m.group(1)] = f"{m.group(2).replace('__', '::')}({shown})"
+            last_test = tests[m.group(1)]
+        m = re.match(r"^(\w+)\s*=\s*lib::L2CValue::operator==", line)
+        if m and last_test:                      # the result of the last engine test, compared
+            tests[m.group(1)] = last_test
+        cm = COND.match(line)
+        if cm or line in ("else {", "} else {"):
+            if line.startswith("}") and stack:
+                closed = stack.pop()
+            else:                                    # "}" came as its own statement just before
+                closed = last_closed
+            last_closed = None
+            if cm:
+                test = cm.group(1).strip()
+                bare = re.sub(r"[()!\s]", "", test)
+                transparent = bare in guards
+                used = [v for v in re.findall(r"[a-z]Var\d+", test) if v in tests]
+                label = tests[used[0]] + " : " + test if used else test
+                stack.append({"test": label, "holds": not test.lstrip("(").startswith("!"),
+                              "start": frame, "transparent": transparent})
+            else:                                    # else: the other side of the branch just closed
+                if closed is not None:
+                    if not closed["transparent"]:
+                        frame = closed["start"]
+                    stack.append({"test": closed["test"], "holds": not closed["holds"],
+                                  "start": closed["start"], "transparent": closed["transparent"]})
+            continue
+        if line == "}":
+            last_closed = stack.pop() if stack else None
+            continue
+        last_closed = None
+        when = [{"test": b["test"], "holds": b["holds"]} for b in stack if not b["transparent"]]
+
         m = HELPER_CALL.search(line)
         if m:
             name = helpers.get(m.group(1)) or ("helper_" + m.group(1))
             args = []
             for tok in m.group(2).split(","):
-                tok = tok.strip()
+                tok = re.sub(r"^\([^)]*\)\s*", "", tok.strip()).lstrip("&")   # (L2CValue *)&uStack_60
                 if tok.startswith("PTR_NIL") or (tok in env and env[tok] is None):
                     args.append(None)
                 else:
                     args.append(var.get(tok, env.get(tok, tok)))
-            out.append({"frame": frame, "cmd": name, "args": args}); pending = []; continue
+            out.append({"frame": frame, "cmd": name, "args": args, "when": when}); pending = []; continue
         m = CTOR_VAR.search(line)
         if m:
             v = value(m.group(2), env, nro, hashes)
             var[m.group(1)] = v
             pending.append(v); continue
         m = ASSIGN.match(line)
-        if m and re.fullmatch(r"[fp]Var\d+|puVar\d+", m.group(1)):
+        if m and re.fullmatch(r"[fpi]Var\d+|puVar\d+", m.group(1)):
             env[m.group(1)] = value(m.group(2), env, nro, hashes)
             if isinstance(env[m.group(1)], str) and env[m.group(1)].startswith("PTR_NIL"):
                 env[m.group(1)] = None                  # a variable holding nil (an absent argument)
@@ -182,14 +233,14 @@ def parse_body(text, nro, hashes, helpers=None):
                 v = args[-1]
                 if isinstance(v, (int, float)) and not isinstance(v, bool):
                     frame = float(v) if cmd == "frame" else frame + float(v)
-                    out.append({"frame": frame, "cmd": cmd, "args": [v]})
+                    out.append({"frame": frame, "cmd": cmd, "args": [v], "when": when})
                 else:                               # a frame from a parameter or constant: kept as is
-                    out.append({"frame": frame, "cmd": cmd, "args": [v], "unresolved_frame": True})
+                    out.append({"frame": frame, "cmd": cmd, "args": [v], "unresolved_frame": True, "when": when})
                 continue
-            out.append({"frame": frame, "cmd": cmd, "args": args}); continue
+            out.append({"frame": frame, "cmd": cmd, "args": args, "when": when}); continue
         m = MODULE_CALL.search(line)
         if m and "L2CValue" not in line:
-            out.append({"frame": frame, "cmd": f"{m.group(1)}::{m.group(2)}", "args": pending}); pending = []
+            out.append({"frame": frame, "cmd": f"{m.group(1)}::{m.group(2)}", "args": pending, "when": when}); pending = []
     for c in out:
         if c["cmd"] in ("ATTACK", "ATTACK_ABS") and len(c["args"]) in (33, 36):
             names = ATTACK_ARGS if len(c["args"]) == 36 else [n for n in ATTACK_ARGS if n not in ("x2", "y2", "z2")]
@@ -249,7 +300,7 @@ def main():
 
 
 REF_ATTACK = re.compile(r"macros::ATTACK\(agent, (.+)\);")
-REF_FN = re.compile(r"fn (game_\w+)\(")
+REF_FN = re.compile(r"fn ((?:game|effect|sound|expression)_\w+)\(")   # every fn: effect_ must end game_
 REF_FRAME = re.compile(r"(frame|wait)\(agent\.lua_state_agent, ([\d.]+)\)")
 
 
@@ -265,12 +316,15 @@ def check_against(rows, ref_dir):
             fn, frame = None, 0.0
             for line in open(os.path.join(root, f), encoding="utf-8", errors="replace"):
                 m = REF_FN.search(line)
-                if m: fn, frame = m.group(1), 0.0; ref.setdefault(fn, []); continue
+                if m:
+                    fn, frame = m.group(1), 0.0
+                    if fn.startswith("game_"): ref.setdefault(fn, [])
+                    continue
                 m = REF_FRAME.search(line)
                 if m and fn:
                     frame = float(m.group(2)) if m.group(1) == "frame" else frame + float(m.group(2)); continue
                 m = REF_ATTACK.search(line)
-                if m and fn:
+                if m and fn and fn.startswith("game_"):
                     p = [x.strip() for x in m.group(1).split(",")]
                     bone = re.search(r'"(\w+)"', p[2]).group(1)
                     ref[fn].append((frame, int(p[0]), bone, *[round(float(x), 2) for x in (p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10], p[11])]))
@@ -283,7 +337,7 @@ def check_against(rows, ref_dir):
         t = []
         for c in r["commands"]:
             n = c.get("named")
-            if c["cmd"] == "ATTACK" and n:
+            if c["cmd"] == "ATTACK" and n and isinstance(n["id"], int):
                 t.append((c["frame"], n["id"], n["bone"], *[round(float(n[k]), 2) for k in ("damage", "angle", "kbg", "fkb", "bkb", "size", "x", "y", "z")]))
         ours.setdefault(r["script"], t)
     same = diff = missing = 0; examples = []
