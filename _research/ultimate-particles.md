@@ -173,3 +173,57 @@ efbuild; compare with Ultimate frame by frame.
    attached to the Fire article with its `"effect"` id (Geno 19.8 already has the hook).
 4. Decide on the two shader variants after seeing (3) in game next to Ultimate footage.
 5. Effect ids: Sora's bank needs an m-ex effect slot (m-ex effect ids 5000+, delta's D2 work).
+
+## 5. Firaga pilot: difference audit (2026-09-26, after GD's verdict "not accurate to Ultimate at all")
+
+Source of the Ultimate column: GD's ef_trail.eff read by EffectLibrary (every value below is a decoded
+field, named as the library names it). Melee column: what `trail_vfx_melee.py` v1 wrote into EfUsData.dat
+(the efbuild spec) and what the in-game census measured (geno events 38/39). **INF** = inferred by us.
+
+### 5.1 Faults found (ordered by how much they change the picture)
+
+| # | fault | Ultimate (decoded) | pilot v1 | effect |
+|---|---|---|---|---|
+| 1 | **wrong direction** | every flame emitter is rotated by `EmitterInfo.RotateX` = pi/2, so its `DesignatedDir` (0, -1, 0) becomes local (0, 0, -1) = **backwards along the travel** (the weapon's forward is +Z); spark2's (0, 0, -1) is backwards too | velocity written as world (0, -v, 0) = **straight down**, spark2 as world -Z = **into the screen** | the fire trails downward instead of streaming behind the ball |
+| 2 | **colour clipped to white** | colours are HDR: `Color0 x ColorScale` (1.1 / 1.2 / 2.0 / 3.0) goes through the custom shader (ShaderType = UserMacro2, shader 211) with Sampler2 = `ef_cmn_grade05` | `Color0 x ColorScale` clamped to 255 per channel, then lifted toward white for PrimCol | fire2 / fireline1 / spark2 render near-white; no red-orange-yellow gradient |
+| 3 | **the combine is unknown** | `Combiner` fields are all 0, `ShaderType` 2: the colour/alpha combine is Nintendo's compiled user shader (Shader.bnsh, Maxwell), not table data | guessed PrimEnv lerp(env, prim, tex I), alpha = prim.a x tex A | the look depends on the guess (see 6.1) |
+| 4 | **no random rotation** | `RotateInitRandZ` = 2 pi (every flame quad at a random roll) | every particle at roll 0 | identical-looking sprites, visible tiling |
+| 5 | **wrong emission shape** | `ShapeInfo.VolumeType` 7 = filled sphere (hollow ratio `CaliberRatio` 0.2 / 0.7 / 1.0), 4 = sphere surface (fire_rif1) | disc (Melee type 0) of the same radius | flat, screen-plane spread instead of a ball |
+| 6 | **no random ranges** | `ScaleRandom` 35-50 %, `LifeRandom` 20-60 %, `VelRandom` 20-50 % | fixed size, life, speed | uniform particles |
+| 7 | **pattern animation mode** | `TextureAnim1.PatternAnimType` 1 = FitLifespan (fire_rif1, fire3, fire2, fireline1: the table's N frames stretched over the life), 2 = Clamp (fire1) | one frame per game frame for all | frames run too fast / wrong for long-lived particles |
+| 8 | **emission delay** | `Emission.Start` 2 / 3 / 5 frames | none | particles appear at frame 0 |
+| 9 | **velocity inheritance** | `EmVelInherit` -0.2 / -0.1 / +0.1 (a share of the ball's own speed, backwards) | none | missing drag-behind |
+| 10 | **flare** | a *primitive* (mesh) emitter, scale 0.5, colour (1, 0.33, 0) alpha 0.4, additive (BlendType 1), `ef_cmn_grade00` | a particle of size 6 (**INF**) that interpolates to 0.25 in 2 frames (a bug: the primitive's scale curve applied to a particle) | the glow flickers out |
+| 11 | **core meshes** | sphere1 / spherering1 / circle2 are G3PR primitives (meshes) with their own textures, rotation speeds (`RotateAddZ` 0.52 / 0.70 / -0.012 rad a frame), colours x 1.5 | one stand-in icosphere (**INF** radius 3.0), static, no ring, no circle | the core does not spin or layer |
+| 12 | spawn offsets | `EmitterInfo.TransZ` 2.3 (fire1, flare1), 6.0 (fireline1) - in the emitter frame | ignored | particles start at the centre |
+| 13 | depth / sort | fire_rif1 `DrawPath` 11, flare1 21 (later passes); soft-particle params present | Melee: generator order, no depth sort | draw order differs |
+
+### 5.2 Per emitter, decoded vs pilot v1 vs measured
+
+| emitter | life (rand %) | per frame | start | shape r | speed (dir) | scale (rand %) | colour0 keys x ColorScale | alpha | blend | tex (pattern) | pilot v1 life / rate / size | census @f30 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| fire_rif1 | 15 (20) | 1 per 2 f = 0.5 | 5 | sphere surface 5.0 | 1.1 back, spread 0.01 | 9 (35) | white const | 4 keys 0 -> 1 @.19 -> .67 @.55 -> 0 | normal | fire00 atlas 11 frames FitLifespan | 15 / 0.5 / 2.97 | 6 (steady 7.5) |
+| fire3 | 13 (25) | dist 1 per 2.2 u = 0.75 | 3 | filled sphere 3.5 | 0.35 back | 10 (40) | 4 keys (1,.58,.13) .. (.87,0,0) x1.1 | 1 | normal | 13 frames FitLifespan | 13 / 0.75 / 5.0 | 9 (9.75) |
+| fire1 | 11 (0) | dist 0.8 per 2.5 u = 0.53 | 3 | filled sphere 2.0, hollow .2 | 0.15 back, grav 0.005 up, air .98 | 7 (35) | 4 keys (1,.79,.39) .. (1,.04,.04) x1.1 | 1 | normal | 11 frames Clamp | 11 / 0.53 / 2.27 | 6 (5.8) |
+| fire2 | 8 (25) | dist 1 per 2 u = 0.825 | 2 | filled sphere 3.0, hollow .7 | 0.005 back | 4.5 (40) | 3 keys (1,.92,.77) .. (1,.48,.1) x1.2 | 2 keys 1 @.4 -> 0 | normal | 10 frames FitLifespan | 8 / 0.83 / 1.8 | 6 (6.6) |
+| fireline1 | 13 (60) | 0.5 | 5 | filled sphere 6.3 | 3.0 back, spread 1.0 | 3.2 (35) | 4 keys white .. (1,0,0) x2.0 | 1 -> 0 @.86..1 | normal | 10 frames FitLifespan | 13 / 0.5 / 1.6 | 6 (6.5) |
+| spark2 | 30 (50) | 0.5 | 5 | filled sphere 5.0 | 0.8 back (z), spread 0.1 | 2.8 x 3.92 (50) | 2 keys x3.0 | 1 -> 0 @.75..1 | normal | trail_parts00 | 30 / 0.5 / 1.4 | 14 (15) |
+| flare1 | 2 | 1 (one-time primitive) | 0 | point | - | 0.5 | (1,.33,0) const | 0.4 | **add** | grade00 | 2 / 1 / 6 **INF** | 2 (2) |
+| sphere1 / spherering1 / circle2 | 12 / 2 / 31 | one-time primitives | 0 | point | spin .52 / .70 / -.012 rad/f | 0.35 / 0.3 / 0.4 | (1,.59,.15)+(1,.13,.04) x1.5 / 3-key red x1.5 / (1,.95,.72) x1.5 | 2 / 1 / 1 | normal | mask02, fire03+fire00, line12 | not particles: one stand-in sphere | - |
+
+The counts match the decoded steady states (rate x life) within one particle per emitter; everything
+else in 5.1 is where the pilot is wrong.
+
+### 5.3 Fix order (the coordinator's, with what each needs)
+
+1. Direction and offsets (5.1 #1, #12): emit in the emitter frame (RotateX applied) with Melee's
+   joint-oriented generator flag (0x100 | 0x400), so the article's facing rotation carries it. Tool only.
+2. Shape, rotation, randoms, pattern mode, delays, inheritance (#4-#9): Melee has a sphere generator
+   (type 8), per-particle random size (0xA4/0xA5 family), random rotation/pose ops, command waits.
+   Tool only.
+3. The flare and the core meshes (#10, #11): decode G3PR primitives into effect models (efbuild path).
+4. The colour (#2, #3): needs the user shader's combine. Only its compiled Maxwell code exists; the plan
+   is to decompile shader 211's fragment program with an open-source Maxwell decompiler (Ryujinx's shader
+   translator, MIT) and then implement the SAME combine as a Melee renderer variant (a GX TEV stage
+   sequence with the grade ramp as a second texture, if TEV can express it; an Aurora shader variant
+   if not - that is the renderer change the coordinator must approve first).
