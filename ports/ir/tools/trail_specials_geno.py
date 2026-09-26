@@ -23,8 +23,8 @@ Semantic port (Sora must feel like Ultimate's; Melee's mechanics win):
   Aerial Sweep's jump_distance 55 (x0.8 in the air), jump_accel_y 0.04, jump_speed_x_mul 0.6,
   Counter Attack's window (flag on f8 - off f26), intangibility (motion list xlu), its lunge (the
   clip's Trans z per frame), speed_y 1.1 in the air.
-  Melee's rules: hitlag / SDI multipliers, shield setoff, force reaction, Ultimate's counter damage
-  multiplier (1.5x the countered hit, 9..30) - the counter attack hits for its script's 9 %.
+  Melee's rules: hitlag / SDI multipliers, shield setoff, force reaction. The counter's damage IS
+  ported (Sora's own move property): the countered hit x attack_mul 1.5, clamped 9..30 (Geno HBDMG).
   INFERRED (tune in game; printed): the lock-on range 50 (the SEARCH box radius), its angle clamp
   (MAX_LOCK_DEG) and the stick aim without a target (STICK_DEG); the rise profile (constant
   deceleration jump_accel_y reaching jump_distance); the 8-frame hover between dashes.
@@ -62,7 +62,7 @@ HOVER = 8               # d01specialsstart2's length: the pause between dashes (
 GENO_OP = 59
 LAI, RAI, LAF, RAF = 0, 1, 2, 3
 V_AIR, V_FACING, V_VEL_X, V_VEL_Y, V_GROUND_VEL, V_FWD_VEL = 0x00, 0x01, 0x02, 0x03, 0x04, 0x05
-V_PRESSED, V_MOVE_F0, V_MOVE_F1 = 0x14, 0x20, 0x21
+V_PRESSED, V_MOVE_F0, V_MOVE_F1, V_HIT_DAMAGE = 0x14, 0x20, 0x21, 0x35
 EQ, NE, LT, LE, GT, GE, BIT, NOBIT = range(8)
 C_ALWAYS = 0
 BTN_SPECIAL_BIT = 1
@@ -90,6 +90,8 @@ def MULF(v, x): return [w0(0x04, 2, v << 8), fb(x)]
 def MULV(v, b): return [w0(0x04, 2, (v << 8) | 0x80), b]
 def SETBIT(v, b): return [w0(0x05, 2, v << 8), b]
 def IF(v, cmp, b, skip): return [w0(0x10, 3, (v << 8) | (cmp << 4)), b & 0xFFFFFFFF, skip]
+def SETF(v, x): return [w0(0x01, 2, v << 8), fb(x)]
+def HBDMG(mask, v): return [w0(0x3A, 2, ((mask & 0xFF) << 8) | 0x80), v]   # v5.3
 def GET(v, val): return [w0(0x08, 2, v << 8), val]
 def PUTF(val, x): return [w0(0x09, 3), val, fb(x)]
 def PUTI(val, x): return [w0(0x09, 3), val, x]
@@ -384,6 +386,17 @@ def build(rows, P, joint_of, host, base, rep):
                 tl.at(f, PUTF(V_FWD_VEL, v), 2)
                 last = v
         hit_events(tl, row, ident, joint_of, rep, name)
+        # Ultimate's counter damage: the countered hit x attack_mul, clamped attack_min..attack_max
+        # (HIT_DAMAGE, Geno 19.3), written over the script's hitboxes each time they are (re)set
+        dmg = var(RAF, 5)
+        tl.at(0, GET(dmg, V_HIT_DAMAGE) + MULF(dmg, L["attack_mul"])
+              + IF(dmg, LT, fb(L["attack_min"]), 2) + SETF(dmg, L["attack_min"])
+              + IF(dmg, GT, fb(L["attack_max"]), 2) + SETF(dmg, L["attack_max"]), 0)
+        for c in row["commands"]:
+            if c["cmd"] == "ATTACK" and c.get("named") and isinstance(c["named"]["id"], int) and c["named"]["id"] < 4:
+                tl.at(c["frame"], HBDMG(1 << c["named"]["id"], dmg), 4)
+        rep.append("  %s: damage = countered hit x%.1f, clamped %.0f..%.0f (HBDMG)" % (
+            name, L["attack_mul"], L["attack_min"], L["attack_max"]))
         if mo.get("cancel_frame"):
             tl.at(mo["cancel_frame"], IASA, 7)
         # "both": the counter can be entered mid-hitlag airborne; it lands and stays in the state
