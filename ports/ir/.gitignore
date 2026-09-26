@@ -1,0 +1,4 @@
+# C# build output (fighterbuild)
+bin/
+obj/
+__pycache__/
