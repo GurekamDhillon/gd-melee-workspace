@@ -87,6 +87,12 @@ def translate(row, joint_of_bone, scale=1.0):
             events.append((c["frame"], "clear", [16 << 26]))
         elif cmd == "AttackModule::clear" and c["args"] and isinstance(c["args"][0], int):
             events.append((c["frame"], "clear", [(15 << 26) | ((c["args"][0] & 7) << 23)]))   # RemoveHitbox id
+        elif cmd == "WorkModule::on_flag" and c["args"] and c["args"][0] == {"const": "0x720"}:
+            # const_value_table + 0x720: the first flag a jab sets after its hitboxes (Sora's jab 1
+            # frame 20, jab 2 frame 16), i.e. the combo window opening - Melee's JabCombo. Named by
+            # its place in the jab scripts, not yet from the executable's constant table. The flag
+            # two frames later (0x72c, Ultimate's no-hit combo allowance) has no Melee counterpart.
+            events.append((c["frame"], "clear", [29 << 26]))
         elif cmd == "FT_MOTION_RATE" and c["args"]:
             r = c["args"][0]
             if isinstance(r, (int, float)):
