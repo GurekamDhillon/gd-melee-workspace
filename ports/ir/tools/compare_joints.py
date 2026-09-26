@@ -72,9 +72,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("fighter")
     ap.add_argument("log")
+    ap.add_argument("--folded-helpers", action="store_true", help="the mod was installed with --fold-helpers")
     args = ap.parse_args()
     ir = json.load(open(os.path.join(CA.INSTANCES, f"{args.fighter}.ultimate-body.ir.json"), encoding="utf-8"))
     plan = plan_parts.plan(ir); rest = CA.rest_of(ir)
+    orient = {} if args.folded_helpers else CA.helper_constraints(args.fighter)[0]
     real = [i for i, j in enumerate(plan["joints"]) if not j["synthesized"]]
     # Old (untagged "JP") lines: only joints the skin uses, which drawing computes every frame. gd.joints
     # reads each joint's LAST computed matrix, and a joint nothing needed this frame keeps an old
@@ -109,6 +111,7 @@ def main():
             skipped["fewer than 8 valid joints"] += 1; continue
         if clip not in anims:
             anims[clip] = CA.decode(os.path.join(motion, clip + ".nuanmb"))
+            CA.bake_helpers(anims[clip], plan, rest, orient)   # as the installer baked them
         last = anims[clip]["final_frame_index"]
         src = source_pose(anims[clip], plan, rest, min(max(frame, 0.0), last))
         fitted, sc = fit(src[use], game[use])

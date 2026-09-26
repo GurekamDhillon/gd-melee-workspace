@@ -100,6 +100,10 @@ static class P
             bool hasTex = texs.Count > 0 && images.ContainsKey(texs[0]);
             var attrs = new List<GXAttribName> { GXAttribName.GX_VA_PNMTXIDX, GXAttribName.GX_VA_POS, GXAttribName.GX_VA_NRM };
             if (hasTex) attrs.Add(GXAttribName.GX_VA_TEX0);
+            // layer 2 (export_ultimate_mesh 'layers': an eye's iris over its white), on TEX1
+            JsonElement? layer = null;
+            if (hasTex && d.TryGetProperty("layers", out var ls) && ls.GetArrayLength() > 0 && images.ContainsKey(ls[0].GetProperty("texture").GetString()))
+            { layer = ls[0]; attrs.Add(GXAttribName.GX_VA_TEX1); }
             var verts = new List<GX_Vertex>(); var bones = new List<HSD_JOBJ[]>(); var wts = new List<float[]>();
             int single = 0;
             foreach (var tri in d.GetProperty("tris").EnumerateArray())
@@ -122,6 +126,7 @@ static class P
                     }
                     var gv = new GX_Vertex { POS = new GXVector3(p[0], p[1], p[2]), NRM = new GXVector3(nr[0], nr[1], nr[2]) };
                     if (hasTex) { var uv = F(v.GetProperty("uv")); gv.TEX0 = new GXVector2(uv[0], uv[1]); }
+                    if (layer != null) { var uv2 = F(v.GetProperty("uv2")); gv.TEX1 = new GXVector2(uv2[0], uv2[1]); }
                     verts.Add(gv);
                     bones.Add(wl.Select(x => jobjs[x.Item1]).ToArray());
                     wts.Add(wl.Select(x => x.Item2).ToArray());
@@ -143,6 +148,20 @@ static class P
                 tobj.RepeatS = 1; tobj.RepeatT = 1;
                 tobj.TexMapID = GXTexMapID.GX_TEXMAP0; tobj.GXTexGenSrc = GXTexGenSrc.GX_TG_TEX0;
                 rf |= RENDER_MODE.TEX0;
+                if (layer != null)
+                {
+                    var l = layer.Value; var lw = l.GetProperty("wrap");
+                    var t1 = new HSD_TOBJ { _s = tobj._s.DeepClone() };
+                    t1.Next = null;
+                    t1.ImageData = images[l.GetProperty("texture").GetString()]; t1.TlutData = null;
+                    t1.WrapS = Wrap(lw[0].GetString()); t1.WrapT = Wrap(lw[1].GetString());
+                    t1.RepeatS = 1; t1.RepeatT = 1;
+                    t1.TexMapID = GXTexMapID.GX_TEXMAP1; t1.GXTexGenSrc = GXTexGenSrc.GX_TG_TEX1;
+                    t1.ColorOperation = l.GetProperty("blend").GetString() == "add" ? COLORMAP.ADD : COLORMAP.BLEND;
+                    t1.AlphaOperation = ALPHAMAP.NONE;
+                    tobj.Next = t1;
+                    rf |= RENDER_MODE.TEX1;
+                }
             }
             else mobj.Textures = null;
             mobj.RenderFlags = rf;
@@ -164,7 +183,7 @@ static class P
             {
                 dobj = dlist.Count - 1, obj = d.GetProperty("object").GetString(), sub = d.GetProperty("subindex").GetInt32(),
                 group = d.GetProperty("group").ValueKind == JsonValueKind.String ? d.GetProperty("group").GetString() : null,
-                texture = hasTex ? texs[0] : null, xlu, cull, verts = verts.Count, tris = verts.Count / 3,
+                texture = hasTex ? texs[0] : null, layer2 = layer?.GetProperty("texture").GetString(), xlu, cull, verts = verts.Count, tris = verts.Count / 3,
                 single_bound_verts = single, pobjs = pobj.List.Count,
             });
         }

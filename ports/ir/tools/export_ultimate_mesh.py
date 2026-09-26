@@ -8,6 +8,10 @@ vertex keeps its source bone weights 1:1 by joint name. Read with the upstream s
 `ssbh_data_json` from model.numshb (meshes), model.numdlb (mesh -> material) and model.numatb
 (materials). The mkbuild side is ports/halberd/model/tools/mkbuild (Build.cs reads this format).
 
+Helper bones (H_*, driven by model.nuhlpb at runtime, never keyed): kept 1:1 by default, because
+convert_ultimate_anim.bake_helpers keys them; --fold-helpers moves their weights to the nearest
+non-helper ancestor instead (for a clip set converted with --no-helpers).
+
 Conventions, checked on Kirby's c00:
   - Skinned meshes (bone_influences) are in model space.
   - Rigid meshes (no influences, parent_bone_name set: Kirby's 17 faces and 7 eyes on 'Body') are in
@@ -84,7 +88,58 @@ def world_rest(plan, rest):
     return world
 
 
-def export(fighter, costume, max_tex=256):
+def helper_owner(plan):
+    """Joint index -> the joint that takes its skin weights when helper bones are folded: an H_* bone
+    goes to its nearest non-helper ancestor (Ultimate's helpers are leaves driven by model.nuhlpb)."""
+    J = plan["joints"]; out = {}
+    for i, j in enumerate(J):
+        k = i
+        while k is not None and J[k]["name"].startswith("H_"):
+            k = J[k]["parent"]
+        if k != i:
+            out[i] = k
+    return out
+
+
+def uv_transform(uv, t):
+    """Ultimate's layer UV transform (ssbh_wgpu model.wgsl TransformUv, 'ported from Mario's eye
+    shader'): x = sx * (u - tz), y = 1 - sy * (1 - v - tw)."""
+    sx, sy, tz, tw = t
+    return np.stack([sx * (uv[:, 0] - tz), 1 - sy * (1 - uv[:, 1] - tw)], axis=1)
+
+
+def pose_material_vectors(fighter, clip, param="CustomVector31"):
+    """{material: vector} at frame 0 of `clip`'s Material group (the clip that stands for the
+    fighter's rest face: its eyes' iris offset)."""
+    path = os.path.join(FIGHTERS, fighter, "motion", "body", "c00", clip + ".nuanmb")
+    if not clip or not os.path.exists(path):
+        return {}
+    out = {}
+    for g in decode(path)["groups"]:
+        if g["group_type"] != "Material":
+            continue
+        for n in g["nodes"]:
+            for t in n["tracks"]:
+                if t["name"] == param:
+                    v = t["values"]; v = next(iter(v.values())) if isinstance(v, dict) else v
+                    out[n["name"]] = [v[0][a] for a in "xyzw"]
+    return out
+
+
+def lod_skip(names, lod):
+    """Mesh objects of the other level of detail: Ultimate ships some bodies twice ('body_high' and
+    'body_low', both unconditionally drawn by this exporter otherwise: Sora's 1,609 POBJs overflowed
+    the renderer's per-frame uniform buffer). Keep `lod` where both exist."""
+    other = {"high": "low", "low": "high"}[lod]
+    out = set()
+    for n in names:
+        m = re.search(r"_(high|low)(?=Shape$|_|$)", n, re.I)
+        if m and m.group(1).lower() == other and n[:m.start()] + "_" + lod + n[m.end():] in names:
+            out.add(n)
+    return out
+
+
+def export(fighter, costume, max_tex=256, fold_helpers=False, face_clip="a00wait1", lod="high"):
     ir = json.load(open(os.path.join(INSTANCES, f"{fighter}.ultimate-body.ir.json"), encoding="utf-8"))
     plan = plan_parts.plan(ir)
     rest = rest_of(ir)
@@ -96,13 +151,41 @@ def export(fighter, costume, max_tex=256):
     atb = {m["material_label"]: m for m in decode(os.path.join(base, "model.numatb"))["entries"]}
     mat_of = {(e["mesh_object_name"], e["mesh_object_subindex"]): e["material_label"] for e in dlb}
 
-    stats = {"tris": 0, "verts": 0, "verts_trimmed": 0, "max_weight_dropped": 0.0, "max_influences": 0,
-             "rigid_objects": 0, "unknown_bones": set()}
+    fold = helper_owner(plan) if fold_helpers else {}
+    posed = pose_material_vectors(fighter, face_clip)
+    stats = {"helpers_folded": {plan["joints"][h]["name"]: plan["joints"][k]["name"] for h, k in fold.items()},
+             "tris": 0, "verts": 0, "verts_trimmed": 0, "max_weight_dropped": 0.0, "max_influences": 0,
+             "rigid_objects": 0, "layer2": {}, "unknown_bones": set()}
     dobjs = []
+    skip = lod_skip({o["name"] for o in shb}, lod)
+    stats["lod_dropped"] = sorted(skip)
     for o in shb:
+        if o["name"] in skip:
+            continue
         pos, nrm = attr(o["positions"]), attr(o["normals"])
         uvs = [attr(o["texture_coordinates"], k) for k in range(len(o["texture_coordinates"]))]
         n = len(pos)
+        label = mat_of.get((o["name"], o["subindex"]))
+        mat = atb.get(label, {})
+        tex = next((t["data"] for t in mat.get("textures", []) if t["param_id"] == "Texture0"), None)
+        # Texture1 = colour layer 2 (an eye's iris over its white): sampled with the second UV set
+        # through CustomVector31, blended over layer 1 by its alpha (CustomBoolean11: added). The
+        # transform is baked into the vertex UVs at the face clip's frame 0; the clips' Material
+        # tracks move it (the gaze) and are not carried.
+        tex1 = next((t["data"] for t in mat.get("textures", []) if t["param_id"] == "Texture1"
+                     and not t["data"].startswith("#")), None)
+        layers = []
+        if tex and tex1 and len(uvs) > 1:
+            vec = next((v["data"] for v in mat.get("vectors", []) if v["param_id"] == "CustomVector31"), None)
+            xf = posed.get(label) or ([vec[a] for a in "xyzw"] if vec else [1.0, 1.0, 0.0, 0.0])
+            uv2 = uv_transform(uvs[1], xf)
+            s1 = next((s["data"] for s in mat.get("samplers", []) if s["param_id"] == "Sampler1"), {})
+            add = next((b["data"] for b in mat.get("booleans", []) if b["param_id"] == "CustomBoolean11"), False)
+            layers.append({"texture": tex1, "uv": "uv2", "blend": "add" if add else "alpha",
+                           "wrap": (s1.get("wraps", "Repeat"), s1.get("wrapt", "Repeat")), "transform": xf})
+            stats["layer2"][label] = {"texture": tex1, "transform": [round(x, 4) for x in xf],
+                                      "from": "clip " + face_clip if label in posed else "material"}
+        samp = next((s["data"] for s in mat.get("samplers", []) if s["param_id"] == "Sampler0"), {})
         weights = [[] for _ in range(n)]
         for inf in o["bone_influences"]:
             j = jidx.get(inf["bone_name"])
@@ -110,7 +193,7 @@ def export(fighter, costume, max_tex=256):
                 stats["unknown_bones"].add(inf["bone_name"])
                 continue
             for vw in inf["vertex_weights"]:
-                weights[vw["vertex_index"]].append((j, vw["vertex_weight"]))
+                weights[vw["vertex_index"]].append((fold.get(j, j), vw["vertex_weight"]))
         rigid = not o["bone_influences"]
         if rigid:
             b = o["parent_bone_name"]
@@ -144,13 +227,11 @@ def export(fighter, costume, max_tex=256):
             if uvs:
                 v["uvs"] = [[float(u[i, 0]), float(u[i, 1])] for u in uvs]
                 v["uv"] = v["uvs"][0]
+            if layers:
+                v["uv2"] = [float(x) for x in uv2[i]]
             verts.append(v)
         idx = o["vertex_indices"]
         tris = [[verts[idx[k]], verts[idx[k + 1]], verts[idx[k + 2]]] for k in range(0, len(idx), 3)]
-        label = mat_of.get((o["name"], o["subindex"]))
-        mat = atb.get(label, {})
-        tex = next((t["data"] for t in mat.get("textures", []) if t["param_id"] == "Texture0"), None)
-        samp = next((s["data"] for s in mat.get("samplers", []) if s["param_id"] == "Sampler0"), {})
         blend = next((b["data"] for b in mat.get("blend_states", []) if b["param_id"] == "BlendState0"), {})
         cull = next((r["data"]["cull_mode"] for r in mat.get("rasterizer_states", [])), "Back")
         vis = re.sub(r"_VIS_O_OBJShape$", "", o["name"]) if o["name"].endswith("_VIS_O_OBJShape") else None
@@ -161,6 +242,7 @@ def export(fighter, costume, max_tex=256):
                       "wrap": [(samp.get("wraps", "Repeat"), samp.get("wrapt", "Repeat"))] if tex else [],
                       "lit": True, "spec": None, "env": None,
                       "cull": {"Back": "Cull_Outside", "Front": "Cull_Inside", "None": "Cull_None"}.get(cull, "Cull_Outside"),
+                      "layers": layers,
                       "xlu": blend.get("destination_color", "Zero") != "Zero",
                       "tris": tris})
         stats["tris"] += len(tris)
@@ -177,7 +259,7 @@ def export(fighter, costume, max_tex=256):
                        "scale": s, "rot": e, "trans": t, "ibm": [float(x) for x in ibm]})
     stats["unknown_bones"] = sorted(stats["unknown_bones"])
     textures = []
-    for name in sorted({t for d in dobjs for t in d["textures"]}):
+    for name in sorted({t for d in dobjs for t in d["textures"]} | {l["texture"] for d in dobjs for l in d["layers"]}):
         path = os.path.join(base, name + ".nutexb")
         if not os.path.exists(path):
             sys.exit(f"texture {name} not in {base}")
@@ -193,8 +275,11 @@ def main():
     ap.add_argument("--costume", default="c00")
     ap.add_argument("-o", "--out")
     ap.add_argument("--max-texture", type=int, default=256)
+    ap.add_argument("--lod", choices=("high", "low"), default="high")
+    ap.add_argument("--fold-helpers", action="store_true",
+                    help="H_* weights -> nearest non-helper ancestor (when the clips do not bake model.nuhlpb)")
     args = ap.parse_args()
-    res = export(args.fighter, args.costume, args.max_texture)
+    res = export(args.fighter, args.costume, args.max_texture, args.fold_helpers, lod=args.lod)
     out = args.out or os.path.join(ROOT, "_build", "tmp", "ultimate-mesh", f"{args.fighter}_{args.costume}.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     json.dump(res, open(out, "w"))

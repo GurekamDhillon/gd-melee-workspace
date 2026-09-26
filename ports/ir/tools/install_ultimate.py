@@ -17,7 +17,7 @@ The generic counterpart of Halberd's install_mk.py, driven by the IR tools inste
     a clip is pointed at the Ultimate clip of the same action name (Melee 'AttackS4S' = Ultimate
     'c03attacks4s'); rows with no match play the fallback (wait1) and are listed.
  5. ftData joint fields from plan_parts.py: part bytes, centre, coin spheres, ECB, GFX, IK; the
-    host's hurtboxes moved onto the fighter's joints by role; x20 / x5C joint trees; x1C part
+    hurtboxes fitted to the fighter's own mesh (plan_hurtboxes.py; --host-hurtboxes: the host's moved by role); x20 / x5C joint trees; x1C part
     anims parked on a mesh-less joint (as install_mk.py does for Meta Knight).
  6. script bones: Kirby's scripts name Kirby PART SLOTS; each goes to the fighter's joint with the
     same common part, else to the nearest joint by rest position (uniform scale fitted on the
@@ -60,6 +60,7 @@ import mex_hsd  # noqa: E402
 ISO_ACE = "C:/iso/SSBM ACE Build v2.0.0.iso"   # mk_slot_files.py reads this path too
 HALBERD = os.path.join(ROOT, "ports", "halberd")
 KIRBY_INTERNAL = 4
+COMMON_ROWS = 295   # motion rows 0..294 are the common actions (ftCo); 295 on are the fighter's own
 FLOW_LEN = [1, 1, 1, 1, 1, 2, 1, 2, 1, 1]
 OP_LEN = [5, 5, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 7, 4, 1, 1, 1, 1,
           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 2, 1, 4]   # ftaction.c ftAction_803C0870, ops 10..58
@@ -309,6 +310,22 @@ def main():
     ap.add_argument("--dst-k", type=int, default=52); ap.add_argument("--dst-e", type=int, default=51)
     ap.add_argument("--out", default=None)
     ap.add_argument("--fallback", default="a00wait1")
+    ap.add_argument("--clip-list", help="ship only these clips (one per line, see convert_ultimate_anim."
+                    "read_clip_list); rows matched to any other clip play --fallback and are listed")
+    ap.add_argument("--write-clip-list", help="write the clips the host's rows match (the used set, with "
+                    "the rows each plays and whether they are common actions) and continue")
+    ap.add_argument("--common-only", action="store_true", help="ship only the clips common-action rows "
+                    "(host rows < %d) use; the fighter's specials play --fallback" % COMMON_ROWS)
+    ap.add_argument("--moveset", help="acmd_to_ftcmd.py output (<fighter>.moveset.json): its rows get the "
+                    "translated scripts (not remapped: their bones are already the fighter's joints) and "
+                    "the named clips; the ModelVis merge still runs on top")
+    ap.add_argument("--lod", choices=("high", "low"), default="high", help="which body to keep where the "
+                    "model ships two levels of detail")
+    ap.add_argument("--host-hurtboxes", action="store_true", help="the host's capsules moved onto the "
+                    "fighter's joints instead of plan_hurtboxes.py's fitted to the fighter's mesh")
+    ap.add_argument("--fold-helpers", action="store_true", help="fold helper-bone (H_*) weights into their "
+                    "nearest non-helper ancestor instead of baking model.nuhlpb into the clips (saves "
+                    "~25%% of animation bytes on Sora; skin error up to ~5%% of body height at the feet)")
     a = ap.parse_args()
     name = a.name or f"Ultimate {a.fighter.capitalize()}"
     stem = a.pl[:-4]
@@ -330,7 +347,7 @@ def main():
     open(os.path.join(files, a.pl), "wb").write(g.read("PlKb.dat"))
 
     # 3. costume
-    mesh = EM.export(a.fighter, "c00")
+    mesh = EM.export(a.fighter, "c00", fold_helpers=a.fold_helpers, lod=a.lod)
     mpath = os.path.join(out, "_work", "mesh_c00.json"); os.makedirs(os.path.dirname(mpath), exist_ok=True)
     json.dump(mesh, open(mpath, "w"))
     tmpl = os.path.join(out, "_work", "PlKbNr.dat"); open(tmpl, "wb").write(g.read("PlKbNr.dat"))
@@ -376,16 +393,39 @@ def main():
     # 'SpecialAirN' plays a figatree named SpecialN), then the figatree's.
     host_names = {s["index"]["value"]: s["name"] for s in json.load(open(os.path.join(
         CA.INSTANCES, "kirby.melee.ir.json"), encoding="utf-8"))["behavior"]["subactions"]}
+    allowed = set(CA.read_clip_list(a.clip_list)) | {a.fallback} if a.clip_list else None
+    moveset = {int(k): v for k, v in json.load(open(a.moveset))["rows"].items()} if a.moveset else {}
+    if allowed is not None:
+        allowed |= {m["clip"] for m in moveset.values()}
+    matched, not_shipped = {}, {}
     for r_, act in rows.items():
         c, how_ = match_clip(host_names.get(r_), by_key)
+        if r_ in moveset:
+            c, how_ = moveset[r_]["clip"], "exact"
+            if c not in clips: sys.exit(f"moveset row {r_}: no clip {c}")
         if c is None:
             c, how_ = match_clip(act, by_key)
-        if c is None: unmatched.append(act); c = a.fallback
+        if c is not None:
+            matched.setdefault(c, []).append(r_)
+        if c is not None and ((allowed is not None and c not in allowed) or (a.common_only and r_ >= COMMON_ROWS)):
+            not_shipped.setdefault(c, []).append(host_names.get(r_) or act); c = a.fallback
+        elif c is None: unmatched.append(act); c = a.fallback
         elif how_ != "exact": fuzzy[act] = f"{c} ({how_})"
         wanted.setdefault(c, []).append(r_)
+    if a.write_clip_list:
+        with open(a.write_clip_list, "w", encoding="utf-8") as fh:
+            fh.write(f"# clips {a.fighter}'s rows use on the {name} host (install_ultimate.py --write-clip-list)\n"
+                     f"# 'common' = played by a common-action row (< {COMMON_ROWS}); edit and pass back with --clip-list\n")
+            for c in sorted(set(matched) | {a.fallback}):
+                rs = matched.get(c, [])
+                tag = "common" if any(r_ < COMMON_ROWS for r_ in rs) else "special"
+                fh.write(f"{c:28} # {tag}: {', '.join(sorted({host_names.get(r_, str(r_)) for r_ in rs}))[:150]}\n")
+    orient, aim = ({}, []) if a.fold_helpers else CA.helper_constraints(a.fighter)
+    if aim: sys.exit(f"{len(aim)} aim constraints: not baked yet, rerun with --fold-helpers")
     aj = bytearray(); clip_at = {}; vis_of = {}; worst = 0.0; conv = []
     for c in sorted(wanted):
         anim = CA.decode(os.path.join(motion, c + ".nuanmb"))
+        CA.bake_helpers(anim, plan, rest, orient)
         sym = f"Ply{name.replace(' ', '')}5K_Share_ACTION_{c}_figatree"
         arc, cr, poses = CA.convert_clip(anim, plan, rest, sym)
         chk = CA.check(arc, plan, rest, poses, cr["frames"], False)
@@ -394,7 +434,8 @@ def main():
         while len(aj) % 0x20: aj.append(0)
         clip_at[c] = (len(aj), len(arc), sym); aj += arc
         vis_of[c] = vis_frames(anim, base)
-        conv.append({"clip": c, "rows": wanted[c], "bytes": len(arc), "world_err": round(chk["world"], 4)})
+        conv.append({"clip": c, "rows": wanted[c], "bytes": len(arc), "world_err": round(chk["world"], 4),
+                     "common": any(r_ < COMMON_ROWS for r_ in wanted[c])})
     host_aj = g.read("PlKbAJ.dat")
     kept = {}
     for r_, (off, size) in sorted(foreign.items()):
@@ -414,7 +455,10 @@ def main():
                          "unmatched_rows_played_as_fallback": sorted({u for u in unmatched if u}),
                          "matched_by_rule": fuzzy,
                          "host_clips_kept_for_other_skeletons": sorted(foreign),
-                         "worst_world_error": round(worst, 4)}
+                         "worst_world_error": round(worst, 4),
+                         "bytes_common_clips": sum(x["bytes"] for x in conv if x["common"]),
+                         "helpers": "folded" if a.fold_helpers else f"{len(orient)} orient constraints baked",
+                         "clips_not_shipped": {c: sorted(set(v)) for c, v in not_shipped.items()}}
 
     # 5. ftData joint fields
     ftd = plan["ftdata"]
@@ -457,9 +501,22 @@ def main():
     w.ptr(fd + 0x5C, joint_tree(w, J))
     # host slot map (scripts, hurtboxes)
     slot_to_joint, scale, how = host_slot_map(J, plan)
-    # x30 hurtboxes: the host's capsules on the fighter's joints (offsets in fighter units)
+    # x30 hurtboxes: capsules fitted to the fighter's own mesh (plan_hurtboxes.py), or with
+    # --host-hurtboxes the host's capsules moved onto the fighter's joints (offsets in fighter units)
     x30 = w.u32(fd + 0x30); n = w.u32(x30); arr = w.u32(x30 + 4)
     hurt_bones, hb = set(), []
+    if not a.host_hurtboxes:
+        import plan_hurtboxes as PH
+        hres, _ = PH.plan(a.fighter, a.fallback, mesh)
+        caps = hres["capsules"]
+        if not 0 < len(caps) <= 15: sys.exit(f"{len(caps)} hurtboxes (the engine holds 15)")
+        arr = w.alloc(bytes(0x28 * len(caps)))
+        for i, c in enumerate(caps):
+            w.data[arr + 0x28 * i:arr + 0x28 * (i + 1)] = struct.pack(">3i7f", c["joint"], c["height"], c["grabbable"],
+                                                                      *c["a"], *c["b"], c["radius"])
+            hurt_bones.add(c["joint"])
+            hb.append({"segment": c["segment"], "joint": c["joint_name"], "radius": round(c["radius"], 3)})
+        w.put(x30, len(caps)); w.ptr(x30 + 4, arr); n = 0
     for i in range(n):
         o = arr + 0x28 * i
         b = struct.unpack(">i", w.data[o:o + 4])[0]; nb = slot_to_joint.get(b, 0)
@@ -491,6 +548,11 @@ def main():
 
     # 6. scripts + frame-0 ModelVis
     rep["scripts"] = remap_scripts(w, fd, slot_to_joint, hurt_bones, J)
+    for r_, m in sorted(moveset.items()):
+        words = m["words"]
+        if not words or words[-1] >> 26 != 0: sys.exit(f"moveset row {r_}: script does not end in End")
+        w.ptr(mt + r_ * 0x18 + 0xC, w.alloc(b"".join(struct.pack(">I", x) for x in words)))
+    rep["moveset_rows"] = {r_: f"{m['name']} {m['script']} -> {m['clip']} ({len(m['words'])} words)" for r_, m in sorted(moveset.items())}
     idx_of = {s: k for k, s in enumerate(states)}
     cache = {}; mv = {"rows": 0, "events": 0, "approx_rows": [], "dropped_after_goto": 0}
     for c, rs in wanted.items():

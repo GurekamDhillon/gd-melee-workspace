@@ -178,6 +178,70 @@ def srt(t, r, s):
     return m
 
 
+def helper_constraints(fighter):
+    """model.nuhlpb (upstream ssbh_lib decode) -> ({helper: orient constraint}, [aim constraints]).
+    Kirby has no file (no helpers)."""
+    path = os.path.join(FIGHTERS, fighter, "model", "body", "c00", "model.nuhlpb")
+    if not os.path.exists(path):
+        return {}, []
+    d = decode(path)
+    return {c["target_bone_name"]: c for c in d["orient_constraints"]}, d["aim_constraints"]
+
+
+def _rot(m):
+    return Rotation.from_matrix(m[:3, :3] / np.linalg.norm(m[:3, :3], axis=0))
+
+
+def bake_helpers(anim, plan, rest, orient):
+    """Ultimate drives helper bones (H_*) at runtime from model.nuhlpb; clips never key them. Bake
+    each orient constraint into a keyed rotation track so the engine needs nothing new. The
+    constraint is upstream ssbh_wgpu's reading (animation/constraints.rs apply_orient_constraint):
+    the helper's world rotation, as ZYX Euler angles, moves from its own (parent world * rest local)
+    toward the source bone's world rotation by constraint_axes per axis, shortest way round.
+    quat1/quat2 and the range limits are not used (upstream does not either; all +-180 on Sora).
+    Adds a synthetic Transform node per constrained helper to `anim` in place; returns their names."""
+    if not orient:
+        return []
+    g = next(g for g in anim["groups"] if g["group_type"] == "Transform")
+    nodes = {n["name"]: n for n in g["nodes"]}
+    joints = plan["joints"]
+    idx = {j["name"]: i for i, j in enumerate(joints)}
+    todo = [h for h in orient if h in idx and h not in nodes and orient[h]["source_bone_name"] in idx]
+    if not todo:
+        return []
+    frames = int(round(anim["final_frame_index"])) + 1
+    quats = {h: [] for h in todo}
+    for f in range(frames):
+        world = []
+        for j in joints:
+            m = np.eye(4)
+            if not j["synthesized"]:
+                t, r, s = rest[j["name"]][:3]
+                nd = nodes.get(j["name"])
+                if nd is not None:
+                    v = nd["tracks"][0]["values"]["Transform"]; v = v[min(f, len(v) - 1)]
+                    r = Rotation.from_quat([v["rotation"][a] for a in "xyzw"])
+                    s = np.array([v["scale"][a] for a in "xyz"])
+                    if not nd["tracks"][0]["transform_flags"]["override_translation"]:
+                        t = np.array([v["translation"][a] for a in "xyz"])
+                m = srt(t, r, s)
+            world.append(world[j["parent"]] @ m if j["parent"] is not None else m)
+        for h in todo:
+            c = orient[h]; i = idx[h]; pw = world[joints[i]["parent"]]
+            te = _rot(world[i]).as_euler("ZYX"); se = _rot(world[idx[c["source_bone_name"]]]).as_euler("ZYX")
+            d = (se - te) % (2 * math.pi); d = ((2 * d) % (2 * math.pi)) - d
+            wr = Rotation.from_euler("ZYX", te + d * np.array([c["constraint_axes"][a] for a in "zyx"]))
+            quats[h].append((_rot(pw).inv() * wr).as_quat())
+    for h in todo:
+        t, _, s, _ = rest[h]
+        vals = [{"translation": dict(zip("xyz", map(float, t))), "scale": dict(zip("xyz", map(float, s))),
+                 "rotation": dict(zip("xyzw", map(float, q)))} for q in quats[h]]
+        g["nodes"].append({"name": h, "tracks": [{"name": "Transform", "compensate_scale": False,
+                           "transform_flags": {"override_translation": False},
+                           "values": {"Transform": vals}}]})
+    return todo
+
+
 def convert_clip(anim, plan, rest, symbol):
     frames = int(round(anim["final_frame_index"])) + 1
     nodes = {n["name"]: n for g in anim["groups"] if g["group_type"] == "Transform" for n in g["nodes"]}
@@ -282,23 +346,41 @@ def check(arc, plan, rest, source_poses, frames, half):
     return worst
 
 
+def read_clip_list(path):
+    """One clip name per line; '#' starts a comment; the Ultimate group prefix is optional."""
+    out = []
+    for line in open(path, encoding="utf-8"):
+        line = line.split("#")[0].strip()
+        if line:
+            out.append(line)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("fighter")
     ap.add_argument("--clips", nargs="*")
     ap.add_argument("--out", default=os.path.join(ROOT, "_build", "tmp", "ultimate-anim"))
     ap.add_argument("--check-half", action="store_true")
+    ap.add_argument("--no-helpers", action="store_true", help="do not bake model.nuhlpb helper bones")
+    ap.add_argument("--clip-list", help="file with one clip name per line (a moveset's used set)")
     args = ap.parse_args()
     ir = json.load(open(os.path.join(INSTANCES, f"{args.fighter}.ultimate-body.ir.json"), encoding="utf-8"))
     plan = plan_parts.plan(ir)
     rest = rest_of(ir)
     motion = os.path.join(FIGHTERS, args.fighter, "motion", "body", "c00")
     clips = args.clips or sorted(n[:-7] for n in os.listdir(motion) if n.endswith(".nuanmb"))
+    if args.clip_list:
+        clips = read_clip_list(args.clip_list)
+    orient, aim = ({}, []) if args.no_helpers else helper_constraints(args.fighter)
+    if aim:
+        print(f"{len(aim)} aim constraints not baked (their helpers must be folded by the mesh export)")
     out = os.path.join(args.out, args.fighter)
     os.makedirs(out, exist_ok=True)
     summary = []
     for c in clips:
         anim = decode(os.path.join(motion, c + ".nuanmb"))
+        bake_helpers(anim, plan, rest, orient)
         sym = f"Ply{args.fighter}_ACTION_{c}_figatree"
         arc, rep, poses = convert_clip(anim, plan, rest, sym)
         rep.update(check(arc, plan, rest, poses, rep["frames"], args.check_half))
@@ -310,6 +392,7 @@ def main():
               + (f" half {rep['world_half']:.4f} ({rep['snap_intervals']} snap frames skipped)"
                  if args.check_half else ""))
     json.dump(summary, open(os.path.join(out, "report.json"), "w"), indent=1)
+    print(f"total {sum(r['bytes'] for r in summary)} bytes in {len(summary)} clips")
     w = max(r["world"] for r in summary)
     print(f"{len(summary)} clips -> {out}; worst world error {w:.4f}, "
           f"{sum(r['over_buffer'] for r in summary)} over the 0x10000 buffer")
