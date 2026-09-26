@@ -56,7 +56,8 @@ static class P
             jobjs.Add(new HSD_JOBJ
             {
                 SX = s[0], SY = s[1], SZ = s[2], RX = r[0], RY = r[1], RZ = r[2], TX = t[0], TY = t[1], TZ = t[2],
-                Flags = JOBJ_FLAG.CLASSICAL_SCALING,
+                Flags = JOBJ_FLAG.CLASSICAL_SCALING
+                        | (j.TryGetProperty("billboard", out var bb) && bb.GetBoolean() ? JOBJ_FLAG.BILLBOARD : 0),   // optional (effect meshes)
                 InverseWorldTransform = new HSD_Matrix4x3
                 {
                     M11 = ib[0], M12 = ib[1], M13 = ib[2], M14 = ib[3],
@@ -99,6 +100,11 @@ static class P
             var texs = d.GetProperty("textures").EnumerateArray().Select(x => x.GetString()).ToList();
             bool hasTex = texs.Count > 0 && images.ContainsKey(texs[0]);
             var attrs = new List<GXAttribName> { GXAttribName.GX_VA_PNMTXIDX, GXAttribName.GX_VA_POS, GXAttribName.GX_VA_NRM };
+            // optional, additive (effect meshes: trail_magic_models.py): per-vertex colour "c" [r,g,b,a] 0..1 and an
+            // unlit material ("lit": false) whose colour and alpha come from the vertex x texture
+            bool vcol = d.TryGetProperty("vcolor", out var vc) && vc.GetBoolean();
+            bool unlit = d.TryGetProperty("lit", out var lt) && lt.ValueKind == JsonValueKind.False;
+            if (vcol) attrs.Add(GXAttribName.GX_VA_CLR0);
             if (hasTex) attrs.Add(GXAttribName.GX_VA_TEX0);
             // layer 2 (export_ultimate_mesh 'layers': an eye's iris over its white), on TEX1
             JsonElement? layer = null;
@@ -125,6 +131,7 @@ static class P
                         single++;
                     }
                     var gv = new GX_Vertex { POS = new GXVector3(p[0], p[1], p[2]), NRM = new GXVector3(nr[0], nr[1], nr[2]) };
+                    if (vcol) { var c = F(v.GetProperty("c")); gv.CLR0 = new GXColor4(c[0], c[1], c[2], c[3]); }
                     if (hasTex) { var uv = F(v.GetProperty("uv")); gv.TEX0 = new GXVector2(uv[0], uv[1]); }
                     if (layer != null) { var uv2 = F(v.GetProperty("uv2")); gv.TEX1 = new GXVector2(uv2[0], uv2[1]); }
                     verts.Add(gv);
@@ -139,7 +146,8 @@ static class P
             var tobj = mobj.Textures; tobj.Next = null;
             var rf = mobj.RenderFlags & ~(RENDER_MODE.CONSTANT | RENDER_MODE.VERTEX | RENDER_MODE.DIFFUSE | RENDER_MODE.SPECULAR
                                           | RENDER_MODE.TEX0 | RENDER_MODE.TEX1 | RENDER_MODE.TEX2 | RENDER_MODE.TEX3);
-            rf |= RENDER_MODE.DIFFUSE;
+            rf |= unlit ? 0 : RENDER_MODE.DIFFUSE;
+            if (vcol) rf = (rf & ~RENDER_MODE.ALPHA_BOTH) | RENDER_MODE.VERTEX | RENDER_MODE.ALPHA_VTX;
             if (hasTex)
             {
                 var wrap = d.GetProperty("wrap")[0];
@@ -173,7 +181,8 @@ static class P
                 mobj.PEDesc = new HSD_PEDesc
                 {
                     Flags = PIXEL_PROCESS_ENABLE.COLOR_UPDATE | PIXEL_PROCESS_ENABLE.ALPHA_UPDATE | PIXEL_PROCESS_ENABLE.COMPARE | PIXEL_PROCESS_ENABLE.ZUPDATE,
-                    BlendMode = GXBlendMode.GX_BLEND, SrcFactor = GXBlendFactor.GX_BL_SRCALPHA, DstFactor = GXBlendFactor.GX_BL_INVSRCALPHA,
+                    BlendMode = GXBlendMode.GX_BLEND, SrcFactor = GXBlendFactor.GX_BL_SRCALPHA,
+                    DstFactor = d.TryGetProperty("blend", out var bl) && bl.GetString() == "add" ? GXBlendFactor.GX_BL_ONE : GXBlendFactor.GX_BL_INVSRCALPHA,
                     BlendOp = GXLogicOp.GX_LO_SET, DepthFunction = GXCompareType.LEqual,
                     AlphaComp0 = GXCompareType.GEqual, AlphaOp = GXAlphaOp.And, AlphaComp1 = GXCompareType.GEqual,
                 };

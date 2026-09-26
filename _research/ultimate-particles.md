@@ -227,3 +227,46 @@ else in 5.1 is where the pilot is wrong.
    translator, MIT) and then implement the SAME combine as a Melee renderer variant (a GX TEV stage
    sequence with the grade ramp as a second texture, if TEV can express it; an Aurora shader variant
    if not - that is the renderer change the coordinator must approve first).
+
+### 5.4 The fragment shaders, disassembled (envytools `envydis -m gm107`, built from source in _build/agents/beta)
+
+Each emitter carries its own compiled fragment program (Shader.bnsh; the fragment code is the last
+NVN block, +0x80). Read with envydis, P_TrailFireBullet's combines are:
+
+| emitter (shader) | colour | alpha | TEV-expressible? |
+|---|---|---|---|
+| fire1 / fire2 / fire3 / fireline1 (211 / 212 / 209 / 213, UserMacro2) | **Color0 x ColorScale, flat - no texture in the colour** | sat(fire00.G(uv1 + 2 x (indirect00.RG(uv0) - 0.5) x strength) x grade05.R(uv2) x Alpha0) x Alpha1; alpha-test kill | yes (grade05 is a border mask, not a heat ramp; the ramp idea was wrong); the UV warp needs GX indirect texturing |
+| fire_rif1 (207, UserMacro1) | **2 x the FRAME BUFFER** (sampled at screen coordinates) x Color0 | fire00.G x grade05 x Alpha0 x vertex | no: a screen-space heat haze; needs a frame-buffer copy |
+| spark2 / flare1 (216 / 215, Normal) | lerp(Color1, Color0, tex.rgb) (x vertex colour for flare1) | tex.a x Alpha0 (x Alpha1) | yes (Melee's PrimEnv) |
+| sphere1 (210) | lerp(Color1, Color0, mask02.R(warped uv)) x vertex | smoothstep(0.1, 0.5, abs(n . v)) x Alpha0 (a view fresnel: soft edge) | per-vertex bake (billboarded, so n.v = n.z) |
+| spherering1 (208) | vertex x Color0 | brave_fire00.G(warped) x Alpha0 | yes |
+| circle2 (214) | lerp(Color1, Color0, line12.rgb) x vertex | line12.a x vertex a x Alpha0 | yes |
+
+BNTX component selectors (2, 2, 2, 3) make a BC5 texture's rgb = R, a = G; BC4's (2, 2, 2, 2) = R.
+
+**So no renderer change is needed for Firaga's colour**: the colour is the per-particle key colour, and the
+textures only shape alpha. Two things remain that Melee's particle path cannot do: the UV warp (GX has
+indirect texturing in hardware; Melee's particle TEV does not use it) and fire_rif1's heat haze (a frame
+buffer copy).
+
+### 5.5 Pilot v2 (what changed per audit item, with the census)
+
+| # | item | v2 | measured (ACE, Sora slot, census events 38-41) |
+|---|---|---|---|
+| 1 | direction | velocity in the emitter frame (RotateX applied) + EmVelInherit x 1.65; the generator follows the article's joint whose rotation is the facing | mean particle position **behind** the ball: -3.1 / -7.4 / -8.1 units at frames 10 / 20 / 30 facing right, -3.0 / -7.8 / -8.3 facing left; forward speed ~0 |
+| 2-3 | colour | the disassembled combine: flat Color0 x ColorScale per particle; alpha = atlas G x grade05 mask (baked into the frames) x Alpha0 keys | - |
+| 4 | random roll | 4 generators per emitter at rolls 0.4 + k x 90 deg (Melee has no random-roll op) | 20 generators on the ball |
+| 5 | shape | disc emission along the travel + a random offset of 0.8 x VolumeRadius on each axis (0xA8) | - |
+| 6 | randoms | life random (0xA6), speed random (0xBD), scale random quantised into the 4 generators (scale x (1 - r x (k + .5) / 4)) | sizes e.g. fire3 4.75 / 4.25 / 3.75 / 3.25 |
+| 7 | pattern | FitLifespan / Clamp / Loop per TextureAnim1.PatternAnimType | - |
+| 8 | delays | Geno "effects" frame = Emission.Start: 2 (fire2), 3 (fire3, fire1), 5 (fireline1, spark2) | attached at article frames 2 / 3 / 5 (event 37) |
+| 9 | inheritance | folded into the velocity | - |
+| 10-11 | flare + core meshes | the four primitive emitters' own meshes (bfres, dumped with BfresLibrary): sphere1 hemisphere (327 verts, r 3.5), spherering1 (324, r ~6), circle2 (648, r 3.9), flare1 (64, r 12.3, additive), each on a billboarded joint with its ParticleScale, colours / alpha per 5.4 baked, spins 0.524 / 0.698 / -0.0122 rad a frame (Geno "spins") | the article item carries 8 joints, 4 display objects |
+| 12 | offsets | TransZ 2.3 / 6.0 as emit joints of the model | effects on joints 2 / 3 |
+| - | heat haze (fire_rif1) | left out (frame buffer) | - |
+
+Live particles at frames 10 / 20 / 30: 8 / 25 / 32 (per emitter at 30: fire3 4, fire1 4, fire2 8, fireline1
+12, spark2 4-5). Tests 190/190.
+
+Still not carried: the UV warp (GX indirect), the heat haze, colour-key animation of the ring, soft
+particles, per-particle random roll beyond 4 steps, the draw passes.

@@ -144,7 +144,110 @@ def fire_core(dump):
     rgb = np.clip((c1 * (1 - m) + c0 * m) * 255, 0, 255).astype(np.uint8)
     px = np.concatenate([rgb, np.full((32, 32, 1), 255, np.uint8)], -1)
     tex = {"name": "fire_core", "w": 32, "h": 32, "fmt": "CMPR", "rgba": base64.b64encode(px.tobytes()).decode()}
-    return mesh("FireCore", [{"textures": ["fire_core"], "xlu": False, "tris": icosphere(3.0)}], [tex]), name
+    m = mesh("FireCore", [{"textures": ["fire_core"], "xlu": False, "tris": icosphere(3.0)}], [tex])
+    # emit joints (depth-first 2 and 3): P_TrailFireBullet's EmitterInfo.TransZ 2.3 (fire1, flare1) and 6.0
+    # (fireline1), forward along the travel (+Z) - Geno's "effects" attach generators to them
+    for nm, z in (("Emit23", 2.3), ("Emit60", 6.0)):
+        m["joints"].append({"name": nm, "parent": 0, "scale": [1, 1, 1], "rot": [0, 0, 0], "trans": [0, 0, z],
+                            "ibm": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, -z]})
+    return m, name
+
+
+def fire_core_real(dump, prims):
+    """Firaga's core as Ultimate draws it: P_TrailFireBullet's four PRIMITIVE emitters, their own meshes
+    (the emitters' bfres, dumped to <prims>/<emitter>.prim.json by the BfresLibrary dumper - see
+    _research/ultimate-particles.md 5.5), each on its own billboarded joint (VertexTransformMode 0 =
+    billboard), scaled by ParticleScale, coloured / faded the way each emitter's disassembled fragment
+    shader combines (5.4), baked into the texture and the vertex colour:
+      sphere1 (210)      rgb = lerp(Color1, Color0, mask02.R) x ColorScale; alpha = smoothstep(0.1, 0.5,
+                         |n.z|) x Alpha0 (the view-facing fresnel term, n.z in billboard space)
+      spherering1 (208)  rgb = vertex x Color0 x ColorScale; alpha = brave_fire00.G x Alpha0
+      circle2 (214)      rgb = lerp(Color1, Color0, line12.R) x vertex x ColorScale; alpha = line12.G x vertex a
+      flare1 (215)       rgb = lerp(Color1, Color0, grade00.R) x vertex; alpha = grade00.G x vertex a x Alpha0
+                         x Alpha1; ADDITIVE (BlendType 1)
+    NOT carried: the UV distortion by the indirect textures, the ring's colour-key animation (its key at
+    t = 0.5 is baked), the vertex-alpha animation. The spins (RotateAddZ) are Geno "spins" on these joints."""
+    import numpy as np
+    from PIL import Image
+    import trail_vfx_melee as V
+    fx = os.path.join(dump, "P_TrailFireBullet")
+
+    def em(n):
+        return json.load(open(os.path.join(fx, n, "EmitterData.json")))
+
+    def tex(n, sampler):
+        d = em(n)
+        return V.bntx(os.path.join(fx, n, "%d.bntx" % d["Sampler%d" % sampler]["TextureID"]))[1]
+
+    def b64(rgba):
+        return base64.b64encode(np.clip(rgba, 0, 255).astype(np.uint8).tobytes()).decode()
+    joints = [{"name": "TopN", "parent": -1, "scale": [1, 1, 1], "rot": [0, 0, 0], "trans": [0, 0, 0], "ibm": IDENT_IBM},
+              {"name": "Body", "parent": 0, "scale": [1, 1, 1], "rot": [0, 0, 0], "trans": [0, 0, 0], "ibm": IDENT_IBM}]
+    for nm, z in (("Emit23", 2.3), ("Emit60", 6.0)):
+        joints.append({"name": nm, "parent": 0, "scale": [1, 1, 1], "rot": [0, 0, 0], "trans": [0, 0, z],
+                       "ibm": [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, -z]})
+    dobjs, textures, spins, rep = [], [], [], {}
+    for name in ("sphere1", "spherering1", "circle2", "flare1"):
+        d = em(name)
+        S, C, Sc, I = d["EmitterStatic"], d["ParticleColor"], d["ParticleScale"], d["EmitterInfo"]
+        cs = S["ColorScale"]
+        c0 = np.array(V.curve_at(V.keys(S, "Color0", "NumColor0Keys"), 0.5) if C["Color0Type"] != "Constant"
+                      else (C["Color0R"], C["Color0G"], C["Color0B"]))
+        c1 = np.array((C["Color1R"], C["Color1G"], C["Color1B"]))
+        prim = json.load(open(os.path.join(prims, name + ".prim.json")))[0]
+        pos = np.array(prim["attrs"]["_p0"])[:, :3]
+        nrm = np.array(prim["attrs"]["_n0"])[:, :3]
+        uv = np.array(prim["attrs"]["_u0"])[:, :2]
+        vc = np.array(prim["attrs"]["_c0"]) if "_c0" in prim["attrs"] else np.ones((len(pos), 4))
+        size = 64
+        if name == "sphere1":
+            m = np.asarray(tex(name, 1).resize((size, size), Image.LANCZOS)).astype(float)[..., 0:1] / 255.0
+            rgb = (c1 * (1 - m) + c0 * m) * cs * 255
+            a = np.full((size, size, 1), 255.0)
+            nz = np.abs(nrm[:, 2] / np.maximum(1e-6, np.linalg.norm(nrm, axis=1)))
+            lo, hi = S["FresnelAlphaParam1"], S["FresnelAlphaParam2"]
+            t = np.clip((nz - lo) / max(1e-6, hi - lo), 0, 1)
+            va = np.clip(t * t * (3 - 2 * t) * min(1.0, C["Alpha0"]), 0, 1)
+            vcols = np.stack([np.ones(len(pos))] * 3 + [va], 1)
+        elif name == "spherering1":
+            g = np.asarray(tex(name, 1).resize((size, size), Image.LANCZOS)).astype(float)[..., 1:2] / 255.0
+            rgb = np.ones((size, size, 3)) * c0 * cs * 255
+            a = g * min(1.0, C["Alpha0"]) * 255
+            vcols = vc
+        else:
+            arr = np.asarray(tex(name, 1 if name == "circle2" else 0).resize((size, size), Image.LANCZOS)).astype(float) / 255.0
+            r, g = arr[..., 0:1], arr[..., 1:2]
+            rgb = (c1 * (1 - r) + c0 * r) * cs * 255
+            a = g * (C["Alpha0"] * C["Alpha1"] if name == "flare1" else 1.0) * 255
+            vcols = vc
+        textures.append({"name": name, "w": size, "h": size, "fmt": "RGBA8", "rgba": b64(np.concatenate([rgb, a], -1))})
+        j = len(joints)
+        sc = Sc["ScaleX"]
+        tz = I["TransZ"]
+        joints.append({"name": name, "parent": 0, "scale": [sc, sc, sc], "rot": [0, 0, 0], "trans": [0, 0, tz],
+                       "billboard": True,
+                       "ibm": [1 / sc, 0, 0, 0, 0, 1 / sc, 0, 0, 0, 0, 1 / sc, -tz / sc]})
+        idx = prim["indices"]
+        tris = []
+        for k in range(0, len(idx), 3):
+            tv = []
+            for q in idx[k:k + 3]:
+                tv.append({"p": [float(pos[q][0] * sc), float(pos[q][1] * sc), float(pos[q][2] * sc + tz)],
+                           "n": [float(x) for x in nrm[q]], "w": [[j, 1.0]],
+                           "uv": [float(uv[q][0]), float(uv[q][1])], "c": [float(x) for x in vcols[q]]})
+            tris.append(tv)
+        smp = d["Sampler1" if name in ("spherering1", "circle2") else "Sampler0"]
+        wrap = {"Mirror": "MirroredRepeat", "Repeat": "Repeat"}.get(smp["WrapU"], "ClampToEdge")
+        dobjs.append({"textures": [name], "xlu": True, "tris": tris, "vcolor": True, "lit": False,
+                      "blend": "add" if d["RenderState"]["BlendType"] == 1 else "normal",
+                      "wrap": [[wrap, wrap]], "cull": "Cull_None"})
+        if S["RotateAddZ"]:
+            spins.append({"joint": j, "z": round(S["RotateAddZ"], 6)})
+        rep[name] = {"joint": j, "verts": len(pos), "tris": len(tris), "scale": sc, "trans_z": tz,
+                     "radius": float(np.abs(pos[:, :2]).max() * sc), "spin": S["RotateAddZ"]}
+    m = mesh("FireCore", dobjs, textures)
+    m["joints"] = joints
+    return m, spins, rep
 
 
 def main():
@@ -152,6 +255,7 @@ def main():
     ap.add_argument("--template", required=True, help="a Melee costume .dat (material setup only)")
     ap.add_argument("-o", "--out", required=True)
     ap.add_argument("--vfx-dump", help="EffectLibrary dump of ef_trail.eff: also build GnTrailFireCore.dat from sphere1")
+    ap.add_argument("--prims", help="dir of <emitter>.prim.json (bfres dumps): FireCore from Ultimate's primitive meshes")
     a = ap.parse_args()
     fb = glob.glob(os.path.join(HERE, "fighterbuild", "bin", "**", "fighterbuild.exe"), recursive=True)
     if not fb:
@@ -159,7 +263,11 @@ def main():
     os.makedirs(a.out, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
         todo = models()
-        if a.vfx_dump:
+        if a.vfx_dump and a.prims:
+            todo["FireCore"], spins, rep = fire_core_real(a.vfx_dump, a.prims)
+            json.dump(spins, open(os.path.join(a.out, "..", "firecore_spins.json"), "w"))
+            print("FireCore from Ultimate's primitive meshes: %s" % json.dumps(rep))
+        elif a.vfx_dump:
             todo["FireCore"], src = fire_core(a.vfx_dump)
             print("FireCore: sphere1's colours and texture %s" % src)
         for name, m in todo.items():

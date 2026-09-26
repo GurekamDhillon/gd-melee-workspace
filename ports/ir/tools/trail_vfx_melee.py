@@ -194,6 +194,155 @@ def emitter_generator(name, d, texg, frames_of, speed, report):
     return {"name": name, "behavior": 5, "header": hdr, "ops": ops}
 
 
+# ---- v2 mapping (after the audit, _research/ultimate-particles.md section 5; the fragment shaders were
+# disassembled with envytools: 5.4) --------------------------------------------------------------------
+VARIANTS = 4          # random roll / scale are quantised into this many generators per emitter
+
+
+def rot_x(v, a):
+    c, s = math.cos(a), math.sin(a)
+    return (v[0], v[1] * c - v[2] * s, v[1] * s + v[2] * c)
+
+
+def ultimate_frames(img, div, size, mask=None):
+    """the fire atlas cells as Melee frames: rgb white, alpha = the cell's G ('a' through the BNTX
+    component selector 2,2,2,3) x the grade05 border mask (the shader's second texture, quad uv)."""
+    a = np.asarray(img).astype(np.float32) / 255.0
+    cw, ch = img.width // div, img.height // div
+    m = None
+    if mask is not None:
+        m = np.asarray(mask.convert('RGBA').resize((size, size), Image.LANCZOS)).astype(np.float32)[..., 0] / 255.0
+    out = []
+    for cy in range(div):
+        for cx in range(div):
+            g = Image.fromarray((a[cy * ch:(cy + 1) * ch, cx * cw:(cx + 1) * cw, 1] * 255).astype(np.uint8), 'L')
+            g = np.asarray(g.resize((size, size), Image.LANCZOS)).astype(np.float32) / 255.0
+            if m is not None:
+                g = g * m
+            rgba = np.stack([np.ones_like(g), np.ones_like(g), np.ones_like(g), g], -1)
+            out.append(base64.b64encode((rgba * 255).astype(np.uint8).tobytes()).decode())
+    return out
+
+
+def plain_frames(img, size):
+    """a single texture as IA: rgb = R, a = G (the component selector)."""
+    a = np.asarray(img.resize((size, size), Image.LANCZOS))
+    rgba = np.stack([a[..., 0], a[..., 0], a[..., 0], a[..., 1]], -1).astype(np.uint8)
+    return [base64.b64encode(rgba.tobytes()).decode()]
+
+
+def pattern_table(S, anim_type_key, d):
+    pat = S['TexPatternAnim1']
+    n = max(1, int(pat['Num']))
+    return [t for t in pat['Table'][:n]], d['TextureAnim1']['PatternAnimType']
+
+
+def emitter_generators(name, d, texg, speed, report):
+    """v2: one Ultimate emitter -> VARIANTS Melee generators (roll k x 90 deg + 0.4 rad, scale factor spread
+    over the ScaleRandom range), direction in the emitter frame (EmitterInfo.RotateX applied; the generator
+    follows the article's joint, whose rotation is the facing), EmVelInherit folded in, gravity world,
+    volume filled with a random offset, randomised life (0xA6) and speed (0xBD), pattern by its mode,
+    colour / alpha per the disassembled shader."""
+    S, P, Em, Sh, V, C, Sc, R, I = (d['EmitterStatic'], d['ParticleData'], d['Emission'], d['ShapeInfo'],
+                                    d['ParticleVelocity'], d['ParticleColor'], d['ParticleScale'], d['RenderState'],
+                                    d['EmitterInfo'])
+    life = int(P['Life'])
+    lrand = P['LifeRandom'] / 100.0
+    if Em['IsEmitDistEnabled']:
+        per_frame = Em['Rate'] * speed / max(1e-3, Em['EmitterDistUnit'])
+    else:
+        per_frame = Em['Rate'] / max(1, Em['Interval'])
+    c_ks = keys(S, 'Color0', 'NumColor0Keys') if C['Color0Type'] != 'Constant' else [(C['Color0R'], C['Color0G'], C['Color0B'], 0.0)]
+    c1_ks = keys(S, 'Color1', 'NumColor1Keys') if C['Color1Type'] != 'Constant' else [(C['Color1R'], C['Color1G'], C['Color1B'], 0.0)]
+    a_ks = keys(S, 'Alpha0', 'NumAlpha0Keys') if C['Alpha0Type'] != 'Constant' else [(C['Alpha0'],) * 3 + (0.0,)]
+    s_ks = keys(S, 'ScaleAnim', 'NumScaleKeys') or [(1.0, 1.0, 1.0, 0.0)]
+    cs = S['ColorScale']
+    user_shader = d['Combiner']['ShaderType'] == 2          # flat Color0, alpha = atlas G x grade mask
+    size0 = Sc['ScaleX'] * 0.5
+    srand = Sc['ScaleRandomX'] / 100.0
+    table, mode = pattern_table(S, None, d)
+    # direction: DesignatedDir x scale, in the emitter frame (RotateX), + the ball's velocity x EmVelInherit
+    dv = (V['DesignatedDirX'] * V['DesignatedDirScale'], V['DesignatedDirY'] * V['DesignatedDirScale'],
+          V['DesignatedDirZ'] * V['DesignatedDirScale'])
+    dv = rot_x(dv, I['RotateX'])
+    dv = (dv[0], dv[1], dv[2] + V['EmVelInherit'] * speed)
+    spd = math.sqrt(sum(x * x for x in dv))
+    spread = math.atan2(V['AllDirection'], max(1e-4, spd)) if V['AllDirection'] else 0.0
+    vrand = V['VelRandom'] / 100.0
+    radius = Sh['VolumeRadiusX']
+    gens = []
+    for k in range(VARIANTS):
+        f = 1.0 - srand * (k + 0.5) / VARIANTS          # Ultimate scales DOWN by up to ScaleRandom %
+        roll = k * (math.pi / 2) + 0.4
+        ev = {}
+        def at(fr):
+            return ev.setdefault(max(0, min(life, int(round(fr)))), [])
+
+        def col(t):
+            c = [min(255, int(round(255 * x * cs))) for x in (curve_at(c_ks, t) or (1, 1, 1))]
+            a = max(0, min(255, int(round(255 * (curve_at(a_ks, t) or (1, 1, 1))[0]))))
+            return c + [a]
+        head = [[0xA6, "ss", int(round(life * (1 - lrand))), int(round(life * lrand))]] if lrand else []
+        if vrand and spd > 0:
+            head.append([0xBD, "ff", round(spd * (1 - vrand), 4), round(spd * vrand, 4)])
+        if radius > 0:
+            r = radius * 0.8
+            head.append([0xA8, "fff", round(r, 3), round(r, 3), round(r, 3)])
+        head.append([0xB6, "ef", 0, round(roll, 4)])
+        c0 = col(0.0)
+        head.append([0xC0, "ebbbb", 0] + c0)
+        if not user_shader:                               # lerp(Color1, Color0, tex): PrimEnv
+            e1 = [min(255, int(round(255 * x * cs))) for x in (curve_at(c1_ks, 0.0) or (1, 1, 1))] + [0]
+            head += [[0xAD, ""], [0xD0, "ebbbb", 0] + e1]
+        at(0)[:0] = head
+        times = sorted({0.0, 1.0} | {kk[3] for kk in c_ks} | {kk[3] for kk in a_ks} | {kk[3] for kk in s_ks})
+        for a_, b_ in zip(times, times[1:]):
+            fa, fb = a_ * life, b_ * life
+            dur = max(1, int(round(fb - fa)))
+            s1 = (curve_at(s_ks, b_) or (1,))[0] * size0 * f
+            at(fa).extend([[0xC0, "ebbbb", dur] + col(b_), [0xA0, "ef", dur, round(s1, 3)]])
+        n = len(table)
+        for fr in range(life):
+            if mode == 1:        # FitLifespan
+                idx = table[min(n - 1, fr * n // max(1, life))]
+            elif mode == 2:      # Clamp
+                idx = table[min(fr, n - 1)]
+            elif mode == 3:      # Loop
+                idx = table[fr % n]
+            else:
+                idx = table[0] if n > 1 else 0
+            at(fr).append([0x40, "b", idx])
+        ops, now = [], 0
+        for fr in sorted(ev):
+            if fr > now:
+                ops.append([0x00, "s", fr - now])
+                now = fr
+            ops += ev[fr]
+        if life > now:
+            ops.append([0x00, "s", life - now])
+        ops.append([0xFF, ""])
+        grav = -S['GravityScale'] * S['GravityDirY'] if S['GravityScale'] else 0.0
+        kind = 0x1 | 0x2
+        if R['BlendType'] == 1:
+            kind |= 0x400000
+        hdr = {"type": 0, "gflags": 0, "texg": texg, "genlife": 90, "life": life, "kind": kind,
+               "gravity": round(grav, 4), "friction": round(S['AirRes'], 4),
+               "vel": [round(dv[0], 4), round(dv[1], 4), round(dv[2], 4)],
+               "radius": 0.0, "angle": round(spread, 4), "random": round(-per_frame / VARIANTS, 4),
+               "size": round(size0 * f * s_ks[0][0], 3), "param": [0, 0, 0]}
+        gens.append({"name": "%s#%d" % (name, k), "behavior": 5, "header": hdr, "ops": ops})
+    report[name] = {"decoded": {"life": life, "life_random_pct": P['LifeRandom'], "per_frame": round(per_frame, 3),
+                                "start": Em['Start'], "trans_z": I['TransZ'], "rotate_x": I['RotateX'],
+                                "velocity_local": [round(x, 4) for x in dv], "spread_rad": round(spread, 4),
+                                "vel_random_pct": V['VelRandom'], "volume": [Sh['VolumeType'], radius],
+                                "scale": size0 * 2, "scale_random_pct": Sc['ScaleRandomX'], "scale_keys": s_ks,
+                                "color0_keys": c_ks, "color_scale": cs, "alpha0_keys": a_ks,
+                                "pattern": [mode, table], "user_shader": user_shader, "blend": R['BlendType']},
+                    "melee": {"generators": VARIANTS, "per_frame_each": round(per_frame / VARIANTS, 4),
+                              "sizes": [g["header"]["size"] for g in gens]}}
+    return gens
+
+
 def slot_bank(mxdt, internal, bank_file, bank_sym):
     """The fighter slot's MxDt.dat gets an effect-bank row for the bank file and its effect_index -> it
     (the same edit ports/halberd/tools/build_mk_effects.py makes for Meta Knight). Returns (bank, old index)."""
@@ -239,34 +388,47 @@ def main():
     sd = os.path.join(a.dump, a.set)
     order = json.load(open(os.path.join(sd, "EmitterOrder.txt")))["Order"]
     report, gens, texgroups, texidx = {}, [], [], {}
-    def texgroup(tid, emdir, div):
-        key = (tid, div)
-        if key not in texidx:
-            name, img = bntx(os.path.join(emdir, "%d.bntx" % tid))
-            frames = ia_frames(img, div, a.frame_size if div > 1 else min(a.frame_size, img.width))
-            texidx[key] = len(texgroups)
-            texgroups.append({"name": name, "w": a.frame_size if div > 1 else min(a.frame_size, img.width),
-                              "h": a.frame_size if div > 1 else min(a.frame_size, img.height), "fmt": "IA8", "frames": frames})
-        return texidx[key]
-    skipped = {}
+    skipped, effects = {}, []
+    joints = {0.0: 0, 2.3: 2, 6.0: 3}      # the FireCore model's emit joints (trail_magic_models.py)
     for em in order:
         d = json.load(open(os.path.join(sd, em, "EmitterData.json")))
         P = d['ParticleData']
-        if P['PrimitiveID'] != NONE_ID and em != "flare1":
-            skipped[em] = "primitive (G3PR mesh) - the article model carries it"
+        if P['PrimitiveID'] != NONE_ID:
+            skipped[em] = "primitive (bfres mesh): an effect model, not particles"
             continue
+        if d['Combiner']['ShaderType'] == 1:
+            # fire_rif1 (shader 207): rgb = 2 x the FRAME BUFFER (sampled at screen coordinates) x Color0 -
+            # a heat-haze refraction of what is behind the ball. Melee's particle path cannot sample the
+            # frame buffer; it is left out, not faked.
+            skipped[em] = "screen-space heat haze (samples the frame buffer): needs a renderer feature"
+            continue
+        emdir = os.path.join(sd, em)
+        user = d['Combiner']['ShaderType'] == 2
         s1 = d['Sampler1']['TextureID']
-        if s1 != NONE_ID and d['EmitterStatic']['TexScrollAnim1']['UVDivX'] > 1:
-            tg = texgroup(s1, os.path.join(sd, em), int(d['EmitterStatic']['TexScrollAnim1']['UVDivX']))
-            nf = 16
+        if user and s1 != NONE_ID:
+            key = (s1, d['Sampler2']['TextureID'])
+            if key not in texidx:
+                atlas = bntx(os.path.join(emdir, "%d.bntx" % s1))[1]
+                mask = bntx(os.path.join(emdir, "%d.bntx" % d['Sampler2']['TextureID']))[1]                     if d['Sampler2']['TextureID'] != NONE_ID else None
+                div = int(d['EmitterStatic']['TexScrollAnim1']['UVDivX'])
+                texidx[key] = len(texgroups)
+                texgroups.append({"name": "fire atlas x grade mask", "w": a.frame_size, "h": a.frame_size,
+                                  "fmt": "IA8", "frames": ultimate_frames(atlas, div, a.frame_size, mask)})
         else:
-            tg = texgroup(d['Sampler0']['TextureID'], os.path.join(sd, em), 1)
-            nf = 1
-        g = emitter_generator(em, d, tg, nf, a.speed, report)
-        if em == "flare1":   # a screen-facing quad at the core, one short particle a frame, additive
-            g["header"].update(random=-1.0, radius=0.0, vel=[0, 0, 0], size=6.0, gravity=0.0, friction=1.0)
-            report[em]["melee"]["note"] = "primitive quad -> 1 particle a frame, life 2, size 6 (INFERRED)"
-        gens.append(g)
+            key = (d['Sampler0']['TextureID'], None)
+            if key not in texidx:
+                nm, img = bntx(os.path.join(emdir, "%d.bntx" % key[0]))
+                texidx[key] = len(texgroups)
+                texgroups.append({"name": nm, "w": a.frame_size, "h": a.frame_size, "fmt": "IA8",
+                                  "frames": plain_frames(img, a.frame_size)})
+        first = len(gens)
+        gens += emitter_generators(em, d, texidx[key], a.speed, report)
+        tz = round(d['EmitterInfo']['TransZ'], 1)
+        ids = list(range(6000 + first, 6000 + len(gens)))
+        effects.append({"id": 6000 + first, "count": len(gens) - first, "frame": int(d['Emission']['Start']),
+                        "joint": joints.get(tz, 0)})
+        report[em]["melee"]["effect_ids"] = ids
+        report[em]["melee"]["attach"] = {"frame": int(d['Emission']['Start']), "joint": joints.get(tz, 0)}
     os.makedirs(a.out, exist_ok=True)
     # the bank's generator ids start at bank * 1000 (efAsync_MexResolve's final id; hsd_8039F05C indexes the
     # bank's command lists by id - EffectIDStart), so the slot's bank row is settled first
@@ -284,6 +446,7 @@ def main():
     rep = {"set": a.set, "bank_file": a.bank_file, "bytes": os.path.getsize(out), "generators": [g["name"] for g in gens],
            "texgroups": [(t["name"], len(t["frames"]), t["w"]) for t in texgroups], "skipped": skipped, "emitters": report}
     json.dump(rep, open(os.path.join(a.out, "vfx_report.json"), "w"), indent=1)
+    json.dump(effects, open(os.path.join(a.out, "vfx_effects.json"), "w"))
     for i, g in enumerate(gens):
         h = g["header"]
         print("gen %d %-10s life %3d  %.2f/frame  size %5.2f  radius %4.1f  texg %d  ops %d" % (
