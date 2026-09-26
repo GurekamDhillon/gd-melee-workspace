@@ -135,10 +135,18 @@ def translate(row, joint_of_bone, scale=1.0):
             # two frames later (0x72c, Ultimate's no-hit combo allowance) has no Melee counterpart.
             events.append((c["frame"], "clear", [29 << 26]))
         elif cmd == "FT_MOTION_RATE" and c["args"]:
+            # Melee's scripts have no animation-rate command (a state's C code sets
+            # fp->frame_speed_mul); flow op 8 is "wait forever" (lbcommand.c Command_08) and stalled
+            # every move with a rate before its hitboxes. Geno's PUT on engine value ANIM_RATE
+            # (0x1B; geno.md engine values, opcode 59 sub 0x09) sets the rate through
+            # ftAnim_8006F0FC, and the script timers already scale by frame_speed_mul, so the
+            # animation and the script slow together, as FT_MOTION_RATE does. Needs the Geno exe
+            # and ANIM_RATE writable (lane echo, 2026-09-26).
             r = c["args"][0]
             if isinstance(r, (int, float)):
                 bits = struct.unpack(">I", struct.pack(">f", float(r)))[0]
-                events.append((c["frame"], "rate", [(8 << 26), bits]))
+                put = (59 << 26) | (0x09 << 20) | (3 << 16)
+                events.append((c["frame"], "rate", [put, 0x1B, bits]))
         else:
             rep["unknown"][cmd] = rep["unknown"].get(cmd, 0) + 1
     if cancel:
