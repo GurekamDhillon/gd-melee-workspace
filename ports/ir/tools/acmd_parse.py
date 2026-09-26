@@ -238,6 +238,11 @@ def parse_body(text, nro, hashes, helpers=None):
                     out.append({"frame": frame, "cmd": cmd, "args": [v], "unresolved_frame": True, "when": when})
                 continue
             out.append({"frame": frame, "cmd": cmd, "args": args, "when": when}); continue
+        m = re.match(r"^app::lua_bind::(\w+?)__(\w+?)_impl\s*\(", line)
+        if m:                                  # a statement call: AttackModule::clear_all and the like
+            out.append({"frame": frame, "cmd": f"{m.group(1)}::{m.group(2)}", "args": pending, "when": when})
+            pending = []
+            continue
         m = MODULE_CALL.search(line)
         if m and "L2CValue" not in line:
             out.append({"frame": frame, "cmd": f"{m.group(1)}::{m.group(2)}", "args": pending, "when": when}); pending = []
