@@ -125,6 +125,8 @@ def main():
     ap.add_argument("--attach", default="PlWf.dat")
     ap.add_argument("--scale", type=float, default=1.0)
     ap.add_argument("--no-models", action="store_true", help="invisible articles (no trail_magic_models.py files)")
+    ap.add_argument("--vfx", type=int, default=0, help="Firaga carries the slot's generators 6000..6000+N-1 "
+                    "(trail_vfx_melee.py --slot) and the FireCore model, instead of the placeholder flame")
     ap.add_argument("-o", "--out", required=True)
     a = ap.parse_args()
     rows = json.load(open(a.acmd, encoding="utf-8"))
@@ -143,9 +145,15 @@ def main():
         arts.append(d)
         return len(arts) - 1
     fire_hits = hitboxes_of(game[("trail_fire", "game_fly")], S, rep, "fire")
-    A_FIRE = art({"name": "Fire", "lifetime": int(pf["life"]), "velocity": [pf["speed"], 0],
-                  "spawns": [[sn["fire_offset_x"] * S, sn["fire_offset_y"] * S]], "max_live": 8,
-                  "effect": 1147, "hitboxes": fire_hits})
+    fire = {"name": "Fire", "lifetime": int(pf["life"]), "velocity": [pf["speed"], 0],
+            "spawns": [[sn["fire_offset_x"] * S, sn["fire_offset_y"] * S]], "max_live": 8, "hitboxes": fire_hits}
+    if a.vfx:   # route (c) pilot: Ultimate's P_TrailFireBullet as the slot's own particle bank (trail_vfx_melee.py)
+        fire["effects"] = list(range(6000, 6000 + a.vfx))
+    else:
+        fire["effect"] = 1147                 # placeholder: Mario's fireball flame
+    A_FIRE = art(fire)
+    if a.vfx and not a.no_models:
+        arts[A_FIRE]["model"] = {"file": "GnTrailFireCore.dat", "symbol": "GnTrailFireCore_joint"}
     ice_hits = hitboxes_of(game[("trail_ice", "game_fly")], S, rep, "ice")
     ice = {"lifetime": ICE_LIFE, "velocity": [pi["speed"], 0], "accel": -pi["brake"],
            "min_speed": pi["stable_speed"], "max_live": 8,

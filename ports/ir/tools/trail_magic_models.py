@@ -125,17 +125,44 @@ def models():
     return out
 
 
+def fire_core(dump):
+    """Firaga's core from Ultimate's own primitive emitter `sphere1` (P_TrailFireBullet, decoded by
+    EffectLibrary): its texture (ef_brave_mask02, BNTX) and colours - Color0 (1.00, 0.59, 0.15) where the mask
+    is bright, Color1 (1.00, 0.13, 0.04) where it is dark, x ColorScale 1.5 - baked into the sphere's texture.
+    The primitive mesh itself (G3PR) is not decoded: the sphere stands in for it (radius 3.0, INFERRED)."""
+    import numpy as np
+    from PIL import Image
+    import trail_vfx_melee as V
+    em = os.path.join(dump, "P_TrailFireBullet", "sphere1")
+    d = json.load(open(os.path.join(em, "EmitterData.json")))
+    C, S = d["ParticleColor"], d["EmitterStatic"]
+    c0 = np.array([C["Color0R"], C["Color0G"], C["Color0B"]]) * S["ColorScale"]
+    c1 = np.array([C["Color1R"], C["Color1G"], C["Color1B"]]) * S["ColorScale"]
+    name, img = V.bntx(os.path.join(em, "%d.bntx" % d["Sampler1"]["TextureID"]))
+    a = np.asarray(img.resize((32, 32), Image.LANCZOS)).astype(float) / 255.0
+    m = a[..., 0:1]
+    rgb = np.clip((c1 * (1 - m) + c0 * m) * 255, 0, 255).astype(np.uint8)
+    px = np.concatenate([rgb, np.full((32, 32, 1), 255, np.uint8)], -1)
+    tex = {"name": "fire_core", "w": 32, "h": 32, "fmt": "CMPR", "rgba": base64.b64encode(px.tobytes()).decode()}
+    return mesh("FireCore", [{"textures": ["fire_core"], "xlu": False, "tris": icosphere(3.0)}], [tex]), name
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--template", required=True, help="a Melee costume .dat (material setup only)")
     ap.add_argument("-o", "--out", required=True)
+    ap.add_argument("--vfx-dump", help="EffectLibrary dump of ef_trail.eff: also build GnTrailFireCore.dat from sphere1")
     a = ap.parse_args()
     fb = glob.glob(os.path.join(HERE, "fighterbuild", "bin", "**", "fighterbuild.exe"), recursive=True)
     if not fb:
         sys.exit("build ports/ir/tools/fighterbuild first (dotnet build -c Release)")
     os.makedirs(a.out, exist_ok=True)
     with tempfile.TemporaryDirectory() as tmp:
-        for name, m in models().items():
+        todo = models()
+        if a.vfx_dump:
+            todo["FireCore"], src = fire_core(a.vfx_dump)
+            print("FireCore: sphere1's colours and texture %s" % src)
+        for name, m in todo.items():
             mp = os.path.join(tmp, name + ".json")
             json.dump(m, open(mp, "w"))
             dat = os.path.join(a.out, "GnTrail%s.dat" % name)
