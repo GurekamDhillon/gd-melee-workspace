@@ -71,10 +71,13 @@ ATTACK_ARGS = ["id", "part", "bone", "damage", "angle", "kbg", "fkb", "bkb", "si
                "shield_damage", "trip", "rehit", "reflectable", "absorbable", "flinchless",
                "disable_hitlag", "direct", "ground_air", "hitbits", "collision_part",
                "friendly_fire", "effect", "sound_level", "sound_attr", "region"]
+# CATCH's optional second point is absent from short (8-argument) calls, as with ATTACK.
+CATCH_ARGS = ["id", "bone", "size", "x", "y", "z", "x2", "y2", "z2", "status", "situation"]
 CTOR = re.compile(r"lib::L2CValue::L2CValue\(\w+,(.+)\);\s*$")
 ASSIGN = re.compile(r"^\s*(\w+)\s*=\s*(.+);\s*$")
 CALL = re.compile(r"app::sv_animcmd::(\w+)\(")
 MODULE_CALL = re.compile(r"app::(\w+Module)::(\w+)\(")
+SV_MODULE_CALL = re.compile(r"app::sv_module_access::(\w+)\(")
 
 
 class Nro:
@@ -83,7 +86,8 @@ class Nro:
     BASE = 0x7100000000
 
     def __init__(self, path):
-        self.data = open(path, "rb").read()
+        with open(path, "rb") as fp:
+            self.data = fp.read()
 
     def f32(self, addr):
         import struct
@@ -246,9 +250,19 @@ def parse_body(text, nro, hashes, helpers=None):
         m = MODULE_CALL.search(line)
         if m and "L2CValue" not in line:
             out.append({"frame": frame, "cmd": f"{m.group(1)}::{m.group(2)}", "args": pending, "when": when}); pending = []
+            continue
+        m = SV_MODULE_CALL.search(line)
+        if m and m.group(1) == "grab" and pending == [{"const": "0xe7d4"}]:
+            # grab!(... MA_MSC_CMD_GRAB_CLEAR_ALL) decompiles to sv_module_access::grab.
+            # The constant-table entry is shared by Ultimate fighter NROs.
+            out.append({"frame": frame, "cmd": "GrabModule::clear_all", "args": pending, "when": when})
+            pending = []
     for c in out:
         if c["cmd"] in ("ATTACK", "ATTACK_IGNORE_THROW") and len(c["args"]) in (33, 36):
             names = ATTACK_ARGS if len(c["args"]) == 36 else [n for n in ATTACK_ARGS if n not in ("x2", "y2", "z2")]
+            c["named"] = dict(zip(names, c["args"]))
+        elif c["cmd"] == "CATCH" and len(c["args"]) in (8, 11):
+            names = CATCH_ARGS if len(c["args"]) == 11 else [n for n in CATCH_ARGS if n not in ("x2", "y2", "z2")]
             c["named"] = dict(zip(names, c["args"]))
     return out
 

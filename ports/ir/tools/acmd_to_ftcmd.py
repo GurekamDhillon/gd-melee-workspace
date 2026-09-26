@@ -14,7 +14,10 @@ A semantic translation (the port feels like the fighter; Melee's mechanics win):
                           and offset in the fighter's own units (its skeleton is Ultimate's).
                           Offsets are written z / y / x as the decomp names the fields - checked in
                           game with gd.hitboxes, not assumed.
+  CATCH                   Melee catch-element hitbox. Ultimate's optional second capsule point is
+                          ignored, as it is for ATTACK; the first point supplies the sphere offset.
   AttackModule::clear_all ClearHitboxes.
+  GrabModule::clear_all   ClearHitboxes.
   FT_MOTION_RATE r        SetTimerAnim (the animation rate command).
   cancel_frame            IASA at that frame (Melee's interruptible flag).
 Ultimate-only mechanics are dropped and counted (hitlag and SDI multipliers, shieldstun, rehit,
@@ -30,6 +33,11 @@ ELEM = {"collision_attr_normal": 0, "collision_attr_fire": 1, "collision_attr_el
         "collision_attr_flower": 15, "collision_attr_magic": 0, "collision_attr_stab": 3}
 # Melee hit sound kind by element (Slash for cutting attacks, else Punch-like)
 SFX_KIND = {3: 3}
+# Ultimate const_value_table offsets in the decompiled ACMD calls: GA also appears on ATTACK.
+CATCH_SITUATIONS = {"0x4b54": (True, True), "0xe7cc": (True, False), "0xe7d0": (False, True),
+                    "COLLISION_SITUATION_MASK_GA": (True, True),
+                    "COLLISION_SITUATION_MASK_G": (True, False),
+                    "COLLISION_SITUATION_MASK_A": (False, True)}
 
 
 def s16(v):
@@ -105,6 +113,38 @@ def translate(row, joint_of_bone, scale=1.0):
             events.append((c["frame"], "hit", hw))
             rep["hitboxes"] += 1
             rep["dropped_ultimate_only"] += 1           # hitlag/SDI multipliers etc. on this hitbox
+        elif cmd == "CATCH" and c.get("named"):
+            n = c["named"]
+            if not isinstance(n["id"], int) or not 0 <= n["id"] < 4:
+                rep["unknown"]["CATCH id " + str(n["id"])] = rep["unknown"].get("CATCH id " + str(n["id"]), 0) + 1
+                continue
+            situation = n["situation"]
+            key = situation.get("const") if isinstance(situation, dict) else str(situation)
+            flags = CATCH_SITUATIONS.get(key)
+            if flags is None:
+                label = "CATCH situation " + str(situation)
+                rep["unknown"][label] = rep["unknown"].get(label, 0) + 1
+                continue
+            bone = n["bone"]
+            j = joint_of_bone.get(bone)
+            if j is None:
+                rep["unmapped_bones"].add(str(bone)); j = joint_of_bone.get("top", 0)
+            # Marth's vanilla Catch script (PlMs.dat: 0x6560/0x6574/0x6588) uses damage 0,
+            # angle 361, KBG 100, element 8, item interaction and clank, sound kind 2.
+            # Melee boxes are spheres. Ultimate's grab box is a capsule reaching x2/y2/z2 (Sora's
+            # stand grab: z 4.6 -> 8.6), and most of the reach is in that far end, so a second
+            # sphere of the same size sits there in slot id + 2 (grabs use only ids 0-1).
+            ends = [(n["id"], n["x"], n["y"], n["z"])]
+            if n.get("x2") is not None and n["id"] < 2 and (n["x2"], n["y2"], n["z2"]) != (n["x"], n["y"], n["z"]):
+                ends.append((n["id"] + 2, n["x2"], n["y2"], n["z2"]))
+            for slot, x, y, z in ends:
+                hw = hitbox_words(slot, j, 0, n["size"] * scale, x * scale, y * scale, z * scale,
+                                  361, 100, 0, 0, 8, 0, *flags)
+                hw[3] |= 0x12
+                hw[4] = (hw[4] & ~(0x1F << 2)) | (2 << 2)
+                events.append((c["frame"], "hit", hw))
+                rep["hitboxes"] += 1
+            rep["grab_boxes"] = rep.get("grab_boxes", 0) + 1
         elif cmd.endswith("clear_all") or cmd == "AttackModule::clear_all":
             events.append((c["frame"], "clear", [16 << 26]))
         elif cmd == "AttackModule::clear" and c["args"] and isinstance(c["args"][0], int):
@@ -174,7 +214,8 @@ ROWS = {"Attack11": "game_attack11", "Attack12": "game_attack12", "Attack13": "g
         "AttackS4": "game_attacks4", "AttackS4LwS": "game_attacks4", "AttackS4Lw": "game_attacks4",
         "AttackHi4": "game_attackhi4", "AttackLw4": "game_attacklw4", "AttackAirN": "game_attackairn",
         "AttackAirF": "game_attackairf", "AttackAirB": "game_attackairb", "AttackAirHi": "game_attackairhi",
-        "AttackAirLw": "game_attackairlw", "CatchAttack": "game_catchattack", "ThrowF": "game_throwf",
+        "AttackAirLw": "game_attackairlw", "Catch": "game_catch", "CatchDash": "game_catchdash",
+        "CatchAttack": "game_catchattack", "ThrowF": "game_throwf",
         "ThrowB": "game_throwb", "ThrowHi": "game_throwhi", "ThrowLw": "game_throwlw"}
 
 
@@ -199,6 +240,12 @@ def main():
         script = ROWS.get(s["name"])
         if script and script in by_script:
             words, rep = translate(by_script[script], joint_of)
+            if s["name"] in ("Catch", "CatchDash"):
+                # Keep the host's script if any grab box could not be parsed or encoded.
+                count = sum(1 for c in by_script[script]["commands"]
+                            if c["cmd"] == "CATCH" and default_path(c.get("when", [])))
+                if not count or rep.get("grab_boxes", 0) != count:
+                    continue
             out["rows"][s["index"]["value"]] = {"name": s["name"], "script": script, "words": words,
                                                 "clip": (by_script[script].get("motion") or {}).get("clip")}
             out["report"][s["name"]] = {k: v for k, v in rep.items() if v}
