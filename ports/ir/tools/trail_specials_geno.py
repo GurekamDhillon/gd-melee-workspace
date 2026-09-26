@@ -28,7 +28,7 @@ Semantic port (Sora must feel like Ultimate's; Melee's mechanics win):
   INFERRED (tune in game; printed): the lock-on range 50 (the SEARCH box radius), its angle clamp
   (MAX_LOCK_DEG) and the stick aim without a target (STICK_DEG); the rise profile (constant
   deceleration jump_accel_y reaching jump_distance); the 8-frame hover between dashes.
-Optional: --sonic-hit-branch saves ATTACK_CONNECTED_PREV (engine value 0x3C) in the between-dash
+Default ON (--no-... to drop): --sonic-hit-branch saves ATTACK_CONNECTED_PREV (engine value 0x3C) in the between-dash
 hover, then selects both follow-up hitbox sets from that saved value; --counter-backward adds
 backward counter attacks after lock-on reverses facing; and
 --counter-rebound adds the rebound clips as unreachable states (the status trigger is absent from
@@ -511,8 +511,8 @@ def main():
     ap.add_argument("--attach", default="PlUs.dat")
     ap.add_argument("--host", default="marth", choices=sorted(HOSTS))
     ap.add_argument("--magic", help="trail_magic_geno.py's geno.json: merge the neutral special in first")
-    ap.add_argument("--sonic-hit-branch", action="store_true", help="save ATTACK_CONNECTED_PREV in the hover and branch follow-up hitboxes on LA int 2")
-    ap.add_argument("--counter-backward", action="store_true", help="turn on counter attack's backward clip when lock-on reverses facing")
+    ap.add_argument("--sonic-hit-branch", action=argparse.BooleanOptionalAction, default=True, help="(default on) save ATTACK_CONNECTED_PREV in the hover and branch follow-up hitboxes on LA int 2; --no-sonic-hit-branch = always 5.2 %%")
+    ap.add_argument("--counter-backward", action=argparse.BooleanOptionalAction, default=True, help="(default on) counter attack's backward variant when lock-on reverses facing; --no-counter-backward to drop it")
     ap.add_argument("--counter-rebound", action="store_true", help="emit the unreachable counter rebound states")
     ap.add_argument("-o", "--out", required=True)
     a = ap.parse_args()

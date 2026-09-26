@@ -14,10 +14,12 @@ OUT = os.path.join(ROOT, "_build", "tmp", "codex-specials", "test")
 ACMD = os.path.join(ROOT, "_build", "tmp", "ir", "trail.acmd.json")
 MAGIC = os.path.join(ROOT, "_build", "agents", "beta", "mods-sora-magic", "sora-magic-demo", "geno.json")
 OPTIONS = ("--sonic-hit-branch", "--counter-backward", "--counter-rebound")
+OFF = ("--no-sonic-hit-branch", "--no-counter-backward")   # the pre-branch output
 
 
 def generate(host, magic=False, options=OPTIONS):
-    dest = os.path.join(OUT, host + ("-magic" if magic else "") + ("-all" if options else "-default"))
+    tag = "-all" if options == OPTIONS else "-off" if options == OFF else "-plain"
+    dest = os.path.join(OUT, host + ("-magic" if magic else "") + tag)
     args = [sys.executable, sp.__file__, "--host", host, "-o", dest, *options]
     if magic:
         args += ["--magic", MAGIC]
@@ -172,8 +174,13 @@ def main():
     dump = json.load(open(ACMD, encoding="utf-8"))
     magic_count = len(json.load(open(MAGIC, encoding="utf-8"))["fighters"][0]["states"])
     for host in ("marth", "kirby"):
-        default_dest, default_doc, _ = generate(host, options=())
+        default_dest, default_doc, _ = generate(host, options=OFF)
         dest, doc, clips = generate(host)
+        # no options: the hit branch and the backward counter are ON by default, the rebound OFF
+        plain_dest, plain_doc, _ = generate(host, options=())
+        assert [s["name"] for s in plain_doc["states"]] == [n for n in sp.STATES if n not in sp.REBOUND_STATES]
+        for n in ("SDash2", "SDash3", "LwAttack"):
+            assert events_for(plain_dest, plain_doc, n) == events_for(dest, doc, n)
         assert [s["name"] for s in doc["states"]] == sp.STATES
         assert len(doc["states"]) == 17
         assert [s["subaction"] for s in doc["states"]] == [sp.HOSTS[host][n] for n in sp.STATES]
