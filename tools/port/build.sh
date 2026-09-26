@@ -76,7 +76,7 @@ if [ -f "$tu_list" ]; then
     # TU stale (an enum resize in ft/forward.h rebuilt 5 TUs of ~990).
     while IFS= read -r -d '' h; do
         if [ -z "$newest_inc" ] || [ "$h" -nt "$newest_inc" ]; then newest_inc="$h"; fi
-    done < <(find "$GW_MELEE/src" "$GW_MELEE/include" -name '*.h' -newer "$tu_list" -print0 2>/dev/null)
+    done < <(find "$GW_MELEE/src" "$GW_MELEE/include" "$GW_MELEE/pc/geno" -name '*.h' -newer "$tu_list" -print0 2>/dev/null)
     stale_tus="$GW_BUILD_ROOT/.stale_tus"
     : >"$stale_tus"
     while IFS= read -r f; do
