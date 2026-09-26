@@ -71,6 +71,17 @@ OP_LEN = [5, 5, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 2, 1, 4]   # ftaction.c ftAction_803C0870, ops 10..58
 
 
+def cmd_len(word):
+    """Words in the ftcmd starting with `word`: flow ops 0-9, retail 10-58 (ftAction_803C0870), and
+    Geno's 59 whose word0 [19:16] is its own length (melee docs/geno.md 15; 0 reads as 1)."""
+    op = word >> 26
+    if op < 10:
+        return FLOW_LEN[op]
+    if op == 59:
+        return max(1, (word >> 16) & 0xF)
+    return OP_LEN[op - 10] if op - 10 < len(OP_LEN) else 1
+
+
 class Writer:
     """Append-only HSD archive editor (install_mk.py's): data grows at the end, relocations rebuilt."""
     def __init__(self, raw):
@@ -181,6 +192,7 @@ def remap_scripts(w, fd, slot_to_joint, hurt_bones, J):
                     if t: walk(t)
                     if op == 7: return
                 o += 4 * FLOW_LEN[op]; continue
+            if op == 59: o += 4 * cmd_len(word); continue
             if op - 10 >= len(OP_LEN): return
             def sub(shift, key, conv=lambda j: j):
                 b = (word >> shift) & 0xFF
@@ -285,7 +297,7 @@ def merge_vis(w, src, events, frames, rep):
             rep["dropped_after_goto"] += len(pend); pend = []
             words.append((word, False)); words.append((w.u32(o + 4), (o + 4) in w.relocs)); break
         if op in (3, 4, 5, 8): approx = True
-        ln = FLOW_LEN[op] if op < 10 else (OP_LEN[op - 10] if op - 10 < len(OP_LEN) else 1)
+        ln = cmd_len(word)
         for k in range(ln): words.append((w.u32(o + 4 * k), (o + 4 * k) in w.relocs))
         o += 4 * ln
     at = w.alloc(bytes(4 * len(words)))
@@ -311,6 +323,58 @@ def vis_frames(anim, base):
     return out
 
 
+# ------------------------------------------------------------------ clip conversion: parallel + cached
+_CTX = {}
+
+
+def _convert_one(job):
+    """One clip: decode, strip the root (non-driven rows), bake helpers, convert, self-check.
+    Cached on disk by (source clip bytes, options, converter sources), so a reinstall that only
+    changes scripts reuses every clip."""
+    import hashlib, pickle
+    fighter, c, driven, root, helpers, sym, base = job
+    src = os.path.join(CA.FIGHTERS, fighter, "motion", "body", "c00", c + ".nuanmb")
+    h = hashlib.sha1(open(src, "rb").read())
+    import inspect
+    for f in ("convert_ultimate_anim.py", "figatree.py", "plan_parts.py"):
+        h.update(open(os.path.join(HERE, f), "rb").read())
+    h.update(inspect.getsource(vis_frames).encode())
+    h.update(repr((root, helpers, sym, sorted(base.items()))).encode())
+    cache = os.path.join(ROOT, "_build", "tmp", "ultimate-anim-cache", fighter, f"{c}{'_drv' if driven else ''}_{h.hexdigest()[:16]}.pkl")
+    if os.path.exists(cache):
+        return pickle.load(open(cache, "rb"))
+    if fighter not in _CTX:
+        ir = json.load(open(os.path.join(CA.INSTANCES, f"{fighter}.ultimate-body.ir.json"), encoding="utf-8"))
+        _CTX[fighter] = (plan_parts.plan(ir), CA.rest_of(ir), CA.helper_constraints(fighter)[0])
+    plan, rest, orient = _CTX[fighter]
+    anim = CA.decode(src)
+    stripped = CA.strip_root(anim, root) if root else None
+    if helpers:
+        CA.bake_helpers(anim, plan, rest, orient)
+    arc, cr, poses = CA.convert_clip(anim, plan, rest, sym)
+    chk = CA.check(arc, plan, rest, poses, cr["frames"], False)
+    out = (arc, chk["world"], vis_frames(anim, base), stripped, sym)
+    os.makedirs(os.path.dirname(cache), exist_ok=True)
+    pickle.dump(out, open(cache + ".tmp", "wb")); os.replace(cache + ".tmp", cache)
+    return out
+
+
+def convert_all(jobs, workers):
+    if workers <= 1:
+        return [_convert_one(j) for j in jobs]
+    # Each worker loads numpy/scipy (~0.3 GB of commit). When the machine's commit limit is reached
+    # (other games running: "paging file too small") the pool dies; finished clips are cached, so the
+    # rest runs with half the workers, down to serial.
+    from concurrent.futures import ProcessPoolExecutor
+    from concurrent.futures.process import BrokenProcessPool
+    try:
+        with ProcessPoolExecutor(max_workers=workers) as ex:
+            return list(ex.map(_convert_one, jobs, chunksize=2))
+    except (BrokenProcessPool, MemoryError, OSError) as e:
+        print(f"conversion pool of {workers} failed ({type(e).__name__}); retrying with {workers // 2}", file=sys.stderr)
+        return convert_all(jobs, workers // 2)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("fighter")
@@ -319,6 +383,12 @@ def main():
     ap.add_argument("--dst-k", type=int, default=52); ap.add_argument("--dst-e", type=int, default=51)
     ap.add_argument("--out", default=None)
     ap.add_argument("--fallback", default="a00wait1")
+    ap.add_argument("--jobs", type=int, default=min(4, max(1, (os.cpu_count() or 2) - 2)),
+                    help="clip conversion processes (default: min(4, cores - 2), halved on a memory failure; each holds a decoded clip, ~0.5 GB peak); converted clips are cached "
+                         "under _build/tmp/ultimate-anim-cache")
+    ap.add_argument("--row-clips", help="clips.json {subaction_clips: {row: clip}} (trail_specials_geno.py)")
+    ap.add_argument("--extra-files", help="a folder whose files are added to the mod's files/ (article models)")
+    ap.add_argument("--geno", help="geno.json to ship (default: a minimal profile attached to --pl)")
     ap.add_argument("--host", choices=sorted(HOSTS), default="kirby", help="the Melee fighter whose data, "
                     "scripts and m-ex row the slot clones (its IR: build_melee_fighter.py <host>)")
     ap.add_argument("--clip-list", help="ship only these clips (one per line, see convert_ultimate_anim."
@@ -410,6 +480,10 @@ def main():
     host_names = {s["index"]["value"]: s["name"] for s in host_ir()["behavior"]["subactions"]}
     allowed = set(CA.read_clip_list(a.clip_list)) | {a.fallback} if a.clip_list else None
     moveset = {int(k): v for k, v in json.load(open(a.moveset))["rows"].items()} if a.moveset else {}
+    # --row-clips (trail_specials_geno.py clips.json): rows whose Geno overlay supplies the script
+    # and only need the fighter's clip
+    for k, c in (json.load(open(a.row_clips))["subaction_clips"].items() if a.row_clips else []):
+        moveset.setdefault(int(k), {"name": f"row {k}", "script": None, "words": None, "clip": c})
     if allowed is not None:
         allowed |= {m["clip"] for m in moveset.values()}
     matched, not_shipped = {}, {}
@@ -422,7 +496,7 @@ def main():
             c, how_ = match_clip(act, by_key)
         if c is not None:
             matched.setdefault(c, []).append(r_)
-        if c is not None and ((allowed is not None and c not in allowed) or (a.common_only and r_ >= COMMON_ROWS)):
+        if c is not None and ((allowed is not None and c not in allowed) or (a.common_only and r_ >= COMMON_ROWS and r_ not in moveset)):
             not_shipped.setdefault(c, []).append(host_names.get(r_) or act); c = a.fallback
         elif c is None: unmatched.append(act); c = a.fallback
         elif how_ != "exact": fuzzy[act] = f"{c} ({how_})"
@@ -449,21 +523,19 @@ def main():
     wanted = variants
     root_report = {}
     aj = bytearray(); clip_at = {}; vis_of = {}; worst = 0.0; conv = []
-    for key_c in sorted(wanted):
+    jobs = [(a.fighter, c, driven, root if not driven else None, not a.fold_helpers,
+             f"Ply{name.replace(' ', '')}5K_Share_ACTION_{c}{'_drv' if driven else ''}_figatree", base)
+            for c, driven in sorted(wanted)]
+    for key_c, (arc, world, vis, stripped, sym) in zip(sorted(wanted), convert_all(jobs, a.jobs)):
         c, driven = key_c
-        anim = CA.decode(os.path.join(motion, c + ".nuanmb"))
-        if not driven and root:
-            root_report[c] = CA.strip_root(anim, root)
-        CA.bake_helpers(anim, plan, rest, orient)
-        sym = f"Ply{name.replace(' ', '')}5K_Share_ACTION_{c}{'_drv' if driven else ''}_figatree"
-        arc, cr, poses = CA.convert_clip(anim, plan, rest, sym)
-        chk = CA.check(arc, plan, rest, poses, cr["frames"], False)
-        worst = max(worst, chk["world"])
+        if stripped is not None:
+            root_report[c] = stripped
+        worst = max(worst, world)
         if len(arc) > 0x20000: sys.exit(f"{c}: {len(arc)} bytes, over FT_ANIM_BUF_SIZE")
         while len(aj) % 0x20: aj.append(0)
         clip_at[key_c] = (len(aj), len(arc), sym); aj += arc
-        vis_of[key_c] = vis_frames(anim, base)
-        conv.append({"clip": c, "anim_driven": driven, "rows": wanted[key_c], "bytes": len(arc), "world_err": round(chk["world"], 4),
+        vis_of[key_c] = vis
+        conv.append({"clip": c, "anim_driven": driven, "rows": wanted[key_c], "bytes": len(arc), "world_err": round(world, 4),
                      "common": any(r_ < COMMON_ROWS for r_ in wanted[key_c])})
     host_aj = g.read(f"Pl{HOST['code']}AJ.dat")
     kept = {}
@@ -587,9 +659,11 @@ def main():
     rep["scripts"] = remap_scripts(w, fd, slot_to_joint, hurt_bones, J)
     for r_, m in sorted(moveset.items()):
         words = m["words"]
+        if words is None:
+            continue
         if not words or words[-1] >> 26 != 0: sys.exit(f"moveset row {r_}: script does not end in End")
         w.ptr(mt + r_ * 0x18 + 0xC, w.alloc(b"".join(struct.pack(">I", x) for x in words)))
-    rep["moveset_rows"] = {r_: f"{m['name']} {m['script']} -> {m['clip']} ({len(m['words'])} words)" for r_, m in sorted(moveset.items())}
+    rep["moveset_rows"] = {r_: f"{m['name']} {m['script']} -> {m['clip']} ({len(m['words'] or [])} words)" for r_, m in sorted(moveset.items())}
     idx_of = {s: k for k, s in enumerate(states)}
     cache = {}; mv = {"rows": 0, "events": 0, "approx_rows": [], "dropped_after_goto": 0}
     for c, rs in wanted.items():
@@ -641,6 +715,19 @@ def main():
                               f"{a.dst_k}/{a.dst_e} (the row metaknight-slot uses). {a.host.capitalize()}'s fighter data and scripts are the "
                               f"host behaviour. Built by ports/ir/tools/install_ultimate.py."},
               open(os.path.join(out, "mod.json"), "w"), indent=1)
+    # Geno profile: the translated scripts' PUTs (ANIM_RATE for FT_MOTION_RATE) run only for a fighter
+    # with one. --geno copies a full profile (specials, magic); else a minimal one attaches to the slot.
+    if a.geno:
+        shutil.copy(a.geno, os.path.join(out, "geno.json"))
+        gdir = os.path.join(os.path.dirname(a.geno), "geno")      # the profile's overlay scripts
+        if os.path.isdir(gdir):
+            shutil.copytree(gdir, os.path.join(out, "geno"), dirs_exist_ok=True)
+    else:
+        json.dump({"geno": 1, "fighters": [{"attach": a.pl, "name": name}]},
+                  open(os.path.join(out, "geno.json"), "w"), indent=1)
+    if a.extra_files:
+        for f in os.listdir(a.extra_files):
+            shutil.copy(os.path.join(a.extra_files, f), os.path.join(files, f))
     rep["conversion"] = conv
     json.dump(rep, open(os.path.join(out, "INSTALL.json"), "w"), indent=1)
     print(json.dumps({k: v for k, v in rep.items() if k not in ("conversion", "slot_files")}, indent=1)[:4000])
