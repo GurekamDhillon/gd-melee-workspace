@@ -149,18 +149,29 @@ def choose_frac(vals, force_f32=False):
     return 0x00
 
 
+def choose_s8_frac(vals):
+    """Smallest signed key representation, for a checked post-fit size reduction."""
+    m = max((abs(v) for v in vals), default=0.0)
+    for sh in range(15, -1, -1):
+        if m * (1 << sh) <= 127:
+            return (3 << 5) | sh
+    return None
+
+
 def _enc(v, frac):
     t = frac >> 5; sh = frac & 0x1F
     if t == 0: return struct.pack('<f', v)
     q = int(round(v * (1 << sh)))
     if t == 1: return struct.pack('<h', max(-32768, min(32767, q)))
+    if t == 3: return struct.pack('<b', max(-128, min(127, q)))
     raise ValueError
 
 
 def quant(v, frac):
     t = frac >> 5; sh = frac & 0x1F
     if t == 0: return struct.unpack('<f', struct.pack('<f', v))[0]
-    return max(-32768, min(32767, int(round(v * (1 << sh))))) / float(1 << sh)
+    limits = (-128, 127) if t == 3 else (-32768, 32767)
+    return max(limits[0], min(limits[1], int(round(v * (1 << sh))))) / float(1 << sh)
 
 
 def encode_spline(pts, frac_v=None, frac_s=None):
@@ -184,6 +195,43 @@ def encode_spline(pts, frac_v=None, frac_s=None):
         if i + 1 < n:
             w = pts[i + 1][0] - f; body += _varint(w)
         keys.append((SPL, quant(v, fv), quant(s, fs), w))
+    return bytes(body), fv, fs, keys
+
+
+def encode_mixed_spline(pts, modes, frac_v=None, frac_s=None):
+    """Encode the same spline points with a LIN, SPL0, or SPL mode at each key.
+
+    A LIN key has no slope payload; a neighbouring SPL segment reads zero as its end slope.
+    Consecutive keys of one mode share a header, as in the normal SPL stream.
+    """
+    if len(pts) != len(modes) or any(mode not in (LIN, SPL0, SPL) for mode in modes):
+        raise ValueError("one LIN/SPL0/SPL mode is required per spline point")
+    fv = frac_v if frac_v is not None else choose_frac([p[1] for p in pts])
+    fs = frac_s if frac_s is not None else choose_frac([p[2] for p, mode in zip(pts, modes) if mode == SPL])
+    body = bytearray()
+    keys = []
+    i = 0
+    while i < len(pts):
+        end = i + 1
+        while end < len(pts) and modes[end] == modes[i]:
+            end += 1
+        count = end - i - 1
+        header = modes[i] | ((count & 7) << 4)
+        if count > 7:
+            body.append(header | 0x80)
+            body += _varint(count >> 3)
+        else:
+            body.append(header)
+        for k in range(i, end):
+            f, value, slope = pts[k]
+            body += _enc(value, fv)
+            if modes[k] == SPL:
+                body += _enc(slope, fs)
+            wait = pts[k + 1][0] - f if k + 1 < len(pts) else None
+            if wait is not None:
+                body += _varint(wait)
+            keys.append((modes[k], quant(value, fv), quant(slope, fs) if modes[k] == SPL else None, wait))
+        i = end
     return bytes(body), fv, fs, keys
 
 

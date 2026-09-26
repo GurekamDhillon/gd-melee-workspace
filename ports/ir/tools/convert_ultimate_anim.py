@@ -33,8 +33,10 @@ import os
 import subprocess
 import sys
 import tempfile
+from functools import lru_cache
 
 import numpy as np
+from scipy.linalg import solve_banded
 from scipy.spatial.transform import Rotation
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -50,6 +52,8 @@ FIGHTERS = os.path.join(TOOL, "workspace", "extracted", "fighter")
 INSTANCES = os.path.join(ROOT, "_build", "tmp", "ir")
 ROT, TRA, SCA = (1, 2, 3), (5, 6, 7), (8, 9, 10)
 TOL = {"rot": 2e-3, "tra": 2e-3, "sca": 1e-3}
+DEFAULT_WORLD_TOL = 0.004
+MAX_DEFORMING_WORLD_ERROR = 0.02
 ANIM_BUF = 0x10000  # the port's per-fighter figatree buffer (fighter.c FT_ANIM_BUF_SIZE)
 
 
@@ -115,27 +119,123 @@ def euler_slopes(quats, euler):
     return out
 
 
-def encode(values, tol, slopes=None):
-    """Cheapest encoding within tol: two keys if constant, else sparse keys added where the
-    decoded curve misses, else every frame; s16 first, f32 if quantisation alone is too coarse."""
+def encode(values, tol, slopes=None, mid_values=None):
+    """Fit quantised Hermite keys at integer and half frames, then remove redundant keys.
+
+    Values are fixed at selected source frames. Their slopes are solved together so the source's
+    half-frame path, including quaternion slerp for rotations, is part of the fit. Try s16 first
+    and use f32 only when fixed-point quantisation cannot meet the error budget.
+    """
+    values = np.asarray(values, dtype=float)
     n = len(values)
-    if np.ptp(values) <= tol / 4:
-        pts = [(0, float(values[0]), 0.0), (n - 1, float(values[0]), 0.0)] if n > 1 else [(0, float(values[0]), 0.0)]
-        body, fv, fs, keys = F.encode_spline(pts)
-        return body, fv, fs, keys
-    allp = points(values, slopes)
-    for frac in ((None, None), (0x00, 0x00)):
-        chosen = {0, n - 1}
+    if mid_values is None:
+        mid_values = (values[:-1] + values[1:]) / 2
+    target = np.empty(2 * n - 1)
+    target[::2] = values
+    target[1::2] = mid_values
+    limits = np.full(len(target), tol)
+    samples = np.arange(len(target)) / 2
+    prior = np.asarray(slopes if slopes is not None else np.gradient(values) if n > 1 else [0.0])
+
+    def fit(indices, frac_v, frac_s):
+        indices = sorted(indices)
+        fv = frac_v if frac_v is not None else F.choose_frac(values[indices])
+        qv = np.array([F.quant(values[i], fv) for i in indices])
+        count = len(indices)
+        diag = np.full(count, 1e-8)
+        off = np.zeros(count - 1)
+        rhs = 1e-8 * prior[indices]
+        for k in range(count - 1):
+            lo, hi = indices[k], indices[k + 1]
+            x = samples[2 * lo + 1:2 * hi]
+            y = target[2 * lo + 1:2 * hi]
+            span = hi - lo
+            u = (x - lo) / span
+            h00 = 2 * u**3 - 3 * u**2 + 1
+            h01 = 1 - h00
+            a = span * (u**3 - 2 * u**2 + u)
+            b = span * (u**3 - u**2)
+            residual = y - h00 * qv[k] - h01 * qv[k + 1]
+            diag[k] += np.dot(a, a)
+            diag[k + 1] += np.dot(b, b)
+            off[k] += np.dot(a, b)
+            rhs[k] += np.dot(a, residual)
+            rhs[k + 1] += np.dot(b, residual)
+        band = np.zeros((3, count))
+        band[1] = diag
+        band[0, 1:] = off
+        band[2, :-1] = off
+        fitted = solve_banded((1, 1), band, rhs, check_finite=False)
+        pts = [(i, float(values[i]), float(s)) for i, s in zip(indices, fitted)]
+        result = F.encode_spline(pts, frac_v=fv, frac_s=frac_s)
+        return pts, result
+
+    def errors(keys):
+        frames = np.cumsum([0] + [key[3] or 0 for key in keys[:-1]])
+        out = np.empty_like(target)
+        out[-1] = keys[-1][1]
+        for k in range(len(keys) - 1):
+            lo, hi = frames[k:k + 2]
+            x = samples[2 * lo:2 * hi]
+            v0, v1 = keys[k][1], keys[k + 1][1]
+            if keys[k][0] == F.LIN:
+                out[2 * lo:2 * hi] = v0 + (v1 - v0) * (x - lo) / (hi - lo)
+            else:
+                out[2 * lo:2 * hi] = F.hermite(hi - lo, x - lo, v0, v1,
+                    keys[k][2] or 0.0, keys[k + 1][2] or 0.0)
+        return np.abs(out - target)
+
+    for frac_v, frac_s in ((None, None), (0x00, 0x00)):
+        chosen = [0] if n == 1 else [0, n - 1]
         while True:
-            pts = [allp[i] for i in sorted(chosen)]
-            body, fv, fs, keys = F.encode_spline(pts, *frac)
-            err = np.abs([F.evaluate(keys, f) - values[f] for f in range(n)])
+            pts, result = fit(chosen, frac_v, frac_s)
+            err = errors(result[3]) / limits
             worst = int(np.argmax(err))
-            if err[worst] <= tol:
-                return body, fv, fs, keys
-            if worst in chosen:
+            if err[worst] <= 1:
+                # Refit all slopes after each removal: a locally redundant key can be needed
+                # again if a later removal changes neighbouring tangents.
+                for direction in (1, -1):
+                    order = range(1, len(chosen) - 1) if direction == 1 else range(len(chosen) - 2, 0, -1)
+                    for candidate in [chosen[i] for i in order]:
+                        trial = [i for i in chosen if i != candidate]
+                        trial_pts, trial_result = fit(trial, frac_v, frac_s)
+                        if np.max(errors(trial_result[3]) / limits) <= 1:
+                            chosen, pts, result = trial, trial_pts, trial_result
+                modes = [F.SPL] * len(pts)
+                for direction in (range(len(pts)), range(len(pts) - 1, -1, -1)):
+                    for k in direction:
+                        for mode in (F.LIN, F.SPL0):
+                            trial = modes.copy()
+                            trial[k] = mode
+                            mixed = F.encode_mixed_spline(pts, trial, result[1], result[2])
+                            if len(mixed[0]) < len(result[0]) and np.max(errors(mixed[3]) / limits) <= 1:
+                                modes = trial
+                                result = mixed
+                # Preserve the s16-first/f32-fallback fit. A checked s8 post-pass can encode
+                # small-value or small-slope tracks in half the payload bytes without moving any
+                # decoded sample outside the same tolerance.
+                value8 = F.choose_s8_frac([p[1] for p in pts])
+                slope8 = F.choose_s8_frac([p[2] for p, mode in zip(pts, modes) if mode == F.SPL])
+                for fv in (result[1], value8):
+                    for fs in (result[2], slope8):
+                        if fv is None or fs is None or (fv, fs) == (result[1], result[2]):
+                            continue
+                        compact = F.encode_mixed_spline(pts, modes, fv, fs)
+                        if len(compact[0]) < len(result[0]) and np.max(errors(compact[3]) / limits) <= 1:
+                            result = compact
+                return result
+            if n == len(chosen):
                 break
-            chosen.add(worst)
+            frame = min(n - 1, (worst + 1) // 2)
+            if frame in chosen:
+                frame = worst // 2
+            if frame in chosen:
+                unchosen = [i for i in range(1, n - 1) if i not in chosen]
+                if not unchosen:
+                    break
+                frame = min(unchosen, key=lambda i: abs(i - worst / 2))
+            chosen.append(frame)
+            chosen.sort()
     raise ValueError("curve cannot be encoded within %g" % tol)
 
 
@@ -161,6 +261,17 @@ def pick_slopes(quats, euler):
     return best[1]
 
 
+def slerp_mid_euler(quats, euler):
+    """Source rotation at each half frame, on the same continuous Euler branch as its endpoints."""
+    from scipy.spatial.transform import Slerp
+
+    if len(quats) < 2:
+        return np.empty((0, 3))
+    rotations = Rotation.from_quat(quats)
+    return np.array([euler_track([Slerp([0, 1], rotations[[i, i + 1]])([0.5])[0].as_quat()],
+                                 euler[i])[0] for i in range(len(quats) - 1)])
+
+
 def rest_of(ir):
     rest = {}
     for j in ir["assets"]["skeletons"][0]["joints"]:
@@ -176,6 +287,68 @@ def srt(t, r, s):
     m[:3, :3] = r.as_matrix() @ np.diag(s)
     m[:3, 3] = t
     return m
+
+
+def joint_tolerances(plan, rest, world_tol):
+    """Per-joint channel budgets from rest-pose lever arms, bounded for small leaf bones."""
+    joints = plan["joints"]
+    world = []
+    for j in joints:
+        local = np.eye(4) if j["synthesized"] else srt(*rest[j["name"]][:3])
+        parent = j["parent"]
+        world.append((world[parent] if parent is not None else np.eye(4)) @ local)
+    radius = np.zeros(len(joints))
+    for i, pose in enumerate(world):
+        parent = joints[i]["parent"]
+        while parent is not None:
+            radius[parent] = max(radius[parent], np.linalg.norm(pose[:3, 3] - world[parent][:3, 3]))
+            parent = joints[parent]["parent"]
+    out = []
+    for r in radius:
+        arm = max(r, 0.15)  # leaf joints still move their own skinned vertices
+        out.append({"rot": float(np.clip(world_tol / arm, 1.5e-4, 0.03)),
+                    "tra": float(np.clip(world_tol, 1.5e-4, 0.01)),
+                    "sca": float(np.clip(world_tol / arm, 1.5e-4, 0.02))})
+    return out
+
+
+@lru_cache(maxsize=None)
+def directly_weighted_bones(fighter):
+    """Bones with vertices in the installed high-LOD body, for world-space fit feedback."""
+    path = os.path.join(FIGHTERS, fighter, "model", "body", "c00", "model.numshb")
+    if not os.path.exists(path):
+        return None
+    from export_ultimate_mesh import lod_skip
+
+    objects = decode(path)["objects"]
+    skip = lod_skip({obj["name"] for obj in objects}, "high")
+    direct = set()
+    for obj in objects:
+        if obj["name"] in skip:
+            continue
+        if obj["bone_influences"]:
+            for influence in obj["bone_influences"]:
+                if any(weight["vertex_weight"] > 0 for weight in influence["vertex_weights"]):
+                    direct.add(influence["bone_name"])
+        else:
+            direct.add(obj["parent_bone_name"])
+    return direct
+
+
+def deforming_indices(plan):
+    """Directly skinned joints and their ancestors; fall back to every joint without a mesh."""
+    direct = directly_weighted_bones(plan["fighter"].removesuffix(".ultimate-body"))
+    joints = plan["joints"]
+    if direct is None:
+        return list(range(len(joints)))
+    names = {joint["name"]: joint["index"] for joint in joints}
+    out = set()
+    for name in direct:
+        parent = names.get(name)
+        while parent is not None:
+            out.add(parent)
+            parent = joints[parent]["parent"]
+    return sorted(out)
 
 
 def helper_constraints(fighter):
@@ -269,13 +442,21 @@ def strip_root(anim, name):
     return {a: 0.0 for a in "xyz"}
 
 
-def convert_clip(anim, plan, rest, symbol):
+def convert_clip(anim, plan, rest, symbol, stats=False, world_tol=DEFAULT_WORLD_TOL, _attempt=0):
     frames = int(round(anim["final_frame_index"])) + 1
     nodes = {n["name"]: n for g in anim["groups"] if g["group_type"] == "Transform" for n in g["nodes"]}
     tracks, report = [], {"frames": frames, "tracks": 0, "override_translation": [], "compensate_scale": [],
                           "bones_not_in_tree": sorted(set(nodes) - {j["name"] for j in plan["joints"]})}
+    if stats:
+        report["stats"] = {"joints": [], "kinds": {k: {"bytes": 0, "keys": 0, "channels": 0}
+                                                 for k in ("rot", "tra", "sca")}}
     source_poses = {}
+    tolerances = joint_tolerances(plan, rest, world_tol)
     for j in plan["joints"]:
+        joint_stats = {"joint": j["name"], **{k: {"bytes": 0, "keys": 0, "channels": 0}
+                                                 for k in ("rot", "tra", "sca")}} if stats else None
+        if stats:
+            report["stats"]["joints"].append(joint_stats)
         node = nodes.get(j["name"]) if not j["synthesized"] else None
         if node is None:
             tracks.append([])
@@ -294,30 +475,54 @@ def convert_clip(anim, plan, rest, symbol):
             report["compensate_scale"].append(j["name"])
         e = euler_track(q, reuler)
         es = pick_slopes(q, e)
+        em = slerp_mid_euler(q, e)
         source_poses[j["index"]] = (t, q, s)
         jt = []
-        for kinds, block, base, tol, slope in ((ROT, e, reuler, TOL["rot"], es), (TRA, t, rt, TOL["tra"], None),
-                                               (SCA, s, rs, TOL["sca"], None)):
+        for label, kinds, block, base, slope, middle in (("rot", ROT, e, reuler, es, em),
+                                                         ("tra", TRA, t, rt, None, None),
+                                                         ("sca", SCA, s, rs, None, None)):
             for axis, kind in enumerate(kinds):
                 col = block[:, axis]
-                if np.max(np.abs(col - base[axis])) <= tol / 4:
+                if np.max(np.abs(col - base[axis])) <= TOL[label] / 4:
                     continue
-                body, fv, fs, _ = encode(col, tol, None if slope is None else slope[:, axis])
+                tol = tolerances[j["index"]][label]
+                body, fv, fs, keys = encode(col, tol, None if slope is None else slope[:, axis],
+                                           None if middle is None else middle[:, axis])
                 jt.append((kind, body, fv, fs))
+                if stats:
+                    for entry in (joint_stats[label], report["stats"]["kinds"][label]):
+                        entry["bytes"] += len(body) + 16  # key stream, track record, relocation
+                        entry["keys"] += len(keys)
+                        entry["channels"] += 1
         tracks.append(jt)
         report["tracks"] += len(jt)
     arc = F.build_tree_archive(symbol, frames - 1, tracks)
     report["bytes"] = len(arc)
     report["over_buffer"] = len(arc) > ANIM_BUF
+    if stats:
+        report["stats"]["archive_overhead"] = len(arc) - sum(v["bytes"] for v in report["stats"]["kinds"].values())
+        report["stats"]["keys"] = sum(v["keys"] for v in report["stats"]["kinds"].values())
+    checked = check(arc, plan, rest, source_poses, frames, True, True)
+    weighted = deforming_indices(plan)
+    max_deforming = float(np.max(checked["_joint_max"][weighted]))
+    if max_deforming > MAX_DEFORMING_WORLD_ERROR:
+        if _attempt >= 6:
+            raise ValueError(f"{symbol}: deforming-joint error {max_deforming:.5f} exceeds "
+                             f"{MAX_DEFORMING_WORLD_ERROR:.5f} after {_attempt + 1} fits")
+        return convert_clip(anim, plan, rest, symbol, stats, world_tol * 0.75, _attempt + 1)
+    report["world_fit"] = {"deforming_max": max_deforming, "effective_world_tol": world_tol,
+                           "fits": _attempt + 1}
     return arc, report, source_poses
 
 
-def check(arc, plan, rest, source_poses, frames, half):
+def check(arc, plan, rest, source_poses, frames, half, collect_errors=False):
     """Decode the archive and compare with the source: channel error at integer frames, and joint
     world positions (the whole chain, synthesized joints at rest) at integer and half frames."""
     _, tree = F.parse_archive(arc)
     joints = plan["joints"]
     worst = {"channel": 0.0, "world": 0.0, "world_half": 0.0, "where": None}
+    errors = [] if collect_errors else None
+    joint_max = np.zeros(len(joints)) if collect_errors else None
 
     def local_hsd(i, f):
         j = joints[i]
@@ -364,12 +569,20 @@ def check(arc, plan, rest, source_poses, frames, half):
             p = j["parent"]
             wh[i] = (wh[p] if p is not None else np.eye(4)) @ local_hsd(i, f)
             ws[i] = (ws[p] if p is not None else np.eye(4)) @ local_src(i, f)
-        d = max(np.linalg.norm(wh[i][:3, 3] - ws[i][:3, 3]) for i in wh)
+        distances = [np.linalg.norm(wh[i][:3, 3] - ws[i][:3, 3]) for i in wh]
+        i = int(np.argmax(distances))
+        d = distances[i]
+        if collect_errors:
+            errors.extend(distances)
+            np.maximum(joint_max, distances, out=joint_max)
         key = "world" if f == int(f) else "world_half"
         if d > worst[key]:
             worst[key] = d
-            if key == "world":
-                worst["where"] = f
+            worst["where" if key == "world" else "half_where"] = f
+            worst["joint" if key == "world" else "half_joint"] = joints[i]["name"]
+    if collect_errors:
+        worst["_errors"] = np.asarray(errors, dtype=np.float32)
+        worst["_joint_max"] = joint_max
     return worst
 
 
@@ -389,9 +602,14 @@ def main():
     ap.add_argument("--clips", nargs="*")
     ap.add_argument("--out", default=os.path.join(ROOT, "_build", "tmp", "ultimate-anim"))
     ap.add_argument("--check-half", action="store_true")
+    ap.add_argument("--stats", action="store_true", help="include per-joint/channel bytes, key counts, and world error distribution")
+    ap.add_argument("--world-tol", type=float, default=DEFAULT_WORLD_TOL,
+                    help="world-space displacement budget used to derive channel tolerances")
     ap.add_argument("--no-helpers", action="store_true", help="do not bake model.nuhlpb helper bones")
     ap.add_argument("--clip-list", help="file with one clip name per line (a moveset's used set)")
     args = ap.parse_args()
+    if not math.isfinite(args.world_tol) or args.world_tol <= 0:
+        ap.error("--world-tol must be a positive finite number")
     ir = json.load(open(os.path.join(INSTANCES, f"{args.fighter}.ultimate-body.ir.json"), encoding="utf-8"))
     plan = plan_parts.plan(ir)
     rest = rest_of(ir)
@@ -405,20 +623,40 @@ def main():
     out = os.path.join(args.out, args.fighter)
     os.makedirs(out, exist_ok=True)
     summary = []
+    all_errors = []
     for c in clips:
         anim = decode(os.path.join(motion, c + ".nuanmb"))
         bake_helpers(anim, plan, rest, orient)
         sym = f"Ply{args.fighter}_ACTION_{c}_figatree"
-        arc, rep, poses = convert_clip(anim, plan, rest, sym)
-        rep.update(check(arc, plan, rest, poses, rep["frames"], args.check_half))
+        arc, rep, poses = convert_clip(anim, plan, rest, sym, args.stats, args.world_tol)
+        checked = check(arc, plan, rest, poses, rep["frames"], args.check_half, args.stats)
+        if args.stats:
+            errors = checked.pop("_errors")
+            joint_max = checked.pop("_joint_max")
+            all_errors.append(errors)
+            rep["stats"]["world_error"] = {"max": float(np.max(errors)),
+                                             "p99": float(np.percentile(errors, 99)),
+                                             "median": float(np.median(errors)), "samples": len(errors)}
+            rep["stats"]["joint_max"] = {j["name"]: float(joint_max[j["index"]]) for j in plan["joints"]}
+        rep.update(checked)
         rep["clip"] = c
         open(os.path.join(out, c + ".dat"), "wb").write(arc)
         summary.append(rep)
         print(f"{c:28} {rep['frames']:4}f {rep['tracks']:4} tracks {rep['bytes']:6} B"
-              f"{' OVER' if rep['over_buffer'] else ''}  world err {rep['world']:.4f}"
+              + (f" {rep['stats']['keys']:5} keys" if args.stats else "")
+              + f"{' OVER' if rep['over_buffer'] else ''}  world err {rep['world']:.4f}"
               + (f" half {rep['world_half']:.4f} ({rep['snap_intervals']} snap frames skipped)"
                  if args.check_half else ""))
     json.dump(summary, open(os.path.join(out, "report.json"), "w"), indent=1)
+    if args.stats:
+        errors = np.concatenate(all_errors)
+        kinds = {k: {field: sum(r["stats"]["kinds"][k][field] for r in summary)
+                     for field in ("bytes", "keys", "channels")} for k in ("rot", "tra", "sca")}
+        json.dump({"clips": len(summary), "bytes": sum(r["bytes"] for r in summary),
+                   "keys": sum(r["stats"]["keys"] for r in summary), "kinds": kinds,
+                   "world_error": {"max": float(np.max(errors)), "p99": float(np.percentile(errors, 99)),
+                                   "median": float(np.median(errors)), "samples": len(errors)}},
+                  open(os.path.join(out, "stats-summary.json"), "w"), indent=1)
     print(f"total {sum(r['bytes'] for r in summary)} bytes in {len(summary)} clips")
     w = max(r["world"] for r in summary)
     print(f"{len(summary)} clips -> {out}; worst world error {w:.4f}, "
