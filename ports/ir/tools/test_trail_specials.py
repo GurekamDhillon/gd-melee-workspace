@@ -97,6 +97,18 @@ def check_sonic(dest, doc, default_dest, default_doc, dump):
         assert all(c["when"][0]["holds"] == (c["named"]["damage"] == 3.0) for c in row["commands"]
                    if c["cmd"] == "ATTACK" and c["frame"] == 3)
         ev = events_for(dest, doc, name)
+        at_entry = [e for e in ev if e["frame"] == 0]
+        up = next(i for i, e in enumerate(at_entry) if e["words"] == [0xEC42C000, 0x3F59999A])
+        assert at_entry[up - 1]["words"] == [0xED240040, 0x21, 0x3F248DBB, 4]
+        assert at_entry[up + 1]["words"] == [0xEC42C100, 0x3F59999A]
+        guard = at_entry[up + 2]
+        assert guard["words"] == [0xED030200, 1, 4]  # LA int 2 == 1; skip both MULFs when 0
+        assert [e["words"] for e in at_entry[up + 3:up + 5]] == [
+            [0xEC42C000, 0x3F933333], [0xEC42C100, 0x3F933333]]
+        words = [w for e in ev for w in e["words"]]
+        for connected, next_word in ((0, 0xED240040), (1, 0xEC42C000)):
+            offset = guard["offset"] + len(guard["words"]) + (guard["words"][2] if connected == 0 else 0)
+            assert words[offset] == next_word
         assert not any(e["frame"] == 3 and e["sub"] == 0x12 and e["words"][1] in (0x3B, 0x3C)
                        for e in ev)
         f3 = [e for e in ev if e["frame"] == 3 and (e["op"] == 11 or

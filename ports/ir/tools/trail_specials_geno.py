@@ -100,6 +100,8 @@ HOOK_SPAWN, HOOK_LOCKON = 5, 6
 MS_WAIT, MS_FALLSPECIAL = 14, 35
 DASH_N = 1              # LA int 1: dashes done (LA int 0 is the magic cycle, beta's)
 SONIC_PREV_N = 2        # LA int 2: previous dash's connection across hover -> next dash
+# _research/ultimate-trail-status.md §3: vl.prc 0x1A41A10288 boosts dash speed when the copied flag is true.
+SONIC_DASH_ENHANCE_MUL = 1.15
 
 
 def fb(x):
@@ -349,6 +351,9 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
              + GET(var(RAF, 1), V_MOVE_F1) + MULF(var(RAF, 1), speed))
         upblk = MULF(var(RAF, 0), up_mul) + MULF(var(RAF, 1), up_mul)
         v += IFV(V_MOVE_F1, GT, steer_up_mul_test(S), len(upblk)) + upblk       # 40-140 deg: x0.85
+        if n > 1 and sonic_hit_branch:
+            boost = MULF(var(RAF, 0), SONIC_DASH_ENHANCE_MUL) + MULF(var(RAF, 1), SONIC_DASH_ENHANCE_MUL)
+            v += IF(var(LAI, SONIC_PREV_N), EQ, 1, len(boost)) + boost
         v += IFV(V_MOVE_F1, GT, fb(0.05), 3) + PUTI(V_AIR, 1)                   # aimed up: lift off
         v += (PUTV(V_FWD_VEL, var(RAF, 0)) + PUTV(V_VEL_Y, var(RAF, 1))
               + GET(var(RAF, 2), V_FACING) + MULV(var(RAF, 2), var(RAF, 0)) + PUTV(V_GROUND_VEL, var(RAF, 2)))
