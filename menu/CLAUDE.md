@@ -1,6 +1,6 @@
 # menu/: the kit's art pipeline
 
-Every texture the port's menus draw, and the README's art, is **generated** here: HTML/CSS/SVG in
+The port's original kit textures and README artwork are **generated** here: HTML/CSS/SVG in
 `pipeline/*.py`, rendered by headless Chromium, converted to GX textures by
 `melee/pc/tools/png2gx.py`, with a layout JSON beside each set. `README.md` has the build and the
 per-texture table; `pipeline/readme.py`'s docstring the README-art rules.
@@ -23,13 +23,21 @@ Hasklug, OFL).
 The LAB's own art (`melee/pc/geno/mods/geno-lab/art/`) imports this pipeline by path and reads it
 only.
 
+## Pending art work
+
+The 2026-09-27 state in `../docs/NEXT-SESSION.md` supersedes the two queued notes. GD wants
+new `frame_edge_v`, `frame_edge_h` and four `frame_corner_*` pieces, plus parametric menus
+in both the engine kit and generators. `pipeline/build.py` still consumes the current pieces;
+`gd.kit.panel` still composes their 9-slice names. Keep the generator, 1x/2x output and runtime
+consumer consistent when that work starts. This refresh does not change art.
+
 ## Working here
 
 - Needs `playwright`, `pillow`, `numpy`, `scipy`. Without `playwright install`, point the launch at
   an existing Chromium (`executable_path`); a small wrapper that patches `BrowserType.launch`
   works and needs no repo change.
-- Every generator checks its own output (text fits its box, no overlaps, contrast) and exits
-  non-zero on failure; a build that prints no `checks ok` did not pass.
+- `readme.py` checks text fit, overlaps, safe areas and contrast and fails on a bad result.
+  Read each other generator's checks before claiming its output was verified.
 - The README shows the PNGs committed in `docs/readme/`; regenerating changes nothing until they
   are copied there. Compare before copying: a one-word change should move one tile.
 - The kit's style is one shear (0.25), flat colour, hard shadows, cobalt faces, gold for emphasis

@@ -1,17 +1,18 @@
 # tools/release - public releases
 
 How GD's Melee is packaged for people who are not us: a zip with the game, a launcher that asks
-for the user's own disc image, and nothing of Nintendo's. Owned by lane charlie.
+for the user's own disc image, and nothing of Nintendo's. The commands below describe the scripts at workspace `fc23753`.
 
 ## One command
 
 ```powershell
-powershell -File tools\release\publish.ps1 -DryRun   # build + check + show the gh command and notes
+powershell -File tools\release\publish.ps1 -DryRun   # package existing binaries + check + show gh command and notes
 powershell -File tools\release\publish.ps1 -Draft    # publish as a draft release (look it over on GitHub, then Publish)
 powershell -File tools\release\publish.ps1           # publish for real
 ```
 
-`publish.ps1` refuses to publish when:
+`publish.ps1` packages an existing game build; it does not compile the game. Normal publishing
+uses `-Strict` and refuses when:
 - the tag `v<VERSION>` already exists on the repo (bump `tools/release/VERSION`);
 - the workspace commit is not on `origin-ws` (the release notes link to it);
 - the melee commit in the exe is not on the public fork `pub`, the melee tree has uncommitted
@@ -19,7 +20,8 @@ powershell -File tools\release\publish.ps1           # publish for real
   offer in the zip points at that commit, so it must be public and must be what was built);
 - `check_release.ps1` finds anything it does not recognise.
 
-`-Force` publishes past the provenance checks (never past `check_release.ps1`). `-Repo` picks
+`-Force` bypasses provenance failures (never `check_release.ps1`). `-DryRun` also turns
+provenance failures into warnings and skips strict mode, so it is not a strict-package proof. `-Repo` picks
 another repo (default `GurekamDhillon/gd-melee-workspace`; the fork `GurekamDhillon/melee` would
 also work). `-Server host:port` bakes a `netplay_server.txt` into the zip; that address is then
 public, so it is off by default.
@@ -34,7 +36,7 @@ Before publishing: rebuild the exe (`bash tools/port/build.sh`), push `pc-port` 
 | `VERSION` | the release version (`0.1.0` -> tag `v0.1.0`, zip `GDMelee-0.1.0-win64.zip`) |
 | `build_release.ps1` | stages `_build/release/GDMelee-<v>-win64/`, writes `version.txt` + `MANIFEST.sha256`, checks the folder, zips it (forward-slash entries, one top folder), checks the zip, writes `<zip>.sha256` |
 | `check_release.ps1` | the disc-data guard; runs on a folder or a zip; exit 1 = do not ship |
-| `publish.ps1` | build (strict) + check + release notes + `gh release create` |
+| `publish.ps1` | package existing binaries (strict unless Force/DryRun) + check + release notes + `gh release create` |
 | `build_launcher.ps1` | compiles the launcher with Windows' own `csc.exe` (.NET Framework 4.x) |
 | `launcher/GDMeleeLauncher.cs` | the launcher (C# 5 WinForms, one file) |
 | `README-user.txt` | becomes `README.txt` in the zip |
@@ -46,7 +48,28 @@ Before publishing: rebuild the exe (`bash tools/port/build.sh`), push `pc-port` 
 `msvcp140_atomic_wait.dll`, `vcruntime140.dll`, app-local from the newest installed
 `VC\Redist\MSVC\<ver>\x86\Microsoft.VC*.CRT` - melee-pc.exe and Dawn import them, and a PC
 without the VC++ redistributable would otherwise fail to start), the committed `_build/ui` art,
-docs and licences. `-GameDir` packages a lane's build instead.
+docs and licences, the LAB script mod, and Lua examples. To package a lane's build, pair
+`-GameDir` with `-MeleeDir` pointing at the checkout that produced that EXE:
+
+```powershell
+powershell -File tools\release\build_release.ps1 -GameDir C:\path\build -MeleeDir C:\path\melee -Strict
+```
+
+## Checks before packaging
+
+Build through `tools/port/build.sh`, then use the sandbox runner described in
+[tools/port/README.md](../port/README.md). For example, in Git Bash:
+
+```bash
+bash tools/port/run.sh --test release-tests --iso "C:/path/game.iso"
+bash tools/port/run.sh --test --realtime release-tests-rt --iso "C:/path/game.iso"
+```
+
+`--test` sets `MELEE_TURBO=1`; `--realtime` before the sandbox name sets it to 0. Headless
+tests have no paced frame loop. For scripted gameplay, turbo accelerates the virtual simulation
+clock and may omit presentation/draw work; use realtime for player-facing visual/audio checks.
+`MELEE_FPS=u` only uncaps interpolated presentation. `GW_JOBS` is not supported by this workspace
+HEAD. Test results must name the actual EXE, renderer, disc and mods being packaged.
 
 ## What keeps disc data out
 
@@ -82,7 +105,7 @@ tampered README.
 
 ## The launcher
 
-`GD Melee.exe`, a single 50 KB exe that runs on any Windows 10/11 with nothing installed (.NET
+`GD Melee.exe`, the launcher exe that runs on any Windows 10/11 with nothing installed (.NET
 Framework 4.8 ships with the OS).
 
 - First run: explains that no game data is included, then asks for the `.iso`.
@@ -132,8 +155,8 @@ Framework 4.8 ships with the OS).
   There is no automatic upload and no prompt. The receiving end is `crash_upload_server.py`
   (below); it is NOT deployed.
 - A non-zero exit without a report offers the log, except when the log shows the window was
-  closed first: the current exe faults in `webgpu_dawn.dll` while shutting down after a window
-  close (0xC0000005), which is not worth alarming anyone over.
+  closed first: shutdown failures can occur after a window close; that filter is not evidence that the
+  current game still has a particular shutdown fault.
 - Settings live in `userdata\launcher.cfg` next to the launcher (portable); if that folder is
   read-only (Program Files) they go to `%LOCALAPPDATA%\GDMelee`, and the game then runs with its
   log and shader cache there too.
@@ -174,9 +197,10 @@ A CI build is not feasible today, so there is no `.github/workflows/release.yml`
   `tools/port/build.sh` assume that local layout;
 - the test suite needs a disc image, which can never be on a runner.
 
-No disc data is needed to *compile*, so it becomes possible once the toolchain and a prebuilt
-Aurora/Dawn are downloadable (e.g. release assets of a toolchain repo) and the build scripts can
-run from a clean clone. Until then: build locally, `publish.ps1` uploads.
+A clean-machine recipe also needs the generated include files used by the game pipeline
+(`agent_new.sh` copies them from the baseline). Do not assume the tracked sources alone are a
+complete build input. Keep locally extracted data out of CI artifacts and releases. Until a
+portable recipe is verified: build locally, then package and publish the existing binaries.
 
 ## Licences in the zip (checked 2026-09-22)
 

@@ -1,60 +1,92 @@
-# Next session — start here
+# Next session - start here
 
-**Current as of 2026-09-24.** Read [HANDOFF-2026-09-24.md](HANDOFF-2026-09-24.md) for the
-current slate and its evidence. It supersedes this file's 2026-09-20 state and the dated
-handoffs of 2026-09-20 and 2026-09-21. `HANDOFF.md` remains useful for its §6 Traps and §7
-Conventions; its early status sections are historical.
+**Current as of 2026-09-27**, checked against workspace `fc23753` and game `4c676892a`.
+This dated state supersedes `QUEUED-2026-09-26.md`, `QUEUED-2026-09-27.md` and the general
+state in `HANDOFF-2026-09-24.md`. The dated Slippi handoff remains the record of those replay
+runs, not a test result for today's HEAD. `HANDOFF.md` supplies the architecture and sections 6-7 rules.
 
-For the newer Slippi work, read [HANDOFF-2026-09-24-SLIPPI.md](HANDOFF-2026-09-24-SLIPPI.md)
-first. A complete two-native-client replay has passed public Slippi Direct
-matchmaking, with exact processed inputs, game states and finalized checksums;
-the Slippi handoff tracks final regression/integration status and remaining scope.
-Two additional unchanged public Direct replay runs passed all 9,120 and 9,126
-frames exactly; a third long replay was rejected at startup for non-neutral P1
-processed input in the initial delay window and does not count as a pass. GD's
-earlier one-time cleanup deleted 104 used `.slp` files, including the six old
-`parity.local.conf` fixtures (4,396 recordings remained at the time).
+## Current code
 
-## Baseline
+- Release version is **0.1.6** (`tools/release/VERSION`). HEAD has substantial work after that
+  release; the old 185/185 result does not validate it. This refresh ran no builds or games.
+- **Ultimate fighters:** the shared IR pipeline installs a fighter on its own skeleton. Sora's
+  source id is `trail` (default name `Ultimate Trail`, token `ultimatetrail`); Ultimate Kirby uses
+  `kirby` (name `Ultimate Kirby`, token `ultimatekirby`). Sora has ACMD conversion, Geno magic and physical-special generators,
+  effect packages and bindings, UI art, alternate costumes and conversion-loss/position audits.
+  The Aerial Sweep carry-profile change was reverted in workspace `e7d5246`; do not report it
+  as part of HEAD. See `ports/README.md` for the actual entry points and slot conflicts.
+- **Geno:** JSON version 5, with additive v5.5 features: 16 articles per profile, on-hit dispatch,
+  counter windows, lock-on/stick aim, animation-rate writes, HBDMG, HBSTUN and HBFLAGS. Native
+  `.gfx.json` effect simulation and rendering and fighter `fx_bindings` exist. Generated output
+  and visual fidelity still need their own verification; a renderer is not proof of parity.
+- **Fighters/rendering:** 94 m-ex slots, 255 PC fighter parts, 0x20000-byte animation buffers;
+  optional 64-envelope PC palette POBJs with a `pobj_palette: 1` engine requirement. MEM1 is
+  40 MiB; snapshots share pages and the netplay protocol is 3. Aurora has CPU-side indexed-array
+  comparison, interpolation for palette draws and the host UI on interpolated presents.
+- **Scripting:** offline stage lines, attached models, real Target Test targets, camera control,
+  six Adventure enemy kinds, fly/teleport, boss-defeat holds, `gd.set_damage` and `gd.hit` are
+  registered. `gd.input` holds count completed logic frames, including single stepping; extra
+  PADReads while paused do not consume them. LAB input-driven export steps one frame per tick.
+- **1P:** scene launch supports Classic, Adventure and All-Star with step/difficulty fields.
+  Retail table lookups for m-ex fighters, AllA animation-heap capacity and step bounds have fixes.
+  Classic step 7's IntroEasy projection uses `Mtx44` (`d07539c59`). The boss-hit work landed
+  (`8fccfdc27`); those old queue entries are no longer unmerged tasks.
+- **Build/run:** a single Python scan finds stale game TUs; bridge regeneration writes only
+  changed bytes and relinks until the generated table agrees with the link map. `run.sh --test`
+  exports turbo by default; `--realtime` clears it. Headless `--test` itself has no paced frame
+  driver. `MELEE_FPS=u` uncaps presentation, not game logic. `GW_JOBS` is not in this HEAD.
 
-- **v0.1.6 is published**, with stage D and corrected launcher online directions. The release
-  targets workspace `75f0863` and game `919e345ac`; the strict package passed both disc-data
-  guards. See the current handoff for the GitHub release link and validation limits.
-- Game `pc-port` is now `1cf87fe4b`, containing the tested experimental Slippi
-  replay-pair adapter, the current Discord community links, and the Windows
-  title-bar drag fix. Both clients kept advancing during active/inactive window
-  movement in a complete exact Direct replay; ACE remained 185/185. It has been pushed
-  to `pub/pc-port`; workspace `master` contains the accompanying build/verification
-  tools and handoff. Development lanes remain available with their task history.
-- The **pre-stage-D executable** passed 185/185 headless tests on vanilla, Akaneia and ACE.
-  Stage D has prior GD testing, 47 passing offline Lua checks, passing beta and main builds,
-  and **185/185 on ACE** with the merged executable. A controller-enabled live LAB launch
-  reached Fox/Fox on FD in `_build/runs/stage_d_lab_gd` without a FATAL log entry; GD said it
-  looked good and closed the game.
-- The three VPS crash reports remain untouched per GD's instruction.
+## Pending work and decisions
 
-## Working rules
+The queue records intent, not proof that a lane is still running. Recheck its tree and report
+before resuming it; do not reuse the old alpha/echo/beta assignments as current ownership.
 
-- **Agents build; GD tests.** Give GD a running game and numeric/log evidence for a visual or
-  controller check. No screenshots for verification. Default to ACE, level-0 CPUs and
-  `MELEE_VOLUME=3`; use a visible main-desktop game window.
-- Check at least 8 GB free RAM before launching; ordinarily keep one `melee-pc` process per
-  agent. Kill only a PID you started after checking its executable path.
-- Build through `tools/port/build.sh`, never raw clang. Inspect the log for `error` and `FAIL`
-  even if the script says OK. The generated m-ex bridge must reach its link-map fixpoint.
-- Do not push, publish or merge to `pc-port`/`master` without GD's explicit go. Never commit
-  disc-derived data or Nintendo assets. Commit messages end with a `Co-Authored-By` line.
+1. **Four-Sora frame arena:** `4c676892a` sets Aurora's storage buffer to 24 MiB. Its source
+   comment cites a 10,573 KB four-Sora peak; this replaces the temporary 64 MiB measurement
+   setting. The vertex buffer is 12 MiB; overflow drops remaining draws. Recheck the queued
+   `codex-frame-arena-report.md` and matching run/library before claiming flicker is resolved.
+2. **Platform exporter:** the queued `codex-platform-model` work exports GD's Blender BF_Platform
+   and adds a `model=` platform option. HEAD has `gd.stage_add_model{platform=handle}`;
+   `gd.stage_add_platform` still reads only `passthrough` and `ledges`. The exporter/shortcut
+   is not part of this audited HEAD.
+3. **Build speed round 2:** `codex-buildspeed2-ws` has queued `GW_JOBS` and content-hash rebuild
+   work. GD's queue requires a Windows lane timing run before merging it. This HEAD uses
+   timestamp stale detection and fixed `xargs -P 8`; the bridge's hash stamp is a separate check.
+4. **Menu art:** replace `menu/out/2x/frame_edge_v.png`, `frame_edge_h.png` and the four
+   `frame_corner_{bl,br,tl,tr}.png` pieces. Decide how the 1x copies and generator change too.
+   Make the engine menu kit and art generators parametric. Existing frame pieces are still
+   generated and consumed; neither task is done.
+5. **Move grafting: estimate only, do not build.** GD asked about replacing one Melee fighter's
+   move with another's. The earlier estimate was 1-2 days for a normal/throw graft tool plus
+   LAB checks, and roughly half a day to two days per special. These are planning estimates,
+   not measured delivery times. `build_melee_fighter.py` now handles any retail fighter; the
+   move-graft tool itself is not established by that generalisation.
+6. **Sora effects:** GD requires Ultimate particles in place of the procedural spell models.
+   The importer, native effects runtime and bindings now exist; compare the installed spell
+   effects against the source before closing the request. `trail_magic_models.py` still exists.
+7. **Workspace move:** later, with agents and games stopped, move to `E:\Projects\Melee Workspace`
+   or a nearby location. Repair both repos' worktrees, update `.env`, lane/build paths, mod/run
+   references and path-keyed agent memory. Ghidra can move separately. Nothing was moved here.
+8. The queue reports stage-pool reservation on the results screen. Treat it as an observation
+   needing a current log, not a confirmed defect. Leave the three VPS crash reports untouched
+   under GD's existing instruction.
 
-## Historical traps still worth keeping in mind
+## Operating rules and traps
 
-1. A stale source or copied executable can give a false verification. Confirm the changed
-   build was used; `build.sh` now rebuilds stale game TUs and shims, but `_build/runs/<name>`
-   contains a copy. `.github/README.md` outranks the root README on GitHub when present.
-2. A harness summary can hide a fault. Inspect the run's `melee-pc.log` before dismissing it.
-3. Several simultaneous games can contend for caches, memory and volume handling. Use
-   separate run and build roots and respect the one-process baseline above.
-4. `MELEE_MODS_DIR` names the **parent** of a mod pack. Pointing it at the pack can make a
-   green-looking test run prove nothing.
-
-The earlier file's stage/trophy triage and 70/70 count were 2026-09-20 snapshots. Consult
-dated research before reviving one of those tasks.
+- **Agents build; GD tests** visual/controller behaviour. Use numeric/log evidence, a visible
+  main-desktop window, ACE by default, level-0 CPUs and `MELEE_VOLUME=3`. Check free RAM (8 GiB
+  baseline); normally one game per agent. Stop only a PID you started, after checking its path.
+- Build with `tools/port/build.sh`. Inspect errors and the final bridge ABI audit. A sandbox
+  contains a copied EXE/map: changing source or the baseline EXE does not refresh a live run.
+- Use separate build and run roots. `agent_new.sh` hardlinks baseline objects; inspect the local
+  game-TU writer before assuming writes are isolated. Shared Aurora rebuilds affect every lane.
+- `MELEE_MODS_DIR` names the parent of mod folders. Native Windows code needs Windows paths:
+  use Git Bash `pwd -W`, not `/c/...`. Confirm mounted mods in the log.
+- Inspect each failed run's `melee-pc.log` and crash logs; a harness summary is not diagnosis.
+- Script pad claims survive gaps as connected neutral input. Release them explicitly or let the
+  owning task/script end. Legacy text pad scripts still count PADReads, not Lua logic frames.
+- Turbo requires scripted input or LAB batch export and refuses netplay. Hidden turbo frames
+  skip display lists/skinning by default; `MELEE_TURBO_DRAWS=1` retains that work. Use realtime
+  for presentation timing and controller checks.
+- No disc-derived assets in either repo. No push, publish or merge to shared branches without
+  GD's go. `.github/README.md` takes precedence over the root README on GitHub.

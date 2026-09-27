@@ -1,5 +1,8 @@
 # Scripting GD's Melee (Lua) — the modding API
 
+**Current as of 2026-09-27.** Checked against `gw_script.c` at game `4c676892a`; this
+reference supersedes older API descriptions. The LAB API is public too (`gd.lab_api == 1`).
+
 GD's Melee runs **Lua 5.4** scripts inside the game. A script can read the match (fighters,
 positions, percents, action states), draw readouts over the game, add console commands, press
 buttons, save and load states, and set up scenes. Training-mode features and other modders'
@@ -108,7 +111,6 @@ Scripts come from mods people download, so they run sandboxed:
 ### Gameplay scripts, netplay and rollback
 
 Anything that changes the game - `gd.input`, `gd.set_percent`, `gd.set_stocks`, savestates,
-| `gd.set_damage(port, n)` | *gameplay, offline.* The fighter's real damage (knockback, HUD, a stamina boss's remaining HP = stamina - damage). A stamina boss still needs a hit to be KO'd |
 pause/step, `gd.scene_launch`, `gd.quit` - is refused unless the manifest says `"gameplay": true`.
 Read-only scripts (overlays, loggers, readouts) can differ between two players online.
 
@@ -121,10 +123,10 @@ Read-only scripts (overlays, loggers, readouts) can differ between two players o
    everything it writes from game state each frame and keeps no Lua-side memory across frames
    (Lua state is not part of a savestate, so a script with counters would diverge on rollback).
    Savestates and pause are never available online.
-3. Every loaded gameplay script is hashed (id, version and source) into
-   `gw_Script_GameplayHash()` / `gw_Script_GameplayDescribe()` for the netplay must-match set:
-   two players whose gameplay scripts differ do not match. (The handshake side is the netplay
-   code's; the digest is ready for it.)
+3. Enabled scripts with both `gameplay` and `rollback_safe` are hashed by version and source
+   into the netplay must-match set. Script ids label the diagnostic description. The console
+   and offline-only scripts are excluded. An offline-only API stays unavailable online even
+   when `rollback_safe` is true.
 
 ---
 
@@ -134,8 +136,8 @@ Define any of these as globals in your script; the engine calls them.
 
 | hook | when | notes |
 |---|---|---|
-| `on_tick()` | once per rendered frame, before the game logic | input polling (`gd.key_pressed`), UI state |
-| `on_draw()` | once per rendered frame, after `on_tick` | the only place `gd.text`/`gd.box`/... draw (the list is rebuilt every frame) |
+| `on_tick()` | each host script tick, before game logic | input polling (`gd.key_pressed`), UI state |
+| `on_draw()` | after the game render; fallback at the next tick if no render hook ran | the only place `gd.text`/`gd.box`/... draw (the list is rebuilt every frame) |
 | `on_frame_pre()` | at the start of every game-logic frame | before the fighters move |
 | `on_frame()` | at the end of every game-logic frame | after the fighters moved; the frame-data point |
 | `on_scene(kind, name, prev_kind)` | a scene started (also once when the script loads) | `name` like `"GS_TRAINING"` |
@@ -145,7 +147,23 @@ Define any of these as globals in your script; the engine calls them.
 | `on_unload()` | before the script is unloaded or reloaded | |
 
 While the game is paused (`gd.pause`), `on_tick` and `on_draw` keep running; the frame hooks do not.
-There is no `on_hit` in API 1 (it would need a hook inside the hit code; asked for later).
+Engine events are queued and delivered after the logic frame, before `on_frame`:
+
+| hook | arguments |
+|---|---|
+| `on_action_change(port, old, new, sub)` | action-state ids; `sub` identifies a subfighter |
+| `on_hit(attacker, victim, info)` | attacker port or nil; victim port; `info.dealt`, optional `hitbox`, `item`, `attacker_sub`, `victim_sub`, and captured hitbox fields when available |
+| `on_hitlag(port, entering, sub)` | entering/leaving hitlag |
+| `on_land(port, motion, sub)` | landing action |
+| `on_target_broken(handle, remaining)` | gameplay scripts only; scripted target broken |
+| `on_all_targets_broken()` | gameplay scripts only; last scripted target broken |
+| `on_enemy_defeated(event)` | gameplay scripts only; `{kind, handle}` |
+| `on_boss_defeated(event)` | gameplay scripts only; `{kind, port, x, y}`; kind is `master_hand`, `crazy_hand`, or `fighter_<kind>` |
+| `on_camera_complete(kind)` | owning script; `"move"` or `"path"` |
+| `on_hot_reload(ok)` | completion of the LAB hot reload |
+
+Use `gd.boss_hold` in the boss-defeat callback to delay progression for a scripted bonus,
+then `gd.boss_release` to let the normal flow continue.
 
 ---
 
@@ -170,7 +188,7 @@ Ports and players are numbered **1-4** (fighter slots 1-6 for `gd.player`).
 | `gd.perf([n])` | host diagnostics for up to `n` (default 120, 1-240) recent presented frames: `{fps, target (0 = uncapped; the sim stays 60 Hz), frames}`, oldest first. Each frame: `total_ms` (tick to tick, pacing included), `logic_ms` (game thread outside GX submission), `gx_ms` (`GXBegin` / `GXCallDisplayList`), `submit_ms` (`aurora_end_frame` enqueue), `worker_ms` (render-worker work incl. Present; asynchronous, overlaps the others, never add it to them), `draw_calls`, `vertices` (decoded GX vertices), `fx_particles`. `worker_ms` and `vertices` read 0 until the shared Aurora has the new counters. Sampling starts on a `gd.perf()` call or Video > Show FPS = Performance and stops about 120 frames after the last read; host-only, not in savestates or rollback, never for gameplay decisions. The LAB's DISPLAY > Performance (F4) panel and Show FPS 1 / 2 outside the LAB are drawn with the kit from it |
 | `gd.script()` | this script's `{id, name, version, author, gameplay, rollback_safe}` |
 | `gd.buttons` | the bit values: `gd.buttons.A == 0x100` ... |
-| `gd.items()` | every live item (articles and projectiles too), in the engine's item-list order: `{kind, owner_port (1-6, 0 unowned), x, y, z, vx, vy, facing, frame_alive, state}`; Geno articles add `geno_kind` (zero-based article index) and `geno_profile`. `frame_alive` is exact for Geno articles; for other items it counts frames since the script engine first saw the item in this scene. `state` is the item's motion state |
+| `gd.items()` | every live item (articles and projectiles too), in the engine's item-list order: `{id, kind, owner_port (1-6, 0 unowned), x, y, z, vx, vy, facing, frame_alive, state}`; Geno articles add `geno_kind` (zero-based article index) and `geno_profile`. `frame_alive` is exact for Geno articles; for other items it counts frames since the script engine first saw the item in this scene. `state` is the item's motion state |
 | `gd.fx()` | every live Geno effect attachment (one row per package attachment, its emitters aggregated): `{package, owner_kind ("fighter"/"article"/"unknown"), owner_port, joint (-1 for an article), x, y, z (world origin), facing, live_particles, emitter_count, bbox}`; `bbox = {min={x,y,z}, max={x,y,z}}` over the particles' world positions, absent with no particles. A detached effect stays listed until its last particle dies |
 
 A **player table**: `port`, `char` (character id), `char_name`, `kind` (internal fighter kind),
@@ -270,7 +288,7 @@ end
 |---|---|
 | `gd.mouse()` | `x, y, buttons, wheel`: the pointer in the same 640x480 space as `gd.text` / `gd.kit` (-1000, -1000 when it is off the picture); `buttons` = 1 left + 2 right + 4 middle; `wheel` = notches this tick (+ up). Local UI input only: it never reaches the pads or a netplay peer. The kit's cursor shows during a match only while a script polls `gd.mouse()`, so poll it only while your menu is open. |
 | `gd.key(name)`, `gd.key_pressed(name)` | the keyboard, only while the game window is focused, the console is closed and nothing is being typed (a name, a room code). The keyboard never drives the game, so every key is free for hotkeys. Names: `A`-`Z`, `0`-`9`, `F1`-`F12`, `KP0`-`KP9`, `SPACE`, `ENTER`, `TAB`, `ESCAPE`, `SHIFT`, `CTRL`, `ALT`, `LEFT`/`RIGHT`/`UP`/`DOWN`, `HOME`, `END`, `PAGEUP`, `PAGEDOWN`, `INSERT`, `DELETE`, `BACKSPACE` |
-| `gd.input(port, spec [, frames])` | *gameplay.* Claim a controller from its first input. `spec` is `"A+B"`, a number (button bits), or `{buttons="A", x=, y=, cx=, cy=, l=, r=}` (sticks -127..127, triggers 0..255). The whole pad sample replaces the SDL controller, GameCube adapter, `MELEE_PAD_SCRIPT`, and `MELEE_PAD_LIVE`, even while focused. After `frames` logic samples (default 1), the claimed port stays connected and reports neutral input until released. Paused render reads do not consume samples; `step n` consumes exactly n logic reads. Local diagnostic input, not rollback state. |
+| `gd.input(port, spec [, frames])` | *gameplay.* Claim a controller from its first input. `spec` is `"A+B"`, a number (button bits), or `{buttons="A", x=, y=, cx=, cy=, l=, r=}` (sticks -127..127, triggers 0..255). The whole pad sample replaces the SDL controller, GameCube adapter, `MELEE_PAD_SCRIPT`, and `MELEE_PAD_LIVE`, even while focused. After `frames` completed logic frames (default 1), the claimed port stays connected and reports neutral input until released. Extra PADReads while paused do not consume the hold; `step n` consumes n completed logic frames. Rewind/rollback resimulation does not consume the live hold. Local diagnostic input, not rollback state. |
 | `gd.release_pad(port)` | Release this script's or console session's claim early; the normal physical source resumes, or the port disconnects if none is present. A `gd.run` task also releases its claims when it ends; unloading, reloading, or disabling a script releases its claims. |
 | `gd.release(port)` | Compatibility alias for `gd.release_pad(port)`. |
 | `gd.press(port, buttons [, frames [, spec]])` | *in a task:* `gd.input` then wait that many frames |
@@ -288,7 +306,11 @@ end
 
 | function | |
 |---|---|
-| `gd.set_percent(port, p)`, `gd.set_stocks(port, n)` | |
+| `gd.set_percent(port, p)`, `gd.set_stocks(port, n)` | damage clamped to integer 0-999; stocks to 0-99; forks the rewind timeline |
+| `gd.set_damage(port, n)` | offline; sets the same real fighter/player damage as `set_percent` (integer 0-999), keeping HUD, knockback and stamina HP in agreement. A boss at zero remaining HP still needs a hit to die |
+| `gd.hit(port, {damage=, angle=, kbg=, bkb=, from=})` | offline; injects a normal-element hit through Melee's collision result and fighter hit processing. Required integer fields: damage 0-500, angle 0-361, kbg/bkb 0-1000. Optional `from` is a fighter slot; omitted means environment damage. Returns false for a missing fighter/source or refused damage, true after processing. Applies damage state, HP/percent and hitlag, not just a HUD edit; forks rewind |
+| `gd.boss_hold([seconds])` | offline; hold the pending boss-defeat transition, default 60 seconds, range 1/60-600; timeout counts match logic frames. Returns whether accepted |
+| `gd.boss_release()` | offline; release the boss-defeat hold; returns whether accepted |
 | `gd.savestate([slot])`, `gd.loadstate([slot])` | slots 1-4, taken/loaded at the next frame boundary; a state from another scene is refused; never online |
 | `gd.pause()`, `gd.resume()`, `gd.step([n])` | freeze the game logic; `step` runs `n` frames and stays paused |
 | `gd.scene_launch(text or table)` | jump to a scene: `"mode=training;p1=fox;p2=falco/cpu;stage=fd"` or `{mode="training", p1="fox", ...}` (the `MELEE_SCENE` grammar, `_research/scene-launch.md`). It goes through the game's own soft reset, so it is safe from anywhere; returns the text |
@@ -310,10 +332,10 @@ Coordinates are world units, finite and within ±100000. Each write forks the LA
 | function | |
 |---|---|
 | `gd.stage_add_platform(x, y, width [, {passthrough=, ledges=}])` | a horizontal floor centred on `(x, y)`; returns a handle, or `nil, reason` |
-| `gd.stage_add_model{file=, symbol='map_head', group=0, joint='root', x=0, y=0, z=0, scale=1, rot=0, platform=}` | Draw a JObj branch from a stage or mounted mod DAT in the stage world pass (lit, fogged). `joint` is a group-local zero-based index, `JOBJ_<index>`, or `root`; `rot` is degrees about Z. Returns a model handle or `nil, reason`. `platform` attaches a `gd.stage_add_platform` floor: `gd.stage_move(model, x, y)` carries it and `gd.stage_remove(model)` removes both; an attached floor does not draw its slab. Each DAT is loaded once per scene into heap 0 and released at scene end; up to 8 DATs (8 MiB each) and 64 models. Branches with JObj instance references are refused. `gd.spawn_target` draws Mato's Target Test model (GrTMr.dat) |
+| `gd.stage_add_model{file=, symbol='map_head', group=0, joint='root', x=0, y=0, z=0, scale=1, rot=0, platform=}` | Draw a JObj branch from a root-level stage or mounted mod `.dat` filename (5-30 bytes, no path separators or `..`) in the stage world pass (lit, fogged). `joint` is a group-local zero-based index, `JOBJ_<index>`, or `root`; `rot` is degrees about Z; `scale` is >0 and <=100, `group` 0-255, joint index 0-4095. Returns a model handle or `nil, reason`. `platform` attaches a `gd.stage_add_platform` floor: `gd.stage_move(model, x, y)` carries it and `gd.stage_remove(model)` removes both; an attached floor does not draw its slab. Each DAT is loaded once per scene into heap 0 and released at scene end; up to 8 DATs (8 MiB each) and 64 models. Branches with JObj instance references are refused. `gd.spawn_target` draws Mato's Target Test model (GrTMr.dat) |
 | `gd.stage_add_line(x1, y1, x2, y2, kind [, opts])` | `kind`: `"floor"` (left to right), `"ceiling"` (right to left), `"right_wall"` (top to bottom) or `"left_wall"` (bottom to top); a wrong direction is an error. `opts` (`passthrough`, `ledges`) is for floors only |
-| `gd.stage_move(handle, x, y)` | move a line so its midpoint is at `(x, y)`; call it every frame for a moving platform. A fighter standing on it is carried |
-| `gd.stage_remove(handle)` | remove a line or a target (a removed target raises no event); returns whether it existed |
+| `gd.stage_move(handle, x, y)` | move a line midpoint or model to `(x, y)` (targets cannot be moved); returns whether it exists. A model carries its attached floor; a moved floor carries a standing fighter |
+| `gd.stage_remove(handle)` | remove a line, target or model (a removed target raises no event); removing a model removes its attached floor; returns whether it existed |
 | `gd.spawn_target(x, y)` | a target (Target Test's Mato item) held at `(x, y)`; returns a handle, or `nil, reason` |
 | hook `on_target_broken(handle, remaining)` | after the frame a target was hit in |
 | hook `on_all_targets_broken()` | after the last active scripted target breaks |
@@ -329,24 +351,17 @@ Coordinates are world units, finite and within ±100000. Each write forks the LA
   They show in screenshots, are fogged and depth-tested, and are blended at 120 fps.
   - Floors are slabs under the line: gold when solid, cyan when you can drop through.
   - A wall is a thin red bar, a ceiling a thin violet one.
-  - A target is a red diamond with a white core. It is not Target Test's own model, which lives in
-    the Target Test stage's file.
+  - A target uses the real Mato model loaded from `GrTMr.dat`.
   - `gd.stage_view([geometry [, overlay]])` turns the geometry off, or the old host-overlay debug
     strokes on (off by default); it returns both settings.
 - **Limits.** Up to **200 lines** and **32 targets** at once.
   - **Lines:** each line takes one of mpLib's 256 collision joints, so a stage gets
-    `min(200, 256 − its joints)`. Measured: FD, Battlefield, Dream Land (31 joints) and Pokémon
-    Stadium (8) all got the full 200.
-  - **Line cost** (FD, Fox running and jumping for 1100 frames, game-thread ms mean, 2 runs):
-    - geometry off: 0 lines 1.18 / 1.30, 32 lines 1.20 / 1.13, 100 lines 1.14 / 1.22,
-      200 lines 1.22 / 1.26. The collision search shows no cost above the noise.
-    - geometry on: 32 lines 1.22 / 1.27, 100 lines 1.36 / 1.36, 200 lines 1.51 / 1.26. Drawing
-      adds up to about 0.3 ms at 200 lines.
+    `min(200, 256 - its joints)`; inspect the actual stage reservation in the log.
   - **Targets:** the pool is 32. The next ceiling is the game's item limit for the category
     (`Item_804A0C64`, from ItCo's common data).
 - **Example:** `melee/pc/scripts/examples/fd_stage_content/` adds 3 platforms (passthrough with
   ledges, passthrough, solid with ledges) and 10 targets to Final Destination. Copy it to
-  `scripts/fd_stage_content` beside the exe.
+  `mods/fd_stage_content` beside the exe (the manifest entry is `scripts/main.lua`).
 
 ### Camera (offline, gameplay mods)
 
@@ -360,20 +375,18 @@ mode}`, or `nil` before a match camera exists. Coordinates are world units, `fov
 | `gd.camera_detach()` | take control at the current pose. The first write detaches by itself |
 | `gd.camera_set{eye=, interest=, fov=, roll=}` | set any of the fields |
 | `gd.camera_move{to={...}, frames=N, ease="linear"\|"in"\|"out"\|"inout"}` | tween the given fields over 1-6000 frames; calls `on_camera_complete("move")` |
-| `gd.camera_path{ {frame=0, eye=, interest=, fov=[, roll=]}, ... }` | 2-64 keys with rising frame numbers (up to 36000); calls `on_camera_complete("path")` |
+| `gd.camera_path({{frame=0, eye={...}, interest={...}, fov=45}, ...})` | 2-64 keys starting at frame 0 with strictly rising frame numbers (up to 36000); calls `on_camera_complete("path")` |
 | `gd.camera_follow(point \| gd.player(n) \| gd.items()[i] [, offset])` | track a point, a fighter or an item (`gd.items()` rows now carry `id`); the eye keeps its offset. If the target disappears, the last pose holds |
-| `gd.camera_shake(intensity, frames)` | a decaying shake, the same on every replay |
-| `gd.camera_bounds(bool)` | lift the stage's camera clamps and extend the far plane |
-| `gd.camera_attach([frames])` | blend back to the match camera (default 30 frames; 0 is instant) |
+| `gd.camera_shake(intensity, frames)` | a deterministic decaying shake; nonnegative intensity and 0-6000 logic frames |
+| `gd.camera_bounds(bool)` | `true` lifts the stage's camera clamps and extends the far plane; `false` restores the bounds policy |
+| `gd.camera_attach([frames])` | blend back to the match camera (default 30 logic frames, range 0-6000; 0 is instant) |
 
 - **Normal camera:** while detached, the normal camera keeps updating underneath, so attaching
   returns to it. The camera is also restored when the owning script unloads, when its `gd.run`
   task ends, and on a scene change.
-- **Rollback safety:** the pose lives in snapshotted game memory. On ACE, `gd.rewind_test` was
-  exact over a detached path, a move, a shake and a follow.
-- **Frame rate:** the camera moves at 60 Hz, and extra frames are interpolated. A full orbit held
-  120 fps at the 120 cap and 144 uncapped. It did not raise the renderer's rejected
-  matrix-blend counts above the normal camera's own spread.
+- **Ownership:** only one script may own the camera. Another script's write is refused until it
+  is released. Camera state is in snapshotted game memory; Lua bookkeeping is not.
+- **Frame rate:** movement advances per game-logic frame; higher presentation rates interpolate.
 - **Example:** `melee/pc/scripts/examples/camera_cinematic` (the console command `fdcine`).
 
 ### Adventure enemies (offline gameplay mods)
@@ -384,25 +397,82 @@ mode}`, or `nil` before a match camera exists. Coordinates are world units, `fov
 - **Kinds:** `goomba`, `redead`, `octorok` (these three come from ItCo), and `koopa`,
   `like_like`, `polar_bear`. The last three load their Adventure stage's file on first use, and
   every item that file defines is registered too (Koopa's shell, for example).
-- **Removing:** `gd.enemy_remove(handle)` returns `true`, and does not count as a defeat.
+- **Removing:** `gd.enemy_remove(handle)` returns whether the handle existed, and does not count as a defeat.
 - **Defeats:** `on_enemy_defeated{kind=, handle=}` fires once, at the monster's stock defeat.
 - **Rules:** these need a gameplay mod, in an active offline match; the console cannot call them.
 - **Savestates:** enemies are saved with the match, but Lua tables are not. Rebuild your
   bookkeeping in `on_loadstate`.
 
-Checked on Battlefield (ACE). All six render with their own models, sit on the stage, and
-survived a savestate load:
-
-| kind | moved in 120 frames | defeat event |
-|---|---|---|
-| Goomba | 13.5 | yes |
-| ReDead (it grabs) | 8.7 | yes |
-| Octorok | 28.9 | yes |
-| Koopa | 36.0 | **no**: a hit turns it into its shell, and that path is not the stock defeat |
-| Like Like | 0 (it waits) | yes |
-| Polar Bear | 29.1 | yes |
+Koopa's shell transition is not the stock defeat path, so it does not emit an enemy-defeated
+event at that transition. Explicit removal emits no defeat event and returns false for a missing handle.
 
 Example: `melee/pc/scripts/examples/enemy_spawn_demo`.
+
+### Menu and netplay state
+
+| function | returns / action |
+|---|---|
+| `gd.menu()` | `{title, screen, cursor, item, native_menu, native_hovered}` for the current frontend/native menu |
+| `gd.netplay()` | `{phase, status, code, host, rematch, random, lobby, me, game, turn, left, countdown, ck, color, players, stages, groups, cursor}`. `players[1]` is host, `[2]` guest (`ck, color, locked, ready`). Stage values: 0 free, 1/2 struck, 3 banned, 4 picked; groups: 0 starter, 1 counterpick. Stage cursor is 1-based |
+| `gd.netplay_act(action, ...)` | `"char", ck, color`; `"stage", index` (1-based); `"ready", bool` (default true); `"code", text`. Uses the lobby's normal validation; returns local acceptance, not peer acknowledgement. Menu routing, no gameplay manifest required |
+
+### LAB inspection and control
+
+These are public API 1 functions, registered on `gd` alongside the rest; `gd.lab_api` is 1.
+The game repo's `docs/geno.md` section 14 describes the detailed field tables and the LAB UI.
+Reads work in ordinary scripts unless marked offline. Offline writes require `gameplay: true`
+or the console, and remain refused during netplay/rollback even for `rollback_safe` scripts.
+
+| function | meaning |
+|---|---|
+| `gd.debug_draw(port [, flags])` | read/set the fighter's develop-draw flags (low 8 bits); nil without the fighter; setting is offline |
+| `gd.debug_stage([flags])` | read/set stage debug flags (low 5 bits); nil without a match camera; setting is offline |
+| `gd.hitboxes(port [, all])` | active hitboxes; `all=true` includes all slots 0-4, enabled or not; nil without fighter |
+| `gd.hurtboxes(port)` | capsules: `{id, bone, state, height, grabbable, ax, ay, az, bx, by, bz, radius}` |
+| `gd.joints(port [, fresh])` | joint positions and projected coordinates: `{index, parent, valid, x, y, z, sx, sy, on}`; list index = joint index + 1. `fresh=true` updates matrices first and is offline-only; otherwise unused joints may have old matrices |
+| `gd.dobjs(port)` | draw objects (`index, hidden, render, tobjs`) plus `models` part states and `costume` texture-animation transforms |
+| `gd.project(x, y [, z])` | `screen_x, screen_y, visible, depth` in 640x480 coordinates; z defaults 0; nil without camera |
+| `gd.attrs(port)` | fighter's named common attributes as `{name=value}` |
+| `gd.motion_name(id [, port])` | action name; optional fighter selects its special/Geno table |
+| `gd.motion_list(port)` | valid actions as `{id, name, group, anim_id, anim_name}`; groups `common`, `special`, `mex`, `geno` |
+| `gd.timeline(port [, motion])` | script timeline for current/specified action: motion/animation ids and names, events, length and stop reason; current action also has `end_frame` |
+| `gd.set_motion(port or {ports}, motion [, frame [, rate [, lift]]])` | offline; queue motion at next boundary, step to frame (default 1, clamped 1-600), then pause. Rate defaults 1, lift 0; lift raises grounded fighters for aerials. Returns true or false, reason. It changes motion directly; entry-specific setup may be absent |
+| `gd.mirror_pad(from, to [, take])`, `gd.mirror_pad()` | offline; mirror ports 1-4 to a human destination; `take=true` also neutralises source. No args disables mirroring |
+| `gd.lab_request([clear])` | whether the frontend/environment requested LAB; optional clear consumes request |
+| `gd.lab_mode()` | whether LAB is the current mode, including its select screens |
+| `gd.lab_leave([where])` | gameplay; leave LAB for `"css"` (default), `"sss"`, `"menu"` or `"restart"`; returns whether a LAB match was ended |
+| `gd.lab_common()` | loaded common constants: L-cancel window/divisor, hitstun multiplier, knockback speed/decay, stick/tech/SDI thresholds, ASDI scale and stick dead zones |
+| `gd.floor_below(x, y [, depth])` | first floor y within depth (default 200), or nil; active match only |
+| `gd.set_shield(port, health)` | offline; set shield health (negative becomes 0), fork rewind |
+| `gd.kb_preview(port, spec)` | offline; knockback/flight estimate without applying a hit. Spec: `attacker, damage=10, angle=45, kbg=100, bkb=0, wbk=0, percent, extra=90, x, y, dir, di`; omitted position/percent uses victim. DI: `"none"`, `"in"`, `"out"`, `"survival"`, or `{x,y}`. Returns kb, level, tumble, hitstun, angles, velocity, weight, zones, points and optional blast crossing. Preview does not simulate stage collisions |
+| `gd.rollbacks([n])` | newest-first rollback diagnostics (default 120, max 600): total, list and optional first mismatch; read-only, online too |
+| `gd.rollbacks_clear()` | clear host rollback diagnostics |
+| `gd.lab_env(name)` | environment string `MELEE_LAB_<name>` or nil; no access to other environment families |
+| `gd.lab_now([long])` | local time string `YYYYMMDD-HHMMSS`, or `YYYY-MM-DD HH:MM:SS` with true; labels only, not deterministic gameplay |
+| `gd.lab_peek(address [, bytes])` | hex text of guest MEM1 bytes (default 16, clamped 1-64); nil outside MEM1; read-only diagnostic |
+
+### Rewind, reload and persistent states
+
+| function | meaning |
+|---|---|
+| `gd.history([frames [, interval]])` | inspect history depth, now/oldest/head, back/fwd, keys, memory/timings, replaying and busy. Setting depth/interval is offline; depth 0 stops recording |
+| `gd.step_back([n])` | offline; request n frames back (default 1), pause; true or false, reason |
+| `gd.rewind_to(frame)` | offline; request retained frame (forward too); stays paused; true or false, reason |
+| `gd.rewind_live()` | offline; branch here, discard future logged input; true |
+| `gd.rewind_test([frames [, keep_running]])` | offline exactness check: default 90 further frames, rewind/resimulate and compare state bytes. Unpauses to run; pauses after unless keep_running; true or false, reason |
+| `gd.rewind_test_result()` | `{phase, pass, diff, diff_compared, text}`; pass present once available |
+| `gd.hot_reload([seconds])` | offline; rewind (default 2 seconds), reload Geno data and LAB script, replay recorded input. Incompatible layout restarts match. Returns true, start frame or false, reason |
+| `gd.hot_reload_status()` | `{phase, ok, text}`; phase 0 idle |
+| `gd.state_save([name [, description]])` | offline; queue a persistent state for next boundary, return generated `.gdst` filename or false, reason |
+| `gd.state_list()` | saved files with name, what, frame, time, saved, stage, fighters and compatibility `ok, why` |
+| `gd.state_load(file)` | offline; validate build/disc/mods/Geno/match before queueing load; true or false, reason |
+| `gd.state_delete(file)` | offline; delete a saved state; true or false, reason |
+| `gd.state_rename(file, name)` | offline; change display name, retain filename; true or false, reason |
+| `gd.state_gen()` | state-library change counter (refresh a UI list when it changes) |
+
+State files live below the script's data folder in `states/`. Lua tables are not snapshotted:
+use `on_loadstate` to restore script bookkeeping. Rewind and other gameplay writes can branch
+history; a retained future is not guaranteed after a write.
 
 ### Console and files
 
@@ -411,9 +481,28 @@ Example: `melee/pc/scripts/examples/enemy_spawn_demo`.
 | `gd.log(...)` / `print(...)` | to the console and `melee-pc.log`, prefixed with the script id |
 | `gd.command(name, fn [, help])` | add a console command; `fn(arg_string)` |
 | `gd.data_read(name)`, `gd.data_write(name, text)` | the script's data folder |
-| `gd.screenshot([name])` | a PNG of the final frame into the data folder; returns `ok, path` (reports "not available yet" until the renderer's capture lands) |
+| `gd.screenshot([name])` | a PNG of the final frame into the data folder; returns `ok, path` (capture is queued for the next presented frame; it is not a synchronous file-write result) |
 
 ---
+
+## Timing and turbo
+
+Lua input durations count **completed logic frames**, not render ticks or PADReads.
+`gd.input(1, {buttons="B", y=127}, 3)` holds that full sample for three logic frames even
+when the game is paused and stepped one frame at a time. The claim then remains neutral.
+Legacy `.txt` scripts and `MELEE_PAD_LIVE` retain their PADRead-based behaviour.
+
+`MELEE_FPS=u` uncaps interpolated rendering while realtime logic remains 60 Hz.
+`MELEE_TURBO=1` (or game `--turbo`) accelerates scripted/LAB batch logic on a virtual clock,
+mutes audio, and defaults to presenting every eighth game frame. It requires `MELEE_PAD_SCRIPT`
+or `MELEE_LAB_BATCH` and refuses netplay/Slippi/fake rollback. `MELEE_TURBO_RENDER=0` never
+presents; hidden/minimised windows do not present. Unpresented match frames still run render
+callbacks but skip display lists/skinning unless `MELEE_TURBO_DRAWS=1`. Wall-clock `gd.time`,
+render-tick polling and `gd.perf` are not deterministic simulation clocks.
+
+The workspace wrapper `run.sh --test` sets turbo by default, and `--realtime` clears it.
+Headless engine tests have no paced frame driver and do not enter turbo simulation.
+See [tools/port/README.md](../tools/port/README.md) for command placement.
 
 ## Input scripts
 
@@ -472,7 +561,7 @@ lines; the console may use the gameplay functions offline). `= expr` prints a va
 | `echo <text>`, `clear`, `quit` | |
 | *commands scripts added* | listed by `help` |
 
-Console `input` claims a port from its first command, including gaps between commands. A connected socket client keeps its claim until `gd.release_pad(port)` or disconnect; the in-game console keeps it until `gd.release_pad(port)` or game exit. During a claim, a physical pad on that port is ignored and the port reports connected neutral input whenever no samples are queued.
+Console `input` claims a port from its first command, including gaps between commands. A connected socket client keeps its claim until `gd.release_pad(port)` or disconnect; the in-game console keeps it until `gd.release_pad(port)` or game exit. During a claim, a physical pad on that port is ignored and the port reports connected neutral input whenever no hold is active.
 
 For automated tests the pattern is: start the game with `MELEE_CONSOLE_PORT` and `MELEE_SCENE`,
 drive it over the socket, assert on `state` / `= gd.player(n)` output, `quit` at the end.

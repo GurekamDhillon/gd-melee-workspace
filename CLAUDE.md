@@ -1,9 +1,11 @@
 # GD's Melee workspace: notes for agents
 
 This repo is the build system, tooling, research and release pipeline around the game repo. The game
-itself is a **separate checkout at `<root>/melee`** (branch `pc-port`, `GurekamDhillon/melee`). The two
+itself is a **separate checkout, normally `<root>/melee`** (branch `pc-port`, `GurekamDhillon/melee`). The two
 are versioned apart; a change to gameplay lives there, a change to how it is built, tested, packaged or
-described lives here. `SETUP.md` gets a machine ready; `bootstrap.sh` checks it.
+described lives here. `SETUP.md` gets a machine ready; `tools/port/bootstrap.sh` checks it. In the
+`codex/docs-refresh` worktree the game checkout is `../GD's Melee/melee` (read-only for this
+docs task); no builds or commits. `GW_MELEE` selects a non-default game checkout.
 
 ## Orientation
 
@@ -15,7 +17,7 @@ described lives here. `SETUP.md` gets a machine ready; `bootstrap.sh` checks it.
 | m-ex research | `_research/mex-*.md`, `docs/MEX_PORT_STATUS.md`, `tools/mex_port/README.md` |
 | the menus' art | `menu/` (`menu/README.md`); `docs/ART-BRIEF-menus.md` |
 | a release, the launcher, the friends zip | `tools/release/` (`README.md` there), `tools/netplay/` |
-| Meta Knight / the Brawl port kit | `ports/halberd/`, `ports/ir/` (`ports/README.md`) |
+| Meta Knight, Ultimate Kirby and Sora (`ultimate-trail`) | `ports/halberd/`, `ports/ir/` (`ports/README.md`) |
 | the crash sweep | `tools/sweep/` |
 | session history | `docs/DEVLOG.md` (long; the numbered sections are dated) |
 
@@ -28,14 +30,19 @@ detail. This file stays short.
    `grep -a "your new log text" _build/melee-pc.exe`. `build.sh` rebuilds stale game TUs and shims
    now, but a copied exe in `_build/runs/<name>/` is a copy.
 2. **The bridge fixpoint.** `gw_mex_bridge.c` maps guest addresses to native functions and is
-   generated from the link map. `build.sh` does link → regenerate → compile → link again and checks
-   the file did not change. A stale bridge builds, boots, and silently calls the wrong function.
+   generated from the link map. `build.sh` links, regenerates, and recompiles/relinks as needed
+   until the table matches the final map, then audits the EXE ABI. A stale bridge can build
+   and boot while silently calling the wrong function.
    `build.sh` regenerating it and leaving it uncommitted is normal build output.
 3. **The harness under-reports.** Read a failing run's log (`_build/runs/<name>/melee-pc.log`)
    before calling a failure class an artifact.
 4. **Concurrency.** Several games at once need separate run dirs (`run.sh` does this) and
-   separate build roots (`tools/port/agent_new.sh <name>`, `GW_BUILD_ROOT`).
-5. **`.github/README.md` outranks the root README** on GitHub.
+   separate build roots (`tools/port/agent_new.sh <name>`, `GW_BUILD_ROOT`). Baseline
+   objects are hardlinked; check that the local game-TU writer replaces them, not truncates them.
+5. **Timing.** Lua pad holds count logic frames. `MELEE_FPS=u` uncaps rendering;
+   `MELEE_TURBO=1` accelerates scripted/batch logic. `run.sh --test --realtime <name>` clears
+   the test wrapper's default turbo request. Commands: `tools/port/README.md`.
+6. **`.github/README.md` outranks the root README** on GitHub.
 
 ## Conventions
 

@@ -1,26 +1,32 @@
 # ports/: fighters from other games
 
-Research and tools only: the analysis of decoded move data, converters, hand-written configs and
-each fighter's character IR. **No game assets are tracked** and `.gitignore` keeps built ones out;
-every model, animation, texture, sound and menu graphic is built locally from the user's own copies
-of the source game and Melee. Keep it that way in every commit.
+Research, converters, schemas and hand-written configs live here. Built source-game models,
+animations, textures, sounds and menu graphics stay local and gitignored. Never commit them.
 
-| dir | what | reference |
-|---|---|---|
-| `halberd/` | Meta Knight from Brawl: an m-ex fighter on the ACE disc, extended by Geno for what m-ex cannot express | `halberd/README.md` (status, the pipeline, what is approximated), `PHASE1_REPORT.md` |
-| `ir/` | the character IR schema (`schema/*.schema.json`) and its validator, shared by every port | `ir/README.md` |
+| path | purpose |
+|---|---|
+| `halberd/` | Brawl Meta Knight: Brawl decoders, model/animation/effect/sound conversion and Geno configs |
+| `ir/` | shared character schema and Melee/Ultimate tools; not only a validator |
+| `ir/tools/install_ultimate.py` | install an Ultimate fighter on its own skeleton; `trail` is Sora, `kirby` is Ultimate Kirby |
+| `ir/tools/trail_*` | Sora magic, physical specials and effect bindings; source-game key is `trail` |
 
-## Rules
+Read `README.md` for the pipeline and slot naming. Both Ultimate installs default to m-ex
+internal 52 / external 51, the Halberd slot; do not mount those default replacements together.
+Display names default to `Ultimate Trail` / `Ultimate Kirby`, tokens `ultimatetrail` /
+`ultimatekirby`; manifest ids are `ultimate-trail-slot` / `ultimate-kirby-slot`. `--name` changes
+the installed name and scene token.
 
-- The Geno encodings a port emits are **frozen**: `halberd/geno_v1_encodings.md` and
-  `geno_v2_encodings.md` are copies of `melee/docs/geno.md` sections 15-16, and that file wins if
-  they differ. A new need gets a new id in Geno, never a changed one here.
-- `tuning.json` is the fighter's numbers as ported (Brawl's); `tuning.melee-feel.json` a feel
-  pass. Both are data the Geno build hot-reloads; the LAB's A/B and frame-data diff are how a
-  change is measured.
-- Known limits worth not rediscovering: a 3-player match with Meta Knight runs out of memory at
-  load (the 4.9 MB animation file); about 9 KB of UI heap headroom is left; Final Smash, sword
-  hiding and the entrance are not ported; the ledge flags, cape stick threshold and landing lag
-  are guesses (`halberd/README.md`).
-- A second port should reuse `halberd/tools/` and the IR rather than start from the Brawl files
-  again; the tools are the port kit.
+- Geno instruction ids are stable. `halberd/geno_v1_encodings.md` and `geno_v2_encodings.md`
+  describe their version's subset; game `docs/geno.md` and `pc/geno/geno.h` define later additions
+  (JSON version 5, additive v5.5 commands). Do not change an existing id to satisfy a converter.
+- Reuse the IR and engine-specific tools. `build_melee_fighter.py` handles retail Melee fighters;
+  Ultimate conversion lives in `ir/tools`, Brawl conversion in `halberd`.
+- The Ultimate installer audits ACMD and installed hitbox positions and writes
+  `conversion_losses.json` and `hitbox_positions.json`. `--skip-acmd-audit` marks these skipped;
+  it is not a clean conversion result. Read explicit losses and fallback rows.
+- `--pc-palette 64` requires engine `pobj_palette: 1`. `--tex-format auto` is opt-in; alternate
+  costumes are included unless `--c00-only` is passed. These are converter flags, not run flags.
+- Halberd's old three-player OOM report predates the larger fighter heap. Keep it as historical
+  evidence, not a current player cap. Current memory and visual claims need a matching run.
+- GD's move-graft request is estimate-only. Menu/platform/build-speed/effects follow-up is tracked
+  in the 2026-09-27 state in `../docs/NEXT-SESSION.md`.

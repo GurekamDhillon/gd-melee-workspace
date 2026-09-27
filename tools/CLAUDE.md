@@ -5,7 +5,7 @@ the rules that cross them.
 
 | dir | reach for it when | reference |
 |---|---|---|
-| `port/` | building (`build.sh`), running (`run.sh`), a second agent (`agent_new.sh`), a fresh machine (`bootstrap.sh`), profiling (`prof_report.py`) | the header comment of each script; `melee/pc/docs/PORT_DEV_QUICKREF.md` |
+| `port/` | building (`build.sh`), running (`run.sh`), a second agent (`agent_new.sh`), a fresh machine (`bootstrap.sh`), profiling (`prof_report.py`) | `port/README.md`; script headers; `melee/pc/docs/PORT_DEV_QUICKREF.md` |
 | `release/` | a public release, the launcher, the user README, the crash upload server | `release/README.md`; notes in `release/notes/<version>.md`, the version in `release/VERSION` |
 | `netplay/` | the matchmaking server, the friends zip (`make_package.ps1`), `HOW TO PLAY ONLINE.txt` | `netplay/server/README.md` |
 | `sweep/` | which stages and fighters crash on each disc (`crash_sweep.py --plan` first) | its docstring |
@@ -22,13 +22,19 @@ the rules that cross them.
 - **Everything is relative to `GW_ROOT`** (`port/portlib.sh`), with the disc images from `.env`.
   Nothing hard-codes `C:\gdm`.
 - **Two agents, two build roots** (`GW_BUILD_ROOT`). Test runs (`--test`) parallelise; gameplay
-  runs share one audio device and one screen, so keep those serial or use the sweep's tiling.
+  runs share audio and the screen. Baseline game objects are hardlinked by `agent_new.sh`;
+  check the local output writer before treating build roots as isolated. Shared Aurora is
+  outside that isolation.
+- **Timing:** `run.sh --test` requests turbo; `--realtime` (before the sandbox name) clears it.
+  Headless tests have no paced frame loop. `MELEE_FPS=u` uncaps presentation; `MELEE_TURBO=1`
+  accelerates scripted/LAB batch logic. `GW_JOBS` is not in this HEAD (TUs use fixed `-P 8`).
+- `MELEE_MODS_DIR` is the parent of mod folders; pass Windows paths (`pwd -W`), not `/c/...`.
 - **Read the log, not the harness.** A run's `melee-pc.log` and `crashlogs/` are in its sandbox
   under `_build/runs/<name>/` (or the sweep's `runs/`); the harness's summary has under-reported
   before.
 - **The release guard is `check_release.ps1`**: nothing disc-derived ships. `publish.ps1` also
   refuses an exe older than the melee commit, or a commit not on the public remotes.
-- The launcher is one C# file; strings are keyed by their English text, so edit `GDMeleeLauncher.cs`
+- The launcher UI is in `GDMeleeLauncher.cs`; strings are keyed by their English text, so edit `GDMeleeLauncher.cs`
   and `Lang.cs` together and run `release/launcher/check_strings.py`.
 - PowerShell scripts are Windows-only; the Python and bash ones run anywhere, but anything that
   starts the game needs Windows and a disc.
