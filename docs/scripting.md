@@ -347,6 +347,62 @@ Coordinates are world units, finite and within ±100000. Each write forks the LA
   ledges, passthrough, solid with ledges) and 10 targets to Final Destination. Copy it to
   `scripts/fd_stage_content` beside the exe.
 
+### Camera (offline, gameplay mods)
+
+Camera writes need `"gameplay": true` (or the console) and are refused during netplay or rollback.
+`gd.camera_get()` works in any script. It returns `{eye={x,y,z}, interest={x,y,z}, fov, roll,
+mode}`, or `nil` before a match camera exists. Coordinates are world units, `fov` is degrees and
+`roll` is radians.
+
+| function | |
+|---|---|
+| `gd.camera_detach()` | take control at the current pose. The first write detaches by itself |
+| `gd.camera_set{eye=, interest=, fov=, roll=}` | set any of the fields |
+| `gd.camera_move{to={...}, frames=N, ease="linear"\|"in"\|"out"\|"inout"}` | tween the given fields over 1-6000 frames; calls `on_camera_complete("move")` |
+| `gd.camera_path{ {frame=0, eye=, interest=, fov=[, roll=]}, ... }` | 2-64 keys with rising frame numbers (up to 36000); calls `on_camera_complete("path")` |
+| `gd.camera_follow(point \| gd.player(n) \| gd.items()[i] [, offset])` | track a point, a fighter or an item (`gd.items()` rows now carry `id`); the eye keeps its offset. If the target disappears, the last pose holds |
+| `gd.camera_shake(intensity, frames)` | a decaying shake, the same on every replay |
+| `gd.camera_bounds(bool)` | lift the stage's camera clamps and extend the far plane |
+| `gd.camera_attach([frames])` | blend back to the match camera (default 30 frames; 0 is instant) |
+
+- **Normal camera:** while detached, the normal camera keeps updating underneath, so attaching
+  returns to it. The camera is also restored when the owning script unloads, when its `gd.run`
+  task ends, and on a scene change.
+- **Rollback safety:** the pose lives in snapshotted game memory. On ACE, `gd.rewind_test` was
+  exact over a detached path, a move, a shake and a follow.
+- **Frame rate:** the camera moves at 60 Hz, and extra frames are interpolated. A full orbit held
+  120 fps at the 120 cap and 144 uncapped. It did not raise the renderer's rejected
+  matrix-blend counts above the normal camera's own spread.
+- **Example:** `melee/pc/scripts/examples/camera_cinematic` (the console command `fdcine`).
+
+### Adventure enemies (offline gameplay mods)
+
+`gd.spawn_enemy(kind, x, y [, {facing = 1 | -1}])` returns a handle, or `nil, reason`. At most
+32 script enemies can be alive at once.
+
+- **Kinds:** `goomba`, `redead`, `octorok` (these three come from ItCo), and `koopa`,
+  `like_like`, `polar_bear`. The last three load their Adventure stage's file on first use, and
+  every item that file defines is registered too (Koopa's shell, for example).
+- **Removing:** `gd.enemy_remove(handle)` returns `true`, and does not count as a defeat.
+- **Defeats:** `on_enemy_defeated{kind=, handle=}` fires once, at the monster's stock defeat.
+- **Rules:** these need a gameplay mod, in an active offline match; the console cannot call them.
+- **Savestates:** enemies are saved with the match, but Lua tables are not. Rebuild your
+  bookkeeping in `on_loadstate`.
+
+Checked on Battlefield (ACE). All six render with their own models, sit on the stage, and
+survived a savestate load:
+
+| kind | moved in 120 frames | defeat event |
+|---|---|---|
+| Goomba | 13.5 | yes |
+| ReDead (it grabs) | 8.7 | yes |
+| Octorok | 28.9 | yes |
+| Koopa | 36.0 | **no**: a hit turns it into its shell, and that path is not the stock defeat |
+| Like Like | 0 (it waits) | yes |
+| Polar Bear | 29.1 | yes |
+
+Example: `melee/pc/scripts/examples/enemy_spawn_demo`.
+
 ### Console and files
 
 | function | |
