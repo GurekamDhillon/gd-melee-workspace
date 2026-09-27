@@ -19,6 +19,7 @@ A semantic translation (the port feels like the fighter; Melee's mechanics win):
   AttackModule::clear_all ClearHitboxes.
   GrabModule::clear_all   ClearHitboxes.
   FT_MOTION_RATE r        SetTimerAnim (the animation rate command).
+  START_SMASH_HOLD        Melee smash charge with the host Marth's vanilla charge settings.
   cancel_frame            IASA at that frame (Melee's interruptible flag).
 Ultimate-only mechanics are dropped and counted (hitlag and SDI multipliers, shieldstun, rehit,
 flinchless, direct/indirect, reflect/absorb flags): Melee's rules apply. Commands under a branch on
@@ -68,6 +69,9 @@ def throw_words(idx, dmg, ang, kbg, fkb, bkb, elem):
 # one of each at frame 0, the first with the throw's own numbers, the second the grab release)
 ABS_THROW, ABS_CATCH = "0x396c", "0xe7a0"
 THROW_RELEASE = 20 << 26          # Marth's throws release with op 20 (0x50000000), then ClearHitboxes
+# Marth PlMs.dat AttackS4/Hi4/Lw4 each uses opcode 56, 60 charge frames, rate 350,
+# colour animation 119 (0xE03C015E 0x77000000); ftAction_80073008 consumes both words.
+SMASH_CHARGE_WORDS = (0xE03C015E, 0x77000000)
 
 
 def default_path(when):
@@ -174,6 +178,8 @@ def translate(row, joint_of_bone, scale=1.0):
             # its place in the jab scripts, not yet from the executable's constant table. The flag
             # two frames later (0x72c, Ultimate's no-hit combo allowance) has no Melee counterpart.
             events.append((c["frame"], "clear", [29 << 26]))
+        elif cmd == "START_SMASH_HOLD":
+            events.append((c["frame"], "charge", SMASH_CHARGE_WORDS))
         elif cmd == "FT_MOTION_RATE" and c["args"]:
             # Melee's scripts have no animation-rate command (a state's C code sets
             # fp->frame_speed_mul); flow op 8 is "wait forever" (lbcommand.c Command_08) and stalled
@@ -191,7 +197,7 @@ def translate(row, joint_of_bone, scale=1.0):
             rep["unknown"][cmd] = rep["unknown"].get(cmd, 0) + 1
     if cancel:
         events.append((float(cancel), "iasa", [23 << 26]))
-    events.sort(key=lambda e: (e[0], {"time": 0, "rate": 1, "clear": 2, "hit": 3, "iasa": 4}[e[1]]))
+    events.sort(key=lambda e: (e[0], {"time": 0, "rate": 1, "charge": 1, "clear": 2, "hit": 3, "iasa": 4}[e[1]]))
     for f, kind, w in events:
         if kind == "time":
             continue
