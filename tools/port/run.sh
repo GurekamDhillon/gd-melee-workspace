@@ -69,6 +69,24 @@ fi
 if [ -f "${seed%.db}.core" ]; then
     cp -f "${seed%.db}.core" "$sandbox/initial_pipeline_cache.core"
 fi
+# Dawn's compiled-shader cache (dawn_cache.db) lives in the sandbox. A new sandbox starts cold, so
+# warming the seed's ~6,000 pipelines keeps 8 d3dcompiler threads at ~98% for minutes: every perf
+# run on a fresh sandbox measured the game next to a compile storm. Start a new sandbox from the
+# largest cache of this build root whose game is not running (a live one may be mid-write).
+# GW_DAWN_CACHE_SEED=0 keeps the old cold start (e.g. to measure a first launch).
+if [ ! -f "$sandbox/dawn_cache.db" ] && [ "${GW_DAWN_CACHE_SEED:-1}" != 0 ]; then
+    live="$(powershell.exe -NoProfile -Command \
+        "Get-CimInstance Win32_Process -Filter \"Name='melee-pc.exe'\" | ForEach-Object { \$_.ExecutablePath }" \
+        2>/dev/null | tr -d '\r' | tr '\\' '/')"
+    for c in $(ls -S "$GW_BUILD_ROOT"/runs/*/dawn_cache.db 2>/dev/null | tr ' ' '\001'); do
+        c="$(tr '\001' ' ' <<<"$c")"
+        d="$(cygpath -m "$(dirname "$c")" 2>/dev/null || dirname "$c")"
+        grep -qiF "$d/" <<<"$live" && continue
+        cp -f "$c" "$sandbox/dawn_cache.db"
+        [ -f "$c-wal" ] && cp -f "$c-wal" "$sandbox/dawn_cache.db-wal"
+        break
+    done
+fi
 
 # mods/ is found next to the executable, so a sandbox sees no mods unless it is told where they
 # are. The default is the shared _build/mods folder, which holds NO mods (only targettest/ layouts,
