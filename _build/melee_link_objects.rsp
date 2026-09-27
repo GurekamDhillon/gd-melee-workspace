@@ -1033,3 +1033,5 @@
 ../masstest/out/pc_geno_geno_tests.c.obj
 ../masstest/out/pc_geno_geno_lab_mode.c.obj
 ../masstest/shimobj/geno_registry.obj
+../masstest/shimobj/gw_fx.obj
+../masstest/shimobj/gw_fx_render.obj
