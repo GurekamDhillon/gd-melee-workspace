@@ -323,19 +323,25 @@ Coordinates are world units, finite and within ±100000. Each write forks the LA
 - **Handles.** Handles are never reused, even across a savestate load. A script that keeps handles
   across a load should check them before it moves or removes the objects.
 - **Stage bounds.** The stage's camera bounds and blast zones do not change.
-- **Looks.** A line is drawn as an overlay stroke and a target as an orange ring (the host overlay,
-  not the game's picture). There is no mesh: a game screenshot shows neither.
-- **Limits.** A match can have at most **32 lines and 32 targets** at once. These are the pool
-  sizes in `pc/gameworld/script_game.c` (`SCRIPT_STAGE_LINES`, `SCRIPT_STAGE_TARGETS`), not
-  engine limits. On Final Destination (1 joint, 16 lines) and Battlefield (1 joint, 23 lines), both
-  pools filled to exactly 32. The 33rd call returns `nil, reason`.
-  - **Raising the line pool:** each line takes one collision joint, so the pool can grow to about
-    `256 − the stage's joints` by changing the constant. Past that, lines would have to share joints
-    (one joint per kind, with contiguous ranges), up to about 1536 lines. Past that again,
-    `mplib.c`'s fixed 2048 / 1536 / 256 arrays would have to grow. Every active joint adds to each
-    floor and wall search.
-  - **Raising the target pool:** change the constant. The next ceiling is the game's item limit for
-    the category (`Item_804A0C64`, set from ItCo's common data). 32 targets fit on both stages.
+- **Looks.** Lines and targets are real geometry, drawn by the game in the stage's world pass.
+  They show in screenshots, are fogged and depth-tested, and are blended at 120 fps.
+  - Floors are slabs under the line: gold when solid, cyan when you can drop through.
+  - A wall is a thin red bar, a ceiling a thin violet one.
+  - A target is a red diamond with a white core. It is not Target Test's own model, which lives in
+    the Target Test stage's file.
+  - `gd.stage_view([geometry [, overlay]])` turns the geometry off, or the old host-overlay debug
+    strokes on (off by default); it returns both settings.
+- **Limits.** Up to **200 lines** and **32 targets** at once.
+  - **Lines:** each line takes one of mpLib's 256 collision joints, so a stage gets
+    `min(200, 256 − its joints)`. Measured: FD, Battlefield, Dream Land (31 joints) and Pokémon
+    Stadium (8) all got the full 200.
+  - **Line cost** (FD, Fox running and jumping for 1100 frames, game-thread ms mean, 2 runs):
+    - geometry off: 0 lines 1.18 / 1.30, 32 lines 1.20 / 1.13, 100 lines 1.14 / 1.22,
+      200 lines 1.22 / 1.26. The collision search shows no cost above the noise.
+    - geometry on: 32 lines 1.22 / 1.27, 100 lines 1.36 / 1.36, 200 lines 1.51 / 1.26. Drawing
+      adds up to about 0.3 ms at 200 lines.
+  - **Targets:** the pool is 32. The next ceiling is the game's item limit for the category
+    (`Item_804A0C64`, from ItCo's common data).
 - **Example:** `melee/pc/scripts/examples/fd_stage_content/` adds 3 platforms (passthrough with
   ledges, passthrough, solid with ledges) and 10 targets to Final Destination. Copy it to
   `scripts/fd_stage_content` beside the exe.
