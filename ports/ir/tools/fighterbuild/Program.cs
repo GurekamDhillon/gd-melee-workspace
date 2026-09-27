@@ -32,8 +32,20 @@ static class P
         if (a.Length >= 3 && a[0] == "compare")
             return TriangleEquality.Run(a[1], a[2]);
         if (a.Length >= 5 && a[0] == "build")
-            return Build(a[1], a[2], a[3], a[4], a.Length > 5 ? a[5] : null, a.Length > 6 ? a[6] : null);
-        Console.Error.WriteLine("usage: fighterbuild build <mesh.json> <template.dat> <out.dat> <joint symbol> [matanim symbol] [report.json]");
+        {
+            int flag = Array.IndexOf(a, "--pc-palette");
+            if (flag >= 0)
+            {
+                if (flag != a.Length - 2 || a[^1] != "64")
+                    throw new ArgumentException("--pc-palette requires 64 and must follow the build arguments");
+                a = a[..^2];
+            }
+            if (a.Length < 5 || a.Length > 7)
+                throw new ArgumentException("invalid fighterbuild build arguments");
+            return Build(a[1], a[2], a[3], a[4], a.Length > 5 ? a[5] : null,
+                a.Length > 6 ? a[6] : null, flag >= 0 ? 64 : 0);
+        }
+        Console.Error.WriteLine("usage: fighterbuild build <mesh.json> <template.dat> <out.dat> <joint symbol> [matanim symbol] [report.json] [--pc-palette 64]");
         Console.Error.WriteLine("       fighterbuild compare <strips.dat> <triangles.dat>");
         return 2;
     }
@@ -42,7 +54,7 @@ static class P
 
     static GXWrapMode Wrap(string s) => s switch { "ClampToEdge" => GXWrapMode.CLAMP, "MirroredRepeat" => GXWrapMode.MIRROR, _ => GXWrapMode.REPEAT };
 
-    static int Build(string meshPath, string templatePath, string outPath, string jointSym, string matAnimSym, string reportPath)
+    static int Build(string meshPath, string templatePath, string outPath, string jointSym, string matAnimSym, string reportPath, int pcPaletteCapacity)
     {
         var mesh = JsonDocument.Parse(File.ReadAllText(meshPath)).RootElement;
         var tf = new HSDRawFile(templatePath);
@@ -97,7 +109,10 @@ static class P
 
         // ---- DObjs ----------------------------------------------------------------------------------
         bool strips = Environment.GetEnvironmentVariable("FIGHTERBUILD_STRIPS") == "1";
-        var gen = new POBJ_Generator { UseTriangleStrips = strips, BatchTriangleLists = !strips };
+        if (pcPaletteCapacity == 64 && strips)
+            throw new InvalidOperationException("--pc-palette 64 requires triangle lists; unset FIGHTERBUILD_STRIPS");
+        var gen = new POBJ_Generator { UseTriangleStrips = strips, BatchTriangleLists = !strips,
+                                       PcPaletteCapacity = pcPaletteCapacity };
         var ibm = jobjs.Select(j => j.InverseWorldTransform).ToList();
         bool flip = Environment.GetEnvironmentVariable("FIGHTERBUILD_FLIP") == "1";
         var dlist = new List<HSD_DOBJ>(); var per = new List<object>();
@@ -148,13 +163,16 @@ static class P
                 }
             string cull = d.GetProperty("cull").GetString();
             gen.CullMode = cull == "Cull_None" ? GenCullMode.None : cull == "Cull_Outside" ? GenCullMode.Back : GenCullMode.Front;
-            var otherGen = new POBJ_Generator { UseTriangleStrips = !strips, BatchTriangleLists = strips,
+            var otherGen = new POBJ_Generator { UseTriangleStrips = pcPaletteCapacity == 64 ? false : !strips,
+                                                BatchTriangleLists = pcPaletteCapacity == 64 || strips,
                                                 CullMode = gen.CullMode };
             var names = attrs.ToArray();
             var otherPobj = otherGen.CreatePOBJsFromTriangleList(new List<GX_Vertex>(verts), names, bones, wts);
             var pobj = gen.CreatePOBJsFromTriangleList(new List<GX_Vertex>(verts), names, bones, wts);
-            var before = strips ? gen.GetCounts(pobj) : otherGen.GetCounts(otherPobj);
-            var after = strips ? otherGen.GetCounts(otherPobj) : gen.GetCounts(pobj);
+            var before = pcPaletteCapacity == 64 ? otherGen.GetCounts(otherPobj)
+                : strips ? gen.GetCounts(pobj) : otherGen.GetCounts(otherPobj);
+            var after = pcPaletteCapacity == 64 ? gen.GetCounts(pobj)
+                : strips ? otherGen.GetCounts(otherPobj) : gen.GetCounts(pobj);
             beforePobjs += before.POBJs; beforePrimitives += before.Primitives; beforeVertices += before.Vertices;
             afterPobjs += after.POBJs; afterPrimitives += after.Primitives; afterVertices += after.Vertices;
 
@@ -203,6 +221,12 @@ static class P
                     AlphaComp0 = GXCompareType.GEqual, AlphaOp = GXAlphaOp.And, AlphaComp1 = GXCompareType.GEqual,
                 };
             }
+            if (pcPaletteCapacity == 64 && mobj.Textures != null)
+                foreach (var tex in mobj.Textures.List)
+                    if (tex.CoordType == COORD_TYPE.REFLECTION || tex.CoordType == COORD_TYPE.HILIGHT ||
+                        tex.GXTexGenSrc == GXTexGenSrc.GX_TG_NRM || tex.GXTexGenSrc == GXTexGenSrc.GX_TG_BINRM ||
+                        tex.GXTexGenSrc == GXTexGenSrc.GX_TG_TANGENT)
+                        throw new InvalidOperationException($"DOBJ {dlist.Count}: PC palette v1 does not support normal-projection texgens");
             dlist.Add(new HSD_DOBJ { Mobj = mobj, Pobj = pobj });
             per.Add(new
             {

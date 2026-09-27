@@ -26,6 +26,7 @@ static class Verify
         foreach (var j in list) if (j.InverseWorldTransform != null) { Matrix4x4.Invert(world[j], out var inv); var s = FromIbm(j.InverseWorldTransform); for (int r = 0; r < 4; r++) for (int c = 0; c < 4; c++) ibmErr = Math.Max(ibmErr, Math.Abs(inv[r, c] - s[r, c])); }
         var mesh = JsonDocument.Parse(File.ReadAllText(meshPath)).RootElement.GetProperty("dobjs").EnumerateArray().ToList();
         int di = 0; double worst = 0; int nv = 0;
+        int palettePobjs = 0, paletteTriangles = 0, triangleDifferences = 0, weightDifferences = 0;
         foreach (var d in root.Dobj.List)
         {
             var mn = new Vector3(1e9f); var mx = new Vector3(-1e9f); var sum = Vector3.Zero; int n = 0;
@@ -36,7 +37,10 @@ static class Verify
                 foreach (var v in dl.Vertices)
                 {
                     var pos = new Vector3(v.POS.X, v.POS.Y, v.POS.Z); Vector3 o;
-                    var e = envs[v.PNMTXIDX / 3];
+                    int slot = p._s.GetString(0x00) == PaletteVerify.ClassName ? v.PNMTXIDX : v.PNMTXIDX / 3;
+                    if (envs == null || slot >= envs.Length)
+                        throw new InvalidDataException($"DOBJ {di}: PNMTXIDX slot {slot} exceeds envelope list");
+                    var e = envs[slot];
                     if (e.EnvelopeCount == 1) o = Vector3.Transform(pos, world[e.JOBJs[0]]);
                     else { o = Vector3.Zero; for (int k = 0; k < e.EnvelopeCount; k++) o += e.Weights[k] * Vector3.Transform(pos, FromIbm(e.JOBJs[k].InverseWorldTransform) * world[e.JOBJs[k]]); }
                     mn = Vector3.Min(mn, o); mx = Vector3.Max(mx, o); sum += o; n++;
@@ -47,10 +51,20 @@ static class Verify
             var sc = src.Aggregate(Vector3.Zero, (a, b) => a + b) / src.Count; var c = sum / n;
             double err = Math.Max((mn - smn).Length(), (mx - smx).Length());   // centroids differ: the PObjs hold deduplicated vertices
             worst = Math.Max(worst, err); nv += n;
+            if (d.Pobj.List.Any(p => p._s.GetString(0x00) == PaletteVerify.ClassName))
+            {
+                var result = PaletteVerify.Compare(d, mesh[di], world, list, di);
+                palettePobjs += result.POBJs;
+                paletteTriangles += result.Triangles;
+                triangleDifferences += result.TriangleDifferences;
+                weightDifferences += result.WeightDifferences;
+            }
             Console.WriteLine($"dobj {di,2} verts {n,5} (src {src.Count,5}) centroid ({c.X:F2},{c.Y:F2},{c.Z:F2}) bbox err {err:F4} flags {d.Pobj.Flags}");
             di++;
         }
         Console.WriteLine($"joints {list.Count} ibm_vs_fk_max_err {ibmErr:E2} dobjs {di} verts {nv} worst_bbox_err {worst:F4}");
-        return worst < 0.05 && ibmErr < 1e-3 ? 0 : 2;
+        if (palettePobjs > 0)
+            Console.WriteLine($"PC palette: {palettePobjs} POBJs, {paletteTriangles} triangles, triangle differences {triangleDifferences}, weight differences {weightDifferences}");
+        return worst < 0.05 && ibmErr < 1e-3 && triangleDifferences == 0 && weightDifferences == 0 ? 0 : 2;
     }
 }
