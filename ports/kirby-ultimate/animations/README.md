@@ -1,0 +1,25 @@
+# Ultimate Kirby body animations
+
+`manifest.json` maps 207 distinct Ultimate 13.0.2 Kirby `c00` NUANMB clips to 277 Melee motion rows. Every entry records the IR clip ID, private extracted path and SHA-256, source frame endpoint, and matching `motion_list.bin` statuses. It contains no animation key data. Five metal aerial-jump rows share the corresponding Ultimate regular aerial-jump clips; the host applies the metal appearance.
+
+Generate the ignored HSD FigaTree archives on the Windows machine with the private Ultimate extraction:
+
+```sh
+python ports/kirby-ultimate/animations/build_manifest.py
+python ports/kirby-ultimate/animations/convert_world.py --bind-policy source-world-scaled --out _build/tmp/ultimate-kirby-anims-world-rest-scaled
+python -m unittest discover -s ports/kirby-ultimate/animations -p 'test_*.py'
+```
+
+Install the generated `install-manifest.json` with `ports/kirby-ultimate/tools/install_visuals.py`, paired with a costume built using `ports/kirby-ultimate/model/retarget_mesh.py` in source-world rest space at scale `5/4.6`. `convert_world.py` transfers 26 mapped Ultimate world bone poses into Melee's 46-joint tree, conjugates the source skin delta by the mesh scale, and fits sparse HSD tracks. Every constant channel has two keys spanning the clip. A one-key constant expires in the game's FObj runtime even though the static decoder evaluates it forever; the live row-306 sentinel and idle foot-contact LAB captures established this behavior.
+
+Ultimate's cumulative visual `Trans` travel is removed, and each row uses its stock Melee visual root curve. Most rows span that curve over the Ultimate clip's duration. Scripted ThrowF/B/Hi rows 247–249 sample it at the exact stock frame because the host throw states pause until the fighter lands; stretching ThrowF's 62-frame stock root over its 72-frame Ultimate clip delayed the descent beyond the frame-33 pause and stranded the action. Physics-driven walk/run loops retain zero visual root travel. Run's last six frames blend to its first pose to avoid a source loop seam. The converter checks decoded integer-frame mapped joint positions and keeps each subarchive below the PC fighter animation buffer's `0x10000` bytes.
+
+The 272-row predecessor pack passed LAB action and visual samples for idle, walk, run, all five aerial jumps, Inhale, Stone, and ground/aerial Final Cutter. Idle feet now contact the platform; Inhale row 306 applies its converted pose at runtime. Ground JumpF's back-facing frame 24 follows the Ultimate source's spin (source Body yaw `+146.7°`, converted `+146.5°`). A six-frame WalkMiddle LAB sequence kept Kirby facing right while the pupils gradually disappeared and returned; source and converted bone yaw agree, so the costume's eye placement under the Melee camera needs further QA. Reachability probes do not establish visual quality for every row.
+
+`convert.py` is the older local-pose experiment and must not be paired with the source-world costume. Facial deformation, source visibility and material tracks remain outside these body FigaTrees. Ultimate has no `c00` Stone exit clip; Melee Stone End rows 334/337 retain their stock animations. `PlyTaro_Share` rows 262–265, 284–285 and 294 use a separate 52-joint generic victim tree with author kind `0x21`; they play on the captured or thrown opponent, not Kirby's 46-joint body. Ultimate's `e01thrown*` and `f08swallowed` are Kirby-as-victim clips, so these rows retain stock motion until a separate 52-joint retarget and opponent capture test exists. The remaining uncovered item actions likewise retain their host motion.
+
+`build_pivot_grab.py` builds Ultimate `e00catchturn` as the dedicated-slot row 479 FigaTree (`PlyKirby5K_Share_ACTION_CatchTurn_figatree`), with the same source-world-scaled bind policy. Its generated archive also remains under ignored `_build/tmp`.
+
+`build_hammer_clips.py` builds ten source-backed native Hammer motion archives on additive-slot rows 479–488: hold, held walk, full ground/air release, starts, max hold, turn, jump and jump squat. They retain the Ultimate `motion_list.bin` loop flags in the generated manifest; hold, walk and max hold have measured first/end pose gaps below 0.00006 world units. These rows require the host's extended motion table and Geno Hammer states. The older optional pivot-grab experiment also used row 479 and therefore cannot be installed together with this Hammer extension.
+
+Spawn entry needs coordinated host timing and article visuals. Kirby's Ultimate `j00entryr` body clip is 120 frames, while Melee row 238's stock tree is 10 frames and Melee EntryStart uses a separate timer and trophy-scale movement. Ultimate also supplies a visible Warp Star model and `motion/warpstar/c00/j00entry.nuanmb`. `build_entry_clip.py` emits isolated additive row 489 `UltimateEntry` with the source Trans descent preserved and scaled to the companion costume: root Y runs 163.04 at frame zero to zero by frame 40, while Z runs -81.52 to zero by frame 120. It requires a dedicated host entry state plus Warp Star article. `probe_entry.lua` records the current live entry action and animation frames.
