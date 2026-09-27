@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <BaseOutputPath>../../../_build/tmp/stage-parts/build/</BaseOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="StageParts.cs" />
+    <ProjectReference Include="../../../experiment/tooling/HSDLib/HSDRaw/HSDRaw.csproj" />
+  </ItemGroup>
+</Project>
