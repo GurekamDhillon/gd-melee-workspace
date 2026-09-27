@@ -70,13 +70,20 @@ def curve(C, S, name, table, count, const):
 
 
 # ---- textures ----------------------------------------------------------------------------------------------
-def texture_png(path, out_dir):
+def decode_bntx(path):
+    """Decode one BNTX image, retaining its NVN component selectors.
+
+    trail_vfx_melee is the shared Tegra block-linear / BC1/3/4/5/7 decoder. RGB565
+    is handled here because that older decoder only covers RGBA8 and BCn.
+    """
     import trail_vfx_melee as V
     d = open(path, 'rb').read()
     i = d.find(b'BRTI')
+    if i < 0:
+        raise ValueError(f"no BRTI texture in {path}")
     comp = list(d[i + 0x58:i + 0x5c])        # component selector per output channel r, g, b, a
     fmt = struct.unpack_from('<I', d, i + 0x1c)[0]
-    if fmt == 0x701:  # BNTX RGB565_UNORM; the older particle-bank decoder handles only RGBA8/BCn.
+    if fmt == 0x701:  # BNTX RGB565_UNORM
         from PIL import Image
         w, h = struct.unpack_from('<II', d, i + 0x24)
         layout = struct.unpack_from('<I', d, i + 0x34)[0]
@@ -98,6 +105,11 @@ def texture_png(path, out_dir):
         img = Image.frombytes('RGB', (w, h), bytes(rgb)).convert('RGBA')
     else:
         name, img = V.bntx(path)
+    return name, img, fmt, comp
+
+
+def texture_png(path, out_dir):
+    name, img, fmt, comp = decode_bntx(path)
     os.makedirs(out_dir, exist_ok=True)
     img.save(os.path.join(out_dir, name + ".png"))
     # selector codes: 0 zero, 1 one, 2 red, 3 green, 4 blue, 5 alpha (NVN)

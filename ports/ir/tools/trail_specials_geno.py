@@ -53,7 +53,11 @@ LABELS = os.path.join(ULT, "references", "ParamLabels.csv")
 VL = os.path.join(ULT, "workspace", "extracted", "fighter", "trail", "param", "vl.prc")
 MOTION = os.path.join(ULT, "workspace", "extracted", "fighter", "trail", "motion", "body", "c00")
 sys.path.insert(0, HERE)
-from acmd_to_ftcmd import ELEM, hitbox_words, default_path, needs_hitbox_remap, remap_hitboxes, apply_autolink, carry_hit_commands  # noqa: E402
+from acmd_to_ftcmd import (attack_spheres, default_path, needs_hitbox_remap, remap_hitboxes,
+                           apply_autolink, carry_hit_commands, carry_fkb_floor, validate_attack,
+                           hit_extras, clear_rehit, reaction_stun_args,
+                           force_reaction_args)  # noqa: E402
+from acmd_loss import LossGuard, write_losses, verify_acmd_source  # noqa: E402
 
 LOCK_RANGE = 50         # the SEARCH box radius in game_specialssearch (a sphere approximates it)
 MAX_LOCK_DEG = 40       # INFERRED: steepest locked-on dash
@@ -266,45 +270,116 @@ class Timeline:
         return out + tail + [0]
 
 
-def hit_events(tl, row, t, joint_of, rep, name):
+def audit_special_row(row, joint_of, *, sonic_hit_branch=True, allowlist=None):
+    """Fail on every source command/argument the hand-written state does not encode."""
+    guard = LossGuard(f"{row.get('agent', 'trail')}/{row.get('script', '<unnamed special>')}", allowlist)
+    script = row.get("script", "")
+    for c in row["commands"]:
+        cmd, frame, args = c["cmd"], c["frame"], c.get("args", [])
+        if c.get("when") and not default_path(c["when"]):
+            branch_encoded = (sonic_hit_branch and script in ("game_specials2", "game_specials3")
+                              and cmd == "ATTACK" and frame == 3)
+            if not branch_encoded:
+                guard.omit(frame, "case", "branch:" + cmd,
+                           f"{cmd} on unselected condition {c['when']!r}")
+                continue
+        if cmd in ("frame", "wait"):
+            if c.get("unresolved_frame") or len(args) != 1 or not isinstance(args[0], (int, float)):
+                raise ValueError(f"{script} frame {frame:g}: {cmd} timing unresolved")
+        elif cmd == "ATTACK":
+            n = c.get("named")
+            if n is None:
+                raise ValueError(f"{script} frame {frame:g}: ATTACK arguments unresolved")
+            validate_attack(n, guard, frame)
+            if n["bone"] not in joint_of:
+                raise ValueError(f"{script} frame {frame:g}: ATTACK bone {n['bone']!r} unmapped")
+        elif cmd == "AttackModule::set_add_reaction_frame_revised":
+            reaction_stun_args(c, f"trail/{script}")
+        elif cmd == "AttackModule::set_force_reaction":
+            force_reaction_args(c, f"trail/{script}")
+        elif cmd == "AttackModule::clear_all":
+            if args:
+                guard.omit(frame, "case", "AttackModule::clear_all.args", f"clear arguments {args!r}")
+        elif cmd == "FT_MOTION_RATE" and script in ("game_specialhi", "game_specialairhi", "game_attacks32"):
+            if len(args) != 1 or not isinstance(args[0], (int, float)) or args[0] <= 0:
+                raise ValueError(f"{script} frame {frame:g}: FT_MOTION_RATE arguments {args!r} unresolved")
+        elif cmd == "KineticModule::add_speed" and script in ("game_specials1", "game_specials2", "game_specials3"):
+            if len(args) != 3 or not isinstance(args[0], (int, float)) or args[1:] != [0, 0.0]:
+                raise ValueError(f"{script} frame {frame:g}: add_speed vector {args!r} is not converted")
+        elif cmd in ("WorkModule::on_flag", "WorkModule::off_flag") and len(args) == 1 and (
+                (script in ("game_specials1", "game_specials2", "game_specials3") and args[0] == {"const": "0xe65c"}) or
+                (script in ("game_specialhi", "game_specialairhi") and args[0] == {"const": "0xe610"}) or
+                (script in ("game_speciallwstart", "game_specialairlwstart") and args[0] == {"const": "0xe61c"}) or
+                (script == "game_attacks32" and args[0] == {"const": "0x720"})):
+            pass
+        else:
+            guard.omit(frame, "command", cmd, f"{cmd} arguments {args!r}")
+    return guard.losses
+
+
+def hit_events(tl, row, t, joint_of, rep, name, carry_motion=None, losses=None, audit=True,
+               allowlist=None):
     """A game script's ATTACK / clear_all -> Melee hitboxes on the timeline (game frames)."""
+    if audit:
+        audited_losses = audit_special_row(row, joint_of, allowlist=allowlist)
+        if losses is not None:
+            losses.extend(audited_losses)
     events = []
+    guard = LossGuard(f"{row.get('agent', 'trail')}/{row.get('script', name)}", allowlist)
     carry_hits = carry_hit_commands(row)
+    carry_floors = carry_fkb_floor(row, *carry_motion) if carry_motion else {}
     for c in row["commands"]:
         if not default_path(c.get("when", [])):
             continue
         if c["cmd"] == "ATTACK" and c.get("named"):
             n = c["named"]
-            if not isinstance(n["id"], int):
-                rep.append("  %s f%d: hitbox id %s dropped (Melee has 4 slots)" % (name, c["frame"], n["id"]))
-                continue
-            y = n["y"] if n["y2"] is None else (n["y"] + n["y2"]) / 2     # a capsule -> its middle
-            z = n["z"] if n["z2"] is None else (n["z"] + n["z2"]) / 2
-            j = joint_of.get(n["bone"], 0)
-            words = hitbox_words(n["id"], j, n["damage"], n["size"], n["x"], y, z, n["angle"],
-                                 n["kbg"], n["fkb"], n["bkb"], ELEM.get(n.get("effect"), 0), 0)
-            events.append((c["frame"], "hit", {"words": words, "key": ("attack", n["id"]),
-                                                "id": n["id"], "damage": n["damage"], "radius": n["size"],
-                                                "carry": id(c) in carry_hits}))
+            validate_attack(n, guard, c["frame"])
+            if n["bone"] not in joint_of:
+                raise ValueError(f"{name} frame {c['frame']:g}: ATTACK bone {n['bone']!r} unmapped")
+            j = joint_of[n["bone"]]
+            samples = attack_spheres(n, j, carry=id(c) in carry_hits,
+                                     fkb=carry_floors.get(id(c), n["fkb"]))
+            payload = dict(samples[0])
+            if len(samples) > 1:
+                payload["samples"] = samples
+            events.append((c["frame"], "hit", payload))
             rep.append("  %s f%d (game %d): id %d %s %.1f%% angle %d kbg %d fkb %d bkb %d size %.1f" % (
                 name, c["frame"], round(t(c["frame"])), n["id"], n["bone"], n["damage"], n["angle"],
                 n["kbg"], n["fkb"], n["bkb"], n["size"]))
         elif c["cmd"] == "AttackModule::clear_all":
             events.append((c["frame"], "clear", CLEAR))
+        elif c["cmd"] == "AttackModule::set_add_reaction_frame_revised":
+            source_id, frames = reaction_stun_args(c, guard.move)
+            events.append((c["frame"], "stun", {"id": source_id, "frames": frames}))
+        elif c["cmd"] == "AttackModule::set_force_reaction":
+            source_id, enabled = force_reaction_args(c, guard.move)
+            events.append((c["frame"], "force", {"id": source_id, "enabled": enabled}))
     if needs_hitbox_remap(events):
         details = {}
         events = remap_hitboxes(events, details)
         for drop in details.get("dropped_hitboxes", []):
             rep.append("  %s f%d: hitbox id %d dropped (%s)" %
                        (name, drop["frame"], drop["id"], drop["reason"]))
+            guard.remap(drop["frame"], drop)
+    if losses is not None:
+        losses.extend(guard.losses)
     events = apply_autolink(events)
     for frame, kind, payload in events:
-        tl.at(t(frame), payload["words"] if isinstance(payload, dict) else payload,
+        encoded = payload["words"] if isinstance(payload, dict) else payload
+        if kind == "hit" and isinstance(payload, dict):
+            encoded = encoded + hit_extras(payload)
+        elif kind == "clear":
+            encoded = encoded + clear_rehit(encoded)
+        tl.at(t(frame), encoded,
               2 if kind == "clear" else 3)
 
 
-def sonic_branch_hit_events(tl, row, joint_of, rep, name):
+def sonic_branch_hit_events(tl, row, joint_of, rep, name, losses=None, audit=True):
     """Keep both frame-3 flag branches; value 0 means no previous dash hit."""
+    if audit:
+        audited_losses = audit_special_row(row, joint_of, sonic_hit_branch=True)
+        if losses is not None:
+            losses.extend(audited_losses)
     branches = {3.0: [], 5.2: []}
     for c in row["commands"]:
         if c["cmd"] != "ATTACK" or c["frame"] != 3 or not c.get("named") or not c.get("when"):
@@ -314,29 +389,77 @@ def sonic_branch_hit_events(tl, row, joint_of, rep, name):
             raise ValueError("unexpected Sonic Blade follow-up branch: %s" % c)
         if len(c["when"]) != 1 or c["when"][0]["holds"] != (n["damage"] == 3.0):
             raise ValueError("Sonic Blade flag branch no longer matches the dump: %s" % c)
-        y = n["y"] if n["y2"] is None else (n["y"] + n["y2"]) / 2
-        z = n["z"] if n["z2"] is None else (n["z"] + n["z2"]) / 2
-        branches[n["damage"]].append((n["id"], hitbox_words(n["id"], joint_of.get(n["bone"], 0),
-            n["damage"], n["size"], n["x"], y, z, n["angle"], n["kbg"], n["fkb"],
-            n["bkb"], ELEM.get(n.get("effect"), 0), 0)))
+        guard = LossGuard(f"{row.get('agent', 'trail')}/{row.get('script', name)}")
+        validate_attack(n, guard, c["frame"])
+        if n["bone"] not in joint_of:
+            raise ValueError(f"{name} frame {c['frame']:g}: ATTACK bone {n['bone']!r} unmapped")
+        samples = attack_spheres(n, joint_of[n["bone"]])
+        payload = dict(samples[0])
+        if len(samples) > 1:
+            payload["samples"] = samples
+        branches[n["damage"]].append((n["id"], payload, n))
+        if losses is not None:
+            losses.extend(guard.losses)
         rep.append("  %s f3: connected=%d id %d %.1f%% angle %d kbg %d bkb %d" % (
             name, n["damage"] == 5.2, n["id"], n["damage"], n["angle"], n["kbg"], n["bkb"]))
-    if any(sorted(i for i, _ in branch) != [0, 1, 2] for branch in branches.values()):
+    if any(sorted(i for i, _, _ in branch) != [0, 1, 2] for branch in branches.values()):
         raise ValueError("Sonic Blade follow-up must have three hitboxes in each branch")
-    weak = sum((words for _, words in sorted(branches[3.0])), [])
-    strong = sum((words for _, words in sorted(branches[5.2])), [])
+    geometry = ("bone", "size", "x", "y", "z", "x2", "y2", "z2")
+    weak_geometry = {i: tuple(n.get(k) for k in geometry) for i, _, n in branches[3.0]}
+    strong_geometry = {i: tuple(n.get(k) for k in geometry) for i, _, n in branches[5.2]}
+    if weak_geometry != strong_geometry:
+        raise ValueError("Sonic Blade branch geometry differs; position check needs separate branch timelines")
+    def branch_words(branch):
+        events = [(3, "hit", payload) for _, payload, _ in sorted(branch)]
+        details = {}
+        if needs_hitbox_remap(events):
+            events = remap_hitboxes(events, details)
+        events = apply_autolink(events)
+        if losses is not None:
+            guard = LossGuard(f"{row.get('agent', 'trail')}/{row.get('script', name)}")
+            for drop in details.get("dropped_hitboxes", []):
+                guard.remap(drop["frame"], drop)
+            losses.extend(guard.losses)
+        return sum((payload["words"] + hit_extras(payload) if isinstance(payload, dict) else payload
+                    for _, _, payload in events), [])
+    weak = branch_words(branches[3.0])
+    strong = branch_words(branches[5.2])
     # IF skips only when its test fails: disconnected -> 3.0%, connected -> 5.2%.
     prev = var(LAI, SONIC_PREV_N)
     tl.at(3, IF(prev, EQ, 0, len(weak)) + weak
           + IF(prev, EQ, 1, len(strong)) + strong, 3)
     nonbranch = dict(row, commands=[c for c in row["commands"] if not (
         c["cmd"] == "ATTACK" and c["frame"] == 3 and c.get("when"))])
-    hit_events(tl, nonbranch, lambda f: f, joint_of, rep, name)
+    hit_events(tl, nonbranch, lambda f: f, joint_of, rep, name, losses=losses, audit=False)
 
 
 def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_backward=False,
-          counter_rebound=False, combo_chain=True):
+          counter_rebound=False, combo_chain=True, losses=None):
     game = {r["script"]: r for r in rows if r["kind"] == "game" and r["agent"] == "trail"}
+    if losses is None:
+        losses = []
+    if not sonic_hit_branch:
+        losses.append({"move": "Sonic Blade", "frame": 3,
+                       "what": "connected-hit follow-up branch",
+                       "why": "--no-sonic-hit-branch selects a single branch"})
+    if not counter_backward:
+        losses.append({"move": "Counter Attack", "frame": 0,
+                       "what": "backward counter variant",
+                       "why": "--no-counter-backward disables the variant"})
+    if not combo_chain:
+        losses.append({"move": "S3 combo", "frame": 0,
+                       "what": "game_attacks32 and game_attacks33 stages",
+                       "why": "--no-combo-chain disables the follow-up stages"})
+    scripts = [f"game_specials{i}" for i in (1, 2, 3)] + [
+        "game_specialhi", "game_specialairhi", "game_speciallwstart",
+        "game_specialairlwstart", "game_speciallw", "game_specialairlw"]
+    if combo_chain:
+        scripts += ["game_attacks32", "game_attacks33"]
+    for script in scripts:
+        if script not in game:
+            raise ValueError(f"special ACMD source missing: {script}")
+        losses.extend(audit_special_row(game[script], joint_of,
+                                        sonic_hit_branch=sonic_hit_branch))
     sub = HOSTS[host]
     active = (BASE_STATES + (BACK_STATES if counter_backward else [])
               + (REBOUND_STATES if counter_rebound else []) + (COMBO_STATES if combo_chain else []))
@@ -394,9 +517,9 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
               + GET(var(RAF, 2), V_FACING) + MULV(var(RAF, 2), var(RAF, 0)) + PUTV(V_GROUND_VEL, var(RAF, 2)))
         tl.at(0, v, 0)
         if n > 1 and sonic_hit_branch:
-            sonic_branch_hit_events(tl, row, joint_of, rep, "SDash%d" % n)
+            sonic_branch_hit_events(tl, row, joint_of, rep, "SDash%d" % n, losses=losses, audit=False)
         else:
-            hit_events(tl, row, ident, joint_of, rep, "SDash%d" % n)
+            hit_events(tl, row, ident, joint_of, rep, "SDash%d" % n, losses=losses, audit=False)
         for c in row["commands"]:
             if c["cmd"] == "KineticModule::add_speed" and isinstance(c["args"][0], (int, float)):
                 dv = float(c["args"][0])
@@ -452,7 +575,8 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
               + PUTV(V_VEL_X, var(RAF, 0)), 0)
         for f in range(g0, total):
             tl.at(f, PUTF(V_VEL_Y, v0 - a * (f - g0)), 1)
-        hit_events(tl, row, t, joint_of, rep, name)
+        hit_events(tl, row, t, joint_of, rep, name,
+                   carry_motion=(t, lambda f: v0 - a * (f - g0)), losses=losses, audit=False)
         state(name, "geno.air", tl.words(total, CHG(MS_FALLSPECIAL)), phys="air_drift", coll="anim_motion",
               ledge="front", landing_lag=int(H["landing_frame"]))
         rep.append("%s: %d game frames (%d clip frames through FT_MOTION_RATE), rise from game f%d: vy %.3f - %.2f/frame "
@@ -518,7 +642,7 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
             if back or v != last:
                 tl.at(f, PUTF(V_FWD_VEL, v), 2)
                 last = v
-        hit_events(tl, row, ident, joint_of, rep, name)
+        hit_events(tl, row, ident, joint_of, rep, name, losses=losses, audit=False)
         # Ultimate's counter damage: the countered hit x attack_mul, clamped attack_min..attack_max
         # (HIT_DAMAGE, Geno 19.3), written over the script's hitboxes each time they are (re)set
         dmg = var(RAF, 5)
@@ -583,7 +707,7 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
             for command in row["commands"]:
                 if command["cmd"] == "FT_MOTION_RATE" and command.get("args"):
                     tl.at(command["frame"], PUTF(V_ANIM_RATE, command["args"][0]), 1)
-            hit_events(tl, row, lambda f: f, joint_of, rep, name)
+            hit_events(tl, row, lambda f: f, joint_of, rep, name, losses=losses, audit=False)
             cancel = (row.get("motion") or {}).get("cancel_frame")
             if cancel:
                 tl.at(cancel, IASA, 7)
@@ -613,17 +737,34 @@ def main():
                     help="(default on) Sora's AttackS3 three-stage chain")
     ap.add_argument("-o", "--out", required=True)
     a = ap.parse_args()
-    rows = json.load(open(a.acmd, encoding="utf-8"))
+    rows = json.loads(verify_acmd_source(a.acmd))
     P = params()
     rep = []
+    losses = []
     magic = None
+    magic_manifest = {"rows": [], "articles": []}
     base = 0
     if a.magic:
+        import hashlib
+        from pathlib import Path
+        magic_dir = Path(a.magic).parent
+        audit_path, source_path = magic_dir / "conversion_losses.json", magic_dir / "overlay_sources.json"
+        if not audit_path.is_file() or not source_path.is_file():
+            raise ValueError("magic profile has no ACMD loss report and source map")
+        magic_audit = json.loads(audit_path.read_text(encoding="utf-8"))
+        magic_manifest = json.loads(source_path.read_text(encoding="utf-8"))
+        proof = magic_audit.get("audit", {})
+        if (proof.get("source_sha256") != hashlib.sha256(Path(a.acmd).read_bytes()).hexdigest() or
+                proof.get("generator_sha256") != hashlib.sha256((Path(HERE) / "trail_magic_geno.py").read_bytes()).hexdigest() or
+                proof.get("profile_sha256") != hashlib.sha256(Path(a.magic).read_bytes()).hexdigest() or
+                proof.get("manifest_sha256") != hashlib.sha256(source_path.read_bytes()).hexdigest()):
+            raise ValueError("magic ACMD audit is stale; regenerate the magic profile")
+        losses.extend(magic_audit["losses"])
         magic = json.load(open(a.magic, encoding="utf-8"))["fighters"][0]
         base = len(magic.get("states", []))
     states, overlays, specials, clips = build(rows, P, joints_of_sora(), a.host, base, rep,
         sonic_hit_branch=a.sonic_hit_branch, counter_backward=a.counter_backward,
-        counter_rebound=a.counter_rebound, combo_chain=a.combo_chain)
+        counter_rebound=a.counter_rebound, combo_chain=a.combo_chain, losses=losses)
     fighter = {"attach": a.attach, "name": "Sora specials (Geno, host %s)" % a.host,
                "states": states, "specials": specials, "subactions": overlays}
     if magic:
@@ -659,6 +800,39 @@ def main():
                                   str(HOSTS[a.host]["LwAttackBackAir"]): "d03specialairlwturn"}
     with open(os.path.join(a.out, "clips.json"), "w", encoding="utf-8") as f:
         json.dump(clip_doc, f, indent=1)
+    hit_sources = {"SDash1": "game_specials1", "SDash2": "game_specials2",
+                   "SDash3": "game_specials3", "Hi": "game_specialhi",
+                   "HiAir": "game_specialairhi", "LwAttack": "game_speciallw",
+                   "LwAttackAir": "game_specialairlw", "LwAttackBack": "game_speciallw",
+                   "LwAttackBackAir": "game_specialairlw", "S3Combo2": "game_attacks32",
+                   "S3Combo3": "game_attacks33"}
+    overlay_sources = []
+    for state in states:
+        name = state["name"]
+        if name not in hit_sources:
+            continue
+        script = hit_sources[name]
+        row = next(r for r in rows if r["kind"] == "game" and r["agent"] == "trail" and r["script"] == script)
+        overlay_sources.append({"row": state["subaction"], "name": name, "script": script,
+                                "clip": CLIPS[name], "file": f"geno/sora_sp_{state['subaction']}.txt",
+                                "rates": (sorted([c["frame"], c["args"][0]] for c in row["commands"]
+                                                 if c["cmd"] == "FT_MOTION_RATE")
+                                          if name in ("Hi", "HiAir") else [])})
+    with open(os.path.join(a.out, "overlay_sources.json"), "w", encoding="utf-8") as f:
+        json.dump({"version": 1, "rows": magic_manifest.get("rows", []) + overlay_sources,
+                   "articles": magic_manifest.get("articles", [])}, f, indent=1)
+    import hashlib
+    loss_path = os.path.join(a.out, "conversion_losses.json")
+    write_losses(loss_path, {"losses": losses})
+    loss_doc = json.load(open(loss_path, encoding="utf-8"))
+    from pathlib import Path
+    loss_doc["audit"] = {"version": 1,
+                         "source_sha256": hashlib.sha256(Path(a.acmd).read_bytes()).hexdigest(),
+                         "generator_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                         "profile_sha256": hashlib.sha256(Path(a.out, "geno.json").read_bytes()).hexdigest(),
+                         "manifest_sha256": hashlib.sha256(Path(a.out, "overlay_sources.json").read_bytes()).hexdigest()}
+    with open(loss_path, "w", encoding="utf-8") as f:
+        json.dump(loss_doc, f, indent=2)
     with open(os.path.join(a.out, "mod.json"), "w", encoding="utf-8") as f:
         json.dump({"id": os.path.basename(os.path.normpath(a.out)), "name": "Sora specials (Geno)",
                    "version": "0.1.0", "kind": "misc",

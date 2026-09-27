@@ -15,6 +15,7 @@ import acmd_parse as A
 import acmd_to_ftcmd as F
 import plan_parts
 import trail_magic_geno as M
+from acmd_loss import LossGuard, write_losses
 from convert_ultimate_anim import INSTANCES, TOOL
 from trail_specials_geno import HOSTS
 
@@ -94,8 +95,9 @@ def package_of(name, own):
 
 def call_from_command(c, own, joint_of, scale):
     args = c['args']
-    if len(args) < 9:
-        return None
+    needed = 8 if c['cmd'] == 'EFFECT_GLOBAL' else 9
+    if len(args) < needed:
+        raise ValueError(f"{c['cmd']} arguments are incomplete: {args!r}")
     pkg = package_of(args[0], own)
     global_effect = c['cmd'] == 'EFFECT_GLOBAL'
     bone = 'top' if global_effect else str(args[1]).lower()
@@ -103,7 +105,7 @@ def call_from_command(c, own, joint_of, scale):
     rot = args[4:7] if global_effect else args[5:8]
     size = args[7] if global_effect else args[8]
     if not all(isinstance(v, (int, float)) for v in xyz + rot + [size]):
-        return None
+        raise ValueError(f"{c['cmd']} arguments are unresolved: {args!r}")
     return {'frame': c['frame'], 'macro': c['cmd'], 'effect': args[0], 'package': pkg,
             'bone': bone, 'joint': joint_of.get(bone),
             'offset': [round(v * scale, 6) for v in xyz], 'rotation': rot,
@@ -116,35 +118,63 @@ def call_from_command(c, own, joint_of, scale):
 
 
 def decorate_ends(commands, calls):
+    consumed = set()
     for call in calls:
         start = call.pop('_command_index')
         for c in commands[start + 1:]:
             if c['cmd'] in END_CMDS and c['frame'] >= call['frame'] and c['args'] and c['args'][0] == call['effect']:
                 call['end_frame'] = c['frame']
                 call['end_event'] = 'off' if c['cmd'] == 'EFFECT_OFF_KIND' else 'detach'
+                consumed.add(id(c))
                 break
+    return consumed
 
 
-def census(rows, own, joint_of, scale):
-    scripts, common, after = [], Counter(), []
+def census(rows, own, joint_of, scale, *, allowlist=None):
+    scripts, common, after, losses = [], Counter(), [], []
     for r in rows:
+        guard = LossGuard(f"{r['agent']}/{r['script']}", allowlist)
         calls, end_calls, modifiers = [], [], []
         for command_index, c in enumerate(r['commands']):
             if c['cmd'] in EFFECT_CMDS:
-                call = call_from_command(c, own, joint_of, scale)
-                if call:
-                    call['_command_index'] = command_index
-                    calls.append(call)
-                    if not call['package'] and call['effect'] != 'null':
-                        common[str(call['effect'])] += 1
+                try:
+                    call = call_from_command(c, own, joint_of, scale)
+                except ValueError as exc:
+                    raise ValueError(f"{r['script']} frame {c['frame']:g}: {exc}") from exc
+                needed = 8 if c['cmd'] == 'EFFECT_GLOBAL' else 9
+                if len(c['args']) > needed:
+                    guard.omit(c['frame'], 'case', c['cmd'] + '.extra_args',
+                               f"{c['cmd']} trailing arguments {c['args'][needed:]!r}")
+                if c.get('when'):
+                    guard.omit(c['frame'], 'case', c['cmd'] + '.branch',
+                               f"conditional effect {c['cmd']} branch {c['when']!r}")
+                if call['joint'] is None:
+                    guard.omit(c['frame'], 'case', 'effect.bone.unmapped:' + call['bone'],
+                               f"effect bone {call['bone']!r} has no converted skeleton joint; use top")
+                    call['joint'] = joint_of['top']
+                    call['bone'] = 'top'
+                if not call['package']:
+                    guard.omit(c['frame'], 'case', 'effect.common:' + str(call['effect']),
+                               f"effect {call['effect']!r} has no converted package")
+                    common[str(call['effect'])] += 1
+                call['_command_index'] = command_index
+                call['source'] = [r['source_file'], command_index]
+                calls.append(call)
             elif c['cmd'] in END_CMDS:
+                if len(c['args']) != 1:
+                    guard.omit(c['frame'], 'case', c['cmd'] + '.extra_args',
+                               f"{c['cmd']} arguments {c['args']!r}")
                 end_calls.append({'frame': c['frame'], 'macro': c['cmd'],
                                   'effect': c['args'][0] if c['args'] else None,
                                   'args': c['args'], 'when': c.get('when', [])})
             elif c['cmd'].startswith('LAST_EFFECT_'):
+                guard.omit(c['frame'], 'command', c['cmd'],
+                           f"effect modifier {c['cmd']} arguments {c.get('args')!r}")
                 modifiers.append({'frame': c['frame'], 'macro': c['cmd'],
                                   'args': c['args'], 'when': c.get('when', [])})
             elif c['cmd'].startswith('AFTER_IMAGE'):
+                guard.omit(c['frame'], 'command', c['cmd'],
+                           f"sword trail {c['cmd']} arguments {c.get('args')!r}")
                 a = c['args']
                 after.append({'agent': r['agent'], 'script': r['script'], 'frame': c['frame'],
                               'macro': c['cmd'], 'source_file': r['source_file'], 'parameters': a,
@@ -154,11 +184,23 @@ def census(rows, own, joint_of, scale):
                               'blade_points': [a[4:7], a[8:11]] if 'ON' in c['cmd'] else [],
                               'color': 'texture-derived' if 'ON' in c['cmd'] else None,
                               'tail_parameters': a[-2:] if 'ON' in c['cmd'] else []})
-        decorate_ends(r['commands'], calls)
+            elif c['cmd'] in ('frame', 'wait'):
+                if (c.get('unresolved_frame') or len(c.get('args', [])) != 1 or
+                        not isinstance(c['args'][0], (int, float))):
+                    raise ValueError(f"{r['script']} frame {c['frame']:g}: {c['cmd']} timing unresolved")
+            else:
+                guard.omit(c['frame'], 'command', c['cmd'],
+                           f"effect command {c['cmd']} arguments {c.get('args')!r}")
+        consumed_ends = decorate_ends(r['commands'], calls)
+        for c in r['commands']:
+            if c['cmd'] in END_CMDS and id(c) not in consumed_ends:
+                guard.omit(c['frame'], 'case', c['cmd'] + '.unmatched',
+                           f"{c['cmd']} has no matching converted effect call")
         scripts.append({'agent': r['agent'], 'script': r['script'], 'source_file': r['source_file'],
                         'share': r['share'], 'owner': r['owner'], 'calls': calls,
                         'end_calls': end_calls, 'modifiers': modifiers})
-    return scripts, dict(sorted(common.items())), after
+        losses.extend(guard.losses)
+    return scripts, dict(sorted(common.items())), after, losses
 
 
 def magic_states(scripts, acmd):
@@ -262,6 +304,20 @@ def bind(scripts, host_ir, host, packages, acmd):
             'states': states}
 
 
+def audit_unbound(scripts, bindings, *, allowlist=None):
+    """An own effect in the census must reach at least one installed state."""
+    bound = {tuple(c['source']) for state in bindings['states'] for c in state['calls']}
+    losses = []
+    for script in scripts:
+        guard = LossGuard(f"{script['agent']}/{script['script']}", allowlist)
+        for call in script['calls']:
+            if call['package'] and tuple(call['source']) not in bound:
+                guard.omit(call['frame'], 'case', 'effect.unbound:' + script['script'],
+                           f"effect {call['effect']!r} is not bound to an installed state")
+        losses.extend(guard.losses)
+    return losses
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--dump', default=os.path.join(ROOT, '_build', 'ultimate-vfx', 'ef_trail'))
@@ -275,11 +331,14 @@ def main():
     plan = plan_parts.plan(body)
     joint_of = {j['name'].lower(): i for i, j in enumerate(plan['joints'])}
     joint_of['top'] = 0
-    scripts, common, after = census(rows, own, joint_of, 1.0)
+    scripts, common, after, census_losses = census(rows, own, joint_of, 1.0)
     host_ir = json.load(open(os.path.join(INSTANCES, a.host + '.melee.ir.json'), encoding='utf-8'))
     packages = {f[:-9] for f in os.listdir(a.packages) if f.endswith('.gfx.json')}
     bindings = bind(scripts, host_ir, a.host, packages, a.acmd)
+    unbound_losses = audit_unbound(scripts, bindings)
     os.makedirs(a.out, exist_ok=True)
+    write_losses(os.path.join(a.out, 'conversion_losses.json'),
+                 {'losses': census_losses}, {'losses': unbound_losses})
     json.dump({'sets': sets, 'scripts': scripts, 'common_effects': common, 'after_images': after},
               open(os.path.join(a.out, 'effect_census.json'), 'w'), indent=1)
     json.dump(bindings, open(os.path.join(a.packages, 'fx_bindings.json'), 'w'), indent=1)

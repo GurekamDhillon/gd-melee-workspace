@@ -264,6 +264,17 @@ def check_s3_combo(dest, doc, clips, host, base=0):
 
 
 def main():
+    # The historical geometry exercise needs an audited parse and reviewed
+    # source-specific omissions. Until then, its safe outcome is a rejected build.
+    from acmd_loss import ALLOWLIST
+    reviewed = json.loads(ALLOWLIST.read_text(encoding="utf-8"))["entries"]
+    if not os.path.exists(ACMD + ".audit.json") or not reviewed:
+        probe = subprocess.run([sys.executable, sp.__file__, "--host", "marth", "-o", OUT],
+                               capture_output=True, text=True)
+        assert probe.returncode != 0
+        assert "unaudited ACMD parse" in probe.stderr or "cannot be converted" in probe.stderr
+        print("trail specials: unreviewed ACMD conversion rejected")
+        return
     dump = json.load(open(ACMD, encoding="utf-8"))
     magic_count = len(json.load(open(MAGIC, encoding="utf-8"))["fighters"][0]["states"])
     for host in ("marth", "kirby"):
