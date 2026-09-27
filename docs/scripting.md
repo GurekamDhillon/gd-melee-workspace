@@ -298,6 +298,48 @@ end
 | `gd.teleport(port, x, y)` | put the fighter exactly there. It keeps flying if it was; one on foot falls from there. Offline only |
 | `gd.fly_speed([n])`, `gd.fly_solid([bool])` | the fly speed in units per frame at full stick (0.05-200, default 2), and whether hurtboxes stay on while flying (default off); each returns the current value. Offline only |
 
+### Stage content (offline, gameplay mods)
+
+A gameplay mod can add collision lines and breakable targets to the running stage: platforms and
+walls for a custom map, or a Break-the-Targets course on a VS stage. These calls need a mod with
+`"gameplay": true` in its manifest (a pad script counts). They work only in an active offline match.
+The console and every netplay or rollback session are refused, even for a `rollback_safe` script.
+Coordinates are world units, finite and within ±100000. Each write forks the LAB's rewind timeline.
+
+| function | |
+|---|---|
+| `gd.stage_add_platform(x, y, width [, {passthrough=, ledges=}])` | a horizontal floor centred on `(x, y)`; returns a handle, or `nil, reason` |
+| `gd.stage_add_line(x1, y1, x2, y2, kind [, opts])` | `kind`: `"floor"` (left to right), `"ceiling"` (right to left), `"right_wall"` (top to bottom) or `"left_wall"` (bottom to top); a wrong direction is an error. `opts` (`passthrough`, `ledges`) is for floors only |
+| `gd.stage_move(handle, x, y)` | move a line so its midpoint is at `(x, y)`; call it every frame for a moving platform. A fighter standing on it is carried |
+| `gd.stage_remove(handle)` | remove a line or a target (a removed target raises no event); returns whether it existed |
+| `gd.spawn_target(x, y)` | a target (Target Test's Mato item) held at `(x, y)`; returns a handle, or `nil, reason` |
+| hook `on_target_broken(handle, remaining)` | after the frame a target was hit in |
+| hook `on_all_targets_broken()` | after the last active scripted target breaks |
+
+- **Floors.** `passthrough = true` makes a floor you can drop through (down on the stick) and land
+  on from below. `ledges = true` makes both of its ends grabbable.
+- **Moving platforms.** A line moved during a frame carries whoever stands on it by the same amount
+  (`mpGetSpeed`), exactly as the stage's own moving platforms do.
+- **Handles.** Handles are never reused, even across a savestate load. A script that keeps handles
+  across a load should check them before it moves or removes the objects.
+- **Stage bounds.** The stage's camera bounds and blast zones do not change.
+- **Looks.** A line is drawn as an overlay stroke and a target as an orange ring (the host overlay,
+  not the game's picture). There is no mesh: a game screenshot shows neither.
+- **Limits.** A match can have at most **32 lines and 32 targets** at once. These are the pool
+  sizes in `pc/gameworld/script_game.c` (`SCRIPT_STAGE_LINES`, `SCRIPT_STAGE_TARGETS`), not
+  engine limits. On Final Destination (1 joint, 16 lines) and Battlefield (1 joint, 23 lines), both
+  pools filled to exactly 32. The 33rd call returns `nil, reason`.
+  - **Raising the line pool:** each line takes one collision joint, so the pool can grow to about
+    `256 − the stage's joints` by changing the constant. Past that, lines would have to share joints
+    (one joint per kind, with contiguous ranges), up to about 1536 lines. Past that again,
+    `mplib.c`'s fixed 2048 / 1536 / 256 arrays would have to grow. Every active joint adds to each
+    floor and wall search.
+  - **Raising the target pool:** change the constant. The next ceiling is the game's item limit for
+    the category (`Item_804A0C64`, set from ItCo's common data). 32 targets fit on both stages.
+- **Example:** `melee/pc/scripts/examples/fd_stage_content/` adds 3 platforms (passthrough with
+  ledges, passthrough, solid with ledges) and 10 targets to Final Destination. Copy it to
+  `scripts/fd_stage_content` beside the exe.
+
 ### Console and files
 
 | function | |
