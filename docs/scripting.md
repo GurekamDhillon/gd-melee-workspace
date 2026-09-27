@@ -294,6 +294,9 @@ end
 | `gd.scene_clear()` | stop seeding scenes (the next VS/Training starts normally) |
 | `gd.training_select(["kit" \| "native"])` | *(any script - menu routing only)* Training's character and stage select on the port's own kit screens or the native ones; returns the current choice and stays until changed. On the kit, Training keeps its rules: the player who entered picks, the CPU dummy's card picks the dummy, nothing else can be added. Also `select=kit` in the scene grammar (`gd.scene_launch{mode = "training", at = "css", select = "kit"}`, `MELEE_SCENE`), `MELEE_TRAINING_SELECT=kit` at start, and `gw_Frontend_SetTrainingSelect(1)` for native code |
 | `gd.quit()` | close the game like the window's close button |
+| `gd.fly(port [, mode])` | debug movement (noclip). With no mode it reads: `true` while that port's fighter flies. `mode` is `true` / `"on"`, `false` / `"off"` (drop into Fall there), `"place"` (land on the floor below) or `"toggle"`; returns the new state. Flying: stick moves it at the fly speed (A ×0.25, B ×4), no gravity, no stage collision or ledges, no blast-zone KO, no hurtboxes unless solid; the camera follows it past the stage's bounds. Offline only, every mode (melee `docs/geno.md` 14.17) |
+| `gd.teleport(port, x, y)` | put the fighter exactly there. It keeps flying if it was; one on foot falls from there. Offline only |
+| `gd.fly_speed([n])`, `gd.fly_solid([bool])` | the fly speed in units per frame at full stick (0.05-200, default 2), and whether hurtboxes stay on while flying (default off); each returns the current value. Offline only |
 
 ### Console and files
 
@@ -357,6 +360,9 @@ lines; the console may use the gameplay functions offline). `= expr` prints a va
 | `input <port> <buttons\|0xhex\|none> [frames] [x y]` | e.g. `input 1 A 5`, `input 1 none 40 127 0` (walk right) |
 | `shot [path]` | screenshot (see `gd.screenshot`) |
 | `label <text>` | the run label |
+| `fly [port] [on\|off\|place\|toggle]`, `noclip ...` | debug movement: toggle with no argument; `fly speed <n>`, `fly solid on\|off`, `fly port <n>` (the default port and F11's), `fly readout on\|off`. Offline only; **F11** toggles the fly port in any offline match |
+| `tp [port] <x> <y>` | teleport (offline only) |
+| `pos [port]` | the fighter's position, also copied to the clipboard as `x y` |
 | `echo <text>`, `clear`, `quit` | |
 | *commands scripts added* | listed by `help` |
 
