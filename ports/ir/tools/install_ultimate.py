@@ -8,6 +8,8 @@ The generic counterpart of Halberd's install_mk.py, driven by the IR tools inste
 
  1. slot files (Halberd's mk_slot_files.py, parameterised): MxDt row dst-k/dst-e becomes a clone of
     Kirby (internal/external 4) named --name with pl file --pl; PlCo / MnSlChr / IfAll to match.
+    When the fighter's extracted Ultimate UI BNTX files exist, the copied CSS icon, CSPs and
+    stock icons are replaced with converted art in this mod's own entries.
     Row 52/51 is the one Meta Knight uses (it replaces ACE's duplicate "Wolf SSBU"): every added
     fighter displaces an ACE fighter while the port has 31 m-ex slots, so this mod and
     metaknight-slot are mounted one at a time.
@@ -17,7 +19,7 @@ The generic counterpart of Halberd's install_mk.py, driven by the IR tools inste
     a clip is pointed at the Ultimate clip of the same action name (Melee 'AttackS4S' = Ultimate
     'c03attacks4s'); rows with no match play the fallback (wait1) and are listed.
  5. ftData joint fields from plan_parts.py: part bytes, centre, coin spheres, ECB, GFX, IK; the
-    hurtboxes fitted to the fighter's own mesh (plan_hurtboxes.py; --host-hurtboxes: the host's moved by role); x20 / x5C joint trees; x1C part
+    hurtboxes fitted to the fighter's own mesh (plan_hurtboxes.py; --host-hurtboxes: the host's moved by role); x20 guard-frame / x5C rest joint trees; x1C part
     anims parked on a mesh-less joint (as install_mk.py does for Meta Knight).
  6. script bones: Kirby's scripts name Kirby PART SLOTS; each goes to the fighter's joint with the
     same common part, else to the nearest joint by rest position (uniform scale fitted on the
@@ -34,9 +36,11 @@ Kirby-clone m-ex slot runs. Output is disc-derived and goes under _build/tmp (gi
 """
 import argparse
 import glob
+import hashlib
 import json
 import math
 import os
+from pathlib import Path
 import re
 import shutil
 import struct
@@ -53,7 +57,9 @@ import convert_ultimate_anim as CA  # noqa: E402
 import export_ultimate_mesh as EM  # noqa: E402
 import figatree as F  # noqa: E402
 import plan_parts  # noqa: E402
+import ultimate_ui as UI  # noqa: E402
 from walkloop import rewrite_host_loop, validate_geno_overlays, validate_script  # noqa: E402
+from acmd_loss import write_losses, verify_acmd_source  # noqa: E402
 
 ROOT = CA.ROOT
 sys.path.insert(0, os.path.join(ROOT, "tools", "mex_port"))
@@ -71,6 +77,21 @@ COMMON_ROWS = 295   # motion rows 0..294 are the common actions (ftCo); 295 on a
 FLOW_LEN = [1, 1, 1, 1, 1, 2, 1, 2, 1, 1]
 OP_LEN = [5, 5, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 7, 4, 1, 1, 1, 1,
           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 2, 1, 4]   # ftaction.c ftAction_803C0870, ops 10..58
+
+
+def acmd_converter_digest():
+    return hashlib.sha256(b"".join((Path(HERE) / file).read_bytes() for file in
+                                   ("acmd_to_ftcmd.py", "acmd_loss.py", "acmd_allowlist.json"))).hexdigest()
+
+
+def verify_moveset_audit(document, source_bytes):
+    audit = document.get("audit") or {}
+    if audit.get("version") != 1:
+        raise ValueError("unaudited moveset: regenerate with current acmd_to_ftcmd.py")
+    if audit.get("source_sha256") != hashlib.sha256(source_bytes).hexdigest():
+        raise ValueError("stale moveset: ACMD source changed; regenerate the moveset")
+    if audit.get("converter_sha256") != acmd_converter_digest():
+        raise ValueError("stale moveset: converter or allowlist changed; regenerate the moveset")
 
 
 def cmd_len(word):
@@ -158,6 +179,72 @@ def joint_tree(w, J):
     return offs[0]
 
 
+def guard_pose_joints(anim, plan, rest, joints, orient):
+    """Sample Ultimate's b00guard at frame 0 in the costume/figatree joint order."""
+    CA.bake_helpers(anim, plan, rest, orient)
+    nodes = {n["name"]: n for g in anim["groups"] if g["group_type"] == "Transform" for n in g["nodes"]}
+    pose = []
+    for planned, joint in zip(plan["joints"], joints):
+        copied = dict(joint)
+        node = nodes.get(planned["name"]) if not planned["synthesized"] else None
+        if node is not None:
+            track = node["tracks"][0]
+            frame = track["values"]["Transform"][0]
+            copied["rot"] = list(map(float, CA.euler_track(
+                [[frame["rotation"][axis] for axis in "xyzw"]], rest[planned["name"]][3])[0]))
+            copied["scale"] = [float(frame["scale"][axis]) for axis in "xyz"]
+            if not track["transform_flags"]["override_translation"]:
+                copied["trans"] = [float(frame["translation"][axis]) for axis in "xyz"]
+        pose.append(copied)
+    return pose
+
+
+def count_joint_tree(w, root):
+    """Count an HSD_Joint tree, rejecting invalid links and cycles."""
+    seen, pending = set(), [root]
+    while pending:
+        at = pending.pop()
+        if not at or at in seen or at + 0x40 > len(w.data):
+            raise ValueError(f"invalid HSD_Joint at 0x{at:X}")
+        seen.add(at)
+        for field in (at + 8, at + 0xC):
+            child = w.u32(field)
+            if child:
+                if field not in w.relocs:
+                    raise ValueError(f"HSD_Joint link at 0x{field:X} lacks relocation")
+                pending.append(child)
+    return len(seen)
+
+
+def validate_ftdata_pose_trees(w, fd, joint_count):
+    """The only HSD_Joint fields in ftData are x20->x0 and x5C."""
+    x20 = w.u32(fd + 0x20)
+    if fd + 0x20 not in w.relocs or not x20 or x20 + 8 > len(w.data):
+        raise ValueError("ftData x20 pose descriptor is invalid")
+    shield_root = w.u32(x20)
+    if x20 not in w.relocs or not shield_root:
+        raise ValueError("ftData x20->x0 pose root is invalid")
+    trees = (("x20->x0", shield_root, joint_count),
+             ("x20->x0[2]", w.u32(shield_root + 8), joint_count - 1),
+             ("x5C", w.u32(fd + 0x5C), joint_count))
+    if fd + 0x5C not in w.relocs:
+        raise ValueError("ftData x5C pose root lacks relocation")
+    for name, root, expected in trees:
+        found = count_joint_tree(w, root)
+        if found != expected:
+            raise ValueError(f"ftData {name}: {found} joints, expected {expected}")
+
+
+def install_ftdata_pose_trees(w, fd, joints, guard_pose):
+    # x0 is itself an HSD_Joint root: words [0] and [1] are its null name
+    # and 0x8 CLASSICAL_SCALING flag. Word [2] is the child tree copied by guard.
+    x20 = w.alloc(bytes(8))
+    w.ptr(x20, joint_tree(w, guard_pose))
+    w.ptr(fd + 0x20, x20)
+    w.ptr(fd + 0x5C, joint_tree(w, joints))
+    validate_ftdata_pose_trees(w, fd, len(joints))
+
+
 # ------------------------------------------------------------------ host (Melee Kirby) joint spaces
 def host_ir():
     return json.load(open(os.path.join(CA.INSTANCES, f"{HOST['name']}.melee.ir.json"), encoding="utf-8"))
@@ -219,7 +306,8 @@ def remap_scripts(w, fd, slot_to_joint, hurt_bones, J):
             def sub(shift, key, conv=lambda j: j):
                 b = (word >> shift) & 0xFF
                 nb = slot_to_joint.get(b)
-                if nb is None: st["unmapped"] += 1; nb = 0
+                if nb is None:
+                    raise ValueError(f"host script joint slot {b} is unmapped at 0x{o:X} (opcode {op})")
                 w.put(o, (word & ~(0xFF << shift)) | (conv(nb) << shift)); st[key] += 1
             if op == 11 and not (word >> 10) & 1: sub(11, "hitbox")
             elif op == 10 and not (word >> 17) & 1 and not (word >> 15) & 1: sub(18, "gfx")
@@ -283,8 +371,8 @@ def match_clip(act, by_key):
 def merge_vis(w, src, events, frames, rep):
     """A copy of script `src` with ModelVis(0, state) at each event frame: Halberd's apply_vis
     (install_mk.py), which splits timers so a command lands on its frame. Frames after a loop,
-    subroutine or animation-rate command are placed approximately (reported); events after a Goto
-    are dropped (counted). A row with no script gets one made of the events alone."""
+    subroutine or animation-rate command are placed approximately (reported). A row with no
+    script gets one made of the events alone. Ambiguous Goto placement fails."""
     MV = lambda i, v: (31 << 26) | ((i & 0x7F) << 19) | (v & 0x7FFFF)
     if src is None:
         ws, fr = [], 0
@@ -316,12 +404,17 @@ def merge_vis(w, src, events, frames, rep):
             n = word & 0x3FFFFFF
             emit_until(n, True); words.append((word, False)); frame = max(frame, n); o += 4; continue
         if op == 7:
-            rep["dropped_after_goto"] += len(pend); pend = []
+            if pend:
+                rep["dropped_after_goto"] += len(pend)
+                rep.setdefault("goto_losses", []).append({"script_offset": f"0x{o:X}",
+                                                          "events": list(pend)})
             words.append((word, False)); words.append((w.u32(o + 4), (o + 4) in w.relocs)); break
         if op in (3, 4, 5, 8): approx = True
         ln = cmd_len(word)
         for k in range(ln): words.append((w.u32(o + 4 * k), (o + 4 * k) in w.relocs))
         o += 4 * ln
+    else:
+        raise ValueError(f"ModelVis script at 0x{src:X} has no End within 4000 commands")
     at = w.alloc(bytes(4 * len(words)))
     for k, (v, isp) in enumerate(words):
         if isp: w.ptr(at + 4 * k, v)
@@ -404,6 +497,11 @@ def main():
     ap.add_argument("--pl", default="PlUk.dat")
     ap.add_argument("--dst-k", type=int, default=52); ap.add_argument("--dst-e", type=int, default=51)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--ui-art", choices=("auto", "off", "required"), default="auto",
+                    help="convert Ultimate CSS/CSP/stock art when all BNTX sources exist (default: auto; "
+                         "off keeps host placeholders; required fails if art is missing)")
+    ap.add_argument("--ui-root", default=UI.UI_ROOT, help="extracted ui/replace_patch/chara folder")
+    ap.add_argument("--ui-label", help="text in the CSS icon's name band (trail defaults to SORA)")
     ap.add_argument("--fallback", default="a00wait1")
     ap.add_argument("--jobs", type=int, default=min(4, max(1, (os.cpu_count() or 2) - 2)),
                     help="clip conversion processes (default: min(4, cores - 2), halved on a memory failure; each holds a decoded clip, ~0.5 GB peak); converted clips are cached "
@@ -422,6 +520,10 @@ def main():
     ap.add_argument("--moveset", help="acmd_to_ftcmd.py output (<fighter>.moveset.json): its rows get the "
                     "translated scripts (not remapped: their bones are already the fighter's joints) and "
                     "the named clips; the ModelVis merge still runs on top")
+    ap.add_argument("--acmd", help="ACMD JSON used to produce --moveset (default: _build/tmp/ir/<fighter>.acmd.json)")
+    ap.add_argument("--joint-probe", help="optional LAB joint-probe log for the final position check")
+    ap.add_argument("--skip-acmd-audit", action="store_true",
+                    help="LOUD OVERRIDE: skip no-drop provenance and installed hitbox position gate")
     ap.add_argument("--lod", choices=("high", "low"), default="high", help="which body to keep where the "
                     "model ships two levels of detail")
     ap.add_argument("--host-hurtboxes", action="store_true", help="the host's capsules moved onto the "
@@ -433,18 +535,60 @@ def main():
                     "matrix palette POBJs (geno_pal_pobj_v1, up to 64 envelopes a piece; needs an exe with engine "
                     "pobj_palette 1, which mod.json then requires)")
     a = ap.parse_args()
+    acmd_path = a.acmd or os.path.join(CA.INSTANCES, f"{a.fighter}.acmd.json")
+    moveset_doc = None
+    geno_audit = None
+    geno_sources = None
+    if a.skip_acmd_audit:
+        print("WARNING: ACMD LOSS AND HITBOX POSITION AUDITS DISABLED BY --skip-acmd-audit", file=sys.stderr)
+    else:
+        if not a.moveset:
+            sys.exit("ACMD audit requires --moveset; use --skip-acmd-audit only for a deliberate unaudited install")
+        if not os.path.isfile(acmd_path):
+            sys.exit(f"ACMD audit source missing: {acmd_path}")
+        try:
+            source_bytes = verify_acmd_source(acmd_path)
+        except ValueError as exc:
+            sys.exit(str(exc))
+        moveset_doc = json.load(open(a.moveset, encoding="utf-8"))
+        try:
+            verify_moveset_audit(moveset_doc, source_bytes)
+        except ValueError as exc:
+            sys.exit(str(exc))
+        if a.geno:
+            provenance = Path(a.geno).with_name("conversion_losses.json")
+            geno_sources = Path(a.geno).with_name("overlay_sources.json")
+            if not provenance.is_file() or not geno_sources.is_file():
+                sys.exit("Geno ACMD profile needs conversion_losses.json and overlay_sources.json beside --geno")
+            geno_audit = json.loads(provenance.read_text(encoding="utf-8"))
+            profile_audit = geno_audit.get("audit", {})
+            if profile_audit.get("source_sha256") != hashlib.sha256(Path(acmd_path).read_bytes()).hexdigest():
+                sys.exit("Geno ACMD audit is missing or stale for this source")
+            generator_hashes = {hashlib.sha256((Path(HERE) / name).read_bytes()).hexdigest()
+                                for name in ("trail_specials_geno.py", "trail_magic_geno.py")}
+            if (profile_audit.get("generator_sha256") not in generator_hashes or
+                    profile_audit.get("profile_sha256") != hashlib.sha256(Path(a.geno).read_bytes()).hexdigest() or
+                    profile_audit.get("manifest_sha256") != hashlib.sha256(geno_sources.read_bytes()).hexdigest()):
+                sys.exit("Geno ACMD profile, generator, or source mapping changed; regenerate the profile")
     global HOST
     HOST = dict(HOSTS[a.host], name=a.host)
     HOST["rows"] = len(host_ir()["behavior"]["subactions"])
     name = a.name or f"Ultimate {a.fighter.capitalize()}"
+    ui_label = a.ui_label or ("SORA" if a.fighter == "trail" else name.removeprefix("Ultimate ").upper())
     stem = a.pl[:-4]
     out = a.out or os.path.join(ROOT, "_build", "tmp", "ultimate-mods", f"ultimate-{a.fighter}-slot")
     files = os.path.join(out, "files"); os.makedirs(files, exist_ok=True)
+    for audit_file in ("conversion_losses.json", "hitbox_positions.json"):
+        Path(out, audit_file).write_text(json.dumps({"version": 1, "status": "pending"}) + "\n",
+                                         encoding="utf-8")
     rep = {"fighter": a.fighter, "name": name, "pl": a.pl, "row": {"internal": a.dst_k, "external": a.dst_e}}
 
     ir = json.load(open(os.path.join(CA.INSTANCES, f"{a.fighter}.ultimate-body.ir.json"), encoding="utf-8"))
     plan = plan_parts.plan(ir); rest = CA.rest_of(ir); J = fighter_joints(plan, rest)
     if plan["unresolved"]: sys.exit(f"plan has unresolved roles: {plan['unresolved']}")
+    missing_ui = UI.missing_sources(a.ui_root, a.fighter) if a.ui_art != "off" else []
+    if missing_ui and a.ui_art == "required":
+        sys.exit(f"Ultimate UI art required, but {len(missing_ui)} BNTX files are missing; first: {missing_ui[0]}")
 
     # 1-2. slot files + host fighter data
     log = subprocess.run([sys.executable, os.path.join(HALBERD, "tools", "mk_slot_files.py"), "--out", files,
@@ -454,6 +598,15 @@ def main():
                           "--src-icon-joint", str(HOST["icon"])], capture_output=True, text=True)
     if log.returncode: sys.exit("mk_slot_files failed: " + log.stderr[-1500:])
     rep["slot_files"] = json.loads(log.stdout)
+    if a.ui_art == "off":
+        rep["ui_art"] = {"status": "host placeholders (--ui-art off)"}
+    elif missing_ui:
+        warning = (f"Ultimate UI art unavailable ({len(missing_ui)} BNTX files missing, first: "
+                   f"{missing_ui[0]}); keeping {a.host}'s CSS icon, CSP and stock art")
+        print("warning: " + warning, file=sys.stderr)
+        rep["ui_art"] = {"status": "host placeholders", "warning": warning}
+    else:
+        rep["ui_art"] = UI.install(files, a.fighter, a.dst_k, a.dst_e, ui_label, a.ui_root, ISO_ACE)
     g = mex_hsd.Gcm(ISO_ACE)
     open(os.path.join(files, a.pl), "wb").write(g.read(f"Pl{HOST['code']}.dat"))
 
@@ -508,7 +661,7 @@ def main():
     host_subactions = {s["index"]["value"]: s for s in host_doc["behavior"]["subactions"]}
     host_clip_frames = {c["id"]: c["frames"] for c in host_doc["assets"]["animations"]["clips"]}
     allowed = set(CA.read_clip_list(a.clip_list)) | {a.fallback} if a.clip_list else None
-    moveset = {int(k): v for k, v in json.load(open(a.moveset))["rows"].items()} if a.moveset else {}
+    moveset = {int(k): v for k, v in (moveset_doc or json.load(open(a.moveset)))["rows"].items()} if a.moveset else {}
     # --row-clips (trail_specials_geno.py clips.json): rows whose Geno overlay supplies the script
     # and only need the fighter's clip
     for k, c in (json.load(open(a.row_clips))["subaction_clips"].items() if a.row_clips else []):
@@ -651,9 +804,10 @@ def main():
         for k in range(4): w.ptr(an + 4 * k, still[k])
         ent = w.alloc(struct.pack(">HH", park, 1) + bytes(8)); w.ptr(ent + 4, lst); w.ptr(ent + 8, an); w.ptr(x1c + 4 * e, ent)
     w.ptr(fd + 0x1C, x1c)
-    # x20 shield pose, x5C metal / parts model: the fighter's tree at rest
-    x20 = w.alloc(bytes(8)); w.ptr(x20, joint_tree(w, J)); w.ptr(fd + 0x20, x20)
-    w.ptr(fd + 0x5C, joint_tree(w, J))
+    # x20 shield pose samples b00guard; x5C metal / parts model stays at rest.
+    guard_anim = CA.decode(os.path.join(motion, "b00guard.nuanmb"))
+    guard_pose = guard_pose_joints(guard_anim, plan, rest, J, orient)
+    install_ftdata_pose_trees(w, fd, J, guard_pose)
     # host slot map (scripts, hurtboxes)
     slot_to_joint, scale, how = host_slot_map(J, plan)
     # x30 hurtboxes: capsules fitted to the fighter's own mesh (plan_hurtboxes.py), or with
@@ -751,7 +905,10 @@ def main():
             src = w.u32(po) if po in w.relocs else None
             key_ = (src, tuple(events))
             if key_ not in cache:
-                cache[key_] = merge_vis(w, src, events, len(seq), mv)
+                try:
+                    cache[key_] = merge_vis(w, src, events, len(seq), mv)
+                except ValueError as exc:
+                    raise ValueError(f"{c} row {r_} ({host_names.get(r_)}), events {events!r}: {exc}") from exc
             w.ptr(po, cache[key_])
             mv["rows"] += 1; mv["events"] += len(events)
     rep["modelvis"] = mv
@@ -770,6 +927,7 @@ def main():
     rep["script_loop_validation"] = {"rows_checked": rows_checked, "findings": script_findings}
     if script_findings:
         sys.exit(f"unsafe script loops in installed moveset: {script_findings[:8]}")
+    validate_ftdata_pose_trees(w, fd, len(J))
     w.save(os.path.join(files, a.pl))
 
     # 7. PlCo parts table
@@ -812,6 +970,8 @@ def main():
     # with one. --geno copies a full profile (specials, magic); else a minimal one attaches to the slot.
     if a.geno:
         shutil.copy(a.geno, os.path.join(out, "geno.json"))
+        if geno_sources:
+            shutil.copy(geno_sources, os.path.join(out, "overlay_sources.json"))
         gdir = os.path.join(os.path.dirname(a.geno), "geno")      # the profile's overlay scripts
         if os.path.isdir(gdir):
             shutil.copytree(gdir, os.path.join(out, "geno"), dirs_exist_ok=True)
@@ -830,6 +990,71 @@ def main():
             shutil.copy(os.path.join(a.extra_files, f), os.path.join(files, f))
     rep["conversion"] = conv
     json.dump(rep, open(os.path.join(out, "INSTALL.json"), "w"), indent=1)
+    if a.skip_acmd_audit:
+        marker = {"version": 1, "audit_skipped": True, "flag": "--skip-acmd-audit"}
+        Path(out, "conversion_losses.json").write_text(json.dumps(marker, indent=2) + "\n", encoding="utf-8")
+        Path(out, "hitbox_positions.json").write_text(json.dumps(marker, indent=2) + "\n", encoding="utf-8")
+        rep["acmd_audit"] = marker
+        json.dump(rep, open(os.path.join(out, "INSTALL.json"), "w"), indent=1)
+    else:
+        audited = []
+        seen_scripts = set()
+        for move in moveset.values():
+            script = move.get("script")
+            if not script or script in seen_scripts:
+                continue
+            seen_scripts.add(script)
+            detail = moveset_doc.get("report", {}).get(move["name"])
+            if detail is None:
+                sys.exit(f"moveset script {script}: missing conversion report")
+            audited.append(detail)
+        host_losses = []
+        for key in ("modelvis_dropped", "texanim_dropped"):
+            count = rep["scripts"].get(key, 0)
+            if count:
+                host_losses.append({"move": f"{a.host} host scripts", "frame": 0,
+                                    "what": f"{count} {key} commands", "why": "host model feature replaced by converted body"})
+        if rep.get("host_bone_dynamics_dropped"):
+            host_losses.append({"move": f"{a.host} host fighter", "frame": 0,
+                                "what": "host bone dynamics", "why": "ported skeleton supplies its own animation"})
+        if mv["approx_rows"]:
+            host_losses.append({"move": f"{a.host} host scripts", "frame": 0,
+                                "what": f"approximate ModelVis timing in {len(mv['approx_rows'])} rows",
+                                "why": "host script contains non-linear timing"})
+        for loss in mv.get("goto_losses", []):
+            for frame, state in loss["events"]:
+                host_losses.append({"move": f"{a.host} host ModelVis script {loss['script_offset']}",
+                                    "frame": frame, "what": f"visibility state {state} after Goto",
+                                    "why": "host item script jumps before this cosmetic visibility frame"})
+        for clip, names in rep["animations"]["clips_not_shipped"].items():
+            host_losses.append({"move": ", ".join(names), "frame": 0,
+                                "what": f"Ultimate animation clip {clip} replaced by {a.fallback}",
+                                "why": "install clip selection excludes this clip"})
+        for name in rep["animations"]["unmatched_rows_played_as_fallback"]:
+            host_losses.append({"move": name, "frame": 0,
+                                "what": f"unmatched Ultimate animation replaced by {a.fallback}",
+                                "why": "no matching Ultimate clip for host motion row"})
+        for clip, travel in rep["animations"]["root_travel_stripped"]["per_clip"].items():
+            if any(value for value in travel.values()):
+                host_losses.append({"move": clip, "frame": 0,
+                                    "what": f"animation root travel {travel}",
+                                    "why": "host physics drives the root on these rows"})
+        audited.append({"losses": host_losses})
+        audited.append({"losses": moveset_doc.get("omissions", [])})
+        if geno_audit is not None:
+            audited.append(geno_audit)
+        reported_losses = write_losses(os.path.join(out, "conversion_losses.json"), *audited)
+        from check_hitbox_positions import check_install
+        try:
+            position_report = check_install(a.fighter, out, acmd_path, a.moveset,
+                                            joint_probe=a.joint_probe,
+                                            overlay_sources=(os.path.join(out, "overlay_sources.json")
+                                                             if geno_sources else None))
+        except ValueError as exc:
+            sys.exit(f"installed hitbox position audit failed: {exc}")
+        rep["hitbox_position_check"] = position_report
+        rep["acmd_audit"] = {"status": "passed", "loss_count": len(reported_losses)}
+        json.dump(rep, open(os.path.join(out, "INSTALL.json"), "w"), indent=1)
     print(json.dumps({k: v for k, v in rep.items() if k not in ("conversion", "slot_files")}, indent=1)[:4000])
     print(f"-> {out}  (scene token p1={name.replace(' ', '').lower()})")
 
