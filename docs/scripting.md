@@ -168,6 +168,8 @@ Ports and players are numbered **1-4** (fighter slots 1-6 for `gd.player`).
 | `gd.paused()` | bool |
 | `gd.script()` | this script's `{id, name, version, author, gameplay, rollback_safe}` |
 | `gd.buttons` | the bit values: `gd.buttons.A == 0x100` ... |
+| `gd.items()` | every live item (articles and projectiles too), in the engine's item-list order: `{kind, owner_port (1-6, 0 unowned), x, y, z, vx, vy, facing, frame_alive, state}`; Geno articles add `geno_kind` (zero-based article index) and `geno_profile`. `frame_alive` is exact for Geno articles; for other items it counts frames since the script engine first saw the item in this scene. `state` is the item's motion state |
+| `gd.fx()` | every live Geno effect attachment (one row per package attachment, its emitters aggregated): `{package, owner_kind ("fighter"/"article"/"unknown"), owner_port, joint (-1 for an article), x, y, z (world origin), facing, live_particles, emitter_count, bbox}`; `bbox = {min={x,y,z}, max={x,y,z}}` over the particles' world positions, absent with no particles. A detached effect stays listed until its last particle dies |
 
 A **player table**: `port`, `char` (character id), `char_name`, `kind` (internal fighter kind),
 `costume`, `cpu` (bool), `x`, `y`, `vx`, `vy`, `percent`, `stocks`, `facing` (1 right / -1 left),
@@ -266,7 +268,7 @@ end
 |---|---|
 | `gd.mouse()` | `x, y, buttons, wheel`: the pointer in the same 640x480 space as `gd.text` / `gd.kit` (-1000, -1000 when it is off the picture); `buttons` = 1 left + 2 right + 4 middle; `wheel` = notches this tick (+ up). Local UI input only: it never reaches the pads or a netplay peer. The kit's cursor shows during a match only while a script polls `gd.mouse()`, so poll it only while your menu is open. |
 | `gd.key(name)`, `gd.key_pressed(name)` | the keyboard, only while the game window is focused, the console is closed and nothing is being typed (a name, a room code). The keyboard never drives the game, so every key is free for hotkeys. Names: `A`-`Z`, `0`-`9`, `F1`-`F12`, `KP0`-`KP9`, `SPACE`, `ENTER`, `TAB`, `ESCAPE`, `SHIFT`, `CTRL`, `ALT`, `LEFT`/`RIGHT`/`UP`/`DOWN`, `HOME`, `END`, `PAGEUP`, `PAGEDOWN`, `INSERT`, `DELETE`, `BACKSPACE` |
-| `gd.input(port, spec [, frames])` | *gameplay.* Override a controller for `frames` pad samples (default 1). `spec` is `"A+B"`, a number (bits) or `{buttons="A", x=, y=, cx=, cy=, l=, r=}` (sticks -127..127, triggers 0..255) |
+| `gd.input(port, spec [, frames])` | *gameplay.* Override a controller for `frames` pad samples (default 1). `spec` is `"A+B"`, a number (bits) or `{buttons="A", x=, y=, cx=, cy=, l=, r=}` (sticks -127..127, triggers 0..255). The override replaces that port's **whole** pad sample (unset axes and triggers are 0) and wins over the SDL controller, the GameCube adapter, `MELEE_PAD_SCRIPT` and `MELEE_PAD_LIVE` for its frames, even with the window focused; afterwards the normal source resumes. A paused render tick can see it through `gd.pad()` without using up a frame: `step n` consumes exactly the next n logic reads. Local diagnostic input, not rollback state |
 | `gd.release(port)` | end an override early |
 | `gd.press(port, buttons [, frames [, spec]])` | *in a task:* `gd.input` then wait that many frames |
 | `gd.tilt(port, x, y [, frames])` | *in a task:* hold the stick |
@@ -346,6 +348,7 @@ lines; the console may use the gameplay functions offline). `= expr` prints a va
 | `load <name>` | `hello` (scripts/hello.lua), `examples/tm_lite`, `builtin:state_overlay`, a folder, or a full path |
 | `unload <id>`, `reload [id]` | |
 | `state` | scene, mode, match, and every fighter's position/percent/stocks/action |
+| `items`, `fx` | one line per `gd.items()` / `gd.fx()` row (or a short empty-list line) |
 | `frame`, `pause`, `resume`, `step [n]` | |
 | `savestate [1-4]`, `loadstate [1-4]` | |
 | `scene <MELEE_SCENE text>`, `scene clear` | |
