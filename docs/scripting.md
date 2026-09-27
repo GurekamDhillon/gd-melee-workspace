@@ -269,8 +269,9 @@ end
 |---|---|
 | `gd.mouse()` | `x, y, buttons, wheel`: the pointer in the same 640x480 space as `gd.text` / `gd.kit` (-1000, -1000 when it is off the picture); `buttons` = 1 left + 2 right + 4 middle; `wheel` = notches this tick (+ up). Local UI input only: it never reaches the pads or a netplay peer. The kit's cursor shows during a match only while a script polls `gd.mouse()`, so poll it only while your menu is open. |
 | `gd.key(name)`, `gd.key_pressed(name)` | the keyboard, only while the game window is focused, the console is closed and nothing is being typed (a name, a room code). The keyboard never drives the game, so every key is free for hotkeys. Names: `A`-`Z`, `0`-`9`, `F1`-`F12`, `KP0`-`KP9`, `SPACE`, `ENTER`, `TAB`, `ESCAPE`, `SHIFT`, `CTRL`, `ALT`, `LEFT`/`RIGHT`/`UP`/`DOWN`, `HOME`, `END`, `PAGEUP`, `PAGEDOWN`, `INSERT`, `DELETE`, `BACKSPACE` |
-| `gd.input(port, spec [, frames])` | *gameplay.* Override a controller for `frames` pad samples (default 1). `spec` is `"A+B"`, a number (bits) or `{buttons="A", x=, y=, cx=, cy=, l=, r=}` (sticks -127..127, triggers 0..255). The override replaces that port's **whole** pad sample (unset axes and triggers are 0) and wins over the SDL controller, the GameCube adapter, `MELEE_PAD_SCRIPT` and `MELEE_PAD_LIVE` for its frames, even with the window focused; afterwards the normal source resumes. A paused render tick can see it through `gd.pad()` without using up a frame: `step n` consumes exactly the next n logic reads. Local diagnostic input, not rollback state |
-| `gd.release(port)` | end an override early |
+| `gd.input(port, spec [, frames])` | *gameplay.* Claim a controller from its first input. `spec` is `"A+B"`, a number (button bits), or `{buttons="A", x=, y=, cx=, cy=, l=, r=}` (sticks -127..127, triggers 0..255). The whole pad sample replaces the SDL controller, GameCube adapter, `MELEE_PAD_SCRIPT`, and `MELEE_PAD_LIVE`, even while focused. After `frames` logic samples (default 1), the claimed port stays connected and reports neutral input until released. Paused render reads do not consume samples; `step n` consumes exactly n logic reads. Local diagnostic input, not rollback state. |
+| `gd.release_pad(port)` | Release this script's or console session's claim early; the normal physical source resumes, or the port disconnects if none is present. A `gd.run` task also releases its claims when it ends; unloading, reloading, or disabling a script releases its claims. |
+| `gd.release(port)` | Compatibility alias for `gd.release_pad(port)`. |
 | `gd.press(port, buttons [, frames [, spec]])` | *in a task:* `gd.input` then wait that many frames |
 | `gd.tilt(port, x, y [, frames])` | *in a task:* hold the stick |
 
@@ -358,6 +359,8 @@ lines; the console may use the gameplay functions offline). `= expr` prints a va
 | `label <text>` | the run label |
 | `echo <text>`, `clear`, `quit` | |
 | *commands scripts added* | listed by `help` |
+
+Console `input` claims a port from its first command, including gaps between commands. A connected socket client keeps its claim until `gd.release_pad(port)` or disconnect; the in-game console keeps it until `gd.release_pad(port)` or game exit. During a claim, a physical pad on that port is ignored and the port reports connected neutral input whenever no samples are queued.
 
 For automated tests the pattern is: start the game with `MELEE_CONSOLE_PORT` and `MELEE_SCENE`,
 drive it over the socket, assert on `state` / `= gd.player(n)` output, `quit` at the end.
