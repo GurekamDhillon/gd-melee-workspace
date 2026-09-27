@@ -14,7 +14,8 @@ The generic counterpart of Halberd's install_mk.py, driven by the IR tools inste
     fighter displaces an ACE fighter while the port has 31 m-ex slots, so this mod and
     metaknight-slot are mounted one at a time.
  2. <pl> = the ACE disc's host fighter file (--host kirby: PlKb.dat, marth: PlMs.dat): its fighter data and scripts are the host behaviour.
- 3. costume: export_ultimate_mesh.py + fighterbuild (every costume row -> the c00 model).
+ 3. costumes: export_ultimate_mesh.py + fighterbuild for each available c00..c07 body,
+    one Melee costume file per m-ex row. --c00-only selects just the first costume.
  4. animations: convert_ultimate_anim.py per clip into <pl stem>AJ.dat; every motion row that has
     a clip is pointed at the Ultimate clip of the same action name (Melee 'AttackS4S' = Ultimate
     'c03attacks4s'); rows with no match play the fallback (wait1) and are listed.
@@ -74,6 +75,7 @@ HOSTS = {"kirby": {"internal": 4, "external": 4, "icon": 20, "code": "Kb"},
          "marth": {"internal": 18, "external": 9, "icon": 47, "code": "Ms"}}
 HOST = HOSTS["kirby"]   # set from --host in main()
 COMMON_ROWS = 295   # motion rows 0..294 are the common actions (ftCo); 295 on are the fighter's own
+COSTUME_COLORS = ("Nr", "Ye", "Bu", "Re", "Gr", "Wh", "Bk", "Or")
 FLOW_LEN = [1, 1, 1, 1, 1, 2, 1, 2, 1, 1]
 OP_LEN = [5, 5, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 7, 4, 1, 1, 1, 1,
           1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 3, 2, 1, 4]   # ftaction.c ftAction_803C0870, ops 10..58
@@ -145,6 +147,84 @@ class Writer:
         body = bytes(self.data) + b"".join(struct.pack(">I", r) for r in rel) + tail
         hdr = struct.pack(">5I", 0x20 + len(body), len(self.data), len(rel), self.ar.nb_public, self.ar.nb_extern) + self.ar.raw[0x14:0x20]
         open(path, "wb").write(hdr + body)
+
+
+def discover_costumes(body_dir, c00_only=False):
+    """Select the contiguous Ultimate costume prefix represented by the eight UI/ftData rows."""
+    body_dir = Path(body_dir)
+    selected = []
+    for index, color in enumerate(COSTUME_COLORS):
+        costume = f"c{index:02}"
+        folder = body_dir / costume
+        complete = (all((folder / name).is_file() for name in
+                        ("model.numshb", "model.numdlb", "model.numatb"))
+                    and any(folder.glob("*.nutexb")))
+        if complete:
+            if len(selected) != index:
+                raise ValueError(f"{costume}: preceding costume c{len(selected):02} is missing or incomplete")
+            selected.append((costume, color))
+        if c00_only:
+            break
+    if not selected:
+        raise ValueError(f"c00 model/textures missing from {body_dir}")
+    return selected
+
+
+def costume_workdir(out):
+    work = Path(out, "_work")
+    work.mkdir(parents=True, exist_ok=True)
+    return work
+
+
+def write_costume_rows(w, internal, external, files, joint_sym, mat_sym):
+    """Replace the m-ex costume_file table and external costume_info count."""
+    if not 1 <= len(files) <= len(COSTUME_COLORS):
+        raise ValueError(f"m-ex costume rows must contain 1..{len(COSTUME_COLORS)} files")
+    fighter = w.u32(w.ar.public("mexData") + 8)
+    info = w.u32(fighter + 0x10) + external * 4
+    table_ptr = w.u32(fighter + 0x14) + internal * 4
+    table = w.alloc(bytes(16 * len(files)))
+    joint = w.cstr(joint_sym)
+    mat = w.cstr(mat_sym)
+    for index, filename in enumerate(files):
+        row = table + index * 16
+        w.ptr(row, w.cstr(filename))
+        w.ptr(row + 4, joint)
+        w.ptr(row + 8, mat)
+        # The fourth word selects this costume's ftData x8 visibility lookup row.
+        w.put(row + 12, index)
+    w.ptr(table_ptr, table)
+    w.data[info] = len(files)
+    for team in range(1, 4):
+        if w.data[info + team] >= len(files):
+            w.data[info + team] = 0
+
+
+def write_costume_modelvis(w, states, costume_groups, controlled):
+    """Build one ftData x8 model-visibility lookup per costume's DObj order."""
+    table = w.alloc(bytes(16 * len(COSTUME_COLORS)))
+    first = None
+    for index, groups in enumerate(costume_groups):
+        state_table = w.alloc(bytes(8 * len(states)))
+        for state_index, state in enumerate(states):
+            dobjs = [i for i, group in enumerate(groups) if group in state and group in controlled]
+            entries = w.alloc(bytes(dobjs) + bytes((-len(dobjs)) % 4))
+            row = state_table + state_index * 8
+            w.put(row, len(dobjs))
+            w.ptr(row + 4, entries)
+        model = w.alloc(bytes(8))
+        w.put(model, len(states))
+        w.ptr(model + 4, state_table)
+        if first is None:
+            first = model
+        w.ptr(table + index * 16, model)
+        w.ptr(table + index * 16 + 4, model)
+        w.ptr(table + index * 16 + 12, model)
+    for index in range(len(costume_groups), len(COSTUME_COLORS)):
+        w.ptr(table + index * 16, first)
+        w.ptr(table + index * 16 + 4, first)
+        w.ptr(table + index * 16 + 12, first)
+    return table
 
 
 # ------------------------------------------------------------------ fighter model: joints and positions
@@ -455,7 +535,8 @@ def _convert_one(job):
         h.update(open(os.path.join(HERE, f), "rb").read())
     h.update(inspect.getsource(vis_frames).encode())
     h.update(repr((root, helpers, sym, sorted(base.items()))).encode())
-    cache = os.path.join(ROOT, "_build", "tmp", "ultimate-anim-cache", fighter, f"{c}{'_drv' if driven else ''}_{h.hexdigest()[:16]}.pkl")
+    cache_root = os.environ.get("GW_ULTIMATE_ANIM_CACHE", os.path.join(ROOT, "_build", "tmp", "ultimate-anim-cache"))
+    cache = os.path.join(cache_root, fighter, f"{c}{'_drv' if driven else ''}_{h.hexdigest()[:16]}.pkl")
     if os.path.exists(cache):
         return pickle.load(open(cache, "rb"))
     if fighter not in _CTX:
@@ -497,6 +578,9 @@ def main():
     ap.add_argument("--pl", default="PlUk.dat")
     ap.add_argument("--dst-k", type=int, default=52); ap.add_argument("--dst-e", type=int, default=51)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--ir-root", help="directory with the generated fighter IR files (default: this workspace's _build/tmp/ir)")
+    ap.add_argument("--c00-only", action="store_true",
+                    help="build and expose only Ultimate costume c00 (one selectable m-ex costume)")
     ap.add_argument("--ui-art", choices=("auto", "off", "required"), default="auto",
                     help="convert Ultimate CSS/CSP/stock art when all BNTX sources exist (default: auto; "
                          "off keeps host placeholders; required fails if art is missing)")
@@ -505,7 +589,7 @@ def main():
     ap.add_argument("--fallback", default="a00wait1")
     ap.add_argument("--jobs", type=int, default=min(4, max(1, (os.cpu_count() or 2) - 2)),
                     help="clip conversion processes (default: min(4, cores - 2), halved on a memory failure; each holds a decoded clip, ~0.5 GB peak); converted clips are cached "
-                         "under _build/tmp/ultimate-anim-cache")
+                         "under --out/_work/anim-cache when --out is set, else _build/tmp/ultimate-anim-cache")
     ap.add_argument("--row-clips", help="clips.json {subaction_clips: {row: clip}} (trail_specials_geno.py)")
     ap.add_argument("--extra-files", help="a folder whose files are added to the mod's files/ (article models)")
     ap.add_argument("--geno", help="geno.json to ship (default: a minimal profile attached to --pl)")
@@ -535,6 +619,9 @@ def main():
                     "matrix palette POBJs (geno_pal_pobj_v1, up to 64 envelopes a piece; needs an exe with engine "
                     "pobj_palette 1, which mod.json then requires)")
     a = ap.parse_args()
+    if a.ir_root:
+        os.environ["GW_ULTIMATE_IR_ROOT"] = os.path.abspath(a.ir_root)
+        CA.INSTANCES = EM.INSTANCES = os.environ["GW_ULTIMATE_IR_ROOT"]
     acmd_path = a.acmd or os.path.join(CA.INSTANCES, f"{a.fighter}.acmd.json")
     moveset_doc = None
     geno_audit = None
@@ -577,6 +664,8 @@ def main():
     ui_label = a.ui_label or ("SORA" if a.fighter == "trail" else name.removeprefix("Ultimate ").upper())
     stem = a.pl[:-4]
     out = a.out or os.path.join(ROOT, "_build", "tmp", "ultimate-mods", f"ultimate-{a.fighter}-slot")
+    if a.out:
+        os.environ["GW_ULTIMATE_ANIM_CACHE"] = os.path.join(out, "_work", "anim-cache")
     files = os.path.join(out, "files"); os.makedirs(files, exist_ok=True)
     for audit_file in ("conversion_losses.json", "hitbox_positions.json"):
         Path(out, audit_file).write_text(json.dumps({"version": 1, "status": "pending"}) + "\n",
@@ -586,6 +675,11 @@ def main():
     ir = json.load(open(os.path.join(CA.INSTANCES, f"{a.fighter}.ultimate-body.ir.json"), encoding="utf-8"))
     plan = plan_parts.plan(ir); rest = CA.rest_of(ir); J = fighter_joints(plan, rest)
     if plan["unresolved"]: sys.exit(f"plan has unresolved roles: {plan['unresolved']}")
+    body_dir = Path(CA.FIGHTERS, a.fighter, "model", "body")
+    try:
+        costumes = discover_costumes(body_dir, a.c00_only)
+    except ValueError as exc:
+        sys.exit(str(exc))
     missing_ui = UI.missing_sources(a.ui_root, a.fighter) if a.ui_art != "off" else []
     if missing_ui and a.ui_art == "required":
         sys.exit(f"Ultimate UI art required, but {len(missing_ui)} BNTX files are missing; first: {missing_ui[0]}")
@@ -610,21 +704,37 @@ def main():
     g = mex_hsd.Gcm(ISO_ACE)
     open(os.path.join(files, a.pl), "wb").write(g.read(f"Pl{HOST['code']}.dat"))
 
-    # 3. costume
-    mesh = EM.export(a.fighter, "c00", fold_helpers=a.fold_helpers, lod=a.lod)
-    mpath = os.path.join(out, "_work", "mesh_c00.json"); os.makedirs(os.path.dirname(mpath), exist_ok=True)
-    json.dump(mesh, open(mpath, "w"))
-    tmpl = os.path.join(out, "_work", "template_Nr.dat"); open(tmpl, "wb").write(g.read(f"Pl{HOST['code']}Nr.dat"))
+    # 3. costumes: all share the plan's skeleton, but their DObj layouts can differ.
+    work = costume_workdir(out)
+    tmpl = work / "template_Nr.dat"; tmpl.write_bytes(g.read(f"Pl{HOST['code']}Nr.dat"))
     fb = glob.glob(os.path.join(HERE, "fighterbuild", "bin", "**", "fighterbuild.exe"), recursive=True)
     if not fb: sys.exit("build ports/ir/tools/fighterbuild first (dotnet build -c Release)")
     jsym, msym = "Ply%s5K_Share_joint" % name.replace(" ", ""), "Ply%s5K_Share_matanim_joint" % name.replace(" ", "")
-    costume = f"{stem}Nr.dat"
-    r = subprocess.run([fb[0], "build", mpath, tmpl, os.path.join(files, costume), jsym, msym,
-                        os.path.join(out, "_work", "costume_report.json")]
-                       + (["--pc-palette", str(a.pc_palette)] if a.pc_palette else []), capture_output=True, text=True)
-    if r.returncode: sys.exit("fighterbuild failed: " + r.stdout[-800:] + r.stderr[-800:])
-    rep["costume"] = r.stdout.strip()
-    dobj_group = [d["group"] for d in mesh["dobjs"]]
+    mesh = None
+    costume_groups = []
+    costume_files = []
+    rep["costumes"] = []
+    for source, color in costumes:
+        converted = EM.export(a.fighter, source, fold_helpers=a.fold_helpers, lod=a.lod)
+        if mesh is not None and converted["joints"] != mesh["joints"]:
+            sys.exit(f"{source}: costume skeleton differs from c00")
+        if mesh is None:
+            mesh = converted
+        costume_groups.append([d["group"] for d in converted["dobjs"]])
+        mpath = work / f"mesh_{source}.json"
+        with open(mpath, "w", encoding="utf-8") as fh:
+            json.dump(converted, fh)
+        filename = f"{stem}{color}.dat"
+        build_report = work / f"costume_report_{source}.json"
+        r = subprocess.run([fb[0], "build", str(mpath), str(tmpl), os.path.join(files, filename), jsym, msym,
+                            str(build_report)] + (["--pc-palette", str(a.pc_palette)] if a.pc_palette else []),
+                           capture_output=True, text=True)
+        if r.returncode:
+            sys.exit(f"fighterbuild {source} failed: " + r.stdout[-800:] + r.stderr[-800:])
+        costume_files.append(filename)
+        rep["costumes"].append({"source": source, "file": filename, "build": r.stdout.strip(),
+                                 "dobjs": len(converted["dobjs"])})
+    rep["costume"] = rep["costumes"][0]["build"]
 
     # 4. animations + visibility
     motion = os.path.join(CA.FIGHTERS, a.fighter, "motion", "body", "c00")
@@ -777,15 +887,8 @@ def main():
     if default in all_sets: all_sets.remove(default)
     states = [default] + all_sets
     controlled = sorted({g_ for s in states for g_ in s} | set(base))
-    lists = [[i for i, gname in enumerate(dobj_group) if gname in s and gname in controlled] for s in states]
-    st_at = w.alloc(bytes(8 * len(states)))
-    for k, dl in enumerate(lists):
-        lst = w.alloc(bytes(dl) + bytes((-len(dl)) % 4))
-        w.put(st_at + 8 * k, len(dl)); w.ptr(st_at + 8 * k + 4, lst)
-    model = w.alloc(bytes(8)); w.put(model, len(states)); w.ptr(model + 4, st_at)
     NROWS = 8
-    vt = w.alloc(bytes(16 * NROWS))
-    w.ptr(vt, model); w.ptr(vt + 4, model); w.ptr(vt + 12, model)
+    vt = write_costume_modelvis(w, states, costume_groups, controlled)
     tl = w.alloc(struct.pack(">HH", 0, 0)); tt = w.alloc(bytes(4 * NROWS)); w.ptr(tt, tl)
     x8 = w.alloc(bytes(0x18))
     # no costume TObjs: ftAnim_80070200 asserts "can't find fighter texture anim" for any TObj
@@ -940,7 +1043,7 @@ def main():
     pc.save(os.path.join(files, "PlCo.dat"))
     rep["PlCo.dat"] = {"parts_num": len(J), "placeholder_slots": None}
 
-    # MxDt: anim file + every costume row -> the c00 model
+    # MxDt: clone the animation filename, then replace the costume table and count.
     mx = os.path.join(files, "MxDt.dat")
     raw = open(mx, "rb").read()
     class _Gcm:
@@ -950,7 +1053,6 @@ def main():
     argv = sys.argv
     sys.argv = ["mxdt_clone.py", "--out", mx, "--pl", a.pl, "--name", name, "--aj", f"{stem}AJ.dat",
                 "--src-k", str(a.dst_k), "--src-e", str(a.dst_e), "--dst-k", str(a.dst_k), "--dst-e", str(a.dst_e)]
-    for c in range(6): sys.argv += ["--costume", f"{c}:{costume}:{jsym}:{msym}"]
     import contextlib, io, runpy
     buf = io.StringIO()
     try:
@@ -958,6 +1060,10 @@ def main():
             runpy.run_path(os.path.join(ROOT, "experiment", "brawl-kirby", "tools", "mxdt_clone.py"), run_name="__main__")
     finally:
         sys.argv = argv; mex_hsd.Gcm = real
+    costume_row = Writer(open(mx, "rb").read())
+    write_costume_rows(costume_row, a.dst_k, a.dst_e, costume_files, jsym, msym)
+    costume_row.save(mx)
+    rep["costume_count"] = len(costume_files)
 
     json.dump({"id": f"ultimate-{a.fighter}-slot", "name": f"{name.upper()} (Ultimate, own skeleton)", "version": "0.1.0",
                "kind": "fighter", "requires": [], "conflicts": ["metaknight-slot"],

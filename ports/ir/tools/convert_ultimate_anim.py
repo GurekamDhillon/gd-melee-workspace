@@ -49,7 +49,7 @@ import plan_parts  # noqa: E402
 TOOL = os.environ.get("GW_ULTIMATE_ROOT", os.path.join(ROOT, "experiment", "tooling", "ultimate"))
 DECODER = os.path.join(TOOL, "apps", "SSBH-JSON", "ssbh_data_json.exe")
 FIGHTERS = os.path.join(TOOL, "workspace", "extracted", "fighter")
-INSTANCES = os.path.join(ROOT, "_build", "tmp", "ir")
+INSTANCES = os.environ.get("GW_ULTIMATE_IR_ROOT", os.path.join(ROOT, "_build", "tmp", "ir"))
 ROT, TRA, SCA = (1, 2, 3), (5, 6, 7), (8, 9, 10)
 TOL = {"rot": 2e-3, "tra": 2e-3, "sca": 1e-3}
 DEFAULT_WORLD_TOL = 0.004
