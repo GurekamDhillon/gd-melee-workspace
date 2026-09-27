@@ -8,8 +8,8 @@ A semantic translation (the port feels like the fighter; Melee's mechanics win):
   frame(n) / wait(n)      AsyncWait n / SyncWait n. Both engines count animation frames and a
                           command after the wait runs on frame n+1, so the numbers carry over.
   ATTACK                  Melee hitbox (spawn_hitbox_0..4, melee/src/melee/lb/types.h): id is
-                          assigned to one of four live slots; excess boxes keep the highest
-                          damage, then radius (ties keep the earlier box).
+                          assigned to one of four live slots. Distinct linking roles take
+                          priority; near-duplicate boxes are dropped before unique coverage.
                           bone = the fighter's own joint (joint_of_bone), damage, angle (361 is the
                           Sakurai angle in both), knockback growth / base / fixed copied 1:1 (the
                           knockback formula has the same shape and constants in both games), size
@@ -22,7 +22,8 @@ A semantic translation (the port feels like the fighter; Melee's mechanics win):
   FT_MOTION_RATE r        SetTimerAnim (the animation rate command).
   START_SMASH_HOLD        Melee smash charge with the host Marth's vanilla charge settings.
   cancel_frame            IASA at that frame (Melee's interruptible flag).
-Ultimate-only mechanics are dropped and counted (hitlag and SDI multipliers, shieldstun, rehit,
+Repeated low-hitlag, set-weight fixed-knockback carry windows opt into Geno LINK mode 2 after
+their hitboxes. Ultimate-only mechanics are dropped and counted (hitlag and SDI multipliers, shieldstun, rehit,
 flinchless, direct/indirect, reflect/absorb flags): Melee's rules apply. Commands under a branch on
 game state keep only the path that plays by default ('holds' False on a flag test = the flag is off
 at the start of a move); the others are reported.
@@ -84,6 +85,124 @@ def default_path(when):
     return True
 
 
+def carry_hit_commands(row):
+    """Find set-knockback, low-hitlag windows that repeatedly carry a victim.
+
+    A complete window ends at clear_all. Requiring three multi-box windows avoids
+    opting an isolated launcher or a finisher into attacker-motion linking.
+    """
+    windows, current = [], []
+    for command in row["commands"]:
+        if not default_path(command.get("when", [])):
+            continue
+        if command["cmd"] in ("ATTACK", "ATTACK_IGNORE_THROW") and command.get("named"):
+            current.append(command)
+        elif command["cmd"] == "AttackModule::clear_all":
+            if current:
+                windows.append(current)
+                current = []
+    if current:
+        windows.append(current)
+
+    def carries(window):
+        return len({c["named"]["id"] for c in window}) >= 2 and all(
+            isinstance((n := c["named"])["id"], int) and
+            70 <= n["angle"] <= 150 and n["fkb"] > 0 and n["bkb"] == 0 and
+            n.get("set_weight") is True and n.get("hitlag", 1) <= 0.5 and
+            n.get("rehit", 0) == 0 for c in window)
+
+    eligible = [window for window in windows if carries(window)]
+    return {id(c) for window in eligible for c in window} if len(eligible) >= 3 else set()
+
+
+def _hitbox_features(box):
+    """Decode the geometry and knockback fields used to compare live candidates."""
+    w0, w1, w2, w3, w4 = box["words"]
+    signed = lambda value: value - 0x10000 if value & 0x8000 else value
+    angle = (w3 >> 23) & 0x1FF
+    fkb = (w3 >> 5) & 0x1FF
+    return {
+        "kind": box["key"][0], "joint": (w0 >> 11) & 0xFF,
+        "damage": box["damage"], "radius": box["radius"],
+        "angle": angle, "kbg": (w3 >> 14) & 0x1FF, "fkb": fkb,
+        "bkb": (w4 >> 23) & 0x1FF,
+        "pos": (signed(w1 & 0xFFFF) / 256, signed(w2 >> 16) / 256,
+                signed(w2 & 0xFFFF) / 256),
+        "linking": box["key"][0] == "attack" and
+                   (fkb > 0 or 361 <= angle <= 368 or box.get("loop", False)),
+    }
+
+
+def _near_duplicate(a, b):
+    """Same hit role and almost the same sphere, with conservative numeric tolerances."""
+    if a["kind"] != b["kind"] or a["joint"] != b["joint"]:
+        return False
+    if abs(a["damage"] - b["damage"]) > 0.25:
+        return False
+    if 361 <= a["angle"] <= 368 or 361 <= b["angle"] <= 368:
+        if a["angle"] != b["angle"]:
+            return False
+    else:
+        angle_gap = abs(a["angle"] - b["angle"])
+        if a["angle"] <= 360 and b["angle"] <= 360:
+            angle_gap = min(angle_gap, 360 - angle_gap)
+        if angle_gap > 20:
+            return False
+    if abs(a["kbg"] - b["kbg"]) > 10 or abs(a["bkb"] - b["bkb"]) > 10:
+        return False
+    if abs(a["fkb"] - b["fkb"]) > max(16, 0.2 * max(a["fkb"], b["fkb"])):
+        return False
+    distance2 = sum((x - y) ** 2 for x, y in zip(a["pos"], b["pos"]))
+    return distance2 <= (0.5 * min(a["radius"], b["radius"])) ** 2
+
+
+def _select_hitboxes(logical):
+    """Keep one box per distinct role first; fill spare slots with duplicates."""
+    keys = sorted(logical, key=lambda key: logical[key]["order"])
+    features = {key: _hitbox_features(logical[key]) for key in keys}
+    groups = []
+    for key in keys:
+        matches = [group for group in groups if any(_near_duplicate(features[key], features[other])
+                                                    for other in group)]
+        if matches:
+            matches[0].append(key)
+            for group in matches[1:]:
+                matches[0].extend(group)
+                groups.remove(group)
+        else:
+            groups.append([key])
+
+    def basic_rank(key):
+        box, feature = logical[key], features[key]
+        return (feature["linking"], box["damage"], box["radius"], -box["order"])
+
+    representatives = [max(group, key=basic_rank) for group in groups]
+    group_size = {rep: len(group) for rep, group in zip(representatives, groups)}
+
+    def spatial_novelty(key):
+        feature = features[key]
+        distances = []
+        for other in representatives:
+            if other == key or features[other]["joint"] != feature["joint"]:
+                continue
+            peer = features[other]
+            distance2 = sum((x - y) ** 2 for x, y in zip(feature["pos"], peer["pos"]))
+            distances.append(distance2 / max((feature["radius"] + peer["radius"]) ** 2, 0.001))
+        return min(distances) if distances else 1.0
+
+    def representative_rank(key):
+        box, feature = logical[key], features[key]
+        return (feature["linking"], group_size[key] == 1,
+                spatial_novelty(key) if feature["linking"] else 0,
+                box["damage"], box["radius"], -box["order"])
+
+    chosen = sorted(representatives, key=representative_rank, reverse=True)[:4]
+    if len(chosen) < 4:
+        extras = (key for key in keys if key not in representatives)
+        chosen.extend(sorted(extras, key=basic_rank, reverse=True)[:4 - len(chosen)])
+    return sorted(chosen, key=lambda key: logical[key]["order"])
+
+
 def remap_hitboxes(events, rep):
     """Allocate four ftcmd slots, preserving each live source ID across replacements.
 
@@ -94,11 +213,24 @@ def remap_hitboxes(events, rep):
     logical = {}   # source key -> latest encoded hitbox and first-spawn order
     resident = {}  # source key -> Melee slot
     result = []
+    wave = 0
+    hit_waves = {}
+    for order, (_, kind, payload) in enumerate(events):
+        if kind == "clear" and payload == [16 << 26]:
+            wave += 1
+        elif kind == "hit" and isinstance(payload, dict) and payload["key"][0] == "attack":
+            hit_waves.setdefault(payload["key"], []).append((order, wave, payload["damage"]))
+    loop_orders = set()
+    for occurrences in hit_waves.values():
+        for i, (order, phase, damage) in enumerate(occurrences):
+            for other_order, other_phase, other_damage in occurrences[i + 1:]:
+                if phase != other_phase and abs(damage - other_damage) <= 0.25:
+                    loop_orders.update((order, other_order))
 
     def emit_hit(frame, key, slot):
         hw = logical[key]["words"].copy()
         hw[0] = (hw[0] & ~(7 << 23)) | (slot << 23)
-        result.append((frame, "hit", hw))
+        result.append((frame, "hit", {"words": hw, "carry": True} if logical[key].get("carry") else hw))
 
     def drop(frame, key, reason):
         box = logical[key]
@@ -107,8 +239,7 @@ def remap_hitboxes(events, rep):
             "radius": box["radius"], "reason": reason})
 
     def reconcile(frame, changed_key=None):
-        winners = sorted(logical, key=lambda key: (-logical[key]["damage"],
-                                                    -logical[key]["radius"], logical[key]["order"]))[:4]
+        winners = _select_hitboxes(logical)
         selected = set(winners)
         leaving = [key for key in resident if key not in selected]
         entering = [key for key in winners if key not in resident]
@@ -142,7 +273,7 @@ def remap_hitboxes(events, rep):
         if kind == "hit" and isinstance(payload, dict):
             key = payload["key"]
             first_order = logical[key]["order"] if key in logical else order
-            logical[key] = {**payload, "order": first_order}
+            logical[key] = {**payload, "order": first_order, "loop": order in loop_orders}
             reconcile(frame, key)
         elif kind == "clear" and isinstance(payload, dict):
             for key in payload["keys"]:
@@ -173,12 +304,69 @@ def needs_hitbox_remap(events):
     return False
 
 
+def apply_autolink(events):
+    """Translate special angles and carry windows after Melee slot allocation.
+
+    Geno LINK 1 follows attacker momentum while keeping Melee knockback. LINK 2 also
+    floors launch speed at attacker speed. Neither can pull toward a hitbox centre or
+    a target vector; 368 uses a low-FKB 361 fallback instead. Link state belongs to
+    the slot, so clear it when that slot is reused or removed.
+    """
+    modes = [0] * 4
+    result = []
+
+    def link(mask, mode):
+        return [(59 << 26) | (0x39 << 20) | (2 << 16) | (mask << 8), mode]
+
+    for frame, kind, payload in events:
+        words = payload.get("words", []) if isinstance(payload, dict) else payload
+        if not isinstance(words, list) or not words:
+            result.append((frame, kind, payload))
+            continue
+        original_words = words
+        extra = []
+        if kind == "hit" and words[0] >> 26 == 11:
+            slot = (words[0] >> 23) & 7
+            angle = (words[3] >> 23) & 0x1FF
+            if angle in (365, 366, 367, 368):
+                words = words.copy()
+                words[3] = (words[3] & ~(0x1FF << 23)) | (361 << 23)
+                if angle == 368:
+                    words[3] = (words[3] & ~(0x1FF << 5)) | (20 << 5)
+                mode = 1 if angle == 365 else 2 if angle in (366, 367) else 0
+                if mode or modes[slot]:
+                    extra = link(1 << slot, mode)
+                modes[slot] = mode
+            elif isinstance(payload, dict) and payload.get("carry"):
+                extra = link(1 << slot, 2)
+                modes[slot] = 2
+            elif modes[slot]:
+                extra = link(1 << slot, 0)
+                modes[slot] = 0
+        elif kind == "clear" and words[0] >> 26 == 16:
+            mask = sum((1 << slot) for slot, mode in enumerate(modes) if mode)
+            if mask:
+                extra = link(mask, 0)
+                modes = [0] * 4
+        elif kind == "clear" and words[0] >> 26 == 15:
+            slot = words[0] & 0x3FFFFFF
+            if slot < 4 and modes[slot]:
+                extra = link(1 << slot, 0)
+                modes[slot] = 0
+        if extra or words is not original_words:
+            words = words + extra
+            payload = dict(payload, words=words) if isinstance(payload, dict) else words
+        result.append((frame, kind, payload))
+    return result
+
+
 def translate(row, joint_of_bone, scale=1.0):
     words, frame = [], 0.0
     rep = {"hitboxes": 0, "dropped_ultimate_only": 0, "other_path_commands": 0, "unmapped_bones": set(),
            "unknown": {}}
     cancel = (row.get("motion") or {}).get("cancel_frame") or 0
     events = []
+    carry_hits = carry_hit_commands(row)
     catch_only = False
     for c in row["commands"]:
         if not default_path(c.get("when", [])):
@@ -206,7 +394,8 @@ def translate(row, joint_of_bone, scale=1.0):
                 hw[0] |= 1 << 19
             events.append((c["frame"], "hit", {"words": hw, "key": ("attack", n["id"]),
                                                  "id": n["id"], "damage": n["damage"],
-                                                 "radius": n["size"] * scale}))
+                                                 "radius": n["size"] * scale,
+                                                 "carry": id(c) in carry_hits}))
             rep["hitboxes"] += 1
             rep["dropped_ultimate_only"] += 1           # hitlag/SDI multipliers etc. on this hitbox
         elif cmd == "CATCH" and c.get("named"):
@@ -304,6 +493,7 @@ def translate(row, joint_of_bone, scale=1.0):
                                  for _, kind, payload in events)
         if legacy_grab_clears:
             rep["unknown"]["GrabModule::clear"] = legacy_grab_clears
+    events = apply_autolink(events)
     for f, kind, w in events:
         if kind == "time":
             continue

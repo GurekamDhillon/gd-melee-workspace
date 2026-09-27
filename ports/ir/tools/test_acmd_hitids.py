@@ -11,10 +11,10 @@ ROOT = Path(__file__).resolve().parents[3]
 SORA_ACMD = ROOT / "_build/tmp/ir/trail.acmd.json"
 
 
-def attack(frame, hit_id, damage=5, size=3):
+def attack(frame, hit_id, damage=5, size=3, *, angle=45, fkb=0, x=0, y=0, z=0):
     return {"frame": float(frame), "cmd": "ATTACK", "when": [], "named": {
         "id": hit_id, "bone": "top", "damage": damage, "size": size,
-        "x": 0, "y": 0, "z": 0, "angle": 45, "kbg": 100, "fkb": 0, "bkb": 20,
+        "x": x, "y": y, "z": z, "angle": angle, "kbg": 100, "fkb": fkb, "bkb": 20,
     }}
 
 
@@ -41,10 +41,56 @@ def decoded(words):
         elif op == 34:
             i += 2
         elif op == 59:
-            i += 2
+            i += ((w >> 16) & 15) - 1
         elif op == 56:
             i += 1
         i += 1
+    return result
+
+
+def live_boxes(words):
+    """Snapshot slot -> (angle, FKB, Y, Z) after each frame's commands."""
+    frame, live, snapshots, i = 0, {}, {}, 0
+    while i < len(words):
+        w = words[i]
+        op = w >> 26
+        if op == 2:
+            frame = w & 0x3FFFFFF
+        elif op == 11:
+            w2, w3 = words[i + 2:i + 4]
+            signed = lambda v: v - 0x10000 if v & 0x8000 else v
+            live[(w >> 23) & 7] = ((w3 >> 23) & 0x1FF, (w3 >> 5) & 0x1FF,
+                                    signed(w2 >> 16) / 256, signed(w2 & 0xFFFF) / 256)
+            i += 4
+        elif op == 15:
+            live.pop(w & 0x3FFFFFF, None)
+        elif op == 16:
+            live.clear()
+        elif op == 34:
+            i += 2
+        elif op == 59:
+            i += ((w >> 16) & 15) - 1
+        elif op == 56:
+            i += 1
+        snapshots[frame] = dict(live)
+        i += 1
+    return snapshots
+
+
+def links(words):
+    """Return (mask, mode) for complete two-word Geno LINK commands."""
+    result, i = [], 0
+    while i < len(words):
+        w = words[i]
+        op = w >> 26
+        if op == 59:
+            size = (w >> 16) & 15
+            if (w >> 20) & 63 == 0x39:
+                assert size == 2
+                result.append(((w >> 8) & 255, words[i + 1]))
+        else:
+            size = 5 if op == 11 else 3 if op == 34 else 2 if op == 56 else 1
+        i += size
     return result
 
 
@@ -65,9 +111,9 @@ class HitIdTest(unittest.TestCase):
         self.assertEqual([(w >> 20) & 7 for w in words if w >> 26 == 11], [0, 0])
 
     def test_overflow_keeps_damage_then_radius_and_reports_every_drop(self):
-        words, rep = self.translate([attack(2, 0, 5, 3), attack(2, 1, 5, 2),
-                                     attack(2, 2, 5, 4), attack(2, 3, 5, 5),
-                                     attack(2, 4, 6, 1), attack(2, 5, 1, 9)])
+        words, rep = self.translate([attack(2, 0, 5, 3, x=0), attack(2, 1, 5, 2, x=20),
+                                     attack(2, 2, 5, 4, x=40), attack(2, 3, 5, 5, x=60),
+                                     attack(2, 4, 6, 1, x=80), attack(2, 5, 1, 9, x=100)])
         events = decoded(words)
         self.assertEqual(events[-2:], [(2, "remove", 1), (2, "hit", 1)])
         self.assertEqual([d["id"] for d in rep["dropped_hitboxes"]], [1, 5])
@@ -80,6 +126,28 @@ class HitIdTest(unittest.TestCase):
         self.assertEqual(decoded(words)[-2:], [(2, "remove", 3), (2, "hit", 3)])
         self.assertEqual(rep["dropped_hitboxes"][0]["id"], 3)
 
+    def test_distinct_linking_box_beats_higher_damage(self):
+        words, rep = self.translate([*(attack(2, i, 10, x=20*i) for i in range(4)),
+                                     attack(2, 4, 1, 2, fkb=60, x=100)])
+        self.assertEqual([d["id"] for d in rep["dropped_hitboxes"]], [3])
+        self.assertTrue(any(box[1] == 60 for box in live_boxes(words)[2].values()))
+
+    def test_near_duplicate_drops_before_distinct_linking_role(self):
+        words, rep = self.translate([attack(2, 0, 3, angle=86, fkb=100, x=0),
+                                     attack(2, 1, 3, angle=92, fkb=110, x=0),
+                                     attack(2, 2, 3, angle=120, fkb=100, x=20),
+                                     attack(2, 3, 3, angle=150, fkb=100, x=40),
+                                     attack(2, 4, 1, angle=366, x=60)])
+        self.assertEqual([d["id"] for d in rep["dropped_hitboxes"]], [1])
+        self.assertTrue(any(box[0] == 361 for box in live_boxes(words)[2].values()))
+        self.assertIn((1 << 1, 2), links(words))
+
+    def test_repeated_hit_windows_count_as_linking_loop(self):
+        words, rep = self.translate([attack(2, 0, 1), clear(3), attack(4, 0, 1, x=0),
+                                     *(attack(4, i, 10, x=20*i) for i in range(1, 5))])
+        self.assertEqual([d["id"] for d in rep["dropped_hitboxes"]], [4])
+        self.assertEqual(len(live_boxes(words)[4]), 4)
+
     def test_dropped_box_promotes_when_a_slot_clears(self):
         words, rep = self.translate([*(attack(2, i) for i in range(5)), clear(3, 0), clear(4, 4)])
         self.assertEqual(decoded(words)[-3:], [(3, "remove", 0), (3, "hit", 0),
@@ -87,8 +155,9 @@ class HitIdTest(unittest.TestCase):
         self.assertEqual([d["id"] for d in rep["dropped_hitboxes"]], [4])
 
     def test_replacement_can_promote_a_more_important_dropped_box(self):
-        words, rep = self.translate([attack(2, 0, 6), attack(2, 1, 5), attack(2, 2, 5),
-                                     attack(2, 3, 5), attack(2, 4, 4), attack(3, 0, 1)])
+        words, rep = self.translate([attack(2, 0, 6, x=0), attack(2, 1, 5, x=20),
+                                     attack(2, 2, 5, x=40), attack(2, 3, 5, x=60),
+                                     attack(2, 4, 4, x=80), attack(3, 0, 1, x=0)])
         self.assertEqual(decoded(words)[-2:], [(3, "remove", 0), (3, "hit", 0)])
         self.assertEqual([d["id"] for d in rep["dropped_hitboxes"]], [4, 0])
 
@@ -149,6 +218,30 @@ class HitIdTest(unittest.TestCase):
                     self.assertIn((12, "remove", 3), events)
                 if script == "game_attacks4":
                     self.assertEqual(sum(f == 21 and kind == "hit" for f, kind, _ in events), 2)
+
+    @unittest.skipUnless(SORA_ACMD.exists(), "local Sora ACMD export unavailable")
+    def test_sora_up_tilt_and_up_special_keep_linking_coverage(self):
+        rows = {r["script"]: r for r in json.loads(SORA_ACMD.read_text(encoding="utf-8"))
+                if r.get("agent") == "trail" and r.get("kind") == "game"}
+        tilt, _ = FT.translate(rows["game_attackhi3"], {"top": 0})
+        tilt_live = live_boxes(tilt)
+        self.assertEqual([mode for _, mode in links(tilt) if mode == 2], [2] * 4)
+        for frame, angle, fkb, z in ((12, 88, 62, 0), (16, 88, 62, 0), (20, 104, 22, 8.6)):
+            with self.subTest(move="up tilt", frame=frame):
+                self.assertTrue(any(a == angle and kb == fkb and abs(pz-z) < .02
+                                    for a, kb, _, pz in tilt_live[frame].values()))
+                self.assertEqual(len(tilt_live[frame]), 4)
+        for script in ("game_specialhi", "game_specialairhi"):
+            with self.subTest(move=script):
+                words, _ = FT.translate(rows[script], {"top": 0})
+                self.assertEqual([mode for _, mode in links(words)].count(2), 24)
+                self.assertEqual([mode for _, mode in links(words)].count(0), 6)
+                snapshots = live_boxes(words)
+                for frame in (8, 15, 18, 22, 25, 29):
+                    boxes = list(snapshots[frame].values())
+                    self.assertEqual(len(boxes), 4)
+                    self.assertTrue(all(fkb > 0 for _, fkb, _, _ in boxes))
+                    self.assertEqual(len({(round(y, 1), round(z, 1)) for _, _, y, z in boxes}), 4)
 
 
 if __name__ == "__main__":

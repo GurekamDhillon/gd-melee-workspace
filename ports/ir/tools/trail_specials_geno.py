@@ -33,8 +33,7 @@ hover, then selects both follow-up hitbox sets from that saved value; --counter-
 backward counter attacks after lock-on reverses facing; and
 --counter-rebound adds the rebound clips as unreachable states (the status trigger is absent from
 the dump). The 7-frame counter turn clips are recorded for the installer but have no Geno state.
-Not ported: Ultimate hitbox ids 4-5 (Melee has 4 hitbox slots: the up special's two capsules
-between spheres 0/2 and 1/3).
+Ultimate hitbox ids 4-5 share Melee's four live slots through acmd_to_ftcmd's remapper.
 """
 import argparse
 import json
@@ -54,7 +53,7 @@ LABELS = os.path.join(ULT, "references", "ParamLabels.csv")
 VL = os.path.join(ULT, "workspace", "extracted", "fighter", "trail", "param", "vl.prc")
 MOTION = os.path.join(ULT, "workspace", "extracted", "fighter", "trail", "motion", "body", "c00")
 sys.path.insert(0, HERE)
-from acmd_to_ftcmd import ELEM, hitbox_words, default_path  # noqa: E402
+from acmd_to_ftcmd import ELEM, hitbox_words, default_path, needs_hitbox_remap, remap_hitboxes, apply_autolink, carry_hit_commands  # noqa: E402
 
 LOCK_RANGE = 50         # the SEARCH box radius in game_specialssearch (a sphere approximates it)
 MAX_LOCK_DEG = 40       # INFERRED: steepest locked-on dash
@@ -91,11 +90,13 @@ HOVER = 8               # d01specialsstart2's length: the pause between dashes (
 GENO_OP = 59
 LAI, RAI, LAF, RAF = 0, 1, 2, 3
 V_AIR, V_FACING, V_VEL_X, V_VEL_Y, V_GROUND_VEL, V_FWD_VEL = 0x00, 0x01, 0x02, 0x03, 0x04, 0x05
-V_PRESSED, V_MOVE_F0, V_MOVE_F1, V_HIT_DAMAGE = 0x14, 0x20, 0x21, 0x35
+V_ANIM_FRAME, V_PRESSED, V_ANIM_RATE = 0x0D, 0x14, 0x1B
+V_MOVE_F0, V_MOVE_F1, V_HIT_DAMAGE = 0x20, 0x21, 0x35
 V_ATTACK_CONNECTED_PREV = 0x3C  # last action's hit; copy in the hover before the next dash
 EQ, NE, LT, LE, GT, GE, BIT, NOBIT = range(8)
 C_ALWAYS = 0
 BTN_SPECIAL_BIT = 1
+BTN_ATTACK = 1
 HOOK_SPAWN, HOOK_LOCKON = 5, 6
 MS_WAIT, MS_FALLSPECIAL = 14, 35
 DASH_N = 1              # LA int 1: dashes done (LA int 0 is the magic cycle, beta's)
@@ -133,8 +134,23 @@ def IFV(val, cmp, b, skip, b_var=False): return [w0(0x12, 4, (cmp << 4) | (0x80 
 def CALL(h, arg): return [w0(0x20, 3), h, arg & 0xFFFFFFFF]
 def CHG(target, cond=C_ALWAYS): return [w0(0x30, 2, (cond << 8) | 0x04), target]   # ONCE
 def GENO(n): return (2 << 28) | n
+ORIG = [w0(0x13, 1)]
 INTANGIBLE, NORMAL = [(26 << 26) | 2], [(26 << 26) | 0]   # body collision state (ftColl_8007B62C)
 CLEAR, IASA = [16 << 26], [23 << 26]
+
+
+def combo_chain_check(target, first, last, button=BTN_ATTACK):
+    """Persistent fresh-press transition, limited to an inclusive animation-frame window.
+
+    CHG permits three conditions: PRESSED, FRAME >= first, ANIM_FRAME <= last.
+    This also works as an ORIG prefix on an existing common-action script.
+    Forward stick is checked by the common AttackS3 entry; follow-ups use A alone.
+    """
+    if first > last:
+        raise ValueError("combo window opens after it closes")
+    return ([w0(0x30, 3, 4 << 8), GENO(target), button]
+            + [w0(0x31, 2, 8 << 8), first]
+            + [w0(0x31, 3, (9 << 8) | (LE << 4)), V_ANIM_FRAME, fb(last)])
 
 
 def hx(words):
@@ -200,11 +216,11 @@ HOSTS = {
     "marth": {"SStart": 303, "SStart2": 304, "SDash1": 305, "SDash2": 306, "SDash3": 307, "SEnd": 308,
               "SEndAir": 309, "Hi": 321, "HiAir": 322, "LwStart": 323, "LwAttack": 324,
               "LwStartAir": 325, "LwAttackAir": 326, "LwAttackBack": 310, "LwAttackBackAir": 311,
-              "LwRebound": 312, "LwReboundAir": 313},
+              "LwRebound": 312, "LwReboundAir": 313, "S3Combo2": 315, "S3Combo3": 316},
     "kirby": {"SStart": 322, "SStart2": 323, "SDash1": 324, "SDash2": 325, "SDash3": 326, "SEnd": 327,
               "SEndAir": 328, "Hi": 329, "HiAir": 330, "LwStart": 332, "LwAttack": 338,
               "LwStartAir": 335, "LwAttackAir": 339, "LwAttackBack": 340, "LwAttackBackAir": 341,
-              "LwRebound": 342, "LwReboundAir": 343},
+              "LwRebound": 342, "LwReboundAir": 343, "S3Combo2": 333, "S3Combo3": 334},
 }
 CLIPS = {"SStart": "d01specialsstart", "SStart2": "d01specialsstart2", "SDash1": "d01specials1",
          "SDash2": "d01specials2", "SDash3": "d01specials2", "SEnd": "d01specialsend",
@@ -212,11 +228,14 @@ CLIPS = {"SStart": "d01specialsstart", "SStart2": "d01specialsstart2", "SDash1":
          "LwStart": "d03speciallwstart", "LwStartAir": "d03specialairlwstart", "LwAttack": "d03speciallw",
          "LwAttackAir": "d03specialairlw", "LwAttackBack": "d03speciallwbackward",
          "LwAttackBackAir": "d03specialairlwbackward", "LwRebound": "d03speciallwrebound",
-         "LwReboundAir": "d03specialairlwrebound"}   # declaration order (= state numbers)
+         "LwReboundAir": "d03specialairlwrebound", "S3Combo2": "c00attack12",
+         "S3Combo3": "c01attacks33"}   # declaration order (= state numbers)
 STATES = list(CLIPS)
 BASE_STATES = STATES[:STATES.index("LwAttackBack")]
 BACK_STATES = ["LwAttackBack", "LwAttackBackAir"]
 REBOUND_STATES = ["LwRebound", "LwReboundAir"]
+COMBO_STATES = ["S3Combo2", "S3Combo3"]
+S3_ROWS = (53, 54, 55, 56, 57)  # Marth/Kirby AttackS3 angle rows
 
 
 def joints_of_sora():
@@ -249,24 +268,39 @@ class Timeline:
 
 def hit_events(tl, row, t, joint_of, rep, name):
     """A game script's ATTACK / clear_all -> Melee hitboxes on the timeline (game frames)."""
+    events = []
+    carry_hits = carry_hit_commands(row)
     for c in row["commands"]:
         if not default_path(c.get("when", [])):
             continue
         if c["cmd"] == "ATTACK" and c.get("named"):
             n = c["named"]
-            if not isinstance(n["id"], int) or n["id"] > 3:
+            if not isinstance(n["id"], int):
                 rep.append("  %s f%d: hitbox id %s dropped (Melee has 4 slots)" % (name, c["frame"], n["id"]))
                 continue
             y = n["y"] if n["y2"] is None else (n["y"] + n["y2"]) / 2     # a capsule -> its middle
             z = n["z"] if n["z2"] is None else (n["z"] + n["z2"]) / 2
             j = joint_of.get(n["bone"], 0)
-            tl.at(t(c["frame"]), hitbox_words(n["id"], j, n["damage"], n["size"], n["x"], y, z, n["angle"],
-                                              n["kbg"], n["fkb"], n["bkb"], ELEM.get(n.get("effect"), 0), 0), 3)
+            words = hitbox_words(n["id"], j, n["damage"], n["size"], n["x"], y, z, n["angle"],
+                                 n["kbg"], n["fkb"], n["bkb"], ELEM.get(n.get("effect"), 0), 0)
+            events.append((c["frame"], "hit", {"words": words, "key": ("attack", n["id"]),
+                                                "id": n["id"], "damage": n["damage"], "radius": n["size"],
+                                                "carry": id(c) in carry_hits}))
             rep.append("  %s f%d (game %d): id %d %s %.1f%% angle %d kbg %d fkb %d bkb %d size %.1f" % (
                 name, c["frame"], round(t(c["frame"])), n["id"], n["bone"], n["damage"], n["angle"],
                 n["kbg"], n["fkb"], n["bkb"], n["size"]))
         elif c["cmd"] == "AttackModule::clear_all":
-            tl.at(t(c["frame"]), CLEAR, 2)
+            events.append((c["frame"], "clear", CLEAR))
+    if needs_hitbox_remap(events):
+        details = {}
+        events = remap_hitboxes(events, details)
+        for drop in details.get("dropped_hitboxes", []):
+            rep.append("  %s f%d: hitbox id %d dropped (%s)" %
+                       (name, drop["frame"], drop["id"], drop["reason"]))
+    events = apply_autolink(events)
+    for frame, kind, payload in events:
+        tl.at(t(frame), payload["words"] if isinstance(payload, dict) else payload,
+              2 if kind == "clear" else 3)
 
 
 def sonic_branch_hit_events(tl, row, joint_of, rep, name):
@@ -301,10 +335,11 @@ def sonic_branch_hit_events(tl, row, joint_of, rep, name):
 
 
 def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_backward=False,
-          counter_rebound=False):
+          counter_rebound=False, combo_chain=True):
     game = {r["script"]: r for r in rows if r["kind"] == "game" and r["agent"] == "trail"}
     sub = HOSTS[host]
-    active = BASE_STATES + (BACK_STATES if counter_backward else []) + (REBOUND_STATES if counter_rebound else [])
+    active = (BASE_STATES + (BACK_STATES if counter_backward else [])
+              + (REBOUND_STATES if counter_rebound else []) + (COMBO_STATES if combo_chain else []))
     idx = {n: base + i for i, n in enumerate(active)}
     S, H, L = P["param_special_s"], P["param_special_hi"], P["param_special_lw"]
     states, overlays = [], []
@@ -529,6 +564,34 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
             "%s=%s" % (key, L[key]) for key in sorted(L) if key.startswith("rebound_"))
             + "; trigger unknown")
 
+    # ---------------- Ground attack combo chain ----------------
+    if combo_chain:
+        # An overlay prefix registers the check and ORIG resumes the installed game_attacks3
+        # script, including its hitboxes and ModelVis. All five angle rows share that script.
+        # The installed translator selects the default 7.2% branch; its ACMD combo flag is
+        # conditional on the alternate 5.2% branch. Keep the installed hitboxes unchanged.
+        for row_id in S3_ROWS:
+            overlays.append({"index": row_id, "words": hx(combo_chain_check(idx["S3Combo2"], 29, 44) + ORIG)})
+        for name, script, next_name, first, last in (
+                ("S3Combo2", "game_attacks32", "S3Combo3", 18, 40),
+                ("S3Combo3", "game_attacks33", None, None, None)):
+            row = game[script]
+            frames, _ = clip_info(CLIPS[name])
+            tl = Timeline()
+            if next_name:
+                tl.at(0, combo_chain_check(idx[next_name], first, last), 0)
+            for command in row["commands"]:
+                if command["cmd"] == "FT_MOTION_RATE" and command.get("args"):
+                    tl.at(command["frame"], PUTF(V_ANIM_RATE, command["args"][0]), 1)
+            hit_events(tl, row, lambda f: f, joint_of, rep, name)
+            cancel = (row.get("motion") or {}).get("cancel_frame")
+            if cancel:
+                tl.at(cancel, IASA, 7)
+            state(name, "geno.anim_motion", tl.words(frames, []), anim="next", iasa="interrupt", ledge="none")
+            rep.append("%s: %s on %s (%d clip frames)%s" % (
+                name, script, CLIPS[name], frames,
+                ", fresh A f%d-%d -> %s" % (first, last, next_name) if next_name else ""))
+
     assert active == [name for name in STATES if name in active]
     assert [x["name"] for x in states] == active, "state order must match STATES (script targets are numbers)"
     specials = {"s": "geno:SStart", "air_s": "geno:SStart", "hi": "geno:Hi", "air_hi": "geno:HiAir",
@@ -546,6 +609,8 @@ def main():
     ap.add_argument("--sonic-hit-branch", action=argparse.BooleanOptionalAction, default=True, help="(default on) save ATTACK_CONNECTED_PREV in the hover and branch follow-up hitboxes on LA int 2; --no-sonic-hit-branch = always 5.2 %%")
     ap.add_argument("--counter-backward", action=argparse.BooleanOptionalAction, default=True, help="(default on) counter attack's backward variant when lock-on reverses facing; --no-counter-backward to drop it")
     ap.add_argument("--counter-rebound", action="store_true", help="emit the unreachable counter rebound states")
+    ap.add_argument("--combo-chain", action=argparse.BooleanOptionalAction, default=True,
+                    help="(default on) Sora's AttackS3 three-stage chain")
     ap.add_argument("-o", "--out", required=True)
     a = ap.parse_args()
     rows = json.load(open(a.acmd, encoding="utf-8"))
@@ -558,7 +623,7 @@ def main():
         base = len(magic.get("states", []))
     states, overlays, specials, clips = build(rows, P, joints_of_sora(), a.host, base, rep,
         sonic_hit_branch=a.sonic_hit_branch, counter_backward=a.counter_backward,
-        counter_rebound=a.counter_rebound)
+        counter_rebound=a.counter_rebound, combo_chain=a.combo_chain)
     fighter = {"attach": a.attach, "name": "Sora specials (Geno, host %s)" % a.host,
                "states": states, "specials": specials, "subactions": overlays}
     if magic:

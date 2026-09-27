@@ -62,6 +62,11 @@ def events_for(dest, doc, name):
     return decode(os.path.join(dest, overlay["file"]))
 
 
+def overlay_events(dest, doc, row):
+    overlay = next(o for o in doc["subactions"] if o["index"] == row)
+    return decode(os.path.join(dest, overlay["file"]))
+
+
 def hits(events):
     out = []
     for e in events:
@@ -75,6 +80,32 @@ def hits(events):
 
 def f32(bits):
     return struct.unpack(">f", struct.pack(">I", bits))[0]
+
+
+def check_up_special(dest, doc):
+    # ACMD f8/15/18/22/25/29/39 become game f10/17/20/24/27/31/41.
+    # The first six-box groups tie, so four fit. At f39 the larger id-4
+    # capsule (radius 4.8) must replace one of the radius-3.6 boxes.
+    expected = {10: (4, [1075] * 4), 17: (2, [614] * 4),
+                20: (2, [717] * 4), 24: (2, [614] * 4),
+                27: (2, [717] * 4), 31: (2, [614] * 4),
+                41: (5, [922, 922, 1229, 1331])}
+    for name in ("Hi", "HiAir"):
+        live = {}
+        snapshots = {}
+        for e in events_for(dest, doc, name):
+            if e["op"] == 11:
+                slot = (e["words"][0] >> 23) & 7
+                assert slot < 4, (name, e["frame"], slot)
+                live[slot] = (e["words"][0] & 1023, e["words"][1] >> 16)
+            elif e["op"] == 15:
+                live.pop(e["words"][0] & 0x3FFFFFF, None)
+            elif e["op"] == 16:
+                live.clear()
+            snapshots[e["frame"]] = dict(live)
+        for frame, (damage, radii) in expected.items():
+            assert sorted(snapshots[frame].values()) == sorted((damage, radius) for radius in radii), \
+                (name, frame, snapshots[frame])
 
 
 def check_sonic(dest, doc, default_dest, default_doc, dump):
@@ -168,7 +199,7 @@ def check_rebound(dest, doc):
                         "SDash1": {"SStart2", "SEnd", "SEndAir"},
                         "SDash2": {"SStart2", "SEnd", "SEndAir"},
                         "SDash3": {"SEnd", "SEndAir"}, "LwAttack": {"LwAttackBack"},
-                        "LwAttackAir": {"LwAttackBackAir"}}
+                        "LwAttackAir": {"LwAttackBackAir"}, "S3Combo2": {"S3Combo3"}}
     for state in doc["states"]:
         targets = set()
         for e in events_for(dest, doc, state["name"]):
@@ -182,30 +213,84 @@ def check_rebound(dest, doc):
                 if s["name"] == ("LwAttackAir" if state["name"] == "LwStartAir" else "LwAttack"))
 
 
+def check_s3_combo(dest, doc, clips, host, base=0):
+    names = [s["name"] for s in doc["states"]]
+    assert names[-2:] == ["S3Combo2", "S3Combo3"]
+    assert names.index("S3Combo2") >= base + sp.STATES.index("LwRebound")
+    for row in (53, 54, 55, 56, 57):
+        ev = overlay_events(dest, doc, row)
+        check = next(e for e in ev if e["sub"] == 0x30)
+        assert check["words"][1:] == [sp.GENO(names.index("S3Combo2")), 1]
+        assert (check["words"][0] >> 8) & 255 == 4  # PRESSED A, not held A
+        assert not check["words"][0] & 4  # persistent until action ends
+        bounds = [e for e in ev if e["sub"] == 0x31]
+        assert [((e["words"][0] >> 8) & 255, e["words"][1:]) for e in bounds] == [
+            (8, [29]), (9, [sp.V_ANIM_FRAME, sp.fb(44)])]
+        assert (bounds[1]["words"][0] >> 4) & 7 == sp.LE
+        assert ev[-1]["words"] == [0xED310000]  # ORIG: keep translated stage-1 hitboxes
+    for name, clip, start, end in (("S3Combo2", "c00attack12", 18, 40),
+                                   ("S3Combo3", "c01attacks33", None, None)):
+        state = next(s for s in doc["states"] if s["name"] == name)
+        assert state["subaction"] == sp.HOSTS[host][name]
+        assert state["behavior"] == "geno.anim_motion"
+        assert clips["subaction_clips"][str(state["subaction"])] == clip
+        host_ir = json.load(open(os.path.join(ROOT, "_build", "tmp", "ir", host + ".melee.ir.json")))
+        host_row = host_ir["behavior"]["subactions"][state["subaction"]]
+        assert int(host_row["flags"]["raw"], 16) & 0x80000000  # root motion stays animation-driven
+        ev = events_for(dest, doc, name)
+        if start is not None:
+            check = next(e for e in ev if e["sub"] == 0x30 and e["words"][1] == sp.GENO(names.index("S3Combo3")))
+            assert check["words"][2] == 1 and (check["words"][0] >> 8) & 255 == 4
+            assert not check["words"][0] & 4
+            bounds = [e for e in ev if e["sub"] == 0x31]
+            assert [((e["words"][0] >> 8) & 255, e["words"][1:]) for e in bounds] == [
+                (8, [start]), (9, [sp.V_ANIM_FRAME, sp.fb(end)])]
+            assert (bounds[1]["words"][0] >> 4) & 7 == sp.LE
+        else:
+            assert not any(e["sub"] == 0x30 and e["words"][1] >> 28 == 2 for e in ev)
+    second = hits(events_for(dest, doc, "S3Combo2"))
+    third = hits(events_for(dest, doc, "S3Combo3"))
+    # Source ids 4-5 compete for Melee's four slots via the shared remapper.
+    assert second == [(7, 0, 4, 65, 12, 50), (7, 1, 4, 80, 12, 50),
+                      (7, 2, 4, 95, 12, 50), (7, 3, 4, 361, 15, 25),
+                      (7, 2, 4, 361, 15, 23)]
+    assert third == [(10, 0, 6, 42, 90, 70), (10, 1, 6, 42, 90, 70),
+                     (10, 2, 6, 42, 90, 70), (12, 3, 6, 42, 90, 70),
+                     (12, 3, 6, 42, 90, 70)]
+    rates = [(e["frame"], f32(e["words"][2])) for e in events_for(dest, doc, "S3Combo2")
+             if e["sub"] == 0x09 and e["words"][1] == sp.V_ANIM_RATE]
+    assert len(rates) == 2 and all(f == expected_f and abs(rate - expected_rate) < 1e-6
+                                   for (f, rate), (expected_f, expected_rate) in zip(rates, ((0, 0.8), (11, 1.0))))
+
+
 def main():
     dump = json.load(open(ACMD, encoding="utf-8"))
     magic_count = len(json.load(open(MAGIC, encoding="utf-8"))["fighters"][0]["states"])
     for host in ("marth", "kirby"):
         default_dest, default_doc, _ = generate(host, options=OFF)
         dest, doc, clips = generate(host)
+        check_s3_combo(dest, doc, clips, host)
         # no options: the hit branch and the backward counter are ON by default, the rebound OFF
         plain_dest, plain_doc, _ = generate(host, options=())
         assert [s["name"] for s in plain_doc["states"]] == [n for n in sp.STATES if n not in sp.REBOUND_STATES]
         for n in ("SDash2", "SDash3", "LwAttack"):
             assert events_for(plain_dest, plain_doc, n) == events_for(dest, doc, n)
         assert [s["name"] for s in doc["states"]] == sp.STATES
-        assert len(doc["states"]) == 17
+        assert len(doc["states"]) == 19
         assert [s["subaction"] for s in doc["states"]] == [sp.HOSTS[host][n] for n in sp.STATES]
+        check_up_special(dest, doc)
         check_sonic(dest, doc, default_dest, default_doc, dump)
         check_counter(dest, doc, clips)
         check_rebound(dest, doc)
-        magic_dest, magic_doc, _ = generate(host, magic=True)
+        magic_dest, magic_doc, magic_clips = generate(host, magic=True)
         assert [s["name"] for s in magic_doc["states"][magic_count:]] == sp.STATES
+        check_s3_combo(magic_dest, magic_doc, magic_clips, host, magic_count)
         for name, back_name in (("LwAttack", "LwAttackBack"), ("LwAttackAir", "LwAttackBackAir")):
             chg = [e for e in events_for(magic_dest, magic_doc, name) if e["sub"] == 0x30
                    and e["words"][1] >> 28 == 2]
             assert sp.GENO(magic_count + sp.STATES.index(back_name)) in [e["words"][1] for e in chg]
-        print("%s: Sonic branches, backward lunge, rebound, and +%d magic offset passed" % (host, magic_count))
+        print("%s: Sonic branches, backward lunge, rebound, S3 combo, and +%d magic offset passed" %
+              (host, magic_count))
 
 
 if __name__ == "__main__":

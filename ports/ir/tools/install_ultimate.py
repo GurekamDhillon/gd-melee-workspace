@@ -53,6 +53,7 @@ import convert_ultimate_anim as CA  # noqa: E402
 import export_ultimate_mesh as EM  # noqa: E402
 import figatree as F  # noqa: E402
 import plan_parts  # noqa: E402
+from walkloop import rewrite_host_loop, validate_geno_overlays, validate_script  # noqa: E402
 
 ROOT = CA.ROOT
 sys.path.insert(0, os.path.join(ROOT, "tools", "mex_port"))
@@ -81,6 +82,26 @@ def cmd_len(word):
     if op == 59:
         return max(1, (word >> 16) & 0xF)
     return OP_LEN[op - 10] if op - 10 < len(OP_LEN) else 1
+
+
+def admit_empty_motion_rows(rows, foreign, host_names, moveset, clips):
+    """Add empty host rows only when the translated moveset supplies a clip and script.
+
+    The caller's animation and script passes then fill the whole motion record. Rows
+    supplied by --row-clips have no script here and remain Geno overlay territory.
+    """
+    admitted = {}
+    for r_, move in moveset.items():
+        if r_ in rows or r_ in foreign or r_ not in host_names:
+            continue
+        if not move.get("clip") or not move.get("script") or not move.get("words"):
+            continue
+        clip = move["clip"]
+        if clip not in clips:
+            raise ValueError(f"moveset row {r_}: no clip {clip}")
+        rows[r_] = host_names[r_]
+        admitted[r_] = clip
+    return admitted
 
 
 class Writer:
@@ -408,6 +429,9 @@ def main():
     ap.add_argument("--fold-helpers", action="store_true", help="fold helper-bone (H_*) weights into their "
                     "nearest non-helper ancestor instead of baking model.nuhlpb into the clips (saves "
                     "~25%% of animation bytes on Sora; skin error up to ~5%% of body height at the feet)")
+    ap.add_argument("--pc-palette", type=int, choices=(64,), help="build the costume's envelope POBJs as PC "
+                    "matrix palette POBJs (geno_pal_pobj_v1, up to 64 envelopes a piece; needs an exe with engine "
+                    "pobj_palette 1, which mod.json then requires)")
     a = ap.parse_args()
     global HOST
     HOST = dict(HOSTS[a.host], name=a.host)
@@ -443,7 +467,8 @@ def main():
     jsym, msym = "Ply%s5K_Share_joint" % name.replace(" ", ""), "Ply%s5K_Share_matanim_joint" % name.replace(" ", "")
     costume = f"{stem}Nr.dat"
     r = subprocess.run([fb[0], "build", mpath, tmpl, os.path.join(files, costume), jsym, msym,
-                        os.path.join(out, "_work", "costume_report.json")], capture_output=True, text=True)
+                        os.path.join(out, "_work", "costume_report.json")]
+                       + (["--pc-palette", str(a.pc_palette)] if a.pc_palette else []), capture_output=True, text=True)
     if r.returncode: sys.exit("fighterbuild failed: " + r.stdout[-800:] + r.stderr[-800:])
     rep["costume"] = r.stdout.strip()
     dobj_group = [d["group"] for d in mesh["dobjs"]]
@@ -479,12 +504,19 @@ def main():
     # The decomp's row name first (the figatree name repeats for ground and air rows: Kirby's 320
     # 'SpecialAirN' plays a figatree named SpecialN), then the figatree's.
     host_names = {s["index"]["value"]: s["name"] for s in host_ir()["behavior"]["subactions"]}
+    host_doc = host_ir()
+    host_subactions = {s["index"]["value"]: s for s in host_doc["behavior"]["subactions"]}
+    host_clip_frames = {c["id"]: c["frames"] for c in host_doc["assets"]["animations"]["clips"]}
     allowed = set(CA.read_clip_list(a.clip_list)) | {a.fallback} if a.clip_list else None
     moveset = {int(k): v for k, v in json.load(open(a.moveset))["rows"].items()} if a.moveset else {}
     # --row-clips (trail_specials_geno.py clips.json): rows whose Geno overlay supplies the script
     # and only need the fighter's clip
     for k, c in (json.load(open(a.row_clips))["subaction_clips"].items() if a.row_clips else []):
         moveset.setdefault(int(k), {"name": f"row {k}", "script": None, "words": None, "clip": c})
+    try:
+        admit_empty_motion_rows(rows, foreign, host_names, moveset, clips)
+    except ValueError as exc:
+        sys.exit(str(exc))
     if allowed is not None:
         allowed |= {m["clip"] for m in moveset.values()}
     matched, not_shipped = {}, {}
@@ -676,6 +708,32 @@ def main():
 
     # 6. scripts + frame-0 ModelVis
     rep["scripts"] = remap_scripts(w, fd, slot_to_joint, hurt_bones, J)
+    # vis_of includes both frame 0 and the final frame; the FigaTree length
+    # used by ftcmd is the final frame index (50 for Sora's WalkMiddle).
+    row_clips = {r_: (c, len(vis_of[(c, driven)]) - 1)
+                 for (c, driven), rs in wanted.items() for r_ in rs}
+    rewritten_loops = {}
+    for r_ in sorted(rows):
+        if r_ in moveset:  # translated scripts replace the host script below
+            continue
+        po = mt + r_ * 0x18 + 0xC
+        if po not in w.relocs:
+            continue
+        src = w.u32(po)
+        try:
+            if not validate_script(w, src):
+                continue
+            host_clip = host_subactions[r_].get("clip")
+            host_frames = host_clip_frames.get(host_clip)
+            clip, new_frames = row_clips[r_]
+            rewritten, detail = rewrite_host_loop(w, src, host_frames or 0, new_frames)
+        except (ValueError, KeyError) as exc:
+            sys.exit(f"host script row {r_} ({host_names.get(r_)}): {exc}")
+        w.ptr(po, rewritten)
+        rewritten_loops[r_] = {"motion": host_names.get(r_), "clip": clip,
+                               "host_frames": host_frames, "new_frames": new_frames,
+                               **detail}
+    rep["host_loop_rewrites"] = rewritten_loops
     for r_, m in sorted(moveset.items()):
         words = m["words"]
         if words is None:
@@ -697,6 +755,21 @@ def main():
             w.ptr(po, cache[key_])
             mv["rows"] += 1; mv["events"] += len(events)
     rep["modelvis"] = mv
+    script_findings = []
+    rows_checked = 0
+    for r_ in range(HOST["rows"]):
+        po = mt + r_ * 0x18 + 0xC
+        if po not in w.relocs:
+            continue
+        rows_checked += 1
+        try:
+            script_findings.extend({"row": r_, "motion": host_names.get(r_), **finding}
+                                   for finding in validate_script(w, w.u32(po)))
+        except ValueError as exc:
+            sys.exit(f"script loop validation row {r_} ({host_names.get(r_)}): {exc}")
+    rep["script_loop_validation"] = {"rows_checked": rows_checked, "findings": script_findings}
+    if script_findings:
+        sys.exit(f"unsafe script loops in installed moveset: {script_findings[:8]}")
     w.save(os.path.join(files, a.pl))
 
     # 7. PlCo parts table
@@ -730,6 +803,7 @@ def main():
 
     json.dump({"id": f"ultimate-{a.fighter}-slot", "name": f"{name.upper()} (Ultimate, own skeleton)", "version": "0.1.0",
                "kind": "fighter", "requires": [], "conflicts": ["metaknight-slot"],
+               **({"engine": {"pobj_palette": 1}} if a.pc_palette else {}),
                "description": f"{name} from Smash Ultimate on its own skeleton, as an m-ex fighter replacing ACE's row "
                               f"{a.dst_k}/{a.dst_e} (the row metaknight-slot uses). {a.host.capitalize()}'s fighter data and scripts are the "
                               f"host behaviour. Built by ports/ir/tools/install_ultimate.py."},
@@ -744,6 +818,13 @@ def main():
     else:
         json.dump({"geno": 1, "fighters": [{"attach": a.pl, "name": name}]},
                   open(os.path.join(out, "geno.json"), "w"), indent=1)
+    try:
+        overlay_findings = validate_geno_overlays(os.path.join(out, "geno.json"))
+    except ValueError as exc:
+        sys.exit(f"Geno script loop validation: {exc}")
+    rep["script_loop_validation"]["geno_overlay_findings"] = overlay_findings
+    if overlay_findings:
+        sys.exit(f"unsafe Geno overlay loops: {overlay_findings[:8]}")
     if a.extra_files:
         for f in os.listdir(a.extra_files):
             shutil.copy(os.path.join(a.extra_files, f), os.path.join(files, f))
