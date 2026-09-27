@@ -108,6 +108,7 @@ Scripts come from mods people download, so they run sandboxed:
 ### Gameplay scripts, netplay and rollback
 
 Anything that changes the game - `gd.input`, `gd.set_percent`, `gd.set_stocks`, savestates,
+| `gd.set_damage(port, n)` | *gameplay, offline.* The fighter's real damage (knockback, HUD, a stamina boss's remaining HP = stamina - damage). A stamina boss still needs a hit to be KO'd |
 pause/step, `gd.scene_launch`, `gd.quit` - is refused unless the manifest says `"gameplay": true`.
 Read-only scripts (overlays, loggers, readouts) can differ between two players online.
 
