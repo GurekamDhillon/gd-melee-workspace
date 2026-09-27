@@ -179,23 +179,9 @@
       ],
       "properties": {
         "format": {
-          "enum": [
-            "hsd_archive",
-            "hsd_archive_concat",
-            "ssm",
-            "sem_scripts",
-            "jpeg",
-            "mthp",
-            "thp",
-            "arc_pac",
-            "brres",
-            "rel_module",
-            "brsar_group",
-            "sawnd",
-            "tpl",
-            "raw",
-            "other"
-          ]
+          "type": "string",
+          "minLength": 1,
+          "description": "Source file format, including engine-specific names such as NRO, NUMDLB, NUSKTB, and NUTEXB."
         },
         "endianness": {
           "enum": [

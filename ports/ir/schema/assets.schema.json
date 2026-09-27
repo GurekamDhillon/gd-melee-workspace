@@ -701,19 +701,9 @@
           "minimum": 1
         },
         "format": {
-          "enum": [
-            "I4",
-            "I8",
-            "IA4",
-            "IA8",
-            "RGB565",
-            "RGB5A3",
-            "RGBA8",
-            "CI4",
-            "CI8",
-            "CI14X2",
-            "CMPR"
-          ]
+          "type": "string",
+          "minLength": 1,
+          "description": "Source texture format name. Melee uses GX names (e.g. CMPR); Ultimate uses NUTEXB format names (e.g. BC7Srgb)."
         },
         "palette": {
           "type": "object",

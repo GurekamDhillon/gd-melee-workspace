@@ -487,10 +487,10 @@
     "Article": {
       "description": "A spawnable object owned by the character (projectile, item, platform, companion). Melee: m-ex item via itFunction + item_lookup; Brawl: article in the fighter's module/PSA.",
       "type": "object",
-      "required": ["id", "local_index"],
+      "required": ["id"],
       "properties": {
         "id": { "$ref": "common.schema.json#/$defs/Id" },
-        "local_index": { "type": "integer" },
+        "local_index": { "type": "integer", "description": "Article index in the owning fighter's local table, when decoded. Omit when only a symbolic article reference is known." },
         "global_index": { "$ref": "common.schema.json#/$defs/IndexSpace" },
         "name": { "type": "string" },
         "kind": { "enum": ["projectile", "item", "platform", "companion", "effect_object", "unknown"] },

@@ -2,8 +2,8 @@
 
 A semantic, evidence-backed **intermediate representation of one fighter**: what it's made of, how
 it plays, what code it ships, and how a framework (m-ex) and a host runtime (GD's Melee) handle it.
-Every port in `ports/` first describes its source fighter in this shape, so a Brawl fighter and a
-Melee fighter can be compared field by field before anything is built.
+Every port in `ports/` first describes its source fighter in this shape, so fighters from Melee,
+Brawl, and Ultimate can be compared field by field before anything is built.
 
 ```
 schema/                   JSON Schema (draft 2020-12), one file per layer
@@ -15,6 +15,7 @@ schema/                   JSON Schema (draft 2020-12), one file per layer
   code.schema.json        relocatable code units, overrides, hidden imports, intrinsics, escapes, functions
   integration.schema.json frameworks (registration, hook slots, id rules, API, patches) and hosts
   engines/melee.md        index spaces and engine extension blocks for melee.gc / melee.mex / melee.gdport
+  engines/ultimate.md     index spaces and engine extension blocks for ssbu.switch
 tools/
   validate.py             schema + referential integrity + evidence + namespace checks
 ```

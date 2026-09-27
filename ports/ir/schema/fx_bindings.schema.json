@@ -53,7 +53,9 @@
           "properties": {"test": {"type": "string"}, "holds": {"type": "boolean"}}
         }},
         "end_frame": {"type": "number", "minimum": 0},
-        "end_event": {"enum": ["state_exit", "owner_destroy", "emitter_life", "off", "detach"]}
+        "end_event": {"enum": ["state_exit", "owner_destroy", "emitter_life", "off", "detach"]},
+        "source": {"type": "array", "prefixItems": [{"type": "string"}, {"type": "integer", "minimum": 0}],
+                   "minItems": 2, "maxItems": 2}
       }
     }
   }
