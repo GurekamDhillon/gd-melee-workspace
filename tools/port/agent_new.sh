@@ -14,8 +14,8 @@
 #
 # THAT INVARIANT IS LOAD-BEARING AND IT IS NOT AUTOMATIC. gwtool truncates its -o path in place
 # rather than unlinking it, so writing objects directly would mutate the inode every agent
-# shares. pipe_win.sh and pipe_wsl.sh therefore write "$n.obj.tmp" and `mv` it into place; a
-# rename replaces only that one directory entry. Do not "simplify" those two lines back into a
+# shares. pipe_win.sh writes a unique temporary object (pipe_wsl.sh uses "$n.obj.tmp") and `mv`s
+# it into place; a rename replaces only that one directory entry. Do not "simplify" this back into a
 # direct -o, and be suspicious of any new tool that writes into $GW_OUT. The failure is quiet:
 # builds stay green, one agent's objects link into another's exe, and the generated bridge comes
 # out too small. It cost most of an evening once - docs/HANDOFF.md section 6.
@@ -40,16 +40,19 @@ mkdir -p "$root/masstest/out" "$root/masstest/shimobj" "$root/runs"
 
 echo "objects   hardlinking the baseline"
 link_dir() {
-    local src="$1" dst="$2" n=0
+    local src="$1" dst="$2" records="$3" n=0
     for f in "$src"/*.obj; do
         [ -e "$f" ] || continue
         ln -f "$f" "$dst/$(basename "$f")" 2>/dev/null || cp -f "$f" "$dst/$(basename "$f")"
+        if [ "$records" = 1 ] && [ -f "$f.d" ] && [ -f "$f.sha256" ]; then
+            cp -f "$f.d" "$f.sha256" "$dst/"
+        fi
         n=$((n + 1))
     done
     echo "          $n objects -> $dst"
 }
-link_dir "$GW_ROOT/_build/masstest/out" "$root/masstest/out"
-link_dir "$GW_ROOT/_build/masstest/shimobj" "$root/masstest/shimobj"
+link_dir "$GW_ROOT/_build/masstest/out" "$root/masstest/out" 1
+link_dir "$GW_ROOT/_build/masstest/shimobj" "$root/masstest/shimobj" 0
 
 # The link response file is hand-maintained and lists exactly the right objects, so rewrite that
 # curated list for this root instead of globbing the directory (which would also pick up stale
@@ -108,6 +111,26 @@ if [ -n "$oldest_obj" ]; then
         echo "mtimes    $n source trees backdated to $stamp (before the object baseline)"
     fi
 fi
+
+# Only objects with a complete dependency record may rely on the content-hash check after
+# backdating. A baseline object without one has no proof that this checkout's bytes match it.
+# An empty key is an explicit stale marker, independent of source timestamps. Native depfiles
+# use absolute platform paths, so all native shims are rebuilt once in a fresh lane.
+forced=0
+while IFS= read -r f; do
+    f="${f%$'\r'}"
+    [ -n "$f" ] && [ -f "$worktree/$f" ] || continue
+    obj="$root/masstest/out/${f//\//_}.obj"
+    if [ -f "$obj" ] && { [ ! -f "$obj.d" ] || [ ! -f "$obj.sha256" ]; }; then
+        : >"$obj.sha256"
+        forced=$((forced + 1))
+    fi
+done < "$GW_ROOT/_build/masstest/files.txt"
+for obj in "$root"/masstest/shimobj/*.obj; do
+    [ -f "$obj" ] || continue
+    : >"$obj.sha256"
+done
+echo "          $forced game object(s) without hash records marked for rebuild; native shims marked"
 
 src_rsp="$GW_ROOT/_build/melee_link_objects.rsp"
 [ -f "$src_rsp" ] || gw_die "missing $src_rsp"

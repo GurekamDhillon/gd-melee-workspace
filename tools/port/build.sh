@@ -39,22 +39,29 @@ while [ $# -gt 0 ]; do
 done
 
 gw_env_summary
+GW_GWTOOL="${GW_GWTOOL:-$GW_ROOT/_build/gwtool/gwtool.exe}"
+GW_GWTOOL_FLAGS="${GW_GWTOOL_FLAGS:-}"
+GW_JOBS="${GW_JOBS:-}"
+export GW_ROOT GW_BUILD_ROOT GW_MELEE GW_OUT GW_SHIMOBJ GW_CLANG GW_GWTOOL GW_GWTOOL_FLAGS GW_JOBS
+export GW_SDL_INCLUDE GW_IMGUI_INCLUDE GW_DAWN_INCLUDE GW_DAWN_GEN_INCLUDE
+jobs="$(python "$GW_ROOT/tools/port/build_objects.py" jobs)" || gw_die "invalid GW_JOBS"
+echo "jobs      $jobs"
 echo
 
 if [ ${#tus[@]} -gt 0 ]; then
-    for f in "${tus[@]}"; do
-        echo "TU    $f"
-        gw_build_tu "$f"
-    done
+    tu_args=()
+    for f in "${tus[@]}"; do tu_args+=(--tu "$f"); done
+    python "$GW_ROOT/tools/port/build_objects.py" game --jobs "$jobs" "${tu_args[@]}" ||
+        gw_die "explicit TU compilation failed"
 fi
 if [ ${#shims[@]} -gt 0 ]; then
-    for s in "${shims[@]}"; do
-        echo "shim  $s"
-        gw_build_shim "$s"
-    done
+    shim_args=()
+    for s in "${shims[@]}"; do shim_args+=(--shim "$s"); done
+    python "$GW_ROOT/tools/port/build_objects.py" shim --jobs "$jobs" "${shim_args[@]}" ||
+        gw_die "explicit shim compilation failed"
 fi
 
-# REBUILD ANY GAME TU WHOSE SOURCE IS NEWER THAN ITS OBJECT.
+# REBUILD GAME TUs SELECTED BY CONTENT HASHES OR THE LEGACY TIMESTAMP FALLBACK.
 #
 # The shim loop below has existed for a while; game TUs never got the same treatment, and that
 # gap silently invalidated a day's work. Four TUs sat with sources from 07:43 against objects
@@ -64,28 +71,15 @@ fi
 # premise for a whole follow-up investigation that was chasing a ghost. The tell was findable all
 # along: the exe did not contain the format string the fix added.
 #
-# Header changes have no dependency scanner here either, so a TU whose object predates the newest
-# header under src/ or include/ is rebuilt too. That is blunt - a header touch can mean all 988 -
-# but the full set takes about a minute in parallel, and it is the difference between a slow
-# build and a WRONG one.
+# Older objects without depfiles still use the conservative timestamp scan. Newly compiled objects
+# record every actual clang include, including forced and system include roots.
 tu_list="$GW_ROOT/_build/masstest/files.txt"
 if [ -f "$tu_list" ]; then
-    stale_tus="$GW_BUILD_ROOT/.stale_tus"
-    # One process reproduces the old timestamp rules, including CRLF, pc/geno headers and
-    # per-TU *_*.inc parts. Its --compare mode runs the preserved shell scan on a real lane.
-    python "$GW_ROOT/tools/port/scan_stale_tus.py" --files "$tu_list" \
-        --melee "$GW_MELEE" --out "$GW_OUT" --output "$stale_tus" ||
-        gw_die "stale TU scan failed"
-    n_stale=$(wc -l <"$stale_tus" | tr -d ' ')
-    if [ "$n_stale" -gt 0 ]; then
-        echo "TUs stale: $n_stale"
-        ( cd "$GW_MELEE" && GW_OUT="$GW_OUT" xargs -P 8 -I{} bash "$GW_ROOT/_build/masstest/pipe_win.sh" {} <"$stale_tus" ) ||
-            gw_die "a stale TU failed to rebuild"
-    fi
-    rm -f "$stale_tus"
+    python "$GW_ROOT/tools/port/build_objects.py" game --jobs "$jobs" --files "$tu_list" ||
+        gw_die "stale TU compilation failed"
 fi
 
-# REBUILD ANY SHIM WHOSE SOURCE IS NEWER THAN ITS OBJECT.
+# REBUILD NATIVE SHIMS SELECTED BY CONTENT HASHES OR THE TIMESTAMP FALLBACK.
 #
 # This used to rebuild a shim only when --shim named it, so editing pc/platform/*.c and running
 # build.sh produced a green build of the OLD code. That is not a slow build, it is a WRONG one:
@@ -93,30 +87,9 @@ fi
 # that had never contained it - and then re-testing the same stale binary on three discs and
 # calling it 63/63. A stale object here does not announce itself anywhere.
 #
-# Header changes are handled by touching every shim whose object predates the newest header,
-# since these sources have no dependency scanner.
-newest_hdr=""
-for h in "$GW_MELEE"/pc/platform/*.h; do
-    [ -e "$h" ] || continue
-    if [ -z "$newest_hdr" ] || [ "$h" -nt "$newest_hdr" ]; then newest_hdr="$h"; fi
-done
-stale=()
-for src in "$GW_MELEE"/pc/platform/*.c "$GW_MELEE"/pc/platform/*.cpp; do
-    [ -e "$src" ] || continue
-    name="$(basename "$src")"
-    obj="$GW_SHIMOBJ/${name%.*}.obj"
-    if [ ! -f "$obj" ] || [ "$src" -nt "$obj" ] ||
-       { [ -n "$newest_hdr" ] && [ "$newest_hdr" -nt "$obj" ]; }; then
-        stale+=("$name")
-    fi
-done
-if [ ${#stale[@]} -gt 0 ]; then
-    echo "shims stale: ${#stale[@]}"
-    for s in "${stale[@]}"; do
-        echo "shim  $s"
-        gw_build_shim "$s"
-    done
-fi
+# Older shims without depfiles retain the platform-header timestamp rule.
+python "$GW_ROOT/tools/port/build_objects.py" shim --jobs "$jobs" ||
+    gw_die "stale shim compilation failed"
 
 # Optional Slippi native sources and their ENet dependency. The derived response
 # file includes only sources present in this checkout, so switching a lane back
@@ -175,11 +148,18 @@ for ((pass=1; pass<=max_bridge_passes; pass++)); do
         # The first link used shims compiled against the previous generated header.
         # Apply the same conservative platform-header rule before linking again.
         echo "bridge header changed; rebuilding native shims"
+        rebuilt_shims=()
         for src in "$GW_MELEE"/pc/platform/*.c "$GW_MELEE"/pc/platform/*.cpp; do
             [ -e "$src" ] || continue
             name="$(basename "$src")"
-            [ "$name" = "gw_mex_bridge.c" ] || gw_build_shim "$name"
+            if [ "$name" != "gw_mex_bridge.c" ]; then
+                rebuilt_shims+=(--shim "$name")
+            fi
         done
+        if [ ${#rebuilt_shims[@]} -gt 0 ]; then
+            python "$GW_ROOT/tools/port/build_objects.py" shim --jobs "$jobs" "${rebuilt_shims[@]}" ||
+                gw_die "bridge-dependent shim compilation failed"
+        fi
         linked_bridge_header="$generated_bridge_header"
     fi
     generated_bridge_source="$(sha256sum "$bridge_c" "$bridge_h")"
@@ -191,6 +171,8 @@ for ((pass=1; pass<=max_bridge_passes; pass++)); do
         gw_die "bridge did not reach a fixpoint after $max_bridge_passes regeneration checks; do not run this EXE"
     echo "bridge changed or linked object unverified; rebuilding"
     gw_build_shim gw_mex_bridge.c
+    python "$GW_ROOT/tools/port/build_objects.py" record-shims --shim gw_mex_bridge.c ||
+        gw_die "could not record bridge object inputs"
     echo "link  $((pass + 1)) (bridge)"
     gw_link
     linked_bridge_source="$generated_bridge_source"

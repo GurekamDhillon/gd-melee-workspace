@@ -27,7 +27,7 @@ the rules that cross them.
   outside that isolation.
 - **Timing:** `run.sh --test` requests turbo; `--realtime` (before the sandbox name) clears it.
   Headless tests have no paced frame loop. `MELEE_FPS=u` uncaps presentation; `MELEE_TURBO=1`
-  accelerates scripted/LAB batch logic. `GW_JOBS` is not in this HEAD (TUs use fixed `-P 8`).
+  accelerates scripted/LAB batch logic. `GW_JOBS` sets compile jobs; stale objects are chosen by content hash (tools/port/README.md).
 - `MELEE_MODS_DIR` is the parent of mod folders; pass Windows paths (`pwd -W`), not `/c/...`.
 - **Read the log, not the harness.** A run's `melee-pc.log` and `crashlogs/` are in its sandbox
   under `_build/runs/<name>/` (or the sweep's `runs/`); the harness's summary has under-reported

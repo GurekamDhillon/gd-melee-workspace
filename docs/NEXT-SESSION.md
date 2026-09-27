@@ -34,7 +34,7 @@ runs, not a test result for today's HEAD. `HANDOFF.md` supplies the architecture
 - **Build/run:** a single Python scan finds stale game TUs; bridge regeneration writes only
   changed bytes and relinks until the generated table agrees with the link map. `run.sh --test`
   exports turbo by default; `--realtime` clears it. Headless `--test` itself has no paced frame
-  driver. `MELEE_FPS=u` uncaps presentation, not game logic. `GW_JOBS` is not in this HEAD.
+  driver. `MELEE_FPS=u` uncaps presentation, not game logic. `GW_JOBS` sets compile jobs (content-hash rebuilds, tools/port/README.md).
 
 ## Pending work and decisions
 
@@ -49,9 +49,8 @@ before resuming it; do not reuse the old alpha/echo/beta assignments as current 
    and adds a `model=` platform option. HEAD has `gd.stage_add_model{platform=handle}`;
    `gd.stage_add_platform` still reads only `passthrough` and `ledges`. The exporter/shortcut
    is not part of this audited HEAD.
-3. **Build speed round 2:** `codex-buildspeed2-ws` has queued `GW_JOBS` and content-hash rebuild
-   work. GD's queue requires a Windows lane timing run before merging it. This HEAD uses
-   timestamp stale detection and fixed `xargs -P 8`; the bridge's hash stamp is a separate check.
+3. **Build speed (done 2026-09-27):** content-hash rebuilds and `GW_JOBS` are merged (round 3). Measured on
+   a lane: warm no-op 4.0 s, one TU 5.5 s, reverts rebuild nothing, a narrow header rebuilds its one consumer.
 4. **Menu art:** replace `menu/out/2x/frame_edge_v.png`, `frame_edge_h.png` and the four
    `frame_corner_{bl,br,tl,tr}.png` pieces. Decide how the 1x copies and generator change too.
    Make the engine menu kit and art generators parametric. Existing frame pieces are still

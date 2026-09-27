@@ -86,7 +86,7 @@ gw_env_summary() {
 # A shim .c under pc/platform -> its object. Shim sources are native x86, NOT gwtool input, and
 # they need the SDL3 headers: main.c, shim_ax.c and shim_vi.c reach them through aurora/event.h.
 gw_build_shim() {
-    local src="$1" name
+    local src="$1" name obj_tmp dep_tmp cc_err suffix
     local -a extra=()
     case "$src" in
     *.cpp)
@@ -115,18 +115,28 @@ gw_build_shim() {
     esac
     [ -f "$GW_MELEE/pc/platform/$src" ] || gw_die "no such shim: pc/platform/$src"
     mkdir -p "$GW_SHIMOBJ"
-    # Remove the old object FIRST. Otherwise a failed compile leaves the previous one in place,
-    # the existence check below passes, and the link silently produces an exe built from stale
-    # code - the same class of lie as a failed link leaving the old exe, which build.sh already
-    # guards against. This was not hypothetical: it happened the first time a checkout path with
-    # a space was used.
+    # Never write through a hardlinked lane object. Failed compiles must not leave the old object
+    # or key looking valid to a later invocation.
     rm -f "$GW_SHIMOBJ/$name.obj"
+    rm -f "$GW_SHIMOBJ/$name.obj.sha256"
+    suffix=".$$.${RANDOM}"
+    obj_tmp="$GW_SHIMOBJ/$name.obj$suffix.tmp"
+    dep_tmp="$GW_SHIMOBJ/$name.obj.d$suffix.tmp"
+    cc_err="$GW_SHIMOBJ/$name.cc$suffix.err"
     "$GW_CLANG" --target=i686-pc-windows-msvc -c -O2 -DTARGET_PC "${extra[@]}" \
         -I "$GW_MELEE/extern/aurora/include" -I "$GW_MELEE/pc/platform" -I "$GW_SDL_INCLUDE" \
         -I "$GW_MELEE/extern/enet/include" \
-        "$GW_MELEE/pc/platform/$src" -o "$GW_SHIMOBJ/$name.obj" 2>&1 |
-        grep -E "error|warning: .*(uninitialized|implicit)" || true
-    [ -f "$GW_SHIMOBJ/$name.obj" ] || gw_die "shim $src did not compile"
+        -MD -MF "$dep_tmp" -MT object \
+        "$GW_MELEE/pc/platform/$src" -o "$obj_tmp" >"$cc_err" 2>&1 || {
+            cat "$cc_err" >&2
+            rm -f "$obj_tmp" "$dep_tmp" "$cc_err"
+            gw_die "shim $src did not compile"
+        }
+    grep -E "error|warning: .*(uninitialized|implicit)" "$cc_err" || true
+    rm -f "$cc_err"
+    [ -f "$obj_tmp" ] && [ -f "$dep_tmp" ] || gw_die "shim $src produced no object or dependencies"
+    mv -f "$obj_tmp" "$GW_SHIMOBJ/$name.obj"
+    mv -f "$dep_tmp" "$GW_SHIMOBJ/$name.obj.d"
 }
 
 # A game TU (path relative to the melee worktree) through clang -> gwtool -> object.

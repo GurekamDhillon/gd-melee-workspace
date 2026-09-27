@@ -26,7 +26,10 @@ remain realtime unless explicitly requested otherwise.
 rebuilds stale native shims, links, regenerates the bridge from that map, and rebuilds/relinks it
 as needed until stable (at most four regeneration checks). It audits the final EXE's bridge ABI.
 An unchanged trusted bridge avoids the extra link. Do not use raw clang for game TUs or bypass
-the fixpoint. `GW_JOBS` is not supported in this revision; game-TU batches use `xargs -P 8`.
+the fixpoint. `GW_JOBS` sets the compile jobs for game TUs and shims (default: physical cores, at most 12).
+Staleness is by content: each object records a hash of its source, its depfile's headers, the
+compile script and the tools, so a touched-but-unchanged file rebuilds nothing, a header rebuilds
+only its consumers, a flag change rebuilds everything, and a revert restores the previous object.
 
 ## Runtime switches
 
