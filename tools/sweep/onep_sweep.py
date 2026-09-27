@@ -42,10 +42,21 @@ ONEP = [
     (0x44, "Figure1 (Adventure trophy battle)"), (0x45, "Figure2"), (0x46, "Figure3"),
 ]
 
-PAD = r'''-- onep_sweep: wait, walk, jump, log frame times, quit.
+PAD = r'''-- onep_sweep: wait, walk, jump, log frame times and every scene / stage change, quit.
 local ms, n = 0, 0
+local last = ""
+function on_frame()
+  local s = gd.scene() local m = gd.match()
+  local t = string.format("%s/%s stage=%s", s and s.mode_name or "?", s and s.name or "?", tostring(m and m.stage))
+  if t ~= last then gd.log("ONEPSCENE " .. t) last = t end
+end
 gd.run(function()
-  gd.wait_until(function() return gd.player(1) ~= nil end, 3000)
+  -- intro / cutscene screens (Adventure's) wait for a button: press Start until a fighter exists
+  for _ = 1, 60 do
+    if gd.player(1) ~= nil then break end
+    gd.press(1, "START", 2) gd.wait(58)
+  end
+  gd.wait_until(function() return gd.player(1) ~= nil end, 600)
   gd.log("ONEP entered")
   gd.perf(1)
   for i = 1, 8 do
@@ -67,8 +78,20 @@ class Run:
         self.result, self.detail, self.code, self.ms, self.stack = "", "", None, None, ""
 
 
-def plan(fighters, mods_sora):
+# the 1P modes through their own scripts (MELEE_SCENE mode=classic|adventure|allstar;step=N)
+REAL_STEPS = {"classic": 11, "adventure": 18, "allstar": 26}
+
+
+def plan(fighters, mods_sora, real=False):
     runs = []
+    if real:
+        for who, spec, mods in fighters:
+            for mode, count in REAL_STEPS.items():
+                for step in range(count):
+                    runs.append(Run("%s-%s%d" % (who, mode, step),
+                                    "mode=%s;p1=%s;step=%d;difficulty=2" % (mode, spec, step),
+                                    "%s step %d" % (mode, step), mods))
+        return runs
     for who, spec, mods in fighters:
         for kind, what in ONEP:
             runs.append(Run("%s-int%d" % (who, kind),
@@ -162,11 +185,14 @@ def main():
     ap.add_argument("--label", default="alpha / 1P sweep")
     ap.add_argument("--plan", action="store_true")
     ap.add_argument("--match", default="")
+    ap.add_argument("--real", action="store_true", help="the 1P modes through their own scripts (step by step)")
+    ap.add_argument("--parallel", type=int, default=1)
     a = ap.parse_args()
     exe, out = os.path.abspath(a.exe), os.path.abspath(a.out)
     nomods = os.path.join(ROOT, "_build", "nomods")
     os.makedirs(nomods, exist_ok=True)
-    runs = plan([("fox", "fox", nomods), ("sora", "ultimatesora", os.path.abspath(a.sora_mods))], a.sora_mods)
+    runs = plan([("fox", "fox", nomods), ("sora", "ultimatesora", os.path.abspath(a.sora_mods))], a.sora_mods,
+                real=a.real)
     if a.match:
         runs = [r for r in runs if a.match in r.tag]
     if a.plan:
@@ -174,35 +200,49 @@ def main():
             print("%-14s %-44s %s" % (r.tag, r.what, r.scene))
         return 0
     os.makedirs(out, exist_ok=True)
-    for i, r in enumerate(runs):
-        while games_running() >= a.max_games or free_ram_gb() < 3.0:
-            time.sleep(5)
-        sb = sandbox(out, exe, r.tag)
-        env = env_for(r, sb, a.label)
-        p = subprocess.Popen([os.path.join(sb, "melee-pc.exe"), "--iso", ISO_ACE], cwd=sb, env=env,
-                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        timed_out = False
-        try:
-            r.code = p.wait(timeout=a.secs)
-        except subprocess.TimeoutExpired:
-            timed_out = True
-            p.kill()
-            p.wait()
-        r.result, r.detail = judge(r, sb, timed_out)
-        if r.result in ("EXIT", "HANG") and os.path.exists(CDB):
-            while games_running() >= a.max_games:
-                time.sleep(5)
-            r.stack = cdb_stack(sb, env, a.secs)
-        print("[%d/%d] %-14s %-7s %s %s" % (i + 1, len(runs), r.tag, r.result,
-                                           "%.2f ms" % r.ms if r.ms is not None else "", r.detail), flush=True)
+    queue, active, done = list(runs), [], 0
+    while queue or active:
+        while queue and len(active) < a.parallel and games_running() < a.max_games:
+            r = queue.pop(0)
+            r.sb = sandbox(out, exe, r.tag)
+            r.env = env_for(r, r.sb, a.label)
+            r.proc = subprocess.Popen([os.path.join(r.sb, "melee-pc.exe"), "--iso", ISO_ACE], cwd=r.sb, env=r.env,
+                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            r.t0 = time.time()
+            active.append(r)
+            time.sleep(2)
+        time.sleep(1)
+        for r in list(active):
+            timed_out = time.time() - r.t0 > a.secs
+            if r.proc.poll() is None and not timed_out:
+                continue
+            if timed_out and r.proc.poll() is None:
+                r.proc.kill()
+                r.proc.wait()
+            r.code = r.proc.returncode if not timed_out else None
+            active.remove(r)
+            r.result, r.detail = judge(r, r.sb, timed_out)
+            log = os.path.join(r.sb, "melee-pc.log")
+            text = open(log, encoding="latin-1").read() if os.path.exists(log) else ""
+            r.scenes = " > ".join(re.findall(r"ONEPSCENE ([^\n]*)", text))[:300]
+            if r.result in ("EXIT", "HANG") and os.path.exists(CDB):
+                while games_running() >= a.max_games:
+                    time.sleep(5)
+                r.stack = cdb_stack(r.sb, r.env, a.secs)
+            done += 1
+            print("[%d/%d] %-18s %-7s %s %s | %s" % (done, len(runs), r.tag, r.result,
+                                                     "%.2f ms" % r.ms if r.ms is not None else "", r.detail, r.scenes),
+                  flush=True)
     with open(os.path.join(out, "results.json"), "w") as f:
-        json.dump([vars(r) for r in runs], f, indent=1)
+        json.dump([{k: v for k, v in vars(r).items() if k not in ("proc", "env")} for r in runs], f, indent=1)
     with open(os.path.join(out, "results.md"), "w") as f:
-        f.write("| run | stage | result | frame ms | detail |\n|---|---|---|---|---|\n")
+        f.write("| run | stage | result | frame ms | detail | scenes |\n|---|---|---|---|---|---|\n")
         for r in runs:
-            f.write("| %s | %s | %s | %s | %s %s |\n" % (r.tag, r.what, r.result,
-                                                      "%.2f" % r.ms if r.ms is not None else "",
-                                                      r.detail.replace("|", "/"), ("stack: " + r.stack) if r.stack else ""))
+            f.write("| %s | %s | %s | %s | %s %s | %s |\n" % (r.tag, r.what, r.result,
+                                                           "%.2f" % r.ms if r.ms is not None else "",
+                                                           r.detail.replace("|", "/"),
+                                                           ("stack: " + r.stack) if r.stack else "",
+                                                           getattr(r, "scenes", "")))
     print("results: %s" % os.path.join(out, "results.md"))
     return 0
 
