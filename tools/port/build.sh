@@ -70,33 +70,12 @@ fi
 # build and a WRONG one.
 tu_list="$GW_ROOT/_build/masstest/files.txt"
 if [ -f "$tu_list" ]; then
-    newest_inc=""
-    # NUL-separated: the checkout path has a space in it ("GD's Melee"), and a word-split
-    # `for h in $(find ...)` broke every header path in two, so no header change ever marked a
-    # TU stale (an enum resize in ft/forward.h rebuilt 5 TUs of ~990).
-    while IFS= read -r -d '' h; do
-        if [ -z "$newest_inc" ] || [ "$h" -nt "$newest_inc" ]; then newest_inc="$h"; fi
-    done < <(find "$GW_MELEE/src" "$GW_MELEE/include" "$GW_MELEE/pc/geno" -name '*.h' -newer "$tu_list" -print0 2>/dev/null)
     stale_tus="$GW_BUILD_ROOT/.stale_tus"
-    : >"$stale_tus"
-    while IFS= read -r f; do
-        [ -n "$f" ] || continue
-        obj="$GW_OUT/$(echo "$f" | tr '/' '_').obj"
-        src="$GW_MELEE/$f"
-        [ -e "$src" ] || continue
-        # A TU can include its own <stem>_*.inc parts (gmfrontend.c does), which the header
-        # rule above does not see.
-        inc_newer=0
-        for part in "${src%.c}"_*.inc; do
-            if [ -e "$part" ] && [ "$part" -nt "$obj" ]; then inc_newer=1; fi
-        done
-        if [ ! -f "$obj" ] || [ "$src" -nt "$obj" ] || [ "$inc_newer" = 1 ] ||
-           { [ -n "$newest_inc" ] && [ "$newest_inc" -nt "$obj" ]; }; then
-            printf '%s\n' "$f" >>"$stale_tus"
-        fi
-    # Strip CR: git checks files.txt out with CRLF on Windows, and a name ending in \r never
-    # exists, which once made every game TU look up to date (lanes ran exes missing synced code).
-    done < <(tr -d '\r' <"$tu_list")
+    # One process reproduces the old timestamp rules, including CRLF, pc/geno headers and
+    # per-TU *_*.inc parts. Its --compare mode runs the preserved shell scan on a real lane.
+    python "$GW_ROOT/tools/port/scan_stale_tus.py" --files "$tu_list" \
+        --melee "$GW_MELEE" --out "$GW_OUT" --output "$stale_tus" ||
+        gw_die "stale TU scan failed"
     n_stale=$(wc -l <"$stale_tus" | tr -d ' ')
     if [ "$n_stale" -gt 0 ]; then
         echo "TUs stale: $n_stale"
@@ -152,7 +131,26 @@ if [ -f "$GW_EXE" ] && ! ( : >>"$GW_EXE" ) 2>/dev/null; then
        tools/port/run.sh, which runs a copy so a run can never block a link."
 fi
 
-echo "link  1/2"
+bridge_c="$GW_MELEE/pc/platform/gw_mex_bridge.c"
+bridge_h="$GW_MELEE/pc/platform/gw_mex_bridge.h"
+bridge_obj="$GW_SHIMOBJ/gw_mex_bridge.obj"
+bridge_stamp="$GW_BUILD_ROOT/.gw_mex_bridge_linked.sha256"
+bridge_trusted=0
+linked_bridge_source=""
+linked_bridge_header=""
+if [ -f "$bridge_h" ]; then linked_bridge_header="$(sha256sum <"$bridge_h")"; fi
+# The stamp records the source, header and object of a previously audited final link.
+# A pre-existing lane without a stamp takes one conservative bridge rebuild/link.
+if [ "$bridge" = "1" ] && [ -f "$bridge_c" ] && [ -f "$bridge_h" ] &&
+   [ -f "$bridge_obj" ] && [ -f "$bridge_stamp" ]; then
+    bridge_proof="$(sha256sum "$bridge_c" "$bridge_h" "$bridge_obj")"
+    if [ "$bridge_proof" = "$(cat "$bridge_stamp")" ]; then
+        bridge_trusted=1
+        linked_bridge_source="$(sha256sum "$bridge_c" "$bridge_h")"
+    fi
+fi
+
+echo "link  1"
 gw_link
 
 if [ "$bridge" = "0" ]; then
@@ -160,33 +158,45 @@ if [ "$bridge" = "0" ]; then
     exit 0
 fi
 
-bridge_c="$GW_MELEE/pc/platform/gw_mex_bridge.c"
-echo "bridge"
 # symbols.txt and splits.txt come from THIS build's melee worktree, not from $GW_ROOT/melee.
 # An agent builds its own checkout's objects, so taking the decomp metadata from the default
 # checkout would describe a different tree - and splits.txt is now load-bearing, since it is what
 # tells two same-named statics apart.
-python "$GW_ROOT/tools/mex_port/gen_bridge.py" --map "$GW_MAP" \
-    --symbols "$GW_MELEE/config/GALE01/symbols.txt" \
-    --splits "$GW_MELEE/config/GALE01/splits.txt" \
-    --out-c "$bridge_c" --out-h "$GW_MELEE/pc/platform/gw_mex_bridge.h" | tail -1
-gw_build_shim gw_mex_bridge.c
-echo "link  2/2"
-gw_link
-
-# The second link moved things again if and only if it changed a gw_ symbol's address, so prove
-# the bridge still matches the exe that will actually run.
-before="$(md5sum <"$bridge_c")"
-python "$GW_ROOT/tools/mex_port/gen_bridge.py" --map "$GW_MAP" \
-    --symbols "$GW_MELEE/config/GALE01/symbols.txt" \
-    --splits "$GW_MELEE/config/GALE01/splits.txt" \
-    --out-c "$bridge_c" --out-h "$GW_MELEE/pc/platform/gw_mex_bridge.h" >/dev/null
-after="$(md5sum <"$bridge_c")"
-if [ "$before" != "$after" ]; then
-    echo "bridge did not reach a fixpoint - rebuilding it once more" >&2
+bridge_stable=0
+max_bridge_passes=4
+for ((pass=1; pass<=max_bridge_passes; pass++)); do
+    echo "bridge check $pass/$max_bridge_passes"
+    python "$GW_ROOT/tools/mex_port/gen_bridge.py" --map "$GW_MAP" \
+        --symbols "$GW_MELEE/config/GALE01/symbols.txt" \
+        --splits "$GW_MELEE/config/GALE01/splits.txt" \
+        --out-c "$bridge_c" --out-h "$bridge_h" | tail -1
+    generated_bridge_header="$(sha256sum <"$bridge_h")"
+    if [ "$generated_bridge_header" != "$linked_bridge_header" ]; then
+        # The first link used shims compiled against the previous generated header.
+        # Apply the same conservative platform-header rule before linking again.
+        echo "bridge header changed; rebuilding native shims"
+        for src in "$GW_MELEE"/pc/platform/*.c "$GW_MELEE"/pc/platform/*.cpp; do
+            [ -e "$src" ] || continue
+            name="$(basename "$src")"
+            [ "$name" = "gw_mex_bridge.c" ] || gw_build_shim "$name"
+        done
+        linked_bridge_header="$generated_bridge_header"
+    fi
+    generated_bridge_source="$(sha256sum "$bridge_c" "$bridge_h")"
+    if [ "$bridge_trusted" = "1" ] && [ "$generated_bridge_source" = "$linked_bridge_source" ]; then
+        bridge_stable=1
+        break
+    fi
+    [ "$pass" -lt "$max_bridge_passes" ] ||
+        gw_die "bridge did not reach a fixpoint after $max_bridge_passes regeneration checks; do not run this EXE"
+    echo "bridge changed or linked object unverified; rebuilding"
     gw_build_shim gw_mex_bridge.c
+    echo "link  $((pass + 1)) (bridge)"
     gw_link
-fi
+    linked_bridge_source="$generated_bridge_source"
+    bridge_trusted=1
+done
+[ "$bridge_stable" = "1" ] || gw_die "bridge fixpoint check ended unexpectedly; do not run this EXE"
 
 # THE BRIDGE ABI, which is the other thing that is silently wrong rather than loudly broken.
 # gw_ppc_bridge_call invokes every target as cdecl, arguments on the stack. A game function that
@@ -208,4 +218,6 @@ if ! python "$GW_ROOT/tools/mex_port/audit_bridge_abi.py" \
        Rebuild gwtool (melee/pc/tools/gwtool/build.bat) and rebuild the TUs those functions
        live in; if it persists, the pin no longer holds and gwtool needs a look."
 fi
+sha256sum "$bridge_c" "$bridge_h" "$bridge_obj" >"$bridge_stamp.tmp"
+mv -f "$bridge_stamp.tmp" "$bridge_stamp"
 echo "OK    $GW_EXE"
