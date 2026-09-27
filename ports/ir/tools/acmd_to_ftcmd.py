@@ -4,15 +4,15 @@
     from acmd_to_ftcmd import translate
     words, report = translate(script_row, joint_of_bone, fighter_scale)
 
-A semantic translation (the port feels like the fighter; Melee's mechanics win):
+A guarded semantic translation (unsupported values fail unless reviewed):
   frame(n) / wait(n)      AsyncWait n / SyncWait n. Both engines count animation frames and a
                           command after the wait runs on frame n+1, so the numbers carry over.
   ATTACK                  Melee hitbox (spawn_hitbox_0..4, melee/src/melee/lb/types.h): id is
                           assigned to one of four live slots. Distinct linking roles take
                           priority; near-duplicate boxes are dropped before unique coverage.
                           bone = the fighter's own joint (joint_of_bone), damage, angle (361 is the
-                          Sakurai angle in both), knockback growth / base / fixed copied 1:1 (the
-                          knockback formula has the same shape and constants in both games), size
+                          Sakurai angle in both), knockback growth / base / fixed normally copied
+                          1:1, size
                           and offset in the fighter's own units (its skeleton is Ultimate's).
                           Offsets are written z / y / x as the decomp names the fields - checked in
                           game with gd.hitboxes, not assumed.
@@ -22,13 +22,15 @@ A semantic translation (the port feels like the fighter; Melee's mechanics win):
   FT_MOTION_RATE r        SetTimerAnim (the animation rate command).
   START_SMASH_HOLD        Melee smash charge with the host Marth's vanilla charge settings.
   cancel_frame            IASA at that frame (Melee's interruptible flag).
-Repeated low-hitlag, set-weight fixed-knockback carry windows opt into Geno LINK mode 2 after
-their hitboxes. Ultimate-only mechanics are dropped and counted (hitlag and SDI multipliers, shieldstun, rehit,
-flinchless, direct/indirect, reflect/absorb flags): Melee's rules apply. Commands under a branch on
-game state keep only the path that plays by default ('holds' False on a flag test = the flag is off
-at the start of a move); the others are reported.
+Repeated low-hitlag, set-weight fixed-knockback carry windows opt into Geno LINK mode 2 until
+the last carry wave before a finisher. A supplied rise profile can raise only the FKB needed to
+reach the next box under Melee gravity. Losses need exact entries in acmd_allowlist.json and are
+recorded per move and frame. Four-slot remap losses are always recorded.
 """
+import itertools
 import struct
+import math
+from acmd_loss import LossGuard, verify_acmd_source
 
 ELEM = {"collision_attr_normal": 0, "collision_attr_fire": 1, "collision_attr_elec": 2,
         "collision_attr_cutup": 3, "collision_attr_coin": 4, "collision_attr_ice": 5,
@@ -41,6 +43,82 @@ CATCH_SITUATIONS = {"0x4b54": (True, True), "0xe7cc": (True, False), "0xe7d0": (
                     "COLLISION_SITUATION_MASK_GA": (True, True),
                     "COLLISION_SITUATION_MASK_G": (True, False),
                     "COLLISION_SITUATION_MASK_A": (False, True)}
+
+ATTACK_USED = {"id", "bone", "damage", "angle", "kbg", "fkb", "bkb", "size",
+               "x", "y", "z", "x2", "y2", "z2", "shield_damage", "effect",
+               "rehit", "ground_air", "disable_hitlag", "flinchless"}
+# These values have no additional effect in the emitted Melee command. Every other
+# present field is a semantic loss and needs an exact reviewed allowlist case.
+ATTACK_NEUTRAL = {"part": (0,), "hitlag": (1, 1.0), "sdi": (1, 1.0),
+                  "set_weight": (False,), "trip": (0, 0.0),
+                  "reflectable": (False,), "absorbable": (False,),
+                  "flinchless": (False,), "disable_hitlag": (False,),
+                  "direct": (True,), "friendly_fire": (False,)}
+
+
+def _number(value, field, low, high, *, integer=False):
+    if (not isinstance(value, (int, float)) or isinstance(value, bool) or
+            not math.isfinite(value) or value < low or value > high or
+            (integer and int(value) != value)):
+        raise ValueError(f"{field} {value!r} cannot be encoded in Melee ftcmd")
+
+
+def validate_attack(n, guard, frame, *, article=False):
+    for key in ("id", "bone", "damage", "angle", "kbg", "fkb", "bkb", "size", "x", "y", "z"):
+        if key not in n:
+            raise ValueError(f"ATTACK arguments missing {key}")
+    _number(n["id"], "hitbox id", 0, 65535, integer=True)
+    _number(n["damage"], "damage", 0, 1023)
+    if article and attack_flags(n) & 3:
+        raise ValueError(f"article ATTACK id {n['id']} no-hitlag/flinchless needs a Geno item feature")
+    attack_flags(n)
+    if not 0 <= n.get("rehit", 0) <= 255 or int(n.get("rehit", 0)) != n.get("rehit", 0):
+        raise ValueError(f"ATTACK id {n['id']} rehit {n.get('rehit')!r} cannot be encoded")
+    if "ground_air" in n and (n["ground_air"].get("const") if isinstance(n["ground_air"], dict)
+                              else str(n["ground_air"])) not in CATCH_SITUATIONS:
+        raise ValueError(f"ATTACK id {n['id']} ground_air {n['ground_air']!r} is unsupported")
+    for key, high in (("angle", 368), ("kbg", 511),
+                      ("fkb", 511), ("bkb", 511)):
+        _number(n[key], key, 0, high, integer=True)
+    if n["angle"] in (365, 366, 367, 368):
+        guard.omit(frame, "case", "ATTACK.angle." + str(n["angle"]),
+                   f"ATTACK id {n['id']} Ultimate angle {n['angle']} uses Geno LINK/361 approximation")
+    _number(n["size"], "size", 0, 255.996)
+    for key in ("x", "y", "z"):
+        _number(n[key], key, -128, 127.996)
+    ends = [n.get(key) for key in ("x2", "y2", "z2")]
+    if any(v is not None for v in ends) and not all(v is not None for v in ends):
+        raise ValueError("ATTACK capsule endpoint is incomplete")
+    for key, value in zip(("x2", "y2", "z2"), ends):
+        if value is not None:
+            _number(value, "capsule " + key, -128, 127.996)
+    effect = n.get("effect")
+    if effect is not None and effect not in ELEM:
+        raise ValueError(f"ATTACK effect {effect!r} has no Melee mapping")
+    if effect in ("collision_attr_magic", "collision_attr_stab"):
+        guard.omit(frame, "case", "ATTACK.effect." + effect,
+                   f"ATTACK id {n['id']} effect {effect} is approximated in Melee")
+    if "shield_damage" in n and n["shield_damage"] is not None:
+        _number(n["shield_damage"], "shield_damage", -128, 127)
+        if int(n["shield_damage"]) != n["shield_damage"]:
+            guard.omit(frame, "case", "ATTACK.shield_damage.rounding",
+                       f"ATTACK id {n['id']} shield damage {n['shield_damage']!r} rounds to integer")
+    for key, value in n.items():
+        if key in ATTACK_USED or (article and key in ("reflectable", "absorbable")):
+            continue
+        if key not in ATTACK_NEUTRAL or value not in ATTACK_NEUTRAL[key]:
+            guard.omit(frame, "case", "ATTACK." + key,
+                       f"ATTACK id {n['id']} argument {key}={value!r}")
+
+
+def attack_flags(n):
+    """Geno fighter contact flags carried by an Ultimate ATTACK spawn."""
+    for key in ("disable_hitlag", "flinchless"):
+        if type(n.get(key, False)) is not bool:
+            raise ValueError(f"ATTACK id {n['id']} {key} {n.get(key)!r} is not Boolean")
+    return (int(n.get("disable_hitlag", False)) |
+            (int(n.get("flinchless", False)) << 1) |
+            (4 if n["damage"] == 0 else 0))
 
 
 def s16(v):
@@ -57,6 +135,52 @@ def hitbox_words(slot, joint, dmg, size, x, y, z, ang, kbg, fkb, bkb, elem, shie
     w4 = ((int(bkb) & 0x1FF) << 23) | ((elem & 0x1F) << 18) | ((int(shield) & 0xFF) << 10) | \
          (1 << 7) | (SFX_KIND.get(elem, 1) << 2) | (int(gnd) << 1) | int(air)
     return [w0, w1, w2, w3, w4]
+
+
+def attack_spheres(n, joint, scale=1.0, carry=False, catch_only=False, fkb=None):
+    """Encode an ATTACK sphere or capsule as sphere candidates for the four Melee slots.
+
+    Samples are one diameter apart when the eight-candidate cap permits it. Selection
+    happens across all live attacks, so overlapping capsules share the four live slots.
+    """
+    start = tuple(n[axis] * scale for axis in ("x", "y", "z"))
+    _number(n["size"] * scale, "scaled hitbox size", 0, 255.996)
+    for axis, value in zip("xyz", start):
+        _number(value, "scaled " + axis, -128, 127.996)
+    end = tuple(n.get(axis + "2") for axis in ("x", "y", "z"))
+    if any(v is not None for v in end) and not all(
+            isinstance(v, (int, float)) and not isinstance(v, bool) and math.isfinite(v)
+            for v in end):
+        raise ValueError(f"ATTACK id {n['id']}: unresolved capsule endpoint {end!r}")
+    capsule = all(v is not None for v in end) and tuple(v * scale for v in end) != start
+    if capsule:
+        end = tuple(v * scale for v in end)
+        for axis, value in zip("xyz", end):
+            _number(value, "scaled capsule " + axis, -128, 127.996)
+        length = math.dist(start, end)
+        count = min(8, max(2, math.ceil(length / max(2 * n["size"] * scale, 0.001)) + 1))
+    else:
+        count = 1
+    shield = n.get("shield_damage") if isinstance(n.get("shield_damage"), (int, float)) else 0
+    situation = n.get("ground_air", {"const": "0x4b54"})
+    situation = situation.get("const") if isinstance(situation, dict) else str(situation)
+    flags = CATCH_SITUATIONS[situation]
+    elem = ELEM.get(n.get("effect"), 0)
+    out = []
+    for i in range(count):
+        t = i / (count - 1) if count > 1 else 0
+        x, y, z = (a + t * (b - a) for a, b in zip(start, end if capsule else start))
+        hw = hitbox_words(n["id"], joint, n["damage"], n["size"] * scale, x, y, z,
+                          n["angle"], n["kbg"], n["fkb"] if fkb is None else fkb,
+                          n["bkb"], elem, shield, *flags)
+        if catch_only:
+            hw[0] |= 1 << 19
+        out.append({"words": hw, "key": ("attack", n["id"], i) if capsule else ("attack", n["id"]),
+                    "source": ("attack", n["id"]), "id": n["id"], "damage": n["damage"],
+                    "radius": n["size"] * scale, "carry": carry, "rehit": n.get("rehit", 0),
+                    "flags": attack_flags(n),
+                    **({"capsule": (start, end)} if capsule else {})})
+    return out
 
 
 def throw_words(idx, dmg, ang, kbg, fkb, bkb, elem):
@@ -76,16 +200,33 @@ THROW_RELEASE = 20 << 26          # Marth's throws release with op 20 (0x5000000
 SMASH_CHARGE_WORDS = (0xE03C015E, 0x77000000)
 
 
-def default_path(when):
-    """True if a command runs on the path a move takes by default (every flag test false)."""
+def combo_branch_tests(row):
+    """Find a conditional combo-enable path in a staged attack script.
+
+    Ultimate can use one ACMD script for its weak first combo stage and a stronger
+    standalone tilt. Only a path which both opens the combo flag and adds reaction
+    frames is eligible. The caller must also have the next stage available.
+    """
+    paths = {tuple((w["test"], w["holds"]) for w in c.get("when", []))
+             for c in row["commands"] if c["cmd"] == "WorkModule::on_flag"
+             and c.get("args") == [{"const": "0x720"}] and c.get("when")}
+    return {test for path in paths
+            if any(c["cmd"].startswith("AttackModule::set_add_reaction_frame")
+                   and tuple((w["test"], w["holds"]) for w in c.get("when", [])) == path
+                   for c in row["commands"])
+            for test, holds in path if holds}
+
+
+def default_path(when, combo_tests=()):
+    """True if a command runs on the selected flag path."""
     for c in when:
         if "is_flag" in c["test"] or "uVar" in c["test"]:
-            if c["holds"]:
+            if c["holds"] != (c["test"] in combo_tests):
                 return False
     return True
 
 
-def carry_hit_commands(row):
+def carry_windows(row, combo_tests=()):
     """Find set-knockback, low-hitlag windows that repeatedly carry a victim.
 
     A complete window ends at clear_all. Requiring three multi-box windows avoids
@@ -93,7 +234,7 @@ def carry_hit_commands(row):
     """
     windows, current = [], []
     for command in row["commands"]:
-        if not default_path(command.get("when", [])):
+        if not default_path(command.get("when", []), combo_tests):
             continue
         if command["cmd"] in ("ATTACK", "ATTACK_IGNORE_THROW") and command.get("named"):
             current.append(command)
@@ -112,7 +253,60 @@ def carry_hit_commands(row):
             n.get("rehit", 0) == 0 for c in window)
 
     eligible = [window for window in windows if carries(window)]
-    return {id(c) for window in eligible for c in window} if len(eligible) >= 3 else set()
+    return (windows, eligible) if len(eligible) >= 3 else (windows, [])
+
+
+def carry_hit_commands(row, combo_tests=()):
+    """LINK each carry wave leading to another carry wave.
+
+    A following non-carry finisher relies on the final wave's authored angle to
+    bring the victim back. LINK would erase that vector.
+    """
+    windows, eligible = carry_windows(row, combo_tests)
+    linked = eligible[:-1] if eligible and eligible[-1] is not windows[-1] else eligible
+    return {id(c) for window in linked for c in window}
+
+
+def carry_fkb_floor(row, game_time, attacker_vy, *, gravity=0.23, weight=100):
+    """Compensate a repeated LINK-2 carrier for gravity before its next window.
+
+    The caller supplies the attacker's rise profile; a plain ACMD dump cannot
+    reveal status-code velocity. Target the lower half of the next source box so
+    the point-victim estimate has room for Melee weight and timing differences.
+    This is a minimum FKB, never a reduction, and excludes the final carry wave.
+    """
+    _, eligible = carry_windows(row)
+    if not eligible:
+        return {}
+
+    def centre_y(c):
+        n = c["named"]
+        return n["y"] if n.get("y2") is None else (n["y"] + n["y2"]) / 2
+
+    floor = {}
+    for old, new in zip(eligible, eligible[1:]):
+        by_id = {c["named"]["id"]: c for c in new}
+        for c in old:
+            n = c["named"]
+            target = by_id.get(n["id"])
+            if target is None:
+                target = min(new, key=lambda v: abs(centre_y(v) - centre_y(c)))
+            hit_frame = int(round(game_time(c["frame"])))
+            next_frame = int(round(game_time(target["frame"])))
+            count = next_frame - hit_frame
+            if count <= 0 or n["kbg"] <= 0:
+                continue
+            rise = sum(attacker_vy(f) for f in range(hit_frame, next_frame))
+            allowed_low = centre_y(target) - target["named"]["size"] / 2
+            needed_speed = (rise + allowed_low - centre_y(c) +
+                            (gravity + .051) * count * (count + 1) / 2) / count
+            needed_kb = max(0, needed_speed) / .03
+            w = (100 + weight) / 200
+            needed_fkb = math.ceil((w * ((needed_kb - n["bkb"]) / (n["kbg"] / 100) - 18)
+                                    - 1.4) / .7)
+            if needed_fkb > n["fkb"]:
+                floor[id(c)] = min(511, needed_fkb)
+    return floor
 
 
 def _hitbox_features(box):
@@ -158,6 +352,8 @@ def _near_duplicate(a, b):
 
 def _select_hitboxes(logical):
     """Keep one box per distinct role first; fill spare slots with duplicates."""
+    if any("capsule" in box for box in logical.values()):
+        return _select_capsule_spheres(logical)
     keys = sorted(logical, key=lambda key: logical[key]["order"])
     features = {key: _hitbox_features(logical[key]) for key in keys}
     groups = []
@@ -200,6 +396,79 @@ def _select_hitboxes(logical):
     if len(chosen) < 4:
         extras = (key for key in keys if key not in representatives)
         chosen.extend(sorted(extras, key=basic_rank, reverse=True)[:4 - len(chosen)])
+    if len(keys) > 4:
+        targets = {(features[key]["joint"], tuple(round(v, 3) for v in features[key]["pos"]))
+                   for key in keys}
+        def coverage(selection):
+            return sum(any(features[key]["joint"] == joint and
+                           math.dist(features[key]["pos"], point) <= features[key]["radius"] + .51
+                           for key in selection) for joint, point in targets)
+        current = coverage(chosen)
+        if current < len(targets):
+            candidates = itertools.combinations(keys, 4)
+            best = max(candidates, key=lambda selection: (
+                coverage(selection),
+                len({(features[key]["angle"], features[key]["joint"]) for key in selection}),
+                sum(features[key]["damage"] for key in selection),
+                -sum(logical[key]["order"] for key in selection)))
+            if coverage(best) > current:
+                chosen = list(best)
+    return sorted(chosen, key=lambda key: logical[key]["order"])
+
+
+def _select_capsule_spheres(logical):
+    """Cover the live capsule centre lines while retaining distinct attack roles.
+
+    Four slots are small enough to evaluate combinations directly. The coverage score
+    uses points on the original segment, not on its candidate spheres, so it rewards
+    middle and tip coverage even when several capsules overlap at the hilt.
+    """
+    keys = sorted(logical, key=lambda key: logical[key]["order"])
+    if len(keys) <= 4:
+        return keys
+    features = {key: _hitbox_features(logical[key]) for key in keys}
+    targets = []
+    tips = []
+    seen = set()
+    for key in keys:
+        box = logical[key]
+        source = box.get("source", key)
+        if source in seen:
+            continue
+        seen.add(source)
+        if "capsule" in box:
+            start, end = box["capsule"]
+            tips.append((features[key]["joint"], end))
+            length = math.dist(start, end)
+            for i in range(33):
+                t = i / 32
+                targets.append((features[key]["joint"],
+                                tuple(a + t * (b - a) for a, b in zip(start, end)), length / 33))
+        else:
+            targets.append((features[key]["joint"], features[key]["pos"], 2 * box["radius"]))
+
+    def score(chosen):
+        sources = {logical[key].get("source", key) for key in chosen}
+        linking = {logical[key].get("source", key) for key in chosen if features[key]["linking"]}
+        coverage = sum(weight for joint, point, weight in targets if any(
+            features[key]["joint"] == joint and
+            math.dist(features[key]["pos"], point) <= logical[key]["radius"] + 0.002
+            for key in chosen))
+        tip_coverage = sum(any(features[key]["joint"] == joint and
+                               math.dist(features[key]["pos"], point) <= logical[key]["radius"] + 0.002
+                               for key in chosen) for joint, point in tips)
+        return (len(linking), len(sources), tip_coverage, round(coverage, 6),
+                sum(logical[key]["damage"] for key in chosen),
+                -sum(logical[key]["order"] for key in chosen))
+
+    if len(keys) > 20:
+        # Limit combinatorial work for a pathological many-capsule script.
+        chosen = []
+        for _ in range(4):
+            chosen.append(max((key for key in keys if key not in chosen),
+                              key=lambda key: score((*chosen, key))))
+    else:
+        chosen = max(itertools.combinations(keys, 4), key=score)
     return sorted(chosen, key=lambda key: logical[key]["order"])
 
 
@@ -212,6 +481,11 @@ def remap_hitboxes(events, rep):
     """
     logical = {}   # source key -> latest encoded hitbox and first-spawn order
     resident = {}  # source key -> Melee slot
+    source_stun = {}  # Ultimate attack id -> current extra hitstun
+    source_force = {}  # Ultimate attack id -> persistent force-reaction bit
+    with_stun = any(kind == "stun" for _, kind, _ in events)
+    with_flags = any(kind == "force" or (kind == "hit" and isinstance(payload, dict) and
+                                        payload.get("flags", 0)) for _, kind, payload in events)
     result = []
     wave = 0
     hit_waves = {}
@@ -230,25 +504,36 @@ def remap_hitboxes(events, rep):
     def emit_hit(frame, key, slot):
         hw = logical[key]["words"].copy()
         hw[0] = (hw[0] & ~(7 << 23)) | (slot << 23)
-        result.append((frame, "hit", {"words": hw, "carry": True} if logical[key].get("carry") else hw))
+        result.append((frame, "hit", {"words": hw, "carry": logical[key].get("carry", False),
+                                      "damage": logical[key]["damage"],
+                                      "rehit": logical[key].get("rehit", 0),
+                                      "source": logical[key].get("source", key),
+                                      "flags": logical[key].get("flags", 0) |
+                                               source_force.get(logical[key]["id"], 0),
+                                      "emit_flags": with_flags,
+                                      **({"stun": source_stun.get(logical[key]["id"], 0)}
+                                         if with_stun else {})}))
 
-    def drop(frame, key, reason):
+    def drop(frame, key, reason, selected):
         box = logical[key]
+        feature = _hitbox_features(box)
         rep.setdefault("dropped_hitboxes", []).append({
             "frame": frame, "id": box["id"], "damage": box["damage"],
-            "radius": box["radius"], "reason": reason})
+            "radius": box["radius"], "reason": reason,
+            "sample": key, "joint": feature["joint"], "position": feature["pos"]})
 
-    def reconcile(frame, changed_key=None):
+    def reconcile(frame, changed_keys=()):
         winners = _select_hitboxes(logical)
         selected = set(winners)
         leaving = [key for key in resident if key not in selected]
         entering = [key for key in winners if key not in resident]
         for key in leaving:
             if key in logical:
-                drop(frame, key, "lower-priority replacement" if key == changed_key else
-                     "replaced by higher-priority hitbox")
-        if changed_key is not None and changed_key not in selected and changed_key not in leaving:
-            drop(frame, changed_key, "four-slot limit")
+                drop(frame, key, "lower-priority replacement" if key in changed_keys else
+                     "replaced by higher-priority hitbox", selected)
+        for key in changed_keys:
+            if key not in selected and key not in leaving:
+                drop(frame, key, "four-slot limit", selected)
 
         # If a clear removes the last resident while a dropped box is waiting, a same-group
         # replacement retains its victim list. Otherwise the new box inherits that list from
@@ -266,24 +551,62 @@ def remap_hitboxes(events, rep):
             resident[key] = slot
             emit_hit(frame, key, slot)
             handoff = False
-        if changed_key is not None and changed_key in selected and changed_key not in entering:
-            emit_hit(frame, changed_key, resident[changed_key])
+        for key in changed_keys:
+            if key in selected and key not in entering:
+                emit_hit(frame, key, resident[key])
 
     for order, (frame, kind, payload) in enumerate(events):
         if kind == "hit" and isinstance(payload, dict):
             key = payload["key"]
-            first_order = logical[key]["order"] if key in logical else order
-            logical[key] = {**payload, "order": first_order, "loop": order in loop_orders}
-            reconcile(frame, key)
+            source = payload.get("source", key)
+            samples = payload.get("samples", [payload])
+            old = {k: box for k, box in logical.items() if box.get("source", k) == source}
+            if old:
+                source_stun[payload["id"]] = 0  # replacement ATTACK resets its prior bonus
+            for old_key in old:
+                logical.pop(old_key)
+            for i, sample in enumerate(samples):
+                sample_key = sample["key"]
+                first_order = old[sample_key]["order"] if sample_key in old else order + i / 100
+                logical[sample_key] = {**sample, "order": first_order, "loop": order in loop_orders}
+            reconcile(frame, tuple(sample["key"] for sample in samples))
         elif kind == "clear" and isinstance(payload, dict):
-            for key in payload["keys"]:
-                logical.pop(key, None)
+            for source in payload["keys"]:
+                if source[0] == "attack":
+                    source_stun.pop(source[1], None)
+                    source_force.pop(source[1], None)
+                for old_key in list(logical):
+                    if logical[old_key].get("source", old_key) == source:
+                        logical.pop(old_key)
             reconcile(frame)
+        elif kind == "stun":
+            source_id, frames = payload["id"], payload["frames"]
+            active = [key for key, box in logical.items() if box["id"] == source_id]
+            if not active:
+                rep.setdefault("pending_reaction_stun", []).append(
+                    {"frame": frame, "id": source_id, "frames": frames})
+            source_stun[source_id] = frames
+            mask = sum(1 << resident[key] for key in active if key in resident)
+            if mask:
+                result.append((frame, "stun", hbstun(mask, frames)))
+        elif kind == "force":
+            source_id, enabled = payload["id"], payload["enabled"]
+            source_force[source_id] = 8 if enabled else 0
+            active = [key for key, box in logical.items() if box["id"] == source_id]
+            by_flags = {}
+            for key in active:
+                if key in resident:
+                    flags = logical[key].get("flags", 0) | source_force[source_id]
+                    by_flags[flags] = by_flags.get(flags, 0) | (1 << resident[key])
+            for flags, mask in by_flags.items():
+                result.append((frame, "force", hbflags(mask, flags)))
         else:
             result.append((frame, kind, payload))
             if kind == "clear" and payload == [16 << 26]:
                 logical.clear()
                 resident.clear()
+                source_stun.clear()
+                source_force.clear()
     return result
 
 
@@ -291,7 +614,11 @@ def needs_hitbox_remap(events):
     """Leave ordinary four-ID rows on the original byte-for-byte encoding path."""
     active = set()
     for _, kind, payload in events:
+        if kind in ("stun", "force"):
+            return True
         if kind == "hit" and isinstance(payload, dict):
+            if len(payload.get("samples", ())) > 1:
+                return True
             if payload["id"] >= 4:
                 return True
             active.add(payload["key"])
@@ -360,60 +687,161 @@ def apply_autolink(events):
     return result
 
 
-def translate(row, joint_of_bone, scale=1.0):
+def hit_extras(payload):
+    """Geno float damage and per-slot rehit follow the native hitbox spawn."""
+    encoded = payload["words"]
+    slot = (encoded[0] >> 23) & 7
+    if slot >= 4:
+        raise ValueError(f"fighter hitbox slot {slot} exceeds Geno limit")
+    out = []
+    if int(payload["damage"]) != payload["damage"]:
+        out += [(59 << 26) | (0x3A << 20) | (2 << 16) | (1 << (slot + 8)),
+                struct.unpack(">I", struct.pack(">f", payload["damage"]))[0]]
+    out += [(59 << 26) | (0x38 << 20) | (2 << 16) | (1 << (slot + 8)), payload.get("rehit", 0)]
+    if "stun" in payload:
+        out += hbstun(1 << slot, payload["stun"])
+    if (payload.get("source", (None,))[0] == "attack" and
+            (payload.get("flags", 0) or payload.get("emit_flags"))):
+        out += hbflags(1 << slot, payload.get("flags", 0))
+    return out
+
+
+def hbstun(mask, frames):
+    """Geno HBSTUN immediate: mask of Melee hitbox slots, then extra frames."""
+    if not 0 <= mask <= 15 or not 0 <= frames <= 255 or int(frames) != frames:
+        raise ValueError(f"HBSTUN mask {mask!r} or frames {frames!r} cannot be encoded")
+    return [0xEFB20000 | (mask << 8), int(frames)]
+
+
+def hbflags(mask, flags):
+    """Geno HBFLAGS immediate: mask of Melee hitbox slots, then contact flags."""
+    if not 0 <= mask <= 15 or not 0 <= flags <= 15 or int(flags) != flags:
+        raise ValueError(f"HBFLAGS mask {mask!r} or flags {flags!r} cannot be encoded")
+    return [0xEFC20000 | (mask << 8), int(flags)]
+
+
+def reaction_stun_args(command, move):
+    """Validate the observed Ultimate (source id, extra frames, revised flag) form."""
+    args = command.get("args", [])
+    if (len(args) != 3 or type(args[0]) is not int or not 0 <= args[0] <= 65535 or
+            type(args[1]) is not int or not 0 <= args[1] <= 255 or args[2] is not False):
+        raise ValueError(f"{move} frame {command['frame']:g}: "
+                         f"AttackModule::set_add_reaction_frame_revised {args!r} cannot be encoded")
+    return args[0], args[1]
+
+
+def force_reaction_args(command, move):
+    args = command.get("args", [])
+    if (len(args) != 3 or type(args[0]) is not int or not 0 <= args[0] <= 65535 or
+            type(args[1]) is not bool or args[2] is not False):
+        raise ValueError(f"{move} frame {command['frame']:g}: "
+                         f"AttackModule::set_force_reaction {args!r} cannot be encoded")
+    return args[0], args[1]
+
+
+def clear_rehit(words):
+    mask = 0
+    for word in words:
+        if word >> 26 == 16:
+            mask = 15
+        elif word >> 26 == 15 and (word & 0x3FFFFFF) < 4:
+            mask |= 1 << (word & 0x3FFFFFF)
+    return ([(59 << 26) | (0x38 << 20) | (2 << 16) | (mask << 8), 0]
+            if mask else [])
+
+
+def translate(row, joint_of_bone, scale=1.0, *, combo=False, carry_motion=None,
+              allowlist=None, hurt_joint_of_bone=None):
     words, frame = [], 0.0
-    rep = {"hitboxes": 0, "dropped_ultimate_only": 0, "other_path_commands": 0, "unmapped_bones": set(),
-           "unknown": {}}
+    rep = {"hitboxes": 0, "other_path_commands": 0}
+    script = row.get("script", "<unnamed move>")
+    guard = LossGuard(f"{row['agent']}/{script}" if row.get("agent") else script, allowlist)
     cancel = (row.get("motion") or {}).get("cancel_frame") or 0
     events = []
-    carry_hits = carry_hit_commands(row)
+    combo_tests = combo_branch_tests(row) if combo else set()
+    carry_hits = carry_hit_commands(row, combo_tests)
+    carry_floors = carry_fkb_floor(row, *carry_motion) if carry_motion else {}
     catch_only = False
+    live_attacks = {}
     for c in row["commands"]:
-        if not default_path(c.get("when", [])):
+        if not default_path(c.get("when", []), combo_tests):
             rep["other_path_commands"] += 1
+            guard.omit(c["frame"], "case", "branch:" + c["cmd"],
+                       f"{c['cmd']} on unselected condition {c.get('when')!r}")
             continue
         cmd = c["cmd"]
         if cmd in ("frame", "wait") and not c.get("unresolved_frame"):
+            if len(c.get("args", [])) != 1 or not isinstance(c["args"][0], (int, float)):
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: {cmd} arguments unresolved")
             events.append((c["frame"], "time", None))
         elif cmd in ("ATTACK", "ATTACK_IGNORE_THROW") and c.get("named"):
             # ATTACK_IGNORE_THROW hits bystanders, not the thrown opponent: in Melee a thrower's
             # ordinary hitbox does not hit its thrown opponent, so it is an ordinary hitbox
             n = c["named"]
-            if not isinstance(n["id"], int):
-                continue
+            validate_attack(n, guard, c["frame"])
+            live_attacks[n["id"]] = dict(n)
             bone = n["bone"]
             j = joint_of_bone.get(bone)
             if j is None:
-                rep["unmapped_bones"].add(str(bone)); j = joint_of_bone.get("top", 0)
-            shield = n.get("shield_damage") if isinstance(n.get("shield_damage"), (int, float)) else 0
-            elem = ELEM.get(n.get("effect"), 0)
-            hw = hitbox_words(
-                n["id"], j, n["damage"], n["size"] * scale, n["x"] * scale, n["y"] * scale, n["z"] * scale,
-                n["angle"], n["kbg"], n["fkb"], n["bkb"], elem, shield)
-            if catch_only:                               # Melee's only_hit_grabbed (spawn_hitbox_0)
-                hw[0] |= 1 << 19
-            events.append((c["frame"], "hit", {"words": hw, "key": ("attack", n["id"]),
-                                                 "id": n["id"], "damage": n["damage"],
-                                                 "radius": n["size"] * scale,
-                                                 "carry": id(c) in carry_hits}))
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: ATTACK bone {bone!r} is unmapped")
+            samples = attack_spheres(n, j, scale, id(c) in carry_hits, catch_only,
+                                     carry_floors.get(id(c), n["fkb"]))
+            payload = dict(samples[0])
+            if len(samples) > 1:
+                payload["samples"] = samples
+            events.append((c["frame"], "hit", payload))
             rep["hitboxes"] += 1
-            rep["dropped_ultimate_only"] += 1           # hitlag/SDI multipliers etc. on this hitbox
+        elif cmd == "sv_module_access::attack":
+            args = c.get("args", [])
+            if (len(args) != 6 or args[0] != {"const": "0xe7f8"} or
+                    not isinstance(args[1], int) or args[1] not in live_attacks or
+                    not isinstance(args[2], str) or
+                    any(not isinstance(v, (int, float)) for v in args[3:])):
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: sv_module_access::attack {args!r} unsupported")
+            n = dict(live_attacks[args[1]], bone=args[2], x=args[3], y=args[4], z=args[5])
+            n.pop("x2", None); n.pop("y2", None); n.pop("z2", None)
+            live_attacks[args[1]] = n
+            j = joint_of_bone.get(n["bone"])
+            if j is None:
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: moved hitbox bone {n['bone']!r} unmapped")
+            events.append((c["frame"], "hit", attack_spheres(n, j, scale)[0]))
+        elif cmd == "AttackModule::set_add_reaction_frame_revised":
+            source_id, frames = reaction_stun_args(c, guard.move)
+            events.append((c["frame"], "stun", {"id": source_id, "frames": frames}))
+        elif cmd == "AttackModule::set_force_reaction":
+            source_id, enabled = force_reaction_args(c, guard.move)
+            events.append((c["frame"], "force", {"id": source_id, "enabled": enabled}))
         elif cmd == "CATCH" and c.get("named"):
             n = c["named"]
+            for key in ("id", "bone", "size", "x", "y", "z", "status", "situation"):
+                if key not in n:
+                    raise ValueError(f"{guard.move} frame {c['frame']:g}: CATCH arguments missing {key}")
+            for key, value in n.items():
+                if key not in {"id", "bone", "size", "x", "y", "z", "x2", "y2", "z2", "status", "situation"}:
+                    guard.omit(c["frame"], "case", "CATCH." + key,
+                               f"CATCH id {n['id']} argument {key}={value!r}")
             if not isinstance(n["id"], int) or n["id"] < 0:
-                rep["unknown"]["CATCH id " + str(n["id"])] = rep["unknown"].get("CATCH id " + str(n["id"]), 0) + 1
-                continue
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: CATCH id {n['id']!r} is invalid")
+            for key in ("size", "x", "y", "z"):
+                _number(n[key], "CATCH " + key, 0 if key == "size" else -128,
+                        255.996 if key == "size" else 127.996)
+            end_values = [n.get(key) for key in ("x2", "y2", "z2")]
+            if any(v is not None for v in end_values) and not all(v is not None for v in end_values):
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: CATCH capsule endpoint is incomplete")
+            for key, value in zip(("x2", "y2", "z2"), end_values):
+                if value is not None:
+                    _number(value, "CATCH capsule " + key, -128, 127.996)
+            if n.get("status") not in (None, {"const": "0x80c"}):
+                guard.omit(c["frame"], "case", "CATCH.status", f"CATCH status {n['status']!r}")
             situation = n["situation"]
             key = situation.get("const") if isinstance(situation, dict) else str(situation)
             flags = CATCH_SITUATIONS.get(key)
             if flags is None:
-                label = "CATCH situation " + str(situation)
-                rep["unknown"][label] = rep["unknown"].get(label, 0) + 1
-                continue
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: CATCH situation {situation!r} is unsupported")
             bone = n["bone"]
             j = joint_of_bone.get(bone)
             if j is None:
-                rep["unmapped_bones"].add(str(bone)); j = joint_of_bone.get("top", 0)
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: CATCH bone {bone!r} is unmapped")
             # Marth's vanilla Catch script (PlMs.dat: 0x6560/0x6574/0x6588) uses damage 0,
             # angle 361, KBG 100, element 8, item interaction and clank, sound kind 2.
             # Melee boxes are spheres. Ultimate's grab box is a capsule reaching x2/y2/z2 (Sora's
@@ -423,6 +851,9 @@ def translate(row, joint_of_bone, scale=1.0):
             if n.get("x2") is not None and (n["x2"], n["y2"], n["z2"]) != (n["x"], n["y"], n["z"]):
                 ends.append((n["id"] + 2, 1, n["x2"], n["y2"], n["z2"]))
             for slot, end, x, y, z in ends:
+                _number(n["size"] * scale, "scaled CATCH size", 0, 255.996)
+                for axis, value in zip("xyz", (x * scale, y * scale, z * scale)):
+                    _number(value, "scaled CATCH " + axis, -128, 127.996)
                 hw = hitbox_words(slot, j, 0, n["size"] * scale, x * scale, y * scale, z * scale,
                                   361, 100, 0, 0, 8, 0, *flags)
                 hw[3] |= 0x12
@@ -432,41 +863,97 @@ def translate(row, joint_of_bone, scale=1.0):
                                                      "radius": n["size"] * scale}))
                 rep["hitboxes"] += 1
             rep["grab_boxes"] = rep.get("grab_boxes", 0) + 1
-        elif cmd.endswith("clear_all") or cmd == "AttackModule::clear_all":
+        elif cmd in ("AttackModule::clear_all", "GrabModule::clear_all"):
+            expected = [] if cmd.startswith("Attack") else [{"const": "0xe7d4"}]
+            if c.get("args", []) not in ([], expected):
+                guard.omit(c["frame"], "case", cmd + ".args", f"{cmd} arguments {c['args']!r}")
             events.append((c["frame"], "clear", [16 << 26]))
+            if cmd.startswith("Attack"):
+                live_attacks.clear()
         elif cmd == "AttackModule::clear" and c["args"] and isinstance(c["args"][0], int):
+            if len(c["args"]) != 1 or c["args"][0] < 0:
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: AttackModule::clear id/arguments invalid")
             # RemoveHitbox: the engine reads the id from the low 26 bits (alpha, 2026-09-26: the id at
             # <<23 wrote fp->x914[huge] in AttackLw4)
             events.append((c["frame"], "clear", {"keys": [("attack", c["args"][0])],
                                                    "words": [(15 << 26) | (c["args"][0] & 0x3FFFFFF)]}))
+            live_attacks.pop(c["args"][0], None)
         elif cmd == "GrabModule::clear" and c.get("args") and isinstance(c["args"][0], int):
+            if len(c["args"]) != 1 or c["args"][0] < 0:
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: GrabModule::clear id/arguments invalid")
             grab_id = c["args"][0]
             events.append((c["frame"], "clear", {"keys": [("catch", grab_id, 0), ("catch", grab_id, 1)],
-                                                   "words": []}))
+                                                   "words": [(15 << 26) | grab_id,
+                                                             (15 << 26) | (grab_id + 2)]}))
         elif cmd == "ATTACK_ABS" and len(c["args"]) >= 7 and isinstance(c["args"][0], dict):
             kind = c["args"][0].get("const")
             a_ = c["args"]
             idx = 0 if kind == ABS_THROW else 1 if kind == ABS_CATCH else None
             if idx is None:
-                rep["unknown"]["ATTACK_ABS " + str(kind)] = rep["unknown"].get("ATTACK_ABS " + str(kind), 0) + 1
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: unsupported ATTACK_ABS kind {kind!r}")
             else:
-                elem = ELEM.get(next((x for x in a_ if isinstance(x, str) and x.startswith("collision_attr")), ""), 0)
+                if not isinstance(a_[1], int) or a_[1] < 0:
+                    raise ValueError(f"{guard.move} frame {c['frame']:g}: ATTACK_ABS id {a_[1]!r} is invalid")
+                if a_[1] != 0:
+                    guard.omit(c["frame"], "case", "ATTACK_ABS.id",
+                               f"ATTACK_ABS id {a_[1]} aliases Melee's single {kind} throw slot")
+                if len(a_) > 7:
+                    guard.omit(c["frame"], "case", "ATTACK_ABS.extra_args",
+                               f"ATTACK_ABS arguments after base knockback: {a_[7:]!r}")
+                for key, value in zip(("damage", "angle", "kbg", "fkb", "bkb"), a_[2:7]):
+                    _number(value, "ATTACK_ABS " + key, 0, 0x7FFFFF if key == "damage" else
+                            368 if key == "angle" else 511, integer=key != "damage")
+                if int(a_[2]) != a_[2]:
+                    guard.omit(c["frame"], "case", "ATTACK_ABS.damage.rounding",
+                               f"throw damage {a_[2]!r} rounds to Melee integer damage")
+                effect = next((x for x in a_ if isinstance(x, str) and x.startswith("collision_attr")), None)
+                if effect is not None and effect not in ELEM:
+                    raise ValueError(f"{guard.move} frame {c['frame']:g}: ATTACK_ABS effect {effect!r} unsupported")
+                if effect in ("collision_attr_magic", "collision_attr_stab"):
+                    guard.omit(c["frame"], "case", "ATTACK_ABS.effect." + effect,
+                               f"throw effect {effect} approximated in Melee")
+                elem = ELEM.get(effect, 0)
                 events.append((c["frame"], "hit", throw_words(idx, a_[2], a_[3], a_[4], a_[5], a_[6], elem)))
                 rep["throw_hitboxes"] = rep.get("throw_hitboxes", 0) + 1
         elif cmd == "ATK_HIT_ABS":
+            if c.get("args"):
+                guard.omit(c["frame"], "case", "ATK_HIT_ABS.args",
+                           f"ATK_HIT_ABS target/arguments {c['args']!r}")
             events.append((c["frame"], "clear", [THROW_RELEASE]))
             rep["throw_release_frame"] = c["frame"]
         elif cmd == "AttackModule::set_catch_only_all":
-            catch_only = bool(c["args"] and c["args"][0] is True)
+            args = c.get("args", [])
+            if (len(args) not in (1, 2) or not isinstance(args[0], bool) or
+                    (len(args) == 2 and args[1] is not False)):
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: set_catch_only_all arguments unresolved")
+            catch_only = args[0]
+        elif cmd == "HIT_NODE":
+            args = c.get("args", [])
+            states = {"0xc50": 2, "0xc90": 0, "0xcdc": 1}  # XLU, NORMAL, OFF
+            if (len(args) != 2 or not isinstance(args[0], str) or
+                    not isinstance(args[1], dict) or args[1].get("const") not in states):
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: HIT_NODE arguments {args!r} unsupported")
+            bone = args[0].lower()
+            joint = (hurt_joint_of_bone or joint_of_bone).get(bone)
+            if joint is None:
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: HIT_NODE bone {bone!r} is unmapped")
+            events.append((c["frame"], "hurt", [(28 << 26) | (joint << 18) |
+                                                  states[args[1]["const"]]]))
         elif cmd == "REVERSE_LR":
-            rep["dropped_ultimate_only"] += 1           # Melee's back-throw logic turns the fighter
+            guard.omit(c["frame"], "command", cmd, "reverse facing")
         elif cmd == "WorkModule::on_flag" and c["args"] and c["args"][0] == {"const": "0x720"}:
+            if len(c["args"]) != 1:
+                guard.omit(c["frame"], "case", "WorkModule::on_flag.extra_args",
+                           f"combo flag arguments {c['args']!r}")
             # const_value_table + 0x720: the first flag a jab sets after its hitboxes (Sora's jab 1
             # frame 20, jab 2 frame 16), i.e. the combo window opening - Melee's JabCombo. Named by
             # its place in the jab scripts, not yet from the executable's constant table. The flag
             # two frames later (0x72c, Ultimate's no-hit combo allowance) has no Melee counterpart.
             events.append((c["frame"], "clear", [29 << 26]))
         elif cmd == "START_SMASH_HOLD":
+            if c.get("args"):
+                guard.omit(c["frame"], "case", "START_SMASH_HOLD.args",
+                           f"smash hold arguments {c['args']!r}")
             events.append((c["frame"], "charge", SMASH_CHARGE_WORDS))
         elif cmd == "FT_MOTION_RATE" and c["args"]:
             # Melee's scripts have no animation-rate command (a state's C code sets
@@ -476,36 +963,45 @@ def translate(row, joint_of_bone, scale=1.0):
             # ftAnim_8006F0FC, and the script timers already scale by frame_speed_mul, so the
             # animation and the script slow together, as FT_MOTION_RATE does. Needs the Geno exe
             # and ANIM_RATE writable (lane echo, 2026-09-26).
-            r = c["args"][0]
-            if isinstance(r, (int, float)):
+            r = c["args"][-1]
+            if isinstance(r, (int, float)) and not isinstance(r, bool):
+                if len(c["args"]) > 1:
+                    guard.omit(c["frame"], "case", "FT_MOTION_RATE.extra_args",
+                               f"rate arguments before {r!r}: {c['args'][:-1]!r}")
                 bits = struct.unpack(">I", struct.pack(">f", float(r)))[0]
                 put = (59 << 26) | (0x09 << 20) | (3 << 16)
                 events.append((c["frame"], "rate", [put, 0x1B, bits]))
+            else:
+                raise ValueError(f"{guard.move} frame {c['frame']:g}: FT_MOTION_RATE {r!r} is unresolved")
         else:
-            rep["unknown"][cmd] = rep["unknown"].get(cmd, 0) + 1
+            guard.omit(c["frame"], "command", cmd, f"{cmd} arguments {c.get('args')!r}")
     if cancel:
         events.append((float(cancel), "iasa", [23 << 26]))
-    events.sort(key=lambda e: (e[0], {"time": 0, "rate": 1, "charge": 1, "clear": 2, "hit": 3, "iasa": 4}[e[1]]))
+    events.sort(key=lambda e: (e[0], {"time": 0, "rate": 1, "charge": 1, "clear": 2,
+                                       "hit": 3, "hurt": 3, "stun": 4, "force": 4,
+                                       "iasa": 5}[e[1]]))
     if needs_hitbox_remap(events):
         events = remap_hitboxes(events, rep)
-    else:
-        legacy_grab_clears = sum(kind == "clear" and isinstance(payload, dict) and not payload["words"]
-                                 for _, kind, payload in events)
-        if legacy_grab_clears:
-            rep["unknown"]["GrabModule::clear"] = legacy_grab_clears
+    for box in rep.get("dropped_hitboxes", []):
+        guard.remap(box["frame"], box)
     events = apply_autolink(events)
     for f, kind, w in events:
         if kind == "time":
             continue
         if isinstance(w, dict) and not w["words"]:
-            continue  # legacy rows never emitted GrabModule::clear
+            raise ValueError(f"{guard.move} frame {f:g}: empty converted {kind} command")
         if f > frame:
             words.append((2 << 26) | int(round(f)))        # AsyncWait f
             frame = f
-        words += w["words"] if isinstance(w, dict) else w
+        encoded = w["words"] if isinstance(w, dict) else w
+        words += encoded
+        if kind == "hit" and isinstance(w, dict) and encoded[0] >> 26 == 11:
+            words += hit_extras(w)
+        elif kind == "clear":
+            words += clear_rehit(encoded)
     words.append(0)                                      # End
-    rep["unmapped_bones"] = sorted(rep["unmapped_bones"])
     rep["cancel_frame"] = cancel
+    rep["losses"] = guard.losses
     return words, rep
 
 
@@ -524,7 +1020,8 @@ ROWS = {"Attack11": "game_attack11", "Attack12": "game_attack12", "Attack13": "g
 
 
 def main():
-    import argparse, json, os, sys
+    import argparse, hashlib, json, os, sys
+    from pathlib import Path
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import plan_parts
     from convert_ultimate_anim import INSTANCES
@@ -532,24 +1029,49 @@ def main():
     ap.add_argument("fighter"); ap.add_argument("acmd_json"); ap.add_argument("-o", "--out")
     ap.add_argument("--host", default="kirby", help="the Melee host fighter whose rows receive the scripts")
     a = ap.parse_args()
+    source_bytes = verify_acmd_source(a.acmd_json)
     plan = plan_parts.plan(json.load(open(os.path.join(INSTANCES, f"{a.fighter}.ultimate-body.ir.json"), encoding="utf-8")))
     joint_of = {j["name"].lower(): i for i, j in enumerate(plan["joints"])}
     joint_of["top"] = 0
-    rows = [r for r in json.load(open(a.acmd_json)) if r["kind"] == "game" and r["owner"] == "fighter"
+    import plan_hurtboxes
+    hurt_bones = {plan["parts"]["part_to_joint"][plan_parts.COMMON.index(name)]
+                  for name in plan_hurtboxes.SEGMENTS
+                  if plan["parts"]["part_to_joint"][plan_parts.COMMON.index(name)] != 255}
+    def hurt_joint(j):
+        while j is not None and j not in hurt_bones:
+            j = plan["joints"][j]["parent"]
+        return j if j is not None else plan["parts"]["part_to_joint"][plan_parts.COMMON.index("HipN")]
+    hurt_of = {name: hurt_joint(joint) for name, joint in joint_of.items()}
+    rows = [r for r in json.loads(source_bytes) if r["kind"] == "game" and r["owner"] == "fighter"
             and not r["share"] and r["agent"] == a.fighter]
     by_script = {r["script"]: r for r in rows}
     host = json.load(open(os.path.join(INSTANCES, f"{a.host}.melee.ir.json"), encoding="utf-8"))["behavior"]["subactions"]
-    out = {"fighter": a.fighter, "rows": {}, "report": {}}
+    here = os.path.dirname(os.path.abspath(__file__))
+    audit_files = ("acmd_to_ftcmd.py", "acmd_loss.py", "acmd_allowlist.json")
+    audit_hash = hashlib.sha256(b"".join((Path(here) / f).read_bytes()
+                                         for f in audit_files)).hexdigest()
+    out = {"fighter": a.fighter, "rows": {}, "report": {}, "omissions": [],
+           "audit": {"version": 1, "source_sha256": hashlib.sha256(source_bytes).hexdigest(),
+                     "converter_sha256": audit_hash}}
     for s in host:
         script = ROWS.get(s["name"])
+        if script and script not in by_script:
+            guard = LossGuard(s["name"])
+            guard.omit(0, "case", "missing_script:" + script,
+                       f"host row {s['name']} has no selected Ultimate game script {script}")
+            out["omissions"].extend(guard.losses)
+            continue
         if script and script in by_script:
-            words, rep = translate(by_script[script], joint_of)
+            # A staged script supplies its weak combo-enabling branch when its next
+            # stage is also present. Keep the stronger branch for standalone tilts.
+            words, rep = translate(by_script[script], joint_of,
+                                   combo=script + "2" in by_script,
+                                   hurt_joint_of_bone=hurt_of)
             if s["name"] in ("Catch", "CatchDash"):
-                # Keep the host's script if any grab box could not be parsed or encoded.
                 count = sum(1 for c in by_script[script]["commands"]
                             if c["cmd"] == "CATCH" and default_path(c.get("when", [])))
                 if not count or rep.get("grab_boxes", 0) != count:
-                    continue
+                    raise ValueError(f"{script}: {count} source grabs but {rep.get('grab_boxes', 0)} converted")
             out["rows"][s["index"]["value"]] = {"name": s["name"], "script": script, "words": words,
                                                 "clip": (by_script[script].get("motion") or {}).get("clip")}
             out["report"][s["name"]] = {k: v for k, v in rep.items() if v}

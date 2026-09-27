@@ -29,7 +29,7 @@ class FrameDataCheckTest(unittest.TestCase):
         move = FD.expected_from_row(row, {"top": 0, "haver": 78}, 1.25)
         self.assertEqual(move["iasa"], 7)
         self.assertEqual(move["hitboxes"], [{"id": 0, "start": 2, "end": 4,
-            "damage": 4, "angle": 45, "kbg": 80, "bkb": 20,
+            "damage": 3.6, "angle": 45, "kbg": 80, "bkb": 20,
             "radius": 2.5, "bone": 78, "offset": [1.25, 2.5, 3.75]}])
 
     def test_comparison_flags_only_values_beyond_thresholds(self):

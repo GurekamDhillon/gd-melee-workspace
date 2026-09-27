@@ -13,6 +13,7 @@ import argparse
 from collections import Counter
 from functools import lru_cache
 import json
+import struct
 import math
 from pathlib import Path
 import re
@@ -99,9 +100,9 @@ def game_frame_of(row):
     return game_frame
 
 
-def expected_from_row(row, joint_of_bone, scale):
+def expected_from_row(row, joint_of_bone, scale, *, allowlist=None):
     """Decode the actual converter output, so its quantization and fallbacks apply."""
-    words, conversion = FT.translate(row, joint_of_bone, scale)
+    words, conversion = FT.translate(row, joint_of_bone, scale, allowlist=allowlist)
     game_frame = game_frame_of(row)
     active = {}
     hitboxes = []
@@ -143,8 +144,17 @@ def expected_from_row(row, joint_of_bone, scale):
                 finish(slot, game_frame(frame) - 1)
         elif op == 23:  # IASA
             iasa = game_frame(frame)
-        elif op in (34, 59):  # throw data; Geno PUT with two payload words
+        elif op == 34:  # throw data
             i += 2
+        elif op == 59:
+            sub = (word >> 20) & 63
+            if sub == 0x3A and i + 1 < len(words):
+                damage = struct.unpack(">f", struct.pack(">I", words[i + 1]))[0]
+                mask = (word >> 8) & 0xFF
+                for slot in active:
+                    if mask & (1 << slot):
+                        active[slot]["damage"] = round(damage, 5)
+            i += ((word >> 16) & 15) - 1
         i += 1
     for slot in list(active):
         finish(slot, None)

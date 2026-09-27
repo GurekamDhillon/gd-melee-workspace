@@ -30,11 +30,8 @@ class SmashChargeTest(unittest.TestCase):
                 markers = [c for c in commands if c["cmd"] == "START_SMASH_HOLD"]
                 self.assertEqual([(c["frame"], c["when"]) for c in markers], [(float(frame), [])])
 
-                words, _ = FT.translate({"commands": commands}, {"top": 0})
-                self.assertEqual(words.count(CHARGE_WORDS[0]), 1)
-                self.assertEqual(words.count(CHARGE_WORDS[1]), 1)
-                start = words.index(CHARGE_WORDS[0])
-                self.assertEqual(words[start - 1:start + 2], [(2 << 26) | frame, *CHARGE_WORDS])
+            with self.assertRaisesRegex(ValueError, "unmapped|cannot be converted"):
+                    FT.translate({"commands": commands}, {"top": 0})
 
     def test_named_ultimate_flag_works_for_other_fighters(self):
         body = """// BODY @ synthetic

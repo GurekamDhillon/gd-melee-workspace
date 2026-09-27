@@ -57,7 +57,7 @@ def grab_events(words):
         elif op == 16:
             events.append(("off", frame))
         elif op == 59:
-            i += 2
+            i += ((w >> 16) & 15) - 1
         i += 1
     return events
 
@@ -87,7 +87,13 @@ class CatchTest(unittest.TestCase):
                     self.assertEqual(n["situation"], {"const": situation})
                     self.assertEqual(tuple(n[k] for k in ("size", "x", "y", "z", "x2", "y2", "z2")),
                                      (size, x, y, z, x2, y2, z2))
-                words, report = FT.translate({"commands": commands}, {"top": 0}, SCALE)
+                fixture_allowlist = {("command", name):
+                                     {"reason": "grab geometry fixture", "approved_by": "test fixture",
+                                      "moves": ["<unnamed move>"]}
+                                     for name in ("GrabModule::set_rebound", "WorkModule::on_flag",
+                                                  "UNCONSUMED_ACMD_ARGS")}
+                words, report = FT.translate({"commands": commands}, {"top": 0}, SCALE,
+                                             allowlist=fixture_allowlist)
                 self.assertEqual(report["hitboxes"], 2 * len(boxes))   # each capsule: both ends
                 self.assertEqual(report["grab_boxes"], len(boxes))
                 events = grab_events(words)

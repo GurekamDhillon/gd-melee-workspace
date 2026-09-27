@@ -1,0 +1,2853 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "kind": "case",
+      "name": "ATK_HIT_ABS.args",
+      "moves": [
+        "trail/game_throwb",
+        "trail/game_throwf",
+        "trail/game_throwhi",
+        "trail/game_throwlw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.angle.366",
+      "moves": [
+        "trail/game_attackhi3"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.collision_part",
+      "moves": [
+        "trail/game_attack11",
+        "trail/game_attack12",
+        "trail/game_attack13",
+        "trail/game_attackairb",
+        "trail/game_attackairf",
+        "trail/game_attackairhi",
+        "trail/game_attackairlw",
+        "trail/game_attackairn",
+        "trail/game_attackdash",
+        "trail/game_attackhi3",
+        "trail/game_attackhi4",
+        "trail/game_attacklw3",
+        "trail/game_attacklw4",
+        "trail/game_attacks3",
+        "trail/game_attacks32",
+        "trail/game_attacks33",
+        "trail/game_attacks4",
+        "trail/game_catchattack",
+        "trail/game_specialairhi",
+        "trail/game_specialairlw",
+        "trail/game_specialairn1start",
+        "trail/game_specialairn2",
+        "trail/game_specialhi",
+        "trail/game_speciallw",
+        "trail/game_specialn1start",
+        "trail/game_specialn2",
+        "trail/game_specials1",
+        "trail/game_specials2",
+        "trail/game_specials3",
+        "trail/game_throwb",
+        "trail/game_throwf",
+        "trail_fire/game_fly",
+        "trail_ice/0xc00a3e2ad",
+        "trail_ice/game_fly",
+        "trail_thunder/0x10983531cc",
+        "trail_thunder/0xdbd48edf3",
+        "trail_thunder/game_fall",
+        "trail_thunder/game_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.direct",
+      "moves": [
+        "trail/game_attackhi3",
+        "trail/game_attackhi4",
+        "trail/game_specialairn1start",
+        "trail/game_specialairn2",
+        "trail/game_specialn1start",
+        "trail/game_specialn2",
+        "trail_fire/game_fly",
+        "trail_ice/0xc00a3e2ad",
+        "trail_ice/game_fly",
+        "trail_thunder/0x10983531cc",
+        "trail_thunder/0xdbd48edf3",
+        "trail_thunder/game_fall",
+        "trail_thunder/game_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.effect.collision_attr_magic",
+      "moves": [
+        "trail/game_attackhi4"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.hitbits",
+      "moves": [
+        "trail/game_attack11",
+        "trail/game_attack12",
+        "trail/game_attack13",
+        "trail/game_attackairb",
+        "trail/game_attackairf",
+        "trail/game_attackairhi",
+        "trail/game_attackairlw",
+        "trail/game_attackairn",
+        "trail/game_attackdash",
+        "trail/game_attackhi3",
+        "trail/game_attackhi4",
+        "trail/game_attacklw3",
+        "trail/game_attacklw4",
+        "trail/game_attacks3",
+        "trail/game_attacks32",
+        "trail/game_attacks33",
+        "trail/game_attacks4",
+        "trail/game_catchattack",
+        "trail/game_specialairhi",
+        "trail/game_specialairlw",
+        "trail/game_specialairn1start",
+        "trail/game_specialairn2",
+        "trail/game_specialhi",
+        "trail/game_speciallw",
+        "trail/game_specialn1start",
+        "trail/game_specialn2",
+        "trail/game_specials1",
+        "trail/game_specials2",
+        "trail/game_specials3",
+        "trail/game_throwb",
+        "trail/game_throwf",
+        "trail_fire/game_fly",
+        "trail_ice/0xc00a3e2ad",
+        "trail_ice/game_fly",
+        "trail_thunder/0x10983531cc",
+        "trail_thunder/0xdbd48edf3",
+        "trail_thunder/game_fall",
+        "trail_thunder/game_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.hitlag",
+      "moves": [
+        "trail/game_attack11",
+        "trail/game_attack12",
+        "trail/game_attack13",
+        "trail/game_attackairb",
+        "trail/game_attackairf",
+        "trail/game_attackairhi",
+        "trail/game_attackairlw",
+        "trail/game_attackairn",
+        "trail/game_attackdash",
+        "trail/game_attackhi3",
+        "trail/game_attackhi4",
+        "trail/game_attacklw3",
+        "trail/game_attacklw4",
+        "trail/game_attacks3",
+        "trail/game_attacks32",
+        "trail/game_attacks33",
+        "trail/game_attacks4",
+        "trail/game_catchattack",
+        "trail/game_specialairhi",
+        "trail/game_specialairlw",
+        "trail/game_specialhi",
+        "trail/game_speciallw",
+        "trail/game_throwf",
+        "trail_ice/0xc00a3e2ad",
+        "trail_ice/game_fly",
+        "trail_thunder/0x10983531cc",
+        "trail_thunder/0xdbd48edf3",
+        "trail_thunder/game_fall",
+        "trail_thunder/game_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.lr_check",
+      "moves": [
+        "trail/game_attack11",
+        "trail/game_attack12",
+        "trail/game_attack13",
+        "trail/game_attackairb",
+        "trail/game_attackairf",
+        "trail/game_attackairhi",
+        "trail/game_attackairlw",
+        "trail/game_attackairn",
+        "trail/game_attackdash",
+        "trail/game_attackhi3",
+        "trail/game_attackhi4",
+        "trail/game_attacklw3",
+        "trail/game_attacklw4",
+        "trail/game_attacks3",
+        "trail/game_attacks32",
+        "trail/game_attacks33",
+        "trail/game_attacks4",
+        "trail/game_catchattack",
+        "trail/game_specialairhi",
+        "trail/game_specialairlw",
+        "trail/game_specialairn1start",
+        "trail/game_specialairn2",
+        "trail/game_specialhi",
+        "trail/game_speciallw",
+        "trail/game_specialn1start",
+        "trail/game_specialn2",
+        "trail/game_specials1",
+        "trail/game_specials2",
+        "trail/game_specials3",
+        "trail/game_throwb",
+        "trail/game_throwf",
+        "trail_fire/game_fly",
+        "trail_ice/0xc00a3e2ad",
+        "trail_ice/game_fly",
+        "trail_thunder/0x10983531cc",
+        "trail_thunder/0xdbd48edf3",
+        "trail_thunder/game_fall",
+        "trail_thunder/game_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.region",
+      "moves": [
+        "trail/game_attack11",
+        "trail/game_attack12",
+        "trail/game_attack13",
+        "trail/game_attackairb",
+        "trail/game_attackairf",
+        "trail/game_attackairhi",
+        "trail/game_attackairlw",
+        "trail/game_attackairn",
+        "trail/game_attackdash",
+        "trail/game_attackhi3",
+        "trail/game_attackhi4",
+        "trail/game_attacklw3",
+        "trail/game_attacklw4",
+        "trail/game_attacks3",
+        "trail/game_attacks32",
+        "trail/game_attacks33",
+        "trail/game_attacks4",
+        "trail/game_catchattack",
+        "trail/game_specialairhi",
+        "trail/game_specialairlw",
+        "trail/game_specialairn1start",
+        "trail/game_specialairn2",
+        "trail/game_specialhi",
+        "trail/game_speciallw",
+        "trail/game_specialn1start",
+        "trail/game_specialn2",
+        "trail/game_specials1",
+        "trail/game_specials2",
+        "trail/game_specials3",
+        "trail/game_throwb",
+        "trail/game_throwf",
+        "trail_fire/game_fly",
+        "trail_ice/0xc00a3e2ad",
+        "trail_ice/game_fly",
+        "trail_thunder/0x10983531cc",
+        "trail_thunder/0xdbd48edf3",
+        "trail_thunder/game_fall",
+        "trail_thunder/game_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.sdi",
+      "moves": [
+        "trail/game_throwf",
+        "trail_ice/0xc00a3e2ad",
+        "trail_ice/game_fly",
+        "trail_thunder/0x10983531cc",
+        "trail_thunder/0xdbd48edf3",
+        "trail_thunder/game_fall",
+        "trail_thunder/game_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.set_weight",
+      "moves": [
+        "trail/game_attackhi3",
+        "trail/game_attackhi4",
+        "trail/game_specialairhi",
+        "trail/game_specialhi",
+        "trail_thunder/game_fall",
+        "trail_thunder/game_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.setoff_kind",
+      "moves": [
+        "trail/game_attack11",
+        "trail/game_attack12",
+        "trail/game_attack13",
+        "trail/game_attackairb",
+        "trail/game_attackairf",
+        "trail/game_attackairhi",
+        "trail/game_attackairlw",
+        "trail/game_attackairn",
+        "trail/game_attackdash",
+        "trail/game_attackhi3",
+        "trail/game_attackhi4",
+        "trail/game_attacklw3",
+        "trail/game_attacklw4",
+        "trail/game_attacks3",
+        "trail/game_attacks32",
+        "trail/game_attacks33",
+        "trail/game_attacks4",
+        "trail/game_catchattack",
+        "trail/game_specialairhi",
+        "trail/game_specialairlw",
+        "trail/game_specialairn1start",
+        "trail/game_specialairn2",
+        "trail/game_specialhi",
+        "trail/game_speciallw",
+        "trail/game_specialn1start",
+        "trail/game_specialn2",
+        "trail/game_specials1",
+        "trail/game_specials2",
+        "trail/game_specials3",
+        "trail/game_throwb",
+        "trail/game_throwf",
+        "trail_fire/game_fly",
+        "trail_ice/0xc00a3e2ad",
+        "trail_ice/game_fly",
+        "trail_thunder/0x10983531cc",
+        "trail_thunder/0xdbd48edf3",
+        "trail_thunder/game_fall",
+        "trail_thunder/game_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.shield_damage.rounding",
+      "moves": [
+        "trail_fire/game_fly"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.sound_attr",
+      "moves": [
+        "trail/game_attack11",
+        "trail/game_attack12",
+        "trail/game_attack13",
+        "trail/game_attackairb",
+        "trail/game_attackairf",
+        "trail/game_attackairhi",
+        "trail/game_attackairlw",
+        "trail/game_attackairn",
+        "trail/game_attackdash",
+        "trail/game_attackhi3",
+        "trail/game_attackhi4",
+        "trail/game_attacklw3",
+        "trail/game_attacklw4",
+        "trail/game_attacks3",
+        "trail/game_attacks32",
+        "trail/game_attacks33",
+        "trail/game_attacks4",
+        "trail/game_catchattack",
+        "trail/game_specialairhi",
+        "trail/game_specialairlw",
+        "trail/game_specialairn1start",
+        "trail/game_specialairn2",
+        "trail/game_specialhi",
+        "trail/game_speciallw",
+        "trail/game_specialn1start",
+        "trail/game_specialn2",
+        "trail/game_specials1",
+        "trail/game_specials2",
+        "trail/game_specials3",
+        "trail/game_throwb",
+        "trail/game_throwf",
+        "trail_fire/game_fly",
+        "trail_ice/0xc00a3e2ad",
+        "trail_ice/game_fly",
+        "trail_thunder/0x10983531cc",
+        "trail_thunder/0xdbd48edf3",
+        "trail_thunder/game_fall",
+        "trail_thunder/game_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.sound_level",
+      "moves": [
+        "trail/game_attack11",
+        "trail/game_attack12",
+        "trail/game_attack13",
+        "trail/game_attackairb",
+        "trail/game_attackairf",
+        "trail/game_attackairhi",
+        "trail/game_attackairlw",
+        "trail/game_attackairn",
+        "trail/game_attackdash",
+        "trail/game_attackhi3",
+        "trail/game_attackhi4",
+        "trail/game_attacklw3",
+        "trail/game_attacklw4",
+        "trail/game_attacks3",
+        "trail/game_attacks32",
+        "trail/game_attacks33",
+        "trail/game_attacks4",
+        "trail/game_catchattack",
+        "trail/game_specialairhi",
+        "trail/game_specialairlw",
+        "trail/game_specialairn1start",
+        "trail/game_specialairn2",
+        "trail/game_specialhi",
+        "trail/game_speciallw",
+        "trail/game_specialn1start",
+        "trail/game_specialn2",
+        "trail/game_specials1",
+        "trail/game_specials2",
+        "trail/game_specials3",
+        "trail/game_throwb",
+        "trail/game_throwf",
+        "trail_fire/game_fly",
+        "trail_ice/0xc00a3e2ad",
+        "trail_ice/game_fly",
+        "trail_thunder/0x10983531cc",
+        "trail_thunder/0xdbd48edf3",
+        "trail_thunder/game_fall",
+        "trail_thunder/game_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK.trip",
+      "moves": [
+        "trail_fire/game_fly"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK_ABS.damage.rounding",
+      "moves": [
+        "trail/game_throwb",
+        "trail/game_throwhi",
+        "trail/game_throwlw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "ATTACK_ABS.extra_args",
+      "moves": [
+        "trail/game_throwb",
+        "trail/game_throwf",
+        "trail/game_throwhi",
+        "trail/game_throwlw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "DOWN_EFFECT.extra_args",
+      "moves": [
+        "trail/effect_downboundd",
+        "trail/effect_downboundu"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT.branch",
+      "moves": [
+        "trail/effect_landingairlw",
+        "trail/effect_specialairlw",
+        "trail/effect_speciallw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT.extra_args",
+      "moves": [
+        "trail/0x104e548cb2",
+        "trail/0x15baf562ba",
+        "trail/0x166d25a6c8",
+        "trail/0x182d9894a2",
+        "trail/0x19496ffd13",
+        "trail/0x1971449a8b",
+        "trail/0x1b77ca3cdf",
+        "trail/0x1d5be4eb0d",
+        "trail/effect_attackairlw",
+        "trail/effect_attackhi4",
+        "trail/effect_attackhi4charge",
+        "trail/effect_attacklw4",
+        "trail/effect_attacklw4charge",
+        "trail/effect_attacks4",
+        "trail/effect_attacks4charge",
+        "trail/effect_attacks4hi",
+        "trail/effect_attacks4lw",
+        "trail/effect_catchattack",
+        "trail/effect_cliffattack",
+        "trail/effect_cliffcatch",
+        "trail/effect_downboundd",
+        "trail/effect_downboundu",
+        "trail/effect_escapeb",
+        "trail/effect_escapef",
+        "trail/effect_finalvisualscene01",
+        "trail/effect_furafuraend",
+        "trail/effect_landingairlw",
+        "trail/effect_sleepend",
+        "trail/effect_specialairhi",
+        "trail/effect_specialairlw",
+        "trail/effect_specialairlwstart",
+        "trail/effect_specialairs1",
+        "trail/effect_specialairs2",
+        "trail/effect_specialairs3",
+        "trail/effect_specialairssearch",
+        "trail/effect_specialairsstart",
+        "trail/effect_specialhi",
+        "trail/effect_speciallw",
+        "trail/effect_speciallwstart",
+        "trail/effect_specials1",
+        "trail/effect_specials2",
+        "trail/effect_specials3",
+        "trail/effect_specialssearch",
+        "trail/effect_specialsstart",
+        "trail/effect_steppose",
+        "trail/effect_stepposeair",
+        "trail/effect_throwb",
+        "trail/effect_throwf",
+        "trail/effect_throwhi",
+        "trail/effect_throwlw",
+        "trail/effect_win2",
+        "trail_cloud/effect_start",
+        "trail_hole/0x13967233c1",
+        "trail_hole/0x161ce9aa93",
+        "trail_hole/effect_expansionair",
+        "trail_hole/effect_vanishair",
+        "trail_thunder/effect_landing"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT_ALPHA.extra_args",
+      "moves": [
+        "trail/effect_throwlw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT_DETACH_KIND.extra_args",
+      "moves": [
+        "trail/effect_appealsl",
+        "trail/effect_appealsr",
+        "trail/effect_attackhi4",
+        "trail/effect_specialairlw",
+        "trail/effect_specialairn1",
+        "trail/effect_speciallw",
+        "trail/effect_specialn1"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT_DETACH_KIND.unmatched",
+      "moves": [
+        "trail/effect_specialn1"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT_FLW_POS.branch",
+      "moves": [
+        "trail/effect_appealhi2"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT_FLW_POS.extra_args",
+      "moves": [
+        "trail/0x15c91de007",
+        "trail/effect_appealhi2",
+        "trail/effect_attack12",
+        "trail/effect_attacks32",
+        "trail/effect_bind",
+        "trail/effect_cliffattack",
+        "trail/effect_finalvisualscene02",
+        "trail/effect_sleeploop",
+        "trail/effect_sleepstart"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT_FOLLOW.branch",
+      "moves": [
+        "trail/effect_appealhi2",
+        "trail/effect_attackairb",
+        "trail/effect_specialairn2"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT_FOLLOW.extra_args",
+      "moves": [
+        "trail/0x104e548cb2",
+        "trail/0x137877467d",
+        "trail/0x1458893253",
+        "trail/0xc14acdd23",
+        "trail/0xf6d9d14c7",
+        "trail/effect_appealhi1",
+        "trail/effect_appealhi2",
+        "trail/effect_appealhi3",
+        "trail/effect_appealsl",
+        "trail/effect_appealsr",
+        "trail/effect_attack11",
+        "trail/effect_attack12",
+        "trail/effect_attack13",
+        "trail/effect_attackairb",
+        "trail/effect_attackairf",
+        "trail/effect_attackairf2",
+        "trail/effect_attackairf3",
+        "trail/effect_attackairhi",
+        "trail/effect_attackairlw",
+        "trail/effect_attackairn",
+        "trail/effect_attackairn2",
+        "trail/effect_attackairn3",
+        "trail/effect_attackhi3",
+        "trail/effect_attackhi4",
+        "trail/effect_attacklw3",
+        "trail/effect_attacklw4",
+        "trail/effect_attacks3",
+        "trail/effect_attacks32",
+        "trail/effect_attacks33",
+        "trail/effect_attacks4",
+        "trail/effect_attacks4hi",
+        "trail/effect_attacks4lw",
+        "trail/effect_cliffattack",
+        "trail/effect_downattackd",
+        "trail/effect_downattacku",
+        "trail/effect_entryl",
+        "trail/effect_entryr",
+        "trail/effect_final",
+        "trail/effect_finalair",
+        "trail/effect_finalairl",
+        "trail/effect_finall",
+        "trail/effect_finalvisualscene02",
+        "trail/effect_jumpback",
+        "trail/effect_jumpfront",
+        "trail/effect_slipattack",
+        "trail/effect_specialairhi",
+        "trail/effect_specialairlw",
+        "trail/effect_specialairn1",
+        "trail/effect_specialairn12",
+        "trail/effect_specialairn1end",
+        "trail/effect_specialairn2",
+        "trail/effect_specialairn3",
+        "trail/effect_specialairs1",
+        "trail/effect_specialairs2",
+        "trail/effect_specialairs3",
+        "trail/effect_specialhi",
+        "trail/effect_speciallw",
+        "trail/effect_specialn12",
+        "trail/effect_specialn1end",
+        "trail/effect_specialn1start",
+        "trail/effect_specialn2",
+        "trail/effect_specialn3",
+        "trail/effect_specials1",
+        "trail/effect_specials2",
+        "trail/effect_specials3",
+        "trail/effect_throwb",
+        "trail/effect_throwf",
+        "trail/effect_throwhi",
+        "trail/effect_win1",
+        "trail/effect_win2",
+        "trail/effect_win3",
+        "trail_beam/effect_fly",
+        "trail_box/effect_visualscene01",
+        "trail_box/effect_visualscene02",
+        "trail_box/effect_visualscene04",
+        "trail_fire/effect_fly",
+        "trail_fire/effect_fly2",
+        "trail_flower/effect_appealhil",
+        "trail_flower/effect_appealhir",
+        "trail_ice/0xe82abe0ae",
+        "trail_ice/effect_fly",
+        "trail_lockoncursor/effect_fix",
+        "trail_lockoncursor/effect_start",
+        "trail_thunder/0x12426b2248",
+        "trail_thunder/0xf24c3b44b",
+        "trail_thunder/effect_fall",
+        "trail_thunder/effect_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT_FOLLOW_ALPHA.extra_args",
+      "moves": [
+        "trail/effect_attacklw4"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT_FOLLOW_NO_STOP.branch",
+      "moves": [
+        "trail/effect_specialairn1",
+        "trail/effect_specialn1"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT_FOLLOW_NO_STOP.extra_args",
+      "moves": [
+        "trail/0x109bb7bb2f",
+        "trail/0x1114e7e1ae",
+        "trail/0x14e2cff547",
+        "trail/effect_attackhi4",
+        "trail/effect_specialairn1",
+        "trail/effect_specialairn12",
+        "trail/effect_specialairn1start",
+        "trail/effect_specialn1",
+        "trail/effect_specialn12",
+        "trail/effect_specialn1start"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT_GLOBAL.extra_args",
+      "moves": [
+        "trail/effect_finalvisualscene01"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT_OFF_KIND.extra_args",
+      "moves": [
+        "trail/0x1971449a8b",
+        "trail/effect_appealsl",
+        "trail/effect_appealsr",
+        "trail/effect_attack11",
+        "trail/effect_attack12",
+        "trail/effect_attack13",
+        "trail/effect_attackairb",
+        "trail/effect_attackairf",
+        "trail/effect_attackairf2",
+        "trail/effect_attackairf3",
+        "trail/effect_attackairhi",
+        "trail/effect_attackairlw",
+        "trail/effect_attackairn",
+        "trail/effect_attackairn2",
+        "trail/effect_attackairn3",
+        "trail/effect_attackhi3",
+        "trail/effect_attacklw3",
+        "trail/effect_attacklw4",
+        "trail/effect_attacks3",
+        "trail/effect_attacks32",
+        "trail/effect_attacks33",
+        "trail/effect_attacks4",
+        "trail/effect_attacks4hi",
+        "trail/effect_attacks4lw",
+        "trail/effect_cliffattack",
+        "trail/effect_downattackd",
+        "trail/effect_downattacku",
+        "trail/effect_final",
+        "trail/effect_finalair",
+        "trail/effect_finalairend",
+        "trail/effect_finalairendl",
+        "trail/effect_finalairl",
+        "trail/effect_finalend",
+        "trail/effect_finalendl",
+        "trail/effect_finall",
+        "trail/effect_finalvisualscene02",
+        "trail/effect_slipattack",
+        "trail/effect_specialairhi",
+        "trail/effect_specialairlw",
+        "trail/effect_specialairn2",
+        "trail/effect_specialairs1",
+        "trail/effect_specialairs2",
+        "trail/effect_specialairs3",
+        "trail/effect_specialhi",
+        "trail/effect_speciallw",
+        "trail/effect_specialn2",
+        "trail/effect_specials1",
+        "trail/effect_specials2",
+        "trail/effect_specials3",
+        "trail/effect_throwf",
+        "trail/effect_win1",
+        "trail/effect_win3",
+        "trail_hole/0x13967233c1",
+        "trail_hole/effect_vanishair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "EFFECT_OFF_KIND.unmatched",
+      "moves": [
+        "trail/0x1971449a8b",
+        "trail/effect_attacks4",
+        "trail/effect_attacks4hi",
+        "trail/effect_attacks4lw",
+        "trail/effect_finalairend",
+        "trail/effect_finalairendl",
+        "trail/effect_finalend",
+        "trail/effect_finalendl",
+        "trail_hole/0x13967233c1",
+        "trail_hole/effect_vanishair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "FOOT_EFFECT.branch",
+      "moves": [
+        "trail/effect_squatf"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "FOOT_EFFECT.extra_args",
+      "moves": [
+        "trail/effect_attack11",
+        "trail/effect_attack12",
+        "trail/effect_attack13",
+        "trail/effect_attackdash",
+        "trail/effect_attackhi3",
+        "trail/effect_attackhi4charge",
+        "trail/effect_attacklw3",
+        "trail/effect_attacklw4charge",
+        "trail/effect_attacks3",
+        "trail/effect_attacks32",
+        "trail/effect_attacks33",
+        "trail/effect_attacks4charge",
+        "trail/effect_cliffclimb",
+        "trail/effect_cliffescape",
+        "trail/effect_dash",
+        "trail/effect_downbackd",
+        "trail/effect_downbacku",
+        "trail/effect_downforwardd",
+        "trail/effect_downforwardu",
+        "trail/effect_downstandu",
+        "trail/effect_entryl",
+        "trail/effect_entryr",
+        "trail/effect_escapeb",
+        "trail/effect_escapef",
+        "trail/effect_escapen",
+        "trail/effect_itemlegswalkb",
+        "trail/effect_itemlegswalkf",
+        "trail/effect_run",
+        "trail/effect_runbrake",
+        "trail/effect_runbrakel",
+        "trail/effect_runbraker",
+        "trail/effect_slip",
+        "trail/effect_slipescapeb",
+        "trail/effect_slipescapef",
+        "trail/effect_specialhi",
+        "trail/effect_squatb",
+        "trail/effect_squatf",
+        "trail/effect_turn",
+        "trail/effect_turndash",
+        "trail/effect_turnrun",
+        "trail/effect_walkfast",
+        "trail/effect_walkmiddle",
+        "trail/effect_walkslow"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "LANDING_EFFECT.extra_args",
+      "moves": [
+        "trail/0x176381ec4b",
+        "trail/effect_appealhi1",
+        "trail/effect_appealhi2",
+        "trail/effect_appealhi3",
+        "trail/effect_appeallwl",
+        "trail/effect_appeallwr",
+        "trail/effect_attackdash",
+        "trail/effect_attackhi3",
+        "trail/effect_attackhi4",
+        "trail/effect_attacklw4",
+        "trail/effect_attacks4",
+        "trail/effect_attacks4hi",
+        "trail/effect_attacks4lw",
+        "trail/effect_cliffattack",
+        "trail/effect_cliffescape",
+        "trail/effect_cliffjump2",
+        "trail/effect_downattackd",
+        "trail/effect_downattacku",
+        "trail/effect_downbackd",
+        "trail/effect_downforwardd",
+        "trail/effect_downforwardu",
+        "trail/effect_entryl",
+        "trail/effect_entryr",
+        "trail/effect_final",
+        "trail/effect_finall",
+        "trail/effect_landingairb",
+        "trail/effect_landingairf",
+        "trail/effect_landingairf2",
+        "trail/effect_landingairf3",
+        "trail/effect_landingairhi",
+        "trail/effect_landingairlw",
+        "trail/effect_landingairn",
+        "trail/effect_landingairn2",
+        "trail/effect_landingairn3",
+        "trail/effect_landingfallspecial",
+        "trail/effect_landingheavy",
+        "trail/effect_landinglight",
+        "trail/effect_slip",
+        "trail/effect_slipattack",
+        "trail/effect_slipdown",
+        "trail/effect_slipescapeb",
+        "trail/effect_slipescapef",
+        "trail/effect_specialhi",
+        "trail/effect_speciallw",
+        "trail/effect_specialn1",
+        "trail/effect_specialn2",
+        "trail/effect_specialn3",
+        "trail/effect_specials1",
+        "trail/effect_specials2",
+        "trail/effect_specials3",
+        "trail/effect_throwb",
+        "trail/effect_throwf",
+        "trail/effect_throwhi",
+        "trail/effect_throwlw",
+        "trail/effect_win1",
+        "trail/effect_win3",
+        "trail_thunder/effect_landing"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "article.ATTACK.damage.rounding",
+      "moves": [
+        "trail_fire/game_fly",
+        "trail_ice/0xc00a3e2ad",
+        "trail_ice/game_fly",
+        "trail_thunder/0x10983531cc",
+        "trail_thunder/0xdbd48edf3",
+        "trail_thunder/game_fall",
+        "trail_thunder/game_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "branch:ATK_SET_SHIELD_SETOFF_MUL2",
+      "moves": [
+        "trail/game_attacks3"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "branch:ATTACK",
+      "moves": [
+        "trail/game_attacks3"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "branch:AttackModule::clear_all",
+      "moves": [
+        "trail/game_attacks3"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "branch:wait",
+      "moves": [
+        "trail/game_attacks3"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.bone.unmapped:0x803b3206f",
+      "moves": [
+        "trail_flower/effect_appealhil",
+        "trail_flower/effect_appealhir"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.bone.unmapped:0x83e91ba85",
+      "moves": [
+        "trail_flower/effect_appealhil",
+        "trail_flower/effect_appealhir"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.bone.unmapped:0x8d7f21fb0",
+      "moves": [
+        "trail_flower/effect_appealhil",
+        "trail_flower/effect_appealhir"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.bone.unmapped:0x8ead0855a",
+      "moves": [
+        "trail_flower/effect_appealhil",
+        "trail_flower/effect_appealhir"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x1067ddad8a",
+      "moves": [
+        "trail/effect_specialairn2"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x11e9417690",
+      "moves": [
+        "trail/effect_specialairlw",
+        "trail/effect_speciallw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x12542f686b",
+      "moves": [
+        "trail/effect_attackhi3"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x13911da1fc",
+      "moves": [
+        "trail/effect_attacks3"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x13e7c1e06c",
+      "moves": [
+        "trail/effect_attacks33"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x13f214e98b",
+      "moves": [
+        "trail/effect_appealsl",
+        "trail/effect_appealsr"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x142307aa22",
+      "moves": [
+        "trail/0x109bb7bb2f"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x14829c42e2",
+      "moves": [
+        "trail/effect_specialairhi",
+        "trail/effect_specialhi"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x1513d713ea",
+      "moves": [
+        "trail/effect_specialairhi",
+        "trail/effect_specialhi"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x156aee2d02",
+      "moves": [
+        "trail/0x1114e7e1ae"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x1579ccbed1",
+      "moves": [
+        "trail/effect_attackairb"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x157ea17ac8",
+      "moves": [
+        "trail/effect_attackairf"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x15881bfcc7",
+      "moves": [
+        "trail/effect_appealsl",
+        "trail/effect_appealsr"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x1778ad7de6",
+      "moves": [
+        "trail/effect_throwf"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x182c3e71db",
+      "moves": [
+        "trail/0x14e2cff547"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x1872c42441",
+      "moves": [
+        "trail/effect_attacklw4"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x188c46ec76",
+      "moves": [
+        "trail_box/effect_visualscene01"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x188d42f0f3",
+      "moves": [
+        "trail/effect_attackhi4"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x18d12e19cd",
+      "moves": [
+        "trail/effect_attack12",
+        "trail/effect_attacks32",
+        "trail/effect_cliffattack"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x1a85be9e2e",
+      "moves": [
+        "trail_box/effect_visualscene01"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x1b82b9016a",
+      "moves": [
+        "trail/effect_finalvisualscene02"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x975712420",
+      "moves": [
+        "trail/effect_sleeploop",
+        "trail/effect_sleepstart"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0x9aa1f1420",
+      "moves": [
+        "trail/0xc14acdd23",
+        "trail/0xf6d9d14c7"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0xd2dca51a5",
+      "moves": [
+        "trail/effect_specialairhi",
+        "trail/effect_specialhi"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0xd6dd4defe",
+      "moves": [
+        "trail/effect_throwb"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0xd915a8b73",
+      "moves": [
+        "trail/effect_steppose",
+        "trail/effect_stepposeair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0xe1da3fe23",
+      "moves": [
+        "trail/effect_specialairhi",
+        "trail/effect_specialhi"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0xe537b167a",
+      "moves": [
+        "trail/effect_specialairhi",
+        "trail/effect_specialhi"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0xf3f44ef80",
+      "moves": [
+        "trail/effect_cliffcatch"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:0xff23a5fe4",
+      "moves": [
+        "trail/effect_attack13"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:null",
+      "moves": [
+        "trail/effect_attack11",
+        "trail/effect_attack12",
+        "trail/effect_attack13",
+        "trail/effect_attackhi3",
+        "trail/effect_dash",
+        "trail/effect_entryl",
+        "trail/effect_entryr",
+        "trail/effect_itemlegswalkb",
+        "trail/effect_itemlegswalkf",
+        "trail/effect_landingairlw",
+        "trail/effect_squatb",
+        "trail/effect_squatf",
+        "trail/effect_turn",
+        "trail/effect_turndash",
+        "trail/effect_walkfast",
+        "trail/effect_walkmiddle",
+        "trail/effect_walkslow",
+        "trail_thunder/effect_landing"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_atk_smoke",
+      "moves": [
+        "trail/effect_attackdash",
+        "trail/effect_attacks4",
+        "trail/effect_attacks4hi",
+        "trail/effect_attacks4lw",
+        "trail/effect_cliffattack",
+        "trail/effect_downattackd",
+        "trail/effect_downattacku",
+        "trail/effect_final",
+        "trail/effect_finall",
+        "trail/effect_slipattack",
+        "trail/effect_specialhi",
+        "trail/effect_speciallw",
+        "trail/effect_specialn1",
+        "trail/effect_specialn2",
+        "trail/effect_specials1",
+        "trail/effect_specials2",
+        "trail/effect_specials3",
+        "trail/effect_throwb"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_attack_speedline",
+      "moves": [
+        "trail/effect_catchattack",
+        "trail/effect_cliffattack",
+        "trail/effect_throwlw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_crown",
+      "moves": [
+        "trail/effect_downboundd",
+        "trail/effect_downboundu"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_dash_smoke",
+      "moves": [
+        "trail/effect_attackdash",
+        "trail/effect_cliffjump2",
+        "trail/effect_dash",
+        "trail/effect_escapeb",
+        "trail/effect_escapef",
+        "trail/effect_turndash",
+        "trail/effect_win3"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_down_smoke",
+      "moves": [
+        "trail/0x176381ec4b",
+        "trail/effect_appeallwl",
+        "trail/effect_appeallwr",
+        "trail/effect_attacklw4",
+        "trail/effect_cliffescape",
+        "trail/effect_downbackd",
+        "trail/effect_downbacku",
+        "trail/effect_downboundd",
+        "trail/effect_downboundu",
+        "trail/effect_downforwardd",
+        "trail/effect_downforwardu",
+        "trail/effect_escapen",
+        "trail/effect_landingfallspecial",
+        "trail/effect_slip",
+        "trail/effect_slipescapeb",
+        "trail/effect_slipescapef",
+        "trail/effect_throwhi",
+        "trail/effect_throwlw",
+        "trail/effect_win1"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_jump_aerial",
+      "moves": [
+        "trail/0x15baf562ba",
+        "trail/0x166d25a6c8",
+        "trail/0x182d9894a2",
+        "trail/0x19496ffd13",
+        "trail/0x1b77ca3cdf",
+        "trail/0x1d5be4eb0d"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_jump_smoke",
+      "moves": [
+        "trail/0x137877467d",
+        "trail/0x1458893253",
+        "trail/effect_jumpback",
+        "trail/effect_jumpfront"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_landing_smoke",
+      "moves": [
+        "trail/effect_appeallwl",
+        "trail/effect_appeallwr",
+        "trail/effect_entryl",
+        "trail/effect_entryr",
+        "trail/effect_landingairb",
+        "trail/effect_landingairf",
+        "trail/effect_landingairf2",
+        "trail/effect_landingairf3",
+        "trail/effect_landingairhi",
+        "trail/effect_landingairn",
+        "trail/effect_landingairn2",
+        "trail/effect_landingairn3",
+        "trail/effect_landingheavy",
+        "trail/effect_slipdown",
+        "trail/effect_throwhi"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_landing_smoke_s",
+      "moves": [
+        "trail/effect_attackhi3",
+        "trail/effect_attacklw4",
+        "trail/effect_landinglight",
+        "trail/effect_throwf",
+        "trail/effect_throwlw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_piyo",
+      "moves": [
+        "trail/effect_furafuraend",
+        "trail/effect_sleepend"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_piyopiyo",
+      "moves": [
+        "trail/0x15c91de007",
+        "trail/effect_bind"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_run_smoke",
+      "moves": [
+        "trail/effect_attackhi4charge",
+        "trail/effect_attacklw4charge",
+        "trail/effect_attacks4charge",
+        "trail/effect_cliffclimb",
+        "trail/effect_cliffescape"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_sliding_smoke",
+      "moves": [
+        "trail/effect_attackdash"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_smash_flash",
+      "moves": [
+        "trail/effect_attackairlw",
+        "trail/effect_attackhi4",
+        "trail/effect_attacklw4",
+        "trail/effect_attacks4",
+        "trail/effect_attacks4hi",
+        "trail/effect_attacks4lw",
+        "trail/effect_cliffattack",
+        "trail/effect_escapeb",
+        "trail/effect_escapef"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_smash_flash_s",
+      "moves": [
+        "trail/effect_attackhi4charge",
+        "trail/effect_attacklw4charge",
+        "trail/effect_attacks4charge",
+        "trail/effect_throwb",
+        "trail/effect_throwf",
+        "trail/effect_throwhi"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_turn_smoke",
+      "moves": [
+        "trail/effect_attacklw3",
+        "trail/effect_attacks3",
+        "trail/effect_attacks32",
+        "trail/effect_attacks33",
+        "trail/effect_downbackd",
+        "trail/effect_downbacku",
+        "trail/effect_downforwardd",
+        "trail/effect_downforwardu",
+        "trail/effect_downstandu",
+        "trail/effect_run",
+        "trail/effect_runbrake",
+        "trail/effect_runbrakel",
+        "trail/effect_runbraker",
+        "trail/effect_slip",
+        "trail/effect_slipescapeb",
+        "trail/effect_slipescapef",
+        "trail/effect_turnrun"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_v_smoke_a",
+      "moves": [
+        "trail/effect_appealhi1",
+        "trail/effect_appealhi2",
+        "trail/effect_appealhi3",
+        "trail/effect_attackhi4",
+        "trail/effect_specialn3"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.common:sys_whirlwind_l",
+      "moves": [
+        "trail/effect_specialhi",
+        "trail/effect_throwb"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:0x104e548cb2",
+      "moves": [
+        "trail/0x104e548cb2"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:0x12426b2248",
+      "moves": [
+        "trail_thunder/0x12426b2248"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:0x13967233c1",
+      "moves": [
+        "trail_hole/0x13967233c1"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:0x161ce9aa93",
+      "moves": [
+        "trail_hole/0x161ce9aa93"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:0x1971449a8b",
+      "moves": [
+        "trail/0x1971449a8b"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:0xe82abe0ae",
+      "moves": [
+        "trail_ice/0xe82abe0ae"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:0xf24c3b44b",
+      "moves": [
+        "trail_thunder/0xf24c3b44b"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_appealhi1",
+      "moves": [
+        "trail/effect_appealhi1"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_appealhi2",
+      "moves": [
+        "trail/effect_appealhi2"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_appealhi3",
+      "moves": [
+        "trail/effect_appealhi3"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_appealhil",
+      "moves": [
+        "trail_flower/effect_appealhil"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_appealhir",
+      "moves": [
+        "trail_flower/effect_appealhir"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_attackairf2",
+      "moves": [
+        "trail/effect_attackairf2"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_attackairf3",
+      "moves": [
+        "trail/effect_attackairf3"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_attackairn2",
+      "moves": [
+        "trail/effect_attackairn2"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_attackairn3",
+      "moves": [
+        "trail/effect_attackairn3"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_attacks32",
+      "moves": [
+        "trail/effect_attacks32"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_attacks33",
+      "moves": [
+        "trail/effect_attacks33"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_cliffattack",
+      "moves": [
+        "trail/effect_cliffattack"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_entryl",
+      "moves": [
+        "trail/effect_entryl"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_entryr",
+      "moves": [
+        "trail/effect_entryr"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_expansionair",
+      "moves": [
+        "trail_hole/effect_expansionair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_fall",
+      "moves": [
+        "trail_thunder/effect_fall"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_fallair",
+      "moves": [
+        "trail_thunder/effect_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_final",
+      "moves": [
+        "trail/effect_final"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_finalair",
+      "moves": [
+        "trail/effect_finalair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_finalairl",
+      "moves": [
+        "trail/effect_finalairl"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_finall",
+      "moves": [
+        "trail/effect_finall"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_finalvisualscene01",
+      "moves": [
+        "trail/effect_finalvisualscene01"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_finalvisualscene02",
+      "moves": [
+        "trail/effect_finalvisualscene02"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_fix",
+      "moves": [
+        "trail_lockoncursor/effect_fix"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_fly",
+      "moves": [
+        "trail_beam/effect_fly",
+        "trail_fire/effect_fly",
+        "trail_ice/effect_fly"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_fly2",
+      "moves": [
+        "trail_fire/effect_fly2"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_landing",
+      "moves": [
+        "trail_thunder/effect_landing"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_slipattack",
+      "moves": [
+        "trail/effect_slipattack"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_specialairn12",
+      "moves": [
+        "trail/effect_specialairn12"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_specialairs1",
+      "moves": [
+        "trail/effect_specialairs1"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_specialairs2",
+      "moves": [
+        "trail/effect_specialairs2"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_specialairssearch",
+      "moves": [
+        "trail/effect_specialairssearch"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_specialn12",
+      "moves": [
+        "trail/effect_specialn12"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_start",
+      "moves": [
+        "trail_cloud/effect_start",
+        "trail_lockoncursor/effect_start"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_vanishair",
+      "moves": [
+        "trail_hole/effect_vanishair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_visualscene01",
+      "moves": [
+        "trail_box/effect_visualscene01"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_visualscene02",
+      "moves": [
+        "trail_box/effect_visualscene02"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_visualscene04",
+      "moves": [
+        "trail_box/effect_visualscene04"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_win1",
+      "moves": [
+        "trail/effect_win1"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_win2",
+      "moves": [
+        "trail/effect_win2"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "case",
+      "name": "effect.unbound:effect_win3",
+      "moves": [
+        "trail/effect_win3"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "AFTER_IMAGE4_ON_arg29",
+      "moves": [
+        "trail/effect_attack11",
+        "trail/effect_attackairf2",
+        "trail/effect_attackairf3",
+        "trail/effect_attackairhi",
+        "trail/effect_attackairlw",
+        "trail/effect_attackairn",
+        "trail/effect_attackairn2",
+        "trail/effect_attackairn3",
+        "trail/effect_attackhi3",
+        "trail/effect_attacklw3",
+        "trail/effect_attacks4",
+        "trail/effect_attacks4hi",
+        "trail/effect_attacks4lw",
+        "trail/effect_downattackd",
+        "trail/effect_downattacku",
+        "trail/effect_slipattack",
+        "trail/effect_specialairhi",
+        "trail/effect_specialairlw",
+        "trail/effect_specialhi",
+        "trail/effect_speciallw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "AFTER_IMAGE_OFF",
+      "moves": [
+        "trail/effect_attack11",
+        "trail/effect_attackairf2",
+        "trail/effect_attackairf3",
+        "trail/effect_attackairhi",
+        "trail/effect_attackairlw",
+        "trail/effect_attackairn",
+        "trail/effect_attackairn2",
+        "trail/effect_attackairn3",
+        "trail/effect_attackhi3",
+        "trail/effect_attacklw3",
+        "trail/effect_attacks4",
+        "trail/effect_attacks4hi",
+        "trail/effect_attacks4lw",
+        "trail/effect_downattackd",
+        "trail/effect_downattacku",
+        "trail/effect_slipattack",
+        "trail/effect_specialairhi",
+        "trail/effect_specialairlw",
+        "trail/effect_specialhi",
+        "trail/effect_speciallw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "ATK_SET_SHIELD_SETOFF_MUL2",
+      "moves": [
+        "trail/game_attack11",
+        "trail/game_attack12",
+        "trail/game_attack13",
+        "trail/game_attackairlw",
+        "trail/game_attackdash",
+        "trail/game_attacks3",
+        "trail/game_attacks32",
+        "trail/game_attacks33",
+        "trail/game_attacks4",
+        "trail_fire/game_fly"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "AttackModule::enable_safe_pos",
+      "moves": [
+        "trail_fire/game_fly"
+      ],
+      "reason": "Pending engine feature (AttackModule::enable_safe_pos); Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "C"
+    },
+    {
+      "kind": "command",
+      "name": "AttackModule::set_attack_height_all",
+      "moves": [
+        "trail/game_attacklw3",
+        "trail/game_attacklw4"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "AttackModule::set_no_damage_fly_smoke_all",
+      "moves": [
+        "trail/game_attackhi3",
+        "trail/game_attackhi4",
+        "trail/game_specialairhi",
+        "trail/game_specialhi"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "AttackModule::set_no_finish_camera",
+      "moves": [
+        "trail/game_specialairhi",
+        "trail/game_specialhi"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "CANCEL_FILL_SCREEN",
+      "moves": [
+        "trail/effect_finalairend",
+        "trail/effect_finalairendl",
+        "trail/effect_finalend",
+        "trail/effect_finalendl"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "CHECK_FINISH_CAMERA",
+      "moves": [
+        "trail/game_throwb",
+        "trail/game_throwf",
+        "trail/game_throwhi",
+        "trail/game_throwlw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "COL_NORMAL",
+      "moves": [
+        "trail/effect_specialairlwstart",
+        "trail/effect_speciallwstart"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "EFFECT_FOLLOW_NO_SCALE",
+      "moves": [
+        "trail_thunder/0x12426b2248",
+        "trail_thunder/0xf24c3b44b",
+        "trail_thunder/effect_fall",
+        "trail_thunder/effect_fallair"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "EFFECT_STENCIL_OFF",
+      "moves": [
+        "trail_box/effect_visualscene02"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "EFFECT_STENCIL_ON",
+      "moves": [
+        "trail_box/effect_visualscene01"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "EffectModule::enable_sync_init_pos_last",
+      "moves": [
+        "trail/effect_attackhi4",
+        "trail/effect_attacks4",
+        "trail/effect_attacks4hi",
+        "trail/effect_attacks4lw",
+        "trail/effect_specialairhi",
+        "trail/effect_specialairn12",
+        "trail/effect_specialairn1end",
+        "trail/effect_specialairn1start",
+        "trail/effect_specialairn2",
+        "trail/effect_specialairn3",
+        "trail/effect_specialairs1",
+        "trail/effect_specialairs2",
+        "trail/effect_specialairs3",
+        "trail/effect_specialhi",
+        "trail/effect_speciallw",
+        "trail/effect_specialn12",
+        "trail/effect_specialn1end",
+        "trail/effect_specialn1start",
+        "trail/effect_specialn2",
+        "trail/effect_specialn3",
+        "trail/effect_specials1",
+        "trail/effect_specials2",
+        "trail/effect_specials3",
+        "trail_fire/effect_fly",
+        "trail_fire/effect_fly2",
+        "trail_ice/0xe82abe0ae",
+        "trail_ice/effect_fly"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "EffectModule::req_screen",
+      "moves": [
+        "trail/effect_final",
+        "trail/effect_finalair",
+        "trail/effect_finalairl",
+        "trail/effect_finall"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "FILL_SCREEN_MODEL_COLOR",
+      "moves": [
+        "trail/0x1971449a8b",
+        "trail/effect_finalairend",
+        "trail/effect_finalairendl",
+        "trail/effect_finalend",
+        "trail/effect_finalendl",
+        "trail/effect_finalvisualscene01",
+        "trail/effect_finalvisualscene03"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "FLASH",
+      "moves": [
+        "trail/effect_specialairlwstart",
+        "trail/effect_speciallwstart"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "FT_CATCH_STOP",
+      "moves": [
+        "trail/game_throwlw"
+      ],
+      "reason": "Pending engine feature (FT_CATCH_STOP); Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "C"
+    },
+    {
+      "kind": "command",
+      "name": "FT_START_ADJUST_MOTION_FRAME_REVISED_arg1",
+      "moves": [
+        "trail/game_specialn1end"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "FT_START_ADJUST_MOTION_FRAME_arg1",
+      "moves": [
+        "trail/game_specialairn2",
+        "trail/game_specialn2"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "FighterAreaModuleImpl::enable_fix_jostle_area",
+      "moves": [
+        "trail/game_attackdash",
+        "trail/game_attacklw4",
+        "trail/game_specialairlwstart",
+        "trail/game_speciallwstart"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "FighterCutInManager::set_throw_finish_zoom_rate",
+      "moves": [
+        "trail/game_throwb",
+        "trail/game_throwf",
+        "trail/game_throwhi",
+        "trail/game_throwlw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "GrabModule::set_rebound",
+      "moves": [
+        "trail/game_catch",
+        "trail/game_catchdash"
+      ],
+      "reason": "Pending engine feature (GrabModule::set_rebound); Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "C"
+    },
+    {
+      "kind": "command",
+      "name": "KineticModule::change_kinetic",
+      "moves": [
+        "trail/game_specialairn1end",
+        "trail/game_specialairn2",
+        "trail/game_specialairn3"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "KineticModule::resume_energy",
+      "moves": [
+        "trail/game_attackairlw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "KineticModule::suspend_energy",
+      "moves": [
+        "trail/game_attackairlw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "LAST_EFFECT_SET_ALPHA",
+      "moves": [
+        "trail/effect_attacklw4",
+        "trail/effect_cliffattack",
+        "trail/effect_throwlw",
+        "trail/effect_win2"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "LAST_EFFECT_SET_COLOR",
+      "moves": [
+        "trail/effect_cliffattack"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "LAST_EFFECT_SET_RATE",
+      "moves": [
+        "trail/0x104e548cb2",
+        "trail/effect_appeallwl",
+        "trail/effect_appeallwr",
+        "trail/effect_attack12",
+        "trail/effect_attackairlw",
+        "trail/effect_attackdash",
+        "trail/effect_attacks32",
+        "trail/effect_cliffattack",
+        "trail/effect_downattackd",
+        "trail/effect_downattacku",
+        "trail/effect_slipattack",
+        "trail/effect_specialairlw",
+        "trail/effect_specialhi",
+        "trail/effect_speciallw",
+        "trail/effect_throwb"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "REVERSE_LR",
+      "moves": [
+        "trail/game_throwb"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "SET_SPEED_EX",
+      "moves": [
+        "trail/game_attackairlw"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "UNCONSUMED_ACMD_ARGS",
+      "moves": [
+        "trail/0x101d62a80a",
+        "trail/0x1038522220",
+        "trail/0x109bdcf4e3",
+        "trail/0x115c6ebae9",
+        "trail/0x13551e065e",
+        "trail/0x14187c3652",
+        "trail/0x14ebbeaaf6",
+        "trail/0x1731f81985",
+        "trail/0x173695dd9c",
+        "trail/0x174192ed0a",
+        "trail/0x1781816786",
+        "trail/0x17a8f1483f",
+        "trail/0x17dff678a9",
+        "trail/0x1800e377a5",
+        "trail/0x180595cf25",
+        "trail/0x18078eb3bc",
+        "trail/0x184d041c97",
+        "trail/0x187089832a",
+        "trail/0x187292ffb3",
+        "trail/0x187b408277",
+        "trail/0x18954ee35b",
+        "trail/0x1899ea261f",
+        "trail/0x189bf15a86",
+        "trail/0x18e52417d4",
+        "trail/0x18eb9bae09",
+        "trail/0x18ecf66a10",
+        "trail/0x18eeed1689",
+        "trail/0x19fe1f3a9c",
+        "trail/0x1a05883372",
+        "trail/0x1a3146a1eb",
+        "trail/0x1ac191637a",
+        "trail/0x1b892249b6",
+        "trail/0x1bd493e2c5",
+        "trail/0x1e8e7d9bbd",
+        "trail/effect_thrownb",
+        "trail/effect_thrownf",
+        "trail/effect_thrownhi",
+        "trail/effect_thrownlw",
+        "trail_hole/effect_stay"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "UNPARSED_CALL",
+      "moves": [
+        "trail/0x1a3c2c1197",
+        "trail/0x1f62ec13f1",
+        "trail/game_attackairb",
+        "trail/game_attackairf",
+        "trail/game_attackairhi",
+        "trail/game_specialairhi",
+        "trail/game_specialhi",
+        "trail/game_specials1",
+        "trail/game_specials2",
+        "trail/game_specials3",
+        "trail_hole/effect_expansion",
+        "trail_hole/effect_vanish",
+        "trail_ice/0xc00a3e2ad",
+        "trail_ice/game_fly"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "WorkModule::off_flag",
+      "moves": [
+        "trail/0x1a3c2c1197",
+        "trail/0x1f62ec13f1",
+        "trail/game_attackairb",
+        "trail/game_attackairf",
+        "trail/game_attackairhi",
+        "trail/game_attackairlw",
+        "trail/game_attackairn",
+        "trail/game_specialairhi",
+        "trail/game_specialairn1",
+        "trail/game_specialairn1end",
+        "trail/game_specialairn2",
+        "trail/game_specialairn3",
+        "trail/game_specialhi",
+        "trail/game_specialn1",
+        "trail/game_specialn1end",
+        "trail/game_specialn2",
+        "trail/game_specialn3",
+        "trail/game_specials1"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "WorkModule::on_flag",
+      "moves": [
+        "trail/game_attack11",
+        "trail/game_attack12",
+        "trail/game_attackairb",
+        "trail/game_attackairf",
+        "trail/game_attackairhi",
+        "trail/game_attackairlw",
+        "trail/game_attackairn",
+        "trail/game_attacks3",
+        "trail/game_attacks32",
+        "trail/game_catch",
+        "trail/game_catchdash",
+        "trail/game_specialairhi",
+        "trail/game_specialairlw",
+        "trail/game_specialairn1",
+        "trail/game_specialairn1start",
+        "trail/game_specialairn2",
+        "trail/game_specialairn3",
+        "trail/game_specialhi",
+        "trail/game_speciallw",
+        "trail/game_specialn1",
+        "trail/game_specialn1start",
+        "trail/game_specialn2",
+        "trail/game_specialn3",
+        "trail/game_throwb"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "helper_71000621a0",
+      "moves": [
+        "trail/effect_appealhil",
+        "trail/effect_appealhir"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "helper_7100062bb0",
+      "moves": [
+        "trail/effect_appealhil",
+        "trail/effect_appealhir"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "helper_7100063a40",
+      "moves": [
+        "trail/effect_appealhil",
+        "trail/effect_appealhir"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    },
+    {
+      "kind": "command",
+      "name": "wait_loop_sync_mot",
+      "moves": [
+        "trail/effect_itemlegswalkb",
+        "trail/effect_itemlegswalkf",
+        "trail/effect_sleeploop",
+        "trail/effect_squatb",
+        "trail/effect_squatf",
+        "trail/effect_walkfast",
+        "trail/effect_walkmiddle",
+        "trail/effect_walkslow"
+      ],
+      "reason": "Ultimate-specific mechanic, Melee rules apply",
+      "approved_by": "coordinator per GD rule 2026-09-26",
+      "group": "B"
+    }
+  ]
+}

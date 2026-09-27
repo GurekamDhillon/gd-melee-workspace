@@ -118,7 +118,7 @@ def value(tok, env, nro, hashes):
         return tok
 
 
-HELPER_CALL = re.compile(r"(?:func_0x0*|FUN_)([0-9a-f]{8,})\(param_2,(.*)\);", re.S)  # FUN_ once Ghidra defined it
+HELPER_CALL = re.compile(r"(?:func_0x0*|FUN_)([0-9a-f]{8,})\(param_[12],(.*)\);", re.S)  # Ghidra's helper first parameter varies
 PTR_CALL = re.compile(r"PTR_(\w+?)_[0-9a-f]{8,}\)")
 CTOR_VAR = re.compile(r"lib::L2CValue::L2CValue\(\s*(?:\([^)]*\)\s*)?&?(\w+),(.+)\);\s*$")  # (L2CValue *)&uStack_60 too
 
@@ -178,6 +178,9 @@ def parse_body(text, nro, hashes, helpers=None):
             tests[m.group(1)] = last_test
         cm = COND.match(line)
         if cm or line in ("else {", "} else {"):
+            # Constructors immediately before a branch are predicate operands, not ACMD args.
+            # In particular get_value_float() leaves its comparison operands in pending.
+            pending = []
             if line.startswith("}") and stack:
                 closed = stack.pop()
             else:                                    # "}" came as its own statement just before
@@ -217,6 +220,8 @@ def parse_body(text, nro, hashes, helpers=None):
             out.append({"frame": frame, "cmd": name, "args": args, "when": when}); pending = []; continue
         m = CTOR_VAR.search(line)
         if m:
+            if m.group(1) == "param_1":
+                continue  # L2CValue(param_1, 0) is the C++ helper's return value
             v = value(m.group(2), env, nro, hashes)
             var[m.group(1)] = v
             pending.append(v); continue
@@ -232,14 +237,17 @@ def parse_body(text, nro, hashes, helpers=None):
             cmd = m.group(1)
             if cmd == "is_excute":
                 continue
+            if cmd == "get_value_float":
+                pending = []  # reads an animcmd parameter for a C-side predicate
+                continue
             args = pending; pending = []
             if cmd in ("frame", "wait") and args:
                 v = args[-1]
                 if isinstance(v, (int, float)) and not isinstance(v, bool):
                     frame = float(v) if cmd == "frame" else frame + float(v)
-                    out.append({"frame": frame, "cmd": cmd, "args": [v], "when": when})
+                    out.append({"frame": frame, "cmd": cmd, "args": args, "when": when})
                 else:                               # a frame from a parameter or constant: kept as is
-                    out.append({"frame": frame, "cmd": cmd, "args": [v], "unresolved_frame": True, "when": when})
+                    out.append({"frame": frame, "cmd": cmd, "args": args, "unresolved_frame": True, "when": when})
                 continue
             out.append({"frame": frame, "cmd": cmd, "args": args, "when": when}); continue
         m = re.match(r"^app::lua_bind::(\w+?)__(\w+?)_impl\s*\(", line)
@@ -252,13 +260,22 @@ def parse_body(text, nro, hashes, helpers=None):
             out.append({"frame": frame, "cmd": f"{m.group(1)}::{m.group(2)}", "args": pending, "when": when}); pending = []
             continue
         m = SV_MODULE_CALL.search(line)
-        if m and m.group(1) == "grab" and pending == [{"const": "0xe7d4"}]:
-            # grab!(... MA_MSC_CMD_GRAB_CLEAR_ALL) decompiles to sv_module_access::grab.
-            # The constant-table entry is shared by Ultimate fighter NROs.
-            out.append({"frame": frame, "cmd": "GrabModule::clear_all", "args": pending, "when": when})
+        if m:
+            if m.group(1) == "grab" and pending == [{"const": "0xe7d4"}]:
+                # grab!(... MA_MSC_CMD_GRAB_CLEAR_ALL) decompiles to sv_module_access::grab.
+                name = "GrabModule::clear_all"
+            else:
+                name = "sv_module_access::" + m.group(1)
+            out.append({"frame": frame, "cmd": name, "args": pending, "when": when})
             pending = []
+            continue
+        if re.match(r"^(?:app::|FUN_|func_0x)", line) and "(" in line:
+            out.append({"frame": frame, "cmd": "UNPARSED_CALL", "args": [line, *pending], "when": when})
+            pending = []
+    if pending:
+        out.append({"frame": frame, "cmd": "UNCONSUMED_ACMD_ARGS", "args": pending, "when": []})
     for c in out:
-        if (c["cmd"] == "WorkModule::on_flag" and c["args"] and
+        if (c["cmd"] == "WorkModule::on_flag" and len(c["args"]) == 1 and
                 c["args"][0] in ("FIGHTER_STATUS_ATTACK_FLAG_START_SMASH_HOLD", {"const": "0x818"})):
             # Ultimate's shared constant-table offset 0x818 is the smash-hold flag. Keep the
             # meaning independent of the fighter and game script name for the ftcmd translator.
@@ -358,7 +375,13 @@ def main():
     if a.check_against:
         check_against(rows, a.check_against)
     if a.out:
-        json.dump(rows, open(a.out, "w"), indent=1)
+        from pathlib import Path
+        import hashlib
+        target = Path(a.out)
+        target.write_text(json.dumps(rows, indent=1), encoding="utf-8")
+        audit = {"version": 1, "source_sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+                 "parser_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+        Path(str(target) + ".audit.json").write_text(json.dumps(audit, indent=2) + "\n", encoding="utf-8")
 
 
 REF_ATTACK = re.compile(r"macros::ATTACK\(agent, (.+)\);")
