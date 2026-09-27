@@ -1056,7 +1056,7 @@ def main():
         rep["acmd_audit"] = {"status": "passed", "loss_count": len(reported_losses)}
         json.dump(rep, open(os.path.join(out, "INSTALL.json"), "w"), indent=1)
     print(json.dumps({k: v for k, v in rep.items() if k not in ("conversion", "slot_files")}, indent=1)[:4000])
-    print(f"-> {out}  (scene token p1={name.replace(' ', '').lower()})")
+    print(f"-> {out}  (scene token p1={rep['name'].replace(' ', '').lower()})")
 
 
 if __name__ == "__main__":

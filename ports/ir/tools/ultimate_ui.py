@@ -30,6 +30,8 @@ ISO_ACE = "C:/iso/SSBM ACE Build v2.0.0.iso"
 UI_ROOT = os.path.join(os.environ.get("GW_ULTIMATE_ROOT", os.path.join(ROOT, "experiment", "tooling", "ultimate")),
                        "workspace", "extracted", "ui", "replace_patch", "chara")
 FORMAT = {G.GX_TF_C4: "CI4", G.GX_TF_C8: "CI8"}
+# Ultimate's franchise emblem per fighter (ui/replace_patch/series/series_1/series_1_<name>.bntx)
+SERIES = {"trail": "kingdomhearts"}
 
 
 def source_paths(root, fighter):
@@ -475,6 +477,60 @@ def write_icon(current, joint, source, label):
     return {"joint": joint, "size": [w, h], "format": "CI8/RGB5A3", "source": "chara_0", "label": label}
 
 
+def series_path(root, fighter):
+    """series_1 is the large (512x512) white-on-alpha emblem; None when the fighter has no entry."""
+    name = SERIES.get(fighter)
+    if name is None:
+        return None
+    return os.path.join(os.path.dirname(root), "series", "series_1", f"series_1_{name}.bntx")
+
+
+def emblem_texanim(ar):
+    """IfAll Eblm_matanim_joint: one I4 80x64 image per emblem, image track frame N = image N."""
+    return ar.u32(ar.u32(ar.archive.public("Eblm_matanim_joint") + 8) + 8)
+
+
+def write_emblem(stock, mxdt, external, source):
+    """Append the fighter's franchise emblem as a new Eblm frame and point MxDt's insignia_idx[ext] at it
+    (the HUD emblem behind the percent and the CSS door emblem both read that index)."""
+    ta = emblem_texanim(stock)
+    count = stock.u16(ta + 0x14)
+    like = desc_at(stock, ta, 0)
+    w, h, fmt = struct.unpack_from(">HHI", stock.data, like + 4)
+    if fmt != G.GX_TF_I4:
+        raise ValueError(f"unexpected emblem format {fmt}")
+    art = fit_art(source, (w, h), inset=4)
+    white = Image.new("RGBA", (w, h), (255, 255, 255, 255))
+    white.putalpha(art.getchannel("A"))
+    index = count
+    old_table = stock.u32(ta + 0xC)
+    stock.add_to_texanim(ta, [stock.image(like, G.encode_i4(white))], [])
+
+    track = tracks_of_image(stock, ta)
+    if not fobj.set_inplace(stock.data, track, {index: float(index)}):
+        fobj.set_constant(stock.data, track, {index: float(index)})
+    aobj = stock.u32(ta + 8)
+    end = struct.unpack_from(">f", stock.data, aobj + 4)[0]
+    if end < index + 1:
+        struct.pack_into(">f", stock.data, aobj + 4, float(index + 1))
+    base = mxdt.archive.public("mexData")
+    table = mxdt.u32(mxdt.u32(base + 8) + 8)
+    removed = stock.compact_unreferenced_tables([(old_table, count)])
+    old = mxdt.data[table + external]
+    mxdt.data[table + external] = index
+    return {"frame": index, "size": [w, h], "format": "I4", "insignia_was": old, "source": "series_1",
+            "old_table_bytes_removed": removed}
+
+
+def tracks_of_image(ar, ta):
+    f = ar.u32(ar.u32(ta + 8) + 8)
+    while f:
+        if ar.data[f + 12] == 1:
+            return f
+        f = ar.u32(f)
+    raise ValueError("emblem TexAnim has no image track")
+
+
 def icon_joint(mxdt, external):
     ar = ArchiveEdit(mxdt)
     base = ar.archive.public("mexData")
@@ -503,6 +559,12 @@ def install(files, fighter, internal, external, label, source_root=UI_ROOT, iso=
     result = {"fighter": fighter, "icon": write_icon(menu, joint, sources[0][0], label),
               "csp": write_csp(menu, original_menu, external, sources[1]),
               "stock": write_stocks(stock, original_stock, internal, sources[2])}
+    emblem = series_path(source_root, fighter)
+    if emblem is not None and os.path.isfile(emblem):
+        mxpath = os.path.join(files, "MxDt.dat")
+        mxdt = ArchiveEdit(open(mxpath, "rb").read())
+        result["emblem"] = write_emblem(stock, mxdt, external, load_bntx(emblem))
+        mxdt.save(mxpath)
     menu.save(mnpath)
     stock.save(ifpath)
     result["files"] = {"MnSlChr.usd": os.path.getsize(mnpath), "IfAll.usd": os.path.getsize(ifpath)}
