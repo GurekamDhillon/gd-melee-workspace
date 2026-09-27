@@ -1,4 +1,4 @@
-// fighterbuild build <mesh.json> <template costume .dat> <out.dat> <joint symbol> [matanim symbol] [report.json]
+// fighterbuild build <mesh.json> <template costume .dat> <out.dat> <joint symbol> [matanim symbol] [report.json] [--tex-format auto]
 // fighterbuild verify <out.dat> <mesh.json>
 //
 // A Melee costume file on a ported fighter's OWN joint tree, from the neutral mesh JSON that
@@ -11,7 +11,7 @@
 //    joint-local (HSD draws them with the joint matrix only)
 //  - material: the template costume's first textured MObj cloned (lighting, TEV), its TObj given
 //    the mesh's colour texture; XLU + alpha blend where the source blends
-//  - textures: RGBA from the JSON, encoded here (CMPR if opaque, else RGBA8)
+//  - textures: RGBA from the JSON, encoded here (legacy CMPR/RGBA8 by default)
 // Winding: FIGHTERBUILD_FLIP=1 reverses it (mkbuild needed that for BrawlLib); Ultimate's is
 // unverified until the model is seen in game.
 using System.Text.Json;
@@ -33,19 +33,32 @@ static class P
             return TriangleEquality.Run(a[1], a[2]);
         if (a.Length >= 5 && a[0] == "build")
         {
-            int flag = Array.IndexOf(a, "--pc-palette");
-            if (flag >= 0)
+            var positional = new List<string> { a[0] };
+            int pcPalette = 0;
+            bool autoTextures = false;
+            for (int i = 1; i < a.Length; i++)
             {
-                if (flag != a.Length - 2 || a[^1] != "64")
-                    throw new ArgumentException("--pc-palette requires 64 and must follow the build arguments");
-                a = a[..^2];
+                if (a[i] == "--pc-palette")
+                {
+                    if (pcPalette != 0 || ++i == a.Length || a[i] != "64")
+                        throw new ArgumentException("--pc-palette requires 64");
+                    pcPalette = 64;
+                }
+                else if (a[i] == "--tex-format")
+                {
+                    if (autoTextures || ++i == a.Length || a[i] != "auto")
+                        throw new ArgumentException("--tex-format requires auto");
+                    autoTextures = true;
+                }
+                else positional.Add(a[i]);
             }
-            if (a.Length < 5 || a.Length > 7)
+            if (positional.Count < 5 || positional.Count > 7)
                 throw new ArgumentException("invalid fighterbuild build arguments");
-            return Build(a[1], a[2], a[3], a[4], a.Length > 5 ? a[5] : null,
-                a.Length > 6 ? a[6] : null, flag >= 0 ? 64 : 0);
+            return Build(positional[1], positional[2], positional[3], positional[4],
+                positional.Count > 5 ? positional[5] : null,
+                positional.Count > 6 ? positional[6] : null, pcPalette, autoTextures);
         }
-        Console.Error.WriteLine("usage: fighterbuild build <mesh.json> <template.dat> <out.dat> <joint symbol> [matanim symbol] [report.json] [--pc-palette 64]");
+        Console.Error.WriteLine("usage: fighterbuild build <mesh.json> <template.dat> <out.dat> <joint symbol> [matanim symbol] [report.json] [--pc-palette 64] [--tex-format auto]");
         Console.Error.WriteLine("       fighterbuild compare <strips.dat> <triangles.dat>");
         return 2;
     }
@@ -54,7 +67,22 @@ static class P
 
     static GXWrapMode Wrap(string s) => s switch { "ClampToEdge" => GXWrapMode.CLAMP, "MirroredRepeat" => GXWrapMode.MIRROR, _ => GXWrapMode.REPEAT };
 
-    static int Build(string meshPath, string templatePath, string outPath, string jointSym, string matAnimSym, string reportPath, int pcPaletteCapacity)
+    static GXTexFmt AutoTextureFormat(byte[] rgba)
+    {
+        int pixels = rgba.Length / 4, intermediate = 0;
+        bool nearOpaque = true, binary = true;
+        for (int i = 3; i < rgba.Length; i += 4)
+        {
+            byte alpha = rgba[i];
+            if (alpha < 250) nearOpaque = false;
+            if (alpha != 0 && alpha != 255) binary = false;
+            if (alpha > 0 && alpha < 255) intermediate++;
+        }
+        if (nearOpaque || binary) return GXTexFmt.CMP;
+        return 2 * intermediate >= pixels ? GXTexFmt.RGBA8 : GXTexFmt.RGB5A3;
+    }
+
+    static int Build(string meshPath, string templatePath, string outPath, string jointSym, string matAnimSym, string reportPath, int pcPaletteCapacity, bool autoTextures)
     {
         var mesh = JsonDocument.Parse(File.ReadAllText(meshPath)).RootElement;
         var tf = new HSDRawFile(templatePath);
@@ -101,7 +129,12 @@ static class P
             var bgra = new byte[rgba.Length];
             for (int i = 0; i < w * h; i++)
             { bgra[i * 4] = rgba[i * 4 + 2]; bgra[i * 4 + 1] = rgba[i * 4 + 1]; bgra[i * 4 + 2] = rgba[i * 4]; bgra[i * 4 + 3] = rgba[i * 4 + 3]; }
-            var fmt = t.GetProperty("fmt").GetString() == "CMPR" ? GXTexFmt.CMP : GXTexFmt.RGBA8;
+            var fmt = autoTextures ? AutoTextureFormat(rgba) : t.GetProperty("fmt").GetString() switch
+            {
+                "CMPR" => GXTexFmt.CMP,
+                "RGB5A3" => GXTexFmt.RGB5A3,
+                _ => GXTexFmt.RGBA8,
+            };
             var data = GXImageConverter.EncodeImage(bgra, w, h, fmt, GXTlutFmt.IA8, out _);
             images[t.GetProperty("name").GetString()] = new HSD_Image { ImageData = data, Width = (short)w, Height = (short)h, Format = fmt };
             texRep.Add(new { name = t.GetProperty("name").GetString(), w, h, fmt = fmt.ToString(), bytes = data.Length });

@@ -610,6 +610,7 @@ def main():
                     help="LOUD OVERRIDE: skip no-drop provenance and installed hitbox position gate")
     ap.add_argument("--lod", choices=("high", "low"), default="high", help="which body to keep where the "
                     "model ships two levels of detail")
+    ap.add_argument("--tex-format", choices=("auto",), help="opt in to smaller CMPR/RGB5A3 costume textures")
     ap.add_argument("--host-hurtboxes", action="store_true", help="the host's capsules moved onto the "
                     "fighter's joints instead of plan_hurtboxes.py's fitted to the fighter's mesh")
     ap.add_argument("--fold-helpers", action="store_true", help="fold helper-bone (H_*) weights into their "
@@ -715,7 +716,8 @@ def main():
     costume_files = []
     rep["costumes"] = []
     for source, color in costumes:
-        converted = EM.export(a.fighter, source, fold_helpers=a.fold_helpers, lod=a.lod)
+        converted = EM.export(a.fighter, source, fold_helpers=a.fold_helpers, lod=a.lod,
+                              tex_format=a.tex_format)
         if mesh is not None and converted["joints"] != mesh["joints"]:
             sys.exit(f"{source}: costume skeleton differs from c00")
         if mesh is None:
@@ -727,7 +729,8 @@ def main():
         filename = f"{stem}{color}.dat"
         build_report = work / f"costume_report_{source}.json"
         r = subprocess.run([fb[0], "build", str(mpath), str(tmpl), os.path.join(files, filename), jsym, msym,
-                            str(build_report)] + (["--pc-palette", str(a.pc_palette)] if a.pc_palette else []),
+                            str(build_report)] + (["--pc-palette", str(a.pc_palette)] if a.pc_palette else [])
+                           + (["--tex-format", a.tex_format] if a.tex_format else []),
                            capture_output=True, text=True)
         if r.returncode:
             sys.exit(f"fighterbuild {source} failed: " + r.stdout[-800:] + r.stderr[-800:])

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """export_ultimate_mesh.py - an Ultimate fighter's body model -> the neutral mesh JSON mkbuild reads.
 
-    python ports/ir/tools/export_ultimate_mesh.py <fighter> [--costume c00] [-o mesh.json]
+    python ports/ir/tools/export_ultimate_mesh.py <fighter> [--costume c00] [--tex-format auto] [-o mesh.json]
 
 The joints are plan_parts.py's (the fighter's own skeleton, depth-first, plus TopN and YRotN); every
 vertex keeps its source bone weights 1:1 by joint name. Read with the upstream ssbh_lib
@@ -45,7 +45,22 @@ MAX_INFLUENCES = 4
 TEXCLI = os.path.join(os.path.dirname(os.path.dirname(DECODER)), "Ultimate-Tex-CLI", "ultimate_tex_cli.exe")
 
 
-def texture(path, max_size):
+def auto_texture_format(rgba):
+    """Choose a GX format from final, downscaled RGBA pixels.
+
+    RGB5A3 has only three alpha bits. A gradient covering at least half the image is
+    kept at eight bits to avoid visible bands on broad translucent surfaces.
+    """
+    alpha = rgba[3::4]
+    if not alpha:
+        raise ValueError("empty RGBA texture")
+    if min(alpha) >= 250 or all(a in (0, 255) for a in alpha):
+        return "CMPR"
+    intermediate = sum(0 < a < 255 for a in alpha)
+    return "RGBA8" if 2 * intermediate >= len(alpha) else "RGB5A3"
+
+
+def texture(path, max_size, tex_format=None):
     """.nutexb -> RGBA via the upstream Ultimate-Tex CLI, downscaled to max_size (Melee's memory:
     Kirby's seven 512x512 eye sheets are ~900 KB as CMPR, more than Meta Knight's whole costume)."""
     from PIL import Image
@@ -58,10 +73,16 @@ def texture(path, max_size):
     if max(im.size) > max_size:
         k = max_size / max(im.size)
         im = im.resize((max(4, int(im.width * k)), max(4, int(im.height * k))), Image.LANCZOS)
+    rgba = im.tobytes()
     alpha = im.getextrema()[3]
-    return {"w": im.width, "h": im.height, "source_size": list(src),
-            "fmt": "CMPR" if alpha[0] >= 250 else "RGBA8",
-            "rgba": base64.b64encode(im.tobytes()).decode()}
+    fmt = auto_texture_format(rgba) if tex_format == "auto" else ("CMPR" if alpha[0] >= 250 else "RGBA8")
+    result = {"w": im.width, "h": im.height, "source_size": list(src),
+              "fmt": fmt, "rgba": base64.b64encode(rgba).decode()}
+    if tex_format == "auto":
+        result["alpha_intermediate_pixels"] = sum(0 < a < 255 for a in rgba[3::4])
+        result["format_reason"] = ("broad smooth alpha" if fmt == "RGBA8" else
+                                   "opaque or binary alpha" if fmt == "CMPR" else "limited smooth alpha")
+    return result
 
 
 def decode(path):
@@ -139,7 +160,7 @@ def lod_skip(names, lod):
     return out
 
 
-def export(fighter, costume, max_tex=256, fold_helpers=False, face_clip="a00wait1", lod="high"):
+def export(fighter, costume, max_tex=256, fold_helpers=False, face_clip="a00wait1", lod="high", tex_format=None):
     ir = json.load(open(os.path.join(INSTANCES, f"{fighter}.ultimate-body.ir.json"), encoding="utf-8"))
     plan = plan_parts.plan(ir)
     rest = rest_of(ir)
@@ -263,7 +284,7 @@ def export(fighter, costume, max_tex=256, fold_helpers=False, face_clip="a00wait
         path = os.path.join(base, name + ".nutexb")
         if not os.path.exists(path):
             sys.exit(f"texture {name} not in {base}")
-        textures.append(dict(name=name, **texture(path, max_tex)))
+        textures.append(dict(name=name, **texture(path, max_tex, tex_format)))
     stats["texture_bytes_rgba"] = sum(t["w"] * t["h"] * 4 for t in textures)
     return {"fighter": fighter, "costume": costume, "joints": joints, "dobjs": dobjs,
             "textures": textures, "stats": stats}
@@ -275,11 +296,13 @@ def main():
     ap.add_argument("--costume", default="c00")
     ap.add_argument("-o", "--out")
     ap.add_argument("--max-texture", type=int, default=256)
+    ap.add_argument("--tex-format", choices=("auto",), help="opt in to CMPR/RGB5A3/RGBA8 alpha-aware texture selection")
     ap.add_argument("--lod", choices=("high", "low"), default="high")
     ap.add_argument("--fold-helpers", action="store_true",
                     help="H_* weights -> nearest non-helper ancestor (when the clips do not bake model.nuhlpb)")
     args = ap.parse_args()
-    res = export(args.fighter, args.costume, args.max_texture, args.fold_helpers, lod=args.lod)
+    res = export(args.fighter, args.costume, args.max_texture, args.fold_helpers, lod=args.lod,
+                 tex_format=args.tex_format)
     out = args.out or os.path.join(ROOT, "_build", "tmp", "ultimate-mesh", f"{args.fighter}_{args.costume}.json")
     os.makedirs(os.path.dirname(out), exist_ok=True)
     json.dump(res, open(out, "w"))
