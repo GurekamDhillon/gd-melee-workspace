@@ -22,12 +22,25 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 . ./portlib.sh
 
 test_mode=0
-if [ "${1:-}" = "--test" ]; then
-    test_mode=1
+realtime=0
+# --test runs turbo by default (MELEE_TURBO=1: virtual clock, no pacing; see PORT_DEV_QUICKREF);
+# --realtime keeps 60 Hz. A plain window run keeps its default (realtime) unless the caller sets it.
+while [ "${1:-}" = "--test" ] || [ "${1:-}" = "--realtime" ]; do
+    case "$1" in
+        --test) test_mode=1 ;;
+        --realtime) realtime=1 ;;
+    esac
     shift
+done
+if [ "$test_mode" = 1 ]; then
+    if [ "$realtime" = 1 ]; then export MELEE_TURBO=0
+    else export MELEE_TURBO=1
+    fi
+elif [ "$realtime" = 1 ]; then
+    export MELEE_TURBO=0
 fi
 name="${1:-}"
-[ -n "$name" ] || gw_die "usage: run.sh [--test] <sandbox-name> [game args...]"
+[ -n "$name" ] || gw_die "usage: run.sh [--test] [--realtime] <sandbox-name> [game args...]"
 shift
 
 [ -f "$GW_EXE" ] || gw_die "no exe at $GW_EXE - run tools/port/build.sh first"
