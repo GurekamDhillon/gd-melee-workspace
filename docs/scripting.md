@@ -310,6 +310,7 @@ Coordinates are world units, finite and within ±100000. Each write forks the LA
 | function | |
 |---|---|
 | `gd.stage_add_platform(x, y, width [, {passthrough=, ledges=}])` | a horizontal floor centred on `(x, y)`; returns a handle, or `nil, reason` |
+| `gd.stage_add_model{file=, symbol='map_head', group=0, joint='root', x=0, y=0, z=0, scale=1, rot=0, platform=}` | Draw a JObj branch from a stage or mounted mod DAT in the stage world pass (lit, fogged). `joint` is a group-local zero-based index, `JOBJ_<index>`, or `root`; `rot` is degrees about Z. Returns a model handle or `nil, reason`. `platform` attaches a `gd.stage_add_platform` floor: `gd.stage_move(model, x, y)` carries it and `gd.stage_remove(model)` removes both; an attached floor does not draw its slab. Each DAT is loaded once per scene into heap 0 and released at scene end; up to 8 DATs (8 MiB each) and 64 models. Branches with JObj instance references are refused. `gd.spawn_target` draws Mato's Target Test model (GrTMr.dat) |
 | `gd.stage_add_line(x1, y1, x2, y2, kind [, opts])` | `kind`: `"floor"` (left to right), `"ceiling"` (right to left), `"right_wall"` (top to bottom) or `"left_wall"` (bottom to top); a wrong direction is an error. `opts` (`passthrough`, `ledges`) is for floors only |
 | `gd.stage_move(handle, x, y)` | move a line so its midpoint is at `(x, y)`; call it every frame for a moving platform. A fighter standing on it is carried |
 | `gd.stage_remove(handle)` | remove a line or a target (a removed target raises no event); returns whether it existed |
