@@ -16,7 +16,7 @@ Writes <out>/geno.json, <out>/mod.json and <out>/clips.json (subaction -> the So
 play: for the installer), and prints every number with its source. Nothing it writes is committed.
 
 Semantic port (Sora must feel like Ultimate's; Melee's mechanics win):
-  1:1 from the dump except the calibrated Aerial Sweep carry: hitbox damage, angle, kbg, bkb, bone; the frames
+  1:1 from the dump: every hitbox (damage, angle, kbg, fkb, bkb, size, offset, bone), the frames
   (through FT_MOTION_RATE segments, beta's game_time), the clip lengths and IASA (cancel_frame),
   Sonic Blade's attack_speed_x 3.2, the -1 / -0.5 slow-down at f11, attack_num 3, start / end
   multipliers, end_frame_1-3 35/40/45, end_speed_y 1.5, landing lags (attack 20, up special 21),
@@ -56,22 +56,10 @@ sys.path.insert(0, HERE)
 from acmd_to_ftcmd import (attack_spheres, default_path, needs_hitbox_remap, remap_hitboxes,
                            apply_autolink, carry_hit_commands, carry_fkb_floor, validate_attack,
                            hit_extras, clear_rehit, reaction_stun_args,
-                           force_reaction_args, carry_adjustments)  # noqa: E402
+                           force_reaction_args)  # noqa: E402
 from acmd_loss import LossGuard, write_losses, verify_acmd_source  # noqa: E402
 
 LOCK_RANGE = 50         # the SEARCH box radius in game_specialssearch (a sphere approximates it)
-UPB_CARRY_PROFILE = {
-    # Reference trajectories: Fox, Marth, Bowser, and Jigglypuff; ground and air rise.
-    # Each number is the emitted FKB for one carry window.  The last window has
-    # separate lower and upper launch speeds to converge on the finisher.
-    "fkb": (49, 65, 71, 30, 73, (66, 33)),
-    "z_signs": (1, -1, 1, -1, 1, -1),
-    "mirror_z": True,
-    "link_last": True,
-    "radius_pad": .85,
-    "finisher_y": 8,
-    "finisher_size": 8,
-}
 MAX_LOCK_DEG = 40       # INFERRED: steepest locked-on dash
 STICK_DEG = 25          # INFERRED: stick up / down without a target
 # ---- Sonic Blade steering (echo, from _research/ultimate-sonic-blade-steering.md) ----------------
@@ -330,7 +318,7 @@ def audit_special_row(row, joint_of, *, sonic_hit_branch=True, allowlist=None):
 
 
 def hit_events(tl, row, t, joint_of, rep, name, carry_motion=None, losses=None, audit=True,
-               allowlist=None, carry_profile=None):
+               allowlist=None):
     """A game script's ATTACK / clear_all -> Melee hitboxes on the timeline (game frames)."""
     if audit:
         audited_losses = audit_special_row(row, joint_of, allowlist=allowlist)
@@ -339,8 +327,7 @@ def hit_events(tl, row, t, joint_of, rep, name, carry_motion=None, losses=None, 
     events = []
     guard = LossGuard(f"{row.get('agent', 'trail')}/{row.get('script', name)}", allowlist)
     carry_hits = carry_hit_commands(row)
-    carry_floors = carry_fkb_floor(row, *carry_motion) if carry_motion and not carry_profile else {}
-    carry_plan = carry_adjustments(row, carry_profile) if carry_profile else {}
+    carry_floors = carry_fkb_floor(row, *carry_motion) if carry_motion else {}
     for c in row["commands"]:
         if not default_path(c.get("when", [])):
             continue
@@ -350,19 +337,15 @@ def hit_events(tl, row, t, joint_of, rep, name, carry_motion=None, losses=None, 
             if n["bone"] not in joint_of:
                 raise ValueError(f"{name} frame {c['frame']:g}: ATTACK bone {n['bone']!r} unmapped")
             j = joint_of[n["bone"]]
-            change = carry_plan.get(id(c), {})
-            converted = {**n, **{k: v for k, v in change.items() if k in n}}
-            samples = attack_spheres(converted, j, carry=change.get("carry", id(c) in carry_hits),
-                                     fkb=carry_floors.get(id(c), converted["fkb"]))
+            samples = attack_spheres(n, j, carry=id(c) in carry_hits,
+                                     fkb=carry_floors.get(id(c), n["fkb"]))
             payload = dict(samples[0])
             if len(samples) > 1:
                 payload["samples"] = samples
             events.append((c["frame"], "hit", payload))
-            if change.get("stun"):
-                events.append((c["frame"], "stun", {"id": n["id"], "frames": change["stun"]}))
             rep.append("  %s f%d (game %d): id %d %s %.1f%% angle %d kbg %d fkb %d bkb %d size %.1f" % (
                 name, c["frame"], round(t(c["frame"])), n["id"], n["bone"], n["damage"], n["angle"],
-                n["kbg"], converted["fkb"], n["bkb"], converted["size"]))
+                n["kbg"], n["fkb"], n["bkb"], n["size"]))
         elif c["cmd"] == "AttackModule::clear_all":
             events.append((c["frame"], "clear", CLEAR))
         elif c["cmd"] == "AttackModule::set_add_reaction_frame_revised":
@@ -593,8 +576,7 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
         for f in range(g0, total):
             tl.at(f, PUTF(V_VEL_Y, v0 - a * (f - g0)), 1)
         hit_events(tl, row, t, joint_of, rep, name,
-                   carry_motion=(t, lambda f: v0 - a * (f - g0)), losses=losses, audit=False,
-                   carry_profile=UPB_CARRY_PROFILE)
+                   carry_motion=(t, lambda f: v0 - a * (f - g0)), losses=losses, audit=False)
         state(name, "geno.air", tl.words(total, CHG(MS_FALLSPECIAL)), phys="air_drift", coll="anim_motion",
               ledge="front", landing_lag=int(H["landing_frame"]))
         rep.append("%s: %d game frames (%d clip frames through FT_MOTION_RATE), rise from game f%d: vy %.3f - %.2f/frame "

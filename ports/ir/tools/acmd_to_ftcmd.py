@@ -309,61 +309,6 @@ def carry_fkb_floor(row, game_time, attacker_vy, *, gravity=0.23, weight=100):
     return floor
 
 
-def carry_adjustments(row, profile):
-    """Apply a measured carry profile to repeated set-weight attack windows.
-
-    The profile is move data, while the selection, lane mirroring, and hitstun
-    restoration are shared conversion rules.  A profile mismatch fails rather
-    than silently changing a different attack after an ACMD update.
-    """
-    windows, eligible = carry_windows(row)
-    strengths = profile["fkb"]
-    if (len(eligible) != len(strengths) or not eligible or
-            any(a is not b for a, b in zip(eligible, windows))):
-        raise ValueError("carry profile does not match the source attack windows")
-    if len(windows) != len(eligible) + 1:
-        raise ValueError("carry profile needs one following finisher window")
-    if "z_signs" in profile:
-        signs = tuple(1 if all(c["named"]["z"] > 0 for c in window) else
-                      -1 if all(c["named"]["z"] < 0 for c in window) else 0
-                      for window in eligible)
-        if signs != profile["z_signs"]:
-            raise ValueError("carry profile does not match the source horizontal lanes")
-    first_z = eligible[0][0]["named"]["z"]
-    if first_z == 0:
-        raise ValueError("carry profile needs a nonzero first horizontal lane")
-    adjusted = {}
-    for index, (window, strength) in enumerate(zip(eligible, strengths)):
-        middle_y = (min(c["named"]["y"] for c in window) +
-                    max(c["named"]["y"] for c in window)) / 2
-        for c in window:
-            n = c["named"]
-            fkb = strength[0 if n["y"] < middle_y else 1] if isinstance(strength, tuple) else strength
-            if not isinstance(fkb, int) or not 1 <= fkb <= 511:
-                raise ValueError(f"carry FKB {fkb!r} is outside Melee's fixed-KB range")
-            change = {"fkb": fkb, "carry": profile["link_last"] or index < len(eligible) - 1}
-            if index and profile.get("radius_pad", 0):
-                change["size"] = n["size"] + profile["radius_pad"]
-            if profile["mirror_z"] and n["z"] * first_z < 0:
-                change["z"] = -n["z"]
-                if n.get("z2") is not None:
-                    change["z2"] = -n["z2"]
-            # SetWeight fixes Ultimate's KB calculation at weight 100.  Static
-            # Melee FKB cannot reproduce that for every victim, but HBSTUN can
-            # retain its reference-weight stun after lowering launch speed.
-            def stun_frames(value):
-                kb = ((18 + (1.4 + .7 * value)) * n["kbg"] / 100 + n["bkb"])
-                return int(.4 * kb)
-            change["stun"] = max(0, stun_frames(n["fkb"]) - stun_frames(fkb))
-            adjusted[id(c)] = change
-    finisher = max(windows[-1], key=lambda c: c["named"]["size"])
-    finisher_change = {"y": profile["finisher_y"], "size": profile["finisher_size"]}
-    if finisher["named"].get("y2") is not None:
-        finisher_change["y2"] = profile["finisher_y"]
-    adjusted[id(finisher)] = finisher_change
-    return adjusted
-
-
 def _hitbox_features(box):
     """Decode the geometry and knockback fields used to compare live candidates."""
     w0, w1, w2, w3, w4 = box["words"]
