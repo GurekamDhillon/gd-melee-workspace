@@ -7,15 +7,16 @@
 A semantic translation (the port feels like the fighter; Melee's mechanics win):
   frame(n) / wait(n)      AsyncWait n / SyncWait n. Both engines count animation frames and a
                           command after the wait runs on frame n+1, so the numbers carry over.
-  ATTACK                  Melee hitbox (spawn_hitbox_0..4, melee/src/melee/lb/types.h): slot = id,
+  ATTACK                  Melee hitbox (spawn_hitbox_0..4, melee/src/melee/lb/types.h): id is
+                          assigned to one of four live slots; excess boxes keep the highest
+                          damage, then radius (ties keep the earlier box).
                           bone = the fighter's own joint (joint_of_bone), damage, angle (361 is the
                           Sakurai angle in both), knockback growth / base / fixed copied 1:1 (the
                           knockback formula has the same shape and constants in both games), size
                           and offset in the fighter's own units (its skeleton is Ultimate's).
                           Offsets are written z / y / x as the decomp names the fields - checked in
                           game with gd.hitboxes, not assumed.
-  CATCH                   Melee catch-element hitbox. Ultimate's optional second capsule point is
-                          ignored, as it is for ATTACK; the first point supplies the sphere offset.
+  CATCH                   Melee catch-element hitbox. Each capsule endpoint becomes a sphere.
   AttackModule::clear_all ClearHitboxes.
   GrabModule::clear_all   ClearHitboxes.
   FT_MOTION_RATE r        SetTimerAnim (the animation rate command).
@@ -83,6 +84,95 @@ def default_path(when):
     return True
 
 
+def remap_hitboxes(events, rep):
+    """Allocate four ftcmd slots, preserving each live source ID across replacements.
+
+    All emitted boxes use hit group zero. Melee copies that group's victim list to a newly
+    enabled slot; replacing the same live slot does not reset it. Dropped Ultimate boxes
+    remain logical candidates and can return when a slot opens or priorities change.
+    """
+    logical = {}   # source key -> latest encoded hitbox and first-spawn order
+    resident = {}  # source key -> Melee slot
+    result = []
+
+    def emit_hit(frame, key, slot):
+        hw = logical[key]["words"].copy()
+        hw[0] = (hw[0] & ~(7 << 23)) | (slot << 23)
+        result.append((frame, "hit", hw))
+
+    def drop(frame, key, reason):
+        box = logical[key]
+        rep.setdefault("dropped_hitboxes", []).append({
+            "frame": frame, "id": box["id"], "damage": box["damage"],
+            "radius": box["radius"], "reason": reason})
+
+    def reconcile(frame, changed_key=None):
+        winners = sorted(logical, key=lambda key: (-logical[key]["damage"],
+                                                    -logical[key]["radius"], logical[key]["order"]))[:4]
+        selected = set(winners)
+        leaving = [key for key in resident if key not in selected]
+        entering = [key for key in winners if key not in resident]
+        for key in leaving:
+            if key in logical:
+                drop(frame, key, "lower-priority replacement" if key == changed_key else
+                     "replaced by higher-priority hitbox")
+        if changed_key is not None and changed_key not in selected and changed_key not in leaving:
+            drop(frame, changed_key, "four-slot limit")
+
+        # If a clear removes the last resident while a dropped box is waiting, a same-group
+        # replacement retains its victim list. Otherwise the new box inherits that list from
+        # another enabled member of the group after the old slot is cleared.
+        handoff = leaving and entering and len(resident) == len(leaving) == 1
+        handoff_slot = resident[leaving[0]] if handoff else None
+        for key in leaving:
+            slot = resident.pop(key)
+            if not handoff:
+                result.append((frame, "clear", [(15 << 26) | slot]))
+        for key in entering:
+            free = [slot for slot in range(4) if slot not in resident.values()]
+            preferred = logical[key]["id"]
+            slot = handoff_slot if handoff else preferred if preferred in free else free[0]
+            resident[key] = slot
+            emit_hit(frame, key, slot)
+            handoff = False
+        if changed_key is not None and changed_key in selected and changed_key not in entering:
+            emit_hit(frame, changed_key, resident[changed_key])
+
+    for order, (frame, kind, payload) in enumerate(events):
+        if kind == "hit" and isinstance(payload, dict):
+            key = payload["key"]
+            first_order = logical[key]["order"] if key in logical else order
+            logical[key] = {**payload, "order": first_order}
+            reconcile(frame, key)
+        elif kind == "clear" and isinstance(payload, dict):
+            for key in payload["keys"]:
+                logical.pop(key, None)
+            reconcile(frame)
+        else:
+            result.append((frame, kind, payload))
+            if kind == "clear" and payload == [16 << 26]:
+                logical.clear()
+                resident.clear()
+    return result
+
+
+def needs_hitbox_remap(events):
+    """Leave ordinary four-ID rows on the original byte-for-byte encoding path."""
+    active = set()
+    for _, kind, payload in events:
+        if kind == "hit" and isinstance(payload, dict):
+            if payload["id"] >= 4:
+                return True
+            active.add(payload["key"])
+            if len(active) > 4:
+                return True
+        elif kind == "clear" and isinstance(payload, dict):
+            active.difference_update(payload["keys"])
+        elif kind == "clear" and payload == [16 << 26]:
+            active.clear()
+    return False
+
+
 def translate(row, joint_of_bone, scale=1.0):
     words, frame = [], 0.0
     rep = {"hitboxes": 0, "dropped_ultimate_only": 0, "other_path_commands": 0, "unmapped_bones": set(),
@@ -114,12 +204,14 @@ def translate(row, joint_of_bone, scale=1.0):
                 n["angle"], n["kbg"], n["fkb"], n["bkb"], elem, shield)
             if catch_only:                               # Melee's only_hit_grabbed (spawn_hitbox_0)
                 hw[0] |= 1 << 19
-            events.append((c["frame"], "hit", hw))
+            events.append((c["frame"], "hit", {"words": hw, "key": ("attack", n["id"]),
+                                                 "id": n["id"], "damage": n["damage"],
+                                                 "radius": n["size"] * scale}))
             rep["hitboxes"] += 1
             rep["dropped_ultimate_only"] += 1           # hitlag/SDI multipliers etc. on this hitbox
         elif cmd == "CATCH" and c.get("named"):
             n = c["named"]
-            if not isinstance(n["id"], int) or not 0 <= n["id"] < 4:
+            if not isinstance(n["id"], int) or n["id"] < 0:
                 rep["unknown"]["CATCH id " + str(n["id"])] = rep["unknown"].get("CATCH id " + str(n["id"]), 0) + 1
                 continue
             situation = n["situation"]
@@ -137,16 +229,18 @@ def translate(row, joint_of_bone, scale=1.0):
             # angle 361, KBG 100, element 8, item interaction and clank, sound kind 2.
             # Melee boxes are spheres. Ultimate's grab box is a capsule reaching x2/y2/z2 (Sora's
             # stand grab: z 4.6 -> 8.6), and most of the reach is in that far end, so a second
-            # sphere of the same size sits there in slot id + 2 (grabs use only ids 0-1).
-            ends = [(n["id"], n["x"], n["y"], n["z"])]
-            if n.get("x2") is not None and n["id"] < 2 and (n["x2"], n["y2"], n["z2"]) != (n["x"], n["y"], n["z"]):
-                ends.append((n["id"] + 2, n["x2"], n["y2"], n["z2"]))
-            for slot, x, y, z in ends:
+            # sphere of the same size sits at the far endpoint (logical id + 2).
+            ends = [(n["id"], 0, n["x"], n["y"], n["z"])]
+            if n.get("x2") is not None and (n["x2"], n["y2"], n["z2"]) != (n["x"], n["y"], n["z"]):
+                ends.append((n["id"] + 2, 1, n["x2"], n["y2"], n["z2"]))
+            for slot, end, x, y, z in ends:
                 hw = hitbox_words(slot, j, 0, n["size"] * scale, x * scale, y * scale, z * scale,
                                   361, 100, 0, 0, 8, 0, *flags)
                 hw[3] |= 0x12
                 hw[4] = (hw[4] & ~(0x1F << 2)) | (2 << 2)
-                events.append((c["frame"], "hit", hw))
+                events.append((c["frame"], "hit", {"words": hw, "key": ("catch", n["id"], end),
+                                                     "id": slot, "damage": 0,
+                                                     "radius": n["size"] * scale}))
                 rep["hitboxes"] += 1
             rep["grab_boxes"] = rep.get("grab_boxes", 0) + 1
         elif cmd.endswith("clear_all") or cmd == "AttackModule::clear_all":
@@ -154,7 +248,12 @@ def translate(row, joint_of_bone, scale=1.0):
         elif cmd == "AttackModule::clear" and c["args"] and isinstance(c["args"][0], int):
             # RemoveHitbox: the engine reads the id from the low 26 bits (alpha, 2026-09-26: the id at
             # <<23 wrote fp->x914[huge] in AttackLw4)
-            events.append((c["frame"], "clear", [(15 << 26) | (c["args"][0] & 0x3FFFFFF)]))
+            events.append((c["frame"], "clear", {"keys": [("attack", c["args"][0])],
+                                                   "words": [(15 << 26) | (c["args"][0] & 0x3FFFFFF)]}))
+        elif cmd == "GrabModule::clear" and c.get("args") and isinstance(c["args"][0], int):
+            grab_id = c["args"][0]
+            events.append((c["frame"], "clear", {"keys": [("catch", grab_id, 0), ("catch", grab_id, 1)],
+                                                   "words": []}))
         elif cmd == "ATTACK_ABS" and len(c["args"]) >= 7 and isinstance(c["args"][0], dict):
             kind = c["args"][0].get("const")
             a_ = c["args"]
@@ -198,13 +297,22 @@ def translate(row, joint_of_bone, scale=1.0):
     if cancel:
         events.append((float(cancel), "iasa", [23 << 26]))
     events.sort(key=lambda e: (e[0], {"time": 0, "rate": 1, "charge": 1, "clear": 2, "hit": 3, "iasa": 4}[e[1]]))
+    if needs_hitbox_remap(events):
+        events = remap_hitboxes(events, rep)
+    else:
+        legacy_grab_clears = sum(kind == "clear" and isinstance(payload, dict) and not payload["words"]
+                                 for _, kind, payload in events)
+        if legacy_grab_clears:
+            rep["unknown"]["GrabModule::clear"] = legacy_grab_clears
     for f, kind, w in events:
         if kind == "time":
             continue
+        if isinstance(w, dict) and not w["words"]:
+            continue  # legacy rows never emitted GrabModule::clear
         if f > frame:
             words.append((2 << 26) | int(round(f)))        # AsyncWait f
             frame = f
-        words += w
+        words += w["words"] if isinstance(w, dict) else w
     words.append(0)                                      # End
     rep["unmapped_bones"] = sorted(rep["unmapped_bones"])
     rep["cancel_frame"] = cancel
