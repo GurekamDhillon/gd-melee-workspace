@@ -712,8 +712,9 @@ help updated. Contract tests cover modal move/undo, ESC revert, axis lock, frame
 `collision`/`floor flags` to edit), **on-object gizmo handles** (§5.12), **toasts** for
 save/load/duplicate/clear, and the error/last-action split. The overlay also fills the widescreen frame
 via `gd.safe_area` (§4.6).
-**Remaining:** a native `gd.kit.field` widget, palette category *headers* (rows carry their category
-today), a ghost hover highlight, and redo-branch history display.
+**Remaining:** a native `gd.kit.field` widget, a ghost hover highlight, and
+palette *search ranking* (filter + category headers + recents are done: the list groups under gold
+`floor`/`wall`/`trim`/`glass`/`corner`/`door`/`balcony` headers, 5 parts per page).
 
 ### P2 — Own the ecosystem gap (spawns, camera, bounds)
 
