@@ -446,9 +446,11 @@ count). **P1:** duplicate enters move mode; `Ctrl+D` with a count (`Ctrl+D` then
 
 **Pattern:** named, grouped, coalesced (Unity: per-object deltas, groups split on mouse-down,
 `SetCurrentGroupName`; Blender: Undo History list). **Our situation:** 64 clone-snapshot steps, unnamed,
-no history UI; a failed op never advances history (§7.7 — already correct). **P0:** every mutation names
-its action and the status bar shows it ("Move bf_floor_4m", not "—"). **P1:** an Undo History list in
-the action menu (jump to a step; a new edit truncates the redo branch, Blender-style).
+no history UI; a failed op never advances history (§7.7 — already correct). **Done 2026-09-28:** every
+mutation is **named** through `acted()`/`name_undo()` (`undo_names` tracks the stack), the status bar
+shows the last action, and `map log on` opens an **Action Log** overlay listing the last named steps —
+**click a row to step back** (`map history <n>` does the same from a script). Undo pops a name; redo
+pushes "Redo". **Remaining:** showing the redo branch and jumping forward.
 
 ### 5.7 Property grid
 
@@ -481,8 +483,10 @@ the kit palette). **P1:** toasts at the top-right for save/load/duplicate; error
 
 **Pattern:** a searchable command/help surface; the two-layer model (exposed ops vs all ops, Blender
 F3). **Our situation:** the P0 help overlay is a single-column, scrollable, opaque, dimmed modal
-(verified: no bleed-through; proportional scrollbar). **P1:** `Space` search over *actions* (the
-command palette), with F1 remaining the keybind reference; both must be reachable from the panel.
+(verified: no bleed-through; proportional scrollbar). **Done 2026-09-28:** `Space` opens a **live action
+search** — type to filter every action, Up/Down to pick, Enter runs the highlighted one, ESC closes;
+`map search [text]` opens it from a script and `map run <text>` runs the best match. F1 remains the
+keybind reference. **Remaining:** search the help *rows* too, and a palette-driven search.
 
 ### 5.11 Discoverability of the scheme
 
@@ -697,8 +701,8 @@ help updated. Contract tests cover modal move/undo, ESC revert, axis lock, frame
 `collision`/`floor flags` to edit), **on-object gizmo handles** (§5.12), **toasts** for
 save/load/duplicate/clear, and the error/last-action split. The overlay also fills the widescreen frame
 via `gd.safe_area` (§4.6).
-**Remaining:** placement ghost, palette category grouping, Undo History list, `Space` action search,
-native `gd.kit.field`.
+**Remaining:** a native `gd.kit.field` widget, palette category *headers* (rows carry their category
+today), a ghost hover highlight, and redo-branch history display.
 
 ### P2 — Own the ecosystem gap (spawns, camera, bounds)
 
