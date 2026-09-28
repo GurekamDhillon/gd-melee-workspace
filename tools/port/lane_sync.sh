@@ -69,6 +69,9 @@ if [ -f "$src_rsp" ] && [ -f "$lane_rsp" ]; then
         FNR == NR { for (i = 1; i <= NF; i++) if ($i ~ /\.obj$/) have[$i] = 1; next }
         { for (i = 1; i <= NF; i++) if ($i ~ /\.obj$/ && !($i in have)) { print; break } }
     ' "$new_rsp" <(tr -d '\r' <"$lane_rsp"))"
+    # build.sh (slippi_build.sh) adds the Slippi and ENet objects itself and strips them from any
+    # curated list, so a lane list that still names one is stale, not unpublished work: drop it.
+    extra="$(printf '%s\n' "$extra" | grep -Ev '[/\\](gw_slippi_(pad|wire|peer|match_json|match|mode)|enet_(callbacks|compress|host|list|packet|peer|protocol|win32))\.obj"?$')"
     [ -z "$extra" ] || printf '%s\n' "$extra" >>"$new_rsp"
     n_extra=0; [ -z "$extra" ] || n_extra="$(printf '%s\n' "$extra" | wc -l)"
     mv -f "$new_rsp" "$lane_rsp"
