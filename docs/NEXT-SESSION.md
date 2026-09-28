@@ -51,7 +51,10 @@ disc's own `zero` (a Link clone: `char=57`, `anim_symbol=PlyLink5K_Share_ACTION_
 internal 52 / external 51** and takes `MxDt.dat` under a different table than this disc's row (ACE Build
 v2.0.0's row 51 is `zero`). Next: identify the ACE build the slot's row targets, or re-run
 `ports/ir/tools/install_ultimate.py` against this disc's tables, then select that fighter and re-check
-`gd.fx()` for `P_TrailFire*`/`P_TrailKeyblade*` after a B press.
+`gd.fx()` for `P_TrailFire*`/`P_TrailKeyblade*` after a B press. A third probe with the fighter id as a
+name (`p1=trail`) started **no match at all** (`gd.match().active == false`, `gd.player(1)` nil), so the
+name form is not accepted for this slot; read the mod's own `MxDt.dat` / `INSTALL.json`
+`moveset_rows` to learn the m-ex slot id the port expects, then select by `mex:<n>`.
 
 ## Current code
 
