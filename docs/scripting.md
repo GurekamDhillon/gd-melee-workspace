@@ -319,6 +319,7 @@ end
 | `gd.quit()` | close the game like the window's close button |
 | `gd.fly(port [, mode])` | debug movement (noclip). With no mode it reads: `true` while that port's fighter flies. `mode` is `true` / `"on"`, `false` / `"off"` (drop into Fall there), `"place"` (land on the floor below) or `"toggle"`; returns the new state. Flying: stick moves it at the fly speed (A ×0.25, B ×4), no gravity, no stage collision or ledges, no blast-zone KO, no hurtboxes unless solid; the camera follows it past the stage's bounds. Offline only, every mode (melee `docs/geno.md` 14.17) |
 | `gd.teleport(port, x, y)` | put the fighter exactly there. It keeps flying if it was; one on foot falls from there. Offline only |
+| `gd.hold_hitbox(port, on [, {action=, frame=}])` | with debug fly on: the fighter stays in an attack state (`"nair"` default, `"fair"` `"bair"` `"uair"` `"dair"` `"jab"` or a motion state id) frozen at the first frame a hitbox is live (or `frame`); the hitbox stays on, attacker hitlag is cancelled and the hit list is cleared every 8 frames so the same target is hit again. `gd.hold_hitbox(port)` returns `on, rehit_intervals`. Console: `hold [port] on\|off`. Offline only |
 | `gd.fly_speed([n])`, `gd.fly_solid([bool])` | the fly speed in units per frame at full stick (0.05-200, default 2), and whether hurtboxes stay on while flying (default off); each returns the current value. Offline only |
 
 ### Stage content (offline, gameplay mods)
