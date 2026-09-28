@@ -607,6 +607,13 @@ a release note.
 - `load_map(name)` → `gd.data_read` → `load(text, '@name', 't', {})` with an **empty environment** (no
   `gd`, no `io`, no globals) → `validate()` (schema, palette membership, ranges, units) → `apply()`.
 - `map play <file>` sets the session autoload; it is **not** persisted across relaunch (by design).
+- **Layout v2 (done 2026-09-28):** when the map carries stage bounds, `serialize` writes `version=2`
+  plus `camera={left,right,top,bottom}` and/or `blast={...}`; `validate` still accepts v1 and checks v2
+  bounds (`left < right`, `bottom < top`). Loading v2 applies them through `gd.stage_set_camera_bounds`
+  / `gd.stage_set_blast_bounds`, and says so if the stage refuses. `map bounds` reports the live bounds,
+  `bounds capture` stores them, `bounds restore` clears them, `bounds camera|blast l r t b` sets the
+  live stage and the document; the overlay draws the camera rect green and the blast rect red (clamped
+  to the canvas).
 
 ### 6.7 Community pain points (what our editor must not repeat)
 
@@ -624,8 +631,10 @@ a release note.
 ### 6.8 What cannot persist today (the roadmap's raw input)
 
 Stage id/binding · spawns/items/enemies · model binaries · authored collision geometry · tint/layer/
-visible/alpha · Z-depth collision · blast/camera bounds · undo history and UI state · pad handles ·
+visible/alpha · Z-depth collision · undo history and UI state · pad handles ·
 cross-mod sharing · rollback safety · streaming worlds · asset-bundle self-validation (units/scale).
+(Camera/blast bounds left this list with layout v2; **player respawns** stay on it — they are native
+general points with no engine setter yet.)
 
 ---
 
@@ -705,6 +714,13 @@ via `gd.safe_area` (§4.6).
 today), a ghost hover highlight, and redo-branch history display.
 
 ### P2 — Own the ecosystem gap (spawns, camera, bounds)
+
+**Done 2026-09-28 (data layer + camera/blast):** layout **v2** persists camera/blast bounds (v1 still
+reads), `map bounds capture|restore|camera l r t b|blast l r t b` edits them, and the overlay draws the
+camera rect green / blast rect red. Contract tests cover capture → v2 serialize → load-applies →
+round-trip and v1 compatibility.
+**Remaining:** **player respawns** need an engine setter (the 0–7 general points are native; only
+`spawn_target` exists today), a drag-a-rect bounds UI, and the walkoff warning (§6.7 #8).
 
 - Read, display, name, edit and persist: player respawns (ids 0–7) — the scripted-platform API already
   exists for spawn points; camera bounds and blast bounds via `gd.stage_set_camera_bounds` /
