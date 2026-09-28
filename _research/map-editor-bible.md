@@ -435,7 +435,11 @@ whether clicking the void clears). Local vs world only where meaningful — ImGu
 `select all` / `select clear` manage the set, and Move / Rotate / Scale / Mirror / Delete apply to the
 whole selection as **one undo step** (move shifts every member by the anchor's delta; rotate/scale act
 per part). Verified live: three parts rotated to 15 together, one undo unwound it, Delete removed all
-three. **Remaining:** marquee/box select, and Ctrl to subtract from the set.
+three. **Done:** the select tool also does **marquee box-select** — drag a box and every part whose projected
+origin falls inside joins the group (Shift-drag adds to the existing set; a click, under 4px, is still a
+plain pick). The edge handles now compute from the live bounds, so a stale handle can never hijack a
+click (a bug the box-select test caught). **Remaining:** nothing on selection; a future nicety is
+selecting by material/part type.
 
 ### 5.5 Duplicate / copy / paste / arrays
 
