@@ -118,6 +118,15 @@ export MELEE_RUN_LABEL="${MELEE_RUN_LABEL:-$lane / $name}"
 # while lanes test; a full-volume window is the first complaint. Callers can override it.
 export MELEE_VOLUME="${MELEE_VOLUME:-3}"
 
+# GD's window defaults (2026-09-28): a 16:9 window and a 1440p-class internal image. render_scale 3
+# makes the framebuffer follow the window's aspect, so a 16:9 window renders 2560x1440 internally
+# (see Aurora's scale_frame_buffer_to_aspect / MELEE_RENDER_SCALE in shim_vi.c). Widescreen defaults
+# on so runs show the wide picture; MELEE_WIDESCREEN=0 (or any of these) overrides per run.
+export MELEE_WINDOW_W="${MELEE_WINDOW_W:-1920}"
+export MELEE_WINDOW_H="${MELEE_WINDOW_H:-1080}"
+export MELEE_RENDER_SCALE="${MELEE_RENDER_SCALE:-3}"
+export MELEE_WIDESCREEN="${MELEE_WIDESCREEN:-1}"
+
 # Pad scripts are named relative to the working directory, and they all live in _build. Resolve a
 # bare name against that so callers can keep writing MELEE_PAD_SCRIPT=pad_specialhi.txt.
 if [ -n "${MELEE_PAD_SCRIPT:-}" ] && [ ! -f "$sandbox/${MELEE_PAD_SCRIPT}" ] &&
