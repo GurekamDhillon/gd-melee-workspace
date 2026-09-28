@@ -451,8 +451,10 @@ no history UI; a failed op never advances history (§7.7 — already correct). *
 mutation is **named** through `acted()`/`name_undo()` (`undo_names` tracks the stack), the status bar
 shows the last action, and `map log on` opens an **Action Log** overlay listing the last named steps —
 **click a row to step back** (`map history <n>` does the same from a script). **Done:** the Action Log also lists the **redo branch** (rows prefixed `redo:`, click one to step
-forward); `map redo <n>` mirrors `map history <n>` for scripts. **Remaining:** nothing on the history
-list itself — the next step is a per-part copy stack (§5.5).
+forward); `map redo <n>` mirrors `map history <n>` for scripts. The undo stack now snapshots the
+**whole document** (`{parts, bounds, spawns}`) and `history` re-applies the live stage effects on
+restore, so bounds and spawn edits are undoable like part edits; savestates carry bounds/spawns beside
+parts. **Remaining:** a per-part copy stack (§5.5).
 
 ### 5.7 Property grid
 
