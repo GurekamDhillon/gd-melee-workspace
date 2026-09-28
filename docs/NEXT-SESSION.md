@@ -39,6 +39,15 @@ the scene grammar (try the m-ex name first, then `mex:<row>`), drive a cast from
 (`gd.press(1,"B",-1)` in a ground state) and read `gd.fx()` for the attached `P_TrailFire*` package,
 plus a capture for the visual. Guides: `docs/prompts/codex-sora-effects.md`,
 `_research/geno-effects-runtime.md`.
+**First probe (2026-09-28) — installs and boots, wrong fighter selected:** with the slot copied under
+`_build/agents/batcha/sora-mods/` and `MELEE_MODS_DIR` pointed at it, the game boots on ACE Build
+v2.0.0, but `p1=mex:51` selects the disc's own **`zero`** (a Link clone: `char=57`,
+`anim_symbol=PlyLink5K_Share_ACTION_Wait_figatree`), **not** Sora, so `gd.fx()` is `{}` after a scripted
+`gd.input(1,"B",2)`. Cause: `INSTALL.json` says the slot replaces **row internal 52 / external 51** and
+takes `MxDt.dat` / `MnSlChr.usd` **from the disc**, so the disc's m-ex row has to be the matching one.
+Next: identify the ACE build the slot's row targets (or re-run `ports/ir/tools/install_ultimate.py`
+against this disc's tables), then select that row (or the fighter by name) and re-check `gd.fx()` for
+`P_TrailFire*` after a B press.
 
 ## Current code
 
