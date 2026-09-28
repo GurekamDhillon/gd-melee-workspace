@@ -6,6 +6,7 @@ for a separate game-side visibility-table extension. No fighter PlKb.dat data is
 changed by this converter.
 """
 
+import os
 from pathlib import Path
 import argparse
 import json
@@ -15,7 +16,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parent
-DEFAULT_SOURCE = Path(r"E:\Ultimate files\workspace\extracted\fighter\kirby\model\stone\c00")
+DEFAULT_SOURCE = Path(os.environ.get("GW_ULTIMATE_EXTRACT", str(Path(__file__).resolve().parents[3] / "_local" / "ultimate"))) / 'fighter/kirby/model/stone/c00'
 DEFAULT_PYTHON = ROOT / "experiment/tooling/ultimate/apps/Blender/blender-5.1.2-windows-x64/5.1/python/bin/python.exe"
 DEFAULT_CLI = ROOT / "experiment/tooling/ultimate/apps/Ultimate-Tex-CLI/ultimate_tex_cli.exe"
 DEFAULT_OUT = ROOT / "_build/tmp/ultimate-kirby-stone"

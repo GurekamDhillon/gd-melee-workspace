@@ -16,18 +16,19 @@ Run by build_mk_slot.py as its last step (after install_mk and geno.json), on th
                       the Geno exe)
 Scripts are matched by clip, not by move key, so rows the other build steps add or rebuild pick their effects up on the
 next run. Report: effects/work/fx_report.json."""
+from pathlib import Path
 import argparse, json, os, struct, subprocess, sys, hashlib, collections
 HERE = os.path.dirname(os.path.abspath(__file__)); MK = os.path.dirname(HERE)
 FX = os.path.join(MK, "effects"); FXT = os.path.join(FX, "tools"); FXW = os.path.join(FX, "work")
 sys.path.insert(0, FXT); sys.path.insert(0, os.path.join(MK, "model", "tools"))
-sys.path.insert(0, r"C:/Users/Gurek/Desktop/GD's Melee/tools/mex_port")
+sys.path.insert(0, os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[3])), 'tools/mex_port'))
 import ftscript as FS
 import brawl_fx as BF
 import install_mk as IM
 import mex_hsd
 
-EF_PAC = r"C:\iso\brawl-extract\files\effect\fighter\ef_metaknight.pac"
-EF_COMMON = r"C:\iso\brawl-extract\files\effect\ef_common.pac"
+EF_PAC = os.path.join(os.environ.get("GW_BRAWL_FILES", os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[3])), "_local", "brawl", "files")), 'effect/fighter/ef_metaknight.pac')
+EF_COMMON = os.path.join(os.environ.get("GW_BRAWL_FILES", os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[3])), "_local", "brawl", "files")), 'effect/ef_common.pac')
 EXPORT_EXE = os.path.join(FXT, "efexport.exe")
 EFBUILD = os.path.join(FXT, "efbuild", "bin", "Release", "net8.0", "efbuild.exe")
 EF_JSON = os.path.join(FXW, "ef_metaknight.json")

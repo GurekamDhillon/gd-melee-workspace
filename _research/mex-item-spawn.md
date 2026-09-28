@@ -1,7 +1,7 @@
 # m-ex item spawn for Sonic's spring (global ItemKind 277)
 
 **Date: 2026-09-19.** Research only. Nothing was built, nothing was run, no ISO and nothing under
-`C:/gdm/melee/` was modified. m-ex is used as a **specification only**: every m-ex behaviour below
+`${GW_ROOT}/melee/` was modified. m-ex is used as a **specification only**: every m-ex behaviour below
 is paraphrased in my own words; no m-ex `.asm`/`.h`/`.dat` content is reproduced. Where m-ex's
 source was read, the **shipped bytes** (Akaneia's `codes.gct`) were disassembled as well, so the
 claims rest on what the disc actually runs, not on a source tree that might differ from it.
@@ -9,7 +9,7 @@ claims rest on what the disc actually runs, not on a source tree that might diff
 Evidence labels: **VERIFIED** = read directly in a file or a disassembly (location given).
 **INFERRED** = reasoned from verified facts, not observed.
 
-New tool: `C:/gdm/tools/mex_port/dump_itfunction.py` (see [Tooling](#tooling)).
+New tool: `${GW_ROOT}/tools/mex_port/dump_itfunction.py` (see [Tooling](#tooling)).
 
 ---
 
@@ -27,7 +27,7 @@ New tool: `C:/gdm/tools/mex_port/dump_itfunction.py` (see [Tooling](#tooling)).
    fighter-init hook at `0x80068B40` (inside `Fighter_UnkInitLoad_80068914`), right after
    `ftFunction` is relocated and overloaded. Both verified by disassembling the payloads in
    Akaneia's `codes.gct`.
-3. **The native fix site is `Item_80267978` in `C:/gdm/melee/src/melee/it/item.c:532`.** For kind
+3. **The native fix site is `Item_80267978` in `${GW_ROOT}/melee/src/melee/it/item.c:532`.** For kind
    `>= 237`: `xB8_itemLogicTable = &item.Custom[kind-237]` (the *address of* the 0x3C entry, not a
    function pointer), `xC4_article_data = item.RuntimeIndex[kind-237]`, assert if the latter is
    NULL, then fall through to the existing `xBC_itemStateContainer = xB8->states` (item.c:559).
@@ -48,7 +48,7 @@ New tool: `C:/gdm/tools/mex_port/dump_itfunction.py` (see [Tooling](#tooling)).
 
 ### 1.1 Outer header: VERIFIED
 
-Source: `PlSn.dat` on `C:/iso/Akaneia.iso`, `itFunction` public symbol at **data+0x3D648**
+Source: `PlSn.dat` on `${GW_ISO_AKANEIA}`, `itFunction` public symbol at **data+0x3D648**
 (archive relocated at base 0, so every pointer below is a data-section offset). `R` = the word is
 in the archive's relocation table.
 
@@ -94,7 +94,7 @@ Each 8-byte entry is `{ u32 slot; u32 code_offset; }`. The loader writes
 `table[slot] = code + code_offset` (disassembly of the `0x803D7070` payload `+0x94..+0xAC`:
 `lwz r3,4(r5); add r3,r3,r10; lwz r4,0(r5); mulli r4,r4,4; stwx r3,r4,r9`). `table` is the
 0x3C-byte entry for the article's global kind (see Q2). The 15 words of that entry are
-`struct ItemLogicTable`, `C:/gdm/melee/src/melee/it/kinds/types.h:26-71`: `states, spawned,
+`struct ItemLogicTable`, `${GW_ROOT}/melee/src/melee/it/kinds/types.h:26-71`: `states, spawned,
 destroyed, picked_up, dropped, thrown, dmg_dealt, dmg_received, entered_air, reflected, clanked,
 absorbed, shield_bounced, hit_shield, evt_unk`. 15 × 4 = 0x3C, which matches m-ex's stride.
 
@@ -146,7 +146,7 @@ that no table reaches: `Idle_Enter` 0x30C, `Fall_Enter` 0x374, `Rebound_Enter` 0
 
 ### 1.5 Cross-check across all Akaneia custom fighters: VERIFIED
 
-`python dump_itfunction.py --iso C:/iso/Akaneia.iso --survey PlSn.dat PlTs.dat PlWf.dat PlDd.dat PlDe.dat PlLc.dat PlLz.dat`:
+`python dump_itfunction.py --iso ${GW_ISO_AKANEIA} --survey PlSn.dat PlTs.dat PlWf.dat PlDd.dat PlDe.dat PlLc.dat PlLz.dat`:
 
 | file | count | items (code off+size, instr relocs, slots written) | `item_lookup` count |
 |---|---:|---|---:|
@@ -203,7 +203,7 @@ Disassembly of that payload (args: r3 = fighter kind, r4 = desc, r5 = article in
    that `global >= 237`, so a vanilla-range id would write at a negative index.
 
 The port already implements exactly this (`gw_mex_shim_index_item`,
-`C:/gdm/melee/pc/platform/gw_mex_ftfunction_runtime.c`). The comment there says it is not yet
+`${GW_ROOT}/melee/pc/platform/gw_mex_ftfunction_runtime.c`). The comment there says it is not yet
 known whether this call also fills item.Custom. That question is now settled: **it does not.**
 
 ### 2.2 The `itFunction` loader (0x803D7070) fills `item.Custom`: VERIFIED
@@ -285,11 +285,11 @@ payload:
 Previous research said the patch stores "the function pointer" at `+0xB8`. Correction: it stores
 the **pointer to the 0x3C `ItemLogicTable` entry**, which is exactly what the decomp field type
 `ItemLogicTable* xB8_itemLogicTable` expects. `+0xC4` = `Article* xC4_article_data`. I verified
-both offsets against `C:/gdm/melee/src/melee/it/types.h:281-284`.
+both offsets against `${GW_ROOT}/melee/src/melee/it/types.h:281-284`.
 
 ### 3.2 Where it goes in the decomp: VERIFIED
 
-**`C:/gdm/melee/src/melee/it/item.c`, `void Item_80267978(HSD_GObj* gobj)`, line 532**
+**`${GW_ROOT}/melee/src/melee/it/item.c`, `void Item_80267978(HSD_GObj* gobj)`, line 532**
 (`symbols.txt:12978`, `.text:0x80267978`, size 0x130; 0x80267990 is +0x18 into it). Its
 `if/else if` chain is the vanilla range split. Kind 277 currently lands in the final `else` (stage
 items, `kind - It_Kind_Old_Kuri`), which indexes `it_804A0F60[69]` and `it_803F4D20[69]`. The
@@ -477,17 +477,17 @@ steps 5-8 make the guest code callable, and steps 9-10 do the spawn.
 
 ## Tooling
 
-`C:/gdm/tools/mex_port/dump_itfunction.py` is a read-only parser for `itFunction`. It reuses
+`${GW_ROOT}/tools/mex_port/dump_itfunction.py` is a read-only parser for `itFunction`. It reuses
 `mex_hsd.py` and the `MEXFunction` parser in `dump_ftfunction.py`, and it writes nothing except an
 explicit `--emit-blob` target.
 
 ```
-python dump_itfunction.py --iso C:/iso/Akaneia.iso PlSn.dat                      # slots, names
-python dump_itfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --states 8           # state rows (auto-bounded by debug symbol)
-python dump_itfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --symbols --relocs   # full listing
-python dump_itfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --emit-blob it_sn.bin
+python dump_itfunction.py --iso ${GW_ISO_AKANEIA} PlSn.dat                      # slots, names
+python dump_itfunction.py --iso ${GW_ISO_AKANEIA} PlSn.dat --states 8           # state rows (auto-bounded by debug symbol)
+python dump_itfunction.py --iso ${GW_ISO_AKANEIA} PlSn.dat --symbols --relocs   # full listing
+python dump_itfunction.py --iso ${GW_ISO_AKANEIA} PlSn.dat --emit-blob it_sn.bin
 python ppc_disasm.py --raw it_sn.bin --base 0x80000000 --start 0x8000030C --count 28
-python dump_itfunction.py --iso C:/iso/Akaneia.iso --survey PlSn.dat PlTs.dat PlWf.dat PlDd.dat PlDe.dat PlLc.dat PlLz.dat
+python dump_itfunction.py --iso ${GW_ISO_AKANEIA} --survey PlSn.dat PlTs.dat PlWf.dat PlDd.dat PlDe.dat PlLc.dat PlLz.dat
 ```
 
 Flags: `--item N` (one article), `--code-base` (default `0x80000000`), `--symbols`, `--relocs`,
@@ -495,7 +495,7 @@ Flags: `--item N` (one article), `--code-base` (default `0x80000000`), `--symbol
 
 ### Reproduction notes (not saved as tools)
 
-- **`codes.gct` payloads:** read `codes.gct` from `C:/iso/Akaneia.iso`. The header is
+- **`codes.gct` payloads:** read `codes.gct` from `${GW_ISO_AKANEIA}`. The header is
   `00D0C0DE 00D0C0DE` and the terminator is `F0000000`. A `C2` code is
   `{0xC2 | addr&0x1FFFFFF, nlines}` followed by nlines×8 bytes; an `04` code is a one-word write.
   There are 1163 codes, and the terminator is at file offset `0x12D00`. The relevant hooks and

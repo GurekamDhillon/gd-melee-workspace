@@ -22,14 +22,15 @@ Kirby's costumes, animation file (PlKbAJ.dat), sound bank, effects and m-ex call
 CSS: the existing ext-51 icon keeps its cell and gets a new icon joint that is a copy of Kirby's (PLACEHOLDER art);
 its door portrait (CSP) frames become Kirby's. Stock icons (IfAll) for internal 52 become Kirby's. PlCo.dat's
 per-internal-kind tables [4] and [5] get Kirby's entry at 52."""
+from pathlib import Path
 import sys, os, struct, json, argparse, runpy, io, contextlib
 HERE = os.path.dirname(os.path.abspath(__file__)); MK = os.path.dirname(HERE)
 BKT = os.path.join(os.path.dirname(os.path.dirname(MK)), "experiment", "brawl-kirby", "tools")
 BKSLOT = os.path.join(os.path.dirname(os.path.dirname(MK)), "experiment", "brawl-kirby", "mods-slot", "brawl-kirby-slot", "files")
-ROOT = r"C:/Users/Gurek/Desktop/GD's Melee"
+ROOT = os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[3]))
 sys.path.insert(0, ROOT + "/tools/mex_port"); sys.path.insert(0, BKT)
 import mex_hsd, texanim_keys
-ISO = "C:/iso/SSBM ACE Build v2.0.0.iso"
+ISO = os.environ.get("GW_ISO_ACE", "")
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--out", required=True)

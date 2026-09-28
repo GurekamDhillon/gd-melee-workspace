@@ -1,9 +1,11 @@
+import os
+from pathlib import Path
 import bpy
 import math
 from mathutils import Vector
 
-OBJ = r"C:\gdm\_build\grTFx.obj"
-PNG = r"C:\gdm\_build\grTFx_blender.png"
+OBJ = os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[1])), '_build/grTFx.obj')
+PNG = os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[1])), '_build/grTFx_blender.png')
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.wm.obj_import(filepath=OBJ)

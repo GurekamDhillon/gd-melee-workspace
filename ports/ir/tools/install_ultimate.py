@@ -66,7 +66,7 @@ ROOT = CA.ROOT
 sys.path.insert(0, os.path.join(ROOT, "tools", "mex_port"))
 import mex_hsd  # noqa: E402
 
-ISO_ACE = "C:/iso/SSBM ACE Build v2.0.0.iso"   # mk_slot_files.py reads this path too
+ISO_ACE = os.environ.get("GW_ISO_ACE", "")   # mk_slot_files.py reads this path too
 HALBERD = os.path.join(ROOT, "ports", "halberd")
 # Host fighters: the Melee fighter whose data, scripts and m-ex row the slot clones.
 # internal = FighterKind (also the low 6 bits of a motion row authored for its skeleton),

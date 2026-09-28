@@ -9,10 +9,11 @@ reader are imported unchanged from that file's source; only the subject fighter 
 The 185-row map pairs every Brawl common attribute with its Melee ftCo_DatAttrs field through Brawl Kirby's
 hand-made pairing table (brawl-kirby/tools/mapping_spec.py ATTRS: the Brawl attribute layout is the same for
 every fighter), marking what Phase 1 writes, what is a Brawl-only mechanic, and what is unmapped."""
+from pathlib import Path
 import sys, os, json, re, struct, statistics
 HERE = os.path.dirname(os.path.abspath(__file__)); MK = os.path.dirname(HERE)
 BKT = os.path.join(os.path.dirname(os.path.dirname(MK)), "experiment", "brawl-kirby", "tools")
-ROOT = r"C:/Users/Gurek/Desktop/GD's Melee"
+ROOT = os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[3]))
 sys.path.insert(0, ROOT + "/tools/mex_port"); sys.path.insert(0, BKT)
 import mex_hsd
 from mapping_spec import ATTRS as PAIRS

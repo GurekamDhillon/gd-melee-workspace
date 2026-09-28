@@ -16,7 +16,7 @@ Per-fighter (`MexData.fighter +0x38`, Header.s Arch_Fighter_SSMFileIDs) is
 lbl_803BB3C0, indexed by EXTERNAL character id (CharacterKind).
 
 Usage:
-    python dump_ssm.py --iso C:/iso/Akaneia.iso
+    python dump_ssm.py --iso "${GW_ISO_AKANEIA}"
 """
 
 import argparse

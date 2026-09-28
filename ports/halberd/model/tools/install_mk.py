@@ -29,12 +29,13 @@ What it does to <mod>/files (append-only writers, as the Brawl Kirby tools: exis
     mxdt_clone.py, run with source = destination row, on this MxDt).
 Writes <mod>/files/../MK_INSTALL.json (what was changed).
 """
+from pathlib import Path
 import os, sys, json, struct, shutil, subprocess, io, contextlib, runpy, math
 HERE = os.path.dirname(os.path.abspath(__file__)); MODEL = os.path.dirname(HERE); MK = os.path.dirname(MODEL)
 EXP = os.path.join(os.path.dirname(os.path.dirname(MK)), "experiment"); ANIM = os.path.join(MK, 'anim'); ROOT = os.path.dirname(EXP)
 sys.path.insert(0, os.path.join(ROOT, 'tools', 'mex_port')); sys.path.insert(0, os.path.join(EXP, 'brawl-kirby', 'tools'))
 import mex_hsd
-ISO = "C:/iso/SSBM ACE Build v2.0.0.iso"
+ISO = os.environ.get("GW_ISO_ACE", "")
 COLORS = ['Nr', 'Ye', 'Bu', 'Re', 'Gr', 'Wh']
 SCRIPTS_MODE = 'phase1'
 VIS = True

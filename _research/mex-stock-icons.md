@@ -1,7 +1,7 @@
 # m-ex stock icons (in-match HUD and 1P CSS) for Sonic
 
-**Date: 2026-09-19.** Research only. Nothing was built or run, and nothing under `C:/gdm/melee/` or
-`C:/iso/` was modified. m-ex is used as a **specification only**: its behaviour is described here
+**Date: 2026-09-19.** Research only. Nothing was built or run, and nothing under `${GW_ROOT}/melee/` or
+`${GW_ISO_DIR}/` was modified. m-ex is used as a **specification only**: its behaviour is described here
 in my own words, and no m-ex `.asm`, `.h` or `.dat` content is reproduced. Every m-ex claim below was
 checked against the **bytes Akaneia actually ships** (the `codes.gct` payloads, disassembled), not
 only against the m-ex source tree.
@@ -9,7 +9,7 @@ only against the m-ex source tree.
 Evidence labels: **VERIFIED** means read directly in a file or a disassembly (the location is
 given). **INFERRED** means reasoned from verified facts but not observed.
 
-New tools (read-only, in `C:/gdm/tools/mex_port/`):
+New tools (read-only, in `${GW_ROOT}/tools/mex_port/`):
 - `dump_gct.py` lists, extracts and disassembles Gecko codes from Akaneia's `codes.gct`. Use `--addr`,
   `--range` and `--disasm`.
 - `dump_stc_icns.py` decodes IfAll's `Stc_icns`. It maps frames to images for any internal id, can
@@ -59,8 +59,8 @@ Index spaces used below (always stated explicitly):
 
 ### 1.1 The shipped routine: VERIFIED
 
-Source: `C:/iso/Akaneia.iso` → `codes.gct`, `C2 0x803D7060`, gct+0xE028, 176-byte payload
-(`python dump_gct.py --iso C:/iso/Akaneia.iso --addr 0x803D7060 --disasm`). The disassembly matches
+Source: `${GW_ISO_AKANEIA}` → `codes.gct`, `C2 0x803D7060`, gct+0xE028, 176-byte payload
+(`python dump_gct.py --iso ${GW_ISO_AKANEIA} --addr 0x803D7060 --disasm`). The disassembly matches
 m-ex's `Standalone Functions/Stock Icon Get Frame.asm` instruction for instruction. What it does:
 
 - args: `r3` = mINT, `r4` = costume. Returns `f1` = frame (float).
@@ -149,7 +149,7 @@ TLUT, for every vanilla CK and every retail costume:
 
 ## Q2. Stc_icns
 
-VERIFIED (`dump_stc_icns.py`; `C:/iso/Akaneia.iso` → `IfAll.usd`, public `Stc_icns` at data+0xDF61C):
+VERIFIED (`dump_stc_icns.py`; `${GW_ISO_AKANEIA}` → `IfAll.usd`, public `Stc_icns` at data+0xDF61C):
 
 | off | field | value |
 |---|---|---|

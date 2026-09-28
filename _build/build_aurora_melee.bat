@@ -1,14 +1,15 @@
 @echo off
+setlocal
 rem EVERY PATH HERE IS QUOTED. An unquoted %GW_ROOT% splits on the space in a checkout like
-rem "GD's Melee" and cmake reports the source dir as C:/Users/Gurek/Desktop/GD's. That is the
+rem "GD's Melee" and cmake reports the source dir as <split-path>. That is the
 rem fifth distinct quoting bug this tree has hit for the same reason; quote unconditionally.
 rem Build the port's own Aurora copy for 32-bit x86, reusing the already-downloaded Dawn/SDL3 sources.
-rem GW_ROOT defaults to this script's parent directory, so a fresh clone works with no
-rem %GW_ROOT% symlink; tools/port exports it and that wins. See SETUP.md.
-if "%GW_ROOT%"=="" for %%I in ("%~dp0..") do set "GW_ROOT=%%~fI"
-call "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" amd64_x86
+rem Set GW_AURORA_ROOT to the stable junction; see tools/move_workspace.md.
+call "%~dp0..\tools\port\aurora_env.bat"
 if errorlevel 1 exit /b 1
-set "PATH=C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin;C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja;%PATH%"
+call "%~dp0..\tools\port\vs_env.bat" amd64_x86
+if errorlevel 1 exit /b 1
+if defined GW_VSDIR set "PATH=%GW_VSDIR%\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin;%GW_VSDIR%\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja;%PATH%"
 cmake -S "%GW_ROOT%\melee\extern\aurora" -B "%GW_ROOT%\_build\ax86m" -G Ninja ^
   -DCMAKE_BUILD_TYPE=RelWithDebInfo ^
   -DAURORA_DAWN_PROVIDER=vendor ^

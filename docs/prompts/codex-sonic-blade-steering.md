@@ -25,11 +25,11 @@ dashes up to three times, and the player can angle each dash with the stick. Our
   `experiment/tooling/ultimate/workspace/extracted/` (find the exact file), decoded with the ParamXML
   tool there and the hash labels in `references/ParamLabels.csv`. Look for the `special_s` / Sonic
   Blade params.
-- Our ACMD dumps (Ghidra decompilation): `C:/Users/Gurek/ghidra-projects/sora_acmd/` (`index.tsv`,
+- Our ACMD dumps (Ghidra decompilation): `${GW_GHIDRA_PROJECTS}/sora_acmd/` (`index.tsv`,
   `game/*.c`, `helpers/`); Sonic Blade's scripts are `game_specials*`. The dumps come from
   `lua2cpp_trail.nro`; the status code (where steering most likely lives) may be in the same NRO but
   was not dumped: say whether it is present there and, if so, where (function addresses), using the
-  Ghidra project in `C:/Users/Gurek/ghidra-projects` (headless analyzer; the project path must not
+  Ghidra project in `${GW_GHIDRA_PROJECTS}` (headless analyzer; the project path must not
   contain an apostrophe).
 - `ports/ir/tools/trail_specials_geno.py` shows what the port does today (read only).
 - Public documentation (frame data sites, the SSBU modding community's decompiled status scripts) is

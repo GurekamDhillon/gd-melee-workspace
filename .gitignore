@@ -142,3 +142,7 @@ __pycache__/
 
 # Local agent task ledgers and review artifacts.
 /.superpowers/
+
+# Local disc extractions selected by GW_BRAWL_FILES / GW_ULTIMATE_EXTRACT.
+/_local/
+/_build/meleedump/

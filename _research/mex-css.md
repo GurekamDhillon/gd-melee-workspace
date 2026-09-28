@@ -93,9 +93,9 @@ tables do not overflow, but their entry 0x20 holds Popo/garbage data (see sectio
 Tool: `tools/mex_port/dump_css.py` (new, read-only) decodes the data below from the ISO.
 
 ### 3a. Akaneia really ships these patches
-`codes.gct` on `C:/iso/Akaneia.iso` parses to 1,163 Gecko codes (the same count as
+`codes.gct` on `${GW_ISO_AKANEIA}` parses to 1,163 Gecko codes (the same count as
 `akaneia-dependency-scope.md`). **114 of them insert inside `mncharsel` (0x8025BC20..0x80266F3C)**, and
-all 114 match the insertion address of an `asm/**` file in `C:/gdm/_build/m-ex`. (Checked with a
+all 114 match the insertion address of an `asm/**` file in `${GW_ROOT}/_build/m-ex`. (Checked with a
 throwaway script: parse the C2/04/06 records, then index every m-ex `.asm`/`.s` by its
 `#To be inserted at|@` address.)
 
@@ -116,7 +116,7 @@ Outside `mncharsel`, these patches are also on the CSS path:
   `FtExtNum` and read m-ex's costume tables.
 - `UserSelect ID/InitCSSPlayerStruct` (0x80167978).
 
-### 3b. m-ex's CSS data (VERIFIED with `dump_css.py --iso C:/iso/Akaneia.iso`)
+### 3b. m-ex's CSS data (VERIFIED with `dump_css.py --iso ${GW_ISO_AKANEIA}`)
 - `mexData` root +0x04 `menu` = { +0x0 `param` (floats 0.95, 0, -17, 0: hand/puck scale and SSS cursor),
   +0x4 **`css`**, +0x8 `sss` (0 here) }.
 - `menu.css` is a relocated copy of the whole retail CSS data block that starts at DOL 0x803F0A48
@@ -376,9 +376,9 @@ drive the CSS).
 ## Appendix: evidence commands (read-only)
 
 ```
-python tools/mex_port/dump_css.py --iso C:/iso/Akaneia.iso            # mexData CSS table, names, ext map, mexSelectChr
-python tools/mex_port/dump_css.py --iso C:/iso/Akaneia.iso --joints   # the icon model's 32 joints + translations
-python tools/mex_port/dump_css.py --iso "C:/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"  # retail: no MxDt, no mexSelectChr
+python tools/mex_port/dump_css.py --iso ${GW_ISO_AKANEIA}            # mexData CSS table, names, ext map, mexSelectChr
+python tools/mex_port/dump_css.py --iso ${GW_ISO_AKANEIA} --joints   # the icon model's 32 joints + translations
+python tools/mex_port/dump_css.py --iso "${GW_ISO_VANILLA}"  # retail: no MxDt, no mexSelectChr
 ```
 The retail-vs-Akaneia `MnSelectChrDataTable` texanim comparison and the `codes.gct` -> m-ex asm mapping
 were one-off scripts. Their results are in sections 3a and 4; they are simple to re-derive with

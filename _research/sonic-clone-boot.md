@@ -133,5 +133,5 @@ a blue Sonic (white gloves, red shoes) on the Target Test stage. Controls: vanil
 
 ## Diagnostics
 - `MELEE_TARGET_TEST=<ckind|name>` → `gw_TestTargetTestCKind` (`pc/platform/gw_runtime.c`).
-- Resolve a crash RVA: `"/mnt/c/Program Files/Git/bin/bash.exe" -lc 'bash /c/gdm/_build/masstest/mapsym.sh 0x<rva>'`
+- Resolve a crash RVA: `"/mnt/c/Program Files/Git/bin/bash.exe" -lc 'bash ${GW_ROOT}/_build/masstest/mapsym.sh 0x<rva>'`
 - A temporary `OSReport` at the assert site prints `kind`, `part`, `parts_num` (removed after use).

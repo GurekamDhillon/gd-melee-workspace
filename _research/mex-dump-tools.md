@@ -1,16 +1,16 @@
 # `dump_ftfunction.py` / `dump_mxdt.py` — offline m-ex format dumpers
 
 **Date: 2026-09-19.** Analysis only: nothing was built, nothing was run, no ISO and no file under
-`C:/gdm/melee/` was modified. Both ISOs were opened read-only.
+`${GW_ROOT}/melee/` was modified. Both ISOs were opened read-only.
 
 These two tools make permanent the throwaway analysis recorded in
 [`mex-data-layer-design.md`](mex-data-layer-design.md) §1.6–§1.8 and §2.2. Everything below was
 re-derived from scratch by these scripts, not copied from that report; where the two disagree it is
 called out under [Corrections](#corrections).
 
-- `C:/gdm/tools/mex_port/mex_hsd.py` — shared read-only GCM/FST and HSD-archive readers.
-- `C:/gdm/tools/mex_port/dump_ftfunction.py` — the `ftFunction` blob in a fighter `.dat`.
-- `C:/gdm/tools/mex_port/dump_mxdt.py` — `MxDt.dat` / the `mexData` struct.
+- `${GW_ROOT}/tools/mex_port/mex_hsd.py` — shared read-only GCM/FST and HSD-archive readers.
+- `${GW_ROOT}/tools/mex_port/dump_ftfunction.py` — the `ftFunction` blob in a fighter `.dat`.
+- `${GW_ROOT}/tools/mex_port/dump_mxdt.py` — `MxDt.dat` / the `mexData` struct.
 
 Both take either a loose file or `--iso <image> <name-on-disc>`, both are non-interactive, both have
 `--help`, and neither ever opens a file for writing except the explicit `--emit-blob` target.
@@ -22,11 +22,11 @@ Both take either a loose file or `--iso <image> <name-on-disc>`, both are non-in
 ### `dump_ftfunction.py`
 
 ```
-python dump_ftfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --header --overrides
-python dump_ftfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --symbols
-python dump_ftfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --check-symbols
-python dump_ftfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --resolve 0x800034F8
-python dump_ftfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --emit-blob sn.bin
+python dump_ftfunction.py --iso ${GW_ISO_AKANEIA} PlSn.dat --header --overrides
+python dump_ftfunction.py --iso ${GW_ISO_AKANEIA} PlSn.dat --symbols
+python dump_ftfunction.py --iso ${GW_ISO_AKANEIA} PlSn.dat --check-symbols
+python dump_ftfunction.py --iso ${GW_ISO_AKANEIA} PlSn.dat --resolve 0x800034F8
+python dump_ftfunction.py --iso ${GW_ISO_AKANEIA} PlSn.dat --emit-blob sn.bin
 python dump_ftfunction.py ./PlSn.dat --relocs --limit 20        # loose file, no ISO
 ```
 
@@ -46,17 +46,17 @@ python dump_ftfunction.py ./PlSn.dat --relocs --limit 20        # loose file, no
 The relocated blob feeds the existing disassembler unchanged:
 
 ```
-python dump_ftfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --emit-blob sn.bin
+python dump_ftfunction.py --iso ${GW_ISO_AKANEIA} PlSn.dat --emit-blob sn.bin
 python ppc_disasm.py --raw sn.bin --base 0x80000000 --start 0x800034C4 --count 8
 ```
 
 ### `dump_mxdt.py`
 
 ```
-python dump_mxdt.py --iso C:/iso/Akaneia.iso MxDt.dat --all
-python dump_mxdt.py --iso C:/iso/Akaneia.iso MxDt.dat --validate     # the one that matters
-python dump_mxdt.py --iso C:/iso/Akaneia.iso MxDt.dat --item-lookup --kind 31
-python dump_mxdt.py --iso C:/iso/Akaneia.iso MxDt.dat --item --runtime-index
+python dump_mxdt.py --iso ${GW_ISO_AKANEIA} MxDt.dat --all
+python dump_mxdt.py --iso ${GW_ISO_AKANEIA} MxDt.dat --validate     # the one that matters
+python dump_mxdt.py --iso ${GW_ISO_AKANEIA} MxDt.dat --item-lookup --kind 31
+python dump_mxdt.py --iso ${GW_ISO_AKANEIA} MxDt.dat --item --runtime-index
 ```
 
 `--root`, `--metadata`, `--fighter`, `--item-lookup`, `--item`, `--runtime-index`, `--validate`,
@@ -70,7 +70,7 @@ offset** — the same number the port sees before adding its own guest base.
 
 ## 2. `ftFunction` — verified facts
 
-Source of every number below: `PlSn.dat` on `C:\iso\Akaneia.iso`.
+Source of every number below: `PlSn.dat` on `${GW_ISO_AKANEIA}`.
 
 ### 2.1 Archive and header
 

@@ -3,13 +3,14 @@
     python ports/halberd/model/tools/build_p23.py
     python ports/halberd/model/tools/install_mk.py <mod dir>      # then install into a slot (copy)
 
-Inputs: C:/iso/brawl-extract/files/fighter/metaknight/*.pac (dumped with the Brawl Kirby BrawlLib tools, 32-bit),
+Inputs: ${GW_BRAWL_FILES}/fighter/metaknight/*.pac (dumped with the Brawl Kirby BrawlLib tools, 32-bit),
 the ACE disc (Kirby template MObj, Kirby's PlCo tables), brawl-kirby/phase2 (row map, bone map, encoder).
 """
+from pathlib import Path
 import os, sys, subprocess
 HERE = os.path.dirname(os.path.abspath(__file__)); MK = os.path.dirname(os.path.dirname(HERE))
 K = os.path.join(os.path.dirname(os.path.dirname(MK)), 'experiment', 'brawl-kirby', 'tools')
-PAC = r'C:\iso\brawl-extract\files\fighter\metaknight'
+PAC = os.path.join(os.environ.get("GW_BRAWL_FILES", os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[4])), "_local", "brawl", "files")), 'fighter/metaknight')
 def run(*a): print('==', ' '.join(os.path.basename(str(x)) for x in a)); subprocess.run(list(a), check=True)
 A = os.path.join(MK, 'anim')
 if not os.path.exists(os.path.join(A, 'brawl', 'chr0_index.json')):

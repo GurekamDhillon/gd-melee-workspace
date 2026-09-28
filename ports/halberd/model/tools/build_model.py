@@ -8,9 +8,10 @@ Steps: model_export.exe (BrawlLib, 32-bit; brawl/*.json) + brawl_matdump.exe (ey
 (eye states) -> skeleton.py -> mesh.py -> mkbuild build -> mkbuild verify
 (HSDRaw reload + HSD skinning of every vertex vs the source) -> cos.py structural parse (independent reader).
 """
+from pathlib import Path
 import os, sys, json, subprocess
 HERE = os.path.dirname(os.path.abspath(__file__)); MODEL = os.path.dirname(HERE)
-ROOT = r"C:/Users/Gurek/Desktop/GD's Melee"
+ROOT = os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[4]))
 sys.path.insert(0, ROOT + "/tools/mex_port"); sys.path.insert(0, ROOT + "/experiment/Shadow/analysis/02_assets_scripts")
 import mex_hsd, cos
 from collections import Counter
@@ -33,14 +34,14 @@ def main():
     os.makedirs(os.path.join(MODEL, 'out'), exist_ok=True)
     if not os.path.exists(KIRBY_NR):
         os.makedirs(os.path.dirname(KIRBY_NR), exist_ok=True)
-        open(KIRBY_NR, 'wb').write(mex_hsd.Gcm("C:/iso/SSBM ACE Build v2.0.0.iso").read('PlKbNr.dat'))
+        open(KIRBY_NR, 'wb').write(mex_hsd.Gcm(os.environ.get("GW_ISO_ACE", "")).read('PlKbNr.dat'))
     for n in ('00', '01', '02', '03', '04', '05'):
         bj = os.path.join(MODEL, 'brawl', 'FitMetaknight%s.json' % n)
         if not os.path.exists(bj):
             subprocess.run([os.path.join(ROOT, 'experiment', 'brawl-kirby', 'tools', 'model', 'model_export.exe'),
-                            r'C:\iso\brawl-extract\files\fighter\metaknight\FitMetaknight%s.pac' % n, bj], check=True)
+                            os.path.join(os.environ.get("GW_BRAWL_FILES", os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[4])), "_local", "brawl", "files")), 'fighter/metaknight/FitMetaknight%s.pac') % n, bj], check=True)
     # every UV set of the eye object (model_export writes two; the eye's body layer is on the third) and the eye SRT0 clips
-    MD = os.path.join(HERE, 'brawl_matdump.exe'); PAC = 'C:/iso/brawl-extract/files/fighter/metaknight'
+    MD = os.path.join(HERE, 'brawl_matdump.exe'); PAC = os.path.join(os.environ.get("GW_BRAWL_FILES", os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[4])), "_local", "brawl", "files")), 'fighter/metaknight')
     if not os.path.exists(os.path.join(MODEL, 'brawl', 'eye_uvs.json')):
         subprocess.run([MD, PAC + '/FitMetaknight00.pac', 'uvs', 'polygon5', os.path.join(MODEL, 'brawl', 'eye_uvs.json')], check=True)
     srt = os.path.join(os.path.dirname(MODEL), 'anim', 'brawl_srt0', 'srt0.json')

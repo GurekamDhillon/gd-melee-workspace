@@ -1,6 +1,6 @@
 # Art brief: replacing every vanilla menu
 
-You own the art pipeline in `C:\Users\Gurek\Desktop\menu` (`pipeline/`, `out/`, `out_hub/`). The engine side is replacing Melee's menus with our own screens, drawn by `gmfrontend.c` in the PC port. This brief lists every asset those screens need, in the order the engine side will build them. Each section is the contract for one step. Deliver a section at a time; the engine side starts on section 1 as soon as it lands.
+You own the art pipeline in `${GW_ROOT}/menu` (`pipeline/`, `out/`, `out_hub/`). The engine side is replacing Melee's menus with our own screens, drawn by `gmfrontend.c` in the PC port. This brief lists every asset those screens need, in the order the engine side will build them. Each section is the contract for one step. Deliver a section at a time; the engine side starts on section 1 as soon as it lands.
 
 Everything you already set up still applies unchanged:
 - The provenance rule: nothing is traced, recoloured, referenced or sampled from Melee. The `meleedump/index` metadata is fine to read. Never the pixels.

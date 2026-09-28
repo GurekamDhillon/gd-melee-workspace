@@ -20,7 +20,7 @@ the rules that cross them.
 - **Scripts, not raw commands.** `build.sh` exists for the bridge fixpoint; `run.sh` for the
   sandbox per run. A raw clang or a bare exe run repeats the mistakes those scripts encode.
 - **Everything is relative to `GW_ROOT`** (`port/portlib.sh`), with the disc images from `.env`.
-  Nothing hard-codes `C:\gdm`.
+  Aurora uses the explicit `GW_AURORA_ROOT` junction; see `move_workspace.md`.
 - **Two agents, two build roots** (`GW_BUILD_ROOT`). Test runs (`--test`) parallelise; gameplay
   runs share audio and the screen. Baseline game objects are hardlinked by `agent_new.sh`;
   check the local output writer before treating build roots as isolated. Shared Aurora is

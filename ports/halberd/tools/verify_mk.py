@@ -14,10 +14,11 @@
    wrote are byte-identical to stage A.
 4. geno.json overlays: every escape is a known v1 sub with the right length, and the overlay minus its escapes is
    exactly the Pl file's script for that row."""
+from pathlib import Path
 import os, sys, json, subprocess, argparse, struct
 HERE = os.path.dirname(os.path.abspath(__file__)); MK = os.path.dirname(HERE); EXP = os.path.join(os.path.dirname(os.path.dirname(MK)), "experiment")
 BKT = os.path.join(EXP, "brawl-kirby", "tools")
-sys.path.insert(0, r"C:/Users/Gurek/Desktop/GD's Melee/tools/mex_port"); sys.path.insert(0, os.path.join(MK, "model", "tools"))
+sys.path.insert(0, os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[3])), 'tools/mex_port')); sys.path.insert(0, os.path.join(MK, "model", "tools"))
 import mex_hsd
 ap = argparse.ArgumentParser(); ap.add_argument("--mod", default=os.path.join(MK, "build", "stage")); ap.add_argument("--tag", default="phase1")
 a = ap.parse_args()

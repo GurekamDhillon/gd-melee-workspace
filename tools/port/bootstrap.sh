@@ -70,10 +70,8 @@ note "Akaneia and ACE are only needed for m-ex content."
 echo
 
 echo "MSVC (for the link step)"
-# "ProgramFiles(x86)" is not a valid shell identifier (the parentheses), so it cannot be expanded
-# as a variable here even though cmd.exe has it. vswhere's location is fixed by design.
-vswhere="C:/Program Files (x86)/Microsoft Visual Studio/Installer/vswhere.exe"
-[ -f "$vswhere" ] || vswhere="C:/Program Files/Microsoft Visual Studio/Installer/vswhere.exe"
+# Use Windows' installation folders without assuming the system drive.
+vswhere="${GW_VSWHERE:-$(python -c 'import os; from pathlib import Path; print(next((str(Path(os.environ[k]) / "Microsoft Visual Studio/Installer/vswhere.exe") for k in ("ProgramFiles(x86)", "ProgramFiles") if k in os.environ and (Path(os.environ[k]) / "Microsoft Visual Studio/Installer/vswhere.exe").is_file()), ""))')}"
 if [ -f "$vswhere" ]; then
     vs="$("$vswhere" -latest -products '*' -property installationPath 2>/dev/null | tr -d '\r')"
     [ -n "$vs" ] && ok "Visual Studio" "$vs" || bad "Visual Studio" "vswhere found no install"

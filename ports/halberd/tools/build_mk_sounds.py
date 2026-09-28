@@ -28,6 +28,7 @@ Brawl -> Melee command mapping (Melee channels: ft_0881.c; 3/4/6 stop on action 
   Low Voice Clip -> RandomSmashSFX; Damage Voice Clip -> damage_l on the voice channel; Ottotto Voice Clip -> dropped
       (Melee's teeter code plays ftData sfx x18 = otto)
 Scripts are matched by clip, not by move key, as the effects pass. Report: sound/work/sound_report.json."""
+from pathlib import Path
 import argparse, json, os, struct, sys, hashlib, math, collections
 HERE = os.path.dirname(os.path.abspath(__file__)); MK = os.path.dirname(HERE)
 SND = os.path.join(MK, "sound"); SNDT = os.path.join(SND, "tools"); SNDW = os.path.join(SND, "work")
@@ -40,8 +41,8 @@ import sfxscript as FS
 import install_mk as IM
 import mex_hsd
 
-BRSAR = r"C:\iso\brawl-extract\files\sound\smashbros_sound.brsar"
-ISO = "C:/iso/SSBM ACE Build v2.0.0.iso"
+BRSAR = os.path.join(os.environ.get("GW_BRAWL_FILES", os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[3])), "_local", "brawl", "files")), 'sound/smashbros_sound.brsar')
+ISO = os.environ.get("GW_ISO_ACE", "")
 BANK_FILE = "brawlmk.ssm"
 MK_INTERNAL, MK_EXTERNAL = 52, 51
 REL = 5000                      # m-ex relative id base: 5000 + index in the owner's bank

@@ -5,6 +5,7 @@ The output is derived game data: keep it under _build/, beside the imported .gfx
 ACMD is parsed from the local Ghidra C with acmd_parse, using the same joint table and
 unit scale as acmd_to_ftcmd. Common effects and sword trails remain census-only.
 """
+from pathlib import Path
 import argparse
 from collections import Counter
 import json
@@ -321,7 +322,7 @@ def audit_unbound(scripts, bindings, *, allowlist=None):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--dump', default=os.path.join(ROOT, '_build', 'ultimate-vfx', 'ef_trail'))
-    ap.add_argument('--acmd', default=r'C:\Users\Gurek\ghidra-projects\sora_acmd')
+    ap.add_argument('--acmd', default=os.path.join(os.environ.get("GW_GHIDRA_PROJECTS", str(Path.home() / "ghidra-projects")), 'sora_acmd'))
     ap.add_argument('--host', choices=sorted(HOSTS), default='marth')
     ap.add_argument('--packages', default=os.path.join(ROOT, '_build', 'tmp', 'codex-fx', 'trail'))
     ap.add_argument('-o', '--out', default=os.path.join(ROOT, '_build', 'tmp', 'codex-fx'))

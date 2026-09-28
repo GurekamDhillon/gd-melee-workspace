@@ -12,6 +12,7 @@ Inputs (all local research outputs, regenerate with the tools named):
 The script / action conversion (conv_events, timeline) is the one from build_shadow_brawl_sate.py, extended with
 simulated (loop-unrolled) hit windows from the decoder.
 """
+from pathlib import Path
 import collections
 import json
 import os
@@ -24,7 +25,7 @@ EXP = os.path.normpath(os.path.join(HERE, "..", "..", "..", "experiment"))
 MK = os.path.normpath(os.path.join(HERE, ".."))
 DUMP = os.path.join(MK, "dump")
 OUT = os.path.join(HERE, "metaknight.brawl.ir.json")
-DISC = "C:/iso/brawl-extract/files/"
+DISC = "${GW_BRAWL_FILES}/"  # symbolic provenance; never opened by this generator
 MELEE = "shadow.melee-ace#"
 
 A = json.load(open(os.path.join(MK, "analysis", "brawl_metaknight.json"), encoding="utf-8"))

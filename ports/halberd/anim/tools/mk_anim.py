@@ -21,6 +21,7 @@ Ledge get-ups (policy 'ledge_floor'): TransN.y's -0.003 rest on top of the ledge
 usage: python mk_anim.py            -> anim/out/PlBmAJ.dat, anim/out/motion_rows.json, anim/transn_report.json
        (then mk_vis.py -> anim/vis_events.json; model/tools/report.py -> model/converter_report.json)
 """
+from pathlib import Path
 import os, sys, json, math, struct
 from collections import defaultdict, Counter
 HERE = os.path.dirname(os.path.abspath(__file__)); ANIM = os.path.dirname(HERE); MK = os.path.dirname(ANIM)
@@ -225,8 +226,8 @@ def demo_kirby():
     """Vanilla Kirby's results-screen figatrees (GmRstMKb.dat, ACE disc) by symbol: the TransN base of the demo clips."""
     global _MDEMO
     if _MDEMO is None:
-        sys.path.insert(0, r"C:/Users/Gurek/Desktop/GD's Melee/tools/mex_port"); import mex_hsd
-        a = mex_hsd.Archive(mex_hsd.Gcm("C:/iso/SSBM ACE Build v2.0.0.iso").read('GmRstMKb.dat')); raw = bytes(a.data); _MDEMO = {}
+        sys.path.insert(0, os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[4])), 'tools/mex_port')); import mex_hsd
+        a = mex_hsd.Archive(mex_hsd.Gcm(os.environ.get("GW_ISO_ACE", "")).read('GmRstMKb.dat')); raw = bytes(a.data); _MDEMO = {}
         for o, sz in F.walk_aj(raw):
             sym, t = F.parse_archive(raw[o:o + sz]); _MDEMO[sym] = t
     return _MDEMO
@@ -384,7 +385,7 @@ def validate(arc, c, frames):
                 v = math.radians(bk[f][a]) if 3 <= a <= 5 else bk[f][a]
                 worst[g] = max(worst[g], abs(F.evaluate(x['keys'], f) - v))
     sys.path.insert(0, os.path.join(EXP, 'Shadow', 'analysis', '02_assets_scripts'))
-    sys.path.insert(0, r"C:/Users/Gurek/Desktop/GD's Melee/tools/mex_port")
+    sys.path.insert(0, os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[4])), 'tools/mex_port'))
     import figa, mex_hsd
     a = mex_hsd.Archive(arc).relocate(0)
     r = figa.figatree(a, a.publics[0][1])

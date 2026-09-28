@@ -87,4 +87,4 @@ The zeroing codes (Init Player/Stage Data) are the ones that matter most in prac
 stale-heap nondeterminism the decomp's own `@bug` notes describe, and they apply to every codeset.
 
 The headless suite passes:
-`bash tools/port/run.sh --test tests --iso "C:/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"`.
+`bash tools/port/run.sh --test tests --iso "${GW_ISO_VANILLA}"`.

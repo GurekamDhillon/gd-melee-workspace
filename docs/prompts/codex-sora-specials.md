@@ -14,9 +14,9 @@ ported, inferred and missing). Inputs:
 - `_build/tmp/ir/trail.acmd.json` - our ACMD dump parsed by `ports/ir/tools/acmd_parse.py` (per script:
   `commands` with `frame`, `cmd`, `args`, `named` ATTACK fields, `when` branch conditions; `motion` =
   cancel_frame / xlu (intangibility) / clip from the motion list). Regenerate it if missing:
-  `python ports/ir/tools/acmd_parse.py trail C:/Users/Gurek/ghidra-projects/sora_acmd -o _build/tmp/ir/trail.acmd.json`
+  `python ports/ir/tools/acmd_parse.py trail ${GW_GHIDRA_PROJECTS}/sora_acmd -o _build/tmp/ir/trail.acmd.json`
   (check the script's `--help` for the exact form).
-- The decompiled scripts: `C:/Users/Gurek/ghidra-projects/sora_acmd/game/0x5b268858f__<script_hash>.c`
+- The decompiled scripts: `${GW_GHIDRA_PROJECTS}/sora_acmd/game/0x5b268858f__<script_hash>.c`
   (hashes in `index.tsv` and in each acmd.json row's `script_hash`).
 - `vl.prc` params (decoded in the generator's `params()`), the clips' frame counts / Trans tracks
   (`clip_info()`).

@@ -29,9 +29,9 @@ changing how the game looks or plays. Measure first; change second; every claim 
 
 - Game repo: `melee/` (branch `pc-port`). Workspace (this repo): tools, ports, build system.
 - Sora is an m-ex fighter slot built by `ports/ir/tools/install_ultimate.py`. The current build GD plays:
-  mods folder `C:\Users\Gurek\Desktop\GD's Melee\_build\agents\alpha\sora\mods-marth`, scene
+  mods folder `${GW_ROOT}\_build\agents\alpha\sora\mods-marth`, scene
   `mode=training;p1=mex:52;p2=fox/cpu1/kind0;stage=fd`. Launch through `tools/port/run.sh <name>
-  --iso "C:/iso/SSBM ACE Build v2.0.0.iso"` with `MELEE_MODS_DIR` and `MELEE_SCENE` set.
+  --iso "${GW_ISO_ACE}"` with `MELEE_MODS_DIR` and `MELEE_SCENE` set.
 - Known heavy parts of Sora, from the lanes' reports: 175 joints, one body of ~1,002 draw pieces
   (POBJs) - two bodies (1,609) once overflowed the renderer's 24 MiB uniform buffer -, 88k triangles,
   ~6 MB of animation (163 clips, helper bones baked in), Geno articles and particle effects for his
@@ -63,7 +63,7 @@ changing how the game looks or plays. Measure first; change second; every claim 
   the per-stage split, and draw calls/vertices. Sora's frame time measurably lower; the vanilla scene
   not slower.
 - No change in look or play: the headless test suite passes (`tools/port/run.sh --test tests --iso
-  "C:/iso/SSBM ACE Build v2.0.0.iso"`, currently 190/190); Sora's in-game pose still matches its source
+  "${GW_ISO_ACE}"`, currently 190/190); Sora's in-game pose still matches its source
   (`ports/ir/tools/compare_joints.py` on a joint-probe log, median error stays ~0.006 units); hitbox
   positions unchanged. GD judges the look himself - leave a game window running for him with the final
   build (Sora scene above) and say which one it is.

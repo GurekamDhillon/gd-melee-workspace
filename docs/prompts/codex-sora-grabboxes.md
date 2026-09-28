@@ -4,7 +4,7 @@
 - Rows are **Catch and CatchDash only**. Melee has no CatchTurn row, so `game_catchturn` is skipped
   (Melee's rules win). Acceptance: exactly those two rows change.
 - The Ultimate fighter id is **`trail`** everywhere (dump agent Hash40(`trail`) = 0x5b268858f), not
-  `sora`: e.g. `python ports/ir/tools/acmd_parse.py trail C:/Users/Gurek/ghidra-projects/sora_acmd ...`.
+  `sora`: e.g. `python ports/ir/tools/acmd_parse.py trail ${GW_GHIDRA_PROJECTS}/sora_acmd ...`.
 - Step 1 is already answered by the first attempt: grab boxes are ordinary op-11 hitboxes with element
   `HitElement_Catch` = 8 (ftaction.c:178-181, 325-347; ftcoll.c:1626-1635; lb/forward.h:52-66).
   Still check a vanilla Catch script (Marth's) for the other fields a grab box sets (damage, angle,
@@ -20,12 +20,12 @@ below, and stop. Claude builds, installs and tests in game afterwards.
 
 Sora is ported from Smash Ultimate into Melee with our own tools. His move scripts are converted by
 `ports/ir/tools/acmd_to_ftcmd.py` from our own ACMD dumps (Ghidra decompilation in
-`C:/Users/Gurek/ghidra-projects/sora_acmd/game/*.c`, parsed by `ports/ir/tools/acmd_parse.py`) into
+`${GW_GHIDRA_PROJECTS}/sora_acmd/game/*.c`, parsed by `ports/ir/tools/acmd_parse.py`) into
 Melee fighter commands (ftcmd). Hitboxes, throws, JabCombo and IASA are already mapped. **Grabs are
 not:** Sora's grab states (Catch, CatchDash, CatchTurn) still run the host fighter's (Marth's) own grab
 script, so his grab range is Marth's, not Sora's. The Ultimate grab scripts use the `CATCH` macro
 (`macros::CATCH` / `CatchModule`, `grab!(... MA_MSC_CMD_GRAB_CLEAR_ALL)` and the like). Files that
-contain it: `grep -l CATCH C:/Users/Gurek/ghidra-projects/sora_acmd/game/*.c`.
+contain it: `grep -l CATCH ${GW_GHIDRA_PROJECTS}/sora_acmd/game/*.c`.
 
 ## What to do
 

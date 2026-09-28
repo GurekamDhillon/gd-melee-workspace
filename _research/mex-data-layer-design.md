@@ -12,7 +12,7 @@ my reading of how the pieces fit, not something any single file states.
 ## 0. Why this document exists
 
 Sonic's interpreted `ftFunction` calls an m-ex runtime API that the port currently stubs
-(`C:/gdm/melee/pc/platform/gw_mex_ftfunction_runtime.c`):
+(`${GW_ROOT}/melee/pc/platform/gw_mex_ftfunction_runtime.c`):
 
 | shim | line | behaviour today |
 |---|---|---|
@@ -25,11 +25,11 @@ Sonic's interpreted `ftFunction` calls an m-ex runtime API that the port current
 
 The guest addresses they are hooked at are declared at `gw_mex_ftfunction_runtime.c:59-65`.
 **VERIFIED**: the three m-ex-only addresses match m-ex's own linker script —
-`C:/gdm/_build/m-ex/MexTK/links/melee.link:1176` (`803D7058:MEX_IndexFighterItem`), `:1184`
+`${GW_ROOT}/_build/m-ex/MexTK/links/melee.link:1176` (`803D7058:MEX_IndexFighterItem`), `:1184`
 (`803D7088:MEX_GetFtItemID`), `:1186` (`803D7094:MEX_GetData`). So the port's hook *points* are
 correct; only the bodies are missing.
 
-Consequence (`C:/gdm/docs/HANDOFF.md:86-89`, gap 2): neutral-B walks an m-ex fighter-item list that
+Consequence (`${GW_ROOT}/docs/HANDOFF.md:86-89`, gap 2): neutral-B walks an m-ex fighter-item list that
 was never built, `MEX_GetFtItemID` answers 0 forever, and the guest search never terminates.
 
 ---
@@ -42,7 +42,7 @@ This is the biggest source of confusion in the existing port notes, so it is sta
 
 1. **The rtoc slot block.** m-ex reserves a run of **rtoc-relative word slots** named `OFST_*`.
    Each slot holds *one pointer* (or one count). Patched vanilla code reaches a table with a single
-   `lwz rX, OFST_Foo(rtoc)`. **VERIFIED** in `C:/gdm/_build/m-ex/asm/m-ex/Header.s:350-464` (the
+   `lwz rX, OFST_Foo(rtoc)`. **VERIFIED** in `${GW_ROOT}/_build/m-ex/asm/m-ex/Header.s:350-464` (the
    `.set OFST_…, 0x…` block) and at the use sites, e.g.
    `.../asm/m-ex/Fighter Costume Pointers/FetchCostumePointer.asm:5`
    (`lwz r0,OFST_Char_CostumeRuntimePointers(rtoc)`),
@@ -54,7 +54,7 @@ This is the biggest source of confusion in the existing port notes, so it is sta
 
 2. **The `MexData` struct** — the root object of m-ex's metadata, reached by
    `MEX_GetData(MXDT_MEXDATA)`. **VERIFIED** as a C declaration in
-   `C:/gdm/_build/m-ex/MexTK/include/mxdt.h:246-320`. `Header.s:449` defines `OFST_mexData` as
+   `${GW_ROOT}/_build/m-ex/MexTK/include/mxdt.h:246-320`. `Header.s:449` defines `OFST_mexData` as
    *one of the rtoc slots*, i.e. the rtoc block contains a pointer to this struct. They are nested,
    not alternatives.
 
@@ -66,7 +66,7 @@ This is the biggest source of confusion in the existing port notes, so it is sta
 
 ### 1.2 The rtoc slot block (`OFST_*`)
 
-**VERIFIED**, `C:/gdm/_build/m-ex/asm/m-ex/Header.s:350-464`. Offsets are byte offsets *from r2*,
+**VERIFIED**, `${GW_ROOT}/_build/m-ex/asm/m-ex/Header.s:350-464`. Offsets are byte offsets *from r2*,
 one word each, starting at `0x00` and running contiguously. The ordered list, with the m-ex name
 and (my paraphrase of) what the slot points at:
 
@@ -130,7 +130,7 @@ Two cautions, both **VERIFIED**:
 
 ### 1.3 The `MexData` struct
 
-**VERIFIED**, `C:/gdm/_build/m-ex/MexTK/include/mxdt.h:246-320`. Field order, all one-word
+**VERIFIED**, `${GW_ROOT}/_build/m-ex/MexTK/include/mxdt.h:246-320`. Field order, all one-word
 pointers: `metadata`, `menu`, `fighter`, `fighter_function`, `ssm`, `music`, `effect`, `item`,
 `kirby_data`, `kirby_function`, `stage`, `stage_desc`, `scene`, `misc`.
 
@@ -222,7 +222,7 @@ Rules the layout must obey:
 ### 1.6 What Sonic's blob actually reads — **ZERO rtoc slots**
 
 **VERIFIED by static analysis of the shipped blob.** I extracted `PlSn.dat` from
-`C:\iso\Akaneia.iso` (read-only; GCM FST walk), parsed its HSD archive
+`${GW_ISO_AKANEIA}` (read-only; GCM FST walk), parsed its HSD archive
 (`filesize 0x41696, datasize 0x3D8FC, 3920 relocs, 3 publics: ftDataSonic 0x2FA90,
 ftFunction 0x3BB70, itFunction 0x3D648`), took the `ftFunction` code
 (`code 0x23E0, codeSize 0x5778`, matching `mex-ppc-interpreter.md:150-156`), applied the
@@ -281,7 +281,7 @@ read) gives the exact override map, and it corrects several slot names guessed i
 (`debug_symbol_num` / `debug_symbol`, **VERIFIED** present: 207 symbols) and log the real symbol
 name for every override and every guest PC. That alone turns future interpreter panics from
 addresses into named functions, for free. (`MEXDebugSymbol` is declared at
-`C:/gdm/_build/m-ex/MexTK/include/mxdt.h:111-116`; in the shipped blob its second word is the
+`${GW_ROOT}/_build/m-ex/MexTK/include/mxdt.h:111-116`; in the shipped blob its second word is the
 **end** offset, not a length — `OnLoad` reports `0x124`, which is the next symbol's start.)
 
 ### 1.7 `MxDt.dat` already *is* the mexData — do not synthesize it
@@ -381,7 +381,7 @@ lwz  r3, 4(r31)       ; fp->kind
 bl   MEX_IndexFighterItem
 ```
 
-`ftData.x48_items` is **VERIFIED** in the decomp at `C:/gdm/melee/src/melee/ft/types.h:655`
+`ftData.x48_items` is **VERIFIED** in the decomp at `${GW_ROOT}/melee/src/melee/ft/types.h:655`
 (`/* +48 */ UNK_T* x48_items;`). So: *"register this fighter's article #N with the global item
 system."*
 
@@ -442,7 +442,7 @@ item function tables, as absolute game addresses), then `Custom = 0x17D64` and
 relocations — they are runtime-filled.**
 
 **(c) How the global kind is consumed.** **VERIFIED** in
-`C:/gdm/_build/m-ex/asm/m-ex/Item Extension/Create Item.asm` (patch site `@0x80267990`, i.e. inside
+`${GW_ROOT}/_build/m-ex/asm/m-ex/Item Extension/Create Item.asm` (patch site `@0x80267990`, i.e. inside
 item creation). m-ex replaces the vanilla "which table does this item id belong to" decision with a
 range split, all driven off `OFST_ItemsAdded(rtoc)`:
 
@@ -525,11 +525,11 @@ from the blob's own debug symbols). It is the homing-attack target search and it
 ```
 
 - `0x804D782C` is **`HSD_GObjPLinkHead`** — **VERIFIED**,
-  `C:/gdm/melee/config/GALE01/symbols.txt:29538` (`.sbss`, size 4), declared
-  `HSD_GObj** HSD_GObjPLinkHead;` at `C:/gdm/melee/src/sysdolphin/baselib/gobj.h:73`. Index
-  `0x24/4 = 9` is `HSD_GOBJ_PLINK_ITEM` (`C:/gdm/melee/src/melee/it/forward.h:8`).
+  `${GW_ROOT}/melee/config/GALE01/symbols.txt:29538` (`.sbss`, size 4), declared
+  `HSD_GObj** HSD_GObjPLinkHead;` at `${GW_ROOT}/melee/src/sysdolphin/baselib/gobj.h:73`. Index
+  `0x24/4 = 9` is `HSD_GOBJ_PLINK_ITEM` (`${GW_ROOT}/melee/src/melee/it/forward.h:8`).
 - `gobj->next` at `+8` and `gobj->user_data` at `+0x2C` are **VERIFIED** in `gobj.h:14-33`.
-- `Item.kind` at `+0x10` is **VERIFIED** in `C:/gdm/melee/src/melee/it/types.h:213-226`.
+- `Item.kind` at `+0x10` is **VERIFIED** in `${GW_ROOT}/melee/src/melee/it/types.h:213-226`.
 - `209 == 0xD1 == It_Kind_Mato` — the **Target Test target** (`it/forward.h`, the MONSTERS 2 block:
   `0xD0 It_Kind_Old_Kuri`, then `It_Kind_Mato`). So the homing attack homes onto Target-Test
   targets as well as onto players — which is precisely why this fires under `MELEE_TARGET_TEST=32`.
@@ -693,8 +693,8 @@ Stated plainly, with what would settle each.
 ### Reproduction notes
 
 Everything in §1.6-§1.8 and §2.2 was produced offline from two files read out of
-`C:\iso\Akaneia.iso` (GCM FST walk, read-only — the ISO was not modified and the game was not
-run). No file under `C:\gdm\melee\` was modified. No m-ex `.asm`/`.h`/`.dat` content was copied
+`${GW_ISO_AKANEIA}` (GCM FST walk, read-only — the ISO was not modified and the game was not
+run). No file under `${GW_ROOT}\melee\` was modified. No m-ex `.asm`/`.h`/`.dat` content was copied
 into this document; all structure descriptions are paraphrases written to be reimplemented in
 original C.
 

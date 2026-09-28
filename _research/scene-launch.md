@@ -182,7 +182,7 @@ MELEE_SCENE="mode=vs;p1=fox/team0;p2=falco/team0/cpu9;p3=marth/team1/cpu9;p4=gan
 MELEE_SCENE="mode=targettest;p1=fox"
 
 # From a file.
-MELEE_SCENE_FILE=C:/gdm/_build/scenes/sonic_metacrystal.txt
+MELEE_SCENE_FILE=${GW_ROOT}/_build/scenes/sonic_metacrystal.txt
 ```
 
 A scene file:
@@ -198,9 +198,9 @@ at        match
 Run it:
 
 ```bash
-export GW_MELEE=C:/gdm/worktrees/<agent> GW_BUILD_ROOT=C:/gdm/_build/agents/<agent>
+export GW_MELEE=${GW_ROOT}/worktrees/<agent> GW_BUILD_ROOT=${GW_ROOT}/_build/agents/<agent>
 MELEE_SCENE="mode=training;p1=ck:38;stage=ext:293" \
-  bash C:/gdm/tools/port/run.sh sonic --iso C:/iso/Akaneia.iso
+  bash ${GW_ROOT}/tools/port/run.sh sonic --iso ${GW_ISO_AKANEIA}
 ```
 
 From **WSL**, a Windows binary does not inherit a WSL shell variable unless it is named in

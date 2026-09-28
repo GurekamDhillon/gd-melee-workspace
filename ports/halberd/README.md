@@ -79,7 +79,7 @@ This needs your own files; nothing here is playable on its own.
    start a match with `p1=brawlmetaknight`.
 
 The paths to your extracted Brawl files and your disc image are set at the top of the tools
-(`C:/iso/...` by default). Some shared helper tooling still lives in the local workspace outside
+(`${GW_ISO_DIR}/...` by default). Some shared helper tooling still lives in the local workspace outside
 `ports/` and isn't published yet, so a from-scratch rebuild on another machine needs some path
 editing.
 

@@ -3,8 +3,8 @@
 
 Read-only. See _research/mex-stock-icons.md.
 
-  python dump_stc_icns.py --iso C:/iso/Akaneia.iso --retail-iso "C:/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
-  python dump_stc_icns.py --iso C:/iso/Akaneia.iso --png-dir OUT --internal 31 --costumes 7
+  python dump_stc_icns.py --iso "${GW_ISO_AKANEIA}" --retail-iso "${GW_ISO_VANILLA}"
+  python dump_stc_icns.py --iso "${GW_ISO_AKANEIA}" --png-dir OUT --internal 31 --costumes 7
 
 Prints the Stc_icns header, the TexAnim, the frame -> image mapping for one internal id, and
 (with --retail-iso) compares every vanilla fighter/costume: retail gm_80168B34 frame on retail

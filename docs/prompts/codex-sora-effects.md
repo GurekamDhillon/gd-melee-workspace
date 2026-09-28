@@ -34,7 +34,7 @@ regenerate the four magic packages with the UNCHANGED importer at 1a9b4ce into
 ## What to do
 
 1. **Census.** List every emitter set in the dump, and every effect call in Sora's effect scripts
-   (Ghidra decompilation: `C:/Users/Gurek/ghidra-projects/sora_acmd/effect/*.c`, indexed by
+   (Ghidra decompilation: `${GW_GHIDRA_PROJECTS}/sora_acmd/effect/*.c`, indexed by
    `index.tsv`; parse them the way `ports/ir/tools/acmd_parse.py` parses game scripts - reuse its
    helpers by importing it, do not edit it). For each call: script (motion), frame, macro
    (EFFECT, EFFECT_FOLLOW, EFFECT_FLW_POS, LANDING_EFFECT, AFTER_IMAGE4_ON..., EFFECT_OFF_KIND, etc.),

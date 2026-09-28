@@ -3,9 +3,9 @@
 # run it.
 #
 # GW_BUILD_ROOT is the knob that makes parallel work possible. It names the directory holding one
-# tree's object files, link response file and melee-pc.exe. It defaults to C:/gdm/_build, so a
+# tree's object files, link response file and melee-pc.exe. It defaults to $GW_ROOT/_build, so a
 # single-agent session behaves exactly as before; agent_new.sh points a git worktree at
-# C:/gdm/_build/agents/<name> instead, and from then on two agents never write the same file.
+# $GW_ROOT/_build/agents/<name> instead, and from then on two agents never write the same file.
 #
 # What stays shared on purpose:
 #   - $GW_ROOT/_build/ax86m     the Aurora/Dawn/SDL3 import libraries. melee_link_libs.rsp names
@@ -16,7 +16,7 @@
 #   - melee/config/GALE01/symbols.txt via the worktree, which each agent has its own copy of.
 #
 # NOTHING HERE IS TIED TO A PARTICULAR CHECKOUT PATH. GW_ROOT defaults to the directory two levels
-# above this script, so a fresh clone works with no setup and no C:/gdm symlink; exporting GW_ROOT
+# above this script, so a fresh clone works with no setup and no the Aurora junction symlink; exporting GW_ROOT
 # still wins. See SETUP.md.
 
 # The toolchain (clang.exe, gwtool.exe, link.exe) is native Windows and cannot read /c/... paths,
@@ -31,6 +31,13 @@ gw_win_path() {
 if [ -z "${GW_ROOT:-}" ]; then
     GW_ROOT="$(gw_win_path "$(dirname "${BASH_SOURCE[0]}")/../..")"
 fi
+# Optional per-machine settings: ISO paths and any toolchain override. Not tracked (see
+# .gitignore); SETUP.md documents it. Sourced before the defaults below so it can set anything.
+if [ -f "$GW_ROOT/.env" ]; then
+    # shellcheck disable=SC1091
+    . "$GW_ROOT/.env"
+fi
+
 GW_BUILD_ROOT="${GW_BUILD_ROOT:-$GW_ROOT/_build}"
 
 # The melee worktree to build FROM: an explicit GW_MELEE wins, then the git repo the caller is
@@ -47,13 +54,6 @@ GW_SHIMOBJ="${GW_SHIMOBJ:-$GW_BUILD_ROOT/masstest/shimobj}"  # native platform s
 GW_EXE="$GW_BUILD_ROOT/melee-pc.exe"
 GW_MAP="$GW_BUILD_ROOT/melee-pc.map"
 GW_LINK_OBJECTS="${GW_LINK_OBJECTS:-$GW_BUILD_ROOT/melee_link_objects.rsp}"
-
-# Optional per-machine settings: ISO paths and any toolchain override. Not tracked (see
-# .gitignore); SETUP.md documents it. Sourced before the defaults below so it can set anything.
-if [ -f "$GW_ROOT/.env" ]; then
-    # shellcheck disable=SC1091
-    . "$GW_ROOT/.env"
-fi
 
 # The discs. Supply your own legally dumped images; none is distributed with this repo.
 # GW_ISO is what run.sh uses when --iso is not given.
@@ -152,6 +152,11 @@ gw_build_tu() {
 # step happily runs against a stale exe.
 gw_link() {
     local out
+    # Refresh moved lanes; an explicitly supplied custom response file remains caller-owned.
+    if [ "$GW_LINK_OBJECTS" = "$GW_BUILD_ROOT/melee_link_objects.rsp" ]; then
+        python "$GW_ROOT/tools/port/link_response.py" --root "$GW_ROOT" --build-root "$GW_BUILD_ROOT" ||
+            gw_die "cannot regenerate lane link list"
+    fi
     mkdir -p "$GW_BUILD_ROOT"
     out="$( cd "$GW_ROOT/_build/ax86m" &&
         GW_ROOT="$(cygpath -w "$GW_ROOT" 2>/dev/null || echo "$GW_ROOT")" \

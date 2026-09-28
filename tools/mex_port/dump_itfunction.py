@@ -22,11 +22,11 @@ blob and its function pointers are fixed up by the blob's own abs32 instruction 
 
 Examples:
 
-    python dump_itfunction.py --iso C:/iso/Akaneia.iso PlSn.dat
-    python dump_itfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --states 8
-    python dump_itfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --symbols --relocs
-    python dump_itfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --emit-blob it_sn.bin
-    python dump_itfunction.py --iso C:/iso/Akaneia.iso --survey PlSn.dat PlTs.dat PlWf.dat
+    python dump_itfunction.py --iso "${GW_ISO_AKANEIA}" PlSn.dat
+    python dump_itfunction.py --iso "${GW_ISO_AKANEIA}" PlSn.dat --states 8
+    python dump_itfunction.py --iso "${GW_ISO_AKANEIA}" PlSn.dat --symbols --relocs
+    python dump_itfunction.py --iso "${GW_ISO_AKANEIA}" PlSn.dat --emit-blob it_sn.bin
+    python dump_itfunction.py --iso "${GW_ISO_AKANEIA}" --survey PlSn.dat PlTs.dat PlWf.dat
 
 Read-only: nothing is ever written except the explicit --emit-blob target.
 """
