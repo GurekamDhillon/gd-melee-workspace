@@ -438,9 +438,10 @@ transform (the model API supports per-instance `set`; a multi-drag must be one u
 
 **Pattern:** duplicate is *immediate + enter move mode* (Blender `Shift+D`), linked duplication is a
 separate verb (`Alt+D`), per-field value copy/paste is `Ctrl+C/V`, and a repeat/array count is the
-power-user form of duplicate. **Our situation:** `Ctrl+D` duplicates at the cursor (no move mode, no
-count). **P1:** duplicate enters move mode; `Ctrl+D` with a count (`Ctrl+D` then digits) or a "duplicate
-×N" action row; a small copy stack for part settings.
+power-user form of duplicate. **Done 2026-09-28:** `map duplicate <n>` (and the "Duplicate x4 at cursor" action row) copies the
+selection **N times** spaced one grid step along X as **one undo step**; `Ctrl+D` stays a single
+duplicate at the cursor. **Remaining:** enter move mode after a duplicate, and a small copy stack for
+part settings.
 
 ### 5.6 Undo / redo
 
