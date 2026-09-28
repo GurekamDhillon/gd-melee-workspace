@@ -410,8 +410,13 @@ do not override pads for a UI, §4.7 uses them read-only).
 **Pattern:** drag the label to scrub, click the box to type; a drag deadzone so a click still types;
 `Esc` during a drag reverts to the start value; Ctrl/Shift modify the step (Blender fields; Unity
 `FieldMouseDragger`/`DragNumberValue`). **Polarity:** Blender/Unity = Ctrl coarser, Shift finer (§4.5);
-document it. **Our kit:** there is no slider/field widget yet — `_research/menu-kit-pieces.md` plans
-`gd.kit.field`. **P1:** build `gd.kit.field` + use it in the property grid (§5.7) for x/y/z/rot/scale.
+document it.
+**Done 2026-09-28:** inspector `x/y/z/rot/scale` rows scrub on drag (3px deadzone, `Shift` quarters the
+step, `Ctrl` hard-snaps) and open **typed entry** on a plain click (digits, `.`, `-`, Backspace, Enter
+applies one undo step, ESC cancels). `map set <field> <value>` mirrors it for scripts and tests.
+`gd.key` gained the OEM names (`PERIOD`, `MINUS`, `PLUS`, `COMMA`, `SLASH`, `SEMICOLON`, `GRAVE`,
+`LBRACKET`, `RBRACKET`, `BACKSLASH`, `QUOTE`).
+**Remaining:** a native `gd.kit.field` widget (the Lua row is sufficient today).
 
 ### 5.3 Palette browsing and search
 
@@ -449,10 +454,10 @@ the action menu (jump to a step; a new edit truncates the redo branch, Blender-s
 
 **Pattern:** data-driven, foldout sections, reset-to-default per field, per-field copy/paste (Dear ImGui
 property editor demo; Unity Inspector revert; Blender Ctrl+C/V). **Our situation:** no inspector at all
-— the selected part is only a cyan square. **P1:** a selection panel showing `part`, `x/y/z`, `rot`,
-`scale*`, `collision`, `floor_flags`, `layer`, `tint`, with a "New parts" defaults section (the
-current `New …` action rows become fields here, which also fixes the "meaningless index as value" defect
-in §7.3).
+— the selected part is only a cyan square. **Done 2026-09-28:** a right-hand SELECTION panel shows
+`part`, `x/y/z`, `rot`, `scale`, `collision`, `floor_flags`; the numeric rows scrub and type (§5.2),
+`collision`/`floor flags` click to change. **Remaining:** `layer`/`tint`, and moving the `New …`
+defaults from the action menu into a "New parts" section here.
 
 ### 5.8 Ghost previews and validation
 
@@ -484,6 +489,18 @@ command palette), with F1 remaining the keybind reference; both must be reachabl
 The reserved-key conflict (§4.1) means the scheme is *unusual*, so the editor must teach it: the bottom
 bar's hint line names the current tool's primary gesture and its modifier, and F1 shows the full table
 with the `G/E/C` substitutions called out. (§2 P6.)
+
+### 5.12 On-object gizmos (the primary manipulation path)
+
+**Principle:** direct manipulation first (§2 P7) — the selected part carries its own handles rather than
+requiring a modal key. **Done 2026-09-28:** the selection draws **red = move X**, **green = move Y**,
+**cyan = scale** (uniform), and a **gold rotation ring**, all in screen space from the projected axes
+(so they follow the camera and widescreen). Pressing a handle starts the *same* modal transform the keys
+use (`modal_begin(mode, ax, 'mouse')`); the pointer drives it, release commits, a drag is one undo step.
+Panels take precedence over handles (a press is tested against the panels first), and the handles only
+exist while a part is selected.
+**Remaining:** a hover highlight + cursor change over a handle, per-axis scale tips, and rotation
+out-of-plane (the ring is the in-plane rotate the engine supports).
 
 ---
 
@@ -618,9 +635,13 @@ cross-mod sharing · rollback safety · streaming worlds · asset-bundle self-va
   new-part defaults, tools, scale/mirror/reset, constraint, snap, help.
 - **Keys:** F6/F1/H/F2/F3/F7/F8, Z, arrows, PgUp/PgDn, Insert, Del, Tab, Enter, Esc, M/R/T/C/G/X/Y, 1-5,
   WASD (fly), Ctrl+{D,Z,Y,S,O}, Shift+{X,Y}; plus pad edges via `gd.pad(1)`.
-- **Panels:** top bar (title/tool/part/file), left panel (TOOL + PART/ACTIONS + Help rows), bottom bar
-  (hint + XYZ/grid/snap/parts + file|status), all on an opaque backdrop; help modal (single column, 12
-  rows, scrollbar, dim backdrop).
+- **Panels:** top bar (title/tool/part/file), left panel (TOOL + PART/ACTIONS + Help rows), right
+  SELECTION inspector (name, x/y/z/rot/scale, collision, floor flags), bottom bar (hint + state +
+  last-action/error), all on an opaque backdrop; help modal (single column, 12 rows, scrollbar, dim
+  backdrop). Every panel is laid out against `gd.safe_area()`, so the bars span the whole window at any
+  aspect and the inspector hugs the right edge.
+- **Gizmos:** the selection carries red/green move handles, a cyan scale handle and a gold rotate ring
+  (§5.12), drawn from `gd.project`; the world cursor cross and the part outlines use the same projection.
 - **Undo:** 64 clone snapshots; failed ops do not advance history; selection re-validated after apply.
 - **Picking:** no raycast — nearest part origin in XYZ (including the selected depth plane); screen→world
   via a **plane homography** solved from four projected samples, cached per (camera interest, depth,
@@ -672,10 +693,12 @@ help updated. Contract tests cover modal move/undo, ESC revert, axis lock, frame
 
 **Done 2026-09-28** (this session, verified on screen): palette **filter + recents + typed `F4` mode**
 (`map filter <text>` for scripts/tests; matches are pinned-recent-first; `*` marks recent rows), the
-**SELECTION inspector** (right panel: name, x/y/z/rot/scale; click `collision`/`floor flags` to edit),
-**toasts** for save/load/duplicate/clear, and the error/last-action split.
-**Remaining:** drag-to-scrub field editing (`gd.kit.field`), placement ghost, palette category
-grouping, Undo History list, `Space` action search.
+**SELECTION inspector** (right panel: name, x/y/z/rot/scale; drag to scrub, click to type; click
+`collision`/`floor flags` to edit), **on-object gizmo handles** (§5.12), **toasts** for
+save/load/duplicate/clear, and the error/last-action split. The overlay also fills the widescreen frame
+via `gd.safe_area` (§4.6).
+**Remaining:** placement ghost, palette category grouping, Undo History list, `Space` action search,
+native `gd.kit.field`.
 
 ### P2 — Own the ecosystem gap (spawns, camera, bounds)
 
