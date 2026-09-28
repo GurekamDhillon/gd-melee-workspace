@@ -200,7 +200,10 @@ A **player table**: `port`, `char` (character id), `char_name`, `kind` (internal
 
 ### Drawing (call from `on_draw`)
 
-Coordinates are a 640x480 virtual screen scaled to the window. Colours are `0xRRGGBBAA` numbers
+Coordinates are a 640x480 virtual screen scaled to the window: the height is always 480 and the
+width grows with the window's aspect (a 16:9 window is about 853 wide), so the overlay uses the
+whole picture instead of a centred 4:3 band. Read `gd.safe_area()` and lay wide layouts out
+against it; 640 stays the origin and the minimum. Colours are `0xRRGGBBAA` numbers
 (`gd.rgb(r, g, b [, a])` builds one) or `{r=, g=, b=, a=}`.
 
 | function | |
@@ -453,7 +456,8 @@ or the console, and remain refused during netplay/rollback even for `rollback_sa
 | `gd.hurtboxes(port)` | capsules: `{id, bone, state, height, grabbable, ax, ay, az, bx, by, bz, radius}` |
 | `gd.joints(port [, fresh])` | joint positions and projected coordinates: `{index, parent, valid, x, y, z, sx, sy, on}`; list index = joint index + 1. `fresh=true` updates matrices first and is offline-only; otherwise unused joints may have old matrices |
 | `gd.dobjs(port)` | draw objects (`index, hidden, render, tobjs`) plus `models` part states and `costume` texture-animation transforms |
-| `gd.project(x, y [, z])` | `screen_x, screen_y, visible, depth` in 640x480 coordinates; z defaults 0; nil without camera |
+| `gd.project(x, y [, z])` | `screen_x, screen_y, visible, depth` in the overlay canvas coordinates above (x can exceed 640 on a wide window); z defaults 0; nil without camera |
+| `gd.safe_area()` | `{x=0, y=0, w, h=480, right=w, bottom=480}`: the overlay canvas; `w` follows the window aspect. Lay panels out against this. |
 | `gd.attrs(port)` | fighter's named common attributes as `{name=value}` |
 | `gd.motion_name(id [, port])` | action name; optional fighter selects its special/Geno table |
 | `gd.motion_list(port)` | valid actions as `{id, name, group, anim_id, anim_name}`; groups `common`, `special`, `mex`, `geno` |
