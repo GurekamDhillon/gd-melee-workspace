@@ -575,7 +575,10 @@ is the mental model modders already have (§2 P26).
 owner-guarded and restored by `gd.stage_restore_bounds()`; `gd.stage_spawn(slot)` reads it back. The map
 editor exposes it as `map spawn <0-7> [x y]`. **Verified live:** moving slot 4 to `x=-100` made P1
 respawn at `x=-100` after a KO. **Spawns are saved in layout v2** (`spawn={[slot]={x=…,y=…}, …}`) and
-re-applied on load — the move/save/move-away/load cycle was verified live.
+re-applied on load — the move/save/move-away/load cycle was verified live. **Item spawn points
+(ids 127–146) use the same API and the same storage**: `map spawn 130` reads or moves one (the native
+save/restore arrays cover all 261 general points), and a live move + undo put the FD item spawn back to
+its authored `0, 30`.
 
 ### 6.4 The stage filenames (and the corrections)
 

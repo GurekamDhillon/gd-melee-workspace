@@ -458,7 +458,7 @@ or the console, and remain refused during netplay/rollback even for `rollback_sa
 | `gd.dobjs(port)` | draw objects (`index, hidden, render, tobjs`) plus `models` part states and `costume` texture-animation transforms |
 | `gd.project(x, y [, z])` | `screen_x, screen_y, visible, depth` in the overlay canvas coordinates above (x can exceed 640 on a wide window); z defaults 0; nil without camera |
 | `gd.safe_area()` | `{x=0, y=0, w, h=480, right=w, bottom=480}`: the overlay canvas; `w` follows the window aspect. Lay panels out against this. |
-| `gd.stage_set_spawn(slot, x, y)` | offline: move a spawn point; slots 0–3 are player starts, 4–7 the respawns (owner-guarded, forks the rewind timeline, restored by `gd.stage_restore_bounds()`). |
+| `gd.stage_set_spawn(slot, x, y)` | offline: move a spawn point; slots 0–3 are player starts, 4–7 the respawns, 127–146 the item spawns (owner-guarded, forks the rewind timeline, restored by `gd.stage_restore_bounds()`). |
 | `gd.stage_spawn(slot)` | `x, y, z` of that spawn point as authored. |
 | `gd.attrs(port)` | fighter's named common attributes as `{name=value}` |
 | `gd.motion_name(id [, port])` | action name; optional fighter selects its special/Geno table |
