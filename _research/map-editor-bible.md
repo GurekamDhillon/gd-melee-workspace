@@ -734,8 +734,11 @@ blast rect red. Contract tests cover capture → v2 serialize → load-applies �
 compatibility. **Player start/respawn editing landed too:** `gd.stage_set_spawn(slot, x, y)` +
 `gd.stage_spawn(slot)` (native, JObj translate; arena-owned and restorable) with the editor's
 `map spawn <0-7> [x y]` op — verified live by moving P1's respawn to `x=-100` and respawning there.
-**Remaining:** write spawns into the layout (v2), a drag-a-rect bounds UI, spawn/bounds handles, and
-the walkoff warning (§6.7 #8); item/enemy spawns still have no editor.
+**Remaining:** item/enemy spawns still have no editor, the walkoff warning (§6.7 #8), camera collision
+(§2 P13) and orthographic views are open, as are the P3 items (multi-select/box-select, duplicate runs
+beyond ×N). The **bounds edges are draggable** since 2026-09-28: the camera rect's four edge handles
+move that edge to the cursor's world position (grid-snapped, clamped so the rect stays non-empty) with
+one undo step per drag; `walkoff` warnings would build on the same rect.
 
 - Read, display, name, edit and persist: player respawns (ids 0–7) — the scripted-platform API already
   exists for spawn points; camera bounds and blast bounds via `gd.stage_set_camera_bounds` /
