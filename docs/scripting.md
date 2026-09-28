@@ -231,6 +231,7 @@ alpha × tint alpha. Other formats are modulated by the tint.
 | `gd.kit.available()` | `true`, or `false` and why (the kit's files were not found) |
 | `gd.kit.text(x, y, text [, role [, color [, align [, opts]]]])` | `y` is the **baseline**. `role` (default `"body"`) is one of `gd.kit.roles`; `color` defaults to `"bone"`; `align` `"left"`/`"center"`/`"right"` of `x`; `opts` `{max_w =, shear =}` (`max_w` applies the fit rule; `shear` defaults to the kit's `gd.kit.shear`, 0 = upright). Returns the width |
 | `gd.kit.measure(text [, role [, max_w]])` | width, line height, and the text as the fit rule would set it |
+| `gd.kit.paragraph(x, y, w, text [, role [, colour [, opts]]])` | wrapped multi-line text: breaks at spaces (and `\n`) to lines no wider than `w`, drawn from baseline `y` at the role's line height. A single overlong word goes through the fit rule. `opts` `{shear =}` (default the kit's shear). Returns the lines drawn and the block's height. The kit's pieces and how to add one: `_research/menu-kit-pieces.md` |
 | `gd.kit.metrics(role)` | `{size, ascent, descent, cap, line}` at 1x |
 | `gd.kit.image(name, x, y [, w [, h [, opts]]])` | any kit texture by file name (`"glyph_a"`, `"frame_edge_h"`, your mod's). Default size: its 1x size (the kit is authored at 2x) × `opts.scale`. `opts` `{tint =, scale =, flip_x =, flip_y =, shear =}`. Returns w, h, or `nil` when there is no such texture |
 | `gd.kit.icon(name, x, y [, scale [, tint]])` | `ico_<name>` (`"lock"` → `ico_lock`), tinted `"bone"` unless its manifest or `tint` says otherwise |

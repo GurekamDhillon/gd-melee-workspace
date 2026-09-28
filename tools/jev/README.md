@@ -28,6 +28,16 @@ kept for the record in `_build/agents/batcha/jev-triage-2026-09-28.md` (v1) and
 Run it after a sweep or a lane test batch; treat `outcome=test_failed` rows as the queue and
 `severity` as the order. It is a triage aid, not proof — read the log it points at.
 
+## `rank_chunks.py` — rank findings/options against a goal
+
+    python3 tools/jev/rank_chunks.py --goal "Which findings should the map-editor bible use?" \
+        --chunks findings.tsv [--top N]
+
+One call, one `noul` per chunk: "does this finding materially inform or change the plan for the
+goal?" Chunks are `label<TAB>text` lines — a self-contained statement per line. Sorted output, plus
+`rank_chunks.md` + `rank_chunks.json` beside the chunks file. Use it to filter research lanes down
+to load-bearing material, or to score candidate designs against a fixed goal.
+
 ## `rerank_files.py` — rank a file shortlist against a task
 
     python3 tools/jev/rerank_files.py --task "finish gd.comm: fix escapes, rebuild, test, document" \
