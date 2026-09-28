@@ -73,8 +73,11 @@ smash), longer holds for mid-cast frames, and a side-by-side against Ultimate fo
 fireball mid-flight) and `sonic-blade.png` (side-B star flash) are **visually confirmed**.
 `blizzaga.png` (down-B, `P_TrailIceShot`) and `thundaga.png` (up-B, `P_TrailThunderCloud` 5 emitters +
 `P_TrailThunderBullet`) had the effects **live at capture/query time** but the frames caught them early
-(a small trail / pre-flash), so redo them with a later capture (~0.7-1.1 s into the cast, or a 2-3 frame
-burst) — do not present those two as effect shots yet. **Recipe for a directional special:**
+(a small trail / pre-flash), so redo them. A 3-frame burst also missed (six frames across two casts, all
+without a visible effect): the cast's visible window is **shorter than one capture round-trip**
+(~0.4 s of PrintWindow latency). The reliable route is to **gate the capture on a `gd.fx()` poll** —
+cast, then poll `gd.fx()` and capture the instant it is non-empty — or to record a short video and pick
+the frame. Do not present those two as effect shots yet. **Recipe for a directional special:**
 `gd.input(1,{y=-110},6)` (or `y=110`) **then** `gd.input(1,{buttons="B"},30)`, ~3 s between casts; a
 simultaneous stick+B spec attaches nothing. Still to capture: Aerial Sweep and a Keyblade smash, plus a
 side-by-side against Ultimate for the fidelity pass.
