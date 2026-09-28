@@ -69,6 +69,10 @@ fireball mid-flight) and `sora-fx-cap/now00.png`. The earlier `mex:51`/"zero" an
 the wrong selector and a fresh-copy mismatch; the alpha lane's `mods-gd-latest` carries the matching
 `MxDt` clone. **Next for a showcase:** a capture set per spell (Firaga/Blizzaga/Thundaga + Keyblade
 smash), longer holds for mid-cast frames, and a side-by-side against Ultimate for the fidelity pass.
+**Showcase captures so far (2026-09-28)** in `_build/agents/batcha/sora-showcase/`: `firaga.png` (the
+Firaga fireball mid-flight) and `sonic-blade.png` (side-B's star flash, `P_TrailSonicAttack`, 9
+emitters). Down-B produced no attachment at capture time (`gd.fx() == {}`) — a timing/trigger question
+(hold longer, or cast after a jump); Blizzaga and Thundaga are still to capture.
 
 ## Current code
 
