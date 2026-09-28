@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Offline check of Ultimate smash-hold markers and Melee charge commands."""
+from pathlib import Path
 import os
 import unittest
 
@@ -8,7 +9,7 @@ import acmd_to_ftcmd as FT
 from convert_ultimate_anim import TOOL
 
 
-DUMP = "C:/Users/Gurek/ghidra-projects/sora_acmd"
+DUMP = os.path.join(os.environ.get("GW_GHIDRA_PROJECTS", str(Path.home() / "ghidra-projects")), 'sora_acmd')
 NRO = os.path.join(TOOL, "workspace", "extracted", "prebuilt", "nro", "release", "lua2cpp_trail.nro")
 AGENT = hex(AP.hash40("trail"))
 # Marth PlMs.dat data offsets 0x4ED4/0x4FBC/0x5090: 60 frames, rate 350, colour animation 119.

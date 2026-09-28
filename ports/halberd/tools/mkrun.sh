@@ -3,7 +3,8 @@
 # default 51777) in the background, like _build/agents/alpha/tools/heaprun.sh. Exes are COPIES in
 # ports/halberd/_run/<root>/ (beta's Geno exe / the main exe), so neither original is touched.
 # Prints the PID of the game process started (kill only that one: taskkill //PID <pid> //F).
-MK="C:/Users/Gurek/Desktop/GD's Melee/ports/halberd"
+. "$(dirname "${BASH_SOURCE[0]}")/../../../tools/port/portlib.sh"
+MK="$GW_ROOT/ports/halberd"
 root="$1"; name="$2"; scene="$3"; mods="${4:-$MK/_run/mods}"
 export GW_BUILD_ROOT="$MK/_run/$root"
 export MELEE_RUN_LABEL="${LABEL:-metaknight / $root ($name)}"
@@ -15,7 +16,7 @@ export MELEE_LOG="${LOGCATS:-dvd,mex}"
 if [ -n "${KBONLY:-}" ]; then export MELEE_INPUT=keyboard SDL_JOYSTICK_HIDAPI_GAMECUBE=0; fi
 if [ "$mods" != "-" ]; then export MELEE_MODS_DIR="$mods"; fi
 mkdir -p "$GW_BUILD_ROOT/runs"
-nohup bash "C:/Users/Gurek/Desktop/GD's Melee/tools/port/run.sh" "$name" --iso "C:/iso/SSBM ACE Build v2.0.0.iso" \
+nohup bash "$GW_ROOT/tools/port/run.sh" "$name" --iso "${GW_ISO_ACE:?set GW_ISO_ACE}" \
     >"$GW_BUILD_ROOT/runs/$name.out" 2>&1 </dev/null &
 sleep 4
 # the game's PID: the melee-pc.exe whose image path is this sandbox

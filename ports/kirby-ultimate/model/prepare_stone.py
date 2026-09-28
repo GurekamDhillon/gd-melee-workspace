@@ -4,6 +4,7 @@ The extracted game files are read locally; the mesh and texture output belongs
 under the ignored build directory and must never be committed.
 """
 
+import os
 from pathlib import Path
 import argparse
 import json
@@ -14,7 +15,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[3]
 DEPENDENCIES = ROOT / "experiment/tooling/ultimate/profile/blender/scripts/addons/smash-ultimate-blender/dependencies"
-DEFAULT_SOURCE = Path(r"E:\Ultimate files\workspace\extracted\fighter\kirby\model\stone\c00")
+DEFAULT_SOURCE = Path(os.environ.get("GW_ULTIMATE_EXTRACT", str(Path(__file__).resolve().parents[3] / "_local" / "ultimate"))) / 'fighter/kirby/model/stone/c00'
 DEFAULT_CLI = ROOT / "experiment/tooling/ultimate/apps/Ultimate-Tex-CLI/ultimate_tex_cli.exe"
 DEFAULT_OUT = ROOT / "_build/tmp/ultimate-kirby-stone"
 SCALE = 5.0 / 4.6

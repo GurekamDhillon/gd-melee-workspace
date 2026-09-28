@@ -1,6 +1,6 @@
 param(
   [int[]]$TimestampsSec = @(0,6,12,20),
-  [string]$OutDir = "C:\gdm\_build\stage_capture"
+  [string]$OutDir = "$PSScriptRoot\stage_capture"
 )
 
 Add-Type -AssemblyName System.Drawing

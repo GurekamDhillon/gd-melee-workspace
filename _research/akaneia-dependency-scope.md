@@ -1,7 +1,7 @@
 # Akaneia dependency scope — what must be supplied beyond `PlSn*.dat`
 
 **Date: 2026-09-19.** Research only: nothing was built, run, or modified. Both ISOs and
-`C:/gdm/melee/` were read-only.
+`${GW_ROOT}/melee/` were read-only.
 
 **Short answer.** Beyond the ten `PlSn*.dat` files, Sonic *as he runs today* needs exactly one
 more disc file: **`PlCo.dat`** (Akaneia's, +3,344 B). Everything else Akaneia adds is content for
@@ -18,13 +18,13 @@ below.
 ## 0. Method and provenance
 
 Both discs were parsed with a throwaway FST reader (session scratchpad, not committed) modelled on
-`C:/gdm/tools/gc_extract.py` — that tool exists but prints only bare names, not full paths, so the
+`${GW_ROOT}/tools/gc_extract.py` — that tool exists but prints only bare names, not full paths, so the
 walk was re-derived from the boot-block layout documented in
-`C:/gdm/melee/pc/platform/shim_dvd.c`. HSD archive headers were parsed directly
+`${GW_ROOT}/melee/pc/platform/shim_dvd.c`. HSD archive headers were parsed directly
 (`u32 file_size, data_size, n_reloc, n_public, n_extern`, data at `0x20`).
 
-- Vanilla: `C:\iso\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso`
-- Akaneia: `C:\iso\Akaneia.iso`
+- Vanilla: `${GW_ISO_VANILLA}`
+- Akaneia: `${GW_ISO_AKANEIA}`
 
 VERIFIED disc headers:
 
@@ -135,7 +135,7 @@ And the decisive one for fighters:
 **Sonic's code ships inside his own `.dat`.** That is the single most important structural fact in
 this report: m-ex puts a fighter's moveset (`ftFunction`) and his article/item code (`itFunction`)
 in the fighter archive as relocatable PPC, not in the DOL. This is exactly what
-`C:/gdm/melee/pc/platform/gw_mex_ftfunction.c` already loads and interprets.
+`${GW_ROOT}/melee/pc/platform/gw_mex_ftfunction.c` already loads and interprets.
 
 ---
 
@@ -149,7 +149,7 @@ Cross-referenced against how the port reaches him: `src/melee/ft/ftdata.c`
 ### CONFIRMED HARD dependencies (11 files)
 
 **1–10. The ten `PlSn*.dat`.** Seven are named literally in
-`C:/gdm/melee/src/melee/ft/kinds/ftSonic/ftsonic.c`: `PlSn.dat` (+ symbol `ftDataSonic`),
+`${GW_ROOT}/melee/src/melee/ft/kinds/ftSonic/ftsonic.c`: `PlSn.dat` (+ symbol `ftDataSonic`),
 `PlSnAJ.dat`, and costumes `PlSnNr/Re/Gr/Ye/Bk/Or/Wh.dat` with their
 `PlySonic5K*_Share_joint` / `_matanim_joint` symbols. `PlSn.dat` is opened a **second** time by
 `pc/platform/gw_mex_ftfunction_runtime.c:37` (`#define GW_MEX_FTFUNC_DAT "PlSn.dat"`) for the
@@ -169,13 +169,13 @@ akaneia PlCo.dat: data 0x24630, 837 relocs, 1 public symbol `ftLoadCommonData`
                                       section. entry[31] = 0x241F8 = Sonic's parts table.
 ```
 
-`C:/gdm/melee/src/melee/ft/fighter.c:202` reads exactly that slot:
+`${GW_ROOT}/melee/src/melee/ft/fighter.c:202` reads exactly that slot:
 
 ```c
 out[Ft_Kind_Sonic] = ftData_SonicHasOwnData() ? loaded[31] : loaded[Ft_Kind_Fox];
 ```
 
-Prior in-game evidence (`C:/gdm/_research/sonic-clone-boot.md`, section "m4") confirms
+Prior in-game evidence (`${GW_ROOT}/_research/sonic-clone-boot.md`, section "m4") confirms
 `parts_num=71` from that entry, matching Sonic's skeleton (Fox has 73). With a vanilla `PlCo.dat`,
 index 31 is a vanilla boss's parts table and `ftParts_SetupParts` will mismatch.
 
@@ -186,7 +186,7 @@ implies. Flagged in §5.
 
 ### LIKELY needed for the open gaps (medium confidence)
 
-- **`MxDt.dat` (`mexData`, 105,460 B)** — for gap 2 in `C:/gdm/docs/HANDOFF.md` (neutral-B → guest
+- **`MxDt.dat` (`mexData`, 105,460 B)** — for gap 2 in `${GW_ROOT}/docs/HANDOFF.md` (neutral-B → guest
   access violation walking an m-ex item list). The port currently **synthesizes** mexData: a zeroed
   `0x2000` block (`pc/platform/gw_mex_ftfunction_runtime.c:69`, `GW_MEX_MEXDATA_SIZE`). The real
   tables live in `MxDt.dat`, and the m-ex code's own error strings name them — extracted verbatim
@@ -196,7 +196,7 @@ implies. Flagged in §5.
   `"error: MxDt does not have article ID %d"`,
   `"error: MxDt does not contain any items for %s %d"`.
   The `MexData.fighter[]` layout is documented in
-  `C:/gdm/_build/m-ex/MexTK/include/mxdt.h:247` and includes `item_lookup`, `ft_archives`,
+  `${GW_ROOT}/_build/m-ex/MexTK/include/mxdt.h:247` and includes `item_lookup`, `ft_archives`,
   `target_test_lookup`, `effect_index`, `anim_num`, `costume_file`.
   Confidence the item crash traces to missing `mexData`: **high**. Confidence that shipping the
   file alone fixes it: **low** — the port would have to parse `mexData` and marshal it, which is
@@ -255,15 +255,15 @@ Exactly **5 byte-runs differ, 11,993 bytes total**:
 The header signature names the tool: **Melee Code Manager v4.2.1**. The 11,964-byte region it
 overwrites is the dead EXI2/HIO debugger-mailbox code (`HIOEnumDevices`, `HIOInit`,
 `HIOReadMailbox`, `DBGHandler`, `FIOInit`, `MCCWrite` — per
-`C:/gdm/melee/config/GALE01/symbols.txt`), never reached on retail hardware. That is MCM's standard
-free-space region. `C:/gdm/_build/m-ex/dol patcher/patch.xdelta` (2,502 B) is the shipped form of
+`${GW_ROOT}/melee/config/GALE01/symbols.txt`), never reached on retail hardware. That is MCM's standard
+free-space region. `${GW_ROOT}/_build/m-ex/dol patcher/patch.xdelta` (2,502 B) is the shipped form of
 this same patch.
 
 ### 3b. What it does — disassembled
 
 `HSD_OSInit+0x80` (`0x80375384`), vanilla `387F001F addi r3,r31,31`, becomes
 `4BFB71BC b 0x8032C540`. At `0x8032C540`
-(via `C:/gdm/tools/mex_port/ppc_disasm.py`, abridged):
+(via `${GW_ROOT}/tools/mex_port/ppc_disasm.py`, abridged):
 
 ```
 0x8032C540  mfspr r0,lr / stwu r1,-256 / stmw r20,8(r1)   prologue
@@ -331,7 +331,7 @@ up — `!ftFunction`, `!kbFunction`, `!mexPatch`, `!MxDt.dat` / `!mexData`, `!Mx
 date; please update with mexTool"`.
 
 Now the port. **It applies none of these 1,163 codes.** It does not read `codes.gct` at all (grep
-of `C:/gdm/melee/pc/`, `tools/` and `src/melee/ft/` for `codes.gct`: no hits). Instead the
+of `${GW_ROOT}/melee/pc/`, `tools/` and `src/melee/ft/` for `codes.gct`: no hits). Instead the
 decompiled C *is* the engine, and each m-ex behaviour the port needs is reimplemented natively —
 e.g. `ftCommonData_ExtendKindTable` (`src/melee/ft/fighter.c:192`) replaces m-ex's `ftPartsTable`
 widening, and `src/melee/gm/gmmultiman.c:432` documents one such port explicitly:
@@ -459,8 +459,8 @@ Stated plainly; these are the things I did **not** verify.
 The FST reader, the two extracted DOLs and the parsed outputs live in the session scratchpad and
 were deliberately not committed. Everything here is re-derivable from:
 
-- `C:/gdm/tools/gc_extract.py` — FST walk (names only; full paths need the prefix stack)
-- `C:/gdm/tools/mex_port/ppc_disasm.py --dol <dol> --start <va> --count <n>` — disassembly
+- `${GW_ROOT}/tools/gc_extract.py` — FST walk (names only; full paths need the prefix stack)
+- `${GW_ROOT}/tools/mex_port/ppc_disasm.py --dol <dol> --start <va> --count <n>` — disassembly
 - the HSD archive header layout in §0 — public-symbol tables
 - the two DOLs: file offset `0x1E800`, length `0x4385E0`, on each ISO
 

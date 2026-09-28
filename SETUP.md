@@ -23,7 +23,7 @@ non-zero if anything is. Work down its list.
 ```
 
 The `melee` checkout must sit at `<root>/melee`. Everything else is found relative to the scripts
-themselves: `GW_ROOT` defaults to the directory above `tools/port`, so **no `C:\gdm` symlink is
+themselves: `GW_ROOT` defaults to the directory above `tools/port`, so **no `${GW_ROOT}` symlink is
 needed** — that was an artefact of the original machine and is gone.
 
 ## `.env`
@@ -101,3 +101,12 @@ serial.
 `_research/port-dev-quickref.md` is the command reference and the list of traps that have cost
 real time. `docs/HANDOFF.md` is the current state of the work. Both are worth reading before a
 first change; several of the entries in them exist because someone assumed instead of dumping.
+
+## Relocating an existing workspace
+
+Follow [the move plan](tools/move_workspace.md) before changing the workspace location.
+Normal tools derive `GW_ROOT`; Aurora wrappers require `GW_AURORA_ROOT` pointing at
+an existing space-free, apostrophe-free junction. Inspect local/generated paths with
+`python tools/check_workspace_paths.py --all` (read-only; `.env` values are redacted).
+Python converters use exported `GW_ISO_*`, `GW_BRAWL_FILES`, `GW_ULTIMATE_EXTRACT`,
+`GW_GHIDRA_PROJECTS` and `GW_MENU_DUMP`; see the plan for their defaults and export setup.

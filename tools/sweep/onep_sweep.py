@@ -14,6 +14,7 @@ script waits, walks and jumps for ~20 s, logs gd.perf() frame times and ends its
 A run passes on exit code 0 with the scene entered and no FATAL / PANIC / ALLOC_FAIL; a silent early
 exit is rerun under cdbX86 for the stack. Results: <out>/results.md and <out>/results.json.
 """
+from pathlib import Path
 import argparse
 import json
 import os
@@ -24,7 +25,7 @@ import sys
 import time
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-ISO_ACE = "C:/iso/SSBM ACE Build v2.0.0.iso"
+ISO_ACE = os.environ.get("GW_ISO_ACE", "")
 CDB = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Microsoft", "WindowsApps", "cdbX86.exe")
 
 # GrKind (src/melee/gr/forward.h) -> what it is in 1P

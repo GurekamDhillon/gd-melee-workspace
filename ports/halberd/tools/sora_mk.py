@@ -1,8 +1,9 @@
 """sora_mk.py - find Meta Knight / glide classes that live in sora_melee.rel (module 27): vtables via CW RTTI,
 slot -> function (doldecomp/brawl sora_melee symbols). Writes ../dump/sora_mk.json."""
+from pathlib import Path
 import json, os, re, struct, bisect
 HERE = os.path.dirname(os.path.abspath(__file__))
-REL = r"C:\iso\brawl-extract\files\module\sora_melee.rel"
+REL = os.path.join(os.environ.get("GW_BRAWL_FILES", os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[3])), "_local", "brawl", "files")), 'module/sora_melee.rel')
 SYM = os.path.join(HERE, "..", "..", "..", "experiment", "tooling", "brawl", "config", "RSBE01_02", "rels", "sora_melee", "symbols.txt")
 WANT = ("Metaknight", "Glide", "JumpAerialFly", "MultiJump")
 d = open(REL, "rb").read()

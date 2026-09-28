@@ -4,6 +4,7 @@ The output is an intermediate description consumed by kbbuild. It contains no
 textures or model bytes and stays in the ignored build directory.
 """
 
+import os
 from pathlib import Path
 import argparse
 import json
@@ -20,7 +21,7 @@ import ssbh_data_py as ssbh  # noqa: E402
 import melee_skel  # noqa: E402
 import mex_hsd  # noqa: E402
 
-DEFAULT_SOURCE = Path(r"E:\Ultimate files\workspace\extracted\fighter\kirby\model\body\c00")
+DEFAULT_SOURCE = Path(os.environ.get("GW_ULTIMATE_EXTRACT", str(Path(__file__).resolve().parents[3] / "_local" / "ultimate"))) / 'fighter/kirby/model/body/c00'
 DEFAULT_OUT = ROOT / "_build/tmp/ultimate-kirby-model/mesh.json"
 WORLD_REST_SCALE = 5.0 / 4.6
 

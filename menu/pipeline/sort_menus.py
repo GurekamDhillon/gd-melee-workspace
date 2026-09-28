@@ -264,7 +264,7 @@ def main():
 
     L.append("\n## Review list\n")
     L.append("Textures the metadata can't settle. Files are in "
-             "`Desktop\\meleedump\\textures\\<archive>\\`.\n")
+             "`${GW_MENU_DUMP}/textures/<archive>\\`.\n")
     L.append("| archive | png | size | format | why |")
     L.append("|---|---|---|---|---|")
     rv = [r for r in uniq.values() if r["bucket"] == "review"]

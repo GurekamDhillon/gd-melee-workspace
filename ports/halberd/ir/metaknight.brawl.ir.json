@@ -8,7 +8,7 @@
   "distribution": {
    "name": "Super Smash Bros. Brawl (retail)",
    "kind": "retail",
-   "media": "C:/iso/brawl-extract/files/"
+   "media": "${GW_BRAWL_FILES}/"
   },
   "analysed_with": [
    {
@@ -28,7 +28,7 @@
   {
    "id": "ev:disc",
    "kind": "disc_image",
-   "path": "C:/iso/brawl-extract/files/",
+   "path": "${GW_BRAWL_FILES}/",
    "revision": "RSBE01 (NTSC-U) extracted",
    "note": "fighter/metaknight/*, module/ft_metaknight.rel, effect/*, sound/smashbros_sound.brsar"
   },
@@ -164,7 +164,7 @@
     "name": "FitMetaknight.pac",
     "role": "fighter_data",
     "size": 485152,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknight.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -182,7 +182,7 @@
     "name": "FitMetaknightMotionEtc.pac",
     "role": "animation_bank",
     "size": 3285952,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknightMotionEtc.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknightMotionEtc.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -200,7 +200,7 @@
     "name": "FitMetaknightEntry.pac",
     "role": "demo_animation",
     "size": 29696,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknightEntry.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknightEntry.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -218,7 +218,7 @@
     "name": "FitMetaknightFinal.pac",
     "role": "other",
     "size": 19264,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknightFinal.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknightFinal.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -236,7 +236,7 @@
     "name": "FitMetaknightResult.pac",
     "role": "result_animation",
     "size": 24448,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknightResult.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknightResult.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -254,7 +254,7 @@
     "name": "FitMetaknightSpy.pac",
     "role": "costume_model",
     "size": 713600,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknightSpy.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknightSpy.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -272,7 +272,7 @@
     "name": "FitMetaknightSpy.pcs",
     "role": "costume_model",
     "size": 474890,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknightSpy.pcs",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknightSpy.pcs",
     "container": {
      "format": "arc_pac",
      "endianness": "big",
@@ -291,7 +291,7 @@
     "name": "FitMetaknightDark.pac",
     "role": "costume_model",
     "size": 1114144,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknightDark.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknightDark.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -309,7 +309,7 @@
     "name": "FitMetaknightDark.pcs",
     "role": "costume_model",
     "size": 718852,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknightDark.pcs",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknightDark.pcs",
     "container": {
      "format": "arc_pac",
      "endianness": "big",
@@ -328,7 +328,7 @@
     "name": "ft_metaknight.rel",
     "role": "module",
     "size": 133744,
-    "local_path": "C:/iso/brawl-extract/files/module/ft_metaknight.rel",
+    "local_path": "${GW_BRAWL_FILES}/module/ft_metaknight.rel",
     "container": {
      "format": "rel_module",
      "endianness": "big"
@@ -346,7 +346,7 @@
     "name": "ef_metaknight.pac",
     "role": "effect_bank",
     "size": 302720,
-    "local_path": "C:/iso/brawl-extract/files/effect/fighter/ef_metaknight.pac",
+    "local_path": "${GW_BRAWL_FILES}/effect/fighter/ef_metaknight.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -364,7 +364,7 @@
     "name": "ef_FinMetaknight.pac",
     "role": "effect_bank",
     "size": 19168,
-    "local_path": "C:/iso/brawl-extract/files/effect/final/ef_FinMetaknight.pac",
+    "local_path": "${GW_BRAWL_FILES}/effect/final/ef_FinMetaknight.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -382,7 +382,7 @@
     "name": "FitKirbyMetaknight.pac",
     "role": "copy_ability",
     "size": 66848,
-    "local_path": "C:/iso/brawl-extract/files/fighter/kirby/FitKirbyMetaknight.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/kirby/FitKirbyMetaknight.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -400,7 +400,7 @@
     "name": "FitKirbyMetaknight00.pac",
     "role": "copy_ability",
     "size": 356128,
-    "local_path": "C:/iso/brawl-extract/files/fighter/kirby/FitKirbyMetaknight00.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/kirby/FitKirbyMetaknight00.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -418,7 +418,7 @@
     "name": "FitKirbyMetaknightSpy.pac",
     "role": "copy_ability",
     "size": 91872,
-    "local_path": "C:/iso/brawl-extract/files/fighter/kirby/FitKirbyMetaknightSpy.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/kirby/FitKirbyMetaknightSpy.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -436,7 +436,7 @@
     "name": "ef_KbMetaknight.pac",
     "role": "copy_ability",
     "size": 61536,
-    "local_path": "C:/iso/brawl-extract/files/effect/kirby_cp/ef_KbMetaknight.pac",
+    "local_path": "${GW_BRAWL_FILES}/effect/kirby_cp/ef_KbMetaknight.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -454,7 +454,7 @@
     "name": "MetaknightR1.brres",
     "role": "trophy",
     "size": 918016,
-    "local_path": "C:/iso/brawl-extract/files/toy/fig/MetaknightR1.brres",
+    "local_path": "${GW_BRAWL_FILES}/toy/fig/MetaknightR1.brres",
     "container": {
      "format": "brres",
      "endianness": "big"
@@ -472,7 +472,7 @@
     "name": "End_Metaknight.thp",
     "role": "movie",
     "size": 7486400,
-    "local_path": "C:/iso/brawl-extract/files/movie/End_Metaknight.thp",
+    "local_path": "${GW_BRAWL_FILES}/movie/End_Metaknight.thp",
     "container": {
      "format": "thp",
      "endianness": "big"
@@ -490,7 +490,7 @@
     "name": "FitMetaknight00.pac",
     "role": "costume_model",
     "size": 1071872,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight00.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknight00.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -508,7 +508,7 @@
     "name": "FitMetaknight00.pcs",
     "role": "costume_model",
     "size": 704771,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight00.pcs",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknight00.pcs",
     "container": {
      "format": "arc_pac",
      "endianness": "big",
@@ -527,7 +527,7 @@
     "name": "FitMetaknight01.pac",
     "role": "costume_model",
     "size": 1071872,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight01.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknight01.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -545,7 +545,7 @@
     "name": "FitMetaknight01.pcs",
     "role": "costume_model",
     "size": 720688,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight01.pcs",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknight01.pcs",
     "container": {
      "format": "arc_pac",
      "endianness": "big",
@@ -564,7 +564,7 @@
     "name": "FitMetaknight02.pac",
     "role": "costume_model",
     "size": 1071872,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight02.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknight02.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -582,7 +582,7 @@
     "name": "FitMetaknight02.pcs",
     "role": "costume_model",
     "size": 720119,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight02.pcs",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknight02.pcs",
     "container": {
      "format": "arc_pac",
      "endianness": "big",
@@ -601,7 +601,7 @@
     "name": "FitMetaknight03.pac",
     "role": "costume_model",
     "size": 1071872,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight03.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknight03.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -619,7 +619,7 @@
     "name": "FitMetaknight03.pcs",
     "role": "costume_model",
     "size": 702642,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight03.pcs",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknight03.pcs",
     "container": {
      "format": "arc_pac",
      "endianness": "big",
@@ -638,7 +638,7 @@
     "name": "FitMetaknight04.pac",
     "role": "costume_model",
     "size": 1071872,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight04.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknight04.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -656,7 +656,7 @@
     "name": "FitMetaknight04.pcs",
     "role": "costume_model",
     "size": 713880,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight04.pcs",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknight04.pcs",
     "container": {
      "format": "arc_pac",
      "endianness": "big",
@@ -675,7 +675,7 @@
     "name": "FitMetaknight05.pac",
     "role": "costume_model",
     "size": 1071872,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight05.pac",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknight05.pac",
     "container": {
      "format": "arc_pac",
      "endianness": "big"
@@ -693,7 +693,7 @@
     "name": "FitMetaknight05.pcs",
     "role": "costume_model",
     "size": 721161,
-    "local_path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight05.pcs",
+    "local_path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknight05.pcs",
     "container": {
      "format": "arc_pac",
      "endianness": "big",
@@ -16176,7 +16176,7 @@
     "size": 268,
     "location": {
      "kind": "source_range",
-     "path": "C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight.pac",
+     "path": "${GW_BRAWL_FILES}/fighter/metaknight/FitMetaknight.pac",
      "note": "MoveDef data: paramSpecialN/S/Lw/Final__16ftMetaknightNode, Misc MultiJump, Misc Glide"
     },
     "fields": [

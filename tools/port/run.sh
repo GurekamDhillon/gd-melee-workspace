@@ -1,13 +1,13 @@
 #!/bin/bash
 # Run melee-pc.exe in its own sandbox directory.
 #
-#   tools/port/run.sh sonic --iso C:/iso/Akaneia.iso
+#   tools/port/run.sh sonic --iso ${GW_ISO_AKANEIA}
 #   MELEE_TRAINING=38 MELEE_PAD_SCRIPT=pad_specialhi.txt tools/port/run.sh sonic --iso ...
-#   tools/port/run.sh --test tests --iso "C:/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
+#   tools/port/run.sh --test tests --iso "${GW_ISO_VANILLA}"
 #
 # Why a sandbox at all: the game writes melee-pc.log, crashlogs/ and its memory card relative to
 # the directory it runs in, and looks for mods/ next to its own executable. Two runs in
-# C:/gdm/_build therefore fight over all four. Worse, a running game holds melee-pc.exe open, so
+# $GW_ROOT/_build therefore fight over all four. Worse, a running game holds melee-pc.exe open, so
 # it blocks the next link with LNK1104 - which is exactly what happened mid-session once.
 #
 # So each run gets _build/runs/<name>/ with its OWN COPY of the exe (7.6 MB, a moment to copy).

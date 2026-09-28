@@ -1,19 +1,19 @@
 # Port dev quick-reference (agents: READ THIS FIRST)
 
-Workspace root: `C:\gdm` = `/mnt/c/gdm` (a junction to the same checkout).
-Game repo: `C:\gdm\melee` (branch `pc-port`). Build dir: `C:\gdm\_build`. Docs: `_research/`, `docs/DEVLOG.md`.
+Workspace root: `${GW_ROOT}` = `${GW_ROOT}` (a junction to the same checkout).
+Game repo: `${GW_ROOT}\melee` (branch `pc-port`). Build dir: `${GW_ROOT}\_build`. Docs: `_research/`, `docs/DEVLOG.md`.
 Commands digest: `docs/DEVLOG.md` §4. Boot gates / SDK notes: `_research/melee-boot.md`. Invariants: `_research/console-invariants.md`.
 
 ## Toolchain
-- Clang: `/mnt/c/gdm/_toolchains/llvm/bin/clang.exe` (a Windows binary; run it directly from WSL, `--target=i686-pc-windows-msvc`).
+- Clang: `${GW_ROOT}/_toolchains/llvm/bin/clang.exe` (a Windows binary; run it directly from WSL, `--target=i686-pc-windows-msvc`).
 - Windows-side steps run via `cmd.exe` from WSL. Visual Studio Build Tools supply `vcvarsall` for the link step.
 
 ## Build and run: use the scripts (they get the bridge right)
 
 ```
-bash C:/gdm/tools/port/build.sh --tu src/melee/ft/ftdata.c --shim shim_dvd.c
-bash C:/gdm/tools/port/run.sh sonic --iso C:/iso/Akaneia.iso
-bash C:/gdm/tools/port/run.sh --test t --iso "C:/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
+bash ${GW_ROOT}/tools/port/build.sh --tu src/melee/ft/ftdata.c --shim shim_dvd.c
+bash ${GW_ROOT}/tools/port/run.sh sonic --iso ${GW_ISO_AKANEIA}
+bash ${GW_ROOT}/tools/port/run.sh --test t --iso "${GW_ISO_VANILLA}"
 ```
 
 `build.sh` does compile -> link -> **regenerate `gw_mex_bridge.c`** -> compile it -> link again,
@@ -28,9 +28,9 @@ with `LNK1104`.
 ## Two agents at once
 
 ```
-bash C:/gdm/tools/port/agent_new.sh stages     # worktree + build root, objects hardlinked
-export GW_MELEE=C:/gdm/worktrees/stages
-export GW_BUILD_ROOT=C:/gdm/_build/agents/stages
+bash ${GW_ROOT}/tools/port/agent_new.sh stages     # worktree + build root, objects hardlinked
+export GW_MELEE=${GW_ROOT}/worktrees/stages
+export GW_BUILD_ROOT=${GW_ROOT}/_build/agents/stages
 ```
 
 `GW_BUILD_ROOT` is the whole trick: it holds that agent's objects, link response file and
@@ -46,10 +46,10 @@ deletes the branch.
 
 ## Rebuild a platform shim (`melee/pc/platform/<shim>.c`)
 ```
-C:/gdm/_toolchains/llvm/bin/clang.exe --target=i686-pc-windows-msvc -c -O2 -DTARGET_PC \
-  -I C:/gdm/melee/extern/aurora/include -I C:/gdm/melee/pc/platform \
-  -I C:/gdm/_build/ax86/_deps/sdl3_prebuilt-src/include \
-  C:/gdm/melee/pc/platform/<shim>.c -o C:/gdm/_build/masstest/shimobj/<shim>.obj
+${GW_ROOT}/_toolchains/llvm/bin/clang.exe --target=i686-pc-windows-msvc -c -O2 -DTARGET_PC \
+  -I ${GW_ROOT}/melee/extern/aurora/include -I ${GW_ROOT}/melee/pc/platform \
+  -I ${GW_ROOT}/_build/ax86/_deps/sdl3_prebuilt-src/include \
+  ${GW_ROOT}/melee/pc/platform/<shim>.c -o ${GW_ROOT}/_build/masstest/shimobj/<shim>.obj
 ```
 - The **SDL3 include path is required**, not optional: `main.c`, `shim_ax.c` and `shim_vi.c` all
   reach SDL3 headers (directly or through `aurora/event.h`). Omitting it fails with
@@ -59,7 +59,7 @@ C:/gdm/_toolchains/llvm/bin/clang.exe --target=i686-pc-windows-msvc -c -O2 -DTAR
 
 ## Rebuild one game TU (`melee/src/**.c`) - use the pipe script, NOT raw clang
 ```
-cd /mnt/c/gdm/melee && bash /mnt/c/gdm/_build/masstest/pipe_wsl.sh <src path>   # e.g. src/melee/lb/lbarq.c
+cd ${GW_ROOT}/melee && bash ${GW_ROOT}/_build/masstest/pipe_wsl.sh <src path>   # e.g. src/melee/lb/lbarq.c
 # Git Bash alternative: pipe_win.sh <path>
 ```
 Game TUs go clang (PPC frontend) -> gwtool -> `.obj`. Compiling a game TU directly with the Windows clang produces a wrong object; always use the pipe.
@@ -74,15 +74,15 @@ Game TUs go clang (PPC frontend) -> gwtool -> `.obj`. Compiling a game TU direct
 
 ## Relink (after any `.obj` change)
 ```
-cmd.exe /c "cd /d C:\gdm\_build\ax86m && ..\build_melee_pc.bat"   # expect MELEE_PC_LINK_OK
+cmd.exe /c "cd /d ${GW_ROOT}\_build\ax86m && ..\build_melee_pc.bat"   # expect MELEE_PC_LINK_OK
 ```
 
 ## Run (interactive, e.g. for the user to play) - env vars must be EXPORTED
 ```
-cd /mnt/c/gdm/_build
+cd ${GW_ROOT}/_build
 export MELEE_PAD_IGNORE_ADAPTER=1   # only when using scripted/keyboard, not a real controller
 export WSLENV="MELEE_PAD_IGNORE_ADAPTER"
-nohup ./melee-pc.exe --iso 'C:\iso\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso' > /tmp/opencode/live.log 2>&1 &
+nohup ./melee-pc.exe --iso '${GW_ISO_VANILLA}' > /tmp/opencode/live.log 2>&1 &
 disown
 ```
 - **Memory card is on by default** (GCI folder at `_build/card`); set `MELEE_CARD=0` to disable it.
@@ -94,7 +94,7 @@ disown
 
 ## Run (ONE instance only)
 ```
-cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso'
+cd ${GW_ROOT}/_build && timeout 45s ./melee-pc.exe --iso '${GW_ISO_VANILLA}'
 ```
 - Before every run: `cmd.exe /c "tasklist | findstr /i melee-pc"` and wait until none. Two concurrent instances kill each other's runs.
 - Screenshots and scripted input **are** available now and are the normal way to verify a visual change: `MELEE_PAD_SCRIPT` for input, `PrintWindow` for capture, window parked off-screen so nothing appears on the user's monitors (see "Run without the window appearing on a monitor"). Still ask the user for anything needing real judgement or a path the scripts cannot reach.
@@ -109,12 +109,12 @@ cd /mnt/c/gdm/_build && timeout 45s ./melee-pc.exe --iso '/mnt/c/iso/Super Smash
 
 ```
 # WRONG - reports 96 internal stages (Akaneia's), on the ACE disc
-bash tools/port/run.sh --test t --iso "C:/iso/SSBM ACE Build v2.0.0.iso"
+bash tools/port/run.sh --test t --iso "${GW_ISO_ACE}"
     graudio: mexData stage audio ready: 96 internal stages
 
 # RIGHT - point MELEE_MODS_DIR at an empty directory
 mkdir -p /tmp/nomods && export MELEE_MODS_DIR=/tmp/nomods
-bash tools/port/run.sh --test t --iso "C:/iso/SSBM ACE Build v2.0.0.iso"
+bash tools/port/run.sh --test t --iso "${GW_ISO_ACE}"
     graudio: mexData stage audio ready: 155 internal stages
 ```
 
@@ -124,7 +124,7 @@ are unaffected - they read the disc directly.
 
 ## Resolve an rva/crash address to a symbol (needs Git Bash gawk; WSL mawk fails)
 ```
-"/mnt/c/Program Files/Git/bin/bash.exe" -lc 'bash /c/gdm/_build/masstest/mapsym.sh 0x10355E93'
+"/mnt/c/Program Files/Git/bin/bash.exe" -lc 'bash ${GW_ROOT}/_build/masstest/mapsym.sh 0x10355E93'
 ```
 
 ## Environment variables
@@ -168,9 +168,9 @@ off every monitor at creation time and hide the console:
 
 ```powershell
 $env:MELEE_WINDOW_X = "30000"; $env:MELEE_WINDOW_Y = "30000"
-Start-Process -FilePath C:\gdm\_build\melee-pc.exe `
-  -ArgumentList '--iso','"C:\iso\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"' `
-  -WorkingDirectory C:\gdm\_build -WindowStyle Hidden -PassThru
+Start-Process -FilePath ${GW_ROOT}\_build\melee-pc.exe `
+  -ArgumentList '--iso','"${GW_ISO_VANILLA}"' `
+  -WorkingDirectory ${GW_ROOT}\_build -WindowStyle Hidden -PassThru
 ```
 
 Frames can then be captured with `PrintWindow(hwnd, hdc, PW_RENDERFULLCONTENT)`, which works on an
@@ -189,12 +189,12 @@ Blender is the mesh authoring tool; the `.dat` stays the source of truth.
 
 ```
 # build the library (one-off). Windows .NET SDK 10. 0 errors; a missing GCILib reference is a harmless warning.
-cp -r <HSDLib clone> C:\gdm\_build\HSDLib
-cmd.exe /c "cd /d C:\gdm\_build\HSDLib && dotnet build HSDLib.sln -c Release"
+cp -r <HSDLib clone> ${GW_ROOT}\_build\HSDLib
+cmd.exe /c "cd /d ${GW_ROOT}\_build\HSDLib && dotnet build HSDLib.sln -c Release"
 
 # tools (both net8.0-windows7.0 console apps that ProjectReference HSDRawViewer.csproj)
-C:\gdm\_build\hsd_export\bin\Release\net8.0-windows7.0\hsd_export.exe <dat> <outdir>   # DAT -> per-group glTF
-C:\gdm\_build\stagec\bin\Release\net8.0-windows7.0\stagec.exe  <verb> ...            # the compiler
+${GW_ROOT}\_build\hsd_export\bin\Release\net8.0-windows7.0\hsd_export.exe <dat> <outdir>   # DAT -> per-group glTF
+${GW_ROOT}\_build\stagec\bin\Release\net8.0-windows7.0\stagec.exe  <verb> ...            # the compiler
 ```
 
 `stagec` verbs: `rt <in> <out>` (round-trip + compare), `coll <dat>` (dump collision),

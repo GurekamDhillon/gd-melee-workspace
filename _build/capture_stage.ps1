@@ -1,10 +1,10 @@
 param(
-  [string]$Iso = "C:\gdm\_build\melee_mod.iso",
+  [string]$Iso = "$PSScriptRoot\melee_mod.iso",
   [string]$TT = "fox",
   [int[]]$TimestampsSec = @(8,12,16,20,24,28,33,38,45),
-  [string]$OutDir = "C:\gdm\_build\stage_capture",
-  [string]$OutLog = "C:\gdm\_build\stage_run.out.log",
-  [string]$ErrLog = "C:\gdm\_build\stage_run.err.log"
+  [string]$OutDir = "$PSScriptRoot\stage_capture",
+  [string]$OutLog = "$PSScriptRoot\stage_run.out.log",
+  [string]$ErrLog = "$PSScriptRoot\stage_run.err.log"
 )
 
 Add-Type -AssemblyName System.Drawing
@@ -32,9 +32,9 @@ if ($TT -ne "") { $env:MELEE_TARGET_TEST = $TT } else { Remove-Item Env:MELEE_TA
 Remove-Item $OutLog -ErrorAction SilentlyContinue
 Remove-Item $ErrLog -ErrorAction SilentlyContinue
 
-$p = Start-Process -FilePath "C:\gdm\_build\melee-pc.exe" `
+$p = Start-Process -FilePath "$PSScriptRoot\melee-pc.exe" `
     -ArgumentList '--iso',"`"$Iso`"" `
-    -WorkingDirectory "C:\gdm\_build" -WindowStyle Hidden -PassThru `
+    -WorkingDirectory "$PSScriptRoot" -WindowStyle Hidden -PassThru `
     -RedirectStandardOutput $OutLog -RedirectStandardError $ErrLog
 
 Write-Output "LAUNCHED pid=$($p.Id) iso=$Iso MELEE_TARGET_TEST=$TT"

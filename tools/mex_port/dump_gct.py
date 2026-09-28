@@ -4,9 +4,9 @@
 Read-only. Understands the code types Akaneia uses: 04 (32-bit write), C2 (insert asm),
 plus 00/02 (8/16-bit write) and 06 (string write) for completeness.
 
-  python dump_gct.py --iso C:/iso/Akaneia.iso                     # list every code
-  python dump_gct.py --iso C:/iso/Akaneia.iso --addr 0x803D7060   # codes that target this address
-  python dump_gct.py --iso C:/iso/Akaneia.iso --addr 0x803D7060 --disasm
+  python dump_gct.py --iso "${GW_ISO_AKANEIA}"                     # list every code
+  python dump_gct.py --iso "${GW_ISO_AKANEIA}" --addr 0x803D7060   # codes that target this address
+  python dump_gct.py --iso "${GW_ISO_AKANEIA}" --addr 0x803D7060 --disasm
   python dump_gct.py --iso ... --range 0x802F9000 0x802FA000      # codes whose target is in range
 
 --disasm dumps a C2 payload to a temp file and runs ppc_disasm.py --raw on it (base 0x81000000,

@@ -3,7 +3,7 @@
 
 Copies them out of an m-ex build that has Sonic (Akaneia). Read-only on the ISO.
 
-    python tools/mex_port/make_sonic_mod.py --iso C:/iso/Akaneia.iso [--out C:/gdm/_build/mods/sonic]
+    python tools/mex_port/make_sonic_mod.py --iso "${GW_ISO_AKANEIA}" [--out $GW_ROOT/_build/mods/sonic]
 
 What goes in, and why (derived with MELEE_DVD_TRACE=1 runs on Akaneia, diffed against vanilla):
   new files       his fighter data, animations, 7 costumes and victory poses (PlSn*), results

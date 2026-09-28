@@ -11,6 +11,7 @@
            on channels something plays on; ftData sfx ids inside the bank
   budget   the port's ARAM fighter budget (sum of the four largest group-4 banks) with and without brawlmk.ssm
 Exit 1 on any failure. Report: sound/work/verify_sounds.json."""
+from pathlib import Path
 import argparse, json, os, struct, sys, collections
 HERE = os.path.dirname(os.path.abspath(__file__)); MK = os.path.dirname(os.path.dirname(HERE))
 ROOT = os.path.dirname(os.path.dirname(MK))
@@ -22,7 +23,7 @@ ap.add_argument("--mod", default=os.path.join(MK, "mods-slot", "metaknight-slot"
 A = ap.parse_args()
 F = os.path.join(A.mod, "files")
 REP = json.load(open(os.path.join(MK, "sound", "work", "sound_report.json")))
-ISO = "C:/iso/SSBM ACE Build v2.0.0.iso"
+ISO = os.environ.get("GW_ISO_ACE", "")
 fails = []; out = {}
 def check(ok, what):
     if not ok: fails.append(what)
@@ -33,7 +34,7 @@ b = open(os.path.join(F, "audio", "us", "brawlmk.ssm"), "rb").read()
 S = SSM.read_ssm(b)
 check(S["data_start"] + S["data_size"] == len(b), "ssm: header + data != file size")
 check(len(S["samples"]) == REP["bank"]["samples"], "ssm: sample count != report")
-R = BR.Brsar(r"C:\iso\brawl-extract\files\sound\smashbros_sound.brsar")
+R = BR.Brsar(os.path.join(os.environ.get("GW_BRAWL_FILES", os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[4])), "_local", "brawl", "files")), 'sound/smashbros_sound.brsar'))
 by_sample = {}
 for s in REP["sounds"]: by_sample.setdefault(s["sample"], s)
 rows = []; peak_all = 0

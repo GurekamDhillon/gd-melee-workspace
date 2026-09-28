@@ -7,6 +7,7 @@ The replaced row's unused image buffers are reused where possible, especially
 in IfAll.usd, which has little match-time heap headroom. No source textures or
 converted art are written to tracked paths.
 """
+from pathlib import Path
 import argparse
 import bisect
 import json
@@ -26,7 +27,7 @@ import fobj  # noqa: E402
 import gxcodec as G  # noqa: E402
 from ultimate_vfx_geno import decode_bntx  # noqa: E402
 
-ISO_ACE = "C:/iso/SSBM ACE Build v2.0.0.iso"
+ISO_ACE = os.environ.get("GW_ISO_ACE", "")
 UI_ROOT = os.path.join(os.environ.get("GW_ULTIMATE_ROOT", os.path.join(ROOT, "experiment", "tooling", "ultimate")),
                        "workspace", "extracted", "ui", "replace_patch", "chara")
 FORMAT = {G.GX_TF_C4: "CI4", G.GX_TF_C8: "CI8"}

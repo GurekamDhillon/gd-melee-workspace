@@ -2,10 +2,10 @@
 """Pack YOUR OWN mod disc into a mods/ folder, so the port runs it off a VANILLA ISO.
 
     python tools/mex_port/make_mod_from_disc.py \
-        --vanilla "C:/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso" \
-        --mod     "C:/iso/Akaneia.iso" \
+        --vanilla "${GW_ISO_VANILLA}" \
+        --mod     "${GW_ISO_AKANEIA}" \
         --name    akaneia \
-        --out     "C:/gdm/_build/packs"
+        --out     "$GW_ROOT/_build/packs"
 
 WE SHIP THE TOOL, NEVER THE PACK. Both discs are supplied by whoever runs this; the tool computes
 the difference on their machine and writes `<out>/<name>/`. Nothing it produces may enter the

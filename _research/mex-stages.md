@@ -9,7 +9,7 @@ Everything below was **dumped off the real discs** before any code was written. 
 on evidence, the evidence is named. Reproduce with `tools/mex_port/dump_mxdt.py`,
 `dump_ftfunction.py --symbol grFunction` and `ppc_disasm.py`.
 
-Discs used: `C:/iso/Akaneia.iso` and `C:/iso/SSBM ACE Build v2.0.0.iso`.
+Discs used: `${GW_ISO_AKANEIA}` and `${GW_ISO_ACE}`.
 
 ---
 
@@ -361,7 +361,7 @@ but floats and `SFX_PlayStageSFX`).
 
 ## 9. ACE
 
-**ACE has a built ISO: `C:/iso/SSBM ACE Build v2.0.0.iso`.** (An earlier note of mine claimed only a
+**ACE has a built ISO: `${GW_ISO_ACE}`.** (An earlier note of mine claimed only a
 patcher + zip existed under `_build/ace/`; that was wrong. Dump the ISO.)
 
 | | Akaneia | ACE |

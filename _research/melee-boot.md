@@ -1,6 +1,6 @@
 # Melee boot & runtime structure (doldecomp/melee) — for the native Windows port
 
-All paths relative to `C:\gdm\melee`. Line numbers from the current checkout.
+All paths relative to `${GW_ROOT}\melee`. Line numbers from the current checkout.
 
 ---
 

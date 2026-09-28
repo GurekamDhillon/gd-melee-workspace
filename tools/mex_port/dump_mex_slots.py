@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Reconcile an m-ex disc's MxDt.dat against the port's m-ex fighter slot table (read-only).
 
-    python tools/mex_port/dump_mex_slots.py --iso "C:/iso/SSBM ACE Build v2.0.0.iso"
-    python tools/mex_port/dump_mex_slots.py --iso C:/iso/Akaneia.iso --compare "C:/iso/ACE.iso"
+    python tools/mex_port/dump_mex_slots.py --iso "${GW_ISO_ACE}"
+    python tools/mex_port/dump_mex_slots.py --iso "${GW_ISO_AKANEIA}" --compare "${GW_ISO_ACE}"
 
 Reproduces, offline, exactly what `gw_mex_slots_build()` (pc/platform/gw_mex_ftfunction_runtime.c)
 does at runtime: walk m-ex INTERNAL ids from GW_MEX_FIRST_NEW (27) up to internal_id_count - 6

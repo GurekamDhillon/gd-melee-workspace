@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Count which m-ex API entries (the MexTK helper region 0x803D7058..0x803D70A8) disc content calls.
 
-    python tools/mex_port/scan_api_calls.py --iso C:/iso/Akaneia.iso --iso "C:/iso/SSBM ACE Build v2.0.0.iso"
+    python tools/mex_port/scan_api_calls.py --iso "${GW_ISO_AKANEIA}" --iso "${GW_ISO_ACE}"
 
 m-ex's installer turns vanilla's gmResultCharacterData into a table of branch trampolines, one per
 MexTK API function, and fighter/stage code calls them like any game function. The port has no

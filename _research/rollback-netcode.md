@@ -1,8 +1,8 @@
 # Rollback netcode for the native Melee PC port: research and design
 
-Status: research and design only. Nothing under `melee/`, `_build/` or `C:/iso` was changed, built or run.
+Status: research and design only. Nothing under `melee/`, `_build/` or `${GW_ISO_DIR}` was changed, built or run.
 Date: 2026-09-19. Claims are tagged **VERIFIED** (I read the code or source) or **INFERRED** (reasoned,
-not observed). All `file:line` references are to this tree (`C:/gdm`) unless they name an upstream repo.
+not observed). All `file:line` references are to this tree (`${GW_ROOT}`) unless they name an upstream repo.
 
 ---
 

@@ -17,7 +17,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parent
-DEFAULT_SOURCE = Path(r"E:\Ultimate files\workspace\extracted\fighter\kirby\model\body\c00")
+DEFAULT_SOURCE = Path(os.environ.get("GW_ULTIMATE_EXTRACT", str(Path(__file__).resolve().parents[3] / "_local" / "ultimate"))) / 'fighter/kirby/model/body/c00'
 DEFAULT_PYTHON = ROOT / "experiment/tooling/ultimate/apps/Blender/blender-5.1.2-windows-x64/5.1/python/bin/python.exe"
 DEFAULT_OUT = ROOT / "_build/tmp/ultimate-kirby-model"
 

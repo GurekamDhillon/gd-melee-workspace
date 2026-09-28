@@ -1,5 +1,6 @@
 """Decode Ultimate Kirby's c00 open-eye body atlas for the HSD writer."""
 
+import os
 from pathlib import Path
 import argparse
 import json
@@ -8,7 +9,7 @@ import subprocess
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[3]
-DEFAULT_SOURCE = Path(r"E:\Ultimate files\workspace\extracted\fighter\kirby\model\body\c00")
+DEFAULT_SOURCE = Path(os.environ.get("GW_ULTIMATE_EXTRACT", str(Path(__file__).resolve().parents[3] / "_local" / "ultimate"))) / 'fighter/kirby/model/body/c00'
 DEFAULT_CLI = ROOT / "experiment/tooling/ultimate/apps/Ultimate-Tex-CLI/ultimate_tex_cli.exe"
 DEFAULT_OUT = ROOT / "_build/tmp/ultimate-kirby-model"
 

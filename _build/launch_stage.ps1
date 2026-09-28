@@ -1,5 +1,5 @@
 param(
-  [string]$Iso = "C:\gdm\_build\melee_mod.iso",
+  [string]$Iso = "$PSScriptRoot\melee_mod.iso",
   [string]$TT = "fox"
 )
 
@@ -11,8 +11,8 @@ Remove-Item Env:MELEE_AUDIO_DUMP -ErrorAction SilentlyContinue
 
 if ($TT -ne "") { $env:MELEE_TARGET_TEST = $TT } else { Remove-Item Env:MELEE_TARGET_TEST -ErrorAction SilentlyContinue }
 
-$p = Start-Process -FilePath "C:\gdm\_build\melee-pc.exe" `
+$p = Start-Process -FilePath "$PSScriptRoot\melee-pc.exe" `
     -ArgumentList '--iso',"`"$Iso`"" `
-    -WorkingDirectory "C:\gdm\_build" -PassThru
+    -WorkingDirectory "$PSScriptRoot" -PassThru
 
 Write-Output "LAUNCHED pid=$($p.Id) on the primary monitor, iso=$Iso, MELEE_TARGET_TEST=$TT"

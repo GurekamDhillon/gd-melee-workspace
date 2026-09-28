@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Play many Slippi replays through the port and report crashes, asserts and hangs.
 
-    python tools/replay/batch_play.py --exe-dir C:/gdm/_build/agents/slpcrash [--count 40]
+    python tools/replay/batch_play.py --exe-dir $GW_ROOT/_build/agents/slpcrash [--count 40]
         [--csv _build/replay_corpus.csv] [--jobs 3] [--only path1.slp,path2.slp] [--out name]
 
 Accuracy is not judged here (first_div.py does that): a replay that diverges but plays to its last

@@ -13,10 +13,10 @@ declared field order. Trust `--validate` over `--fighter`.
 
 Examples:
 
-    python dump_mxdt.py --iso C:/iso/Akaneia.iso MxDt.dat --root --metadata
-    python dump_mxdt.py --iso C:/iso/Akaneia.iso MxDt.dat --validate
-    python dump_mxdt.py --iso C:/iso/Akaneia.iso MxDt.dat --item-lookup
-    python dump_mxdt.py --iso C:/iso/Akaneia.iso MxDt.dat --item --runtime-index
+    python dump_mxdt.py --iso "${GW_ISO_AKANEIA}" MxDt.dat --root --metadata
+    python dump_mxdt.py --iso "${GW_ISO_AKANEIA}" MxDt.dat --validate
+    python dump_mxdt.py --iso "${GW_ISO_AKANEIA}" MxDt.dat --item-lookup
+    python dump_mxdt.py --iso "${GW_ISO_AKANEIA}" MxDt.dat --item --runtime-index
     python dump_mxdt.py MxDt.dat --fighter
 """
 

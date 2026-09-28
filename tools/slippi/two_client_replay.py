@@ -13,6 +13,7 @@ import json
 import os
 from pathlib import Path
 import secrets
+import shutil
 import socket
 import subprocess
 import sys
@@ -206,7 +207,7 @@ def launch(args, role, ports, run_id, salt, profiles, proxy_ports=None,
     if profiles:
         env['MELEE_SLIPPI_USER_JSON'] = '-'
         env['MELEE_SLIPPI_CODE'] = profiles[2-role]['connectCode']
-    command = ['C:/Program Files/Git/bin/bash.exe', '-c',
+    command = [os.environ.get('GW_BASH') or shutil.which('bash') or 'bash', '-c',
                'export PATH=/usr/bin:/bin:$PATH; exec bash "$GW_ROOT/tools/port/run.sh" '
                '"$MELEE_SLIPPI_RUN_NAME" --iso "$MELEE_ISO"']
     process = None

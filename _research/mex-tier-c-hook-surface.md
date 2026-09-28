@@ -10,7 +10,7 @@ cannot do, because it retargets PPC→x86 at **build** time and has no PPC inter
 Every Tier C hook must therefore be re-expressed as a native C callback surface.
 
 Grounding: all claims are backed by (a) the m-ex assembly under
-`/mnt/c/gdm/_build/m-ex/asm/m-ex/`, (b) the decomp source under `src/melee/`, and (c)
+`${GW_ROOT}/_build/m-ex/asm/m-ex/`, (b) the decomp source under `src/melee/`, and (c)
 `config/GALE01/symbols.txt`. Address→symbol resolution was done with
 `tools/mex_port/resolve_patches.py` plus direct `ppc_disasm.py` disassembly of
 `_build/orig_main.dol` to recover the instruction each patch replaces.

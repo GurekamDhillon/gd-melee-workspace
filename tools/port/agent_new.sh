@@ -60,8 +60,8 @@ link_dir "$GW_ROOT/_build/masstest/shimobj" "$root/masstest/shimobj" 0
 #
 # Each path is QUOTED on the way out. The shared file's entries are relative (../masstest/...) and
 # so never contain a space; an agent root's are absolute, and link.exe splits an unquoted response
-# -file line on whitespace. With a checkout at "C:/Users/.../GD's Melee" that produced
-# `LNK1181: cannot open input file 'C:\Users\Gurek\Desktop\GD's.obj'` and no agent could link
+# -file line on whitespace. With a checkout at "<workspace with spaces>" that produced
+# `LNK1181: cannot open input file '<split-path>.obj'` and no agent could link
 # at all. link.exe accepts quotes around every path, space or not, so quote unconditionally.
 # THREE THINGS A FRESH WORKTREE GETS WRONG. Each cost a separate agent real time before this
 # existed, and two of them look nothing like what they are.
@@ -75,7 +75,7 @@ link_dir "$GW_ROOT/_build/masstest/shimobj" "$root/masstest/shimobj" 0
 #    are produced by pc/tools/extract_assets.py into build/GALE01/include/. Without them a real
 #    full rebuild fails on those two TUs, long after setup, with an error that says nothing about
 #    worktrees. Copy them across.
-# 3. AURORA MUST BE BUILT THROUGH C:\gdm. _build/ax86m is configured against that junction, which
+# 3. AURORA MUST BE BUILT THROUGH the Aurora junction. _build/ax86m is configured against that junction, which
 #    avoids the apostrophe in "GD's Melee". Building it through the real path poisons the cmake
 #    cache and the next regenerate fails deep inside Dawn's third-party tree - a failure that
 #    looks like a broken dependency, not a path problem. Noted in the ready-message below.
@@ -134,8 +134,7 @@ echo "          $forced game object(s) without hash records marked for rebuild; 
 
 src_rsp="$GW_ROOT/_build/melee_link_objects.rsp"
 [ -f "$src_rsp" ] || gw_die "missing $src_rsp"
-sed -e "s#^\.\./masstest/#$root/masstest/#" -e 's#^\(..*\)$#"\1"#' \
-    "$src_rsp" >"$root/melee_link_objects.rsp"
+python "$GW_ROOT/tools/port/link_response.py" --root "$GW_ROOT" --build-root "$root"
 echo "          $(wc -l <"$root/melee_link_objects.rsp") entries in melee_link_objects.rsp"
 
 cat <<EOF
@@ -147,12 +146,12 @@ Ready. In that agent's shell:
 
   cd "\$GW_MELEE"
   bash "$GW_ROOT/tools/port/build.sh" --tu src/melee/ft/ftdata.c
-  bash "$GW_ROOT/tools/port/run.sh" --test t --iso "C:/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
+  bash "$GW_ROOT/tools/port/run.sh" --test t --iso "\$GW_ISO_VANILLA"
 
 If you need to rebuild vendored aurora, do it THROUGH THE JUNCTION or you will poison the
 cmake cache and the next regenerate will fail inside Dawn's third-party tree:
 
-  GW_ROOT=C:/gdm cmd //c "C:\gdm\_build\build_aurora_melee.bat"
+  GW_AURORA_ROOT="\$GW_AURORA_ROOT" cmd //c "$GW_ROOT/_build/build_aurora_melee.bat"
 
 Remove it with: tools/port/agent_rm.sh $name
 EOF

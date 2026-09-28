@@ -5,6 +5,7 @@ Run with the Python bundled with the local Ultimate Blender installation:
 """
 
 from collections import Counter
+import os
 from pathlib import Path
 import argparse
 import json
@@ -17,7 +18,7 @@ DEPENDENCIES = ROOT / "experiment/tooling/ultimate/profile/blender/scripts/addon
 sys.path.insert(0, str(DEPENDENCIES))
 import ssbh_data_py as ssbh  # noqa: E402
 
-DEFAULT_SOURCE = Path(r"E:\Ultimate files\workspace\extracted\fighter\kirby")
+DEFAULT_SOURCE = Path(os.environ.get("GW_ULTIMATE_EXTRACT", str(Path(__file__).resolve().parents[3] / "_local" / "ultimate"))) / 'fighter/kirby'
 
 
 def inspect(source):

@@ -4,10 +4,10 @@ Status: COMPLETE (research only, 2026-09-19).
 Research only - nothing built, nothing run. m-ex has no licence: behaviour is described, not copied.
 
 ## Sources
-- m-ex asm: `C:/gdm/_build/m-ex/asm/m-ex/SSM/` (bank loader rewrites), `.../SFX/`, `Header.s`
-- m-ex headers: `C:/gdm/_build/m-ex/MexTK/include/mxdt.h`
-- decomp: `C:/gdm/melee/src/melee/lb/lbaudio_ax.c`, `lbaudio_ax.static.h`
-- Akaneia disc: `C:/iso/Akaneia.iso` (MxDt.dat, audio/us/*.ssm, audio/us/smash2.sem)
+- m-ex asm: `${GW_ROOT}/_build/m-ex/asm/m-ex/SSM/` (bank loader rewrites), `.../SFX/`, `Header.s`
+- m-ex headers: `${GW_ROOT}/_build/m-ex/MexTK/include/mxdt.h`
+- decomp: `${GW_ROOT}/melee/src/melee/lb/lbaudio_ax.c`, `lbaudio_ax.static.h`
+- Akaneia disc: `${GW_ISO_AKANEIA}` (MxDt.dat, audio/us/*.ssm, audio/us/smash2.sem)
 
 ## 0. Headline (VERIFIED unless marked)
 
@@ -27,7 +27,7 @@ Research only - nothing built, nothing run. m-ex has no licence: behaviour is de
   Tails 0x40000 = Mario's; Charizard 0x8000 = Bowser's; Lucas 0x200000 = Ness's). So "mask !=
   1<<id" is expected and meaningless. The u64 bank mask is not widened - it is **bypassed**.
 
-Evidence: `python tools/mex_port/dump_ssm.py --iso C:/iso/Akaneia.iso` (new tool, read-only),
+Evidence: `python tools/mex_port/dump_ssm.py --iso ${GW_ISO_AKANEIA}` (new tool, read-only),
 output reproduced in section 1.
 
 ## 1. `mexData.ssm` (root +0x10) decoded - VERIFIED
@@ -270,7 +270,7 @@ adds a by-index request function. 141 injection sites under `asm/m-ex/SSM`, `Sub
 Override/SFX`, `SFX`, `SSS Expansion/StageAudio References` and `MnSlChrData Overwrites - IntID
 Count` were mapped to decomp functions (scratch script over `resolve_patches.load_symbols` +
 `config/GALE01/symbols.txt`). **136 of the 141 are present in Akaneia's codes.gct**
-(`dump_gct.py --iso C:/iso/Akaneia.iso`); the 5 absent are `GetSFXIDBounds1/2` (0x800230F8 /
+(`dump_gct.py --iso ${GW_ISO_AKANEIA}`); the 5 absent are `GetSFXIDBounds1/2` (0x800230F8 /
 0x80023114, superseded), `CalculateBankSizes_Boot/_LangSwitch` (0x800286C4 / 0x80027ADC; sizes come
 from the table) and `DEBUGFGM.s` (debug overlay).
 
@@ -382,11 +382,11 @@ voice mixer) needs **no change**: it plays whatever ARAM the synth fills, and AR
 
 ## Tools / reproduction
 
-- `tools/mex_port/dump_ssm.py --iso C:/iso/Akaneia.iso` (new, read-only): mexData.ssm tables, bank
+- `tools/mex_port/dump_ssm.py --iso ${GW_ISO_AKANEIA}` (new, read-only): mexData.ssm tables, bank
   list with disc and table sizes, and `fighter.ssm_files` by external id.
 - smash2.sem bank table: parse `{n0,[n0]} {n1,[n1]} {nbanks, start[nbanks]} {nscripts, ...}` per
   `AXDriver_8038DA70` (a 20-line script; not committed).
 - `.ssm` header: 4 big-endian words `{header_size, data_size, sample_count, first_sample_id}`.
-- `dump_gct.py --iso C:/iso/Akaneia.iso --addr <hook>` confirms each hook is shipped;
-  `ppc_disasm.py --dol C:/gdm/_build/orig_main.dol --start 0x80087D0C` shows the vanilla code the
+- `dump_gct.py --iso ${GW_ISO_AKANEIA} --addr <hook>` confirms each hook is shipped;
+  `ppc_disasm.py --dol ${GW_ROOT}/_build/orig_main.dol --start 0x80087D0C` shows the vanilla code the
   hooks land on.

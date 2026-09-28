@@ -1,3 +1,4 @@
+from pathlib import Path
 # Executed at the end of decode_mk.py (shares its globals). Writes analysis/brawl_kirby.json + brawl_model.json.
 import json, os, struct, collections
 
@@ -265,7 +266,7 @@ out = dict(
           "Per subaction: hitboxes = unrolled hitbox windows [start,end) in PSA frames (0-based: start 2 = first active on game frame 3; end None = still out when the script ends); "
           "iasa_frame = first Allow Interrupt (None = no IASA event, interruptible at anim end); bone ids in hitboxes/gfx are PSA ids = 400 + MDL0 bone index; "
           "loops unrolled (infinite loops run once), local subroutines inlined, If takes the true branch (sim_notes flags it); channels_raw keeps the undecoded-order events with data offsets."),
-    source=dict(pac='C:/iso/brawl-extract/files/fighter/metaknight/FitMetaknight.pac', motion='FitMetaknightMotionEtc.pac', costume='FitMetaknight00.pac'),
+    source=dict(pac=os.path.join(os.environ.get("GW_BRAWL_FILES", os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[3])), "_local", "brawl", "files")), 'fighter/metaknight/FitMetaknight.pac'), motion='FitMetaknightMotionEtc.pac', costume='FitMetaknight00.pac'),
     attributes=attrs_named,
     sse_attributes_diff=sse_diff,
     misc_section=misc_clean,

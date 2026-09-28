@@ -4,7 +4,7 @@ This repo is the build system, tooling, research and release pipeline around the
 itself is a **separate checkout, normally `<root>/melee`** (branch `pc-port`, `GurekamDhillon/melee`). The two
 are versioned apart; a change to gameplay lives there, a change to how it is built, tested, packaged or
 described lives here. `SETUP.md` gets a machine ready; `tools/port/bootstrap.sh` checks it. In the
-`codex/docs-refresh` worktree the game checkout is `../GD's Melee/melee` (read-only for this
+`codex/docs-refresh` worktree the game checkout is `${GW_MELEE}` (read-only for this
 docs task); no builds or commits. `GW_MELEE` selects a non-default game checkout.
 
 ## Orientation

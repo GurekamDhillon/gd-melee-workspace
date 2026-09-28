@@ -35,15 +35,16 @@ in CSS colour order, not costume-file order: texture .21k (k = 1..6) is costume 
 of the CSPs / stock icons against the mantle / mask textures of FitMetaknight0X.pac - k=2 cream = 04 white, k=3 red =
 01, k=4 green = 02, k=5 dark blue = 03, k=6 pink/orange = 05).
 Brawl textures are dumped once with tools/ui/brawl_tex_dump.exe (BrawlLib, 32-bit) into build/ui/brawl/."""
+from pathlib import Path
 import argparse, json, os, struct, subprocess, sys
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); MK = os.path.dirname(HERE)
-ROOT = r"C:/Users/Gurek/Desktop/GD's Melee"
+ROOT = os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[3]))
 sys.path.insert(0, ROOT + "/tools/mex_port"); sys.path.insert(0, os.path.join(HERE, "ui"))
 import mex_hsd, fobj, gxcodec as G
 
-ISO = "C:/iso/SSBM ACE Build v2.0.0.iso"
-BRAWL = "C:/iso/brawl-extract/files"
+ISO = os.environ.get("GW_ISO_ACE", "")
+BRAWL = os.environ.get("GW_BRAWL_FILES", os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[3])), "_local", "brawl", "files"))
 BKSLOT = os.path.join(os.path.dirname(os.path.dirname(MK)), "experiment", "brawl-kirby", "mods-slot", "brawl-kirby-slot", "files")
 SRCDIR = os.path.join(MK, "build", "ui", "brawl")
 DUMP = os.path.join(HERE, "ui", "brawl_tex_dump.exe")

@@ -9,10 +9,11 @@
  - m-ex tables: MK's CSS icon row -> joint 58; insignia[51] = 5;
  - HSDRaw round trip (model/tools/mkbuild roundtrip) of MnSlChr.usd, IfAll.usd, GmRst.usd, MxDt.dat.
 Exit 0 = all OK."""
+from pathlib import Path
 import argparse, os, struct, subprocess, sys
 from PIL import Image, ImageChops
 HERE = os.path.dirname(os.path.abspath(__file__)); MK = os.path.dirname(os.path.dirname(HERE))
-sys.path.insert(0, r"C:/Users/Gurek/Desktop/GD's Melee/tools/mex_port"); sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[4])), 'tools/mex_port')); sys.path.insert(0, HERE)
 import mex_hsd, fobj, gxcodec as G
 BKSLOT = os.path.join(os.path.dirname(os.path.dirname(MK)), "experiment", "brawl-kirby", "mods-slot", "brawl-kirby-slot", "files")
 MB = os.path.join(MK, "model", "tools", "mkbuild", "bin", "Release", "net8.0", "mkbuild.exe")
@@ -125,7 +126,7 @@ if a.before:
     print("CSS icons: joints 1-57 identical before/after")
     gb = os.path.join(a.before, "GmRst.usd")
     if not os.path.exists(gb):
-        open(os.path.join(os.environ.get("TEMP", "."), "_gmrst_disc.usd"), "wb").write(mex_hsd.Gcm("C:/iso/SSBM ACE Build v2.0.0.iso").read("GmRst.usd"))
+        open(os.path.join(os.environ.get("TEMP", "."), "_gmrst_disc.usd"), "wb").write(mex_hsd.Gcm(os.environ.get("GW_ISO_ACE", "")).read("GmRst.usd"))
         gb = os.path.join(os.environ.get("TEMP", "."), "_gmrst_disc.usd")
     g0, tas0 = names(gb); n = 0
     for t0, t in zip(tas0, tas):

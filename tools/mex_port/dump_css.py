@@ -16,8 +16,8 @@ Three sources are decoded:
 
 Nothing is written. m-ex has no licence: this tool only *describes* data, it copies none.
 
-    python dump_css.py --iso C:/iso/Akaneia.iso
-    python dump_css.py --iso C:/iso/Akaneia.iso --joints      # also walk the icon model
+    python dump_css.py --iso "${GW_ISO_AKANEIA}"
+    python dump_css.py --iso "${GW_ISO_AKANEIA}" --joints      # also walk the icon model
 """
 
 import argparse

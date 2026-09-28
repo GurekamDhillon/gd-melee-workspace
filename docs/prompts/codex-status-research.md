@@ -6,7 +6,7 @@ no game runs, no other Codex processes. Produce one note and stop.
 ## Background
 
 Sora is ported from Smash Ultimate (fighter id **`trail`**, never `sora`). Our move scripts come from
-Ghidra decompilation of the ACMD in `lua2cpp_trail.nro` (`C:/Users/Gurek/ghidra-projects/sora_acmd/`,
+Ghidra decompilation of the ACMD in `lua2cpp_trail.nro` (`${GW_GHIDRA_PROJECTS}/sora_acmd/`,
 indexed by `index.tsv`). Ultimate's *status* scripts (state logic: transitions, stick reads, flags)
 were not dumped. `_research/ultimate-sonic-blade-steering.md` found that the status-script factory is
 in the same NRO; read that note first, including where it stopped.
@@ -26,9 +26,9 @@ in the same NRO; read that note first, including where it stopped.
 
 ## How
 
-- The Ghidra project in `C:/Users/Gurek/ghidra-projects` (headless analyzer; the project path must
+- The Ghidra project in `${GW_GHIDRA_PROJECTS}` (headless analyzer; the project path must
   not contain an apostrophe; the .bat splits on commas and pipes). Dump the status functions you need
-  to a new folder `C:/Users/Gurek/ghidra-projects/sora_status/` and cite them by address.
+  to a new folder `${GW_GHIDRA_PROJECTS}/sora_status/` and cite them by address.
 - Params: `vl.prc` decoded with ParamXML and `references/ParamLabels.csv` (see the steering note for
   where they are).
 - External sources (community decompiled status scripts, frame data sites) are for cross-checking

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Find m-ex guest calls that pass an argument register nothing set - a "leftover-register" call.
 
-    python tools/mex_port/scan_leftover_args.py --iso C:/iso/Akaneia.iso --iso "C:/iso/SSBM ACE Build v2.0.0.iso"
-    python tools/mex_port/scan_leftover_args.py --iso C:/iso/Akaneia.iso --file PlSc.dat --all
+    python tools/mex_port/scan_leftover_args.py --iso "${GW_ISO_AKANEIA}" --iso "${GW_ISO_ACE}"
+    python tools/mex_port/scan_leftover_args.py --iso "${GW_ISO_AKANEIA}" --file PlSc.dat --all
 
 The class: m-ex content written against a header that declares a game function with FEWER
 arguments than it really takes (ACE's PlSc.dat calls `it_80276174(gobj, pos)` as one-argument).

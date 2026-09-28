@@ -1,6 +1,6 @@
 # m-ex patch triage — insertion addresses resolved to decomp symbols
 
-- m-ex checkout: `/mnt/c/gdm/_build/m-ex`
+- m-ex checkout: `${GW_ROOT}/_build/m-ex`
 - symbol table: `melee/config/GALE01/symbols.txt` (34690 sized symbols)
 - `.asm` files scanned: 1169
 - files with an `#To be inserted at <addr>` directive: 1169

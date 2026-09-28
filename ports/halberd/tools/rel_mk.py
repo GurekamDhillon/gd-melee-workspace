@@ -6,6 +6,7 @@ CodeWarrior RTTI (vtable = [typeinfo*, this-offset, fn*...]; typeinfo = [name*, 
 from the decomp symbol lists of main.dol and sora_melee.rel, intra-module call graph, jump tables.
 Writes ../dump/rel_mk.json.
 """
+from pathlib import Path
 import collections
 import json
 import os
@@ -14,7 +15,7 @@ import struct
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 EXP = os.path.normpath(os.path.join(HERE, "..", "..", "..", "experiment"))
-REL = r"C:\iso\brawl-extract\files\module\ft_metaknight.rel"
+REL = os.path.join(os.environ.get("GW_BRAWL_FILES", os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[3])), "_local", "brawl", "files")), 'module/ft_metaknight.rel')
 CFG = os.path.join(EXP, "tooling", "brawl", "config", "RSBE01_02")
 OUT = os.path.join(HERE, "..", "dump", "rel_mk.json")
 

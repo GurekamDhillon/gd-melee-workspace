@@ -8,7 +8,7 @@ rem out/*.obj and shimobj/*.obj, melee_link_libs.rsp mirrors the library set Aur
 rem "simple" example links with.
 rem
 rem NOTHING HERE IS TIED TO A PARTICULAR CHECKOUT PATH. GW_ROOT defaults to this script's own
-rem parent directory, so a fresh clone works with no setup and no C:\gdm symlink; tools/port
+rem parent directory, so a fresh clone works with no setup and no the Aurora junction symlink; tools/port
 rem exports GW_ROOT and GW_BUILD_ROOT and those win. See SETUP.md.
 rem
 rem GW_BUILD_ROOT holds this tree's objects, response file and melee-pc.exe.

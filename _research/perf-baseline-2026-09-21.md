@@ -159,6 +159,6 @@ the DOL's `.bss`).
 ```powershell
 $env:MELEE_PROFILE="1"; $env:MELEE_PROFILE_SAMPLE="15"
 .\_build\selftest.ps1 -Scene "mode=vs;p1=fox/cpu9;p2=falco/cpu9;p3=marth/cpu9;p4=ganondorf/cpu9;time=180;stage=battlefield" `
-  -Disc vanilla -NoMods -Seconds 45 -Tag perf-vanilla -ExeDir C:\gdm\_build\agents\perf
+  -Disc vanilla -NoMods -Seconds 45 -Tag perf-vanilla -ExeDir ${GW_ROOT}\_build\agents\perf
 python tools/port/prof_report.py _build/runs/perf-vanilla/melee-pc.samples -n 25
 ```

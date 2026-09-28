@@ -1,12 +1,14 @@
+import os
+from pathlib import Path
 import bpy
 import math
 import sys
 from mathutils import Vector
 
 _argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-OBJ = _argv[0] if len(_argv) > 0 else r"C:\gdm\_build\grTFx.obj"
+OBJ = _argv[0] if len(_argv) > 0 else os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[1])), '_build/grTFx.obj')
 PREFIX = _argv[1] if len(_argv) > 1 else "grTFx"
-OUT = r"C:\gdm\_build"
+OUT = os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[1])), '_build')
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 bpy.ops.wm.obj_import(filepath=OBJ)

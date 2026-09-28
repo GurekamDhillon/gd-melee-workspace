@@ -1,6 +1,7 @@
 """Read helpers for constant-key TexAnims (m-ex CSP / stock atlases): which image + TLUT a frame shows, decoded."""
+from pathlib import Path
 import os, struct, sys
-sys.path.insert(0, r"C:/Users/Gurek/Desktop/GD's Melee/experiment/brawl-kirby/tools")
+sys.path.insert(0, os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[4])), 'experiment/brawl-kirby/tools'))
 import texanim_keys
 import gxcodec as G
 

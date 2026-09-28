@@ -1,6 +1,6 @@
 # Aurora (vendored) — driving it from a new C app, and what its GX layer expects
 
-All paths below are relative to `C:\gdm\melee\extern\aurora` unless noted. That is the port's
+All paths below are relative to `${GW_ROOT}\melee\extern\aurora` unless noted. That is the port's
 vendored copy of encounter/aurora (base commit `749d6ee`, MIT) with seven port patches; see
 `extern/aurora/PORT_PATCHES.md` and `DEPENDENCIES.md`.
 Verified by reading source; line cites are `file:line`.
@@ -124,7 +124,7 @@ lost (`lib/aurora.cpp:235-259`). You must `continue` — do NOT call `aurora_end
 
 ## 2. How dusklight structures the game loop
 
-`C:\gdm\dusklight\src\m_Do\m_Do_main.cpp:225-361` (`main01`). **Single-threaded, main thread owns
+`${GW_ROOT}\dusklight\src\m_Do\m_Do_main.cpp:225-361` (`main01`). **Single-threaded, main thread owns
 everything**; Aurora spawns its own FIFO worker internally.
 
 Order per iteration:
@@ -140,7 +140,7 @@ There is **no separate render thread** and **no VI interrupt thread**. 60 Hz pac
 either Aurora's vsync (`AuroraConfig.vsync`) or dusklight's own `Limiter`, never from VI.
 
 TP's `VIWaitForRetrace` is *not* Aurora's — dusklight implements it in
-`C:\gdm\dusklight\src\dusk\stubs.cpp:314-370`:
+`${GW_ROOT}\dusklight\src\dusk\stubs.cpp:314-370`:
 
 ```cpp
 static u32 sRetraceCount = 0;
@@ -245,7 +245,7 @@ big-endian.** This is the single most important compatibility fact for this port
   Arrays are never copied or pre-swapped on the CPU — Aurora reads the game's own memory.
   **Compat note:** melee's header already carries the compatibility macro
   `#define GXSETARRAY(attr,data,size,stride,le) GXSetArray((attr),(data),(stride))`
-  (`C:\gdm\melee\extern\dolphin\include\dolphin\gx\GXGeometry.h:11`) and Aurora defines the
+  (`${GW_ROOT}\melee\extern\dolphin\include\dolphin\gx\GXGeometry.h:11`) and Aurora defines the
   5-arg version of the same macro (`GXGeometry.h:37`). So melee game code that uses `GXSETARRAY`
   ports cleanly; any *direct* `GXSetArray(attr, data, stride)` call site needs the extra
   `size` and `le` arguments. Aurora **requires** `size` (it bounds-checks indexed loads,
@@ -293,7 +293,7 @@ append to the FIFO — there is **no `GXWGFifo` write-through-a-pointer macro** 
 **Melee impact:** melee's `dolphin/gx/GXVert.h` almost certainly declares these as inline
 `GXWGFifo.f32 = x;` writes to the write-gather pipe at `0xCC008000`. Those inlines must be
 removed/redirected to Aurora's real symbols, or the LLVM-swapped game code will write to a
-pointer nobody reads. Check `C:\gdm\melee\extern\dolphin\include\dolphin\gx\GXVert.h` before
+pointer nobody reads. Check `${GW_ROOT}\melee\extern\dolphin\include\dolphin\gx\GXVert.h` before
 anything else.
 
 ---
@@ -308,7 +308,7 @@ typedef struct { #ifdef TARGET_PC u32 dummy[16]; #else u32 dummy[8];  #endif } G
 typedef struct { #ifdef TARGET_PC u32 dummy[10]; #else u32 dummy[3];  #endif } GXTlutObj;
 ```
 
-| Object | melee (`C:\gdm\melee\extern\dolphin\include`) | Aurora `TARGET_PC` | 32-bit payload actually stored | Verdict |
+| Object | melee (`${GW_ROOT}\melee\extern\dolphin\include`) | Aurora `TARGET_PC` | 32-bit payload actually stored | Verdict |
 |---|---|---|---|---|
 | `GXTexObj` | `u32 dummy[8]` = **32 B** (`gx/GXStruct.h:38-41`) | `u32 dummy[16]` = **64 B** | `GXTexObj_` = `4×u32 + 2 ptr + 5×u32 + GXTlut + u8` ≈ **52 B** on i686 (`lib/gfx/texture.hpp:67-113`) | ⚠️ **BREAKS.** melee-sized 32 B is too small; `static_assert(sizeof(GXTexObj_) <= sizeof(GXTexObj))` at `texture.hpp:113` would fail, and at runtime `GXInitTexObj` writes ~52 B into a 32 B slot. |
 | `GXTlutObj` | `u32 dummy[3]` = **12 B** (`GXStruct.h:53-56`) | `u32 dummy[10]` = **40 B** | `GXTlutObj_` = `2×u32 + u16 + ptr + enum + 2×u32 + u8` ≈ **28 B** on i686 (`texture.hpp:115-129`) | ⚠️ **BREAKS.** 12 B far too small. |
@@ -326,7 +326,7 @@ into game memory and integer ids, and Aurora itself memcpys `__GXData_struct` wh
 an Aurora-sized object.** Melee's game code allocates all of these (HSD image/tlut descriptors
 embed `GXTexObj`/`GXTlutObj` in heap structures), so the fix is mandatory, not optional.
 
-**Recommended fix:** patch `C:\gdm\melee\extern\dolphin\include\dolphin\gx\GXStruct.h` and
+**Recommended fix:** patch `${GW_ROOT}\melee\extern\dolphin\include\dolphin\gx\GXStruct.h` and
 `pad.h` under a `TARGET_PC` guard to match Aurora exactly (`dummy[16]`, `dummy[10]`,
 `+u32 extButton`) — this is precisely what dusklight/Aurora did for TP. Anything that computes a
 struct size numerically (`sizeof` in a decomp-matching assert, a hardcoded 0x20 offset in HSD's
@@ -406,7 +406,7 @@ agree with wall time (`OSTime.cpp:88-98`). `OSGetSystemTime()` is true wall time
 ## Practical checklist for the melee port
 
 1. **Write the VI shim yourself** — Aurora has none. Port
-   `C:\gdm\dusklight\src\dusk\stubs.cpp:310-370` verbatim and extend it to drive HSD's XFB state
+   `${GW_ROOT}\dusklight\src\dusk\stubs.cpp:310-370` verbatim and extend it to drive HSD's XFB state
    machine (`src/sysdolphin/baselib/video.c`), since `HSD_VIWaitXFBDrawEnable` spins on
    `VIWaitForRetrace()`.
 2. **Add `GXWaitDrawDone` and `GXAbortFrame`** — melee calls the former

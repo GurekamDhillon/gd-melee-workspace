@@ -168,7 +168,7 @@ Write-Output "log    $log"
 
 $style = if ($OffScreen) { 'Hidden' } else { 'Normal' }
 # The ISO path MUST be quoted here. Start-Process joins -ArgumentList with spaces and does NOT
-# quote for you, so "C:/iso/SSBM ACE Build v2.0.0.iso" arrived as "C:/iso/SSBM" and the game ran
+# quote for you, so "${GW_ISO_ACE}" arrived as "<space-split ISO>" and the game ran
 # with no disc - which presents as an endless "MxDt.dat not on this disc" and a card wait that
 # never completes, i.e. nothing like a path bug. Akaneia has no space in its name, which is why
 # only ACE ever looked broken.

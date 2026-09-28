@@ -3,9 +3,10 @@
 The RGB5A3 word rules are pc/tools/png2gx.py's (imported, not copied), so texels round the same way the port's
 own art pipeline rounds them. Quantisation to a 256/16-entry palette happens on RGB5A3-quantised colours (the
 palette can only hold those), with fully transparent texels folded to one entry."""
+from pathlib import Path
 import os, struct, sys
 from PIL import Image
-sys.path.insert(0, os.path.join(r"C:/Users/Gurek/Desktop/GD's Melee", "melee", "pc", "tools"))
+sys.path.insert(0, os.path.join(os.environ.get("GW_MELEE", os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[4])), "melee")), "pc", "tools"))
 from png2gx import rgb5a3_encode, rgb5a3_decode
 
 GX_TF_I4, GX_TF_I8, GX_TF_IA4, GX_TF_IA8, GX_TF_RGB565, GX_TF_RGB5A3, GX_TF_RGBA8, GX_TF_C4, GX_TF_C8 = 0, 1, 2, 3, 4, 5, 6, 8, 9

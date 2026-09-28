@@ -12,7 +12,7 @@ out of this tree, or **[E]** estimated. Method for each class of measurement is 
 
 ## 0. How the numbers were obtained
 
-**[M] Static sizes** come from `C:/gdm/_build/melee-pc.map` (link of 2026-09-19 15:55, the same
+**[M] Static sizes** come from `${GW_ROOT}/_build/melee-pc.map` (link of 2026-09-19 15:55, the same
 commit as this worktree). A script read every symbol in section `0003` (`.data` + `.data$r` +
 `.data$rs` + `.bss`), sized each as the distance to the next symbol, and attributed it to its
 object file. That is **4,812 symbols totalling 1,548,860 bytes** — an exhaustive partition of the
@@ -20,7 +20,7 @@ section, not a sample. Section 4 (`.gwfix`, 0x13458 bytes) is the link-time fixu
 after `gw_apply_fixups` (`gw_runtime.c:30`).
 
 **[M] Timings** come from four small test programs built with the port's own compiler and target
-(`C:/gdm/_toolchains/llvm/bin/clang.exe --target=i686-pc-windows-msvc -O2`, and
+(`${GW_ROOT}/_toolchains/llvm/bin/clang.exe --target=i686-pc-windows-msvc -O2`, and
 `/LARGEADDRESSAWARE` where it matters) and run on this machine. They measure: `memcpy` at the
 sizes this design actually uses, a scalar 64-bit FNV-1a hash, `GetWriteWatch`, and a DEP
 execute-fault round trip. Best-of-N is reported, so these are the *optimistic* end — a real frame

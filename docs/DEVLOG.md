@@ -54,15 +54,15 @@ real time to discover.
 
 ## 0. Environment / where things live
 
-- Workspace root: `C:\gdm` (WSL: `/mnt/c/gdm`; `C:\gdm` is a junction to the checkout).
-- `C:\gdm` is a junction to that root. All port docs/tooling use `C:\gdm\...`; use it too
+- Workspace root: `${GW_ROOT}` (WSL: `${GW_ROOT}`; `${GW_ROOT}` is a junction to the checkout).
+- `${GW_ROOT}` is a junction to that root. All port docs/tooling use `${GW_ROOT}\...`; use it too
   (it avoids the apostrophe in "GD's Melee").
-- Game repo: `C:\gdm\melee` (doldecomp/melee). Port layer: `C:\gdm\melee\pc`.
-- Toolchain: `C:\gdm\_toolchains\llvm\bin\clang.exe` (clang 23, runs fine from WSL directly).
-- Aurora build: `C:\gdm\_build\build_aurora_melee.bat` → `C:\gdm\_build\ax86m`.
+- Game repo: `${GW_ROOT}\melee` (doldecomp/melee). Port layer: `${GW_ROOT}\melee\pc`.
+- Toolchain: `${GW_ROOT}\_toolchains\llvm\bin\clang.exe` (clang 23, runs fine from WSL directly).
+- Aurora build: `${GW_ROOT}\_build\build_aurora_melee.bat` → `${GW_ROOT}\_build\ax86m`.
   `_build\build_aurora_extra.bat` builds the two libraries the simple example does not
   (`aurora_os.lib`, `aurora_pad.lib`, plus `aurora_si.lib`); both are needed to link the port.
-- Port build/run (all in `C:\gdm\_build`):
+- Port build/run (all in `${GW_ROOT}\_build`):
   - `build_melee_pc.bat` — vcvars + `link` with `melee_link_objects.rsp` (all `masstest\out\*.obj`
     plus `masstest\shimobj\*.obj`) and `melee_link_libs.rsp` (the library set Aurora's own
     `examples/simple.exe` links, plus the three extra Aurora libs). Flags include
@@ -71,9 +71,9 @@ real time to discover.
   - `SDL3.dll` and `webgpu_dawn.dll` must sit next to the exe (copied from
     `ax86/_deps/sdl3_prebuilt-src/bin` and `ax86m/_deps/dawn-build`).
   - Run: `melee-pc.exe --iso "<path to GALE01 v1.02 iso>"`.
-- gwtool: `C:\gdm\_build\gwtool\gwtool.exe` (build with `C:\gdm\melee\pc\tools\gwtool\build.bat`).
-- Mass-compile scratch: `C:\gdm\_build\masstest`.
-  - **`pipe_wsl.sh` is the current correct per-TU pipeline** (flags in §2). Run from `C:\gdm\melee`.
+- gwtool: `${GW_ROOT}\_build\gwtool\gwtool.exe` (build with `${GW_ROOT}\melee\pc\tools\gwtool\build.bat`).
+- Mass-compile scratch: `${GW_ROOT}\_build\masstest`.
+  - **`pipe_wsl.sh` is the current correct per-TU pipeline** (flags in §2). Run from `${GW_ROOT}\melee`.
   - `files.txt` (984 TUs), `out/` (`.bc`/`.obj`/`.imports` per TU). **All 984 compile clean.**
   - `imports_all.txt` / `imports_data.txt`: regenerated authoritative external-symbol lists.
   - `unresolved_syms.txt`: **290** symbols referenced by game objects but not defined by them —
@@ -86,7 +86,7 @@ real time to discover.
     resolves them.
   - `newly_added_syms.txt` / `removed_syms.txt`: diff vs the previous snapshot
     (`imports_all.pre-opencode.txt`).
-- Research reports: `C:\gdm\_research\{melee-boot,aurora,shim_surface}.md`. The first two are the
+- Research reports: `${GW_ROOT}\_research\{melee-boot,aurora,shim_surface}.md`. The first two are the
   boot-gate/API bibles; `shim_surface.md` is the curated external-symbol list with prototypes.
 - Previous Claude Code session: `baee277b-47a0-4abc-8652-1166575f103e` ("gd-s-melee-05"), state
   kept on the Windows side under the Claude Code project directory for this checkout.
@@ -283,28 +283,28 @@ audio (AX is inert) and the usual acceptance work (determinism, rollback).
 Syntax check / compile a native shim:
 
 ```
-C:\gdm\_toolchains\llvm\bin\clang.exe --target=i686-pc-windows-msvc -fsyntax-only -DTARGET_PC \
+${GW_ROOT}\_toolchains\llvm\bin\clang.exe --target=i686-pc-windows-msvc -fsyntax-only -DTARGET_PC \
   -Wall -Wextra -Wno-unused-parameter \
-  -I C:/gdm/melee/extern/aurora/include -I C:/gdm/melee/pc/platform <file.c>
+  -I ${GW_ROOT}/melee/extern/aurora/include -I ${GW_ROOT}/melee/pc/platform <file.c>
 ```
 
 Compile one game TU through gwtool (prefer the script — it has the right flags):
 
 ```
-cd C:\gdm\melee
-bash C:\gdm\_build\masstest\pipe_wsl.sh src\melee\gm\gm_1832.c
+cd ${GW_ROOT}\melee
+bash ${GW_ROOT}\_build\masstest\pipe_wsl.sh src\melee\gm\gm_1832.c
 ```
 
-Full rebuild (run from `C:\gdm\melee`, ~4 minutes at -P 4):
+Full rebuild (run from `${GW_ROOT}\melee`, ~4 minutes at -P 4):
 
 ```
-cat /mnt/c/gdm/_build/masstest/files.txt | xargs -P 4 -I{} bash /mnt/c/gdm/_build/masstest/pipe_wsl.sh {}
+cat ${GW_ROOT}/_build/masstest/files.txt | xargs -P 4 -I{} bash ${GW_ROOT}/_build/masstest/pipe_wsl.sh {}
 ```
 
 Regenerate the import aggregates and the unresolved list:
 
 ```
-cd /mnt/c/gdm/_build/masstest/out
+cd ${GW_ROOT}/_build/masstest/out
 cat *.imports | grep '^F' | sed 's/^F\t//' | sort | uniq -c | sort -rn > ../imports_all.txt
 cat *.imports | grep '^D' | sed 's/^D\t//' | sort -u > ../imports_data.txt
 ls *.obj | xargs -n 40 $LLVM/bin/llvm-nm.exe | grep -E ' [TDBRCWVA] ' | awk '{print $3}' | sed 's/^_//' | sort -u > /tmp/defined.txt
@@ -326,16 +326,16 @@ FST walker. The harness used last session was `/tmp/opencode/dvd_harness.c`.
 Rebuild a shim and relink (the shim objects live in `_build\masstest\shimobj`):
 
 ```
-C:\gdm\_toolchains\llvm\bin\clang.exe --target=i686-pc-windows-msvc -c -O2 -DTARGET_PC ^
-  -I C:/gdm/melee/extern/aurora/include -I C:/gdm/melee/pc/platform ^
-  C:/gdm/melee/pc/platform/<shim>.c -o C:/gdm/_build/masstest/shimobj/<shim>.obj
-cmd.exe /c "cd /d C:\gdm\_build\ax86m && ..\build_melee_pc.bat"
+${GW_ROOT}\_toolchains\llvm\bin\clang.exe --target=i686-pc-windows-msvc -c -O2 -DTARGET_PC ^
+  -I ${GW_ROOT}/melee/extern/aurora/include -I ${GW_ROOT}/melee/pc/platform ^
+  ${GW_ROOT}/melee/pc/platform/<shim>.c -o ${GW_ROOT}/_build/masstest/shimobj/<shim>.obj
+cmd.exe /c "cd /d ${GW_ROOT}\_build\ax86m && ..\build_melee_pc.bat"
 ```
 
 Run it (keep it short — it is a GUI app; `timeout` works from WSL):
 
 ```
-cd C:/gdm/_build && timeout 30s ./melee-pc.exe --iso "C:\\path\\to\\GALE01.iso"
+cd ${GW_ROOT}/_build && timeout 30s ./melee-pc.exe --iso "C:\\path\\to\\GALE01.iso"
 ```
 
 Identify a crash: Windows records the fault offset, and the map file turns it back into a function.
@@ -602,7 +602,7 @@ Three commits on `melee` `pc-port` (branch HEAD `8cd84fae4`):
 ## 8.2 Run it
 
 ```
-cd C:/gdm/_build && timeout 45s ./melee-pc.exe --iso "C:\iso\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
+cd ${GW_ROOT}/_build && timeout 45s ./melee-pc.exe --iso "${GW_ISO_VANILLA}"
 ```
 
 Controls (keyboard bridge on channel 0, marked `TARGET_PC test controls` in `shim_pad.c`, easy to
@@ -1357,7 +1357,7 @@ Build note: `gc_adapter.c` needs `hid.lib`, `winusb.lib` and `setupapi.lib`. The
 files are **hand-maintained, not generated** -- a new shim must be added to
 `_build/melee_link_objects.rsp` and any new import library to `_build/melee_link_libs.rsp`.
 Note also that `main.c` needs the SDL3 include path
-(`-I C:/gdm/_build/ax86/_deps/sdl3_prebuilt-src/include`), which the generic shim build line in the
+(`-I ${GW_ROOT}/_build/ax86/_deps/sdl3_prebuilt-src/include`), which the generic shim build line in the
 quickref omits.
 
 ## 12. Open items
@@ -2235,7 +2235,7 @@ Target Test stage geometry and only moves the targets.
   `x280[199..219]` joint loop remains the PC fallback and the non-PC path.
 - **Cross-boundary calls** — game code declares/calls the **unprefixed** `TTMod_*`; gwtool prefixes
   every game symbol, yielding `gw_TTMod_*`, matching the shim's definition.
-- **Verified** — boot logs `gw: targettest: loaded 1 mods from C:\gdm\_build\mods\targettest`,
+- **Verified** — boot logs `gw: targettest: loaded 1 mods from ${GW_ROOT}\_build\mods\targettest`,
   0 FATAL. In-match target placement was not yet exercised (needs driving to Target Test).
 
 **Known limits / Phase 2** — geometry is reused, so a mod can only move targets; max 21 targets
@@ -2284,7 +2284,7 @@ Driven headlessly with `MELEE_PAD_SCRIPT` + `PrintWindow` captures (window parke
 Harness: `_build/tt_script.txt` (boot → title → 1-P Mode → Stadium → Target Test CSS).
 
 **Verified in-game**
-- The Target Test mod loader runs: `gw: targettest: loaded 1 mods from C:\gdm\_build\mods\targettest`.
+- The Target Test mod loader runs: `gw: targettest: loaded 1 mods from ${GW_ROOT}\_build\mods\targettest`.
 - The Target Test CSS renders, and the **C-stick CSS toggle works end-to-end**: it shows
   `C-STICK: CAMERA`, and pressing **L** flips it to `C-STICK: SMASH` (captured).
 - No crash across the whole navigation (boot → title → 1-P Mode → Stadium → Target Test CSS), 0 FATAL.
@@ -2348,8 +2348,8 @@ authoring tool; the `.dat` remains the source of truth (see §33 for why that sp
 locally with the **.NET 10 SDK** already on the machine:
 
 ```
-cp -r <clone> C:\gdm\_build\HSDLib
-cmd.exe /c "cd /d C:\gdm\_build\HSDLib && dotnet build HSDLib.sln -c Release"
+cp -r <clone> ${GW_ROOT}\_build\HSDLib
+cmd.exe /c "cd /d ${GW_ROOT}\_build\HSDLib && dotnet build HSDLib.sln -c Release"
 ```
 
 Builds clean (0 errors). One non-fatal warning: the `GCILib` assembly reference in

@@ -1,8 +1,10 @@
+import os
+from pathlib import Path
 import bpy
 import math
 from mathutils import Vector
 
-OUT = r"C:\gdm\_build"
+OUT = os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[1])), '_build')
 GLBS = [
     OUT + r"\gltf\grTFx_0.glb",
     OUT + r"\gltf\grTFx_1.glb",

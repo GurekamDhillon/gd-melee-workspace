@@ -100,7 +100,7 @@ function Start-Side($tag, $label, $netplay, $device, $x, $pad, $vol) {
   New-Item -ItemType Directory -Force -Path $sandbox | Out-Null
   # By executable path from the process table: Get-Process's MainModule can throw for a process
   # that is starting or exiting, which silently skipped it and left its exe locked.
-  # C:\gdm is a junction to the project folder: match the run folder, not the full path.
+  # the Aurora junction is a junction to the project folder: match the run folder, not the full path.
   Get-CimInstance Win32_Process -Filter "Name = 'melee-pc.exe'" -ErrorAction SilentlyContinue |
     Where-Object { $_.ExecutablePath -like ("*" + $sandbox.Substring($root.Length) + "\melee-pc.exe") } | ForEach-Object {
       Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue

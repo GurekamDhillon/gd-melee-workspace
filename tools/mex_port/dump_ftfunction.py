@@ -23,11 +23,11 @@ length: see --check-symbols, which proves it.
 
 Examples:
 
-    python dump_ftfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --header --overrides
-    python dump_ftfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --symbols
-    python dump_ftfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --check-symbols
-    python dump_ftfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --resolve 0x800033E0
-    python dump_ftfunction.py --iso C:/iso/Akaneia.iso PlSn.dat --emit-blob sn.bin
+    python dump_ftfunction.py --iso "${GW_ISO_AKANEIA}" PlSn.dat --header --overrides
+    python dump_ftfunction.py --iso "${GW_ISO_AKANEIA}" PlSn.dat --symbols
+    python dump_ftfunction.py --iso "${GW_ISO_AKANEIA}" PlSn.dat --check-symbols
+    python dump_ftfunction.py --iso "${GW_ISO_AKANEIA}" PlSn.dat --resolve 0x800033E0
+    python dump_ftfunction.py --iso "${GW_ISO_AKANEIA}" PlSn.dat --emit-blob sn.bin
     python dump_ftfunction.py PlSn.dat --relocs --limit 20
 """
 

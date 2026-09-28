@@ -1,5 +1,5 @@
 @echo off
-cd /d C:\gdm\_build
+if "%GW_ROOT%"=="" for %%I in ("%~dp0..") do set "GW_ROOT=%%~fI"
 set MELEE_MEX=no_title_demo
-melee-pc.exe --test --iso "C:\iso\Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
+bash "%GW_ROOT%/tools/port/run.sh" --test run_tests_mex
 echo EXITCODE=%ERRORLEVEL%

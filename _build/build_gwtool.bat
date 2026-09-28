@@ -10,7 +10,7 @@ rem   $env:GWTOOL_OUT = "<root>\_build\agents\<agent>\gwtool"  into its own buil
 rem
 rem NOT through `cmd /c` from Git Bash: cmd strips the outer quotes of its /c argument, so a
 rem checkout at "...\GD's Melee" is split on the space and cmd answers
-rem "'C:\Users\Gurek\Desktop\GD's' is not recognized". PowerShell's call operator hands the path
+rem "'<split-path>' is not recognized". PowerShell's call operator hands the path
 rem over intact. The paths inside this file are quoted and are fine either way.
 rem
 rem It finds the workspace beside itself (%~dp0..), so it is not relocatable: run it where it
@@ -24,7 +24,7 @@ rem
 rem   cd "$GW_MELEE" && xargs -P 8 -I{} bash _build/masstest/pipe_win.sh {} < _build/masstest/files.txt
 rem   bash tools/port/build.sh
 setlocal
-set "GW_ROOT=%~dp0.."
+if "%GW_ROOT%"=="" for %%I in ("%~dp0..") do set "GW_ROOT=%%~fI"
 if "%GW_MELEE%"=="" set "GW_MELEE=%GW_ROOT%\melee"
 if "%LLVM_ROOT%"=="" set "LLVM_ROOT=%GW_ROOT%\_toolchains\llvm"
 if "%GWTOOL_OUT%"=="" set "GWTOOL_OUT=%GW_ROOT%\_build\gwtool"
@@ -33,7 +33,7 @@ if not exist "%SRC%\gwtool.cpp" (
   echo error: no gwtool.cpp under "%SRC%" - set GW_MELEE to the melee checkout
   exit /b 1
 )
-call "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\VC\Auxiliary\Build\vcvarsall.bat" amd64 >nul
+call "%~dp0..\tools\port\vs_env.bat" amd64
 if errorlevel 1 exit /b 1
 if not exist "%GWTOOL_OUT%" mkdir "%GWTOOL_OUT%"
 for /f "delims=" %%L in ('"%LLVM_ROOT%\bin\llvm-config.exe" --libnames core irreader bitreader bitwriter passes x86codegen x86asmparser x86desc x86info target analysis transformutils support') do set "LLVM_LIBS=%%L"

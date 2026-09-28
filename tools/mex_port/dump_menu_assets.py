@@ -3,7 +3,7 @@
 
     python tools/mex_port/dump_menu_assets.py                 # everything, default locations
     python tools/mex_port/dump_menu_assets.py --only MnMaAll.usd,IfAll.usd --no-raw
-    python tools/mex_port/dump_menu_assets.py --iso "C:/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
+    python tools/mex_port/dump_menu_assets.py --iso "${GW_ISO_VANILLA}"
 
 WHAT IT WRITES (all outside the repo; nothing this tool writes is ever committed):
 
@@ -19,7 +19,7 @@ WHAT IT WRITES (all outside the repo; nothing this tool writes is ever committed
                               in only one version
   <index-out>/../MANIFEST.md  the itemized list, the layout and the headline numbers
 
-Defaults: raw/tex to ~/Desktop/meleedump, index to <repo>/menu/meleedump/index (the art pipeline
+Defaults: raw/tex to GW_MENU_DUMP (default <root>/_build/meleedump), index to <repo>/menu/meleedump/index (the art pipeline
 folder beside this repo's tools/, found relative to this file).
 
 HOW TEXTURES ARE FOUND. Two independent ways, cross-checked:
@@ -38,6 +38,7 @@ PROVENANCE. Extracted locally from a disc image the user supplies. Nothing extra
 or redistributed; `.gitignore` already refuses disc data.
 """
 from __future__ import annotations
+from pathlib import Path
 
 import argparse
 import collections
@@ -56,10 +57,11 @@ import mex_hsd  # noqa: E402
 import numpy as np  # noqa: E402
 from PIL import Image  # noqa: E402
 
-DEFAULT_ISO = r"C:/iso/Super Smash Bros. Melee (USA) (En,Ja) (v1.02).iso"
+DEFAULT_ISO = os.environ.get("GW_ISO_VANILLA", "")
 HOME = os.path.expanduser("~")
-DEF_RAW = os.path.join(HOME, "Desktop", "meleedump", "raw")
-DEF_TEX = os.path.join(HOME, "Desktop", "meleedump", "textures")
+DUMP_ROOT = os.environ.get("GW_MENU_DUMP", str(Path(__file__).resolve().parents[2] / "_build" / "meleedump"))
+DEF_RAW = os.path.join(DUMP_ROOT, "raw")
+DEF_TEX = os.path.join(DUMP_ROOT, "textures")
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DEF_INDEX = os.path.join(REPO, "menu", "meleedump", "index")
 

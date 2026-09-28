@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Count MWCC-specific constructs / intrinsics per source area of doldecomp/melee.
 Read-only. Usage: python count_constructs.py [melee_root]"""
+from pathlib import Path
 import os, re, sys, collections
 
-ROOT = sys.argv[1] if len(sys.argv) > 1 else r"C:\gdm\melee"
+ROOT = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.environ.get("GW_ROOT", str(Path(__file__).resolve().parents[2])), 'melee')
 AREAS = {
     "melee": "src/melee",
     "sysdolphin": "src/sysdolphin",
