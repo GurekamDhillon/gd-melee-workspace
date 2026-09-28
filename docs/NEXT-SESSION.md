@@ -10,6 +10,24 @@ runs, not a test result for today's HEAD. `HANDOFF.md` supplies the architecture
 docs in `scripting.md`). `RESUME-2026-09-28-e06941cb.md` keeps that session's context (its Claude
 weekly limit resets Oct 3, 2am PT).
 
+**Map editor overhaul (2026-09-28; workspace `3412a63`, game `dc138d56d`):** the in-game map editor
+got the pass specified by `_research/map-editor-bible.md`. The overlay now **fills the widescreen
+window** (`gd.safe_area`; see `docs/scripting.md`), and the editor gained: gizmo handles (red/green
+move, cyan scale, gold rotate), typed + drag-scrub inspector fields, a filtered/categorised palette with
+a translucent placement ghost, `Space` action search, a named Action Log with undo/redo rows,
+multi-select (Shift/Ctrl add–remove, marquee box-select) with group transforms and delete as one undo
+step, layout **v2** (camera/blast bounds **and spawns** persist; every edit is undoable through a
+document-level history), draggable camera-bounds edges, an out-of-bounds placement warning, and
+**native spawn editing** — `gd.stage_set_spawn(slot,x,y)` / `gd.stage_spawn(slot)` for starts/respawns
+0–7 and item spawns 127–146, with `map spawn` in the editor. Evidence: contract tests (130 assertions,
+PASS), headless suite 203/203 (10 runs), on-screen captures for each UI change, and live checks (a
+moved respawn made P1 respawn there; an item-spawn move + undo restored `0,30`).
+**Open on the editor** (bible §8 backlog, each needs native/feature work): native `gd.kit.field`, ghost
+hover highlight, camera collision, orthographic views.
+**Awaiting a decision:** which showcase to build — (1) Sora Magic FX showcase (zero engine work: the
+`gw_fx.c` runtime, the `ultimate_vfx_geno.py` importer and the fx_bindings already exist),
+(2) a scripted room/boss on the Gamemode library, or (3) a Geno specials reel.
+
 ## Current code
 
 - Release version is **0.1.6** (`tools/release/VERSION`). HEAD has substantial work after that
