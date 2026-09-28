@@ -174,6 +174,13 @@ foreach ($e in $entries) {
 
 foreach ($r in $Required) { if (-not $hashes.ContainsKey($r)) { Fail "missing required file: $r" } }
 
+. (Join-Path $PSScriptRoot 'netplay_protocol.ps1')
+$versionEntry = $entries | Where-Object { $_.Rel -eq 'version.txt' } | Select-Object -First 1
+if ($versionEntry) {
+  try { Assert-NetplayMetadata ([System.Text.Encoding]::ASCII.GetString($versionEntry.Bytes)) }
+  catch { Fail $_.Exception.Message }
+}
+
 # 5. manifest: every file listed once with the right hash, and nothing listed that is absent
 $man = $entries | Where-Object { $_.Rel -eq "MANIFEST.sha256" } | Select-Object -First 1
 if ($man) {

@@ -43,6 +43,7 @@ import time
 
 MAGIC_CTL = b"GDMR"
 MAGIC_DATA = b"GDMD"
+NETPLAY_PROTOCOL = 3  # gw_net.h: 40 MiB MEM1 / expanded heap; not the GDMR text format
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no I, O, 0, 1: easy to read out loud
 CODE_LEN = 4
 ROOM_IDLE = 120.0      # seconds without a packet from the host before a room is dropped
@@ -51,6 +52,7 @@ PAIR_IDLE = 900.0      # seconds without traffic before a PAIRED room is dropped
 QUEUE_IDLE = 10.0      # random queue: seconds without a RAND before an entry is dropped
 QUEUE_MAX = 300.0      # random queue: longest wait before the client is told TIMEOUT
 MAX_ROOMS = 5000
+REJECT_IDLE = 60.0  # repeat errors through lost UDP replies and the game's 30s rejoin grace
 
 log = logging.getLogger("gdmelee")
 
@@ -84,6 +86,7 @@ class Server(asyncio.DatagramProtocol):
         self.rooms = {}      # code -> Room
         self.by_addr = {}    # addr -> Room (host or guest)
         self.queue = {}      # addr -> Waiter (random matchmaking)
+        self.rejected = {}   # addr -> (expiry, error); bounded, short-lived retry responses
         self.transport = None
         self.relayed = 0
 
@@ -108,10 +111,37 @@ class Server(asyncio.DatagramProtocol):
                 del self.by_addr[a]
 
     def datagram_received(self, data, addr):
+        if data[:4] not in (MAGIC_DATA, MAGIC_CTL):
+            return
+        rejection = self.rejected.get(addr)
+        if rejection is not None:
+            if time.monotonic() < rejection[0]:
+                self.send(addr, rejection[1])
+                return
+            del self.rejected[addr]
         if data[:4] == MAGIC_DATA:
             room = self.by_addr.get(addr)
             if room is None or room.guest is None:
                 return
+            # REG/JOIN/RAND are still unversioned in the v3 game. Only the
+            # binary HELLO/ACCEPT carries a version: GN, type, 18-byte header,
+            # then a little-endian u16. Direct peers perform this check themselves.
+            payload = data[4:]
+            if len(payload) >= 20 and payload[:2] == b"GN" and payload[2] in (1, 2):
+                version = int.from_bytes(payload[18:20], "little")
+                if version != NETPLAY_PROTOCOL:
+                    error = ("ERR protocol version mismatch (server %d, client %d); "
+                             "update GD's Melee on both PCs" % (NETPLAY_PROTOCOL, version))
+                    self.send(room.host, error)
+                    self.send(room.guest, error)
+                    for peer in (room.host, room.guest):
+                        # At most two records per allowed room; evict oldest under load.
+                        if len(self.rejected) >= 2 * MAX_ROOMS:
+                            self.rejected.pop(next(iter(self.rejected)))
+                        self.rejected[peer] = (time.monotonic() + REJECT_IDLE, error)
+                        self.queue.pop(peer, None)
+                    self.drop(room, "protocol version mismatch")
+                    return
             room.seen = time.monotonic()
             room.relay = True
             other = room.guest if addr == room.host else room.host
@@ -235,6 +265,9 @@ class Server(asyncio.DatagramProtocol):
         while True:
             await asyncio.sleep(10)
             now = time.monotonic()
+            for addr, (expiry, _) in list(self.rejected.items()):
+                if now >= expiry:
+                    del self.rejected[addr]
             for w in list(self.queue.values()):
                 if now - w.since > QUEUE_MAX:
                     self.send(w.addr, "TIMEOUT")

@@ -1353,7 +1353,7 @@ namespace GDMelee
         {
             TabPage page = new TabPage(L.T("Online"));
             page.Name = "online";
-            Label intro = UI.Para(L.T("Online play is in the game: VERSUS > ONLINE (Host a Room, Join a Room, Random Opponent). Both players need this same release of GD's Melee. Mods are welcome online: any fighter or stage you both have can be picked (see the Mods tab).\r\n\r\nRoom codes (short codes instead of IP addresses) need a matchmaking server. Enter its address here as host:port, or leave it empty to swap addresses by hand. The setting is stored in netplay_server.txt next to the game."));
+            Label intro = UI.Para(L.T("Online play is in the game: VERSUS > ONLINE (Host a Room, Join a Room, Random Opponent). Both players need this same release of GD's Melee (netplay protocol 3). If you see a protocol version error, update the game on both PCs. Mods are welcome online: any fighter or stage you both have can be picked (see the Mods tab).\r\n\r\nRoom codes (short codes instead of IP addresses) need a matchmaking server. Enter its address here as host:port, or leave it empty to swap addresses by hand. The setting is stored in netplay_server.txt next to the game."));
             Label lbl = new Label { Text = L.T("Matchmaking server (host:port):"), AutoSize = true, Margin = new Padding(0, 4, 0, 4) };
             serverBox = new TextBox { Width = 320, Margin = new Padding(0, 0, 0, 6) };
             serverState = new Label { AutoSize = true, ForeColor = Color.DimGray, Margin = new Padding(0, 0, 0, 10) };

@@ -51,6 +51,8 @@ function Copy-In([string]$src, [string]$rel) {
 
 # ---- provenance of the game build ---------------------------------------------------------------
 $melee = if ($MeleeDir) { (Resolve-Path $MeleeDir).Path } else { Join-Path $root "melee" }
+. (Join-Path $PSScriptRoot 'netplay_protocol.ps1')
+Assert-NetplaySource $melee
 $meleeRev = (git -C $melee rev-parse HEAD).Trim()
 $meleeShort = $meleeRev.Substring(0, 9)
 $wsRev = (git -C $root rev-parse --short=9 HEAD).Trim()
@@ -157,7 +159,8 @@ Set-Content -Path (Join-Path $stage "version.txt") -Encoding ascii -Value @(
   "$Version (melee $meleeShort)",
   "melee      $meleeRev  https://github.com/GurekamDhillon/melee/tree/$meleeRev",
   "workspace  $wsRev  https://github.com/GurekamDhillon/gd-melee-workspace",
-  "built      $date"
+  "built      $date",
+  "netplay_protocol $(Get-NetplayProtocol)"
 )
 
 # manifest: sha256sum format, '/' separators, sorted

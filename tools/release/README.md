@@ -212,3 +212,25 @@ BSD-2; Tracy BSD-3; SQLite public domain; MSVC runtime under Visual Studio's Dis
 terms; UI glyphs from Source Sans 3 and Hasklug (SIL OFL 1.1). Details:
 `THIRD-PARTY-NOTICES.txt`. The decompiled game code itself has no upstream licence; that is
 stated plainly in the notices rather than papered over.
+
+## Netplay protocol compatibility
+
+Packaging now requires GW_NET_PROTOCOL_VERSION 3 in the selected game checkout
+and writes `netplay_protocol 3` to version.txt. The release guard requires this
+entry exactly once in both folder and zip checks. The friends wrapper inherits
+these checks. Release VERSION stays independent of the network protocol.
+
+These are source/metadata checks, not proof of the executable's contents. Keep
+the existing provenance checks and verify an actual v3 handshake on a Windows
+lane before release. Never add metadata to a stale EXE to make a check pass.
+
+Run without building:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/release/test_netplay_protocol.ps1 -MeleeDir ../../melee
+python tools/release/launcher/check_strings.py
+```
+
+The generated release-notes template in publish.ps1 explains the v3 requirement.
+TCP crash upload compatibility is independent and remains unchanged, including
+for older launchers; netplay errors must not prevent diagnostic uploads.

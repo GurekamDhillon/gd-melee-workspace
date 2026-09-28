@@ -75,6 +75,8 @@ def wait_for(what, check, timeout):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--exe", default="", help="melee-pc.exe to run (default: _build's)")
+    ap.add_argument("--guest-exe", default="", help="a different melee-pc.exe for the guest (version-mismatch tests)")
+    ap.add_argument("--server", default="", help="host:port of the matchmaking server (default: netplay_server.txt)")
     ap.add_argument("--disc", default="ace")
     ap.add_argument("--label", default="np_drive")
     ap.add_argument("--timeout", type=int, default=300, help="seconds for each stage")
@@ -87,7 +89,9 @@ def main():
     cmd = ("& '%s' -Menu -RealNetwork -HostDevice gc -GuestDevice keyboard -Disc %s -Label '%s' -EnvHost %s -EnvGuest %s%s" %
            (os.path.join(ROOT, "_build", "netplay_local.ps1").replace("'", "''"), a.disc, a.label.replace("'", "''"),
             env_host, env_guest,
-            (" -Exe '%s'" % os.path.abspath(a.exe).replace("'", "''")) if a.exe else ""))
+            ((" -Exe '%s'" % os.path.abspath(a.exe).replace("'", "''")) if a.exe else "")
+            + ((" -GuestExe '%s'" % os.path.abspath(a.guest_exe).replace("'", "''")) if a.guest_exe else "")
+            + ((" -Server '%s'" % a.server) if a.server else "")))
     print("starting both windows")
     subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", cmd], check=False)
 

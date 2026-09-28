@@ -32,6 +32,7 @@ param(
   [int]$HostChar = -1,   # CharacterKind for each side when connecting at boot (m-ex fighters too)
   [int]$GuestChar = -1,
   [string]$Exe = "",     # run this melee-pc.exe (a lane's build) instead of _build's; sandboxes go beside it
+  [string]$GuestExe = "", # the guest runs this exe instead (e.g. an older build, for a version-mismatch test)
   [string]$Server = "",  # MELEE_NETPLAY_SERVER for both (default: netplay_server.txt beside the exe)
   [string]$LiveHost = "", # MELEE_PAD_LIVE file for each side: drive it by writing "<buttons_hex>" into it
   [string]$LiveGuest = "",
@@ -94,7 +95,8 @@ New-Item -ItemType Directory -Force -Path (Split-Path $netsimFile) | Out-Null
 $h = [int]([Math]::Min($wa.Height, $w * 3 / 4))
 
 function Start-Side($tag, $label, $netplay, $device, $x, $pad, $vol) {
-  $sandbox = Join-Path $exeDir "runs\$tag"
+  $sideDir = if ($tag -eq "np_guest" -and $GuestExe) { Split-Path (Resolve-Path $GuestExe) -Parent } else { $exeDir }
+  $sandbox = Join-Path $sideDir "runs\$tag"
   New-Item -ItemType Directory -Force -Path $sandbox | Out-Null
   # By executable path from the process table: Get-Process's MainModule can throw for a process
   # that is starting or exiting, which silently skipped it and left its exe locked.
@@ -104,7 +106,7 @@ function Start-Side($tag, $label, $netplay, $device, $x, $pad, $vol) {
       Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
       Wait-Process -Id $_.ProcessId -Timeout 10 -ErrorAction SilentlyContinue   # its exe stays locked until it exits
     }
-  foreach ($f in @("melee-pc.exe", "melee-pc.map")) { Sync-RunFile (Join-Path $exeDir $f) $sandbox }
+  foreach ($f in @("melee-pc.exe", "melee-pc.map")) { Sync-RunFile (Join-Path $sideDir $f) $sandbox }
   if ($Server) { $env:MELEE_NETPLAY_SERVER = $Server } else { Remove-Item Env:MELEE_NETPLAY_SERVER -ErrorAction SilentlyContinue }
   $srvFile = Join-Path $build "netplay_server.txt"
   if (-not $Server -and (Test-Path $srvFile)) { Sync-RunFile $srvFile $sandbox }
