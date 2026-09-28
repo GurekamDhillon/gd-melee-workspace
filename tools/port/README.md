@@ -15,7 +15,13 @@ bash tools/port/run.sh --test tests --iso "C:/path/game.iso"
 bash tools/port/run.sh --test --realtime tests-rt --iso "C:/path/game.iso"
 MELEE_FPS=u bash tools/port/run.sh uncapped --iso "C:/path/game.iso"
 MELEE_TURBO=1 MELEE_PAD_SCRIPT="C:/path/check.lua" bash tools/port/run.sh batch --iso "C:/path/game.iso"
+python tools/port/gd_prompt.py                # type text -> in-game comm callouts (needs MELEE_CONSOLE_PORT)
 ```
+
+`gd_prompt.py` needs a running game started with `MELEE_CONSOLE_PORT` (the environment passes
+through; the socket is 127.0.0.1-only, so run the prompt on Windows). Plain lines become `comm`
+callouts in game; `:raw <line>` sends any console command; `:help` lists the rest, including
+`:who falco`, `:sound <id>`, `:clear`.
 
 Wrapper flags `--test` and `--realtime` go **before the sandbox name**. `--test` exports
 `MELEE_TURBO=1`; `--realtime` exports 0. The headless test runner has no paced game-frame loop,
