@@ -55,14 +55,20 @@ v2.0.0's row 51 is `zero`). Next: identify the ACE build the slot's row targets,
 name (`p1=trail`) started **no match at all** (`gd.match().active == false`, `gd.player(1)` nil), so the
 name form is not accepted for this slot; read the mod's own `MxDt.dat` / `INSTALL.json`
 `moveset_rows` to learn the m-ex slot id the port expects, then select by `mex:<n>`.
-**Decisive finding (2026-09-28):** `INSTALL.json` shows how the slot is installed — `mxdt_clone.tables`
-clones the disc's `MxDt.dat` and rewrites the **`pl_file` table at `0x14FA0` for internal row 52**
-(`000156d0…` → `00015368…`, i.e. to the shipped `PlUs.dat`), over a disc whose row 51/52 is **Wolf SSBU
-(`PlWfU.dat`)**. The port's `mex:` prefix is the m-ex **internal** index space, so the intended selector
-is **`p1=mex:52`**; its `exit 127` on our **ACE Build v2.0.0** means this disc's `MxDt` does not match
-the clone the slot was built against (this disc's row is `zero`, a Link clone). Next: rebuild the slot
-for this disc with `ports/ir/tools/install_ultimate.py` (or obtain the matching ACE build), then
-`p1=mex:52`, cast B and re-check `gd.fx()` for `P_TrailFire*` / `P_TrailKeyblade*`.
+**RESOLVED (2026-09-28) — demo option 1 is verified in-game.** The working recipe is the **alpha
+lane's** setup, not a fresh slot copy: `MELEE_MODS_DIR="C:/gdm/_build/agents/alpha/sora/mods-gd-latest"`
+(2 mods, enabled via its `enabled.txt`: `geno-lab` + `ultimate-trail-slot`) and the fighter **by name**:
+`MELEE_SCENE="mode=training;p1=ultimatesora"` (`mex:` row selectors do not address this slot; the name
+does). Verified on ACE Build v2.0.0: `gd.player(1).char_name == "ultimate sora"`,
+`anim_symbol = PlyUltimateSora5K_Share_ACTION_a00wait1_figatree`, and after `gd.input(1,"B",90)` the
+log shows `fx: P_TrailFireEnd attached … 2/2 emitter(s), refused 0`, `fx: bind Firaga call 3 … joint 78`,
+a census of **44 live particles** (`fire3=7 fire1=5 spark2=10 circle2=1 …`), a magic hit on P2
+(`geno: … on_hit: damage x100 500`) and the live query `gd.fx() = {P_TrailFireBullet, emitter_count=10,
+live_particles=41, owner_kind=article}`. Captures: `_build/agents/batcha/sora-fx-cap2/now00.png` (the
+fireball mid-flight) and `sora-fx-cap/now00.png`. The earlier `mex:51`/"zero" and `mex:52`/127 probes were
+the wrong selector and a fresh-copy mismatch; the alpha lane's `mods-gd-latest` carries the matching
+`MxDt` clone. **Next for a showcase:** a capture set per spell (Firaga/Blizzaga/Thundaga + Keyblade
+smash), longer holds for mid-cast frames, and a side-by-side against Ultimate for the fidelity pass.
 
 ## Current code
 
