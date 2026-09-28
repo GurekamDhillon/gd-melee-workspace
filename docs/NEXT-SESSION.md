@@ -69,13 +69,14 @@ fireball mid-flight) and `sora-fx-cap/now00.png`. The earlier `mex:51`/"zero" an
 the wrong selector and a fresh-copy mismatch; the alpha lane's `mods-gd-latest` carries the matching
 `MxDt` clone. **Next for a showcase:** a capture set per spell (Firaga/Blizzaga/Thundaga + Keyblade
 smash), longer holds for mid-cast frames, and a side-by-side against Ultimate for the fidelity pass.
-**Showcase captures so far (2026-09-28)** in `_build/agents/batcha/sora-showcase/`: `firaga.png` (the
-Firaga fireball mid-flight) and `sonic-blade.png` (side-B's star flash, `P_TrailSonicAttack`, 9
-emitters). **Directional specials need a sequenced input**, not a simultaneous one: sending
-`{buttons="B", y=-110}` (or `y=110`) in one spec, even held 120 frames, left `gd.fx() == {}` twice for
-down-B and up-B. Next: hold the stick for ~5 frames *first*, then press B, with the fighter confirmed
-back in `Wait` between casts (a 120-frame cast is a ~2 s animation, so back-to-back casts overlap and get
-ignored); then capture Blizzaga / Thundaga / Aerial Sweep and a Keyblade smash the same way.
+**Showcase captures (2026-09-28)** in `_build/agents/batcha/sora-showcase/`: `firaga.png` (Firaga
+fireball mid-flight), `sonic-blade.png` (side-B star flash, `P_TrailSonicAttack`), `blizzaga.png`
+(down-B, `P_TrailIceShot`) and `thundaga.png` (up-B, `P_TrailThunderCloud` 5 emitters +
+`P_TrailThunderBullet`) — four Ultimate effects rendered by the native `gw_fx` runtime in a Melee
+match. **Directional specials need a sequenced input**: hold the stick for ~6 logic frames **then** press
+B (`gd.input(1,{y=-110},6)` followed by `gd.input(1,{buttons="B"},30)`); a simultaneous
+stick+B spec attaches nothing, and back-to-back casts overlap so wait ~3 s between them. Still to
+capture: Aerial Sweep and a Keyblade smash, plus a side-by-side against Ultimate for the fidelity pass.
 
 ## Current code
 
