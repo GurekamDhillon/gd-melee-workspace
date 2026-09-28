@@ -568,6 +568,12 @@ Vanilla data is unlabelled; naming is the feature. In Melee these are JObjs insi
 Brawl equivalent (`StgPosition` bones, `Player0-3E/N`, `Rebirth0-3E/N`, `CamLimit0N/1N`, `Dead0N/1N`)
 is the mental model modders already have (§2 P26).
 
+**Editable since 2026-09-28:** `gd.stage_set_spawn(slot, x, y)` moves a **start** (0–3) or **respawn**
+(4–7) point by writing the point JObj's translate (the same value `Ground_801C2D24` reads at spawn),
+owner-guarded and restored by `gd.stage_restore_bounds()`; `gd.stage_spawn(slot)` reads it back. The map
+editor exposes it as `map spawn <0-7> [x y]`. **Verified live:** moving slot 4 to `x=-100` made P1
+respawn at `x=-100` after a KO. Saving spawns into the layout file is the next half.
+
 ### 6.4 The stage filenames (and the corrections)
 
 | file | stage |
@@ -632,11 +638,12 @@ a release note.
 
 ### 6.8 What cannot persist today (the roadmap's raw input)
 
-Stage id/binding · spawns/items/enemies · model binaries · authored collision geometry · tint/layer/
+Stage id/binding · items/enemies · model binaries · authored collision geometry · tint/layer/
 visible/alpha · Z-depth collision · undo history and UI state · pad handles ·
 cross-mod sharing · rollback safety · streaming worlds · asset-bundle self-validation (units/scale).
-(Camera/blast bounds left this list with layout v2; **player respawns** stay on it — they are native
-general points with no engine setter yet.)
+(Camera/blast bounds left this list with layout v2; **start/respawn points** are editable live since
+2026-09-28 but are **not yet written to the layout file** — that is the next half; item/enemy spawns
+still have no editor.)
 
 ---
 
@@ -718,12 +725,14 @@ palette *search ranking* (filter + category headers + recents are done: the list
 
 ### P2 — Own the ecosystem gap (spawns, camera, bounds)
 
-**Done 2026-09-28 (data layer + camera/blast):** layout **v2** persists camera/blast bounds (v1 still
-reads), `map bounds capture|restore|camera l r t b|blast l r t b` edits them, and the overlay draws the
-camera rect green / blast rect red. Contract tests cover capture → v2 serialize → load-applies →
-round-trip and v1 compatibility.
-**Remaining:** **player respawns** need an engine setter (the 0–7 general points are native; only
-`spawn_target` exists today), a drag-a-rect bounds UI, and the walkoff warning (§6.7 #8).
+**Done 2026-09-28:** layout **v2** persists camera/blast bounds (v1 still reads), `map bounds
+capture|restore|camera l r t b|blast l r t b` edits them, and the overlay draws the camera rect green /
+blast rect red. Contract tests cover capture → v2 serialize → load-applies → round-trip and v1
+compatibility. **Player start/respawn editing landed too:** `gd.stage_set_spawn(slot, x, y)` +
+`gd.stage_spawn(slot)` (native, JObj translate; arena-owned and restorable) with the editor's
+`map spawn <0-7> [x y]` op — verified live by moving P1's respawn to `x=-100` and respawning there.
+**Remaining:** write spawns into the layout (v2), a drag-a-rect bounds UI, spawn/bounds handles, and
+the walkoff warning (§6.7 #8); item/enemy spawns still have no editor.
 
 - Read, display, name, edit and persist: player respawns (ids 0–7) — the scripted-platform API already
   exists for spawn points; camera bounds and blast bounds via `gd.stage_set_camera_bounds` /
