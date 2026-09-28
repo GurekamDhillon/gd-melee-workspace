@@ -514,8 +514,10 @@ requiring a modal key. **Done 2026-09-28:** the selection draws **red = move X**
 use (`modal_begin(mode, ax, 'mouse')`); the pointer drives it, release commits, a drag is one undo step.
 Panels take precedence over handles (a press is tested against the panels first), and the handles only
 exist while a part is selected.
-**Remaining:** a hover highlight + cursor change over a handle, per-axis scale tips, and rotation
-out-of-plane (the ring is the in-plane rotate the engine supports).
+**Remaining:** a hover highlight + cursor change over a handle (done 2026-09-28: hovering names the
+affordance in the status line — `drag: move x` — and rings it white; the handle geometry is now computed
+from the live part and bounds on demand, so a stale handle can never hijack a click), per-axis scale
+tips, and rotation out-of-plane (the ring is the in-plane rotate the engine supports).
 
 ---
 
