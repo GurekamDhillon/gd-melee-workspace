@@ -639,7 +639,10 @@ a release note.
 5. **Tool rot and fragmentation** → the editor is in-tree and tested (contract test + in-game captures).
 6. **Bounds by trial and error** → P2 draws camera/blast rects with a preview.
 7. **Crash-prone imports** → we only spawn validated kit assets; no bone-count coupling.
-8. **Walkoffs everywhere** → P2 can warn when a blast bound sits inside a wall.
+8. **Walkoffs everywhere** → **addressed 2026-09-28:** placing or duplicating a part outside the blast
+   zone (or, when inside it, outside the camera bounds) logs a warning line and raises a toast; the
+   rects come from the document's layout v2 bounds, else the live stage. A hard block is deliberately
+   not used (builders sometimes want a part out there).
 9. **Ledge/flag subtlety** → `floor_flags` are named in the UI (drop-through / ledges), not bits.
 10. **Tool copy/paste mismatch** → our layouts are self-describing and version-checked.
 
