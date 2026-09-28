@@ -5,6 +5,11 @@ This dated state supersedes `QUEUED-2026-09-26.md`, `QUEUED-2026-09-27.md` and t
 state in `HANDOFF-2026-09-24.md`. The dated Slippi handoff remains the record of those replay
 runs, not a test result for today's HEAD. `HANDOFF.md` supplies the architecture and sections 6-7 rules.
 
+**gd.comm landed (2026-09-28):** the paused `e06941cb` session's task was finished at game
+`d6b067d25` (escapes fix, build + bridge OK, headless suite 203/203 on ACE, in-game smoke PASS;
+docs in `scripting.md`). `RESUME-2026-09-28-e06941cb.md` keeps that session's context (its Claude
+weekly limit resets Oct 3, 2am PT).
+
 ## Current code
 
 - Release version is **0.1.6** (`tools/release/VERSION`). HEAD has substantial work after that

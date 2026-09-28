@@ -5,6 +5,7 @@ Which document is current, and what goes where.
 | file | status | what |
 |---|---|---|
 | `NEXT-SESSION.md` | **read first** | the current baseline, operating rules and historical traps |
+| `RESUME-2026-09-28-e06941cb.md` | landed history | the finished `gd.comm` pickup (game `d6b067d25`) and the paused session's context; the other paused lanes are in `PAUSED-2026-09-27.md` |
 | `HANDOFF-2026-09-24.md` | historical baseline | superseded for current state by the 2026-09-27 `NEXT-SESSION.md` |
 | `HANDOFF-2026-09-24-SLIPPI.md` | historical test evidence | replay-pair results, not validation of later HEAD |
 | `QUEUED-2026-09-26.md`, `QUEUED-2026-09-27.md` | superseded request records | folded into `NEXT-SESSION.md`; lane assignments are historical |

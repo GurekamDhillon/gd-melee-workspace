@@ -1,7 +1,9 @@
 # Scripting GD's Melee (Lua) — the modding API
 
-**Current as of 2026-09-27.** Checked against `gw_script.c` at game `4c676892a`; this
-reference supersedes older API descriptions. The LAB API is public too (`gd.lab_api == 1`).
+**Current as of 2026-09-28.** Comms callouts (`gd.comm`, `gd.comm_state`, `gd.comm_clear`,
+`gd.play_sound`) were verified at game `d6b067d25`; the rest of the reference was checked against
+`gw_script.c` at `4c676892a`. This reference supersedes older API descriptions. The LAB API is
+public too (`gd.lab_api == 1`).
 
 GD's Melee runs **Lua 5.4** scripts inside the game. A script can read the match (fighters,
 positions, percents, action states), draw readouts over the game, add console commands, press
@@ -282,6 +284,24 @@ function on_draw()
 end
 ```
 
+### Comms callouts (offline)
+
+A Corneria-style comm window: a panel slides in at the screen edge with a portrait, a speaker name
+and a subtitle, holds, then slides out. Calls queue behind the current one (up to 16), and the
+window draws over any scene - a match included. It is drawing only, with its own tick state in Lua
+(no game memory), so savestates and rewinds cannot desync it; it is refused during netplay/rollback.
+It uses `gd.kit` when the kit is available and plain draws otherwise, and keeps clear of the
+widescreen safe area when available.
+
+| function | |
+|---|---|
+| `gd.comm{who=, text=, seconds=, sound=, portrait=, side=}` | show a callout. `who` is `"fox"`, `"falco"`, `"peppy"`, `"slippy"` or `"custom"` (default; picks the name and colours); `text` is the subtitle; `seconds` is the hold time (default 3); `sound` is a game sound id played when the window appears (see `gd.play_sound`); `portrait` is a `gd.kit.image` texture name (the colour block with the speaker's initial is the fallback); `side` is `"left"` (default) or `"right"`. Returns how many callouts are live or queued, or `false` when the queue is full |
+| `gd.comm_clear()` | drop the current callout and the queue |
+| `gd.comm_state()` | `{shown, queued, who, text, t, slide}` - for tests and mods (`t` is frames in the current callout, `slide` 0-1) |
+| `gd.play_sound(id)` | play a game sound id (what the decomp passes to `lbAudioAx_800237A8`), full volume, centre pan; returns the AX voice handle. Offline only |
+
+The console command `comm <who> "text" [sound id]` is the same call, e.g. `comm fox "incoming"`.
+
 ### Input
 
 | function | |
@@ -556,6 +576,7 @@ lines; the console may use the gameplay functions offline). `= expr` prints a va
 | `input <port> <buttons\|0xhex\|none> [frames] [x y]` | e.g. `input 1 A 5`, `input 1 none 40 127 0` (walk right) |
 | `shot [path]` | screenshot (see `gd.screenshot`) |
 | `label <text>` | the run label |
+| `comm <who> "text" [sound id]` | a comm callout (`gd.comm{...}`) |
 | `fly [port] [on\|off\|place\|toggle]`, `noclip ...` | debug movement: toggle with no argument; `fly speed <n>`, `fly solid on\|off`, `fly port <n>` (the default port and F11's), `fly readout on\|off`. Offline only; **F11** toggles the fly port in any offline match |
 | `tp [port] <x> <y>` | teleport (offline only) |
 | `pos [port]` | the fighter's position, also copied to the clipboard as `x y` |
