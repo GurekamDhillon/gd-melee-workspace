@@ -28,11 +28,17 @@ hover highlight, camera collision, orthographic views.
 `gw_fx.c` runtime, the `ultimate_vfx_geno.py` importer and the fx_bindings already exist), (2) a
 scripted room/boss on the Gamemode library, or (3) a Geno specials reel.
 **Option 1 is the shortest path and its content already exists on disk** (verified 2026-09-28):
-`_build/agents/alpha/sora/bak-v6/ultimate-trail-slot/` holds a built Sora slot — fighter config, ACMD
-conversion and **dozens of `fx/P_Trail*/**.gfx.json` effect packages** (AerialSweep\*, Air\*, and the
-magic/Keyblade sets). The remaining work is to install that slot under `MELEE_MODS_DIR`, verify the
-effects attach in a match (`gd.fx()` census + a capture), and tune; start from
-`docs/prompts/codex-sora-effects.md` and `_research/geno-effects-runtime.md`.
+`_build/agents/alpha/sora/bak-v6/ultimate-trail-slot/` is a complete **fighter** mod — id
+`ultimate-trail-slot`, name "ULTIMATE SORA (Ultimate, own skeleton)", `kind: "fighter"`, and it
+**must not be enabled beside `metaknight-slot`** (both claim ACE row 51/52). It ships `files/`
+(GnTrailFire/Ice/Bolt/Cloud, `MxDt.dat`, `PlCo.dat`, the CSS/ifall USDs), a **Geno v4** `geno.json`
+(Firaga/Blizzaga/… states, `attach: PlUs.dat`, host behaviour = Marth) and **114
+`fx/P_Trail*/*.gfx.json` effect packages** (the magic, Keyblade and Counter sets). To verify: put the
+slot under a mods parent, point `MELEE_MODS_DIR` at that parent, run on the **ACE** disc, pick Sora in
+the scene grammar (try the m-ex name first, then `mex:<row>`), drive a cast from the console
+(`gd.press(1,"B",-1)` in a ground state) and read `gd.fx()` for the attached `P_TrailFire*` package,
+plus a capture for the visual. Guides: `docs/prompts/codex-sora-effects.md`,
+`_research/geno-effects-runtime.md`.
 
 ## Current code
 
