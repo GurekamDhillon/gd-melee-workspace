@@ -431,8 +431,11 @@ search, no recents. **P1:** fuzzy filter, "recent" section pinned at top, catego
 **Pattern:** Shift = add, Ctrl = toggle/subtract, marquee = box select (Tiled), with the ImGui
 multi-select semantics (box-select needs spacing to aim at empty space; `ClearOnClickVoid` decides
 whether clicking the void clears). Local vs world only where meaningful — ImGuizmo hides it for scale.
-**Our situation:** single selection only; pick is nearest-origin (§7.4). **P2:** box select + grouped
-transform (the model API supports per-instance `set`; a multi-drag must be one undo step, §5.6).
+**Done 2026-09-28:** `Shift+Tab` (or `map select add`) joins the nearest part to the anchor,
+`select all` / `select clear` manage the set, and Move / Rotate / Scale / Mirror / Delete apply to the
+whole selection as **one undo step** (move shifts every member by the anchor's delta; rotate/scale act
+per part). Verified live: three parts rotated to 15 together, one undo unwound it, Delete removed all
+three. **Remaining:** marquee/box select, and Ctrl to subtract from the set.
 
 ### 5.5 Duplicate / copy / paste / arrays
 
