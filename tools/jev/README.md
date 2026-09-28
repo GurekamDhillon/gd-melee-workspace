@@ -27,3 +27,15 @@ kept for the record in `_build/agents/batcha/jev-triage-2026-09-28.md` (v1) and
 
 Run it after a sweep or a lane test batch; treat `outcome=test_failed` rows as the queue and
 `severity` as the order. It is a triage aid, not proof — read the log it points at.
+
+## `rerank_files.py` — rank a file shortlist against a task
+
+    python3 tools/jev/rerank_files.py --task "finish gd.comm: fix escapes, rebuild, test, document" \
+        --candidates /tmp/shortlist.tsv --root worktrees/batcha --top 10
+
+One call, one `noul` per candidate: "is this file likely needed (read or edit) to finish the task?"
+Sorted output, plus `jev-rerank.md` + `jev-rerank.json` beside the candidates file. Candidates are
+`path<TAB>description` lines — the description is the evidence, so keep it factual. The first run on
+the gd.comm task put the working set at 0.98-0.62 and every distractor at 0.04-0.05
+(`_build/agents/batcha/jev-rerank-2026-09-28.md`).
+
