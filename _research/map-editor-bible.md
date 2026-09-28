@@ -450,8 +450,9 @@ part settings.
 no history UI; a failed op never advances history (§7.7 — already correct). **Done 2026-09-28:** every
 mutation is **named** through `acted()`/`name_undo()` (`undo_names` tracks the stack), the status bar
 shows the last action, and `map log on` opens an **Action Log** overlay listing the last named steps —
-**click a row to step back** (`map history <n>` does the same from a script). Undo pops a name; redo
-pushes "Redo". **Remaining:** showing the redo branch and jumping forward.
+**click a row to step back** (`map history <n>` does the same from a script). **Done:** the Action Log also lists the **redo branch** (rows prefixed `redo:`, click one to step
+forward); `map redo <n>` mirrors `map history <n>` for scripts. **Remaining:** nothing on the history
+list itself — the next step is a per-part copy stack (§5.5).
 
 ### 5.7 Property grid
 
