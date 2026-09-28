@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.1.6" src="docs/readme/brand/version.svg" height="28"></a>
+  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.1.7" src="docs/readme/brand/version.svg" height="28"></a>
   <img alt="Platform: Windows x64" src="docs/readme/brand/windows.svg" height="28">
   <img alt="Netplay: rollback" src="docs/readme/brand/rollback.svg" height="28">
   <img alt="Mods: m-ex compatible" src="docs/readme/brand/mex.svg" height="28">
@@ -30,7 +30,7 @@ decompilation** rather than by emulation or by recompiling the retail binary. It
 **rollback netcode** from a competitive lobby, renders natively in HD, runs **m-ex** mod discs and
 loose mods, and can be scripted in **Lua**.
 
-> **Status: public test build (0.1.6).** Expect rough edges and please report bugs: what you did,
+> **Status: public test build (0.1.7).** Expect rough edges and please report bugs: what you did,
 > which disc, and the crash report from the `crashlogs` folder (or `melee-pc.log`).
 
 ## Quick start
