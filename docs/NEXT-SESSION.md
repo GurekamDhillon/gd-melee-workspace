@@ -39,15 +39,19 @@ the scene grammar (try the m-ex name first, then `mex:<row>`), drive a cast from
 (`gd.press(1,"B",-1)` in a ground state) and read `gd.fx()` for the attached `P_TrailFire*` package,
 plus a capture for the visual. Guides: `docs/prompts/codex-sora-effects.md`,
 `_research/geno-effects-runtime.md`.
-**First probe (2026-09-28) — installs and boots, wrong fighter selected:** with the slot copied under
-`_build/agents/batcha/sora-mods/` and `MELEE_MODS_DIR` pointed at it, the game boots on ACE Build
-v2.0.0, but `p1=mex:51` selects the disc's own **`zero`** (a Link clone: `char=57`,
-`anim_symbol=PlyLink5K_Share_ACTION_Wait_figatree`), **not** Sora, so `gd.fx()` is `{}` after a scripted
-`gd.input(1,"B",2)`. Cause: `INSTALL.json` says the slot replaces **row internal 52 / external 51** and
-takes `MxDt.dat` / `MnSlChr.usd` **from the disc**, so the disc's m-ex row has to be the matching one.
-Next: identify the ACE build the slot's row targets (or re-run `ports/ir/tools/install_ultimate.py`
-against this disc's tables), then select that row (or the fighter by name) and re-check `gd.fx()` for
-`P_TrailFire*` after a B press.
+**First probe (2026-09-28) — installs, loads its effects, wrong fighter selected:** with the slot copied
+under `_build/agents/batcha/sora-mods/` and `MELEE_MODS_DIR` pointed at it, the port mounts it
+(`gw: mods: ultimate-trail-slot fighter 0.1.0 on`, 11 new paths), reserves the Geno article region and
+**the effect runtime loads Sora's packages** — e.g. `P_TrailKeybladeFlare` (2 emitters),
+`P_TrailSmashHiFlash` (12 emitters, 8 textures, 6 meshes), `P_TrailSmashLwImpact` (16 emitters). So the
+effects half is proven with real content. What is **not** proven is the fighter: `p1=mex:51` selects the
+disc's own `zero` (a Link clone: `char=57`, `anim_symbol=PlyLink5K_Share_ACTION_Wait_figatree`), so
+`gd.fx()` is `{}` after `gd.input(1,"B",2)`; `p1=mex:52` did not boot (runner `exit 127`, card error
+`Failed to open file: SuperSmashBros0110290334`). Cause: `INSTALL.json` says the slot replaces **row
+internal 52 / external 51** and takes `MxDt.dat` under a different table than this disc's row (ACE Build
+v2.0.0's row 51 is `zero`). Next: identify the ACE build the slot's row targets, or re-run
+`ports/ir/tools/install_ultimate.py` against this disc's tables, then select that fighter and re-check
+`gd.fx()` for `P_TrailFire*`/`P_TrailKeyblade*` after a B press.
 
 ## Current code
 
