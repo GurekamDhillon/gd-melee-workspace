@@ -329,6 +329,7 @@ continuous rotate = `E`, search = `Space`, axis-lock = arrow keys.**
 | `Ctrl+D` | duplicate at cursor (existing) |
 | `Ctrl+S` / `Ctrl+O` | save / load (save verifies, §6.6) |
 | `F1` / `H` | help (existing) |
+| `F4` | palette filter: type a name, Enter done, ESC clears (`map filter <text>` scripts/tests) |
 | `F2` / RMB | action menu (existing) |
 | `F3` | collision overlay (existing) |
 | `F6` | start / exit editor (existing) |
@@ -637,14 +638,14 @@ cross-mod sharing · rollback safety · streaming worlds · asset-bundle self-va
 
 | # | defect | fix | phase |
 |---|---|---|---|
-| D1 | Part rows showed meaningless index numbers as their "value" | the property grid (§5.7) or remove the value column | P1 |
-| D2 | `New …` action rows mutate new-part defaults invisibly | move to a "New parts" section of the panel showing the actual values | P1 |
-| D3 | Errors share the status line with mode text | dedicated error line/colour (§5.9) | P0 |
-| D4 | No feedback on the last undoable action | "last action" in the status bar (§5.6) | P0 |
-| D5 | The native FLY readout draws over the modal's bottom-left corner | raise the modal 8px and/or shrink; noted as a port-UI z-order issue | P0 |
-| D6 | Selection is a bare cyan square; no part identity | selection panel + ghost of what is selected | P1 |
-| D7 | Rotation/mirror semantics are hidden in the README, not the UI | per-tool hint line + help row (§4.3) | P0/P1 |
-| D8 | No spawn/camera/bounds at all | phase P2 (§6.2/6.3) | P2 |
+| D1 | Part rows showed meaningless index numbers as their "value" | the property grid (§5.7) or remove the value column | **fixed P1**: palette rows show names (recents `*`), values live in the inspector |
+| D2 | `New …` action rows mutate new-part defaults invisibly | move to a "New parts" section of the panel showing the actual values | **partial P1**: the inspector shows the selected part's real values; the New… rows remain |
+| D3 | Errors share the status line with mode text | dedicated error line/colour (§5.9) | **fixed P0** |
+| D4 | No feedback on the last undoable action | "last action" in the status bar (§5.6) | **fixed P0** |
+| D5 | The native FLY readout draws over the modal's bottom-left corner | raise the modal 8px and/or shrink; noted as a port-UI z-order issue | open |
+| D6 | Selection is a bare cyan square; no part identity | selection panel + ghost of what is selected | **fixed P1** (SELECTION panel; ghost still open) |
+| D7 | Rotation/mirror semantics are hidden in the README, not the UI | per-tool hint line + help row (§4.3) | **fixed P0/P1** (per-tool hints) |
+| D8 | No spawn/camera/bounds at all | phase P2 (§6.2/6.3) | open (P2) |
 
 ### 7.4 Rules the code already encodes (do not break)
 
@@ -663,25 +664,18 @@ cites this bible.
 
 ### P0 — Controls + honesty (this pass)
 
-- Implement the hybrid scheme (§4.3): `G/E/C` tap = tool switch, hold+drag = modal transform; `F`
-  frames; `Shift` = fine, `Ctrl` = snap (polarity §4.5); arrows = axis lock during a modal; `Space` =
-  action search stub.
-- Bottom bar: `mode | hint | last action` + a distinct error line (§5.9, D3/D4).
-- Help: document the substitutions explicitly (§5.11).
-- **Acceptance:** stranger places/moves/saves unaided; help's key table matches the code; a deliberate
-  error (e.g. invalid rotate) shows in the error line, not the mode text.
+**Done 2026-09-28** (game `f637fc46f`, verified on screen): hybrid `G/E/C` hold-to-transform with tap-to-switch,
+`F` frame, `Shift`/`Ctrl` polarity, `Z` snap, `Shift+C` constraint, last-action + persistent error lines,
+help updated. Contract tests cover modal move/undo, ESC revert, axis lock, frame, snap, fine step.
 
 ### P1 — Make it a tool people want to use
 
-- Palette: fuzzy filter + pinned "recent" + categories (floor/wall/trim/glass/stair) (§5.3).
-- Inspector panel on the right: part, x/y/z, rot, scale, collision, floor_flags, layer, tint + "New
-  parts" defaults (§5.7). Requires `gd.kit.field` (§5.2).
-- Placement ghost at the snapped cursor, green/red validity, despawned on cancel (§5.8).
-- Toasts for save/load/duplicate; errors persist (§5.9).
-- Undo: named actions + Undo History list in the action menu (§5.6).
-- Selection panel replaces the bare cyan square (D6); action rows stop showing index values (D1/D2).
-- **Acceptance:** two-minute test passes for a Blender and a Unity user; every operation reports its
-  result; the palette is usable with 100+ parts (stress with duplicates).
+**Done 2026-09-28** (this session, verified on screen): palette **filter + recents + typed `F4` mode**
+(`map filter <text>` for scripts/tests; matches are pinned-recent-first; `*` marks recent rows), the
+**SELECTION inspector** (right panel: name, x/y/z/rot/scale; click `collision`/`floor flags` to edit),
+**toasts** for save/load/duplicate/clear, and the error/last-action split.
+**Remaining:** drag-to-scrub field editing (`gd.kit.field`), placement ghost, palette category
+grouping, Undo History list, `Space` action search.
 
 ### P2 — Own the ecosystem gap (spawns, camera, bounds)
 
