@@ -25,7 +25,7 @@ from compare_finalized import _complete_replay, verify_pair
 from udp_relay import UdpRelay
 
 ROOT = Path(__file__).resolve().parents[2]
-MIN_FREE_RAM = 8 * 1024 ** 3
+MIN_FREE_RAM = 0  # GD dropped the free-RAM rule (2026-09-27); --min-free-gib restores a floor
 
 
 class RunError(RuntimeError):
@@ -178,8 +178,9 @@ def free_ports() -> tuple[int, int]:
 def launch(args, role, ports, run_id, salt, profiles, proxy_ports=None,
            fixture_override: Path | None = None) -> OwnedRun:
     free = psutil.virtual_memory().available
-    if free < MIN_FREE_RAM:
-        raise RunError('fewer than 8 GiB of free physical memory before launch')
+    floor = max(MIN_FREE_RAM, int(getattr(args, 'min_free_gib', 0) * 1024 ** 3))
+    if floor and free < floor:
+        raise RunError(f'fewer than {floor / 1024 ** 3:g} GiB of free physical memory before launch')
     name = f'slippi-{run_id}-{role}'
     directory = args.build_root / 'runs' / name
     directory.mkdir(parents=True, exist_ok=False)
@@ -261,7 +262,8 @@ def run(args) -> dict:
         raise RunError('build the selected lane first')
     if not 0 <= args.latency_ms <= 2000 or not 0 <= args.loss_percent <= 100:
         raise RunError('invalid UDP impairment setting')
-    if args.mode != 'loopback' and (args.latency_ms or args.loss_percent):
+    if args.mode != 'loopback' and (args.latency_ms or args.loss_percent or args.jitter_ms or args.stall_ms
+                                    or args.disconnect_at_s):
         raise RunError('UDP impairment is only available in loopback mode')
     if args.negative_control and args.mode != 'loopback':
         raise RunError('input negative control is only available in loopback mode')
@@ -286,9 +288,13 @@ def run(args) -> dict:
                 mutation = make_altered_p1_fixture(args.fixture, altered_fixture)
             except FixtureMutationError as exc:
                 raise RunError(str(exc)) from None
-        if args.latency_ms or args.loss_percent:
+        if (args.latency_ms or args.loss_percent or args.jitter_ms or args.stall_ms
+                or args.disconnect_at_s):
             relay = UdpRelay(ports, latency_ms=args.latency_ms,
-                             loss_percent=args.loss_percent, seed=args.network_seed)
+                             loss_percent=args.loss_percent, seed=args.network_seed,
+                             jitter_ms=args.jitter_ms, stall_every_s=args.stall_every_s,
+                             stall_ms=args.stall_ms, disconnect_at_s=args.disconnect_at_s,
+                             disconnect_s=args.disconnect_s)
             relay.start()
         for role in (1, 2):
             runs.append(launch(args, role, ports, run_id, salt, profiles,
@@ -379,6 +385,12 @@ def main() -> int:
     parser.add_argument('--latency-ms', type=int, default=0, help='one-way loopback UDP delay')
     parser.add_argument('--loss-percent', type=float, default=0, help='seeded loopback UDP loss')
     parser.add_argument('--network-seed', type=int, default=12345)
+    parser.add_argument('--jitter-ms', type=int, default=0, help='extra random 0..N ms per packet (reordering)')
+    parser.add_argument('--stall-every-s', type=float, default=0, help='hold all traffic every N seconds...')
+    parser.add_argument('--stall-ms', type=int, default=0, help='...for this long')
+    parser.add_argument('--disconnect-at-s', type=float, default=0, help='drop everything from N seconds in...')
+    parser.add_argument('--disconnect-s', type=float, default=0, help='...for this long (0 = for good)')
+    parser.add_argument('--min-free-gib', type=float, default=0, help='refuse to launch below this much free RAM')
     args = parser.parse_args()
     try:
         result = run(args)

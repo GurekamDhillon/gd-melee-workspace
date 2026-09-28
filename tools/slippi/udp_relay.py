@@ -16,15 +16,33 @@ import time
 
 
 class UdpRelay:
-    """Two-socket localhost relay with latency, seeded loss and bounded queue."""
+    """Two-socket localhost relay with latency, seeded loss and bounded queue.
+
+    Further impairments, all seeded or time-scheduled so a run repeats:
+      jitter_ms       each packet gets an extra 0..jitter_ms delay - packets overtake each other (reordering)
+      stall_every_s / stall_ms
+                      every stall_every_s seconds, hold both directions for stall_ms (a network stall:
+                      nothing is lost, everything arrives late and in a burst)
+      disconnect_at_s / disconnect_s
+                      from disconnect_at_s seconds after start, drop everything for disconnect_s seconds
+                      (0 = for good: the peers must notice and fail cleanly)
+    """
 
     def __init__(self, client_ports: tuple[int, int], latency_ms: int = 0,
-                 loss_percent: float = 0, seed: int = 0, max_queue: int = 2048):
+                 loss_percent: float = 0, seed: int = 0, max_queue: int = 2048,
+                 jitter_ms: int = 0, stall_every_s: float = 0, stall_ms: int = 0,
+                 disconnect_at_s: float = 0, disconnect_s: float = 0):
         if (len(client_ports) != 2 or any(not isinstance(p, int) or not 1 <= p <= 65535
                                           for p in client_ports) or client_ports[0] == client_ports[1]):
             raise ValueError('client_ports must be two distinct UDP ports')
-        if latency_ms < 0 or not 0 <= loss_percent <= 100 or max_queue < 1:
+        if (latency_ms < 0 or not 0 <= loss_percent <= 100 or max_queue < 1 or jitter_ms < 0
+                or stall_every_s < 0 or stall_ms < 0 or disconnect_at_s < 0 or disconnect_s < 0
+                or (stall_ms and not stall_every_s)):
             raise ValueError('invalid relay impairment setting')
+        self.jitter_ms = jitter_ms
+        self.stall_every_s, self.stall_ms = stall_every_s, stall_ms
+        self.disconnect_at_s, self.disconnect_s = disconnect_at_s, disconnect_s
+        self._t0 = time.monotonic()
         self.client_ports = tuple(client_ports)
         self.latency_ms = latency_ms
         self.loss_percent = loss_percent
@@ -45,7 +63,9 @@ class UdpRelay:
         self._lock = threading.Lock()
         self._counts = {'received': [0, 0], 'forwarded': [0, 0],
                         'dropped': [0, 0], 'queue_dropped': [0, 0],
-                        'foreign': [0, 0]}
+                        'foreign': [0, 0], 'disconnect_dropped': [0, 0],
+                        'reordered': [0, 0], 'stalled': [0, 0]}
+        self._last_due = [0.0, 0.0]
         self._pending: list[tuple[float, int, int, bytes]] = []
         self._serial = 0
         self._closed = False
@@ -60,6 +80,7 @@ class UdpRelay:
         if self._closed:
             raise RuntimeError('relay already closed')
         if self._thread is None:
+            self._t0 = time.monotonic()
             self._thread = threading.Thread(target=self._run, name='slippi-udp-relay', daemon=True)
             self._thread.start()
 
@@ -85,15 +106,31 @@ class UdpRelay:
                         self._counts['foreign'][side] += 1
                         continue
                     self._counts['received'][side] += 1
+                    now = time.monotonic()
+                    t = now - self._t0
+                    if self.disconnect_at_s and t >= self.disconnect_at_s and (
+                            self.disconnect_s == 0 or t < self.disconnect_at_s + self.disconnect_s):
+                        self._counts['disconnect_dropped'][side] += 1
+                        continue
                     if self._rng.random() * 100 < self.loss_percent:
                         self._counts['dropped'][side] += 1
                         continue
                     if len(self._pending) >= self.max_queue:
                         self._counts['queue_dropped'][side] += 1
                         continue
+                    due = now + delay
+                    if self.jitter_ms:
+                        due += self._rng.random() * self.jitter_ms / 1000.0
+                    if self.stall_every_s:
+                        phase = t % self.stall_every_s
+                        if t >= self.stall_every_s and phase < self.stall_ms / 1000.0:
+                            due = max(due, now + (self.stall_ms / 1000.0 - phase))
+                            self._counts['stalled'][side] += 1
+                    if due < self._last_due[side]:
+                        self._counts['reordered'][side] += 1
+                    self._last_due[side] = max(self._last_due[side], due)
                     self._serial += 1
-                    heapq.heappush(self._pending,
-                                   (time.monotonic() + delay, self._serial, side, payload))
+                    heapq.heappush(self._pending, (due, self._serial, side, payload))
             now = time.monotonic()
             while True:
                 with self._lock:

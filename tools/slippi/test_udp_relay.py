@@ -60,6 +60,43 @@ class UdpRelayTest(unittest.TestCase):
             self.clients[1].recvfrom(128)
         self.assertEqual(self.relay.stats['dropped'], (1, 0))
 
+    def test_jitter_reorders_and_everything_arrives(self):
+        self.start_relay(jitter_ms=60, seed=7)
+        for i in range(40):
+            self.clients[0].sendto(bytes([i]), ('127.0.0.1', self.relay.ports[0]))
+        got = [self.clients[1].recvfrom(16)[0][0] for _ in range(40)]
+        self.assertEqual(sorted(got), list(range(40)))
+        self.assertNotEqual(got, list(range(40)))
+        self.assertGreater(self.relay.stats['reordered'][0], 0)
+
+    def test_disconnect_window_then_recovery(self):
+        self.start_relay(disconnect_at_s=0.01, disconnect_s=0.2)
+        time.sleep(0.05)
+        self.clients[0].sendto(b'lost', ('127.0.0.1', self.relay.ports[0]))
+        self.clients[1].settimeout(0.1)
+        with self.assertRaises(socket.timeout):
+            self.clients[1].recvfrom(16)
+        time.sleep(0.2)
+        self.clients[1].settimeout(0.6)
+        self.clients[0].sendto(b'back', ('127.0.0.1', self.relay.ports[0]))
+        self.assertEqual(self.clients[1].recvfrom(16)[0], b'back')
+        self.assertEqual(self.relay.stats['disconnect_dropped'], (1, 0))
+
+    def test_stall_holds_then_delivers(self):
+        self.start_relay(stall_every_s=0.05, stall_ms=40)
+        time.sleep(0.051)  # inside the second window's stall
+        start = time.monotonic()
+        self.clients[0].sendto(b'late', ('127.0.0.1', self.relay.ports[0]))
+        self.assertEqual(self.clients[1].recvfrom(16)[0], b'late')
+        self.assertGreaterEqual(time.monotonic() - start, 0.02)
+        self.assertEqual(self.relay.stats['stalled'], (1, 0))
+
+    def test_invalid_impairments(self):
+        with self.assertRaises(ValueError):
+            UdpRelay(self.ports, jitter_ms=-1)
+        with self.assertRaises(ValueError):
+            UdpRelay(self.ports, stall_ms=10)
+
     def test_seeded_loss_sequence(self):
         seed = 17
         self.start_relay(latency_ms=0, loss_percent=50, seed=seed)

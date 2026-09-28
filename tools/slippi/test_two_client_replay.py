@@ -113,8 +113,9 @@ class RunnerOwnershipTest(unittest.TestCase):
     def test_safe_local_error_text(self):
         with mock.patch.object(runner.psutil, 'virtual_memory',
                                return_value=SimpleNamespace(available=0)):
+            # the floor is opt-in (--min-free-gib): GD dropped the default 8 GiB rule
             with self.assertRaisesRegex(runner.RunError, 'fewer than 8 GiB'):
-                runner.launch(None, 1, (45001, 45002), 'test', 'ab'*16, [])
+                runner.launch(SimpleNamespace(min_free_gib=8), 1, (45001, 45002), 'test', 'ab'*16, [])
 
 
 if __name__ == '__main__':

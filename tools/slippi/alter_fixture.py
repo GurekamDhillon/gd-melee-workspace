@@ -73,6 +73,8 @@ def make_altered_p1_fixture(source: Path, destination: Path, min_frame: int = 0)
         raise FixtureMutationError('SLP fixture is too large')
     data = source.read_bytes()
     start_seen = end_seen = False
+    # frame -> every offset of P1's event for it. A live online recording writes a frame again
+    # when Dolphin rolls back over it; the last write is the finalized one.
     pre, post = {}, {}
     for command, offset, size in _events(data):
         if command == 0x36:
@@ -91,31 +93,29 @@ def make_altered_p1_fixture(source: Path, destination: Path, min_frame: int = 0)
             port, follower = data[offset + 5], data[offset + 6]
             if port == 0 and follower == 0:
                 target = pre if command == 0x37 else post
-                if frame in target:
-                    raise FixtureMutationError('duplicate P1 SLP frame event')
-                target[frame] = offset
+                target.setdefault(frame, []).append(offset)
     if not start_seen or not end_seen:
         raise FixtureMutationError('incomplete SLP fixture')
     selected = None
     for frame in sorted(pre):
         if frame < min_frame or frame - 1 not in pre or frame not in post or frame - 1 not in post:
             continue
-        if any(struct.unpack_from('>H', data, post[f] + 8)[0] != 14 for f in (frame - 1, frame)):
+        if any(struct.unpack_from('>H', data, post[f][-1] + 8)[0] != 14 for f in (frame - 1, frame)):
             continue
-        if any((struct.unpack_from('>I', data, pre[f] + 0x2D)[0] & _A) or
-               (struct.unpack_from('>H', data, pre[f] + 0x31)[0] & _A)
-               for f in (frame - 1, frame)):
+        if any((struct.unpack_from('>I', data, o + 0x2D)[0] & _A) or
+               (struct.unpack_from('>H', data, o + 0x31)[0] & _A)
+               for f in (frame - 1, frame) for o in pre[f]):
             continue
         selected = frame
         break
     if selected is None:
         raise FixtureMutationError('no grounded idle P1 frame with A released')
-    offset = pre[selected]
     altered = bytearray(data)
-    processed = struct.unpack_from('>I', altered, offset + 0x2D)[0] | _A
-    physical = struct.unpack_from('>H', altered, offset + 0x31)[0] | _A
-    struct.pack_into('>I', altered, offset + 0x2D, processed)
-    struct.pack_into('>H', altered, offset + 0x31, physical)
+    for offset in pre[selected]:  # every rewrite of the frame, so no copy keeps the old input
+        processed = struct.unpack_from('>I', altered, offset + 0x2D)[0] | _A
+        physical = struct.unpack_from('>H', altered, offset + 0x31)[0] | _A
+        struct.pack_into('>I', altered, offset + 0x2D, processed)
+        struct.pack_into('>H', altered, offset + 0x31, physical)
     with destination.open('xb') as out:
         out.write(altered)
     return {'frame': selected, 'port': 0, 'button': _A}
