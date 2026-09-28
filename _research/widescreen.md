@@ -1,6 +1,7 @@
 # Widescreen support — recovered plan, mechanism, and seams (2026-09-28)
 
-**Status: plan recovered, not started.** The job that was supposed to do it (`worktrees/codex-widescreen`,
+**Status: plan recovered; steps 1-2 implemented 2026-09-28 (game `afbe4bc37`, published to pc-port);
+steps 3-6 remain.** The job that was supposed to do it (`worktrees/codex-widescreen`,
 branch `codex/widescreen`) never ran: its transcript (`_build/tmp/codex-codex-widescreen.jsonl`) is a
 single usage-limit failure ("try again at Oct 3rd"). No widescreen commit exists on any branch. This
 file recovers the specification and maps it onto our code so it can be executed directly.
@@ -34,6 +35,17 @@ Translated into requirements:
 3. **Kit safe area** — our own menus/kit UI (and scripts) need a defined wide layout/safe area;
    `gd.safe_area` is already probed by `gw_comm.lua` ("the widescreen lane's API, when it exists").
 4. **Live toggle** — changeable at runtime (settings page; testable via an env var).
+
+**Landed so far (game `afbe4bc37`):** the `widescreen` setting / `MELEE_WIDESCREEN`
+(`gw_Widescreen_Enabled`, `pc/platform/gw_settings.c`), the core camera widen in `CObjLoad`
+(`src/sysdolphin/baselib/cobj.c`), and the presenter aspect through Aurora's own viewport policy
+(`AURORA_VIEWPORT_STRETCH` synced per frame in `pc/platform/shim_vi.c`). Verified numerically:
+headless suite 203/203; `gd.project` of fixed world points matches a 16:9 frustum to sub-pixel
+(predicted 117.2/954.2 vs measured 117.5/953.5) and native 73:60 with the flag off (-98.5 vs
+-98.54); the render target fills the window (1345 px fit vs 1920 px). Not yet: the peripheral
+sites below, kit safe area, the settings-page row / aspect pickers, and the rollback question.
+Note: `AURORA_VIEWPORT_STRETCH` fills whatever window shape it gets — on a 16:9 window the widened
+frame is exactly right; on other shapes it stretches until the aspect pickers land.
 
 ## The specification: Slippi's "Optional: Widescreen 16:9" code
 
