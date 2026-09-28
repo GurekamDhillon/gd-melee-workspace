@@ -572,7 +572,8 @@ is the mental model modders already have (§2 P26).
 (4–7) point by writing the point JObj's translate (the same value `Ground_801C2D24` reads at spawn),
 owner-guarded and restored by `gd.stage_restore_bounds()`; `gd.stage_spawn(slot)` reads it back. The map
 editor exposes it as `map spawn <0-7> [x y]`. **Verified live:** moving slot 4 to `x=-100` made P1
-respawn at `x=-100` after a KO. Saving spawns into the layout file is the next half.
+respawn at `x=-100` after a KO. **Spawns are saved in layout v2** (`spawn={[slot]={x=…,y=…}, …}`) and
+re-applied on load — the move/save/move-away/load cycle was verified live.
 
 ### 6.4 The stage filenames (and the corrections)
 
@@ -621,7 +622,8 @@ a release note.
   / `gd.stage_set_blast_bounds`, and says so if the stage refuses. `map bounds` reports the live bounds,
   `bounds capture` stores them, `bounds restore` clears them, `bounds camera|blast l r t b` sets the
   live stage and the document; the overlay draws the camera rect green and the blast rect red (clamped
-  to the canvas).
+  to the canvas). **Spawns** ride the same version: `spawn={[slot]={x=…,y=…}, …}` for every moved
+  start/respawn, validated (slots 0–7) and re-applied through `gd.stage_set_spawn` on load.
 
 ### 6.7 Community pain points (what our editor must not repeat)
 
@@ -641,9 +643,8 @@ a release note.
 Stage id/binding · items/enemies · model binaries · authored collision geometry · tint/layer/
 visible/alpha · Z-depth collision · undo history and UI state · pad handles ·
 cross-mod sharing · rollback safety · streaming worlds · asset-bundle self-validation (units/scale).
-(Camera/blast bounds left this list with layout v2; **start/respawn points** are editable live since
-2026-09-28 but are **not yet written to the layout file** — that is the next half; item/enemy spawns
-still have no editor.)
+(Camera/blast bounds and **start/respawn points** left this list on 2026-09-28 — both are editable and
+persisted in layout v2; item/enemy spawns still have no editor.)
 
 ---
 
