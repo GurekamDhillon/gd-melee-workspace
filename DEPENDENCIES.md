@@ -63,9 +63,22 @@ carries SPDX and attribution headers and is the only GPL-derived source in the p
   `_research/mex-port-triage.md`. If m-ex later adopts a licence, the arrangement should be
   revisited — and upstream authors credited directly.
 
+- **Project Slippi — "Optional: Widescreen 16:9" Gecko code** — by
+  **[Dan Salvato, mirrorbender, Achilles1515, UnclePunch]** (credit line as shipped), distributed
+  in Slippi Ishiiruka's `GameSettings/GALE01r2.ini` (GPL-2.0). Consulted **as a specification**
+  for native widescreen support: its patch sites are address-mapped to decomp symbols in
+  [`_research/widescreen.md`](_research/widescreen.md), and any ported behavior carries the
+  authors' credit at the point of change; no code is copied. Presentation policy was also studied
+  in **melee-unlocked** (Hero88go, GPL-2.0) — a local, git-excluded reference checkout at
+  `_build/refs/melee-unlocked`, used with permission (`docs/PAUSED-2026-09-27.md`).
+
 ## Not dependencies
 
 `dusklight/`, `tp/`, `nod/` and `dawn/` in the workspace are reference checkouts of
 other projects. Nothing in the build uses them. The port's Aurora is vendored under
 `melee/extern/aurora`, and the bootstrap build (`_build/build_aurora_x86.bat`) was
 repointed at that copy rather than at `dusklight/extern/aurora`.
+
+`_build/refs/melee-unlocked` is a reference checkout of **melee-unlocked** (Hero88go, GPL-2.0),
+kept read-only and git-excluded; it is consulted for its renderer/widescreen presentation policy
+(see `_research/widescreen.md`) and nothing in the build uses it.
