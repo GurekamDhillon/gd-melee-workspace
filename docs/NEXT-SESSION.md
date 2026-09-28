@@ -71,8 +71,11 @@ the wrong selector and a fresh-copy mismatch; the alpha lane's `mods-gd-latest` 
 smash), longer holds for mid-cast frames, and a side-by-side against Ultimate for the fidelity pass.
 **Showcase captures so far (2026-09-28)** in `_build/agents/batcha/sora-showcase/`: `firaga.png` (the
 Firaga fireball mid-flight) and `sonic-blade.png` (side-B's star flash, `P_TrailSonicAttack`, 9
-emitters). Down-B produced no attachment at capture time (`gd.fx() == {}`) — a timing/trigger question
-(hold longer, or cast after a jump); Blizzaga and Thundaga are still to capture.
+emitters). **Directional specials need a sequenced input**, not a simultaneous one: sending
+`{buttons="B", y=-110}` (or `y=110`) in one spec, even held 120 frames, left `gd.fx() == {}` twice for
+down-B and up-B. Next: hold the stick for ~5 frames *first*, then press B, with the fighter confirmed
+back in `Wait` between casts (a 120-frame cast is a ~2 s animation, so back-to-back casts overlap and get
+ignored); then capture Blizzaga / Thundaga / Aerial Sweep and a Keyblade smash the same way.
 
 ## Current code
 
