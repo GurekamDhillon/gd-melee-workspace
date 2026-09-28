@@ -119,21 +119,7 @@ body{
 .btn.disabled .shadow{background:var(--steel-dk)}
 
 /* ---------------- frame pieces ----------------------------------- */
-.fr .ink{background:var(--ink)}
-.fr .cob{background:var(--cobalt)}
-.fr .gld{background:var(--gold)}
-.corner .ink{clip-path:polygon(0 0,100% 0,100% 28px,28px 28px,28px 100%,0 100%)}
-.corner .cob{inset:8px;clip-path:polygon(0 0,100% 0,100% 20px,20px 20px,20px 100%,0 100%)}
-.corner .gld{inset:8px;clip-path:polygon(0 0,16px 0,16px 96px,0 96px,0 0,96px 0,96px 16px,0 16px)}
-.corner .cap{position:absolute;left:8px;top:8px;width:36px;height:36px;background:var(--gold);
-             clip-path:polygon(0 0,100% 0,0 100%)}
-
-.edge-h .ink{position:absolute;left:0;right:0;top:0;height:28px;background:var(--ink)}
-.edge-h .cob{position:absolute;left:0;right:0;top:8px;height:12px;background:var(--cobalt)}
-.edge-h .gld{position:absolute;left:0;right:0;top:8px;height:4px;background:var(--gold)}
-.edge-v .ink{position:absolute;top:0;bottom:0;left:0;width:28px;background:var(--ink)}
-.edge-v .cob{position:absolute;top:0;bottom:0;left:8px;width:12px;background:var(--cobalt)}
-.edge-v .gld{position:absolute;top:0;bottom:0;left:8px;width:4px;background:var(--gold)}
+/* drawn as SVG from elements.FRAME_PROFILE; no CSS needed */
 
 /* ---------------- row (1024x64 @2x) ------------------------------ */
 .row .clip{

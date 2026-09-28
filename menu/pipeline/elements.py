@@ -118,25 +118,100 @@ def cursor():
 
 
 # ---------------------------------------------------------------- frame
+# The frame is one band profile, read from the outside in, and everything else is derived from it:
+# the edges are the profile extruded along their length, the corners are the profile turned
+# round a square or a 45-degree cut corner. So the pieces always meet exactly, an edge can be
+# stretched to any length without changing, and the engine's mirrored bottom/right edges still
+# match (the profile has no light direction, only outside -> inside).
+#
+# Stage-kit family: ink rim, steel trim in two hard-stop tones, an indigo body band and a cyan
+# inner line; corners carry the only accents (cyan chevron, magenta pip), since an edge must stay
+# constant along its length. Widths are 2x pixels; the band is 32 px (16 @1x), as before.
+FRAME_PROFILE = (          # (width, colour)
+    (3, "#0a0e18"),        # ink rim
+    (4, "#d3d6e8"),        # steel, lit
+    (4, "#7e86aa"),        # steel, shade
+    (2, "#0a0e18"),        # ink seam
+    (10, "#2b2266"),       # indigo body
+    (3, "#38c9d9"),        # cyan inner line
+    (3, "#0a0e18"),        # ink, the panel's edge
+)                          # 29 px of band, then 3 px of panel face (FRAME_FILL)
+FRAME_BAND = 32
+FRAME_CUT = 44             # the cut corner's 45-degree chamfer, measured on the outer edge
+FRAME_FILL = "#16123a"     # the panel face under the frame (tint with vertex colour)
+_SQ2 = 2 ** 0.5
+
+
+def _bands():
+    d = 0
+    for w, col in FRAME_PROFILE:
+        yield d, d + w, col
+        d += w
+
+
+def _contour(d, cut, size):
+    """Points of the outline at inset d, from the bottom of the left side round to the right end
+    of the top side (a top-left corner)."""
+    if not cut:
+        return [(d, size), (d, d), (size, d)]
+    k = cut + d * (_SQ2 - 1)        # the chamfer line x + y = cut + d*sqrt2, met at x = d
+    return [(d, size), (d, k), (k, d), (size, d)]
+
+
+def _poly(pts):
+    return " ".join("%.3f,%.3f" % p for p in pts)
+
+
+def _svg(w, h, body):
+    return ('<svg width="%d" height="%d" viewBox="0 0 %d %d" '
+            'style="position:absolute;left:0;top:0">%s</svg>' % (w, h, w, h, body))
+
+
+def corner_svg(cut=0, size=128):
+    # the panel face inside the band, so the fill piece never has to enter a corner cell
+    parts = ['<polygon points="%s" fill="%s"/>' % (_poly(_contour(FRAME_BAND - 3, cut, size) +
+                                                     [(size, size)]), FRAME_FILL)]
+    for d0, d1, col in _bands():
+        pts = _contour(d0, cut, size) + _contour(d1, cut, size)[::-1]
+        parts.append('<polygon points="%s" fill="%s"/>' % (_poly(pts), col))
+    # accents, inside the indigo band: a cyan chevron on the diagonal and a magenta pip
+    b0 = sum(w for w, _ in FRAME_PROFILE[:4])
+    c = (cut + b0 * (_SQ2 - 1) if cut else b0) + 10
+    parts.append('<polygon points="%s" fill="#38c9d9"/>' % _poly(
+        [(b0 + 2, c + 18), (b0 + 2, c + 10), (c + 10, b0 + 2), (c + 18, b0 + 2)]
+        if cut else [(b0 + 2, b0 + 22), (b0 + 2, b0 + 2), (b0 + 22, b0 + 2),
+                     (b0 + 22, b0 + 7), (b0 + 7, b0 + 7), (b0 + 7, b0 + 22)]))
+    parts.append('<rect x="%d" y="%d" width="6" height="6" fill="#ff2d8a"/>' % (b0 + 34, b0 + 2))
+    parts.append('<rect x="%d" y="%d" width="6" height="6" fill="#ff2d8a"/>' % (b0 + 2, b0 + 34))
+    return _svg(size, size, "".join(parts))
+
+
+def edge_svg(horizontal, length=128):
+    parts = []
+    for d0, d1, col in list(_bands()) + [(FRAME_BAND - 3, FRAME_BAND, FRAME_FILL)]:
+        if horizontal:
+            parts.append('<rect x="0" y="%d" width="%d" height="%d" fill="%s"/>' % (d0, length, d1 - d0, col))
+        else:
+            parts.append('<rect x="%d" y="0" width="%d" height="%d" fill="%s"/>' % (d0, d1 - d0, length, col))
+    w, h = (length, FRAME_BAND) if horizontal else (FRAME_BAND, length)
+    return _svg(w, h, "".join(parts))
+
+
 def _rot(rot, inner):
     return ('<div style="position:absolute;inset:0;transform:rotate(%ddeg);'
             'transform-origin:50%% 50%%">%s</div>' % (rot, inner))
 
 
-def corner(rot):
-    return [
-        _layer("ink",  _rot(rot, '<div class="ink fill"></div>')),
-        _layer("cob",  _rot(rot, '<div class="cob fill"></div>')),
-        _layer("gold", _rot(rot, '<div class="gld fill"></div><div class="cap"></div>')),
-    ]
+def corner(rot, cut=0):
+    return [_layer("frame", _rot(rot, corner_svg(cut)))]
 
 
-def edge():
-    return [
-        _layer("ink",  '<div class="ink"></div>'),
-        _layer("cob",  '<div class="cob"></div>'),
-        _layer("gold", '<div class="gld"></div>'),
-    ]
+def edge(horizontal=True):
+    return [_layer("frame", edge_svg(horizontal))]
+
+
+def fill():
+    return [_layer("fill", '<div style="position:absolute;inset:0;background:%s"></div>' % FRAME_FILL)]
 
 
 # --------------------------------------------------------------- catalog
@@ -208,6 +283,14 @@ def catalog():
 
     for rot, tag in ((0, "tl"), (90, "tr"), (180, "br"), (270, "bl")):
         items.append(dict(
+            name="frame_cut_corner_" + tag, w=CORNER, h=CORNER, cls="fr corner",
+            layers=corner(rot, cut=FRAME_CUT), fmt="RGB5A3",
+            why="As frame_corner_*: hard-edged, no text; the chamfer's diagonal edges "
+                "need RGB5A3's alpha levels.",
+            note="Cut-corner 9-slice variant: same band profile and edges as "
+                 "frame_corner_*, with a 45-degree chamfer of %d px @2x." % FRAME_CUT))
+    for rot, tag in ((0, "tl"), (90, "tr"), (180, "br"), (270, "bl")):
+        items.append(dict(
             name="frame_corner_" + tag, w=CORNER, h=CORNER, cls="fr corner",
             layers=corner(rot), fmt="RGB5A3",
             why="Large transparent region, hard-edged art, no text. Only 5 "
@@ -219,13 +302,19 @@ def catalog():
 
     items.append(dict(
         name="frame_edge_h", w=EDGE_LONG, h=EDGE_SHORT, cls="fr edge-h",
-        layers=edge(), fmt="RGB5A3",
+        layers=edge(True), fmt="RGB5A3",
         why="Constant along U, so it stays crisp stretched between corners.",
         note="9-slice piece. Tileable / stretchable on X."))
     items.append(dict(
         name="frame_edge_v", w=EDGE_SHORT, h=EDGE_LONG, cls="fr edge-v",
-        layers=edge(), fmt="RGB5A3",
+        layers=edge(False), fmt="RGB5A3",
         why="Constant along V, so it stays crisp stretched between corners.",
         note="9-slice piece. Tileable / stretchable on Y."))
+    items.append(dict(
+        name="frame_fill", w=32, h=32, cls="fr fill", layers=fill(), fmt="RGB5A3",
+        why="One flat colour; the engine stretches it and may tint it.",
+        note="9-slice centre (<prefix>_fill): the panel face for the centre cells only. Corners and "
+                 "edges carry their own face, and a cut corner is clear beyond its chamfer, "
+                 "so the fill must not be drawn under the corner cells."))
 
     return items

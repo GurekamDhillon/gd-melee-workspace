@@ -390,6 +390,98 @@
       ]
     },
     {
+      "name": "frame_cut_corner_tl",
+      "file_2x": "out/2x/frame_cut_corner_tl.png",
+      "file_1x": "out/1x/frame_cut_corner_tl.png",
+      "layered": "out/ora/frame_cut_corner_tl.ora",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGB5A3",
+      "format_rationale": "As frame_corner_*: hard-edged, no text; the chamfer's diagonal edges need RGB5A3's alpha levels.",
+      "layers": [
+        "frame"
+      ],
+      "notes": "Cut-corner 9-slice variant: same band profile and edges as frame_corner_*, with a 45-degree chamfer of 44 px @2x."
+    },
+    {
+      "name": "frame_cut_corner_tr",
+      "file_2x": "out/2x/frame_cut_corner_tr.png",
+      "file_1x": "out/1x/frame_cut_corner_tr.png",
+      "layered": "out/ora/frame_cut_corner_tr.ora",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGB5A3",
+      "format_rationale": "As frame_corner_*: hard-edged, no text; the chamfer's diagonal edges need RGB5A3's alpha levels.",
+      "layers": [
+        "frame"
+      ],
+      "notes": "Cut-corner 9-slice variant: same band profile and edges as frame_corner_*, with a 45-degree chamfer of 44 px @2x."
+    },
+    {
+      "name": "frame_cut_corner_br",
+      "file_2x": "out/2x/frame_cut_corner_br.png",
+      "file_1x": "out/1x/frame_cut_corner_br.png",
+      "layered": "out/ora/frame_cut_corner_br.ora",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGB5A3",
+      "format_rationale": "As frame_corner_*: hard-edged, no text; the chamfer's diagonal edges need RGB5A3's alpha levels.",
+      "layers": [
+        "frame"
+      ],
+      "notes": "Cut-corner 9-slice variant: same band profile and edges as frame_corner_*, with a 45-degree chamfer of 44 px @2x."
+    },
+    {
+      "name": "frame_cut_corner_bl",
+      "file_2x": "out/2x/frame_cut_corner_bl.png",
+      "file_1x": "out/1x/frame_cut_corner_bl.png",
+      "layered": "out/ora/frame_cut_corner_bl.ora",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGB5A3",
+      "format_rationale": "As frame_corner_*: hard-edged, no text; the chamfer's diagonal edges need RGB5A3's alpha levels.",
+      "layers": [
+        "frame"
+      ],
+      "notes": "Cut-corner 9-slice variant: same band profile and edges as frame_corner_*, with a 45-degree chamfer of 44 px @2x."
+    },
+    {
       "name": "frame_corner_tl",
       "file_2x": "out/2x/frame_corner_tl.png",
       "file_1x": "out/1x/frame_corner_tl.png",
@@ -408,9 +500,7 @@
       "recommended_format": "RGB5A3",
       "format_rationale": "Large transparent region, hard-edged art, no text. Only 5 colours, so CI8 would halve it - but that saves 16 KB for a whole TLUT slot, which is the worse trade. Stay RGB5A3.",
       "layers": [
-        "ink",
-        "cob",
-        "gold"
+        "frame"
       ],
       "notes": "9-slice piece. Emitted per orientation rather than relying on runtime UV flips - collapse to one texture with mirrored UVs if that turns out cheaper."
     },
@@ -433,9 +523,7 @@
       "recommended_format": "RGB5A3",
       "format_rationale": "Large transparent region, hard-edged art, no text. Only 5 colours, so CI8 would halve it - but that saves 16 KB for a whole TLUT slot, which is the worse trade. Stay RGB5A3.",
       "layers": [
-        "ink",
-        "cob",
-        "gold"
+        "frame"
       ],
       "notes": "9-slice piece. Emitted per orientation rather than relying on runtime UV flips - collapse to one texture with mirrored UVs if that turns out cheaper."
     },
@@ -458,9 +546,7 @@
       "recommended_format": "RGB5A3",
       "format_rationale": "Large transparent region, hard-edged art, no text. Only 5 colours, so CI8 would halve it - but that saves 16 KB for a whole TLUT slot, which is the worse trade. Stay RGB5A3.",
       "layers": [
-        "ink",
-        "cob",
-        "gold"
+        "frame"
       ],
       "notes": "9-slice piece. Emitted per orientation rather than relying on runtime UV flips - collapse to one texture with mirrored UVs if that turns out cheaper."
     },
@@ -483,9 +569,7 @@
       "recommended_format": "RGB5A3",
       "format_rationale": "Large transparent region, hard-edged art, no text. Only 5 colours, so CI8 would halve it - but that saves 16 KB for a whole TLUT slot, which is the worse trade. Stay RGB5A3.",
       "layers": [
-        "ink",
-        "cob",
-        "gold"
+        "frame"
       ],
       "notes": "9-slice piece. Emitted per orientation rather than relying on runtime UV flips - collapse to one texture with mirrored UVs if that turns out cheaper."
     },
@@ -508,9 +592,7 @@
       "recommended_format": "RGB5A3",
       "format_rationale": "Constant along U, so it stays crisp stretched between corners.",
       "layers": [
-        "ink",
-        "cob",
-        "gold"
+        "frame"
       ],
       "notes": "9-slice piece. Tileable / stretchable on X."
     },
@@ -533,11 +615,32 @@
       "recommended_format": "RGB5A3",
       "format_rationale": "Constant along V, so it stays crisp stretched between corners.",
       "layers": [
-        "ink",
-        "cob",
-        "gold"
+        "frame"
       ],
       "notes": "9-slice piece. Tileable / stretchable on Y."
+    },
+    {
+      "name": "frame_fill",
+      "file_2x": "out/2x/frame_fill.png",
+      "file_1x": "out/1x/frame_fill.png",
+      "layered": "out/ora/frame_fill.ora",
+      "size_2x": [
+        32,
+        32
+      ],
+      "size_1x": [
+        16,
+        16
+      ],
+      "power_of_two": true,
+      "multiple_of_four": true,
+      "within_1024": true,
+      "recommended_format": "RGB5A3",
+      "format_rationale": "One flat colour; the engine stretches it and may tint it.",
+      "layers": [
+        "fill"
+      ],
+      "notes": "9-slice centre (<prefix>_fill): the panel face for the centre cells only. Corners and edges carry their own face, and a cut corner is clear beyond its chamfer, so the fill must not be drawn under the corner cells."
     }
   ]
 }

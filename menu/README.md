@@ -31,6 +31,15 @@ sRGB-tagged. Rebuilds `out/` from scratch every run.
 | `frame_corner_tl/tr/bl/br` | 128×128 | 64×64 | RGB5A3 | 9-slice, no text |
 | `frame_edge_h` | 128×32 | 64×16 | RGB5A3 | tiles/stretches on X |
 | `frame_edge_v` | 32×128 | 16×64 | RGB5A3 | tiles/stretches on Y |
+| `frame_cut_corner_tl/tr/bl/br` | 128×128 | 64×64 | RGB5A3 | 9-slice, 45° cut-corner variant |
+| `frame_fill` | 32×32 | 16×16 | RGB5A3 | 9-slice centre; centre cells only |
+
+The frame pieces (2026-09-27) are generated from one band profile, `elements.FRAME_PROFILE`
+(ink, steel, indigo, cyan: the stage-kit family). Edges are constant along their length and have no
+light direction, so they stretch and mirror safely. Corners and edges carry their own panel face.
+A cut corner is clear beyond its chamfer, so `frame_fill` goes in the centre cells only.
+`python pipeline/frame_sheet.py [--before DIR]` renders a contact sheet at several panel sizes
+to `out/preview/frame_sheet.png`.
 
 ```
 out/2x/     authoring res — this is the deliverable set
