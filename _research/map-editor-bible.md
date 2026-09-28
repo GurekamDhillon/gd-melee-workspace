@@ -738,7 +738,9 @@ compatibility. **Player start/respawn editing landed too:** `gd.stage_set_spawn(
 (§2 P13) and orthographic views are open, as are the P3 items (multi-select/box-select, duplicate runs
 beyond ×N). The **bounds edges are draggable** since 2026-09-28: the camera rect's four edge handles
 move that edge to the cursor's world position (grid-snapped, clamped so the rect stays non-empty) with
-one undo step per drag; `walkoff` warnings would build on the same rect.
+one undo step per drag. A handle is drawn only for an edge that projects inside the view, so a
+full-stage bound (edges off-screen) shows none — shrink the rect with `map bounds camera …` first, then
+drag; `walkoff` warnings would build on the same rect.
 
 - Read, display, name, edit and persist: player respawns (ids 0–7) — the scripted-platform API already
   exists for spawn points; camera bounds and blast bounds via `gd.stage_set_camera_bounds` /
