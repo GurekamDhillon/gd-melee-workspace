@@ -25,8 +25,14 @@ moved respawn made P1 respawn there; an item-spawn move + undo restored `0,30`).
 **Open on the editor** (bible §8 backlog, each needs native/feature work): native `gd.kit.field`, ghost
 hover highlight, camera collision, orthographic views.
 **Awaiting a decision:** which showcase to build — (1) Sora Magic FX showcase (zero engine work: the
-`gw_fx.c` runtime, the `ultimate_vfx_geno.py` importer and the fx_bindings already exist),
-(2) a scripted room/boss on the Gamemode library, or (3) a Geno specials reel.
+`gw_fx.c` runtime, the `ultimate_vfx_geno.py` importer and the fx_bindings already exist), (2) a
+scripted room/boss on the Gamemode library, or (3) a Geno specials reel.
+**Option 1 is the shortest path and its content already exists on disk** (verified 2026-09-28):
+`_build/agents/alpha/sora/bak-v6/ultimate-trail-slot/` holds a built Sora slot — fighter config, ACMD
+conversion and **dozens of `fx/P_Trail*/**.gfx.json` effect packages** (AerialSweep\*, Air\*, and the
+magic/Keyblade sets). The remaining work is to install that slot under `MELEE_MODS_DIR`, verify the
+effects attach in a match (`gd.fx()` census + a capture), and tune; start from
+`docs/prompts/codex-sora-effects.md` and `_research/geno-effects-runtime.md`.
 
 ## Current code
 
