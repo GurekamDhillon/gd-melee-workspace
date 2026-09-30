@@ -12,10 +12,16 @@ offline-verified). Gate 3 certification and Gate 4 runtime wiring are **not**
 done and must not be claimed.
 
 Pure modules (`melee/worktrees/linux/pc/scripts/examples/roguelite/`):
-`rng.lua`, `codec.lua`, `checkpoint.lua`, `legacy.lua`, `room_catalogue.lua`,
-`room_recipes.lua`, `encounter_catalogue.lua`, `progression.lua`,
-`topology.lua`, `adapter.lua`, `inspector.lua`, frozen `dungeon_v1.lua`.
-`prepare.py` bundles them; `main.lua` gained versioned diagnostics.
+`rng.lua`, `codec.lua`, `checkpoint.lua`, `legacy.lua`, `progress.lua`,
+`room_catalogue.lua`, `room_recipes.lua`, `encounter_catalogue.lua`,
+`gene_catalogue.lua`, `enemy_catalogue.lua`, `audio_catalogue.lua`,
+`progression.lua`, `topology.lua`, `adapter.lua`, `inspector.lua`, frozen
+`dungeon_v1.lua`. `prepare.py` bundles them; `main.lua` gained versioned
+diagnostics and `core.lua` allocates a fresh world seed per run.
+
+Planning contracts (data, `implemented`/`certified` flags honest): the gene,
+enemy and audio catalogues define Gate 5/6/10 targets without claiming
+mechanics. `adapter.lua` refuses any manifest with an uncertified recipe.
 
 ## Interfaces (injected dependencies, no globals)
 

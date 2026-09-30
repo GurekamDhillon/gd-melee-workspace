@@ -51,12 +51,16 @@ Revisions: `gdm` `1f01ae4` (+ inspector/diagnostics commits) and `melee`
 runtime still uses the v1 route, so Gate 0's working build is preserved.
 
 - Pure modules in `melee/.../roguelite/`: `rng.lua`, `codec.lua`,
-  `checkpoint.lua`, `legacy.lua`, `room_catalogue.lua`,
-  `encounter_catalogue.lua`, `progression.lua`, `topology.lua`,
-  `inspector.lua`, frozen `dungeon_v1.lua`.
+  `checkpoint.lua`, `legacy.lua`, `progress.lua`, `room_catalogue.lua`,
+  `room_recipes.lua`, `encounter_catalogue.lua`, `gene_catalogue.lua`,
+  `enemy_catalogue.lua`, `audio_catalogue.lua`, `progression.lua`,
+  `topology.lua`, `adapter.lua`, `inspector.lua`, frozen `dungeon_v1.lua`.
 - Tests (run at discovery import): `test_rng.py`, `test_codec.py`,
   `test_checkpoint.py`, `test_catalogue.py`, `test_topology.py`,
-  `test_legacy.py`, `test_inspector.py`.
+  `test_legacy.py`, `test_inspector.py`, `test_progression.py`,
+  `test_room_recipes.py`, `test_adapter.py`, `test_economy.py`,
+  `test_world_seed.py`, `test_gene_catalogue.py`, `test_enemy_catalogue.py`,
+  `test_progress.py`, `test_audio_catalogue.py`.
 - `prepare.py` bundles the new modules; existing 35-test suite remains green.
 - `main.lua` diagnostics gained `diag_version`, `runtime_ready`,
   `ability_ready`; `live_acceptance.py` consumes them.
