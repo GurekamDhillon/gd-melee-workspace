@@ -10,13 +10,21 @@ $Out = [System.IO.Path]::GetFullPath($Out)
 $outDir = Split-Path $Out -Parent
 $args = @("-S", (Join-Path $PSScriptRoot "launcher/qt"), "-B", $build,
           "-G", "Visual Studio 17 2022", "-A", "x64", "-DBUILD_TESTING=ON", "-DLAUNCHER_DEPLOY_QT=ON")
-if ($QtRoot) { $args += "-DCMAKE_PREFIX_PATH=$QtRoot" }
+if ($QtRoot) {
+  $args += "-DCMAKE_PREFIX_PATH=$QtRoot"
+  # Tests and their child process must resolve this SDK's native Qt DLLs.
+  $env:PATH = (Join-Path $QtRoot "bin") + ";" + $env:PATH
+}
 & cmake @args
 if ($LASTEXITCODE -ne 0) { throw "Qt launcher configuration failed. Set QT_ROOT_DIR to an MSVC x64 Qt >= 6.5 installation." }
 & cmake --build $build --config Release --parallel 8
 if ($LASTEXITCODE -ne 0) { throw "Qt launcher compilation failed." }
-& ctest --test-dir $build -C Release --output-on-failure
-if ($LASTEXITCODE -ne 0) { throw "Qt launcher tests failed." }
+& ctest --test-dir $build -C Release --output-on-failure --output-junit launcher-test-results.xml
+if ($LASTEXITCODE -ne 0) {
+  Get-Content (Join-Path $build "Testing/Temporary/LastTest.log") -ErrorAction SilentlyContinue
+  Get-Content (Join-Path $build "launcher-test-results.xml") -ErrorAction SilentlyContinue
+  throw "Qt launcher tests failed."
+}
 New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 & cmake --install $build --config Release --prefix (Join-Path $outDir "launcher")
 if ($LASTEXITCODE -ne 0) { throw "Qt runtime deployment failed." }

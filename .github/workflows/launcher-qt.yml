@@ -51,8 +51,12 @@ jobs:
           & "./_build/launcher-package/launcher/bin/gd-melee-launcher.exe" --data-dir _build/test-profile --lang es --shots _build/shots/es
           if ($LASTEXITCODE -ne 0) { throw 'Spanish UI render failed' }
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: qt-launcher-${{ matrix.os }}
           path: |
             _build/launcher-package/
             _build/shots/
+            _build/launcher-qt/Testing/Temporary/
+            _build/launcher-qt-windows/Testing/Temporary/
+            _build/launcher-qt-windows/launcher-test-results.xml
