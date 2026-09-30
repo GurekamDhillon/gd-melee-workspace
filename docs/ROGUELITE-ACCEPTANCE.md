@@ -92,6 +92,8 @@ runtime/Windows/hardware. These remain `planned`/`blocked`, not claimed.
 | G2-3 | Save/load preserves resolved manifest | worker | G1-3, G2-1 | automated-pass | `checkpoint` + topology round-trip tests | runtime adapter pending |
 | G2-4 | Graph inspector shows distinct routes | worker | G2-1 | automated-pass | `inspector.lua`; `test_inspector.py` | text evidence, not in-engine |
 | G2-5 | Revisit-carry false completion fixed | worker | G2-2 | automated-pass | `progression.lua`; `test_progression.py` | confirmed against old arithmetic |
+| G2-6 | Finite pickups claimed once; no key farming | worker | G2-2 | automated-pass | `progression.lua` v2; `test_progression.py` | stable pickup ids, claimed state in signature, one-shot/opened-door policy |
+| G1-8 | Codec refuses colliding object keys | worker | G1-2 | automated-pass | `codec.lua`; `test_codec.py` | numeric object keys canonicalize to strings; collisions rejected before output |
 | G3-RECIPE | Recipe contract/resolver (all socket sides) | worker | G2-1 | automated-pass | `room_recipes.lua`; `test_room_recipes.py` | all recipes `certified=false`; native clips pending |
 | G4-ADAPTER | v2 manifest -> runtime node adapter, certification-gated | worker | G2-1, G3-RECIPE | automated-pass | `adapter.lua`; `test_adapter.py` | live runtime still v1; needs certified recipes + Gate 4 wiring |
 | G3-* | Certified physical room templates + mobility | worker | G2-1, G3-RECIPE | planned | `docs/ART-BRIEF-branch-rooms.md` | needs installed visual modules + in-engine clips |

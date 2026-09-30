@@ -24,8 +24,22 @@ local s=round('a"b\\c\nd\te'); assert(s=='a"b\\c\nd\te')
 local u=round(string.char(1)..string.char(127)); assert(u==string.char(1)..string.char(127))
 -- Deterministic: key order does not change the encoding.
 assert(C.encode({b=1,a=2})==C.encode({a=2,b=1}))
--- Object numeric keys 1..64 are accepted as strings; larger integer keys are objects only if string.
+-- Object numeric keys 1..64 canonicalize to strings.
 local mixed=round({['1']='a',['64']='b'}); assert(mixed['1']=='a' and mixed['64']=='b')
+-- Numeric-only contiguous tables are arrays and preserve numeric keys.
+local arr2=round({[1]='a',[2]='b'}); assert(arr2[1]=='a' and arr2[2]=='b')
+-- A non-contiguous integer object is an object; numeric keys become strings.
+local gap=round({[2]='a'}); assert(gap['2']=='a' and gap[2]==nil)
+-- A number key and its string twin collide and must be refused, never emitted
+-- as an undecodable duplicate.
+assert(not C.encode({[1]='numeric',['1']='string'}))
+-- Key-collision detection does not change ordinary objects or arrays.
+assert(C.encode({a=1,b=2})==C.encode({b=2,a=1}))
+assert(C.encode({10,20,30})=='[10,20,30]')
+-- Every accepted value round-trips under the declared contract.
+for _,v in ipairs({{}, {1,2,3}, {['1']='a'}, {[2]='a'}, {a={b={c=true}}}}) do
+ local encoded=assert(C.encode(v)); assert(C.encode(assert(C.decode(encoded)))==encoded)
+end
 -- Refusals: executable/metatable/nonfinite/oversized. Encode returns nil,err.
 assert(not C.encode(setmetatable({},{__index={}})))
 assert(not C.encode(print))
