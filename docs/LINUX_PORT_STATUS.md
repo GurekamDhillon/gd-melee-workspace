@@ -28,6 +28,10 @@ glibc 2.35. The local Arch build requires newer glibc and is not that portable b
   process argument/environment handling, including Unicode paths.
 - Qt recognizes the three real discs. Vanilla and ACE engine tests also passed 201/201
   when launched through Qt. The menu-kit UI uses committed original fonts, icons and tokens.
+- Native Wayland: the deployed Qt launcher rendered all four tabs with X11 disabled;
+  the game presented about 1,700 frames in a 30-second forced-Wayland run and shut down
+  cleanly at the timeout. SDL's dynamically loaded i686 Wayland/keyboard libraries are
+  explicitly included in packaging. This check does not certify input or sustained play.
 - Hosted Windows/Linux Qt CI and a Windows-to-WSL game-check entry point are authored.
   Remote CI results, runner registration and repository requirements are separate evidence.
 
@@ -54,6 +58,7 @@ Under `_build/agents/linux`:
 - `run-yQ2DbzEU`: ACE suite, 201/201.
 - `run-czKgijdg`: vanilla CPU match.
 - `run-gD46sKNg`: Akaneia Sonic CPU match.
+- `run-HUVH7mk0`: native Wayland graphical startup, X11 disabled; bounded timeout.
 - `netplay-swh166sq`: 3,925 shared confirmed frames, no hash mismatch.
 - `netplay-zq26diqe`: 4,138 shared confirmed frames, no hash mismatch with delay/loss.
 
@@ -61,6 +66,7 @@ Under `_build/launcher-qt`:
 - `game-profile/runs/59bc7a21-5a81-4fd4-871e-9c53c6d7e0c7`: Qt-launched vanilla, 201/201.
 - `ace-tests/runs/63089de3-b9d6-45c6-b285-dfec431f6e80`: Qt-launched ACE, 201/201.
 - `kit-shots/`: rendered launcher screens.
+- `wayland-shots/`: deployed launcher rendered on the native Wayland session.
 
 Tests describe their recorded executable, not every later source change. Each game build
 must regenerate its own bridge from its own link map. The generated bridge's addresses

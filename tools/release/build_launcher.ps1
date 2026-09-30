@@ -21,8 +21,6 @@ if ($LASTEXITCODE -ne 0) { throw "Qt launcher configuration failed. Set QT_ROOT_
 if ($LASTEXITCODE -ne 0) { throw "Qt launcher compilation failed." }
 & ctest --test-dir $build -C Release --output-on-failure --output-junit launcher-test-results.xml
 if ($LASTEXITCODE -ne 0) {
-  & (Join-Path $build "Release/launcher_tests.exe") -o "-,txt"
-  Write-Output "Direct test process exit code: $LASTEXITCODE"
   Get-Content (Join-Path $build "launcher-tests.txt") -ErrorAction SilentlyContinue
   Get-Content (Join-Path $build "Testing/Temporary/LastTest.log") -ErrorAction SilentlyContinue
   Get-Content (Join-Path $build "launcher-test-results.xml") -ErrorAction SilentlyContinue

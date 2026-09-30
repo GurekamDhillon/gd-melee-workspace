@@ -13,6 +13,10 @@ package; NVIDIA users need the matching 32-bit NVIDIA driver package.
 A glibc newer than the portable baseline may be needed for a LOCAL DEVELOPMENT
 archive: consult manifest.json. Such an archive is not a portable release.
 
+Native Wayland is supported by the Qt launcher and SDL game. The package includes
+separate 64-bit Qt and 32-bit SDL Wayland runtimes. To force Wayland during a check,
+use QT_QPA_PLATFORM=wayland for the launcher and SDL_VIDEO_DRIVER=wayland for the game.
+
 The Qt launcher keeps one save folder per disc and imports legacy launcher.cfg
 without modifying it. Its new settings are in launcher.json. Rename or Change ISO
 keeps the disc's save folder. --data-dir selects a separate profile.

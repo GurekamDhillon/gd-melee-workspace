@@ -9,7 +9,26 @@
 #include <QtEndian>
 #include <QtTest>
 #include <stdexcept>
+#ifdef Q_OS_WIN
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#endif
 using namespace launcher;
+
+static QString canonicalPath(const QString &path) {
+#ifdef Q_OS_WIN
+    // QFileInfo's canonical path preserves 8.3 spelling. Expand it before
+    // comparing a legacy-game path against its original Unicode spelling.
+    auto native = QDir::toNativeSeparators(QFileInfo(path).absoluteFilePath());
+    wchar_t expanded[32768];
+    auto n = GetLongPathNameW(reinterpret_cast<LPCWSTR>(native.utf16()), expanded, 32768);
+    if (!n || n >= 32768) return {};
+    return QFileInfo(QString::fromWCharArray(expanded, n)).canonicalFilePath().toCaseFolded();
+#else
+    return QFileInfo(path).canonicalFilePath();
+#endif
+}
 
 static QString fixture(const QString &dir, const QStringList &names = {}, const QByteArray &title = "Super Smash Bros Melee") {
     QByteArray data(0x440, '\0'); data.replace(0, 6, "GALE01"); data[7] = 2;
@@ -102,9 +121,11 @@ private slots:
         process.start(); QVERIFY2(process.waitForStarted(), qPrintable(process.errorString())); QVERIFY(process.waitForFinished(10000)); QCOMPARE(process.exitStatus(), QProcess::NormalExit); QCOMPARE(process.exitCode(), 0);
         auto report = QJsonDocument::fromJson(readText(d.path() + "/child.json").toUtf8()).object();
         auto received = report["args"].toArray(); QCOMPARE(received.size(), 3); QCOMPARE(received[1].toString(), "--iso");
-        QCOMPARE(QFileInfo(received[2].toString()).canonicalFilePath(), QFileInfo(iso).canonicalFilePath());
-        QCOMPARE(QFileInfo(report["card"].toString()).canonicalFilePath(), QFileInfo(user + "/saves/my-disc").canonicalFilePath());
-        QCOMPARE(QFileInfo(report["cwd"].toString()).canonicalFilePath(), QFileInfo(spec.workingDirectory).canonicalFilePath());
+        QVERIFY(!canonicalPath(iso).isEmpty());
+        QCOMPARE(canonicalPath(received[2].toString()), canonicalPath(iso));
+        QVERIFY(!canonicalPath(user + "/saves/my-disc").isEmpty());
+        QCOMPARE(canonicalPath(report["card"].toString()), canonicalPath(user + "/saves/my-disc"));
+        QCOMPARE(canonicalPath(report["cwd"].toString()), canonicalPath(spec.workingDirectory));
         auto second = prepareLaunch(app, user, settings, disc); QVERIFY(second.workingDirectory != spec.workingDirectory);
         QCOMPARE(second.environment.value("MELEE_CARD_PATH"), spec.environment.value("MELEE_CARD_PATH"));
         qunsetenv("MELEE_NETPLAY"); qunsetenv("MELEE_SCENE"); qunsetenv("MELEE_INPUT");

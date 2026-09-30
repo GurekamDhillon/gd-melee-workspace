@@ -73,6 +73,6 @@ fi
 # The port links aurora_core/gx/main/vi plus os/pad/si/card, which the "simple" example alone
 # does not build - and a stale lib here does not announce itself. Same target set as
 # build_aurora_melee.bat.
-cmake --build "$BUILD" -j "$JOBS" --target simple aurora_os aurora_pad aurora_si aurora_card
+cmake --build "$BUILD" -j "$JOBS" --target simple aurora_os aurora_pad aurora_si aurora_card aurora_mtx aurora_gd aurora_ms
 
 echo AURORA_LINUX_BUILD_OK "$BUILD"

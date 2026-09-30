@@ -16,6 +16,7 @@ ap.add_argument('--build',type=Path,default=root/'_build/agents/linux')
 ap.add_argument('--output',type=Path,default=root/'_build/linux/packages')
 ap.add_argument('--local',action='store_true')
 ap.add_argument('--launcher',type=Path,help='Deployed Qt prefix containing bin/gd-melee-launcher and its runtime')
+ap.add_argument('--runtime-lib-dir',type=Path,action='append',default=[],help='Additional directory for 32-bit SDL Wayland runtime libraries')
 a=ap.parse_args(); build=a.build.resolve(); a.output.mkdir(parents=True,exist_ok=True)
 exe=build/'melee'
 subprocess.run(['python3',str(root/'tools/mex_port/audit_bridge_abi.py'),'--map',str(build/'melee-pc.msvc.map'),'--exe',str(exe),'--bridge',str(build/'bridge/gw_mex_bridge.c')],check=True)
@@ -45,14 +46,30 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
     shutil.copy2(root/'_build/linux/libusb-src/COPYING',dest/'licenses/libusb-LGPL-2.1.txt')
     shutil.copy2(root/'docs/LINUX_PORT_STATUS.md',dest/'IMPLEMENTATION_STATUS.md')
     # ldd lists the transitive dependencies of this trusted, locally built executable.
-    libs=subprocess.check_output(['ldd',str(exe)],text=True)
-    if 'not found' in libs:raise SystemExit('Missing dependencies:\n'+libs)
     excluded=re.compile(r'^(lib(c|m|dl|rt|pthread|resolv|util)\.so|ld-linux)')
-    for line in libs.splitlines():
-        match=re.search(r'(\S+) => (/\S+)',line)
-        if match:
-            soname=Path(match[1]).name
-            if not excluded.match(soname):shutil.copy2(match[2],dest/'lib'/soname)
+    def copy_dependencies(binary):
+        libs=subprocess.check_output(['ldd',str(binary)],text=True)
+        if 'not found' in libs:raise SystemExit('Missing dependencies:\n'+libs)
+        for line in libs.splitlines():
+            match=re.search(r'(\S+) => (/\S+)',line)
+            if match:
+                soname=Path(match[1]).name
+                if not excluded.match(soname):shutil.copy2(match[2],dest/'lib'/soname)
+    copy_dependencies(exe)
+    # SDL loads these with dlopen, so the executable's ldd output cannot find
+    # them. Keep the i686 Wayland stack separate from the launcher's x64 Qt libs.
+    runtime_dirs=a.runtime_lib_dir+[build/'lib',Path('/usr/lib32'),Path('/usr/lib/i386-linux-gnu'),Path('/lib/i386-linux-gnu')]
+    for soname in ('libwayland-client.so.0','libwayland-cursor.so.0','libwayland-egl.so.1','libxkbcommon.so.0'):
+        candidates=[directory/soname for directory in runtime_dirs if (directory/soname).is_file()]
+        library=None
+        for candidate in candidates:
+            with candidate.open('rb') as f:magic=f.read(5)
+            if magic==b'\x7fELF\x01':
+                library=candidate
+                break
+        if library is None:raise SystemExit(f'Missing 32-bit Wayland runtime {soname}; provision it or use --runtime-lib-dir')
+        shutil.copy2(library,dest/'lib'/soname)
+        copy_dependencies(library)
     # Enforce the baseline for every ELF, including the 64-bit Qt launcher and
     # both sets of bundled libraries. Checking the game alone misses newer Qt/glibc.
     elf_requirements={}
