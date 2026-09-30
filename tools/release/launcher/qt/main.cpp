@@ -63,7 +63,18 @@ int main(int argc, char **argv) {
             }
             if (index < 0) throw std::runtime_error("No matching disc. Add one with --add-iso first.");
             auto spec = launcher::prepareLaunch(root, user, settings, settings.discs[index]);
-            if (parser.isSet("test-game")) spec.arguments.prepend("--test");
+            if (parser.isSet("test-game")) {
+#ifndef Q_OS_WIN
+                // Engine tests write fixtures next to their executable. Run a
+                // session copy so packaged installations can remain read-only.
+                auto testProgram = spec.workingDirectory + "/" + QFileInfo(spec.program).fileName();
+                auto map = QFileInfo(spec.program).dir().filePath("melee-pc.msvc.map");
+                if (!QFile::copy(spec.program, testProgram) || !QFile::copy(map, spec.workingDirectory + "/melee-pc.msvc.map"))
+                    throw std::runtime_error("Cannot prepare isolated engine test executable");
+                spec.program = testProgram;
+#endif
+                spec.arguments.prepend("--test");
+            }
             settings.options["last_run"] = spec.workingDirectory; settings.save(user);
             QProcess process; process.setProgram(spec.program); process.setArguments(spec.arguments); process.setWorkingDirectory(spec.workingDirectory); process.setProcessEnvironment(spec.environment);
             process.setProcessChannelMode(QProcess::MergedChannels); process.setStandardOutputFile(spec.logFile);
