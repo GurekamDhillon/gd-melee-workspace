@@ -141,3 +141,26 @@ Sol reproduced a stale cooldown refund overwriting a newer successful same-slot
 activation (ready_at180 becomes0). Corrective pass 7 is running in the existing
 isolated lane, session ses_f0bb67b3affe04vwHUrcZ4TZdx, process handle46108. No
 Core/gene output has been copied or claimed live. New-model reservation intact.
+
+
+## Native gene adapter lane and state-based spend correction
+
+A fresh isolated wrapper/game lane `_build/deepseek-worktrees/gene-world` is
+running standard-effort DeepSeek, session `ses_f0b58e3b7ffexScbp8DhKPIrXZ`, process
+handle45118. Ownership is new `runtime_gene_world.lua`, `test_gene_world.py` and
+`GENE-WORLD-CONTRACT.md` only. It audits confirmed native APIs and supplies real
+fighter/custom-enemy action callbacks with explicit unsupported-capability
+refusal. It does not touch campaign, menus, Core, native sources or final art.
+Seed dependencies are historical interface guidance; final reviewed action-engine
+integration remains root's work. Task: coordination `gene-world-task.md`.
+
+Gene pass7 fixed same-slot cooldown ABA but failed two supported cases: room
+cleanup discarded an ordinary pending refund; moving the original gene's runtime
+state to another slot let its old refund overwrite a new spend. Pass8 is active
+in the original isolated gene-actions lane (same session, process handle54539).
+It keys spend ownership by the actual runtime state object, preserves ordinary
+pending spend tokens across room reset and uses weak state keys for residency.
+No unreviewed Core/actions output copied. New-model campaign lane still reserved.
+
+Floor construction/lifecycle rules are committed in `docs/STAGE-FLOOR-SEAMS.md`
+(wrapper f3f423d). The live branch fixture remains paused and unchanged.
