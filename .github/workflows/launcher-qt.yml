@@ -46,10 +46,19 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
-          & "./_build/launcher-package/launcher/bin/gd-melee-launcher.exe" --data-dir _build/test-profile --shots _build/shots/en
-          if ($LASTEXITCODE -ne 0) { throw 'English UI render failed' }
-          & "./_build/launcher-package/launcher/bin/gd-melee-launcher.exe" --data-dir _build/test-profile --lang es --shots _build/shots/es
-          if ($LASTEXITCODE -ne 0) { throw 'Spanish UI render failed' }
+          $launcher = (Resolve-Path "./_build/launcher-package/launcher/bin/gd-melee-launcher.exe").Path
+          Remove-Item Env:QT_PLUGIN_PATH,Env:QT_QPA_PLATFORM_PLUGIN_PATH,Env:QML2_IMPORT_PATH -ErrorAction SilentlyContinue
+          $sdkBin = (Join-Path $env:QT_ROOT_DIR 'bin').TrimEnd('\')
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_.TrimEnd('\') -ne $sdkBin }) -join ';'
+          New-Item -ItemType Directory -Force _build/shots | Out-Null
+          foreach ($language in @('en', 'es')) {
+            $process = Start-Process -FilePath $launcher -ArgumentList @('--data-dir', '_build/test-profile', '--lang', $language, '--shots', "_build/shots/$language") -Wait -PassThru -RedirectStandardOutput "_build/shots/$language.stdout.txt" -RedirectStandardError "_build/shots/$language.stderr.txt"
+            if ($process.ExitCode -ne 0) {
+              Get-Content "_build/shots/$language.stderr.txt"
+              throw "$language UI render failed with exit $($process.ExitCode)"
+            }
+            if ((Get-ChildItem "_build/shots/$language/launcher-*.png").Count -ne 4) { throw "$language screenshots are incomplete" }
+          }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
