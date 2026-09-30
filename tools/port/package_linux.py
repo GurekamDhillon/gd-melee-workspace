@@ -18,9 +18,10 @@ ap.add_argument('--local',action='store_true')
 ap.add_argument('--launcher',type=Path,help='Deployed Qt prefix containing bin/gd-melee-launcher and its runtime')
 ap.add_argument('--runtime-lib-dir',type=Path,action='append',default=[],help='Additional directory for 32-bit SDL Wayland runtime libraries')
 a=ap.parse_args(); build=a.build.resolve(); a.output.mkdir(parents=True,exist_ok=True)
+readelf=os.environ.get('GW_READELF') or shutil.which('llvm-readelf-22') or 'readelf'
 exe=build/'melee'
 subprocess.run(['python3',str(root/'tools/mex_port/audit_bridge_abi.py'),'--map',str(build/'melee-pc.msvc.map'),'--exe',str(exe),'--bridge',str(build/'bridge/gw_mex_bridge.c')],check=True)
-versions=subprocess.check_output(['readelf','--version-info',str(exe)],text=True)
+versions=subprocess.check_output([readelf,'--version-info',str(exe)],text=True)
 required=max((tuple(map(int,v.split('.'))) for v in re.findall(r'GLIBC_([0-9.]+)',versions)),default=(0,))
 if required>(2,35) and not a.local: raise SystemExit(f'GLIBC {required} exceeds portable baseline 2.35; rebuild on Ubuntu 22.04')
 name='melee-linux-i686'+('-local' if a.local else '')
@@ -77,7 +78,7 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
         if not p.is_file() or p.is_symlink():continue
         with p.open('rb') as f:magic=f.read(4)
         if magic!=b'\x7fELF':continue
-        versions=subprocess.check_output(['readelf','--version-info',str(p)],text=True)
+        versions=subprocess.check_output([readelf,'--version-info',str(p)],text=True)
         version=max((tuple(map(int,v.split('.'))) for v in re.findall(r'GLIBC_([0-9.]+)',versions)),default=(0,))
         elf_requirements[str(p.relative_to(dest))]='.'.join(map(str,version))
         required=max(required,version)
@@ -88,7 +89,7 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
     manifest={'architecture':'i686','glibc_required':'.'.join(map(str,required)),'portable_baseline_verified':False,
               'local_development_build':a.local,'source_executable_sha256':sha(exe),
               'elf_glibc_requirements':elf_requirements,
-              'elf_build_id':re.search(r'Build ID: (\w+)',subprocess.check_output(['readelf','-n',str(exe)],text=True))[1],
+              'elf_build_id':re.search(r'Build ID: (\w+)',subprocess.check_output([readelf,'-n',str(exe)],text=True))[1],
               'files':{str(p.relative_to(dest)):sha(p) for p in dest.rglob('*') if p.is_file()}}
     (dest/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     shutil.copy2(dest/'manifest.json',debug/'manifest.json')
