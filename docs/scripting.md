@@ -481,6 +481,7 @@ history; a retained future is not guaranteed after a write.
 | `gd.log(...)` / `print(...)` | to the console and `melee-pc.log`, prefixed with the script id |
 | `gd.command(name, fn [, help])` | add a console command; `fn(arg_string)` |
 | `gd.data_read(name)`, `gd.data_write(name, text)` | the script's data folder |
+| `gd.data_write_atomic(name, text)` | like `data_write`, but writes a temporary sibling file, checks the write/flush/close results, and only then replaces the target, returning `true`, or `false, why` on failure with the previous file intact. Atomic against a torn write (a reader sees the old or the new file, never a partial one); not a power-loss durability guarantee |
 | `gd.screenshot([name])` | a PNG of the final frame into the data folder; returns `ok, path` (capture is queued for the next presented frame; it is not a synchronous file-write result) |
 
 ---
