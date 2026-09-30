@@ -44,19 +44,47 @@ Known traps inherited from the plan §2 (still open): fixed eight-node route;
 Core codec numeric-key limit 16; transient native handles persist nowhere;
 Adventure vanish unlocks traversal; `rogue_state` emits `ready` twice.
 
+## Delivered this pass (patches 1–4 of plan §18)
+
+Revisions: `gdm` `1f01ae4` (+ inspector/diagnostics commits) and `melee`
+`7a91c0a` (+ inspector/diagnostics commits). All changes are additive; the live
+runtime still uses the v1 route, so Gate 0's working build is preserved.
+
+- Pure modules in `melee/.../roguelite/`: `rng.lua`, `codec.lua`,
+  `checkpoint.lua`, `legacy.lua`, `room_catalogue.lua`,
+  `encounter_catalogue.lua`, `progression.lua`, `topology.lua`,
+  `inspector.lua`, frozen `dungeon_v1.lua`.
+- Tests (run at discovery import): `test_rng.py`, `test_codec.py`,
+  `test_checkpoint.py`, `test_catalogue.py`, `test_topology.py`,
+  `test_legacy.py`, `test_inspector.py`.
+- `prepare.py` bundles the new modules; existing 35-test suite remains green.
+- `main.lua` diagnostics gained `diag_version`, `runtime_ready`,
+  `ability_ready`; `live_acceptance.py` consumes them.
+
+Verified evidence (this revision): topology 1000 seeds valid + reproducible,
+775 distinct structural signatures, 0 fallback, locks always keyed on a
+mandatory room; TBD1/TBD2 dev fixtures migrate to TBD3 with a byte-identical
+reconstruction of the frozen v1 route; codec/checkpoint reject corruption.
+
+Boundary reached: Gate 3 (certified physical templates/mobility) needs authored
+3-socket geometry and in-engine traversal clips; Gate 4+ need the native
+runtime/Windows/hardware. These remain `planned`/`blocked`, not claimed.
+
 ## Requirement rows
 
 | ID | Requirement | Owner | Depends on | State | Evidence / command | Limitation |
 | --- | --- | --- | --- | --- | --- | --- |
 | G0-1 | Baseline reproducible; tests isolated | coord | — | automated-pass | baseline suite above; fixtures copied | no live clip captured yet |
 | G0-2 | Frozen v1 generator + save fixtures | coord | — | automated-pass | `dungeon_v1.lua`, `_build/roguelite-validation-saves/legacy-v1/` | — |
-| G1-1 | Named deterministic RNG streams | worker | — | implemented | `rng.lua`; `test_rng.py` | not yet consumed by runtime |
-| G1-2 | Bounded data codec beyond numeric-key 16 | worker | — | implemented | `codec.lua`; `test_codec.py` | independent of Core's frozen codec |
-| G1-3 | Versioned checkpoint envelope (TBD3) | worker | G1-2, G1-4 | implemented | `checkpoint.lua`; `test_checkpoint.py` | A/B + atomic rename wiring is Gate 4 |
-| G1-4 | Room/encounter/reward catalogue contracts | worker | — | implemented | `room_catalogue.lua`, `encounter_catalogue.lua`; `test_catalogue.py` | initial finite catalogue is a subset of the §3 target |
-| G2-1 | Variable connected topology, branches, returns, loops | worker | G1-1, G1-4 | implemented | `topology.lua`; `test_topology.py` (1000 seeds + adversarial) | not yet spawned in-engine |
-| G2-2 | Progression validator (locks/keys/reachability) | worker | G2-1 | implemented | `progression.lua`; `test_progression.py` | persistent keys first; consumable search bounded |
-| G2-3 | Save/load preserves resolved manifest | worker | G1-3, G2-1 | implemented | `checkpoint` round-trip test | runtime adapter pending |
+| G1-1 | Named deterministic RNG streams | worker | — | automated-pass | `rng.lua`; `test_rng.py` | not yet consumed by runtime |
+| G1-2 | Bounded data codec beyond numeric-key 16 | worker | — | automated-pass | `codec.lua`; `test_codec.py` | independent of Core's frozen codec |
+| G1-3 | Versioned checkpoint envelope (TBD3) | worker | G1-2, G1-4 | automated-pass | `checkpoint.lua`; `test_checkpoint.py` | A/B + atomic rename wiring is Gate 4 |
+| G1-4 | Room/encounter/reward catalogue contracts | worker | — | automated-pass | `room_catalogue.lua`, `encounter_catalogue.lua`; `test_catalogue.py` | initial finite catalogue is a subset of the §3 target |
+| G1-5 | TBD1/TBD2 migration via frozen v1 generator | worker | G1-2, G1-3 | automated-pass | `legacy.lua`; `test_legacy.py` (incl. dev fixtures) | runtime still uses its own loader |
+| G2-1 | Variable connected topology, branches, returns, loops | worker | G1-1, G1-4 | automated-pass | `topology.lua`; `test_topology.py` (1000 seeds + adversarial) | not yet spawned in-engine |
+| G2-2 | Progression validator (locks/keys/reachability) | worker | G2-1 | automated-pass | `progression.lua`; `test_topology.py` | persistent keys first; consumable search bounded |
+| G2-3 | Save/load preserves resolved manifest | worker | G1-3, G2-1 | automated-pass | `checkpoint` + topology round-trip tests | runtime adapter pending |
+| G2-4 | Graph inspector shows distinct routes | worker | G2-1 | automated-pass | `inspector.lua`; `test_inspector.py` | text evidence, not in-engine |
 | G3-* | Certified physical room templates + mobility | worker | G2-1 | planned | — | needs authored geometry / in-engine clips |
 | G4-* | Runtime world lifecycle + exploration | worker | G2-*, G3-* | planned | — | `main.lua`/`rooms.lua` adapter |
 | G5-* | Action provenance + gene families | worker | — | planned | — | — |
