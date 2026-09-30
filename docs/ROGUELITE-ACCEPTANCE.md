@@ -95,6 +95,7 @@ runtime/Windows/hardware. These remain `planned`/`blocked`, not claimed.
 | G5-* | Action provenance + gene families | worker | — | planned | — | — |
 | G5-GENE | Gene-family contract (6 families, 12 genes, authored reactions) | worker | G1-4 | automated-pass | `gene_catalogue.lua`; `test_gene_catalogue.py` | only cinder/rime implemented; mechanics are Gate 5 |
 | G6-* | Enemies, bosses, fighter AI | worker | G5-* | planned | — | — |
+| G6-ENEMY | Enemy behavior contract cross-checked with encounters | worker | G1-4, G5-GENE | automated-pass | `enemy_catalogue.lua`; `test_enemy_catalogue.py` | data only; AI/native wrappers are Gate 6 |
 | G7-* | Inventory / collection / economy | worker | G1-* | planned | — | — |
 | G7-ECON | Long-run economy simulation stays bounded | worker | G1-* | automated-pass | `test_economy.py` | pure model simulation, not an in-game playtest |
 | G8-* | Commands, menus, onboarding | worker | G1-* | planned | — | — |
