@@ -60,7 +60,12 @@ runtime still uses the v1 route, so Gate 0's working build is preserved.
   `test_legacy.py`, `test_inspector.py`, `test_progression.py`,
   `test_room_recipes.py`, `test_adapter.py`, `test_economy.py`,
   `test_world_seed.py`, `test_gene_catalogue.py`, `test_enemy_catalogue.py`,
-  `test_progress.py`, `test_audio_catalogue.py`.
+  `test_progress.py`, `test_audio_catalogue.py`, `test_route.py`.
+- Next pass (coordinator review): finite-pickup and codec key-collision fixes;
+  full BF kit installation and reconciled upper-door/opening recipes; `route.lua`
+  semantic save validation; TBD3 progress section. Native harness verified
+  (211 tests, 3 pre-existing unrelated failures). Live v2 wiring and Gate 3
+  in-engine certification remain, per `HANDOFF-ROGUELITE-2026-09-30.md`.
 - `prepare.py` bundles the new modules; existing 35-test suite remains green.
 - `main.lua` diagnostics gained `diag_version`, `runtime_ready`,
   `ability_ready`; `live_acceptance.py` consumes them.
