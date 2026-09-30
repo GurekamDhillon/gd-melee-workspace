@@ -10,6 +10,9 @@ This is an i686 executable for an x86-64 Linux host. Install the distribution's
 32-bit glibc runtime and 32-bit Vulkan driver matching your GPU. Vulkan 1.1 or
 newer is required. Mesa users need their distribution's 32-bit Mesa Vulkan
 package; NVIDIA users need the matching 32-bit NVIDIA driver package.
+The 64-bit Qt launcher also requires the distribution's OpenGL/EGL loader
+libraries (libglx0, libgl1, libopengl0 and libegl1 on Ubuntu). These normally come with the
+desktop graphics drivers and are deliberately not bundled with the package.
 A glibc newer than the portable baseline may be needed for a LOCAL DEVELOPMENT
 archive: consult manifest.json. Such an archive is not a portable release.
 

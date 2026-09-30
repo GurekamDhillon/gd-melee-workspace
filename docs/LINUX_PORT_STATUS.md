@@ -39,11 +39,15 @@ glibc 2.35. The local Arch build requires newer glibc and is not that portable b
 - The Ubuntu 22.04 game build completed (executable requires GLIBC 2.34); vanilla,
   Akaneia and ACE each passed 201/201 within Ubuntu's actual userspace. Focused ABI,
   synchronization, mapping and adapter-report fixtures also passed in that environment.
+- A complete baseline package passed its runtime checksums and all three 201/201 suites
+  through Qt in a relocated, read-only installation under Ubuntu 22.04. Its deployed
+  launcher also rendered all four tabs on the native Wayland session. All 170 packaged
+  ELF runtimes require GLIBC <=2.35. Local runtime/debug archives are not published releases.
 
 ## Remaining acceptance work
 
-- Validate the complete baseline package on the target distribution matrix. The baseline
-  game and hosted launcher checks are not full portable certification.
+- Broaden complete-package testing beyond the Ubuntu 22.04 userspace. The baseline checks
+  are not full portable certification or sustained GPU/gameplay acceptance.
 - Interactive Qt launcher testing on Windows with existing user data and the actual game.
 - Longer gameplay, ACE modded fighter/stage play, menu/results/rematch paths, game save/reload
   and relaunch, representative loose custom content, audio quality and SDL controllers.
@@ -81,5 +85,6 @@ are build-specific and are not a portable source change.
 
 Game checkout: `melee/worktrees/linux` (`agent/linux`). Tools and launcher: this repository.
 Native game build: `_build/agents/linux`; Ubuntu build: `_build/linux/ubuntu22`.
+Baseline local archives and validation record: `_build/linux/packages-baseline`.
 Qt: `tools/release/launcher/qt`; instructions: `tools/release/README.md`.
 Continuous checks: `docs/LINUX_CONTINUOUS_CHECKS.md`.
