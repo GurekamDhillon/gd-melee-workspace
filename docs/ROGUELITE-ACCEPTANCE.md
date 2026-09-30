@@ -197,3 +197,18 @@ runtime/Windows/hardware. These remain `planned`/`blocked`, not claimed.
 cd /home/gd/melee_linux_test/gdm
 python3 -m unittest discover -s tools/roguelite -p 'test_*.py' -v
 ```
+
+
+### Native seam fix and enemy helper review
+
+Explicit room-local floor seam calls are committed, with ambiguity/refusal and
+rollback tests. The native patch is applied in root working files; Linux build,
+bridge/ABI and actual-source ASan/UBSan tests passed. Full native suite: 214/214.
+Full roguelite suite after room callers and enemy helper landing: 202 tests OK.
+Evidence: `_build/deepseek-coordination/stage-seam-landed-evidence.json`.
+
+The isolated watched-review profile is prepared with this build. User-reported
+snagging at all ascent joins remains **pending a watched retest**; automated tests
+are not human movement acceptance. All recipes remain uncertified. Enemy helpers
+have 32 tests and exact observable-state/run ownership checks; they still need
+native runtime wiring and normal-speed combat/tell/AI acceptance.

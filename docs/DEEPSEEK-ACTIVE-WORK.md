@@ -102,3 +102,27 @@ Root must not overwrite the reserved lane or copy live output until it freezes.
   passed; final review and seed-relative patch are pending. Root owns Lua callers.
 - Watched merge accessibility is recorded; the user-reported ascent snag remains
   an open defect. No native recipe certification has been granted.
+
+
+## Reviewed seam and enemy landing
+
+Native stage-link patch applied to root working files; Linux build and bridge/ABI
+checks passed. Linked native API refusal test passed, full native suite 214/214.
+Actual-source graph/floor-follow/lifecycle sanitizer test passed in root. Native
+source includes preserved earlier work and is not yet committed as a clean patch.
+Room-local Lua callers and certification sequence committed as game 83f9d8f92.
+The isolated certification profile now contains this binary and updated probe;
+no new controller traversal has been claimed. Recipes remain uncertified.
+
+Enemy corrective pass 4 fixes exact-true visibility and safe malformed-observation
+refusal. Root reran 32 focused tests and committed helpers as game 936fe7bae;
+wrapper tests/contracts/seam coverage are d39ae58. Full root roguelite suite:
+202 tests OK. Enemy native combat/rendered tells remain unwired and unaccepted.
+
+Gene corrective pass 5 still failed independent review: reentrant room cleanup
+could reset mark revisions and allow a stale refund; missing source-host restore
+could create an unsaveable mark. Pass 6 is running in its isolated lane, session
+ses_f0bb67b3affe04vwHUrcZ4TZdx, process handle 49102. No gene/core output copied.
+
+Build/test hashes and exact logs: `_build/deepseek-coordination/stage-seam-landed-evidence.json`.
+New-model campaign reservation remains in force; its worktree was not updated.
