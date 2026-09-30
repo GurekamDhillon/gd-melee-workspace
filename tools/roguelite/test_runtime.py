@@ -138,7 +138,7 @@ door('right');assert(state().run.status=='success' and state().menu=='collection
 assert(state().profile.finished[state().run.id].export)
 local checkpoint_a,checkpoint_b=files['checkpoint-a.txt'],files['checkpoint-b.txt']
 assert(checkpoint_a and checkpoint_b and writes>3)
-on_draw();commands.rogue_state();on_unload();assert(not claims[4] and masks[1]==0 and not pause)
+on_draw();commands.rogue_state();commands.rogue_route('4242');commands.rogue_route('bogus');on_unload();assert(not claims[4] and masks[1]==0 and not pause)
 print('runtime: native-entry wait, collection/breeding/locks, doors, commands, genes, shield charge, refusal, stocks, rewards, fusion and export passed (engine stubs)')
 '''
 
