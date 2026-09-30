@@ -31,6 +31,21 @@ catalogue counts do not establish complete player-facing gates.
   fork attempt fell below the room. Return has a seam-pop candidate requiring
   review. The attempted controller path may be wrong; this does not prove the
   lower socket impossible. No recipe certification was granted.
+- Watched physical-controller evidence supersedes the failed scripted lower-door
+  attempt: Bluetooth 8BitDo Ultimate2C on port1, 900-frame branch trace with
+  301grounded samples near x52/y0. Lower-door reachability demonstrated for
+  Falco (`_build/deepseek-coordination/watched-branch-trace.json`). User reports
+  snag/pop at ALL stairs/balcony/ramp/upperlanding joins, so movement quality
+  remains failed/pending a collision seam fix and watched retest. No full recipe
+  certification. Review queue: `docs/ROGUELITE-WATCHED-RETESTS.md`.
+- Compact command/HUD/onboarding helpers landed: game `7ebd732ee`, wrapper
+  `41deb17`; combined root discovery 182named tests plus module suites passed
+  (`_build/deepseek-coordination/combined-menu-review.log`). Main loadout/HUD/
+  onboarding integration and in-game readability acceptance remain pending.
+- Additional native Falco merge-room evidence:
+  `_build/deepseek-coordination/native-merge-v2-summary.json`: left incoming
+  controller attempt fell, top incoming placement was refused. Startup needed a
+  longer bounded wait; neither failed observation certifies the recipe.
 - Genuine game PNG evidence lives in
   `_build/deepseek-coordination/native-previews-clean/`. User requires in-game
   PNGs only; mockups/reference-sheet galleries are not acceptance evidence.
@@ -50,8 +65,14 @@ catalogue counts do not establish complete player-facing gates.
   missing defeat-to-completion persistence. Corrective worker active.
 - Expanded layout prototype review found disconnected-floor reachability,
   nonfinite coordinate acceptance, interior ledges and ignored template themes.
-  Counts are 17 geometry/module groups versus 19 metadata-sensitive signatures;
-  theme labels currently share BF visuals. Correction returned for independent review.
+  Correction landed (game `da7af1524`, wrapper `ec1b9e1`): 16 translation-
+  normalized geometry groups across 29 templates, actual-arrival screening,
+  nonfinite refusals, seam ledges corrected and template themes honored.
+  Theme labels still share BF visuals; every recipe remains uncertified.
+  Combined root discovery passed 176 named tests plus import-time module suites
+  (`_build/deepseek-coordination/combined-layout-inventory-review-2.log`).
+  Migration refusal fixtures now explicitly contain finite pickup history,
+  independent of which optional room a generator seed selects.
 - Gene-action and menu followups await independent review. Inventory/equipment,
   new enemies, expanded layouts and gene actions are not offered as completed
   native gameplay merely because worker tests pass.

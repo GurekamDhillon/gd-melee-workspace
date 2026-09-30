@@ -24,3 +24,15 @@ result. Resume these tests during watched review.
 Confirmed campaign retirement, effect rollback, native unload ownership and
 save safety defects remain engineering work and are not waiting for human
 judgment. All recipes remain uncertified.
+
+## Live watched evidence update
+
+Bluetooth 8BitDo Ultimate2C physical pad observed bygd.pad(1). Usercontrolled
+branchtrace `watched-branch-trace.json`:301grounded samples near lowerdoor
+x52/y0 fromentryfixture, no scriptedinputduringtrace. Lowerdoor reachablewith
+Falco; previousovershoot doesnotprovegeometryunreachable. Window900frames
+truncated, stillnotfullrecipe certificate. Userexplicitlyreports snag/pop at
+ALL stairs->balcony->ramp->upperlandingjoins. This confirms a movement-quality
+defect for investigation, not humanacceptance. Native seams researchworker
+inspecting MapLine links/independentjoints; no automaticflag flips. Merge room
+loaded andunpaused foruser, secondtrace pendinguser movement.
