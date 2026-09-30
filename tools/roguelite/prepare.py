@@ -25,7 +25,7 @@ def install_room_kit(mod):
 
 def bundle(source=SOURCE):
     chunks = []
-    for name, local in [('core', 'Core'), ('rng', 'Rng'), ('codec', 'Codec'), ('room_catalogue', 'RoomCatalogue'), ('encounter_catalogue', 'EncounterCatalogue'), ('progression', 'Progression'), ('checkpoint', 'Checkpoint'), ('topology', 'Topology'), ('legacy', 'Legacy'), ('dungeon', 'Dungeon'), ('commands', 'Commands'), ('roster', 'Roster'), ('bindings', 'Bindings'), ('visuals', 'Visuals'), ('feedback', 'Feedback'), ('menus', 'Menus'), ('rooms', 'Rooms'), ('enemy_genes', 'EnemyGenes'), ('technical_ai', 'TechAI')]:
+    for name, local in [('core', 'Core'), ('rng', 'Rng'), ('codec', 'Codec'), ('room_catalogue', 'RoomCatalogue'), ('encounter_catalogue', 'EncounterCatalogue'), ('progression', 'Progression'), ('checkpoint', 'Checkpoint'), ('topology', 'Topology'), ('inspector', 'Inspector'), ('legacy', 'Legacy'), ('dungeon', 'Dungeon'), ('commands', 'Commands'), ('roster', 'Roster'), ('bindings', 'Bindings'), ('visuals', 'Visuals'), ('feedback', 'Feedback'), ('menus', 'Menus'), ('rooms', 'Rooms'), ('enemy_genes', 'EnemyGenes'), ('technical_ai', 'TechAI')]:
         chunks.append(f'local {local} = (function()\n{(source / (name + ".lua")).read_text()}\nend)()\n')
     chunks.append((source / 'main.lua').read_text())
     return '\n'.join(chunks)
