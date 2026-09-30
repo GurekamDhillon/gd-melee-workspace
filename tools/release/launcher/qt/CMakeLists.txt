@@ -68,14 +68,17 @@ if(LAUNCHER_DEPLOY_QT)
     install(FILES "$<TARGET_FILE:Qt6::QOffscreenIntegrationPlugin>"
             DESTINATION plugins/platforms)
     # Qt < 6.10 has no INCLUDE_PLUGINS deployment option. Include Wayland's
-    # imported plugin targets explicitly, including shell/buffer integrations.
+    # SDK plugins explicitly, including shell/buffer integrations. Older SDKs
+    # do not consistently expose the plugin target lists to consumers.
     set(wayland_modules)
-    foreach(plugin IN LISTS Qt6Gui_PLUGINS Qt6WaylandClient_PLUGINS)
-      if(plugin MATCHES "Wayland")
-        get_target_property(plugin_type ${plugin} QT_PLUGIN_TYPE)
-        install(FILES "$<TARGET_FILE:${plugin}>" DESTINATION "plugins/${plugin_type}")
-        string(APPEND wayland_modules " \"$<TARGET_FILE:${plugin}>\"")
-      endif()
+    set(qt_plugin_root "${QT6_INSTALL_PREFIX}/${QT6_INSTALL_PLUGINS}")
+    file(GLOB wayland_plugins "${qt_plugin_root}/platforms/libqwayland*.so"
+         "${qt_plugin_root}/wayland-*/*.so")
+    foreach(plugin IN LISTS wayland_plugins)
+      file(RELATIVE_PATH relative_plugin "${qt_plugin_root}" "${plugin}")
+      get_filename_component(plugin_type "${relative_plugin}" DIRECTORY)
+      install(FILES "${plugin}" DESTINATION "plugins/${plugin_type}")
+      string(APPEND wayland_modules " \"${plugin}\"")
     endforeach()
     if(NOT wayland_modules)
       message(FATAL_ERROR "The Qt SDK must include its Wayland platform plugins")
