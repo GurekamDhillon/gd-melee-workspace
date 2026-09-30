@@ -21,7 +21,7 @@ jobs:
         with:
           version: '6.8.3'
           # Linux's Qt tools and Core library also need the matching bundled ICU.
-          archives: ${{ runner.os == 'Linux' && 'qtbase icu' || 'qtbase' }}
+          archives: ${{ runner.os == 'Linux' && 'qtbase icu qtwayland' || 'qtbase' }}
           cache: true
       - name: Build, test and deploy (Linux)
         if: runner.os == 'Linux'
