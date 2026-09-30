@@ -13,6 +13,55 @@ Severity: P0 crash/data loss · P1 softlock / broken controls / unreachable
 required objective / broken supported platform · P2 major readability, fairness
 or performance · P3 cosmetic.
 
+## Current coordinator audit — 2026-09-30
+
+This snapshot supersedes older status descriptions below; the baseline and
+previous-pass sections remain historical evidence. Helper implementations and
+catalogue counts do not establish complete player-facing gates.
+
+- Landed game `e47bbe785`: atomic-only checkpoint mutation plus reviewed room,
+  encounter and reward runtime helpers. Native scripting group passed 34/34;
+  this is scripting coverage, not a full generated-run acceptance.
+- Landed certification revisions: game `24b164c5f`, wrapper `66e7818`.
+  `python3 -m unittest discover -s tools/roguelite -p test_certify_rooms.py`
+  passed 62/62; log `_build/deepseek-coordination/certification-root-review.log`.
+- Native normal-speed Falco `branch_y` run:
+  `_build/deepseek-coordination/native-certification-v7-summary.json` names the
+  executable hash and captures. Ascent, return and upper fork arrived; lower
+  fork attempt fell below the room. Return has a seam-pop candidate requiring
+  review. The attempted controller path may be wrong; this does not prove the
+  lower socket impossible. No recipe certification was granted.
+- Genuine game PNG evidence lives in
+  `_build/deepseek-coordination/native-previews-clean/`. User requires in-game
+  PNGs only; mockups/reference-sheet galleries are not acceptance evidence.
+- Live v2 campaign output is **not accepted or installed**. Returned corrections
+  address pause/stock/encounter/rollback issues in stub tests; review still finds
+  premature new-run profile promotion on failed saves and an unjustified
+  `reset(true)` on live script unload. The second corrective pass returned 19 passing stub cases; independent review
+  continues. It explicitly reports the missing native owner-cleanup seam.
+- Inventory second correction landed: game `1be259f18`, wrapper `05be7a1`.
+  Root reran 16/16 focused cases and the original adversarial forged heal999 /
+  zero-cost probe now refuses without spending. Validation reconstructs a plan
+  from authoritative context; equipment apply/revert rollback is tested. This is
+  a pure service milestone: bundling, persistence and in-game effects/menu
+  integration remain pending.
+- Enemy/boss prototype review found occlusion/reaction fail-open behavior,
+  stale confirmations, changed attacks after tells, invalid boss resume and
+  missing defeat-to-completion persistence. Corrective worker active.
+- Expanded layout prototype review found disconnected-floor reachability,
+  nonfinite coordinate acceptance, interior ledges and ignored template themes.
+  Counts are 17 geometry/module groups versus 19 metadata-sensitive signatures;
+  theme labels currently share BF visuals. Correction returned for independent review.
+- Gene-action and menu followups await independent review. Inventory/equipment,
+  new enemies, expanded layouts and gene actions are not offered as completed
+  native gameplay merely because worker tests pass.
+
+Gate position: Gates 1–2 have substantial automated contract evidence; Gates
+3–4 are the current native/integration work. Gates 5–8 have prototype or helper
+work pending corrections and live integration. Gates 9–12 still require full
+presentation, audio, platform, complete-run and human playtesting evidence.
+There is no agreed weighted percentage denominator, and no 100/100 claim.
+
 ## Baseline (Gate 0)
 
 Recorded 2026-09-30.

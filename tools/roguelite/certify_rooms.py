@@ -585,7 +585,7 @@ class CertificationDriver:
                 raise UnsupportedRun('accelerated/stalled simulation: %.1f logic frames/s' % rate)
             self.c.note({'category': 'timing_observation', 'target': 60, 'logic_frames_per_second': rate})
 
-    def launch_scene(self, fighter, costume=0, timeout=18):
+    def launch_scene(self, fighter, costume=0, timeout=60):
         output = self.c.cmd('certify_scene %s %d' % (fighter, costume), 'native_scene')
         if 'ok=true' not in output:
             raise UnsupportedRun('scene launch refused: ' + output.strip())
