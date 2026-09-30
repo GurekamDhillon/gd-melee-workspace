@@ -46,3 +46,22 @@ arrival near the ground-level right doorway. This is reachability evidence for
 Falco from the left entrance, not clearance or physics certification for every
 character. The native cleanup build passed 213/213 tests. The shared ascent
 snag remains open until the seam fix is integrated and retested with the user.
+
+
+## Seam build prepared for watched review
+
+The updated branch_y room reached native `phase=ready`: five colliders,
+26 visual parts, stage isolation enabled, native `stage_link` API present.
+Construction now requires all three authored ascent seams to link successfully.
+This proves live construction, not movement quality. Evidence:
+`_build/deepseek-coordination/native-seam-live-build.json`.
+
+The entry placement command was refused while Falco was on a respawn platform.
+Per the user's direction, do not repeatedly automate fixture timing to force a
+result. The room is left paused; establish a stable fighter and entry fixture
+with the user watching, then retest the three joins at normal speed. No controller
+input was injected during this build check and no traversal was recorded.
+
+Actual in-game PNG:
+`_build/deepseek-coordination/native-previews-clean/native_seam_branch_ready.png`.
+All recipes remain uncertified.

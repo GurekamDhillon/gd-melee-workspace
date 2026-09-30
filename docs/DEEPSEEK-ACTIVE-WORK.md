@@ -126,3 +126,18 @@ ses_f0bb67b3affe04vwHUrcZ4TZdx, process handle 49102. No gene/core output copied
 
 Build/test hashes and exact logs: `_build/deepseek-coordination/stage-seam-landed-evidence.json`.
 New-model campaign reservation remains in force; its worktree was not updated.
+
+
+## Positive native construction and latest gene review
+
+One bounded live branch_y construction completed with the new room-local links,
+five colliders and isolation true. Actual PNG saved; game left paused. Entry
+placement refused during respawn, recorded for watched retest instead of repeated
+unattended retries. No traversal/feel certification. Evidence:
+`_build/deepseek-coordination/native-seam-live-build.json`.
+
+Gene pass 6 corrected mark-reset ABA and retired-source restore, but independent
+Sol reproduced a stale cooldown refund overwriting a newer successful same-slot
+activation (ready_at180 becomes0). Corrective pass 7 is running in the existing
+isolated lane, session ses_f0bb67b3affe04vwHUrcZ4TZdx, process handle46108. No
+Core/gene output has been copied or claimed live. New-model reservation intact.
