@@ -1,0 +1,47 @@
+#!/bin/bash
+set -euo pipefail
+install_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+data_override="${MELEE_DATA_DIR:-}"
+args=()
+while [ $# -gt 0 ]; do
+    case "$1" in
+    --data-dir) data_override="${2:?--data-dir requires a path}"; shift 2 ;;
+    --iso) args+=(--iso "$(realpath -- "${2:?--iso requires a disc path}")"); shift 2 ;;
+    *.iso|*.gcm) args+=("$(realpath -- "$1")"); shift ;;
+    *) args+=("$1"); shift ;;
+    esac
+done
+if [ ! -x /lib/ld-linux.so.2 ]; then
+    echo 'The 32-bit Linux runtime is missing. See README.txt for multilib installation.' >&2
+    exit 1
+fi
+if [ -n "${MELEE_ISO:-}" ]; then export MELEE_ISO="$(realpath -- "$MELEE_ISO")"; fi
+if [ -n "$data_override" ]; then
+    mkdir -p -- "$data_override"
+    data_dir="$(cd -- "$data_override" && pwd)"
+    config_dir="$data_dir/config"; cache_dir="$data_dir/cache"; state_dir="$data_dir/state"
+else
+    data_dir="${XDG_DATA_HOME:-$HOME/.local/share}/melee-linux"
+    config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/melee-linux"
+    cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/melee-linux"
+    state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/melee-linux"
+fi
+mkdir -p -- "$data_dir/card" "$data_dir/mods" "$data_dir/scripts" "$data_dir/scripts-data" "$config_dir" "$cache_dir" "$state_dir/runs"
+run_dir="$(mktemp -d "$state_dir/runs/run-XXXXXXXX")"
+export MELEE_CARD_PATH="${MELEE_CARD_PATH:-$data_dir/card}"
+export MELEE_MODS_DIR="${MELEE_MODS_DIR:-$data_dir/mods}"
+export MELEE_SETTINGS_CFG="${MELEE_SETTINGS_CFG:-$config_dir/settings.cfg}"
+export MELEE_SCRIPTS_DIR="${MELEE_SCRIPTS_DIR:-$data_dir/scripts}"
+export MELEE_SCRIPT_DATA_DIR="${MELEE_SCRIPT_DATA_DIR:-$data_dir/scripts-data}"
+export MELEE_FONT_DIR="${MELEE_FONT_DIR:-$install_dir/assets/fonts}"
+export MELEE_MENUTEX_DIR="${MELEE_MENUTEX_DIR:-$install_dir/assets/ui}"
+# Separate caches per process: Aurora's pipeline database is not safe to share between runs.
+export MELEE_CACHE_DIR="${MELEE_CACHE_DIR:-$run_dir/cache}"
+mkdir -p -- "$MELEE_CACHE_DIR"
+export LD_LIBRARY_PATH="$install_dir/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+missing="$(ldd "$install_dir/bin/melee" | awk '/not found/{print $1}')"
+if [ -n "$missing" ]; then printf 'Missing runtime libraries:\n%s\n' "$missing" >&2; exit 1; fi
+(cd "$install_dir" && sha256sum --quiet -c runtime.sha256)
+printf 'Logs: %s\n' "$run_dir"
+cd -- "$run_dir"
+exec "$install_dir/bin/melee" "${args[@]}"

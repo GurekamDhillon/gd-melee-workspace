@@ -36,9 +36,10 @@ MORE THAN ONE DISC ("MODPACKS")
     Forget         remove it from the list. The .iso itself is never touched, and its saves stay.
   "Unlock every character and stage" (on by default) opens the whole roster, all stages and the
   unlockable rules without touching your save; untick it to play the unlocks the normal way.
-  Online matches always have everything unlocked for both players.
-  Each disc keeps its own memory card, in userdata\saves\<disc>. Deleting userdata\launcher.cfg
-  makes the launcher forget everything and ask again (saves are kept).
+  Each disc keeps its own memory card, in userdata\saves\<disc>.
+  The Qt launcher stores its disc library in userdata\launcher.json and imports the older
+  launcher.cfg automatically. Change ISO and Rename preserve each disc's save folder.
+  If the installation folder is read-only, settings go under %LOCALAPPDATA%\GDMelee instead.
 
   Shortcuts: "GD Melee.exe" --play boots the default disc straight away, and
   "GD Melee.exe" --play ACE boots the disc named ACE.
@@ -68,38 +69,35 @@ LAB
 
 
 MODS AND SCRIPTS
-  The Mods tab lists the mods in the mods folder: untick one to switch it off at the next start,
-  or Remove it. To get new mods, "Edit sources..." and add sources you trust (a GitHub repo like
-  owner/repo, or an https link to an index) - none are listed by default. "Refresh sources" shows
-  what they offer; Install downloads a mod and anything it needs, checks it and unpacks it.
-  Nothing downloaded is run by the launcher; mod scripts run in the game's sandbox.
+  The Mods tab lists installed mods: switch one off for the next start, or remove it from the
+  active list. Removed mods are moved to the .removed folder. Dependencies and conflicts are
+  checked when enabling mods. Open the mods folder to add your local content.
+  Remote mod browsing and downloads are not included in the current Qt launcher.
   Lua scripts: scripts\ next to the game (examples in scripts\examples). Press ` in the game for
   the console.
 
 
-ONLINE
-  See "HOW TO PLAY ONLINE.txt". Both players need this same release of GD's Melee.
-  Mods are welcome online: fighters and stages are matched with your opponent by their content,
-  so anything you both have can be picked, and anything only one of you has is greyed out. Mods
-  that change the rules of the whole game (codes, physics) must match on both sides.
-  The Online tab in the launcher sets the matchmaking server used for room codes.
-  If Windows Firewall asks about melee-pc.exe, tick both Private and Public, then Allow.
+CURRENT SCOPE
+  The shared Qt launcher covers offline play and local custom content. It has no Online tab.
+  Linux development support is documented in docs/LINUX_PORT_STATUS.md in the workspace repo;
+  the Linux package has its own runtime requirements and README.
 
 
 IF SOMETHING GOES WRONG
   - "This disc can't be used": the launcher says why (wrong region, wrong revision, not Melee,
     compressed image). You need NTSC-U 1.02.
-  - The game closes at once: the launcher offers to open melee-pc.log. Crash reports are in the
-    crashlogs folder. Please include them when you report a bug.
+  - The game closes at once: use the launcher's Diagnostics page to open the run logs. Each
+    launch creates its own directory under userdata\runs (or the fallback data directory).
   - "VCRUNTIME140.dll was not found": the files next to melee-pc.exe were not all unzipped; unzip
     the whole folder again.
 
 
 FILES
   GD Melee.exe        the launcher
+  launcher\           the Qt application, runtime and licences; keep this folder intact
   melee-pc.exe        the game (you can also run it directly: melee-pc.exe --iso "C:\path\melee.iso")
   ui\                 GD's Melee's own menu art
-  mods\               your mods (the Mods tab manages them), sources.txt says where to find more
+  mods\               your installed mods (the Mods tab manages them)
   scripts\            Lua scripts; examples\ holds the examples
   userdata\           your settings and saves (created on first run)
   LICENSES\           licences of the port and every library in it

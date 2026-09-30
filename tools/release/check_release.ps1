@@ -119,12 +119,18 @@ foreach ($e in $entries) {
 
   # 1. allowlist
   $ok = $false
+  # Qt's 64-bit runtime is isolated from the 32-bit game and its CRT.
+  $launcherBinary = $rel -match '^launcher/bin/(gd-melee-launcher\.exe|Qt6(Core|Gui|Widgets|Svg)\.dll|msvcp140(_1|_2|_atomic_wait|_codecvt_ids)?\.dll|vcruntime140(_1)?\.dll|concrt140\.dll|d3dcompiler_47\.dll|opengl32sw\.dll|dxcompiler\.dll|dxil\.dll|vc_redist\.x64\.exe)$' -or
+                    $rel -match '^launcher/(plugins|bin)/(platforms/q(windows|offscreen|minimal)\.dll|styles/q(modernwindows|windowsvista)style\.dll|imageformats/q(gif|ico|jpeg|svg)\.dll)$'
   if ($dirs.Count -eq 0) {
     $ok = ($AllowedBinaries -contains $name) -or ($AllowedTopFiles -contains $name)
   } elseif ($dirs[0] -eq "ui") {
     $ok = ($dirs.Count -eq 1) -and ($ext -eq ".gxtex" -or $ext -eq ".json")
   } elseif ($dirs[0] -eq "LICENSES") {
     $ok = ($dirs.Count -eq 1) -and ($ext -eq ".txt")
+  } elseif ($dirs[0] -eq "launcher") {
+    $ok = $launcherBinary -or ($rel -eq 'launcher/bin/qt.conf') -or ($rel -eq 'launcher/qt-build.txt') -or
+          ($dirs.Count -eq 2 -and $dirs[1] -eq 'licenses' -and $ext -eq '.txt')
   } elseif ($dirs[0] -eq "mods") {
     $ok = ($rel -eq "mods/README.txt") -or ($rel -eq "mods/sources.txt") -or
           ($rel -eq "mods/geno-lab/mod.json") -or
@@ -135,7 +141,7 @@ foreach ($e in $entries) {
           ($dirs.Count -ge 2 -and $dirs[1] -eq "examples" -and ($ext -eq ".lua" -or $ext -eq ".json"))
   }
   if (-not $ok) { Fail "$rel : not on the release allowlist (tools/release/check_release.ps1)" }
-  if (($ext -eq ".exe" -or $ext -eq ".dll") -and -not ($dirs.Count -eq 0 -and $AllowedBinaries -contains $name)) {
+  if (($ext -eq ".exe" -or $ext -eq ".dll") -and -not (($dirs.Count -eq 0 -and $AllowedBinaries -contains $name) -or $launcherBinary)) {
     Fail "$rel : unexpected executable"
   }
 

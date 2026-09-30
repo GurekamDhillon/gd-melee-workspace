@@ -139,6 +139,9 @@ __pycache__/
 
 # Release staging and zips (tools/release/build_release.ps1).
 /_build/release/
+/_build/linux/
+/_build/gwtool_linux/
+/_build/launcher-*/
 
 # Local agent task ledgers and review artifacts.
 /.superpowers/

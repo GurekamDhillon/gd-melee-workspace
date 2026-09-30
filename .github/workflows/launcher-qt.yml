@@ -1,0 +1,57 @@
+name: Qt launcher
+on:
+  push:
+    paths: ['tools/release/launcher/qt/**', 'tools/release/build_launcher.*', '_build/ui/kit*.json', '_build/ui/ico_*.gxtex', 'menu/SourceSans3/**', '.github/workflows/launcher-qt.yml']
+  pull_request:
+    paths: ['tools/release/launcher/qt/**', 'tools/release/build_launcher.*', '_build/ui/kit*.json', '_build/ui/ico_*.gxtex', 'menu/SourceSans3/**', '.github/workflows/launcher-qt.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          archives: 'qtbase'
+          cache: true
+      - name: Build, test and deploy (Linux)
+        if: runner.os == 'Linux'
+        run: bash tools/release/build_launcher.sh _build/launcher-package
+      - name: Build, test and deploy (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tools/release/build_launcher.ps1 -Out "${{ github.workspace }}/_build/launcher-package/GD Melee.exe"
+      - name: Render all tabs (Linux)
+        if: runner.os == 'Linux'
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QT_QPA_PLATFORMTHEME: none
+          QT_STYLE_OVERRIDE: Fusion
+        run: |
+          unset LD_LIBRARY_PATH QT_PLUGIN_PATH QT_QPA_PLATFORM_PLUGIN_PATH
+          _build/launcher-package/launcher/bin/gd-melee-launcher --data-dir _build/test-profile --shots _build/shots/en
+          _build/launcher-package/launcher/bin/gd-melee-launcher --data-dir _build/test-profile --lang es --shots _build/shots/es
+      - name: Render all tabs (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          & "./_build/launcher-package/launcher/bin/gd-melee-launcher.exe" --data-dir _build/test-profile --shots _build/shots/en
+          if ($LASTEXITCODE -ne 0) { throw 'English UI render failed' }
+          & "./_build/launcher-package/launcher/bin/gd-melee-launcher.exe" --data-dir _build/test-profile --lang es --shots _build/shots/es
+          if ($LASTEXITCODE -ne 0) { throw 'Spanish UI render failed' }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qt-launcher-${{ matrix.os }}
+          path: |
+            _build/launcher-package/
+            _build/shots/

@@ -72,8 +72,11 @@ scripts\examples\  (example Lua scripts)
   Part of the melee fork (pc/scripts/examples), GPL-2.0-or-later.
 
 GD Melee.exe (the launcher)
-  Part of the GD's Melee workspace repository, GPL-2.0-or-later. Runs on the .NET Framework that
-  ships with Windows.
+  The Qt launcher and its Windows entry point are part of the GD's Melee workspace repository,
+  GPL-2.0-or-later. The launcher uses dynamically linked Qt 6 Core, Gui and Widgets.
+  Qt and its runtime plugins are kept in launcher/, separate from the game runtime.
+  See launcher/qt-build.txt for the Qt version and launcher/licenses/ for the Qt licence texts
+  and bundled third-party licence texts. Qt sources: https://download.qt.io/archive/qt/.
 
 
 2. Source code (GPL)

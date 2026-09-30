@@ -1,0 +1,12 @@
+<RCC><qresource prefix="/kit">
+ <file alias="kit.json">../../../../_build/ui/kit.json</file>
+ <file alias="motion.json">../../../../_build/ui/kit_motion.json</file>
+ <file alias="bold.otf">../../../../menu/SourceSans3/SourceSans3-Bold.otf</file>
+ <file alias="black.otf">../../../../menu/SourceSans3/SourceSans3-Black.otf</file>
+ <file alias="semibold.otf">../../../../menu/SourceSans3/SourceSans3-Semibold.otf</file>
+ <file alias="melee.gxtex">../../../../_build/ui/ico_melee.gxtex</file>
+ <file alias="collection.gxtex">../../../../_build/ui/ico_collection.gxtex</file>
+ <file alias="options.gxtex">../../../../_build/ui/ico_options.gxtex</file>
+ <file alias="data.gxtex">../../../../_build/ui/ico_data.gxtex</file>
+ <file alias="lab.gxtex">../../../../_build/ui/ico_lab.gxtex</file>
+</qresource></RCC>

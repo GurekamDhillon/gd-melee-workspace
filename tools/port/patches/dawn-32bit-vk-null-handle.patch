@@ -1,0 +1,13 @@
+diff -ruN a/src/dawn/native/vulkan/ResourceMemoryAllocatorVk.cpp b/src/dawn/native/vulkan/ResourceMemoryAllocatorVk.cpp
+--- a/src/dawn/native/vulkan/ResourceMemoryAllocatorVk.cpp	2026-09-29 17:41:53.144744653 -0700
++++ b/src/dawn/native/vulkan/ResourceMemoryAllocatorVk.cpp	2026-09-29 17:41:53.146988800 -0700
+@@ -123,6 +123,8 @@
+             dedicatedInfo.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO;
+             dedicatedInfo.pNext = nullptr;
+             dedicatedInfo.image = dedicatedImage;
+-            dedicatedInfo.buffer = VK_NULL_HANDLE;
++            // On 32-bit Dawn redefines VK_NULL_HANDLE as std::nullptr_t, but this global Vulkan
++            // struct's handle fields are still uint64_t; braced init zeroes the field portably.
++            dedicatedInfo.buffer = {};
+             allocateInfo.pNext = &dedicatedInfo;
+         }

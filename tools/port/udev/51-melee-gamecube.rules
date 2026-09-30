@@ -1,0 +1,2 @@
+# Grant the active local desktop session access to a Nintendo WUP-028 compatible adapter.
+SUBSYSTEM=="usb", ATTR{idVendor}=="057e", ATTR{idProduct}=="0337", TAG+="uaccess"
