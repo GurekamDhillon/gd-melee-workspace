@@ -212,3 +212,29 @@ snagging at all ascent joins remains **pending a watched retest**; automated tes
 are not human movement acceptance. All recipes remain uncertified. Enemy helpers
 have 32 tests and exact observable-state/run ownership checks; they still need
 native runtime wiring and normal-speed combat/tell/AI acceptance.
+
+
+### Live native owner cleanup and gene transaction landing
+
+The normal-speed paused branch fixture passed a two-script resource-owner probe.
+Both scripts retained the same mesh token and allocated their own model/floor.
+Script A's unload hook deliberately threw; native fallback removed A's instance
+and floor while B could still mutate its instance and floor. Unloading B returned
+the total visual instance count to 26. Match frame (1666), Falco position (16,45),
+branch status and isolation were unchanged; no controller input or scene change.
+Temporary probe scripts were removed. Evidence:
+`_build/deepseek-coordination/native-owner-live-probe.json` (binary hash included).
+This proves live cleanup ownership, not rewind or traversal acceptance.
+
+Gene helpers are committed as game f26863364; contract/regressions are wrapper
+54bc740. Independent review verified state-owned refunds across room cleanup,
+slot/host migration, newer spends, mark ABA/expiry, lifecycle invalidation and
+save-schema isolation. Root focused action/Core/catalogue/checkpoint/legacy
+checks passed; native adapter and main dispatch remain pending. The gene test
+uses two named methods with many transaction cases; no numeric subcase count is
+used as completion evidence.
+
+Frozen new-model suite independently reproduced 214 tests OK, skipped=1. Root
+review reproduced three recovery defects and failed HUD-release ownership loss;
+corrective integration is underway. The frozen lane remains unchanged. Report:
+`_build/deepseek-coordination/model-handoff-review.md`.

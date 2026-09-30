@@ -164,3 +164,23 @@ No unreviewed Core/actions output copied. New-model campaign lane still reserved
 
 Floor construction/lifecycle rules are committed in `docs/STAGE-FLOOR-SEAMS.md`
 (wrapper f3f423d). The live branch fixture remains paused and unchanged.
+
+
+## Frozen model handoff now under corrective root integration
+
+User reports their model finished; reservation is now frozen output for review.
+Independent full run reproduced 214 tests OK (one skip). Root imported only main,
+seeded campaign service, presentation service, bundler and the two owned test
+files after backing up current root candidates. Root's newer room-link/native
+work was preserved; the source lane was not edited.
+
+Sol is correcting reproduced recovery pause escape, zero-life finish-page
+resurrection, lost settling-save continuation and HUD release retry ownership.
+It also enables the real loadout tree on the production legacy fallback and
+updates the obsolete gesture fixture. No certification bypass. Exact review
+repros: coordination `model-handoff-review.md`.
+
+Gene pass8 accepted after independent review and landed (game f26863364,
+wrapper54bc740). Native adapter worker still active in isolated gene-world lane.
+Live two-script native owner fallback probe passed without changing paused
+frame, fighter position or retained room instances; evidence owner-live-probe.
