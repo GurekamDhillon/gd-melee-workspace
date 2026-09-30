@@ -139,7 +139,8 @@ content folders; otherwise the launcher's user data folders are used.
 
 ### Build and test
 
-Linux: install a native 64-bit Qt SDK with Widgets and Test, CMake and a C++17 compiler:
+Linux: install a native 64-bit Qt SDK with Widgets, Test and WaylandClient, plus Wayland/EGL
+development packages, CMake and a C++17 compiler:
 
 ```sh
 bash tools/release/build_launcher.sh _build/launcher-package

@@ -72,6 +72,9 @@ int main(int argc, char **argv) {
                 if (!QFile::copy(spec.program, testProgram) || !QFile::copy(map, spec.workingDirectory + "/melee-pc.msvc.map"))
                     throw std::runtime_error("Cannot prepare isolated engine test executable");
                 spec.program = testProgram;
+                auto tempDir = spec.workingDirectory + "/tmp";
+                if (!QDir().mkpath(tempDir)) throw std::runtime_error("Cannot prepare isolated test temporary directory");
+                spec.environment.insert("TMPDIR", tempDir);
 #endif
                 spec.arguments.prepend("--test");
             }

@@ -33,13 +33,18 @@ glibc 2.35. The local Arch build requires newer glibc and is not that portable b
   cleanly at the timeout. SDL's dynamically loaded i686 Wayland/keyboard libraries are
   explicitly included in packaging. This check does not certify input or sustained play.
 - Hosted Windows/Linux Qt CI and a Windows-to-WSL game-check entry point are authored.
-  Remote CI results, runner registration and repository requirements are separate evidence.
+  Hosted Windows and Ubuntu builds, tests, deployment and UI rendering passed; Linux CI
+  also rendered with native Wayland on a headless compositor. Runner registration and
+  repository requirements remain separate setup work.
+- The Ubuntu 22.04 game build completed (executable requires GLIBC 2.34); vanilla,
+  Akaneia and ACE each passed 201/201 within Ubuntu's actual userspace. Focused ABI,
+  synchronization, mapping and adapter-report fixtures also passed in that environment.
 
 ## Remaining acceptance work
 
-- Complete the Ubuntu 22.04 dependency/game build and validate a relocated, read-only
-  package on the target distribution matrix. Local packaging is not portable certification.
-- Validate the Qt launcher on Windows, including runtime deployment and existing user data.
+- Validate the complete baseline package on the target distribution matrix. The baseline
+  game and hosted launcher checks are not full portable certification.
+- Interactive Qt launcher testing on Windows with existing user data and the actual game.
 - Longer gameplay, ACE modded fighter/stage play, menu/results/rematch paths, game save/reload
   and relaunch, representative loose custom content, audio quality and SDL controllers.
 - Physical raw GameCube adapter: inputs, rumble, hotplug, focus handoff and shutdown.
