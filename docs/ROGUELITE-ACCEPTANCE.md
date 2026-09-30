@@ -102,6 +102,7 @@ runtime/Windows/hardware. These remain `planned`/`blocked`, not claimed.
 | G9-* | Regions / equipment / FX catalogue | worker | G5-* | planned | — | — |
 | G9-VOCAB | Afterimages/tracers/halos/orbitals/surface/silhouette/contact/UI vocabulary with motion-clip acceptance | worker | G9-* | planned | — | new plan subsection; needs native render support inspection + clips |
 | G10-* | Audio + world presentation | worker | G4-*, G9-* | planned | — | — |
+| G10-AUDIO | Audio event map with buses, provenance, critical tells | worker | G1-* | automated-pass | `audio_catalogue.lua`; `test_audio_catalogue.py` | assets unassigned; mixing/playback is Gate 10 |
 | G11-* | Platform parity, performance, delivery | worker | G4-*, G9-* | planned | — | needs Windows + hardware for full pass |
 | G12-* | Full playtesting + polish pass | human | all | planned | — | human/hardware gate |
 
