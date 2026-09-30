@@ -67,3 +67,38 @@ corrections and enemy first correction remain active. Native merge probe v1
 failed setup timeout, v2 is running with a longer bounded Ready/Go startup wait.
 Native script unload currently lacks per-script ownership for stage/model
 resources; a native seam is required, not a fabricated reset(true).
+
+## New-model handoff / campaign writer retired
+
+User requested work to test a new model in an isolated area. DeepSeek campaign
+session `ses_f0bc253ceffeVyPhAOtkZu7w9j` is terminal after corrective pass5;
+no process remained when handoff was created. Do NOT resume that writer or
+start another main/campaign/UI integration writer during this reservation.
+
+New external-model lane: `_build/model-tests/campaign-integration`, wrapper and
+nested game worktrees on `agent/model-test-campaign-20260930`. Task:
+`MODEL-TEST-TASK.md` — verify campaign acceptance, then wire compact HUD,
+loadout command tree and truthful onboarding. Reviewed assets are copied;
+no shared asset symlink writes. Initial sourcehashes in MODEL-TEST-SEED.json.
+Coordinator-ran baseline199namedtests OK (1skipped), import-level suites green.
+User will supply/run the model; creation of a lane is not evidence it is running.
+Root/Sol continue native seams, cleanup and separate combat/helper reviews.
+Root must not overwrite the reserved lane or copy live output until it freezes.
+
+
+## Coordination update after new-model reservation
+
+- Campaign integration remains reserved for the user's new model. No replacement
+  DeepSeek campaign writer has been started.
+- Gene actions corrective pass 5 is running in the existing isolated gene-actions
+  lane, session `ses_f0bb67b3affe04vwHUrcZ4TZdx`, process handle 12007. It addresses
+  revision-registry saturation: refusal must precede mark mutation and charge
+  spending, while tracked targets remain usable. Prompt and log are in
+  `_build/deepseek-coordination/gene-actions-followup-5.*`.
+- Enemy corrective pass 3 is terminal. Its 30-case report claims exact run/gene/
+  state identity binding. Sol runtime is independently reviewing it before landing.
+- Sol rooms is finishing an isolated native stage-link patch in
+  `_build/sol-worktrees/stage-seams`. Actual-source floor-follow and island tests
+  passed; final review and seed-relative patch are pending. Root owns Lua callers.
+- Watched merge accessibility is recorded; the user-reported ascent snag remains
+  an open defect. No native recipe certification has been granted.

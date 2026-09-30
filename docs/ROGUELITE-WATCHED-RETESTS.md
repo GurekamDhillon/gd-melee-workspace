@@ -27,12 +27,22 @@ judgment. All recipes remain uncertified.
 
 ## Live watched evidence update
 
-Bluetooth 8BitDo Ultimate2C physical pad observed bygd.pad(1). Usercontrolled
-branchtrace `watched-branch-trace.json`:301grounded samples near lowerdoor
-x52/y0 fromentryfixture, no scriptedinputduringtrace. Lowerdoor reachablewith
-Falco; previousovershoot doesnotprovegeometryunreachable. Window900frames
-truncated, stillnotfullrecipe certificate. Userexplicitlyreports snag/pop at
-ALL stairs->balcony->ramp->upperlandingjoins. This confirms a movement-quality
-defect for investigation, not humanacceptance. Native seams researchworker
-inspecting MapLine links/independentjoints; no automaticflag flips. Merge room
-loaded andunpaused foruser, secondtrace pendinguser movement.
+The Bluetooth 8BitDo Ultimate 2C physical pad was observed by `gd.pad(1)`.
+The user-controlled branch trace (`watched-branch-trace.json`) contains 301
+grounded samples near the lower door at x=52, y=0, starting from the entry
+fixture with no scripted input during the trace. Falco reached the lower door;
+the previous automated overshoot does not prove that the geometry is unreachable.
+The 900-frame trace was truncated and is not a full recipe certificate.
+
+The user explicitly reports snagging or popping at **all** joins between the
+stairs, balcony, ramp and upper landing. This confirms a movement-quality
+defect. A Sol worker is implementing explicit room-local native floor links;
+its actual-source tests do not replace a watched retest. No certification flags
+have been changed.
+
+After reopening with the native owner-cleanup build, the user confirmed that
+the merge room is accessible. The native sample at x=47.553, y=0 corroborates
+arrival near the ground-level right doorway. This is reachability evidence for
+Falco from the left entrance, not clearance or physics certification for every
+character. The native cleanup build passed 213/213 tests. The shared ascent
+snag remains open until the seam fix is integrated and retested with the user.
