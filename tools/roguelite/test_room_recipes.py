@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the physical recipe contract: coverage, bounds and explicit refusal."""
+"""Validate the physical recipe contract: coverage, bounds, reachability, refusal."""
 from pathlib import Path
 import shutil
 import subprocess
@@ -14,34 +14,34 @@ MODULES = [RT / 'room_catalogue.lua', RT / 'room_recipes.lua']
 TEST = r'''
 local Rooms=dofile(arg[1]); local Recipes=dofile(arg[2])
 local ok,why=Recipes.validate(Rooms); assert(ok,why)
--- Every supported recipe resolves geometry whose anchors cover its sockets.
-local supported,unsupported=0,0
+-- Every template resolves geometry whose anchors cover its declared sockets,
+-- and every recipe passes the analytic ascent screen. None are certified yet.
+local count,certified=0,0
 for id,template in pairs(Rooms.rooms) do
+ count=count+1
  local geometry,recipe=Recipes.resolve(template)
- if Recipes.is_supported(template.recipe) then
-  supported=supported+1
-  assert(geometry,id..' should resolve: '..tostring(recipe))
-  for _,socket in ipairs(template.sockets) do assert(geometry.exit_anchors[socket.side],id..' missing anchor') end
-  assert(geometry.floor.left==-65 and geometry.floor.right==65)
- else
-  unsupported=unsupported+1
-  assert(geometry==nil,'unsupported resolved')
-  assert(tostring(recipe):find('unsupported',1,true),'missing unsupported reason for '..id)
- end
+ assert(geometry,id..' should resolve: '..tostring(recipe))
+ for _,socket in ipairs(template.sockets) do assert(geometry.exit_anchors[socket.side],id..' missing anchor for '..socket.side) end
+ assert(geometry.floor.left==-65 and geometry.floor.right==65)
+ assert(geometry.spawn and geometry.camera)
+ local reachable,reason=Recipes.reachable(recipe); assert(reachable,id..': '..tostring(reason))
+ if Recipes.is_certified(template.recipe) then certified=certified+1 end
 end
-assert(supported>=8 and unsupported>=6,'supported='..supported..' unsupported='..unsupported)
--- The 3-socket branch shapes are explicitly unsupported (no authored up/down doors).
-assert(not Recipes.is_supported('branch_y') and not Recipes.is_supported('rejoin_merge'))
-assert(not Recipes.is_supported('junction_cross') and not Recipes.is_supported('shortcut_door'))
+assert(count>=18,'only '..count..' templates')
+assert(certified==0,'nothing may be certified before native clips; got '..certified)
+-- Upper/drop sockets carry the expected anchor shapes.
+local g=assert(Recipes.resolve(Rooms.rooms.branch_y))
+assert(g.exit_anchors.top and g.exit_anchors.top.y==26 and not g.exit_anchors.top.drop)
+local c=assert(Recipes.resolve(Rooms.rooms.junction_cross))
+assert(c.exit_anchors.bottom and c.exit_anchors.bottom.drop,'drop socket must be marked')
 -- A missing anchor for a declared socket side is refused, not guessed.
 local fake={recipe='lane_open',sockets={{id='in',side='left'},{id='out',side='middle'}}}
-local g,r=Recipes.resolve(fake); assert(not g and tostring(r):find('no anchor',1,true))
+local fg,fr=Recipes.resolve(fake); assert(not fg and tostring(fr):find('no anchor',1,true))
 -- Unknown recipes and malformed geometry are refused.
 assert(not Recipes.resolve({recipe='nope',sockets={}}))
 local function clone(v) if type(v)~='table' then return v end local o={} for k,x in pairs(v) do o[k]=clone(x) end return o end
 local bad=clone(Rooms); bad.rooms.lane_straight.recipe='ghost_recipe'
 assert(not Recipes.validate(bad))
--- A declared socket side without an anchor is refused.
 bad=clone(Rooms); bad.rooms.lane_straight.sockets={{id='in',side='left'},{id='out',side='middle'}}
 assert(not Recipes.validate(bad))
 -- Out-of-bounds authored geometry is refused, and the module is restored after.
@@ -50,7 +50,11 @@ Recipes.recipes.lane_open.geometry.platforms={{x=100,y=0,width=10,passthrough=tr
 assert(not Recipes.validate(Rooms))
 Recipes.recipes.lane_open.geometry.platforms=original
 assert(Recipes.validate(Rooms))
-print('room recipes: '..supported..' supported, '..unsupported..' explicitly unsupported, bounds and refusal passed')
+-- An ascent that exceeds the jump profile fails the reachability screen.
+local steep=clone(Recipes.recipes.lane_balcony)
+steep.geometry.platforms={{x=0,y=55,width=8,passthrough=true,ledges=true}}
+assert(not Recipes.reachable(steep))
+print('room recipes: '..count..' templates resolve, reachable, uncertified; bounds and refusal passed')
 '''
 
 subprocess.run([LUA, '-', *[str(m) for m in MODULES]], input=TEST, text=True, check=True)
