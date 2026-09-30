@@ -60,3 +60,4 @@ jobs:
             _build/launcher-qt/Testing/Temporary/
             _build/launcher-qt-windows/Testing/Temporary/
             _build/launcher-qt-windows/launcher-test-results.xml
+            _build/launcher-qt-windows/launcher-tests.txt

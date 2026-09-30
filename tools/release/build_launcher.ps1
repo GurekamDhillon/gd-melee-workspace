@@ -23,6 +23,7 @@ if ($LASTEXITCODE -ne 0) { throw "Qt launcher compilation failed." }
 if ($LASTEXITCODE -ne 0) {
   & (Join-Path $build "Release/launcher_tests.exe") -o "-,txt"
   Write-Output "Direct test process exit code: $LASTEXITCODE"
+  Get-Content (Join-Path $build "launcher-tests.txt") -ErrorAction SilentlyContinue
   Get-Content (Join-Path $build "Testing/Temporary/LastTest.log") -ErrorAction SilentlyContinue
   Get-Content (Join-Path $build "launcher-test-results.xml") -ErrorAction SilentlyContinue
   throw "Qt launcher tests failed."
