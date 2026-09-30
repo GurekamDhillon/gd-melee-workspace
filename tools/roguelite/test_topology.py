@@ -48,6 +48,12 @@ local encoded=Codec.encode(sample); assert(encoded,'manifest did not encode')
 assert(encoded==Codec.encode(t:generate(424242)))
 local decoded=assert(Codec.decode(encoded))
 assert(Top.signature(decoded)==Top.signature(sample))
+assert(sample.stream_versions and sample.stream_versions.topology==1,'stream versions missing')
+-- A saved manifest from another catalogue version is preserved as data; only
+-- regeneration is refused, so an update cannot relocate a saved doorway.
+local stale=Codec.decode(encoded); stale.catalogue_version=0
+assert(Codec.decode(Codec.encode(stale)).catalogue_version==0)
+local sv,swhy=Top.validate(t,stale); assert(not sv and tostring(swhy):find('version mismatch',1,true))
 -- Locks/keys appear and are always satisfiable; the key is on a mandatory room.
 local locked,keys=0,0
 for seed=1,300 do
