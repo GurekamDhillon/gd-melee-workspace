@@ -35,7 +35,8 @@ int main(int argc, char **argv) {
         if (root.isEmpty()) {
             root = app.applicationDirPath();
             // Packaged layout: <game>/launcher/bin/gd-melee-launcher.
-            if (QFileInfo(root).fileName() == "bin" && QFileInfo(QDir(root).absoluteFilePath("..")).fileName() == "launcher") root = QDir(root).absoluteFilePath("../..");
+            QDir parent(root);
+            if (parent.dirName() == "bin" && parent.cdUp() && parent.dirName() == "launcher" && parent.cdUp()) root = parent.absolutePath();
         }
         root = QDir::cleanPath(QFileInfo(root).absoluteFilePath());
         auto user = launcher::pickUserDir(root, parser.value("data-dir")); auto settings = launcher::Settings::load(user);
