@@ -82,7 +82,7 @@ runtime/Windows/hardware. These remain `planned`/`blocked`, not claimed.
 | G1-4 | Room/encounter/reward catalogue contracts | worker | — | automated-pass | `room_catalogue.lua`, `encounter_catalogue.lua`; `test_catalogue.py` | initial finite catalogue is a subset of the §3 target |
 | G1-5 | TBD1/TBD2 migration via frozen v1 generator | worker | G1-2, G1-3 | automated-pass | `legacy.lua`; `test_legacy.py` (incl. dev fixtures) | runtime still uses its own loader |
 | G2-1 | Variable connected topology, branches, returns, loops | worker | G1-1, G1-4 | automated-pass | `topology.lua`; `test_topology.py` (1000 seeds + adversarial) | not yet spawned in-engine |
-| G2-2 | Progression validator (locks/keys/reachability) | worker | G2-1 | automated-pass | `progression.lua`; `test_topology.py` | persistent keys first; consumable search bounded |
+| G2-2 | Progression validator (locks/keys/reachability) | worker | G2-1 | automated-pass | `progression.lua`; `test_topology.py`, `test_progression.py` | objective bitmask fixed to be idempotent; consumable keys need `grants_consumable` |
 | G2-3 | Save/load preserves resolved manifest | worker | G1-3, G2-1 | automated-pass | `checkpoint` + topology round-trip tests | runtime adapter pending |
 | G2-4 | Graph inspector shows distinct routes | worker | G2-1 | automated-pass | `inspector.lua`; `test_inspector.py` | text evidence, not in-engine |
 | G3-* | Certified physical room templates + mobility | worker | G2-1 | planned | — | needs authored geometry / in-engine clips |
