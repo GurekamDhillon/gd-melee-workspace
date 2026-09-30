@@ -116,12 +116,12 @@ def _plan_specs():
             'segments': [
                 {'id': 'drop_through', 'kind': 'drop', 'source': None, 'target': None,
                  'fixture': {'x': 20, 'y': 0}, 'natural': True, 'requires_fall': True,
-                 'probes': [[walk(-1, 90)], [down(30), neutral(30)]],
+                 'probes': [[walk(-1, 40)], [down(20), neutral(40)]],
                  'note': 'walk over the real 13-unit floor opening and fall through to y=-6 trigger'},
                 {'id': 'drop_one_way', 'kind': 'drop-one-way', 'source': None, 'target': None,
                  'fixture': {'x': 20, 'y': 0}, 'natural': True, 'requires_fall': True,
                  'forbid_climb_back': True,
-                 'probes': [[walk(-1, 90), neutral(120)]],
+                 'probes': [[walk(-1, 40), neutral(60)]],
                  'note': 'after falling, the fighter may not climb back onto the lane floor'},
                 {'id': 'safe_incoming_bottom', 'kind': 'safe-arrival', 'source': 'branch_b', 'target': 'out',
                  'natural': True, 'probes': [[walk(1, 200)]],
@@ -393,13 +393,20 @@ def classify_trace(result, trace, *, floor_y, target=None, requires_fall=False,
                    forbid_climb_back=False,
                    arrival_tolerance=10.0, height_tolerance=6.0, fall_margin=30.0,
                    stuck_frames=90, air_epsilon=0.05):
-    """Pure classification of a bounded trace. Never implies certification."""
+    """Pure classification of a bounded trace. Never implies certification.
+
+    A fall is only a pass for an expected drop (``requires_fall``); an
+    unexpected fall on an ascent/traversal segment is a hard failure.
+    """
     samples = [dict(s) for s in trace]
     checks = {
         'sampled': len(samples),
         'truncated': bool(result.get('truncated')),
         'arrived': False,
         'fell': False,
+        'expected_fall': bool(requires_fall),
+        'unexpected_fall': False,
+        'descended': False,
         'climb_back': False,
         'stuck': False,
         'airborne_frames': sum(1 for s in samples if s.get('airborne')),
@@ -419,8 +426,14 @@ def classify_trace(result, trace, *, floor_y, target=None, requires_fall=False,
                 checks['arrived'] = True
                 break
     # falling: a sample well below the lane floor
-    if requires_fall or checks['min_y'] is not None:
-        checks['fell'] = checks['min_y'] is not None and checks['min_y'] < (floor_y - fall_margin)
+    checks['fell'] = checks['min_y'] is not None and checks['min_y'] < (floor_y - fall_margin)
+    if checks['fell'] and not requires_fall:
+        checks['unexpected_fall'] = True
+    # descent: an actual airborne downward step (not just a low teleport sample)
+    for previous, current in zip(samples, samples[1:]):
+        if current.get('airborne') and (current.get('vy', 0) < 0 or current['y'] < previous['y'] - 0.5):
+            checks['descended'] = True
+            break
     # one-way: after the fall, a grounded sample back at lane-floor height means a climb back
     if requires_fall and checks['fell']:
         for index, current in enumerate(samples):
@@ -450,13 +463,19 @@ def classify_trace(result, trace, *, floor_y, target=None, requires_fall=False,
         checks['manual_review'].append('grounded->airborne with non-positive vy: inspect for a seam pop')
     if checks['truncated']:
         checks['manual_review'].append('trace window was truncated; rerun with a longer window')
+    if checks['unexpected_fall']:
+        checks['manual_review'].append('fighter fell below the lane floor on a non-drop segment')
     if forbid_climb_back and checks['climb_back']:
         status = 'one-way-violated'
         checks['manual_review'].append('fighter returned to the lane floor after a drop')
     elif requires_fall and not checks['fell']:
         status = 'failed-no-fall'
-    elif checks['fell']:
+    elif requires_fall and not checks['descended']:
+        status = 'failed-no-descent'
+    elif requires_fall:
         status = 'fell'
+    elif checks['unexpected_fall']:
+        status = 'unexpected-fall'
     elif target is not None and checks['arrived']:
         status = 'arrived'
     elif checks['stuck']:
@@ -466,18 +485,32 @@ def classify_trace(result, trace, *, floor_y, target=None, requires_fall=False,
     return {'status': status, 'checks': checks, 'manual_review': checks['manual_review']}
 
 
+# A status may never silently disappear from the verdict summary. 'fell' is a
+# pass only because classify_trace emits it for expected drops; unexpected falls
+# are 'unexpected-fall'.
+PASS_STATUSES = ('arrived', 'fell')
+FAILED_STATUSES = ('failed-no-fall', 'failed-no-descent', 'one-way-violated',
+                   'unexpected-fall', 'stuck', 'error')
+INCONCLUSIVE_STATUSES = ('inconclusive', 'no-samples', 'fixture-only', 'placement-refused')
+
+
 def recipe_verdict(recipe, version, outcomes, *, native_run):
     """The verdict never claims certification. Manual review is always required."""
-    passed = [o for o in outcomes if o.get('status') in ('arrived', 'fell')]
-    failed = [o['id'] for o in outcomes if o.get('status') in ('failed-no-fall', 'stuck', 'one-way-violated')]
-    inconclusive = [o['id'] for o in outcomes if o.get('status') == 'inconclusive']
+    passed = [o for o in outcomes if o.get('status') in PASS_STATUSES]
+    failed = [o['id'] for o in outcomes if o.get('status') in FAILED_STATUSES]
+    inconclusive = [o['id'] for o in outcomes if o.get('status') in INCONCLUSIVE_STATUSES]
+    known = set(PASS_STATUSES) | set(FAILED_STATUSES) | set(INCONCLUSIVE_STATUSES)
+    unclassified = [o['id'] for o in outcomes if o.get('status') not in known]
+    inconclusive.extend(unclassified)  # an unknown status is never a pass
     return {
         'schema': SCHEMA, 'recipe': recipe, 'recipe_version': version,
         'certified': False, 'auto_certification': 'forbidden',
         'verdict': 'manual-review-required' if native_run else 'pending-native-run',
         'native_run_performed': bool(native_run),
         'segments_total': len(outcomes), 'segments_with_observation': len(passed),
+        'passed_segments': [o['id'] for o in passed],
         'failed_segments': failed, 'inconclusive_segments': inconclusive,
+        'unclassified_segments': unclassified,
         'requires_human_review': True,
         'note': ('A human/coordinator must review captures and observations. '
                  'A successful trace is not certification.'),
@@ -584,8 +617,9 @@ class CertificationDriver:
         raise UnsupportedRun('certification match did not become ready')
 
     # -- recipe lifecycle -----------------------------------------------------------
-    def build(self, template, timeout=30):
-        output = self.c.cmd('certify_build ' + template, 'native_build')
+    def build(self, template, clean=False, timeout=30):
+        command = 'certify_build ' + template + (' clean' if clean else '')
+        output = self.c.cmd(command, 'native_build')
         if 'certify_missing_api' in output and 'certify_build_start' not in output:
             names = [r['name'] for r in parse_rows(output, 'certify_missing_api')]
             raise MissingAPI('missing native API: ' + ', '.join(names))
@@ -605,31 +639,69 @@ class CertificationDriver:
             self.c.sleep(0.25)
         raise UnsupportedRun('build timed out (phase never reached ready)')
 
-    def fixture_place(self, socket):
-        return self.c.cmd('certify_place %s' % socket, 'explicit_fixture')
+    def fixture_place(self, socket=None, x=None, y=None, *, timeout=12.0, interval=0.5):
+        """Fixture teleport with bounded retry for a dead/respawning player.
 
-    def fixture_place_at(self, x, y):
-        return self.c.cmd('certify_place_at %.3f %.3f' % (x, y), 'explicit_fixture')
-
-    def arm(self, socket, label):
-        return self.c.cmd('certify_arm %s %s' % (socket, label), 'observation')
+        A refused teleport is an operational outcome, never a probe failure; the
+        Lua probe keeps its constructed phase/isolation. Unknown sockets and
+        usage errors fail fast because retrying cannot help.
+        """
+        deadline = self.c.clock() + timeout
+        attempts, last = 0, ''
+        while self.c.clock() <= deadline:
+            attempts += 1
+            if x is not None:
+                last = self.c.cmd('certify_place_at %.3f %.3f' % (x, y), 'explicit_fixture')
+            else:
+                last = self.c.cmd('certify_place %s' % socket, 'explicit_fixture')
+            rows = parse_rows(last, 'certify_place')
+            if rows and rows[-1].get('ok') is True:
+                return {'ok': True, 'attempts': attempts, 'row': rows[-1]}
+            reason = rows[-1].get('reason') if rows else None
+            if reason in ('unknown_socket', 'no_arrival', 'usage'):
+                return {'ok': False, 'attempts': attempts, 'reason': reason, 'output': last}
+            self.c.sleep(interval)
+        return {'ok': False, 'attempts': attempts, 'reason': 'timeout', 'output': last}
 
     def arm_window(self, label, target=None):
-        """Open a window; ``target`` is an arrival region or None for a pure fall."""
+        """Open a window; ``target`` is an arrival region or None for a pure fall.
+
+        A window that did not open must never look like a successful arm.
+        """
         if target is None:
-            return self.c.cmd('certify_arm_coords %s none none' % label, 'observation')
-        return self.c.cmd('certify_arm_coords %s %s %s' % (label, target['x'], target['y']), 'observation')
+            output = self.c.cmd('certify_arm_coords %s none none' % label, 'observation')
+        else:
+            output = self.c.cmd('certify_arm_coords %s %s %s' % (label, target['x'], target['y']),
+                                'observation')
+        rows = parse_rows(output, 'certify_arm')
+        if 'certify_error' in output or not rows:
+            raise UnsupportedRun('arm refused: ' + output.strip())
+        return rows[-1]
 
     def result(self):
+        """Return (header, rows) or (None, []) when the result header is absent.
+
+        The socket protocol answering ``ok`` is not enough: a missing Lua header
+        means the command failed and must not be treated as a pass.
+        """
         output = self.c.cmd('certify_result', 'observation')
         summary = parse_rows(output, 'certify_result')
-        rows = parse_rows(output, 'certify_trace')
-        # Keep each response below the native console's bounded output buffer.
-        count = min(900, int(summary[-1].get('samples', 0))) if summary else 0
-        for offset in range(len(rows) + 1, count + 1, 20):
+        if not summary or summary[-1].get('header') != 1 or 'certify_error' in output:
+            return None, []
+        count = min(900, int(summary[-1].get('samples') or 0))
+        by_index = {int(r['i']): r for r in parse_rows(output, 'certify_trace') if 'i' in r}
+        # Page the whole bounded range in <=20-row responses so the native 16 KiB
+        # buffer never truncates a row.
+        offset = 1
+        while offset <= count:
             page = self.c.cmd('certify_trace %d 20' % offset, 'observation_page')
-            rows.extend(parse_rows(page, 'certify_trace'))
-        return summary, rows
+            if 'certify_error' in page:
+                break
+            for row in parse_rows(page, 'certify_trace'):
+                if 'i' in row:
+                    by_index[int(row['i'])] = row
+            offset += 20
+        return summary[-1], [by_index[i] for i in sorted(by_index)]
 
     def sample(self):
         rows = parse_rows(self.c.cmd('certify_sample'), 'certify_sample')
@@ -638,14 +710,32 @@ class CertificationDriver:
     def bounds(self):
         return parse_rows(self.c.cmd('certify_bounds'), 'certify_bounds')
 
-    def capture(self, name):
+    def preview_camera(self, mode='wide'):
+        output = self.c.cmd('certify_camera %s' % mode, 'preview_fixture')
+        self.c.sleep(0.2)  # let the camera pose reach a presented frame
+        rows = parse_rows(output, 'certify_camera')
+        return rows[-1] if rows else None
+
+    def capture(self, name, timeout=6.0):
+        """Request a PNG and confirm a fresh file appears; never reuse a stale one."""
         if not self.capture_dir:
             return None
         self.capture_dir.mkdir(parents=True, exist_ok=True)
-        # The native process may have a different working directory.
         path = (self.capture_dir / name).resolve()
+        try:
+            path.unlink()
+        except FileNotFoundError:
+            pass
         self.c.cmd('shot %s' % path, 'evidence_capture')
-        return str(path)
+        deadline = self.c.clock() + timeout
+        while self.c.clock() < deadline:
+            if path.is_file() and path.stat().st_size > 0:
+                self.c.note({'category': 'capture_written', 'path': str(path),
+                             'bytes': path.stat().st_size})
+                return str(path)
+            self.c.sleep(0.1)
+        self.c.note({'category': 'capture_failure', 'path': str(path), 'reason': 'png not written'})
+        return None
 
     # -- controller replay ----------------------------------------------------------
     def _render(self, op, port):
@@ -660,20 +750,62 @@ class CertificationDriver:
             return 'input %d DOWN %d' % (port, op[1])
         raise ValueError('unknown probe op: %r' % (op,))
 
-    def replay(self, program, *, capture_prefix=None):
+    def _observe_stop(self, target, floor_y, requires_fall, stop_margin):
+        """Poll the live fighter and decide whether a bounded replay should stop.
+
+        Walking is never allowed to run off the room into a KO: it stops at the
+        arrival region, or as soon as it falls below the lane floor.
+        """
+        row = self.sample()
+        if not row:
+            return 'no-fighter'
+        x, y, air = row.get('x'), row.get('y'), bool(row.get('airborne'))
+        if target is not None and not air and x is not None and y is not None:
+            if abs(x - target['x']) < 10 and abs(y - target['y']) < 6:
+                return 'arrived'
+        if y is not None and y < floor_y - stop_margin:
+            return 'out-of-bounds'
+        return None
+
+    def replay_until(self, program, *, target=None, floor_y=0.0, requires_fall=False,
+                     stop_margin=40.0, capture_prefix=None, chunk=20):
+        """Replay ordinary pad samples in bounded chunks, stopping on an outcome.
+
+        The pad is claimed on port 1 only. No teleport or debug flight is issued
+        during the trace; only the initial fixture placement precedes it.
+        """
         if not self.pad_owned:
             self.c.cmd('input %d none 1' % self.port, 'controller_sample')
             self.pad_owned = True
-        frames_done = 0
-        for index, op in enumerate(program):
-            self.c.cmd(self._render(op, self.port), 'controller_sample')
-            frames = op[-1] if isinstance(op[-1], int) else 1
-            frames_done += frames
-            self._sleep_frames(frames)
-            if capture_prefix and self.capture_stride > 0:
-                self.capture('%s_%03d.png' % (capture_prefix, frames_done))
+        frames_done, stopped = 0, None
+        for op in program:
+            kind = op[0]
+            total = op[-1] if isinstance(op[-1], int) else 1
+            if kind == 'walk':
+                direction, remaining = op[1], total
+                while remaining > 0:
+                    step = min(chunk, remaining)
+                    self.c.cmd('input %d none %d %d 0' % (self.port, step, 127 * direction), 'controller_sample')
+                    self._sleep_frames(step)
+                    frames_done += step
+                    remaining -= step
+                    if capture_prefix and self.capture_stride > 0:
+                        self.capture('%s_%03d.png' % (capture_prefix, frames_done))
+                    stopped = self._observe_stop(target, floor_y, requires_fall, stop_margin)
+                    if stopped:
+                        break
+            else:
+                self.c.cmd(self._render(op, self.port), 'controller_sample')
+                self._sleep_frames(total)
+                frames_done += total
+                if capture_prefix and self.capture_stride > 0:
+                    self.capture('%s_%03d.png' % (capture_prefix, frames_done))
+                stopped = self._observe_stop(target, floor_y, requires_fall, stop_margin)
+            if stopped:
+                break
         self.c.cmd('input %d none 2' % self.port, 'controller_sample')
         self._sleep_frames(2)
+        return stopped
 
     def release(self):
         if self.pad_owned:
@@ -700,30 +832,44 @@ class CertificationDriver:
         if not segment.get('natural', True):
             return {'id': segment['id'], 'status': 'fixture-only', 'checks': {},
                     'manual_review': ['segment is inspection-only']}
-        fixture = segment.get('fixture')
-        if fixture:
-            self.fixture_place_at(fixture['x'], fixture['y'])
-        elif segment.get('source'):
-            self.fixture_place(segment['source'])
-        if capture_prefix:
-            self.capture('%s_start.png' % capture_prefix)
-        self.arm_window(segment['id'], target)
         outcome = {'id': segment['id'], 'status': 'inconclusive', 'checks': {}, 'manual_review': []}
-        for probe in segment.get('probes', []):
-            self.replay(probe, capture_prefix=capture_prefix)
+        for attempt, probe in enumerate(segment.get('probes', []), start=1):
+            # Fresh fixture + fresh window for every attempt: a prior path must
+            # never contaminate this trace.
+            fixture = segment.get('fixture')
+            if fixture:
+                placed = self.fixture_place(x=fixture['x'], y=fixture['y'])
+            elif segment.get('source'):
+                placed = self.fixture_place(socket=segment['source'])
+            else:
+                placed = {'ok': False, 'reason': 'no_fixture'}
+            if not placed.get('ok'):
+                outcome = {'id': segment['id'], 'status': 'placement-refused', 'checks': {},
+                           'manual_review': ['fixture placement refused: ' + str(placed.get('reason') or placed.get('output'))]}
+                continue
+            attempt_prefix = '%s_a%d' % (capture_prefix, attempt) if capture_prefix else None
+            if attempt_prefix:
+                self.capture('%s_start.png' % attempt_prefix)
+            self.arm_window(segment['id'], target)
+            self.replay_until(probe, target=target, floor_y=floor_y,
+                              requires_fall=segment.get('requires_fall', False),
+                              capture_prefix=attempt_prefix)
             summary, trace = self.result()
-            rows = [dict(row) for row in trace]
+            if summary is None:
+                outcome = {'id': segment['id'], 'status': 'error', 'checks': {},
+                           'manual_review': ['missing certify_result header']}
+                continue
             samples = [{'x': r.get('x'), 'y': r.get('y'), 'vy': r.get('vy'),
-                        'airborne': bool(r.get('airborne')), 'frame': r.get('frame')} for r in rows]
-            outcome = classify_trace(summary[-1] if summary else {}, samples,
-                                     floor_y=floor_y, target=target,
+                        'airborne': bool(r.get('airborne')), 'frame': r.get('frame')}
+                       for r in (dict(row) for row in trace)]
+            outcome = classify_trace(summary, samples, floor_y=floor_y, target=target,
                                      requires_fall=segment.get('requires_fall', False),
                                      forbid_climb_back=segment.get('forbid_climb_back', False))
             outcome['id'] = segment['id']
-            if outcome['status'] in ('arrived', 'fell'):
+            if attempt_prefix:
+                self.capture('%s_end.png' % attempt_prefix)
+            if outcome['status'] in PASS_STATUSES:
                 break
-        if capture_prefix:
-            self.capture('%s_end.png' % capture_prefix)
         return outcome
 
 
@@ -765,8 +911,12 @@ class EvidenceLog:
 
 
 def run_certification(app_dir, *, port=51700, templates=None, profiles=None, log_path=None,
-                      capture_dir=None, connect=None):
-    """Drive a running match. Returns the summary dict; never certifies."""
+                      capture_dir=None, connect=None, clean=False, camera=None):
+    """Drive a running match. Returns the summary dict; never certifies.
+
+    Any console timeout, disconnect or command failure is recorded and returned
+    in the summary instead of escaping as a traceback with no JSON.
+    """
     templates = list(templates or REQUIRED_TEMPLATES)
     profile_ids = list(profiles or [p['id'] for p in MOBILITY_PROFILES])
     profiles_by_id = {p['id']: p for p in MOBILITY_PROFILES}
@@ -787,7 +937,8 @@ def run_certification(app_dir, *, port=51700, templates=None, profiles=None, log
     capture_root = Path(capture_dir) if capture_dir else Path(app_dir) / 'certification' / 'captures'
     summary = {'schema': SCHEMA, 'build': collect_build_info(app_dir),
                'log': str(log.path), 'captures': str(capture_root),
-               'recipes': {}, 'any_certified': False, 'errors': []}
+               'recipes': {}, 'any_certified': False, 'errors': [], 'failed': False,
+               'clean_preview': bool(clean), 'camera': camera, 'previews': []}
 
     owns_socket = connect is None
     if owns_socket:
@@ -795,13 +946,18 @@ def run_certification(app_dir, *, port=51700, templates=None, profiles=None, log
             sys.path.insert(0, str(GAME / 'pc/scripts'))
             from console import run  # noqa: E402
             return socket.create_connection(('127.0.0.1', port), timeout=10), run
+    sock = None
     try:
         sock, console_run = connect()
         reader = sock.makefile('r')
         reader.readline()
 
         def command(text, category):
-            output, ok = console_run(reader, sock, text)
+            try:
+                output, ok = console_run(reader, sock, text)
+            except Exception as error:
+                log.write(category='console_failure', command=text, error=repr(error))
+                raise UnsupportedRun('console I/O failure: ' + repr(error))
             text_out = '\n'.join(output)
             log.write(category=category, command=text, ok=ok, output=text_out)
             if not ok:
@@ -828,10 +984,19 @@ def run_certification(app_dir, *, port=51700, templates=None, profiles=None, log
                 outcomes = []
                 try:
                     driver.launch_scene(profile['fighter'], profile.get('costume', 0))
-                    status = driver.build(template)
+                    status = driver.build(template, clean=clean)
                     floor_y = status.get('floor_y', 0)
                     bounds = driver.bounds()
                     log.write(category='bounds', template=template, profile=profile_id, rows=bounds)
+                    if camera:
+                        # Preview camera is a labelled fixture; it is attached back
+                        # before any traversal input and never used as evidence.
+                        driver.preview_camera(camera)
+                        if camera == 'wide':
+                            preview = driver.capture('%s_%s_preview.png' % (template, profile_id))
+                            if preview:
+                                summary['previews'].append(preview)
+                        driver.preview_camera('auto')
                     targets = {s['id']: None for s in plan['segments']}
                     for row in plan['sockets']:
                         x = row.get('rx') if row.get('rx') is not None else row.get('ax')
@@ -848,9 +1013,13 @@ def run_certification(app_dir, *, port=51700, templates=None, profiles=None, log
                 except (MissingAPI, UnsupportedRun) as error:
                     summary['errors'].append('%s/%s: %s' % (template, profile_id, error))
                     outcomes.append({'id': 'setup', 'status': 'error', 'checks': {}, 'manual_review': [str(error)]})
+                except Exception as error:  # console timeout, decode error, anything
+                    summary['errors'].append('%s/%s: %r' % (template, profile_id, error))
+                    outcomes.append({'id': 'setup', 'status': 'error', 'checks': {}, 'manual_review': [repr(error)]})
                 finally:
                     cleanup_errors = driver.cleanup()
                     if cleanup_errors:
+                        summary['errors'].append('%s/%s cleanup: %s' % (template, profile_id, cleanup_errors))
                         log.write(category='cleanup_failure', template=template, profile=profile_id,
                                   errors=cleanup_errors)
                 verdict = recipe_verdict(plan['recipe'], plan['recipe_version'], outcomes, native_run=True)
@@ -859,8 +1028,12 @@ def run_certification(app_dir, *, port=51700, templates=None, profiles=None, log
                 log.write(category='recipe_verdict', template=template, profile=profile_id, verdict=verdict)
             summaries = [p['verdict'] for p in summary['recipes'][template]['profiles'].values()]
             summary['recipes'][template]['verdict'] = _aggregate_verdict(plan, summaries)
+    except Exception as error:
+        summary['failed'] = True
+        summary['errors'].append('run aborted: ' + repr(error))
+        log.write(category='run_failure', error=repr(error))
     finally:
-        if owns_socket and 'sock' in locals():
+        if owns_socket and sock is not None:
             try:
                 sock.close()
             except Exception:
@@ -916,6 +1089,10 @@ def main(argv=None):
     run.add_argument('--log', type=Path)
     run.add_argument('--capture-dir', type=Path)
     run.add_argument('--summary', type=Path)
+    run.add_argument('--clean-preview', action='store_true',
+                     help='hide diagnostic collision slabs for attractive PNGs (collision unchanged)')
+    run.add_argument('--camera', choices=('auto', 'wide'), default=None,
+                     help='preview-only camera for captures; restored before traversal')
 
     args = parser.parse_args(argv)
     if args.action == 'inspect':
@@ -957,15 +1134,23 @@ def main(argv=None):
         if os.environ.get('MELEE_FPS', '').strip().lower() == 'u':
             print('refusing to run: MELEE_FPS=u is uncapped; certification needs normal speed', file=sys.stderr)
             return 2
-        summary = run_certification(args.app_dir, port=args.port,
-                                    templates=args.recipe or list(REQUIRED_TEMPLATES),
-                                    profiles=args.profile or [p['id'] for p in MOBILITY_PROFILES],
-                                    log_path=args.log, capture_dir=args.capture_dir)
+        summary = None
+        try:
+            summary = run_certification(args.app_dir, port=args.port,
+                                        templates=args.recipe or list(REQUIRED_TEMPLATES),
+                                        profiles=args.profile or [p['id'] for p in MOBILITY_PROFILES],
+                                        log_path=args.log, capture_dir=args.capture_dir,
+                                        clean=args.clean_preview, camera=args.camera)
+        except Exception as error:
+            # A traceback with no machine-readable summary is not acceptable:
+            # write the failure evidence and return non-zero.
+            summary = {'schema': SCHEMA, 'errors': ['run aborted: ' + repr(error)],
+                       'failed': True, 'any_certified': False, 'recipes': {}}
         if args.summary:
             args.summary.parent.mkdir(parents=True, exist_ok=True)
             args.summary.write_text(json.dumps(summary, indent=2, sort_keys=True) + '\n')
         _print_json(summary)
-        return 0 if not summary['errors'] else 1
+        return 0 if not summary.get('errors') else 1
     return 2
 
 

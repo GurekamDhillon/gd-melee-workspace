@@ -195,6 +195,23 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual(result['status'], 'one-way-violated')
         self.assertTrue(result['checks']['climb_back'])
 
+    def test_unexpected_fall_on_ascent_is_a_failure(self):
+        result = certify.classify_trace({'truncated': False},
+                                        trace((20, 0, 0, False), (0, -40, -3, True), (0, -80, -3, True)),
+                                        floor_y=0, target={'x': 39, 'y': 26})
+        self.assertEqual(result['status'], 'unexpected-fall')
+        self.assertTrue(result['checks']['unexpected_fall'])
+        self.assertNotIn(result['status'], certify.PASS_STATUSES)
+
+    def test_drop_needs_actual_downward_motion(self):
+        # below the floor, but never airborne and never descending: a teleport sample
+        result = certify.classify_trace({'truncated': False},
+                                        trace((20, 0, 0, False), (0, -40, 0, False)),
+                                        floor_y=0, requires_fall=True)
+        self.assertEqual(result['status'], 'failed-no-descent')
+        self.assertTrue(result['checks']['fell'])
+        self.assertFalse(result['checks']['descended'])
+
     def test_seam_pop_candidate_flagged_for_manual_review(self):
         result = certify.classify_trace({'truncated': False},
                                         trace((-10, 0, 0, False), (-9, 0, 0, True), (-8, 0, 0, False)),
@@ -227,6 +244,32 @@ class VerdictTests(unittest.TestCase):
         verdict = certify.recipe_verdict('x', 2, outcomes, native_run=True)
         self.assertEqual(verdict['failed_segments'], ['stuck_seg'])
         self.assertEqual(verdict['inconclusive_segments'], ['maybe'])
+
+    def test_no_samples_error_and_fixture_only_never_vanish(self):
+        outcomes = [{'id': 'empty', 'status': 'no-samples'},
+                    {'id': 'boom', 'status': 'error'},
+                    {'id': 'inspect', 'status': 'fixture-only'},
+                    {'id': 'nope', 'status': 'totally-unknown'}]
+        verdict = certify.recipe_verdict('x', 2, outcomes, native_run=True)
+        self.assertEqual(verdict['segments_with_observation'], 0)
+        self.assertEqual(verdict['failed_segments'], ['boom'])
+        self.assertEqual(sorted(verdict['inconclusive_segments']),
+                         ['empty', 'inspect', 'nope'])
+        self.assertEqual(verdict['unclassified_segments'], ['nope'])
+
+    def test_unexpected_fall_is_not_a_pass(self):
+        outcomes = [{'id': 'ascent', 'status': 'unexpected-fall'},
+                    {'id': 'drop', 'status': 'fell'}]
+        verdict = certify.recipe_verdict('x', 2, outcomes, native_run=True)
+        self.assertEqual(verdict['passed_segments'], ['drop'])
+        self.assertIn('ascent', verdict['failed_segments'])
+
+    def test_every_known_status_is_bucketed(self):
+        for status in certify.PASS_STATUSES + certify.FAILED_STATUSES + certify.INCONCLUSIVE_STATUSES:
+            verdict = certify.recipe_verdict('x', 2, [{'id': status, 'status': status}], native_run=True)
+            listed = (verdict['passed_segments'] + verdict['failed_segments']
+                      + verdict['inconclusive_segments'])
+            self.assertIn(status, listed, status + ' vanished from the verdict')
 
 
 class DriverRefusalTests(unittest.TestCase):
@@ -302,10 +345,13 @@ class DriverStateTests(unittest.TestCase):
         self.assertEqual(commands.count('= gd.match().active'), 5)
         self.assertEqual(commands[-1], "gd.cpu_mode(2, 'stand')")
 
+    SAMPLE = 'certify_sample port=1 x=0 y=0 vx=0 vy=0 airborne=false action=14 facing=1'
+
     def test_replay_renders_real_pad_inputs_on_one_port(self):
-        console = make_console({})
+        console = make_console({'certify_sample': self.SAMPLE})
         driver = certify.CertificationDriver(console, sleep_frames=lambda n: None)
-        driver.replay([('walk', 1, 60), ('neutral', 10), ('button', 'A', 4), ('down', 30)])
+        driver.replay_until([('walk', 1, 60), ('neutral', 10), ('button', 'A', 4), ('down', 30)],
+                            target=None, floor_y=-1000.0, chunk=1000)
         rendered = [c['command'] for c in console.calls]
         self.assertIn('input 1 none 60 127 0', rendered)
         self.assertIn('input 1 none 10', rendered)
@@ -313,10 +359,33 @@ class DriverStateTests(unittest.TestCase):
         self.assertIn('input 1 DOWN 30', rendered)
         self.assertTrue(all('input 1' in c for c in rendered if c.startswith('input')))
 
-    def test_cleanup_releases_pad_and_calls_native_cleanup(self):
-        console = make_console({'certify_cleanup': 'certify_cleanup errors=0'})
+    def test_replay_stops_at_the_arrival_region(self):
+        # first poll far away, second poll on target; walk should stop after 2 chunks
+        samples = iter(['certify_sample port=1 x=-40 y=0 vx=0 vy=0 airborne=false action=14 facing=1',
+                        'certify_sample port=1 x=39 y=26 vx=0 vy=0 airborne=false action=14 facing=1'])
+        console = make_console({'certify_sample': lambda t: next(samples)})
         driver = certify.CertificationDriver(console, sleep_frames=lambda n: None)
-        driver.replay([('walk', 1, 10)])
+        stopped = driver.replay_until([('walk', 1, 200)], target={'x': 39, 'y': 26},
+                                      floor_y=0.0, chunk=20)
+        self.assertEqual(stopped, 'arrived')
+        walks = [c['command'] for c in console.calls if c['command'].startswith('input 1 none 20')]
+        self.assertEqual(len(walks), 2)
+
+    def test_replay_stops_when_it_would_leave_the_room(self):
+        samples = iter(['certify_sample port=1 x=0 y=-50 vx=0 vy=-3 airborne=true action=14 facing=1'])
+        console = make_console({'certify_sample': lambda t: next(samples)})
+        driver = certify.CertificationDriver(console, sleep_frames=lambda n: None)
+        stopped = driver.replay_until([('walk', 1, 400)], target={'x': 39, 'y': 26},
+                                      floor_y=0.0, chunk=20)
+        self.assertEqual(stopped, 'out-of-bounds')
+        walks = [c['command'] for c in console.calls if c['command'].startswith('input 1 none 20')]
+        self.assertEqual(len(walks), 1)
+
+    def test_cleanup_releases_pad_and_calls_native_cleanup(self):
+        console = make_console({'certify_cleanup': 'certify_cleanup errors=0',
+                                'certify_sample': self.SAMPLE})
+        driver = certify.CertificationDriver(console, sleep_frames=lambda n: None)
+        driver.replay_until([('walk', 1, 10)], target=None, floor_y=-1000.0, chunk=1000)
         errors = driver.cleanup()
         rendered = [c['command'] for c in console.calls]
         self.assertIn('gd.release_pad(1)', rendered)
@@ -331,27 +400,114 @@ class DriverStateTests(unittest.TestCase):
 
     def test_segment_uses_fixture_about_placement_and_never_certifies(self):
         console = make_console({
+            'certify_place': 'certify_place ok=true x=20 y=0 fixture=true',
             'certify_arm': 'certify_arm label=drop socket=branch_b target_x=39 target_y=26 floor_y=0 start_x=20 start_y=0 limit=900',
-            'certify_result': ('certify_result label=drop socket=branch_b target_x=39 target_y=26 floor_y=0 samples=2 truncated=false min_y=-40 max_y=0 air_frames=1 start_x=20 start_y=0\n'
+            'certify_sample': self.SAMPLE,
+            'certify_result': ('certify_result header=1 label=drop socket=branch_b target_x=39 target_y=26 floor_y=0 samples=2 truncated=false min_y=-40 max_y=0 air_frames=1 start_x=20 start_y=0\n'
                                'certify_trace i=1 frame=1 x=20 y=0 vx=-2 vy=0 airborne=false action=14\n'
                                'certify_trace i=2 frame=2 x=0 y=-40 vx=0 vy=-3 airborne=true action=14'),
         })
         driver = certify.CertificationDriver(console, sleep_frames=lambda n: None)
         segment = {'id': 'drop_through', 'natural': True, 'fixture': {'x': 20, 'y': 0},
                    'requires_fall': True, 'target': None, 'source': None, 'probes': [[('walk', -1, 10)]]}
-        outcome = driver.certify_segment(segment, None, 0.0)
+        outcome = driver.certify_segment(segment, None, 40.0)
         self.assertEqual(outcome['status'], 'fell')
         rendered = [c['command'] for c in console.calls]
         self.assertIn('certify_place_at 20.000 0.000', rendered)
         self.assertIn('certify_arm_coords drop_through none none', rendered)
 
     def test_arm_window_uses_socket_target_when_present(self):
-        console = make_console({})
+        console = make_console({'certify_arm': 'certify_arm label=ascent socket=window target_x=39 target_y=26 floor_y=0 start_x=0 start_y=0 limit=900'})
         driver = certify.CertificationDriver(console, sleep_frames=lambda n: None)
         driver.arm_window('ascent', {'x': 39.0, 'y': 26.0})
         self.assertIn('certify_arm_coords ascent 39.0 26.0', [c['command'] for c in console.calls])
         driver.arm_window('drop')
         self.assertIn('certify_arm_coords drop none none', [c['command'] for c in console.calls])
+
+    def test_arm_refusal_is_explicit(self):
+        console = make_console({'certify_error': 'certify_error where=arm_coords message=bad'})
+        driver = certify.CertificationDriver(console, sleep_frames=lambda n: None)
+        with self.assertRaises(certify.UnsupportedRun):
+            driver.arm_window('drop', None)
+
+    def test_result_without_header_is_an_error_not_a_pass(self):
+        console = make_console({'certify_result': 'certify_trace i=1 frame=1 x=39 y=26 vx=0 vy=0 airborne=false action=14'})
+        driver = certify.CertificationDriver(console, sleep_frames=lambda n: None)
+        summary, rows = driver.result()
+        self.assertIsNone(summary)
+        self.assertEqual(rows, [])
+
+    def test_fixture_place_retries_then_succeeds(self):
+        outputs = iter(['certify_place ok=false reason=refused x=1 y=2 fixture=true',
+                        'certify_place ok=true x=1 y=2 fixture=true'])
+        console = make_console({'certify_place': lambda t: next(outputs)})
+        driver = certify.CertificationDriver(console, sleep_frames=lambda n: None)
+        result = driver.fixture_place(socket='in', timeout=10.0, interval=0.5)
+        self.assertTrue(result['ok'])
+        self.assertEqual(result['attempts'], 2)
+
+    def test_fixture_place_unknown_socket_fails_fast(self):
+        console = make_console({'certify_place': 'certify_place ok=false reason=unknown_socket socket=x'})
+        driver = certify.CertificationDriver(console, sleep_frames=lambda n: None)
+        result = driver.fixture_place(socket='x', timeout=10.0)
+        self.assertFalse(result['ok'])
+        self.assertEqual(result['attempts'], 1)
+        self.assertEqual(result['reason'], 'unknown_socket')
+
+    def test_fixture_place_timeout_is_reported(self):
+        console = make_console({'certify_place': 'certify_place ok=false reason=refused'})
+        driver = certify.CertificationDriver(console, sleep_frames=lambda n: None)
+        result = driver.fixture_place(socket='in', timeout=1.0, interval=0.5)
+        self.assertFalse(result['ok'])
+        self.assertGreater(result['attempts'], 1)
+        self.assertEqual(result['reason'], 'timeout')
+
+    def test_capture_confirms_a_fresh_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp) / 'shot.png'
+
+            def command(text, category='observation'):
+                if text.startswith('shot '):
+                    target.write_bytes(b'png-bytes')
+                return ''
+
+            console = certify.Console(command, sleep=lambda s: None, clock=time.monotonic,
+                                      note=lambda r: None)
+            driver = certify.CertificationDriver(console, capture_dir=tmp, sleep_frames=lambda n: None)
+            self.assertEqual(driver.capture('shot.png', timeout=1.0), str(target.resolve()))
+
+    def test_capture_failure_is_not_evidence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            console = make_console({})
+            driver = certify.CertificationDriver(console, capture_dir=tmp, sleep_frames=lambda n: None)
+            self.assertIsNone(driver.capture('missing.png', timeout=0.2))
+
+
+class EvidenceTests(unittest.TestCase):
+    def test_run_certification_writes_summary_on_console_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            app = Path(tmp) / 'app'
+            (app / 'mods/roguelite_certification/scripts').mkdir(parents=True)
+            (app / 'mods/roguelite_certification/scripts/main.lua').write_text('-- installed')
+
+            class Reader:
+                def readline(self):
+                    return 'banner\n'
+
+            class Sock:
+                def makefile(self, mode='r'):
+                    return Reader()
+
+            def console_run(reader, sock, text):
+                raise OSError('console timeout')
+
+            summary = certify.run_certification(
+                app, connect=lambda: (Sock(), console_run),
+                log_path=Path(tmp) / 'evidence.jsonl', capture_dir=Path(tmp) / 'caps')
+            self.assertTrue(summary['failed'])
+            self.assertTrue(any('aborted' in e for e in summary['errors']))
+            self.assertFalse(summary['any_certified'])
+            self.assertTrue((Path(tmp) / 'evidence.jsonl').is_file())
 
 
 class ProbeModuleTests(unittest.TestCase):
@@ -360,39 +516,85 @@ class ProbeModuleTests(unittest.TestCase):
         self.assertIsNotNone(lua, 'Lua required')
         prelude = r'''
 local commands,logs,moves={},{},{}
-local removals,refuse,builds=0,true,0
-local scene,isolated
-gd={command=function(n,f)commands[n]=f end,log=function(s)logs[#logs+1]=s end,
- player=function()return {x=0,y=0,vx=0,vy=0,airborne=false,action=14}end,
+local removals,refuse,next_handle=0,false,0
+local scene,isolated,refuse_teleport=false,false
+local function handle() next_handle=next_handle+1; return next_handle end
+gd={api_version=1,command=function(n,f)commands[n]=f end,log=function(s)logs[#logs+1]=s end,
+ player=function()return {x=0,y=0,vx=0,vy=0,airborne=false,action=14,facing=1}end,
  match=function()return {active=true,frame=200}end,
- teleport=function(p,x,y)moves[#moves+1]={p,x,y}end,
+ teleport=function(p,x,y)if refuse_teleport then error('dead') end moves[#moves+1]={p,x,y}end,
+ model_load=function()return handle()end, model_spawn=function()return handle()end,
+ model_get=function(h)return {handle=h}end, model_despawn=function()return true end,
+ model_release=function()return true end,
+ hud_visible=function()return true end,
+ camera_detach=function()return true end,camera_set=function()return nil end,
+ camera_attach=function()return nil end,
  stage_remove=function()removals=removals+1;return not refuse end,
- stage_add_platform=function()builds=builds+1;if builds==1 then return 42 end return nil,'pool full' end,
+ stage_add_platform=function()return handle()end,
+ stage_add_line=function()return handle()end,
  scene_launch=function(s)scene=s end,
  stage_isolate=function(v)if v~=nil then isolated=v end return isolated end}
+function has(pat)for _,s in ipairs(logs)do if s:find(pat,1,true)then return true end end return false end
 '''
         checks = r'''
 commands.certify_scene('falco 2');assert(scene.p1=='falco/c2')
-commands.certify_place_at('-12.5 26');assert(moves[1][2]==-12.5 and moves[1][3]==28)
+
+-- 1. explicit phase: placement before a build is refused and does not poison state
+logs={};commands.certify_place_at('10 0')
+assert(probe.state.phase=='idle')
+assert(has('certify_place ok=false reason=phase_idle'))
+
+-- 2. real successful callbacks: preload -> visuals -> collision -> isolate
+commands.certify_build('branch_y')
+local guard=0
+while probe.state.phase~='ready' and probe.state.phase~='error' and guard<400 do guard=guard+1;on_tick()end
+assert(probe.state.phase=='ready','build failed: '..tostring(probe.state.error))
+assert(gd.stage_isolate()==true,'isolation not held after build')
+assert(#probe.state.handles==5,'unexpected collider count '..#probe.state.handles)
+
+-- 3. operational refusal preserves constructed phase and isolation (no fake arm)
+refuse_teleport=true
+logs={};commands.certify_place('in')
+assert(probe.state.phase=='ready','refused placement changed the phase')
+assert(gd.stage_isolate()==true,'refused placement lost isolation')
+assert(has('certify_place ok=false reason=refused'))
+refuse_teleport=false
+logs={};commands.certify_place('in')
+assert(has('certify_place ok=true'))
+assert(moves[#moves][1]==1)
+
+-- 4. clean preview changes only the diagnostic draw
+commands.certify_build('branch_y clean')
+assert(probe.state.clean==true,'clean flag not set')
+guard=0
+while probe.state.phase~='ready' and probe.state.phase~='error' and guard<400 do guard=guard+1;on_tick()end
+assert(probe.state.phase=='ready','clean rebuild failed')
+
+-- 5. camera preview is scoped to this mod and restored
+logs={};commands.certify_camera('wide')
+assert(probe.state.camera_mode=='wide');assert(has('certify_camera ok=true mode=wide'))
+commands.certify_camera('auto');assert(probe.state.camera_mode==nil)
+
+-- 6. arm + bounded result page + paging
 commands.certify_arm_coords('window 39 26')
 assert(probe.state.arm.target.x==39 and probe.state.arm.target.y==26)
 probe.state.phase='ready';for i=1,25 do on_frame()end
 logs={};commands.certify_result()
+assert(has('header=1'),'result header missing')
 local n=0;for _,s in ipairs(logs)do if s:match('^certify_trace i=')then n=n+1 end end
 assert(n==20,'result exceeded bounded trace page')
 logs={};commands.certify_trace('21 3');assert(#logs==3)
 assert(logs[1]:find('i=21 ',1,true) and logs[3]:find('i=23 ',1,true))
-local platform=gd.stage_add_platform
-gd.stage_add_platform=function()return 42 end
-probe.state.phase='collision';probe.state.plan={floor_segments={{left=0,right=1,y=0}},platforms={},lines={}}
-on_tick();assert(probe.state.phase=='isolate' and probe.state.collision_count==1)
-on_tick();assert(probe.state.phase=='ready' and gd.stage_isolate()==true)
-on_tick();assert(gd.stage_isolate()==true,'successful callback lost isolation')
-gd.stage_add_platform=platform;probe.state.handles={}
+
+-- 7. partial build keeps ownership; cleanup retries; teardown forgets stale handles
+local original=gd.stage_add_platform
+local calls=0
+gd.stage_add_platform=function()calls=calls+1;if calls==1 then return 42 end return nil,'pool full' end
 probe.state.phase='collision';probe.state.plan={floor_segments={{left=0,right=1,y=0},{left=1,right=2,y=0}},platforms={},lines={}}
 on_tick();assert(probe.state.phase=='error' and probe.state.handles[1]==42,'partial build lost ownership')
-probe.cleanup();assert(probe.state.handles[1]==42,'refused removal lost ownership')
+refuse=true;probe.cleanup();assert(probe.state.handles[1]==42,'refused removal lost ownership')
 refuse=false;probe.cleanup();assert(#probe.state.handles==0)
+gd.stage_add_platform=original
 local before=removals;probe.state.handles={9};on_match_end()
 assert(removals==before and #probe.state.handles==0,'native teardown retried stale handles')
 print('PASS')
