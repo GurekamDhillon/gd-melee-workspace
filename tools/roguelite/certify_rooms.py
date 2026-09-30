@@ -53,7 +53,8 @@ CERT_SRC = GAME / 'pc/scripts/examples/roguelite_certification'
 ROOM_KIT = ROOT / 'menu/out_roguelite/room-kit'
 SHARED_APP = (ROOT / '_build/agents/linux').resolve()
 MOD_ID = 'roguelite_certification'
-BUNDLE_MODULES = (('room_catalogue', 'RoomCatalogue'), ('room_recipes', 'RoomRecipes'), ('rooms', 'Rooms'))
+BUNDLE_MODULES = (('room_catalogue', 'RoomCatalogue'), ('room_recipes', 'RoomRecipes'),
+                  ('rooms', 'Rooms'), ('runtime_rooms', 'RuntimeRooms'))
 REQUIRED_KIT = (
     'bf_floor_2m', 'bf_floor_4m', 'bf_floor_end_trim', 'bf_floor_opening_4m',
     'bf_wall_solid_4m', 'bf_wall_doorway_4m', 'bf_wall_window_4m', 'bf_wall_side_return',

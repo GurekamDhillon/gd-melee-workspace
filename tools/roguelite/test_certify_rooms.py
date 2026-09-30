@@ -518,20 +518,33 @@ class ProbeModuleTests(unittest.TestCase):
 local commands,logs,moves={},{},{}
 local removals,refuse,next_handle=0,false,0
 local scene,isolated,refuse_teleport=false,false
+local floor_records,links={},{}
+local fail_link,throw_link=nil,nil
+local spawned=0
+local inspect_link=nil
 local function handle() next_handle=next_handle+1; return next_handle end
 gd={api_version=1,command=function(n,f)commands[n]=f end,log=function(s)logs[#logs+1]=s end,
  player=function()return {x=0,y=0,vx=0,vy=0,airborne=false,action=14,facing=1}end,
  match=function()return {active=true,frame=200}end,
  teleport=function(p,x,y)if refuse_teleport then error('dead') end moves[#moves+1]={p,x,y}end,
- model_load=function()return handle()end, model_spawn=function()return handle()end,
+ model_load=function()return handle()end, model_spawn=function()spawned=spawned+1;return handle()end,
  model_get=function(h)return {handle=h}end, model_despawn=function()return true end,
  model_release=function()return true end,
  hud_visible=function()return true end,
  camera_detach=function()return true end,camera_set=function()return nil end,
  camera_attach=function()return nil end,
  stage_remove=function()removals=removals+1;return not refuse end,
- stage_add_platform=function()return handle()end,
- stage_add_line=function()return handle()end,
+ stage_add_platform=function(x,y,w)local h=handle();floor_records[h]={x0=x-w/2,y0=y,x1=x+w/2,y1=y};return h end,
+ stage_add_line=function(x0,y0,x1,y1)local h=handle();floor_records[h]={x0=x0,y0=y0,x1=x1,y1=y1};return h end,
+ stage_link=function(a,b)
+  links[#links+1]={a,b}
+  if throw_link and #links==throw_link then error('link unavailable') end
+  if fail_link and #links==fail_link then return false,'occupied endpoint' end
+  local ra,rb=assert(floor_records[a]),assert(floor_records[b])
+  assert((ra.x1-rb.x0)^2+(ra.y1-rb.y0)^2<=.05^2,'invalid seam')
+  if inspect_link then inspect_link() end
+  return true
+ end,
  scene_launch=function(s)scene=s end,
  stage_isolate=function(v)if v~=nil then isolated=v end return isolated end}
 function has(pat)for _,s in ipairs(logs)do if s:find(pat,1,true)then return true end end return false end
@@ -544,13 +557,27 @@ logs={};commands.certify_place_at('10 0')
 assert(probe.state.phase=='idle')
 assert(has('certify_place ok=false reason=phase_idle'))
 
--- 2. real successful callbacks: preload -> visuals -> collision -> isolate
+-- 2. real successful callbacks: preload -> collision/links -> visuals -> isolate
+inspect_link=function()
+ assert(probe.state.phase=='collision' and #probe.state.handles==5,'seams linked before all room allocations')
+ assert(#probe.state.visuals.handles==0,'seams linked after visual entry')
+end
 commands.certify_build('branch_y')
 local guard=0
 while probe.state.phase~='ready' and probe.state.phase~='error' and guard<400 do guard=guard+1;on_tick()end
 assert(probe.state.phase=='ready','build failed: '..tostring(probe.state.error))
 assert(gd.stage_isolate()==true,'isolation not held after build')
 assert(#probe.state.handles==5,'unexpected collider count '..#probe.state.handles)
+assert(#links==3,'certification did not join the real ascent chain')
+local own={} for _,h in ipairs(probe.state.handles)do own[h]=true end
+for _,pair in ipairs(links)do assert(own[pair[1]] and own[pair[2]])end
+local outgoing,incoming={},{}
+for _,pair in ipairs(links)do outgoing[pair[1]]=pair[2];incoming[pair[2]]=pair[1]end
+local first
+for h in pairs(outgoing)do if not incoming[h] then assert(not first);first=h end end
+local length=0
+while first do length=length+1;first=outgoing[first]end
+assert(length==4,'certification links are not the continuous four-floor ascent')
 
 -- 3. operational refusal preserves constructed phase and isolation (no fake arm)
 refuse_teleport=true
@@ -569,6 +596,8 @@ assert(probe.state.clean==true,'clean flag not set')
 guard=0
 while probe.state.phase~='ready' and probe.state.phase~='error' and guard<400 do guard=guard+1;on_tick()end
 assert(probe.state.phase=='ready','clean rebuild failed')
+assert(#links==6,'clean preview changed ascent links')
+inspect_link=nil
 
 -- 5. camera preview is scoped to this mod and restored
 logs={};commands.certify_camera('wide')
@@ -597,6 +626,37 @@ refuse=false;probe.cleanup();assert(#probe.state.handles==0)
 gd.stage_add_platform=original
 local before=removals;probe.state.handles={9};on_match_end()
 assert(removals==before and #probe.state.handles==0,'native teardown retried stale handles')
+
+-- 8. Seam refusals preserve every allocation for cleanup, before visuals enter.
+local original_link=gd.stage_link
+for _,mode in ipairs({'false','throw','missing','ambiguous'})do
+ local prior=#links
+ commands.certify_build('branch_y')
+ if mode=='false' then fail_link=prior+2
+ elseif mode=='throw' then throw_link=prior+2
+ elseif mode=='missing' then gd.stage_link=nil
+ else probe.state.plan.platforms[#probe.state.plan.platforms+1]={x=-12,y=13,width=28,passthrough=false,ledges=false}end
+ local before_spawn=spawned
+ guard=0
+ while probe.state.phase~='ready' and probe.state.phase~='error' and guard<400 do guard=guard+1;on_tick()end
+ assert(probe.state.phase=='error','required seam failure reached ready')
+ assert(spawned==before_spawn,'visuals entered before seam validation')
+ assert(#probe.state.handles==(mode=='ambiguous' and 6 or 5))
+ assert(probe.state.collision_count==#probe.state.handles,'partial collider count lost')
+ if mode=='missing' or mode=='ambiguous' then assert(#links==prior,'preflight failure made native links')end
+ refuse=true;probe.cleanup();assert(#probe.state.handles>0,'cleanup lost refused handles')
+ assert(probe.state.collision_count==#probe.state.handles)
+ local pending=probe.state.handles
+ commands.certify_build('shortcut_door')
+ assert(probe.state.phase=='error' and #probe.state.handles==#pending,'rebuild discarded pending collider cleanup')
+ refuse=false;probe.cleanup();assert(#probe.state.handles==0 and probe.state.collision_count==0)
+ gd.stage_link=original_link;fail_link=nil;throw_link=nil
+end
+gd.stage_link=nil;commands.certify_build('shortcut_door')
+guard=0
+while probe.state.phase~='ready' and probe.state.phase~='error' and guard<400 do guard=guard+1;on_tick()end
+assert(probe.state.phase=='ready','room without seams incorrectly requires stage_link')
+probe.cleanup()
 print('PASS')
 '''
         code = prelude + '\nlocal probe=(function()\n' + certify.bundle_text() + '\nend)();\n' + checks
@@ -664,6 +724,7 @@ class InstallTests(unittest.TestCase):
         self.assertIn('local RoomCatalogue = (function()', text)
         self.assertIn('local RoomRecipes = (function()', text)
         self.assertIn('local Rooms = (function()', text)
+        self.assertIn('local RuntimeRooms = (function()', text)
         self.assertIn("certify_build", text)
 
     def test_bundled_lua_compiles(self):

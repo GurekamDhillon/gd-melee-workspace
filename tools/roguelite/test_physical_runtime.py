@@ -35,6 +35,8 @@ local fail_platform,fail_line,fail_spawn,fail_load=nil,nil,nil,nil
 local refuse_remove,refuse_despawn={},{}
 local platform_calls,line_calls,spawn_calls,load_calls=0,0,0,0
 local platform_log,line_log,teleports={},{},{}
+local link_log={}
+local fail_link,throw_link=nil,nil
 -- Fighters are real live tables so placement can capture verified originals.
 local players={[1]={x=-42,y=0,vy=0},[2]={x=28,y=0,vy=0}}
 local refuse_teleport_port,false_teleport_port,fail_player_port=nil,nil,nil
@@ -50,6 +52,18 @@ gd={buttons={},
   line_calls=line_calls+1;line_log[#line_log+1]={x0=x0,y0=y0,x1=x1,y1=y1,kind=kind,opts=opts}
   if fail_line and line_calls==fail_line then return nil,'line allocation refused' end
   serial=serial+1;records[serial]={kind='line',x0=x0,y0=y0,x1=x1,y1=y1,opts=opts};return serial
+ end,
+ stage_link=function(a,b)
+  assert(records[a] and records[b],'link used foreign or removed handles')
+  link_log[#link_log+1]={a,b}
+  if throw_link and #link_log==throw_link then error('link API restricted') end
+  if fail_link and #link_log==fail_link then return false,'occupied endpoint' end
+  local ra,rb=records[a],records[b]
+  local ax,ay=ra.x1 or (ra.x+ra.w/2),ra.y1 or ra.y
+  local bx,by=rb.x0 or (rb.x-rb.w/2),rb.y0 or rb.y
+  assert((ax-bx)^2+(ay-by)^2<=0.05^2,'link bridged a gap or interior')
+  assert(not ra.right and not rb.left,'endpoint linked twice')
+  ra.right=b;rb.left=a;return true
  end,
  stage_remove=function(h) if not records[h] or refuse_remove[h] then return false end records[h]=nil;return true end,
  player=function(port) if fail_player_port==port then return nil end return players[port] end,
@@ -116,6 +130,100 @@ class PhysicalRuntimeTests(unittest.TestCase):
         result = subprocess.run([LUA, '-', *[str(m) for m in MODULES]],
                                 input=PRELUDE + body, text=True, capture_output=True, timeout=60)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_resolved_ascent_room_local_graph_during_overlap(self):
+        self.run_lua(r'''
+local src=recipe_node('branch_y','traversal')
+local dest=recipe_node('branch_y','traversal');dest.id='branch_y_copy'
+local exit={edge_id='duplicate',socket='out',side='right',to=dest.id,arrival_socket='left'}
+src.exits={exit}
+local rr=RR.new(gd,Rooms)
+commit_room(rr,src)
+local source=rr:active_room()
+assert(#link_log==3,'real ascent must join slope/landing/slope/landing')
+local source_set={} for _,e in ipairs(source.handles) do source_set[e.handle]=true end
+local tx=assert(rr:begin(dest,{from=source,exit=exit}))
+assert(drive(rr,tx))
+assert(#link_log==6 and rr:total()==10,'duplicate destination failed to build')
+local dest_set={} for _,e in ipairs(tx.dest.handles) do dest_set[e.handle]=true end
+for i,pair in ipairs(link_log) do
+ local own=i<=3 and source_set or dest_set
+ assert(own[pair[1]] and own[pair[2]],'source/destination were cross linked')
+end
+local slope1,slope2,lower,upper,ground
+for _,e in ipairs(tx.dest.handles) do
+ if e.x0==-52 and e.x1==-26 then slope1=e.handle
+ elseif e.x0==0 and e.x1==26 then slope2=e.handle
+ elseif e.x0==-26 and e.x1==0 then lower=e.handle
+ elseif e.x0==26 and e.x1==52 then upper=e.handle
+ elseif e.x0==-65 and e.x1==65 then ground=e.handle end
+end
+assert(records[slope1].right==lower and records[lower].right==slope2 and records[slope2].right==upper)
+assert(not records[ground].left and not records[ground].right,'ground interior was linked')
+assert(rr:rollback(tx));assert(rr:total()==5 and records_live()==5)
+for _,pair in ipairs(link_log) do if source_set[pair[1]] then assert(records[pair[1]].right==pair[2]) end end
+assert(rr:cleanup())
+''')
+
+    def test_endpoint_matching_refuses_ambiguity_and_preserves_gaps(self):
+        self.run_lua(r'''
+local calls={}
+local engine={stage_link=function(a,b)calls[#calls+1]={a,b};return true end}
+local function e(h,x0,y0,x1,y1)return {handle=h,x0=x0,y0=y0,x1=x1,y1=y1}end
+-- Euclidean distance, not a per-axis box; separated drop lips never link.
+assert(RR.link_floor_seams(engine,{e(1,-65,0,-6.5,0),e(2,6.5,0,65,0)}))
+assert(RR.link_floor_seams(engine,{e(3,0,0,1,1),e(4,1.04,1.04,2,2)}))
+assert(#calls==0)
+-- Interior crossing/touch, and same-side endpoints cannot create seams.
+assert(RR.link_floor_seams(engine,{e(5,0,0,2,2),e(6,0,2,2,0),e(7,1,1,3,1)}))
+assert(#calls==0)
+assert(RR.link_floor_seams(engine,{e(8,0,0,1,0),e(9,0,0,2,1)}));assert(#calls==0)
+-- The allowed tolerance survives reversed allocation order.
+local ok,n=RR.link_floor_seams(engine,{e(11,1.03,.03,2,0),e(10,0,0,1,0)})
+assert(ok and n==1 and calls[1][1]==10 and calls[1][2]==11)
+calls={}
+ok=RR.link_floor_seams(engine,{e(1,0,0,1,0),e(2,1,0,2,0),e(3,1.02,0,3,0)})
+assert(not ok and #calls==0,'ambiguous graph linked before complete preflight')
+ok=RR.link_floor_seams(engine,{e(1,0,0,1,0),e(2,-1,0,1,0),e(3,1,0,2,0)})
+assert(not ok and #calls==0,'multiple left neighbours silently selected')
+''')
+
+    def test_required_links_fail_closed_with_retryable_rollback(self):
+        self.run_lua(r'''
+for _,mode in ipairs({'false','throw','missing','ambiguous'}) do
+ local node=recipe_node('branch_y','traversal')
+ local rr=RR.new(gd,Rooms)
+ local tx=assert(rr:begin(node))
+ local original=gd.stage_link
+ local calls_before=#link_log
+ if mode=='false' then fail_link=calls_before+2
+ elseif mode=='throw' then throw_link=calls_before+2
+ elseif mode=='missing' then gd.stage_link=nil
+ else
+  node.room.platforms[#node.room.platforms+1]={x=-12,y=13,width=28,passthrough=false,ledges=false}
+  -- begin captures collision; update it through a fresh transaction.
+  assert(rr:rollback(tx));tx=assert(rr:begin(node))
+ end
+ -- Refuse the first cleanup handle, retaining ownership and the line count.
+ local remove=gd.stage_remove
+ local pending
+ gd.stage_remove=function(h)if not pending then pending=h;return false end return remove(h) end
+ local spawned_before=spawn_calls
+ local ok,why=drive(rr,tx)
+ assert(not ok,tostring(why))
+ local expected=mode=='ambiguous' and 'ambiguous' or (mode=='missing' and 'stage_link' or 'seam link refused')
+ assert(why:find(expected,1,true),tostring(why))
+ assert(spawn_calls==spawned_before,'visuals spawned before seam validation')
+ assert(rr:total()==1 and #tx.dest.handles==1 and tx.dest.handles[1].handle==pending,'rollback lost refused handle')
+ gd.stage_remove=remove;gd.stage_link=original;fail_link=nil;throw_link=nil
+ assert(rr:rollback(tx));assert(rr:total()==0 and records_live()==0)
+end
+-- Missing link API is compatible with an authored room requiring no seams.
+gd.stage_link=nil
+local node=recipe_node('shortcut_door','traversal')
+local rr=RR.new(gd,Rooms);commit_room(rr,node)
+assert(rr:cleanup() and records_live()==0)
+''')
 
     def test_translated_collision_slopes_and_incremental_preload(self):
         self.run_lua(r'''
@@ -260,6 +368,12 @@ local rr2=RR.new(gd,Rooms,{max_total_lines=32})
 local out=commit_room(rr2,node)
 local jcol=assert(Rooms.collision(node))
 assert(#jcol.floor_segments==2,'drop floor did not resolve to two segments')
+assert(#link_log==3,'junction should link its ascent but never bridge the drop')
+for _,e in ipairs(rr2:active_room().handles) do
+ if e.y0==0 and e.y1==0 then
+  assert(not records[e.handle].left and not records[e.handle].right,'authored drop lip was welded')
+ end
+end
 local opening=g.floor.openings[1]
 for i,seg in ipairs(jcol.floor_segments) do
  local c=platform_log[i]
