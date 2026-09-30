@@ -96,14 +96,16 @@ local futuregen=enc(6,assert(Codec.encode(fg)),prt,roster)
 local fm=clone(manifest); fm.schema_version=3
 local futureman=enc(6,assert(Codec.encode(fm)),prt,roster)
 -- Safe migration strips every finite pickup and consumable gate so the schema-1
--- record's missing histories cannot matter; the original route keeps its
--- consumable gate (timed_vault on seed 4242), which makes migration unsafe.
+-- record's missing histories cannot matter. Build unsafe history explicitly:
+-- catalogue additions may legitimately change which optional template a seed picks.
 local safeman=clone(manifest)
 for _,e in pairs(safeman.edges_by_id) do e.gate_rule=nil end
 safeman.locks={}
 for _,room in pairs(safeman.rooms_by_id) do room.pickups=nil; room.grants_consumable=nil end
 local safe1=enc(5,assert(Codec.encode(safeman)),assert(Codec.encode(p1)),roster)
-local unsafe1=enc(5,mt,assert(Codec.encode(p1)),roster)
+local unsafeman=clone(safeman)
+unsafeman.rooms_by_id[unsafeman.start_room].grants_consumable={migration_key=1}
+local unsafe1=enc(5,assert(Codec.encode(unsafeman)),assert(Codec.encode(p1)),roster)
 -- Malformed nested manifest/progress: locks becomes a number and an opened
 -- entry makes validate_save index it. topology.validate never inspects locks
 -- without a gate, so this reaches the downstream route validator.

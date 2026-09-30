@@ -115,7 +115,30 @@ for _,room in pairs(m.rooms_by_id) do if room.grants_key=='never_granted' then r
 reject(m,'unreachable')
 -- Invalid seeds are refused, never clamped.
 assert(not pcall(t.generate,t,0)); assert(not pcall(t.generate,t,-4)); assert(not pcall(t.generate,t,2147483647))
-print('topology: 1000 seeds, reproducibility, '..ns..' signatures, locks/keys and adversarial refusal passed')
+-- Theme contracts: a template that declares a theme must produce rooms with
+-- that theme, and every generated route still validates. The assigned
+-- primary/secondary stream is otherwise untouched.
+local themed,mismatches=0,0
+for seed=1,100 do
+ local m=t:generate(seed)
+ assert(Top.validate(t,m))
+ for _,room in pairs(m.rooms_by_id) do
+  local template=Rooms.rooms[room.template_id]
+  if template.theme then
+   themed=themed+1
+   if room.theme~=template.theme then mismatches=mismatches+1 end
+  end
+ end
+end
+assert(themed>0,'no declared-theme templates were generated across 100 seeds')
+assert(mismatches==0,'theme contract violated for '..mismatches..' of '..themed..' themed rooms')
+-- A compatible-template constraint without a declared theme still lets the
+-- generator assign any valid theme.
+for _,id in ipairs(t:generate(4242).order) do
+ local room=t:generate(4242).rooms_by_id[id]
+ assert(Rooms.themes[room.theme],'unknown generated theme')
+end
+print('topology: 1000 seeds, reproducibility, '..ns..' signatures, locks/keys, theme contracts ('..themed..' themed rooms) and adversarial refusal passed')
 '''
 
 subprocess.run([LUA, '-', *[str(m) for m in MODULES]], input=PRELUDE + TEST, text=True, check=True)
