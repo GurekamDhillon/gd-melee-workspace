@@ -11,10 +11,16 @@ SOURCE = ROOT / 'melee/worktrees/linux/pc/scripts/examples/roguelite'
 ROOM_KIT = ROOT / 'menu/out_roguelite/room-kit'
 
 def install_room_kit(mod):
-    required = ('bf_floor_4m', 'bf_floor_end_trim', 'bf_wall_solid_4m',
-                'bf_beam_4m', 'bf_rear_post_4m', 'bf_wall_doorway_4m')
+    # Full reviewed BF interior kit (21 models) so lane, upper-door/balcony and
+    # drop-through recipes can be assembled. Glass variants share an atlas.
+    required = ('bf_floor_2m', 'bf_floor_4m', 'bf_floor_end_trim', 'bf_floor_opening_4m',
+                'bf_wall_solid_4m', 'bf_wall_doorway_4m', 'bf_wall_window_4m', 'bf_wall_side_return',
+                'bf_beam_4m', 'bf_rear_post_4m', 'bf_rear_glass_rail_4m', 'bf_rear_glass_rail_4m_glass',
+                'bf_corner_inside_4m', 'bf_corner_outside_4m', 'bf_door_leaf',
+                'bf_stairs_4m_rise2m', 'bf_ramp_4m_rise2m', 'bf_ramp_4m_rise2m_glass',
+                'bf_balcony_4m', 'bf_balcony_4m_glass', 'bf_window_glass_insert_glass')
     names = [name + suffix for name in required for suffix in ('.gxmesh', '.coll.json')]
-    names += ['bf_kit.gxtex', 'bf_kit.glow.gxtex']
+    names += ['bf_kit.gxtex', 'bf_kit.glow.gxtex', 'bf_kit_glass.gxtex', 'bf_kit_glass.glow.gxtex']
     missing = [name for name in names if not (ROOM_KIT / name).is_file()]
     if missing:
         raise FileNotFoundError('Regenerate the BF room kit before installation: ' + ', '.join(missing))

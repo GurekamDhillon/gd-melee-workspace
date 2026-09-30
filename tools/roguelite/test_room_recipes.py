@@ -29,11 +29,19 @@ for id,template in pairs(Rooms.rooms) do
 end
 assert(count>=18,'only '..count..' templates')
 assert(certified==0,'nothing may be certified before native clips; got '..certified)
--- Upper/drop sockets carry the expected anchor shapes.
-local g=assert(Recipes.resolve(Rooms.rooms.branch_y))
-assert(g.exit_anchors.top and g.exit_anchors.top.y==26 and not g.exit_anchors.top.drop)
+-- Upper/drop sockets carry the expected anchor shapes and agree with the
+-- authored visual transforms.
+local branch=Rooms.rooms.branch_y
+local g=assert(Recipes.resolve(branch))
+assert(g.exit_anchors.top and g.exit_anchors.top.y==26 and g.exit_anchors.top.x==39 and not g.exit_anchors.top.drop)
+local recipe=Recipes.get(branch.recipe)
+assert(recipe.upper_doorway and recipe.upper_doorway.x==g.exit_anchors.top.x and recipe.upper_doorway.y==g.exit_anchors.top.y,
+ 'upper doorway must match the top anchor')
+local modules=0 for _,m in ipairs(recipe.modules or {}) do modules=modules+1 end
+assert(modules>=4,'ascent needs stairs/balcony/ramp/upper floor')
 local c=assert(Recipes.resolve(Rooms.rooms.junction_cross))
 assert(c.exit_anchors.bottom and c.exit_anchors.bottom.drop,'drop socket must be marked')
+assert(#c.floor.openings==1 and c.floor.openings[1].x==c.exit_anchors.bottom.x,'drop needs a real floor opening')
 -- A missing anchor for a declared socket side is refused, not guessed.
 local fake={recipe='lane_open',sockets={{id='in',side='left'},{id='out',side='middle'}}}
 local fg,fr=Recipes.resolve(fake); assert(not fg and tostring(fr):find('no anchor',1,true))
@@ -54,6 +62,14 @@ assert(Recipes.validate(Rooms))
 local steep=clone(Recipes.recipes.lane_balcony)
 steep.geometry.platforms={{x=0,y=55,width=8,passthrough=true,ledges=true}}
 assert(not Recipes.reachable(steep))
+-- Orphan opening (no drop anchor) and drop anchor without an opening are refused.
+local orphan=clone(Rooms); Recipes.recipes.lane_open.geometry.floor.openings={{x=0,width=26}}
+assert(not Recipes.validate(orphan))
+Recipes.recipes.lane_open.geometry.floor.openings={}
+local noopen=clone(Rooms); Recipes.recipes.junction_cross.geometry.floor.openings={}
+assert(not Recipes.validate(noopen))
+Recipes.recipes.junction_cross.geometry.floor.openings={{x=0,width=26}}
+assert(Recipes.validate(Rooms))
 print('room recipes: '..count..' templates resolve, reachable, uncertified; bounds and refusal passed')
 '''
 

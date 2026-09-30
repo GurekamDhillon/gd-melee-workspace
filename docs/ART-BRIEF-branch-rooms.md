@@ -41,25 +41,32 @@ Add to `tools/roguelite/prepare.py::install_room_kit` (plus `.coll.json`):
 
 Glass variants are optional and out of scope for the first certification.
 
-## Authored transforms (kit metres, from the BF interior example)
+## Authored transforms (reconciled, game units)
 
-For the upper-door (top socket) geometry, in the lane's local frame
-(`ox` = lane centre, `oy` = floor):
+`room_recipes.lua` (`ASCENT_MODULES`) is authoritative: the BF interior
+example transforms converted once to game units (UNIT 6.5), in the lane's local
+frame (`ox` = lane centre, `oy` = floor).
 
-| Part | x | y (storey) | depth | mirror |
+| Part | x | y | depth | mirror |
 | --- | --- | --- | --- | --- |
-| Stairs_4m_Rise2m | −6 | 0 | 0 | no |
-| Balcony_4m | −2 | 2 | 0 | no |
-| Ramp_4m_Rise2m | 2 | 2 | 0 | no |
-| Floor_Opening_4m | 6 | 4 | 0 | no |
-| Wall_Doorway_4m (upper) | 6 | 4 | 0 | yes (faces the lane) |
+| Stairs_4m_Rise2m | −39 | 0 | 0 | no |
+| Balcony_4m | −13 | 13 | 0 | no |
+| Ramp_4m_Rise2m | 13 | 13 | 0 | no |
+| Floor_Opening_4m | 39 | 26 | 0 | no |
+| Wall_Doorway_4m (upper) | 39 | 26 | 0 | yes (faces the lane) |
 
-The analytic recipe ascent currently uses passthrough steps at
-`(-22,9) (-6,18) (10,26)` with the `top` anchor at `{x=10,y=26}`. The visual
-layout above must be reconciled to those anchors before certification (either
-move the module transforms to the recipe anchors or adjust the recipe), and the
-reconciled coordinates recorded in `room_recipes.lua` comments. The `top`
-anchor must coincide with the upper doorway origin.
+The analytic surfaces align to the two landings: balcony `x=-13,y=13` and upper
+floor `x=39,y=26`; the visual ramp bridges the analytic 13-unit rise / 26-unit
+gap. The `top` anchor is `{x=39,y=26}` and must equal the upper doorway origin;
+`RoomRecipes.validate` enforces that agreement. Any change to these transforms
+must update both the recipe and this brief together, and invalidates prior
+certification.
+
+A `bottom` socket is a real floor opening, not a flag over solid floor:
+`recipe.geometry.floor.openings` carries the gap and the graph edge for that
+socket must be one-way. `RoomRecipes.validate` refuses an opening without a drop
+anchor and a drop anchor without an opening. The runtime builds segmented floor
+collision around the opening and enforces directionality (Gate 4).
 
 ## Templates needing certification
 
