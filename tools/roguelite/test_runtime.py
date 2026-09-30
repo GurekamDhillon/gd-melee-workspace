@@ -234,9 +234,17 @@ assert(state().run_fighter.id=='link' and state().run_fighter.costume==1)
 print('runtime: fighter/costume actually relaunches scene; atomic A/B checkpoint keeps saved-run fighter separate from next-run choice')
 on_unload()
 -- The legacy envelope has no character metadata and therefore means Falco 0.
+-- Rewrite the current TBD3 saves (and any TBD2) into roster-less TBD1.
 for name,raw in pairs(files) do if name:match('checkpoint') then
- local g,pl,rl,ml,body=raw:match('TBD2 (%d+) (%d+) (%d+) (%d+)\n(.*)')
- if g then files[name]='TBD1 '..g..' '..pl..' '..rl..'\n'..body:sub(1,tonumber(pl)+tonumber(rl)) end
+ local g,pl,rl=raw:match('TBD3 (%d+) (%d+) (%d+)')
+ if g then
+  pl,rl=tonumber(pl),tonumber(rl)
+  local body=raw:match('\n(.*)$')
+  files[name]='TBD1 '..g..' '..pl..' '..rl..'\n'..body:sub(1,pl+rl)
+ else
+  local g2,pl2,rl2,ml2,body2=raw:match('TBD2 (%d+) (%d+) (%d+) (%d+)\n(.*)')
+  if g2 then files[name]='TBD1 '..g2..' '..pl2..' '..rl2..'\n'..body2:sub(1,tonumber(pl2)+tonumber(rl2)) end
+ end
 end end
 request=true;tick=0
 '''

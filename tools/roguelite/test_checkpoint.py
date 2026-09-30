@@ -16,7 +16,7 @@ local RNG=dofile(arg[1]); local Core=dofile(arg[2]); local Codec=dofile(arg[3]);
 local profile=Core.new_profile(17029)
 local run=Core.new_run(profile)
 local manifest=Codec.encode({schema_version=2,world_seed=run.world_seed,rooms={1,2,3}})
-local progress=Codec.encode({version=1,run_id=run.id,current_room='r001',start_room='r001',visited={r001=true},discovered={r001=true},revealed={},claimed={},keys={},consumables={},defeated={},objectives={},supplies=2,lives=3})
+local progress=Codec.encode({version=2,run_id=run.id,current_room='r001',start_room='r001',visited={r001=true},discovered={r001=true},revealed={},claimed={},keys={},consumables={},defeated={},objectives={},opened={},pickups={},encounter_kos={},supplies=2,lives=3})
 local function fields() return {generation=5,profile=assert(Core.snapshot(profile)),run=assert(Core.snapshot(run)),manifest=manifest,roster='ROSTER1 falco/c0\n',progress=progress} end
 '''
 
@@ -48,6 +48,15 @@ assert(not Checkpoint.decode(head..'\n'..flipped,Core,Codec))
 -- Truncation and over-long bodies are refused.
 assert(not Checkpoint.decode(text:sub(1,#text-5),Core,Codec))
 assert(not Checkpoint.decode(text..'extra',Core,Codec))
+-- A section of the wrong schema version is refused and preserved, never
+-- returned as if interchangeable.
+local wrong=Checkpoint.encode({generation=1,profile=assert(Core.snapshot(profile)),progress=Codec.encode({version=1,run_id=run.id,current_room='r001',start_room='r001'})})
+assert(not Checkpoint.decode(wrong,Core,Codec,{progress_version=2}))
+local _,pwhy=Checkpoint.decode(wrong,Core,Codec,{progress_version=2})
+assert(pwhy and pwhy:find('progress version',1,true) and pwhy:find('preserved',1,true))
+assert(Checkpoint.decode(wrong,Core,Codec,{progress_version=1}))
+local badman=Checkpoint.encode({generation=1,profile=assert(Core.snapshot(profile)),manifest=Codec.encode({schema_version=1})})
+assert(not Checkpoint.decode(badman,Core,Codec,{manifest_schema=2}))
 -- Unknown future versions are preserved with an explanation, not misparsed.
 assert(not Checkpoint.decode('TBD4 1 2 0 0 0 00000000\nab',Core,Codec))
 local _,why=Checkpoint.decode('TBD4 1 2 0 0 0 00000000\nab',Core,Codec)

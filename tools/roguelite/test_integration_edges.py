@@ -70,7 +70,7 @@ assert(attempts==0,'invulnerable enemy was offered for activation')
     def test_checkpoint_corruption_preserves_older_pair(self):
         self.run_lua(r'''
 local a,b=files['checkpoint-a.txt'],files['checkpoint-b.txt'];assert(a and b)
-local function generation(s)return tonumber(s:match('^TBD2 (%d+)'))end
+local function generation(s)return tonumber(s:match('^TBD%d (%d+)'))end
 local newest=generation(a)>generation(b) and 'checkpoint-a.txt' or 'checkpoint-b.txt'
 local older=newest=='checkpoint-a.txt' and b or a
 files[newest]=files[newest]:sub(1,30)

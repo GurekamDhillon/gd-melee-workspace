@@ -11,11 +11,11 @@ FIXTURES = ROOT / '_build/roguelite-validation-saves/legacy-v1'
 LUA = shutil.which('lua5.4') or shutil.which('lua')
 assert LUA, 'Lua interpreter required'
 
-MODULES = [RT / name for name in ('rng.lua', 'core.lua', 'codec.lua', 'checkpoint.lua', 'dungeon_v1.lua', 'legacy.lua')]
+MODULES = [RT / name for name in ('rng.lua', 'core.lua', 'codec.lua', 'checkpoint.lua', 'progress.lua', 'dungeon_v1.lua', 'legacy.lua')]
 
 PRELUDE = r'''
 local RNG=dofile(arg[1]); local Core=dofile(arg[2]); local Codec=dofile(arg[3])
-local Checkpoint=dofile(arg[4]); local V1=dofile(arg[5]); local Legacy=dofile(arg[6])
+local Checkpoint=dofile(arg[4]); local Progress=dofile(arg[5]); local V1=dofile(arg[6]); local Legacy=dofile(arg[7])
 local deps={core=Core,codec=Codec,checkpoint=Checkpoint,v1=V1}
 '''
 
@@ -51,6 +51,24 @@ assert(not pcall(Legacy.migrate,tbd2(),{}))
 local other=Core.new_profile(777)
 local forged=string.format('TBD2 1 %d %d 0\n%s%s',#(assert(Core.snapshot(other))),#rtext,assert(Core.snapshot(other)),rtext)
 assert(not Legacy.migrate(forged,deps))
+-- Progress schema migration: 1 -> 2 adds the missing maps, is not mutated and
+-- re-validates; an unknown version is preserved and explained.
+local v1={version=1,run_id=run.id,current_room='r001',start_room='r001',
+ visited={r001=true},discovered={r001=true},revealed={},claimed={},keys={},
+ consumables={},defeated={},objectives={},supplies=2,lives=3}
+assert(Progress.version==2)
+local up=assert(Legacy.migrate_progress(v1,Progress))
+assert(up.version==2 and up.opened and up.pickups and up.encounter_kos)
+assert(Progress.validate(up))
+assert(v1.version==1 and v1.opened==nil,'migration must not mutate the input')
+local v2={version=2,run_id=run.id,current_room='r001',start_room='r001',
+ visited={r001=true},discovered={r001=true},revealed={},claimed={},keys={},
+ consumables={},defeated={},objectives={},opened={},pickups={},encounter_kos={},supplies=2,lives=3}
+assert(Legacy.migrate_progress(v2,Progress)==v2)
+local _,mwhy=Legacy.migrate_progress({version=3},Progress)
+assert(mwhy and mwhy:find('unsupported progress version',1,true) and mwhy:find('preserved',1,true))
+assert(not Legacy.migrate_progress({version=1,run_id='r',current_room='x',start_room='x',supplies=99,lives=3},Progress))
+assert(not Legacy.migrate_progress('nope',Progress))
 print('legacy: TBD1/TBD2 parse, v1 route reconstruction, TBD3 wrap and refusal passed')
 '''
 
@@ -64,9 +82,9 @@ def fixture_check():
         return
     program = r'''
 local RNG=dofile(arg[1]); local Core=dofile(arg[2]); local Codec=dofile(arg[3])
-local Checkpoint=dofile(arg[4]); local V1=dofile(arg[5]); local Legacy=dofile(arg[6])
+local Checkpoint=dofile(arg[4]); local Progress=dofile(arg[5]); local V1=dofile(arg[6]); local Legacy=dofile(arg[7])
 local deps={core=Core,codec=Codec,checkpoint=Checkpoint,v1=V1}
-for _,path in ipairs({arg[7],arg[8]}) do
+for _,path in ipairs({arg[8],arg[9]}) do
  local f=assert(io.open(path,'r')); local text=f:read('a'); f:close()
  local migrated,why=Legacy.migrate(text,deps)
  assert(migrated,'frozen fixture failed migration: '..tostring(why))
