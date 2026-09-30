@@ -254,6 +254,29 @@ assert(state().run and state().run.status=='active')
 print('runtime: legacy TBD1 checkpoint migrates losslessly with original Falco choice')
 '''
 run(PRELUDE + wrapped + TEST + ROSTER_START + wrapped + ROSTER_PREFERENCE + wrapped + ROSTER_RESUME + wrapped + ROSTER_LEGACY)
+# An unsupported future checkpoint occupies one slot; a valid older generation
+# in the other must stay loadable and the future slot must never be overwritten.
+FUTURE_SETUP = r'''
+local function gen(s) return tonumber(s:match('TBD%d (%d+)')) end
+local a,b=files['checkpoint-a.txt'],files['checkpoint-b.txt']
+assert(gen(a) and gen(b),'expected two valid saves to seed the fixture')
+-- Put the unsupported future envelope in the OLDER slot; the newer stays valid.
+FUTURE_SLOT=gen(a)>=gen(b) and 'checkpoint-b.txt' or 'checkpoint-a.txt'
+FUTURE_BYTES='TBD4 999 1 0 0 0 0 00000000\nx'
+files[FUTURE_SLOT]=FUTURE_BYTES
+request=true;tick=0
+'''
+FUTURE_CHECK = r'''
+step();step();tick=91;step();assert(state().ready)
+assert(files[FUTURE_SLOT]==FUTURE_BYTES,'future checkpoint lost during load')
+-- A save-triggering interaction must not overwrite the preserved future slot.
+click('lock')
+assert(files[FUTURE_SLOT]==FUTURE_BYTES,'future checkpoint overwritten by save')
+local other=FUTURE_SLOT=='checkpoint-a.txt' and 'checkpoint-b.txt' or 'checkpoint-a.txt'
+assert(files[other] and files[other]:match('^TBD3'),'no replacement checkpoint was written')
+print('runtime: unsupported future checkpoint slot preserved across saves')
+'''
+run(PRELUDE + wrapped + TEST + FUTURE_SETUP + wrapped + FUTURE_CHECK)
 # Installation is isolated only when --enable requested, and restore preserves backup.
 with tempfile.TemporaryDirectory() as temp:
     app = Path(temp)
