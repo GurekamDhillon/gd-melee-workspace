@@ -93,6 +93,7 @@ runtime/Windows/hardware. These remain `planned`/`blocked`, not claimed.
 | G5-* | Action provenance + gene families | worker | — | planned | — | — |
 | G6-* | Enemies, bosses, fighter AI | worker | G5-* | planned | — | — |
 | G7-* | Inventory / collection / economy | worker | G1-* | planned | — | — |
+| G7-ECON | Long-run economy simulation stays bounded | worker | G1-* | automated-pass | `test_economy.py` | pure model simulation, not an in-game playtest |
 | G8-* | Commands, menus, onboarding | worker | G1-* | planned | — | — |
 | G9-* | Regions / equipment / FX catalogue | worker | G5-* | planned | — | — |
 | G9-VOCAB | Afterimages/tracers/halos/orbitals/surface/silhouette/contact/UI vocabulary with motion-clip acceptance | worker | G9-* | planned | — | new plan subsection; needs native render support inspection + clips |
