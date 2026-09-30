@@ -28,6 +28,21 @@ for _,t in pairs(Rooms.rooms) do
  local ids,sides={},{}
  for _,s in ipairs(t.sockets) do assert(not ids[s.id],'dup socket'); assert(not sides[s.side],'dup side'); ids[s.id],sides[s.side]=true,true end
 end
+-- Finite content targets (plan section 3): compositions, bosses, rewards and
+-- the authored reaction vocabulary, with implementations honestly unclaimed.
+local encounters,bosses,rewards,locks,reactions=0,0,0,0,0
+for _,e in pairs(Enc.encounters) do if e.archetype=='boss' then bosses=bosses+1 else encounters=encounters+1 end end
+for _ in pairs(Enc.rewards) do rewards=rewards+1 end
+for _ in pairs(Enc.locks) do locks=locks+1 end
+local boss_themes={}
+for _,e in pairs(Enc.encounters) do if e.archetype=='boss' then for _,t in ipairs(e.themes) do boss_themes[t]=true end end end
+for _,r in pairs(Enc.reactions) do reactions=reactions+1; assert(r.implemented==false,'reaction must not claim implementation') end
+assert(encounters>=12,'only '..encounters..' encounter compositions')
+assert(bosses>=3,'only '..bosses..' bosses')
+assert(rewards>=24,'only '..rewards..' rewards')
+assert(locks>=3,'only '..locks..' locks')
+assert(reactions>=6,'only '..reactions..' reactions')
+assert(boss_themes.cobalt and boss_themes.frost and boss_themes.fire,'boss themes must cover all three themes')
 -- Encounter theme filtering returns only allowed rows and covers each theme.
 for _,theme in pairs({'cobalt','frost','fire'}) do
  local rows=Enc.encounters_for_theme(theme)
@@ -48,7 +63,10 @@ local function reject_enc(mutate) local c=clone(Enc); mutate(c); assert(not pcal
 reject_enc(function(c) c.encounters.scout_pair.difficulty=9 end)
 reject_enc(function(c) c.encounters.scout_pair.enemies={} end)
 reject_enc(function(c) c.rewards.potency_small.kind='bogus' end)
+reject_enc(function(c) c.rewards.potency_small.family='void' end)
 reject_enc(function(c) c.locks.frost_gate.kind='bogus' end)
+reject_enc(function(c) c.reactions.thermal_shock.components={} end)
+reject_enc(function(c) c.reactions.thermal_shock.implemented='yes' end)
 print('catalogue: roles, shapes, sockets, theme filtering and refusal passed')
 '''
 

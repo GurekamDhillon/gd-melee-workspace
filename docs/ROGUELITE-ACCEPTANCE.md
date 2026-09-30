@@ -79,7 +79,7 @@ runtime/Windows/hardware. These remain `planned`/`blocked`, not claimed.
 | G1-1 | Named deterministic RNG streams | worker | — | automated-pass | `rng.lua`; `test_rng.py` | not yet consumed by runtime |
 | G1-2 | Bounded data codec beyond numeric-key 16 | worker | — | automated-pass | `codec.lua`; `test_codec.py` | independent of Core's frozen codec |
 | G1-3 | Versioned checkpoint envelope (TBD3) | worker | G1-2, G1-4 | automated-pass | `checkpoint.lua`; `test_checkpoint.py` | A/B + atomic rename wiring is Gate 4 |
-| G1-4 | Room/encounter/reward catalogue contracts | worker | — | automated-pass | `room_catalogue.lua`, `encounter_catalogue.lua`; `test_catalogue.py` | initial finite catalogue is a subset of the §3 target |
+| G1-4 | Room/encounter/reward catalogue contracts | worker | — | automated-pass | `room_catalogue.lua`, `encounter_catalogue.lua`; `test_catalogue.py` | 20 rooms, 17 encounters incl. 3 bosses, 28 rewards, 8 unclaimed reactions; gene families/mechanics are Gate 5 |
 | G1-5 | TBD1/TBD2 migration via frozen v1 generator | worker | G1-2, G1-3 | automated-pass | `legacy.lua`; `test_legacy.py` (incl. dev fixtures) | runtime still uses its own loader |
 | G1-6 | Deliberate world-seed allocation (no repeated runs) | worker | — | automated-pass | `core.lua`; `test_world_seed.py` | advances `profile.world_seed`; legacy profiles fall back to `seed` |
 | G2-1 | Variable connected topology, branches, returns, loops | worker | G1-1, G1-4 | automated-pass | `topology.lua`; `test_topology.py` (1000 seeds + adversarial) | not yet spawned in-engine |
