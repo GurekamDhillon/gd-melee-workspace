@@ -93,6 +93,7 @@ runtime/Windows/hardware. These remain `planned`/`blocked`, not claimed.
 | G3-* | Certified physical room templates + mobility | worker | G2-1, G3-RECIPE | planned | `docs/ART-BRIEF-branch-rooms.md` | needs installed visual modules + in-engine clips |
 | G4-* | Runtime world lifecycle + exploration | worker | G2-*, G3-* | planned | — | `main.lua`/`rooms.lua` adapter |
 | G5-* | Action provenance + gene families | worker | — | planned | — | — |
+| G5-GENE | Gene-family contract (6 families, 12 genes, authored reactions) | worker | G1-4 | automated-pass | `gene_catalogue.lua`; `test_gene_catalogue.py` | only cinder/rime implemented; mechanics are Gate 5 |
 | G6-* | Enemies, bosses, fighter AI | worker | G5-* | planned | — | — |
 | G7-* | Inventory / collection / economy | worker | G1-* | planned | — | — |
 | G7-ECON | Long-run economy simulation stays bounded | worker | G1-* | automated-pass | `test_economy.py` | pure model simulation, not an in-game playtest |
