@@ -95,7 +95,11 @@ runtime/Windows/hardware. These remain `planned`/`blocked`, not claimed.
 | G2-6 | Finite pickups claimed once; no key farming | worker | G2-2 | automated-pass | `progression.lua` v2; `test_progression.py` | stable pickup ids, claimed state in signature, one-shot/opened-door policy |
 | G1-8 | Codec refuses colliding object keys | worker | G1-2 | automated-pass | `codec.lua`; `test_codec.py` | numeric object keys canonicalize to strings; collisions rejected before output |
 | G3-RECIPE | Recipe contract/resolver (all socket sides) | worker | G2-1 | automated-pass | `room_recipes.lua`; `test_room_recipes.py` | all recipes `certified=false`; native clips pending |
-| G4-ADAPTER | v2 manifest -> runtime node adapter, certification-gated | worker | G2-1, G3-RECIPE | automated-pass | `adapter.lua`; `test_adapter.py` | live runtime still v1; needs certified recipes + Gate 4 wiring |
+| G3-KIT | Full BF kit installed; ascent reconciled to visual transforms | worker | — | automated-pass | `prepare.py`; `room_recipes.lua`; `ART-BRIEF-branch-rooms.md` | installation tested in temp profile; native load not yet run |
+| G3-OPEN | Real floor openings for drop sockets (no flag over solid floor) | worker | G3-RECIPE | automated-pass | `room_recipes.lua`; `test_room_recipes.py` | runtime segmented floor + directionality is Gate 4 |
+| G3-CERT | In-engine traversal/combat certification per template | worker | G3-KIT | blocked | native harness available; clips pending | needs live normal-speed runs; not self-certified |
+| G4-ADAPTER | v2 manifest -> runtime node adapter, certification-gated | worker | G2-1, G3-RECIPE | automated-pass | `adapter.lua`; `test_adapter.py` | live runtime still v1; needs certified recipes |
+| G4-ROUTE | Route service: create/resume + semantic save validation | worker | G2-1, G4-ADAPTER, G1-7 | automated-pass | `route.lua`; `test_route.py`; `checkpoint.lua` progress section | stub-verified; native TBD entry not yet wired |
 | G3-* | Certified physical room templates + mobility | worker | G2-1, G3-RECIPE | planned | `docs/ART-BRIEF-branch-rooms.md` | needs installed visual modules + in-engine clips |
 | G4-* | Runtime world lifecycle + exploration | worker | G2-*, G3-* | planned | — | `main.lua`/`rooms.lua` adapter |
 | G5-* | Action provenance + gene families | worker | — | planned | — | — |

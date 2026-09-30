@@ -16,7 +16,8 @@ local RNG=dofile(arg[1]); local Core=dofile(arg[2]); local Codec=dofile(arg[3]);
 local profile=Core.new_profile(17029)
 local run=Core.new_run(profile)
 local manifest=Codec.encode({schema_version=2,world_seed=run.world_seed,rooms={1,2,3}})
-local function fields() return {generation=5,profile=assert(Core.snapshot(profile)),run=assert(Core.snapshot(run)),manifest=manifest,roster='ROSTER1 falco/c0\n'} end
+local progress=Codec.encode({version=1,run_id=run.id,current_room='r001',start_room='r001',visited={r001=true},discovered={r001=true},revealed={},claimed={},keys={},consumables={},defeated={},objectives={},supplies=2,lives=3})
+local function fields() return {generation=5,profile=assert(Core.snapshot(profile)),run=assert(Core.snapshot(run)),manifest=manifest,roster='ROSTER1 falco/c0\n',progress=progress} end
 '''
 
 TEST = r'''
@@ -26,7 +27,14 @@ local back=assert(Checkpoint.decode(text,Core,Codec))
 assert(back.generation==5 and back.profile.type=='profile' and back.run.type=='run')
 assert(back.manifest.world_seed==run.world_seed and back.manifest.rooms[3]==3)
 assert(back.roster=='ROSTER1 falco/c0\n')
+assert(back.progress and back.progress.run_id==run.id and back.progress.current_room=='r001','progress section missing')
 assert(Checkpoint.encode(fields())==text,'encoding not deterministic')
+-- The earlier roster-only 5-length header still decodes (progress absent).
+local ptext=assert(Core.snapshot(profile)); local roster='ROSTER1 falco/c0\n'
+local oldbody=ptext..roster
+local oldform=string.format('TBD3 5 %d 0 0 %d %s\n%s',#ptext,#roster,Checkpoint.checksum(oldbody),oldbody)
+local oldback=assert(Checkpoint.decode(oldform,Core,Codec))
+assert(oldback.progress==nil and oldback.roster==roster,'old form must not invent progress')
 -- No run/roster is also valid.
 local minimal=Checkpoint.encode({generation=0,profile=assert(Core.snapshot(profile))})
 local m2=assert(Checkpoint.decode(minimal,Core,Codec))
