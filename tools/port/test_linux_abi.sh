@@ -8,7 +8,7 @@ clang --target=ppc32-none-eabi -O2 -Xclang -disable-llvm-passes -fno-builtin -em
 clang -m32 -O2 -fuse-ld=lld -no-pie "$root/tools/port/tests/abi_host.c" "$build/guest.o" -o "$build/abi-probe"
 "$build/abi-probe"
 melee="${GW_MELEE:-$root/melee/worktrees/linux}"
-clang -m32 -O2 -ffunction-sections -fdata-sections -I "$melee/pc/platform" -I "${GW_AURORA_LINUX_BUILD:-$root/_build/linux/ax86m}/_deps/sdl-src/include" \
+clang -m32 -O2 -ffunction-sections -fdata-sections -I "$melee/pc/platform" -I "${GW_SDL_INCLUDE:-${GW_AURORA_LINUX_BUILD:-$root/_build/linux/ax86m}/_deps/sdl-src/include}" \
     "$root/tools/port/tests/linux_compat.c" "$melee/pc/platform/gw_compat_linux.c" \
     -no-pie -fuse-ld=lld -Wl,--gc-sections -lpthread -o "$build/compat-probe"
 "$build/compat-probe"

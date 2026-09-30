@@ -20,7 +20,8 @@ jobs:
       - uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
-          archives: 'qtbase'
+          # Linux's Qt tools and Core library also need the matching bundled ICU.
+          archives: ${{ runner.os == 'Linux' && 'qtbase icu' || 'qtbase' }}
           cache: true
       - name: Build, test and deploy (Linux)
         if: runner.os == 'Linux'
