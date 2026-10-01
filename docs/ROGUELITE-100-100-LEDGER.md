@@ -174,6 +174,27 @@ Generated `pc/platform/gw_mex_bridge.c` remains uncommitted by design.
 | R9 | P2 | Asset generators untracked; tooling undeclared | coordinator |
 | R10 | P2 | X11/XWayland unevidenced; `.gitignore` leak gaps | coordinator |
 
+## 4b. Root review findings — diagnosed, NOT yet landed
+
+Root's read-only review (`ROOT-REVIEW-NEW-WORK-2026-10-01.md`) reproduced four real
+defects. Each was reproduced here and diagnosed. **None is fixed yet**: the fixes
+were prototyped but integrating all four broke other finish/recovery paths
+(`test_settling_save_recovery_finishes_once`, `test_final_stock_finish_refusal_...`,
+`test_finish_save_failure_retry_...`) and the work was reverted rather than ship
+unverified. The lane is green at 251 with the last accepted state.
+
+| # | Defect | Diagnosis (verified) |
+|---|---|---|
+| P1 | An earned/exported gene cannot be discarded: `Core.validate` requires every historical `result.export` to exist in `profile.genes`, so the discard save fails | Fix prototyped and passes an independent repro: keep `result.export` as history, add `export_discarded`, set it in `Core.discard`, and allow the absence only when that flag is set. A forged absence (removing the gene without the flag) still fails validation |
+| P1 | Shipped legacy Restore charges an item when the heal is refused (`main.lua` called `gd.set_percent` unchecked on the legacy branch only) | Fix prototyped: one shared `native_heal(amount)` used by both paths; refuses throw / false / unchanged readback; on a refused save the undo's own failure is reported instead of swallowed |
+| P2 | v2 Restore leaves inventory and supply counts disagreeing (`route_mirror` rewrites `run.progress.supplies` from the untouched `route.progress`) | Fix prototyped: `route.progress` is the authoritative count under a live campaign, written in the same transaction as the inventory, plus `reconcile_inventory` so campaign supply grants replenish the same inventory |
+| P2 | Run history appended after the save, so it is absent from the finish checkpoint | **Root cause found and it is a pre-existing codec defect**: `core.lua` `encode` accepts integer keys but `decode` reads every key as a STRING, so any array-keyed table silently round-trips to a string-keyed one. Persisting `history` inline therefore loses `entries` on restore. Fix in progress: keep history as an encoded blob (`profile.history_text`) via the service's own codec. NOT verified — this touched the shared save path and caused the regressions above |
+
+Also outstanding from the review: pending-export controls in `menus.lua` are
+unbounded (`y=113+(i-1)*30`), decline is a single-activation destructive action
+unlike confirmed discard, and the deferred-export regression calls the private
+dispatcher instead of the menu and contains an `or true` that can never fail.
+
 ## 5. Rules held
 - One writer per protected file (`main.lua`, `core.lua`, `prepare.py`, native, bridge).
 - No lane claims human/hardware evidence. `PENDING-HUMAN` is never converted to pass.
