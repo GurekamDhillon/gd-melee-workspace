@@ -11,7 +11,7 @@ Evidence provenance: **stub** = deterministic engine double · **native** = real
 
 | Check | Command | Result |
 |---|---|---|
-| Pure/stub suite | `python3 -m unittest discover -s tools/roguelite -p 'test_*.py'` | **247 pass, 1 skip** (root 244 + adapter capacity group + export-loss regression + gene-world suite) |
+| Pure/stub suite | `python3 -m unittest discover -s tools/roguelite -p 'test_*.py'` | **248 pass, 1 skip** |
 | Native link | `tools/port/build_linux.sh` | **LINK_OK**, 1044 objects, 72 libraries |
 | Bridge fixpoint | (same) | **stable** on pass 1/4, `18828/18828` entries resolved |
 | Bridge ABI audit | (same) | **OK**, `0` ECX/EDX prologue violations |
@@ -60,7 +60,7 @@ Generated `pc/platform/gw_mex_bridge.c` remains uncommitted by design.
 | Source reproduces tested exe | **integration-tested** | §1. Link+bridge+ABI+214/214 from this lane |
 | Native changes inventoried | **integration-tested** | `reports/A1-native-inventory.md`. 54 entries: A=39/3827, B=1/61785, C=4/625, D=10/707 |
 | Clean tree compiles | **native-tested** | `e9cd3286e` lands the 17 untracked includes; `244f00710` lands the 33-file native patch. Verified from a **clean clone**: seam test passes, LINK_OK, 214/214. Still requires disc-extracted `build/GALE01/include` (gitignored) |
-| Generated assets reproducible | **partial** | `04060d4` lands the 6 generators, so the pipeline is now reproducible. **Remaining:** `DEPENDENCIES.md:36` still claims "Python 3 (standard library only)" while the generators need Pillow/fontTools/rsvg-convert/Blender/playwright, and the Pillow venv has no creation recipe (M1 open item) |
+| Generated assets reproducible | **integration-tested** | `2c9d9bd`: `tools/roguelite/art_venv.sh` creates a venv, installs exactly what the generators import, installs the Playwright browser, then runs all six. Verified in a clean venv: all six exit 0; `roguelite_expansion.py` regenerates 237 files, 76 `gxtex` byte-identical across two runs (**deterministic**). `DEPENDENCIES.md` corrected |
 | Native patches landed with focused checks | **native-tested** | `244f00710` (33 files) + `e9cd3286e` (17 includes + seam test) + `d5ba31d98`. `stage_seam_test.py` wired into `ci_linux.sh`; it previously passed ONLY with `script_game.c` dirty and now passes from a clean clone. Generated `gw_mex_bridge.c` deliberately never staged |
 | Bridge separated from source | **integration-tested** | `gw_mex_bridge.c` is bucket B, regenerates per build — must never be staged |
 
@@ -105,7 +105,7 @@ Generated `pc/platform/gw_mex_bridge.c` remains uncommitted by design.
 | Consumables | **partial** | one item; Restore is a raw int (`core.lua:47`), no ownership/stack/capacity/cooldown |
 | Equipment | **missing** | no slots; only genes-as-body-parts (`core.lua:185-196`) |
 | Victory export | **missing — R2 OPEN** | Core **refuses** a non-nil id at 128 (`core.lua:321`, "choose no export"); **main elects** `id=nil`. Truthful-notice subfix done and tested: a `failure` notice names the gene, states the cause and states the real consequence, and recommends **no** action that does not exist. **Still required:** an explicit choose/replace/discard flow, or a durable pending export reachable through finished-run UI *and after relaunch*, with original-run ownership and exactly-once export. A finished run cannot be resumed (`core.lua:318` returns the existing result; `main.lua:334` drops the run), so the gene is **not** recoverable from the finished run and the checkpoint bytes do not establish recovery |
-| Discard/replacement | **missing** | `menus.lua:236` needs `ctx.capacity` never supplied (`main.lua:779-783`); no `Menus.apply` discard branch |
+| Discard | **implemented + integration-tested** | `Core.discard` landed. Refuses: unknown gene, any locked stat, a gene that is an ancestor of a retained gene, and emptying the collection. `test_discard.py` proves the guards, that nothing else mutates, and that a discard survives save/load as a deletion. **Still needed:** the menu action, `ctx.capacity`, and wiring it to the deferred export |
 | v1 restore rollback | **missing** | `main.lua:1021` ignores `save()` return; v2 path is correct |
 | Reward-offer persistence | **integration-tested** | v2 only (`route.lua:45`); v1/v2 `claimed` key mismatch remains (`menus.lua:339` vs `runtime_rewards.lua:304`) |
 | Economy tuning | **missing** | sim exists but disconnected from live rewards; asserts bounds, never rates |
@@ -164,7 +164,8 @@ Generated `pc/platform/gw_mex_bridge.c` remains uncommitted by design.
 |---|---|---|---|
 | R1 | P1 | `ftColl_80076640` absorbed→`false`; `main.lua:768` refunds on armor chip | coordinator (needs native edit + build) |
 | R2 | **OPEN** (notice subfix only) | Lost export is now reported truthfully. **Remaining:** explicit choose/replace/discard, or durable pending export reachable via finished-run UI and after relaunch, exactly-once, original-run ownership, failure-safe. Player may decline deliberately with clear consequences. Full capacity must never auto-elect no-export. Regression must cover: real product flow → relaunch → resolve capacity → claim the SAME gene once → repeated claim/refused save neither duplicates nor deletes. Root review: `ROOT-REVIEW-R2-2026-10-01.md` |
-| R3 | P1 | 5 complete, tested modules unreachable (not in `prepare.py`) | coordinator (`prepare.py` is single-writer) |
+| R3a | P1 | Inventory/equipment/history **integration**: bundle the 3 modules, add the discard menu action + `ctx.capacity`, construct them, dispatch to them, persist, and expose native seams. `Core.discard` is the landed prerequisite | coordinator (`prepare.py`/`main.lua`/`menus.lua` single-writer) |
+| R3b | P1 | Encounter/boss **native-control work**: the scripted enemy API is 6 functions and none moves an actor or sets vulnerability, so `encounter_behaviors.lua`/`boss_behaviors.lua` (1545 lines, tested, unbundled) cannot become reachable until that surface exists | coordinator + native build |
 | R4 | P1 | Invisible fighters via ignored `dobj_tint` refusal (`visuals.lua:37`) | coordinator + native confirm |
 | R5 | P1 | Reward screen has no exit (`menus.lua:264` vs legend `:520`) | coordinator (`menus.lua`) |
 | R6 | **CLOSED** | 17 untracked includes + 33-file native patch landed; clean clone builds, bridge fixpoint stable, ABI clean, 214/214, seam test green |
