@@ -38,7 +38,13 @@ googletest (BSD), abseil (Apache-2.0).
   WSL directly.
 - MSVC Build Tools — the linker and `vcvarsall`.
 - CMake + Ninja — for Aurora.
-- Python 3 (standard library only) — `tools/replay` and the research scripts.
+- Python 3 — `tools/replay`, the research scripts and `tools/roguelite` need only
+  the standard library. **The `menu/pipeline` art generators do not**: they import
+  Pillow, numpy, fontTools and playwright, and `menu/pipeline/*.py` shells out to
+  `rsvg-convert`. Create and verify that toolchain with
+  `bash tools/roguelite/art_venv.sh` (creates `_build/roguelite-art-venv`,
+  installs the wheels and `playwright install chromium`, then runs every
+  generator). It reads no disc data.
 - `gwtool` is built from `melee/pc/tools/gwtool`; it has no external dependencies.
 
 ## Derived code
