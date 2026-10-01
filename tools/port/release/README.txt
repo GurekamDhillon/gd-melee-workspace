@@ -1,4 +1,4 @@
-Melee Linux port — development build
+GD's Melee 0.1.8 Linux — public test build
 
 Open ./GD-Melee for the Qt launcher, disc library and installed-mod controls.
 Or run ./launch-melee --iso "/path/to/your/disc.iso" directly.
@@ -13,8 +13,8 @@ package; NVIDIA users need the matching 32-bit NVIDIA driver package.
 The 64-bit Qt launcher also requires the distribution's OpenGL/EGL loader
 libraries (libglx0, libgl1, libopengl0 and libegl1 on Ubuntu). These normally come with the
 desktop graphics drivers and are deliberately not bundled with the package.
-A glibc newer than the portable baseline may be needed for a LOCAL DEVELOPMENT
-archive: consult manifest.json. Such an archive is not a portable release.
+This public test package targets Ubuntu 22.04 or newer (glibc 2.35).
+Consult manifest.json for the requirements of the included binaries.
 
 Native Wayland is supported by the Qt launcher and SDL game. The package includes
 separate 64-bit Qt and 32-bit SDL Wayland runtimes. To force Wayland during a check,
