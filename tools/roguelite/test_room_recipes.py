@@ -39,6 +39,16 @@ assert(recipe.upper_doorway and recipe.upper_doorway.x==g.exit_anchors.top.x and
  'upper doorway must match the top anchor')
 local modules=0 for _,m in ipairs(recipe.modules or {}) do modules=modules+1 end
 assert(modules>=4,'ascent needs stairs/balcony/ramp/upper floor')
+-- All shared ascent layouts must arrive on their flat lead-in, not underneath
+-- the one-way stair slope (short fighters cannot climb it from below).
+for _,r in pairs(Recipes.recipes) do if r.upper_doorway then
+ local stair=r.geometry.lines[1]
+ assert(r.geometry.spawn.y==stair.y0 and r.geometry.spawn.x<=stair.x0-Recipes.unit,
+  'ascent spawn overlaps the stair slope')
+ local a=r.geometry.arrivals.left
+ assert(a.y==stair.y0 and a.x<=stair.x0-Recipes.unit and a.x>r.geometry.floor.left,
+  'ascent arrival must have a flat lead-in inside the floor')
+end end
 local c=assert(Recipes.resolve(Rooms.rooms.junction_cross))
 assert(c.exit_anchors.bottom and c.exit_anchors.bottom.drop,'drop socket must be marked')
 assert(#c.floor.openings==1 and c.floor.openings[1].x==c.exit_anchors.bottom.x,'drop needs a real floor opening')
