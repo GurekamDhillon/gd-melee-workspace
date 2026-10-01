@@ -21,7 +21,7 @@ dpkg --add-architecture i386
     libpng-dev:i386 zlib1g-dev:i386 libfreetype6-dev:i386 libsqlite3-dev:i386 libzstd-dev:i386 \
     libasound2-dev:i386 libpulse-dev:i386 libudev-dev:i386 libx11-dev:i386 libx11-xcb-dev:i386 libxext-dev:i386 \
     libxrandr-dev:i386 libxcursor-dev:i386 libxi-dev:i386 libxfixes-dev:i386 libxss-dev:i386 libxinerama-dev:i386 libxtst-dev:i386 \
-    libwayland-dev:i386 libxkbcommon-dev:i386 libvulkan-dev:i386 fonts-liberation2 \
+    libwayland-dev:i386 libxkbcommon-dev:i386 libegl1-mesa-dev:i386 wayland-protocols libvulkan-dev:i386 fonts-liberation2 \
     libglx0:amd64 libegl1:amd64 libgl1:amd64 libopengl0:amd64
 curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --batch --yes --dearmor -o /usr/share/keyrings/llvm.gpg
 printf '%s\n' 'deb [signed-by=/usr/share/keyrings/llvm.gpg] https://apt.llvm.org/jammy/ llvm-toolchain-jammy-22 main' > /etc/apt/sources.list.d/llvm.list
