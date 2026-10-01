@@ -669,6 +669,25 @@ print('PASS reduced motion is honest and UI failures cannot corrupt run or save 
 
 
 class BundleTests(unittest.TestCase):
+    def test_collection_draw_before_first_run_has_no_room_dependency(self):
+        script = '(function()\n' + prepare.bundle() + '\nend)()\n'
+        body = r"""
+files={};request=true;tick=0
+ready()
+assert(state().menu=='collection' and state().run==nil and state().node==nil)
+local logs,texts={},{}
+gd.log=function(s) logs[#logs+1]=s end
+gd.kit.text=function(x,y,s) texts[#texts+1]=tostring(s);return 10 end
+on_draw()
+assert(#logs==0,'fresh collection renderer failed: '..table.concat(logs,';'))
+assert(#texts>0,'fresh collection did not render')
+print('PASS fresh collection renders before any room or run exists')
+"""
+        result = subprocess.run([LUA, '-', str(RT)], input=v2.PRELUDE_MAIN + script + body,
+                                text=True, capture_output=True, timeout=120)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('PASS', result.stdout)
+
     def test_production_legacy_onboarding_observes_complete_gameplay_sequence(self):
         script = '(function()\n' + prepare.bundle() + '\nend)()\n'
         body = r'''
