@@ -21,6 +21,11 @@ cmake -S "$GW_MELEE/extern/enet" -B "$GW_ENET_BUILD" -G Ninja \
 cmake --build "$GW_ENET_BUILD" -j "$GW_JOBS"
 bash "$GW_ROOT/tools/port/build_libusb_linux.sh"
 python3 "$GW_ROOT/tools/port/map_to_msvc.py" --self-test
+# Actual-source stage seam / floor-follow / dynamic-island / lifetime checks.
+# This driver compiles the real seam sources against a synthetic collision map;
+# it is not a live-physics or GPU test. Wired here so a clean checkout actually
+# discovers it instead of leaving it as an unreferenced file.
+python3 "$GW_MELEE/pc/tests/stage_seam_test.py"
 bash "$GW_ROOT/tools/port/test_linux_abi.sh"
 bash "$GW_ROOT/tools/port/build_linux.sh"
 mkdir -p "$GW_BUILD_ROOT/assets/fonts"
