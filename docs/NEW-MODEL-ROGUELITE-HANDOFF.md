@@ -4,6 +4,8 @@ Updated 2026-09-30 after watched movement testing, the ascent spawn correction, 
 
 ## Assignment
 
+**Scope update:** the user has authorized the new model to own the entire remaining 100/100 program. Read `FULL-100-100-MODEL-ASSIGNMENT.md` alongside this handoff; it supplies the milestone-by-milestone execution mandate through final content, polish and platform acceptance.
+
 Continue the offline TBD roguelite toward the full completion and polish contract in `ROGUELITE-COMPLETION-PLAN.md`. Do not restart planning or rebuild already working systems. The next practical milestone is **one complete generated run through validated rooms, with combat, rewards and reliable save/resume**. This is an intermediate milestone, not permission to reduce the final scope to a demonstration.
 
 Read this handoff first. The longer completion plan supplies the full requirements; this document supplies the latest facts and an execution order. Historical status paragraphs in other documents may be superseded by the evidence below.
