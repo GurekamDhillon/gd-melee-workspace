@@ -781,6 +781,65 @@ print('PASS R3a: the inventory owns the consumable, is failure-safe and durable 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('R3a: the inventory owns the consumable', result.stdout)
 
+    def test_equipment_applies_reverts_and_history_records(self):
+        script = '(function()\n' + prepare.bundle() + '\nend)()\n'
+        body = r'''
+files={};request=true;tick=0
+ready();click('start');step();step();tick=91;step()
+for _=1,400 do step();if state().active then break end end
+assert(state().active,'run did not activate')
+local profile=state().profile
+assert(profile.history~=nil,'no run history on the profile')
+-- R3a: consumables record exists on the run
+assert(state().run.inventory~=nil,'no inventory on the run')
+-- R3a: equipment record exists and is applied to the player host
+assert(state().run.equipment~=nil,'no equipment record on the run')
+assert(state().run.equipment.host=='player','equipment host is not the player')
+assert(state().run.equipment.capacity==4,'unexpected equipment capacity')
+-- Applying an item produces a real modifier on the host.
+local choose_menu=uv(on_tick,'choose_menu')
+local begin=uv(choose_menu,'begin')
+local se=uv(begin,'sync_equipment')
+local svc=uv(se,'equipment_service')
+local rec=uv(se,'run_equipment')(state().run)
+-- equip/acquire return a NEW record; the caller owns replacing the old one.
+rec=assert(svc.acquire(rec,'ember_lens',1))
+rec=assert(svc.equip(rec,'ember_lens'))
+state().run.equipment=rec
+local before=Core.resolve(state().run,'player','assault')
+local ok,why=svc:apply(state().run,rec)
+assert(ok,'equipment apply refused: '..tostring(why))
+local after=Core.resolve(state().run,'player','assault')
+assert(after.potency==before.potency+2,'equipment produced no real stat change: '..tostring(before.potency)..'->'..tostring(after.potency))
+-- Reverting removes it exactly.
+assert(svc:revert(state().run,rec),'equipment revert refused')
+local reverted=Core.resolve(state().run,'player','assault')
+assert(reverted.potency==before.potency,'revert left the modifier behind: '..tostring(reverted.potency))
+-- Leaving the run must not leak an equipped item into the next run.
+rec=assert(svc.equip(rec,'ember_lens'));state().run.equipment=rec;svc:apply(state().run,rec)
+local choose=uv(on_tick,'choose_menu')
+choose({kind='leave'})
+local leaked=Core.resolve(state().run,'player','assault')
+assert(leaked.potency==before.potency,'leave leaked an equipped item: '..tostring(leaked.potency))
+-- Run history is appended when a run finishes.
+click('start');step();step();tick=91;step()
+for _=1,400 do step();if state().active then break end end
+local finish=uv(uv(on_tick,'complete_entry'),'finish')
+finish('failure')
+local hist=state().profile.history
+assert(hist~=nil,'history vanished')
+assert(hist.entries and #hist.entries>=1,'no history entry was appended: '..tostring(hist.entries and #hist.entries))
+local last=hist.entries[#hist.entries]
+assert(last.outcome=='failure','history recorded the wrong outcome: '..tostring(last.outcome))
+assert(last.run_id==state().run.id,'history entry is bound to the wrong run')
+print('PASS R3a: equipment applies, reverts, does not leak, and run history records finishes')
+'''
+        code = v2.PRELUDE_MAIN + ';\n' + script + '\n' + body
+        result = subprocess.run([shutil.which('lua5.4') or shutil.which('lua'), '-', str(v2.RT)],
+                                input=code, text=True, capture_output=True, timeout=180)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('R3a: equipment applies, reverts', result.stdout)
+
     def test_production_legacy_main_uses_real_loadout_and_preserves_up(self):
         script = '(function()\n' + prepare.bundle() + '\nend)()\n'
         body = r'''

@@ -11,7 +11,7 @@ Evidence provenance: **stub** = deterministic engine double · **native** = real
 
 | Check | Command | Result |
 |---|---|---|
-| Pure/stub suite | `python3 -m unittest discover -s tools/roguelite -p 'test_*.py'` | **250 pass, 1 skip** |
+| Pure/stub suite | `python3 -m unittest discover -s tools/roguelite -p 'test_*.py'` | **251 pass, 1 skip** |
 | Native link | `tools/port/build_linux.sh` | **LINK_OK**, 1044 objects, 72 libraries |
 | Bridge fixpoint | (same) | **stable** on pass 1/4, `18828/18828` entries resolved |
 | Bridge ABI audit | (same) | **OK**, `0` ECX/EDX prologue violations |
@@ -103,7 +103,7 @@ Generated `pc/platform/gw_mex_bridge.c` remains uncommitted by design.
 |---|---|---|
 | `inventory.lua`/`equipment.lua`/`run_history.lua` | **implemented, NOT REACHABLE** | `reports/B3`: not bundled (`prepare.py:34-39`), zero callers. 16 tests `loadfile` by path, so they test unshipped code |
 | Consumables | **integration-tested** | R3a: `inventory.lua` is bundled, constructed per run, seeded from the legacy counter via `from_legacy_supplies`, and now **owns** the spend. Dispatch is plan -> re-validate against the authoritative record -> apply+read back -> commit. `core.lua` gained optional `run.inventory`/`run.equipment`. A refused save consumes nothing and grants no heal; the inventory survives a relaunch |
-| Equipment | **missing** | no slots; only genes-as-body-parts (`core.lua:185-196`) |
+| Equipment | **integration-tested** | R3a: `run_equipment` seeds a 4-slot player record, `sync_equipment` applies real modifiers, `revert_equipment` runs on leave so an item cannot leak into the next run. Verified: equipping `ember_lens` moves assault potency by exactly its declared +2, revert restores it, leave leaves nothing behind. **Remaining:** a menu surface to own/equip, and the native region/seam work so items are visible |
 | Victory export | **integration-tested** | **R2 core resolved.** `Core.finish` now takes `{defer_export=true}`: a full collection **defers** the earned gene onto the finish record instead of dropping it. `Core.pending_exports` / `claim_deferred` / `decline_deferred` make it reachable from the collection, durable across relaunch, and **exactly once**. `Core.discard` (the only way a collection shrinks) backs it, refusing locked, parented and last genes. main never elects no-export; a deferral becomes the headline notice. Full product-flow regression: finish -> relaunch -> claim still refused while full -> discard -> claim -> repeated claim neither duplicates nor deletes -> refused save leaves the profile untouched |
 | Discard | **implemented + integration-tested** | `Core.discard` landed. Refuses: unknown gene, any locked stat, a gene that is an ancestor of a retained gene, and emptying the collection. `test_discard.py` proves the guards, that nothing else mutates, and that a discard survives save/load as a deletion. **Still needed:** the menu action, `ctx.capacity`, and wiring it to the deferred export |
 | v1 restore rollback | **missing** | `main.lua:1021` ignores `save()` return; v2 path is correct |
@@ -164,7 +164,7 @@ Generated `pc/platform/gw_mex_bridge.c` remains uncommitted by design.
 |---|---|---|---|
 | R1 | P1 | `ftColl_80076640` absorbed→`false`; `main.lua:768` refunds on armor chip | coordinator (needs native edit + build) |
 | R2 | **CLOSED (integration-tested)** | Durable deferred export landed: defer at capacity, claim exactly once from the collection, explicit decline recorded, `Core.discard` frees capacity. Regression drives the real product flow through a relaunch. Root review: `ROOT-REVIEW-R2-2026-10-01.md` |
-| R3a | **partly closed** | Bundled; inventory constructed, dispatched and persisted; discard menu action + `ctx.capacity` + claim/decline wired; `Core.discard` landed. **Remaining:** equipment applied to a run (modifiers + native region seams), run-history appended on finish and shown, and the menu surface for owned consumables |
+| R3a | **partly closed** | Bundled. Inventory constructs, dispatches, persists, is failure-safe and relaunch-durable. Equipment constructs, applies real modifiers, reverts and does not leak. Run history seeds from the finished ledger and records finishes. Discard + claim/decline + `ctx.capacity` wired. `Core.discard` landed. **Remaining:** menu surfaces to own/equip/see inventory+history, equipment visual regions, and native region seams |
 | R3b | P1 | Encounter/boss **native-control work**: the scripted enemy API is 6 functions and none moves an actor or sets vulnerability, so `encounter_behaviors.lua`/`boss_behaviors.lua` (1545 lines, tested, unbundled) cannot become reachable until that surface exists | coordinator + native build |
 | R4 | P1 | Invisible fighters via ignored `dobj_tint` refusal (`visuals.lua:37`) | coordinator + native confirm |
 | R5 | P1 | Reward screen has no exit (`menus.lua:264` vs legend `:520`) | coordinator (`menus.lua`) |
