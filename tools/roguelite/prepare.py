@@ -31,7 +31,12 @@ def install_room_kit(mod):
 
 def bundle(source=SOURCE):
     chunks = []
-    for name, local in [('core', 'Core'), ('rng', 'Rng'), ('codec', 'Codec'), ('room_catalogue', 'RoomCatalogue'), ('room_recipes', 'RoomRecipes'), ('encounter_catalogue', 'EncounterCatalogue'), ('gene_catalogue', 'GeneCatalogue'), ('enemy_catalogue', 'EnemyCatalogue'), ('audio_catalogue', 'AudioCatalogue'), ('progression', 'Progression'), ('progress', 'Progress'), ('checkpoint', 'Checkpoint'), ('topology', 'Topology'), ('adapter', 'Adapter'), ('route', 'Route'), ('route_map', 'RouteMap'), ('inspector', 'Inspector'), ('legacy', 'Legacy'), ('dungeon', 'Dungeon'), ('dungeon_v1', 'DungeonV1'), ('commands', 'Commands'), ('roster', 'Roster'), ('bindings', 'Bindings'), ('visuals', 'Visuals'), ('feedback', 'Feedback'), ('menus', 'Menus'), ('rooms', 'Rooms'), ('enemy_genes', 'EnemyGenes'), ('technical_ai', 'TechAI')]:
+    for name, local in [('core', 'Core'), ('rng', 'Rng'), ('codec', 'Codec'), ('room_catalogue', 'RoomCatalogue'), ('room_recipes', 'RoomRecipes'), ('encounter_catalogue', 'EncounterCatalogue'), ('gene_catalogue', 'GeneCatalogue'), ('enemy_catalogue', 'EnemyCatalogue'), ('audio_catalogue', 'AudioCatalogue'), ('progression', 'Progression'), ('progress', 'Progress'), ('checkpoint', 'Checkpoint'), ('topology', 'Topology'), ('adapter', 'Adapter'), ('route', 'Route'), ('route_map', 'RouteMap'), ('inspector', 'Inspector'), ('legacy', 'Legacy'), ('dungeon', 'Dungeon'), ('dungeon_v1', 'DungeonV1'), ('commands', 'Commands'), ('roster', 'Roster'), ('bindings', 'Bindings'), ('visuals', 'Visuals'), ('feedback', 'Feedback'), ('menus', 'Menus'), ('rooms', 'Rooms'), ('enemy_genes', 'EnemyGenes'), ('technical_ai', 'TechAI'), ('runtime_rooms', 'RuntimeRooms'), ('runtime_encounters', 'RuntimeEncounters'), ('runtime_rewards', 'RuntimeRewards'), ('runtime_campaign', 'RuntimeCampaign'),
+        # Compact presentation, appended after every earlier runtime module so
+        # the existing names and their order stay byte-compatible with the
+        # previously installed bundle. main.lua reads them lexically.
+        ('hud_layout', 'Hud'), ('onboarding', 'Onboarding'),
+        ('runtime_presentation', 'Presentation')]:
         chunks.append(f'local {local} = (function()\n{(source / (name + ".lua")).read_text()}\nend)()\n')
     chunks.append((source / 'main.lua').read_text())
     return '\n'.join(chunks)

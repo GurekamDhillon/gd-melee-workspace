@@ -80,7 +80,7 @@ for i=1,3 do
  on_enemy_hit({handle=enemy_handle,from=1,damage=3})
 end
 assert(state().run.hosts.player.state.assault.charge==3)
-press(1);press(1);press(1)
+press(1);press(1)
 assert(enemies[enemy_handle].damage==10 and state().run.hosts.player.state.assault.charge==0)
 assert(state().run.hosts.enemy_trail_1)
 for i=1,100 do frame() end
@@ -96,7 +96,7 @@ local charge=r.hosts.player.state.assault.charge;assert(charge==1)
 for i=1,2 do on_action_change(1,44,44,false);on_hit(1,2,{item=false}) end
 assert(r.hosts.player.state.assault.charge==3)
 ps[1].x=0;ps[1].y=0;ps[2].x=4;ps[2].y=0
-press(1);press(1);press(1);assert(hits==1 and state().run.hosts.player.state.assault.charge==0)
+press(1);press(1);assert(hits==1 and state().run.hosts.player.state.assault.charge==0)
 -- Injected hit does not consume subsequent genuine collision credit.
 on_action_change(1,44,44,false);on_hit(1,2,{item=false})
 for i=1,3 do on_action_change(1,179,181,false) end
@@ -104,7 +104,7 @@ assert(state().run.hosts.player.state.guard.charge==3)
 -- Native refusal must retain the charge; test fresh cooldown-expired state.
 for i=1,100 do frame() end
 for i=1,3 do on_action_change(1,44,44,false);on_hit(1,2,{item=false}) end
-fail_hit=true;press(1);press(1);press(1);fail_hit=false
+fail_hit=true;press(1);press(1);fail_hit=false
 assert(state().run.hosts.player.state.assault.charge==3)
 -- Arena clear is an observed native stock transition, not percent threshold.
 ps[2].stocks=98;frame();assert(state().menu=='reward' and pause)
