@@ -60,7 +60,9 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
     # SDL loads these with dlopen, so the executable's ldd output cannot find
     # them. Keep the i686 Wayland stack separate from the launcher's x64 Qt libs.
     runtime_dirs=a.runtime_lib_dir+[build/'lib',Path('/usr/lib32'),Path('/usr/lib/i386-linux-gnu'),Path('/lib/i386-linux-gnu')]
-    for soname in ('libwayland-client.so.0','libwayland-cursor.so.0','libwayland-egl.so.1','libxkbcommon.so.0'):
+    for soname in ('libwayland-client.so.0','libwayland-cursor.so.0','libwayland-egl.so.1','libxkbcommon.so.0',
+                   'libX11.so.6','libX11-xcb.so.1','libXext.so.6','libXcursor.so.1',
+                   'libXfixes.so.3','libXi.so.6','libXrandr.so.2','libXss.so.1','libXtst.so.6'):
         candidates=[directory/soname for directory in runtime_dirs if (directory/soname).is_file()]
         library=None
         for candidate in candidates:
@@ -68,7 +70,7 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
             if magic==b'\x7fELF\x01':
                 library=candidate
                 break
-        if library is None:raise SystemExit(f'Missing 32-bit Wayland runtime {soname}; provision it or use --runtime-lib-dir')
+        if library is None:raise SystemExit(f'Missing 32-bit display runtime {soname}; provision it or use --runtime-lib-dir')
         shutil.copy2(library,dest/'lib'/soname)
         copy_dependencies(library)
     # Enforce the baseline for every ELF, including the 64-bit Qt launcher and
