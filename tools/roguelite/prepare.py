@@ -36,7 +36,12 @@ def bundle(source=SOURCE):
         # the existing names and their order stay byte-compatible with the
         # previously installed bundle. main.lua reads them lexically.
         ('hud_layout', 'Hud'), ('onboarding', 'Onboarding'),
-        ('runtime_presentation', 'Presentation')]:
+        ('runtime_presentation', 'Presentation'),
+        # R3a: inventory/equipment/run-history were complete and tested but were
+        # never bundled, so nothing could reach them. Bundled after the presentation
+        # modules; every earlier name keeps its exact relative order.
+        ('inventory', 'Inventory'), ('equipment', 'Equipment'),
+        ('run_history', 'RunHistory')]:
         chunks.append(f'local {local} = (function()\n{(source / (name + ".lua")).read_text()}\nend)()\n')
     chunks.append((source / 'main.lua').read_text())
     return '\n'.join(chunks)

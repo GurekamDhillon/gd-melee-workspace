@@ -733,6 +733,54 @@ print('PASS all eight onboarding steps follow real production legacy gameplay ho
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('PASS', result.stdout)
 
+    def test_run_inventory_owns_consumables_and_survives_refusal(self):
+        script = '(function()\n' + prepare.bundle() + '\nend)()\n'
+        body = r'''
+files={};request=true;tick=0
+ready();click('start');step();step();tick=91;step()
+for _=1,400 do step();if state().active then break end end
+assert(state().active and roguelite_v2()==nil,'expected the shipped legacy path')
+local cs=uv(on_tick,'command_state');local avail=uv(on_tick,'availability')
+assert(state().run.progress.supplies==2,'fixture supplies')
+ps[1].percent=90
+-- One real D-pad spend: root -> item -> Restore.
+step(0);step(2);step(0)
+step(0);step(1);step(0)
+assert(state().run.progress.supplies==1,'the spend did not consume exactly one item')
+assert(ps[1].percent==60,'the heal did not land exactly once')
+assert(state().run.inventory~=nil,'the run has no inventory record')
+assert(state().run.inventory.items.legacy_restore==1,'the inventory disagrees with the supplies mirror')
+-- A REFUSED save consumes nothing and grants no heal.
+fail_atomic=true
+step(0);step(2);step(0)
+step(0);step(1);step(0)
+fail_atomic=false
+assert(state().run.progress.supplies==1,'a refused save consumed an item')
+assert(state().run.inventory.items.legacy_restore==1,'a refused save mutated the inventory')
+assert(ps[1].percent==60,'a refused save left a free heal behind')
+-- Durable across a relaunch: the inventory, not just the counter.
+local inv_before=state().run.inventory.items.legacy_restore
+on_unload();files={};request=true;tick=0;ready()
+step();step();tick=91;step();click('resume')
+for _=1,400 do step();if state().active then break end end
+assert(state().run.progress.supplies==1,'supplies came back after a relaunch')
+assert(state().run.inventory~=nil,'the inventory was lost across a relaunch')
+assert(state().run.inventory.items.legacy_restore==inv_before,'the inventory count changed across a relaunch')
+-- The tree follows the real inventory, and reports honestly at zero.
+state().run.inventory.items.legacy_restore=nil
+state().run.progress.supplies=0
+local ok,why=uv(on_tick,'use_inventory_item')(state().run,'legacy_restore','combat',function() return true end)
+assert(ok==false,'a spend succeeded with an empty inventory')
+assert(tostring(why):find('not owned',1,true) or tostring(why):find('stack',1,true),
+  'the empty-inventory refusal is not the real one: '..tostring(why))
+print('PASS R3a: the inventory owns the consumable, is failure-safe and durable across relaunch')
+'''
+        code = v2.PRELUDE_MAIN + ';\n' + script + '\n' + body
+        result = subprocess.run([shutil.which('lua5.4') or shutil.which('lua'), '-', str(v2.RT)],
+                                input=code, text=True, capture_output=True, timeout=180)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('R3a: the inventory owns the consumable', result.stdout)
+
     def test_production_legacy_main_uses_real_loadout_and_preserves_up(self):
         script = '(function()\n' + prepare.bundle() + '\nend)()\n'
         body = r'''
@@ -816,11 +864,16 @@ print('PASS shipped legacy main uses real placed genes, preserves held Up, refun
                         script.index('function on_tick()'))
         self.assertIn('function on_tick()', script)
         self.assertIn('function on_draw()', script)
-        # The reviewed inventory modules were neither added nor dropped by this
-        # lane: they were not part of the installed bundle before either.
-        for module in ('Inventory', 'Equipment'):
-            self.assertNotIn(f'local {module} = (function()', script,
-                             f'{module} was silently added to the installed bundle')
+        # R3a deliberately bundles the reviewed inventory/equipment/run-history
+        # services: they were complete and tested but unreachable. They must appear
+        # AFTER every earlier module so the previous names keep their order.
+        for module in ('Inventory', 'Equipment', 'RunHistory'):
+            self.assertIn(f'local {module} = (function()', script,
+                          f'{module} must be bundled for R3a')
+        ordered = ['Core', 'Commands', 'Feedback', 'RuntimeCampaign', 'Hud', 'Onboarding',
+                   'Presentation', 'Inventory', 'Equipment', 'RunHistory']
+        where = [script.index(f'local {m} = (function()') for m in ordered]
+        self.assertEqual(where, sorted(where), 'bundle module order changed')
 
     def test_bundled_source_compiles(self):
         directory = v2._certified_source()
