@@ -58,6 +58,20 @@ cmake -S "$AURORA_SRC" -B "$BUILD" -G Ninja "${source_options[@]}" \
     -DAURORA_ENABLE_THP=OFF \
     -DAURORA_ENABLE_RMLUI=OFF
 
+# SDL can silently disable Wayland even when SDL_WAYLAND=ON if a development
+# dependency is missing. Check the generated configuration, not the cache flag.
+python3 - "$BUILD" <<'PY'
+from pathlib import Path
+import re
+import sys
+configs = list((Path(sys.argv[1]) / '_deps/sdl-build').glob(
+    'include-config-*/build_config/SDL_build_config.h'))
+if not configs or not all(re.search(r'^#define SDL_VIDEO_DRIVER_WAYLAND 1$',
+                                   p.read_text(), re.M) for p in configs):
+    sys.exit('SDL Wayland was not compiled: install the 32-bit Wayland, '
+             'xkbcommon and EGL development packages plus wayland-protocols')
+PY
+
 # Dawn is fetched from a tag, so the one 32-bit source fix it needs ships as a patch here rather
 # than as an edit to a file that a clean configure would re-fetch. The configure above is what
 # populates _deps/dawn-src, so this has to run after it and before the build; the grep makes it
