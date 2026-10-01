@@ -21,6 +21,26 @@ Evidence provenance: **stub** = deterministic engine double · **native** = real
 **Source-to-binary relationship established.** The integration lane reproduces a working executable from:
 tracked+seeded native source + 22 untracked-but-included `.inc`/`.h` + **disc-extracted generated headers** (`build/GALE01/include`, gitignored, copied by `tools/port/agent_new.sh:82`). A clone without the disc cannot build; this is correct and must never be committed.
 
+## 1b. Commit map (all local; nothing pushed, no release)
+
+Game repo `agent/roguelite-100-game`:
+| Commit | Contents |
+|---|---|
+| `e9cd3286e` | 17 untracked includes + seam test + its harness (2443 lines) |
+| `244f00710` | 33-file native patch. **Also carries two Lua files the message omits:** `gene_actions.lua` (accepted optional intent hooks, `f33fced`) and `main.lua` (R2 notice fix). Flagged for the reviewer rather than rewriting history |
+| `d5ba31d98` | `runtime_gene_world.lua` adapter + character_parts_lab + effects_lab |
+
+Wrapper `agent/roguelite-100-integration`:
+| Commit | Contents |
+|---|---|
+| `04060d4` | 6 art generators + review triple + `menu/concepts` + `tools/model_parts` |
+| `3c2d6b2` | campaign / presentation / gene-world / gene-action / enemy-behavior suites |
+| `b0d5556` | ledger |
+| `7baf4c2` | ledger, completion plan, watched retests, scripting, research notes, .gitignore |
+| (this) | wire `stage_seam_test.py` into `ci_linux.sh` |
+
+Generated `pc/platform/gw_mex_bridge.c` remains uncommitted by design.
+
 ## 2. Integration lane seeding record
 
 | Seeded | Count | Note |
@@ -40,7 +60,7 @@ tracked+seeded native source + 22 untracked-but-included `.inc`/`.h` + **disc-ex
 | Source reproduces tested exe | **integration-tested** | §1. Link+bridge+ABI+214/214 from this lane |
 | Native changes inventoried | **integration-tested** | `reports/A1-native-inventory.md`. 54 entries: A=39/3827, B=1/61785, C=4/625, D=10/707 |
 | Clean tree compiles | **native-tested** | `e9cd3286e` lands the 17 untracked includes; `244f00710` lands the 33-file native patch. Verified from a **clean clone**: seam test passes, LINK_OK, 214/214. Still requires disc-extracted `build/GALE01/include` (gitignored) |
-| Generated assets reproducible | **missing** | `reports/A2-asset-pipeline.md`. **6 generators untracked**; 83 runtime-critical outputs untracked; tooling undeclared (`DEPENDENCIES.md:36` claims stdlib-only, needs PIL/numpy/fontTools/playwright/Blender) |
+| Generated assets reproducible | **partial** | `04060d4` lands the 6 generators, so the pipeline is now reproducible. **Remaining:** `DEPENDENCIES.md:36` still claims "Python 3 (standard library only)" while the generators need Pillow/fontTools/rsvg-convert/Blender/playwright, and the Pillow venv has no creation recipe (M1 open item) |
 | Native patches landed with focused checks | **native-tested** | `244f00710` (33 files) + `e9cd3286e` (17 includes + seam test) + `d5ba31d98`. `stage_seam_test.py` wired into `ci_linux.sh`; it previously passed ONLY with `script_game.c` dirty and now passes from a clean clone. Generated `gw_mex_bridge.c` deliberately never staged |
 | Bridge separated from source | **integration-tested** | `gw_mex_bridge.c` is bucket B, regenerates per build — must never be staged |
 
