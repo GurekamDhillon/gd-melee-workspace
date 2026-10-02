@@ -11,7 +11,7 @@ Nothing was pushed, tagged or published.
 | --- | --- | --- |
 | Workspace (`origin-ws`) | `integration/2026-10-01/roguelite-100` | `0b2a548` (primary pair), `35319af` (Linux 0.1.8) |
 | Workspace, graphics preflight | `integration/2026-10-01/graphics-preflight` | `d89875b` (recovered WIP), `00fb921` (missing CI test) |
-| Game (`pub`) | `integration/2026-10-01/roguelite-100-game` | `e47950dd2` (primary pair), `21d001dea` (VK kit) |
+| Game (`pub`) | `integration/2026-10-01/roguelite-100-game` | `e47950dd2` (primary pair), `21d001dea` (VK kit), `5759ccdd8` and `378d79b20` (two fixes found while verifying — see below) |
 
 Local work was preserved throughout: the 42 workspace and 50 game local-only commits are ancestors
 of the integration branches, and the four modified `tools/slippi` files were never staged.
@@ -150,11 +150,48 @@ This session ran on WSL/Linux. The following are **not** done and must not be re
 - No bridge fixpoint and no EXE ABI audit.
 - No headless game tests, no `run.sh` gameplay run, no controller or timing check.
 - No on-screen verification of any changed menu, room, HUD or stage seam.
-- Game-side C was **not** compiler-verified: the documented
-  `clang --target=powerpc-unknown-eabi -fsyntax-only` needs clang, and only gcc is present here.
-  The merge was verified structurally instead: zero conflict markers, comment- and string-aware
-  brace/paren balance on all five files, no duplicate Lua registration keys, and every referenced
-  handler resolving to an included `.inc`.
+
+## Compiler verification, and the two bugs it found
+
+The merge **was** put through a real compiler. `tools/port/pipe_linux.sh` turned out to carry the
+exact per-TU flag set, and the workspace has a bundled LLVM 23.1.1 at `_toolchains/llvm` whose
+`clang.exe` runs under WSL interop. Running each resolved file with its own target, as the sol lane
+had done, gives real coverage:
+
+| File | Target | Result |
+| --- | --- | --- |
+| `pc/gameworld/script_game.c` | `ppc32-none-eabi` (PPC) | **exit 0, 0 errors** |
+| `pc/geno/geno_lab_mode.c` | `ppc32-none-eabi` (PPC) | **exit 0, 0 errors** |
+| `pc/platform/gw_script.c` | `i686-pc-windows-msvc` (native shim) | 9 errors, **byte-identical to the pre-merge commit** |
+
+`pc/gameworld/` is PowerPC-retargeted game code; `pc/platform/` is a native shim, which is why they
+need different targets. `script_model.h` and `script_model.inc` are covered by `script_game.c`.
+
+The nine remaining `gw_script.c` errors are artifacts of the ad-hoc include flags, not defects:
+`-I extern/aurora/include` pulls in Aurora's original three-argument `GXSetArray` instead of the
+port's five-argument shim, and the Windows SDK is not on the include path so `BOOL` is undeclared.
+They reproduce identically on `28c528018`, the pre-merge tip. The right comparison is the error
+*set*, not the count — and after the fix below the two trees match exactly.
+
+**This caught a compile-breaking bug I had introduced.** Moving `on_enemy_hit` from event 9 to 10
+updated the producer, the names table and the dispatcher's upper bound, but I missed the consumer
+switch, leaving two `case 9:` labels in one switch — `duplicate case value '9'`, a hard error. It
+never would have built. Fixed in `378d79b20`. The lesson generalises: on a merge this size, the
+duplicate-key script check I wrote by hand was not enough, and the compiler was.
+
+A second bug surfaced during the same review: `l_enemy_state` guarded the enemy-kind name with a
+hardcoded `value < 6` while `gs_enemy_names` holds seven, so `topi` read back as `"unknown"` even
+though `gd.spawn_enemy("topi")` succeeds. Fixed in `5759ccdd8`.
+
+Both fixes are pushed. After them the merged tree introduces **zero** new errors against the
+pre-merge baseline.
+
+## What verification still does not cover
+
+Syntax checking is not building. It proves the files parse and typecheck against the SDK headers;
+it does not link, so it cannot catch a duplicate or missing symbol at link time, and it says
+nothing about the bridge fixpoint, the EXE ABI, or behaviour. The `gw_script.c` gap above is
+specifically a *linking and include-order* question that only `build.sh` settles.
 
 ## Defects that remain open
 
