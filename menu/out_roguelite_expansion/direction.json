@@ -1,0 +1,788 @@
+{
+  "schema": 1,
+  "status": "authored art and browser motion reference; native implementation pending",
+  "families": {
+    "fire": {
+      "name": "Cinder",
+      "color": "#ff985b",
+      "icon": "icon_cinder",
+      "trail": "trail_cinder",
+      "halo": "halo_cinder",
+      "orbit": "orbit_cinder",
+      "surface": "surface_cinder",
+      "shape": "hook / ember / rising flow"
+    },
+    "frost": {
+      "name": "Rime",
+      "color": "#91e5f4",
+      "icon": "icon_rime",
+      "trail": "trail_rime",
+      "halo": "halo_rime",
+      "orbit": "orbit_rime",
+      "surface": "surface_rime",
+      "shape": "facet / split rail / held symmetry"
+    },
+    "kinetic": {
+      "name": "Gale",
+      "color": "#abedaa",
+      "icon": "family_kinetic",
+      "trail": "trail_gale",
+      "halo": "halo_sector",
+      "orbit": "comet_star",
+      "surface": null,
+      "shape": "forward rails / long spacing"
+    },
+    "aegis": {
+      "name": "Aegis",
+      "color": "#f3cf79",
+      "icon": "family_aegis",
+      "trail": null,
+      "halo": "halo_rime",
+      "orbit": "orbit_rime",
+      "surface": "surface_aegis",
+      "shape": "braced facets / heavy steady rim"
+    },
+    "flux": {
+      "name": "Flux",
+      "color": "#d5a6ff",
+      "icon": "family_flux",
+      "trail": "trail_cinder",
+      "halo": "vortex_lens",
+      "orbit": "orbit_cinder",
+      "surface": "surface_flux",
+      "shape": "opposed circuits / inward exchange"
+    },
+    "sigil": {
+      "name": "Sigil",
+      "color": "#f2a3ce",
+      "icon": "family_sigil",
+      "trail": "arc_bridge",
+      "halo": "surface_sigil",
+      "orbit": "comet_star",
+      "surface": "surface_sigil",
+      "shape": "enclosed seal / linked nodes"
+    }
+  },
+  "states": {
+    "dormant": {
+      "opacity": 0.2,
+      "trail_ms": 0,
+      "orbit_count": 0,
+      "pulse_hz": 0
+    },
+    "charging": {
+      "opacity": 0.42,
+      "trail_ms": 90,
+      "orbit_count": 1,
+      "pulse_hz": 0.6
+    },
+    "ready": {
+      "opacity": 0.7,
+      "trail_ms": 140,
+      "orbit_count": 3,
+      "pulse_hz": 0
+    },
+    "activation": {
+      "opacity": 0.9,
+      "trail_ms": 190,
+      "orbit_count": 3,
+      "pulse_hz": 0,
+      "duration_ms": 260
+    },
+    "recovery": {
+      "opacity": 0.25,
+      "trail_ms": 60,
+      "orbit_count": 0,
+      "pulse_hz": 0,
+      "duration_ms": 420
+    }
+  },
+  "founders": {
+    "SolarEruption": {
+      "title": "Solar Eruption",
+      "color": "#ff985b",
+      "core": "orbit_cinder",
+      "ring": "halo_cinder",
+      "detail": "trail_cinder",
+      "motion": "rising_hooks",
+      "family": "fire"
+    },
+    "GlacialShatter": {
+      "title": "Glacial Shatter",
+      "color": "#91e5f4",
+      "core": "orbit_rime",
+      "ring": "halo_rime",
+      "detail": "trail_rime",
+      "motion": "facet_hold_then_split",
+      "family": "frost"
+    },
+    "ThunderCrown": {
+      "title": "Thunder Crown",
+      "color": "#f5dd83",
+      "core": "crown_prong",
+      "ring": "halo_sector",
+      "detail": "arc_bridge",
+      "motion": "staggered_crown",
+      "family": null
+    },
+    "AstralVortex": {
+      "title": "Astral Vortex",
+      "color": "#c4a3ff",
+      "core": "vortex_band",
+      "ring": "vortex_lens",
+      "detail": "orbit_rime",
+      "motion": "counter_rotation",
+      "family": null
+    },
+    "CometCrescent": {
+      "title": "Comet Crescent",
+      "color": "#a8eedd",
+      "core": "comet_crescent",
+      "ring": "comet_star",
+      "detail": "trail_gale",
+      "motion": "directional_sweep",
+      "family": null
+    }
+  },
+  "blends": [
+    {
+      "id": "SolarEruption__GlacialShatter",
+      "parents": [
+        "SolarEruption",
+        "GlacialShatter"
+      ],
+      "weights": [
+        0,
+        0.25,
+        0.5,
+        0.75,
+        1
+      ],
+      "composition": {
+        "core": "SolarEruption",
+        "shell": "GlacialShatter",
+        "motion": "hot core / cold shell",
+        "parent_a_transform": [
+          -7,
+          8,
+          0,
+          1
+        ],
+        "parent_b_transform": [
+          9,
+          -5,
+          0,
+          1.04
+        ]
+      },
+      "midpoint": {
+        "core_gain": 0.7,
+        "shell_gain": 0.7,
+        "detail_alternation": true,
+        "opaque_overlap": "forbidden"
+      },
+      "endpoint_rule": "At 0 render only parent A; at 1 only parent B; no residual other-parent layers.",
+      "max_layers": 12,
+      "max_detail_sprites": 8,
+      "mechanical_reaction": false
+    },
+    {
+      "id": "SolarEruption__ThunderCrown",
+      "parents": [
+        "SolarEruption",
+        "ThunderCrown"
+      ],
+      "weights": [
+        0,
+        0.25,
+        0.5,
+        0.75,
+        1
+      ],
+      "composition": {
+        "core": "SolarEruption",
+        "shell": "ThunderCrown",
+        "motion": "fire beneath a staggered crown",
+        "parent_a_transform": [
+          0,
+          15,
+          0,
+          0.9
+        ],
+        "parent_b_transform": [
+          0,
+          -18,
+          0,
+          1.04
+        ]
+      },
+      "midpoint": {
+        "core_gain": 0.7,
+        "shell_gain": 0.7,
+        "detail_alternation": true,
+        "opaque_overlap": "forbidden"
+      },
+      "endpoint_rule": "At 0 render only parent A; at 1 only parent B; no residual other-parent layers.",
+      "max_layers": 12,
+      "max_detail_sprites": 8,
+      "mechanical_reaction": false
+    },
+    {
+      "id": "SolarEruption__AstralVortex",
+      "parents": [
+        "SolarEruption",
+        "AstralVortex"
+      ],
+      "weights": [
+        0,
+        0.25,
+        0.5,
+        0.75,
+        1
+      ],
+      "composition": {
+        "core": "SolarEruption",
+        "shell": "AstralVortex",
+        "motion": "ember hooks threaded through counter-rotating bands",
+        "parent_a_transform": [
+          -14,
+          7,
+          -0.15,
+          0.85
+        ],
+        "parent_b_transform": [
+          10,
+          0,
+          0,
+          1.1
+        ]
+      },
+      "midpoint": {
+        "core_gain": 0.7,
+        "shell_gain": 0.7,
+        "detail_alternation": true,
+        "opaque_overlap": "forbidden"
+      },
+      "endpoint_rule": "At 0 render only parent A; at 1 only parent B; no residual other-parent layers.",
+      "max_layers": 12,
+      "max_detail_sprites": 8,
+      "mechanical_reaction": false
+    },
+    {
+      "id": "SolarEruption__CometCrescent",
+      "parents": [
+        "SolarEruption",
+        "CometCrescent"
+      ],
+      "weights": [
+        0,
+        0.25,
+        0.5,
+        0.75,
+        1
+      ],
+      "composition": {
+        "core": "SolarEruption",
+        "shell": "CometCrescent",
+        "motion": "hot leading crescent / ember wake",
+        "parent_a_transform": [
+          -24,
+          15,
+          -0.35,
+          0.75
+        ],
+        "parent_b_transform": [
+          17,
+          -2,
+          -0.12,
+          1.06
+        ]
+      },
+      "midpoint": {
+        "core_gain": 0.7,
+        "shell_gain": 0.7,
+        "detail_alternation": true,
+        "opaque_overlap": "forbidden"
+      },
+      "endpoint_rule": "At 0 render only parent A; at 1 only parent B; no residual other-parent layers.",
+      "max_layers": 12,
+      "max_detail_sprites": 8,
+      "mechanical_reaction": false
+    },
+    {
+      "id": "GlacialShatter__ThunderCrown",
+      "parents": [
+        "GlacialShatter",
+        "ThunderCrown"
+      ],
+      "weights": [
+        0,
+        0.25,
+        0.5,
+        0.75,
+        1
+      ],
+      "composition": {
+        "core": "GlacialShatter",
+        "shell": "ThunderCrown",
+        "motion": "crystal frame / charged crown nodes",
+        "parent_a_transform": [
+          0,
+          12,
+          0,
+          1.02
+        ],
+        "parent_b_transform": [
+          0,
+          -20,
+          0,
+          0.85
+        ]
+      },
+      "midpoint": {
+        "core_gain": 0.7,
+        "shell_gain": 0.7,
+        "detail_alternation": true,
+        "opaque_overlap": "forbidden"
+      },
+      "endpoint_rule": "At 0 render only parent A; at 1 only parent B; no residual other-parent layers.",
+      "max_layers": 12,
+      "max_detail_sprites": 8,
+      "mechanical_reaction": false
+    },
+    {
+      "id": "GlacialShatter__AstralVortex",
+      "parents": [
+        "GlacialShatter",
+        "AstralVortex"
+      ],
+      "weights": [
+        0,
+        0.25,
+        0.5,
+        0.75,
+        1
+      ],
+      "composition": {
+        "core": "GlacialShatter",
+        "shell": "AstralVortex",
+        "motion": "faceted orbitals outside a clear-centred vortex",
+        "parent_a_transform": [
+          0,
+          0,
+          0,
+          1.13
+        ],
+        "parent_b_transform": [
+          0,
+          0,
+          0,
+          0.86
+        ]
+      },
+      "midpoint": {
+        "core_gain": 0.7,
+        "shell_gain": 0.7,
+        "detail_alternation": true,
+        "opaque_overlap": "forbidden"
+      },
+      "endpoint_rule": "At 0 render only parent A; at 1 only parent B; no residual other-parent layers.",
+      "max_layers": 12,
+      "max_detail_sprites": 8,
+      "mechanical_reaction": false
+    },
+    {
+      "id": "GlacialShatter__CometCrescent",
+      "parents": [
+        "GlacialShatter",
+        "CometCrescent"
+      ],
+      "weights": [
+        0,
+        0.25,
+        0.5,
+        0.75,
+        1
+      ],
+      "composition": {
+        "core": "GlacialShatter",
+        "shell": "CometCrescent",
+        "motion": "cold leading blade / split facet wake",
+        "parent_a_transform": [
+          -20,
+          14,
+          0.18,
+          0.77
+        ],
+        "parent_b_transform": [
+          16,
+          -7,
+          -0.08,
+          1.08
+        ]
+      },
+      "midpoint": {
+        "core_gain": 0.7,
+        "shell_gain": 0.7,
+        "detail_alternation": true,
+        "opaque_overlap": "forbidden"
+      },
+      "endpoint_rule": "At 0 render only parent A; at 1 only parent B; no residual other-parent layers.",
+      "max_layers": 12,
+      "max_detail_sprites": 8,
+      "mechanical_reaction": false
+    },
+    {
+      "id": "ThunderCrown__AstralVortex",
+      "parents": [
+        "ThunderCrown",
+        "AstralVortex"
+      ],
+      "weights": [
+        0,
+        0.25,
+        0.5,
+        0.75,
+        1
+      ],
+      "composition": {
+        "core": "ThunderCrown",
+        "shell": "AstralVortex",
+        "motion": "crown tips carried on opposed bands",
+        "parent_a_transform": [
+          0,
+          -21,
+          0,
+          0.87
+        ],
+        "parent_b_transform": [
+          0,
+          11,
+          0,
+          1.07
+        ]
+      },
+      "midpoint": {
+        "core_gain": 0.7,
+        "shell_gain": 0.7,
+        "detail_alternation": true,
+        "opaque_overlap": "forbidden"
+      },
+      "endpoint_rule": "At 0 render only parent A; at 1 only parent B; no residual other-parent layers.",
+      "max_layers": 12,
+      "max_detail_sprites": 8,
+      "mechanical_reaction": false
+    },
+    {
+      "id": "ThunderCrown__CometCrescent",
+      "parents": [
+        "ThunderCrown",
+        "CometCrescent"
+      ],
+      "weights": [
+        0,
+        0.25,
+        0.5,
+        0.75,
+        1
+      ],
+      "composition": {
+        "core": "ThunderCrown",
+        "shell": "CometCrescent",
+        "motion": "one directional sweep / staggered electrical echoes",
+        "parent_a_transform": [
+          -23,
+          -12,
+          0.32,
+          0.78
+        ],
+        "parent_b_transform": [
+          19,
+          7,
+          -0.16,
+          1.06
+        ]
+      },
+      "midpoint": {
+        "core_gain": 0.7,
+        "shell_gain": 0.7,
+        "detail_alternation": true,
+        "opaque_overlap": "forbidden"
+      },
+      "endpoint_rule": "At 0 render only parent A; at 1 only parent B; no residual other-parent layers.",
+      "max_layers": 12,
+      "max_detail_sprites": 8,
+      "mechanical_reaction": false
+    },
+    {
+      "id": "AstralVortex__CometCrescent",
+      "parents": [
+        "AstralVortex",
+        "CometCrescent"
+      ],
+      "weights": [
+        0,
+        0.25,
+        0.5,
+        0.75,
+        1
+      ],
+      "composition": {
+        "core": "AstralVortex",
+        "shell": "CometCrescent",
+        "motion": "vortex uncoils into a leading crescent",
+        "parent_a_transform": [
+          -16,
+          7,
+          0,
+          0.9
+        ],
+        "parent_b_transform": [
+          19,
+          -7,
+          -0.2,
+          1.05
+        ]
+      },
+      "midpoint": {
+        "core_gain": 0.7,
+        "shell_gain": 0.7,
+        "detail_alternation": true,
+        "opaque_overlap": "forbidden"
+      },
+      "endpoint_rule": "At 0 render only parent A; at 1 only parent B; no residual other-parent layers.",
+      "max_layers": 12,
+      "max_detail_sprites": 8,
+      "mechanical_reaction": false
+    }
+  ],
+  "reactions": {
+    "thermal_shock": {
+      "title": "Thermal Shock",
+      "parents": [
+        "SolarEruption",
+        "GlacialShatter"
+      ],
+      "sequence": "cold shell splits; hot hooks break through; steam decays",
+      "beats_ms": [
+        0,
+        90,
+        160,
+        540
+      ],
+      "status": "visual choreography; gameplay mapping requires action-system review"
+    },
+    "plasma_surge": {
+      "title": "Plasma Surge",
+      "parents": [
+        "SolarEruption",
+        "ThunderCrown"
+      ],
+      "sequence": "crown gathers; narrow hot arc advances; residual ember rail",
+      "beats_ms": [
+        0,
+        120,
+        190,
+        600
+      ],
+      "status": "visual choreography; gameplay mapping requires action-system review"
+    },
+    "charged_crystals": {
+      "title": "Charged Crystals",
+      "parents": [
+        "GlacialShatter",
+        "ThunderCrown"
+      ],
+      "sequence": "held facets carry staggered arcs; facets split after contact",
+      "beats_ms": [
+        0,
+        100,
+        220,
+        650
+      ],
+      "status": "visual choreography; gameplay mapping requires action-system review"
+    },
+    "fire_cyclone": {
+      "title": "Fire Cyclone",
+      "parents": [
+        "SolarEruption",
+        "AstralVortex"
+      ],
+      "sequence": "hooks wind inward on two bands; open centre; unwind upward",
+      "beats_ms": [
+        0,
+        140,
+        280,
+        760
+      ],
+      "status": "visual choreography; gameplay mapping requires action-system review"
+    },
+    "orbital_shard_storm": {
+      "title": "Orbital Shard Storm",
+      "parents": [
+        "GlacialShatter",
+        "AstralVortex"
+      ],
+      "sequence": "three faceted orbitals tighten; separate outward; rim fades",
+      "beats_ms": [
+        0,
+        150,
+        300,
+        800
+      ],
+      "status": "visual choreography; gameplay mapping requires action-system review"
+    },
+    "infused_comet": {
+      "title": "Infused Comet",
+      "parents": [
+        "SolarEruption",
+        "CometCrescent"
+      ],
+      "sequence": "hot leading crescent; two trailing hooks; directional recovery",
+      "beats_ms": [
+        0,
+        70,
+        160,
+        500
+      ],
+      "status": "visual choreography; gameplay mapping requires action-system review"
+    }
+  },
+  "placement": {
+    "assault": "reviewed hands / held weapon endpoints",
+    "guard": "reviewed torso / shield, avoid face",
+    "traversal": "reviewed boots / feet; contact traces require ground contact"
+  },
+  "afterimages": {
+    "status": "native pose snapshot support required; browser mannequin is illustrative",
+    "interval_ms": 40,
+    "lifetime_ms": 160,
+    "opacity": [
+      0.24,
+      0.16,
+      0.09,
+      0.04
+    ],
+    "max_snapshots": 4,
+    "tint": "family accent with P1/P2 rim distinction",
+    "skinning": "immutable historical pose including owned equipment",
+    "reset": [
+      "teleport",
+      "respawn",
+      "transform",
+      "equipment swap",
+      "scene exit",
+      "graphics reset",
+      "script error"
+    ]
+  },
+  "ribbons": {
+    "status": "native history strip support required",
+    "max_samples": 16,
+    "history_ms": 190,
+    "sampling": "post-animation base and tip, world-space history",
+    "uv": "x: tail 0 to head 1; y: strip width",
+    "discontinuity": "clear on teleport or owner/asset change; do not bridge discontinuities",
+    "alpha": "straight",
+    "wrap": "clamp"
+  },
+  "halos": {
+    "segment_rule": "N independent segments for actual capacity; fill only actual charges",
+    "max_capacity": 12,
+    "empty_opacity": 0.16,
+    "orientation": "attachment local; never camera-space unless specified"
+  },
+  "quality": {
+    "low": {
+      "orbitals": 0,
+      "trail_samples": 6,
+      "afterimages": 0,
+      "decorative_layers": 3
+    },
+    "medium": {
+      "orbitals": 2,
+      "trail_samples": 10,
+      "afterimages": 2,
+      "decorative_layers": 7
+    },
+    "high": {
+      "orbitals": 3,
+      "trail_samples": 16,
+      "afterimages": 4,
+      "decorative_layers": 12
+    }
+  },
+  "accessibility": {
+    "reduced_motion": "static halo; no afterimages/orbits, one short opacity transition",
+    "reduced_flashes": "no full-screen flash; no rapid alternation; ready retains steady notch",
+    "opposing_builds": "solid under-foot diamond P1; split-circle P2; shape remains under grayscale"
+  },
+  "budget": {
+    "ui_resident_bytes_max": 1048576,
+    "fx_resident_bytes_max": 4194304,
+    "full_pack_bytes_max": 8388608,
+    "loading": "Full pack is an authoring library; load selected build/room sets, not every texture at once.",
+    "native_ms": "must be measured during integration; no browser timing claim",
+    "projected_coverage": "persistent decorative quads <= 2 body rectangles per actor; bursts <= 4 for <=260 ms",
+    "priority": [
+      "enemy attack tell",
+      "live fighter silhouette",
+      "readiness",
+      "gene ornament"
+    ]
+  },
+  "motion_events": {
+    "menu_enter": {
+      "duration_ms": 120,
+      "translate_px": [
+        6,
+        0
+      ],
+      "opacity": [
+        0,
+        1
+      ]
+    },
+    "menu_back": {
+      "duration_ms": 90,
+      "translate_px": [
+        -4,
+        0
+      ]
+    },
+    "ready": {
+      "duration_ms": 220,
+      "scale": [
+        1,
+        1.08,
+        1
+      ]
+    },
+    "refusal": {
+      "duration_ms": 130,
+      "translate_px": [
+        0,
+        3,
+        -2,
+        0
+      ]
+    },
+    "toast": {
+      "enter_ms": 150,
+      "hold_ms": 1800,
+      "exit_ms": 160,
+      "coalesce": true
+    },
+    "transition": {
+      "close_ms": 180,
+      "hold": "runtime ready",
+      "open_ms": 240
+    },
+    "fusion": {
+      "approach_ms": 300,
+      "interlace_ms": 480,
+      "settle_ms": 220,
+      "commit": "runtime success event only"
+    }
+  }
+}

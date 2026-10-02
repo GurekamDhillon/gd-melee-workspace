@@ -1,0 +1,1 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128"><defs><mask id="shape"><g fill="white"><path d="M24 6H42L39 34L54 42L59 53L56 58H9L7 49L19 36Z"/><path d="M12 49H48M25 19H39M22 28H37" fill="none" stroke="black" stroke-width="4"/></g></mask></defs><path fill="white" mask="url(#shape)" d="M0 0H64V64H0Z"/></svg>

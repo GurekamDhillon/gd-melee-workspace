@@ -1,0 +1,166 @@
+{
+  "schema": 1,
+  "status": "authored layout contract; installer must adapt to existing kit API",
+  "coordinates": {
+    "height": 480,
+    "widths": [
+      640,
+      854
+    ],
+    "safe_inset": 16,
+    "text": "runtime strings, no baked words"
+  },
+  "combat": {
+    "status": {
+      "anchor": "bottom-left",
+      "rect": [
+        17,
+        -78,
+        154,
+        57
+      ],
+      "slots": [
+        "damage_percent",
+        "lives",
+        "assault_charge",
+        "traversal_charge",
+        "guard_charge",
+        "item_count"
+      ]
+    },
+    "root_commands": {
+      "anchor": "bottom-right",
+      "rect": [
+        -249,
+        -52,
+        232,
+        30
+      ],
+      "directions": [
+        "left",
+        "right",
+        "down"
+      ]
+    },
+    "open_commands": {
+      "anchor": "bottom-right",
+      "rect": [
+        -227,
+        -98,
+        210,
+        76
+      ],
+      "slots": [
+        "parent_hint",
+        "breadcrumb",
+        "branch_1",
+        "branch_2",
+        "branch_3",
+        "availability"
+      ]
+    },
+    "notification": {
+      "anchor": "top-center",
+      "rect": [
+        -110,
+        22,
+        220,
+        28
+      ],
+      "max_visible": 1,
+      "coalesce": true
+    },
+    "minimap": {
+      "anchor": "top-left",
+      "rect": [
+        19,
+        34,
+        80,
+        17
+      ]
+    },
+    "coverage_4_3": {
+      "closed_primary_panels": 0.0512,
+      "open_primary_panels": 0.0805
+    },
+    "type_px": {
+      "damage": 27,
+      "lives": 12,
+      "command": 9,
+      "breadcrumb": 9,
+      "secondary": 9
+    },
+    "long_labels": "localize; measure font advances; abbreviate approved labels with full name in build view; never shrink below 9px"
+  },
+  "doors": {
+    "units": "game units",
+    "opening": [
+      10.4,
+      16.9
+    ],
+    "storey": 26,
+    "marker_size": [
+      3.6,
+      3.6
+    ],
+    "marker_anchor_from_opening_base": [
+      0,
+      20.2
+    ],
+    "reviewed_recipe_version": 2,
+    "upper_socket_origin": [
+      39,
+      26
+    ],
+    "upper_marker_origin": [
+      39,
+      46.2
+    ],
+    "render_depth": "front of lintel; resolve from actual kit mesh metadata, avoid z-fighting",
+    "mapping": {
+      "upper": "door_upper",
+      "lower": "door_lower",
+      "return": "door_return",
+      "locked": "door_locked",
+      "open": "door_open",
+      "unknown": "door_unknown"
+    },
+    "states": "gate state wins over destination marker; marker reveals only known information",
+    "collision": "none; symbols cannot modify socket position or certify traversal"
+  },
+  "screens": {
+    "reward": "three equal cards; direction choice; benefit and cost from real stat deltas",
+    "fusion": "two parent seals approach, interlace, settle after commit; cost stays visible",
+    "victory": "export preview; confirm only after successful save",
+    "failure": "retained collection vs expired run changes, then review/return choices",
+    "transition": "close, hold until runtime ready, open; no host-stage flash"
+  },
+  "gene_art": {
+    "cinder": "fire",
+    "emberline": "fire",
+    "rime": "frost",
+    "glacier": "frost",
+    "gale": "kinetic",
+    "dashstep": "kinetic",
+    "bulwark": "aegis",
+    "retaliate": "aegis",
+    "siphon": "flux",
+    "convert": "flux",
+    "brand": "sigil",
+    "chain": "sigil"
+  },
+  "founder_mapping": "Founders are visual recipes, not additional mechanical gene families. Thunder/Astral/Comet mappings require gameplay review.",
+  "tell_map": {
+    "dash_windup": "tell_dash",
+    "guard_flare": "tell_guard",
+    "zone_marker": "tell_zone",
+    "dive_marker": "tell_dive",
+    "phase_roar": "tell_phase",
+    "aura": "icon_elite"
+  },
+  "evidence": {
+    "native_branch_capture": "not available at art authoring; all recipes still uncertified in handoff",
+    "reviewed_native_baseline": "/tmp/roguelite-door-grid-v10.png; fixed-route doorway/HUD only",
+    "required_next": "native integrated branch-room capture, actual controller readability and attachment review"
+  }
+}

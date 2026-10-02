@@ -1,0 +1,259 @@
+{
+  "version": 1,
+  "authoring_source": "melee/worktrees/linux/pc/assets_src/bf_interior/export_kit.py",
+  "unit": 6.5,
+  "texture_size": 1024,
+  "samples": 48,
+  "files": [
+    {
+      "name": "bf_balcony_4m.coll.json",
+      "bytes": 72,
+      "sha256": "b39dacd107c39e88559a292a746f75559a204204ad87c3de7efeb11f6df66089"
+    },
+    {
+      "name": "bf_balcony_4m.gxmesh",
+      "bytes": 22456,
+      "sha256": "89e67f8222f0fdac48e4d7ceaf4ae8506fcb3e33d703d1a6682795f0eb143a65"
+    },
+    {
+      "name": "bf_balcony_4m_glass.coll.json",
+      "bytes": 58,
+      "sha256": "9b23a8a582c55bb035eefa4e0f7b358fb3177a68c12ce9b2c42c905fabfc720b"
+    },
+    {
+      "name": "bf_balcony_4m_glass.gxmesh",
+      "bytes": 736,
+      "sha256": "7a62540933856cad726caebc33871737a24df21693787598fde7ed62e3c93f5a"
+    },
+    {
+      "name": "bf_beam_4m.coll.json",
+      "bytes": 42,
+      "sha256": "efa5e0ecffd22f4c93553ea0e474549934709c2f04f4e4e298eae0a053eef79b"
+    },
+    {
+      "name": "bf_beam_4m.gxmesh",
+      "bytes": 8644,
+      "sha256": "d383dd29bfe9e43ea414d1b60839b5a2187f87b83de0d9ce069c241f633914f5"
+    },
+    {
+      "name": "bf_corner_inside_4m.coll.json",
+      "bytes": 42,
+      "sha256": "efa5e0ecffd22f4c93553ea0e474549934709c2f04f4e4e298eae0a053eef79b"
+    },
+    {
+      "name": "bf_corner_inside_4m.gxmesh",
+      "bytes": 11280,
+      "sha256": "762f82fd670fc880e0f84c54b3e3d583c09a10c98525e4153593c099596b1490"
+    },
+    {
+      "name": "bf_corner_outside_4m.coll.json",
+      "bytes": 42,
+      "sha256": "efa5e0ecffd22f4c93553ea0e474549934709c2f04f4e4e298eae0a053eef79b"
+    },
+    {
+      "name": "bf_corner_outside_4m.gxmesh",
+      "bytes": 14780,
+      "sha256": "aa1e57f200db6950ca336f90e0399b1605e0b0cbc1d3d15389af2b05308537b5"
+    },
+    {
+      "name": "bf_door_leaf.coll.json",
+      "bytes": 42,
+      "sha256": "efa5e0ecffd22f4c93553ea0e474549934709c2f04f4e4e298eae0a053eef79b"
+    },
+    {
+      "name": "bf_door_leaf.gxmesh",
+      "bytes": 14616,
+      "sha256": "28ba5a5a140fa3a93b50c305a9c564ce55d784c4a2ea13a7af6883b8d880376d"
+    },
+    {
+      "name": "bf_floor_2m.coll.json",
+      "bytes": 70,
+      "sha256": "3b8e5fd3646b3f390ccdafb6f7631b9017fa0263ffc12ffba73780c0ac34e969"
+    },
+    {
+      "name": "bf_floor_2m.gxmesh",
+      "bytes": 14652,
+      "sha256": "136f24597578fd5c91914865347cfeee41ac8e5c9e03c0441542bd0df80dcaf3"
+    },
+    {
+      "name": "bf_floor_4m.coll.json",
+      "bytes": 72,
+      "sha256": "b39dacd107c39e88559a292a746f75559a204204ad87c3de7efeb11f6df66089"
+    },
+    {
+      "name": "bf_floor_4m.gxmesh",
+      "bytes": 17452,
+      "sha256": "17338a38f9af4d520e47a5500d1f3659616fcf45ca6122845e14189dae810882"
+    },
+    {
+      "name": "bf_floor_end_trim.coll.json",
+      "bytes": 42,
+      "sha256": "efa5e0ecffd22f4c93553ea0e474549934709c2f04f4e4e298eae0a053eef79b"
+    },
+    {
+      "name": "bf_floor_end_trim.gxmesh",
+      "bytes": 4504,
+      "sha256": "4f2655bc0319419b466f2cba80a3ec0c5ac1ffc69678950791d827c0343603f0"
+    },
+    {
+      "name": "bf_floor_opening_4m.coll.json",
+      "bytes": 101,
+      "sha256": "57b8f46b11facef15b34e5cac55023dbb3eddbfab80086ac7aab5bfb7d947144"
+    },
+    {
+      "name": "bf_floor_opening_4m.gxmesh",
+      "bytes": 35404,
+      "sha256": "40eb568f5a73c3a7a9f9415bfb97e3f87ec623b0b5e5fa763ed237f618f90c1b"
+    },
+    {
+      "name": "bf_kit.glow.gxtex",
+      "bytes": 5587008,
+      "sha256": "cfba1e5c7eb9a3d7ab3ed212f1096fe3a8580916f5a38db454100574a3ff1c5c"
+    },
+    {
+      "name": "bf_kit.glow.png",
+      "bytes": 94200,
+      "sha256": "216dbff2bd1665fb6f10499c8ec509e82a62f00cbd53bb3ce1747742f3ad9172"
+    },
+    {
+      "name": "bf_kit.gxtex",
+      "bytes": 5587008,
+      "sha256": "8311acdaa695031ef708fe00965ccbbbd4bef124f05785f81c88ca93c0360b2b"
+    },
+    {
+      "name": "bf_kit.png",
+      "bytes": 945457,
+      "sha256": "782ac2cd7b84040d59610faea035d5538eb7f5f4f751b757fcfcf2942b4979b9"
+    },
+    {
+      "name": "bf_kit_glass.glow.gxtex",
+      "bytes": 5587008,
+      "sha256": "6a4cfa5c5671a72498c3cb98cbc68c9af8b817300cf47f696d0125a3ecb7839f"
+    },
+    {
+      "name": "bf_kit_glass.glow.png",
+      "bytes": 5684,
+      "sha256": "63f7b9e39db4edcdfea0e852b21c950f8a50ee1e7b516f89e91e08d6052e588f"
+    },
+    {
+      "name": "bf_kit_glass.gxtex",
+      "bytes": 5587008,
+      "sha256": "be19c30c6c8a81486fe11a57f62663f04b882751c5adfc9f854217d92f7f39ba"
+    },
+    {
+      "name": "bf_kit_glass.png",
+      "bytes": 249645,
+      "sha256": "4006a54bde06b9ae15ee51e8257bcd8a90635ab81a7a553bef8654475750f043"
+    },
+    {
+      "name": "bf_ramp_4m_rise2m.coll.json",
+      "bytes": 73,
+      "sha256": "f41cdbbd05f33e72f9e7e620e80e1336843a32f85614bcd3fa7f8da4f0e32e04"
+    },
+    {
+      "name": "bf_ramp_4m_rise2m.gxmesh",
+      "bytes": 33852,
+      "sha256": "c64bb0194647c2498169ecabc86c8537b2713631398330ad4f39466d5407a5f6"
+    },
+    {
+      "name": "bf_ramp_4m_rise2m_glass.coll.json",
+      "bytes": 58,
+      "sha256": "9b23a8a582c55bb035eefa4e0f7b358fb3177a68c12ce9b2c42c905fabfc720b"
+    },
+    {
+      "name": "bf_ramp_4m_rise2m_glass.gxmesh",
+      "bytes": 736,
+      "sha256": "78d4cb7f9b5cb150c279ed6af1dbeabe2be18c3e0a1fc4eecaeb9b9ea65664ba"
+    },
+    {
+      "name": "bf_rear_glass_rail_4m.coll.json",
+      "bytes": 42,
+      "sha256": "efa5e0ecffd22f4c93553ea0e474549934709c2f04f4e4e298eae0a053eef79b"
+    },
+    {
+      "name": "bf_rear_glass_rail_4m.gxmesh",
+      "bytes": 8644,
+      "sha256": "58a33a1f00648445b84413d70f2b825ba1b5d69d6e534f0b726632572a6c72b9"
+    },
+    {
+      "name": "bf_rear_glass_rail_4m_glass.coll.json",
+      "bytes": 58,
+      "sha256": "9b23a8a582c55bb035eefa4e0f7b358fb3177a68c12ce9b2c42c905fabfc720b"
+    },
+    {
+      "name": "bf_rear_glass_rail_4m_glass.gxmesh",
+      "bytes": 736,
+      "sha256": "0e8e49aabb3c15c36e040ad12921f35d2325608c9631864109fdd06dfeb4590b"
+    },
+    {
+      "name": "bf_rear_post_4m.coll.json",
+      "bytes": 42,
+      "sha256": "efa5e0ecffd22f4c93553ea0e474549934709c2f04f4e4e298eae0a053eef79b"
+    },
+    {
+      "name": "bf_rear_post_4m.gxmesh",
+      "bytes": 9344,
+      "sha256": "a2da3495a8f5d0887778921381828ad5aeb6ca0a653750139fe7a259ed829693"
+    },
+    {
+      "name": "bf_stairs_4m_rise2m.coll.json",
+      "bytes": 73,
+      "sha256": "f41cdbbd05f33e72f9e7e620e80e1336843a32f85614bcd3fa7f8da4f0e32e04"
+    },
+    {
+      "name": "bf_stairs_4m_rise2m.gxmesh",
+      "bytes": 64364,
+      "sha256": "3e738ee41ca436b2be2d407b7d596d582752244e8e66ee4bf9e6643ca0ea70d0"
+    },
+    {
+      "name": "bf_wall_doorway_4m.coll.json",
+      "bytes": 42,
+      "sha256": "efa5e0ecffd22f4c93553ea0e474549934709c2f04f4e4e298eae0a053eef79b"
+    },
+    {
+      "name": "bf_wall_doorway_4m.gxmesh",
+      "bytes": 60784,
+      "sha256": "7fc9bfcf0dfd3a319bb332c9bcbcb5b547fb6a44c0c70e49c635d1dad2335e61"
+    },
+    {
+      "name": "bf_wall_side_return.coll.json",
+      "bytes": 42,
+      "sha256": "efa5e0ecffd22f4c93553ea0e474549934709c2f04f4e4e298eae0a053eef79b"
+    },
+    {
+      "name": "bf_wall_side_return.gxmesh",
+      "bytes": 28660,
+      "sha256": "36c1b5bb45b573e5f2bc297a327ce422e937329a1b77c0913681c8a98568fd5c"
+    },
+    {
+      "name": "bf_wall_solid_4m.coll.json",
+      "bytes": 42,
+      "sha256": "efa5e0ecffd22f4c93553ea0e474549934709c2f04f4e4e298eae0a053eef79b"
+    },
+    {
+      "name": "bf_wall_solid_4m.gxmesh",
+      "bytes": 28496,
+      "sha256": "0e2a64b728d787fe72d846c4eea4df8f96fed427cb8160a92e17634d8691d372"
+    },
+    {
+      "name": "bf_wall_window_4m.coll.json",
+      "bytes": 42,
+      "sha256": "efa5e0ecffd22f4c93553ea0e474549934709c2f04f4e4e298eae0a053eef79b"
+    },
+    {
+      "name": "bf_wall_window_4m.gxmesh",
+      "bytes": 64612,
+      "sha256": "37c71428c7ed269f34180eb05e5809499edf63ac964588a50961e4e7dd7833c9"
+    },
+    {
+      "name": "bf_window_glass_insert_glass.coll.json",
+      "bytes": 58,
+      "sha256": "9b23a8a582c55bb035eefa4e0f7b358fb3177a68c12ce9b2c42c905fabfc720b"
+    },
+    {
+      "name": "bf_window_glass_insert_glass.gxmesh",
+      "bytes": 1016,
+      "sha256": "3d107fd67d38efd3dc6a1aac1b5dd4de311ee095fa393c764e9c5947371a7dd0"
+    }
+  ]
+}

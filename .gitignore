@@ -26,6 +26,7 @@
 # objects, an exe and a log per parallel worker, all regenerable.
 /_build/agents/
 /_build/runs/
+/_build/effects-lab-validation/
 /worktrees/
 
 # Generated symbol audits: regenerate with the commands in docs/DEVLOG.md section 4.
@@ -130,9 +131,11 @@ __pycache__/
 /_build/replay_batch_*.err
 /_build/gw_mex_sigs_gen.inc*
 
-# README artwork (original, docs/readme) is the one place PNGs are committed
+# Original artwork allowlists; game captures remain ignored.
 !docs/readme/*.png
 !docs/readme/shots/*.png
+!menu/out_effects_study/rgba/*.png
+!menu/out_roguelite/rgba/*.png
 
 # your matchmaking server address (goes into the friends package, not the public repo)
 /_build/netplay_server.txt

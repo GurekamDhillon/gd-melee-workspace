@@ -1,0 +1,47 @@
+{
+  "status": "art asset and browser validation passed",
+  "native_acceptance": "pending",
+  "textures": 76,
+  "groups": {
+    "shared": 17,
+    "wayfinding": 11,
+    "ui": 5,
+    "family": 4,
+    "equipment": 4,
+    "reward": 3,
+    "continuous": 8,
+    "surface": 5,
+    "founder": 6,
+    "tell": 5,
+    "contact": 2,
+    "attachment": 2,
+    "world": 4
+  },
+  "ui_gx_bytes": 805952,
+  "total_gx_bytes": 6165248,
+  "max_alpha_roundtrip_delta": 8,
+  "browser_errors": [],
+  "checked": [
+    "GX decode and dimensions",
+    "nonempty alpha",
+    "hashes",
+    "reference coverage",
+    "texture budgets",
+    "D-pad parent/root behavior",
+    "4:3 and 16:9 closed/open HUD",
+    "six families and five states",
+    "color inspection and reduced motion controls",
+    "five founders",
+    "ten blends at five weights",
+    "exact sampled blend endpoints",
+    "six reactions",
+    "six presentation screens",
+    "responsive overflow"
+  ],
+  "limitations": [
+    "No native afterimage/ribbon/surface support claimed",
+    "No integrated branch-room capture",
+    "Browser color simulation is an approximation; human readability review pending",
+    "Native GPU timing, model bindings, physics and controller acceptance pending"
+  ]
+}

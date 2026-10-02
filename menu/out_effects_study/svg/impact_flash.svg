@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 128 128"><defs>
+<linearGradient id="flame" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+ <stop offset="0" stop-color="white" stop-opacity=".15"/>
+ <stop offset=".28" stop-color="white" stop-opacity=".92"/>
+ <stop offset=".72" stop-color="white" stop-opacity=".65"/>
+ <stop offset="1" stop-color="white" stop-opacity="0"/>
+</linearGradient>
+<linearGradient id="fade" x1="0" y1="0" x2="1" y2="0">
+ <stop offset="0" stop-color="white" stop-opacity="0"/>
+ <stop offset=".75" stop-color="white" stop-opacity=".8"/>
+ <stop offset="1" stop-color="white" stop-opacity="1"/>
+</linearGradient>
+<radialGradient id="puff"><stop stop-color="white" stop-opacity=".8"/>
+ <stop offset=".48" stop-color="white" stop-opacity=".48"/>
+ <stop offset=".8" stop-color="white" stop-opacity=".13"/>
+ <stop offset="1" stop-color="white" stop-opacity="0"/></radialGradient>
+<filter id="soft" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB">
+ <feGaussianBlur stdDeviation="2.1"/></filter>
+<filter id="billow" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+ <feTurbulence type="fractalNoise" baseFrequency=".055" numOctaves="3" seed="41" result="noise"/>
+ <feDisplacementMap in="SourceGraphic" in2="noise" scale="10" xChannelSelector="R" yChannelSelector="G"/>
+</filter>
+</defs>
+<path fill="white" d="M61 10 L66 49 L84 34 L73 54 L117 64 L76 69 L94 92 L69 76 L62 119 L57 76 L35 91 L47 70 L11 63 L49 57 L32 34 L56 49 Z"/>
+<circle cx="62" cy="64" r="22" fill="url(#puff)"/>
+</svg>
