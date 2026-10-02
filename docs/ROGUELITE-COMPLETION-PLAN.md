@@ -490,4 +490,9 @@ Report progress as named gates and verified requirements. If percentages are req
 
 ## 20. Copyable instruction for the implementing agent
 
+For continuation after the first foundation pass, use
+[DeepSeek next-pass instructions](DEEPSEEK-NEXT-PASS.md). They record the
+coordinator's confirmed defects, physical-room/runtime integration order and
+required native evidence. The full completion scope below still applies.
+
 > Execute `docs/ROGUELITE-COMPLETION-PLAN.md` through its full offline completion scope. First inspect both repositories and preserve existing dirty work. Create the acceptance ledger and frozen legacy-save fixtures, then implement the data/persistence contracts, actual dungeon generation, certified room catalogue and safe runtime integration before expanding content. Follow the later gates for genetics/actions, enemies/AI/bosses, inventory/progression, command menus, roster/equipment visuals, art/audio, platform parity and polish. Treat the listed content numbers as explicit proposed delivery targets, not evidence of prior approval or current implementation. Record any necessary changes and their reasons. Reuse the current kit and native APIs; verify capabilities before inventing helpers. Keep the recursive D-pad controls, compact HUD, offline-only scope and no-release instruction. Root coordinates shared builds and final art. Run real native/controller checks in addition to pure tests; label debug fixtures. Do not stop at another vertical slice or substitute a fixed graph for generation. Preserve pending hardware/human acceptance honestly and prepare a concrete review build when those are the only remaining gates.

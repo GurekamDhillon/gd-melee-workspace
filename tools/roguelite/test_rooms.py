@@ -33,6 +33,99 @@ local prior=load_serial
 assert(R.preload_step(s)==nil and load_serial==prior,'permanent failure was retried')
 R.reset(s);fail_load=nil;assert(R.preload_step(s)==false)
 ''')
+    def test_recipe_rooms_place_all_sockets_segment_drops_and_cleanup(self):
+        self.run_lua(r'''
+local function node_for(id,t)
+ local g,r=Recipes.resolve(t)
+ local node={id='generated_'..id,template_id=id,recipe=t.recipe,recipe_modules=r.modules or {},
+  recipe_version=r.version,theme='frost',kind=t.role,room=copy(g),exits={}}
+ for _,socket in ipairs(t.sockets) do
+  node.room.arrivals[socket.id]=copy(g.arrivals[socket.side])
+  node.exits[#node.exits+1]={socket=socket.id,side=socket.side,anchor=copy(g.exit_anchors[socket.side]),to='other'}
+ end
+ return node
+end
+for id,t in pairs(C.rooms) do
+ local n=node_for(id,t);local original=serialize(n);local p=assert(R.plan(n))
+ assert(serialize(n)==original and #p.parts<=28)
+ local c=assert(R.collision(n));assert(#c.floor_segments+#c.platforms+#c.lines<=16)
+ for _,e in ipairs(n.exits) do
+  local a=assert(R.anchor(n,e));local arrival=assert(R.arrival(n,e.socket))
+  assert(a.x==n.room.exit_anchors[e.side].x and arrival.facing)
+  if e.side=='bottom' then
+   assert(a.drop and a.y<0 and #c.floor_segments==2)
+   assert(c.floor_segments[1].right==-6.5 and c.floor_segments[2].left==6.5)
+   for _,f in ipairs(c.floor_segments) do assert(arrival.x<f.left or arrival.x>f.right or arrival.y==f.y) end
+  end
+ end
+ if n.room.exit_anchors.top then
+  local stairs,ramp,upper,door=0,0,0,0
+  for _,part in ipairs(p.parts) do
+   if part.model=='bf_stairs_4m_rise2m' then stairs=stairs+1;assert(part.x==-39 and part.y==0) end
+   if part.model=='bf_ramp_4m_rise2m' then ramp=ramp+1;assert(part.x==13 and part.y==13) end
+   if part.model=='bf_floor_4m' and part.y==26 then upper=upper+1;assert(part.x==39) end
+   if part.model=='bf_wall_doorway_4m' and part.y==26 then door=door+1;assert(part.x==39 and part.scale_x==-1) end
+  end
+  assert(stairs==1 and ramp==1 and upper==1 and door==1 and #c.lines==2)
+ end
+ local prior=load_serial
+ while R.preload_step(s,n)==false do assert(load_serial==prior+1);prior=load_serial end
+ local loaded=load_serial;assert(R.enter(s,n));assert(loaded==load_serial,'preload missed recipe asset')
+ assert(R.clear(s) and count(live)==0)
+end
+assert(count(refs)==10 and R.release(s) and count(refs)==0)
+local bad=node_for('bad',C.rooms.junction_cross)
+bad.room.floor.openings[1].width=26;assert(not R.plan(bad),'off-grid visual opening accepted')
+bad=node_for('bad',C.rooms.branch_y);bad.room.lines[1].x1=0/0;assert(not R.plan(bad))
+bad=node_for('bad',C.rooms.branch_y);bad.room.platforms[1].x=100;assert(not R.plan(bad))
+bad=node_for('bad',C.rooms.branch_y);bad.recipe_modules={};assert(not R.plan(bad))
+''')
+
+    def test_recipe_slopes_and_opening_match_independent_exporter_sidecars(self):
+        lua = shutil.which('lua') or shutil.which('lua5.4')
+        program = r'''
+local C=dofile(arg[1]);local Recipes=dofile(arg[2])
+local g,r=Recipes.resolve(C.rooms.branch_y)
+for _,line in ipairs(g.lines) do print('slope',line.part,line.x0,line.y0,line.x1,line.y1) end
+for _,module in ipairs(r.modules) do
+ if module.part~='bf_wall_doorway_4m' then print('module',module.part,module.x,module.y) end
+end
+local d=Recipes.resolve(C.rooms.junction_cross)
+for _,o in ipairs(d.floor.openings) do print('opening',o.x,o.width) end
+'''
+        result = subprocess.run([lua, '-', str(RUNTIME / 'room_catalogue.lua'), str(RUNTIME / 'room_recipes.lua')],
+                                input=program, text=True, capture_output=True, check=True)
+        source = RUNTIME.parent / 'bf_interior_room/models'
+        rows = [row.split() for row in result.stdout.splitlines()]
+        modules = {row[1]: tuple(map(float, row[2:])) for row in rows if row[0] == 'module'}
+        for row in rows:
+            if row[0] == 'slope':
+                name = row[1]
+                sidecar = json.loads((source / (name+'.coll.json')).read_text())
+                line = sidecar['lines'][0]
+                x,y = modules[name]
+                self.assertEqual(tuple(map(float,row[2:])), (x+line[1],y+line[2],x+line[3],y+line[4]))
+            elif row[0] == 'opening':
+                center,width = map(float,row[1:])
+                lines = json.loads((source / 'bf_floor_opening_4m.coll.json').read_text())['lines']
+                self.assertEqual((center-width/2,center+width/2),(lines[0][3],lines[1][1]))
+        self.assertIn('bf_floor_4m', modules, 'upper doorway needs solid authored floor')
+        self.assertNotIn('bf_floor_opening_4m', modules)
+        exported = ROOT / 'menu/out_roguelite/room-kit'
+        for name in modules:
+            sidecar = json.loads((source / (name+'.coll.json')).read_text())
+            self.assertEqual(sidecar, json.loads((exported / (name+'.coll.json')).read_text()),
+                             'installer input drifted from reviewed BF sidecar')
+            data = (exported / (name+'.gxmesh')).read_bytes()
+            _,_,nv,_,_,_,_,offset,_ = assets.HEADER.unpack_from(data)
+            points = [struct.unpack_from('>8f',data,offset+i*32)[:3] for i in range(nv)]
+            lo = [min(v[i] for v in points) for i in range(3)]
+            hi = [max(v[i] for v in points) for i in range(3)]
+            for line in sidecar['lines']:
+                for x,y in ((line[1],line[2]),(line[3],line[4])):
+                    self.assertTrue(lo[0]-.001<=x<=hi[0]+.001 and lo[1]-.001<=y<=hi[1]+.001,
+                                    f'{name} collider endpoint lies outside actual visual bounds')
+
     def test_exported_bf_wall_and_door_native_dimensions_and_depth(self):
         kit = ROOT / 'menu/out_roguelite/room-kit'
         if not (kit / 'bf_wall_doorway_4m.gxmesh').exists():
@@ -56,6 +149,7 @@ R.reset(s);fail_load=nil;assert(R.preload_step(s)==false)
         self.assertIsNotNone(lua, 'Real Lua required')
         prelude = r'''
 local R=assert(loadfile(arg[1]))();local D=assert(loadfile(arg[2]))()
+local C=dofile(arg[3]);local Recipes=dofile(arg[4])
 local s=R.new();local manifest=D.generate(123)
 local live,refs,loads,names={},{},{},{}
 local serial,load_serial,spawn_calls=0,0,0
@@ -93,7 +187,7 @@ end,model_get=function(h) return live[h] end,model_release=function(asset)
  refs[asset]=nil -- Actual native API returns no values, not true.
 end}
 '''
-        result = subprocess.run([lua, '-', str(RUNTIME / 'rooms.lua'), str(RUNTIME / 'dungeon.lua')],
+        result = subprocess.run([lua, '-', str(RUNTIME / 'rooms.lua'), str(RUNTIME / 'dungeon.lua'), str(RUNTIME / 'room_catalogue.lua'), str(RUNTIME / 'room_recipes.lua')],
                                 input=prelude + body, text=True, capture_output=True, timeout=30)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
