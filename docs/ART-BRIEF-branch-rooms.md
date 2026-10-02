@@ -1,6 +1,7 @@
 # Art/asset brief: branch rooms and upper doorways (Gate 3)
 
-Status: planning brief. Companion to `ROGUELITE-COMPLETION-PLAN.md` Gate 3.
+Status: recipe-v2 configuration reviewed; native certification pending.
+Companion to `ROGUELITE-COMPLETION-PLAN.md` Gate 3 and `SOL-ROOMS-CHECKPOINT.md`.
 The recipe contract (`pc/scripts/examples/roguelite/room_recipes.lua`) already
 authors the analytic collision; this brief covers the **visual** modules, their
 exact kit transforms, and the native certification each template needs before
@@ -10,9 +11,9 @@ exact kit transforms, and the native certification each template needs before
 
 Topology templates now declare three and four sockets (`top`, `bottom`) for
 split/merge/detour/shortcut rooms. The runtime can only admit a template after
-an in-engine traversal/combat clip exists, and the roguelite packet currently
-installs only six BF models. The full kit (`menu/out_roguelite/room-kit/`)
-already contains the needed pieces; they must be installed and bound.
+an in-engine traversal/combat clip exists. The installer now includes all 21
+BF models from `menu/out_roguelite/room-kit/`; live recipe binding and native
+collision/traversal verification remain necessary.
 
 ## Kit constants (authoritative)
 
@@ -30,7 +31,7 @@ carry their rear depth; do not add another offset. Mirror right-hand parts with
 
 ## Required models (install into the roguelite mod)
 
-Add to `tools/roguelite/prepare.py::install_room_kit` (plus `.coll.json`):
+Installed by `tools/roguelite/prepare.py::install_room_kit` (plus `.coll.json`):
 
 - `bf_wall_doorway_4m` (already) — reuse for the **upper storey** doorway.
 - `bf_stairs_4m_rise2m` — ground-to-balcony ascent.
@@ -52,12 +53,15 @@ frame (`ox` = lane centre, `oy` = floor).
 | Stairs_4m_Rise2m | −39 | 0 | 0 | no |
 | Balcony_4m | −13 | 13 | 0 | no |
 | Ramp_4m_Rise2m | 13 | 13 | 0 | no |
-| Floor_Opening_4m | 39 | 26 | 0 | no |
+| Floor_4m (solid upper landing) | 39 | 26 | 0 | no |
 | Wall_Doorway_4m (upper) | 39 | 26 | 0 | yes (faces the lane) |
 
 The analytic surfaces align to the two landings: balcony `x=-13,y=13` and upper
-floor `x=39,y=26`; the visual ramp bridges the analytic 13-unit rise / 26-unit
-gap. The `top` anchor is `{x=39,y=26}` and must equal the upper doorway origin;
+floor `x=39,y=26`. Sidecar-derived slope lines run from `(-52,0)` to `(-26,13)`
+for the stairs and `(0,13)` to `(26,26)` for the ramp. Bind these through
+`gd.stage_add_line`; horizontal proxy platforms do not reproduce the mesh.
+Do not substitute `Floor_Opening_4m` at the upper arrival: its hole lies under
+the player. The `top` anchor is `{x=39,y=26}` and must equal the upper doorway origin;
 `RoomRecipes.validate` enforces that agreement. Any change to these transforms
 must update both the recipe and this brief together, and invalidates prior
 certification.
@@ -67,6 +71,10 @@ A `bottom` socket is a real floor opening, not a flag over solid floor:
 socket must be one-way. `RoomRecipes.validate` refuses an opening without a drop
 anchor and a drop anchor without an opening. The runtime builds segmented floor
 collision around the opening and enforces directionality (Gate 4).
+The actual opening is 13 game units wide, centered at `x=0` (edges −6.5 and
++6.5), not a full 26-unit bay. The drop trigger is `(0,-6)`; the safe bottom
+arrival is `(20,0)`. A socket trigger and a destination arrival have different
+purposes and must not be substituted for each other.
 
 ## Templates needing certification
 

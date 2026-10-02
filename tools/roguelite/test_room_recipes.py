@@ -68,7 +68,16 @@ assert(not Recipes.validate(orphan))
 Recipes.recipes.lane_open.geometry.floor.openings={}
 local noopen=clone(Rooms); Recipes.recipes.junction_cross.geometry.floor.openings={}
 assert(not Recipes.validate(noopen))
+Recipes.recipes.junction_cross.geometry.floor.openings={{x=0,width=13}}
+assert(Recipes.validate(Rooms))
+-- Authored hole width and safe arrivals are checked against geometry.
 Recipes.recipes.junction_cross.geometry.floor.openings={{x=0,width=26}}
+assert(not Recipes.validate(Rooms))
+Recipes.recipes.junction_cross.geometry.floor.openings={{x=0,width=13}}
+local arrival=Recipes.recipes.junction_cross.geometry.arrivals.bottom
+Recipes.recipes.junction_cross.geometry.arrivals.bottom={x=0,y=0,facing=1}
+assert(not Recipes.validate(Rooms),'arrival over a real hole accepted')
+Recipes.recipes.junction_cross.geometry.arrivals.bottom=arrival
 assert(Recipes.validate(Rooms))
 print('room recipes: '..count..' templates resolve, reachable, uncertified; bounds and refusal passed')
 '''
