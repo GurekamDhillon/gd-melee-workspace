@@ -1,7 +1,8 @@
 # Build and deploy the Qt 6 launcher. Run on Windows with VS 2022 and Qt >= 6.5 (MSVC x64).
 param(
   [string]$Out = (Join-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) "_build/release/GD Melee.exe"),
-  [string]$QtRoot = $env:QT_ROOT_DIR
+  [string]$QtRoot = $env:QT_ROOT_DIR,
+  [string]$Generator = "Visual Studio 17 2022"
 )
 $ErrorActionPreference = "Stop"
 $root = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
@@ -9,7 +10,7 @@ $build = Join-Path $root "_build/launcher-qt-windows"
 $Out = [System.IO.Path]::GetFullPath($Out)
 $outDir = Split-Path $Out -Parent
 $args = @("-S", (Join-Path $PSScriptRoot "launcher/qt"), "-B", $build,
-          "-G", "Visual Studio 17 2022", "-A", "x64", "-DBUILD_TESTING=ON", "-DLAUNCHER_DEPLOY_QT=ON")
+          "-G", $Generator, "-A", "x64", "-DBUILD_TESTING=ON", "-DLAUNCHER_DEPLOY_QT=ON")
 if ($QtRoot) {
   $args += "-DCMAKE_PREFIX_PATH=$QtRoot"
   # Tests and their child process must resolve this SDK's native Qt DLLs.

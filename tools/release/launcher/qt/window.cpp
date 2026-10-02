@@ -1,5 +1,6 @@
 #include "window.h"
 #include "kit.h"
+#include "graphics.h"
 #include <QApplication>
 #include <QCheckBox>
 #include <QClipboard>
@@ -8,6 +9,7 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QFileDialog>
+#include <QFile>
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QHeaderView>
@@ -17,6 +19,7 @@
 #include <QMessageBox>
 #include <QMenu>
 #include <QPushButton>
+#include <QPlainTextEdit>
 #include <QScrollArea>
 #include <QSlider>
 #include <QStatusBar>
@@ -29,6 +32,9 @@
 #include <algorithm>
 
 namespace launcher {
+#ifdef Q_OS_LINUX
+static QString osRelease() { QFile f("/etc/os-release"); return f.open(QIODevice::ReadOnly) ? QString::fromUtf8(f.read(16384)) : QString(); }
+#endif
 bool spanish = false;
 QString t(const char *en, const char *es) { return QString::fromUtf8(spanish ? es : en); }
 static QLabel *label(const QString &text) { auto *w = new QLabel(text); w->setWordWrap(true); w->setTextFormat(Qt::PlainText); return w; }
@@ -76,6 +82,19 @@ Window::Window(QString app, QString user, Settings settings)
     setCentralWidget(surface_);
     refreshDiscs(); guarded([&] { refreshMods(); });
     statusBar()->showMessage(t("SELECT A DISC  /  Double-click to play", "ELIGE UN DISCO  /  Doble clic para jugar"));
+#ifdef Q_OS_LINUX
+    graphicsTimeout_ = new QTimer(this); graphicsTimeout_->setSingleShot(true);
+    connect(graphicsTimeout_, &QTimer::timeout, this, [this] { graphicsTimedOut_ = true; graphicsProcess_.kill(); });
+    connect(&graphicsProcess_, &QProcess::readyReadStandardOutput, this, [this] {
+        graphicsOutput_ += graphicsProcess_.readAllStandardOutput();
+        if (graphicsOutput_.size() > 1024 * 1024) { graphicsOutput_.truncate(1024 * 1024); graphicsProcess_.kill(); }
+    });
+    connect(&graphicsProcess_, &QProcess::readyReadStandardError, this, [this] {
+        graphicsErrors_ += graphicsProcess_.readAllStandardError(); graphicsErrors_ = graphicsErrors_.right(64 * 1024);
+    });
+    connect(&graphicsProcess_, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this, [this](int code, QProcess::ExitStatus status) { finishGraphics(status == QProcess::NormalExit ? code : -1); });
+    connect(&graphicsProcess_, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) { if (error == QProcess::FailedToStart) { graphicsErrors_ = graphicsProcess_.errorString().toUtf8(); finishGraphics(-1); } });
+#endif
     connect(&process_, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
         if (error == QProcess::FailedToStart) { show(); play_->setEnabled(true); QMessageBox::critical(this, t("Launch failed", "Error al iniciar"), process_.errorString()); }
     });
@@ -84,8 +103,13 @@ Window::Window(QString app, QString user, Settings settings)
         auto crash = latestCrash(runDir_);
         if (status == QProcess::CrashExit || code != 0 || !crash.isEmpty()) {
             show(); quitting_ = false;
-            QMessageBox::warning(this, t("Game stopped", "El juego se ha detenido"),
-                t("The game stopped unexpectedly. Logs are available here:\n", "El juego se ha detenido inesperadamente. Registros disponibles aquí:\n") + runDir_);
+            QString message;
+#ifdef Q_OS_LINUX
+            message = graphicsStartupFailure(runDir_, osRelease());
+#endif
+            if (message.isEmpty()) message = t("The game stopped unexpectedly.", "El juego se ha detenido inesperadamente.");
+            QMessageBox dialog(QMessageBox::Warning, t("Game stopped", "El juego se ha detenido"), message, QMessageBox::Ok, this);
+            dialog.setTextFormat(Qt::PlainText); dialog.setDetailedText(t("Logs are available here:\n", "Registros disponibles aquí:\n") + runDir_); dialog.exec();
         } else if (quitting_ || settings_.flag("close_on_play")) QApplication::quit();
         else statusBar()->showMessage(t("Game closed.", "Juego cerrado."));
     });
@@ -185,14 +209,73 @@ void Window::addDisc(const QString &given) { guarded([&] {
 }); }
 void Window::play() { guarded([&] {
     if (process_.state() != QProcess::NotRunning) return;
+#ifdef Q_OS_LINUX
+    if (graphicsBusy_) return;
+#endif
     int i = selectedDisc(); if (i < 0) { addDisc(); return; }
-    auto spec = prepareLaunch(appDir_, userDir_, settings_, settings_.discs[i]); save(); runDir_ = spec.workingDirectory;
+    auto spec = prepareLaunch(appDir_, userDir_, settings_, settings_.discs[i]); save();
+#ifdef Q_OS_LINUX
+    pendingLaunch_ = spec; checkGraphics(true);
+#else
+    startGame(spec);
+#endif
+}); }
+void Window::startGame(const LaunchSpec &spec) {
+    runDir_ = spec.workingDirectory;
     settings_.options["last_run"] = runDir_; save();
     process_.setProgram(spec.program); process_.setArguments(spec.arguments); process_.setWorkingDirectory(spec.workingDirectory); process_.setProcessEnvironment(spec.environment);
     process_.setProcessChannelMode(QProcess::MergedChannels); process_.setStandardOutputFile(spec.logFile);
     play_->setEnabled(false); statusBar()->showMessage(t("Game running. Logs: ", "Juego en ejecución. Registros: ") + runDir_);
     process_.start(); if (settings_.flag("close_on_play")) hide();
+}
+#ifdef Q_OS_LINUX
+void Window::checkGraphics(bool forLaunch) { guarded([&] {
+    if (graphicsBusy_ || process_.state() != QProcess::NotRunning) return;
+    auto env = forLaunch ? pendingLaunch_.environment : QProcessEnvironment::systemEnvironment();
+    env.remove("QT_PLUGIN_PATH"); env.remove("QT_QPA_PLATFORM_PLUGIN_PATH"); env.remove("LD_PRELOAD");
+    env.insert("LD_LIBRARY_PATH", appDir_ + "/lib");
+    graphicsBusy_ = true; graphicsForLaunch_ = forLaunch; graphicsTimedOut_ = false;
+    graphicsOutput_.clear(); graphicsErrors_.clear(); play_->setEnabled(false); graphicsDevice_->setEnabled(false);
+    graphicsDetails_->setPlainText(t("Checking 32-bit Vulkan drivers...", "Comprobando los controladores Vulkan de 32 bits..."));
+    statusBar()->showMessage(t("Checking graphics...", "Comprobando gráficos..."));
+    graphicsProcess_.setProgram(appDir_ + "/bin/melee-graphics-probe");
+    graphicsProcess_.setWorkingDirectory(appDir_); graphicsProcess_.setProcessEnvironment(env);
+    graphicsProcess_.start(); graphicsTimeout_->start(15000);
 }); }
+void Window::finishGraphics(int code) {
+    if (!graphicsBusy_) return;
+    graphicsTimeout_->stop(); graphicsBusy_ = false; play_->setEnabled(true); graphicsDevice_->setEnabled(true);
+    guarded([&] {
+        auto report = parseGraphicsReport(graphicsOutput_, code);
+        if (graphicsTimedOut_) report.error = "The 32-bit graphics check timed out.";
+        else if (code == -1) report.error = "The 32-bit graphics helper could not run or crashed. " + QString::fromUtf8(graphicsErrors_).left(2048);
+        const auto selection = settings_.option("graphics_device", "auto");
+        bool selected = report.matchesSelection(selection);
+        QString text = report.summary();
+        if (graphicsForLaunch_ && report.ready() && !selected) text += "\nThe installed device-selection controls did not isolate the selected GPU. Choose Automatic or update the driver's selection layer.";
+        if (!report.ready() || (graphicsForLaunch_ && !selected)) text += "\n\n" + graphicsDriverHelp(osRelease());
+        graphicsDetails_->setPlainText(text);
+        auto log = graphicsForLaunch_ ? pendingLaunch_.workingDirectory + "/graphics-preflight.log" : userDir_ + "/graphics-preflight.log";
+        writeAtomic(log, (text + "\n\nSelected GPU: " + selection + "\nOS:\n" + osRelease() + "\nProbe stdout:\n" + QString::fromUtf8(graphicsOutput_) + "\nProbe stderr:\n" + QString::fromUtf8(graphicsErrors_)).toUtf8());
+        if (!graphicsForLaunch_) {
+            graphicsDevice_->blockSignals(true); graphicsDevice_->clear();
+            graphicsDevice_->addItem(t("Automatic", "Automático"), "auto");
+            for (const auto &d : report.devices) if (d.usable && (d.vendor == 0x1002 || d.vendor == 0x8086 || d.vendor == 0x10de) && graphicsDevice_->findData(d.selector()) < 0) graphicsDevice_->addItem(d.name + " (" + d.selector() + ")", d.selector());
+            if (graphicsDevice_->findData(selection) < 0) graphicsDevice_->addItem(selection + t(" (saved; unavailable)", " (guardada; no disponible)"), selection);
+            graphicsDevice_->setCurrentIndex(graphicsDevice_->findData(selection)); graphicsDevice_->blockSignals(false);
+            statusBar()->showMessage(report.ready() ? t("32-bit Vulkan check passed.", "Comprobación de Vulkan de 32 bits correcta.") : t("Graphics check needs attention. See Diagnostics.", "La comprobación requiere atención. Consulta Diagnóstico."));
+            return;
+        }
+        if (!selected) {
+            QMessageBox dialog(QMessageBox::Warning, t("Graphics check", "Comprobación de gráficos"), text, QMessageBox::Cancel, this);
+            dialog.setTextFormat(Qt::PlainText); dialog.setDetailedText("Preflight log: " + log);
+            auto *attempt = dialog.addButton(t("Try game anyway", "Intentar iniciar de todos modos"), QMessageBox::AcceptRole);
+            dialog.exec(); if (dialog.clickedButton() != attempt) return;
+        }
+        startGame(pendingLaunch_);
+    });
+}
+#endif
 void Window::refreshMods() {
     auto entries = installedMods(modsDir(appDir_, userDir_)); filling_ = true;
     mods_->setRowCount(entries.size());
@@ -225,6 +308,22 @@ QWidget *Window::modsTab() {
 }
 QWidget *Window::diagnosticsTab() {
     auto *scroll = new QScrollArea; scroll->setWidgetResizable(true); auto *page = new QWidget; auto *layout = new QVBoxLayout(page); scroll->setWidget(page);
+#ifdef Q_OS_LINUX
+    auto *graphics = new QGroupBox(t("Linux graphics", "Gráficos de Linux")); auto *graphicsLayout = new QVBoxLayout(graphics); layout->addWidget(graphics);
+    auto *gpuForm = new QFormLayout; graphicsLayout->addLayout(gpuForm); graphicsDevice_ = new QComboBox;
+    graphicsDevice_->addItem(t("Automatic", "Automático"), "auto");
+    auto savedGpu = settings_.option("graphics_device", "auto");
+    if (savedGpu != "auto") { graphicsDevice_->addItem(savedGpu + t(" (saved; check graphics)", " (guardada; comprobar gráficos)"), savedGpu); graphicsDevice_->setCurrentIndex(1); }
+    gpuForm->addRow(t("Game GPU", "GPU del juego"), graphicsDevice_);
+    connect(graphicsDevice_, qOverload<int>(&QComboBox::currentIndexChanged), this, [this] { guarded([&] { settings_.options["graphics_device"] = graphicsDevice_->currentData().toString(); save(); }); });
+    graphicsDetails_ = new QPlainTextEdit; graphicsDetails_->setReadOnly(true); graphicsDetails_->setMinimumHeight(120); graphicsDetails_->setMaximumHeight(180);
+    graphicsDetails_->setPlainText(t("Check graphics to list GPUs available to the 32-bit game. Play checks the selected GPU before starting.", "Comprueba los gráficos para ver las GPU disponibles para el juego de 32 bits. Jugar comprueba la GPU seleccionada antes de iniciar.")); graphicsLayout->addWidget(graphicsDetails_);
+    auto *graphicsRow = new QHBoxLayout; graphicsLayout->addLayout(graphicsRow);
+    button(graphicsRow, t("Check graphics", "Comprobar gráficos"), [this] { checkGraphics(false); });
+    button(graphicsRow, t("Driver help", "Ayuda de controladores"), [this] {
+        QMessageBox dialog(QMessageBox::Information, t("32-bit graphics drivers", "Controladores gráficos de 32 bits"), graphicsDriverHelp(osRelease()), QMessageBox::Ok, this); dialog.setTextFormat(Qt::PlainText); dialog.exec();
+    });
+#endif
     auto check = [&](const QString &title, const QString &key, bool fallback) {
         auto *w = new QCheckBox(title); w->setChecked(settings_.flag(key, fallback)); layout->addWidget(w);
         connect(w, &QCheckBox::toggled, this, [this, key](bool v) { guarded([&] { settings_.options[key] = v ? "1" : "0"; save(); }); });

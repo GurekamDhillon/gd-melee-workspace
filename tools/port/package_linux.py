@@ -41,6 +41,10 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
     launcher=a.launcher or root/'_build/launcher-package/launcher'
     if not (launcher/'bin/gd-melee-launcher').is_file():raise SystemExit('Build/deploy the Qt launcher first with tools/release/build_launcher.sh _build/launcher-package')
     shutil.copytree(launcher,dest/'launcher',symlinks=True)
+    probe=launcher/'bin/melee-graphics-probe'
+    if not probe.is_file():raise SystemExit('Rebuild the launcher: its 32-bit graphics helper is missing')
+    if probe.read_bytes()[:5]!=b'\x7fELF\x01':raise SystemExit('Graphics helper must be a 32-bit ELF executable')
+    shutil.copy2(probe,dest/'bin/melee-graphics-probe')
     shutil.copytree(root/'tools/port/udev',dest/'udev',dirs_exist_ok=True)
     shutil.copytree(root/'tools/release/licenses',dest/'licenses',dirs_exist_ok=True)
     shutil.copy2(root/'tools/release/THIRD-PARTY-NOTICES.txt',dest/'licenses/')
@@ -57,6 +61,7 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
                 soname=Path(match[1]).name
                 if not excluded.match(soname):shutil.copy2(match[2],dest/'lib'/soname)
     copy_dependencies(exe)
+    copy_dependencies(probe)
     # SDL loads these with dlopen, so the executable's ldd output cannot find
     # them. Keep the i686 Wayland stack separate from the launcher's x64 Qt libs.
     runtime_dirs=a.runtime_lib_dir+[build/'lib',Path('/usr/lib32'),Path('/usr/lib/i386-linux-gnu'),Path('/lib/i386-linux-gnu')]

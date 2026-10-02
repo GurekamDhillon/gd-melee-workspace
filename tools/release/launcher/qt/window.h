@@ -8,6 +8,9 @@ class QLabel;
 class QStackedWidget;
 class QPushButton;
 class QCloseEvent;
+class QComboBox;
+class QPlainTextEdit;
+class QTimer;
 
 namespace launcher {
 namespace kit { class Hero; class Surface; }
@@ -37,6 +40,18 @@ private:
     QPushButton *play_;
     bool filling_ = false;
     bool quitting_ = false;
+#ifdef Q_OS_LINUX
+    QProcess graphicsProcess_;
+    QTimer *graphicsTimeout_ = nullptr;
+    QComboBox *graphicsDevice_ = nullptr;
+    QPlainTextEdit *graphicsDetails_ = nullptr;
+    QByteArray graphicsOutput_, graphicsErrors_;
+    LaunchSpec pendingLaunch_;
+    bool graphicsBusy_ = false, graphicsForLaunch_ = false, graphicsTimedOut_ = false;
+    void checkGraphics(bool forLaunch);
+    void finishGraphics(int code);
+#endif
+    void startGame(const LaunchSpec &spec);
     void guarded(const std::function<void()> &action);
     void save();
     void refreshDiscs(const QString &selectId = {});

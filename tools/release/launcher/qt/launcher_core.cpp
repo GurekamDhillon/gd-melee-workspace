@@ -1,4 +1,5 @@
 #include "launcher_core.h"
+#include "graphics.h"
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -272,6 +273,7 @@ LaunchSpec prepareLaunch(const QString &app, const QString &user, const Settings
     // The 64-bit Qt runtime must never enter the 32-bit game's library search path.
     env.remove("QT_PLUGIN_PATH"); env.remove("QT_QPA_PLATFORM_PLUGIN_PATH"); env.remove("LD_PRELOAD");
     env.insert("LD_LIBRARY_PATH", app + "/lib");
+    env = graphicsEnvironment(env, s.option("graphics_device", "auto"));
 #endif
     spec.environment = env; spec.arguments = {"--iso", gamePath(QFileInfo(disc.path).absoluteFilePath())};
     spec.logFile = spec.workingDirectory + "/launcher-process.log";
