@@ -1,0 +1,366 @@
+{
+  "schema": 1,
+  "review_only": true,
+  "seed": 91473,
+  "provenance": "Original SVG paths, gradients and deterministic analytic fields in menu/pipeline/effects_assets.py; no game or disc references.",
+  "assets": [
+    {
+      "name": "flame_lance",
+      "title": "Flame / lance",
+      "group": "Fire",
+      "role": "Upward core and sharp release",
+      "tint": "#ffb85c",
+      "anchor": [
+        0.48,
+        0.82
+      ],
+      "notes": "Narrow upright silhouette with an internal hot tongue.",
+      "kind": "mask",
+      "file": "rgba/flame_lance.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "clamp",
+      "sha256": "1b6b69dbb0eeb970c045fb53ca8a898f9fe357ebc9209b47a5ed6f4716fe157e"
+    },
+    {
+      "name": "flame_hook",
+      "title": "Flame / hook",
+      "group": "Fire",
+      "role": "Curling outer flame",
+      "tint": "#ffb85c",
+      "anchor": [
+        0.4,
+        0.82
+      ],
+      "notes": "A clear hook profile; mirror and rotate around the core.",
+      "kind": "mask",
+      "file": "rgba/flame_hook.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "clamp",
+      "sha256": "1e24ff94491ab004b890d7b0eb068ab5f2457bf38da982d07f05b45485dd6d38"
+    },
+    {
+      "name": "flame_fork",
+      "title": "Flame / fork",
+      "group": "Fire",
+      "role": "Broken flame crown",
+      "tint": "#ffb85c",
+      "anchor": [
+        0.48,
+        0.84
+      ],
+      "notes": "Three unequal tips, intended for brief bursts rather than wallpaper.",
+      "kind": "mask",
+      "file": "rgba/flame_fork.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "clamp",
+      "sha256": "9bf12e4e763687cbaff0a7df232c0e23de59b70219c760c1a784ac160afa929a"
+    },
+    {
+      "name": "ice_needle",
+      "title": "Ice / needle",
+      "group": "Ice",
+      "role": "Long outward shard",
+      "tint": "#88dafa",
+      "anchor": [
+        0.5,
+        0.65
+      ],
+      "notes": "Facets are alpha values, so the whole shard remains tintable.",
+      "kind": "mask",
+      "file": "rgba/ice_needle.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "clamp",
+      "sha256": "18ea3c9cdf3ed26051c0e877cc87100b5e6baaa10efd2c746dea47108282dfdc"
+    },
+    {
+      "name": "ice_cleaver",
+      "title": "Ice / cleaver",
+      "group": "Ice",
+      "role": "Broad shell fragment",
+      "tint": "#88dafa",
+      "anchor": [
+        0.5,
+        0.58
+      ],
+      "notes": "Broad asymmetric wedge to vary the breakup silhouette.",
+      "kind": "mask",
+      "file": "rgba/ice_cleaver.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "clamp",
+      "sha256": "b420429dcdbe02f91a1c73aa51b71d2bbdd35a66d211a6efe85dc29be61b1c52"
+    },
+    {
+      "name": "ice_chip",
+      "title": "Ice / chip",
+      "group": "Ice",
+      "role": "Small tumbling fragment",
+      "tint": "#88dafa",
+      "anchor": [
+        0.5,
+        0.5
+      ],
+      "notes": "A squat fragment; distinct from the long and broad shards.",
+      "kind": "mask",
+      "file": "rgba/ice_chip.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "clamp",
+      "sha256": "5d680db55bf5f1d63bf1ec7a711fab0eb5779ad6030aa4ee8b2329078aad3dc9"
+    },
+    {
+      "name": "frost_branch",
+      "title": "Frost / branch",
+      "group": "Ice",
+      "role": "Growing frost and fracture detail",
+      "tint": "#88dafa",
+      "anchor": [
+        0.19,
+        0.88
+      ],
+      "notes": "A branching fragment, not a full snowflake stamped everywhere.",
+      "kind": "mask",
+      "file": "rgba/frost_branch.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "clamp",
+      "sha256": "20930f98aa676daa65689c83ea3122b25479f18e1b39f92a5318d08f69f81e0e"
+    },
+    {
+      "name": "ring_clean",
+      "title": "Ring / clean",
+      "group": "Impact",
+      "role": "Charge halo and expanding wave",
+      "tint": "#e0cdff",
+      "anchor": [
+        0.5,
+        0.5
+      ],
+      "notes": "A thin continuous ring with room to expand inside the texture.",
+      "kind": "mask",
+      "file": "rgba/ring_clean.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "clamp",
+      "sha256": "afc0f8987abc68205adca40cd7f49a3c4428134caa7036970e5ab14c732c4656"
+    },
+    {
+      "name": "ring_broken",
+      "title": "Ring / fractured",
+      "group": "Impact",
+      "role": "Shatter and interrupted shockwave",
+      "tint": "#e0cdff",
+      "anchor": [
+        0.5,
+        0.5
+      ],
+      "notes": "Unequal arcs and radial splinters make the break direction readable.",
+      "kind": "mask",
+      "file": "rgba/ring_broken.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "clamp",
+      "sha256": "c95dedc348ce6e22346d4d692e2ca186b36389d8c442e30666e0d3584cac7e58"
+    },
+    {
+      "name": "impact_flash",
+      "title": "Flash / release",
+      "group": "Impact",
+      "role": "One brief impact accent",
+      "tint": "#e0cdff",
+      "anchor": [
+        0.5,
+        0.5
+      ],
+      "notes": "A sharp asymmetric star, intended for only a few game frames.",
+      "kind": "mask",
+      "file": "rgba/impact_flash.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "clamp",
+      "sha256": "8f6f6ff0c957d086f4a17e82a555a7ace822c0d74fc58c49603db4dbb5a0b83b"
+    },
+    {
+      "name": "streak_taper",
+      "title": "Streak / taper",
+      "group": "Impact",
+      "role": "Fast fragments and swept accents",
+      "tint": "#e0cdff",
+      "anchor": [
+        0.85,
+        0.5
+      ],
+      "notes": "The anchor is near the bright leading tip; the tail points left.",
+      "kind": "mask",
+      "file": "rgba/streak_taper.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "clamp",
+      "sha256": "30f4d32595e140139476ffb2925af0a3231096e5dc32a6008c25e294b5d01776"
+    },
+    {
+      "name": "ember_shard",
+      "title": "Ember / splinter",
+      "group": "Fire",
+      "role": "Small hot debris",
+      "tint": "#ffb85c",
+      "anchor": [
+        0.5,
+        0.5
+      ],
+      "notes": "An angular hot fragment, rather than another round sparkle.",
+      "kind": "mask",
+      "file": "rgba/ember_shard.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "clamp",
+      "sha256": "d55465d4fbac2058819776639075e2e7bff8f6fc6a4cf3658998aa01e526f66a"
+    },
+    {
+      "name": "smoke_billow",
+      "title": "Smoke / billow",
+      "group": "Atmosphere",
+      "role": "Soft, irregular aftermath",
+      "tint": "#bcc8dd",
+      "anchor": [
+        0.5,
+        0.5
+      ],
+      "notes": "Soft alpha with an irregular edge; tint dark for smoke or pale for mist.",
+      "kind": "mask",
+      "file": "rgba/smoke_billow.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "clamp",
+      "sha256": "ed67f94f11f8c50646f5a0f44b0cad60def2b9bc6364ae7a5ff94dc3c95afcaf"
+    },
+    {
+      "name": "steam_wisp",
+      "title": "Steam / wisp",
+      "group": "Atmosphere",
+      "role": "Rising thermal-shock steam",
+      "tint": "#c9eaf6",
+      "anchor": [
+        0.4,
+        0.85
+      ],
+      "notes": "Two unequal curls leave empty space between wisps.",
+      "kind": "mask",
+      "file": "rgba/steam_wisp.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "clamp",
+      "sha256": "0cf5fd66b7ad4949214ae194ddce7b731cf7c560c2df8f561437512268d74d1a"
+    },
+    {
+      "name": "noise_soft",
+      "title": "Noise / soft",
+      "group": "Distortion",
+      "role": "Scalar modulation and distortion",
+      "tint": "#ffffff",
+      "anchor": [
+        0.5,
+        0.5
+      ],
+      "notes": "Seamless grayscale data; scroll and remap it, not a visible particle.",
+      "kind": "data",
+      "file": "rgba/noise_soft.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "repeat",
+      "sha256": "91d86f8405df4ee41808e771793821da4c379be16cfebf8bdaff63f74a9dac9c",
+      "colour_space": "linear data; do not apply sRGB decoding",
+      "gfx_texture_swizzle": "rrrr",
+      "sampling_note": "The current FX offset shader reads R/A. Keep this sampler out of alpha_textures; data alpha is not particle opacity."
+    },
+    {
+      "name": "flow_curl",
+      "title": "Flow / curl",
+      "group": "Distortion",
+      "role": "Directional heat/refraction offsets",
+      "tint": "#ffffff",
+      "anchor": [
+        0.5,
+        0.5
+      ],
+      "notes": "Seamless R/G vector field; 0.5 means zero offset. Use texture swizzle rgbg with the current warp/distortion shaders (G feeds alpha).",
+      "kind": "data",
+      "file": "rgba/flow_curl.png",
+      "size": [
+        256,
+        256
+      ],
+      "format": "RGBA8",
+      "alpha": "straight",
+      "wrap": "repeat",
+      "sha256": "86324c55cff8e3d6d48d0bb98a88388f413c83cb531ec060c2751118b62440fd",
+      "colour_space": "linear data; do not apply sRGB decoding",
+      "gfx_texture_swizzle": "rgbg",
+      "sampling_note": "The current FX offset shader reads R/A. Keep this sampler out of alpha_textures; data alpha is not particle opacity."
+    }
+  ]
+}

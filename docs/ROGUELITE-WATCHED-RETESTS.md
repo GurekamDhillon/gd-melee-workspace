@@ -36,3 +36,8 @@ ALL stairs->balcony->ramp->upperlandingjoins. This confirms a movement-quality
 defect for investigation, not humanacceptance. Native seams researchworker
 inspecting MapLine links/independentjoints; no automaticflag flips. Merge room
 loaded andunpaused foruser, secondtrace pendinguser movement.
+
+User confirms merge room accessible afterreopening newowner-cleanup build.
+Native cleanup build213/213tests passed. This is human reachability evidence
+for Falco/left entrance, not fullbodyclearance/allroster/physicscertification.
+Shared ascent snag/pop remains failed until seamfix andwatchedretest.
