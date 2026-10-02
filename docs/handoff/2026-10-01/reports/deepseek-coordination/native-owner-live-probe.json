@@ -1,0 +1,96 @@
+{
+  "controller_input": false,
+  "scene_changed": false,
+  "paused_room_preserved": true,
+  "before": "26\n1666\n16\n45",
+  "a": [
+    1,
+    32,
+    34
+  ],
+  "b": [
+    1,
+    35,
+    37
+  ],
+  "after": "26\n1666\n16\n45",
+  "room_status": "[roguelite_certification/main] certify_status diag_version=1 api_version=1 phase=ready template=branch_y recipe=true recipe_version=2 certified=false isolated=true draw=false clean=true camera=wide floor_y=0 colliders=5 samples=0 error=nil",
+  "success": true,
+  "commands": [
+    {
+      "command": "= #gd.model_instances(), gd.match().frame, gd.player(1).x, gd.player(1).y",
+      "ok": true,
+      "output": [
+        "26",
+        "1666",
+        "16",
+        "45"
+      ]
+    },
+    {
+      "command": "load /home/gd/melee_linux_test/gdm/_build/agents/roguelite-certification/scripts/owner_probe_a.lua",
+      "ok": true,
+      "output": [
+        "[owner_probe_a] owner_probe_a asset=1 instance=32 floor=34",
+        "loaded owner_probe_a (scripts) [gameplay]"
+      ]
+    },
+    {
+      "command": "load /home/gd/melee_linux_test/gdm/_build/agents/roguelite-certification/scripts/owner_probe_b.lua",
+      "ok": true,
+      "output": [
+        "[owner_probe_b] owner_probe_b asset=1 instance=35 floor=37",
+        "loaded owner_probe_b (scripts) [gameplay]"
+      ]
+    },
+    {
+      "command": "unload owner_probe_a",
+      "ok": true,
+      "output": [
+        "[owner_probe_a] on_unload: owner_probe_a:7: deliberate owner-probe hook refusal",
+        "stack traceback:",
+        "\t[C]: in function 'error'",
+        "\towner_probe_a:7: in function <owner_probe_a:7>",
+        "unloaded owner_probe_a"
+      ]
+    },
+    {
+      "command": "assert(gd.model_get(32) == nil); assert(gd.model_get(35) ~= nil)",
+      "ok": true,
+      "output": []
+    },
+    {
+      "command": "owner_probe_b_check 34",
+      "ok": true,
+      "output": [
+        "[owner_probe_b] owner_probe_b_check passed"
+      ]
+    },
+    {
+      "command": "unload owner_probe_b",
+      "ok": true,
+      "output": [
+        "unloaded owner_probe_b"
+      ]
+    },
+    {
+      "command": "= #gd.model_instances(), gd.match().frame, gd.player(1).x, gd.player(1).y",
+      "ok": true,
+      "output": [
+        "26",
+        "1666",
+        "16",
+        "45"
+      ]
+    },
+    {
+      "command": "certify_status",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_status diag_version=1 api_version=1 phase=ready template=branch_y recipe=true recipe_version=2 certified=false isolated=true draw=false clean=true camera=wide floor_y=0 colliders=5 samples=0 error=nil"
+      ]
+    }
+  ],
+  "binary_sha256": "fb3a8816e70131d96d56241726c3718292aec425b268f09d78f82aa1e417ed6c",
+  "scope": "live shared mesh references, owner floor/model removal after throwing unload hook; no traversal evidence"
+}

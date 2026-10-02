@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Menu genres — five structurally different navigation concepts</title>
+<style>
+@font-face{font-family:SS3;src:url(../SourceSans3/SourceSans3-Black.otf);font-weight:900}
+@font-face{font-family:SS3;src:url(../SourceSans3/SourceSans3-Bold.otf);font-weight:700}
+@font-face{font-family:Hask;src:url(../Hasklug/HasklugNerdFont-Black.otf)}
+
+:root{
+  --ink:#0a0e18; --bone:#f2efe4; --muted:#b8c2dc; --gold:#f0b429; --gold-lt:#ffd766;
+  --gold-dk:#a9761a; --danger:#e5483b; --ok:#27b88a; --dis:#7d88a6; --line:#29374c;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#070c14;color:var(--bone);font:15px/1.55 SS3,system-ui,sans-serif}
+h1,h2,h3{font-weight:900;margin:0}
+main{max-width:1500px;margin:0 auto;padding:30px 4% 90px}
+
+header{border-bottom:2px solid var(--gold);padding-bottom:16px;margin-bottom:24px}
+h1{font-size:clamp(30px,4vw,50px);letter-spacing:-1.5px;line-height:1.05}
+.sub{color:var(--muted);margin:8px 0 0;max-width:76ch}
+.kicker{font-size:10px;letter-spacing:2.4px;color:var(--gold);margin:0 0 8px}
+
+section{border-top:1px solid var(--line);padding-top:24px;margin-bottom:70px}
+.chead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+h2{font-size:26px;letter-spacing:-.5px}
+.tag{font:900 10px/1 SS3;letter-spacing:1.6px;padding:5px 8px;background:#19263a;
+  border:1px solid var(--line);color:var(--gold)}
+.blurb{color:var(--muted);margin:6px 0 16px;max-width:84ch}
+
+.work{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:start}
+@media(max-width:1180px){.work{grid-template-columns:1fr}}
+
+/* the stage */
+.stagebox{position:relative}
+canvas.stage{display:block;width:960px;height:720px;max-width:100%;
+  border:1px solid var(--line);background:#000;cursor:pointer;border-radius:2px}
+.hud{margin-top:9px;font-size:11px;letter-spacing:1px;color:#8292aa;width:960px;max-width:100%}
+.hud b{color:var(--gold)}
+
+.ctrls{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start;margin:0 0 18px}
+.ctl{display:flex;flex-direction:column;gap:5px}
+.ctl span{font-size:9px;letter-spacing:1.5px;color:var(--gold)}
+button{background:#19263a;border:1px solid #344660;color:var(--bone);padding:7px 12px;
+  font:700 11px/1 SS3;letter-spacing:1.3px;cursor:pointer}
+button:hover{border-color:#4a7ae0}
+button[aria-pressed=true]{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+input[type=range]{accent-color:var(--gold);width:190px}
+.nval{font:900 13px/1 SS3;color:var(--bone);min-width:14px;display:inline-block}
+
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:20px;margin-top:22px}
+.box{background:#101a2c;padding:16px 17px;border:1px solid var(--line)}
+.box h3{font-size:10px;letter-spacing:1.8px;color:var(--gold);margin-bottom:9px}
+.box ul{margin:0;padding-left:16px;color:var(--muted)}
+.box li{margin-bottom:5px}
+.box p{margin:0;color:var(--muted)}
+.box b{color:var(--bone);font-weight:900}
+.box code{font-family:Hask,monospace;font-size:12px;color:var(--bone)}
+.verdict{border-left:4px solid var(--gold)}
+.bad{color:var(--danger);font-weight:900}.good{color:var(--ok);font-weight:900}
+.mid{color:var(--gold);font-weight:900}
+.find{background:#0c1626;border:1px solid var(--line);padding:14px 16px;margin-top:18px;
+  font-size:13px;color:var(--muted)}
+.find b{color:var(--bone)}
+.find .lbl{color:var(--gold);font-size:9px;letter-spacing:1.6px;display:block;margin-bottom:5px}
+
+table{width:100%;border-collapse:collapse;margin:14px 0 36px;font-size:13px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:10px;letter-spacing:1.4px;color:var(--gold)}
+td b{color:var(--bone)}
+.yes{color:var(--ok);font-weight:900}.no{color:var(--danger);font-weight:900}
+.part{color:var(--gold);font-weight:900}
+.note{background:#101a2c;border:1px solid var(--line);padding:15px 18px;margin:26px 0;
+  color:var(--muted);font-size:14px}
+.note b{color:var(--bone)}
+footer{border-top:1px solid var(--line);margin-top:56px;padding-top:16px;
+  font-size:9px;letter-spacing:1px;color:#8292aa}
+</style>
+</head>
+<body>
+<main>
+
+<header>
+  <p class="kicker">NAVIGATION EXPLORATION · NOT A DELIVERY · NOTHING HERE IS IN THE PIPELINE</p>
+  <h1>Five menus that are not the hub</h1>
+  <p class="sub">The current top level is a <b>hub</b>: one hero tile plus a column that steps
+  down ×0.76. That is one answer out of several. Below are five structurally different answers —
+  different <i>navigation models</i>, not reskins — each drawn as a live 640×480 stage.
+  <b>These are prototypes, not pictures.</b> The layout rules are executable, the motion runs at
+  the frame counts in the spec, and the item-count slider stress-tests each rule from 2 to 9.
+  Drive them with the arrow keys and A / B.</p>
+</header>
+
+<table>
+<tr><th>Concept</th><th>Navigation model</th><th>Scales past 6?</th><th>Player support today</th><th>Texture cost @2x</th></tr>
+<tr><td><b>A · Orbit</b></td><td>rotational; the cursor travels a ring</td><td class="part">~8</td>
+  <td class="part">yes, with a fit rule</td><td>~160 KB</td></tr>
+<tr><td><b>B · Filmstrip</b></td><td>1-D lateral; one card fanned into a "now showing" slot</td><td class="no">no — 1-D</td>
+  <td class="yes">yes</td><td>~180 KB</td></tr>
+<tr><td><b>C · Index</b></td><td>linear list; the existing list template, promoted</td><td class="yes">yes, 9+</td>
+  <td class="yes">yes, unchanged</td><td>~161 KB</td></tr>
+<tr><td><b>D · Dashboard</b></td><td>the pad <i>is</i> the menu; direct positional</td><td class="no">no — ~8 fixed</td>
+  <td class="part">yes, one new mask</td><td>~128 KB</td></tr>
+<tr><td><b>E · Deck</b></td><td>dimensional; depth order <i>is</i> the cursor order</td><td class="part">~7</td>
+  <td class="part">needs a ROT channel</td><td>~150 KB</td></tr>
+</table>
+
+<div class="note">
+<b>Read this first.</b> All five sit <i>above</i> the list template, not instead of it — Special
+Melee has 10 rows and Rules has more. So this choice only decides the two screens a player sees
+first. Press <b>A</b> on any concept and it drills into its child screen using the kit's own list
+template, so you can judge whether the concept survives contact with a real sub-list.
+</div>
+
+<!-- ══════════════════════ A ══════════════════════ -->
+<section>
+  <div class="chead"><h2>A · Orbit</h2><span class="tag">ROTATIONAL</span></div>
+  <p class="blurb">The cursor travels a ring instead of a grid. Position on the ring <i>is</i> the
+  menu index, so wrap-around is visible rather than implied, and the selected card swings forward
+  to a fixed reading slot. Cards past the front lose their labels — the ring is a transport, the
+  front card is the page.</p>
+  <div class="work"><div class="stagebox">
+    <canvas class="stage" id="cv-a" width="960" height="720"></canvas>
+    <div class="hud" id="hud-a"></div>
+  </div><div>
+    <div class="ctrls">
+      <div class="ctl"><span>TILES</span><input type="range" min="2" max="9" value="6" id="n-a"><span class="nval" id="nv-a">6</span></div>
+      <div class="ctl"><span>VIEW</span>
+        <button id="a-shear" aria-pressed="true">SHEAR</button>
+        <button id="a-geo" aria-pressed="false">GEOMETRY</button>
+        <button id="a-fit" aria-pressed="false">CHECK TITLE-SAFE</button>
+      </div>
+      <div class="ctl"><span>READOUT</span><div class="hud" style="margin:0;width:auto">
+        <b>◄ ►</b> turn ring · <b>A</b> enter · <b>B</b> back</div></div>
+    </div>
+    <div class="find"><span class="lbl">LIVE CHECK</span><b id="a-find"></b></div>
+    <div class="cols">
+      <div class="box"><h3>LAYOUT RULE</h3><ul>
+        <li>Ring centre <code>(320, 300)</code>, radius <code>205</code>, arc ±78°</li>
+        <li>Front slot <code>(262, 120) 116×150</code> — every selection lands on exactly this rect</li>
+        <li>Label by rank: <b>0 = hero 44</b>, <b>1 = heading 32</b>, <b>2 = label 20</b>,
+          <b>≥3 = icon only</b></li>
+        <li>Alpha hard-stepped <b>1 → .70 → .42 → .30 → .22</b> over ranks 0–4</li>
+      </ul></div>
+      <div class="box"><h3>NAVIGATION + MOTION</h3><ul>
+        <li>◄ ► / stick X rotate one step, <b>8f</b>, the card travelling its own arc</li>
+        <li>Selected: TRA to front slot + <b>SCA 1→1.30 overshoot at f4</b>, settle f9 — the
+          numbers <code>row_select</code> already ships</li>
+        <li>Wrap is a <b>18f</b> full turn, so it reads as a rotation not a jump</li>
+        <li>A dives in, B backs out</li>
+      </ul></div>
+      <div class="box"><h3>FEASIBILITY</h3><ul>
+        <li><span class="good">Direct.</span> Every card is a parallelogram, so
+          <code>fp_draw_quad</code> maps it exactly</li>
+        <li><span class="good">Direct.</span> TRA / SCA / ALPHA already exist as joint channels</li>
+        <li><span class="bad">Blocked:</span> per-card <b>rotation</b>. The fan of upright cards
+          is what you see here; it works, but a real orbit wants <code>FJC_ROT</code></li>
+      </ul></div>
+      <div class="box verdict"><h3>VERDICT</h3><p><b>The strongest first impression of the
+      five</b>, and the only one that makes the top level feel like a fighting game. Wrap becomes
+      legible. <b>Costs:</b> ~8 max; at n=9 you get 6 names and 3 blank cards; and it breaks the
+      pad-script convention <code>fe_menu_sweep.py</code> assumes.</p></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ══════════════════════ B ══════════════════════ -->
+<section>
+  <div class="chead"><h2>B · Filmstrip</h2><span class="tag">1-D TRANSPORT</span></div>
+  <p class="blurb">A media-browser shape. One large "now showing" card on the left, the upcoming
+  items receding to the right in scale and alpha. The cursor is lateral only — the strip slides
+  and the chosen card flies into the reading slot.</p>
+  <div class="work"><div class="stagebox">
+    <canvas class="stage" id="cv-b" width="960" height="720"></canvas>
+    <div class="hud" id="hud-b"></div>
+  </div><div>
+    <div class="ctrls">
+      <div class="ctl"><span>TILES</span><input type="range" min="2" max="9" value="6" id="n-b"><span class="nval" id="nv-b">6</span></div>
+      <div class="ctl"><span>VIEW</span>
+        <button id="b-shear" aria-pressed="true">SHEAR</button>
+        <button id="b-geo" aria-pressed="false">GEOMETRY</button>
+        <button id="b-fit" aria-pressed="false">CHECK TITLE-SAFE</button>
+      </div>
+      <div class="ctl"><span>READOUT</span><div class="hud" style="margin:0;width:auto">
+        <b>◄ ►</b> scroll · <b>A</b> enter · <b>B</b> back</div></div>
+    </div>
+    <div class="find"><span class="lbl">LIVE CHECK</span><b id="b-find"></b></div>
+    <div class="cols">
+      <div class="box"><h3>LAYOUT RULE</h3><ul>
+        <li>Reading slot <code>(58, 88) 308×308</code>; strip origin <code>x = 404</code>,
+          pitch <code>70</code></li>
+        <li>Strip card <code>70×96</code>, decaying <b>×0.86</b> per step; only 3 fit before the
+          right edge</li>
+        <li>Alpha <b>.60 → .40 → .24</b>, hard-stepped</li>
+        <li>Selected gets an <b>8px gold left edge</b> — never colour alone</li>
+      </ul></div>
+      <div class="box"><h3>NAVIGATION + MOTION</h3><ul>
+        <li>◄ ► scrolls the strip one slot over <b>7 frames</b> — <code>kit_motion</code>'s
+          existing <code>scroll</code></li>
+        <li>Leaving a card: TRA to the reading slot <b>10f</b>, SCA .6→1.0, alpha crossfade</li>
+        <li>Strip shift and card flight share one clock — no queued state</li>
+      </ul></div>
+      <div class="box"><h3>FEASIBILITY</h3><ul>
+        <li><span class="good">Cheapest of the five.</span> The list template with a scale
+          channel — <code>fk_frame</code>'s highlight glide is already this motion</li>
+        <li><span class="bad">Blocked:</span> strictly <b>1-D</b>. Anything hierarchical needs a
+          second screen</li>
+      </ul></div>
+      <div class="box verdict"><h3>VERDICT</h3><p>The most modern and least risky, but the
+      <b>least identity</b> — it reads as a generic launcher and drops the "place" idea entirely
+      (no breadcrumb, because there is no hierarchy). <b>Best kept for a leaf screen</b> like
+      Records or stage select, not the front door.</p></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ══════════════════════ C ══════════════════════ -->
+<section>
+  <div class="chead"><h2>C · Index</h2><span class="tag">EDITORIAL / ARCHIVE</span></div>
+  <p class="blurb">No faces, no icons, no tiles. A contents page: a rule down the left margin, a
+  section numeral, item rows set as pure typography with index numbers right-aligned in the mono
+  face. The cursor is a gold square in the margin. It is today's list template with the chrome
+  taken away.</p>
+  <div class="work"><div class="stagebox">
+    <canvas class="stage" id="cv-c" width="960" height="720"></canvas>
+    <div class="hud" id="hud-c"></div>
+  </div><div>
+    <div class="ctrls">
+      <div class="ctl"><span>ROWS</span><input type="range" min="2" max="10" value="6" id="n-c"><span class="nval" id="nv-c">6</span></div>
+      <div class="ctl"><span>VIEW</span>
+        <button id="c-shear" aria-pressed="true">SHEAR</button>
+        <button id="c-geo" aria-pressed="false">GEOMETRY</button>
+        <button id="c-fit" aria-pressed="false">CHECK TITLE-SAFE</button>
+      </div>
+      <div class="ctl"><span>READOUT</span><div class="hud" style="margin:0;width:auto">
+        <b>▲ ▼</b> move · <b>A</b> enter · <b>B</b> back</div></div>
+    </div>
+    <div class="find"><span class="lbl">LIVE CHECK</span><b id="c-find"></b></div>
+    <div class="cols">
+      <div class="box"><h3>LAYOUT RULE</h3><ul>
+        <li>Margin rule <code>x = 88</code>, 2px, from <code>y 96</code> to the last row</li>
+        <li>Row pitch <b>48</b>; hairline above each row, 2px gold under the selected</li>
+        <li>Label at <code>x = 104</code> (<code>label</code> 20); selected row shifts
+          <b>+10</b> and goes gold</li>
+        <li>Index numeral right-aligned at <code>x = 540</code> in Hasklug <code>row</code></li>
+        <li>Description as a pull-quote: <b>4px gold rule + body</b>, 2 lines / 88 chars</li>
+      </ul></div>
+      <div class="box"><h3>NAVIGATION + MOTION</h3><ul>
+        <li>▲ ▼ only — no second axis, so the simplest model of the five</li>
+        <li>Cursor move is <code>row_select</code> unchanged: <b>10f</b>, face
+          <code>gold_lt</code> at f1 → gold at f8</li>
+        <li>Label TRA_X +10 over <b>6f</b> — the label moves, the hairline does not</li>
+      </ul></div>
+      <div class="box"><h3>FEASIBILITY</h3><ul>
+        <li><span class="good">Almost free.</span> <code>list_layout.json</code> with the
+          face/plate/icon quads deleted. The engine already builds list rows in
+          <code>fm_build</code></li>
+        <li><span class="good">Zero new textures</span> — <code>body</code> + <code>row</code> +
+          <code>label</code> are already resident on every screen</li>
+        <li><span class="good">Best accessibility</span> — the margin tick and the indent both
+          encode selection; no colour-only cue anywhere</li>
+      </ul></div>
+      <div class="box verdict"><h3>VERDICT</h3><p><b>The only one strictly cheaper than what
+      ships</b>, and the only one that scales to 12 rows without inventing rules — the slider goes
+      past 9 to prove it. Its weakness is identity: pure typography with no pictograms reads as
+      <i>unfinished</i> beside 29 <code>ico_*</code> bodies that already exist.</p></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ══════════════════════ D ══════════════════════ -->
+<section>
+  <div class="chead"><h2>D · Dashboard</h2><span class="tag">HARDWARE METAPHOR</span></div>
+  <p class="blurb">The controller <i>is</i> the menu. Its buttons are the items, the D-pad is the
+  cursor, the shoulders page. Direct positional targeting — you point at the button you want and
+  it lights. Nothing about it is a list or a grid; it is the object on your desk.</p>
+  <div class="work"><div class="stagebox">
+    <canvas class="stage" id="cv-d" width="960" height="720"></canvas>
+    <div class="hud" id="hud-d"></div>
+  </div><div>
+    <div class="ctrls">
+      <div class="ctl"><span>BUTTONS BOUND</span><input type="range" min="2" max="9" value="6" id="n-d"><span class="nval" id="nv-d">6</span></div>
+      <div class="ctl"><span>VIEW</span>
+        <button id="d-shear" aria-pressed="true">SHEAR</button>
+        <button id="d-geo" aria-pressed="false">HIT RADII</button>
+        <button id="d-fit" aria-pressed="false">CHECK TITLE-SAFE</button>
+      </div>
+      <div class="ctl"><span>READOUT</span><div class="hud" style="margin:0;width:auto">
+        <b>click a button</b> · <b>A</b> enter · <b>B</b> back</div></div>
+    </div>
+    <div class="find"><span class="lbl">LIVE CHECK</span><b id="d-find"></b></div>
+    <div class="cols">
+      <div class="box"><h3>LAYOUT RULE</h3><ul>
+        <li>Pad body <code>(96, 78)–(500, 268)</code>, drawn from a <b>512×512 I4 mask</b>
+          (128 KB)</li>
+        <li>Items bind to <b>named anchors</b>: <code>btn_a/b/x/y</code>, <code>dpad_*</code>,
+          <code>shoulder_l/r</code>, <code>stick</code>, <code>home</code></li>
+        <li>Each anchor is <b>centre + radius 22</b>; hit-test is centre distance &lt; 22</li>
+        <li>Header slab width follows the lit button's label — <code>fm_chrome_panel</code>
+          already sizes it from the title</li>
+      </ul></div>
+      <div class="box"><h3>NAVIGATION + MOTION</h3><ul>
+        <li><b>Direct.</b> No d-pad steps — pointing at a button <i>is</i> selecting it</li>
+        <li>Stick and D-pad both resolve to the nearest anchor within 28px</li>
+        <li>Lit button: <b>SCA 1→1.15 about its centre over 6f</b>, colour → gold — the
+          <code>toggle_set</code> knob motion, reused verbatim</li>
+        <li>Shoulders page between hubs with a 7f cross-slide</li>
+      </ul></div>
+      <div class="box"><h3>FEASIBILITY</h3><ul>
+        <li><span class="good">Draws today.</span> One new I4 mask + a flat rect per anchor;
+          the player needs no change</li>
+        <li><span class="good">Direct.</span> <code>fms_in_verts</code> already hit-tests quads
+          for the mouse, so the pointer path is the same code</li>
+        <li><span class="bad">Blocked:</span> the mask must be <b>I4, not RGBA8</b> — at 2× a
+          512×512 RGBA8 pad is 1 MB and blows the entire per-screen budget on its own</li>
+      </ul></div>
+      <div class="box verdict"><h3>VERDICT</h3><p>The most <b>original</b>, and the best fit for
+      how anyone actually holds a pad. Colour-blind safe for free, because buttons are identified
+      by shape and position and the name is always in the header. <b>Costs:</b> cannot hold a list
+      of 10, unusable by keyboard without a second path, every item needs a bespoke anchor. Too
+      precious for the front door — but <b>genuinely strong for a lobby or pause menu</b>, where
+      the items really are buttons.</p></div>
+    </div>
+  </div></div>
+</section>
+
+<!-- ══════════════════════ E ══════════════════════ -->
+<section>
+  <div class="chead"><h2>E · Deck</h2><span class="tag">DIMENSIONAL</span></div>
+  <p class="blurb">A hand of cards fanned from the bottom of the screen. Depth order <i>is</i>
+  cursor order, so the menu reads as a physical stack. The selection pulls a card clear of the
+  fan and brings it forward.</p>
+  <div class="work"><div class="stagebox">
+    <canvas class="stage" id="cv-e" width="960" height="720"></canvas>
+    <div class="hud" id="hud-e"></div>
+  </div><div>
+    <div class="ctrls">
+      <div class="ctl"><span>CARDS</span><input type="range" min="2" max="9" value="6" id="n-e"><span class="nval" id="nv-e">6</span></div>
+      <div class="ctl"><span>VIEW</span>
+        <button id="e-shear" aria-pressed="true">SHEAR</button>
+        <button id="e-geo" aria-pressed="false">GEOMETRY</button>
+        <button id="e-fit" aria-pressed="false">CHECK TITLE-SAFE</button>
+      </div>
+      <div class="ctl"><span>READOUT</span><div class="hud" style="margin:0;width:auto">
+        <b>◄ ►</b> through fan · <b>A</b> enter · <b>B</b> back</div></div>
+    </div>
+    <div class="find"><span class="lbl">LIVE CHECK</span><b id="e-find"></b></div>
+    <div class="cols">
+      <div class="box"><h3>LAYOUT RULE</h3><ul>
+        <li>Fan origin <code>(268, 214)</code>, pitch <b>−52 x</b>, <b>−8 y</b> going back</li>
+        <li>Card <code>96×130</code>; selected <code>150×200</code> at <code>(86, 132)</code></li>
+        <li>Fan depth by rank: <b>#4a2c05 → #683d04</b>, four hard steps, no gradient</li>
+        <li>A <code>caption</code> "n MORE" counts what does not fit</li>
+      </ul></div>
+      <div class="box"><h3>NAVIGATION + MOTION</h3><ul>
+        <li>◄ ► walks the fan one card, and <b>the whole fan moves</b> — the motion is on the
+          fan, not on a cursor</li>
+        <li>Selected: TRA out + <b>SCA 1→1.34, 1.3× overshoot at f4</b>, settle f9</li>
+        <li>The card that was selected re-enters the fan from the front, <b>8f</b> behind</li>
+        <li>Detail pane: alpha 0→1 over 6f, starting <b>4f</b> after the card</li>
+      </ul></div>
+      <div class="box"><h3>FEASIBILITY</h3><ul>
+        <li><span class="good">Direct</span> if the fan is TRA + SCA only — a spread without
+          rotation, which is what is drawn here</li>
+        <li><span class="bad">Blocked:</span> the version that reads as a real <i>hand of
+          cards</i> needs per-card <b>rotation</b>. The player has
+          <code>FJC_TRA/SCA/ALPHA/RECOIL</code> and nothing else</li>
+        <li><span class="bad">Also blocked:</span> rotated textured quads break the
+          "every textured quad is a parallelogram" rule the whole pipeline checks — this would be
+          the first art needing non-affine UV mapping</li>
+      </ul></div>
+      <div class="box verdict"><h3>VERDICT</h3><p>The best <b>fit to the subject</b> — a fighting
+      game's menu as a hand of match cards is immediately legible, and depth-as-cursor teaches
+      itself in one move. <b>Costs:</b> occlusion by design, a hard cap near 7, and the only
+      genuine engine work of the five. <b>Prototype the un-rotated spread first</b> — it is free,
+      and if the idea survives without rotation the whole question closes.</p></div>
+    </div>
+  </div></div>
+</section>
+
+<div class="note">
+<b>What all five leave unchanged:</b> the list template, the settings row widgets, the dialog,
+the toast, the breadcrumb and the footer hints. Rules has more rows than any of these hubs has
+tiles, and those screens are untouched by any of the five choices. Press <b>A</b> in any concept
+to see the child screen it has to hand off to.
+</div>
+
+<footer>
+DESIGN EXPLORATION · NOT PART OF THE MENU KIT PIPELINE · NOTHING HERE IS REFERENCED BY
+pipeline/*.py, BY THE ENGINE, OR BY THE BUILD · PALETTE AND TYPE SCALE FROM
+menu/out_kit/kit.json · FONTS SOURCE SANS 3 + HASKLUG, SIL OFL 1.1 ·
+ICONS ARE PLACEHOLDER BLOCKS, NOT THE pipeline/icons.py BODIES
+</footer>
+
+</main>
+<script src="concepts.js"></script>
+</body>
+</html>

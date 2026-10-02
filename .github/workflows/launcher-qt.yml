@@ -1,0 +1,95 @@
+name: Qt launcher
+on:
+  push:
+    paths: ['tools/release/launcher/qt/**', 'tools/release/build_launcher.*', '_build/ui/kit*.json', '_build/ui/ico_*.gxtex', 'menu/SourceSans3/**', '.github/workflows/launcher-qt.yml']
+  pull_request:
+    paths: ['tools/release/launcher/qt/**', 'tools/release/build_launcher.*', '_build/ui/kit*.json', '_build/ui/ico_*.gxtex', 'menu/SourceSans3/**', '.github/workflows/launcher-qt.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          # Linux's Qt tools and Core library also need the matching bundled ICU.
+          archives: ${{ runner.os == 'Linux' && 'qtbase icu qtwayland' || 'qtbase' }}
+          cache: true
+      - name: Install Linux Wayland development and test dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwayland-dev libxkbcommon-dev libegl1-mesa-dev weston
+      - name: Build, test and deploy (Linux)
+        if: runner.os == 'Linux'
+        run: bash tools/release/build_launcher.sh _build/launcher-package
+      - name: Build, test and deploy (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./tools/release/build_launcher.ps1 -Out "${{ github.workspace }}/_build/launcher-package/GD Melee.exe"
+      - name: Render all tabs (Linux)
+        if: runner.os == 'Linux'
+        env:
+          QT_QPA_PLATFORM: offscreen
+          QT_QPA_PLATFORMTHEME: none
+          QT_STYLE_OVERRIDE: Fusion
+        run: |
+          unset LD_LIBRARY_PATH QT_PLUGIN_PATH QT_QPA_PLATFORM_PLUGIN_PATH
+          _build/launcher-package/launcher/bin/gd-melee-launcher --data-dir _build/test-profile --shots _build/shots/en
+          _build/launcher-package/launcher/bin/gd-melee-launcher --data-dir _build/test-profile --lang es --shots _build/shots/es
+      - name: Render with native Wayland (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          export XDG_RUNTIME_DIR="$(mktemp -d)"
+          chmod 700 "$XDG_RUNTIME_DIR"
+          weston --backend=headless-backend.so --use-pixman --socket=wayland-ci --idle-time=0 > _build/wayland-compositor.log 2>&1 &
+          weston_pid=$!
+          trap 'kill "$weston_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..50}; do
+            test -S "$XDG_RUNTIME_DIR/wayland-ci" && break
+            sleep 0.1
+          done
+          test -S "$XDG_RUNTIME_DIR/wayland-ci"
+          unset DISPLAY LD_LIBRARY_PATH QT_PLUGIN_PATH QT_QPA_PLATFORM_PLUGIN_PATH
+          export WAYLAND_DISPLAY=wayland-ci QT_QPA_PLATFORM=wayland QT_QPA_PLATFORMTHEME=none QT_STYLE_OVERRIDE=Fusion
+          _build/launcher-package/launcher/bin/gd-melee-launcher --data-dir _build/test-profile --shots _build/shots/wayland
+          for tab in {0..3}; do test -s "_build/shots/wayland/launcher-$tab.png"; done
+      - name: Render all tabs (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          $launcher = (Resolve-Path "./_build/launcher-package/launcher/bin/gd-melee-launcher.exe").Path
+          Remove-Item Env:QT_PLUGIN_PATH,Env:QT_QPA_PLATFORM_PLUGIN_PATH,Env:QML2_IMPORT_PATH -ErrorAction SilentlyContinue
+          $sdkBin = (Join-Path $env:QT_ROOT_DIR 'bin').TrimEnd('\')
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_.TrimEnd('\') -ne $sdkBin }) -join ';'
+          New-Item -ItemType Directory -Force _build/shots | Out-Null
+          foreach ($language in @('en', 'es')) {
+            $process = Start-Process -FilePath $launcher -ArgumentList @('--data-dir', '_build/test-profile', '--lang', $language, '--shots', "_build/shots/$language") -Wait -PassThru -RedirectStandardOutput "_build/shots/$language.stdout.txt" -RedirectStandardError "_build/shots/$language.stderr.txt"
+            if ($process.ExitCode -ne 0) {
+              Get-Content "_build/shots/$language.stderr.txt"
+              throw "$language UI render failed with exit $($process.ExitCode)"
+            }
+            if ((Get-ChildItem "_build/shots/$language/launcher-*.png").Count -ne 4) { throw "$language screenshots are incomplete" }
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qt-launcher-${{ matrix.os }}
+          path: |
+            _build/launcher-package/
+            _build/shots/
+            _build/launcher-qt/Testing/Temporary/
+            _build/launcher-qt-windows/Testing/Temporary/
+            _build/launcher-qt-windows/launcher-test-results.xml
+            _build/launcher-qt-windows/launcher-tests.txt
+            _build/wayland-compositor.log

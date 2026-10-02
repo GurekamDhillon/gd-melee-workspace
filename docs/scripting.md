@@ -160,6 +160,7 @@ Engine events are queued and delivered after the logic frame, before `on_frame`:
 | `on_target_broken(handle, remaining)` | gameplay scripts only; scripted target broken |
 | `on_all_targets_broken()` | gameplay scripts only; last scripted target broken |
 | `on_enemy_defeated(event)` | gameplay scripts only; `{kind, handle}` |
+| `on_enemy_hit(event)` | owning gameplay script; `{kind, handle, from, damage}` for a native direct primary-fighter hit on its Adventure enemy; `from` is a 1-based port |
 | `on_boss_defeated(event)` | gameplay scripts only; `{kind, port, x, y}`; kind is `master_hand`, `crazy_hand`, or `fighter_<kind>` |
 | `on_camera_complete(kind)` | owning script; `"move"` or `"path"` |
 | `on_hot_reload(ok)` | completion of the LAB hot reload |
@@ -345,6 +346,10 @@ The console command `comm <who> "text" [sound id]` is the same call, e.g. `comm 
 | `gd.teleport(port, x, y)` | put the fighter exactly there. It keeps flying if it was; one on foot falls from there. Offline only |
 | `gd.hold_hitbox(port, on [, {action=, frame=}])` | with debug fly on: the fighter stays in an attack state (`"nair"` default, `"fair"` `"bair"` `"uair"` `"dair"` `"jab"` or a motion state id) frozen at the first frame a hitbox is live (or `frame`); the hitbox stays on, attacker hitlag is cancelled and the hit list is cleared every 8 frames so the same target is hit again. `gd.hold_hitbox(port)` returns `on, rehit_intervals`. Console: `hold [port] on\|off`. Offline only |
 | `gd.fly_speed([n])`, `gd.fly_solid([bool])` | the fly speed in units per frame at full stick (0.05-200, default 2), and whether hurtboxes stay on while flying (default off); each returns the current value. Offline only |
+| `gd.fly_target(port, x, y)` | enables flight and moves toward a fixed world position at `fly_speed`, clamping the final step to avoid overshoot; holds that position once reached. Finite coordinates within ±10000. Offline debug control |
+| `gd.fly_attack(port, on [, damage, radius])` | enables/disarms an actual native fighter hitbox while flying; enabling also starts flight. Defaults: 3 damage, radius 6; each is bounded to 1–30 (damage integer). Each non-hitlag physics frame rearms the capsule, clears both victim histories, and allocates a fresh attack instance. Fighter/item collision, shields, hitlag and invulnerability remain native. This is a debug attack, not a character's normal move animation |
+| `gd.fly_state(port)` | reads `flying`, `targeting`, `attacking`, target `x/y`, `damage`, `radius`, and `pulses`. Inactive cursor fields are zero/false. Pulses count rearming attempts, not confirmed hits |
+| `gd.fly_clear(port)` | disarms the cursor and clears its target while retaining ordinary stick-controlled flight. `gd.fly(port,false)` or F11 leaves flight and disarms it. New cursor controls are script-owned; unloading/disabling the owner clears them, and scene changes reset all cursors |
 
 ### Stage content (offline, gameplay mods)
 
@@ -356,9 +361,10 @@ Coordinates are world units, finite and within ±100000. Each write forks the LA
 
 | function | |
 |---|---|
-| `gd.stage_add_platform(x, y, width [, {passthrough=, ledges=}])` | a horizontal floor centred on `(x, y)`; returns a handle, or `nil, reason` |
+| `gd.stage_add_platform(x, y, width [, {passthrough=, ledges=, draw=}])` | a horizontal floor centred on `(x, y)`; returns a handle, or `nil, reason`; optional boolean `draw=false` hides its debug slab while preserving collision |
+| `gd.stage_isolate([on])` | owning offline gameplay mod only: suppress the supported FD host's original scenery and collision, preserving added models/floors and native camera/blast zones. `true` acquires isolation; returns `false` for an unsupported stage and raises an error if another script owns it. `false` restores and returns `false`; no argument queries caller-owned isolation. First script error, unload, scene teardown or offline-boundary loss restores the original stage. Add your own floor before enabling; the console cannot own isolation |
 | `gd.stage_add_model{file=, symbol='map_head', group=0, joint='root', x=0, y=0, z=0, scale=1, rot=0, platform=}` | Draw a JObj branch from a root-level stage or mounted mod `.dat` filename (5-30 bytes, no path separators or `..`) in the stage world pass (lit, fogged). `joint` is a group-local zero-based index, `JOBJ_<index>`, or `root`; `rot` is degrees about Z; `scale` is >0 and <=100, `group` 0-255, joint index 0-4095. Returns a model handle or `nil, reason`. `platform` attaches a `gd.stage_add_platform` floor: `gd.stage_move(model, x, y)` carries it and `gd.stage_remove(model)` removes both; an attached floor does not draw its slab. Each DAT is loaded once per scene into heap 0 and released at scene end; up to 8 DATs (8 MiB each) and 64 models. Branches with JObj instance references are refused. `gd.spawn_target` draws Mato's Target Test model (GrTMr.dat) |
-| `gd.stage_add_line(x1, y1, x2, y2, kind [, opts])` | `kind`: `"floor"` (left to right), `"ceiling"` (right to left), `"right_wall"` (top to bottom) or `"left_wall"` (bottom to top); a wrong direction is an error. `opts` (`passthrough`, `ledges`) is for floors only |
+| `gd.stage_add_line(x1, y1, x2, y2, kind [, opts])` | `kind`: `"floor"` (left to right), `"ceiling"` (right to left), `"right_wall"` (top to bottom) or `"left_wall"` (bottom to top); a wrong direction is an error. Floor options include `passthrough`, `ledges` and boolean `draw` |
 | `gd.stage_move(handle, x, y)` | move a line midpoint or model to `(x, y)` (targets cannot be moved); returns whether it exists. A model carries its attached floor; a moved floor carries a standing fighter |
 | `gd.stage_remove(handle)` | remove a line, target or model (a removed target raises no event); removing a model removes its attached floor; returns whether it existed |
 | `gd.spawn_target(x, y)` | a target (Target Test's Mato item) held at `(x, y)`; returns a handle, or `nil, reason` |
@@ -367,6 +373,9 @@ Coordinates are world units, finite and within ±100000. Each write forks the LA
 
 - **Floors.** `passthrough = true` makes a floor you can drop through (down on the stick) and land
   on from below. `ledges = true` makes both of its ends grabbable.
+  `draw = false` hides only that floor's debug slab; absent or true draws it normally.
+  A supplied nonboolean `draw` is an error. This does not hide runtime model meshes;
+  `gd.stage_view(false)` hides the stage-content geometry more broadly.
 - **Moving platforms.** A line moved during a frame carries whoever stands on it by the same amount
   (`mpGetSpeed`), exactly as the stage's own moving platforms do.
 - **Handles.** Handles are never reused, even across a savestate load. A script that keeps handles
@@ -422,16 +431,47 @@ mode}`, or `nil` before a match camera exists. Coordinates are world units, `fov
 - **Kinds:** `goomba`, `redead`, `octorok` (these three come from ItCo), and `koopa`,
   `like_like`, `polar_bear`. The last three load their Adventure stage's file on first use, and
   every item that file defines is registered too (Koopa's shell, for example).
-- **Removing:** `gd.enemy_remove(handle)` returns whether the handle existed, and does not count as a defeat.
+- **Liveness:** `gd.enemy_alive(handle)` is a read-only query for a script-owned enemy.
+  It returns false when the native pool entry is missing or inactive, including destruction
+  without a stock defeat. It requires an active offline gameplay mod script; the console
+  cannot call it. Handles are positive integers. A known handle owned by another script
+  is refused. Querying does not queue a defeat event or change the game state.
+- **Removing:** `gd.enemy_remove(handle)` returns whether the owned enemy was alive,
+  and does not count as a defeat. Removing an already destroyed owned handle returns
+  false and releases its ownership record. Known other-script handles are refused.
 - **Defeats:** `on_enemy_defeated{kind=, handle=}` fires once, at the monster's stock defeat.
+- **Native hits:** `on_enemy_hit{kind=, handle=, from=, damage=}` queues a direct
+  primary-fighter hit for the owning script, including a killing blow whose actor
+  retires before event delivery. `from` is a 1-based port. This event does not
+  resolve generic projectile ownership or fire for scripted `gd.enemy_hurt`.
 - **Rules:** these need a gameplay mod, in an active offline match; the console cannot call them.
 - **Savestates:** enemies are saved with the match, but Lua tables are not. Rebuild your
-  bookkeeping in `on_loadstate`.
+  bookkeeping in `on_loadstate`. The current native ownership registry is scene-local;
+  restoring an enemy after its ownership record was removed requires reconstruction
+  and is not established by the liveness API. Scene changes clear ownership, and script
+  unload/disable explicitly removes its remaining owned enemies without defeat events.
 
 Koopa's shell transition is not the stock defeat path, so it does not emit an enemy-defeated
 event at that transition. Explicit removal emits no defeat event and returns false for a missing handle.
 
 Example: `melee/pc/scripts/examples/enemy_spawn_demo`.
+
+Owned enemy combat helpers use the same offline gameplay restrictions and handle
+ownership as the liveness API:
+
+| function | result / action |
+|---|---|
+| `gd.enemy_state(handle)` | `nil` for a missing/retired actor, otherwise `{handle, alive, kind, state, damage, hits, attack_id, last_victim, received, last_attacker, last_damage, x, y, vx, vy, facing, vulnerable}`; `state` is the native item motion ID, victim/attacker are 1-based ports (0 when absent), counters describe contacts rather than ability charges |
+| `gd.enemy_strike(handle, port, {damage=, angle=, kbg=, bkb=, reach=})` | boolean; an owned enemy's bounded damage/knockback attempt against a nearby fighter, using the native fighter damage path |
+| `gd.enemy_hurt(handle, {from=port, damage=, angle=, kbg=, bkb=, reach=})` | boolean; a nearby primary fighter's bounded scripted damage attempt against the owned enemy, using its native hurt path |
+
+All combat fields are required: integer damage 1-30, angle 0-361, kbg/bkb
+0-1000, finite reach 1-30 world units. Native checks include actor liveness,
+range, facing and applicable vulnerability/hitlag conditions; false means the
+attempt was refused. A controller should spend its own charge only on acceptance
+or restore it on refusal. Scripted enemy hurt is distinguished from natural
+contacts, so these helpers do not themselves establish a recursive charge source.
+The state table is an observation, not a persistent enemy snapshot.
 
 ### Menu and netplay state
 
@@ -509,6 +549,7 @@ history; a retained future is not guaranteed after a write.
 | `gd.log(...)` / `print(...)` | to the console and `melee-pc.log`, prefixed with the script id |
 | `gd.command(name, fn [, help])` | add a console command; `fn(arg_string)` |
 | `gd.data_read(name)`, `gd.data_write(name, text)` | the script's data folder |
+| `gd.data_write_atomic(name, text)` | like `data_write`, but writes a temporary sibling file, checks the write/flush/close results, and only then replaces the target, returning `true`, or `false, why` on failure with the previous file intact. Atomic against a torn write (a reader sees the old or the new file, never a partial one); not a power-loss durability guarantee |
 | `gd.screenshot([name])` | a PNG of the final frame into the data folder; returns `ok, path` (capture is queued for the next presented frame; it is not a synchronous file-write result) |
 
 ---
@@ -585,6 +626,7 @@ lines; the console may use the gameplay functions offline). `= expr` prints a va
 | `label <text>` | the run label |
 | `comm <who> "text" [sound id]` | a comm callout (`gd.comm{...}`) |
 | `fly [port] [on\|off\|place\|toggle]`, `noclip ...` | debug movement: toggle with no argument; `fly speed <n>`, `fly solid on\|off`, `fly port <n>` (the default port and F11's), `fly readout on\|off`. Offline only; **F11** toggles the fly port in any offline match |
+| `fly target [port] x y`, `fly attack [port] on\|off [damage radius]`, `fly clear [port]` | fixed-position debug attack cursor. Example: `fly target 1 12 8`, then `fly attack 1 on 3 6`; `fly 1 off` ends it. The readout displays attack state and pulse count |
 | `tp [port] <x> <y>` | teleport (offline only) |
 | `pos [port]` | the fighter's position, also copied to the clipboard as `x y` |
 | `echo <text>`, `clear`, `quit` | |
@@ -608,6 +650,99 @@ drive it over the socket, assert on `state` / `= gd.player(n)` output, `quit` at
 | `kit_hud/` | a panel in the menus' own style over the match (`gd.kit`: 9-slice frame, kit fonts, list rows, an icon); F3 toggles, F4 moves the highlight; `kit_training` routes Training through the kit's select. Read-only - works online |
 
 ---
+
+## Offline character-part inspection (2026-09-30 addition)
+
+`gd.parts(port[, refresh])` returns the loaded fighter's zero-based DObj records:
+owning joint, shared material IDs, triangle count, posed bounds/area, area-weighted
+body-region influences, visibility-state membership, support flags, and currently
+owned item geometry. The array also has `geometry_signature`, `measurement_space`
+and `coverage_mode` metadata. Pass `true` to refresh after pose/model/equipment changes.
+
+`gd.dobj_solid(port, index, colour)` changes one draw's live solid colour without
+mutating its shared material. `gd.dobj_solid_off(port, index)` restores that draw;
+`gd.parts_clear()` clears the calling script's overrides. Colours do not preserve
+texture details or alpha cutouts. All these operations are offline only.
+Colour calls targeting an expired snapshot entry return false; invalid indices
+and override-capacity errors remain errors. Refresh the snapshot to inspect newly
+spawned equipment rather than reusing its old numeric index.
+
+`gd.parts_id(port[, inverted])` uses the current snapshot for isolated, opaque ID
+rendering; `gd.parts_id_off()` exits it. Complementary frozen captures support
+visible-coverage analysis. Other HSD geometry is suppressed during capture.
+
+`gd.dobj_tint(port, index, colour)` instead multiplies the normal material's RGB
+by the supplied colour. Texture detail, lighting and alpha cutouts remain intact;
+the supplied alpha channel is ignored. This needs a spare TEV stage and unused
+konst register: unsupported materials return false and retain their original
+appearance. The same `dobj_solid_off` / `parts_clear` functions remove a tint.
+It does not recompile or mutate shared source materials.
+
+### Offline roguelite integration
+
+`gd.input_mask(port, bits)` consumes only selected D-pad bits (left=1, right=2,
+down=4, up=8); zero releases the mask. It preserves sticks, triggers, face buttons
+and the controller's connection. One script owns a port's mask; conflicting
+owners return false. `gd.pad(port, true)` reads buttons before this mask, allowing
+edge detection without replacing the player's pad. Scene changes, script cleanup
+and `gd.release_pad` release masks. A menu that consumes Up while backing to its
+root must keep masking that hold until release, or the game can treat it as taunt.
+
+`gd.impulse(port, {x=, y=})` adds bounded velocity during ordinary locomotion:
+delta x ±4, y ±3; resulting x ±5, y ±4. Grounded impulses require y=0 and also
+update ground velocity. Damage, capture, attacking, rebirth, special fall,
+jump squat and hitlag states refuse the operation without changing velocity.
+It returns a boolean and does not teleport, change actions or replenish jumps.
+
+`gd.cpu_mode(port, "stand"|"fight")` reinitializes the existing native CPU mode,
+preserving its level. It returns false for a missing, human or subfighter entity.
+Stand retains physics and vulnerability. These are the game's existing modes;
+this API does not install 20XX or another training hack's AI.
+
+`gd.cpu_technical(port, skill [, seed])` opts a primary native Fox/Falco fight CPU
+into an original input assist. Skill is integer 0-3 (0 disables), and seed is
+integer 1-2147483647 (default 1). It returns acceptance as a boolean. Another
+script's ownership, unsupported/missing actors, replay, netplay and rollback
+refuse configuration. Ownership and policy state clear on scene changes and
+script unload/disable; a replaced fighter requires configuration again.
+
+The policy observes descending eligible aerials or damage-fly hitstun, native
+floor collision and tech lockout, then inserts one delayed trigger pulse per
+accepted opportunity. Landing-cancel uses an analog pulse; ground-tech uses a
+digital pulse only during native hitstun. Skills 1/2/3 have 6/4/2-frame observation
+delays and seeded 60/80/95% opportunity acceptance. These are policy settings,
+not measured technique success rates. Pausing freezes the policy. Existing CPU
+directions, attacks and recovery remain in place; it writes no physics, lag,
+action state, hitstun, damage or stocks. It is not a complete fighting AI or an
+upstream training-hack port.
+
+`gd.cpu_technical(port)` reads the calling script's
+`{enabled, skill, opportunities, lcancel_inputs, tech_inputs, missed_decisions,
+last_event, reaction_frames, policy}`. Other owners appear disabled. Input
+counters count attempts, not successful cancels/techs; `last_event` retains the
+latest pulse type (0 initially, 1 for landing-cancel, 2 for ground-tech). The prototype's `rogue_ai`
+command exposes these observations without configuring the CPU.
+
+`gd.hud_visible([boolean])` queries or controls the native status HUD for an
+offline gameplay script; the console is refused. Hiding requires an active
+match and claims ownership, so another script cannot change it until released.
+Passing true restores visibility and releases ownership. Scene changes and
+script unload/disable also restore it. It does not hide script-drawn UI or change
+fighter status; a mod that replaces the HUD must draw its own feedback.
+
+When an active gameplay script has id `roguelite/main`, the native main menu
+shows **TBD**. Choosing it sets `gd.tbd_request()`; pass `true` to consume the
+request, then have the script launch its scene. The bundled prototype uses this
+entry independently of Adventure and the Master Hand sequence.
+
+`gd.hit` processes a synthetic damage result directly and currently does **not**
+emit the collision-loop `on_hit` callback. Its action/hitlag transitions can still
+emit their normal callbacks. Do not suppress the next ordinary hit as a proxy for
+synthetic lineage: it may be an unrelated attack.
+
+The mouse lab, API examples, interpretation limits and review workflow are in
+[`tools/model_parts/README.md`](../tools/model_parts/README.md). Raw part indices
+and inferred body regions are not universal names for garments or accessories.
 
 ## Versioning and deprecations
 

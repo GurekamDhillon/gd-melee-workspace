@@ -1,0 +1,26 @@
+[
+  {
+    "path": "melee/worktrees/linux/pc/scripts/examples/roguelite/main.lua",
+    "candidate_sha256": "70dfe560ceacb87cd74987a061667e290f9d44a177957ecfd37b620882a0d010"
+  },
+  {
+    "path": "melee/worktrees/linux/pc/scripts/examples/roguelite/runtime_campaign.lua",
+    "candidate_sha256": "891160cf8b1242fc7fc9016bc55ba458b8a8b73e5c6be4165ec03d8fe358d3ae"
+  },
+  {
+    "path": "melee/worktrees/linux/pc/scripts/examples/roguelite/runtime_presentation.lua",
+    "candidate_sha256": "4a5b70db69ce0f7a65eb26a4464a76b2484fb5cd8423e3c7d9378746948c3376"
+  },
+  {
+    "path": "tools/roguelite/prepare.py",
+    "candidate_sha256": "3dc92cda02fc6cefb3a7882512936d7afb0b0197f8ddac0d77ac8c6a7c5bd94b"
+  },
+  {
+    "path": "tools/roguelite/test_v2_runtime.py",
+    "candidate_sha256": "e18bcf9821ff915a066ff9eaa890fd4ad7eaaa4b2acd2f965f2ab736cea1c255"
+  },
+  {
+    "path": "tools/roguelite/test_presentation_runtime.py",
+    "candidate_sha256": "72c004a13a5eaa3d8c5bbd2d81b7f95017350c8023907633adfd32dbe58c0f41"
+  }
+]

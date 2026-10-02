@@ -1,0 +1,663 @@
+diff --git a/pc/gameworld/script_game.c b/pc/gameworld/script_game.c
+--- a/pc/gameworld/script_game.c
++++ b/pc/gameworld/script_game.c
+@@ -631,6 +631,8 @@
+              script_stage.base_j);
+ }
+ 
++#include "script_stage_seams.inc"
++
+ int ScriptGame_StageAddLine(int x0b, int y0b, int x1b, int y1b, int kind, int flags,
+                             int handle)
+ {
+@@ -653,6 +655,7 @@
+     l = script_stage.base_l + i;
+     j = script_stage.base_j + i;
+     ml = &map->lines[l]; mj = &map->joints[j];
++    ml->prev_id0 = ml->prev_id1 = ml->next_id0 = ml->next_id1 = -1;
+     cv = mpGetGroundCollVtx(); cl = mpGetGroundCollLine(); cj = mpGetGroundCollJoint();
+     scale = Ground_801C0498();
+     if (scale <= 0.001f) scale = 1.0f;
+@@ -714,11 +717,17 @@
+     for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {
+         if (script_stage.line[i].active && script_stage.line[i].handle == handle) {
+             int j = script_stage.base_j + i;
+-            if (script_stage.map == NULL || mpLib_8004D164() != script_stage.map) return 0;
++            int linked;
++            if (!script_stage_seam_current()) return 0;
++            linked = script_stage_seam_clear(i);
+             mpLib_80057BC0(j);
+             script_stage.map->joints[j].ranges[MapLineGroup_Dynamic].count = 0;
+             script_stage.line[i].active = 0;
+             script_stage.line[i].model_handle = 0;
++            /* 57BC0 refreshes while the range still contains the retired line.
++             * Empty it first, then retire that joint's cached dynamic island. */
++            mpLib_8005667C(j);
++            if (linked) script_stage_seam_refresh();
+             {
+                 int k;
+                 for (k = 0; k < SCRIPT_STAGE_MODELS; ++k)
+@@ -749,6 +758,7 @@
+ static int script_stage_line_set(int handle, float x0, float y0, float x1, float y1)
+ {
+     int i;
++    if (!script_stage_seam_current()) return 0;
+     for (i = 0; i < script_stage.cap; ++i) {
+         ScriptStageLine* s = &script_stage.line[i];
+         CollVtx* v;
+@@ -766,7 +776,7 @@
+         j->bounding_max.y = (y0 > y1 ? y0 : y1) + 30;
+         j->flags |= CollJoint_B8;
+         j->xE = true;
+-        mpLib_8005667C(script_stage.base_j + i);
++        script_stage_seam_moved(i);
+         mpUncheckBounding();
+         return 1;
+     }
+diff --git a/pc/gameworld/script_stage_seams.inc b/pc/gameworld/script_stage_seams.inc
+new file mode 100644
+--- /dev/null
++++ b/pc/gameworld/script_stage_seams.inc
+@@ -0,0 +1,175 @@
++/* Explicit scripted floor seams. MapLine id0 is mpLib's unguarded traversal /
++ * island fallback; id1 is the enabled/proximity-checked cross-joint link. Keep
++ * both directions reciprocal, and never infer links from other room geometry. */
++#define SCRIPT_STAGE_SEAM_EPS 0.05f
++static int script_stage_seam_current(void)
++{
++    return script_stage.map && mpLib_8004D164() == script_stage.map &&
++        script_stage.cap > 0 && script_stage.cap <= SCRIPT_STAGE_LINES &&
++        script_stage.base_l >= 0 && script_stage.base_j >= 0 &&
++        script_stage.map->lines && script_stage.map->joints &&
++        script_stage.map->line_count >= script_stage.base_l + script_stage.cap &&
++        script_stage.map->joint_count >= script_stage.base_j + script_stage.cap;
++}
++
++static int script_stage_seam_slot(int handle)
++{
++    int i;
++    for (i = 0; i < script_stage.cap; ++i)
++        if (handle > 0 && script_stage.line[i].active && script_stage.line[i].handle == handle) return i;
++    return -1;
++}
++
++static int script_stage_seam_touch(int left, int right)
++{
++    MapLine* a = &script_stage.map->lines[script_stage.base_l + left];
++    MapLine* b = &script_stage.map->lines[script_stage.base_l + right];
++    CollVtx* vertices = mpGetGroundCollVtx();
++    float dx, dy;
++    if (!vertices || a->v0_idx >= script_stage.map->vert_count || a->v1_idx >= script_stage.map->vert_count ||
++        b->v0_idx >= script_stage.map->vert_count || b->v1_idx >= script_stage.map->vert_count) return 0;
++    dx = vertices[a->v1_idx].pos.x - vertices[b->v0_idx].pos.x;
++    dy = vertices[a->v1_idx].pos.y - vertices[b->v0_idx].pos.y;
++    return vertices[a->v0_idx].pos.x < vertices[a->v1_idx].pos.x &&
++        vertices[b->v0_idx].pos.x < vertices[b->v1_idx].pos.x &&
++        dx * dx + dy * dy <= SCRIPT_STAGE_SEAM_EPS * SCRIPT_STAGE_SEAM_EPS;
++}
++
++static int script_stage_seam_endpoint_valid(int slot, int next)
++{
++    int index = script_stage.base_l + slot, other;
++    MapLine* line = &script_stage.map->lines[index];
++    int id0 = next ? line->next_id0 : line->prev_id0;
++    int id1 = next ? line->next_id1 : line->prev_id1;
++    MapLine* peer;
++    if (id0 == -1 && id1 == -1) return 1;
++    if (id0 != id1 || id0 < script_stage.base_l || id0 >= script_stage.base_l + script_stage.cap) return 0;
++    other = id0 - script_stage.base_l;
++    if (other == slot || !script_stage.line[other].active || script_stage.line[other].kind != 1 ||
++        script_stage.line[slot].owner <= 0 || script_stage.line[other].owner != script_stage.line[slot].owner) return 0;
++    peer = &script_stage.map->lines[id0];
++    {
++        CollLine* collision = mpGetGroundCollLine();
++        if (collision[id0].x0 != peer || (collision[id0].flags & LINE_FLAG_KIND) != CollLine_Floor ||
++            !(collision[id0].flags & LINE_FLAG_ENABLED) || collision[id0].flags & LINE_FLAG_HIDDEN) return 0;
++    }
++    if ((next ? peer->prev_id0 : peer->next_id0) != index ||
++        (next ? peer->prev_id1 : peer->next_id1) != index) return 0;
++    return next ? script_stage_seam_touch(slot, other) : script_stage_seam_touch(other, slot);
++}
++
++/* Refresh every active floor joint: its dynamic island can cache the endpoints
++ * of a chain spanning many joints, including joints beyond the changed pair.
++ * 8005667C delegates to mpIsland_8005B334 without changing vertex frame history. */
++static void script_stage_seam_refresh(void)
++{
++    int i;
++    for (i = 0; i < script_stage.cap; ++i)
++        if (script_stage.line[i].active && script_stage.line[i].kind == 1)
++            mpLib_8005667C(script_stage.base_j + i);
++    mpUncheckBounding();
++}
++
++/* Clear the selected endpoint and every incoming reciprocal reference, including
++ * inconsistent id0/id1 pairs. Slot reuse must never resurrect an old seam. */
++static int script_stage_seam_unlink_endpoint(int slot, int next)
++{
++    int i, changed = 0, index = script_stage.base_l + slot;
++    MapLine* line = &script_stage.map->lines[index];
++    if (next) {
++        changed = line->next_id0 != -1 || line->next_id1 != -1;
++        line->next_id0 = line->next_id1 = -1;
++    } else {
++        changed = line->prev_id0 != -1 || line->prev_id1 != -1;
++        line->prev_id0 = line->prev_id1 = -1;
++    }
++    for (i = 0; i < script_stage.cap; ++i) {
++        MapLine* peer = &script_stage.map->lines[script_stage.base_l + i];
++        if (next) {
++            if (peer->prev_id0 == index) { peer->prev_id0 = -1; changed = 1; }
++            if (peer->prev_id1 == index) { peer->prev_id1 = -1; changed = 1; }
++        } else {
++            if (peer->next_id0 == index) { peer->next_id0 = -1; changed = 1; }
++            if (peer->next_id1 == index) { peer->next_id1 = -1; changed = 1; }
++        }
++    }
++    return changed;
++}
++
++static int script_stage_seam_clear(int slot)
++{
++    int changed = script_stage_seam_unlink_endpoint(slot, 0);
++    return script_stage_seam_unlink_endpoint(slot, 1) || changed;
++}
++
++static void script_stage_seam_moved(int slot)
++{
++    MapLine* line = &script_stage.map->lines[script_stage.base_l + slot];
++    int i, index = script_stage.base_l + slot;
++    int linked = line->prev_id0 != -1 || line->prev_id1 != -1 ||
++                 line->next_id0 != -1 || line->next_id1 != -1;
++    if (!script_stage_seam_endpoint_valid(slot, 0)) script_stage_seam_unlink_endpoint(slot, 0);
++    if (!script_stage_seam_endpoint_valid(slot, 1)) script_stage_seam_unlink_endpoint(slot, 1);
++    /* Also repair one-sided incoming references. No unguarded id0 may keep
++     * following this line after it moves away, even if its own slots were clear. */
++    for (i = 0; i < script_stage.cap; ++i) {
++        MapLine* peer = &script_stage.map->lines[script_stage.base_l + i];
++        if (peer->next_id0 == index || peer->next_id1 == index) {
++            linked = 1;
++            if (!script_stage.line[i].active || !script_stage_seam_endpoint_valid(i, 1))
++                script_stage_seam_unlink_endpoint(i, 1);
++        }
++        if (peer->prev_id0 == index || peer->prev_id1 == index) {
++            linked = 1;
++            if (!script_stage.line[i].active || !script_stage_seam_endpoint_valid(i, 0))
++                script_stage_seam_unlink_endpoint(i, 0);
++        }
++    }
++    if (linked) script_stage_seam_refresh();
++    else mpLib_8005667C(script_stage.base_j + slot);
++}
++
++/* 1 success; negative refusal codes are translated by gd.stage_link. */
++int ScriptGame_StageLink(int handle_a, int handle_b, int owner)
++{
++    int a, b, left, right, forward, reverse, i, walk;
++    MapLine* ml;
++    MapLine* mr;
++    CollLine* collision;
++    if (!script_stage_seam_current()) return -1;
++    a = script_stage_seam_slot(handle_a); b = script_stage_seam_slot(handle_b);
++    if (a < 0 || b < 0 || a == b) return -2;
++    if (owner <= 0 || script_stage.line[a].owner != owner || script_stage.line[b].owner != owner) return -3;
++    if (script_stage.line[a].kind != 1 || script_stage.line[b].kind != 1) return -4;
++    collision = mpGetGroundCollLine();
++    for (i = 0; i < 2; ++i) {
++        int slot = i ? b : a, index = script_stage.base_l + slot;
++        if (collision[index].x0 != &script_stage.map->lines[index] ||
++            (collision[index].flags & LINE_FLAG_KIND) != CollLine_Floor ||
++            !(collision[index].flags & LINE_FLAG_ENABLED) || collision[index].flags & LINE_FLAG_HIDDEN)
++            return -8;
++        if (!script_stage_seam_endpoint_valid(slot, 0) || !script_stage_seam_endpoint_valid(slot, 1)) return -8;
++    }
++    forward = script_stage_seam_touch(a, b); reverse = script_stage_seam_touch(b, a);
++    if (forward && reverse) return -6;
++    if (!forward && !reverse) return -5;
++    left = forward ? a : b; right = forward ? b : a;
++    ml = &script_stage.map->lines[script_stage.base_l + left];
++    mr = &script_stage.map->lines[script_stage.base_l + right];
++    if (ml->next_id0 != -1 || ml->next_id1 != -1 || mr->prev_id0 != -1 || mr->prev_id1 != -1) return -7;
++    /* A small tolerance must not permit a cyclic chain of very short floors. */
++    walk = right;
++    for (i = 0; i < script_stage.cap; ++i) {
++        int id;
++        if (walk == left) return -6;
++        if (!script_stage_seam_endpoint_valid(walk, 1)) return -8;
++        id = script_stage.map->lines[script_stage.base_l + walk].next_id0;
++        if (id == -1) break;
++        walk = id - script_stage.base_l;
++    }
++    if (i == script_stage.cap) return -6;
++    ml->next_id0 = ml->next_id1 = script_stage.base_l + right;
++    mr->prev_id0 = mr->prev_id1 = script_stage.base_l + left;
++    script_stage_seam_refresh();
++    return 1;
++}
+diff --git a/pc/platform/gw_script.c b/pc/platform/gw_script.c
+--- a/pc/platform/gw_script.c
++++ b/pc/platform/gw_script.c
+@@ -79,6 +79,7 @@
+ extern int gw_ScriptGame_StageReleaseDeadOwners(void);
+ extern int gw_ScriptGame_StageRemove(int handle);
+ extern int gw_ScriptGame_StageMove(int handle, int x, int y);
++extern int gw_ScriptGame_StageLink(int handle_a, int handle_b, int owner);
+ extern int gw_ScriptGame_StageAddModel(int group, int joint, int x, int y, int z,
+                                        int scale, int rot, int handle);
+ extern int gw_ScriptGame_StageAttachModel(int model_handle, int line_handle);
+@@ -5331,6 +5332,25 @@
+     return 1;
+ }
+ 
++/* Explicit room-local adjacency; duplicate source/destination room geometry is
++ * intentionally ignored. Refusal never guesses a different partner handle. */
++static int l_stage_link(lua_State *L) {
++    static const char *const why[] = {
++        "current stage collision map unavailable", "stale or identical floor handles",
++        "floor handle belongs to another script", "seams require two floor lines",
++        "opposite floor endpoints exceed 0.05 units", "ambiguous or cyclic floor seam",
++        "floor endpoint already linked", "inconsistent or disabled floor seam topology"
++    };
++    int a = gs_stage_handle_arg(L, 1), b = gs_stage_handle_arg(L, 2), result;
++    gs_require_stage(L, "stage_link");
++    gs_rw_branch();
++    result = gw_ScriptGame_StageLink(a, b, gw_Script_StageResourceOwner());
++    lua_pushboolean(L, result == 1);
++    if (result == 1) return 1;
++    lua_pushstring(L, result >= -8 && result <= -1 ? why[-result - 1] : "floor seam unavailable");
++    return 2;
++}
++
+ /* gd.stage_view([geometry [, overlay]]) -> geometry, overlay: the in-game shapes (on by default)
+  * and the host-overlay debug strokes (off by default). Cosmetic: any script, not gameplay state. */
+ extern void gw_ScriptGame_StageSetDraw(int on);
+@@ -5633,7 +5653,7 @@
+     {"model_get", l_model_get},
+     {"model_instances", l_model_instances},
+     {"stage_bounds", l_stage_bounds},
+-    {"stage_remove", l_stage_remove}, {"stage_move", l_stage_move}, {"stage_isolate", l_stage_isolate},
++    {"stage_remove", l_stage_remove}, {"stage_move", l_stage_move}, {"stage_link", l_stage_link}, {"stage_isolate", l_stage_isolate},
+     {"spawn_target", l_spawn_target}, {"stage_view", l_stage_view},
+     {"spawn_enemy", l_spawn_enemy}, {"enemy_remove", l_enemy_remove}, {"enemy_alive", l_enemy_alive},
+     {"enemy_state", l_enemy_state}, {"enemy_strike", l_enemy_strike}, {"enemy_hurt", l_enemy_hurt},
+@@ -8636,6 +8656,7 @@
+ 
+ /* ---- Geno Lab ---------------------------------------------------------------------------------- */
+ #include "gw_script_model_tests.inc"
++#include "gw_script_stage_seam_tests.inc"
+ 
+ static int test_script_stage_events(void) {
+     char dir[MAX_PATH], path[MAX_PATH], out[512];
+@@ -9437,6 +9458,7 @@
+ void gw_script_tests_register(void) {
+     gw_test_register("script_model_api", test_script_model_api);
+     gw_test_register("script_model_owner_cleanup", test_script_model_owner_cleanup);
++    gw_test_register("script_stage_link", test_script_stage_link);
+     gw_test_register("script_stage_events", test_script_stage_events);
+     gw_test_register("script_boss_event", test_script_boss_event);
+     gw_test_register("script_set_damage", test_script_set_damage);
+diff --git a/pc/platform/gw_script_stage_seam_tests.inc b/pc/platform/gw_script_stage_seam_tests.inc
+new file mode 100644
+--- /dev/null
++++ b/pc/platform/gw_script_stage_seam_tests.inc
+@@ -0,0 +1,27 @@
++/* API/refusal coverage in the linked headless native harness. The synthetic
++ * actual-source graph and floor-follow fixture lives in pc/tests/stage_seam_test.py. */
++static int test_script_stage_link(void)
++{
++    static const char source[] =
++        "local ok,why=gd.stage_link(2147483001,2147483002); "
++        "assert(ok==false and type(why)=='string'); "
++        "assert(not pcall(gd.stage_link,0,2)); assert(not pcall(gd.stage_link,1.5,2));";
++    char out[512];
++    int script, was_match;
++    if (t_exec("assert(type(gd.stage_link)=='function'); "
++               "assert(not pcall(gd.stage_link,1,2)); assert(not pcall(gd.stage_link,0,2)); "
++               "assert(not pcall(gd.stage_link,1,2147483648));", out, sizeof out)) {
++        gw_test_fail("stage_link registration or console validation failed: %s", out);
++        return 1;
++    }
++    was_match = gs.match_active;
++    gs.match_active = 1;
++    script = t_model_owner_script("stage_link_fixture", "stage_link_fixture.lua", source);
++    if (script >= 0) gs_unload(script);
++    gs.match_active = was_match;
++    if (script < 0) {
++        gw_test_fail("stage_link Lua refusal did not return false, reason or reject invalid handles");
++        return 1;
++    }
++    return 0;
++}
+diff --git a/pc/tests/stage_seam_test.c b/pc/tests/stage_seam_test.c
+new file mode 100644
+--- /dev/null
++++ b/pc/tests/stage_seam_test.c
+@@ -0,0 +1,246 @@
++/* Actual-source graph/traversal tests. stage_seam_test.py supplies verbatim
++ * functions from the game TUs. Only memory, scale, and GObj operations are fixtures. */
++#include <assert.h>
++#include <stdbool.h>
++#include <float.h>
++#include <math.h>
++#include <stdint.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++typedef uint32_t u32;
++typedef uint16_t u16;
++typedef int16_t s16;
++typedef uint8_t u8;
++typedef struct { float x, y; } Vec2;
++typedef struct { float x, y, z; } Vec3;
++typedef struct { u16 v0_idx, v1_idx; s16 prev_id0, next_id0, prev_id1, next_id1; u16 hi_flags, lo_flags; } MapLine;
++typedef struct { MapLine* x0; u32 flags; } CollLine;
++typedef struct { float x0, x4; Vec2 pos; float x10, x14; } CollVtx;
++enum { MapLineGroup_Floor, MapLineGroup_Ceiling, MapLineGroup_RightWall, MapLineGroup_LeftWall, MapLineGroup_Dynamic, MapLineGroup_Count };
++typedef struct MapLineRange { s16 start, count; } MapLineRange;
++typedef struct { MapLineRange ranges[MapLineGroup_Count]; float left_bound, bottom_bound, right_bound, top_bound; s16 vtx_start, vtx_count; } MapJoint;
++typedef struct CollJoint { struct CollJoint* next; MapJoint* inner; u32 flags; bool xE; Vec2 bounding_min, bounding_max; } CollJoint;
++typedef struct { Vec2* verts; int vert_count; MapLine* lines; int line_count; MapLineRange ranges[MapLineGroup_Count]; MapJoint* joints; int joint_count; } MapCollData;
++typedef struct mp_UnkStruct0 { struct mp_UnkStruct0* next; u16 x4, x6; Vec3 x8, x14; int x20; s16 x24, x26, x28; } mp_UnkStruct0;
++enum { CollLine_Floor = 1, LINE_FLAG_KIND = 15, LINE_FLAG_PLATFORM = 256, LINE_FLAG_LEDGE = 512,
++       LINE_FLAG_ENABLED = 1 << 16, LINE_FLAG_HIDDEN = 1 << 18,
++       CollJoint_B8 = 1 << 8, CollJoint_B11 = 1 << 11, CollJoint_Enabled = 1 << 16, CollJoint_Hidden = 1 << 18 };
++#define SCRIPT_STAGE_LINES 12
++#define SCRIPT_STAGE_MODELS 2
++#define SCRIPT_STAGE_TARGETS 2
++#define SQ(x) ((x) * (x))
++#define ABS(x) fabsf(x)
++#define F32_MAX FLT_MAX
++#define UNUSED __attribute__((unused))
++#define PAD_STACK(n) ((void)0)
++#define HSD_ASSERT(line, expr) assert(expr)
++#define LINEID_CHECK(line, index) assert((index) >= 0 && (index) < map.line_count)
++#define OSReport(...) ((void)0)
++#define memzero(ptr, count) memset(ptr, 0, count)
++typedef struct { Vec3 translate; } HSD_JObj;
++typedef struct { HSD_JObj root; } HSD_GObj;
++typedef HSD_GObj Item_GObj;
++#define GET_JOBJ(object) (&(object)->root)
++typedef struct { int handle, active, kind, flags, model_handle, owner; float x0, y0, x1, y1; } ScriptStageLine;
++typedef struct { int handle, active, line_handle, owner; HSD_GObj* gobj; float x, y; } ScriptStageModel;
++typedef struct { int handle, active; Item_GObj* gobj; } ScriptStageTarget;
++static struct {
++    MapCollData* map; int cap, base_v, base_l, base_j, target_remaining;
++    ScriptStageLine line[SCRIPT_STAGE_LINES]; ScriptStageModel model[SCRIPT_STAGE_MODELS]; ScriptStageTarget target[SCRIPT_STAGE_TARGETS];
++} script_stage;
++static MapLine lines[32], saved_lines[32];
++static MapJoint map_joints[20];
++static CollLine groundCollLine[32];
++static CollVtx groundCollVtx[40];
++static CollJoint groundCollJoint[20];
++static Vec2 vertices[40];
++static MapCollData map, *current_map;
++#define mpLib_804D64B4 current_map
++static CollJoint *jointListStart, *jointListEnd;
++static struct { mp_UnkStruct0* next; } mpIsland_80458E88;
++static mp_UnkStruct0* island_pool;
++static int owner = 7, refresh_calls, bounding_checks;
++static MapCollData* mpLib_8004D164(void) { return current_map; }
++static CollLine* mpGetGroundCollLine(void) { return groundCollLine; }
++static CollVtx* mpGetGroundCollVtx(void) { return groundCollVtx; }
++static CollJoint* mpGetGroundCollJoint(void) { return groundCollJoint; }
++static int Script_StageResourceOwner(void) { return owner; }
++static float Ground_801C0498(void) { return 1; }
++static void mpUncheckBounding(void) { ++bounding_checks; }
++static void HSD_GObjFree(HSD_GObj* object) { (void)object; assert(!"unexpected GObj fixture"); }
++static void Item_8026A8EC(Item_GObj* object) { (void)object; assert(!"unexpected target fixture"); }
++static void HSD_JObjSetTranslate(HSD_JObj* object, const Vec3* pos) { object->translate = *pos; }
++static void PSVECNormalize(const Vec3* source, Vec3* out) {
++    float norm = sqrtf(source->x * source->x + source->y * source->y + source->z * source->z);
++    out->x = source->x / norm; out->y = source->y / norm; out->z = source->z / norm;
++}
++static void* HSD_MemAlloc(size_t bytes) {
++    /* Native code allocates the 32-bit island prefix; the host fixture uses
++     * named fields on either host pointer width. No ABI claim is made here. */
++    assert(bytes == 0x2C); return calloc(1, sizeof(mp_UnkStruct0));
++}
++static void mpIsland_AssertSeg(void* segment) { assert(segment); }
++#include "readers.inc"
++#include "islands.inc"
++static void mpIsland_8005B334(int joint, int first, int count, bool enabled) {
++    ++refresh_calls;
++    mpIsland_8005B004(&mpIsland_80458E88.next, &island_pool, joint, 1, first, count, enabled);
++}
++#include "refresh.inc"
++#include "script_stage_seams.inc"
++#include "lifetime.inc"
++#include "stitcher.inc"
++
++static int bits(float value) { union { int i; float f; } u; u.f = value; return u.i; }
++static void release_islands(mp_UnkStruct0* list) {
++    while (list) { mp_UnkStruct0* next = list->next; free(list); list = next; }
++}
++static void fixture(void) {
++    int i;
++    release_islands(mpIsland_80458E88.next); release_islands(island_pool);
++    mpIsland_80458E88.next = island_pool = NULL;
++    memset(&script_stage, 0, sizeof script_stage); memset(lines, 0, sizeof lines);
++    memset(map_joints, 0, sizeof map_joints); memset(groundCollLine, 0, sizeof groundCollLine);
++    memset(groundCollVtx, 0, sizeof groundCollVtx); memset(groundCollJoint, 0, sizeof groundCollJoint);
++    map.verts = vertices; map.lines = lines; map.joints = map_joints;
++    map.vert_count = 40; map.line_count = 32; map.joint_count = 20;
++    script_stage.map = current_map = &map; script_stage.cap = SCRIPT_STAGE_LINES;
++    script_stage.base_l = 4; script_stage.base_v = 8; script_stage.base_j = 4;
++    for (i = 0; i < 32; ++i) {
++        lines[i].prev_id0 = lines[i].prev_id1 = lines[i].next_id0 = lines[i].next_id1 = -1;
++        groundCollLine[i].x0 = &lines[i];
++    }
++    for (i = 0; i < 20; ++i) groundCollJoint[i].inner = &map_joints[i];
++    for (i = 0; i < SCRIPT_STAGE_LINES; ++i) {
++        lines[4 + i].v0_idx = 8 + i * 2; lines[4 + i].v1_idx = 9 + i * 2;
++        map_joints[4 + i].vtx_start = 8 + i * 2; map_joints[4 + i].vtx_count = 2;
++    }
++    jointListStart = jointListEnd = NULL; owner = 7; refresh_calls = bounding_checks = 0;
++}
++static int add(int handle, float x0, float y0, float x1, float y1, int kind, int flags) {
++    assert(ScriptGame_StageAddLine(bits(x0), bits(y0), bits(x1), bits(y1), kind, flags, handle) == handle);
++    return handle;
++}
++static int index(int handle) { int slot = script_stage_seam_slot(handle); assert(slot >= 0); return 4 + slot; }
++static int follow(int handle, float x, float y) {
++    Vec3 position = { x, y, 0 }; float difference;
++    return mpLib_8004DD90_Floor(index(handle), &position, &difference, NULL, NULL);
++}
++static void no_seams(int line) {
++    assert(lines[line].prev_id0 == -1 && lines[line].prev_id1 == -1 &&
++           lines[line].next_id0 == -1 && lines[line].next_id1 == -1);
++}
++
++int main(void) {
++    int a, b, c, d, copies[4], i, before;
++    fixture();
++    a = add(101, -52, 0, -26, 13, 1, 1); b = add(102, -26, 13, 0, 13, 1, 0);
++    c = add(103, 0, 13, 26, 26, 1, 1); d = add(104, 26, 26, 52, 26, 1, 0);
++    assert(follow(a, -20, 13) == -1); /* actual floor-follow dead end before linking */
++    assert(ScriptGame_StageLink(a, b, owner) == 1);
++    assert(ScriptGame_StageLink(c, b, owner) == 1); /* reversed argument order */
++    assert(ScriptGame_StageLink(c, d, owner) == 1);
++    assert(lines[index(a)].next_id0 == index(b) && lines[index(a)].next_id1 == index(b));
++    assert(lines[index(b)].prev_id0 == index(a) && lines[index(b)].prev_id1 == index(a));
++    assert(follow(a, 40, 26) == index(d) && follow(d, -40, 6) == index(a));
++    for (i = 0; i < 4; ++i) {
++        mp_UnkStruct0* island = mpIsland_8005AB54(4 + i);
++        assert(island && island->x24 == index(a) && island->x26 == index(d));
++    }
++    /* Every per-joint island caches the whole chain; removing its middle must
++     * refresh distant joints and erase reciprocal id0 as well as id1. */
++    assert(ScriptGame_StageRemove(b));
++    assert(mpLineGetNext(index(a)) == -1 && mpLineGetPrev(index(c)) == -1);
++    no_seams(5);
++    assert(mpIsland_8005AB54(index(a))->x26 == index(a));
++    assert(mpIsland_8005AB54(index(d))->x24 == index(c));
++    assert(follow(a, 40, 26) == -1 && follow(c, 40, 26) == index(d));
++    add(105, -26, 13, 0, 13, 1, 0); no_seams(index(105)); /* slot reuse stays unlinked */
++    assert(ScriptGame_StageLink(a, 105, owner) == 1 && ScriptGame_StageLink(105, c, owner) == 1);
++    /* Moving a joined line apart clears both fallback directions. Movement
++     * within tolerance retains the reciprocal graph; moving back does not infer it. */
++    assert(script_stage_line_set(c, 0.01f, 13, 26.01f, 26));
++    assert(mpLineGetPrev(index(c)) == index(105) && mpLineGetNext(index(c)) == index(d));
++    assert(ScriptGame_StageMove(c, bits(18), bits(19.5f)));
++    no_seams(index(c)); assert(mpLineGetNext(index(105)) == -1 && mpLineGetPrev(index(d)) == -1);
++    assert(script_stage_line_set(c, 0, 13, 26, 26)); no_seams(index(c));
++    assert(ScriptGame_StageLink(105, c, owner) == 1 && ScriptGame_StageLink(c, d, owner) == 1);
++    /* Source/destination copies have one mod owner. Explicit handles link only
++     * their own graph even though every endpoint has duplicate geometry. */
++    copies[0] = add(201, -52, 0, -26, 13, 1, 1); copies[1] = add(202, -26, 13, 0, 13, 1, 0);
++    copies[2] = add(203, 0, 13, 26, 26, 1, 1); copies[3] = add(204, 26, 26, 52, 26, 1, 0);
++    for (i = 0; i < 3; ++i) assert(ScriptGame_StageLink(copies[i], copies[i + 1], owner) == 1);
++    assert(mpLineGetNext(index(a)) == index(105) && mpLineGetNext(index(copies[0])) == index(copies[1]));
++    assert(ScriptGame_StageRemove(a) && ScriptGame_StageRemove(105) && ScriptGame_StageRemove(c) && ScriptGame_StageRemove(d));
++    assert(follow(copies[0], 40, 26) == index(copies[3]));
++    /* Vanilla nearby-joint stitching is excluded for scripted joints. */
++    memcpy(saved_lines, lines, sizeof lines);
++    mpLib_800581DC(8, 9); assert(!memcmp(saved_lines, lines, sizeof lines));
++
++    fixture(); a = add(301, -10, 0, 0, 0, 1, 0); b = add(302, 0, 0, 10, 0, 1, 0);
++    memcpy(saved_lines, lines, sizeof lines); before = refresh_calls;
++    assert(ScriptGame_StageLink(a, a, owner) == -2);
++    assert(ScriptGame_StageLink(a, 9999, owner) == -2);
++    assert(ScriptGame_StageLink(a, b, owner + 1) == -3);
++    current_map = NULL; assert(ScriptGame_StageLink(a, b, owner) == -1);
++    assert(!ScriptGame_StageMove(b, bits(50), bits(0)) && !ScriptGame_StageRemove(b)); current_map = &map;
++    assert(!memcmp(saved_lines, lines, sizeof lines) && refresh_calls == before);
++    groundCollVtx[lines[index(b)].v0_idx].pos.x = 0.1f;
++    assert(ScriptGame_StageLink(a, b, owner) == -5); /* actual physics vertices, not stale metadata */
++    groundCollVtx[lines[index(b)].v0_idx].pos.x = 0;
++    owner = 8; c = add(303, 0, 0, 10, 0, 1, 0); owner = 7;
++    assert(ScriptGame_StageLink(a, c, owner) == -3);
++    d = add(304, 0, 0, 0, 10, 4, 0); assert(ScriptGame_StageLink(a, d, owner) == -4);
++    c = add(305, 0.06f, 0, 10, 0, 1, 0); assert(ScriptGame_StageLink(a, c, owner) == -5);
++    c = add(306, -5, 0, 5, 0, 1, 0); assert(ScriptGame_StageLink(a, c, owner) == -5); /* T/interior */
++    assert(ScriptGame_StageLink(a, b, owner) == 1);
++    assert(ScriptGame_StageLink(a, b, owner) == -7); /* occupied, including same pair */
++    c = add(307, 0, 0, 15, 0, 1, 0); assert(ScriptGame_StageLink(a, c, owner) == -7);
++    lines[index(a)].next_id1 = -1; assert(ScriptGame_StageLink(a, c, owner) == -8);
++    assert(ScriptGame_StageRemove(a)); assert(mpLineGetPrev(index(b)) == -1); /* clear inconsistent reciprocal pair */
++    fixture(); a = add(351, -10, 0, 0, 0, 1, 0); b = add(352, 0, 0, 10, 0, 1, 0);
++    lines[index(a)].next_id0 = index(b); /* one-sided stale fallback */
++    assert(ScriptGame_StageMove(b, bits(50), bits(0)));
++    assert(mpLineGetNext(index(a)) == -1); no_seams(index(b));
++    /* Unsafe-map refusal retains the live handle and graph for a real retry;
++     * pointer equality alone is insufficient after reserved counts retire. */
++    fixture(); a = add(371, -10, 0, 0, 0, 1, 0); b = add(372, 0, 0, 10, 0, 1, 0);
++    assert(ScriptGame_StageLink(a, b, owner) == 1);
++    memcpy(saved_lines, lines, sizeof lines); before = refresh_calls;
++    current_map = NULL;
++    assert(!ScriptGame_StageRemove(a));
++    assert(script_stage_seam_slot(a) >= 0);
++    current_map = &map; map.line_count = script_stage.base_l;
++    assert(!ScriptGame_StageRemove(a));
++    assert(script_stage_seam_slot(a) >= 0);
++    assert(!memcmp(saved_lines, lines, sizeof lines) && refresh_calls == before);
++    map.line_count = 32;
++    assert(ScriptGame_StageRemove(a));
++    assert(script_stage_seam_slot(a) == -1 && mpLineGetPrev(index(b)) == -1);
++    no_seams(4);
++    fixture(); a = add(401, 0, 0, 0.01f, 0, 1, 0); b = add(402, 0.01f, 0, 0.02f, 0, 1, 0);
++    assert(ScriptGame_StageLink(a, b, owner) == -6); /* both orientations within EPS */
++    fixture(); a = add(501, -10, 0, 0, 0, 1, 0); b = add(502, 0.03f, 0.04f, 10, 0, 1, 0);
++    assert(ScriptGame_StageLink(a, b, owner) == 1); /* Euclidean EPS boundary */
++    groundCollLine[index(b)].flags |= LINE_FLAG_HIDDEN;
++    assert(ScriptGame_StageLink(a, b, owner) == -8);
++    fixture();
++    /* The scripted-joint exclusion leaves vanilla builtin stitching intact. */
++    lines[0].v0_idx = 0; lines[0].v1_idx = 1; lines[1].v0_idx = 2; lines[1].v1_idx = 3;
++    groundCollVtx[0].pos.x = -10; groundCollVtx[1].pos.x = 0;
++    groundCollVtx[2].pos.x = 0; groundCollVtx[3].pos.x = 10;
++    map_joints[0].vtx_start = 0; map_joints[0].vtx_count = 2;
++    map_joints[1].vtx_start = 2; map_joints[1].vtx_count = 2;
++    map_joints[0].ranges[MapLineGroup_Floor].start = 0; map_joints[0].ranges[MapLineGroup_Floor].count = 1;
++    map_joints[1].ranges[MapLineGroup_Floor].start = 1; map_joints[1].ranges[MapLineGroup_Floor].count = 1;
++    mpLib_800581DC(0, 1);
++    assert(lines[0].next_id1 == 1 && lines[1].prev_id1 == 0);
++    assert(lines[0].next_id0 == -1 && lines[1].prev_id0 == -1);
++    add(601, 0, 0, 10, 0, 1, 0);
++    memcpy(saved_lines, lines, sizeof lines);
++    mpLib_800581DC(0, 4); assert(!memcmp(saved_lines, lines, sizeof lines));
++    fixture();
++    puts("actual-source stage seam graph, floor-follow, dynamic-island and lifecycle tests passed");
++    return 0;
++}
+diff --git a/pc/tests/stage_seam_test.py b/pc/tests/stage_seam_test.py
+new file mode 100644
+--- /dev/null
++++ b/pc/tests/stage_seam_test.py
+@@ -0,0 +1,61 @@
++#!/usr/bin/env python3
++"""Compile actual seam, floor-follow, dynamic-island and lifetime source with a
++synthetic collision map. Allocator/scene objects are fixtures, not live physics.
++No shared native build, GPU, installation or game process is used.
++"""
++from pathlib import Path
++import argparse
++import re
++import subprocess
++import tempfile
++
++GAME = Path(__file__).resolve().parents[2]
++
++
++def function(source, name):
++    match = re.search(r'^(?:static\s+(?:inline\s+)?)?(?:int|bool|void|mp_UnkStruct0\*)\s*' +
++                      re.escape(name) + r'\s*\(', source, re.M)
++    if not match:
++        raise AssertionError('missing actual source function ' + name)
++    start = source.index('{', match.start())
++    # Ignore braces inside comments and string/character literals.
++    tokens = re.compile(r'/\*.*?\*/|//[^\n]*|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|[{}]', re.S)
++    depth = 0
++    for token in tokens.finditer(source, start):
++        if token.group() == '{':
++            depth += 1
++        elif token.group() == '}':
++            depth -= 1
++            if depth == 0:
++                return source[match.start():token.end()] + '\n'
++    raise AssertionError('unterminated function ' + name)
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--sanitize', action='store_true')
++    args = parser.parse_args()
++    groups = [
++        ('readers', 'src/melee/mp/mplib.c', ['mpLineGetNext', 'mpLineGetPrev', 'mpLib_8004DD90_Floor', 'mpLib_80054ED8']),
++        ('islands', 'src/melee/mp/mpisland.c', ['mpIsland_8005B004', 'mpIsland_8005AB54']),
++        ('refresh', 'src/melee/mp/mplib.c', ['mpLib_8005667C', 'mpLib_80057424', 'mpJointListAdd', 'mpJointListUnlink', 'mpLib_80057BC0']),
++        ('lifetime', 'pc/gameworld/script_game.c', ['ScriptGame_StageAddLine', 'ScriptGame_StageRemove', 'script_stage_line_set', 'ScriptGame_StageMove', 'ScriptGame_StageJoint']),
++        ('stitcher', 'src/melee/mp/mplib.c', ['mpLib_GetJointVtxRange', 'mpLib_800581DC']),
++    ]
++    with tempfile.TemporaryDirectory(prefix='stage-seam-source-') as temporary:
++        build = Path(temporary)
++        for group, path, names in groups:
++            source = (GAME / path).read_text()
++            (build / (group + '.inc')).write_text(''.join(function(source, name) for name in names))
++        command = ['cc', '-std=c11', '-Wall', '-Wextra', '-Werror',
++                   '-Wno-unused-parameter', '-Wno-unused-variable', '-DTARGET_PC',
++                   '-I', str(build), '-I', str(GAME / 'pc/gameworld')]
++        if args.sanitize:
++            command += ['-fsanitize=address,undefined', '-fno-omit-frame-pointer']
++        command += [str(GAME / 'pc/tests/stage_seam_test.c'), '-lm', '-o', str(build / 'test')]
++        subprocess.run(command, check=True)
++        subprocess.run([str(build / 'test')], check=True)
++
++
++if __name__ == '__main__':
++    main()
+diff --git a/src/melee/mp/mplib.c b/src/melee/mp/mplib.c
+--- a/src/melee/mp/mplib.c
++++ b/src/melee/mp/mplib.c
+@@ -5715,6 +5715,12 @@
+ 
+ void mpLib_800581DC(int joint_id0, int joint_id1)
+ {
++#if defined(TARGET_PC)
++    /* Scripted rooms share owners and world coordinates while transitioning.
++     * Their seam graph is explicit; vanilla proximity stitching would join rooms. */
++    extern int ScriptGame_StageJoint(int joint_id);
++    if (ScriptGame_StageJoint(joint_id0) || ScriptGame_StageJoint(joint_id1)) return;
++#endif
+     CollJoint* j0_r9;
+     CollJoint* j1_r10;
+     CollLine* line_base;

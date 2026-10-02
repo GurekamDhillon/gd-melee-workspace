@@ -134,7 +134,7 @@ rejected.** This is the one rule the mechanism exists to enforce.
 | `stage` | `<stageref>` | `izumi` (St_Kind_Izumi) | |
 | `teams` | `0`/`1` | leave alone | |
 | `time` | seconds | leave alone | 0 disables the timer |
-| `items` | item frequency | leave alone | |
+| `items` | item frequency index; `off` or `none` disables random items (index `0` still enables them) | leave alone | |
 | `skipmemcard` | `0`/`1` | `1` when a scene is configured | §1 |
 | `select` | `kit`, `native` | leave alone | Training's character / stage select on the port's kit screens or the native ones (gw_uigen.c `gw_Frontend_TrainingSelect`). Applied as the text is read and kept for later Training launches; `mode=training;at=css;select=kit` opens Training on the kit's CSS |
 
@@ -176,7 +176,7 @@ MELEE_SCENE="mode=vs;p1=fox/c1/hu;p2=falco/cpu5;p3=random/cpu3;p4=ck:38/cpu9;sta
 MELEE_SCENE="mode=vs;at=css;p1=fox;p2=marth;p3=random;p4=random"
 
 # Teams, 3 minutes, no items.
-MELEE_SCENE="mode=vs;p1=fox/team0;p2=falco/team0/cpu9;p3=marth/team1/cpu9;p4=ganondorf/team1/cpu9;teams=1;time=180;items=0;stage=battlefield"
+MELEE_SCENE="mode=vs;p1=fox/team0;p2=falco/team0/cpu9;p3=marth/team1/cpu9;p4=ganondorf/team1/cpu9;teams=1;time=180;items=off;stage=battlefield"
 
 # Target Test as Fox.
 MELEE_SCENE="mode=targettest;p1=fox"

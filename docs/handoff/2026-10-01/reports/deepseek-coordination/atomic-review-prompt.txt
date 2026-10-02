@@ -1,0 +1,17 @@
+Perform a READ-ONLY bounded engineering review. Do not edit any files, run builds,
+commit, install bundles, launch the game, or delegate more agents. Another session
+may be modifying this checkout. We coordinate from /home/gd/melee_linux_test/gdm.
+
+Read docs/DEEPSEEK-BULK-HANDOFF.md Batch 1 and docs/SOL-RUNTIME-CHECKPOINT.md.
+Inspect game commit 7fd8adc8d and the current atomic data writer in
+melee/worktrees/linux/pc/platform/gw_script.c. Review its path/temp handling,
+failure/replace behavior, script filename ownership, cleanup, maximum lengths,
+platform shim semantics and meaningful native test coverage. Inspect the Linux
+MoveFileExA shim and existing native tests as needed. Do not read credentials,
+environment dumps, private collections, external config or unrelated files.
+
+Report only concrete defects supported by code, including exact file/line and
+reproduction, severity and a focused suggested fix/test. Distinguish missing
+test evidence from known defects. Also list which Batch 1 requirements remain
+unimplemented in checkpoint/main, without inventing APIs or touching them.
+Keep the report concise. Do not label the full save migration finished.

@@ -1,0 +1,1436 @@
+{
+  "available": true,
+  "game_root": "/home/gd/melee_linux_test/gdm/melee/worktrees/linux",
+  "lua": "/usr/bin/lua5.4",
+  "openings": {
+    "junction_cross": [
+      {
+        "index": 1.0,
+        "template": "junction_cross",
+        "width": 13.0,
+        "x": 0.0
+      }
+    ],
+    "shortcut_door": [
+      {
+        "index": 1.0,
+        "template": "shortcut_door",
+        "width": 13.0,
+        "x": 0.0
+      }
+    ]
+  },
+  "reason": null,
+  "recipes": [
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 0.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 0.0,
+      "openings": [],
+      "platforms": 2.0,
+      "recipe": "lane_pit",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "arena_drop"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "arena_drop"
+        }
+      ],
+      "template": "arena_drop",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 0.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 0.0,
+      "openings": [],
+      "platforms": 0.0,
+      "recipe": "arena_flat",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "arena_flat"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "arena_flat"
+        }
+      ],
+      "template": "arena_flat",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 0.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 0.0,
+      "openings": [],
+      "platforms": 2.0,
+      "recipe": "arena_pillars",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "arena_pillars"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "arena_pillars"
+        }
+      ],
+      "template": "arena_pillars",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 2.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 5.0,
+      "openings": [],
+      "platforms": 2.0,
+      "recipe": "arena_tiered",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "arena_tiered"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "arena_tiered"
+        },
+        {
+          "ax": 39.0,
+          "ay": 26.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 39.0,
+          "ry": 26.0,
+          "side": "top",
+          "socket": "up",
+          "template": "arena_tiered"
+        }
+      ],
+      "template": "arena_tiered",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 0.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 0.0,
+      "openings": [],
+      "platforms": 0.0,
+      "recipe": "boss_arena",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "boss_arena"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "boss_arena"
+        }
+      ],
+      "template": "boss_arena",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 2.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 5.0,
+      "openings": [],
+      "platforms": 2.0,
+      "recipe": "branch_y",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "branch_a",
+          "template": "branch_y"
+        },
+        {
+          "ax": 39.0,
+          "ay": 26.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 39.0,
+          "ry": 26.0,
+          "side": "top",
+          "socket": "branch_b",
+          "template": "branch_y"
+        },
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "branch_y"
+        }
+      ],
+      "template": "branch_y",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 0.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 0.0,
+      "openings": [],
+      "platforms": 0.0,
+      "recipe": "entry_lane",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "entry_gate"
+        }
+      ],
+      "template": "entry_gate",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 0.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 0.0,
+      "openings": [],
+      "platforms": 0.0,
+      "recipe": "finish_lane",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "finish_gate"
+        }
+      ],
+      "template": "finish_gate",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 2.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 5.0,
+      "openings": [
+        {
+          "index": 1.0,
+          "template": "junction_cross",
+          "width": 13.0,
+          "x": 0.0
+        }
+      ],
+      "platforms": 2.0,
+      "recipe": "junction_cross",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": 39.0,
+          "ay": 26.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 39.0,
+          "ry": 26.0,
+          "side": "top",
+          "socket": "branch_a",
+          "template": "junction_cross"
+        },
+        {
+          "ax": 0.0,
+          "ay": -6.0,
+          "drop": true,
+          "facing": -1.0,
+          "rx": 20.0,
+          "ry": 0.0,
+          "side": "bottom",
+          "socket": "branch_b",
+          "template": "junction_cross"
+        },
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "junction_cross"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "junction_cross"
+        }
+      ],
+      "template": "junction_cross",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 2.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 5.0,
+      "openings": [],
+      "platforms": 2.0,
+      "recipe": "lane_balcony",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "lane_balcony"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "lane_balcony"
+        },
+        {
+          "ax": 39.0,
+          "ay": 26.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 39.0,
+          "ry": 26.0,
+          "side": "top",
+          "socket": "up",
+          "template": "lane_balcony"
+        }
+      ],
+      "template": "lane_balcony",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 2.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 5.0,
+      "openings": [],
+      "platforms": 2.0,
+      "recipe": "lane_fork",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "lane_fork"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "lane_fork"
+        },
+        {
+          "ax": 39.0,
+          "ay": 26.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 39.0,
+          "ry": 26.0,
+          "side": "top",
+          "socket": "up",
+          "template": "lane_fork"
+        }
+      ],
+      "template": "lane_fork",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 0.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 0.0,
+      "openings": [],
+      "platforms": 2.0,
+      "recipe": "lane_pit",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "lane_pit"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "lane_pit"
+        }
+      ],
+      "template": "lane_pit",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 0.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 0.0,
+      "openings": [],
+      "platforms": 0.0,
+      "recipe": "lane_open",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "lane_straight"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "lane_straight"
+        }
+      ],
+      "template": "lane_straight",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 0.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 0.0,
+      "openings": [],
+      "platforms": 3.0,
+      "recipe": "lane_two_level",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "lane_vertical"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "lane_vertical"
+        }
+      ],
+      "template": "lane_vertical",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 2.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 5.0,
+      "openings": [],
+      "platforms": 2.0,
+      "recipe": "rejoin_merge",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in_a",
+          "template": "rejoin_merge"
+        },
+        {
+          "ax": 39.0,
+          "ay": 26.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 39.0,
+          "ry": 26.0,
+          "side": "top",
+          "socket": "in_b",
+          "template": "rejoin_merge"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "rejoin_merge"
+        }
+      ],
+      "template": "rejoin_merge",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 0.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 0.0,
+      "openings": [],
+      "platforms": 0.0,
+      "recipe": "rest_alcove",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "rest_alcove"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "rest_alcove"
+        }
+      ],
+      "template": "rest_alcove",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 2.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 5.0,
+      "openings": [],
+      "platforms": 2.0,
+      "recipe": "rest_balcony",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "rest_balcony"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "rest_balcony"
+        },
+        {
+          "ax": 39.0,
+          "ay": 26.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 39.0,
+          "ry": 26.0,
+          "side": "top",
+          "socket": "up",
+          "template": "rest_balcony"
+        }
+      ],
+      "template": "rest_balcony",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 0.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 0.0,
+      "openings": [],
+      "platforms": 0.0,
+      "recipe": "reward_vault",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "reward_vault"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "reward_vault"
+        }
+      ],
+      "template": "reward_vault",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 0.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 0.0,
+      "openings": [
+        {
+          "index": 1.0,
+          "template": "shortcut_door",
+          "width": 13.0,
+          "x": 0.0
+        }
+      ],
+      "platforms": 0.0,
+      "recipe": "shortcut_door",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "shortcut_door"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "shortcut_door"
+        },
+        {
+          "ax": 0.0,
+          "ay": -6.0,
+          "drop": true,
+          "facing": -1.0,
+          "rx": 20.0,
+          "ry": 0.0,
+          "side": "bottom",
+          "socket": "shortcut",
+          "template": "shortcut_door"
+        }
+      ],
+      "template": "shortcut_door",
+      "version": 2.0
+    },
+    {
+      "certified": false,
+      "floor_left": -65.0,
+      "floor_right": 65.0,
+      "lines": 0.0,
+      "mobility": "bf-walk-jump-v2",
+      "modules": 0.0,
+      "openings": [],
+      "platforms": 0.0,
+      "recipe": "lane_open",
+      "resolved": true,
+      "sockets": [
+        {
+          "ax": -52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": 1.0,
+          "rx": -42.0,
+          "ry": 0.0,
+          "side": "left",
+          "socket": "in",
+          "template": "teach_lane"
+        },
+        {
+          "ax": 52.0,
+          "ay": 0.0,
+          "drop": null,
+          "facing": -1.0,
+          "rx": 42.0,
+          "ry": 0.0,
+          "side": "right",
+          "socket": "out",
+          "template": "teach_lane"
+        }
+      ],
+      "template": "teach_lane",
+      "version": 2.0
+    }
+  ],
+  "sockets": {
+    "arena_drop": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "arena_drop"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "arena_drop"
+      }
+    ],
+    "arena_flat": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "arena_flat"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "arena_flat"
+      }
+    ],
+    "arena_pillars": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "arena_pillars"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "arena_pillars"
+      }
+    ],
+    "arena_tiered": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "arena_tiered"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "arena_tiered"
+      },
+      {
+        "ax": 39.0,
+        "ay": 26.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 39.0,
+        "ry": 26.0,
+        "side": "top",
+        "socket": "up",
+        "template": "arena_tiered"
+      }
+    ],
+    "boss_arena": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "boss_arena"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "boss_arena"
+      }
+    ],
+    "branch_y": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "branch_y"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "branch_a",
+        "template": "branch_y"
+      },
+      {
+        "ax": 39.0,
+        "ay": 26.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 39.0,
+        "ry": 26.0,
+        "side": "top",
+        "socket": "branch_b",
+        "template": "branch_y"
+      }
+    ],
+    "entry_gate": [
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "entry_gate"
+      }
+    ],
+    "finish_gate": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "finish_gate"
+      }
+    ],
+    "junction_cross": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "junction_cross"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "junction_cross"
+      },
+      {
+        "ax": 39.0,
+        "ay": 26.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 39.0,
+        "ry": 26.0,
+        "side": "top",
+        "socket": "branch_a",
+        "template": "junction_cross"
+      },
+      {
+        "ax": 0.0,
+        "ay": -6.0,
+        "drop": true,
+        "facing": -1.0,
+        "rx": 20.0,
+        "ry": 0.0,
+        "side": "bottom",
+        "socket": "branch_b",
+        "template": "junction_cross"
+      }
+    ],
+    "lane_balcony": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "lane_balcony"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "lane_balcony"
+      },
+      {
+        "ax": 39.0,
+        "ay": 26.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 39.0,
+        "ry": 26.0,
+        "side": "top",
+        "socket": "up",
+        "template": "lane_balcony"
+      }
+    ],
+    "lane_fork": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "lane_fork"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "lane_fork"
+      },
+      {
+        "ax": 39.0,
+        "ay": 26.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 39.0,
+        "ry": 26.0,
+        "side": "top",
+        "socket": "up",
+        "template": "lane_fork"
+      }
+    ],
+    "lane_pit": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "lane_pit"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "lane_pit"
+      }
+    ],
+    "lane_straight": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "lane_straight"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "lane_straight"
+      }
+    ],
+    "lane_vertical": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "lane_vertical"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "lane_vertical"
+      }
+    ],
+    "rejoin_merge": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in_a",
+        "template": "rejoin_merge"
+      },
+      {
+        "ax": 39.0,
+        "ay": 26.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 39.0,
+        "ry": 26.0,
+        "side": "top",
+        "socket": "in_b",
+        "template": "rejoin_merge"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "rejoin_merge"
+      }
+    ],
+    "rest_alcove": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "rest_alcove"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "rest_alcove"
+      }
+    ],
+    "rest_balcony": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "rest_balcony"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "rest_balcony"
+      },
+      {
+        "ax": 39.0,
+        "ay": 26.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 39.0,
+        "ry": 26.0,
+        "side": "top",
+        "socket": "up",
+        "template": "rest_balcony"
+      }
+    ],
+    "reward_vault": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "reward_vault"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "reward_vault"
+      }
+    ],
+    "shortcut_door": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "shortcut_door"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "shortcut_door"
+      },
+      {
+        "ax": 0.0,
+        "ay": -6.0,
+        "drop": true,
+        "facing": -1.0,
+        "rx": 20.0,
+        "ry": 0.0,
+        "side": "bottom",
+        "socket": "shortcut",
+        "template": "shortcut_door"
+      }
+    ],
+    "teach_lane": [
+      {
+        "ax": -52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": 1.0,
+        "rx": -42.0,
+        "ry": 0.0,
+        "side": "left",
+        "socket": "in",
+        "template": "teach_lane"
+      },
+      {
+        "ax": 52.0,
+        "ay": 0.0,
+        "drop": null,
+        "facing": -1.0,
+        "rx": 42.0,
+        "ry": 0.0,
+        "side": "right",
+        "socket": "out",
+        "template": "teach_lane"
+      }
+    ]
+  }
+}

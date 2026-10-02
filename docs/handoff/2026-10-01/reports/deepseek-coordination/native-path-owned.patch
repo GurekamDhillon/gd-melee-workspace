@@ -1,0 +1,71 @@
+--- a/pc/platform/gw_script.c
++++ b/pc/platform/gw_script.c
+@@ -2325,25 +2325,21 @@
+             luaL_error(L, "data file names use letters, digits, _ - . and / (got \"%s\")", name);
+         }
+     }
+-    snprintf(dir, sizeof dir, "%s\\%s", gs.data_dir, s->id);
+-    for (p = dir; *p != '\0'; ++p) {
+-        if (*p == '/') {
+-            *(char *) p = '_'; /* a mod script's id "mod/file" is one folder */
++    {
++        char id[128];
++        snprintf(id, sizeof id, "%s", s->id);
++        for (char *q = id; *q; ++q) if (*q == '/' || *q == '\\') *q = '_';
++        if (snprintf(dir, sizeof dir, "%s/%s", gs.data_dir, id) >= (int) sizeof dir) {
++            luaL_error(L, "data directory path too long");
+         }
+     }
+     CreateDirectoryA(gs.data_dir, NULL);
+     CreateDirectoryA(dir, NULL);
+-    snprintf(out, cap, "%s\\%s", dir, name);
+-    {
+-        /* the folders of a "dir/sub/file" name (stage E: versioned frame-data exports) */
+-        char *q = out + strlen(dir) + 1;
+-        for (; *q != '\0'; ++q) {
+-            if (*q == '/') {
+-                *q = '\0';
+-                CreateDirectoryA(out, NULL);
+-                *q = '\\';
+-            }
+-        }
++    if (snprintf(out, cap, "%s/%s", dir, name) >= (int) cap) {
++        luaL_error(L, "data file path too long");
++    }
++    for (char *q = out + strlen(dir) + 1; *q; ++q) {
++        if (*q == '/') { *q = 0; CreateDirectoryA(out, NULL); *q = '/'; }
+     }
+ }
+ 
+@@ -8677,9 +8673,9 @@
+  * at it while the console drives the calls. */
+ static int test_script_data_write_atomic(void) {
+     static const char code[] = "probe_loaded = true";
+-    char out[256];
++    char out[256], saved_data_dir[MAX_PATH];
+     char *src;
+-    int i, prev, rc = 0;
++    int i, prev, rc = 0, changed_data_dir = 0;
+     if (t_exec("= 1", out, sizeof out) != 0) return 1;
+     src = (char *)malloc(sizeof code);
+     if (src == NULL) return 1;
+@@ -8713,8 +8709,19 @@
+     CHECK_ATOMIC("= (gd.data_write('rdir/f.txt','keep') or true)", "could not seed rdir/f.txt")
+     CHECK_ATOMIC("= (gd.data_write_atomic('rdir','x') == false)", "atomic write onto a directory was not refused")
+     CHECK_ATOMIC("= (gd.data_read('rdir/f.txt') == 'keep')", "a failed replace damaged sibling data")
++    /* A long installation/data root must refuse before creating a truncated
++     * directory or touching the old file. Restore the root on every exit. */
++    memcpy(saved_data_dir, gs.data_dir, sizeof saved_data_dir);
++    memset(gs.data_dir, 'a', sizeof gs.data_dir - 1);
++    gs.data_dir[sizeof gs.data_dir - 1] = '\0';
++    changed_data_dir = 1;
++    CHECK_ATOMIC("= (function() local ok,why=pcall(gd.data_write_atomic,'probe','bad'); return not ok and tostring(why):find('path too long',1,true)~=nil end)()", "long data path was not safely refused")
++    memcpy(gs.data_dir, saved_data_dir, sizeof gs.data_dir);
++    changed_data_dir = 0;
++    CHECK_ATOMIC("= (gd.data_read('probe') == 'new')", "long data path refusal damaged the old file")
+ #undef CHECK_ATOMIC
+ done:
++    if (changed_data_dir) memcpy(gs.data_dir, saved_data_dir, sizeof gs.data_dir);
+     gs.cur = prev;
+     return rc;
+ }

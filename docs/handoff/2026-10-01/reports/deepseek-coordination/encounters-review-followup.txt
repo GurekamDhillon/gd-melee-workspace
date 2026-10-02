@@ -1,0 +1,23 @@
+Root review follow-up, same isolated encounters worktree and same two files.
+No main/catalogue/Core edits, commits, build/install/game.
+
+User's opponent requirement is that varied opponents also use the gene system
+for buffs. Ordinary fighter CPUs currently have no gene host, whereas champion
+and custom actors do. Add explicit supported fighter gene/buff configuration
+using real Core host/definition APIs. Supported current families are cinder/rime;
+do not pretend planned kinetic/sigil mechanics already exist. Make deterministic
+default/current eligibility explicit in API/status, allow supplied supported
+row.family or opts policy, refuse unsupported explicit families rather than
+silently converting them. Expose active host so main can drive real ability/
+hit/provenance handling as it already does for native fighter opponents.
+
+Review reset()/clear()/spawn-refusal semantics: reset without native teardown
+must not silently erase live owned handles/hosts; cleanup attempts should return
+pending ownership if refusal persists. Test ordinary fighter buff attachment,
+gene immutability, duplicate stock/defeat, partial wave resumes and cleanup of
+all fighter/custom/champion gene hosts/modifiers on room exit or failed spawn.
+Never treat actor disappearance as confirmed death. No speculative phases or
+body-region effects beyond actual API support.
+
+Keep bounded waves and stable route entity ids. Run focused/full tests, report
+the API changes and STOP editing. Root integrates lifecycle callbacks later.

@@ -37,8 +37,8 @@ Before publishing: rebuild the exe (`bash tools/port/build.sh`), push `pc-port` 
 | `build_release.ps1` | stages `_build/release/GDMelee-<v>-win64/`, writes `version.txt` + `MANIFEST.sha256`, checks the folder, zips it (forward-slash entries, one top folder), checks the zip, writes `<zip>.sha256` |
 | `check_release.ps1` | the disc-data guard; runs on a folder or a zip; exit 1 = do not ship |
 | `publish.ps1` | package existing binaries (strict unless Force/DryRun) + check + release notes + `gh release create` |
-| `build_launcher.ps1` | compiles the launcher with Windows' own `csc.exe` (.NET Framework 4.x) |
-| `launcher/GDMeleeLauncher.cs` | the launcher (C# 5 WinForms, one file) |
+| `build_launcher.ps1` / `build_launcher.sh` | build, test and deploy the native Qt launcher |
+| `launcher/qt/` | portable launcher; legacy C# sources retained for reference |
 | `README-user.txt` | becomes `README.txt` in the zip |
 | `THIRD-PARTY-NOTICES.txt`, `licenses/` | become `LICENSES/` in the zip |
 
@@ -103,78 +103,84 @@ Tested negatives (all caught): an ISO chunk renamed `.txt`, a GCI renamed `.txt`
 fake HSD archive named `.gxtex`, a `.dat`, a file in an `ace/` folder, an unlisted `ui/` file, a
 tampered README.
 
-## The launcher
+## The Qt launcher
 
-`GD Melee.exe`, the launcher exe that runs on any Windows 10/11 with nothing installed (.NET
-Framework 4.8 ships with the OS).
+The launcher now uses native C++17 and Qt 6 Widgets on Windows and Linux. The UI consumes
+our existing menu kit (`_build/ui/kit.json`, icon masks and Source Sans 3 fonts) through Qt
+resources: cobalt/section backgrounds, gold selection plates, hard shadows and the kit's
+0.25 shear. `launcher/qt/` contains the application and its core tests. No game artwork is
+embedded. The old C# files remain as a reference for deferred online features; the default
+build scripts compile Qt.
 
-- First run: explains that no game data is included, then asks for the `.iso`.
-- Every picked file is probed: disc magic, game ID `GALE01`, revision 2, then the file table.
-  Detected: `Melee 1.02 (vanilla)` (1212 FST entries), `ACE (m-ex mod)` (`MxDt.dat` + ACE-only
-  files such as `AltSlippiCSS.dat`), `Akaneia (m-ex mod)`, `Training Mode (TM-CE)` (game ID
-  `GTME01`) and `20XX` (title) - both allowed with "boots, but its special features aren't
-  supported yet" - other m-ex or 1.02 mods (allowed with a warning), and refusals with the reason
-  (PAL/NTSC-J, 1.00/1.01, not Melee, not GameCube, Wii, RVZ/WIA/CISO with the Dolphin hint).
-- Several discs ("modpacks"): Add disc / Change ISO (keeps the disc's saves) / Rename / Make
-  default / Forget. Double-click or PLAY boots the selected one.
-- One memory card per disc: `MELEE_CARD_PATH = userdata\saves\<disc id>`.
-- Options: unlock everything (`MELEE_UNLOCK_ALL=1`, default on: every character, stage and
-  unlockable rule reports unlocked in `gmmain_lib.c` without writing the save; always on in
-  netplay), skip intro (`MELEE_SKIP_INTRO`), close on play. No input options: controllers play
-  and the keyboard is hotkeys only (old `keyboard_only` / `keyboard_port` lines are ignored).
-- Online tab: edits `netplay_server.txt` beside the game (what `gw_netplay.c` reads).
-- Mods tab (`launcher/ModsBrowser.cs`): installed mods from `mods/*/mod.json` + `enabled.txt`
-  (tick = enabled for the next boot, Remove), and a browser for the sources in `mods/sources.txt`
-  (Refresh, Install/Update with requirements, conflicts disabled). HTTPS only, sha256 + size
-  checked before opening, zips unpacked entry by entry with path/symlink/size checks into a
-  staging folder. Nothing downloaded is executed. Author docs: `docs/mods-browser.md`; schema and
-  `make_index.py` in `tools/mods_browser/`. Mods are always loaded (`MELEE_MODS_DIR = mods\`),
-  online too - there is deliberately no "mods off for online" switch.
-- Also on the Mods tab: "Console socket for tools" (`MELEE_CONSOLE_PORT=51700`, 127.0.0.1) and
-  "Open scripts folder". On the Play tab: game volume (`MELEE_VOLUME`, default 50).
-- Diagnostics tab: every log switch a player may be asked to turn on, grouped, with tooltips -
-  the game's log categories (`MELEE_LOG`, melee `pc/platform/gw_log.c`: watchdog, mex, heap, dvd,
-  tex, frontend, audio, snap, the render DIAG block once-per-scene/every/none, scene, everything),
-  controllers (`MELEE_PAD_DIAG` 0/1/2, `MELEE_PAD_RELEASE_ON_BLUR`), deeper traces
-  (`MELEE_RB_LOG`, `MELEE_GR_TRACE`, `MELEE_MEX_TRACE_CALLS`, `MELEE_CARD_DIAG`, `MELEE_PROFILE`,
-  `MELEE_SHOW_FPS`, `MELEE_AURORA_VERBOSE`, `MELEE_PC_TRACE_OSREPORT`), crash-report uploading
-  (below), and Open log folder / Open game log / Open or Copy latest crash report / Reset to defaults.
-  Anything left at "Game default" is not passed, so the game's own default (and settings.cfg)
-  applies.
-- About tab: version (first line of `version.txt`), folders, log, licences, source link.
-- Crashes: the game writes `crashlogs\crash-<time>.log` (compact, at most 64 KB, user paths already
-  `%USERPROFILE%`) and `crash-<time>-full.log` (the whole log). The launcher calls it a crash only
-  when a NEW compact report appears during the session and is not marked `during shutdown: yes`;
-  closing the window (exit 0, no report) never is one, nor is a fault while tearing down after the
-  window was closed. It then says where the report is - it never asks to send it.
-- Uploading is opt-in and manual: the Diagnostics tab's "Allow uploading crash reports" (off by
-  default, `crash_upload=` in launcher.cfg) with the consent text (what, where, why) enables the
-  "Upload last 3 crash logs" button. Only that click sends anything: the three newest compact
-  reports (never a -full log, never a shutdown fault) are POSTed to
-  `http://<netplay_server.txt>/crash`, each marked with a `.sent` file, and the result is shown.
-  There is no automatic upload and no prompt. The receiving end is `crash_upload_server.py`
-  (below); it is NOT deployed.
-- A non-zero exit without a report offers the log, except when the log shows the window was
-  closed first: shutdown failures can occur after a window close; that filter is not evidence that the
-  current game still has a particular shutdown fault.
-- Settings live in `userdata\launcher.cfg` next to the launcher (portable); if that folder is
-  read-only (Program Files) they go to `%LOCALAPPDATA%\GDMelee`, and the game then runs with its
-  log and shader cache there too.
-- Paths with non-ASCII characters are passed as 8.3 short names (the game takes ANSI paths).
-- Languages: English and Spanish (the launcher only; the game stays English). `launcher/Lang.cs`
-  holds the table - the key is the English text, every visible string goes through `L.T` / `L.F`
-  (format) / `L.N` (marks a key shown later). `language=auto|en|es` in launcher.cfg (auto = Spanish
-  when the Windows display language is Spanish), set from the About tab's Language box, applied at
-  the next launcher start; `--lang en|es` overrides it for one run. After adding or changing a
-  string run `python tools/release/launcher/check_strings.py` (missing Spanish entries, placeholder
-  mismatches, duplicate keys).
+The current scope is **offline Windows parity**:
 
-Command line: `--play [disc name]` boots without the window (for shortcuts), `--add-iso <path>`,
-`--forget-all`, `--shots <dir>` renders each tab to a PNG and exits (for docs), `--mods` opens on
-the Mods tab and reads the sources, `--install-mod <id>...`, `--list-mods`, `--enable-mod <id>`,
-`--disable-mod <id>` (results in `userdata/mods.log`, exit code 1 on a failure),
-`--upload-crashes` does what the "Upload last 3 crash logs" button does, only with the opt-in on
-(result appended to `userdata\crash-upload.txt`, exit code 1 when nothing was sent).
+- Probe vanilla NTSC-U 1.02, Akaneia and ACE discs; reject unsupported or damaged images.
+- Add, rename, change ISO, select a default or forget discs. Stable IDs preserve each disc's
+  memory card directory even after a rename or ISO change.
+- List local mods, enable/disable with dependency/conflict checks, open mod/script folders,
+  and remove mods into a recoverable `.removed` folder.
+- Unlock everything, skip intro, volume, close launcher on play; controller and engine
+  diagnostic switches; local log/crash inspection.
+- English/Spanish controls. Low-level file/probe errors currently remain English.
+- Launch via `QProcess` with separate arguments and isolated working directories. Closing
+  the launcher while playing hides it; it remains alive until the game exits, preserving
+  process monitoring without terminating the game.
+
+Online matchmaking, remote mod downloads, console sockets and crash uploading are not in
+this Qt migration. The underlying game networking code has not been removed.
+
+Settings migrate from `launcher.cfg` to an atomic `launcher.json` on first save; the old
+file is retained. IDs and unknown settings are retained. Windows prefers writable portable
+`userdata/`, falling back to `%LOCALAPPDATA%/GDMelee`. Linux uses existing writable portable
+`userdata/` or `$XDG_DATA_HOME/melee-linux` (default `~/.local/share/melee-linux`).
+`--data-dir` overrides this. Saves live at `saves/<disc-id>`, logs at `runs/<session>`.
+If existing `mods/` or `scripts/` folders are beside the game, they remain the selected
+content folders; otherwise the launcher's user data folders are used.
+
+### Build and test
+
+Linux: install a native 64-bit Qt SDK with Widgets, Test and WaylandClient, plus Wayland/EGL
+development packages, CMake and a C++17 compiler:
+
+```sh
+bash tools/release/build_launcher.sh _build/launcher-package
+```
+
+Windows: install Visual Studio 2022 C++ tools, CMake and an MSVC x64 Qt SDK, then:
+
+```powershell
+$env:QT_ROOT_DIR = 'C:\Qt\6.8.3\msvc2022_64'
+.\tools\release\build_launcher.ps1 -Out '.\_build\release\GD Melee.exe'
+```
+
+Compilation supports Qt >=6.2; deployment needs >=6.5 (6.8.3 is pinned in CI).
+For system-Qt development only, pass `GW_LAUNCHER_DEPLOY=OFF` to the Linux script.
+Both scripts run the core tests before installing. Qt libraries/plugins are placed under
+`launcher/`, isolated from the 32-bit game's runtime. Windows `GD Melee.exe` is a small
+static-runtime entry point into `launcher/bin/gd-melee-launcher.exe`; Linux's `GD-Melee`
+entry script opens that same layout. Copy the whole installed folder, not just the executable.
+
+`.github/workflows/launcher-qt.yml` builds/tests on GitHub-hosted Windows and Linux, with
+no discs or private runner needed. Screenshots and build artifacts are workflow artifacts;
+the workflow does not tag, create or publish a GitHub Release. Real game/disc validation
+is separate; see `docs/LINUX_CONTINUOUS_CHECKS.md`.
+
+Useful command lines:
+
+```sh
+gd-melee-launcher --app-dir /path/to/game --data-dir /path/to/profile
+gd-melee-launcher --probe /path/to/disc.iso
+gd-melee-launcher --add-iso /path/to/disc.iso --play
+gd-melee-launcher --play 'My ACE'
+gd-melee-launcher --list-mods
+gd-melee-launcher --enable-mod my-mod
+gd-melee-launcher --disable-mod my-mod
+gd-melee-launcher --lang es --shots /path/to/screenshots
+```
+
+For headless tests, set `QT_QPA_PLATFORM=offscreen` and `QT_QPA_PLATFORMTHEME=none`.
+`--play --test-game` runs the actual game engine suite and propagates its exit code.
+Qt runtime deployment follows https://doc.qt.io/qt-6/cmake-deployment.html.
 
 ## Crash reports server (not deployed)
 

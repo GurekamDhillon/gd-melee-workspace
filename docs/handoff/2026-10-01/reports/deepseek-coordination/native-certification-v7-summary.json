@@ -1,0 +1,170 @@
+{
+  "any_certified": false,
+  "build": {
+    "app_dir": "/home/gd/melee_linux_test/gdm/_build/agents/roguelite-certification",
+    "backend": "unknown",
+    "exe": "_build/agents/roguelite-certification/melee",
+    "exe_sha256": "ae2ac548b5ca714a5df027da6ad75088299b5380732ea96d02a43b4b2a1914d7",
+    "game_revision": "e47bbe7858c94f18cacb8cfdba6309755571a33c",
+    "game_root": "/home/gd/melee_linux_test/gdm/melee/worktrees/linux"
+  },
+  "camera": "wide",
+  "captures": "_build/deepseek-coordination/native-previews-clean",
+  "clean_preview": true,
+  "errors": [],
+  "failed": false,
+  "log": "_build/deepseek-coordination/native-certification-v7.jsonl",
+  "previews": [
+    "/home/gd/melee_linux_test/gdm/_build/deepseek-coordination/native-previews-clean/branch_y_falco_preview.png"
+  ],
+  "recipes": {
+    "branch_y": {
+      "certified_after": false,
+      "certified_before": false,
+      "profiles": {
+        "falco": {
+          "outcomes": [
+            {
+              "checks": {
+                "airborne_frames": 17,
+                "arrived": true,
+                "climb_back": false,
+                "descended": true,
+                "expected_fall": false,
+                "fell": false,
+                "manual_review": [],
+                "max_y": 27.503,
+                "min_y": 3.65,
+                "sampled": 140,
+                "seam_pop_candidate": false,
+                "stuck": false,
+                "truncated": false,
+                "unexpected_fall": false
+              },
+              "id": "ascent",
+              "manual_review": [],
+              "segment": "ascent",
+              "status": "arrived"
+            },
+            {
+              "checks": {
+                "airborne_frames": 11,
+                "arrived": true,
+                "climb_back": false,
+                "descended": true,
+                "expected_fall": false,
+                "fell": false,
+                "manual_review": [
+                  "grounded->airborne with non-positive vy: inspect for a seam pop"
+                ],
+                "max_y": 26.0,
+                "min_y": 4.9,
+                "sampled": 140,
+                "seam_pop_candidate": true,
+                "stuck": false,
+                "truncated": false,
+                "unexpected_fall": false
+              },
+              "id": "return",
+              "manual_review": [
+                "grounded->airborne with non-positive vy: inspect for a seam pop"
+              ],
+              "segment": "return",
+              "status": "arrived"
+            },
+            {
+              "checks": {
+                "airborne_frames": 59,
+                "arrived": false,
+                "climb_back": false,
+                "descended": true,
+                "expected_fall": false,
+                "fell": true,
+                "manual_review": [
+                  "grounded->airborne with non-positive vy: inspect for a seam pop",
+                  "fighter fell below the lane floor on a non-drop segment"
+                ],
+                "max_y": 27.61,
+                "min_y": -74.37,
+                "sampled": 160,
+                "seam_pop_candidate": true,
+                "stuck": false,
+                "truncated": false,
+                "unexpected_fall": true
+              },
+              "id": "fork_branch_a",
+              "manual_review": [
+                "grounded->airborne with non-positive vy: inspect for a seam pop",
+                "fighter fell below the lane floor on a non-drop segment"
+              ],
+              "segment": "fork_branch_a",
+              "status": "unexpected-fall"
+            },
+            {
+              "checks": {
+                "airborne_frames": 17,
+                "arrived": true,
+                "climb_back": false,
+                "descended": true,
+                "expected_fall": false,
+                "fell": false,
+                "manual_review": [],
+                "max_y": 27.711,
+                "min_y": 5.15,
+                "sampled": 140,
+                "seam_pop_candidate": false,
+                "stuck": false,
+                "truncated": false,
+                "unexpected_fall": false
+              },
+              "id": "fork_branch_b",
+              "manual_review": [],
+              "segment": "fork_branch_b",
+              "status": "arrived"
+            }
+          ],
+          "verdict": {
+            "auto_certification": "forbidden",
+            "certified": false,
+            "failed_segments": [
+              "fork_branch_a"
+            ],
+            "inconclusive_segments": [],
+            "native_run_performed": true,
+            "note": "A human/coordinator must review captures and observations. A successful trace is not certification.",
+            "passed_segments": [
+              "ascent",
+              "return",
+              "fork_branch_b"
+            ],
+            "recipe": "branch_y",
+            "recipe_version": 2.0,
+            "requires_human_review": true,
+            "schema": "certify-rooms/1",
+            "segments_total": 4,
+            "segments_with_observation": 3,
+            "unclassified_segments": [],
+            "verdict": "manual-review-required"
+          }
+        }
+      },
+      "recipe_version": 2.0,
+      "verdict": {
+        "auto_certification": "forbidden",
+        "certified": false,
+        "failed": [
+          "fork_branch_a"
+        ],
+        "inconclusive": [],
+        "note": "No recipe may be marked certified from this harness output.",
+        "profiles": 1,
+        "recipe": "branch_y",
+        "recipe_version": 2.0,
+        "requires_human_review": true,
+        "schema": "certify-rooms/1",
+        "verdict": "manual-review-required"
+      }
+    }
+  },
+  "schema": "certify-rooms/1"
+}

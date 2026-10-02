@@ -1,0 +1,26 @@
+{
+  "binary_sha256": "fb3a8816e70131d96d56241726c3718292aec425b268f09d78f82aa1e417ed6c",
+  "native_build_log": "_build/deepseek-coordination/native-stage-seam-build.log",
+  "native_actual_source_sanitized": "pc/tests/stage_seam_test.py --sanitize passed",
+  "native_tests": {
+    "passed": 214,
+    "failed": 0,
+    "log": "_build/deepseek-coordination/native-stage-seam-full.log"
+  },
+  "roguelite_tests": {
+    "passed": 202,
+    "failed": 0,
+    "log": "_build/deepseek-coordination/post-seam-enemy-pure-tests.log"
+  },
+  "game_helper_commits": [
+    "936fe7bae",
+    "83f9d8f92"
+  ],
+  "wrapper_tests_commit": "d39ae58",
+  "native_patch": "_build/sol-coordination/stage-seams-seed-relative.patch",
+  "native_source_committed": false,
+  "isolated_profile_updated": "_build/agents/roguelite-certification",
+  "human_seam_acceptance": false,
+  "recipe_certification": false,
+  "new_model_lane_untouched": true
+}

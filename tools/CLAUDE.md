@@ -34,7 +34,8 @@ the rules that cross them.
   before.
 - **The release guard is `check_release.ps1`**: nothing disc-derived ships. `publish.ps1` also
   refuses an exe older than the melee commit, or a commit not on the public remotes.
-- The launcher UI is in `GDMeleeLauncher.cs`; strings are keyed by their English text, so edit `GDMeleeLauncher.cs`
-  and `Lang.cs` together and run `release/launcher/check_strings.py`.
-- PowerShell scripts are Windows-only; the Python and bash ones run anywhere, but anything that
-  starts the game needs Windows and a disc.
+- The portable launcher is in `release/launcher/qt/`; keep English/Spanish labels together.
+  It reads the original menu kit as Qt resources. Build scripts run its CTest suite.
+  The old C# UI/string table remains a reference for deferred online features.
+- PowerShell build scripts target Windows. `port/ci_linux.sh` and `check_linux.ps1` cover Linux
+  and Windows/WSL checks; actual engine validation needs local discs.

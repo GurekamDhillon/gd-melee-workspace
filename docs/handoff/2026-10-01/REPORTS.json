@@ -1,0 +1,558 @@
+[
+  {
+    "source": "_build/coordination/100-100/ROOT-REVIEW-2026-10-01.md",
+    "github_path": "docs/handoff/2026-10-01/reports/coordination/100-100/ROOT-REVIEW-2026-10-01.md"
+  },
+  {
+    "source": "_build/coordination/100-100/ROOT-REVIEW-R2-2026-10-01.md",
+    "github_path": "docs/handoff/2026-10-01/reports/coordination/100-100/ROOT-REVIEW-R2-2026-10-01.md"
+  },
+  {
+    "source": "_build/coordination/100-100/ROOT-REVIEW-R6-2026-10-01.md",
+    "github_path": "docs/handoff/2026-10-01/reports/coordination/100-100/ROOT-REVIEW-R6-2026-10-01.md"
+  },
+  {
+    "source": "_build/coordination/100-100/ROOT-REVIEW-NEW-WORK-2026-10-01.md",
+    "github_path": "docs/handoff/2026-10-01/reports/coordination/100-100/ROOT-REVIEW-NEW-WORK-2026-10-01.md"
+  },
+  {
+    "source": "_build/coordination/100-100/reports/A1-native-inventory.md",
+    "github_path": "docs/handoff/2026-10-01/reports/coordination/100-100/reports/A1-native-inventory.md"
+  },
+  {
+    "source": "_build/coordination/100-100/reports/A2-asset-pipeline.md",
+    "github_path": "docs/handoff/2026-10-01/reports/coordination/100-100/reports/A2-asset-pipeline.md"
+  },
+  {
+    "source": "_build/coordination/100-100/reports/B1-native-hit.md",
+    "github_path": "docs/handoff/2026-10-01/reports/coordination/100-100/reports/B1-native-hit.md"
+  },
+  {
+    "source": "_build/coordination/100-100/reports/B2-encounters-ai.md",
+    "github_path": "docs/handoff/2026-10-01/reports/coordination/100-100/reports/B2-encounters-ai.md"
+  },
+  {
+    "source": "_build/coordination/100-100/reports/B3-inventory-economy.md",
+    "github_path": "docs/handoff/2026-10-01/reports/coordination/100-100/reports/B3-inventory-economy.md"
+  },
+  {
+    "source": "_build/coordination/100-100/reports/B4-ui.md",
+    "github_path": "docs/handoff/2026-10-01/reports/coordination/100-100/reports/B4-ui.md"
+  },
+  {
+    "source": "_build/coordination/100-100/reports/B5-region-genetics.md",
+    "github_path": "docs/handoff/2026-10-01/reports/coordination/100-100/reports/B5-region-genetics.md"
+  },
+  {
+    "source": "_build/coordination/100-100/reports/B6-world-audio.md",
+    "github_path": "docs/handoff/2026-10-01/reports/coordination/100-100/reports/B6-world-audio.md"
+  },
+  {
+    "source": "_build/coordination/100-100/reports/B7-platform.md",
+    "github_path": "docs/handoff/2026-10-01/reports/coordination/100-100/reports/B7-platform.md"
+  },
+  {
+    "source": "_build/sol-coordination/stage-seams-seed-relative.patch",
+    "github_path": "docs/handoff/2026-10-01/reports/sol-coordination/stage-seams-seed-relative.patch"
+  },
+  {
+    "source": "_build/sol-coordination/stage-seams-report.json",
+    "github_path": "docs/handoff/2026-10-01/reports/sol-coordination/stage-seams-report.json"
+  },
+  {
+    "source": "_build/sol-coordination/stage-seams-report.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/sol-coordination/stage-seams-report.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/atomic-review-prompt.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/atomic-review-prompt.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/atomic-review-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/atomic-review-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/progress-persistence-prompt.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/progress-persistence-prompt.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/native-path-owned.patch",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/native-path-owned.patch"
+  },
+  {
+    "source": "_build/deepseek-coordination/physical-prompt.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/physical-prompt.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/encounters-prompt.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/encounters-prompt.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/certification-prompt.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/certification-prompt.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/persistence-review-followup.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/persistence-review-followup.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/rewards-prompt.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/rewards-prompt.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/persistence-followup-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/persistence-followup-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/physical-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/physical-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/encounters-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/encounters-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/physical-review-followup.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/physical-review-followup.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/encounters-review-followup.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/encounters-review-followup.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/certification-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/certification-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/rewards-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/rewards-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/certification-recipes.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/certification-recipes.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/rewards-review-followup.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/rewards-review-followup.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/certification-install.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/certification-install.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/physical-followup-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/physical-followup-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/encounters-followup-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/encounters-followup-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/native-certification-summary.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/native-certification-summary.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/native-certification-v2-summary.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/native-certification-v2-summary.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/integration-prompt.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/integration-prompt.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/certification-install-v2.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/certification-install-v2.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/native-certification-v3-summary.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/native-certification-v3-summary.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/certification-install-v3.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/certification-install-v3.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/certification-install-v4.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/certification-install-v4.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/native-certification-v5-summary.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/native-certification-v5-summary.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-prompt.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-prompt.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/layouts-prompt.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/layouts-prompt.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/enemy-behaviors-prompt.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/enemy-behaviors-prompt.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/menu-polish-prompt.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/menu-polish-prompt.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/inventory-prompt.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/inventory-prompt.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/certification-install-v5.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/certification-install-v5.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/native-certification-v6-summary.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/native-certification-v6-summary.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/certification-review-followup.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/certification-review-followup.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/integration-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/integration-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/integration-review-followup.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/integration-review-followup.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/integration-review-addendum.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/integration-review-addendum.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/enemy-behaviors-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/enemy-behaviors-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/menu-polish-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/menu-polish-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/inventory-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/inventory-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/inventory-review-followup.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/inventory-review-followup.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/certification-followup-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/certification-followup-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/layouts-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/layouts-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/certification-final-install.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/certification-final-install.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/menu-review-followup.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/menu-review-followup.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/native-certification-v7-summary.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/native-certification-v7-summary.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-review-followup.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-review-followup.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/integration-followup-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/integration-followup-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/inventory-followup-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/inventory-followup-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/menu-followup-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/menu-followup-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/layouts-review-followup.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/layouts-review-followup.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/enemy-review-followup.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/enemy-review-followup.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/integration-review-followup-2.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/integration-review-followup-2.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/inventory-review-followup-2.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/inventory-review-followup-2.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/native-merge-v1-summary.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/native-merge-v1-summary.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-review-followup-2.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-review-followup-2.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/menu-review-followup-2.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/menu-review-followup-2.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-review-addendum-2.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-review-addendum-2.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/integration-followup-2-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/integration-followup-2-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/layouts-followup-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/layouts-followup-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/inventory-followup-2-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/inventory-followup-2-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/native-merge-v2-summary.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/native-merge-v2-summary.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/enemy-followup-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/enemy-followup-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-followup-2-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-followup-2-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/menu-followup-2-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/menu-followup-2-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/integration-review-followup-3.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/integration-review-followup-3.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/native-ground-fork-v1-summary.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/native-ground-fork-v1-summary.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-followup-3-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-followup-3-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/integration-review-3.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/integration-review-3.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/watched-test-session.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/watched-test-session.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/watched-branch-trace.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/watched-branch-trace.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/enemy-review-followup-2.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/enemy-review-followup-2.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/stage-seams-research.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/stage-seams-research.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/integration-followup-3-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/integration-followup-3-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/integration-review-followup-4.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/integration-review-followup-4.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-review-followup-4.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-review-followup-4.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/enemy-followup-2-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/enemy-followup-2-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/integration-review-followup-5.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/integration-review-followup-5.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-followup-4-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-followup-4-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/enemy-review-followup-3.txt",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/enemy-review-followup-3.txt"
+  },
+  {
+    "source": "_build/deepseek-coordination/integration-followup-5-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/integration-followup-5-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-followup-5.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-followup-5.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-followup-5-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-followup-5-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/enemy-followup-4.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/enemy-followup-4.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/enemy-independent-review-3.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/enemy-independent-review-3.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/enemy-followup-4-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/enemy-followup-4-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-followup-6.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-followup-6.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-followup-6-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-followup-6-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/stage-seam-landed-evidence.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/stage-seam-landed-evidence.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/native-seam-live-build.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/native-seam-live-build.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-followup-7.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-followup-7.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-followup-7-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-followup-7-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-world-task.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-world-task.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-followup-8.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-followup-8.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-actions-followup-8-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-actions-followup-8-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-world-report.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-world-report.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/native-owner-live-probe.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/native-owner-live-probe.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/model-handoff-review.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/model-handoff-review.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-world-review-1.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-world-review-1.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/handoff-acceptance-fixes.patch",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/handoff-acceptance-fixes.patch"
+  },
+  {
+    "source": "_build/deepseek-coordination/handoff-acceptance-fixes-manifest.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/handoff-acceptance-fixes-manifest.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/native-hit-refusal-audit.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/native-hit-refusal-audit.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-world-followup-2.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-world-followup-2.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-world-report-2.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-world-report-2.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/handoff-native-evidence.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/handoff-native-evidence.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-world-followup-3.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-world-followup-3.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-world-review-2.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-world-review-2.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/watched-seam-retest-setup.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/watched-seam-retest-setup.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-world-report-3.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-world-report-3.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/branch_remaining-summary.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/branch_remaining-summary.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/merge_drop-summary.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/merge_drop-summary.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/watched-jigglypuff-setup.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/watched-jigglypuff-setup.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/gene-world-review-3.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/gene-world-review-3.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/ascent_spawn_corrected-summary.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/ascent_spawn_corrected-summary.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/enemy-root-before-pass4/landed-sourcehashes.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/enemy-root-before-pass4/landed-sourcehashes.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/root-before-model-handoff/candidate-sourcehashes.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/root-before-model-handoff/candidate-sourcehashes.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/root-before-gene-pass8/landed-sourcehashes.json",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/root-before-gene-pass8/landed-sourcehashes.json"
+  },
+  {
+    "source": "_build/deepseek-coordination/root-before-gene-pass8/docs/GENE-ACTION-CONTRACT.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/root-before-gene-pass8/docs/GENE-ACTION-CONTRACT.md"
+  },
+  {
+    "source": "_build/deepseek-coordination/enemy-root-before-pass4/docs/ENEMY-BEHAVIOR-CONTRACT.md",
+    "github_path": "docs/handoff/2026-10-01/reports/deepseek-coordination/enemy-root-before-pass4/docs/ENEMY-BEHAVIOR-CONTRACT.md"
+  }
+]

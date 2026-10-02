@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+"""Package a verified Linux build; reject a nonportable glibc dependency unless --local is explicit."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import tarfile
+import tempfile
+root=Path(__file__).resolve().parents[2]
+ap=argparse.ArgumentParser(description=__doc__)
+ap.add_argument('--build',type=Path,default=root/'_build/agents/linux')
+ap.add_argument('--output',type=Path,default=root/'_build/linux/packages')
+ap.add_argument('--local',action='store_true')
+ap.add_argument('--launcher',type=Path,help='Deployed Qt prefix containing bin/gd-melee-launcher and its runtime')
+ap.add_argument('--runtime-lib-dir',type=Path,action='append',default=[],help='Additional directory for 32-bit SDL Wayland runtime libraries')
+a=ap.parse_args(); build=a.build.resolve(); a.output.mkdir(parents=True,exist_ok=True)
+readelf=os.environ.get('GW_READELF') or shutil.which('llvm-readelf-22') or 'readelf'
+exe=build/'melee'
+subprocess.run(['python3',str(root/'tools/mex_port/audit_bridge_abi.py'),'--map',str(build/'melee-pc.msvc.map'),'--exe',str(exe),'--bridge',str(build/'bridge/gw_mex_bridge.c')],check=True)
+versions=subprocess.check_output([readelf,'--version-info',str(exe)],text=True)
+required=max((tuple(map(int,v.split('.'))) for v in re.findall(r'GLIBC_([0-9.]+)',versions)),default=(0,))
+if required>(2,35) and not a.local: raise SystemExit(f'GLIBC {required} exceeds portable baseline 2.35; rebuild on Ubuntu 22.04')
+name='melee-linux-i686'+('-local' if a.local else '')
+with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
+    temp=Path(temp); dest=temp/name; debug=temp/(name+'-debug')
+    for d in (dest/'bin',dest/'lib',dest/'assets',dest/'licenses',dest/'udev',debug):d.mkdir(parents=True,exist_ok=True)
+    shutil.copy2(exe,dest/'bin/melee')
+    subprocess.run(['objcopy','--only-keep-debug',str(exe),str(debug/'melee.debug')],check=True)
+    subprocess.run(['strip','--strip-debug',str(dest/'bin/melee')],check=True)
+    subprocess.run(['objcopy','--add-gnu-debuglink='+str(debug/'melee.debug'),str(dest/'bin/melee')],check=True)
+    shutil.copy2(build/'melee-pc.msvc.map',dest/'bin/melee-pc.msvc.map')
+    shutil.copytree(build/'assets/fonts',dest/'assets/fonts')
+    shutil.copytree(build/'ui',dest/'assets/ui')
+    for f in ('launch-melee','README.txt','GD-Melee'):shutil.copy2(root/'tools/port/release'/f,dest/f)
+    (dest/'launch-melee').chmod(0o755)
+    (dest/'GD-Melee').chmod(0o755)
+    launcher=a.launcher or root/'_build/launcher-package/launcher'
+    if not (launcher/'bin/gd-melee-launcher').is_file():raise SystemExit('Build/deploy the Qt launcher first with tools/release/build_launcher.sh _build/launcher-package')
+    shutil.copytree(launcher,dest/'launcher',symlinks=True)
+    shutil.copytree(root/'tools/port/udev',dest/'udev',dirs_exist_ok=True)
+    shutil.copytree(root/'tools/release/licenses',dest/'licenses',dirs_exist_ok=True)
+    shutil.copy2(root/'tools/release/THIRD-PARTY-NOTICES.txt',dest/'licenses/')
+    shutil.copy2(root/'_build/linux/libusb-src/COPYING',dest/'licenses/libusb-LGPL-2.1.txt')
+    shutil.copy2(root/'docs/LINUX_PORT_STATUS.md',dest/'IMPLEMENTATION_STATUS.md')
+    # ldd lists the transitive dependencies of this trusted, locally built executable.
+    excluded=re.compile(r'^(lib(c|m|dl|rt|pthread|resolv|util)\.so|ld-linux)')
+    def copy_dependencies(binary):
+        libs=subprocess.check_output(['ldd',str(binary)],text=True)
+        if 'not found' in libs:raise SystemExit('Missing dependencies:\n'+libs)
+        for line in libs.splitlines():
+            match=re.search(r'(\S+) => (/\S+)',line)
+            if match:
+                soname=Path(match[1]).name
+                if not excluded.match(soname):shutil.copy2(match[2],dest/'lib'/soname)
+    copy_dependencies(exe)
+    # SDL loads these with dlopen, so the executable's ldd output cannot find
+    # them. Keep the i686 Wayland stack separate from the launcher's x64 Qt libs.
+    runtime_dirs=a.runtime_lib_dir+[build/'lib',Path('/usr/lib32'),Path('/usr/lib/i386-linux-gnu'),Path('/lib/i386-linux-gnu')]
+    for soname in ('libwayland-client.so.0','libwayland-cursor.so.0','libwayland-egl.so.1','libxkbcommon.so.0'):
+        candidates=[directory/soname for directory in runtime_dirs if (directory/soname).is_file()]
+        library=None
+        for candidate in candidates:
+            with candidate.open('rb') as f:magic=f.read(5)
+            if magic==b'\x7fELF\x01':
+                library=candidate
+                break
+        if library is None:raise SystemExit(f'Missing 32-bit Wayland runtime {soname}; provision it or use --runtime-lib-dir')
+        shutil.copy2(library,dest/'lib'/soname)
+        copy_dependencies(library)
+    # Enforce the baseline for every ELF, including the 64-bit Qt launcher and
+    # both sets of bundled libraries. Checking the game alone misses newer Qt/glibc.
+    elf_requirements={}
+    for p in dest.rglob('*'):
+        if not p.is_file() or p.is_symlink():continue
+        with p.open('rb') as f:magic=f.read(4)
+        if magic!=b'\x7fELF':continue
+        versions=subprocess.check_output([readelf,'--version-info',str(p)],text=True)
+        version=max((tuple(map(int,v.split('.'))) for v in re.findall(r'GLIBC_([0-9.]+)',versions)),default=(0,))
+        elf_requirements[str(p.relative_to(dest))]='.'.join(map(str,version))
+        required=max(required,version)
+        if version>(2,35) and not a.local:raise SystemExit(f'{p.relative_to(dest)} requires GLIBC {version}, beyond 2.35')
+    def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+    runtime=[p for p in dest.rglob('*') if p.is_file()]
+    (dest/'runtime.sha256').write_text(''.join(f'{sha(p)}  {p.relative_to(dest)}\n' for p in runtime))
+    manifest={'architecture':'i686','glibc_required':'.'.join(map(str,required)),'portable_baseline_verified':False,
+              'local_development_build':a.local,'source_executable_sha256':sha(exe),
+              'elf_glibc_requirements':elf_requirements,
+              'elf_build_id':re.search(r'Build ID: (\w+)',subprocess.check_output([readelf,'-n',str(exe)],text=True))[1],
+              'files':{str(p.relative_to(dest)):sha(p) for p in dest.rglob('*') if p.is_file()}}
+    (dest/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+    shutil.copy2(dest/'manifest.json',debug/'manifest.json')
+    for folder in (dest,debug):
+        output=a.output/(folder.name+'.tar.xz')
+        pending=output.with_suffix(output.suffix+'.pending')
+        with tarfile.open(pending,'w:xz') as tar:tar.add(folder,arcname=folder.name)
+        pending.replace(output);print(output,flush=True)

@@ -37,7 +37,7 @@ PUSHES = (0x55, 0x53, 0x57, 0x56)  # push ebp / ebx / edi / esi
 
 def load_map(MAP):
     va2sym = {}
-    pat = re.compile(r"\s*[0-9a-f]{4}:[0-9a-f]{8}\s+(\S+)\s+([0-9a-f]{8})\s+f\s")
+    pat = re.compile(r"\s*[0-9a-f]{4}:[0-9a-f]{8}\s+(\S+)\s+([0-9a-f]{8})\s+f\s", re.IGNORECASE)
     for line in open(MAP, encoding="utf-8", errors="replace"):
         m = pat.match(line)
         if m:
@@ -79,6 +79,36 @@ def pe_reader(path):
     return sl
 
 
+def elf_reader(path):
+    """Read bytes at a virtual address in a 32-bit ELF - the Linux port's counterpart of pe_reader().
+
+    It works in VAs, not file offsets, because the addresses this audit is handed (from the map and
+    from the bridge table) are the ones the linker assigned. The port links -no-pie, so those are
+    absolute. 64-bit ELFs are rejected rather than half-read: this port is 32-bit on every platform.
+    """
+    data = open(path, "rb").read()
+    if data[:4] != b"\x7fELF" or data[4] != 1:
+        raise SystemExit(f"{path}: not a 32-bit ELF executable")
+    phoff = struct.unpack_from("<I", data, 0x1C)[0]
+    phentsize = struct.unpack_from("<H", data, 0x2A)[0]
+    phnum = struct.unpack_from("<H", data, 0x2C)[0]
+    segs = []
+    for i in range(phnum):
+        e = phoff + i * phentsize
+        p_type, p_offset, p_vaddr, _p_paddr, p_filesz = struct.unpack_from("<IIIII", data, e)
+        if p_type == 1:  # PT_LOAD
+            segs.append((p_vaddr, p_filesz, p_offset))
+
+    def sl(va, n=16):
+        for vaddr, filesz, offset in segs:
+            if vaddr <= va < vaddr + filesz:
+                o = offset + (va - vaddr)
+                return data[o:o + n]
+        return b""
+
+    return sl
+
+
 def reads_argreg(b):
     """The argument register this prologue reads before writing, or None.
 
@@ -114,7 +144,11 @@ def main():
                                                       "the ones that read ECX")
     a = ap.parse_args()
     va2sym = load_map(a.map)
-    sl = pe_reader(a.exe)
+    with open(a.exe, "rb") as f:
+        magic = f.read(4)
+    # PE for the Windows port, ELF for the Linux one; the audit is about machine code either way,
+    # and both readers work in the VAs the map and the bridge table use.
+    sl = elf_reader(a.exe) if magic == b"\x7fELF" else pe_reader(a.exe)
     funcs = [(g, n) for g, n, kind in load_bridge(a.bridge) if kind == 1]
     resolved = [(g, n, va2sym[n]) for g, n in funcs if n in va2sym]
     bare = [(g, n, s) for g, n, s in resolved if not s.startswith("_gw_")]
@@ -124,6 +158,11 @@ def main():
     print(f"  resolved against the live map  : {len(resolved)}")
     print(f"  symbol is NOT _gw_-prefixed    : {len(bare)}  (static in its TU)")
     print(f"  ... reads ECX/EDX in prologue  : {len(risky)}  <-- called wrong by the bridge")
+    missing = [(g, n) for g, n in funcs if n not in va2sym or not sl(n, 1)]
+    if not funcs or missing:
+        print(f"ERROR: {len(missing)} bridge functions lack a mapped executable target")
+        for g, n in missing[:20]: print(f"  guest {g:08X} -> native {n:08X}")
+        return 1
     if not risky and not a.all:
         return 0
     print()

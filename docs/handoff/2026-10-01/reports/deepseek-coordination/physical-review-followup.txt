@@ -1,0 +1,31 @@
+Root review follow-up in your isolated physical worktree; same two owned files.
+No commits or main/prepare edits. Fix integration-critical lifecycle gaps:
+
+1. Add explicit cleanup/release and scene-reset APIs covering active, in-flight
+   destination and pending source, retaining refused collision/model handles
+   until actually released. reset is only after real native scene teardown;
+   it must not silently lose live handles. Test active room exit, interruption
+   while loading/building/placed, refused removals then retry, no duplicate frees.
+2. Transactional place must capture original fighter positions through verified
+   gd.player before moving any fighter. Partial placement failure and rollback
+   after failed SAVE must restore every moved fighter, retaining retry ownership
+   if restore fails. Explicit false is failure if an injected API returns it;
+   real gd.teleport succeeds with no return and throws on error. Test second
+   fighter failure after first moved, and save-refusal rollback after all moved.
+3. begin must reject a foreign/inactive source token and exits/destinations not
+   belonging to canonical source/destination IDs; caller should not forge a new
+   exit table to circumvent direction validation. Do not change Route APIs.
+4. Bottom trigger currently only checks y below floor, not downward motion.
+   Require actual downward passage/motion, not rising from below. Use native
+   player.vy / previous samples with a clear API. Test standing, rising below,
+   falling through correct opening and falling elsewhere.
+5. Correct transaction guidance: construct + place while gameplay is paused,
+   stage and validate logical Route/Core/progress, persist successfully BEFORE
+   destructively retiring source at physical commit. On save refusal rollback
+   destination+placements. Do not claim commit-then-save can restore source.
+   Source cleanup failure after durable save is retained pending cleanup, with
+   gameplay paused until colliders retire. Explain this in module docs/report.
+
+Keep budgets/yields, strict upstream recipe gate, and old tests. Run focused and
+full tests; report exact result and STOP editing. This module is not native
+traversal certification. Root will merge and wire it after review.
