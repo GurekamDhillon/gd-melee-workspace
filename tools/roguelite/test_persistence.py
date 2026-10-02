@@ -47,6 +47,8 @@ gd={buttons={A=256,B=512,UP=8,DOWN=4,LEFT=1,RIGHT=2},kit=kit,
  impulse=function()return true end,fx_play=function()return 0 end,fx_end=function()end,
  parts_clear=function()end,parts=function()return {geometry_signature='unknown'}end,
  fill=function()end,project=function(x,y)return x+320,240-y end}
+-- Safe in-memory atomic substitute; errors happen before replacing the slot.
+gd.data_write_atomic=gd.data_write
 '''
 
 FIXTURE_GEN = r'''
@@ -342,6 +344,39 @@ assert(state().run.progress.room==room0 and state().run.progress.supplies==supp0
 print('persistence: forced refusal and write failure keep the last usable slot, protected sibling and live mirrors intact')
 ''',
             'staged save failures')
+
+        # A missing native atomic helper must never fall back to the dangerous
+        # raw writer. Exercise both redirected target slots: if invoked, this
+        # raw writer truncates the only supported checkpoint before failing.
+        for supported, protected in (('a', 'b'), ('b', 'a')):
+            scenario(
+                f"files={{}}\nfiles['checkpoint-{supported}.txt']=FIX.valid\n"
+                f"files['checkpoint-{protected}.txt']=FIX.futureprogress\nrequest=true;tick=0\n",
+                r'''
+step();step();tick=91;step()
+assert(state().ready and state().v2,'valid route did not load for partial-write refusal')
+local before_a,before_b=files['checkpoint-a.txt'],files['checkpoint-b.txt']
+local before_profile=assert(Core.snapshot(state().profile))
+local before_run=assert(Core.snapshot(state().run))
+local before_writes=writes
+local raw_calls=0
+gd.data_write_atomic=nil
+gd.data_write=function(name,bytes)
+ raw_calls=raw_calls+1
+ files[name]=bytes:sub(1,30)
+ return false
+end
+click('lock')
+assert(raw_calls==0,'missing atomic helper invoked a destructive raw writer')
+assert(writes==before_writes,'missing atomic helper performed a checkpoint write')
+assert(files['checkpoint-a.txt']==before_a,'supported/protected A changed on refusal')
+assert(files['checkpoint-b.txt']==before_b,'supported/protected B changed on refusal')
+assert(Core.snapshot(state().profile)==before_profile,'refused save retained collection mutation')
+assert(Core.snapshot(state().run)==before_run,'refused save changed live run')
+assert(state().toast:find('atomic checkpoint writer unavailable',1,true),'missing helper refusal was not explained')
+print('persistence: missing atomic writer refuses destructive partial-write fallback and preserves both slots')
+''',
+                f'missing atomic writer with supported {supported.upper()}')
 
         # Malformed nested route data is contained at the load boundary.
         scenario(

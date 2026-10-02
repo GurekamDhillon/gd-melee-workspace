@@ -36,6 +36,7 @@ gd={buttons={A=256,B=512,UP=8,DOWN=4,LEFT=1,RIGHT=2},kit=kit,
  impulse=function()return true end,fx_play=function()return 0 end,fx_end=function()end,
  parts_clear=function()end,parts=function()return {geometry_signature='unknown'}end,
  fill=function()end,project=function(x,y)return x+320,240-y end}
+gd.data_write_atomic=gd.data_write -- deterministic safe writer fixture
 '''
 TEST = r'''
 local function step(b) controls=b or 0;on_tick() end
