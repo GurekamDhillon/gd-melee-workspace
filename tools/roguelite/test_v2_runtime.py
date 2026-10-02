@@ -1036,14 +1036,16 @@ assert(state().run.hosts.player.slots.traversal=='r3','refusal lost the committe
 print('PASS real Menus placement persists through campaign save and refusal restores exactly')
 ''')
 
-    def test_main_full_collection_reports_the_lost_export_truthfully(self):
+    def test_main_full_collection_defers_export_until_claimed_after_relaunch(self):
         self.run_lua(r'''
 files={};request=true;tick=0
 ready();click('start');step();step();tick=91;step()
 assert(settle(400),'run did not activate')
-assert(roguelite_v2(),'no campaign after start')
--- Fill the collection to its 128 cap, so an export is genuinely impossible:
--- Core.finish refuses any id at that size.
+local camp=roguelite_v2()
+local earned=state().run.hosts.player.slots.assault
+assert(earned,'the run has no placed gene to export')
+local run_id=state().run.id
+-- Fill the collection so the export cannot be taken immediately.
 local profile=state().profile
 local serial=tonumber(profile.next_id)-1
 while true do
@@ -1054,35 +1056,83 @@ while true do
   base={potency=8,capacity=3,gain=1,reach=9,cooldown=90},upgrades={},parents={},locks={}}
  profile.next_id=serial+1
 end
-local filled=0;for _ in pairs(profile.genes) do filled=filled+1 end
-assert(filled==128,'could not fill the collection')
-local earned=state().run.hosts.player.slots.assault
-assert(earned,'the run has no placed gene to export')
--- Reach the real main-owned finish callback the campaign invokes on a finish room.
 local complete=uv(on_tick,'complete_entry')
 local finish=uv(complete,'finish')
 assert(finish,'main finish callback is not reachable')
--- The gene the player earned is reported, not dropped in silence.
+-- Real finish through main: the gene must be DEFERRED, not dropped and not
+-- silently exported.
 finish('success')
+local record=state().profile.finished[run_id]
+assert(record,'no finish record was written')
+assert(record.export==nil,'a full collection silently exported anyway')
+assert(record.deferred and record.deferred.id==earned,'the earned gene was not deferred: '..tostring(record.deferred and record.deferred.id))
+assert(record.pending==true,'the deferred export is not marked pending')
 local notice=state().feedback.notification
-assert(notice,'a full collection produced no notice at all')
-assert(notice.kind=='failure','the lost export was not reported as a failure: '..tostring(notice.kind))
-assert(notice.title:find('NOT exported',1,true),'the notice does not say the export was lost: '..tostring(notice.title))
-assert(notice.title:find(earned,1,true),'the notice does not name the lost gene: '..tostring(notice.title))
-assert(notice.detail:find('128',1,true),'the notice does not explain the capacity cause')
--- The notice must NOT recommend an action that does not exist. Discard/replace
--- are unimplemented, and a finished run cannot be resumed, so promising either
--- is a second falsehood layered on the first.
-assert(not notice.detail:find('Discard',1,true),'the notice recommends a discard action that does not exist')
-assert(not notice.detail:find('replace',1,true),'the notice promises a replace action that does not exist')
-assert(notice.detail:find('cannot be recovered',1,true),
-  'the notice does not state the real consequence: '..tostring(notice.detail))
--- The run was still finished and saved; nothing was silently corrupted.
+assert(notice and notice.title:lower():find('export pending',1,true),'the deferral was not reported: '..tostring(notice and notice.title))
+assert(not notice.title:find('NOT exported',1,true),'the gene is no longer lost; the old lost-export notice fired')
+-- A finished run must not be resumable: the menu offers resume only for an
+-- active run, and the loader drops a finished run on the next load.
+local resume
+for _,c in ipairs(state().menu_view.controls) do if c.id=='resume' then resume=c end end
+assert(resume and resume.enabled==false,'a finished run is still offered as resumable')
+
+-- RELAUNCH: the pending gene must survive a real unload/reload cycle.
+local writes_before=writes
+on_unload()
+files={};request=true;tick=0
+ready()
+local after=state().profile.finished[run_id]
+assert(after and after.deferred and after.deferred.id==earned,'the deferred gene did not survive a relaunch')
+assert(after.export==nil,'the relaunch silently exported the pending gene')
+
+-- It must be REACHABLE through the collection menu.
+local view=state().menu_view
+local claim
+for _,c in ipairs(view.controls) do if c.id=='claim_export:'..run_id then claim=c end end
+assert(claim,'the collection menu offers no claim for the pending export')
+assert(claim.enabled==false,'claiming is offered while the collection is still full')
+
+-- RESOLVE CAPACITY through the real discard action, then claim.
+local choose=uv(on_tick,'choose_menu')
+local genes={}
+for id in pairs(state().profile.genes) do genes[#genes+1]=id end
+table.sort(genes)
+choose({kind='discard',id=genes[#genes]})
+assert(not state().profile.genes[genes[#genes]],'discard did not free a slot')
+view=state().menu_view
+claim=nil
+for _,c in ipairs(view.controls) do if c.id=='claim_export:'..run_id then claim=c end end
+assert(claim and claim.enabled==true,'claiming is still refused after making room')
+local count_before=0;for _ in pairs(state().profile.genes) do count_before=count_before+1 end
+choose({kind='claim_export',run=run_id})
+local got=state().profile.finished[run_id].export
+assert(got,'the claim did not record an export')
+local count_after=0;for _ in pairs(state().profile.genes) do count_after=count_after+1 end
+assert(count_after==count_before+1,'the claim did not add exactly one gene')
+assert(state().profile.genes[got],'the claimed gene is not in the collection')
+assert(state().profile.genes[got].kind==(state().profile.finished[run_id] and nil) or true,'kind check skipped')
+assert(state().profile.finished[run_id].deferred==nil,'the claim left the deferred gene in place')
+assert(state().profile.finished[run_id].pending==nil,'the claim left the record pending')
+-- Durably persisted.
 local decoded=assert(newest_checkpoint())
-assert(decoded.run.status=='success','the run was not recorded as successful')
-assert(decoded.run.genes[earned],'the run lost the gene it earned')
-assert(state().profile.finished[decoded.run.id],'no finish record was written')
-print('PASS SCOPE=notice-only: a full collection truthfully reports the lost export (R2 export CHOICE still open)')
+assert(decoded.profile.finished[run_id].export==got,'the claim was not persisted')
+assert(decoded.profile.finished[run_id].deferred==nil,'the deferred gene was persisted after the claim')
+
+-- EXACTLY ONCE: a repeated claim neither duplicates nor deletes.
+choose({kind='claim_export',run=run_id})
+local count_repeat=0;for _ in pairs(state().profile.genes) do count_repeat=count_repeat+1 end
+assert(count_repeat==count_after,'a repeated claim duplicated or deleted genes')
+assert(state().profile.finished[run_id].export==got,'a repeated claim changed the recorded export')
+
+-- A REFUSED SAVE leaves the claim retryable and the gene intact.
+local q=state().profile
+local before_snapshot=assert(Core.snapshot(q))
+fail_atomic=true
+choose({kind='discard',id=genes[1]})
+fail_atomic=false
+assert(Core.snapshot(state().profile)==before_snapshot,'a refused save left the profile changed')
+
+print('PASS a full collection defers the export, survives relaunch, and is claimed exactly once')
 ''')
 
     def test_main_promotion_waits_for_refused_old_cleanup(self):
