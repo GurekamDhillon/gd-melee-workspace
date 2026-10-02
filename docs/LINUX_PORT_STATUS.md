@@ -1,8 +1,8 @@
 # Linux port implementation status
 
 Current scope (2026-09-29): **Windows parity for offline play and custom content**,
-plus a shared Qt launcher. Networking is excluded from acceptance. This is development
-support, not a release or a claim of completed parity.
+plus a shared Qt launcher. Networking is excluded from acceptance. The first Linux public test release is `v0.1.8-linux`, based on the verified
+Ubuntu 22.04 package. This is not a claim of completed Windows parity.
 
 The game is a 32-bit i686 Linux executable for x86-64 Linux, using Vulkan/SDL3.
 The launcher is a separate native 64-bit Qt app. Target portable baseline: Ubuntu 22.04,
@@ -42,7 +42,7 @@ glibc 2.35. The local Arch build requires newer glibc and is not that portable b
 - A complete baseline package passed its runtime checksums and all three 201/201 suites
   through Qt in a relocated, read-only installation under Ubuntu 22.04. Its deployed
   launcher also rendered all four tabs on the native Wayland session. All 170 packaged
-  ELF runtimes require GLIBC <=2.35. Local runtime/debug archives are not published releases.
+  ELF runtimes require GLIBC <=2.35. The baseline runtime/debug archives are the basis of the first Linux public test release.
 
 ## Remaining acceptance work
 
@@ -57,7 +57,7 @@ glibc 2.35. The local Arch build requires newer glibc and is not that portable b
 
 Slippi, UPnP and Windows-only sampling/PAGE_GUARD diagnostics remain outside this port.
 Prior local GD netplay checks are retained as development evidence, not current acceptance.
-No release tags or GitHub Releases are authorized.
+The user authorized the Linux GitHub Release on 2026-10-01. Networking is not part of its acceptance.
 
 ## Local evidence (not committed)
 

@@ -1,4 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# Some deployed non-Qt libraries have no RUNPATH of their own. The launcher's
+# RUNPATH only covers direct dependencies, so make its complete x86-64 runtime
+# available to the loader. prepareLaunch replaces this with the game's i686 lib
+# directory before starting the child process.
+export LD_LIBRARY_PATH="$root/launcher/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 exec "$root/launcher/bin/gd-melee-launcher" "$@"
