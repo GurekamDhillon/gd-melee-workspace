@@ -1,0 +1,18 @@
+[
+  {
+    "path": "docs/scripting.md",
+    "sha256": "78e36a997103a62a062cd4da81d3548112905e900b0b26c2ff932e7a0a4fc46b"
+  },
+  {
+    "path": "docs/GENE-ACTION-CONTRACT.md",
+    "sha256": "acd1f3472f14c061f0b093563441a9795875d4a5e5b85f098148fc0a49a42a81"
+  },
+  {
+    "path": "melee/worktrees/linux/pc/scripts/examples/roguelite/gene_actions.lua",
+    "sha256": "d1e97779b5d132ac29c1eea8432dcd9f343a711c10c70fb19d9f54605184ee9e"
+  },
+  {
+    "path": "melee/worktrees/linux/pc/scripts/examples/roguelite/gene_behaviors.lua",
+    "sha256": "980944cba58dce66335bb0db31447c9b6d7fd0303d7c67e870389658a0acc68b"
+  }
+]
