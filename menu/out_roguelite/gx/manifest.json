@@ -1,0 +1,331 @@
+{
+  "schema": 1,
+  "provenance": "Original vector paths in menu/pipeline/roguelite_art.py",
+  "palette": {
+    "ink": "#0a0e18",
+    "bone": "#f2efe4",
+    "muted": "#b8c2dc",
+    "disabled": "#7d88a6",
+    "gold": "#f0b429",
+    "gold_lt": "#ffd766",
+    "gold_dk": "#a9761a",
+    "danger": "#e5483b",
+    "ok": "#27b88a"
+  },
+  "shear": 0.25,
+  "textures": [
+    {
+      "name": "ico_rogue_cinder",
+      "file": "rgba/ico_rogue_cinder.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_cinder.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_cinder.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "5b5bfb5b1b202827b68b718c3a9152fae295b6385ca288273a0a8e94c207e44d"
+    },
+    {
+      "name": "ico_rogue_rime",
+      "file": "rgba/ico_rogue_rime.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_rime.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_rime.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "b1fcd0e7e71a5c36e04ed3f67ab407d43efe4bfa463308b0968e706cfd77e7d4"
+    },
+    {
+      "name": "ico_rogue_magic",
+      "file": "rgba/ico_rogue_magic.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_magic.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_magic.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "2381e97a03a7b470a90b182d01faabdbd3443efed8e85c144d7559284287ae73"
+    },
+    {
+      "name": "ico_rogue_item",
+      "file": "rgba/ico_rogue_item.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_item.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_item.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "93d392e61e9014c8597411bdc636068902c5b207a3797880a3712d860bfaee4d"
+    },
+    {
+      "name": "ico_rogue_special",
+      "file": "rgba/ico_rogue_special.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_special.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_special.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "552a0e56ab730760c4ee0dcc2c9c3baa39e234b2b95f471d2eedb9fc82a9a875"
+    },
+    {
+      "name": "ico_rogue_assault",
+      "file": "rgba/ico_rogue_assault.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_assault.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_assault.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "f2e222e1224cf198094fa88a379151ef8772d6ac4787d1bb95c30856aaccc573"
+    },
+    {
+      "name": "ico_rogue_traversal",
+      "file": "rgba/ico_rogue_traversal.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_traversal.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_traversal.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "ac03d8f8aa019050d55e2948502c48c8fac8f0b27895e6800af05ac95094e210"
+    },
+    {
+      "name": "ico_rogue_guard",
+      "file": "rgba/ico_rogue_guard.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_guard.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_guard.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "ea74dd99fb687a6f6ef4e5360c27a956b5b98e22932075e1a04a608d29066551"
+    },
+    {
+      "name": "ico_rogue_focus",
+      "file": "rgba/ico_rogue_focus.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_focus.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_focus.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "4ae17c6348f17effa459077cd5534813bf2aa5ac441ef27fda46db83a2dd8aa0"
+    },
+    {
+      "name": "ico_rogue_gene",
+      "file": "rgba/ico_rogue_gene.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_gene.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_gene.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "2bee239af3ac9b4ce703e3be45da78e23fa17003634d94681fd0f658b2c6ec01"
+    },
+    {
+      "name": "ico_rogue_fusion",
+      "file": "rgba/ico_rogue_fusion.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_fusion.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_fusion.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "a5f8c79696d282b27889e966fc54e6641d1445fc29292fe95537c3707debfcf8"
+    },
+    {
+      "name": "ico_rogue_route",
+      "file": "rgba/ico_rogue_route.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_route.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_route.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "04f20a724d4602c56104e90a15fe3846cde2f92d001552e0b3fd5fd977872649"
+    },
+    {
+      "name": "ico_rogue_elite",
+      "file": "rgba/ico_rogue_elite.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_elite.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_elite.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "547149aae1fa305d3965bdba7960b5058345996f111bab0c20b0b020ca3d36cc"
+    },
+    {
+      "name": "ico_rogue_check",
+      "file": "rgba/ico_rogue_check.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_check.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_check.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "b4f746226b18719b397b8d850c4e2206e6d1c8f09da8e2ebf92b947c269145fb"
+    },
+    {
+      "name": "ico_rogue_left",
+      "file": "rgba/ico_rogue_left.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_left.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_left.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "9ad49d40359f859a7c6a436be61884f56883f2d48bfec855ca4e63aa4e2719bc"
+    },
+    {
+      "name": "ico_rogue_right",
+      "file": "rgba/ico_rogue_right.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_right.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_right.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "d5b78c35c5a727bf35ea1de6bb100aa9a96bf1e78b9d8031bcc03f7140f24062"
+    },
+    {
+      "name": "ico_rogue_down",
+      "file": "rgba/ico_rogue_down.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_down.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_down.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "132d7030c2a6ff84820273e33a8102b7ba84b8528d9ded137fd590bfb608bf61"
+    },
+    {
+      "name": "ico_rogue_up",
+      "file": "rgba/ico_rogue_up.png",
+      "file_1x": "out_roguelite/rgba/ico_rogue_up.png",
+      "file_2x": "out_roguelite/rgba/ico_rogue_up.png",
+      "format": "IA4",
+      "size_1x": [
+        32,
+        32
+      ],
+      "size": [
+        128,
+        128
+      ],
+      "recommended_format": "ia4",
+      "sha256": "003dd2089560a8cbb3e2538c4893d9386d73f0399617a2393e97c991d1a52ed3"
+    }
+  ],
+  "font": "Source Sans 3 / SIL OFL 1.1",
+  "controls": {
+    "left": "branch 1",
+    "right": "branch 2",
+    "down": "branch 3",
+    "up": "parent; taunt only at root"
+  }
+}
