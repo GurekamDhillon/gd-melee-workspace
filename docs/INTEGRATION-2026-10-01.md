@@ -3,7 +3,11 @@
 Prepared on this Windows workspace (WSL session) from
 `HANDOFF-GITHUB-INTEGRATION-2026-10-01.md`. That handoff recorded intent; this file records
 what was actually done, what was deliberately not taken, and what could not be verified here.
-Nothing was pushed, tagged or published.
+
+**Amendment, 2026-10-01 (later):** the Windows build and native evidence arrived after this file
+was first written. See [Amendment](#amendment-2026-10-01-windows-build-and-suite-evidence), which
+**supersedes** the verification-gap list and the roguelite-suite section below. Both branches have
+since been pushed; nothing has been tagged or published, and no release was cut.
 
 ## Result
 
@@ -126,6 +130,10 @@ addresses, and behaviour with inherited explicit ICD selections is unexamined. D
 
 ## The roguelite suite is not evidence on this machine
 
+**Superseded — see [the amendment](#amendment-2026-10-01-windows-build-and-suite-evidence).**
+This is kept as the record of why the numbers were meaningless, not as the current state. The
+path problem described here has been fixed and the suite now runs green.
+
 `python -m unittest discover -s tools/roguelite -p 'test_*.py'` runs **167 tests: 73 failures,
 31 errors, 7 skipped, 56 passed.** This is a layout artifact, not a verdict on the merge.
 
@@ -144,12 +152,13 @@ paths are parameterised.
 
 ## Verification gaps beyond this session's reach
 
-This session ran on WSL/Linux. The following are **not** done and must not be reported as done:
+This session ran on WSL/Linux. The following are **not** done and must not be reported as done.
+**The first two are closed by the [amendment](#amendment-2026-10-01-windows-build-and-suite-evidence).**
 
-- No game build. The game builds only on Windows with the disc images.
-- No bridge fixpoint and no EXE ABI audit.
-- No headless game tests, no `run.sh` gameplay run, no controller or timing check.
-- No on-screen verification of any changed menu, room, HUD or stage seam.
+- ~~No game build. The game builds only on Windows with the disc images.~~ **Closed: 216/216.**
+- ~~No bridge fixpoint and no EXE ABI audit.~~ **Closed: bridge fixpoint and ABI audit passed.**
+- No `run.sh` gameplay run, no controller or timing check. **Still open.**
+- No on-screen verification of any changed menu, room, HUD or stage seam. **Still open.**
 
 ## Compiler verification, and the two bugs it found
 
@@ -212,6 +221,80 @@ dependency reproducibility.
 Feature milestones remain open too: room certification, controller traversal, enemy/boss controls,
 effects and region integration, audio and camera. **Integration readiness is not 100/100 product
 completion.**
+
+## Amendment (2026-10-01, Windows build and suite evidence)
+
+Added later the same day. **This supersedes the roguelite-suite section and the first two
+verification gaps above.**
+
+### Windows build
+
+| Check | Result |
+| --- | --- |
+| Launcher build | both test suites passed; all four tabs rendered |
+| Game build, vanilla NTSC 1.02 | **216/216 native tests passed** |
+| Game build, ACE | **216/216 native tests passed** |
+| Bridge fixpoint | passed |
+| EXE ABI audit | clean |
+
+Two Windows-side fixes were needed to complete the build and are **still uncommitted**: Windows
+source selection (`build_objects.py` was handing `*_linux` shim units to the Windows shim compiler,
+which `build_linux.sh` owns) and one outdated enemy-event test.
+
+That test is worth recording, because it was this integration's change. `test_script_enemy_genes`
+asserted a natural enemy hit arrived as `what == 9`. Event 9 belongs to `on_enemy_removed`
+(kind, handle, reason); the hit event carries (handle, from, damage) and was moved to 10 to resolve
+the collision between the two branches. The test's expectation was updated to 10 and its payload
+assertions were left intact, so it still discriminates. Nothing was weakened to make a build pass.
+
+The roguelite work is the bulk of what was integrated, so that 216/216 is the real verdict on the
+merge: it links, the bridge table matches the final map, and the conflict resolutions are sound.
+
+### The roguelite suite is now real evidence
+
+The suite was previously unrunnable here for a reason that had nothing to do with the code: 45
+modules hardcoded one machine's lane, `melee/worktrees/linux`. With that path absent, 26 modules
+failed to *import*, so only 167 of the tests were ever collected and the run reported 73 failures
+and 31 errors that were all setup noise.
+
+`tools/roguelite/game_source.py` is now the single resolver — `GW_MELEE`, else `<workspace>/melee` —
+and raises a `GameSourceError` naming the path it tried when the checkout has no roguelite sources.
+Tests needing nothing from the game do not import it, so they still run with no checkout at all.
+Lua 5.4.7 was built from source into a local prefix rather than installed system-wide.
+
+    python3 -m unittest discover -s tools/roguelite -p 'test_*.py'
+    Ran 251 tests
+    OK (skipped=1)
+
+251 with one skipped is exactly the figure the October 1 upstream review records. The 84
+newly-collected tests are the 26 modules that previously would not import. The skip wants local
+ignored measurement reports, which are not present. The suite runs the real interpreter and refuses
+to substitute a mock, so this is genuine Lua execution.
+
+One stale reference was left deliberately: `build_room_kit.py` writes
+`authoring_source='melee/worktrees/linux/...'` into generated manifests. That is a recorded
+provenance label rather than a resolved path, so changing it alters manifest content. It needs a
+decision about what the label should say.
+
+### Explicitly still open
+
+Integration is verified; the **product** is not. None of the following has been checked, and the
+suite and the build do not stand in for them:
+
+- **Controller and visual validation** of rooms, enemies, HUD and effects. The tabs rendered and
+  the native suite passed, but nothing was inspected on screen in a match.
+- **Roguelite feature verification beyond the pure/stub tier.** 251 pure/stub tests is one tier;
+  the historical native figure is 214/214 and was not re-run here. Gameplay behaviour of the
+  roguelite is unproven.
+- **The four open roguelite defects**, unchanged by any of this: undiscardable earned/exported
+  genes, Legacy Restore spending an item when native healing refuses, V2 Restore persisting
+  contradictory inventory and campaign supply counts, and run history appended after the durable
+  finish save. These are the next work.
+- Sora's magic effects work; fidelity comparisons and the remaining showcase captures are open.
+
+The next three priorities (durable gene discard, Restore inventory transactions, run-history
+persistence) now have a usable regression suite behind them, which they did not before.
+
 
 ## Recoverable state
 
