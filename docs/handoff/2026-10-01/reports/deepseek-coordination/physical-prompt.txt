@@ -1,0 +1,41 @@
+Implement a bounded reusable physical room/transition runtime in your isolated
+worktree. You own NEW game module pc/scripts/examples/roguelite/runtime_rooms.lua
+and NEW wrapper tests tools/roguelite/test_physical_runtime.py only. Do not edit
+main.lua/prepare.py, recipes/route/progress/native, existing tests or other files.
+Root integrates/bundles later. Existing dirty route/rooms/progress files are
+baseline snapshots from reviewed Sol work; preserve them, do not commit them.
+Read docs/SOL-ROOMS-CHECKPOINT.md and SOL-RUNTIME-CHECKPOINT.md and actual modules.
+
+Implement an injected engine API/service module, following existing Lua style,
+that main can use to load/build/place a resolved node transactionally. Consume
+Rooms.preload_step(state,node), plan/collision/anchor/arrival, including floor
+segments and actual slopes through stage_add_line. Own native handles and visual
+state, respect yields/budgets, refuse failed allocations and preserve ownership
+on failed cleanup. Translate coordinates once. Keep empty-stage isolation a
+checked precondition and cleanup symmetric. Do not invent APIs; root's actual
+native source is readable at /home/gd/melee_linux_test/gdm/melee/worktrees/linux
+if your committed native API snapshot lacks current support.
+
+Provide explicit per-socket trigger/arrival selection. Distinguish source trigger
+and destination arrival. Bottom drop requires actual downward passage belowfloor,
+never simple proximity while standing. Support both fork exits, merge entries,
+allowed returns, upper sockets and one-way edge direction. Use canonical adapter
+exit objects, no fixed room-ID or two-door whitelist. Never bypass certification
+in production; acceptance harness is separate. Main will commit Route.travel/
+collect/save only after destination construction+placement succeed. Design the
+module's begin/step/commit/rollback return shapes so root can wire logical and
+physical transaction state without hidden callbacks or stale pointers.
+
+Meaningful fake-engine tests cover resolved geometry/translated slope calls,
+incremental loads, source/destination sockets, downward-only trigger, allocation
+and placement refusal, partial cleanup retry, interruption and bounded handles.
+Do not mirror constants; use real Rooms/Recipes/Adapter modules with test-only
+recipe admission in fixtures. Report limitations of source-room physical rollback
+if engine APIs cannot keep both rooms resident, rather than pretend it works.
+Read existing room planner budgets before choosing an approach.
+
+No git commits/staging/reset/clean, model/API delegation, native build, install,
+shared game runs or art authoring. Pure tests authorized. Use ordinary default
+reasoning, not max effort. Finish this functional module and tests, then STOP
+editing and report exact owned files, API/return shapes, commands/results and
+root integration notes. New module is not proof of live gameplay/certification.

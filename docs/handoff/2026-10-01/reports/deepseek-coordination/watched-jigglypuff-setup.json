@@ -1,0 +1,449 @@
+{
+  "certified": false,
+  "paused": true,
+  "scripted_traversal_input": false,
+  "records": [
+    {
+      "command": "resume",
+      "ok": true,
+      "output": []
+    },
+    {
+      "command": "certify_scene jigglypuff 0",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_scene p1=jigglypuff/c0 ok=true result=mode=vs;p2=fox/c0/cpu9;time=0;p1=jigglypuff/c0;stage=fd;stocks=99;items=off"
+      ]
+    },
+    {
+      "command": "certify_status",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_status diag_version=1 api_version=1 phase=idle template=nil recipe=false recipe_version=nil certified=nil isolated=false draw=false clean=true camera=auto floor_y=0 colliders=0 samples=0 error=nil"
+      ]
+    },
+    {
+      "command": "= gd.match().active",
+      "ok": true,
+      "output": [
+        "false"
+      ]
+    },
+    {
+      "command": "certify_status",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_status diag_version=1 api_version=1 phase=idle template=nil recipe=false recipe_version=nil certified=nil isolated=false draw=false clean=true camera=auto floor_y=0 colliders=0 samples=0 error=nil"
+      ]
+    },
+    {
+      "command": "= gd.match().active",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(2) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1).cpu",
+      "ok": true,
+      "output": [
+        "false"
+      ]
+    },
+    {
+      "command": "= gd.match().frame",
+      "ok": true,
+      "output": [
+        "13"
+      ]
+    },
+    {
+      "command": "certify_status",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_status diag_version=1 api_version=1 phase=idle template=nil recipe=false recipe_version=nil certified=nil isolated=false draw=false clean=true camera=auto floor_y=0 colliders=0 samples=0 error=nil"
+      ]
+    },
+    {
+      "command": "= gd.match().active",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(2) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1).cpu",
+      "ok": true,
+      "output": [
+        "false"
+      ]
+    },
+    {
+      "command": "= gd.match().frame",
+      "ok": true,
+      "output": [
+        "44"
+      ]
+    },
+    {
+      "command": "certify_status",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_status diag_version=1 api_version=1 phase=idle template=nil recipe=false recipe_version=nil certified=nil isolated=false draw=false clean=true camera=auto floor_y=0 colliders=0 samples=0 error=nil"
+      ]
+    },
+    {
+      "command": "= gd.match().active",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(2) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1).cpu",
+      "ok": true,
+      "output": [
+        "false"
+      ]
+    },
+    {
+      "command": "= gd.match().frame",
+      "ok": true,
+      "output": [
+        "75"
+      ]
+    },
+    {
+      "command": "certify_status",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_status diag_version=1 api_version=1 phase=idle template=nil recipe=false recipe_version=nil certified=nil isolated=false draw=false clean=true camera=auto floor_y=0 colliders=0 samples=0 error=nil"
+      ]
+    },
+    {
+      "command": "= gd.match().active",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(2) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1).cpu",
+      "ok": true,
+      "output": [
+        "false"
+      ]
+    },
+    {
+      "command": "= gd.match().frame",
+      "ok": true,
+      "output": [
+        "106"
+      ]
+    },
+    {
+      "command": "certify_status",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_status diag_version=1 api_version=1 phase=idle template=nil recipe=false recipe_version=nil certified=nil isolated=false draw=false clean=true camera=auto floor_y=0 colliders=0 samples=0 error=nil"
+      ]
+    },
+    {
+      "command": "= gd.match().active",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(2) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1).cpu",
+      "ok": true,
+      "output": [
+        "false"
+      ]
+    },
+    {
+      "command": "= gd.match().frame",
+      "ok": true,
+      "output": [
+        "137"
+      ]
+    },
+    {
+      "command": "certify_status",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_status diag_version=1 api_version=1 phase=idle template=nil recipe=false recipe_version=nil certified=nil isolated=false draw=false clean=true camera=auto floor_y=0 colliders=0 samples=0 error=nil"
+      ]
+    },
+    {
+      "command": "= gd.match().active",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(2) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1).cpu",
+      "ok": true,
+      "output": [
+        "false"
+      ]
+    },
+    {
+      "command": "= gd.match().frame",
+      "ok": true,
+      "output": [
+        "168"
+      ]
+    },
+    {
+      "command": "certify_status",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_status diag_version=1 api_version=1 phase=idle template=nil recipe=false recipe_version=nil certified=nil isolated=false draw=false clean=true camera=auto floor_y=0 colliders=0 samples=0 error=nil"
+      ]
+    },
+    {
+      "command": "= gd.match().active",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(2) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1).cpu",
+      "ok": true,
+      "output": [
+        "false"
+      ]
+    },
+    {
+      "command": "= gd.match().frame",
+      "ok": true,
+      "output": [
+        "199"
+      ]
+    },
+    {
+      "command": "certify_status",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_status diag_version=1 api_version=1 phase=idle template=nil recipe=false recipe_version=nil certified=nil isolated=false draw=false clean=true camera=auto floor_y=0 colliders=0 samples=0 error=nil"
+      ]
+    },
+    {
+      "command": "= gd.match().active",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(2) ~= nil",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "= gd.player(1).cpu",
+      "ok": true,
+      "output": [
+        "false"
+      ]
+    },
+    {
+      "command": "= gd.match().frame",
+      "ok": true,
+      "output": [
+        "230"
+      ]
+    },
+    {
+      "command": "gd.cpu_mode(2, 'stand')",
+      "ok": true,
+      "output": [
+        "true"
+      ]
+    },
+    {
+      "command": "pause",
+      "ok": true,
+      "output": []
+    },
+    {
+      "command": "certify_build branch_y clean",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_build_start template=branch_y recipe=branch_y recipe_version=2 certified=false clean=true draw=false parts=26 platforms=2 lines=2 floor_segments=1"
+      ]
+    },
+    {
+      "command": "certify_status",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_status diag_version=1 api_version=1 phase=loading template=branch_y recipe=true recipe_version=2 certified=false isolated=false draw=false clean=true camera=auto floor_y=0 colliders=0 samples=0 error=nil"
+      ]
+    },
+    {
+      "command": "certify_status",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_status diag_version=1 api_version=1 phase=ready template=branch_y recipe=true recipe_version=2 certified=false isolated=true draw=false clean=true camera=auto floor_y=0 colliders=5 samples=0 error=nil"
+      ]
+    },
+    {
+      "command": "certify_place in",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_place ok=true socket=in x=-42 y=0 fixture=true note=placement-only-not-traversal"
+      ]
+    },
+    {
+      "command": "gd.set_percent(1,0)",
+      "ok": true,
+      "output": []
+    },
+    {
+      "command": "certify_camera wide",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_camera ok=true mode=wide preview=true fixture=true"
+      ]
+    },
+    {
+      "command": "certify_hud off",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_hud hidden=true ok=true result=false"
+      ]
+    },
+    {
+      "command": "gd.release_pad(1)",
+      "ok": true,
+      "output": []
+    },
+    {
+      "command": "state",
+      "ok": true,
+      "output": [
+        "frame 23535  scene GS_VS(2)  mode GM_VS(2)  match live  PAUSED",
+        "P1 Jigglypuff       x=  -42.00 y=    2.00    0.0%  stocks 99  action  29 (frame 125) air",
+        "P2 Fox              x=    5.57 y=    0.00    0.0%  stocks 99  action  14 (frame 2)"
+      ]
+    },
+    {
+      "command": "certify_status",
+      "ok": true,
+      "output": [
+        "[roguelite_certification/main] certify_status diag_version=1 api_version=1 phase=ready template=branch_y recipe=true recipe_version=2 certified=false isolated=true draw=false clean=true camera=wide floor_y=0 colliders=5 samples=0 error=nil"
+      ]
+    }
+  ]
+}

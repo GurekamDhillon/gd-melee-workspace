@@ -1,0 +1,142 @@
+{
+  "any_certified": false,
+  "build": {
+    "app_dir": "/home/gd/melee_linux_test/gdm/_build/agents/roguelite-certification",
+    "backend": "unknown",
+    "exe": "_build/agents/roguelite-certification/melee",
+    "exe_sha256": "ae2ac548b5ca714a5df027da6ad75088299b5380732ea96d02a43b4b2a1914d7",
+    "game_revision": "e833e01d9bc3113d460306c772788574351bfd52",
+    "game_root": "/home/gd/melee_linux_test/gdm/melee/worktrees/linux"
+  },
+  "captures": "_build/deepseek-coordination/native-previews",
+  "errors": [],
+  "log": "_build/deepseek-coordination/native-certification-v5.jsonl",
+  "recipes": {
+    "branch_y": {
+      "certified_after": false,
+      "certified_before": false,
+      "profiles": {
+        "falco": {
+          "outcomes": [
+            {
+              "checks": {
+                "airborne_frames": 170,
+                "arrived": true,
+                "climb_back": false,
+                "fell": true,
+                "manual_review": [
+                  "grounded->airborne with non-positive vy: inspect for a seam pop"
+                ],
+                "max_y": 112.85,
+                "min_y": -140.67,
+                "sampled": 260,
+                "seam_pop_candidate": true,
+                "stuck": false,
+                "truncated": false
+              },
+              "id": "ascent",
+              "manual_review": [
+                "grounded->airborne with non-positive vy: inspect for a seam pop"
+              ],
+              "segment": "ascent",
+              "status": "fell"
+            },
+            {
+              "checks": {
+                "airborne_frames": 0,
+                "arrived": false,
+                "climb_back": false,
+                "fell": false,
+                "manual_review": [],
+                "max_y": null,
+                "min_y": null,
+                "sampled": 0,
+                "seam_pop_candidate": false,
+                "stuck": false,
+                "truncated": false
+              },
+              "id": "return",
+              "manual_review": [
+                "no per-frame samples observed"
+              ],
+              "segment": "return",
+              "status": "no-samples"
+            },
+            {
+              "checks": {
+                "airborne_frames": 0,
+                "arrived": false,
+                "climb_back": false,
+                "fell": false,
+                "manual_review": [],
+                "max_y": null,
+                "min_y": null,
+                "sampled": 0,
+                "seam_pop_candidate": false,
+                "stuck": false,
+                "truncated": false
+              },
+              "id": "fork_branch_a",
+              "manual_review": [
+                "no per-frame samples observed"
+              ],
+              "segment": "fork_branch_a",
+              "status": "no-samples"
+            },
+            {
+              "checks": {
+                "airborne_frames": 0,
+                "arrived": false,
+                "climb_back": false,
+                "fell": false,
+                "manual_review": [],
+                "max_y": null,
+                "min_y": null,
+                "sampled": 0,
+                "seam_pop_candidate": false,
+                "stuck": false,
+                "truncated": false
+              },
+              "id": "fork_branch_b",
+              "manual_review": [
+                "no per-frame samples observed"
+              ],
+              "segment": "fork_branch_b",
+              "status": "no-samples"
+            }
+          ],
+          "verdict": {
+            "auto_certification": "forbidden",
+            "certified": false,
+            "failed_segments": [],
+            "inconclusive_segments": [],
+            "native_run_performed": true,
+            "note": "A human/coordinator must review captures and observations. A successful trace is not certification.",
+            "recipe": "branch_y",
+            "recipe_version": 2.0,
+            "requires_human_review": true,
+            "schema": "certify-rooms/1",
+            "segments_total": 4,
+            "segments_with_observation": 1,
+            "verdict": "manual-review-required"
+          }
+        }
+      },
+      "recipe_version": 2.0,
+      "verdict": {
+        "auto_certification": "forbidden",
+        "certified": false,
+        "failed": [],
+        "inconclusive": [],
+        "note": "No recipe may be marked certified from this harness output.",
+        "profiles": 1,
+        "recipe": "branch_y",
+        "recipe_version": 2.0,
+        "requires_human_review": true,
+        "schema": "certify-rooms/1",
+        "verdict": "manual-review-required"
+      }
+    }
+  },
+  "schema": "certify-rooms/1"
+}

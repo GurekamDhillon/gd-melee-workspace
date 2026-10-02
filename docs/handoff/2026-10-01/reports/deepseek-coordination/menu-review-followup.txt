@@ -1,0 +1,10 @@
+Continue isolatedmenu-polish lane only7ownedfiles. No main/bundler/native/art/build/install/commits. RootSolreview actualrepros:
+- onboarding COREcast hint sayspressA but currentgrammar Dpadleaf autoexecutes, A yieldsnil. Aligntutorial exactcontrols realdeclaredcallbacks. No confusionattackbutton whilecombat.
+- M.reset leaves s.pending; discardpromptg1 then resetcollection/starterg2, firstclickdiscardsg2 withoutfreshconfirmation. Bindconfirmationexactselectedidentity/action/source generation, reset invalidate; selection/contextchange invalidate, two deliberatepresses mandatory.
+- Feedback fallbackopponent missingoptionallabel crashes %s, previouscompactpathdefaultOPPONENT. Preserve safe fallbackHUD.
+- Preparedpartialassignleftguard=>guard,guard,traversal omitsassault; rootleftspecial=>special,item,special omitsabilities. Requireuniqueinstallednodes/actions/injectivechoices orreconcileassignments deterministically withoutdroppinginstalledactions; invalidassignmentsrefused. Stablepathsfrequent2-3presses.
+- Commands.install(state,nil) whilenodeabilities throwsinvalidcommandnode; rebuild resetscurrentnode tovalidroot andbuttonedgehistory safely. No stale callbacks preparedcapability disappears whiletraversing.
+- HUD realdraw ignores layout: dpi2 computedrailheight122 butdraw61; notificationexpected28,20 drawn210,12 outside safearea. Test actualrecordedKit/Fill drawcoords against declaredlayoutbounds notonly pureboxes. Applylayout entiretyscaling metrics; nohugeopaque box replacing vanillaHUD unless truthfulnewHUD true actualdraw.
+- supplies0 yieldsenabledRestorex0 ratherthanemptyblocked; loadoutcapacitiesneedtrueavailability. AllmatchingmainlegacyAPIsstaycompatible.
+- Docs saysnativechecksrequireWindows/disc butLinuxnativeavailable root. State nativepending/rootexclusive,humanunverified ratherthan inventedmachineconstraints.
+Run focused+originalcommands/menus/feedback/map suites. Add adversarialreal-module tests above. Freeze report onlyownedchanges/APIs/remainingintegration. Allshipmainhooksstillpending, nofalsecompletion.

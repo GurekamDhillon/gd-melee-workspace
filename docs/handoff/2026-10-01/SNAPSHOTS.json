@@ -1,0 +1,352 @@
+[
+  {
+    "repository": "workspace",
+    "source_branch": "agent/linux-qt-launcher",
+    "source_worktree": "/home/gd/melee_linux_test/gdm",
+    "parent": "6b94b7816734fcb9bf576fe08e4294b591de633c",
+    "commit": "c2f533247869717a1a19f4a18eca82fc39eb54d9",
+    "branch": "handoff/2026-10-01/linux-qt-launcher",
+    "snapshot_files": 437,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/deepseek-certification-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/certification",
+    "parent": "c6292fb381a49f8490c42b4a68251d8fbc00a3fe",
+    "commit": "687c1ab27d2b650641b308e4f209d7864b0a21af",
+    "branch": "handoff/2026-10-01/deepseek-certification-20260930",
+    "snapshot_files": 172,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/deepseek-encounters-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/encounters",
+    "parent": "c6292fb381a49f8490c42b4a68251d8fbc00a3fe",
+    "commit": "010fa723252c7f485de8e34056c42bf184aeea3f",
+    "branch": "handoff/2026-10-01/deepseek-encounters-20260930",
+    "snapshot_files": 171,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/deepseek-enemy-behaviors-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/enemy-behaviors",
+    "parent": "d695e75de05341a6a4223946124696e86de43011",
+    "commit": "b1fcc81a1d6f0466505951ce856ebc3fd899027b",
+    "branch": "handoff/2026-10-01/deepseek-enemy-behaviors-20260930",
+    "snapshot_files": 19,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/deepseek-gene-actions-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/gene-actions",
+    "parent": "d695e75de05341a6a4223946124696e86de43011",
+    "commit": "4951586693d32285aef2f7b2aa86c0ccda87c5e4",
+    "branch": "handoff/2026-10-01/deepseek-gene-actions-20260930",
+    "snapshot_files": 19,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/deepseek-gene-world-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/gene-world",
+    "parent": "f3f423da05cb0c44f7466fab36ba7cce6549acd1",
+    "commit": "3af9830971a2045fca009746041d70b2d71baff4",
+    "branch": "handoff/2026-10-01/deepseek-gene-world-20260930",
+    "snapshot_files": 7,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/deepseek-integration-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/integration",
+    "parent": "d695e75de05341a6a4223946124696e86de43011",
+    "commit": "48f3e9e775bc79467a296eb040e16e75b552b780",
+    "branch": "handoff/2026-10-01/deepseek-integration-20260930",
+    "snapshot_files": 19,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/deepseek-inventory-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/inventory",
+    "parent": "d695e75de05341a6a4223946124696e86de43011",
+    "commit": "d96bf59d35db3e9951e44eb29e6909b78c99f68a",
+    "branch": "handoff/2026-10-01/deepseek-inventory-20260930",
+    "snapshot_files": 19,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/deepseek-layouts-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/layouts",
+    "parent": "d695e75de05341a6a4223946124696e86de43011",
+    "commit": "11e8d1ff07baa819925d8609848119ffe5d6d934",
+    "branch": "handoff/2026-10-01/deepseek-layouts-20260930",
+    "snapshot_files": 71,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/deepseek-menu-polish-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/menu-polish",
+    "parent": "d695e75de05341a6a4223946124696e86de43011",
+    "commit": "27a94a816796fc8168b6a380d7605634aeb9d044",
+    "branch": "handoff/2026-10-01/deepseek-menu-polish-20260930",
+    "snapshot_files": 19,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/deepseek-physical-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/physical",
+    "parent": "c6292fb381a49f8490c42b4a68251d8fbc00a3fe",
+    "commit": "bd08aa122b3ce62532945b7c59d5d28b0477fd25",
+    "branch": "handoff/2026-10-01/deepseek-physical-20260930",
+    "snapshot_files": 171,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/deepseek-rewards-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/rewards",
+    "parent": "c6292fb381a49f8490c42b4a68251d8fbc00a3fe",
+    "commit": "ad6f19dd4cb31099c5e8484cca13dd30dd929a21",
+    "branch": "handoff/2026-10-01/deepseek-rewards-20260930",
+    "snapshot_files": 16,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/deepseek-stage-seams-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/stage-seams",
+    "parent": "41deb175750e16c4c7c92906968a1c1624a0537f",
+    "commit": "7460dc57a128da7dcaba8fb9f3ea32d5399810c9",
+    "branch": "handoff/2026-10-01/deepseek-stage-seams-20260930",
+    "snapshot_files": 1,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/roguelite-100-integration",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/integration/roguelite-100",
+    "parent": "65efdab516ad17f6af80afddfc97d00d71b30a91",
+    "commit": "f478fe89da8f7a956579cc40c488dbf48847ceb5",
+    "branch": "handoff/2026-10-01/roguelite-100-integration",
+    "snapshot_files": 408,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/model-test-campaign-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/model-tests/campaign-integration",
+    "parent": "9a035d0aa0a47d7fd19890c9b68e927bea94271a",
+    "commit": "6d465c1f483c48225225b2bb2930183d95200f89",
+    "branch": "handoff/2026-10-01/model-test-campaign-20260930",
+    "snapshot_files": 430,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "workspace",
+    "source_branch": "agent/gene-world-capacity-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/model-tests/gene-world-capacity",
+    "parent": "ff3f4847ac332e81d716adbf3711c6b1a5d3622f",
+    "commit": "089fa746ab0f87c74f6dbd75aabf2933e2800b20",
+    "branch": "handoff/2026-10-01/gene-world-capacity-20260930",
+    "snapshot_files": 198,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/deepseek-certification-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/certification/melee/worktrees/linux",
+    "parent": "05d2f429a8f7ee70f7a57f2bdc173d147a50b41d",
+    "commit": "bc5f89e52a6bee634eca1bdd11b169c81c07b6ae",
+    "branch": "handoff/2026-10-01/deepseek-certification-20260930",
+    "snapshot_files": 7,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/deepseek-encounters-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/encounters/melee/worktrees/linux",
+    "parent": "05d2f429a8f7ee70f7a57f2bdc173d147a50b41d",
+    "commit": "38a665bda15c77e5ddf87df23414569fbc2bba9e",
+    "branch": "handoff/2026-10-01/deepseek-encounters-20260930",
+    "snapshot_files": 6,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/deepseek-enemy-behaviors-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/enemy-behaviors/melee/worktrees/linux",
+    "parent": "e833e01d9bc3113d460306c772788574351bfd52",
+    "commit": "f9da7a6183150e3b1bdeb5a4b255b12e83e5e5c2",
+    "branch": "handoff/2026-10-01/deepseek-enemy-behaviors-20260930",
+    "snapshot_files": 6,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/deepseek-gene-actions-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/gene-actions/melee/worktrees/linux",
+    "parent": "e833e01d9bc3113d460306c772788574351bfd52",
+    "commit": "4b078215a9b934fa855bf9154f9fabdbaf8ca003",
+    "branch": "handoff/2026-10-01/deepseek-gene-actions-20260930",
+    "snapshot_files": 7,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/deepseek-gene-world-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/gene-world/melee/worktrees/linux",
+    "parent": "83f9d8f92a026377b60b7cb557d41feaa9f3fe41",
+    "commit": "4a19293ff62a711ff4bd5732b1a74f23eb6460b5",
+    "branch": "handoff/2026-10-01/deepseek-gene-world-20260930",
+    "snapshot_files": 4,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/deepseek-integration-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/integration/melee/worktrees/linux",
+    "parent": "e833e01d9bc3113d460306c772788574351bfd52",
+    "commit": "7dc662c2f5c1949162ac988c45e2d9ef0b08f68b",
+    "branch": "handoff/2026-10-01/deepseek-integration-20260930",
+    "snapshot_files": 5,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/deepseek-inventory-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/inventory/melee/worktrees/linux",
+    "parent": "e833e01d9bc3113d460306c772788574351bfd52",
+    "commit": "2e57e08056161e005223f806fa0b31fe850161ee",
+    "branch": "handoff/2026-10-01/deepseek-inventory-20260930",
+    "snapshot_files": 7,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/deepseek-layouts-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/layouts/melee/worktrees/linux",
+    "parent": "e833e01d9bc3113d460306c772788574351bfd52",
+    "commit": "ddd45e16ea9d435542675a29b6250759529d7ddf",
+    "branch": "handoff/2026-10-01/deepseek-layouts-20260930",
+    "snapshot_files": 8,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/deepseek-menu-polish-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/menu-polish/melee/worktrees/linux",
+    "parent": "e833e01d9bc3113d460306c772788574351bfd52",
+    "commit": "0883fe8a29c1cc412cc6540c029bcb60d51b52c7",
+    "branch": "handoff/2026-10-01/deepseek-menu-polish-20260930",
+    "snapshot_files": 9,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/deepseek-physical-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/physical/melee/worktrees/linux",
+    "parent": "05d2f429a8f7ee70f7a57f2bdc173d147a50b41d",
+    "commit": "7b908dad519d4a118f36df7e3feee8c5a56a4232",
+    "branch": "handoff/2026-10-01/deepseek-physical-20260930",
+    "snapshot_files": 6,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/deepseek-rewards-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/rewards/melee/worktrees/linux",
+    "parent": "05d2f429a8f7ee70f7a57f2bdc173d147a50b41d",
+    "commit": "0e4055245f0389c31d44bf04f1f5f8a5915d3a7a",
+    "branch": "handoff/2026-10-01/deepseek-rewards-20260930",
+    "snapshot_files": 6,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/deepseek-stage-seams-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/deepseek-worktrees/stage-seams/melee/worktrees/linux",
+    "parent": "7ebd732ee00fff59bd1733b667697ccb45cd2488",
+    "commit": "7ebd732ee00fff59bd1733b667697ccb45cd2488",
+    "branch": "handoff/2026-10-01/deepseek-stage-seams-20260930",
+    "snapshot_files": 0,
+    "new_snapshot_commit": false
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/roguelite-100-game",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/integration/roguelite-100/melee/worktrees/linux",
+    "parent": "3062566f596e522433720d7033f5115937143f2b",
+    "commit": "3062566f596e522433720d7033f5115937143f2b",
+    "branch": "handoff/2026-10-01/roguelite-100-game",
+    "snapshot_files": 0,
+    "new_snapshot_commit": false
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/model-test-campaign-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/model-tests/campaign-integration/melee/worktrees/linux",
+    "parent": "7ebd732ee00fff59bd1733b667697ccb45cd2488",
+    "commit": "08a292bd5b4aaf1f54e615c2fdc456e8ead94808",
+    "branch": "handoff/2026-10-01/model-test-campaign-20260930",
+    "snapshot_files": 8,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/gene-world-capacity-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/model-tests/gene-world-capacity/melee/worktrees/linux",
+    "parent": "5664a6db1cf2d096db8df0e3e58775d31dbed23e",
+    "commit": "42d92ea6b851f632dd457b4a13beefd1a8b7e58e",
+    "branch": "handoff/2026-10-01/gene-world-capacity-20260930",
+    "snapshot_files": 2,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/sol-native-owner-cleanup-20260930",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/sol-worktrees/native-owner-cleanup",
+    "parent": "da7af1524784c7105720f8b24633863f688b1971",
+    "commit": "0b227162a4f9c274dd3bcca6fec71f7a356fb225",
+    "branch": "handoff/2026-10-01/sol-native-owner-cleanup-20260930",
+    "snapshot_files": 28,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/vk-concepts-kit-20261001",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/_build/sol-worktrees/stage-seams",
+    "parent": "567c23e5312df98c66a69f318c82a8c2564f72f7",
+    "commit": "55b110dd3034583d0275695625b92c3dfd571f67",
+    "branch": "handoff/2026-10-01/vk-concepts-kit-20261001",
+    "snapshot_files": 30,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "agent/linux",
+    "source_worktree": "/home/gd/melee_linux_test/gdm/melee/worktrees/linux",
+    "parent": "5664a6db1cf2d096db8df0e3e58775d31dbed23e",
+    "commit": "15c459c5078671aed958beab4e091ef92b6cc2b6",
+    "branch": "handoff/2026-10-01/linux",
+    "snapshot_files": 53,
+    "new_snapshot_commit": true
+  },
+  {
+    "repository": "game",
+    "source_branch": "wip/linux-compat-2026-09-22",
+    "source_worktree": null,
+    "parent": "0ab62f440ce3909ed634ca6de47cf3cb4ef9f3b8",
+    "commit": "0ab62f440ce3909ed634ca6de47cf3cb4ef9f3b8",
+    "branch": "handoff/2026-10-01/archived-linux-compat-20260922",
+    "snapshot_files": 0,
+    "new_snapshot_commit": false
+  }
+]

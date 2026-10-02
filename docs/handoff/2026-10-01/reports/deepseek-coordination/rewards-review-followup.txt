@@ -1,0 +1,3 @@
+Continue in isolated rewards worktree, only runtime_rewards.lua and test_reward_runtime.py. No commits/build/game/art/unrelated edits. Root will refresh these two after your report.
+Fix confirmed actual-Core defects: _claim_header require progress.run_id == run.id; reject foreign progress before staging, regression preview/commit unchanged.
+Tradeoff must pay full advertised effective cost: glass_cannon capacity1.5->1 pays .5 of required1 but awards potency+6; slow_burn gain modifier-.75 pays .15 of .5. Refuse partial costs (float epsilon), document contract and test actual Core. Ordinary full-cost tradeoff still succeeds. Source state unchanged on refusal. Review overlapping adds/removes deterministic behavior. Focused tests/report. Standard effort.

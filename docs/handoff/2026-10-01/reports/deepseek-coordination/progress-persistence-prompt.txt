@@ -1,0 +1,72 @@
+You are the sole coding worker for a bounded continuation of the offline TBD
+roguelite. Root coordinates reviews, commits, native builds/install/game. User
+closed the previous OpenCode session; no other writer now owns these task files.
+
+Working directory /home/gd/melee_linux_test/gdm; game repo melee/worktrees/linux.
+Current game HEAD 6ed933614. Read docs/DEEPSEEK-BULK-HANDOFF.md,
+docs/SOL-RUNTIME-CHECKPOINT.md and docs/SOL-ROOMS-CHECKPOINT.md. Their status can
+be stale: the native temp collision and future envelope protection are fixed in
+ba6cce4ee and 35be19ff7; do not repeat that work. Main now instantiates route_service
+but still generates v1 runs. All recipes remain uncertified. Preserve dirty work.
+
+OWNED FILES ONLY:
+- game pc/scripts/examples/roguelite/main.lua
+- game pc/scripts/examples/roguelite/checkpoint.lua and legacy.lua if necessary
+- wrapper tools/roguelite/prepare.py
+- wrapper tools/roguelite/test_runtime.py, test_checkpoint.py, test_legacy.py
+You may add a focused persistence integration test under tools/roguelite if
+needed. Do not edit route/progress/rooms/recipe modules, native C, artwork,
+other docs, gitignore or unrelated files. If their API has a defect report it.
+No commits, reset/clean, staging, releases, game launches/install, native builds,
+new subagents, API/model calls or external config/credential reads. Root handles
+integration after review. Pure tests and temporary fixtures are authorized.
+
+Implement Batch 2 item2: an actual validated TBD3 persistence/resume seam ready
+for v2 routes, while preserving working v1 gameplay and collection-only saves.
+Do not implement new-run v2 generation or physical traversal yet. Stop at a
+coherent patch with tests, not a contract-only scaffold.
+
+Requirements:
+1. Separate runtime resolved manifest, adapter view and schema2 progress state
+   explicitly; save real progress whenever a v2 route exists. Do not silently
+   derive a v2 manifest/progress from a v1 seed or regenerate saved v2 geometry.
+   Connect existing Route.resume/validate_save under protected calls and persist
+   resolved data exactly. Required progress cannot be silently absent on v2.
+2. Loader must dispatch legacy v1 vs v2 by supported schema/generator and keep
+   frozen dungeon_v1 for legacy reconstruction. Bundle DungeonV1 deliberately
+   if needed; inspect actual legacy.lua APIs and immutable fixture contracts.
+   Retain roster selected-vs-running metadata, collection and finished runs.
+3. Wire supported progress migration explicitly using Legacy.migrate_progress
+   only if enough old data exists; do not invent missing pickup/lock histories.
+   Expected version checks must protect future inner manifest/progress schemas
+   even alongside an older usable A/B file. Unknown future records remain bytes
+   intact; semantic corruption refuses safely. Reject missing/incompatible v2
+   sections rather than treating them as a legacy or new run.
+4. Save and load boundaries must contain malformed nested decode/restore/route
+   exceptions. Report useful short feedback. Preserve current future-slot
+   redirection behavior; save failure leaves the previous valid checkpoint and
+   pending logical state intact. Do not claim raw-write fallback is atomic.
+5. Resume should retain validated v2 service state for subsequent orchestration;
+   until traversal is wired, refuse starting incompatible live gameplay safely
+   rather than handing a v2 view to old fixed-room logic. Collection review and
+   legacy play must stay functional. No blanket recipe certification or hidden
+   v1 fallback when a v2 saved run refuses.
+6. Tests must exercise bundled main's real save/load seam, not only Codec APIs:
+   persisted v2 progress+exact resolved manifest, missing progress refusal,
+   supported migration and unsupported preservation, valid old A plus future
+   inner-schema B preservation, malformed nested data containment, corrupt
+   newest fallback, selected/running fighter separation and existing legacy
+   resumes. Test-only admitted recipe fixtures are allowed in the harness, never
+   flip production certified flags. Ensure assertions cover actual bytes/state.
+   Do not expose an unsafe production command solely to satisfy tests.
+
+Run focused suites for changed modules and full discovery:
+python3 -m unittest discover -s tools/roguelite -p 'test_*.py'
+Report named tests separately from import-executed suites. Ensure Lua bundle
+syntax and install-input tests pass. Keep hook/asset budgets and Dpad behavior.
+
+At completion give root exact changed files, behavior now exercised, test
+commands/results, limitations and the next orchestration seam. Do not say v2
+gameplay is live or certification passed. Stop editing after that report so
+root can review. If unable to finish a specific dependency, leave no half-wired
+runtime and give concrete API/error evidence, but pursue available work first.

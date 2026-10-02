@@ -1,0 +1,7 @@
+Additional frozen review findings for the next integration audit:
+- main calls campaign:tick only while transitioning; active failed progress saves never retry after storage recovers. Repro fail_atomic lose_life, restore,50steps ->pendingtrue/writesunchanged.
+- on_unload forcibly campaign:reset(true) after refusedteardown; native gs_unload invokeson_unload butdoesNOTremove stagecolliders/models. Never inferconfirmedscene teardownfromscriptunload. Need nativeowner-cleanup seam or explicitunloadrefusal/recovery; keepmodoperationalwhilepending, do notdroplivehandles.
+- campaign.tick falls through allphases inonecallback: build/place/fsyncsave/destructivecommit/enemyspawn. Restoremandatoryyields (one boundedphase/unitpertick) toavoidhookbudgetoverrun/lifecyclegaps.
+- main newrun installs stagedprofile/run beforeinitialsave; onatomicfailure actualprofile.next_run advances andrun1 remainsinstalled despiteclaimoldprofileuntouched. Preserve references androllbackall profile/run/route/fighter initialselection andgeneration state beforeexternaldurablecommit, regressionwithinitialdiskfailure.
+- Tentative lostrunmirrors concern was NOT substantiated: save mutates override object; rewardsetrun sameobject. Don't introduce speculative clonearchitecture solely for that.
+Allreview evidence usedactualmodulesnative-correct snapshots, existing10tests stillgreen. User's broader12-gategamegoal remainsopen; merelyAPIstubgreen is not shippingcompletion.

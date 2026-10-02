@@ -1,0 +1,44 @@
+[
+  {
+    "path": "melee/worktrees/linux/pc/scripts/examples/roguelite/main.lua",
+    "frozen_sha256": "70dfe560ceacb87cd74987a061667e290f9d44a177957ecfd37b620882a0d010",
+    "candidate_sha256": "8fcbe54b0d618681358bda252076ee9ca26067a1b22d3c0c13389d4b4c07f62e",
+    "added_lines": 39,
+    "removed_lines": 17
+  },
+  {
+    "path": "melee/worktrees/linux/pc/scripts/examples/roguelite/runtime_campaign.lua",
+    "frozen_sha256": "891160cf8b1242fc7fc9016bc55ba458b8a8b73e5c6be4165ec03d8fe358d3ae",
+    "candidate_sha256": "63b6868974a6c6f8e8c1e70d2d14fcc17032f37a163159c6e39740a05ea68aee",
+    "added_lines": 15,
+    "removed_lines": 6
+  },
+  {
+    "path": "melee/worktrees/linux/pc/scripts/examples/roguelite/runtime_presentation.lua",
+    "frozen_sha256": "4a5b70db69ce0f7a65eb26a4464a76b2484fb5cd8423e3c7d9378746948c3376",
+    "candidate_sha256": "1da8b31677719680a70cfd64108a7aa8dc7857cb5f234c5dd8ef0662d02481da",
+    "added_lines": 16,
+    "removed_lines": 7
+  },
+  {
+    "path": "tools/roguelite/test_v2_runtime.py",
+    "frozen_sha256": "e18bcf9821ff915a066ff9eaa890fd4ad7eaaa4b2acd2f965f2ab736cea1c255",
+    "candidate_sha256": "a773e19109648cd3bee06f073ed7ba5da44e095415391a106401ceb3f8000887",
+    "added_lines": 134,
+    "removed_lines": 11
+  },
+  {
+    "path": "tools/roguelite/test_presentation_runtime.py",
+    "frozen_sha256": "72c004a13a5eaa3d8c5bbd2d81b7f95017350c8023907633adfd32dbe58c0f41",
+    "candidate_sha256": "15342da73d0500448f47a2a08e0cefbba8e8701cd5a729f4bc4445da75b0e090",
+    "added_lines": 170,
+    "removed_lines": 3
+  },
+  {
+    "path": "tools/roguelite/test_runtime.py",
+    "frozen_sha256": "6f57b0f1f7365ca0a69be19733811b625703d47b3993878776257fb4695491cc",
+    "candidate_sha256": "c7546138c3a482f8983dbdb0943677c3ca529b13781ff16bb93793cc8636eac0",
+    "added_lines": 3,
+    "removed_lines": 3
+  }
+]

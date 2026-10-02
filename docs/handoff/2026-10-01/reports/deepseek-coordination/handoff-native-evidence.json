@@ -1,0 +1,30 @@
+{
+  "profile": "/home/gd/melee_linux_test/gdm/_build/agents/roguelite-handoff-review",
+  "game_commit": "0eab9b9b4",
+  "tool_commit": "e00c463",
+  "binary_sha256": "fb3a8816e70131d96d56241726c3718292aec425b268f09d78f82aa1e417ed6c",
+  "fps": 60,
+  "turbo": false,
+  "recipe_certification_changed": false,
+  "route": "production legacy fallback",
+  "observed": [
+    "run entry active",
+    "LEFT opens loadout-derived abilities tree",
+    "custom room geometry with host FD geometry isolated",
+    "compact percent/lives/supplies/charge rail visible",
+    "vanilla HUD hidden",
+    "onboarding notification visible"
+  ],
+  "input": "scripted console fixture, not physical-controller acceptance",
+  "native_png_limitation": "shot captures native scene without script overlay; desktop grim window capture includes visible script UI",
+  "capture": "/home/gd/melee_linux_test/gdm/_build/deepseek-coordination/native-previews-clean/handoff_window.png",
+  "found_and_fixed": "collection render before first run dereferenced nil node in opponent lives calculation",
+  "pure_validation": "243 all-suite tests passed before native fix; affected presentation suite 20 tests passed including new regression",
+  "not_claimed": [
+    "full v2 route admission",
+    "slope traversal",
+    "native gene-world adapter",
+    "human feel",
+    "Windows validation"
+  ]
+}

@@ -1,0 +1,38 @@
+Build a reproducible native room certification harness in your isolated worktree.
+OWN NEW wrapper tools/roguelite/certify_rooms.py, tools/roguelite/test_certify_rooms.py
+and NEW game pc/scripts/examples/roguelite_certification/ directory only. Root
+reviews/bundles/installs/drives native runs later. Do not edit existing main,
+recipes, native code, other tests/prepare or frozen dirty baseline modules.
+
+Read docs/SOL-ROOMS-CHECKPOINT.md, ART-BRIEF-branch-rooms.md, completion/acceptance
+docs and existing tools launch/console/controller/capture flows. Actual current
+native API source may be read from /home/gd/melee_linux_test/gdm/melee/worktrees/linux
+because your isolated committed snapshot omits some current working APIs.
+
+Harness must inspect unc ertified resolved recipes WITHOUT flipping production
+certification or bypassing production admission. Separate isolated mod/profile
+can resolve a recipe directly, load existing BF kit incrementally, isolate FD,
+build actual floor segments/platforms/slopes, place supported fighters and replay
+ordinary controller inputs at NORMAL speed. Teleports are allowed only for
+initial placement/inspection, never evidence that a mandatory traversal succeeds.
+Test plans should cover branch_y upper ascent/return/both forks, rejoin_merge both
+entries, junction_cross downward drop and safe arrival/alternate return, and
+representative mobility fighter profiles. Track recipe/assets/build/backend,
+controller samples, position/airborne observations, seam/arrival/fall outcomes,
+camera/blast bounds and cleanup. Never automatically mark a recipe certified
+from mere schema/teleport success. Provide machine-readable logs and capture
+paths, pending/manual verdicts where needed. No uncapped/turbo experiments.
+
+Use real gd pad/controller APIs and console runner semantics after inspecting
+them, not invented helpers. Avoid holding a controller on the wrong port. Report
+unsupported headless capture or missing API precisely. Pure tests validate
+plans/parser/refusal/state handling; do not claim native traversal passed until
+root runs it. CLI installs only when explicitly invoked to an isolated app-dir;
+it must preserve enabled lists/user saves/shared binary. No interactive viewer;
+PNG screenshots and internal normal-speed motion clips are evidence outputs.
+
+No native build/game/install during this worker task, git commits/staging/reset/
+clean, extra model calls/agents, art authoring, releases or network features.
+Pure tests permitted. Default reasoning effort only. Deliver working harness,
+focused tests, exact CLI commands/root prerequisites and honest limitations,
+then STOP editing. Keep code practical rather than a plan-only document.

@@ -1,0 +1,39 @@
+Implement NEW game pc/scripts/examples/roguelite/runtime_rewards.lua and NEW
+wrapper tools/roguelite/test_reward_runtime.py in your isolated worktree only.
+Root owns wiring main/prepare/menus and merging. Preserve baseline dirty Sol
+modules, do not edit/commit them. No native build/install/game, art authoring,
+git staging/commit/reset/clean, model calls/agents or external config reads.
+
+Read Core, EncounterCatalogue reward specs, gene catalogue, Progress/Route and
+existing menus/reward flow. Build a functional transaction-safe reward resolver
+for resolved node.reward_spec (not the old four fixed options). Validate ids,
+versions/kinds/families/target genes, resolve eligible choices from actual Core
+mechanics and return useful benefits+costs for menus. Use existing Core.reward /
+stats caps, deep-copy via existing supported snapshot semantics where useful.
+Never silently label unimplemented mutations/reactions or equipment as working.
+
+Support existing stat upgrades and meaningful tradeoffs as whole operations,
+bounded supplies where existing progress supports them, and charge/heal only
+with an explicit staged gameplay effect contract root can commit safely. Supply
+caps/charge/cooldown caps, incompatible families and target selection must be
+checked; no pretend stat effects beyond actual Core support. Explicit controlled
+unsupported refusals for mutation/equipment definitions lacking real mechanics
+are preferable to fake functionality. Provide supported-definition filtering
+for generator admission and readable menu choices. No misleading speculative
+numbers or catalogue-only features.
+
+Stage on independent run/progress copies, stable reward:<room_id> identity,
+one-time claims and fulfilled objective requirements. Do not mutate original
+Core/progress/profile or save directly. Return transaction result that main can
+persist and commit, plus deferred native effect intents where applicable. Refusal
+or partial tradeoff failure must preserve originals. Preview and commit must use
+the same resolver/stats. Gene family naming aliases must be explicit and match
+actual Core mechanics, not guessed cinder/fire or rime/frost equivalence.
+
+Meaningful tests use real Core/Progress/canonical specs: cap/refusal boundaries,
+tradeoff all-or-nothing, compatible/incompatible target, choice preview matches
+actual new stats, duplicate/uncleared claims, snapshot round trips and deferred
+effects rollback contract. No test-only production commands. Default reasoning
+effort, not max. Finish module/tests, STOP editing and report exact API, supported
+content, test commands/results and required main/menu wiring. Pure stubs do not
+prove native play or human fun. Follow full completion plan scope over time.

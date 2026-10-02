@@ -1,0 +1,8 @@
+# Fourth bounded enemy correction after independent Sol review
+Work only existing enemy-behaviors isolated wrapper/game lane. Owned encounter_behaviors.lua,boss_behaviors.lua,test_enemy_behaviors.py,ENEMY-BEHAVIOR-CONTRACT.md. No main/native/build/install/commit or other lanes.
+
+Independent reviewer ran actualCore30tests green and confirmed exact run/gene/state binding. Two concrete blockers remain:
+1. encounter_behaviors.lua visibility() around272 checks result==false only. With configured visible=function() return nil end, make_manager(charged_run(...),{visible=...}), drive_to_ability returns true/frame17. Configured predicate must return exactlytrue to grant visibility; nil/false/errors/other values failclosed. Default when predicate absent follows explicit observed target semantics. Add actualCore regression showing no ability/tell/private target history and existing tell cancellation if visibility changes true->nil.
+2. sanitize_obs({targets={}}) throws near232 due self_dropped nil. obs({targets={false}}) throws near239 due more nil. Malformed self/target observations must refuse/drop safely, not raise or retain invisible history. Helpers must return consistent zero/count or validate before adding. Add malformed/missing self, false/nil targets and configured visibility return type regressions using real public update path. Do not invent positions or admit invalid actors.
+
+Preserve all30tests and owned identity/action/LOS fixes. Run focusedsuite plus lexicalbundle smoke. Report exact counts and remaining native limits. Rootcoordination report-only file enemy-followup-4-report.md allowed, or return report text. Freeze on completion.

@@ -1,0 +1,8 @@
+{
+  "app_dir": "/home/gd/melee_linux_test/gdm/_build/agents/roguelite-certification",
+  "bundle_sha256": "0f3d4c7eddf88929a9db693c8d73206136a62a1ad02ab247adb57709d7c10921",
+  "enabled_backup": "/home/gd/melee_linux_test/gdm/_build/agents/roguelite-certification/mods/roguelite_certification-enabled.backup",
+  "enabled_written": "roguelite_certification",
+  "mod_dir": "/home/gd/melee_linux_test/gdm/_build/agents/roguelite-certification/mods/roguelite_certification",
+  "models": 46
+}

@@ -1,0 +1,38 @@
+Implement a bounded encounter orchestrator in your isolated worktree. OWN NEW
+game pc/scripts/examples/roguelite/runtime_encounters.lua and NEW wrapper
+tools/roguelite/test_encounter_runtime.py only. Do not edit main/prepare/catalogues/
+Core/native/AI/other tests or baseline dirty files. Root bundles/wires later.
+Read actual encounter_catalogue, enemy_catalogue, enemy_genes, technical_ai,
+main.lua, route/progress and the handoff docs. Root current native sources are
+readable at /home/gd/melee_linux_test/gdm/melee/worktrees/linux to verify APIs.
+
+Build a functional injected gd/Core/controller orchestrator for resolved
+node.encounter_spec and saved schema2 progress. Filter supported content: data
+descriptions lacking mechanics cannot appear functional. Support custom actors
+(goomba/redead/etc as existing API actually implements), ordinary fighter CPUs
+with existing technical AI, buffed gene hosts and explicit stock/phase counters.
+Do not assume multiple fighter definitions all map into one CPU port. Define a
+clear supported scheduling policy (sequential waves when only p2 exists) or
+controlled refusal; never silently discard fighters.
+
+Use stable saved entity IDs and confirmed defeat events/observed stock transitions
+for progress. Duplicate contacts/defeats and stale handles must be harmless.
+Actor disappearance or leaving camera must not grant defeat/clear. Provide
+bounded respawn/error policy so missing actors do not strand a run silently.
+Integrate existing EnemyGenes + TechAI through verified contracts, keep owner
+cleanup correct and charge/provenance intact. Controls remain main's responsibility.
+Have explicit spawn/update/hit/defeat/clear/reset lifecycle, avoid globalrequire.
+Root will atomically mirror and persist progress; do not save or mutate profile
+collection. Return meaningful events/results for main's transaction layer.
+
+Tests use real modules plus injected gd stubs and saved resolved fixture specs:
+spawn refusal cleans owned actors/hosts; duplicate/stale defeat refusal;
+escaped actor is not defeat; stock/wave continuation and partial resume; gene
+buff attachment; impossible compositions refusal; cleanup failure retries and
+budgets. Cover real behaviors not just catalogue field validation.
+
+No commits/staging/reset/clean, native builds/install/game, external config or
+model/API delegation, new art, networking/release. Pure tests authorized. Default
+effort only, not max. Finish coherent module+tests, STOP editing and report owned
+files, API, supported specs, tests/results and remaining main wiring. Do not
+claim native combat/playtesting based on stubs.

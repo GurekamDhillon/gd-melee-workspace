@@ -1,0 +1,141 @@
+{
+  "status": "complete-and-frozen",
+  "certified": false,
+  "lane": "/home/gd/melee_linux_test/gdm/_build/sol-worktrees/stage-seams",
+  "seed": "/home/gd/melee_linux_test/gdm/_build/sol-worktrees/stage-seams-seed",
+  "seed_manifest": "/home/gd/melee_linux_test/gdm/_build/sol-worktrees/stage-seams-seed/manifest.json",
+  "seed_manifest_verified": true,
+  "git_head": "7ebd732ee00fff59bd1733b667697ccb45cd2488",
+  "patch": "/home/gd/melee_linux_test/gdm/_build/sol-coordination/stage-seams-seed-relative.patch",
+  "patch_sha256": "2e0cb70d090405d4b9f771331809365396378b896539b7196ad82db41aca61e1",
+  "files": [
+    {
+      "path": "pc/gameworld/script_game.c",
+      "seed_sha256": "fa2e2584ac7971e7fa3c43f2e8329aa8e850542eb4dc14827e0f9d25517b9d6d",
+      "final_sha256": "0a3f3a0285b22a2ab7f3aabe1a26e639d8be21772e236f9496bcb062b6839e4f"
+    },
+    {
+      "path": "pc/gameworld/script_stage_seams.inc",
+      "seed_sha256": null,
+      "final_sha256": "68f6bed1f93818bd26d2ca569f8e72e4b9f40a3a718287eecb7138ea4601a444"
+    },
+    {
+      "path": "pc/platform/gw_script.c",
+      "seed_sha256": "a7be932fa522c17ced03dd3591f25c00f638b5083d0f613a7d8782affb1dae83",
+      "final_sha256": "d49272b309879d999f9267b19c9e17672afe67dd2a369137c75742202064a984"
+    },
+    {
+      "path": "pc/platform/gw_script_stage_seam_tests.inc",
+      "seed_sha256": null,
+      "final_sha256": "b52bc64e0bb4b10316a41ec478f853fc1cead8fe796c3bb3de65072dc9990a1b"
+    },
+    {
+      "path": "pc/tests/stage_seam_test.c",
+      "seed_sha256": null,
+      "final_sha256": "da3f98c9dcb988411635b72c1cfa1d5273cff132aada9cc5c5889f2b343cea2e"
+    },
+    {
+      "path": "pc/tests/stage_seam_test.py",
+      "seed_sha256": null,
+      "final_sha256": "4d269c67029b9b7bd4d4c3c4c4f48048dad15e2bcfba0ff4a08974ad6c844042"
+    },
+    {
+      "path": "src/melee/mp/mplib.c",
+      "seed_sha256": "13ce443d6ce9d5490ab624f81b6897b7db5588d034ae7062ff047975ac5091a1",
+      "final_sha256": "fe3bc6cfc5d571e2a7dec8b927dcd2daedd706d9eadeac7864e80559ecfde1af"
+    }
+  ],
+  "checks": [
+    {
+      "command": "python3 pc/tests/stage_seam_test.py",
+      "result": "pass",
+      "evidence": "actual-source stage seam graph, floor-follow, dynamic-island and lifecycle tests passed"
+    },
+    {
+      "command": "python3 pc/tests/stage_seam_test.py --sanitize",
+      "result": "pass",
+      "sanitizers": [
+        "address",
+        "undefined"
+      ],
+      "evidence": "actual-source stage seam graph, floor-follow, dynamic-island and lifecycle tests passed"
+    },
+    {
+      "command": "clang --target=ppc32-none-eabi -std=c99 -nostdinc -fno-builtin -DLINT -DTARGET_PC -fno-short-enums -fsigned-char -mlong-double-64 -fno-strict-aliasing -fwrapv -fcommon -fgnu89-inline -ftrivial-auto-var-init=zero -Isrc -isystem src/MSL -isystem libs/dolphin/include -isystem libs/dolphin/src -isystem build/GALE01/include -include src/MSL/math_ppc.h -fsyntax-only pc/gameworld/script_game.c src/melee/mp/mplib.c",
+      "result": "pass",
+      "warnings": "7 script_game warnings and 6 mplib warnings: existing header typedef redefinitions and enum conversion outside seam changes"
+    },
+    {
+      "command": "clang -m32 -std=gnu11 -DTARGET_PC -I extern/aurora/include -I pc/platform -I /home/gd/melee_linux_test/gdm/_build/linux/ax86m/_deps/sdl-src/include -I extern/enet/include -I /home/gd/melee_linux_test/gdm/_build/linux/libusb/install/include/libusb-1.0 -I /usr/include/freetype2 -fsyntax-only pc/platform/gw_script.c",
+      "result": "pass",
+      "warnings": "4 nested comment warnings outside seam changes"
+    },
+    {
+      "command": "git apply --check <seed-relative.patch> on a temporary copy of every seed-manifest file; git apply; byte-compare all seven final files",
+      "result": "pass"
+    }
+  ],
+  "review_findings": [
+    "Explicit handles and positive owner equality define selected room graph. No coordinate search or room inference. Floors left-to-right, actual world collision endpoints within Euclidean EPS 0.05.",
+    "Reciprocal id0 and id1 updated together; stale, foreign, self, nonfloor, mismatched/disabled topology, occupied, ambiguous or cyclic link attempts refuse before mutation.",
+    "Moves preserve valid touching pairs and unlink invalid outgoing and incoming references; removal clears reciprocal and inconsistent incoming links before slot retirement and refreshes every active floor island.",
+    "Review strengthened removal to require complete current-map reserved counts. Regression proves unsafe-map refusal retains active linked handle and unchanged graph, with subsequent successful retry.",
+    "Scripted joints excluded from vanilla proximity stitcher, including scripted-builtin pairs; builtin-builtin stitching remains intact."
+  ],
+  "scope": {
+    "root_modified": false,
+    "shared_native_modified": false,
+    "lua_modified": false,
+    "new_model_lane_modified": false,
+    "build_install_or_game_used": false,
+    "seeded_dirty_native_changes_in_patch": false
+  },
+  "risks_and_limits": [
+    "Controller traversal of allstairs/balcony/ramp joins remains unverified; certification stays false.",
+    "Lua script_stage_link headless test is registered and its translation unit syntax checked but was not run in a newly linked native executable.",
+    "Actual-source tests use synthetic maps and allocator/scene fixtures; they do not certify PPC-to-i686 bridge ABI, live fighter physics, rendering, save/rewind or production room caller integration.",
+    "Explicit handles are room-local by caller selection; no native room identifier exists, so callers must not request a cross-room pair owned by the same script.",
+    "Patch depends on the seed snapshot including existing dirty native ownership/model/isolation work; apply to the corresponding seed state, not a clean upstream checkout."
+  ],
+  "freeze": {
+    "files_sha256": [
+      {
+        "path": "pc/gameworld/script_game.c",
+        "seed_sha256": "fa2e2584ac7971e7fa3c43f2e8329aa8e850542eb4dc14827e0f9d25517b9d6d",
+        "final_sha256": "0a3f3a0285b22a2ab7f3aabe1a26e639d8be21772e236f9496bcb062b6839e4f"
+      },
+      {
+        "path": "pc/gameworld/script_stage_seams.inc",
+        "seed_sha256": null,
+        "final_sha256": "68f6bed1f93818bd26d2ca569f8e72e4b9f40a3a718287eecb7138ea4601a444"
+      },
+      {
+        "path": "pc/platform/gw_script.c",
+        "seed_sha256": "a7be932fa522c17ced03dd3591f25c00f638b5083d0f613a7d8782affb1dae83",
+        "final_sha256": "d49272b309879d999f9267b19c9e17672afe67dd2a369137c75742202064a984"
+      },
+      {
+        "path": "pc/platform/gw_script_stage_seam_tests.inc",
+        "seed_sha256": null,
+        "final_sha256": "b52bc64e0bb4b10316a41ec478f853fc1cead8fe796c3bb3de65072dc9990a1b"
+      },
+      {
+        "path": "pc/tests/stage_seam_test.c",
+        "seed_sha256": null,
+        "final_sha256": "da3f98c9dcb988411635b72c1cfa1d5273cff132aada9cc5c5889f2b343cea2e"
+      },
+      {
+        "path": "pc/tests/stage_seam_test.py",
+        "seed_sha256": null,
+        "final_sha256": "4d269c67029b9b7bd4d4c3c4c4f48048dad15e2bcfba0ff4a08974ad6c844042"
+      },
+      {
+        "path": "src/melee/mp/mplib.c",
+        "seed_sha256": "13ce443d6ce9d5490ab624f81b6897b7db5588d034ae7062ff047975ac5091a1",
+        "final_sha256": "fe3bc6cfc5d571e2a7dec8b927dcd2daedd706d9eadeac7864e80559ecfde1af"
+      }
+    ],
+    "time_utc": "2026-09-30T23:15:38.612392+00:00",
+    "policy": "No further lane edits after report. Frozen by coordination declaration; filesystem permissions left unchanged."
+  }
+}

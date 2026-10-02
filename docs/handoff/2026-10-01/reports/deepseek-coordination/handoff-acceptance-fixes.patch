@@ -1,0 +1,727 @@
+--- a/melee/worktrees/linux/pc/scripts/examples/roguelite/main.lua
++++ b/melee/worktrees/linux/pc/scripts/examples/roguelite/main.lua
+@@ -34,6 +34,7 @@
+ local pending_room=nil
+ local pending_ticks=0
+ local transition_error,pending_finish=nil,nil
++local campaign_recovery_error=false
+ local menu='collection'
+ local menu_state=Menus.new()
+ local selected_fighter,run_fighter={id='falco',costume=0},{id='falco',costume=0}
+@@ -76,12 +77,8 @@
+ -- current button word is passed through so a held Up keeps its latch across the
+ -- rebuild and can never become a fresh root taunt.
+ --
+--- Scoped to the live v2 surface. The legacy v1 slice deliberately keeps the
+--- authored default grammar: its acceptance suite
+--- (tools/roguelite/test_runtime.py, outside this lane's file ownership) encodes
+--- the default gesture depth, and swapping the tree there is a root-coordinated
+--- change rather than a silent behaviour change.
+-local function sync_loadout() if campaign then presentation:rebuild(command_state,run,buttons) end end
++-- Both route versions install the same loadout-derived grammar.
++local function sync_loadout() presentation:rebuild(command_state,run,buttons) end
+ -- The most recent real command-tree edge, for read-only diagnostics. main never
+ -- fabricates one: it is written only where Commands.update actually returns.
+ local last_command_event=nil
+@@ -387,6 +384,7 @@
+  return nil
+ end
+ local function finish(outcome)
++ campaign_recovery_error=false
+  local h=run.hosts.player;local id=h.slots.assault or h.slots.traversal or h.slots.guard
+  if outcome=='success' and #keys(profile.genes)>=128 then id=nil end
+  local old_profile,old_run=assert(Core.snapshot(profile)),assert(Core.snapshot(run))
+@@ -450,8 +448,15 @@
+ -- A campaign error that has actually recovered is retired with the error: the run
+ -- is playable again, and a page left with no usable control is not a recovery.
+ local function v2_recovered()
++ if not campaign_recovery_error or pending_finish or not campaign then return false end
++ local retired=campaign.phase=='idle' and not campaign:blocked() and campaign.tx==nil
++ if not campaign:running() and not retired then return false end
++ campaign_recovery_error=false
+  transition_error=nil
+- if menu=='error' then unpause() end
++ if menu=='error' then
++  if retired then active=false;pause_menu('collection') else unpause() end
++ end
++ return true
+ end
+ -- Release a previous owner deliberately. A refused native cleanup keeps the
+ -- campaign retained so its handles are retried at the next paused promotion
+@@ -610,6 +615,7 @@
+  return true
+ end
+ local function begin(resume)
++ campaign_recovery_error=false
+  if save_error then say('Invalid checkpoints preserved; cannot start until repaired');return end
+  Feedback.reset(feedback)
+  if resume and route then
+@@ -797,7 +803,7 @@
+  if result.starter then starter=result.starter end
+  if not save() then
+   profile=assert(Core.restore(old_profile));rebind_current_run(old_run and assert(Core.restore(old_run)) or nil);starter=old_starter
+-  feedback_sync(0,true);return
++  sync_loadout();feedback_sync(0,true);return
+  end
+  if action.kind=='breed' or action.kind=='fuse' then
+   Menus.reset(menu_state,menu);menu_state.selected=result.id
+@@ -916,36 +922,38 @@
+    -- once storage/engine recovers. Retried on a slow cadence (and by the error
+    -- menu confirm), never rewriting a stale checkpoint because pending always
+    -- holds the latest authoritative record.
+-   if tick_serial%30==0 then campaign:retry_recovery() end
+-   if campaign:failed() then
++   campaign_recovery_error=true
++   if tick_serial%30==0 or (menu=='error' and not pending_finish and edge(b,gd.buttons.A)) then campaign:retry_recovery() end
++   -- A retry can leave error for recovering or settling. Those phases still
++   -- own native/save work and must stay gated in this very callback.
++   if not campaign:running() then
++    if campaign.phase=='idle' then v2_recovered() end
+     transition_error=campaign.error_msg
+-    if menu~='error' then pause_menu('error') end
++    if campaign:failed() and menu~='error' then pause_menu('error') end
+     buttons=b;return
+    end
+-   -- Recovered: the run is playable again, so a recovery page whose error no
+-   -- longer applies must not strand the player behind it.
+-   v2_recovered()
+-  end
+-  if v2_paused then v2_set_paused(false) end
++  end
+   local notice=campaign:take_notice()
+   local iso_ok,iso=false,false
+   if gd.stage_isolate then iso_ok,iso=pcall(gd.stage_isolate) end
+   if not iso_ok or not iso then
+    active=false;cleanup();transition_error='Empty playfield isolation was lost. Restart to resume the preserved checkpoint.';pause_menu('error');buttons=b;return
+   end
+-  active=true
+   -- Isolation and the campaign are both healthy again, so a recovery page whose
+   -- error no longer applies must not strand the player behind inert controls.
+-  if menu=='error' and not campaign:failed() and campaign:running() then v2_recovered() end
++  if menu=='error' then v2_recovered() end
++  active=campaign:running() and menu~='error'
++  if v2_paused and campaign:running() and menu~='error' then v2_set_paused(false) end
+   if notice then say(notice,'info','v2') end
+   feedback_sync(0,menu~=nil)
+   if menu then
+    gd.input_mask(1,15)
+    -- Explicit recovery control: confirm on the error page retries the pending
+    -- native/save recovery; a successful retry resumes the run.
+-   if menu=='error' and campaign and edge(b,gd.buttons.A) then
++   if menu=='error' and campaign_recovery_error and not pending_finish and edge(b,gd.buttons.A) then
+     campaign:retry_recovery()
+-    if not campaign:failed() then v2_recovered();v2_set_paused(false);buttons=b;return end
++    if campaign:running() then v2_recovered();v2_set_paused(false);buttons=b;return end
++    v2_set_paused(true);active=false;buttons=b;return
+    end
+    local mx,my,mb=gd.mouse()
+    local input={up=edge(b,gd.buttons.UP),down=edge(b,gd.buttons.DOWN),left=edge(b,gd.buttons.LEFT),right=edge(b,gd.buttons.RIGHT),confirm=edge(b,gd.buttons.A),back=edge(b,gd.buttons.B),mx=mx,my=my,click=mb%2==1 and mouse_buttons%2==0}
+@@ -998,7 +1006,10 @@
+    -- the root Down edge, so one press can never both travel and fork a branch.
+    if p and command_state.node=='root' and edge(b,gd.buttons.DOWN) and (run.progress.cleared[node.id] or (node.kind~='arena' and node.kind~='boss' and not next(enemies))) then
+     for _,e in ipairs(node.exits) do local anchor=node.room.exit_anchors[e.side]
+-     if math.abs(p.x-anchor.x)<13 and math.abs(p.y-anchor.y)<10 then enter(e.to);Commands.reset(command_state,b);travelled=true;break end end
++     if math.abs(p.x-anchor.x)<13 and math.abs(p.y-anchor.y)<10 then
++      if enter(e.to) then presentation:observe({kind='door'});Commands.reset(command_state,b);travelled=true end
++      break
++     end end
+    end
+    if not travelled then
+     local event,mask=Commands.update(command_state,b,availability);gd.input_mask(1,mask)
+@@ -1182,12 +1193,15 @@
+   player={percent=player and player.percent or 0,lives=run and run.stocks or 0,supplies=run and run.progress.supplies or 0},
+   opponent=opponent and {label=node.kind=='boss' and 'CHAMPION' or 'OPPONENT',percent=opponent.percent,lives=opp_lives}})
+ end
+--- Drawing is pure presentation, so a renderer failure is contained and reported
+--- instead of escaping into the engine every frame. A partial frame can never be
+--- mistaken for a run or save change, because this callback mutates nothing.
++-- A renderer failure is contained and returns the native HUD when possible.
++-- Drawing never advances the run or writes a save; a refused HUD restoration
++-- stays owned by Presentation for the next lifecycle retry.
+ function on_draw()
+  local ok,err=pcall(draw_scene)
+- if not ok and gd.log then gd.log('roguelite: draw refused: '..tostring(err)) end
++ if not ok then
++  presentation:release_hud()
++  if gd.log then gd.log('roguelite: draw refused: '..tostring(err)) end
++ end
+ end
+ function on_match_end()
+  pending_room=nil;ready=false;active=false;pending_entry=false
+--- a/melee/worktrees/linux/pc/scripts/examples/roguelite/runtime_campaign.lua
++++ b/melee/worktrees/linux/pc/scripts/examples/roguelite/runtime_campaign.lua
+@@ -473,7 +473,8 @@
+   if ok then return true end
+   self.route.progress = staged
+   self:_mirror(staged)
+-  self.pending_save = { manifest = self.route.manifest, progress = staged, attempts = 0 }
++  self.pending_save = { manifest = self.route.manifest, progress = staged, attempts = 0,
++    resume_phase = self.phase }
+   self.notice = 'Progress save pending: ' .. tostring(why)
+   return false, why
+ end
+@@ -483,7 +484,14 @@
+   if not pending then return true end
+   pending.attempts = (pending.attempts or 0) + 1
+   local ok, why = self:_save(pending.progress)
+-  if ok then return true end
++  if ok then
++    -- Exhaustion changes the phase to error, but does not complete the operation
++    -- that queued this write. In particular, settling still owes room entry,
++    -- finish and reward dispatch after its objective becomes durable.
++    self.phase = pending.resume_phase or 'active'
++    self.error_msg = nil
++    return true
++  end
+   if pending.attempts >= self.max_save_attempts then
+     self.error_msg = 'Progress save refused after retries: ' .. tostring(why)
+     self.phase = 'error'
+@@ -822,7 +830,8 @@
+ 
+ -- Explicit user/hook recovery attempt for a terminal error: retries the pending
+ -- native rollback, the pending durable save, or a refused transition rollback
+--- from a fresh bound. Returns true when the owner is no longer in error.
++-- from a fresh bound. Returns true only when play can resume or a retired owner
++-- is clean and idle; recovering/settling still owe work and remain blocked.
+ function RuntimeCampaign:retry_recovery()
+   if self.effect_pending then
+     local ok = self:retry_effects()
+@@ -832,18 +841,17 @@
+     self.pending_save.attempts = 0
+     local ok, why = self:_flush_pending_save()
+     if not ok then return false, why end
+-    if self.phase == 'error' then self.phase = self.rooms:active_room() and 'active' or 'idle' end
+     self.error_msg = nil
+-    return true
++    return self:running()
+   end
+   if self.phase == 'error' and self.tx then
+     self.rollback_attempts = 0
+     self.phase = 'recovering'
+     self:attempt_recovery()
+-    if not self:failed() then self.error_msg = nil; return true end
++    if self:running() then self.error_msg = nil; return true end
+     return false, self.error_msg
+   end
+-  return not self:failed()
++  return self:running() or (self.phase == 'idle' and not self:blocked() and self.tx == nil)
+ end
+ 
+ -- Destructive retirement of the source happens only after a durable save. A
+--- a/melee/worktrees/linux/pc/scripts/examples/roguelite/runtime_presentation.lua
++++ b/melee/worktrees/linux/pc/scripts/examples/roguelite/runtime_presentation.lua
+@@ -48,6 +48,7 @@
+     -- Owns the native HUD only while it is actually hidden: that is the same
+     -- condition under which the compact rail is allowed to replace it.
+     compact = false,
++    hud_release_pending = false,
+     layout = nil, layout_key = nil,
+     charged = {}, told = {}, told_room = nil,
+   }, {__index = Presentation})
+@@ -70,18 +71,23 @@
+   local opts = {width = self.width, height = self.height, dpi = self.dpi,
+     new_hud = self.compact, command = flags.command == true,
+     compact_menu = flags.compact_menu == true}
+-  local lay, why = self.Hud.layout(opts)
+-  if lay then
++  local ok, lay, why = pcall(self.Hud.layout, opts)
++  if ok and lay then
+     self.layout, self.layout_key = lay, key
+     return lay
+   end
++  if not ok then why = lay end
++  -- A broken custom layout cannot safely replace the native damage readout.
++  -- A refused restore keeps its ownership token for the next lifecycle retry.
++  self:release_hud()
+   -- A refused layout must not blank the run: fall back to the unscaled canvas so
+   -- the player keeps a readable life/damage readout, and report it honestly.
+   if self.layout_key ~= 'fallback' then
+     self.layout_key = 'fallback'
+     self.log('HUD layout refused (' .. tostring(why) .. '); using the minimal safe layout')
+   end
+-  local safe, safe_why = self.Hud.layout({width = self.width, height = self.height})
++  local safe_ok, safe, safe_why = pcall(self.Hud.layout, {width = self.width, height = self.height})
++  if not safe_ok then safe_why = safe; safe = nil end
+   self.layout = safe or {width = self.width, height = self.height, safe = {x = 0, y = 0, w = self.width, h = self.height},
+     replace_vanilla = false, scale = 1, content_scale = 1, note_scale = 1, compact_scale = 1}
+   if not safe then self.log('HUD fallback layout refused (' .. tostring(safe_why) .. ')') end
+@@ -97,6 +103,7 @@
+ -- failed mutation, so only a throw or a missing API counts as a failure.
+ function Presentation:take_vanilla_hud(want)
+   want = want == true
++  if self.hud_release_pending then return self:release_hud() end
+   if want == self.compact then return false, 'unchanged' end
+   if type(self.gd.hud_visible) ~= 'function' then return false, 'native HUD control unavailable' end
+   local ok, res = pcall(self.gd.hud_visible, not want)
+@@ -109,11 +116,13 @@
+ -- Hand the native HUD back unconditionally; safe to call when not owned.
+ function Presentation:release_hud()
+   if not self.compact then return false, 'not owned' end
+-  if type(self.gd.hud_visible) ~= 'function' then self.compact = false;return false, 'unavailable' end
++  self.hud_release_pending = true
++  if type(self.gd.hud_visible) ~= 'function' then return false, 'unavailable' end
+   local ok, res = pcall(self.gd.hud_visible, true)
++  if not ok then return false, tostring(res) end
+   self.compact = false
++  self.hud_release_pending = false
+   self.layout, self.layout_key = nil, nil
+-  if not ok then return false, tostring(res) end
+   return true, res
+ end
+ 
+@@ -130,7 +139,7 @@
+     hud = ctx.hud ~= false, notifications = ctx.notifications ~= false,
+     compact_menu = ctx.compact_menu == true, reduced = self.reduced,
+     layout = lay, player = ctx.player, opponent = ctx.opponent})
+-  if not ok then self.log('HUD draw refused: ' .. tostring(err)) ; return false end
++  if not ok then self:release_hud(); self.log('HUD draw refused: ' .. tostring(err)) ; return false end
+   return true
+ end
+ 
+@@ -290,4 +299,4 @@
+ end
+ 
+ Presentation.copy = copy
+-return Presentation+return Presentation
+--- a/tools/roguelite/test_v2_runtime.py
++++ b/tools/roguelite/test_v2_runtime.py
+@@ -51,6 +51,7 @@
+ for _,recipe in pairs(Recipes.recipes) do recipe.certified=true end
+ 
+ local serial=0; local actors={}; local refuse_remove=false; local save_fail=false
++local stage_handles={}
+ local percent_mode=nil; local percent_refuse_call=nil; local percent_calls=0
+ local ps={[1]={x=-42,y=0,vy=0,stocks=99,percent=0,facing=1,action=14,airborne=false,hitlag=0},
+  [2]={x=28,y=0,vy=0,stocks=99,percent=0,facing=-1,action=14,airborne=false,hitlag=0}}
+@@ -64,14 +65,15 @@
+ gd={buttons={A=256,B=512,UP=8,DOWN=4,LEFT=1,RIGHT=2},
+  log=function() end,
+  stage_isolate=function(v) if v~=nil then isolation=v end return isolation end,
+- stage_add_platform=function() serial=serial+1; return serial end,
+- stage_add_line=function() serial=serial+1; return serial end,
++ stage_add_platform=function() serial=serial+1; stage_handles[serial]=true; return serial end,
++ stage_add_line=function() serial=serial+1; stage_handles[serial]=true; return serial end,
++ stage_link=function(a,b) assert(a~=b and stage_handles[a] and stage_handles[b],'link requires two owned lines'); return true end,
+  model_load=function() serial=serial+1; return serial end,
+  model_spawn=function() serial=serial+1; return serial end,
+  model_despawn=function() return true end,
+  model_release=function() return true end,
+  model_get=function() return true end,
+- stage_remove=function() if refuse_remove then return false end return true end,
++ stage_remove=function(h) if refuse_remove then return false end stage_handles[h]=nil; return true end,
+  player=snapshot,
+  teleport=function(p,x,y) if not ps[p] then return false end ps[p].x=x;ps[p].y=y;return true end,
+  set_percent=function(p,n)
+@@ -173,7 +175,7 @@
+  return CAMPAIGN
+ end
+ local function reset(seed)
+- serial=0; actors={}; refuse_remove=false; save_fail=false; isolation=true; FINISHED=nil; SAVE_CALLS=0
++ serial=0; actors={}; stage_handles={}; refuse_remove=false; save_fail=false; isolation=true; FINISHED=nil; SAVE_CALLS=0
+  percent_mode=nil; percent_refuse_call=nil; percent_calls=0; paused=false
+  ps[1]={x=-42,y=0,vy=0,stocks=99,percent=0,facing=1,action=14,airborne=false,hitlag=0}
+  ps[2]={x=28,y=0,vy=0,stocks=99,percent=0,facing=-1,action=14,airborne=false,hitlag=0}
+@@ -645,8 +647,9 @@
+  teleport=function(p,x,y)if refuse_teleport[p] then error('fighter respawning') end ps[p].x=x;ps[p].y=y end,
+  model_load=function()serial=serial+1;return serial end,model_spawn=function()serial=serial+1;return serial end,
+  model_despawn=function()return true end,model_release=function()return true end,model_get=function()return true end,
+- stage_add_platform=function()serial=serial+1;return serial end,stage_add_line=function()serial=serial+1;return serial end,
+- stage_remove=function()if refuse_stage_remove then return false end return true end,
++ stage_add_platform=function()serial=serial+1;models[serial]=true;return serial end,stage_add_line=function()serial=serial+1;models[serial]=true;return serial end,
++ stage_link=function(a,b)assert(a~=b and models[a] and models[b],'link requires two owned lines');return true end,
++ stage_remove=function(h)if refuse_stage_remove then return false end models[h]=nil;return true end,
+  stage_isolate=function(v)if v~=nil then isolated=v end return isolated end,
+  spawn_enemy=function(kind,x,y,o)serial=serial+1;enemies[serial]={kind=kind,x=x,y=y,facing=o and o.facing,alive=true,vulnerable=true,hits=0,received=0,attack_id=1,damage=0};return serial end,
+  enemy_state=function(h)return enemies[h]end,enemy_hurt=function(h,spec)if enemies[h] then enemies[h].damage=enemies[h].damage+spec.damage end return true end,
+@@ -688,12 +691,12 @@
+   if not acted then return end
+  end
+ end
+-local function goto_rest(c)
++local function goto_role(c,role,before_settle)
+  local view=c:view()
+  local start=c:status().room
+  local target
+- for id,n in pairs(view.nodes) do if n.role=='rest' then target=id end end
+- assert(target,'route has no rest room')
++ for id,n in pairs(view.nodes) do if n.role==role then target=id end end
++ assert(target,'route has no '..role..' room')
+  local prev={};local q={start};prev[start]=true;local head=1;local path
+  while q[head] do
+   local u=q[head];head=head+1
+@@ -707,10 +710,15 @@
+   for _,e in ipairs(cur.exits) do if e.to==nextid then exit=e end end
+   assert(exit,'no exit to '..nextid)
+   assert(c:request_travel(exit),'travel refused to '..nextid)
++  if nextid==target and before_settle then
++   for _=1,400 do if c.phase=='settling' then before_settle(c);return end;step() end
++   error('travel did not reach settling at '..nextid)
++  end
+   assert(settle(400),'travel did not settle at '..nextid)
+  end
+- assert(c:current_node().role=='rest','did not reach the rest room')
+-end
++ assert(c:current_node().role==role,'did not reach the '..role..' room')
++end
++local function goto_rest(c) return goto_role(c,'rest') end
+ local function newest_checkpoint()
+  local a,b=files['checkpoint-a.txt'],files['checkpoint-b.txt']
+  local function gen(s) local g=s and s:match('TBD%d (%d+)');return tonumber(g) or -1 end
+@@ -806,6 +814,121 @@
+ assert(pause==false,'engine was not resumed after recovery')
+ assert(c:status().room==before and c.tx==nil,'recovery did not restore the source room')
+ print('PASS main pauses gameplay for the whole transition and resumes after recovery')
++''')
++
++    def test_main_terminal_rollback_retry_never_unpauses_owned_rooms(self):
++        self.run_lua(r'''
++files={};request=true;tick=0
++ready();click('start');step();step();tick=91;step()
++assert(settle(400))
++local c=assert(roguelite_v2())
++fail_atomic=true;refuse_stage_remove=true
++assert(c:request_travel(c:current_node().exits[1]))
++for _=1,400 do step();if c:failed() and state().menu=='error' then break end end
++assert(c:failed() and state().menu=='error','rollback did not exhaust to the error page')
++assert(c.tx and c.tx.source and c.tx.dest,'the two native rooms were not retained')
++local resumed=0
++gd.resume=function() resumed=resumed+1;pause=false end
++-- The 30-tick retry leaves error for recovering while cleanup still refuses.
++local retried=false
++for _=1,30 do
++ step()
++ assert(pause and not state().active,'an automatic retry unpaused unresolved room ownership')
++ if c.phase=='recovering' then retried=true;break end
++end
++assert(retried and c.tx and c:blocked(),'automatic retry did not remain in owned recovery')
++assert(resumed==0,'automatic recovery called the native resume API')
++for _=1,30 do step();if c:failed() then break end end
++assert(c:failed())
++-- Confirm is reachable on the failed page, and has the same strict gate.
++step(0);step(256)
++assert(c.phase=='recovering' and c.tx and pause and not state().active,'confirm bypassed the paused recovery gate')
++assert(resumed==0,'confirm resumed two owned rooms')
++fail_atomic=false;refuse_stage_remove=false
++assert(settle(400) and not pause and c.tx==nil,'released rollback did not resume the source')
++print('PASS automatic and confirm retries keep two owned rooms paused in the same callback')
++''')
++
++    def test_main_settling_save_recovery_finishes_once(self):
++        self.run_lua(r'''
++files={};request=true;tick=0
++ready();click('start');step();step();tick=91;step();assert(settle(400))
++local c=assert(roguelite_v2())
++local completed=0
++local finish=c.finish_run
++c.finish_run=function(outcome) completed=completed+1;return finish(outcome) end
++goto_role(c,'finish',function() fail_atomic=true end)
++local id=c:status().room
++step();assert(c.pending_save and c.pending_save.resume_phase=='settling')
++for _=1,40 do step() end
++assert(c:failed() and state().menu=='error' and completed==0,'finish ran before objective durability')
++fail_atomic=false
++-- The write resumes settling, which remains paused before its continuation.
++for _=1,90 do step();if c.phase=='settling' and not c.pending_save then break end end
++assert(c.phase=='settling' and pause and not state().active,'durable objective skipped its settling continuation')
++step()
++assert(completed==1 and state().run.status=='success','recovery did not finish the run')
++assert(state().profile.finished[state().run.id].outcome=='success','completion was not recorded')
++for _=1,60 do step() end
++assert(completed==1,'settling repeated completion')
++local saved=assert(newest_checkpoint())
++assert(saved.run.status=='success' and saved.progress.objectives[id]=='done','completion/objective was not durable')
++print('PASS finish-room objective recovery completes the real run exactly once')
++''')
++
++    def test_settling_save_recovery_offers_safe_reward_once(self):
++        run_campaign(r'''
++local camp=reset(7)
++-- The resolved fixture has a real supply_crate reward in its safe reward room.
++-- Begin directly there to isolate objective-save recovery from traversal saves.
++ROUTE.progress.current_room='r5';ROUTE.progress.visited.r5=true;mirror(RUN,ROUTE.progress)
++assert(camp:enter_current())
++assert(tick_until(camp,function() return camp.phase=='settling' end))
++local before=ROUTE.progress.supplies
++save_fail=true;camp:tick()
++assert(camp.pending_save and camp.pending_save.resume_phase=='settling')
++for _=1,40 do camp:tick() end
++assert(camp:failed() and camp.reward_room==nil,'reward was offered before objective durability')
++save_fail=false
++assert(camp:retry_recovery()==false,'pending settling was reported as playable')
++assert(camp.phase=='settling' and camp:blocked() and camp.pending_save==nil,'objective recovery skipped settling')
++camp:tick()
++assert(camp:running() and camp.reward_room=='r5','safe reward continuation was lost')
++assert(ROUTE.progress.objectives.r5=='done')
++local granted_result,why=camp:reward_commit(camp:current_node(),nil)
++assert(granted_result,'the real reward service refused: '..tostring(why))
++local granted=ROUTE.progress.supplies
++assert(granted>before and ROUTE.progress.claimed['reward:r5'],'reward did not grant supplies')
++for _=1,60 do camp:tick() end
++assert(ROUTE.progress.supplies==granted and camp.reward_room==nil,'reward granted twice')
++assert(not camp:reward_commit(camp:current_node(),nil),'claimed reward was granted again')
++assert(ROUTE.progress.supplies==granted,'duplicate reward attempt changed supplies')
++print('PASS safe-room objective recovery resumes settling and grants real reward exactly once')
++''')
++
++    def test_main_final_stock_finish_refusal_keeps_retry_finish_page(self):
++        self.run_lua(r'''
++files={};request=true;tick=0
++ready();click('start');step();step();tick=91;step();assert(settle(400))
++local c=assert(roguelite_v2())
++for _=1,2 do ps[1].stocks=98;tick=tick+1;on_frame() end
++assert(state().run.stocks==1)
++local writer=gd.data_write_atomic;local calls=0
++gd.data_write_atomic=function(...)
++ calls=calls+1
++ if calls==2 then return false,'finish result write refused' end
++ return writer(...)
++end
++ps[1].stocks=98;tick=tick+1;on_frame()
++assert(calls==2 and state().run.stocks==0 and c.pending_save==nil,'did not refuse precisely the result write')
++assert(state().menu=='error' and pause and not state().active,'finish refusal did not keep the result recovery page')
++local runid=state().run.id
++for _=1,60 do step();assert(state().menu=='error' and pause and not state().active,'healthy campaign resurrected a zero-life run') end
++gd.data_write_atomic=writer
++click('retry')
++assert(state().run.status=='failure' and state().profile.finished[runid].outcome=='failure','Retry Finish did not record the result')
++assert(state().menu=='collection','Retry Finish did not return to collection')
++print('PASS final observed stock loss retains Retry Finish after result-save refusal')
+ ''')
+ 
+     def test_main_failed_new_run_restores_profile_and_retries(self):
+--- a/tools/roguelite/test_presentation_runtime.py
++++ b/tools/roguelite/test_presentation_runtime.py
+@@ -141,9 +141,8 @@
+ hud.throw=false
+ assert(bad==false,'a throwing release reported success')
+ assert(tostring(why):find('hud refused',1,true),'the throwing reason was lost')
+-assert(p:hud_owned()==false,'ownership was recorded despite the throw')
++assert(p:hud_owned()==true and p.hud_release_pending,'a refused release discarded the hidden HUD claim')
+ -- Give it back explicitly.
+-p:take_vanilla_hud(true)
+ assert(p:release_hud()==true,'release failed')
+ assert(gd.hud_visible()==true,'the vanilla HUD ownership was not returned')
+ print('PASS HUD claim treats a false result as state and a throw as failure')
+@@ -180,6 +179,49 @@
+ gd.kit.text=real
+ assert(p:draw(feedback,{hud=true,player={percent=1}})==true,'the presentation stayed broken after recovery')
+ print('PASS draw uses layout coordinates and contains rendering failures')
++''')
++
++    def test_release_retains_claim_when_api_disappears_and_retries(self):
++        run_lua(r'''
++local p=make{}
++assert(p:take_vanilla_hud(true))
++local native=gd.hud_visible;gd.hud_visible=nil
++assert(p:release_hud()==false and p:hud_owned() and p.hud_release_pending,'missing API discarded the claim')
++assert(hud.visible==false,'fixture native HUD was not hidden')
++gd.hud_visible=native
++-- The next active lifecycle claim request first retries the pending release.
++assert(p:take_vanilla_hud(true)==true)
++assert(hud.visible and not p:hud_owned() and not p.hud_release_pending,'pending release did not reach the native API')
++print('PASS a missing restore API retains HUD ownership until lifecycle retry succeeds')
++''')
++
++    def test_layout_and_draw_failure_restore_vanilla_without_losing_claim(self):
++        run_lua(r'''
++local p,f=make{}
++assert(p:take_vanilla_hud(true))
++local layout=Hud.layout
++Hud.layout=function() error('layout exploded') end
++local contained,result=pcall(p.draw,p,f,{hud=true})
++assert(contained,'throwing layout escaped safe fallback')
++assert(hud.visible and not p:hud_owned(),'layout failure kept the native HUD hidden')
++assert(p:state{}.replace_vanilla==false,'fallback advertised a replacement')
++Hud.layout=layout;p.layout=nil;p.layout_key=nil
++assert(p:take_vanilla_hud(true))
++local text=gd.kit.text;gd.kit.text=function() error('drawing exploded') end
++hud.throw=true
++assert(p:draw(f,{hud=true})==false)
++assert(p:hud_owned() and p.hud_release_pending and not hud.visible,'failed fallback discarded native ownership')
++hud.throw=false;gd.kit.text=text
++assert(p:take_vanilla_hud(true))
++assert(hud.visible and not p:hud_owned(),'draw fallback was not retried')
++-- Missing/throwing hide never authorizes a full replacement rail.
++hud.throw=true
++assert(p:take_vanilla_hud(true)==false)
++hud.throw=false
++drawn={};assert(p:draw(f,{hud=true}))
++local rail=Hud.layout{width=640,height=480,new_hud=true}.rail
++for _,d in ipairs(drawn) do assert(not (d.w==rail.w and d.h==rail.h),'hide refusal drew a duplicate replacement rail') end
++print('PASS layout/draw failures give back vanilla HUD and retain refused releases')
+ ''')
+ 
+     def test_tutorial_only_advances_on_observed_events(self):
+@@ -393,6 +435,21 @@
+ assert(state().hud_rail==false,'unload kept the claim')
+ assert(#hud_calls>seen and hud_calls[#hud_calls]==true,'unload did not restore the vanilla HUD')
+ print('PASS HUD ownership is returned on leave, error and unload')
++''')
++
++    def test_refused_hud_restore_is_retried_by_real_leave_lifecycle(self):
++        _main(_live() + r'''
++local choose=upv('choose_menu');local presentation=upv('presentation')
++local native=gd.hud_visible
++gd.hud_visible=function(v) if v==true then error('restore refused') end;return native(v) end
++choose({kind='leave'})
++assert(state().menu=='collection' and presentation:hud_owned() and presentation.hud_release_pending,'leave forgot a refused native restore')
++assert(hud.visible==false,'refused release unexpectedly showed native HUD')
++step()
++assert(presentation:hud_owned(),'lifecycle discarded the still-refused claim')
++gd.hud_visible=native;step()
++assert(hud.visible and not presentation:hud_owned(),'collection tick did not retry native HUD restoration')
++print('PASS real leave lifecycle retries a refused native HUD restore')
+ ''')
+ 
+     def test_command_tree_is_rebuilt_from_the_installed_loadout(self):
+@@ -612,6 +669,116 @@
+ 
+ 
+ class BundleTests(unittest.TestCase):
++    def test_production_legacy_onboarding_observes_complete_gameplay_sequence(self):
++        script = '(function()\n' + prepare.bundle() + '\nend)()\n'
++        body = r'''
++files={};request=true;tick=0
++ready();click('start');step();step();tick=91;step()
++for _=1,400 do step();if state().active then break end end
++assert(state().active and roguelite_v2()==nil)
++local p=uv(on_tick,'presentation')
++local function frame() tick=tick+1;on_frame() end
++local function current(id) assert(p:view().step==id,'expected '..tostring(id)..', got '..tostring(p:view().step)) end
++local function door(side)
++ ps[1].x=side=='left' and -52 or 52;ps[1].y=0;press(4)
++ for _=1,30 do if state().active then break end;step() end
++end
++current('move')
++ps[1].vx=3;for _=1,60 do frame() end;ps[1].vx=0
++current('charge')
++door('right');assert(state().node=='trail')
++local enemy=next(enemies);assert(enemy)
++ps[1].x=0;ps[1].y=0;enemies[enemy].x=4;enemies[enemy].y=0
++for _=1,3 do on_action_change(1,14,44,false);on_enemy_hit{handle=enemy,from=1,damage=3} end
++frame();current('branch')
++press(1);current('back');press(8);current('cast')
++press(1);press(1)
++assert(enemies[enemy].damage==10,'tutorial cast was not a real gameplay activation')
++current('tell')
++-- Feed observed native enemy contacts; the real EnemyGenes controller earns
++-- charge, enters its windup and supplies its actual state to presentation.
++for _=1,12 do
++ enemies[enemy].hits=enemies[enemy].hits+1;enemies[enemy].attack_id=enemies[enemy].attack_id+1
++ frame();if p:view().step=='door' then break end
++end
++current('door')
++on_enemy_defeated{handle=enemy};enemies[enemy]=nil
++door('left');assert(state().node=='arena_a');current('reward')
++ps[2].stocks=98;frame();assert(state().menu=='reward')
++click('reward1');current(nil)
++assert(p:view().completed==8 and p:view().pause==false,'full tutorial did not complete from the real gameplay hooks')
++print('PASS all eight onboarding steps follow real production legacy gameplay hooks')
++'''
++        result = subprocess.run([LUA, '-', str(RT)], input=v2.PRELUDE_MAIN + script + body,
++                                text=True, capture_output=True, timeout=120)
++        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
++        self.assertIn('PASS', result.stdout)
++
++    def test_production_legacy_main_uses_real_loadout_and_preserves_up(self):
++        script = '(function()\n' + prepare.bundle() + '\nend)()\n'
++        body = r'''
++files={};request=true;tick=0
++ready();click('start');step();step();tick=91;step()
++for _=1,400 do step();if state().active then break end end
++assert(state().active and roguelite_v2()==nil,'production certification did not use the legacy path')
++local presentation=uv(on_tick,'presentation');local cs=uv(on_tick,'command_state');local avail=uv(on_tick,'availability')
++local choose=uv(on_tick,'choose_menu')
++local root=presentation:view_commands(cs,avail)
++assert(root.branches[1].label=='Abilities','legacy kept the authored default tree')
++local function door(side)
++ ps[1].x=side=='left' and -52 or 52;ps[1].y=0;press(4)
++ for _=1,30 do if state().active then break end;step() end
++end
++door('right');assert(state().node=='trail')
++local enemy=next(enemies);assert(enemy);on_enemy_defeated{handle=enemy};enemies[enemy]=nil
++door('left');assert(state().node=='arena_a')
++ps[2].stocks=98;tick=tick+1;on_frame();assert(state().menu=='reward');click('reward1')
++door('right');assert(state().node=='rest' and state().menu=='rest')
++-- A real menu placement while Up is held rebuilds the installed loadout without
++-- creating a fresh root taunt. Menus owns the placement/save transaction.
++ps[1].x=0
++click('gene:r3')
++step(8);step(8)
++choose({kind='place',id='r3',slot='traversal'})
++assert(state().run.hosts.player.slots.traversal=='r3','legacy placement did not commit')
++assert(cs.node=='root' and cs.up_latched,'legacy rebuild lost held Up')
++choose({kind='continue'});step(8)
++assert(state().command_event==nil or state().command_event.kind~='taunt','held Up fabricated a taunt')
++step(0);press(1)
++local abilities=presentation:view_commands(cs,avail);local traversal
++for _,b in ipairs(abilities.branches) do if b.slot=='traversal' then traversal=b end end
++assert(traversal and traversal.label:find('CINDER',1,true),'placed traversal gene is absent from legacy tree')
++-- Refused placement leaves the saved gene and its command leaf installed.
++press(8);press(4);press(1);click('gene:r2')
++fail_atomic=true;choose({kind='place',id='r2',slot='traversal'});fail_atomic=false
++assert(state().run.hosts.player.slots.traversal=='r3','legacy save refusal did not refund placement')
++choose({kind='continue'});press(1)
++for _,b in ipairs(presentation:view_commands(cs,avail).branches) do
++ if b.slot=='traversal' then assert(b.label:find('CINDER',1,true),'refund left stale command leaf') end
++end
++press(8)
++-- Spend the run's two real supplies through normal D-pad actions.
++ps[1].percent=90
++for _=1,2 do press(2);press(1) end
++assert(state().run.progress.supplies==0 and ps[1].percent==30,'legacy supplies were not really spent')
++press(2)
++local item=presentation:view_commands(cs,avail)
++assert(item.branches[1].enabled==false and item.branches[1].reason=='No supplies in this run','legacy zero-supply command is enabled')
++-- The durable resume uses this same real loadout, without recipe admission edits.
++press(8);choose({kind='leave'});click('resume')
++for _=1,400 do step();if state().active then break end end
++assert(state().active and roguelite_v2()==nil)
++press(1)
++for _,b in ipairs(presentation:view_commands(cs,avail).branches) do
++ if b.slot=='traversal' then assert(b.label:find('CINDER',1,true),'resume lost the placed legacy gene') end
++end
++print('PASS shipped legacy main uses real placed genes, preserves held Up, refunds and disables spent supplies')
++'''
++        result = subprocess.run([LUA, '-', str(RT)], input=v2.PRELUDE_MAIN + script + body,
++                                text=True, capture_output=True, timeout=120)
++        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
++        self.assertIn('PASS', result.stdout)
++
+     def test_bundle_carries_the_presentation_modules_before_main(self):
+         script = prepare.bundle()
+         # Every presentation module is bundled under its expected lexical name.
+@@ -651,4 +818,4 @@
+ 
+ 
+ if __name__ == '__main__':
+-    unittest.main(verbosity=2)+    unittest.main(verbosity=2)
+--- a/tools/roguelite/test_runtime.py
++++ b/tools/roguelite/test_runtime.py
+@@ -80,7 +80,7 @@
+  on_enemy_hit({handle=enemy_handle,from=1,damage=3})
+ end
+ assert(state().run.hosts.player.state.assault.charge==3)
+-press(1);press(1);press(1)
++press(1);press(1)
+ assert(enemies[enemy_handle].damage==10 and state().run.hosts.player.state.assault.charge==0)
+ assert(state().run.hosts.enemy_trail_1)
+ for i=1,100 do frame() end
+@@ -96,7 +96,7 @@
+ for i=1,2 do on_action_change(1,44,44,false);on_hit(1,2,{item=false}) end
+ assert(r.hosts.player.state.assault.charge==3)
+ ps[1].x=0;ps[1].y=0;ps[2].x=4;ps[2].y=0
+-press(1);press(1);press(1);assert(hits==1 and state().run.hosts.player.state.assault.charge==0)
++press(1);press(1);assert(hits==1 and state().run.hosts.player.state.assault.charge==0)
+ -- Injected hit does not consume subsequent genuine collision credit.
+ on_action_change(1,44,44,false);on_hit(1,2,{item=false})
+ for i=1,3 do on_action_change(1,179,181,false) end
+@@ -104,7 +104,7 @@
+ -- Native refusal must retain the charge; test fresh cooldown-expired state.
+ for i=1,100 do frame() end
+ for i=1,3 do on_action_change(1,44,44,false);on_hit(1,2,{item=false}) end
+-fail_hit=true;press(1);press(1);press(1);fail_hit=false
++fail_hit=true;press(1);press(1);fail_hit=false
+ assert(state().run.hosts.player.state.assault.charge==3)
+ -- Arena clear is an observed native stock transition, not percent threshold.
+ ps[2].stocks=98;frame();assert(state().menu=='reward' and pause)

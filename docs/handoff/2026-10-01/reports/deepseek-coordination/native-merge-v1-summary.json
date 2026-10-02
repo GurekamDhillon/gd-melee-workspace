@@ -1,0 +1,76 @@
+{
+  "any_certified": false,
+  "build": {
+    "app_dir": "/home/gd/melee_linux_test/gdm/_build/agents/roguelite-certification",
+    "backend": "unknown",
+    "exe": "_build/agents/roguelite-certification/melee",
+    "exe_sha256": "ae2ac548b5ca714a5df027da6ad75088299b5380732ea96d02a43b4b2a1914d7",
+    "game_revision": "24b164c5f6d68f183449903922f0c45462019027",
+    "game_root": "/home/gd/melee_linux_test/gdm/melee/worktrees/linux"
+  },
+  "camera": "wide",
+  "captures": "_build/deepseek-coordination/native-previews-clean",
+  "clean_preview": true,
+  "errors": [
+    "rejoin_merge/falco: certification match did not become ready"
+  ],
+  "failed": false,
+  "log": "_build/deepseek-coordination/native-merge-v1.jsonl",
+  "previews": [],
+  "recipes": {
+    "rejoin_merge": {
+      "certified_after": false,
+      "certified_before": false,
+      "profiles": {
+        "falco": {
+          "outcomes": [
+            {
+              "checks": {},
+              "id": "setup",
+              "manual_review": [
+                "certification match did not become ready"
+              ],
+              "status": "error"
+            }
+          ],
+          "verdict": {
+            "auto_certification": "forbidden",
+            "certified": false,
+            "failed_segments": [
+              "setup"
+            ],
+            "inconclusive_segments": [],
+            "native_run_performed": true,
+            "note": "A human/coordinator must review captures and observations. A successful trace is not certification.",
+            "passed_segments": [],
+            "recipe": "rejoin_merge",
+            "recipe_version": 2.0,
+            "requires_human_review": true,
+            "schema": "certify-rooms/1",
+            "segments_total": 1,
+            "segments_with_observation": 0,
+            "unclassified_segments": [],
+            "verdict": "manual-review-required"
+          }
+        }
+      },
+      "recipe_version": 2.0,
+      "verdict": {
+        "auto_certification": "forbidden",
+        "certified": false,
+        "failed": [
+          "setup"
+        ],
+        "inconclusive": [],
+        "note": "No recipe may be marked certified from this harness output.",
+        "profiles": 1,
+        "recipe": "rejoin_merge",
+        "recipe_version": 2.0,
+        "requires_human_review": true,
+        "schema": "certify-rooms/1",
+        "verdict": "manual-review-required"
+      }
+    }
+  },
+  "schema": "certify-rooms/1"
+}

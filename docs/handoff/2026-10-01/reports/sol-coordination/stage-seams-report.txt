@@ -1,0 +1,20 @@
+Stage seams lane complete and frozen; certification remains false.
+
+Seed manifest hashes verified. Patch contains only the three seed-relative source deltas and four new seam/test files. All other seeded dirty native work is excluded.
+
+Verification: focused actual-source tests pass normally and under ASan/UBSan; production PPC syntax passes for script_game.c/mplib.c; native 32-bit syntax passes for gw_script.c; patch applies to a temporary seed copy and recreates every final file byte-for-byte. Existing header/comment warnings remain.
+
+Review fix: line removal now refuses a current-map pointer whose reserved line/joint counts have retired, retaining active handles and links for retry. Regression exercises NULL-map and retired-count refusal followed by successful removal.
+
+No root/native/shared build/install/game or Lua/model lane was changed. The linked Lua harness, live controller joins, production caller integration, bridge ABI and rewind remain unverified. Room ownership is checked, but room locality requires callers to choose their own explicit handle pairs.
+
+Files:
+pc/gameworld/script_game.c
+pc/gameworld/script_stage_seams.inc
+pc/platform/gw_script.c
+pc/platform/gw_script_stage_seam_tests.inc
+pc/tests/stage_seam_test.c
+pc/tests/stage_seam_test.py
+src/melee/mp/mplib.c
+
+Patch: /home/gd/melee_linux_test/gdm/_build/sol-coordination/stage-seams-seed-relative.patch

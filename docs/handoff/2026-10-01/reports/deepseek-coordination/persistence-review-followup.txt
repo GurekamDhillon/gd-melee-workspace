@@ -1,0 +1,33 @@
+Root review follow-up. You own the same files and must not touch the newly
+parallelized physical/encounter/certification worktrees. Your first patch/tests
+are promising; close these issues before root lands it. No commits/native build.
+
+1. save() currently calls route_mirror on live Core BEFORE validation/write and
+   validates only by readback AFTER writing bytes. A failed route validation can
+   overwrite the last usable checkpoint when the other slot is protected, and
+   leave mirrored in-memory state altered even when save reports failure. Validate
+   a staged copy of Core+route before any disk write; commit live mirrored values
+   only when persistence succeeds or restore them exactly on failure. Prove the
+   last usable slot survives a forced semantic-validation refusal and forced
+   save failure while the other A/B slot is protected. Use test-copy injected
+   validators/mocks for failure, no unsafe production mutation commands.
+2. Manifest schema2 with an unknown future generator_version is currently refused
+   by Route.validate_save with 'unsupported generator version; preserve checkpoint'
+   (singular preserve), while classify() protects only 'preserved'. Do not rely
+   on free-text substring to protect this case. Detect unsupported inner schema/
+   generator/progress versions explicitly at loader boundary and keep their slot
+   bytes untouched when an older valid slot is saved. Add future-generator test,
+   future-manifest schema test alongside existing future-progress case.
+3. Supported schema1 progress migration is allowed only where missing histories
+   are safely reconstructible/irrelevant. If route has finite pickups/consumable
+   gates and old record omits their history, controlled preserve/refusal is safer
+   than silently giving them empty claims. Add an insufficient-history refusal
+   case and a genuinely safe migration case.
+4. Checkpoint.decode cannot throw to direct callers for nested malformed data
+   if the public contract is controlled refusal; contain Core.restore exceptions
+   or justify keeping protection exclusively at main boundary. Tests must cover
+   actual malformed sections, not just syntax rejection.
+
+Use focused tests then full discovery; clean up temporary test source directories
+with context managers/finally. Stop editing and report fixes/evidence. Keep v2
+gameplay refusal until actual runtime wiring, no recipe certification flips.

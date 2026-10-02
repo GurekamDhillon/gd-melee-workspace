@@ -1,0 +1,307 @@
+{
+  "schema": "certify-rooms/1",
+  "build": {
+    "app_dir": "/home/gd/melee_linux_test/gdm/_build/agents/roguelite-handoff-review",
+    "game_root": "/home/gd/melee_linux_test/gdm/melee/worktrees/linux",
+    "backend": "unknown",
+    "exe": "/home/gd/melee_linux_test/gdm/_build/agents/roguelite-handoff-review/melee",
+    "exe_sha256": "fb3a8816e70131d96d56241726c3718292aec425b268f09d78f82aa1e417ed6c",
+    "game_revision": "0eab9b9b40dfca810be8efb75d20c6dad5b51526"
+  },
+  "log": "/home/gd/melee_linux_test/gdm/_build/deepseek-coordination/branch_remaining.jsonl",
+  "captures": "/home/gd/melee_linux_test/gdm/_build/deepseek-coordination/native-previews-clean/branch_remaining",
+  "recipes": {
+    "branch_y": {
+      "recipe_version": 2.0,
+      "certified_before": false,
+      "certified_after": false,
+      "profiles": {
+        "bowser": {
+          "verdict": {
+            "schema": "certify-rooms/1",
+            "recipe": "branch_y",
+            "recipe_version": 2.0,
+            "certified": false,
+            "auto_certification": "forbidden",
+            "verdict": "manual-review-required",
+            "native_run_performed": true,
+            "segments_total": 4,
+            "segments_with_observation": 1,
+            "passed_segments": [
+              "ascent"
+            ],
+            "failed_segments": [],
+            "inconclusive_segments": [
+              "return",
+              "fork_branch_a",
+              "fork_branch_b"
+            ],
+            "unclassified_segments": [],
+            "requires_human_review": true,
+            "note": "A human/coordinator must review captures and observations. A successful trace is not certification."
+          },
+          "outcomes": [
+            {
+              "status": "arrived",
+              "checks": {
+                "sampled": 120,
+                "truncated": false,
+                "arrived": true,
+                "fell": false,
+                "expected_fall": false,
+                "unexpected_fall": false,
+                "descended": false,
+                "climb_back": false,
+                "stuck": false,
+                "airborne_frames": 0,
+                "min_y": 5.0,
+                "max_y": 26.0,
+                "seam_pop_candidate": false,
+                "manual_review": []
+              },
+              "manual_review": [],
+              "id": "ascent",
+              "segment": "ascent"
+            },
+            {
+              "id": "return",
+              "status": "placement-refused",
+              "checks": {},
+              "manual_review": [
+                "fixture placement refused: timeout"
+              ],
+              "segment": "return"
+            },
+            {
+              "id": "fork_branch_a",
+              "status": "placement-refused",
+              "checks": {},
+              "manual_review": [
+                "fixture placement refused: timeout"
+              ],
+              "segment": "fork_branch_a"
+            },
+            {
+              "id": "fork_branch_b",
+              "status": "placement-refused",
+              "checks": {},
+              "manual_review": [
+                "fixture placement refused: timeout"
+              ],
+              "segment": "fork_branch_b"
+            }
+          ]
+        },
+        "jigglypuff": {
+          "verdict": {
+            "schema": "certify-rooms/1",
+            "recipe": "branch_y",
+            "recipe_version": 2.0,
+            "certified": false,
+            "auto_certification": "forbidden",
+            "verdict": "manual-review-required",
+            "native_run_performed": true,
+            "segments_total": 4,
+            "segments_with_observation": 0,
+            "passed_segments": [],
+            "failed_segments": [
+              "ascent"
+            ],
+            "inconclusive_segments": [
+              "return",
+              "fork_branch_a",
+              "fork_branch_b"
+            ],
+            "unclassified_segments": [],
+            "requires_human_review": true,
+            "note": "A human/coordinator must review captures and observations. A successful trace is not certification."
+          },
+          "outcomes": [
+            {
+              "status": "unexpected-fall",
+              "checks": {
+                "sampled": 280,
+                "truncated": false,
+                "arrived": false,
+                "fell": true,
+                "expected_fall": false,
+                "unexpected_fall": true,
+                "descended": true,
+                "climb_back": false,
+                "stuck": false,
+                "airborne_frames": 85,
+                "min_y": -96.64,
+                "max_y": 0.0,
+                "seam_pop_candidate": true,
+                "manual_review": [
+                  "grounded->airborne with non-positive vy: inspect for a seam pop",
+                  "fighter fell below the lane floor on a non-drop segment"
+                ]
+              },
+              "manual_review": [
+                "grounded->airborne with non-positive vy: inspect for a seam pop",
+                "fighter fell below the lane floor on a non-drop segment"
+              ],
+              "id": "ascent",
+              "segment": "ascent"
+            },
+            {
+              "id": "return",
+              "status": "placement-refused",
+              "checks": {},
+              "manual_review": [
+                "fixture placement refused: timeout"
+              ],
+              "segment": "return"
+            },
+            {
+              "id": "fork_branch_a",
+              "status": "placement-refused",
+              "checks": {},
+              "manual_review": [
+                "fixture placement refused: timeout"
+              ],
+              "segment": "fork_branch_a"
+            },
+            {
+              "id": "fork_branch_b",
+              "status": "placement-refused",
+              "checks": {},
+              "manual_review": [
+                "fixture placement refused: timeout"
+              ],
+              "segment": "fork_branch_b"
+            }
+          ]
+        },
+        "kirby": {
+          "verdict": {
+            "schema": "certify-rooms/1",
+            "recipe": "branch_y",
+            "recipe_version": 2.0,
+            "certified": false,
+            "auto_certification": "forbidden",
+            "verdict": "manual-review-required",
+            "native_run_performed": true,
+            "segments_total": 4,
+            "segments_with_observation": 0,
+            "passed_segments": [],
+            "failed_segments": [
+              "ascent",
+              "return"
+            ],
+            "inconclusive_segments": [
+              "fork_branch_a",
+              "fork_branch_b"
+            ],
+            "unclassified_segments": [],
+            "requires_human_review": true,
+            "note": "A human/coordinator must review captures and observations. A successful trace is not certification."
+          },
+          "outcomes": [
+            {
+              "status": "unexpected-fall",
+              "checks": {
+                "sampled": 200,
+                "truncated": false,
+                "arrived": false,
+                "fell": true,
+                "expected_fall": false,
+                "unexpected_fall": true,
+                "descended": true,
+                "climb_back": false,
+                "stuck": false,
+                "airborne_frames": 66,
+                "min_y": -88.8,
+                "max_y": 0.0,
+                "seam_pop_candidate": true,
+                "manual_review": [
+                  "grounded->airborne with non-positive vy: inspect for a seam pop",
+                  "fighter fell below the lane floor on a non-drop segment"
+                ]
+              },
+              "manual_review": [
+                "grounded->airborne with non-positive vy: inspect for a seam pop",
+                "fighter fell below the lane floor on a non-drop segment"
+              ],
+              "id": "ascent",
+              "segment": "ascent"
+            },
+            {
+              "status": "unexpected-fall",
+              "checks": {
+                "sampled": 200,
+                "truncated": false,
+                "arrived": true,
+                "fell": true,
+                "expected_fall": false,
+                "unexpected_fall": true,
+                "descended": true,
+                "climb_back": false,
+                "stuck": false,
+                "airborne_frames": 72,
+                "min_y": -98.4,
+                "max_y": 26.0,
+                "seam_pop_candidate": true,
+                "manual_review": [
+                  "grounded->airborne with non-positive vy: inspect for a seam pop",
+                  "fighter fell below the lane floor on a non-drop segment"
+                ]
+              },
+              "manual_review": [
+                "grounded->airborne with non-positive vy: inspect for a seam pop",
+                "fighter fell below the lane floor on a non-drop segment"
+              ],
+              "id": "return",
+              "segment": "return"
+            },
+            {
+              "id": "fork_branch_a",
+              "status": "placement-refused",
+              "checks": {},
+              "manual_review": [
+                "fixture placement refused: timeout"
+              ],
+              "segment": "fork_branch_a"
+            },
+            {
+              "id": "fork_branch_b",
+              "status": "placement-refused",
+              "checks": {},
+              "manual_review": [
+                "fixture placement refused: timeout"
+              ],
+              "segment": "fork_branch_b"
+            }
+          ]
+        }
+      },
+      "verdict": {
+        "schema": "certify-rooms/1",
+        "recipe": "branch_y",
+        "recipe_version": 2.0,
+        "certified": false,
+        "auto_certification": "forbidden",
+        "verdict": "manual-review-required",
+        "requires_human_review": true,
+        "profiles": 3,
+        "failed": [
+          "ascent",
+          "return"
+        ],
+        "inconclusive": [
+          "fork_branch_a",
+          "fork_branch_b",
+          "return"
+        ],
+        "note": "No recipe may be marked certified from this harness output."
+      }
+    }
+  },
+  "any_certified": false,
+  "errors": [],
+  "failed": false,
+  "clean_preview": true,
+  "camera": null,
+  "previews": []
+}

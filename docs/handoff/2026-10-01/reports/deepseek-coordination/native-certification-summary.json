@@ -1,0 +1,66 @@
+{
+  "any_certified": false,
+  "build": {
+    "app_dir": "/home/gd/melee_linux_test/gdm/_build/agents/roguelite-certification",
+    "backend": "unknown",
+    "exe": "_build/agents/roguelite-certification/melee",
+    "exe_sha256": "ae2ac548b5ca714a5df027da6ad75088299b5380732ea96d02a43b4b2a1914d7",
+    "game_revision": "e833e01d9bc3113d460306c772788574351bfd52",
+    "game_root": "/home/gd/melee_linux_test/gdm/melee/worktrees/linux"
+  },
+  "captures": "_build/deepseek-coordination/native-previews",
+  "errors": [
+    "branch_y/falco: build refused: [roguelite_certification/main] certify_error where=build message=no active offline match"
+  ],
+  "log": "_build/deepseek-coordination/native-certification.jsonl",
+  "recipes": {
+    "branch_y": {
+      "certified_after": false,
+      "certified_before": false,
+      "profiles": {
+        "falco": {
+          "outcomes": [
+            {
+              "checks": {},
+              "id": "setup",
+              "manual_review": [
+                "build refused: [roguelite_certification/main] certify_error where=build message=no active offline match"
+              ],
+              "status": "error"
+            }
+          ],
+          "verdict": {
+            "auto_certification": "forbidden",
+            "certified": false,
+            "failed_segments": [],
+            "inconclusive_segments": [],
+            "native_run_performed": true,
+            "note": "A human/coordinator must review captures and observations. A successful trace is not certification.",
+            "recipe": "branch_y",
+            "recipe_version": 2.0,
+            "requires_human_review": true,
+            "schema": "certify-rooms/1",
+            "segments_total": 1,
+            "segments_with_observation": 0,
+            "verdict": "manual-review-required"
+          }
+        }
+      },
+      "recipe_version": 2.0,
+      "verdict": {
+        "auto_certification": "forbidden",
+        "certified": false,
+        "failed": [],
+        "inconclusive": [],
+        "note": "No recipe may be marked certified from this harness output.",
+        "profiles": 1,
+        "recipe": "branch_y",
+        "recipe_version": 2.0,
+        "requires_human_review": true,
+        "schema": "certify-rooms/1",
+        "verdict": "manual-review-required"
+      }
+    }
+  },
+  "schema": "certify-rooms/1"
+}

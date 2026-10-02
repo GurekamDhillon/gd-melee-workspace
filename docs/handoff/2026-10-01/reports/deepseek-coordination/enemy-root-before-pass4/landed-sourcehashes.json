@@ -1,0 +1,18 @@
+[
+  {
+    "path": "melee/worktrees/linux/pc/scripts/examples/roguelite/encounter_behaviors.lua",
+    "sha256": "32db17864432f09597b59863325af055137e1c422c3b05d892557b7f2193f878"
+  },
+  {
+    "path": "melee/worktrees/linux/pc/scripts/examples/roguelite/boss_behaviors.lua",
+    "sha256": "b24d5e55ffa48c9bee520a41d037382a2827121fc64852932778a260629ff6f5"
+  },
+  {
+    "path": "tools/roguelite/test_enemy_behaviors.py",
+    "sha256": "0927d5a725c559765adb71da1850a864073931ae49fcde4d97196470427718a8"
+  },
+  {
+    "path": "docs/ENEMY-BEHAVIOR-CONTRACT.md",
+    "sha256": "eae739421ca210435d137b6db4b879ad9c0041b87aa0193716553901c84d68e9"
+  }
+]

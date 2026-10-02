@@ -1,0 +1,23 @@
+{
+  "schema": "certify-rooms/1",
+  "build": {
+    "app_dir": "/home/gd/melee_linux_test/gdm/_build/agents/roguelite-certification",
+    "game_root": "/home/gd/melee_linux_test/gdm/melee/worktrees/linux",
+    "backend": "unknown",
+    "exe": "/home/gd/melee_linux_test/gdm/_build/agents/roguelite-certification/melee",
+    "exe_sha256": "ae2ac548b5ca714a5df027da6ad75088299b5380732ea96d02a43b4b2a1914d7",
+    "game_revision": "da7af1524784c7105720f8b24633863f688b1971"
+  },
+  "log": "/home/gd/melee_linux_test/gdm/_build/deepseek-coordination/native-ground-fork-v1.jsonl",
+  "captures": "/home/gd/melee_linux_test/gdm/_build/deepseek-coordination/native-previews-clean",
+  "recipes": {},
+  "any_certified": false,
+  "errors": [
+    "run aborted: ConnectionRefusedError(111, 'Connection refused')"
+  ],
+  "failed": true,
+  "clean_preview": true,
+  "camera": "wide",
+  "previews": [],
+  "exploratory": true
+}
