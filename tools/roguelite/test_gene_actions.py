@@ -12,9 +12,10 @@ from pathlib import Path
 import shutil
 import subprocess
 import unittest
+import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
-RT = ROOT / 'melee/worktrees/linux/pc/scripts/examples/roguelite'
+RT = game_source.ROGUELITE
 BEHAVIORS = RT / 'gene_behaviors.lua'
 CORE = RT / 'core.lua'
 ACTIONS = RT / 'gene_actions.lua'

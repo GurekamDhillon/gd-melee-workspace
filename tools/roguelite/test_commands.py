@@ -3,8 +3,9 @@ from pathlib import Path
 import shutil
 import subprocess
 import unittest
+import game_source
 
-MODULE = Path(__file__).resolve().parents[2] / 'melee/worktrees/linux/pc/scripts/examples/roguelite/commands.lua'
+MODULE = game_source.ROGUELITE / 'commands.lua'
 
 
 class CommandsTests(unittest.TestCase):

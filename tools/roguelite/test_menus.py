@@ -3,8 +3,9 @@ from pathlib import Path
 import shutil
 import subprocess
 import unittest
+import game_source
 
-SOURCE = Path(__file__).resolve().parents[2] / 'melee/worktrees/linux/pc/scripts/examples/roguelite'
+SOURCE = game_source.ROGUELITE
 
 
 class MenuTests(unittest.TestCase):

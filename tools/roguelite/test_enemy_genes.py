@@ -3,8 +3,9 @@ from pathlib import Path
 import shutil
 import subprocess
 import unittest
+import game_source
 
-BASE = Path(__file__).resolve().parents[2] / 'melee/worktrees/linux/pc/scripts/examples/roguelite'
+BASE = game_source.ROGUELITE
 
 class EnemyGenesTests(unittest.TestCase):
     def test_shared_rules_and_lifecycle(self):

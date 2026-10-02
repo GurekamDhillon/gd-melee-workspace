@@ -9,9 +9,10 @@ import struct
 import subprocess
 import tempfile
 import unittest
+import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
-RUNTIME = ROOT / 'melee/worktrees/linux/pc/scripts/examples/roguelite'
+RUNTIME = game_source.ROGUELITE
 spec = importlib.util.spec_from_file_location('rogue_room_assets', Path(__file__).with_name('room_assets.py'))
 assets = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(assets)
@@ -355,7 +356,7 @@ assert(R.clear(s));assert(R.release(s));assert(not R.enter(s,manifest.nodes.entr
     def test_actual_native_gxtx_parser_and_model_mip_validation(self):
         # Compile the unchanged parser/level validator from renderer source, not
         # a Python translation of the authoring header. This runs no game/build.
-        platform = ROOT / 'melee/worktrees/linux/pc/platform'
+        platform = game_source.PLATFORM
         runtime = (platform / 'gw_runtime.c').read_text()
         script = (platform / 'gw_script.c').read_text()
         def function(source, signature):

@@ -3,8 +3,9 @@ from pathlib import Path
 import shutil
 import subprocess
 import unittest
+import game_source
 
-SOURCE = Path(__file__).resolve().parents[2] / 'melee/worktrees/linux/pc/scripts/examples/roguelite/technical_ai.lua'
+SOURCE = game_source.ROGUELITE / 'technical_ai.lua'
 
 
 class TechnicalAiTests(unittest.TestCase):

@@ -7,9 +7,10 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
-NATIVE = ROOT / 'melee/worktrees/linux'
+NATIVE = game_source.GAME
 
 
 def build(blender, output, texture_size=1024, samples=48):

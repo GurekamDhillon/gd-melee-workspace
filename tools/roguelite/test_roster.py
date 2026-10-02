@@ -6,9 +6,10 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / 'melee/worktrees/linux/pc/scripts/examples/roguelite'
+SOURCE = game_source.ROGUELITE
 SPEC = importlib.util.spec_from_file_location('rogue_bindings', Path(__file__).with_name('build_bindings.py'))
 BUILD = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(BUILD)

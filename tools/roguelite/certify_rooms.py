@@ -45,11 +45,12 @@ import socket
 import subprocess
 import sys
 import time
+import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME = Path(os.environ.get('GW_MELEE') or (ROOT / 'melee/worktrees/linux')).resolve()
-RT = GAME / 'pc/scripts/examples/roguelite'
-CERT_SRC = GAME / 'pc/scripts/examples/roguelite_certification'
+GAME = game_source.GAME
+RT = game_source.ROGUELITE
+CERT_SRC = game_source.CERTIFICATION
 ROOM_KIT = ROOT / 'menu/out_roguelite/room-kit'
 SHARED_APP = (ROOT / '_build/agents/linux').resolve()
 MOD_ID = 'roguelite_certification'

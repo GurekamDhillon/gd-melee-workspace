@@ -5,9 +5,10 @@ import json
 from pathlib import Path
 import shutil
 import importlib.util
+import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / 'melee/worktrees/linux/pc/scripts/examples/roguelite'
+SOURCE = game_source.ROGUELITE
 ROOM_KIT = ROOT / 'menu/out_roguelite/room-kit'
 
 def install_room_kit(mod):

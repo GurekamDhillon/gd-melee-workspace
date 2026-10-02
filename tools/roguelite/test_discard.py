@@ -8,8 +8,9 @@ discarded gene survives a save/load round trip as gone rather than resurrected.
 from pathlib import Path
 import subprocess
 import unittest
+import game_source
 
-CORE = Path(__file__).resolve().parents[2] / 'melee/worktrees/linux/pc/scripts/examples/roguelite/core.lua'
+CORE = game_source.ROGUELITE / 'core.lua'
 
 PRELUDE = r'''
 local Core = assert(loadfile(arg[1]))()

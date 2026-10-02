@@ -9,8 +9,11 @@ This is an offline, unreleased vertical slice of
 gene collection/breeding system with disposable run upgrades, a seeded bounded
 route, native fighter combat, and a recursive three-way command menu.
 
-The runtime is authored in
-`melee/worktrees/linux/pc/scripts/examples/roguelite/`. `prepare.py` bundles Core,
+The runtime is authored in the game checkout's
+`pc/scripts/examples/roguelite/`. Every tool and test here resolves that checkout
+through `game_source.py`: `GW_MELEE` if set, otherwise `<workspace>/melee`. Importing
+it fails immediately, naming the path it looked at, when the checkout has no
+roguelite sources. `prepare.py` bundles Core,
 Dungeon, Commands, Roster, Bindings, Visuals, Feedback, Menus, Rooms, EnemyGenes
 and TechAI as lexical Lua modules ahead of `main.lua`; the sandbox does not need
 `require`. Installed script ID is `roguelite/main`, which
@@ -70,7 +73,7 @@ frequency sentinel and the normal gameplay spawner path.
   `gd.stage_isolate(true)` disables the host's native scenery and collision;
   each room supplies its own solid main floor and elevated platforms. The rebuilt
   BF modular kit provides floors, walls, beams, posts, trim and doorway frames.
-  Follow the kit's [placement contract](../../melee/worktrees/linux/pc/scripts/examples/bf_interior_room/README.md#placement-contract):
+  Follow the kit's [placement contract](../../melee/pc/scripts/examples/bf_interior_room/README.md#placement-contract):
   a doorway replaces a full wall bay, at the same scale and depth as its neighbours.
   Decorative meshes add no collision. An asset failure retains visible debug floors;
   missing native isolation stops entry with an error instead of playing on FD.
@@ -159,7 +162,7 @@ python3 menu/pipeline/roguelite_art.py
 python3 menu/pipeline/roguelite_build_art.py
 python3 menu/pipeline/roguelite_feedback_art.py
 python3 tools/roguelite/build_room_kit.py
-python3 melee/worktrees/linux/pc/tools/png2gx.py --layout menu/out_roguelite/manifest.json --outdir menu/out_roguelite/gx
+python3 "$GW_MELEE"/pc/tools/png2gx.py --layout menu/out_roguelite/manifest.json --outdir menu/out_roguelite/gx
 ```
 
 The vector rebuild requires `rsvg-convert`; conversion requires Pillow.
@@ -193,6 +196,9 @@ Pre-existing magenta stage textures
 are a separate renderer issue and are not claimed fixed by this prototype.
 
 ## Validation and outstanding work
+
+Needs `lua` (5.4) on `PATH`; the suite runs the real interpreter and refuses to
+substitute a mock. Point `GW_MELEE` at a non-default game checkout.
 
 ```sh
 python3 -m unittest discover -s tools/roguelite -p 'test_*.py' -v
@@ -264,7 +270,7 @@ Read-only console diagnostics are:
 `rogue_start` requests the collection launch when the runtime is not ready; it
 changes the scene. These commands do not fake encounter clear or victory.
 The console helper is
-`melee/worktrees/linux/pc/scripts/console.py`; configure `MELEE_CONSOLE_PORT` only
+`$GW_MELEE/pc/scripts/console.py`; configure `MELEE_CONSOLE_PORT` only
 for local review.
 
 Reusable live evidence capture (start the game separately at normal speed):

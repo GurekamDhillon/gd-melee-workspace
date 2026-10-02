@@ -9,9 +9,10 @@ sibling inventories; and bounded/controlled refusal.
 from pathlib import Path
 import shutil
 import subprocess
+import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
-MODULE = ROOT / 'melee/worktrees/linux/pc/scripts/examples/roguelite/progression.lua'
+MODULE = game_source.ROGUELITE / 'progression.lua'
 LUA = shutil.which('lua5.4') or shutil.which('lua')
 assert LUA, 'Lua interpreter required'
 

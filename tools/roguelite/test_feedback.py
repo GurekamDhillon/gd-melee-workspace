@@ -6,8 +6,9 @@ from pathlib import Path
 import shutil
 import subprocess
 import unittest
+import game_source
 
-RUNTIME = Path(__file__).resolve().parents[2] / 'melee/worktrees/linux/pc/scripts/examples/roguelite'
+RUNTIME = game_source.ROGUELITE
 
 
 class FeedbackTests(unittest.TestCase):

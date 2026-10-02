@@ -12,9 +12,10 @@ from pathlib import Path
 import argparse
 import json
 import re
+import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / 'melee/worktrees/linux/pc/scripts/examples/roguelite'
+SOURCE = game_source.ROGUELITE
 REPORTS = ROOT / '_build/agents/linux/scripts-data/character_parts_lab_main'
 # Alias, costume table code, native internal FighterKind; primary IC only.
 STOCK = {
@@ -29,7 +30,7 @@ STOCK = {
 REVIEWED_ATTACHMENTS = {('pikachu',1,'555363dceb4f68d4'):{22,23,24}}
 
 
-def stock_counts(checkout=ROOT / 'melee/worktrees/linux'):
+def stock_counts(checkout=game_source.GAME):
     result = {}
     for source in sorted((checkout / 'src/melee/ft/kinds').glob('*/*.c')):
         text = source.read_text()

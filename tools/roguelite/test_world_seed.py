@@ -7,9 +7,10 @@ the unchanged profile seed, so successive runs repeated the dungeon.
 from pathlib import Path
 import shutil
 import subprocess
+import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
-CORE = ROOT / 'melee/worktrees/linux/pc/scripts/examples/roguelite/core.lua'
+CORE = game_source.ROGUELITE / 'core.lua'
 LUA = shutil.which('lua5.4') or shutil.which('lua')
 assert LUA, 'Lua interpreter required'
 

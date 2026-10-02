@@ -3,9 +3,10 @@
 from pathlib import Path
 import shutil
 import subprocess
+import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
-MODULE = ROOT / 'melee/worktrees/linux/pc/scripts/examples/roguelite/dungeon.lua'
+MODULE = game_source.ROGUELITE / 'dungeon.lua'
 LUA = shutil.which('lua5.4') or shutil.which('lua')
 assert LUA, 'Lua interpreter required'
 TEST = r'''

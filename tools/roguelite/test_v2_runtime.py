@@ -28,9 +28,10 @@ import tempfile
 import unittest
 
 import prepare
+import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
-RT = ROOT / 'melee/worktrees/linux/pc/scripts/examples/roguelite'
+RT = game_source.ROGUELITE
 LUA = shutil.which('lua5.4') or shutil.which('lua')
 assert LUA, 'Lua interpreter required'
 

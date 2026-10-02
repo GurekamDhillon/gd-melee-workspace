@@ -10,9 +10,10 @@ from pathlib import Path
 import shutil
 import subprocess
 import unittest
+import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
-RUNTIME = ROOT / 'melee/worktrees/linux/pc/scripts/examples/roguelite'
+RUNTIME = game_source.ROGUELITE
 LUA = shutil.which('lua5.4') or shutil.which('lua')
 MODULES = [RUNTIME / name for name in ('rng.lua', 'room_catalogue.lua', 'room_recipes.lua',
                                        'encounter_catalogue.lua', 'progression.lua', 'topology.lua',

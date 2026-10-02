@@ -20,10 +20,11 @@ import shutil
 import struct
 import subprocess
 import unittest
+import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
-RUNTIME = ROOT / 'melee/worktrees/linux/pc/scripts/examples/roguelite'
-NATIVE = ROOT / 'melee/worktrees/linux'
+RUNTIME = game_source.ROGUELITE
+NATIVE = game_source.GAME
 KIT = ROOT / 'menu/out_roguelite/room-kit'
 EXPORTER = RUNTIME.parent / 'bf_interior_room/models'
 HEADER = struct.Struct('>4sIIIfffII')
