@@ -1,0 +1,3689 @@
+{
+  "type": "object",
+  "properties": {
+    "geno": {
+      "type": "integer",
+      "description": "Format version",
+      "x-engine-default": 5,
+      "x-reference": "geno.md §7",
+      "x-source": "melee/pc/platform/geno_registry.c",
+      "minimum": 1,
+      "maximum": 5
+    },
+    "fighters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "attach": {
+            "type": "string",
+            "description": "Vanilla name/alias or existing fighter .dat file",
+            "x-engine-default": "",
+            "x-reference": "geno.md §7",
+            "x-source": "melee/pc/platform/geno_registry.c",
+            "maxLength": 31
+          },
+          "define": {
+            "description": "Reserved; engine skips this entire fighter",
+            "not": {}
+          },
+          "name": {
+            "type": "string",
+            "description": "Log display name",
+            "x-engine-default": "target Pl file",
+            "x-reference": "geno.md §7",
+            "x-source": "melee/pc/platform/geno_registry.c",
+            "maxLength": 63
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "walk_accel_mul": {
+                "type": "number",
+                "description": "Common attribute walk_accel_mul",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "walk_accel_base": {
+                "type": "number",
+                "description": "Common attribute walk_accel_base",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "walk_max_vel": {
+                "type": "number",
+                "description": "Common attribute walk_max_vel",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "slow_walk_max": {
+                "type": "number",
+                "description": "Common attribute slow_walk_max",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "mid_walk_point": {
+                "type": "number",
+                "description": "Common attribute mid_walk_point",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "fast_walk_min": {
+                "type": "number",
+                "description": "Common attribute fast_walk_min",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "ground_friction": {
+                "type": "number",
+                "description": "Common attribute ground_friction",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "dash_initial_velocity": {
+                "type": "number",
+                "description": "Common attribute dash_initial_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "dash_accel_mul": {
+                "type": "number",
+                "description": "Common attribute dash_accel_mul",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "dash_accel_base": {
+                "type": "number",
+                "description": "Common attribute dash_accel_base",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "dash_max_velocity": {
+                "type": "number",
+                "description": "Common attribute dash_max_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "run_animation_scaling": {
+                "type": "number",
+                "description": "Common attribute run_animation_scaling",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "max_run_brake_frames": {
+                "type": "number",
+                "description": "Common attribute max_run_brake_frames",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "ground_max_horizontal_velocity": {
+                "type": "number",
+                "description": "Common attribute ground_max_horizontal_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "jump_startup_time": {
+                "type": "number",
+                "description": "Common attribute jump_startup_time",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "jump_h_initial_velocity": {
+                "type": "number",
+                "description": "Common attribute jump_h_initial_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "jump_v_initial_velocity": {
+                "type": "number",
+                "description": "Common attribute jump_v_initial_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "ground_to_air_jump_momentum_multiplier": {
+                "type": "number",
+                "description": "Common attribute ground_to_air_jump_momentum_multiplier",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "jump_h_max_velocity": {
+                "type": "number",
+                "description": "Common attribute jump_h_max_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "hop_v_initial_velocity": {
+                "type": "number",
+                "description": "Common attribute hop_v_initial_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "air_jump_v_multiplier": {
+                "type": "number",
+                "description": "Common attribute air_jump_v_multiplier",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "air_jump_h_multiplier": {
+                "type": "number",
+                "description": "Common attribute air_jump_h_multiplier",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "max_jumps": {
+                "type": "integer",
+                "description": "Common attribute max_jumps",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "gravity": {
+                "type": "number",
+                "description": "Common attribute gravity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "terminal_velocity": {
+                "type": "number",
+                "description": "Common attribute terminal_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "air_drift_stick_mul": {
+                "type": "number",
+                "description": "Common attribute air_drift_stick_mul",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "aerial_drift_base": {
+                "type": "number",
+                "description": "Common attribute aerial_drift_base",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "air_drift_max": {
+                "type": "number",
+                "description": "Common attribute air_drift_max",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "aerial_friction": {
+                "type": "number",
+                "description": "Common attribute aerial_friction",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "fast_fall_velocity": {
+                "type": "number",
+                "description": "Common attribute fast_fall_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "air_max_horizontal_velocity": {
+                "type": "number",
+                "description": "Common attribute air_max_horizontal_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "jab_2_input_window": {
+                "type": "number",
+                "description": "Common attribute jab_2_input_window",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "jab_3_input_window": {
+                "type": "number",
+                "description": "Common attribute jab_3_input_window",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "standing_turn_frames": {
+                "type": "number",
+                "description": "Common attribute standing_turn_frames",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "weight": {
+                "type": "number",
+                "description": "Common attribute weight",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "model_scaling": {
+                "type": "number",
+                "description": "Common attribute model_scaling",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "initial_shield_size": {
+                "type": "number",
+                "description": "Common attribute initial_shield_size",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "shield_break_initial_velocity": {
+                "type": "number",
+                "description": "Common attribute shield_break_initial_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "rapid_jab_window": {
+                "type": "integer",
+                "description": "Common attribute rapid_jab_window",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "clank_animation_length": {
+                "type": "number",
+                "description": "Common attribute clank_animation_length",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              }
+            },
+            "additionalProperties": false,
+            "maxProperties": 48
+          },
+          "jumps": {
+            "type": "object",
+            "properties": {
+              "max": {
+                "type": "integer",
+                "description": "Total jumps including ground jump",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §10",
+                "x-source": "melee/pc/platform/geno_registry.c",
+                "minimum": 1,
+                "maximum": 250
+              },
+              "air_vy": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "description": "Per-air-jump vertical impulse",
+                  "x-engine-default": "disc value",
+                  "x-reference": "geno.md §10",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "maxItems": 16
+              }
+            },
+            "additionalProperties": false
+          },
+          "hooks": {
+            "type": "object",
+            "properties": {
+              "on_init": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "Hook name or name:integer",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §9",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "maxItems": 8
+              },
+              "on_frame": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "Hook name or name:integer",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §9",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "maxItems": 8
+              },
+              "on_action": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "Hook name or name:integer",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §9",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "maxItems": 8
+              },
+              "on_land": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "Hook name or name:integer",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §9",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "maxItems": 8
+              },
+              "on_hit": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "Hook name or name:integer",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §9",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "maxItems": 8
+              }
+            },
+            "additionalProperties": false
+          },
+          "states": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "State target name",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §16.1",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "maxLength": 31
+                },
+                "behavior": {
+                  "type": "string",
+                  "description": "Callback bundle",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §16.2",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "enum": [
+                    "geno.air",
+                    "geno.ground",
+                    "geno.anim_motion",
+                    "geno.glide.start",
+                    "geno.glide",
+                    "geno.glide.attack",
+                    "geno.glide.landing",
+                    "geno.glide.end",
+                    "geno.tornado",
+                    "geno.drill",
+                    "geno.drill.end",
+                    "geno.cape",
+                    "geno.cape.attack",
+                    "geno.cape.end",
+                    "geno.drill.start"
+                  ]
+                },
+                "subaction": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "description": "Animation row",
+                      "x-engine-default": -1,
+                      "x-reference": "geno.md §16.1",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "minimum": 0,
+                      "maximum": 1023
+                    },
+                    {
+                      "type": "string",
+                      "description": "Use a motion's animation",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §16.1",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "pattern": "^(motion|special):[0-9]+$"
+                    }
+                  ]
+                },
+                "like": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "description": "Copy motion flags, move id and camera callback",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §15.3",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    {
+                      "type": "string",
+                      "description": "Copy motion flags, move id and camera callback",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §15.3",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                    }
+                  ]
+                },
+                "flags": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 4294967295
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^(0[xX][0-9a-fA-F]+|[0-9]+)$"
+                    }
+                  ]
+                },
+                "move_id": {
+                  "type": "integer",
+                  "description": "Move id for staling",
+                  "x-engine-default": "from like / behavior",
+                  "x-reference": "geno.md §16.1",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "next": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "description": "Target on animation end",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §15.3",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    {
+                      "type": "string",
+                      "description": "Target on animation end",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §15.3",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                    }
+                  ]
+                },
+                "land": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "description": "Target on landing",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §15.3",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    {
+                      "type": "string",
+                      "description": "Target on landing",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §15.3",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                    }
+                  ]
+                },
+                "landing_lag": {
+                  "type": "number",
+                  "description": "Landing lag",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §16.1",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "ledge": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "none",
+                        "front",
+                        "both"
+                      ]
+                    },
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 2
+                    }
+                  ]
+                },
+                "liftoff": {
+                  "type": [
+                    "boolean",
+                    "number"
+                  ],
+                  "description": "Enable when nonzero",
+                  "x-engine-default": 1,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "origin": {
+                  "type": [
+                    "boolean",
+                    "number"
+                  ],
+                  "description": "Enable when nonzero",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "gravity": {
+                  "type": "number",
+                  "description": "Root-motion gravity multiplier",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §17",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "facing": {
+                  "type": "string",
+                  "description": "Lock root-motion travel to entry facing",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §17",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "enum": [
+                    "entry"
+                  ]
+                },
+                "counter": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "integer",
+                      "description": "First counter action frame",
+                      "x-engine-default": 1,
+                      "x-reference": "geno.md §19",
+                      "x-source": "melee/pc/platform/geno_registry.c"
+                    },
+                    "to": {
+                      "type": "integer",
+                      "description": "Last counter action frame",
+                      "x-engine-default": 2147483647,
+                      "x-reference": "geno.md §19",
+                      "x-source": "melee/pc/platform/geno_registry.c"
+                    },
+                    "target": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "description": "Target after a countered hit",
+                          "x-engine-default": 0,
+                          "x-reference": "geno.md §15.3",
+                          "x-source": "melee/pc/platform/geno_registry.c",
+                          "minimum": 0,
+                          "maximum": 65535
+                        },
+                        {
+                          "type": "string",
+                          "description": "Target after a countered hit",
+                          "x-engine-default": "",
+                          "x-reference": "geno.md §15.3",
+                          "x-source": "melee/pc/platform/geno_registry.c",
+                          "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                        }
+                      ]
+                    },
+                    "negate": {
+                      "type": [
+                        "boolean",
+                        "number"
+                      ],
+                      "description": "Enable when nonzero",
+                      "x-engine-default": 1,
+                      "x-reference": "geno.md §19",
+                      "x-source": "melee/pc/platform/geno_registry.c"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "anim": {
+                  "type": "string",
+                  "description": "Override anim callback",
+                  "x-engine-default": "behavior callback",
+                  "x-reference": "geno.md §16.2",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "enum": [
+                    "like",
+                    "next",
+                    "loop",
+                    "hold",
+                    "glide.start",
+                    "glide",
+                    "tornado",
+                    "drill",
+                    "drill.end",
+                    "glide.after",
+                    "cape"
+                  ]
+                },
+                "iasa": {
+                  "type": "string",
+                  "description": "Override iasa callback",
+                  "x-engine-default": "behavior callback",
+                  "x-reference": "geno.md §16.2",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "enum": [
+                    "like",
+                    "interrupt",
+                    "none",
+                    "glide"
+                  ]
+                },
+                "phys": {
+                  "type": "string",
+                  "description": "Override phys callback",
+                  "x-engine-default": "behavior callback",
+                  "x-reference": "geno.md §16.2",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "enum": [
+                    "like",
+                    "cape",
+                    "none",
+                    "air",
+                    "air_nodrift",
+                    "air_drift",
+                    "brake",
+                    "ground",
+                    "auto",
+                    "anim_motion",
+                    "glide.start",
+                    "glide",
+                    "glide.attack",
+                    "glide.end",
+                    "tornado",
+                    "drill",
+                    "drill.end",
+                    "drill.start"
+                  ]
+                },
+                "coll": {
+                  "type": "string",
+                  "description": "Override coll callback",
+                  "x-engine-default": "behavior callback",
+                  "x-reference": "geno.md §16.2",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "enum": [
+                    "like",
+                    "cape",
+                    "cape.after",
+                    "none",
+                    "air",
+                    "air_noledge",
+                    "ground",
+                    "ground_stop",
+                    "both",
+                    "anim_motion",
+                    "glide",
+                    "drill",
+                    "drill.start"
+                  ]
+                }
+              },
+              "additionalProperties": false
+            },
+            "maxItems": 48
+          },
+          "articles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Article name",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "maxLength": 31
+                },
+                "model": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string",
+                      "description": "Model archive path",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §19",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "maxLength": 63
+                    },
+                    "symbol": {
+                      "type": "string",
+                      "description": "Model joint public symbol; absent uses first *_joint",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §19",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "maxLength": 63
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "file"
+                  ]
+                },
+                "lifetime": {
+                  "type": "number",
+                  "description": "Lifetime in logic frames",
+                  "x-engine-default": 60,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "velocity": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "description": "Coordinate",
+                    "x-engine-default": 0,
+                    "x-reference": "geno.md §19",
+                    "x-source": "melee/pc/platform/geno_registry.c"
+                  },
+                  "maxItems": 2
+                },
+                "spawn": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "description": "Coordinate",
+                    "x-engine-default": 0,
+                    "x-reference": "geno.md §19",
+                    "x-source": "melee/pc/platform/geno_registry.c"
+                  },
+                  "maxItems": 2
+                },
+                "scale": {
+                  "type": "number",
+                  "description": "Model scale",
+                  "x-engine-default": 1,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "spin": {
+                  "type": "number",
+                  "description": "Model spin in degrees per frame",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "max_live": {
+                  "type": "integer",
+                  "description": "Live article limit",
+                  "x-engine-default": 4,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minimum": 1
+                },
+                "homing": {
+                  "type": "object",
+                  "properties": {
+                    "turn": {
+                      "type": "number",
+                      "description": "turn",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §19",
+                      "x-source": "melee/pc/platform/geno_registry.c"
+                    },
+                    "range": {
+                      "type": "number",
+                      "description": "range",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §19",
+                      "x-source": "melee/pc/platform/geno_registry.c"
+                    },
+                    "delay": {
+                      "type": "number",
+                      "description": "delay",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §19",
+                      "x-source": "melee/pc/platform/geno_registry.c"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "despawn": {
+                  "type": "object",
+                  "properties": {
+                    "hit": {
+                      "type": [
+                        "boolean",
+                        "number"
+                      ],
+                      "description": "Enable when nonzero",
+                      "x-engine-default": 1,
+                      "x-reference": "geno.md §19",
+                      "x-source": "melee/pc/platform/geno_registry.c"
+                    },
+                    "shield": {
+                      "type": [
+                        "boolean",
+                        "number"
+                      ],
+                      "description": "Enable when nonzero",
+                      "x-engine-default": 1,
+                      "x-reference": "geno.md §19",
+                      "x-source": "melee/pc/platform/geno_registry.c"
+                    },
+                    "stage": {
+                      "type": [
+                        "boolean",
+                        "number"
+                      ],
+                      "description": "Enable when nonzero",
+                      "x-engine-default": 1,
+                      "x-reference": "geno.md §19",
+                      "x-source": "melee/pc/platform/geno_registry.c"
+                    },
+                    "clank": {
+                      "type": [
+                        "boolean",
+                        "number"
+                      ],
+                      "description": "Enable when nonzero",
+                      "x-engine-default": 1,
+                      "x-reference": "geno.md §19",
+                      "x-source": "melee/pc/platform/geno_registry.c"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "spins": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "joint": {
+                        "type": "integer",
+                        "description": "Model joint index",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "z": {
+                        "type": "number",
+                        "description": "Joint spin radians per frame",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "maxItems": 4
+                },
+                "bone": {
+                  "type": "integer",
+                  "description": "Spawn joint; -1 = position",
+                  "x-engine-default": -1,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "effect": {
+                  "type": "integer",
+                  "description": "Melee effect id",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "fx": {
+                  "type": "string",
+                  "description": "Effect package name",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §20",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "effects": {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "description": "Melee effect id",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "description": "Effect id",
+                            "x-engine-default": 0,
+                            "x-reference": "geno.md §19",
+                            "x-source": "melee/pc/platform/geno_registry.c"
+                          },
+                          "frame": {
+                            "type": "integer",
+                            "description": "Attach life frame",
+                            "x-engine-default": 0,
+                            "x-reference": "geno.md §19",
+                            "x-source": "melee/pc/platform/geno_registry.c",
+                            "minimum": 0,
+                            "maximum": 65535
+                          },
+                          "joint": {
+                            "type": "integer",
+                            "description": "Model joint",
+                            "x-engine-default": 0,
+                            "x-reference": "geno.md §19",
+                            "x-source": "melee/pc/platform/geno_registry.c",
+                            "minimum": 0,
+                            "maximum": 255
+                          },
+                          "count": {
+                            "type": "integer",
+                            "description": "Consecutive effect count",
+                            "x-engine-default": 1,
+                            "x-reference": "geno.md §19",
+                            "x-source": "melee/pc/platform/geno_registry.c",
+                            "minimum": 1,
+                            "maximum": 256
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "maxItems": 8
+                },
+                "spawns": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "number",
+                      "description": "Coordinate",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §19",
+                      "x-source": "melee/pc/platform/geno_registry.c"
+                    },
+                    "maxItems": 2
+                  },
+                  "maxItems": 4
+                },
+                "hitboxes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "damage": {
+                        "type": "number",
+                        "description": "Damage percent",
+                        "x-engine-default": 1,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "size": {
+                        "type": "number",
+                        "description": "Hitbox radius",
+                        "x-engine-default": 3,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "offset": {
+                        "type": "array",
+                        "items": {
+                          "type": "number",
+                          "description": "Coordinate",
+                          "x-engine-default": 0,
+                          "x-reference": "geno.md §19",
+                          "x-source": "melee/pc/platform/geno_registry.c"
+                        },
+                        "maxItems": 3
+                      },
+                      "angle": {
+                        "type": "integer",
+                        "description": "Launch angle",
+                        "x-engine-default": 361,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "kbg": {
+                        "type": "integer",
+                        "description": "Knockback growth",
+                        "x-engine-default": 100,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "wkb": {
+                        "type": "integer",
+                        "description": "Weight-set knockback",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "bkb": {
+                        "type": "integer",
+                        "description": "Base knockback",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "element": {
+                        "type": "integer",
+                        "description": "Hit element",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "shield_damage": {
+                        "type": "integer",
+                        "description": "Shield damage",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "stun": {
+                        "type": "integer",
+                        "description": "Extra hitstun",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "minimum": 0,
+                        "maximum": 255
+                      },
+                      "sfx_severity": {
+                        "type": "integer",
+                        "description": "Hit sound severity",
+                        "x-engine-default": 1,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "sfx_kind": {
+                        "type": "integer",
+                        "description": "Hit sound kind",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "start": {
+                        "type": "integer",
+                        "description": "First active life frame",
+                        "x-engine-default": 1,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "end": {
+                        "type": "integer",
+                        "description": "Last active life frame; 0 = lifetime",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "slot": {
+                        "type": "integer",
+                        "description": "Live hitbox slot",
+                        "x-engine-default": "entry index modulo 4",
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "minimum": 0,
+                        "maximum": 3
+                      },
+                      "hits": {
+                        "type": "object",
+                        "properties": {
+                          "ground": {
+                            "type": [
+                              "boolean",
+                              "number"
+                            ],
+                            "description": "Enable when nonzero",
+                            "x-engine-default": 1,
+                            "x-reference": "geno.md §19",
+                            "x-source": "melee/pc/platform/geno_registry.c"
+                          },
+                          "air": {
+                            "type": [
+                              "boolean",
+                              "number"
+                            ],
+                            "description": "Enable when nonzero",
+                            "x-engine-default": 1,
+                            "x-reference": "geno.md §19",
+                            "x-source": "melee/pc/platform/geno_registry.c"
+                          },
+                          "reflect": {
+                            "type": [
+                              "boolean",
+                              "number"
+                            ],
+                            "description": "Enable when nonzero",
+                            "x-engine-default": 1,
+                            "x-reference": "geno.md §19",
+                            "x-source": "melee/pc/platform/geno_registry.c"
+                          },
+                          "absorb": {
+                            "type": [
+                              "boolean",
+                              "number"
+                            ],
+                            "description": "Enable when nonzero",
+                            "x-engine-default": 1,
+                            "x-reference": "geno.md §19",
+                            "x-source": "melee/pc/platform/geno_registry.c"
+                          },
+                          "counter": {
+                            "type": [
+                              "boolean",
+                              "number"
+                            ],
+                            "description": "Enable when nonzero",
+                            "x-engine-default": 1,
+                            "x-reference": "geno.md §19",
+                            "x-source": "melee/pc/platform/geno_registry.c"
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "maxItems": 8
+                },
+                "children": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "article": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "description": "Article index",
+                            "x-engine-default": 0,
+                            "x-reference": "geno.md §19",
+                            "x-source": "melee/pc/platform/geno_registry.c",
+                            "minimum": 0,
+                            "maximum": 15
+                          },
+                          {
+                            "type": "string",
+                            "description": "Article name",
+                            "x-engine-default": "",
+                            "x-reference": "geno.md §19",
+                            "x-source": "melee/pc/platform/geno_registry.c"
+                          }
+                        ]
+                      },
+                      "frame": {
+                        "type": "integer",
+                        "description": "First spawn frame",
+                        "x-engine-default": 1,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "every": {
+                        "type": "integer",
+                        "description": "Repeat interval; 0 = once",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "count": {
+                        "type": "integer",
+                        "description": "Spawn count",
+                        "x-engine-default": 1,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      "spawn": {
+                        "type": "integer",
+                        "description": "Spawn variant",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "minimum": 0,
+                        "maximum": 3
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "article"
+                    ]
+                  },
+                  "maxItems": 2
+                },
+                "gravity": {
+                  "type": "number",
+                  "description": "gravity",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "max_fall": {
+                  "type": "number",
+                  "description": "max fall",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "accel": {
+                  "type": "number",
+                  "description": "accel",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "max_speed": {
+                  "type": "number",
+                  "description": "max speed",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "min_speed": {
+                  "type": "number",
+                  "description": "min speed",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "angle": {
+                  "type": "number",
+                  "description": "angle",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                }
+              },
+              "additionalProperties": false
+            },
+            "maxItems": 16
+          },
+          "subactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "description": "Subaction row to replace",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §15.5",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minimum": 0,
+                  "maximum": 1023
+                },
+                "words": {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": -2147483648,
+                        "maximum": 4294967295
+                      },
+                      {
+                        "type": "string",
+                        "pattern": "^(0[xX][0-9a-fA-F]+|[0-9]+)$"
+                      }
+                    ]
+                  },
+                  "maxItems": 16383,
+                  "minItems": 1
+                },
+                "file": {
+                  "type": "string",
+                  "description": "Whitespace word file relative to mod root",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §15.5",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "index"
+              ],
+              "oneOf": [
+                {
+                  "required": [
+                    "words"
+                  ],
+                  "not": {
+                    "required": [
+                      "file"
+                    ]
+                  }
+                },
+                {
+                  "required": [
+                    "file"
+                  ],
+                  "not": {
+                    "required": [
+                      "words"
+                    ]
+                  }
+                }
+              ]
+            },
+            "maxItems": 64
+          },
+          "special_attributes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "description": "Special attribute word index",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §15.5",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minimum": 0,
+                  "maximum": 264
+                },
+                "offset": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": -2147483648,
+                      "maximum": 4294967295
+                    },
+                    {
+                      "type": "string",
+                      "pattern": "^(0[xX][0-9a-fA-F]+|[0-9]+)$"
+                    }
+                  ]
+                },
+                "float": {
+                  "type": "number",
+                  "description": "Float override",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §15.5",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "int": {
+                  "type": "integer",
+                  "description": "Integer override",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §15.5",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minimum": -2147483648,
+                  "maximum": 2147483647
+                }
+              },
+              "additionalProperties": false,
+              "allOf": [
+                {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "index"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "offset"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "float"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "int"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "maxItems": 64
+          },
+          "on_land": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "from": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "description": "Action target",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §15.3",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    {
+                      "type": "string",
+                      "description": "Action target",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §15.3",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                    }
+                  ]
+                },
+                "to": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "description": "Action target",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §15.3",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    {
+                      "type": "string",
+                      "description": "Action target",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §15.3",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                    }
+                  ]
+                },
+                "keep_frame": {
+                  "type": "boolean",
+                  "description": "Keep current animation frame",
+                  "x-engine-default": false,
+                  "x-reference": "geno.md §15.5",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "from",
+                "to"
+              ]
+            },
+            "maxItems": 16
+          },
+          "motion_anims": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "motion": {
+                  "type": "integer",
+                  "description": "Common motion id",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19.12",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minimum": 0,
+                  "maximum": 1023
+                },
+                "subaction": {
+                  "type": "integer",
+                  "description": "Animation row",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19.12",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minimum": 0,
+                  "maximum": 1023
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "motion",
+                "subaction"
+              ]
+            },
+            "maxItems": 8
+          },
+          "specials": {
+            "type": "object",
+            "properties": {
+              "n": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "description": "Action target",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "minimum": 0,
+                        "maximum": 65535
+                      },
+                      {
+                        "type": "string",
+                        "description": "Action target",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "select": {
+                        "type": "string",
+                        "description": "Integer bank selector",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(la_i|ra_i):(?:[0-9]|[1-5][0-9]|6[0-3])$"
+                      },
+                      "targets": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "description": "Action target",
+                              "x-engine-default": 0,
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "minimum": 0,
+                              "maximum": 65535
+                            },
+                            {
+                              "type": "string",
+                              "description": "Action target",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                            }
+                          ]
+                        },
+                        "maxItems": 4,
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "select",
+                      "targets"
+                    ]
+                  }
+                ]
+              },
+              "s": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "description": "Action target",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "minimum": 0,
+                        "maximum": 65535
+                      },
+                      {
+                        "type": "string",
+                        "description": "Action target",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "select": {
+                        "type": "string",
+                        "description": "Integer bank selector",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(la_i|ra_i):(?:[0-9]|[1-5][0-9]|6[0-3])$"
+                      },
+                      "targets": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "description": "Action target",
+                              "x-engine-default": 0,
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "minimum": 0,
+                              "maximum": 65535
+                            },
+                            {
+                              "type": "string",
+                              "description": "Action target",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                            }
+                          ]
+                        },
+                        "maxItems": 4,
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "select",
+                      "targets"
+                    ]
+                  }
+                ]
+              },
+              "hi": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "description": "Action target",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "minimum": 0,
+                        "maximum": 65535
+                      },
+                      {
+                        "type": "string",
+                        "description": "Action target",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "select": {
+                        "type": "string",
+                        "description": "Integer bank selector",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(la_i|ra_i):(?:[0-9]|[1-5][0-9]|6[0-3])$"
+                      },
+                      "targets": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "description": "Action target",
+                              "x-engine-default": 0,
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "minimum": 0,
+                              "maximum": 65535
+                            },
+                            {
+                              "type": "string",
+                              "description": "Action target",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                            }
+                          ]
+                        },
+                        "maxItems": 4,
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "select",
+                      "targets"
+                    ]
+                  }
+                ]
+              },
+              "lw": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "description": "Action target",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "minimum": 0,
+                        "maximum": 65535
+                      },
+                      {
+                        "type": "string",
+                        "description": "Action target",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "select": {
+                        "type": "string",
+                        "description": "Integer bank selector",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(la_i|ra_i):(?:[0-9]|[1-5][0-9]|6[0-3])$"
+                      },
+                      "targets": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "description": "Action target",
+                              "x-engine-default": 0,
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "minimum": 0,
+                              "maximum": 65535
+                            },
+                            {
+                              "type": "string",
+                              "description": "Action target",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                            }
+                          ]
+                        },
+                        "maxItems": 4,
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "select",
+                      "targets"
+                    ]
+                  }
+                ]
+              },
+              "air_n": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "description": "Action target",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "minimum": 0,
+                        "maximum": 65535
+                      },
+                      {
+                        "type": "string",
+                        "description": "Action target",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "select": {
+                        "type": "string",
+                        "description": "Integer bank selector",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(la_i|ra_i):(?:[0-9]|[1-5][0-9]|6[0-3])$"
+                      },
+                      "targets": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "description": "Action target",
+                              "x-engine-default": 0,
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "minimum": 0,
+                              "maximum": 65535
+                            },
+                            {
+                              "type": "string",
+                              "description": "Action target",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                            }
+                          ]
+                        },
+                        "maxItems": 4,
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "select",
+                      "targets"
+                    ]
+                  }
+                ]
+              },
+              "air_s": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "description": "Action target",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "minimum": 0,
+                        "maximum": 65535
+                      },
+                      {
+                        "type": "string",
+                        "description": "Action target",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "select": {
+                        "type": "string",
+                        "description": "Integer bank selector",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(la_i|ra_i):(?:[0-9]|[1-5][0-9]|6[0-3])$"
+                      },
+                      "targets": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "description": "Action target",
+                              "x-engine-default": 0,
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "minimum": 0,
+                              "maximum": 65535
+                            },
+                            {
+                              "type": "string",
+                              "description": "Action target",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                            }
+                          ]
+                        },
+                        "maxItems": 4,
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "select",
+                      "targets"
+                    ]
+                  }
+                ]
+              },
+              "air_hi": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "description": "Action target",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "minimum": 0,
+                        "maximum": 65535
+                      },
+                      {
+                        "type": "string",
+                        "description": "Action target",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "select": {
+                        "type": "string",
+                        "description": "Integer bank selector",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(la_i|ra_i):(?:[0-9]|[1-5][0-9]|6[0-3])$"
+                      },
+                      "targets": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "description": "Action target",
+                              "x-engine-default": 0,
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "minimum": 0,
+                              "maximum": 65535
+                            },
+                            {
+                              "type": "string",
+                              "description": "Action target",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                            }
+                          ]
+                        },
+                        "maxItems": 4,
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "select",
+                      "targets"
+                    ]
+                  }
+                ]
+              },
+              "air_lw": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "description": "Action target",
+                        "x-engine-default": 0,
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "minimum": 0,
+                        "maximum": 65535
+                      },
+                      {
+                        "type": "string",
+                        "description": "Action target",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §15.3",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "select": {
+                        "type": "string",
+                        "description": "Integer bank selector",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §19",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "pattern": "^(la_i|ra_i):(?:[0-9]|[1-5][0-9]|6[0-3])$"
+                      },
+                      "targets": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "description": "Action target",
+                              "x-engine-default": 0,
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "minimum": 0,
+                              "maximum": 65535
+                            },
+                            {
+                              "type": "string",
+                              "description": "Action target",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                            }
+                          ]
+                        },
+                        "maxItems": 4,
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "select",
+                      "targets"
+                    ]
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "fx_bindings": {
+            "type": "string",
+            "description": "Effect bindings JSON relative path",
+            "x-engine-default": "",
+            "x-reference": "geno.md §20",
+            "x-source": "melee/pc/platform/geno_registry.c"
+          },
+          "glide": {
+            "type": "object",
+            "properties": {
+              "angle_max": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter angle_max",
+                "x-engine-default": 80.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "angle_min": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter angle_min",
+                "x-engine-default": -70.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "start_vy": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter start_vy",
+                "x-engine-default": 0.75,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "start_gravity": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter start_gravity",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "start_vx": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter start_vx",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "speed": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter speed",
+                "x-engine-default": 1.7,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "speed_accel": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter speed_accel",
+                "x-engine-default": 0.04,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "max_speed": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter max_speed",
+                "x-engine-default": 2.2,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "stall_speed": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter stall_speed",
+                "x-engine-default": 0.7,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "sink_accel": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter sink_accel",
+                "x-engine-default": 0.03,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "max_sink": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter max_sink",
+                "x-engine-default": 0.6,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "recover_angle": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter recover_angle",
+                "x-engine-default": 15.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "dive_angle": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter dive_angle",
+                "x-engine-default": -25.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "dive_bonus": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter dive_bonus",
+                "x-engine-default": 0.03,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w14": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w14",
+                "x-engine-default": 0.15,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "deadzone": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter deadzone",
+                "x-engine-default": 0.25,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "pitch_up": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter pitch_up",
+                "x-engine-default": 0.55,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "pitch_down": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter pitch_down",
+                "x-engine-default": 0.75,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "max_pitch_rate": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter max_pitch_rate",
+                "x-engine-default": 7.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "stall_pitch": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter stall_pitch",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "wing_node": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter wing_node",
+                "x-engine-default": 44.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w21": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w21",
+                "x-engine-default": 0.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "hold_frames": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter hold_frames",
+                "x-engine-default": 16.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "from_ground_jump": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter from_ground_jump",
+                "x-engine-default": 0.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "end_helpless": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter end_helpless",
+                "x-engine-default": 0.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "landing_lag": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter landing_lag",
+                "x-engine-default": 0.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "entry": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter entry",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "max_frames": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter max_frames",
+                "x-engine-default": 0.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "pose_center": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter pose_center",
+                "x-engine-default": 0.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "end_buttons": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter end_buttons",
+                "x-engine-default": 14,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "script_entry_helpless": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter script_entry_helpless",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w00": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w00",
+                "x-engine-default": 80.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w01": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w01",
+                "x-engine-default": -70.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w02": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w02",
+                "x-engine-default": 0.75,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w03": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w03",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w04": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w04",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w05": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w05",
+                "x-engine-default": 1.7,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w06": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w06",
+                "x-engine-default": 0.04,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w07": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w07",
+                "x-engine-default": 2.2,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w08": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w08",
+                "x-engine-default": 0.7,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w09": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w09",
+                "x-engine-default": 0.03,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w10": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w10",
+                "x-engine-default": 0.6,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w11": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w11",
+                "x-engine-default": 15.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w12": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w12",
+                "x-engine-default": -25.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w13": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w13",
+                "x-engine-default": 0.03,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w15": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w15",
+                "x-engine-default": 0.25,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w16": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w16",
+                "x-engine-default": 0.55,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w17": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w17",
+                "x-engine-default": 0.75,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w18": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w18",
+                "x-engine-default": 7.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w19": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w19",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w20": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w20",
+                "x-engine-default": 44.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              }
+            },
+            "additionalProperties": false
+          },
+          "tornado": {
+            "type": "object",
+            "properties": {
+              "entry_vy": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter entry_vy",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "entry_vx_mul": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter entry_vx_mul",
+                "x-engine-default": 0.7,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "start_rate": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter start_rate",
+                "x-engine-default": 80.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "ground_accel": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter ground_accel",
+                "x-engine-default": 0.12,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "ground_speed": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter ground_speed",
+                "x-engine-default": 2.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "air_accel": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter air_accel",
+                "x-engine-default": 0.1,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "air_speed": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter air_speed",
+                "x-engine-default": 1.7,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "brake": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter brake",
+                "x-engine-default": 0.008,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "gravity": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter gravity",
+                "x-engine-default": -0.08,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "max_fall": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter max_fall",
+                "x-engine-default": 0.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "tap_vy": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter tap_vy",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "tap_cooldown": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter tap_cooldown",
+                "x-engine-default": 10.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "max_rise": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter max_rise",
+                "x-engine-default": 1.4,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "tap_rate": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter tap_rate",
+                "x-engine-default": 16.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "max_rate": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter max_rate",
+                "x-engine-default": 80.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "rate_decay": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter rate_decay",
+                "x-engine-default": 1.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "spin_frames": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter spin_frames",
+                "x-engine-default": 70.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "late_decay": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter late_decay",
+                "x-engine-default": 2.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "end_rate": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter end_rate",
+                "x-engine-default": 10.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w19": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w19",
+                "x-engine-default": 0.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "max_speed": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter max_speed",
+                "x-engine-default": 2.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "end_helpless": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter end_helpless",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "spin_anim": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter spin_anim",
+                "x-engine-default": 0.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "spin_period": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter spin_period",
+                "x-engine-default": 0.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w00": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w00",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w01": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w01",
+                "x-engine-default": 0.7,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w02": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w02",
+                "x-engine-default": 80.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w03": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w03",
+                "x-engine-default": 0.12,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w04": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w04",
+                "x-engine-default": 2.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w05": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w05",
+                "x-engine-default": 0.1,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w06": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w06",
+                "x-engine-default": 1.7,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w07": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w07",
+                "x-engine-default": 0.008,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w08": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w08",
+                "x-engine-default": -0.08,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w09": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w09",
+                "x-engine-default": 0.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w10": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w10",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w11": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w11",
+                "x-engine-default": 10.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w12": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w12",
+                "x-engine-default": 1.4,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w13": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w13",
+                "x-engine-default": 16.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w14": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w14",
+                "x-engine-default": 80.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w15": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w15",
+                "x-engine-default": 1.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w16": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w16",
+                "x-engine-default": 70.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w17": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w17",
+                "x-engine-default": 2.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w18": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w18",
+                "x-engine-default": 10.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              }
+            },
+            "additionalProperties": false
+          },
+          "drill": {
+            "type": "object",
+            "properties": {
+              "start_vx_mul": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter start_vx_mul",
+                "x-engine-default": 0.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "start_vy": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter start_vy",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "start_gravity": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter start_gravity",
+                "x-engine-default": -0.08,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "steer": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter steer",
+                "x-engine-default": 3.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "end_frames": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter end_frames",
+                "x-engine-default": 10.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w05": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w05",
+                "x-engine-default": 0.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "speed": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter speed",
+                "x-engine-default": 2.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "angle_max": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter angle_max",
+                "x-engine-default": 0.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "bounce": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter bounce",
+                "x-engine-default": 0.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "pop_vx": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter pop_vx",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "pop_vy": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter pop_vy",
+                "x-engine-default": 2.1,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "end_helpless": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter end_helpless",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "pitch_model": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter pitch_model",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w00": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w00",
+                "x-engine-default": 0.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w01": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w01",
+                "x-engine-default": 1.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w02": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w02",
+                "x-engine-default": -0.08,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w03": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w03",
+                "x-engine-default": 3.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w04": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w04",
+                "x-engine-default": 10.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              }
+            },
+            "additionalProperties": false
+          },
+          "cape": {
+            "type": "object",
+            "properties": {
+              "keep_vx": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter keep_vx",
+                "x-engine-default": 0.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "keep_vy": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter keep_vy",
+                "x-engine-default": 0.4,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "steer_accel_x": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter steer_accel_x",
+                "x-engine-default": 0.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "steer_max_x": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter steer_max_x",
+                "x-engine-default": 2.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "steer_accel_y": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter steer_accel_y",
+                "x-engine-default": 0.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "steer_max_y": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter steer_max_y",
+                "x-engine-default": 2.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "steer_frame": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter steer_frame",
+                "x-engine-default": 12.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "decide_frame": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter decide_frame",
+                "x-engine-default": 26.0,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "neutral_x": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter neutral_x",
+                "x-engine-default": 0.3,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "attack_buttons": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter attack_buttons",
+                "x-engine-default": 3,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w00": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w00",
+                "x-engine-default": 0.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w01": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w01",
+                "x-engine-default": 0.4,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w02": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w02",
+                "x-engine-default": 0.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w03": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w03",
+                "x-engine-default": 2.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w04": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w04",
+                "x-engine-default": 0.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              },
+              "w05": {
+                "type": [
+                  "number",
+                  "boolean"
+                ],
+                "description": "Behavior parameter w05",
+                "x-engine-default": 2.5,
+                "x-reference": "geno.md §16.4",
+                "x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "attach"
+        ]
+      },
+      "maxItems": 32
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "geno",
+    "fighters"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Geno fighter overlays",
+  "x-registry-keys": [
+    "absorb",
+    "accel",
+    "air",
+    "air_hi",
+    "air_lw",
+    "air_n",
+    "air_s",
+    "air_vy",
+    "angle",
+    "anim",
+    "article",
+    "articles",
+    "attach",
+    "attributes",
+    "behavior",
+    "bkb",
+    "bone",
+    "cape",
+    "children",
+    "clank",
+    "coll",
+    "count",
+    "counter",
+    "damage",
+    "define",
+    "delay",
+    "despawn",
+    "drill",
+    "effect",
+    "effects",
+    "element",
+    "end",
+    "every",
+    "facing",
+    "fighters",
+    "file",
+    "flags",
+    "float",
+    "frame",
+    "from",
+    "fx",
+    "fx_bindings",
+    "geno",
+    "glide",
+    "gravity",
+    "ground",
+    "hi",
+    "hit",
+    "hitboxes",
+    "hits",
+    "homing",
+    "hooks",
+    "iasa",
+    "id",
+    "index",
+    "int",
+    "joint",
+    "jumps",
+    "kbg",
+    "keep_frame",
+    "land",
+    "landing_lag",
+    "ledge",
+    "lifetime",
+    "liftoff",
+    "like",
+    "lw",
+    "max",
+    "max_fall",
+    "max_live",
+    "max_speed",
+    "min_speed",
+    "model",
+    "motion",
+    "motion_anims",
+    "move_id",
+    "n",
+    "name",
+    "negate",
+    "next",
+    "offset",
+    "on_action",
+    "on_frame",
+    "on_hit",
+    "on_init",
+    "on_land",
+    "origin",
+    "phys",
+    "range",
+    "reflect",
+    "s",
+    "scale",
+    "select",
+    "sfx_kind",
+    "sfx_severity",
+    "shield",
+    "shield_damage",
+    "size",
+    "slot",
+    "spawn",
+    "spawns",
+    "special_attributes",
+    "specials",
+    "spin",
+    "spins",
+    "stage",
+    "start",
+    "states",
+    "stun",
+    "subaction",
+    "subactions",
+    "symbol",
+    "target",
+    "targets",
+    "to",
+    "tornado",
+    "turn",
+    "velocity",
+    "wkb",
+    "words",
+    "z"
+  ],
+  "x-limits": {
+    "GENO_VARS_PER_BANK": {
+      "value": 64,
+      "source": "melee/pc/geno/geno.h:44"
+    },
+    "GENO_SPECIAL_WORDS": {
+      "value": 265,
+      "source": "melee/pc/geno/geno.h:134"
+    },
+    "GENO_MAX_CHECKS": {
+      "value": 8,
+      "source": "melee/pc/geno/geno.h:177"
+    },
+    "GENO_CHECK_CONDS": {
+      "value": 3,
+      "source": "melee/pc/geno/geno.h:178"
+    },
+    "GENO_MAX_REHIT": {
+      "value": 4,
+      "source": "melee/pc/geno/geno.h:179"
+    },
+    "GENO_EV_MAX_HOOKS": {
+      "value": 8,
+      "source": "melee/pc/geno/geno.h:244"
+    },
+    "GENO_MAX_ATTRS": {
+      "value": 48,
+      "source": "melee/pc/geno/geno.h:248"
+    },
+    "GENO_MAX_JUMP_VY": {
+      "value": 16,
+      "source": "melee/pc/geno/geno.h:249"
+    },
+    "GENO_MAX_PROFILES": {
+      "value": 32,
+      "source": "melee/pc/geno/geno.h:250"
+    },
+    "GENO_MAX_SPECIAL": {
+      "value": 64,
+      "source": "melee/pc/geno/geno.h:251"
+    },
+    "GENO_MAX_ONLAND": {
+      "value": 16,
+      "source": "melee/pc/geno/geno.h:252"
+    },
+    "GENO_MAX_MOTION_ANIM": {
+      "value": 8,
+      "source": "melee/pc/geno/geno.h:253"
+    },
+    "GENO_MAX_OVERLAYS": {
+      "value": 64,
+      "source": "melee/pc/geno/geno.h:254"
+    },
+    "GENO_POOL_WORDS": {
+      "value": 16384,
+      "source": "melee/pc/geno/geno.h:255"
+    },
+    "GENO_MAX_STATES": {
+      "value": 48,
+      "source": "melee/pc/geno/geno.h:266"
+    },
+    "GENO_ART_KIND_BASE": {
+      "value": 4096,
+      "source": "melee/pc/geno/geno.h:351"
+    },
+    "GENO_MAX_ARTICLES": {
+      "value": 16,
+      "source": "melee/pc/geno/geno.h:351"
+    },
+    "GENO_ART_PER_RANGE": {
+      "value": 8,
+      "source": "melee/pc/geno/geno.h:358"
+    },
+    "GENO_ART_HITBOXES": {
+      "value": 4,
+      "source": "melee/pc/geno/geno.h:366"
+    },
+    "GENO_ART_HIT_ENTRIES": {
+      "value": 8,
+      "source": "melee/pc/geno/geno.h:367"
+    },
+    "GENO_ART_SPAWNS": {
+      "value": 4,
+      "source": "melee/pc/geno/geno.h:369"
+    },
+    "GENO_ART_CHILDREN": {
+      "value": 2,
+      "source": "melee/pc/geno/geno.h:370"
+    },
+    "GENO_SP_SELECT": {
+      "value": 4,
+      "source": "melee/pc/geno/geno.h:463"
+    },
+    "JDOC_NODES": {
+      "value": 4096,
+      "source": "melee/pc/platform/geno_registry.c:71"
+    },
+    "JDOC_ARENA": {
+      "value": 65536,
+      "source": "melee/pc/platform/geno_registry.c:72"
+    },
+    "GN_MAX_SLOTS": {
+      "value": 256,
+      "source": "melee/pc/platform/geno_registry.c:444"
+    },
+    "JSON_DEPTH": {
+      "value": 32,
+      "source": "melee/pc/platform/geno_registry.c:jd_value"
+    },
+    "JSON_FILE_BYTES": {
+      "value": 1048576,
+      "source": "melee/pc/platform/geno_registry.c:gn_read_file"
+    }
+  },
+  "x-source-contract": {
+    "pc/platform/geno_registry.c": "34d07b2873c3c71f8b7387edd0cc55fdeb0c688e9486dc36976259628c1467b5",
+    "pc/geno/geno.h": "926d20a745851e9d825af7af07a7723035f714c6dc28fb9896559e5108a33c81",
+    "pc/geno/geno_game.c": "19b4aa6dd84ceb4cf1a4f732db487c80a7109ac3c43d65f4bf0b0e0bc3f41556",
+    "pc/geno/geno_game_v2.inc": "a157504de6201458b76f4795651fd8b18c80c3a4fe57e800354534edc7d4b146"
+  }
+}

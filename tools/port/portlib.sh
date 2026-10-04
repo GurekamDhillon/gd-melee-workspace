@@ -75,6 +75,17 @@ gw_die() {
     exit 1
 }
 
+# Native Windows Python creates the suspended child and its kill-on-close job.
+# It watches its actual native bash parent handle (not MSYS's emulated $$).
+gw_run_owned() {
+    local sandbox="$1" seconds="$2"
+    local -a unattended=()
+    shift 2
+    [ "${MELEE_UNATTENDED:-0}" != 1 ] || unattended=(--unattended)
+    python "$GW_ROOT/tools/port/runs.py" launch --sandbox "$(gw_win_path "$sandbox")" \
+        --max-seconds "$seconds" "${unattended[@]}" -- "$@"
+}
+
 gw_env_summary() {
     echo "melee     $GW_MELEE"
     echo "build     $GW_BUILD_ROOT"
@@ -111,6 +122,13 @@ gw_build_shim() {
         ;;
     *)
         name="$(basename "$src" .c)"
+        ;;
+    esac
+    case "$src" in gw_profiler.c|gw_profiler_tracy.cpp)
+        if [ "${GW_PROF_TRACY:-0}" = "1" ]; then
+            [ "${GW_RELEASE_BUILD:-0}" != "1" ] || gw_die "Tracy is development-only"
+            extra+=(-DGW_PROF_TRACY -DTRACY_ENABLE -DTRACY_ON_DEMAND)
+        fi
         ;;
     esac
     [ -f "$GW_MELEE/pc/platform/$src" ] || gw_die "no such shim: pc/platform/$src"

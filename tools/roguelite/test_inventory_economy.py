@@ -528,6 +528,13 @@ assert(#migrated.entries==2 and Hist.validate(migrated))
 assert(migrated.entries[1].outcome=='failure' and migrated.entries[2].outcome=='success')
 assert(migrated.entries[1].run_id=='run1' and migrated.entries[2].run_id=='run2')
 assert(Core.restore(before),'profile still restorable')
+local earned=Core.new_profile(778);local earned_run=Core.new_run(earned)
+local earned_id=assert(Core.finish(earned,earned_run,'success','r1')).export
+assert(Core.discard(earned,earned_id))
+local earned_history=assert(Hist.from_core_finished(earned.id,earned))
+assert(earned.finished[earned_run.id].discarded_export==earned_id)
+assert(earned_history.entries[1].export==earned_id,
+ 'migration lost the identity of a subsequently discarded earned export')
 print('PASS run history bounds/codec/migration')
 ''')
 

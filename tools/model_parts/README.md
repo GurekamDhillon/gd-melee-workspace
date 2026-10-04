@@ -5,15 +5,16 @@ This is an offline diagnostic workflow for finding useful recolour controls in t
 from measured geometry, skin influences and visible coverage. It does not assume
 that character models contain semantic names such as “jacket” or “sword”.
 
-Run these commands from the `gdm` workspace repository. The inspected game checkout
-is `melee/worktrees/linux`; the default app directory is `_build/agents/linux`.
+Run these commands from the workspace repository. The inspected game checkout
+is `GW_MELEE`, or `melee` by default. The app directory is `GW_BUILD_ROOT`, or
+`_build` by default; `--app-dir` selects another build.
 
 ## Scan and review
 
 ```sh
 python3 tools/model_parts/prepare.py --iso /path/to/melee.iso --fighters falco --interactive
-_build/agents/linux/melee --iso /path/to/melee.iso
-python3 tools/model_parts/analyze.py _build/agents/linux/scripts-data/character_parts_lab_main --character falco
+MELEE_SCRIPT_DATA_DIR="$(pwd -W)/_build/scripts-data" bash tools/port/run.sh parts-lab --iso /path/to/melee.iso
+python3 tools/model_parts/analyze.py _build/scripts-data/character_parts_lab_main --character falco
 ```
 
 Open `falco-review.html` in that reports directory. Each card highlights its proposed
@@ -22,7 +23,7 @@ describes the joint evidence, not certainty that a surface is a particular garme
 Edit the names, download the review JSON, and apply it:
 
 ```sh
-python3 tools/model_parts/analyze.py _build/agents/linux/scripts-data/character_parts_lab_main --character falco --reviews /path/to/falco-reviews.json
+python3 tools/model_parts/analyze.py _build/scripts-data/character_parts_lab_main --character falco --reviews /path/to/falco-reviews.json
 ```
 
 The live mouse panel checks for updated measured controls every three seconds and
@@ -165,7 +166,7 @@ The runtime and generated procedural assets have no Python dependency.
 
 ```sh
 python3 -m unittest discover -s tools/model_parts -p 'test_*.py'
-bash tools/port/build_linux.sh
+bash tools/port/build.sh
 ```
 
 Tests cover all 512 palette IDs, complementary rejection, PNG data, missing and

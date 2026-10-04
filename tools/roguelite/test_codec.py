@@ -63,6 +63,23 @@ assert(not C.decode('{"k":"\\q"}'))
 assert(not C.decode(string.rep('[',30)..string.rep(']',30)))
 assert(not C.decode(42))
 assert(C.decode('{"a":[1,{"b":true}]}').a[2].b==true)
+-- Chunk-scanning must retain every raw control and escape refusal.
+for byte=0,31 do assert(not C.decode('"prefix'..string.char(byte)..'suffix"')) end
+for byte=0,127 do
+ local expected=string.rep('x',200)..string.char(byte)..string.rep('z',200)
+ assert(round(expected)==expected)
+end
+assert(C.decode('"'..string.rep('a',512)..'"')==string.rep('a',512))
+assert(not C.decode('"'..string.rep('a',513)..'"'))
+assert(not C.decode('"'..string.rep('a',512)..'\\n"'))
+assert(not C.decode('"unclosed\\'))
+local long={};for i=1,128 do long[i]=string.rep('corridor',64) end
+local text=assert(C.encode(long));local instructions=0
+debug.sethook(function()instructions=instructions+100 end,'',100)
+local decoded=assert(C.decode(text));debug.sethook()
+assert(#decoded==128 and decoded[128]==long[128])
+print('codec chunk decode instructions='..instructions)
+assert(instructions<70000,'plain string decoding must scan runs rather than bytes')
 print('codec: round trips, key order, escape handling, limits and injection refusal passed')
 '''
 subprocess.run([LUA, '-', str(MODULE)], input=TEST, text=True, check=True)

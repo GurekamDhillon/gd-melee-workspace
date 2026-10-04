@@ -1,0 +1,393 @@
+--- a/include/aurora/gfx.h
++++ b/include/aurora/gfx.h
+@@ -66,6 +66,16 @@
+ /// GX vertices decoded for the last completed frame, including display lists.
+ uint32_t aurora_get_last_vertex_count();
+ /// Enable the two extra performance counters used by the in-game visualizer.
++/* Optional diagnostics sink. Called on the render worker, never from simulation.
++ * GPU results are delayed; frame is Aurora's presentation id, not a logic frame.
++ * Register before initialization; clear only after the worker has synchronized.
++ * Names have callback lifetime. durationNs is a duration, not a CPU timestamp. */
++typedef void (*AuroraProfilerSink)(const char* name, uint64_t frame, uint64_t durationNs, void* userdata);
++void aurora_profiler_set_sink(AuroraProfilerSink sink, void* userdata);
++void aurora_profiler_enable(bool enabled);
++bool aurora_profiler_gpu_available(void);
++uint64_t aurora_profiler_gpu_dropped_zones(void);
++uint64_t aurora_profiler_gpu_dropped_frames(void);
+ void aurora_perf_enable(bool enabled);
+ bool aurora_perf_enabled();
+ 
+--- a/include/aurora/gfx.hpp
++++ b/include/aurora/gfx.hpp
+@@ -178,6 +178,8 @@
+ /// EFB. Nesting is unsupported: returns false (with a warning) outside an
+ /// active render pass or while any offscreen pass is already open.
+ bool create_pass(uint32_t width, uint32_t height);
++/// Diagnostics-only label for the resulting offscreen pass (copied during recording).
++bool create_pass_profiled(uint32_t width, uint32_t height, const char* label);
+ 
+ /// True while an offscreen pass (create_pass or GXCreateFrameBuffer) is open.
+ bool is_offscreen() noexcept;
+--- a/lib/aurora.cpp
++++ b/lib/aurora.cpp
+@@ -253,6 +253,8 @@
+     }
+   }
+ 
++  gx::update();
++  window::apply_frame_buffer_aspect();
+   imgui::new_frame(window::get_window_size());
+   if (!gfx::begin_frame()) {
+     return false;
+@@ -321,6 +323,7 @@
+                 .view = currentView,
+                 .loadOp = wgpu::LoadOp::Clear,
+                 .storeOp = wgpu::StoreOp::Store,
++                .clearValue = {0.0, 0.0, 0.0, 1.0},
+             },
+         };
+         const wgpu::RenderPassDescriptor renderPassDescriptor{
+@@ -379,6 +382,8 @@
+     gfx::png::after_submit_screenshot();
+     if (canPresent && g_surface) {
+       ZoneScopedN("Present");
++      const bool gdMeasurePresent = webgpu::gpu_prof::active();
++      const auto gdPresentStart = gdMeasurePresent ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+       wgpu::ConvertibleStatus status = wgpu::Status::Error;
+       {
+         window::SurfaceLock surfaceLock;
+@@ -386,6 +391,8 @@
+           status = g_surface.Present();
+         }
+       }
++      if (gdMeasurePresent) webgpu::gpu_prof::emit_cpu("cpu.present", static_cast<uint64_t>(
++          std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - gdPresentStart).count()));
+       if (status) {
+         gfx::after_present();
+       } else {
+--- a/lib/gfx/encoding.cpp
++++ b/lib/gfx/encoding.cpp
+@@ -370,14 +370,18 @@
+   const webgpu::gpu_prof::Zone zone{cmd, "Staging copies"};
+   const auto& highWater = op.highWater;
+   auto& res = resources();
++  {
++  const webgpu::gpu_prof::Zone meshZone{cmd, "Mesh and uniform upload"};
+   copy_staging_buffer_range(cmd, frame, frame.copied.verts, highWater.verts, VertexStagingOffset, res.vertexBuffer);
+   copy_staging_buffer_range(cmd, frame, frame.copied.uniforms, highWater.uniforms, UniformStagingOffset,
+                             res.uniformBuffer);
+   copy_staging_buffer_range(cmd, frame, frame.copied.indices, highWater.indices, IndexStagingOffset, res.indexBuffer);
+   copy_staging_buffer_range(cmd, frame, frame.copied.storage, highWater.storage, StorageStagingOffset,
+                             res.storageBuffer);
++  }
+ 
+   if constexpr (UseTextureBuffer) {
++    const webgpu::gpu_prof::Zone textureZone{cmd, "Texture upload"};
+     for (size_t i = frame.copied.textureUploadCount; i < op.textureUploads.size(); ++i) {
+       const auto& item = *op.textureUploads[i];
+       const wgpu::TexelCopyBufferInfo buf{
+--- a/lib/gfx/recording.cpp
++++ b/lib/gfx/recording.cpp
+@@ -18,6 +18,7 @@
+ #include "../rmlui/pipeline.hpp"
+ #endif
+ #include "../window.hpp"
++#include "../webgpu/gpu_prof.hpp"
+ 
+ #include <array>
+ #include <cstring>
+@@ -1070,6 +1071,13 @@
+   return true;
+ }
+ 
++bool create_pass_profiled(uint32_t width, uint32_t height, const char* label) {
++  if (!create_pass(width, height)) return false;
++  if (webgpu::gpu_prof::active() && label && *label)
++    current_render_passes()[g_recorder.currentRenderPass].label = label;
++  return true;
++}
++
+ bool resolve_pass(const ResolveDesc& desc, ResolvedTargets& out) {
+   out = {};
+   gx::fifo::drain();
+--- a/lib/gfx/render_worker.cpp
++++ b/lib/gfx/render_worker.cpp
+@@ -1,6 +1,7 @@
+ #include "render_worker.hpp"
+ 
+ #include "../thread.hpp"
++#include "../webgpu/gpu_prof.hpp"
+ #include "aurora/gfx.h"
+ 
+ #include <algorithm>
+@@ -47,12 +48,15 @@
+     }
+ 
+     if (item->work) {
+-      const bool measure = aurora_perf_enabled();
++      const bool measure = aurora_perf_enabled() || webgpu::gpu_prof::active();
+       const auto start = measure ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+       ZoneScopedN("QueueItem work");
+       item->work();
+-      if (measure) g_busyNs.fetch_add(std::chrono::duration_cast<std::chrono::nanoseconds>(
+-                                         std::chrono::steady_clock::now() - start).count(), std::memory_order_relaxed);
++      if (measure) {
++        const auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count();
++        g_busyNs.fetch_add(ns, std::memory_order_relaxed);
++        webgpu::gpu_prof::emit_cpu("cpu.render_worker", static_cast<uint64_t>(ns));
++      }
+     }
+     complete_sync(item->sync);
+     g_pendingItems.fetch_sub(1, std::memory_order_acq_rel);
+--- a/lib/gx/pipeline.cpp
++++ b/lib/gx/pipeline.cpp
+@@ -7,6 +7,8 @@
+ 
+ #include "gx_fmt.hpp"
+ #include "shader_info.hpp"
++#include "../webgpu/gpu_prof.hpp"
++#include <chrono>
+ 
+ #include <tracy/Tracy.hpp>
+ 
+@@ -14,11 +16,18 @@
+ 
+ wgpu::RenderPipeline create_pipeline(const PipelineConfig& config, const gfx::RenderTargetLayout& layout) {
+   ZoneScoped;
++  const bool measure = webgpu::gpu_prof::active();
++  const auto start = measure ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+   const auto shader = build_shader(config.shaderConfig, layout);
+   const auto label = fmt::format("GX Pipeline {:x}",
+                                  xxh3_hash(layout.key, xxh3_hash(config, static_cast<HashType>(gfx::ShaderType::GX))));
+-  if (!shader) return {};
+-  return build_pipeline(config, layout, {}, shader, label.c_str());
++  auto pipeline = shader ? build_pipeline(config, layout, {}, shader, label.c_str()) : wgpu::RenderPipeline{};
++  if (measure) {
++    const auto name = std::string("cpu.pipeline_compile.") + label;
++    webgpu::gpu_prof::emit_cpu(name.c_str(), static_cast<uint64_t>(
++        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now()-start).count()));
++  }
++  return pipeline;
+ }
+ 
+ void render(const DrawData& data, const wgpu::RenderPassEncoder& pass) {
+--- a/lib/webgpu/gpu.cpp
++++ b/lib/webgpu/gpu.cpp
+@@ -941,11 +941,9 @@
+         }
+         requiredFeatures.push_back(feature);
+       }
+-#ifdef TRACY_ENABLE
+-      if (feature == wgpu::FeatureName::TimestampQuery) {
++      if (feature == wgpu::FeatureName::TimestampQuery && gpu_prof::requested()) {
+         requiredFeatures.push_back(feature);
+       }
+-#endif
+     }
+     std::string featureList;
+     for (auto featureName : requiredFeatures) {
+--- a/lib/webgpu/gpu_prof.cpp
++++ b/lib/webgpu/gpu_prof.cpp
+@@ -5,9 +5,12 @@
+ 
+ #include <tracy/Tracy.hpp>
+ 
++#include <aurora/gfx.h>
++#include <cstdlib>
++
+ #ifdef TRACY_ENABLE
+-
+ #include <tracy/TracyC.h>
++#endif
+ 
+ #include <algorithm>
+ #include <array>
+@@ -22,6 +25,25 @@
+ #include <absl/container/flat_hash_map.h>
+ #include <magic_enum.hpp>
+ 
++namespace {
++std::atomic<AuroraProfilerSink> gdSink{nullptr};
++void* gdSinkData = nullptr; // immutable while the worker is alive
++std::atomic_bool gdActive{false};
++std::atomic_bool gdGpuAvailable{false};
++std::atomic_uint64_t gdDroppedZones{0}, gdDroppedFrames{0};
++void gd_emit(const char* name, uint64_t frame, uint64_t duration) {
++  if (!gdActive.load(std::memory_order_relaxed)) return;
++  if (auto sink = gdSink.load(std::memory_order_acquire)) sink(name, frame, duration, gdSinkData);
++}
++}
++void aurora_profiler_set_sink(AuroraProfilerSink sink, void* userdata) {
++  gdSinkData = userdata;
++  gdSink.store(sink, std::memory_order_release);
++}
++void aurora_profiler_enable(bool enabled) { gdActive.store(enabled, std::memory_order_relaxed); }
++bool aurora_profiler_gpu_available(void) { return gdGpuAvailable.load(std::memory_order_acquire); }
++uint64_t aurora_profiler_gpu_dropped_zones(void) { return gdDroppedZones.load(std::memory_order_relaxed); }
++uint64_t aurora_profiler_gpu_dropped_frames(void) { return gdDroppedFrames.load(std::memory_order_relaxed); }
+ namespace aurora::webgpu::gpu_prof {
+ namespace {
+ Module Log("aurora::webgpu::gpu_prof");
+@@ -62,6 +84,7 @@
+   std::vector<Event> events;
+   uint32_t passCount = 0;
+   int64_t submitNs = 0;
++  uint64_t frameId = 0;
+   std::atomic<SlotState> state{SlotState::Free};
+ };
+ 
+@@ -83,10 +106,14 @@
+ bool g_framePending = false;
+ uint32_t g_zoneCount = 0;
+ 
++#ifdef TRACY_ENABLE
+ bool g_contextEmitted = false;
+ uint16_t g_queryId = 0;
+ uint64_t g_lastEmittedTs = 0;
+ uint64_t g_lastFrameEnd = 0;
++
++#endif
++std::atomic_uint64_t g_frameId{0};
+ 
+ int64_t now_ns() {
+   return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now().time_since_epoch())
+@@ -107,6 +134,7 @@
+   return stable;
+ }
+ 
++#ifdef TRACY_ENABLE
+ // tracy::GpuContextType not exposed through TracyC.h
+ uint8_t tracy_context_type(wgpu::BackendType backend) {
+   switch (backend) {
+@@ -162,6 +190,8 @@
+   ___tracy_emit_gpu_time_serial({.gpuTime = int64_t(gpuNs), .queryId = queryId, .context = ContextId});
+ }
+ 
++#endif
++
+ TimestampBounds event_bounds(const Slot& slot, const uint64_t* ts) {
+   TimestampBounds bounds;
+   for (const auto& event : slot.events) {
+@@ -199,6 +229,16 @@
+     return;
+   }
+ 
++  gd_emit("gpu.frame", slot.frameId, frameEnd - frameBegin);
++  for (const auto& event : slot.events) {
++    if (event.kind == EventKind::End) continue;
++    const uint64_t begin = ts[event.query], end = ts[event.query + 1];
++    if (begin != 0 && end > begin) {
++      const std::string label = std::string("gpu.") + event.name;
++      gd_emit(label.c_str(), slot.frameId, end - begin);
++    }
++  }
++#ifdef TRACY_ENABLE
+   const uint64_t lastFrameEnd = std::exchange(g_lastFrameEnd, frameEnd);
+   if (lastFrameEnd != 0) {
+     if (frameBegin < lastFrameEnd) {
+@@ -277,20 +317,32 @@
+   TracyPlot("aurora: gpuFrameMs", double(frameEnd - frameBegin) * 1e-6);
+   TracyPlot("aurora: gpuIdleMs", double(idleNs) * 1e-6);
+   TracyPlot("aurora: gpuPasses", int64_t(slot.passCount));
++#endif
+ }
+ 
+ Slot& record_slot() { return g_slots[g_recordSlot]; }
+ 
+ uint32_t alloc_zone() {
+-  if (!g_frameActive || g_zoneCount >= MaxZones) {
+-    return UINT32_MAX;
+-  }
++  if (!g_frameActive) return UINT32_MAX;
++  if (g_zoneCount >= MaxZones) { gdDroppedZones.fetch_add(1, std::memory_order_relaxed); return UINT32_MAX; }
+   return g_zoneCount++;
+ }
+ } // namespace
++
++bool requested() {
++#ifdef TRACY_ENABLE
++  return true;
++#else
++  const auto on = [](const char* key) { const char* v = std::getenv(key); return v && std::strcmp(v, "1") == 0; };
++  return on("MELEE_PROFILER") || on("MELEE_PROF_GPU");
++#endif
++}
++bool active() { return gdActive.load(std::memory_order_relaxed); }
++void emit_cpu(const char* name, uint64_t durationNs) { gd_emit(name, g_frameId.load(std::memory_order_relaxed), durationNs); }
+ 
+ void initialize() {
+   g_enabled = g_device.HasFeature(wgpu::FeatureName::TimestampQuery);
++  gdGpuAvailable.store(g_enabled, std::memory_order_release);
+   if (!g_enabled) {
+     Log.info("Timestamp queries unsupported; GPU profiling disabled");
+     return;
+@@ -321,13 +373,16 @@
+   g_recordSlot = 0;
+   g_emitSlot = 0;
+   g_framePending = false;
++#ifdef TRACY_ENABLE
+   TracyPlotConfig("aurora: gpuFrameMs", tracy::PlotFormatType::Number, false, true, 0);
+   TracyPlotConfig("aurora: gpuIdleMs", tracy::PlotFormatType::Number, false, true, 0);
+   TracyPlotConfig("aurora: gpuPasses", tracy::PlotFormatType::Number, true, true, 0);
++#endif
+   Log.info("GPU profiling enabled ({} zones max)", MaxZones);
+ }
+ 
+ void shutdown() {
++  gdGpuAvailable.store(false, std::memory_order_release);
+   g_querySet = {};
+   g_resolveBuffer = {};
+   for (auto& slot : g_slots) {
+@@ -343,15 +398,19 @@
+ }
+ 
+ void frame_begin(const wgpu::CommandEncoder& encoder) {
+-  if (!g_enabled) {
++  ++g_frameId;
++  if (!g_enabled || !active()) {
++    g_frameActive = false;
+     return;
+   }
+   auto& slot = record_slot();
+   if (slot.state != SlotState::Free) {
++    gdDroppedFrames.fetch_add(1, std::memory_order_relaxed);
+     g_frameActive = false;
+     return;
+   }
+   slot.state = SlotState::Recording;
++  slot.frameId = g_frameId;
+   slot.events.clear();
+   slot.passCount = 0;
+   g_zoneCount = 0;
+@@ -457,18 +516,3 @@
+ }
+ 
+ } // namespace aurora::webgpu::gpu_prof
+-
+-#else
+-
+-namespace aurora::webgpu::gpu_prof {
+-void initialize() {}
+-void shutdown() {}
+-void frame_begin(const wgpu::CommandEncoder&) {}
+-void frame_end(const wgpu::CommandEncoder&) {}
+-void after_submit() {}
+-const wgpu::PassTimestampWrites* pass_writes(std::string_view) { return nullptr; }
+-Zone::Zone(const wgpu::CommandEncoder&, std::string_view) {}
+-Zone::~Zone() = default;
+-} // namespace aurora::webgpu::gpu_prof
+-
+-#endif
+--- a/lib/webgpu/gpu_prof.hpp
++++ b/lib/webgpu/gpu_prof.hpp
+@@ -6,6 +6,10 @@
+ 
+ namespace aurora::webgpu::gpu_prof {
+ 
++// Runtime opt-in; feature must have been requested when the device was created.
++bool requested();
++bool active();
++void emit_cpu(const char* name, uint64_t durationNs);
+ void initialize();
+ void shutdown();
+ 

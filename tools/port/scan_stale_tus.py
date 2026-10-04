@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scan game TUs by dependency content, with the old timestamp rule as fallback.
+"""Scan game TUs by dependency content; retain a separate legacy timestamp scan.
 
 --compare validates the preserved Python timestamp scan against the shell scan
 on the same real tree. Hash mode is deliberately more selective after depfiles
@@ -10,7 +10,6 @@ import argparse
 import difflib
 import glob
 import hashlib
-import json
 import os
 from pathlib import Path
 import shutil
@@ -22,57 +21,39 @@ PORT = Path(__file__).resolve().parent
 ROOT = PORT.parent.parent
 
 
-class FileCache:
-    """Lane-local, disposable stat/content index; one stat/hash per file per pass.
+def default_bash():
+    if os.name == 'nt':
+        git_bash = Path(os.environ.get('ProgramFiles', 'C:/Program Files'))/'Git/bin/bash.exe'
+        if git_bash.is_file():
+            return str(git_bash)
+    return shutil.which('bash') or 'bash'
 
-    A new instance starts each scan (and each post-compile recording pass).
-    Persisted mtimes are nanoseconds; backdated changes invalidate just like newer
-    ones. As with other stat caches, writers must change size or mtime.
+
+class FileCache:
+    """Share input reads within one scan or post-compile recording pass.
+
+    Every new pass reads current bytes. Size and mtime cannot prove unchanged
+    content: checkout/copy tools may preserve both across a source edit.
     """
 
     def __init__(self, path):
         self.path = path
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-            self.entries = data["entries"] if data["version"] == 1 else {}
-            if not isinstance(self.entries, dict):
-                self.entries = {}
-        except (OSError, ValueError, KeyError, TypeError):
-            self.entries = {}
-        self.stats = {}
         self.values = {}
         self.identities = {}
         self.paths = {}
         self.resolved = {}
-        self.dirty = False
-
-    def stamp(self, path):
-        if path not in self.stats:
-            stat = path.stat()
-            self.stats[path] = [stat.st_mtime_ns, stat.st_size]
-        return self.stats[path]
 
     def cached(self, kind, path, read):
         token = (kind, path)
         if token not in self.values:
-            stamp = self.stamp(path)
-            key = kind + ":" + str(path)
-            entry = self.entries.get(key)
-            if isinstance(entry, list) and len(entry) == 2 and entry[0] == stamp:
-                value = entry[1]
-            else:
-                value = read()
-                self.entries[key] = [stamp, value]
-                self.dirty = True
-            self.values[token] = value
+            self.values[token] = read()
         return self.values[token]
 
     def digest(self, path):
         return bytes.fromhex(self.cached("sha", path, lambda: hash_file(path).hex()))
 
     def dependencies(self, path, cwd):
-        # Include the checkout in the index identity so seeded lanes cannot use
-        # another lane's resolved paths. Resolve only on depfile cache misses.
+        # Include the checkout so callers can share a pass across lanes.
         return self.cached("deps:" + str(cwd), path,
                            lambda: [str(p) for p in dependencies(path, cwd, self.resolved)])
 
@@ -85,14 +66,8 @@ class FileCache:
         return self.cached("key", path, lambda: path.read_text(encoding="ascii").strip())
 
     def save(self):
-        if not self.dirty:
-            return
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        temp = self.path.with_name(self.path.name + f".{os.getpid()}.tmp")
-        temp.write_text(json.dumps({"version": 1, "entries": self.entries},
-                                   separators=(",", ":")), encoding="utf-8")
-        temp.replace(self.path)
-        self.dirty = False
+        # Retain the caller API; persisted content caches are intentionally unused.
+        pass
 
 
 def hash_file(path):
@@ -235,9 +210,8 @@ def manifest_sources(files: Path, melee: Path):
 
 
 def scan_content(files: Path, melee: Path, out: Path, config: bytes, file_hashes=None):
-    """Use dependency hashes where available; otherwise preserve the old scan."""
+    """Require dependency hashes; rebuild legacy objects once to establish them."""
     stale = []
-    fallback = None
     melee = melee.resolve()
     file_hashes = file_hashes if file_hashes is not None else FileCache(out / ".content-cache.json")
     for name in manifest_sources(files, melee):
@@ -246,13 +220,8 @@ def scan_content(files: Path, melee: Path, out: Path, config: bytes, file_hashes
         keyfile = Path(str(obj) + ".sha256")
         if not obj.is_file():
             stale.append(name)
-        elif depfile.is_file() != keyfile.is_file():
+        elif not depfile.is_file() or not keyfile.is_file():
             stale.append(name)
-        elif not depfile.is_file():
-            if fallback is None:
-                fallback = set(scan(files, melee, out))
-            if name in fallback:
-                stale.append(name)
         else:
             try:
                 actual = object_key(depfile, melee, config, melee / name, file_hashes)
@@ -302,7 +271,7 @@ def restore_object(obj, melee, config, source, cache):
 def compare(files: Path, melee: Path, out: Path, current, bash: str):
     legacy = PORT / "scan_stale_tus_legacy.sh"
     result = subprocess.run(
-        [bash, str(legacy), str(files), str(melee), str(out)],
+        [bash, legacy.as_posix(), files.as_posix(), melee.as_posix(), out.as_posix()],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False,
     )
     if result.returncode:
@@ -330,7 +299,7 @@ def main():
     parser.add_argument("--out", type=Path, default=Path(os.environ.get("GW_OUT", build_root / "masstest/out")))
     parser.add_argument("--output", type=Path, help="write the ordered stale list for xargs")
     parser.add_argument("--compare", action="store_true", help="diff against the previous shell scan")
-    parser.add_argument("--bash", default=shutil.which("bash") or "bash",
+    parser.add_argument("--bash", default=default_bash(),
                         help="Git Bash executable for --compare")
     args = parser.parse_args()
 

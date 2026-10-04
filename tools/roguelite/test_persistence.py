@@ -11,6 +11,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import unittest
 import prepare
 import game_source
 
@@ -21,7 +22,7 @@ assert LUA, 'Lua interpreter required'
 
 # Minimal deterministic engine stub, identical in shape to test_runtime.py's.
 PRELUDE = r'''
-local last_scene;local files={};local mx,my,mb=-1000,-1000,0; local controls=0; local tick=100;local pause=false;local request=true
+local pending_scene;local last_scene;local files={};local mx,my,mb=-1000,-1000,0; local controls=0; local tick=100;local pause=false;local request=true
 local ps={[1]={x=-42,y=0,vx=0,vy=0,stocks=99,percent=0,facing=1,action=14,airborne=false,hitlag=0,costume=0},[2]={x=28,y=0,vx=0,vy=0,stocks=99,percent=0,facing=-1,action=14,airborne=false,hitlag=0,costume=0}}
 local models={};local enemies={};local serial=0;local writes=0;local hits=0;local claims={};local masks={};local commands={};local cpu={};local fail_write=false;local fail_hit=false;local refuse_platform=false;local refuse_teleport={};local isolated=false;local refuse_isolation=false
 local kit=setmetatable({roles={},row={pitch=36}}, {__index=function() return function() return 1 end end})
@@ -31,7 +32,12 @@ gd={buttons={A=256,B=512,UP=8,DOWN=4,LEFT=1,RIGHT=2},kit=kit,
  command=function(n,f)commands[n]=f end,input=function(p)claims[p]=true end,
  input_mask=function(p,b)masks[p]=b end,release_pad=function(p)claims[p]=nil end,
  tbd_request=function()local v=request;request=false;return v end,
- scene_launch=function(opts)last_scene=opts.p1;assert(opts.mode=='vs','unsupported scene grammar');assert(opts.p2=='fox/c0/cpu9');assert(opts.stocks==99 and opts.items=='off' and opts.time==0,'unbounded/native-scene rules mismatch');tick=0 end,match=function()return {active=true,frame=tick,netplay=false,stage=37}end,
+ scene_launch=function(opts)
+  last_scene=opts.p1
+  assert((opts.mode=='lab' and opts.p2=='none') or (opts.mode=='vs' and opts.p2=='fox/c0/cpu9'),'unsupported scene grammar')
+  assert(opts.stocks==99 and opts.items=='off' and opts.time==0,'unbounded/native-scene rules mismatch')
+  pending_scene=opts;tick=0
+ end,match=function()return {active=true,frame=tick,netplay=false,stage=37}end,
  player=function(p)return ps[p]end,pad=function()return {buttons=controls}end,
  pause=function()pause=true end,resume=function()pause=false end,paused=function()return pause end,
  mouse=function()return mx,my,mb end,
@@ -163,7 +169,17 @@ WRAPPED = ''
 _LOAD = ("local FIX=dofile(arg[1]); local Core=dofile(arg[2]); local Codec=dofile(arg[3]); "
          "local Checkpoint=dofile(arg[4])\n")
 _HELPERS = r'''
-local function step(b) controls=b or 0;on_tick() end
+local function step(b)
+ controls=b or 0
+ if pending_scene then
+  local opts=pending_scene;pending_scene=nil
+  if on_match_end then on_match_end() end
+  ps={[1]={x=-42,y=0,vx=0,vy=0,stocks=99,percent=0,facing=1,action=14,airborne=false,hitlag=0,costume=0}}
+  if opts.p2~='none' then ps[2]={x=28,y=0,vx=0,vy=0,stocks=99,percent=0,facing=-1,action=14,airborne=false,hitlag=0,costume=0} end
+  tick=0
+ else tick=math.min(100,tick+31) end
+ on_tick()
+end
 local function state() return roguelite_state() end
 local function click(id)
  local view=state().menu_view;assert(view,'No menu for '..id)
@@ -218,7 +234,7 @@ assert(state().run_fighter.id=='falco' and state().run_fighter.costume==0)
 assert(state().run and state().run.status=='active')
 local orig=assert(Checkpoint.decode(FIX.valid,Core,Codec))
 local before=files['checkpoint-a.txt']
-click('lock')
+click('gene:g3');click('discard');click('discard')
 local changed=files['checkpoint-a.txt']
 assert(changed and changed~=before,'a collection save did not write the v2 route')
 local back=assert(Checkpoint.decode(changed,Core,Codec,{progress_versions={[2]=true}}))
@@ -255,7 +271,7 @@ print('persistence: a v2 manifest without progress is refused and preserved')
 step();step();tick=91;step()
 assert(state().ready and state().v2 and state().v2.current=='r002','older valid v2 route did not load')
 assert(files['checkpoint-b.txt']==FIX.futureprogress,'future inner-schema file lost during load')
-click('lock')
+click('gene:g3');click('discard');click('discard')
 assert(files['checkpoint-b.txt']==FIX.futureprogress,'future inner-schema file overwritten by save')
 assert(files['checkpoint-a.txt']~=FIX.oldvalid,'replacement checkpoint was not redirected')
 local back=assert(Checkpoint.decode(files['checkpoint-a.txt'],Core,Codec,{progress_versions={[2]=true}}))
@@ -272,7 +288,7 @@ print('persistence: valid older A loads while a future inner-schema B stays byte
 step();step();tick=91;step()
 assert(state().ready and state().v2,'older valid route did not load past a future generator')
 assert(files['checkpoint-b.txt']==FIX.futuregen,'future-generator file lost during load')
-click('lock')
+click('gene:g3');click('discard');click('discard')
 assert(files['checkpoint-b.txt']==FIX.futuregen,'future-generator file overwritten by save')
 assert(files['checkpoint-a.txt']~=FIX.oldvalid,'replacement checkpoint was not redirected')
 print('persistence: a future generator version is preserved, not adopted or overwritten')
@@ -286,7 +302,7 @@ print('persistence: a future generator version is preserved, not adopted or over
 step();step();tick=91;step()
 assert(state().ready and state().v2,'older valid route did not load past a future manifest schema')
 assert(files['checkpoint-b.txt']==FIX.futureman,'future-manifest file lost during load')
-click('lock')
+click('gene:g3');click('discard');click('discard')
 assert(files['checkpoint-b.txt']==FIX.futureman,'future-manifest file overwritten by save')
 assert(files['checkpoint-a.txt']~=FIX.oldvalid,'replacement checkpoint was not redirected')
 print('persistence: a future manifest schema is preserved, not adopted or overwritten')
@@ -313,7 +329,7 @@ print('persistence: schema-1 migration is refused when pickup/lock history would
 step();step();tick=91;step()
 assert(state().ready and state().v2 and state().v2.progress==2,'safe schema-1 migration did not load')
 assert(files['checkpoint-a.txt']==FIX.safe1,'load must not rewrite the file')
-click('lock')
+click('gene:g3');click('discard');click('discard')
 local back=assert(Checkpoint.decode(files['checkpoint-a.txt'],Core,Codec,{progress_versions={[2]=true}}))
 assert(back.progress.version==2 and back.progress.opened and back.progress.pickups and back.progress.encounter_kos)
 print('persistence: safe schema-1 progress migrates explicitly and persists as schema 2')
@@ -330,20 +346,23 @@ step();step();tick=91;step()
 assert(state().ready and state().v2,'valid route did not load for the save-failure cases')
 local before_a,before_b=files['checkpoint-a.txt'],files['checkpoint-b.txt']
 local room0,supp0,lives0=state().run.progress.room,state().run.progress.supplies,state().run.stocks
+local profile0=assert(Core.snapshot(state().profile))
 __ROGUE_FORCE_ROUTE_REFUSAL=true
-click('lock')
+click('gene:g3');click('discard');click('discard')
 assert(state().toast and state().toast:find('previous checkpoint retained',1,true),'forced refusal message missing')
 assert(files['checkpoint-a.txt']==before_a,'refused save overwrote the last usable slot')
 assert(files['checkpoint-b.txt']==before_b,'refused save touched the protected sibling')
 assert(state().run.progress.room==room0 and state().run.progress.supplies==supp0 and state().run.stocks==lives0,'refused save altered live mirrors')
+assert(Core.snapshot(state().profile)==profile0,'semantic refusal retained gene discard')
 __ROGUE_FORCE_ROUTE_REFUSAL=false
 fail_write=true
-click('lock')
+click('gene:g3');click('discard');click('discard')
 fail_write=false
 assert(state().toast and state().toast:find('write/readback failed',1,true),'forced write-failure message missing')
 assert(files['checkpoint-a.txt']==before_a,'failed write overwrote the last usable slot')
 assert(files['checkpoint-b.txt']==before_b,'failed write touched the protected sibling')
 assert(state().run.progress.room==room0 and state().run.progress.supplies==supp0 and state().run.stocks==lives0,'failed write altered live mirrors')
+assert(Core.snapshot(state().profile)==profile0,'write failure retained gene discard')
 print('persistence: forced refusal and write failure keep the last usable slot, protected sibling and live mirrors intact')
 ''',
             'staged save failures')
@@ -369,7 +388,7 @@ gd.data_write=function(name,bytes)
  files[name]=bytes:sub(1,30)
  return false
 end
-click('lock')
+click('gene:g3');click('discard');click('discard')
 assert(raw_calls==0,'missing atomic helper invoked a destructive raw writer')
 assert(writes==before_writes,'missing atomic helper performed a checkpoint write')
 assert(files['checkpoint-a.txt']==before_a,'supported/protected A changed on refusal')
@@ -405,4 +424,10 @@ print('persistence: a torn newest v2 checkpoint falls back to the older valid ge
     print('persistence: bundled main real save/load seam scenarios passed')
 
 
-main()
+class PersistenceTests(unittest.TestCase):
+    def test_bundled_save_load_and_recovery(self):
+        main()
+
+
+if __name__ == '__main__':
+    unittest.main()

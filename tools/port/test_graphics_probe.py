@@ -26,7 +26,7 @@ DEFAULT_PROBE = ROOT / "_build" / "launcher-qt" / "melee-graphics-probe"
 
 
 def probe_path() -> Path:
-    if len(sys.argv) > 1:
+    if __name__ == '__main__' and len(sys.argv) > 1 and not sys.argv[1].startswith('-'):
         return Path(sys.argv[1]).resolve()
     return DEFAULT_PROBE
 
@@ -91,6 +91,7 @@ def ready(report: dict) -> bool:
     )
 
 
+@unittest.skipUnless(sys.platform.startswith('linux'), 'requires the Linux Vulkan graphics helper')
 class GraphicsProbeTests(unittest.TestCase):
     probe = probe_path()
 

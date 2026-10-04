@@ -95,6 +95,63 @@ class AcceptanceTest(unittest.TestCase):
     def verify(self, **kwargs):
         return verify_pair(self.fixture, self.clients[0], self.clients[1], **kwargs)
 
+    def early_pair(self):
+        for client in self.clients:
+            client['evidence'].update(match_completed=False, exit_code=3,
+                                     end_frame=-120, last_frame=10)
+        # P2 finalized one fewer frame; the common prefix still has changing input.
+        client = self.clients[1]
+        data = client['recording'].read_bytes()
+        rawlen = struct.unpack_from('>I', data, 11)[0]
+        # Each frame has two pre/post event pairs (67 + 85 bytes each).
+        start = 15 + rawlen - 7 - 304
+        data = data[:start] + data[start+304:]
+        data = data[:11] + struct.pack('>I', rawlen-304) + data[15:]
+        client['recording'].write_bytes(data)
+        rows = client['trace'].read_text().splitlines()
+        client['trace'].write_text('\n'.join(rows[:-2])+'\n')
+        client['hashes'].write_text('-123,00000001\n-122,00000002\n')
+        client['evidence']['confirmed_frame'] = -122
+
+    def test_early_common_finalized_prefix(self):
+        self.early_pair()
+        result = self.verify(allow_early_end=True)
+        self.assertTrue(result['ok'], result)
+        self.assertEqual(result['last_frame'], -122)
+        self.assertEqual(result['compared_player_frames'], 4)
+        self.assertFalse(self.verify()['ok'])
+
+    def test_early_different_end_is_rejected(self):
+        self.early_pair()
+        self.clients[1]['evidence']['end_frame'] = -119
+        self.assertFalse(self.verify(allow_early_end=True)['ok'])
+
+    def test_early_missing_checksum_is_rejected(self):
+        self.early_pair()
+        self.clients[0]['hashes'].write_text('-123,00000001\n')
+        self.assertFalse(self.verify(allow_early_end=True)['ok'])
+
+    def test_early_client_mismatch_is_rejected(self):
+        self.early_pair()
+        self.clients[1]['hashes'].write_text('-123,00000001\n-122,000000FF\n')
+        self.assertFalse(self.verify(allow_early_end=True)['ok'])
+
+    def test_early_negative_control_requires_real_divergence(self):
+        from two_client_replay import evaluate_negative_control
+        self.early_pair()
+        normal = self.verify(allow_early_end=True)
+        consensus = verify_pair(self.clients[0]['recording'], *self.clients, allow_early_end=True)
+        self.assertFalse(evaluate_negative_control({'frame': -122}, normal, consensus)['ok'])
+        # Change an original post-state at the mutated frame, leaving both clients equal.
+        data = bytearray(self.fixture.read_bytes())
+        cursor = 15 + 14 + 421 + 304 + 67
+        self.assertEqual(data[cursor], 0x38)
+        struct.pack_into('>f', data, cursor + 0x0A, 99.0)
+        self.fixture.write_bytes(data)
+        normal = self.verify(allow_early_end=True)
+        self.assertTrue(evaluate_negative_control({'frame': -122}, normal, consensus)['ok'])
+        self.assertFalse(evaluate_negative_control({'frame': -121}, normal, consensus)['ok'])
+
     def test_complete_pair_passes(self):
         result = self.verify(require_rollback=True)
         self.assertTrue(result['ok'], result)

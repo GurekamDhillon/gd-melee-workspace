@@ -11,6 +11,8 @@ flags=(-std=c11 -ffunction-sections -I "$GW_MELEE/pc/platform")
 libs=()
 uses_enet=0
 case "$test_name" in
+roster-registry)
+    sources=(pc/tests/roster_registry_test.c) ;;
 slippi-pad)
     sources=(pc/tests/slippi_pad_test.c pc/platform/gw_slippi_pad.c) ;;
 slippi-fixture)
@@ -19,6 +21,25 @@ slippi-rb)
     sources=(pc/tests/slippi_rb_test.c pc/platform/gw_slippi_pad.c) ;;
 slippi-mode)
     sources=(pc/tests/slippi_mode_test.c) ;;
+script-policy)
+    sources=(pc/tests/script_policy_test.c) ;;
+arena-spawn)
+    sources=(pc/tests/arena_spawn_test.c) ;;
+view-canvas)
+    sources=(pc/tests/view_canvas_test.c) ;;
+controls-remap)
+    sources=(pc/tests/controls_remap_test.c pc/platform/gw_slippi_pad.c) ;;
+profiler-core)
+    sources=(pc/tests/profiler_core_test.c) ;;
+pipeline-warm)
+    sources=(pc/tests/pipeline_warm_test.cpp)
+    flags=(-std=c++20 -ffunction-sections -I "$GW_MELEE/pc/platform") ;;
+geno-items-registry)
+    sources=(pc/tests/geno_items_registry_test.c) ;;
+mex-items-query)
+    sources=(pc/tests/mex_items_query_test.c) ;;
+engine-data)
+    sources=(pc/tests/engine_gaps_test.c) ;;
 window-drag)
     sources=(pc/tests/window_drag_test.c) ;;
 slippi-wire)
@@ -29,7 +50,7 @@ slippi-peer)
 slippi-match)
     sources=(pc/tests/slippi_match_test.c pc/platform/gw_slippi_match_json.c pc/platform/gw_slippi_match.c)
     uses_enet=1 ;;
-*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag)" ;;
+*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, arena-spawn, view-canvas, profiler-core, pipeline-warm)" ;;
 esac
 
 if [ "$uses_enet" = 1 ]; then
@@ -47,6 +68,19 @@ done
 
 test_root="$GW_BUILD_ROOT/native-tests"
 mkdir -p "$test_root"
+if [ "$test_name" = geno-items-registry ]; then
+    python "$GW_ROOT/tools/port/geno_items_fixture.py" "$test_root/geno_items_json_reader.inc"
+    flags+=(-I "$test_root")
+fi
+if [ "$test_name" = script-policy ]; then
+    python "$GW_ROOT/tools/port/script_policy_fixture.py" "$GW_MELEE/pc/platform/gw_script.c" \
+        "$test_root/script_policy_functions.inc"
+    flags+=(-I "$test_root")
+fi
+if [ "$test_name" = arena-spawn ]; then
+    python "$GW_ROOT/tools/port/arena_spawn_fixture.py" "$GW_MELEE" "$test_root/arena_spawn_functions.inc"
+    flags+=(-I "$test_root")
+fi
 test_exe="$test_root/$test_name.exe"
 test_tmp="$test_root/$test_name.next.exe"
 echo "native test  $test_name"
@@ -54,4 +88,17 @@ echo "native test  $test_name"
     -o "$test_tmp" -Xlinker /OPT:REF "${libs[@]}"
 # Replace only after successful compilation; a stale executable is never run.
 mv -f "$test_tmp" "$test_exe"
-"$test_exe"
+if [ "$test_name" = profiler-core ]; then
+    fixture_root="$test_root/profiler-core-output"
+    mkdir -p "$fixture_root"
+    (
+        cd "$fixture_root"
+        "$test_exe"
+        python "$GW_MELEE/pc/tests/validate_profiler_fixture.py"
+    )
+elif [ "$test_name" = engine-data ]; then
+    fixture_root="$(mktemp -d "$test_root/engine-data.XXXXXX")"
+    "$test_exe" "$fixture_root"
+else
+    "$test_exe"
+fi

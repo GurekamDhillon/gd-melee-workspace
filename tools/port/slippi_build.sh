@@ -8,23 +8,28 @@ if [ -f "$GW_MELEE/pc/platform/gw_slippi_peer.c" ] ||
    [ -f "$GW_MELEE/pc/platform/gw_slippi_match.c" ]; then
     enet_include="$GW_MELEE/extern/enet/include"
     [ -f "$enet_include/enet/enet.h" ] || gw_die "Slippi requires vendored ENet headers"
-    enet_newest=""
-    while IFS= read -r -d '' enet_header; do
-        if [ -z "$enet_newest" ] || [ "$enet_header" -nt "$enet_newest" ]; then
-            enet_newest="$enet_header"
-        fi
-    done < <(find "$enet_include" -type f -name '*.h' -print0)
+    # agent_new.sh backdates sources and hardlinks old objects. Timestamps cannot
+    # establish that this lane's ENet revision was compiled. Include the compiler,
+    # flags and all public headers in each object's content key instead.
+    enet_config="$( {
+        "$GW_CLANG" --version
+        printf '%s\n' "$GW_CLANG" '--target=i686-pc-windows-msvc -c -O2'
+        find "$enet_include" -type f -name '*.h' -print0 | sort -z | xargs -0 sha256sum
+    } | sha256sum )"
     for enet_part in "${slippi_parts[@]}"; do
         enet_source="$GW_MELEE/extern/enet/$enet_part.c"
         enet_object="$GW_SHIMOBJ/enet_$enet_part.obj"
         [ -f "$enet_source" ] || gw_die "missing ENet source $enet_part.c"
-        if [ ! -f "$enet_object" ] || [ "$enet_source" -nt "$enet_object" ] ||
-           [ "$enet_newest" -nt "$enet_object" ]; then
+        enet_key="$( { printf '%s\n' "$enet_config"; sha256sum "$enet_source"; } | sha256sum )"
+        if [ ! -f "$enet_object" ] || [ ! -f "$enet_object.sha256" ] ||
+           [ "$(cat "$enet_object.sha256")" != "$enet_key" ]; then
             echo "ENet  $enet_part"
             # Replace the directory entry to preserve agent_new.sh hardlinks.
             "$GW_CLANG" --target=i686-pc-windows-msvc -c -O2 -I "$enet_include" \
                 "$enet_source" -o "$enet_object.tmp"
             mv -f "$enet_object.tmp" "$enet_object"
+            printf '%s\n' "$enet_key" > "$enet_object.sha256.tmp"
+            mv -f "$enet_object.sha256.tmp" "$enet_object.sha256"
         fi
     done
     slippi_needs_enet=1

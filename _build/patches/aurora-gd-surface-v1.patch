@@ -1,0 +1,441 @@
+GD surface v1 carried patch (2026-10-03)
+Upstream: encounter/aurora, MIT, cb0e279 (vendored upstream revision).
+Applies on top of the existing port patches at game repository
+378d79b20c46452cf43aec45c2d622471ed3a5e6, paths relative to extern/aurora.
+This patch is already applied to this workspace. Do not apply it twice.
+
+--- a/include/dolphin/gx/GXAurora.h
++++ b/include/dolphin/gx/GXAurora.h
+@@ -120,6 +120,14 @@
+ #define GX_AURORA_END_PALETTE 0x0045
+ #define GX_AURORA_PALETTE_MAX 64
+ 
++/* GD surface extension v1. Immutable program IDs are process-local; do not persist.
++ * Params: vec4(time, object_id, normal_valid, reserved), then four authored vec4s.
++ * The FIFO command is replayed on interpolated presents. No command when unused. */
++#define AURORA_GD_SURFACE_VERSION 1
++#define GX_AURORA_SURFACE 0x0046
++u32 GXAuroraSurfaceRegister(const char* source, const char* label, char* error, u32 errorSize);
++void GXAuroraSurface(u32 program, const float* params20);
++
+ #define GX2_SET_POLYGON_OFFSET 0x1000
+ 
+ 
+--- a/lib/dolphin/gx/GXAurora.cpp
++++ b/lib/dolphin/gx/GXAurora.cpp
+@@ -7,6 +7,7 @@
+ #include "../../window.hpp"
+ 
+ #include "../../gx/fifo.hpp"
++#include "../../gx/surface.hpp"
+ 
+ static void GXWriteString(const char* label) {
+   auto length = strlen(label);
+@@ -57,6 +58,37 @@
+   GX_WRITE_U16(static_cast<u16>(n));
+   GX_WRITE_U32(key);
+   GX_WRITE_DATA(data, n * 96u);
++}
++
++u32 GXAuroraSurfaceRegister(const char* source, const char* label, char* error, u32 errorSize) {
++  std::string message;
++  u32 id = 0;
++  if (!source || !label || strlen(source) > 65536 || strstr(source, "@group") ||
++      strstr(source, "@binding") || strstr(source, "@vertex") || strstr(source, "@fragment")) {
++    message = "surface must be <=64 KiB, with no entry points or resource bindings";
++  } else {
++    id = aurora::gx::surface::registry.find(source);
++    if (id) {
++      if (error && errorSize) error[0] = 0;
++      return id;
++    }
++    std::string probe = aurora::gx::surface::contract() + source;
++    probe += "\n@fragment fn fs_main() -> @location(0) vec4f { return gd_surface(vec4f(1.0), "
++             "GdSurfaceInput(vec4f(1.0), vec3f(0.0,0.0,1.0), vec3f(0.0,0.0,1.0), "
++             "vec2f(0.0), 0.0, 0.0, 1.0, array<vec4f,4>(vec4f(0.0),vec4f(0.0),vec4f(0.0),vec4f(0.0)))); }";
++    auto module = aurora::gx::surface::checked_module(probe, label, message);
++    if (module) id = aurora::gx::surface::registry.add(source, label);
++    if (module && !id) message = "surface registry exhausted (256 immutable sources per process)";
++  }
++  if (error && errorSize) snprintf(error, errorSize, "%s", message.c_str());
++  return id;
++}
++
++void GXAuroraSurface(u32 program, const float* params20) {
++  if (!params20) return;
++  GX_WRITE_AURORA(GX_AURORA_SURFACE);
++  GX_WRITE_U32(program);
++  GX_WRITE_DATA(params20, 80);
+ }
+ 
+ void GXAuroraEndPalette(void) { GX_WRITE_AURORA(GX_AURORA_END_PALETTE); }
+--- a/lib/gx/gx.hpp
++++ b/lib/gx/gx.hpp
+@@ -516,6 +516,7 @@
+   AlphaCompare alphaCompare;
+   std::array<IndStage, MaxIndStages> indStages{};
+   u32 numIndStages = 0;
++  u32 surfaceProgram = 0; // immutable, process-local override identity
+ 
+   bool operator==(const ShaderConfig& rhs) const { return memcmp(this, &rhs, sizeof(*this)) == 0; }
+ };
+@@ -540,6 +541,7 @@
+   std::bitset<MaxTextures> sampledIndTextures;
+   std::bitset<MaxIndTexMtxs> usedIndTexMtxs;
+   u32 uniformSize = 0;
++  bool surface = false;
+   bool usesFog : 1 = false;
+   bool lightingEnabled : 1 = false;
+   u8 lineMode : 2 = 0;
+--- a/lib/gx/gx.cpp
++++ b/lib/gx/gx.cpp
+@@ -375,7 +375,7 @@
+     const char* env = std::getenv("AURORA_PIPELINE_ASYNC");
+     return env != nullptr && env[0] == '1';
+   }();
+-  if (!useAsync) {
++  if (!useAsync && !config.shaderConfig.surfaceProgram) {
+     return g_device.CreateRenderPipeline(&descriptor);
+   }
+   struct AsyncResult {
+--- a/lib/gx/pipeline.hpp
++++ b/lib/gx/pipeline.hpp
+@@ -17,7 +17,7 @@
+   uint32_t dstAlpha;
+ };
+ 
+-constexpr uint32_t GXPipelineConfigVersion = 13;
++constexpr uint32_t GXPipelineConfigVersion = 14;
+ struct PipelineConfig {
+   uint32_t version = GXPipelineConfigVersion;
+   uint32_t msaaSamples = 1; // deprecated
+--- a/lib/gx/pipeline.cpp
++++ b/lib/gx/pipeline.cpp
+@@ -17,6 +17,7 @@
+   const auto shader = build_shader(config.shaderConfig, layout);
+   const auto label = fmt::format("GX Pipeline {:x}",
+                                  xxh3_hash(layout.key, xxh3_hash(config, static_cast<HashType>(gfx::ShaderType::GX))));
++  if (!shader) return {};
+   return build_pipeline(config, layout, {}, shader, label.c_str());
+ }
+ 
+--- a/lib/gx/command_processor.cpp
++++ b/lib/gx/command_processor.cpp
+@@ -11,6 +11,7 @@
+ #include "pipeline.hpp"
+ #include "regs.hpp"
+ #include "shader_info.hpp"
++#include "surface.hpp"
+ #include "texture.hpp"
+ 
+ #include <tracy/Tracy.hpp>
+@@ -691,7 +692,9 @@
+     const auto prevSampledTextures = cache.shaderInfo.sampledTextures;
+     const auto prevSampledIndTextures = cache.shaderInfo.sampledIndTextures;
+     populate_pipeline_config(cache.config, prim, fmt);
++    cache.config.shaderConfig.surfaceProgram = surface::activeProgram;
+     cache.shaderInfo = build_shader_info(cache.config.shaderConfig);
++    if (!cache.shaderInfo.uniformSize) return;
+     cache.pipelineRef = gfx::pipeline_ref(cache.config);
+     cache.targetLayoutKey = targetLayoutKey;
+     cache.fmt = fmt;
+@@ -902,7 +905,13 @@
+   ZoneScoped;
+   const u16 subCmd = reader.read<u16>();
+ 
+-  if (subCmd == GX_AURORA_PIPELINE_WAIT) {
++  if (subCmd == GX_AURORA_SURFACE) {
++    const auto program = reader.read<u32>();
++    const auto bytes = reader.take(sizeof(gw_surface::Params));
++    surface::activeProgram = program;
++    memcpy(surface::activeParams.data.data(), bytes.data(), bytes.size());
++    g_gxState.dirty |= DirtyPipeline | DirtyUniform;
++  } else if (subCmd == GX_AURORA_PIPELINE_WAIT) {
+     sPipelineWait = reader.read<u8>() != 0;
+   } else if (subCmd == GX_AURORA_LOAD_VIEWPORT_RENDER) {
+     const f32 left = reader.read<f32>();
+--- a/lib/gx/shader.cpp
++++ b/lib/gx/shader.cpp
+@@ -8,6 +8,7 @@
+ #include "gx.hpp"
+ #include "gx_fmt.hpp"
+ #include "shader_info.hpp"
++#include "surface.hpp"
+ 
+ #include <dolphin/gx/GXEnum.h>
+ 
+@@ -926,6 +927,7 @@
+   ZoneScoped;
+   const auto hash = xxh3_hash(normalAttachment, xxh3_hash(config));
+   const auto info = build_shader_info(config);
++  if (config.surfaceProgram && !info.uniformSize) return {};
+   if (EnableDebugPrints && !s_seenShaders.contains(hash)) {
+     s_seenShaders.insert(hash);
+ 
+@@ -996,6 +998,7 @@
+ 
+   std::string uniformPre;
+   std::string uniBufAttrs;
++  if (config.surfaceProgram) uniBufAttrs += "\n    gd_data: array<vec4f, 5>,";
+   std::string texBindings;
+   std::string vtxOutAttrs;
+   std::string vtxInAttrs;
+@@ -1138,6 +1141,16 @@
+     vtxOutAttrs += fmt::format("\n    @location({}) nrm: vec3f,", vtxOutIdx++);
+     vtxXfrAttrsPre += "\n    out.nrm = mv_nrm;";
+   }
++  if (config.surfaceProgram) {
++    // Dedicated varyings avoid changing TEV lighting/texgen decisions.
++    vtxOutAttrs += fmt::format("\n    @location({}) gd_eye: vec3f,", vtxOutIdx++);
++    vtxOutAttrs += fmt::format("\n    @location({}) gd_normal: vec3f,", vtxOutIdx++);
++    vtxOutAttrs += fmt::format("\n    @location({}) gd_vertex: vec4f,", vtxOutIdx++);
++    vtxOutAttrs += fmt::format("\n    @location({}) gd_uv: vec2f,", vtxOutIdx++);
++    vtxXfrAttrsPre += "\n    out.gd_eye = mv_pos;\n    out.gd_normal = mv_nrm;";
++    vtxXfrAttrsPre += fmt::format("\n    out.gd_vertex = {};", vtx_attr(config, GX_VA_CLR0));
++    vtxXfrAttrsPre += fmt::format("\n    out.gd_uv = ({}).xy;", vtx_attr(config, GX_VA_TEX0));
++  }
+   const bool useNormalTarget = normalAttachment != UINT32_MAX && config.attrs[GX_VA_NRM].attrType != GX_NONE;
+   if (useNormalTarget && !(UsePerPixelLighting && info.lightingEnabled)) {
+     vtxOutAttrs += fmt::format("\n    @location({}) mv_nrm: vec3f,", vtxOutIdx++);
+@@ -1731,7 +1744,7 @@
+     fragmentReturn += "\n    return out;";
+   }
+ 
+-  const auto shaderSource =
++  auto shaderSource =
+       fmt::format(R"""(
+ fn bswap32(v: u32, le: bool) -> u32 {{
+   if (le) {{
+@@ -2106,6 +2119,15 @@
+     Log.info("Generated shader (hash {:x}): {}", hash, shaderSource);
+   }
+ 
++  if (config.surfaceProgram) {
++    const auto program = surface::registry.get(config.surfaceProgram);
++    if (!program) return {};
++    const auto valid = config.attrs[GX_VA_NRM].attrType != GX_NONE ? "1.0" : "0.0";
++    shaderSource = gw_surface::splice(std::move(shaderSource), surface::contract() + program->source,
++        fmt::format("prev = gd_surface(prev, GdSurfaceInput(in.gd_vertex, in.gd_normal, "
++                    "in.gd_eye, in.gd_uv, ubuf.gd_data[0].x, ubuf.gd_data[0].y, {}, "
++                    "array<vec4f, 4>(ubuf.gd_data[1], ubuf.gd_data[2], ubuf.gd_data[3], ubuf.gd_data[4])));", valid));
++  }
+   return shaderSource;
+ }
+ 
+@@ -2128,6 +2150,14 @@
+       Log.info("shaderlog cfg {:016x} wgsl {:016x}", hash, XXH3_64bits(shaderSource.data(), shaderSource.size()));
+     }
+   }
++  if (config.surfaceProgram) {
++    std::string error;
++    const auto program = surface::registry.get(config.surfaceProgram);
++    const char* label = program ? program->label.c_str() : "GD surface";
++    auto module = surface::checked_module(shaderSource, label, error);
++    if (!module) Log.error("GD surface {} ({}): {}", config.surfaceProgram, label, error);
++    return module;
++  }
+   wgpu::ShaderSourceWGSL wgslDescriptor{};
+   wgslDescriptor.code = shaderSource.c_str();
+   const auto label = fmt::format("GX Shader {:x}", hash);
+--- a/lib/gx/shader_info.cpp
++++ b/lib/gx/shader_info.cpp
+@@ -1,4 +1,5 @@
+ #include "shader_info.hpp"
++#include "surface.hpp"
+ 
+ #include "../gfx/recording.hpp"
+ 
+@@ -362,8 +363,15 @@
+     info.uniformSize += MaxIndTexMtxs * sizeof(Mat2x4<float>);
+   }
+   info.uniformSize += info.sampledTextures.count() * sizeof(Vec4<float>);
++  info.surface = config.surfaceProgram != 0;
++  if (info.surface) info.uniformSize += sizeof(gw_surface::Params);
+   info.uniformSize = gfx::align_uniform(info.uniformSize);
+   if (info.uniformSize > MaxUniformSize) {
++    if (info.surface) {
++      Log.error("GD surface {} exceeds GX uniform limit; draw skipped", config.surfaceProgram);
++      info.uniformSize = 0;
++      return info;
++    }
+     Log.fatal("Uniform size exceeds maximum: {} > {}", info.uniformSize, MaxUniformSize);
+   }
+   return info;
+@@ -376,6 +384,7 @@
+   buf.append<f32>(g_gxState.renderViewport.height);
+   buf.append<f32>(g_gxState.logicalViewport.width);
+   buf.append<f32>(g_gxState.logicalViewport.height);
++  if (info.surface) buf.append(surface::activeParams.data);
+   if (info.lineMode != 0) {
+     if (info.lineMode == 3) { // GX_POINTS
+       buf.append<f32>(static_cast<f32>(g_gxState.pointSize) / 6.f);
+--- a/lib/gfx/pipeline_cache.cpp
++++ b/lib/gfx/pipeline_cache.cpp
+@@ -1222,7 +1222,9 @@
+ }
+ 
+ PipelineRef find_pipeline(const gx::PipelineConfig& config, const RenderTargetLayout& layout) {
+-  remember_pipeline_config(ShaderType::GX, config, current_frame(), true);
++  // Mod programs are process-local and must never reach persistent warm-up tables.
++  if (!config.shaderConfig.surfaceProgram)
++    remember_pipeline_config(ShaderType::GX, config, current_frame(), true);
+   return resolve_pipeline(ShaderType::GX, config, layout, PipelinePriority::Normal);
+ }
+ 
+--- a/lib/gfx/encoding.cpp
++++ b/lib/gfx/encoding.cpp
+@@ -426,7 +426,7 @@
+     return true;
+   }
+   wgpu::RenderPipeline pipeline;
+-  if (!get_pipeline(ref, pipeline)) {
++  if (!get_pipeline(ref, pipeline) || !pipeline) {
+     return false;
+   }
+   pass.SetPipeline(pipeline);
+--- /dev/null
++++ b/include/aurora/surface_state.hpp
+@@ -0,0 +1,78 @@
++#pragma once
++// GPU-independent surface state. Render-only; never read by simulation.
++#include <array>
++#include <cmath>
++#include <cstdint>
++#include <memory>
++#include <mutex>
++#include <string>
++#include <vector>
++
++namespace gw_surface {
++inline std::string splice(std::string generated, const std::string& body, const std::string& call) {
++    if (body.empty()) return generated;
++    const auto entry = generated.find("@fragment\nfn fs_main(");
++    auto finish = generated.find("\n    return prev;", entry);
++    if (finish == std::string::npos) finish = generated.find("\n    out.color = prev;", entry);
++    if (entry == std::string::npos || finish == std::string::npos) return {};
++    generated.insert(finish, "\n    " + call);
++    generated.insert(entry, body + "\n");
++    return generated;
++}
++struct Params { std::array<float, 20> data{}; };
++static_assert(sizeof(Params) == 80);
++struct Program { std::string source, label; };
++class Registry {
++    std::mutex mutex;
++    std::vector<std::shared_ptr<const Program>> programs{nullptr};
++public:
++    uint32_t find(const std::string& source) {
++        std::lock_guard lock(mutex);
++        for (uint32_t i = 1; i < programs.size(); ++i)
++            if (programs[i]->source == source) return i;
++        return 0;
++    }
++    uint32_t add(std::string source, std::string label) {
++        if (source.empty() || source.size() > 65536) return 0;
++        std::lock_guard lock(mutex);
++        for (uint32_t i = 1; i < programs.size(); ++i)
++            if (programs[i]->source == source) return i;
++        if (programs.size() >= 257) return 0;
++        programs.push_back(std::make_shared<Program>(Program{std::move(source), std::move(label)}));
++        return static_cast<uint32_t>(programs.size() - 1);
++    }
++    std::shared_ptr<const Program> get(uint32_t id) {
++        std::lock_guard lock(mutex);
++        return id < programs.size() ? programs[id] : nullptr;
++    }
++};
++struct Binding { uint32_t program = 0, owner = 0; Params params{}; };
++class Selection {
++    // Index 0 = unrelated, 1..6 = fighter slots, 7 = original stage.
++    std::array<Binding, 8> bindings{};
++    std::array<Binding, 32> stack{};
++    Binding current{};
++    unsigned depth = 0, overflow = 0;
++public:
++    bool set(unsigned slot, uint32_t program, uint32_t owner, const Params& params) {
++        if (!slot || slot >= bindings.size() || !owner) return false;
++        for (float f : params.data) if (!std::isfinite(f)) return false;
++        auto& b = bindings[slot];
++        if (b.owner && b.owner != owner) return false;
++        b = program ? Binding{program, owner, params} : Binding{};
++        return true;
++    }
++    Binding enter(unsigned slot) {
++        if (depth == stack.size()) { ++overflow; return current = {}; }
++        stack[depth++] = current;
++        return current = slot < bindings.size() ? bindings[slot] : Binding{};
++    }
++    Binding leave() {
++        if (overflow) { --overflow; return current = {}; }
++        return current = depth ? stack[--depth] : Binding{};
++    }
++    void release(uint32_t owner) {
++        for (auto& b : bindings) if (!owner || b.owner == owner) b = {};
++    }
++};
++} // namespace gw_surface
+--- /dev/null
++++ b/lib/gx/surface.hpp
+@@ -0,0 +1,62 @@
++#pragma once
++#include <aurora/surface_state.hpp>
++#include "../webgpu/gpu.hpp"
++#include <chrono>
++#include <condition_variable>
++#include <cstring>
++
++namespace aurora::gx::surface {
++inline gw_surface::Registry registry;
++// GX processing thread only; FIFO copies parameters and interpolation replays them.
++inline uint32_t activeProgram = 0;
++inline gw_surface::Params activeParams;
++inline std::string contract() {
++  return R"(
++struct GdSurfaceInput {
++  vertex_color: vec4f,
++  normal: vec3f,
++  eye_position: vec3f,
++  uv0: vec2f,
++  time: f32,
++  object_id: f32,
++  normal_valid: f32,
++  params: array<vec4f, 4>,
++};
++)";
++}
++inline wgpu::ShaderModule checked_module(const std::string& source, const char* label, std::string& error) {
++  if (source.empty() || !webgpu::g_device) { error = "surface shader/device unavailable"; return {}; }
++  struct Result {
++    std::mutex mutex;
++    std::condition_variable cv;
++    bool done = false;
++    std::string error;
++  };
++  auto result = std::make_shared<Result>();
++  wgpu::ShaderSourceWGSL wgsl{};
++  wgsl.code = source.c_str();
++  wgpu::ShaderModuleDescriptor desc{};
++  desc.nextInChain = &wgsl;
++  desc.label = label;
++  webgpu::g_device.PushErrorScope(wgpu::ErrorFilter::Validation);
++  auto module = webgpu::g_device.CreateShaderModule(&desc);
++  webgpu::g_device.PopErrorScope(wgpu::CallbackMode::AllowSpontaneous,
++      [result](wgpu::PopErrorScopeStatus status, wgpu::ErrorType type, wgpu::StringView message) {
++        std::lock_guard lock(result->mutex);
++        if (status != wgpu::PopErrorScopeStatus::Success || type != wgpu::ErrorType::NoError) {
++          result->error = message.data ? std::string(message.data,
++              message.length == SIZE_MAX ? strlen(message.data) : message.length) : "shader validation failed";
++          if (result->error.empty()) result->error = "shader validation failed";
++        }
++        result->done = true;
++        result->cv.notify_all();
++      });
++  std::unique_lock lock(result->mutex);
++  if (!result->cv.wait_for(lock, std::chrono::seconds(5), [&] { return result->done; })) {
++    error = "surface shader validation timed out";
++    return {};
++  }
++  error = result->error;
++  return error.empty() ? module : wgpu::ShaderModule{};
++}
++} // namespace aurora::gx::surface

@@ -32,14 +32,21 @@ $AllowedBinaries = @("GD Melee.exe", "melee-pc.exe", "SDL3.dll", "webgpu_dawn.dl
                      "msvcp140.dll", "msvcp140_atomic_wait.dll", "vcruntime140.dll")
 $AllowedTopFiles = @("melee-pc.map", "initial_pipeline_cache.db", "initial_pipeline_cache.core",
                      "README.txt", "HOW TO PLAY ONLINE.txt", "version.txt", "MANIFEST.sha256",
-                     "netplay_server.txt")
+                     "netplay_server.txt", "build-provenance.json")
 $DiscExt = @(".iso", ".gcm", ".rvz", ".wia", ".ciso", ".wbfs", ".nkit", ".gcz", ".dol", ".dat", ".usd",
              ".hps", ".thp", ".mth", ".ssm", ".sem", ".gci", ".sav", ".raw", ".tpl", ".bnr", ".rel", ".elf",
              ".png", ".bmp", ".tga", ".dds", ".jpg", ".jpeg", ".tex", ".bin", ".wav", ".ogg", ".mp3", ".obj", ".glb")
 $DiscDirs = @("ace", "packs", "akaneia-build", "akaneia", "meleedump", "card", "card-ace", "card-empty",
               "card-trophy", "userdata", "crashlogs", "hsd_export", "m-ex", "menutex", "gltf", "orig", "files", "sys")
 $Required = @("README.txt", "version.txt", "MANIFEST.sha256", "LICENSES/GPL-2.0.txt",
-              "LICENSES/THIRD-PARTY-NOTICES.txt", "melee-pc.exe", "GD Melee.exe")
+              "LICENSES/THIRD-PARTY-NOTICES.txt", "melee-pc.exe", "melee-pc.map", "GD Melee.exe",
+              "SDL3.dll", "webgpu_dawn.dll", "msvcp140.dll", "msvcp140_atomic_wait.dll", "vcruntime140.dll",
+              "initial_pipeline_cache.db", "initial_pipeline_cache.core", "HOW TO PLAY ONLINE.txt",
+              "build-provenance.json", "launcher/bin/gd-melee-launcher.exe", "launcher/bin/Qt6Core.dll",
+              "launcher/bin/Qt6Gui.dll", "launcher/bin/Qt6Widgets.dll", "launcher/bin/qt.conf",
+              "launcher/bin/msvcp140.dll", "launcher/bin/vcruntime140.dll", "launcher/bin/vcruntime140_1.dll",
+              "launcher/qt-build.txt", "launcher/licenses/LGPL-3.0-only.txt",
+              "launcher/licenses/Qt-GPL-exception-1.0.txt", "launcher/licenses/SourceSans3-OFL-1.1.txt")
 
 $problems = New-Object System.Collections.Generic.List[string]
 function Fail([string]$msg) { $problems.Add($msg) }
@@ -94,6 +101,8 @@ if ($haveRepo) {
     $uiBlobs[$parts[1].Substring("_build/".Length)] = $sha
   }
 }
+if (-not $haveRepo -or $uiBlobs.Count -eq 0) { Fail "cannot verify required ui art (no committed _build/ui at $RepoRoot)" }
+$Required += @($uiBlobs.Keys)
 $sha1 = [System.Security.Cryptography.SHA1]::Create()
 function GitBlobSha([byte[]]$b) {
   $hdr = [System.Text.Encoding]::ASCII.GetBytes("blob $($b.Length)`0")
@@ -108,6 +117,8 @@ $userPath = [regex]'(?i)[A-Z]:[\\/]Users[\\/](?!Public[\\/]|Default[\\/])[A-Za-z
 
 foreach ($e in $entries) {
   $rel = $e.Rel; $b = $e.Bytes
+  if ($rel -match '(^/|\\|(^|/)\.\.?(/|$)|:)' -or -not $rel) { Fail "$rel : unsafe release path" }
+  if ($hashes.ContainsKey($rel)) { Fail "$rel : duplicate release entry" }
   $name = [System.IO.Path]::GetFileName($rel)
   $ext = [System.IO.Path]::GetExtension($rel).ToLowerInvariant()
   $dirs = @($rel.Split('/') | Select-Object -SkipLast 1)
@@ -120,8 +131,8 @@ foreach ($e in $entries) {
   # 1. allowlist
   $ok = $false
   # Qt's 64-bit runtime is isolated from the 32-bit game and its CRT.
-  $launcherBinary = $rel -match '^launcher/bin/(gd-melee-launcher\.exe|Qt6(Core|Gui|Widgets|Svg)\.dll|msvcp140(_1|_2|_atomic_wait|_codecvt_ids)?\.dll|vcruntime140(_1)?\.dll|concrt140\.dll|d3dcompiler_47\.dll|opengl32sw\.dll|dxcompiler\.dll|dxil\.dll|vc_redist\.x64\.exe)$' -or
-                    $rel -match '^launcher/(plugins|bin)/(platforms/q(windows|offscreen|minimal)\.dll|styles/q(modernwindows|windowsvista)style\.dll|imageformats/q(gif|ico|jpeg|svg)\.dll)$'
+  $launcherBinary = $rel -match '^launcher/bin/(gd-melee-launcher\.exe|Qt6(Core|Gui|Widgets|Svg|Network)\.dll|msvcp140(_1|_2|_atomic_wait|_codecvt_ids)?\.dll|vcruntime140(_1)?\.dll|concrt140\.dll|d3dcompiler_47\.dll|opengl32sw\.dll|dxcompiler\.dll|dxil\.dll|vc_redist\.x64\.exe)$' -or
+                    $rel -match '^launcher/(plugins|bin)/(platforms/q(windows|offscreen|minimal)\.dll|styles/q(modernwindows|windowsvista)style\.dll|imageformats/q(gif|ico|jpeg|svg)\.dll|generic/qtuiotouchplugin\.dll|networkinformation/qnetworklistmanager\.dll|tls/q(certonlybackend|schannelbackend)\.dll)$'
   if ($dirs.Count -eq 0) {
     $ok = ($AllowedBinaries -contains $name) -or ($AllowedTopFiles -contains $name)
   } elseif ($dirs[0] -eq "ui") {
@@ -159,8 +170,19 @@ foreach ($e in $entries) {
   }
   if ($ext -eq ".exe" -or $ext -eq ".dll" -or $ext -eq ".map" -or $ext -eq ".db") {
     $text = [System.Text.Encoding]::GetEncoding(28591).GetString($b)
+    if (($ext -eq ".exe" -or $ext -eq ".dll") -and $text.Contains("GD_MELEE_TRACY_DEVELOPMENT_ONLY")) {
+      Fail "$rel : development-only Tracy profiler is enabled; rebuild with GW_PROF_TRACY unset"
+    }
     $m = $userPath.Match($text)
     if ($m.Success) { Fail "$rel : contains a personal path ($($m.Value)...)" }
+    foreach ($alignment in 0, 1) {
+      $length = [int]([Math]::Floor(($b.Length - $alignment) / 2) * 2)
+      if ($length -gt 0) {
+        $wide = [System.Text.Encoding]::Unicode.GetString($b, $alignment, $length)
+        $m = $userPath.Match($wide)
+        if ($m.Success) { Fail "$rel : contains a personal path ($($m.Value)...)" }
+      }
+    }
   }
 
   # 4. ui art must be the committed art
@@ -179,6 +201,9 @@ foreach ($e in $entries) {
 }
 
 foreach ($r in $Required) { if (-not $hashes.ContainsKey($r)) { Fail "missing required file: $r" } }
+if (-not $hashes.ContainsKey('launcher/bin/platforms/qwindows.dll') -and -not $hashes.ContainsKey('launcher/plugins/platforms/qwindows.dll')) {
+  Fail "missing required file: launcher/bin/platforms/qwindows.dll (or launcher/plugins/platforms/qwindows.dll)"
+}
 
 . (Join-Path $PSScriptRoot 'netplay_protocol.ps1')
 $versionEntry = $entries | Where-Object { $_.Rel -eq 'version.txt' } | Select-Object -First 1
@@ -187,12 +212,39 @@ if ($versionEntry) {
   catch { Fail $_.Exception.Message }
 }
 
+# The build stamp binds the final EXE/map to the source identity checked before packaging.
+# Manifest hashes alone prove neither that identity nor that the two artifacts were built together.
+$provenanceEntry = $entries | Where-Object { $_.Rel -eq 'build-provenance.json' } | Select-Object -First 1
+if ($provenanceEntry) {
+  try {
+    $stamp = [System.Text.Encoding]::UTF8.GetString($provenanceEntry.Bytes) | ConvertFrom-Json
+    if ($stamp.format -isnot [int] -or $stamp.format -ne 1 -or $stamp.melee_commit -notmatch '^[0-9a-f]{40}$' -or
+        $stamp.source_sha256 -notmatch '^[0-9a-f]{64}$' -or $stamp.source_dirty -isnot [bool] -or
+        $stamp.netplay_protocol -isnot [int] -or $stamp.netplay_protocol -ne (Get-NetplayProtocol)) {
+      throw 'malformed build provenance or incompatible protocol'
+    }
+    foreach ($artifact in 'melee-pc.exe', 'melee-pc.map') {
+      $recorded = $stamp.files.$artifact
+      if ($recorded -notmatch '^[0-9a-f]{64}$' -or $recorded -ne $hashes[$artifact]) {
+        throw "build provenance hash mismatch: $artifact"
+      }
+    }
+    $identities = [regex]::Matches([System.Text.Encoding]::ASCII.GetString($versionEntry.Bytes), '(?m)^melee\s+([0-9a-f]{40})\s+')
+    if ($identities.Count -ne 1 -or $identities[0].Groups[1].Value -ne $stamp.melee_commit) {
+      throw 'build provenance commit does not match version.txt'
+    }
+  } catch { Fail "build provenance refused: $($_.Exception.Message)" }
+}
+
 # 5. manifest: every file listed once with the right hash, and nothing listed that is absent
 $man = $entries | Where-Object { $_.Rel -eq "MANIFEST.sha256" } | Select-Object -First 1
 if ($man) {
   $listed = @{}
   foreach ($line in ([System.Text.Encoding]::UTF8.GetString($man.Bytes) -split "`r?`n")) {
-    if ($line -match '^([0-9a-f]{64})  (.+)$') { $listed[$Matches[2]] = $Matches[1] }
+    if ($line -match '^([0-9a-f]{64})  (.+)$') {
+      if ($listed.ContainsKey($Matches[2])) { Fail "$($Matches[2]) : duplicate MANIFEST.sha256 entry" }
+      $listed[$Matches[2]] = $Matches[1]
+    } elseif ($line.Trim()) { Fail "malformed MANIFEST.sha256 line" }
   }
   foreach ($k in $hashes.Keys) {
     if ($k -eq "MANIFEST.sha256") { continue }

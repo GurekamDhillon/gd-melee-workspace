@@ -25,11 +25,21 @@ Semantic port (Sora must feel like Ultimate's; Melee's mechanics win):
   clip's Trans z per frame), speed_y 1.1 in the air.
   Melee's rules: hitlag / SDI multipliers, shield setoff, force reaction. The counter's damage IS
   ported (Sora's own move property): the countered hit x attack_mul 1.5, clamped 9..30 (Geno HBDMG).
-  INFERRED (tune in game; printed): the lock-on range 50 (the SEARCH box radius), its angle clamp
-  (MAX_LOCK_DEG) and the stick aim without a target (STICK_DEG); the rise profile (constant
-  deceleration jump_accel_y reaching jump_distance); the 8-frame hover between dashes.
-Default ON (--no-... to drop): --sonic-hit-branch saves ATTACK_CONNECTED_PREV (engine value 0x3C) in the between-dash
-hover, then selects both follow-up hitbox sets from that saved value; --counter-backward adds
+  Sonic Blade follows the status code (_research/ultimate-sonic-blade-spec-2026-10-03.md): dash 1
+  straight and never aimed; SEARCH (search_frame 9: a target inside the SEARCH sphere's radius 50
+  locks and the stick is then ignored, else the last stick sample >= search_stick aims, the full
+  circle, no clamp); TURN (8-frame level / up / down clip, facing = the aim's side unless within 20
+  degrees of vertical); dashes 2 and 3 always airborne at 3.2 x 0.92^n, x0.85 aimed 40-140 degrees
+  without a target, x1.15 "powered" (special latched and not stick-aimed, which also selects the 5.2 %
+  hitboxes); the chain continues on stick deflection at a dash's last frame or the special latched in
+  its window; END plays in exactly end_frame_1/2/3 game frames with the status's own brake / gravity.
+  NOT ported (outside the status script or needing assets): the aim cursor and lock marker, the
+  35-frame head-on contact counter, the last-dash ledge assist, ledge grabs during a dash, the 0.98
+  factor (its counter has no writer in the script), the start status's own timing.
+  BEST-FIT: add_speed at frame 11 is taken off the dash speed along its heading; SEARCH and TURN
+  hover (no gravity); the target point is the opponent's position (the real point is not in our data).
+  INFERRED: the Aerial Sweep rise profile (constant deceleration jump_accel_y reaching jump_distance).
+Default ON (--no-... to drop): --sonic-hit-branch emits both follow-up hitbox sets, selected by the powered flag; --counter-backward adds
 backward counter attacks after lock-on reverses facing; and
 --counter-rebound adds the rebound clips as unreachable states (the status trigger is absent from
 the dump). The 7-frame counter turn clips are recorded for the installer but have no Geno state.
@@ -88,7 +98,16 @@ def steer_up_mul_test(S):
     return fb(math.sin(math.radians(S["attack_up_angle_min"])))
 # ---- end of steering --------------------------------------------------------------------------------
 
-HOVER = 8               # d01specialsstart2's length: the pause between dashes (clip frames)
+# ---- Sonic Blade as the status code runs it (_research/ultimate-sonic-blade-spec-2026-10-03.md) ----
+# Dash 1 is never aimed. Between dashes: SEARCH (search_frame game frames: a target in range locks and
+# then the stick is ignored, else the last stick sample past search_stick is the aim, the full circle)
+# then TURN (the 8-frame turn clip: level / up / down by the aim), then the dash along the aim.
+HOOK_DASH_SEARCH, HOOK_DASH_AIM, HOOK_BRAKE = 8, 9, 10   # geno.dash.search / geno.dash.aim / geno.brake (v5.4)
+V_STICK_LEN = 0x3D
+V_STICK_X = 0x08
+SIDE_CANCEL_STICK = 0.5   # BEST-FIT: the side-special stick test of Aerial Sweep's cancel window
+V_MOVE_I3, V_MOVE_I4 = 0x2B, 0x2C
+V_MOVE_F5, V_MOVE_F6, V_MOVE_F7 = 0x25, 0x26, 0x27      # phys "brake": brake, gravity, vertical clamp
 
 # Geno ids (docs/geno.md 15-19; pc/geno/geno.h)
 GENO_OP = 59
@@ -104,9 +123,11 @@ BTN_ATTACK = 1
 HOOK_SPAWN, HOOK_LOCKON = 5, 6
 MS_WAIT, MS_FALLSPECIAL = 14, 35
 DASH_N = 1              # LA int 1: dashes done (LA int 0 is the magic cycle, beta's)
-SONIC_PREV_N = 2        # LA int 2: previous dash's connection across hover -> next dash
-# _research/ultimate-trail-status.md §3: vl.prc 0x1A41A10288 boosts dash speed when the copied flag is true.
-SONIC_DASH_ENHANCE_MUL = 1.15
+# LA int 2: the dash is "powered" (work flag 0xe648 = special latched and NOT aimed with the stick; a
+# locked target counts as not stick): speed x 0x1A41A10288 (1.15) and the 5.2 % hitbox set. Nothing in
+# the status code reads whether a dash connected; the old "previous dash hit" reading was wrong.
+SONIC_POWER_N = SONIC_PREV_N = 2
+LATCH_N = 3             # LA int 3: special pressed inside the dash's window (work flag 0xe650)
 
 
 def fb(x):
@@ -202,13 +223,16 @@ def clip_info(name):
 def game_time(row):
     """anim frame -> game frame, through the script's FT_MOTION_RATE segments (as trail_magic_geno)."""
     rates = sorted((c["frame"], c["args"][0]) for c in row["commands"] if c["cmd"] == "FT_MOTION_RATE")
+    if any(not isinstance(rate, (int, float)) or isinstance(rate, bool) or
+           not math.isfinite(rate) or rate <= 0 for _, rate in rates):
+        raise ValueError("baked motion rate must be finite and positive")
 
     def t(f):
         g, cur, last = 0.0, 1.0, 0.0
         for fr, r in rates:
             if fr >= f:
                 break
-            g += (fr - last) * cur
+            g += (fr - last) * cur   # r = game frames per clip frame
             last, cur = fr, r
         return g + (f - last) * cur
     return t
@@ -220,11 +244,13 @@ HOSTS = {
     "marth": {"SStart": 303, "SStart2": 304, "SDash1": 305, "SDash2": 306, "SDash3": 307, "SEnd": 308,
               "SEndAir": 309, "Hi": 321, "HiAir": 322, "LwStart": 323, "LwAttack": 324,
               "LwStartAir": 325, "LwAttackAir": 326, "LwAttackBack": 310, "LwAttackBackAir": 311,
-              "LwRebound": 312, "LwReboundAir": 313, "S3Combo2": 315, "S3Combo3": 316},
+              "LwRebound": 312, "LwReboundAir": 313, "S3Combo2": 315, "S3Combo3": 316,
+              "SSearch": 314, "STurnUp": 317, "STurnDown": 318},
     "kirby": {"SStart": 322, "SStart2": 323, "SDash1": 324, "SDash2": 325, "SDash3": 326, "SEnd": 327,
               "SEndAir": 328, "Hi": 329, "HiAir": 330, "LwStart": 332, "LwAttack": 338,
               "LwStartAir": 335, "LwAttackAir": 339, "LwAttackBack": 340, "LwAttackBackAir": 341,
-              "LwRebound": 342, "LwReboundAir": 343, "S3Combo2": 333, "S3Combo3": 334},
+              "LwRebound": 342, "LwReboundAir": 343, "S3Combo2": 333, "S3Combo3": 334,
+              "SSearch": 344, "STurnUp": 345, "STurnDown": 346},   # kirby rows: not checked against a host table
 }
 CLIPS = {"SStart": "d01specialsstart", "SStart2": "d01specialsstart2", "SDash1": "d01specials1",
          "SDash2": "d01specials2", "SDash3": "d01specials2", "SEnd": "d01specialsend",
@@ -233,12 +259,23 @@ CLIPS = {"SStart": "d01specialsstart", "SStart2": "d01specialsstart2", "SDash1":
          "LwAttackAir": "d03specialairlw", "LwAttackBack": "d03speciallwbackward",
          "LwAttackBackAir": "d03specialairlwbackward", "LwRebound": "d03speciallwrebound",
          "LwReboundAir": "d03specialairlwrebound", "S3Combo2": "c00attack12",
-         "S3Combo3": "c01attacks33"}   # declaration order (= state numbers)
+         "S3Combo3": "c01attacks33",
+         # Sonic Blade's aim window and the aimed turn clips (SStart2 is the level turn). Last, so the
+         # numbers of every earlier state stay what installed profiles and tests know.
+         "SSearch": "d01specialssearch", "STurnUp": "d01specialsup",
+         "STurnDown": "d01specialsdown"}   # declaration order (= state numbers)
 STATES = list(CLIPS)
 BASE_STATES = STATES[:STATES.index("LwAttackBack")]
 BACK_STATES = ["LwAttackBack", "LwAttackBackAir"]
 REBOUND_STATES = ["LwRebound", "LwReboundAir"]
 COMBO_STATES = ["S3Combo2", "S3Combo3"]
+SIDE_EXTRA_STATES = ["SSearch", "STurnUp", "STurnDown"]
+# The grab pull-in. Melee's CatchPull (213) and CatchDashPull (215) carry the Catch clip on, so a
+# successful grab looked like a whiff; Ultimate has a pull clip of its own. It goes on a spare host
+# row with an empty script and the profile's "motion_anims" (geno.md, v5.4) points both states at it.
+PULL_ROWS = {"marth": 319, "kirby": 347}   # kirby row: not checked against a host table
+PULL_CLIP = "e00catchpull"
+PULL_MOTIONS = (213, 215)
 S3_ROWS = (53, 54, 55, 56, 57)  # Marth/Kirby AttackS3 angle rows
 
 
@@ -308,7 +345,7 @@ def audit_special_row(row, joint_of, *, sonic_hit_branch=True, allowlist=None):
                 raise ValueError(f"{script} frame {frame:g}: add_speed vector {args!r} is not converted")
         elif cmd in ("WorkModule::on_flag", "WorkModule::off_flag") and len(args) == 1 and (
                 (script in ("game_specials1", "game_specials2", "game_specials3") and args[0] == {"const": "0xe65c"}) or
-                (script in ("game_specialhi", "game_specialairhi") and args[0] == {"const": "0xe610"}) or
+                (script in ("game_specialhi", "game_specialairhi") and args[0] in ({"const": "0xe610"}, {"const": "0xe600"})) or
                 (script in ("game_speciallwstart", "game_specialairlwstart") and args[0] == {"const": "0xe61c"}) or
                 (script == "game_attacks32" and args[0] == {"const": "0x720"})):
             pass
@@ -370,12 +407,12 @@ def hit_events(tl, row, t, joint_of, rep, name, carry_motion=None, losses=None, 
             encoded = encoded + hit_extras(payload)
         elif kind == "clear":
             encoded = encoded + clear_rehit(encoded)
-        tl.at(t(frame), encoded,
-              2 if kind == "clear" else 3)
+        # Keep source order among hitbox commands, including an ATTACK followed by clear.
+        tl.at(t(frame), encoded, 3)
 
 
 def sonic_branch_hit_events(tl, row, joint_of, rep, name, losses=None, audit=True):
-    """Keep both frame-3 flag branches; value 0 means no previous dash hit."""
+    """Keep both frame-3 flag branches; LA int 2 = 1 is the powered dash (work flag 0xe648)."""
     if audit:
         audited_losses = audit_special_row(row, joint_of, sonic_hit_branch=True)
         if losses is not None:
@@ -400,7 +437,7 @@ def sonic_branch_hit_events(tl, row, joint_of, rep, name, losses=None, audit=Tru
         branches[n["damage"]].append((n["id"], payload, n))
         if losses is not None:
             losses.extend(guard.losses)
-        rep.append("  %s f3: connected=%d id %d %.1f%% angle %d kbg %d bkb %d" % (
+        rep.append("  %s f3: powered=%d id %d %.1f%% angle %d kbg %d bkb %d" % (
             name, n["damage"] == 5.2, n["id"], n["damage"], n["angle"], n["kbg"], n["bkb"]))
     if any(sorted(i for i, _, _ in branch) != [0, 1, 2] for branch in branches.values()):
         raise ValueError("Sonic Blade follow-up must have three hitboxes in each branch")
@@ -424,7 +461,7 @@ def sonic_branch_hit_events(tl, row, joint_of, rep, name, losses=None, audit=Tru
                     for _, _, payload in events), [])
     weak = branch_words(branches[3.0])
     strong = branch_words(branches[5.2])
-    # IF skips only when its test fails: disconnected -> 3.0%, connected -> 5.2%.
+    # IF skips only when its test fails: not powered -> 3.0%, powered -> 5.2%.
     prev = var(LAI, SONIC_PREV_N)
     tl.at(3, IF(prev, EQ, 0, len(weak)) + weak
           + IF(prev, EQ, 1, len(strong)) + strong, 3)
@@ -462,7 +499,8 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
                                         sonic_hit_branch=sonic_hit_branch))
     sub = HOSTS[host]
     active = (BASE_STATES + (BACK_STATES if counter_backward else [])
-              + (REBOUND_STATES if counter_rebound else []) + (COMBO_STATES if combo_chain else []))
+              + (REBOUND_STATES if counter_rebound else []) + (COMBO_STATES if combo_chain else [])
+              + SIDE_EXTRA_STATES)
     idx = {n: base + i for i, n in enumerate(active)}
     S, H, L = P["param_special_s"], P["param_special_hi"], P["param_special_lw"]
     states, overlays = [], []
@@ -476,45 +514,64 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
     ident = lambda f: f
     # ---------------- Sonic Blade ----------------
     speed = S["attack_speed_x"]
-    lock = lockon_arg(LOCK_RANGE, MAX_LOCK_DEG, STICK_DEG)
+    decay, power_mul = S["0x15530D2D10"], S["0x1A41A10288"]            # 0.92 per dash, 1.15 powered
+    dash_frames = S["attack_frame"]                                     # 12 game frames a dash
+    aim_arg = (int(S["0x0DEB5675E2"]) & 0xFF) | ((int(S["attack_up_angle_min"]) & 0xFF) << 8) | (
+        (int(S["attack_up_angle_max"]) & 0xFF) << 16)                   # keep facing within 20 deg of vertical; up = 40..140
+    search_arg = (int(round(S["search_stick"] * 100)) & 0xFF) | ((LOCK_RANGE & 0xFFFF) << 8)
+    deferred = []
+
+    def kinetics(brake, grav=0.0, clamp=0.0, x_only=False):
+        """phys "brake"'s numbers (per game frame, whatever the clip's rate)."""
+        return (PUTF(V_MOVE_F5, brake) + PUTF(V_MOVE_F6, grav) + PUTF(V_MOVE_F7, clamp)
+                + PUTI(V_MOVE_I4, 1 if x_only else 0))
+
+    to_end = lambda: IFV(V_AIR, EQ, 1, 2) + CHG(GENO(idx["SEndAir"])) + CHG(GENO(idx["SEnd"]))
+
+    # The start status lives in the main executable, not the status script (spec 13): the clip's 15
+    # frames at rate 1 and the start multipliers are what we have. It never aims: dash 1 is straight.
     n_start, _ = clip_info(CLIPS["SStart"])
     tl = Timeline()
-    tl.at(0, PUTI(V_MOVE_I2, 0) + SET(var(LAI, DASH_N), 0)
+    tl.at(0, SET(var(LAI, DASH_N), 0) + SET(var(LAI, SONIC_POWER_N), 0) + SET(var(LAI, LATCH_N), 0)
+          + PUTI(V_MOVE_I0, 0) + PUTI(V_MOVE_I2, 0)
           + GET(var(RAF, 0), V_GROUND_VEL) + MULF(var(RAF, 0), S["start_speed_x_mul_ground"]) + PUTV(V_GROUND_VEL, var(RAF, 0))
           + GET(var(RAF, 0), V_VEL_X) + MULF(var(RAF, 0), S["start_speed_x_mul_air"]) + PUTV(V_VEL_X, var(RAF, 0))
           + GET(var(RAF, 1), V_VEL_Y) + MULF(var(RAF, 1), S["start_speed_y_mul_air"]) + PUTV(V_VEL_Y, var(RAF, 1)))
-    tl.at(S["search_frame"], CALL(HOOK_LOCKON, lock) + steer_words(S))
-    state("SStart", "geno.air", tl.words(n_start, CHG(GENO(idx["SDash1"])) ), phys="auto", coll="both")
-    rep.append("SStart: %d frames (d01specialsstart), speed x%.1f ground / x%.1f air, vy x%.1f; lock-on at f%d "
-               "(range %d, clamp %d deg, stick %d deg: INFERRED)" % (n_start, S["start_speed_x_mul_ground"],
-               S["start_speed_x_mul_air"], S["start_speed_y_mul_air"], S["search_frame"], LOCK_RANGE, MAX_LOCK_DEG, STICK_DEG))
+    state("SStart", "geno.air", tl.words(n_start, CHG(GENO(idx["SDash1"]))), phys="auto", coll="both")
+    rep.append("SStart: %d frames (d01specialsstart), speed x%.1f ground / x%.1f air, vy x%.1f; no aim: dash 1 is straight" % (
+        n_start, S["start_speed_x_mul_ground"], S["start_speed_x_mul_air"], S["start_speed_y_mul_air"]))
 
-    tl = Timeline()
-    tl.at(0, (GET(var(LAI, SONIC_PREV_N), V_ATTACK_CONNECTED_PREV) if sonic_hit_branch else [])
-          + PUTF(V_FWD_VEL, 0) + PUTF(V_VEL_Y, 0) + PUTF(V_GROUND_VEL, 0))
-    tl.at(S["attack_turn_frame"], CALL(HOOK_LOCKON, lock) + steer_words(S))
-    # LA1 = dashes done: 1 -> Dash2, else Dash3
-    state("SStart2", "geno.air", tl.words(HOVER, IF(var(LAI, DASH_N), EQ, 1, 2) + CHG(GENO(idx["SDash2"]))
-                                          + CHG(GENO(idx["SDash3"]))), phys="none", coll="both")
-    rep.append("SStart2: %d-frame hover between dashes (d01specialsstart2), re-aim at f%d (attack_turn_frame)%s" % (
-        HOVER, S["attack_turn_frame"], ", save ATTACK_CONNECTED_PREV in LA int 2 at f0" if sonic_hit_branch else ""))
+    # TURN, level clip (the state keeps its old name and number). The SEARCH brake carries on.
+    n_turn, _ = clip_info(CLIPS["SStart2"])
+    turn_tail = IF(var(LAI, DASH_N), EQ, 1, 2) + CHG(GENO(idx["SDash2"])) + CHG(GENO(idx["SDash3"]))
+    state("SStart2", "geno.air", Timeline().words(n_turn, turn_tail), phys="brake", coll="both")
+    for name in ("STurnUp", "STurnDown"):
+        frames, _ = clip_info(CLIPS[name])
+        deferred.append((name, "geno.air", Timeline().words(frames, turn_tail), dict(phys="brake", coll="both")))
+    rep.append("TURN: %d frames (d01specialsstart2 level / d01specialsup 40-140 deg / d01specialsdown 220-320 deg)" % n_turn)
 
     for n in (1, 2, 3):
         row = game["game_specials%d" % n]
-        cancel = int((row.get("motion") or {}).get("cancel_frame") or 13)
+        clip_frames, _ = clip_info(CLIPS["SDash%d" % n])
         tl = Timeline()
-        up_mul = S["attack_up_speed_mul"]
-        v = (SET(var(LAI, DASH_N), n)
-             + GET(var(RAF, 0), V_MOVE_F0) + MULF(var(RAF, 0), speed)
-             + GET(var(RAF, 1), V_MOVE_F1) + MULF(var(RAF, 1), speed))
-        upblk = MULF(var(RAF, 0), up_mul) + MULF(var(RAF, 1), up_mul)
-        v += IFV(V_MOVE_F1, GT, steer_up_mul_test(S), len(upblk)) + upblk       # 40-140 deg: x0.85
-        if n > 1 and sonic_hit_branch:
-            boost = MULF(var(RAF, 0), SONIC_DASH_ENHANCE_MUL) + MULF(var(RAF, 1), SONIC_DASH_ENHANCE_MUL)
-            v += IF(var(LAI, SONIC_PREV_N), EQ, 1, len(boost)) + boost
-        v += IFV(V_MOVE_F1, GT, fb(0.05), 3) + PUTI(V_AIR, 1)                   # aimed up: lift off
-        v += (PUTV(V_FWD_VEL, var(RAF, 0)) + PUTV(V_VEL_Y, var(RAF, 1))
-              + GET(var(RAF, 2), V_FACING) + MULV(var(RAF, 2), var(RAF, 0)) + PUTV(V_GROUND_VEL, var(RAF, 2)))
+        v = SET(var(LAI, DASH_N), n) + PUTF(V_ANIM_RATE, clip_frames / dash_frames)   # the clip in attack_frame game frames
+        if n == 1:
+            # count 0: straight along the facing, never aimed, never powered here (spec 3.1)
+            v += (SETF(var(RAF, 0), speed) + PUTV(V_FWD_VEL, var(RAF, 0)) + PUTF(V_VEL_Y, 0)
+                  + GET(var(RAF, 2), V_FACING) + MULV(var(RAF, 2), var(RAF, 0)) + PUTV(V_GROUND_VEL, var(RAF, 2)))
+            dash_speed = speed
+        else:
+            dash_speed = speed * decay ** (n - 1)
+            v += PUTI(V_AIR, 1) + CALL(HOOK_DASH_AIM, aim_arg)             # dashes 2 and 3 always leave the ground
+            v += (GET(var(RAF, 0), V_MOVE_F0) + MULF(var(RAF, 0), dash_speed)
+                  + GET(var(RAF, 1), V_MOVE_F1) + MULF(var(RAF, 1), dash_speed))
+            upblk = MULF(var(RAF, 0), S["attack_up_speed_mul"]) + MULF(var(RAF, 1), S["attack_up_speed_mul"])
+            inner = IFV(V_MOVE_I3, EQ, 1, len(upblk)) + upblk
+            v += IFV(V_MOVE_I0, EQ, 0, len(inner)) + inner                  # x0.85 aimed 40-140 deg, never with a target
+            boost = MULF(var(RAF, 0), power_mul) + MULF(var(RAF, 1), power_mul)
+            v += IF(var(LAI, SONIC_POWER_N), EQ, 1, len(boost)) + boost
+            v += PUTV(V_VEL_X, var(RAF, 0)) + PUTV(V_VEL_Y, var(RAF, 1))    # world axes: the aim is absolute
+        v += SET(var(LAI, LATCH_N), 0)
         tl.at(0, v, 0)
         if n > 1 and sonic_hit_branch:
             sonic_branch_hit_events(tl, row, joint_of, rep, "SDash%d" % n, losses=losses, audit=False)
@@ -523,38 +580,81 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
         for c in row["commands"]:
             if c["cmd"] == "KineticModule::add_speed" and isinstance(c["args"][0], (int, float)):
                 dv = float(c["args"][0])
-                tl.at(c["frame"], GET(var(RAF, 0), V_FWD_VEL) + ADDF(var(RAF, 0), dv) + PUTV(V_FWD_VEL, var(RAF, 0))
-                      + GET(var(RAF, 2), V_FACING) + MULV(var(RAF, 2), var(RAF, 0)) + PUTV(V_GROUND_VEL, var(RAF, 2)), 4)
-                rep.append("  SDash%d f%d: forward speed %+.1f (KineticModule::add_speed)" % (n, c["frame"], dv))
-        buf = IFV(V_PRESSED, BIT, BTN_SPECIAL_BIT, 2) + SETBIT(var(RAI, 0), 0)
-        for f in range(1, cancel):
-            tl.at(f, buf, 6)
+                # BEST-FIT: the script's add_speed(-x, 0, 0) has no facing factor and the engine's frame
+                # for it is not in our data; taking it off the dash speed along its own direction is the
+                # one reading that slows an aimed dash the same as a level one.
+                tl.at(c["frame"], CALL(HOOK_BRAKE, int(round(-dv * 1000)) & 0xFFFF), 4)
+                rep.append("  SDash%d f%d: dash speed %+.1f (KineticModule::add_speed)" % (n, c["frame"], dv))
+        latch = IFV(V_PRESSED, BIT, BTN_SPECIAL_BIT, 2) + SET(var(LAI, LATCH_N), 1)
+        window = sorted(c["frame"] for c in row["commands"] if c["cmd"] in ("WorkModule::on_flag", "WorkModule::off_flag")
+                        and c.get("args") == [{"const": "0xe65c"}])
+        first, last = (int(window[0]), int(window[-1])) if len(window) == 2 else (3, clip_frames)
+        for f in range(first, min(last, clip_frames)):
+            tl.at(f, latch, 6)
         tail = []
         if n < int(S["attack_num"]):
-            tail += IF(var(RAI, 0), BIT, 0, 2) + CHG(GENO(idx["SStart2"]))
-        tail += IFV(V_AIR, EQ, 1, 2) + CHG(GENO(idx["SEndAir"])) + CHG(GENO(idx["SEnd"]))
-        state("SDash%d" % n, "geno.air", tl.words(cancel, tail), phys="none", coll="both")
-        rep.append("SDash%d: %d frames at %.1f/frame along the aim (x%.2f aimed up), B pressed f1-%d -> next dash" % (
-            n, cancel, speed, up_mul, cancel - 1))
+            go = CHG(GENO(idx["SSearch"]))
+            tail += IFV(V_STICK_LEN, GE, fb(S["search_stick"]), len(go)) + go   # stick alone continues the chain
+            tail += IF(var(LAI, LATCH_N), EQ, 1, len(go)) + go                  # so does the special button alone
+        tail += to_end()
+        state("SDash%d" % n, "geno.air", tl.words(clip_frames, tail), phys="none", coll="both")
+        rep.append("SDash%d: %d game frames at %.3f/frame (clip %d at rate %.3f)%s; special latched f%d-%d or stick >= %.2f at the end -> SEARCH" % (
+            n, dash_frames, dash_speed, clip_frames, clip_frames / dash_frames,
+            "" if n == 1 else ", x%.2f aimed up without a target, x%.2f powered" % (S["attack_up_speed_mul"], power_mul),
+            first, last - 1, S["search_stick"]))
+
+    # SEARCH: search_frame game frames. Entry keeps at most search_inherit_speed, then the brake.
+    search_frames = int(S["search_frame"])
+    tl = Timeline()
+    air_k, ground_k = kinetics(S["search_brake_air"]), kinetics(S["search_brake_x"])
+    tl.at(0, PUTI(V_MOVE_I0, 0) + PUTI(V_MOVE_I2, 0)
+          + CALL(HOOK_BRAKE, (int(round(S["search_inherit_speed"] * 100)) & 0x7FFF) << 16)
+          + IFV(V_AIR, EQ, 1, len(air_k)) + air_k + IFV(V_AIR, EQ, 0, len(ground_k)) + ground_k, 0)
+    for f in range(search_frames):
+        tl.at(f, CALL(HOOK_DASH_SEARCH, search_arg), 3)
+    go = var(RAI, 1)
+    mark = SET(go, 1)
+    power = IFV(V_MOVE_I2, EQ, 0, 2) + SET(var(LAI, SONIC_POWER_N), 1)
+    cont = (CALL(HOOK_DASH_AIM, aim_arg)                                   # turn now; the dash re-reads the target
+            + IFV(V_MOVE_I3, EQ, 1, 2) + CHG(GENO(idx["STurnUp"]))
+            + IFV(V_MOVE_I3, EQ, 2, 2) + CHG(GENO(idx["STurnDown"]))
+            + CHG(GENO(idx["SStart2"])))
+    tail = (SET(go, 0)
+            + IFV(V_MOVE_I0, EQ, 1, len(mark)) + mark                      # a locked target
+            + IFV(V_MOVE_I2, EQ, 1, len(mark)) + mark                      # a stick aim
+            + IF(var(LAI, LATCH_N), EQ, 1, len(mark)) + mark               # neutral stick, special latched: straight ahead
+            + SET(var(LAI, SONIC_POWER_N), 0) + IF(var(LAI, LATCH_N), EQ, 1, len(power)) + power
+            + IF(go, EQ, 1, len(cont)) + cont
+            + to_end())                                                    # the stick was let go and no button: the chain ends
+    deferred.append(("SSearch", "geno.air", tl.words(search_frames, tail), dict(phys="brake", coll="both")))
+    rep.append("SEARCH: %d game frames (d01specialssearch); speed capped at %.1f then brake %.2f ground / %.2f air; "
+               "target within %d locks (stick ignored), else the last stick sample >= %.2f aims over the full circle" % (
+                   search_frames, S["search_inherit_speed"], S["search_brake_x"], S["search_brake_air"], LOCK_RANGE,
+                   S["search_stick"]))
+
+    def end_rate(clip_len):
+        """The END clip plays in exactly end_frame_1/2/3 game frames after 1/2/3 dashes."""
+        words = PUTF(V_ANIM_RATE, clip_len / S["end_frame_3"])
+        for k in (1, 2):
+            put = PUTF(V_ANIM_RATE, clip_len / S["end_frame_%d" % k])
+            words += IF(var(LAI, DASH_N), EQ, k, len(put)) + put
+        return words
 
     n_end, _ = clip_info(CLIPS["SEnd"])
-    body = []
-    for k, e in ((1, S["end_frame_1"]), (2, S["end_frame_2"])):
-        blk = SYNC(e) + IASA + SYNC(n_end - e) + CHG(MS_WAIT)
-        body += IF(var(LAI, DASH_N), EQ, k, len(blk)) + blk
-    e3 = S["end_frame_3"]
-    body += SYNC(e3) + IASA + SYNC(n_end - e3) + CHG(MS_WAIT) + [0]
-    state("SEnd", "geno.ground", body, phys="ground", coll="ground", iasa="interrupt")
-    rep.append("SEnd: %d frames (d01specialsend), IASA at %d / %d / %d after 1 / 2 / 3 dashes" % (
-        n_end, S["end_frame_1"], S["end_frame_2"], e3))
+    tl = Timeline()
+    tl.at(0, kinetics(S["end_brake_x"]) + end_rate(n_end), 0)
+    state("SEnd", "geno.ground", tl.words(n_end, CHG(MS_WAIT)), phys="brake", coll="ground")
+    rep.append("SEnd: d01specialsend (%d frames) in %d / %d / %d game frames after 1 / 2 / 3 dashes, ground brake %.2f" % (
+        n_end, S["end_frame_1"], S["end_frame_2"], S["end_frame_3"], S["end_brake_x"]))
     n_enda, _ = clip_info(CLIPS["SEndAir"])
     tl = Timeline()
-    tl.at(0, GET(var(RAF, 0), V_FWD_VEL) + MULF(var(RAF, 0), S["end_speed_x_mul_air"]) + PUTV(V_FWD_VEL, var(RAF, 0))
-          + PUTF(V_VEL_Y, S["end_speed_y"]))
-    state("SEndAir", "geno.air", tl.words(n_enda, CHG(MS_FALLSPECIAL)), phys="air_nodrift", coll="air",
-          landing_lag=int(S["end_landing_fall_special_frame"]))
-    rep.append("SEndAir: %d frames (d01specialairsend), forward x%.1f, vy %.1f, then helpless; landing lag %d" % (
-        n_enda, S["end_speed_x_mul_air"], S["end_speed_y"], S["end_landing_fall_special_frame"]))
+    tl.at(0, kinetics(S["end_brake_x_air"], grav=S["end_accel_y"], clamp=S["end_speed_y"], x_only=True) + end_rate(n_enda), 0)
+    state("SEndAir", "geno.air", tl.words(n_enda, CHG(MS_FALLSPECIAL)), phys="brake", coll="air",
+          landing_lag=int(S["attack_landing_frame"]))
+    rep.append("SEndAir: d01specialairsend (%d frames) in %d / %d / %d game frames, air brake %.2f, gravity %.2f with vy "
+               "within +-%.1f, then helpless; landing lag %d" % (
+                   n_enda, S["end_frame_1"], S["end_frame_2"], S["end_frame_3"], S["end_brake_x_air"], S["end_accel_y"],
+                   S["end_speed_y"], S["attack_landing_frame"]))
 
     # ---------------- Aerial Sweep ----------------
     for name, script, mul in (("Hi", "game_specialhi", 1.0), ("HiAir", "game_specialairhi", H["jump_distance_mul"])):
@@ -577,6 +677,22 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
             tl.at(f, PUTF(V_VEL_Y, v0 - a * (f - g0)), 1)
         hit_events(tl, row, t, joint_of, rep, name,
                    carry_motion=(t, lambda f: v0 - a * (f - g0)), losses=losses, audit=False)
+        # Flag 0xe600 (ACMD f48-f70): while it is up the status loop changes to the side special when
+        # that transition term passes (fidelity audit U1; status 0x710001cd10 -> change_status(+0xc4)).
+        # BEST-FIT guard, the term's own test is in the main executable: special pressed with the stick
+        # at least SIDE_CANCEL_STICK to one side, and Sora turns to that side.
+        window = sorted(c["frame"] for c in row["commands"] if c["cmd"] in ("WorkModule::on_flag", "WorkModule::off_flag")
+                        and c.get("args") == [{"const": "0xe600"}])
+        if len(window) == 2:
+            first, last = int(round(t(window[0]))), int(round(t(window[1])))
+            right = PUTF(V_FACING, 1.0) + CHG(GENO(idx["SStart"]))
+            left = PUTF(V_FACING, -1.0) + CHG(GENO(idx["SStart"]))
+            sides = (IFV(V_STICK_X, GE, fb(SIDE_CANCEL_STICK), len(right)) + right
+                     + IFV(V_STICK_X, LE, fb(-SIDE_CANCEL_STICK), len(left)) + left)
+            for f in range(first, min(last, total)):
+                tl.at(f, IFV(V_PRESSED, BIT, BTN_SPECIAL_BIT, len(sides)) + sides, 6)
+            rep.append("  %s: side special with the stick >= %.1f to a side cancels into Sonic Blade, game f%d-%d (flag 0xe600)" % (
+                name, SIDE_CANCEL_STICK, first, last - 1))
         state(name, "geno.air", tl.words(total, CHG(MS_FALLSPECIAL)), phys="air_drift", coll="anim_motion",
               ledge="front", landing_lag=int(H["landing_frame"]))
         rep.append("%s: %d game frames (%d clip frames through FT_MOTION_RATE), rise from game f%d: vy %.3f - %.2f/frame "
@@ -716,6 +832,8 @@ def build(rows, P, joint_of, host, base, rep, sonic_hit_branch=False, counter_ba
                 name, script, CLIPS[name], frames,
                 ", fresh A f%d-%d -> %s" % (first, last, next_name) if next_name else ""))
 
+    for name, behavior, words, options in sorted(deferred, key=lambda d: STATES.index(d[0])):
+        state(name, behavior, words, **options)
     assert active == [name for name in STATES if name in active]
     assert [x["name"] for x in states] == active, "state order must match STATES (script targets are numbers)"
     specials = {"s": "geno:SStart", "air_s": "geno:SStart", "hi": "geno:Hi", "air_hi": "geno:HiAir",
@@ -765,8 +883,12 @@ def main():
     states, overlays, specials, clips = build(rows, P, joints_of_sora(), a.host, base, rep,
         sonic_hit_branch=a.sonic_hit_branch, counter_backward=a.counter_backward,
         counter_rebound=a.counter_rebound, combo_chain=a.combo_chain, losses=losses)
+    pull_row = PULL_ROWS[a.host]
+    overlays.append({"index": pull_row, "words": hx([0])})     # the host row's own script must not run
+    clips[str(pull_row)] = PULL_CLIP
     fighter = {"attach": a.attach, "name": "Sora specials (Geno, host %s)" % a.host,
-               "states": states, "specials": specials, "subactions": overlays}
+               "states": states, "specials": specials, "subactions": overlays,
+               "motion_anims": [{"motion": m, "subaction": pull_row} for m in PULL_MOTIONS]}
     if magic:
         used = {o["index"] for o in magic.get("subactions", [])}
         clash = used & {o["index"] for o in overlays}
@@ -795,6 +917,9 @@ def main():
     with open(os.path.join(a.out, "geno.json"), "w", encoding="utf-8") as f:
         json.dump(doc, f, indent=1)
     clip_doc = {"host": a.host, "subaction_clips": clips}
+    # The magic's cast states sit on common rows of their own; without their clips here the installer's
+    # name matcher gives those rows the host's item clips (h12itemscope*).
+    clip_doc["subaction_clips"].update(magic_manifest.get("row_clips", {}))
     if a.counter_backward:
         clip_doc["turn_clips"] = {str(HOSTS[a.host]["LwAttackBack"]): "d03speciallwturn",
                                   str(HOSTS[a.host]["LwAttackBackAir"]): "d03specialairlwturn"}

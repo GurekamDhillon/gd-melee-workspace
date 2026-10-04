@@ -10,11 +10,12 @@ or alter the approved PNGs. Vector-field G is swizzled into runtime A for the
 renderer's R/A distortion convention. Asset anchors remain authoring hints;
 particles currently use centered pivots. The full founder catalogue and genetics are not implemented.
 
-From the workspace repository:
+From the workspace repository in Git Bash. Source comes from `GW_MELEE` or
+`melee`; installed packages use `GW_BUILD_ROOT` or `_build` by default:
 
 ```sh
 python3 tools/effects_lab/prepare.py --enable
-_build/agents/linux/melee --iso /path/to/melee.iso
+MELEE_SCRIPT_DATA_DIR="$(pwd -W)/_build/scripts-data" bash tools/port/run.sh effects-lab --iso /path/to/melee.iso
 ```
 
 Falco loads on Final Destination with a neutral virtual P4 controller. Click
@@ -32,7 +33,7 @@ close framing to normal gameplay framing. Thermal Shock consumes/fades the
 current preview and starts a bounded reaction with a 90-game-frame cooldown.
 
 Save/Load stores settings and the seed in
-`_build/agents/linux/scripts-data/effects_lab_main/favourite.lua`. The save includes
+`_build/scripts-data/effects_lab_main/favourite.lua`. The save includes
 a recipe version but not resolved assets, so it is reproducible only while that
 recipe version and its pinned assets remain unchanged. Version 1 favourites are
 rejected, since version 2 changes the artwork. This is a prototype
@@ -49,7 +50,7 @@ python3 tools/model_parts/prepare.py --iso /path/to/melee.iso --fighters falco -
 
 ```sh
 python3 -m unittest discover -s tools/effects_lab -p 'test_*.py'
-MELEE_TEST_FILTER=fx _build/agents/linux/melee --test --iso /path/to/melee.iso
+MELEE_TEST_FILTER=fx bash tools/port/run.sh --test fx-tests --iso /path/to/melee.iso
 ```
 
 Use `prepare.py --enable --validate` for nine bounded runtime capture cases;

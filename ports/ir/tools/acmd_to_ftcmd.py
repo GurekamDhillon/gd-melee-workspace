@@ -30,7 +30,8 @@ recorded per move and frame. Four-slot remap losses are always recorded.
 import itertools
 import struct
 import math
-from acmd_loss import LossGuard, verify_acmd_source
+import re
+from acmd_loss import LossGuard, verify_acmd_source, moveset_payload_digest
 
 ELEM = {"collision_attr_normal": 0, "collision_attr_fire": 1, "collision_attr_elec": 2,
         "collision_attr_cutup": 3, "collision_attr_coin": 4, "collision_attr_ice": 5,
@@ -74,6 +75,8 @@ def validate_attack(n, guard, frame, *, article=False):
     attack_flags(n)
     if not 0 <= n.get("rehit", 0) <= 255 or int(n.get("rehit", 0)) != n.get("rehit", 0):
         raise ValueError(f"ATTACK id {n['id']} rehit {n.get('rehit')!r} cannot be encoded")
+    if article and n.get("rehit", 0):
+        raise ValueError(f"article ATTACK id {n['id']} rehit {n['rehit']} needs a Geno item feature")
     if "ground_air" in n and (n["ground_air"].get("const") if isinstance(n["ground_air"], dict)
                               else str(n["ground_air"])) not in CATCH_SITUATIONS:
         raise ValueError(f"ATTACK id {n['id']} ground_air {n['ground_air']!r} is unsupported")
@@ -219,11 +222,17 @@ def combo_branch_tests(row):
 
 def default_path(when, combo_tests=()):
     """True if a command runs on the selected flag path."""
+    selected = True
     for c in when:
-        if "is_flag" in c["test"] or "uVar" in c["test"]:
+        test = c["test"]
+        flag = re.fullmatch(r"(?:\w+::)*\w*is_flag\([^()]*\)", test)
+        bit_test = re.fullmatch(r"\(uVar\d+\s*&\s*1\)\s*(?:==|!=)\s*0", test)
+        if flag or bit_test:
             if c["holds"] != (c["test"] in combo_tests):
-                return False
-    return True
+                selected = False
+        else:
+            raise ValueError(f"unsupported ACMD condition {c['test']!r}")
+    return selected
 
 
 def carry_windows(row, combo_tests=()):
@@ -750,8 +759,77 @@ def clear_rehit(words):
             if mask else [])
 
 
+# const_value_table ids in Ultimate's kinetic commands: SET_SPEED_EX's energy type, and the energy
+# KineticModule::suspend_energy/resume_energy name when a script holds the fighter against gravity
+# (Sora's dair pairs it with two SET_SPEED_EX rises/dives; the gravity reading is INFERRED from that).
+KINETIC_SPEED_TYPES = {"0x348"}
+KINETIC_GRAVITY = {"0x4a8"}
+PUT_WORD = (59 << 26) | (0x09 << 20) | (3 << 16)   # Geno PUT engine value (geno.md 15.2)
+V_VEL_Y, V_FWD_VEL = 0x03, 0x05
+V_FALL_LIMIT = 0x3E   # this action's fall-speed limit (geno.h GENO_VAL_FALL_LIMIT, v5.4)
+
+
+def _f32(value):
+    return struct.unpack(">I", struct.pack(">f", float(value)))[0]
+
+
+def kinetic_events(sets, holds, end, kin, guard):
+    """Per-game-frame Geno PUTs for SET_SPEED_EX and gravity suspension.
+
+    A plain Melee row cannot suspend gravity, but the PUT runs before the fighter's physics, which
+    subtracts gravity once more that frame; PUTting speed + gravity every frame of a suspension
+    therefore holds the speed. Without a suspension a SET_SPEED_EX is one PUT (gravity goes on
+    acting, as in Ultimate). x is only PUT when nonzero (SET_SPEED_EX x 0 does not stop the
+    fighter's control/drift energy). Speeds are Ultimate units times kin['speed_ratio'].
+    Returns [(frame, "kin", words)].
+    """
+    ratio, gravity = kin.get("speed_ratio", 1.0), kin.get("gravity", 0.0)
+    terminal = kin.get("terminal")
+    out = []
+    spans = []           # [start, stop) frames where gravity is suspended
+    for frame, on in sorted(holds):
+        if not on:
+            if spans and spans[-1][1] is None:
+                spans[-1][1] = frame
+        elif not spans or spans[-1][1] is not None:
+            spans.append([frame, None])
+    for span in spans:
+        if span[1] is None:
+            span[1] = end
+    speed = None
+    marks = sorted(sets)
+    def put(frame, vid, value):
+        out.append((frame, "kin", [PUT_WORD, vid, _f32(value)]))
+
+    # Melee's ftCommon_Fall clamps the vertical speed to the terminal velocity every frame; a set
+    # speed faster than that raises this action's limit first, once, to the fastest it will reach.
+    fastest = max([-(y * ratio) for _, _, y in marks] or [0.0])
+    raised = False
+
+    def fall(frame, value):
+        nonlocal raised
+        if terminal and value < -terminal and not raised:
+            put(frame, V_FALL_LIMIT, fastest)
+            raised = True
+        put(frame, V_VEL_Y, value)
+
+    first = marks[0][0] if marks else None
+    for frame in sorted({f for f, _, _ in marks} | {f for a, b in spans for f in range(int(a), int(b))}):
+        for f, x, y in marks:
+            if f == frame:
+                speed = y * ratio
+                if x:
+                    put(frame, V_FWD_VEL, x * ratio)
+        held = any(a <= frame < b for a, b in spans)
+        if held and speed is not None and first is not None and frame >= first:
+            fall(frame, speed + gravity)
+        elif any(f == frame for f, _, _ in marks):
+            fall(frame, speed)
+    return out
+
+
 def translate(row, joint_of_bone, scale=1.0, *, combo=False, carry_motion=None,
-              allowlist=None, hurt_joint_of_bone=None):
+              allowlist=None, hurt_joint_of_bone=None, kinetics=None):
     words, frame = [], 0.0
     rep = {"hitboxes": 0, "other_path_commands": 0}
     script = row.get("script", "<unnamed move>")
@@ -763,6 +841,7 @@ def translate(row, joint_of_bone, scale=1.0, *, combo=False, carry_motion=None,
     carry_floors = carry_fkb_floor(row, *carry_motion) if carry_motion else {}
     catch_only = False
     live_attacks = {}
+    kin_sets, kin_holds = [], []
     for c in row["commands"]:
         if not default_path(c.get("when", []), combo_tests):
             rep["other_path_commands"] += 1
@@ -870,6 +949,13 @@ def translate(row, joint_of_bone, scale=1.0, *, combo=False, carry_motion=None,
             events.append((c["frame"], "clear", [16 << 26]))
             if cmd.startswith("Attack"):
                 live_attacks.clear()
+            else:
+                # Marth's Catch / CatchDash end the grab window with `clear hitboxes; op 20`
+                # (PlMs.dat 0x6538, 0x65BC). Op 20 sets throw_flags_b3, which ends CatchPull
+                # (ftCo_CatchPull_Anim). Without it a connected grab stays in the pull until the
+                # whole Catch clip has played (48 frames measured on Sora, 2026-10-03).
+                events.append((c["frame"], "clear", [THROW_RELEASE]))
+                rep["grab_pull_end_frame"] = c["frame"]
         elif cmd == "AttackModule::clear" and c["args"] and isinstance(c["args"][0], int):
             if len(c["args"]) != 1 or c["args"][0] < 0:
                 raise ValueError(f"{guard.move} frame {c['frame']:g}: AttackModule::clear id/arguments invalid")
@@ -939,6 +1025,14 @@ def translate(row, joint_of_bone, scale=1.0, *, combo=False, carry_motion=None,
                 raise ValueError(f"{guard.move} frame {c['frame']:g}: HIT_NODE bone {bone!r} is unmapped")
             events.append((c["frame"], "hurt", [(28 << 26) | (joint << 18) |
                                                   states[args[1]["const"]]]))
+        elif (kinetics is not None and cmd == "SET_SPEED_EX" and len(c["args"]) == 3 and
+              all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in c["args"][:2]) and
+              isinstance(c["args"][2], dict) and c["args"][2].get("const") in KINETIC_SPEED_TYPES):
+            kin_sets.append((c["frame"], c["args"][0], c["args"][1]))
+        elif (kinetics is not None and cmd in ("KineticModule::suspend_energy", "KineticModule::resume_energy")
+              and len(c["args"]) == 1 and isinstance(c["args"][0], dict) and
+              c["args"][0].get("const") in KINETIC_GRAVITY):
+            kin_holds.append((c["frame"], cmd.endswith("suspend_energy")))
         elif cmd == "REVERSE_LR":
             guard.omit(c["frame"], "command", cmd, "reverse facing")
         elif cmd == "WorkModule::on_flag" and c["args"] and c["args"][0] == {"const": "0x720"}:
@@ -961,25 +1055,32 @@ def translate(row, joint_of_bone, scale=1.0, *, combo=False, carry_motion=None,
             # every move with a rate before its hitboxes. Geno's PUT on engine value ANIM_RATE
             # (0x1B; geno.md engine values, opcode 59 sub 0x09) sets the rate through
             # ftAnim_8006F0FC, and the script timers already scale by frame_speed_mul, so the
-            # animation and the script slow together, as FT_MOTION_RATE does. Needs the Geno exe
+            # animation and the script change pace together, as FT_MOTION_RATE does. Needs the Geno exe
             # and ANIM_RATE writable (lane echo, 2026-09-26).
             r = c["args"][-1]
             if isinstance(r, (int, float)) and not isinstance(r, bool):
                 if len(c["args"]) > 1:
                     guard.omit(c["frame"], "case", "FT_MOTION_RATE.extra_args",
                                f"rate arguments before {r!r}: {c['args'][:-1]!r}")
-                bits = struct.unpack(">I", struct.pack(">f", float(r)))[0]
+                if not math.isfinite(r) or r <= 0:
+                    raise ValueError(f"{guard.move} frame {c['frame']:g}: FT_MOTION_RATE {r!r} must be positive")
+                # r is game frames per clip frame (0.5 = twice as fast): the engine's ANIM_RATE is a
+                # speed, 1 / r. Sora's jab 1 (r 0.5 over clip frames 1-6, cancel 40) must end near
+                # fighter_param combo_attack_12_end 38 (37.5 this way, 45 with r as a speed).
+                bits = struct.unpack(">I", struct.pack(">f", 1.0 / float(r)))[0]
                 put = (59 << 26) | (0x09 << 20) | (3 << 16)
                 events.append((c["frame"], "rate", [put, 0x1B, bits]))
             else:
                 raise ValueError(f"{guard.move} frame {c['frame']:g}: FT_MOTION_RATE {r!r} is unresolved")
         else:
             guard.omit(c["frame"], "command", cmd, f"{cmd} arguments {c.get('args')!r}")
+    if kin_sets or kin_holds:
+        last = max([f for f, _, _ in kin_sets] + [f for f, _ in kin_holds] + [cancel or 0])
+        events.extend(kinetic_events(kin_sets, kin_holds, cancel or last, kinetics, guard))
     if cancel:
         events.append((float(cancel), "iasa", [23 << 26]))
-    events.sort(key=lambda e: (e[0], {"time": 0, "rate": 1, "charge": 1, "clear": 2,
-                                       "hit": 3, "hurt": 3, "stun": 4, "force": 4,
-                                       "iasa": 5}[e[1]]))
+    # Stable source order is semantic: ATTACK then clear on one frame must finish disabled.
+    events.sort(key=lambda e: e[0])
     if needs_hitbox_remap(events):
         events = remap_hitboxes(events, rep)
     for box in rep.get("dropped_hitboxes", []):
@@ -1028,7 +1129,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("fighter"); ap.add_argument("acmd_json"); ap.add_argument("-o", "--out")
     ap.add_argument("--host", default="kirby", help="the Melee host fighter whose rows receive the scripts")
+    ap.add_argument("--attrs", default="auto", metavar="auto|off|FILE",
+                    help="calibrated attributes (calibrate_attrs.py --port) that scale script-set speeds; "
+                         "off keeps SET_SPEED_EX/suspend_energy as reviewed losses")
     a = ap.parse_args()
+    import attr_apply
+    kinetics = attr_apply.kinetics_params(a.attrs, a.fighter)
     source_bytes = verify_acmd_source(a.acmd_json)
     plan = plan_parts.plan(json.load(open(os.path.join(INSTANCES, f"{a.fighter}.ultimate-body.ir.json"), encoding="utf-8")))
     joint_of = {j["name"].lower(): i for i, j in enumerate(plan["joints"])}
@@ -1066,7 +1172,7 @@ def main():
             # stage is also present. Keep the stronger branch for standalone tilts.
             words, rep = translate(by_script[script], joint_of,
                                    combo=script + "2" in by_script,
-                                   hurt_joint_of_bone=hurt_of)
+                                   hurt_joint_of_bone=hurt_of, kinetics=kinetics)
             if s["name"] in ("Catch", "CatchDash"):
                 count = sum(1 for c in by_script[script]["commands"]
                             if c["cmd"] == "CATCH" and default_path(c.get("when", [])))
@@ -1079,6 +1185,7 @@ def main():
     for n, r in out["report"].items():
         print(f"  {n:12} hitboxes {r.get('hitboxes', 0):3}  cancel {r.get('cancel_frame')}")
     if a.out:
+        out["audit"]["payload_sha256"] = moveset_payload_digest(out)
         json.dump(out, open(a.out, "w"), indent=1)
 
 

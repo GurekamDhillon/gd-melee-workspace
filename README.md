@@ -88,7 +88,7 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
     </picture></td>
     <td><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_launcher_dark.png">
-      <img alt="Launcher, EN / ES: Mods browser, diagnostics and crash reports. In English and Spanish." src="docs/readme/feature_launcher_light.png" width="400">
+      <img alt="Launcher, EN / ES: Local mods, diagnostics and crash reports. In English and Spanish." src="docs/readme/feature_launcher_light.png" width="400">
     </picture></td>
   </tr>
   <tr>
@@ -130,8 +130,9 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
   online match.
 
 **Mods (m-ex)**
-- Mod discs (ACE, Akaneia) and loose mods in the `mods` folder, toggled in the launcher. The
-  launcher's Mods tab browses and installs mods; downloads are verified and never run.
+- Mod discs (ACE, Akaneia) and loose mods copied into the `mods` folder. The Qt launcher's Mods
+  tab lists installed mods, enables/disables them, and moves removed mods to a recoverable folder.
+  Remote downloads and updates are not implemented in this launcher.
 - **94 m-ex fighter slots** (up from 31), so big rosters fit.
 - The results screen shows m-ex fighters' names, emblems and stock icons.
 - m-ex CPUs play from their clone base's CPU tables.
@@ -150,6 +151,21 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
 - About 13 ms from controller to screen, steadily.
 - GameCube adapter (plug in any time, clones supported) and any gamepad.
 
+**Controller remapping (source implementation; controller acceptance pending)**
+
+Open **SETTINGS > CONTROLS > Remap Controller**. Choose **Game Input**, select
+**Bind Input**, then press and release the button, stick direction or trigger
+you want. **Swap** exchanges conflicting bindings; **Also** keeps duplicates.
+**Pick Controller** selects a pad by an input on it. Original buttons navigate
+this page; **START+B** cancels capture, and holding original **START+B for two
+seconds** in menus restores the current profile's defaults.
+
+Each device has four named profiles and Default, Shoulder Jump and Face Friendly
+presets. Stick deadzones, stick swapping, trigger analog, digital light/full
+shield and rumble are on the same page. The live strip shows the mapped inputs.
+Tap jump remains Melee's original behaviour; an exact, netplay-safe off option
+is still outstanding. The keyboard remains hotkeys only.
+
 **Scripting**
 - Lua scripts and a console (the backtick key). Scripts can read the match, draw, wait on the game,
   add console commands, and, if they declare it, drive gameplay (rollback-safe).
@@ -161,8 +177,8 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
 
 **Launcher and reports**
 - English and Spanish; the language follows Windows by default.
-- Diagnostics tab, short logs, and crash reports with your Windows user name removed. Optional crash
-  report upload, off by default; nothing is ever sent automatically.
+- Diagnostics tab, short logs, and local crash reports with your Windows user name removed.
+  The Qt launcher opens logs and copies reports for sharing; it has no crash upload client.
 
 ### Added in 0.1.5
 
@@ -324,7 +340,7 @@ where most of the engineering goes (see the devlog).
 | m-ex discs and loose mods (94 fighter slots) | public test |
 | Lua scripting + console | working (API 1) |
 | Launcher, release packaging | public test (0.1.6) |
-| Widescreen | not started |
+| Widescreen | Hor+ gameplay; centred wide kit menus and Lua canvas, live VIDEO toggle (menu changes awaiting in-game verification) |
 
 ## Repository layout
 

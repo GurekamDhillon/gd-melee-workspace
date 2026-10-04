@@ -386,7 +386,7 @@ class RoomLayoutTests(unittest.TestCase):
             for _pid, kind, model, x, y, z, sx, sy, sz in parts:
                 x, y, z, sx, sy, sz = map(float, (x, y, z, sx, sy, sz))
                 self.assertTrue(model.startswith('bf_'), f'{template}: non-kit model {model}')
-                self.assertEqual(z, 0)
+                self.assertEqual(z, 0, f'{template}: render depth policy must preserve authored projection')
                 self.assertTrue(-65 <= x <= 65 and 0 <= y <= 60)
                 if kind in STRUCTURAL:
                     self.assertEqual(x % 13, 0, f'{template}: {kind} off the 13-unit grid')

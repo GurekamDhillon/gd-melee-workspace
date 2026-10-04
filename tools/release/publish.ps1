@@ -6,7 +6,7 @@
 #   ... -Repo owner/name    (default: GurekamDhillon/gd-melee-workspace)
 #   ... -Draft              create the release as a draft, to look it over on GitHub first
 #   ... -Server host:port   ship a netplay_server.txt (the address becomes public!)
-#   ... -Force              publish despite provenance warnings (unpushed commits, stale exe)
+#   ... -Force              publish despite public-commit/clean-source warnings (never stale binaries)
 #
 # Why local and not CI: the game cannot be built on a GitHub runner today. It needs the clang 23
 # toolchain unpacked in _toolchains (not in any repo), the multi-GB Aurora/Dawn/SDL3 build tree in
@@ -82,7 +82,7 @@ $versionNotes
 
 Windows SmartScreen may warn about an unsigned program: *More info > Run anyway*. Online play: see ``HOW TO PLAY ONLINE.txt`` in the zip.
 
-Online play requires **netplay protocol 3** (40 MiB game memory and shared-page rollback snapshots). Both players must update to this release; protocol 1/2 peers are incompatible. A protocol version error means you need to update the game, not change your disc. Matchmaking uses UDP and opt-in crash uploads use TCP on the configured server's port (normally netplay.gsd.sh:51600).
+Online play requires **netplay protocol 3** (40 MiB game memory and shared-page rollback snapshots). Both players must update to this release; protocol 1/2 peers are incompatible. A protocol version error means you need to update the game, not change your disc. Matchmaking uses UDP on the configured server's port (normally netplay.gsd.sh:51600). The Qt launcher inspects local crash reports; it has no upload client.
 
 ### What's in the zip
 The game (``melee-pc.exe``), the launcher (``GD Melee.exe``), their runtime libraries (SDL3, Dawn, the MSVC runtime), GD's Melee's own menu art, docs, and the licences of everything bundled (``LICENSES\``). ``MANIFEST.sha256`` lists every file.

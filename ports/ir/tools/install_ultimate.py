@@ -56,11 +56,13 @@ sys.path.insert(0, HERE)
 import acmd_parse as AP  # noqa: E402
 import convert_ultimate_anim as CA  # noqa: E402
 import export_ultimate_mesh as EM  # noqa: E402
+import attr_apply  # noqa: E402
 import figatree as F  # noqa: E402
 import plan_parts  # noqa: E402
+import vis_channels as VC  # noqa: E402
 import ultimate_ui as UI  # noqa: E402
 from walkloop import rewrite_host_loop, validate_geno_overlays, validate_script  # noqa: E402
-from acmd_loss import write_losses, verify_acmd_source  # noqa: E402
+from acmd_loss import write_losses, verify_acmd_source, moveset_payload_digest  # noqa: E402
 
 ROOT = CA.ROOT
 sys.path.insert(0, os.path.join(ROOT, "tools", "mex_port"))
@@ -94,6 +96,8 @@ def verify_moveset_audit(document, source_bytes):
         raise ValueError("stale moveset: ACMD source changed; regenerate the moveset")
     if audit.get("converter_sha256") != acmd_converter_digest():
         raise ValueError("stale moveset: converter or allowlist changed; regenerate the moveset")
+    if audit.get("payload_sha256") != moveset_payload_digest(document):
+        raise ValueError("unaudited moveset payload: words or metadata changed; regenerate the moveset")
 
 
 def cmd_len(word):
@@ -200,21 +204,23 @@ def write_costume_rows(w, internal, external, files, joint_sym, mat_sym):
             w.data[info + team] = 0
 
 
-def write_costume_modelvis(w, states, costume_groups, controlled):
-    """Build one ftData x8 model-visibility lookup per costume's DObj order."""
+def write_costume_modelvis(w, channels, costume_groups):
+    """Build one ftData x8 model-visibility lookup per costume's DObj order: one ModelVis model per
+    channel (vis_channels.py), state 0 empty, state k exactly mesh group k-1 - states of a model
+    never share a DObj, which the engine's show-current/hide-the-others pass requires."""
     table = w.alloc(bytes(16 * len(COSTUME_COLORS)))
     first = None
     for index, groups in enumerate(costume_groups):
-        state_table = w.alloc(bytes(8 * len(states)))
-        for state_index, state in enumerate(states):
-            dobjs = [i for i, group in enumerate(groups) if group in state and group in controlled]
-            entries = w.alloc(bytes(dobjs) + bytes((-len(dobjs)) % 4))
-            row = state_table + state_index * 8
-            w.put(row, len(dobjs))
-            w.ptr(row + 4, entries)
-        model = w.alloc(bytes(8))
-        w.put(model, len(states))
-        w.ptr(model + 4, state_table)
+        model = w.alloc(bytes(8 * len(channels)))
+        for ch_index, states in enumerate(VC.state_lists(channels, groups)):
+            state_table = w.alloc(bytes(8 * len(states)))
+            for state_index, dobjs in enumerate(states):
+                entries = w.alloc(bytes(dobjs) + bytes((-len(dobjs)) % 4))
+                row = state_table + state_index * 8
+                w.put(row, len(dobjs))
+                w.ptr(row + 4, entries)
+            w.put(model + 8 * ch_index, len(states))
+            w.ptr(model + 8 * ch_index + 4, state_table)
         if first is None:
             first = model
         w.ptr(table + index * 16, model)
@@ -449,7 +455,7 @@ def match_clip(act, by_key):
 
 # ------------------------------------------------------------------ visibility -> ModelVis
 def merge_vis(w, src, events, frames, rep):
-    """A copy of script `src` with ModelVis(0, state) at each event frame: Halberd's apply_vis
+    """A copy of script `src` with ModelVis(model, state) at each event (frame, (model, state)): Halberd's apply_vis
     (install_mk.py), which splits timers so a command lands on its frame. Frames after a loop,
     subroutine or animation-rate command are placed approximately (reported). A row with no
     script gets one made of the events alone. Ambiguous Goto placement fails."""
@@ -458,7 +464,7 @@ def merge_vis(w, src, events, frames, rep):
         ws, fr = [], 0
         for f, v in events:
             if f > fr: ws.append((2 << 26) | f); fr = f
-            ws.append(MV(0, v))
+            ws.append(MV(*v))
         return w.alloc(b"".join(struct.pack(">I", x) for x in ws + [0]))
     words, pend, frame, approx, o, seen = [], list(events), 0, False, src, 0
     def emit_until(f_lim, timer_async):
@@ -467,12 +473,12 @@ def merge_vis(w, src, events, frames, rep):
             f, v = pend.pop(0)
             if f > frame:
                 words.append((((2 << 26) | f) if timer_async else ((1 << 26) | (f - frame)), False)); frame = f
-            words.append((MV(0, v), False))
+            words.append((MV(*v), False))
     while seen < 4000:
         seen += 1
         word = w.u32(o); op = word >> 26
         while pend and pend[0][0] <= frame:
-            f, v = pend.pop(0); words.append((MV(0, v), False))
+            f, v = pend.pop(0); words.append((MV(*v), False))
         if op == 0:
             emit_until(frames, True); words.append((word, False)); break
         if op == 1:
@@ -518,6 +524,87 @@ def vis_frames(anim, base):
     return out
 
 
+# ------------------------------------------------------------------ thrown-victim rows
+# Melee plays a thrown victim's Thrown* row from the THROWER's animation table (Fighter_ChangeMotionState
+# with the thrower gobj -> ftData_80085CD8), retargeted by common part (ftAnim_8006FCE4). The host rows
+# are authored for kind 0x21 (the generic thrown skeleton); Ultimate ships the victim clips with the
+# thrower (e01thrownf/b/hi/lw), played in step with its throw.
+THROWN_ROWS = ("ThrownF", "ThrownB", "ThrownHi", "ThrownLw")
+
+
+def own_thrown_rows(foreign, host_names, by_key):
+    """{row: clip}: the host's kind-0x21 thrown rows for which the fighter has its own victim clip."""
+    taken = {}
+    for r_ in foreign:
+        name = host_names.get(r_)
+        if name in THROWN_ROWS and name.lower() in by_key:
+            taken[r_] = by_key[name.lower()]
+    return taken
+
+
+def restamp_author_kind(flags, kind):
+    """A row's flags with the authoring kind (low 6 bits) replaced: 0x21 = generic thrown skeleton."""
+    return (flags & ~0x3F) | (kind & 0x3F)
+
+
+def motion_rate_segments(acmd_rows, fighter, script):
+    """[(clip frame, r)] of the script's FT_MOTION_RATE commands (r = game frames per clip frame)."""
+    out = []
+    for r in acmd_rows:
+        if (r.get("kind") == "game" and r.get("owner") == "fighter" and not r.get("share")
+                and r.get("agent") == fighter and r.get("script") == script):
+            out += [(float(c["frame"]), float(c["args"][-1])) for c in r["commands"]
+                    if c["cmd"] == "FT_MOTION_RATE" and c.get("args") and not c.get("when")]
+    return sorted(out)
+
+
+def warp_to_game_time(anim, segments):
+    """`anim` resampled so that one frame is one GAME frame under the thrower's rate schedule.
+    The victim's clip plays at a fixed rate while the thrower's FT_MOTION_RATE changes its pace
+    (Sora's down throw runs r 0.8 over clip frames 20-40); resampling keeps the victim on the
+    thrower's pose timeline. Returns a new anim dict; no segments is the identity."""
+    if not segments:
+        return anim
+    import copy
+    from scipy.spatial.transform import Rotation, Slerp
+    last = float(anim["final_frame_index"])
+    def clip_at(g):                       # game frame -> clip frame
+        c, t, r_prev, f_prev = 0.0, 0.0, 1.0, 0.0
+        for f, r in list(segments) + [(float("inf"), 1.0)]:
+            span_game = (f - f_prev) * r_prev
+            if g <= t + span_game or f == float("inf"):
+                return f_prev + (g - t) / r_prev
+            t += span_game
+            f_prev, r_prev = f, r
+        return c
+    total = 0
+    while clip_at(total + 1) <= last + 1e-9:
+        total += 1
+    out = copy.deepcopy(anim)
+    for gi, grp in enumerate(anim["groups"]):
+        if grp["group_type"] != "Transform":
+            continue
+        for ni, node in enumerate(grp["nodes"]):
+            for ti, tr in enumerate(node["tracks"]):
+                vals = tr["values"]["Transform"]
+                new = []
+                for g in range(total + 1):
+                    c = min(clip_at(g), len(vals) - 1.0)
+                    i0 = int(c); i1 = min(i0 + 1, len(vals) - 1); u = c - i0
+                    a, b = vals[i0], vals[i1]
+                    lerp = lambda k: {x: a[k][x] + (b[k][x] - a[k][x]) * u for x in a[k]}
+                    qa = [a["rotation"][x] for x in "xyzw"]; qb = [b["rotation"][x] for x in "xyzw"]
+                    if u == 0.0 or qa == qb:
+                        q = qa
+                    else:
+                        q = Slerp([0.0, 1.0], Rotation.from_quat([qa, qb]))([u]).as_quat()[0].tolist()
+                    new.append({"translation": lerp("translation"), "scale": lerp("scale"),
+                                "rotation": dict(zip("xyzw", q))})
+                out["groups"][gi]["nodes"][ni]["tracks"][ti]["values"]["Transform"] = new
+    out["final_frame_index"] = float(total)
+    return out
+
+
 # ------------------------------------------------------------------ clip conversion: parallel + cached
 _CTX = {}
 
@@ -527,7 +614,8 @@ def _convert_one(job):
     Cached on disk by (source clip bytes, options, converter sources), so a reinstall that only
     changes scripts reuses every clip."""
     import hashlib, pickle
-    fighter, c, driven, root, helpers, sym, base = job
+    fighter, c, driven, root, helpers, sym, base = job[:7]
+    warp = tuple(job[7]) if len(job) > 7 else ()
     src = os.path.join(CA.FIGHTERS, fighter, "motion", "body", "c00", c + ".nuanmb")
     h = hashlib.sha1(open(src, "rb").read())
     import inspect
@@ -535,6 +623,8 @@ def _convert_one(job):
         h.update(open(os.path.join(HERE, f), "rb").read())
     h.update(inspect.getsource(vis_frames).encode())
     h.update(repr((root, helpers, sym, sorted(base.items()))).encode())
+    if warp:
+        h.update(repr(("warp", warp)).encode() + inspect.getsource(warp_to_game_time).encode())
     cache_root = os.environ.get("GW_ULTIMATE_ANIM_CACHE", os.path.join(ROOT, "_build", "tmp", "ultimate-anim-cache"))
     cache = os.path.join(cache_root, fighter, f"{c}{'_drv' if driven else ''}_{h.hexdigest()[:16]}.pkl")
     if os.path.exists(cache):
@@ -543,7 +633,7 @@ def _convert_one(job):
         ir = json.load(open(os.path.join(CA.INSTANCES, f"{fighter}.ultimate-body.ir.json"), encoding="utf-8"))
         _CTX[fighter] = (plan_parts.plan(ir), CA.rest_of(ir), CA.helper_constraints(fighter)[0])
     plan, rest, orient = _CTX[fighter]
-    anim = CA.decode(src)
+    anim = warp_to_game_time(CA.decode(src), warp)
     stripped = CA.strip_root(anim, root) if root else None
     if helpers:
         CA.bake_helpers(anim, plan, rest, orient)
@@ -592,6 +682,10 @@ def main():
                          "under --out/_work/anim-cache when --out is set, else _build/tmp/ultimate-anim-cache")
     ap.add_argument("--row-clips", help="clips.json {subaction_clips: {row: clip}} (trail_specials_geno.py)")
     ap.add_argument("--extra-files", help="a folder whose files are added to the mod's files/ (article models)")
+    ap.add_argument("--attrs", default="auto", metavar="auto|off|FILE",
+                    help="calibrated movement attributes (calibrate_attrs.py --port <fighter>) written into the "
+                         "fighter file's common attribute block; auto = _build/tmp/ir/attr_calibration.json when it is "
+                         "for this fighter, off = keep the host's")
     ap.add_argument("--geno", help="geno.json to ship (default: a minimal profile attached to --pl)")
     ap.add_argument("--host", choices=sorted(HOSTS), default="kirby", help="the Melee fighter whose data, "
                     "scripts and m-ex row the slot clones (its IR: build_melee_fighter.py <host>)")
@@ -771,6 +865,11 @@ def main():
     # 'SpecialAirN' plays a figatree named SpecialN), then the figatree's.
     host_names = {s["index"]["value"]: s["name"] for s in host_ir()["behavior"]["subactions"]}
     host_doc = host_ir()
+    # The victim's Thrown* rows: the fighter's own e01thrown* clips replace the host's kind-0x21 ones.
+    thrown_own = own_thrown_rows(foreign, host_names, by_key)
+    for r_ in thrown_own:
+        foreign.pop(r_)
+        rows[r_] = None
     host_subactions = {s["index"]["value"]: s for s in host_doc["behavior"]["subactions"]}
     host_clip_frames = {c["id"]: c["frames"] for c in host_doc["assets"]["animations"]["clips"]}
     allowed = set(CA.read_clip_list(a.clip_list)) | {a.fallback} if a.clip_list else None
@@ -838,8 +937,16 @@ def main():
     wanted = variants
     root_report = {}
     aj = bytearray(); clip_at = {}; vis_of = {}; worst = 0.0; conv = []
+    # A victim clip plays at the engine's fixed rate while its thrower's FT_MOTION_RATE changes the
+    # thrower's pace, so it is resampled to the thrower's game-frame timeline (warp_to_game_time).
+    warp_of = {}
+    if thrown_own and os.path.isfile(acmd_path):
+        acmd_rows = json.load(open(acmd_path, encoding="utf-8"))
+        for r_, c in thrown_own.items():
+            warp_of[c] = tuple(motion_rate_segments(acmd_rows, a.fighter, "game_throw" + host_names[r_][6:].lower()))
     jobs = [(a.fighter, c, driven, root if not driven else None, not a.fold_helpers,
-             f"Ply{name.replace(' ', '')}5K_Share_ACTION_{c}{'_drv' if driven else ''}_figatree", base)
+             f"Ply{name.replace(' ', '')}5K_Share_ACTION_{c}{'_drv' if driven else ''}_figatree", base,
+             warp_of.get(c, ()))
             for c, driven in sorted(wanted)]
     for key_c, (arc, world, vis, stripped, sym) in zip(sorted(wanted), convert_all(jobs, a.jobs)):
         c, driven = key_c
@@ -868,10 +975,12 @@ def main():
             o = mt + r_ * 0x18
             w.ptr(o, sym_str[sym]); w.put(o + 4, off); w.put(o + 8, size)
             if r_ in move_rows: w.put(o + 0x10, w.u32(o + 0x10) | 0x80000000)
+            if r_ in thrown_own: w.put(o + 0x10, restamp_author_kind(w.u32(o + 0x10), HOST["internal"]))
     rep["animations"] = {"file": f"{stem}AJ.dat", "bytes": len(aj), "clips": len(clip_at), "rows": len(rows),
                          "unmatched_rows_played_as_fallback": sorted({u for u in unmatched if u}),
                          "matched_by_rule": fuzzy,
                          "host_clips_kept_for_other_skeletons": sorted(foreign),
+                         "thrown_victim_rows_from_fighter": {str(k): v for k, v in sorted(thrown_own.items())},
                          "worst_world_error": round(worst, 4),
                          "bytes_common_clips": sum(x["bytes"] for x in conv if x["common"]),
                          "helpers": "folded" if a.fold_helpers else f"{len(orient)} orient constraints baked",
@@ -884,19 +993,21 @@ def main():
     # 5. ftData joint fields
     ftd = plan["ftdata"]
     jn = lambda e: e["joint"]
-    # x8: ModelVis model 0 = every distinct visible set (states); part bytes item/shield/head/feet
-    all_sets = sorted({s for v in vis_of.values() for s in v}, key=lambda s: sorted(s))
-    default = (vis_of.get((a.fallback, False)) or vis_of.get((a.fallback, True)) or [frozenset()])[0]
-    if default in all_sets: all_sets.remove(default)
-    states = [default] + all_sets
-    controlled = sorted({g_ for s in states for g_ in s} | set(base))
+    # x8: ModelVis models = visibility channels (vis_channels.py: meshes that are never visible
+    # together share a model, one state per mesh, so no two states of a model share a DObj and no
+    # controlled mesh is left out of every state); part bytes item/shield/head/feet
+    all_sets = {s for v in vis_of.values() for s in v}
+    in_model = {g_ for groups in costume_groups for g_ in groups if g_}   # only meshes some costume has
+    controlled = sorted(({g_ for s in all_sets for g_ in s} | set(base)) & in_model)
+    channels = VC.plan_channels(all_sets | {frozenset(k for k, on in base.items() if on)}, controlled)
+    states = [g_ for ch in channels for g_ in [None] + ch]
     NROWS = 8
-    vt = write_costume_modelvis(w, states, costume_groups, controlled)
+    vt = write_costume_modelvis(w, channels, costume_groups)
     tl = w.alloc(struct.pack(">HH", 0, 0)); tt = w.alloc(bytes(4 * NROWS)); w.ptr(tt, tl)
     x8 = w.alloc(bytes(0x18))
     # no costume TObjs: ftAnim_80070200 asserts "can't find fighter texture anim" for any TObj
     # listed here without a texanim, and the model's expressions are meshes, not texanims
-    w.put(x8, 1); w.ptr(x8 + 4, vt); w.put(x8 + 8, 0); w.ptr(x8 + 0xC, tt)
+    w.put(x8, len(channels)); w.ptr(x8 + 4, vt); w.put(x8 + 8, 0); w.ptr(x8 + 0xC, tt)
     w.data[x8 + 0x10:x8 + 0x15] = bytes(jn(e) for e in ftd["x8_part_bytes"])
     w.ptr(fd + 8, x8)
     # x1C: part anims parked on the head-top joint with still AnimJoints (install_mk.py's approach)
@@ -952,7 +1063,7 @@ def main():
     x58 = w.u32(fd + 0x58)
     for o, (rr, ll) in zip((0, 8, 0x10, 0x1C, 0x24), ftd["x58_ik"]):
         w.data[x58 + o] = jn(rr); w.data[x58 + o + 1] = jn(ll)
-    rep["ftdata"] = {"modelvis_states": len(states), "controlled_meshes": controlled, "hurtboxes": hb,
+    rep["ftdata"] = {"modelvis_states": len(states), "modelvis_channels": channels, "controlled_meshes": controlled, "hurtboxes": hb,
                      "host_units_per_fighter_unit": round(scale, 4), "host_slot_map": how}
 
     # demo motions (x14): the port counts an m-ex fighter's demo motions up to the first entry with
@@ -1001,18 +1112,16 @@ def main():
         if not words or words[-1] >> 26 != 0: sys.exit(f"moveset row {r_}: script does not end in End")
         w.ptr(mt + r_ * 0x18 + 0xC, w.alloc(b"".join(struct.pack(">I", x) for x in words)))
     rep["moveset_rows"] = {r_: f"{m['name']} {m['script']} -> {m['clip']} ({len(m['words'] or [])} words)" for r_, m in sorted(moveset.items())}
-    idx_of = {s: k for k, s in enumerate(states)}
     cache = {}; mv = {"rows": 0, "events": 0, "approx_rows": [], "dropped_after_goto": 0}
     for c, rs in wanted.items():
-        seq = [idx_of[s] for s in vis_of[c]]
-        events = [(f, st) for f, st in enumerate(seq) if f == 0 or st != seq[f - 1]]
+        events = VC.events_for(vis_of[c], channels)   # (frame, (model, state)), every model at frame 0
         for r_ in rs:
             po = mt + r_ * 0x18 + 0xC
             src = w.u32(po) if po in w.relocs else None
             key_ = (src, tuple(events))
             if key_ not in cache:
                 try:
-                    cache[key_] = merge_vis(w, src, events, len(seq), mv)
+                    cache[key_] = merge_vis(w, src, events, len(vis_of[c]), mv)
                 except ValueError as exc:
                     raise ValueError(f"{c} row {r_} ({host_names.get(r_)}), events {events!r}: {exc}") from exc
             w.ptr(po, cache[key_])
@@ -1034,6 +1143,17 @@ def main():
     if script_findings:
         sys.exit(f"unsafe script loops in installed moveset: {script_findings[:8]}")
     validate_ftdata_pose_trees(w, fd, len(J))
+    try:
+        attr_choice = attr_apply.resolve(a.attrs, a.fighter)
+    except ValueError as exc:
+        sys.exit(f"--attrs: {exc}")
+    if attr_choice:
+        attr_path, port_attrs, held_attrs = attr_choice
+        rep["attributes"] = {"source": os.path.relpath(attr_path, ROOT) if attr_path.startswith(ROOT) else attr_path,
+                             "held_back": held_attrs,
+                             "applied": attr_apply.apply_to_block(w, fd, port_attrs)}
+    else:
+        rep["attributes"] = {"source": None, "note": f"{a.host}'s attributes kept (--attrs {a.attrs})"}
     w.save(os.path.join(files, a.pl))
 
     # 7. PlCo parts table

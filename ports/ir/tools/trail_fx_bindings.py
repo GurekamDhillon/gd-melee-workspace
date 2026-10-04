@@ -11,6 +11,7 @@ from collections import Counter
 import json
 import os
 import re
+import shutil
 
 import acmd_parse as A
 import acmd_to_ftcmd as F
@@ -33,19 +34,46 @@ COMMON_EFFECT_NAMES = (
     'sys_jump_aerial', 'sys_smash_flash', 'sys_whirlwind_l',
 )
 
-# The special-state names and subaction numbers are the same ones installed by
-# trail_specials_geno.py. Repeated scripts intentionally bind to each dash state.
+# Sora's special states and the ACMD effect script each plays. State names and rows are the ones
+# trail_specials_geno.py (HOSTS) and trail_magic_geno.py (CAST) install. Every clip is bound on the
+# "animation" clock, which is the CLIP frame (fp->cur_anim_frame, geno.md 20.3): ACMD effect frames
+# count motion (clip) frames whatever the motion rate, and the Geno states play the real clips at
+# their rate (dashes 13/12, END clips 35/40/45 game frames), so a clip-frame clock needs no rescaling.
+# Fixed rows that share an effect script with another row repeat it (LwAttackBack plays the Counter).
 SPECIAL = {
-    'SStart': 'effect_specialsstart', 'SStart2': 'effect_specialssearch',
-    'SDash1': 'effect_specials1', 'SDash2': 'effect_specials2',
-    'SDash3': 'effect_specials2', 'SEnd': 'effect_specials3',
-    'SEndAir': 'effect_specialairs3', 'Hi': 'effect_specialhi',
-    'HiAir': 'effect_specialairhi', 'LwStart': 'effect_speciallwstart',
-    'LwStartAir': 'effect_specialairlwstart', 'LwAttack': 'effect_speciallw',
-    'LwAttackAir': 'effect_specialairlw', 'LwAttackBack': 'effect_speciallw',
-    'LwAttackBackAir': 'effect_specialairlw', 'LwRebound': 'effect_speciallw',
-    'LwReboundAir': 'effect_specialairlw',
+    'SStart': 'effect_specialsstart', 'SSearch': 'effect_specialssearch',
+    'SDash1': 'effect_specials1', 'SDash2': 'effect_specials2', 'SDash3': 'effect_specials3',
+    'Hi': 'effect_specialhi', 'HiAir': 'effect_specialairhi',
+    'LwStart': 'effect_speciallwstart', 'LwStartAir': 'effect_specialairlwstart',
+    'LwAttack': 'effect_speciallw', 'LwAttackAir': 'effect_specialairlw',
+    'LwAttackBack': 'effect_speciallw', 'LwAttackBackAir': 'effect_specialairlw',
+    'LwRebound': 'effect_speciallw', 'LwReboundAir': 'effect_specialairlw',
+    'S3Combo2': 'effect_attacks32', 'S3Combo3': 'effect_attacks33',
 }
+# One Geno state serves ground and air for these: the ACMD has a ground script and an `air` twin
+# (effect_specialairs1 for effect_specials1), and the call carries the situation it came from.
+SHARED_AIR = ('SStart', 'SSearch', 'SDash1', 'SDash2', 'SDash3')
+# States with no effect script of their own in the ACMD (the END clips, the turn clips): see SPECIAL_NOTES.
+SPECIAL_NOTES = {
+    'SStart2': 'level TURN clip: no effect script of its own',
+    'STurnUp': 'turn clip: no effect script of its own',
+    'STurnDown': 'turn clip: no effect script of its own',
+    'SEnd': 'END clip: no effect script (the ACMD has none; the old binding replayed the third dash)',
+    'SEndAir': 'END clip: no effect script',
+}
+
+
+def cast_script(state):
+    """The effect script of a magic cast part: Firaga/1start -> effect_specialn1start, air -> specialairn..."""
+    for name, _row, clip, suffix, air in M.CAST:
+        if name == state:
+            return 'effect_special' + ('air' if air else '') + 'n' + suffix
+    raise KeyError(state)
+
+
+def air_twin(script):
+    """effect_specials1 -> effect_specialairs1."""
+    return script.replace('effect_special', 'effect_specialair', 1)
 
 
 def effect_name(set_name):
@@ -204,67 +232,88 @@ def census(rows, own, joint_of, scale, *, allowlist=None):
     return scripts, dict(sorted(common.items())), after, losses
 
 
-def magic_states(scripts, acmd):
-    """The magic Geno states play a stand-in clip, so their effects use game time.
-
-    Follow trail_magic_geno's start/cast/end composition and its motion-rate map.
-    Read the game scripts from the same Ghidra dump; effects still come from the
-    effect scripts parsed above.
-    """
+def magic_states(scripts):
+    """One bound state per cast part (trail_magic_geno.CAST): each plays its real clip on a common row
+    and its script counts clip frames, so the effect script's own frames apply on the animation clock."""
     by_script = {r['script']: r for r in scripts if r['agent'] == 'trail' and
                  r['owner'] == 'fighter' and not r['share']}
-    nro = A.Nro(os.path.join(TOOL, 'workspace', 'extracted', 'prebuilt', 'nro',
-                            'release', 'lua2cpp_trail.nro'))
-    helpers = A.helper_names(acmd)
-    game = {}
-    for air in (False, True):
-        pre = 'game_specialairn' if air else 'game_specialn'
-        for suffix in ('1start', '1', '1end', '2', '3'):
-            name = pre + suffix
-            path = os.path.join(acmd, 'game', f'{hex(A.hash40("trail"))}__{hex(A.hash40(name))}.c')
-            if not os.path.exists(path):
-                raise FileNotFoundError(path)
-            game[name] = {'commands': A.parse_body(open(path, encoding='utf-8').read(), nro, {}, helpers)}
     states = []
-    for air in (False, True):
-        pre = 'specialairn' if air else 'specialn'
-        game_pre = 'game_' + pre
-        suffix = 'Air' if air else ''
-        firaga_parts = [('1start', 0),
-                        ('1', M.game_time(game[game_pre + '1start'])(18)),
-                        ('1end', M.game_time(game[game_pre + '1start'])(18) +
-                         M.game_time(game[game_pre + '1'])(15))]
-        for state, parts in ((
-                'Firaga' + suffix, firaga_parts),
-                ('Blizzaga' + suffix, [('2', 0)]),
-                ('Thundaga' + suffix, [('3', 0)])):
-            calls = []
-            names = []
-            for part, shift in parts:
-                effect_script = 'effect_' + pre + part
-                if effect_script not in by_script:
-                    continue
-                names.append(effect_script)
-                clock = M.game_time(game[game_pre + part])
-                for src in by_script[effect_script]['calls']:
-                    if not src['package']:
-                        continue
-                    call = dict(src)
-                    call['frame'] = round(shift + clock(src['frame']), 6)
-                    if 'end_frame' in call:
-                        call['end_frame'] = round(shift + clock(call['end_frame']), 6)
-                    calls.append(call)
-            if calls:
-                states.append({'state': state, 'subaction': M.SUB[state], 'clock': 'game',
-                               'script': '/'.join(names), 'calls': sorted(calls, key=lambda x: x['frame'])})
+    for state, row, _clip, _suffix, _air in M.CAST:
+        script = cast_script(state)
+        if script not in by_script:
+            continue
+        calls = [c for c in by_script[script]['calls'] if c['package']]
+        if calls:
+            states.append({'state': state, 'subaction': row, 'clock': 'animation',
+                           'script': script, 'calls': calls})
     return states
 
 
-def bind(scripts, host_ir, host, packages, acmd):
+# A Geno state ends on the tick its script reaches its length, and the effects are driven after that
+# tick under the NEW state, so an ACMD call at the last frame (the cast's FireShot at 18 of
+# specialn1start, the search's SonicTurn at 9) is never seen by its own state. In Ultimate that frame
+# is the moment the next motion starts; the call moves to frame 0 of each state that can follow.
+HANDOFF = {'Firaga': ('FiragaFire',), 'FiragaAir': ('FiragaFireAir',),
+           'SSearch': ('SStart2', 'STurnUp', 'STurnDown')}
+
+
+def state_lengths():
+    """Script length in clip frames of the states whose effects can reach it (generators' own numbers)."""
+    import trail_specials_geno as T
+    lengths = {state: M.CLIP_FRAMES[clip] for state, _row, clip, _suffix, _air in M.CAST}
+    for state in ('SStart', 'SDash1', 'SDash2', 'SDash3'):
+        lengths[state] = T.clip_info(T.CLIPS[state])[0]
+    lengths['SSearch'] = int(T.params()['param_special_s']['search_frame'])
+    return lengths
+
+
+def carry_past_end(states, by_script, lengths, rows):
+    """Move calls at or after their state's last frame onto the successors (HANDOFF) at frame - length.
+
+    A carried call also takes the end its successor's script gives the same effect (the cast's FireShot is
+    detached at 13 of specialn1). A state with such calls and no successor is an error."""
+    by_name = {s['state']: s for s in states}
+    for state in list(states):
+        length = lengths.get(state['state'])
+        if length is None:
+            continue
+        past = [c for c in state['calls'] if c['frame'] >= length]
+        if not past:
+            continue
+        targets = HANDOFF.get(state['state'], ())
+        if not targets:
+            raise ValueError(f"{state['state']}: effect calls at frame >= {length} never play: "
+                             + ', '.join(f"{c['package']}@{c['frame']:g}" for c in past))
+        state['calls'] = [c for c in state['calls'] if c['frame'] < length]
+        for name in targets:
+            target = by_name.get(name)
+            if target is None:
+                target = {'state': name, 'subaction': rows[name], 'clock': 'animation', 'script': '', 'calls': []}
+                states.append(target)
+                by_name[name] = target
+            ends = by_script.get(re.split('[/+]', target['script'])[0], {}).get('end_calls', [])
+            for c in past:
+                moved = dict(c, frame=round(c['frame'] - length, 6))
+                moved.pop('end_frame', None)
+                if 'end_frame' in c:
+                    moved['end_frame'] = round(c['end_frame'] - length, 6)
+                for e in ends:
+                    if e['effect'] == c['effect'] and e['frame'] >= moved['frame'] and 'end_frame' not in moved:
+                        moved['end_frame'] = e['frame']
+                        moved['end_event'] = 'off' if e['macro'] == 'EFFECT_OFF_KIND' else 'detach'
+                target['calls'].append(moved)
+            source = re.split('[/+]', state['script'])[0]
+            target['script'] = target['script'] + '+' + source if target['script'] else source
+            target['calls'].sort(key=lambda x: x['frame'])
+    states[:] = [st for st in states if st['calls']]
+    return states
+
+
+def bind(scripts, host_ir, host, packages, acmd=None, lengths=None):
     by_script = {r['script']: r for r in scripts if r['agent'] == 'trail' and r['owner'] == 'fighter'
                  and not r['share']}
     states = []
-    overlaid_subactions = set(HOSTS[host].values()) | set(M.SUB.values())
+    overlaid_subactions = set(HOSTS[host].values()) | set(M.CAST_ROW.values())
     for s in host_ir['behavior']['subactions']:
         if s['index']['value'] in overlaid_subactions:
             continue  # Geno's Sora state replaces this host row.
@@ -283,18 +332,19 @@ def bind(scripts, host_ir, host, packages, acmd):
         if script not in by_script:
             continue
         calls = [c for c in by_script[script]['calls'] if c['package']]
-        if state == 'SStart' and 'effect_specialairsstart' in by_script:
-            # One Geno state serves ground and air. Ultimate's air start raises
-            # SonicStart by one unit; the later dash/search effects are identical.
-            ground = [dict(c, situation='ground') for c in calls]
-            air = [dict(c, situation='air') for c in
-                   by_script['effect_specialairsstart']['calls'] if c['package']]
-            calls = ground + air
-            script += '/effect_specialairsstart'
+        twin = air_twin(script)
+        if state in SHARED_AIR and twin in by_script:
+            # One Geno state serves ground and air. The air script may differ (Ultimate's air start
+            # raises SonicStart by one unit); each call fires only in its own situation.
+            calls = ([dict(c, situation='ground') for c in calls] +
+                     [dict(c, situation='air') for c in by_script[twin]['calls'] if c['package']])
+            script += '/' + twin
         if calls:
             states.append({'state': state, 'subaction': HOSTS[host][state], 'clock': 'animation',
                            'script': script, 'calls': calls})
-    states += magic_states(scripts, acmd)
+    states += magic_states(scripts)
+    rows = dict(HOSTS[host], **M.CAST_ROW)
+    carry_past_end(states, by_script, state_lengths() if lengths is None else lengths, rows)
     missing = sorted({c['package'] for s in states for c in s['calls']} - packages)
     if missing:
         raise ValueError('binding refers to missing packages: ' + ', '.join(missing))
@@ -319,6 +369,87 @@ def audit_unbound(scripts, bindings, *, allowlist=None):
     return losses
 
 
+def check_against_geno(bindings, fighter):
+    """Every bound state must point at a row the generated profile really has.
+
+    `fighter` is a geno.json fighter entry (its `states` carry name + subaction). A bound state named
+    like a Geno state must use that state's row; any other bound state is a host row and must not be one
+    the profile's states replace (the host's row would then play Sora's clip under another fighter's
+    effects). Raises ValueError listing every mismatch."""
+    geno = {s['name']: s['subaction'] for s in fighter.get('states', [])}
+    rows = {v: k for k, v in geno.items()}
+    problems = []
+    for st in bindings['states']:
+        if st['state'] in geno:
+            if geno[st['state']] != st['subaction']:
+                problems.append(f"{st['state']}: bound to row {st['subaction']}, the profile has row {geno[st['state']]}")
+        elif st['subaction'] in rows:
+            problems.append(f"{st['state']}: host row {st['subaction']} is the profile's state {rows[st['subaction']]}")
+    if problems:
+        raise ValueError('bindings do not match the generated profile: ' + '; '.join(problems))
+
+
+def unbound_geno_states(bindings, fighter):
+    """Profile states with no effect binding (informational: some have no ACMD effect script)."""
+    bound = {s['subaction'] for s in bindings['states']}
+    return [s['name'] for s in fighter.get('states', []) if s['subaction'] not in bound]
+
+
+# trail_magic_geno.py --fx gives each article variant its package by this name; a mod installed without
+# that flag has no article effects, so attach_to fills them in (never overriding one that is set).
+ARTICLE_FX = {'Fire': 'P_TrailFireBullet', 'Ice': 'P_TrailIceBullet', 'Bolt': 'P_TrailThunderBullet',
+              'Cloud': 'P_TrailThunderCloud'}
+
+
+def article_package(name):
+    return ARTICLE_FX.get(name.replace('Air', '').replace('Last', ''))
+
+
+def attach_to(mod_dir, packages_dir, bindings, *, attach=None, articles=True):
+    """Put the effects into an installed Geno mod: fx/<pkg>/<pkg>.gfx.json with the textures and meshes
+    that package names, fx/fx_bindings.json, and the fighter entry's "fx_bindings" key (geno.md 20.3).
+
+    install_ultimate.py does not touch fx/, so this is the step that makes fighter-bound effects play.
+    `attach` selects the fighter entry by its `attach` file (the only entry when omitted). Articles
+    without an `fx` get their package. Returns a summary dict."""
+    geno_path = os.path.join(mod_dir, 'geno.json')
+    doc = json.load(open(geno_path, encoding='utf-8'))
+    fighters = [f for f in doc.get('fighters', []) if attach is None or f.get('attach') == attach]
+    if len(fighters) != 1:
+        raise ValueError(f'{geno_path}: {len(fighters)} fighter entries match attach={attach!r}; pass attach')
+    fighter = fighters[0]
+    check_against_geno(bindings, fighter)
+    names = sorted(f[:-9] for f in os.listdir(packages_dir) if f.endswith('.gfx.json'))
+    fx = os.path.join(mod_dir, 'fx')
+    for name in names:
+        package = json.load(open(os.path.join(packages_dir, name + '.gfx.json'), encoding='utf-8'))
+        dest = os.path.join(fx, name)
+        if os.path.isdir(dest):
+            shutil.rmtree(dest)
+        os.makedirs(dest)
+        shutil.copyfile(os.path.join(packages_dir, name + '.gfx.json'), os.path.join(dest, name + '.gfx.json'))
+        for asset in package.get('textures', []) + package.get('meshes', []):
+            target = os.path.join(dest, asset['file'])
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            shutil.copyfile(os.path.join(packages_dir, asset['file']), target)
+    missing = sorted({c['package'] for s in bindings['states'] for c in s['calls']} - set(names))
+    if missing:
+        raise ValueError('bindings name packages that are not in ' + packages_dir + ': ' + ', '.join(missing))
+    json.dump(bindings, open(os.path.join(fx, 'fx_bindings.json'), 'w', encoding='utf-8'), indent=1)
+    fighter['fx_bindings'] = 'fx/fx_bindings.json'
+    filled = []
+    if articles:
+        for art in fighter.get('articles', []):
+            pkg = article_package(art.get('name', ''))
+            if pkg and not art.get('fx'):
+                if pkg not in names:
+                    raise ValueError(f"article {art['name']} needs package {pkg}")
+                art['fx'] = pkg
+                filled.append(art['name'])
+    json.dump(doc, open(geno_path, 'w', encoding='utf-8'), indent=1)
+    return {'packages': len(names), 'bound_states': len(bindings['states']), 'articles_filled': filled}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--dump', default=os.path.join(ROOT, '_build', 'ultimate-vfx', 'ef_trail'))
@@ -326,6 +457,12 @@ def main():
     ap.add_argument('--host', choices=sorted(HOSTS), default='marth')
     ap.add_argument('--packages', default=os.path.join(ROOT, '_build', 'tmp', 'codex-fx', 'trail'))
     ap.add_argument('-o', '--out', default=os.path.join(ROOT, '_build', 'tmp', 'codex-fx'))
+    ap.add_argument('--geno', help="the generated profile's geno.json (staged-specials or an installed mod's): "
+                    "fail unless every bound state points at a row it really has")
+    ap.add_argument('--attach-to', metavar='MOD_DIR', help="an installed mod (install_ultimate.py --out): copy the "
+                    "packages into its fx/, write fx/fx_bindings.json and set the fighter's fx_bindings key "
+                    "(and the articles' fx); checks the bindings against that mod's geno.json")
+    ap.add_argument('--attach-name', help="with --attach-to: the fighter entry's `attach` file (PlUs.dat)")
     a = ap.parse_args()
     sets, own = own_names(a.dump)
     rows, body = parsed_rows(a.acmd, own)
@@ -336,6 +473,11 @@ def main():
     host_ir = json.load(open(os.path.join(INSTANCES, a.host + '.melee.ir.json'), encoding='utf-8'))
     packages = {f[:-9] for f in os.listdir(a.packages) if f.endswith('.gfx.json')}
     bindings = bind(scripts, host_ir, a.host, packages, a.acmd)
+    if a.geno:
+        fighters = json.load(open(a.geno, encoding='utf-8'))['fighters']
+        fighter = next(f for f in fighters if a.attach_name in (None, f.get('attach')))
+        check_against_geno(bindings, fighter)
+        print('profile states with no effect script:', ', '.join(unbound_geno_states(bindings, fighter)))
     unbound_losses = audit_unbound(scripts, bindings)
     os.makedirs(a.out, exist_ok=True)
     write_losses(os.path.join(a.out, 'conversion_losses.json'),
@@ -346,6 +488,8 @@ def main():
     print(f'{len(sets)} sets; {len(scripts)} effect scripts; {len(bindings["states"])} bound states; '
           f'{sum(len(s["calls"]) for s in bindings["states"])} own calls; '
           f'{sum(common.values())} common calls; {len(after)} after-image commands')
+    if a.attach_to:
+        print('attached:', attach_to(a.attach_to, a.packages, bindings, attach=a.attach_name))
 
 
 if __name__ == '__main__':

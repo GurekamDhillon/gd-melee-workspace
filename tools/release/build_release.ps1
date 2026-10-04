@@ -27,6 +27,8 @@ $root = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $build = Join-Path $root "_build"
 if (-not $GameDir) { $GameDir = $build }
 if (-not $OutDir) { $OutDir = Join-Path $build "release" }
+# A relative -OutDir made the manifest's paths wrong: they are cut from each file's full path.
+$OutDir = [System.IO.Path]::GetFullPath($OutDir)
 if (-not $Version) { $Version = (Get-Content (Join-Path $PSScriptRoot "VERSION") -Raw).Trim() }
 if ($Version -notmatch '^[0-9A-Za-z][0-9A-Za-z.\-]*$') { throw "bad version '$Version'" }
 $name = "GDMelee-$Version-win64"
@@ -53,17 +55,19 @@ function Copy-In([string]$src, [string]$rel) {
 $melee = if ($MeleeDir) { (Resolve-Path $MeleeDir).Path } else { Join-Path $root "melee" }
 . (Join-Path $PSScriptRoot 'netplay_protocol.ps1')
 Assert-NetplaySource $melee
+$verifyArgs = @((Join-Path $root 'tools/port/build_provenance.py'), '--melee', $melee, '--build', $GameDir, '--verify')
+if ($Strict) { $verifyArgs += '--require-clean' }
+& python @verifyArgs
+if ($LASTEXITCODE -ne 0) { throw 'Game build provenance failed; rebuild this checkout before packaging.' }
+$provenance = Get-Content (Join-Path $GameDir 'build-provenance.json') -Raw | ConvertFrom-Json
 $meleeRev = (git -C $melee rev-parse HEAD).Trim()
 $meleeShort = $meleeRev.Substring(0, 9)
 $wsRev = (git -C $root rev-parse --short=9 HEAD).Trim()
-$dirty = git -C $melee status --porcelain --untracked-files=no -- src include pc extern
+$dirty = $provenance.source_dirty
 if ($dirty) { Warn "the melee checkout has uncommitted changes; the exe may not match commit $meleeShort (the GPL source offer points at that commit)" }
 $ErrorActionPreference = "Continue"; $onPub = git -C $melee branch -r --contains $meleeRev 2>$null | Where-Object { $_ -match '^\s*pub/' }
 $ErrorActionPreference = "Stop"
 if (-not $onPub) { Warn "melee commit $meleeShort is not on the public fork (remote 'pub') yet: push pc-port before publishing" }
-$exe = Join-Path $GameDir "melee-pc.exe"
-$commitTime = [DateTimeOffset]::FromUnixTimeSeconds([long](git -C $melee log -1 --format=%ct)).LocalDateTime
-if ((Get-Item $exe).LastWriteTime -lt $commitTime) { Warn "melee-pc.exe ($((Get-Item $exe).LastWriteTime)) is older than melee HEAD ($commitTime): rebuild so the exe contains the commit" }
 $uiDirty = git -C $root status --porcelain -- _build/ui
 if ($uiDirty) { throw "_build/ui has uncommitted changes; the release ships only committed art (commit or restore it first)" }
 if ($Strict -and $warnings.Count -gt 0) { throw "-Strict: $($warnings.Count) warning(s) above" }
@@ -90,7 +94,7 @@ New-Item -ItemType Directory -Force -Path $stage | Out-Null
 Write-Output "staging $name"
 Write-Output "  melee $meleeShort, workspace $wsRev, MSVC runtime from $crt"
 
-foreach ($f in "melee-pc.exe", "melee-pc.map") { Copy-In (Join-Path $GameDir $f) $f }
+foreach ($f in "melee-pc.exe", "melee-pc.map", "build-provenance.json") { Copy-In (Join-Path $GameDir $f) $f }
 # the runtime libraries and the pipeline seed: from -GameDir when it has them (a lane's build root
 # usually does not), else from _build
 foreach ($f in "SDL3.dll", "webgpu_dawn.dll", "initial_pipeline_cache.db", "initial_pipeline_cache.core") {
@@ -115,9 +119,11 @@ Copy-In (Join-Path $PSScriptRoot "THIRD-PARTY-NOTICES.txt") "LICENSES\THIRD-PART
 foreach ($l in Get-ChildItem (Join-Path $PSScriptRoot "licenses") -Filter *.txt) { Copy-In $l.FullName ("LICENSES\" + $l.Name) }
 New-Item -ItemType Directory -Force -Path (Join-Path $stage "mods") | Out-Null
 Set-Content -Path (Join-Path $stage "mods\README.txt") -Encoding ascii -Value @'
-Mods go in this folder, one folder per mod (mod.json + files\ and/or scripts\). The launcher's Mods
-tab installs, updates, enables and removes them; sources.txt says where it looks for mods to
-install (none are listed by default - add the ones you trust). The game loads every enabled mod,
+Mods go in this folder, one folder per mod (mod.json + files\ and/or scripts\). Copy trusted mods
+here manually. The launcher's Mods tab lists installed mods, enables or disables them, and moves
+removed mods into a recoverable .removed folder. Remote installation and updates are not
+implemented in this Qt launcher. sources.txt
+is an example format for the separate mods-browser tools. The game loads every enabled mod,
 online too: fighters and stages are matched with your opponent by their content.
 '@
 Copy-In (Join-Path $root "tools\mods_browser\sources.example.txt") "mods\sources.txt"

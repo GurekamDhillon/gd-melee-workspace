@@ -6,13 +6,20 @@ binding generator. ACMD's bone-local offsets use the same 1.0 scale as
 acmd_to_ftcmd.translate for this Ultimate-rig port.
 """
 import json
+import os
 from pathlib import Path
+import shutil
+import tempfile
 import unittest
 
 import jsonschema
 
+import trail_fx_bindings as FX
+import trail_magic_geno as M
+
 ROOT = Path(__file__).resolve().parents[3]
-OUT = ROOT / '_build' / 'tmp' / 'codex-fx' / 'trail'
+# SORA_FX_PACKAGES points the file checks at another package directory (a copy under _build/...).
+OUT = Path(os.environ.get('SORA_FX_PACKAGES') or ROOT / '_build' / 'tmp' / 'codex-fx' / 'trail')
 
 
 class FxBindingsTest(unittest.TestCase):
@@ -62,11 +69,15 @@ class FxBindingsTest(unittest.TestCase):
     def test_sonic_blade_dash(self):
         # effect/0x5b268858f__0x1059acd9d6.c:75,123,224: frames 1,2,9.
         # SonicAttack/Impact use rot-local offsets (0,-2,20)/(0,-2,23).
-        self.assert_calls('SDash2', [
-            (1, 'P_TrailKeybladeFlare', 'haver', [0, 0, 0]),
-            (2, 'P_TrailSonicAttack', 'rot', [0, -2, 20]),
-            (9, 'P_TrailSonicImpact', 'rot', [0, -2, 23]),
-        ])
+        # The state serves ground and air: each situation carries its own script's calls.
+        for situation in ('ground', 'air'):
+            actual = [(c['frame'], c['package'], c['bone'], c['offset'])
+                      for c in self.states['SDash2']['calls'] if c.get('situation') == situation]
+            self.assertEqual(actual, [
+                (1, 'P_TrailKeybladeFlare', 'haver', [0, 0, 0]),
+                (2, 'P_TrailSonicAttack', 'rot', [0, -2, 20]),
+                (9, 'P_TrailSonicImpact', 'rot', [0, -2, 23]),
+            ])
 
     def test_up_special(self):
         # effect/0x5b268858f__0x100c239a30.c:225, frame 6, haver + (0,0,0).

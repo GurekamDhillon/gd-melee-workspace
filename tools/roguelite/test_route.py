@@ -24,8 +24,32 @@ local run={id='run1',world_seed=4242,stocks=3,progress={supplies=2,room='r001',c
 local function clone(v) if type(v)~='table' then return v end local o={} for k,x in pairs(v) do o[k]=clone(x) end return o end
 -- Uncertified recipes are refused before any run is created.
 local r,why=route:create(run); assert(not r and tostring(why):find('not certified',1,true),tostring(why))
+assert(tostring(why):find('entry',1,true),'missing required role must be actionable: '..tostring(why))
 -- Certify in place for the integration test, then restore afterwards.
 local saved={} for id,recipe in pairs(Recipes.recipes) do saved[id]=recipe.certified; recipe.certified=true end
+-- Admission filtering must preserve the old deterministic output when all
+-- recipes are admitted, and never select a refused optional layout.
+local unfiltered=topology:generate(run.world_seed)
+r=assert(route:create(run))
+assert(r.manifest.generation_report.topology_signature==unfiltered.generation_report.topology_signature)
+assert(Codec.encode(topology:generate(run.world_seed,{eligible_templates=adapter:eligible_templates()}))==Codec.encode(unfiltered),
+ 'all-admitted filtering changed seeded generation')
+Recipes.recipes.branch_y.certified=false
+local missing,missing_why=route:create(run,{eligible_templates={branch_y=true}})
+assert(not missing and tostring(missing_why):find('branch/split',1,true),tostring(missing_why))
+assert(Recipes.recipes.branch_y.certified==false,'admission must never rewrite certification')
+Recipes.recipes.branch_y.certified=true
+Recipes.recipes.lane_two_level.certified=false
+for seed=1,30 do
+ local admitted=assert(route:create({id='admitted',world_seed=seed,stocks=3}))
+ for _,id in ipairs(admitted.manifest.order) do
+  local template=Rooms.rooms[admitted.manifest.rooms_by_id[id].template_id]
+  assert(Recipes.is_certified(template.recipe),'uncertified candidate selected')
+ end
+ assert(Codec.encode(admitted.manifest)==Codec.encode(assert(route:create({id='admitted',world_seed=seed,stocks=3})).manifest),
+  'filtered generation is not reproducible')
+end
+Recipes.recipes.lane_two_level.certified=true
 r=assert(route:create(run))
 assert(r.manifest.schema_version==2 and r.progress.run_id=='run1' and r.progress.current_room==r.manifest.start_room)
 assert(assert(route:validate_save(run,r.manifest,r.progress)))

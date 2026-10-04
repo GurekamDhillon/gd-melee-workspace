@@ -10,6 +10,16 @@ from pathlib import Path
 ALLOWLIST = Path(__file__).with_name("acmd_allowlist.json")
 
 
+def moveset_payload_digest(document):
+    """Bind provenance to the complete payload, independent of JSON formatting/key types."""
+    payload = {key: value for key, value in document.items() if key != "audit"}
+    # Generated row keys are integers; JSON readers turn them into strings. Normalize before
+    # sorting so both sides hash the same document, including multi-digit row numbers.
+    payload = json.loads(json.dumps(payload))
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
 def verify_acmd_source(path):
     source = Path(path)
     sidecar = Path(str(source) + ".audit.json")

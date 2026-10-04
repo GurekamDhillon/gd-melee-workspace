@@ -1,9 +1,9 @@
 name: Qt launcher
 on:
   push:
-    paths: ['tools/release/launcher/qt/**', 'tools/release/build_launcher.*', '_build/ui/kit*.json', '_build/ui/ico_*.gxtex', 'menu/SourceSans3/**', '.github/workflows/launcher-qt.yml']
+    paths: ['tools/release/launcher/qt/**', 'tools/release/build_launcher.*', 'tools/release/check_release.ps1', 'tools/release/sanitize_launcher.py', 'tools/release/test_*.py', 'tools/netplay/server/**', '_build/ui/kit*.json', '_build/ui/ico_*.gxtex', 'menu/SourceSans3/**', '.github/workflows/launcher-qt.yml']
   pull_request:
-    paths: ['tools/release/launcher/qt/**', 'tools/release/build_launcher.*', '_build/ui/kit*.json', '_build/ui/ico_*.gxtex', 'menu/SourceSans3/**', '.github/workflows/launcher-qt.yml']
+    paths: ['tools/release/launcher/qt/**', 'tools/release/build_launcher.*', 'tools/release/check_release.ps1', 'tools/release/sanitize_launcher.py', 'tools/release/test_*.py', 'tools/netplay/server/**', '_build/ui/kit*.json', '_build/ui/ico_*.gxtex', 'menu/SourceSans3/**', '.github/workflows/launcher-qt.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -17,6 +17,14 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
+      - name: Verify release guards and local matchmaking regressions
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tools/release -p "test_*.py" -v
+          if ($LASTEXITCODE -ne 0) { throw 'Release regressions failed' }
+          python -m unittest discover -s tools/netplay/server -v
+          if ($LASTEXITCODE -ne 0) { throw 'Matchmaking regressions failed' }
       - uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'

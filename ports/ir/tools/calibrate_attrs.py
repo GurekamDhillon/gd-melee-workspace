@@ -40,7 +40,15 @@ v0 = lambda u, h: math.sqrt(2 * u["air_accel_y"] * u[h])
 MAP = {
     "walk_max_vel": lambda u: u["walk_speed_max"],
     "ground_friction": lambda u: u["ground_brake"],
+    "jab_2_input_window": lambda u: u["combo_attack_12_end"],
+    "jab_3_input_window": lambda u: u["combo_attack_13_end"],
+    "walk_accel_mul": lambda u: u["walk_accel_mul"],
+    "walk_accel_base": lambda u: u["walk_accel_add"],
     "dash_initial_velocity": lambda u: u["dash_speed"],
+    "dash_accel_mul": lambda u: u["run_accel_mul"],
+    "dash_accel_base": lambda u: u["run_accel_add"],
+    "ground_to_air_jump_momentum_multiplier": lambda u: u["jump_speed_x_mul"],
+    "air_jump_h_multiplier": lambda u: u["jump_aerial_speed_x_mul"],
     "dash_max_velocity": lambda u: u["run_speed_max"],
     "jump_startup_time": lambda u: u["jump_squat_frame"],
     "jump_h_initial_velocity": lambda u: u["jump_speed_x"],
@@ -154,6 +162,8 @@ def main():
             attrs[f"landingair{d}_lag"] = 2 * u[f"landing_attack_air_frame_{d}"]; why[f"landingair{d}_lag"] = "2x (L-cancel)"
         # - jumpsquat: every Ultimate fighter has 3, Melee's (3-8) is per-character identity: keep 3
         attrs["jump_startup_time"] = u["jump_squat_frame"]; why["jump_startup_time"] = "Ultimate's own"
+        # - jump count: a count, not a scale; Kirby's 5 vs 6 would skew a fit. Ultimate's own number.
+        attrs["max_jumps"] = int(u["jump_count_max"]); why["max_jumps"] = "Ultimate's own"
         # - air acceleration: the games split mul/base differently; fit the full-stick total
         tot = [(ult[n]["air_accel_x_mul"] + ult[n]["air_accel_x_add"],
                 mel[n]["air_drift_stick_mul"] + mel[n]["aerial_drift_base"]) for n in PAIRS if n in ult and n in mel]

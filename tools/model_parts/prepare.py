@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 import shutil
@@ -11,7 +12,7 @@ import uuid
 from make_presets import build
 
 ROOT=Path(__file__).resolve().parents[2]
-CHECKOUT=ROOT/'melee/worktrees/linux'
+CHECKOUT=Path(os.environ.get('GW_MELEE', ROOT/'melee')).expanduser().resolve()
 ROSTER={'falco':'Fc','mario':'Mr','kirby':'Kb','pikachu':'Pk','bowser':'Kp','marth':'Ms','link':'Lk','gamewatch':'Gw',
  'fox':'Fx','captain':'Ca','donkey':'Dk','luigi':'Lg','samus':'Ss','ness':'Ns','peach':'Pe','yoshi':'Ys','popo':'Pp',
  'sheik':'Sk','zelda':'Zd','pichu':'Pc','drmario':'Dr','roy':'Fe','ganondorf':'Gn','mewtwo':'Mt','jigglypuff':'Pr','younglink':'Cl'}
@@ -40,7 +41,7 @@ def literal(value):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--app-dir',type=Path,default=ROOT/'_build/agents/linux')
+    p.add_argument('--app-dir',type=Path,default=Path(os.environ.get('GW_BUILD_ROOT', ROOT/'_build')))
     p.add_argument('--iso',type=Path)
     p.add_argument('--fighters',default='falco')
     p.add_argument('--roster',action='store_true');p.add_argument('--quick',action='store_true')

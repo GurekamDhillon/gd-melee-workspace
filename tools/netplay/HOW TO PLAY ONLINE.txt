@@ -23,8 +23,8 @@ PLAY SOMEONE YOU KNOW
   One of you:     VERSUS > ONLINE > Host a Room. You get a room code: send it to your opponent
                   (Discord, text...).
   The other one:  VERSUS > ONLINE > Join a Room, then type in that code.
-  The rooms use the matchmaking server set in SETTINGS > ONLINE > Server (and the launcher's
-  Online tab). Both of you need the same server.
+  The rooms use the matchmaking server set in the game's SETTINGS > ONLINE > Server.
+  Both of you need the same server. The Qt launcher has no Online tab.
 
 PLAY ANYONE
   VERSUS > ONLINE > Random Opponent: you are matched with whoever else is looking right now.

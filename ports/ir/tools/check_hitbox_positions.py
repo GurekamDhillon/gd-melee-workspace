@@ -159,7 +159,7 @@ def hitbox_event_paths(words):
                         raise ValueError(f"Geno skip at word {i} reaches invalid word {target}")
                     i = target
                     continue
-                elif sub == 0x20 and words[i+1] not in (5, 6, 7):
+                elif sub == 0x20 and words[i+1] not in (5, 6, 7, 8, 9, 10):   # 8-10 (v5.4 dash aim / brake) move the fighter, not its bones
                     raise ValueError(f"Geno hook {words[i+1]} cannot be position checked")
                 elif sub == 0x13:
                     raise ValueError(f"Geno control subcommand {sub:#x} cannot be position checked")
@@ -195,7 +195,7 @@ def check_unmapped_overlay(words, row, audited_base_rows, article_hooks_audited=
             sub = (word >> 20) & 63
             if sub == 0x13 and row not in audited_base_rows:
                 raise ValueError(f"Geno overlay row {row} uses ORIG without an audited base row")
-            if sub == 0x20 and (words[at+1] not in (5, 6, 7) or
+            if sub == 0x20 and (words[at+1] not in (5, 6, 7, 8, 9, 10) or
                                 (words[at+1] == 5 and not article_hooks_audited)):
                 raise ValueError(f"Geno overlay row {row} calls an unaudited hook {words[at+1]}")
         at += length
@@ -290,13 +290,16 @@ def installed_tree(writer, ftdata, row, aj):
 
 
 def game_time(frame, rates):
+    if any(not isinstance(rate, (int, float)) or isinstance(rate, bool) or
+           not math.isfinite(rate) or rate <= 0 for _, rate in rates):
+        raise ValueError("baked motion rate must be finite and positive")
     game, current, last = 0.0, 1.0, 0.0
     for at, rate in rates:
         if at >= frame:
             break
-        game += (at - last) * current
+        game += (at - last) * current   # r = game frames per clip frame (animation speed is 1 / r)
         last, current = at, rate
-    return int(round(game + (frame - last) * current))
+    return int(round(game + (frame - last) / current))
 
 
 def overlay_source_events(row, entry):
@@ -486,12 +489,17 @@ def check_install(fighter, install, acmd, moveset, *, tolerance=.5, joint_probe=
             key = (entry["agent"], entry["script"])
             if key not in all_source:
                 raise ValueError(f"article {name}: source ACMD {key} missing")
-            for command in all_source[key]["commands"]:
+            commands = all_source[key]["commands"]
+            for index, command in enumerate(commands):
                 if command["cmd"] != "ATTACK":
                     continue
                 box = command.get("named")
                 if box is None:
                     raise ValueError(f"article {name}: ATTACK at {command['frame']} unresolved")
+                if any(other["cmd"] == "ATTACK" and other["frame"] == command["frame"] and
+                       (other.get("named") or {}).get("id") == box["id"]
+                       for other in commands[index + 1:]):
+                    continue  # same-frame replacement: this geometry never reaches a live frame
                 start = int(command["frame"]) + 1
                 converted = [h for h in article.get("hitboxes", [])
                              if h.get("source_id", h["slot"]) == box["id"] and h["start"] == start]

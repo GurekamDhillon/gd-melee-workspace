@@ -11,6 +11,9 @@ eight big-endian bytes). Both processes
 receive the same fresh salt from the runner. Only tags and salt may appear in
 evidence; the peer tag must equal the other client's account tag. This is
 diagnostic identity evidence, not authentication.
+Early-end comparison is opt-in and requires matching explicit exit-3/end-frame
+evidence. It compares only the shared finalized recording prefix, never treating
+a missing tail as gameplay divergence. Normal acceptance still requires full length.
 Finalized hashes cover every fixture frame and may additionally include the
 start-of-next-frame boundary at last_frame + 1 on both clients.
 """
@@ -208,7 +211,8 @@ def _hashes(path: Path) -> dict[int, int]:
 
 
 def verify_pair(fixture: Path, client_a: dict, client_b: dict, *,
-                require_mode: str = 'loopback', require_rollback: bool = False) -> dict:
+                require_mode: str = 'loopback', require_rollback: bool = False,
+                allow_early_end: bool = False) -> dict:
     """Validate a pair; each client supplies trace/recording/hashes paths and evidence.
 
     Evidence is written by the native mode. `input_delay` is an integer 1..7;
@@ -232,10 +236,36 @@ def verify_pair(fixture: Path, client_a: dict, client_b: dict, *,
     if last < first or last - first + 1 > MAX_FIXTURE_FRAMES:
         errors.append('fixture frame span is invalid or implausibly large')
         return result
+    fixture_last = last
+    early = allow_early_end and any(
+        isinstance(c.get('evidence'), dict) and c['evidence'].get('exit_code') == 3
+        for c in (client_a, client_b))
+    if early:
+        try:
+            evs = [c['evidence'] for c in (client_a, client_b)]
+            for ev in evs:
+                if (type(ev.get('exit_code')) is not int or ev['exit_code'] != 3 or
+                    ev.get('match_completed') is not False or
+                    type(ev.get('end_frame')) is not int or
+                    type(ev.get('last_frame')) is not int or
+                    type(ev.get('confirmed_frame')) is not int or
+                    not first <= ev['confirmed_frame'] <= ev['end_frame'] < ev['last_frame'] or
+                    ev['last_frame'] - first + 1 > MAX_FIXTURE_FRAMES):
+                    raise ValueError('invalid early-end evidence')
+            if evs[0]['end_frame'] != evs[1]['end_frame'] or evs[0]['last_frame'] != evs[1]['last_frame']:
+                raise ValueError('clients ended at different frames or used different fixture lengths')
+            ends = [_complete_replay(Path(c['recording'])).last_frame for c in (client_a, client_b)]
+            if any(not first <= end <= ev['confirmed_frame'] for end, ev in zip(ends, evs)):
+                raise ValueError('recording exceeds confirmed early-end range')
+            last = min(last, *ends)
+            result['end_frame'] = evs[0]['end_frame']
+        except (KeyError, TypeError, OSError, ValueError, IndexError, struct.error) as exc:
+            errors.append(f'early end: {exc}')
+            return result
     frames = set(range(first, last + 1))
     count = len(frames)
     result.update(first_frame=first, last_frame=last)
-    if first != -123 or set(original.post) != frames or set(original.pre) != frames:
+    if first != -123 or set(original.post) != set(range(first, fixture_last + 1)) or set(original.pre) != set(range(first, fixture_last + 1)):
         errors.append('fixture does not contain a complete frame sequence from -123')
     if any(not {(0, False), (1, False)} <= set(players) for players in original.post.values()):
         errors.append('fixture does not contain both P1 and P2 on every frame')
@@ -268,8 +298,8 @@ def verify_pair(fixture: Path, client_a: dict, client_b: dict, *,
             evidence = {}
         evidences.append(evidence)
         exact = dict(schema=1, mode=require_mode, role=role, connection_selected=True,
-                     match_started=True, match_completed=True, first_frame=first,
-                     last_frame=last, remote_fixture_reads=0, desyncs=0)
+                     match_started=True, match_completed=not early, first_frame=first,
+                     last_frame=evidence.get('last_frame') if early else last, remote_fixture_reads=0, desyncs=0)
         for key, expected in exact.items():
             value = evidence.get(key)
             if type(value) is not type(expected) or value != expected:
@@ -297,7 +327,18 @@ def verify_pair(fixture: Path, client_a: dict, client_b: dict, *,
             state = _trace(Path(client['trace']))
             recording = _complete_replay(Path(client['recording']))
             traces.append(state)
-            hash_sets.append(_hashes(Path(client['hashes'])))
+            hashes = _hashes(Path(client['hashes']))
+            if early:
+                own_frames = set(range(first, recording.last_frame + 1))
+                if (set(recording.pre) != own_frames or set(recording.post) != own_frames or
+                    set(state) != own_frames or not own_frames <= set(hashes) or
+                    not set(hashes) <= set(range(first, evidence['confirmed_frame'] + 2))):
+                    raise ValueError('incomplete early-end artifacts')
+                recording.pre = {f: v for f, v in recording.pre.items() if f in frames}
+                recording.post = {f: v for f, v in recording.post.items() if f in frames}
+                state = {f: v for f, v in state.items() if f in frames}
+                hashes = {f: v for f, v in hashes.items() if f in frames}
+            hash_sets.append(hashes)
             if set(recording.pre) != frames or any(
                 set(recording.pre.get(frame, {})) != set(original.pre.get(frame, {}))
                 for frame in frames
@@ -325,7 +366,7 @@ def verify_pair(fixture: Path, client_a: dict, client_b: dict, *,
                 if previous is None or input_mismatch['frame'] < previous['frame']:
                     result['first_input_divergence'] = input_mismatch
             for label, actual in (('trace', state), ('recording', recording.post)):
-                comparison = replay_diff.compare(original.post, actual)
+                comparison = replay_diff.compare({f: original.post[f] for f in frames}, actual)
                 exact_shape = set(actual) == frames and all(
                     set(actual[frame]) == set(original.post[frame]) for frame in frames
                     if frame in actual and frame in original.post)
@@ -342,7 +383,7 @@ def verify_pair(fixture: Path, client_a: dict, client_b: dict, *,
                     if previous is None or candidate['frame'] < previous['frame']:
                         result['first_divergence'] = candidate
             if role == 1:
-                result['compared_player_frames'] = sum(len(p) for p in original.post.values())
+                result['compared_player_frames'] = sum(len(original.post[f]) for f in frames)
         except (OSError, KeyError, TypeError, ValueError, IndexError, struct.error) as exc:
             post_ok = False
             inputs_ok = False

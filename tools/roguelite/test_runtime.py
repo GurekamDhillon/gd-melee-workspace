@@ -9,17 +9,22 @@ import prepare
 LUA = shutil.which('lua5.4') or shutil.which('lua')
 assert LUA, 'Lua required'
 PRELUDE = r'''
-local last_scene;local files={};local mx,my,mb=-1000,-1000,0; local controls=0; local tick=100;local pause=false;local request=true
+local last_scene;local pending_scene;local scene_ended=false;local files={};local mx,my,mb=-1000,-1000,0; local controls=0; local tick=100;local pause=false;local request=true
 local ps={[1]={x=-42,y=0,vx=0,vy=0,stocks=99,percent=0,facing=1,action=14,airborne=false,hitlag=0,costume=0},[2]={x=28,y=0,vx=0,vy=0,stocks=99,percent=0,facing=-1,action=14,airborne=false,hitlag=0,costume=0}}
 local models={};local enemies={};local serial=0;local writes=0;local hits=0;local claims={};local masks={};local commands={};local cpu={};local fail_write=false;local fail_hit=false;local refuse_platform=false;local refuse_teleport={};local isolated=false;local refuse_isolation=false
 local kit=setmetatable({roles={},row={pitch=36}}, {__index=function() return function() return 1 end end})
 gd={buttons={A=256,B=512,UP=8,DOWN=4,LEFT=1,RIGHT=2},kit=kit,
- log=function() end,data_read=function(n)return files[n]end,
+ log=function() end,data_read=function(n)if n=='config.txt' then return files[n] or 'generator=legacy' end return files[n]end,
  data_write=function(n,s) if fail_write then error('disk full') end files[n]=s;writes=writes+1;return true end,
  command=function(n,f)commands[n]=f end,input=function(p)claims[p]=true end,
  input_mask=function(p,b)masks[p]=b end,release_pad=function(p)claims[p]=nil end,
  tbd_request=function()local v=request;request=false;return v end,
- scene_launch=function(opts)last_scene=opts.p1;assert(opts.mode=='vs','unsupported scene grammar');assert(opts.p2=='fox/c0/cpu9');assert(opts.stocks==99 and opts.items=='off' and opts.time==0,'unbounded/native-scene rules mismatch');tick=0 end,match=function()return {active=true,frame=tick,netplay=false,stage=37}end,
+ scene_launch=function(opts)
+ last_scene=opts.p1
+ assert((opts.mode=='lab' and opts.p2=='none') or (opts.mode=='vs' and opts.p2=='fox/c0/cpu9'),'unsupported scene grammar')
+ assert(opts.stocks==99 and opts.items=='off' and opts.time==0,'unbounded/native-scene rules mismatch')
+ pending_scene=opts;scene_ended=false;tick=0
+ end,match=function()return {active=true,frame=tick,netplay=false,stage=37}end,
  player=function(p)return ps[p]end,pad=function()return {buttons=controls}end,
  pause=function()pause=true end,resume=function()pause=false end,paused=function()return pause end,
  mouse=function()return mx,my,mb end,
@@ -31,15 +36,25 @@ gd={buttons={A=256,B=512,UP=8,DOWN=4,LEFT=1,RIGHT=2},kit=kit,
  stage_isolate=function(value)if value~=nil then if value and refuse_isolation then return false end isolated=value end return isolated end,
  spawn_enemy=function(kind,x,y,opts)serial=serial+1;enemies[serial]={kind=kind,x=x,y=y,facing=opts.facing,hits=0,received=0,attack_id=1,damage=0};return serial end,
  enemy_state=function(h)return enemies[h]end,enemy_strike=function()return true end,enemy_hurt=function(h,spec)enemies[h].damage=enemies[h].damage+spec.damage;return true end,
- enemy_remove=function(h)enemies[h]=nil end,enemy_alive=function(h)return enemies[h]~=nil end,cpu_mode=function(p,m)cpu[p]=m;return true end,
+ enemy_remove=function(h)enemies[h]=nil end,enemy_alive=function(h)return enemies[h]~=nil end,cpu_mode=function(p,m)assert(ps[p],'absent CPU touched');cpu[p]=m;return true end,
  hit=function(p,opts)if fail_hit then return false end hits=hits+1;ps[p].percent=ps[p].percent+opts.damage;return true end,
  impulse=function()return true end,fx_play=function()return 0 end,fx_end=function()end,
  parts_clear=function()end,parts=function()return {geometry_signature='unknown'}end,
  fill=function()end,project=function(x,y)return x+320,240-y end}
+local function fixture_scene_tick()
+ if not pending_scene then return end
+ if not scene_ended then
+  on_match_end();ps[2]=nil;cpu[2]=nil;scene_ended=true
+  ps[1]={x=0,y=0,vx=0,vy=0,stocks=99,percent=0,facing=1,action=14,airborne=false,hitlag=0,costume=0}
+  if pending_scene.p2~='none' then ps[2]={x=28,y=0,vx=0,vy=0,stocks=99,percent=0,facing=-1,action=14,airborne=false,hitlag=0,costume=0} end
+ end
+ tick=tick+1
+ if tick>91 then pending_scene=nil end
+end
 gd.data_write_atomic=gd.data_write; -- deterministic safe writer fixture
 '''
 TEST = r'''
-local function step(b) controls=b or 0;on_tick() end
+local function step(b) controls=b or 0;fixture_scene_tick();on_tick() end
 local function press(b)step(0);step(b);step(0)end
 local function frame()tick=tick+1;on_frame()end
 local function state()return roguelite_state()end
@@ -52,23 +67,28 @@ local function click(id)
  if state().loading then error('preload did not settle') end
  if state().menu==nil and not state().active and state().ready then step(0) end
 end
-local function door(side)ps[1].x=side=='left' and -52 or 52;ps[1].y=0;press(4)end
+local function door(side)
+ ps[1].x=side=='left' and -104 or 104;ps[1].y=0;press(4)
+ if pending_scene then for i=1,140 do step();if not pending_scene and state().ready then break end end;for i=1,12 do if state().active or state().menu then break end;step() end end
+end
 step();assert(not state().ready);step();assert(not state().ready);tick=91;step();assert(state().ready and state().menu=='collection')
 assert(claims[4] and not claims[1]);assert(pause)
--- Breeding, persistent locks and a selected inherited starter are real core calls.
-click('parents');click('gene:g3');click('confirm');assert(state().profile.genes.g4)
-click('gene:g1');click('lock');assert(state().profile.genes.g1.locks.potency)
+-- Collection starter selection saves, without creating free genes or locks.
+local collection_writes=writes
+click('gene:g3');click('starter');assert(state().menu_view.starter=='g3' and writes==collection_writes+1)
+click('gene:g1');click('starter');assert(state().menu_view.starter=='g1' and writes==collection_writes+2)
+assert(not state().profile.genes.g4 and not state().profile.genes.g1.locks.potency)
 refuse_teleport[1]=true;click('start')
 assert(state().node=='entry' and not state().active and not pause and state().menu==nil)
 refuse_teleport[1]=nil;step(0);assert(state().active and not pause)
-assert(cpu[2]=='stand' and ps[2].x==58 and isolated)
--- Parked noncombat fighters cannot farm defense charge.
+assert(ps[2]==nil and isolated)
+-- Player-only exploration cannot farm defense charge.
 on_action_change(1,179,181,false)
 assert(state().run.hosts.player.state.guard.charge==0)
-ps[1].x=52;ps[1].y=0;step(4);step(4);step(4)
+ps[1].x=104;ps[1].y=0;step(4);step(4);step(4)
 assert(state().node=='trail' and state().command=='root');step(0);assert(next(models))
 -- Door cannot steal down while inside the three-way command menu.
-ps[1].x=-52;ps[1].y=0;press(1);assert(state().node=='trail');press(4);assert(state().node=='trail')
+ps[1].x=-104;ps[1].y=0;press(1);assert(state().node=='trail');press(4);assert(state().node=='trail')
 press(8);press(8)
 local enemy_handle=next(enemies);assert(enemy_handle)
 -- Real queued enemy contacts use the current move instance; duplicate events and
@@ -120,9 +140,9 @@ on_action_change(1,179,181,false)
 assert(state().run.hosts.player.state.guard.charge==0)
 local arena_checkpoint={};for name,value in pairs(files) do arena_checkpoint[name]=value end
 assert(state().run.genes[state().run.hosts.player.slots.assault].upgrades.potency==2)
-refuse_teleport[2]=true;door('right')
-assert(state().node=='rest' and not state().active and not pause and state().menu==nil and cpu[2]=='stand')
-refuse_teleport[2]=nil;step(4);step(4)
+refuse_teleport[1]=true;door('right')
+assert(state().node=='rest' and not state().active and not pause and state().menu==nil and ps[2]==nil)
+refuse_teleport[1]=nil;step(4);step(4)
 assert(state().active and state().menu=='rest' and pause)
 -- Fusion consumes authored parents, re-equips child, retains ancestry.
 click('gene:r1');click('parents');click('gene:r3');click('confirm')
@@ -140,7 +160,7 @@ assert(state().profile.finished[state().run.id].export)
 local checkpoint_a,checkpoint_b=files['checkpoint-a.txt'],files['checkpoint-b.txt']
 assert(checkpoint_a and checkpoint_b and writes>3)
 on_draw();commands.rogue_state();commands.rogue_route('4242');commands.rogue_route('bogus');on_unload();assert(not claims[4] and masks[1]==0 and not pause)
-print('runtime: native-entry wait, collection/breeding/locks, doors, commands, genes, shield charge, refusal, stocks, rewards, fusion and export passed (engine stubs)')
+print('runtime: native-entry wait, collection/starter saves, doors, commands, genes, shield charge, refusal, stocks, rewards, fusion and export passed (engine stubs)')
 '''
 
 def run(code):
@@ -163,7 +183,7 @@ RESTORED = r'''
 assert(roguelite_state().profile and roguelite_state().run)
 step();step();tick=91;step();assert(roguelite_state().ready)
 -- A throwing native write is contained; it cannot disable the gameplay script.
-fail_write=true;click('lock');fail_write=false
+fail_write=true;click('gene:g3');click('discard');click('discard');fail_write=false
 assert(roguelite_state().feedback.notification.kind=='error')
 assert(roguelite_state().feedback.notification.title:find('write/readback failed',1,true))
 on_unload()
@@ -181,7 +201,7 @@ RESUME_ARENA = r'''
 files=arena_checkpoint;request=true;tick=0;on_unload();
 '''
 CHECK_ARENA = r'''
-step();step();tick=91;step();click('resume')
+step();step();tick=91;step();click('resume');for i=1,140 do step() end
 assert(roguelite_state().node=='arena_a' and roguelite_state().menu==nil)
 assert(roguelite_state().run.progress.claimed.arena_a and cpu[2]=='stand')
 print('runtime: claimed arena resumes with stand CPU and no duplicate reward')
@@ -271,7 +291,7 @@ FUTURE_CHECK = r'''
 step();step();tick=91;step();assert(state().ready)
 assert(files[FUTURE_SLOT]==FUTURE_BYTES,'future checkpoint lost during load')
 -- A save-triggering interaction must not overwrite the preserved future slot.
-click('lock')
+click('gene:g3');click('discard');click('discard')
 assert(files[FUTURE_SLOT]==FUTURE_BYTES,'future checkpoint overwritten by save')
 local other=FUTURE_SLOT=='checkpoint-a.txt' and 'checkpoint-b.txt' or 'checkpoint-a.txt'
 assert(files[other] and files[other]:match('^TBD3'),'no replacement checkpoint was written')

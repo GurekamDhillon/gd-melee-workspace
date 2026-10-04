@@ -22,6 +22,25 @@ local function fields() return {generation=5,profile=assert(Core.snapshot(profil
 '''
 
 TEST = r'''
+-- Batched checksum remains byte-for-byte compatible with frozen recurrence.
+local function old_checksum(s)
+ local h=7;for i=1,#s do h=(h*131+s:byte(i))%2147483647 end
+ return string.format('%08x',h)
+end
+for length=0,1025 do
+ local bytes={};for i=1,length do bytes[i]=string.char((i*173+length*19)%256) end
+ local text=table.concat(bytes)
+ assert(Checkpoint.checksum(text)==old_checksum(text),'checksum compatibility length '..length)
+end
+for _,length in ipairs({24576,24577,24578,1048576})do
+ local text=string.rep(string.char(255),length)
+ assert(Checkpoint.checksum(text)==old_checksum(text),'large checksum compatibility')
+end
+local instructions=0;local payload=string.rep('abc',8192)
+debug.sethook(function()instructions=instructions+100 end,'',100)
+Checkpoint.checksum(payload);debug.sethook()
+print('checkpoint checksum instructions='..instructions)
+assert(instructions<110000,'checkpoint checksum must batch exact-safe byte groups')
 -- Round trip preserves every generation.
 local text=Checkpoint.encode(fields())
 local back=assert(Checkpoint.decode(text,Core,Codec))

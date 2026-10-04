@@ -32,7 +32,7 @@ def install_room_kit(mod):
 
 def bundle(source=SOURCE):
     chunks = []
-    for name, local in [('core', 'Core'), ('rng', 'Rng'), ('codec', 'Codec'), ('room_catalogue', 'RoomCatalogue'), ('room_recipes', 'RoomRecipes'), ('encounter_catalogue', 'EncounterCatalogue'), ('gene_catalogue', 'GeneCatalogue'), ('enemy_catalogue', 'EnemyCatalogue'), ('audio_catalogue', 'AudioCatalogue'), ('progression', 'Progression'), ('progress', 'Progress'), ('checkpoint', 'Checkpoint'), ('topology', 'Topology'), ('adapter', 'Adapter'), ('route', 'Route'), ('route_map', 'RouteMap'), ('inspector', 'Inspector'), ('legacy', 'Legacy'), ('dungeon', 'Dungeon'), ('dungeon_v1', 'DungeonV1'), ('commands', 'Commands'), ('roster', 'Roster'), ('bindings', 'Bindings'), ('visuals', 'Visuals'), ('feedback', 'Feedback'), ('menus', 'Menus'), ('rooms', 'Rooms'), ('enemy_genes', 'EnemyGenes'), ('technical_ai', 'TechAI'), ('runtime_rooms', 'RuntimeRooms'), ('runtime_encounters', 'RuntimeEncounters'), ('runtime_rewards', 'RuntimeRewards'), ('runtime_campaign', 'RuntimeCampaign'),
+    for name, local in [('core', 'Core'), ('rng', 'Rng'), ('codec', 'Codec'), ('room_catalogue', 'RoomCatalogue'), ('room_recipes', 'RoomRecipes'), ('encounter_catalogue', 'EncounterCatalogue'), ('gene_catalogue', 'GeneCatalogue'), ('enemy_catalogue', 'EnemyCatalogue'), ('audio_catalogue', 'AudioCatalogue'), ('progression', 'Progression'), ('progress', 'Progress'), ('checkpoint', 'Checkpoint'), ('topology', 'Topology'), ('adapter', 'Adapter'), ('route', 'Route'), ('route_map', 'RouteMap'), ('inspector', 'Inspector'), ('legacy', 'Legacy'), ('dungeon', 'Dungeon'), ('dungeon_v1', 'DungeonV1'), ('prototype_v1', 'PrototypeV1'), ('maze', 'Maze'), ('traversal', 'Traversal'), ('physical_campaign', 'PhysicalCampaign'), ('commands', 'Commands'), ('roster', 'Roster'), ('bindings', 'Bindings'), ('visuals', 'Visuals'), ('feedback', 'Feedback'), ('menus', 'Menus'), ('rooms', 'Rooms'), ('enemy_genes', 'EnemyGenes'), ('technical_ai', 'TechAI'), ('runtime_rooms', 'RuntimeRooms'), ('runtime_encounters', 'RuntimeEncounters'), ('runtime_rewards', 'RuntimeRewards'), ('runtime_campaign', 'RuntimeCampaign'),
         # Compact presentation, appended after every earlier runtime module so
         # the existing names and their order stay byte-compatible with the
         # previously installed bundle. main.lua reads them lexically.
@@ -47,7 +47,7 @@ def bundle(source=SOURCE):
     chunks.append((source / 'main.lua').read_text())
     return '\n'.join(chunks)
 
-def install(app, enable=False, restore=False, demo=False):
+def install(app, enable=False, restore=False, demo=False, render_probe=False):
     app = Path(app).resolve()
     mods = app / 'mods'
     mods.mkdir(parents=True, exist_ok=True)
@@ -58,11 +58,13 @@ def install(app, enable=False, restore=False, demo=False):
         return
     # Read the whole bundle before creating an incomplete installed mod.
     script = bundle()
+    if render_probe:
+        script += "\n" + (ROOT / "tools/roguelite/render_probe.lua").read_text()
     mod = mods / 'roguelite'
     (mod / 'scripts').mkdir(parents=True, exist_ok=True)
     (mod / 'scripts/main.lua').write_text(script)
     (mod / 'mod.json').write_text(json.dumps({
-        'id': 'roguelite', 'name': 'TBD: Genes and Routes', 'version': '0.1.0',
+        'id': 'roguelite', 'name': 'SuperTime Envoy', 'version': '0.1.0',
         'author': 'GD', 'kind': 'script', 'api_version': 1, 'gameplay': True,
         'rollback_safe': False, 'entry': 'scripts/main.lua'}, indent=2) + '\n')
     spec = importlib.util.spec_from_file_location('roguelite_effect_recipes', ROOT / 'tools/effects_lab/recipes.py')
@@ -101,9 +103,10 @@ def main():
     p.add_argument('--app-dir', type=Path, default=ROOT / '_build/agents/linux')
     p.add_argument('--enable', action='store_true')
     p.add_argument('--restore', action='store_true')
-    p.add_argument('--demo', action='store_true', help='Launch the TBD collection automatically for review')
+    p.add_argument('--demo', action='store_true', help='Launch the SuperTime Envoy collection automatically for review')
+    p.add_argument('--render-probe', action='store_true', help='Add opt-in console commands for map/effect occlusion review')
     args = p.parse_args()
-    print(install(args.app_dir, args.enable, args.restore, args.demo))
+    print(install(args.app_dir, args.enable, args.restore, args.demo, args.render_probe))
 
 if __name__ == '__main__':
     main()

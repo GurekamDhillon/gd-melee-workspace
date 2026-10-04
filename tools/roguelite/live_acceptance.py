@@ -16,11 +16,11 @@ import re
 import socket
 import sys
 import time
+import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(game_source.SCRIPTS))
 from console import run
-import game_source
 
 
 def rows(output, prefix):

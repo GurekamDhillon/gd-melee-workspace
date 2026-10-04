@@ -113,12 +113,8 @@ def check_sonic(dest, doc, default_dest, default_doc, dump):
     # 0xeeb8859a7.c lines 96-116, 300-311. False flag = 3.0%, true = 5.2%.
     expected = {"SDash2": [(3.0, 108, 8, 80), (5.2, 108, 8, 80)],
                 "SDash3": [(3.0, 46, 88, 80), (5.2, 46, 85, 80)]}
-    hover = events_for(dest, doc, "SStart2")
-    hover_get = [e for e in hover if e["frame"] == 0 and e["sub"] == 0x08]
-    assert len(hover_get) == 1
-    assert hover_get[0]["words"] == sp.GET(sp.var(sp.LAI, sp.SONIC_PREV_N), sp.V_ATTACK_CONNECTED_PREV)
-    assert next(e for e in hover if e["frame"] == 0)["words"] == hover_get[0]["words"]
-    assert not any(e["sub"] == 0x08 for e in events_for(default_dest, default_doc, "SStart2"))
+    # The powered flag (LA int 2) is set where SEARCH ends, never from a hit (test_sonic_blade.py).
+    assert not any(e["sub"] == 0x08 for e in events_for(dest, doc, "SStart2"))
     for name, want in expected.items():
         row = next(r for r in dump if r["script"] == "game_specials" + name[-1] and r["kind"] == "game")
         branch = [c["named"] for c in row["commands"] if c["cmd"] == "ATTACK" and c["frame"] == 3]
@@ -128,18 +124,6 @@ def check_sonic(dest, doc, default_dest, default_doc, dump):
         assert all(c["when"][0]["holds"] == (c["named"]["damage"] == 3.0) for c in row["commands"]
                    if c["cmd"] == "ATTACK" and c["frame"] == 3)
         ev = events_for(dest, doc, name)
-        at_entry = [e for e in ev if e["frame"] == 0]
-        up = next(i for i, e in enumerate(at_entry) if e["words"] == [0xEC42C000, 0x3F59999A])
-        assert at_entry[up - 1]["words"] == [0xED240040, 0x21, 0x3F248DBB, 4]
-        assert at_entry[up + 1]["words"] == [0xEC42C100, 0x3F59999A]
-        guard = at_entry[up + 2]
-        assert guard["words"] == [0xED030200, 1, 4]  # LA int 2 == 1; skip both MULFs when 0
-        assert [e["words"] for e in at_entry[up + 3:up + 5]] == [
-            [0xEC42C000, 0x3F933333], [0xEC42C100, 0x3F933333]]
-        words = [w for e in ev for w in e["words"]]
-        for connected, next_word in ((0, 0xED240040), (1, 0xEC42C000)):
-            offset = guard["offset"] + len(guard["words"]) + (guard["words"][2] if connected == 0 else 0)
-            assert words[offset] == next_word
         assert not any(e["frame"] == 3 and e["sub"] == 0x12 and e["words"][1] in (0x3B, 0x3C)
                        for e in ev)
         f3 = [e for e in ev if e["frame"] == 3 and (e["op"] == 11 or
@@ -195,9 +179,11 @@ def check_rebound(dest, doc):
         assert any(e["frame"] == 0 and e["op"] == 26 and e["words"][0] == sp.INTANGIBLE[0] for e in ev)
         assert any(e["frame"] == 19 and e["op"] == 26 and e["words"][0] == sp.NORMAL[0] for e in ev)
         assert not any(e["sub"] == 0x3A for e in ev)
-    expected_targets = {"SStart": {"SDash1"}, "SStart2": {"SDash2", "SDash3"},
-                        "SDash1": {"SStart2", "SEnd", "SEndAir"},
-                        "SDash2": {"SStart2", "SEnd", "SEndAir"},
+    turns = {"SStart2", "STurnUp", "STurnDown"}
+    expected_targets = {"SStart": {"SDash1"}, **{t: {"SDash2", "SDash3"} for t in turns},
+                        "SDash1": {"SSearch", "SEnd", "SEndAir"},
+                        "SDash2": {"SSearch", "SEnd", "SEndAir"},
+                        "SSearch": turns | {"SEnd", "SEndAir"},
                         "SDash3": {"SEnd", "SEndAir"}, "LwAttack": {"LwAttackBack"},
                         "LwAttackAir": {"LwAttackBackAir"}, "S3Combo2": {"S3Combo3"}}
     for state in doc["states"]:
@@ -215,7 +201,8 @@ def check_rebound(dest, doc):
 
 def check_s3_combo(dest, doc, clips, host, base=0):
     names = [s["name"] for s in doc["states"]]
-    assert names[-2:] == ["S3Combo2", "S3Combo3"]
+    assert [n for n in names if n.startswith("S3")] == ["S3Combo2", "S3Combo3"]
+    assert names[-3:] == sp.SIDE_EXTRA_STATES
     assert names.index("S3Combo2") >= base + sp.STATES.index("LwRebound")
     for row in (53, 54, 55, 56, 57):
         ev = overlay_events(dest, doc, row)
@@ -287,7 +274,7 @@ def main():
         for n in ("SDash2", "SDash3", "LwAttack"):
             assert events_for(plain_dest, plain_doc, n) == events_for(dest, doc, n)
         assert [s["name"] for s in doc["states"]] == sp.STATES
-        assert len(doc["states"]) == 19
+        assert len(doc["states"]) == 19 + len(sp.SIDE_EXTRA_STATES)
         assert [s["subaction"] for s in doc["states"]] == [sp.HOSTS[host][n] for n in sp.STATES]
         check_up_special(dest, doc)
         check_sonic(dest, doc, default_dest, default_doc, dump)

@@ -621,7 +621,7 @@ PRELUDE_MAIN = r'''
 local Core=assert(dofile(arg[1] .. '/core.lua'))
 local Codec=assert(dofile(arg[1] .. '/codec.lua'))
 local Checkpoint=assert(dofile(arg[1] .. '/checkpoint.lua'))
-local last_scene;local files={};local mx,my,mb=-1000,-1000,0;local controls=0;local tick=100;local pause=false;local request=true
+local pending_scene;local last_scene;local files={};local mx,my,mb=-1000,-1000,0;local controls=0;local tick=100;local pause=false;local request=true
 local ps={[1]={x=-42,y=0,vx=0,vy=0,stocks=99,percent=0,facing=1,action=14,airborne=false,hitlag=0,costume=0},
  [2]={x=28,y=0,vx=0,vy=0,stocks=99,percent=0,facing=-1,action=14,airborne=false,hitlag=0,costume=0}}
 local function snapshot(p)
@@ -639,7 +639,12 @@ gd={buttons={A=256,B=512,UP=8,DOWN=4,LEFT=1,RIGHT=2},kit=kit,
  command=function(n,f)commands[n]=f end,input=function(p)claims[p]=true end,
  input_mask=function(p,b)masks[p]=b end,release_pad=function(p)claims[p]=nil end,
  tbd_request=function()local v=request;request=false;return v end,
- scene_launch=function(opts)last_scene=opts.p1;assert(opts.mode=='vs','scene grammar');assert(opts.p2=='fox/c0/cpu9');assert(opts.stocks==99 and opts.items=='off' and opts.time==0);tick=0 end,
+ scene_launch=function(opts)
+  last_scene=opts.p1
+  assert((opts.mode=='lab' and opts.p2=='none') or (opts.mode=='vs' and opts.p2=='fox/c0/cpu9'),'scene grammar')
+  assert(opts.stocks==99 and opts.items=='off' and opts.time==0)
+  pending_scene=opts;tick=0
+ end,
  match=function()return {active=true,frame=tick,netplay=false,stage=37}end,
  player=snapshot,pad=function()return {buttons=controls}end,
  pause=function()pause=true end,resume=function()pause=false end,paused=function()return pause end,
@@ -659,7 +664,17 @@ gd={buttons={A=256,B=512,UP=8,DOWN=4,LEFT=1,RIGHT=2},kit=kit,
  impulse=function()return true end,fx_play=function()return 0 end,fx_end=function()end,
  parts_clear=function()end,parts=function()return {geometry_signature='unknown'}end,
  fill=function()end,project=function(x,y)return x+320,240-y end,hud_visible=function()return true end}
-local function step(b) controls=b or 0;on_tick() end
+local function step(b)
+ controls=b or 0
+ if pending_scene then
+  local opts=pending_scene;pending_scene=nil
+  if on_match_end then on_match_end() end
+  ps={[1]={x=-42,y=0,vx=0,vy=0,stocks=99,percent=0,facing=1,action=14,airborne=false,hitlag=0,costume=0}}
+  if opts.p2~='none' then ps[2]={x=28,y=0,vx=0,vy=0,stocks=99,percent=0,facing=-1,action=14,airborne=false,hitlag=0,costume=0} end
+  tick=0
+ else tick=math.min(100,tick+31) end
+ on_tick()
+end
 local function press(b) step(0);step(b);step(0) end
 local function state() return roguelite_state() end
 local function click(id)
@@ -788,6 +803,33 @@ on_draw();on_action_change(1,14,44,false);on_hit(1,2,{item=false})
 if commands.rogue_state then commands.rogue_state() end
 if commands.rogue_map then commands.rogue_map() end
 print('PASS main v2 new run, per-socket travel and save-refusal recovery')
+''')
+
+    def test_main_v2_restore_keeps_route_run_and_inventory_in_one_checkpoint(self):
+        self.run_lua(r'''
+files={};request=true;tick=0
+ready();click('start');step();step();tick=91;step()
+assert(settle(400),'certified v2 new run did not activate')
+local c=assert(roguelite_v2());local progress=c:progress()
+assert(progress,'v2 fixture has no route progress')
+-- Seed a consistent two-item fixture through the real checkpoint seam; this
+-- route's authored starting room does not guarantee a supply pickup.
+state().run.inventory.items.legacy_restore=2
+state().run.progress.supplies=2;progress.supplies=2
+assert(uv(on_tick,'save')(),'could not persist the v2 supply fixture')
+ps[1].percent=90
+-- Real command-tree Restore path; the inventory, Core run mirror and route
+-- campaign counter must all move together in the durable checkpoint.
+step(0);step(2);step(0);step(0);step(1);step(0)
+assert(ps[1].percent==60,'v2 Restore did not apply exactly once')
+assert(state().run.inventory.items.legacy_restore==1,'v2 inventory did not decrement')
+assert(state().run.progress.supplies==1,'v2 Core mirror did not decrement')
+assert(progress.supplies==1,'v2 campaign counter did not decrement')
+local saved=newest_checkpoint()
+assert(saved.progress.supplies==1 and saved.run.progress.supplies==1,
+ 'v2 checkpoint contains split supply counts')
+assert(saved.run.inventory.items.legacy_restore==1,'v2 checkpoint inventory disagrees with supply count')
+print('PASS v2 Restore commits route, run and inventory supply counts atomically')
 ''')
 
     def test_main_transition_pauses_gameplay_and_recovers(self):
@@ -1087,6 +1129,7 @@ assert(after and after.deferred and after.deferred.id==earned,'the deferred gene
 assert(after.export==nil,'the relaunch silently exported the pending gene')
 
 -- It must be REACHABLE through the collection menu.
+click('exports')
 local view=state().menu_view
 local claim
 for _,c in ipairs(view.controls) do if c.id=='claim_export:'..run_id then claim=c end end

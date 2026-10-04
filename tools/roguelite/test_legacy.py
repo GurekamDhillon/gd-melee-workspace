@@ -4,6 +4,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import hashlib
 import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -11,6 +12,8 @@ RT = game_source.ROGUELITE
 FIXTURES = ROOT / '_build/roguelite-validation-saves/legacy-v1'
 LUA = shutil.which('lua5.4') or shutil.which('lua')
 assert LUA, 'Lua interpreter required'
+# Pin the frozen generator to historical 7a91c0a29, not the generator under test.
+assert hashlib.sha256((RT / 'dungeon_v1.lua').read_bytes().replace(b'\r\n', b'\n')).hexdigest() == '80fac102a349c8308196a179fe768a0a377cdf020d35d3d427179254651569f5', 'frozen historical V1 generator changed'
 
 MODULES = [RT / name for name in ('rng.lua', 'core.lua', 'codec.lua', 'checkpoint.lua', 'progress.lua', 'dungeon_v1.lua', 'legacy.lua')]
 
@@ -34,6 +37,12 @@ local back=assert(Checkpoint.decode(migrated,Core,Codec))
 assert(back.generation==12 and back.profile.id==profile.id and back.run.id==run.id)
 assert(back.roster==roster)
 local expected=assert(V1.generate(run.world_seed))
+local old=expected.nodes.trail.room
+assert(old.floor.left==-65 and old.floor.right==65 and old.spawn.x==-42)
+assert(old.kit.unit==6.5 and old.kit.grid==13 and old.kit.bay==26 and old.kit.height==26)
+assert(old.exit_anchors.left.x==-52 and old.exit_anchors.right.x==52)
+assert(old.platforms[1].y==12 and old.platforms[3].y==24 and old.platforms[1].ledges)
+assert(old.platforms[1].width==22 and old.platforms[3].width==24)
 assert(Codec.encode(back.manifest)==Codec.encode(expected),'manifest not byte-identical to v1 route')
 assert(back.manifest.nodes[run.progress.room],'progress room missing after migration')
 -- TBD1 has no roster and no manifest section, and still migrates.

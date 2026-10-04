@@ -13,7 +13,6 @@ import json
 import os
 from pathlib import Path
 import secrets
-import shutil
 import socket
 import subprocess
 import sys
@@ -197,6 +196,7 @@ def launch(args, role, ports, run_id, salt, profiles, proxy_ports=None,
                MELEE_SLIPPI_REMOTE_PORT=str(proxy_ports[role-1] if proxy_ports else ports[2-role]),
                MELEE_SLIPPI_MATCH_ID=run_id,
                MELEE_SLIPPI_DELAY=str(args.delay), MELEE_SLIPPI_RUN_SALT=salt,
+               MELEE_SLIPPI_TIMEOUT_MS=str(getattr(args, 'peer_timeout_ms', 5000)),
                MELEE_SLP=(fixture_override or args.fixture).as_posix(),
                MELEE_INPUT='none', MELEE_VOLUME='3',
                MELEE_MODS_DIR=args.empty_mods.as_posix(),
@@ -208,7 +208,7 @@ def launch(args, role, ports, run_id, salt, profiles, proxy_ports=None,
     if profiles:
         env['MELEE_SLIPPI_USER_JSON'] = '-'
         env['MELEE_SLIPPI_CODE'] = profiles[2-role]['connectCode']
-    command = [os.environ.get('GW_BASH') or shutil.which('bash') or 'bash', '-c',
+    command = ['C:/Program Files/Git/bin/bash.exe', '-c',
                'export PATH=/usr/bin:/bin:$PATH; exec bash "$GW_ROOT/tools/port/run.sh" '
                '"$MELEE_SLIPPI_RUN_NAME" --iso "$MELEE_ISO"']
     process = None
@@ -234,6 +234,10 @@ def launch(args, role, ports, run_id, salt, profiles, proxy_ports=None,
             cleanup_failed_launch(process, directory/'melee-pc.exe', launched_after)
         log.close()
         raise
+
+
+def valid_pair_exits(codes, negative_control: bool) -> bool:
+    return tuple(codes) == (0, 0) or (negative_control and tuple(codes) == (3, 3))
 
 
 def evaluate_negative_control(mutation: dict, normal: dict, consensus: dict) -> dict:
@@ -268,6 +272,8 @@ def run(args) -> dict:
         raise RunError('UDP impairment is only available in loopback mode')
     if args.negative_control and args.mode != 'loopback':
         raise RunError('input negative control is only available in loopback mode')
+    if not 1000 <= args.peer_timeout_ms <= 60000:
+        raise RunError('peer timeout must be 1000..60000 ms')
     replay = _complete_replay(args.fixture)
     profiles = profiles_from_args(args)
     ports = free_ports()
@@ -303,19 +309,20 @@ def run(args) -> dict:
                                altered_fixture if role == 1 else None))
         deadline = time.monotonic() + (args.timeout or max(180, (replay.last_frame+124)/60*3+120))
         next_update = time.monotonic()
+        allowed_exits = (0, 3) if args.negative_control else (0,)
         while any(item.process.poll() is None for item in runs):
             for item in runs:
                 item.discover()
             if time.monotonic() >= deadline:
                 raise RunError('paired match exceeded its deadline')
-            if any(item.process.poll() not in (None, 0) for item in runs):
+            if any(item.process.poll() not in (None, *allowed_exits) for item in runs):
                 raise RunError('a native client exited with failure; inspect its private run log')
             if time.monotonic() >= next_update:
                 print(json.dumps(dict(status='running', mode=args.mode,
                                       observed_game_processes=sum(len(item.games) for item in runs))), flush=True)
                 next_update = time.monotonic()+10
             time.sleep(0.2)
-        if any(item.process.returncode != 0 for item in runs):
+        if not valid_pair_exits([item.process.returncode for item in runs], args.negative_control):
             raise RunError('native client failed')
         clients = []
         expected_tags = {account_tag(profile, salt) for profile in profiles}
@@ -327,6 +334,8 @@ def run(args) -> dict:
             if profiles and (evidence.get('run_salt') != salt or
                              evidence.get('account_tag') not in expected_tags):
                 raise RunError('matchmaking identity does not match the requested account pair')
+            if (item.process.returncode == 3 or 'exit_code' in evidence) and evidence.get('exit_code') != item.process.returncode:
+                raise RunError('early exit lacks explicit in-game end evidence')
             clients.append(dict(evidence=evidence, trace=item.directory/'state.csv',
                                 recording=item.directory/'match.slp', hashes=item.directory/'hashes.csv'))
         clients.sort(key=lambda client: client['evidence'].get('role', 0))
@@ -334,10 +343,10 @@ def run(args) -> dict:
             raise RunError('both evidence files name the same game process')
         if args.negative_control:
             normal = verify_pair(args.fixture, *clients, require_mode='loopback',
-                                 require_rollback=args.require_rollback)
+                                 require_rollback=args.require_rollback, allow_early_end=True)
             consensus = verify_pair(clients[0]['recording'], *clients,
                                     require_mode='loopback',
-                                    require_rollback=args.require_rollback)
+                                    require_rollback=args.require_rollback, allow_early_end=True)
             result = evaluate_negative_control(mutation, normal, consensus)
         else:
             result = verify_pair(args.fixture, *clients, require_mode=args.mode,
@@ -380,6 +389,8 @@ def main() -> int:
     parser.add_argument('--accounts-helper', type=Path, help='private local Python provider exposing profiles()')
     parser.add_argument('--delay', type=int, choices=range(1,8), default=2)
     parser.add_argument('--timeout', type=float)
+    parser.add_argument('--peer-timeout-ms', type=int, default=5000,
+                        help='ENet and gameplay stall timeout, 1000..60000 ms')
     parser.add_argument('--require-rollback', action='store_true')
     parser.add_argument('--negative-control', action='store_true',
                         help='alter one P1 A input in client 1 only; require divergence and client consensus')

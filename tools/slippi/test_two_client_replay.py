@@ -118,5 +118,14 @@ class RunnerOwnershipTest(unittest.TestCase):
                 runner.launch(SimpleNamespace(min_free_gib=8), 1, (45001, 45002), 'test', 'ab'*16, [])
 
 
+class EarlyExitTest(unittest.TestCase):
+    def test_only_matching_early_exit_is_accepted(self):
+        self.assertTrue(runner.valid_pair_exits([3, 3], True))
+        self.assertTrue(runner.valid_pair_exits([0, 0], False))
+        for codes, negative in (([3, 3], False), ([0, 3], True),
+                                ([3, 2], True), ([2, 2], True)):
+            self.assertFalse(runner.valid_pair_exits(codes, negative))
+
+
 if __name__ == '__main__':
     unittest.main()

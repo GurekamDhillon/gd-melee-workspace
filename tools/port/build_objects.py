@@ -65,7 +65,7 @@ def config(kind, root, source=None, cache=None):
         script = root / "tools/port/portlib.sh"
         tools = [clang]
         variables = ("GW_SDL_INCLUDE", "GW_IMGUI_INCLUDE", "GW_DAWN_INCLUDE",
-                     "GW_DAWN_GEN_INCLUDE")
+                     "GW_DAWN_GEN_INCLUDE", "GW_PROF_TRACY", "GW_RELEASE_BUILD")
     digest = hashlib.sha256()
     digest.update(b"gw-compile-v2\0" + kind.encode() + b"\0")
     if source is not None:
@@ -137,12 +137,13 @@ def run_jobs(jobs, workers, on_success=None, cwd=None, env=None):
 
 def shim_sources(melee):
     platform = melee / "pc/platform"
-    return sorted([*platform.glob("*.c"), *platform.glob("*.cpp")])
+    # Linux compatibility units are built by build_linux.sh, not the Windows shim compiler.
+    return sorted(p for p in [*platform.glob("*.c"), *platform.glob("*.cpp")]
+                  if not p.stem.endswith("_linux"))
 
 
 def scan_shims(melee, out, root, file_hashes=None):
     stale = []
-    fallback_header = None
     melee = melee.resolve()
     file_hashes = file_hashes if file_hashes is not None else scan_stale_tus.FileCache(out / ".content-cache.json")
     configs = {}
@@ -151,13 +152,8 @@ def scan_shims(melee, out, root, file_hashes=None):
         depfile, keyfile = object_paths(obj)
         if not obj.is_file():
             stale.append(source.name)
-        elif depfile.is_file() != keyfile.is_file():
+        elif not depfile.is_file() or not keyfile.is_file():
             stale.append(source.name)
-        elif not depfile.is_file():
-            if fallback_header is None:
-                fallback_header = max((p.stat().st_mtime_ns for p in (melee / "pc/platform").glob("*.h")), default=-1)
-            if source.stat().st_mtime_ns > obj.stat().st_mtime_ns or fallback_header > obj.stat().st_mtime_ns:
-                stale.append(source.name)
         else:
             mode = (source.suffix, source.name.startswith("gw_fx_") and source.suffix == ".cpp")
             if mode not in configs:

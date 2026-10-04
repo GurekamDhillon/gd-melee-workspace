@@ -2,9 +2,10 @@
 from pathlib import Path
 import subprocess
 import unittest
+from prepare import CHECKOUT
 
 
-SCRIPT = Path(__file__).resolve().parents[2] / 'melee/worktrees/linux/pc/scripts/examples/character_parts_lab/main.lua'
+SCRIPT = CHECKOUT / 'pc/scripts/examples/character_parts_lab/main.lua'
 
 DRIVER = r'''
 local mx,my,mb,frame=0,0,0,0

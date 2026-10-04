@@ -1035,3 +1035,8 @@
 ../masstest/shimobj/geno_registry.obj
 ../masstest/shimobj/gw_fx.obj
 ../masstest/shimobj/gw_fx_render.obj
+../masstest/shimobj/gw_surface.obj
+../masstest/shimobj/gw_profiler.obj
+../masstest/shimobj/gw_profiler_tracy.obj
+../masstest/shimobj/gw_profiler_tests.obj
+"../masstest/shimobj/gw_hang.obj"

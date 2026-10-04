@@ -28,6 +28,20 @@ def load_bridge():
     return module
 
 
+class WindowsShimSelectionTests(unittest.TestCase):
+    def test_linux_only_sources_are_not_selected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            melee = Path(tmp)
+            platform = melee / "pc/platform"
+            platform.mkdir(parents=True)
+            for name in ("main.c", "gw_fx_render.cpp", "gw_compat_linux.c"):
+                (platform / name).write_text("/* source */")
+            self.assertEqual(
+                [p.name for p in build_objects.shim_sources(melee)],
+                ["gw_fx_render.cpp", "main.c"],
+            )
+
+
 class StaleScanTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -82,7 +96,7 @@ class StaleScanTests(unittest.TestCase):
         result = subprocess.run(
             [sys.executable, str(PORT / "scan_stale_tus.py"),
              "--files", str(self.files), "--melee", str(self.melee),
-             "--out", str(self.out), "--compare", "--bash", shutil.which("bash")],
+             "--out", str(self.out), "--compare", "--bash", scan_stale_tus.default_bash()],
             capture_output=True, text=True, check=False,
         )
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -119,10 +133,19 @@ class StaleScanTests(unittest.TestCase):
         self.assertEqual(scan_stale_tus.scan_content(self.files, self.melee, self.out, config), [])
         self.assertEqual(scan_stale_tus.scan_content(self.files, self.melee, self.out, b"new flag"), ["src/example.c"])
 
-    def test_missing_dependency_record_uses_timestamp_fallback(self):
-        self.assertEqual(scan_stale_tus.scan_content(self.files, self.melee, self.out, b"config"), [])
-        self.set_time(self.source, 40)
+    def test_missing_dependency_record_rebuilds_even_when_source_is_older(self):
         self.assertEqual(scan_stale_tus.scan_content(self.files, self.melee, self.out, b"config"), ["src/example.c"])
+
+    def test_shim_without_dependency_record_rebuilds_when_source_is_older(self):
+        platform = self.melee / "pc/platform"
+        platform.mkdir()
+        source = platform / "example.c"
+        source.write_text("int example;\n")
+        self.set_time(source, 20)
+        obj = self.out / "example.obj"
+        obj.write_bytes(b"legacy object")
+        self.set_time(obj, 30)
+        self.assertEqual(build_objects.scan_shims(self.melee, self.out, ROOT), ["example.c"])
 
     def test_missing_included_file_is_stale(self):
         depfile = self.obj.with_suffix(self.obj.suffix + ".d")
@@ -169,7 +192,7 @@ class CachedScanTests(unittest.TestCase):
         self.header.write_bytes(b"header A")
         build_objects.record(self.obj, self.source, self.melee, b"config")
 
-    def test_warm_scan_reads_no_dependencies_or_depfiles(self):
+    def test_warm_scan_reads_each_input_once(self):
         self.prepare_record()
         self.assertEqual(scan_stale_tus.scan_content(self.files, self.melee, self.out, b"config"), [])
         original_open = Path.open
@@ -180,7 +203,15 @@ class CachedScanTests(unittest.TestCase):
             return original_open(path, *args, **kwargs)
         with mock.patch.object(Path, "open", tracked_open):
             self.assertEqual(scan_stale_tus.scan_content(self.files, self.melee, self.out, b"config"), [])
-        self.assertEqual(reads, [])
+        self.assertCountEqual(reads, [self.source, self.header, Path(str(self.obj) + ".d"), Path(str(self.obj) + ".sha256")])
+
+    def test_same_size_edit_with_restored_mtime_invalidates_object(self):
+        self.prepare_record()
+        self.set_time(self.header, 80)
+        self.assertEqual(scan_stale_tus.scan_content(self.files, self.melee, self.out, b"config"), [])
+        self.header.write_bytes(b"header B")
+        self.set_time(self.header, 80)
+        self.assertEqual(scan_stale_tus.scan_content(self.files, self.melee, self.out, b"config"), ["src/example.c"])
 
     def test_shared_header_is_read_once_and_stat_changes_invalidate_hash(self):
         self.prepare_record()
@@ -241,9 +272,10 @@ class CachedScanTests(unittest.TestCase):
         (self.out / ".content-cache.json").write_text("interrupted JSON")
         self.assertEqual(scan_stale_tus.scan_content(self.files, self.melee, self.out, b"config"), [])
 
-    def test_tools_are_cached_between_scans_but_byte_changes_invalidate(self):
+    def test_tool_bytes_are_rechecked_between_scans_even_with_same_stat(self):
         tool = self.out / "clang.exe"
         tool.write_bytes(b"compiler A")
+        self.set_time(tool, 3)
         cache_path = self.out / "tools.json"
         cache = scan_stale_tus.FileCache(cache_path)
         with mock.patch.dict(os.environ, {"GW_CLANG": str(tool)}):
@@ -257,7 +289,7 @@ class CachedScanTests(unittest.TestCase):
                 return original_open(path, *args, **kwargs)
             with mock.patch.object(Path, "open", tracked_open):
                 self.assertEqual(build_objects.config("shim", ROOT, self.source, scan_stale_tus.FileCache(cache_path)), old)
-            self.assertEqual(reads, [])
+            self.assertEqual(reads, [tool])
             tool.write_bytes(b"compiler B")
             self.set_time(tool, 3)
             self.assertNotEqual(build_objects.config("shim", ROOT, self.source, scan_stale_tus.FileCache(cache_path)), old)

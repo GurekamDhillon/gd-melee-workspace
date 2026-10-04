@@ -70,3 +70,99 @@ are outside lane isolation. Read [HANDOFF.md section 6](../../docs/HANDOFF.md#6-
 
 Read the run's log and crash logs as well as the test summary. Record EXE/game revision, disc,
 mods, run directory and switches with any result. A successful older run is not a HEAD check.
+
+## Owned runs and hang diagnosis
+
+Use native Windows Python (Windows 10+), including from Git Bash. `run.sh` creates a
+suspended child **inside** a kill-on-close Windows Job Object using
+`PROC_THREAD_ATTRIBUTE_JOB_LIST`, writes `run.json`, then resumes it. Only its
+Python supervisor holds the job handle; the child cannot inherit it. Killing the
+supervisor closes the job in the kernel. If `timeout N bash run.sh ...` ends only
+bash, the supervisor notices its native parent handle signalled within 250 ms and
+ends its own child. It never owns or kills another run's job.
+
+Agents must use an owner tag and a distinct sandbox, wait for completion, then
+verify their inventory is empty before reporting that nothing remains running:
+
+```bash
+MELEE_RUN_OWNER=alpha MELEE_UNATTENDED=1 bash tools/port/run.sh --max-seconds 180 alpha-check --iso "$GW_ISO_ACE"
+python tools/port/runs.py wait alpha-check
+python tools/port/runs.py status --owner alpha
+```
+
+`--max-seconds N` goes before the sandbox name. `--test` sets unattended policy;
+unattended runs default to 300 seconds and interactive runs to no time limit.
+Explicit `--max-seconds 0` removes the overall limit. `MELEE_MAX_SECONDS` supplies
+the wrapper default. The native watchdog defaults to 10 seconds without a main
+tick (`MELEE_WATCHDOG_SECS=0` disables it), with `MELEE_WATCHDOG_ACTION=log|dump|exit`:
+interactive default `log`, unattended default `exit`. Both `dump` and `exit` attempt
+a minidump; `exit` terminates with code 86 after a bounded dump wait. The supervisor
+also enforces unattended heartbeat/main-tick progress with a five-second margin.
+It detects absent heartbeats too; use a freshly integrated EXE, not an old copy.
+
+`heartbeat.json` records main, completed-present and logic counters; scene; script,
+LAB/step and timed-freeze intent; debugger/system-modal state; hidden/minimized/DWM
+cloaked state; last normal log time; active Lua callback/instruction count; and
+script deadlines. A stalled main loop is fatal under exit policy even if the last
+published intent said paused. Live main ticks with stalled logic, absent presents,
+intentional pause, or hidden windows are distinct diagnostic states. Hiding a
+window releases its adapter when it loses foreground ownership. Fully covering a window with another app is
+not reliably detectable; `occlusion_known=false` states that limitation.
+
+```bash
+python tools/port/runs.py status
+python tools/port/runs.py reap --owner alpha
+python tools/port/runs.py reap --owner alpha --hung
+python tools/port/runs.py reap --sandbox alpha-check --older-than 600
+python tools/port/runs.py --root "C:/path/lane/runs" wait alpha-check
+```
+
+Selectors combine with AND. Reaping requires an explicit selector and only acts
+on matching tracked runs after rechecking PID, creation time and executable path
+through the same handle used for termination. Untracked games appear in status
+but are never automatically reaped. `status` includes monitor/position and memory,
+and warns below 2 GiB available RAM or at eight live games. `--root` narrows a
+search; the default searches all lanes under `_build`. Ambiguous wait names fail.
+
+CIM creation times are matched within 1 ms of the native FILETIME, with PID and
+executable path still checked. Reaping no matching games prints an explicit
+message and exits 1. Disc paths are replaced with `<disc>` in run metadata,
+diagnostic copies, native logs and crash reports; the executable receives the
+real path. Cache seeding uses an inactive source's atomic run claim and skips
+seeding if process inventory fails.
+
+Unattended volume defaults to 0; interactive volume defaults to 3. An explicit
+`MELEE_VOLUME` wins. `MELEE_PAD_IGNORE_ADAPTER=1` and unattended policy prevent
+adapter device opens. Only the foreground interactive game may claim it; the
+scanner releases background handles independently of rendering. SDL's GameCube
+driver is disabled so it cannot bypass this policy (`MELEE_SDL_GAMECUBE=1` and
+`MELEE_PAD_RELEASE_ON_BLUR=0` no longer reserve the device).
+
+`gd.scene_launch` publishes `scene-transition` / `expected_operation` for at most
+30 seconds, ending at the first completed logic frame in the new scene. A stalled
+main loop remains a hang throughout. Pause entry lines are capped at one per
+30 seconds, with summaries of pause episodes and sampled duration; resume chatter
+is suppressed.
+
+The supervisor leaves `verdict.json` and prints `OK`, `TIMEOUT`, `HUNG`,
+`HUNG presenting=.. logic=..`, `CRASH code=..`, `SILENT_EXIT`, or another explicit
+termination reason. Forced termination saves `diagnosis.json`, the last 200 log
+lines, and a copy of available `hang.txt`; the native watchdog writes `hang.txt`
+and optionally `hang.dmp`. Exit codes: 86 hang, 124 overall timeout, 125 wrapper
+death/reap/launch error, 130 interrupt; normal game/test codes remain intact. The
+actual unsigned Windows fault code is retained in the verdict even when the shell
+can only return 1. `wait` returns 0 only for `OK`.
+
+Scripts and the console can use `gd.deadline("staging maze", 600)` before work,
+and `gd.deadline_done("staging maze")` on completion. Deadlines count live logic
+frames, pause during pause/hitstop, and skip rewind/resimulation. Names belong to
+one script generation. Opening an existing deadline returns false and does not
+extend it; done/unload cancels it. Expiry logs once, stays in heartbeat until done,
+and calls that owner's `on_deadline(name, frames_waited)`. Refusing/failing callbacks
+get a rate-limited summary after `MELEE_SCRIPT_WATCHDOG_SECS` (default 10 seconds).
+False predicates without a reason string are not classified as refusals.
+
+For explicit diagnostic testing only, set `MELEE_WATCHDOG_TEST=1` and use console
+`watchdog-stall 12` with action `log` to let the game recover, or `exit` to verify
+code 86. Native acceptance remains necessary after integration; source checks do
+not establish that a copied EXE has these features.

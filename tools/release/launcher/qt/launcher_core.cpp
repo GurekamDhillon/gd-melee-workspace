@@ -14,6 +14,7 @@
 #include <QUuid>
 #include <QtEndian>
 #include <algorithm>
+#include <functional>
 #include <stdexcept>
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -176,7 +177,9 @@ QVector<Mod> installedMods(const QString &dir) {
     QSet<QString> enabled;
     const bool all = !QFile::exists(dir + "/enabled.txt");
     if (!all) for (auto line : readText(dir + "/enabled.txt").split('\n')) {
-        line = line.trimmed().toLower(); if (!line.startsWith('#') && !line.isEmpty()) enabled.insert(line);
+        line.remove(QChar(0xfeff));
+        line = line.section('#', 0, 0).trimmed().toLower();
+        if (!line.isEmpty()) enabled.insert(line);
     }
     QVector<Mod> result;
     for (const auto &f : QDir(dir).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name)) {
@@ -192,11 +195,47 @@ QVector<Mod> installedMods(const QString &dir) {
     }
     return result;
 }
+static QSet<QString> cyclicMods(const QVector<Mod> &mods, const QSet<QString> &selected) {
+    QMap<QString, QStringList> requirements;
+    for (const auto &m : mods) if (selected.contains(m.id)) requirements[m.id] = m.requires;
+    QMap<QString, int> state;
+    QStringList stack;
+    QSet<QString> cycles;
+    std::function<void(const QString &)> visit = [&](const QString &id) {
+        if (!selected.contains(id) || state.value(id) == 2) return;
+        if (state.value(id) == 1) {
+            for (int i = stack.indexOf(id); i < stack.size(); ++i) cycles.insert(stack[i]);
+            return;
+        }
+        state[id] = 1; stack.append(id);
+        for (const auto &r : requirements.value(id)) visit(r);
+        stack.removeLast(); state[id] = 2;
+    };
+    for (auto i = requirements.begin(); i != requirements.end(); ++i) visit(i.key());
+    return cycles;
+}
 void setModEnabled(const QString &dir, const QString &id, bool on) {
     auto mods = installedMods(dir); QSet<QString> selected; bool found = false;
     for (const auto &m : mods) { if (m.enabled) selected.insert(m.id); found |= m.id == id; }
     if (!found) fail("Unknown mod: " + id);
+    const auto cycles = cyclicMods(mods, selected);
+    if (!on && cycles.contains(id)) {
+        // No member of a requirement cycle can mount. Let the user recover
+        // an invalid default/all-enabled selection without hand-editing it.
+        selected.subtract(cycles);
+        bool changed;
+        do {
+            changed = false;
+            for (const auto &m : mods) if (selected.contains(m.id)) {
+                for (const auto &r : m.requires) if (!selected.contains(r)) {
+                    selected.remove(m.id); changed = true; break;
+                }
+            }
+        } while (changed);
+    }
     if (on) selected.insert(id); else selected.remove(id);
+    auto remainingCycles = cyclicMods(mods, selected).values(); remainingCycles.sort();
+    if (!remainingCycles.isEmpty()) fail("Mod requirement cycle: " + remainingCycles.join(", "));
     for (const auto &m : mods) if (selected.contains(m.id)) {
         for (const auto &r : m.requires) if (!selected.contains(r)) fail(m.id + " requires enabled mod " + r);
         for (const auto &c : m.conflicts) if (selected.contains(c)) fail(m.id + " conflicts with " + c);

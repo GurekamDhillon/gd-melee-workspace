@@ -1,98 +1,106 @@
 #!/usr/bin/env python3
-"""Merge every run sandbox's aurora pipeline cache into one seed: _build/initial_pipeline_cache.db.
+"""Merge pipeline caches or export a no-launch coverage sweep.
 
-Aurora compiles a render pipeline the first time a draw needs one, so a match on a cold cache pops
-in piece by piece. It also loads a read-only seed, `initial_pipeline_cache.db` next to the exe
-(aurora's resourcesPath), and warms every pipeline in it in the background; the loading screen
-holds until that queue is empty (gw_Gfx_PipelinesPending counts background warm-ups too). A seed
-built from a full sweep - every stage and every fighter on every disc - therefore means a fresh
-install drops into a match with its pipelines already built.
+python tools/port/build_pipeline_seed.py [cache.db | sandbox-root ...]
+python tools/port/build_pipeline_seed.py --sweep-plan _build/pipeline-sweep --disc ace --probe-log <existing boot log> --items-json <runtime roster.json>
 
-  python tools/port/build_pipeline_seed.py            # after a sweep
-
-ORDER MATTERS MORE THAN SIZE. Aurora warms the seed in first_frame_used order, and warming all of
-it takes minutes. One match uses ~90 pipelines spread across the whole seed, so a first-use order
-is useless for "the next match". What does work is commonness: ~180 pipelines (those used by at
-least 5% of the sweep's runs) cover about three quarters of a typical match. So first_frame_used is
-rewritten to a rank by how many runs used the pipeline, the core compiles first, and its size goes
-to initial_pipeline_cache.core for the loading screen to wait on (gw_Gfx_SeedCoreCount).
+Inputs are read-only. Unique nonempty compatible caches count as runs. Common
+keys are ranked first; tags and learned origin identities survive merging.
+Sweep export writes a plan and Lua driver only: it never starts a game.
 """
+import argparse
 import collections
-import glob
-import os
+from contextlib import closing
+from pathlib import Path
 import sqlite3
-import sys
 
-root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-build = os.path.join(root, "_build")
-out = os.path.join(build, "initial_pipeline_cache.db")
-tmp = out + ".tmp"
+ROOT=Path(__file__).resolve().parents[2]
+DEFAULT_OUTPUT=ROOT/'_build/initial_pipeline_cache.db'
 
-sources = sorted(glob.glob(os.path.join(build, "runs", "*", "pipeline_cache.db")))
-# Extra sandbox roots (e.g. a lane's _build/agents/<lane>/runs) as arguments.
-for extra in sys.argv[1:]:
-    sources += sorted(glob.glob(os.path.join(extra, "*", "pipeline_cache.db")))
-if not sources:
-    sys.exit("no _build/runs/*/pipeline_cache.db to merge - run a sweep first")
 
-if os.path.exists(tmp):
-    os.remove(tmp)
-db = sqlite3.connect(tmp)
-schema = None
-freq = collections.Counter()
-n_runs = 0
-for src in sources:
-    s = sqlite3.connect("file:%s?mode=ro" % src.replace("\\", "/"), uri=True)
+def discover_sources(inputs=(),include_default=True):
+    paths=list(inputs)
+    if include_default and (ROOT/'_build/runs').is_dir():paths.append(ROOT/'_build/runs')
+    found=set()
+    for value in paths:
+        path=Path(value)
+        if path.is_file():found.add(path.resolve())
+        elif path.is_dir():found.update(p.resolve() for p in path.rglob('pipeline_cache.db'))
+        else:raise ValueError('cache input does not exist: '+str(path))
+    return sorted(found)
+
+
+def merge_caches(sources,output):
+    output=Path(output);tmp=output.with_name(output.name+'.tmp')
+    output.parent.mkdir(parents=True,exist_ok=True)
+    if tmp.exists():tmp.unlink()
+    db=sqlite3.connect(tmp);schema=None;freq=collections.Counter();runs=0;accepted=0
     try:
-        ver = s.execute("SELECT value FROM aurora_schema").fetchone()
-        ddl = s.execute("SELECT name, sql FROM sqlite_master WHERE sql IS NOT NULL").fetchall()
-    except sqlite3.DatabaseError:
-        s.close()
-        continue
-    if schema is None:
-        schema = ver
-        for name, sql in ddl:
-            if name != "pipeline_tags":
-                db.execute(sql)
-        db.execute("INSERT INTO aurora_schema VALUES (?)", ver)
-        # Tag bits per pipeline (AURORA_PIPELINE_TAG_*: 1 = drawn by an item model, which the
-        # match loading screen prewarms). A side table, so older caches without it still merge.
-        db.execute("CREATE TABLE pipeline_tags (type INTEGER NOT NULL, hash INTEGER NOT NULL, "
-                   "tags INTEGER NOT NULL, PRIMARY KEY (type, hash))")
-    elif ver != schema:
-        s.close()
-        continue
-    try:
-        tags = s.execute("SELECT type, hash, tags FROM pipeline_tags").fetchall()
-    except sqlite3.DatabaseError:
-        tags = []
-    db.executemany("INSERT INTO pipeline_tags VALUES (?,?,?) ON CONFLICT(type, hash) DO UPDATE SET "
-                   "tags = tags | excluded.tags", tags)
-    rows = s.execute("SELECT type, hash, config_version, config_size, config, first_frame_used "
-                     "FROM pipeline_cache").fetchall()
-    if rows:
-        n_runs += 1
-        freq.update(set((r[0], r[1]) for r in rows))
-    # Keep the earliest first use: aurora warms in that order, so what a match draws first builds first.
-    db.executemany("INSERT INTO pipeline_cache VALUES (?,?,?,?,?,?) "
-                   "ON CONFLICT(type, hash) DO UPDATE SET "
-                   "first_frame_used = MIN(first_frame_used, excluded.first_frame_used)", rows)
-    s.close()
-db.commit()
-# Re-rank: most-used first (ties keep their earliest first use), so aurora warms the core first.
-ranked = db.execute("SELECT type, hash, first_frame_used FROM pipeline_cache").fetchall()
-ranked.sort(key=lambda r: (-freq[(r[0], r[1])], r[2]))
-db.executemany("UPDATE pipeline_cache SET first_frame_used = ? WHERE type = ? AND hash = ?",
-               [(i, r[0], r[1]) for i, r in enumerate(ranked)])
-core = sum(1 for r in ranked if freq[(r[0], r[1])] >= 0.05 * max(n_runs, 1))
-db.commit()
-n = db.execute("SELECT COUNT(*) FROM pipeline_cache").fetchone()[0]
-n_tagged = db.execute("SELECT COUNT(*) FROM pipeline_tags t JOIN pipeline_cache c "
-                      "ON c.type = t.type AND c.hash = t.hash WHERE t.tags & 1").fetchone()[0]
-db.execute("VACUUM")
-db.close()
-os.replace(tmp, out)
-with open(os.path.join(build, "initial_pipeline_cache.core"), "w") as f:
-    f.write("%d\n" % core)
-print("seed: %d pipelines from %d caches (%d runs), core %d, item-tagged %d -> %s" % (
-    n, len(sources), n_runs, core, n_tagged, out))
+        for src in sorted({Path(p).resolve() for p in sources}):
+            if src==output.resolve():raise ValueError('output seed cannot also be an input')
+            with closing(sqlite3.connect(src.as_uri()+'?mode=ro',uri=True)) as source:
+                try:
+                    ver=source.execute('SELECT value FROM aurora_schema').fetchone()
+                    rows=source.execute('SELECT type,hash,config_version,config_size,config,first_frame_used FROM pipeline_cache').fetchall()
+                except sqlite3.DatabaseError:continue
+                if not ver or not rows:continue
+                if schema is not None and ver!=schema:continue
+                if schema is None:
+                    schema=ver
+                    for table in ('aurora_schema','pipeline_cache'):
+                        ddl=source.execute('SELECT sql FROM sqlite_master WHERE type=\'table\' AND name=?',(table,)).fetchone()
+                        if not ddl:raise ValueError('missing table '+table)
+                        db.execute(ddl[0])
+                    db.execute('INSERT INTO aurora_schema VALUES (?)',ver)
+                    db.execute('CREATE TABLE pipeline_tags(type INTEGER,hash INTEGER,tags INTEGER,PRIMARY KEY(type,hash))')
+                    db.execute('CREATE TABLE pipeline_origins(type INTEGER,hash INTEGER,origin TEXT,PRIMARY KEY(type,hash,origin))')
+                runs+=1;accepted+=1;freq.update({(r[0],r[1]) for r in rows})
+                db.executemany('INSERT INTO pipeline_cache(type,hash,config_version,config_size,config,first_frame_used) VALUES (?,?,?,?,?,?) ON CONFLICT(type,hash) DO UPDATE SET first_frame_used=MIN(first_frame_used,excluded.first_frame_used)',rows)
+                for table,columns,sql in (
+                    ('pipeline_tags','type,hash,tags','INSERT INTO pipeline_tags VALUES (?,?,?) ON CONFLICT(type,hash) DO UPDATE SET tags=tags | excluded.tags'),
+                    ('pipeline_origins','type,hash,origin','INSERT OR IGNORE INTO pipeline_origins VALUES (?,?,?)')):
+                    try:metadata=source.execute('SELECT '+columns+' FROM '+table).fetchall()
+                    except sqlite3.DatabaseError:metadata=[]
+                    db.executemany(sql,metadata)
+        if not runs:raise ValueError('no nonempty compatible pipeline caches; existing seed preserved')
+        ranked=db.execute('SELECT type,hash,first_frame_used FROM pipeline_cache').fetchall()
+        ranked.sort(key=lambda row:(-freq[(row[0],row[1])],row[2],row[0],row[1]))
+        db.executemany('UPDATE pipeline_cache SET first_frame_used=? WHERE type=? AND hash=?',[(i,row[0],row[1]) for i,row in enumerate(ranked)])
+        core=sum(freq[(r[0],r[1])]>=0.05*runs for r in ranked)
+        tagged=db.execute('SELECT COUNT(*) FROM pipeline_tags t JOIN pipeline_cache c ON c.type=t.type AND c.hash=t.hash WHERE t.tags & 1').fetchone()[0]
+        origins=db.execute('SELECT COUNT(*) FROM pipeline_origins o JOIN pipeline_cache c ON c.type=o.type AND c.hash=o.hash').fetchone()[0]
+        db.commit();db.execute('VACUUM');db.close();db=None
+        tmp.replace(output)
+        output.with_suffix('.core').write_text(str(core)+'\n')
+        return dict(pipelines=len(ranked),runs=runs,caches=accepted,core=core,tagged=tagged,origins=origins)
+    finally:
+        if db is not None:db.close()
+        if tmp.exists():tmp.unlink()
+
+
+def main(argv=None):
+    ap=argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('inputs',nargs='*',help='explicit .db paths or recursively scanned cache roots')
+    ap.add_argument('--output',type=Path,default=DEFAULT_OUTPUT)
+    ap.add_argument('--no-default-runs',action='store_true')
+    ap.add_argument('--sweep-plan',type=Path,help='export stage/content sweep driver here; no launch')
+    ap.add_argument('--disc',choices=('vanilla','ace','akaneia'),default='vanilla')
+    ap.add_argument('--probe-log',type=Path,help='existing runtime boot log with dynamic external stage count')
+    ap.add_argument('--items-json',type=Path,help='runtime-discovered item list, or {items:[...]}')
+    ap.add_argument('--seconds',type=int,default=24)
+    args=ap.parse_args(argv)
+    if args.sweep_plan:
+        import json
+        import pipeline_seed_sweep as sweep
+        text=args.probe_log.read_text(encoding='utf-8',errors='replace') if args.probe_log else ''
+        items=json.loads(args.items_json.read_text()) if args.items_json else []
+        if isinstance(items,dict):items=items['items']
+        plan=sweep.make_plan(args.disc,text,items,args.seconds)
+        sweep.export_plan(plan,args.sweep_plan)
+        print('sweep plan:',args.sweep_plan,'runs',len(plan['runs']),'stage/item roster complete',plan['stage_roster_complete'],plan['item_roster_complete'])
+        return 0
+    stats=merge_caches(discover_sources(args.inputs,not args.no_default_runs),args.output)
+    print('seed:',stats,'->',args.output)
+    return 0
+
+if __name__=='__main__':raise SystemExit(main())

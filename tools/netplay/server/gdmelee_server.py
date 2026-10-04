@@ -52,6 +52,7 @@ PAIR_IDLE = 900.0      # seconds without traffic before a PAIRED room is dropped
 QUEUE_IDLE = 10.0      # random queue: seconds without a RAND before an entry is dropped
 QUEUE_MAX = 300.0      # random queue: longest wait before the client is told TIMEOUT
 MAX_ROOMS = 5000
+MAX_QUEUE = 5000  # pending players, independently bounded from completed rooms
 REJECT_IDLE = 60.0  # repeat errors through lost UDP replies and the game's 30s rejoin grace
 
 log = logging.getLogger("gdmelee")
@@ -70,6 +71,7 @@ class Room:
         self.guest_lan = ""
         self.relay = False
         self.seen = time.monotonic()
+        self.random_mods = None  # retain the assignment for lost MATCH replies
 
 
 class Waiter:
@@ -110,6 +112,27 @@ class Server(asyncio.DatagramProtocol):
             if a is not None and self.by_addr.get(a) is room:
                 del self.by_addr[a]
 
+    def leave_room(self, addr, why):
+        """A guest releases its seat; a departing host closes its room."""
+        room = self.by_addr.get(addr)
+        if room is None:
+            return
+        if room.host == addr:
+            self.drop(room, why)
+        else:
+            self.by_addr.pop(addr, None)
+            if room.guest == addr:
+                room.guest = None
+                room.guest_lan = ""
+                room.relay = False
+
+    def send_match(self, room, addr):
+        host = addr == room.host
+        other = room.guest if host else room.host
+        lan = room.guest_lan if host else room.host_lan
+        self.send(addr, "MATCH %s %s %s %s" %
+                  ("HOST" if host else "GUEST", room.code, fmt(other), lan or "-"))
+
     def datagram_received(self, data, addr):
         if data[:4] not in (MAGIC_DATA, MAGIC_CTL):
             return
@@ -145,6 +168,8 @@ class Server(asyncio.DatagramProtocol):
             room.seen = time.monotonic()
             room.relay = True
             other = room.guest if addr == room.host else room.host
+            if self.by_addr.get(other) is not room:
+                return
             self.transport.sendto(data, other)
             self.relayed += 1
             return
@@ -168,15 +193,16 @@ class Server(asyncio.DatagramProtocol):
                 room.guest = None
                 room.relay = False
             else:
-                if room is not None:
-                    self.drop(room, "host re-registered")
                 if len(self.rooms) >= MAX_ROOMS:
                     self.send(addr, "ERR server full")
                     return
+                if room is not None:
+                    self.leave_room(addr, "host re-registered")
                 room = Room(self.new_code(), addr, lan)
                 self.rooms[room.code] = room
                 self.by_addr[addr] = room
                 log.info("room %s opened by %s (lan %s)", room.code, fmt(addr), lan)
+            self.queue.pop(addr, None)
             self.send(addr, "CODE %s %s" % (room.code, fmt(addr)))
         elif cmd == "JOIN":
             if len(words) < 2:
@@ -188,14 +214,17 @@ class Server(asyncio.DatagramProtocol):
             if target is None:
                 self.send(addr, "ERR no room with that code")
                 return
+            if target.host == addr:
+                self.send(addr, "ERR that is your own room")
+                return
+            if room is not None and room is not target:
+                self.leave_room(addr, "joined another room")
+            self.queue.pop(addr, None)
             if target.guest is not None and target.guest != addr:
                 # PERSISTENT ROOMS: a guest coming back for a rematch arrives from a new port;
                 # the newest guest takes the seat (the game's own handshake admits one peer)
                 if self.by_addr.get(target.guest) is target:
                     del self.by_addr[target.guest]
-            if target.host == addr:
-                self.send(addr, "ERR that is your own room")
-                return
             target.guest = addr
             target.guest_lan = lan
             target.seen = time.monotonic()
@@ -215,13 +244,20 @@ class Server(asyncio.DatagramProtocol):
         elif cmd == "RAND":
             mods = words[1] if len(words) > 1 else "-"
             lan = words[2] if len(words) > 2 else ""
+            if room is not None and room.guest is not None and room.random_mods == mods:
+                # RAND is retried until MATCH arrives. Never turn a lost reply
+                # into a new queue request that strands the matched partner.
+                self.send_match(room, addr)
+                return
             me = self.queue.get(addr)
             if me is None:
+                matchable = any(w.mods == mods for w in self.queue.values())
+                if len(self.queue) >= MAX_QUEUE and not matchable:
+                    self.send(addr, "ERR server queue full")
+                    return
                 if room is not None:
-                    self.drop(room, "%s went to random matchmaking" % fmt(addr))
+                    self.leave_room(addr, "%s went to random matchmaking" % fmt(addr))
                 me = Waiter(addr, mods, lan)
-                self.queue[addr] = me
-                log.info("random: %s queued (mods %s, %d waiting)", fmt(addr), mods, len(self.queue))
             else:
                 me.seen = time.monotonic()
                 me.mods, me.lan = mods, lan or me.lan
@@ -230,12 +266,13 @@ class Server(asyncio.DatagramProtocol):
                 if w is not me and w.mods == me.mods and (other is None or w.since < other.since):
                     other = w
             if other is None:
+                self.queue[addr] = me
                 waiting = sum(1 for w in self.queue.values() if w.mods == me.mods)
                 self.send(addr, "QUEUED %d" % waiting)
                 return
             host, guest = (other, me) if other.since <= me.since else (me, other)
-            del self.queue[host.addr]
-            del self.queue[guest.addr]
+            self.queue.pop(host.addr, None)
+            self.queue.pop(guest.addr, None)
             if len(self.rooms) >= MAX_ROOMS:
                 self.send(host.addr, "ERR server full")
                 self.send(guest.addr, "ERR server full")
@@ -243,16 +280,19 @@ class Server(asyncio.DatagramProtocol):
             pair = Room(self.new_code(), host.addr, host.lan)
             pair.guest = guest.addr
             pair.guest_lan = guest.lan
+            pair.random_mods = host.mods
             self.rooms[pair.code] = pair
             self.by_addr[host.addr] = pair
             self.by_addr[guest.addr] = pair
-            self.send(host.addr, "MATCH HOST %s %s %s" % (pair.code, fmt(guest.addr), guest.lan or "-"))
-            self.send(guest.addr, "MATCH GUEST %s %s %s" % (pair.code, fmt(host.addr), host.lan or "-"))
+            self.send_match(pair, host.addr)
+            self.send_match(pair, guest.addr)
             log.info("random: room %s - host %s, guest %s (mods %s)", pair.code, fmt(host.addr),
                      fmt(guest.addr), host.mods)
         elif cmd == "RANDCANCEL":
             if self.queue.pop(addr, None) is not None:
                 log.info("random: %s left the queue", fmt(addr))
+            if room is not None and room.random_mods is not None:
+                self.leave_room(addr, "random matchmaking canceled")
             self.send(addr, "CANCELED")
         elif cmd == "BYE":
             if room is not None:

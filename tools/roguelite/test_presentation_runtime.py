@@ -356,7 +356,7 @@ gd.fill=function(x,y,w,h) fills[#fills+1]={x=x,y=y,w=w,h=h} end
 gd.kit.text=function(x,y,s,role,color,align,opts)
  texts[#texts+1]={x=x,y=y,t=tostring(s)};return 10 end
 gd.kit.icon=function() end
-files={};request=true;tick=0
+files={['config.txt']='generator=legacy'};request=true;tick=0
 ready();click('start');step();step();tick=91;step()
 assert(settle(400),'the certified v2 run did not activate')
 local camp=roguelite_v2()
@@ -463,7 +463,7 @@ local root=presentation:view_commands(cs,avail)
 assert(root.id=='root','unexpected command root')
 local labels={}
 for _,b in ipairs(root.branches) do labels[b.direction]=b.label end
-assert(labels.left=='Abilities' and labels.right=='Item' and labels.down=='Special',
+assert(labels.left=='Abilities' and labels.right=='Supplies' and labels.down=='Run options',
  'the root fork is not the loadout tree: '..tostring(labels.left)..'/'..tostring(labels.right)..'/'..tostring(labels.down))
 -- Drill into the abilities fork: real placed genes, real readiness, real reasons.
 step(0);step(1);step(0)
@@ -626,7 +626,7 @@ print('PASS tutorial advances only from real gameplay and reaches the menus trut
 
     def test_reduced_motion_is_honoured_and_ui_failures_do_not_corrupt_state(self):
         _main(r'''
-files={};request=true;tick=0
+files={['config.txt']='generator=legacy'};request=true;tick=0
 ready();click('start');step();step();tick=91;step()
 assert(settle(400),'the certified v2 run did not activate')
 local camp=roguelite_v2()
@@ -672,7 +672,7 @@ class BundleTests(unittest.TestCase):
     def test_collection_draw_before_first_run_has_no_room_dependency(self):
         script = '(function()\n' + prepare.bundle() + '\nend)()\n'
         body = r"""
-files={};request=true;tick=0
+files={['config.txt']='generator=legacy'};request=true;tick=0
 ready()
 assert(state().menu=='collection' and state().run==nil and state().node==nil)
 local logs,texts={},{}
@@ -691,7 +691,7 @@ print('PASS fresh collection renders before any room or run exists')
     def test_production_legacy_onboarding_observes_complete_gameplay_sequence(self):
         script = '(function()\n' + prepare.bundle() + '\nend)()\n'
         body = r'''
-files={};request=true;tick=0
+files={['config.txt']='generator=legacy'};request=true;tick=0
 ready();click('start');step();step();tick=91;step()
 for _=1,400 do step();if state().active then break end end
 assert(state().active and roguelite_v2()==nil)
@@ -699,7 +699,7 @@ local p=uv(on_tick,'presentation')
 local function frame() tick=tick+1;on_frame() end
 local function current(id) assert(p:view().step==id,'expected '..tostring(id)..', got '..tostring(p:view().step)) end
 local function door(side)
- ps[1].x=side=='left' and -52 or 52;ps[1].y=0;press(4)
+ ps[1].x=side=='left' and -104 or 104;ps[1].y=0;press(4)
  for _=1,30 do if state().active then break end;step() end
 end
 current('move')
@@ -728,7 +728,7 @@ click('reward1');current(nil)
 assert(p:view().completed==8 and p:view().pause==false,'full tutorial did not complete from the real gameplay hooks')
 print('PASS all eight onboarding steps follow real production legacy gameplay hooks')
 '''
-        result = subprocess.run([LUA, '-', str(RT)], input=v2.PRELUDE_MAIN + script + body,
+        result = subprocess.run([LUA, '-', str(RT)], input=v2.PRELUDE_MAIN + "files['config.txt']='generator=legacy'\n" + script + body,
                                 text=True, capture_output=True, timeout=120)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('PASS', result.stdout)
@@ -736,12 +736,21 @@ print('PASS all eight onboarding steps follow real production legacy gameplay ho
     def test_run_inventory_owns_consumables_and_survives_refusal(self):
         script = '(function()\n' + prepare.bundle() + '\nend)()\n'
         body = r'''
-files={};request=true;tick=0
+files={['config.txt']='generator=legacy'};request=true;tick=0
 ready();click('start');step();step();tick=91;step()
 for _=1,400 do step();if state().active then break end end
 assert(state().active and roguelite_v2()==nil,'expected the shipped legacy path')
 local cs=uv(on_tick,'command_state');local avail=uv(on_tick,'availability')
 assert(state().run.progress.supplies==2,'fixture supplies')
+-- The shipped legacy Restore handler must honor an explicit native refusal.
+ps[1].percent=90
+local native_set=gd.set_percent
+gd.set_percent=function(port,n) ps[port].percent=n;return false end
+step(0);step(2);step(0);step(0);step(1);step(0)
+gd.set_percent=native_set
+assert(state().run.progress.supplies==2,'legacy Restore spent an item after native refusal')
+assert(state().run.inventory.items.legacy_restore==2,'legacy Restore changed inventory after native refusal')
+assert(ps[1].percent==90,'legacy Restore changed damage after native refusal')
 ps[1].percent=90
 -- One real D-pad spend: root -> item -> Restore.
 step(0);step(2);step(0)
@@ -758,9 +767,23 @@ fail_atomic=false
 assert(state().run.progress.supplies==1,'a refused save consumed an item')
 assert(state().run.inventory.items.legacy_restore==1,'a refused save mutated the inventory')
 assert(ps[1].percent==60,'a refused save left a free heal behind')
+-- If the native rollback is refused too, retain ownership and block dispatch
+-- until the exact pre-effect value has been restored.
+local restore_set=gd.set_percent
+gd.set_percent=function(port,n) if n==60 then return false end return restore_set(port,n) end
+fail_atomic=true
+step(0);step(2);step(0);step(0);step(1);step(0)
+fail_atomic=false
+assert(ps[1].percent==30,'failed-save effect fixture did not apply')
+assert(state().run.inventory.items.legacy_restore==1,'failed-save fixture spent before durable save')
+step(0)
+assert(ps[1].percent==30,'the unresolved rollback was not retained')
+gd.set_percent=restore_set;step(0)
+assert(ps[1].percent==60,'the retained rollback did not restore the prior percent')
+assert(state().run.inventory.items.legacy_restore==1,'rollback recovery changed the inventory')
 -- Durable across a relaunch: the inventory, not just the counter.
 local inv_before=state().run.inventory.items.legacy_restore
-on_unload();files={};request=true;tick=0;ready()
+on_unload();files={['config.txt']='generator=legacy'};request=true;tick=0;ready()
 step();step();tick=91;step();click('resume')
 for _=1,400 do step();if state().active then break end end
 assert(state().run.progress.supplies==1,'supplies came back after a relaunch')
@@ -784,7 +807,7 @@ print('PASS R3a: the inventory owns the consumable, is failure-safe and durable 
     def test_equipment_applies_reverts_and_history_records(self):
         script = '(function()\n' + prepare.bundle() + '\nend)()\n'
         body = r'''
-files={};request=true;tick=0
+files={['config.txt']='generator=legacy'};request=true;tick=0
 ready();click('start');step();step();tick=91;step()
 for _=1,400 do step();if state().active then break end end
 assert(state().active,'run did not activate')
@@ -832,6 +855,12 @@ assert(hist.entries and #hist.entries>=1,'no history entry was appended: '..tost
 local last=hist.entries[#hist.entries]
 assert(last.outcome=='failure','history recorded the wrong outcome: '..tostring(last.outcome))
 assert(last.run_id==state().run.id,'history entry is bound to the wrong run')
+local durable=false
+for _,name in ipairs({'checkpoint-a.txt','checkpoint-b.txt'}) do
+ local raw=files[name]
+ if raw and raw:find('"run_id":"'..last.run_id..'"',1,true) then durable=true end
+end
+assert(durable,'the latest run history is missing from the durable finish checkpoint')
 print('PASS R3a: equipment applies, reverts, does not leak, and run history records finishes')
 '''
         code = v2.PRELUDE_MAIN + ';\n' + script + '\n' + body
@@ -843,7 +872,7 @@ print('PASS R3a: equipment applies, reverts, does not leak, and run history reco
     def test_production_legacy_main_uses_real_loadout_and_preserves_up(self):
         script = '(function()\n' + prepare.bundle() + '\nend)()\n'
         body = r'''
-files={};request=true;tick=0
+files={['config.txt']='generator=legacy'};request=true;tick=0
 ready();click('start');step();step();tick=91;step()
 for _=1,400 do step();if state().active then break end end
 assert(state().active and roguelite_v2()==nil,'production certification did not use the legacy path')
@@ -852,7 +881,7 @@ local choose=uv(on_tick,'choose_menu')
 local root=presentation:view_commands(cs,avail)
 assert(root.branches[1].label=='Abilities','legacy kept the authored default tree')
 local function door(side)
- ps[1].x=side=='left' and -52 or 52;ps[1].y=0;press(4)
+ ps[1].x=side=='left' and -104 or 104;ps[1].y=0;press(4)
  for _=1,30 do if state().active then break end;step() end
 end
 door('right');assert(state().node=='trail')
@@ -900,7 +929,7 @@ for _,b in ipairs(presentation:view_commands(cs,avail).branches) do
 end
 print('PASS shipped legacy main uses real placed genes, preserves held Up, refunds and disables spent supplies')
 '''
-        result = subprocess.run([LUA, '-', str(RT)], input=v2.PRELUDE_MAIN + script + body,
+        result = subprocess.run([LUA, '-', str(RT)], input=v2.PRELUDE_MAIN + "files['config.txt']='generator=legacy'\n" + script + body,
                                 text=True, capture_output=True, timeout=120)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('PASS', result.stdout)
@@ -940,10 +969,11 @@ print('PASS shipped legacy main uses real placed genes, preserves held Up, refun
             script = '(function()\n' + prepare.bundle(source=directory) + '\nend)()\n'
         finally:
             shutil.rmtree(directory, ignore_errors=True)
-        target = Path('/tmp/roguelite-presentation-bundle.lua')
-        target.write_text(script)
-        result = subprocess.run([LUA, '-e', f'assert(loadfile("{target}")) print("PASS")'],
-                                capture_output=True, text=True, timeout=60)
+        with __import__('tempfile').TemporaryDirectory() as folder:
+            target = Path(folder) / 'roguelite-presentation-bundle.lua'
+            target.write_text(script, encoding='utf-8')
+            result = subprocess.run([LUA, '-', str(target)], input='assert(loadfile(arg[1])) print("PASS")',
+                                    capture_output=True, text=True, timeout=60)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('PASS', result.stdout)
 

@@ -92,6 +92,33 @@ private slots:
         removeMod(d.path(), "addon"); QVERIFY(!QDir(d.path() + "/addon").exists()); QVERIFY(QDir(d.path() + "/.removed").exists());
         QVERIFY(QDir(d.path() + "/base").exists());
     }
+    void enabledFileCommentsMatchTheEngine() {
+        QTemporaryDir d;
+        writeAtomic(d.path() + "/foo/mod.json", "{}");
+        writeAtomic(d.path() + "/bar/mod.json", "{}");
+        writeAtomic(d.path() + "/enabled.txt", "\xef\xbb\xbf# saved selection\n foo # keep this mod\nbar\n");
+        auto mods = installedMods(d.path());
+        QCOMPARE(mods.size(), 2); QVERIFY(mods[0].enabled); QVERIFY(mods[1].enabled);
+        setModEnabled(d.path(), "bar", false);
+        QCOMPARE(readText(d.path() + "/enabled.txt"), "# Enabled mods for the next launch\nfoo\n");
+    }
+    void rejectRequirementCyclesWithoutChangingTheSelection() {
+        QTemporaryDir d;
+        writeAtomic(d.path() + "/a/mod.json", "{\"requires\":[\"b\"]}");
+        writeAtomic(d.path() + "/b/mod.json", "{\"requires\":[\"a\"]}");
+        QVERIFY_EXCEPTION_THROWN(setModEnabled(d.path(), "a", true), std::runtime_error);
+        QVERIFY(!QFile::exists(d.path() + "/enabled.txt"));
+    }
+    void disablingInvalidCycleCanRecoverItsDependents() {
+        QTemporaryDir d;
+        writeAtomic(d.path() + "/a/mod.json", "{\"requires\":[\"b\"]}");
+        writeAtomic(d.path() + "/b/mod.json", "{\"requires\":[\"a\"]}");
+        writeAtomic(d.path() + "/child/mod.json", "{\"requires\":[\"a\"]}");
+        writeAtomic(d.path() + "/unrelated/mod.json", "{}");
+        setModEnabled(d.path(), "a", false);
+        auto mods = installedMods(d.path());
+        for (const auto &m : mods) QCOMPARE(m.enabled, m.id == "unrelated");
+    }
     void launchArgumentsAndEnvironment() {
         QTemporaryDir d; auto app = d.path() + "/game with spaces"; auto user = d.path() + "/profile ü";
         QDir().mkpath(app);

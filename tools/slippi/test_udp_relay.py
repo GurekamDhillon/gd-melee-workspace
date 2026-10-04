@@ -4,6 +4,7 @@ import random
 import socket
 import time
 import unittest
+from unittest.mock import Mock, patch
 
 from udp_relay import UdpRelay
 
@@ -83,13 +84,25 @@ class UdpRelayTest(unittest.TestCase):
         self.assertEqual(self.relay.stats['disconnect_dropped'], (1, 0))
 
     def test_stall_holds_then_delivers(self):
-        self.start_relay(stall_every_s=0.05, stall_ms=40)
-        time.sleep(0.051)  # inside the second window's stall
-        start = time.monotonic()
-        self.clients[0].sendto(b'late', ('127.0.0.1', self.relay.ports[0]))
-        self.assertEqual(self.clients[1].recvfrom(16)[0], b'late')
-        self.assertGreaterEqual(time.monotonic() - start, 0.02)
-        self.assertEqual(self.relay.stats['stalled'], (1, 0))
+        # Control the relay's clock, keeping the real UDP/thread path. A 51ms
+        # host sleep can overshoot the entire 40ms stall on Windows or busy CI.
+        clock = Mock()
+        clock.monotonic.return_value = 0.0
+        with patch('udp_relay.time', clock):
+            self.start_relay(stall_every_s=0.05, stall_ms=40)
+            clock.monotonic.return_value = 0.051
+            self.clients[0].sendto(b'late', ('127.0.0.1', self.relay.ports[0]))
+            deadline = time.monotonic() + 0.6
+            while self.relay.stats['received'][0] == 0 and time.monotonic() < deadline:
+                time.sleep(0.005)
+            self.assertEqual(self.relay.stats['stalled'], (1, 0))
+            self.clients[1].settimeout(0.03)
+            with self.assertRaises(socket.timeout):
+                self.clients[1].recvfrom(16)
+            clock.monotonic.return_value = 0.091
+            self.clients[1].settimeout(0.6)
+            self.assertEqual(self.clients[1].recvfrom(16)[0], b'late')
+            self.relay.close()
 
     def test_invalid_impairments(self):
         with self.assertRaises(ValueError):

@@ -45,6 +45,8 @@ GW_JOBS="${GW_JOBS:-}"
 export GW_ROOT GW_BUILD_ROOT GW_MELEE GW_OUT GW_SHIMOBJ GW_CLANG GW_GWTOOL GW_GWTOOL_FLAGS GW_JOBS
 export GW_SDL_INCLUDE GW_IMGUI_INCLUDE GW_DAWN_INCLUDE GW_DAWN_GEN_INCLUDE
 jobs="$(python "$GW_ROOT/tools/port/build_objects.py" jobs)" || gw_die "invalid GW_JOBS"
+source_token="$(python "$GW_ROOT/tools/port/build_provenance.py" --melee "$GW_MELEE" \
+    --build "$GW_BUILD_ROOT" --snapshot)" || gw_die "could not snapshot build inputs"
 echo "jobs      $jobs"
 echo
 
@@ -61,7 +63,7 @@ if [ ${#shims[@]} -gt 0 ]; then
         gw_die "explicit shim compilation failed"
 fi
 
-# REBUILD GAME TUs SELECTED BY CONTENT HASHES OR THE LEGACY TIMESTAMP FALLBACK.
+# REBUILD GAME TUs SELECTED BY CONTENT HASHES.
 #
 # The shim loop below has existed for a while; game TUs never got the same treatment, and that
 # gap silently invalidated a day's work. Four TUs sat with sources from 07:43 against objects
@@ -71,15 +73,15 @@ fi
 # premise for a whole follow-up investigation that was chasing a ghost. The tell was findable all
 # along: the exe did not contain the format string the fix added.
 #
-# Older objects without depfiles still use the conservative timestamp scan. Newly compiled objects
-# record every actual clang include, including forced and system include roots.
+# Older objects without dependency records rebuild once. Each compiled object
+# records every actual clang include, including forced and system include roots.
 tu_list="$GW_ROOT/_build/masstest/files.txt"
 if [ -f "$tu_list" ]; then
     python "$GW_ROOT/tools/port/build_objects.py" game --jobs "$jobs" --files "$tu_list" ||
         gw_die "stale TU compilation failed"
 fi
 
-# REBUILD NATIVE SHIMS SELECTED BY CONTENT HASHES OR THE TIMESTAMP FALLBACK.
+# REBUILD NATIVE SHIMS SELECTED BY CONTENT HASHES.
 #
 # This used to rebuild a shim only when --shim named it, so editing pc/platform/*.c and running
 # build.sh produced a green build of the OLD code. That is not a slow build, it is a WRONG one:
@@ -87,7 +89,7 @@ fi
 # that had never contained it - and then re-testing the same stale binary on three discs and
 # calling it 63/63. A stale object here does not announce itself anywhere.
 #
-# Older shims without depfiles retain the platform-header timestamp rule.
+# Older shims without dependency records rebuild once to establish provenance.
 python "$GW_ROOT/tools/port/build_objects.py" shim --jobs "$jobs" ||
     gw_die "stale shim compilation failed"
 
@@ -152,6 +154,7 @@ for ((pass=1; pass<=max_bridge_passes; pass++)); do
         for src in "$GW_MELEE"/pc/platform/*.c "$GW_MELEE"/pc/platform/*.cpp; do
             [ -e "$src" ] || continue
             name="$(basename "$src")"
+            case "$name" in *_linux.c|*_linux.cpp) continue ;; esac
             if [ "$name" != "gw_mex_bridge.c" ]; then
                 rebuilt_shims+=(--shim "$name")
             fi
@@ -202,4 +205,7 @@ if ! python "$GW_ROOT/tools/mex_port/audit_bridge_abi.py" \
 fi
 sha256sum "$bridge_c" "$bridge_h" "$bridge_obj" >"$bridge_stamp.tmp"
 mv -f "$bridge_stamp.tmp" "$bridge_stamp"
+python "$GW_ROOT/tools/port/build_provenance.py" --melee "$GW_MELEE" \
+    --build "$GW_BUILD_ROOT" --expect-source "$source_token" ||
+    gw_die "could not bind this build to its source inputs"
 echo "OK    $GW_EXE"

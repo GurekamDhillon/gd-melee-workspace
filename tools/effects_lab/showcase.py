@@ -4,11 +4,13 @@ import argparse
 import csv
 import html
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
+BUILD = Path(os.environ.get('GW_BUILD_ROOT', ROOT/'_build')).expanduser().resolve()
 OUT = ROOT / '_build/effects-showcase'
 CAPTURES = ROOT / '_build/effects-tour-profile/data/effects_tour_main'
 
@@ -53,7 +55,9 @@ def build(reviewed=False):
     slides=[]
     for package,name,kind,appearance,expression in CATALOGUE:
         shutil.copy2(CAPTURES/(package+'.png'),OUT/(package+'.png'))
-        paths=list((ROOT/'_build/agents/linux/mods').glob('*/fx/'+package+'/'+package+'.gfx.json'))
+        paths=list((BUILD/'mods').glob('*/fx/'+package+'/'+package+'.gfx.json'))
+        if not paths:
+            raise FileNotFoundError('Installed effect package missing: '+package)
         data=json.loads(paths[0].read_text())
         shaders=sorted({e['material']['shader']['type'] for e in data['emitters']})
         blends=sorted({e['material']['blend'] for e in data['emitters']})

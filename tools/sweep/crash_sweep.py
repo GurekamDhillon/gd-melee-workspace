@@ -37,6 +37,7 @@ VANILLA_STAGES = [  # (name, StKind) - gw_sl_stage_names in gw_runtime.c, one na
 VANILLA_FIGHTERS = list(range(0, 26))  # CharacterKind 0..25, the playable cast
 MEX_CK0 = 34                            # ChKind_Mex0: added fighters are contiguous from here
 MEX_EXT0 = 288                          # added stages: external StKind 288 + k
+PROGRESS_GRACE_SECONDS = 10.0            # heartbeats normally arrive every two seconds
 
 
 def env_isos():
@@ -55,6 +56,9 @@ class Run:
     def __init__(self, disc, kind, tag, scene, secs, what):
         self.disc, self.kind, self.tag, self.scene, self.secs, self.what = disc, kind, tag, scene, secs, what
         self.result, self.detail, self.proc, self.t0, self.sandbox = None, "", None, 0.0, ""
+        self.progress_values = None
+        self.progress_times = None
+        self.progress_stalled = False
 
 
 def prepare_sandbox(out, exe, tag):
@@ -93,9 +97,42 @@ def start(run, out, exe, iso, slot, label):
     run.t0 = time.time()
 
 
+def sample_progress(run, now=None):
+    """Observe liveness throughout the run; an old burst of frames is not evidence."""
+    now = time.monotonic() if now is None else now
+    log = os.path.join(run.sandbox, "melee-pc.log")
+    try:
+        with open(log, encoding="latin-1") as f:
+            text = f.read()
+    except OSError:
+        return
+    entered = re.search(r"scene: enter mode=GM_VS\(2\)[^\n]*screen=GS_VS\(2\)", text)
+    if not entered:
+        return
+    beats = re.findall(r"heartbeat retrace=(\d+) presented=(\d+)", text[entered.start():])
+    if not beats:
+        return
+    values = tuple(map(int, beats[-1]))
+    if run.progress_values is None:
+        run.progress_values = values
+        run.progress_times = [now, now]
+        return
+    for i, value in enumerate(values):
+        # Check the gap before accepting new progress, so a late recovery cannot
+        # erase an extended freeze earlier in the run.
+        if now - run.progress_times[i] > PROGRESS_GRACE_SECONDS:
+            run.progress_stalled = True
+        if value > run.progress_values[i]:
+            run.progress_times[i] = now
+    run.progress_values = values
+
+
 def judge(run):
     log = os.path.join(run.sandbox, "melee-pc.log")
-    text = open(log, encoding="latin-1").read() if os.path.exists(log) else ""
+    text = ""
+    if os.path.exists(log):
+        with open(log, encoding="latin-1") as f:
+            text = f.read()
     crashes = os.listdir(os.path.join(run.sandbox, "crashlogs")) if os.path.isdir(os.path.join(run.sandbox, "crashlogs")) else []
     alive = run.proc.poll() is None
     fatal = re.search(r"FATAL[^\n]*", text)
@@ -112,8 +149,8 @@ def judge(run):
     if not entered:
         last = re.findall(r"scene: enter [^\n]*", text)
         return "NOMATCH", (last[-1] if last else "no scene entered")[:160]
-    if not progressed:
-        return "HANG", "frames stopped after the match began (last heartbeat %s)" % (beats[-1] if beats else "none")
+    if not progressed or run.progress_values is None or run.progress_stalled or run.progress_values[1] == 0:
+        return "HANG", "logic/render progress missing or stalled during the run (last heartbeat %s)" % (beats[-1] if beats else "none")
     return "PASS", ""
 
 
@@ -196,6 +233,7 @@ def main():
                 active[slot] = r
         time.sleep(1)
         for slot, r in list(active.items()):
+            sample_progress(r)
             if r.proc.poll() is not None or time.time() - r.t0 >= r.secs:
                 time.sleep(0.5)
                 r.result, r.detail = judge(r)

@@ -116,21 +116,28 @@ class MexCostumeRowTest(unittest.TestCase):
 class CostumeVisibilityTest(unittest.TestCase):
     def test_each_costume_uses_its_own_dobj_indices(self):
         w = writer()
-        states = [frozenset(("face",)), frozenset(("blink",))]
+        channels = [["blink", "face"]]          # one ModelVis model: state 0 none, 1 blink, 2 face
         groups = [["body", "face", "blink"], ["blink", "body", "face", "extra"]]
 
-        table = IU.write_costume_modelvis(w, states, groups, {"face", "blink"})
+        table = IU.write_costume_modelvis(w, channels, groups)
 
         first = w.u32(table)
         second = w.u32(table + 16)
         self.assertNotEqual(first, second)
-        for model, expected in ((first, ([1], [2])), (second, ([2], [0]))):
+        for model, expected in ((first, ([], [2], [1])), (second, ([], [0], [2]))):
+            self.assertEqual(w.u32(model), len(expected))
             state_table = w.u32(model + 4)
             for index, dobjs in enumerate(expected):
                 entry = state_table + index * 8
                 self.assertEqual(w.u32(entry), len(dobjs))
                 self.assertEqual(list(w.data[w.u32(entry + 4):w.u32(entry + 4) + len(dobjs)]), dobjs)
         self.assertEqual(w.u32(table + 2 * 16), first)
+
+    def test_every_channel_is_its_own_model_entry(self):
+        w = writer()
+        table = IU.write_costume_modelvis(w, [["a", "b"], ["c"]], [["a", "b", "c"]])
+        model = w.u32(table)
+        self.assertEqual([w.u32(model + 8 * i) for i in range(2)], [3, 2])
 
 
 if __name__ == "__main__":

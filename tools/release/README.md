@@ -1,7 +1,7 @@
 # tools/release - public releases
 
 How GD's Melee is packaged for people who are not us: a zip with the game, a launcher that asks
-for the user's own disc image, and nothing of Nintendo's. The commands below describe the scripts at workspace `fc23753`.
+for the user's own disc image, and nothing of Nintendo's.
 
 ## One command
 
@@ -15,13 +15,15 @@ powershell -File tools\release\publish.ps1           # publish for real
 uses `-Strict` and refuses when:
 - the tag `v<VERSION>` already exists on the repo (bump `tools/release/VERSION`);
 - the workspace commit is not on `origin-ws` (the release notes link to it);
-- the melee commit in the exe is not on the public fork `pub`, the melee tree has uncommitted
-  changes, or `_build/melee-pc.exe` is older than melee HEAD (`-Strict` build; the GPL source
-  offer in the zip points at that commit, so it must be public and must be what was built);
+- the melee commit is not on the public fork `pub`, or the game was built from uncommitted
+  source (`-Strict`; the GPL source offer must describe the public source that was built);
+- `build-provenance.json` is absent, malformed, or no longer matches the current source snapshot
+  and final EXE/map hashes. Rebuild with `tools/port/build.sh` to generate it;
 - `check_release.ps1` finds anything it does not recognise.
 
-`-Force` bypasses provenance failures (never `check_release.ps1`). `-DryRun` also turns
-provenance failures into warnings and skips strict mode, so it is not a strict-package proof. `-Repo` picks
+`-Force` bypasses public-commit and clean-source warnings; it never bypasses the source/artifact
+binding or `check_release.ps1`. `-DryRun` skips strict mode, but still requires matching build
+provenance and package checks, so it is not a strict-package proof. `-Repo` picks
 another repo (default `GurekamDhillon/gd-melee-workspace`; the fork `GurekamDhillon/melee` would
 also work). `-Server host:port` bakes a `netplay_server.txt` into the zip; that address is then
 public, so it is off by default.
@@ -54,6 +56,14 @@ docs and licences, the LAB script mod, and Lua examples. To package a lane's bui
 ```powershell
 powershell -File tools\release\build_release.ps1 -GameDir C:\path\build -MeleeDir C:\path\melee -Strict
 ```
+
+The build records a SHA256 snapshot of recognized source/configuration inputs (including nonignored
+untracked source), the game commit and protocol, and final EXE/map hashes. Packaging recomputes these
+before copying the stamp. The folder/zip guard independently checks artifact hashes and their
+commit/protocol against `version.txt`; changing timestamps cannot relabel an older build.
+The guard also requires the engine/runtime/cache files, the complete committed UI, and the deployed
+Qt application, Windows platform plugin, x64 CRT and license notices. Manifest entries and zip paths
+must be unique.
 
 ## Checks before packaging
 
@@ -119,6 +129,8 @@ The current scope is **offline Windows parity**:
   memory card directory even after a rename or ISO change.
 - List local mods, enable/disable with dependency/conflict checks, open mod/script folders,
   and remove mods into a recoverable `.removed` folder.
+  `enabled.txt` supports `#` comments. Cyclic requirements are refused; disabling a cyclic mod
+  clears invalid cycles and their dependents so an all-enabled folder can be recovered.
 - Unlock everything, skip intro, volume, close launcher on play; controller and engine
   diagnostic switches; local log/crash inspection.
 - English/Spanish controls. Low-level file/probe errors currently remain English.
@@ -146,7 +158,7 @@ development packages, CMake and a C++17 compiler:
 bash tools/release/build_launcher.sh _build/launcher-package
 ```
 
-Windows: install Visual Studio 2022 C++ tools, CMake and an MSVC x64 Qt SDK, then:
+Windows: install Visual Studio 2022 or 2026 C++ tools, CMake and an MSVC x64 Qt SDK, then:
 
 ```powershell
 $env:QT_ROOT_DIR = 'C:\Qt\6.8.3\msvc2022_64'
@@ -182,7 +194,21 @@ For headless tests, set `QT_QPA_PLATFORM=offscreen` and `QT_QPA_PLATFORMTHEME=no
 `--play --test-game` runs the actual game engine suite and propagates its exit code.
 Qt runtime deployment follows https://doc.qt.io/qt-6/cmake-deployment.html.
 
-## Crash reports server (not deployed)
+The Windows build selects the newest installed app-local x64 CRT, rather than relying on
+`windeployqt` to infer `VCINSTALLDIR`, and tests the deployed executable with SDK/toolset directories
+removed from PATH. Vendor build-user roots in copied PE diagnostics are replaced in place.
+Modified Qt DLLs are explicitly unsigned: their vendor Authenticode directory/certificate is removed,
+as recorded in `launcher/qt-build.txt`. Other signed images requiring redaction are refused;
+the original Qt SDK and Microsoft CRT signatures remain unchanged.
+
+Local release regressions (no game build or public service needed):
+
+```powershell
+python -m unittest discover -s tools/release -p "test_*.py" -v
+python -m unittest discover -s tools/netplay/server -v
+```
+
+## Crash reports receiver (legacy clients)
 
 `crash_upload_server.py` is plain HTTP on TCP, on the same host:port as the UDP matchmaking server
 (TCP and UDP ports do not collide): `POST /crash`, text body starting with the report header, at
@@ -192,6 +218,7 @@ in memory - addresses are never written), 300 a day overall, 200 MB on disk. Sto
 `python3 crash_upload_server.py --port 51600 --dir /var/lib/gdmelee/crashes`, or from
 `gdmelee_server.py`'s event loop with `await start_crash_upload(bind, port, dir)`. Deploying it
 needs TCP 51600 open on the VPS and a service unit beside `gdmelee.service`.
+The current Qt launcher only inspects/copies local reports; it has no upload client.
 
 ## Why no GitHub Actions build
 

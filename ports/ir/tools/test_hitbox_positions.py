@@ -15,6 +15,7 @@ class PositionTest(unittest.TestCase):
                       "x": 0, "y": 7.2, "z": 3.2}}]}
         events = HP.overlay_source_events(row, {"rates": [[1, .8], [10, 1]],
                                                  "source_end": 18})
+        # r is game frames per clip frame: nine clip frames at .8 take 7.2 game frames.
         self.assertEqual([at for at, _, _ in events], [14, 16])
         self.assertEqual(len(HP.live_source(events, 14)), 1)
         self.assertEqual(HP.live_source(events, 16), [])

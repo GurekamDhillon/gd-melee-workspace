@@ -9,6 +9,7 @@ import tempfile
 import unittest
 from expression import express, TRAITS
 from recipes import build, recipes, asset_catalog, VERSION
+from prepare import CHECKOUT
 
 class EffectsLabTests(unittest.TestCase):
     def test_assets_and_supported_packages(self):
@@ -70,7 +71,7 @@ class EffectsLabTests(unittest.TestCase):
 
     def test_expression_matches_lua(self):
         # Exercise the actual mouse lab expression through its emitted live controls.
-        script=Path(__file__).resolve().parents[2]/'melee/worktrees/linux/pc/scripts/examples/effects_lab/main.lua'
+        script=CHECKOUT/'pc/scripts/examples/effects_lab/main.lua'
         driver='''gd={data_read=function()end,input=function()end,scene_launch=function()end,match=function()return{active=true,frame=100}end,teleport=function()end,player=function()return{x=0,y=0}end,camera_detach=function()end,camera_set=function()end,resume=function()end,fx_play=function()return 1 end,fx_instance=function()return{alive=true}end,fx_end=function()end,mouse=function()return 0,0,0 end,fx_control=function(h,i,c,f)print(i,c.opacity,c.rate,c.speed,c.life,c.size,c.brightness,c.turbulence)end};dofile(arg[0]);on_frame();on_frame()'''
         driver=driver.replace('on_frame();on_frame()', 'on_frame();gd.match=function()return{active=true,frame=0}end;on_frame();gd.match=function()return{active=true,frame=100}end;on_frame()')
         result=subprocess.run(['lua','-e',driver,str(script)],capture_output=True,text=True,check=True)
@@ -81,7 +82,7 @@ class EffectsLabTests(unittest.TestCase):
             for value,target in zip(row[1:],expected):self.assertAlmostEqual(float(value),target)
 
     def test_mouse_workflow(self):
-        script=Path(__file__).resolve().parents[2]/'melee/worktrees/linux/pc/scripts/examples/effects_lab/main.lua'
+        script=CHECKOUT/'pc/scripts/examples/effects_lab/main.lua'
         driver=r'''local mx,my,mb,paused,stepped,plays,edits=0,0,0,false,0,0,0
 local store={};local fades={};local alive=true
 function click(x,y)mx,my,mb=x,y,1;on_tick();mb=0;on_tick()end

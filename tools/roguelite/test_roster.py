@@ -102,6 +102,21 @@ gd={fill=bounds,kit={panel=bounds,button=function(x,y,w,label,selected,opts) bou
  icon=function(name,x,y,scale) bounds(x,y,16*scale,16*scale) end,
  text=function(x,y,txt,role,color,align,opts) assert(x>=0 and y>=0 and y<=480 and x+opts.max_w<=640);total=total+1 end}}
 R.draw(s,ctx);assert(total>35)
+for _,width in ipairs({640,480*16/9,1120}) do
+ local area={x=7,y=3,w=width,h=480};local drawn={}
+ local function box(x,y,w,h)assert(x>=area.x and y>=area.y and x+w<=area.x+width+.0001 and y+h<=area.y+480)end
+ gd.safe_area=function()return area end
+ gd.fill=box;gd.kit.panel=box
+ gd.kit.button=function(x,y,w,label,selected,opts)box(x,y,w,opts.h);drawn[#drawn+1]={x=x,y=y,w=w,h=opts.h}end
+ gd.kit.icon=function(name,x,y,scale)assert(scale==.65);box(x,y,16*scale,16*scale)end
+ gd.kit.text=function(x,y,txt,role,color,align,opts)assert(x>=area.x and y>=area.y and y<=area.y+480 and x+opts.max_w<=area.x+width+.0001)end
+ local v=R.view(s,ctx);R.draw(s,ctx);assert(v.canvas.w==width and #drawn==#v.controls)
+ for i,c in ipairs(v.controls)do assert(c.x==drawn[i].x and c.y==drawn[i].y and c.w==drawn[i].w and c.h==drawn[i].h)end
+ local back=v.controls[#v.controls]
+ assert(back.x+back.w>area.x+.95*width,'unused right side of roster')
+ assert(R.update(s,ctx,{mx=back.x+back.w-1,my=back.y+1,click=true}).kind=='fighter_back','rightmost pointer hit missed')
+end
+
 print('stock roster/picker/binding invariants passed')
 '''
             result = subprocess.run([lua, '-', str(SOURCE), str(counts)], input=program, text=True, capture_output=True, timeout=30)

@@ -1668,3 +1668,83 @@ an authorized offline gameplay script or console may cancel. Cancellation does n
 unload staged content or release warm handles. A scene transition cancels pending
 staging. The director should cancel on a terminal load/warm error rather than leave
 an unfinishable request held.
+
+## Retail Classic and Adventure (1P)
+
+Source addition, 2026-10-03. Offline gameplay mods only. These APIs use the retail
+mode tables, opponents, handicaps, AI levels, bonus stages, continues and Adventure
+cutscenes. Native play/controller acceptance remains pending; source syntax and
+single-feature Lua stubs are checked.
+
+| Call | Contract |
+|---|---|
+| `gd.start_1p{mode="classic", fighter="mario", difficulty=2, stocks=3, loop=true}` | Queues a safe scene reset. Mode is `classic` or `adventure`; fighter is an installed scene-selector name or explicit kind token, without player-option suffixes. Difficulty 0..4 (Normal 2), stocks 1..99. Returns `true`, or `false, reason`; an existing or pending 1P run cannot be replaced, including by its owner. Requires a manifest-backed gameplay mod. |
+| `gd.mode_1p()` | Snapshot table below, or nil outside the tracked offline retail run. |
+| `gd.hold_1p([ticks=1800])` | Claims the current interstage barrier from its clear/complete/game-over callback. Returns boolean. One claim per barrier, clamped to 1..1800 host ticks; cannot renew its deadline. |
+| `gd.release_1p()` | Releases this script's hold; returns false if absent or another script owns it. |
+| `gd.loop_1p(enabled)` | Owner-only New Game+ switch; returns boolean. A run adopted by `spawn_1p` from a manually entered retail mode cannot enable looping, because it has no original launch settings. |
+| `gd.end_1p()` | Owner-only, idempotent cleanup. Cancels a pending initial launch, or safely resets an active run to the menu. Templates, tints and holds are released; record protection remains until retail teardown. Returns boolean. |
+| `gd.spawn_1p(port, options)` | Apply a template to the current main entity and each replacement in that port before its first logic frame. Options: the existing `damage_dealt`, `damage_taken`, `run_speed`, `air_speed`, `shield_max` multipliers (finite, clamped 0.1..4), plus optional `tint=0xRRGGBBAA`. Returns boolean. `nil` clears this script's template/modifier/tint even after match end. A template adopts an otherwise manual retail run into record-protected script ownership. |
+
+Each hook receives one snapshot: `{mode, stage_index, stage_kind, loop, player_port,
+held, final, opponents}`. `mode` is a string; `stage_index` is the zero-based retail
+**battle ordinal**, including Classic bonus stages and Adventure's separate fights
+within a stage block. Retries keep that ordinal. `stage_kind` is `battle`, `team`,
+`giant`, `metal`, `bonus` or `boss`, from the existing retail flags; these tags do
+not change match rules. `loop` begins at zero. Player entity port is 1. `opponents`
+contains only present enemy CPU main entities, excluding allies, with
+`{port, char, kind, entity}`; `char` is CharacterKind, `kind` is FighterKind, and
+`entity` is a monotonically changing spawn generation. Do not use that generation
+as a retry seed. Physical controller ports remain separate from fighter entity ports.
+
+- `on_1p_stage_start(e)` runs after initial entities exist, before their first
+  logic frame. Existing `on_match_start` still runs first.
+- `on_1p_spawn(e)` adds `port` and `entity`; it notifies after a new main entity
+  exists. Native templates already applied before its first logic frame. Notification
+  does not request a new template; calling `spawn_1p` never synthesizes a spawn event.
+- `on_1p_stage_clear(e)` runs when retail accepts a clear, including bonus-stage
+  exits. Failed battles and continued/retried attempts do not produce a clear.
+- `on_1p_boss_defeated(e)` adds `boss_kind` and `port`: Master/Crazy Hand use their
+  native HP/death detection; Adventure Bowser/Giga Bowser use accepted final-block
+  battle clears. These events do not override Crazy Hand or Giga Bowser conditions.
+- `on_1p_complete(e)` is the definitive completion event, with `final=true`.
+  Classic final clear and completion share a barrier and deadline. Adventure can
+  reach completion after a retained cutscene; its distinct completion barrier permits
+  a fresh bounded hold. Bowser clear cannot promise completion before the Giga decision.
+- `on_1p_game_over(e)` runs when a continue is declined or retail exits through
+  its no-contest/retry cancellation path. Explicit script scene replacement also
+  signals termination; `end_1p` is cleanup and does not recursively signal its owner.
+
+The barrier freezes the old scene after its exit decision, before next-scene preload.
+No retail GObj, AI, clock or input logic advances. Drawing, `on_tick`, `on_draw` and
+fresh `gd.pad` reads continue, so A/B/START cannot leak through to retail while held.
+Use those tick hooks for panels, not logic-frame waits. Unload/disable releases the
+owner's hold and ends its scripted run. Deadline expiry releases the flow; an expired
+completion hold disables looping so uncommitted progression cannot auto-start NG+.
+
+Templates multiply the retail ratios instead of rewriting the fighter attributes.
+Giant size, metal armour, team size and CPU level therefore remain retail values.
+They are per replacement **main entity in a port**, not independent persistent
+controllers for multiple entities sharing a port: Ice Climbers' follower shares the
+port's stat modifiers; the template tint is applied to the main entity. Wireframe
+replacements reuse their port's deterministic template; their predecessor's overlay
+is cleared before applying it. New stages and terminal exits clear templates/tints.
+No jump-height field is added by this capability.
+
+Scripted runs write **no Classic/Adventure score, clear/difficulty/stock, target-test,
+play-time, coin or trophy progression records through the retail 1P exit paths**, and
+skip their card-save dispatch. Continue choices and stock reset behavior remain;
+scripted continues do not debit the memory card's coin count. Completion skips the
+retail trophy/congratulations/credits majors to avoid unlocking trophies or inflating
+card records; the script may show its own short congratulations. New Game+ starts
+from stage zero with the original fighter, difficulty and stock setting. A standalone
+`scene_launch` Classic/Adventure without script templates keeps normal retail records
+and ending behavior. Companion growth and saving belong to the mod.
+
+Snapshot/rewind/state-file imports are refused while this orchestration is active:
+the native lifecycle/hold/loop state is not snapshot-owned. No native snapshot resume
+is promised. Modifiers and spawn templates themselves live in game memory.
+
+Single-capability catalogue demos: `demo_1p_awareness`, `demo_1p_hold`,
+`demo_1p_spawn`, `demo_1p_loop` under `pc/scripts/examples/demos/`. Native suite
+fixture: `script_1p`; offline demo stub: `pc/tests/onep_demo_test.lua`.

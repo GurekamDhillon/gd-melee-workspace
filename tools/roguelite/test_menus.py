@@ -29,15 +29,15 @@ local v=M.view(s,ctx);assert(v.selected.id=='g1' and v.selected.stats.potency==1
 assert(click('gene:g3')==nil and s.selected=='g3')
 local a=click('starter');assert(a.kind=='starter' and a.id=='g3')
 local result=M.apply(ctx,a);assert(result.ok and result.starter=='g3');ctx.starter=result.starter
-result=M.apply(ctx,click('lock'));assert(result.ok and p.genes.g3.locks.potency)
--- Breeding previews reproduce exact child and retain parents, without advancing seeds.
-assert(click('parents')==nil and s.parent=='g3')
-assert(click('gene:g1')==nil);local before=snapshot()
-v=M.view(s,ctx);assert(v.child and v.child.gene.locks.potency and v.child.stats.potency==6)
-for i=1,5 do M.view(s,ctx) end;assert(snapshot()==before,'preview changed RNG/source')
-result=M.apply(ctx,click('confirm'));assert(result.ok and p.genes[result.id].base.potency==v.child.gene.base.potency)
-assert(p.genes.g1 and p.genes.g3)
-click('back');click('gene:g2');assert(click('starter').kind=='blocked')
+local before=snapshot()
+for _,control in ipairs(M.view(s,ctx).controls) do
+ assert(control.id~='lock' and control.id~='parents' and control.action.kind~='breed')
+end
+assert(not M.apply(ctx,{kind='breed',a='g1',b='g3'}).ok,'stale breeding action accepted')
+assert(not M.apply(ctx,{kind='lock',id='g3',stat='potency'}).ok,'stale trait lock action accepted')
+assert(snapshot()==before,'collection action changed existing genes or locks')
+s.section='parents';v=M.view(s,ctx);assert(v.section=='main' and not v.child,'stale parent screen remained live')
+click('gene:g2');assert(click('starter').kind=='blocked')
 -- Every stat in reward previews includes active slot modifiers and caps.
 ctx.menu='reward';s=M.new();assert(C.apply_modifier(r,'player','assault',{id='cap',stat='potency',add=18}))
 assert(C.reward(r,'r1','potency',1));assert(C.apply_modifier(r,'player','assault',{id='gain',stat='gain',add=-.6}))
@@ -76,15 +76,11 @@ assert(not r.genes.r1 and not r.genes.r3 and r.genes[result.id])
 for _,stat in ipairs(M.traits) do assert(C.resolve(r,'player','traversal')[stat]==expected.stats[stat]) end
 assert(r.genes[result.id].base.potency==expected.gene.base.potency)
 assert(r.genes[enemy] and r.hosts.enemy_arena.slots.assault==enemy)
--- Conflicting locks and full profile disable the actual mutation, no fabricated child.
-ctx.menu='collection';s=M.new();C.lock(p,'g1','potency',true)
-click('gene:g1');click('parents');click('gene:g3');before=snapshot();v=M.view(s,ctx)
-assert(not v.child and v.preview_error=='conflicting locked traits');assert(click('confirm').kind=='blocked');assert(snapshot()==before)
-C.lock(p,'g1','potency',false);C.lock(p,'g3','potency',false)
+-- Core remains available to tools; existing full collections still paginate.
+ctx.menu='collection';s=M.new()
 while p.next_id<=128 do assert(C.breed(p,'g1','g3')) end
-v=M.view(s,ctx);assert(not v.child and v.preview_error=='collection full')
 -- Pagination exposes every individual through mouse and controller focus.
-click('back');v=M.view(s,ctx);assert(v.pages==22)
+v=M.view(s,ctx);assert(v.pages==22)
 click('next');assert(s.page==2);v=M.view(s,ctx);assert(button(v,'gene:g7'))
 s.focus='previous';M.update(s,ctx,{right=true});assert(s.focus=='next');M.update(s,ctx,{confirm=true});assert(s.page==3)
 -- Controller A returns the same action as mouse click, with no source mutation.

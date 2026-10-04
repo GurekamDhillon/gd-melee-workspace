@@ -19,6 +19,118 @@ spec.loader.exec_module(assets)
 
 
 class RoomsTests(unittest.TestCase):
+    def test_physical_traversal_slab_projection_and_collision_limits(self):
+        self.run_lua(r'''
+local n=Traversal.generate(42).nodes.entry
+local before=serialize(n);local p=assert(R.plan(n));local c=assert(R.collision(n))
+assert(#p.parts==48 and #c.platforms==20 and #c.lines==3 and #c.floor_segments==1)
+assert(before==serialize(n),'planner mutated saved physical geometry')
+local walls=0
+for _,part in ipairs(p.parts) do
+ assert(part.background and part.collision==false and part.scale_z==2)
+ if part.model=='bf_wall_solid_4m' then
+  walls=walls+1;assert(math.abs(part.z-17.68)<.000001)
+  assert(math.abs(part.z+2*(-8.84))<.000001,'slab mesh midpoint not on gameplay plane')
+ else assert(part.z==0,'floor/portal projection moved') end
+end
+assert(walls==4);assert(R.enter(s,n));assert(R.clear(s))
+local bad=copy(n);bad.room.platforms[1].y=157;assert(not R.collision(bad))
+bad=copy(n);bad.physical=nil;assert(not R.collision(bad),'legacy admitted high physical geometry')
+bad=copy(n);bad.room.lines[3].x0,bad.room.lines[3].x1=bad.room.lines[3].x1,bad.room.lines[3].x0
+assert(not R.collision(bad),'wrong ceiling orientation admitted')
+''')
+    def test_generated_maze_render_collision_copy_and_directed_walls(self):
+        self.run_lua(r'''
+local Maze=dofile((arg[1]:gsub('rooms.lua$','maze.lua')))
+for seed=1,30 do
+ local m=Maze.generate(seed)
+ for _,id in ipairs(m.order) do
+  local n=m.nodes[id];local before=serialize(n);local c=assert(R.collision(n));local p=assert(R.plan(n))
+  assert(before==serialize(n) and serialize(c.lines)==serialize(n.room.lines))
+  assert(#c.platforms==7 and #c.lines==6 and #p.parts<=32)
+  local platforms,blockers,upper=0,0,0
+  for _,part in ipairs(p.parts) do
+   assert(part.z==(part.kind=='blocker' and 17.68 or 0) and part.scale_z==2 and part.collision==false and part.background==true)
+   if part.kind=='platform' then platforms=platforms+1 end
+   if part.kind=='blocker' then blockers=blockers+1;assert(part.scale_x*26==8 and part.scale_y*26==48) end
+   if part.kind=='portal' and part.y==54 then upper=upper+1 end
+  end
+  local expected=0;for _,e in ipairs(n.exits) do if e.side=='top' or e.side=='bottom' then expected=expected+1 end end
+  assert(platforms==7 and blockers==2 and upper==expected)
+  assert(R.enter(s,n));for _,v in pairs(live) do assert(v.opts.scale_z==2) end
+  assert(R.clear(s))
+ end
+end
+local bad=copy(Maze.generate(1).nodes.entry)
+bad.room.lines[1].y0,bad.room.lines[1].y1=bad.room.lines[1].y1,bad.room.lines[1].y0
+assert(not R.collision(bad),'backwards wall accepted')
+''')
+    def test_all_plans_preserve_world_projection_with_background_depth(self):
+        kit = ROOT / 'menu/out_roguelite/room-kit'
+        bounds = {}
+        for mesh in kit.glob('*.gxmesh'):
+            data = mesh.read_bytes()
+            _, _, nv, _, _, _, _, offset, _ = assets.HEADER.unpack_from(data)
+            bounds[mesh.stem] = max(struct.unpack_from('>8f', data, offset+i*32)[2] for i in range(nv))
+        maxima = '{' + ','.join('["%s"]=%r' % row for row in sorted(bounds.items())) + '}'
+        self.run_lua('local forward=' + maxima + r'''
+local function check(n)
+ local before=serialize(R.collision(n));local p=assert(R.plan(n))
+ for _,part in ipairs(p.parts) do
+  assert(forward[part.model], 'missing independently decoded mesh bounds')
+  assert(part.z==0 and part.background==true and part.collision==false, 'assembly projection/depth policy drift')
+ end
+ assert(before==serialize(R.collision(n)), 'visual depth changed physics')
+ assert(R.enter(s,n))
+ for _,instance in pairs(live) do assert(instance.opts.z==0 and instance.opts.background==true and instance.opts.collision==false) end
+ assert(R.clear(s))
+end
+for _,id in ipairs(manifest.order) do check(manifest.nodes[id]) end
+for id,t in pairs(C.rooms) do
+ local g,r=Recipes.resolve(t)
+ check({id=id,template_id=id,recipe=t.recipe,recipe_version=r.version,
+  recipe_modules=r.modules or {},room=g,exits={}})
+end
+''')
+
+    def test_double_scale_preserves_assembly_and_background_depth(self):
+        self.run_lua(r'''
+local n=copy(manifest.nodes.trail)
+n.room.kit={unit=13,grid=26,bay=52,height=52,depth=0}
+n.room.exit_anchors={left={x=-104,y=0},right={x=104,y=0}}
+n.room.platforms={{x=-44,y=24,width=44,passthrough=true,ledges=false},
+ {x=44,y=24,width=44,passthrough=true,ledges=false},
+ {x=0,y=48,width=48,passthrough=true,ledges=false}}
+local p=assert(R.plan(n));local floors=0
+for _,part in ipairs(p.parts) do
+ assert(part.z==0 and part.scale_z==2 and part.scale_y==2 and not part.collision and part.background==true)
+ if part.kind=='mainfloor' then floors=floors+1;assert(part.scale_x==2) end
+ if part.kind=='platform' then assert(part.scale_x*26==44 or part.scale_x*26==48) end
+end
+assert(floors==5)
+local old=copy(n);old.room.floor={left=-65,right=65,y=0}
+old.room.kit={unit=6.5,grid=13,bay=26,height=26,depth=0}
+old.room.platforms={};old.room.exit_anchors={left={x=-52,y=0},right={x=52,y=0}}
+assert(R.plan(old),'older narrow saved snapshot rejected')
+local g,r=Recipes.resolve(C.rooms.branch_y)
+local recipe={id='double_ascent',template_id='branch_y',recipe=C.rooms.branch_y.recipe,
+ recipe_version=r.version,recipe_modules=copy(r.modules),room=copy(g),exits={}}
+local dimensions={x=true,y=true,x0=true,y0=true,x1=true,y1=true,left=true,right=true,
+ width=true,unit=true,grid=true,bay=true,height=true,depth=true}
+local function double(t)
+ for k,v in pairs(t) do
+  if type(v)=='table' then double(v) elseif dimensions[k] and type(v)=='number' then t[k]=v*2 end
+ end
+end
+double(recipe.room);double(recipe.recipe_modules)
+local original=serialize(recipe);local rp=assert(R.plan(recipe));local stairs=0
+assert(serialize(recipe)==original and #rp.lines==2)
+for _,part in ipairs(rp.parts) do
+ assert(part.z==0 and part.scale_z==2 and part.scale_y==2 and part.collision==false and part.background==true)
+ if part.model=='bf_stairs_4m_rise2m' then stairs=stairs+1;assert(part.x==-78 and part.y==0) end
+end
+assert(stairs==1)
+''')
     def test_incremental_preload_yields_caches_and_stops_permanent_failure(self):
         self.run_lua(r'''
 for i=1,6 do
@@ -149,7 +261,9 @@ for _,o in ipairs(d.floor.openings) do print('opening',o.x,o.width) end
         lua = shutil.which('lua') or shutil.which('lua5.4')
         self.assertIsNotNone(lua, 'Real Lua required')
         prelude = r'''
-local R=assert(loadfile(arg[1]))();local D=assert(loadfile(arg[2]))()
+local Traversal=dofile(arg[1]:gsub('rooms.lua$','traversal.lua'))
+local env=setmetatable({Traversal=Traversal},{__index=_G})
+local R=assert(loadfile(arg[1],'t',env))();local D=assert(loadfile(arg[2]))()
 local C=dofile(arg[3]);local Recipes=dofile(arg[4])
 local s=R.new();local manifest=D.generate(123)
 local live,refs,loads,names={},{},{},{}
@@ -198,48 +312,49 @@ local fingerprints={}
 for seed=1,300 do
  local m=D.generate(seed)
  for _,id in ipairs(m.order) do
-  local node=m.nodes[id];local before=serialize(node);local p=assert(R.plan(node))
+  local node=m.nodes[id];local factor=node.room.kit.unit/6.5;local rear=0
+  local before=serialize(node);local p=assert(R.plan(node))
   assert(serialize(p)==serialize(assert(R.plan(D.generate(seed).nodes[id]))))
   assert(before==serialize(node),'plan mutated physical route')
-  assert(#p.parts<=28 and #p.platforms==#node.room.platforms)
+  assert(#p.parts<=48 and #p.platforms==#node.room.platforms)
   local visual_platforms,portals=0,0
   for _,part in ipairs(p.parts) do
-   assert(part.collision==false and part.scale_y>0 and part.scale_z==1)
-   assert(part.x>=-65 and part.x<=65 and part.y>=0 and part.y<=60)
+   assert(part.collision==false and part.scale_y>0 and part.scale_z==factor)
+   assert(part.x>=-130 and part.x<=130 and part.y>=0 and part.y<=60)
    assert(part.model:match('^bf_'))
    if part.kind=='platform' then
     visual_platforms=visual_platforms+1;local physical=node.room.platforms[visual_platforms]
     assert(part.x==physical.x and part.y==physical.y and part.scale_x*26==physical.width)
     assert(p.platforms[visual_platforms].visual_top==physical.y)
-   elseif part.kind~='mainfloor' and part.kind~='trim' then assert(part.z==0) end
+   elseif part.kind~='mainfloor' and part.kind~='trim' then assert(part.z==rear) end
    if part.kind=='portal' then
     portals=portals+1;local e=node.exits[portals];local a=node.room.exit_anchors[e.side]
     assert(part.x==a.x and part.y==a.y)
-    assert(part.scale_x==1 and part.scale_y==1 and part.z==0)
+    assert(part.scale_x==factor and part.scale_y==factor and part.z==rear)
    end
   end
   assert(visual_platforms==#node.room.platforms and portals==#node.exits)
   local bays,wall_at,door_at={},{},{}
   for _,part in ipairs(p.parts) do
    if part.kind=='mainfloor' then
-    assert(part.scale_x==1 and part.scale_y==1 and part.x%13==0)
+    assert(part.scale_x==factor and part.scale_y==factor and part.x%(13*factor)==0)
     bays[#bays+1]=part.x
    elseif part.kind=='wall' then wall_at[part.x]=true
    elseif part.kind=='portal' then door_at[part.x]=true
-   elseif part.kind=='post' then assert(part.x%13==0 and part.scale_x==1 and part.scale_y==1) end
+   elseif part.kind=='post' then assert(part.x%(13*factor)==0 and part.scale_x==factor and part.scale_y==factor) end
   end
-  assert(#bays==5)
-  table.sort(bays);assert(bays[1]==-52 and bays[5]==52)
-  for j=2,5 do assert(bays[j]-bays[j-1]==26) end
+  assert(#bays==10/factor)
+  table.sort(bays);local edge=130-13*factor;assert(bays[1]==-edge and bays[#bays]==edge)
+  for j=2,#bays do assert(bays[j]-bays[j-1]==26*factor) end
   for x in pairs(door_at) do assert(not wall_at[x],'solid wall behind opening') end
-  assert(portals==0 or (door_at[-52] or door_at[52]))
+  assert(portals==0 or (door_at[-edge] or door_at[edge]))
   if node.kind=='arena' then assert(p.theme==(node.encounter=='pressure' and 'fire' or 'frost')) end
   if seed==1 then fingerprints[id]=serialize(p) end
  end
  assert(assert(R.plan(m.nodes.arena_a)).theme~=assert(R.plan(m.nodes.arena_b)).theme)
 end
 assert(fingerprints.trail~=fingerprints.approach and fingerprints.arena_a~=fingerprints.arena_b)
-local bad=copy(manifest.nodes.trail);bad.room.platforms[1].x=100;assert(not R.plan(bad))
+local bad=copy(manifest.nodes.trail);bad.room.platforms[1].x=150;assert(not R.plan(bad))
 bad=copy(manifest.nodes.trail);bad.room.platforms[1].width=0/0;assert(not R.plan(bad))
 bad=copy(manifest.nodes.trail);bad.room.exit_anchors.left.x=-65;assert(not R.plan(bad))
 bad=copy(manifest.nodes.trail);bad.exits[2].side='left';assert(not R.plan(bad))
@@ -381,22 +496,25 @@ assert(R.clear(s));assert(R.release(s));assert(not R.enter(s,manifest.nodes.entr
                      'if(h<0)return 2;GwGxTex*t=&gw_gxtex[h];'
                      'if(t->format!=6||t->width<4||t->height<4||t->width>4096||t->height>4096)return 3;'
                      'return gs_stage_tex_levels(t->width,t->height,t->image_size)<1?4:0;}\n')
-        cc = shutil.which('cc')
+        cc = shutil.which('cc') or shutil.which('clang')
+        if not cc and (ROOT/'_toolchains/llvm/bin/clang.exe').exists():
+            cc = str(ROOT/'_toolchains/llvm/bin/clang.exe')
         self.assertIsNotNone(cc, 'C compiler required for native format regression')
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp)
             (path / 'check.c').write_text(program)
-            subprocess.run([cc, '-std=c99', str(path/'check.c'), '-o', str(path/'check')], check=True, capture_output=True)
+            executable = path / ('check.exe' if __import__('os').name=='nt' else 'check')
+            subprocess.run([cc, '-std=c99', str(path/'check.c'), '-o', str(executable)], check=True, capture_output=True)
             for theme in assets.THEMES:
                 (path / (theme+'.gxtex')).write_bytes(assets.atlas_bytes(theme))
-                self.assertEqual(subprocess.run([str(path/'check'),tmp,theme]).returncode, 0)
+                self.assertEqual(subprocess.run([str(executable),tmp,theme]).returncode, 0)
             # Original swapped size/offset fits within the file, but violates the
             # model loader's complete 4x4-tiled level requirement (64 != 512).
             broken = bytearray(assets.atlas_bytes('cobalt'))
             struct.pack_into('>I', broken, 28, 64)
             struct.pack_into('>I', broken, 36, 512)
             (path/'broken.gxtex').write_bytes(broken)
-            self.assertEqual(subprocess.run([str(path/'check'),tmp,'broken']).returncode, 4)
+            self.assertEqual(subprocess.run([str(executable),tmp,'broken']).returncode, 4)
 
     def test_actual_mesh_bounds_match_lua_plans_and_native_budgets(self):
         lua = shutil.which('lua') or shutil.which('lua5.4')
@@ -436,8 +554,8 @@ end end
         self.assertEqual(len(models), 6)
         for spans in coverage.values():
             spans.sort()
-            self.assertAlmostEqual(spans[0][0], -65)
-            self.assertAlmostEqual(spans[-1][1], 65)
+            self.assertAlmostEqual(spans[0][0], -130)
+            self.assertAlmostEqual(spans[-1][1], 130)
             for first, second in zip(spans,spans[1:]):
                 self.assertAlmostEqual(first[1], second[0], msg='main floor visual gap')
 

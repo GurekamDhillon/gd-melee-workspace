@@ -1,0 +1,21 @@
+{
+  "mode": "lab",
+  "stage": "fd",
+  "roster": [
+    "iceclimbers",
+    "samus",
+    "fox",
+    "falco"
+  ],
+  "items": 4,
+  "env": {
+    "MELEE_SYNCTEST": 12,
+    "MELEE_SYNCTEST_BENCH": 1
+  },
+  "features": [
+    "ported_geno_fighter",
+    "maximum_depth_rollback_every_frame"
+  ],
+  "setup": [],
+  "events": []
+}

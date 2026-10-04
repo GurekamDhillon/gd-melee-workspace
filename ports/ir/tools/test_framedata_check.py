@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Offline checks for the Ultimate ACMD versus Geno LAB report."""
 import unittest
+import json
+import tempfile
 from pathlib import Path
 
 import framedata_check as FD
@@ -11,12 +13,23 @@ MARTH = ROOT / "_build/agents/alpha/runs/alpha-fd-marth/scripts-data/geno-lab_la
 
 
 class FrameDataCheckTest(unittest.TestCase):
+    @unittest.skipUnless(MARTH.is_dir(), "optional local Marth LAB export is unavailable")
     def test_marth_export_parses_without_ultimate_source(self):
         data = FD.load_export(MARTH)
         self.assertEqual(data["fighter"], "marth")
         self.assertEqual(len(data["moves"]), 22)
         self.assertEqual(sum(len(m["hitboxes"]) for m in data["moves"]), 96)
         self.assertEqual(data["moves"][8]["hitboxes"][0]["windows"], [(4, 7)])
+
+    def test_synthetic_lab_export_parses_directory_and_disjoint_hit_windows(self):
+        fixture = {"fighter": "fixture", "moves": [{"name": "Attack11", "hitboxes": [
+            {"id": 0, "frames": "2-4 7 10-12"}, {"id": 1, "frames": ""}]}]}
+        with tempfile.TemporaryDirectory() as temp:
+            Path(temp, "framedata.json").write_text(json.dumps(fixture), encoding="utf-8")
+            data = FD.load_export(temp)
+        self.assertEqual(data["fighter"], "fixture")
+        self.assertEqual(data["moves"][0]["hitboxes"][0]["windows"], [(2, 4), (7, 7), (10, 12)])
+        self.assertEqual(data["moves"][0]["hitboxes"][1]["windows"], [])
 
     def test_translated_words_define_hitbox_window_and_iasa(self):
         row = {"motion": {"cancel_frame": 7}, "commands": [

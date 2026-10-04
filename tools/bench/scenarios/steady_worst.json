@@ -1,0 +1,72 @@
+{
+  "mode": "lab",
+  "stage": "fd",
+  "roster": [
+    "iceclimbers",
+    "fox",
+    "falco",
+    "marth",
+    "samus",
+    "peach"
+  ],
+  "fallback_rosters": [
+    [
+      "iceclimbers",
+      "fox",
+      "fox",
+      "marth",
+      "samus",
+      "peach"
+    ],
+    [
+      "fox",
+      "fox",
+      "fox",
+      "fox",
+      "fox",
+      "fox"
+    ]
+  ],
+  "items": 4,
+  "enemy_cap": 32,
+  "env": {
+    "MELEE_RENDER_SCALE": 8,
+    "MELEE_MSAA": 4
+  },
+  "features": [
+    "ported_geno_fighter",
+    "instance_limit_custom_level_materials_glass",
+    "full_post_chain",
+    "all_fighter_surface_shaders",
+    "repeated_clank_pass"
+  ],
+  "setup": [
+    {
+      "feature": "camera_wide",
+      "api": "camera_params",
+      "args": [
+        {
+          "min_dist": 300,
+          "max_depth": 1800
+        }
+      ]
+    },
+    {
+      "feature": "contact_trace",
+      "api": "contact_trace",
+      "args": [
+        true
+      ]
+    },
+    {
+      "feature": "debug_overlay",
+      "api": "contact_overlay",
+      "args": [
+        true
+      ]
+    }
+  ],
+  "events": [],
+  "mission_stress": true,
+  "maze_size": 12
+}

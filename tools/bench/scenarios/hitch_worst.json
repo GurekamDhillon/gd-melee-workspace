@@ -1,0 +1,84 @@
+{
+  "mode": "lab",
+  "stage": "fd",
+  "roster": [
+    "fox",
+    "marth"
+  ],
+  "items": "off",
+  "cold": true,
+  "hitch_ms": 16.66,
+  "features": [],
+  "setup": [],
+  "events": [
+    {
+      "frame": 440,
+      "feature": "lab_savestate",
+      "api": "savestate",
+      "args": [
+        1
+      ]
+    },
+    {
+      "frame": 500,
+      "feature": "fighter_bench",
+      "api": "fighter_bench",
+      "args": [
+        2
+      ]
+    },
+    {
+      "frame": 560,
+      "feature": "fighter_call",
+      "api": "fighter_call",
+      "args": [
+        2,
+        0,
+        0
+      ]
+    },
+    {
+      "frame": 820,
+      "feature": "lab_loadstate",
+      "api": "loadstate",
+      "args": [
+        1
+      ]
+    },
+    {
+      "frame": 620,
+      "feature": "generated_maze_chunk_crossings",
+      "api": "mission_command",
+      "args": [
+        "fly next"
+      ]
+    },
+    {
+      "frame": 680,
+      "feature": "level_reload",
+      "api": "mission_command",
+      "args": [
+        "reload"
+      ]
+    },
+    {
+      "frame": 740,
+      "feature": "mission_tour",
+      "api": "mission_command",
+      "args": [
+        "tour"
+      ]
+    },
+    {
+      "frame": 880,
+      "feature": "lab_rewind",
+      "api": "rewind_test",
+      "args": [
+        30,
+        true
+      ]
+    }
+  ],
+  "mission_stress": true,
+  "maze_size": 12
+}

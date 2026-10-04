@@ -11,14 +11,14 @@ TREE = ast.parse((HERE / 'test_runtime.py').read_text())
 PRELUDE = next(ast.literal_eval(n.value) for n in TREE.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'PRELUDE' for t in n.targets))
 WRAPPED = ';(function()\n' + prepare.bundle() + '\nend)()\n'
 SETUP = r'''
-local function step(b)controls=b or 0;on_tick()end
+local function step(b)controls=b or 0;fixture_scene_tick();on_tick()end
 local function press(b)step(0);step(b);step(0)end
 local function state()return roguelite_state()end
 local function click(id)
  for _,c in ipairs(state().menu_view.controls) do if c.id==id then mx=c.x+c.w/2;my=c.y+c.h/2;mb=0;step();mb=1;step();mb=0;step();mx=-1000;my=-1000;for i=1,10 do if not state().loading then break end;step() end;assert(not state().loading);if state().menu==nil and not state().active and state().ready then step() end;return end end
  error('missing control '..id)
 end
-step();step();tick=91;step();click('start');ps[1].x=52;ps[1].y=0;press(4)
+step();step();tick=91;step();click('start');ps[1].x=104;ps[1].y=0;press(4)
 assert(state().node=='trail' and state().active)
 local handle=next(enemies);assert(handle);ps[1].x=0;ps[1].facing=1;enemies[handle].x=4;enemies[handle].y=0
 local function charge()
@@ -26,7 +26,10 @@ local function charge()
 end
 local function cast()press(1);press(1);press(1)end
 local function frame()tick=tick+1;on_frame()end
-local function door(side)ps[1].x=side=='left' and -52 or 52;ps[1].y=0;press(4)end
+local function door(side)
+ ps[1].x=side=='left' and -104 or 104;ps[1].y=0;press(4)
+ if pending_scene then for i=1,140 do step();if not pending_scene and state().ready then break end end;for i=1,12 do if state().active or state().menu then break end;step() end end
+end
 local function arena()
  on_enemy_defeated({handle=handle});enemies[handle]=nil;door('left')
  assert(state().node=='arena_a');ps[2].stocks=98;frame();assert(state().menu=='reward')
@@ -37,7 +40,13 @@ class IntegrationEdges(unittest.TestCase):
     def run_lua(self, code, before_setup=''):
         lua = shutil.which('lua5.4') or shutil.which('lua')
         self.assertIsNotNone(lua)
-        p = subprocess.run([lua, '-'], input='local CORE_PATH='+__import__('json').dumps(str(prepare.SOURCE / 'core.lua'))+'\n'+PRELUDE+WRAPPED+before_setup+SETUP+code, text=True, capture_output=True)
+        p = subprocess.run([lua, '-'], input='local CORE_PATH='+__import__('json').dumps((prepare.SOURCE / 'core.lua').as_posix())+'\n'+PRELUDE+WRAPPED+before_setup+SETUP+code, text=True, capture_output=True)
+        if p.returncode:
+            import re
+            line = re.search(r'stdin:(\d+):', p.stderr)
+            if line:
+                program = 'local CORE_PATH='+__import__('json').dumps(str(prepare.SOURCE / 'core.lua'))+'\n'+PRELUDE+WRAPPED+before_setup+SETUP+code
+                p.stderr += '\nFailing Lua: ' + program.splitlines()[int(line.group(1))-1]
         self.assertEqual(p.returncode, 0, p.stdout+p.stderr)
 
     def test_refusal_restore_and_lethal_dedup(self):
@@ -102,10 +111,22 @@ assert(state().node=='boss');ps[2].stocks=98;frame();ps[2].stocks=98;frame();cli
 local C=assert(loadfile(CORE_PATH))();local before=C.snapshot(state().profile)
 local runid=state().run.id;local count=0;for _ in pairs(state().profile.genes)do count=count+1 end
 fail_write=true;door('right')
-assert(state().menu=='error' and pause and state().run.status=='active')
+assert(state().node=='boss' and state().run.status=='active' and not pending_scene,'refused handover replaced the active room')
+assert(C.snapshot(state().profile)==before and not state().profile.finished[runid])
+fail_write=false
+local atomic=gd.data_write_atomic;local finish_writes=0
+-- First persist the scene handover destination; refuse the sole terminal finish write.
+gd.data_write_atomic=function(n,value)
+ finish_writes=finish_writes+1
+ if finish_writes==2 then fail_write=true end
+ return atomic(n,value)
+end
+door('right')
+assert(finish_writes==2,'terminal entry must not add an intermediate arrival save')
+assert(state().menu=='error' and pause and not state().active and state().run.status=='active')
 assert(C.snapshot(state().profile)==before and not state().profile.finished[runid])
 assert(state().run.progress.claimed.boss and state().run.progress.cleared.arena_a)
-fail_write=false;click('retry')
+fail_write=false;gd.data_write_atomic=atomic;click('retry')
 assert(state().menu=='collection' and state().run.status=='success')
 assert(state().profile.finished[runid].export)
 local after=0;for _ in pairs(state().profile.genes)do after=after+1 end
@@ -118,7 +139,7 @@ assert(isolated and not pause)
 local floors,platform_count=0,0
 for h,p in pairs(floor_params) do if models[h] then
  platform_count=platform_count+1
- if p.y==0 then floors=floors+1;assert(p.x==0 and p.width==130 and p.opts.passthrough==false and p.opts.ledges==true) end
+ if p.y==0 then floors=floors+1;assert(p.x==0 and p.width==260 and p.opts.passthrough==false and p.opts.ledges==true) end
 end end
 local D=assert(loadfile((CORE_PATH:gsub('core.lua$','dungeon.lua'))))()
 local node=D.generate(state().run.world_seed).nodes[state().node]
@@ -145,11 +166,24 @@ end
                 self.run_lua(r'''
 on_enemy_defeated({handle=handle});enemies[handle]=nil
 local a,b=files['checkpoint-a.txt'],files['checkpoint-b.txt'];local prior=writes
+local C=assert(loadfile(CORE_PATH))();local saved_profile=C.snapshot(state().profile)
+local lives=state().run.stocks;local runid=state().run.id
 ''' + ('gd.stage_isolate=nil\n' if missing else 'refuse_isolation=true\n') + r'''
 door('left')
 assert(not state().active and state().menu=='error' and pause)
 assert(not next(models) and not next(enemies),'failed isolation leaked owned geometry')
-assert(writes==prior and files['checkpoint-a.txt']==a and files['checkpoint-b.txt']==b)
+''' + (r"assert(writes==prior and files['checkpoint-a.txt']==a and files['checkpoint-b.txt']==b)" if missing else r'''
+assert(writes==prior+1,'handover must persist exactly one destination checkpoint')
+local directory=CORE_PATH:match('^(.*)/core.lua$')
+local CP=assert(loadfile(directory..'/checkpoint.lua'))()
+local Codec=assert(loadfile(directory..'/codec.lua'))()
+local newest=files['checkpoint-a.txt']
+if tonumber(files['checkpoint-b.txt']:match('^TBD3 (%d+)'))>tonumber(newest:match('^TBD3 (%d+)')) then newest=files['checkpoint-b.txt'] end
+local decoded=assert(CP.decode(newest,C,Codec))
+assert(decoded.run.id==runid and decoded.run.progress.room=='arena_a')
+assert(decoded.run.stocks==lives and C.snapshot(decoded.profile)==saved_profile)
+assert(decoded.run.progress.cleared.trail and not decoded.run.progress.cleared.arena_a and not decoded.run.progress.claimed.arena_a)
+''') + r'''
 on_unload();assert(not pause)
 ''')
 
