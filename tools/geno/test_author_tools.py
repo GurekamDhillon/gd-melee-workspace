@@ -162,7 +162,7 @@ class AuthorToolsTests(unittest.TestCase):
             if "enum" in node:
                 samples["enum"] = "not-a-valid-enumeration"
             if "pattern" in node:
-                samples["pattern"] = "!invalid!"
+                samples["pattern"] = "\x00!invalid!"
             if "additionalProperties" in node:
                 samples["additionalProperties"] = {"unknown_key": 1}
             if "required" in node:

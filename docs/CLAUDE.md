@@ -12,6 +12,7 @@ Which document is current, and what goes where.
 | `HANDOFF.md` | architecture, current traps and conventions | the architecture of m-ex content in the port |
 | `HANDOFF-2026-09-20.md`, `-21.md` | superseded snapshots, kept for the record | |
 | `DEVLOG.md` | history; the numbered sections are dated, later corrects earlier (§5.2 corrects §1-4) | how each blocker was found and fixed |
+| `TERMINOLOGY.md` | current naming reference | project glossary, collision rules and proposed future renames |
 | `scripting.md` | current, public | the `gd` scripting API and `gd.kit` (includes the public LAB API; detailed fields in `melee/docs/geno.md` section 14) |
 | `MEX_PORT_STATUS.md` | current | implemented surfaces, feature inventory and verification limits |
 | `mods-packaging.md`, `mods-browser.md` | current | the mod folder layout; the in-game mod browser design (not built) |

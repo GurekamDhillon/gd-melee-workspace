@@ -268,14 +268,19 @@ def validate(data, base):
     attaches = set()
     for i, fighter in enumerate(data["fighters"]):
         p = f"$.fighters[{i}]"
-        attach = fighter["attach"]
+        if "define" in fighter:
+            from .define import validate_definition
+            errors.extend(diagnostic(path, message) for path, message in validate_definition(data, fighter, p))
+        elif "common_states" in fighter:
+            errors.append(diagnostic(p+".common_states", "common state overrides require define"))
+        attach = fighter.get("attach", "mario")
         resolved = schema.S["vanilla"].get(attach.lower(), attach.lower() if attach.lower().endswith(".dat") else None)
         if resolved is None:
             suggestion = difflib.get_close_matches(attach.lower(), schema.S["vanilla"], n=1)
             errors.append(diagnostic(p + ".attach", "unknown attach name" + (f"; did you mean {suggestion[0]!r}?" if suggestion else "")))
-        elif resolved.lower() in attaches:
+        elif "attach" in fighter and resolved.lower() in attaches:
             errors.append(diagnostic(p + ".attach", "another profile attaches to the same fighter; later profile shadows it"))
-        else:
+        elif "attach" in fighter:
             attaches.add(resolved.lower())
         states = [s.get("name", "") for s in fighter.get("states", [])]
         articles = fighter.get("articles", [])
@@ -472,7 +477,7 @@ def main():
             location = f":{error['line']}:{error['column']}" if "line" in error else ""
             print(f"{error['path']}{location}: {error['message']} [{error['source']}]")
     else:
-        print("OK: Geno overlay and mod metadata validated (offline; disc rows and gameplay require LAB checks)")
+        print("OK: Geno fighter package and mod metadata validated (offline; disc rows and gameplay require LAB checks)")
     return 1 if errors else 0
 
 

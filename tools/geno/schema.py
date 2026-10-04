@@ -11,7 +11,7 @@ S = symbols()
 
 
 def registry_text():
-    return read("pc/platform/geno_registry.c")
+    return read("pc/platform/geno_registry.c") + "\n" + read("pc/platform/geno_define_registry.inc")
 
 
 def registry_keys(text=None):
@@ -63,6 +63,7 @@ def word():
 
 
 def build_schema():
+    from .define import definition_schema
     boolean = field(["boolean", "number"], "Enable when nonzero", 0, "19")
     vector2 = arr(num("Coordinate"), 2)
     vector3 = arr(num("Coordinate"), 3)
@@ -122,7 +123,13 @@ def build_schema():
                       allOf=[{"anyOf": [{"required": ["index"]}, {"required": ["offset"]}]},
                              {"anyOf": [{"required": ["float"]}, {"required": ["int"]}]}])
     fighter = obj({"attach": string("Vanilla name/alias or existing fighter .dat file", maxLength=31),
-                   "define": {"description": "Reserved; engine skips this entire fighter", "not": {}},
+                   "define": definition_schema(),
+                   "common_states": arr(obj({"motion": integer("Native motion row", minimum=0, maximum=350),
+                        "like": integer("Inherited motion row", minimum=0, maximum=350),
+                        "subaction": integer("Installed retail animation row", minimum=0, maximum=1023),
+                        "flags": integer("Motion flags", minimum=0, maximum=2147483647),
+                        "move_id": integer("Stale move id", minimum=0, maximum=255),
+                        **{slot: string("Callback override", enum=names) for slot, names in S["callbacks"].items()}}, ("motion",)), 64),
                    "name": string("Log display name", "target Pl file", maxLength=63),
                    "attributes": obj({key: (integer if is_int else num)("Common attribute " + key, "disc value", "7") for key, is_int in S["attrs"].items()}, maxProperties=C["GENO_MAX_ATTRS"]),
                    "jumps": obj({"max": integer("Total jumps including ground jump", "disc value", "10", minimum=1, maximum=250),
@@ -136,13 +143,19 @@ def build_schema():
                                             "subaction": integer("Animation row", section="19.12", minimum=0, maximum=1023)}, ("motion", "subaction")), C["GENO_MAX_MOTION_ANIM"]),
                    "specials": obj({key: {"anyOf": [target(), selector]} for key in ("n", "s", "hi", "lw", "air_n", "air_s", "air_hi", "air_lw")}),
                    "fx_bindings": string("Effect bindings JSON relative path", section="20"),
-                   **{family: obj({key: field(["number", "boolean"], "Behavior parameter " + key, default, "16.4", **{"x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"}) for key, default in params.items()}) for family, params in S["params"].items()}}, ("attach",))
+                   **{family: obj({key: field(["number", "boolean"], "Behavior parameter " + key, default, "16.4", **{"x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"}) for key, default in params.items()}) for family, params in S["params"].items()}},
+                  oneOf=[{"required": ["attach"], "not": {"required": ["define"]}},
+                         {"required": ["define"], "not": {"required": ["attach"]}}])
+    fighter["allOf"] = [{"if": {"required": ["define"]}, "then": {"properties": {
+        field: {"items": {"properties": {key: {"maximum": 302}}}}
+        for field, key in (("subactions", "index"), ("common_states", "subaction"),
+                           ("states", "subaction"), ("motion_anims", "subaction"))}}}]
     result = obj({"geno": integer("Format version", C["GENO_VERSION"], "7", minimum=1, maximum=C["GENO_VERSION"]),
                   "fighters": arr(fighter, C["GENO_MAX_PROFILES"])}, ("geno", "fighters"))
     result.update({"$schema": "https://json-schema.org/draft/2020-12/schema", "title": "Geno fighter overlays",
                    "x-registry-keys": sorted(registry_keys()), "x-limits": limits()})
     result["x-source-contract"] = {path: hashlib.sha256(read(path).encode()).hexdigest() for path in
-                                   ("pc/platform/geno_registry.c", "pc/geno/geno.h", "pc/geno/geno_game.c", "pc/geno/geno_game_v2.inc")}
+                                     ("pc/platform/geno_registry.c", "pc/platform/geno_define_registry.inc", "pc/geno/geno.h", "pc/geno/geno_game.c", "pc/geno/geno_game_v2.inc", "pc/geno/geno_profiles.inc", "pc/geno/geno_profile_storage.h", "pc/geno/geno_game_articles.inc")}
     return result
 
 

@@ -113,6 +113,19 @@ def read_fighter(disc, fighter, rows, *, archive_factory=None, table_kind="actio
 
 
 def main():
+    if "--package" in sys.argv:
+        from .define import export_package
+        ap = argparse.ArgumentParser(description="Export a source-only Geno definition package")
+        ap.add_argument("--package", required=True, type=Path)
+        ap.add_argument("--out", required=True, type=Path)
+        args = ap.parse_args()
+        try:
+            export_package(args.package, args.out)
+            print("Exported offline definition package and SHA-256 manifest.")
+            return 0
+        except (ValueError, OSError):
+            print("Package export refused: invalid definition, unsafe payload or output unavailable.")
+            return 1
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("fighter", help="vanilla name/alias or exact Pl*.dat filename")
     ap.add_argument("--row", required=True, action="append", type=lambda x: int(x, 0))

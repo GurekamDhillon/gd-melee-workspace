@@ -7,10 +7,25 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 
 | Key | Type / meaning | Engine default | Limits / reference |
 |---|---|---|---|
-| geno | integer: Format version | 5 | minimum=1; maximum=5; geno.md §7; melee/pc/platform/geno_registry.c |
-| fighters | array: Ordered entries | absent | maxItems=32; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| geno | integer: Format version | 6 | minimum=1; maximum=6; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters | array: Ordered entries | absent | maxItems=65535; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].attach | string: Vanilla name/alias or existing fighter .dat file |  | maxLength=31; geno.md §7; melee/pc/platform/geno_registry.c |
-| fighters[].define | choice: Reserved; engine skips this entire fighter | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].define | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].define.key | string: See choice encodings | absent | pattern=^[a-z0-9][a-z0-9_.-]{0,38}$; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].define.name | string: See choice encodings | absent | maxLength=47; pattern=^[ -~]+$; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].define.base | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].define.common | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].define.resources | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].common_states | array: Ordered entries | absent | maxItems=64; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].common_states[].motion | integer: Native motion row | 0 | minimum=0; maximum=350; geno.md §19; melee/pc/platform/geno_registry.c |
+| fighters[].common_states[].like | integer: Inherited motion row | 0 | minimum=0; maximum=350; geno.md §19; melee/pc/platform/geno_registry.c |
+| fighters[].common_states[].subaction | integer: Installed retail animation row | 0 | minimum=0; maximum=1023; geno.md §19; melee/pc/platform/geno_registry.c |
+| fighters[].common_states[].flags | integer: Motion flags | 0 | minimum=0; maximum=2147483647; geno.md §19; melee/pc/platform/geno_registry.c |
+| fighters[].common_states[].move_id | integer: Stale move id | 0 | minimum=0; maximum=255; geno.md §19; melee/pc/platform/geno_registry.c |
+| fighters[].common_states[].anim | string: Callback override |  | enum=['like', 'next', 'loop', 'hold', 'glide.start', 'glide', 'tornado', 'drill', 'drill.end', 'glide.after', 'cape']; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].common_states[].iasa | string: Callback override |  | enum=['like', 'interrupt', 'none', 'glide']; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].common_states[].phys | string: Callback override |  | enum=['like', 'cape', 'none', 'air', 'air_nodrift', 'air_drift', 'brake', 'ground', 'auto', 'anim_motion', 'glide.start', 'glide', 'glide.attack', 'glide.end', 'tornado', 'drill', 'drill.end', 'drill.start']; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].common_states[].coll | string: Callback override |  | enum=['like', 'cape', 'cape.after', 'none', 'air', 'air_noledge', 'ground', 'ground_stop', 'both', 'anim_motion', 'glide', 'drill', 'drill.start']; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].name | string: Log display name | target Pl file | maxLength=63; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].attributes | object: Named settings | absent | maxProperties=48; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].attributes.walk_accel_mul | number: Common attribute walk_accel_mul | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
@@ -339,7 +354,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | GENO_EV_MAX_HOOKS | 8 | melee/pc/geno/geno.h:244 |
 | GENO_MAX_ATTRS | 48 | melee/pc/geno/geno.h:248 |
 | GENO_MAX_JUMP_VY | 16 | melee/pc/geno/geno.h:249 |
-| GENO_MAX_PROFILES | 32 | melee/pc/geno/geno.h:250 |
+| GENO_MAX_PROFILES | 65535 | melee/pc/geno/geno.h:250 |
 | GENO_MAX_SPECIAL | 64 | melee/pc/geno/geno.h:251 |
 | GENO_MAX_ONLAND | 16 | melee/pc/geno/geno.h:252 |
 | GENO_MAX_MOTION_ANIM | 8 | melee/pc/geno/geno.h:253 |
@@ -349,14 +364,15 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | GENO_ART_KIND_BASE | 4096 | melee/pc/geno/geno.h:351 |
 | GENO_MAX_ARTICLES | 16 | melee/pc/geno/geno.h:351 |
 | GENO_ART_PER_RANGE | 8 | melee/pc/geno/geno.h:358 |
-| GENO_ART_HITBOXES | 4 | melee/pc/geno/geno.h:366 |
-| GENO_ART_HIT_ENTRIES | 8 | melee/pc/geno/geno.h:367 |
-| GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:369 |
-| GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:370 |
-| GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:463 |
-| JDOC_NODES | 4096 | melee/pc/platform/geno_registry.c:71 |
-| JDOC_ARENA | 65536 | melee/pc/platform/geno_registry.c:72 |
-| GN_MAX_SLOTS | 256 | melee/pc/platform/geno_registry.c:444 |
+| GENO_ART_EXTRA_BASE | 131072 | melee/pc/geno/geno.h:363 |
+| GENO_ART_HITBOXES | 4 | melee/pc/geno/geno.h:371 |
+| GENO_ART_HIT_ENTRIES | 8 | melee/pc/geno/geno.h:372 |
+| GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:374 |
+| GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:375 |
+| GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:468 |
+| JDOC_NODES | 4096 | melee/pc/platform/geno_registry.c:72 |
+| JDOC_ARENA | 65536 | melee/pc/platform/geno_registry.c:73 |
+| GN_MAX_SLOTS | 256 | melee/pc/platform/geno_registry.c:450 |
 | JSON_DEPTH | 32 | melee/pc/platform/geno_registry.c:jd_value |
 | JSON_FILE_BYTES | 1048576 | melee/pc/platform/geno_registry.c:gn_read_file |
 

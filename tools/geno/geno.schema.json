@@ -4,11 +4,11 @@
     "geno": {
       "type": "integer",
       "description": "Format version",
-      "x-engine-default": 5,
+      "x-engine-default": 6,
       "x-reference": "geno.md §7",
       "x-source": "melee/pc/platform/geno_registry.c",
       "minimum": 1,
-      "maximum": 5
+      "maximum": 6
     },
     "fighters": {
       "type": "array",
@@ -24,8 +24,176 @@
             "maxLength": 31
           },
           "define": {
-            "description": "Reserved; engine skips this entire fighter",
-            "not": {}
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "name",
+              "base",
+              "common",
+              "resources"
+            ],
+            "properties": {
+              "key": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_.-]{0,38}$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 47,
+                "pattern": "^[ -~]+$"
+              },
+              "base": {
+                "const": "mario"
+              },
+              "common": {
+                "const": "melee.common.v1"
+              },
+              "resources": {
+                "const": "retail:mario"
+              }
+            }
+          },
+          "common_states": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "motion": {
+                  "type": "integer",
+                  "description": "Native motion row",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minimum": 0,
+                  "maximum": 350
+                },
+                "like": {
+                  "type": "integer",
+                  "description": "Inherited motion row",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minimum": 0,
+                  "maximum": 350
+                },
+                "subaction": {
+                  "type": "integer",
+                  "description": "Installed retail animation row",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minimum": 0,
+                  "maximum": 1023
+                },
+                "flags": {
+                  "type": "integer",
+                  "description": "Motion flags",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minimum": 0,
+                  "maximum": 2147483647
+                },
+                "move_id": {
+                  "type": "integer",
+                  "description": "Stale move id",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "anim": {
+                  "type": "string",
+                  "description": "Callback override",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §7",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "enum": [
+                    "like",
+                    "next",
+                    "loop",
+                    "hold",
+                    "glide.start",
+                    "glide",
+                    "tornado",
+                    "drill",
+                    "drill.end",
+                    "glide.after",
+                    "cape"
+                  ]
+                },
+                "iasa": {
+                  "type": "string",
+                  "description": "Callback override",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §7",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "enum": [
+                    "like",
+                    "interrupt",
+                    "none",
+                    "glide"
+                  ]
+                },
+                "phys": {
+                  "type": "string",
+                  "description": "Callback override",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §7",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "enum": [
+                    "like",
+                    "cape",
+                    "none",
+                    "air",
+                    "air_nodrift",
+                    "air_drift",
+                    "brake",
+                    "ground",
+                    "auto",
+                    "anim_motion",
+                    "glide.start",
+                    "glide",
+                    "glide.attack",
+                    "glide.end",
+                    "tornado",
+                    "drill",
+                    "drill.end",
+                    "drill.start"
+                  ]
+                },
+                "coll": {
+                  "type": "string",
+                  "description": "Callback override",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §7",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "enum": [
+                    "like",
+                    "cape",
+                    "cape.after",
+                    "none",
+                    "air",
+                    "air_noledge",
+                    "ground",
+                    "ground_stop",
+                    "both",
+                    "anim_motion",
+                    "glide",
+                    "drill",
+                    "drill.start"
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "motion"
+              ]
+            },
+            "maxItems": 64
           },
           "name": {
             "type": "string",
@@ -3429,11 +3597,79 @@
           }
         },
         "additionalProperties": false,
-        "required": [
-          "attach"
+        "oneOf": [
+          {
+            "required": [
+              "attach"
+            ],
+            "not": {
+              "required": [
+                "define"
+              ]
+            }
+          },
+          {
+            "required": [
+              "define"
+            ],
+            "not": {
+              "required": [
+                "attach"
+              ]
+            }
+          }
+        ],
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "define"
+              ]
+            },
+            "then": {
+              "properties": {
+                "subactions": {
+                  "items": {
+                    "properties": {
+                      "index": {
+                        "maximum": 302
+                      }
+                    }
+                  }
+                },
+                "common_states": {
+                  "items": {
+                    "properties": {
+                      "subaction": {
+                        "maximum": 302
+                      }
+                    }
+                  }
+                },
+                "states": {
+                  "items": {
+                    "properties": {
+                      "subaction": {
+                        "maximum": 302
+                      }
+                    }
+                  }
+                },
+                "motion_anims": {
+                  "items": {
+                    "properties": {
+                      "subaction": {
+                        "maximum": 302
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         ]
       },
-      "maxItems": 32
+      "maxItems": 65535
     }
   },
   "additionalProperties": false,
@@ -3458,6 +3694,7 @@
     "articles",
     "attach",
     "attributes",
+    "base",
     "behavior",
     "bkb",
     "bone",
@@ -3465,6 +3702,8 @@
     "children",
     "clank",
     "coll",
+    "common",
+    "common_states",
     "count",
     "counter",
     "damage",
@@ -3504,6 +3743,7 @@
     "jumps",
     "kbg",
     "keep_frame",
+    "key",
     "land",
     "landing_lag",
     "ledge",
@@ -3534,6 +3774,7 @@
     "phys",
     "range",
     "reflect",
+    "resources",
     "s",
     "scale",
     "select",
@@ -3600,7 +3841,7 @@
       "source": "melee/pc/geno/geno.h:249"
     },
     "GENO_MAX_PROFILES": {
-      "value": 32,
+      "value": 65535,
       "source": "melee/pc/geno/geno.h:250"
     },
     "GENO_MAX_SPECIAL": {
@@ -3639,37 +3880,41 @@
       "value": 8,
       "source": "melee/pc/geno/geno.h:358"
     },
+    "GENO_ART_EXTRA_BASE": {
+      "value": 131072,
+      "source": "melee/pc/geno/geno.h:363"
+    },
     "GENO_ART_HITBOXES": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:366"
+      "source": "melee/pc/geno/geno.h:371"
     },
     "GENO_ART_HIT_ENTRIES": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:367"
+      "source": "melee/pc/geno/geno.h:372"
     },
     "GENO_ART_SPAWNS": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:369"
+      "source": "melee/pc/geno/geno.h:374"
     },
     "GENO_ART_CHILDREN": {
       "value": 2,
-      "source": "melee/pc/geno/geno.h:370"
+      "source": "melee/pc/geno/geno.h:375"
     },
     "GENO_SP_SELECT": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:463"
+      "source": "melee/pc/geno/geno.h:468"
     },
     "JDOC_NODES": {
       "value": 4096,
-      "source": "melee/pc/platform/geno_registry.c:71"
+      "source": "melee/pc/platform/geno_registry.c:72"
     },
     "JDOC_ARENA": {
       "value": 65536,
-      "source": "melee/pc/platform/geno_registry.c:72"
+      "source": "melee/pc/platform/geno_registry.c:73"
     },
     "GN_MAX_SLOTS": {
       "value": 256,
-      "source": "melee/pc/platform/geno_registry.c:444"
+      "source": "melee/pc/platform/geno_registry.c:450"
     },
     "JSON_DEPTH": {
       "value": 32,
@@ -3681,9 +3926,13 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "34d07b2873c3c71f8b7387edd0cc55fdeb0c688e9486dc36976259628c1467b5",
-    "pc/geno/geno.h": "926d20a745851e9d825af7af07a7723035f714c6dc28fb9896559e5108a33c81",
-    "pc/geno/geno_game.c": "19b4aa6dd84ceb4cf1a4f732db487c80a7109ac3c43d65f4bf0b0e0bc3f41556",
-    "pc/geno/geno_game_v2.inc": "a157504de6201458b76f4795651fd8b18c80c3a4fe57e800354534edc7d4b146"
+    "pc/platform/geno_registry.c": "dac8775d2389df0177c6cc34db359da0cd79f4237cbc7b74c7cad50d9d808d76",
+    "pc/platform/geno_define_registry.inc": "d91cfcf7a1ebe9403046dc70dbe625cf1da37743f6b2745c1c40f55003ec7d34",
+    "pc/geno/geno.h": "6d49008cb3a5b065f88de9c9c7ac2373a094d95fb79a6763df4f01c5bd6ed979",
+    "pc/geno/geno_game.c": "bf84ec43d4d8440de5311cf2bc4f1dda3494b660681862588e28f5c8a0f2b70f",
+    "pc/geno/geno_game_v2.inc": "954a122bad0b8f149390d22f1a06f620de92fab506cc7402c9107d3a24a61ef9",
+    "pc/geno/geno_profiles.inc": "0472b13e440d433329edc38f115956d62617e1cfe6e3a45436be8b036606cb7f",
+    "pc/geno/geno_profile_storage.h": "a40aec8aafa890622f0ba6cb9f5602176c738f960346b18daf87c8dc8498d04d",
+    "pc/geno/geno_game_articles.inc": "eb1ad1a63867aebf4e34d9e3676b45f141077989b08042386ac3630f2ecac5d6"
   }
 }

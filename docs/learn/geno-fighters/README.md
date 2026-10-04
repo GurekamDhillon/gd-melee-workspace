@@ -16,7 +16,7 @@ Every packet ends with a Sources list so you can check a claim yourself.
 
 ## The short answer to "does Geno replace m-ex?"
 
-No. m-ex gives a fighter a place in the game: a slot, its files, costumes, an icon on the character
+Version 6 adds an offline native-definition path for the Geno engine; see [packet 11](11-defined-fighter.md). Its game acceptance is still pending. The earlier attachment course below describes the tested path. m-ex gives a fighter a place in the game: a slot, its files, costumes, an icon on the character
 select. Geno changes how a fighter plays: new action states, script logic, values, hooks, projectiles
 and effects. Geno sits on top of m-ex and never edits it. Packet 0 gives the full answer, with a
 table.

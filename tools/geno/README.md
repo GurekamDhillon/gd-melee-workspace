@@ -1,5 +1,16 @@
 # Geno author tools
 
+The Geno engine's version 6 native-definition tools generate a source-only Mario-reference fighter. Runtime integration still needs a rebuild and game acceptance; this path is offline only.
+
+```text
+python -m tools.geno.new vanilla-hero --name "Vanilla Hero" --base mario --output mods/vanilla-hero
+python -m tools.geno.check mods/vanilla-hero
+python -m tools.geno.export --package mods/vanilla-hero --out packages/vanilla-hero
+python -m unittest tools.geno.test_define tools.geno.test_native_define
+```
+
+The folder contains `mod.json`, `geno.json`, authored move scripts and an empty `files/` mount root. Export copies the validated source inputs and writes a SHA-256 manifest, refusing archive payloads. Restart after changing definitions. Only the `mario` donor, `melee.common.v1` behavior and `retail:mario` resource preset are supported in slice 1; unsupported donors/resources and simultaneous `attach`/`define` are errors. This manifest is a packaging foundation, not an online admission certificate.
+
 Run from the workspace root with Python 3.10+ and the game checkout at `melee/`.
 Install the checker dependency with `python -m pip install -r tools/geno/requirements.txt`.
 No game build or launch is needed. The codec imports the existing IR encoder unchanged.

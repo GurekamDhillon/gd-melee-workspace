@@ -189,3 +189,12 @@ SCENARIOS['demo_zones']=[
     ('assert', '#gd.zones()==3'),
     ('assert', 'type(gd.zones_at(1,0))=="table"'),
 ]
+
+# Source/registration checks; actual echo collision needs operator acceptance.
+SCENARIOS['demo_echoes']=[
+    ('assert','gd.fighter_history_depth()==61 and #gd.echoes(1)==1'),
+    ('probe',r'^active=true echoes=1 hits=[0-9]+ acceptance=operator-required'),
+    K('N',.3),('assert','#gd.echoes(1)==2'),
+    ('assert','gd.echoes(1)[1].match.move=="nair" and gd.echoes(1)[2].match.move=="nair"'),
+    K('E',.3),('assert','#gd.echoes(1)==1'),
+]

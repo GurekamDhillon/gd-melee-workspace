@@ -2122,3 +2122,64 @@ See `_build/tmp/codex-afterimages-tracers-report.md` for caps and unrun acceptan
 New hit-rule percent_damage and launch coefficients accept finite signed -1e9..1e9, encoded as 1 + additive raw delta. Sum all matching contributions before final physical caps: outgoing percent .05..64, incoming percent .15..64, launch .05..4. Legacy damage/growth/base/knockback_taken inputs remain .1..4. Tables support32 rules; progression=true identifies the new native capability, while percent_only remains. Provenance retains96 IDs (historical creation plus current attacker/defender). This changes native snapshot/journal layout and requires a rebuild.
 
 Envoy LAB depth <n> [loop] controls future drive/opponent rolls, unlocks4/5/6 slots and1/2/3 keys, and preserves physical drive tiers and existing CPU builds. Selected player keys follow the dial. Invalid downshifts refuse atomically. Opponents use scalar strength and shared weighted rolls; optional foe role is normal, boss or finalboss. See Envoy PLAYTEST.md for exact early/late FD commands.
+
+
+### Typed fighter armour (2026-10-04 source pass)
+
+`gd.fighter_armor(entity)` returns an array in type order; `entity`1-6 primary,
+7-12 secondary. Set one type with `gd.fighter_armor(entity, options)`;
+`nil` clears this script's types, `{type='hit_count',clear=true}` clears one.
+Writes require an offline active match and gameplay permission; false means
+missing fighter or another owner. The older `gd.fighter_armour` remains available.
+
+```lua
+gd.fighter_armor(1,{type='damage_threshold',value=8,frames=120})
+gd.fighter_armor(1,{type='hit_count',value=3,state=14,from=0,to=20,direction='front'})
+function on_armor(e)
+  gd.log(e.type..' absorbed='..tostring(e.absorbed)..' broke='..tostring(e.broke))
+end
+```
+
+Types in evaluation order: `knockback` subtracts value after retail armour and
+before its minimum floor; `damage_threshold` absorbs selected-hit damage strictly
+below value; `knockback_threshold` absorbs resulting knockback strictly below
+value; `super` absorbs ordinary reactions; `hit_count` absorbs N hits, including
+the breaking Nth; `damage_pool` absorbs below remaining damage, with equal/crossing
+hit breaking through. All eligible types evaluate and both budgets consume even
+when another type protects. Threshold equality reacts. Subtraction alone reports
+absorbed=false because it promises reduction, not no flinch.
+
+Options: positive value<=1000 (hit_count integer1-255; super defaults1), frames0
+persistent or1-36000 logic frames, state-1 any or exact0-65535, inclusive from/to
+animation bounds(-1 unbounded or0-100000), direction any/front/back. Read rows:
+type,value,remaining,frames,state,from,to,direction,enabled. Disabled broken rows
+remain readable until clear/expiry. State gates do not refill budgets on re-entry.
+
+`on_armor(e)` receives port1-6, entity1-12, subfighter boolean, type, absorbed,
+broke, selected damage and resulting knockback. One event per eligible type per
+selected reaction; copied scalars dispatch after frame, suppressed during resim.
+Percent and retail hitlag for both fighters remain. Absorption prevents new launch
+and hitstun; existing counters and blastzone deaths remain. Grabs/throws/captures
+and ice, sleep, bury, Disable paralysis, Cape and Leadead preserve retail reaction
+and do not consume typed budgets. Electric keeps ordinary armour and electric
+hitlag. No grab immunity is added. CPUs use the same hooks.
+
+[Armour types demo](../melee/pc/scripts/examples/demos/armor-types/README.md) uses
+scripted P2 collision hits; physical attack and native rewind acceptance remain
+pending. Authoritative armour records live in game snapshot memory. Geno
+per-move integration is proposed separately for the schema owner.
+
+
+### Fighter gameplay history and echoes (EM5, 2026-10-04 source pass)
+
+`gd.fighter_history_depth()` returns61; `gd.fighter_history(port,age,sub=false)` reads ages0..60 or returns nil before capture. Reads are ungated. Records expose resolved world endpoints/radius and damage/angle/knockback/element for active fighter capsules, state/action-frame/position/facing/grounding and identity/source ownership, including the thrown-body capsule. Six ports and their explicit partners are independent. This game-memory history is separate from presentation pose history.
+
+`gd.echo_add(port,{delay=1..60,sub=false,match={move='nair',element='normal',airborne=true},damage=.4,knockback=1,once_per_move=true})` returns an owned handle; `gd.echo_remove(handle)` removes it. `gd.echoes(port,sub=false)` reads rows and owner/capacity/journal metadata. Eight rules per fighter entity; gameplay writes require the existing offline permission/branch rules. Normal fighter capsules replay at historical world positions, retaining true historical source credit; live hit and each echo have independent target memory. Default once_per_move consumes a target per historical move. False preserves the original per-hitbox/group incarnation semantics. Owner hitlag/rebound is suppressed, while normal target reactions/team/shield/clank and stale-credit paths remain. Articles and projectile hitboxes are not recorded by this fighter carrier.
+
+Deterministic on_frame publication uses `gd.sim_commit(blob,{{op='echoes',port=1,sub=false,rules={...}}})`. This absolute replacement preserves unchanged handles/target memory; empty rules clears the entity. Native canonicalization and duplicate-entity/handle preflight occur before journal allocation or mutation. Use direct echo_add/remove for explicit branched edits, not replayed on_frame state. `gd.echo_supported` identifies the rebuilt capability.
+
+`gd.echo_afterimage(port,{copies=3,spacing=4,echoes={{copy=1,match={move='nair'},damage=.4},{copy=2,match={move='nair'},damage=.4}},visual={...},sub=false})` returns emitter and echo handle array. Delay is always copy index times spacing; conflicting overrides refuse. `presentation_only=true` creates pictures only for rules already published through the journal. Multiple filters may occupy one copy. Existing motion options remain in visual; copies1..12, spacing1..8 and oldest age below60 preserve the current renderer lifetime bound. Standalone collision delay60 is supported; a joint age60 picture needs renderer work.
+
+`gd.afterimage_copy(emitter,index)` reads copy age/armed/element/contact-flash/brightness/tint; `gd.afterimage_copy_set(emitter,index,{brightness=.8,tint={1,.5,.2,1}})` changes owner-scoped unarmed styling. Ordinary afterimage_add emitters are addressable too. These are presentation reads/updates, without gameplay gates. Armed style data is implemented; the renderer integration is explicitly pending in the afterimage lane. Its game-thread snapshot must be copied into the GX FIFO payload, never read game BSS from the render thread.
+
+Envoy LAB: `echo add <delay> [move] [scale]`, `echo clear`. Manual commands publish collision-only rules; the joint demo supplies the matching three pictures. Source fixtures/syntax checks do not establish live shield/clank, rendered alignment or actual LAB zero-byte rewind. Rebuild normal affected translation units and run owner acceptance.

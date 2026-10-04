@@ -1,0 +1,13 @@
+# Echo hitboxes design
+
+Binding specification: docs/prompts/codex-echo-hitboxes.md, with codex-parallel-rules.md. Architectural source-only task; explicit packet permission overrides skill design approval/commit/worktree gates. Preserve both dirty trees and other lanes. No builds or game launch.
+
+Record deterministic fighter gameplay state and resolved active world capsules in a game-memory ring covering ages0..60 for twelve entities (six primary/sub fighters). Keep rule tables, replay capsules and once-per-target memory in snapshot-covered game memory. Read queries are ungated; gameplay writes use the existing offline/LAB branch and journal conventions.
+
+Preferred carrier is a separate bounded capsule list fed through the normal fighter collision traversal, retaining the original fighter as owner and its credit/teams/stale data. Do not invoke Lua or gd.hit to approximate collision. Native implementer must verify shield/clank/rebound behavior and avoid owner hitlag; if this carrier cannot satisfy a requirement, record an explicit limitation rather than invent capability. Never modify roster/fighter-definition code. Use script_echo* and gw_script_echo* new files; existing hit-rule collision hooks are owned. Shared include/frame/registration edits belong to root and happen last.
+
+Each echo replays historical positions, not current bones. A live hit and echo are separate hits. Each declared echo has independent once-per-target identity for each original move generation; once_per_move=false uses the game's per-hitbox rehit behavior without unbounded damage. Echo delays and afterimage copy ages must share one description; rendering remains presentation-only and reads simulation state through a scalar boundary. Armed copies use element tint and brief contact flash.
+
+Expose fighter_history/depth, echo_add/remove plus bounded inspection needed for journal/presentation, afterimage copy address/update and a joint helper. Existing APIs retain their defaults. Envoy adds declarative echo effect/family and tiered pool records, costs, looks, same-pool CPU composition and LAB echo commands. Three copies with neutral-air armed only on copies1/2 is expressible without naming particular fighter code.
+
+Tests use real production logic under standalone/stub harnesses: exact snapshot replay bytes, frame/position, target ownership/team shielding/clanks, once memory, cleanup, extreme input validation, deterministic API journals, pure records and adapter lifecycle. Standalone evidence is distinguished from live acceptance. Report carrier/cost/API/rebuild/shared edits and owner play script.
