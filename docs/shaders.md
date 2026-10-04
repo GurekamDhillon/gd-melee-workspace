@@ -288,3 +288,51 @@ presentation tick and removes the pass at expiry. Use `params.elapsed.x` and
 pause stops game logic; errors, unload and scene cleanup cannot strand the pass.
 Ownership/type validation remains unchanged. Removal/clear retires the timer;
 no clock/duration option means the original indefinite pass behavior.
+
+
+## EM1 fighter surface composite
+
+`melee/pc/scripts/examples/envoy/shaders/modifiers_surface.wgsl` is one native GX
+surface program containing seven separately named status functions and two
+ordered equipment layers. It receives the completed retail GX color, blends
+bounded color treatments, and preserves retail alpha and geometry. Equipment
+runs before statuses, but statuses reserve the three stronger slots first;
+equipment yields to faint tint when those slots are exhausted. Remaining statuses
+contribute faint tint. Intensity zero is identity.
+Burn ember rim, Shock arc pattern, Chill frost/desaturation, Curse inverted rim,
+Haste streaks, Guarded facets and Momentum stack climb are surface treatments.
+Heat refraction, history afterimages and an extra glass shell are not implemented.
+
+Sixteen float parameters, in order: logic seconds, intensity, Burn, Shock, Chill,
+Curse, Haste, Guarded, normalized Momentum, equipment-one encoded look+hue/strength,
+equipment-two encoded look+hue/strength, guard flash, combined hue/strength.
+Encode equipment look as 1 Burn, 2 Shock, 3 Chill, 4 Curse, 5 Haste, 6 Guarded,
+7 Momentum, plus normalized hue 0..1 (hue must be strictly below 1). Zero look
+uses hue tint. Strengths and combined hue are normalized 0..1. The shader never uses host `s.time`. Missing normals use a
+bounded constant rim. `modifiers_chain.wgsl` uses post `progress` and `strength`
+parameters; progress must be driven by Lua logic, with strength clamped to 0.06.
+It is a single gentle edge pulse, without a strobe or timed host-clock option.
+
+Native selection and parameter state remains visual-only and unsnapshotted.
+Rewind clients restore these uniforms from their own snapshotted Lua state.
+Current loaded fighter and sub-fighter material pipelines can be warmed after
+surface selection, but new GX variants remain cold until captured. Actual
+appearance, six-fighter cost and 120 fps acceptance require the integrator's
+Windows game run; standalone tests do not establish them.
+
+
+The Envoy `mod_display` adapter warms each loaded fighter's selected composite,
+then warms its chain post with a zero-strength pass and polls `gd.post_ready`
+for that exact pass. It removes the invisible warming pass once prepared. Later
+moments reuse the precompiled program and pipelines, using 18 logic frames and
+at least 30 logic frames between pulses. A pulse requires at least two distinct
+modifier labels in the chain; its peak edge blend is bounded by 0.06 times the
+intensity setting. There is one smooth rise/fall and no repeated strobe. No safety
+or appearance acceptance is inferred without the integrator's game run.
+
+The adapter snapshots only deterministic Lua visual metadata through the modifier
+engine. Restoring while paused rebuilds surface selection only for previously warmed
+ports, reuses cached native programs/pipelines, and restores logic progress
+without advancing timers or calling `gd.warm` (which forks rewind history).
+An unavailable host cache is reported; new variants wait for normal live warmup.
+Scene transitions invalidate cached handles; manual same-scene clear reuses them.

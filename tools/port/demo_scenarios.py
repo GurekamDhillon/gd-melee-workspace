@@ -135,3 +135,51 @@ SCENARIOS['demo_1p_awareness']=[('assert',"type(gd.mode_1p)==\"function\"")]
 SCENARIOS['demo_1p_hold']=[('assert',"type(gd.hold_1p)==\"function\"")]
 SCENARIOS['demo_1p_spawn']=[('assert',"type(gd.spawn_1p)==\"function\"")]
 SCENARIOS['demo_1p_loop']=[('assert',"type(gd.start_1p)==\"function\"")]
+
+
+# EM1 source demos: these scenarios are definitions, not game execution evidence.
+for field in ('fall_speed','weight','shield_regen'):
+    ident='demo_modifier_'+field
+    SCENARIOS[ident]=[
+        K('M',.3),('probe','^true '+field+'=2'),
+        ('assert','gd.fighter_mod(1).'+field+'==2'),
+        K('M',.3),('probe','^false '+field+'=1'),
+        ('assert','gd.fighter_mod(1)==nil'),
+    ]
+SCENARIOS['demo_hit_context']=[
+    ('c','= gd.teleport(1,-5,0)'),('c','= gd.teleport(2,5,0)'),
+    ('w',.3),('c','= gd.input(1,{buttons="A"},1)'),('w',.8),
+    ('probe','^captured=true move=jab element=normal attacker_damage=[0-9]'),
+]
+# Explicit hook admission only. Real payload/ordering acceptance requires an operator
+# or rebuilt native suite; passing this smoke never establishes the actual event.
+for event in ('ko','stock_lost','jump','air_jump','ledge_grab','grab','throw','taunt','shield_hit','perfect_shield'):
+    SCENARIOS['demo_event_'+event]=[
+        ('probe','^contract=on_'+event+' hook=true captured=[0-9]+ acceptance=operator-required'),
+    ]
+
+SCENARIOS['demo_sim_checkpoint']=[
+    ('c','= gd.history(180,30)'),('w',2),
+    ('probe',r'^checkpoint [0-9]+ \| matches=true'),
+    ('c','= gd.step_back(60)'),('w',1),
+    ('assert','gd.paused() and not gd.history().busy'),
+    ('probe',r'^checkpoint [0-9]+ \| matches=true'),
+    ('c','= gd.resume()'),
+]
+SCENARIOS['demo_surface_params']=[
+    ('w',.5),('probe',r'^selected=true updates=[1-9][0-9]* loads=[1-9][0-9]*'),
+    ('c','em1_surface_loads=gd.perf().surface_load_calls'),('w',.5),
+    ('probe',r'^selected=true updates=[1-9][0-9]* loads=[1-9][0-9]*'),
+    ('assert','gd.perf().surface_load_calls==em1_surface_loads'),
+]
+SCENARIOS['demo_post_ready']=[
+    ('w',.5),('probe',r'^post=true ready=true'),
+]
+
+SCENARIOS['demo_hit_rules']=[
+    ('assert', '#gd.hit_rules(1)==2'),
+    ('probe', r'^active=true rules=2 hits=[0-9]+ acceptance=operator-required'),
+    K('H',.3),('assert','#gd.hit_rules(1)==0'),
+    ('probe',r'^active=false rules=0 hits=[0-9]+ acceptance=operator-required'),
+    K('H',.3),('assert','#gd.hit_rules(1)==2'),
+]

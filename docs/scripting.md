@@ -977,7 +977,7 @@ gd.camera_params(nil)
 
 ### Passive fighter modifiers (engine batch 2)
 
-`gd.fighter_mod(port, values)` replaces that script's complete set and returns true. Ports are 1..6. Keys are `damage_dealt`, `damage_taken`, `run_speed`, `air_speed`, and `shield_max`; omitted keys become 1. Finite numbers are clamped to 0.1..4. Unknown fields and another script's ownership are errors. `gd.fighter_mod(port, nil)` clears the set. Writes require an offline active match.
+`gd.fighter_mod(port, values)` replaces that script's complete set and returns true. Ports are 1..6. Keys are `damage_dealt`, `damage_taken`, `run_speed`, `air_speed`, `shield_max`, `jump_height`, `air_jump_height`, and `knockback_taken`; omitted keys become 1. Finite numbers are clamped to 0.1..4. Ground `jump_height` covers full jumps and short hops. `air_jump_height` independently covers ordinary double jumps, multi-jump impulse tables (after Geno), and animation-driven double jumps. Ballistic launch velocity is multiplied by the square root of the requested height ratio; achieved height is approximate because gravity and discrete frames still follow retail logic. Animation-driven vertical displacement uses the ratio directly. `knockback_taken` scales the final capped collision knockback; 0.8 means 20% less launch impulse. These are live read overlays over the attributes the jump code reads, without DAT mutation; clearing/replacement/owner release preserves item and Geno edits. Expanded values remain in the existing snapshotted game BSS. Unknown fields and another script's ownership are errors. `gd.fighter_mod(port, nil)` clears the set. Writes require an offline active match.
 
 Attack/defense multipliers overlay the retail player ratio getters for knockback. Actual damage percent also needs separate hooks: dealt damage is scaled on fighter/item collision and direct grab/throw/script hit routes; taken damage is scaled once at the central damage application. Owned thrown bodies and items credit their live fighter owner. Modified damage is capped at 500; unmodified damage retains retail behavior. Generic grounded acceleration and speed limits use `run_speed`; generic aerial drift limits use `air_speed`. Lowering `air_speed` does not immediately rewrite existing horizontal velocity. Retail state-specific drift/deceleration callbacks work toward the scaled limit; momentum may remain above it for several frames, and existing retail clamp paths still clamp where they normally do. There is no new setter-time clamp. Character-specific special-move velocities retain their own behavior. Shield capacity reads scale the shared baseline without editing it; current shield health is clamped immediately when capacity decreases and is never refilled by clearing a modifier.
 
@@ -1441,7 +1441,7 @@ check fails. It uses the same per-script data namespace and name validation as
 the first return value remain compatible; invalid names still raise errors.
 
 `gd.fighter_mod(port)` queries the active overlay as a table containing
-`damage_dealt`, `damage_taken`, `run_speed`, `air_speed` and `shield_max`, or `nil`
+`damage_dealt`, `damage_taken`, `run_speed`, `air_speed`, `shield_max`, `jump_height`, `air_jump_height` and `knockback_taken`, or `nil`
 when none is active. The query is read-only across script owners. Explicit
 `gd.fighter_mod(port,nil)` clears an owned overlay; table writes keep their
 existing offline gate and ownership rules.
@@ -1684,7 +1684,7 @@ single-feature Lua stubs are checked.
 | `gd.release_1p()` | Releases this script's hold; returns false if absent or another script owns it. |
 | `gd.loop_1p(enabled)` | Owner-only New Game+ switch; returns boolean. A run adopted by `spawn_1p` from a manually entered retail mode cannot enable looping, because it has no original launch settings. |
 | `gd.end_1p()` | Owner-only, idempotent cleanup. Cancels a pending initial launch, or safely resets an active run to the menu. Templates, tints and holds are released; record protection remains until retail teardown. Returns boolean. |
-| `gd.spawn_1p(port, options)` | Apply a template to the current main entity and each replacement in that port before its first logic frame. Options: the existing `damage_dealt`, `damage_taken`, `run_speed`, `air_speed`, `shield_max` multipliers (finite, clamped 0.1..4), plus optional `tint=0xRRGGBBAA`. Returns boolean. `nil` clears this script's template/modifier/tint even after match end. A template adopts an otherwise manual retail run into record-protected script ownership. |
+| `gd.spawn_1p(port, options)` | Apply a template to the current main entity and each replacement in that port before its first logic frame. Options: the existing `damage_dealt`, `damage_taken`, `run_speed`, `air_speed`, `shield_max`, `jump_height`, `air_jump_height`, `knockback_taken` multipliers (finite, clamped 0.1..4), plus optional `tint=0xRRGGBBAA`. Returns boolean. `nil` clears this script's template/modifier/tint even after match end. A template adopts an otherwise manual retail run into record-protected script ownership. |
 
 Each hook receives one snapshot: `{mode, stage_index, stage_kind, loop, player_port,
 held, final, opponents}`. `mode` is a string; `stage_index` is the zero-based retail
@@ -1748,3 +1748,237 @@ is promised. Modifiers and spawn templates themselves live in game memory.
 Single-capability catalogue demos: `demo_1p_awareness`, `demo_1p_hold`,
 `demo_1p_spawn`, `demo_1p_loop` under `pc/scripts/examples/demos/`. Native suite
 fixture: `script_1p`; offline demo stub: `pc/tests/onep_demo_test.lua`.
+
+
+## Surface parameter updates (EM1, 2026-10-04)
+
+`gd.fighter_shader_set(port, {params={...}})` updates the calling script's existing
+fighter surface selection, retaining its program. The complete array replaces the
+previous 16 floats (omitted tail slots become zero). Returns `true` or `nil,error`
+if no owned selection exists. Invalid ports, non-finite values or more than 16
+values raise argument errors. Updates perform no file reads, shader registration
+or compilation. The independent catalogue entry is
+`melee/pc/scripts/examples/surface-shaders/scripts/parameter-update.lua`.
+
+Select your surface program before `gd.warm{fighters={1,2}}`. Fighter warm jobs now
+capture actual GX material variants under that selected program for both loaded
+primary and sub-fighter joints. Poll `gd.warm_done` before enabling play. This is
+coverage of current loaded materials; future costumes, metal materials or other
+uncaptured GX configurations can still compile. Selection follows player port,
+including CPU and sub-fighter draw callbacks, and survives costume/metal/size
+changes within the scene. Lifecycle cleanup clears it. Script-owned visual state
+is not a rewind snapshot; rebuild selection and parameters from restored Lua
+state. Use logic-time uniforms for deterministic animation, since surface `s.time`
+is host time. No Aurora renderer source or ABI change is required for these APIs.
+
+
+### EM1 gameplay observations and live value overlays (2026-10-04 source additions)
+
+These additions have syntax checks and native-suite source fixtures. They have not
+been linked or executed in the game. `gd.fighter_mod` also accepts `fall_speed`,
+`weight`, and `shield_regen`, each a finite multiplier clamped to 0.1..4 and
+returned by its getter. Fall speed scales the terminal velocity in the common
+fall callback, preserving gravity and character-specific fall callbacks. Weight
+scales the live weight input of collision-knockback formulas and the ordinary
+explicit-weight route; fixed-weight throw behavior still uses its
+retail weight-selection rule. Shield regeneration scales the central idle shield
+health increment. All three are read overlays in the existing snapshot-owned
+modifier set. Replacement resets unspecified keys to one; clear/unload restores
+live baseline calculations. No attributes or DAT tables are edited. The same
+port-owned overlay applies to primary/subfighters and CPUs. Existing modifiers
+survive respawn by design; a rules module must explicitly clear its own statuses
+and modifier set on its lifecycle boundaries. See demos/modifier-fall-speed,
+demos/modifier-weight, demos/modifier-shield-regen.
+
+Collision-origin `on_hit(attacker, victim, info)` adds `context_valid`,
+`move_tag`, `element_tag`, numeric `element`, `attacker_action`,
+`attacker_grounded` (absent for no owner), `victim_grounded`,
+`attacker_damage` and `victim_damage`. Damage fields are the current percent at
+collision, before the eventual central percent application; `dealt` is the
+collision's scaled damage. Context is captured through scalar arguments at the
+collision site, never reconstructed from deferred fighter state. Synthetic
+`gd.hit`/enemy observer paths may have `context_valid=false`; consumers must check
+it. Elements map normal=0, fire=1, electric=2, ice=5, darkness=13; other retail
+elements remain numeric and have `element_tag="unknown"`.
+
+Common action states classify jab (including rapid jabs), dash_attack, tilt,
+smash, aerial, grab and throw. The same common ranges apply to retail fighter
+families, clones and Geno fighters while they use those states. Family-specific
+states are `unknown`: an index beyond the common range is not automatically a
+special. Item hits remain `unknown` instead of claiming every item is a projectile.
+Thrown-body hits attribute the owner when available. Family-specific normal
+attacks, special throws, Geno custom states and lingering hitboxes after their
+owner changes state need an explicit future move-metadata contract. Direct throw
+percent routes do not currently emit `on_hit`; this addition does not invent them.
+See demos/hit-context. `on_hit` remains a queued observer after collision result
+application; returning a table cannot patch damage, element, knockback or hitstop.
+
+| Hook | Payload and exact source |
+|---|---|
+| `on_ko(attacker_or_nil, victim)` | Retail death accounting; self/environment attribution is nil; primary lifetimes only |
+| `on_stock_lost(port, stocks_remaining)` | After the same death accounting; LAB unlimited respawn still reports falls; delivered after on_ko |
+| `on_jump(port, action, sub)` | Entry to common JumpF/JumpB |
+| `on_air_jump(port, action, sub)` | Entry to common JumpAerialF/JumpAerialB; family-specific multijump states excluded |
+| `on_ledge_grab(port, action, sub)` | Entry to common CliffCatch |
+| `on_grab(port, action, sub)` | Successful common CatchPull/CatchDashPull; grab attempts excluded |
+| `on_throw(port, action, sub)` | Entry to common ThrowF/B/Hi/Lw; family-specific throws excluded |
+| `on_taunt(port, action, sub)` | Entry to common AppealSR/AppealSL; family-specific taunts excluded |
+| `on_shield_hit(port, action, sub)` | Actual accepted fighter/item shield collision, including repeated contacts during shield stun |
+| `on_perfect_shield(port, action, sub)` | Accepted fighter shield collision with retail powershield flag x221C_b2; reflected items take a separate unimplemented observer route |
+
+All hooks are opt-in queued observations delivered after the logic frame, before
+on_frame, and suppressed during silent resimulation. They do not change retail
+behavior. Common transition signals fire only when old and new states differ;
+a repeated same-state motion restart is not another transition. `on_land` remains
+the existing grounded-commit event. Each new hook has one demos/event-* catalogue
+example. Gameplay effects still require offline script authorization.
+
+## Simulation checkpoints (EM1, 2026-10-04)
+
+Source addition; isolated native/game helper fixtures and syntax checks pass.
+Integrated `gd.rewind_test` with active modifiers is an integrator check.
+
+`gd.sim_supported == true` advertises the offline checkpoint API.
+`gd.sim_commit(blob, operations)` accepts an opaque string up to 16384 bytes and
+at most 24 dense-array operations. A gameplay mod may commit once inside its
+`on_frame` in an offline active match. Console calls, tasks, other hooks, online
+sessions and explicit replay-time calls are refused. Validate/allocate everything
+before any gameplay writes. Eight loaded generations may own checkpoints.
+The sparse native journal has a 128 MiB budget; exhaustion refuses the commit.
+
+Supported operations:
+
+- `{op='fighter_mod', port=1, values={run_speed=1.2}}`: replaces the script's
+  complete fighter overlay. Omitted values default to 1; all supplied values
+  must be finite and within 0.1..4. Keys are `damage_dealt`, `damage_taken`,
+  `run_speed`, `air_speed`, `shield_max`, `jump_height`, `air_jump_height`,
+  `knockback_taken`, `fall_speed`, `weight`, `shield_regen`. A nil `values`
+  clears the overlay. Ownership conflicts refuse the whole commit.
+- `{op='damage', port=2, value=18}`: sets real fighter/HUD percent, 0..999.
+  Fractions truncate exactly as `gd.set_damage` does. Healing is an absolute
+  lower damage value computed by the rule engine.
+
+`gd.sim_read()` returns the calling script's checkpoint or nil. Its opaque bytes
+live in game BSS already covered by the snapshot; Lua globals do not. Serialize
+all deterministic rule state (seed, statuses, stacks, timers, pending events and
+equipped modifiers) and import it in `on_loadstate`. Never deserialize by
+executing the string as Lua. `gd.sim_replaying()` is true during both silent
+history frames and the last history frame, whose ordinary Lua hooks still run:
+return immediately from rule evaluation then. `on_loadstate` must still import.
+The journal replays the stored absolute writes/checkpoint at their original
+post-frame boundary without evaluating Lua or forking history. The last replay
+frame is covered too. New live writes after a seek fork future history.
+
+This contract covers only outputs submitted through `sim_commit`; other Lua
+writes, hit mutation, spawned actors and arbitrary native presentation are not
+made replayable by storing a blob. The script owns its schema, bounded serializer
+and restoration. Reload/unload/disable invalidates old history, clears storage,
+and existing fighter ownership teardown clears its overlays. Scene teardown
+clears checkpoints and the journal. Old saved load generations cannot alias a
+new script in the same slot. Demo: `demo_sim_checkpoint` in the feature catalogue.
+
+`gd.sim_clear()` immediately clears the calling gameplay mod's fighter overlays
+and checkpoint, including while the LAB is paused. It is offline-only and refuses
+explicit calls during history resimulation. Like other manual gameplay edits it
+forks future history and forces a checkpoint at the next boundary. It does not
+reset damage already dealt/healed; reset pure Lua rule state in the same command.
+Earlier snapshots still own their earlier blob; importing nil on load must reset
+the script's rule state. This manual edit differs from timed cleanup operations,
+which belong in `sim_commit` so history can replay them.
+
+### EM1 collision context and LAB modifier adapter
+
+Hit payload `context_valid` identifies the captured collision fields. When true,
+`move_tag`, `element_tag`, `attacker_damage`, `victim_damage`,
+`attacker_grounded` (only if a fighter owner is known), and `victim_grounded`
+describe collision-time state. Unknown move/element names remain unclassified:
+item contacts do not automatically mean `projectile`. An unknown attacker may
+still produce a valid victim hit-taken event; no fighter attacker is fabricated.
+The Lua adapter preserves these percent/ground values in `self_context` and
+`target_context`; stocks are sampled from `gd.player` at hook dispatch, because
+collision-time stock capture is not provided.
+
+The Envoy `mod_lab` module remains dormant until explicit `mod add <id> [port]`
+in an offline active LAB match. `mod list`, `mod trace` and
+`mod intensity <0..1>` expose its data/look; `mod clear` clears the entire debug
+build immediately, including while paused. Partial clear is intentionally not
+exposed. Classic/Adventure and an active Envoy run/director refuse activation.
+Hooks queue pure events; one live `on_frame` samples players, drains rules and
+commits all outputs. Hit percentages/ground flags are used only with valid native
+capture. Shader warmup completes before queued equipment activates. Host ticks
+poll paused visual restoration without advancing rule timers or game outputs.
+All rule/adapter roots, pending equipment, owner slots and lifecycle observations
+are serialized; a missing blob retires stale numeric-slot overlays from old saves.
+Checkpoint failure disables debug evaluation and clears native/pure/visual state.
+KO/respawn removes active rules, values and visible treatments; a neutral shader
+selection may be reused as a cache while an opponent remains loaded. Scene change
+recreates the visual adapter, because shader handles are scene-owned.
+
+
+`gd.post_ready(handle)` returns a boolean for an owned post pass. It is false
+until that exact pass successfully records and resolves using its current shader
+program; an expired or foreign handle returns `nil,error`. This is render-only
+readiness, not proof of GPU execution, visual correctness, or every future target
+configuration. A successful body reload replaces its program and clears effective
+readiness until the new program records. Use a zero-strength or identity pass
+while loading, then retire it after readiness. The independent catalogue demo is
+`demos/post-ready`; `demos/surface-params` separately demonstrates per-frame
+fighter uniforms without shader loads. Source/native fixture checked; game
+acceptance remains pending.
+
+
+### Native hit rules (EM2)
+
+Offline gameplay scripts declare rules ahead of combat; Lua never runs during collision.
+`gd.hit_rule_add(port, rule[, sub])` returns a handle; `gd.hit_rule_remove(handle)`
+removes its owned copies. `gd.hit_rules(port[, sub])` returns an array with
+`owner` and `status_bits`. `gd.hit_rules_clear(port[, sub])` retains statuses.
+`gd.fighter_status(port[, bits[, sub]])` reads/sets the 31-bit mask (nil bits
+for a selected partner read). Boolean sub selects primary(false)/partner(true).
+Omitted writes mirror both; omitted reads select primary. Each of the twelve
+entities has an independent eight-rule table/mask. CPU slots participate.
+Ownership covers rules and statuses. Unload/scene clear them; KO only if scripted.
+
+Example: `gd.hit_rule_add(1,{id=101,match={move='smash',element='normal'},
+change={element='fire',damage=1.2}})`. Move tags: any, unknown, jab, dash_attack,
+tilt, smash, aerial, special, grab, throw, projectile (owned items). Optional
+grounded and original element filters are frozen at creation. Allowed original
+and converted elements: normal, fire, electric, ice, darkness. Every other
+original is immune, including Sleep, Catch, Inert and Lipstick. Creation changes
+permit element, damage, knockback_growth, knockback_base, shield_damage, hitstun.
+Contact rules use match.status_bits (all requested bits) or match.incoming=true,
+and permit only damage/knockback_taken. Incoming rules belong to the victim.
+Original element matches even after conversion. Missing metadata permits incoming
+ordinary-element rules with unknown move/grounding; outgoing owner is not inferred.
+
+Insertion order is fixed, last element setter wins. Multipliers individually
+and running products are clamped to 0.1..4 after each rule. Shield delta -100..100,
+stun 0..120 logic frames; changed damage capped500, growth/base1000, shield
+result -100..100. Unchanged retail fields retain original values. Unknown fields
+and fraction requests are refused: conversion changes the whole hit, with no
+second damage component. Creation values stay latched for a capsule; clear affects
+future creation and current contact rules, not an already launched projectile.
+Per-victim contact scalars do not mutate a shared capsule. Metadata capacity1024;
+exhaustion logs once and refuses new creation changes.
+
+Electric uses retail hitlag; Fire uses fire reaction/thaw; Ice freezes only when
+retail thresholds qualify; Darkness has its own visual effect. Original sound
+kind/severity remain, so conversion alone does not change the attack sound.
+Creation damage affects clanks/shields/stale-adjusted damage. Contact-only damage
+does not affect clank priority. Staling still adds one queue entry. Stun uses
+the existing Geno largest-contact-bonus channel.
+
+Live checkpoint scripts must use absolute journal outputs:
+`gd.sim_commit(blob,{{op='hit_rules',port=1,rules={...},status_bits=1,sub=false}})`.
+Omitted sub mirrors both. Direct setters branch history and must not be used
+per-frame for replay. Tables/masks/handles/metadata live in snapshotted game BSS;
+native replay applies journal outputs. on_hit provides parallel hit_rule_ids and
+hit_rule_owners arrays of actual changes. Compare owner AND ID before naming
+a modifier. Creation IDs stay latched; contact IDs describe the victim's hit.
+
+Retail playable family special states, clones and Kirby copied specials are mapped.
+Unmapped character-specific normals/taunts, bosses/wireframes/Sandbag and custom
+m-ex/Geno extended states return unknown. Anonymous environmental and synthetic
+paths outside audited contact are excluded. Detailed site census, retail effects
+and integrator acceptance: _build/tmp/codex-hit-rules-report.md. Source/isolated
+helper tests do not establish live LAB rewind exactness.
