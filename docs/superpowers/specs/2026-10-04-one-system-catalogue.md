@@ -204,6 +204,24 @@ Lifecycle evidence: `melee/pc/gameworld/script_game.c:211`–`:217` releases sce
 
 ## 5. Smallest spine: dependency order
 
+S1 follow-up (2026-10-04) supersedes the original identity/bundle gap for the
+following source changes only. Historical inventories and fingerprints below
+remain the audit's closing capture, not the current EXE.
+
+| Step | Current status | Evidence / remaining acceptance |
+|---|---|---|
+| 1 | Source implemented and reviewed: scalar entity/source refs, compatibility adapters, queued event envelope foundation, LAB binding checks | Production standalone identity/codec/adapter/event fixtures pass; 516-byte reference-state replay has zero differences. PPC/native syntax and369 Lua tests pass. Real EXE queue/rewind and owner acceptance pending. Sources are caller-authored provenance; loader wiring remains step6. |
+| 2 | Built, suite 286/286 (2026-10-04, Claude): `sim_commit` journal admits `fighter_caps`, `fighter_effect`, `fighter_armour`, `fighter_armor`, `timed_status` (same bounds as the `gd.*` setters, replay calls the same native setters); `mod_registry.lua` is the one effect/operation descriptor list schema and budget read; journal commits allocate only their ops (the old full array exhausted the 128 MB budget after ~30 s) | Headless test: parse/refusal per op and movement replay zero-difference. Effect, armour and timer replay equality needs a live fighter: not yet checked in a LAB rewind. |
+| 3 | Built (Lua, suite unaffected): `mod_status.lua` is the single status declaration (bits, tags, budget, fighter values, order); schema, engine, synergy, display and budget read it; the `armoured` loot is labelled `Damage resistant` (id kept: persisted) | All existing Envoy Lua tests pass unchanged; `envoy_status.lua` pins the old numbers. Native numeric timed channels stay private. |
+| 4 | Partly built: item/article hits declare move tag `projectile`; original and effective element both reach `on_hit` (`original_element_tag`, `element_converted`); zone (`world`) and 1P (`run`) signals join the `on_event` envelope | Declared move tags for Geno-fighter and m-ex-fighter moves are NOT done (no declaration source exists in their data); armour/skill producers and the contact ring are not in the envelope. |
+| 5 | Built and driven in the game (sandbox, vanilla disc): `envoy rules on` then `envoy classic` installs the pool, bag, slots, opponent rolls and looks through the same host as the LAB (`run_host.lua`); the old companion-stat route is the default | Verified: starter drive equipped, opponent rolled with nameplate and fighter mod applied, stage clear -> reward drive -> stage 1 (depth 1) with three more rolls, game over and `envoy stop` clear the bag. Not verified: visual looks, the owner's own play, NG+, Adventure, bosses. |
+
+Codex stopped after step 1; Claude continued with steps 2 to 5 (see `_build/audit-20261003/spine/PROGRESS.md`).
+Envoy bundle regeneration is the final source operation of the pass. Report:
+`_build/tmp/codex-spine-steps-1-5-report.md`; scoped review:
+`_build/tmp/spine-step1-review.md`. No held technique/crit feature was built.
+
+
 Keep retail collision/physics, Geno move/state executor, Item allocation, stage teardown and renderer. Unify their **contracts**. These steps only join existing capabilities; in-flight armour/skill/define work is not a new feature smuggled into this proposal.
 
 | Order | Small change | Existing systems change | Playable boundary and evidence required |

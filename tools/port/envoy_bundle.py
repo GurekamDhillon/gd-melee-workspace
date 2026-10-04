@@ -24,7 +24,7 @@ def mission_modules():
     raise ValueError('Shared mission module list missing')
 
 MISSION_MODULES = mission_modules()
-ENVOY_MODULES = ('mod_progression', 'mod_echo', 'mod_schema', 'mod_codec', 'mod_budget', 'mod_engine', 'mod_pool', 'mod_display', 'mod_echo_lab', 'mod_lab', 'genetics', 'companion', 'save', 'drives', 'mission_events', 'drive_models', 'fighter', 'campaign', 'run', 'classic', 'hud', 'menu', 'menu_draw', 'menu_input', 'recolour', 'visual', 'hub', 'retail_app', 'app', 'mod_synergy', 'drive_loot', 'drive_bag', 'drive_drop', 'drive_menu', 'drive_lab', 'foe_roll', 'foe_lab')
+ENVOY_MODULES = ('mod_progression', 'mod_echo', 'mod_registry', 'mod_status', 'mod_schema', 'mod_codec', 'mod_budget', 'mod_engine', 'mod_pool', 'mod_display', 'mod_echo_lab', 'mod_lab', 'genetics', 'companion', 'save', 'drives', 'mission_events', 'drive_models', 'fighter', 'campaign', 'run', 'classic', 'hud', 'menu', 'menu_draw', 'menu_input', 'recolour', 'visual', 'hub', 'retail_app', 'app', 'mod_synergy', 'drive_loot', 'drive_bag', 'drive_drop', 'drive_menu', 'drive_lab', 'foe_roll', 'foe_lab', 'run_host')
 
 
 def bundle():
@@ -42,11 +42,12 @@ def bundle():
         lines.append(f'envoy.{name} = assert(load({literal}, "@envoy/{name}.lua", "t"))()(envoy)')
     lines += ['local mission = missions.runtime.new(envoy.mission_events.engine(gd))',
               'local app = envoy.app.new(gd, mission)',
-              'local mods = envoy.mod_lab.new(gd,{blocked=function() return app.run.active or (app.retail and app.retail.active) or app.mission.current~=nil end,activate=function() app.visible=false;app.input:close() end})',
+              'local mods = envoy.mod_lab.new(gd,{blocked=function() return app.run.active or (app.retail and app.retail.active) or app.mission.current~=nil end,run_host=function() return app.retail~=nil and app.retail.active==true and app.retail.rules==true end,run_ready=function() return app.retail.host~=nil and app.retail.host:ready() end,activate=function() app.visible=false;app.input:close() end})',
+              'app.retail.host = envoy.run_host.new(gd,mods,app.retail)',
               'app.retire = function() missions.install.retire(mission) end',
               'app.detach_events = envoy.mission_events.observe(missions.mission, function(e) app:mission_event(e) end, gd.log)',
-              'function on_frame() if not mods:frame() then app:frame() end end',
-              'function on_tick() if not mods:tick() then app:tick() end end',
+              'function on_frame() local handled=mods:frame();if not handled or mods:hosted() then app:frame() end end',
+              'function on_tick() local menu=mods:tick();if not menu or mods:hosted() then app:tick() end;if app.retail.host then app.retail.host:tick() end end',
               'function on_draw() app:draw();mods:draw() end',
               'function on_enemy_defeated(event) app:defeated(event) end',
               'function on_item_collect(event) app:item_collect(event);mods:pickup(event) end',

@@ -2183,3 +2183,74 @@ Deterministic on_frame publication uses `gd.sim_commit(blob,{{op='echoes',port=1
 `gd.afterimage_copy(emitter,index)` reads copy age/armed/element/contact-flash/brightness/tint; `gd.afterimage_copy_set(emitter,index,{brightness=.8,tint={1,.5,.2,1}})` changes owner-scoped unarmed styling. Ordinary afterimage_add emitters are addressable too. These are presentation reads/updates, without gameplay gates. Armed style data is implemented; the renderer integration is explicitly pending in the afterimage lane. Its game-thread snapshot must be copied into the GX FIFO payload, never read game BSS from the render thread.
 
 Envoy LAB: `echo add <delay> [move] [scale]`, `echo clear`. Manual commands publish collision-only rules; the joint demo supplies the matching three pictures. Source fixtures/syntax checks do not establish live shield/clank, rendered alignment or actual LAB zero-byte rewind. Rebuild normal affected translation units and run owner acceptance.
+
+
+### Scalar entity/source references (S1 step 1, 2026-10-04 source pass)
+
+`gd.entity_ref(port)` selects a primary fighter. Explicit selectors are
+`{kind='fighter',port=1..6,sub=false}` or `{kind=kind,id=id}` for item,
+article, projectile, echo, stage_object and stage_actor. Item IDs are retail
+serials; echo IDs are rule handles; scripted stage-object IDs are existing
+line/model/mesh-instance/target/enemy handles; retail stage-actor IDs are map
+slots0..63. Article/projectile select canonical item identity; CPU is a fighter
+role. A live reference string is also accepted. Missing actors return nil.
+
+References are opaque versioned scalar strings. `gd.entity_valid(ref)` checks
+lifetime; `gd.entity_resolve(ref)` returns version, kind, id, epoch, generation,
+definition and roles, plus fighter port/sub and compatibility IDs where relevant.
+Owner fields identify the current owner when known. Respawn, transformation,
+removal/recreation and scene teardown invalidate old bindings. Item reflection
+changes ownership without changing identity. Snapshot restoration restores game
+identity state; actual LAB rewind acceptance remains pending. Player and item
+query rows now include `entity_ref`.
+
+`gd.entity_call(ref,operation,...)` forwards a live fighter to existing APIs:
+fighter_caps, fighter_effect, fighter_armour, fighter_armor,
+fighter_timed_status, give_item, nearest_opponent, opponents_in_radius,
+fighter_status, hit_rule_add, hit_rules, hit_rules_clear, fighter_history,
+echo_add, echoes and zones_at. It maps primary/sub layouts and refuses an
+explicit conflicting sub selector. Other arguments retain the original API
+meaning, including additional opponent exclusion selectors. Existing permission,
+offline and ownership gates still apply. Existing integer calls keep working.
+
+`gd.source_ref(kind,key,revision=1,entity_ref?)` declares immutable provenance.
+Kinds: drive, opponent, fighter, item, stage. Keys contain1..96 ASCII letters,
+digits, underscores or hyphens; revisions are positive signed32-bit integers.
+`gd.source_resolve(ref)` returns version/kind/key/revision and optional binding,
+or nil for malformed/stale bound refs. Unbound sources remain historical
+declarations. A source does not prove content is loaded or grant permissions;
+authored loader integration is a later spine step.
+
+`on_event(e)` observes existing queued native engine events immediately before
+their corresponding legacy callback. Fields: version1, kind (legacy hook name),
+id, frame, sequence, phase (action/collision/reaction/lifecycle),
+delivery='post_frame', optional cause/actor_ref/target_ref, and legacy={code,a,b,c,d}.
+Frame follows the existing gd.frame logic clock; sequence counts capture order
+within scene epoch/frame. Derived action signals carry their parent cause.
+Captured refs remain after actor retirement; validate them before mutation.
+Hit actor_ref is omitted because legacy item/throw credit cannot reliably
+establish primary/sub identity; known target refs are retained. This is the
+queued-stream foundation: zone/contact/1P/Geno streams and complete declared
+move/source tags remain step4. Resimulation does not invoke observers.
+
+Envoy LAB checkpoints carry the primary binding when available, reject stale
+bindings before publication, and clear transient statuses after same-kind
+replacement. Older checkpoints without a binding remain compatible.
+
+
+### Spine steps 2 to 5 (2026-10-04)
+
+`gd.sim_commit` ops now also include `fighter_caps` (`entity`, `values`), `fighter_effect` (`entity`, `effect`,
+`value`, `frames`), `fighter_armour` (`entity`, `damage`, `knockback`), `fighter_armor` (`entity`, `type`,
+`value`, `frames`, `state`, `from`, `to`, `direction`, `clear`) and `timed_status` (`entity`, `channel`, `value`,
+`frames`). `entity` is 1..12. Bounds equal the matching `gd.fighter_*` setter; replay re-applies the same native
+setter, never the Lua.
+
+`on_hit` info gains `original_element`, `original_element_tag` and `element_converted` next to the effective
+`element` / `element_tag`; hits by items and articles report `move_tag='projectile'`. `on_event` also carries
+zone signals (phase `world`, kind `on_zone_*`) and 1P signals (phase `run`, kind `on_1p_*`), in the same
+epoch/frame/sequence clock, before their legacy hook.
+
+Envoy: `envoy rules on|off` selects the rule host for Classic and Adventure runs (off by default; applies from
+the next run). On, a run installs the loot pool, bag, slots, opponent rolls, nameplates and looks the LAB uses,
+instead of the companion-stat templates.

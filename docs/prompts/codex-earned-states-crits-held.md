@@ -144,3 +144,31 @@ F. Rolled modifiers for the first set (crit chance, crit multiplier, a condition
 Tests: the roll's determinism and distribution over 10,000 hits, percent-only application, conditional crits, the
 strength formula, the presentation curve's monotonicity and safe limits.
 
+## ADDED while held: the three channels left presentation outputs unassigned (owner: "what happened to emitters and particles?" ... "what else?")
+The three-channel rule (surface = equipped/status on you; afterimage = earned status while it lasts; tracer = this hit
+carries something) only covers CONTINUOUS looks on a fighter. The engine has more outputs, each built and none given a
+meaning: particle emitters and effect packages (`gd.fx_play/attach/world/move/control/stop/end/instance/shader`, the
+effects lab, the drive pickup and loot packages under the Envoy mod's `fx/`), post passes (`gd.post_*`), script lights
+(`gd.light_set`), sound (`gd.sfx` with pitch/volume), hitstop and screen kick, the camera parameters, and on-screen text
+(nameplates, the HUD bars, drive name cards, the chain trace). Give each ONE meaning, enforce it in the schema like the
+others, and report the table for the owner to correct. The integrator's proposal:
+- **Particle burst (local, momentary)** = something just HAPPENED at this place: a status applied or expired, a drive
+  dropped or collected, armour absorbing or breaking, an echo arming or connecting, a crit, a KO. One-shot, short,
+  positioned at the event, coloured by what happened. Never continuous on a fighter.
+- **Emitter attached to a fighter (continuous)** = allowed only as part of a status's surface look (embers rising from a
+  Burning fighter, frost falling from a Chilled one): same meaning as the surface channel, subordinate to it, counted
+  inside the "three strong treatments" limit, and ending with the status.
+- **Emitter in the world (continuous)** = a place or an object that matters: a dropped drive by rarity, a goal, a zone
+  with an effect. Not fighters.
+- **Post pass (whole screen, momentary)** = a rare, big moment for the whole fight: a chain of three or more, a strong
+  crit, a keystone activating, a KO off a combo. Scaled by magnitude, safe limits, never for routine hits.
+- **Light** = accompanies a world emitter or a big moment; never the only signal.
+- **Sound** = every momentary signal has one, pitched or layered by magnitude; continuous states have none or a very
+  quiet loop.
+- **Hitstop and screen kick** = the weight of a hit that carried something (crit strength, a broken armour), scaled.
+- **Camera** = not used as a signal (the owner's rule: C-stick is attacks, and the camera stays the game's).
+- **Text** = names and numbers only where a player chooses or reads a build (nameplates at stage start, the bag, the
+  drive card, the debug trace); never needed to understand a fight in motion.
+So: three continuous channels on a fighter, momentary signals for events, world emitters for places. Every modifier
+`visual` record must fall in one of these or be rejected.
+
