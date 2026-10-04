@@ -1,5 +1,26 @@
 # Next session - start here
 
+**Controller remapping source pass (2026-10-03):** CONTROLS now has a controller-only
+remap editor, device profiles, presets and shim input transforms. Report and
+integrator/owner acceptance steps: `_build/tmp/codex-controls-remap-report.md`.
+Libclang syntax checks passed; no game build, game launch or executable test run
+was performed. Tap-jump-off is still outstanding; do not describe the whole
+controls packet or the under-one-minute/controller usability goal as accepted.
+
+**Audit repair handoff (2026-10-03):** read
+[HANDOFF-AUDIT-REPAIRS-2026-10-03.md](HANDOFF-AUDIT-REPAIRS-2026-10-03.md) first for
+the current uncommitted repairs, focused test evidence and remaining integration
+work. The user requested handoff before the full game build and gameplay
+acceptance. That dated handoff supersedes earlier repair progress claims; the
+Envoy requirements below remain in force.
+
+**Envoy gameplay correction (2026-10-02):** read
+[ENVOY-PROBLEMS-2026-10-02.md](ENVOY-PROBLEMS-2026-10-02.md) before treating the
+current prototype as accepted gameplay. It supersedes earlier optimistic Envoy
+readiness summaries: the default is one physical traversal level that ends and
+repeats, not the requested spatial maze/campaign. The dated acceptance document
+retains individual test evidence; it does not establish gameplay completion.
+
 **Current as of 2026-09-27**, checked against workspace `fc23753` and game `4c676892a`.
 This dated state supersedes `QUEUED-2026-09-26.md`, `QUEUED-2026-09-27.md` and the general
 state in `HANDOFF-2026-09-24.md`. The dated Slippi handoff remains the record of those replay

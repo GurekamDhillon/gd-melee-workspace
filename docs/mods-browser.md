@@ -1,11 +1,16 @@
-# Publishing mods for the GD's Melee mods browser
+# Mods source format and legacy browser reference
 
-The launcher's **Mods** tab lists installed mods, and installs, updates, enables and removes mods
-offered by the **sources** a player adds. This page is for mod authors: how to make your mods show
-up there. The folder layout a mod installs into is `docs/mods-packaging.md`; scripts are
-`docs/scripting.md`.
+The current Qt launcher's **Mods** tab lists local mods, enables/disables them, and moves removed
+mods into a recoverable `.removed` folder. Copy trusted mods into `mods/<id>/` manually; remote
+sources, installation and updates are not implemented in Qt. Its CLI supports `--list-mods`,
+`--enable-mod <id>`, `--disable-mod <id>` and `--mods`, but **not `--install-mod`**.
 
-## For players, in short
+This page preserves the source/index format used by the separate mods-browser tools and legacy
+C# launcher retained under `tools/release/launcher/`. The remote browser flow below describes that
+reference implementation, not the launcher shipped by the current build scripts. Folder layout:
+`docs/mods-packaging.md`; scripting: `docs/scripting.md`.
+
+## Legacy browser flow
 
 - `mods/sources.txt` next to the game lists sources, one per line (`#` comments). It ships empty:
   GD's Melee does not vouch for anyone's mods; add the ones you trust.

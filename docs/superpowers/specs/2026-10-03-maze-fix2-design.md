@@ -1,0 +1,11 @@
+# Maze clearance, finish and connected world
+
+The owner wants readable choices, comfortable traversal and a definite ending. Implement the packet in order, in the existing Lua/Python ownership, without builds, C edits, game launches or commits.
+
+Clearance: use50 units of solid-ceiling headroom (17.97 standing height +29 measured hop +3.03 tolerance), minimum6 units horizontal wall clearance, maximum20-unit climb steps and32-unit landing span under drops. Explicit crawl labels may reduce headroom to20, never below standing height. Pass-through platforms do not block upward motion. Check actual collision across seams, with chunk and object labels in refusals. Upper ascent platforms must fit inside the unchanged24-unit roof slot; other recipes prune adaptive high platforms under sealed roofs. No bridge across down holes: horizontal traversal there costs a hop.
+
+Maze shape: grow a bounded self-avoiding path in all directions, prioritize a mix of straight runs and turns, grow branch chains instead of single stubs, and connect neighbouring eligible cells into loops. Preserve a chosen main-route length and independent whole-graph reachability. Publish branches, longest dead end, route turns, cycles and direction histogram. Record1000 seeds before changing topology and after.
+
+Completion: keep the pure mission result/cleanup path; show a centered completion panel and pause the offline mission once. Restart/play/reroll/stop release only that owned pause. Generated goal uses a visible kit doorway object.
+
+World: deterministic derived region seeds, fixed reserved slots and per-region theme mixes; regional reroll keeps other region seeds and physical placement. Join exterior ports by obstacle-routed connector chunks into one continuous graph, with a looping region graph and a final goal/boss region. Whole-world checking requires every connector pair in each region to be mutually reachable and all regions to be safely reachable/backtrackable. Region zones are display membership, not camera ownership; room/transition commitment remains unchanged. Limit regions, chunk count, coordinates, enemy count and blast bounds explicitly. Python is a Lua call-through; bounded generation yields work to subsequent logic callbacks at runtime. Report Envoy integration requirements without editing its bundle.

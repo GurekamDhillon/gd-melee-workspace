@@ -1,0 +1,9 @@
+{
+  "id": "tutorial-kirby",
+  "name": "Tutorial Kirby",
+  "version": "0.1.0",
+  "kind": "fighter",
+  "description": "An original data-only Kirby jump overlay.",
+  "requires": [],
+  "conflicts": []
+}

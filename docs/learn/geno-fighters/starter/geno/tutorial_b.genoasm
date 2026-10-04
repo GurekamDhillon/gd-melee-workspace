@@ -1,0 +1,9 @@
+# Original tutorial move: no script or archive copied from a disc.
+# Based on the learner-lane tutorial-kirby mod (2026-10-03).
+# Joint 43 is the learner-lane's choice; check it on YOUR install in the LAB.
+wait 5
+hitbox slot=0 joint=43 damage=8 size=4 angle=361 kbg=100 bkb=30
+wait 3
+clear_hitboxes
+wait 6
+iasa

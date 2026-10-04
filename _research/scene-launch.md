@@ -1,5 +1,9 @@
 # Scene launch — booting straight into any screen, in any configuration
 
+**Fix1 (2026-10-03) supersedes the source-only status below:** the tester verified the original six-slot build in `_build/audit-20261003/batch2-verify/`. Fix1 adds the six-anchor HUD selection, real preload planning/after-load free-byte logging, explicit p7/LAB selection refusals, and `teams=1;enemy_team_colors=1` (enemy team costumes, no duplicate tint). Fix1 remains unbuilt/unrun; see `_build/tmp/codex-six-slots-fix1-report.md`.
+
+**Six-slot source update 2026-10-03:** direct VS/LAB accepts p5/p6 as CPUs; six-slot CSS/SSS/Training routes are refused. `preload=fox/marth` names up to two extra costume-zero characters (GameCache has eight entries). See `docs/scripting.md` and `_build/tmp/codex-six-slots-report.md` for admission limits and unverified native behavior. This supersedes the four-slot launch audit; historical native results below do not verify these changes.
+
 **Written 2026-09-19.** Code: `pc/platform/gw_runtime.c` (the `SCENE LAUNCH` block at the end),
 `src/melee/gm/gmscenelaunch.h` (the game-side seeder), and the call sites listed in §7.
 Tests: `scene_*` in the `--test` suite, 7 of them.
@@ -130,7 +134,7 @@ rejected.** This is the one rule the mechanism exists to enforce.
 |---|---|---|---|
 | `mode` | `training`, `vs`/`melee`, `targettest`/`tt`, `title`, `menu`, `tiny`, `giant`, `stamina`, `camera`, `ssd`, `invisible`, `slomo`, `lightning` | — | required; sets the `GameModeKind` and the `GmVsMode` row it seeds |
 | `at` / `screen` | `css`, `sss`, `match` | `match` | the screen within the mode. Both `GM_VS` and `GM_TRAINING` number their states CSS 0 → SSS 1 → playable 2 |
-| `p1`..`p4` | `<charref>[/<opt>]…` | — | see below |
+| `p1`..`p6` | `<charref>[/<opt>]…` | — | see below |
 | `stage` | `<stageref>` | `izumi` (St_Kind_Izumi) | |
 | `teams` | `0`/`1` | leave alone | |
 | `time` | seconds | leave alone | 0 disables the timer |

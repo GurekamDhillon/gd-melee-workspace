@@ -1,0 +1,138 @@
+# Credits
+
+This project stands on other people's work. Everything here is credited whether or not a licence
+requires it, and that includes ideas and findings as well as code. Licences of bundled libraries are
+in `tools/release/THIRD-PARTY-NOTICES.txt`. A project we learn from or start using is added here in
+the same change.
+
+## Maze stitching (2026-10-03)
+
+GD's direction to stitch hand-built chunks, the project's mission-folder runtime,
+Blender exporter and original `bf_floor_4m` kit are the foundations of this packet.
+The measured chunk size, streaming behavior, fighter footprint and jump limits
+come from `_research/large-levels-and-maze-stitching-2026-10-03.md` and the owner's
+maze prompt. The throwaway spike was consulted for its findings, never copied.
+Graph growth, sealing, independent checking and data recipes are original code;
+the seeded RNG uses the general Park–Miller minimal-standard recurrence.
+
+Draft of 2026-10-03: the "foundations" list is incomplete and is being filled in from the README
+and the third-party notices.
+
+## Foundations
+
+| Project | Author | Link | What it gives us |
+|---|---|---|---|
+| doldecomp/melee | the doldecomp contributors | https://github.com/doldecomp/melee | The matching decompilation the port is built from |
+| Aurora | encounter | https://github.com/encounter/aurora | The GameCube SDK reimplementation the port renders through |
+| Project Slippi | Fizzi and the Project Slippi team | https://slippi.gg, https://github.com/project-slippi | The replay format, rollback practice and UCF codes the port follows |
+| Lua 5.4 | Lua.org, PUC-Rio | https://www.lua.org | The scripting language embedded in the port |
+
+## Work we have learned from (ideas and findings; no code copied)
+
+| Project | Author | Link | Licence as they state it | What we drew on |
+|---|---|---|---|---|
+| MeleeVS (melee-pc-TagFighter) | Joyastick | https://github.com/Joyastick/melee-pc-TagFighter | Game-side code unlicensed; port code GPL-3.0-or-later | Benching and calling reserve fighters, control hand-off, fighter labels, and the bug history around them. Note: `_research/tagfighter-insights-2026-10-03.md` |
+| melee-pc | 999sian and the melee-pc contributors | https://github.com/999sian/melee-pc | Port code GPL-3.0-or-later; game code unlicensed | Whole-memory rollback snapshot design; architecture comparison |
+| slippi-ai | Vlad Firoiu (vladfi1) | https://github.com/vladfi1/slippi-ai | MIT; no terms stated for the trained weights | An imitation-learned agent considered as a test opponent. Note: `_research/slippi-ai-for-testing-2026-10-03.md` |
+| Phillip | Vlad Firoiu (vladfi1) | https://github.com/vladfi1/phillip | GPL-3.0 | Read to judge its status; not used |
+| libmelee | AltF4 and vladfi1 | https://github.com/altf4/libmelee, https://github.com/vladfi1/libmelee | LGPL-3.0 | The game-state field set an agent expects |
+| Sonic Adventure 2 decompilations and Chao World Extended | their respective authors (to be named from the repos) | to be filled in | SA2B GameCube decomp CC0; others carry no licence | Chao genetics, growth and breeding rules as design reference. Note: `_research/chao-genetics-for-envoy-2026-10-03.md` |
+| sonic-adventure-workbench | leevee123 (GitHub account) | https://github.com/leevee123/sonic-adventure-workbench | No licence stated (ideas only; nothing copied) | Benchmark method (fixed savestate, median of trials, hashes recorded), offline relocation and opcode audit of code blobs, allow-list package validation. Note: `_research/sonic-adventure-workbench-insights-2026-10-03.md` |
+| Sonic Adventure / Chao Garden | Sega, Sonic Team | | | The design the companion and garden are modelled on |
+| Super Smash Bros. Ultimate (Spirits, Stage Morph) | Nintendo, Bandai Namco Studios, Sora Ltd. | | | Design reference for the Envoy companion (Spirits) and for seamless stage switching (Stage Morph); ideas only |
+
+## Fighter surface shading (2026-10-03)
+
+Aurora's generated GX shaders, threaded FIFO, public normal resolve and pipeline
+cache are provided by **encounter / Luke Street and the Aurora contributors**
+([encounter/aurora](https://github.com/encounter/aurora), MIT; vendored upstream
+`cb0e279`). The GD surface extension builds on those local implementations and
+retains their licence. The cel edge, rim and dissolve samples are original code;
+quantisation, view-normal rim lighting and procedural hash dissolve are general
+shader techniques, with no outside sample code copied.
+
+## Controller remapping (2026-10-03)
+
+The editor consults **encounter and the Aurora contributors**' existing PAD
+device layouts and public mapping, native button-name and SDL-handle APIs
+([Aurora](https://github.com/encounter/aurora), MIT). **The SDL contributors**
+provide controller button/axis positions, GUIDs and device polling
+([SDL](https://github.com/libsdl-org/SDL), zlib). These local implementations
+informed the shim integration; the profile model, conflict resolution, capture
+flow and preset descriptions are original code. No external remapping screen
+or controller artwork was copied.
+
+## Mod shaders, post processing and kit materials (2026-10-03)
+
+The custom renderer uses the public draw, resolve and offscreen-pass interfaces
+of **encounter / Luke Street and the Aurora contributors**
+([encounter/aurora](https://github.com/encounter/aurora), MIT). It extends the
+existing Geno effects renderer without changing Aurora or `shim_gx`.
+
+WGSL uniformity, explicit-LOD sampling and uniform layout were checked against
+the **W3C GPU for the Web Working Group**, including editors **Alan Baker,
+Mehmet Oguz Derin and David Neto**,
+[WebGPU Shading Language specification](https://www.w3.org/TR/WGSL/).
+Validation uses the bundled **Google Dawn/Tint contributors'** implementation
+([Dawn](https://dawn.googlesource.com/dawn), BSD-3-Clause).
+The grade, vignette, depth outline, bloom, derivative tangent frame and
+Fresnel-style glass samples are original implementations of general shader
+techniques; no outside shader source was copied.
+
+## Native profiler and benchmark tooling (2026-10-03)
+
+The optional development profiler vendors only the **Tracy 0.14.1 client**, by
+**Bartosz Taudul and contributors** ([Tracy](https://github.com/wolfpld/tracy),
+BSD-3-Clause). Its bundled **libbacktrace**, by **Ian Lance Taylor / Free Software
+Foundation** (BSD-3-Clause), **LZ4**, by **Yann Collet** (BSD-2-Clause), and
+**rpmalloc**, by **Mattias Jansson** (public domain), retain their notices.
+The client is off by default and excluded from release packaging.
+
+Run-wide bounded percentile samples use **Jeffrey S. Vitter's Algorithm R**
+([Random Sampling with a Reservoir](https://www.cs.umd.edu/~samir/498/vitter.pdf));
+this is an original implementation of the technique. The private replacement hash
+uses **Austin Appleby's MurmurHash3 64-bit finalizer**, released into the public domain
+([source](https://github.com/aappleby/smhasher/blob/master/src/MurmurHash3.cpp)).
+Chrome Trace JSON interoperability follows **Google / the Perfetto contributors'**
+[trace format documentation](https://perfetto.dev/docs/getting-started/other-formats);
+no Perfetto library is vendored. GPU timestamps extend **Luke Street / encounter and
+Aurora contributors'** MIT renderer and **Google Dawn contributors'** WebGPU backend.
+The synthetic benchmark mesh, material grid and clank shader are original assets;
+no disc-derived assets are included.
+
+
+## Static stage switching (2026-10-03)
+
+Stage Morph presentation and placement ideas: Super Smash Bros. Ultimate, Nintendo, Bandai Namco and Sora Ltd. The behavior reference is [SmashWiki: Stage Morph](https://www.ssbwiki.com/Stage_Morph), contributed by SmashWiki editors under CC BY-SA 4.0; this implementation uses an original, simplified static geometry design. Retail DAT layout and game routines are studied in this workspace's Melee decompilation and `_research/seamless-stage-switch-2026-10-03.md`. No disc-derived assets are included.
+
+## Geno author tools (2026-10-03)
+
+`tools/geno/` consults the Melee decompilation contributors' command table and bitfield
+definitions in `melee/src/melee/ft/ftaction.c`, and this workspace's Geno registry,
+game implementation, LAB command names and `melee/docs/geno.md`. The assembler imports
+the existing `ports/ir/tools/acmd_to_ftcmd.py` encoder unchanged; the exporter reuses
+`tools/mex_port/mex_hsd.py`'s GCM/HSD readers. Effect-binding validation reuses the
+workspace's `ports/ir/schema/fx_bindings.schema.json`, adapting converter-only constraints
+to the engine. The starter's original authored choices come from the learner-lane
+`tutorial-kirby` overlay and the Geno fighters course. Schema validation uses the
+`jsonschema` project's Python library (Julian Berman and contributors). No command
+streams, archives or assets from a disc are included in these tools or starter files.
+
+## Feature demos and small showcases (2026-10-03)
+
+`melee/pc/scripts/examples/demos/` follows this project's scripting, mission,
+shader and profiling references and native registrations/implementations. The
+independent post demos preserve the existing `shader-demo` WGSL techniques.
+Gauntlet contains the project's pure seeded maze generator and room recipes
+from `examples/missions/scripts/maze.lua` and `maze_set.lua`; its arena,
+pickup definition, result UI and presentation shaders are original text/data.
+The tiny localhost client follows `melee/pc/scripts/console.py`'s protocol.
+LAB inspection reads the engine's motion/timeline and contact tables, whose
+underlying Melee behavior comes from the doldecomp/melee contributors.
+Each README names its project technique sources. No external source, third-party
+asset, texture/model export or disc-derived data was added by this demo packet.
+
+
+## Demo catalogue fix2 (2026-10-03)
+
+The staged Gauntlet setup, protected fly calls and jab-first training selection follow the project's tested demo-tour audit patches in `_build/audit-20261003/demo-tour/patches/`. The behavior runner adapts that audit's `scenarios.py` and `drive.py`, with owner-state assertions, isolated mounts and complete PNG decoding added here. These are project-authored techniques; no third-party assets or disc-derived data were imported.

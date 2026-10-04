@@ -1,9 +1,120 @@
 # Scripting GD's Melee (Lua) — the modding API
 
+## Zones
+
+**2026-10-03 source addition:** native non-physical trigger volumes. Syntax checks
+and the demo's Lua stub check have passed; native suite, rewind and in-game
+acceptance are pending. Zones do not add collision lines or physical geometry.
+
+```lua
+local room = gd.zone_add{
+  name="west-room", label="West room", kind="room",
+  x0=-120, y0=-20, x1=-12, y1=90, tags={"interior"}
+}
+local door = gd.zone_add{
+  name="door", kind="transition", x0=-12, y0=-20, x1=12, y1=90
+}
+gd.zone_set(room, {label="West chamber"})
+local inside = gd.zones_at(1)
+local wait = gd.wait_until{port=1, zone="west-room", timeout=180}
+-- gd.wait_status(wait) reports success or names the current zones on timeout.
+```
+
+| Call | Result |
+|---|---|
+| `gd.zone_add{...}` | Positive handle; errors on invalid data or exhausted capacity |
+| `gd.zone_set(handle, patch)` | Same handle after atomic validation and replacement |
+| `gd.zone_remove(handle)` | `true`; only the owning script can remove it |
+| `gd.zones()` | All live definitions, ordered by kind, ascending area, then handle |
+| `gd.zones_at(port [, sub])` | Cached memberships for port 1–6; `sub=0` primary (default), `sub=1` sub-fighter |
+| `gd.zone_members(handle)` | `{port, sub, entity, x, y, frames}` records for the zone |
+| `gd.point_zones(x, y)` | Definitions containing a finite gameplay-plane point |
+
+Definitions require a unique live `name` (1–80 bytes). `label` defaults to the name,
+`kind` defaults to `"trigger"` and accepts arbitrary text (1–31 bytes), and `tags`
+is an optional dense array of up to eight strings (1–31 bytes each). Choose either
+all four rectangle coordinates, with `x0<x1` and `y0<y1`, or
+`points={{x,y},...}` with 3–16 vertices of a strictly convex polygon. Both winding
+directions are accepted; repeated or collinear vertices, self-intersections,
+non-finite values and coordinates beyond ±49000 are refused. Capacity is 64 live
+zones; a removed slot becomes available after its terminal membership pass.
+No strings are silently truncated. A rectangle update supplies all four bounds;
+other fields can be patched independently. Unknown definition keys are errors.
+
+Optional `model=handle` binds local geometry to a scripted model instance's x/y
+translation. Rotation and scale are not inherited. `model=0` detaches the binding;
+removing the model removes the zone on the next logic pass. Returned definitions
+include `handle`, `owner`, `name`, `label`, `kind`, `tags`, local `points`, `area`,
+and cached `offset_x`/`offset_y`; memberships also contain `frames` and `seconds`
+(frames/60). A newly entered membership has one completed residence frame.
+
+Membership uses each fighter's `cur_pos.x/y` origin, the same point used for
+retail blast-zone checks. It does not use the animation-dependent ECB centre.
+All six owners and their sub-fighters are sampled separately. Dead and benched
+fighters are absent; respawn/call starts membership again. `entity` identifies a
+sampled lifetime, while `port` identifies its owner. Reads never advance time.
+Positions and bindings are sampled once at the end of each logic frame. A
+teleport compares its endpoints; a zone crossed entirely between samples does
+not produce a synthetic intermediate visit.
+
+Rectangles use `[x0,x1) × [y0,y1)`: left/bottom included, right/top excluded.
+Polygons normalize counterclockwise winding; downward-directed edges and
+rightward horizontal edges are included, opposite edges excluded. An unchanged
+point on a boundary retains the same answer without movement-direction heuristics
+or hysteresis. A camera can read `gd.zones_at` to distinguish room, transition and
+outside membership explicitly.
+
+Define any of these hooks to opt into its queued transitions:
+
+```lua
+function on_zone_enter(e) gd.log("entered", e.label, e.port, e.entity) end
+function on_zone_exit(e) gd.log("left", e.label, e.port, e.entity) end
+function on_zone_none(e) gd.log("outside every zone", e.port) end
+function on_zone_some(e) gd.log("inside at least one zone", e.port) end
+```
+
+Payloads contain `zone` (handle), `name`, `label`, `kind`, `port`, `sub`, `entity`,
+`x`, `y`, and `from` (prior membership handles). None/some have no individual zone
+(`zone=0`, empty name/label/kind). Exit precedes enter for each entity; none/some
+only report a change between nonempty and empty membership, including first entry.
+Removing a zone or fighter emits terminal exits; owner unload, scene teardown and
+stage-slot switching retire zones before destination hooks create new ones.
+Cleanup preserves labels for exit payloads. Teardown callbacks cannot add or update
+zone definitions. Hook arming is independent of membership calculation and does
+not arm the ordinary engine event queue. Silent rewind/rollback frames compute
+membership but never deliver Lua callbacks.
+
+`gd.contacts(port)` and contact-event pictures include `zones` as cached
+`{handle, frames}` records and `zone_names` as display text. Contact JSON traces
+include those same fields; the contact overlay displays zone names. A watcher
+with `zone="name"` waits for that primary fighter's named membership and names the
+current zones, or "outside every zone", on timeout. Profiling exposes `zones`
+for the membership pass.
+
+Definitions, handles, current membership, residence counters and transition state
+live in the snapshot-covered game-side scripting TU. They are restored rather
+than reconstructed from Lua globals. Native Lua event-delivery copies are
+observers only. A native monotonic allocation watermark prevents cached Lua zone
+handles from aliasing newly created zones after a restore; it only influences an
+explicit definition write, never a membership pass. Zone writes use the existing offline gameplay gate and fork the
+rewind timeline; reads remain available. Online gameplay use would require shared
+zone schema/content, deterministic replayable definition writes on both peers,
+and rollback-safe consumers; the current Lua mutation gate grants no online writes.
+Optional item membership is not implemented. Geno zone data schema version 1 is
+reserved, with this definition shape; there is no Geno stage-zone loader yet.
+
+See `examples/demos/zones` for the two-room/doorway demo and
+`pc/tests/zones_rewind.lua` for the live zero-difference rewind fixture. Neither
+fixture's presence establishes native execution or visual acceptance.
+
 **Current as of 2026-09-28.** Comms callouts (`gd.comm`, `gd.comm_state`, `gd.comm_clear`,
 `gd.play_sound`) were verified at game `d6b067d25`; the rest of the reference was checked against
 `gw_script.c` at `4c676892a`. This reference supersedes older API descriptions. The LAB API is
 public too (`gd.lab_api == 1`).
+
+**Engine batch 2 additions (2026-10-03):** camera parameters, passive fighter modifiers and
+reserve fighters below have source and headless-suite fixtures. The native audit confirmed the
+basic APIs; follow-up floor-call/CPU fixes and entity inspection still need native re-testing.
 
 GD's Melee runs **Lua 5.4** scripts inside the game. A script can read the match (fighters,
 positions, percents, action states), draw readouts over the game, add console commands, press
@@ -80,7 +191,7 @@ toggles its scripts (at the next boot).
 | `kind` | — | `"script"` for a scripts-only mod |
 | `api_version` | 1 | the API the script was written for; a script asking for a newer one than the build has is refused with a message |
 | `gameplay` | false | **true if the script changes the game** (see below) |
-| `rollback_safe` | false | a gameplay script that promises to be deterministic under rollback (below) |
+| `rollback_safe` | false | legacy compatibility metadata; does not permit online gameplay writes |
 | `entry` | `main.lua` | for `scripts/<id>/` folders: the file to run |
 
 Booleans may be written `true`/`false` or as strings (`"yes"`, `"true"`), so the file also parses
@@ -120,15 +231,14 @@ Read-only scripts (overlays, loggers, readouts) can differ between two players o
 
 1. During a rollback session, **no script hook runs on a resimulated frame**. Hooks run once per
    real frame, at fixed points (below), so overlays and loggers never see a frame twice.
-2. During a netplay/rollback session the gameplay writes are refused, **except** for scripts whose
-   manifest also says `"rollback_safe": true`. That flag is a promise: the script derives
-   everything it writes from game state each frame and keeps no Lua-side memory across frames
-   (Lua state is not part of a savestate, so a script with counters would diverge on rollback).
-   Savestates and pause are never available online.
+2. During a netplay/rollback session **all Lua gameplay writes are refused**, including scripts
+   whose manifest says `"rollback_safe": true`. Hooks are skipped during resimulation and the
+   engine does not replay their mutations, so the flag cannot guarantee determinism. Gameplay
+   scripts remain supported offline; read-only overlays and loggers remain available online.
 3. Enabled scripts with both `gameplay` and `rollback_safe` are hashed by version and source
    into the netplay must-match set. Script ids label the diagnostic description. The console
-   and offline-only scripts are excluded. An offline-only API stays unavailable online even
-   when `rollback_safe` is true.
+   and offline-only scripts are excluded. This historical handshake set is retained for
+   compatibility; matching it does not grant online write permission.
 
 ---
 
@@ -161,6 +271,7 @@ Engine events are queued and delivered after the logic frame, before `on_frame`:
 | `on_all_targets_broken()` | gameplay scripts only; last scripted target broken |
 | `on_enemy_defeated(event)` | gameplay scripts only; `{kind, handle}` |
 | `on_enemy_hit(event)` | owning gameplay script; `{kind, handle, from, damage}` for a native direct primary-fighter hit on its Adventure enemy; `from` is a 1-based port |
+| `on_clank(event)` | read-only hitbox cancellation observation; `{port_a, port_b?, item?, item_kind?, x,y,z, damage_a,damage_b, cancel_a,cancel_b, rebound,rebound_a,rebound_b, hitlag_a,hitlag_b}`; queued at collision and delivered after the frame |
 | `on_boss_defeated(event)` | gameplay scripts only; `{kind, port, x, y}`; kind is `master_hand`, `crazy_hand`, or `fighter_<kind>` |
 | `on_camera_complete(kind)` | owning script; `"move"` or `"path"` |
 | `on_hot_reload(ok)` | completion of the LAB hot reload |
@@ -172,7 +283,7 @@ then `gd.boss_release` to let the normal flow continue.
 
 ## API reference (`gd`, API 1)
 
-Ports and players are numbered **1-4** (fighter slots 1-6 for `gd.player`).
+Fighter slots are numbered **1-6**. Physical controller ports remain **1-4**; `gd.input`, `gd.pad` and `gd.release` also support script-driven CPU slots 5-6 in offline matches.
 
 ### State
 
@@ -184,7 +295,7 @@ Ports and players are numbered **1-4** (fighter slots 1-6 for `gd.player`).
 | `gd.scene()` | `{kind, name, mode, mode_name, epoch}` - e.g. `name = "GS_TRAINING"`, `mode_name = "GM_TRAINING"`; `epoch` counts scene changes |
 | `gd.match()` | `{active, frame, stage, netplay}` - `frame` counts from the first frame with fighters |
 | `gd.players()` | a list of player tables for every fighter on stage |
-| `gd.player(port)` | one player table, or `nil` |
+| `gd.player(port)` | one player table, or `nil`; `falls` is the main fighter death count for this match, including time-mode/LAB deaths without stock loss |
 | `gd.char_name(id)` | `"Fox"` etc. for a character id |
 | `gd.pad(port)` | what the game read from that controller this frame: `{buttons, x, y, cx, cy, l, r, A=bool, B=..., START, L, R, Z, UP, DOWN, LEFT, RIGHT}` |
 | `gd.paused()` | bool |
@@ -198,6 +309,13 @@ A **player table**: `port`, `char` (character id), `char_name`, `kind` (internal
 `costume`, `cpu` (bool), `x`, `y`, `vx`, `vy`, `percent`, `stocks`, `facing` (1 right / -1 left),
 `action` (the action-state id), `action_frame` (frames since the action state began, from 0),
 `anim_frame`, `airborne` (bool), `hitlag` (frames left).
+
+Traversal reads also include `on_floor` (current grounded floor contact), `floor_y` (the supporting
+collision segment's height at the ECB bottom x, or nil without a valid supporting floor),
+`floor_passthrough` (standing on a drop-through floor), `wall` (-1 left, 1 right, 0 neither;
+left wins if touching both), `ceiling` (current ceiling contact), `ledge` (CliffCatch or CliffWait,
+not merely a nearby grabbable edge), and `jumps_left` (nonnegative maximum minus jumps used).
+Contact fields describe the latest collision update; read them from `on_frame` after physics.
 
 ### Drawing (call from `on_draw`)
 
@@ -303,9 +421,27 @@ widescreen safe area when available.
 | `gd.comm{who=, text=, seconds=, sound=, portrait=, side=}` | show a callout. `who` is `"fox"`, `"falco"`, `"peppy"`, `"slippy"` or `"custom"` (default; picks the name and colours); `text` is the subtitle; `seconds` is the hold time (default 3); `sound` is a game sound id played when the window appears (see `gd.play_sound`); `portrait` is a `gd.kit.image` texture name (the colour block with the speaker's initial is the fallback); `side` is `"left"` (default) or `"right"`. Returns how many callouts are live or queued, or `false` when the queue is full |
 | `gd.comm_clear()` | drop the current callout and the queue |
 | `gd.comm_state()` | `{shown, queued, who, text, t, slide}` - for tests and mods (`t` is frames in the current callout, `slide` 0-1) |
-| `gd.play_sound(id)` | play a game sound id (what the decomp passes to `lbAudioAx_800237A8`), full volume, centre pan; returns the AX voice handle. Offline only |
+| `gd.play_sound(id [, {volume=127, pitch=0}])` | play an existing game sound id (what the decomp passes to `lbAudioAx_800237A8`), centre pan; returns the AX voice handle, or a negative handle if playback failed. `volume` is an integer 0..127; `pitch` is an integer -1200..1200 cents (100 cents = one semitone). Omitting options retains full volume and unchanged pitch. Offline only |
 
 The console command `comm <who> "text" [sound id]` is the same call, e.g. `comm fox "incoming"`.
+
+The pickup-juice demo uses vanilla coin pickup 170, star pickup 250, and box
+break 246 as regular pickup, rare pickup, and drop candidates. These ids are
+identified from their game call sites; their mix and suitability need an in-game
+audition. No additional audio assets are loaded.
+
+`gd.fx_world(package,x,y,z [,scale=1,seed=1])` starts a registered effect
+package at a fixed world position without a fighter joint. It returns a positive
+script-owned handle, or 0 when the package is missing or the emitter pool is
+full. Coordinates must be finite and within +/-100000, scale within (0,100],
+and seed an integer 0..2147483647. `gd.fx_move(handle,x,y,z)` moves that world
+anchor, returning false for ended, foreign or fighter-attached handles. Particles
+with `follow:"srt"` or `follow:"translate"` move with it; `follow:"none"`
+particles stay where they were born, leaving a trail. Both calls are offline
+only and use the existing snapshotted FX state. `gd.fx_end(handle,0)` immediately
+removes its emitters and particles; a positive fade duration permits a bounded
+tail. Script unload already removes owned effects. These new calls have syntax
+and fixture coverage; their native fixtures have not yet been executed.
 
 ### Input
 
@@ -331,22 +467,28 @@ The console command `comm <who> "text" [sound id]` is the same call, e.g. `comm 
 
 | function | |
 |---|---|
-| `gd.set_percent(port, p)`, `gd.set_stocks(port, n)` | damage clamped to integer 0-999; stocks to 0-99; forks the rewind timeline |
+| `gd.set_percent(port, p)`, `gd.set_stocks(port, n)` | damage clamped to integer 0-999; stocks to 0-99; forks the rewind timeline. A LAB match has no stocks (infinite respawn), so `gd.set_stocks` changes nothing a script can rely on there: count `gd.player(port).falls` instead |
 | `gd.set_damage(port, n)` | offline; sets the same real fighter/player damage as `set_percent` (integer 0-999), keeping HUD, knockback and stamina HP in agreement. A boss at zero remaining HP still needs a hit to die |
 | `gd.hit(port, {damage=, angle=, kbg=, bkb=, from=})` | offline; injects a normal-element hit through Melee's collision result and fighter hit processing. Required integer fields: damage 0-500, angle 0-361, kbg/bkb 0-1000. Optional `from` is a fighter slot; omitted means environment damage. Returns false for a missing fighter/source or refused damage, true after processing. Applies damage state, HP/percent and hitlag, not just a HUD edit; forks rewind |
 | `gd.boss_hold([seconds])` | offline; hold the pending boss-defeat transition, default 60 seconds, range 1/60-600; timeout counts match logic frames. Returns whether accepted |
 | `gd.boss_release()` | offline; release the boss-defeat hold; returns whether accepted |
 | `gd.savestate([slot])`, `gd.loadstate([slot])` | slots 1-4, taken/loaded at the next frame boundary; a state from another scene is refused; never online |
 | `gd.pause()`, `gd.resume()`, `gd.step([n])` | freeze the game logic; `step` runs `n` frames and stays paused |
+| `gd.hitstop(frames)` | offline gameplay; freeze logic for `frames/60` wall-clock seconds (integer 1..36000), returning bool; replaces this owner's timed request. Presentation hooks/rendering continue; manual pause/step state stays intact |
+| `gd.hitstop_cancel()` | offline gameplay; cancel only the calling owner's timed freeze; bool |
 | `gd.scene_launch(text or table)` | jump to a scene: `"mode=training;p1=fox;p2=falco/cpu;stage=fd"` or `{mode="training", p1="fox", ...}` (the `MELEE_SCENE` grammar, `_research/scene-launch.md`). It goes through the game's own soft reset, so it is safe from anywhere; returns the text |
 | `gd.scene_clear()` | stop seeding scenes (the next VS/Training starts normally) |
 | `gd.training_select(["kit" \| "native"])` | *(any script - menu routing only)* Training's character and stage select on the port's own kit screens or the native ones; returns the current choice and stays until changed. On the kit, Training keeps its rules: the player who entered picks, the CPU dummy's card picks the dummy, nothing else can be added. Also `select=kit` in the scene grammar (`gd.scene_launch{mode = "training", at = "css", select = "kit"}`, `MELEE_SCENE`), `MELEE_TRAINING_SELECT=kit` at start, and `gw_Frontend_SetTrainingSelect(1)` for native code |
 | `gd.quit()` | close the game like the window's close button |
 | `gd.fly(port [, mode])` | debug movement (noclip). With no mode it reads: `true` while that port's fighter flies. `mode` is `true` / `"on"`, `false` / `"off"` (drop into Fall there), `"place"` (land on the floor below) or `"toggle"`; returns the new state. Flying: stick moves it at the fly speed (A ×0.25, B ×4), no gravity, no stage collision or ledges, no blast-zone KO, no hurtboxes unless solid; the camera follows it past the stage's bounds. Offline only, every mode (melee `docs/geno.md` 14.17) |
 | `gd.teleport(port, x, y)` | put the fighter exactly there. It keeps flying if it was; one on foot falls from there. Offline only |
+| `gd.fighter_mod(port, table_or_nil)` | replace that script's passive multipliers for port 1-6; omitted fields become 1.0, `nil` clears. Offline active matches only; returns true on success |
+| `gd.fighter_bench(port)` | freeze and hide a reserve, including its partner/dormant transformation half; returns true or `false, reason`. Offline active matches only |
+| `gd.fighter_call(port, x, y [, {facing=1, intangible_frames=0}])` | release the calling script's reserve at a new position; returns true or `false, reason` |
+| `gd.fighter_benched(port)` | returns ownership boolean plus per-entity state tables; false outside a match |
 | `gd.hold_hitbox(port, on [, {action=, frame=}])` | with debug fly on: the fighter stays in an attack state (`"nair"` default, `"fair"` `"bair"` `"uair"` `"dair"` `"jab"` or a motion state id) frozen at the first frame a hitbox is live (or `frame`); the hitbox stays on, attacker hitlag is cancelled and the hit list is cleared every 8 frames so the same target is hit again. `gd.hold_hitbox(port)` returns `on, rehit_intervals`. Console: `hold [port] on\|off`. Offline only |
 | `gd.fly_speed([n])`, `gd.fly_solid([bool])` | the fly speed in units per frame at full stick (0.05-200, default 2), and whether hurtboxes stay on while flying (default off); each returns the current value. Offline only |
-| `gd.fly_target(port, x, y)` | enables flight and moves toward a fixed world position at `fly_speed`, clamping the final step to avoid overshoot; holds that position once reached. Finite coordinates within ±10000. Offline debug control |
+| `gd.fly_target(port, x, y)` | enables flight and moves toward a fixed world position at `fly_speed`, clamping the final step to avoid overshoot; holds that position once reached. Finite coordinates within ±49000. Offline debug control |
 | `gd.fly_attack(port, on [, damage, radius])` | enables/disarms an actual native fighter hitbox while flying; enabling also starts flight. Defaults: 3 damage, radius 6; each is bounded to 1–30 (damage integer). Each non-hitlag physics frame rearms the capsule, clears both victim histories, and allocates a fresh attack instance. Fighter/item collision, shields, hitlag and invulnerability remain native. This is a debug attack, not a character's normal move animation |
 | `gd.fly_state(port)` | reads `flying`, `targeting`, `attacking`, target `x/y`, `damage`, `radius`, and `pulses`. Inactive cursor fields are zero/false. Pulses count rearming attempts, not confirmed hits |
 | `gd.fly_clear(port)` | disarms the cursor and clears its target while retaining ordinary stick-controlled flight. `gd.fly(port,false)` or F11 leaves flight and disarms it. New cursor controls are script-owned; unloading/disabling the owner clears them, and scene changes reset all cursors |
@@ -363,7 +505,8 @@ Coordinates are world units, finite and within ±100000. Each write forks the LA
 |---|---|
 | `gd.stage_add_platform(x, y, width [, {passthrough=, ledges=, draw=}])` | a horizontal floor centred on `(x, y)`; returns a handle, or `nil, reason`; optional boolean `draw=false` hides its debug slab while preserving collision |
 | `gd.stage_isolate([on])` | owning offline gameplay mod only: suppress the supported FD host's original scenery and collision, preserving added models/floors and native camera/blast zones. `true` acquires isolation; returns `false` for an unsupported stage and raises an error if another script owns it. `false` restores and returns `false`; no argument queries caller-owned isolation. First script error, unload, scene teardown or offline-boundary loss restores the original stage. Add your own floor before enabling; the console cannot own isolation |
-| `gd.stage_add_model{file=, symbol='map_head', group=0, joint='root', x=0, y=0, z=0, scale=1, rot=0, platform=}` | Draw a JObj branch from a root-level stage or mounted mod `.dat` filename (5-30 bytes, no path separators or `..`) in the stage world pass (lit, fogged). `joint` is a group-local zero-based index, `JOBJ_<index>`, or `root`; `rot` is degrees about Z; `scale` is >0 and <=100, `group` 0-255, joint index 0-4095. Returns a model handle or `nil, reason`. `platform` attaches a `gd.stage_add_platform` floor: `gd.stage_move(model, x, y)` carries it and `gd.stage_remove(model)` removes both; an attached floor does not draw its slab. Each DAT is loaded once per scene into heap 0 and released at scene end; up to 8 DATs (8 MiB each) and 64 models. Branches with JObj instance references are refused. `gd.spawn_target` draws Mato's Target Test model (GrTMr.dat) |
+| `gd.stage_hide(on)` | boolean required; wrapper over `stage_isolate` for **Final Destination only**. Hides both host scenery and collision on `true`, restores both on `false`; returns `true` on successful hide or restoration, or `false, err` if host isolation is unavailable. Same owner, unload/match-end restoration and offline restrictions; ownership/type errors raise Lua errors. `stage_isolate` retains its existing return semantics |
+| `gd.stage_add_model{file=, symbol='map_head', group=0, joint='root', x=0, y=0, z=0, scale=1, rot=0, platform=}` | Draw a JObj branch from a root-level stage or mounted mod `.dat` filename (5-30 bytes, no path separators or `..`), or a contained `missions/.../*.dat` path in the calling mod, in the stage world pass (lit, fogged). `joint` is a group-local zero-based index, `JOBJ_<index>`, or `root`; `rot` is degrees about Z; `scale` is >0 and <=100, `group` 0-255, joint index 0-4095. Returns a model handle or `nil, reason`. `platform` attaches a `gd.stage_add_platform` floor: `gd.stage_move(model, x, y)` carries it and `gd.stage_remove(model)` removes both; an attached floor does not draw its slab. Each DAT generation is loaded once per scene into heap 0 and released at scene end; up to 8 DATs (8 MiB each) and 64 models. Branches with JObj instance references are refused. `gd.spawn_target` draws Mato's Target Test model (GrTMr.dat) |
 | `gd.stage_add_line(x1, y1, x2, y2, kind [, opts])` | `kind`: `"floor"` (left to right), `"ceiling"` (right to left), `"right_wall"` (top to bottom) or `"left_wall"` (bottom to top); a wrong direction is an error. Floor options include `passthrough`, `ledges` and boolean `draw` |
 | `gd.stage_move(handle, x, y)` | move a line midpoint or model to `(x, y)` (targets cannot be moved); returns whether it exists. A model carries its attached floor; a moved floor carries a standing fighter |
 | `gd.stage_remove(handle)` | remove a line, target or model (a removed target raises no event); removing a model removes its attached floor; returns whether it existed |
@@ -388,14 +531,47 @@ Coordinates are world units, finite and within ±100000. Each write forks the LA
   - A target uses the real Mato model loaded from `GrTMr.dat`.
   - `gd.stage_view([geometry [, overlay]])` turns the geometry off, or the old host-overlay debug
     strokes on (off by default); it returns both settings.
-- **Limits.** Up to **200 lines** and **32 targets** at once.
-  - **Lines:** each line takes one of mpLib's 256 collision joints, so a stage gets
-    `min(200, 256 - its joints)`; inspect the actual stage reservation in the log.
-  - **Targets:** the pool is 32. The next ceiling is the game's item limit for the category
+- **Limits.** Up to **768 scripted collision lines**, **256 GXMS instances**, **128 scene-pinned
+  GXMS assets** (also bounded by a **64 MiB native mesh/atlas budget**), and **128 targets** at once.
+  - **Lines:** each owns two vertices and one joint. Reservation is
+    `min(768, (2048 - host_vertices) / 2, 1536 - host_lines, 1024 - host_joints)` with integer division;
+    inspect the actual stage reservation in the log. A single model sidecar may contain up to
+    **64 lines**, within **16 KiB**; a spawn also needs that many free reserved lines.
+  - **Targets:** the pool is 128. The next ceiling is the game's item limit for the category
     (`Item_804A0C64`, from ItCo's common data).
 - **Example:** `melee/pc/scripts/examples/fd_stage_content/` adds 3 platforms (passthrough with
   ledges, passthrough, solid with ledges) and 10 targets to Final Destination. Copy it to
   `mods/fd_stage_content` beside the exe (the manifest entry is `scripts/main.lua`).
+
+#### Mission model paths and reloads
+
+`gd.model_load(path)` accepts `missions/<name>/models/<mesh>` (optional `.gxmesh` suffix), relative
+to the calling mod's root even when the script entry is nested. The existing plain basename lookup
+under `models/` and mounted `mod-id/path/to/mesh` form remain supported. The `model` option on
+`gd.stage_add_platform` / `gd.stage_add_line` accepts the same mission path. Mission mesh names use
+at most 48 letters, digits, `_` or `-`; each sidecar's atlas and optional glow remain beside it.
+
+| function | result |
+|---|---|
+| `gd.model_load(path)` | retained asset handle; a changed mesh, collision sidecar, atlas or optional glow at the same path creates a new asset generation |
+| `gd.model_spawn(asset [, options])` | new instance handle, or `nil, reason`; options include transform, visibility, tint, `collision=false`, and `floor_flags` |
+| `gd.model_despawn(instance)` | whether the instance was removed; retained load handles and scene-pinned asset bytes survive |
+| `gd.model_release(asset)` | releases one caller-owned load reference; no return value; bytes remain pinned until scene reset |
+| `gd.model_get(instance)` | instance table, or nil |
+| `gd.model_instances()` | array of live instance tables |
+
+Asset identity uses the resolved path plus size/modification-time stamps for **all four source
+files**, including optional file presence. An unchanged generation reuses its asset and atlas;
+an old instance keeps its old bytes after a re-export. This is a metadata stamp, so an exporter
+must preserve a change in size or modification time. Bytes are freed at scene reset, not on the
+last despawn. When 128 generations or the 64 MiB budget are exhausted, restart the match.
+Savestate/rewind behavior with reloaded assets is unverified and outside this reload contract.
+
+`gd.stage_add_model{file="missions/<name>/models/stage.dat", ...}` also accepts a contained
+mission path. Mission DATs are read directly from the calling mod, transported into the game heap,
+and cached by final path plus size/modification time. Root-level disc/mod DAT filenames retain
+their existing behavior. The separate DAT limits remain 8 scene-pinned archives (8 MiB each) and
+64 JObj model instances; valid DAT structure and available game heap are still required.
 
 ### Camera (offline, gameplay mods)
 
@@ -428,7 +604,7 @@ mode}`, or `nil` before a match camera exists. Coordinates are world units, `fov
 `gd.spawn_enemy(kind, x, y [, {facing = 1 | -1}])` returns a handle, or `nil, reason`. At most
 32 script enemies can be alive at once.
 
-- **Kinds:** `goomba`, `redead`, `octorok` (these three come from ItCo), and `koopa`,
+- **Kinds:** `goomba`, `redead`, `octorok`, `topi` (these four come from ItCo), and `koopa`,
   `like_like`, `polar_bear`. The last three load their Adventure stage's file on first use, and
   every item that file defines is registered too (Koopa's shell, for example).
 - **Liveness:** `gd.enemy_alive(handle)` is a read-only query for a script-owned enemy.
@@ -529,7 +705,7 @@ or the console, and remain refused during netplay/rollback even for `rollback_sa
 | `gd.rewind_live()` | offline; branch here, discard future logged input; true |
 | `gd.rewind_test([frames [, keep_running]])` | offline exactness check: default 90 further frames, rewind/resimulate and compare state bytes. Unpauses to run; pauses after unless keep_running; true or false, reason |
 | `gd.rewind_test_result()` | `{phase, pass, diff, diff_compared, text}`; pass present once available |
-| `gd.hot_reload([seconds])` | offline; rewind (default 2 seconds), reload Geno data and LAB script, replay recorded input. Incompatible layout restarts match. Returns true, start frame or false, reason |
+| `gd.hot_reload([seconds])` | offline LAB match only; rewind (default 2 seconds), reload Geno data and LAB script, replay recorded input. Incompatible layout restarts match; malformed data is refused with previous data retained. Returns true, start frame or false, reason |
 | `gd.hot_reload_status()` | `{phase, ok, text}`; phase 0 idle |
 | `gd.state_save([name [, description]])` | offline; queue a persistent state for next boundary, return generated `.gdst` filename or false, reason |
 | `gd.state_list()` | saved files with name, what, frame, time, saved, stage, fighters and compatibility `ok, why` |
@@ -549,8 +725,19 @@ history; a retained future is not guaranteed after a write.
 | `gd.log(...)` / `print(...)` | to the console and `melee-pc.log`, prefixed with the script id |
 | `gd.command(name, fn [, help])` | add a console command; `fn(arg_string)` |
 | `gd.data_read(name)`, `gd.data_write(name, text)` | the script's data folder |
+| `gd.mod_read(path)` | read-only Windows mission text from the calling mod: string, or `nil, err`; at most 1 MiB |
+| `gd.mod_list(dir)` | sorted array of `{name=string, dir=bool}`, or `nil, err` for an unavailable/non-directory path; `missions/` lists the mission root |
+| `gd.mod_stamp(path)` | integer size/modification-time stamp for a contained file of at most 1 MiB, or nil; intended for polling |
 | `gd.data_write_atomic(name, text)` | like `data_write`, but writes a temporary sibling file, checks the write/flush/close results, and only then replaces the target, returning `true`, or `false, why` on failure with the previous file intact. Atomic against a torn write (a reader sees the old or the new file, never a partial one); not a power-loss durability guarantee |
 | `gd.screenshot([name])` | a PNG of the final frame into the data folder; returns `ok, path` (capture is queued for the next presented frame; it is not a synchronous file-write result) |
+
+Mission paths must start with `missions/` and use forward slashes. Absolute paths, drive letters,
+backslashes, `..` anywhere, empty components, embedded NUL, Windows wildcard/device separators,
+and components ending in a dot or space are refused. Final opened paths must remain inside the
+mod folder, including after resolving junctions/reparse points. Nested entries use the mounted
+mod root (or the nearest ancestor `mod.json` for a standalone mod). The console has no owning
+mod and cannot use these reads. They add no write access and require no online service or disc.
+On non-Windows hosts mission reads fail closed; existing data-folder and model APIs remain available.
 
 ---
 
@@ -695,8 +882,17 @@ jump squat and hitlag states refuse the operation without changing velocity.
 It returns a boolean and does not teleport, change actions or replenish jumps.
 
 `gd.cpu_mode(port, "stand"|"fight")` reinitializes the existing native CPU mode,
-preserving its level. It returns false for a missing, human or subfighter entity.
-Stand retains physics and vulnerability. These are the game's existing modes;
+preserving each entity's level. It initializes the active and dormant transformation
+halves together, so stand/fight survives Zelda/Sheik swaps; Nana also receives the
+retail initializer, which retains her special partner CPU kind. A benched pair
+saves the latest selection for both entities. It returns false for a missing or
+human slot, or a subfighter presented as the primary.
+Stand emits no autonomous inputs: it bypasses retail recovery/character AI and
+clears pending commands, including timed Zelda/Sheik transformations. Nana is
+also quiet despite her special CPU kind. Physics and vulnerability remain active.
+The selected mode is persisted in the player slot so first-frame initialization,
+respawn and transformation use it. Explicit scripted virtual-pad control is still
+an input override. Fight uses the game's existing AI;
 this API does not install 20XX or another training hack's AI.
 
 `gd.cpu_technical(port, skill [, seed])` opts a primary native Fox/Falco fight CPU
@@ -758,3 +954,717 @@ Rollback, snapshots and netcode; UCF/Slippi gameplay codes (scripts may toggle t
 run them); the m-ex runtime hooks; render, audio and memory-card IO; hot-path traces (heap, DVD,
 PPC bridge, `MELEE_WATCH` guard pages, `MELEE_LOG_MOTION`'s per-transition log). The fixed-frame
 pad script and the scene grammar remain as shorthands over the same paths scripts use.
+
+
+### Camera parameters (engine batch 2)
+
+`gd.camera_params(values)` returns the previous values for all ten keys. A table updates only its named fields; an empty table does nothing. `gd.camera_params(nil)` restores the stage baseline. This requires an offline active match and has one script owner. Unknown keys, non-finite values, conflicting aliases and `min_dist > max_depth` are errors; validation is atomic.
+
+| Keys | Accepted range |
+|---|---|
+| `min_dist`, `max_depth` | 1..49000 |
+| `fov`, `tilt` | 1..89 degrees |
+| `fixed_zoom`, `track_smooth`, `track_ratio`, `yaw_gain`, `pitch_gain` | 0..10 |
+| `pan` | -180..180 degrees |
+
+The decompilation's `cam_vertical_tilt` field actually feeds the standard camera FOV. Consequently `tilt` is an alias for `fov`; specifying both requires equal values. It is not an independent camera rotation. `pan` is the stage's vertical pitch offset in degrees, despite the historical name; it changes the eye/interest Y offset, not horizontal yaw. The accepted key remains `pan`. The standard camera FOV hook reads the override after its retail target calculation. C-stick paths and the 1P-mode gate are unchanged. The verified vanilla LAB stage defaults for `yaw_gain` and `pitch_gain` are both 0.05; values come from the loaded stage, so other stages can differ. Set `yaw_gain=0, pitch_gain=0` to remove origin-distance skew. Per-frame `stage_set_origin` and `stage_set_camera_bounds` calls no longer fork the LAB timeline or emit per-call logs; acquiring arena tracking logs once. Blast-bound writes retain their existing behavior.
+
+```lua
+local previous = gd.camera_params{min_dist=100, max_depth=1800,
+    fov=45, yaw_gain=0, pitch_gain=0}
+gd.camera_params(nil)
+```
+
+### Passive fighter modifiers (engine batch 2)
+
+`gd.fighter_mod(port, values)` replaces that script's complete set and returns true. Ports are 1..6. Keys are `damage_dealt`, `damage_taken`, `run_speed`, `air_speed`, and `shield_max`; omitted keys become 1. Finite numbers are clamped to 0.1..4. Unknown fields and another script's ownership are errors. `gd.fighter_mod(port, nil)` clears the set. Writes require an offline active match.
+
+Attack/defense multipliers overlay the retail player ratio getters for knockback. Actual damage percent also needs separate hooks: dealt damage is scaled on fighter/item collision and direct grab/throw/script hit routes; taken damage is scaled once at the central damage application. Owned thrown bodies and items credit their live fighter owner. Modified damage is capped at 500; unmodified damage retains retail behavior. Generic grounded acceleration and speed limits use `run_speed`; generic aerial drift limits use `air_speed`. Lowering `air_speed` does not immediately rewrite existing horizontal velocity. Retail state-specific drift/deceleration callbacks work toward the scaled limit; momentum may remain above it for several frames, and existing retail clamp paths still clamp where they normally do. There is no new setter-time clamp. Character-specific special-move velocities retain their own behavior. Shield capacity reads scale the shared baseline without editing it; current shield health is clamped immediately when capacity decreases and is never refilled by clearing a modifier.
+
+Fighter attribute bytes and player baseline ratios remain untouched. Reads use the current baseline, including ported/Geno edits, so sets survive respawn and character changes without stacking. Clearing restores baseline calculations; it does not undo already inflicted damage or refill shield health. Ownership and values live in game BSS captured by LAB snapshots.
+
+```lua
+gd.fighter_mod(2, {damage_dealt=1.5, damage_taken=0.75,
+    run_speed=1.2, air_speed=1.1, shield_max=1.5})
+gd.fighter_mod(2, nil)
+```
+
+### Reserve fighters (engine batch 2)
+
+`gd.fighter_bench(port)` returns true or `false, reason`. `gd.fighter_call(port, x, y, options)` returns the same; options are `facing` (-1 or 1) and `intangible_frames` (integer 0..600). Coordinates must be finite and within +/-49000. `gd.fighter_benched(port)` returns `boolean, entities`: the existing first result queries any script's ownership, returning false outside a match. The second result is an array of two state tables for the current primary and partner/dormant half, even when not benched. Each has `entity_index` (0 or 1) and `present`. Present entities also expose numeric `kind`, `action`, `cpu_kind`, `x`, `y`, `refusal_code`, and boolean `airborne`, `frozen`, `invisible`, `intangible`, `camera_excluded`, `dormant`, `benched`. `refusal_code` is the current individual safety result (0 safe, 1 missing camera, 2 boss, 3 dead/sleep/respawn, 4 capture/throw/carry, 5 hitlag/external freeze, 6 transformation, 7 unsupported action/item); pair/ownership checks can additionally refuse the write. Missing entities expose only index and `present=false`. This read-only query does not fork the timeline. Writes require an offline active match; online writes error before changing ownership.
+
+A benched fighter is frozen, hidden, intangible, CPU-disabled and excluded from camera framing. Flags are reasserted before AI/physics and in the stage frame hook. Benching enters clean Wait on the ground or Fall in the air. Calling clears velocities, acceleration, nudge, fastfall, button/stick/trigger state and input timers; it probes a floor within 0.5 units of the requested height, enters the retail grounded Wait state (action 14 with Wait callbacks) immediately when found, otherwise airborne Fall at the requested coordinates, collapses collision history, unlocks ECB and reseeds the camera. Use a floor-height target to call onto a platform; distant floors are not snapped to.
+
+Refusals cover missing fighter/camera, bosses, dead/sleep/respawn states, grabbing/grabbed/thrown/shouldered states, hitlag or externally frozen fighters, active transformations, unsupported action states, held items, another owner's reserve, calling an unbenched port, and changed entity identity. Supported entry actions are Wait through FallAerialB, plus teeter states. Invalid arguments error at the Lua boundary. Both player entities are checked before mutation: Nana is handled with her leader; a genuine dormant Zelda/Sheik half stays dormant and frozen while moving with the active half. Unknown secondary entities are refused.
+
+The full CPU controller is saved, so restoring a kind cannot leave the disabled controller's stale AI state behind. Calling `gd.cpu_mode` while benched replaces the saved controller with the latest initialized selection and keeps the reserve inert; call/unload restores that selection. Saved flags, controllers and entity identities live in snapshotted game BSS. Script unload, match end and scene change release ownership, restoring original flags only on still-live matching entities. Camera parameter baselines and modifier sets have the same cleanup lifecycle. The batch-2 native audit confirmed camera/modifier behavior, reserve stock protection, air calls and several refusals. The follow-up corrects floor Wait entry and CPU controller restoration; its floor-cycle, partner/transform inspection and rewind re-tests remain for the integrator. Source fixtures are not a game run.
+
+```lua
+local ok, reason = gd.fighter_bench(2)
+if ok then
+    assert(gd.fighter_benched(2))
+    local called, why = gd.fighter_call(2, 0, 0,
+        {facing=-1, intangible_frames=60})
+    print(called, why)
+else print(reason) end
+```
+
+## Fighter and original-stage surface shaders (packet H, 2026-10-03)
+
+`gd.fighter_shader(port, "shaders/name.wgsl", {params={...}})` and
+`gd.stage_shader("shaders/name.wgsl", {params={...}})` select visual-only WGSL
+surface functions. Ports are 1..6; at most 16 finite parameter floats are accepted.
+Pass `nil` instead of the path to clear the calling script's selection. Returns
+`true` or `nil, diagnostic`; paths are contained in the calling mod folder.
+Another script cannot overwrite your selection. Unload, script disablement and
+scene transitions clear selections. Requires the Aurora GD surface carried patch
+and a fresh build. See [shaders.md](shaders.md) for inputs, normal-buffer limits,
+cache/performance costs and the sample mod. `gd.perf()` adds cumulative
+`surface_load_calls`, cumulative `surface_fifo_commands`, and `surface_selections`.
+
+
+## Contacts and traces
+
+**Source addition, 2026-10-03:** syntax checked; native-suite, link and gameplay acceptance are
+pending. These APIs inspect primary fighters on ports 1..6. Sampling begins when a contact API,
+watcher or overlay is first used, and runs after completed logic frames, before `on_frame`.
+
+| Call | Result |
+|---|---|
+| `gd.model_label(instance, "Floor_4m.003")` | `true`; diagnostic name for an instance owned by this script's resource token. Printable text, at most 80 bytes; 1024 labelled handles per scene. Retired handles retain their names for same-scene rewind. |
+| `gd.contacts(port)` | Current contact picture, or `nil` when the primary fighter is absent. |
+| `gd.contact_events([since_seq])` | `events, next_seq, dropped`; pass `next_seq` back on the next poll. Omit the cursor or use 0 to read all retained events. |
+| `gd.contact_trace(true)` | Append events to this script's data file `contacts.jsonl`. |
+| `gd.contact_trace{file="route.jsonl", state_changes=true}` | Choose a relative script-data path and opt into action-state events. One script owns the file tracer at a time. |
+| `gd.contact_trace(false)` | Close the calling script's tracer and turn state-change events off. |
+| `gd.wait_until{port=1, x=41.2, y=8, radius=1, state="Wait", on="Floor_4m.003", airborne=false, timeout=600}` | Watcher handle; no input, teleport, pause or blocking loop. All supplied conditions must match. |
+| `gd.wait_status(handle)` | `{done, ok, frames, reason}`, or `nil, reason` for a stale/other-script handle. |
+| `gd.contact_overlay(true)` | Show human fighters' compact contact text, highlighted surfaces and contact markers. `false` hides it. Off by default. |
+
+A picture has `x,y,vx,vy,facing,state,state_id,state_frame,jumps_left,airborne`.
+`state` uses the fighter's existing action-name table, including named Geno actions; `state_id`
+is the numeric action. `state_frame` counts logic frames in that action, as in `gd.player`.
+`floor,left_wall,right_wall,ceiling,ledge` are each absent (`nil`) or a surface:
+
+```lua
+{owner=instance_handle_or_line_handle_or_"stage", label="Floor_4m.003",
+ part=0, line=123, kind="floor", passthrough=true,
+ x0=-10, y0=8, x1=10, y1=8, offset=6, t=0.3, normal={x=0,y=1}}
+```
+
+`line` is the current map collision index; `part` is the zero-based mesh line index (`-1` for
+host-stage and standalone scripted lines). A model's instance handle owns its lines; a standalone
+scripted line owns itself; original-stage lines have owner `"stage"`. Empty labels mean no name
+was attached. Wall sides describe the fighter's left/right, rather than the wall's normal.
+Endpoints are ordered from left to right, or bottom to top for a vertical segment. `offset`
+is distance along the segment from that end; `t` is its clamped fraction. Ledge contacts use the
+latched floor line and its facing-selected endpoint. Coordinates and offsets are world units.
+
+The 512-event ring drops its oldest record when full; `dropped` counts overflow since the last
+scene/load/rewind reset. Records contain `seq,frame,port,event,reason`, the fighter fields above,
+and `contact` (the full surface or `nil`). Lua records also copy surface fields to the top level.
+`frame` is the match logic frame. Events are `land`, `leave`, `wall_touch`, `wall_release`,
+`ceiling_hit`, `pass_up_through`, `drop_through`, `ledge_grab`, `ledge_release`, `ko`, `respawn`,
+and optional `state_change`. Steady contacts emit nothing. Initial sampling reports existing
+contacts as acquisitions. Changing floor lines emits leave/land even on adjoining surfaces.
+
+Leave reasons are `jumped`, `ran_off_left`, `ran_off_right`, `dropped_through`, `knocked`, or
+`lost_contact` when the read-only sample cannot classify the transition. `pass_up_through`
+means the airborne fighter's ECB bottom swept upward across a pass-through line. It records the
+crossing point, including crossings without a final contact flag. This is geometry observation,
+not a claim that an input succeeded. Moving surfaces and fighter-specific actions need native
+acceptance. Traces use one escaped JSON record per event, capped at 1 MiB per file; `.1` holds
+one previous rotation. File errors stop tracing and log a diagnostic. Trace-off still allows
+ring polling and watchers.
+
+Watchers default to port 1, radius 1, timeout 600 logic frames. Coordinates must be finite and
+within +/-49000; radius is 0..49000; timeout is 1..360000. `state` accepts a name or nonnegative
+id; `on` accepts a floor owner handle or exact label. A supplied x alone tests horizontal distance;
+x+y tests circular distance. Unknown fields and empty conditions are errors. Already satisfied
+conditions resolve at zero frames. Paused presentation ticks do not advance waits. There are
+64 slots shared across scripts; a script may reuse its completed slots when full, invalidating
+the previous handle. Active waits are never evicted; unloading releases that script's slots.
+
+A timeout explains observations, for example `stopped at wall "Wall_Solid.014" (left side) at
+x=41.2 after 212 frames`, `fell through "Floor_4m.003"`, `never left the ground`, or
+`timeout 600 frames; last on "Ramp.002" offset 3.1`. These are diagnostic descriptions, not proof
+of causation. Match/scene changes and state loads/rewinds cancel pending waits with a reason.
+
+A traversal controller should issue short inputs and poll once per logic frame. This worked
+loop assumes an existing labelled platform near `(41.2,8)` and an offline gameplay script
+(`-- @gameplay: true`):
+
+```lua
+-- @gameplay: true
+local cursor, watcher, finished = 0, nil, false
+local target_x, target_y = 41.2, 8
+
+function on_match_start()
+  cursor, finished = 0, false
+  gd.contact_trace{file="route.jsonl"} -- state changes stay off
+  watcher = gd.wait_until{port=1, x=target_x, y=target_y, radius=1,
+    state="Wait", on="Floor_4m.003", airborne=false, timeout=600}
+end
+
+function on_frame()
+  if finished or not watcher then return end
+  local events
+  events, cursor = gd.contact_events(cursor)
+  for _, e in ipairs(events) do
+    if e.port == 1 then
+      gd.log(e.event .. " " .. (e.label or "-") .. " at " .. e.x .. "," .. e.y)
+    end
+  end
+  local result = gd.wait_status(watcher)
+  if not result then finished = true; gd.release_pad(1); return end
+  if result.done then
+    gd.release_pad(1)
+    gd.log((result.ok and "reached target: " or "route failed: ") .. result.reason)
+    finished = true
+    return
+  end
+  local c = gd.contacts(1)
+  if c then
+    local dx = target_x - c.x
+    gd.input(1, {x=math.abs(dx)>0.75 and (dx>0 and 60 or -60) or 0}, 1)
+  end
+end
+
+function on_loadstate() -- Lua control variables are not simulation snapshots
+  finished, watcher = true, nil
+  gd.release_pad(1)
+end
+function on_match_end() finished = true; watcher = nil end
+function on_unload() gd.contact_trace(false) end
+```
+
+For an airborne target, add a jump input when the live picture shows the named launch floor,
+then wait for the intended airborne coordinates/state. Poll the events to distinguish a wall
+stop, an upward platform crossing and an unintended drop; do not spin in a Lua `while` loop.
+
+Console equivalents are `contacts 1`, `contacts overlay on|off`, `trace on|off`, `trace last 20`,
+and `wait port=1 x=41.2 y=8 radius=1 state=Wait on=Floor_4m.003 airborne=false timeout=600`.
+Console wait values use `key=value` tokens; labels containing spaces use the Lua API instead.
+A console wait prints one result line when it resolves.
+
+Contact reads never call collision probes or alter fighters, pads, camera or line caches.
+Observer history, labels, trace files, watcher progress and overlay state are native diagnostics,
+excluded from simulation snapshots and hashes. Rollback replay frames do not append events or
+advance watchers. Savestate load/rewind clears the ring and previous picture, bumps the monotonic
+sequence, and cancels active waits; retained same-scene labels remain attached to their nonreused
+handles. This keeps diagnostics rollback-neutral; gameplay inputs in the example still use the
+normal offline permission checks. Disabled overlay drawing returns immediately without reads or
+allocations. The observer itself remains inactive until first use.
+
+## Custom shaders, post passes and model materials
+
+These APIs change native visual state only and remain available online. See
+[the shader author guide](shaders.md) for WGSL bodies, bindings, examples,
+containment, hot reload and performance costs. The sample mod is
+`melee/pc/geno/mods/shader-demo/`.
+
+| API | Contract |
+|---|---|
+| `gd.shader_load(path, opts)` | Handle or `nil,error`; opts: `kind="post"` (default) or `"effect"`, optional `vertex`, named `params` |
+| `gd.shader_set(handle, params)` | Atomically update declared floats/vec4s; `true` or `nil,error` |
+| `gd.shader_status(handle)` | `{valid,error}` or `nil,error`; also polls for edits |
+| `gd.fx_shader(package, emitter, handle_or_nil)` | Override a named effect emitter's appearance; nil restores its package shader |
+| `gd.post_add(path_or_shader_handle, opts)` | Post handle or `nil,error`; opts: `order`, `stage="world"|"final"`, `half`, `params`, `duration_frames`, `clock` |
+| `gd.post_set(handle, {params=...})` | Update a pass's independent parameter values |
+| `gd.post_remove(handle)` | Boolean; only the owning script can remove it |
+| `gd.post_clear()` | Clear this script's passes; engine transition covers and other scripts' passes survive |
+| `gd.light_set{dir={x,y,z}, color={r,g,b}, ambient={r,g,b}}` | Set the custom model key light; nonzero direction, nonnegative colours |
+
+Paths are relative to the calling mod; console paths start with a mounted mod ID.
+Parameters declare at most 16 named finite floats or four-float arrays. Every WGSL
+parameter occupies a `vec4f` slot: read scalar values with `.x`. Updates cannot
+change names or types. Handles expire on unload and scene/match end.
+
+`world` runs after world/effects/near translucent models and before the retail
+HUD; `final` runs after the retail HUD and before host overlays. Passes preserve
+scene depth and EFB alpha. No separate pre-effects insertion point is exposed.
+`gd.perf().shaders` reports cumulative compilation/cache/error, draw/pass/resolve,
+skip, pixel, upload-byte and CPU recording counters; it does not measure GPU time.
+
+`gd.model_load` opts into custom rendering when a matching `.material.json`
+exists next to its `.gxmesh`. Built-ins are `lit`, `unlit`, `glass`, or supply a
+WGSL fragment body. Models without a material keep the GX path. Glass needs its
+existing collision sidecar's `alpha=1` to retain far/near translucent sorting;
+the sample provides an authored opacity/tint material template. See the author
+guide before adding material sidecars to exported kit parts.
+
+
+### Clank observation and timed presentation
+
+`gd.clank_event == true` advertises `on_clank`. Both ports are 1-based;
+`port_b` is absent for a fighter/item clash, where `item` is an unsigned
+same-frame object identity and `item_kind` is the engine item kind. The item
+identity is **not** a mutable `gd.item_*` handle. `x,y,z` are the midpoint of
+the colliding hitbox world centres; damage fields preserve their float damage.
+`cancel_a/b` reflect the engine damage-gap test for each side. Damage-imbalanced
+clashes can cancel only one side. Repeated contacts for the same entity pair in
+one logic frame yield the first contact once.
+
+`rebound_a/b` and `hitlag_a/b` read each still-live object's final state at the
+frame boundary, after ordinary engine collision processing and callbacks. A
+projectile destroyed by its clank callback has zero remaining hitlag. Hitlag
+also reflects other collisions that frame; these fields report actual remaining
+engine state, not a newly calculated per-contact duration. Rebound is the OR of
+the per-fighter ReboundStop/Rebound state flags. Producing the event writes no
+game state, and resimulated frames produce no duplicate Lua events.
+
+Grounded fighter/fighter clanks and grounded/aerial fighter/item clanks are
+observed. The vanilla fighter/fighter collision gate requires both fighters on
+the ground: this API does not create an aerial fighter/fighter cancellation rule.
+A fighter/item clash in the air can apply hitlag with `rebound=false`. Inert
+hitbox touches, shield hits, reflects, absorbs and item/item clashes are separate
+paths and do not produce this event. With no `on_clank` subscriber the producer
+returns immediately.
+
+For a shader centre, existing `gd.project(x,y,z)` returns top-left script
+coordinates; divide x by `gd.safe_area().w` and y by 480 to obtain post UVs.
+No additional camera write or projection API is necessary.
+
+`gd.hitstop` is a host logic-iteration gate, not a write to fighter hitlag or
+rollback memory. Its duration is nominal **60 Hz presentation time**, including
+while paused, rather than stopped logic frames or monitor refreshes. Separate
+owners' requests coexist; cancelling/expiry never resumes another request or a
+manual pause. Match/scene end, unload, script disable and online entry release
+requests; netplay, rollback and resimulation do not honor this gate. Calling it
+requires `gameplay=true` (or console), an offline active match and valid frames.
+`on_tick`, drawing and console remain live. On scene restart manual pause follows
+its pre-existing reset behavior.
+
+`gd.post_add(...,{duration_frames=N,clock=true,params={elapsed=0,progress=0,...}})`
+removes that owned pass automatically after N/60 wall-clock seconds, even if its
+Lua hook errors. `clock=true` additionally updates **declared scalar** `elapsed`
+(seconds since creation) and `progress` (0..1) at each presentation tick. Declare
+both scalar names; wrong/missing types fail atomically and remove the attempted
+pass. `clock` requires a duration; omit it for a timed pass whose parameters Lua
+updates. Duration is integer 1..36000, or omitted/0 for an indefinite pass.
+Manual remove/clear, scene cleanup and unload retire timer records too.
+
+The non-shipped `experiment/clank_impact` folder demonstrates these capabilities
+with GD's own v3 impact shader. Its freeze is offline-only; the shader APIs remain
+local visual APIs under their existing permissions.
+
+## Six-fighter direct matches (source update 2026-10-03)
+
+**Fix1 source update (2026-10-03):** `p7=` is logged and refuses the complete launch. With six fighters, `gd.lab_leave("css"|"sss")` returns `false, reason` and logs that reason; use `"menu"` or `"restart"`. A refused leave preserves pause state.
+
+Team launches normally keep the requested/default costume (`/colorN`) and run Melee's same-team, same-character duplicate tint assignment. Five identical teammates can therefore have shades 0 through 4; shading does not select their physical controller. Add `teams=1;enemy_team_colors=1` to force each active fighter on a team different from P1's team to its CSS team costume (team0 red, team1 blue, team2 green) and shade zero. This overrides enemy `/colorN`, preloads the chosen costume, and supports five enemies sharing one costume without a fifth nonzero tint. P1's team retains ordinary duplicate shading.
+
+Admission now plans the actual match preload requests before any fighter load, independently of the previous screen's heap policy. `six-slot planned` lines give deduplicated request counts and byte budgets; `six-slot after-load` lines give allocator free bytes after the complete preload queue finishes. They are distinct measurements. Main-heap runtime peaks still need live testing.
+
+The tester verified the original six-slot build's camera, port APIs, KO/respawn, recycling, restart, savestates and rewind (zero differing bytes) in `_build/audit-20261003/batch2-verify/`. Fix1's HUD, admission, refusal and colour changes have syntax checks and added regression fixtures; they have not been built or run. See `_build/tmp/codex-six-slots-fix1-report.md` for acceptance steps.
+
+
+`MELEE_SCENE` and `gd.scene_launch` accept `p1` through `p6` for **direct VS or LAB matches**. Slots 5-6 default to CPUs and refuse human/demo types. Physical controllers remain four. Six-slot CSS, SSS and Training routes are refused; VS finishes return to menus, and LAB permits restart or exit to menus. Use `/team0` for the player and `/team1` for each enemy with `teams=1`.
+
+```lua
+gd.scene_launch{mode="lab", stage="fd", teams=1,
+  p1="fox/hu/team0", p2="marth/cpu0/team1", p3="marth/cpu0/team1",
+  p4="marth/cpu0/team1", p5="marth/cpu0/team1", p6="marth/cpu0/team1"}
+gd.input(6, {buttons="A", x=-80}, 10)
+gd.release(6)
+```
+
+Fighter APIs use slots 1-6: `player`, `players`, CPU modes, modifiers, bench/call/benched, shaders, teleport, hit and contacts. `input`, `press`, `pad` and `release` now also support slots 5-6 through CPU input records. Holds count logic frames; a claimed slot stays neutral until released. `pad(5/6)` reports the most recently sampled CPU input; its optional physical/raw selector has no separate meaning there. `mirror_pad` and `input_mask` remain physical-controller APIs for ports 1-4. LAB panel targets cycle the fighters actually present; menu navigation still polls four controllers.
+
+`gd.fighter_recycle(port, {x=, y=, facing=1, intangible_frames=0, character=})` returns `true` or `false, reason`. The optional character is an explicit CharacterKind (`gd.player(port).char`). Recycle requires a CPU that has completed its KO and is in Sleep/Rebirth/RebirthWait. Use an infinite time/LAB match: stock elimination can destroy the entity before a script can recycle it. Retail respawn reset refreshes the retained fighter, damage becomes zero, and floor/camera/input placement uses the reserve call path. Paired fighters, transforms, bosses and character changes are currently refused. For a different enemy character, call another fighter slot seeded with that character at match start.
+
+`preload=fox/marth` reserves up to **two** additional costume-zero characters in the eight-entry launch cache. This preloads files only; it does **not** enable character-changing recycle. Six-slot launches and extra preloads check deduplicated file sizes, alignment and archive/allocator overhead against the file heaps, retain 1 MiB admission headroom in each fighter heap, and require 4 MiB free in the main heap. Refusals and headroom are logged. These conservative floors are not measured runtime peak guarantees for arbitrary mod assets or stages.
+
+The snapshot header already describes six fighters. Virtual input records and sampled values live in snapshotted game memory, and LAB input logs include the two extra slots for replay. The initial source pass did not build or run the game. The subsequent tester results and outstanding Fix1 acceptance are distinguished above; six-way HUD spacing remains pending visual verification.
+
+
+## Stage slots and switching
+
+Offline stage slots (Packet O; fix4 source update, 2026-10-03). The owner watched the fix2/fix3 six-stage queue tour; fix4 native-controller changes still need executable acceptance. Slots retain DAT models, collision, markers and parameters. The six legal DATs default to scoped animation/moving collision; Yoshi's Story and Fountain additionally run owned native controllers. Arbitrary destination hazards remain unsupported. `gd.stage_slot_load("battlefield")` returns `slot` or `nil, err`; names `fd`, `bf`, `ys`, `dl`, `fod`, `ps` and vanilla kind numbers are accepted. `{file="GrNBa.dat",music_id=...}` selects a root disc DAT. `gd.stage_slot_info(slot)` exposes bytes, model bytes, collision counts, camera/blast bounds, marker-indexed spawns, music and heap free/capacity/headroom. `gd.stage_slots()` lists owned slots. `gd.stage_slot_free(slot)` refuses active or transitioning slots. Handles belong to the loading script and scene.
+
+There are 16 slot records, 64 model groups per slot, a 512 KiB heap reserve, and the existing script collision budget (normally 768 lines, 1536 vertices); switches reserve one safety line. Allocation and collision availability can limit the count below 16. DAT reads are synchronous. Preload before play: the pre-fix2 tester measured about 4.7 MiB for six legal static slots; current animation allocations require a fresh heap measurement. Arbitrary archives are subject to bounded validation and cannot be assumed safe or compatible.
+
+`gd.stage_switch(slot,{transition="wipe",indicator=1,duration_frames=60,place="keep"})` requests an owned timed freeze and one atomic collision/parameter replacement. Built-ins are `wipe`, `flash`, `morph`; an integer post shader handle selects a custom cover. Default duration is 60 presentation frames (one second). Wipe sweeps left-to-right across the old scene, then uncovers the new scene left-to-right; flash fades to white and back. Both use the final post-process pass and cover the retail HUD, while the host/console overlay stays above the cover. The indicator is queried directly on each rendered frame, including frozen logic. Indicator uses logic seconds; presentation duration uses 60 Hz time while logic is frozen. Morph offsets DAT meshes visually; collision switches once at midpoint. The initial host is hidden rather than morphed. Mission meshes currently switch visibility without morphing. Custom shaders receive no automatic progress uniform.
+
+Fix5 source repair defers destination/restoration music until the normal native
+loop has returned from script hooks and both timed freeze and explicit pause
+have ended. A later switch/unload replaces or cancels a pending request; scene
+end clears it. `gd.post_clear()` leaves director-created built-in/custom covers
+alive until the director removes them. The PC stream-start busy wait also pumps
+deferred DVD/AR completions. These changes have standalone fixture evidence;
+they have not been accepted in a rebuilt executable.
+
+The owner's fix5 target is complete vanilla initialization and teardown with
+one live stage and file-only caches. The current partial paths below do **not**
+meet that target. The hosting audit and concrete remaining work are in
+[_research/stage-switch-full-retail-lifecycle-2026-10-03.md](../_research/stage-switch-full-retail-lifecycle-2026-10-03.md).
+
+Default placement retains a usable position, otherwise moves to the nearest floor without KO. `place="ko"` moves only fighters outside the new blast zone below it, including grounded fighters; fighters inside the zone keep a usable position, and those without a usable floor move to the nearest floor without KO; retail KO occurs after logic resumes. Captured, thrown, dead and respawning fighters refuse the switch. Ledge action entry into Fall and all floor, wall, ceiling, ledge and ECB contact clearing happen before any old collision line is removed. Captures/throws are refused before writes. Common portable items and projectiles survive with reset collision references; item kinds at or above `Old_Kuri` are deleted (this conservative policy also removes summons). Fighters with unusual transformation/bench state still need native testing.
+
+`gd.stage_queue{{slot=bf,after=10,transition="wipe"},{slot=ys,on="next_room",transition="flash"},loop=true,shuffle=true,seed=42}` accepts arbitrarily many entries subject to memory. Each entry uses exactly one of `after` (seconds since queue start/previous completed switch), `at_stocks` (total stocks <= threshold), or `on` (event name). `gd.stage_queue_event(name)` signals a custom event; dispatched game events also signal queues. `gd.stage_queue_next()` forces the next entry; `gd.stage_queue_clear()` clears future entries. A pending transition must finish before replacing its queue. Seeded shuffle and loop order are deterministic. All scripts receive `on_stage_switch{phase="before"|"after",from=...,slot=...}`; recursive switch requests are refused. Captured/dead/respawning preflight refusals retry without consuming the entry; other preflight failures stop the queue.
+
+Only the six legal retail stages are accepted as hosts. Original host stage procs, collision and wind are gated; owned Yoshi/Fountain procs and their destination shadow checks run while active. Other stages and arbitrary m-ex hosts require a hazard audit. FD/BF retain their authored topology; Yoshi runs Randall and Shy Guy callbacks; Fountain runs random platform heights with submerged/absent collision disabled, omitting reflections and water effects. Dream Land omits Whispy/clouds; Stadium selects its initial arena, omitting transformations and screen animation. These fix4 source paths supersede the earlier animation-only limitations for Yoshi/Fountain; full visual equivalence is not yet accepted.
+
+Mission registration uses `gd.stage_slot_load{models={{asset=asset,x=...,y=...,scale=...}},camera={left=...,right=...,top=...,bottom=...},blast={...},spawns={[0]={x=...,y=...}},music_id=...}`. Generated GXMS collision sidecars supply geometry; static full levels only. Release the slot before asset references. The missions-mod registration diff is in `_build/tmp/codex-stage-switch-missions.diff`; the mod itself is unchanged.
+
+Netplay, rollback and replay are refused. Savestate loads/rewind/history/hot-reload resimulation are refused while slots are live, and memory snapshots from a different slot epoch are refused. Native queues and model caches are outside snapshots. Unload/match end/scene change reclaim slots and restore host markers, camera, blast bounds, parameters, music and isolation. See `pc/scripts/examples/stage_switch_demo/` for the FD -> BF -> YS -> FD timer demo and `stage next`, `stage queue`, `stage slots` commands.
+
+
+
+Legal stage names differ between the slot API's internal kinds and the scene launcher's SSS indices. Use these tokens:
+
+| Stage | Slot name | Slot kind | Scene `stage=` | Scene SSS index |
+|---|---|---:|---|---:|
+| Final Destination | `fd` / `final_destination` | 37 | `fd` / `finaldestination` | 32 |
+| Battlefield | `bf` / `battlefield` | 36 | `bf` / `battlefield` | 31 |
+| Yoshi's Story | `ys` / `yoshis_story` | 10 | `ys` / `yoshistory` | 8 |
+| Dream Land 64 | `dl` / `dream_land` | 28 | `dreamland64` / `oldpupupu` | 28 |
+| Fountain of Dreams | `fod` / `fountain_of_dreams` | 12 | `fod` / `fountain` | 2 |
+| Pokemon Stadium | `ps` / `pokemon_stadium` | 16 | `ps` / `pstadium` | 3 |
+
+The scene aliases `dl` and `dreamland` select Green Greens (SSS 17, internal kind 13), retained for compatibility. Use `stage=dreamland64` for Dream Land.
+
+While any stage slots are loaded, `gd.savestate`, `gd.loadstate`, `gd.state_save`, `gd.state_load`, `gd.rewind_test` and `gd.hot_reload` return `false, reason` and log a refusal before scheduling work. Pending state requests are also logged and cleared if slots are loaded before their frame boundary. Slot/cache epochs continue to protect older snapshots after unloading.
+
+All DAT model, collision, camera/blast markers and spawn markers use the destination ground scale (BF 0.8, YS 0.7). FD reproduces its starting backdrop clip selection and its near/far camera planes; its full retail backdrop cycle remains unsupported. A switch logs requested/current music ids and whether the retail HPS helper restarted playback.
+
+## Standalone items and model rotation (source update 2026-10-03)
+
+Native Geno items let a mod define stage pickups independently of a fighter or
+m-ex item table. They use real game item state, with gravity, stage/script mission
+collision, floor rest, touch collection, expiry, a small colour/amount payload,
+and optional GXMS visuals. Definitions register from `items/<name>/item.json` at
+mod boot; format and reserved kind range are in `melee/docs/geno.md` section 19.13.
+`grab`, holding and throwing standalone definitions are currently refused.
+There is a hard cap of 128 live native standalone items. Collision uses swept
+points against floors, walls and ceilings, plus moving-floor carry; floor/platform rest is owner-verified on the stamped build; wall/ceiling and
+moving-floor carry still need native acceptance. Full netplay still requires definition
+fingerprints and replicated deterministic spawn/despawn inputs.
+
+General definition fields `visual.hover`, `visual.height`, and `visual.tilt`
+default to zero. Hover lifts only the visual and pickup volume; the stage
+collision point stays at the floor anchor. Height is the unscaled model height.
+The pickup volume is a vertical capsule from that anchor to
+`anchor + max(0, hover + bob*sin(age*bob_speed*pi/180) + height*scale)`;
+its radius is `radius*scale`. A fighter underneath or jumping through it can
+collect it. `spin` and `bob_speed` are degrees per logic frame: 6 and 3 give
+360 degrees/second and a two-second bob at 60 logic FPS. Rotation turns the
+tilted long axis around Y (`Ry(spin)*Rx(tilt)`) so symmetric models read clearly.
+Hover follows the existing floor carry and does not prevent falling off edges.
+These additions are source-checked; moving-platform and visual acceptance
+require a later native run.
+
+Standalone Geno rows from `gd.items()` also expose `visual_y`, `rotation`
+(degrees), `tilt` (degrees), `scale`, `visible`, and native `age` (logic frames).
+The ordinary `x,y,z` remain the physics anchor. These read-only values let
+presentation follow the rendered pickup without simulating a second trajectory.
+
+```lua
+local handle, err = gd.item_spawn("drive", 10, 30,
+  {vx=0, vy=2, payload={colour="blue", amount=20}})
+function on_item_collect(e)
+  if e.name == "drive" and e.port == 1 then
+    -- Award e.payload.colour / e.payload.amount once for e.item.
+  end
+end
+function on_item_expire(e)
+  -- e.reason is "expired" for lifetime expiry, "destroyed" for other destruction.
+end
+```
+
+`gd.item_define("items/drive/item.json")` loads a contained mod-relative definition;
+`gd.item_spawn(name,x,y,options)` returns a handle or `nil,reason`;
+vanilla aliases `"vanilla:<kind>"` are accepted as well as numeric kinds.
+Refusals distinguish unsupported kind, unsafe kind, uninitialized descriptor,
+pool full, item cap reached, and reserved-range conflict. Visuals preload one
+colour/part per engine tick outside the Lua budget. A freshly registered
+or scene-reset definition may return `nil,"item visuals still preparing; retry
+next frame"`; retry after a later frame. Optional-art failures complete with the
+built-in fallback. Spawn never loads assets. If the creating callback errors or
+runs over its budget, newly created items from that callback are removed without
+terminal reward events. Successful callbacks and yielded tasks retain items.
+`gd.item_despawn(handle)` removes a live item. Spawn/despawn are gameplay writes:
+refused online and fork the LAB timeline. Native item state can be restored with
+the game's snapshots; drawing follows the restored item rather than storing an
+independent Lua pickup list. Collection and expiry hooks are queued only when
+hooked. By default they report standalone Geno items only. A script can opt in
+with `gd.item_events{vanilla=true, mex=true}`; `gd.item_events{}` disables both
+families, and `gd.item_events()` reads the current filter. Filters are per script
+and take effect immediately. Vanilla opt-in covers common kinds 0..34, not
+fighter articles/projectiles or stage enemies. Geno fighter articles never enter
+these hooks. m-ex opt-in covers admitted custom kinds outside Geno reservations. Script rewards remain offline-only and must guard duplicate/unrelated
+handles themselves. The owner verified baseline floor/platform rest, fallback spin, exactly-once
+collection, expiry, 60 items and snapshot/rewind on the stamped build (fix1 packet).
+The material/preload/filter/CPU/blink corrections still require native retesting;
+this source update did not build or launch the game.
+
+One item surface covers three families, with explicit admission limits:
+
+| Family | Spawn selector | Support and refusal |
+|---|---|---|
+| Standalone Geno | definition name or reserved kind 4608-4671 | Defined native pickup state, colour/amount payload and collect/expiry events; undefined kinds refused. |
+| Vanilla | integer kind from Capsule through Poke Ball (`It_Kind_M_Ball`) | Ordinary common items only, using loaded retail descriptors; later fighter/Pokemon/stage kinds and uninitialized/unsafe kinds refused. |
+| m-ex | integer custom kind or alias `"mex:<kind>"` | Only an active, resolved descriptor and logic row; missing/incomplete rows refused. No m-ex display-name table is available, so the numeric alias is the supported name. |
+
+`gd.items()` adds `layer` (`geno`, `geno_article`, `mex`, `vanilla`) and a native
+name, m-ex alias `mex:<kind>`, or vanilla alias `vanilla:<kind>` where available. Script-spawned items expose their
+owned handle; only standalone Geno rows have a payload. Vanilla and m-ex rows
+and events omit payload, and their spawn options refuse it. Despawn is restricted to handles owned by the calling
+script; arbitrary existing retail/m-ex objects have no script ownership. Unified
+collection events cover known common consumable paths, touch collection of stars
+and mushrooms, and held-item pickup paths, including items not spawned by Lua.
+Their existing behavior is retained. Untracked-family events identify the item
+by engine serial; script-spawned handles use a separate namespace starting at
+`0x40000000`. Do not assume every event item ID is an owned despawn handle.
+General destruction emits `on_item_expire` with `reason="destroyed"`; native
+lifetime completion uses `reason="expired"`, and collection uses
+`reason="collected"`. Terminal guards suppress a second event after collection. Fighter
+Geno articles remain their existing fighter-owned route and cannot be spawned
+through the standalone API. The m-ex itFunction loader remains incomplete;
+this API does not implement the missing guest-code loader. Admission checks validate
+the descriptor/table structure, not arbitrary guest-code safety.
+
+Model options now include `rot_x` and `rot_y` in degrees (-360..360). Existing `rot`
+is still Z rotation. Transform order is scale, X, Y, then Z; static batched vertices,
+normal transforms, dynamic replay matrices and alpha depth sorting agree.
+`gd.model_get`/`gd.model_instances` return all three fields. Instances with collision
+lines refuse nonzero X/Y rotations atomically; use `collision=false` for visual
+models that spin in three dimensions.
+
+## Data and fighter-state readback (source update 2026-10-03)
+
+`gd.data_exists(name)` returns `true` or `false`, or `nil,error` when the existence
+check fails. It uses the same per-script data namespace and name validation as
+`data_read`. A directory can exist even though reading it as a file fails.
+`gd.data_read(name)` returns bytes or `nil,"missing"` for an absent file, and
+`nil,error` for unreadable, oversized or failed reads. Callers that only inspect
+the first return value remain compatible; invalid names still raise errors.
+
+`gd.fighter_mod(port)` queries the active overlay as a table containing
+`damage_dealt`, `damage_taken`, `run_speed`, `air_speed` and `shield_max`, or `nil`
+when none is active. The query is read-only across script owners. Explicit
+`gd.fighter_mod(port,nil)` clears an owned overlay; table writes keep their
+existing offline gate and ownership rules.
+
+`gd.dobj_tints(port)` returns `{count=N,any=boolean}` for registered per-draw tint
+overlays assigned to that fighter slot across script owners. This excludes flat
+colours and ID rendering. It counts registered overlays; rendering can suppress
+an overlay for an unsupported material or pass. Clear/unload/destruction removes
+registrations, so the query can verify restoration without changing part caches.
+
+`on_enemy_defeated` reports stock enemy defeat, including a Koopa's conversion to
+a shell (even if shell allocation fails and the original enemy is removed).
+A snapshotted terminal guard emits one terminal event per enemy lifetime.
+Scripted removal, fallout, lifetime expiry or general destruction without stock
+defeat remains `on_enemy_removed`; it does not fabricate a reward.
+
+`gd.cpu_mode(port,"stand")` / `"fight"` now persists the choice in the player slot
+used by first-frame initialization, rebirth and resets. The CPU entity pair and
+bench overlay are updated together; invalid/non-CPU/not-present ports return false.
+The drive visual defaults to bob amplitude 0.6. Blink-before-expiry hides four of
+every eight logic frames, and logs one `geno item: blink start` line per item;
+the guard is snapshot-owned, so rewind restores its lifecycle state.
+
+
+### Dynamic stage slots (2026-10-03 fix4 source update)
+
+This update supersedes the static-only playback and rest-pose descriptions above.
+The six legal retail DATs default to dynamic animation/collision. Use
+`gd.stage_slot_load{kind="yoshis_story",dynamic=false}` for an explicitly static
+slot, or `dynamic=true` to require support. Mission meshes and other DATs remain
+static; explicitly requesting dynamic playback for them refuses.
+`stage_slot_info` now reports `dynamic`, `dynamic_phase` (0 static, 2 DAT animation
+and moving collision, 3 owned native Yoshi/Fountain controllers), and
+`callback_proof` (the audited FD group-0 callback path).
+Phase 2 does not mean the complete stage module runs.
+
+Loaded groups use the destination scale and retail clip-zero joint/material/
+texture animation setup. Playback pauses while a slot is inactive. Original
+DAT joint bindings and native StageData bindings drive the reserved lines through
+retail collision transforms, including previous positions for platform carry.
+Placement uses the installed world vertices. Ledge checks retain original DAT
+joint identity for wall occlusion, despite one reserved backend joint per line.
+These source paths need on-screen acceptance for each stage.
+
+Yoshi's Story now runs retail initialization, Randall collision/puffs and the
+Shy Guy controller. Fountain uses two independent retail platform controllers;
+submerged or absent platforms have disabled collision. Stage-created objects,
+items and particles are torn down on exit; another visit resets the controllers.
+Both use the engine RNG. Fountain reflections/water effects, Whispy wind/apples,
+Stadium transformations and FD's background state machine remain omitted.
+Existing demos use these source paths without a Lua API change. Fix4 has
+standalone controller/lifecycle evidence; executable and visual acceptance,
+including all-six-slots native heap measurements, remain pending.
+
+Fighter placement/unload preserves the entire per-entity CPU controller across
+Fall entry. The existing player-slot CPU choice continues to drive respawn;
+verify a stood CPU and both transformation/partner entities across ten switches.
+The report and on-screen acceptance plan are in
+`_build/tmp/codex-stage-switch-fix2-report.md`.
+
+## Preparing room content, warming materials and launching missions (source update 2026-10-03)
+
+This section supersedes earlier area-unload descriptions that imply immediate physical
+frees. These APIs are verified against current source and compiler syntax checks;
+native rendering, rewind and frame-time acceptance still require a rebuilt executable.
+Area construction, `warm`, `item_kinds` and `launch_ready` require an active offline
+match and a mod manifest with `"gameplay": true`; the console cannot construct areas
+or declare warm jobs. Script gameplay writes remain refused during netplay/rollback.
+
+### Prepare an area before entering it
+
+| Call | Result |
+|---|---|
+| `gd.area_prepare(name, builder)` | Positive integer handle for an inactive preparation. |
+| `gd.area_prepare(name)` | Existing prepared/active preparation handle; a new name requires a builder. |
+| `gd.area_activate(handle)` | `true` for an owned prepared/already active handle; `false` for missing, foreign or unloading handles. |
+| `gd.area_status(handle)` | `"missing"`, `"prepared"`, `"active"` or `"unloading"`. |
+| `gd.area_loaded(name)` | Whether this script's named area is active. |
+| `gd.area_load(name, builder)` | Builds an active area, or activates a preparation without rerunning its builder; `false` for an already active or still unloading name. |
+| `gd.area_unload(name)` | `true` when the name exists; hides its content immediately and schedules resource retirement. |
+
+Names are 1�47 bytes without NUL. Handles belong to the script generation; positive
+32-bit handle arguments are required. Name-only preparation returns `nil` for an
+unloading name or an area created by ordinary `area_load` without a preparation handle.
+Repeated preparation of an existing prepared/active name returns its original handle
+without calling another builder.
+
+```lua
+local room = gd.area_prepare('next-room', function()
+    gd.stage_add_line(500, 100, 600, 100, 'floor')
+    -- gd.model_spawn(loaded_model, transform) can prepare GXMS instances here.
+end)
+-- The reserved floor and models are absent from collision queries and drawing.
+assert(gd.area_status(room) == 'prepared')
+-- Later, after material warming and before crossing the doorway:
+assert(gd.area_activate(room))
+```
+
+Builders are synchronous: call preparation early, and keep each builder small. They
+cannot nest, yield or unload areas. A builder error retires its partial content and
+propagates the Lua error. Prepared builders support collision lines and GXMS model
+instances; retail target/enemy spawning and legacy stage DAT model GObjs are refused.
+Spawn enemies after activation, following their separate material warm declaration.
+Explicit `stage_link` floor seams must remain within one area slot: independently
+activated areas cannot share a cached floor chain. Standalone lines belong to area 0.
+
+Line/model edits inside an area builder share one collision-island batch. Activation
+changes the area gate without walking its line/model records. Unload immediately
+removes collision, draws and public model handles, then retires at most two
+line/instance records per logic frame, with collision lines retired before their
+instances. Wait for `area_status(handle) == 'missing'` before relying on reclaimed
+capacity or reusing that name. The pools remain 64 areas, 256 instances and up to
+768 scripted lines. Ordinary `area_load` still supports targets; those retail item
+GObjs are removed synchronously on unload, outside the deferred geometry budget.
+`stage_stats` excludes unloading records and counts prepared resources as reserved;
+`visible_instances` respects the area gate.
+
+Area membership, activation and the deferred cursor are snapshot state. Savestates
+can restore prepared, active or unloading content, and deterministic cleanup resumes
+from its restored cursor. Immutable model assets stay pinned for the scene. Lua
+builders are not replayed by history: save stable states outside a builder and run
+`gd.rewind_test` for the mission's existing replay path. Preparation/activation are
+source mechanisms, not a measured guarantee that every room takes less than 4 ms.
+
+### Declare materials before their first visible draw
+
+`gd.warm{enemies={...}, items={...}, models={...}, fighters={...}} -> handle` queues
+material discovery and background pipeline compilation. All four lists are optional;
+unknown top-level keys are refused. There are at most 16 outstanding handles and
+128 listed objects per declaration.
+
+* `enemies`: names accepted by `spawn_enemy`: `goomba`, `koopa`, `redead`, `like_like`,
+  `octorok`, `polar_bear`, `topi`.
+* `items`: numeric kinds, `"vanilla:<kind>"`, `"mex:<kind>"`, or an active Geno item
+  name. m-ex kinds must already be registered; Geno definitions must be active.
+* `models`: handles returned by `gd.model_load`, retained by this script. Load assets
+  before declaring them; a warm declaration does not accept model filenames.
+* `fighters`: loaded player ports **1�6**, such as `{1, 2}`. These are entity slots,
+  not fighter names or CharacterKind values. An absent entity fails discovery.
+
+```lua
+local materials = gd.warm{
+    enemies = {'goomba', 'koopa'},
+    fighters = {1},
+}
+-- Poll from on_tick, including while the launch loading hold is active.
+local done, why = gd.warm_done(materials)
+if done then
+    gd.warm_release(materials)
+elseif why then
+    gd.log(why)
+end
+```
+
+`gd.warm_done(handle) -> done, error_or_nil` is `false,nil` while pending,
+`true,nil` when complete, or `false,"warm material discovery failed"` on failure.
+`gd.warm_status(handle)` returns `{objects, prepared, pending, done, failed}`:
+`objects` counts requested descriptors, `prepared` counts completed descriptor
+captures, and `pending` combines descriptors not yet captured with pending captured
+pipelines (`-1` on failure). It is not a percentage. Poll per tick rather than spinning.
+One descriptor is traversed across all warm jobs per tick; discovery can still perform
+CPU work and temporary model allocation, but it creates no enemy/item AI or visible
+object. Successful completion covers the material variants discovered by those
+current descriptors; later costume/material/content changes may need a new declaration.
+
+`gd.warm_release(handle)` releases the job handle, with no return value. Release
+completed or failed jobs to reclaim the 16-job pool. Releasing a pending declaration
+removes its readiness tracking; it does not establish that compilation completed.
+Jobs are scene-scoped and owned by the script generation; stale/foreign handles raise
+an error. Scene changes and script retirement clear them. Warm progress is diagnostic
+native state, not rewind simulation state, and does not advance during resimulation.
+The single-feature [Warm demo](../melee/pc/scripts/examples/demos/warm/scripts/main.lua)
+declares all seven enemy descriptors before spawning its first Goomba.
+
+`gd.item_kinds() -> array` lists currently registered/readable item descriptors as
+`{kind=number, name=string, spawnable=boolean}`. Names use `vanilla:<kind>` or
+`mex:<kind>` for stock/m-ex descriptors, and the definition name for Geno items.
+`spawnable=false` descriptors can still be useful to warm: readable materials do
+not imply that the public item-spawn API accepts that kind. This list reflects the
+current scene/mod registrations, not every item that could exist in another install.
+
+### Keep loading covered until a mission director is ready
+
+Scene launch accepts `mission=<folder>` or `maze=<seed>,<size>`, for example:
+
+```text
+MELEE_SCENE=mission=first-room;p1=fox;stage=fd
+MELEE_SCENE=maze=7,12;p1=fox;stage=fd
+```
+
+A mission folder identifier uses only letters, digits, `-` and `_` (1�127 bytes).
+Maze seed is 0�2147483647 and size is 1�1024. The latest mission/maze selector wins.
+The selector routes to an offline training host and holds loading while a Lua
+mission director stages content; the engine does not generate or read the mission
+layout itself. An active mod can supply a scene-grammar string in `mod.json`, such
+as `"autostart": "maze=7,12;p1=fox;stage=fd"`. Autostart is considered only when no
+scene was already configured; the first valid active declaration is selected.
+
+`gd.launch_request() -> {mission, seed, size, mod, pending}` reads the request.
+`mission`/`mod` are strings (empty when absent), and `seed`/`size` are numbers.
+For mod autostart, `mod` identifies its selected mod; explicit scene configuration
+has no selected mod filter.
+
+The engine initializes the host and loaded fighters, grants the active-match API,
+and delivers `on_match_start` before `on_launch(request)`. It then invokes exactly
+one enabled gameplay script's `on_launch`; mod autostart restricts candidates to the
+selected mod. Zero or multiple candidates leave loading held and log the refusal.
+`on_launch` is delivered once per request. Retiring its owner allows a replacement
+hook to receive the pending request. Tick hooks continue while loading is held:
+retain the request and retry stage/CPU operations from `on_tick` when they report
+an unsafe/not-ready entity. Do not expect logic-frame waits to advance during staging,
+and do not depend on the engine repeatedly calling `on_launch` after a hook error.
+
+The director calls `gd.launch_ready() -> boolean` only after its level is staged,
+prepared areas are activated where required, and its declared materials are ready.
+Only the selected owner may call it. It returns `false` while any of that owner's
+unreleased warm jobs are pending or failed; `true` clears the script staging hold.
+The loading screen's other pipeline readiness conditions still apply. `launch_ready`
+does not itself activate areas or verify a mission layout.
+
+`gd.launch_cancel([reason])` clears/consumes the pending launch and logs the reason,
+with no return value. Once an owner is selected, only it may cancel; before selection,
+an authorized offline gameplay script or console may cancel. Cancellation does not
+unload staged content or release warm handles. A scene transition cancels pending
+staging. The director should cancel on a terminal load/warm error rather than leave
+an unfinishable request held.

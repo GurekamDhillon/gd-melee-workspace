@@ -1,0 +1,389 @@
+[
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/agent/linux-qt-launcher",
+        "commit":  "6b94b7816734fcb9bf576fe08e4294b591de633c",
+        "subject":  "Assign full roguelite completion and polish program to next model",
+        "target_vs_branch_counts":  "42\t65",
+        "commits_not_in_primary":  0
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/claude/hopeful-brahmagupta-js9imw",
+        "commit":  "00d27c0ed6ed16f52a43258b2ede485547952173",
+        "subject":  "docs: CLAUDE.md for tools/, menu/, ports/ and docs/",
+        "target_vs_branch_counts":  "143\t0",
+        "commits_not_in_primary":  0
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/deepseek-certification-20260930",
+        "commit":  "687c1ab27d2b650641b308e4f209d7864b0a21af",
+        "subject":  "Handoff snapshot: workspace/deepseek-certification-20260930",
+        "target_vs_branch_counts":  "42\t44",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/deepseek-encounters-20260930",
+        "commit":  "010fa723252c7f485de8e34056c42bf184aeea3f",
+        "subject":  "Handoff snapshot: workspace/deepseek-encounters-20260930",
+        "target_vs_branch_counts":  "42\t44",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/deepseek-enemy-behaviors-20260930",
+        "commit":  "b1fcc81a1d6f0466505951ce856ebc3fd899027b",
+        "subject":  "Handoff snapshot: workspace/deepseek-enemy-behaviors-20260930",
+        "target_vs_branch_counts":  "42\t46",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/deepseek-gene-actions-20260930",
+        "commit":  "4951586693d32285aef2f7b2aa86c0ccda87c5e4",
+        "subject":  "Handoff snapshot: workspace/deepseek-gene-actions-20260930",
+        "target_vs_branch_counts":  "42\t46",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/deepseek-gene-world-20260930",
+        "commit":  "3af9830971a2045fca009746041d70b2d71baff4",
+        "subject":  "Handoff snapshot: workspace/deepseek-gene-world-20260930",
+        "target_vs_branch_counts":  "42\t58",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/deepseek-integration-20260930",
+        "commit":  "48f3e9e775bc79467a296eb040e16e75b552b780",
+        "subject":  "Handoff snapshot: workspace/deepseek-integration-20260930",
+        "target_vs_branch_counts":  "42\t46",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/deepseek-inventory-20260930",
+        "commit":  "d96bf59d35db3e9951e44eb29e6909b78c99f68a",
+        "subject":  "Handoff snapshot: workspace/deepseek-inventory-20260930",
+        "target_vs_branch_counts":  "42\t46",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/deepseek-layouts-20260930",
+        "commit":  "11e8d1ff07baa819925d8609848119ffe5d6d934",
+        "subject":  "Handoff snapshot: workspace/deepseek-layouts-20260930",
+        "target_vs_branch_counts":  "42\t46",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/deepseek-menu-polish-20260930",
+        "commit":  "27a94a816796fc8168b6a380d7605634aeb9d044",
+        "subject":  "Handoff snapshot: workspace/deepseek-menu-polish-20260930",
+        "target_vs_branch_counts":  "42\t46",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/deepseek-physical-20260930",
+        "commit":  "bd08aa122b3ce62532945b7c59d5d28b0477fd25",
+        "subject":  "Handoff snapshot: workspace/deepseek-physical-20260930",
+        "target_vs_branch_counts":  "42\t44",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/deepseek-rewards-20260930",
+        "commit":  "ad6f19dd4cb31099c5e8484cca13dd30dd929a21",
+        "subject":  "Handoff snapshot: workspace/deepseek-rewards-20260930",
+        "target_vs_branch_counts":  "42\t44",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/deepseek-stage-seams-20260930",
+        "commit":  "7460dc57a128da7dcaba8fb9f3ea32d5399810c9",
+        "subject":  "Handoff snapshot: workspace/deepseek-stage-seams-20260930",
+        "target_vs_branch_counts":  "42\t52",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/gene-world-capacity-20260930",
+        "commit":  "089fa746ab0f87c74f6dbd75aabf2933e2800b20",
+        "subject":  "Handoff snapshot: workspace/gene-world-capacity-20260930",
+        "target_vs_branch_counts":  "42\t65",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/linux-qt-launcher",
+        "commit":  "c2f533247869717a1a19f4a18eca82fc39eb54d9",
+        "subject":  "Handoff snapshot: workspace/linux-qt-launcher",
+        "target_vs_branch_counts":  "42\t66",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/model-test-campaign-20260930",
+        "commit":  "6d465c1f483c48225225b2bb2930183d95200f89",
+        "subject":  "Handoff snapshot: workspace/model-test-campaign-20260930",
+        "target_vs_branch_counts":  "42\t53",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/handoff/2026-10-01/roguelite-100-integration",
+        "commit":  "1da9335607fe8f931a5b1f7a07f9d6f2261e2541",
+        "subject":  "Document cross-machine roguelite handoff and preserve review reports",
+        "target_vs_branch_counts":  "42\t79",
+        "commits_not_in_primary":  0
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/master",
+        "commit":  "1ae7f0332707bc770de9be7d5a2a50c166679984",
+        "subject":  "release 0.1.7: VERSION, notes, README; docs/PAUSED-2026-09-27 handoff",
+        "target_vs_branch_counts":  "42\t0",
+        "commits_not_in_primary":  0
+    },
+    {
+        "repository":  "workspace",
+        "target":  "master",
+        "branch":  "origin-ws/release/linux-0.1.8",
+        "commit":  "a30d15510770525030306360261daa5028f6eafc",
+        "subject":  "Bundle the dynamically loaded i686 X11 runtime alongside Wayland",
+        "target_vs_branch_counts":  "42\t19",
+        "commits_not_in_primary":  5
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/agent/linux",
+        "commit":  "5664a6db1cf2d096db8df0e3e58775d31dbed23e",
+        "subject":  "Place ascent arrivals on flat floor before stair slope",
+        "target_vs_branch_counts":  "50\t40",
+        "commits_not_in_primary":  0
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/claude/hopeful-brahmagupta-js9imw",
+        "commit":  "f82b3cb6152cd5dd4707ddde197bc4192dd7172e",
+        "subject":  "geno: LAB kb check predicts from after the ASDI nudge; gd.lab_common().asdi_scale",
+        "target_vs_branch_counts":  "166\t0",
+        "commits_not_in_primary":  0
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/archived-linux-compat-20260922",
+        "commit":  "0ab62f440ce3909ed634ca6de47cf3cb4ef9f3b8",
+        "subject":  "wip(linux): Win32-primitive compat shim + _WIN32 guards for the Linux build",
+        "target_vs_branch_counts":  "284\t1",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/deepseek-certification-20260930",
+        "commit":  "bc5f89e52a6bee634eca1bdd11b169c81c07b6ae",
+        "subject":  "Handoff snapshot: game/deepseek-certification-20260930",
+        "target_vs_branch_counts":  "50\t28",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/deepseek-encounters-20260930",
+        "commit":  "38a665bda15c77e5ddf87df23414569fbc2bba9e",
+        "subject":  "Handoff snapshot: game/deepseek-encounters-20260930",
+        "target_vs_branch_counts":  "50\t28",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/deepseek-enemy-behaviors-20260930",
+        "commit":  "f9da7a6183150e3b1bdeb5a4b255b12e83e5e5c2",
+        "subject":  "Handoff snapshot: game/deepseek-enemy-behaviors-20260930",
+        "target_vs_branch_counts":  "50\t30",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/deepseek-gene-actions-20260930",
+        "commit":  "4b078215a9b934fa855bf9154f9fabdbaf8ca003",
+        "subject":  "Handoff snapshot: game/deepseek-gene-actions-20260930",
+        "target_vs_branch_counts":  "50\t30",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/deepseek-gene-world-20260930",
+        "commit":  "4a19293ff62a711ff4bd5732b1a74f23eb6460b5",
+        "subject":  "Handoff snapshot: game/deepseek-gene-world-20260930",
+        "target_vs_branch_counts":  "50\t37",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/deepseek-integration-20260930",
+        "commit":  "7dc662c2f5c1949162ac988c45e2d9ef0b08f68b",
+        "subject":  "Handoff snapshot: game/deepseek-integration-20260930",
+        "target_vs_branch_counts":  "50\t30",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/deepseek-inventory-20260930",
+        "commit":  "2e57e08056161e005223f806fa0b31fe850161ee",
+        "subject":  "Handoff snapshot: game/deepseek-inventory-20260930",
+        "target_vs_branch_counts":  "50\t30",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/deepseek-layouts-20260930",
+        "commit":  "ddd45e16ea9d435542675a29b6250759529d7ddf",
+        "subject":  "Handoff snapshot: game/deepseek-layouts-20260930",
+        "target_vs_branch_counts":  "50\t30",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/deepseek-menu-polish-20260930",
+        "commit":  "0883fe8a29c1cc412cc6540c029bcb60d51b52c7",
+        "subject":  "Handoff snapshot: game/deepseek-menu-polish-20260930",
+        "target_vs_branch_counts":  "50\t30",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/deepseek-physical-20260930",
+        "commit":  "7b908dad519d4a118f36df7e3feee8c5a56a4232",
+        "subject":  "Handoff snapshot: game/deepseek-physical-20260930",
+        "target_vs_branch_counts":  "50\t28",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/deepseek-rewards-20260930",
+        "commit":  "0e4055245f0389c31d44bf04f1f5f8a5915d3a7a",
+        "subject":  "Handoff snapshot: game/deepseek-rewards-20260930",
+        "target_vs_branch_counts":  "50\t28",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/deepseek-stage-seams-20260930",
+        "commit":  "7ebd732ee00fff59bd1733b667697ccb45cd2488",
+        "subject":  "Add responsive compact HUD onboarding and safe recursive command menus",
+        "target_vs_branch_counts":  "50\t34",
+        "commits_not_in_primary":  0
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/gene-world-capacity-20260930",
+        "commit":  "42d92ea6b851f632dd457b4a13beefd1a8b7e58e",
+        "subject":  "Handoff snapshot: game/gene-world-capacity-20260930",
+        "target_vs_branch_counts":  "50\t41",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/linux",
+        "commit":  "15c459c5078671aed958beab4e091ef92b6cc2b6",
+        "subject":  "Handoff snapshot: game/linux",
+        "target_vs_branch_counts":  "50\t41",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/model-test-campaign-20260930",
+        "commit":  "08a292bd5b4aaf1f54e615c2fdc456e8ead94808",
+        "subject":  "Handoff snapshot: game/model-test-campaign-20260930",
+        "target_vs_branch_counts":  "50\t35",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/roguelite-100-game",
+        "commit":  "3062566f596e522433720d7033f5115937143f2b",
+        "subject":  "roguelite: R3a -- equipment applies for real, run history records finishes",
+        "target_vs_branch_counts":  "50\t47",
+        "commits_not_in_primary":  0
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/sol-native-owner-cleanup-20260930",
+        "commit":  "0b227162a4f9c274dd3bcca6fec71f7a356fb225",
+        "subject":  "Handoff snapshot: game/sol-native-owner-cleanup-20260930",
+        "target_vs_branch_counts":  "50\t34",
+        "commits_not_in_primary":  1
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/handoff/2026-10-01/vk-concepts-kit-20261001",
+        "commit":  "55b110dd3034583d0275695625b92c3dfd571f67",
+        "subject":  "Handoff snapshot: game/vk-concepts-kit-20261001",
+        "target_vs_branch_counts":  "50\t36",
+        "commits_not_in_primary":  2
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/master",
+        "commit":  "7d32dd581edd83fa5031a6971bf5f460edbc9dfb",
+        "subject":  "configure: split `--lint-all` into categories (#3481)",
+        "target_vs_branch_counts":  "782\t0",
+        "commits_not_in_primary":  0
+    },
+    {
+        "repository":  "game",
+        "target":  "pc-port",
+        "branch":  "pub/pc-port",
+        "commit":  "1f5b36baf1a70a0ada0025893deeaa73385e8c3d",
+        "subject":  "gw_mex_bridge.c: regenerated by the 0.1.7 release build",
+        "target_vs_branch_counts":  "50\t0",
+        "commits_not_in_primary":  0
+    }
+]

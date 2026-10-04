@@ -1,0 +1,4 @@
+{
+  "geno": 5,
+  "fighters": [{ "attach": "kirby", "jumps": { "max": 9 } }]
+}

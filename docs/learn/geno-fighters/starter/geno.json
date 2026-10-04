@@ -1,0 +1,16 @@
+{
+  "geno": 5,
+  "fighters": [
+    {
+      "attach": "kirby",
+      "name": "Kirby (tutorial)",
+      "jumps": { "max": 9 },
+      "subactions": [{ "index": 305, "file": "geno/tutorial_b.txt" }],
+      "states": [
+        { "name": "TutorialB", "behavior": "geno.ground", "subaction": 305, "like": "motion:44" },
+        { "name": "TutorialBAir", "behavior": "geno.air", "subaction": 305, "like": "motion:65" }
+      ],
+      "specials": { "n": "geno:TutorialB", "air_n": "geno:TutorialBAir" }
+    }
+  ]
+}

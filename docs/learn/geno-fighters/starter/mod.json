@@ -1,0 +1,9 @@
+{
+  "id": "tutorial-kirby",
+  "name": "Tutorial Kirby",
+  "version": "0.1.0",
+  "kind": "fighter",
+  "description": "Data-only course starter: nine jumps and an original B move.",
+  "requires": [],
+  "conflicts": []
+}
