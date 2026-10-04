@@ -1910,7 +1910,8 @@ poll paused visual restoration without advancing rule timers or game outputs.
 All rule/adapter roots, pending equipment, owner slots and lifecycle observations
 are serialized; a missing blob retires stale numeric-slot overlays from old saves.
 Checkpoint failure disables debug evaluation and clears native/pure/visual state.
-KO/respawn removes active rules, values and visible treatments; a neutral shader
+KO/respawn clears temporary statuses/stacks/events; equipment, steady values and
+native hit rules persist and are re-derived; a neutral shader
 selection may be reused as a cache while an opponent remains loaded. Scene change
 recreates the visual adapter, because shader handles are scene-owned.
 
@@ -1982,3 +1983,16 @@ m-ex/Geno extended states return unknown. Anonymous environmental and synthetic
 paths outside audited contact are excluded. Detailed site census, retail effects
 and integrator acceptance: _build/tmp/codex-hit-rules-report.md. Source/isolated
 helper tests do not establish live LAB rewind exactness.
+
+
+EM3 LAB drive commands: drive give|drop [common|magic|rare|unique] [seed], and bag.
+Z+START opens the controller-only four-slot/twelve-drive bag; A selects/equips,
+B closes, Left/Right pages detail text. Keystones are separate, never rolled.
+Bag edits and native rule/overlay outputs join the modifier sim_commit blob.
+Highest tier per duplicate ID contributes once; base implicits multiply with caps.
+Purple status_duration is Lua-only and never a native fighter_mod field. Manual
+physical drops use the existing item_spawn timeline branch outside on_frame,
+with compact owned-handle records checkpointed next frame. Default inventory
+is fresh per scene/run; drive_lab.tuning.persist controls retention. These are
+offline LAB diagnostics, with no opponent rolls or Classic loot integration.
+See Envoy PLAYTEST.md for physical drop/checkpoint boundaries and acceptance.
