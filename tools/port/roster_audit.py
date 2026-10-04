@@ -30,7 +30,7 @@ def census():
                 m=re.match(r'\s*#\s*define\s+(\w+)\s+(.+)',line)
                 if m and m[1] not in constants and set(re.findall(r'\b\w+\b',m[2]))&constants:
                     constants.add(m[1]);changed=True
-    out=[]
+    out=[];fixed=[]
     for path,lines in files:
         for i,line in enumerate(lines,1):
             words=set(re.findall(r'\b\w+\b',line))
@@ -42,7 +42,19 @@ def census():
             if re.search(r'(ckind|char_kind|fighter_kind)\s*(<\s*0|==\s*-1)',line):reason='signed sentinel'
             if reason:out.append({'file':path.relative_to(ROOT).as_posix(),'line':i,
                                   'reason':reason,'source':line.strip()})
-    return {'constants':sorted(constants),'entries':out}
+            # Broader inventory of fixed extents, including unrelated tables for review.
+            # It intentionally lists false positives instead of silently omitting a cap
+            # whose name does not mention fighters. Multiline declarations remain lexical.
+            extents=re.findall(r'\[([^\]\n]+)\]',line)
+            if any(re.search(r'\b\d+\b|\b[A-Z][A-Z_0-9]+\b|Kind_(?:Max|Cap)',e) for e in extents):
+                fixed.append({'file':path.relative_to(ROOT).as_posix(),'line':i,
+                              'extents':extents,'source':line.strip()})
+    return {'constants':sorted(constants),'entries':out,'fixed_tables':fixed,
+            'limits':{'legacy_added_slots':94,'legacy_signed_id_max':127,
+                      'legacy_icons':128,'geno_profiles':32,
+                      'native_id_max':65534,'native_rows_max':65407,
+                      'match_unique_kinds':6},
+            'limitations':'lexical inventory, not an alias/dataflow proof; includes indexed expressions'}
 
 
 def main():
@@ -53,6 +65,12 @@ def main():
     rows.extend(f"| {e['file']}:{e['line']} | {e['reason']} | `{e['source'].replace('|',' / ')}` |"
                 for e in result['entries'])
     (dest/'roster-audit.md').write_text('\n'.join(rows)+'\n',encoding='utf-8')
+    fixed=['# Remaining fixed table / index inventory','',
+           'Conservative lexical census; includes indexed expressions and non-roster tables.', '',
+           '| Location | Extents | Source |','|---|---|---|']
+    fixed.extend(f"| {e['file']}:{e['line']} | {', '.join(e['extents'])} | `{e['source'].replace('|',' / ')}` |"
+                 for e in result['fixed_tables'])
+    (dest/'roster-fixed-tables.md').write_text('\n'.join(fixed)+'\n',encoding='utf-8')
     print(f"Roster census: {len(result['constants'])} constants, {len(result['entries'])} references; "
           "_build/tmp/roster-audit.md")
 

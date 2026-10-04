@@ -301,7 +301,9 @@ equipment yields to faint tint when those slots are exhausted. Remaining statuse
 contribute faint tint. Intensity zero is identity.
 Burn ember rim, Shock arc pattern, Chill frost/desaturation, Curse inverted rim,
 Haste streaks, Guarded facets and Momentum stack climb are surface treatments.
-Heat refraction, history afterimages and an extra glass shell are not implemented.
+Heat refraction and an extra glass shell are not implemented in this compositor.
+FX1 adds separate pose-history afterimages and point ribbons in source; their GPU
+and visual acceptance is pending, and Envoy wiring belongs to the Envoy job.
 
 Sixteen float parameters, in order: logic seconds, intensity, Burn, Shock, Chill,
 Curse, Haste, Guarded, normalized Momentum, equipment-one encoded look+hue/strength,
@@ -336,3 +338,23 @@ ports, reuses cached native programs/pipelines, and restores logic progress
 without advancing timers or calling `gd.warm` (which forks rewind history).
 An unavailable host cache is reported; new variants wait for normal live warmup.
 Scene transitions invalidate cached handles; manual same-scene clear reuses them.
+
+
+## FX1 motion history (source implementation; unverified on screen)
+
+Afterimages retain Aurora draw output: vertex/index bytes, indexed attribute and
+skin-palette storage, uniforms, texture handles and bindings. Replay reprojects
+the captured pose into the current camera; no fighter JObj or MEM1 state is
+rewritten. Copies reuse the surface pipeline generator with own-look tint,
+silhouette or UV gradient, alpha/additive blend, depth test and no depth writes.
+Historical materials requiring mutable EFB textures, fog-range LUTs, or separately
+rendered held items are rejected as a whole instead of replaying incomplete poses.
+
+Ribbons use original procedural solid/glow/fire/electric/frost/dark WGSL, logical
+time and camera-facing Catmull-Rom geometry. They write scene RGB, preserve EFB
+alpha and auxiliary attachments, and never write depth. Cold variants skip.
+Declare `gd.warm{fighters={1},tracers=true}` after installing emitters, before play.
+Use `gd.motion_intensity(0)` to reduce the presentation to zero. See the Motion
+history API in scripting.md and the FX1 report for limits and pending validation.
+Aurora ABI/FIFO changes require a rebuild; the carried patch is
+`_build/patches/aurora-gd-motion-v1.patch`.

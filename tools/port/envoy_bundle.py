@@ -24,7 +24,7 @@ def mission_modules():
     raise ValueError('Shared mission module list missing')
 
 MISSION_MODULES = mission_modules()
-ENVOY_MODULES = ('mod_schema', 'mod_codec', 'mod_engine', 'mod_pool', 'mod_display', 'mod_lab', 'genetics', 'companion', 'save', 'drives', 'mission_events', 'drive_models', 'fighter', 'campaign', 'run', 'classic', 'hud', 'menu', 'menu_draw', 'menu_input', 'recolour', 'visual', 'hub', 'retail_app', 'app', 'mod_synergy', 'drive_loot', 'drive_bag', 'drive_drop', 'drive_menu', 'drive_lab')
+ENVOY_MODULES = ('mod_progression', 'mod_schema', 'mod_codec', 'mod_budget', 'mod_engine', 'mod_pool', 'mod_display', 'mod_lab', 'genetics', 'companion', 'save', 'drives', 'mission_events', 'drive_models', 'fighter', 'campaign', 'run', 'classic', 'hud', 'menu', 'menu_draw', 'menu_input', 'recolour', 'visual', 'hub', 'retail_app', 'app', 'mod_synergy', 'drive_loot', 'drive_bag', 'drive_drop', 'drive_menu', 'drive_lab', 'foe_roll', 'foe_lab')
 
 
 def bundle():

@@ -183,3 +183,9 @@ SCENARIOS['demo_hit_rules']=[
     ('probe',r'^active=false rules=0 hits=[0-9]+ acceptance=operator-required'),
     K('H',.3),('assert','#gd.hit_rules(1)==2'),
 ]
+
+# Registration/membership smoke only; boundary traversal remains operator work.
+SCENARIOS['demo_zones']=[
+    ('assert', '#gd.zones()==3'),
+    ('assert', 'type(gd.zones_at(1,0))=="table"'),
+]

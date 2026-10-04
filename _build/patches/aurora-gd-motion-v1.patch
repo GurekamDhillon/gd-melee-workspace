@@ -1,0 +1,535 @@
+diff --git a/lib/gfx/recording.cpp b/lib/gfx/recording.cpp
+--- a/lib/gfx/recording.cpp
++++ b/lib/gfx/recording.cpp
+@@ -1296,6 +1296,8 @@
+ #endif
+ }
+ 
++#include "motion_arena.inc"
++
+ void push_debug_group(std::string label) {
+ #if defined(AURORA_GFX_DEBUG_GROUPS)
+   g_recorder.debugGroupStack.push_back(std::move(label));
+diff --git a/lib/gfx/resource_cache.cpp b/lib/gfx/resource_cache.cpp
+--- a/lib/gfx/resource_cache.cpp
++++ b/lib/gfx/resource_cache.cpp
+@@ -81,6 +81,8 @@
+ 
+ } // namespace detail
+ 
++#include "motion_bindings.inc"
++
+ BindGroupRef bind_group_ref(const WGPUBindGroupDescriptor& descriptor) {
+   const auto id = xxh3_hash(descriptor);
+   std::lock_guard lock{g_bindGroupCacheMutex};
+diff --git a/lib/dolphin/gx/GXAurora.cpp b/lib/dolphin/gx/GXAurora.cpp
+--- a/lib/dolphin/gx/GXAurora.cpp
++++ b/lib/dolphin/gx/GXAurora.cpp
+@@ -8,6 +8,7 @@
+ 
+ #include "../../gx/fifo.hpp"
+ #include "../../gx/surface.hpp"
++#include <aurora/motion.hpp>
+ 
+ static void GXWriteString(const char* label) {
+   auto length = strlen(label);
+@@ -48,6 +49,14 @@
+   if (size > 0) {
+     GX_WRITE_DATA(data, size);
+   }
++}
++
++void GXAuroraMotionCallback(void (*fn)(const void*,u32),const void* data,u32 size) {
++  if (!fn || size > 65535) return;
++  GX_WRITE_AURORA(GX_AURORA_MOTION_CALLBACK);
++  GX_WRITE_U64(reinterpret_cast<uintptr_t>(fn));
++  GX_WRITE_U16(static_cast<u16>(size));
++  if(size) GX_WRITE_DATA(data,size);
+ }
+ 
+ void GXAuroraLoadPalette(u32 n, u32 key, const float* data) {
+diff --git a/lib/gx/command_processor.cpp b/lib/gx/command_processor.cpp
+--- a/lib/gx/command_processor.cpp
++++ b/lib/gx/command_processor.cpp
+@@ -12,6 +12,7 @@
+ #include "regs.hpp"
+ #include "shader_info.hpp"
+ #include "surface.hpp"
++#include "motion_capture.hpp"
+ #include "texture.hpp"
+ 
+ #include <tracy/Tracy.hpp>
+@@ -707,7 +708,7 @@
+     }
+   }
+   // A capture walks the real material state but never sends geometry to the screen.
+-  if (gfx::pipeline_warm_capturing()) { gfx::pipeline_warm_record(cache.pipelineRef); return; }
++  if (gfx::pipeline_warm_capturing()) { motion::warm(cache.config); gfx::pipeline_warm_record(cache.pipelineRef); return; }
+   if (sPipelineWait) {
+     static gfx::PipelineRef sLastTagged = 0;
+     if (cache.pipelineRef != sLastTagged) {
+@@ -770,7 +771,7 @@
+     instanceCount = vtxCount;
+   }
+   cache.lastDrawFmt = fmt;
+-  gfx::push_draw_command(DrawData{
++  const DrawData motionDraw{
+       .pipeline = cache.pipelineRef,
+       .vertRange = vertRange,
+       .idxRange = idxRange,
+@@ -781,7 +782,9 @@
+       .instanceCount = instanceCount,
+       .bindGroups = cache.bindGroups,
+       .dstAlpha = state.dstAlpha,
+-  });
++  };
++  motion::retain(motionDraw,cache.config);
++  if(!motion::suppress_live())gfx::push_draw_command(motionDraw);
+ }
+ 
+ static void handle_draw_unmerged(GXPrimitive prim, GXVtxFmt fmt, u16 vtxCount, std::span<const uint8_t> vertexData,
+@@ -816,7 +819,7 @@
+ 
+   const bool cleanState = g_gxState.dirty == 0 && fmt == sDrawCache.lastDrawFmt && sDrawCache.lineMode == 0 &&
+                           prim != GX_LINES && prim != GX_LINESTRIP && prim != GX_POINTS;
+-  auto* lastDraw = cleanState ? gfx::get_last_draw_command<DrawData>() : nullptr;
++  auto* lastDraw = cleanState && !motion::active() && !motion::suppress_live() ? gfx::get_last_draw_command<DrawData>() : nullptr;
+ 
+   // Read the vertex data before deciding whether to merge: the merge predicate below needs the
+   // indices these vertices reference.
+@@ -907,7 +910,11 @@
+   ZoneScoped;
+   const u16 subCmd = reader.read<u16>();
+ 
+-  if (subCmd == GX_AURORA_SURFACE) {
++  if (subCmd == GX_AURORA_MOTION_CALLBACK) {
++    auto fn = reinterpret_cast<void (*)(const void*,u32)>(reader.read<u64>());
++    const auto size=reader.read<u16>();auto data=reader.take(size);
++    if(fn){fifo::detail::tInCallback=true;fn(data.data(),size);fifo::detail::tInCallback=false;}
++  } else if (subCmd == GX_AURORA_SURFACE) {
+     const auto program = reader.read<u32>();
+     const auto bytes = reader.take(sizeof(gw_surface::Params));
+     surface::activeProgram = program;
+@@ -1215,3 +1222,5 @@
+ namespace aurora::gx {
+ PaletteState g_palette;
+ } // namespace aurora::gx
++
++#include "motion_replay.inc"
+diff --git a/include/aurora/motion.hpp b/include/aurora/motion.hpp
+new file mode 100644
+--- /dev/null
++++ b/include/aurora/motion.hpp
+@@ -0,0 +1,42 @@
++#pragma once
++// GD motion v1, presentation-only. All functions except callback() run on the GX recording thread.
++#include <cstdint>
++#include <memory>
++#include <array>
++#include <vector>
++#define AURORA_GD_MOTION_VERSION 2
++#define GX_AURORA_MOTION_CALLBACK 0x0047
++extern "C" void GXAuroraMotionCallback(void (*fn)(const void*,uint32_t),const void*,uint32_t);
++namespace aurora::gx::motion {
++struct Snapshot;
++using Pose=std::shared_ptr<const Snapshot>;
++// A failed/over-budget capture returns null, never a partial fighter.
++void begin(uint32_t surface,int additive,bool warming,bool textureless=false);
++Pose end();
++bool active();
++size_t bytes(const Pose&);
++size_t draws(const Pose&);
++// Delta maps captured eye coordinates into current eye coordinates. Params are the
++// existing surface system's 20 floats; callers reserve params[4].a for copy fade.
++bool replay(const Pose&,const std::array<float,12>& delta,const float* params20);
++bool replay_group(const std::vector<Pose>&,const std::array<float,12>& delta,const float* params20);
++// GX-only scope for an extra descriptor traversal: retain but do not draw live.
++void capture_only(bool);
++bool suppress_live();
++enum class Failure : unsigned { Pipeline,VertexArena,IndexArena,UniformArena,
++    CopyTexture,IndexArray,Palette,Fog,PoseBytes,DrawCount,FrameArena,
++    ResidentBytes,EmptyPose,PipelinePending,ReplayArena,Geometry,Count };
++enum class Fallback : unsigned { NoFog,Textureless,CopySilhouette,PaletteWarm,HeldDraws,HeldGeometry,Count };
++inline constexpr size_t FailureCount=static_cast<size_t>(Failure::Count);
++inline constexpr size_t FallbackCount=static_cast<size_t>(Fallback::Count);
++const char* failure_name(Failure);
++void diagnostics(uint64_t* failures,uint64_t* fallbacks,uint64_t* warm_variants);
++Failure last_failure();
++void rejected(Failure);
++void held_draws();
++bool contract_test();
++void clear_warm();
++bool replaying();
++void projection(float* out16);
++bool arena_room(size_t vertices,size_t indices,size_t uniforms,size_t storage);
++}
+diff --git a/lib/gfx/motion_arena.inc b/lib/gfx/motion_arena.inc
+new file mode 100644
+--- /dev/null
++++ b/lib/gfx/motion_arena.inc
+@@ -0,0 +1,20 @@
++// Included in recording.cpp's aurora::gfx namespace. Copy while this frame owns
++// the arena: no Range, pointer or FramePacket is retained across frames.
++bool motion_copy_arena(unsigned kind,Range range,std::vector<uint8_t>& out) {
++    auto& f=current_frame_packet();
++    const ByteBuffer* buffers[]={&f.verts,&f.indices,&f.uniforms,&f.storage};
++    if(kind>=4)return false;
++    const auto& b=*buffers[kind];
++    if(range.offset>b.size() || range.size>b.size()-range.offset)return false;
++    if(!range.size){out.clear();return true;}
++    out.assign(b.data()+range.offset,b.data()+range.offset+range.size);
++    return true;
++}
++bool motion_arena_room(size_t v,size_t i,size_t u,size_t s) {
++    const auto& f=current_frame_packet();
++    // Preserve half of remaining space for the live fighter, effects and HUD.
++    return v<=(VertexBufferSize-f.verts.size())/2 &&
++           i<=(IndexBufferSize-f.indices.size())/2 &&
++           u<=(UniformBufferSize-f.uniforms.size())/2 &&
++           s<=(StorageBufferSize-f.storage.size())/2;
++}
+diff --git a/lib/gfx/motion_bindings.inc b/lib/gfx/motion_bindings.inc
+new file mode 100644
+--- /dev/null
++++ b/lib/gfx/motion_bindings.inc
+@@ -0,0 +1,6 @@
++// Included in resource_cache.cpp's aurora::gfx namespace.
++void motion_pin_binding(BindGroupRef id,const wgpu::BindGroup& binding) {
++    if(!id || !binding)return;
++    std::lock_guard lock{g_bindGroupCacheMutex};
++    g_cachedBindGroups.insert_or_assign(id,CachedBindGroup{binding,current_frame()});
++}
+diff --git a/lib/gx/motion_capture.hpp b/lib/gx/motion_capture.hpp
+new file mode 100644
+--- /dev/null
++++ b/lib/gx/motion_capture.hpp
+@@ -0,0 +1,160 @@
++#pragma once
++#include <aurora/motion.hpp>
++#include "pipeline.hpp"
++#include "shader_info.hpp"
++#include "../gfx/resource_cache.hpp"
++#include "../gfx/pipeline_cache.hpp"
++#include <map>
++#include <atomic>
++namespace aurora::gfx {
++bool motion_copy_arena(unsigned,Range,std::vector<uint8_t>&);
++bool motion_arena_room(size_t,size_t,size_t,size_t);
++void motion_pin_binding(BindGroupRef,const wgpu::BindGroup&);
++}
++namespace aurora::gx::motion {
++struct Block { gfx::Range old; std::vector<uint8_t> data; bool palette=false; };
++struct Draw {
++    DrawData draw;
++    PipelineConfig config;
++    std::vector<uint8_t> vertices,indices,uniform;
++    std::vector<size_t> storage;
++    wgpu::BindGroup textures; // keep the actual immutable binding alive, even if cache expires
++    std::array<gfx::TextureBind,MaxTextures> pins;
++};
++struct Snapshot { std::vector<Draw> draws;std::vector<Block> blocks;size_t bytes=0;bool failed=false; };
++inline std::shared_ptr<Snapshot> capture;
++inline uint32_t program;
++inline bool additive,warming,textureless,only;
++inline std::array<std::atomic<uint64_t>,FailureCount> failures{};
++inline std::array<std::atomic<uint64_t>,FallbackCount> fallbacks{};
++inline std::atomic<uint64_t> warm_variants{};
++inline Failure last_error=Failure::Count;
++inline void reject_count(Failure f){if(f!=Failure::Count){++failures[size_t(f)];last_error=f;}}
++template<class Emit> inline void fail_once(Snapshot& s,Failure f,Emit emit){if(!s.failed){s.failed=true;emit(f);}}
++inline void fail(Failure f){if(capture)fail_once(*capture,f,reject_count);}
++inline void fallback(Fallback f){++fallbacks[size_t(f)];}
++inline size_t resident=0;
++inline constexpr size_t MaxPoseBytes=4*1024*1024,MaxResidentBytes=64*1024*1024;
++struct Warm { PipelineConfig config;uint64_t layout;gfx::PipelineRef ref; };
++inline std::vector<Warm> warmed;
++inline bool active(){return bool(capture);}
++template<class IsCopy> inline bool sampled_copy(const ShaderInfo& info,IsCopy is_copy){
++    for(size_t i=0;i<MaxTextures;++i)if((info.sampledTextures.test(i)||info.sampledIndTextures.test(i))&&is_copy(i))return true;
++    return false;
++}
++inline bool palette_variant(const PipelineConfig& c){return c.shaderConfig.lineMode==0&&c.shaderConfig.attrs[GX_VA_PNMTXIDX].attrType==GX_DIRECT;}
++inline bool relocate_array(uint32_t original,gfx::Range old,gfx::Range fresh,uint32_t& out){
++    if(original<old.offset||original-old.offset>=old.size)return false;
++    out=fresh.offset+(original-old.offset);return true;
++}
++inline bool mergeable(const Draw& a,const Draw& b){
++    if(!a.indices.empty()||!b.indices.empty()||a.config.shaderConfig.lineMode||b.config.shaderConfig.lineMode||
++       a.draw.instanceCount!=1||b.draw.instanceCount!=1||a.draw.vtxCount%3||b.draw.vtxCount%3||
++       a.draw.pipeline!=b.draw.pipeline||memcmp(&a.config,&b.config,sizeof a.config)||
++       a.uniform!=b.uniform||a.storage!=b.storage||a.draw.bindGroups.textureBindGroup!=b.draw.bindGroups.textureBindGroup)return false;
++    auto x=a.draw.immediateData,y=b.draw.immediateData;x.vtxStart=y.vtxStart=0;
++    return !memcmp(&x,&y,sizeof x);
++}
++inline PipelineConfig variant(PipelineConfig c,bool flat){
++    c.shaderConfig.surfaceProgram=program;
++    // Stage fog state can remain enabled even with GX_FOG_NONE. Copies are
++    // intentionally unfogged; build their own matching uniform layout below.
++    c.shaderConfig.fogType=GX_FOG_NONE;c.shaderConfig.fogRangeEnabled=false;
++    if(flat){
++        // Preserve vertex decoding, culling and skinning, but remove every
++        // material dependency, including texture alpha tests and indirect TEV.
++        c.shaderConfig.tevStages={};c.shaderConfig.tevStageCount=1;
++        auto& stage=c.shaderConfig.tevStages[0];
++        stage.colorPass.d=GX_CC_ONE;stage.alphaPass.d=GX_CA_KONST;
++        stage.kaSel=GX_TEV_KASEL_1;
++        c.shaderConfig.tevSwapTable={};c.shaderConfig.colorChannels={};
++        c.shaderConfig.tcgs={};c.shaderConfig.indStages={};c.shaderConfig.numIndStages=0;
++        c.shaderConfig.alphaCompare={};
++    }
++    c.depthCompare=true;c.depthUpdate=false;c.alphaUpdate=false;c.colorUpdate=true;
++    c.depthFunc=GX_LEQUAL;c.blendMode=GX_BM_BLEND;c.blendFacSrc=GX_BL_SRCALPHA;
++    c.blendFacDst=additive?GX_BL_ONE:GX_BL_INVSRCALPHA;c.dstAlpha=UINT32_MAX;
++    return c;
++}
++inline gfx::PipelineRef prepared_for(const PipelineConfig& c,const gfx::RenderTargetLayout& layout,bool request){
++    for(const auto& w:warmed)if(w.layout==layout.key && !memcmp(&w.config,&c,sizeof c))return w.ref;
++    if(!request || warmed.size()>=4096)return 0;
++    auto ref=gfx::find_pipeline(c,layout);warmed.push_back({c,layout.key,ref});++warm_variants;return ref;
++}
++inline gfx::PipelineRef prepared(const PipelineConfig& c,bool request){return prepared_for(c,gfx::get_render_target_layout(),request);}
++inline void warm(const PipelineConfig& config){
++    if(!active()||!warming)return;
++    // Warm both material and texture-free fallback, plus the palette variant
++    // that HSD's live envelope path may select outside descriptor warm traversal.
++    const gfx::RenderTargetLayout targets[]={gfx::get_render_target_layout(),gfx::scene_render_target_layout()};
++    for(const auto& target:targets)for(int flat=textureless?1:0;flat<2;++flat){
++        auto c=variant(config,flat!=0);
++        auto ref=prepared_for(c,target,true);if(ref)gfx::pipeline_warm_record(ref);
++        if(palette_variant(c)){
++            c.shaderConfig.pnPalette=!c.shaderConfig.pnPalette;
++            ref=prepared_for(c,target,true);if(ref){gfx::pipeline_warm_record(ref);fallback(Fallback::PaletteWarm);}
++        }
++    }
++}
++inline void retain(const DrawData& source,const PipelineConfig& config){
++    if(!active()||warming||capture->failed)return;
++    Draw d{};d.draw=source;
++    auto original_info=build_shader_info(config.shaderConfig);
++    bool copied_texture=sampled_copy(original_info,[&](size_t i){
++        const auto& pin=g_gxState.textures[i];
++        return pin && g_gxState.copyTextures.find(pin.texObj.data)!=g_gxState.copyTextures.end();
++    });
++    const bool flat=textureless||copied_texture;
++    d.config=variant(config,flat);
++    if(config.shaderConfig.fogRangeEnabled||config.shaderConfig.fogType!=GX_FOG_NONE)fallback(Fallback::NoFog);
++    if(flat)fallback(Fallback::Textureless);
++    if(copied_texture&&!textureless)fallback(Fallback::CopySilhouette);
++    d.draw.pipeline=prepared(d.config,false);
++    if(!d.draw.pipeline){fail(Failure::Pipeline);return;} // no compilation requested in play
++    if(!gfx::motion_copy_arena(0,source.vertRange,d.vertices)){fail(Failure::VertexArena);return;}
++    if(!gfx::motion_copy_arena(1,source.idxRange,d.indices)){fail(Failure::IndexArena);return;}
++    auto info=build_shader_info(d.config.shaderConfig);
++    if(!info.uniformSize){fail(Failure::UniformArena);return;}
++    if(!gfx::motion_arena_room(0,0,info.uniformSize+256,0)){fail(Failure::UniformArena);return;}
++    // Material stripping changes variable uniform fields. Generate from the
++    // exact current GX state rather than splicing an incompatible old layout.
++    const auto uniform=build_uniform(info);
++    if(uniform.size<96+64+MaxPnMtx*96+MaxTexMtx*48 || !gfx::motion_copy_arena(2,uniform,d.uniform)){fail(Failure::UniformArena);return;}
++    if(flat)d.draw.bindGroups.textureBindGroup=0;
++    else {
++        for(size_t i=0;i<MaxTextures;++i)if(info.sampledTextures.test(i)||info.sampledIndTextures.test(i))d.pins[i]=g_gxState.textures[i];
++        if(source.bindGroups.textureBindGroup)d.textures=gfx::find_bind_group(source.bindGroups.textureBindGroup);
++    }
++    auto add=[&](gfx::Range range,bool palette){
++        if(!range.size)return false;
++        for(size_t i=0;i<capture->blocks.size();++i)if(capture->blocks[i].old==range){
++            capture->blocks[i].palette|=palette;d.storage.push_back(i);return true;
++        }
++        if(sizeof(Block)+range.size>MaxPoseBytes-capture->bytes){fail(Failure::PoseBytes);return false;}
++        Block b{range,{},palette};
++        if(!gfx::motion_copy_arena(3,range,b.data))return false;
++        capture->bytes+=sizeof(Block)+b.data.size();
++        d.storage.push_back(capture->blocks.size());capture->blocks.push_back(std::move(b));return true;
++    };
++    for(int a=GX_VA_POS;a<=GX_VA_TEX7;++a)
++        if(info.indexAttr.test(a) && !add(g_gxState.arrays[a].cachedRange,false)){fail(Failure::IndexArray);return;}
++    if(config.shaderConfig.pnPalette && (!g_palette.active||!add({source.immediateData._pad*4,g_palette.n*96},true))){fail(Failure::Palette);return;}
++    d.draw.immediateData.fogRangeBase=0;
++    // Capture disables the CP's live merging to observe every draw. Coalesce
++    // compatible retained triangle chunks afterwards, preserving material,
++    // matrix/index-array snapshots and order, so copies do not multiply tiny
++    // per-triangle GPU draws.
++    if(!capture->draws.empty()&&mergeable(capture->draws.back(),d)){
++        if(d.vertices.size()>MaxPoseBytes-capture->bytes){fail(Failure::PoseBytes);return;}
++        auto& previous=capture->draws.back();
++        previous.vertices.insert(previous.vertices.end(),d.vertices.begin(),d.vertices.end());
++        if(only)fallback(Fallback::HeldGeometry);
++        previous.draw.vtxCount+=d.draw.vtxCount;capture->bytes+=d.vertices.size();return;
++    }
++    size_t cost=sizeof(Draw)+d.vertices.size()+d.indices.size()+d.uniform.size();
++    cost+=d.storage.size()*sizeof(size_t);
++    if(capture->draws.size()>=2048){fail(Failure::DrawCount);return;}
++    if(cost>MaxPoseBytes-capture->bytes){fail(Failure::PoseBytes);return;}
++    capture->bytes+=cost;capture->draws.push_back(std::move(d));if(only)fallback(Fallback::HeldGeometry);
++}
++}
+diff --git a/lib/gx/motion_replay.inc b/lib/gx/motion_replay.inc
+new file mode 100644
+--- /dev/null
++++ b/lib/gx/motion_replay.inc
+@@ -0,0 +1,164 @@
++// Included after command processor helpers. Retained draws own every referenced
++// byte and material binding; no game data is read during a historical replay.
++namespace aurora::gx::motion {
++void begin(uint32_t source,int add,bool warm_capture,bool flat){
++    program=source;additive=add!=0;warming=warm_capture;textureless=flat;last_error=Failure::Count;
++    capture=std::make_shared<Snapshot>();
++}
++Pose end(){
++    auto result=std::move(capture);
++    if(!result || warming || result->failed)return {};
++    if(gfx::frame_overflowed()){reject_count(Failure::FrameArena);return {};}
++    // An empty opaque/translucent pass is normal; the whole-frame assembler
++    // reports EmptyPose only if all three passes were empty.
++    if(result->draws.empty())return {};
++    if(result->bytes>MaxResidentBytes-resident){reject_count(Failure::ResidentBytes);return {};}
++    resident+=result->bytes;
++    auto* value=new Snapshot(std::move(*result));
++    return Pose(value,[](const Snapshot* p){resident-=p->bytes;delete p;});
++}
++size_t bytes(const Pose& p){return p?p->bytes:0;}
++size_t draws(const Pose& p){return p?p->draws.size():0;}
++void clear_warm(){capture.reset();warmed.clear();}
++void capture_only(bool value){only=value;}
++bool suppress_live(){return only;}
++void rejected(Failure f){reject_count(f);}
++Failure last_failure(){return last_error;}
++void held_draws(){fallback(Fallback::HeldDraws);}
++const char* failure_name(Failure f){
++    static const char* names[]={"pipeline_missing","vertex_arena","index_arena","uniform_arena",
++        "copy_texture","index_array","palette","fog_lut","pose_bytes","draw_count","frame_arena",
++        "resident_bytes","empty_pose","pipeline_pending","replay_arena","geometry"};
++    return size_t(f)<FailureCount?names[size_t(f)]:"none";
++}
++void diagnostics(uint64_t* f,uint64_t* b,uint64_t* w){
++    for(size_t i=0;i<FailureCount;++i)f[i]=failures[i].load();
++    for(size_t i=0;i<FallbackCount;++i)b[i]=fallbacks[i].load();
++    *w=warm_variants.load();
++}
++bool replaying(){return fifo::replaying();}
++bool arena_room(size_t v,size_t i,size_t u,size_t s){return gfx::motion_arena_room(v,i,u,s);}
++void projection(float* out){
++    auto p=g_gxState.proj;
++    if constexpr(UseReversedZ)p.m2=p.m2*Vec4{-1.f,-1.f,-1.f,-1.f};
++    else p.m2=p.m2+p.m3;
++    memcpy(out,&p,64);
++}
++static void transform(uint8_t* bytes,const std::array<float,12>& a,bool normal){
++    float b[12],r[12]{};memcpy(b,bytes,sizeof b);
++    for(int i=0;i<3;++i)for(int j=0;j<4;++j){
++        for(int k=0;k<3;++k)r[i*4+j]+=a[i*4+k]*b[k*4+j];
++        if(j==3 && !normal)r[i*4+j]+=a[i*4+3];
++    }
++    // Uniform scale is allowed; normals must not change length when copies grow.
++    if(normal){float s=std::sqrt(a[0]*a[0]+a[1]*a[1]+a[2]*a[2]);
++        if(s>1e-8f)for(float& x:r)x/=s;}
++    memcpy(bytes,r,sizeof r);
++}
++bool replay(const Pose& pose,const std::array<float,12>& delta,const float* params){
++    if(!pose||!params)return false;
++    // Preflight against all arenas BEFORE replay; never truncate the live frame.
++    // Conservative per-copy caps supplement the recording arena's overflow guard.
++    if(pose->bytes>MaxPoseBytes)return false;
++    size_t v=0,i=0,u=0,s=0;
++    for(const auto& b:pose->blocks)s+=b.data.size()+256;
++    for(const auto& saved:pose->draws){
++        v+=saved.vertices.size()+4;i+=saved.indices.size()+4;u+=saved.uniform.size()+256;
++        auto draw=saved.draw;
++        wgpu::RenderPipeline ready;
++        if(!gfx::get_pipeline(draw.pipeline,ready) || !ready){reject_count(Failure::PipelinePending);return false;}
++    }
++    if(!gfx::motion_arena_room(v,i,u,s)){reject_count(Failure::ReplayArena);return false;}
++    std::vector<gfx::Range> blocks;blocks.reserve(pose->blocks.size());
++    for(const auto& b:pose->blocks){
++        auto data=b.data;
++        if(b.palette)for(size_t i=0;i+96<=data.size();i+=96){
++            transform(data.data()+i,delta,false);transform(data.data()+i+48,delta,true);
++        }
++        blocks.push_back(gfx::push_storage(data.data(),data.size()));
++    }
++    for(const auto& saved:pose->draws){
++        auto draw=saved.draw;auto uniform=saved.uniform;
++        memcpy(uniform.data()+16,params,80);
++        const size_t proj=96+(saved.config.shaderConfig.lineMode?16:0);
++        auto projection=g_gxState.proj;
++        if constexpr(UseReversedZ)projection.m2=projection.m2*Vec4{-1.f,-1.f,-1.f,-1.f};
++        else projection.m2=projection.m2+projection.m3;
++        memcpy(uniform.data()+proj,&projection,64);
++        for(unsigned i=0;i<MaxPnMtx;++i){
++            transform(uniform.data()+proj+64+i*48,delta,false);
++            transform(uniform.data()+proj+64+MaxPnMtx*48+MaxTexMtx*48+i*48,delta,true);
++        }
++        draw.vertRange=gfx::push_verts(saved.vertices.data(),saved.vertices.size(),4);
++        draw.immediateData.vtxStart=draw.vertRange.offset;
++        draw.idxRange=gfx::push_indices(saved.indices.data(),saved.indices.size(),4);
++        draw.uniformRange=gfx::push_uniform(uniform.data(),uniform.size());
++        for(auto index:saved.storage){
++            const auto& block=pose->blocks[index];const auto fresh=blocks[index];
++            // Indexed arrays are BYTE offsets; palette/fog bases are WORDS.
++            for(size_t a=0;a<draw.immediateData.arrayStart.size();++a){
++                const auto original=saved.draw.immediateData.arrayStart[a];
++                if(!block.palette)relocate_array(original,block.old,fresh,draw.immediateData.arrayStart[a]);
++            }
++            if(block.palette)draw.immediateData._pad=fresh.offset/4;
++        }
++        draw.dstAlpha=UINT32_MAX;
++        gfx::motion_pin_binding(draw.bindGroups.textureBindGroup,saved.textures);
++        if(gfx::frame_overflowed()){reject_count(Failure::FrameArena);return false;}
++        gfx::push_draw_command(draw);
++    }
++    return true;
++}
++bool replay_group(const std::vector<Pose>& poses,const std::array<float,12>& delta,const float* params){
++    size_t v=0,i=0,u=0,s=0;
++    for(const auto& p:poses){
++        if(!p){reject_count(Failure::Geometry);return false;}
++        for(const auto& b:p->blocks)s+=b.data.size()+256;
++        for(const auto& d:p->draws){
++            wgpu::RenderPipeline ready;
++            if(!gfx::get_pipeline(d.draw.pipeline,ready)||!ready){reject_count(Failure::PipelinePending);return false;}
++            v+=d.vertices.size()+4;i+=d.indices.size()+4;u+=d.uniform.size()+256;
++        }
++    }
++    if(!gfx::motion_arena_room(v,i,u,s)){reject_count(Failure::ReplayArena);return false;}
++    for(const auto& p:poses)if(!replay(p,delta,params))return false;
++    return true;
++}
++bool contract_test(){
++    PipelineConfig c{};c.shaderConfig.fogType=GX_FOG_LIN;c.shaderConfig.fogRangeEnabled=true;
++    c.shaderConfig.surfaceProgram=77;c.shaderConfig.tevStageCount=1;
++    c.shaderConfig.tevStages[0].colorPass.d=GX_CC_TEXC;
++    c.shaderConfig.tevStages[0].alphaPass.d=GX_CA_TEXA;
++    c.shaderConfig.tevStages[0].texMapId=GX_TEXMAP0;c.shaderConfig.tevStages[0].texCoordId=GX_TEXCOORD0;
++    c.shaderConfig.attrs[GX_VA_POS].attrType=GX_INDEX16;c.shaderConfig.pnPalette=true;
++    auto flat=variant(c,true),own=variant(c,false);auto info=build_shader_info(flat.shaderConfig);
++    if(flat.shaderConfig.fogRangeEnabled||flat.shaderConfig.fogType!=GX_FOG_NONE||info.sampledTextures.any()||info.sampledIndTextures.any())return false;
++    if(memcmp(flat.shaderConfig.attrs.data(),c.shaderConfig.attrs.data(),sizeof c.shaderConfig.attrs)||!flat.shaderConfig.pnPalette||!info.indexAttr.test(GX_VA_POS))return false;
++    if(own.shaderConfig.fogRangeEnabled||own.shaderConfig.fogType!=GX_FOG_NONE)return false;
++    auto changed=c;changed.shaderConfig.surfaceProgram=99;changed.shaderConfig.tevStages[0].texMapId=GX_TEXMAP1;
++    auto canonical=variant(changed,true);if(memcmp(&canonical,&flat,sizeof flat))return false;
++    ShaderInfo sampled{};sampled.sampledTextures.set(3);
++    if(sampled_copy(sampled,[](size_t i){return i==1;}))return false; // stale stage slot
++    if(!sampled_copy(sampled,[](size_t i){return i==3;}))return false; // actual EFB sampler
++    sampled.sampledTextures.reset();sampled.sampledIndTextures.set(2);
++    if(!sampled_copy(sampled,[](size_t i){return i==2;}))return false;
++    uint32_t relocated=0;
++    if(!relocate_array(44,{20,40},{128,40},relocated)||relocated!=152)return false;
++    if(relocate_array(60,{20,40},{128,40},relocated)||relocate_array(19,{20,40},{128,40},relocated))return false;
++    // Rebase from ORIGINAL offsets, not a fresh base that could match another
++    // captured range. A palette instead uses fresh.offset / sizeof(u32).
++    if(!relocate_array(44,{20,40},{256,40},relocated)||relocated!=280)return false;
++    Draw a{},b{};a.draw.instanceCount=b.draw.instanceCount=1;a.draw.vtxCount=b.draw.vtxCount=3;
++    if(!mergeable(a,b))return false;
++    b.uniform.push_back(1);if(mergeable(a,b))return false;b.uniform.clear();
++    b.draw.immediateData.arrayStart[0]=4;if(mergeable(a,b))return false;b.draw.immediateData.arrayStart[0]=0;
++    b.indices.push_back(0);if(mergeable(a,b))return false;
++    c.shaderConfig.attrs[GX_VA_PNMTXIDX].attrType=GX_DIRECT;
++    if(!palette_variant(c))return false;c.shaderConfig.lineMode=1;if(palette_variant(c))return false;
++    // First failure wins, without changing global diagnostics or a live capture.
++    Snapshot sample;unsigned counted=0;
++    auto emit=[&](Failure){++counted;};
++    for(size_t n=0;n<FailureCount;++n){sample.failed=false;fail_once(sample,Failure(n),emit);fail_once(sample,Failure(n),emit);}
++    return counted==FailureCount;
++}
++}

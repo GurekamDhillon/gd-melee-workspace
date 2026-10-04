@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Build a local ACE roster stress overlay. Never distributes disc-derived data.
 
-Run with --fill-limit (63 clones on ACE 2.0) or --count N. The disc is read
+Run with --native-registry --count 100 for native rows, or --fill-limit for
+legacy table clones (63 clones on ACE 2.0). The disc is read
 privately from GW_ISO_ACE in the environment/.env; there is no disc-path CLI.
 Existing external ids stay fixed. Internal rows are inserted BEFORE the six
 bosses, preserving the runtime's boss-at-end convention. Clones share assets,
@@ -35,6 +36,72 @@ _STRIDES = (4,8,1,3,4,4,4,4,8,1,4,4,4,4,16,8,8,1,8,8,2,4,
             4,4,4,4,4,4,4,2,2,2,4)
 FIGHTER_TABLES = tuple((i*4,n,_SPACES[i],_STRIDES[i])
                        for i,n in enumerate(FIGHTER_FIELDS))
+
+
+def roster_hash(data):
+    value=14695981039346656037
+    for byte in data:
+        value=((value^byte)*1099511628211)&0xFFFFFFFFFFFFFFFF
+    return value
+
+
+def native_manifest(name, internal, external, count, table, fighter, animation):
+    """GDRSTR01: original byte ids stay unchanged; native identities are separate."""
+    if not 0<count<=65407 or not 0<=internal<128 or not 0<=external<128:
+        raise ValueError('native manifest ids/count exceed version 1 bounds')
+    if not name or any(ord(c)<32 or ord(c)>126 for c in name):
+        raise ValueError('native display names must be printable ASCII')
+    rows=[]
+    for i in range(count):
+        key=f'clone-{i+1:05d}'.encode('ascii')
+        label=f'{name} {i+1:03d}'.encode('ascii')
+        if len(label)>=48:raise ValueError('native display name exceeds 47 bytes')
+        rows.append(struct.pack('>HHI40s48s',internal,external,0,key,label))
+    return struct.pack('>8sIQQQ',b'GDRSTR01',count,roster_hash(table),
+                       roster_hash(fighter),roster_hash(animation))+b''.join(rows)
+
+
+def read_native_manifest(raw):
+    if len(raw)<36:raise ValueError('native manifest header truncated')
+    magic,count,_,_,_=struct.unpack_from('>8sIQQQ',raw)
+    if magic!=b'GDRSTR01' or not 0<count<=65407 or len(raw)!=36+count*96:
+        raise ValueError('native manifest version/count/length mismatch')
+    rows=[];keys=set()
+    for i in range(count):
+        k,e,flags,key,name=struct.unpack_from('>HHI40s48s',raw,36+i*96)
+        if k>=128 or e>=128 or flags or b'\0' not in key or b'\0' not in name:
+            raise ValueError('invalid native row')
+        key_head,key_tail=key.split(b'\0',1);name_head,name_tail=name.split(b'\0',1)
+        if any(key_tail) or any(name_tail) or any(x<32 or x>126 for x in key_head+name_head):
+            raise ValueError('native strings are not canonical printable ASCII')
+        key=key_head.decode('ascii');name=name_head.decode('ascii')
+        if not key or not name or key in keys:raise ValueError('empty/duplicate native key')
+        keys.add(key);rows.append({'internal':k,'external':e,'key':key,'name':name})
+    return rows
+
+
+def generate_native(args, g, raw, a, ft, sk, se, dest):
+    count=args.count
+    source_pl=a.cstr(a.u32(a.u32(ft+4)+sk*8))
+    source_aj=a.cstr(a.u32(a.u32(ft+28)+sk*4))
+    manifest=native_manifest(args.source,sk,se,count,raw,g.read(source_pl),g.read(source_aj))
+    read_native_manifest(manifest)
+    # Native rows do not replace or enlarge MxDt/PlCo/menu/HUD archives.
+    # ACE supplies shared assets, avoiding a second mutable table namespace.
+    dest.mkdir(parents=True)
+    (dest/'files').mkdir()  # Prevent legacy whole-folder mounting of the manifest.
+    (dest/'roster.gwr').write_bytes(manifest)
+    (dest/'mod.json').write_text(json.dumps({'id':args.name,'name':f'Native roster: {count} {args.source} clones',
+        'version':'1.0.0','kind':'fighter','pack':'ace',
+        'description':'Local native roster manifest; requires registry integration'},indent=2)+'\n')
+    (dest/'INSTALL.json').write_text(json.dumps({'schema':'GDRSTR01','count':count,
+        'source_internal':sk,'source_external':se,'source_name':args.source,
+        'row_id_first':128,'row_id_last':127+count,
+        'requires':'same ACE content, native roster frontend/match/snapshot integration',
+        'engine_integration':'catalogue available; gameplay hooks still required',
+        'no_table_growth':True},indent=2)+'\n')
+    print(f'Created {count} native roster rows; ids 128..{127+count}; '
+          f'local folder _build/local-assets/roster-stress/{args.name}')
 
 
 def check_capacity(nk, ne, icons, slots, count):
@@ -239,6 +306,10 @@ def generate(args):
     hits=[e for e in range(ne) if a.cstr(a.u32(names+4*e)).casefold()==args.source.casefold()]
     if len(hits)!=1:raise ValueError('source name is absent or ambiguous')
     se=hits[0];sk=a.data[desc+se*3]
+    if getattr(args,'native_registry',False):
+        if args.fill_limit:raise ValueError('--fill-limit is only for legacy table clones')
+        generate_native(args,g,raw,a,ft,sk,se,dest)
+        return
     basenames={p.rsplit('/',1)[-1].casefold() for p in g.files}
     slots=sum(1 for k in range(27,nk-6) if a.u32(pl+8*k) and
               a.cstr(a.u32(pl+8*k)).casefold() in basenames)
@@ -282,6 +353,8 @@ def main():
     ap=argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--name',default='sonic-limit')
     ap.add_argument('--source',default='Sonic')
+    ap.add_argument('--native-registry',action='store_true',
+                    help='write wide native rows instead of growing m-ex byte tables')
     group=ap.add_mutually_exclusive_group();group.add_argument('--count',type=int,default=100)
     group.add_argument('--fill-limit',action='store_true')
     args=ap.parse_args()

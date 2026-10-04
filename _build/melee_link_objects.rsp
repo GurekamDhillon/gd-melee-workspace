@@ -1040,3 +1040,4 @@
 ../masstest/shimobj/gw_profiler_tracy.obj
 ../masstest/shimobj/gw_profiler_tests.obj
 "../masstest/shimobj/gw_hang.obj"
+../masstest/shimobj/gw_fx_motion.obj

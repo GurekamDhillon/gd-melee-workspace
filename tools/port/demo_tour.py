@@ -52,9 +52,12 @@ def tour_environment(output, mods, port):
 def redact(text, disc):
     # Include JSON-escaped and both slash forms; inherited environment/errors count too.
     values = {str(disc), str(Path(disc).resolve())}
+    values.update(v for k,v in os.environ.items()
+                  if v and (k.startswith('GW_ISO') or k == 'MELEE_ISO'))
     variants = {variant for value in values for variant in
                 (value,value.replace('\\','/'),value.replace('/','\\'))}
-    variants.update(json.dumps(v)[1:-1] for v in tuple(variants))
+    variants.update(json.dumps(v,ensure_ascii=ascii)[1:-1]
+                    for v in tuple(variants) for ascii in (True,False))
     for value in sorted(variants, key=len, reverse=True):
         if value:
             text = re.sub(re.escape(value), lambda _: '<disc>', text, flags=re.I)
@@ -311,7 +314,7 @@ def run_entry(row, n, output, env, args, tour_deadline, iso_alias):
         command_before(client,'quit',deadline)
         process.wait(timeout=remaining(deadline))
     except (OSError,RuntimeError,TimeoutError,ValueError,StopIteration,subprocess.TimeoutExpired) as exc:
-        result['reason']=redact(str(exc),args.iso)
+        result['reason']=redact(redact(str(exc),iso_alias),args.iso)
     finally:
         # The launcher's exact child lives in a kill-on-close Job. Never kill by name.
         if process and process.poll() is None:

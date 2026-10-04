@@ -29,7 +29,7 @@ trap 'rm -f "$bc_tmp" "$obj_tmp" "$imports_tmp" "$dep_tmp" "$cc_err" "$gw_err"' 
 "$GW_CLANG" --target=ppc32-none-eabi -std=c99 -nostdinc -fno-builtin -DLINT -DTARGET_PC \
   -fno-short-enums -fsigned-char -mlong-double-64 -fno-strict-aliasing -fwrapv -fcommon -fgnu89-inline \
   -ftrivial-auto-var-init=zero -O2 -Xclang -disable-llvm-passes -emit-llvm -c -w \
-  -Isrc -Ipc -isystem src/MSL -isystem libs/dolphin/include -isystem libs/dolphin/src -isystem build/GALE01/include \
+  -Isrc -Ipc -Ipc/gameworld -isystem src/MSL -isystem libs/dolphin/include -isystem libs/dolphin/src -isystem build/GALE01/include \
   -include src/MSL/math_ppc.h -MD -MF "$dep_tmp" -MT object \
   "$f" -o "$bc_tmp" 2> "$cc_err" || { echo "CC_FAIL $f"; cat "$cc_err"; exit 1; }
 mv -f "$bc_tmp" "$d/$n.bc"

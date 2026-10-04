@@ -1996,3 +1996,129 @@ with compact owned-handle records checkpointed next frame. Default inventory
 is fresh per scene/run; drive_lab.tuning.persist controls retention. These are
 offline LAB diagnostics, with no opponent rolls or Classic loot integration.
 See Envoy PLAYTEST.md for physical drop/checkpoint boundaries and acceptance.
+
+
+Envoy EM4 native hit-rule fields (2026-10-04; source-tested, rebuild required).
+`change.percent_damage` and `change.launch` are neutral-at-1 ratios for ordinary
+attacks. They support unconditional, status-conditioned and incoming matches.
+Each side adds matching ratio-minus-one contributions and caps once: percent
+0.6..1.6, launch 0.6..1.3. The two sides remain separate families.
+`gd.hit_rules(port).percent_only == true` identifies the updated engine.
+
+Percent-only damage scales the accepted, already-staled damage at its commit,
+after current-frame launch selection. It leaves original hitbox damage, shield
+damage, clank priority, hitlag inputs and staling unchanged; the on-screen
+percent/HP changes and later hits see the real accumulated percent. Special
+nonordinary elements, phantom hits and zero-damage detector contacts are
+excluded. Launch scales the final retail knockback scalar. Legacy `damage`,
+`knockback_growth`, `knockback_base` and fighter-modifier damage fields keep their
+existing behavior. New rule fields and pending percent deltas are snapshotted
+game state and included in the native simulation journal. Old native snapshots
+and journals must not be reused after upgrading this binary. Live collision
+and LAB rewind acceptance remain required.
+
+
+## Fighter capabilities (2026-10-04 source pass)
+
+These calls extend passive fighter modifiers. Writes require an active offline match and a gameplay script (or console), and fork the LAB rewind timeline. Each selector is an **entity**: 1?6 are the primary fighters of ports 1?6; 7?12 are their secondary entities (Nana or a second form). Missing entities refuse effect/item/status writes. CPU control does not change permissions. Each native record has a script owner; competing scripts receive false. Read calls do not claim ownership. No native pointer crosses the Lua boundary.
+
+| Call | Contract |
+|---|---|
+| `gd.fighter_caps(entity)` | Owned override table or nil, plus a second return containing this live entity's retail air-jump count (nil if missing). Useful for relative bonuses. |
+| `gd.fighter_caps(entity, options)` | Replace overrides; returns boolean. `air_jumps=0..8` sets air jumps; omitted uses retail. `shield`, `air_dodge`, `run`, `grab`, `specials` are boolean restriction flags: **true forbids**. Unknown keys/types refuse. |
+| `gd.fighter_caps(entity, nil)` | Clear this owner's movement overrides. |
+| `gd.fighter_armour(entity)` | `{damage, knockback}` thresholds, or nil. |
+| `gd.fighter_armour(entity, {damage=n, knockback=n})` | Each threshold 0?1000; zero disables that test. Strictly below either enabled threshold suppresses the ordinary retail damage reaction, while percent damage remains. Nil clears. |
+| `gd.fighter_effect(entity, kind)` | `{value, frames}` or nil. |
+| `gd.fighter_effect(entity, kind, value, frames)` | `kind` is `intangible`, `invincible`, `metal`, or `size`. Duration 0?3600 logic frames; zero clears that owner's kind. Use value 1 for enabled non-size kinds (accepted range 0?1); size is an absolute scale 0.25?4. Effects expire automatically. |
+| `gd.give_item(entity, kind)` | Retail numeric kind ID or `"random"`; boolean result. Empty hands, neutral Wait/Fall/Jump states, enabled match items, spawn cap, portable kind and actual pickup eligibility required. Random is weighted from enabled portable kinds. Failure destroys any newly spawned orphan. |
+| `gd.nearest_opponent(entity[, exclude_entity])` | Entity ID or nil; optional exclusion supports chaining to a different victim. |
+| `gd.opponents_in_radius(entity, radius[, exclude_entity])` | Ascending entity IDs, radius 0?100000 world units inclusive. No line-of-sight check. Same-port entities and teammates in team matches are excluded, as are dead/entry/benched entities. Equal nearest distances choose the lower ID. |
+| `gd.fighter_timed_status(entity, channel)` | `{value, frames}` or nil. |
+| `gd.fighter_timed_status(entity, channel, value, frames)` | Four independent channels (1?4), finite value ?100000?100000, duration 0?3600 logic frames. Replaces a channel owned by this script; zero frames clears. Generic event-carried values, with no built-in hitlag/hitstun mutation. |
+
+`fighter_timed_status` is separate from the hit-rule API `gd.fighter_status(port, bits, sub)`. The latter stores a bitmask; timed values do not automatically change it or install hit rules.
+
+Air-jump overrides retain retail landing/ledge/hit counter resets and exhaustion writes. The initial ground jump is counted internally, so an override of five means five **air** jumps. Kirby/Puff repeat bounded retail multi-jump motion/impulse rows; the penultimate script is reused while extra jumps remain, since Kirby's final script has no next-jump gate. Movement claims apply to the entity selector through respawn/transformation; other timed values bind to the current fighter object and retire when it is replaced.
+
+Restrictions gate entries into GuardOn/powershield, EscapeAir, Dash/Run/TurnRun, Catch/CatchDash/AirCatch and the shared ground/air SpecialN/S/Hi/Lw decisions. An action already underway finishes its normal callbacks; input is not latched or rewritten. Item throws remain available with grab forbidden. Forced state changes and character-specific internal special continuations are not filtered. CPU decision checks share the jump-limit overlay; live CPU lockup acceptance remains pending.
+
+Armour uses the existing `ftCo_8008EC90` no-reaction branch after retail commits percent and calculates knockback. Damage thresholds compare the individual scaled damage of the hit selected by retail to determine the reaction, rather than the sum of damage from simultaneous contacts. Percent still keeps that full sum. Knockback thresholds compare the result **after** crouch, ice, charge, scale, Yoshi/Bowser and metal modifiers. It does not intercept special damage-reaction modes, grabs/throws, or state-specific callbacks. Existing retail armour is left intact.
+
+Timed hurt protection uses retail counters/setters and colour animation. Cleanup ages the original counter using observed retail decrements (including hitlag pauses), restores it when still attributable to the script and preserves a longer newer counter. The shared counter cannot distinguish a new equal/shorter retail timer; exact independent overlap ownership requires a follow-up setter hook in the collision owner's files. Metal refuses an already-metal fighter and uses retail material/attribute setup and teardown. Size restores the saved scale only while the current scale equals its applied value. New retail effects with the same value are likewise not distinguishable. Use these timed effects in controlled offline scenarios until that overlap hook and runtime acceptance are complete.
+
+Give-at-stage-start uses the existing event hook rather than a persistent native queue:
+
+```lua
+function on_match_start()
+  if not gd.give_item(1, "random") then gd.log("stage-start item grant refused") end
+end
+```
+
+A director may retry on a later neutral frame, once per stage, if entry animation initially refuses. The allowed portable kinds are Bob-omb, Mr. Saturn, Bat, Beam Sword, Green/Red Shell, Ray Gun, Freezie, Motion-Sensor Bomb, Super Scope, Star Rod, Lip's Stick, Fan, Fire Flower and Pok? Ball. Heavy items, consumables and character articles are refused. A successful grant becomes an ordinary retail held item; script unload does not confiscate it.
+
+All timers, ownership and entity bindings live in the already snapshotted `script_game.c` BSS. Scene teardown and native script-unload fallback release overrides and timed effects even if Lua cleanup throws. The `script_fighter_caps` headless suite fixture covers game-side helpers and Lua validation. Six single-feature examples are indexed in the demo catalogue. The separate `fighter-targeting/scripts/rewind-proof.lua` fixture requires timer expiry followed by `pass == true` and `diff == 0`; **it has not been executed**. This packet did not build or launch the game, and source/stub checks do not establish gameplay or rewind acceptance.
+
+
+Envoy EM4 LAB opponent commands: `foe roll [strength] [seed] [port]`,
+`foe clear`, `foe list`, `foe fight [port]`, and `foe stand [port]`.
+Default rolls target the player build strength. CPU modifier edits and foe
+rolls must commit separately; timed opponent nameplates temporarily replace
+the debug HUD. These commands are offline LAB tools, not Classic integration.
+
+
+## Fighter afterimages and point tracers (FX1 source; runtime acceptance pending)
+
+`gd.afterimage_add(port, options)` and `gd.tracer_add(options)` return an owner-scoped
+handle or `nil, reason`. `gd.afterimage_set(handle, partial_options)` and
+`gd.tracer_set` return true or `nil, reason`; the corresponding `_remove(handle)`
+returns true. Foreign/stale handles and malformed options raise Lua errors. Port
+and `sub` are immutable. These APIs have no gameplay gate or simulation writes.
+
+Afterimage options: `copies=1..6`, `spacing=1..8`, `lifetime=2..31` logic frames,
+`fade=0.25..4` exponent, `tint={r,g,b,a}`, `tail={r,g,b,a}`,
+`blend="alpha"|"additive"`, `surface="own"|"silhouette"|"gradient"`,
+`scale=0.25..2`, `follow=false`, `trigger="always"|"moving"|"flag"`,
+`speed=0..100`, `flag=false`, `clear_on_respawn=false`, `sub=false`,
+`intensity=0..1`, and `offset={x,y,z}` (each -100..100). One emitter per port/sub;
+12 total. A port's primary and sub-fighter must share surface and blend.
+
+Tracer options additionally include `port=1..6`,
+`anchor="right_hand"|"left_hand"|"right_foot"|"left_foot"|"head"`,
+an explicit joint index 0..254 (tail/custom skeleton), `{joint=...}`,
+`{hitbox=0..4}`, `"held_item"`, `"sword_tip"`, or `{item=serial}`.
+Sword tips read the existing retail trail; they do not enable it. `gd.tracer_hitboxes(port,
+options)` makes one handle for all active hitboxes and selects colour/shader from
+the actual hit element. `anchor="active_hitboxes"` is equivalent. Limit 64 handles.
+`width=0.05..8`, `taper=0..4`, `length=2..31`, `smoothing=1..8`, `depth=true`,
+`shader="solid"|"glow"|"fire"|"electric"|"frost"|"dark"`,
+`edge={r,g,b,amount}`, and `params={strength,frequency,core_width,motion_rate}`
+(0..10; strength clamps to 1). Colours use 0..1 components. `tail` fades along
+the ribbon; `edge` blends across it. Catmull-Rom smoothing creates intermediate
+geometry without adding simulation samples.
+
+Declare emitters before `gd.warm{fighters={1,2}, tracers=true}` and poll
+`gd.warm_done`; cold/unsupported historical draws are skipped. New surface/blend,
+costume or material configurations need another warm pass. `gd.motion_intensity(0..1)`
+sets the global multiplier (initial 0.65). `gd.motion_stats()` exposes active counts,
+cumulative poses/copy_draws/skipped/ribbon_vertices/resets, not GPU timings.
+
+Histories are native presentation state, cleared and rebuilt on restore/resimulation,
+scene change, unload, and entity/costume replacement. Pause/interpolated presents
+do not add samples. Hitlag suppresses new pose samples; existing copies age in
+logic frames. Ribbons sample once per logic frame, so a frozen anchor degenerates
+and fades naturally. KO clearing is opt-in unless the entity changes. APIs are
+available online, but online/rollback visual correctness is unverified; `gd.warm`
+remains an offline diagnostic.
+
+Aurora must be rebuilt with `_build/patches/aurora-gd-motion-v1.patch`. Held-item
+afterimages, fog-range materials and mutable EFB-copy textures are skipped whole.
+Arbitrary custom copy WGSL is not exposed. Demos: `demos/afterimages`, `demos/tracers`.
+See `_build/tmp/codex-afterimages-tracers-report.md` for caps and unrun acceptance.
+
+
+### Envoy progression follow-up (2026-10-04)
+
+New hit-rule percent_damage and launch coefficients accept finite signed -1e9..1e9, encoded as 1 + additive raw delta. Sum all matching contributions before final physical caps: outgoing percent .05..64, incoming percent .15..64, launch .05..4. Legacy damage/growth/base/knockback_taken inputs remain .1..4. Tables support32 rules; progression=true identifies the new native capability, while percent_only remains. Provenance retains96 IDs (historical creation plus current attacker/defender). This changes native snapshot/journal layout and requires a rebuild.
+
+Envoy LAB depth <n> [loop] controls future drive/opponent rolls, unlocks4/5/6 slots and1/2/3 keys, and preserves physical drive tiers and existing CPU builds. Selected player keys follow the dial. Invalid downshifts refuse atomically. Opponents use scalar strength and shared weighted rolls; optional foe role is normal, boss or finalboss. See Envoy PLAYTEST.md for exact early/late FD commands.
