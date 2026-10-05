@@ -357,6 +357,7 @@ alpha × tint alpha. Other formats are modulated by the tint.
 | `gd.kit.metrics(role)` | `{size, ascent, descent, cap, line}` at 1x |
 | `gd.kit.image(name, x, y [, w [, h [, opts]]])` | any kit texture by file name (`"glyph_a"`, `"frame_edge_h"`, your mod's). Default size: its 1x size (the kit is authored at 2x) × `opts.scale`. `opts` `{tint =, scale =, flip_x =, flip_y =, shear =}`. Returns w, h, or `nil` when there is no such texture |
 | `gd.kit.icon(name, x, y [, scale [, tint]])` | `ico_<name>` (`"lock"` → `ico_lock`), tinted `"bone"` unless its manifest or `tint` says otherwise |
+| `gd.kit.model(model, x, y, w, h [, opts])` | a **script model drawn into a rectangle** of the script canvas (the same x, y, w, h space as `gd.fill` / `gd.kit.image`), in call order with `gd.fill`, `gd.box`, `gd.text` and every other `gd.kit` call: draw a cell's background, then its model, then its pips, cursor and text, and they stack that way. `model` is a `gd.model_load` handle (so the load rules apply: a gameplay mod, in a match). `opts`: `yaw`, `pitch` (degrees, -360..360), `spin` (degrees per second, +-3600, from the engine's UI clock: 1/60 s units of wall time, rate-independent at 60 or 120 Hz), `t` (the spin's clock in 1/60 s units, to drive it yourself), `margin` (0..0.45 of w and h left empty each side, default 0.08), `tint` (colour, default white), `dim` (0..1, multiplies the lit colour: a locked or empty cell), `alpha` (0..1), `cull` (true drops back faces: exact and cheaper for a closed convex mesh), `clip` (default true: scissored to the rectangle). Returns the triangles drawn. Details in *Screen-space models* below |
 | `gd.kit.panel(x, y, w, h [, style])` | a 9-slice panel. `style` `{prefix = "frame", piece =, tint =, fill =, shear =}`: pieces `<prefix>_corner_tl/_tr/_bl/_br`, `<prefix>_edge_h` (top; flipped vertically for the bottom), `<prefix>_edge_v` (left; flipped horizontally for the right) and an optional `<prefix>_fill` (stretched, tinted by `fill`). `piece` scales the frame (corner size in px; default the corner's 1x size, never more than half the panel). `fill` is a colour (default the Versus section's bg, a little translucent) or `false`. Missing pieces are skipped |
 | `gd.kit.button(x, y, w, label [, state [, opts]])` | the kit's list row: `state` `true`/`"sel"` (gold face lifted off its gold_dk plate, ink label), `false`/`"ng"`, `"disabled"`. `opts` `{value =, h =, shear =, section =}` - `value` is drawn right-aligned. Returns the height |
 | `gd.kit.list(x, y, w, items, selected [, opts])` | rows at the kit's pitch. `items` are strings or `{label =, value =, disabled =}`; `selected` is 1-based (0 = none). `opts` `{pitch =, h =, first =, visible =, shear =, section =}`. Returns the height used |
@@ -406,6 +407,39 @@ function on_draw()
   gd.kit.list(x + 12, y + 48, w - 24, rows, 1)
 end
 ```
+
+
+### Screen-space models (`gd.kit.model`)
+
+`gd.kit.model` puts a real model in a menu cell. It is presentation only: it reads nothing from the game, writes
+nothing, is not in any hash, has nothing to restore on a rewind or savestate, and is allowed offline and online.
+
+- **Camera and light are fixed.** An orthographic camera looks down -Z with +Y up, so the model's axes are the
+  screen's; the light is the world draw's key light (direction (0.25, 1.0, 0.55), colour (235,235,240), ambient
+  (92,96,112), `ambient + colour * max(0, N.L)` per vertex). Match camera, stage lighting and fog do not touch it;
+  it is always in front of the world (it is drawn in the interface pass).
+- **Auto-fit.** The model is centred on its bounding box and scaled so it fits the rectangle with `margin` at
+  every yaw: horizontally by its largest distance from the vertical axis, vertically by `hy*|cos p| + r*|sin p|`
+  for the pitch. A spinning model never changes size and never leaves the rectangle. Bounds are computed once per asset.
+- **Order and clip.** The triangles go into the kit's quad list, so they stay in call order with every other draw
+  (the interface pass is an ImGui draw list, not a GX pass, which is why this is a call and not a model instance
+  option). Each carries its rectangle and is scissored to it.
+- **Depth** inside the model is a painter's sort by triangle depth: exact for a closed convex mesh (use `cull = true`
+  there) and for any mesh whose triangles do not interpenetrate. The glow atlas is added into the colour before the
+  light, so emissive lines are dimmed on shaded faces; `custom_material` shaders are not applied.
+- **Limits.** At most 512 triangles per model (an icon, not a scene: a larger mesh is refused with an error, not
+  thinned), 64 distinct atlases, the kit's 16384-quad list per frame. About 4 microseconds of script time per call at
+  12-44 triangles.
+
+```lua
+-- a grid cell: background, model, then the rest (see demos/screen-models)
+gd.fill(x, y, w, w, 0x101826F0)
+gd.kit.model(asset, x + 3, y + 3, w - 6, w - 6, { yaw = 25, pitch = 14, spin = focused and 90 or 0, dim = locked and 0.35 or 1 })
+gd.box(x, y, w, w, 0x5B7396FF)
+```
+
+Demo: `demos/screen-models` (12 original models; a 4x3 cell grid, then the real grid component with its `icon_draw`
+wired to this call).
 
 ### Comms callouts (offline)
 
@@ -868,12 +902,21 @@ It does not recompile or mutate shared source materials.
 ### Offline roguelite integration
 
 `gd.input_mask(port, bits)` consumes only selected D-pad bits (left=1, right=2,
-down=4, up=8); zero releases the mask. It preserves sticks, triggers, face buttons
+down=4, up=8) and START (0x1000); zero releases the mask. START is for a chord-opened
+overlay (the Envoy bag, Z+START): the game never sees the press, so it cannot also pause; a script reads it
+through `gd.pad(port, true)`. It preserves sticks, triggers, face buttons
 and the controller's connection. One script owns a port's mask; conflicting
 owners return false. `gd.pad(port, true)` reads buttons before this mask, allowing
 edge detection without replacing the player's pad. Scene changes, script cleanup
 and `gd.release_pad` release masks. A menu that consumes Up while backing to its
 root must keep masking that hold until release, or the game can treat it as taunt.
+
+`gd.match_end_hold(reason, on)` (offline) defers the end of a stock-based match (a 1P/VS win or loss by stocks) while any reason is held and the human (slot 0) still has a stock: the match keeps running, the player keeps control, the timer and hazards continue. Time-outs, terminations, no-contest/retry and the bonus-stage end are not deferred; the player losing the last stock ends it as usual. Reason-keyed (1-23 characters, up to 8 at once); `gd.match_end_hold(reason)` reads one back, `gd.match_end_hold()` lists the held reasons. Logged on start and release; cleared at every scene change and when the script unloads; refused online. Envoy holds the end while a drop is on the floor.
+
+`gd.input_chord(port, "Z+START")` (offline) keeps a whole chord from the game: while every named button is
+held in the same sample the game sees none of them, so a chord that opens an overlay cannot also pause the match, even
+when the buttons land on the same frame. Two or more buttons; `nil` releases; one owner per port; `gd.pad(port, true)`
+still reads them. Scene changes and script cleanup release it, so a script re-asserts it now and then (Envoy does).
 
 `gd.impulse(port, {x=, y=})` adds bounded velocity during ordinary locomotion:
 delta x ±4, y ±3; resulting x ±5, y ±4. Grounded impulses require y=0 and also
@@ -1749,7 +1792,7 @@ single-feature Lua stubs are checked.
 |---|---|
 | `gd.start_1p{mode="classic", fighter="mario", difficulty=2, stocks=3, loop=true}` | Queues a safe scene reset. Mode is `classic` or `adventure`; fighter is an installed scene-selector name or explicit kind token, without player-option suffixes. Difficulty 0..4 (Normal 2), stocks 1..99. Returns `true`, or `false, reason`; an existing or pending 1P run cannot be replaced, including by its owner. Requires a manifest-backed gameplay mod. |
 | `gd.mode_1p()` | Snapshot table below, or nil outside the tracked offline retail run. |
-| `gd.hold_1p([ticks=1800])` | Claims the current interstage barrier from its clear/complete/game-over callback. Returns boolean. One claim per barrier, clamped to 1..1800 host ticks; cannot renew its deadline. |
+| `gd.hold_1p([units=1800])` | Claims the current interstage barrier from its clear/complete/game-over callback, or renews a live claim of your own. Returns boolean. One claim per barrier. Counted in 60 Hz logic units of wall time (not host ticks, so 120 Hz does not halve it): default 1800 (30 s), clamped to 1..7200 (120 s) in all from the claim; a renewal sets the remaining length from now, capped by what is left of the 120 s. |
 | `gd.release_1p()` | Releases this script's hold; returns false if absent or another script owns it. |
 | `gd.loop_1p(enabled)` | Owner-only New Game+ switch; returns boolean. A run adopted by `spawn_1p` from a manually entered retail mode cannot enable looping, because it has no original launch settings. |
 | `gd.end_1p()` | Owner-only, idempotent cleanup. Cancels a pending initial launch, or safely resets an active run to the menu. Templates, tints and holds are released; record protection remains until retail teardown. Returns boolean. |

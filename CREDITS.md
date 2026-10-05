@@ -40,6 +40,7 @@ and the third-party notices.
 | sonic-adventure-workbench | leevee123 (GitHub account) | https://github.com/leevee123/sonic-adventure-workbench | No licence stated (ideas only; nothing copied) | Benchmark method (fixed savestate, median of trials, hashes recorded), offline relocation and opcode audit of code blobs, allow-list package validation. Note: `_research/sonic-adventure-workbench-insights-2026-10-03.md` |
 | Sonic Adventure / Chao Garden | Sega, Sonic Team | | | The design the companion and garden are modelled on |
 | Super Smash Bros. Ultimate (Spirits, Stage Morph) | Nintendo, Bandai Namco Studios, Sora Ltd. | | | Design reference for the Envoy companion (Spirits) and for seamless stage switching (Stage Morph); ideas only |
+| Path of Exile | Grinding Gear Games | https://www.pathofexile.com/ | | The model for Envoy's loot: prefix/suffix modifiers on items, uniques, and keystones (rule-changing passives with a drawback); ideas only, no names, rules or numbers copied (`keystones.lua`, `mod_pool.lua`) |
 
 ## Fighter surface shading (2026-10-03)
 
