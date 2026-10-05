@@ -5,6 +5,7 @@
 #include "launcher_core.h"
 #include <QFileDevice>
 #include <QIODevice>
+#include <QProcess>
 #include <QVector>
 namespace launcher {
 struct ElfInfo {
@@ -61,6 +62,23 @@ struct Redactor {
     QString apply(QString text) const;
     static Redactor forThisMachine(const QStringList &discPaths);
 };
+// Writes the game's merged stdout/stderr to launcher-process.log with every line passed through the
+// Redactor first, so the file players send us holds no home path, user name or disc location. Each
+// complete line is written (unbuffered) as it arrives, so a crash or hang loses nothing but a
+// trailing partial line, which finish() (also the destructor) writes out.
+class RedactedLog {
+public:
+    RedactedLog(const QString &path, const Redactor &redactor);
+    ~RedactedLog();
+    bool isOpen() const;
+    void write(const QByteArray &chunk);
+    void finish();
+private:
+    struct Impl; Impl *d;
+};
+Redactor redactorForLaunch(const QStringList &arguments);   // this machine, plus the disc named after --iso
+// Merged-channel capture of `process` into `logFile`, redacted. Call before start().
+void captureRedacted(QProcess &process, const QString &logFile, const Redactor &redactor);
 QString envValueForReport(const QString &name, const QString &value);   // value, or "(set)" for anything that could hold a secret
 QString shortList(const QString &text, int head, int tail);             // first/last lines with a gap marker
 

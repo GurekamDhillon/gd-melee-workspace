@@ -1,3 +1,4 @@
+#include <memory>
 #include "diagnostics.h"
 #include "graphics.h"
 #include <QCoreApplication>
@@ -293,6 +294,43 @@ QString Redactor::apply(QString text) const {
     text.replace(mac, "<mac>");
     for (const auto &w : words) text.replace(QRegularExpression("(?<![\\w.-])" + QRegularExpression::escape(w) + "(?![\\w.-])"), "<name>");
     return text;
+}
+static const char NL = 10;
+struct RedactedLog::Impl { QFile file; Redactor redactor; QByteArray pending; };
+RedactedLog::RedactedLog(const QString &path, const Redactor &redactor) : d(new Impl) {
+    d->redactor = redactor; d->file.setFileName(path);
+    QDir().mkpath(QFileInfo(path).absolutePath());
+    d->file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Unbuffered);
+}
+RedactedLog::~RedactedLog() { finish(); delete d; }
+bool RedactedLog::isOpen() const { return d->file.isOpen(); }
+void RedactedLog::write(const QByteArray &chunk) {
+    if (!d->file.isOpen()) return;
+    d->pending += chunk;
+    QByteArray out;
+    int nl;
+    while ((nl = d->pending.indexOf(NL)) >= 0) {
+        out += d->redactor.apply(QString::fromUtf8(d->pending.left(nl))).toUtf8() + NL;
+        d->pending.remove(0, nl + 1);
+    }
+    // A runaway line with no newline is cut so memory stays bounded and a hang still shows output.
+    if (d->pending.size() > 64 * 1024) { out += d->redactor.apply(QString::fromUtf8(d->pending)).toUtf8(); d->pending.clear(); }
+    if (!out.isEmpty()) d->file.write(out);
+}
+void RedactedLog::finish() {
+    if (d->file.isOpen() && !d->pending.isEmpty()) { d->file.write(d->redactor.apply(QString::fromUtf8(d->pending)).toUtf8()); d->pending.clear(); }
+}
+Redactor redactorForLaunch(const QStringList &arguments) {
+    QStringList discs; const int i = arguments.indexOf("--iso"); if (i >= 0 && i + 1 < arguments.size()) discs << arguments[i + 1];
+    return Redactor::forThisMachine(discs);
+}
+void captureRedacted(QProcess &process, const QString &logFile, const Redactor &redactor) {
+    auto log = std::make_shared<RedactedLog>(logFile, redactor);
+    process.setProcessChannelMode(QProcess::MergedChannels);
+    auto drain = [log, &process] { log->write(process.readAllStandardOutput()); };
+    QObject::connect(&process, &QProcess::readyReadStandardOutput, &process, drain);
+    QObject::connect(&process, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), &process, [log, drain] { drain(); log->finish(); });
+    QObject::connect(&process, &QProcess::errorOccurred, &process, [log, drain](QProcess::ProcessError) { drain(); log->finish(); });
 }
 QString envValueForReport(const QString &name, const QString &value) {
     static const QRegularExpression secret("TOKEN|KEY|SECRET|PASS|AUTH|CRED|COOKIE|SESSION_ID|PRELOAD", QRegularExpression::CaseInsensitiveOption);

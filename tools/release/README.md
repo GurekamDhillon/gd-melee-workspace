@@ -196,6 +196,7 @@ to `launcher-process.log`). The user data folder is `userdata/` beside the game,
 `~/.local/share/melee-linux`. When the game fails the launcher shows the verdict with **Copy
 diagnostics** and **Open log folder**. The Diagnostics tab has **Copy launch diagnostics** and
 **Run diagnostics without launching**; `gd-melee-launcher --diagnose` does the same from a terminal.
+`launcher-process.log` is written by the launcher itself, line by line, through the same redaction (home to `~`, user and host names, disc images to file name only), so it is safe to send. `package_linux.py` writes `version.txt` (from `tools/release/VERSION`) to the package root and to `bin/`, where the game's crash report looks for it.
 If the launcher itself will not open, run `./gd-melee-diagnose.sh` from the game folder (POSIX sh
 and coreutils only, it never starts the game) and attach the `gd-melee-diagnostics-*.txt` it writes.
 It also tries to start the launcher and records that program's stderr.

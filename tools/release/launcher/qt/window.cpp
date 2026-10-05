@@ -281,7 +281,7 @@ void Window::startGame(const LaunchSpec &spec) {
     runDir_ = spec.workingDirectory;
     settings_.options["last_run"] = runDir_; save();
     process_.setProgram(spec.program); process_.setArguments(spec.arguments); process_.setWorkingDirectory(spec.workingDirectory); process_.setProcessEnvironment(spec.environment);
-    process_.setProcessChannelMode(QProcess::MergedChannels); process_.setStandardOutputFile(spec.logFile);
+    launcher::captureRedacted(process_, spec.logFile, launcher::redactorForLaunch(spec.arguments));
     play_->setEnabled(false); statusBar()->showMessage(t("Game running. Logs: ", "Juego en ejecución. Registros: ") + runDir_);
     diag_ = {}; diag_.spec = spec; diag_.haveSpec = true; diag_.stamp = QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss");
     auto &sp = diag_.spawn; sp.attempted = true; sp.program = spec.program; sp.arguments = spec.arguments; sp.workingDirectory = spec.workingDirectory; sp.stdoutFile = spec.logFile;

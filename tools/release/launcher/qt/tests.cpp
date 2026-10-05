@@ -311,6 +311,52 @@ private slots:
         QCOMPARE(envValueForReport("SDL_VIDEODRIVER", "wayland"), QString("wayland"));
         QCOMPARE(shortList("1\n2\n3\n4\n5\n6", 2, 1), QString("1\n2\n... 3 lines omitted ...\n6")); QCOMPARE(shortList("1\n2\n", 2, 2), QString("1\n2"));
     }
+    void redactedLogWriter() {
+        QTemporaryDir d; const auto path = d.path() + "/launcher-process.log";
+        Redactor r; r.home = "/home/alex"; r.words = {"alex"};
+        {
+            RedactedLog log(path, r);
+            // a line split across reads, a disc path with spaces, a CRLF line, and a partial last line
+            log.write("melee-pc: disc image /home/alex/Downloads/GDMelee-0.1.8-linux-x86_64/my game.i");
+            log.write("so\ngw: targettest: no mods found in /home/alex/mods\r\nuser alex ip 10.0.0.5\nlast /home/alex/x");
+            QFile mid(path); QVERIFY(mid.open(QIODevice::ReadOnly));   // already on disk before finish()
+            QVERIFY(mid.readAll().contains("no mods found in ~/mods"));
+        }
+        QFile f(path); QVERIFY(f.open(QIODevice::ReadOnly)); const auto text = QString::fromUtf8(f.readAll());
+        QVERIFY2(text.contains("melee-pc: disc image my game.iso\n"), qPrintable(text));
+        QVERIFY(text.contains("no mods found in ~/mods\r\n")); QVERIFY(text.contains("user <name> ip <ip>")); QVERIFY(text.endsWith("last ~/x"));
+        QVERIFY(!text.contains("alex")); QVERIFY(!text.contains("Downloads")); QVERIFY(!text.contains("/home"));
+        // the first/last-lines capture the diagnostics report uses still works on the redacted file
+        QCOMPARE(shortList(text, 1, 1).split('\n').size(), 3);
+    }
+    void redactedLogOfRealChild() {
+#ifdef Q_OS_UNIX
+        const QString script = "printf 'disc image %s/Downloads/pkg/example.iso\\n' \"$HOME\"; printf 'gw: no mods found in %s/x\\n' \"$HOME\" >&2; printf 'partial %s' \"$HOME\"; if [ -n \"$HANG\" ]; then sleep 30; fi";
+        for (bool kill : {false, true}) {
+            QTemporaryDir d; const auto path = d.path() + "/launcher-process.log";
+            QProcess p; QProcessEnvironment env = QProcessEnvironment::systemEnvironment(); env.insert("HOME", "/home/alex"); if (kill) env.insert("HANG", "1");
+            p.setProcessEnvironment(env); p.setProgram("/bin/sh"); p.setArguments({"-c", script});
+            Redactor r; r.home = "/home/alex"; r.words = {"alex"};
+            captureRedacted(p, path, r); p.start(); QVERIFY(p.waitForStarted());
+            if (kill) {
+                // the file already holds the complete lines while the child is still hanging
+                QTRY_VERIFY_WITH_TIMEOUT([&] { QFile f(path); return f.open(QIODevice::ReadOnly) && f.readAll().contains("no mods found in ~/x"); }(), 5000);
+                p.kill();
+            }
+            QVERIFY(p.waitForFinished(10000));
+            QFile f(path); QVERIFY(f.open(QIODevice::ReadOnly)); const auto text = QString::fromUtf8(f.readAll());
+            QVERIFY2(text.contains("disc image example.iso\n"), qPrintable(text)); QVERIFY2(text.contains("no mods found in ~/x\n"), qPrintable(text));
+            QVERIFY2(!text.contains("alex") && !text.contains("/home") && !text.contains("Downloads"), qPrintable(text));
+            if (!kill) QVERIFY2(text.endsWith("partial ~"), qPrintable(text));
+        }
+#else
+        QSKIP("needs /bin/sh");
+#endif
+    }
+    void launchRedactorNamesTheDisc() {
+        auto r = redactorForLaunch({"--iso", "/data/games/example disc.iso", "--x"}); QCOMPARE(r.discPaths, QStringList({"/data/games/example disc.iso"}));
+        QVERIFY(redactorForLaunch({"--test"}).discPaths.isEmpty());
+    }
     void environmentDifference() {
         QProcessEnvironment a, b; a.insert("KEEP", "1"); a.insert("GONE", "x"); a.insert("CHANGED", "old"); b.insert("KEEP", "1"); b.insert("CHANGED", "new"); b.insert("MELEE_VOLUME", "50"); b.insert("API_TOKEN", "s3cret");
         auto diff = environmentDiff(a, b).join('\n');

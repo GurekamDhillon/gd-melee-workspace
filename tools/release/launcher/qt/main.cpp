@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
             }
             settings.options["last_run"] = spec.workingDirectory; settings.save(user);
             QProcess process; process.setProgram(spec.program); process.setArguments(spec.arguments); process.setWorkingDirectory(spec.workingDirectory); process.setProcessEnvironment(spec.environment);
-            process.setProcessChannelMode(QProcess::MergedChannels); process.setStandardOutputFile(spec.logFile);
+            launcher::captureRedacted(process, spec.logFile, launcher::redactorForLaunch(spec.arguments));
             QTextStream(stdout) << "Logs: " << spec.workingDirectory << Qt::endl;
             QObject::connect(&process, &QProcess::errorOccurred, &app, [&](QProcess::ProcessError error) { if (error == QProcess::FailedToStart) { QTextStream(stderr) << process.errorString() << '\n'; app.exit(1); } });
             QObject::connect(&process, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), &app, [&](int code, QProcess::ExitStatus status) { app.exit(status == QProcess::CrashExit ? 1 : code); });

@@ -15,6 +15,8 @@ ap=argparse.ArgumentParser(description=__doc__)
 ap.add_argument('--build',type=Path,default=root/'_build/agents/linux')
 ap.add_argument('--output',type=Path,default=root/'_build/linux/packages')
 ap.add_argument('--local',action='store_true')
+ap.add_argument('--version',help='Release version for version.txt (default: tools/release/VERSION)')
+ap.add_argument('--melee',type=Path,default=Path(os.environ['GW_MELEE']) if os.environ.get('GW_MELEE') else root/'melee',help='Game checkout the executable was built from (for version.txt)')
 ap.add_argument('--launcher',type=Path,help='Deployed Qt prefix containing bin/gd-melee-launcher and its runtime')
 ap.add_argument('--runtime-lib-dir',type=Path,action='append',default=[],help='Additional directory for 32-bit SDL Wayland runtime libraries')
 a=ap.parse_args(); build=a.build.resolve(); a.output.mkdir(parents=True,exist_ok=True)
@@ -24,6 +26,23 @@ subprocess.run(['python3',str(root/'tools/mex_port/audit_bridge_abi.py'),'--map'
 versions=subprocess.check_output([readelf,'--version-info',str(exe)],text=True)
 required=max((tuple(map(int,v.split('.'))) for v in re.findall(r'GLIBC_([0-9.]+)',versions)),default=(0,))
 if required>(2,35) and not a.local: raise SystemExit(f'GLIBC {required} exceeds portable baseline 2.35; rebuild on Ubuntu 22.04')
+def git(repo,*args):
+    try:return subprocess.check_output(['git','-C',str(repo),*args],text=True,stderr=subprocess.DEVNULL).strip()
+    except (OSError,subprocess.CalledProcessError):return ''
+def version_text():
+    # Same shape as the Windows release's version.txt (tools/release/build_release.ps1). The game's crash
+    # report reads line 1 of <exe dir>/version.txt; the launcher reads <package>/version.txt.
+    version=(a.version or (root/'tools/release/VERSION').read_text()).strip()
+    if not re.fullmatch(r'[0-9A-Za-z][0-9A-Za-z.+-]*',version):raise SystemExit(f'bad release version {version!r}')
+    melee=git(a.melee,'rev-parse','HEAD') or 'unknown'; ws=git(root,'rev-parse','--short=9','HEAD') or 'unknown'
+    header=a.melee/'pc/platform/gw_net.h'
+    proto=re.search(r'(?m)^\s*#define\s+GW_NET_PROTOCOL_VERSION\s+(\d+)u?\s*$',header.read_text()) if header.is_file() else None
+    lines=[f'{version} (melee {melee[:9]})' + (' local' if a.local else ''),
+           f'melee      {melee}  https://github.com/GurekamDhillon/melee/tree/{melee}',
+           f'workspace  {ws}  https://github.com/GurekamDhillon/gd-melee-workspace',
+           'built      '+__import__('datetime').date.today().isoformat()]
+    if proto:lines.append('netplay_protocol '+proto[1])
+    return chr(10).join(lines)+chr(10)
 name='melee-linux-i686'+('-local' if a.local else '')
 with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
     temp=Path(temp); dest=temp/name; debug=temp/(name+'-debug')
@@ -33,6 +52,9 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
     subprocess.run(['strip','--strip-debug',str(dest/'bin/melee')],check=True)
     subprocess.run(['objcopy','--add-gnu-debuglink='+str(debug/'melee.debug'),str(dest/'bin/melee')],check=True)
     shutil.copy2(build/'melee-pc.msvc.map',dest/'bin/melee-pc.msvc.map')
+    # The game looks for version.txt beside its executable (gw_log.c, gl_exe_dir), which is bin/ here.
+    # The launcher looks beside itself, at the package root. Same text in both.
+    text=version_text(); (dest/'version.txt').write_text(text); (dest/'bin/version.txt').write_text(text)
     shutil.copytree(build/'assets/fonts',dest/'assets/fonts')
     shutil.copytree(build/'ui',dest/'assets/ui')
     for f in ('launch-melee','README.txt','GD-Melee'):shutil.copy2(root/'tools/port/release'/f,dest/f)
