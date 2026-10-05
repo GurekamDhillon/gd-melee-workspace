@@ -2195,7 +2195,7 @@ and `sub` are immutable. These APIs have no gameplay gate or simulation writes.
 Afterimage options: `copies=1..6`, `spacing=1..8`, `lifetime=2..31` logic frames,
 `fade=0.25..4` exponent, `tint={r,g,b,a}`, `tail={r,g,b,a}`,
 `blend="alpha"|"additive"`, `surface="own"|"silhouette"|"gradient"`,
-`scale=0.25..2`, `follow=false`, `trigger="always"|"moving"|"flag"`,
+`scale=0.25..2`, `follow=false`, `trigger="flag"` (the default: lowered until a flag, binding or window raises it; `"always"` and `"moving"` are refused unless `debug=true`, see "Earned afterimages and tracers" below),
 `speed=0..100`, `flag=false`, `clear_on_respawn=false`, `sub=false`,
 `intensity=0..1`, and `offset={x,y,z}` (each -100..100). One emitter per port/sub;
 12 total. A port's primary and sub-fighter must share surface and blend.
@@ -2371,3 +2371,100 @@ epoch/frame/sequence clock, before their legacy hook.
 Envoy: `envoy rules on|off` selects the rule host for Classic and Adventure runs (off by default; applies from
 the next run). On, a run installs the loot pool, bag, slots, opponent rolls, nameplates and looks the LAB uses,
 instead of the companion-stat templates.
+
+
+## Skill events, crits and earned looks (engine lane, 2026-10-05)
+
+Source and game verification: builds 2 and 3 of the held-engine pass; the in-game checks are listed in the final report. All
+reads are safe offline and online; the writes (`gd.crit*`) are gameplay writes (offline, owner-scoped, fork the LAB timeline).
+
+### Skill events
+
+Native, deterministic, read-only observers of the game's own decisions, never of raw inputs. The L-cancel decision is
+read where retail makes it (`ftCo_LandingAir_EnterWithLag`: the trigger timer `x67F` against the common-data window), hits where
+the collision pass accepts them, the powershield window where retail tests it; everything else is a transition of the
+fighter's own motion state, ground flag, fast-fall flag, hitlag flag or position between two logic frames, observed after the
+fighters run (`ScriptGame_SkillFrame`, `pc/gameworld/script_skill.inc`). They fire for every fighter, CPUs included, never
+change the game's outcome, and each appends a row to a **recent-history ring** (256 rows, snapshotted game state: a rewind
+or rollback restores it, and resimulated frames reproduce the same rows; the script event itself is skipped while resimulating).
+
+Delivery: engine event 18 (armour is 17, crit 19), after the frame that produced it, like every engine event. A script gets
+`on_<kind>(info)` for one technique, `on_skill(info)` for all, and the generic `on_event` envelope; all carry the same table:
+`kind, port (1-6), entity (1-12; 7-12 secondary), subfighter, frame` plus the fields below. A script that reacts with a
+`gd.fighter_*` write has it applied from the next logic frame. The kind `perfect_shield` is delivered as
+`on_perfect_shield_skill` (the retail-signature `on_perfect_shield(port, motion, sub)` is unchanged).
+
+| kind (hook `on_<kind>`) | fires when | extra fields |
+|---|---|---|
+| `lcancel` | `EnterWithLag` took the halved landing lag (trigger pressed `x67F < window` frames before landing) | `aerial` nair/fair/bair/uair/dair, `hit` (an aerial hitbox connected), `trigger_age`, `lag`, `lag_cancelled` |
+| `lcancel_miss` | `EnterWithLag` ran the full lag | same |
+| `lcancel_hit` | compound: an L-cancel of an aerial that hit | same |
+| `auto_cancel` | landed inside the aerial's auto-cancel window | `aerial`, `hit` |
+| `wavedash` / `waveland` | an air dodge landed (`LandingFallSpecial`) with ground speed at least `wave_min_speed`; `wavedash` if the dodge began within `wavedash_max_airborne_frames` of a ground jump leaving the floor | `frames_after_jump`, `dodge_frames`, `speed` (signed, world x), `speed_abs` |
+| `ledge_dash` | a wavedash or waveland within `ledge_dash_frames` of leaving the ledge (the wave event fires too) | `frames_since_ledge`, `dodge_frames`, `speed`, `speed_abs` |
+| `air_dodge` | entered `EscapeAir` (or a one-frame dodge that landed in the same logic frame) | `frames_after_jump`, `stick_x`, `stick_y` |
+| `perfect_shield` | a hit or projectile met a shield inside the powershield window (`x221C_b2`) | `projectile`, `attacker` (entity, when known), `window_frame`, `damage` |
+| `tech` | entered `Passive`, `PassiveStandF/B`, `PassiveWall`, `PassiveWallJump` or `PassiveCeil` | `direction` in_place/toward/away (a roll, relative to the nearest opponent)/wall/ceiling, `roll`, `wall_jump` |
+| `tech_miss` | entered `DownBoundU/D` | `facing_down` |
+| `dash_dance` | a dash re-entered the other way within `dash_dance_frames` of the last one | `reversals`, `frames_since_dash` |
+| `short_hop` / `full_hop` | a ground jump left the floor; classified by the first-frame vertical speed against the midpoint of the fighter's own hop and jump speeds | `jumpsquat`, `speed`, `expected` |
+| `fast_fall` | retail's `fall_fast` flag rose while airborne | `air_frames`, `speed` |
+| `shield_drop` | shield (on, held or set-off) to `Pass` | `shield_frames` |
+| `jump_cancel_grab` / `jump_cancel_usmash` | `KneeBend` (jumpsquat) to `Catch`/`CatchDash` or `AttackHi4` | `jumpsquat` |
+| `sdi` | a fighter in hitlag moved (smash DI; nothing else moves a fighter in hitlag) | `count`, `hitlag_left`, `dx`, `dy` |
+| `combo` | a hit landed on a fighter; `count` 1 is the opener, 2 and up landed while the victim was still in hitstun or hitlag | `count`, `attacker`, `damage` (total), `last_damage` |
+| `combo_end` | the victim left hitstun and hitlag, or was KO'd | `count`, `attacker`, `damage`, `ko` |
+
+Thresholds (`gd.skill_thresholds()`): `wave_min_speed` 0.25 (measured on Fox: a wavedash lands at 2.62, steep wavelands
+0.41 and 0.27, a decayed dodge 0), `wavedash_max_airborne_frames` 4, `ledge_dash_frames` 50, `dash_dance_frames` 24,
+`lcancel_window_frames` 7 and `powershield_window_frames` 3 (both read from the game's common data). Not built: ASDI (it
+cannot be separated from the launch on the same frame), a ledge-dash state of its own beyond the timing above.
+
+Reads: `gd.skill_history(entity [, n=16 [, kind]])` (newest first, the same tables, at most 256), `gd.skill_state(entity)`
+(`combo_count, combo_damage, combo_attacker, air_frames, frames_in_state, aerial_hit`), `gd.skill_kinds()`,
+`gd.skill_thresholds()`. A CPU performs any of these on demand: `gd.cpu_mode(port, "script")` then `gd.cpu_macro(port, ...)`.
+Demo: `demos/skill-events`.
+
+### Crits
+
+`gd.crit(entity [, config])` configures an attacker. `config = {chance=0..1, multiplier=1..16 [, multiplier_max=],
+launch=1..4, min_percent=0..999, force=0..255, tags={aerial={chance=, multiplier=, ...}}}`; the tags are the hit-rule move
+tags (`jab dash_attack tilt smash aerial grab throw special projectile`) and inherit missing keys from the default.
+`gd.crit(entity)` reads it back (`hits`, `crits`, `force`, `max_multiplier`, `tags`) or returns nil; `gd.crit(entity, nil)`
+releases it; `gd.crit_force(entity, n)` makes the next n eligible hits crit; `gd.crit_seed(n)` restarts the generator.
+The engine default is no crits (chance 0); a base of 5% and x1.5 is a script's call.
+
+Decision: in both collision paths (fighter hitbox, projectile with a fighter owner), right after the hit-rule percent
+queue, one xorshift32 draw per eligible hit (`min_percent` is the victim's percent before the hit; an ineligible hit draws
+nothing), plus one more when the multiplier has a range. A crit adds `damage*(multiplier-1)` to the victim's pending
+percent delta, so it rides the percent-only path (shield damage, hitlag, staling and the retail launch input are unchanged);
+`launch > 1` multiplies the final knockback at the same place the hit-rule family launch applies. `strength` is
+(multiplier-1) over (the largest multiplier of that entity, tags included, minus 1), so 0..1. All state (configuration,
+generator, pending events) is snapshotted game memory; `sim_commit` accepts `{op="crit", entity=, slot="default" or a tag,
+begin=, release=, chance=, multiplier=, multiplier_max=, launch=, min_percent=, force=}` (one slot per op) so the journal
+replays it like the other capability writers. Online the table is empty (writes are refused), so the decision never runs.
+Rewind: the draw sequence is in the snapshot, so a resimulation from the same snapshot gives the same crits; netplay would
+need every peer to install the same configuration on the same frame (the writes are offline-only today).
+
+`on_crit(info)` (engine event 19, after the frame, after that frame's `on_hit`): `attacker, victim` (ports),
+`attacker_entity, victim_entity, move_tag, base_damage, final_damage, added_damage, multiplier, strength, x, y, z` (the
+contact point on the victim's hurtbox), `hitlag_frames` (the victim's, read after the fighters ran), `launch, forced,
+projectile`. A visual lane that reacts to every hit should key on `on_crit` instead and scale by `strength`.
+Demo: `demos/crit-events`.
+
+### Earned afterimages and tracers (no always-on afterimages)
+
+Afterimages now start lowered: the default trigger is `"flag"`, and `"always"` or `"moving"` are refused unless the options
+carry `debug=true`. A start and an end are bound with `gd.afterimage_bind(handle, {status=1..4, tint=, tail=})` (on while
+that `gd.fighter_timed_status` channel of the emitter's fighter has frames; the status is snapshotted state, so a rewind
+restores it) or `gd.afterimage_window(handle, frames [, {tint=, tail=}])` (a presentation window that ends by itself and is
+not rewound); `gd.afterimage_unbind(handle)` drops either. `gd.tracer_bind`, `gd.tracer_window` and `gd.tracer_unbind` do the
+same for a tracer with a flag trigger: the one place for a tracer is "this hit carries something", so bind it to a status
+granted on `on_crit` or a hit tag, or to a window the length of the hitbox. The colours come from the binding (the cause).
+
+### Bonus-stage objectives
+
+`gd.stage_objectives()` returns `{targets={{id, x, y, z, state, intact}, ...}, remaining=n, supported={targets=true,
+doors=false, finish=false}}`. Targets are the live Break the Targets items (retail targets and `gd.spawn_target` alike; Mato's
+own destroy path removes a broken one). Race to the Finish doors and the finish line are not enumerated: no retail data
+source for them was found in the decomp.
