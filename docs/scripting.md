@@ -960,7 +960,7 @@ controller starts neutral, and `gd.cpu_modes()` reports `{mode="script", source=
 | `gd.cpu_target(port [, other])` | the fighter the `*_toward_fighter` commands face (default the first other fighter) |
 | `gd.cpu_cancel(port [, sub])` | stop everything, neutral |
 | `gd.cpu_commands()` | `{name = {code=, args=}}` for every command below |
-| `gd.cpu_attrs(port)` | the fighter's own numbers the macros are timed from: `jump_squat`, `hop_v`, `jump_v`, `gravity`, `terminal_velocity`, `landing_nair`.. `landing_dair`, `landing_normal`, `airdodge_landing`, `dash_initial`, `dash_max`, `walk_max`, `max_jumps`, `fast_fall`, ... |
+| `gd.cpu_attrs(port)` | the fighter's own numbers the macros are timed from: `jump_squat`, `hop_v`, `jump_v`, `gravity`, `terminal_velocity`, `landing_nair`.. `landing_dair`, `landing_normal`, `airdodge_landing`, `dash_initial`, `dash_max`, `walk_max`, `max_jumps`, `fast_fall`, ..., `tech_window` |
 
 Commands (`gd.cpu_commands()`; the numbers are the retail enum, asserted by a test):
 
@@ -989,7 +989,7 @@ the frame after the call).
 | `lcancel_aerial` `{aerial="nair", lcancel=1, at=2, lead=3}` (aerial: nair, fair, bair, uair or dair) | short hop, the aerial `at` ticks after take-off (C-stick for the directional ones), then L `lead` ticks before the predicted landing. The landing tick is `jump_squat + hop air frames + 2`, the air frames being the fighter's `hop_v`, `gravity` and `terminal_velocity` integrated the way the engine steps them |
 | `shield` `{frames=30}` | L held |
 | `perfect_shield` `{at=0, hold=12}` | L pressed `at` ticks from now: the caller times it to the hit |
-| `tech` `{at=0, dir="left", "right" or "in"}` | L tapped (with the stick toward `dir`) `at` ticks from now |
+| `tech` `{at=0, dir="left", "right" or "in", window=}` | L tapped (with the stick toward `dir`) `at` ticks from now. The game reads the stick when it lands the fighter, up to the tech window (`tech_window` in `gd.cpu_attrs`, retail common data) after the L press, so the stick is held for the whole window (`window` overrides it); letting go after the tap made a later landing an in-place tech in either direction (fixed 2026-10-05; verified by the `tech` skill event's `direction`: `left` is `away` for a fighter facing right, `right` is `toward`). Not for missed techs: a held stick on the floor can roll the get-up |
 | `jump_cancel_grab` `{z_at=1}` | X, then Z `z_at` ticks later (inside the jump squat) |
 
 `gd.cpu_goto(port, x, y [, {radius=2, timeout=900, sub=}])` is a rule-based mover, not a search. Each
@@ -2465,6 +2465,45 @@ granted on `on_crit` or a hit tag, or to a window the length of the hitbox. The 
 ### Bonus-stage objectives
 
 `gd.stage_objectives()` returns `{targets={{id, x, y, z, state, intact}, ...}, remaining=n, supported={targets=true,
-doors=false, finish=false}}`. Targets are the live Break the Targets items (retail targets and `gd.spawn_target` alike; Mato's
-own destroy path removes a broken one). Race to the Finish doors and the finish line are not enumerated: no retail data
-source for them was found in the decomp.
+doors=bool, finish=bool}}`, read-only, safe online. Targets are the live Break the Targets items (retail targets and
+`gd.spawn_target` alike; Mato's own destroy path removes a broken one).
+
+**Race to the Finish** (ground `grpushon`, `Gr_Kind_Pushon`; `MELEE_SCENE="mode=classic;step=8"` reaches it) has no door
+objects and no items: its "doors" are map points 0x99..0xB2 (`Ground_801C2D24` gives a point's world position). Every frame the
+ground (`ground.c`, `Ground_801C3D44` armed by `grPushOn_802186C8`) tests the first player against a 25 x 20 box around each
+point, gated by `fn_80218678` (a collision callback on map joints 3-5 sets its flag while the player stands on them); the
+first point that passes is latched (`stage_info.x6D0`), and that index selects the entry of the stage's Yakumono table
+(`grPushOn_80219204`) that the results screen shows as the special score when the stage ends. On that stage the result gains
+`doors={{kind="door", index, id, x, y, z, score, coins, reached, inside}, ...}` (20 points on the vanilla stage, scores from
+1000 to 80000 in the order of the course) and `finish={reached, door (the latched id), touching, candidate, scale,
+zones={{x_min, x_max, y_bottom, y_top} x4}}`; `zones` are the four rectangles of the fighter-device test
+(`grPushOn_802192A4`). `supported.doors` and `supported.finish` are true there, and `doors`/`finish` are absent elsewhere.
+Verified in the game: teleporting P1 onto door 156's point latched `finish.door=156` and ended the stage (outcome 6).
+**Not enumerated**: the Adventure Underground Maze's trigger markers (`Ground_801C3DB4`, map points 0xBD..0xC6, as
+`grkinokoroute.c` reads them) and the F-Zero Grand Prix checkpoints (`grbigblueroute.c`, `Ground_801C2D24` points around
+index 148). They are the same kind of map point, so listing them is a few lines once the stage and the index range are
+confirmed on a running stage; a verification lane could not do that blind.
+
+### Shock (a native status)
+
+`gd.shock(entity)` reads `{frames, charges, hitstun_multiplier, bonus, hits, applied, owner}` or nil;
+`gd.shock(entity, nil)` clears this script's Shock; `gd.shock(entity, {frames=1..3600 (default 300), charges=1..8 (default 1),
+hitstun=1..4 (default 1.5), bonus=0..120 (default 0), stack=bool})` applies it (`stack` adds charges and refreshes the timer
+of a running Shock instead of replacing it). Offline gameplay write (owner-scoped, forks the LAB timeline); false when another
+script owns that entity's Shock. `sim_commit` accepts `{op="shock", entity=, frames=, charges=, hitstun=, bonus=, stack=,
+clear=}` so the journal replays it.
+
+Meaning (the design spec's "next hit taken has more hitstun"): while an entity is shocked, each hit it takes that puts it into a
+damage reaction (`ftCo_8008DCE0`, where retail computes the reaction's hitstun frame count `mv.co.damage.x0`, next to Geno's
+HBSTUN bonus) adds `round(base * (hitstun - 1)) + bonus` frames (at most 120) and uses up a charge. Damage, knockback, launch
+and hitlag are untouched, so it composes with crits and hit rules; an armoured hit enters no reaction and keeps its charge.
+It ends when its frames run out, its charges are spent, it is cleared, or the fighter object is replaced. The grounded
+damage animation's own length is a floor, so a short hit shows the extra only once the hitstun exceeds it (measured, Fox, a
+weak grounded hit: hitstun 12 + 24, the fighter acted after 38 frames instead of 25). All state is snapshotted game memory with
+no RNG; the timer ticks once per logic frame. **Chaining** (Conductor) is Lua: `on_hit` with the attacker's element, then
+`gd.shock(gd.nearest_opponent(attacker, victim), ...)`. Not covered: grabs and special damage reactions that skip
+`ftCo_8008DCE0`. Events (skill ring, `gd.skill_history`, `on_skill`, and a hook per kind): `on_shock` (`frames, charges, bonus,
+hitstun_multiplier`), `on_shock_hit` (`base_hitstun, extra_hitstun, charges_left, hitstun_multiplier`), `on_shock_end`
+(`reason` = expired, spent, cleared or replaced; `hits`). `gd.skill_kinds()` has 24 entries now. Demo: `demos/shock-status`.
+Verified in the game: set, hit (base 12 + 24), spent, stack with bonus, savestate/loadstate restored charges and frames,
+`gd.rewind_test` PASS with Shock running.
