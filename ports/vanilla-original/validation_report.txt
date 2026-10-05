@@ -1,0 +1,54 @@
+== glTF file ==
+PASS one mesh, one primitive (one skinned piece)
+PASS no JOINTS_1/WEIGHTS_1 (at most 4 influences per vertex)
+PASS glb weights normalised : max error 0.00000
+PASS glb: no unskinned vertex (every weight sum > 0.99) : min sum 1.0000
+PASS glb: nonzero influences per vertex <= 4 : max 2
+PASS glb: skin joint count == bone count : 39
+PASS glb: joint indices in range
+PASS glb: animation count == clip count : 179
+PASS glb: every animation named after a clip, with the declared key count : [] []
+PASS glb: times start at 0 with a 1/60 s step; scale channels constant 1 (no bone scaling) : []
+PASS glb: skinned mesh has UVs and a material with a texture
+PASS model height 11-13 units, soles near y=0 : y -0.02..12.25, x +-5.55, z -2.70..2.67
+== coverage ==
+PASS all 351 engine motion rows resolved (own clip / alias / no-animation) : []
+PASS every alias targets an existing clip
+PASS every Striker move has a clip : []
+PASS clip hit frame == script hitbox frame, clip length >= script length (Striker moves/*.genoasm) : []
+PASS every required common state has its own clip : []
+root-motion clips (on `trans`): EscapeF, EscapeB, DownForwardU, DownBackU, DownForwardD, DownBackD, PassiveStandF, PassiveStandB, CliffClimbSlow, CliffClimbQuick, CliffAttackSlow, CliffAttackQuick, CliffEscapeSlow, CliffEscapeQuick
+PASS root motion only on trans in flagged clips
+== costumes ==
+PASS four costume textures exist
+== Blender-side results ==
+PASS max influences per vertex <= 4 : max 2
+PASS weights normalised (sum 1 +- 1e-3) : 0 vertices off
+PASS no unskinned vertices : 0 unskinned of 1403
+PASS weights only on deform bones
+PASS triangles within budget (<= 4000) : 2580
+PASS bones within budget (<= 64 for a pc-palette 64 packing; total <= 90) : 29 deform / 39 total
+PASS one mesh, one material slot (packs into one skinned piece) : 1 slot(s)
+PASS every mesh has a real material
+PASS UV layer present
+PASS no bone scale in rest pose
+PASS all required roles present : []
+PASS hurtbox count <= 15 (FighterHurtCapsule hurt_capsules[15]) : 15
+PASS hurtbox bones exist
+PASS an action per clip : 179 actions / 179 clips
+PASS every clip keyed on every required role bone : []
+PASS every channel has the declared frame count : []
+PASS no scale channels in any clip : 0
+PASS no euler channels (quaternion only)
+PASS loops wrap without a pop (wrap step <= 3x typical step + 0.25) : []
+PASS striking pose is within 85% of the clip's max reach on the hit frame (window hit-4..hit+6; throws and the whole-body dash attack excluded) : {}
+PASS stance foot ground speed matches the clip's declared ground_ref_speed (+-20%) : {}
+PASS re-import: one mesh object : 1
+PASS re-import: triangle count matches source (2580) : 2580
+PASS re-import: bone count matches source : 39 vs 39
+PASS re-import: every clip came back as an action : 179 actions; missing []
+PASS re-import: frame counts match the declared counts : []
+PASS re-import: <= 4 influences per vertex : 2
+== counts ==
+{"triangles": 2580, "vertices_gltf": 1925, "vertices_source": 1403, "bones": 39, "deform_bones": 29, "materials_per_costume": 1, "costume_materials": 4, "clips": 179, "total_frames": 4955, "motion_rows": 351, "rows_own": 162, "rows_alias": 31, "rows_placeholder": 151, "rows_no_animation": 7, "hurtboxes": 15, "glb_bytes": 10610576}
+RESULT: ALL PASSED

@@ -1,0 +1,7342 @@
+{
+ "schema": "geno-fighter-art-manifest/1",
+ "fighter": "vanilla-original",
+ "display_name": "Vanilla Original (the Courier)",
+ "conventions": {
+  "units": "1 unit = 1 Melee unit (the fighter is ~11.7 units to the helmet top, 12.4 to the crest tip); glTF numbers are Melee units, not metres",
+  "authoring_axes": "Blender Z-up, character faces -Y, character's left = +X",
+  "gltf_axes": "glTF Y-up, character faces +Z, left = +X (Blender exporter -Y-forward -> +Z-forward; same handedness and facing as HSD model space)",
+  "fps": 60,
+  "frame_semantics": "clip frame i is time i/60 s; one quaternion (+ location for trans/hips) key on every frame, linear interpolation; clip.frames = key count",
+  "rest_pose": "A-pose, arms 38 degrees from vertical, legs straight, feet flat (soles at y=0)",
+  "rotation": "quaternions, never euler; no bone scale anywhere (scale channels are constant 1)",
+  "root_motion": "only on the `trans` bone, only in the clips flagged root_motion=true; all other clips are in place",
+  "ground": "y=0 in glTF space (soles); `trans` origin is at the feet",
+  "hit_timing": "hit_frames[] are clip frames equal to the Striker's script frames; author the overlays at ANIM_RATE 1.0"
+ },
+ "counts": {
+  "triangles": 2580,
+  "vertices_gltf": 1925,
+  "vertices_source": 1403,
+  "bones": 39,
+  "deform_bones": 29,
+  "materials_per_costume": 1,
+  "costume_materials": 4,
+  "clips": 179,
+  "total_frames": 4955,
+  "motion_rows": 351,
+  "rows_own": 162,
+  "rows_alias": 31,
+  "rows_placeholder": 151,
+  "rows_no_animation": 7,
+  "hurtboxes": 15,
+  "glb_bytes": 10610576
+ },
+ "bones": [
+  {
+   "name": "root",
+   "parent": null,
+   "role": "root",
+   "deform": false,
+   "rest_head_authoring": [
+    0,
+    0,
+    0
+   ],
+   "rest_tail_authoring": [
+    0,
+    0,
+    0.6
+   ],
+   "rest_head_gltf": [
+    0,
+    0,
+    0
+   ],
+   "rest_tail_gltf": [
+    0,
+    0.6,
+    0
+   ]
+  },
+  {
+   "name": "trans",
+   "parent": "root",
+   "role": "translation",
+   "deform": false,
+   "rest_head_authoring": [
+    0,
+    0,
+    0
+   ],
+   "rest_tail_authoring": [
+    0,
+    0,
+    0.5
+   ],
+   "rest_head_gltf": [
+    0,
+    0,
+    0
+   ],
+   "rest_tail_gltf": [
+    0,
+    0.5,
+    0
+   ]
+  },
+  {
+   "name": "hips",
+   "parent": "trans",
+   "role": "hips",
+   "deform": true,
+   "rest_head_authoring": [
+    0,
+    0,
+    5.4
+   ],
+   "rest_tail_authoring": [
+    0,
+    0,
+    6.2
+   ],
+   "rest_head_gltf": [
+    0,
+    5.4,
+    0
+   ],
+   "rest_tail_gltf": [
+    0,
+    6.2,
+    0
+   ]
+  },
+  {
+   "name": "spine",
+   "parent": "hips",
+   "role": "spine",
+   "deform": true,
+   "rest_head_authoring": [
+    0,
+    0,
+    6.2
+   ],
+   "rest_tail_authoring": [
+    0,
+    0,
+    7.2
+   ],
+   "rest_head_gltf": [
+    0,
+    6.2,
+    0
+   ],
+   "rest_tail_gltf": [
+    0,
+    7.2,
+    0
+   ]
+  },
+  {
+   "name": "chest",
+   "parent": "spine",
+   "role": "chest",
+   "deform": true,
+   "rest_head_authoring": [
+    0,
+    0,
+    7.2
+   ],
+   "rest_tail_authoring": [
+    0,
+    0,
+    8.2
+   ],
+   "rest_head_gltf": [
+    0,
+    7.2,
+    0
+   ],
+   "rest_tail_gltf": [
+    0,
+    8.2,
+    0
+   ]
+  },
+  {
+   "name": "neck",
+   "parent": "chest",
+   "role": "neck",
+   "deform": true,
+   "rest_head_authoring": [
+    0,
+    0,
+    8.2
+   ],
+   "rest_tail_authoring": [
+    0,
+    0,
+    8.8
+   ],
+   "rest_head_gltf": [
+    0,
+    8.2,
+    0
+   ],
+   "rest_tail_gltf": [
+    0,
+    8.8,
+    0
+   ]
+  },
+  {
+   "name": "head",
+   "parent": "neck",
+   "role": "head",
+   "deform": true,
+   "rest_head_authoring": [
+    0,
+    0,
+    8.8
+   ],
+   "rest_tail_authoring": [
+    0,
+    0,
+    11.6
+   ],
+   "rest_head_gltf": [
+    0,
+    8.8,
+    0
+   ],
+   "rest_tail_gltf": [
+    0,
+    11.6,
+    0
+   ]
+  },
+  {
+   "name": "clavicle_L",
+   "parent": "chest",
+   "role": "shoulder",
+   "deform": true,
+   "rest_head_authoring": [
+    0.3,
+    0,
+    7.8
+   ],
+   "rest_tail_authoring": [
+    1.8,
+    0,
+    7.8
+   ],
+   "rest_head_gltf": [
+    0.3,
+    7.8,
+    0
+   ],
+   "rest_tail_gltf": [
+    1.8,
+    7.8,
+    0
+   ]
+  },
+  {
+   "name": "upperarm_L",
+   "parent": "clavicle_L",
+   "role": "upper_arm",
+   "deform": true,
+   "rest_head_authoring": [
+    1.9,
+    0,
+    7.75
+   ],
+   "rest_tail_authoring": [
+    3.07,
+    0,
+    6.25
+   ],
+   "rest_head_gltf": [
+    1.9,
+    7.75,
+    0
+   ],
+   "rest_tail_gltf": [
+    3.07,
+    6.25,
+    0
+   ]
+  },
+  {
+   "name": "forearm_L",
+   "parent": "upperarm_L",
+   "role": "lower_arm",
+   "deform": true,
+   "rest_head_authoring": [
+    3.07,
+    0,
+    6.25
+   ],
+   "rest_tail_authoring": [
+    4.18,
+    0,
+    4.83
+   ],
+   "rest_head_gltf": [
+    3.07,
+    6.25,
+    0
+   ],
+   "rest_tail_gltf": [
+    4.18,
+    4.83,
+    0
+   ]
+  },
+  {
+   "name": "hand_L",
+   "parent": "forearm_L",
+   "role": "hand",
+   "deform": true,
+   "rest_head_authoring": [
+    4.18,
+    0,
+    4.83
+   ],
+   "rest_tail_authoring": [
+    4.8,
+    0,
+    4.04
+   ],
+   "rest_head_gltf": [
+    4.18,
+    4.83,
+    0
+   ],
+   "rest_tail_gltf": [
+    4.8,
+    4.04,
+    0
+   ]
+  },
+  {
+   "name": "thumb_L",
+   "parent": "hand_L",
+   "role": "thumb",
+   "deform": true,
+   "rest_head_authoring": [
+    4.0,
+    -0.45,
+    4.75
+   ],
+   "rest_tail_authoring": [
+    3.9,
+    -0.95,
+    4.35
+   ],
+   "rest_head_gltf": [
+    4.0,
+    4.75,
+    0.45
+   ],
+   "rest_tail_gltf": [
+    3.9,
+    4.35,
+    0.95
+   ]
+  },
+  {
+   "name": "fingers_L",
+   "parent": "hand_L",
+   "role": "fingers",
+   "deform": true,
+   "rest_head_authoring": [
+    4.55,
+    -0.15,
+    4.5
+   ],
+   "rest_tail_authoring": [
+    4.95,
+    -0.15,
+    3.95
+   ],
+   "rest_head_gltf": [
+    4.55,
+    4.5,
+    0.15
+   ],
+   "rest_tail_gltf": [
+    4.95,
+    3.95,
+    0.15
+   ]
+  },
+  {
+   "name": "thigh_L",
+   "parent": "hips",
+   "role": "upper_leg",
+   "deform": true,
+   "rest_head_authoring": [
+    1.05,
+    0,
+    5.5
+   ],
+   "rest_tail_authoring": [
+    1.05,
+    0,
+    3.3
+   ],
+   "rest_head_gltf": [
+    1.05,
+    5.5,
+    0
+   ],
+   "rest_tail_gltf": [
+    1.05,
+    3.3,
+    0
+   ]
+  },
+  {
+   "name": "shin_L",
+   "parent": "thigh_L",
+   "role": "lower_leg",
+   "deform": true,
+   "rest_head_authoring": [
+    1.05,
+    0,
+    3.3
+   ],
+   "rest_tail_authoring": [
+    1.05,
+    0,
+    1.25
+   ],
+   "rest_head_gltf": [
+    1.05,
+    3.3,
+    0
+   ],
+   "rest_tail_gltf": [
+    1.05,
+    1.25,
+    0
+   ]
+  },
+  {
+   "name": "foot_L",
+   "parent": "shin_L",
+   "role": "foot",
+   "deform": true,
+   "rest_head_authoring": [
+    1.05,
+    0,
+    1.25
+   ],
+   "rest_tail_authoring": [
+    1.05,
+    -1.55,
+    0.55
+   ],
+   "rest_head_gltf": [
+    1.05,
+    1.25,
+    0
+   ],
+   "rest_tail_gltf": [
+    1.05,
+    0.55,
+    1.55
+   ]
+  },
+  {
+   "name": "toe_L",
+   "parent": "foot_L",
+   "role": "toe",
+   "deform": true,
+   "rest_head_authoring": [
+    1.05,
+    -1.55,
+    0.55
+   ],
+   "rest_tail_authoring": [
+    1.05,
+    -2.45,
+    0.45
+   ],
+   "rest_head_gltf": [
+    1.05,
+    0.55,
+    1.55
+   ],
+   "rest_tail_gltf": [
+    1.05,
+    0.45,
+    2.45
+   ]
+  },
+  {
+   "name": "clavicle_R",
+   "parent": "chest",
+   "role": "shoulder",
+   "deform": true,
+   "rest_head_authoring": [
+    -0.3,
+    0,
+    7.8
+   ],
+   "rest_tail_authoring": [
+    -1.8,
+    0,
+    7.8
+   ],
+   "rest_head_gltf": [
+    -0.3,
+    7.8,
+    0
+   ],
+   "rest_tail_gltf": [
+    -1.8,
+    7.8,
+    0
+   ]
+  },
+  {
+   "name": "upperarm_R",
+   "parent": "clavicle_R",
+   "role": "upper_arm",
+   "deform": true,
+   "rest_head_authoring": [
+    -1.9,
+    0,
+    7.75
+   ],
+   "rest_tail_authoring": [
+    -3.07,
+    0,
+    6.25
+   ],
+   "rest_head_gltf": [
+    -1.9,
+    7.75,
+    0
+   ],
+   "rest_tail_gltf": [
+    -3.07,
+    6.25,
+    0
+   ]
+  },
+  {
+   "name": "forearm_R",
+   "parent": "upperarm_R",
+   "role": "lower_arm",
+   "deform": true,
+   "rest_head_authoring": [
+    -3.07,
+    0,
+    6.25
+   ],
+   "rest_tail_authoring": [
+    -4.18,
+    0,
+    4.83
+   ],
+   "rest_head_gltf": [
+    -3.07,
+    6.25,
+    0
+   ],
+   "rest_tail_gltf": [
+    -4.18,
+    4.83,
+    0
+   ]
+  },
+  {
+   "name": "hand_R",
+   "parent": "forearm_R",
+   "role": "hand",
+   "deform": true,
+   "rest_head_authoring": [
+    -4.18,
+    0,
+    4.83
+   ],
+   "rest_tail_authoring": [
+    -4.8,
+    0,
+    4.04
+   ],
+   "rest_head_gltf": [
+    -4.18,
+    4.83,
+    0
+   ],
+   "rest_tail_gltf": [
+    -4.8,
+    4.04,
+    0
+   ]
+  },
+  {
+   "name": "thumb_R",
+   "parent": "hand_R",
+   "role": "thumb",
+   "deform": true,
+   "rest_head_authoring": [
+    -4.0,
+    -0.45,
+    4.75
+   ],
+   "rest_tail_authoring": [
+    -3.9,
+    -0.95,
+    4.35
+   ],
+   "rest_head_gltf": [
+    -4.0,
+    4.75,
+    0.45
+   ],
+   "rest_tail_gltf": [
+    -3.9,
+    4.35,
+    0.95
+   ]
+  },
+  {
+   "name": "fingers_R",
+   "parent": "hand_R",
+   "role": "fingers",
+   "deform": true,
+   "rest_head_authoring": [
+    -4.55,
+    -0.15,
+    4.5
+   ],
+   "rest_tail_authoring": [
+    -4.95,
+    -0.15,
+    3.95
+   ],
+   "rest_head_gltf": [
+    -4.55,
+    4.5,
+    0.15
+   ],
+   "rest_tail_gltf": [
+    -4.95,
+    3.95,
+    0.15
+   ]
+  },
+  {
+   "name": "thigh_R",
+   "parent": "hips",
+   "role": "upper_leg",
+   "deform": true,
+   "rest_head_authoring": [
+    -1.05,
+    0,
+    5.5
+   ],
+   "rest_tail_authoring": [
+    -1.05,
+    0,
+    3.3
+   ],
+   "rest_head_gltf": [
+    -1.05,
+    5.5,
+    0
+   ],
+   "rest_tail_gltf": [
+    -1.05,
+    3.3,
+    0
+   ]
+  },
+  {
+   "name": "shin_R",
+   "parent": "thigh_R",
+   "role": "lower_leg",
+   "deform": true,
+   "rest_head_authoring": [
+    -1.05,
+    0,
+    3.3
+   ],
+   "rest_tail_authoring": [
+    -1.05,
+    0,
+    1.25
+   ],
+   "rest_head_gltf": [
+    -1.05,
+    3.3,
+    0
+   ],
+   "rest_tail_gltf": [
+    -1.05,
+    1.25,
+    0
+   ]
+  },
+  {
+   "name": "foot_R",
+   "parent": "shin_R",
+   "role": "foot",
+   "deform": true,
+   "rest_head_authoring": [
+    -1.05,
+    0,
+    1.25
+   ],
+   "rest_tail_authoring": [
+    -1.05,
+    -1.55,
+    0.55
+   ],
+   "rest_head_gltf": [
+    -1.05,
+    1.25,
+    0
+   ],
+   "rest_tail_gltf": [
+    -1.05,
+    0.55,
+    1.55
+   ]
+  },
+  {
+   "name": "toe_R",
+   "parent": "foot_R",
+   "role": "toe",
+   "deform": true,
+   "rest_head_authoring": [
+    -1.05,
+    -1.55,
+    0.55
+   ],
+   "rest_tail_authoring": [
+    -1.05,
+    -2.45,
+    0.45
+   ],
+   "rest_head_gltf": [
+    -1.05,
+    0.55,
+    1.55
+   ],
+   "rest_tail_gltf": [
+    -1.05,
+    0.45,
+    2.45
+   ]
+  },
+  {
+   "name": "scarf1",
+   "parent": "neck",
+   "role": "cloth_1",
+   "deform": true,
+   "rest_head_authoring": [
+    0,
+    0.9,
+    8.1
+   ],
+   "rest_tail_authoring": [
+    0,
+    1.5,
+    7.2
+   ],
+   "rest_head_gltf": [
+    0,
+    8.1,
+    -0.9
+   ],
+   "rest_tail_gltf": [
+    0,
+    7.2,
+    -1.5
+   ]
+  },
+  {
+   "name": "scarf2",
+   "parent": "scarf1",
+   "role": "cloth_2",
+   "deform": true,
+   "rest_head_authoring": [
+    0,
+    1.5,
+    7.2
+   ],
+   "rest_tail_authoring": [
+    0,
+    1.8,
+    6.0
+   ],
+   "rest_head_gltf": [
+    0,
+    7.2,
+    -1.5
+   ],
+   "rest_tail_gltf": [
+    0,
+    6.0,
+    -1.8
+   ]
+  },
+  {
+   "name": "scarf3",
+   "parent": "scarf2",
+   "role": "cloth_3",
+   "deform": true,
+   "rest_head_authoring": [
+    0,
+    1.8,
+    6.0
+   ],
+   "rest_tail_authoring": [
+    0,
+    1.9,
+    4.7
+   ],
+   "rest_head_gltf": [
+    0,
+    6.0,
+    -1.8
+   ],
+   "rest_tail_gltf": [
+    0,
+    4.7,
+    -1.9
+   ]
+  },
+  {
+   "name": "scarf4",
+   "parent": "scarf3",
+   "role": "cloth_4",
+   "deform": true,
+   "rest_head_authoring": [
+    0,
+    1.9,
+    4.7
+   ],
+   "rest_tail_authoring": [
+    0,
+    1.9,
+    3.5
+   ],
+   "rest_head_gltf": [
+    0,
+    4.7,
+    -1.9
+   ],
+   "rest_tail_gltf": [
+    0,
+    3.5,
+    -1.9
+   ]
+  },
+  {
+   "name": "socket_item_R",
+   "parent": "hand_R",
+   "role": "item_socket",
+   "deform": false,
+   "rest_head_authoring": [
+    -4.35,
+    -0.2,
+    4.45
+   ],
+   "rest_tail_authoring": [
+    -4.35,
+    -0.6,
+    4.45
+   ],
+   "rest_head_gltf": [
+    -4.35,
+    4.45,
+    0.2
+   ],
+   "rest_tail_gltf": [
+    -4.35,
+    4.45,
+    0.6
+   ]
+  },
+  {
+   "name": "grab_anchor",
+   "parent": "chest",
+   "role": "grab_anchor",
+   "deform": false,
+   "rest_head_authoring": [
+    0,
+    -3.2,
+    6.6
+   ],
+   "rest_tail_authoring": [
+    0,
+    -3.2,
+    7.1
+   ],
+   "rest_head_gltf": [
+    0,
+    6.6,
+    3.2
+   ],
+   "rest_tail_gltf": [
+    0,
+    7.1,
+    3.2
+   ]
+  },
+  {
+   "name": "victim_anchor",
+   "parent": "hips",
+   "role": "victim_anchor",
+   "deform": false,
+   "rest_head_authoring": [
+    0,
+    0,
+    5.6
+   ],
+   "rest_tail_authoring": [
+    0,
+    0,
+    6.0
+   ],
+   "rest_head_gltf": [
+    0,
+    5.6,
+    0
+   ],
+   "rest_tail_gltf": [
+    0,
+    6.0,
+    0
+   ]
+  },
+  {
+   "name": "camera_focus",
+   "parent": "chest",
+   "role": "camera_focus",
+   "deform": false,
+   "rest_head_authoring": [
+    0,
+    0,
+    7.4
+   ],
+   "rest_tail_authoring": [
+    0,
+    0,
+    7.8
+   ],
+   "rest_head_gltf": [
+    0,
+    7.4,
+    0
+   ],
+   "rest_tail_gltf": [
+    0,
+    7.8,
+    0
+   ]
+  },
+  {
+   "name": "shield_origin",
+   "parent": "trans",
+   "role": "shield_origin",
+   "deform": false,
+   "rest_head_authoring": [
+    0,
+    0,
+    5.0
+   ],
+   "rest_tail_authoring": [
+    0,
+    0,
+    5.4
+   ],
+   "rest_head_gltf": [
+    0,
+    5.0,
+    0
+   ],
+   "rest_tail_gltf": [
+    0,
+    5.4,
+    0
+   ]
+  },
+  {
+   "name": "reflect_origin",
+   "parent": "trans",
+   "role": "reflect_origin",
+   "deform": false,
+   "rest_head_authoring": [
+    0,
+    0,
+    5.8
+   ],
+   "rest_tail_authoring": [
+    0,
+    0,
+    6.2
+   ],
+   "rest_head_gltf": [
+    0,
+    5.8,
+    0
+   ],
+   "rest_tail_gltf": [
+    0,
+    6.2,
+    0
+   ]
+  },
+  {
+   "name": "absorb_origin",
+   "parent": "trans",
+   "role": "absorb_origin",
+   "deform": false,
+   "rest_head_authoring": [
+    0,
+    0,
+    5.4
+   ],
+   "rest_tail_authoring": [
+    0,
+    0,
+    5.8
+   ],
+   "rest_head_gltf": [
+    0,
+    5.4,
+    0
+   ],
+   "rest_tail_gltf": [
+    0,
+    5.8,
+    0
+   ]
+  },
+  {
+   "name": "head_top",
+   "parent": "head",
+   "role": "head_top",
+   "deform": false,
+   "rest_head_authoring": [
+    0,
+    0,
+    12.1
+   ],
+   "rest_tail_authoring": [
+    0,
+    0,
+    12.5
+   ],
+   "rest_head_gltf": [
+    0,
+    12.1,
+    0
+   ],
+   "rest_tail_gltf": [
+    0,
+    12.5,
+    0
+   ]
+  }
+ ],
+ "hurtboxes": [
+  {
+   "id": "head",
+   "bone": "head",
+   "a_gltf": [
+    0,
+    9.75,
+    0
+   ],
+   "b_gltf": [
+    0,
+    10.45,
+    0
+   ],
+   "a_authoring": [
+    0,
+    0,
+    9.75
+   ],
+   "b_authoring": [
+    0,
+    0,
+    10.45
+   ],
+   "radius": 1.8,
+   "height": "high",
+   "grabbable": true
+  },
+  {
+   "id": "chest",
+   "bone": "chest",
+   "a_gltf": [
+    0,
+    7.3,
+    0
+   ],
+   "b_gltf": [
+    0,
+    8.0,
+    0
+   ],
+   "a_authoring": [
+    0,
+    0,
+    7.3
+   ],
+   "b_authoring": [
+    0,
+    0,
+    8.0
+   ],
+   "radius": 1.65,
+   "height": "high",
+   "grabbable": true
+  },
+  {
+   "id": "torso",
+   "bone": "hips",
+   "a_gltf": [
+    0,
+    5.5,
+    0
+   ],
+   "b_gltf": [
+    0,
+    6.8,
+    0
+   ],
+   "a_authoring": [
+    0,
+    0,
+    5.5
+   ],
+   "b_authoring": [
+    0,
+    0,
+    6.8
+   ],
+   "radius": 1.55,
+   "height": "mid",
+   "grabbable": true
+  },
+  {
+   "id": "upperarm_L",
+   "bone": "upperarm_L",
+   "a_gltf": [
+    1.9,
+    7.75,
+    0
+   ],
+   "b_gltf": [
+    3.07,
+    6.25,
+    0
+   ],
+   "a_authoring": [
+    1.9,
+    0,
+    7.75
+   ],
+   "b_authoring": [
+    3.07,
+    0,
+    6.25
+   ],
+   "radius": 0.8,
+   "height": "mid",
+   "grabbable": true
+  },
+  {
+   "id": "lowerarm_L",
+   "bone": "forearm_L",
+   "a_gltf": [
+    3.07,
+    6.25,
+    0
+   ],
+   "b_gltf": [
+    4.18,
+    4.83,
+    0
+   ],
+   "a_authoring": [
+    3.07,
+    0,
+    6.25
+   ],
+   "b_authoring": [
+    4.18,
+    0,
+    4.83
+   ],
+   "radius": 0.8,
+   "height": "mid",
+   "grabbable": true
+  },
+  {
+   "id": "hand_L",
+   "bone": "hand_L",
+   "a_gltf": [
+    4.4,
+    4.55,
+    0
+   ],
+   "b_gltf": [
+    4.8,
+    4.0,
+    0
+   ],
+   "a_authoring": [
+    4.4,
+    0,
+    4.55
+   ],
+   "b_authoring": [
+    4.8,
+    0,
+    4.0
+   ],
+   "radius": 1.1,
+   "height": "mid",
+   "grabbable": true
+  },
+  {
+   "id": "thigh_L",
+   "bone": "thigh_L",
+   "a_gltf": [
+    1.05,
+    5.4,
+    0
+   ],
+   "b_gltf": [
+    1.05,
+    3.4,
+    0
+   ],
+   "a_authoring": [
+    1.05,
+    0,
+    5.4
+   ],
+   "b_authoring": [
+    1.05,
+    0,
+    3.4
+   ],
+   "radius": 1.0,
+   "height": "low",
+   "grabbable": true
+  },
+  {
+   "id": "shin_L",
+   "bone": "shin_L",
+   "a_gltf": [
+    1.05,
+    3.3,
+    0
+   ],
+   "b_gltf": [
+    1.05,
+    1.4,
+    0
+   ],
+   "a_authoring": [
+    1.05,
+    0,
+    3.3
+   ],
+   "b_authoring": [
+    1.05,
+    0,
+    1.4
+   ],
+   "radius": 0.95,
+   "height": "low",
+   "grabbable": true
+  },
+  {
+   "id": "foot_L",
+   "bone": "foot_L",
+   "a_gltf": [
+    1.05,
+    0.75,
+    -0.2
+   ],
+   "b_gltf": [
+    1.05,
+    0.65,
+    1.7
+   ],
+   "a_authoring": [
+    1.05,
+    0.2,
+    0.75
+   ],
+   "b_authoring": [
+    1.05,
+    -1.7,
+    0.65
+   ],
+   "radius": 0.75,
+   "height": "low",
+   "grabbable": true
+  },
+  {
+   "id": "upperarm_R",
+   "bone": "upperarm_R",
+   "a_gltf": [
+    -1.9,
+    7.75,
+    0
+   ],
+   "b_gltf": [
+    -3.07,
+    6.25,
+    0
+   ],
+   "a_authoring": [
+    -1.9,
+    0,
+    7.75
+   ],
+   "b_authoring": [
+    -3.07,
+    0,
+    6.25
+   ],
+   "radius": 0.8,
+   "height": "mid",
+   "grabbable": true
+  },
+  {
+   "id": "lowerarm_R",
+   "bone": "forearm_R",
+   "a_gltf": [
+    -3.07,
+    6.25,
+    0
+   ],
+   "b_gltf": [
+    -4.18,
+    4.83,
+    0
+   ],
+   "a_authoring": [
+    -3.07,
+    0,
+    6.25
+   ],
+   "b_authoring": [
+    -4.18,
+    0,
+    4.83
+   ],
+   "radius": 0.8,
+   "height": "mid",
+   "grabbable": true
+  },
+  {
+   "id": "hand_R",
+   "bone": "hand_R",
+   "a_gltf": [
+    -4.4,
+    4.55,
+    0
+   ],
+   "b_gltf": [
+    -4.8,
+    4.0,
+    0
+   ],
+   "a_authoring": [
+    -4.4,
+    0,
+    4.55
+   ],
+   "b_authoring": [
+    -4.8,
+    0,
+    4.0
+   ],
+   "radius": 1.1,
+   "height": "mid",
+   "grabbable": true
+  },
+  {
+   "id": "thigh_R",
+   "bone": "thigh_R",
+   "a_gltf": [
+    -1.05,
+    5.4,
+    0
+   ],
+   "b_gltf": [
+    -1.05,
+    3.4,
+    0
+   ],
+   "a_authoring": [
+    -1.05,
+    0,
+    5.4
+   ],
+   "b_authoring": [
+    -1.05,
+    0,
+    3.4
+   ],
+   "radius": 1.0,
+   "height": "low",
+   "grabbable": true
+  },
+  {
+   "id": "shin_R",
+   "bone": "shin_R",
+   "a_gltf": [
+    -1.05,
+    3.3,
+    0
+   ],
+   "b_gltf": [
+    -1.05,
+    1.4,
+    0
+   ],
+   "a_authoring": [
+    -1.05,
+    0,
+    3.3
+   ],
+   "b_authoring": [
+    -1.05,
+    0,
+    1.4
+   ],
+   "radius": 0.95,
+   "height": "low",
+   "grabbable": true
+  },
+  {
+   "id": "foot_R",
+   "bone": "foot_R",
+   "a_gltf": [
+    -1.05,
+    0.75,
+    -0.2
+   ],
+   "b_gltf": [
+    -1.05,
+    0.65,
+    1.7
+   ],
+   "a_authoring": [
+    -1.05,
+    0.2,
+    0.75
+   ],
+   "b_authoring": [
+    -1.05,
+    -1.7,
+    0.65
+   ],
+   "radius": 0.75,
+   "height": "low",
+   "grabbable": true
+  }
+ ],
+ "ecb": {
+  "anchor_bone": "trans",
+  "standing": {
+   "top": 11.7,
+   "bottom": 0.0,
+   "left": -3.0,
+   "right": 3.0,
+   "side_height": 5.5
+  },
+  "crouch": {
+   "top": 6.4,
+   "bottom": 0.0,
+   "left": -3.0,
+   "right": 3.0,
+   "side_height": 3.2
+  },
+  "aerial": {
+   "top": 11.7,
+   "bottom": 0.0,
+   "left": -3.0,
+   "right": 3.0,
+   "side_height": 5.5
+  },
+  "ledge_grab_box": {
+   "front": 5.0,
+   "back": -1.0,
+   "up": 3.0,
+   "down": -6.0
+  },
+  "notes": "Diamond ECB. Standing top is just above the helmet (11.7), below the crest (12.4); sampled from the animation root, not from bones. Values are proposals sized to this body (retail ECBs are a few units wide)."
+ },
+ "costumes": [
+  {
+   "name": "default",
+   "team": null,
+   "description": "teal tunic, cream helmet, amber scarf",
+   "texture": "out/tex/costume_default.png",
+   "material": "mat_default"
+  },
+  {
+   "name": "red",
+   "team": "red",
+   "description": "crimson tunic, cream helmet, gold scarf",
+   "texture": "out/tex/costume_red.png",
+   "material": "mat_red"
+  },
+  {
+   "name": "blue",
+   "team": "blue",
+   "description": "cobalt tunic, cream helmet, white scarf",
+   "texture": "out/tex/costume_blue.png",
+   "material": "mat_blue"
+  },
+  {
+   "name": "green",
+   "team": "green",
+   "description": "forest tunic, cream helmet, lime scarf",
+   "texture": "out/tex/costume_green.png",
+   "material": "mat_green"
+  }
+ ],
+ "clips": [
+  {
+   "name": "Attack11",
+   "frames": 13,
+   "loop": false,
+   "serves": "Attack11 (jab 1)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    3
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "Attack12",
+   "frames": 14,
+   "loop": false,
+   "serves": "Attack12 (jab 2)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    3
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "Attack13",
+   "frames": 20,
+   "loop": false,
+   "serves": "Attack13 (jab 3, rising hook)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    5
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "Attack100Loop",
+   "frames": 8,
+   "loop": true,
+   "serves": "Attack100Loop (rapid jab; placeholder cycle)",
+   "status": "placeholder",
+   "category": "move",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "Attack100Start",
+   "frames": 6,
+   "loop": false,
+   "serves": "Attack100Start (placeholder)",
+   "status": "placeholder",
+   "category": "move",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "Attack100End",
+   "frames": 10,
+   "loop": false,
+   "serves": "Attack100End (placeholder)",
+   "status": "placeholder",
+   "category": "move",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackDash",
+   "frames": 30,
+   "loop": false,
+   "serves": "AttackDash (shoulder lunge)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    6,
+    10
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackS3Hi",
+   "frames": 17,
+   "loop": false,
+   "serves": "AttackS3Hi (forward tilt)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    6
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackS3S",
+   "frames": 17,
+   "loop": false,
+   "serves": "AttackS3S (forward tilt)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    6
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackS3Lw",
+   "frames": 17,
+   "loop": false,
+   "serves": "AttackS3Lw (forward tilt)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    6
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackHi3",
+   "frames": 23,
+   "loop": false,
+   "serves": "AttackHi3 (up tilt)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    5,
+    17
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackLw3",
+   "frames": 23,
+   "loop": false,
+   "serves": "AttackLw3 (down tilt)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    6
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackS4S",
+   "frames": 38,
+   "loop": false,
+   "serves": "AttackS4S (forward smash; charge pose = frame 5)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    13
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackS4Hi",
+   "frames": 38,
+   "loop": false,
+   "serves": "AttackS4Hi (forward smash; charge pose = frame 5)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    13
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackS4Lw",
+   "frames": 38,
+   "loop": false,
+   "serves": "AttackS4Lw (forward smash; charge pose = frame 5)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    13
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackHi4",
+   "frames": 38,
+   "loop": false,
+   "serves": "AttackHi4 (up smash; charge pose = frame 7)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    10,
+    20
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackLw4",
+   "frames": 34,
+   "loop": false,
+   "serves": "AttackLw4 (down smash: front then back)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    6,
+    15
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackAirN",
+   "frames": 40,
+   "loop": false,
+   "serves": "AttackAirN (split-kick spin pose)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [
+    4,
+    8
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackAirF",
+   "frames": 52,
+   "loop": false,
+   "serves": "AttackAirF (overhead double smash)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [
+    19
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackAirB",
+   "frames": 28,
+   "loop": false,
+   "serves": "AttackAirB (double back kick)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [
+    7,
+    14
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackAirHi",
+   "frames": 25,
+   "loop": false,
+   "serves": "AttackAirHi (scorpion kick)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [
+    5
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "AttackAirLw",
+   "frames": 42,
+   "loop": false,
+   "serves": "AttackAirLw (drill)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [
+    11,
+    25
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "Catch",
+   "frames": 30,
+   "loop": false,
+   "serves": "Catch / CatchPull (grab whiff)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    6
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "CatchDash",
+   "frames": 36,
+   "loop": false,
+   "serves": "CatchDash (dash grab)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    9
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "CatchWait",
+   "frames": 40,
+   "loop": true,
+   "serves": "CatchWait (holding a victim: grab_anchor in front of the chest)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "CatchAttack",
+   "frames": 15,
+   "loop": false,
+   "serves": "CatchAttack (pummel, a headbutt)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    14
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "CatchCut",
+   "frames": 22,
+   "loop": false,
+   "serves": "CatchCut (victim breaks free)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "ThrowF",
+   "frames": 26,
+   "loop": false,
+   "serves": "ThrowF (forward throw; release 13)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    13
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "ThrowB",
+   "frames": 60,
+   "loop": false,
+   "serves": "ThrowB (back throw; spin, release 45)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    45
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "ThrowHi",
+   "frames": 34,
+   "loop": false,
+   "serves": "ThrowHi (up throw; release 19)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    19
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "ThrowLw",
+   "frames": 34,
+   "loop": false,
+   "serves": "ThrowLw (down throw: slam; release 19)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    19
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "NCharge",
+   "frames": 12,
+   "loop": true,
+   "serves": "NCharge (hold B: coiled stance, 2-frame script loop)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "NRelease",
+   "frames": 20,
+   "loop": false,
+   "serves": "NRelease (dash strike; hit 3-11)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    3
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 40
+  },
+  {
+   "name": "SLunge",
+   "frames": 28,
+   "loop": false,
+   "serves": "SLunge (side special lunge; hit 4-12)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    4
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 30
+  },
+  {
+   "name": "Rise",
+   "frames": 24,
+   "loop": true,
+   "serves": "Rise (up special: a steerable corkscrew; the clip loops)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [
+    1
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 70
+  },
+  {
+   "name": "Counter",
+   "frames": 30,
+   "loop": false,
+   "serves": "Counter (guard cross; counter window 4-24)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "CounterStrike",
+   "frames": 21,
+   "loop": false,
+   "serves": "CounterStrike (answering strike; hit 2-7)",
+   "status": "full",
+   "category": "move",
+   "hit_frames": [
+    2
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 30
+  },
+  {
+   "name": "Wait",
+   "frames": 80,
+   "loop": true,
+   "serves": "Wait (ready stance, breathing)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 5
+  },
+  {
+   "name": "WalkSlow",
+   "frames": 44,
+   "loop": true,
+   "serves": "WalkSlow",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {
+    "stride_per_cycle_units": 2.8,
+    "stance_duty": 0.66,
+    "ground_ref_speed": 0.0964,
+    "note": "slide-free body speed in units/frame at animation rate 1.0; the engine scales the rate"
+   },
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "WalkMiddle",
+   "frames": 34,
+   "loop": true,
+   "serves": "WalkMiddle",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {
+    "stride_per_cycle_units": 3.5,
+    "stance_duty": 0.6,
+    "ground_ref_speed": 0.1716,
+    "note": "slide-free body speed in units/frame at animation rate 1.0; the engine scales the rate"
+   },
+   "notes": "",
+   "wind": 16
+  },
+  {
+   "name": "WalkFast",
+   "frames": 26,
+   "loop": true,
+   "serves": "WalkFast",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {
+    "stride_per_cycle_units": 4.3,
+    "stance_duty": 0.55,
+    "ground_ref_speed": 0.3007,
+    "note": "slide-free body speed in units/frame at animation rate 1.0; the engine scales the rate"
+   },
+   "notes": "",
+   "wind": 26
+  },
+  {
+   "name": "Run",
+   "frames": 16,
+   "loop": true,
+   "serves": "Run / RunDirect",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {
+    "stride_per_cycle_units": 5.8,
+    "stance_duty": 0.38,
+    "ground_ref_speed": 0.9539,
+    "note": "slide-free body speed in units/frame at animation rate 1.0; the engine scales the rate"
+   },
+   "notes": "",
+   "wind": 58
+  },
+  {
+   "name": "Dash",
+   "frames": 16,
+   "loop": false,
+   "serves": "Dash (burst into the run cycle; loops to Run)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 64
+  },
+  {
+   "name": "RunBrake",
+   "frames": 16,
+   "loop": false,
+   "serves": "RunBrake (skid)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 36
+  },
+  {
+   "name": "Turn",
+   "frames": 10,
+   "loop": false,
+   "serves": "Turn (engine flips facing between frames 4 and 5)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "TurnRun",
+   "frames": 12,
+   "loop": false,
+   "serves": "TurnRun (engine flips facing between frames 5 and 6)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 30
+  },
+  {
+   "name": "KneeBend",
+   "frames": 5,
+   "loop": false,
+   "serves": "KneeBend (jump squat)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 2
+  },
+  {
+   "name": "JumpF",
+   "frames": 40,
+   "loop": false,
+   "serves": "JumpF (full hop forward)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": -18
+  },
+  {
+   "name": "JumpB",
+   "frames": 40,
+   "loop": false,
+   "serves": "JumpB (full hop back)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": -18
+  },
+  {
+   "name": "JumpAerialF",
+   "frames": 34,
+   "loop": false,
+   "serves": "JumpAerialF (double jump: forward flip)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 0
+  },
+  {
+   "name": "JumpAerialB",
+   "frames": 34,
+   "loop": false,
+   "serves": "JumpAerialB (double jump: back flip)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 0
+  },
+  {
+   "name": "Fall",
+   "frames": 20,
+   "loop": true,
+   "serves": "Fall / FallAerial",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 26
+  },
+  {
+   "name": "FallAerial",
+   "frames": 20,
+   "loop": true,
+   "serves": "FallAerial",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 26
+  },
+  {
+   "name": "FastFall",
+   "frames": 8,
+   "loop": true,
+   "serves": "FastFall (tight dive; engine may bind to FallAerial rows)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 40
+  },
+  {
+   "name": "FallSpecial",
+   "frames": 24,
+   "loop": true,
+   "serves": "FallSpecial (helpless fall, arms out)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 30
+  },
+  {
+   "name": "DamageFall",
+   "frames": 18,
+   "loop": true,
+   "serves": "DamageFall (tumbling fall after hitstun)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 40
+  },
+  {
+   "name": "Landing",
+   "frames": 8,
+   "loop": false,
+   "serves": "Landing",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": -6
+  },
+  {
+   "name": "LandingAirN",
+   "frames": 8,
+   "loop": false,
+   "serves": "LandingAirN",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": -6
+  },
+  {
+   "name": "LandingAirF",
+   "frames": 10,
+   "loop": false,
+   "serves": "LandingAirF",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": -6
+  },
+  {
+   "name": "LandingAirB",
+   "frames": 9,
+   "loop": false,
+   "serves": "LandingAirB",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": -6
+  },
+  {
+   "name": "LandingAirHi",
+   "frames": 8,
+   "loop": false,
+   "serves": "LandingAirHi",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": -6
+  },
+  {
+   "name": "LandingAirLw",
+   "frames": 14,
+   "loop": false,
+   "serves": "LandingAirLw",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": -6
+  },
+  {
+   "name": "LandingFallSpecial",
+   "frames": 24,
+   "loop": false,
+   "serves": "LandingFallSpecial (helpless landing)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": -6
+  },
+  {
+   "name": "Squat",
+   "frames": 8,
+   "loop": false,
+   "serves": "Squat (crouch in)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 2
+  },
+  {
+   "name": "SquatWait",
+   "frames": 40,
+   "loop": true,
+   "serves": "SquatWait (crouch hold)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 4
+  },
+  {
+   "name": "SquatRv",
+   "frames": 8,
+   "loop": false,
+   "serves": "SquatRv (crouch out)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 2
+  },
+  {
+   "name": "GuardOn",
+   "frames": 8,
+   "loop": false,
+   "serves": "GuardOn",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 4
+  },
+  {
+   "name": "Guard",
+   "frames": 24,
+   "loop": true,
+   "serves": "Guard (shield hold)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 4
+  },
+  {
+   "name": "GuardOff",
+   "frames": 10,
+   "loop": false,
+   "serves": "GuardOff",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 4
+  },
+  {
+   "name": "GuardSetOff",
+   "frames": 12,
+   "loop": false,
+   "serves": "GuardSetOff (shield hit flinch)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 8
+  },
+  {
+   "name": "EscapeF",
+   "frames": 30,
+   "loop": false,
+   "serves": "EscapeF (forward roll)",
+   "status": "full",
+   "category": "roll",
+   "hit_frames": [],
+   "root_motion": true,
+   "root_motion_total": [
+    0.0,
+    16.0,
+    0.0
+   ],
+   "ref": {},
+   "notes": "root motion on `trans`: 16 units forward",
+   "wind": 20
+  },
+  {
+   "name": "EscapeB",
+   "frames": 30,
+   "loop": false,
+   "serves": "EscapeB (back roll)",
+   "status": "full",
+   "category": "roll",
+   "hit_frames": [],
+   "root_motion": true,
+   "root_motion_total": [
+    0.0,
+    -16.0,
+    0.0
+   ],
+   "ref": {},
+   "notes": "root motion on `trans`: 16 units backward",
+   "wind": 20
+  },
+  {
+   "name": "EscapeN",
+   "frames": 24,
+   "loop": false,
+   "serves": "EscapeN (spot dodge)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6
+  },
+  {
+   "name": "EscapeAir",
+   "frames": 28,
+   "loop": false,
+   "serves": "EscapeAir (air dodge)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 8
+  },
+  {
+   "name": "DamageHi1",
+   "frames": 14,
+   "loop": false,
+   "serves": "DamageHi1",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 12
+  },
+  {
+   "name": "DamageHi2",
+   "frames": 20,
+   "loop": false,
+   "serves": "DamageHi2",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 12
+  },
+  {
+   "name": "DamageHi3",
+   "frames": 28,
+   "loop": false,
+   "serves": "DamageHi3",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 12
+  },
+  {
+   "name": "DamageN1",
+   "frames": 14,
+   "loop": false,
+   "serves": "DamageN1",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 12
+  },
+  {
+   "name": "DamageN2",
+   "frames": 20,
+   "loop": false,
+   "serves": "DamageN2",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 12
+  },
+  {
+   "name": "DamageN3",
+   "frames": 28,
+   "loop": false,
+   "serves": "DamageN3",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 12
+  },
+  {
+   "name": "DamageLw1",
+   "frames": 14,
+   "loop": false,
+   "serves": "DamageLw1",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 12
+  },
+  {
+   "name": "DamageLw2",
+   "frames": 20,
+   "loop": false,
+   "serves": "DamageLw2",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 12
+  },
+  {
+   "name": "DamageLw3",
+   "frames": 28,
+   "loop": false,
+   "serves": "DamageLw3",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 12
+  },
+  {
+   "name": "DamageAir1",
+   "frames": 14,
+   "loop": false,
+   "serves": "DamageAir1",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 12
+  },
+  {
+   "name": "DamageAir2",
+   "frames": 20,
+   "loop": false,
+   "serves": "DamageAir2",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 12
+  },
+  {
+   "name": "DamageAir3",
+   "frames": 28,
+   "loop": false,
+   "serves": "DamageAir3",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 12
+  },
+  {
+   "name": "DamageFlyHi",
+   "frames": 16,
+   "loop": true,
+   "serves": "DamageFlyHi (launched, head high)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 44
+  },
+  {
+   "name": "DamageFlyN",
+   "frames": 16,
+   "loop": true,
+   "serves": "DamageFlyN",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 44
+  },
+  {
+   "name": "DamageFlyLw",
+   "frames": 16,
+   "loop": true,
+   "serves": "DamageFlyLw",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 44
+  },
+  {
+   "name": "DamageFlyTop",
+   "frames": 16,
+   "loop": true,
+   "serves": "DamageFlyTop (launched upward)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 44
+  },
+  {
+   "name": "DamageFlyRoll",
+   "frames": 20,
+   "loop": true,
+   "serves": "DamageFlyRoll (tumble spin)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 44
+  },
+  {
+   "name": "DownWaitU",
+   "frames": 30,
+   "loop": true,
+   "serves": "DownWaitU",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 2
+  },
+  {
+   "name": "DownWaitD",
+   "frames": 30,
+   "loop": true,
+   "serves": "DownWaitD",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 2
+  },
+  {
+   "name": "DownBoundU",
+   "frames": 22,
+   "loop": false,
+   "serves": "DownBoundU",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 18
+  },
+  {
+   "name": "DownDamageU",
+   "frames": 16,
+   "loop": false,
+   "serves": "DownDamageU",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6
+  },
+  {
+   "name": "DownStandU",
+   "frames": 30,
+   "loop": false,
+   "serves": "DownStandU (getup in place)",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "DownSpotU",
+   "frames": 28,
+   "loop": false,
+   "serves": "DownSpotU",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "DownAttackU",
+   "frames": 45,
+   "loop": false,
+   "serves": "DownAttackU (getup attack)",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "DownForwardU",
+   "frames": 35,
+   "loop": false,
+   "serves": "DownForwardU (getup roll)",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": true,
+   "root_motion_total": [
+    0.0,
+    14.0,
+    0.0
+   ],
+   "ref": {},
+   "notes": "root motion on `trans`: 14 units",
+   "wind": 16
+  },
+  {
+   "name": "DownBackU",
+   "frames": 35,
+   "loop": false,
+   "serves": "DownBackU (getup roll)",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": true,
+   "root_motion_total": [
+    0.0,
+    -14.0,
+    0.0
+   ],
+   "ref": {},
+   "notes": "root motion on `trans`: 14 units",
+   "wind": 16
+  },
+  {
+   "name": "DownBoundD",
+   "frames": 22,
+   "loop": false,
+   "serves": "DownBoundD",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 18
+  },
+  {
+   "name": "DownDamageD",
+   "frames": 16,
+   "loop": false,
+   "serves": "DownDamageD",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6
+  },
+  {
+   "name": "DownStandD",
+   "frames": 30,
+   "loop": false,
+   "serves": "DownStandD (getup in place)",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "DownSpotD",
+   "frames": 28,
+   "loop": false,
+   "serves": "DownSpotD",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "DownAttackD",
+   "frames": 45,
+   "loop": false,
+   "serves": "DownAttackD (getup attack)",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "DownForwardD",
+   "frames": 35,
+   "loop": false,
+   "serves": "DownForwardD (getup roll)",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": true,
+   "root_motion_total": [
+    0.0,
+    14.0,
+    0.0
+   ],
+   "ref": {},
+   "notes": "root motion on `trans`: 14 units",
+   "wind": 16
+  },
+  {
+   "name": "DownBackD",
+   "frames": 35,
+   "loop": false,
+   "serves": "DownBackD (getup roll)",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": true,
+   "root_motion_total": [
+    0.0,
+    -14.0,
+    0.0
+   ],
+   "ref": {},
+   "notes": "root motion on `trans`: 14 units",
+   "wind": 16
+  },
+  {
+   "name": "Passive",
+   "frames": 24,
+   "loop": false,
+   "serves": "Passive (tech in place)",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "PassiveStandF",
+   "frames": 30,
+   "loop": false,
+   "serves": "PassiveStandF (tech roll)",
+   "status": "full",
+   "category": "roll",
+   "hit_frames": [],
+   "root_motion": true,
+   "root_motion_total": [
+    0.0,
+    14.0,
+    0.0
+   ],
+   "ref": {},
+   "notes": "root motion on `trans`: 14 units",
+   "wind": 20
+  },
+  {
+   "name": "PassiveStandB",
+   "frames": 30,
+   "loop": false,
+   "serves": "PassiveStandB (tech roll)",
+   "status": "full",
+   "category": "roll",
+   "hit_frames": [],
+   "root_motion": true,
+   "root_motion_total": [
+    0.0,
+    -14.0,
+    0.0
+   ],
+   "ref": {},
+   "notes": "root motion on `trans`: 14 units",
+   "wind": 20
+  },
+  {
+   "name": "PassiveWall",
+   "frames": 24,
+   "loop": false,
+   "serves": "PassiveWall (wall tech)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "PassiveWallJump",
+   "frames": 30,
+   "loop": false,
+   "serves": "PassiveWallJump",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 12
+  },
+  {
+   "name": "PassiveCeil",
+   "frames": 22,
+   "loop": false,
+   "serves": "PassiveCeil",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "ShieldBreakFly",
+   "frames": 16,
+   "loop": true,
+   "serves": "ShieldBreakFly",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 50
+  },
+  {
+   "name": "ShieldBreakFall",
+   "frames": 20,
+   "loop": true,
+   "serves": "ShieldBreakFall",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 24
+  },
+  {
+   "name": "ShieldBreakDownU",
+   "frames": 22,
+   "loop": false,
+   "serves": "ShieldBreakDownU",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "ShieldBreakStandU",
+   "frames": 40,
+   "loop": false,
+   "serves": "ShieldBreakStandU",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "ShieldBreakDownD",
+   "frames": 22,
+   "loop": false,
+   "serves": "ShieldBreakDownD",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "ShieldBreakStandD",
+   "frames": 40,
+   "loop": false,
+   "serves": "ShieldBreakStandD",
+   "status": "full",
+   "category": "down",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "Furafura",
+   "frames": 40,
+   "loop": true,
+   "serves": "Furafura (dizzy sway)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 8
+  },
+  {
+   "name": "CapturePulledHi",
+   "frames": 16,
+   "loop": false,
+   "serves": "CapturePulledHi (victim yanked into the hold)",
+   "status": "full",
+   "category": "victim",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "CapturePulledLw",
+   "frames": 16,
+   "loop": false,
+   "serves": "CapturePulledLw",
+   "status": "full",
+   "category": "victim",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "CaptureWaitHi",
+   "frames": 30,
+   "loop": true,
+   "serves": "CaptureWaitHi (victim struggle)",
+   "status": "full",
+   "category": "victim",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "CaptureWaitLw",
+   "frames": 30,
+   "loop": true,
+   "serves": "CaptureWaitLw",
+   "status": "full",
+   "category": "victim",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "CaptureDamageHi",
+   "frames": 10,
+   "loop": false,
+   "serves": "CaptureDamageHi (pummeled)",
+   "status": "full",
+   "category": "victim",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "CaptureDamageLw",
+   "frames": 10,
+   "loop": false,
+   "serves": "CaptureDamageLw",
+   "status": "full",
+   "category": "victim",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "CaptureCut",
+   "frames": 18,
+   "loop": false,
+   "serves": "CaptureCut (breaks out of the hold)",
+   "status": "full",
+   "category": "victim",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "CaptureJump",
+   "frames": 20,
+   "loop": false,
+   "serves": "CaptureJump (hops out)",
+   "status": "full",
+   "category": "victim",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "CaptureNeck",
+   "frames": 24,
+   "loop": true,
+   "serves": "CaptureNeck (dangling hold)",
+   "status": "full",
+   "category": "victim",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "CaptureFoot",
+   "frames": 24,
+   "loop": true,
+   "serves": "CaptureFoot (hung by the feet)",
+   "status": "full",
+   "category": "victim",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6.0
+  },
+  {
+   "name": "ThrownF",
+   "frames": 24,
+   "loop": false,
+   "serves": "ThrownF (flung by a throw)",
+   "status": "full",
+   "category": "victim",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 44
+  },
+  {
+   "name": "ThrownB",
+   "frames": 24,
+   "loop": false,
+   "serves": "ThrownB (flung by a throw)",
+   "status": "full",
+   "category": "victim",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 44
+  },
+  {
+   "name": "ThrownHi",
+   "frames": 24,
+   "loop": false,
+   "serves": "ThrownHi (flung by a throw)",
+   "status": "full",
+   "category": "victim",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 44
+  },
+  {
+   "name": "ThrownLw",
+   "frames": 24,
+   "loop": false,
+   "serves": "ThrownLw (flung by a throw)",
+   "status": "full",
+   "category": "victim",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 44
+  },
+  {
+   "name": "Rebound",
+   "frames": 24,
+   "loop": false,
+   "serves": "Rebound (staggered by a clank)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "Pass",
+   "frames": 18,
+   "loop": false,
+   "serves": "Pass (drop through platform)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 8
+  },
+  {
+   "name": "Ottotto",
+   "frames": 30,
+   "loop": true,
+   "serves": "Ottotto (teetering at an edge)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 18
+  },
+  {
+   "name": "FlyReflectWall",
+   "frames": 20,
+   "loop": false,
+   "serves": "FlyReflectWall (bounce / stick on a surface)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 20
+  },
+  {
+   "name": "FlyReflectCeil",
+   "frames": 20,
+   "loop": false,
+   "serves": "FlyReflectCeil (bounce / stick on a surface)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 20
+  },
+  {
+   "name": "StopWall",
+   "frames": 20,
+   "loop": false,
+   "serves": "StopWall (bounce / stick on a surface)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 20
+  },
+  {
+   "name": "StopCeil",
+   "frames": 20,
+   "loop": false,
+   "serves": "StopCeil (bounce / stick on a surface)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 20
+  },
+  {
+   "name": "MissFoot",
+   "frames": 20,
+   "loop": false,
+   "serves": "MissFoot (stumbling landing)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "CliffCatch",
+   "frames": 14,
+   "loop": false,
+   "serves": "CliffCatch",
+   "status": "full",
+   "category": "ledge",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6
+  },
+  {
+   "name": "CliffWait",
+   "frames": 60,
+   "loop": true,
+   "serves": "CliffWait (hang)",
+   "status": "full",
+   "category": "ledge",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6
+  },
+  {
+   "name": "CliffClimbSlow",
+   "frames": 60,
+   "loop": false,
+   "serves": "CliffClimbSlow (root motion: +9.0 up, +4.5 forward over the clip)",
+   "status": "full",
+   "category": "ledge",
+   "hit_frames": [],
+   "root_motion": true,
+   "root_motion_total": [
+    0,
+    4.5,
+    9.0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "CliffClimbQuick",
+   "frames": 40,
+   "loop": false,
+   "serves": "CliffClimbQuick (root motion: +9.0 up, +4.5 forward over the clip)",
+   "status": "full",
+   "category": "ledge",
+   "hit_frames": [],
+   "root_motion": true,
+   "root_motion_total": [
+    0,
+    4.5,
+    9.0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "CliffAttackSlow",
+   "frames": 70,
+   "loop": false,
+   "serves": "CliffAttackSlow (ledge attack; root motion +9 up, +6 forward)",
+   "status": "full",
+   "category": "ledge",
+   "hit_frames": [],
+   "root_motion": true,
+   "root_motion_total": [
+    0,
+    6.0,
+    9.0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "CliffAttackQuick",
+   "frames": 50,
+   "loop": false,
+   "serves": "CliffAttackQuick (ledge attack; root motion +9 up, +6 forward)",
+   "status": "full",
+   "category": "ledge",
+   "hit_frames": [],
+   "root_motion": true,
+   "root_motion_total": [
+    0,
+    6.0,
+    9.0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "CliffEscapeSlow",
+   "frames": 70,
+   "loop": false,
+   "serves": "CliffEscapeSlow (ledge roll onto the stage; root motion +9 up, +14 forward)",
+   "status": "full",
+   "category": "ledge",
+   "hit_frames": [],
+   "root_motion": true,
+   "root_motion_total": [
+    0,
+    14.0,
+    9.0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 20
+  },
+  {
+   "name": "CliffEscapeQuick",
+   "frames": 50,
+   "loop": false,
+   "serves": "CliffEscapeQuick (ledge roll onto the stage; root motion +9 up, +14 forward)",
+   "status": "full",
+   "category": "ledge",
+   "hit_frames": [],
+   "root_motion": true,
+   "root_motion_total": [
+    0,
+    14.0,
+    9.0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 20
+  },
+  {
+   "name": "CliffJumpSlow1",
+   "frames": 30,
+   "loop": false,
+   "serves": "CliffJumpSlow1",
+   "status": "full",
+   "category": "ledge",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "CliffJumpQuick1",
+   "frames": 22,
+   "loop": false,
+   "serves": "CliffJumpQuick1",
+   "status": "full",
+   "category": "ledge",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "CliffJumpSlow2",
+   "frames": 36,
+   "loop": false,
+   "serves": "CliffJumpSlow2 (air part of the ledge jump)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": -10
+  },
+  {
+   "name": "CliffJumpQuick2",
+   "frames": 30,
+   "loop": false,
+   "serves": "CliffJumpQuick2 (air part of the ledge jump)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": -10
+  },
+  {
+   "name": "LightGet",
+   "frames": 14,
+   "loop": false,
+   "serves": "LightGet (pick up a light item)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 4
+  },
+  {
+   "name": "HeavyGet",
+   "frames": 24,
+   "loop": false,
+   "serves": "HeavyGet (lift a heavy item)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 4
+  },
+  {
+   "name": "LightThrowF",
+   "frames": 24,
+   "loop": false,
+   "serves": "LightThrowF",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [
+    9
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "LightThrowB",
+   "frames": 26,
+   "loop": false,
+   "serves": "LightThrowB",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [
+    12
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "LightThrowHi",
+   "frames": 24,
+   "loop": false,
+   "serves": "LightThrowHi",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [
+    9
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "LightThrowLw",
+   "frames": 24,
+   "loop": false,
+   "serves": "LightThrowLw",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [
+    9
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "LightThrowDash",
+   "frames": 24,
+   "loop": false,
+   "serves": "LightThrowDash",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [
+    9
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "LightThrowDrop",
+   "frames": 14,
+   "loop": false,
+   "serves": "LightThrowDrop",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [
+    5
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "ItemSwing1",
+   "frames": 24,
+   "loop": false,
+   "serves": "ItemSwing1 (item swing; family clip for the 24 Sword/Bat/Parasol/Harisen/StarRod/Lipstick rows)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [
+    6
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "ItemSwing3",
+   "frames": 28,
+   "loop": false,
+   "serves": "ItemSwing3 (overhead swing)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [
+    10
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "ItemSwing4",
+   "frames": 40,
+   "loop": false,
+   "serves": "ItemSwing4 (smash swing)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [
+    14
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 14
+  },
+  {
+   "name": "ItemSwingDash",
+   "frames": 30,
+   "loop": false,
+   "serves": "ItemSwingDash",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [
+    7
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 40
+  },
+  {
+   "name": "ItemShoot",
+   "frames": 22,
+   "loop": false,
+   "serves": "ItemShoot (ray gun / flower style shot; also the scope rows)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [
+    3
+   ],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 8
+  },
+  {
+   "name": "LiftWait",
+   "frames": 40,
+   "loop": true,
+   "serves": "LiftWait (carrying a heavy item overhead)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 5
+  },
+  {
+   "name": "LiftWalk",
+   "frames": 28,
+   "loop": true,
+   "serves": "LiftWalk",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {
+    "stride_per_cycle_units": 2.8,
+    "stance_duty": 0.62,
+    "ground_ref_speed": 0.1613
+   },
+   "notes": "",
+   "wind": 8
+  },
+  {
+   "name": "EntryStart",
+   "frames": 60,
+   "loop": false,
+   "serves": "EntryStart / Entry (spawn pose: crouch, spring, point)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 12
+  },
+  {
+   "name": "Rebirth",
+   "frames": 40,
+   "loop": true,
+   "serves": "Rebirth / RebirthWait (standing on the revival platform)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 6
+  },
+  {
+   "name": "AppealSR",
+   "frames": 70,
+   "loop": false,
+   "serves": "AppealSR (taunt: fist raised)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "AppealSL",
+   "frames": 70,
+   "loop": false,
+   "serves": "AppealSL (taunt: spin and settle)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "Win1",
+   "frames": 90,
+   "loop": false,
+   "serves": "Win1 (results: both fists up)",
+   "status": "full",
+   "category": "results",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "Win2",
+   "frames": 90,
+   "loop": false,
+   "serves": "Win2 (results: arms crossed)",
+   "status": "full",
+   "category": "results",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 8
+  },
+  {
+   "name": "Win3",
+   "frames": 90,
+   "loop": false,
+   "serves": "Win3 (results: backflip into a point)",
+   "status": "full",
+   "category": "results",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  },
+  {
+   "name": "Lose",
+   "frames": 60,
+   "loop": true,
+   "serves": "Lose (results: slumped)",
+   "status": "full",
+   "category": "results",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 3
+  },
+  {
+   "name": "DamageIce",
+   "frames": 4,
+   "loop": false,
+   "serves": "DamageIce (frozen: one rigid pose)",
+   "status": "full",
+   "category": "common",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 0
+  },
+  {
+   "name": "DamageIceJump",
+   "frames": 20,
+   "loop": false,
+   "serves": "DamageIceJump (frozen hop)",
+   "status": "full",
+   "category": "air",
+   "hit_frames": [],
+   "root_motion": false,
+   "root_motion_total": [
+    0,
+    0,
+    0
+   ],
+   "ref": {},
+   "notes": "",
+   "wind": 10
+  }
+ ],
+ "full_clips": [
+  "Attack11",
+  "Attack12",
+  "Attack13",
+  "AttackDash",
+  "AttackS3Hi",
+  "AttackS3S",
+  "AttackS3Lw",
+  "AttackHi3",
+  "AttackLw3",
+  "AttackS4S",
+  "AttackS4Hi",
+  "AttackS4Lw",
+  "AttackHi4",
+  "AttackLw4",
+  "AttackAirN",
+  "AttackAirF",
+  "AttackAirB",
+  "AttackAirHi",
+  "AttackAirLw",
+  "Catch",
+  "CatchDash",
+  "CatchWait",
+  "CatchAttack",
+  "CatchCut",
+  "ThrowF",
+  "ThrowB",
+  "ThrowHi",
+  "ThrowLw",
+  "NCharge",
+  "NRelease",
+  "SLunge",
+  "Rise",
+  "Counter",
+  "CounterStrike",
+  "Wait",
+  "WalkSlow",
+  "WalkMiddle",
+  "WalkFast",
+  "Run",
+  "Dash",
+  "RunBrake",
+  "Turn",
+  "TurnRun",
+  "KneeBend",
+  "JumpF",
+  "JumpB",
+  "JumpAerialF",
+  "JumpAerialB",
+  "Fall",
+  "FallAerial",
+  "FastFall",
+  "FallSpecial",
+  "DamageFall",
+  "Landing",
+  "LandingAirN",
+  "LandingAirF",
+  "LandingAirB",
+  "LandingAirHi",
+  "LandingAirLw",
+  "LandingFallSpecial",
+  "Squat",
+  "SquatWait",
+  "SquatRv",
+  "GuardOn",
+  "Guard",
+  "GuardOff",
+  "GuardSetOff",
+  "EscapeF",
+  "EscapeB",
+  "EscapeN",
+  "EscapeAir",
+  "DamageHi1",
+  "DamageHi2",
+  "DamageHi3",
+  "DamageN1",
+  "DamageN2",
+  "DamageN3",
+  "DamageLw1",
+  "DamageLw2",
+  "DamageLw3",
+  "DamageAir1",
+  "DamageAir2",
+  "DamageAir3",
+  "DamageFlyHi",
+  "DamageFlyN",
+  "DamageFlyLw",
+  "DamageFlyTop",
+  "DamageFlyRoll",
+  "DownWaitU",
+  "DownWaitD",
+  "DownBoundU",
+  "DownDamageU",
+  "DownStandU",
+  "DownSpotU",
+  "DownAttackU",
+  "DownForwardU",
+  "DownBackU",
+  "DownBoundD",
+  "DownDamageD",
+  "DownStandD",
+  "DownSpotD",
+  "DownAttackD",
+  "DownForwardD",
+  "DownBackD",
+  "Passive",
+  "PassiveStandF",
+  "PassiveStandB",
+  "PassiveWall",
+  "PassiveWallJump",
+  "PassiveCeil",
+  "ShieldBreakFly",
+  "ShieldBreakFall",
+  "ShieldBreakDownU",
+  "ShieldBreakStandU",
+  "ShieldBreakDownD",
+  "ShieldBreakStandD",
+  "Furafura",
+  "CapturePulledHi",
+  "CapturePulledLw",
+  "CaptureWaitHi",
+  "CaptureWaitLw",
+  "CaptureDamageHi",
+  "CaptureDamageLw",
+  "CaptureCut",
+  "CaptureJump",
+  "CaptureNeck",
+  "CaptureFoot",
+  "ThrownF",
+  "ThrownB",
+  "ThrownHi",
+  "ThrownLw",
+  "Rebound",
+  "Pass",
+  "Ottotto",
+  "FlyReflectWall",
+  "FlyReflectCeil",
+  "StopWall",
+  "StopCeil",
+  "MissFoot",
+  "CliffCatch",
+  "CliffWait",
+  "CliffClimbSlow",
+  "CliffClimbQuick",
+  "CliffAttackSlow",
+  "CliffAttackQuick",
+  "CliffEscapeSlow",
+  "CliffEscapeQuick",
+  "CliffJumpSlow1",
+  "CliffJumpQuick1",
+  "CliffJumpSlow2",
+  "CliffJumpQuick2",
+  "LightGet",
+  "HeavyGet",
+  "LightThrowF",
+  "LightThrowB",
+  "LightThrowHi",
+  "LightThrowLw",
+  "LightThrowDash",
+  "LightThrowDrop",
+  "ItemSwing1",
+  "ItemSwing3",
+  "ItemSwing4",
+  "ItemSwingDash",
+  "ItemShoot",
+  "LiftWait",
+  "LiftWalk",
+  "EntryStart",
+  "Rebirth",
+  "AppealSR",
+  "AppealSL",
+  "Win1",
+  "Win2",
+  "Win3",
+  "Lose",
+  "DamageIce",
+  "DamageIceJump"
+ ],
+ "placeholder_clips": [
+  "Attack100Loop",
+  "Attack100Start",
+  "Attack100End"
+ ],
+ "motion_rows": [
+  {
+   "motion": 0,
+   "row": "DeadDown",
+   "clip": null,
+   "status": "no-animation",
+   "note": "the engine plays no clip for this row"
+  },
+  {
+   "motion": 1,
+   "row": "DeadLeft",
+   "clip": null,
+   "status": "no-animation",
+   "note": "the engine plays no clip for this row"
+  },
+  {
+   "motion": 2,
+   "row": "DeadRight",
+   "clip": null,
+   "status": "no-animation",
+   "note": "the engine plays no clip for this row"
+  },
+  {
+   "motion": 3,
+   "row": "DeadUp",
+   "clip": null,
+   "status": "no-animation",
+   "note": "the engine plays no clip for this row"
+  },
+  {
+   "motion": 4,
+   "row": "DeadUpStar",
+   "clip": "DamageFlyRoll",
+   "status": "placeholder",
+   "note": "star KO spin"
+  },
+  {
+   "motion": 5,
+   "row": "DeadUpStarIce",
+   "clip": null,
+   "status": "no-animation",
+   "note": "the engine plays no clip for this row"
+  },
+  {
+   "motion": 6,
+   "row": "DeadUpFall",
+   "clip": "DamageFlyRoll",
+   "status": "placeholder",
+   "note": "star KO spin"
+  },
+  {
+   "motion": 7,
+   "row": "DeadUpFallHitCamera",
+   "clip": "DamageFlyRoll",
+   "status": "placeholder",
+   "note": "star KO spin"
+  },
+  {
+   "motion": 8,
+   "row": "DeadUpFallHitCameraFlat",
+   "clip": "DamageFlyRoll",
+   "status": "placeholder",
+   "note": "star KO spin"
+  },
+  {
+   "motion": 9,
+   "row": "DeadUpFallIce",
+   "clip": null,
+   "status": "no-animation",
+   "note": "the engine plays no clip for this row"
+  },
+  {
+   "motion": 10,
+   "row": "DeadUpFallHitCameraIce",
+   "clip": null,
+   "status": "no-animation",
+   "note": "the engine plays no clip for this row"
+  },
+  {
+   "motion": 11,
+   "row": "Sleep",
+   "clip": "Wait",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 12,
+   "row": "Rebirth",
+   "clip": "Rebirth",
+   "status": "own"
+  },
+  {
+   "motion": 13,
+   "row": "RebirthWait",
+   "clip": "Rebirth",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 14,
+   "row": "Wait",
+   "clip": "Wait",
+   "status": "own"
+  },
+  {
+   "motion": 15,
+   "row": "WalkSlow",
+   "clip": "WalkSlow",
+   "status": "own"
+  },
+  {
+   "motion": 16,
+   "row": "WalkMiddle",
+   "clip": "WalkMiddle",
+   "status": "own"
+  },
+  {
+   "motion": 17,
+   "row": "WalkFast",
+   "clip": "WalkFast",
+   "status": "own"
+  },
+  {
+   "motion": 18,
+   "row": "Turn",
+   "clip": "Turn",
+   "status": "own"
+  },
+  {
+   "motion": 19,
+   "row": "TurnRun",
+   "clip": "TurnRun",
+   "status": "own"
+  },
+  {
+   "motion": 20,
+   "row": "Dash",
+   "clip": "Dash",
+   "status": "own"
+  },
+  {
+   "motion": 21,
+   "row": "Run",
+   "clip": "Run",
+   "status": "own"
+  },
+  {
+   "motion": 22,
+   "row": "RunDirect",
+   "clip": "Run",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 23,
+   "row": "RunBrake",
+   "clip": "RunBrake",
+   "status": "own"
+  },
+  {
+   "motion": 24,
+   "row": "KneeBend",
+   "clip": "KneeBend",
+   "status": "own"
+  },
+  {
+   "motion": 25,
+   "row": "JumpF",
+   "clip": "JumpF",
+   "status": "own"
+  },
+  {
+   "motion": 26,
+   "row": "JumpB",
+   "clip": "JumpB",
+   "status": "own"
+  },
+  {
+   "motion": 27,
+   "row": "JumpAerialF",
+   "clip": "JumpAerialF",
+   "status": "own"
+  },
+  {
+   "motion": 28,
+   "row": "JumpAerialB",
+   "clip": "JumpAerialB",
+   "status": "own"
+  },
+  {
+   "motion": 29,
+   "row": "Fall",
+   "clip": "Fall",
+   "status": "own"
+  },
+  {
+   "motion": 30,
+   "row": "FallF",
+   "clip": "Fall",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 31,
+   "row": "FallB",
+   "clip": "Fall",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 32,
+   "row": "FallAerial",
+   "clip": "FallAerial",
+   "status": "own"
+  },
+  {
+   "motion": 33,
+   "row": "FallAerialF",
+   "clip": "FallAerial",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 34,
+   "row": "FallAerialB",
+   "clip": "FallAerial",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 35,
+   "row": "FallSpecial",
+   "clip": "FallSpecial",
+   "status": "own"
+  },
+  {
+   "motion": 36,
+   "row": "FallSpecialF",
+   "clip": "FallSpecial",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 37,
+   "row": "FallSpecialB",
+   "clip": "FallSpecial",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 38,
+   "row": "DamageFall",
+   "clip": "DamageFall",
+   "status": "own"
+  },
+  {
+   "motion": 39,
+   "row": "Squat",
+   "clip": "Squat",
+   "status": "own"
+  },
+  {
+   "motion": 40,
+   "row": "SquatWait",
+   "clip": "SquatWait",
+   "status": "own"
+  },
+  {
+   "motion": 41,
+   "row": "SquatRv",
+   "clip": "SquatRv",
+   "status": "own"
+  },
+  {
+   "motion": 42,
+   "row": "Landing",
+   "clip": "Landing",
+   "status": "own"
+  },
+  {
+   "motion": 43,
+   "row": "LandingFallSpecial",
+   "clip": "LandingFallSpecial",
+   "status": "own"
+  },
+  {
+   "motion": 44,
+   "row": "Attack11",
+   "clip": "Attack11",
+   "status": "own"
+  },
+  {
+   "motion": 45,
+   "row": "Attack12",
+   "clip": "Attack12",
+   "status": "own"
+  },
+  {
+   "motion": 46,
+   "row": "Attack13",
+   "clip": "Attack13",
+   "status": "own"
+  },
+  {
+   "motion": 47,
+   "row": "Attack100Start",
+   "clip": "Attack100Start",
+   "status": "own"
+  },
+  {
+   "motion": 48,
+   "row": "Attack100Loop",
+   "clip": "Attack100Loop",
+   "status": "own"
+  },
+  {
+   "motion": 49,
+   "row": "Attack100End",
+   "clip": "Attack100End",
+   "status": "own"
+  },
+  {
+   "motion": 50,
+   "row": "AttackDash",
+   "clip": "AttackDash",
+   "status": "own"
+  },
+  {
+   "motion": 51,
+   "row": "AttackS3Hi",
+   "clip": "AttackS3Hi",
+   "status": "own"
+  },
+  {
+   "motion": 52,
+   "row": "AttackS3HiS",
+   "clip": "AttackS3Hi",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 53,
+   "row": "AttackS3S",
+   "clip": "AttackS3S",
+   "status": "own"
+  },
+  {
+   "motion": 54,
+   "row": "AttackS3LwS",
+   "clip": "AttackS3Lw",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 55,
+   "row": "AttackS3Lw",
+   "clip": "AttackS3Lw",
+   "status": "own"
+  },
+  {
+   "motion": 56,
+   "row": "AttackHi3",
+   "clip": "AttackHi3",
+   "status": "own"
+  },
+  {
+   "motion": 57,
+   "row": "AttackLw3",
+   "clip": "AttackLw3",
+   "status": "own"
+  },
+  {
+   "motion": 58,
+   "row": "AttackS4Hi",
+   "clip": "AttackS4Hi",
+   "status": "own"
+  },
+  {
+   "motion": 59,
+   "row": "AttackS4HiS",
+   "clip": "AttackS4Hi",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 60,
+   "row": "AttackS4S",
+   "clip": "AttackS4S",
+   "status": "own"
+  },
+  {
+   "motion": 61,
+   "row": "AttackS4LwS",
+   "clip": "AttackS4Lw",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 62,
+   "row": "AttackS4Lw",
+   "clip": "AttackS4Lw",
+   "status": "own"
+  },
+  {
+   "motion": 63,
+   "row": "AttackHi4",
+   "clip": "AttackHi4",
+   "status": "own"
+  },
+  {
+   "motion": 64,
+   "row": "AttackLw4",
+   "clip": "AttackLw4",
+   "status": "own"
+  },
+  {
+   "motion": 65,
+   "row": "AttackAirN",
+   "clip": "AttackAirN",
+   "status": "own"
+  },
+  {
+   "motion": 66,
+   "row": "AttackAirF",
+   "clip": "AttackAirF",
+   "status": "own"
+  },
+  {
+   "motion": 67,
+   "row": "AttackAirB",
+   "clip": "AttackAirB",
+   "status": "own"
+  },
+  {
+   "motion": 68,
+   "row": "AttackAirHi",
+   "clip": "AttackAirHi",
+   "status": "own"
+  },
+  {
+   "motion": 69,
+   "row": "AttackAirLw",
+   "clip": "AttackAirLw",
+   "status": "own"
+  },
+  {
+   "motion": 70,
+   "row": "LandingAirN",
+   "clip": "LandingAirN",
+   "status": "own"
+  },
+  {
+   "motion": 71,
+   "row": "LandingAirF",
+   "clip": "LandingAirF",
+   "status": "own"
+  },
+  {
+   "motion": 72,
+   "row": "LandingAirB",
+   "clip": "LandingAirB",
+   "status": "own"
+  },
+  {
+   "motion": 73,
+   "row": "LandingAirHi",
+   "clip": "LandingAirHi",
+   "status": "own"
+  },
+  {
+   "motion": 74,
+   "row": "LandingAirLw",
+   "clip": "LandingAirLw",
+   "status": "own"
+  },
+  {
+   "motion": 75,
+   "row": "DamageHi1",
+   "clip": "DamageHi1",
+   "status": "own"
+  },
+  {
+   "motion": 76,
+   "row": "DamageHi2",
+   "clip": "DamageHi2",
+   "status": "own"
+  },
+  {
+   "motion": 77,
+   "row": "DamageHi3",
+   "clip": "DamageHi3",
+   "status": "own"
+  },
+  {
+   "motion": 78,
+   "row": "DamageN1",
+   "clip": "DamageN1",
+   "status": "own"
+  },
+  {
+   "motion": 79,
+   "row": "DamageN2",
+   "clip": "DamageN2",
+   "status": "own"
+  },
+  {
+   "motion": 80,
+   "row": "DamageN3",
+   "clip": "DamageN3",
+   "status": "own"
+  },
+  {
+   "motion": 81,
+   "row": "DamageLw1",
+   "clip": "DamageLw1",
+   "status": "own"
+  },
+  {
+   "motion": 82,
+   "row": "DamageLw2",
+   "clip": "DamageLw2",
+   "status": "own"
+  },
+  {
+   "motion": 83,
+   "row": "DamageLw3",
+   "clip": "DamageLw3",
+   "status": "own"
+  },
+  {
+   "motion": 84,
+   "row": "DamageAir1",
+   "clip": "DamageAir1",
+   "status": "own"
+  },
+  {
+   "motion": 85,
+   "row": "DamageAir2",
+   "clip": "DamageAir2",
+   "status": "own"
+  },
+  {
+   "motion": 86,
+   "row": "DamageAir3",
+   "clip": "DamageAir3",
+   "status": "own"
+  },
+  {
+   "motion": 87,
+   "row": "DamageFlyHi",
+   "clip": "DamageFlyHi",
+   "status": "own"
+  },
+  {
+   "motion": 88,
+   "row": "DamageFlyN",
+   "clip": "DamageFlyN",
+   "status": "own"
+  },
+  {
+   "motion": 89,
+   "row": "DamageFlyLw",
+   "clip": "DamageFlyLw",
+   "status": "own"
+  },
+  {
+   "motion": 90,
+   "row": "DamageFlyTop",
+   "clip": "DamageFlyTop",
+   "status": "own"
+  },
+  {
+   "motion": 91,
+   "row": "DamageFlyRoll",
+   "clip": "DamageFlyRoll",
+   "status": "own"
+  },
+  {
+   "motion": 92,
+   "row": "LightGet",
+   "clip": "LightGet",
+   "status": "own"
+  },
+  {
+   "motion": 93,
+   "row": "HeavyGet",
+   "clip": "HeavyGet",
+   "status": "own"
+  },
+  {
+   "motion": 94,
+   "row": "LightThrowF",
+   "clip": "LightThrowF",
+   "status": "own"
+  },
+  {
+   "motion": 95,
+   "row": "LightThrowB",
+   "clip": "LightThrowB",
+   "status": "own"
+  },
+  {
+   "motion": 96,
+   "row": "LightThrowHi",
+   "clip": "LightThrowHi",
+   "status": "own"
+  },
+  {
+   "motion": 97,
+   "row": "LightThrowLw",
+   "clip": "LightThrowLw",
+   "status": "own"
+  },
+  {
+   "motion": 98,
+   "row": "LightThrowDash",
+   "clip": "LightThrowDash",
+   "status": "own"
+  },
+  {
+   "motion": 99,
+   "row": "LightThrowDrop",
+   "clip": "LightThrowDrop",
+   "status": "own"
+  },
+  {
+   "motion": 100,
+   "row": "LightThrowAirF",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": "air item throws reuse the ground clips"
+  },
+  {
+   "motion": 101,
+   "row": "LightThrowAirB",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": "air item throws reuse the ground clips"
+  },
+  {
+   "motion": 102,
+   "row": "LightThrowAirHi",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": "air item throws reuse the ground clips"
+  },
+  {
+   "motion": 103,
+   "row": "LightThrowAirLw",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": "air item throws reuse the ground clips"
+  },
+  {
+   "motion": 104,
+   "row": "HeavyThrowF",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": "heavy throws reuse the light throw"
+  },
+  {
+   "motion": 105,
+   "row": "HeavyThrowB",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": "heavy throws reuse the light throw"
+  },
+  {
+   "motion": 106,
+   "row": "HeavyThrowHi",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": "heavy throws reuse the light throw"
+  },
+  {
+   "motion": 107,
+   "row": "HeavyThrowLw",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": "heavy throws reuse the light throw"
+  },
+  {
+   "motion": 108,
+   "row": "LightThrowF4",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 109,
+   "row": "LightThrowB4",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 110,
+   "row": "LightThrowHi4",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 111,
+   "row": "LightThrowLw4",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 112,
+   "row": "LightThrowAirF4",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 113,
+   "row": "LightThrowAirB4",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 114,
+   "row": "LightThrowAirHi4",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 115,
+   "row": "LightThrowAirLw4",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 116,
+   "row": "HeavyThrowF4",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": "heavy throws reuse the light throw"
+  },
+  {
+   "motion": 117,
+   "row": "HeavyThrowB4",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": "heavy throws reuse the light throw"
+  },
+  {
+   "motion": 118,
+   "row": "HeavyThrowHi4",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": "heavy throws reuse the light throw"
+  },
+  {
+   "motion": 119,
+   "row": "HeavyThrowLw4",
+   "clip": "LightThrowF",
+   "status": "placeholder",
+   "note": "heavy throws reuse the light throw"
+  },
+  {
+   "motion": 120,
+   "row": "SwordSwing1",
+   "clip": "ItemSwing1",
+   "status": "placeholder",
+   "note": "one swing family for all item types"
+  },
+  {
+   "motion": 121,
+   "row": "SwordSwing3",
+   "clip": "ItemSwing3",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 122,
+   "row": "SwordSwing4",
+   "clip": "ItemSwing4",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 123,
+   "row": "SwordSwingDash",
+   "clip": "ItemSwingDash",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 124,
+   "row": "BatSwing1",
+   "clip": "ItemSwing1",
+   "status": "placeholder",
+   "note": "one swing family for all item types"
+  },
+  {
+   "motion": 125,
+   "row": "BatSwing3",
+   "clip": "ItemSwing3",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 126,
+   "row": "BatSwing4",
+   "clip": "ItemSwing4",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 127,
+   "row": "BatSwingDash",
+   "clip": "ItemSwingDash",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 128,
+   "row": "ParasolSwing1",
+   "clip": "ItemSwing1",
+   "status": "placeholder",
+   "note": "one swing family for all item types"
+  },
+  {
+   "motion": 129,
+   "row": "ParasolSwing3",
+   "clip": "ItemSwing3",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 130,
+   "row": "ParasolSwing4",
+   "clip": "ItemSwing4",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 131,
+   "row": "ParasolSwingDash",
+   "clip": "ItemSwingDash",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 132,
+   "row": "HarisenSwing1",
+   "clip": "ItemSwing1",
+   "status": "placeholder",
+   "note": "one swing family for all item types"
+  },
+  {
+   "motion": 133,
+   "row": "HarisenSwing3",
+   "clip": "ItemSwing3",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 134,
+   "row": "HarisenSwing4",
+   "clip": "ItemSwing4",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 135,
+   "row": "HarisenSwingDash",
+   "clip": "ItemSwingDash",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 136,
+   "row": "StarRodSwing1",
+   "clip": "ItemSwing1",
+   "status": "placeholder",
+   "note": "one swing family for all item types"
+  },
+  {
+   "motion": 137,
+   "row": "StarRodSwing3",
+   "clip": "ItemSwing3",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 138,
+   "row": "StarRodSwing4",
+   "clip": "ItemSwing4",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 139,
+   "row": "StarRodSwingDash",
+   "clip": "ItemSwingDash",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 140,
+   "row": "LipstickSwing1",
+   "clip": "ItemSwing1",
+   "status": "placeholder",
+   "note": "one swing family for all item types"
+  },
+  {
+   "motion": 141,
+   "row": "LipstickSwing3",
+   "clip": "ItemSwing3",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 142,
+   "row": "LipstickSwing4",
+   "clip": "ItemSwing4",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 143,
+   "row": "LipstickSwingDash",
+   "clip": "ItemSwingDash",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 144,
+   "row": "ItemParasolOpen",
+   "clip": "Fall",
+   "status": "placeholder",
+   "note": "parasol float has no own pose"
+  },
+  {
+   "motion": 145,
+   "row": "ItemParasolFall",
+   "clip": "Fall",
+   "status": "placeholder",
+   "note": "parasol float has no own pose"
+  },
+  {
+   "motion": 146,
+   "row": "ItemParasolFallSpecial",
+   "clip": "Fall",
+   "status": "placeholder",
+   "note": "parasol float has no own pose"
+  },
+  {
+   "motion": 147,
+   "row": "ItemParasolDamageFall",
+   "clip": "Fall",
+   "status": "placeholder",
+   "note": "parasol float has no own pose"
+  },
+  {
+   "motion": 148,
+   "row": "LGunShoot",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 149,
+   "row": "LGunShootAir",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 150,
+   "row": "LGunShootEmpty",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 151,
+   "row": "LGunShootAirEmpty",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 152,
+   "row": "FireFlowerShoot",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 153,
+   "row": "FireFlowerShootAir",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 154,
+   "row": "ItemScrew",
+   "clip": "DamageFlyRoll",
+   "status": "placeholder",
+   "note": "screw attack spin"
+  },
+  {
+   "motion": 155,
+   "row": "ItemScrewAir",
+   "clip": "DamageFlyRoll",
+   "status": "placeholder",
+   "note": "screw attack spin"
+  },
+  {
+   "motion": 156,
+   "row": "DamageScrew",
+   "clip": "DamageFlyRoll",
+   "status": "placeholder",
+   "note": "screw attack spin"
+  },
+  {
+   "motion": 157,
+   "row": "DamageScrewAir",
+   "clip": "DamageFlyRoll",
+   "status": "placeholder",
+   "note": "screw attack spin"
+  },
+  {
+   "motion": 158,
+   "row": "ItemScopeStart",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 159,
+   "row": "ItemScopeRapid",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 160,
+   "row": "ItemScopeFire",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 161,
+   "row": "ItemScopeEnd",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 162,
+   "row": "ItemScopeAirStart",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 163,
+   "row": "ItemScopeAirRapid",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 164,
+   "row": "ItemScopeAirFire",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 165,
+   "row": "ItemScopeAirEnd",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 166,
+   "row": "ItemScopeStartEmpty",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 167,
+   "row": "ItemScopeRapidEmpty",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 168,
+   "row": "ItemScopeFireEmpty",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 169,
+   "row": "ItemScopeEndEmpty",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 170,
+   "row": "ItemScopeAirStartEmpty",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 171,
+   "row": "ItemScopeAirRapidEmpty",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 172,
+   "row": "ItemScopeAirFireEmpty",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 173,
+   "row": "ItemScopeAirEndEmpty",
+   "clip": "ItemShoot",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 174,
+   "row": "LiftWait",
+   "clip": "LiftWait",
+   "status": "own"
+  },
+  {
+   "motion": 175,
+   "row": "LiftWalk1",
+   "clip": "LiftWalk",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 176,
+   "row": "LiftWalk2",
+   "clip": "LiftWalk",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 177,
+   "row": "LiftTurn",
+   "clip": "Turn",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 178,
+   "row": "GuardOn",
+   "clip": "GuardOn",
+   "status": "own"
+  },
+  {
+   "motion": 179,
+   "row": "Guard",
+   "clip": "Guard",
+   "status": "own"
+  },
+  {
+   "motion": 180,
+   "row": "GuardOff",
+   "clip": "GuardOff",
+   "status": "own"
+  },
+  {
+   "motion": 181,
+   "row": "GuardSetOff",
+   "clip": "GuardSetOff",
+   "status": "own"
+  },
+  {
+   "motion": 182,
+   "row": "GuardReflect",
+   "clip": "GuardOn",
+   "status": "alias",
+   "note": "reflect shield pose shares the shield raise"
+  },
+  {
+   "motion": 183,
+   "row": "DownBoundU",
+   "clip": "DownBoundU",
+   "status": "own"
+  },
+  {
+   "motion": 184,
+   "row": "DownWaitU",
+   "clip": "DownWaitU",
+   "status": "own"
+  },
+  {
+   "motion": 185,
+   "row": "DownDamageU",
+   "clip": "DownDamageU",
+   "status": "own"
+  },
+  {
+   "motion": 186,
+   "row": "DownStandU",
+   "clip": "DownStandU",
+   "status": "own"
+  },
+  {
+   "motion": 187,
+   "row": "DownAttackU",
+   "clip": "DownAttackU",
+   "status": "own"
+  },
+  {
+   "motion": 188,
+   "row": "DownFowardU",
+   "clip": "DownForwardU",
+   "status": "alias",
+   "note": "the engine spells this row DownFoward"
+  },
+  {
+   "motion": 189,
+   "row": "DownBackU",
+   "clip": "DownBackU",
+   "status": "own"
+  },
+  {
+   "motion": 190,
+   "row": "DownSpotU",
+   "clip": "DownSpotU",
+   "status": "own"
+  },
+  {
+   "motion": 191,
+   "row": "DownBoundD",
+   "clip": "DownBoundD",
+   "status": "own"
+  },
+  {
+   "motion": 192,
+   "row": "DownWaitD",
+   "clip": "DownWaitD",
+   "status": "own"
+  },
+  {
+   "motion": 193,
+   "row": "DownDamageD",
+   "clip": "DownDamageD",
+   "status": "own"
+  },
+  {
+   "motion": 194,
+   "row": "DownStandD",
+   "clip": "DownStandD",
+   "status": "own"
+  },
+  {
+   "motion": 195,
+   "row": "DownAttackD",
+   "clip": "DownAttackD",
+   "status": "own"
+  },
+  {
+   "motion": 196,
+   "row": "DownFowardD",
+   "clip": "DownForwardD",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 197,
+   "row": "DownBackD",
+   "clip": "DownBackD",
+   "status": "own"
+  },
+  {
+   "motion": 198,
+   "row": "DownSpotD",
+   "clip": "DownSpotD",
+   "status": "own"
+  },
+  {
+   "motion": 199,
+   "row": "Passive",
+   "clip": "Passive",
+   "status": "own"
+  },
+  {
+   "motion": 200,
+   "row": "PassiveStandF",
+   "clip": "PassiveStandF",
+   "status": "own"
+  },
+  {
+   "motion": 201,
+   "row": "PassiveStandB",
+   "clip": "PassiveStandB",
+   "status": "own"
+  },
+  {
+   "motion": 202,
+   "row": "PassiveWall",
+   "clip": "PassiveWall",
+   "status": "own"
+  },
+  {
+   "motion": 203,
+   "row": "PassiveWallJump",
+   "clip": "PassiveWallJump",
+   "status": "own"
+  },
+  {
+   "motion": 204,
+   "row": "PassiveCeil",
+   "clip": "PassiveCeil",
+   "status": "own"
+  },
+  {
+   "motion": 205,
+   "row": "ShieldBreakFly",
+   "clip": "ShieldBreakFly",
+   "status": "own"
+  },
+  {
+   "motion": 206,
+   "row": "ShieldBreakFall",
+   "clip": "ShieldBreakFall",
+   "status": "own"
+  },
+  {
+   "motion": 207,
+   "row": "ShieldBreakDownU",
+   "clip": "ShieldBreakDownU",
+   "status": "own"
+  },
+  {
+   "motion": 208,
+   "row": "ShieldBreakDownD",
+   "clip": "ShieldBreakDownD",
+   "status": "own"
+  },
+  {
+   "motion": 209,
+   "row": "ShieldBreakStandU",
+   "clip": "ShieldBreakStandU",
+   "status": "own"
+  },
+  {
+   "motion": 210,
+   "row": "ShieldBreakStandD",
+   "clip": "ShieldBreakStandD",
+   "status": "own"
+  },
+  {
+   "motion": 211,
+   "row": "Furafura",
+   "clip": "Furafura",
+   "status": "own"
+  },
+  {
+   "motion": 212,
+   "row": "Catch",
+   "clip": "Catch",
+   "status": "own"
+  },
+  {
+   "motion": 213,
+   "row": "CatchPull",
+   "clip": "Catch",
+   "status": "alias",
+   "note": "the grab row's pull-in plays the same clip"
+  },
+  {
+   "motion": 214,
+   "row": "CatchDash",
+   "clip": "CatchDash",
+   "status": "own"
+  },
+  {
+   "motion": 215,
+   "row": "CatchDashPull",
+   "clip": "CatchDash",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 216,
+   "row": "CatchWait",
+   "clip": "CatchWait",
+   "status": "own"
+  },
+  {
+   "motion": 217,
+   "row": "CatchAttack",
+   "clip": "CatchAttack",
+   "status": "own"
+  },
+  {
+   "motion": 218,
+   "row": "CatchCut",
+   "clip": "CatchCut",
+   "status": "own"
+  },
+  {
+   "motion": 219,
+   "row": "ThrowF",
+   "clip": "ThrowF",
+   "status": "own"
+  },
+  {
+   "motion": 220,
+   "row": "ThrowB",
+   "clip": "ThrowB",
+   "status": "own"
+  },
+  {
+   "motion": 221,
+   "row": "ThrowHi",
+   "clip": "ThrowHi",
+   "status": "own"
+  },
+  {
+   "motion": 222,
+   "row": "ThrowLw",
+   "clip": "ThrowLw",
+   "status": "own"
+  },
+  {
+   "motion": 223,
+   "row": "CapturePulledHi",
+   "clip": "CapturePulledHi",
+   "status": "own"
+  },
+  {
+   "motion": 224,
+   "row": "CaptureWaitHi",
+   "clip": "CaptureWaitHi",
+   "status": "own"
+  },
+  {
+   "motion": 225,
+   "row": "CaptureDamageHi",
+   "clip": "CaptureDamageHi",
+   "status": "own"
+  },
+  {
+   "motion": 226,
+   "row": "CapturePulledLw",
+   "clip": "CapturePulledLw",
+   "status": "own"
+  },
+  {
+   "motion": 227,
+   "row": "CaptureWaitLw",
+   "clip": "CaptureWaitLw",
+   "status": "own"
+  },
+  {
+   "motion": 228,
+   "row": "CaptureDamageLw",
+   "clip": "CaptureDamageLw",
+   "status": "own"
+  },
+  {
+   "motion": 229,
+   "row": "CaptureCut",
+   "clip": "CaptureCut",
+   "status": "own"
+  },
+  {
+   "motion": 230,
+   "row": "CaptureJump",
+   "clip": "CaptureJump",
+   "status": "own"
+  },
+  {
+   "motion": 231,
+   "row": "CaptureNeck",
+   "clip": "CaptureNeck",
+   "status": "own"
+  },
+  {
+   "motion": 232,
+   "row": "CaptureFoot",
+   "clip": "CaptureFoot",
+   "status": "own"
+  },
+  {
+   "motion": 233,
+   "row": "EscapeF",
+   "clip": "EscapeF",
+   "status": "own"
+  },
+  {
+   "motion": 234,
+   "row": "EscapeB",
+   "clip": "EscapeB",
+   "status": "own"
+  },
+  {
+   "motion": 235,
+   "row": "EscapeN",
+   "clip": "EscapeN",
+   "status": "own"
+  },
+  {
+   "motion": 236,
+   "row": "EscapeAir",
+   "clip": "EscapeAir",
+   "status": "own"
+  },
+  {
+   "motion": 237,
+   "row": "ReboundStop",
+   "clip": "Rebound",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 238,
+   "row": "Rebound",
+   "clip": "Rebound",
+   "status": "own"
+  },
+  {
+   "motion": 239,
+   "row": "ThrownF",
+   "clip": "ThrownF",
+   "status": "own"
+  },
+  {
+   "motion": 240,
+   "row": "ThrownB",
+   "clip": "ThrownB",
+   "status": "own"
+  },
+  {
+   "motion": 241,
+   "row": "ThrownHi",
+   "clip": "ThrownHi",
+   "status": "own"
+  },
+  {
+   "motion": 242,
+   "row": "ThrownLw",
+   "clip": "ThrownLw",
+   "status": "own"
+  },
+  {
+   "motion": 243,
+   "row": "ThrownlwWomen",
+   "clip": "ThrownLw",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 244,
+   "row": "Pass",
+   "clip": "Pass",
+   "status": "own"
+  },
+  {
+   "motion": 245,
+   "row": "Ottotto",
+   "clip": "Ottotto",
+   "status": "own"
+  },
+  {
+   "motion": 246,
+   "row": "OttottoWait",
+   "clip": "Ottotto",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 247,
+   "row": "FlyReflectWall",
+   "clip": "FlyReflectWall",
+   "status": "own"
+  },
+  {
+   "motion": 248,
+   "row": "FlyReflectCeil",
+   "clip": "FlyReflectCeil",
+   "status": "own"
+  },
+  {
+   "motion": 249,
+   "row": "StopWall",
+   "clip": "StopWall",
+   "status": "own"
+  },
+  {
+   "motion": 250,
+   "row": "StopCeil",
+   "clip": "StopCeil",
+   "status": "own"
+  },
+  {
+   "motion": 251,
+   "row": "MissFoot",
+   "clip": "MissFoot",
+   "status": "own"
+  },
+  {
+   "motion": 252,
+   "row": "CliffCatch",
+   "clip": "CliffCatch",
+   "status": "own"
+  },
+  {
+   "motion": 253,
+   "row": "CliffWait",
+   "clip": "CliffWait",
+   "status": "own"
+  },
+  {
+   "motion": 254,
+   "row": "CliffClimbSlow",
+   "clip": "CliffClimbSlow",
+   "status": "own"
+  },
+  {
+   "motion": 255,
+   "row": "CliffClimbQuick",
+   "clip": "CliffClimbQuick",
+   "status": "own"
+  },
+  {
+   "motion": 256,
+   "row": "CliffAttackSlow",
+   "clip": "CliffAttackSlow",
+   "status": "own"
+  },
+  {
+   "motion": 257,
+   "row": "CliffAttackQuick",
+   "clip": "CliffAttackQuick",
+   "status": "own"
+  },
+  {
+   "motion": 258,
+   "row": "CliffEscapeSlow",
+   "clip": "CliffEscapeSlow",
+   "status": "own"
+  },
+  {
+   "motion": 259,
+   "row": "CliffEscapeQuick",
+   "clip": "CliffEscapeQuick",
+   "status": "own"
+  },
+  {
+   "motion": 260,
+   "row": "CliffJumpSlow1",
+   "clip": "CliffJumpSlow1",
+   "status": "own"
+  },
+  {
+   "motion": 261,
+   "row": "CliffJumpSlow2",
+   "clip": "CliffJumpSlow2",
+   "status": "own"
+  },
+  {
+   "motion": 262,
+   "row": "CliffJumpQuick1",
+   "clip": "CliffJumpQuick1",
+   "status": "own"
+  },
+  {
+   "motion": 263,
+   "row": "CliffJumpQuick2",
+   "clip": "CliffJumpQuick2",
+   "status": "own"
+  },
+  {
+   "motion": 264,
+   "row": "AppealSR",
+   "clip": "AppealSR",
+   "status": "own"
+  },
+  {
+   "motion": 265,
+   "row": "AppealSL",
+   "clip": "AppealSL",
+   "status": "own"
+  },
+  {
+   "motion": 266,
+   "row": "ShoulderedWait",
+   "clip": "Wait",
+   "status": "placeholder",
+   "note": "shouldered carry is not part of this fighter"
+  },
+  {
+   "motion": 267,
+   "row": "ShoulderedWalkSlow",
+   "clip": "WalkSlow",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 268,
+   "row": "ShoulderedWalkMiddle",
+   "clip": "WalkMiddle",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 269,
+   "row": "ShoulderedWalkFast",
+   "clip": "WalkFast",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 270,
+   "row": "ShoulderedTurn",
+   "clip": "Turn",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 271,
+   "row": "ThrownFF",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": "throws by other fighters use the generic flung clip"
+  },
+  {
+   "motion": 272,
+   "row": "ThrownFB",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": "throws by other fighters use the generic flung clip"
+  },
+  {
+   "motion": 273,
+   "row": "ThrownFHi",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": "throws by other fighters use the generic flung clip"
+  },
+  {
+   "motion": 274,
+   "row": "ThrownFLw",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": "throws by other fighters use the generic flung clip"
+  },
+  {
+   "motion": 275,
+   "row": "CaptureCaptain",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": "special-grab holds reuse the generic struggle"
+  },
+  {
+   "motion": 276,
+   "row": "CaptureYoshi",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": "special-grab holds reuse the generic struggle"
+  },
+  {
+   "motion": 277,
+   "row": "YoshiEgg",
+   "clip": "DamageIce",
+   "status": "placeholder",
+   "note": "egg trap shows the frozen pose"
+  },
+  {
+   "motion": 278,
+   "row": "CaptureKoopa",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": "special-grab holds reuse the generic struggle"
+  },
+  {
+   "motion": 279,
+   "row": "CaptureDamageKoopa",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 280,
+   "row": "CaptureWaitKoopa",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 281,
+   "row": "ThrownKoopaF",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 282,
+   "row": "ThrownKoopaB",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 283,
+   "row": "CaptureKoopaAir",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": "special-grab holds reuse the generic struggle"
+  },
+  {
+   "motion": 284,
+   "row": "CaptureDamageKoopaAir",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 285,
+   "row": "CaptureWaitKoopaAir",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 286,
+   "row": "ThrownKoopaAirF",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 287,
+   "row": "ThrownKoopaAirB",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 288,
+   "row": "CaptureKirby",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": "special-grab holds reuse the generic struggle"
+  },
+  {
+   "motion": 289,
+   "row": "CaptureWaitKirby",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 290,
+   "row": "ThrownKirbyStar",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 291,
+   "row": "ThrownCopyStar",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 292,
+   "row": "ThrownKirby",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 293,
+   "row": "BarrelWait",
+   "clip": "Wait",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 294,
+   "row": "Bury",
+   "clip": "SquatWait",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 295,
+   "row": "BuryWait",
+   "clip": "SquatWait",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 296,
+   "row": "BuryJump",
+   "clip": "KneeBend",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 297,
+   "row": "DamageSong",
+   "clip": "Furafura",
+   "status": "placeholder",
+   "note": "sleep / bind poses reuse the dizzy sway"
+  },
+  {
+   "motion": 298,
+   "row": "DamageSongWait",
+   "clip": "Furafura",
+   "status": "placeholder",
+   "note": "sleep / bind poses reuse the dizzy sway"
+  },
+  {
+   "motion": 299,
+   "row": "DamageSongRv",
+   "clip": "Furafura",
+   "status": "placeholder",
+   "note": "sleep / bind poses reuse the dizzy sway"
+  },
+  {
+   "motion": 300,
+   "row": "DamageBind",
+   "clip": "Furafura",
+   "status": "placeholder",
+   "note": "sleep / bind poses reuse the dizzy sway"
+  },
+  {
+   "motion": 301,
+   "row": "CaptureMewtwo",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": "special-grab holds reuse the generic struggle"
+  },
+  {
+   "motion": 302,
+   "row": "CaptureMewtwoAir",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": "special-grab holds reuse the generic struggle"
+  },
+  {
+   "motion": 303,
+   "row": "ThrownMewtwo",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 304,
+   "row": "ThrownMewtwoAir",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 305,
+   "row": "WarpStarJump",
+   "clip": "JumpAerialF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 306,
+   "row": "WarpStarFall",
+   "clip": "Fall",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 307,
+   "row": "HammerWait",
+   "clip": "Wait",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 308,
+   "row": "HammerWalk",
+   "clip": "WalkMiddle",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 309,
+   "row": "HammerTurn",
+   "clip": "WalkMiddle",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 310,
+   "row": "HammerKneeBend",
+   "clip": "KneeBend",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 311,
+   "row": "HammerFall",
+   "clip": "Fall",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 312,
+   "row": "HammerJump",
+   "clip": "Fall",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 313,
+   "row": "HammerLanding",
+   "clip": "Landing",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 314,
+   "row": "KinokoGiantStart",
+   "clip": "Wait",
+   "status": "placeholder",
+   "note": "mushroom size change: the engine scales the model; no bone is scaled by clips"
+  },
+  {
+   "motion": 315,
+   "row": "KinokoGiantStartAir",
+   "clip": "Wait",
+   "status": "placeholder",
+   "note": "mushroom size change: the engine scales the model; no bone is scaled by clips"
+  },
+  {
+   "motion": 316,
+   "row": "KinokoGiantEnd",
+   "clip": "Wait",
+   "status": "placeholder",
+   "note": "mushroom size change: the engine scales the model; no bone is scaled by clips"
+  },
+  {
+   "motion": 317,
+   "row": "KinokoGiantEndAir",
+   "clip": "Wait",
+   "status": "placeholder",
+   "note": "mushroom size change: the engine scales the model; no bone is scaled by clips"
+  },
+  {
+   "motion": 318,
+   "row": "KinokoSmallStart",
+   "clip": "Wait",
+   "status": "placeholder",
+   "note": "mushroom size change: the engine scales the model; no bone is scaled by clips"
+  },
+  {
+   "motion": 319,
+   "row": "KinokoSmallStartAir",
+   "clip": "Wait",
+   "status": "placeholder",
+   "note": "mushroom size change: the engine scales the model; no bone is scaled by clips"
+  },
+  {
+   "motion": 320,
+   "row": "KinokoSmallEnd",
+   "clip": "Wait",
+   "status": "placeholder",
+   "note": "mushroom size change: the engine scales the model; no bone is scaled by clips"
+  },
+  {
+   "motion": 321,
+   "row": "KinokoSmallEndAir",
+   "clip": "Wait",
+   "status": "placeholder",
+   "note": "mushroom size change: the engine scales the model; no bone is scaled by clips"
+  },
+  {
+   "motion": 322,
+   "row": "Entry",
+   "clip": "EntryStart",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 323,
+   "row": "EntryStart",
+   "clip": "EntryStart",
+   "status": "own"
+  },
+  {
+   "motion": 324,
+   "row": "EntryEnd",
+   "clip": "EntryStart",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 325,
+   "row": "DamageIce",
+   "clip": "DamageIce",
+   "status": "own"
+  },
+  {
+   "motion": 326,
+   "row": "DamageIceJump",
+   "clip": "DamageIceJump",
+   "status": "own"
+  },
+  {
+   "motion": 327,
+   "row": "CaptureMasterHand",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": "special-grab holds reuse the generic struggle"
+  },
+  {
+   "motion": 328,
+   "row": "CaptureDamageMasterHand",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 329,
+   "row": "CaptureWaitMasterHand",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 330,
+   "row": "ThrownMasterHand",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 331,
+   "row": "CaptureKirbyYoshi",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": "special-grab holds reuse the generic struggle"
+  },
+  {
+   "motion": 332,
+   "row": "KirbyYoshiEgg",
+   "clip": "DamageIce",
+   "status": "placeholder",
+   "note": "egg trap shows the frozen pose"
+  },
+  {
+   "motion": 333,
+   "row": "CaptureLeadead",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": "special-grab holds reuse the generic struggle"
+  },
+  {
+   "motion": 334,
+   "row": "CaptureLikelike",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": "special-grab holds reuse the generic struggle"
+  },
+  {
+   "motion": 335,
+   "row": "DownReflect",
+   "clip": "FlyReflectWall",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 336,
+   "row": "CaptureCrazyHand",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": "special-grab holds reuse the generic struggle"
+  },
+  {
+   "motion": 337,
+   "row": "CaptureDamageCrazyHand",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 338,
+   "row": "CaptureWaitCrazyHand",
+   "clip": "CaptureWaitHi",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 339,
+   "row": "ThrownCrazyHand",
+   "clip": "ThrownF",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 340,
+   "row": "Barrel",
+   "clip": "Wait",
+   "status": "placeholder",
+   "note": ""
+  },
+  {
+   "motion": 341,
+   "row": "AppealSR",
+   "clip": "AppealSR",
+   "status": "own"
+  },
+  {
+   "motion": 342,
+   "row": "AppealSL",
+   "clip": "AppealSL",
+   "status": "own"
+  },
+  {
+   "motion": 343,
+   "row": "SpecialN",
+   "clip": "NCharge",
+   "status": "alias",
+   "note": "Geno states NCharge/NRelease replace the Mario special rows"
+  },
+  {
+   "motion": 344,
+   "row": "SpecialAirN",
+   "clip": "NCharge",
+   "status": "alias",
+   "note": "Geno states NCharge/NRelease replace the Mario special rows"
+  },
+  {
+   "motion": 345,
+   "row": "SpecialS",
+   "clip": "SLunge",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 346,
+   "row": "SpecialAirS",
+   "clip": "SLunge",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 347,
+   "row": "SpecialHi",
+   "clip": "Rise",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 348,
+   "row": "SpecialAirHi",
+   "clip": "Rise",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 349,
+   "row": "SpecialLw",
+   "clip": "Counter",
+   "status": "alias",
+   "note": ""
+  },
+  {
+   "motion": 350,
+   "row": "SpecialAirLw",
+   "clip": "Counter",
+   "status": "alias",
+   "note": ""
+  }
+ ],
+ "files": {
+  "glb": "out/courier.glb",
+  "textures": "out/tex/*.png",
+  "blend_model": "out/stage1_model.blend",
+  "blend_anim": "out/stage2_anim.blend"
+ }
+}

@@ -1,0 +1,1760 @@
+{
+"source": "tools/geno/report.py --json (engine motion row names from the decomp; names only, no disc data)",
+"rows": [
+{
+"motion": 0,
+"name": "DeadDown",
+"retail_subaction": -1
+},
+{
+"motion": 1,
+"name": "DeadLeft",
+"retail_subaction": -1
+},
+{
+"motion": 2,
+"name": "DeadRight",
+"retail_subaction": -1
+},
+{
+"motion": 3,
+"name": "DeadUp",
+"retail_subaction": -1
+},
+{
+"motion": 4,
+"name": "DeadUpStar",
+"retail_subaction": 29
+},
+{
+"motion": 5,
+"name": "DeadUpStarIce",
+"retail_subaction": -1
+},
+{
+"motion": 6,
+"name": "DeadUpFall",
+"retail_subaction": 29
+},
+{
+"motion": 7,
+"name": "DeadUpFallHitCamera",
+"retail_subaction": 0
+},
+{
+"motion": 8,
+"name": "DeadUpFallHitCameraFlat",
+"retail_subaction": 1
+},
+{
+"motion": 9,
+"name": "DeadUpFallIce",
+"retail_subaction": -1
+},
+{
+"motion": 10,
+"name": "DeadUpFallHitCameraIce",
+"retail_subaction": -1
+},
+{
+"motion": 11,
+"name": "Sleep",
+"retail_subaction": -1
+},
+{
+"motion": 12,
+"name": "Rebirth",
+"retail_subaction": 2
+},
+{
+"motion": 13,
+"name": "RebirthWait",
+"retail_subaction": 2
+},
+{
+"motion": 14,
+"name": "Wait",
+"retail_subaction": 2
+},
+{
+"motion": 15,
+"name": "WalkSlow",
+"retail_subaction": 7
+},
+{
+"motion": 16,
+"name": "WalkMiddle",
+"retail_subaction": 8
+},
+{
+"motion": 17,
+"name": "WalkFast",
+"retail_subaction": 9
+},
+{
+"motion": 18,
+"name": "Turn",
+"retail_subaction": 10
+},
+{
+"motion": 19,
+"name": "TurnRun",
+"retail_subaction": 11
+},
+{
+"motion": 20,
+"name": "Dash",
+"retail_subaction": 12
+},
+{
+"motion": 21,
+"name": "Run",
+"retail_subaction": 13
+},
+{
+"motion": 22,
+"name": "RunDirect",
+"retail_subaction": 13
+},
+{
+"motion": 23,
+"name": "RunBrake",
+"retail_subaction": 14
+},
+{
+"motion": 24,
+"name": "KneeBend",
+"retail_subaction": 15
+},
+{
+"motion": 25,
+"name": "JumpF",
+"retail_subaction": 16
+},
+{
+"motion": 26,
+"name": "JumpB",
+"retail_subaction": 17
+},
+{
+"motion": 27,
+"name": "JumpAerialF",
+"retail_subaction": 18
+},
+{
+"motion": 28,
+"name": "JumpAerialB",
+"retail_subaction": 19
+},
+{
+"motion": 29,
+"name": "Fall",
+"retail_subaction": 20
+},
+{
+"motion": 30,
+"name": "FallF",
+"retail_subaction": -1
+},
+{
+"motion": 31,
+"name": "FallB",
+"retail_subaction": -1
+},
+{
+"motion": 32,
+"name": "FallAerial",
+"retail_subaction": 23
+},
+{
+"motion": 33,
+"name": "FallAerialF",
+"retail_subaction": 24
+},
+{
+"motion": 34,
+"name": "FallAerialB",
+"retail_subaction": 25
+},
+{
+"motion": 35,
+"name": "FallSpecial",
+"retail_subaction": 26
+},
+{
+"motion": 36,
+"name": "FallSpecialF",
+"retail_subaction": 27
+},
+{
+"motion": 37,
+"name": "FallSpecialB",
+"retail_subaction": 28
+},
+{
+"motion": 38,
+"name": "DamageFall",
+"retail_subaction": 29
+},
+{
+"motion": 39,
+"name": "Squat",
+"retail_subaction": 30
+},
+{
+"motion": 40,
+"name": "SquatWait",
+"retail_subaction": 31
+},
+{
+"motion": 41,
+"name": "SquatRv",
+"retail_subaction": 34
+},
+{
+"motion": 42,
+"name": "Landing",
+"retail_subaction": 35
+},
+{
+"motion": 43,
+"name": "LandingFallSpecial",
+"retail_subaction": 36
+},
+{
+"motion": 44,
+"name": "Attack11",
+"retail_subaction": 46
+},
+{
+"motion": 45,
+"name": "Attack12",
+"retail_subaction": 47
+},
+{
+"motion": 46,
+"name": "Attack13",
+"retail_subaction": 48
+},
+{
+"motion": 47,
+"name": "Attack100Start",
+"retail_subaction": 49
+},
+{
+"motion": 48,
+"name": "Attack100Loop",
+"retail_subaction": 50
+},
+{
+"motion": 49,
+"name": "Attack100End",
+"retail_subaction": 51
+},
+{
+"motion": 50,
+"name": "AttackDash",
+"retail_subaction": 52
+},
+{
+"motion": 51,
+"name": "AttackS3Hi",
+"retail_subaction": 53
+},
+{
+"motion": 52,
+"name": "AttackS3HiS",
+"retail_subaction": 54
+},
+{
+"motion": 53,
+"name": "AttackS3S",
+"retail_subaction": 55
+},
+{
+"motion": 54,
+"name": "AttackS3LwS",
+"retail_subaction": 56
+},
+{
+"motion": 55,
+"name": "AttackS3Lw",
+"retail_subaction": 57
+},
+{
+"motion": 56,
+"name": "AttackHi3",
+"retail_subaction": 58
+},
+{
+"motion": 57,
+"name": "AttackLw3",
+"retail_subaction": 59
+},
+{
+"motion": 58,
+"name": "AttackS4Hi",
+"retail_subaction": 60
+},
+{
+"motion": 59,
+"name": "AttackS4HiS",
+"retail_subaction": 61
+},
+{
+"motion": 60,
+"name": "AttackS4S",
+"retail_subaction": 62
+},
+{
+"motion": 61,
+"name": "AttackS4LwS",
+"retail_subaction": 63
+},
+{
+"motion": 62,
+"name": "AttackS4Lw",
+"retail_subaction": 64
+},
+{
+"motion": 63,
+"name": "AttackHi4",
+"retail_subaction": 66
+},
+{
+"motion": 64,
+"name": "AttackLw4",
+"retail_subaction": 67
+},
+{
+"motion": 65,
+"name": "AttackAirN",
+"retail_subaction": 68
+},
+{
+"motion": 66,
+"name": "AttackAirF",
+"retail_subaction": 69
+},
+{
+"motion": 67,
+"name": "AttackAirB",
+"retail_subaction": 70
+},
+{
+"motion": 68,
+"name": "AttackAirHi",
+"retail_subaction": 71
+},
+{
+"motion": 69,
+"name": "AttackAirLw",
+"retail_subaction": 72
+},
+{
+"motion": 70,
+"name": "LandingAirN",
+"retail_subaction": 73
+},
+{
+"motion": 71,
+"name": "LandingAirF",
+"retail_subaction": 74
+},
+{
+"motion": 72,
+"name": "LandingAirB",
+"retail_subaction": 75
+},
+{
+"motion": 73,
+"name": "LandingAirHi",
+"retail_subaction": 76
+},
+{
+"motion": 74,
+"name": "LandingAirLw",
+"retail_subaction": 77
+},
+{
+"motion": 75,
+"name": "DamageHi1",
+"retail_subaction": 165
+},
+{
+"motion": 76,
+"name": "DamageHi2",
+"retail_subaction": 166
+},
+{
+"motion": 77,
+"name": "DamageHi3",
+"retail_subaction": 167
+},
+{
+"motion": 78,
+"name": "DamageN1",
+"retail_subaction": 168
+},
+{
+"motion": 79,
+"name": "DamageN2",
+"retail_subaction": 169
+},
+{
+"motion": 80,
+"name": "DamageN3",
+"retail_subaction": 170
+},
+{
+"motion": 81,
+"name": "DamageLw1",
+"retail_subaction": 171
+},
+{
+"motion": 82,
+"name": "DamageLw2",
+"retail_subaction": 172
+},
+{
+"motion": 83,
+"name": "DamageLw3",
+"retail_subaction": 173
+},
+{
+"motion": 84,
+"name": "DamageAir1",
+"retail_subaction": 174
+},
+{
+"motion": 85,
+"name": "DamageAir2",
+"retail_subaction": 175
+},
+{
+"motion": 86,
+"name": "DamageAir3",
+"retail_subaction": 176
+},
+{
+"motion": 87,
+"name": "DamageFlyHi",
+"retail_subaction": 177
+},
+{
+"motion": 88,
+"name": "DamageFlyN",
+"retail_subaction": 178
+},
+{
+"motion": 89,
+"name": "DamageFlyLw",
+"retail_subaction": 179
+},
+{
+"motion": 90,
+"name": "DamageFlyTop",
+"retail_subaction": 180
+},
+{
+"motion": 91,
+"name": "DamageFlyRoll",
+"retail_subaction": 181
+},
+{
+"motion": 92,
+"name": "LightGet",
+"retail_subaction": 78
+},
+{
+"motion": 93,
+"name": "HeavyGet",
+"retail_subaction": 89
+},
+{
+"motion": 94,
+"name": "LightThrowF",
+"retail_subaction": 79
+},
+{
+"motion": 95,
+"name": "LightThrowB",
+"retail_subaction": 80
+},
+{
+"motion": 96,
+"name": "LightThrowHi",
+"retail_subaction": 81
+},
+{
+"motion": 97,
+"name": "LightThrowLw",
+"retail_subaction": 82
+},
+{
+"motion": 98,
+"name": "LightThrowDash",
+"retail_subaction": 83
+},
+{
+"motion": 99,
+"name": "LightThrowDrop",
+"retail_subaction": 84
+},
+{
+"motion": 100,
+"name": "LightThrowAirF",
+"retail_subaction": 85
+},
+{
+"motion": 101,
+"name": "LightThrowAirB",
+"retail_subaction": 86
+},
+{
+"motion": 102,
+"name": "LightThrowAirHi",
+"retail_subaction": 87
+},
+{
+"motion": 103,
+"name": "LightThrowAirLw",
+"retail_subaction": 88
+},
+{
+"motion": 104,
+"name": "HeavyThrowF",
+"retail_subaction": 92
+},
+{
+"motion": 105,
+"name": "HeavyThrowB",
+"retail_subaction": 93
+},
+{
+"motion": 106,
+"name": "HeavyThrowHi",
+"retail_subaction": 94
+},
+{
+"motion": 107,
+"name": "HeavyThrowLw",
+"retail_subaction": 95
+},
+{
+"motion": 108,
+"name": "LightThrowF4",
+"retail_subaction": 96
+},
+{
+"motion": 109,
+"name": "LightThrowB4",
+"retail_subaction": 97
+},
+{
+"motion": 110,
+"name": "LightThrowHi4",
+"retail_subaction": 98
+},
+{
+"motion": 111,
+"name": "LightThrowLw4",
+"retail_subaction": 99
+},
+{
+"motion": 112,
+"name": "LightThrowAirF4",
+"retail_subaction": 100
+},
+{
+"motion": 113,
+"name": "LightThrowAirB4",
+"retail_subaction": 101
+},
+{
+"motion": 114,
+"name": "LightThrowAirHi4",
+"retail_subaction": 102
+},
+{
+"motion": 115,
+"name": "LightThrowAirLw4",
+"retail_subaction": 103
+},
+{
+"motion": 116,
+"name": "HeavyThrowF4",
+"retail_subaction": 104
+},
+{
+"motion": 117,
+"name": "HeavyThrowB4",
+"retail_subaction": 105
+},
+{
+"motion": 118,
+"name": "HeavyThrowHi4",
+"retail_subaction": 106
+},
+{
+"motion": 119,
+"name": "HeavyThrowLw4",
+"retail_subaction": 107
+},
+{
+"motion": 120,
+"name": "SwordSwing1",
+"retail_subaction": 108
+},
+{
+"motion": 121,
+"name": "SwordSwing3",
+"retail_subaction": 109
+},
+{
+"motion": 122,
+"name": "SwordSwing4",
+"retail_subaction": 110
+},
+{
+"motion": 123,
+"name": "SwordSwingDash",
+"retail_subaction": 111
+},
+{
+"motion": 124,
+"name": "BatSwing1",
+"retail_subaction": 112
+},
+{
+"motion": 125,
+"name": "BatSwing3",
+"retail_subaction": 113
+},
+{
+"motion": 126,
+"name": "BatSwing4",
+"retail_subaction": 114
+},
+{
+"motion": 127,
+"name": "BatSwingDash",
+"retail_subaction": 115
+},
+{
+"motion": 128,
+"name": "ParasolSwing1",
+"retail_subaction": 116
+},
+{
+"motion": 129,
+"name": "ParasolSwing3",
+"retail_subaction": 117
+},
+{
+"motion": 130,
+"name": "ParasolSwing4",
+"retail_subaction": 118
+},
+{
+"motion": 131,
+"name": "ParasolSwingDash",
+"retail_subaction": 119
+},
+{
+"motion": 132,
+"name": "HarisenSwing1",
+"retail_subaction": 120
+},
+{
+"motion": 133,
+"name": "HarisenSwing3",
+"retail_subaction": 121
+},
+{
+"motion": 134,
+"name": "HarisenSwing4",
+"retail_subaction": 122
+},
+{
+"motion": 135,
+"name": "HarisenSwingDash",
+"retail_subaction": 123
+},
+{
+"motion": 136,
+"name": "StarRodSwing1",
+"retail_subaction": 124
+},
+{
+"motion": 137,
+"name": "StarRodSwing3",
+"retail_subaction": 125
+},
+{
+"motion": 138,
+"name": "StarRodSwing4",
+"retail_subaction": 126
+},
+{
+"motion": 139,
+"name": "StarRodSwingDash",
+"retail_subaction": 127
+},
+{
+"motion": 140,
+"name": "LipstickSwing1",
+"retail_subaction": 128
+},
+{
+"motion": 141,
+"name": "LipstickSwing3",
+"retail_subaction": 129
+},
+{
+"motion": 142,
+"name": "LipstickSwing4",
+"retail_subaction": 130
+},
+{
+"motion": 143,
+"name": "LipstickSwingDash",
+"retail_subaction": 131
+},
+{
+"motion": 144,
+"name": "ItemParasolOpen",
+"retail_subaction": 134
+},
+{
+"motion": 145,
+"name": "ItemParasolFall",
+"retail_subaction": 135
+},
+{
+"motion": 146,
+"name": "ItemParasolFallSpecial",
+"retail_subaction": 136
+},
+{
+"motion": 147,
+"name": "ItemParasolDamageFall",
+"retail_subaction": 137
+},
+{
+"motion": 148,
+"name": "LGunShoot",
+"retail_subaction": 138
+},
+{
+"motion": 149,
+"name": "LGunShootAir",
+"retail_subaction": 139
+},
+{
+"motion": 150,
+"name": "LGunShootEmpty",
+"retail_subaction": 140
+},
+{
+"motion": 151,
+"name": "LGunShootAirEmpty",
+"retail_subaction": 141
+},
+{
+"motion": 152,
+"name": "FireFlowerShoot",
+"retail_subaction": 142
+},
+{
+"motion": 153,
+"name": "FireFlowerShootAir",
+"retail_subaction": 143
+},
+{
+"motion": 154,
+"name": "ItemScrew",
+"retail_subaction": 144
+},
+{
+"motion": 155,
+"name": "ItemScrewAir",
+"retail_subaction": 145
+},
+{
+"motion": 156,
+"name": "DamageScrew",
+"retail_subaction": 146
+},
+{
+"motion": 157,
+"name": "DamageScrewAir",
+"retail_subaction": 147
+},
+{
+"motion": 158,
+"name": "ItemScopeStart",
+"retail_subaction": 149
+},
+{
+"motion": 159,
+"name": "ItemScopeRapid",
+"retail_subaction": 150
+},
+{
+"motion": 160,
+"name": "ItemScopeFire",
+"retail_subaction": 151
+},
+{
+"motion": 161,
+"name": "ItemScopeEnd",
+"retail_subaction": 152
+},
+{
+"motion": 162,
+"name": "ItemScopeAirStart",
+"retail_subaction": 153
+},
+{
+"motion": 163,
+"name": "ItemScopeAirRapid",
+"retail_subaction": 154
+},
+{
+"motion": 164,
+"name": "ItemScopeAirFire",
+"retail_subaction": 155
+},
+{
+"motion": 165,
+"name": "ItemScopeAirEnd",
+"retail_subaction": 156
+},
+{
+"motion": 166,
+"name": "ItemScopeStartEmpty",
+"retail_subaction": 157
+},
+{
+"motion": 167,
+"name": "ItemScopeRapidEmpty",
+"retail_subaction": 158
+},
+{
+"motion": 168,
+"name": "ItemScopeFireEmpty",
+"retail_subaction": 159
+},
+{
+"motion": 169,
+"name": "ItemScopeEndEmpty",
+"retail_subaction": 160
+},
+{
+"motion": 170,
+"name": "ItemScopeAirStartEmpty",
+"retail_subaction": 161
+},
+{
+"motion": 171,
+"name": "ItemScopeAirRapidEmpty",
+"retail_subaction": 162
+},
+{
+"motion": 172,
+"name": "ItemScopeAirFireEmpty",
+"retail_subaction": 163
+},
+{
+"motion": 173,
+"name": "ItemScopeAirEndEmpty",
+"retail_subaction": 164
+},
+{
+"motion": 174,
+"name": "LiftWait",
+"retail_subaction": -1
+},
+{
+"motion": 175,
+"name": "LiftWalk1",
+"retail_subaction": 90
+},
+{
+"motion": 176,
+"name": "LiftWalk2",
+"retail_subaction": 91
+},
+{
+"motion": 177,
+"name": "LiftTurn",
+"retail_subaction": -1
+},
+{
+"motion": 178,
+"name": "GuardOn",
+"retail_subaction": 37
+},
+{
+"motion": 179,
+"name": "Guard",
+"retail_subaction": 38
+},
+{
+"motion": 180,
+"name": "GuardOff",
+"retail_subaction": 39
+},
+{
+"motion": 181,
+"name": "GuardSetOff",
+"retail_subaction": 40
+},
+{
+"motion": 182,
+"name": "GuardReflect",
+"retail_subaction": 37
+},
+{
+"motion": 183,
+"name": "DownBoundU",
+"retail_subaction": 183
+},
+{
+"motion": 184,
+"name": "DownWaitU",
+"retail_subaction": 184
+},
+{
+"motion": 185,
+"name": "DownDamageU",
+"retail_subaction": 185
+},
+{
+"motion": 186,
+"name": "DownStandU",
+"retail_subaction": 186
+},
+{
+"motion": 187,
+"name": "DownAttackU",
+"retail_subaction": 187
+},
+{
+"motion": 188,
+"name": "DownFowardU",
+"retail_subaction": 188
+},
+{
+"motion": 189,
+"name": "DownBackU",
+"retail_subaction": 189
+},
+{
+"motion": 190,
+"name": "DownSpotU",
+"retail_subaction": 190
+},
+{
+"motion": 191,
+"name": "DownBoundD",
+"retail_subaction": 191
+},
+{
+"motion": 192,
+"name": "DownWaitD",
+"retail_subaction": 192
+},
+{
+"motion": 193,
+"name": "DownDamageD",
+"retail_subaction": 193
+},
+{
+"motion": 194,
+"name": "DownStandD",
+"retail_subaction": 194
+},
+{
+"motion": 195,
+"name": "DownAttackD",
+"retail_subaction": 195
+},
+{
+"motion": 196,
+"name": "DownFowardD",
+"retail_subaction": 196
+},
+{
+"motion": 197,
+"name": "DownBackD",
+"retail_subaction": 197
+},
+{
+"motion": 198,
+"name": "DownSpotD",
+"retail_subaction": 198
+},
+{
+"motion": 199,
+"name": "Passive",
+"retail_subaction": 199
+},
+{
+"motion": 200,
+"name": "PassiveStandF",
+"retail_subaction": 200
+},
+{
+"motion": 201,
+"name": "PassiveStandB",
+"retail_subaction": 201
+},
+{
+"motion": 202,
+"name": "PassiveWall",
+"retail_subaction": 202
+},
+{
+"motion": 203,
+"name": "PassiveWallJump",
+"retail_subaction": 203
+},
+{
+"motion": 204,
+"name": "PassiveCeil",
+"retail_subaction": 204
+},
+{
+"motion": 205,
+"name": "ShieldBreakFly",
+"retail_subaction": 286
+},
+{
+"motion": 206,
+"name": "ShieldBreakFall",
+"retail_subaction": 287
+},
+{
+"motion": 207,
+"name": "ShieldBreakDownU",
+"retail_subaction": 288
+},
+{
+"motion": 208,
+"name": "ShieldBreakDownD",
+"retail_subaction": 289
+},
+{
+"motion": 209,
+"name": "ShieldBreakStandU",
+"retail_subaction": 290
+},
+{
+"motion": 210,
+"name": "ShieldBreakStandD",
+"retail_subaction": 291
+},
+{
+"motion": 211,
+"name": "Furafura",
+"retail_subaction": 205
+},
+{
+"motion": 212,
+"name": "Catch",
+"retail_subaction": 242
+},
+{
+"motion": 213,
+"name": "CatchPull",
+"retail_subaction": 242
+},
+{
+"motion": 214,
+"name": "CatchDash",
+"retail_subaction": 243
+},
+{
+"motion": 215,
+"name": "CatchDashPull",
+"retail_subaction": 243
+},
+{
+"motion": 216,
+"name": "CatchWait",
+"retail_subaction": 244
+},
+{
+"motion": 217,
+"name": "CatchAttack",
+"retail_subaction": 245
+},
+{
+"motion": 218,
+"name": "CatchCut",
+"retail_subaction": 246
+},
+{
+"motion": 219,
+"name": "ThrowF",
+"retail_subaction": 247
+},
+{
+"motion": 220,
+"name": "ThrowB",
+"retail_subaction": 248
+},
+{
+"motion": 221,
+"name": "ThrowHi",
+"retail_subaction": 249
+},
+{
+"motion": 222,
+"name": "ThrowLw",
+"retail_subaction": 250
+},
+{
+"motion": 223,
+"name": "CapturePulledHi",
+"retail_subaction": 251
+},
+{
+"motion": 224,
+"name": "CaptureWaitHi",
+"retail_subaction": 252
+},
+{
+"motion": 225,
+"name": "CaptureDamageHi",
+"retail_subaction": 253
+},
+{
+"motion": 226,
+"name": "CapturePulledLw",
+"retail_subaction": 254
+},
+{
+"motion": 227,
+"name": "CaptureWaitLw",
+"retail_subaction": 255
+},
+{
+"motion": 228,
+"name": "CaptureDamageLw",
+"retail_subaction": 256
+},
+{
+"motion": 229,
+"name": "CaptureCut",
+"retail_subaction": 257
+},
+{
+"motion": 230,
+"name": "CaptureJump",
+"retail_subaction": 258
+},
+{
+"motion": 231,
+"name": "CaptureNeck",
+"retail_subaction": 259
+},
+{
+"motion": 232,
+"name": "CaptureFoot",
+"retail_subaction": 260
+},
+{
+"motion": 233,
+"name": "EscapeF",
+"retail_subaction": 42
+},
+{
+"motion": 234,
+"name": "EscapeB",
+"retail_subaction": 43
+},
+{
+"motion": 235,
+"name": "EscapeN",
+"retail_subaction": 41
+},
+{
+"motion": 236,
+"name": "EscapeAir",
+"retail_subaction": 44
+},
+{
+"motion": 237,
+"name": "ReboundStop",
+"retail_subaction": -1
+},
+{
+"motion": 238,
+"name": "Rebound",
+"retail_subaction": 45
+},
+{
+"motion": 239,
+"name": "ThrownF",
+"retail_subaction": 262
+},
+{
+"motion": 240,
+"name": "ThrownB",
+"retail_subaction": 263
+},
+{
+"motion": 241,
+"name": "ThrownHi",
+"retail_subaction": 264
+},
+{
+"motion": 242,
+"name": "ThrownLw",
+"retail_subaction": 265
+},
+{
+"motion": 243,
+"name": "ThrownlwWomen",
+"retail_subaction": 266
+},
+{
+"motion": 244,
+"name": "Pass",
+"retail_subaction": 209
+},
+{
+"motion": 245,
+"name": "Ottotto",
+"retail_subaction": -1
+},
+{
+"motion": 246,
+"name": "OttottoWait",
+"retail_subaction": -1
+},
+{
+"motion": 247,
+"name": "FlyReflectWall",
+"retail_subaction": 212
+},
+{
+"motion": 248,
+"name": "FlyReflectCeil",
+"retail_subaction": 214
+},
+{
+"motion": 249,
+"name": "StopWall",
+"retail_subaction": 213
+},
+{
+"motion": 250,
+"name": "StopCeil",
+"retail_subaction": 214
+},
+{
+"motion": 251,
+"name": "MissFoot",
+"retail_subaction": 215
+},
+{
+"motion": 252,
+"name": "CliffCatch",
+"retail_subaction": 216
+},
+{
+"motion": 253,
+"name": "CliffWait",
+"retail_subaction": 217
+},
+{
+"motion": 254,
+"name": "CliffClimbSlow",
+"retail_subaction": 219
+},
+{
+"motion": 255,
+"name": "CliffClimbQuick",
+"retail_subaction": 220
+},
+{
+"motion": 256,
+"name": "CliffAttackSlow",
+"retail_subaction": 221
+},
+{
+"motion": 257,
+"name": "CliffAttackQuick",
+"retail_subaction": 222
+},
+{
+"motion": 258,
+"name": "CliffEscapeSlow",
+"retail_subaction": 223
+},
+{
+"motion": 259,
+"name": "CliffEscapeQuick",
+"retail_subaction": 224
+},
+{
+"motion": 260,
+"name": "CliffJumpSlow1",
+"retail_subaction": 225
+},
+{
+"motion": 261,
+"name": "CliffJumpSlow2",
+"retail_subaction": 226
+},
+{
+"motion": 262,
+"name": "CliffJumpQuick1",
+"retail_subaction": 227
+},
+{
+"motion": 263,
+"name": "CliffJumpQuick2",
+"retail_subaction": 228
+},
+{
+"motion": 264,
+"name": "AppealSR",
+"retail_subaction": 239
+},
+{
+"motion": 265,
+"name": "AppealSL",
+"retail_subaction": 240
+},
+{
+"motion": 266,
+"name": "ShoulderedWait",
+"retail_subaction": 267
+},
+{
+"motion": 267,
+"name": "ShoulderedWalkSlow",
+"retail_subaction": 268
+},
+{
+"motion": 268,
+"name": "ShoulderedWalkMiddle",
+"retail_subaction": 269
+},
+{
+"motion": 269,
+"name": "ShoulderedWalkFast",
+"retail_subaction": 270
+},
+{
+"motion": 270,
+"name": "ShoulderedTurn",
+"retail_subaction": 271
+},
+{
+"motion": 271,
+"name": "ThrownFF",
+"retail_subaction": 272
+},
+{
+"motion": 272,
+"name": "ThrownFB",
+"retail_subaction": 273
+},
+{
+"motion": 273,
+"name": "ThrownFHi",
+"retail_subaction": 274
+},
+{
+"motion": 274,
+"name": "ThrownFLw",
+"retail_subaction": 275
+},
+{
+"motion": 275,
+"name": "CaptureCaptain",
+"retail_subaction": 276
+},
+{
+"motion": 276,
+"name": "CaptureYoshi",
+"retail_subaction": 254
+},
+{
+"motion": 277,
+"name": "YoshiEgg",
+"retail_subaction": 277
+},
+{
+"motion": 278,
+"name": "CaptureKoopa",
+"retail_subaction": -1
+},
+{
+"motion": 279,
+"name": "CaptureDamageKoopa",
+"retail_subaction": 278
+},
+{
+"motion": 280,
+"name": "CaptureWaitKoopa",
+"retail_subaction": -1
+},
+{
+"motion": 281,
+"name": "ThrownKoopaF",
+"retail_subaction": 279
+},
+{
+"motion": 282,
+"name": "ThrownKoopaB",
+"retail_subaction": 280
+},
+{
+"motion": 283,
+"name": "CaptureKoopaAir",
+"retail_subaction": -1
+},
+{
+"motion": 284,
+"name": "CaptureDamageKoopaAir",
+"retail_subaction": 281
+},
+{
+"motion": 285,
+"name": "CaptureWaitKoopaAir",
+"retail_subaction": -1
+},
+{
+"motion": 286,
+"name": "ThrownKoopaAirF",
+"retail_subaction": 282
+},
+{
+"motion": 287,
+"name": "ThrownKoopaAirB",
+"retail_subaction": 283
+},
+{
+"motion": 288,
+"name": "CaptureKirby",
+"retail_subaction": 29
+},
+{
+"motion": 289,
+"name": "CaptureWaitKirby",
+"retail_subaction": -1
+},
+{
+"motion": 290,
+"name": "ThrownKirbyStar",
+"retail_subaction": 285
+},
+{
+"motion": 291,
+"name": "ThrownCopyStar",
+"retail_subaction": 284
+},
+{
+"motion": 292,
+"name": "ThrownKirby",
+"retail_subaction": 29
+},
+{
+"motion": 293,
+"name": "BarrelWait",
+"retail_subaction": -1
+},
+{
+"motion": 294,
+"name": "Bury",
+"retail_subaction": -1
+},
+{
+"motion": 295,
+"name": "BuryWait",
+"retail_subaction": -1
+},
+{
+"motion": 296,
+"name": "BuryJump",
+"retail_subaction": 16
+},
+{
+"motion": 297,
+"name": "DamageSong",
+"retail_subaction": 206
+},
+{
+"motion": 298,
+"name": "DamageSongWait",
+"retail_subaction": 207
+},
+{
+"motion": 299,
+"name": "DamageSongRv",
+"retail_subaction": 208
+},
+{
+"motion": 300,
+"name": "DamageBind",
+"retail_subaction": 205
+},
+{
+"motion": 301,
+"name": "CaptureMewtwo",
+"retail_subaction": -1
+},
+{
+"motion": 302,
+"name": "CaptureMewtwoAir",
+"retail_subaction": -1
+},
+{
+"motion": 303,
+"name": "ThrownMewtwo",
+"retail_subaction": 292
+},
+{
+"motion": 304,
+"name": "ThrownMewtwoAir",
+"retail_subaction": 293
+},
+{
+"motion": 305,
+"name": "WarpStarJump",
+"retail_subaction": 30
+},
+{
+"motion": 306,
+"name": "WarpStarFall",
+"retail_subaction": 31
+},
+{
+"motion": 307,
+"name": "HammerWait",
+"retail_subaction": 132
+},
+{
+"motion": 308,
+"name": "HammerWalk",
+"retail_subaction": 133
+},
+{
+"motion": 309,
+"name": "HammerTurn",
+"retail_subaction": 133
+},
+{
+"motion": 310,
+"name": "HammerKneeBend",
+"retail_subaction": 133
+},
+{
+"motion": 311,
+"name": "HammerFall",
+"retail_subaction": 133
+},
+{
+"motion": 312,
+"name": "HammerJump",
+"retail_subaction": 133
+},
+{
+"motion": 313,
+"name": "HammerLanding",
+"retail_subaction": 133
+},
+{
+"motion": 314,
+"name": "KinokoGiantStart",
+"retail_subaction": -1
+},
+{
+"motion": 315,
+"name": "KinokoGiantStartAir",
+"retail_subaction": -1
+},
+{
+"motion": 316,
+"name": "KinokoGiantEnd",
+"retail_subaction": -1
+},
+{
+"motion": 317,
+"name": "KinokoGiantEndAir",
+"retail_subaction": -1
+},
+{
+"motion": 318,
+"name": "KinokoSmallStart",
+"retail_subaction": -1
+},
+{
+"motion": 319,
+"name": "KinokoSmallStartAir",
+"retail_subaction": -1
+},
+{
+"motion": 320,
+"name": "KinokoSmallEnd",
+"retail_subaction": -1
+},
+{
+"motion": 321,
+"name": "KinokoSmallEndAir",
+"retail_subaction": -1
+},
+{
+"motion": 322,
+"name": "Entry",
+"retail_subaction": -1
+},
+{
+"motion": 323,
+"name": "EntryStart",
+"retail_subaction": 238
+},
+{
+"motion": 324,
+"name": "EntryEnd",
+"retail_subaction": -1
+},
+{
+"motion": 325,
+"name": "DamageIce",
+"retail_subaction": -1
+},
+{
+"motion": 326,
+"name": "DamageIceJump",
+"retail_subaction": 20
+},
+{
+"motion": 327,
+"name": "CaptureMasterHand",
+"retail_subaction": -1
+},
+{
+"motion": 328,
+"name": "CaptureDamageMasterHand",
+"retail_subaction": -1
+},
+{
+"motion": 329,
+"name": "CaptureWaitMasterHand",
+"retail_subaction": -1
+},
+{
+"motion": 330,
+"name": "ThrownMasterHand",
+"retail_subaction": -1
+},
+{
+"motion": 331,
+"name": "CaptureKirbyYoshi",
+"retail_subaction": 254
+},
+{
+"motion": 332,
+"name": "KirbyYoshiEgg",
+"retail_subaction": 294
+},
+{
+"motion": 333,
+"name": "CaptureLeadead",
+"retail_subaction": -1
+},
+{
+"motion": 334,
+"name": "CaptureLikelike",
+"retail_subaction": -1
+},
+{
+"motion": 335,
+"name": "DownReflect",
+"retail_subaction": 212
+},
+{
+"motion": 336,
+"name": "CaptureCrazyHand",
+"retail_subaction": -1
+},
+{
+"motion": 337,
+"name": "CaptureDamageCrazyHand",
+"retail_subaction": -1
+},
+{
+"motion": 338,
+"name": "CaptureWaitCrazyHand",
+"retail_subaction": -1
+},
+{
+"motion": 339,
+"name": "ThrownCrazyHand",
+"retail_subaction": -1
+},
+{
+"motion": 340,
+"name": "Barrel",
+"retail_subaction": -1
+},
+{
+"motion": 341,
+"name": "AppealSR",
+"retail_subaction": -1
+},
+{
+"motion": 342,
+"name": "AppealSL",
+"retail_subaction": -1
+},
+{
+"motion": 343,
+"name": "SpecialN",
+"retail_subaction": -1
+},
+{
+"motion": 344,
+"name": "SpecialAirN",
+"retail_subaction": -1
+},
+{
+"motion": 345,
+"name": "SpecialS",
+"retail_subaction": -1
+},
+{
+"motion": 346,
+"name": "SpecialAirS",
+"retail_subaction": -1
+},
+{
+"motion": 347,
+"name": "SpecialHi",
+"retail_subaction": -1
+},
+{
+"motion": 348,
+"name": "SpecialAirHi",
+"retail_subaction": -1
+},
+{
+"motion": 349,
+"name": "SpecialLw",
+"retail_subaction": -1
+},
+{
+"motion": 350,
+"name": "SpecialAirLw",
+"retail_subaction": -1
+}
+]
+}

@@ -1,0 +1,441 @@
+{
+ "hurtboxes": [
+  {
+   "id": "head",
+   "bone": "head",
+   "a_gltf": [
+    0,
+    9.75,
+    0
+   ],
+   "b_gltf": [
+    0,
+    10.45,
+    0
+   ],
+   "a_authoring": [
+    0,
+    0,
+    9.75
+   ],
+   "b_authoring": [
+    0,
+    0,
+    10.45
+   ],
+   "radius": 1.8,
+   "height": "high",
+   "grabbable": true
+  },
+  {
+   "id": "chest",
+   "bone": "chest",
+   "a_gltf": [
+    0,
+    7.3,
+    0
+   ],
+   "b_gltf": [
+    0,
+    8.0,
+    0
+   ],
+   "a_authoring": [
+    0,
+    0,
+    7.3
+   ],
+   "b_authoring": [
+    0,
+    0,
+    8.0
+   ],
+   "radius": 1.65,
+   "height": "high",
+   "grabbable": true
+  },
+  {
+   "id": "torso",
+   "bone": "hips",
+   "a_gltf": [
+    0,
+    5.5,
+    0
+   ],
+   "b_gltf": [
+    0,
+    6.8,
+    0
+   ],
+   "a_authoring": [
+    0,
+    0,
+    5.5
+   ],
+   "b_authoring": [
+    0,
+    0,
+    6.8
+   ],
+   "radius": 1.55,
+   "height": "mid",
+   "grabbable": true
+  },
+  {
+   "id": "upperarm_L",
+   "bone": "upperarm_L",
+   "a_gltf": [
+    1.9,
+    7.75,
+    0
+   ],
+   "b_gltf": [
+    3.07,
+    6.25,
+    0
+   ],
+   "a_authoring": [
+    1.9,
+    0,
+    7.75
+   ],
+   "b_authoring": [
+    3.07,
+    0,
+    6.25
+   ],
+   "radius": 0.8,
+   "height": "mid",
+   "grabbable": true
+  },
+  {
+   "id": "lowerarm_L",
+   "bone": "forearm_L",
+   "a_gltf": [
+    3.07,
+    6.25,
+    0
+   ],
+   "b_gltf": [
+    4.18,
+    4.83,
+    0
+   ],
+   "a_authoring": [
+    3.07,
+    0,
+    6.25
+   ],
+   "b_authoring": [
+    4.18,
+    0,
+    4.83
+   ],
+   "radius": 0.8,
+   "height": "mid",
+   "grabbable": true
+  },
+  {
+   "id": "hand_L",
+   "bone": "hand_L",
+   "a_gltf": [
+    4.4,
+    4.55,
+    0
+   ],
+   "b_gltf": [
+    4.8,
+    4.0,
+    0
+   ],
+   "a_authoring": [
+    4.4,
+    0,
+    4.55
+   ],
+   "b_authoring": [
+    4.8,
+    0,
+    4.0
+   ],
+   "radius": 1.1,
+   "height": "mid",
+   "grabbable": true
+  },
+  {
+   "id": "thigh_L",
+   "bone": "thigh_L",
+   "a_gltf": [
+    1.05,
+    5.4,
+    0
+   ],
+   "b_gltf": [
+    1.05,
+    3.4,
+    0
+   ],
+   "a_authoring": [
+    1.05,
+    0,
+    5.4
+   ],
+   "b_authoring": [
+    1.05,
+    0,
+    3.4
+   ],
+   "radius": 1.0,
+   "height": "low",
+   "grabbable": true
+  },
+  {
+   "id": "shin_L",
+   "bone": "shin_L",
+   "a_gltf": [
+    1.05,
+    3.3,
+    0
+   ],
+   "b_gltf": [
+    1.05,
+    1.4,
+    0
+   ],
+   "a_authoring": [
+    1.05,
+    0,
+    3.3
+   ],
+   "b_authoring": [
+    1.05,
+    0,
+    1.4
+   ],
+   "radius": 0.95,
+   "height": "low",
+   "grabbable": true
+  },
+  {
+   "id": "foot_L",
+   "bone": "foot_L",
+   "a_gltf": [
+    1.05,
+    0.75,
+    -0.2
+   ],
+   "b_gltf": [
+    1.05,
+    0.65,
+    1.7
+   ],
+   "a_authoring": [
+    1.05,
+    0.2,
+    0.75
+   ],
+   "b_authoring": [
+    1.05,
+    -1.7,
+    0.65
+   ],
+   "radius": 0.75,
+   "height": "low",
+   "grabbable": true
+  },
+  {
+   "id": "upperarm_R",
+   "bone": "upperarm_R",
+   "a_gltf": [
+    -1.9,
+    7.75,
+    0
+   ],
+   "b_gltf": [
+    -3.07,
+    6.25,
+    0
+   ],
+   "a_authoring": [
+    -1.9,
+    0,
+    7.75
+   ],
+   "b_authoring": [
+    -3.07,
+    0,
+    6.25
+   ],
+   "radius": 0.8,
+   "height": "mid",
+   "grabbable": true
+  },
+  {
+   "id": "lowerarm_R",
+   "bone": "forearm_R",
+   "a_gltf": [
+    -3.07,
+    6.25,
+    0
+   ],
+   "b_gltf": [
+    -4.18,
+    4.83,
+    0
+   ],
+   "a_authoring": [
+    -3.07,
+    0,
+    6.25
+   ],
+   "b_authoring": [
+    -4.18,
+    0,
+    4.83
+   ],
+   "radius": 0.8,
+   "height": "mid",
+   "grabbable": true
+  },
+  {
+   "id": "hand_R",
+   "bone": "hand_R",
+   "a_gltf": [
+    -4.4,
+    4.55,
+    0
+   ],
+   "b_gltf": [
+    -4.8,
+    4.0,
+    0
+   ],
+   "a_authoring": [
+    -4.4,
+    0,
+    4.55
+   ],
+   "b_authoring": [
+    -4.8,
+    0,
+    4.0
+   ],
+   "radius": 1.1,
+   "height": "mid",
+   "grabbable": true
+  },
+  {
+   "id": "thigh_R",
+   "bone": "thigh_R",
+   "a_gltf": [
+    -1.05,
+    5.4,
+    0
+   ],
+   "b_gltf": [
+    -1.05,
+    3.4,
+    0
+   ],
+   "a_authoring": [
+    -1.05,
+    0,
+    5.4
+   ],
+   "b_authoring": [
+    -1.05,
+    0,
+    3.4
+   ],
+   "radius": 1.0,
+   "height": "low",
+   "grabbable": true
+  },
+  {
+   "id": "shin_R",
+   "bone": "shin_R",
+   "a_gltf": [
+    -1.05,
+    3.3,
+    0
+   ],
+   "b_gltf": [
+    -1.05,
+    1.4,
+    0
+   ],
+   "a_authoring": [
+    -1.05,
+    0,
+    3.3
+   ],
+   "b_authoring": [
+    -1.05,
+    0,
+    1.4
+   ],
+   "radius": 0.95,
+   "height": "low",
+   "grabbable": true
+  },
+  {
+   "id": "foot_R",
+   "bone": "foot_R",
+   "a_gltf": [
+    -1.05,
+    0.75,
+    -0.2
+   ],
+   "b_gltf": [
+    -1.05,
+    0.65,
+    1.7
+   ],
+   "a_authoring": [
+    -1.05,
+    0.2,
+    0.75
+   ],
+   "b_authoring": [
+    -1.05,
+    -1.7,
+    0.65
+   ],
+   "radius": 0.75,
+   "height": "low",
+   "grabbable": true
+  }
+ ],
+ "ecb": {
+  "anchor_bone": "trans",
+  "standing": {
+   "top": 11.7,
+   "bottom": 0.0,
+   "left": -3.0,
+   "right": 3.0,
+   "side_height": 5.5
+  },
+  "crouch": {
+   "top": 6.4,
+   "bottom": 0.0,
+   "left": -3.0,
+   "right": 3.0,
+   "side_height": 3.2
+  },
+  "aerial": {
+   "top": 11.7,
+   "bottom": 0.0,
+   "left": -3.0,
+   "right": 3.0,
+   "side_height": 5.5
+  },
+  "ledge_grab_box": {
+   "front": 5.0,
+   "back": -1.0,
+   "up": 3.0,
+   "down": -6.0
+  },
+  "notes": "Diamond ECB. Standing top is just above the helmet (11.7), below the crest (12.4); sampled from the animation root, not from bones. Values are proposals sized to this body (retail ECBs are a few units wide)."
+ },
+ "note": "capsule endpoints are rest-pose positions; bone-local offsets = inverse bind matrix x endpoint"
+}
