@@ -1,6 +1,8 @@
 # Geno author tools
 
-The Geno engine's version 6 native-definition tools generate a source-only Mario-reference fighter. Runtime integration still needs a rebuild and game acceptance; this path is offline only.
+The Geno engine's native-definition tools (format 6, widened to 7 in slice 2 and to 8 in slice 3) generate and check a source-only Mario-reference fighter. This path is offline only.
+
+Slice 2 additions: `python -m tools.geno.report <folder> [--frames]` prints which of the 351 motion rows are `own`, `inherited` or `donor-special (unreachable)`, the eight special entries (bound state or `DONOR`) and, with `--frames`, hitbox start/end, damage, angle, size and IASA per overlay (readout convention: hitbox live from action frame N-2); `check` now also errors on a motion out of 0..350, a subaction out of 0..302, an IASA script with callback none, an unreachable state and a mistyped tag, and warns on a special bound to the donor; `new --template striker-skeleton` emits the Striker's header and empty move stubs; a `moves` block in `geno.json` expands at export to the overlay and the `common_states` row. Slice 3 (geno 8): `check` accepts a define's `articles` and `sounds` table, errors on an article naming a sound that is not in `sounds` (no donor fallback), a duplicate name or an id outside 1..999999; `report` lists the resources (sounds, articles, effect, spawn and end sounds). Fixtures: `melee/pc/geno/mods/vanilla-hero`, `vanilla-striker` and `vanilla-caster` (a projectile special); lesson `docs/learn/geno-fighters/11-defined-fighter.md`.
 
 ```text
 python -m tools.geno.new vanilla-hero --name "Vanilla Hero" --base mario --output mods/vanilla-hero

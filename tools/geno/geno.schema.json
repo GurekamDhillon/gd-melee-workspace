@@ -4,11 +4,11 @@
     "geno": {
       "type": "integer",
       "description": "Format version",
-      "x-engine-default": 7,
+      "x-engine-default": 8,
       "x-reference": "geno.md §7",
       "x-source": "melee/pc/platform/geno_registry.c",
       "minimum": 1,
-      "maximum": 7
+      "maximum": 8
     },
     "fighters": {
       "type": "array",
@@ -1350,6 +1350,22 @@
                   "x-reference": "geno.md §20",
                   "x-source": "melee/pc/platform/geno_registry.c"
                 },
+                "spawn_sound": {
+                  "type": "string",
+                  "description": "Name from the fighter's sounds table played at spawn",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §22.2",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "maxLength": 31
+                },
+                "end_sound": {
+                  "type": "string",
+                  "description": "Name from the fighter's sounds table played when the article goes",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §22.2",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "maxLength": 31
+                },
                 "effects": {
                   "type": "array",
                   "items": {
@@ -2615,6 +2631,47 @@
             "x-engine-default": "",
             "x-reference": "geno.md §20",
             "x-source": "melee/pc/platform/geno_registry.c"
+          },
+          "sounds": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Sound name an article refers to",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §22.2",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minLength": 1,
+                  "maxLength": 31
+                },
+                "retail_sfx": {
+                  "type": "integer",
+                  "description": "Engine sound id (ft_PlaySFX's)",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §22.2",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minimum": 1,
+                  "maximum": 999999
+                },
+                "volume": {
+                  "type": "integer",
+                  "description": "Volume 0..127",
+                  "x-engine-default": 127,
+                  "x-reference": "geno.md §22.2",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minimum": 0,
+                  "maximum": 127
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "retail_sfx"
+              ]
+            },
+            "maxItems": 16
           },
           "glide": {
             "type": "object",
@@ -4101,6 +4158,7 @@
     "range",
     "reflect",
     "resources",
+    "retail_sfx",
     "s",
     "scale",
     "select",
@@ -4110,6 +4168,7 @@
     "shield_damage",
     "size",
     "slot",
+    "sounds",
     "spawn",
     "spawns",
     "special_attributes",
@@ -4129,6 +4188,7 @@
     "tornado",
     "turn",
     "velocity",
+    "volume",
     "wkb",
     "words",
     "z"
@@ -4136,99 +4196,103 @@
   "x-limits": {
     "GENO_VARS_PER_BANK": {
       "value": 64,
-      "source": "melee/pc/geno/geno.h:46"
+      "source": "melee/pc/geno/geno.h:47"
     },
     "GENO_SPECIAL_WORDS": {
       "value": 265,
-      "source": "melee/pc/geno/geno.h:136"
+      "source": "melee/pc/geno/geno.h:137"
     },
     "GENO_MAX_CHECKS": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:179"
+      "source": "melee/pc/geno/geno.h:180"
     },
     "GENO_CHECK_CONDS": {
       "value": 3,
-      "source": "melee/pc/geno/geno.h:180"
+      "source": "melee/pc/geno/geno.h:181"
     },
     "GENO_MAX_REHIT": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:181"
+      "source": "melee/pc/geno/geno.h:182"
     },
     "GENO_EV_MAX_HOOKS": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:246"
+      "source": "melee/pc/geno/geno.h:247"
     },
     "GENO_MAX_ATTRS": {
       "value": 128,
-      "source": "melee/pc/geno/geno.h:250"
+      "source": "melee/pc/geno/geno.h:251"
     },
     "GENO_MAX_JUMP_VY": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:251"
+      "source": "melee/pc/geno/geno.h:252"
     },
     "GENO_MAX_PROFILES": {
       "value": 65535,
-      "source": "melee/pc/geno/geno.h:252"
+      "source": "melee/pc/geno/geno.h:253"
     },
     "GENO_MAX_SPECIAL": {
       "value": 64,
-      "source": "melee/pc/geno/geno.h:253"
+      "source": "melee/pc/geno/geno.h:254"
     },
     "GENO_MAX_ONLAND": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:254"
+      "source": "melee/pc/geno/geno.h:255"
     },
     "GENO_MAX_MOTION_ANIM": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:255"
+      "source": "melee/pc/geno/geno.h:256"
     },
     "GENO_MAX_OVERLAYS": {
       "value": 64,
-      "source": "melee/pc/geno/geno.h:256"
+      "source": "melee/pc/geno/geno.h:257"
     },
     "GENO_POOL_WORDS": {
       "value": 16384,
-      "source": "melee/pc/geno/geno.h:257"
+      "source": "melee/pc/geno/geno.h:258"
     },
     "GENO_MAX_STATES": {
       "value": 48,
-      "source": "melee/pc/geno/geno.h:268"
+      "source": "melee/pc/geno/geno.h:269"
     },
     "GENO_ART_KIND_BASE": {
       "value": 4096,
-      "source": "melee/pc/geno/geno.h:353"
+      "source": "melee/pc/geno/geno.h:354"
     },
     "GENO_MAX_ARTICLES": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:353"
+      "source": "melee/pc/geno/geno.h:354"
     },
     "GENO_ART_PER_RANGE": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:360"
+      "source": "melee/pc/geno/geno.h:361"
     },
     "GENO_ART_EXTRA_BASE": {
       "value": 131072,
-      "source": "melee/pc/geno/geno.h:365"
+      "source": "melee/pc/geno/geno.h:366"
+    },
+    "GENO_MAX_SOUNDS": {
+      "value": 16,
+      "source": "melee/pc/geno/geno.h:374"
     },
     "GENO_ART_HITBOXES": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:373"
+      "source": "melee/pc/geno/geno.h:375"
     },
     "GENO_ART_HIT_ENTRIES": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:374"
+      "source": "melee/pc/geno/geno.h:376"
     },
     "GENO_ART_SPAWNS": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:376"
+      "source": "melee/pc/geno/geno.h:378"
     },
     "GENO_ART_CHILDREN": {
       "value": 2,
-      "source": "melee/pc/geno/geno.h:377"
+      "source": "melee/pc/geno/geno.h:379"
     },
     "GENO_SP_SELECT": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:470"
+      "source": "melee/pc/geno/geno.h:478"
     },
     "JDOC_NODES": {
       "value": 4096,
@@ -4240,7 +4304,7 @@
     },
     "GN_MAX_SLOTS": {
       "value": 256,
-      "source": "melee/pc/platform/geno_registry.c:453"
+      "source": "melee/pc/platform/geno_registry.c:457"
     },
     "JSON_DEPTH": {
       "value": 32,
@@ -4252,13 +4316,13 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "e7c66c6a146c98d243e6bb1ad3cf3d92912be00657f143fb6d26dbafdd5cb528",
-    "pc/platform/geno_define_registry.inc": "4b970c7617492b5f7ddaf090262f1db34d90170d33d603c3ce57f607dba7f6c7",
-    "pc/geno/geno.h": "5dc87ef89f41dfa8418f3e0e2e2d746756dd2ee2a37592f3d23c777bb32d8b8f",
-    "pc/geno/geno_game.c": "deb51b45a79004322151707678a7cb6f58bc20a3da0c87e394f09d3f3cb97fc8",
+    "pc/platform/geno_registry.c": "72d9db20f515f5f2e2bd1cc2afea194a99f8729403e59a59b48cffbbe0ae407f",
+    "pc/platform/geno_define_registry.inc": "ed8c899252a5e5044cc3145f3b42f2361dc5d7b5b63620f54cf6ad9e38ab0480",
+    "pc/geno/geno.h": "57e1c6cd001f9ba69c51455ce53cfa516da2d2a4f13e918a5018f596bd627be7",
+    "pc/geno/geno_game.c": "b3383606491acb7699803bcad630b49eddda5d75807d081fe32a21a9ea1d7e3f",
     "pc/geno/geno_game_v2.inc": "786368bb54159d0d664a533886b2cde911473c7d08a822b06083ec75637031cc",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",
     "pc/geno/geno_profile_storage.h": "a40aec8aafa890622f0ba6cb9f5602176c738f960346b18daf87c8dc8498d04d",
-    "pc/geno/geno_game_articles.inc": "eb1ad1a63867aebf4e34d9e3676b45f141077989b08042386ac3630f2ecac5d6"
+    "pc/geno/geno_game_articles.inc": "c19856f52d2e644ac5575bc9a1eb9dfc9299b3f06b2e8397d497080b16b2e1dd"
   }
 }

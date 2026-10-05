@@ -1,5 +1,7 @@
 # Next session - start here
 
+**Geno full fighter (2026-10-05):** slices 2 and 3 are in `docs/superpowers/plans/2026-10-05-geno-full-fighter-slice2.md` (the plan and the road to slice 8). Slice 2 is built: a define with its own move set (`melee/pc/geno/mods/vanilla-striker/`, format 7); the lesson is `docs/learn/geno-fighters/11-defined-fighter.md`, the sweep and ranked gaps are in `10-known-gaps.md` section Z, the engine reference is `melee/docs/geno.md` 22.1.
+
 **Controller remapping source pass (2026-10-03):** CONTROLS now has a controller-only
 remap editor, device profiles, presets and shim input transforms. Report and
 integrator/owner acceptance steps: `_build/tmp/codex-controls-remap-report.md`.

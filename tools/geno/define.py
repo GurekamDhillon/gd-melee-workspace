@@ -14,14 +14,23 @@ def definition_schema():
 
 def validate_definition(data, fighter, path):
     errors = []
-    if data["geno"] not in (6, 7):
-        errors.append((path+".define", "define requires geno: 6 or 7"))
+    if data["geno"] not in (6, 7, 8):
+        errors.append((path+".define", "define requires geno: 6, 7 or 8"))
     if ".." in fighter["define"]["key"]:
         errors.append((path+".define.key", "identity must not contain '..'"))
     # Slice 2 (geno 7) admits special_attributes, fx_bindings and the whole attribute table; articles, own
     # model/clips, sounds and Lua are later slices.
-    if "articles" in fighter:
-        errors.append((path+".articles", "standalone definitions do not support this later-slice field"))
+    # Slice 3 (geno 8) admits articles and the named-sound table (the resolver): every sound an article names must exist.
+    for key in ("articles", "sounds"):
+        if key in fighter and data["geno"] < 8:
+            errors.append((path+"."+key, "needs geno: 8"))
+    names = [s.get("name") for s in fighter.get("sounds", []) if isinstance(s, dict)]
+    if len(set(names)) != len(names):
+        errors.append((path+".sounds", "duplicate sound name"))
+    for j, article in enumerate(fighter.get("articles", [])):
+        for key in ("spawn_sound", "end_sound"):
+            if key in article and article[key] not in names:
+                errors.append((path+".articles[%d].%s" % (j, key), "%r is not a name in sounds (no donor fallback)" % (article[key],)))
     for key in ("fx_bindings", "special_attributes"):
         if key in fighter and data["geno"] < 7:
             errors.append((path+"."+key, "needs geno: 7"))

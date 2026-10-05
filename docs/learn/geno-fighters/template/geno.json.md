@@ -7,7 +7,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 
 | Key | Type / meaning | Engine default | Limits / reference |
 |---|---|---|---|
-| geno | integer: Format version | 7 | minimum=1; maximum=7; geno.md §7; melee/pc/platform/geno_registry.c |
+| geno | integer: Format version | 8 | minimum=1; maximum=8; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters | array: Ordered entries | absent | maxItems=65535; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].attach | string: Vanilla name/alias or existing fighter .dat file |  | maxLength=31; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].define | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
@@ -156,6 +156,8 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].articles[].bone | integer: Spawn joint; -1 = position | -1 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].effect | integer: Melee effect id | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].fx | string: Effect package name |  | ; geno.md §20; melee/pc/platform/geno_registry.c |
+| fighters[].articles[].spawn_sound | string: Name from the fighter's sounds table played at spawn |  | maxLength=31; geno.md §22.2; melee/pc/platform/geno_registry.c |
+| fighters[].articles[].end_sound | string: Name from the fighter's sounds table played when the article goes |  | maxLength=31; geno.md §22.2; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].effects | array: Ordered entries | absent | maxItems=8; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].effects[].id | integer: Effect id | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].effects[].frame | integer: Attach life frame | 0 | minimum=0; maximum=65535; geno.md §19; melee/pc/platform/geno_registry.c |
@@ -240,6 +242,10 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].specials.air_lw.select | string: Integer bank selector |  | pattern=^(la_i\|ra_i):(?:[0-9]\|[1-5][0-9]\|6[0-3])$; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].specials.air_lw.targets | array: Ordered entries | absent | maxItems=4; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].fx_bindings | string: Effect bindings JSON relative path |  | ; geno.md §20; melee/pc/platform/geno_registry.c |
+| fighters[].sounds | array: Ordered entries | absent | maxItems=16; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].sounds[].name | string: Sound name an article refers to |  | maxLength=31; geno.md §22.2; melee/pc/platform/geno_registry.c |
+| fighters[].sounds[].retail_sfx | integer: Engine sound id (ft_PlaySFX's) | 0 | minimum=1; maximum=999999; geno.md §22.2; melee/pc/platform/geno_registry.c |
+| fighters[].sounds[].volume | integer: Volume 0..127 | 127 | minimum=0; maximum=127; geno.md §22.2; melee/pc/platform/geno_registry.c |
 | fighters[].glide | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].glide.angle_max | ['number', 'boolean']: Behavior parameter angle_max | 80.0 | ; geno.md §16.4; melee/pc/geno/geno_game_v2.inc:geno_params |
 | fighters[].glide.angle_min | ['number', 'boolean']: Behavior parameter angle_min | -70.0 | ; geno.md §16.4; melee/pc/geno/geno_game_v2.inc:geno_params |
@@ -377,33 +383,34 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 
 | Constant | Value | Source |
 |---|---|---|
-| GENO_VARS_PER_BANK | 64 | melee/pc/geno/geno.h:46 |
-| GENO_SPECIAL_WORDS | 265 | melee/pc/geno/geno.h:136 |
-| GENO_MAX_CHECKS | 8 | melee/pc/geno/geno.h:179 |
-| GENO_CHECK_CONDS | 3 | melee/pc/geno/geno.h:180 |
-| GENO_MAX_REHIT | 4 | melee/pc/geno/geno.h:181 |
-| GENO_EV_MAX_HOOKS | 8 | melee/pc/geno/geno.h:246 |
-| GENO_MAX_ATTRS | 128 | melee/pc/geno/geno.h:250 |
-| GENO_MAX_JUMP_VY | 16 | melee/pc/geno/geno.h:251 |
-| GENO_MAX_PROFILES | 65535 | melee/pc/geno/geno.h:252 |
-| GENO_MAX_SPECIAL | 64 | melee/pc/geno/geno.h:253 |
-| GENO_MAX_ONLAND | 16 | melee/pc/geno/geno.h:254 |
-| GENO_MAX_MOTION_ANIM | 8 | melee/pc/geno/geno.h:255 |
-| GENO_MAX_OVERLAYS | 64 | melee/pc/geno/geno.h:256 |
-| GENO_POOL_WORDS | 16384 | melee/pc/geno/geno.h:257 |
-| GENO_MAX_STATES | 48 | melee/pc/geno/geno.h:268 |
-| GENO_ART_KIND_BASE | 4096 | melee/pc/geno/geno.h:353 |
-| GENO_MAX_ARTICLES | 16 | melee/pc/geno/geno.h:353 |
-| GENO_ART_PER_RANGE | 8 | melee/pc/geno/geno.h:360 |
-| GENO_ART_EXTRA_BASE | 131072 | melee/pc/geno/geno.h:365 |
-| GENO_ART_HITBOXES | 4 | melee/pc/geno/geno.h:373 |
-| GENO_ART_HIT_ENTRIES | 8 | melee/pc/geno/geno.h:374 |
-| GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:376 |
-| GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:377 |
-| GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:470 |
+| GENO_VARS_PER_BANK | 64 | melee/pc/geno/geno.h:47 |
+| GENO_SPECIAL_WORDS | 265 | melee/pc/geno/geno.h:137 |
+| GENO_MAX_CHECKS | 8 | melee/pc/geno/geno.h:180 |
+| GENO_CHECK_CONDS | 3 | melee/pc/geno/geno.h:181 |
+| GENO_MAX_REHIT | 4 | melee/pc/geno/geno.h:182 |
+| GENO_EV_MAX_HOOKS | 8 | melee/pc/geno/geno.h:247 |
+| GENO_MAX_ATTRS | 128 | melee/pc/geno/geno.h:251 |
+| GENO_MAX_JUMP_VY | 16 | melee/pc/geno/geno.h:252 |
+| GENO_MAX_PROFILES | 65535 | melee/pc/geno/geno.h:253 |
+| GENO_MAX_SPECIAL | 64 | melee/pc/geno/geno.h:254 |
+| GENO_MAX_ONLAND | 16 | melee/pc/geno/geno.h:255 |
+| GENO_MAX_MOTION_ANIM | 8 | melee/pc/geno/geno.h:256 |
+| GENO_MAX_OVERLAYS | 64 | melee/pc/geno/geno.h:257 |
+| GENO_POOL_WORDS | 16384 | melee/pc/geno/geno.h:258 |
+| GENO_MAX_STATES | 48 | melee/pc/geno/geno.h:269 |
+| GENO_ART_KIND_BASE | 4096 | melee/pc/geno/geno.h:354 |
+| GENO_MAX_ARTICLES | 16 | melee/pc/geno/geno.h:354 |
+| GENO_ART_PER_RANGE | 8 | melee/pc/geno/geno.h:361 |
+| GENO_ART_EXTRA_BASE | 131072 | melee/pc/geno/geno.h:366 |
+| GENO_MAX_SOUNDS | 16 | melee/pc/geno/geno.h:374 |
+| GENO_ART_HITBOXES | 4 | melee/pc/geno/geno.h:375 |
+| GENO_ART_HIT_ENTRIES | 8 | melee/pc/geno/geno.h:376 |
+| GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:378 |
+| GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:379 |
+| GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:478 |
 | JDOC_NODES | 4096 | melee/pc/platform/geno_registry.c:72 |
 | JDOC_ARENA | 65536 | melee/pc/platform/geno_registry.c:73 |
-| GN_MAX_SLOTS | 256 | melee/pc/platform/geno_registry.c:453 |
+| GN_MAX_SLOTS | 256 | melee/pc/platform/geno_registry.c:457 |
 | JSON_DEPTH | 32 | melee/pc/platform/geno_registry.c:jd_value |
 | JSON_FILE_BYTES | 1048576 | melee/pc/platform/geno_registry.c:gn_read_file |
 

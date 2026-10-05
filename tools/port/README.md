@@ -96,6 +96,23 @@ are outside lane isolation. Read [HANDOFF.md section 6](../../docs/HANDOFF.md#6-
 Read the run's log and crash logs as well as the test summary. Record EXE/game revision, disc,
 mods, run directory and switches with any result. A successful older run is not a HEAD check.
 
+## Defeating an opponent in a test (the debug cursor)
+
+Lane briefs: to take a stock from an idle opponent, fly P1 and hold the cursor attack; do not script a separate launching
+hit. Offline only (`gs_require_offline`):
+
+```lua
+gd.cpu_mode(2, "stand")          -- an idle CPU still needs this in the LAB
+gd.fly_attack(1, true)           -- burst mode: damage 3, radius 6, active 3 / gap 24 frames, bkb 30, kbg 100, angle 45
+-- every few frames: gd.fly_target(1, gd.player(2).x, gd.player(2).y)
+```
+
+Burst mode (default since 2026-10-05) is one hit instance per 27 logic frames, so hitlag ends and knockback carries the
+victim before the next one. Measured on Final Destination, Mario against idle Fox: first KO at 216-259 logic frames
+(about 4 s); a team of three (Fox, Falco, Marth) went down at 216, 603 and 1163 frames. Options:
+`gd.fly_attack(1, true, {damage=, radius=, active=, gap=, kb=, kbg=, angle=})`; `every_frame=true` restores the old hit on
+every frame (the same Fox needed 547 frames and 216% before it left the stage). Details: `docs/scripting.md`, `gd.fly_attack`.
+
 ## Owned runs and hang diagnosis
 
 Use native Windows Python (Windows 10+), including from Git Bash. `run.sh` creates a

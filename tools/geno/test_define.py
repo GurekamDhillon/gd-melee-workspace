@@ -162,5 +162,30 @@ class MoveSetAuthorTests(unittest.TestCase):
                 self.assertIn(p.suffix.lower() or p.name, allowed, p)
 
 
+class ArticleDefineTests(unittest.TestCase):
+    """Slice 3: geno 8, a define with its own article, effect and named sounds (the resolver)."""
+
+    CASTER = Path(__file__).resolve().parents[2] / "melee/pc/geno/mods/vanilla-caster"
+
+    def test_caster_checks_clean_and_has_text_files_only(self):
+        self.assertEqual(check.validate(check.load_json(self.CASTER / "geno.json"), self.CASTER), [])
+        for p in self.CASTER.rglob("*"):
+            if p.is_file():
+                self.assertIn(p.suffix.lower() or p.name, {".json", ".words", ".genoasm", ".md"}, p)
+
+    def test_articles_and_sounds_need_geno_8_and_names_must_resolve(self):
+        data = check.load_json(self.CASTER / "geno.json")
+        bad = copy.deepcopy(data); bad["geno"] = 7
+        messages = [e["message"] for e in check.validate(bad, self.CASTER)]
+        self.assertTrue(any("needs geno: 8" in m for m in messages), messages)
+        bad = copy.deepcopy(data); bad["fighters"][0]["articles"][0]["spawn_sound"] = "Nope"
+        messages = [e["message"] for e in check.validate(bad, self.CASTER)]
+        self.assertTrue(any("not a name in sounds" in m for m in messages), messages)   # no donor fallback
+        bad = copy.deepcopy(data); bad["fighters"][0]["sounds"].append(dict(bad["fighters"][0]["sounds"][0]))
+        self.assertTrue(any("duplicate sound name" in e["message"] for e in check.validate(bad, self.CASTER)))
+        bad = copy.deepcopy(data); bad["fighters"][0]["sounds"][0]["retail_sfx"] = 0
+        self.assertTrue(check.validate(bad, self.CASTER))   # schema: engine sound id 1..999999
+
+
 if __name__ == "__main__":
     unittest.main()

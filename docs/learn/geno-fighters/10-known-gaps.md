@@ -134,3 +134,21 @@ rereads them):
 Each item cites its own source above. Primary: `melee/docs/geno.md`, `docs/mods-packaging.md`,
 `_research/vanilla-single-folder-mods-2026-10-03.md`, `melee/pc/platform/geno_registry.c`,
 `melee/pc/geno/geno_game_v2.inc`, `ports/README.md`.
+
+## Z. Defines, slice 2 sweep (engine lane, 2026-10-05; build of that day, vanilla disc, LAB unless said)
+
+Ranked by what blocks a real character first. Each "ran" below was run in the game by a console probe with `Vanilla Striker`
+(`pc/geno/mods/vanilla-striker/`) beside Mario; looks and feel are the owner's to judge and nobody has.
+
+1. **Still Mario's model, clips, skeleton, hurtboxes, voice, icon, costumes** (slices 4 and 6). A define looks like Mario.
+2. **Articles and named engine sounds now exist for a define (geno 8); no own audio data and no retail-effect bindings** (fx_bindings bind Geno effect packages).
+3. **Default arms on `fp->kind` switches** (CPU recovery and attack choice, Kirby copy, landing resets): list in `melee/docs/geno.md` 22.1; none showed in the sweep.
+4. **Tech was not obtained for a define**: `tech_miss` fires on a define; a scripted `tech` macro (at 0, 5, 9 and 12 frames after the hit) did not produce a `tech` event, so it is unverified whether the define takes the tech path (probe timing, not shown to be a define fault).
+5. **The CPU `lcancel_aerial` macro assumes the aerial is still active at landing**: its default input (2 frames after take-off) is right for Mario, but for a floaty define (gravity .075) the nair ends before the landing and the L press becomes an air dodge. It is not an attribute read: `gd.cpu_attrs` returns the define's values and the macro times from them. Use the macro's `at` option (about 20 for the Striker's nair; it then L-cancels with the Striker's own landing lag, 8 cancelled to 4).
+6. **A persistent savestate does not restore a Lua pad hold**, so a charge special releases if B is not held again after the load. Rewind (`gd.rewind_test`) restores it: 0 simulation bytes differ mid-charge and mid-counter.
+7. **Rollback**: defines stay offline-only; the hash word covers `GenoState` (and, from slice 3, a define's live articles).
+8. **The Mario-specific special rows (341..350) are unreachable but still in the table** (the generic preset of slice 4 removes them).
+
+9. **Slice 3 (articles, effect, named sounds)**: ran for a define: the bolt in flight (0 simulation bytes differ), across a hit, a persistent savestate mid-flight (restores the item and its travel), the bench SyncTest with 37 casts (24,000 hashes, 0 mismatching); not run: stage switching with a live article, reflect, absorb and clank of a define's article; the sound is verified only as a log line and a call (the run was muted, MELEE_VOLUME=0): what it sounds like is unreviewed. The article is invisible (no model); its look is a Geno effect package.
+
+What the sweep ran (PASS unless marked above): stage switching through five retail stages with the Striker on stage; a six-slot match (Striker, Hero, Mario, Fox, Kirby with an attach mod, Marth) for 8800 frames with KOs and no assert; Classic to the credits with the Striker as the player (0 asserts, `interpreter attempts 0` at every stage) and the same through the Envoy rule host; crit (default and per tag), one hit rule per tag class against Mario's same class, typed armour, a timed status, Shock; L-cancel with the Striker's own landing lag, wavedash, short hop, perfect shield; the bench SyncTest with a pad program that uses the specials (27,600 curated hashes, 0 mismatching).

@@ -158,7 +158,11 @@ def build(path):
                 attack_rows_missing=[ATTACK_ROWS[m] for m, ok in attack.items() if not ok],
                 donor_free=not donor and all(attack.values()),
                 counts={k: sum(1 for r in table if r["kind"].split(" ")[0] == k) for k in ("own", "inherited", "donor-special")},
-                overlays=len(overlays), states=sorted(states, key=states.get)), base, fighter
+                overlays=len(overlays), states=sorted(states, key=states.get),
+                sounds=[(s.get("name"), s.get("retail_sfx"), s.get("volume", 127)) for s in fighter.get("sounds", [])],
+                articles=[dict(name=a.get("name", ""), fx=a.get("fx", ""), spawn_sound=a.get("spawn_sound", ""),
+                               end_sound=a.get("end_sound", ""), hitboxes=len(a.get("hitboxes", [])),
+                               model=bool(a.get("model"))) for a in fighter.get("articles", [])]), base, fighter
 
 
 def frame_table(base, fighter):
@@ -184,6 +188,14 @@ def text(report):
     lines += ["", "common attack rows owned: %d of %d%s" % (report["attack_rows_own"], report["attack_rows_total"],
               "" if not report["attack_rows_missing"] else "  (inherited: " + ", ".join(report["attack_rows_missing"]) + ")"),
               "donor-free (no DONOR special, every attack row own): %s" % ("yes" if report["donor_free"] else "NO")]
+    if report.get("articles") or report.get("sounds"):   # slice 3: the resolver's table and what refers to it
+        lines += ["", "resources (geno 8):"]
+        for name, sfx, vol in report["sounds"]:
+            lines.append("  sound %-16s engine sound id %s volume %s" % (name, sfx, vol))
+        for a in report["articles"]:
+            lines.append("  article %-14s %d hitbox(es), effect %s, spawn sound %s, end sound %s, %s" % (
+                a["name"], a["hitboxes"], a["fx"] or "-", a["spawn_sound"] or "-", a["end_sound"] or "-",
+                "own model" if a["model"] else "no model (invisible; look = effect)"))
     return "\n".join(lines)
 
 
