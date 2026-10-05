@@ -2143,6 +2143,7 @@ These calls extend passive fighter modifiers. Writes require an active offline m
 | `gd.fighter_interrupt(entity)` | `nil`, or `{frames, owner, key, opened, cancels, exits={name=true}}` for the live window (a rule's window shows `owner=0`; `key` is the granting move's class: 1 jab, 2 dash attack, 3-5 tilts, 6-8 smashes, 9-13 aerials, 14 special). |
 
 **Turbo** is a match rule, not a script effect: with it on, a fighter whose attack has connected (hit, optionally a shield or a projectile hit) may cancel the rest of it into most actions for 30 logic frames outside hitlag, under the first rule set (no self-cancel; only jabs and dash attacks cancel into a dash; smashes cannot cancel into crouch, jump or dash; grounded attacks cannot cancel into shield; aerials and specials cannot cancel into air dodge; walking and turning never take the window; a hit in the air restores air jumps; throws do not grant it). It is one 32-bit rule word (`melee/pc/platform/gw_matchrules.h`). Offline, a scene sets it with `turbo=on|off|<hex word>`, or the Gameplay settings page's **Turbo (Versus)** turns it on for local Versus. Online, only the host of a private room sets it (Online > Turbo, saved as `turbo_online`; scripted as `MELEE_NETPLAY_TURBO`); it travels in the handshake (netplay protocol 4) and the match scene, a guest with a different expectation is refused before the match, and Random Opponent never uses it. Log lines: `match rules: turbo=...`, `turbo: window open ...`, `turbo: cancel ...`.
+An optional rule bit, **NO_MOVE_LOOP** (`0x800`, NOT in the first rule set `0x5FB`; use `turbo=0xDFB`), closes the jab -> crouch -> jab loop: a cancel into crouch, dash or a jump remembers the granting move for the rest of that window's length, and that same move landing again (a re-landing re-arms the memory for a full window) grants no window until a different attack lands or the memory runs out. Off, the loop works (jab, 6 frames of crouch, jab, hitstun unbroken, a window every ~13 frames); on, the whole chain gets one window. The owner decides whether to ship it. `ITEM_HIT` (`0x4`, `turbo=0x5FF`) is the projectile/item variant, off by default.
 
 | `gd.fighter_armour(entity)` | `{damage, knockback}` thresholds, or nil. |
 | `gd.fighter_armour(entity, {damage=n, knockback=n})` | Each threshold 0?1000; zero disables that test. Strictly below either enabled threshold suppresses the ordinary retail damage reaction, while percent damage remains. Nil clears. |
@@ -2479,10 +2480,20 @@ first point that passes is latched (`stage_info.x6D0`), and that index selects t
 zones={{x_min, x_max, y_bottom, y_top} x4}}`; `zones` are the four rectangles of the fighter-device test
 (`grPushOn_802192A4`). `supported.doors` and `supported.finish` are true there, and `doors`/`finish` are absent elsewhere.
 Verified in the game: teleporting P1 onto door 156's point latched `finish.door=156` and ended the stage (outcome 6).
-**Not enumerated**: the Adventure Underground Maze's trigger markers (`Ground_801C3DB4`, map points 0xBD..0xC6, as
-`grkinokoroute.c` reads them) and the F-Zero Grand Prix checkpoints (`grbigblueroute.c`, `Ground_801C2D24` points around
-index 148). They are the same kind of map point, so listing them is a few lines once the stage and the index range are
-confirmed on a running stage; a verification lane could not do that blind.
+**Route markers** (Adventure stages; `route` is absent elsewhere and `supported.route` says whether it is there):
+`gd.stage_objectives().route = {stage, candidate, latched, points={...}, ...}`, read-only and online-safe.
+- **Underground Maze** (`stage="underground_maze"`, Adventure step 2, `Gr_Kind_ShrineRoute`, `grshrineroute.c`; `grkinokoroute.c` is the
+  Mushroom Kingdom route, not the maze). The stage has six spots, map points 0xBD..0xC2 (`points[i] = {index, id, x, y, z, role,
+  symbol, done, inside, reached}`): one random spot carries the exit symbol (`role="exit"`, `symbol=3`), the other five an event room
+  (`role="room"`, `symbol=1`). The first player is "on" a spot when its x is inside the spot box and it stands on that spot (the stage
+  needs the platform contact; teleport 23 units above the point). A room spot starts its event (`phase` 1-3, `latched` = the point id,
+  `done_mask` gains its bit when the event ends); the exit spot sets `phase=6`, `exit_chosen=true` and the stage ends.
+  `candidate` is the point the stage currently sees the player on (-1 none). 0xC3..0xC6 are scanned by the engine but do not exist.
+- **F-Zero Grand Prix** (`stage="fzero_grand_prix"`, Adventure step 7): `secondary` lists the three checkpoints (map points 5, 6, 7;
+  `role="checkpoint"`, `passed` once the first player x went past it), `checkpoints_passed` counts them, `points` lists the finish (map
+  point 0x99 at the end of the course; `role="finish"`), `finished` and `latched` say the finish was reached.
+Verified in the game 2026-10-05: spot roles and the latch on both kinds of maze spot; F-Zero checkpoints 1 and 2 by teleport (the third
+checkpoint and the finish are listed with their coordinates but were not triggered by a teleport).
 
 ### Shock (a native status)
 
