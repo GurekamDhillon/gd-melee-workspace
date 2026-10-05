@@ -167,3 +167,9 @@ compatibility need the LAB and normal game acceptance tests.
 The refusal list catches recognizable whole fighter/stage/menu/table archives, disc images,
 executables, game audio banks and patches. It is a packaging guard, not a provenance proof
 for renamed files or arbitrary custom assets. The starter contains original data only.
+
+## Authored fighters (slice 4, first steps)
+
+- `python -m tools.geno.check_art <art folder>` validates an authored art package (manifest, skeleton, hurtboxes, glTF, costume textures) with file-and-field errors; `test_check_art.py` is its test.
+- `tools/geno/build_courier.sh [--art-rebuild] [--out DIR] [--scale S] [--install]` builds the Courier's model files, animation bank and `plan.json` from `ports/vanilla-original/` into `_build/geno-slice4/courier/` (never committed); `--install` copies them into `melee/pc/geno/mods/vanilla-courier/files/` (git-ignored). Converter: `ports/ir/tools/authored_fighter.py` (test: `test_authored_fighter.py`) and `fighterbuild ... build <mesh> - <out>` (template `-` = authored material, no disc file).
+- `check.py` and `report.py` do not yet understand `base: "none"` (the engine does not accept it yet; `melee/docs/geno.md` 22.3).

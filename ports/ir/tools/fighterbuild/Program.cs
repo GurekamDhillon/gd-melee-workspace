@@ -29,6 +29,19 @@ static class P
     {
         if (a.Length >= 3 && a[0] == "verify")
             return Verify.Run(a[1], a[2]);
+        if (a.Length >= 2 && a[0] == "dumpmobj")
+        {   // material summary of a model file (numbers only), to compare an authored material with a known-good one
+            var f = new HSDRawFile(a[1]);
+            var jr = f.Roots.First(r => r.Data is HSD_JOBJ).Data as HSD_JOBJ;
+            foreach (var d in jr.TreeList.Where(j => j.Dobj != null).SelectMany(j => j.Dobj.List))
+            {
+                var m = d.Mobj; var t = m.Textures;
+                Console.WriteLine($"render 0x{(int)m.RenderFlags:X8} mat amb {m.Material?.AMB_R},{m.Material?.AMB_G},{m.Material?.AMB_B} dif {m.Material?.DIF_R} spc {m.Material?.SPC_R} alpha {m.Material?.Alpha} shine {m.Material?.Shininess} pe {(m.PEDesc != null)}");
+                if (t != null) Console.WriteLine($"  tobj flags 0x{(int)t.Flags:X8} map {t.TexMapID} src {t.GXTexGenSrc} wrap {t.WrapS}/{t.WrapT} rep {t.RepeatS},{t.RepeatT} sc {t.SX},{t.SY},{t.SZ} blend {t.Blending} mag {t.MagFilter} img {t.ImageData?.Width}x{t.ImageData?.Height} {t.ImageData?.Format} lod {(t.LOD != null)} tev {(t.TEV != null)}");
+                if (t?.TEV != null) { var v = t.TEV; Console.WriteLine($"  tev active {v.active} cop {v.color_op} aop {v.alpha_op} cb {v.color_bias} ab {v.alpha_bias} cs {v.color_scale} as {v.alpha_scale} clamp {v.color_clamp}/{v.alpha_clamp} cabcd {v.color_a_in},{v.color_b_in},{v.color_c_in},{v.color_d_in} aabcd {v.alpha_a_in},{v.alpha_b_in},{v.alpha_c_in},{v.alpha_d_in}"); }
+            }
+            return 0;
+        }
         if (a.Length >= 3 && a[0] == "compare")
             return TriangleEquality.Run(a[1], a[2]);
         if (a.Length >= 5 && a[0] == "build")
@@ -82,13 +95,34 @@ static class P
         return 2 * intermediate >= pixels ? GXTexFmt.RGBA8 : GXTexFmt.RGB5A3;
     }
 
+    // An original lit, textured material: diffuse x texture, one TOBJ (UV coords, modulate, linear filter).
+    static HSD_MOBJ AuthoredMobj()
+    {
+        var tobj = new HSD_TOBJ();
+        tobj.TexMapID = GXTexMapID.GX_TEXMAP0; tobj.GXTexGenSrc = GXTexGenSrc.GX_TG_TEX0;
+        tobj.CoordType = COORD_TYPE.UV; tobj.DiffuseLightmap = true; tobj.ColorOperation = COLORMAP.REPLACE;   // the texture IS the diffuse lightmap, as retail costumes (flags 0x50010)
+        tobj.AlphaOperation = ALPHAMAP.NONE;
+        tobj.WrapS = GXWrapMode.CLAMP; tobj.WrapT = GXWrapMode.CLAMP; tobj.MagFilter = GXTexFilter.GX_LINEAR;
+        tobj.Blending = 1f;
+        byte amb = byte.Parse(Environment.GetEnvironmentVariable("FIGHTERBUILD_AMB") ?? "179");   // retail costume materials: 179
+        var mat = new HSD_Material { AMB_R = amb, AMB_G = amb, AMB_B = amb, AMB_A = 255, DIF_R = amb, DIF_G = amb, DIF_B = amb, DIF_A = 255,
+                                     SPC_R = 255, SPC_G = 255, SPC_B = 255, SPC_A = 255, Alpha = 1f, Shininess = 50f };
+        return new HSD_MOBJ { RenderFlags = RENDER_MODE.DIFFUSE | RENDER_MODE.TEX0, Material = mat, Textures = tobj };
+    }
+
     static int Build(string meshPath, string templatePath, string outPath, string jointSym, string matAnimSym, string reportPath, int pcPaletteCapacity, bool autoTextures)
     {
         var mesh = JsonDocument.Parse(File.ReadAllText(meshPath)).RootElement;
-        var tf = new HSDRawFile(templatePath);
-        var tRoot = tf.Roots.First(r => r.Name.EndsWith("_Share_joint")).Data as HSD_JOBJ;
-        var tMobj = tRoot.TreeList.Where(j => j.Dobj != null).SelectMany(j => j.Dobj.List)
+        // template "-" = AUTHORED: no disc file is read; the material is built from scratch (AuthoredMobj)
+        HSD_MOBJ tMobj;
+        if (templatePath == "-") tMobj = AuthoredMobj();
+        else
+        {
+            var tf = new HSDRawFile(templatePath);
+            var tRoot = tf.Roots.First(r => r.Name.EndsWith("_Share_joint")).Data as HSD_JOBJ;
+            tMobj = tRoot.TreeList.Where(j => j.Dobj != null).SelectMany(j => j.Dobj.List)
                          .Select(d => d.Mobj).First(m => m != null && m.Textures != null);
+        }
         var report = new Dictionary<string, object>();
 
         // ---- joints -------------------------------------------------------------------------------
