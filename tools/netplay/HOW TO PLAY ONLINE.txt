@@ -47,7 +47,7 @@ IF IT DOESN'T CONNECT
     "different melee-pc.exe build": you are not using the same release.
   - Both of you on the same server? (SETTINGS > ONLINE > Server.)
 
-Netplay protocol 3:
+Netplay protocol 4:
   Both PCs need the same current release. A protocol version mismatch means
   update GD's Melee on both PCs; changing the disc will not fix it.
   Matchmaking uses UDP, and optional crash uploads use TCP, normally on

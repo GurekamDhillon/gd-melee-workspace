@@ -136,3 +136,7 @@ asset, texture/model export or disc-derived data was added by this demo packet.
 ## Demo catalogue fix2 (2026-10-03)
 
 The staged Gauntlet setup, protected fly calls and jab-first training selection follow the project's tested demo-tour audit patches in `_build/audit-20261003/demo-tour/patches/`. The behavior runner adapts that audit's `scenarios.py` and `drive.py`, with owner-state assertions, isolated mounts and complete PNG decoding added here. These are project-authored techniques; no third-party assets or disc-derived data were imported.
+
+## Turbo match rule and the interrupt window (2026-10-04)
+
+Turbo (cancel a connected attack into other actions) is prior art from [Project M](https://github.com/Fracture17/ProjectMCodes) (`Turbo.asm`, "Turbo Mode - On Hit Interrupts" by Magus, Dantarion, standardtoaster and DukeItOut; the Project M Development Team) and [Project+](https://projectplusgame.com) (the Project+ team, whose 2.3.1 "Turbo Mode Adjustments" taught the rules this port starts from: no self-cancel, dash only from jabs and dash attacks, smashes that stay still, no shield or air dodge from the wrong moves, air jumps restored on a hit), and of UnclePunch's Turbo Mode for Melee 20XX (a time window after a hit). The source was consulted for ideas only; this implementation is original and hooks the decompiled Melee fighter code. See `_research/turbo-mode-projectm-2026-10-04.md`. No disc-derived assets are included.

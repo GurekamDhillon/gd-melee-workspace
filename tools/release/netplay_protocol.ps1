@@ -1,5 +1,5 @@
 # Release compatibility policy. Keep in step with server/gdmelee_server.py and gw_net.h.
-function Get-NetplayProtocol { return 3 }
+function Get-NetplayProtocol { return 4 }
 
 function Assert-NetplaySource([string]$MeleeDir) {
   $header = Get-Content (Join-Path $MeleeDir 'pc/platform/gw_net.h') -Raw

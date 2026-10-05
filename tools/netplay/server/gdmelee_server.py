@@ -43,7 +43,7 @@ import time
 
 MAGIC_CTL = b"GDMR"
 MAGIC_DATA = b"GDMD"
-NETPLAY_PROTOCOL = 3  # gw_net.h: 40 MiB MEM1 / expanded heap; not the GDMR text format
+NETPLAY_PROTOCOL = 4  # gw_net.h: 3 was 40 MiB MEM1 / expanded heap; 4 adds the match rules word; not the GDMR text format
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no I, O, 0, 1: easy to read out loud
 CODE_LEN = 4
 ROOM_IDLE = 120.0      # seconds without a packet from the host before a room is dropped

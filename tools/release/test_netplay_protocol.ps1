@@ -1,8 +1,8 @@
 param([string]$MeleeDir = '')
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'netplay_protocol.ps1')
-Assert-NetplayMetadata "0.1.6`r`nnetplay_protocol 3`r`n"
-foreach ($bad in @('', 'netplay_protocol 2', 'netplay_protocol 4', "netplay_protocol 3`nnetplay_protocol 3")) {
+Assert-NetplayMetadata "0.1.6`r`nnetplay_protocol 4`r`n"
+foreach ($bad in @('', 'netplay_protocol 3', 'netplay_protocol 5', "netplay_protocol 4`nnetplay_protocol 4")) {
   $rejected = $false
   try { Assert-NetplayMetadata $bad } catch { $rejected = $true }
   if (-not $rejected) { throw "accepted incompatible metadata: $bad" }

@@ -82,7 +82,7 @@ $versionNotes
 
 Windows SmartScreen may warn about an unsigned program: *More info > Run anyway*. Online play: see ``HOW TO PLAY ONLINE.txt`` in the zip.
 
-Online play requires **netplay protocol 3** (40 MiB game memory and shared-page rollback snapshots). Both players must update to this release; protocol 1/2 peers are incompatible. A protocol version error means you need to update the game, not change your disc. Matchmaking uses UDP on the configured server's port (normally netplay.gsd.sh:51600). The Qt launcher inspects local crash reports; it has no upload client.
+Online play requires **netplay protocol 4** (match rules such as Turbo are agreed in the handshake; 40 MiB game memory and shared-page rollback snapshots). Both players must update to this release; protocol 1/2/3 peers are incompatible. A protocol version error means you need to update the game, not change your disc. Matchmaking uses UDP on the configured server's port (normally netplay.gsd.sh:51600). The Qt launcher inspects local crash reports; it has no upload client.
 
 ### What's in the zip
 The game (``melee-pc.exe``), the launcher (``GD Melee.exe``), their runtime libraries (SDL3, Dawn, the MSVC runtime), GD's Melee's own menu art, docs, and the licences of everything bundled (``LICENSES\``). ``MANIFEST.sha256`` lists every file.
