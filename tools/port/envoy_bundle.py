@@ -25,7 +25,7 @@ def mission_modules():
     raise ValueError('Shared mission module list missing')
 
 MISSION_MODULES = mission_modules()
-ENVOY_MODULES = ('mod_progression', 'fighters', 'mod_echo', 'mod_registry', 'mod_status', 'mod_skill', 'mod_schema', 'mod_codec', 'mod_budget', 'mod_engine', 'keystones', 'mod_techniques', 'mod_pool', 'mod_display', 'earned_fx', 'mod_echo_lab', 'mod_lab', 'genetics', 'companion', 'save', 'drives', 'mission_events', 'drive_models', 'fighter', 'campaign', 'run', 'classic', 'hud', 'menu', 'menu_draw', 'menu_input', 'recolour', 'visual', 'hub', 'retail_app', 'app', 'mod_synergy', 'drive_loot', 'drive_merge', 'drive_economy', 'drive_bag', 'drive_drop', 'drive_menu', 'drive_text', 'drive_lab', 'foe_roll', 'foe_driver', 'foe_lab', 'grid', 'run_screen', 'run_hud', 'run_host')
+ENVOY_MODULES = ('mod_progression', 'mod_tuning', 'fighters', 'mod_echo', 'mod_registry', 'mod_status', 'mod_skill', 'mod_schema', 'mod_codec', 'mod_graph', 'mod_budget', 'mod_engine', 'keystones', 'mod_techniques', 'mod_pool', 'synergy_fx', 'mod_display', 'earned_fx', 'mod_echo_lab', 'mod_lab', 'genetics', 'companion', 'save', 'drives', 'mission_events', 'drive_models', 'fighter', 'campaign', 'run', 'classic', 'hud', 'menu', 'menu_draw', 'menu_input', 'recolour', 'visual', 'hub', 'retail_app', 'app', 'mod_synergy', 'drive_loot', 'drive_merge', 'drive_economy', 'drive_bag', 'drive_drop', 'drive_menu', 'drive_text', 'drive_lab', 'foe_roll', 'foe_driver', 'foe_lab', 'grid', 'run_screen', 'run_hud', 'run_host')
 
 
 def bundle():
