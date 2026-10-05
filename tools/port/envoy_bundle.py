@@ -25,7 +25,7 @@ def mission_modules():
     raise ValueError('Shared mission module list missing')
 
 MISSION_MODULES = mission_modules()
-ENVOY_MODULES = ('mod_progression', 'mod_tuning', 'fighters', 'mod_echo', 'mod_registry', 'mod_status', 'mod_skill', 'mod_schema', 'mod_codec', 'mod_graph', 'mod_budget', 'mod_engine', 'keystones', 'mod_techniques', 'mod_pool', 'synergy_fx', 'mod_display', 'earned_fx', 'mod_echo_lab', 'mod_lab', 'genetics', 'companion', 'save', 'drives', 'mission_events', 'drive_models', 'fighter', 'campaign', 'run', 'classic', 'hud', 'menu', 'menu_draw', 'menu_input', 'recolour', 'visual', 'hub', 'retail_app', 'app', 'mod_synergy', 'drive_loot', 'drive_merge', 'drive_economy', 'drive_bag', 'drive_drop', 'drive_menu', 'drive_text', 'drive_lab', 'foe_roll', 'foe_driver', 'foe_lab', 'grid', 'run_screen', 'run_hud', 'run_host')
+ENVOY_MODULES = ('mod_progression', 'mod_tuning', 'fighters', 'mod_echo', 'mod_registry', 'mod_status', 'mod_skill', 'mod_schema', 'mod_codec', 'mod_graph', 'mod_budget', 'mod_engine', 'keystones', 'mod_techniques', 'mod_pool', 'synergy_fx', 'mod_display', 'earned_fx', 'mod_echo_lab', 'mod_lab', 'genetics', 'companion', 'save', 'drives', 'mission_events', 'drive_models', 'fighter', 'campaign', 'run', 'classic', 'hud', 'menu', 'menu_draw', 'menu_input', 'recolour', 'visual', 'hub', 'retail_app', 'app', 'mod_synergy', 'drive_loot', 'drive_merge', 'drive_economy', 'drive_bag', 'drive_drop', 'drive_menu', 'drive_text', 'drive_lab', 'foe_roll', 'foe_driver', 'foe_lab', 'grid', 'run_screen', 'run_hud', 'run_host', 'coop', 'coop_synth')
 
 
 def bundle():
@@ -45,13 +45,15 @@ def bundle():
         lines.append(f'envoy.{name} = assert(load({literal}, "@envoy/{name}.lua", "t"))()(envoy)')
     lines += ['local mission = missions.runtime.new(envoy.mission_events.engine(gd))',
               'local app = envoy.app.new(gd, mission)',
-              'local mods = envoy.mod_lab.new(gd,{blocked=function() return app.run.active or (app.retail and app.retail.active) or app.mission.current~=nil end,run_host=function() return app.retail~=nil and app.retail.active==true and app.retail.rules==true end,run_ready=function() return app.retail.host~=nil and app.retail.host:ready() end,activate=function() app.visible=false;app.input:close() end})',
+              'local mods = envoy.mod_lab.new(gd,{blocked=function() return app.run.active or (app.retail and app.retail.active) or app.mission.current~=nil end,run_host=function() return (app.retail~=nil and app.retail.active==true and app.retail.rules==true) or (app.coop~=nil and app.coop.active==true) end,run_ready=function() if app.coop~=nil and app.coop.active==true then return app.coop.host~=nil and app.coop.host:ready() end;return app.retail.host~=nil and app.retail.host:ready() end,activate=function() app.visible=false;app.input:close() end})',
               'app.retail.host = envoy.run_host.new(gd,mods,app.retail)',
+              'app.coop = envoy.coop.new(gd,mods,app)',
+              'app.synth = envoy.coop_synth.new(gd,app.coop)',
               'app.retire = function() missions.install.retire(mission) end',
               'app.detach_events = envoy.mission_events.observe(missions.mission, function(e) app:mission_event(e) end, gd.log)',
-              'function on_frame() local handled=mods:frame();if not handled or mods:hosted() then app:frame() end end',
-              'function on_tick() local menu=mods:tick();if not menu or mods:hosted() then app:tick() end;if app.retail.host then app.retail.host:tick() end end',
-              'function on_draw() app:draw();mods:draw();app.retail.host:draw() end',
+              'function on_frame() local handled=mods:frame();if not handled or mods:hosted() then app:frame() end;if app.coop.active then app.coop:frame() end;app.synth:frame() end',
+              'function on_tick() local menu=mods:tick();if not menu or mods:hosted() then app:tick() end;if app.retail.host then app.retail.host:tick() end;if app.coop.active then app.coop:tick() end;app.synth:tick() end',
+              'function on_draw() app:draw();mods:draw();app.retail.host:draw();if app.coop.active then app.coop:draw() end end',
               'function on_enemy_defeated(event) app:defeated(event) end',
               'function on_item_collect(event) app:item_collect(event);mods:pickup(event) end',
               'function on_item_expire(event) app:item_expire(event);mods:pickup_expire(event) end',
