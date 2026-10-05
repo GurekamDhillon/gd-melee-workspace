@@ -17,6 +17,10 @@ MELEE_FPS=u bash tools/port/run.sh uncapped --iso "C:/path/game.iso"
 bash tools/port/run.sh --idle-cpus --realtime lab-check --iso "C:/path/game.iso"   # every CPU stands still (MELEE_CPU_IDLE=1)
 MELEE_TURBO=1 MELEE_PAD_SCRIPT="C:/path/check.lua" bash tools/port/run.sh batch --iso "C:/path/game.iso"
 python tools/port/gd_prompt.py                # type text -> in-game comm callouts (needs MELEE_CONSOLE_PORT)
+bash tools/port/bench.sh retail2                              # one benchmark scene, 60 Hz, judged (below)
+bash tools/port/bench.sh ported1 --mods "C:/path/mods"        # a ported fighter v retail (needs its slot mod)
+bash tools/port/bench.sh retail2 --update-baseline            # the ONLY way a baseline is written (quiet machine)
+python tools/port/runs.py perf _build/runs/<name>             # judge any finished run's perf.json
 ```
 
 `gd_prompt.py` needs a running game started with `MELEE_CONSOLE_PORT` (the environment passes
@@ -38,6 +42,50 @@ Staleness is by content: each object records a hash of its source, its depfile's
 compile script and the tools, so a touched-but-unchanged file rebuilds nothing, a header rebuilds
 only its consumers, a flag change rebuilds everything, and a revert restores the previous object.
 
+## The perf record, and how a lane reads the verdict
+
+Every launch writes a **perf record** (`perf.json` in the run folder, beside `run.json`, and one
+`perf:` line per scene in `melee-pc.log`) from the engine's always-on **summary** (`gw_profiler.c`).
+It costs nothing you can measure (turbo, retail Fox v Marth, five 9,000-frame runs: 1.790 ms a frame
+with it off, 1.784 on, the full `MELEE_PROFILER=1` 1.898; target was under 0.05 ms). It keeps, per scene:
+frames and wall time; frame work mean / p95 / p99 / worst; every bucket's mean per frame (logic, draw
+recording, render worker, submit, animation, object callbacks, script, rewind, skinning, queue wait,
+fighter, ...); hitch count and length over 16.7 ms; draw calls a frame (mean, max); per-frame event
+counts (envelope slots set up and reused, pobj draws, GX begins and display lists); script time per mod;
+peak memory; present rate. The first 600 frames of a scene (`first_use`, where every first-use hitch
+lives) are reported apart from `steady`. `run.sh` prints one verdict line when a windowed run ends.
+
+| verdict | meaning |
+|---|---|
+| `PASS` | every check that applies held |
+| `WARN` | a hitch after warm-up, or the mean/p99 moved past the warn line against the baseline |
+| `FAIL` | a budget broke (script over 1 ms a frame; frame-work p95 over 8.33 ms in a benchmark scene; a hitch over 100 ms after warm-up; draw calls over the scene's ceiling) or a regression passed the fail line |
+| `NOISY` | **not judged**: another `melee-pc` was running at the start or end of the scene, or other processes used more than 35% of the CPU on average (70% peak). Timings are only comparable under the same conditions, so a noisy run proves nothing either way: rerun when the machine is quiet. `--judge-noisy` prints a verdict anyway, marked `*` |
+| `N/A` | no scene reached 120 frames, or the run did not end cleanly (`in_progress`) |
+
+Conditions are stored with the numbers (clock realtime/turbo, `MELEE_TURBO_RENDER`, fps cap, vsync,
+window, render scale, build id, mod set, scene token, instance counts at start and end, other-process
+CPU load). A baseline is only used when clock, fps cap, window, render scale and turbo render match.
+
+`bench.sh <scene>` runs one fixed scene (`retail2`: two retail fighters; `ported1`: one ported fighter v
+retail; `ported2`; `mixed4`: two ported and two retail), 60 Hz by default, warms 900 frames, measures 1,800,
+quits the game through its own console, and judges the window. Ported scenes need `--mods DIR` or
+`GW_BENCH_MODS` (the fighter's slot mod, used in place, read-only) and are skipped without. Baselines are
+per machine in `_build/perf-baselines/<machine>/` (git-ignored), written only by `--update-baseline` from a
+complete, quiet window. Regression thresholds, from the measured run-to-run spread (about 2-3% on a quiet
+machine): warn at +10% or +0.5 ms on the mean (whichever is larger), fail at +20% or +1.0 ms; p99 warns at
+x1.3 and fails at x1.6 of the baseline. All numbers are inclusive and per frame; render_worker and
+pipeline_compile run on other threads and are never part of frame work. Thresholds live in
+`tools/port/perfjudge.py`.
+
+Switches: `MELEE_PERF_SUMMARY=0` turns the summary off entirely; `MELEE_PROFILER=1` keeps today's full
+behaviour (events, details, hitch traces) and also feeds the perf record; `MELEE_PERF_PATH`,
+`MELEE_PERF_HITCH_MS`, `MELEE_PERF_WINDOW=<warm>,<frames>` (what bench.sh sets). `prof perf` in the game
+console writes `perf.json` now and prints the status. What a headless `--test` run can and cannot see:
+it has no GPU and no paced loop, so it cannot time anything or count a real draw; the suite's
+`perf_summary_accounting` pins the arithmetic of the record, and the draw-call ceilings are enforced by
+`bench.sh` on a real scene.
+
 ## Runtime switches
 
 | Switch | Meaning |
@@ -52,6 +100,9 @@ only its consumers, a flag change rebuilds everything, and a revert restores the
 | `MELEE_TEST_SEED=integer` | fixed boot RNG seed for scripted comparisons |
 | `MELEE_MODS_DIR=path` | parent containing mod folders; use a Windows path (`pwd -W` in Git Bash) |
 | `GW_DAWN_CACHE_SEED=0` | disable copying an existing inactive run's compiled shader cache into a fresh sandbox |
+| `MELEE_PERF_SUMMARY=0` | switch the always-on perf record off (default on; see "The perf record") |
+| `MELEE_ENV_CACHE=1` / `compare` | opt-in per-frame memo of envelope skinning matrices; `compare` checks every hit against fresh arithmetic and logs `ENVCACHE` lines (default off: gain was only ~0.3-0.5 ms a legacy fighter) |
+| `MELEE_POBJ_DIAG=1` | log what a frame's envelope draws are made of (`POBJDIAG`: pobj draws v distinct, slots, joint terms, distinct envelopes, render passes) |
 | `GW_RUNS_KEEP=N` | retain the N most recently started stamped sandboxes (default 50); unstamped ones are not pruned |
 
 Turbo mutes audio. Use realtime runs for controller, sound and presentation checks. Lua

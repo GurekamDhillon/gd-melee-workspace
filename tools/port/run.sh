@@ -163,6 +163,11 @@ else
 fi
 set -e
 echo "exit      $rc"
+# The perf record (perf.json, written by the engine's always-on summary): one verdict line.
+# PASS/WARN/FAIL/NOISY; a noisy run is never judged. Not for --test (headless: nothing to time).
+if [ "$test_mode" != "1" ] && [ -f "$sandbox/perf.json" ]; then
+    python "$GW_ROOT/tools/port/perfjudge.py" "$sandbox" 2>/dev/null || true
+fi
 if [ -f "$sandbox/melee-pc.log" ]; then
     n="$(grep -c FATAL "$sandbox/melee-pc.log" || true)"
     echo "FATAL     $n"

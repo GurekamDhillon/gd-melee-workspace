@@ -26,6 +26,8 @@
 # objects, an exe and a log per parallel worker, all regenerable.
 /_build/agents/
 /_build/runs/
+# Per-machine perf baselines (tools/port/bench.sh --update-baseline): timings are only comparable on one machine.
+/_build/perf-baselines/
 /_build/effects-lab-validation/
 /worktrees/
 

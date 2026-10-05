@@ -521,11 +521,18 @@ def main():
         p.add_argument('--owner'); p.add_argument('--sandbox'); p.add_argument('--hung', action='store_true')
         p.add_argument('--older-than', type=float, help='minimum age in seconds')
     p = sub.add_parser('wait'); p.add_argument('name')
+    p = sub.add_parser('perf', help='judge a run folder perf.json (PASS/WARN/FAIL/NOISY); see perfjudge.py')
+    p.add_argument('run', type=Path); p.add_argument('--bench'); p.add_argument('--fps')
+    p.add_argument('--json', action='store_true'); p.add_argument('--judge-noisy', action='store_true')
     p = sub.add_parser('seed-cache'); p.add_argument('--sandbox', type=Path, required=True)
     p = sub.add_parser('launch'); p.add_argument('--sandbox', type=Path, required=True)
     p.add_argument('--max-seconds', type=float, default=0); p.add_argument('--unattended', action='store_true')
     p.add_argument('command', nargs=argparse.REMAINDER)
     args = parser.parse_args()
+    if args.action == 'perf':
+        import perfjudge
+        return perfjudge.main([str(args.run)] + (['--bench', args.bench] if args.bench else []) + (['--fps', args.fps] if args.fps else [])
+                              + (['--json'] if args.json else []) + (['--judge-noisy'] if args.judge_noisy else []))
     if args.action == 'seed-cache':
         seed_cache(args.root, args.sandbox, live_processes())
         return 0
