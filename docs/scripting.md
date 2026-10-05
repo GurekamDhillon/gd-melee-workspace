@@ -881,7 +881,7 @@ update ground velocity. Damage, capture, attacking, rebirth, special fall,
 jump squat and hitlag states refuse the operation without changing velocity.
 It returns a boolean and does not teleport, change actions or replenish jumps.
 
-`gd.cpu_mode(port, "stand"|"fight"|"default")` (`"default"` returns the slot to the launch setting: `MELEE_CPU_IDLE=1` / scene `cpus=idle` / `pN=.../idle`; `gd.cpu_modes()` returns `{[port]={mode="idle"|"fight", source="global"|"slot"|"script"|"retail"}}` for CPU slots; each match logs `cpu: P2 idle (global)`) reinitializes the existing native CPU mode,
+`gd.cpu_mode(port, "stand"|"fight"|"script"|"default")` (`"default"` returns the slot to the launch setting: `MELEE_CPU_IDLE=1` / scene `cpus=idle` / `pN=.../idle`; `gd.cpu_modes()` returns `{[port]={mode="idle"|"fight"|"script", source="global"|"slot"|"script"|"retail"}}` for CPU slots; each match logs `cpu: P2 idle (global)`) reinitializes the existing native CPU mode,
 preserving each entity's level. It initializes the active and dormant transformation
 halves together, so stand/fight survives Zelda/Sheik swaps; Nana also receives the
 retail initializer, which retains her special partner CPU kind. A benched pair
@@ -894,6 +894,75 @@ The selected mode is persisted in the player slot so first-frame initialization,
 respawn and transformation use it. Explicit scripted virtual-pad control is still
 an input override. Fight uses the game's existing AI;
 this API does not install 20XX or another training hack's AI.
+
+### The CPU's virtual controller (`gd.cpu_mode(port, "script")`)
+
+Melee already keeps a deterministic virtual GameCube controller for every CPU (`fp->cpu.lstick`,
+`cstick`, `buttons`, triggers) and a small command language that drives it (`CpuCmd_*`,
+`src/melee/ft/ftcmdscript.h`). These calls write that controller from a script, at the point in the
+frame where the retail AI would, so they work on CPU slots (1-6, and Nana with `{sub=true}`) and
+in 1P modes, where `gd.input` does not. All of them are offline-only and fork the LAB timeline.
+
+`gd.cpu_mode(port, "script")` puts a CPU in script mode: the retail AI writes nothing, the
+controller starts neutral, and `gd.cpu_modes()` reports `{mode="script", source="script"}`. `"stand"`,
+`"fight"` and `"default"` leave it. The other calls refuse a CPU that is not in script mode.
+
+| call | what it does |
+|---|---|
+| `gd.cpu_pad(port, {x=,y=,cx=,cy=,l=,r=,buttons=,sub=} [, frames])` | hold that sample for `frames` completed logic frames (default 1), then neutral. Sticks -127..127, triggers 0..255, `buttons` as for `gd.input`. Cancels a running script or goto |
+| `gd.cpu_script(port, steps [, {hold=, sub=}])` | run retail commands: `steps` is a list of command names or `{name, a [, b]}`. The game's own interpreter runs it (`ftCo_800B3E04`), so timing is the game's: the first command runs on the next logic frame and `{"wait", n}` resumes n frames later. The controller starts neutral and ends neutral unless `hold`. At most 255 bytes (the retail buffer). Returns true |
+| `gd.cpu_script_done(port [, sub])` | no script, pad hold or goto in progress (usable in `gd.wait_until`) |
+| `gd.cpu_script_status(port [, sub])` | `{script_mode, running, completed, pad_frames, buttons, x, y, cx, cy, l, r, target, script_pos, wait_left}`: the controller as the engine will read it |
+| `gd.cpu_dest(port, x, y [, {sub=}])` / `gd.cpu_dest(port)` | set / read `fp->cpu.x54`, the point the `*_toward_destination` commands steer at |
+| `gd.cpu_target(port [, other])` | the fighter the `*_toward_fighter` commands face (default the first other fighter) |
+| `gd.cpu_cancel(port [, sub])` | stop everything, neutral |
+| `gd.cpu_commands()` | `{name = {code=, args=}}` for every command below |
+| `gd.cpu_attrs(port)` | the fighter's own numbers the macros are timed from: `jump_squat`, `hop_v`, `jump_v`, `gravity`, `terminal_velocity`, `landing_nair`.. `landing_dair`, `landing_normal`, `airdodge_landing`, `dash_initial`, `dash_max`, `walk_max`, `max_jumps`, `fast_fall`, ... |
+
+Commands (`gd.cpu_commands()`; the numbers are the retail enum, asserted by a test):
+
+| args | names |
+|---|---|
+| none | `press_`/`release_` + `a b x y r l z up down right left start` (up..right are the D-pad), `release_all` |
+| one | `set_lstick_x`, `set_lstick_y`, `set_cstick_x`, `set_cstick_y` (-127..127), `set_rtrigger`, `set_ltrigger` (0..255), `press_a_for` .. `release_y_for` (button then wait n), `wait` (alias `wait_for`), `lstick_toward_destination`, `lstick_x_toward_destination`, `lstick_x_forward` (facing-relative), `lstick_toward_fighter`, `lstick_x_toward_fighter` (magnitudes), `wait_if_motion` (retry next frame while the motion id is n), `unknown_0x93` (retail stores it in `fp->cpu.x18`; its meaning is unknown) |
+| two | `lstick_toward_destination_clamped`, `lstick_x_toward_destination_clamped`, `lstick_forward_clamped` (step, clamp) |
+
+Bytes 0x96-0xBE exist in no retail script; the interpreter would treat them as no-ops, so
+`gd.cpu_script` does not accept them. `press_r` also sets the R trigger to 255; `press_l` does not set the
+L trigger (the engine treats the button as a full press).
+
+`gd.cpu_macro(port, name [, opts])` builds a technique as a command sequence from the fighter's own
+attributes and runs it; it returns `ok, bytes`. `opts.dir` is `"forward"` (default, follows facing),
+`"back"`, `"left"`, `"right"`, -1 or 1; `hold` and `sub` as above. Ticks below count from the first command (tick 1,
+the frame after the call).
+
+| macro | sequence and timing source |
+|---|---|
+| `short_hop` | X for 1 tick, then the fighter's `jump_squat` frames |
+| `full_hop` | X held through the jump squat |
+| `dash` `{frames=12}` / `dash_dance` `{cycles=3, hold=6}` | stick toward / alternating |
+| `wavedash` `{angle=20, offset=0}` | jump, then an air dodge `angle` degrees below horizontal on the first airborne tick (tick `1 + jump_squat`) |
+| `waveland` `{angle=20}` | the air dodge alone, for use while falling toward a floor |
+| `lcancel_aerial` `{aerial="nair", lcancel=1, at=2, lead=3}` (aerial: nair, fair, bair, uair or dair) | short hop, the aerial `at` ticks after take-off (C-stick for the directional ones), then L `lead` ticks before the predicted landing. The landing tick is `jump_squat + hop air frames + 2`, the air frames being the fighter's `hop_v`, `gravity` and `terminal_velocity` integrated the way the engine steps them |
+| `shield` `{frames=30}` | L held |
+| `perfect_shield` `{at=0, hold=12}` | L pressed `at` ticks from now: the caller times it to the hit |
+| `tech` `{at=0, dir="left", "right" or "in"}` | L tapped (with the stick toward `dir`) `at` ticks from now |
+| `jump_cancel_grab` `{z_at=1}` | X, then Z `z_at` ticks later (inside the jump squat) |
+
+`gd.cpu_goto(port, x, y [, {radius=2, timeout=900, sub=}])` is a rule-based mover, not a search. Each
+frame it reads the fighter and asks the collision system (`mpCheckFloor` rays: the floor lines and
+platforms, which is what `mpIsland` is built from) where the floor is, then writes the controller:
+same level, walk or dash and stop inside the radius (a gap in the floor is jumped); target higher,
+walk under it and jump, with a second jump at the apex if one falls short (blocked at once when even
+two cannot reach); target lower, drop through a platform or walk off the edge; in the air, drift toward the
+target, second jump toward it when below it, climb a ledge once caught. `gd.cpu_goto_status(port)`
+returns `"running"`, `"arrived"` (grounded, within radius of x and 4 of y), `"blocked"` (timeout, no
+progress, no jump reaches, or no floor under the target) or `"fell"` (a KO state) and the frames used.
+It plans one leg at a time: a target that needs a route through an intermediate platform is not
+found. All of it lives in the simulation state (the controller, a small per-slot record in game
+memory): savestates and `gd.rewind_test` carry it. For netplay it would need the same state the
+retail CPU already keeps plus that record in the rollback snapshot and the script calls issued by
+every peer on the same frame; today they are refused online.
 
 `gd.cpu_technical(port, skill [, seed])` opts a primary native Fox/Falco fight CPU
 into an original input assist. Skill is integer 0-3 (0 disables), and seed is

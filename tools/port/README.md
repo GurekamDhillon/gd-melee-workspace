@@ -58,6 +58,28 @@ Turbo mutes audio. Use realtime runs for controller, sound and presentation chec
 `gd.input(..., frames)` counts completed logic frames even while stepping; text pad scripts
 still consume one frame per PADRead. See [scripting.md](../../docs/scripting.md).
 
+### Positioning and driving an opponent in a test
+
+Brief every game-driving lane with this. Use the LAB (`mode=lab`), never training, and give every
+CPU you do not script `cpus=idle` (or `--idle-cpus`). A CPU you do need to act is put in
+`gd.cpu_mode(port, "script")`: the retail AI then writes nothing and the script writes the CPU's
+virtual controller (`fp->cpu.*`), which `gd.input` cannot reach.
+
+- Place it: `gd.teleport(port, x, y)` then wait for `Wait` on the floor; or, with no teleport,
+  `gd.cpu_goto(port, x, y)` and wait for `gd.cpu_script_done(port)` (`gd.cpu_goto_status` says
+  `arrived`, `blocked` or `fell`).
+- Drive it: `gd.cpu_pad(port, {x=,y=,cx=,cy=,l=,r=,buttons=}, frames)` for a held sample;
+  `gd.cpu_script(port, {{"press_x"},{"wait",1},{"release_x"}})` for the retail command language;
+  `gd.cpu_macro(port, "wavedash"|"short_hop"|"full_hop"|"dash"|"dash_dance"|"waveland"|
+  "lcancel_aerial"|"shield"|"perfect_shield"|"tech"|"jump_cancel_grab", {dir=...})` for
+  technique timed from the fighter's own attributes (`gd.cpu_attrs(port)`).
+- Read it back, do not look: `gd.player(port).action` / `.action_frame`, `gd.cpu_script_status(port)`
+  (the controller as the engine will read it), the `on_perfect_shield` / `on_grab` hooks.
+- Step it: `gd.pause()` and `gd.step(n)` are frame exact. A script runs one logic frame after the
+  call that started it. A `gd.run` task started from the console ends when the console client
+  disconnects: load a script file (`load <path>`) for anything that must outlive the call.
+- Reference: [scripting.md](../../docs/scripting.md), "The CPU's virtual controller".
+
 ## Isolation and evidence
 
 `--idle-cpus` sets `MELEE_CPU_IDLE=1`: every CPU-controlled fighter idles for the whole process (agent test runs should pass it; `--test` and `MELEE_PAD_IGNORE_ADAPTER=1` do not imply it). The run is recorded as `idle_cpus` in `run.json`.
