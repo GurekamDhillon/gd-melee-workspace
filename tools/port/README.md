@@ -14,6 +14,7 @@ bash tools/port/run.sh play --iso "C:/path/game.iso"
 bash tools/port/run.sh --test tests --iso "C:/path/game.iso"
 bash tools/port/run.sh --test --realtime tests-rt --iso "C:/path/game.iso"
 MELEE_FPS=u bash tools/port/run.sh uncapped --iso "C:/path/game.iso"
+bash tools/port/run.sh --idle-cpus --realtime lab-check --iso "C:/path/game.iso"   # every CPU stands still (MELEE_CPU_IDLE=1)
 MELEE_TURBO=1 MELEE_PAD_SCRIPT="C:/path/check.lua" bash tools/port/run.sh batch --iso "C:/path/game.iso"
 python tools/port/gd_prompt.py                # type text -> in-game comm callouts (needs MELEE_CONSOLE_PORT)
 ```
@@ -58,6 +59,8 @@ Turbo mutes audio. Use realtime runs for controller, sound and presentation chec
 still consume one frame per PADRead. See [scripting.md](../../docs/scripting.md).
 
 ## Isolation and evidence
+
+`--idle-cpus` sets `MELEE_CPU_IDLE=1`: every CPU-controlled fighter idles for the whole process (agent test runs should pass it; `--test` and `MELEE_PAD_IGNORE_ADAPTER=1` do not imply it). The run is recorded as `idle_cpus` in `run.json`.
 
 `run.sh` copies the EXE and map into `GW_BUILD_ROOT/runs/<name>/`, supplies runtime DLLs and
 caches, and leaves the log there. Reusing a name replaces that sandbox's build: use distinct

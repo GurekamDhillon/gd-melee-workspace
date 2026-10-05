@@ -175,7 +175,11 @@ MELEE_SCENE="mode=training;at=css;p1=falco"
 
 # A four-player VS match on Final Destination: one human, three CPUs, one of them random.
 MELEE_SCENE="mode=vs;p1=fox/c1/hu;p2=falco/cpu5;p3=random/cpu3;p4=ck:38/cpu9;stage=fd"
+```
 
+Idle CPUs (engine-level, never per test): slot tokens `idle` (`p2=fox/idle`, `p3=marth/cpu0/idle`; implies a CPU slot) and `fight` (beats the global for that slot), global `cpus=idle` / `cpus=fight` (a later runtime scene keeps an earlier `cpus=idle` unless it says `cpus=fight`), and `MELEE_CPU_IDLE=1` for the whole process. `cpus=recover` is not supported. Idle CPUs stand still but take hits, fall and respawn.
+
+```
 # The VS character-select screen with four players already configured.
 MELEE_SCENE="mode=vs;at=css;p1=fox;p2=marth;p3=random;p4=random"
 

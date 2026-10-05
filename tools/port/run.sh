@@ -26,10 +26,11 @@ realtime=0
 max_seconds="${MELEE_MAX_SECONDS:-}"
 # --test runs turbo by default (MELEE_TURBO=1: virtual clock, no pacing; see PORT_DEV_QUICKREF);
 # --realtime keeps 60 Hz. A plain window run keeps its default (realtime) unless the caller sets it.
-while [ "${1:-}" = "--test" ] || [ "${1:-}" = "--realtime" ] || [ "${1:-}" = "--max-seconds" ]; do
+while [ "${1:-}" = "--test" ] || [ "${1:-}" = "--realtime" ] || [ "${1:-}" = "--max-seconds" ] || [ "${1:-}" = "--idle-cpus" ]; do
     case "$1" in
         --test) test_mode=1 ;;
         --realtime) realtime=1 ;;
+        --idle-cpus) export MELEE_CPU_IDLE=1 ;; # every CPU-controlled fighter stands still (agent test runs)
         --max-seconds) [ $# -ge 2 ] || gw_die "--max-seconds needs N"; max_seconds="$2"; shift ;;
     esac
     shift
@@ -42,7 +43,7 @@ elif [ "$realtime" = 1 ]; then
     export MELEE_TURBO=0
 fi
 name="${1:-}"
-[ -n "$name" ] || gw_die "usage: run.sh [--test] [--realtime] [--max-seconds N] <sandbox-name> [game args...]"
+[ -n "$name" ] || gw_die "usage: run.sh [--test] [--realtime] [--idle-cpus] [--max-seconds N] <sandbox-name> [game args...]"
 case "$name" in .|..|*/*|*\\*) gw_die "sandbox name must be one directory name" ;; esac
 shift
 

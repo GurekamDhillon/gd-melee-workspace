@@ -881,7 +881,7 @@ update ground velocity. Damage, capture, attacking, rebirth, special fall,
 jump squat and hitlag states refuse the operation without changing velocity.
 It returns a boolean and does not teleport, change actions or replenish jumps.
 
-`gd.cpu_mode(port, "stand"|"fight")` reinitializes the existing native CPU mode,
+`gd.cpu_mode(port, "stand"|"fight"|"default")` (`"default"` returns the slot to the launch setting: `MELEE_CPU_IDLE=1` / scene `cpus=idle` / `pN=.../idle`; `gd.cpu_modes()` returns `{[port]={mode="idle"|"fight", source="global"|"slot"|"script"|"retail"}}` for CPU slots; each match logs `cpu: P2 idle (global)`) reinitializes the existing native CPU mode,
 preserving each entity's level. It initializes the active and dormant transformation
 halves together, so stand/fight survives Zelda/Sheik swaps; Nana also receives the
 retail initializer, which retains her special partner CPU kind. A benched pair

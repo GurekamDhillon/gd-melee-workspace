@@ -383,7 +383,8 @@ def launch(args):
     progress = ProgressWatch(start)
     record = dict(launcher_pid=os.getpid(), parent_pid=parent_pid, parent_name=parent_name,
                   label=os.getenv('MELEE_RUN_LABEL', sandbox.name), start=start, command=command,
-                  timeout=args.max_seconds, owner=os.getenv('MELEE_RUN_OWNER', sandbox.name), sandbox=str(sandbox))
+                  timeout=args.max_seconds, owner=os.getenv('MELEE_RUN_OWNER', sandbox.name), sandbox=str(sandbox),
+                  idle_cpus=os.getenv('MELEE_CPU_IDLE') == '1')
     try:
         # Remove stale diagnostics before suspended launch; log is truncated by engine.
         for name in ('run.json','heartbeat.json','hang.txt','exit.json','verdict.json','termination.json'):
