@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MISSIONS = ROOT / 'melee/pc/scripts/examples/missions/scripts'
 SCRIPTS = ROOT / 'melee/pc/scripts/examples/envoy/scripts'
 TARGET = SCRIPTS / 'main.lua'
+GRID = ROOT / 'melee/pc/scripts/examples/demos/grid-inventory/scripts/grid.lua'
 DRIVE = SCRIPTS.parent / 'items/drive/item.json'
 def mission_modules():
     # The shared runtime owns its factory order, including newly split modules.
@@ -24,7 +25,7 @@ def mission_modules():
     raise ValueError('Shared mission module list missing')
 
 MISSION_MODULES = mission_modules()
-ENVOY_MODULES = ('mod_progression', 'mod_echo', 'mod_registry', 'mod_status', 'mod_schema', 'mod_codec', 'mod_budget', 'mod_engine', 'mod_pool', 'mod_display', 'mod_echo_lab', 'mod_lab', 'genetics', 'companion', 'save', 'drives', 'mission_events', 'drive_models', 'fighter', 'campaign', 'run', 'classic', 'hud', 'menu', 'menu_draw', 'menu_input', 'recolour', 'visual', 'hub', 'retail_app', 'app', 'mod_synergy', 'drive_loot', 'drive_bag', 'drive_drop', 'drive_menu', 'drive_text', 'drive_lab', 'foe_roll', 'foe_lab', 'run_screen', 'run_hud', 'run_host')
+ENVOY_MODULES = ('mod_progression', 'mod_echo', 'mod_registry', 'mod_status', 'mod_schema', 'mod_codec', 'mod_budget', 'mod_engine', 'keystones', 'mod_pool', 'mod_display', 'mod_echo_lab', 'mod_lab', 'genetics', 'companion', 'save', 'drives', 'mission_events', 'drive_models', 'fighter', 'campaign', 'run', 'classic', 'hud', 'menu', 'menu_draw', 'menu_input', 'recolour', 'visual', 'hub', 'retail_app', 'app', 'mod_synergy', 'drive_loot', 'drive_merge', 'drive_economy', 'drive_bag', 'drive_drop', 'drive_menu', 'drive_text', 'drive_lab', 'foe_roll', 'foe_lab', 'grid', 'run_screen', 'run_hud', 'run_host')
 
 
 def bundle():
@@ -38,7 +39,9 @@ def bundle():
     juice = (ROOT / 'melee/pc/scripts/lib/pickup_juice.lua').read_text(encoding='utf-8')
     lines.append(f'envoy.pickup_juice = assert(load({json.dumps(juice, ensure_ascii=False)}, "@lib/pickup_juice.lua", "t"))()')
     for name in ENVOY_MODULES:
-        literal = json.dumps((SCRIPTS / (name + '.lua')).read_text(encoding='utf-8'), ensure_ascii=False)
+        source = (GRID if name == 'grid' else SCRIPTS / (name + '.lua')).read_text(encoding='utf-8')
+        if name == 'grid': source = 'return function(D)'+chr(10)+source+chr(10)+'end'+chr(10)  # the demo component, embedded unedited
+        literal = json.dumps(source, ensure_ascii=False)
         lines.append(f'envoy.{name} = assert(load({literal}, "@envoy/{name}.lua", "t"))()(envoy)')
     lines += ['local mission = missions.runtime.new(envoy.mission_events.engine(gd))',
               'local app = envoy.app.new(gd, mission)',
