@@ -38,6 +38,9 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
     for f in ('launch-melee','README.txt','GD-Melee'):shutil.copy2(root/'tools/port/release'/f,dest/f)
     (dest/'launch-melee').chmod(0o755)
     (dest/'GD-Melee').chmod(0o755)
+    # For players who cannot get past 'the game will not start': POSIX sh, writes one report to attach.
+    shutil.copy2(root/'tools/release/linux/gd-melee-diagnose.sh',dest/'gd-melee-diagnose.sh')
+    (dest/'gd-melee-diagnose.sh').chmod(0o755)
     launcher=a.launcher or root/'_build/launcher-package/launcher'
     if not (launcher/'bin/gd-melee-launcher').is_file():raise SystemExit('Build/deploy the Qt launcher first with tools/release/build_launcher.sh _build/launcher-package')
     shutil.copytree(launcher,dest/'launcher',symlinks=True)

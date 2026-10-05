@@ -177,6 +177,49 @@ no discs or private runner needed. Screenshots and build artifacts are workflow 
 the workflow does not tag, create or publish a GitHub Release. Real game/disc validation
 is separate; see `docs/LINUX_CONTINUOUS_CHECKS.md`.
 
+### Linux: the game will not start
+
+The game is a **32-bit** program under a 64-bit launcher, so most "will not start" reports on
+Linux are a missing 32-bit piece. **Check this first (Arch family: CachyOS, Manjaro, EndeavourOS):**
+enable `[multilib]` in `/etc/pacman.conf`, then
+`sudo pacman -Syu lib32-glibc lib32-mesa lib32-vulkan-icd-loader` plus the driver for the GPU:
+`lib32-vulkan-radeon` (AMD, including the ROG Ally), `lib32-vulkan-intel`, or `lib32-nvidia-utils`
+(must match the installed NVIDIA driver). Debian/Ubuntu: `dpkg --add-architecture i386`, then
+`libc6:i386 libvulkan1:i386 mesa-vulkan-drivers:i386`. Fedora: `glibc.i686 vulkan-loader.i686
+mesa-vulkan-drivers.i686`. Having "the 32-bit drivers" does not imply `lib32-glibc` or the 32-bit
+Vulkan loader; the report says which one is absent.
+
+**What to send us.** Every launch attempt writes a launch diagnostics report, one plain-text file
+you can read before sharing: `<user data>/diagnostics/launch-diagnostics.txt` (the newest; the last
+ten attempts are kept as `launch-diagnostics-<time>.txt`, and a copy sits in the run folder next
+to `launcher-process.log`). The user data folder is `userdata/` beside the game, or
+`~/.local/share/melee-linux`. When the game fails the launcher shows the verdict with **Copy
+diagnostics** and **Open log folder**. The Diagnostics tab has **Copy launch diagnostics** and
+**Run diagnostics without launching**; `gd-melee-launcher --diagnose` does the same from a terminal.
+If the launcher itself will not open, run `./gd-melee-diagnose.sh` from the game folder (POSIX sh
+and coreutils only, it never starts the game) and attach the `gd-melee-diagnostics-*.txt` it writes.
+It also tries to start the launcher and records that program's stderr.
+
+The file holds versions, distribution, kernel, session type, GPU model, file and library checks,
+the exact command (the disc image by file name only), the environment variables the launcher
+changed, and the tails of the child output, game log and newest crash log. Home is shown as `~`;
+user name, host name, IP and MAC addresses are removed; the full environment is never written, and
+`LD_PRELOAD` and anything named like a token or key is "set" only. The text says so at its top.
+
+| Verdict | Meaning | How it is detected |
+|---|---|---|
+| `NO_32BIT_LOADER` | the 32-bit `ld-linux.so.2` is missing (an existing binary reports "No such file or directory") | `PT_INTERP` read from the ELF; file absent; exec probe `ENOENT` |
+| `MISSING_LIBRARY <name>` | a 32-bit library the game needs is absent | the ELF's `DT_NEEDED` resolved against the game's `lib/`, `RUNPATH` and the 32-bit system folders (a 64-bit file does not count); `ldd`; the loader's own message |
+| `NOT_EXECUTABLE` / `NOEXEC_MOUNT` | no execute bit (unzip drops it), or the folder is on a `noexec` mount | permissions; `statvfs` flags and `/proc/self/mountinfo` |
+| `NO_32BIT_VULKAN_DRIVER` | no 32-bit Vulkan loader or ICD library; the launcher's 32-bit helper cannot create a device | the helper's JSON; ICD manifests (`library_path`, 32-bit build present?) |
+| `GRAPHICS_INIT_FAILED` | the game started, then failed in graphics setup though a driver exists (Wayland/X11, gamescope) | known renderer messages in the child output or `melee-pc.log` |
+| `EXITED_EARLY code=N`, `KILLED_BY_SIGNAL SIGSEGV` | the game ran and stopped; read the game log and crash report in the file | `QProcess` result; Qt 6 reports the signal number as the exit code of a crashed child |
+| `WRONG_ARCHITECTURE`, `BAD_BINARY`, `BINARY_MISSING`, `LIBRARY_TOO_OLD`, `START_FAILED`, `LAUNCHER_FAILED` | wrong or damaged download, a glibc newer than the host's, a start the system refused, or the launcher stopped before spawning | ELF header, loader messages, `posix_spawn` errno, the launcher's own error |
+| `STARTED_OK`, `UNKNOWN` | exited normally, or every check passed with nothing to show yet | |
+
+The package-name hints in the report are labelled as guesses. The code is `launcher/qt/diagnostics.*`;
+`tests.cpp` covers it with constructed ELF files, and `linux/test_diagnose.sh` tests the script.
+
 Useful command lines:
 
 ```sh

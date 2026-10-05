@@ -1,9 +1,9 @@
 name: Qt launcher
 on:
   push:
-    paths: ['tools/release/launcher/qt/**', 'tools/release/build_launcher.*', 'tools/release/check_release.ps1', 'tools/release/sanitize_launcher.py', 'tools/release/test_*.py', 'tools/netplay/server/**', '_build/ui/kit*.json', '_build/ui/ico_*.gxtex', 'menu/SourceSans3/**', '.github/workflows/launcher-qt.yml']
+    paths: ['tools/release/launcher/qt/**', 'tools/release/linux/**', 'tools/release/build_launcher.*', 'tools/release/check_release.ps1', 'tools/release/sanitize_launcher.py', 'tools/release/test_*.py', 'tools/netplay/server/**', '_build/ui/kit*.json', '_build/ui/ico_*.gxtex', 'menu/SourceSans3/**', '.github/workflows/launcher-qt.yml']
   pull_request:
-    paths: ['tools/release/launcher/qt/**', 'tools/release/build_launcher.*', 'tools/release/check_release.ps1', 'tools/release/sanitize_launcher.py', 'tools/release/test_*.py', 'tools/netplay/server/**', '_build/ui/kit*.json', '_build/ui/ico_*.gxtex', 'menu/SourceSans3/**', '.github/workflows/launcher-qt.yml']
+    paths: ['tools/release/launcher/qt/**', 'tools/release/linux/**', 'tools/release/build_launcher.*', 'tools/release/check_release.ps1', 'tools/release/sanitize_launcher.py', 'tools/release/test_*.py', 'tools/netplay/server/**', '_build/ui/kit*.json', '_build/ui/ico_*.gxtex', 'menu/SourceSans3/**', '.github/workflows/launcher-qt.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -41,6 +41,9 @@ jobs:
       - name: Build, test and deploy (Linux)
         if: runner.os == 'Linux'
         run: bash tools/release/build_launcher.sh _build/launcher-package
+      - name: Test the Linux diagnose script (POSIX sh)
+        if: runner.os == 'Linux'
+        run: sh tools/release/linux/test_diagnose.sh
       - name: Verify 32-bit graphics helper success and missing-driver diagnostics
         if: runner.os == 'Linux'
         run: python3 tools/port/test_graphics_probe.py _build/launcher-qt/melee-graphics-probe

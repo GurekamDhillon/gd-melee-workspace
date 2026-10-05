@@ -1,6 +1,8 @@
 #pragma once
+#include "diagnostics.h"
 #include "launcher_core.h"
 #include <QMainWindow>
+#include <QElapsedTimer>
 #include <QProcess>
 #include <functional>
 class QTableWidget;
@@ -51,6 +53,14 @@ private:
     void checkGraphics(bool forLaunch);
     void finishGraphics(int code);
 #endif
+    // Launch diagnostics: a report is written for every attempt (see diagnostics.h).
+    DiagContext diag_;
+    QElapsedTimer launchClock_;
+    DiagContext diagContext(bool full) const;
+    void finishLaunchReport(bool showDialog);
+    void showLaunchFailure(const DiagResult &report, const QString &extra = {});
+    void runDiagnosticsOnly();
+    void copyDiagnostics();
     void startGame(const LaunchSpec &spec);
     void guarded(const std::function<void()> &action);
     void save();

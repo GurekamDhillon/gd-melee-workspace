@@ -10,6 +10,15 @@ This is an i686 executable for an x86-64 Linux host. Install the distribution's
 32-bit glibc runtime and 32-bit Vulkan driver matching your GPU. Vulkan 1.1 or
 newer is required. Mesa users need their distribution's 32-bit Mesa Vulkan
 package; NVIDIA users need the matching 32-bit NVIDIA driver package.
+If the game will not start: on Arch, CachyOS, Manjaro and EndeavourOS enable [multilib]
+in /etc/pacman.conf first, then install lib32-glibc lib32-mesa lib32-vulkan-icd-loader and
+your GPU's driver (lib32-vulkan-radeon for AMD and the ROG Ally, lib32-vulkan-intel, or
+lib32-nvidia-utils matching your NVIDIA driver). Every launch writes a report you can attach:
+diagnostics/launch-diagnostics.txt in the user data folder (the launcher's failure window has
+Copy diagnostics, and the Diagnostics tab has Run diagnostics without launching). If the
+launcher itself does not open, run ./gd-melee-diagnose.sh in this folder and attach the
+gd-melee-diagnostics-*.txt it writes. The reports hold no disc path, user name, host name or IP
+address; read the file before sharing it.
 The 64-bit Qt launcher also requires the distribution's OpenGL/EGL loader
 libraries (libglx0, libgl1, libopengl0 and libegl1 on Ubuntu). These normally come with the
 desktop graphics drivers and are deliberately not bundled with the package.

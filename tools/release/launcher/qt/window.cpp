@@ -1,6 +1,8 @@
 #include "window.h"
 #include "kit.h"
 #include "graphics.h"
+#include <QGuiApplication>
+#include <QDateTime>
 #include <QApplication>
 #include <QCheckBox>
 #include <QClipboard>
@@ -95,25 +97,73 @@ Window::Window(QString app, QString user, Settings settings)
     connect(&graphicsProcess_, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this, [this](int code, QProcess::ExitStatus status) { finishGraphics(status == QProcess::NormalExit ? code : -1); });
     connect(&graphicsProcess_, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) { if (error == QProcess::FailedToStart) { graphicsErrors_ = graphicsProcess_.errorString().toUtf8(); finishGraphics(-1); } });
 #endif
+    connect(&process_, &QProcess::started, this, [this] { diag_.spawn.started = true; });
     connect(&process_, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
-        if (error == QProcess::FailedToStart) { show(); play_->setEnabled(true); QMessageBox::critical(this, t("Launch failed", "Error al iniciar"), process_.errorString()); }
+        if (error != QProcess::FailedToStart) return;
+        auto &sp = diag_.spawn; sp.started = false; sp.processError = int(error); sp.errorString = process_.errorString(); sp.finished = false;
+        QStringList env; for (const auto &k : diag_.spec.environment.keys()) env << k + "=" + diag_.spec.environment.value(k);
+        sp.execProbe = execProbe(sp.program, env);
+        play_->setEnabled(true); finishLaunchReport(true);
     });
     connect(&process_, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this, [this](int code, QProcess::ExitStatus status) {
         play_->setEnabled(true);
+        auto &sp = diag_.spawn; sp.finished = true; sp.exitCode = code; sp.crashed = status == QProcess::CrashExit; sp.elapsedMs = launchClock_.elapsed();
+        // Qt 6 reports the terminating signal number as exitCode() for a CrashExit on Unix (checked on 6.8).
+        sp.signal = sp.crashed && code >= 1 && code <= 64 ? signalName(code) : QString();
         auto crash = latestCrash(runDir_);
-        if (status == QProcess::CrashExit || code != 0 || !crash.isEmpty()) {
-            show(); quitting_ = false;
-            QString message;
-#ifdef Q_OS_LINUX
-            message = graphicsStartupFailure(runDir_, osRelease());
-#endif
-            if (message.isEmpty()) message = t("The game stopped unexpectedly.", "El juego se ha detenido inesperadamente.");
-            QMessageBox dialog(QMessageBox::Warning, t("Game stopped", "El juego se ha detenido"), message, QMessageBox::Ok, this);
-            dialog.setTextFormat(Qt::PlainText); dialog.setDetailedText(t("Logs are available here:\n", "Registros disponibles aquí:\n") + runDir_); dialog.exec();
-        } else if (quitting_ || settings_.flag("close_on_play")) QApplication::quit();
-        else statusBar()->showMessage(t("Game closed.", "Juego cerrado."));
+        const bool failed = status == QProcess::CrashExit || code != 0 || !crash.isEmpty();
+        finishLaunchReport(failed);
+        if (!failed) { if (quitting_ || settings_.flag("close_on_play")) QApplication::quit(); else statusBar()->showMessage(t("Game closed.", "Juego cerrado.")); }
     });
 }
+DiagContext Window::diagContext(bool full) const {
+    DiagContext c = diag_; c.appDir = appDir_; c.userDir = userDir_; c.runDir = runDir_; c.full = full;
+    c.platform = QGuiApplication::platformName(); c.launcherExe = QCoreApplication::applicationFilePath();
+    c.graphicsDevice = settings_.option("graphics_device", "auto");
+    c.discPaths.clear(); for (const auto &d : settings_.discs) c.discPaths << d.path;
+    return c;
+}
+void Window::finishLaunchReport(bool showDialog) {
+    // The slow probes (lspci, vulkaninfo) only run for a failure; a clean exit keeps the quick report.
+    auto ctx = diagContext(showDialog); ctx.finished = true;
+    auto report = writeDiagnostics(ctx);
+    if (!showDialog) return;
+    show(); quitting_ = false;
+    QString extra;
+#ifdef Q_OS_LINUX
+    extra = graphicsStartupFailure(runDir_, osRelease());
+#endif
+    showLaunchFailure(report, extra);
+}
+void Window::showLaunchFailure(const DiagResult &report, const QString &extra) {
+    const auto &v = report.verdict;
+    QString text = t("The game could not start or stopped unexpectedly.", "The game could not start or stopped unexpectedly.") + "\n\n" + v.line() + "\n" + v.message;
+    if (!v.hint.isEmpty()) text += "\n\n" + t("Hint: ", "Hint: ") + v.hint;
+    text += "\n\n" + t("A diagnostics report was saved. Copy it and send it when asking for help.", "A diagnostics report was saved. Copy it and send it when asking for help.");
+    QMessageBox dialog(QMessageBox::Warning, t("Game stopped", "El juego se ha detenido"), text, QMessageBox::NoButton, this);
+    dialog.setTextFormat(Qt::PlainText);
+    dialog.setDetailedText(t("Report: ", "Report: ") + report.latestPath + "\n" + t("Logs are available here:\n", "Registros disponibles aquí:\n") + runDir_ + (extra.isEmpty() ? QString() : "\n\n" + extra));
+    auto *copy = dialog.addButton(t("Copy diagnostics", "Copy diagnostics"), QMessageBox::ActionRole);
+    auto *open = dialog.addButton(t("Open log folder", "Abrir carpeta de registros"), QMessageBox::ActionRole);
+    dialog.addButton(QMessageBox::Ok);
+    for (;;) {
+        dialog.exec();
+        if (dialog.clickedButton() == copy) { QApplication::clipboard()->setText(report.text); statusBar()->showMessage(t("Launch diagnostics copied.", "Launch diagnostics copied.")); }
+        else if (dialog.clickedButton() == open) openPath(diagnosticsDir(userDir_));
+        else break;
+    }
+}
+void Window::runDiagnosticsOnly() { guarded([&] {
+    DiagContext c = diagContext(true); c.spawn = {}; c.haveSpec = false; c.finished = true; c.runDir.clear();
+    statusBar()->showMessage(t("Running diagnostics...", "Running diagnostics...")); QApplication::setOverrideCursor(Qt::WaitCursor);
+    auto report = writeDiagnostics(c); QApplication::restoreOverrideCursor();
+    showLaunchFailure(report);
+}); }
+void Window::copyDiagnostics() { guarded([&] {
+    auto path = diagnosticsDir(userDir_) + "/launch-diagnostics.txt";
+    if (!QFile::exists(path)) { statusBar()->showMessage(t("No launch diagnostics yet. Start the game or run diagnostics first.", "No launch diagnostics yet. Start the game or run diagnostics first.")); return; }
+    QApplication::clipboard()->setText(readText(path, 4 * 1024 * 1024)); statusBar()->showMessage(t("Launch diagnostics copied.", "Launch diagnostics copied."));
+}); }
 void Window::guarded(const std::function<void()> &action) {
     try { action(); } catch (const std::exception &e) { QMessageBox::warning(this, t("Could not complete the action", "No se pudo completar la acción"), QString::fromUtf8(e.what())); }
 }
@@ -213,7 +263,14 @@ void Window::play() { guarded([&] {
     if (graphicsBusy_) return;
 #endif
     int i = selectedDisc(); if (i < 0) { addDisc(); return; }
-    auto spec = prepareLaunch(appDir_, userDir_, settings_, settings_.discs[i]); save();
+    LaunchSpec spec;
+    try { spec = prepareLaunch(appDir_, userDir_, settings_, settings_.discs[i]); }
+    catch (const std::exception &e) {
+        diag_ = {}; diag_.prepareError = QString::fromUtf8(e.what()); runDir_.clear();
+        auto ctx = diagContext(true); ctx.finished = true; ctx.discPaths << settings_.discs[i].path;
+        showLaunchFailure(writeDiagnostics(ctx)); return;
+    }
+    save();
 #ifdef Q_OS_LINUX
     pendingLaunch_ = spec; checkGraphics(true);
 #else
@@ -226,7 +283,13 @@ void Window::startGame(const LaunchSpec &spec) {
     process_.setProgram(spec.program); process_.setArguments(spec.arguments); process_.setWorkingDirectory(spec.workingDirectory); process_.setProcessEnvironment(spec.environment);
     process_.setProcessChannelMode(QProcess::MergedChannels); process_.setStandardOutputFile(spec.logFile);
     play_->setEnabled(false); statusBar()->showMessage(t("Game running. Logs: ", "Juego en ejecución. Registros: ") + runDir_);
-    process_.start(); if (settings_.flag("close_on_play")) hide();
+    diag_ = {}; diag_.spec = spec; diag_.haveSpec = true; diag_.stamp = QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss");
+    auto &sp = diag_.spawn; sp.attempted = true; sp.program = spec.program; sp.arguments = spec.arguments; sp.workingDirectory = spec.workingDirectory; sp.stdoutFile = spec.logFile;
+    launchClock_.start();
+    process_.start();
+    // A report exists from the moment the game starts, so a hang or a killed launcher still leaves one.
+    if (sp.started) { auto ctx = diagContext(false); writeDiagnostics(ctx); }
+    if (settings_.flag("close_on_play")) hide();
 }
 #ifdef Q_OS_LINUX
 void Window::checkGraphics(bool forLaunch) { guarded([&] {
@@ -351,6 +414,8 @@ QWidget *Window::diagnosticsTab() {
     auto lastRun = [this] { return runDir_.isEmpty() ? settings_.option("last_run", userDir_ + "/runs") : runDir_; };
     button(row, t("Open log folder", "Abrir carpeta de registros"), [this, lastRun] { openPath(lastRun()); });
     button(row, t("Open game log", "Abrir registro del juego"), [this, lastRun] { openPath(lastRun() + "/melee-pc.log"); });
+    button(row, t("Copy launch diagnostics", "Copy launch diagnostics"), [this] { copyDiagnostics(); });
+    button(row, t("Run diagnostics without launching", "Run diagnostics without launching"), [this] { runDiagnosticsOnly(); });
     button(row, t("Copy latest crash report", "Copiar último informe de fallo"), [this, lastRun] { guarded([&] {
         auto report = latestCrash(lastRun()); if (report.isEmpty()) { statusBar()->showMessage(t("No crash report in the last session.", "No hay informe de fallo en la última sesión.")); return; }
         QApplication::clipboard()->setText(readText(report, 64 * 1024)); statusBar()->showMessage(t("Crash report copied.", "Informe de fallo copiado."));
