@@ -475,6 +475,7 @@ Aliases have separate rows. Guard column only shows direct wrapper checks; deleg
 | gd.impulse | Read/control impulse | `melee/pc/platform/gw_script.c:1887` | `melee/pc/platform/gw_script.c:6272` | offline, fork history |
 | gd.cpu_mode | Read/control cpu mode | `melee/pc/platform/gw_script.c:1870` | `melee/pc/platform/gw_script.c:6272` | offline, fork history |
 | gd.cpu_technical | Read/control cpu technical | `melee/pc/platform/gw_script_cpu.inc:2` | `melee/pc/platform/gw_script.c:6272` | offline, fork history |
+| gd.cpu_assist | Per-entity technique assist on top of the retail AI's pad: L-cancel, tech (+direction), perfect shield, wavedash, fast fall, seeded probabilities, counters (`melee/src/melee/ft/cpu_assist.inc`) | `melee/pc/platform/gw_script_cpu.inc:48` | `melee/pc/platform/gw_script.c:6478` | offline, game BSS (snapshot-covered) |
 | gd.set_stocks | Read/control set stocks | `melee/pc/platform/gw_script.c:1901` | `melee/pc/platform/gw_script.c:6272` | gameplay, fork history |
 | gd.play_sound | Read/control play sound | `melee/pc/platform/gw_script.c:2054` | `melee/pc/platform/gw_script.c:6273` | Delegated/no direct listed guard |
 | gd.hold_hitbox | Read/control hold hitbox | `melee/pc/platform/gw_script.c:2016` | `melee/pc/platform/gw_script.c:6273` | offline |

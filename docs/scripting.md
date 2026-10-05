@@ -1031,6 +1031,55 @@ counters count attempts, not successful cancels/techs; `last_event` retains the
 latest pulse type (0 initially, 1 for landing-cancel, 2 for ground-tech). The prototype's `rogue_ai`
 command exposes these observations without configuring the CPU.
 
+`gd.cpu_assist(port, config)` is the general form of that overlay: a per-entity **technique assist** the engine applies on
+top of a retail-AI CPU's own virtual pad, in fight mode, without resetting the AI. `config` is
+`{lcancel=0..1, perfect_shield=0..1, tech=0..1, tech_dir="in"|"away"|"toward"|"random", wavedash=0..1,
+fast_fall=0..1, seed=n}` (missing probabilities are 0, `tech_dir` defaults to "away", `seed` 1-2147483647 defaults to 1);
+`gd.cpu_assist(port, nil)` clears it; `gd.cpu_assist(port)` reads it back as `{enabled, seed, tech_dir, probability={...},
+counters={lcancel={opportunities, performed}, ...}}` (`seed` is the generator's current state). It returns true when the
+slot is a primary CPU fighter and the call is allowed, false otherwise (no fighter, not a CPU, netplay, rollback and
+replay refuse; the calling script owns the slot, another script's configuration is refused). Each probability is the
+chance that the engine performs the technique at the moment its opportunity arises, drawn once per opportunity from a
+per-entity xorshift32 kept in game memory (`src/melee/ft/cpu_assist.inc`: savestates, rewind and rollback carry it and
+the counters). Probability 0 never performs and 1 always does; the draw happens either way, so a run with every value 0
+changes nothing in the match (the engine-3 harness compared action/position traces over 40000 frames: identical to no
+assist at all). The assist is applied at the point `technical_ai_overlay` already used (`Fighter_Spaghetti_8006AD10`,
+after `fp->input` is built from the AI's `fp->cpu.*` and before the press edges and the L-cancel, tech and shield timers
+read it), OR-ed into the AI's input (a stick direction the technique needs is forced for the technique's own frames), so
+everything downstream is ordinary input and the skill events fire by themselves. It writes no physics, state or timer.
+Script mode (`gd.cpu_mode(port,"script")`) replaces the AI and the assist is not applied there. Configuration survives a
+stock loss; it clears with `gd.cpu_assist(port, nil)`, at scene end and when the script unloads.
+
+| technique | opportunity (one draw) | input |
+|---|---|---|
+| `lcancel` | a lagged aerial (lag flag set, not cancellable) with a floor predicted within 6 frames (the floor ray `technical_ai_overlay` uses, current velocity and ECB) | a fresh light analog shoulder press (0.35, never a digital air dodge) when the predicted landing is within 5 frames |
+| `tech` | a hitstun fall with a floor predicted within 11 frames | a digital R press when the landing is within 10 frames and the tech lockout is over; the stick is held toward `tech_dir` for the engine's tech window (`ftCommonData x250`, the game reads the stick at the landing). `"random"` reuses the same draw: a third each of in place, away, toward |
+| `perfect_shield` | a foe hitbox, moved one more frame along its own sweep, overlaps one of the fighter's enabled hurtbox capsules, the fighter being grounded in Wait/Walk and the hitbox not having hit it in this activation | a shield press (R), held 12 frames |
+| `wavedash` | a ground jump the AI itself starts (the jumpsquat begins), with floor 12 units ahead | an air dodge press on the first frame of the jump, stick 20 degrees below horizontal toward the AI's own stick (toward the nearest foe when neutral) |
+| `fast_fall` | the first descent of an air phase in an ordinary air state | a down flick (up to 4 tries until retail raises `fall_fast`) |
+
+Measured rates (LAB Final Destination, P2 a level 9 Fox CPU in fight mode against a script-mode attacker, seeded
+`MELEE_TEST_SEED=12345`, 40000 logic frames per row, skill events read from the same fighter; `engine-3/matrix.sh`):
+
+| technique | retail AI alone (assist nil = every value 0, identical trace) | 0.5 | 1.0 |
+|---|---|---|---|
+| `lcancel` (lagged-aerial landings) | 0 of 83 (0%); 1 of 46 in the knockdown scenario | 38 of 76 (50%) | 51 of 53: the other 2 landed in the auto-cancel window, 0 missed |
+| `tech` (hitstun landings, `tech_dir="away"`) | 6 of 179 (3%) | 69 of 174 (40%) | 138 of 161 (86%); 129 of those away (93%); `"in"`: 158 of 165 in place (96%); `"toward"`: 100 of 132 toward (76%); `"random"`: 40 in place, 57 away, 39 toward |
+| `perfect_shield` (foe hitbox about to reach it) | 2 events in 6 opportunities | 1 event, 5 presses in 10 opportunities | 3 events, 8 of 8 pressed (37% of presses ended as a perfect shield) |
+| `wavedash` (ground jumps the AI starts) | 0 of 87 | 25 of 63 (40%) | 56 of 56 |
+| `fast_fall` (first descents) | 2 of 94 (2%) | 35 performed of 65 (54%) | 58 events in 58 descents (56 performed, 2 the AI's own) |
+
+The perfect-shield figure is the honest limit of what the engine can predict: it sees a hitbox only from its second active
+frame (a hit that lands on the first active frame is over before any input is read), so it shields hitboxes that arrive or
+persist, and it presses on overlap, so some presses meet no hit. "Opportunity" is counted per technique as described above;
+"events" are the `on_skill` events the same fighter produced.
+
+Not done: netplay. Offline only today (`gs_require_offline`; the native entry refuses netplay, rollback and replay). Online
+it would need the same two things Turbo's rule word needs: the assist slot (a few words per CPU: probabilities, direction,
+generator, counters and the per-instance state) in the rollback snapshot (it already is game BSS, so the snapshot has it)
+and an agreed configuration, applied by every peer on the same frame (a script call on both sides, or a lobby rule word),
+and its words added to `RB_GameHash` so a disagreement is caught.
+
 `gd.hud_visible([boolean])` queries or controls the native status HUD for an
 offline gameplay script; the console is refused. Hiding requires an active
 match and claims ownership, so another script cannot change it until released.
