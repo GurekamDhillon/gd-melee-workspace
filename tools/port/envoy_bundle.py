@@ -24,7 +24,7 @@ def mission_modules():
     raise ValueError('Shared mission module list missing')
 
 MISSION_MODULES = mission_modules()
-ENVOY_MODULES = ('mod_progression', 'mod_echo', 'mod_registry', 'mod_status', 'mod_schema', 'mod_codec', 'mod_budget', 'mod_engine', 'mod_pool', 'mod_display', 'mod_echo_lab', 'mod_lab', 'genetics', 'companion', 'save', 'drives', 'mission_events', 'drive_models', 'fighter', 'campaign', 'run', 'classic', 'hud', 'menu', 'menu_draw', 'menu_input', 'recolour', 'visual', 'hub', 'retail_app', 'app', 'mod_synergy', 'drive_loot', 'drive_bag', 'drive_drop', 'drive_menu', 'drive_lab', 'foe_roll', 'foe_lab', 'run_host')
+ENVOY_MODULES = ('mod_progression', 'mod_echo', 'mod_registry', 'mod_status', 'mod_schema', 'mod_codec', 'mod_budget', 'mod_engine', 'mod_pool', 'mod_display', 'mod_echo_lab', 'mod_lab', 'genetics', 'companion', 'save', 'drives', 'mission_events', 'drive_models', 'fighter', 'campaign', 'run', 'classic', 'hud', 'menu', 'menu_draw', 'menu_input', 'recolour', 'visual', 'hub', 'retail_app', 'app', 'mod_synergy', 'drive_loot', 'drive_bag', 'drive_drop', 'drive_menu', 'drive_text', 'drive_lab', 'foe_roll', 'foe_lab', 'run_screen', 'run_hud', 'run_host')
 
 
 def bundle():
@@ -48,7 +48,7 @@ def bundle():
               'app.detach_events = envoy.mission_events.observe(missions.mission, function(e) app:mission_event(e) end, gd.log)',
               'function on_frame() local handled=mods:frame();if not handled or mods:hosted() then app:frame() end end',
               'function on_tick() local menu=mods:tick();if not menu or mods:hosted() then app:tick() end;if app.retail.host then app.retail.host:tick() end end',
-              'function on_draw() app:draw();mods:draw() end',
+              'function on_draw() app:draw();mods:draw();app.retail.host:draw() end',
               'function on_enemy_defeated(event) app:defeated(event) end',
               'function on_item_collect(event) app:item_collect(event);mods:pickup(event) end',
               'function on_item_expire(event) app:item_expire(event);mods:pickup_expire(event) end',
