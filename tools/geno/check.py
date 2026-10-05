@@ -239,7 +239,78 @@ def package_files(base, name):
     return list(base.glob("fx/**/" + name + ".gfx.json")) + list(base.glob("fx/" + name + "/*.gfx.json"))
 
 
+WARNINGS = []
+
+
+def graph_checks(fighter, p, base, errors):
+    """Define-level checks over the whole package: IASA with no callback, unreachable states, unbound specials."""
+    states = fighter.get("states", [])
+    names = [s_.get("name", "") for s_ in states]
+    overlays = {}
+    for o in fighter.get("subactions", []):
+        try:
+            overlays[o["index"]] = [script.word(w) for w in o["words"]] if "words" in o else script.read_words((base / o["file"]).read_text(encoding="utf-8-sig"))
+        except (ValueError, OSError, KeyError):
+            continue
+    # (a) a state whose script runs IASA while its iasa callback is none
+    for j, state in enumerate(states):
+        sub = state.get("subaction")
+        words = overlays.get(sub) if isinstance(sub, int) else None
+        if not words:
+            continue
+        try:
+            has_iasa = any(ws[0] >> 26 == 23 for _o, ws in script.commands(words))
+        except (ValueError, TypeError):
+            continue
+        if has_iasa and state.get("iasa", "none") == "none":
+            errors.append(diagnostic(p + f".states[{j}]", f"state {state.get('name', j)!r} runs an IASA command but its iasa callback is none; set \"iasa\": \"interrupt\"", "docs/geno.md section 16.2 (IASA trap)"))
+    # (b) a state nothing targets
+    refs = set()
+
+    def ref(value):
+        try:
+            n = script.target_word(str(value), names)
+            if n >> 28 == 2:
+                refs.add(n & 65535)
+        except (ValueError, TypeError):
+            pass
+    for v in fighter.get("specials", {}).values():
+        for t in (v["targets"] if isinstance(v, dict) else [v]):
+            ref(t)
+    for state in states:
+        for key in ("next", "land"):
+            if key in state:
+                ref(state[key])
+        if "counter" in state and "target" in state["counter"]:
+            ref(state["counter"]["target"])
+    for row in fighter.get("on_land", []):
+        ref(row["from"])
+        ref(row["to"])
+    for words in overlays.values():
+        try:
+            for _o, ws in script.commands(words):
+                if ws[0] >> 26 == 59 and (ws[0] >> 20 & 63) == script.SUBS["CHG"] and len(ws) > 1 and ws[1] >> 28 == 2:
+                    refs.add(ws[1] & 65535)
+        except (ValueError, TypeError):
+            pass
+    for j, state in enumerate(states):
+        if j not in refs:
+            errors.append(diagnostic(p + f".states[{j}]", f"state {state.get('name', j)!r} is never targeted by a special, next, land, counter, on_land or CHG: unreachable"))
+    # (c) unbound specials run the donor's code
+    specials = fighter.get("specials", {})
+    for key in ("n", "s", "hi", "lw", "air_n", "air_s", "air_hi", "air_lw"):
+        if specials.get(key) is None and (not key.startswith("air_") or specials.get(key[4:]) is None):
+            WARNINGS.append(diagnostic(p + ".specials." + key, "unbound: this special runs the donor's (Mario's) code"))
+
+
 def validate(data, base):
+    del WARNINGS[:]
+    if any("moves" in f for f in data.get("fighters", []) if isinstance(f, dict)):
+        from .define import expand_moves
+        try:
+            data = expand_moves(data)
+        except (ValueError, KeyError) as e:
+            return [diagnostic("$.fighters[].moves", str(e))]
     errors = schema_errors(data, schema.build_schema())
     if errors:  # avoid cascades / crashes on structurally invalid data
         return errors
@@ -271,6 +342,7 @@ def validate(data, base):
         if "define" in fighter:
             from .define import validate_definition
             errors.extend(diagnostic(path, message) for path, message in validate_definition(data, fighter, p))
+            graph_checks(fighter, p, base, errors)
         elif "common_states" in fighter:
             errors.append(diagnostic(p+".common_states", "common state overrides require define"))
         attach = fighter.get("attach", "mario")
@@ -471,13 +543,16 @@ def main():
     args = ap.parse_args()
     errors = validate_path(args.path)
     if args.json:
-        print(json.dumps({"ok": not errors, "errors": errors}, indent=2))
+        print(json.dumps({"ok": not errors, "errors": errors, "warnings": WARNINGS}, indent=2))
     elif errors:
         for error in errors:
             location = f":{error['line']}:{error['column']}" if "line" in error else ""
             print(f"{error['path']}{location}: {error['message']} [{error['source']}]")
     else:
         print("OK: Geno fighter package and mod metadata validated (offline; disc rows and gameplay require LAB checks)")
+    if not args.json:
+        for w in WARNINGS:
+            print(f"WARNING {w['path']}: {w['message']}")
     return 1 if errors else 0
 
 

@@ -14,14 +14,22 @@ def definition_schema():
 
 def validate_definition(data, fighter, path):
     errors = []
-    if data["geno"] != 6:
-        errors.append((path+".define", "define requires geno: 6"))
+    if data["geno"] not in (6, 7):
+        errors.append((path+".define", "define requires geno: 6 or 7"))
     if ".." in fighter["define"]["key"]:
         errors.append((path+".define.key", "identity must not contain '..'"))
-    # Slice 1 is native inheritance and script/attribute overrides, not owned assets or Lua.
-    for key in ("articles", "fx_bindings", "special_attributes"):
-        if key in fighter:
-            errors.append((path+"."+key, "standalone definitions do not support this later-slice field"))
+    # Slice 2 (geno 7) admits special_attributes, fx_bindings and the whole attribute table; articles, own
+    # model/clips, sounds and Lua are later slices.
+    if "articles" in fighter:
+        errors.append((path+".articles", "standalone definitions do not support this later-slice field"))
+    for key in ("fx_bindings", "special_attributes"):
+        if key in fighter and data["geno"] < 7:
+            errors.append((path+"."+key, "needs geno: 7"))
+    from . import schema
+    first40 = list(schema.S["attrs"])[:40]
+    for name in fighter.get("attributes", {}):
+        if name not in first40 and data["geno"] < 7:
+            errors.append((path+".attributes."+name, "needs geno: 7 (only the first 40 attributes exist in geno: 6)"))
     motions = [row["motion"] for row in fighter.get("common_states", [])]
     if len(set(motions)) != len(motions):
         errors.append((path+".common_states", "duplicate motion override"))
@@ -42,10 +50,44 @@ def validate_definition(data, fighter, path):
     return errors
 
 
+MOVE_TAGS = ("jab", "dash_attack", "tilt", "smash", "aerial", "grab", "throw", "special", "projectile")
+
+
+def expand_moves(data):
+    """The authoring sugar (D9): a fighter's `moves` block becomes a `subactions` overlay plus a
+    `common_states` row per move. The engine reads no `moves` key; the result has engine keys only.
+
+        "moves": {"ftilt": {"motion": 53, "words": "moves/ftilt.words", "tag": "tilt"}}
+
+    `subaction` may be given; otherwise it is the animation row the donor's motion row plays."""
+    import copy
+    data = copy.deepcopy(data)
+    for fighter in data.get("fighters", []):
+        moves = fighter.pop("moves", None)
+        if not moves:
+            continue
+        from .report import motion_subactions
+        rows = motion_subactions()
+        for name, move in moves.items():
+            motion = move["motion"]
+            sub = move.get("subaction", rows.get(motion, (None, -1))[1])
+            if sub is None or sub < 0:
+                raise ValueError("move %r: motion %d has no animation row; give a subaction" % (name, motion))
+            overlay = {"index": sub, ("file" if isinstance(move["words"], str) else "words"): move["words"]}
+            if move.get("tag"):
+                overlay["move_tag"] = move["tag"]
+            fighter.setdefault("subactions", []).append(overlay)
+            row = {"motion": motion}
+            if move.get("tag"):
+                row["move_tag"] = move["tag"]
+            fighter.setdefault("common_states", []).append(row)
+    return data
+
+
 def export_package(source, out):
     from .check import load_json, validate, local_file
     source, out = Path(source), Path(out)
-    data = load_json(source / "geno.json")
+    data = expand_moves(load_json(source / "geno.json"))
     if validate(data, source) or not all("define" in f for f in data["fighters"]):
         raise ValueError("export requires a valid standalone definition")
     if out.exists():
@@ -55,17 +97,34 @@ def export_package(source, out):
         raise ValueError("slice-1 package must reference retail assets, not contain archives")
     files = {"mod.json", "geno.json"}
     for f in data["fighters"]:
+        if isinstance(f.get("fx_bindings"), str):
+            errors = []
+            path = local_file(source, f["fx_bindings"], "fx_bindings", errors)
+            if errors or path is None: raise ValueError("invalid package effect bindings")
+            files.add(path.relative_to(source).as_posix())
         for row in f.get("subactions", []):
             if isinstance(row.get("file"), str):
                 errors = []
                 path = local_file(source, row["file"], "file", errors)
                 if errors or path is None: raise ValueError("invalid package script")
                 files.add(path.relative_to(source).as_posix())
+        if isinstance(f.get("fx_bindings"), str):   # the effect packages the bindings name travel with them
+            for p in (source / "fx").rglob("*") if (source / "fx").is_dir() else ():
+                if p.is_file() and p.suffix.lower() in (".json", ".png"):
+                    files.add(p.relative_to(source).as_posix())
+    expanded = (json.dumps(data, indent=2) + "\n").encode("utf-8")   # engine keys only
+
+    def digest(name):
+        return hashlib.sha256(expanded if name == "geno.json" else (source/name).read_bytes()).hexdigest()
     manifest = {"format": 1, "backend": "geno.define.v1", "offline_only": True, "retail_preset": "mario.v1",
-        "files": {name: hashlib.sha256((source/name).read_bytes()).hexdigest() for name in sorted(files)}}
+        "files": {name: digest(name) for name in sorted(files)}}
     manifest["sha256"] = hashlib.sha256(json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     out.mkdir(parents=True); (out / "files").mkdir()
     for name in sorted(files):
-        dest = out / name; dest.parent.mkdir(parents=True, exist_ok=True); shutil.copyfile(source/name, dest)
+        dest = out / name; dest.parent.mkdir(parents=True, exist_ok=True)
+        if name == "geno.json":
+            dest.write_bytes(expanded)
+        else:
+            shutil.copyfile(source/name, dest)
     (out / "manifest.runtime.json").write_text(json.dumps(manifest, indent=2)+"\n", encoding="utf-8")
     return manifest

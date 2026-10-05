@@ -75,5 +75,92 @@ class DefineAuthorTests(unittest.TestCase):
                 self.assertEqual(bool(check.validate(bad, root)), index >= 303)
 
 
+class MoveSetAuthorTests(unittest.TestCase):
+    """Slice 2: geno 7, the checks a move-set author needs, `moves` sugar, the effective-graph report."""
+
+    STRIKER = Path(__file__).resolve().parents[2] / "melee/pc/geno/mods/vanilla-striker"
+    HERO = Path(__file__).resolve().parents[2] / "melee/pc/geno/mods/vanilla-hero"
+
+    def make(self, tmp, template="striker-skeleton"):
+        from tools.geno.new import create
+        root = Path(tmp) / "mf"
+        create(root, "mf", "My Fighter", "mario", template)
+        return root, check.load_json(root / "geno.json")
+
+    def test_v6_refuses_v7_keys_and_attributes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, data = self.make(tmp)
+            self.assertEqual(check.validate(data, root), [])
+            bad = copy.deepcopy(data); bad["geno"] = 6
+            messages = [e["message"] for e in check.validate(bad, root)]
+            self.assertTrue(any("needs geno: 7" in m for m in messages), messages)   # landingairn_lag is past the first 40
+            bad = copy.deepcopy(data); bad["fighters"][0]["special_attributes"] = [{"index": 1, "float": 1.0}]
+            self.assertEqual(check.validate(bad, root), [])
+            bad["geno"] = 6; bad["fighters"][0]["attributes"] = {"walk_max_vel": 1.5}
+            self.assertTrue(any("needs geno: 7" in e["message"] for e in check.validate(bad, root)))
+            bad = copy.deepcopy(data); bad["fighters"][0]["articles"] = []
+            self.assertTrue(check.validate(bad, root))   # articles stay refused until slice 3
+
+    def test_unreachable_state_and_iasa_callback_and_unbound_special(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root, data = self.make(tmp)
+            (root / "moves/state.words").write_text("0x5C000000\n")           # IASA, then End
+            f = data["fighters"][0]
+            f["states"] = [{"name": "Lonely", "behavior": "geno.ground", "subaction": 295}]
+            f["subactions"].append({"index": 295, "file": "moves/state.words"})
+            messages = [e["message"] for e in check.validate(data, root)]
+            self.assertTrue(any("unreachable" in m for m in messages), messages)
+            self.assertTrue(any("IASA" in m and "iasa callback is none" in m for m in messages), messages)
+            f["states"][0]["iasa"] = "interrupt"
+            f["specials"] = {"n": "geno:Lonely"}
+            self.assertEqual(check.validate(data, root), [])
+            unbound = {w["path"].rsplit(".", 1)[1] for w in check.WARNINGS}
+            self.assertEqual(unbound, {"s", "hi", "lw", "air_s", "air_hi", "air_lw"})   # air_n follows n
+
+    def test_moves_sugar_expands_to_engine_keys(self):
+        from tools.geno.define import expand_moves, export_package
+        with tempfile.TemporaryDirectory() as tmp:
+            root, data = self.make(tmp)
+            f = data["fighters"][0]
+            f["subactions"] = []
+            f["moves"] = {"ftilt": {"motion": 53, "words": "moves/ftilt.words", "tag": "tilt"}}
+            self.assertEqual(check.validate(data, root), [])
+            out = expand_moves(data)["fighters"][0]
+            self.assertNotIn("moves", out)
+            self.assertEqual(out["subactions"], [{"index": 55, "file": "moves/ftilt.words", "move_tag": "tilt"}])
+            self.assertEqual(out["common_states"], [{"motion": 53, "move_tag": "tilt"}])
+            (root / "geno.json").write_text(json.dumps(data))
+            export_package(root, Path(tmp) / "export")
+            exported = json.loads((Path(tmp) / "export/geno.json").read_text())
+            self.assertNotIn("moves", exported["fighters"][0])
+            self.assertEqual(check.validate(exported, Path(tmp) / "export"), [])
+
+    def test_report_golden_hero_and_striker(self):
+        from tools.geno import report
+        hero, _b, _f = report.build(self.HERO)
+        self.assertEqual(hero["counts"], {"own": 1, "inherited": 350, "donor-special": 0})
+        self.assertEqual(hero["attributes"], ["walk_max_vel"])
+        self.assertEqual(set(hero["specials"].values()), {"DONOR"})
+        self.assertFalse(hero["donor_free"])
+        row = next(r for r in hero["rows"] if r["motion"] == 44)
+        self.assertTrue(row["kind"].startswith("own (script overlay on row 46"))
+        striker, base, fighter = report.build(self.STRIKER)
+        self.assertTrue(striker["donor_free"], striker["attack_rows_missing"])
+        self.assertEqual(striker["attack_rows_own"], striker["attack_rows_total"])
+        self.assertNotIn("DONOR", striker["specials"].values())
+        self.assertEqual(striker["counts"]["donor-special"], 8)
+        frames = report.frame_table(base, fighter)
+        fair = next(r for r in frames if r["index"] == 69)
+        self.assertEqual((fair["iasa"], fair["hitboxes"][0]["start"], fair["hitboxes"][0]["damage"]), (52, 19, 10))
+        self.assertIn("donor-free", report.text(striker))
+
+    def test_striker_package_checks_clean_and_has_text_files_only(self):
+        self.assertEqual(check.validate(check.load_json(self.STRIKER / "geno.json"), self.STRIKER), [])
+        allowed = {".json", ".words", ".genoasm", ".md", ".gitkeep", ".png"}
+        for p in self.STRIKER.rglob("*"):
+            if p.is_file():
+                self.assertIn(p.suffix.lower() or p.name, allowed, p)
+
+
 if __name__ == "__main__":
     unittest.main()

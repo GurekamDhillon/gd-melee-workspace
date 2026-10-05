@@ -62,6 +62,9 @@ def word():
                       {"type": "string", "pattern": r"^(0[xX][0-9a-fA-F]+|[0-9]+)$"}]}
 
 
+MOVE_TAGS = ["jab", "dash_attack", "tilt", "smash", "aerial", "grab", "throw", "special", "projectile"]
+
+
 def build_schema():
     from .define import definition_schema
     boolean = field(["boolean", "number"], "Enable when nonzero", 0, "19")
@@ -106,6 +109,7 @@ def build_schema():
                  "landing_lag": num("Landing lag", 0, "16.1"),
                  "ledge": {"anyOf": [{"enum": ["none", "front", "both"]}, {"type": "integer", "minimum": 0, "maximum": 2}]},
                  "liftoff": dict(boolean, **{"x-engine-default": 1}), "origin": boolean,
+                 "move_tag": string("Declared move tag", section="22", enum=MOVE_TAGS),
                  "gravity": num("Root-motion gravity multiplier", 0, "17"),
                  "facing": string("Lock root-motion travel to entry facing", section="17", enum=["entry"]),
                  "counter": obj({"from": integer("First counter action frame", 1), "to": integer("Last counter action frame", 2147483647),
@@ -115,7 +119,8 @@ def build_schema():
                     "targets": arr(target(), C["GENO_SP_SELECT"], minItems=1)}, ("select", "targets"))
     overlay = obj({"index": integer("Subaction row to replace", section="15.5", minimum=0, maximum=1023),
                    "words": arr(word(), C["GENO_POOL_WORDS"]-1, minItems=1),
-                   "file": string("Whitespace word file relative to mod root", section="15.5")}, ("index",),
+                   "file": string("Whitespace word file relative to mod root", section="15.5"),
+                   "move_tag": string("Declared move tag", section="22", enum=MOVE_TAGS)}, ("index",),
                   oneOf=[{"required": ["words"], "not": {"required": ["file"]}}, {"required": ["file"], "not": {"required": ["words"]}}])
     specialattr = obj({"index": integer("Special attribute word index", section="15.5", minimum=0, maximum=C["GENO_SPECIAL_WORDS"]-1),
                        "offset": word(), "float": num("Float override", section="15.5"),
@@ -129,6 +134,7 @@ def build_schema():
                         "subaction": integer("Installed retail animation row", minimum=0, maximum=1023),
                         "flags": integer("Motion flags", minimum=0, maximum=2147483647),
                         "move_id": integer("Stale move id", minimum=0, maximum=255),
+                        "move_tag": string("Declared move tag", section="22", enum=MOVE_TAGS),
                         **{slot: string("Callback override", enum=names) for slot, names in S["callbacks"].items()}}, ("motion",)), 64),
                    "name": string("Log display name", "target Pl file", maxLength=63),
                    "attributes": obj({key: (integer if is_int else num)("Common attribute " + key, "disc value", "7") for key, is_int in S["attrs"].items()}, maxProperties=C["GENO_MAX_ATTRS"]),
@@ -138,6 +144,12 @@ def build_schema():
                    "states": arr(state, C["GENO_MAX_STATES"]), "articles": arr(article, C["GENO_MAX_ARTICLES"]),
                    "subactions": arr(overlay, C["GENO_MAX_OVERLAYS"]),
                    "special_attributes": arr(specialattr, C["GENO_MAX_SPECIAL"]),
+                   "moves": {"type": "object", "description": "Authoring sugar for defines (move names: lowercase letters, digits, hyphens): expands to a subactions overlay plus a common_states row at export/check; the engine reads no such key",
+                             "additionalProperties": False,
+                             "patternProperties": {"^[a-z][a-z0-9-]*$": obj({"motion": integer("Native motion row", minimum=0, maximum=350),
+                                                          "words": {"anyOf": [string("Whitespace word file relative to mod root"), arr(word(), C["GENO_POOL_WORDS"]-1, minItems=1)]},
+                                                          "subaction": integer("Animation row; default: the donor's row for this motion", minimum=0, maximum=302),
+                                                          "tag": string("Declared move tag", section="22", enum=MOVE_TAGS)}, ("motion", "words"))}},
                    "on_land": arr(obj({"from": target(), "to": target(), "keep_frame": field("boolean", "Keep current animation frame", False, "15.5")}, ("from", "to")), C["GENO_MAX_ONLAND"]),
                    "motion_anims": arr(obj({"motion": integer("Common motion id", section="19.12", minimum=0, maximum=1023),
                                             "subaction": integer("Animation row", section="19.12", minimum=0, maximum=1023)}, ("motion", "subaction")), C["GENO_MAX_MOTION_ANIM"]),

@@ -7,7 +7,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 
 | Key | Type / meaning | Engine default | Limits / reference |
 |---|---|---|---|
-| geno | integer: Format version | 6 | minimum=1; maximum=6; geno.md §7; melee/pc/platform/geno_registry.c |
+| geno | integer: Format version | 7 | minimum=1; maximum=7; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters | array: Ordered entries | absent | maxItems=65535; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].attach | string: Vanilla name/alias or existing fighter .dat file |  | maxLength=31; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].define | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
@@ -22,12 +22,13 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].common_states[].subaction | integer: Installed retail animation row | 0 | minimum=0; maximum=1023; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].common_states[].flags | integer: Motion flags | 0 | minimum=0; maximum=2147483647; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].common_states[].move_id | integer: Stale move id | 0 | minimum=0; maximum=255; geno.md §19; melee/pc/platform/geno_registry.c |
+| fighters[].common_states[].move_tag | string: Declared move tag |  | enum=['jab', 'dash_attack', 'tilt', 'smash', 'aerial', 'grab', 'throw', 'special', 'projectile']; geno.md §22; melee/pc/platform/geno_registry.c |
 | fighters[].common_states[].anim | string: Callback override |  | enum=['like', 'next', 'loop', 'hold', 'glide.start', 'glide', 'tornado', 'drill', 'drill.end', 'glide.after', 'cape']; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].common_states[].iasa | string: Callback override |  | enum=['like', 'interrupt', 'none', 'glide']; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].common_states[].phys | string: Callback override |  | enum=['like', 'cape', 'none', 'air', 'air_nodrift', 'air_drift', 'brake', 'ground', 'auto', 'anim_motion', 'glide.start', 'glide', 'glide.attack', 'glide.end', 'tornado', 'drill', 'drill.end', 'drill.start']; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].common_states[].coll | string: Callback override |  | enum=['like', 'cape', 'cape.after', 'none', 'air', 'air_noledge', 'ground', 'ground_stop', 'both', 'anim_motion', 'glide', 'drill', 'drill.start']; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].name | string: Log display name | target Pl file | maxLength=63; geno.md §7; melee/pc/platform/geno_registry.c |
-| fighters[].attributes | object: Named settings | absent | maxProperties=48; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].attributes | object: Named settings | absent | maxProperties=128; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].attributes.walk_accel_mul | number: Common attribute walk_accel_mul | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].attributes.walk_accel_base | number: Common attribute walk_accel_base | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].attributes.walk_max_vel | number: Common attribute walk_max_vel | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
@@ -68,6 +69,33 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].attributes.shield_break_initial_velocity | number: Common attribute shield_break_initial_velocity | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].attributes.rapid_jab_window | integer: Common attribute rapid_jab_window | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].attributes.clank_animation_length | number: Common attribute clank_animation_length | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.hit_spark_variant | integer: Common attribute hit_spark_variant | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.ledge_jump_horizontal_velocity | number: Common attribute ledge_jump_horizontal_velocity | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.ledge_jump_vertical_velocity | number: Common attribute ledge_jump_vertical_velocity | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.item_throw_velocity_multiplier | number: Common attribute item_throw_velocity_multiplier | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.heavy_throw_velocity_multiplier | number: Common attribute heavy_throw_velocity_multiplier | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.specials_ground_speed_retention | number: Common attribute specials_ground_speed_retention | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.kirby_b_star_damage | number: Common attribute kirby_b_star_damage | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.normal_landing_lag | number: Common attribute normal_landing_lag | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.landingairn_lag | number: Common attribute landingairn_lag | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.landingairf_lag | number: Common attribute landingairf_lag | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.landingairb_lag | number: Common attribute landingairb_lag | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.landingairhi_lag | number: Common attribute landingairhi_lag | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.landingairlw_lag | number: Common attribute landingairlw_lag | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.name_tag_height | number: Common attribute name_tag_height | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.passivewall_vel_x | number: Common attribute passivewall_vel_x | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.wall_jump_horizontal_velocity | number: Common attribute wall_jump_horizontal_velocity | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.wall_jump_vertical_velocity | number: Common attribute wall_jump_vertical_velocity | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.passiveceil_vel_x | number: Common attribute passiveceil_vel_x | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.trophy_scale | number: Common attribute trophy_scale | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.screw_attack_launch_velocity | number: Common attribute screw_attack_launch_velocity | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.wall_jump_min_approach_speed | number: Common attribute wall_jump_min_approach_speed | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.damageice_ice_size | number: Common attribute damageice_ice_size | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.damageicejump_vel_y | number: Common attribute damageicejump_vel_y | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.damageicejump_vel_x_mult | number: Common attribute damageicejump_vel_x_mult | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.respawn_platform_scale | number: Common attribute respawn_platform_scale | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.warp_star_hitbox_scale | number: Common attribute warp_star_hitbox_scale | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.camera_zoom_target_bone | integer: Common attribute camera_zoom_target_bone | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].jumps | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].jumps.max | integer: Total jumps including ground jump | disc value | minimum=1; maximum=250; geno.md §10; melee/pc/platform/geno_registry.c |
 | fighters[].jumps.air_vy | array: Ordered entries | absent | maxItems=16; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
@@ -90,6 +118,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].states[].ledge | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].states[].liftoff | ['boolean', 'number']: Enable when nonzero | 1 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].states[].origin | ['boolean', 'number']: Enable when nonzero | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
+| fighters[].states[].move_tag | string: Declared move tag |  | enum=['jab', 'dash_attack', 'tilt', 'smash', 'aerial', 'grab', 'throw', 'special', 'projectile']; geno.md §22; melee/pc/platform/geno_registry.c |
 | fighters[].states[].gravity | number: Root-motion gravity multiplier | 0 | ; geno.md §17; melee/pc/platform/geno_registry.c |
 | fighters[].states[].facing | string: Lock root-motion travel to entry facing |  | enum=['entry']; geno.md §17; melee/pc/platform/geno_registry.c |
 | fighters[].states[].counter | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
@@ -171,11 +200,13 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].subactions[].index | integer: Subaction row to replace | 0 | minimum=0; maximum=1023; geno.md §15.5; melee/pc/platform/geno_registry.c |
 | fighters[].subactions[].words | array: Ordered entries | absent | maxItems=16383; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].subactions[].file | string: Whitespace word file relative to mod root |  | ; geno.md §15.5; melee/pc/platform/geno_registry.c |
+| fighters[].subactions[].move_tag | string: Declared move tag |  | enum=['jab', 'dash_attack', 'tilt', 'smash', 'aerial', 'grab', 'throw', 'special', 'projectile']; geno.md §22; melee/pc/platform/geno_registry.c |
 | fighters[].special_attributes | array: Ordered entries | absent | maxItems=64; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].special_attributes[].index | integer: Special attribute word index | 0 | minimum=0; maximum=264; geno.md §15.5; melee/pc/platform/geno_registry.c |
 | fighters[].special_attributes[].offset | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].special_attributes[].float | number: Float override | 0 | ; geno.md §15.5; melee/pc/platform/geno_registry.c |
 | fighters[].special_attributes[].int | integer: Integer override | 0 | minimum=-2147483648; maximum=2147483647; geno.md §15.5; melee/pc/platform/geno_registry.c |
+| fighters[].moves | object: Authoring sugar for defines (move names: lowercase letters, digits, hyphens): expands to a subactions overlay plus a common_states row at export/check; the engine reads no such key | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].on_land | array: Ordered entries | absent | maxItems=16; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].on_land[].from | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].on_land[].to | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
@@ -346,33 +377,33 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 
 | Constant | Value | Source |
 |---|---|---|
-| GENO_VARS_PER_BANK | 64 | melee/pc/geno/geno.h:44 |
-| GENO_SPECIAL_WORDS | 265 | melee/pc/geno/geno.h:134 |
-| GENO_MAX_CHECKS | 8 | melee/pc/geno/geno.h:177 |
-| GENO_CHECK_CONDS | 3 | melee/pc/geno/geno.h:178 |
-| GENO_MAX_REHIT | 4 | melee/pc/geno/geno.h:179 |
-| GENO_EV_MAX_HOOKS | 8 | melee/pc/geno/geno.h:244 |
-| GENO_MAX_ATTRS | 48 | melee/pc/geno/geno.h:248 |
-| GENO_MAX_JUMP_VY | 16 | melee/pc/geno/geno.h:249 |
-| GENO_MAX_PROFILES | 65535 | melee/pc/geno/geno.h:250 |
-| GENO_MAX_SPECIAL | 64 | melee/pc/geno/geno.h:251 |
-| GENO_MAX_ONLAND | 16 | melee/pc/geno/geno.h:252 |
-| GENO_MAX_MOTION_ANIM | 8 | melee/pc/geno/geno.h:253 |
-| GENO_MAX_OVERLAYS | 64 | melee/pc/geno/geno.h:254 |
-| GENO_POOL_WORDS | 16384 | melee/pc/geno/geno.h:255 |
-| GENO_MAX_STATES | 48 | melee/pc/geno/geno.h:266 |
-| GENO_ART_KIND_BASE | 4096 | melee/pc/geno/geno.h:351 |
-| GENO_MAX_ARTICLES | 16 | melee/pc/geno/geno.h:351 |
-| GENO_ART_PER_RANGE | 8 | melee/pc/geno/geno.h:358 |
-| GENO_ART_EXTRA_BASE | 131072 | melee/pc/geno/geno.h:363 |
-| GENO_ART_HITBOXES | 4 | melee/pc/geno/geno.h:371 |
-| GENO_ART_HIT_ENTRIES | 8 | melee/pc/geno/geno.h:372 |
-| GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:374 |
-| GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:375 |
-| GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:468 |
+| GENO_VARS_PER_BANK | 64 | melee/pc/geno/geno.h:46 |
+| GENO_SPECIAL_WORDS | 265 | melee/pc/geno/geno.h:136 |
+| GENO_MAX_CHECKS | 8 | melee/pc/geno/geno.h:179 |
+| GENO_CHECK_CONDS | 3 | melee/pc/geno/geno.h:180 |
+| GENO_MAX_REHIT | 4 | melee/pc/geno/geno.h:181 |
+| GENO_EV_MAX_HOOKS | 8 | melee/pc/geno/geno.h:246 |
+| GENO_MAX_ATTRS | 128 | melee/pc/geno/geno.h:250 |
+| GENO_MAX_JUMP_VY | 16 | melee/pc/geno/geno.h:251 |
+| GENO_MAX_PROFILES | 65535 | melee/pc/geno/geno.h:252 |
+| GENO_MAX_SPECIAL | 64 | melee/pc/geno/geno.h:253 |
+| GENO_MAX_ONLAND | 16 | melee/pc/geno/geno.h:254 |
+| GENO_MAX_MOTION_ANIM | 8 | melee/pc/geno/geno.h:255 |
+| GENO_MAX_OVERLAYS | 64 | melee/pc/geno/geno.h:256 |
+| GENO_POOL_WORDS | 16384 | melee/pc/geno/geno.h:257 |
+| GENO_MAX_STATES | 48 | melee/pc/geno/geno.h:268 |
+| GENO_ART_KIND_BASE | 4096 | melee/pc/geno/geno.h:353 |
+| GENO_MAX_ARTICLES | 16 | melee/pc/geno/geno.h:353 |
+| GENO_ART_PER_RANGE | 8 | melee/pc/geno/geno.h:360 |
+| GENO_ART_EXTRA_BASE | 131072 | melee/pc/geno/geno.h:365 |
+| GENO_ART_HITBOXES | 4 | melee/pc/geno/geno.h:373 |
+| GENO_ART_HIT_ENTRIES | 8 | melee/pc/geno/geno.h:374 |
+| GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:376 |
+| GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:377 |
+| GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:470 |
 | JDOC_NODES | 4096 | melee/pc/platform/geno_registry.c:72 |
 | JDOC_ARENA | 65536 | melee/pc/platform/geno_registry.c:73 |
-| GN_MAX_SLOTS | 256 | melee/pc/platform/geno_registry.c:450 |
+| GN_MAX_SLOTS | 256 | melee/pc/platform/geno_registry.c:453 |
 | JSON_DEPTH | 32 | melee/pc/platform/geno_registry.c:jd_value |
 | JSON_FILE_BYTES | 1048576 | melee/pc/platform/geno_registry.c:gn_read_file |
 

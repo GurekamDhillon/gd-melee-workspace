@@ -4,11 +4,11 @@
     "geno": {
       "type": "integer",
       "description": "Format version",
-      "x-engine-default": 6,
+      "x-engine-default": 7,
       "x-reference": "geno.md §7",
       "x-source": "melee/pc/platform/geno_registry.c",
       "minimum": 1,
-      "maximum": 6
+      "maximum": 7
     },
     "fighters": {
       "type": "array",
@@ -104,6 +104,24 @@
                   "x-source": "melee/pc/platform/geno_registry.c",
                   "minimum": 0,
                   "maximum": 255
+                },
+                "move_tag": {
+                  "type": "string",
+                  "description": "Declared move tag",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §22",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "enum": [
+                    "jab",
+                    "dash_attack",
+                    "tilt",
+                    "smash",
+                    "aerial",
+                    "grab",
+                    "throw",
+                    "special",
+                    "projectile"
+                  ]
                 },
                 "anim": {
                   "type": "string",
@@ -485,10 +503,199 @@
                 "x-engine-default": "disc value",
                 "x-reference": "geno.md §7",
                 "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "hit_spark_variant": {
+                "type": "integer",
+                "description": "Common attribute hit_spark_variant",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "ledge_jump_horizontal_velocity": {
+                "type": "number",
+                "description": "Common attribute ledge_jump_horizontal_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "ledge_jump_vertical_velocity": {
+                "type": "number",
+                "description": "Common attribute ledge_jump_vertical_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "item_throw_velocity_multiplier": {
+                "type": "number",
+                "description": "Common attribute item_throw_velocity_multiplier",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "heavy_throw_velocity_multiplier": {
+                "type": "number",
+                "description": "Common attribute heavy_throw_velocity_multiplier",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "specials_ground_speed_retention": {
+                "type": "number",
+                "description": "Common attribute specials_ground_speed_retention",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "kirby_b_star_damage": {
+                "type": "number",
+                "description": "Common attribute kirby_b_star_damage",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "normal_landing_lag": {
+                "type": "number",
+                "description": "Common attribute normal_landing_lag",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "landingairn_lag": {
+                "type": "number",
+                "description": "Common attribute landingairn_lag",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "landingairf_lag": {
+                "type": "number",
+                "description": "Common attribute landingairf_lag",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "landingairb_lag": {
+                "type": "number",
+                "description": "Common attribute landingairb_lag",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "landingairhi_lag": {
+                "type": "number",
+                "description": "Common attribute landingairhi_lag",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "landingairlw_lag": {
+                "type": "number",
+                "description": "Common attribute landingairlw_lag",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "name_tag_height": {
+                "type": "number",
+                "description": "Common attribute name_tag_height",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "passivewall_vel_x": {
+                "type": "number",
+                "description": "Common attribute passivewall_vel_x",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "wall_jump_horizontal_velocity": {
+                "type": "number",
+                "description": "Common attribute wall_jump_horizontal_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "wall_jump_vertical_velocity": {
+                "type": "number",
+                "description": "Common attribute wall_jump_vertical_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "passiveceil_vel_x": {
+                "type": "number",
+                "description": "Common attribute passiveceil_vel_x",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "trophy_scale": {
+                "type": "number",
+                "description": "Common attribute trophy_scale",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "screw_attack_launch_velocity": {
+                "type": "number",
+                "description": "Common attribute screw_attack_launch_velocity",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "wall_jump_min_approach_speed": {
+                "type": "number",
+                "description": "Common attribute wall_jump_min_approach_speed",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "damageice_ice_size": {
+                "type": "number",
+                "description": "Common attribute damageice_ice_size",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "damageicejump_vel_y": {
+                "type": "number",
+                "description": "Common attribute damageicejump_vel_y",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "damageicejump_vel_x_mult": {
+                "type": "number",
+                "description": "Common attribute damageicejump_vel_x_mult",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "respawn_platform_scale": {
+                "type": "number",
+                "description": "Common attribute respawn_platform_scale",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "warp_star_hitbox_scale": {
+                "type": "number",
+                "description": "Common attribute warp_star_hitbox_scale",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "camera_zoom_target_bone": {
+                "type": "integer",
+                "description": "Common attribute camera_zoom_target_bone",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
               }
             },
             "additionalProperties": false,
-            "maxProperties": 48
+            "maxProperties": 128
           },
           "jumps": {
             "type": "object",
@@ -762,6 +969,24 @@
                   "x-engine-default": 0,
                   "x-reference": "geno.md §19",
                   "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "move_tag": {
+                  "type": "string",
+                  "description": "Declared move tag",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §22",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "enum": [
+                    "jab",
+                    "dash_attack",
+                    "tilt",
+                    "smash",
+                    "aerial",
+                    "grab",
+                    "throw",
+                    "special",
+                    "projectile"
+                  ]
                 },
                 "gravity": {
                   "type": "number",
@@ -1522,6 +1747,24 @@
                   "x-engine-default": "",
                   "x-reference": "geno.md §15.5",
                   "x-source": "melee/pc/platform/geno_registry.c"
+                },
+                "move_tag": {
+                  "type": "string",
+                  "description": "Declared move tag",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §22",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "enum": [
+                    "jab",
+                    "dash_attack",
+                    "tilt",
+                    "smash",
+                    "aerial",
+                    "grab",
+                    "throw",
+                    "special",
+                    "projectile"
+                  ]
                 }
               },
               "additionalProperties": false,
@@ -1630,6 +1873,88 @@
               ]
             },
             "maxItems": 64
+          },
+          "moves": {
+            "type": "object",
+            "description": "Authoring sugar for defines (move names: lowercase letters, digits, hyphens): expands to a subactions overlay plus a common_states row at export/check; the engine reads no such key",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^[a-z][a-z0-9-]*$": {
+                "type": "object",
+                "properties": {
+                  "motion": {
+                    "type": "integer",
+                    "description": "Native motion row",
+                    "x-engine-default": 0,
+                    "x-reference": "geno.md §19",
+                    "x-source": "melee/pc/platform/geno_registry.c",
+                    "minimum": 0,
+                    "maximum": 350
+                  },
+                  "words": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "description": "Whitespace word file relative to mod root",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §7",
+                        "x-source": "melee/pc/platform/geno_registry.c"
+                      },
+                      {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": -2147483648,
+                              "maximum": 4294967295
+                            },
+                            {
+                              "type": "string",
+                              "pattern": "^(0[xX][0-9a-fA-F]+|[0-9]+)$"
+                            }
+                          ]
+                        },
+                        "maxItems": 16383,
+                        "minItems": 1
+                      }
+                    ]
+                  },
+                  "subaction": {
+                    "type": "integer",
+                    "description": "Animation row; default: the donor's row for this motion",
+                    "x-engine-default": 0,
+                    "x-reference": "geno.md §19",
+                    "x-source": "melee/pc/platform/geno_registry.c",
+                    "minimum": 0,
+                    "maximum": 302
+                  },
+                  "tag": {
+                    "type": "string",
+                    "description": "Declared move tag",
+                    "x-engine-default": "",
+                    "x-reference": "geno.md §22",
+                    "x-source": "melee/pc/platform/geno_registry.c",
+                    "enum": [
+                      "jab",
+                      "dash_attack",
+                      "tilt",
+                      "smash",
+                      "aerial",
+                      "grab",
+                      "throw",
+                      "special",
+                      "projectile"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "motion",
+                  "words"
+                ]
+              }
+            }
           },
           "on_land": {
             "type": "array",
@@ -3760,6 +4085,7 @@
     "motion",
     "motion_anims",
     "move_id",
+    "move_tag",
     "n",
     "name",
     "negate",
@@ -3810,99 +4136,99 @@
   "x-limits": {
     "GENO_VARS_PER_BANK": {
       "value": 64,
-      "source": "melee/pc/geno/geno.h:44"
+      "source": "melee/pc/geno/geno.h:46"
     },
     "GENO_SPECIAL_WORDS": {
       "value": 265,
-      "source": "melee/pc/geno/geno.h:134"
+      "source": "melee/pc/geno/geno.h:136"
     },
     "GENO_MAX_CHECKS": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:177"
+      "source": "melee/pc/geno/geno.h:179"
     },
     "GENO_CHECK_CONDS": {
       "value": 3,
-      "source": "melee/pc/geno/geno.h:178"
+      "source": "melee/pc/geno/geno.h:180"
     },
     "GENO_MAX_REHIT": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:179"
+      "source": "melee/pc/geno/geno.h:181"
     },
     "GENO_EV_MAX_HOOKS": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:244"
+      "source": "melee/pc/geno/geno.h:246"
     },
     "GENO_MAX_ATTRS": {
-      "value": 48,
-      "source": "melee/pc/geno/geno.h:248"
+      "value": 128,
+      "source": "melee/pc/geno/geno.h:250"
     },
     "GENO_MAX_JUMP_VY": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:249"
+      "source": "melee/pc/geno/geno.h:251"
     },
     "GENO_MAX_PROFILES": {
       "value": 65535,
-      "source": "melee/pc/geno/geno.h:250"
+      "source": "melee/pc/geno/geno.h:252"
     },
     "GENO_MAX_SPECIAL": {
       "value": 64,
-      "source": "melee/pc/geno/geno.h:251"
+      "source": "melee/pc/geno/geno.h:253"
     },
     "GENO_MAX_ONLAND": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:252"
+      "source": "melee/pc/geno/geno.h:254"
     },
     "GENO_MAX_MOTION_ANIM": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:253"
+      "source": "melee/pc/geno/geno.h:255"
     },
     "GENO_MAX_OVERLAYS": {
       "value": 64,
-      "source": "melee/pc/geno/geno.h:254"
+      "source": "melee/pc/geno/geno.h:256"
     },
     "GENO_POOL_WORDS": {
       "value": 16384,
-      "source": "melee/pc/geno/geno.h:255"
+      "source": "melee/pc/geno/geno.h:257"
     },
     "GENO_MAX_STATES": {
       "value": 48,
-      "source": "melee/pc/geno/geno.h:266"
+      "source": "melee/pc/geno/geno.h:268"
     },
     "GENO_ART_KIND_BASE": {
       "value": 4096,
-      "source": "melee/pc/geno/geno.h:351"
+      "source": "melee/pc/geno/geno.h:353"
     },
     "GENO_MAX_ARTICLES": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:351"
+      "source": "melee/pc/geno/geno.h:353"
     },
     "GENO_ART_PER_RANGE": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:358"
+      "source": "melee/pc/geno/geno.h:360"
     },
     "GENO_ART_EXTRA_BASE": {
       "value": 131072,
-      "source": "melee/pc/geno/geno.h:363"
+      "source": "melee/pc/geno/geno.h:365"
     },
     "GENO_ART_HITBOXES": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:371"
+      "source": "melee/pc/geno/geno.h:373"
     },
     "GENO_ART_HIT_ENTRIES": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:372"
+      "source": "melee/pc/geno/geno.h:374"
     },
     "GENO_ART_SPAWNS": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:374"
+      "source": "melee/pc/geno/geno.h:376"
     },
     "GENO_ART_CHILDREN": {
       "value": 2,
-      "source": "melee/pc/geno/geno.h:375"
+      "source": "melee/pc/geno/geno.h:377"
     },
     "GENO_SP_SELECT": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:468"
+      "source": "melee/pc/geno/geno.h:470"
     },
     "JDOC_NODES": {
       "value": 4096,
@@ -3914,7 +4240,7 @@
     },
     "GN_MAX_SLOTS": {
       "value": 256,
-      "source": "melee/pc/platform/geno_registry.c:450"
+      "source": "melee/pc/platform/geno_registry.c:453"
     },
     "JSON_DEPTH": {
       "value": 32,
@@ -3926,12 +4252,12 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "dac8775d2389df0177c6cc34db359da0cd79f4237cbc7b74c7cad50d9d808d76",
-    "pc/platform/geno_define_registry.inc": "d91cfcf7a1ebe9403046dc70dbe625cf1da37743f6b2745c1c40f55003ec7d34",
-    "pc/geno/geno.h": "6d49008cb3a5b065f88de9c9c7ac2373a094d95fb79a6763df4f01c5bd6ed979",
-    "pc/geno/geno_game.c": "bf84ec43d4d8440de5311cf2bc4f1dda3494b660681862588e28f5c8a0f2b70f",
-    "pc/geno/geno_game_v2.inc": "954a122bad0b8f149390d22f1a06f620de92fab506cc7402c9107d3a24a61ef9",
-    "pc/geno/geno_profiles.inc": "0472b13e440d433329edc38f115956d62617e1cfe6e3a45436be8b036606cb7f",
+    "pc/platform/geno_registry.c": "e7c66c6a146c98d243e6bb1ad3cf3d92912be00657f143fb6d26dbafdd5cb528",
+    "pc/platform/geno_define_registry.inc": "4b970c7617492b5f7ddaf090262f1db34d90170d33d603c3ce57f607dba7f6c7",
+    "pc/geno/geno.h": "5dc87ef89f41dfa8418f3e0e2e2d746756dd2ee2a37592f3d23c777bb32d8b8f",
+    "pc/geno/geno_game.c": "deb51b45a79004322151707678a7cb6f58bc20a3da0c87e394f09d3f3cb97fc8",
+    "pc/geno/geno_game_v2.inc": "786368bb54159d0d664a533886b2cde911473c7d08a822b06083ec75637031cc",
+    "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",
     "pc/geno/geno_profile_storage.h": "a40aec8aafa890622f0ba6cb9f5602176c738f960346b18daf87c8dc8498d04d",
     "pc/geno/geno_game_articles.inc": "eb1ad1a63867aebf4e34d9e3676b45f141077989b08042386ac3630f2ecac5d6"
   }
