@@ -7,14 +7,16 @@ import argparse
 import ast
 import json
 import math
+import os
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MISSIONS = ROOT / 'melee/pc/scripts/examples/missions/scripts'
-SCRIPTS = ROOT / 'melee/pc/scripts/examples/envoy/scripts'
+MELEE = Path(os.environ.get('GW_MELEE') or ROOT / 'melee')  # a lane's game checkout, else the default one
+MISSIONS = MELEE / 'pc/scripts/examples/missions/scripts'
+SCRIPTS = MELEE / 'pc/scripts/examples/envoy/scripts'
 TARGET = SCRIPTS / 'main.lua'
-GRID = ROOT / 'melee/pc/scripts/examples/demos/grid-inventory/scripts/grid.lua'
+GRID = MELEE / 'pc/scripts/examples/demos/grid-inventory/scripts/grid.lua'
 DRIVE = SCRIPTS.parent / 'items/drive/item.json'
 DRIVE_COOP = SCRIPTS.parent / 'items/drive_coop/item.json'  # the co-op floor drive: the same item, but either player's touch collects it (ports mask 3)
 def mission_modules():
@@ -26,7 +28,7 @@ def mission_modules():
     raise ValueError('Shared mission module list missing')
 
 MISSION_MODULES = mission_modules()
-ENVOY_MODULES = ('mod_progression', 'mod_tuning', 'fighters', 'mod_echo', 'mod_registry', 'mod_status', 'mod_skill', 'mod_schema', 'mod_codec', 'mod_graph', 'mod_budget', 'mod_engine', 'keystones', 'mod_techniques', 'mod_pool', 'synergy_fx', 'mod_display', 'earned_fx', 'mod_echo_lab', 'mod_lab', 'genetics', 'companion', 'save', 'drives', 'mission_events', 'drive_models', 'fighter', 'campaign', 'run', 'classic', 'hud', 'menu', 'menu_draw', 'menu_input', 'recolour', 'visual', 'hub', 'retail_app', 'app', 'mod_synergy', 'drive_loot', 'drive_merge', 'drive_economy', 'drive_bag', 'drive_drop', 'drive_menu', 'drive_text', 'drive_lab', 'foe_roll', 'foe_driver', 'foe_lab', 'grid', 'run_screen', 'run_hud', 'run_host', 'coop', 'coop_synth')
+ENVOY_MODULES = ('mod_progression', 'mod_tuning', 'fighters', 'mod_echo', 'mod_registry', 'mod_status', 'mod_skill', 'mod_schema', 'mod_codec', 'mod_graph', 'mod_budget', 'mod_engine', 'keystones', 'mod_techniques', 'mod_pool', 'synergy_fx', 'mod_display', 'earned_fx', 'mod_echo_lab', 'mod_lab', 'genetics', 'companion', 'save', 'drives', 'mission_events', 'drive_models', 'fighter', 'campaign', 'run', 'classic', 'hud', 'menu', 'menu_draw', 'menu_input', 'recolour', 'visual', 'hub', 'retail_app', 'app', 'mod_synergy', 'drive_loot', 'drive_merge', 'drive_economy', 'drive_bag', 'drive_drop', 'drive_menu', 'drive_text', 'drive_lab', 'foe_roll', 'foe_driver', 'foe_lab', 'grid', 'run_screen', 'atlas_bag', 'run_hud', 'run_host', 'coop', 'coop_synth')
 
 
 def bundle():
@@ -37,7 +39,7 @@ def bundle():
         lines.append(f'missions.{name} = assert(load({literal}, "@missions/{name}.lua", "t"))(){suffix}')
     lines.append('missions.mission_launch = nil -- Envoy owns explicit scene/run launch; no standalone autostart.')
     lines.append('local envoy = {loader=missions.loader, maze_set=missions.maze_set, maze=missions.maze}')
-    juice = (ROOT / 'melee/pc/scripts/lib/pickup_juice.lua').read_text(encoding='utf-8')
+    juice = (MELEE / 'pc/scripts/lib/pickup_juice.lua').read_text(encoding='utf-8')
     lines.append(f'envoy.pickup_juice = assert(load({json.dumps(juice, ensure_ascii=False)}, "@lib/pickup_juice.lua", "t"))()')
     for name in ENVOY_MODULES:
         source = (GRID if name == 'grid' else SCRIPTS / (name + '.lua')).read_text(encoding='utf-8')
