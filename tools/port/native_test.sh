@@ -50,7 +50,9 @@ slippi-peer)
 slippi-match)
     sources=(pc/tests/slippi_match_test.c pc/platform/gw_slippi_match_json.c pc/platform/gw_slippi_match.c)
     uses_enet=1 ;;
-*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, arena-spawn, view-canvas, profiler-core, pipeline-warm)" ;;
+atlas-tokens)
+    sources=(pc/tests/atlas_tokens_test.c) ;;
+*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens)" ;;
 esac
 
 if [ "$uses_enet" = 1 ]; then
