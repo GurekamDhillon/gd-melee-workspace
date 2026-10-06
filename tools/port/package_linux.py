@@ -76,7 +76,9 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
     shutil.copy2(root/'_build/linux/libusb-src/COPYING',dest/'licenses/libusb-LGPL-2.1.txt')
     shutil.copy2(root/'docs/LINUX_PORT_STATUS.md',dest/'IMPLEMENTATION_STATUS.md')
     # ldd lists the transitive dependencies of this trusted, locally built executable.
-    excluded=re.compile(r'^(lib(c|m|dl|rt|pthread|resolv|util)\.so|ld-linux)')
+    # libstdc++ and libgcc_s are never bundled: lib/ is first on LD_LIBRARY_PATH, so a bundled copy older than the
+    # system's is what the system's own 32-bit Vulkan driver gets, and Mesa then fails to load (GLIBCXX not found).
+    excluded=re.compile(r'^(lib(c|m|dl|rt|pthread|resolv|util|stdc\+\+|gcc_s)\.so|ld-linux)')
     def copy_dependencies(binary):
         libs=subprocess.check_output(['ldd',str(binary)],text=True)
         if 'not found' in libs:raise SystemExit('Missing dependencies:\n'+libs)
