@@ -16,6 +16,7 @@ SCRIPTS = ROOT / 'melee/pc/scripts/examples/envoy/scripts'
 TARGET = SCRIPTS / 'main.lua'
 GRID = ROOT / 'melee/pc/scripts/examples/demos/grid-inventory/scripts/grid.lua'
 DRIVE = SCRIPTS.parent / 'items/drive/item.json'
+DRIVE_COOP = SCRIPTS.parent / 'items/drive_coop/item.json'  # the co-op floor drive: the same item, but either player's touch collects it (ports mask 3)
 def mission_modules():
     # The shared runtime owns its factory order, including newly split modules.
     tree=ast.parse((ROOT/'tools/port/missions_bundle.py').read_text(encoding='utf-8'))
@@ -100,6 +101,11 @@ def drive_definition(tuning=None):
     return definition
 
 
+def coop_definition(definition):
+    out=json.loads(json.dumps(definition));out['name']='drive_coop';out['ports']=3
+    return out
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--check', action='store_true')
@@ -110,9 +116,14 @@ def main():
             parser.exit(1, 'Envoy bundle stale; run tools/port/envoy_bundle.py\n')
         if json.loads(DRIVE.read_text(encoding='utf-8')) != definition:
             parser.exit(1, 'Envoy fixed radius stale; run tools/port/envoy_bundle.py\n')
+        if not DRIVE_COOP.exists() or json.loads(DRIVE_COOP.read_text(encoding='utf-8')) != coop_definition(definition):
+            parser.exit(1, 'Envoy co-op drive item stale; run tools/port/envoy_bundle.py\n')
     else:
         if json.loads(DRIVE.read_text(encoding='utf-8')) != definition:
             DRIVE.write_bytes((json.dumps(definition,indent=2)+'\n').encode('utf-8'))
+        DRIVE_COOP.parent.mkdir(parents=True,exist_ok=True)
+        if not DRIVE_COOP.exists() or json.loads(DRIVE_COOP.read_text(encoding='utf-8')) != coop_definition(definition):
+            DRIVE_COOP.write_bytes((json.dumps(coop_definition(definition),indent=2)+'\n').encode('utf-8'))
         TARGET.write_bytes(text.encode('utf-8'))
 
 
