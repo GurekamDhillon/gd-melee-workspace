@@ -871,7 +871,12 @@ does not use it, because the retail renderer draws its own assets.
 | **Training panel** (in match) | **not found by name** in `src/melee`; `gm_1879.c:437` branches on `GM_TRAINING`; `gmtrainingmode.c` (304 lines) is the CSS and exit only | unknown | unknown | unknown | unknown (L if re-hosted) | where the panel is built; a first task is to locate it by tracing the on-screen panel in a run | **Defer.** Decide after step 7: the LAB's DUMMY and PLAY tabs are the nearest prior art, and an Atlas `pause` screen (6.8) may be the right home |
 | **Opening movie** | boot movie (`gmopening*.c`) | `.mth` video | | | | | **Stays as it is.** No menu, pure video; nothing to gain |
 
-Order inside step 10: Gallery (proves the frame pattern), Collection, Lottery, Movies list, then the optional
+**Owner, 2026-10-06, after seeing this table: "Movies, staff roll, snapshots can be skipped".** Those three rows are
+OUT of step 10: they stay retail and are reached by a native hand-off from their Atlas entry. The rows are kept above
+as a record of what was read. Step 10 is therefore the Trophy Gallery, the Collection room and the Lottery, then the
+Tournament and the Training panel if he asks for them.
+
+Order inside step 10 (before that decision; read it without the three skipped screens): Gallery (proves the frame pattern), Collection, Lottery, Movies list, then the optional
 Staff Roll hint, then Tournament setup and bracket, with Snapshots and the Training panel only on an explicit
 yes. Each is one commit set and one look.
 Retired per screen: the retail 2D pieces stay in the disc but are hidden by the mask; once a screen has shipped, its
