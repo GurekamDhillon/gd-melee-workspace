@@ -1,4 +1,4 @@
-# 12. An authored fighter: your own model, skeleton and clips (slice 4, first steps)
+# 12. From a glTF to a playable fighter (slice 4)
 
 Status: the Courier is a fighter on its own skeleton (`base: "none"`): it stands, walks, jumps and attacks with its own clips, the Striker's moves retargeted by role. The engine half is still being finished (see `melee/docs/geno.md` 22.3 and the list at the end).
 
@@ -36,3 +36,19 @@ Rules the converter follows: glTF Y-up facing +Z is the engine's model space (no
   `model_scaling` is 1.0 when the art is authored in Melee units.
 - **Moves**: `python -m tools.geno.courier_moves` retargets the Striker's scripts onto the Courier by role (a hitbox's `joint=` is a
   joint of the fighter's own skeleton) and sets `PUT ANIM_RATE 1.0` (the clips are authored at rate 1.0).
+
+## Hitboxes on your own limbs, grabs and the shield (slice 4d)
+
+- **Hitbox sizes are in your fighter's units.** Mario's sizes (a fist of 4.6) are a third of a 11.7-unit fighter. Give each hitbox the limb
+  it strikes with and a size that fits that limb: the Courier's `retarget.json` has `joint`, `x`/`y`/`z` and `size` per hitbox of a move.
+  Draw them (the LAB's hitbox display) and check the box is on the fist or foot at the clip's hit frame, not on the body.
+- **Check the timing against the pose, not the number.** The engine shows a charge smash's strike pose one frame after the clip's hit
+  frame; `delay` in `retarget.json` starts the box a frame later. Compare `gd.player().anim_frame_f` with the joint positions
+  (`gd.joints`) on the first active frame.
+- **`grab_anchor` is where a held victim attaches** (the engine's `ThrowN`: the victim's centre is moved onto it), so put it in front of
+  the chest. It is also the joint the shield bubble hangs from; the engine clears its translation while you guard so the bubble stays on the body.
+- **Guarding needs a joint tree of your own.** Guard blends the body toward a pose tree from the fighter's data file; a `none` define uses its
+  costume's joint tree. If your skeleton has joints no part table slot covers, they are skipped by that walk.
+- **Independence census.** The log line `geno: census kind N: ftData fields still the donor's pointers: ...` lists what a `none` define still
+  borrows from Mario; the aim is an empty list (`geno.md` 22.5).
+

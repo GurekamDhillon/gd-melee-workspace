@@ -164,12 +164,21 @@ def build_schema():
                    **{family: obj({key: field(["number", "boolean"], "Behavior parameter " + key, default, "16.4", **{"x-source": "melee/pc/geno/geno_game_v2.inc:geno_params"}) for key, default in params.items()}) for family, params in S["params"].items()}},
                   oneOf=[{"required": ["attach"], "not": {"required": ["define"]}},
                          {"required": ["define"], "not": {"required": ["attach"]}}])
-    fighter["allOf"] = [{"if": {"required": ["define"]}, "then": {"properties": {
+    fighter["properties"]["fighter"] = obj({"plan": string("The fighter plan (plan.json): joints, parts, rows, ftData joint fields, hurtboxes", section="22.4"),
+        "animation": string("The animation file (a .dat of figatrees, the bank)", section="22.4"),
+        "costumes": arr(obj({"file": string("Costume model .dat", section="22.4"), "joint": string("Joint-tree symbol", section="22.4"),
+                             "matanim": string("Material-animation symbol", section="22.4")}, ("file", "joint")), 16)}, ("plan", "animation", "costumes"))
+    fighter["allOf"] = [{"if": {"required": ["define"], "properties": {"define": {"properties": {"base": {"const": "mario"}}}}}, "then": {"properties": {
         field: {"items": {"properties": {key: {"maximum": 302}}}}
         for field, key in (("subactions", "index"), ("common_states", "subaction"),
                            ("states", "subaction"), ("motion_anims", "subaction"))}}}]
     result = obj({"geno": integer("Format version", C["GENO_VERSION"], "7", minimum=1, maximum=C["GENO_VERSION"]),
                   "fighters": arr(fighter, C["GENO_MAX_PROFILES"])}, ("geno", "fighters"))
+    result["$defs"] = {"plan": obj({"parts": integer("Parts-table size", section="22.4"), "joint_to_part": arr(integer("Joint to part", section="22.4")), "part_to_joint": arr(integer("Part to joint", section="22.4")),
+        "bank": obj({"clips": arr(string("Clip symbol", section="22.4")), "clip": string("One clip", section="22.4")}), "row_clips": arr(string("Row to clip", section="22.4")),
+        "motion_rows": arr(obj({}), 1024), "ftdata": obj({}), "costumes": arr(obj({})),
+        "hurtboxes": arr(obj({"a": arr(num("Offset a")), "b": arr(num("Offset b")), "radius": num("Capsule radius"), "height": integer("Height class", section="22.4"),
+                              "grabbable": integer("0/1", section="22.4")}))}), }
     result.update({"$schema": "https://json-schema.org/draft/2020-12/schema", "title": "Geno fighter overlays",
                    "x-registry-keys": sorted(registry_keys()), "x-limits": limits()})
     result["x-source-contract"] = {path: hashlib.sha256(read(path).encode()).hexdigest() for path in

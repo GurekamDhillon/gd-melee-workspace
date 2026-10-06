@@ -4,11 +4,11 @@
     "geno": {
       "type": "integer",
       "description": "Format version",
-      "x-engine-default": 8,
+      "x-engine-default": 9,
       "x-reference": "geno.md §7",
       "x-source": "melee/pc/platform/geno_registry.c",
       "minimum": 1,
-      "maximum": 8
+      "maximum": 9
     },
     "fighters": {
       "type": "array",
@@ -45,13 +45,21 @@
                 "pattern": "^[ -~]+$"
               },
               "base": {
-                "const": "mario"
+                "enum": [
+                  "mario",
+                  "none"
+                ],
+                "description": "mario: the retail Mario preset is the template; none (geno 9): the package owns its model, bank, parts table and joint fields (docs/geno.md 22.4)"
               },
               "common": {
                 "const": "melee.common.v1"
               },
               "resources": {
-                "const": "retail:mario"
+                "enum": [
+                  "retail:mario",
+                  "mod:files"
+                ],
+                "description": "retail:mario with base mario; mod:files with base none"
               }
             }
           },
@@ -3976,6 +3984,66 @@
               }
             },
             "additionalProperties": false
+          },
+          "fighter": {
+            "type": "object",
+            "properties": {
+              "plan": {
+                "type": "string",
+                "description": "The fighter plan (plan.json): joints, parts, rows, ftData joint fields, hurtboxes",
+                "x-engine-default": "",
+                "x-reference": "geno.md §22.4",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "animation": {
+                "type": "string",
+                "description": "The animation file (a .dat of figatrees, the bank)",
+                "x-engine-default": "",
+                "x-reference": "geno.md §22.4",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "costumes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string",
+                      "description": "Costume model .dat",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §22.4",
+                      "x-source": "melee/pc/platform/geno_registry.c"
+                    },
+                    "joint": {
+                      "type": "string",
+                      "description": "Joint-tree symbol",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §22.4",
+                      "x-source": "melee/pc/platform/geno_registry.c"
+                    },
+                    "matanim": {
+                      "type": "string",
+                      "description": "Material-animation symbol",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §22.4",
+                      "x-source": "melee/pc/platform/geno_registry.c"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "file",
+                    "joint"
+                  ]
+                },
+                "maxItems": 16
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "plan",
+              "animation",
+              "costumes"
+            ]
           }
         },
         "additionalProperties": false,
@@ -4006,7 +4074,16 @@
             "if": {
               "required": [
                 "define"
-              ]
+              ],
+              "properties": {
+                "define": {
+                  "properties": {
+                    "base": {
+                      "const": "mario"
+                    }
+                  }
+                }
+              }
             },
             "then": {
               "properties": {
@@ -4059,9 +4136,150 @@
     "geno",
     "fighters"
   ],
+  "$defs": {
+    "plan": {
+      "type": "object",
+      "properties": {
+        "parts": {
+          "type": "integer",
+          "description": "Parts-table size",
+          "x-engine-default": 0,
+          "x-reference": "geno.md §22.4",
+          "x-source": "melee/pc/platform/geno_registry.c"
+        },
+        "joint_to_part": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "description": "Joint to part",
+            "x-engine-default": 0,
+            "x-reference": "geno.md §22.4",
+            "x-source": "melee/pc/platform/geno_registry.c"
+          }
+        },
+        "part_to_joint": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "description": "Part to joint",
+            "x-engine-default": 0,
+            "x-reference": "geno.md §22.4",
+            "x-source": "melee/pc/platform/geno_registry.c"
+          }
+        },
+        "bank": {
+          "type": "object",
+          "properties": {
+            "clips": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "description": "Clip symbol",
+                "x-engine-default": "",
+                "x-reference": "geno.md §22.4",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              }
+            },
+            "clip": {
+              "type": "string",
+              "description": "One clip",
+              "x-engine-default": "",
+              "x-reference": "geno.md §22.4",
+              "x-source": "melee/pc/platform/geno_registry.c"
+            }
+          },
+          "additionalProperties": false
+        },
+        "row_clips": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "Row to clip",
+            "x-engine-default": "",
+            "x-reference": "geno.md §22.4",
+            "x-source": "melee/pc/platform/geno_registry.c"
+          }
+        },
+        "motion_rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          },
+          "maxItems": 1024
+        },
+        "ftdata": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        },
+        "costumes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {},
+            "additionalProperties": false
+          }
+        },
+        "hurtboxes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "a": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "description": "Offset a",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                }
+              },
+              "b": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "description": "Offset b",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                }
+              },
+              "radius": {
+                "type": "number",
+                "description": "Capsule radius",
+                "x-engine-default": 0,
+                "x-reference": "geno.md §19",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "height": {
+                "type": "integer",
+                "description": "Height class",
+                "x-engine-default": 0,
+                "x-reference": "geno.md §22.4",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "grabbable": {
+                "type": "integer",
+                "description": "0/1",
+                "x-engine-default": 0,
+                "x-reference": "geno.md §22.4",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Geno fighter overlays",
   "x-registry-keys": [
+    "a",
     "absorb",
     "accel",
     "air",
@@ -4076,6 +4294,8 @@
     "articles",
     "attach",
     "attributes",
+    "b",
+    "bank",
     "base",
     "behavior",
     "bkb",
@@ -4083,9 +4303,12 @@
     "cape",
     "children",
     "clank",
+    "clip",
+    "clips",
     "coll",
     "common",
     "common_states",
+    "costumes",
     "count",
     "counter",
     "damage",
@@ -4099,29 +4322,35 @@
     "end",
     "every",
     "facing",
+    "fighter",
     "fighters",
     "file",
     "flags",
     "float",
     "frame",
     "from",
+    "ftdata",
     "fx",
     "fx_bindings",
     "geno",
     "glide",
+    "grabbable",
     "gravity",
     "ground",
+    "height",
     "hi",
     "hit",
     "hitboxes",
     "hits",
     "homing",
     "hooks",
+    "hurtboxes",
     "iasa",
     "id",
     "index",
     "int",
     "joint",
+    "joint_to_part",
     "jumps",
     "kbg",
     "keep_frame",
@@ -4141,6 +4370,7 @@
     "model",
     "motion",
     "motion_anims",
+    "motion_rows",
     "move_id",
     "move_tag",
     "n",
@@ -4154,11 +4384,15 @@
     "on_init",
     "on_land",
     "origin",
+    "part_to_joint",
+    "parts",
     "phys",
+    "radius",
     "range",
     "reflect",
     "resources",
     "retail_sfx",
+    "row_clips",
     "s",
     "scale",
     "select",
@@ -4196,115 +4430,115 @@
   "x-limits": {
     "GENO_VARS_PER_BANK": {
       "value": 64,
-      "source": "melee/pc/geno/geno.h:47"
+      "source": "melee/pc/geno/geno.h:48"
     },
     "GENO_SPECIAL_WORDS": {
       "value": 265,
-      "source": "melee/pc/geno/geno.h:137"
+      "source": "melee/pc/geno/geno.h:138"
     },
     "GENO_MAX_CHECKS": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:180"
+      "source": "melee/pc/geno/geno.h:181"
     },
     "GENO_CHECK_CONDS": {
       "value": 3,
-      "source": "melee/pc/geno/geno.h:181"
+      "source": "melee/pc/geno/geno.h:182"
     },
     "GENO_MAX_REHIT": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:182"
+      "source": "melee/pc/geno/geno.h:183"
     },
     "GENO_EV_MAX_HOOKS": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:247"
+      "source": "melee/pc/geno/geno.h:248"
     },
     "GENO_MAX_ATTRS": {
       "value": 128,
-      "source": "melee/pc/geno/geno.h:251"
+      "source": "melee/pc/geno/geno.h:252"
     },
     "GENO_MAX_JUMP_VY": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:252"
+      "source": "melee/pc/geno/geno.h:253"
     },
     "GENO_MAX_PROFILES": {
       "value": 65535,
-      "source": "melee/pc/geno/geno.h:253"
+      "source": "melee/pc/geno/geno.h:254"
     },
     "GENO_MAX_SPECIAL": {
       "value": 64,
-      "source": "melee/pc/geno/geno.h:254"
+      "source": "melee/pc/geno/geno.h:255"
     },
     "GENO_MAX_ONLAND": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:255"
+      "source": "melee/pc/geno/geno.h:256"
     },
     "GENO_MAX_MOTION_ANIM": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:256"
+      "source": "melee/pc/geno/geno.h:257"
     },
     "GENO_MAX_OVERLAYS": {
       "value": 64,
-      "source": "melee/pc/geno/geno.h:257"
+      "source": "melee/pc/geno/geno.h:258"
     },
     "GENO_POOL_WORDS": {
       "value": 16384,
-      "source": "melee/pc/geno/geno.h:258"
+      "source": "melee/pc/geno/geno.h:259"
     },
     "GENO_MAX_STATES": {
       "value": 48,
-      "source": "melee/pc/geno/geno.h:269"
+      "source": "melee/pc/geno/geno.h:270"
     },
     "GENO_ART_KIND_BASE": {
       "value": 4096,
-      "source": "melee/pc/geno/geno.h:354"
+      "source": "melee/pc/geno/geno.h:355"
     },
     "GENO_MAX_ARTICLES": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:354"
+      "source": "melee/pc/geno/geno.h:355"
     },
     "GENO_ART_PER_RANGE": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:361"
+      "source": "melee/pc/geno/geno.h:362"
     },
     "GENO_ART_EXTRA_BASE": {
       "value": 131072,
-      "source": "melee/pc/geno/geno.h:366"
+      "source": "melee/pc/geno/geno.h:367"
     },
     "GENO_MAX_SOUNDS": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:374"
+      "source": "melee/pc/geno/geno.h:375"
     },
     "GENO_ART_HITBOXES": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:375"
+      "source": "melee/pc/geno/geno.h:376"
     },
     "GENO_ART_HIT_ENTRIES": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:376"
+      "source": "melee/pc/geno/geno.h:377"
     },
     "GENO_ART_SPAWNS": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:378"
+      "source": "melee/pc/geno/geno.h:379"
     },
     "GENO_ART_CHILDREN": {
       "value": 2,
-      "source": "melee/pc/geno/geno.h:379"
+      "source": "melee/pc/geno/geno.h:380"
     },
     "GENO_SP_SELECT": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:478"
+      "source": "melee/pc/geno/geno.h:479"
     },
     "JDOC_NODES": {
       "value": 4096,
-      "source": "melee/pc/platform/geno_registry.c:72"
+      "source": "melee/pc/platform/geno_registry.c:73"
     },
     "JDOC_ARENA": {
       "value": 65536,
-      "source": "melee/pc/platform/geno_registry.c:73"
+      "source": "melee/pc/platform/geno_registry.c:74"
     },
     "GN_MAX_SLOTS": {
       "value": 256,
-      "source": "melee/pc/platform/geno_registry.c:457"
+      "source": "melee/pc/platform/geno_registry.c:468"
     },
     "JSON_DEPTH": {
       "value": 32,
@@ -4316,13 +4550,13 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "72d9db20f515f5f2e2bd1cc2afea194a99f8729403e59a59b48cffbbe0ae407f",
-    "pc/platform/geno_define_registry.inc": "ed8c899252a5e5044cc3145f3b42f2361dc5d7b5b63620f54cf6ad9e38ab0480",
-    "pc/geno/geno.h": "57e1c6cd001f9ba69c51455ce53cfa516da2d2a4f13e918a5018f596bd627be7",
+    "pc/platform/geno_registry.c": "c6ca050fffc5f3bc78d8f5e3d3a79bef0470ed699625d78170d0283a1c2cfad0",
+    "pc/platform/geno_define_registry.inc": "9db50d2d6ef429a276daf783db92e0eb3112b478d40f7cc4d1d329c67feabe29",
+    "pc/geno/geno.h": "9a1ec4446e0a273db649a66fc3bfd40c5b30f6bd55943119b645cebdea0af7ad",
     "pc/geno/geno_game.c": "b3383606491acb7699803bcad630b49eddda5d75807d081fe32a21a9ea1d7e3f",
     "pc/geno/geno_game_v2.inc": "786368bb54159d0d664a533886b2cde911473c7d08a822b06083ec75637031cc",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",
     "pc/geno/geno_profile_storage.h": "a40aec8aafa890622f0ba6cb9f5602176c738f960346b18daf87c8dc8498d04d",
-    "pc/geno/geno_game_articles.inc": "c19856f52d2e644ac5575bc9a1eb9dfc9299b3f06b2e8397d497080b16b2e1dd"
+    "pc/geno/geno_game_articles.inc": "5cfda7d9a4b3dd75b908e2cc08f660cb35de8a70ce09465912ced173999cb041"
   }
 }

@@ -23,6 +23,27 @@ def joint_map(plan, retarget):
     return {int(k): names[v] for k, v in retarget["roles"].items()}
 
 
+def apply_delay(text, n):
+    """Start a move's first hitbox group n frames later: n more frames in the wait before it, n fewer in the first wait after it
+    (the rest of the move keeps its time; the first group is n frames shorter)."""
+    if n <= 0:
+        return text
+    lines = text.split("\n")
+    first = next((i for i, l in enumerate(lines) if l.startswith("hitbox slot=")), None)
+    if first is None:
+        return text
+    pre = next((i for i in range(first - 1, -1, -1) if re.match(r"wait \d+$", lines[i])), None)
+    last = first
+    while last + 1 < len(lines) and lines[last + 1].startswith("hitbox slot="):
+        last += 1
+    post = next((i for i in range(last + 1, len(lines)) if re.match(r"wait \d+$", lines[i])), None)
+    if pre is None or post is None:
+        return text
+    lines[pre] = "wait %d" % (int(lines[pre].split()[1]) + n)
+    lines[post] = "wait %d" % max(1, int(lines[post].split()[1]) - n)
+    return "\n".join(lines)
+
+
 def retarget_script(text, jm, move, retarget, plan, report):
     names = {j["name"]: i for i, j in enumerate(plan["joints"])}
     ov = retarget.get("hitboxes", {}).get(move, {})
@@ -54,6 +75,7 @@ def retarget_script(text, jm, move, retarget, plan, report):
         return txt
 
     text = re.sub(r"(?m)^hitbox slot=.*$", line, text)
+    text = apply_delay(text, int(retarget.get("delay", {}).get(move, 0)))
     return re.sub(r"(?m)^PUT ANIM_RATE\s+[0-9.]+", "PUT ANIM_RATE 1.0", text)
 
 

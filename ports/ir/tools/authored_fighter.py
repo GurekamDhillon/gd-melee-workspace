@@ -41,7 +41,7 @@ COMMON_OF = {
     "thumb_R": "RThumbNa", "fingers_R": "R1stNa",
     "thigh_L": "LLegJ", "shin_L": "LKneeJ", "foot_L": "LFootJ",
     "thigh_R": "RLegJ", "shin_R": "RKneeJ", "foot_R": "RFootJ",
-    "socket_item_R": "RHaveN", "shield_origin": "ThrowN",
+    "socket_item_R": "RHaveN", "grab_anchor": "ThrowN",
 }
 
 
@@ -158,6 +158,24 @@ def build_plan(art, scale):
                 continue
             joints.append({"name": pj["name"] if pj["name"] != "Headdress" else "head_top", "parent": pj["parent"],
                            "local": local[node], "node": node, "synth": False})
+    # XRotN and YRotN are the fighter's pivot joints: the engine tumbles a launched fighter about them and, for a held victim,
+    # moves XRotN onto the grabber's hold joint (ftCo_CapturePulled). Retail has them at the body's centre (Mario: about 6 units
+    # up), not at the feet where a synthesized identity joint would put them (a tumbling Courier spun about its feet, and a held
+    # one floated 8 units above the grabber). Put them at the hips' rest height and take that height out of their children's
+    # local rest (and out of the hips' translation keys, see `lift` below).
+    names = [j["name"] for j in joints]
+    lift = 0.0
+    if "XRotN" in names and "YRotN" in names:
+        hips = next(j for j in joints if j["name"] == "hips")
+        lift = float(local[hips["node"]][1, 3])
+        # the hips' rest height in the fighter's space (its local in the glTF is relative to `trans`, at the origin)
+        xi, yi = names.index("XRotN"), names.index("YRotN")
+        joints[xi]["local"] = joints[xi]["local"].copy(); joints[xi]["local"][1, 3] = lift
+        for j in joints:
+            if j["parent"] == yi:
+                j["local"] = j["local"].copy(); j["local"][1, 3] -= lift
+    for j in joints:
+        j["lift"] = lift
     # a source joint whose parent in glTF differs from plan parent only through synthesized identities, so
     # the local transform is unchanged; world = chain of plan locals
     for i, j in enumerate(joints):
@@ -360,6 +378,8 @@ def anim_main(art, out, scale):
             if not j["synth"] and (nm, "translation") in chans and (nm == "hips" or (nm == "trans" and clip_root_motion.get(an["name"]))):
                 t, v = chans[(nm, "translation")]
                 v = v * scale
+                if nm == "hips" and j.get("lift"):
+                    v = v.copy(); v[:, 1] -= j["lift"]          # the hips' parent (YRotN) now sits at that height
                 for k, ty in enumerate((5, 6, 7)):       # TRAX, TRAY, TRAZ
                     body, fv, fs = _encode_channel(v[:, k], None)
                     jt.append((ty, body, fv, fs))

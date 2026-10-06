@@ -9,13 +9,21 @@ def definition_schema():
     return {"type": "object", "additionalProperties": False, "required": ["key", "name", "base", "common", "resources"],
         "properties": {"key": {"type": "string", "pattern": r"^[a-z0-9][a-z0-9_.-]{0,38}$"},
             "name": {"type": "string", "minLength": 1, "maxLength": 47, "pattern": "^[ -~]+$"},
-            "base": {"const": "mario"}, "common": {"const": "melee.common.v1"}, "resources": {"const": "retail:mario"}}}
+            "base": {"enum": ["mario", "none"], "description": "mario: the retail Mario preset is the template; none (geno 9): the package owns its model, bank, parts table and joint fields (docs/geno.md 22.4)"},
+            "common": {"const": "melee.common.v1"}, "resources": {"enum": ["retail:mario", "mod:files"], "description": "retail:mario with base mario; mod:files with base none"}}}
 
 
 def validate_definition(data, fighter, path):
     errors = []
-    if data["geno"] not in (6, 7, 8):
-        errors.append((path+".define", "define requires geno: 6, 7 or 8"))
+    own = fighter["define"].get("base") == "none"
+    if data["geno"] not in (6, 7, 8, 9):
+        errors.append((path+".define", "define requires geno: 6, 7, 8 or 9"))
+    if own and data["geno"] < 9:
+        errors.append((path+".define.base", "base none needs geno: 9"))
+    if own != (fighter["define"].get("resources") == "mod:files"):
+        errors.append((path+".define.resources", "base none takes resources mod:files; base mario takes retail:mario"))
+    if own and "fighter" not in fighter:
+        errors.append((path+".fighter", "base none needs a fighter block (plan, animation, costumes)"))
     if ".." in fighter["define"]["key"]:
         errors.append((path+".define.key", "identity must not contain '..'"))
     # Slice 2 (geno 7) admits special_attributes, fx_bindings and the whole attribute table; articles, own
@@ -46,13 +54,13 @@ def validate_definition(data, fighter, path):
     if len(set(keys)) != len(keys):
         errors.append((path+".define.key", "duplicate definition identity in package"))
     # Native Mario preset: ftData_Table_Unk0[0].count == 303, rows 0..302.
-    for row in fighter.get("subactions", []):
+    for row in (fighter.get("subactions", []) if not own else []):   # a base none define owns its row table
         if row["index"] >= 303:
             errors.append((path+".subactions", "Mario preset subaction must be in 0..302"))
-    for row in fighter.get("common_states", []):
+    for row in (fighter.get("common_states", []) if not own else []):
         if row.get("subaction", 0) >= 303:
             errors.append((path+".common_states", "Mario preset subaction must be in 0..302"))
-    for field in ("states", "motion_anims"):
+    for field in (("states", "motion_anims") if not own else ()):
         for row in fighter.get(field, []):
             if isinstance(row.get("subaction"), int) and row["subaction"] >= 303:
                 errors.append((path+"."+field, "Mario preset subaction must be in 0..302"))
