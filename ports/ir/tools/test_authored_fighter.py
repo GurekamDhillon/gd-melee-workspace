@@ -61,5 +61,23 @@ def plan_index(part):
     return plan_parts.COMMON.index(part)
 
 
+
+class ConstantTracks(unittest.TestCase):
+    """A constant channel must never be a one-key track: fobj.c FObjLoadData takes a key's interpolation op from the key BEFORE it,
+    so a single key ends in state 6 with op_intrp 0 and the engine writes an uninitialised 0 to the joint (measured on the Courier:
+    thigh rest rotation pi and hips height lost). Two LIN keys of the same value hold it."""
+
+    def test_constant_channel_is_two_lin_keys(self):
+        import authored_fighter as af
+        import figatree as F
+        body, fv, fs = af._encode_channel([0.5] * 40, af.FRAC_ROT)
+        keys = F.decode_keys(body, 0, len(body), fv, fs)
+        self.assertEqual([k[0] for k in keys], [F.LIN, F.LIN])
+        self.assertEqual(keys[0][3], 39)                                # the first key waits the clip length
+        self.assertAlmostEqual(keys[0][1], 0.5, places=3)
+        self.assertAlmostEqual(keys[1][1], 0.5, places=3)
+        self.assertAlmostEqual(F.evaluate(keys, 17), 0.5, places=3)
+
+
 if __name__ == "__main__":
     unittest.main()

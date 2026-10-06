@@ -16,7 +16,7 @@ are at +Z). Scale is one uniform factor applied to translations, vertex position
 
 Credit: glTF 2.0 (Khronos); the joint/parts planning is plan_parts.py (this repo).
 """
-import argparse
+import argparse, re
 import base64
 import json
 import math
@@ -168,6 +168,28 @@ def build_plan(art, scale):
     return g, binary, pl, joints, skin_pos, jn, src, err
 
 
+def _row_clips(manifest):
+    """Animation ROW number (the engine's ftCo_SM_ subaction numbers) -> clip name, by the row's name: rows no motion state names are still
+    played by number (the fall blend plays the FallF / FallB rows), so the engine needs a clip for every row. Names come from the decomp's
+    own enum (source, not disc data); a row whose name matches no motion row or clip is None (the engine then plays Wait)."""
+    gw = os.environ.get("GW_MELEE") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "melee")
+    src = os.path.join(gw, "src", "melee", "ft", "kinds", "ftCommon", "forward.h")
+    try:
+        text = open(src, encoding="utf-8", errors="replace").read()
+    except OSError:
+        return []
+    i = text.index("ftCo_SM_")
+    body = text[text.rfind("typedef enum", 0, i):text.index("}", i)]
+    names = [n for n, _ in re.findall(r"\b(ftCo_SM_\w+)\s*(=\s*[^,]+)?,", body)][1:]       # [0] is ftCo_SM_None = -1
+    rowclip = {m["row"]: m["clip"] for m in manifest["motion_rows"] if m.get("clip")}
+    clips = {c["name"] for c in manifest["clips"]}
+    out = []
+    for n in names:
+        k = n[len("ftCo_SM_"):]
+        out.append(rowclip.get(k) or (k if k in clips else None))
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["mesh", "anim"])
@@ -245,7 +267,7 @@ def main():
         hb.append({"id": h["id"], "joint": by_name[h["bone"]], "bone": h["bone"], "a": local_pt(h["bone"], h["a_gltf"]),
                    "b": local_pt(h["bone"], h["b_gltf"]), "radius": round(h["radius"] * scale, 5),
                    "height": h["height"], "grabbable": h["grabbable"]})
-    plan = {"scale": scale, "joint_count": len(joints), "joints": [{"index": i, "name": j["name"], "parent": j["parent"], "synth": j["synth"]} for i, j in enumerate(joints)],
+    plan = {"scale": scale, "joint_count": len(joints), "row_clips": _row_clips(manifest), "joints": [{"index": i, "name": j["name"], "parent": j["parent"], "synth": j["synth"]} for i, j in enumerate(joints)],
             "parts": pl["parts"], "ftdata": pl["ftdata"], "unresolved": pl["unresolved"],
             "roles": roles, "role_joint": {b["name"]: name_to_plan[b["name"]] for b in manifest["bones"]},
             "hurtboxes": hb, "ecb": {k: (v if not isinstance(v, dict) else {kk: (vv * scale if isinstance(vv, (int, float)) else vv) for kk, vv in v.items()}) for k, v in hurt["ecb"].items() if k != "notes"},
@@ -284,8 +306,16 @@ def _unwrap_euler(qs):
 def _encode_channel(vals, frac):
     """one value per frame -> (obj-independent key bytes, fv, fs)."""
     vals = [float(v) for v in vals]
+    if frac is not None and max(abs(v) for v in vals) > 7.9 and (frac >> 5) == 1:
+        frac = (1 << 5) | 10           # s16 holds +-8 rad at 1/4096; a channel that unwraps past a turn and a half (a scarf in a thrown clip) takes 1/1024 (+-32 rad)
     if max(vals) - min(vals) < 1e-5:
-        body, fv, fs, _ = F.encode_const(vals[0], frac)
+        # NOT a single CON key: the engine's FObj state machine takes a key's interpolation op from the key BEFORE
+        # it (fobj.c FObjLoadData: op_intrp = op, then op is parsed), so a one-key track ends in state 6 with
+        # op_intrp 0 and writes an UNINITIALISED value (0) to the joint every frame. Measured: every constant
+        # channel zeroed its joint's rotation / translation (thigh rest pi lost, hips height lost). Two LIN keys with
+        # the same value hold it, the way a retail track would.
+        pts = [(0, vals[0], 0.0), (max(1, len(vals) - 1), vals[0], 0.0)]
+        body, fv, fs, _ = F.encode_mixed_spline(pts, [F.LIN] * 2, frac)
         return body, fv, fs
     pts = [(i, v, 0.0) for i, v in enumerate(vals)]
     body, fv, fs, _ = F.encode_mixed_spline(pts, [F.LIN] * len(pts), frac)
