@@ -59,12 +59,14 @@ def bake(clip):
 
 clips = clips_all.all_clips()
 table = []
+metrics = {}
 for c in clips:
     act, poses = bake(c)
     tr = ad.nla_tracks.new(); tr.name = c.name
     st = tr.strips.new(c.name, 0, act)
     st.action = act
     tp = [p.v["tp"] for p in poses]
+    metrics[c.name] = c.metrics
     table.append(dict(name=c.name, frames=c.n, loop=bool(c.loop), serves=c.serves, status=c.status, category=c.category,
                       hit_frames=c.hit or [], root_motion=bool(c.root_motion),
                       root_motion_total=[round(x, 3) for x in tp[-1]] if c.root_motion else [0, 0, 0],
@@ -72,5 +74,6 @@ for c in clips:
 ad.action = None
 os.makedirs(OUT, exist_ok=True)
 json.dump(dict(clips=table, aliases=clips_all.aliases()), open(os.path.join(OUT, "clips_data.json"), "w"), indent=1)
+json.dump(metrics, open(os.path.join(OUT, "clips_metrics.json"), "w"))
 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(OUT, "stage2_anim.blend"))
 print("STAGE2 clips", len(table), "frames", sum(t["frames"] for t in table), "->", os.path.join(OUT, "stage2_anim.blend"))

@@ -8,7 +8,8 @@ no-donor fixture ("Vanilla Original", plan section "Slice 4"). Everything is gen
 Regenerate everything, one command (headless Blender 5.x, Python 3 with numpy; Pillow only for sheets):
 
     ports/vanilla-original/build_all.sh            # model, rig, clips, glb, manifest, validation (about 25 s)
-    ports/vanilla-original/build_all.sh --renders roundN    # plus review renders into _build/audit-20261003/geno-art/renders/roundN
+    ports/vanilla-original/build_all.sh --renders roundN    # plus the first lane's static renders into _build/audit-20261003/geno-art2/renders/roundN
+    python ports/vanilla-original/src/review.py roundN film Run 2 0 14     # before / after sheets of the animation pass (see Animation pass 2)
 
 `BLENDER=/path/to/blender.exe` overrides the default install path. Every Blender job's Windows PID is logged in
 `out/blender_pids.txt`; stop one only by that number (never by image name).
@@ -57,9 +58,12 @@ colour; the eye glow follows it).
   The clips are authored at rate 1.0: set the overlays' `ANIM_RATE` to 1.0 (1.2-1.45 was tuned for Mario's clips).
   Turn clips are continuous in absolute orientation only if the engine flips facing between the declared frames
   (Turn: 4/5, TurnRun: 5/6).
-* **Walk/run**: the stance foot moves at constant speed, so a clip is slide-free at `ref.ground_ref_speed` units per
-  frame (WalkSlow 0.096, WalkMiddle 0.172, WalkFast 0.301, Run 0.954). Gameplay speeds (Striker walk 1.5, dash 2.0)
-  are 2 to 15 times higher: the engine either scales the clip rate or accepts sliding (retail does the same).
+* **Walk/run**: a planted sole point (heel, ball of the foot, toe tip) moves back at exactly `ref.ground_ref_speed` units per
+  frame in every stance phase (measured per frame by `locostats.py`, checked by `validate.py`): WalkSlow 0.29, WalkMiddle 0.50,
+  WalkFast 0.72, Run 1.32 (Dash 1.32, LiftWalk 0.38); they were 0.096 / 0.172 / 0.301 / 0.954. Gameplay speeds (Striker walk 1.5,
+  dash 2.0) are still 2 to 5 times higher: the engine scales the clip rate (retail does the same). Leg length is the limit: a planted
+  ankle can travel about 5.4 units before the hips must drop more than a unit, and the clip lengths are frozen, so the walks are two gait
+  cycles per clip (cadence 9 steps per second at rate 1.0) and the Run one cycle with a flight phase. See "Animation pass 2".
 
 ## Skeleton roles (`skeleton.json`, `manifest.json` bones)
 
@@ -121,15 +125,76 @@ peaks on the hit frame, stance-foot speed equals the declared reference speed, a
 move and required common state has its own clip, hit frames equal the script frames, and a glTF re-import matches
 triangles, bones, clips and frame counts. The latest result is in `validation_report.txt`.
 
+## Animation pass 2 (second lane: weight and flow)
+
+Second pass over the 179 clips. Everything is still procedural (scripts, regenerable, original; no motion capture, clips, add-ons or
+assets). Frozen and verified against `data/frozen_contract.json` on every build: skeleton and bone order, mesh, skin weights (hashes), clip
+names, frame counts, loop flags, the hit frames of the Striker's moves (they still equal the script frames), the root-motion totals, the
+`motion_rows` map and the manifest schema. Design log: `_build/audit-20261003/geno-art2/PROGRESS.md`.
+
+**Animation principles now in the library (`src/anim_lib.py`), so every clip gets them**
+(after Johnston and Thomas, "The Illusion of Life", the twelve principles; credit in `CREDITS.md`):
+slow in / slow out (keyed `smooth` segments are a monotone cubic Hermite through the keys, so a pose no longer stops on every key; the
+`back` ease and `extrap_pose` give overshoot and settle); anticipation, follow-through and overshoot on every Striker strike (`polish()`
+in `clips_moves.py`: a counter-move before the first key, an overshoot on the hit frame that settles two frames later, a recovery dip and
+overshoot; no hit frame or length moved); overlapping action (the shoulder trails the hips by 0.6 frames, the elbow, head and fist by 1.2,
+the wrist and ankle by 2.0; strikes only 0 / 0.4 / 1.2 so the hit pose still peaks on its frame); a head follower (damped spring); breathing
+and a weight shift faded in wherever the pose is nearly still; squash and stretch as POSES (crouch and stretch keys, never bone scale);
+arcs (limbs rotate about joints, and the lag turns the three-point triangles of the first lane's foot and fist paths into curves: see
+`src/review.py arcs`); IK and FK legs blend by conversion (`ik_to_fk`) instead of popping; an ankle clamp; and a scarf derived from the
+body's motion (below).
+
+**Scarf (secondary motion, not baked per clip):** `anim_lib.scarf_sim` runs a four-segment Verlet chain hanging from the neck over the finished
+body motion: gravity, drag against the ground speed (from the clip's `ref`, or its coarse `wind`), a little bending stiffness toward the torso's
+direction, and a torso capsule it cannot enter (`validate.py` checks it never comes closer than 1.30 to the torso axis; the simulation keeps
+1.45). The scarf bones are then rotated to the chain. There is no crest bone (the crest is part of the helmet mesh), so the crest does not move.
+
+**Locomotion (`src/loco.py`)**: contact / down / passing / up poses built from the contact rule (heel strike on the heel, foot flat, heel lift
+on the toe joint with the toe bone flat on the ground, swing as one Hermite with matched velocities); the hips dip and rise and are lowered further
+where a leg cannot reach; the pelvis sways over the supporting foot; the trunk counter-rotates; the head stays level; the arms swing opposite
+the legs with the elbow closing as the arm comes forward; the run leans and has a flight phase (8 of 16 frames with no sole on the ground).
+Reference speeds above.
+
+**Families reworked by hand:** locomotion, turns, jump squat / jumps / double jumps / falls / landings / crouch, shield on / off / hit, rolls
+(the distance travelled is proportional to the angle turned: no slipping; root motion unchanged: 16 / 14 units), spot dodge, air dodge, the damage
+family (a blow throws the body away from the hit, overshoots, rocks back past rest and settles; strength changes size and duration), launch
+and tumble (limbs flail with a delay), down / getup / tech / wall and ceiling tech, shield break, dizzy, grab victims (pulled, struggle, pummel,
+break-out, hop out, dangling, thrown), rebound / pass / teeter / bounce, ledge (catch, sway, climb, attack, roll, jumps: root-motion totals
+unchanged), items (pick-ups, heavy lift, carry, throws, swings, shoot), and the presentation clips (entry, rebirth, both taunts, three wins,
+lose) written around the satchel and the scarf. The silhouettes of AttackDash, NRelease, SLunge, AttackLw3 and AttackLw4 were re-posed for a
+clearer line of action (hit frames unchanged).
+
+**Clips that are now "good" (read well at match size, no obvious pops):** Wait, WalkSlow / Middle / Fast, Run, Dash, RunBrake, Turn, TurnRun,
+KneeBend, Jump*, Fall*, Landing*, Squat*, Guard*, Escape* and the rolls, Damage* (ground and air), DamageFly*, Capture* / Thrown*, CliffCatch / Wait /
+Climb / Attack, the item clips, Entry, Appeal, Win1-3, Lose, and the Striker's jabs, tilts, smashes, aerials and throws.
+
+**Still rough (a human animator should redo):** the three rapid-jab placeholders (Attack100*); the 151 placeholder rows that alias another clip
+(item families, special grabs, hammer, scope, parasol, sleep); the Down* getup rolls (the change from lying to the tuck is quick); PassiveWall /
+PassiveCeil and FlyReflect / Stop (rough surface-contact poses: no wall geometry is known); the ledge roll and attack timings and the ledge
+root-motion totals (still estimates: derive them from the real stage ledge); the knee crease above about 125 degrees (the weights were not touched:
+the library keeps every knee at or under 140, the first lane's clips reached 156); hands (no finger animation) and faces (no blink); the Run is
+slower than the Striker's dash (1.32 against 2.0) and the walks are 2 to 5 times slower than the Striker's walk (the engine scales the rate).
+
+**Validation added** (`validate.py`, `validate_blend.py`): the frozen contract; locomotion contact speed (planted sole point speed equals
+the ground speed, mean within 3% and spread within 24% of the speed, no sole below the floor); loops close in position and velocity (the velocity
+change across the wrap is no larger than inside the clip); a stated rotation limit per joint (upper arm 185, forearm 150, hand 75, thigh 135, shin
+140, foot 75, clavicle 45, toe 60, neck 60, head 75, spine 60, chest 70 degrees from the rest pose; hips and `trans` exempt); the scarf clearance.
+The new checks found real faults in the first lane's clips (Rise popped by 122 degrees at the loop wrap, ankles at 137 degrees, spine twists of
+114 degrees), which are fixed.
+
+**Review tools:** `src/review.py` (before / after filmstrips at a fixed frame step, silhouette sheets, side-view contact strips with sole-contact
+markers and a scrolling ground, fist and foot arc plots, 120 px sheets) renders baked clips headlessly through `src/render_review.py`; the
+first lane's sources are kept in `_build/audit-20261003/geno-art2/before_src` for the "before" side. Blender runs headless only; each job's
+Windows PID is logged.
+
 ## Known gaps (be honest)
 
-* Procedural poses are stiff. A human animator should redo first: Walk*/Run/Dash, the items set (LightGet, HeavyGet,
-  ItemThrow*/Swing*/Shoot, LiftWait/Walk), all victim clips (Capture*, Thrown*), ledge climb/attack/roll (offsets are
-  estimates), DamageFly*/DamageFall, PassiveWall/Ceil, FlyReflect/Stop*, Win1-3, AppealSR/SL, Rebirth, Lose.
+* Poses are procedural: see "Animation pass 2" for what is good and what a human animator should redo first (the ledge
+  offsets are estimates, the wall / ceiling contact poses, the getup rolls, the placeholder rows).
 * 151 engine rows are placeholders that alias another clip (item families, special grabs, mushroom, hammer, scope,
   parasol, sleep/bind): see `manifest.json` `motion_rows[].status`. Attack100Start/Loop/End are a placeholder rapid jab.
-* No facial or finger animation beyond fist/open; no twist bones; no eye blink; no cloth physics (the scarf follow-through
-  is baked per clip). No lying-pose collision data and no paired grab/victim clips tuned to each other's anchors.
+* No facial or finger animation beyond fist/open; no twist bones; no eye blink; no full cloth physics (the scarf is a four-segment chain derived from the
+  body's motion at bake time; no wind, no collision with the arms or satchel). No lying-pose collision data and no paired grab/victim clips tuned to each other's anchors.
 * The ECB and ledge box are proposals. Hurtbox radii were eyeballed against the mesh, not tuned for gameplay.
 * Costume art is flat-cell colour plus a painted visor; no per-costume portrait/stock icon (slice 6).
 * Not seen in the game: nothing here was loaded by the engine.

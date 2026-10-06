@@ -30,7 +30,7 @@
   "rows_placeholder": 151,
   "rows_no_animation": 7,
   "hurtboxes": 15,
-  "glb_bytes": 10610576
+  "glb_bytes": 10968332
  },
  "bones": [
   {
@@ -2283,10 +2283,11 @@
     0
    ],
    "ref": {
-    "stride_per_cycle_units": 2.8,
-    "stance_duty": 0.66,
-    "ground_ref_speed": 0.0964,
-    "note": "slide-free body speed in units/frame at animation rate 1.0; the engine scales the rate"
+    "stride_per_cycle_units": 7.656,
+    "stance_duty": 0.6,
+    "ground_ref_speed": 0.29,
+    "gait_cycles_in_clip": 2,
+    "note": "slide-free body speed in units/frame at animation rate 1.0 (contact point speed = body speed in every stance phase); the engine scales the rate"
    },
    "notes": "",
    "wind": 10
@@ -2306,10 +2307,11 @@
     0
    ],
    "ref": {
-    "stride_per_cycle_units": 3.5,
-    "stance_duty": 0.6,
-    "ground_ref_speed": 0.1716,
-    "note": "slide-free body speed in units/frame at animation rate 1.0; the engine scales the rate"
+    "stride_per_cycle_units": 9.69,
+    "stance_duty": 0.57,
+    "ground_ref_speed": 0.5,
+    "gait_cycles_in_clip": 2,
+    "note": "slide-free body speed in units/frame at animation rate 1.0 (contact point speed = body speed in every stance phase); the engine scales the rate"
    },
    "notes": "",
    "wind": 16
@@ -2329,10 +2331,11 @@
     0
    ],
    "ref": {
-    "stride_per_cycle_units": 4.3,
-    "stance_duty": 0.55,
-    "ground_ref_speed": 0.3007,
-    "note": "slide-free body speed in units/frame at animation rate 1.0; the engine scales the rate"
+    "stride_per_cycle_units": 9.922,
+    "stance_duty": 0.53,
+    "ground_ref_speed": 0.72,
+    "gait_cycles_in_clip": 2,
+    "note": "slide-free body speed in units/frame at animation rate 1.0 (contact point speed = body speed in every stance phase); the engine scales the rate"
    },
    "notes": "",
    "wind": 26
@@ -2352,10 +2355,11 @@
     0
    ],
    "ref": {
-    "stride_per_cycle_units": 5.8,
-    "stance_duty": 0.38,
-    "ground_ref_speed": 0.9539,
-    "note": "slide-free body speed in units/frame at animation rate 1.0; the engine scales the rate"
+    "stride_per_cycle_units": 11.405,
+    "stance_duty": 0.27,
+    "ground_ref_speed": 1.32,
+    "gait_cycles_in_clip": 1,
+    "note": "slide-free body speed in units/frame at animation rate 1.0 (contact point speed = body speed in every stance phase); the engine scales the rate"
    },
    "notes": "",
    "wind": 58
@@ -2374,7 +2378,10 @@
     0,
     0
    ],
-   "ref": {},
+   "ref": {
+    "ground_ref_speed": 1.32,
+    "note": "the dash runs the Run gait at 1.32 units/frame from a low drive start; the engine scales the rate"
+   },
    "notes": "",
    "wind": 64
   },
@@ -2874,9 +2881,9 @@
    "hit_frames": [],
    "root_motion": true,
    "root_motion_total": [
-    0.0,
+    0,
     16.0,
-    0.0
+    0
    ],
    "ref": {},
    "notes": "root motion on `trans`: 16 units forward",
@@ -2892,9 +2899,9 @@
    "hit_frames": [],
    "root_motion": true,
    "root_motion_total": [
-    0.0,
+    0,
     -16.0,
-    0.0
+    0
    ],
    "ref": {},
    "notes": "root motion on `trans`: 16 units backward",
@@ -3378,9 +3385,9 @@
    "hit_frames": [],
    "root_motion": true,
    "root_motion_total": [
-    0.0,
+    0,
     14.0,
-    0.0
+    0
    ],
    "ref": {},
    "notes": "root motion on `trans`: 14 units",
@@ -3396,9 +3403,9 @@
    "hit_frames": [],
    "root_motion": true,
    "root_motion_total": [
-    0.0,
+    0,
     -14.0,
-    0.0
+    0
    ],
    "ref": {},
    "notes": "root motion on `trans`: 14 units",
@@ -3504,9 +3511,9 @@
    "hit_frames": [],
    "root_motion": true,
    "root_motion_total": [
-    0.0,
+    0,
     14.0,
-    0.0
+    0
    ],
    "ref": {},
    "notes": "root motion on `trans`: 14 units",
@@ -3522,9 +3529,9 @@
    "hit_frames": [],
    "root_motion": true,
    "root_motion_total": [
-    0.0,
+    0,
     -14.0,
-    0.0
+    0
    ],
    "ref": {},
    "notes": "root motion on `trans`: 14 units",
@@ -3558,9 +3565,9 @@
    "hit_frames": [],
    "root_motion": true,
    "root_motion_total": [
-    0.0,
+    0,
     14.0,
-    0.0
+    0
    ],
    "ref": {},
    "notes": "root motion on `trans`: 14 units",
@@ -3576,9 +3583,9 @@
    "hit_frames": [],
    "root_motion": true,
    "root_motion_total": [
-    0.0,
+    0,
     -14.0,
-    0.0
+    0
    ],
    "ref": {},
    "notes": "root motion on `trans`: 14 units",
@@ -3786,7 +3793,7 @@
    "name": "CapturePulledLw",
    "frames": 16,
    "loop": false,
-   "serves": "CapturePulledLw",
+   "serves": "CapturePulledLw (victim yanked into the hold)",
    "status": "full",
    "category": "victim",
    "hit_frames": [],
@@ -4665,9 +4672,11 @@
     0
    ],
    "ref": {
-    "stride_per_cycle_units": 2.8,
-    "stance_duty": 0.62,
-    "ground_ref_speed": 0.1613
+    "stride_per_cycle_units": 6.384,
+    "stance_duty": 0.6,
+    "ground_ref_speed": 0.38,
+    "gait_cycles_in_clip": 2,
+    "note": "slide-free body speed in units/frame at animation rate 1.0 (contact point speed = body speed in every stance phase); the engine scales the rate"
    },
    "notes": "",
    "wind": 8
@@ -4712,7 +4721,7 @@
    "name": "AppealSR",
    "frames": 70,
    "loop": false,
-   "serves": "AppealSR (taunt: fist raised)",
+   "serves": "AppealSR (taunt: check the satchel, hand over the parcel)",
    "status": "full",
    "category": "common",
    "hit_frames": [],
@@ -4730,7 +4739,7 @@
    "name": "AppealSL",
    "frames": 70,
    "loop": false,
-   "serves": "AppealSL (taunt: spin and settle)",
+   "serves": "AppealSL (taunt: whip turn flares the scarf, salute)",
    "status": "full",
    "category": "common",
    "hit_frames": [],
@@ -4748,7 +4757,7 @@
    "name": "Win1",
    "frames": 90,
    "loop": false,
-   "serves": "Win1 (results: both fists up)",
+   "serves": "Win1 (results: both fists up, two hops)",
    "status": "full",
    "category": "results",
    "hit_frames": [],
@@ -4766,7 +4775,7 @@
    "name": "Win2",
    "frames": 90,
    "loop": false,
-   "serves": "Win2 (results: arms crossed)",
+   "serves": "Win2 (results: arms crossed, a confident sway)",
    "status": "full",
    "category": "results",
    "hit_frames": [],
@@ -4802,7 +4811,7 @@
    "name": "Lose",
    "frames": 60,
    "loop": true,
-   "serves": "Lose (results: slumped)",
+   "serves": "Lose (results: slumped, a long sigh)",
    "status": "full",
    "category": "results",
    "hit_frames": [],

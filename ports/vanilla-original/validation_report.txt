@@ -35,6 +35,7 @@ PASS no bone scale in rest pose
 PASS all required roles present : []
 PASS hurtbox count <= 15 (FighterHurtCapsule hurt_capsules[15]) : 15
 PASS hurtbox bones exist
+PASS mesh vertices, skin weights and bone table are bit-for-bit the first lane's (frozen: the engine lane has converted them) : {'pos': '7be29c8dbd89', 'weights': '86df081fa177', 'bones': 'd1a35e3b2ead'}
 PASS an action per clip : 179 actions / 179 clips
 PASS every clip keyed on every required role bone : []
 PASS every channel has the declared frame count : []
@@ -49,6 +50,26 @@ PASS re-import: bone count matches source : 39 vs 39
 PASS re-import: every clip came back as an action : 179 actions; missing []
 PASS re-import: frame counts match the declared counts : []
 PASS re-import: <= 4 influences per vertex : 2
+== animation pass 2: contract with the engine lane (frozen) ==
+PASS clip names unchanged (179, same set) : []
+PASS every clip's frame count unchanged : []
+PASS every clip's loop flag and hit_frames unchanged : []
+PASS root_motion flags and totals unchanged (consistent with the manifest the engine lane read) : []
+PASS motion_rows map unchanged (351 rows: row, clip, status)
+PASS manifest schema unchanged (top-level and per-clip keys)
+PASS skeleton unchanged (bone names, order)
+== animation pass 2: motion quality (from the baked clips) ==
+PASS locomotion: planted sole point speed equals the ground speed (mean within 3%, spread within 24% of v), no sole through the floor : []
+   WalkSlow v=0.29 mean=0.29 spread=0.0 minz=0.0 flight=0
+   WalkMiddle v=0.5 mean=0.5 spread=0.001 minz=0.0 flight=0
+   WalkFast v=0.72 mean=0.72 spread=0.001 minz=-0.0 flight=2
+   Run v=1.32 mean=1.32 spread=0.0 minz=0.0 flight=8
+   Dash v=1.32 mean=1.32 spread=0.0 minz=0.0 flight=8
+   LiftWalk v=0.38 mean=0.38 spread=0.001 minz=0.0 flight=0
+PASS loops close in position and velocity (the velocity change across the wrap is no larger than inside the clip) : []
+   limits (deg): upperarm 185, forearm 150, hand 75, thigh 135, shin 140, foot 75, clavicle 45, toe 60, neck 60, head 75, spine 60, chest 70
+PASS no joint exceeds its stated rotation limit in any clip : []
+PASS the scarf never passes through the torso capsule (clearance >= 1.3 from the torso axis) : min 1.45 in Attack11
 == counts ==
-{"triangles": 2580, "vertices_gltf": 1925, "vertices_source": 1403, "bones": 39, "deform_bones": 29, "materials_per_costume": 1, "costume_materials": 4, "clips": 179, "total_frames": 4955, "motion_rows": 351, "rows_own": 162, "rows_alias": 31, "rows_placeholder": 151, "rows_no_animation": 7, "hurtboxes": 15, "glb_bytes": 10610576}
+{"triangles": 2580, "vertices_gltf": 1925, "vertices_source": 1403, "bones": 39, "deform_bones": 29, "materials_per_costume": 1, "costume_materials": 4, "clips": 179, "total_frames": 4955, "motion_rows": 351, "rows_own": 162, "rows_alias": 31, "rows_placeholder": 151, "rows_no_animation": 7, "hurtboxes": 15, "glb_bytes": 10968332}
 RESULT: ALL PASSED

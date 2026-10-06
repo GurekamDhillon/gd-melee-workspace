@@ -50,6 +50,20 @@ check("all required roles present", all(r in have for r in need_roles), str([r f
 check("hurtbox count <= 15 (FighterHurtCapsule hurt_capsules[15])", len(C.HURTBOXES) <= 15, str(len(C.HURTBOXES)))
 check("hurtbox bones exist", all(h["bone"] in C.BONE for h in C.HURTBOXES))
 
+
+# ---- frozen mesh / skin / skeleton (the engine lane has already converted them): geometry, weights and bone table must not change
+import hashlib
+def _H(items): return hashlib.sha1("|".join(items).encode()).hexdigest()[:12]
+_vg = {g.index: g.name for g in mesh.vertex_groups}
+_pos = sorted("%.3f,%.3f,%.3f" % tuple(v.co) for v in me.vertices)
+_ws = {}
+for v in me.vertices:
+    for g in v.groups: _ws[_vg[g.group]] = _ws.get(_vg[g.group], 0) + g.weight
+_bs = ["%s|%s|%s|%s" % (b.name, b.parent.name if b.parent else "", tuple(round(x, 4) for x in b.head_local), tuple(round(x, 4) for x in b.tail_local)) for b in arm.data.bones]
+_fz = json.load(open(os.path.join(C.PKG, "data", "frozen_contract.json")))["mesh"]
+_got = dict(pos=_H(_pos), weights=_H(["%s:%.1f" % (k, _ws[k]) for k in sorted(_ws)]), bones=_H(_bs))
+check("mesh vertices, skin weights and bone table are bit-for-bit the first lane's (frozen: the engine lane has converted them)", all(_got[k] == _fz[k] for k in _got), str(_got))
+
 # ---- actions
 cd = json.load(open(os.path.join(OUT, "clips_data.json")))
 clip_by_name = {c["name"]: c for c in cd["clips"]}

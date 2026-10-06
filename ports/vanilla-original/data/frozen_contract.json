@@ -1,0 +1,4388 @@
+{
+"note": "The first animation lane's contract with the engine lane (frozen: the second pass must not change it).",
+"clips": [
+{
+"name": "Attack11",
+"frames": 13,
+"loop": false,
+"hit_frames": [
+3
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Attack12",
+"frames": 14,
+"loop": false,
+"hit_frames": [
+3
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Attack13",
+"frames": 20,
+"loop": false,
+"hit_frames": [
+5
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Attack100Loop",
+"frames": 8,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Attack100Start",
+"frames": 6,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Attack100End",
+"frames": 10,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackDash",
+"frames": 30,
+"loop": false,
+"hit_frames": [
+6,
+10
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackS3Hi",
+"frames": 17,
+"loop": false,
+"hit_frames": [
+6
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackS3S",
+"frames": 17,
+"loop": false,
+"hit_frames": [
+6
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackS3Lw",
+"frames": 17,
+"loop": false,
+"hit_frames": [
+6
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackHi3",
+"frames": 23,
+"loop": false,
+"hit_frames": [
+5,
+17
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackLw3",
+"frames": 23,
+"loop": false,
+"hit_frames": [
+6
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackS4S",
+"frames": 38,
+"loop": false,
+"hit_frames": [
+13
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackS4Hi",
+"frames": 38,
+"loop": false,
+"hit_frames": [
+13
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackS4Lw",
+"frames": 38,
+"loop": false,
+"hit_frames": [
+13
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackHi4",
+"frames": 38,
+"loop": false,
+"hit_frames": [
+10,
+20
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackLw4",
+"frames": 34,
+"loop": false,
+"hit_frames": [
+6,
+15
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackAirN",
+"frames": 40,
+"loop": false,
+"hit_frames": [
+4,
+8
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackAirF",
+"frames": 52,
+"loop": false,
+"hit_frames": [
+19
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackAirB",
+"frames": 28,
+"loop": false,
+"hit_frames": [
+7,
+14
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackAirHi",
+"frames": 25,
+"loop": false,
+"hit_frames": [
+5
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AttackAirLw",
+"frames": 42,
+"loop": false,
+"hit_frames": [
+11,
+25
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Catch",
+"frames": 30,
+"loop": false,
+"hit_frames": [
+6
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CatchDash",
+"frames": 36,
+"loop": false,
+"hit_frames": [
+9
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CatchWait",
+"frames": 40,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CatchAttack",
+"frames": 15,
+"loop": false,
+"hit_frames": [
+14
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CatchCut",
+"frames": 22,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ThrowF",
+"frames": 26,
+"loop": false,
+"hit_frames": [
+13
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ThrowB",
+"frames": 60,
+"loop": false,
+"hit_frames": [
+45
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ThrowHi",
+"frames": 34,
+"loop": false,
+"hit_frames": [
+19
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ThrowLw",
+"frames": 34,
+"loop": false,
+"hit_frames": [
+19
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "NCharge",
+"frames": 12,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "NRelease",
+"frames": 20,
+"loop": false,
+"hit_frames": [
+3
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "SLunge",
+"frames": 28,
+"loop": false,
+"hit_frames": [
+4
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Rise",
+"frames": 24,
+"loop": true,
+"hit_frames": [
+1
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Counter",
+"frames": 30,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CounterStrike",
+"frames": 21,
+"loop": false,
+"hit_frames": [
+2
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Wait",
+"frames": 80,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "WalkSlow",
+"frames": 44,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "WalkMiddle",
+"frames": 34,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "WalkFast",
+"frames": 26,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Run",
+"frames": 16,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Dash",
+"frames": 16,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "RunBrake",
+"frames": 16,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Turn",
+"frames": 10,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "TurnRun",
+"frames": 12,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "KneeBend",
+"frames": 5,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "JumpF",
+"frames": 40,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "JumpB",
+"frames": 40,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "JumpAerialF",
+"frames": 34,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "JumpAerialB",
+"frames": 34,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Fall",
+"frames": 20,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "FallAerial",
+"frames": 20,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "FastFall",
+"frames": 8,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "FallSpecial",
+"frames": 24,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageFall",
+"frames": 18,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Landing",
+"frames": 8,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LandingAirN",
+"frames": 8,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LandingAirF",
+"frames": 10,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LandingAirB",
+"frames": 9,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LandingAirHi",
+"frames": 8,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LandingAirLw",
+"frames": 14,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LandingFallSpecial",
+"frames": 24,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Squat",
+"frames": 8,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "SquatWait",
+"frames": 40,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "SquatRv",
+"frames": 8,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "GuardOn",
+"frames": 8,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Guard",
+"frames": 24,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "GuardOff",
+"frames": 10,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "GuardSetOff",
+"frames": 12,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "EscapeF",
+"frames": 30,
+"loop": false,
+"hit_frames": [],
+"root_motion": true,
+"root_motion_total": [
+0.0,
+16.0,
+0.0
+]
+},
+{
+"name": "EscapeB",
+"frames": 30,
+"loop": false,
+"hit_frames": [],
+"root_motion": true,
+"root_motion_total": [
+0.0,
+-16.0,
+0.0
+]
+},
+{
+"name": "EscapeN",
+"frames": 24,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "EscapeAir",
+"frames": 28,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageHi1",
+"frames": 14,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageHi2",
+"frames": 20,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageHi3",
+"frames": 28,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageN1",
+"frames": 14,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageN2",
+"frames": 20,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageN3",
+"frames": 28,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageLw1",
+"frames": 14,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageLw2",
+"frames": 20,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageLw3",
+"frames": 28,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageAir1",
+"frames": 14,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageAir2",
+"frames": 20,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageAir3",
+"frames": 28,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageFlyHi",
+"frames": 16,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageFlyN",
+"frames": 16,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageFlyLw",
+"frames": 16,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageFlyTop",
+"frames": 16,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageFlyRoll",
+"frames": 20,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DownWaitU",
+"frames": 30,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DownWaitD",
+"frames": 30,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DownBoundU",
+"frames": 22,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DownDamageU",
+"frames": 16,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DownStandU",
+"frames": 30,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DownSpotU",
+"frames": 28,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DownAttackU",
+"frames": 45,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DownForwardU",
+"frames": 35,
+"loop": false,
+"hit_frames": [],
+"root_motion": true,
+"root_motion_total": [
+0.0,
+14.0,
+0.0
+]
+},
+{
+"name": "DownBackU",
+"frames": 35,
+"loop": false,
+"hit_frames": [],
+"root_motion": true,
+"root_motion_total": [
+0.0,
+-14.0,
+0.0
+]
+},
+{
+"name": "DownBoundD",
+"frames": 22,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DownDamageD",
+"frames": 16,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DownStandD",
+"frames": 30,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DownSpotD",
+"frames": 28,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DownAttackD",
+"frames": 45,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DownForwardD",
+"frames": 35,
+"loop": false,
+"hit_frames": [],
+"root_motion": true,
+"root_motion_total": [
+0.0,
+14.0,
+0.0
+]
+},
+{
+"name": "DownBackD",
+"frames": 35,
+"loop": false,
+"hit_frames": [],
+"root_motion": true,
+"root_motion_total": [
+0.0,
+-14.0,
+0.0
+]
+},
+{
+"name": "Passive",
+"frames": 24,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "PassiveStandF",
+"frames": 30,
+"loop": false,
+"hit_frames": [],
+"root_motion": true,
+"root_motion_total": [
+0.0,
+14.0,
+0.0
+]
+},
+{
+"name": "PassiveStandB",
+"frames": 30,
+"loop": false,
+"hit_frames": [],
+"root_motion": true,
+"root_motion_total": [
+0.0,
+-14.0,
+0.0
+]
+},
+{
+"name": "PassiveWall",
+"frames": 24,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "PassiveWallJump",
+"frames": 30,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "PassiveCeil",
+"frames": 22,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ShieldBreakFly",
+"frames": 16,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ShieldBreakFall",
+"frames": 20,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ShieldBreakDownU",
+"frames": 22,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ShieldBreakStandU",
+"frames": 40,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ShieldBreakDownD",
+"frames": 22,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ShieldBreakStandD",
+"frames": 40,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Furafura",
+"frames": 40,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CapturePulledHi",
+"frames": 16,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CapturePulledLw",
+"frames": 16,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CaptureWaitHi",
+"frames": 30,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CaptureWaitLw",
+"frames": 30,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CaptureDamageHi",
+"frames": 10,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CaptureDamageLw",
+"frames": 10,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CaptureCut",
+"frames": 18,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CaptureJump",
+"frames": 20,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CaptureNeck",
+"frames": 24,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CaptureFoot",
+"frames": 24,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ThrownF",
+"frames": 24,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ThrownB",
+"frames": 24,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ThrownHi",
+"frames": 24,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ThrownLw",
+"frames": 24,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Rebound",
+"frames": 24,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Pass",
+"frames": 18,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Ottotto",
+"frames": 30,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "FlyReflectWall",
+"frames": 20,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "FlyReflectCeil",
+"frames": 20,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "StopWall",
+"frames": 20,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "StopCeil",
+"frames": 20,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "MissFoot",
+"frames": 20,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CliffCatch",
+"frames": 14,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CliffWait",
+"frames": 60,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CliffClimbSlow",
+"frames": 60,
+"loop": false,
+"hit_frames": [],
+"root_motion": true,
+"root_motion_total": [
+0,
+4.5,
+9.0
+]
+},
+{
+"name": "CliffClimbQuick",
+"frames": 40,
+"loop": false,
+"hit_frames": [],
+"root_motion": true,
+"root_motion_total": [
+0,
+4.5,
+9.0
+]
+},
+{
+"name": "CliffAttackSlow",
+"frames": 70,
+"loop": false,
+"hit_frames": [],
+"root_motion": true,
+"root_motion_total": [
+0,
+6.0,
+9.0
+]
+},
+{
+"name": "CliffAttackQuick",
+"frames": 50,
+"loop": false,
+"hit_frames": [],
+"root_motion": true,
+"root_motion_total": [
+0,
+6.0,
+9.0
+]
+},
+{
+"name": "CliffEscapeSlow",
+"frames": 70,
+"loop": false,
+"hit_frames": [],
+"root_motion": true,
+"root_motion_total": [
+0,
+14.0,
+9.0
+]
+},
+{
+"name": "CliffEscapeQuick",
+"frames": 50,
+"loop": false,
+"hit_frames": [],
+"root_motion": true,
+"root_motion_total": [
+0,
+14.0,
+9.0
+]
+},
+{
+"name": "CliffJumpSlow1",
+"frames": 30,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CliffJumpQuick1",
+"frames": 22,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CliffJumpSlow2",
+"frames": 36,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "CliffJumpQuick2",
+"frames": 30,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LightGet",
+"frames": 14,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "HeavyGet",
+"frames": 24,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LightThrowF",
+"frames": 24,
+"loop": false,
+"hit_frames": [
+9
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LightThrowB",
+"frames": 26,
+"loop": false,
+"hit_frames": [
+12
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LightThrowHi",
+"frames": 24,
+"loop": false,
+"hit_frames": [
+9
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LightThrowLw",
+"frames": 24,
+"loop": false,
+"hit_frames": [
+9
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LightThrowDash",
+"frames": 24,
+"loop": false,
+"hit_frames": [
+9
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LightThrowDrop",
+"frames": 14,
+"loop": false,
+"hit_frames": [
+5
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ItemSwing1",
+"frames": 24,
+"loop": false,
+"hit_frames": [
+6
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ItemSwing3",
+"frames": 28,
+"loop": false,
+"hit_frames": [
+10
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ItemSwing4",
+"frames": 40,
+"loop": false,
+"hit_frames": [
+14
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ItemSwingDash",
+"frames": 30,
+"loop": false,
+"hit_frames": [
+7
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "ItemShoot",
+"frames": 22,
+"loop": false,
+"hit_frames": [
+3
+],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LiftWait",
+"frames": 40,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "LiftWalk",
+"frames": 28,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "EntryStart",
+"frames": 60,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Rebirth",
+"frames": 40,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AppealSR",
+"frames": 70,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "AppealSL",
+"frames": 70,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Win1",
+"frames": 90,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Win2",
+"frames": 90,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Win3",
+"frames": 90,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "Lose",
+"frames": 60,
+"loop": true,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageIce",
+"frames": 4,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+},
+{
+"name": "DamageIceJump",
+"frames": 20,
+"loop": false,
+"hit_frames": [],
+"root_motion": false,
+"root_motion_total": [
+0,
+0,
+0
+]
+}
+],
+"motion_rows": [
+{
+"motion": 0,
+"row": "DeadDown",
+"clip": null,
+"status": "no-animation"
+},
+{
+"motion": 1,
+"row": "DeadLeft",
+"clip": null,
+"status": "no-animation"
+},
+{
+"motion": 2,
+"row": "DeadRight",
+"clip": null,
+"status": "no-animation"
+},
+{
+"motion": 3,
+"row": "DeadUp",
+"clip": null,
+"status": "no-animation"
+},
+{
+"motion": 4,
+"row": "DeadUpStar",
+"clip": "DamageFlyRoll",
+"status": "placeholder"
+},
+{
+"motion": 5,
+"row": "DeadUpStarIce",
+"clip": null,
+"status": "no-animation"
+},
+{
+"motion": 6,
+"row": "DeadUpFall",
+"clip": "DamageFlyRoll",
+"status": "placeholder"
+},
+{
+"motion": 7,
+"row": "DeadUpFallHitCamera",
+"clip": "DamageFlyRoll",
+"status": "placeholder"
+},
+{
+"motion": 8,
+"row": "DeadUpFallHitCameraFlat",
+"clip": "DamageFlyRoll",
+"status": "placeholder"
+},
+{
+"motion": 9,
+"row": "DeadUpFallIce",
+"clip": null,
+"status": "no-animation"
+},
+{
+"motion": 10,
+"row": "DeadUpFallHitCameraIce",
+"clip": null,
+"status": "no-animation"
+},
+{
+"motion": 11,
+"row": "Sleep",
+"clip": "Wait",
+"status": "placeholder"
+},
+{
+"motion": 12,
+"row": "Rebirth",
+"clip": "Rebirth",
+"status": "own"
+},
+{
+"motion": 13,
+"row": "RebirthWait",
+"clip": "Rebirth",
+"status": "alias"
+},
+{
+"motion": 14,
+"row": "Wait",
+"clip": "Wait",
+"status": "own"
+},
+{
+"motion": 15,
+"row": "WalkSlow",
+"clip": "WalkSlow",
+"status": "own"
+},
+{
+"motion": 16,
+"row": "WalkMiddle",
+"clip": "WalkMiddle",
+"status": "own"
+},
+{
+"motion": 17,
+"row": "WalkFast",
+"clip": "WalkFast",
+"status": "own"
+},
+{
+"motion": 18,
+"row": "Turn",
+"clip": "Turn",
+"status": "own"
+},
+{
+"motion": 19,
+"row": "TurnRun",
+"clip": "TurnRun",
+"status": "own"
+},
+{
+"motion": 20,
+"row": "Dash",
+"clip": "Dash",
+"status": "own"
+},
+{
+"motion": 21,
+"row": "Run",
+"clip": "Run",
+"status": "own"
+},
+{
+"motion": 22,
+"row": "RunDirect",
+"clip": "Run",
+"status": "alias"
+},
+{
+"motion": 23,
+"row": "RunBrake",
+"clip": "RunBrake",
+"status": "own"
+},
+{
+"motion": 24,
+"row": "KneeBend",
+"clip": "KneeBend",
+"status": "own"
+},
+{
+"motion": 25,
+"row": "JumpF",
+"clip": "JumpF",
+"status": "own"
+},
+{
+"motion": 26,
+"row": "JumpB",
+"clip": "JumpB",
+"status": "own"
+},
+{
+"motion": 27,
+"row": "JumpAerialF",
+"clip": "JumpAerialF",
+"status": "own"
+},
+{
+"motion": 28,
+"row": "JumpAerialB",
+"clip": "JumpAerialB",
+"status": "own"
+},
+{
+"motion": 29,
+"row": "Fall",
+"clip": "Fall",
+"status": "own"
+},
+{
+"motion": 30,
+"row": "FallF",
+"clip": "Fall",
+"status": "alias"
+},
+{
+"motion": 31,
+"row": "FallB",
+"clip": "Fall",
+"status": "alias"
+},
+{
+"motion": 32,
+"row": "FallAerial",
+"clip": "FallAerial",
+"status": "own"
+},
+{
+"motion": 33,
+"row": "FallAerialF",
+"clip": "FallAerial",
+"status": "alias"
+},
+{
+"motion": 34,
+"row": "FallAerialB",
+"clip": "FallAerial",
+"status": "alias"
+},
+{
+"motion": 35,
+"row": "FallSpecial",
+"clip": "FallSpecial",
+"status": "own"
+},
+{
+"motion": 36,
+"row": "FallSpecialF",
+"clip": "FallSpecial",
+"status": "alias"
+},
+{
+"motion": 37,
+"row": "FallSpecialB",
+"clip": "FallSpecial",
+"status": "alias"
+},
+{
+"motion": 38,
+"row": "DamageFall",
+"clip": "DamageFall",
+"status": "own"
+},
+{
+"motion": 39,
+"row": "Squat",
+"clip": "Squat",
+"status": "own"
+},
+{
+"motion": 40,
+"row": "SquatWait",
+"clip": "SquatWait",
+"status": "own"
+},
+{
+"motion": 41,
+"row": "SquatRv",
+"clip": "SquatRv",
+"status": "own"
+},
+{
+"motion": 42,
+"row": "Landing",
+"clip": "Landing",
+"status": "own"
+},
+{
+"motion": 43,
+"row": "LandingFallSpecial",
+"clip": "LandingFallSpecial",
+"status": "own"
+},
+{
+"motion": 44,
+"row": "Attack11",
+"clip": "Attack11",
+"status": "own"
+},
+{
+"motion": 45,
+"row": "Attack12",
+"clip": "Attack12",
+"status": "own"
+},
+{
+"motion": 46,
+"row": "Attack13",
+"clip": "Attack13",
+"status": "own"
+},
+{
+"motion": 47,
+"row": "Attack100Start",
+"clip": "Attack100Start",
+"status": "own"
+},
+{
+"motion": 48,
+"row": "Attack100Loop",
+"clip": "Attack100Loop",
+"status": "own"
+},
+{
+"motion": 49,
+"row": "Attack100End",
+"clip": "Attack100End",
+"status": "own"
+},
+{
+"motion": 50,
+"row": "AttackDash",
+"clip": "AttackDash",
+"status": "own"
+},
+{
+"motion": 51,
+"row": "AttackS3Hi",
+"clip": "AttackS3Hi",
+"status": "own"
+},
+{
+"motion": 52,
+"row": "AttackS3HiS",
+"clip": "AttackS3Hi",
+"status": "alias"
+},
+{
+"motion": 53,
+"row": "AttackS3S",
+"clip": "AttackS3S",
+"status": "own"
+},
+{
+"motion": 54,
+"row": "AttackS3LwS",
+"clip": "AttackS3Lw",
+"status": "alias"
+},
+{
+"motion": 55,
+"row": "AttackS3Lw",
+"clip": "AttackS3Lw",
+"status": "own"
+},
+{
+"motion": 56,
+"row": "AttackHi3",
+"clip": "AttackHi3",
+"status": "own"
+},
+{
+"motion": 57,
+"row": "AttackLw3",
+"clip": "AttackLw3",
+"status": "own"
+},
+{
+"motion": 58,
+"row": "AttackS4Hi",
+"clip": "AttackS4Hi",
+"status": "own"
+},
+{
+"motion": 59,
+"row": "AttackS4HiS",
+"clip": "AttackS4Hi",
+"status": "alias"
+},
+{
+"motion": 60,
+"row": "AttackS4S",
+"clip": "AttackS4S",
+"status": "own"
+},
+{
+"motion": 61,
+"row": "AttackS4LwS",
+"clip": "AttackS4Lw",
+"status": "alias"
+},
+{
+"motion": 62,
+"row": "AttackS4Lw",
+"clip": "AttackS4Lw",
+"status": "own"
+},
+{
+"motion": 63,
+"row": "AttackHi4",
+"clip": "AttackHi4",
+"status": "own"
+},
+{
+"motion": 64,
+"row": "AttackLw4",
+"clip": "AttackLw4",
+"status": "own"
+},
+{
+"motion": 65,
+"row": "AttackAirN",
+"clip": "AttackAirN",
+"status": "own"
+},
+{
+"motion": 66,
+"row": "AttackAirF",
+"clip": "AttackAirF",
+"status": "own"
+},
+{
+"motion": 67,
+"row": "AttackAirB",
+"clip": "AttackAirB",
+"status": "own"
+},
+{
+"motion": 68,
+"row": "AttackAirHi",
+"clip": "AttackAirHi",
+"status": "own"
+},
+{
+"motion": 69,
+"row": "AttackAirLw",
+"clip": "AttackAirLw",
+"status": "own"
+},
+{
+"motion": 70,
+"row": "LandingAirN",
+"clip": "LandingAirN",
+"status": "own"
+},
+{
+"motion": 71,
+"row": "LandingAirF",
+"clip": "LandingAirF",
+"status": "own"
+},
+{
+"motion": 72,
+"row": "LandingAirB",
+"clip": "LandingAirB",
+"status": "own"
+},
+{
+"motion": 73,
+"row": "LandingAirHi",
+"clip": "LandingAirHi",
+"status": "own"
+},
+{
+"motion": 74,
+"row": "LandingAirLw",
+"clip": "LandingAirLw",
+"status": "own"
+},
+{
+"motion": 75,
+"row": "DamageHi1",
+"clip": "DamageHi1",
+"status": "own"
+},
+{
+"motion": 76,
+"row": "DamageHi2",
+"clip": "DamageHi2",
+"status": "own"
+},
+{
+"motion": 77,
+"row": "DamageHi3",
+"clip": "DamageHi3",
+"status": "own"
+},
+{
+"motion": 78,
+"row": "DamageN1",
+"clip": "DamageN1",
+"status": "own"
+},
+{
+"motion": 79,
+"row": "DamageN2",
+"clip": "DamageN2",
+"status": "own"
+},
+{
+"motion": 80,
+"row": "DamageN3",
+"clip": "DamageN3",
+"status": "own"
+},
+{
+"motion": 81,
+"row": "DamageLw1",
+"clip": "DamageLw1",
+"status": "own"
+},
+{
+"motion": 82,
+"row": "DamageLw2",
+"clip": "DamageLw2",
+"status": "own"
+},
+{
+"motion": 83,
+"row": "DamageLw3",
+"clip": "DamageLw3",
+"status": "own"
+},
+{
+"motion": 84,
+"row": "DamageAir1",
+"clip": "DamageAir1",
+"status": "own"
+},
+{
+"motion": 85,
+"row": "DamageAir2",
+"clip": "DamageAir2",
+"status": "own"
+},
+{
+"motion": 86,
+"row": "DamageAir3",
+"clip": "DamageAir3",
+"status": "own"
+},
+{
+"motion": 87,
+"row": "DamageFlyHi",
+"clip": "DamageFlyHi",
+"status": "own"
+},
+{
+"motion": 88,
+"row": "DamageFlyN",
+"clip": "DamageFlyN",
+"status": "own"
+},
+{
+"motion": 89,
+"row": "DamageFlyLw",
+"clip": "DamageFlyLw",
+"status": "own"
+},
+{
+"motion": 90,
+"row": "DamageFlyTop",
+"clip": "DamageFlyTop",
+"status": "own"
+},
+{
+"motion": 91,
+"row": "DamageFlyRoll",
+"clip": "DamageFlyRoll",
+"status": "own"
+},
+{
+"motion": 92,
+"row": "LightGet",
+"clip": "LightGet",
+"status": "own"
+},
+{
+"motion": 93,
+"row": "HeavyGet",
+"clip": "HeavyGet",
+"status": "own"
+},
+{
+"motion": 94,
+"row": "LightThrowF",
+"clip": "LightThrowF",
+"status": "own"
+},
+{
+"motion": 95,
+"row": "LightThrowB",
+"clip": "LightThrowB",
+"status": "own"
+},
+{
+"motion": 96,
+"row": "LightThrowHi",
+"clip": "LightThrowHi",
+"status": "own"
+},
+{
+"motion": 97,
+"row": "LightThrowLw",
+"clip": "LightThrowLw",
+"status": "own"
+},
+{
+"motion": 98,
+"row": "LightThrowDash",
+"clip": "LightThrowDash",
+"status": "own"
+},
+{
+"motion": 99,
+"row": "LightThrowDrop",
+"clip": "LightThrowDrop",
+"status": "own"
+},
+{
+"motion": 100,
+"row": "LightThrowAirF",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 101,
+"row": "LightThrowAirB",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 102,
+"row": "LightThrowAirHi",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 103,
+"row": "LightThrowAirLw",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 104,
+"row": "HeavyThrowF",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 105,
+"row": "HeavyThrowB",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 106,
+"row": "HeavyThrowHi",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 107,
+"row": "HeavyThrowLw",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 108,
+"row": "LightThrowF4",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 109,
+"row": "LightThrowB4",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 110,
+"row": "LightThrowHi4",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 111,
+"row": "LightThrowLw4",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 112,
+"row": "LightThrowAirF4",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 113,
+"row": "LightThrowAirB4",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 114,
+"row": "LightThrowAirHi4",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 115,
+"row": "LightThrowAirLw4",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 116,
+"row": "HeavyThrowF4",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 117,
+"row": "HeavyThrowB4",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 118,
+"row": "HeavyThrowHi4",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 119,
+"row": "HeavyThrowLw4",
+"clip": "LightThrowF",
+"status": "placeholder"
+},
+{
+"motion": 120,
+"row": "SwordSwing1",
+"clip": "ItemSwing1",
+"status": "placeholder"
+},
+{
+"motion": 121,
+"row": "SwordSwing3",
+"clip": "ItemSwing3",
+"status": "placeholder"
+},
+{
+"motion": 122,
+"row": "SwordSwing4",
+"clip": "ItemSwing4",
+"status": "placeholder"
+},
+{
+"motion": 123,
+"row": "SwordSwingDash",
+"clip": "ItemSwingDash",
+"status": "placeholder"
+},
+{
+"motion": 124,
+"row": "BatSwing1",
+"clip": "ItemSwing1",
+"status": "placeholder"
+},
+{
+"motion": 125,
+"row": "BatSwing3",
+"clip": "ItemSwing3",
+"status": "placeholder"
+},
+{
+"motion": 126,
+"row": "BatSwing4",
+"clip": "ItemSwing4",
+"status": "placeholder"
+},
+{
+"motion": 127,
+"row": "BatSwingDash",
+"clip": "ItemSwingDash",
+"status": "placeholder"
+},
+{
+"motion": 128,
+"row": "ParasolSwing1",
+"clip": "ItemSwing1",
+"status": "placeholder"
+},
+{
+"motion": 129,
+"row": "ParasolSwing3",
+"clip": "ItemSwing3",
+"status": "placeholder"
+},
+{
+"motion": 130,
+"row": "ParasolSwing4",
+"clip": "ItemSwing4",
+"status": "placeholder"
+},
+{
+"motion": 131,
+"row": "ParasolSwingDash",
+"clip": "ItemSwingDash",
+"status": "placeholder"
+},
+{
+"motion": 132,
+"row": "HarisenSwing1",
+"clip": "ItemSwing1",
+"status": "placeholder"
+},
+{
+"motion": 133,
+"row": "HarisenSwing3",
+"clip": "ItemSwing3",
+"status": "placeholder"
+},
+{
+"motion": 134,
+"row": "HarisenSwing4",
+"clip": "ItemSwing4",
+"status": "placeholder"
+},
+{
+"motion": 135,
+"row": "HarisenSwingDash",
+"clip": "ItemSwingDash",
+"status": "placeholder"
+},
+{
+"motion": 136,
+"row": "StarRodSwing1",
+"clip": "ItemSwing1",
+"status": "placeholder"
+},
+{
+"motion": 137,
+"row": "StarRodSwing3",
+"clip": "ItemSwing3",
+"status": "placeholder"
+},
+{
+"motion": 138,
+"row": "StarRodSwing4",
+"clip": "ItemSwing4",
+"status": "placeholder"
+},
+{
+"motion": 139,
+"row": "StarRodSwingDash",
+"clip": "ItemSwingDash",
+"status": "placeholder"
+},
+{
+"motion": 140,
+"row": "LipstickSwing1",
+"clip": "ItemSwing1",
+"status": "placeholder"
+},
+{
+"motion": 141,
+"row": "LipstickSwing3",
+"clip": "ItemSwing3",
+"status": "placeholder"
+},
+{
+"motion": 142,
+"row": "LipstickSwing4",
+"clip": "ItemSwing4",
+"status": "placeholder"
+},
+{
+"motion": 143,
+"row": "LipstickSwingDash",
+"clip": "ItemSwingDash",
+"status": "placeholder"
+},
+{
+"motion": 144,
+"row": "ItemParasolOpen",
+"clip": "Fall",
+"status": "placeholder"
+},
+{
+"motion": 145,
+"row": "ItemParasolFall",
+"clip": "Fall",
+"status": "placeholder"
+},
+{
+"motion": 146,
+"row": "ItemParasolFallSpecial",
+"clip": "Fall",
+"status": "placeholder"
+},
+{
+"motion": 147,
+"row": "ItemParasolDamageFall",
+"clip": "Fall",
+"status": "placeholder"
+},
+{
+"motion": 148,
+"row": "LGunShoot",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 149,
+"row": "LGunShootAir",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 150,
+"row": "LGunShootEmpty",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 151,
+"row": "LGunShootAirEmpty",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 152,
+"row": "FireFlowerShoot",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 153,
+"row": "FireFlowerShootAir",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 154,
+"row": "ItemScrew",
+"clip": "DamageFlyRoll",
+"status": "placeholder"
+},
+{
+"motion": 155,
+"row": "ItemScrewAir",
+"clip": "DamageFlyRoll",
+"status": "placeholder"
+},
+{
+"motion": 156,
+"row": "DamageScrew",
+"clip": "DamageFlyRoll",
+"status": "placeholder"
+},
+{
+"motion": 157,
+"row": "DamageScrewAir",
+"clip": "DamageFlyRoll",
+"status": "placeholder"
+},
+{
+"motion": 158,
+"row": "ItemScopeStart",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 159,
+"row": "ItemScopeRapid",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 160,
+"row": "ItemScopeFire",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 161,
+"row": "ItemScopeEnd",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 162,
+"row": "ItemScopeAirStart",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 163,
+"row": "ItemScopeAirRapid",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 164,
+"row": "ItemScopeAirFire",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 165,
+"row": "ItemScopeAirEnd",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 166,
+"row": "ItemScopeStartEmpty",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 167,
+"row": "ItemScopeRapidEmpty",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 168,
+"row": "ItemScopeFireEmpty",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 169,
+"row": "ItemScopeEndEmpty",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 170,
+"row": "ItemScopeAirStartEmpty",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 171,
+"row": "ItemScopeAirRapidEmpty",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 172,
+"row": "ItemScopeAirFireEmpty",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 173,
+"row": "ItemScopeAirEndEmpty",
+"clip": "ItemShoot",
+"status": "placeholder"
+},
+{
+"motion": 174,
+"row": "LiftWait",
+"clip": "LiftWait",
+"status": "own"
+},
+{
+"motion": 175,
+"row": "LiftWalk1",
+"clip": "LiftWalk",
+"status": "alias"
+},
+{
+"motion": 176,
+"row": "LiftWalk2",
+"clip": "LiftWalk",
+"status": "alias"
+},
+{
+"motion": 177,
+"row": "LiftTurn",
+"clip": "Turn",
+"status": "placeholder"
+},
+{
+"motion": 178,
+"row": "GuardOn",
+"clip": "GuardOn",
+"status": "own"
+},
+{
+"motion": 179,
+"row": "Guard",
+"clip": "Guard",
+"status": "own"
+},
+{
+"motion": 180,
+"row": "GuardOff",
+"clip": "GuardOff",
+"status": "own"
+},
+{
+"motion": 181,
+"row": "GuardSetOff",
+"clip": "GuardSetOff",
+"status": "own"
+},
+{
+"motion": 182,
+"row": "GuardReflect",
+"clip": "GuardOn",
+"status": "alias"
+},
+{
+"motion": 183,
+"row": "DownBoundU",
+"clip": "DownBoundU",
+"status": "own"
+},
+{
+"motion": 184,
+"row": "DownWaitU",
+"clip": "DownWaitU",
+"status": "own"
+},
+{
+"motion": 185,
+"row": "DownDamageU",
+"clip": "DownDamageU",
+"status": "own"
+},
+{
+"motion": 186,
+"row": "DownStandU",
+"clip": "DownStandU",
+"status": "own"
+},
+{
+"motion": 187,
+"row": "DownAttackU",
+"clip": "DownAttackU",
+"status": "own"
+},
+{
+"motion": 188,
+"row": "DownFowardU",
+"clip": "DownForwardU",
+"status": "alias"
+},
+{
+"motion": 189,
+"row": "DownBackU",
+"clip": "DownBackU",
+"status": "own"
+},
+{
+"motion": 190,
+"row": "DownSpotU",
+"clip": "DownSpotU",
+"status": "own"
+},
+{
+"motion": 191,
+"row": "DownBoundD",
+"clip": "DownBoundD",
+"status": "own"
+},
+{
+"motion": 192,
+"row": "DownWaitD",
+"clip": "DownWaitD",
+"status": "own"
+},
+{
+"motion": 193,
+"row": "DownDamageD",
+"clip": "DownDamageD",
+"status": "own"
+},
+{
+"motion": 194,
+"row": "DownStandD",
+"clip": "DownStandD",
+"status": "own"
+},
+{
+"motion": 195,
+"row": "DownAttackD",
+"clip": "DownAttackD",
+"status": "own"
+},
+{
+"motion": 196,
+"row": "DownFowardD",
+"clip": "DownForwardD",
+"status": "alias"
+},
+{
+"motion": 197,
+"row": "DownBackD",
+"clip": "DownBackD",
+"status": "own"
+},
+{
+"motion": 198,
+"row": "DownSpotD",
+"clip": "DownSpotD",
+"status": "own"
+},
+{
+"motion": 199,
+"row": "Passive",
+"clip": "Passive",
+"status": "own"
+},
+{
+"motion": 200,
+"row": "PassiveStandF",
+"clip": "PassiveStandF",
+"status": "own"
+},
+{
+"motion": 201,
+"row": "PassiveStandB",
+"clip": "PassiveStandB",
+"status": "own"
+},
+{
+"motion": 202,
+"row": "PassiveWall",
+"clip": "PassiveWall",
+"status": "own"
+},
+{
+"motion": 203,
+"row": "PassiveWallJump",
+"clip": "PassiveWallJump",
+"status": "own"
+},
+{
+"motion": 204,
+"row": "PassiveCeil",
+"clip": "PassiveCeil",
+"status": "own"
+},
+{
+"motion": 205,
+"row": "ShieldBreakFly",
+"clip": "ShieldBreakFly",
+"status": "own"
+},
+{
+"motion": 206,
+"row": "ShieldBreakFall",
+"clip": "ShieldBreakFall",
+"status": "own"
+},
+{
+"motion": 207,
+"row": "ShieldBreakDownU",
+"clip": "ShieldBreakDownU",
+"status": "own"
+},
+{
+"motion": 208,
+"row": "ShieldBreakDownD",
+"clip": "ShieldBreakDownD",
+"status": "own"
+},
+{
+"motion": 209,
+"row": "ShieldBreakStandU",
+"clip": "ShieldBreakStandU",
+"status": "own"
+},
+{
+"motion": 210,
+"row": "ShieldBreakStandD",
+"clip": "ShieldBreakStandD",
+"status": "own"
+},
+{
+"motion": 211,
+"row": "Furafura",
+"clip": "Furafura",
+"status": "own"
+},
+{
+"motion": 212,
+"row": "Catch",
+"clip": "Catch",
+"status": "own"
+},
+{
+"motion": 213,
+"row": "CatchPull",
+"clip": "Catch",
+"status": "alias"
+},
+{
+"motion": 214,
+"row": "CatchDash",
+"clip": "CatchDash",
+"status": "own"
+},
+{
+"motion": 215,
+"row": "CatchDashPull",
+"clip": "CatchDash",
+"status": "alias"
+},
+{
+"motion": 216,
+"row": "CatchWait",
+"clip": "CatchWait",
+"status": "own"
+},
+{
+"motion": 217,
+"row": "CatchAttack",
+"clip": "CatchAttack",
+"status": "own"
+},
+{
+"motion": 218,
+"row": "CatchCut",
+"clip": "CatchCut",
+"status": "own"
+},
+{
+"motion": 219,
+"row": "ThrowF",
+"clip": "ThrowF",
+"status": "own"
+},
+{
+"motion": 220,
+"row": "ThrowB",
+"clip": "ThrowB",
+"status": "own"
+},
+{
+"motion": 221,
+"row": "ThrowHi",
+"clip": "ThrowHi",
+"status": "own"
+},
+{
+"motion": 222,
+"row": "ThrowLw",
+"clip": "ThrowLw",
+"status": "own"
+},
+{
+"motion": 223,
+"row": "CapturePulledHi",
+"clip": "CapturePulledHi",
+"status": "own"
+},
+{
+"motion": 224,
+"row": "CaptureWaitHi",
+"clip": "CaptureWaitHi",
+"status": "own"
+},
+{
+"motion": 225,
+"row": "CaptureDamageHi",
+"clip": "CaptureDamageHi",
+"status": "own"
+},
+{
+"motion": 226,
+"row": "CapturePulledLw",
+"clip": "CapturePulledLw",
+"status": "own"
+},
+{
+"motion": 227,
+"row": "CaptureWaitLw",
+"clip": "CaptureWaitLw",
+"status": "own"
+},
+{
+"motion": 228,
+"row": "CaptureDamageLw",
+"clip": "CaptureDamageLw",
+"status": "own"
+},
+{
+"motion": 229,
+"row": "CaptureCut",
+"clip": "CaptureCut",
+"status": "own"
+},
+{
+"motion": 230,
+"row": "CaptureJump",
+"clip": "CaptureJump",
+"status": "own"
+},
+{
+"motion": 231,
+"row": "CaptureNeck",
+"clip": "CaptureNeck",
+"status": "own"
+},
+{
+"motion": 232,
+"row": "CaptureFoot",
+"clip": "CaptureFoot",
+"status": "own"
+},
+{
+"motion": 233,
+"row": "EscapeF",
+"clip": "EscapeF",
+"status": "own"
+},
+{
+"motion": 234,
+"row": "EscapeB",
+"clip": "EscapeB",
+"status": "own"
+},
+{
+"motion": 235,
+"row": "EscapeN",
+"clip": "EscapeN",
+"status": "own"
+},
+{
+"motion": 236,
+"row": "EscapeAir",
+"clip": "EscapeAir",
+"status": "own"
+},
+{
+"motion": 237,
+"row": "ReboundStop",
+"clip": "Rebound",
+"status": "alias"
+},
+{
+"motion": 238,
+"row": "Rebound",
+"clip": "Rebound",
+"status": "own"
+},
+{
+"motion": 239,
+"row": "ThrownF",
+"clip": "ThrownF",
+"status": "own"
+},
+{
+"motion": 240,
+"row": "ThrownB",
+"clip": "ThrownB",
+"status": "own"
+},
+{
+"motion": 241,
+"row": "ThrownHi",
+"clip": "ThrownHi",
+"status": "own"
+},
+{
+"motion": 242,
+"row": "ThrownLw",
+"clip": "ThrownLw",
+"status": "own"
+},
+{
+"motion": 243,
+"row": "ThrownlwWomen",
+"clip": "ThrownLw",
+"status": "placeholder"
+},
+{
+"motion": 244,
+"row": "Pass",
+"clip": "Pass",
+"status": "own"
+},
+{
+"motion": 245,
+"row": "Ottotto",
+"clip": "Ottotto",
+"status": "own"
+},
+{
+"motion": 246,
+"row": "OttottoWait",
+"clip": "Ottotto",
+"status": "alias"
+},
+{
+"motion": 247,
+"row": "FlyReflectWall",
+"clip": "FlyReflectWall",
+"status": "own"
+},
+{
+"motion": 248,
+"row": "FlyReflectCeil",
+"clip": "FlyReflectCeil",
+"status": "own"
+},
+{
+"motion": 249,
+"row": "StopWall",
+"clip": "StopWall",
+"status": "own"
+},
+{
+"motion": 250,
+"row": "StopCeil",
+"clip": "StopCeil",
+"status": "own"
+},
+{
+"motion": 251,
+"row": "MissFoot",
+"clip": "MissFoot",
+"status": "own"
+},
+{
+"motion": 252,
+"row": "CliffCatch",
+"clip": "CliffCatch",
+"status": "own"
+},
+{
+"motion": 253,
+"row": "CliffWait",
+"clip": "CliffWait",
+"status": "own"
+},
+{
+"motion": 254,
+"row": "CliffClimbSlow",
+"clip": "CliffClimbSlow",
+"status": "own"
+},
+{
+"motion": 255,
+"row": "CliffClimbQuick",
+"clip": "CliffClimbQuick",
+"status": "own"
+},
+{
+"motion": 256,
+"row": "CliffAttackSlow",
+"clip": "CliffAttackSlow",
+"status": "own"
+},
+{
+"motion": 257,
+"row": "CliffAttackQuick",
+"clip": "CliffAttackQuick",
+"status": "own"
+},
+{
+"motion": 258,
+"row": "CliffEscapeSlow",
+"clip": "CliffEscapeSlow",
+"status": "own"
+},
+{
+"motion": 259,
+"row": "CliffEscapeQuick",
+"clip": "CliffEscapeQuick",
+"status": "own"
+},
+{
+"motion": 260,
+"row": "CliffJumpSlow1",
+"clip": "CliffJumpSlow1",
+"status": "own"
+},
+{
+"motion": 261,
+"row": "CliffJumpSlow2",
+"clip": "CliffJumpSlow2",
+"status": "own"
+},
+{
+"motion": 262,
+"row": "CliffJumpQuick1",
+"clip": "CliffJumpQuick1",
+"status": "own"
+},
+{
+"motion": 263,
+"row": "CliffJumpQuick2",
+"clip": "CliffJumpQuick2",
+"status": "own"
+},
+{
+"motion": 264,
+"row": "AppealSR",
+"clip": "AppealSR",
+"status": "own"
+},
+{
+"motion": 265,
+"row": "AppealSL",
+"clip": "AppealSL",
+"status": "own"
+},
+{
+"motion": 266,
+"row": "ShoulderedWait",
+"clip": "Wait",
+"status": "placeholder"
+},
+{
+"motion": 267,
+"row": "ShoulderedWalkSlow",
+"clip": "WalkSlow",
+"status": "placeholder"
+},
+{
+"motion": 268,
+"row": "ShoulderedWalkMiddle",
+"clip": "WalkMiddle",
+"status": "placeholder"
+},
+{
+"motion": 269,
+"row": "ShoulderedWalkFast",
+"clip": "WalkFast",
+"status": "placeholder"
+},
+{
+"motion": 270,
+"row": "ShoulderedTurn",
+"clip": "Turn",
+"status": "placeholder"
+},
+{
+"motion": 271,
+"row": "ThrownFF",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 272,
+"row": "ThrownFB",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 273,
+"row": "ThrownFHi",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 274,
+"row": "ThrownFLw",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 275,
+"row": "CaptureCaptain",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 276,
+"row": "CaptureYoshi",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 277,
+"row": "YoshiEgg",
+"clip": "DamageIce",
+"status": "placeholder"
+},
+{
+"motion": 278,
+"row": "CaptureKoopa",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 279,
+"row": "CaptureDamageKoopa",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 280,
+"row": "CaptureWaitKoopa",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 281,
+"row": "ThrownKoopaF",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 282,
+"row": "ThrownKoopaB",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 283,
+"row": "CaptureKoopaAir",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 284,
+"row": "CaptureDamageKoopaAir",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 285,
+"row": "CaptureWaitKoopaAir",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 286,
+"row": "ThrownKoopaAirF",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 287,
+"row": "ThrownKoopaAirB",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 288,
+"row": "CaptureKirby",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 289,
+"row": "CaptureWaitKirby",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 290,
+"row": "ThrownKirbyStar",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 291,
+"row": "ThrownCopyStar",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 292,
+"row": "ThrownKirby",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 293,
+"row": "BarrelWait",
+"clip": "Wait",
+"status": "placeholder"
+},
+{
+"motion": 294,
+"row": "Bury",
+"clip": "SquatWait",
+"status": "placeholder"
+},
+{
+"motion": 295,
+"row": "BuryWait",
+"clip": "SquatWait",
+"status": "placeholder"
+},
+{
+"motion": 296,
+"row": "BuryJump",
+"clip": "KneeBend",
+"status": "placeholder"
+},
+{
+"motion": 297,
+"row": "DamageSong",
+"clip": "Furafura",
+"status": "placeholder"
+},
+{
+"motion": 298,
+"row": "DamageSongWait",
+"clip": "Furafura",
+"status": "placeholder"
+},
+{
+"motion": 299,
+"row": "DamageSongRv",
+"clip": "Furafura",
+"status": "placeholder"
+},
+{
+"motion": 300,
+"row": "DamageBind",
+"clip": "Furafura",
+"status": "placeholder"
+},
+{
+"motion": 301,
+"row": "CaptureMewtwo",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 302,
+"row": "CaptureMewtwoAir",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 303,
+"row": "ThrownMewtwo",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 304,
+"row": "ThrownMewtwoAir",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 305,
+"row": "WarpStarJump",
+"clip": "JumpAerialF",
+"status": "placeholder"
+},
+{
+"motion": 306,
+"row": "WarpStarFall",
+"clip": "Fall",
+"status": "placeholder"
+},
+{
+"motion": 307,
+"row": "HammerWait",
+"clip": "Wait",
+"status": "placeholder"
+},
+{
+"motion": 308,
+"row": "HammerWalk",
+"clip": "WalkMiddle",
+"status": "placeholder"
+},
+{
+"motion": 309,
+"row": "HammerTurn",
+"clip": "WalkMiddle",
+"status": "placeholder"
+},
+{
+"motion": 310,
+"row": "HammerKneeBend",
+"clip": "KneeBend",
+"status": "placeholder"
+},
+{
+"motion": 311,
+"row": "HammerFall",
+"clip": "Fall",
+"status": "placeholder"
+},
+{
+"motion": 312,
+"row": "HammerJump",
+"clip": "Fall",
+"status": "placeholder"
+},
+{
+"motion": 313,
+"row": "HammerLanding",
+"clip": "Landing",
+"status": "placeholder"
+},
+{
+"motion": 314,
+"row": "KinokoGiantStart",
+"clip": "Wait",
+"status": "placeholder"
+},
+{
+"motion": 315,
+"row": "KinokoGiantStartAir",
+"clip": "Wait",
+"status": "placeholder"
+},
+{
+"motion": 316,
+"row": "KinokoGiantEnd",
+"clip": "Wait",
+"status": "placeholder"
+},
+{
+"motion": 317,
+"row": "KinokoGiantEndAir",
+"clip": "Wait",
+"status": "placeholder"
+},
+{
+"motion": 318,
+"row": "KinokoSmallStart",
+"clip": "Wait",
+"status": "placeholder"
+},
+{
+"motion": 319,
+"row": "KinokoSmallStartAir",
+"clip": "Wait",
+"status": "placeholder"
+},
+{
+"motion": 320,
+"row": "KinokoSmallEnd",
+"clip": "Wait",
+"status": "placeholder"
+},
+{
+"motion": 321,
+"row": "KinokoSmallEndAir",
+"clip": "Wait",
+"status": "placeholder"
+},
+{
+"motion": 322,
+"row": "Entry",
+"clip": "EntryStart",
+"status": "alias"
+},
+{
+"motion": 323,
+"row": "EntryStart",
+"clip": "EntryStart",
+"status": "own"
+},
+{
+"motion": 324,
+"row": "EntryEnd",
+"clip": "EntryStart",
+"status": "alias"
+},
+{
+"motion": 325,
+"row": "DamageIce",
+"clip": "DamageIce",
+"status": "own"
+},
+{
+"motion": 326,
+"row": "DamageIceJump",
+"clip": "DamageIceJump",
+"status": "own"
+},
+{
+"motion": 327,
+"row": "CaptureMasterHand",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 328,
+"row": "CaptureDamageMasterHand",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 329,
+"row": "CaptureWaitMasterHand",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 330,
+"row": "ThrownMasterHand",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 331,
+"row": "CaptureKirbyYoshi",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 332,
+"row": "KirbyYoshiEgg",
+"clip": "DamageIce",
+"status": "placeholder"
+},
+{
+"motion": 333,
+"row": "CaptureLeadead",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 334,
+"row": "CaptureLikelike",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 335,
+"row": "DownReflect",
+"clip": "FlyReflectWall",
+"status": "placeholder"
+},
+{
+"motion": 336,
+"row": "CaptureCrazyHand",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 337,
+"row": "CaptureDamageCrazyHand",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 338,
+"row": "CaptureWaitCrazyHand",
+"clip": "CaptureWaitHi",
+"status": "placeholder"
+},
+{
+"motion": 339,
+"row": "ThrownCrazyHand",
+"clip": "ThrownF",
+"status": "placeholder"
+},
+{
+"motion": 340,
+"row": "Barrel",
+"clip": "Wait",
+"status": "placeholder"
+},
+{
+"motion": 341,
+"row": "AppealSR",
+"clip": "AppealSR",
+"status": "own"
+},
+{
+"motion": 342,
+"row": "AppealSL",
+"clip": "AppealSL",
+"status": "own"
+},
+{
+"motion": 343,
+"row": "SpecialN",
+"clip": "NCharge",
+"status": "alias"
+},
+{
+"motion": 344,
+"row": "SpecialAirN",
+"clip": "NCharge",
+"status": "alias"
+},
+{
+"motion": 345,
+"row": "SpecialS",
+"clip": "SLunge",
+"status": "alias"
+},
+{
+"motion": 346,
+"row": "SpecialAirS",
+"clip": "SLunge",
+"status": "alias"
+},
+{
+"motion": 347,
+"row": "SpecialHi",
+"clip": "Rise",
+"status": "alias"
+},
+{
+"motion": 348,
+"row": "SpecialAirHi",
+"clip": "Rise",
+"status": "alias"
+},
+{
+"motion": 349,
+"row": "SpecialLw",
+"clip": "Counter",
+"status": "alias"
+},
+{
+"motion": 350,
+"row": "SpecialAirLw",
+"clip": "Counter",
+"status": "alias"
+}
+],
+"mesh": {
+"pos": "7be29c8dbd89",
+"weights": "86df081fa177",
+"bones": "d1a35e3b2ead",
+"vertices": 1403,
+"triangles": 2580
+},
+"schema": "geno-fighter-art-manifest/1",
+"manifest_keys": [
+"bones",
+"clips",
+"conventions",
+"costumes",
+"counts",
+"display_name",
+"ecb",
+"fighter",
+"files",
+"full_clips",
+"hurtboxes",
+"motion_rows",
+"placeholder_clips",
+"schema"
+],
+"clip_keys": [
+"category",
+"frames",
+"hit_frames",
+"loop",
+"name",
+"notes",
+"ref",
+"root_motion",
+"root_motion_total",
+"serves",
+"status",
+"wind"
+]
+}

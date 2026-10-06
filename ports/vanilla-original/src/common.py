@@ -8,7 +8,7 @@ front faces +Z, left is +X, the same handedness and facing as HSD / Melee model 
 import math, os
 HERE = os.path.dirname(os.path.abspath(__file__))
 PKG = os.path.dirname(HERE)                      # ports/vanilla-original
-AUDIT = os.path.normpath(os.path.join(PKG, "..", "..", "_build", "audit-20261003", "geno-art"))
+AUDIT = os.path.normpath(os.path.join(PKG, "..", "..", "_build", "audit-20261003", "geno-art2"))
 OUT = os.path.join(PKG, "out")                    # generated, git-ignored (see README)
 FPS = 60
 
@@ -119,3 +119,8 @@ COSTUMES = [
     dict(name="blue", team="blue", desc="cobalt tunic, cream helmet, white scarf"),
     dict(name="green", team="green", desc="forest tunic, cream helmet, lime scarf"),
 ]
+
+# Stated rotation limits (degrees) of a bone relative to its parent measured from the rest pose; validate.py checks every clip,
+# the animation library keeps poses inside them. Hips and trans are exempt (whole-body somersaults).
+JOINT_LIMITS = dict(upperarm=185, forearm=150, hand=75, thigh=135, shin=140, foot=75, clavicle=45, toe=60, neck=60, head=75, spine=60, chest=70)
+SCARF_CLEARANCE = 1.30     # the scarf never comes closer than this to the torso axis (hips head -> neck head); the simulation keeps 1.45

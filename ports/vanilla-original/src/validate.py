@@ -2,7 +2,7 @@
 Striker's move set and the required common states, plus the Blender-side and re-import results. Writes
 validation_report.txt next to the manifest.     python src/validate.py
 """
-import json, os, re, struct, sys
+import json, math, os, re, struct, sys
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -122,7 +122,72 @@ def main():
                 if not c["ok"]: global_fail()
         else:
             lines.append("MISSING " + fn); global_fail()
-    cn = man["counts"]
+
+    # ------------------------------------------------------------------ animation pass 2
+    lines.append("== animation pass 2: contract with the engine lane (frozen) ==")
+    fz = json.load(open(os.path.join(PKG, "data", "frozen_contract.json")))
+    fcl = {c["name"]: c for c in fz["clips"]}
+    cur = {c["name"]: c for c in man["clips"]}
+    check("clip names unchanged (179, same set)", set(fcl) == set(cur), str(sorted(set(fcl) ^ set(cur))[:4]))
+    check("every clip's frame count unchanged", all(cur[n]["frames"] == c["frames"] for n, c in fcl.items() if n in cur), str([n for n, c in fcl.items() if n in cur and cur[n]["frames"] != c["frames"]][:4]))
+    check("every clip's loop flag and hit_frames unchanged", all(cur[n]["loop"] == c["loop"] and cur[n]["hit_frames"] == c["hit_frames"] for n, c in fcl.items() if n in cur),
+          str([n for n, c in fcl.items() if n in cur and (cur[n]["loop"] != c["loop"] or cur[n]["hit_frames"] != c["hit_frames"])][:4]))
+    rmb = [n for n, c in fcl.items() if n in cur and (cur[n]["root_motion"] != c["root_motion"] or any(abs(a - b) > 0.01 for a, b in zip(cur[n]["root_motion_total"], c["root_motion_total"])))]
+    check("root_motion flags and totals unchanged (consistent with the manifest the engine lane read)", not rmb, str(rmb[:4]))
+    check("motion_rows map unchanged (351 rows: row, clip, status)", [(r["motion"], r["row"], r["clip"], r["status"]) for r in man["motion_rows"]] == [(r["motion"], r["row"], r["clip"], r["status"]) for r in fz["motion_rows"]])
+    check("manifest schema unchanged (top-level and per-clip keys)", sorted(man.keys()) == fz["manifest_keys"] and all(sorted(c.keys()) == fz["clip_keys"] for c in man["clips"]))
+    check("skeleton unchanged (bone names, order)", [b["name"] for b in man["bones"]] == [b["name"] for b in json.load(open(os.path.join(HERE, "..", "skeleton.json")))["bones"]] and len(man["bones"]) == 39)
+
+    lines.append("== animation pass 2: motion quality (from the baked clips) ==")
+    mp = os.path.join(OUT, "clips_metrics.json")
+    if not os.path.exists(mp):
+        check("clips_metrics.json present", False, "run build_all.sh")
+        return finish()
+    met = json.load(open(mp))
+    import locostats
+    # 1. locomotion: a planted sole point travels back at exactly the ground speed (no sliding), no sole below the floor
+    loco = [c for c in man["clips"] if c["ref"].get("ground_ref_speed") and c["name"] in met]
+    bad, info = [], []
+    for c in loco:
+        n = c["name"]; v = c["ref"]["ground_ref_speed"]
+        s = locostats.summarize(met[n]["soles"], v, c["loop"])
+        tol_mean, tol_max = (0.03, 0.12) if n != "Dash" else (0.05, 0.12)
+        ok = s.get("n", 0) > 0 and abs(s["err"]) <= tol_mean and s["spread"] <= tol_max * 2 and s["min_z"] > -0.10
+        info.append(f"{n} v={v} mean={s.get('mean')} spread={s.get('spread')} minz={s.get('min_z')} flight={s.get('flight_frames')}")
+        if not ok: bad.append((n, s))
+    check("locomotion: planted sole point speed equals the ground speed (mean within 3%, spread within 24% of v), no sole through the floor", not bad, str(bad[:2]))
+    for l in info: lines.append("   " + l)
+    # 2. loops close in position AND velocity
+    PTS = ("hand_L", "hand_R", "foot_L", "foot_R", "head", "chest")
+    badloop = []
+    for c in man["clips"]:
+        if not c["loop"] or c["name"] not in met: continue
+        pts = met[c["name"]]["pts"]; n = len(pts)
+        for k in PTS:
+            P = [pts[i][k] for i in range(n)]
+            def d(a, b): return [b[j] - a[j] for j in range(3)]
+            vel = [d(P[i - 1], P[i]) for i in range(n)]         # vel[0] is the wrap step (n-1 -> 0)
+            acc = [math.dist(vel[i], vel[(i + 1) % n]) for i in range(n)]   # change of velocity across frame i
+            wrap = acc[0]; inner = max(acc[1:n - 1]) if n > 3 else 0.0
+            if wrap > 1.5 * inner + 0.12: badloop.append((c["name"], k, round(wrap, 3), round(inner, 3)))
+    check("loops close in position and velocity (the velocity change across the wrap is no larger than inside the clip)", not badloop, str(badloop[:3]))
+    # 3. joint rotation limits
+    badj = []
+    for c in man["clips"]:
+        if c["name"] not in met: continue
+        for b, ang in met[c["name"]]["max_angle"].items():
+            lim = C.JOINT_LIMITS[b.split("_")[0]]
+            if ang > lim: badj.append((c["name"], b, ang, lim))
+    lines.append("   limits (deg): " + ", ".join(f"{k} {v}" for k, v in C.JOINT_LIMITS.items()))
+    check("no joint exceeds its stated rotation limit in any clip", not badj, str(badj[:4]))
+    # 4. scarf clearance
+    sc = {n: m["scarf_clearance"] for n, m in met.items()}
+    worst = min(sc, key=sc.get)
+    check(f"the scarf never passes through the torso capsule (clearance >= {C.SCARF_CLEARANCE} from the torso axis)", sc[worst] >= C.SCARF_CLEARANCE, f"min {sc[worst]} in {worst}")
+    return finish()
+
+def finish():
+    cn = json.load(open(os.path.join(PKG, "manifest.json")))["counts"]
     lines.append("== counts ==")
     lines.append(json.dumps(cn))
     lines.append(f"RESULT: {'ALL PASSED' if fails == 0 else str(fails) + ' FAILED'}")
