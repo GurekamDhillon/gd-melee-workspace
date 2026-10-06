@@ -78,7 +78,7 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
     # ldd lists the transitive dependencies of this trusted, locally built executable.
     # libstdc++ and libgcc_s are never bundled: lib/ is first on LD_LIBRARY_PATH, so a bundled copy older than the
     # system's is what the system's own 32-bit Vulkan driver gets, and Mesa then fails to load (GLIBCXX not found).
-    excluded=re.compile(r'^(lib(c|m|dl|rt|pthread|resolv|util|stdc\+\+|gcc_s)\.so|ld-linux)')
+    excluded=re.compile(r'^(lib(c|m|dl|rt|pthread|resolv|util|stdc\+\+|gcc_s|wayland-(client|cursor|egl)|ffi|xcb|X11|X11-xcb|Xau|Xdmcp|z|zstd)\.so|ld-linux)')
     def copy_dependencies(binary):
         libs=subprocess.check_output(['ldd',str(binary)],text=True)
         if 'not found' in libs:raise SystemExit('Missing dependencies:\n'+libs)
@@ -92,8 +92,9 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
     # SDL loads these with dlopen, so the executable's ldd output cannot find
     # them. Keep the i686 Wayland stack separate from the launcher's x64 Qt libs.
     runtime_dirs=a.runtime_lib_dir+[build/'lib',Path('/usr/lib32'),Path('/usr/lib/i386-linux-gnu'),Path('/lib/i386-linux-gnu')]
-    for soname in ('libwayland-client.so.0','libwayland-cursor.so.0','libwayland-egl.so.1','libxkbcommon.so.0',
-                   'libX11.so.6','libX11-xcb.so.1','libXext.so.6','libXcursor.so.1',
+    # Never the libraries the system's graphics driver links against (Wayland, libX11, XCB): they must match the
+    # driver. Mesa 26.2's Radeon driver needs wl_display_create_queue_with_name, which an older libwayland lacks.
+    for soname in ('libxkbcommon.so.0','libXext.so.6','libXcursor.so.1',
                    'libXfixes.so.3','libXi.so.6','libXrandr.so.2','libXss.so.1','libXtst.so.6'):
         candidates=[directory/soname for directory in runtime_dirs if (directory/soname).is_file()]
         library=None
