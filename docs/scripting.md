@@ -442,6 +442,61 @@ gd.box(x, y, w, w, 0x5B7396FF)
 Demo: `demos/screen-models` (12 original models; a 4x3 cell grid, then the real grid component with its `icon_draw`
 wired to this call).
 
+### Atlas screens (`gd.ui`)
+
+`gd.ui` draws screens in the new menu style (Atlas) from a **description**: the script says what goes in four fixed places
+(trail, primary, explainer, keys) and the engine does the layout (4:3 and wide), focus movement, mouse and keyboard input, the
+key hints and the motion. It is presentation only: it reads no game state, writes none, and is allowed online. It never masks
+the pad (`gd.input_mask` stays yours, and stays refused online). Handlers do not run on a resimulated frame. It needs the Atlas
+text roles in the kit's font manifest; `gd.ui.available()` says whether they are there. Design:
+`docs/superpowers/specs/2026-10-06-menu-reunification-design.md`.
+
+| function | |
+|---|---|
+| `gd.ui.available()` | `ok, why`: `true, ""`, or `false` and the reason |
+| `gd.ui.screen(desc)` | register or replace the screen `desc.id` (a script's ids must start with its mod id and a dot; the console may use any). A replacement keeps the focus on the same cell id, else on the same place in the same block, else on the first cell. Raises a Lua error with the reason when the description is wrong; returns `true` |
+| `gd.ui.open(id)` | push a screen onto the stack; `on.open` runs. `false` when that screen is already on top or the stack (8 deep) is full; an unknown id raises |
+| `gd.ui.close([id])` | remove a screen (the top one when `id` is not given); `on.close` runs. Returns `true` when there was one |
+| `gd.ui.feed(id, intent)` | an intent from your own input: `"up" "down" "left" "right" "accept" "back" "x" "y" "z"`; any other word raises |
+| `gd.ui.focus(id)` | `cell_id, block_id` (a list is one block named `"list"`), or nil |
+| `gd.ui.set_focus(id, block_id, cell_id)` | true when that cell exists |
+| `gd.ui.note{text=, kind="ok"\|"warn"\|"err"\|"info", seconds=}` | a corner note on the top screen (0.5 to 15 s, 3 by default); `false` when no screen is open |
+| `gd.ui.dialog{title=, text=, actions={{"A","Discard"},{"B","Cancel"}}, on=function(button) end}` | a dialog on the top screen (one or two actions, buttons `A B X Y Z`); `false` when no screen is open or there is no action. `on` gets the button letter |
+| `gd.ui.state()` | `{depth, top, canvas_w, wide, quads, cost_ms, cost_max_ms, roles_ok}` (`top` is absent when no screen is open) |
+
+A description:
+
+- `id`; `trail = { "SOLO", "ENVOY", title = "YOUR DRIVES" }` (the array part are the parents, at most three); `chapter` 0 to 5.
+- `primary = { kind = "grid", blocks = {...}, footer = {...} }` or `{ kind = "list", items = {...} }`.
+  A **block** is `{ id, title, count?, note?, cols (1 to 12), kind? = "stones", cells = {...} }` (1 to 6 blocks, at most 12 cells each). A **cell** is
+  `{ id, name?, model?, ring?, index?, pips? (0-4), origin? = "G"|"+", color? (0xRRGGBBAA, for stones), letter?, flags = { locked, empty, merge, new, selected, disabled } }`;
+  `model` and `ring` are `gd.model_load` handles. A cell shows only a model or a name. A **list item** is `{ id, label, sub?, disabled?, selected?, value? }` with
+  `value = { kind = "toggle", on }`, `{ kind = "choice", text }`, `{ kind = "slider", min, max, value }`, `{ kind = "text", text }` or `{ kind = "counter", text }` (1 to 32 items;
+  values are data: register the screen again when they change). `footer = { label, a, b, out, text }` is a merge-preview strip.
+- `explainer = { width = "narrow"|"normal"|"wide", provide = function(cell_id, block_id) -> { kicker, title, what, media = {model, ring}, with = {models}, from = { text } } end }`,
+  or `"none"` (the default). `what` is one short rule (it is cut to 159 characters and 4 lines).
+- `keys = { { "A", "Label" }, { "X", function(cell_id, block_id) return "Label" or nil end, when = function(...) end }, ... }`: at most 6 of `A B X Y Z L R START`; a function label
+  that returns nothing hides the hint, and a hint that does not fit the bar is left off. `counter = "text"` or a function. `input = "engine"` (the default: the engine reads the pad of `port`, 1 to 4) or `"feed"` (you feed directions
+  and handle the buttons yourself, which is what a screen needs when it masks the pad itself).
+- `on = { accept, back, alt = { X, Y, Z }, focus, open, close }`: functions called with `(cell_id, block_id)`. A handler may return `{ pop = true }` or `{ push = "id" }`.
+  A disabled cell takes focus but never reaches `accept`. Key label, `when`, counter and provider functions must be pure and cheap: they run when focus changes.
+
+What a description may not do. `gd.ui.screen` raises, and registers nothing, when: an id is longer than its buffer (a screen id 47 characters, a block, cell or item id 23);
+a block id, or a cell id anywhere on the screen, or an item id is used twice; a slider has `min` not below `max`; a block has more than 12 cells, `cols` outside 1 to 12, a screen
+more than 6 blocks, 32 items or 6 keys; a key names a button that is not one of the eight; or the table is too large (more nodes than the conversion arena holds) or nested more than 8 deep
+("the description is too large or nested too deeply"). Text longer than its field (63 characters, 159 for an explainer's `what`) is cut. At most 8 screens exist at once; a script's screens go when it unloads.
+
+Input: pad (D-pad or stick, A B X Y Z), keyboard (arrows, Enter, Escape) and mouse (hover focuses, left click is A, right click is B, the wheel scrolls
+a list, key hints for `A B X Y Z` are buttons); mouse and keyboard are local UI input and never reach the pads. L, R, START and Tab are read, but nothing receives them yet
+(a hint for L, R or START only shows the button; `on.change` is accepted and not called). While a dialog is open it takes every event, clicks included: A and B answer it, and only its own buttons are hit.
+A grid taller than its room scrolls by rows with the focus. Text that has under 8 px of room is not drawn. The setting **Reduced Motion** (Settings > Video, key `reduced_motion`)
+turns the fades and turntables into cuts.
+
+Budget: one screen draws at most 4,096 entries of the kit's 16,384-quad list (the host logs once per screen when 3,000 is passed or the cap is hit; entries past the cap are dropped);
+a model cell is at most 512 triangles. `gd.ui.state()` shows the last frame's quads and cost.
+Offline, `pc/tests/atlas_ui_stub.lua` is a stand-in that enforces the same limits (it reads them from `gw_ui_screen.h`).
+Demo: `demos/atlas-screen`. A real use: the Envoy bag (`envoy/scripts/atlas_bag.lua`, console `uxatlas on`).
+
 ### Comms callouts (offline)
 
 A Corneria-style comm window: a panel slides in at the screen edge with a portrait, a speaker name

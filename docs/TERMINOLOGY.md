@@ -60,6 +60,13 @@ Entries without a status qualifier describe existing source concepts, not a clai
 | Overlay | Geno replacement or extension of an existing subaction's script data. Say HUD overlay for interface graphics. | `melee/pc/platform/geno_registry.c` |
 | Profile | Loaded Geno definition and its immutable configuration. Say save profile for persistent player progress. | `melee/pc/platform/geno_registry.c` |
 
+### Menus
+
+| Term | Definition and boundary | Where |
+|---|---|---|
+| Legacy menu kit | The owner's name for the current menu stuff: everything the port draws or wraps for menus before the Atlas re-unification: the native frontend (`gmfrontend*`), the old `gd.kit` panel, button and list, the `menu/out_*` art sets, the Envoy and LAB screen code, the launcher's own kit copy, and the retail screens until each is replaced. Removed piece by piece as screens move to Atlas. | `docs/superpowers/specs/2026-10-06-menu-reunification-design.md` |
+| Atlas | The new menu system and its style: the parts (plate, row, tab strip, toggle, choice, slider, cell, model cell, explainer, dialog, note, key hints, trail), the screen description, the layout and focus rules, and `gd.ui`. Not the font atlas or a texture atlas, which keep their qualifier. | `melee/pc/platform/gw_ui_*`, `docs/scripting.md` |
+
 ### Scripting
 
 | Term | Definition and boundary | Where |
