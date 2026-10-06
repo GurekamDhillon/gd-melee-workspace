@@ -215,7 +215,12 @@ def build_role(spec):
     font = ImageFont.truetype(path, em)
     chars = kit.charset(spec["charset"])
     tables = font_tables(path, chars)
-    mono = spec["face"] == "mono"
+    missing_ascii = [c for c in kit.ASCII if c not in tables["adv"]]
+    if missing_ascii:
+        raise SystemExit("%s: %s lacks printable ASCII %r" % (spec["role"], path, missing_ascii))
+    dropped = [c for c in chars if c != STAR and c not in tables["adv"]]   # extras the face does not have (arrows...): the engine sets '?'
+    chars = [c for c in chars if c not in dropped]
+    mono = spec["face"] in ("mono", "anum")
     glyphs, items = {}, []
     for ch in chars:
         img, (l, t), adv = render_glyph(font, ch, em, tables, mono)
@@ -249,7 +254,7 @@ def build_role(spec):
     size = spec["size"]
     return out_pages, dict(
         role=spec["role"], size=size, face=spec["face"], font=kit.FONTS[spec["face"]]["name"],
-        weight=spec["weight"], charset=spec["charset"], use=spec["use"], monospaced=mono,
+        weight=spec["weight"], charset=spec["charset"], use=spec["use"], monospaced=mono, dropped=dropped,
         metrics=dict(ascent=round(asc / 2, 2), descent=round(desc / 2, 2),
                      cap_height=round(tables["cap"] * size, 2),
                      x_height=round(tables["xh"] * size, 2), line_height=lh,
@@ -348,7 +353,7 @@ def main():
             os.remove(os.path.join(OUT, sub, f))
 
     manifest = dict(
-        fonts={k: "%s, %s (see %s/LICENSE.md)" % (v["name"], v["licence"], v["dir"])
+        fonts={k: "%s, %s (see %s/%s)" % (v["name"], v["licence"], v["dir"], v.get("licence_file", "LICENSE.md"))
                for k, v in kit.FONTS.items()},
         star="original five-point star drawn by this script (neither font has U+2605)",
         units="1x px. offset = glyph quad top-left relative to the pen at the "
@@ -376,7 +381,7 @@ def main():
         roles={}, textures=[])
 
     pages_2x, errs, total = {}, [], 0
-    for spec in kit.TYPE_SCALE:
+    for spec in kit.TYPE_SCALE + kit.ATLAS_TYPE_SCALE:
         pages, role = build_role(spec)
         name = spec["role"]
         role["pages"] = {"latin": []}
@@ -397,12 +402,12 @@ def main():
         manifest["roles"][name] = role
 
         # checks
-        missing = [c for c in kit.charset(spec["charset"]) if c not in role["glyphs"]]
+        missing = [c for c in kit.charset(spec["charset"]) if c not in role["glyphs"] and c not in role["dropped"]]
         empty = [c for c, g in role["glyphs"].items() if c != " " and "uv" not in g]
         if missing or empty:
             errs.append("%s: missing %r, empty %r" % (name, missing, empty))
         digits = {role["glyphs"][d]["advance"] for d in "0123456789"}
-        if len(digits) != 1:
+        if spec.get("tabular", True) and len(digits) != 1:
             errs.append("%s: digits are not tabular: %s" % (name, digits))
         advs = {g["advance"] for g in role["glyphs"].values()}
         if role["monospaced"] and (len(advs) != 1 or role["kerning"]):

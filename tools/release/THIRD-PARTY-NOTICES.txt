@@ -63,6 +63,7 @@ ui\  (menu art, layouts and fonts)
   The text glyphs are rendered from:
       Source Sans 3 (Adobe) ................. SIL OFL 1.1  SourceSans3-OFL-1.1.txt
       Hasklug Nerd Font (Hasklig) ........... SIL OFL 1.1  Hasklug-OFL-1.1.txt
+      Barlow Condensed (Jeremy Tribby) ...... SIL OFL 1.1  BarlowCondensed-OFL-1.1.txt
 
 initial_pipeline_cache.db / .core
   A cache of GPU pipeline descriptions (render state only, no images or game files) that saves

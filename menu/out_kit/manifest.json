@@ -132,6 +132,175 @@
    "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
   },
   {
+   "name": "font_a_cap12_latin_0",
+   "file_2x": "out_kit/font/2x/font_a_cap12_latin_0.png",
+   "file_1x": "out_kit/font/1x/font_a_cap12_latin_0.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "bytes_2x": 32768,
+   "kind": "font",
+   "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
+  },
+  {
+   "name": "font_a_cap14_latin_0",
+   "file_2x": "out_kit/font/2x/font_a_cap14_latin_0.png",
+   "file_1x": "out_kit/font/1x/font_a_cap14_latin_0.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "bytes_2x": 32768,
+   "kind": "font",
+   "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
+  },
+  {
+   "name": "font_a_cap16_latin_0",
+   "file_2x": "out_kit/font/2x/font_a_cap16_latin_0.png",
+   "file_1x": "out_kit/font/1x/font_a_cap16_latin_0.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "bytes_2x": 32768,
+   "kind": "font",
+   "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
+  },
+  {
+   "name": "font_a_cap20_latin_0",
+   "file_2x": "out_kit/font/2x/font_a_cap20_latin_0.png",
+   "file_1x": "out_kit/font/1x/font_a_cap20_latin_0.png",
+   "size_2x": [
+    512,
+    256
+   ],
+   "format": "I4",
+   "bytes_2x": 65536,
+   "kind": "font",
+   "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
+  },
+  {
+   "name": "font_a_title_latin_0",
+   "file_2x": "out_kit/font/2x/font_a_title_latin_0.png",
+   "file_1x": "out_kit/font/1x/font_a_title_latin_0.png",
+   "size_2x": [
+    512,
+    512
+   ],
+   "format": "I4",
+   "bytes_2x": 131072,
+   "kind": "font",
+   "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
+  },
+  {
+   "name": "font_a_hero_latin_0",
+   "file_2x": "out_kit/font/2x/font_a_hero_latin_0.png",
+   "file_1x": "out_kit/font/1x/font_a_hero_latin_0.png",
+   "size_2x": [
+    512,
+    512
+   ],
+   "format": "I4",
+   "bytes_2x": 131072,
+   "kind": "font",
+   "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
+  },
+  {
+   "name": "font_a_display_latin_0",
+   "file_2x": "out_kit/font/2x/font_a_display_latin_0.png",
+   "file_1x": "out_kit/font/1x/font_a_display_latin_0.png",
+   "size_2x": [
+    1024,
+    512
+   ],
+   "format": "I4",
+   "bytes_2x": 262144,
+   "kind": "font",
+   "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
+  },
+  {
+   "name": "font_a_body12_latin_0",
+   "file_2x": "out_kit/font/2x/font_a_body12_latin_0.png",
+   "file_1x": "out_kit/font/1x/font_a_body12_latin_0.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "bytes_2x": 32768,
+   "kind": "font",
+   "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
+  },
+  {
+   "name": "font_a_body14_latin_0",
+   "file_2x": "out_kit/font/2x/font_a_body14_latin_0.png",
+   "file_1x": "out_kit/font/1x/font_a_body14_latin_0.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "bytes_2x": 32768,
+   "kind": "font",
+   "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
+  },
+  {
+   "name": "font_a_row16_latin_0",
+   "file_2x": "out_kit/font/2x/font_a_row16_latin_0.png",
+   "file_1x": "out_kit/font/1x/font_a_row16_latin_0.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "bytes_2x": 32768,
+   "kind": "font",
+   "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
+  },
+  {
+   "name": "font_a_num12_latin_0",
+   "file_2x": "out_kit/font/2x/font_a_num12_latin_0.png",
+   "file_1x": "out_kit/font/1x/font_a_num12_latin_0.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "bytes_2x": 32768,
+   "kind": "font",
+   "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
+  },
+  {
+   "name": "font_a_num14_latin_0",
+   "file_2x": "out_kit/font/2x/font_a_num14_latin_0.png",
+   "file_1x": "out_kit/font/1x/font_a_num14_latin_0.png",
+   "size_2x": [
+    256,
+    256
+   ],
+   "format": "I4",
+   "bytes_2x": 32768,
+   "kind": "font",
+   "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
+  },
+  {
+   "name": "font_a_num16_latin_0",
+   "file_2x": "out_kit/font/2x/font_a_num16_latin_0.png",
+   "file_1x": "out_kit/font/1x/font_a_num16_latin_0.png",
+   "size_2x": [
+    512,
+    256
+   ],
+   "format": "I4",
+   "bytes_2x": 65536,
+   "kind": "font",
+   "why": "white glyph coverage only; colour comes from vertex/material colour, so 4-bit intensity is enough (16 edge levels)"
+  },
+  {
    "name": "glyph_a",
    "size_2x": [
     32,

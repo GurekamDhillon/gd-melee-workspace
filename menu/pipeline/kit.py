@@ -99,6 +99,14 @@ FONTS = {
                  files={"bold": "SourceSans3-Bold.otf", "black": "SourceSans3-Black.otf"}),
     "mono": dict(name="Hasklug Nerd Font (Hasklig)", licence="SIL OFL 1.1", dir="Hasklug",
                  files={"bold": "HasklugNerdFont-Bold.otf", "black": "HasklugNerdFont-Black.otf"}),
+    # Atlas (menu re-unification, 2026-10-06). Separate face tags from the legacy "sans"/"mono": the engine's fit rule steps
+    # down inside one face, so the Atlas roles must not share a tag with the legacy roles of the same size.
+    "asans": dict(name="Source Sans 3", licence="SIL OFL 1.1", dir="SourceSans3",
+                  files={"semibold": "SourceSans3-Semibold.otf"}),
+    "acond": dict(name="Barlow Condensed (Jeremy Tribby)", licence="SIL OFL 1.1", dir="Barlow", licence_file="OFL.txt",
+                  files={"semibold": "BarlowCondensed-SemiBold.ttf", "bold": "BarlowCondensed-Bold.ttf"}),
+    "anum": dict(name="Hasklug Nerd Font (Hasklig)", licence="SIL OFL 1.1", dir="Hasklug",
+                 files={"medium": "HasklugNerdFont-Medium.otf"}),
 }
 
 
@@ -136,6 +144,22 @@ TYPE_SCALE = [
     dict(role="code",    size=16, face="mono", weight="bold",  charset="code",
          use="network codes and addresses (code plate): max 21 characters, "
              "255.255.255.255:65535 = 201.6 px"),
+]
+# The Atlas role set (spec section 4.3). Names are the keys of the manifest and of gw_ui_layout.c's role table.
+ATLAS_TYPE_SCALE = [
+    dict(role="a_cap12", size=12, face="acond", weight="semibold", charset="full", tabular=False, use="Atlas: tags, toggle words (tracked caps)"),
+    dict(role="a_cap14", size=14, face="acond", weight="semibold", charset="full", tabular=False, use="Atlas: plate headings, rail, key glyph letters"),
+    dict(role="a_cap16", size=16, face="acond", weight="semibold", charset="full", tabular=False, use="Atlas: tabs, trail, buttons"),
+    dict(role="a_cap20", size=20, face="acond", weight="semibold", charset="full", tabular=False, use="Atlas: the trail's current screen, dialog titles, stones"),
+    dict(role="a_title", size=28, face="acond", weight="bold", charset="full", tabular=False, use="Atlas: explainer and screen titles"),
+    dict(role="a_hero", size=44, face="acond", weight="bold", charset="caps", tabular=False, use="Atlas: title screen, results (caps only)"),
+    dict(role="a_display", size=64, face="acond", weight="bold", charset="caps", tabular=False, use="Atlas: big numerals (caps only)"),
+    dict(role="a_body12", size=12, face="asans", weight="semibold", charset="full", use="Atlas: captions"),
+    dict(role="a_body14", size=14, face="asans", weight="semibold", charset="full", use="Atlas: rule text, hints"),
+    dict(role="a_row16", size=16, face="asans", weight="semibold", charset="full", use="Atlas: list rows, choices"),
+    dict(role="a_num12", size=12, face="anum", weight="medium", charset="full", use="Atlas: counters"),
+    dict(role="a_num14", size=14, face="anum", weight="medium", charset="full", use="Atlas: values"),
+    dict(role="a_num16", size=16, face="anum", weight="medium", charset="full", use="Atlas: footer counters"),
 ]
 FONT_CHOICE = dict(
     proportional=dict(
