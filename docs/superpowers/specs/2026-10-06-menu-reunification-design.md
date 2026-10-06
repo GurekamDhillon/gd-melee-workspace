@@ -874,7 +874,7 @@ does not use it, because the retail renderer draws its own assets.
 **Owner, 2026-10-06, after seeing this table: "Movies, staff roll, snapshots can be skipped".** Those three rows are
 OUT of step 10: they stay retail and are reached by a native hand-off from their Atlas entry. The rows are kept above
 as a record of what was read. Step 10 is therefore the Trophy Gallery, the Collection room and the Lottery, then the
-Tournament and the Training panel if he asks for them.
+Tournament if he asks for it. The vanilla Training mode's pause panel is also skipped (owner: "Kk" to skipping it, the same day): the LAB covers it and vanilla Training keeps its retail panel.
 
 Order inside step 10 (before that decision; read it without the three skipped screens): Gallery (proves the frame pattern), Collection, Lottery, Movies list, then the optional
 Staff Roll hint, then Tournament setup and bracket, with Snapshots and the Training panel only on an explicit
