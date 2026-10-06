@@ -22,12 +22,17 @@ Paths are relative to the workspace; game files are under `melee/`. `GM` = `mele
    its Lua registers the screens behind it. Envoy is first. Mod screens only read input and draw.
 5. **Coexistence.** The old router (`gmFrontend_Route`) stays. A screen is moved by changing which handler owns its
    `(MenuKind, selection)` or `(from, to)` slot; the other screens do not notice. Each step ships alone.
-6. **Nine steps**, in the owner's order, each with its own retirement list (section 13). Step 1 is the parts plus the
-   Envoy bag.
-7. **Things the code makes harder than the outline sounds** (section 13.10): the two kits are two codebases;
+6. **Ten steps**: the owner's nine, in his order, plus a tenth that re-hosts the bespoke retail screens (trophies,
+   snapshots, movies, tournament...) inside Atlas chrome (section 13.10). Each has its own retirement list
+   (section 13). Step 1 is the parts plus the Envoy bag.
+   **Retail takeover capability** (section 6.8): the hooks, the per-element mask that hides one retail drawing
+   at a time, and the descriptions of a HUD zone and a pause screen are built (steps 2 and 3). Nothing retail is
+   hidden by default; replacing the retail numerals and pause is the owner's later call.
+7. **Things the code makes harder than the outline sounds** (section 13.11): the two kits are two codebases;
    the main-menu "Envoy tile" is wired to the older `roguelite/main` script, not to Envoy; "one character select
-   for every mode" touches about 19 other mode files (23 `GS_CSS` states); title, results and pause have no frontend hook today; the mockup's type
-   sizes and weights are not the engine atlas' sizes and weights.
+   for every mode" touches about 19 other mode files (23 `GS_CSS` states); title and results have no frontend hook today (pause and the HUD have usable
+   hook sites); the mockup's type sizes and weights are not the engine atlas' sizes and weights; the bespoke retail
+   screens are 3D scenes the retail renderer draws, so Atlas can frame them but not re-draw their models.
 8. **Cost** (section 11): about 130 to 600 quads per screen before models and decoration [estimate from the
    mockup HTML], against a 16,384-quad list; about 6 to 7 MB of added font pages [estimate].
 
@@ -64,6 +69,20 @@ Paths are relative to the workspace; game files are under `melee/`. `GM` = `mele
      when the owner is away, or by him).
 - Assumptions he did not object to: the third font (Barlow Condensed, OFL) is added to the game's atlas; step 1's
   proving screen is the Envoy bag.
+- **Answers to the first draft's open questions (2026-10-06).**
+  1. The name: Atlas for the whole system: "yes".
+  2. The retail percent/stock/timer HUD and the retail pause: "get prepped for it/build capability to". So the hooks
+     and the capability to replace them are built; the replacement itself is a later decision he makes with it in
+     front of him (6.8, steps 2, 3, 8).
+  3. Envoy's parked screens (title, profile, garden hub, fighter, companion, records): "idk do what's optimal".
+     **A delegated decision, not his words:** the coordinator's call is not to port them, to remove their screen
+     wiring in step 3, and to keep their logic.
+  4. The title in step 2 if the hook is cheap, else step 8: "lgtm".
+  5. The retail Language row stays a native hand-off until the retail text screens are gone, then is removed: "ok".
+  6. The bespoke retail screens are not simply left retail: "maybe we disassemble and reassemble these menus against
+     our new menus so they stay in theme. Combining the original melee assets into it where we can to preserve the
+     original look". This is a direction with room to drop a screen that proves too costly ("maybe", "where we
+     can"); it supersedes "bespoke ones like the trophy lottery stay" in item 4 above and becomes step 10 (13.10).
 - Standing rules that bind this design: no disc-derived art in either repo; mods run on the vanilla disc, one folder
   each; always give credit (name and link) in the same change; menus that exist online stay deterministic-safe;
   Envoy readability (one short rule per piece, each thing a distinct identity, the synergy notice a small
@@ -76,7 +95,10 @@ Added to `docs/TERMINOLOGY.md` by step 1 (the file's rule: check it before inven
 | Term | Meaning |
 |---|---|
 | **legacy menu kit** | Everything the port draws or wraps for menus today (the inventory's five systems): `GM/gmfrontend*` (native), the legacy parts of `gd.kit` (`panel`, `button`, `list`, the section palettes), the `menu/out_*` art sets, the Envoy and LAB screen code, the launcher's own kit copy, and the retail screens until each is replaced. |
-| **Atlas** [proposal] | The name of the new system and its style: the parts, the screen description, the registry, the router glue. The owner already calls the style Atlas. Collision: the engine has "font atlas" and "texture atlas"; those always keep their qualifier, and bare "Atlas" means this system. Code names: `gw_ui_*` (host), `gd.ui` (Lua), `at_` (C identifiers). |
+| **Atlas** | (Name confirmed by the owner, section 2.) The name of the new system and its style: the parts, the screen description, the registry, the router glue. The owner already calls the style Atlas. Collision: the engine has "font atlas" and "texture atlas"; those always keep their qualifier, and bare "Atlas" means this system. Code names: `gw_ui_*` (host), `gd.ui` (Lua), `at_` (C identifiers). |
+| **retail element** | One thing the retail game draws that Atlas may hide on its own (a HUD damage plate, the pause panel, a trophy menu's 2D frame). Each has a stable id (`hud.damage`...) and a guard. |
+| **retail element mask** | The set of retail elements currently hidden. Empty by default. |
+| **frame (re-host pattern)** | Running a retail scene unchanged and drawing Atlas chrome (trail, explainer, keys) around it, with chosen retail 2D pieces hidden (13.10). |
 | **part** | One drawable control of the component set (a plate, a row, a cell...). |
 | **screen** | One description registered with an id (`envoy.bag`). Not a game scene. |
 | **place** | One of the four fixed regions of a screen: **trail** (where: top), **primary** (what you act on: left), **explainer** (the one thing in focus: right), **keys** (hints: bottom). |
@@ -302,8 +324,8 @@ No new routing mechanism. A screen is owned by exactly one handler, chosen per s
 3. **Retail screens** are reached by `FA_NATIVE` as now. A retail screen replaced in step 8 changes its `FeMenuItem`
    from `FA_NATIVE` to `FA_ATLAS` (new, opens an Atlas screen id). Entry `sel` indices stay the vanilla ones, so
    vanilla positioning code is untouched.
-4. **Scenes that are not frontend screens** (title, results, pause, HUD): see steps 2, 3, 8. They need a new hook,
-   not a new router.
+4. **Scenes that are not frontend screens** (title, results, the match, the bespoke retail scenes): the **scene
+   policy** of 6.8 (steps 2, 3, 8, 10). A hook on the scene table, not a new router.
 5. **Mod screens** are stack entries pushed by an entry or by `gd.ui.open(id)`; they run inside whichever scene is
    active (`GS_FRONTEND` for menus, a match for the in-match bag). No game mode is added.
 
@@ -341,6 +363,66 @@ their own except tween progress, owned by the stack.
 
 Per-frame submission cost is a few hundred bytes of strings per screen; the host diffs and rebuilds the layout only
 when something changed [estimate; unmeasured].
+
+### 6.8 The retail takeover capability (built, off by default)
+
+The owner's direction for the retail percent/stock/timer HUD and the retail pause is "get prepped for it/build
+capability to" (section 2). So the capability is built and tested; **using** it on the retail numerals and pause is a
+later decision he makes with the result in front of him. Nothing is hidden or replaced by default.
+
+**What retail draws, and where it can be reached** [code]:
+
+| Retail thing | How it is drawn | The one place to guard it |
+|---|---|---|
+| Damage (percent) plate | a GObj per player with GX link render callbacks `ifStatus_802F5DE0` / `ifStatus_802F5E50`, plus per-frame procs `ifStatus_802F5B48` / `ifStatus_802F4EDC` that animate it | the two render callbacks (`src/melee/if/ifstatus.c:633, 655`, created at `:692, 798`). The procs are never skipped: they keep their state running |
+| Stocks | GObjs with callbacks `fn_802F9680`, `fn_802F94E0`, `fn_802F95E8`, `fn_802F9548`, `fn_802F9598` | `if/ifstock.c:590-1083` (the creation sites name them) |
+| Timer | GObjs with `HSD_GObj_JObjCallback` | `if/iftime.c:214, 258` |
+| Name tags, zoom, coin and prize readouts, hazard | `ifnametag.c`, `ifmagnify.c`, `ifcoget.c`, `ifprize.c`, `ifhazard.c` | each file's render callback |
+| Pause panel (background plus L/R/A/Start, Z and analog-stick drawing) | the `GmPause` archive; `gm_801A0FEC(slot, flag)` shows it, `gm_801A10FC` hides it; with `flag == 0` it hides the background itself (`gm/gmpause.c:42-69`) | the callers: `gm/gmvs.c:1200, 1279, 1354`; `gm/gmcamera.c:270, 307`. The pause camera is `gm_EnablePlayerPauseCamera` |
+| Title, results | whole scenes in the scene table (`gm/gmscdata.c`; results in `gmresult.c`, `gmresultplayer.c`) | the scene's `on_enter` / `on_frame` pair |
+| Bespoke 2D menus (trophies, tournament...) | JObj trees hidden or shown with `HSD_JObjSetFlagsAll(jobj, JOBJ_HIDDEN)`, as retail itself does (`ty/toy.c:2667, 2873`; `gmpause.c:50-66`) | the same call, applied by the port |
+
+**The capability, in four parts:**
+
+1. **Scene policy** (`GM/gmfrontend_atlas.inc`, one table keyed by scene kind). Each entry is `RETAIL` (the default for
+   every scene), `OVERLAY` or `REPLACE`.
+   - `OVERLAY`: the retail `on_enter` and `on_frame` run unchanged, so its archives load and its logic runs; after
+     them the adapter submits an Atlas screen and the host draws it. The scene's element mask applies.
+   - `REPLACE`: the retail scene is not entered; a `GS_FRONTEND` stand-in takes its place with the same
+     continue/back targets, the way `gmFrontend_Route` already does for the menus. Only valid where the scene's
+     outputs are simple to reproduce (the title, results).
+   The hook point is the scene table's function pair (`gmscdata.c`, entries such as `Toy_Scene_OnEnter` /
+   `Toy_Scene_OnFrame` at `:141-143`), wrapped under `TARGET_PC` with the unprefixed-shim convention.
+2. **Retail element registry and mask.** A `u32` mask in the host, `gw_Ui_RetailHidden(id)` readable from the game
+   side. Each guard is one line at the single draw site: `if (gw_Ui_RetailHidden(ELEM_HUD_DAMAGE)) return;` at the
+   top of a render callback, `flag = 0` for the pause panel, `JOBJ_HIDDEN` for bespoke JObj pieces. Presentation
+   only: a guard never skips a proc, so no simulation or state changes, and with the mask empty the code path is as
+   today. The mask is set by the scene policy, by `gd.ui.retail_hide{ids}` (offline only; a mod may never hide the
+   match clock or result data), and for testing by `MELEE_ATLAS_RETAIL=<ids>` or a console command.
+3. **A HUD zone description.** `gd.ui.hud{ id, zones = {...} }`, native or Lua. Zones are named rectangles inside the
+   title-safe box: `top_left`, `top_center`, `top_right`, `bottom_left`, `bottom_center`, `bottom_right`. Each holds
+   parts: the built-in `port_card{port}` (numeral and shape, name, percent, stocks, from the readbacks scripts already
+   use, `gd.player` and `gd.match` [unverified: that percent and stocks are exposed for all four ports]), `timer{}`,
+   `note{}`, `strip{}` (the build strip), `banner{}`. Retail elements that are still visible declare **keep-out
+   rectangles** (damage plates, timer, stock icons) so Atlas parts never collide with them at 4:3 or wide. A HUD zone
+   never takes focus, never masks the pad, draws online, and costs only its quads.
+4. **A pause screen description.** `kind = "pause"` is an ordinary screen (list primary, keys, counter) pushed on
+   the pause-on call sites above and popped on the pause-off ones; entries come from the match context and from
+   mods that register under parent `pause`; intents come from the pausing port. Resume must return control to
+   retail through a shim `gw_Ui_RequestUnpause()`; how retail detects an unpause (a START trigger it polls) is
+   [unverified], and if the shim cannot be written the Atlas pause stays an overlay that draws entries while retail
+   still owns START. Offline only: a netplay match does not get a focus-taking pause (8.4).
+
+**What stays untouched by default:** every scene policy is `RETAIL` and the mask is empty, so retail damage, stocks,
+timer, name tags, the pause panel, the title and results are exactly as today. A flip is one table line per scene or
+one mask bit per element, tried first with the environment switch.
+
+**Built in:** the scene policy and `REPLACE` in step 2 (first user: the title, if its hook is cheap, 13.2); the
+element registry, mask, guards, `gd.ui.hud` with keep-outs and the pause description in step 3 (first users:
+Envoy's HUD and pause, which hide nothing retail); `REPLACE` for results in step 8; `OVERLAY` plus the mask for the
+bespoke scenes in step 10. Without the game: a table test of the mask and policy, a PowerPC syntax check of every
+guard, a layout test of keep-out zones. Must be seen: a match with an empty mask looks as before; with each bit set
+exactly that element disappears and nothing else; the Atlas port card beside the retail ones at 4:3 and 16:9.
 
 ## 7. The screen description
 
@@ -565,7 +647,7 @@ Whether menus read the pad before or after the remap is [unverified] and decides
   [doc: `menu/pipeline/font_atlas.py:15-17`]; right-to-left is not designed. Fighter and stage names that the game
   stores in the disc's language are read at run time; a name with a non-Latin character falls back to the English
   name table through the lookup. The retail Language row (English or Japanese, `fm_settings` item) stays a native
-  hand-off until step 8 (open question 5). The launcher's own Spanish table (`window.cpp:433`) is out of this
+  hand-off until the retail text screens are gone (the owner's "ok", section 2), then is removed. The launcher's own Spanish table (`window.cpp:433`) is out of this
   design's reach; docs stay English.
 - **Accessibility**: Reduced motion (4.9), 12 px floor, colour never the only signal (numeral and shape for ports,
   hatching for disabled, letter on keystones, words ON/OFF), key hints always present.
@@ -597,7 +679,8 @@ The Atlas look itself is cheap: flat quads, no shader, no new pass.
 | 9 | **Model turntable**: nothing to add; `gd.kit.model` already takes `spin` and `t` [doc: scripting.md:361] | | |
 | 10 | **Model cells for native screens**: a host call taking a model handle created by Lua. Needed only when a native screen wants a model | | native screens use the frame, not a model |
 | 11 | **`gd.ui`** binding, **registry**, **manifest `menus`** parsing | section 8 | |
-| 12 | **A hook for scenes that are not frontend screens**: title, results, pause, HUD zone | steps 2, 3, 8 | those stay retail until the hook exists |
+| 12 | **The retail takeover capability** (6.8): the scene policy table, the retail element registry and mask with its guards, `gd.ui.hud` keep-out zones, the pause description and `gw_Ui_RequestUnpause` | steps 2, 3, 8, 10 | an unreachable element stays retail; the capability is still built for the others |
+| 13 | **The `view` part and readback shims** for framed retail scenes: an opaque plate with a transparent window over the retail 3D render, and scalar shims that read retail state (current trophy, cursor, counts) | step 10 | draw the Atlas chrome without a window and let the retail 3D fill the screen behind the plates |
 
 ## 13. The migration plan
 
@@ -609,7 +692,7 @@ the title-safe box, hint fit, contrast of the token pairs against the table in 4
 ids unique, providers callable with sample content; (c) optionally a dump of the quad list to SVG for reading a
 layout offline. **What must be seen in the game** is always: the screen at 4:3 and at 16:9, focus by pad and by mouse,
 the key hints, and Reduced motion; it is looked at by the owner, or by an agent only while he is away (his rules on
-windows and screenshots apply). Sizes: S small (days), M medium (about a week), L large.
+windows and screenshots apply). Sizes: S small (days), M medium (about a week), L large; steps 8 and 10 are made of independent screens, each of which can be dropped.
 
 ### 13.1 Step 1: the parts and the Envoy bag (size L)
 
@@ -633,10 +716,10 @@ layout with the standalone tests; (4) `gd.ui` binding; (5) the bag description; 
 |---|---|
 | Screens | **Title** (retail `gmtitle.c`, "Press Start"); **MAIN MENU**, **SOLO**, **REGULAR MATCH**, **STADIUM**, **MULTI-MAN MELEE**, **VERSUS**, **SPECIAL MELEE**, **COLLECTION**, **SETTINGS** (the list), **DATA**, **RECORDS** (the lists; their destinations stay retail until step 8); first-boot onboarding; a new **Credits** screen |
 | New structure | main menu is Solo, Versus, Online, Mods, Settings plus the More row; Online and Mods become top-level (their destinations are still the old Online rows and `Settings > Mods` page until steps 6 and 7); VERSUS keeps Melee, Tournament, Special Melee, Rules, Name Entry [image: `02-main-menu.png`] |
-| Delivers | the registry (U6) and manifest `menus`; U8 game-side adapter for `FM_ATLAS` menus; **Envoy's entry** (`solo > ENVOY`, `opens` its setup) replacing the tile; the LAB entry as a built-in entry owned by its mod |
+| Delivers | the registry (U6) and manifest `menus`; U8 game-side adapter for `FM_ATLAS` menus; the **scene policy** table with `OVERLAY` and `REPLACE` (6.8), first used for the title; **Envoy's entry** (`solo > ENVOY`, `opens` its setup) replacing the tile; the LAB entry as a built-in entry owned by its mod |
 | Retired | `FM_HUB`/`FM_LIST` drawing and the hub/list art sets (`out_hub`, `out_hub_bouba`, the hub and list parts of `out_nav`, `hub_layout.json`, `list_layout.json`); `FA_TBD`, `SEL_MAIN_TBD`, `Script_TbdAvailable`, `Script_TbdRequest`, `gd.tbd_request` and `gd.lab_request`'s menu path (moved to the entry's `on_entry`); the old `roguelite` example's use of the tile (migrate or remove it; it is the only consumer, `roguelite/main.lua:1250`, and removal is a version change under scripting.md "Versioning") |
 | Depends on | step 1 |
-| The title | needs a hook that replaces the retail title (`gmtitle.c:281` has the port's only edit). Proposal: route a frontend screen between boot and title through `fe_rules` (a `GM_BOOT`/opening -> `GM_TITLE` rule) and keep the retail attract loop's timing; if that proves wrong the title stays retail and moves to step 8 (open question 4) |
+| The title | Decided ("lgtm", section 2): in step 2 if the hook is cheap, else step 8. The hook is the scene policy of 6.8 (`REPLACE`, a stand-in between the opening and the menu, or `OVERLAY`); `gmtitle.c:281` has the port's only edit today. The retail attract loop's timing is kept. Step 2 builds the policy table and tries the title first; if its retail scene proves entangled the title moves to step 8 and step 2 ships without it |
 | Verified without the game | all hub and list screens as descriptions at three widths; the position protocol: a table test that every `(MenuKind, selection)` that `fm_position_for` can produce maps to the same screen and item as before (the legacy table is the oracle); registry tests (caps, ordering, unknown parent, disabled mod adds nothing); `fe_menu_sweep.py` if it runs without the disc [unverified] |
 | Must be seen | each hub in 4:3 and 16:9; the walk Title > Main > Solo > Envoy and back with B; coming back from a retail screen lands on the right item; first-boot flow; the mods list says "adds Solo > Envoy" |
 
@@ -647,8 +730,8 @@ layout with the standalone tests; (4) `gd.ui` binding; (5) the bag description; 
 | Screens | Envoy **Reward screen**, **Swap** ("BAG FULL"), **Setup**, **Pause / confirm / quit**, **Interlude / Results** (the live ones), **online reward box** (the plain debug box [doc: audit #23]); in the HUD: the **build strip**, **opponent card**, **announcement and pickup notes** reduced to the corner note, **"Collect the drives" banner**, **synergy notice** (a small top-corner note), co-op strips; the pause screen of a match (see below) |
 | Delivers | `cards` primary and the countdown note; the HUD parts as corner notes, banners and strips (parts only, drawn by `gd.ui.note` and `gd.ui.hud`); the generic builder pieces move into the engine as parts and their **assets stay in the mod** ("the builders get generic'd... assets provided by the mod") |
 | Retired | `run_screen.lua`'s grid use and the embedded `D.grid` plus `embed.py` flow; `menu.lua`, `menu_draw.lua`, `menu_input.lua` screens that are replaced; the duplicate `hud.lua` companion panel and tag panel [doc: audit #24, #25]; the Modifier LAB text box and Drive LAB card stay developer-only (`envoy devui`); the grid demo is kept as a demo only if it moves to `gd.ui` |
-| Parked Envoy screens | title, profile, hub (garden), fighter, companion, records are "parked" by the 2026-10-04 retail contract [doc: `envoy/MENUS.md`]. They are **not ported**; their UI wiring is removed with the legacy screens and their logic stays (open question 3) |
-| Pause and HUD scope | Atlas draws the mod HUD zone and the shared HUD parts. The **retail damage, stock and timer HUD stays retail** in this step (open question 2). A pause screen for a match needs a hook that does not exist; Envoy's own pause (Resume, Bag, Controls, Quit run [image: `12-pause.png`]) is Atlas; the retail pause is replaced only if the hook proves cheap, else stays |
+| Parked Envoy screens | title, profile, hub (garden), fighter, companion, records are "parked" by the 2026-10-04 retail contract [doc: `envoy/MENUS.md`]. **Delegated decision** (owner: "idk do what's optimal"): they are **not ported**; their UI wiring is removed with the legacy screens in this step and their logic stays |
+| HUD and pause capability | Built in this step (6.8): the retail element registry, mask and guards for damage, stocks, timer, name tags and the pause panel; `gd.ui.hud` with keep-out zones; the pause screen description with the pause on/off hooks (the `gmvs.c` and `gmcamera.c` sites). Envoy's HUD and pause (Resume, Bag, Controls, Quit run [image: `12-pause.png`]) are the first users and **hide nothing retail**. Replacing the retail numerals or the retail pause is the owner's later call, made with both versions in front of him |
 | Depends on | steps 1 and 2 (the entry and setup under Solo) |
 | Verified without the game | Lua stub tests for each screen; cap tests (at most one announcement visible, no queue longer than the ruling allows); corner-note layout at three widths with the retail HUD rectangles as keep-out zones |
 | Must be seen | a full Classic Envoy run from the entry to the results; reward with the countdown; swap; online Envoy reward box; the HUD against the retail HUD at 4:3 and 16:9 (the build strip must not collide) |
@@ -669,7 +752,7 @@ layout with the standalone tests; (4) `gd.ui` binding; (5) the bag description; 
 
 | | |
 |---|---|
-| Screens | SETTINGS pages **VIDEO, AUDIO, CONTROLS** (+ **remap editor**, **how-to**), **ONLINE** (the settings page), **GAMEPLAY**, and the retail rows **Rumble, Screen Display, Language, Erase Data** (settings rows, so they go here, not to step 8); the Reduced motion row |
+| Screens | SETTINGS pages **VIDEO, AUDIO, CONTROLS** (+ **remap editor**, **how-to**), **ONLINE** (the settings page), **GAMEPLAY**, and the retail rows **Rumble, Screen Display, Erase Data** (settings rows, so they go here, not to step 8); the Reduced motion row. The retail **Language** row stays a native hand-off (the owner's "ok") until the last retail text screen is gone (steps 8 and 10), then is removed |
 | Delivers | tab strip over pages (the settings tabs of [image: `14c-remap.png`]), toggle, choice, slider as tables through the adapter; the remap editor's capture state stays in `gmfrontend_controls.inc` and `Controls_*`; hints per 9 |
 | Retired | `gmfrontend_kitlist.inc` row drawing, `widgets_layout.json`, `list_layout.json`, the legacy widget art (`out_kit` widgets and glyph pieces that Atlas replaces) |
 | Depends on | steps 1, 2 |
@@ -698,9 +781,10 @@ layout with the standalone tests; (4) `gd.ui` binding; (5) the bag description; 
 | Verified without the game | `lab_stage_d_check.lua` still passes against the stub; the Lua stub test of the LAB's descriptions; main-chunk local count stays under 200 [doc: LAB `CLAUDE.md`]; the mods screen against a fixture `mods/` folder including a conflict |
 | Must be seen | the LAB in a fight with the pause open, states saved and loaded, the info panel while paused; the mods list with a real folder and restart note; the LAB's offline-only behaviour is unchanged |
 
-### 13.8 Step 8: the retail screens being replaced (size L)
+### 13.8 Step 8: the retail screens that can be rebuilt from data (size L)
 
-Replaced (Atlas screens fed from game state by the adapter), per the owner's rule "unless it has a lot of custom shit":
+Replaced (Atlas screens fed from game state by the adapter), per the owner's rule "unless it has a lot of custom
+shit". The bespoke ones are not left retail: they are re-hosted in step 10 (13.10).
 
 | Screen | From | Note |
 |---|---|---|
@@ -708,14 +792,14 @@ Replaced (Atlas screens fed from game state by the adapter), per the owner's rul
 | Name Entry | Versus > Name Entry | 4-cell tag editor (`tag` role) |
 | Sound Test, Special Messages | Data | list plus a text viewer |
 | VS, Bonus, Misc Records | Data > Records | tables |
-| Results | `gmresult*.c` | needs the results hook (item 12); sample KOs and falls in the mockup are not game data |
+| Results | `gmresult.c`, `gmresultplayer.c` | scene policy `REPLACE` or `OVERLAY` (6.8); sample KOs and falls in the mockup are not game data |
 | Game Over, 1P intermission and bonus summaries | | where the data is a list or a card |
+| Title, if step 2 did not take it | `gmtitle.c` | |
 
-Stay retail (bespoke, wrapped by a native hand-off and given Atlas entries): **Trophy Gallery, Lottery, Collection**
-(`GM_TOY_*`), **Snapshots**, **Movies**, **Staff Roll**, the **Tournament** bracket, the **Training panel** (in-match),
-the opening movie and memory-card prompt. The list is the owner's to confirm (open question 6).
-Retired: the retail text and layouts for each replaced screen drop out of use; nothing of the disc is deleted from
-the game, nothing disc-derived is copied.
+Stays as it is: the opening movie and the memory-card prompt (pure video and a boot blocker; there is no menu to
+rebuild). Retired: the retail text and layouts for each replaced screen drop out of use; nothing of the disc is
+deleted from the game, nothing disc-derived is copied. The retail **Language** row (Settings) goes when the last
+retail text screen of steps 8 and 10 is gone (the owner's "ok", section 2).
 Depends on 1, 2, 4. Verified without the game: a table test per screen against a recorded sample of the game data it
 reads (counts, formats); layouts at three widths. Must be seen: each screen reached by its real path, results after a
 real match (and after a netplay match), name entry round trip.
@@ -736,7 +820,69 @@ it can run in parallel with 3 to 8. Verified without the game: `graphics_tests.c
 agreement test (C header, Lua palette and Qt constants all generated from the one JSON). Must be seen: the launcher
 on a real Windows desktop at 100 % and 150 % scaling.
 
-### 13.10 What is harder than it sounds
+### 13.10 Step 10: the bespoke retail screens, re-hosted in Atlas chrome (size L, each screen droppable)
+
+**The owner's direction (6):** "maybe we disassemble and reassemble these menus against our new menus so they stay in
+theme. Combining the original melee assets into it where we can to preserve the original look". "Maybe" and "where
+we can" are kept: every screen below has its own go or no-go, and a screen that proves too costly is dropped
+without holding the others up.
+
+**Why a tenth step and not part of step 8.** Step 8 is rebuilding screens from data and stays shippable on its own.
+These screens depend on the retail takeover capability (step 3), on `OVERLAY` scenes (6.8), on the `view` part
+(section 12, item 13), carry the highest unknowns (each is thousands of lines of retail scene code) and can each be
+dropped. Mixing them into step 8 would let one hard screen hold back results, records and name entry.
+Depends on steps 1, 2, 3 and 8.
+
+**What "disassemble and reassemble" can mean here [code, my reading of the scenes].** These screens are 3D or JObj
+scenes built from archives the retail code loads at run time (`TyMn*.dat`, `Ty*.dat`, `TmBox.dat`, `GmStRoll.dat`,
+`SdToy.dat` and so on). The retail renderer draws them in the game's own pass. Atlas quads cannot draw an HSD
+model, so the models and animations cannot be lifted into Atlas parts; they stay drawn by retail, from the player's
+disc, and nothing is copied or stored. What Atlas can do is the **frame** pattern:
+
+1. The retail scene runs unchanged in `OVERLAY` mode (6.8): its archives load, its logic and its own pad polling run
+   (`ty/toy.c:1429-1491`, `gmstaffroll.c:694-819` and `mngallery.c:203-205` all read `HSD_PadCopyStatus` directly), so
+   no input is injected and no retail logic is rewritten.
+2. The retail **2D menu pieces** (frames, headers, hint icons, labels) are hidden one by one with the element mask
+   (`JOBJ_HIDDEN`, the call retail itself uses). The retail 3D (trophy, stand, lights, backdrop) is not hidden.
+3. Atlas draws the **chrome** around it: trail, an explainer (name, one rule line, WITH and FROM), a counter, key
+   hints, in the Atlas look. The 3D shows through a transparent **window** in an opaque Atlas plate (the `view`
+   part). Where the retail camera cannot be re-framed, the window is placed where retail already frames the model.
+4. **Readback shims** (scalars, like the existing `Mouse_*` and `Settings_*` shims) tell the adapter what retail is
+   showing (trophy index, series counter, cursor cell, coin count). Retail strings (names, descriptions) live in its
+   text archives (`SdToy.dat` and the like) in the game's own text encoding; Atlas can use them only if they can be
+   decoded to its charset. If not, those retail text objects stay visible (a partial mask) and Atlas draws only the
+   frame.
+5. Mouse is not supported on a framed screen in version 1 (retail logic reads the pad; nothing is injected). The key
+   hints show the pad only.
+
+This corrects one assumption in the brief: the host-side **disc-art decode** (section 12, item 8) is needed only
+where Atlas itself places a retail 2D texture (a fighter icon in the Tournament setup, for instance). A framed scene
+does not use it, because the retail renderer draws its own assets.
+
+| Screen | Retail scene and code [code] | Assets it loads at run time | Retail logic kept | Rebuilt | Size | What is unknown | Recommendation |
+|---|---|---|---|---|---|---|---|
+| **Trophy Gallery** | `GS_TOY_GALLERY`, `Toy_Scene_OnEnter` / `OnFrame` (`ty/toy.c:6421, 6568`; `gmscdata.c:141`), 6,842 lines | `TyMnView`, `TyMnBg`, `TyMnInfo`, `TyDatai`, `TyLight`, `TyStand`, one `Ty*.dat` per trophy, text `SdToy.dat` / `SdToyExp.dat` | everything: viewing, stick rotation and zoom, series counter, unlock state from the save | the 2D frame, header, info panel and hints | M | whether the name and description strings can be decoded to the Atlas charset; whether the retail camera can be re-framed into a window; m-ex trophies (ACE) | **Do it first.** It is the smallest scene with clear state and proves the pattern |
+| **Collection (the trophy room)** | `GS_TOY_COLLECTION`, `tyDisplay_Scene_OnEnter` / `OnFrame` (`ty/tydisplay.c:1801, 1993`), 2,525 lines | `TyMnDisp`, the per-series `Ty*` archives (`Mycc`, `Map`, `Seri`, `Etc`, `Poke`, `Item` sets) | the room, shelf layout, cursor, camera | trail, counters, explainer for the selected trophy, hints | M | where the cursor's trophy id is readable; the room fills the screen, so a window means a re-framed camera | **Do it** after the Gallery; same shims |
+| **Lottery (the dispenser)** | `GS_TOY_LOTTERY`, `tyFigupon_Scene_OnEnter` / `OnFrame` (`ty/tyfigupon.c`), 1,676 lines; `gm/gmtoylottery.c` sets up the card work area | `TyMnFigp`, `SdToy`; the machine and the trophy models | the machine, the pull, the coin balance and save writes, the "GOT IT! A NEW TROPHY!" popup (kept as retail: it shows the real trophy model) | coin count, chance and hints as Atlas chrome | S | the retail text objects for coins and chance (hide only if readable); a past entry fault is fixed, `pc/docs/TROPHIES.md` sections 1-3 | **Do it**, framing the machine and keeping the popup |
+| **Movies** | Data > Movies: `mnGallery_80259868` (`mn/mngallery.c:470`), 516 lines, plays `.mth` video through `lbMthp_*` (`:138-221`) | the `Mv*.mth` movies; the video draws in a retail GX pass (448x336 and 640x480 targets) | playback, the unlock flag check, any-pad skip | the **list of unlocked movies** as an Atlas list, with the video window framed | M | how this port plays `.mth` (not traced); the movie titles and unlock flags are not in the code; the video fills the screen | **Do it** as a rebuilt list that calls retail playback; the video stays retail |
+| **Staff Roll** | `gmstaffroll.c`, 1,338 lines | `GmStRoll.dat`, `SdStRoll.dat`, effects, audio sync | all of it: a scripted 3D cinematic with its own camera and text | nothing | S (optional) | none needed | **Leave retail.** Give it an entry under More > Credits ("Staff Roll"), and at most a small Atlas corner key hint; the project's own credits are the Atlas Credits screen (step 2) |
+| **Tournament** | `GS_TOU_SETUP`, `GS_TOU_BRACKET`, `GS_TOU_ALT` (`gmscdata.c:316-330`), `gmtou_0/1/2.c`, `gmtoulib.c`, about 9,200 lines | `TmBox.dat`, `SdTou` text | the bracket logic and the match flow | the **setup** (selections and settings) as an Atlas list; the bracket and winner-out / loser-out scenes framed | L | the setup's data structures, name tags, how results feed back; I read only the scene table and the archive names | **Last, and only if Tournament is played.** Setup first (M); bracket framed after; otherwise drop |
+| **Snapshots** | Data > Snapshots: `mnSnap_80257F24` (`mn/mnsnap.c`), 2,738 lines | the player's own saved photos from the memory card (not disc art), via `lbCardNew_*` tasks | the card I/O state machine and its error states | 4-thumbnail page grid and the delete/copy dialogs as Atlas parts | L | whether the PC port's card emulation holds photos at all; the thumbnails are retail JObj textures, so a frame can only leave them in a window | **Drop unless the owner cares.** Keep retail with an Atlas entry; the cost is high and the feature is rarely used here |
+| **Training panel** (in match) | **not found by name** in `src/melee`; `gm_1879.c:437` branches on `GM_TRAINING`; `gmtrainingmode.c` (304 lines) is the CSS and exit only | unknown | unknown | unknown | unknown (L if re-hosted) | where the panel is built; a first task is to locate it by tracing the on-screen panel in a run | **Defer.** Decide after step 7: the LAB's DUMMY and PLAY tabs are the nearest prior art, and an Atlas `pause` screen (6.8) may be the right home |
+| **Opening movie** | boot movie (`gmopening*.c`) | `.mth` video | | | | | **Stays as it is.** No menu, pure video; nothing to gain |
+
+Order inside step 10: Gallery (proves the frame pattern), Collection, Lottery, Movies list, then the optional
+Staff Roll hint, then Tournament setup and bracket, with Snapshots and the Training panel only on an explicit
+yes. Each is one commit set and one look.
+Retired per screen: the retail 2D pieces stay in the disc but are hidden by the mask; once a screen has shipped, its
+retail text and hint objects are never drawn. Nothing of the disc is copied; nothing disc-derived is committed.
+Verified without the game: the mask and policy tests of 6.8; layout tests of each chrome at three widths with a
+sample trophy, movie and tournament dataset; PowerPC syntax checks of every guard. Must be seen (the owner, or an
+agent while he is away): each screen entered by its real path on the vanilla disc and on ACE (m-ex trophies), with
+the retail 3D unchanged inside the window, the hidden retail pieces gone and nothing else missing, the hints correct,
+and the exit back to the Collection or Data hub.
+
+### 13.11 What is harder than it sounds
 
 - **"One component set"** is two codebases today (game-side retargeted C with `FfRole`, host C with `KfRole`); the
   design moves drawing to the host and turns game-side screens into adapters (6.1, 6.7).
@@ -744,9 +890,10 @@ on a real Windows desktop at 100 % and 150 % scaling.
   the Envoy mod has no tile today. Step 2 therefore both adds Envoy's entry and removes roguelite's tile mechanism.
 - **"ONE character select"**: about 19 mode files with their own CSS states and data (13.4); the mode profile is new
   design, and each group is its own risk.
-- **Title, results, pause, HUD** have no frontend hook; item 12 is real work and may slip those screens.
+- **Title and results** have no frontend hook; the scene policy (6.8) is real work and the title may slip to step 8. The HUD and pause are easier: their draw and call sites are known (6.8).
+- **The bespoke retail screens** are 3D scenes drawn by the retail renderer; Atlas can frame and chrome them but not re-draw their models, so "disassemble and reassemble" means framing, with the 2D retail pieces hidden (13.10).
 - **The mockup is not the engine's type**: sizes and weights differ (4.3); snapping changes some widths.
-- **Disc art** must be drawn from game memory without being stored (item 8).
+- **Disc art** that Atlas itself places (CSS icons, portraits) must be drawn from game memory without being stored (item 8). The framed retail scenes need no decode: the retail renderer draws its own assets at run time.
 - **The online lobby** is a netplay-synchronised state machine; keeping it native while changing its look is the safe
   but slow path (13.6).
 - **Mod models** are Lua handles, so a native screen cannot show a model cell without a bridge (item 10).
@@ -761,21 +908,21 @@ on a real Windows desktop at 100 % and 150 % scaling.
 - A second script or right-to-left layout (kept possible, not designed).
 - The in-game console, the F11 fly readout and the LAB's hitbox overlays (developer tools stay as they are).
 - Changing netplay protocol or rollback behaviour.
-- Retail gameplay HUD numerals (damage, stocks, timer) unless the owner says so (open question 2).
+- Actually replacing the retail damage, stock and timer numerals and the retail pause. The capability is in scope and built (6.8); the replacement is the owner's later decision.
+- Re-drawing retail 3D models (trophies, staff roll, bracket pieces) as Atlas quads: they stay retail-rendered inside Atlas chrome.
+- Porting Envoy's parked screens (delegated decision, step 3).
 - Redesigning Envoy's gameplay UI decisions (what is shown is the audit's and the owner's rulings; this spec only
   gives them a system).
 - Any new art tool: Atlas art comes from `menu/pipeline` (HTML/CSS/SVG to PNG to GX) as today.
 
 ## 15. Open questions for the owner
 
+The first draft's six questions are answered (section 2). What remains:
+
 | # | Question | Recommendation |
 |---|---|---|
-| 1 | Is **Atlas** the right name for the whole system (not just the style), with "font atlas" and "texture atlas" always qualified? | Yes. It is the word you already use; the collision is manageable. |
-| 2 | Does Atlas also replace the **retail damage, stock and timer HUD** and the retail **pause**, or only the mod and shared HUD zone for now? | Not yet. Keep retail numerals and pause in steps 1-3 (match-critical, no hook today); look at the HUD zone first, then decide with the screen in front of you. |
-| 3 | Envoy's **parked screens** (title, profile, garden hub, fighter, companion, records): drop their UI when their code is replaced? | Do not port them; remove their screen wiring in step 3 and keep their logic until you un-park or delete the design. |
-| 4 | The **title**: replace the retail "Press Start" scene with an Atlas title in step 2, keeping the retail attract-mode behaviour behind it? | Yes if the hook is cheap; otherwise leave it retail and do it in step 8. |
-| 5 | The retail **Language** row (English or Japanese): keep as a native hand-off until all retail text screens are replaced, then remove? | Yes. Atlas is English only; the row only matters while retail text screens remain. |
-| 6 | Confirm what **stays retail** as bespoke (13.8): Trophy Gallery, Lottery, Collection, Snapshots, Movies, Staff Roll, the Tournament bracket, the Training panel, opening movie. | Confirm as listed; each still gets an Atlas entry and a native hand-off. |
+| 1 | Step 10 has two screens that are expensive and rarely used: **Snapshots** and the **Tournament** bracket. Do you want them re-hosted at all? | No for Snapshots (keep retail with an Atlas entry). For Tournament, only if you play it; do the Gallery, Collection, Lottery and Movies first and decide the rest after you have seen those. |
+| 2 | The **Training panel** has not been located in the decompiled source. Is it worth re-hosting, or is the LAB the intended home for that kind of tool? | Defer; decide after step 7. The LAB covers most of what the panel does. |
 
 ## 16. Risks
 
@@ -789,7 +936,10 @@ on a real Windows desktop at 100 % and 150 % scaling.
 | Mod menu entries as an attack or clutter surface | a mod floods Solo or steals focus | caps, parent whitelist, no override, hidden during sessions (8.3, 8.4) |
 | Two systems alive for long | double maintenance | each step names what it retires; `MELEE_ATLAS=0` only while both exist |
 | Mockup text and counts are samples | real content overflows | lint at registration; snap rule; fit rule |
-| Scope creep into features with no menu | the nine steps never end | section 14 |
+| Scope creep into features with no menu | the ten steps never end | section 14 |
+| A retail element guard hides more than intended, or a hidden element's state stops updating | a missing HUD number or a stuck animation | guards only on render callbacks and JObj flags, never on procs; empty mask by default; a per-bit look before any default changes |
+| A framed retail scene cannot be re-framed into a window, or its text cannot be decoded | an ugly or half-themed screen | the plate-without-window and partial-mask fallbacks (13.10); each screen is droppable |
+| Step 10 pulls in thousands of lines of retail scene code | the step never ends | per-screen go or no-go, order of 13.10, Snapshots and Tournament only on an explicit yes |
 | Tool limits: headless tests prove layout, not looks | an ugly screen ships | every step ends with the owner's look |
 | Launcher and game drift apart | two palettes again | one generated tokens file and an agreement test (13.9) |
 
@@ -817,8 +967,15 @@ that set is named in that change.
   (Envoy's lobby menus imply it; I did not trace the hook sites).
 - Whether the overlay sampler wraps UVs (hatch and graticule tiles) and whether font pages decode lazily.
 - Whether menus read the pad before or after the Controls remap (key hints, section 9).
-- Where exactly to put the retail title hook and whether the retail pause or results scenes can be intercepted
-  without new engine work (item 12).
+- Whether the scene table's function pair can be wrapped for `OVERLAY` and `REPLACE` without touching more than the
+  table (6.8), and so whether the title hook is cheap; and how retail detects an unpause (`gw_Ui_RequestUnpause`).
+- Whether the retail camera of each trophy scene can be re-framed into a window, whether the retail text archives
+  decode to the Atlas charset, and where each scene exposes its selection (item 13). I read the scene tables, archive
+  names and pad-polling sites, not the scenes' state.
+- Where the Training panel is built (not found by name), how this port plays `.mth` movies, and whether card photos
+  exist on PC.
+- That percent and stocks are exposed for all four ports to the `gd.player` and `gd.match` readbacks the HUD zone
+  would use.
 - Whether `fe_menu_sweep.py` and the standalone tests build without the disc images.
 - The GX formats of the retail CSS/SSS icons and portraits and the decode cost per frame (item 8).
 - All numbers marked [estimate]: quads per screen (counted on the mockup HTML, not on engine output), font memory,
