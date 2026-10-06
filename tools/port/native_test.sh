@@ -52,7 +52,9 @@ slippi-match)
     uses_enet=1 ;;
 atlas-tokens)
     sources=(pc/tests/atlas_tokens_test.c) ;;
-*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens)" ;;
+atlas-layout)
+    sources=(pc/tests/atlas_layout_test.c pc/platform/gw_ui_layout.c) ;;
+*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout)" ;;
 esac
 
 if [ "$uses_enet" = 1 ]; then
