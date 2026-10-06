@@ -38,7 +38,9 @@ Before publishing: rebuild the exe (`bash tools/port/build.sh`), push `pc-port` 
 | `VERSION` | the release version (`0.1.0` -> tag `v0.1.0`, zip `GDMelee-0.1.0-win64.zip`) |
 | `build_release.ps1` | stages `_build/release/GDMelee-<v>-win64/`, writes `version.txt` + `MANIFEST.sha256`, checks the folder, zips it (forward-slash entries, one top folder), checks the zip, writes `<zip>.sha256` |
 | `check_release.ps1` | the disc-data guard; runs on a folder or a zip; exit 1 = do not ship |
-| `publish.ps1` | package existing binaries (strict unless Force/DryRun) + check + release notes + `gh release create` |
+| `check_release_linux.py` | the same rules for a Linux folder or tarball; `tools/port/package_linux.py` runs it before it writes the tarball; tests in `test_release_guard_linux.py` |
+| `mod_rules.json` | which mods a release carries, which files of each, which are on by default, the never-package list |
+| `publish.ps1` | package existing binaries (strict unless Force/DryRun) + check + release notes + `gh release create`; takes `-GameDir/-MeleeDir/-OutDir` for a clean private build root; the protocol number in the body comes from `netplay_protocol.ps1` |
 | `build_launcher.ps1` / `build_launcher.sh` | build, test and deploy the native Qt launcher |
 | `launcher/qt/` | portable launcher; legacy C# sources retained for reference |
 | `README-user.txt` | becomes `README.txt` in the zip |
@@ -64,6 +66,41 @@ commit/protocol against `version.txt`; changing timestamps cannot relabel an old
 The guard also requires the engine/runtime/cache files, the complete committed UI, and the deployed
 Qt application, Windows platform plugin, x64 CRT and license notices. Manifest entries and zip paths
 must be unique.
+
+## Mods in the package (`mod_rules.json`)
+
+One table, `tools/release/mod_rules.json`, says which mods a release carries and which files of each.
+`build_release.ps1` copies by it, `check_release.ps1` (Windows) and `check_release_linux.py` (Linux) enforce it.
+A file ships only if its path inside the mod matches one of the mod's `allow` patterns **and** is tracked in the
+melee git repo (a local or git-ignored file that happens to match is refused). Mods land in `mods/<id>/`; the
+package's `mods/enabled.txt` lists the ones that are on.
+
+| mod | on | files shipped |
+|---|---|---|
+| `geno-lab` | yes | `mod.json`, `scripts/*.lua`, `ui/*.gxtex`, `ui/lab_ui.json` |
+| `envoy` | yes | `mod.json`, `README.md`, `scripts/*.lua`, `shaders/*.wgsl`, `items/*/item.json`, `fx/*/*.gfx.json` + `soft.wgsl`, `missions/fighters.txt`, `missions/*/level.lua|mission.lua` (not its internal `*.md` plans) |
+| `envoy_drives` | yes | `mod.json`, `README.md`, `models/*.gxmesh`, `models/*.gxtex`, `models/*.json` (not `tools/make_drives.py`) |
+| `vanilla-hero`, `vanilla-striker`, `vanilla-caster` | **off** | text only: `mod.json`, `geno.json`, `README.md`, `moves/*.genoasm|words`, `fx/**.json` |
+| `vanilla-courier` | **off, optional** | only with `-IncludeCourier`; see below |
+
+`scripts/examples` still ships the Lua/JSON examples, minus `envoy` and `envoy_drives` (they are mods now).
+`envoy_drives_sa2`, anything under `_build/local-assets`, ported or private fighters (Meta Knight/Halberd, Ultimate
+Kirby, Sora, `ssbm-geno`) and ACE/Akaneia packs are on a never-package list (`deny_mod_ids`,
+`deny_dirs_anywhere`): packaging throws, and both guards fail on the name even if the file types look harmless.
+
+**The Courier and `.dat` files.** The built `GnCourier_*.dat` / `GnCourierAJ.dat` are original data but look, by
+extension and by the HSD header, exactly like disc files. They are not committed and not built at package time (the
+converter needs numpy/scipy/Pillow, the .NET 8 SDK and the HSDLib checkout). `tools/geno/build_courier.sh` writes a
+build record (`_build/geno-slice4/courier/original-assets.json`: sha256 of every output). `build_release.ps1
+-IncludeCourier` refuses any file that does not match that record and writes `mods/original-assets.json` into the
+package; the guards accept a `.dat` only if that file lists it with the right hash, its path is `files/Gn<Name>...dat`
+(never a disc name), it is under 8 MB, it holds the Courier's own symbols and no `Ply<OtherFighter>_` symbol. Every other
+sniff (disc header, game ID, DOL) still runs on it. The record proves "these are the bytes the build produced", the
+path and symbol rules prove "and they are not a disc file"; neither proves authorship, so keep `-IncludeCourier` out of
+strict releases until the Courier's known gaps (`melee/pc/geno/mods/vanilla-courier/README.md`) are closed.
+
+`-ModsFrom <melee checkout>` (dry runs only, refused with `-Strict`) takes the mods from another checkout than the
+exe's, for a package that pairs an older build with newer mod files.
 
 ## Checks before packaging
 

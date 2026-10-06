@@ -41,6 +41,17 @@ class ReleaseGuardTests(unittest.TestCase):
             file = cls.stage/name.removeprefix('_build/')
             file.parent.mkdir(parents=True, exist_ok=True)
             file.write_bytes(subprocess.check_output(['git', '-C', str(ROOT), 'show', 'HEAD:'+name]))
+        for name, text in {'mods/README.txt': 'mods', 'mods/enabled.txt': '# on\ngeno-lab\nenvoy\nenvoy_drives\n',
+                           'mods/geno-lab/mod.json': '{}', 'mods/geno-lab/scripts/main.lua': 'x',
+                           'mods/envoy/mod.json': '{}', 'mods/envoy/scripts/main.lua': 'x',
+                           'mods/envoy/shaders/crit.wgsl': 'x', 'mods/envoy/items/drive_press/item.json': '{}',
+                           'mods/envoy_drives/mod.json': '{}', 'mods/envoy_drives/models/a.gxmesh': 'x',
+                           'mods/envoy_drives/models/a.gxtex': 'x', 'mods/envoy_drives/models/a.material.json': '{}',
+                           'mods/vanilla-striker/mod.json': '{}', 'mods/vanilla-striker/geno.json': '{}',
+                           'mods/vanilla-striker/moves/jab.genoasm': 'x', 'mods/vanilla-striker/moves/jab.words': 'x'}.items():
+            file = cls.stage/name
+            file.parent.mkdir(parents=True, exist_ok=True)
+            file.write_text(text)
         (cls.stage/'version.txt').write_text('fixture\nmelee      '+40*'a'+'  source\nnetplay_protocol 5\n')
         cls.stamp = dict(format=1, melee_commit=40*'a', netplay_protocol=5,
                          source_sha256=64*'b', source_dirty=False,
@@ -172,6 +183,146 @@ class ReleaseGuardTests(unittest.TestCase):
             self.assertIn('personal path', log)
         finally:
             file.write_bytes(before)
+
+    # ---- mods: the allowlist from mod_rules.json -------------------------------------------------
+
+    def put(self, name, data=b'x'):
+        file = self.stage/name
+        file.parent.mkdir(parents=True, exist_ok=True)
+        file.write_bytes(data)
+        return file
+
+    def cleanup(self, *names):
+        for name in names:
+            path = self.stage/name
+            if path.is_dir():
+                shutil.rmtree(path)
+            elif path.exists():
+                path.unlink()
+
+    def expect_fail(self, text):
+        self.manifest()
+        code, log = self.check()
+        self.assertNotEqual(code, 0, log)
+        self.assertIn(text, log)
+
+    def courier(self, data=None, listed=True, symbols=b'PlyCourier_Share_joint courier_joint', name='GnCourier_default.dat'):
+        data = data if data is not None else (b'\0'*4+symbols+b'\0'*64)
+        rel = 'mods/vanilla-courier/files/'+name
+        self.put('mods/vanilla-courier/mod.json', b'{}')
+        self.put(rel, data)
+        if listed:
+            self.put('mods/original-assets.json', json.dumps({'format': 1, 'files': [
+                {'path': rel, 'sha256': hashlib.sha256(data).hexdigest()}]}).encode())
+        return rel
+
+    def test_envoy_assets_pass(self):
+        self.manifest()
+        code, log = self.check()
+        self.assertEqual(code, 0, log)
+
+    def test_unknown_or_private_mod_is_rejected(self):
+        for mod, text in (('envoy_drives_sa2', 'never-package'), ('metaknight-slot', 'never-package'),
+                          ('ultimate-kirby', 'never-package'), ('local-assets', 'never-package'),
+                          ('ace-wolf', 'never-package'), ('my-fighter', 'not a mod this release carries')):
+            with self.subTest(mod=mod):
+                try:
+                    self.put('mods/'+mod+'/mod.json', b'{}')
+                    self.expect_fail(text)
+                finally:
+                    self.cleanup('mods/'+mod)
+
+    def test_a_file_a_mod_does_not_allow_is_rejected(self):
+        for name in ('mods/envoy/art/hero.png', 'mods/envoy/tools/make.py', 'mods/envoy/NATIVE-TEST-PLAN.md',
+                     'mods/envoy_drives/tools/make_drives.py', 'mods/vanilla-striker/files/PlMr.dat',
+                     'mods/envoy/scripts/extra.wgsl'):
+            with self.subTest(name=name):
+                try:
+                    self.put(name, b'x'*64)
+                    self.manifest()
+                    code, log = self.check()
+                    self.assertNotEqual(code, 0, log)
+                finally:
+                    self.cleanup(name)
+
+    def test_envoy_is_not_an_example_script(self):
+        try:
+            self.put('scripts/examples/envoy/scripts/main.lua')
+            self.expect_fail('is a mod now')
+        finally:
+            self.cleanup('scripts/examples/envoy')
+
+    def test_original_dat_passes_only_when_listed_and_original(self):
+        try:
+            rel = self.courier()
+            # a first word equal to the file's own size is how every HSD archive looks: allowed for the listed original only
+            data = (self.stage/rel).read_bytes()
+            data = len(data).to_bytes(4, 'big')+data[4:]
+            self.put(rel, data)
+            self.put('mods/original-assets.json', json.dumps({'format': 1, 'files': [
+                {'path': rel, 'sha256': hashlib.sha256(data).hexdigest()}]}).encode())
+            self.manifest()
+            code, log = self.check()
+            self.assertEqual(code, 0, log)
+        finally:
+            self.cleanup('mods/vanilla-courier', 'mods/original-assets.json')
+
+    def test_dat_not_in_the_original_list_is_disc_data(self):
+        try:
+            self.courier(listed=False)
+            self.expect_fail('does not list is disc data')
+        finally:
+            self.cleanup('mods/vanilla-courier', 'mods/original-assets.json')
+
+    def test_dat_with_wrong_hash_is_rejected(self):
+        try:
+            rel = self.courier()
+            self.put(rel, b'\0'*4+b'PlyCourier_x'+b'tampered')
+            self.expect_fail('does not match mods/original-assets.json')
+        finally:
+            self.cleanup('mods/vanilla-courier', 'mods/original-assets.json')
+
+    def test_listed_dat_carrying_another_fighters_symbols_is_rejected(self):
+        try:
+            self.courier(symbols=b'courier_joint PlyMario5K_Share_joint')
+            self.expect_fail("another fighter's symbol")
+        finally:
+            self.cleanup('mods/vanilla-courier', 'mods/original-assets.json')
+
+    def test_dat_with_a_disc_name_is_rejected_even_if_listed(self):
+        try:
+            self.courier(name='PlMr.dat')
+            self.expect_fail('disc data')
+        finally:
+            self.cleanup('mods/vanilla-courier', 'mods/original-assets.json')
+
+    def test_enabled_txt_cannot_turn_on_an_off_or_unknown_mod(self):
+        file = self.stage/'mods/enabled.txt'
+        before = file.read_text()
+        try:
+            for line, text in (('vanilla-striker', 'must ship off by default'), ('metaknight', 'not a mod this release carries')):
+                with self.subTest(line=line):
+                    file.write_text(before+line+'\n')
+                    self.expect_fail(text)
+        finally:
+            file.write_text(before)
+
+    def test_default_on_mod_is_required(self):
+        file = self.stage/'mods/envoy/mod.json'
+        data = file.read_bytes()
+        try:
+            file.unlink()
+            self.expect_fail('missing required file: mods/envoy/mod.json')
+        finally:
+            file.write_bytes(data)
+
+    def test_personal_path_in_a_mod_script_is_rejected(self):
+        file = self.stage/'mods/envoy/scripts/main.lua'
+        try:
+            file.write_text('-- C:\\Users\\Builder\\src\\x.lua\n')
+            self.expect_fail('personal path')
+        finally:
+            file.write_text('x')
 
 
 if __name__ == '__main__':

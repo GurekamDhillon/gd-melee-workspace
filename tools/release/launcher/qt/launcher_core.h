@@ -42,6 +42,13 @@ struct LaunchSpec {
 };
 LaunchSpec prepareLaunch(const QString &appDir, const QString &userDir,
                          const Settings &settings, const Disc &disc);
+// The 32-bit game's environment on Linux. The launcher keeps its own Qt hygiene (its x86-64 Qt folder and
+// plugin paths never reach the game; neither does a stray LD_PRELOAD, which is nearly always a 64-bit
+// overlay), but it no longer discards the player's own library path: the game's lib/ comes first, then
+// whatever LD_LIBRARY_PATH the launcher was started with, minus the launcher's own launcher/lib that the
+// GD-Melee wrapper adds. A player who needs a preload for the game sets MELEE_GAME_LD_PRELOAD.
+QString gameLibraryPath(const QString &appDir, const QString &inheritedPath);
+void applyGameLibraryEnvironment(QProcessEnvironment &env, const QString &appDir);
 QString latestCrash(const QString &runDir);
 void writeAtomic(const QString &path, const QByteArray &data);
 QString readText(const QString &path, qint64 limit = 1024 * 1024);

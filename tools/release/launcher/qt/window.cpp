@@ -295,8 +295,8 @@ void Window::startGame(const LaunchSpec &spec) {
 void Window::checkGraphics(bool forLaunch) { guarded([&] {
     if (graphicsBusy_ || process_.state() != QProcess::NotRunning) return;
     auto env = forLaunch ? pendingLaunch_.environment : QProcessEnvironment::systemEnvironment();
-    env.remove("QT_PLUGIN_PATH"); env.remove("QT_QPA_PLATFORM_PLUGIN_PATH"); env.remove("LD_PRELOAD");
-    env.insert("LD_LIBRARY_PATH", appDir_ + "/lib");
+    // A launch environment is already the game's own; otherwise build it the same way prepareLaunch does.
+    if (!forLaunch) applyGameLibraryEnvironment(env, appDir_);
     graphicsBusy_ = true; graphicsForLaunch_ = forLaunch; graphicsTimedOut_ = false;
     graphicsOutput_.clear(); graphicsErrors_.clear(); play_->setEnabled(false); graphicsDevice_->setEnabled(false);
     graphicsDetails_->setPlainText(t("Checking 32-bit Vulkan drivers...", "Comprobando los controladores Vulkan de 32 bits..."));

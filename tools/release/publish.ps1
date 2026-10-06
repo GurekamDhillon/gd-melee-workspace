@@ -7,6 +7,13 @@
 #   ... -Draft              create the release as a draft, to look it over on GitHub first
 #   ... -Server host:port   ship a netplay_server.txt (the address becomes public!)
 #   ... -Force              publish despite public-commit/clean-source warnings (never stale binaries)
+#   ... -GameDir <dir>      take melee-pc.exe, its map, build-provenance.json and DLLs from <dir> (a clean private
+#                           build root made by tools\port\agent_new.sh) instead of the main _build
+#   ... -MeleeDir <dir>     the melee checkout that build came from (default <root>\melee)
+#   ... -OutDir <dir>       where the zip and notes are written (default <root>\_build\release; a dry run from a
+#                           private build root should not use the shared folder)
+#   ... -IncludeCourier     also package the experimental Courier fighter (see build_release.ps1)
+#   ... -ModsFrom <dir>     dry runs only (refused unless -DryRun): mods from another melee checkout
 #
 # Why local and not CI: the game cannot be built on a GitHub runner today. It needs the clang 23
 # toolchain unpacked in _toolchains (not in any repo), the multi-GB Aurora/Dawn/SDL3 build tree in
@@ -18,14 +25,23 @@ param(
   [string]$Server = "",
   [switch]$Draft,
   [switch]$DryRun,
-  [switch]$Force
+  [switch]$Force,
+  [string]$GameDir = "",
+  [string]$MeleeDir = "",
+  [string]$OutDir = "",
+  [string]$ModsFrom = "",
+  [switch]$IncludeCourier
 )
 $ErrorActionPreference = "Stop"
 $root = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 if (-not $Version) { $Version = (Get-Content (Join-Path $PSScriptRoot "VERSION") -Raw).Trim() }
 $tag = "v$Version"
 $name = "GDMelee-$Version-win64"
-$out = Join-Path $root "_build\release"
+$out = if ($OutDir) { [System.IO.Path]::GetFullPath($OutDir) } else { Join-Path $root "_build\release" }
+if ($ModsFrom -and -not $DryRun) { throw "-ModsFrom is for dry runs only" }
+# The one source for the protocol number (the code uses it too); the body below never spells a number out.
+. (Join-Path $PSScriptRoot 'netplay_protocol.ps1')
+$protocol = Get-NetplayProtocol
 $zip = Join-Path $out "$name.zip"
 
 # 1. the tag must be new. (Native commands that may fail run under "Continue": with "Stop",
@@ -50,6 +66,11 @@ if (-not $wsPushed) {
 # 3. build (strict unless -Force: the melee commit must be public, the exe must contain it)
 $buildArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "build_release.ps1"), "-Version", $Version)
 if ($Server) { $buildArgs += @("-Server", $Server) }
+if ($GameDir) { $buildArgs += @("-GameDir", $GameDir) }
+if ($MeleeDir) { $buildArgs += @("-MeleeDir", $MeleeDir) }
+$buildArgs += @("-OutDir", $out)
+if ($ModsFrom) { $buildArgs += @("-ModsFrom", $ModsFrom) }
+if ($IncludeCourier) { $buildArgs += "-IncludeCourier" }
 if (-not ($Force -or $DryRun)) { $buildArgs += "-Strict" }
 & powershell @buildArgs
 if ($LASTEXITCODE -ne 0) { throw "build_release.ps1 failed" }
@@ -82,10 +103,10 @@ $versionNotes
 
 Windows SmartScreen may warn about an unsigned program: *More info > Run anyway*. Online play: see ``HOW TO PLAY ONLINE.txt`` in the zip.
 
-Online play requires **netplay protocol 4** (match rules such as Turbo are agreed in the handshake; 40 MiB game memory and shared-page rollback snapshots). Both players must update to this release; protocol 1/2/3 peers are incompatible. A protocol version error means you need to update the game, not change your disc. Matchmaking uses UDP on the configured server's port (normally netplay.gsd.sh:51600). The Qt launcher inspects local crash reports; it has no upload client.
+Online play requires **netplay protocol $protocol** (match rules such as Turbo and the Envoy mode are agreed in the handshake). Both players must update to this release: a game on any other protocol, which means every earlier release, cannot match with this one. A protocol version error means you need to update the game, not change your disc. Matchmaking uses UDP on the configured server's port (normally netplay.gsd.sh:51600). The Qt launcher inspects local crash reports; it has no upload client.
 
 ### What's in the zip
-The game (``melee-pc.exe``), the launcher (``GD Melee.exe``), their runtime libraries (SDL3, Dawn, the MSVC runtime), GD's Melee's own menu art, docs, and the licences of everything bundled (``LICENSES\``). ``MANIFEST.sha256`` lists every file.
+The game (``melee-pc.exe``), the launcher (``GD Melee.exe``), their runtime libraries (SDL3, Dawn, the MSVC runtime), GD's Melee's own menu art, the mods in ``mods\`` (the LAB, Envoy and its drive models are on; sample Geno fighters are installed but off, see ``mods\README.txt``), docs, and the licences of everything bundled (``LICENSES\``). ``MANIFEST.sha256`` lists every file.
 
 ### Source
 - Game: [GurekamDhillon/melee@$($meleeRev.Substring(0,9))](https://github.com/GurekamDhillon/melee/tree/$meleeRev) (branch ``pc-port``)

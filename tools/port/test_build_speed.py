@@ -387,6 +387,17 @@ class BridgeWriteTests(unittest.TestCase):
             self.assertEqual(path.read_text(), "new\n")
             self.assertEqual(list(path.parent.glob("*.tmp")), [])
 
+    def test_generated_bridge_is_always_written_with_lf(self):
+        # melee/.gitattributes is eol=lf: a CRLF write made a checkout without autocrlf look dirty to build_provenance.py
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "gw_mex_bridge.c"
+            bridge = load_bridge()
+            self.assertTrue(bridge.write_if_changed(path, "a\nb\n"))
+            self.assertEqual(path.read_bytes(), b"a\nb\n")
+            path.write_bytes(b"a\r\nb\r\n")  # an autocrlf checkout of the same text is "unchanged"
+            self.assertFalse(bridge.write_if_changed(path, "a\nb\n"))
+            self.assertEqual(path.read_bytes(), b"a\r\nb\r\n")
+
 
 if __name__ == "__main__":
     unittest.main()

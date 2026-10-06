@@ -125,7 +125,7 @@ HOW=
 [ -t 0 ] && HOW="$HOW terminal"
 printf 'Started from (guess):%s\n' "${HOW:- unknown}"
 printf 'Environment the game or SDL reads (a short allowlist; not the full environment):\n'
-for v in SDL_VIDEODRIVER SDL_VIDEO_DRIVER SDL_AUDIODRIVER SDL_AUDIO_DRIVER VK_ICD_FILENAMES VK_DRIVER_FILES LD_LIBRARY_PATH DRI_PRIME MESA_VK_DEVICE_SELECT QT_QPA_PLATFORM DESKTOP_SESSION XDG_SESSION_DESKTOP GAMESCOPE_WAYLAND_DISPLAY SteamDeck; do
+for v in SDL_VIDEODRIVER SDL_VIDEO_DRIVER SDL_AUDIODRIVER SDL_AUDIO_DRIVER VK_ICD_FILENAMES VK_DRIVER_FILES VK_LOADER_DRIVERS_SELECT VK_LOADER_DRIVERS_DISABLE VK_LOADER_DEBUG __NV_PRIME_RENDER_OFFLOAD __VK_LAYER_NV_optimus MESA_LOADER_DRIVER_OVERRIDE XDG_SESSION_TYPE WAYLAND_DISPLAY DISPLAY LD_LIBRARY_PATH DRI_PRIME MESA_VK_DEVICE_SELECT QT_QPA_PLATFORM DESKTOP_SESSION XDG_SESSION_DESKTOP GAMESCOPE_WAYLAND_DISPLAY SteamDeck; do
     eval "val=\${$v-__unset__}"
     [ "$val" = __unset__ ] || printf '  %s=%s\n' "$v" "$val"
 done
@@ -234,6 +234,10 @@ for f in $ICDLIST; do
     printf '  %s: %s\n' "$f" "$st"
 done
 [ -n "$ICDLIST" ] || printf '  (none found)\n'
+NICD=0; for f in $ICDLIST; do NICD=$((NICD + 1)); done
+if [ "$NICD" -gt 1 ]; then
+    printf '  NOTE: %s Vulkan drivers are installed. The game asks the Vulkan loader for every GPU at once, so one driver that fails while enumerating can leave the game with no adapter (log: "No supported adapters"). To try one driver at a time start the game with VK_LOADER_DRIVERS_SELECT=*radeon* (or *nvidia*, *intel*; Vulkan loader 1.3.234 or newer) or VK_DRIVER_FILES=<one manifest listed above>; VK_LOADER_DEBUG=error,warn,driver shows which driver failed. MELEE_BACKEND=opengles skips Vulkan.\n' "$NICD"
+fi
 if p=$(find32 libvulkan.so.1); then printf '32-bit Vulkan loader libvulkan.so.1: FOUND (%s)\n' "$p"; VKLOADER=1; else printf '32-bit Vulkan loader libvulkan.so.1: MISSING\n'; VKLOADER=; fi
 [ -n "$ANY32" ] && [ -n "$VKLOADER" ] || V_NO_VK32=1
 if [ -x "$ROOT/bin/melee-graphics-probe" ]; then

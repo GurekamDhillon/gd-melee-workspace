@@ -6,6 +6,8 @@
 #   ... -GameDir <dir>          take melee-pc.exe and its DLLs from <dir> instead of _build
 #   ... -MeleeDir <dir>         the melee checkout that exe was built from (a lane worktree)
 #   ... -Strict                 warnings (dirty melee tree, commit not on the public fork) become errors
+#   ... -IncludeCourier         also package the experimental Courier fighter (its built .dat files; off by default)
+#   ... -ModsFrom <dir>         dry runs only: mods from another melee checkout than the exe's
 #
 # It packages what is ALREADY BUILT (_build\melee-pc.exe and friends): rebuild first if you changed
 # code. Output goes to _build\release\ (git-ignored). It contains only:
@@ -19,6 +21,9 @@ param(
   [string]$GameDir = "",
   [string]$OutDir = "",
   [string]$MeleeDir = "",   # the melee checkout the exe was built from (default <root>\melee)
+  [string]$ModsFrom = "",   # DRY RUNS ONLY: take the mods from this melee checkout instead of -MeleeDir; refused with -Strict
+  [string]$CourierRecord = "", # the build record of tools/geno/build_courier.sh (default _build\geno-slice4\courier\original-assets.json)
+  [switch]$IncludeCourier,  # package the Courier fixture (experimental, off by default; needs tools/geno/build_courier.sh output)
   [switch]$Strict
 )
 $ErrorActionPreference = "Stop"
@@ -37,14 +42,17 @@ $zipPath = Join-Path $OutDir "$name.zip"
 $warnings = New-Object System.Collections.Generic.List[string]
 function Warn([string]$m) { $warnings.Add($m); Write-Output "warning: $m" }
 
+if ($Strict -and $ModsFrom) { throw "-ModsFrom is for dry runs; a strict release takes its mods from the melee checkout the exe was built from" }
 # Never read from these, whatever a future edit to this script asks for.
 $forbidden = @("_build\ace", "_build\packs", "_build\m-ex", "_build\hsd_export", "_build\card", "_build\card-ace",
                "_build\USA", "akaneia-build", "menu\meleedump", "melee\orig") | ForEach-Object { (Join-Path $root $_).ToLowerInvariant() }
-function Copy-In([string]$src, [string]$rel) {
+function Copy-In([string]$src, [string]$rel, [switch]$OriginalDat) {
   $full = [System.IO.Path]::GetFullPath($src)
   $low = $full.ToLowerInvariant()
   foreach ($f in $forbidden) { if ($low.StartsWith($f)) { throw "refusing to package $full : it is under $f (disc data)" } }
-  if ($low -match '\.(iso|gcm|rvz|ciso|dol|dat|usd|gci)$') { throw "refusing to package $full : disc data extension" }
+  # -OriginalDat: only for the Courier's own built files (a record-checked build product, see the mods block)
+  $disc = if ($OriginalDat) { '\.(iso|gcm|rvz|ciso|dol|usd|gci)$' } else { '\.(iso|gcm|rvz|ciso|dol|dat|usd|gci)$' }
+  if ($low -match $disc) { throw "refusing to package $full : disc data extension" }
   if (-not (Test-Path $full -PathType Leaf)) { throw "missing: $full" }
   $dst = Join-Path $stage $rel
   New-Item -ItemType Directory -Force -Path (Split-Path $dst -Parent) | Out-Null
@@ -125,26 +133,87 @@ removed mods into a recoverable .removed folder. Remote installation and updates
 implemented in this Qt launcher. sources.txt
 is an example format for the separate mods-browser tools. The game loads every enabled mod,
 online too: fighters and stages are matched with your opponent by their content.
+
+Shipped with this release (enabled.txt lists the ones that are on):
+  geno-lab       on   the LAB (SOLO > LAB)
+  envoy          on   Envoy mode (needs envoy_drives for its drive models)
+  envoy_drives   on   Envoy's original drive models
+  vanilla-hero, vanilla-striker, vanilla-caster   off   Geno sample fighters (they use your own disc's
+                      Mario files; turn one on in the Mods tab to try it; unreviewed looks and feel)
 '@
 Copy-In (Join-Path $root "tools\mods_browser\sources.example.txt") "mods\sources.txt"
-# the LAB (SOLO > LAB) is a script mod: mod.json, scripts\*.lua, ui\*.gxtex and ui\lab_ui.json from the
-# melee checkout (never its art\ sources or preview). Its menu icon ico_lab.gxtex is committed under _build\ui.
-$lab = Join-Path $melee "pc\geno\mods\geno-lab"
-if (Test-Path (Join-Path $lab "mod.json")) {
-  Copy-In (Join-Path $lab "mod.json") "mods\geno-lab\mod.json"
-  foreach ($f in Get-ChildItem (Join-Path $lab "scripts") -Filter *.lua -File) { Copy-In $f.FullName ("mods\geno-lab\scripts\" + $f.Name) }
-  foreach ($f in Get-ChildItem (Join-Path $lab "ui") -File | Where-Object { $_.Extension -eq ".gxtex" -or $_.Name -eq "lab_ui.json" }) {
-    Copy-In $f.FullName ("mods\geno-lab\ui\" + $f.Name)
+
+# ---- the mods, from tools\release\mod_rules.json (the same table check_release.ps1 enforces) ----
+# A file ships only if its path inside the mod matches one of the mod's allow patterns AND it is tracked
+# in the melee repository (so nothing git-ignored or local-only slips in). The one exception is the
+# Courier's built files, which are original build products: they ship only with -IncludeCourier, only
+# when they match the record tools/geno/build_courier.sh wrote at build time, and are listed in
+# mods\original-assets.json for the guard.
+$rules = Get-Content (Join-Path $PSScriptRoot "mod_rules.json") -Raw | ConvertFrom-Json
+$modsMelee = if ($ModsFrom) { (Resolve-Path $ModsFrom).Path } else { $melee }
+$enabledIds = New-Object System.Collections.Generic.List[string]
+$offIds = New-Object System.Collections.Generic.List[string]
+$originalAssets = New-Object System.Collections.Generic.List[object]
+function Test-DeniedPath([string]$p) {
+  foreach ($seg in ($p -split '[\\/]')) {
+    if ($seg -match $rules.deny_mod_ids) { return $true }
+    if ($rules.deny_dirs_anywhere -contains $seg.ToLowerInvariant()) { return $true }
   }
-} else {
-  Warn "no pc/geno/mods/geno-lab in the melee checkout: the release has no LAB mode"
+  return $false
 }
-# Lua example scripts (melee/pc/scripts/examples, the same ones compiled in as builtin:<name>)
-$examples = Join-Path $melee "pc\scripts\examples"
+foreach ($prop in $rules.mods.PSObject.Properties) {
+  $id = $prop.Name; $mod = $prop.Value
+  if (Test-DeniedPath $id) { throw "mod_rules.json lists '$id', which is on the never-package list" }
+  if ($mod.optional -and -not ($IncludeCourier -and $id -eq "vanilla-courier")) { continue }
+  $srcDir = Join-Path $modsMelee $mod.source
+  if (-not (Test-Path (Join-Path $srcDir "mod.json"))) {
+    if ($mod.optional) { throw "-IncludeCourier: no $($mod.source) in $modsMelee" }
+    Warn "no $($mod.source) in the melee checkout: the release has no '$id' mod"; continue
+  }
+  $srcBase = (Resolve-Path $srcDir).Path.TrimEnd('\') + '\'
+  $allow = '^(?:' + (($mod.allow | ForEach-Object { "(?:$_)" }) -join '|') + ')$'
+  $tracked = @{}
+  foreach ($t in (git -C $modsMelee ls-files -- $mod.source)) { $tracked[$t.Substring($mod.source.Length + 1)] = $true }
+  $count = 0
+  foreach ($f in (Get-ChildItem $srcDir -Recurse -File | Sort-Object FullName)) {
+    $inMod = $f.FullName.Substring($srcBase.Length).Replace('\', '/')
+    if ($inMod -cnotmatch $allow) { continue }
+    if (Test-DeniedPath $inMod) { throw "refusing $id/$inMod : on the never-package list" }
+    $isOriginal = $mod.original_dat -and ($inMod -cmatch ('^(?:' + $mod.original_dat + ')$') -or $inMod -ceq 'files/plan.json')
+    if (-not $isOriginal -and -not $tracked.ContainsKey($inMod)) { throw "refusing $id/$inMod : matches the allow list but is not tracked in git (a local file?)" }
+    if ($isOriginal) {
+      $record = if ($CourierRecord) { $CourierRecord } else { Join-Path $build "geno-slice4\courier\original-assets.json" }
+      if (-not (Test-Path $record)) { throw "-IncludeCourier: no build record $record ; run tools/geno/build_courier.sh first" }
+      $rec = Get-Content $record -Raw | ConvertFrom-Json
+      $hash = (Get-FileHash $f.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+      if ($rec.files.$($f.Name) -ne $hash) { throw "refusing $id/$inMod : it does not match the build record $record (rebuild with tools/geno/build_courier.sh --install)" }
+      if ($inMod -ne 'files/plan.json') { $originalAssets.Add([ordered]@{ path = "mods/$id/$inMod"; sha256 = $hash; built_by = "tools/geno/build_courier.sh"; art_commit = $rec.art_commit }) }
+      Copy-In $f.FullName "mods\$id\$($inMod.Replace('/', '\'))" -OriginalDat
+    } else {
+      Copy-In $f.FullName "mods\$id\$($inMod.Replace('/', '\'))"
+    }
+    $count++
+  }
+  Write-Output "  mod $id : $count files$(if ($mod.default_on) { ' (on)' } else { ' (off)' })"
+  if ($mod.default_on) { $enabledIds.Add($id) } else { $offIds.Add($id) }
+}
+if ($originalAssets.Count -gt 0) {
+  $json = [ordered]@{ format = 1; note = "Original data built by tools/geno/build_courier.sh from ports/vanilla-original. No game bytes are read to make it."; files = $originalAssets } | ConvertTo-Json -Depth 5
+  [System.IO.File]::WriteAllText((Join-Path $stage "mods\original-assets.json"), ($json + "`n"), (New-Object System.Text.UTF8Encoding $false))
+}
+Set-Content -Path (Join-Path $stage "mods\enabled.txt") -Encoding ascii -Value (@("# Enabled mods for the next launch (the launcher's Mods tab edits this file)") + $enabledIds)
+if ($offIds.Count -gt 0) { Write-Output "  installed but off: $($offIds -join ', ')" }
+
+# Lua example scripts (melee/pc/scripts/examples, the same ones compiled in as builtin:<name>); Envoy and its
+# drive models are real mods now (above) and are left out of here.
+$examples = Join-Path $modsMelee "pc\scripts\examples"
 if (Test-Path $examples) {
   $exBase = (Resolve-Path $examples).Path.TrimEnd('\') + '\'
   foreach ($f in Get-ChildItem $examples -Recurse -File | Where-Object { $_.Extension -in ".lua", ".json" }) {
-    Copy-In $f.FullName ("scripts\examples\" + $f.FullName.Substring($exBase.Length))
+    $inEx = $f.FullName.Substring($exBase.Length)
+    if ($rules.examples_skip -contains $inEx.Split('\')[0]) { continue }
+    if (Test-DeniedPath $inEx) { throw "refusing examples\$inEx : on the never-package list" }
+    Copy-In $f.FullName ("scripts\examples\" + $inEx)
   }
   Set-Content -Path (Join-Path $stage "scripts\README.txt") -Encoding ascii -Value @'
 Lua scripts. Every scripts\<name>.lua and scripts\<id>\ (with a mod.json) here loads when the game

@@ -12,5 +12,10 @@ $m = [regex]::Match($server, '(?m)^NETPLAY_PROTOCOL = (\d+)')
 if (-not $m.Success -or [int]$m.Groups[1].Value -ne (Get-NetplayProtocol)) {
   throw 'server and release protocol disagree'
 }
+# publish.ps1's release body must take the number from netplay_protocol.ps1, never spell one out
+$pub = Get-Content (Join-Path $PSScriptRoot 'publish.ps1') -Raw
+if ($pub -notmatch 'Get-NetplayProtocol' -or $pub -match '(?i)protocol\s+\*{0,2}\d') {
+  throw 'publish.ps1 hard-codes a netplay protocol number'
+}
 if ($MeleeDir) { Assert-NetplaySource $MeleeDir }
 Write-Output 'netplay source/metadata policy checks passed'

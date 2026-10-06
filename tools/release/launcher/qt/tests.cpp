@@ -154,6 +154,23 @@ private slots:
         auto mods = installedMods(d.path());
         for (const auto &m : mods) QCOMPARE(m.enabled, m.id == "unrelated");
     }
+    void gameLibraryEnvironment() {
+        const QString app = "/opt/gd melee";
+        // The game's lib first, the player's own path after it, the launcher's x86-64 Qt folder never.
+        QCOMPARE(gameLibraryPath(app, app + "/launcher/lib:/home/p/fixlibs:" + app + "/launcher/lib/qt:/usr/lib32:/home/p/fixlibs"),
+                 app + "/lib:/home/p/fixlibs:/usr/lib32");
+        QCOMPARE(gameLibraryPath(app, ""), app + "/lib");
+        QCOMPARE(gameLibraryPath(app, app + "/launcher/lib"), app + "/lib");
+        QProcessEnvironment env;
+        env.insert("LD_LIBRARY_PATH", app + "/launcher/lib:/home/p/fixlibs"); env.insert("LD_PRELOAD", "/usr/lib/libmangohud.so");
+        env.insert("QT_PLUGIN_PATH", "/x"); env.insert("QT_QPA_PLATFORM_PLUGIN_PATH", "/y");
+        applyGameLibraryEnvironment(env, app);
+        QCOMPARE(env.value("LD_LIBRARY_PATH"), app + "/lib:/home/p/fixlibs");
+        QVERIFY(!env.contains("LD_PRELOAD")); QVERIFY(!env.contains("QT_PLUGIN_PATH")); QVERIFY(!env.contains("QT_QPA_PLATFORM_PLUGIN_PATH"));
+        env.insert("MELEE_GAME_LD_PRELOAD", "/home/p/libfix32.so");
+        applyGameLibraryEnvironment(env, app);
+        QCOMPARE(env.value("LD_PRELOAD"), QString("/home/p/libfix32.so")); QVERIFY(!env.contains("MELEE_GAME_LD_PRELOAD"));
+    }
     void launchArgumentsAndEnvironment() {
         QTemporaryDir d; auto app = d.path() + "/game with spaces"; auto user = d.path() + "/profile ü";
         QDir().mkpath(app);

@@ -18,6 +18,15 @@
 #      word is the file's own size), a DOL (text section table pointing inside the file at 0x100).
 #   4. ui\ must be byte-identical to the art committed in the workspace repo (_build/ui at HEAD):
 #      alpha's original art, and nothing that crept in beside it.
+#      Mods (mods\<id>\...) are checked against tools\release\mod_rules.json, the same table that
+#      build_release.ps1 copies by: a known mod id, and inside it only paths that match that mod's allow
+#      patterns (.lua .wgsl .gxmesh .gxtex .json .genoasm .words ...). Mod ids on the never-package list
+#      (envoy_drives_sa2, local-assets, ported or private fighters, ACE/Akaneia packs) fail by name.
+#   2b. The one `.dat` exception: the Courier's own built files. A .dat is accepted only if mods\original-assets.json
+#      lists it with a matching sha256 (written at package time from the build record of
+#      tools/geno/build_courier.sh), its path matches the mod's original_dat pattern (Gn<Name>_<costume>.dat,
+#      never a disc name such as Pl*.dat), it is under 8 MB, it contains the mod's own symbol names and NO symbol
+#      of any other fighter (every `Ply<Name>_` token must be Courier's). Every other sniff still runs on it.
 #   5. No file bigger than 64 MB, no personal paths (C:\Users\<name>) inside binaries, the licence
 #      files present, and MANIFEST.sha256 matching every file.
 param(
@@ -47,6 +56,9 @@ $Required = @("README.txt", "version.txt", "MANIFEST.sha256", "LICENSES/GPL-2.0.
               "launcher/bin/msvcp140.dll", "launcher/bin/vcruntime140.dll", "launcher/bin/vcruntime140_1.dll",
               "launcher/qt-build.txt", "launcher/licenses/LGPL-3.0-only.txt",
               "launcher/licenses/Qt-GPL-exception-1.0.txt", "launcher/licenses/SourceSans3-OFL-1.1.txt")
+
+$ModRules = Get-Content (Join-Path $PSScriptRoot "mod_rules.json") -Raw | ConvertFrom-Json
+$ModTopFiles = @("README.txt", "sources.txt", "enabled.txt", "original-assets.json")
 
 $problems = New-Object System.Collections.Generic.List[string]
 function Fail([string]$msg) { $problems.Add($msg) }
@@ -78,6 +90,19 @@ if ((Get-Item $full) -is [System.IO.DirectoryInfo]) {
   } finally { $zip.Dispose() }
 }
 if ($entries.Count -eq 0) { Fail "no files found in $Path" }
+
+# mods\original-assets.json: rel path -> sha256 of the built original files the package claims to hold
+$OriginalAssets = @{}
+$oaEntry = $entries | Where-Object { $_.Rel -eq "mods/original-assets.json" } | Select-Object -First 1
+if ($oaEntry) {
+  try {
+    $oa = [System.Text.Encoding]::UTF8.GetString($oaEntry.Bytes) | ConvertFrom-Json
+    foreach ($f in @($oa.files)) {
+      if ($f.sha256 -notmatch '^[0-9a-f]{64}$' -or -not $f.path) { throw "bad entry" }
+      $OriginalAssets[[string]$f.path] = [string]$f.sha256
+    }
+  } catch { Fail "mods/original-assets.json is malformed: $($_.Exception.Message)" }
+}
 
 function BE32([byte[]]$b, [int]$o) {
   if ($b.Length -lt $o + 4) { return -1 }
@@ -125,8 +150,36 @@ foreach ($e in $entries) {
   $hashes[$rel] = (($sha256.ComputeHash($b) | ForEach-Object { $_.ToString("x2") }) -join '')
 
   # 2. denylist first, for the clearest message
-  if ($DiscExt -contains $ext) { Fail "$rel : '$ext' files are disc data (or could hold it) and never ship" }
-  foreach ($d in $dirs) { if ($DiscDirs -contains $d.ToLowerInvariant()) { Fail "$rel : inside a '$d' folder, which is where disc data or saves live" } }
+  # the Courier's own built .dat files: path + record + symbol checks (see 2b above); any other .dat is disc data
+  $origDat = $false
+  if ($ext -eq ".dat" -and $dirs.Count -ge 3 -and $dirs[0] -eq "mods") {
+    $modRule = $ModRules.mods.$($dirs[1])
+    $inModDat = (@($dirs | Select-Object -Skip 2) + $name) -join '/'
+    if ($modRule -and $modRule.original_dat -and $inModDat -cmatch ('^(?:' + $modRule.original_dat + ')$')) {
+      $origDat = $true
+      $recorded = $OriginalAssets[$rel]
+      if (-not $recorded) { Fail "$rel : a .dat that mods/original-assets.json does not list is disc data (or could be) and never ships"; $origDat = $false }
+      elseif ($recorded -ne $hashes[$rel]) { Fail "$rel : sha256 does not match mods/original-assets.json"; $origDat = $false }
+      elseif ($b.Length -gt 8MB) { Fail "$rel : an original .dat is never this big ($([Math]::Round($b.Length / 1MB)) MB)"; $origDat = $false }
+      else {
+        $txt = [System.Text.Encoding]::GetEncoding(28591).GetString($b)
+        $prefix = [string]$modRule.original_dat_symbol_prefix
+        if ($txt.IndexOf($prefix, [System.StringComparison]::OrdinalIgnoreCase) -lt 0) { Fail "$rel : holds none of the mod's own symbols ('$prefix')"; $origDat = $false }
+        foreach ($m in [regex]::Matches($txt, 'Ply([A-Za-z0-9]+)_')) {
+          if (-not $m.Groups[1].Value.StartsWith($prefix)) { Fail "$rel : contains another fighter's symbol ($($m.Value)): that is disc-derived"; $origDat = $false; break }
+        }
+      }
+    }
+  }
+  if (($DiscExt -contains $ext) -and -not $origDat) { Fail "$rel : '$ext' files are disc data (or could hold it) and never ship" }
+  # a mod's own files\ folder (the Courier's built models) is not the disc's files\ folder: exempt only when the
+  # path is on that mod's allow list, i.e. the mod rules name it on purpose
+  $modOwnFiles = $false
+  if ($dirs.Count -ge 3 -and $dirs[0] -eq "mods" -and $dirs[2] -eq "files" -and $ModRules.mods.$($dirs[1])) {
+    $mr = $ModRules.mods.$($dirs[1])
+    $modOwnFiles = ((@($dirs | Select-Object -Skip 2) + $name) -join '/') -cmatch ('^(?:' + (($mr.allow | ForEach-Object { "(?:$_)" }) -join '|') + ')$')
+  }
+  foreach ($d in $dirs) { if (($DiscDirs -contains $d.ToLowerInvariant()) -and -not ($modOwnFiles -and $d -ceq "files")) { Fail "$rel : inside a '$d' folder, which is where disc data or saves live" } }
 
   # 1. allowlist
   $ok = $false
@@ -143,14 +196,26 @@ foreach ($e in $entries) {
     $ok = $launcherBinary -or ($rel -eq 'launcher/bin/qt.conf') -or ($rel -eq 'launcher/qt-build.txt') -or
           ($dirs.Count -eq 2 -and $dirs[1] -eq 'licenses' -and $ext -eq '.txt')
   } elseif ($dirs[0] -eq "mods") {
-    $ok = ($rel -eq "mods/README.txt") -or ($rel -eq "mods/sources.txt") -or
-          ($rel -eq "mods/geno-lab/mod.json") -or
-          ($dirs.Count -eq 3 -and $dirs[1] -eq "geno-lab" -and $dirs[2] -eq "scripts" -and $ext -eq ".lua") -or
-          ($dirs.Count -eq 3 -and $dirs[1] -eq "geno-lab" -and $dirs[2] -eq "ui" -and ($ext -eq ".gxtex" -or $name -eq "lab_ui.json"))
+    if ($dirs.Count -eq 1) { $ok = $ModTopFiles -contains $name }
+    else {
+      $id = $dirs[1]
+      if ($id -match $ModRules.deny_mod_ids) { Fail "$rel : mod '$id' is on the never-package list (private, ported, local or disc-derived)" }
+      $modRule = $ModRules.mods.$id
+      if (-not $modRule) { Fail "$rel : mod '$id' is not a mod this release carries (tools/release/mod_rules.json)"; $ok = $true }
+      else {
+        $inMod = (@($dirs | Select-Object -Skip 2) + $name) -join '/'
+        $ok = $inMod -cmatch ('^(?:' + (($modRule.allow | ForEach-Object { "(?:$_)" }) -join '|') + ')$')
+        if (-not $ok -and $origDat) { $ok = $true }
+      }
+    }
   } elseif ($dirs[0] -eq "scripts") {
     $ok = ($rel -eq "scripts/README.txt") -or
           ($dirs.Count -ge 2 -and $dirs[1] -eq "examples" -and ($ext -eq ".lua" -or $ext -eq ".json"))
+    if ($dirs.Count -ge 3 -and $dirs[1] -eq "examples" -and ($ModRules.examples_skip -contains $dirs[2])) {
+      Fail "$rel : '$($dirs[2])' is a mod now (mods/$($dirs[2])), not an example script"; $ok = $true
+    }
   }
+  foreach ($d in $dirs) { if ($ModRules.deny_dirs_anywhere -contains $d.ToLowerInvariant()) { Fail "$rel : inside a '$d' folder, which is local-only" } }
   if (-not $ok) { Fail "$rel : not on the release allowlist (tools/release/check_release.ps1)" }
   if (($ext -eq ".exe" -or $ext -eq ".dll") -and -not (($dirs.Count -eq 0 -and $AllowedBinaries -contains $name) -or $launcherBinary)) {
     Fail "$rel : unexpected executable"
@@ -162,13 +227,13 @@ foreach ($e in $entries) {
   $m4 = Ascii $b 0 4
   if ($m4 -eq "RVZ$([char]1)" -or $m4 -eq "WIA$([char]1)" -or $m4 -eq "CISO") { Fail "$rel : is a compressed disc image" }
   if ((Ascii $b 0 4) -match '^G[A-Z]{2}[EPJ]$' -and (Ascii $b 4 2) -match '^[0-9A-Z]{2}$') { Fail "$rel : starts with a game ID ($(Ascii $b 0 6)): a memory-card save or disc header" }
-  if ($ext -ne ".exe" -and $ext -ne ".dll" -and $b.Length -ge 0x20 -and (BE32 $b 0) -eq $b.Length) { Fail "$rel : looks like an HSD archive (.dat): its first word is its own size" }
+  if (-not $origDat -and $ext -ne ".exe" -and $ext -ne ".dll" -and $b.Length -ge 0x20 -and (BE32 $b 0) -eq $b.Length) { Fail "$rel : looks like an HSD archive (.dat): its first word is its own size" }
   if ($b.Length -ge 0x100 -and $ext -ne ".exe" -and $ext -ne ".dll") {
     # DOL: 7 text + 11 data section offsets, then 18 load addresses in 0x80000000-0x81800000
     $t0 = BE32 $b 0; $a0 = BE32 $b 0x48; $entry = BE32 $b 0xE0
     if ($t0 -eq 0x100 -and $a0 -ge 2147483648L -and $a0 -lt 2172649472L -and $entry -ge 2147483648L -and $entry -lt 2172649472L) { Fail "$rel : looks like a DOL (GameCube executable)" }
   }
-  if ($ext -eq ".exe" -or $ext -eq ".dll" -or $ext -eq ".map" -or $ext -eq ".db") {
+  if (@(".exe", ".dll", ".map", ".db", ".lua", ".wgsl", ".json", ".txt", ".md", ".genoasm", ".words", ".dat") -contains $ext) {
     $text = [System.Text.Encoding]::GetEncoding(28591).GetString($b)
     if (($ext -eq ".exe" -or $ext -eq ".dll") -and $text.Contains("GD_MELEE_TRACY_DEVELOPMENT_ONLY")) {
       Fail "$rel : development-only Tracy profiler is enabled; rebuild with GW_PROF_TRACY unset"
@@ -201,6 +266,22 @@ foreach ($e in $entries) {
 }
 
 foreach ($r in $Required) { if (-not $hashes.ContainsKey($r)) { Fail "missing required file: $r" } }
+# every default-on mod must be there, and enabled.txt must name only mods that are (never an experimental or off one)
+foreach ($prop in $ModRules.mods.PSObject.Properties) {
+  if ($prop.Value.default_on -and -not $hashes.ContainsKey("mods/$($prop.Name)/mod.json")) { Fail "missing required file: mods/$($prop.Name)/mod.json" }
+}
+if (-not $hashes.ContainsKey("mods/enabled.txt")) { Fail "missing required file: mods/enabled.txt" }
+else {
+  $en = $entries | Where-Object { $_.Rel -eq "mods/enabled.txt" } | Select-Object -First 1
+  foreach ($line in ([System.Text.Encoding]::UTF8.GetString($en.Bytes) -split "`r?`n")) {
+    $eid = ($line -replace '#.*$', '').Trim()
+    if (-not $eid) { continue }
+    $er = $ModRules.mods.$eid
+    if (-not $er) { Fail "mods/enabled.txt names '$eid', which is not a mod this release carries" }
+    elseif (-not $er.default_on) { Fail "mods/enabled.txt turns on '$eid', which must ship off by default" }
+    elseif (-not $hashes.ContainsKey("mods/$eid/mod.json")) { Fail "mods/enabled.txt names '$eid', which is not in the package" }
+  }
+}
 if (-not $hashes.ContainsKey('launcher/bin/platforms/qwindows.dll') -and -not $hashes.ContainsKey('launcher/plugins/platforms/qwindows.dll')) {
   Fail "missing required file: launcher/bin/platforms/qwindows.dll (or launcher/plugins/platforms/qwindows.dll)"
 }

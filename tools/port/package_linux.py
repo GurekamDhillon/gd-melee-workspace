@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 root=Path(__file__).resolve().parents[2]
@@ -128,6 +129,8 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
               'files':{str(p.relative_to(dest)):sha(p) for p in dest.rglob('*') if p.is_file()}}
     (dest/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     shutil.copy2(dest/'manifest.json',debug/'manifest.json')
+    # The content guard (same rules as the Windows release's check_release.ps1): nothing disc-derived or local-only ships.
+    subprocess.run([sys.executable,str(root/'tools/release/check_release_linux.py'),str(dest),'--repo-root',str(root)],check=True)
     for folder in (dest,debug):
         output=a.output/(folder.name+'.tar.xz')
         pending=output.with_suffix(output.suffix+'.pending')

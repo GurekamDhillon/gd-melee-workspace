@@ -32,6 +32,23 @@ for m in "$OUT"/mesh_*.json; do
   dotnet "$FB/bin/Release/net8.0/fighterbuild.dll" build "$m" - "$OUT/GnCourier_$c.dat" courier_joint courier_matanim "$OUT/rep_$c.json" --pc-palette 64
   dotnet "$FB/bin/Release/net8.0/fighterbuild.dll" verify "$OUT/GnCourier_$c.dat" "$m" | tail -2
 done
+# the build record: what this run produced, by hash. tools/release/build_release.ps1 -IncludeCourier packages a
+# built file only if it still matches this record (it is how a release tells the Courier's original files from
+# disc files: the record is written here, from these outputs, and nowhere else).
+python - "$OUT" "$ROOT" <<'PY'
+import hashlib, json, subprocess, sys
+from pathlib import Path
+out, root = Path(sys.argv[1]), sys.argv[2]
+def git(*a):
+    return subprocess.run(["git", "-C", root, *a], capture_output=True, text=True).stdout.strip()
+files = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+         for p in sorted(list(out.glob("GnCourier_*.dat")) + [out / "GnCourierAJ.dat", out / "plan.json"])}
+rec = {"format": 1, "built_by": "tools/geno/build_courier.sh",
+       "art_commit": git("log", "-1", "--format=%H", "--", "ports/vanilla-original"),
+       "art_dirty": bool(git("status", "--porcelain", "--", "ports/vanilla-original")), "files": files}
+(out / "original-assets.json").write_text(json.dumps(rec, indent=2) + "
+")
+PY
 if [ $INSTALL = 1 ]; then
   D="${GW_MELEE:-$ROOT/melee}/pc/geno/mods/vanilla-courier/files"; mkdir -p "$D"; cp "$OUT"/GnCourier_*.dat "$OUT"/GnCourierAJ.dat "$OUT"/plan.json "$D"/
 fi

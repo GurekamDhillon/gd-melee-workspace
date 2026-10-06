@@ -261,6 +261,24 @@ static QString gamePath(QString path) {
 #endif
     return QDir::toNativeSeparators(path);
 }
+QString gameLibraryPath(const QString &appDir, const QString &inheritedPath) {
+    QStringList out{appDir + "/lib"};
+    const auto launcherLib = QDir::cleanPath(appDir + "/launcher/lib");
+    for (const auto &entry : inheritedPath.split(':', Qt::SkipEmptyParts)) {
+        const auto clean = QDir::cleanPath(entry);
+        if (clean == launcherLib || clean.startsWith(launcherLib + "/") || out.contains(clean)) continue;
+        out << clean;
+    }
+    return out.join(':');
+}
+void applyGameLibraryEnvironment(QProcessEnvironment &env, const QString &appDir) {
+    const auto inherited = env.value("LD_LIBRARY_PATH");
+    const auto preload = env.value("MELEE_GAME_LD_PRELOAD");
+    env.remove("QT_PLUGIN_PATH"); env.remove("QT_QPA_PLATFORM_PLUGIN_PATH"); env.remove("LD_PRELOAD");
+    env.remove("MELEE_GAME_LD_PRELOAD");
+    if (!preload.isEmpty()) env.insert("LD_PRELOAD", preload);
+    env.insert("LD_LIBRARY_PATH", gameLibraryPath(appDir, inherited));
+}
 LaunchSpec prepareLaunch(const QString &app, const QString &user, const Settings &s, const Disc &disc) {
     if (!safeId(disc.id)) fail("Invalid disc ID");
     auto check = probeDisc(disc.path); if (check.verdict == DiscInfo::Bad) fail(check.message);
@@ -310,8 +328,7 @@ LaunchSpec prepareLaunch(const QString &app, const QString &user, const Settings
     for (auto i = traces.begin(); i != traces.end(); ++i) { if (selected.contains(i.key())) env.insert(i.value(), "1"); else env.remove(i.value()); }
 #ifndef Q_OS_WIN
     // The 64-bit Qt runtime must never enter the 32-bit game's library search path.
-    env.remove("QT_PLUGIN_PATH"); env.remove("QT_QPA_PLATFORM_PLUGIN_PATH"); env.remove("LD_PRELOAD");
-    env.insert("LD_LIBRARY_PATH", app + "/lib");
+    applyGameLibraryEnvironment(env, app);
     env = graphicsEnvironment(env, s.option("graphics_device", "auto"));
 #endif
     spec.environment = env; spec.arguments = {"--iso", gamePath(QFileInfo(disc.path).absoluteFilePath())};

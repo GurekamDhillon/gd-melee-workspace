@@ -27,17 +27,19 @@ from pathlib import Path
 def write_if_changed(path, contents):
     """Replace a generated file atomically only when its bytes differ.
 
-    Text mode keeps the same platform newline translation as the former
-    open(path, 'w'), so an unchanged Windows checkout does not churn once.
+    Always LF: melee/.gitattributes says `eol=lf`, so the committed bytes are LF. Writing the
+    platform's newline (CRLF on Windows) made a checkout without autocrlf look modified after every
+    build, and that "dirty" tree is what build_provenance.py records. A checkout whose copy is the
+    same text with CRLF endings (autocrlf=true) counts as unchanged and is left alone.
     """
     path = Path(path)
     fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as output:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as output:
             output.write(contents)
         with open(temporary, "rb") as candidate:
             new_bytes = candidate.read()
-        if path.exists() and path.read_bytes() == new_bytes:
+        if path.exists() and path.read_bytes().replace(b"\r\n", b"\n") == new_bytes:
             return False
         os.replace(temporary, path)
         return True
