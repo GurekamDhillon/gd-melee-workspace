@@ -33,6 +33,6 @@ for m in "$OUT"/mesh_*.json; do
   dotnet "$FB/bin/Release/net8.0/fighterbuild.dll" verify "$OUT/GnCourier_$c.dat" "$m" | tail -2
 done
 if [ $INSTALL = 1 ]; then
-  D="$ROOT/melee/pc/geno/mods/vanilla-courier/files"; mkdir -p "$D"; cp "$OUT"/GnCourier_*.dat "$OUT"/GnCourierAJ.dat "$OUT"/plan.json "$D"/
+  D="${GW_MELEE:-$ROOT/melee}/pc/geno/mods/vanilla-courier/files"; mkdir -p "$D"; cp "$OUT"/GnCourier_*.dat "$OUT"/GnCourierAJ.dat "$OUT"/plan.json "$D"/
 fi
 echo "OK $OUT"

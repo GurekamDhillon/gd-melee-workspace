@@ -298,6 +298,7 @@ def anim_main(art, out, scale):
     nodes = g["nodes"]
     name_to_plan = {j["name"]: i for i, j in enumerate(joints)}
     bank = bytearray()
+    clip_root_motion = {c["name"]: bool(c.get("root_motion")) for c in manifest["clips"]}
     rows = {}
     worst = 0.0
     for an in g["animations"]:
@@ -323,7 +324,10 @@ def anim_main(art, out, scale):
                 for k, ty in enumerate((1, 2, 3)):       # ROTX, ROTY, ROTZ
                     body, fv, fs = _encode_channel(eul[:, k], FRAC_ROT)
                     jt.append((ty, body, fv, fs))
-            if not j["synth"] and (nm, "translation") in chans:
+            # The engine's animation step honours translation only on the translation parts (TransN, HipN and the
+            # Melee root nodes): a translation track on any other joint zeroed that joint's offset in the game
+            # (measured: every limb collapsed to the root). So: hips always, trans only in root-motion clips, nothing else.
+            if not j["synth"] and (nm, "translation") in chans and (nm == "hips" or (nm == "trans" and clip_root_motion.get(an["name"]))):
                 t, v = chans[(nm, "translation")]
                 v = v * scale
                 for k, ty in enumerate((5, 6, 7)):       # TRAX, TRAY, TRAZ
@@ -353,6 +357,13 @@ def anim_main(art, out, scale):
     json.dump({"clips": rows, "bytes": len(bank), "max_euler_error_rad": worst, "tree_frames": "frames-1",
                "rot_precision": "s16 1/4096 rad", "plan_joints": len(joints)},
               open(os.path.join(out, "bank.json"), "w"), indent=1)
+    pj = os.path.join(out, "plan.json")        # the engine reads ONE file: fold the bank and the row map into the plan
+    if os.path.exists(pj):
+        plan = json.load(open(pj, encoding="utf-8"))
+        plan["bank"] = {"file": "GnCourierAJ.dat", "bytes": len(bank), "clips": rows}
+        plan["motion_rows"] = [{"motion": r["motion"], "row": r["row"], "clip": r["clip"], "status": r["status"]}
+                               for r in manifest["motion_rows"]]
+        json.dump(plan, open(pj, "w"), indent=1)
     print("authored_fighter anim: %d clips, %d bytes, max euler error %.5f rad" % (len(rows), len(bank), worst))
 
 
