@@ -1029,6 +1029,14 @@
 ../masstest/shimobj/gw_settings.obj
 ../masstest/shimobj/gw_log.obj
 ../masstest/shimobj/gw_kit.obj
+../masstest/shimobj/gw_ui_focus.obj
+../masstest/shimobj/gw_ui_input.obj
+../masstest/shimobj/gw_ui_layout.obj
+../masstest/shimobj/gw_ui_parts.obj
+../masstest/shimobj/gw_ui_render.obj
+../masstest/shimobj/gw_ui_screen.obj
+../masstest/shimobj/gw_ui_stack.obj
+../masstest/shimobj/gw_ui_val.obj
 ../masstest/out/pc_geno_geno_game.c.obj
 ../masstest/out/pc_geno_geno_tests.c.obj
 ../masstest/out/pc_geno_geno_lab_mode.c.obj
