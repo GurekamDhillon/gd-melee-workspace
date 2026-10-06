@@ -2568,3 +2568,9 @@ hitstun_multiplier`), `on_shock_hit` (`base_hitstun, extra_hitstun, charges_left
 (`reason` = expired, spent, cleared or replaced; `hits`). `gd.skill_kinds()` has 24 entries now. Demo: `demos/shock-status`.
 Verified in the game: set, hit (base 12 + 24), spent, stack with bonus, savestate/loadstate restored charges and frames,
 `gd.rewind_test` PASS with Shock running.
+
+`gd.match_end_pending()` returns the outcome number (`MatchOutcome`: 2 elimination, 3 team elimination, ...) that the retail rules have decided on and that a `gd.match_end_hold` reason is deferring, or `nil` when no end is being held. It is re-derived on every logic frame; it is `nil` while no hold is up. The deferral is stateless: releasing the last reason lets the next poll latch the end (the retail end-of-stage sequence follows; a 1P Classic results overlay then waits for START by retail's own rule). A script that holds the end should begin its own end-of-stage work on this signal, with its own counting only as a fallback on an engine without it.
+
+`gd.player(port).team` (integer) is the fighter's retail team index (`Player_GetTeam`; `-1` for an empty slot). Equal values are allies: in a retail 1P team stage the human has a CPU teammate (the giant stage two) on the human's own team. Read-only and safe online.
+
+A `gd.set_damage` (or journal `damage` op) that would take Master Hand's or Crazy Hand's HP to 0 leaves it at 1 HP and logs it: only a retail hit starts a boss's death. Added 2026-10-06; built, not yet run in a game.
