@@ -3,7 +3,9 @@ geno_registry.c
 gw_compat_linux.c
 gw_console.cpp
 gw_fx.c
+gw_fx_motion.cpp
 gw_fx_render.cpp
+gw_hang.c
 gw_kit.c
 gw_log.c
 gw_lua.c
@@ -20,6 +22,9 @@ gw_net_tests.c
 gw_netplay.c
 gw_overlay.cpp
 gw_ppc.c
+gw_profiler.c
+gw_profiler_tests.c
+gw_profiler_tracy.cpp
 gw_replay.c
 gw_rollback.c
 gw_runtime.c
@@ -33,6 +38,7 @@ gw_slippi_pad.c
 gw_slippi_peer.c
 gw_slippi_wire.c
 gw_snap.c
+gw_surface.cpp
 gw_test.c
 gw_tests_core.c
 gw_uigen.c
