@@ -1,0 +1,4 @@
+Barlow Condensed, SemiBold and Bold (BarlowCondensed-SemiBold.ttf, BarlowCondensed-Bold.ttf), by Jeremy Tribby / The Barlow Project Authors, SIL Open Font License 1.1 (OFL.txt, beside these files).
+Upstream: https://github.com/jpt/barlow
+These exact files came from https://github.com/google/fonts/tree/main/ofl/barlowcondensed, by way of the c-atlas concept (menu/concepts/reunification-2026-10-06/c-atlas/fonts/, whose README records the same origin), copied byte for byte (cmp) on 2026-10-06.
+They are unmodified. Used for the Atlas menu text roles (menu/pipeline/kit.py ATLAS_TYPE_SCALE); credited in CREDITS.md; the licence ships in tools/release/licenses/BarlowCondensed-OFL-1.1.txt.
