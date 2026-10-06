@@ -56,7 +56,9 @@ atlas-layout)
     sources=(pc/tests/atlas_layout_test.c pc/platform/gw_ui_layout.c) ;;
 atlas-focus)
     sources=(pc/tests/atlas_focus_test.c pc/platform/gw_ui_focus.c) ;;
-*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus)" ;;
+atlas-input)
+    sources=(pc/tests/atlas_input_test.c pc/platform/gw_ui_input.c pc/platform/gw_ui_focus.c) ;;
+*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input)" ;;
 esac
 
 if [ "$uses_enet" = 1 ]; then
