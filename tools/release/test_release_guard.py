@@ -41,8 +41,8 @@ class ReleaseGuardTests(unittest.TestCase):
             file = cls.stage/name.removeprefix('_build/')
             file.parent.mkdir(parents=True, exist_ok=True)
             file.write_bytes(subprocess.check_output(['git', '-C', str(ROOT), 'show', 'HEAD:'+name]))
-        (cls.stage/'version.txt').write_text('fixture\nmelee      '+40*'a'+'  source\nnetplay_protocol 4\n')
-        cls.stamp = dict(format=1, melee_commit=40*'a', netplay_protocol=4,
+        (cls.stage/'version.txt').write_text('fixture\nmelee      '+40*'a'+'  source\nnetplay_protocol 5\n')
+        cls.stamp = dict(format=1, melee_commit=40*'a', netplay_protocol=5,
                          source_sha256=64*'b', source_dirty=False,
                          files={name:hashlib.sha256((cls.stage/name).read_bytes()).hexdigest()
                                 for name in ('melee-pc.exe', 'melee-pc.map')})

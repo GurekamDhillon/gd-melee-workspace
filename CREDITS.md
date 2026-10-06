@@ -5,6 +5,14 @@ requires it, and that includes ideas and findings as well as code. Licences of b
 in `tools/release/THIRD-PARTY-NOTICES.txt`. A project we learn from or start using is added here in
 the same change.
 
+## Online Envoy (2026-10-05)
+
+The rollback vocabulary used to scope Envoy over the port's own netplay (input delay, prediction, rollback depth,
+SyncTest) comes from GGPO's documentation and design notes by Tony Cannon, https://www.ggpo.net/ (ideas only; the
+port's netcode is its own). The between-game reward arbitration (a host that validates picks against pure
+functions of an agreed seed) is our own design; no outside code was used. Path of Exile's keystone idea is
+credited in the Envoy rows above.
+
 ## Maze stitching (2026-10-03)
 
 GD's direction to stitch hand-built chunks, the project's mission-folder runtime,

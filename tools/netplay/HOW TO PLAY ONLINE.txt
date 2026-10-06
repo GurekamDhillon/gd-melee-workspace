@@ -40,6 +40,15 @@ WHAT IT FEELS LIKE
   frames back. If it stutters, raise Input Delay (SETTINGS > ONLINE, or on the ONLINE screen for
   rooms you host) to 3 or 4.
 
+ENVOY SETS (a private room, two players)
+  The host turns on VERSUS > ONLINE > Envoy (SETTINGS > ONLINE > Envoy is the same switch) before
+  hosting. The Envoy mod must be installed on both PCs. Each player fights with their own Envoy build
+  (a starter drive and a keystone). Between games each player picks a reward: up/down, A takes it,
+  B keeps the build; no pick in 30 seconds takes the first offer. The host settles the picks, so the
+  two PCs always agree. If the builds are not identical on both PCs the lobby says "Envoy builds
+  differ" and the game does not start. If either player leaves, the set ends. Random Opponent never
+  plays Envoy. (Only passive drives are online for now; triggered drives come later.)
+
 IF IT DOESN'T CONNECT
   The line at the bottom of the screen says what is happening.
   - Check the firewall question above (both Private and Public).
@@ -47,7 +56,7 @@ IF IT DOESN'T CONNECT
     "different melee-pc.exe build": you are not using the same release.
   - Both of you on the same server? (SETTINGS > ONLINE > Server.)
 
-Netplay protocol 4:
+Netplay protocol 5 (adds the Envoy setting; 4 added the Turbo setting):
   Both PCs need the same current release. A protocol version mismatch means
   update GD's Melee on both PCs; changing the disc will not fix it.
   Matchmaking uses UDP, and optional crash uploads use TCP, normally on

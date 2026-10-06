@@ -37,15 +37,15 @@ class ProtocolTests(unittest.TestCase):
         # gw_net.c: 18-byte LE header; HELLO/ACCEPT begin with u16 version.
         return b'GDMD' + struct.pack('<HBBIIIH', 0x4e47, kind, 0, 0, 0, 0, 0) + struct.pack('<H', version) + bytes(30)
 
-    def test_v4_handshakes_forward_unchanged(self):
+    def test_v5_handshakes_forward_unchanged(self):
         self.pair()
         for kind, source, target in [(1, self.guest, self.host), (2, self.host, self.guest)]:
-            packet = self.handshake(4, kind)
+            packet = self.handshake(5, kind)
             self.server.datagram_received(packet, source)
             self.assertEqual(self.transport.sent.pop(), (packet, target))
 
     def test_incompatible_handshake_reports_version_to_both_peers(self):
-        for version in [1, 2, 3, 5, 256]:
+        for version in [1, 2, 3, 4, 6, 256]:
             for kind in [1, 2]:
                 with self.subTest(version=version, kind=kind):
                     self.setUp()
