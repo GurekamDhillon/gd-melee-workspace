@@ -9,8 +9,8 @@ per-texture table; `pipeline/readme.py`'s docstring the README-art rules.
 
 Nothing here may be traced, sampled, recoloured or referenced from Melee or any Nintendo asset.
 The source of every pixel is in this repo, so the claim is auditable. Keep it that way: no
-screenshots as references in the pipeline, no game fonts (the fonts are Source Sans 3 and
-Hasklug, OFL).
+screenshots as references in the pipeline, no game fonts (the fonts are Source Sans 3, Hasklug
+and Barlow Condensed, all OFL).
 
 ## Layout
 
