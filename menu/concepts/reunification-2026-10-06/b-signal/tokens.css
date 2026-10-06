@@ -1,0 +1,63 @@
+/* SIGNAL: design tokens. 640x480 logical canvas. One ground, one accent (volt), hard edges, no radii. */
+
+@font-face { font-family: "Sig Body"; font-weight: 600; src: url("../../../SourceSans3/SourceSans3-Semibold.otf"); }
+@font-face { font-family: "Sig Body"; font-weight: 700; src: url("../../../SourceSans3/SourceSans3-Bold.otf"); }
+@font-face { font-family: "Sig Body"; font-weight: 900; src: url("../../../SourceSans3/SourceSans3-Black.otf"); }
+@font-face { font-family: "Sig Mono"; font-weight: 500; src: url("../../../Hasklug/HasklugNerdFontMono-Medium.otf"); }
+@font-face { font-family: "Sig Mono"; font-weight: 700; src: url("../../../Hasklug/HasklugNerdFontMono-Bold.otf"); }
+@font-face { font-family: "Sig Display"; font-weight: 500; src: url("fonts/BarlowCondensed-Medium.ttf"); }
+@font-face { font-family: "Sig Display"; font-weight: 600; src: url("fonts/BarlowCondensed-SemiBold.ttf"); }
+@font-face { font-family: "Sig Display"; font-weight: 700; src: url("fonts/BarlowCondensed-Bold.ttf"); }
+@font-face { font-family: "Sig Display"; font-weight: 800; src: url("fonts/BarlowCondensed-ExtraBold.ttf"); }
+
+:root {
+  /* ground and ink: one ground, three steps of text, two steps of surface */
+  --ground:   #0c0e11;   /* the one ground */
+  --ground-2: #14171c;   /* a surface: disc-art frames, tooltips, the dialog scrim wells */
+  --ground-3: #1d2128;   /* a pressed or raised surface */
+  --line:     #2b3039;   /* the hairline: the only rule */
+  --dim:      #7a828e;   /* receded text (4.9:1 on ground) */
+  --mid:      #b0b7c1;   /* secondary text */
+  --bone:     #eeebe3;   /* text in focus */
+  --off:      #4a505a;   /* disabled */
+
+  /* the accent: ONLY focus and what is yours */
+  --volt:     #d4ff2a;
+  --volt-ink: #0c0e11;   /* text on volt */
+
+  /* the alarm: destructive confirms only; always with a word */
+  --alarm:    #ff3b30;
+
+  /* ports: tally bars (I, II, III, IIII) carry identity; the colour is a quiet second signal */
+  --p1: #ff8fa3;  --p2: #55aaff;  --p3: #b98cff;  --p4: #ffb547;  --cpu: #8a909a;
+
+  /* drive families (only on the drive models and their 3 px ticks) */
+  --f-red: #f43e36; --f-green: #22d26c; --f-blue: #3c7cff; --f-yellow: #ffcc1e; --f-purple: #b64aec; --f-white: #e8ecf6;
+
+  /* type: six sizes and one mega, nothing else */
+  --fs-cap: 12px;   /* caption, key hints, labels (mono, caps)   -- the 640x480 floor */
+  --fs-body: 14px;  /* sentences (Source Sans 3 semibold) */
+  --fs-row: 20px;   /* receded rows, tabs, names in a ledger (Barlow Condensed) */
+  --fs-head: 32px;  /* hub rows at rest, section words, buttons */
+  --fs-focus: 56px; /* the thing in focus in a list */
+  --fs-hero: 96px;  /* the thing in focus in a hub, big numerals */
+  --fs-mega: 160px; /* title and results only */
+  --f-display: "Sig Display", "Source Sans 3", sans-serif;
+  --f-body: "Sig Body", "Source Sans 3", sans-serif;
+  --f-mono: "Sig Mono", "Hasklug", monospace;
+
+  /* space: an 8 px grid, a 32 px side margin, 24 px top (the title-safe rectangle 32,24 - 608,456) */
+  --s1: 4px; --s2: 8px; --s3: 16px; --s4: 24px; --s5: 32px;
+  --margin-x: 32px; --margin-y: 24px;
+  --radius: 0;
+  --hair: 1px;          /* hairline */
+  --bar: 6px;           /* the focus bar */
+  --under: 3px;         /* the focus underline */
+
+  /* motion: quick and directional */
+  --t-focus: 70ms;      /* focus moves: bar and size step */
+  --t-slide: 110ms;     /* a row or panel slides in from the side it came from */
+  --t-scrim: 160ms;     /* dialog scrim */
+  --t-note: 180ms;      /* corner note in, 2.4 s hold, 120 ms out */
+  --ease: cubic-bezier(.2, .9, .1, 1);
+}

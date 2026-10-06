@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Menu directions, side by side</title>
+<style>
+:root { --bg: #101214; --fg: #e8e6df; --dim: #9a9890; --line: #2a2d31; --acc: #f08a3c; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.4 system-ui, sans-serif; }
+header { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+h1 { font-size: 18px; margin: 0 12px 0 0; }
+#name { font-weight: 600; min-width: 220px; }
+button, a.btn { font: inherit; color: var(--fg); background: #1c1f23; border: 1px solid var(--line); border-radius: 6px; padding: 8px 14px; cursor: pointer; text-decoration: none; }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+.hint { color: var(--dim); font-size: 14px; margin-left: auto; }
+main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 16px; }
+main.b3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+figure { margin: 0; }
+figcaption { display: flex; justify-content: space-between; gap: 8px; padding: 0 0 8px; font-weight: 600; }
+figcaption a { color: var(--dim); font-weight: 400; font-size: 14px; }
+img { display: block; width: 100%; height: auto; background: #000; border: 1px solid var(--line); }
+.miss { border: 1px dashed var(--line); padding: 40px 16px; color: var(--dim); text-align: center; }
+nav { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 24px; }
+nav button { padding: 4px 10px; font-size: 14px; }
+nav button[aria-current="true"] { border-color: var(--acc); color: var(--acc); }
+@media (max-width: 800px) { main, main.b3 { grid-template-columns: minmax(0, 1fr); } .hint { margin-left: 0; } }
+</style>
+</head>
+<body>
+<header>
+<h1>Menu directions</h1>
+<button id="prev" type="button">Previous</button>
+<span id="name"></span>
+<button id="next" type="button">Next</button>
+<button id="tog" type="button">Show B too</button>
+<span class="hint">Left and right arrow keys change screen. Click an image to open it full size.</span>
+</header>
+<main id="main"></main>
+<nav id="nav" aria-label="Screens"></nav>
+<script>
+// Each row: title, then the file name in a-workbench, c-atlas, b-signal (out/ folder).
+var S = [
+["Title", "01-title", "01-title", "01-title"],
+["Main menu", "02-main-menu", "02-main-menu", "02-main-menu"],
+["Solo", "03-solo", "03-solo", "03-solo"],
+["Character select", "04-characters", "04-characters", "04-character-select"],
+["Stage select", "05-stages", "05-stages", "05-stage-select"],
+["Versus rules", "06-versus-rules", "06-versus-rules", "06-versus-rules"],
+["Online room", "07-online-room", "07-online-room", "07-online-room"],
+["Envoy run setup", "08-envoy-setup", "08-envoy-setup", "08-envoy-run-setup"],
+["Envoy bag", "09-envoy-bag", "09-envoy-bag", "09-envoy-bag"],
+["Envoy reward", "10-envoy-reward", "10-envoy-reward", "10-envoy-reward"],
+["In-match HUD", "11-envoy-hud", "11-envoy-hud", "11-envoy-hud"],
+["Pause", "12-pause", "12-pause", "12-pause"],
+["End-of-stage payout", "12b-payout", "12b-payout", "12b-payout"],
+["Results", "13-results", "13-results", "13-results"],
+["Settings: video", "14-settings-video", "14-settings-video", "14b-settings-video"],
+["Settings: audio", "14b-settings-audio", "14b-settings-audio", "14c-settings-audio"],
+["Settings: controls", "14c-settings-controls", "14c-remap", "14-settings-controls"],
+["Mods", "15-mods", "15-mods", "15-mods"],
+["LAB pause", "16-lab-pause", "16-lab-pause", "16-lab-pause"],
+["Launcher", "17-launcher", "17-launcher", "17-launcher-play"],
+["Wide: main menu", "wide-02-main-menu", "wide-02-main-menu", "wide-02-main-menu"],
+["Wide: character select", "wide-04-characters", "wide-04-characters", "wide-04-character-select"],
+["Wide: Envoy bag", "wide-09-envoy-bag", "wide-09-envoy-bag", "wide-09-envoy-bag"],
+["True 640x480: main menu", "small-02-main-menu", "small-02-main-menu", "small-02-main-menu"],
+["True 640x480: Envoy bag", "small-09-envoy-bag", "small-09-envoy-bag", "small-09-envoy-bag"],
+["Kit: foundations", "kit-1-foundations", "kit-1-palette-type", "kit-1-foundations"],
+["Kit: controls", "kit-2-controls", "kit-2-controls", "kit-2-states"],
+["Kit: pieces", "kit-3-pieces", "kit-3-cells-rules-models", "kit-3-pieces"],
+["Kit: input and players", "kit-4-input-players", "kit-4-feedback-input-ports", "kit-4-input-and-motion"],
+["Kit: motion", "kit-5-motion", "kit-5-structure-motion", null]
+];
+var D = [["A: Workbench", "a-workbench", 1], ["C: Atlas", "c-atlas", 2], ["B: Signal", "b-signal", 3]];
+var i = 0, showB = false;
+var main = document.getElementById("main"), nav = document.getElementById("nav");
+function draw() {
+  var row = S[i];
+  document.getElementById("name").textContent = (i + 1) + " of " + S.length + ": " + row[0];
+  main.className = showB ? "b3" : "";
+  main.textContent = "";
+  D.forEach(function (d) {
+    if (d[2] === 3 && !showB) return;
+    var fig = document.createElement("figure"), cap = document.createElement("figcaption");
+    var t = document.createElement("span"); t.textContent = d[0];
+    var g = document.createElement("a"); g.href = d[1] + "/index.html"; g.textContent = "its gallery";
+    cap.appendChild(t); cap.appendChild(g); fig.appendChild(cap);
+    var f = row[d[2]];
+    if (f) {
+      var a = document.createElement("a"); a.href = d[1] + "/out/" + f + ".png"; a.target = "_blank";
+      var im = document.createElement("img"); im.src = a.href; im.alt = d[0] + ", " + row[0];
+      a.appendChild(im); fig.appendChild(a);
+    } else {
+      var m = document.createElement("div"); m.className = "miss"; m.textContent = "No sheet for this one"; fig.appendChild(m);
+    }
+    main.appendChild(fig);
+  });
+  Array.prototype.forEach.call(nav.children, function (b, n) { b.setAttribute("aria-current", n === i ? "true" : "false"); });
+  try { history.replaceState(null, "", "#" + (i + 1)); } catch (e) {}
+}
+function go(n) { i = (n + S.length) % S.length; draw(); }
+S.forEach(function (row, n) {
+  var b = document.createElement("button"); b.type = "button"; b.textContent = row[0];
+  b.addEventListener("click", function () { go(n); }); nav.appendChild(b);
+});
+document.getElementById("prev").addEventListener("click", function () { go(i - 1); });
+document.getElementById("next").addEventListener("click", function () { go(i + 1); });
+document.getElementById("tog").addEventListener("click", function () {
+  showB = !showB; this.textContent = showB ? "Hide B" : "Show B too"; draw();
+});
+document.addEventListener("keydown", function (e) {
+  if (e.key === "ArrowLeft") go(i - 1);
+  if (e.key === "ArrowRight") go(i + 1);
+});
+var h = parseInt(location.hash.slice(1), 10);
+if (h >= 1 && h <= S.length) i = h - 1;
+draw();
+</script>
+</body>
+</html>

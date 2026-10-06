@@ -1,0 +1,209 @@
+/* SIGNAL: components. Almost no boxes. Type is the interface; volt marks focus and what is yours, nothing else. */
+@import url("tokens.css");
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--ground); }
+body { font-family: var(--f-body); font-weight: 600; font-size: var(--fs-body); line-height: 18px; color: var(--bone);
+       -webkit-font-smoothing: antialiased; text-rendering: geometricPrecision; }
+.scr { position: relative; width: 640px; height: 480px; overflow: hidden; background: var(--ground); }
+.scr.wide { width: 853px; }
+.abs { position: absolute; }
+.nw { white-space: nowrap; }
+.r { text-align: right; }
+.fx { display: flex; } .ac { align-items: center; } .ab { align-items: baseline; } .jb { justify-content: space-between; }
+
+/* ---------- type roles ---------- */
+.d { font-family: var(--f-display); font-weight: 800; text-transform: uppercase; line-height: .86; letter-spacing: -.004em; }
+.s-mega { font-size: var(--fs-mega); line-height: .8; }
+.s-hero { font-size: var(--fs-hero); }
+.s-focus { font-size: var(--fs-focus); line-height: .9; }
+.s-head { font-size: var(--fs-head); font-weight: 700; line-height: 1; letter-spacing: .004em; }
+.s-row { font-size: var(--fs-row); font-weight: 600; line-height: 1; letter-spacing: .03em; }
+.b { font-family: var(--f-body); font-weight: 600; font-size: var(--fs-body); line-height: 18px; color: var(--mid); }
+.c { font-family: var(--f-mono); font-weight: 500; font-size: var(--fs-cap); line-height: 16px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); }
+.c.mid { color: var(--mid); } .c.bone { color: var(--bone); } .c.volt { color: var(--volt); }
+.dim { color: var(--dim); } .mid { color: var(--mid); } .bone { color: var(--bone); } .volt { color: var(--volt); } .off { color: var(--off); }
+.alarm { color: var(--alarm); }
+
+/* ---------- chrome: a crumb, a counter, a hairline, hints. That is all of it ---------- */
+.crumb { position: absolute; left: var(--margin-x); top: var(--margin-y); }
+.crumb span { color: var(--dim); } .crumb span.here { color: var(--bone); } .crumb em { font-style: normal; color: var(--off); padding: 0 6px; }
+.count { position: absolute; right: var(--margin-x); top: var(--margin-y); text-align: right; }
+.count b { color: var(--bone); font-weight: 700; } .count i { font-style: normal; color: var(--off); }
+.foot { position: absolute; left: var(--margin-x); right: var(--margin-x); bottom: 22px; border-top: var(--hair) solid var(--line);
+        padding-top: 10px; display: flex; gap: 22px; align-items: center; }
+.foot .gap { flex: 1; }
+.foot { white-space: nowrap; }
+.hint { display: inline-flex; align-items: center; gap: 7px; font-family: var(--f-mono); font-weight: 500; font-size: var(--fs-cap);
+        letter-spacing: .06em; text-transform: uppercase; color: var(--mid); white-space: nowrap; }
+.hint.is-off { color: var(--off); }
+.g { display: inline-block; vertical-align: middle; height: 20px; width: auto; flex: none; }
+
+/* ---------- the lens list: one row in focus, the rest recede. No box, no fill, no divider ---------- */
+.lens { position: absolute; }
+.li { position: relative; display: flex; align-items: baseline; padding-left: 20px; color: var(--dim); white-space: nowrap;
+      font-family: var(--f-display); font-weight: 800; text-transform: uppercase; line-height: 1;
+      transition: font-size var(--t-focus) var(--ease), color var(--t-focus) var(--ease); }
+.li::before { content: ""; position: absolute; left: 0; top: .1em; bottom: .02em; width: var(--bar); background: transparent; }
+.li.f { color: var(--bone); }
+.li.f::before { background: var(--volt); }
+.li .v { margin-left: auto; padding-left: 16px; font-weight: 600; font-size: var(--fs-row); letter-spacing: .03em; color: var(--mid); }
+.li .sel { align-self: center; margin-right: 10px; }
+.li.is-off, .li.is-off .v { color: var(--off); }
+.li.is-off.f::before { background: var(--off); }
+.li.pressed { transform: translateX(3px); color: var(--bone); }
+.li.pressed::before { background: var(--bone); }
+.lens.hub .li { font-size: var(--fs-head); margin: 0 0 10px; }
+.lens.hub .li.f { font-size: var(--fs-hero); margin: 2px 0 14px; }
+.lens.list .li { font-size: var(--fs-row); font-weight: 700; margin: 0 0 6px; }
+.li > .v { margin-top: -4px; margin-bottom: -7px; }
+.lens.list .li.f { font-size: var(--fs-focus); margin: 4px 0 12px; }
+.lens.dense .li { font-size: var(--fs-row); font-weight: 700; margin: 0 0 4px; }
+.lens.dense .li.f { font-size: var(--fs-head); margin: 2px 0 6px; }
+.li .sub { font-family: var(--f-body); font-weight: 600; font-size: var(--fs-body); letter-spacing: 0; text-transform: none; color: var(--mid); margin-left: 14px; }
+.badge { font-family: var(--f-mono); font-weight: 500; font-size: var(--fs-cap); letter-spacing: .06em; margin-left: 12px; color: var(--mid); white-space: nowrap;
+             border: var(--hair) solid var(--line); padding: 0 5px; line-height: 14px; align-self: center; }
+.help { font-family: var(--f-body); font-weight: 600; font-size: var(--fs-body); line-height: 18px; color: var(--mid); }
+
+/* selected marker (what is yours / chosen): a hard volt square */
+.sel { display: inline-block; width: 9px; height: 9px; background: var(--volt); }
+.sel.hollow { background: transparent; border: 2px solid var(--off); }
+
+/* ---------- option strip: a toggle is a two-word strip, a choice is a longer one ---------- */
+.opts { display: inline-flex; gap: 14px; align-items: baseline; font-family: var(--f-display); font-weight: 700; font-size: var(--fs-row);
+        letter-spacing: .03em; text-transform: uppercase; }
+.opts i { font-style: normal; color: var(--off); padding-bottom: 3px; border-bottom: var(--under) solid transparent; line-height: 1; }
+.opts i.on { color: var(--mid); border-bottom-color: #565d68; }
+.li.f .opts i { color: var(--dim); }
+.li.f .opts i.on, .opts.f i.on { color: var(--bone); border-bottom-color: var(--volt); }
+.opts.dis i, .opts.dis i.on { color: var(--off); border-bottom-color: var(--off); text-decoration: line-through; }
+.opts.press i.on { background: var(--bone); color: var(--ground); border-bottom-color: var(--bone); padding: 0 4px 3px; }
+/* a stepped choice: the value with two arrows that exist only in focus */
+.step { display: inline-flex; align-items: center; gap: 10px; font-family: var(--f-display); font-weight: 700; font-size: var(--fs-row); letter-spacing: .03em; text-transform: uppercase; color: var(--mid); }
+.step svg { width: 9px; height: 14px; fill: var(--off); }
+.li.f .step, .step.f { color: var(--bone); } .li.f .step svg, .step.f svg { fill: var(--volt); }
+
+/* ---------- slider: a hairline, a tick, a numeral ---------- */
+.sl { display: inline-flex; align-items: center; gap: 14px; }
+.sl .tr { position: relative; width: 150px; height: 3px; background: var(--line); }
+.sl .fl { position: absolute; left: 0; top: 0; bottom: 0; background: var(--mid); width: var(--w); }
+.sl .tk { position: absolute; top: -6px; width: 3px; height: 15px; background: var(--mid); left: var(--w); }
+.sl .n { font-family: var(--f-display); font-weight: 700; font-size: var(--fs-row); min-width: 46px; text-align: right; color: var(--mid); letter-spacing: .03em; }
+.li.f .sl .fl, .li.f .sl .tk, .sl.f .fl, .sl.f .tk { background: var(--volt); } .li.f .sl .n, .sl.f .n { color: var(--bone); }
+.sl.dis .fl, .sl.dis .tk { background: var(--off); } .sl.dis .n { color: var(--off); }
+.sl.press .tk { background: var(--bone); width: 5px; left: calc(var(--w) - 1px); }
+
+/* ---------- tab strip: words with an underline under the current one ---------- */
+.tabs { display: flex; gap: 22px; align-items: center; font-family: var(--f-display); font-weight: 700; font-size: var(--fs-row); letter-spacing: .03em; text-transform: uppercase; }
+.tabs a { color: var(--dim); padding-bottom: 4px; border-bottom: var(--under) solid transparent; line-height: 1; white-space: nowrap; }
+.tabs a.on { color: var(--bone); border-bottom-color: var(--mid); }
+.tabs.f a.on { border-bottom-color: var(--volt); }
+.tabs a.is-off { color: var(--off); text-decoration: line-through; }
+.tabs a small { font-family: var(--f-mono); font-weight: 500; font-size: var(--fs-cap); letter-spacing: .04em; margin-left: 6px; color: var(--off); }
+.tabs a.on small { color: var(--dim); }
+.tabs .g { height: 18px; }
+
+/* ---------- button: a word. In focus it is the one solid thing on the screen ---------- */
+.bt { display: inline-block; font-family: var(--f-display); font-weight: 800; font-size: var(--fs-head); letter-spacing: .02em; text-transform: uppercase;
+      line-height: 1; padding: 7px 20px 8px; color: var(--bone); border-bottom: 2px solid var(--mid); }
+.bt.f { background: var(--volt); color: var(--volt-ink); border-bottom-color: var(--volt); }
+.bt.press { background: var(--bone); color: var(--ground); border-bottom-color: var(--bone); transform: translate(2px, 2px); }
+.bt.dis { color: var(--off); border-bottom: 2px dashed var(--off); }
+.bt.chosen { border-bottom-color: var(--volt); }
+.bt.sm { font-size: var(--fs-row); padding: 5px 12px 6px; }
+.bt.danger.f { background: var(--alarm); color: var(--ground); border-bottom-color: var(--alarm); }
+
+/* ---------- corner brackets: focus on a cell or a card ---------- */
+.brk:not(.abs) { position: relative; }
+.brk.f::before { content: ""; position: absolute; inset: -4px; pointer-events: none; z-index: 3;
+  background:
+   linear-gradient(var(--volt), var(--volt)) 0 0 / 12px 3px no-repeat, linear-gradient(var(--volt), var(--volt)) 0 0 / 3px 12px no-repeat,
+   linear-gradient(var(--volt), var(--volt)) 100% 0 / 12px 3px no-repeat, linear-gradient(var(--volt), var(--volt)) 100% 0 / 3px 12px no-repeat,
+   linear-gradient(var(--volt), var(--volt)) 0 100% / 12px 3px no-repeat, linear-gradient(var(--volt), var(--volt)) 0 100% / 3px 12px no-repeat,
+   linear-gradient(var(--volt), var(--volt)) 100% 100% / 12px 3px no-repeat, linear-gradient(var(--volt), var(--volt)) 100% 100% / 3px 12px no-repeat; }
+.brk.press::before { content: ""; position: absolute; inset: -4px; border: 3px solid var(--bone); z-index: 3; }
+
+/* ---------- model cell: the drive floats on the ground over a floor tick ---------- */
+.gc { position: relative; width: 56px; height: 56px; flex: none; }
+.gc img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: contain; image-rendering: auto; }
+.gc::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: -3px; height: 1px; background: var(--line); }
+.gc.s::before { content: ""; position: absolute; right: -2px; top: -2px; width: 9px; height: 9px; background: var(--volt); z-index: 2; }
+.gc.dis { opacity: .28; } .gc.press { transform: scale(.93); }
+.gc.empty::after { background: var(--off); }
+.gc.empty .slot { position: absolute; left: 14px; top: 14px; right: 14px; bottom: 14px; border: 2px dashed var(--off); }
+.gc.lock .slot { position: absolute; left: 14px; top: 14px; right: 14px; bottom: 14px; border: 2px solid var(--line); }
+.gc.f::after { background: var(--volt); height: 2px; }
+.gc.sm { width: 28px; height: 28px; } .gc.md { width: 40px; height: 40px; } .gc.lg { width: 72px; height: 72px; }
+.gc.hg { width: 120px; height: 120px; } .gc.xl { width: 200px; height: 200px; } .gc.xl::after { left: 20px; right: 20px; bottom: -6px; }
+
+/* ---------- disc-art frame: the only boxed thing, because it must frame art that cannot be committed ---------- */
+.disc { position: relative; background: var(--ground-2); border: var(--hair) solid var(--line); overflow: hidden; }
+.disc::before { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(135deg, transparent 0 7px, rgba(255,255,255,.035) 7px 8px); }
+.disc::after { content: attr(data-l); position: absolute; left: 6px; bottom: 4px; font-family: var(--f-mono); font-weight: 500; font-size: var(--fs-cap); letter-spacing: .06em; color: var(--dim); text-transform: uppercase; }
+.disc .tl, .disc .tr2, .disc .bl, .disc .br { position: absolute; width: 8px; height: 8px; border-color: var(--dim); border-style: solid; border-width: 0; }
+.disc .tl { left: 4px; top: 4px; border-left-width: 1px; border-top-width: 1px; } .disc .tr2 { right: 4px; top: 4px; border-right-width: 1px; border-top-width: 1px; }
+.disc .bl { left: 4px; bottom: 4px; } .disc .br { right: 4px; bottom: 4px; border-right-width: 1px; border-bottom-width: 1px; }
+.disc.mono::after { content: attr(data-c); left: 0; right: 0; bottom: 50%; margin-bottom: -13px; text-align: center; color: var(--mid); }
+.disc.mono.on::after { color: var(--bone); }
+.disc.dis { opacity: .3; }
+
+/* ---------- port identity: tally bars I..IIII; colour is the quiet second signal ---------- */
+.p1 { --pc: var(--p1); } .p2 { --pc: var(--p2); } .p3 { --pc: var(--p3); } .p4 { --pc: var(--p4); } .pc { --pc: var(--cpu); }
+.tally { display: inline-flex; gap: 2px; height: 14px; vertical-align: middle; }
+.tally b { display: block; width: 3px; height: 14px; background: var(--pc); }
+.tally.cpu b { background: transparent; border: 1px solid var(--pc); width: 4px; }
+.tally.mini { height: 8px; gap: 1px; } .tally.mini b { width: 2px; height: 8px; }
+.tally.big { height: 22px; gap: 3px; } .tally.big b { width: 5px; height: 22px; }
+.tally.big.cpu b { width: 6px; }
+.pn { font-family: var(--f-mono); font-weight: 700; font-size: var(--fs-cap); letter-spacing: .06em; color: var(--pc); }
+
+/* ---------- rule card: one rule per piece. Who (tick), what (name), when (caption), the line ---------- */
+.rc { position: relative; display: flex; gap: 12px; padding: 0; }
+.rc .tick { flex: none; width: 3px; background: var(--kc, var(--mid)); }
+.rc .rn { font-family: var(--f-display); font-weight: 800; font-size: var(--fs-row); letter-spacing: .03em; text-transform: uppercase; line-height: 1; color: var(--bone); display: flex; gap: 10px; align-items: baseline; }
+.rc .rl { font-family: var(--f-body); font-weight: 600; font-size: var(--fs-body); line-height: 18px; color: var(--mid); margin-top: 4px; }
+.rc.dis .rn, .rc.dis .rl { color: var(--off); }
+.k-red { --kc: var(--f-red); } .k-green { --kc: var(--f-green); } .k-blue { --kc: var(--f-blue); }
+.k-yellow { --kc: var(--f-yellow); } .k-purple { --kc: var(--f-purple); } .k-white { --kc: var(--f-white); }
+
+/* ---------- keystone: a hard letter in a hard square; the letter is the signal, the colour is the second one ---------- */
+.ks { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 2px solid var(--kc, var(--mid));
+      color: var(--kc, var(--mid)); font-family: var(--f-display); font-weight: 800; font-size: var(--fs-row); line-height: 1; position: relative; }
+.ks.on { background: var(--kc, var(--mid)); color: var(--ground); }
+.ks.empty { border: 2px dashed var(--off); color: var(--off); }
+.ks.dis { opacity: .3; }
+.ks.sm { width: 22px; height: 22px; font-size: 14px; border-width: 2px; }
+.ks.lg { width: 56px; height: 56px; font-size: var(--fs-focus); line-height: .9; border-width: 3px; }
+
+/* ---------- corner note, tooltip, dialog ---------- */
+.note { position: absolute; border-left: 3px solid var(--mid); padding: 1px 0 1px 10px; max-width: 250px; }
+.note.mine { border-left-color: var(--volt); }
+.note .nh { font-family: var(--f-display); font-weight: 800; font-size: var(--fs-row); letter-spacing: .03em; text-transform: uppercase; line-height: 1; color: var(--bone); }
+.note .nb { font-family: var(--f-body); font-weight: 600; font-size: var(--fs-body); line-height: 18px; color: var(--mid); margin-top: 3px; }
+.tip { position: relative; display: inline-block; background: var(--ground-2); border: var(--hair) solid var(--line); border-left: 3px solid var(--mid); padding: 6px 10px 7px; font-size: var(--fs-body); line-height: 18px; color: var(--bone); max-width: 260px; }
+.scrim { position: absolute; inset: 0; background: rgba(8, 9, 11, .9); z-index: 20; }
+.dlg { position: absolute; z-index: 21; left: 64px; width: 460px; }
+.dlg .rule { height: 3px; width: 56px; background: var(--bone); margin-bottom: 14px; }
+.dlg.danger .rule { background: var(--alarm); }
+
+/* ---------- progress, scroll, empty ---------- */
+.pg { position: relative; height: 3px; background: var(--line); }
+.pg i { position: absolute; left: 0; top: -2px; bottom: -2px; background: var(--volt); width: var(--w); }
+.pg.plain i { background: var(--mid); }
+.segs { display: inline-flex; gap: 3px; }
+.segs b { display: block; width: 14px; height: 14px; background: var(--kc, var(--mid)); }
+.segs b.e { background: transparent; border: 1px solid var(--off); }
+.scrl { position: absolute; width: 2px; background: var(--line); }
+.scrl i { position: absolute; left: -1px; width: 4px; background: var(--mid); }
+.empty-w { font-family: var(--f-display); font-weight: 800; font-size: var(--fs-focus); text-transform: uppercase; line-height: .9; color: var(--off); }
+
+/* ---------- cursor (mouse) ---------- */
+.cur { position: absolute; width: 14px; height: 20px; z-index: 30; }
+.cur polygon { fill: var(--bone); stroke: var(--ground); stroke-width: 1.5; }
+.cur.hot polygon { fill: var(--volt); }
+
+/* ---------- stage stand-in for the HUD ---------- */
+.stand { position: absolute; background: var(--ground-3); }
+
+/* ---------- the DRIVE and its words ---------- */
+.fam { display: inline-block; width: 3px; height: 14px; background: var(--kc, var(--mid)); }

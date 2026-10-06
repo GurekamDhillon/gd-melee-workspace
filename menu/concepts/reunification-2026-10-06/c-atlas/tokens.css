@@ -1,0 +1,33 @@
+/* ATLAS tokens. Authored in the engine's 640x480 logical canvas; every size here is a logical px.
+   Fonts: Source Sans 3 and Hasklug are the engine atlas' own (menu/SourceSans3, menu/Hasklug, SIL OFL);
+   Barlow Condensed (SIL OFL, fonts/) is the one added family, used for caps labels and titles only. */
+@font-face{font-family:"Source Sans 3";font-weight:600;src:url("../../../SourceSans3/SourceSans3-Semibold.otf")}
+@font-face{font-family:"Source Sans 3";font-weight:700;src:url("../../../SourceSans3/SourceSans3-Bold.otf")}
+@font-face{font-family:"Source Sans 3";font-weight:900;src:url("../../../SourceSans3/SourceSans3-Black.otf")}
+@font-face{font-family:"Hasklug";font-weight:500;src:url("../../../Hasklug/HasklugNerdFontPropo-Medium.otf")}
+@font-face{font-family:"Hasklug";font-weight:700;src:url("../../../Hasklug/HasklugNerdFontPropo-Bold.otf")}
+@font-face{font-family:"Barlow Condensed";font-weight:500;src:url("fonts/BarlowCondensed-Medium.ttf")}
+@font-face{font-family:"Barlow Condensed";font-weight:600;src:url("fonts/BarlowCondensed-SemiBold.ttf")}
+@font-face{font-family:"Barlow Condensed";font-weight:700;src:url("fonts/BarlowCondensed-Bold.ttf")}
+
+:root{
+  /* elevations: E0 ground, E1 plate, E2 inset/row, E3 lift. A higher level is lighter and shows a thicker front edge. */
+  --ground:#0d1015;  --ground2:#131820;  --plate:#1a1f29;  --plate2:#222836;  --lift:#2e3648;
+  --edge:#06080b;    --edge2:#0b0e13;    --line:#323a4b;   --line2:#4a5570;   --scrim:rgba(5,7,10,.72);
+  /* ink */
+  --ivory:#f1ebdc;   --text2:#c8c4b8;    --muted:#9aa2b4;  --dim:#6e768a;     --ink:#0b0d12;
+  /* signals: ember = focus and the one action; jade = information, origin, on; sun = caution; rose = danger */
+  --ember:#ff7a3d;   --ember-d:#a8431c;  --jade:#4fd6aa;   --jade-d:#1f6e57;
+  --sun:#f2c14e;     --rose:#ef4f7d;
+  /* four players and the CPU. Never colour alone: each also has a numeral and a shape (circle, square, hexagon, diamond). */
+  --p1:#f0504a; --p2:#4a90ff; --p3:#f3cf3e; --p4:#42d68b; --cpu:#8f98aa;
+  /* pad glyphs */
+  --pad-a:#3dbb78; --pad-b:#e5534b; --pad-x:#9aa3b5; --pad-z:#8e6bdc;
+  /* type: size/line. Floor is 12 at 640x480. */
+  --f-ui:"Source Sans 3",system-ui,sans-serif; --f-cap:"Barlow Condensed","Source Sans 3",sans-serif; --f-num:"Hasklug","Source Sans 3",monospace;
+  --t-cap:12px; --t-body:14px; --t-row:16px; --t-label:20px; --t-title:28px; --t-hero:44px; --t-display:64px;
+  /* space and chamfers (a chamfer is two triangles on two opposite corners; no curves anywhere) */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --ch:8px; --ch-s:5px; --ch-xs:3px;
+  /* motion (ms) */
+  --m-focus:80ms; --m-tab:120ms; --m-pane:100ms; --m-modal:140ms; --m-note:160ms; --m-turn:12000ms;
+}

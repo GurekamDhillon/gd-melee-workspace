@@ -1,0 +1,74 @@
+/* WORKBENCH: tokens. Logical unit = 1 px of the 640x480 canvas (a 2x render doubles everything).
+   Fonts are the two the engine atlas already uses (SIL OFL 1.1), loaded from menu/. */
+@font-face { font-family: "SS3"; font-weight: 600; src: url("../../../SourceSans3/SourceSans3-Semibold.otf"); }
+@font-face { font-family: "SS3"; font-weight: 700; src: url("../../../SourceSans3/SourceSans3-Bold.otf"); }
+@font-face { font-family: "SS3"; font-weight: 900; src: url("../../../SourceSans3/SourceSans3-Black.otf"); }
+@font-face { font-family: "HSK"; font-weight: 500; src: url("../../../Hasklug/HasklugNerdFontMono-Medium.otf"); }
+
+:root {
+  /* THE MAT: a dark slate-green self-healing cutting mat. Everything else sits on it. */
+  --mat:        #1d2622;   /* the work surface */
+  --mat-grid:   #25312c;   /* 16 px printed grid */
+  --mat-major:  #2e3d37;   /* every 80 px */
+  --mat-print:  #8fa196;   /* ink printed on the mat itself (labels, ruler, captions) */
+  --recess:     #121916;   /* a socket, a slot, a tray floor: where things go */
+  --recess-lip: #33443d;   /* the lit rim of a recess */
+
+  /* MATERIALS: each one means one thing */
+  --board:      #e8dfca;   /* chipboard: a CHOICE you can pick up */
+  --board-edge: #b0a281;
+  --kraft:      #d7b26e;   /* kraft tag: INFORMATION tied to the lifted object */
+  --kraft-edge: #9e7b3a;
+  --string:     #f1e8d2;
+  --folder:     #c9bfa5;   /* a manila folder: holds boards (a settings page, the LAB, a launcher tab) */
+  --folder-edge:#8d8467;
+  --paper:      #f7f4ea;   /* paper: forms and dialogs */
+  --paper-edge: #c9c3ae;
+  --slip:       #f3e49a;   /* a slip of notepaper: a NOTIFICATION */
+  --slip-edge:  #c4b35a;
+  --steel:      #67737d;   /* cast steel: HEAVY, committed things (keystones, warnings) */
+  --steel-edge: #353d44;
+  --steel-hi:   #9aa7b2;
+  --tape:       #0a0e0c;   /* label tape: WHERE you are */
+  --tape-lip:   #3a4a43;
+
+  /* INK */
+  --ink:        #191714;   /* on board, kraft, paper, slip */
+  --ink-soft:   #4d4639;
+  --bone:       #ece7d6;   /* on the mat and on tape */
+  --shadow:     #080b09;   /* every hard offset shadow */
+
+  /* SIGNALS */
+  --focus:      #ff7a2f;   /* the grip clamps and the lifted-piece pin; used for nothing else */
+  --focus-ink:  #a8400a;   /* focus colour as text on board */
+  --ok:         #3fae6a;
+  --warn:       #e6b422;
+  --danger:     #e0443a;
+
+  /* FOUR PLAYERS: colour AND a shape AND a number, always (tape flag on what is theirs) */
+  --p1: #e0443a;   /* circle   */
+  --p2: #3b82e8;   /* square   */
+  --p3: #f0c030;   /* triangle */
+  --p4: #38b36a;   /* diamond  */
+  --cpu: #8c9892;  /* hexagon  */
+
+  /* TYPE: the engine's roles, same sizes */
+  --font: "SS3", "Source Sans 3", sans-serif;
+  --mono: "HSK", ui-monospace, monospace;
+  --t-caption: 12px;  --t-body: 14px;  --t-row: 16px;  --t-label: 20px;
+  --t-title: 24px;    --t-heading: 32px; --t-hero: 44px; --t-display: 56px;
+
+  /* SPACE and SHAPE */
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s6: 24px; --s8: 32px;
+  --safe-x: 32px; --safe-y: 24px;                 /* title-safe inset of the 640x480 canvas */
+  --r-board: 3px; --r-token: 7px; --r-peg: 999px;
+
+  /* THICKNESS: a piece is a face + a visible front edge + a hard offset shadow (3 flat quads) */
+  --edge-rest: 3px;   --shadow-rest: 4px;
+  --edge-lift: 7px;   --shadow-lift: 11px;
+  --lift-dx: -2px;    --lift-dy: -5px;
+
+  /* MOTION (ms) */
+  --m-lift: 90ms;  --m-set: 70ms;  --m-press: 50ms;  --m-slide: 160ms;  --m-tab: 100ms;  --m-drop: 120ms;
+  --ease-out: cubic-bezier(.2,.8,.2,1);
+}

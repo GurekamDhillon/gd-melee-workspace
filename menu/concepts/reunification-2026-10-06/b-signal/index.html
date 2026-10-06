@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>SIGNAL: menu mockups</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="tokens.css">
+<style>
+ body{margin:0;background:var(--ground);color:var(--bone);font-family:var(--f-body);font-weight:600}
+ header{padding:28px 32px 8px;display:flex;gap:24px;align-items:baseline;flex-wrap:wrap}
+ h1{font:800 56px/0.9 var(--f-display);text-transform:uppercase;margin:0;letter-spacing:-.004em}
+ h1 span{color:var(--volt)}
+ header p{margin:0;color:var(--mid);font-size:14px;max-width:560px}
+ nav{padding:8px 32px 24px;display:flex;gap:22px;flex-wrap:wrap;font:700 20px var(--f-display);text-transform:uppercase;letter-spacing:.03em}
+ nav a{color:var(--dim);cursor:pointer;padding-bottom:4px;border-bottom:3px solid transparent;text-decoration:none}
+ nav a.on{color:var(--bone);border-bottom-color:var(--volt)}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:28px 24px;padding:0 32px 64px}
+ figure{margin:0;cursor:zoom-in}
+ figure img{display:block;width:100%;height:auto;border:1px solid var(--line)}
+ figure:hover img{border-color:var(--volt)}
+ figcaption{font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mid);padding-top:8px}
+ #lb{position:fixed;inset:0;background:rgba(8,9,11,.96);display:none;align-items:center;justify-content:center;z-index:9;flex-direction:column}
+ #lb.on{display:flex}
+ #lb img{max-width:96vw;max-height:88vh;border:1px solid var(--line)}
+ #lb .cap{font:500 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mid);padding:12px}
+ #lb .cap b{color:var(--volt)}
+</style></head><body>
+<header><h1>Signal <span>/</span> menus</h1>
+<p>Fast and minimal. Type does the work, one thing is in focus, everything else recedes. Click a picture to zoom; left and right move between pictures; Esc closes. The kit showcase is under Kit, or open <a href="kit.html" style="color:var(--volt)">kit.html</a>.</p></header>
+<nav id="nav"></nav><div class="grid" id="g"></div>
+<div id="lb"><img id="li" alt=""><div class="cap" id="lc"></div></div>
+<script>
+const D=[{"t": "Title", "p": "out/01-title.png", "k": "screen"}, {"t": "Main menu", "p": "out/02-main-menu.png", "k": "screen"}, {"t": "Solo", "p": "out/03-solo.png", "k": "screen"}, {"t": "Character select", "p": "out/04-character-select.png", "k": "screen"}, {"t": "Stage select", "p": "out/05-stage-select.png", "k": "screen"}, {"t": "Versus rules", "p": "out/06-versus-rules.png", "k": "screen"}, {"t": "Online room", "p": "out/07-online-room.png", "k": "screen"}, {"t": "Envoy: run setup", "p": "out/08-envoy-run-setup.png", "k": "screen"}, {"t": "Envoy: the bag", "p": "out/09-envoy-bag.png", "k": "screen"}, {"t": "Envoy: reward", "p": "out/10-envoy-reward.png", "k": "screen"}, {"t": "In-match HUD (Envoy)", "p": "out/11-envoy-hud.png", "k": "screen"}, {"t": "Pause", "p": "out/12-pause.png", "k": "screen"}, {"t": "End of stage: payout", "p": "out/12b-payout.png", "k": "screen"}, {"t": "Results", "p": "out/13-results.png", "k": "screen"}, {"t": "Settings: controls and remap", "p": "out/14-settings-controls.png", "k": "screen"}, {"t": "Settings: video", "p": "out/14b-settings-video.png", "k": "screen"}, {"t": "Settings: audio", "p": "out/14c-settings-audio.png", "k": "screen"}, {"t": "Mods", "p": "out/15-mods.png", "k": "screen"}, {"t": "The LAB pause menu", "p": "out/16-lab-pause.png", "k": "screen"}, {"t": "Launcher: Play", "p": "out/17-launcher-play.png", "k": "screen"}, {"t": "Wide 1920x1080: Main menu", "p": "out/wide-02-main-menu.png", "k": "wide"}, {"t": "Wide 1920x1080: Character select", "p": "out/wide-04-character-select.png", "k": "wide"}, {"t": "Wide 1920x1080: Envoy: the bag", "p": "out/wide-09-envoy-bag.png", "k": "wide"}, {"t": "True 640x480: Main menu", "p": "out/small-02-main-menu.png", "k": "small"}, {"t": "True 640x480: Envoy: the bag", "p": "out/small-09-envoy-bag.png", "k": "small"}, {"t": "Kit: Foundations: palette, type, ports, true size", "p": "out/kit-1-foundations.png", "k": "kit"}, {"t": "Kit: Components in every state", "p": "out/kit-2-states.png", "k": "kit"}, {"t": "Kit: Pieces: cells, rules, keystones, notes, dialogs, frames", "p": "out/kit-3-pieces.png", "k": "kit"}, {"t": "Kit: Input glyphs, focus signals, motion", "p": "out/kit-4-input-and-motion.png", "k": "kit"}]; const KINDS=[["all","All"],["screen","Screens"],["wide","Wide"],["small","Small"],["kit","Kit"]];
+let kind="all", list=[], idx=0;
+const g=document.getElementById("g"), lb=document.getElementById("lb");
+function draw(){ list=D.filter(d=>kind=="all"||d.k==kind); g.innerHTML="";
+ list.forEach((d,i)=>{const f=document.createElement("figure"); f.innerHTML='<img loading="lazy" src="'+d.p+'" alt=""><figcaption>'+d.t+'</figcaption>'; f.onclick=()=>open(i); g.appendChild(f);});
+ document.getElementById("nav").innerHTML=KINDS.map(k=>'<a class="'+(k[0]==kind?"on":"")+'" data-k="'+k[0]+'">'+k[1]+'</a>').join("");
+ document.querySelectorAll("nav a").forEach(a=>a.onclick=()=>{kind=a.dataset.k;draw();}); }
+function open(i){ idx=(i+list.length)%list.length; document.getElementById("li").src=list[idx].p;
+ document.getElementById("lc").innerHTML="<b>"+(idx+1)+" / "+list.length+"</b> &nbsp; "+list[idx].t; lb.classList.add("on"); }
+lb.onclick=()=>lb.classList.remove("on");
+addEventListener("keydown",e=>{ if(!lb.classList.contains("on")) return;
+ if(e.key=="ArrowRight")open(idx+1); else if(e.key=="ArrowLeft")open(idx-1); else if(e.key=="Escape")lb.classList.remove("on"); });
+draw();
+</script></body></html>
