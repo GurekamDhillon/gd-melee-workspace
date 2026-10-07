@@ -9,6 +9,31 @@ Companions: `HANDOFF-2026-10-05.md` (Envoy, Turbo, CPU controller state and the 
 `_build/audit-20261003/windows-release/READINESS.md` (the release order; untracked, local).
 
 **Now true.**
+- **Atlas step 8 (the retail screens rebuilt from data) is built and committed, not merged, not looked at, not played** (game `agent/atlas8`, workspace
+  `ws/atlas8`, from the 2026-10-07 integration heads; plan `docs/superpowers/plans/2026-10-06-atlas-step8-retail-data-screens.md`). Event Match, the Name Entry
+  tag list, Sound Test (music and effects), Special Messages, Bonus, Misc. and VS. Records are Atlas lists fed by the retail getters, opened from the `FA_NATIVE`
+  row that opens the retail screen (`fad_open_for` in `fm_confirm`; no table row changed; B returns to the menu item). `MELEE_ATLAS_DATA=<words>` picks screens
+  (`events,name,sound,messages,bonus,misc,vsrec`; `none`; `notext`), `MELEE_ATLAS=0` and netplay keep retail. They ride the settings door (`gw_script_ui_data.inc`):
+  the adapter owns the cursor and a 32-row window. Results is a `REPLACE` stand-in behind `MELEE_ATLAS_SCENES=5:replace` only (never online, no 3D winner, no
+  Rematch or Main Menu keys, the owner's call). The title was already an OVERLAY (step 2). Built: link OK, bridge fixpoint OK, ABI audit 0, headless `run.sh --test`
+  320 of 320; 12 native test cases (`atlas-retailtext`, `-data`, `-models`, `-results`, `-data-host` are new), three Python guards, `check_no_disc_text.py`.
+  **The text gate (Task 1) is settled: PARTIAL, from the disc, not a guess.** `tools/port/sis_probe.py` decodes `SdMenu.usd` in memory (counts only; the vanilla, ACE
+  and Akaneia discs are identical): 0 jumps and 0 bad opcodes; event names 2 of 696 glyphs unknown, descriptions 3 of 2152, sound names 5 of 1009, messages 2 of
+  2741; Misc labels and bonus lines GO. Every unknown glyph is a custom glyph of the second atlas (code 0x4000 and up: the accented letter, a button symbol), never
+  punctuation; a string with one keeps its authored label ("EVENT 7", "TRACK 12"). `SdRst.usd` and `SdToy.usd` are PARTIAL too (12 of 3058 and 39 of 2705).
+  **Corrections the code forced on the plan:** retail's event list reaches display index `mnEvent_8024CE74() + 8`, so later events are LOCKED rows (not "all 51
+  open"); special messages sort oldest first; event rows are keyed by display index, not event id; the bonus table is static, so `mninfobonus.c` has one
+  `TARGET_PC` reader; Sound Test has two views (music, effects) and the retail one also stores the last track (not repeated). **Not rebuilt, by risk:** the Name Entry
+  editor (it writes the save through `mnNameNew_CurrentNameText`; unverifiable without a window), so A on the tag list opens the game's own Name Entry. **Not
+  done:** Game Over (no-go: a 3D scene with unnamed enter data), the 1P intro, regend and prize scenes (3D, a THP movie), Staff Roll (the owner: stays retail, no Credits
+  entry); `tools/port/retail_screens.py` records each. The owner kept the Language row (Snapshots, Movies and Staff Roll stay retail, so it cannot go).
+  **For a Windows agent while the owner is away (nothing below was run; the plan's Task 12 step 2):** `MELEE_ATLAS_TEXTPROBE=1` once (`frontend: sis round trip ok`,
+  then one `sis probe` line per source: they must match the table above); each screen by its real path at 640x480, 960x720 and 1920x1080 (pad, mouse, wheel, key
+  hints); Event Match start and the return onto the played row; Sound Test audio and the menu music coming back; a fresh save for the empty states; Results with
+  `MELEE_ATLAS_SCENES=5:replace` for a 2 player, a 4 player, a team, a CPU and a cancelled match (the exit lands where retail's does; per-human START; the victory
+  music); `MELEE_ATLAS=0` for every screen; the frame cost at `MELEE_FPS=120`. **Open risks:** the archive load (`lbArchive_LoadArchive` for `SdMenu.usd`) inside the
+  frontend scene is untested (`MELEE_ATLAS_DATA=...,notext` skips it); `script-policy` does not build on this branch or on its parent (the literal NULs in
+  `gw_script.c`, already in the paused-work notes).
 - **Atlas step 9 (the Qt launcher in Atlas style) is built and committed on `ws/atlas9`, not merged, not looked at.**
   Plan `docs/superpowers/plans/2026-10-06-atlas-step9-launcher.md` tasks 0 to 9 are done; task 10 (delete the legacy
   kit and the `/kit` resources, then the owner's look at 100 and 150 percent) and task 11 (retire the legacy menu art

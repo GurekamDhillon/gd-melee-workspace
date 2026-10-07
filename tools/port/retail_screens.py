@@ -1,10 +1,11 @@
-"""Which retail screens are still retail: python tools/port/retail_screens.py [--melee PATH] [--json] [--check]
+"""Which retail screens are still retail: python tools/port/retail_screens.py [--melee PATH] [--json]
 
 Reads mn_PcOpenNative (src/melee/mn/mnmain.c), the table that opens the game's own native screens from the frontend's
 FA_NATIVE rows, and says for each entry point whether an Atlas data screen takes it over (a fad_screens[] row in
 src/melee/gm/gmfrontend_atlas_data.inc) or it stays retail. tools/port/retail_screens_expected.json is the committed
-inventory; --check compares against it (the Language-row question reads it: the row goes when the last retail TEXT screen is
-gone, and Snapshots, Movies and Staff Roll stay retail by the owner's decision).
+inventory (test_retail_screens.py compares against it). The Language-row question reads it: the row goes when the last retail TEXT
+screen is gone, and Snapshots, Movies and Staff Roll stay retail by the owner's decision, so it never goes; the owner kept the row
+on 2026-10-07 and nothing is removed. "step 5" marks an entry point another step already covers; SCENES lists the scenes step 8 looked at.
 """
 import json
 import os
@@ -39,13 +40,29 @@ STEP5 = {
 }
 # The owner's decision (spec 2): these stay retail behind a native hand-off.
 STAYS = {"SEL_DATA_SNAP": "Snapshots", "SEL_DATA_ARCHIVES": "Movies"}
+# What an ATLAS entry does not cover.
+NOTES = {"SEL_VS_NAME": "the tag list only: making, renaming and deleting a tag hands over to the retail Name Entry (its editor writes the save and cannot be checked without a window)"}
+
+
+# The scenes step 8 looked at (spec 13.8): what Atlas does with each, and why the rest stay retail. "stays": true means retail by decision, not by omission.
+SCENES = [
+    {"scene": "GS_TITLE", "atlas": "OVERLAY", "note": "step 2: the host draws over the retail title, which keeps its own exit logic"},
+    {"scene": "GS_RESULTS", "atlas": "REPLACE stand-in", "note": "off by default: MELEE_ATLAS_SCENES=5:replace; never online; no 3D winner scene"},
+    {"scene": "GS_GAMEOVER", "stays": True, "note": "no-go for step 8: a 3D animated scene whose enter data (DebugGameOverData) has unnamed fields; a candidate for step 10's frame pattern"},
+    {"scene": "GS_STAFFROLL", "stays": True, "note": "the owner's decision: the credits roll stays retail and gets no Credits entry"},
+    {"scene": "GS_INTRO_NORMAL", "stays": True, "note": "Adventure's intro: 3D and video"},
+    {"scene": "GS_INTRO_EASY", "stays": True, "note": "Classic's splash: 3D"},
+    {"scene": "GS_REGEND_TOYFALL", "stays": True, "note": "the trophy fall after a 1P mode: 3D"},
+    {"scene": "GS_REGEND_CONGRATS", "stays": True, "note": "a THP movie"},
+    {"scene": "GS_PRIZE_INTERFACE", "stays": True, "note": "the achievement pop-up: drawn over the scene it appears in"},
+]
 
 
 def inventory(melee):
     mn = open(os.path.join(melee, "src/melee/mn/mnmain.c"), encoding="utf-8", errors="replace").read()
     atl = os.path.join(melee, "src/melee/gm/gmfrontend_atlas_data.inc")
     covered = atlas_covered(open(atl, encoding="utf-8").read()) if os.path.exists(atl) else set()
-    return [{"kind": k, "sel": s, "retail_fn": f, "atlas": (k, s) in covered, "step5": STEP5.get(s, ""), "stays": s in STAYS}
+    return [{"kind": k, "sel": s, "retail_fn": f, "atlas": (k, s) in covered, "step5": STEP5.get(s, ""), "stays": s in STAYS, "note": NOTES.get(s, "")}
             for k, s, f in entries(mn)]
 
 
@@ -54,7 +71,7 @@ def main(argv):
     melee = next((argv[i + 1] for i, a in enumerate(argv) if a == "--melee"), root)
     rows = inventory(melee)
     if "--json" in argv:
-        print(json.dumps(rows, indent=1))
+        print(json.dumps({"entries": rows, "scenes": SCENES}, indent=1))
     else:
         print("\n".join("%-20s %-22s %-28s %s" % (r["kind"], r["sel"], r["retail_fn"], "ATLAS" if r["atlas"] else ("step 5" if r["step5"] else "retail")) for r in rows))
     return 0
