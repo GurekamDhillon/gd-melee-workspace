@@ -450,21 +450,21 @@ key hints and the motion. It is presentation only: it reads no game state, write
 the pad (`gd.input_mask` stays yours, and stays refused online). Handlers do not run on a resimulated frame, nor after the script is unloaded or switched off (its screens are
 released). A screen belongs to the script that registered it: `open`, `close(id)`, `feed`, `focus` and `set_focus` on another script's screen raise
 `gd.ui: screen "id" belongs to another script`; `note`, `dialog` and `close()` without an id act only on the caller's own top screen and return `false` otherwise.
-The developer console may drive any screen. It needs the Atlas text roles and their font pages; `gd.ui.available()` says whether they are there. Design:
+The developer console may drive any screen. Step 1 has one stack for the whole game: only its top screen draws and takes input, so two local players cannot each have a screen open at once. It needs the Atlas text roles and their font pages; `gd.ui.available()` says whether they are there. Design:
 `docs/superpowers/specs/2026-10-06-menu-reunification-design.md`.
 
 | function | |
 |---|---|
-| `gd.ui.available()` | `ok, why`: `true, ""`, or `false` and the reason. True only when every Atlas role is in the font manifest and every role's font pages loaded; the reason names the missing role or page |
-| `gd.ui.screen(desc)` | register or replace the screen `desc.id` (a script's ids must start with its mod id and a dot; the console may use any). A replacement keeps the focus on the same cell id, else on the same place in the same block, else on the first cell. Raises a Lua error with the reason when the description is wrong; returns `true` |
-| `gd.ui.open(id)` | push a screen onto the stack; `on.open` runs. `false` when that screen is already on top or the stack (8 deep) is full; an unknown id raises |
-| `gd.ui.close([id])` | remove a screen (the top one when `id` is not given); `on.close` runs. Returns `true` when there was one |
+| `gd.ui.available()` | `ok, why`: `true, ""`, or `false` and the reason. True only when the kit is available, every Atlas role is in the font manifest and every role's font pages loaded; the reason is the kit's own, or names the missing role or page. The answer is cached: after one failure it is not retried this run |
+| `gd.ui.screen(desc)` | register or replace the screen `desc.id` (a script's ids must start with its mod id and a dot; the console may use any). A replacement keeps the focus on the same cell id in the same block (on a grid; a list has one block), else on the same place in the same block, else on the first cell. Raises a Lua error with the reason when the description is wrong, when 8 screens already exist (`gd.ui.screen: too many screens (8)`; `close` does not free a slot, only an unload does) or when the id belongs to another script (`gd.ui.screen: "id" belongs to another script`); returns `true` |
+| `gd.ui.open(id)` | push a screen onto the stack; `on.open` runs. `false` when that screen is already on top or the stack (8 deep) is full; opening a screen that is deeper in the stack pushes it again (a duplicate entry). An id that is not registered raises `gd.ui: no screen "id"` (so do `close(id)`, `feed`, `focus` and `set_focus`) |
+| `gd.ui.close([id])` | remove a screen (the top one when `id` is not given); `on.close` runs. `close(id)` returns `true` for any registered screen of yours, even one that is not on the stack; `close()` returns `false` when nothing is open or the top screen is not yours |
 | `gd.ui.feed(id, intent)` | an intent from your own input: `"up" "down" "left" "right" "accept" "back" "x" "y" "z" "l" "r" "start"`; any other word raises |
 | `gd.ui.focus(id)` | `cell_id, block_id` (a list is one block named `"list"`), or nil |
-| `gd.ui.set_focus(id, block_id, cell_id)` | true when that cell exists |
+| `gd.ui.set_focus(id, block_id, cell_id)` | true when that cell exists (a list ignores `block_id`) |
 | `gd.ui.note{text=, kind="ok"\|"warn"\|"err"\|"info", seconds=}` | a corner note on the top screen (0.5 to 15 s, 3 by default); `false` when no screen is open |
-| `gd.ui.dialog{title=, text=, actions={{"A","Discard"},{"B","Cancel"}}, on=function(button) end}` | a dialog on the top screen (one or two actions, buttons `A B X Y Z`); `false` when no screen is open or there is no action. `on` gets the button letter |
-| `gd.ui.state()` | `{depth, top, canvas_w, wide, quads, cost_ms, cost_max_ms, roles_ok}` (`top` is absent when no screen is open) |
+| `gd.ui.dialog{title=, text=, actions={{"A","Discard"},{"B","Cancel"}}, on=function(button) end}` | a dialog on the top screen (one or two actions: a third is cut; a button letter that is not `A B X Y Z` becomes `A`; labels are cut at 23 characters, the text at 159); `false` when no screen is open, the top screen is not yours, or there is no action. `on` gets the letter of the answered button and is called once; its result is not applied |
+| `gd.ui.state()` | `{depth, top, canvas_w, wide, quads, cost_ms, cost_max_ms, roles_ok}` `depth` is the stack size, `top` the top screen's id (absent when none is open), `quads` the last drawn frame's count, `cost_ms` the mean draw time over every frame drawn since start and `cost_max_ms` the largest, `canvas_w` the width of the last drawn frame (0 before the first), `wide` whether that width is the wide layout. `roles_ok` is false until `available()` or a draw has run |
 
 A description:
 
@@ -478,16 +478,16 @@ A description:
 - `explainer = { width = "narrow"|"normal"|"wide", provide = function(cell_id, block_id) -> { kicker, title, what, media = {model, ring}, with = {models}, from = { text } } end }`,
   or `"none"` (the default). `what` is one short rule (it is cut to 159 characters and 4 lines).
 - `keys = { { "A", "Label" }, { "X", function(cell_id, block_id) return "Label" or nil end, when = function(...) end }, ... }`: at most 6 of `A B X Y Z L R START`; a function label
-  that returns nothing hides the hint, and a hint that does not fit the bar is left off. `counter = "text"` or a function. `input = "engine"` (the default: the engine reads the pad of `port`, 1 to 4) or `"feed"` (you feed directions
+  that returns nothing hides the hint. The engine adds a Move hint ahead of yours and it takes room from the bar; a hint that does not fit is left off, with every one after it, so put the important ones first. `counter = "text"` or a function. `input = "engine"` (the default: the engine reads the pad of `port`, 1 to 4) or `"feed"` (you feed directions
   and handle the buttons yourself, which is what a screen needs when it masks the pad itself).
 - `on = { accept, back, alt = { X, Y, Z }, focus, start, open, close, page, change }`. `accept`, `back`, `alt.X/Y/Z`, `focus` and `start` are called with `(cell_id, block_id)`;
-  `open` and `close` with two empty strings; `page(dir, cell_id, block_id)` with `dir` -1 (L, Shift+Tab) or +1 (R, Tab); `change(item_id, value)` as below. A handler may return
-  `{ pop = true }` or `{ push = "id" }` (not from `focus` or `close`; a `push` of another script's screen is ignored). A disabled cell takes focus but never reaches `accept`. Key label, `when`, counter and provider functions must be pure and cheap: they run when focus changes.
+  `open` and `close` with two empty strings; `page(dir, cell_id, block_id)` with `dir` -1 (L, Shift+Tab) or +1 (R, Tab); `change(item_id, value)` as below. The results `{ pop = true }` and `{ push = "id" }` are judged only from `accept`, `back`, `alt`, `start`, `page`, `change` and `open`: `pop` closes the TOP screen (not necessarily the handler's own), and only when the handler's script owns it;
+  `push` opens that screen, and is ignored when the id is unknown, the screen is another script's, or it is already on top. Results of `focus`, `close` and the dialog's `on` are not applied. **B does nothing unless you give `on.back`** (return `{ pop = true }` to close). A disabled cell takes focus but never reaches `accept`. Key label, `when`, counter and provider functions must be pure and cheap: they run when focus changes.
 
 What a description may not do. `gd.ui.screen` raises, and registers nothing, when: an id is longer than its buffer (a screen id 47 characters, a block, cell or item id 23);
 a block id, or a cell id anywhere on the screen, or an item id is used twice; a slider has `min` not below `max`; a block has more than 12 cells, `cols` outside 1 to 12, a screen
 more than 6 blocks, 32 items or 6 keys; a key names a button that is not one of the eight; or the table is too large (more nodes than the conversion arena holds) or nested more than 8 deep
-("the description is too large or nested too deeply"). Text longer than its field (63 characters, 159 for an explainer's `what`) is cut. A table in a description (a key, a cell, an `on` result) is read with raw access: a metatable is not consulted. At most 8 screens exist at once; a script's screens go when it unloads.
+("the description is too large or nested too deeply"); there is no id, no primary, or a primary, value or explainer width of an unknown kind; `chapter` is outside 0 to 5 or `port` outside 1 to 4; or the id does not start with the mod id (`gd.ui.screen: id "x" must start with "mod."`). Text longer than its field (63 characters, 159 for an explainer's `what`) is cut. A table in a description (a key, a cell, an `on` result) is read with raw access: a metatable is not consulted. At most 8 screens exist at once; a script's screens go when it unloads. If L and R arrive in one frame only L is read.
 
 Value rows. On a list row with a `toggle`, `choice` or `slider` value (not disabled), the engine itself reacts and calls `on.change(item_id, value)` instead of `accept`:
 a toggle flips on A, left or right and passes the new boolean; a slider moves on left or right by `max(1, (max - min) / 20)`, clamps, passes the new integer and says nothing
@@ -498,15 +498,17 @@ Input: pad (D-pad or stick, A B X Y Z L R START), keyboard (arrows, Enter, Escap
 focus on a list, key hints are buttons); mouse and keyboard are local UI input and never reach the pads. L, R, Tab and Shift+Tab reach `on.page`, START reaches `on.start`.
 A screen that becomes the top one (opened, or uncovered when the one above closes or is released) starts from the buttons, keys and mouse buttons held at that moment: a held A that
 opened it does not accept on it, and a held B closes one level, not the whole stack. A held direction still repeats after the normal delay.
-While a dialog is open it takes every event, clicks included: A and B answer it, X, Y or Z answer a dialog that has that button, and only its own buttons are hit.
-A grid taller than its room scrolls by whole rows with the focus. Key hints are laid out left to right; the first that does not fit the bar, and every one after it, is left off. Text that has under 8 px of room is not drawn. The setting **Reduced Motion** (Settings > Video, key `reduced_motion`)
+While a dialog is open it takes every event, clicks included: A, B, X, Y or Z answer it only if the dialog has that button, and only its own buttons are hit.
+The explainer, the key hints and the notes belong to the top screen only. A grid taller than its room scrolls by whole rows with the focus. Key hints are laid out left to right; the first that does not fit the bar, and every one after it, is left off. Text that has under 8 px of room is not drawn. The setting **Reduced Motion** (Settings > Video, key `reduced_motion`)
 turns the fades and turntables into cuts.
 
-Budget: one screen draws at most 4,096 entries of the kit's 16,384-quad list (the host logs once per screen when 3,000 is passed or the cap is hit; entries past the cap are dropped);
-a model cell is at most 512 triangles. `gd.ui.state()` shows the last frame's quads and cost.
-Offline, `pc/tests/atlas_ui_stub.lua` is a stand-in that enforces the same rules as the engine (the limits are read from `gw_ui_screen.h` and `gw_ui_val.h`: id lengths, chapter 0 to 5, port 1 to 4,
-explainer width, entries that are not tables, the size ceiling) and mirrors ownership, held buttons, the value rows and `on.page`, `on.start` and `on.change`. It does not model layout,
-drawing, the quad budget, mouse and keyboard, the 8-slot table, or `on.open` and `on.close`.
+Budget: only the top screen is drawn, and it draws at most 4,096 entries of the kit's 16,384-quad list (the host logs once per screen when 3,000 is passed or the cap is hit; entries past the cap are dropped);
+a model cell is at most 512 triangles. If fewer than 4,096 quads are left in the kit's list after the scripts' `on_draw` hooks, the screen is not drawn at all that frame (logged once: `ui: <id> not drawn: only N quads left this frame`), so draw less in `on_draw`. `gd.ui.state()` shows the numbers.
+Offline, `pc/tests/atlas_ui_stub.lua` (load it with `dofile`; `Stub.new{ caller=, owner_mod=, available= }`) is a stand-in. It checks a description by the same rules as the engine (limits read from `gw_ui_screen.h`
+and `gw_ui_val.h`: id lengths, chapter, port, explainer width, entries that are not tables, the size ceiling) and mirrors ownership, held buttons, value rows and `on.page`, `on.start`, `on.change`.
+It is NOT the engine: `feed` only records the intent (it does not run handlers; call `engine_press(id, kind)`, `engine_row` and `engine_focus` to play the engine's part); `dialog` accepts a call without actions and ignores
+button letters; `state()` has only `depth`, `top` and `roles_ok`; `open` of a deeper screen differs; and it has no layout, drawing, quad budget, mouse or keyboard, 8-slot table, or `on.open` / `on.close`.
+Stub-only helpers: `hold(button)`, `release(button)` and `tick()` model the pad's held buttons.
 Demo: `demos/atlas-screen`. A real use: the Envoy bag (`envoy/scripts/atlas_bag.lua`, console `uxatlas on`).
 
 Not in step 1: tabs in the screen record (L and R reach `on.page` only), a slider `step`, a get/set API for values (values are data, re-registered), and mouse-wheel stepping of a value.
