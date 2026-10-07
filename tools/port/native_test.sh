@@ -112,7 +112,7 @@ atlas-items)
 atlas-hud-parts)
     sources=(pc/tests/atlas_hud_parts_test.c pc/platform/gw_ui_hud_parts.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_val.c) ;;
 atlas-mods)
-    sources=(pc/tests/atlas_mods_test.c pc/platform/gw_ui_mods.c pc/platform/gw_ui_render.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c) ;;
+    sources=(pc/tests/atlas_mods_test.c pc/platform/gw_ui_mods.c pc/platform/gw_ui_render.c pc/platform/gw_ui_room.c pc/platform/gw_ui_online_parts.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c) ;;
 atlas-lint)
     sources=(pc/tests/atlas_lint_test.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c) ;;
 atlas-online-parts)
