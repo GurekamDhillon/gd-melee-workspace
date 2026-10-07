@@ -4,7 +4,9 @@ import shutil
 import subprocess
 import unittest
 from pathlib import Path
-import prepare
+from tools.test_support import require_game
+require_game('pc/scripts/examples/roguelite')
+from tools.roguelite import prepare
 from test_maze_runtime import PRELUDE, ENGINE, HELPERS
 
 LUA = shutil.which('lua') or shutil.which('lua5.4')
@@ -17,7 +19,7 @@ class AuditRepairs(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def runtime(self, body, after_reload=None, maze=False):
-        wrapped=';(function()\n'+prepare.bundle()+'\nend)()\n'
+        wrapped=';(function()\n'+prepare.bundle()+'\nend)()\ncommands.rogue_start()\n'
         engine=ENGINE if maze else ENGINE.replace('generator=maze','generator=physical')
         code='local SOURCE='+json.dumps(prepare.SOURCE.as_posix())+'\n'+PRELUDE+engine+wrapped+HELPERS+body
         if after_reload is not None: code+=wrapped+after_reload
@@ -116,7 +118,7 @@ for i=1,20 do assert(visited['run'..i],'pending export unreachable')end
 
     def editor(self, body):
         root=Path(__file__).resolve().parents[2]
-        fixture=(root/'melee/pc/tests/map_editor_test.lua').read_text().split('local chunk = loadfile')[0]
+        fixture=require_game('pc/tests/map_editor_test.lua').read_text().split('local chunk = loadfile')[0]
         stage=r'''
 local live_spawns={}
 gd.stage_set_spawn=function(slot,x,y)live_spawns[slot]={x=x,y=y};return true end
@@ -124,7 +126,7 @@ gd.stage_spawn=function(slot)local s=live_spawns[slot] or{x=12,y=34};return s.x,
 gd.stage_restore_bounds=function()stub_camera=nil;stub_blast=nil;live_spawns={};return true end
 local function deep(t)if type(t)~='table'then return t end;local r={};for k,v in pairs(t)do r[k]=deep(v)end;return r end
 '''
-        self.execute(fixture+stage+'assert(loadfile('+json.dumps((root/'melee/pc/scripts/examples/map_editor/scripts/main.lua').as_posix())+'))()\n'+r'''
+        self.execute(fixture+stage+'assert(loadfile('+json.dumps(require_game('pc/scripts/examples/map_editor/scripts/main.lua').as_posix())+'))()\n'+r'''
 local function command(s)commands.map(s)end
 local function count()local n=0;for _ in pairs(models)do n=n+1 end;return n end
 command('on');command('ghost off')

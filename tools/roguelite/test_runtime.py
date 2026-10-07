@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Actual Lua integration with deterministic engine stubs; not an in-engine playtest."""
 from pathlib import Path
-import shutil
 import subprocess
 import tempfile
-import prepare
+from tools.test_support import require_game
+require_game('pc/scripts/examples/roguelite')
+from tools.roguelite import prepare
 
-LUA = shutil.which('lua5.4') or shutil.which('lua')
-assert LUA, 'Lua required'
+from tools.test_support import require_executable
+LUA = require_executable('lua5.4', 'lua')
 PRELUDE = r'''
 local last_scene;local pending_scene;local scene_ended=false;local files={};local mx,my,mb=-1000,-1000,0; local controls=0; local tick=100;local pause=false;local request=true
 local ps={[1]={x=-42,y=0,vx=0,vy=0,stocks=99,percent=0,facing=1,action=14,airborne=false,hitlag=0,costume=0},[2]={x=28,y=0,vx=0,vy=0,stocks=99,percent=0,facing=-1,action=14,airborne=false,hitlag=0,costume=0}}
@@ -42,6 +43,7 @@ gd={buttons={A=256,B=512,UP=8,DOWN=4,LEFT=1,RIGHT=2},kit=kit,
  parts_clear=function()end,parts=function()return {geometry_signature='unknown'}end,
  fill=function()end,project=function(x,y)return x+320,240-y end}
 local function fixture_scene_tick()
+ if request then request=false;commands.rogue_start() end
  if not pending_scene then return end
  if not scene_ended then
   on_match_end();ps[2]=nil;cpu[2]=nil;scene_ended=true
@@ -167,11 +169,13 @@ def run(code):
     try:
         subprocess.run([LUA, '-'], input=code, text=True, check=True)
     except subprocess.CalledProcessError:
-        Path('/tmp/roguelite-runtime-failure.lua').write_text(code)
+        failure = Path(__file__).resolve().parents[2] / '_build/tmp/roguelite-runtime-failure.lua'
+        failure.parent.mkdir(parents=True, exist_ok=True)
+        failure.write_text(code)
         raise
 
 bundle = prepare.bundle()
-wrapped = '(function()\n' + bundle + '\nend)()\n'
+wrapped = '(function()\n' + bundle + '\nend)()\ncommands.rogue_start()\n'
 RECOVERY = r'''
 -- Keep the older complete pair when newest checkpoint is truncated.
 local ga=tonumber(files['checkpoint-a.txt']:match('TBD%d (%d+)'))
@@ -196,7 +200,6 @@ local before_a=files['checkpoint-a.txt'];step();step();tick=91;step();press(256)
 assert(roguelite_state().menu=='error' and files['checkpoint-a.txt']==before_a)
 print('runtime: torn newest checkpoint recovery, throwing save containment, huge generation rejection and invalid-file preservation passed')
 '''
-run(PRELUDE + wrapped + TEST + RECOVERY + wrapped + RESTORED + wrapped + INVALID)
 RESUME_ARENA = r'''
 files=arena_checkpoint;request=true;tick=0;on_unload();
 '''
@@ -206,7 +209,6 @@ assert(roguelite_state().node=='arena_a' and roguelite_state().menu==nil)
 assert(roguelite_state().run.progress.claimed.arena_a and cpu[2]=='stand')
 print('runtime: claimed arena resumes with stand CPU and no duplicate reward')
 '''
-run(PRELUDE + wrapped + TEST + RESUME_ARENA + wrapped + CHECK_ARENA)
 TIMEOUT = r'''
 local before_a,before_b=files['checkpoint-a.txt'],files['checkpoint-b.txt']
 refuse_teleport[1]=true;click('start')
@@ -216,7 +218,6 @@ assert(roguelite_state().toast:find('placement timed out',1,true))
 assert(next(models)==nil and files['checkpoint-a.txt']==before_a and files['checkpoint-b.txt']==before_b)
 print('runtime: permanent actor refusal cleans geometry, explains transition error and preserves checkpoint')
 '''
-run(PRELUDE + wrapped + TEST + TIMEOUT)
 DEATH = r'''
 local function press(b)controls=0;on_tick();controls=b;on_tick();controls=0;on_tick()end
 on_tick();on_tick();tick=91;on_tick()
@@ -232,7 +233,6 @@ assert(roguelite_state().profile.next_id==before)
 assert(roguelite_state().profile.finished[roguelite_state().run.id].outcome=='failure')
 print('runtime: three observed stock losses end run without adding a collection gene (engine stubs)')
 '''
-run(PRELUDE + wrapped + DEATH)
 ROSTER_START = r'''
 click('fighter');click('fighter:link');click('costume:next');click('accept')
 assert(state().fighter.id=='link' and state().fighter.costume==1)
@@ -274,9 +274,7 @@ assert(state().fighter.id=='falco' and state().run_fighter.id=='falco')
 assert(state().run and state().run.status=='active')
 print('runtime: legacy TBD1 checkpoint migrates losslessly with original Falco choice')
 '''
-run(PRELUDE + wrapped + TEST + ROSTER_START + wrapped + ROSTER_PREFERENCE + wrapped + ROSTER_RESUME + wrapped + ROSTER_LEGACY)
-# An unsupported future checkpoint occupies one slot; a valid older generation
-# in the other must stay loadable and the future slot must never be overwritten.
+# Preserve an unsupported future slot while loading and saving the older pair.
 FUTURE_SETUP = r'''
 local function gen(s) return tonumber(s:match('TBD%d (%d+)')) end
 local a,b=files['checkpoint-a.txt'],files['checkpoint-b.txt']
@@ -297,21 +295,32 @@ local other=FUTURE_SLOT=='checkpoint-a.txt' and 'checkpoint-b.txt' or 'checkpoin
 assert(files[other] and files[other]:match('^TBD3'),'no replacement checkpoint was written')
 print('runtime: unsupported future checkpoint slot preserved across saves')
 '''
-run(PRELUDE + wrapped + TEST + FUTURE_SETUP + wrapped + FUTURE_CHECK)
-# Installation is isolated only when --enable requested, and restore preserves backup.
-with tempfile.TemporaryDirectory() as temp:
-    app = Path(temp)
-    (app / 'mods').mkdir()
-    enabled = app / 'mods/enabled.txt'
-    enabled.write_text('effects_lab\nexisting\n')
-    mod = prepare.install(app)
-    assert enabled.read_text() == 'effects_lab\nexisting\n'
-    assert (mod / 'ui/roguelite_ui.json').exists()
-    assert not (mod / 'ui/kit.json').exists()
-    assert (mod / 'fx/SolarEruption/SolarEruption.gfx.json').exists()
-    prepare.install(app, enable=True)
-    assert enabled.read_text() == 'roguelite\n'
-    prepare.install(app, restore=True)
-    assert enabled.read_text() == 'effects_lab\nexisting\n'
-    subprocess.run([LUA, '-', str(mod / 'scripts/main.lua')], input='assert(loadfile(arg[1]))', text=True, check=True)
-print('runtime: install defaults, isolated enable/restore, original art/FX and bundled Lua syntax passed')
+
+def test_runtime():
+    run(PRELUDE + wrapped + TEST + RECOVERY + wrapped + RESTORED + wrapped + INVALID)
+    run(PRELUDE + wrapped + TEST + RESUME_ARENA + wrapped + CHECK_ARENA)
+    run(PRELUDE + wrapped + TEST + TIMEOUT)
+    run(PRELUDE + wrapped + DEATH)
+    run(PRELUDE + wrapped + TEST + ROSTER_START + wrapped + ROSTER_PREFERENCE + wrapped + ROSTER_RESUME + wrapped + ROSTER_LEGACY)
+    run(PRELUDE + wrapped + TEST + FUTURE_SETUP + wrapped + FUTURE_CHECK)
+    # Installation defaults and enable/restore must preserve the prior enabled list.
+    with tempfile.TemporaryDirectory() as temp:
+        app = Path(temp)
+        (app / 'mods').mkdir()
+        enabled = app / 'mods/enabled.txt'
+        enabled.write_text('effects_lab\nexisting\n')
+        mod = prepare.install(app)
+        assert enabled.read_text() == 'effects_lab\nexisting\n'
+        assert (mod / 'ui/roguelite_ui.json').exists()
+        assert not (mod / 'ui/kit.json').exists()
+        assert (mod / 'fx/SolarEruption/SolarEruption.gfx.json').exists()
+        prepare.install(app, enable=True)
+        assert enabled.read_text() == 'roguelite\n'
+        prepare.install(app, restore=True)
+        assert enabled.read_text() == 'effects_lab\nexisting\n'
+        subprocess.run([LUA, '-', str(mod / 'scripts/main.lua')], input='assert(loadfile(arg[1]))', text=True, check=True)
+    print('runtime: install defaults, isolated enable/restore, original art/FX and bundled Lua syntax passed')
+
+
+if __name__ == '__main__':
+    test_runtime()

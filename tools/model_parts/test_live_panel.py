@@ -2,7 +2,7 @@
 from pathlib import Path
 import subprocess
 import unittest
-from prepare import CHECKOUT
+from tools.model_parts.prepare import CHECKOUT
 
 
 SCRIPT = CHECKOUT / 'pc/scripts/examples/character_parts_lab/main.lua'

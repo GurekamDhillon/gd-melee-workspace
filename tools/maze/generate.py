@@ -6,13 +6,15 @@ python tools/maze/generate.py 7 --size 12 --kit menu/out_roguelite/room-kit \
 import argparse
 import json
 from pathlib import Path
+import os
 import shutil
 import subprocess
 import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPTS = ROOT / 'melee/pc/scripts/examples/missions/scripts'
+MELEE = Path(os.environ.get('GW_MELEE') or ROOT / 'melee').expanduser().resolve()
+SCRIPTS = MELEE / 'pc/scripts/examples/missions/scripts'
 
 
 def safe_name(name):

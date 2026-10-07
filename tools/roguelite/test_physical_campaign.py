@@ -3,7 +3,9 @@ import json
 import shutil
 import subprocess
 import unittest
-import prepare
+from tools.test_support import require_game
+require_game('pc/scripts/examples/roguelite')
+from tools.roguelite import prepare
 from test_maze_runtime import PRELUDE, ENGINE, HELPERS
 
 
@@ -67,7 +69,7 @@ gd.stage_add_platform=function(x,y,w,opts)
 end
 '''
         helpers=HELPERS[:HELPERS.index('local function start()')]
-        wrapped=';(function()\n'+prepare.bundle()+'\nend)()\n'
+        wrapped=';(function()\n'+prepare.bundle()+'\nend)()\ncommands.rogue_start()\n'
         self.execute('local SOURCE='+json.dumps(prepare.SOURCE.as_posix())+'\n'+PRELUDE+engine+
                      wrapped+helpers+body.replace('-- RELOAD_BUNDLE',wrapped))
 

@@ -6,9 +6,11 @@ numbers, while keeping the generated entry short and top-level locals bounded.
 import argparse
 import json
 from pathlib import Path
+import os
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPTS = ROOT / 'melee/pc/scripts/examples/missions/scripts'
+MELEE = Path(os.environ.get('GW_MELEE') or ROOT / 'melee').expanduser().resolve()
+SCRIPTS = MELEE / 'pc/scripts/examples/missions/scripts'
 MODULES = ('mission', 'validator', 'maze_set', 'maze_clearance', 'maze_metrics', 'maze_topology', 'maze_check', 'maze_world_check', 'maze_route', 'maze_encounters', 'maze', 'maze_world', 'loader', 'world', 'zones', 'chunks', 'glue', 'fighters', 'camera', 'maze_commands', 'maze_rewards', 'world_commands', 'commands', 'mission_finish', 'hud', 'mission_warm', 'install', 'mission_launch', 'runtime')
 
 

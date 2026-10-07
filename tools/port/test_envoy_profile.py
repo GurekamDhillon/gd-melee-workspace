@@ -3,10 +3,12 @@ import importlib.util
 from pathlib import Path
 import tempfile
 import unittest
+from tools.test_support import require_game
 
 
 class ProfileTests(unittest.TestCase):
     def module(self):
+        require_game('pc/scripts/examples/envoy/scripts/save.lua')
         spec = importlib.util.spec_from_file_location('envoy_profile', Path(__file__).with_name('envoy_profile.py'))
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)

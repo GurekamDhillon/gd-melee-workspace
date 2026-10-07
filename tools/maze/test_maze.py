@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from tools.test_support import GAME, require_game, require_path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -41,6 +42,7 @@ class MazeTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_custom_library_assets_and_staging_failure(self):
+        require_path(ROOT / 'menu/out_roguelite/room-kit/bf_floor_4m.gxmesh', 'requires generated BF room kit (menu/out_roguelite/room-kit)')
         from tools.maze.generate import generate, materialize, starters
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
@@ -73,7 +75,7 @@ class MazeTests(unittest.TestCase):
     def test_starter_files_current(self):
         from tools.maze.generate import starters
         for path, data in starters().items():
-            self.assertEqual((ROOT / 'melee/pc/scripts/examples/missions' / path).read_bytes(), data)
+            self.assertEqual((GAME / 'pc/scripts/examples/missions' / path).read_bytes(), data)
 
     def test_headless_blender_exit_export(self):
         blender = ROOT / 'experiment/tooling/ultimate/apps/Blender/blender-5.1.2-windows-x64/blender.exe'
@@ -87,6 +89,7 @@ class MazeTests(unittest.TestCase):
             self.assertIn('Blender exit markers PASS', result.stdout)
 
     def test_python_materialization(self):
+        require_path(ROOT / 'menu/out_roguelite/room-kit/bf_floor_4m.gxmesh', 'requires generated BF room kit (menu/out_roguelite/room-kit)')
         from tools.maze.generate import generate, materialize
         files = generate(7, 12)
         self.assertEqual(files, generate(7, 12))

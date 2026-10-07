@@ -8,7 +8,7 @@ import re
 import struct
 import sys
 from jsonschema import Draft202012Validator
-from . import schema, script
+from . import schema, script, source
 
 
 def diagnostic(path, message, source="melee/pc/platform/geno_registry.c", **extra):
@@ -459,7 +459,7 @@ def validate(data, base):
                     errors.extend(binding_errors)
                     if binding_errors:
                         continue
-                    fx_source = (schema.ROOT / "melee/pc/platform/gw_fx_internal.h").read_text(encoding="utf-8")
+                    fx_source = source.read("pc/platform/gw_fx_internal.h")
                     caps = {name: int(value) for name, value in re.findall(r"#define (FX_BIND_\w+)\s+(\d+)", fx_source)}
                     rows = binding.get("states", []) if isinstance(binding, dict) else []
                     if len(rows) > caps["FX_BIND_STATES"]:

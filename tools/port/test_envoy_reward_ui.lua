@@ -1,5 +1,5 @@
 -- Capture real UI drawing calls: animation must reach native kit and fill geometry.
-local base='melee/pc/scripts/examples/envoy/scripts/'
+local base=(os.getenv('GW_MELEE') or 'melee')..'/pc/scripts/examples/envoy/scripts/'
 local stats={'power','speed','guard','jump'}
 local C=dofile(base..'companion.lua')({genetics={stats=stats}})
 local H=dofile(base..'hud.lua')({companion=C})

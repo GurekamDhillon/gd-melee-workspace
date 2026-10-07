@@ -1,4 +1,4 @@
-local base='melee/pc/scripts/examples/missions/scripts/'
+local base=(os.getenv('GW_MELEE') or 'melee')..'/pc/scripts/examples/missions/scripts/'
 local D={}
 for _,n in ipairs({'mission','validator','maze_set','maze_clearance','maze_metrics','maze_topology','maze_check','maze_encounters','maze','loader','world','zones','chunks','glue','fighters','camera','maze_commands','maze_rewards','commands','install','runtime'})do
   local f=assert(loadfile(base..n..'.lua'));D[n]=n=='mission' and f() or f()(D)

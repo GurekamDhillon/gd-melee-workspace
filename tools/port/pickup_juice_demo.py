@@ -1,9 +1,11 @@
 """Refresh the shared pickup controller embedded in its single-feature demo."""
 from pathlib import Path
+import os
 import json
 ROOT=Path(__file__).resolve().parents[2]
-SOURCE=ROOT/'melee/pc/scripts/lib/pickup_juice.lua'
-TARGET=ROOT/'melee/pc/scripts/examples/demos/pickup-juice/scripts/main.lua'
+MELEE = Path(os.environ.get('GW_MELEE') or ROOT / 'melee').expanduser().resolve()
+SOURCE=MELEE/'pc/scripts/lib/pickup_juice.lua'
+TARGET=MELEE/'pc/scripts/examples/demos/pickup-juice/scripts/main.lua'
 def bundle():
  text=TARGET.read_text(encoding='utf-8')
  start=text.index('local J=assert(load(')+len('local J=assert(load(')

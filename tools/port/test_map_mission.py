@@ -9,16 +9,18 @@ import shutil
 import subprocess
 import sys
 import unittest
+from tools.test_support import GAME, require_game
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-MELEE = ROOT / 'melee'
+MELEE = GAME
 LUA = shutil.which('lua')
 
 
 @unittest.skipUnless(LUA, 'lua is not on PATH')
 class MapMissionTests(unittest.TestCase):
     def run_lua(self, script):
+        require_game(script)
         # The tests load files relative to melee/, like the other pc/tests Lua scripts.
         return subprocess.run([LUA, script], cwd=MELEE, capture_output=True, text=True, timeout=120)
 
@@ -32,6 +34,7 @@ class MapMissionTests(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
     def test_main_embeds_the_current_mission_module(self):
+        require_game('pc/scripts/examples/map_editor/scripts/mission.lua')
         r = subprocess.run([sys.executable, str(ROOT / 'tools/port/map_mission_sync.py'), '--check'],
                            capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)

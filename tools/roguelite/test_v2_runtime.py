@@ -27,7 +27,9 @@ import subprocess
 import tempfile
 import unittest
 
-import prepare
+from tools.test_support import require_game
+require_game('pc/scripts/examples/roguelite')
+from tools.roguelite import prepare
 import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -665,6 +667,7 @@ gd={buttons={A=256,B=512,UP=8,DOWN=4,LEFT=1,RIGHT=2},kit=kit,
  parts_clear=function()end,parts=function()return {geometry_signature='unknown'}end,
  fill=function()end,project=function(x,y)return x+320,240-y end,hud_visible=function()return true end}
 local function step(b)
+ if request then request=false;commands.rogue_start() end
  controls=b or 0
  if pending_scene then
   local opts=pending_scene;pending_scene=nil
@@ -763,14 +766,14 @@ class MainIntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls._src = _certified_source()
-        cls._wrapped = '(function()\n' + prepare.bundle(source=cls._src) + '\nend)()\n'
+        cls._wrapped = '(function()\n' + prepare.bundle(source=cls._src) + '\nend)()\ncommands.rogue_start()\n'
 
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls._src, ignore_errors=True)
 
     def run_lua(self, body):
-        code = PRELUDE_MAIN + ';\n' + self._wrapped + '\n' + body
+        code = PRELUDE_MAIN + ';\nlocal function reload_runtime()\n' + self._wrapped + '\nend\nreload_runtime()\n' + body
         result = subprocess.run([LUA, '-', str(RT)], input=code, text=True, capture_output=True, timeout=120)
         if result.returncode != 0:
             raise AssertionError(result.stdout + result.stderr)
@@ -988,7 +991,7 @@ assert(state().v2==nil,'a refused new run left a route installed')
 assert(Core.snapshot(state().profile)==p0,'a refused new run changed the profile')
 assert(state().profile.next_run==n0,'profile.next_run advanced on a refused new run')
 -- Retry after the storage recovers.
-on_unload()
+on_unload();reload_runtime()
 fail_atomic=false;request=true;tick=0
 ready()
 assert(state().menu=='collection','reload did not reach collection')

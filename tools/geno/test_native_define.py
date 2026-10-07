@@ -3,12 +3,14 @@ import os
 from pathlib import Path
 import subprocess
 import unittest
+from tools.test_support import require_game
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
 class NativeDefineTests(unittest.TestCase):
     def test_synthetic_native_core(self):
+        source = require_game('pc/tests/geno_define_core_test.c')
         kits = Path(os.environ.get("ProgramFiles(x86)", "")) / "Windows Kits/10"
         compilers = sorted(Path(os.environ.get("ProgramFiles", "")).glob("Microsoft Visual Studio/*/*/VC/Tools/MSVC/*/bin/Hostx64/x64/cl.exe"))
         sdks = sorted((kits / "Include").glob("*"))
@@ -18,7 +20,7 @@ class NativeDefineTests(unittest.TestCase):
         env = os.environ.copy(); env["PATH"] = str(compiler.parent)+os.pathsep+env.get("PATH", "")
         args = [str(compiler), "/nologo", "/TC", "/std:c11", "/W3",
             *["/I"+str(p) for p in (vc/"include", sdk/"ucrt", sdk/"shared", sdk/"um")],
-            "melee/pc/tests/geno_define_core_test.c", "/Fo"+str(out/"core.obj"), "/Fe"+str(out/"core.next.exe"),
+            str(source), "/Fo"+str(out/"core.obj"), "/Fe"+str(out/"core.next.exe"),
             "/link", *["/LIBPATH:"+str(p) for p in (vc/"lib/x64", kits/"Lib"/sdk.name/"ucrt/x64", kits/"Lib"/sdk.name/"um/x64")]]
         result = subprocess.run(args, cwd=ROOT, env=env, capture_output=True, timeout=60)
         # Diagnostics are private local artifacts, never echoed with host paths.

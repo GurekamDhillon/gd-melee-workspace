@@ -2,12 +2,14 @@
 import argparse
 import importlib.util
 from pathlib import Path
+import os
 import shutil
 import sys
 import tempfile
 
 ROOT=Path(__file__).resolve().parents[2]
-SOURCE=ROOT/'melee/pc/scripts/examples/envoy'
+MELEE = Path(os.environ.get('GW_MELEE') or ROOT / 'melee').expanduser().resolve()
+SOURCE=MELEE/'pc/scripts/examples/envoy'
 
 def load(name,path):
     spec=importlib.util.spec_from_file_location(name,path)

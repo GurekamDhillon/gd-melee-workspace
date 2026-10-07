@@ -12,7 +12,9 @@ import shutil
 import subprocess
 import tempfile
 import unittest
-import prepare
+from tools.test_support import require_game
+require_game('pc/scripts/examples/roguelite')
+from tools.roguelite import prepare
 import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -214,7 +216,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix='roguelite-persistence-src-') as src, \
             tempfile.TemporaryDirectory(prefix='roguelite-fixtures-') as temp:
         _copy_and_patch(src)
-        WRAPPED = '(function()\n' + prepare.bundle(source=Path(src)) + '\nend)()\n'
+        WRAPPED = '(function()\n' + prepare.bundle(source=Path(src)) + '\nend)()\ncommands.rogue_start()\n'
         FIXTURES = Path(temp) / 'fixtures.lua'
         subprocess.run([LUA, '-', str(RT), str(FIXTURES)], input=FIXTURE_GEN, text=True, check=True)
         ARGS = [FIXTURES, RT / 'core.lua', RT / 'codec.lua', RT / 'checkpoint.lua']

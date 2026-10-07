@@ -4,7 +4,9 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from tools.test_support import GAME, require_game
 
+require_game('pc/geno/geno.h')
 from tools.geno import check, script
 
 
@@ -78,8 +80,8 @@ class DefineAuthorTests(unittest.TestCase):
 class MoveSetAuthorTests(unittest.TestCase):
     """Slice 2: geno 7, the checks a move-set author needs, `moves` sugar, the effective-graph report."""
 
-    STRIKER = Path(__file__).resolve().parents[2] / "melee/pc/geno/mods/vanilla-striker"
-    HERO = Path(__file__).resolve().parents[2] / "melee/pc/geno/mods/vanilla-hero"
+    STRIKER = GAME / "pc/geno/mods/vanilla-striker"
+    HERO = GAME / "pc/geno/mods/vanilla-hero"
 
     def make(self, tmp, template="striker-skeleton"):
         from tools.geno.new import create
@@ -136,6 +138,8 @@ class MoveSetAuthorTests(unittest.TestCase):
             self.assertEqual(check.validate(exported, Path(tmp) / "export"), [])
 
     def test_report_golden_hero_and_striker(self):
+        require_game("pc/geno/mods/vanilla-striker/geno.json")
+        require_game("pc/geno/mods/vanilla-hero/geno.json")
         from tools.geno import report
         hero, _b, _f = report.build(self.HERO)
         self.assertEqual(hero["counts"], {"own": 1, "inherited": 350, "donor-special": 0})
@@ -155,6 +159,7 @@ class MoveSetAuthorTests(unittest.TestCase):
         self.assertIn("donor-free", report.text(striker))
 
     def test_striker_package_checks_clean_and_has_text_files_only(self):
+        require_game("pc/geno/mods/vanilla-striker/geno.json")
         self.assertEqual(check.validate(check.load_json(self.STRIKER / "geno.json"), self.STRIKER), [])
         allowed = {".json", ".words", ".genoasm", ".md", ".gitkeep", ".png"}
         for p in self.STRIKER.rglob("*"):
@@ -165,15 +170,17 @@ class MoveSetAuthorTests(unittest.TestCase):
 class ArticleDefineTests(unittest.TestCase):
     """Slice 3: geno 8, a define with its own article, effect and named sounds (the resolver)."""
 
-    CASTER = Path(__file__).resolve().parents[2] / "melee/pc/geno/mods/vanilla-caster"
+    CASTER = GAME / "pc/geno/mods/vanilla-caster"
 
     def test_caster_checks_clean_and_has_text_files_only(self):
+        require_game("pc/geno/mods/vanilla-caster/geno.json")
         self.assertEqual(check.validate(check.load_json(self.CASTER / "geno.json"), self.CASTER), [])
         for p in self.CASTER.rglob("*"):
             if p.is_file():
                 self.assertIn(p.suffix.lower() or p.name, {".json", ".words", ".genoasm", ".md"}, p)
 
     def test_articles_and_sounds_need_geno_8_and_names_must_resolve(self):
+        require_game("pc/geno/mods/vanilla-caster/geno.json")
         data = check.load_json(self.CASTER / "geno.json")
         bad = copy.deepcopy(data); bad["geno"] = 7
         messages = [e["message"] for e in check.validate(bad, self.CASTER)]

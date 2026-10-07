@@ -9,6 +9,9 @@ import struct
 import subprocess
 import tempfile
 import unittest
+from tools.test_support import require_executable
+from tools.test_support import require_game
+require_game('pc/scripts/examples/roguelite')
 import game_source
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -499,7 +502,8 @@ assert(R.clear(s));assert(R.release(s));assert(not R.enter(s,manifest.nodes.entr
         cc = shutil.which('cc') or shutil.which('clang')
         if not cc and (ROOT/'_toolchains/llvm/bin/clang.exe').exists():
             cc = str(ROOT/'_toolchains/llvm/bin/clang.exe')
-        self.assertIsNotNone(cc, 'C compiler required for native format regression')
+        if not cc:
+            cc = require_executable('cc', 'clang')
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp)
             (path / 'check.c').write_text(program)

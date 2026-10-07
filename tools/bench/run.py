@@ -100,7 +100,7 @@ def discover_mods(directory):
 
 def prepare_mission(bundle, directory, config, kit):
     if not config.get('mission_stress'): return
-    source = ROOT / 'melee/pc/scripts/examples/missions'
+    source = Path(os.environ.get('GW_MELEE') or ROOT / 'melee') / 'pc/scripts/examples/missions'
     for sub in ('missions', 'maze-chunks'):
         shutil.copytree(source / sub, bundle / sub, dirs_exist_ok=True)
     # Execute the same bundled runtime in a separate Lua environment, retaining its callbacks.
@@ -201,7 +201,7 @@ def main(argv=None):
     config.update(overrides)
     config.update(frames=args.frames, seed=args.seed, scenario=args.scenario)
     # Discover mission generator availability without claiming geometry is mounted.
-    config['mission_generator_available'] = (ROOT / 'melee/pc/scripts/examples/missions/scripts/maze.lua').exists()
+    config['mission_generator_available'] = (Path(os.environ.get('GW_MELEE') or ROOT / 'melee') / 'pc/scripts/examples/missions/scripts/maze.lua').exists()
     mods_dir = (args.mods_dir or Path(os.environ.get('MELEE_MODS_DIR', str(ROOT / '_build/mods')))).resolve()
     config['mods'] = discover_mods(mods_dir)
     if args.scenario != 'baseline' and 'roster' not in overrides and config['mods']['fighter_candidates']:
@@ -221,7 +221,7 @@ def main(argv=None):
             directory = ROOT / '_build/bench' / args.scenario / (stamp + ('-on' if profiler else '-off') + '-a' + str(attempt))
             directory.mkdir(parents=True)
             bundle = directory / 'bench'
-            shutil.copytree(ROOT / 'melee/pc/scripts/examples/bench', bundle)
+            shutil.copytree(Path(os.environ.get('GW_MELEE') or ROOT / 'melee') / 'pc/scripts/examples/bench', bundle)
             prepare_mission(bundle, directory, config, args.kit)
             (bundle / 'scripts/config.lua').write_text('return ' + lua(config) + '\n', encoding='utf-8')
             env = environment(config, directory, bundle, profiler)

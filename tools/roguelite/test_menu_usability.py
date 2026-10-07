@@ -1,5 +1,7 @@
 """Controller routing contracts, executed by real Lua."""
 import shutil, subprocess, unittest
+from tools.test_support import require_game
+require_game('pc/scripts/examples/roguelite')
 import game_source
 class MenuUsabilityTests(unittest.TestCase):
  def test_primary_focus_back_and_readable_names(self):

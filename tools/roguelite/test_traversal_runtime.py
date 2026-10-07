@@ -3,7 +3,9 @@ import json
 import shutil
 import subprocess
 import unittest
-import prepare
+from tools.test_support import require_game
+require_game('pc/scripts/examples/roguelite')
+from tools.roguelite import prepare
 from test_maze_runtime import PRELUDE, ENGINE, HELPERS
 
 class PhysicalRuntimeTests(unittest.TestCase):
@@ -40,7 +42,7 @@ click('start');settle()
 assert(state().menu=='error' and not state().active,'camera refusal enabled gameplay')
 assert(attached==0 and clamp==false,'partial camera claim was not restored')
 """
-        wrapped=';(function()\n'+prepare.bundle()+'\nend)()\n'
+        wrapped=';(function()\n'+prepare.bundle()+'\nend)()\ncommands.rogue_start()\n'
         code='local SOURCE='+json.dumps(str(prepare.SOURCE))+'\n'+PRELUDE+engine+camera+wrapped+HELPERS+body+wrapped+resume
         result=subprocess.run([shutil.which('lua') or shutil.which('lua5.4'),'-'],input=code,text=True,capture_output=True)
         self.assertEqual(result.returncode,0,result.stdout+result.stderr)
