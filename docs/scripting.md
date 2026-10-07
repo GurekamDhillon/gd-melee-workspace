@@ -1159,10 +1159,9 @@ Passing true restores visibility and releases ownership. Scene changes and
 script unload/disable also restore it. It does not hide script-drawn UI or change
 fighter status; a mod that replaces the HUD must draw its own feedback.
 
-When an active gameplay script has id `roguelite/main`, the native main menu
-shows **TBD**. Choosing it sets `gd.tbd_request()`; pass `true` to consume the
-request, then have the script launch its scene. The bundled prototype uses this
-entry independently of Adventure and the Master Hand sequence.
+`gd.tbd_request([clear])` is **deprecated** (API 2): the main-menu TBD tile it served is gone, so it
+always returns `false`. A mod adds its own main-menu entry with `mod.json` `menus` (`"action": "script"`)
+and an `on_entry(id)` hook; see "Menu entries".
 
 `gd.hit` processes a synthetic damage result directly and currently does **not**
 emit the collision-loop `on_hit` callback. Its action/hitlag transitions can still
@@ -1179,7 +1178,7 @@ and inferred body regions are not universal names for garments or accessories.
 - Additions (new functions, new fields in returned tables) do not bump the version.
 - A removal or a change of meaning bumps it; the old name then stays for one version, listed in
   `gd.deprecated[name] = "use X instead"` and in this document.
-- **Deprecated in API 1:** nothing.
+- **Deprecated in API 2:** `gd.tbd_request` (always `false`; use `mod.json` `menus` with `"action": "script"` and `on_entry`). Removed in API 3.
 
 ## What stays native
 

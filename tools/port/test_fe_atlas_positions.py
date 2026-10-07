@@ -117,7 +117,6 @@ class Positions(unittest.TestCase):
         self.assertIn("sel == SEL_MAIN_TOY", a)
         self.assertIn("sel == SEL_MAIN_DATA", a)
 
-    @unittest.expectedFailure  # the FA_TBD tile is removed in the script API 2 change (Task 10); that change drops this mark
     def test_no_tbd_left(self):
         t = read()
         for word in ("FA_TBD", "SEL_MAIN_TBD", "Script_Tbd"):
