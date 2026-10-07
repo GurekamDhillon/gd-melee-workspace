@@ -8,7 +8,7 @@ GW_ROOT="${GW_ROOT:-E:/Projects/Melee Workspace}"
 cd "$GW_ROOT"
 set -a; . ./.env; set +a
 LUA="$GW_BUILD_ROOT/drive-$1.lua"
-{ echo "local MODE = '$2'"; cat "$HERE/drive.lua"; } > "$LUA"
+{ echo "local MODE = '$2'"; echo "TRACE = true"; cat "$HERE/drive.lua"; } > "$LUA"
 export MELEE_WINDOW_X=30000 MELEE_WINDOW_Y=30000 MELEE_WINDOW_W=640 MELEE_WINDOW_H=360
 export MELEE_VOLUME=0 MELEE_PAD_IGNORE_ADAPTER=1 MELEE_TURBO=1 MELEE_FPS=u MELEE_TURBO_RENDER=0 MELEE_SCRIPT_MS=500
 export MELEE_PAD_SCRIPT="$(cd "$GW_BUILD_ROOT" && pwd -W)/drive-$1.lua"
