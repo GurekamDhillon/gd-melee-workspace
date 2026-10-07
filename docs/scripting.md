@@ -2378,7 +2378,7 @@ handle or `nil, reason`. `gd.afterimage_set(handle, partial_options)` and
 returns true. Foreign/stale handles and malformed options raise Lua errors. Port
 and `sub` are immutable. These APIs have no gameplay gate or simulation writes.
 
-Afterimage options: `copies=1..6`, `spacing=1..8`, `lifetime=2..31` logic frames,
+Afterimage options: `copies=1..12`, `spacing=1..8`, `lifetime=2..60` logic frames,
 `fade=0.25..4` exponent, `tint={r,g,b,a}`, `tail={r,g,b,a}`,
 `blend="alpha"|"additive"`, `surface="own"|"silhouette"|"gradient"`,
 `scale=0.25..2`, `follow=false`, `trigger="flag"` (the default: lowered until a flag, binding or window raises it; `"always"` and `"moving"` are refused unless `debug=true`, see "Earned afterimages and tracers" below),
@@ -2393,7 +2393,7 @@ an explicit joint index 0..254 (tail/custom skeleton), `{joint=...}`,
 Sword tips read the existing retail trail; they do not enable it. `gd.tracer_hitboxes(port,
 options)` makes one handle for all active hitboxes and selects colour/shader from
 the actual hit element. `anchor="active_hitboxes"` is equivalent. Limit 64 handles.
-`width=0.05..8`, `taper=0..4`, `length=2..31`, `smoothing=1..8`, `depth=true`,
+`width=0.05..24`, `taper=0..4`, `length=2..60`, `smoothing=1..8`, `depth=true`,
 `shader="solid"|"glow"|"fire"|"electric"|"frost"|"dark"`,
 `edge={r,g,b,amount}`, and `params={strength,frequency,core_width,motion_rate}`
 (0..10; strength clamps to 1). Colours use 0..1 components. `tail` fades along
@@ -2414,8 +2414,11 @@ and fades naturally. KO clearing is opt-in unless the entity changes. APIs are
 available online, but online/rollback visual correctness is unverified; `gd.warm`
 remains an offline diagnostic.
 
-Aurora must be rebuilt with `_build/patches/aurora-gd-motion-v1.patch`. Held-item
-afterimages, fog-range materials and mutable EFB-copy textures are skipped whole.
+Aurora must be rebuilt with `_build/patches/aurora-gd-motion-v1.patch` (motion ABI v2;
+filename retained). Complete poses include held-item geometry from all render passes;
+equip the item before warming. Copies are unfogged. Own-look sampled EFB-copy
+materials fall back to a tinted silhouette; unused copy bindings do not reject poses.
+Unknown/cold variants reject the complete pose, preserving model/item completeness.
 Arbitrary custom copy WGSL is not exposed. Demos: `demos/afterimages`, `demos/tracers`.
 See `_build/tmp/codex-afterimages-tracers-report.md` for caps and unrun acceptance.
 
@@ -2709,3 +2712,20 @@ Verified in the game: set, hit (base 12 + 24), spent, stack with bonus, savestat
 `gd.player(port).team` (integer) is the fighter's retail team index (`Player_GetTeam`; `-1` for an empty slot). Equal values are allies: in a retail 1P team stage the human has a CPU teammate (the giant stage two) on the human's own team. Read-only and safe online.
 
 A `gd.set_damage` (or journal `damage` op) that would take Master Hand's or Crazy Hand's HP to 0 leaves it at 1 HP and logs it: only a retail hit starts a boss's death. Added 2026-10-06; built, not yet run in a game.
+
+
+FX1 follow-up (2026-10-06): pose/ribbon rings contain64 samples; maximum age60.
+Hard budgets: complete pose4 MiB/2048 draws, total retained accounted bytes64 MiB,
+replay8 MiB/768 draws per present, ribbons16384 vertices. Newest affordable copies
+win; complete unaffordable copies/ribbons are skipped. Container/GPU resource
+overhead is additional. These are limits, not a measured120fps guarantee.
+Detailed failure/fallback counters in gd.motion_stats distinguish pipeline,
+palette, arena, empty-pose and budget failures. Tracer hitbox options cannot
+contradict the explicit port argument; motion names reject embedded NUL bytes.
+Current Envoy first uses are earned_fx.lua: technique-earned afterimages bound
+to the native timed-state lifetime, and short active-hitbox crit tracer windows.
+Original FX1 continuous Haste/Momentum/conversion and launch-flight treatments
+are not installed by that adapter; the later visual-language policy reserves
+these channels for earned states and empowered hits. No gameplay changes were
+made in this follow-up. Screen, online and six-fighter profiling acceptance
+remain outstanding; see the FX1 report for current evidence and commands.

@@ -347,8 +347,11 @@ skin-palette storage, uniforms, texture handles and bindings. Replay reprojects
 the captured pose into the current camera; no fighter JObj or MEM1 state is
 rewritten. Copies reuse the surface pipeline generator with own-look tint,
 silhouette or UV gradient, alpha/additive blend, depth test and no depth writes.
-Historical materials requiring mutable EFB textures, fog-range LUTs, or separately
-rendered held items are rejected as a whole instead of replaying incomplete poses.
+Whole-frame poses assemble opaque/edge/translucent passes and retained-only held-item
+geometry. Copies are unfogged; own-look materials sampling mutable EFB copies use
+a texture-free tinted silhouette fallback. Unused texture bindings do not reject
+poses. Cold or otherwise unsupported pieces reject the entire pose, never just a
+missing limb or held item. Equip held items before warming their variants.
 
 Ribbons use original procedural solid/glow/fire/electric/frost/dark WGSL, logical
 time and camera-facing Catmull-Rom geometry. They write scene RGB, preserve EFB
@@ -358,3 +361,12 @@ Use `gd.motion_intensity(0)` to reduce the presentation to zero. See the Motion
 history API in scripting.md and the FX1 report for limits and pending validation.
 Aurora ABI/FIFO changes require a rebuild; the carried patch is
 `_build/patches/aurora-gd-motion-v1.patch`.
+
+
+FX1 follow-up (2026-10-06): current motion ABI is v2, carried in the original
+aurora-gd-motion-v1.patch filename. Copies1..12, age/lifetime up to60 and tracer
+width up to24 are request bounds; budgets may draw fewer. Current Envoy integration
+uses earned technique-state ghosts and crit hitbox windows in earned_fx.lua;
+the original continuous Haste/Momentum uses remain superseded by that visual
+language. Current source and standalone parser/history checks do not establish
+GPU execution, costume/part/held-item pixels or the measured120fps target.
