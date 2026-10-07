@@ -214,8 +214,12 @@ Scripts come from mods people download, so they run sandboxed:
 - **Isolation:** every script has its own globals and its own copies of the library tables; one
   script cannot see or break another. The string metatable is locked.
 - **Budget:** each call into a script (a hook, a task step, a command) may run 2,000,000 Lua
-  instructions or 50 ms, whichever comes first (`MELEE_SCRIPT_BUDGET`, `MELEE_SCRIPT_MS`). Over
-  budget is an error. Total Lua memory is capped at 64 MB.
+  instructions (`MELEE_SCRIPT_BUDGET`); that count is the limit, and it does not depend on how busy the
+  machine is. Wall time is only a backstop for a call that spends time without spending instructions: 500 ms
+  (`MELEE_SCRIPT_MS`), ignored in turbo. It was 50 ms, which tripped under CPU load (an Envoy mod failed to
+  load at boot while other programs were busy); a normal call is far below both limits. Over budget is an
+  error (`ran too long (limit: ...)`). Total Lua memory is capped at 64 MB. Policy: `pc/platform/gw_script_budget.h`,
+  test: `build.sh --native-test script-budget`.
 - **Errors** are reported per script in the console and the log, with the script, file, line and a
   traceback: `[tm_lite] on_tick: tm_lite:37: attempt to index a nil value`. The game carries on.
   A script that errors 20 times is switched off (`reload <id>` turns it back on).
