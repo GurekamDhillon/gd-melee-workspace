@@ -174,6 +174,20 @@ decompression on every read or a stored-only zip, which gains nothing over a fol
 **distribution** form: the mods browser (charlie, C2) downloads and verifies an archive and unpacks
 it into `mods/<id>/` (`files/` + `mod.json`), then appends the id to `enabled.txt` if it should be on.
 
+### The MODS screen (Atlas, from the main menu)
+
+The main menu's MODS row opens the Atlas MODS screen (`melee/pc/platform/gw_ui_mods.c`, the door in `gw_script_ui_mods.inc`). It has two tabs, INSTALLED (every mod in the
+folder, up to 256) and CONFLICTS (a mod whose boot status is a conflict or a missing requirement). A row shows the name, what it is (kind, pack, `adds Solo > Envoy`, a
+status word: `CONFLICT`, `needs <id>`, `RESTART`), a toggle that shows the **next-boot** state, and a bar when the mod is mounted now. A, left or right toggle the mod and save
+`mods/enabled.txt` at once; the note says what else moved ("Also turned off: ACE Wolf."), a failed save says so and the row keeps the pending state, and `Applies at restart`
+stays in the corner while the next-boot set differs from what is mounted. X resolves a conflict (turns the dropped mod off) or a missing requirement (turns it on, or names the
+one that is not installed); Y opens the detail (requirements, conflicts from both sides, every entry the mod adds to the menus, and a row into the mod's own settings screen).
+**Nothing can be changed while a netplay session exists**: the rows show their state, read-only, with a "Locked while online" note. The screen never runs a mod's code. The old
+Settings page showed only the first 40 mods (it stays as the Settings > MODS tab until the owner has looked).
+
+Two menu parents belong to this step (see `docs/scripting.md`, "Menu entries"): `mods.self`, which the registry files under `mods.<the mod's id>` and which the detail screen
+lists as "<name> settings" (a mod's own settings are a screen it registers; this screen only opens it), and `lab.pause`, which adds a row to the LAB's MODS tab (offline only).
+
 ### The toggle API (for the in-game mods menu)
 
 Native functions in `pc/platform/gw_mods.h`. Game code declares them **without** the `gw_` prefix
@@ -182,7 +196,7 @@ Native functions in `pc/platform/gw_mods.h`. Game code declares them **without**
 | call | meaning |
 |---|---|
 | `int Mods_Count(void)` | mods found (enabled or not), index 0..n-1 in id order, stable for the session |
-| `const char *Mods_Id/Name/Version/Kind/Pack/Description/Requires(int i)` | metadata; `Requires` is comma-separated; `""` for a bad index |
+| `const char *Mods_Id/Name/Version/Kind/Pack/Description/Requires/Conflicts(int i)` | metadata; `Requires` and `Conflicts` are comma-separated (`Conflicts` is the mod's own list; a conflict also works from the other side); `""` for a bad index |
 | `int Mods_Find(const char *id)` | index or -1 |
 | `int Mods_IsActive(int i)` | mounted this boot |
 | `int Mods_Status(int i)` / `const char *Mods_StatusText(int i)` | 0 active, 1 off, 2 missing requirement, 3 conflict; text like `needs ace-base` |

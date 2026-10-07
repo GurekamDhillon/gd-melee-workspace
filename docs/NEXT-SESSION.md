@@ -9,6 +9,12 @@ Companions: `HANDOFF-2026-10-05.md` (Envoy, Turbo, CPU controller state and the 
 `_build/audit-20261003/windows-release/READINESS.md` (the release order; untracked, local).
 
 **Now true.**
+- **Atlas step 7 (2026-10-07; game `agent/atlas7`, workspace `ws/atlas7`; not merged): the MODS screen and the LAB.** The main menu's MODS row opens an Atlas screen
+  (INSTALLED and CONFLICTS tabs, 256 mods windowed, toggles with cascade notes, X resolves, Y details, locked while online); the Settings MODS tab is unchanged until the owner
+  has looked. The LAB's pause menu is an Atlas screen behind **`lab ui on`** (off by default; the legacy menu is the fallback), with its info panel, move timeline, mode strip
+  and notices as HUD descriptions. Built on engine additions (stepper, tabs from Lua, the world backdrop, WITH tags, `gd.ui.token`, `gd.ui.entries` and `activate`, three HUD
+  parts). **None of it has run in the game**: the proof list (Task 11 of `docs/superpowers/plans/2026-10-06-atlas-step7-mods-and-lab.md`) needs a window and the owner's look, and
+  the retirement of the legacy pieces (Task 12) waits for it. Two spec corrections: the LAB has ten display modes, and step 7 needs step 3 (the HUD and the world backdrop).
 - **Atlas step 1 is merged** (game `agent/atlas1`, workspace `ws/atlas1`; spec and plan in
   `docs/superpowers/`, ledger `.superpowers/sdd/2026-10-06-atlas-step1-components-and-envoy-bag/progress.md`).
   The `gd.ui` interface (screen stack, focus, pad/key/mouse input, parts, renderer budget, a Reduced Motion
