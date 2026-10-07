@@ -13,6 +13,14 @@
   },
   "rows": 6
  },
+ "fe_items_morerules": {
+  "file": "gmfrontend_settings.inc",
+  "kinds": {
+   "SLIDER": 2,
+   "TOGGLE": 3
+  },
+  "rows": 5
+ },
  "fe_items_online": {
   "file": "gmfrontend.c",
   "kinds": {
@@ -31,6 +39,15 @@
    "TOGGLE": 3
   },
   "rows": 20
+ },
+ "fe_items_rules": {
+  "file": "gmfrontend_settings.inc",
+  "kinds": {
+   "ACTION": 2,
+   "CHOICE": 3,
+   "SLIDER": 3
+  },
+  "rows": 8
  },
  "fe_items_set_audio": {
   "file": "gmfrontend_settings.inc",
