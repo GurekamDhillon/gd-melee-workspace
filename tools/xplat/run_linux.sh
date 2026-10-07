@@ -5,7 +5,9 @@
 set -uo pipefail
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 bin="$1"; name="$2"; frames="$3"; seed="$4"; scene="$5"; shift 5
-disc="${MELEE_VANILLA_ISO:?set MELEE_VANILLA_ISO}"
+case "${XP_DISC:-vanilla}" in
+  ace) disc="${MELEE_ACE_ISO:?set MELEE_ACE_ISO}" ;; akaneia) disc="${MELEE_AKANEIA_ISO:?set MELEE_AKANEIA_ISO}" ;; *) disc="${MELEE_VANILLA_ISO:?set MELEE_VANILLA_ISO}" ;;
+esac
 run="$(dirname "$bin")/xp-$name"
 rm -rf "$run"; mkdir -p "$run"
 cp "$bin/melee" "$bin/melee-pc.msvc.map" "$run/"; cp -a "$bin/assets" "$bin/ui" "$run/"

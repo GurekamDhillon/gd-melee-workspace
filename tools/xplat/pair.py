@@ -30,6 +30,8 @@ def main():
     ap.add_argument('--linux-dir', default='outD')
     ap.add_argument('--bias', default='55')
     ap.add_argument('--ports', default='2')
+    ap.add_argument('--disc', default='vanilla')
+    ap.add_argument('--mem-every', default='30')
     a = ap.parse_args()
     out = os.path.join(a.out, a.name)
     os.makedirs(out, exist_ok=True)
@@ -40,6 +42,8 @@ def main():
         extra.append('MELEE_XHASH_SKIP=' + a.skip)
     extra.append('DET_BIAS=' + a.bias)
     extra.append('DET_PORTS=' + a.ports)
+    extra.append('XP_DISC=' + a.disc)
+    extra.append('MELEE_XHASH_MEM_EVERY=' + a.mem_every)
     procs = {}
 
     def run_win():
@@ -51,9 +55,11 @@ def main():
             procs['win'] = subprocess.run(cmd, env=env, stdout=fo, stderr=subprocess.STDOUT, cwd=env['GW_MELEE'])
 
     def run_lin():
-        inner = ('cd ~/lb2; export MELEE_VANILLA_ISO=%s; ./enterD.sh env SDL_VIDEODRIVER=wayland '
-                 'bash /mnt/h/wsD/tools/xplat/run_linux.sh /mnt/h/%s/linux %s %s %s %s %s'
-                 % (q(DISC_WSL), a.linux_dir, 'x_' + a.name, a.frames, a.seed, q(a.scene), ' '.join(q(e) for e in extra)))
+        inner = ('cd ~/lb2; export MELEE_VANILLA_ISO={v} MELEE_ACE_ISO={ace} MELEE_AKANEIA_ISO={ak}; '
+                 './enterD.sh env SDL_VIDEODRIVER=wayland XP_DISC={disc} '
+                 'bash /mnt/h/wsD/tools/xplat/run_linux.sh /mnt/h/{ld}/linux {name} {frames} {seed} {scene} {extra}').format(
+            v=q(DISC_WSL), ace=q('/mnt/c/iso/SSBM ACE Build v2.0.0.iso'), ak=q('/mnt/c/iso/Akaneia.iso'), disc=a.disc,
+            ld=a.linux_dir, name='x_' + a.name, frames=a.frames, seed=a.seed, scene=q(a.scene), extra=' '.join(q(e) for e in extra))
         env = dict(os.environ)
         env['MSYS_NO_PATHCONV'] = '1'
         with open(os.path.join(out, 'linux.out'), 'w') as fo:

@@ -15,4 +15,7 @@ export MELEE_TURBO="${MELEE_TURBO:-1}" MELEE_TURBO_RENDER="${MELEE_TURBO_RENDER:
 export MELEE_MAX_SECONDS="${MELEE_MAX_SECONDS:-1200}" MELEE_PAD_IGNORE_ADAPTER=1 MELEE_SKIP_INTRO=1 MELEE_XHASH_LOG="$(cd "$GW_BUILD_ROOT" && pwd -W)/runs/$name/xh.csv"
 export MELEE_MODS_DIR="${MELEE_MODS_DIR:-$(cd "$GW_ROOT_ENV/_build" && mkdir -p nomods && cd nomods && pwd -W)}"
 mkdir -p "$sandbox"; rm -f "$sandbox/xh.csv"
-exec bash "$GW_ROOT_ENV/tools/port/run.sh" "$name" --iso "$GW_ISO_VANILLA"
+case "${XP_DISC:-vanilla}" in
+  ace) iso="$GW_ISO_ACE" ;; akaneia) iso="$GW_ISO_AKANEIA" ;; *) iso="$GW_ISO_VANILLA" ;;
+esac
+exec bash "$GW_ROOT_ENV/tools/port/run.sh" "$name" --iso "$iso"
