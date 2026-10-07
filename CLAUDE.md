@@ -53,7 +53,9 @@ detail. This file stays short.
   supersede undated ones; say which one wins at the top.
 - Release notes: `tools/release/notes/<version>.md`; `tools/release/VERSION` is the version.
 - The launcher's strings are looked up by their exact English text (`Lang.cs`); change both copies
-  and run `tools/release/launcher/check_strings.py`.
+  and run `tools/release/launcher/check_strings.py`. That is the C# reference launcher's table: the Qt
+  window (`tools/release/launcher/qt/`) carries its strings inline as `t("English", "Spanish")` pairs,
+  checked by `tools/release/launcher/check_qt_strings.py` (also a CTest test, `launcher_qt_strings`).
 - The README's art is rebuilt from `menu/pipeline/readme_text.json` by `menu/pipeline/readme.py`
   (headless Chromium); the committed PNGs in `docs/readme/` are what GitHub shows.
 

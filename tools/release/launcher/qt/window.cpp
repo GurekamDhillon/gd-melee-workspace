@@ -248,7 +248,7 @@ Window::Window(QString app, QString user, Settings settings)
     th->addWidget(capLabel(versionText(appDir_), atlas::Role::Body14, "muted"));
     col->addWidget(trail);
     auto *body = new QHBoxLayout; body->setContentsMargins(0, 0, 0, 0); body->setSpacing(0); col->addLayout(body, 1);
-    rail_ = new kit::TabRail({t("PLAY", "JUGAR"), t("MODS", "MODS"), t("DIAGNOSTICS", "DIAGN�STICO"), t("ABOUT", "ACERCA DE")});
+    rail_ = new kit::TabRail({t("PLAY", "JUGAR"), t("MODS", "MODS"), t("DIAGNOSTICS", "DIAGNÓSTICO"), t("ABOUT", "ACERCA DE")});
     rail_->setObjectName("atlasRail"); rail_->setFixedWidth(kRailWidth); rail_->setIcons({"right", "mods", "data", "star"}); body->addWidget(rail_);
     auto *main = new QVBoxLayout; main->setContentsMargins(atlas::px("s5"), kMainPadY, atlas::px("s5"), kMainPadY); main->setSpacing(atlas::px("s3")); body->addLayout(main, 1);
     pageHeading_ = capLabel(QString(), atlas::Role::Title);  pageSub_ = capLabel(QString(), atlas::Role::Body14, "muted");
@@ -257,7 +257,7 @@ Window::Window(QString app, QString user, Settings settings)
     tabs_->addWidget(playTab()); tabs_->addWidget(modsTab()); tabs_->addWidget(diagnosticsTab()); tabs_->addWidget(aboutTab()); main->addWidget(tabs_, 1);
     keys_ = new QWidget; keys_->setObjectName("atlasKeys"); keys_->setFixedHeight(26); main->addWidget(keys_);
     setCentralWidget(root);
-    const QStringList headings{t("Play", "Jugar"), t("Mods", "Mods"), t("Diagnostics", "Diagn�stico"), t("About", "Acerca de")};
+    const QStringList headings{t("Play", "Jugar"), t("Mods", "Mods"), t("Diagnostics", "Diagnóstico"), t("About", "Acerca de")};
     const QStringList subs{t("Pick a disc, then play.", "Pick a disc, then play."), t("Custom content, applied at the next launch.", "Custom content, applied at the next launch."),
                            t("Logs, graphics and reports.", "Logs, graphics and reports."), t("This launcher and what it uses.", "This launcher and what it uses.")};
     connect(rail_, &kit::TabRail::currentChanged, this, [this, headings, subs](int index) {
@@ -537,7 +537,7 @@ void Window::checkGraphics(bool forLaunch) { guarded([&] {
     // A launch environment is already the game's own; otherwise build it the same way prepareLaunch does.
     if (!forLaunch) applyGameLibraryEnvironment(env, appDir_);
     graphicsBusy_ = true; graphicsForLaunch_ = forLaunch; graphicsTimedOut_ = false;
-    graphicsOutput_.clear(); graphicsErrors_.clear(); play_->setEnabled(false); play_->setToolTip(t("Checking graphics...", "Checking graphics...")); graphicsDevice_->setEnabled(false);
+    graphicsOutput_.clear(); graphicsErrors_.clear(); play_->setEnabled(false); play_->setToolTip(t("Checking graphics...", "Comprobando gráficos...")); graphicsDevice_->setEnabled(false);
     graphicsDetails_->setPlainText(t("Checking 32-bit Vulkan drivers...", "Comprobando los controladores Vulkan de 32 bits..."));
     statusBar()->showMessage(t("Checking graphics...", "Comprobando gráficos..."));
     graphicsProcess_.setProgram(appDir_ + "/bin/melee-graphics-probe");
@@ -714,7 +714,7 @@ QWidget *Window::diagnosticsTab() {
     auto *explainer = new ExplainerPane(t("Diagnostics", "Diagnóstico")); explainer->setMinimumWidth(kExplainerMin); layout->addWidget(explainer, 1);
     explainer->title()->setText(t("FIND OUT WHY", "FIND OUT WHY"));
     explainer->what()->setText(t("A report is written for every launch attempt. Copy it and send it when asking for help.", "A report is written for every launch attempt. Copy it and send it when asking for help."));
-    auto *where = explainer->addFact(t("Reports", "Reports"), QDir::toNativeSeparators(diagnosticsDir(userDir_))); where->setToolTip(where->text());
+    auto *where = explainer->addFact(t("Reports", "Informes"), QDir::toNativeSeparators(diagnosticsDir(userDir_))); where->setToolTip(where->text());
     return page;
 }
 QWidget *Window::aboutTab() {
@@ -737,7 +737,7 @@ QWidget *Window::aboutTab() {
     button(row, t("Open user data", "Abrir datos del usuario"), [this] { openPath(userDir_); });
     auto *licences = button(row, t("Open licences", "Abrir licencias"), [this] { openPath(QDir(appDir_ + "/LICENSES").exists() ? appDir_ + "/LICENSES" : appDir_ + "/licenses"); }); licences->setObjectName("atlasLicences");
     row->addStretch(); left->addStretch();
-    auto *explainer = new ExplainerPane(t("About", "About")); explainer->setMinimumWidth(kExplainerMin); layout->addWidget(explainer, 1);
+    auto *explainer = new ExplainerPane(t("About", "Acerca de")); explainer->setMinimumWidth(kExplainerMin); layout->addWidget(explainer, 1);
     explainer->title()->setText("GD'S MELEE");
     explainer->what()->setText(t("A launcher for the PC port. It starts the game from your own disc and keeps your mods and logs in order.", "A launcher for the PC port. It starts the game from your own disc and keeps your mods and logs in order."));
     explainer->addFact(t("Version", "Versión"), version);
