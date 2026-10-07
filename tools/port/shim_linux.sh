@@ -33,7 +33,14 @@ dep_tmp="$GW_SHIMOBJ/$name.obj.d$suffix.tmp"
 cc_err="$GW_SHIMOBJ/$name.cc$suffix.err"
 trap 'rm -f "$obj_tmp" "$dep_tmp" "$cc_err"' EXIT
 
-cc=("$GW_CLANG" -m32 -c -O2 -g -DTARGET_PC
+# -msse2 -mfpmath=sse: plain `clang -m32` is the i386 triple with the i686 CPU, which computes float and
+# double arithmetic on the x87 stack at 64-bit precision (and the Linux x87 control word is extended
+# precision). The Windows shims (--target=i686-pc-windows-msvc) and every game TU (gwtool's
+# pentium4+sse2 features) round each operation to float/double in SSE. A native shim that touches a
+# value the simulation can see (pad scaling, camera/HUD layout, the scripting API's number crossing)
+# must round identically on both, or two builds of one commit drift apart (docs: the cross-platform
+# netplay note in docs/xplat-netplay.md).
+cc=("$GW_CLANG" -m32 -msse2 -mfpmath=sse -c -O2 -g -DTARGET_PC
     -I "$GW_MELEE/extern/aurora/include" -I "$GW_MELEE/pc/platform" -I "$GW_SDL_INCLUDE"
     -I "$GW_MELEE/extern/enet/include" -I "${GW_LIBUSB_BUILD:-$GW_ROOT/_build/linux/libusb}/install/include/libusb-1.0" -I /usr/include/freetype2)
 case "$src" in
