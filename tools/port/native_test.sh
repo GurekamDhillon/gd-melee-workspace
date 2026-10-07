@@ -78,8 +78,8 @@ atlas-retail)
     sources=(pc/tests/atlas_retail_test.c pc/platform/gw_ui_retail.c) ;;
 atlas-hud)
     sources=(pc/tests/atlas_hud_test.c pc/platform/gw_ui_hud.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_stack.c pc/platform/gw_ui_val.c) ;;
-atlas-binding|atlas-select-adapter|atlas-settings-host|atlas-settings|atlas-room-host)
-    sources=(pc/tests/atlas_binding_test.c pc/platform/gw_ui_css.c pc/platform/gw_ui_css_profile.c pc/platform/gw_ui_sss.c pc/platform/gw_ui_render.c pc/platform/gw_ui_room.c pc/platform/gw_ui_online_parts.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c pc/platform/gw_ui_registry.c pc/platform/gw_ui_menus_json.c pc/platform/gw_ui_policy.c pc/platform/gw_ui_retail.c pc/platform/gw_ui_hud.c pc/platform/gw_ui_item.c)
+atlas-binding|atlas-select-adapter|atlas-settings-host|atlas-settings|atlas-room-host|atlas-data-host)
+    sources=(pc/tests/atlas_binding_test.c pc/platform/gw_ui_css.c pc/platform/gw_ui_css_profile.c pc/platform/gw_ui_sss.c pc/platform/gw_ui_render.c pc/platform/gw_ui_room.c pc/platform/gw_ui_online_parts.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c pc/platform/gw_ui_registry.c pc/platform/gw_ui_menus_json.c pc/platform/gw_ui_policy.c pc/platform/gw_ui_retail.c pc/platform/gw_ui_hud.c pc/platform/gw_ui_item.c pc/platform/gw_ui_data.c pc/platform/gw_ui_data_models.c pc/platform/gw_ui_retailtext.c pc/platform/gw_ui_results.c)
     for lua_file in lapi lauxlib lbaselib lcode lcorolib lctype ldblib ldebug ldo ldump lfunc lgc linit liolib llex lmathlib lmem loadlib lobject lopcodes loslib lparser lstate lstring lstrlib ltable ltablib ltm lundump lutf8lib lvm lzio; do
         sources+=("pc/third_party/lua-5.4.7/src/$lua_file.c")
     done
@@ -88,6 +88,7 @@ atlas-binding|atlas-select-adapter|atlas-settings-host|atlas-settings|atlas-room
     [ "$test_name" = atlas-settings-host ] && sources[0]=pc/tests/atlas_settings_host_test.c
     [ "$test_name" = atlas-settings ] && sources[0]=pc/tests/atlas_settings_test.c
     [ "$test_name" = atlas-room-host ] && sources[0]=pc/tests/atlas_room_host_test.c
+    [ "$test_name" = atlas-data-host ] && sources[0]=pc/tests/atlas_data_host_test.c
     flags=(-std=gnu11 -w -ffunction-sections -I "$GW_MELEE/pc/platform" -I "$GW_MELEE/pc/third_party/lua-5.4.7/src") ;;
 atlas-style)
     sources=(pc/tests/atlas_style_test.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c) ;;
@@ -121,7 +122,7 @@ atlas-models)
     sources=(pc/tests/atlas_models_test.c pc/platform/gw_ui_data_models.c pc/platform/gw_ui_data.c pc/platform/gw_ui_retailtext.c) ;;
 atlas-results)
     sources=(pc/tests/atlas_results_test.c pc/platform/gw_ui_results.c pc/platform/gw_ui_data.c) ;;
-*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-tiles, atlas-registry, atlas-policy, atlas-retail, atlas-hud, atlas-binding, atlas-style, atlas-profile, atlas-css, atlas-select-render, atlas-sss, atlas-select-adapter, atlas-items, atlas-walker, atlas-settings-host, atlas-settings, atlas-erase, atlas-remap, atlas-lint, atlas-online-parts, atlas-room, atlas-room-host, atlas-retailtext, atlas-data, atlas-models, atlas-results)" ;;
+*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-tiles, atlas-registry, atlas-policy, atlas-retail, atlas-hud, atlas-binding, atlas-style, atlas-profile, atlas-css, atlas-select-render, atlas-sss, atlas-select-adapter, atlas-items, atlas-walker, atlas-settings-host, atlas-settings, atlas-erase, atlas-remap, atlas-lint, atlas-online-parts, atlas-room, atlas-room-host, atlas-retailtext, atlas-data, atlas-models, atlas-results, atlas-data-host)" ;;
 esac
 
 if [ "$uses_enet" = 1 ]; then

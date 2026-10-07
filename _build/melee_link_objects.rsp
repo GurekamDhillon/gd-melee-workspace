@@ -1060,3 +1060,7 @@
 ../masstest/shimobj/gw_ui_item.obj
 ../masstest/shimobj/gw_ui_online_parts.obj
 ../masstest/shimobj/gw_ui_room.obj
+../masstest/shimobj/gw_ui_data.obj
+../masstest/shimobj/gw_ui_data_models.obj
+../masstest/shimobj/gw_ui_retailtext.obj
+../masstest/shimobj/gw_ui_results.obj
