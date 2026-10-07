@@ -34,6 +34,7 @@ and the third-party notices.
 | Aurora | encounter | https://github.com/encounter/aurora | The GameCube SDK reimplementation the port renders through |
 | Project Slippi | Fizzi and the Project Slippi team | https://slippi.gg, https://github.com/project-slippi | The replay format, rollback practice and UCF codes the port follows |
 | Lua 5.4 | Lua.org, PUC-Rio | https://www.lua.org | The scripting language embedded in the port |
+| m-ex | akaneia and contributors | https://github.com/akaneia/m-ex | The content-expansion mod whose behavior the port's m-ex layer reimplements; consulted, never copied (it publishes no licence). See `tools/mex_port/README.md` |
 
 ## Work we have learned from (ideas and findings; no code copied)
 

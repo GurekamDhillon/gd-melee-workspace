@@ -68,13 +68,19 @@ atlas-parts)
     sources=(pc/tests/atlas_parts_test.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c) ;;
 atlas-render)
     sources=(pc/tests/atlas_render_test.c pc/platform/gw_ui_render.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c) ;;
+atlas-tiles)
+    sources=(pc/tests/atlas_tiles_test.c pc/platform/gw_ui_render.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c) ;;
+atlas-registry)
+    sources=(pc/tests/atlas_registry_test.c pc/platform/gw_ui_registry.c pc/platform/gw_ui_menus_json.c) ;;
+atlas-policy)
+    sources=(pc/tests/atlas_policy_test.c pc/platform/gw_ui_policy.c) ;;
 atlas-binding)
-    sources=(pc/tests/atlas_binding_test.c pc/platform/gw_ui_render.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c)
+    sources=(pc/tests/atlas_binding_test.c pc/platform/gw_ui_render.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c pc/platform/gw_ui_registry.c pc/platform/gw_ui_menus_json.c pc/platform/gw_ui_policy.c)
     for lua_file in lapi lauxlib lbaselib lcode lcorolib lctype ldblib ldebug ldo ldump lfunc lgc linit liolib llex lmathlib lmem loadlib lobject lopcodes loslib lparser lstate lstring lstrlib ltable ltablib ltm lundump lutf8lib lvm lzio; do
         sources+=("pc/third_party/lua-5.4.7/src/$lua_file.c")
     done
     flags=(-std=gnu11 -w -ffunction-sections -I "$GW_MELEE/pc/platform" -I "$GW_MELEE/pc/third_party/lua-5.4.7/src") ;;
-*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-binding)" ;;
+*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-tiles, atlas-registry, atlas-policy, atlas-binding)" ;;
 esac
 
 if [ "$uses_enet" = 1 ]; then
@@ -123,6 +129,9 @@ if [ "$test_name" = profiler-core ]; then
 elif [ "$test_name" = engine-data ]; then
     fixture_root="$(mktemp -d "$test_root/engine-data.XXXXXX")"
     "$test_exe" "$fixture_root"
+elif [[ "$test_name" == atlas-* ]]; then
+    # the atlas tests read files by game-repo-relative path (the Envoy manifest)
+    ( cd "$GW_MELEE" && "$test_exe" )
 else
     "$test_exe"
 fi
