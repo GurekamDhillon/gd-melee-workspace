@@ -1,5 +1,58 @@
 # Next session - start here
 
+**Current as of 2026-10-06 (this block wins).** Dated files supersede undated ones, and the newest
+dated block below supersedes the older blocks under it, which stay as history. Checked against the
+integration branches' logs since 2026-10-04: game `integration/2026-10-01/roguelite-100-game` at
+`4c0cb4cc5`, workspace `integration/2026-10-01/roguelite-100` at `cd914b3`. This refresh ran no
+builds or games; each "verified" below is what the cited ledger or progress file records.
+Companions: `HANDOFF-2026-10-05.md` (Envoy, Turbo, CPU controller state and the owner's open decisions),
+`_build/audit-20261003/windows-release/READINESS.md` (the release order; untracked, local).
+
+**Now true.**
+- **Atlas step 1 is merged** (game `agent/atlas1`, workspace `ws/atlas1`; spec and plan in
+  `docs/superpowers/`, ledger `.superpowers/sdd/2026-10-06-atlas-step1-components-and-envoy-bag/progress.md`).
+  The `gd.ui` interface (screen stack, focus, pad/key/mouse input, parts, renderer budget, a Reduced Motion
+  setting), its offline stand-in, nine `atlas-*` native test cases, the demo `demo_atlas_screen`, and three
+  Atlas fonts (Barlow Condensed, Source Sans 3 Semibold, Hasklug Medium; 23 roles, pages tracked in `_build/ui`,
+  licence and credit recorded). Reference: `docs/scripting.md` (`gd.ui`), `menu/CLAUDE.md`. Every task had review
+  rounds; in-exe `script_` 78/0 and `kit_` 8/0 at the last build, no window.
+- **The Envoy bag runs through `gd.ui` behind the `uxatlas` switch, off by default.** The legacy bag stays
+  the default and the fallback. Local two-seat co-op shows only the top seat's bag under Atlas (legacy showed
+  both): that is why Atlas cannot be the default yet (it needs per-port screen stacks, a spec-level change,
+  raised to the owner). Ruling: A on toggle/choice rows goes to `on.change`; sliders fall through to `on.accept`.
+- **Envoy fixes merged:** the pool split into bite-sized rules and a quieter match screen (`agent/envoy-split`
+  work), drives picked up with A and a payout at the end of every stage (`agent/payout`), and the team and boss
+  fixes (`agent/teamfix`: a teammate is not a foe, a payout runs once, a boss hand cannot be killed by a script
+  write; `gd.match_end_pending`, `gd.player(port).team`). The softlock fixes (endless fall on the boss stage, a run
+  started in the opening movie, an invalid bag slot) and the bundler's `safe_cb` wrapper are in. Their proofs in
+  a game are owed (below).
+- **Also in:** Geno slice 4 (the Courier, an original fighter on its own model; shield, retarget by limb), Geno
+  format 9 in the checker, Envoy online first slices (protocol 5 in server, guard and docs), a performance record
+  per run, the Linux build compiling again, and **Linux 0.1.8.2** (the package bundles nothing the graphics
+  driver links against; fixes "No supported adapters" on current Mesa; notes in `tools/release/notes/`).
+  `tools/release/VERSION` is still **0.1.7**; no 0.2.0 is cut.
+
+**Open.**
+- **Proofs that need a game window; run them only when the owner is away** (see traps): the Atlas bag and
+  `demo_atlas_screen` in a window (look, focus cues at 640x480, real font widths, the Z+START chord), `uxatlas`
+  on in a real Envoy run, the boss stage with burn present (does P1 ever fall for minutes; does the out-of-bounds
+  watchdog cost a stock), a run begun from the title movie, the bag after a depth change, the payout and
+  team-stage fixes in a full run, the Courier's Classic/Versus/stage checks (slice 4d items 3-4 are not done).
+- **Unmerged branches** (game): `agent/motionfix` `9522c0d40` (shader-cache guard: a bad shader configuration
+  no longer crashes the game or bricks its cache; built and unit-tested, never run in a game; a release blocker)
+  and `agent/envoynet` `bba679110` (WIP: a native evaluator for triggered records, Envoy online stage 4).
+  The main game checkout also has uncommitted `gw_script_motion.inc` and `pc/tests/motion_api_test.c` changes.
+- **Release 0.2.0 blockers** (READINESS.md, in its order; recommended as a public test build): decide the
+  release shape; merge and prove `agent/motionfix`; make `build_release.ps1` package Envoy's shaders and drive
+  models and the Geno fighters; the owner's decisions in `HANDOFF-2026-10-05.md`; one real internet match on
+  protocol 5 after the server is redeployed; the 114-run crash sweep on the final exe; commit the regenerated
+  `gw_mex_bridge.c` before a strict build; `publish.ps1`'s stale "protocol 4" body; a Linux 0.2.0 at the same protocol.
+- **Deferred minors** from the Atlas ledger (not defects of record): UTF-8 truncation in text fit, kerning pairs
+  with non-ASCII characters dropped, the `png2gx --manifest` and `kit_ui.py` recipes failing from a clean tree,
+  silent drops in `atlas_tokens.py`, grid scroll not written back.
+- `DEVLOG.md` has no numbered section for this week; the ledgers and `_build/audit-20261003/*/PROGRESS.md` are
+  the record (local, untracked).
+
 **Geno full fighter (2026-10-05):** slices 2 and 3 are in `docs/superpowers/plans/2026-10-05-geno-full-fighter-slice2.md` (the plan and the road to slice 8). Slice 2 is built: a define with its own move set (`melee/pc/geno/mods/vanilla-striker/`, format 7); the lesson is `docs/learn/geno-fighters/11-defined-fighter.md`, the sweep and ranked gaps are in `10-known-gaps.md` section Z, the engine reference is `melee/docs/geno.md` 22.1.
 
 **Controller remapping source pass (2026-10-03):** CONTROLS now has a controller-only
@@ -110,7 +163,7 @@ side-by-side against Ultimate for the fidelity pass.
 
 ## Current code
 
-- Release version is **0.1.6** (`tools/release/VERSION`). HEAD has substantial work after that
+- Release version is **0.1.7** (`tools/release/VERSION`; this line said 0.1.6 when written). HEAD has substantial work after that
   release; the old 185/185 result does not validate it. This refresh ran no builds or games.
 - **Ultimate fighters:** the shared IR pipeline installs a fighter on its own skeleton. Sora's
   source id is `trail` (default name `Ultimate Trail`, token `ultimatetrail`); Ultimate Kirby uses
@@ -192,3 +245,17 @@ before resuming it; do not reuse the old alpha/echo/beta assignments as current 
   for presentation timing and controller checks.
 - No disc-derived assets in either repo. No push, publish or merge to shared branches without
   GD's go. `.github/README.md` takes precedence over the root README on GitHub.
+- **No game windows while the owner is at the machine.** A lane launches none (focus theft); game-driving
+  proofs wait until he is away, then run on the second monitor at `MELEE_VOLUME=0`, at most 8 instances.
+- **Never kill games by image name.** A `taskkill /IM` ended the owner's play session. Stop only a PID you
+  started, after checking its path. A frozen build folder also needs its `ui/`.
+- **Run the Envoy Lua tests from the workspace root.** A lane's "23 of 65 fail, same at baseline" was a path
+  artefact (unverified until rerun); all 65 passed from the root.
+- **A build is refused when sources change under it** (the provenance check). Nothing else may edit the game
+  worktree while an exe build runs; reviews are read-only and may overlap, fixes and builds are serial.
+- **The Atlas link list is the workspace `_build/melee_link_objects.rsp`.** A lane building another game
+  branch must carry the `gw_ui_*` units, or the link drops them.
+- **A test run as the developer console can hide ownership bugs**: `gd.ui` judges a handler by its slot owner,
+  not `gs.cur`, and `gs.cur` is -1 in the tick. Tick tests with a non-console owner.
+- **The subagent usage limit can stop a lane mid-commit.** Check the tree for a finished but uncommitted
+  edit, verify it, then commit; do not redo it.

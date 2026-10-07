@@ -1,7 +1,9 @@
 # Handoff - m-ex content in the native PC port
 
-**Reviewed 2026-09-27 against workspace `fc23753` and game `4c676892a`.** The dated state in
-[NEXT-SESSION.md](NEXT-SESSION.md) wins over this architecture reference and the older handoffs.
+**Reviewed 2026-10-06 against workspace `cd914b3` and game `4c0cb4cc5`** (the architecture text dates
+from 2026-09-27; sections 6 and 7 were extended). The newest dated block in [NEXT-SESSION.md](NEXT-SESSION.md)
+and `HANDOFF-2026-10-05.md` win over this architecture reference and the older handoffs; dated files
+supersede undated ones.
 The 2026-09-26/27 queues have been folded into it. Old run totals are historical evidence, not
 results for HEAD. This review did not build or run the game.
 
@@ -63,8 +65,8 @@ and GD's visual/controller checks. An old 185/185 result cannot validate subsequ
   final EXE also gets the bridge ABI audit. Skipping this can call the wrong native function
   without a boot failure. Generated bridge changes are normal build output.
 - **Timestamp scans.** `scan_stale_tus.py` checks game sources and headers, including Geno.
-  This HEAD does not implement `GW_JOBS` or general content-hash incremental builds. Do not
-  confuse the bridge's SHA-256 proof stamp with the proposed content-hash scanner.
+  Content-hash rebuilds and `GW_JOBS` merged on 2026-09-27 (NEXT-SESSION). Do not confuse the
+  bridge's SHA-256 proof stamp with the content-hash scanner.
 - **Platform statics outlive MEM1.** Native cached guest pointers must be invalidated after a
   test snapshot restore (`gw_Mex_InvalidateAfterMem1Restore`). Restoring game memory does not
   restore host caches or allocation cursors.
@@ -90,6 +92,12 @@ and GD's visual/controller checks. An old 185/185 result cannot validate subsequ
 - **Stage APIs are stricter than general gameplay APIs.** Stage/enemy creation requires an active
   offline match and a gameplay script; the console cannot do it. `stage_add_model` attaches an
   existing floor via `platform=handle`; there is no `model=` platform option in this HEAD.
+- **Provenance refusal.** `build.sh` refuses a build when sources change while it runs. Edit nothing
+  in that game worktree until it finishes; a refused build is not a failed fix.
+- **Windows and lanes.** No game windows while the owner is at the machine. Never `taskkill` by image
+  name; stop a PID you started. A test run as the developer console can hide ownership bugs (check the
+  slot owner, not `gs.cur`). A subagent usage limit can stop a lane mid-commit: verify, then commit its edit.
+- **Envoy tests.** Run the Lua tests from the workspace root; from a lane path some fail spuriously.
 - **Runtime libraries matter.** A rebuilt EXE does not prove a shared Aurora change is running.
   Source at `4c676892a` uses 24 MiB for storage (its comment cites a 10,573 KB four-Sora peak)
   and 12 MiB for vertices. It drops remaining draws after overflow; this source review does
@@ -100,7 +108,9 @@ and GD's visual/controller checks. An old 185/185 result cannot validate subsequ
 - Guard game-source changes with `#if defined(TARGET_PC)` and retain the original path.
 - Game TUs use the PPC frontend/gwtool pipeline. Native `pc/platform` shims do not belong in
   `files.txt`; list their objects in the link response file. Lane sync rewrites the curated
-  workspace link list for its build root; do not glob stale object directories into it.
+  workspace link list for its build root; do not glob stale object directories into it. The Atlas
+  `gw_ui_*` units are in `_build/melee_link_objects.rsp` and the Linux shim list: a lane building another
+  game branch must carry them.
 - Native shims use `gw_r*`/`gw_w*` for game-visible memory. Game code calls unprefixed shim
   names because gwtool adds `gw_`; do not add a second endianness or symbol-prefix layer.
 - m-ex is specification/reference material, not vendored implementation. Keep attribution on
@@ -112,4 +122,4 @@ and GD's visual/controller checks. An old 185/185 result cannot validate subsequ
   prefers `.github/README.md` when present.
 - Stage only named paths when authorised to commit. Do not push, publish or merge shared
   branches without GD's go. Commit trailers must identify the actual contributor; do not copy
-  another agent's identity from an old handoff. This docs-refresh task permits no commits.
+  another agent's identity from an old handoff.
