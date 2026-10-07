@@ -16,6 +16,7 @@ ap=argparse.ArgumentParser(description=__doc__)
 ap.add_argument('--build',type=Path,default=root/'_build/agents/linux')
 ap.add_argument('--output',type=Path,default=root/'_build/linux/packages')
 ap.add_argument('--local',action='store_true')
+ap.add_argument('--server',default='',help='host:port: ship a netplay_server.txt so room codes work out of the box (the address becomes public), like build_release.ps1 -Server')
 ap.add_argument('--version',help='Release version for version.txt (default: tools/release/VERSION)')
 ap.add_argument('--melee',type=Path,default=Path(os.environ['GW_MELEE']) if os.environ.get('GW_MELEE') else root/'melee',help='Game checkout the executable was built from (for version.txt)')
 ap.add_argument('--mods-from',type=Path,help='Melee git checkout to take the mods from (default: --melee). Must be a repository: only tracked files ship')
@@ -57,6 +58,10 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
     # The game looks for version.txt beside its executable (gw_log.c, gl_exe_dir), which is bin/ here.
     # The launcher looks beside itself, at the package root. Same text in both.
     text=version_text(); (dest/'version.txt').write_text(text); (dest/'bin/version.txt').write_text(text)
+    # The matchmaking address, opt-in like build_release.ps1 -Server: the game reads it beside its executable
+    # (gw_netplay.c), bin/ here; the launcher beside itself (crashServer, the crash upload), the package root.
+    if a.server:
+        for d in (dest,dest/'bin'):(d/'netplay_server.txt').write_text(a.server.strip()+chr(10))
     shutil.copytree(build/'assets/fonts',dest/'assets/fonts')
     shutil.copytree(build/'ui',dest/'assets/ui')
     for f in ('launch-melee','README.txt','GD-Melee'):shutil.copy2(root/'tools/port/release'/f,dest/f)

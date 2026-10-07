@@ -91,6 +91,17 @@ class LinuxGuardTests(unittest.TestCase):
         code, log = run(archive)
         self.assertEqual(code, 0, log)
 
+    def test_netplay_server_txt_beside_the_game_and_the_launcher_passes(self):
+        # package_linux.py --server writes it in both places, like build_release.ps1 -Server
+        added = [self.put(n, 'netplay.example:51600\n') for n in ('netplay_server.txt', 'bin/netplay_server.txt')]
+        self.manifests()
+        try:
+            code, log = run(self.stage)
+            self.assertEqual(code, 0, log)
+        finally:
+            for f in added: f.unlink()
+            self.manifests()
+
     def test_disc_extension_header_and_hsd_shape_are_rejected(self):
         cases = [('assets/ui/x.iso', b'x'*64, "'.iso' files are disc data"),
                  ('lib/GALE01.txt', b'GALE01'+b'x'*64, 'game ID'),
