@@ -119,7 +119,7 @@ basic APIs; follow-up floor-call/CPU fixes and entity inspection still need nati
 GD's Melee runs **Lua 5.4** scripts inside the game. A script can read the match (fighters,
 positions, percents, action states), draw readouts over the game, add console commands, press
 buttons, save and load states, and set up scenes. Training-mode features and other modders'
-features are meant to be built on this. It is a public API: `gd.api_version` is **1**, and anything
+features are meant to be built on this. It is a public API: `gd.api_version` is **2**, and anything
 that changes is listed under [Deprecations](#versioning-and-deprecations).
 
 - Engine: `melee/pc/platform/gw_script.c` (+ `gw_script_pad.c`, `gw_console.cpp`, `gw_kit.c`,
@@ -193,6 +193,7 @@ toggles its scripts (at the next boot).
 | `gameplay` | false | **true if the script changes the game** (see below) |
 | `rollback_safe` | false | legacy compatibility metadata; does not permit online gameplay writes |
 | `entry` | `main.lua` | for `scripts/<id>/` folders: the file to run |
+| `menus` | none | entries this mod adds to the game's menus (an array of objects; see "Menu entries"). An inactive mod adds nothing |
 
 Booleans may be written `true`/`false` or as strings (`"yes"`, `"true"`), so the file also parses
 with the mods registry's strings-only reader.
@@ -256,6 +257,7 @@ Define any of these as globals in your script; the engine calls them.
 | `on_match_start()` | the first frame with fighters on stage | |
 | `on_match_end()` | the match scene ended | |
 | `on_savestate(slot)`, `on_loadstate(slot)` | after a savestate was taken / loaded | restore your own Lua state here |
+| `on_entry(id)` | the player chose one of your `"action": "script"` menu entries (see "Menu entries") | may return `{ push = "<mod>.<screen>" }`; runs as your script, offline only |
 | `on_unload()` | before the script is unloaded or reloaded | |
 
 While the game is paused (`gd.pause`), `on_tick` and `on_draw` keep running; the frame hooks do not.
@@ -281,7 +283,7 @@ then `gd.boss_release` to let the normal flow continue.
 
 ---
 
-## API reference (`gd`, API 1)
+## API reference (`gd`, API 2)
 
 Fighter slots are numbered **1-6**. Physical controller ports remain **1-4**; `gd.input`, `gd.pad` and `gd.release` also support script-driven CPU slots 5-6 in offline matches.
 
@@ -289,7 +291,7 @@ Fighter slots are numbered **1-6**. Physical controller ports remain **1-4**; `g
 
 | function | returns |
 |---|---|
-| `gd.api_version` | `1` |
+| `gd.api_version` | `2` |
 | `gd.frame()` | logic frames since boot |
 | `gd.time()` | seconds (wall clock; for overlays, never for gameplay) |
 | `gd.scene()` | `{kind, name, mode, mode_name, epoch}` - e.g. `name = "GS_TRAINING"`, `mode_name = "GM_TRAINING"`; `epoch` counts scene changes |
@@ -464,6 +466,8 @@ The developer console may drive any screen. Step 1 has one stack for the whole g
 | `gd.ui.set_focus(id, block_id, cell_id)` | true when that cell exists (a list ignores `block_id`) |
 | `gd.ui.note{text=, kind="ok"\|"warn"\|"err"\|"info", seconds=}` | a corner note on the top screen (0.5 to 15 s, 3 by default); `false` when no screen is open |
 | `gd.ui.dialog{title=, text=, actions={{"A","Discard"},{"B","Cancel"}}, on=function(button) end}` | a dialog on the top screen (one or two actions: a third is cut; a button letter that is not `A B X Y Z` becomes `A`; labels are cut at 23 characters, the text at 159); `false` when no screen is open, the top screen is not yours, or there is no action. `on` gets the letter of the answered button and is called once; its result is not applied |
+| `gd.ui.entry(id, { visible = bool, badge = "NEW" })` | show, hide or badge one of your own menu entries (see "Menu entries"); `true` when your mod owns that entry, `false` for anyone else's (the console owns none) |
+| `gd.ui.hold_menu(on)` | hold the native menu you are drawing over (it takes no input and draws nothing while held); only the holder or the console releases it, and it ends when the script unloads or the scene ends. Returns whether the menu is held. Temporary: it serves Envoy's legacy menu until its screens are Atlas |
 | `gd.ui.state()` | `{depth, top, canvas_w, wide, quads, cost_ms, cost_max_ms, roles_ok}` `depth` is the stack size, `top` the top screen's id (absent when none is open), `quads` the last drawn frame's count, `cost_ms` the mean draw time over every frame drawn since start and `cost_max_ms` the largest, `canvas_w` the width of the last drawn frame (0 before the first), `wide` whether that width is the wide layout. `roles_ok` is false until `available()` or a draw has run |
 
 A description:
@@ -475,6 +479,7 @@ A description:
   `model` and `ring` are `gd.model_load` handles. A cell shows only a model or a name. A **list item** is `{ id, label, sub?, disabled?, selected?, value? }` with
   `value = { kind = "toggle", on }`, `{ kind = "choice", text }`, `{ kind = "slider", min, max, value }`, `{ kind = "text", text }` or `{ kind = "counter", text }` (1 to 32 items;
   values are data: register the screen again when they change). `footer = { label, a, b, out, text }` is a merge-preview strip.
+- `primary = { kind = "tiles", cols = 1|2, items = {...}, more = {...} }` is the hub: tiles in one or two columns (omit `cols` to let the count decide), at most four small `more` items under them. An item may also carry `icon`, `tag` (a small tag such as `"MOD"`), `badge` and `numeral` (at most five characters).
 - `explainer = { width = "narrow"|"normal"|"wide", provide = function(cell_id, block_id) -> { kicker, title, what, media = {model, ring}, with = {models}, from = { text } } end }`,
   or `"none"` (the default). `what` is one short rule (it is cut to 159 characters and 4 lines).
 - `keys = { { "A", "Label" }, { "X", function(cell_id, block_id) return "Label" or nil end, when = function(...) end }, ... }`: at most 6 of `A B X Y Z L R START`; a function label
@@ -506,12 +511,41 @@ Budget: only the top screen is drawn, and it draws at most 4,096 entries of the 
 a model cell is at most 512 triangles. If fewer than 4,096 quads are left in the kit's list after the scripts' `on_draw` hooks, the screen is not drawn at all that frame (logged once: `ui: <id> not drawn: only N quads left this frame`), so draw less in `on_draw`. `gd.ui.state()` shows the numbers.
 Offline, `pc/tests/atlas_ui_stub.lua` (load it with `dofile`; `Stub.new{ caller=, owner_mod=, available= }`) is a stand-in. It checks a description by the same rules as the engine (limits read from `gw_ui_screen.h`
 and `gw_ui_val.h`: id lengths, chapter, port, explainer width, entries that are not tables, the size ceiling) and mirrors ownership, held buttons, value rows and `on.page`, `on.start`, `on.change`.
-It is NOT the engine: `feed` only records the intent (it does not run handlers; call `engine_press(id, kind)`, `engine_row` and `engine_focus` to play the engine's part); `dialog` accepts a call without actions and ignores
+It is NOT the engine: it has no entry registry caps or ordering (`register_entry`, `entry`, `entries_under` and `engine_activate` check what `at_menus_parse` checks and play the engine's part of choosing an entry; the caps, the order and the netplay filter are `gw_ui_registry.c`'s, tested by `atlas-registry`); `feed` only records the intent (it does not run handlers; call `engine_press(id, kind)`, `engine_row` and `engine_focus` to play the engine's part); `dialog` accepts a call without actions and ignores
 button letters; `state()` has only `depth`, `top` and `roles_ok`; its stack has no depth limit of 8 and its `close` removes every entry of the id (the engine removes the first); and it has no layout, drawing, quad budget, mouse or keyboard, 8-slot table, or `on.open` / `on.close`.
 Stub-only helpers: `hold(button)`, `release(button)` and `tick()` model the pad's held buttons.
 Demo: `demos/atlas-screen`. A real use: the Envoy bag (`envoy/scripts/atlas_bag.lua`, console `uxatlas on`).
 
-Not in step 1: tabs in the screen record (L and R reach `on.page` only), a slider `step`, a get/set API for values (values are data, re-registered), and mouse-wheel stepping of a value.
+Engine screens. The game's own menus (the title, the main menu and its hubs, Credits) are Atlas screens owned by the engine, not by a script: the engine opens, closes and feeds them, and a script that registers, opens, closes, feeds or focuses one raises `gd.ui: screen "id" belongs to the engine` (so does the console; the ids without a dot, and those under `more.`, `solo.`, `versus.` and `settings.`, are the engine's). A mod screen pushed from a menu entry sits above the native menu: the menu draws nothing and takes no input while it is covered, and every screen pushed during a scene is closed when that scene ends (`on.close` runs), so a menu screen never reaches the match.
+
+Not yet: tabs in the screen record (L and R reach `on.page` only), a slider `step`, a get/set API for values (values are data, re-registered), and mouse-wheel stepping of a value.
+
+### Menu entries (`mod.json` `menus`, `on_entry`)
+
+A mod adds entries to the game's menus with a `menus` array in `mod.json`; there is no code to write for the tile itself:
+
+```json
+"menus": [
+  { "id": "envoy", "parent": "solo", "label": "ENVOY", "blurb": "Explore, fight and evolve your build.",
+    "after": "training", "action": "script", "online": false }
+]
+```
+
+| field | meaning |
+|---|---|
+| `id` | the entry's id: your mod id, or your mod id and a dot and a name. Another mod's id, or an id already used, is refused |
+| `parent` | where it goes: `main`, `solo`, `versus`, `online`, `mods`, `settings`, `more` or `settings.<page>`. An unknown parent is ignored with one log line |
+| `label` | the tile's text, at most 18 characters |
+| `blurb` | one short line the explainer shows when the tile is focused (160 characters at most) |
+| `after` | an id in the same parent to sit behind; otherwise the entry goes at the end, and entries after the same id are ordered by id |
+| `action` | `"script"`: your `on_entry(id)` runs when it is chosen. Without it, `opens` names a `gd.ui` screen of yours that is pushed instead |
+| `online` | `false` by default. Entries under `versus` and `online` are hidden (and cannot be activated) while a netplay session exists unless this is `true` |
+
+Rules the registry applies: at most 6 entries per mod under one parent and 12 visible under one parent (the rest are not listed); a mod that is switched off or unloaded
+adds nothing; the tile carries a MOD tag; `gd.ui.entry` can hide or badge an entry later, but only for its own mod. A script entry runs `on_entry(id)` as the mod, with the
+mod's own budget, and may return `{ push = "<mod>.<screen>" }` to open one of its screens over the menu; with `opens` the engine pushes the screen itself. `on_entry` runs
+offline only and must answer nothing it does not own (return `nil` for another id). Menus that are not drawn by Atlas (`MELEE_ATLAS=0`) list the `solo` entries in the legacy hub.
+The Mods page says what a mod adds ("adds Solo > Envoy"). The old `gd.tbd_request` main-menu tile is gone: see "Versioning and deprecations".
 
 ### Comms callouts (offline)
 
