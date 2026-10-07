@@ -15,7 +15,7 @@ for kv in "$@"; do export "$kv"; done
 { echo "DET = {frames=$frames, seed=$seed, bias=${DET_BIAS:-55}, ports=${DET_PORTS:-2}}"; cat "$here/det_input.lua"; } > "$run/det.lua"
 mkdir -p "$run/nomods"
 export MELEE_SCENE="$scene" MELEE_PAD_SCRIPT="$run/det.lua" MELEE_XHASH_LOG="$run/xh.csv"
-export MELEE_TURBO="${MELEE_TURBO:-1}" MELEE_TURBO_RENDER="${MELEE_TURBO_RENDER:-0}" MELEE_VOLUME=0 MELEE_TEST_SEED="${MELEE_TEST_SEED:-777}"
+export MELEE_TURBO="${MELEE_TURBO:-1}" MELEE_TURBO_RENDER="${MELEE_TURBO_RENDER:-120}" MELEE_VOLUME=0 MELEE_TEST_SEED="${MELEE_TEST_SEED:-777}"
 export MELEE_PAD_IGNORE_ADAPTER=1 MELEE_SKIP_INTRO=1 MELEE_MODS_DIR="${MELEE_MODS_DIR:-$run/nomods}" MELEE_CACHE_DIR="$run"
 # the same presentation settings run.sh gives the Windows build (the camera depends on the aspect)
 export MELEE_WINDOW_W="${MELEE_WINDOW_W:-1920}" MELEE_WINDOW_H="${MELEE_WINDOW_H:-1080}" MELEE_RENDER_SCALE="${MELEE_RENDER_SCALE:-3}" MELEE_WIDESCREEN="${MELEE_WIDESCREEN:-1}"
