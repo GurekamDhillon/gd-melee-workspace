@@ -125,6 +125,9 @@ if [ "$test_name" = profiler-core ]; then
 elif [ "$test_name" = engine-data ]; then
     fixture_root="$(mktemp -d "$test_root/engine-data.XXXXXX")"
     "$test_exe" "$fixture_root"
+elif [[ "$test_name" == atlas-* ]]; then
+    # the atlas tests read files by game-repo-relative path (the Envoy manifest)
+    ( cd "$GW_MELEE" && "$test_exe" )
 else
     "$test_exe"
 fi
