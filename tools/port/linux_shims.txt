@@ -49,10 +49,12 @@ gw_ui_item.c
 gw_ui_input.c
 gw_ui_layout.c
 gw_ui_menus_json.c
+gw_ui_online_parts.c
 gw_ui_parts.c
 gw_ui_policy.c
 gw_ui_registry.c
 gw_ui_retail.c
+gw_ui_room.c
 gw_ui_render.c
 gw_ui_screen.c
 gw_ui_sss.c
