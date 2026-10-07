@@ -1,6 +1,5 @@
 #include "window.h"
 #include "kit.h"
-#include "legacy_kit.h"
 #include "graphics.h"
 #include <QGuiApplication>
 #include <QDateTime>
@@ -28,6 +27,7 @@
 #include <QPainter>
 #include <QPalette>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QPlainTextEdit>
 #include <QScrollArea>
 #include <QShortcut>
@@ -39,6 +39,7 @@
 #include <QUrl>
 #include <QVBoxLayout>
 #include <functional>
+#include <tuple>
 #include <algorithm>
 
 namespace launcher {
@@ -47,22 +48,13 @@ static QString osRelease() { QFile f("/etc/os-release"); return f.open(QIODevice
 #endif
 bool spanish = false;
 QString t(const char *en, const char *es) { return QString::fromUtf8(spanish ? es : en); }
-static QLabel *label(const QString &text) { auto *w = new QLabel(text); w->setWordWrap(true); w->setTextFormat(Qt::PlainText); return w; }
 static QPushButton *button(QBoxLayout *layout, const QString &text, const std::function<void()> &action) {
     auto *w = new kit::Button(text); layout->addWidget(w); QObject::connect(w, &QPushButton::clicked, w, action); return w;
 }
-static QTableWidget *table(const QStringList &headers) {
-    auto *w = new QTableWidget(0, headers.size()); w->setHorizontalHeaderLabels(headers);
-    w->setSelectionBehavior(QAbstractItemView::SelectRows); w->setSelectionMode(QAbstractItemView::SingleSelection);
-    w->setEditTriggers(QAbstractItemView::NoEditTriggers); w->verticalHeader()->hide();
-    w->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
-    w->horizontalHeader()->setStretchLastSection(true); w->setAlternatingRowColors(true);
-    return w;
-}
-
 // Layout constants with no token: the three measurements of the Atlas launcher concept
 // (menu/concepts/reunification-2026-10-06/c-atlas/screens_b.py, s17): rail 204 wide, trail 34 high, main padding 18 top and bottom.
 // The left column (420) is the primary's maximum width, applied where the tabs are built.
+constexpr int kDetailsRole = Qt::UserRole + 10;        // a mod item: description, version, requires, conflicts
 constexpr int kRailWidth = 204, kTrailHeight = 34, kMainPadY = 18, kPrimaryWidth = 420, kExplainerMin = 240;
 
 // The only way a label gets a colour: a token, through the palette.
@@ -170,8 +162,8 @@ protected:
 private:
     QString icon_, text_;
 };
-// The disc list: the rows are painted by the delegate; with no disc yet the list says so in a hatched frame.
-class DiscTable : public QTableWidget {
+// The disc and mod lists: the rows are painted by the delegate; with no disc yet the list says so in a hatched frame.
+class RowTable : public QTableWidget {
 public:
     using QTableWidget::QTableWidget;
     QString placeholder;
@@ -187,6 +179,61 @@ protected:
         p.drawText(r.adjusted(atlas::px("s3"), 0, -atlas::px("s3"), -atlas::px("ch-xs")), Qt::AlignCenter | Qt::TextWordWrap, placeholder);
     }
 };
+// The one place a stylesheet is built: what Qt draws itself (combo boxes, edits, scroll bars, tips, menus, dialogs).
+// Every colour is a token: "@name@" is replaced by atlas::colour(name).
+static QString themed(const QString &css) {
+    static const QRegularExpression re("@([a-z0-9-]+)@");
+    QString out; int last = 0; auto it = re.globalMatch(css);
+    while (it.hasNext()) { auto m = it.next(); out += css.mid(last, m.capturedStart() - last) + atlas::colour(m.captured(1)).name(); last = m.capturedEnd(); }
+    return out + css.mid(last);
+}
+static QString atlasStyleSheet() {
+    return themed(QString(R"(
+      QMainWindow, QStackedWidget, QScrollArea { background: transparent; border: none; }
+      QLabel { background: transparent; }
+      QTableWidget { background: transparent; border: none; outline: 0; }
+      QTableWidget::item { border: none; padding: 0; }
+      QComboBox, QLineEdit { background: @plate2@; color: @ivory@; border: 0; border-bottom: 3px solid @edge2@; padding: 5px 12px; min-height: 22px; selection-background-color: @lift@; selection-color: @ivory@; }
+      QComboBox:focus, QLineEdit:focus { background: @lift@; border-bottom-color: @ember@; }
+      QComboBox::drop-down { border: 0; width: 24px; }
+      QComboBox::down-arrow { image: none; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid @ivory@; }
+      QComboBox QAbstractItemView { background: @plate@; color: @ivory@; selection-background-color: @lift@; selection-color: @ivory@; border: 0; outline: 0; }
+      QPlainTextEdit { background: @ground2@; color: @text2@; border: 0; border-bottom: 3px solid @edge2@; selection-background-color: @lift@; selection-color: @ivory@; }
+      QSlider::groove:horizontal { height: 4px; background: @line2@; }
+      QSlider::sub-page:horizontal { background: @jade@; }
+      QSlider::handle:horizontal { width: 10px; margin: -8px 0; background: @ivory@; border: 0; }
+      QSlider::handle:horizontal:focus { background: @ember@; }
+      QScrollBar:vertical { background: @ground2@; width: 8px; margin: 0; }
+      QScrollBar::handle:vertical { background: @line2@; min-height: 32px; }
+      QScrollBar::handle:vertical:hover { background: @muted@; }
+      QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
+      QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
+      QStatusBar { background: @ground@; color: @muted@; padding: 2px 24px; }
+      QStatusBar::item { border: none; }
+      QToolTip { background: @lift@; color: @ivory@; border: 0; border-bottom: 3px solid @edge@; padding: 6px 10px; }
+      QMenu { background: @plate@; color: @ivory@; border: 0; border-bottom: 3px solid @edge@; padding: 4px; }
+      QMenu::item { padding: 6px 24px; }
+      QMenu::item:selected { background: @lift@; color: @ivory@; }
+      QMenu::separator { height: 1px; background: @line@; margin: 4px 0; }
+      QDialog, QMessageBox, QInputDialog { background: @plate@; }
+      QDialog QLabel, QMessageBox QLabel { color: @ivory@; }
+      QDialog QPushButton { background: @plate2@; color: @ivory@; border: 0; border-bottom: 3px solid @edge2@; padding: 8px 20px; min-width: 64px; }
+      QDialog QPushButton:focus, QDialog QPushButton:hover { background: @lift@; border-bottom-color: @ember@; }
+    )"));
+}
+void applyTheme() {
+    atlas::initialize();
+    QApplication::setFont(atlas::font(atlas::Role::Body14));
+    QPalette pal;
+    pal.setColor(QPalette::Window, atlas::colour("ground")); pal.setColor(QPalette::WindowText, atlas::colour("ivory"));
+    pal.setColor(QPalette::Base, atlas::colour("plate")); pal.setColor(QPalette::AlternateBase, atlas::colour("plate2"));
+    pal.setColor(QPalette::Text, atlas::colour("ivory")); pal.setColor(QPalette::Button, atlas::colour("plate2")); pal.setColor(QPalette::ButtonText, atlas::colour("ivory"));
+    pal.setColor(QPalette::Highlight, atlas::colour("lift")); pal.setColor(QPalette::HighlightedText, atlas::colour("ivory"));
+    pal.setColor(QPalette::ToolTipBase, atlas::colour("lift")); pal.setColor(QPalette::ToolTipText, atlas::colour("ivory"));
+    pal.setColor(QPalette::Disabled, QPalette::Text, atlas::colour("muted")); pal.setColor(QPalette::Disabled, QPalette::ButtonText, atlas::colour("muted"));
+    QApplication::setPalette(pal);
+    qApp->setStyleSheet(atlasStyleSheet());
+}
 Window::Window(QString app, QString user, Settings settings)
     : appDir_(std::move(app)), userDir_(std::move(user)), settings_(std::move(settings)) {
     setObjectName("atlasWindow"); setWindowTitle("GD's Melee"); resize(960, 640); setMinimumSize(900, 600);
@@ -372,7 +419,7 @@ QWidget *Window::playTab() {
     leftColumn->setMaximumWidth(kPrimaryWidth); leftColumn->setMinimumWidth(300); layout->addWidget(leftColumn, 1);
     auto *library = new kit::Pane(t("Disc library", "Biblioteca de discos")); library->setObjectName("atlasLibrary"); left->addWidget(library, 1);
     auto *libraryBody = new QVBoxLayout(library->body()); libraryBody->setContentsMargins(0, 0, 0, 0); libraryBody->setSpacing(atlas::px("s2"));
-    auto *discTable = new DiscTable(0, 3); discTable->setHorizontalHeaderLabels({"Disc", "Kind", "Path"}); discTable->placeholder = t("No discs yet. Use Add disc to choose your Melee disc image.", "No discs yet. Use Add disc to choose your Melee disc image.");
+    auto *discTable = new RowTable(0, 3); discTable->setHorizontalHeaderLabels({"Disc", "Kind", "Path"}); discTable->placeholder = t("No discs yet. Use Add disc to choose your Melee disc image.", "No discs yet. Use Add disc to choose your Melee disc image.");
     discs_ = discTable; discs_->setObjectName("atlasDiscs");
     discs_->setSelectionBehavior(QAbstractItemView::SelectRows); discs_->setSelectionMode(QAbstractItemView::SingleSelection);
     discs_->setEditTriggers(QAbstractItemView::NoEditTriggers); discs_->verticalHeader()->hide(); discs_->horizontalHeader()->hide();
@@ -533,39 +580,89 @@ void Window::finishGraphics(int code) {
 #endif
 void Window::refreshMods() {
     auto entries = installedMods(modsDir(appDir_, userDir_)); filling_ = true;
+    const int keep = mods_->currentRow();
     mods_->setRowCount(entries.size());
     for (int row = 0; row < entries.size(); ++row) {
         const auto &m = entries[row]; auto *check = new QTableWidgetItem(m.id); check->setCheckState(m.enabled ? Qt::Checked : Qt::Unchecked);
-        check->setData(Qt::UserRole, m.description + "\n" + t("Requires: ", "Requiere: ") + m.requires.join(", ") + "\n" + t("Conflicts: ", "Conflictos: ") + m.conflicts.join(", "));
+        QVariantMap details{{"name", m.name}, {"version", m.version}, {"description", m.description}, {"requires", m.requires.join(", ")}, {"conflicts", m.conflicts.join(", ")}};
+        check->setData(kDetailsRole, details);
+        check->setData(kit::TitleRole, m.name.isEmpty() ? m.id : m.name);
+        check->setData(kit::SubRole, m.id + (m.version.isEmpty() ? QString() : "  v" + m.version));
         mods_->setItem(row, 0, check); mods_->setItem(row, 1, new QTableWidgetItem(m.name)); mods_->setItem(row, 2, new QTableWidgetItem(m.version));
+        mods_->setRowHeight(row, kit::RowDelegate::rowHeight());
     }
     filling_ = false;
+    if (keep >= 0 && entries.size() > 0) mods_->selectRow(std::min<int>(keep, entries.size() - 1));
+    if (auto *pane = findChild<kit::Pane *>("atlasInstalled")) pane->setCount(QString::number(entries.size()));
     if (modsOnLabel_) { int on = 0; for (const auto &m : entries) on += m.enabled; modsOnLabel_->setText(QString::number(on) + " " + t("on", "on")); }
+    showSelectedMod();
+}
+// The explainer of the Mods tab follows the selected row: its sentence, its version and what it needs.
+void Window::showSelectedMod() {
+    auto *item = mods_->item(mods_->currentRow(), 0);
+    if (!item) {
+        modTitle_->setText(t("No mod selected", "No mod selected"));
+        modDetails_->setText(t("Place each local mod in its own folder inside Mods. Changes take effect at the next game launch.", "Coloca cada mod local en su propia carpeta dentro de Mods. Los cambios se aplican al volver a iniciar el juego."));
+        modVersion_->setText("-"); modRequires_->setText("-"); modConflicts_->setText("-");
+        return;
+    }
+    const auto d = item->data(kDetailsRole).toMap();
+    modTitle_->setText(item->data(kit::TitleRole).toString().toUpper());
+    modDetails_->setText(d["description"].toString().isEmpty() ? t("No description.", "No description.") : d["description"].toString());
+    auto orDash = [](const QString &s) { return s.isEmpty() ? QString("-") : s; };
+    modVersion_->setText(orDash(d["version"].toString())); modRequires_->setText(orDash(d["requires"].toString())); modConflicts_->setText(orDash(d["conflicts"].toString()));
+    for (auto *l : {modVersion_, modRequires_, modConflicts_}) l->setToolTip(l->text());
 }
 QWidget *Window::modsTab() {
-    auto *page = new QWidget; auto *layout = new QVBoxLayout(page);
-    layout->addWidget(label(t("Place each local mod in its own folder inside Mods. Changes take effect at the next game launch.", "Coloca cada mod local en su propia carpeta dentro de Mods. Los cambios se aplican al volver a iniciar el juego.")));
-    mods_ = table({t("Enabled / ID", "Activado / ID"), t("Name", "Nombre"), t("Version", "Versión")}); layout->addWidget(mods_);
-    modDetails_ = label(""); layout->addWidget(modDetails_);
-    connect(mods_, &QTableWidget::itemChanged, this, [this](QTableWidgetItem *item) { if (!filling_ && item->column() == 0) {
-        guarded([&] { setModEnabled(modsDir(appDir_, userDir_), item->text(), item->checkState() == Qt::Checked); }); guarded([&] { refreshMods(); });
-    } });
-    connect(mods_, &QTableWidget::itemSelectionChanged, this, [this] { auto *i = mods_->item(mods_->currentRow(), 0); if (i) modDetails_->setText(i->data(Qt::UserRole).toString()); });
-    auto *row = new QHBoxLayout; layout->addLayout(row);
-    button(row, t("Open mods folder", "Abrir carpeta de mods"), [this] { auto p = modsDir(appDir_, userDir_); QDir().mkpath(p); openPath(p); });
-    button(row, t("Open scripts folder", "Abrir carpeta de scripts"), [this] { auto p = QDir(appDir_ + "/scripts").exists() ? appDir_ + "/scripts" : userDir_ + "/scripts"; QDir().mkpath(p); openPath(p); });
-    button(row, t("Refresh", "Actualizar"), [this] { guarded([&] { refreshMods(); }); });
-    button(row, t("Remove…", "Quitar…"), [this] { guarded([&] {
+    auto *page = new QWidget; auto *layout = new QHBoxLayout(page); layout->setContentsMargins(0, 0, 0, 0); layout->setSpacing(atlas::px("s3"));
+    auto *leftColumn = new QWidget; auto *left = new QVBoxLayout(leftColumn); left->setContentsMargins(0, 0, 0, 0); left->setSpacing(atlas::px("s3"));
+    leftColumn->setMaximumWidth(kPrimaryWidth); leftColumn->setMinimumWidth(300); layout->addWidget(leftColumn, 1);
+    auto *installed = new kit::Pane(t("Installed mods", "Mods instalados")); installed->setObjectName("atlasInstalled"); left->addWidget(installed, 1);
+    auto *body = new QVBoxLayout(installed->body()); body->setContentsMargins(0, 0, 0, 0); body->setSpacing(atlas::px("s2"));
+    body->addWidget(paragraph(t("Place each local mod in its own folder inside Mods. Changes take effect at the next game launch.", "Coloca cada mod local en su propia carpeta dentro de Mods. Los cambios se aplican al volver a iniciar el juego."), atlas::Role::Body12, "muted"));
+    auto *modTable = new RowTable(0, 3); modTable->setHorizontalHeaderLabels({t("Enabled / ID", "Activado / ID"), t("Name", "Nombre"), t("Version", "Versión")});
+    modTable->placeholder = t("No mods installed. Open the mods folder to add one.", "No mods installed. Open the mods folder to add one.");
+    mods_ = modTable; mods_->setObjectName("atlasMods");
+    mods_->setSelectionBehavior(QAbstractItemView::SelectRows); mods_->setSelectionMode(QAbstractItemView::SingleSelection);
+    mods_->setEditTriggers(QAbstractItemView::NoEditTriggers); mods_->verticalHeader()->hide(); mods_->horizontalHeader()->hide();
+    mods_->setItemDelegate(new kit::RowDelegate(mods_)); mods_->setColumnHidden(1, true); mods_->setColumnHidden(2, true);
+    mods_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch); mods_->setShowGrid(false); mods_->setAlternatingRowColors(false);
+    mods_->setFrameShape(QFrame::NoFrame); mods_->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel); mods_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    mods_->setMinimumHeight(kit::RowDelegate::rowHeight() + 4);
+    body->addWidget(mods_, 1);
+    auto *grid = new QGridLayout; grid->setSpacing(atlas::px("s2")); body->addLayout(grid); int n = 0;
+    auto action = [&](const QString &text, const std::function<void()> &fn) { auto *b = new kit::Button(text); grid->addWidget(b, n / 2, n % 2); ++n; connect(b, &QPushButton::clicked, b, fn); return b; };
+    action(t("Open mods folder", "Abrir carpeta de mods"), [this] { auto p = modsDir(appDir_, userDir_); QDir().mkpath(p); openPath(p); });
+    action(t("Open scripts folder", "Abrir carpeta de scripts"), [this] { auto p = QDir(appDir_ + "/scripts").exists() ? appDir_ + "/scripts" : userDir_ + "/scripts"; QDir().mkpath(p); openPath(p); });
+    action(t("Refresh", "Actualizar"), [this] { guarded([&] { refreshMods(); }); });
+    action(t("Remove…", "Quitar…"), [this] { guarded([&] {
         auto *item = mods_->item(mods_->currentRow(), 0); if (!item) return;
         if (QMessageBox::question(this, t("Remove mod?", "¿Quitar mod?"), t("Move this mod into Mods/.removed? You can restore it from that folder.", "¿Mover este mod a Mods/.removed? Puedes restaurarlo desde esa carpeta.")) != QMessageBox::Yes) return;
         removeMod(modsDir(appDir_, userDir_), item->text()); refreshMods();
     }); });
+    connect(mods_, &QTableWidget::itemChanged, this, [this](QTableWidgetItem *item) { if (!filling_ && item->column() == 0) {
+        guarded([&] { setModEnabled(modsDir(appDir_, userDir_), item->text(), item->checkState() == Qt::Checked); }); guarded([&] { refreshMods(); });
+    } });
+    connect(mods_, &QTableWidget::itemSelectionChanged, this, [this] { showSelectedMod(); });
+    auto *explainer = new ExplainerPane(t("Mod", "Mod")); explainer->setMinimumWidth(kExplainerMin); layout->addWidget(explainer, 1);
+    modTitle_ = explainer->title(); modDetails_ = explainer->what();
+    modVersion_ = explainer->addFact(t("Version", "Versión"), "-"); modRequires_ = explainer->addFact(t("Requires", "Requiere"), "-"); modConflicts_ = explainer->addFact(t("Conflicts", "Conflictos"), "-");
     return page;
 }
 QWidget *Window::diagnosticsTab() {
-    auto *scroll = new QScrollArea; scroll->setWidgetResizable(true); auto *page = new QWidget; auto *layout = new QVBoxLayout(page); scroll->setWidget(page);
+    auto *page = new QWidget; auto *layout = new QHBoxLayout(page); layout->setContentsMargins(0, 0, 0, 0); layout->setSpacing(atlas::px("s3"));
+    // primary: scrolls, so nothing is clipped at 900 x 600 or at 150 percent
+    auto *scroll = new QScrollArea; scroll->setObjectName("atlasDiagnostics"); scroll->setWidgetResizable(true); scroll->setFrameShape(QFrame::NoFrame);
+    scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff); scroll->setMaximumWidth(kPrimaryWidth + 14); scroll->setMinimumWidth(300);
+    auto *content = new QWidget; auto *layout2 = new QVBoxLayout(content); layout2->setContentsMargins(0, 0, atlas::px("s2") + 6, 0); layout2->setSpacing(atlas::px("s3")); scroll->setWidget(content);
+    layout->addWidget(scroll, 1);
+    auto bodyOf = [&](const QString &heading) { auto *pane = new kit::Pane(heading); layout2->addWidget(pane); auto *v = new QVBoxLayout(pane->body()); v->setContentsMargins(0, 0, 0, 0); v->setSpacing(atlas::px("s2")); return v; };
+    auto toggleRow = [&](QBoxLayout *into, const QString &title, const QString &name, bool initial, const std::function<void(bool)> &apply) {
+        auto *w = new kit::Toggle; w->setObjectName(name); w->setAccessibleName(title); w->setChecked(initial); into->addWidget(new OptionRow(title, w, w, true));
+        connect(w, &QAbstractButton::toggled, this, [this, apply](bool v) { guarded([&] { apply(v); }); }); return w;
+    };
 #ifdef Q_OS_LINUX
-    auto *graphics = new QGroupBox(t("Linux graphics", "Gráficos de Linux")); auto *graphicsLayout = new QVBoxLayout(graphics); layout->addWidget(graphics);
+    auto *graphicsLayout = bodyOf(t("Linux graphics", "Gráficos de Linux"));
     auto *gpuForm = new QFormLayout; graphicsLayout->addLayout(gpuForm); graphicsDevice_ = new QComboBox;
     graphicsDevice_->addItem(t("Automatic", "Automático"), "auto");
     auto savedGpu = settings_.option("graphics_device", "auto");
@@ -579,16 +676,14 @@ QWidget *Window::diagnosticsTab() {
     button(graphicsRow, t("Driver help", "Ayuda de controladores"), [this] {
         QMessageBox dialog(QMessageBox::Information, t("32-bit graphics drivers", "Controladores gráficos de 32 bits"), graphicsDriverHelp(osRelease()), QMessageBox::Ok, this); dialog.setTextFormat(Qt::PlainText); dialog.exec();
     });
+    graphicsRow->addStretch();
 #endif
-    auto check = [&](const QString &title, const QString &key, bool fallback) {
-        auto *w = new QCheckBox(title); w->setChecked(settings_.flag(key, fallback)); layout->addWidget(w);
-        connect(w, &QCheckBox::toggled, this, [this, key](bool v) { guarded([&] { settings_.options[key] = v ? "1" : "0"; save(); }); });
-    };
-    check(t("Log everything (large logs)", "Registrar todo (registros grandes)"), "log_all", false);
-    check(t("Log scene changes", "Registrar cambios de escena"), "log_scene", true);
-    auto *form = new QFormLayout; layout->addLayout(form);
+    auto *logging = bodyOf(t("Logging", "Logging"));
+    for (const auto &entry : QList<std::tuple<QString, QString, bool>>{{t("Log everything (large logs)", "Registrar todo (registros grandes)"), "log_all", false}, {t("Log scene changes", "Registrar cambios de escena"), "log_scene", true}})
+        toggleRow(logging, std::get<0>(entry), "diag_" + std::get<1>(entry), settings_.flag(std::get<1>(entry), std::get<2>(entry)), [this, key = std::get<1>(entry)](bool v) { settings_.options[key] = v ? "1" : "0"; save(); });
+    auto *form = new QFormLayout; logging->addLayout(form);
     auto combo = [&](const QString &title, const QString &key, const QStringList &choices, int offset, int fallback) {
-        auto *w = new QComboBox; w->addItems(choices); w->setCurrentIndex(std::clamp(settings_.option(key, QString::number(fallback)).toInt() - offset, 0, int(choices.size()) - 1)); form->addRow(title, w);
+        auto *w = new QComboBox; w->setObjectName("diag_" + key); w->addItems(choices); w->setCurrentIndex(std::clamp(settings_.option(key, QString::number(fallback)).toInt() - offset, 0, int(choices.size()) - 1)); form->addRow(title, w);
         connect(w, qOverload<int>(&QComboBox::currentIndexChanged), this, [this, key, offset](int v) { guarded([&] { settings_.options[key] = QString::number(v + offset); save(); }); });
     };
     combo(t("Render diagnostics", "Diagnóstico gráfico"), "log_render", {t("Off", "Desactivado"), t("Once per scene", "Una vez por escena"), t("Every block", "Cada bloque")}, -1, 0);
@@ -597,38 +692,59 @@ QWidget *Window::diagnosticsTab() {
     const QList<QPair<QString, QString>> categories = {{"watchdog", t("Watchdog samples", "Muestras de ejecución")}, {"mex", t("m-ex internals", "Internos de m-ex")}, {"heap", t("Memory allocations", "Asignaciones de memoria")}, {"dvd", t("Disc file trace", "Accesos a archivos del disco")}, {"tex", t("UI texture loads", "Carga de texturas de la interfaz")}, {"frontend", t("Menu layouts", "Diseños de menús")}, {"audio", t("Sound bank loads", "Carga de bancos de sonido")}};
     const QList<QPair<QString, QString>> traces = {{"gr", t("Stage code trace", "Traza del código de escenarios")}, {"mexcalls", t("m-ex engine calls", "Llamadas de m-ex al motor")}, {"card", t("Memory card diagnostics", "Diagnóstico de tarjetas de memoria")}, {"profile", t("Frame timing", "Tiempos de fotogramas")}, {"fps", t("Show frame rate", "Mostrar fotogramas por segundo")}, {"aurora", t("Renderer log", "Registro gráfico")}, {"osreport", t("Report format trace", "Traza de formatos de informes")}};
     for (const auto &group : {qMakePair(QString("log_categories"), categories), qMakePair(QString("traces"), traces)}) {
-        auto *box = new QGroupBox(group.first == "traces" ? t("Traces", "Trazas") : t("Log categories", "Categorías del registro")); auto *grid = new QGridLayout(box); layout->addWidget(box); int n = 0;
-        for (const auto &entry : group.second) {
-            auto *w = new QCheckBox(entry.second); w->setChecked(settings_.option(group.first).split(',').contains(entry.first)); grid->addWidget(w, n / 2, n % 2); ++n;
-            connect(w, &QCheckBox::toggled, this, [this, key = group.first, value = entry.first](bool on) { guarded([&] { auto list = settings_.option(key).split(',', Qt::SkipEmptyParts); list.removeAll(value); if (on) list << value; settings_.options[key] = list.join(','); save(); }); });
-        }
+        auto *list = bodyOf(group.first == "traces" ? t("Traces", "Trazas") : t("Log categories", "Categorías del registro"));
+        for (const auto &entry : group.second)
+            toggleRow(list, entry.second, group.first + "_" + entry.first, settings_.option(group.first).split(',').contains(entry.first), [this, key = group.first, value = entry.first](bool on) {
+                auto items = settings_.option(key).split(',', Qt::SkipEmptyParts); items.removeAll(value); if (on) items << value; settings_.options[key] = items.join(','); save(); });
     }
-    auto *row = new QHBoxLayout; layout->addLayout(row);
+    auto *reports = bodyOf(t("Reports", "Informes"));
+    auto *grid = new QGridLayout; grid->setSpacing(atlas::px("s2")); reports->addLayout(grid); int n = 0;
     auto lastRun = [this] { return runDir_.isEmpty() ? settings_.option("last_run", userDir_ + "/runs") : runDir_; };
-    button(row, t("Open log folder", "Abrir carpeta de registros"), [this, lastRun] { openPath(lastRun()); });
-    button(row, t("Open game log", "Abrir registro del juego"), [this, lastRun] { openPath(lastRun() + "/melee-pc.log"); });
-    button(row, t("Copy launch diagnostics", "Copy launch diagnostics"), [this] { copyDiagnostics(); });
-    button(row, t("Run diagnostics without launching", "Run diagnostics without launching"), [this] { runDiagnosticsOnly(); });
-    button(row, t("Copy latest crash report", "Copiar último informe de fallo"), [this, lastRun] { guarded([&] {
+    auto action = [&](const QString &text, const std::function<void()> &fn) { auto *b = new kit::Button(text); grid->addWidget(b, n / 2, n % 2); ++n; connect(b, &QPushButton::clicked, b, fn); return b; };
+    action(t("Open log folder", "Abrir carpeta de registros"), [this, lastRun] { openPath(lastRun()); });
+    action(t("Open game log", "Abrir registro del juego"), [this, lastRun] { openPath(lastRun() + "/melee-pc.log"); });
+    action(t("Copy launch diagnostics", "Copy launch diagnostics"), [this] { copyDiagnostics(); });
+    action(t("Run diagnostics without launching", "Run diagnostics without launching"), [this] { runDiagnosticsOnly(); });
+    action(t("Copy latest crash report", "Copiar último informe de fallo"), [this, lastRun] { guarded([&] {
         auto report = latestCrash(lastRun()); if (report.isEmpty()) { statusBar()->showMessage(t("No crash report in the last session.", "No hay informe de fallo en la última sesión.")); return; }
         QApplication::clipboard()->setText(readText(report, 64 * 1024)); statusBar()->showMessage(t("Crash report copied.", "Informe de fallo copiado."));
     }); });
-    layout->addStretch(); return scroll;
+    layout2->addStretch();
+    // explainer
+    auto *explainer = new ExplainerPane(t("Diagnostics", "Diagnóstico")); explainer->setMinimumWidth(kExplainerMin); layout->addWidget(explainer, 1);
+    explainer->title()->setText(t("FIND OUT WHY", "FIND OUT WHY"));
+    explainer->what()->setText(t("A report is written for every launch attempt. Copy it and send it when asking for help.", "A report is written for every launch attempt. Copy it and send it when asking for help."));
+    auto *where = explainer->addFact(t("Reports", "Reports"), QDir::toNativeSeparators(diagnosticsDir(userDir_))); where->setToolTip(where->text());
+    return page;
 }
 QWidget *Window::aboutTab() {
-    auto *page = new QWidget; auto *layout = new QVBoxLayout(page); QString version = t("development build", "versión de desarrollo");
+    auto *page = new QWidget; auto *layout = new QHBoxLayout(page); layout->setContentsMargins(0, 0, 0, 0); layout->setSpacing(atlas::px("s3"));
+    QString version = t("development build", "versión de desarrollo");
     try { version = readText(appDir_ + "/version.txt", 16384).section('\n', 0, 0); } catch (...) {}
-    layout->addWidget(label("GD's Melee — " + version + "\nQt " + qVersion()));
-    layout->addWidget(label(t("Bring your own disc image. Game data is never bundled with the launcher.", "Usa tu propia imagen de disco. El lanzador no incluye datos del juego.")));
-    layout->addWidget(label(t("Game folder: ", "Carpeta del juego: ") + appDir_ + "\n" + t("User data: ", "Datos del usuario: ") + userDir_));
-    auto *form = new QFormLayout; layout->addLayout(form); auto *lang = new QComboBox;
+    auto *leftColumn = new QWidget; auto *left = new QVBoxLayout(leftColumn); left->setContentsMargins(0, 0, 0, 0); left->setSpacing(atlas::px("s3"));
+    leftColumn->setMaximumWidth(kPrimaryWidth); leftColumn->setMinimumWidth(300); layout->addWidget(leftColumn, 1);
+    auto *about = new kit::Pane(t("This launcher", "This launcher")); left->addWidget(about);
+    auto *body = new QVBoxLayout(about->body()); body->setContentsMargins(0, 0, 0, 0); body->setSpacing(atlas::px("s2"));
+    body->addWidget(paragraph(t("Bring your own disc image. Game data is never bundled with the launcher.", "Usa tu propia imagen de disco. El lanzador no incluye datos del juego.")));
+    for (const auto &entry : QList<QPair<QString, QString>>{{t("Game folder: ", "Carpeta del juego: "), appDir_}, {t("User data: ", "Datos del usuario: "), userDir_}}) {
+        auto *line = new ElidedLabel(entry.first + QDir::toNativeSeparators(entry.second), atlas::Role::Body14, "text2"); line->setToolTip(entry.second); body->addWidget(line);
+    }
+    auto *form = new QFormLayout; body->addLayout(form); auto *lang = new QComboBox; lang->setObjectName("atlasLanguage");
     lang->addItem(t("System language", "Idioma del sistema"), "auto"); lang->addItem("English", "en"); lang->addItem("Español", "es");
     lang->setCurrentIndex(std::max(0, lang->findData(settings_.option("language", "auto")))); form->addRow(t("Language (next launch)", "Idioma (al reiniciar)"), lang);
     connect(lang, qOverload<int>(&QComboBox::currentIndexChanged), this, [this, lang] { guarded([&] { settings_.options["language"] = lang->currentData().toString(); save(); }); });
-    auto *row = new QHBoxLayout; layout->addLayout(row);
+    auto *row = new QHBoxLayout; row->setSpacing(atlas::px("s2")); body->addLayout(row);
     button(row, t("Open user data", "Abrir datos del usuario"), [this] { openPath(userDir_); });
-    button(row, t("Open licences", "Abrir licencias"), [this] { openPath(QDir(appDir_ + "/LICENSES").exists() ? appDir_ + "/LICENSES" : appDir_ + "/licenses"); });
-    layout->addStretch(); return page;
+    auto *licences = button(row, t("Open licences", "Abrir licencias"), [this] { openPath(QDir(appDir_ + "/LICENSES").exists() ? appDir_ + "/LICENSES" : appDir_ + "/licenses"); }); licences->setObjectName("atlasLicences");
+    row->addStretch(); left->addStretch();
+    auto *explainer = new ExplainerPane(t("About", "About")); explainer->setMinimumWidth(kExplainerMin); layout->addWidget(explainer, 1);
+    explainer->title()->setText("GD'S MELEE");
+    explainer->what()->setText(t("A launcher for the PC port. It starts the game from your own disc and keeps your mods and logs in order.", "A launcher for the PC port. It starts the game from your own disc and keeps your mods and logs in order."));
+    explainer->addFact(t("Version", "Versión"), version);
+    explainer->addFact("Qt", qVersion());
+    auto *type = explainer->addFact(t("Type", "Type"), "Barlow Condensed, Source Sans 3"); type->setToolTip(t("Fonts by Jeremy Tribby (Barlow Condensed) and Adobe (Source Sans 3), both under the SIL Open Font License. The licences are in the Licences folder.", "Fonts by Jeremy Tribby (Barlow Condensed) and Adobe (Source Sans 3), both under the SIL Open Font License. The licences are in the Licences folder."));
+    explainer->more()->addWidget(paragraph(t("Fonts: Barlow Condensed (Jeremy Tribby) and Source Sans 3 (Adobe), SIL Open Font License. Qt (The Qt Company) is used under its open-source licences.", "Fonts: Barlow Condensed (Jeremy Tribby) and Source Sans 3 (Adobe), SIL Open Font License. Qt (The Qt Company) is used under its open-source licences."), atlas::Role::Body12, "muted"));
+    return page;
 }
 void Window::selectMods() { rail_->setCurrent(1); }
 void Window::screenshots(const QString &dir) {

@@ -18,6 +18,7 @@ namespace launcher {
 namespace kit { class TabRail; }
 extern bool spanish;
 QString t(const char *en, const char *es);
+void applyTheme();                      // atlas tokens, fonts, palette and the style sheet for what Qt draws itself
 class Window : public QMainWindow {
 public:
     Window(QString appDir, QString userDir, Settings settings);
@@ -39,6 +40,7 @@ private:
     QLabel *pageHeading_;
     QTableWidget *discs_, *mods_;
     QLabel *discDetails_, *modDetails_;
+    QLabel *modTitle_ = nullptr, *modVersion_ = nullptr, *modRequires_ = nullptr, *modConflicts_ = nullptr;
     QPushButton *play_ = nullptr;
     QWidget *playNote_ = nullptr;
     QLabel *modsOnLabel_ = nullptr;
@@ -69,6 +71,7 @@ private:
     void refreshDiscs(const QString &selectId = {});
     void refreshMods();
     void showSelectedDisc();
+    void showSelectedMod();
     void updatePlayState();
     int selectedDisc() const;
     QWidget *playTab();

@@ -1,8 +1,12 @@
 #include "atlas.h"
 #include "kit.h"
-#include "legacy_kit.h"
 #include "window.h"
+#include <QComboBox>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <QSlider>
+#include <QFile>
+#include <QDir>
 #include <QStackedWidget>
 #include <QTableWidget>
 #include <QTemporaryDir>
@@ -17,7 +21,7 @@ using namespace launcher;
 class AtlasTests : public QObject {
     Q_OBJECT
 private slots:
-    void initTestCase() { atlas::initialize(); launcher::legacy::initialize(); }
+    void initTestCase() { launcher::applyTheme(); }
 
     void tokens_load() {
         QCOMPARE(atlas::colour("ember"), QColor(0xff, 0x7a, 0x3d));
@@ -222,6 +226,50 @@ private slots:
         QTest::keyClick(&w, Qt::Key_M, Qt::ControlModifier); QCOMPARE(rail->current(), 1);   // Ctrl+M selects Mods from anywhere
         rail->setCurrent(3); QTest::keyClick(&w, Qt::Key_M, Qt::ControlModifier); QCOMPARE(rail->current(), 1);
         QTest::keyClick(&w, Qt::Key_1, Qt::ControlModifier); QCOMPARE(rail->current(), 0);
+    }
+
+    void mods_tab_keeps_its_behaviour() {
+        QTemporaryDir dir; QDir(dir.path()).mkpath("mods/demo");
+        QFile f(dir.path() + "/mods/demo/mod.json"); QVERIFY(f.open(QIODevice::WriteOnly)); f.write(R"({"id":"demo","name":"Demo","version":"1.0"})"); f.close();
+        launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.show(); w.selectMods(); QApplication::processEvents();
+        auto *mods = w.findChild<QTableWidget *>("atlasMods"); QVERIFY(mods);
+        QCOMPARE(mods->rowCount(), 1); QCOMPARE(mods->item(0, 0)->text(), QString("demo"));
+        QVERIFY(mods->item(0, 0)->flags() & Qt::ItemIsUserCheckable);                     // the checkbox column is still the toggle
+        QVERIFY(w.findChild<QWidget *>("atlasExplainer"));                                // the explainer shows the selected mod
+        // toggling the item (what the row's ON/OFF does) writes the mod's enabled state through setModEnabled
+        const bool before = mods->item(0, 0)->checkState() == Qt::Checked;
+        mods->item(0, 0)->setCheckState(before ? Qt::Unchecked : Qt::Checked); QApplication::processEvents();
+        QCOMPARE(mods->item(0, 0)->checkState() == Qt::Checked, !before);                 // survived the refresh the handler runs
+        QCOMPARE(launcher::installedMods(launcher::modsDir(dir.path(), dir.path()))[0].enabled, !before);
+    }
+    void diagnostics_scrolls_not_clips() {
+        QTemporaryDir dir; launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.resize(900, 600); w.show();
+        w.findChild<kit::TabRail *>("atlasRail")->setCurrent(2); QApplication::processEvents();
+        auto *scroll = w.findChild<QScrollArea *>("atlasDiagnostics"); QVERIFY(scroll);
+        QVERIFY(scroll->widget()->height() > scroll->viewport()->height());               // longer than the window: it scrolls
+        QVERIFY(scroll->verticalScrollBar()->maximum() > 0);
+        for (auto *b : scroll->widget()->findChildren<QPushButton *>()) QVERIFY2(b->width() > 0 && b->isVisible(), qPrintable(b->text()));
+        QVERIFY(scroll->widget()->findChild<kit::Toggle *>("diag_log_scene"));
+    }
+    void about_has_language_and_licences() {
+        QTemporaryDir dir; launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.show();
+        QVERIFY(w.findChild<QComboBox *>("atlasLanguage"));                               // kept until the owner decides about Spanish
+        QVERIFY(w.findChild<QPushButton *>("atlasLicences"));
+    }
+    void every_tab_fits_at_900_x_600() {
+        QTemporaryDir dir; launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.resize(900, 600); w.show();
+        auto *tabs = w.findChild<QStackedWidget *>("atlasTabs");
+        for (int i = 0; i < 4; ++i) {
+            w.findChild<kit::TabRail *>("atlasRail")->setCurrent(i); QApplication::processEvents();
+            auto *ex = tabs->currentWidget()->findChild<QWidget *>("atlasExplainer"); QVERIFY(ex);
+            QVERIFY2(ex->width() >= 240, qPrintable(QString("explainer %1 px wide on tab %2").arg(ex->width()).arg(i)));
+            for (auto *p : tabs->currentWidget()->findChildren<QPushButton *>()) {
+                if (!p->isVisible() || p->property("clipped").isValid()) continue;
+                if (tabs->currentWidget()->findChild<QScrollArea *>("atlasDiagnostics") && tabs->currentWidget()->findChild<QScrollArea *>("atlasDiagnostics")->isAncestorOf(p)) continue;   // scrolls
+                const QRect g(p->mapTo(&w, QPoint(0, 0)), p->size());
+                QVERIFY2(QRect(QPoint(0, 0), w.size()).contains(g), qPrintable(p->text() + " is cut off on tab " + QString::number(i)));
+            }
+        }
     }
 };
 QTEST_MAIN(AtlasTests)
