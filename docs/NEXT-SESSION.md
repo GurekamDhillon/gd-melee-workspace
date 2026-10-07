@@ -35,6 +35,13 @@ Companions: `HANDOFF-2026-10-05.md` (Envoy, Turbo, CPU controller state and the 
   frontend scene is untested (`MELEE_ATLAS_DATA=...,notext` skips it); `script-policy` does not build on this branch or on its parent (the literal NULs in
   `gw_script.c`, already in the paused-work notes).
 - **Atlas step 9 (the Qt launcher in Atlas style) is built and committed on `ws/atlas9`, not merged, not looked at.**
+- **Atlas step 7 (2026-10-07; game `agent/atlas7`, workspace `ws/atlas7`; merged 2026-10-07): the MODS screen and the LAB.** The main menu's MODS row opens an Atlas screen
+  (INSTALLED and CONFLICTS tabs, 256 mods windowed, toggles with cascade notes, X resolves, Y details, locked while online); the Settings MODS tab is unchanged until the owner
+  has looked. The LAB's pause menu is an Atlas screen behind **`lab ui on`** (off by default; the legacy menu is the fallback), with its info panel, move timeline, mode strip
+  and notices as HUD descriptions. Built on engine additions (stepper, tabs from Lua, the world backdrop, WITH tags, `gd.ui.token`, `gd.ui.entries` and `activate`, three HUD
+  parts). **None of it has run in the game**: the proof list (Task 11 of `docs/superpowers/plans/2026-10-06-atlas-step7-mods-and-lab.md`) needs a window and the owner's look, and
+  the retirement of the legacy pieces (Task 12) waits for it. Two spec corrections: the LAB has ten display modes, and step 7 needs step 3 (the HUD and the world backdrop).
+- **Atlas step 9 (the Qt launcher in Atlas style) is merged (2026-10-07); seen by the owner as screenshots only, not run by him.**
   Plan `docs/superpowers/plans/2026-10-06-atlas-step9-launcher.md` tasks 0 to 9 are done; task 10 (delete the legacy
   kit and the `/kit` resources, then the owner's look at 100 and 150 percent) and task 11 (retire the legacy menu art
   globally, after steps 2 to 8 and 10) are not. Built with Qt 6.8.3 (MSVC 2022 x64 SDK) through the Visual Studio

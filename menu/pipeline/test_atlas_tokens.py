@@ -33,6 +33,12 @@ class Tokens(unittest.TestCase):
         self.assertEqual([m["m-focus"], m["m-tab"], m["m-pane"], m["m-modal"], m["m-note"], m["m-turn"]],
                          [80, 120, 100, 140, 160, 12000])
 
+    def test_names(self):
+        n = T.names_text(self.tok)
+        self.assertIn('{ "ember", 0xFF7A3DFFu },', n)
+        self.assertIn('{ "scrim", 0x05070AB8u },', n)
+        self.assertEqual(n.count('{ "'), len(self.tok["colours"]))
+
     def test_header_text(self):
         h = T.header_text(self.tok)
         self.assertIn("#define AT_C_EMBER 0xFF7A3DFFu", h)
