@@ -82,7 +82,8 @@
     "vanilla-hero": {
       "source": "pc/geno/mods/vanilla-hero",
       "default_on": false,
-      "why": "Geno sample fighter on the retail Mario files from the player's own disc. Text only: define (.json), move scripts (.genoasm, .words). Off: it adds a roster slot and its looks and feel are unreviewed.",
+      "optional": true,
+      "why": "Not shipped (owner, 2026-10-07: no custom fighters in a release yet). Geno sample fighter on the retail Mario files from the player's own disc. Text only: define (.json), move scripts (.genoasm, .words). Off: it adds a roster slot and its looks and feel are unreviewed.",
       "allow": [
         "mod\\.json",
         "geno\\.json",
@@ -94,7 +95,8 @@
     "vanilla-striker": {
       "source": "pc/geno/mods/vanilla-striker",
       "default_on": false,
-      "why": "Geno sample fighter with its own move set. Text only (.json, .genoasm, .words, effect package .json). Off: unreviewed looks and feel.",
+      "optional": true,
+      "why": "Not shipped (owner, 2026-10-07: no custom fighters in a release yet). Geno sample fighter with its own move set. Text only (.json, .genoasm, .words, effect package .json). Off: unreviewed looks and feel.",
       "allow": [
         "mod\\.json",
         "geno\\.json",
@@ -106,7 +108,8 @@
     "vanilla-caster": {
       "source": "pc/geno/mods/vanilla-caster",
       "default_on": false,
-      "why": "Geno sample fighter with its own article and effect. Text only. Off: a fixture that proves the machinery, not a move set.",
+      "optional": true,
+      "why": "Not shipped (owner, 2026-10-07: no custom fighters in a release yet). Geno sample fighter with its own article and effect. Text only. Off: a fixture that proves the machinery, not a move set.",
       "allow": [
         "mod\\.json",
         "geno\\.json",

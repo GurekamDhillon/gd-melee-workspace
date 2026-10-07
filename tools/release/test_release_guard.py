@@ -3,6 +3,7 @@ import hashlib
 import json
 from pathlib import Path
 import shutil
+import struct
 import subprocess
 import tempfile
 import unittest
@@ -252,6 +253,34 @@ class ReleaseGuardTests(unittest.TestCase):
                     self.assertNotEqual(code, 0, log)
                 finally:
                     self.cleanup(name)
+
+    def test_disc_content_under_an_allowed_mod_name_is_rejected(self):
+        # Names the allow list accepts (the new Envoy/Geno asset types), bytes that are disc data:
+        # the content sniffs in check_release.ps1 must still fire whatever the file is called.
+        gc = bytearray(0x440); gc[0:6] = b'GALE01'; gc[0x1C:0x20] = bytes.fromhex('C2339F3D')   # GameCube disc header
+        wii = bytearray(0x440); wii[0x18:0x1C] = bytes.fromhex('5D1C9EA3')                       # Wii disc header
+        hsd = struct.pack('>I', 64) + b'\0'*60                                                    # HSD archive: first word = its own size
+        gci = b'GALE01' + b'\0'*60                                                                # memory-card save / game ID
+        rvz = b'RVZ\x01' + b'\0'*60                                                               # compressed disc image
+        cases = (('mods/envoy_drives/models/drive_red.gxmesh', bytes(gc), 'contains a GameCube disc header', True),
+                 ('mods/envoy_drives/models/drive_atlas.gxtex', hsd, 'looks like an HSD archive', True),
+                 ('mods/envoy/shaders/crit.wgsl', gci, 'starts with a game ID', True),
+                 ('mods/geno-lab/ui/lab_tex.gxtex', bytes(wii), 'contains a Wii disc header', False),
+                 ('mods/vanilla-striker/moves/jab.words', rvz, 'is a compressed disc image', True))
+        for name, data, text, existed in cases:
+            with self.subTest(name=name):
+                original = (self.stage/name).read_bytes() if existed else None
+                try:
+                    self.put(name, data)
+                    self.expect_fail(text)
+                finally:
+                    if existed:
+                        self.put(name, original)
+                    else:
+                        self.cleanup(name)
+        self.manifest()
+        code, log = self.check()
+        self.assertEqual(code, 0, log)
 
     def test_a_missing_envoy_shader_or_drive_model_fails_the_guard(self):
         # the allow list lets these ship; the 'required' list is what fails a package that lacks one

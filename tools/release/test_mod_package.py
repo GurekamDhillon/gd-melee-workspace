@@ -121,15 +121,16 @@ class StageModsTests(unittest.TestCase):
         self.assertIn('deep.wgsl', str(c.exception))
 
     def test_never_package_names_are_refused(self):
-        # vanilla-hero allows fx/.+\.json, so these paths are allowed by the pattern and refused by name
-        for rel in ('local-assets/x.json', '_local/x.json', 'envoy_drives_sa2/x.json', 'sora/x.json'):
-            with self.subTest(rel=rel):
-                put(self.melee, 'pc/geno/mods/vanilla-hero/fx/' + rel)
+        # envoy allows items/<name>/item\.json, so these paths are allowed by the pattern and refused by name
+        src = RULES['mods']['envoy']['source']
+        for name in ('local-assets', '_local', 'envoy_drives_sa2', 'sora'):
+            with self.subTest(name=name):
+                put(self.melee, src + '/items/' + name + '/item.json')
                 with self.assertRaises(SystemExit) as c:
                     self.stage()
                 shutil.rmtree(self.dest, ignore_errors=True)
                 self.assertIn('never-package', str(c.exception))
-                (self.melee / 'pc/geno/mods/vanilla-hero/fx' / rel).unlink()
+                shutil.rmtree(self.melee / src / 'items' / name)
 
     def test_a_rule_table_naming_a_private_mod_is_refused(self):
         rules = json.loads(json.dumps(RULES))
@@ -151,10 +152,10 @@ class StageModsTests(unittest.TestCase):
         self.assertIn('local-only', str(c.exception))
 
     def test_missing_mod_source_is_a_warning(self):
-        shutil.rmtree(self.melee / 'pc/geno/mods/vanilla-hero')
+        shutil.rmtree(self.melee / RULES['mods']['geno-lab']['source'])
         _, _, warnings = self.stage()
         self.assertEqual(len(warnings), 1)
-        self.assertIn('vanilla-hero', warnings[0])
+        self.assertIn('geno-lab', warnings[0])
 
 
 class RealMeleeTests(unittest.TestCase):
