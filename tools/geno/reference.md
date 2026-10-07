@@ -249,7 +249,7 @@ SPECIAL_I:index is integer and SPECIAL_F:index is floating point. Both are read-
 
 ## Callback names by slot
 
-- anim: `like`, `next`, `loop`, `hold`, `glide.start`, `glide`, `tornado`, `drill`, `drill.end`, `glide.after`, `cape`
+- anim: `like`, `next`, `loop`, `lua`, `hold`, `glide.start`, `glide`, `tornado`, `drill`, `drill.end`, `glide.after`, `cape`
 - iasa: `like`, `interrupt`, `none`, `glide`
 - phys: `like`, `cape`, `none`, `air`, `air_nodrift`, `air_drift`, `brake`, `ground`, `auto`, `anim_motion`, `glide.start`, `glide`, `glide.attack`, `glide.end`, `tornado`, `drill`, `drill.end`, `drill.start`
 - coll: `like`, `cape`, `cape.after`, `none`, `air`, `air_noledge`, `ground`, `ground_stop`, `both`, `anim_motion`, `glide`, `drill`, `drill.start`

@@ -216,6 +216,7 @@ SCENARIOS.update({
     'demo_geno_define': [('assert', 'type(gd.savestate)=="function"')],
     'demo_geno_define_striker': [('assert', 'type(gd.input)=="function"')],
     'demo_geno_define_caster': [('assert', 'type(gd.input)=="function"')],
+    'demo_geno_define_charger': [('assert', 'type(gd.fighter_lua)=="function"')],
     'demo_cpu_controller': [('assert', 'type(gd.cpu_script_status(2))=="table"')],
     'demo_screen_models': [('assert', '#gd.model_instances()>0')],
     'demo_skill_events': [('assert', '#gd.skill_kinds()>0 and gd.skill_thresholds().lcancel_window_frames>0')],

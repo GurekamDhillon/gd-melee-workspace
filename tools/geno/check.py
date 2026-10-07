@@ -286,6 +286,17 @@ def graph_checks(fighter, p, base, errors):
     for row in fighter.get("on_land", []):
         ref(row["from"])
         ref(row["to"])
+    lua = fighter.get("lua")
+    if isinstance(lua, dict):  # slice 5: ctx.go("State") in the module targets a state
+        text = lua.get("source")
+        if text is None and "script" in lua:
+            try:
+                text = (base / lua["script"]).read_text(encoding="utf-8")
+            except OSError:
+                text = ""
+        for name in re.findall(r"\bgo\s*\(\s*[\"']([^\"']+)[\"']\s*\)", text or ""):
+            if name in names:
+                refs.add(names.index(name))
     for words in overlays.values():
         try:
             for _o, ws in script.commands(words):
@@ -301,6 +312,56 @@ def graph_checks(fighter, p, base, errors):
     for key in ("n", "s", "hi", "lw", "air_n", "air_s", "air_hi", "air_lw"):
         if specials.get(key) is None and (not key.startswith("air_") or specials.get(key[4:]) is None):
             WARNINGS.append(diagnostic(p + ".specials." + key, "unbound: this special runs the donor's (Mario's) code"))
+
+
+def lua_checks(data, fighter, p, base, errors):
+    """Slice 5: the "lua" block of a define and the "lua" keys of its states (docs/geno.md section 23). Offline, text only: the module
+    is not run here (the engine runs the real checks at load: frozen environment, closure scan, budgets)."""
+    block = fighter.get("lua")
+    users = [(j, s) for j, s in enumerate(fighter.get("states", [])) if "lua" in s]
+    if block is None and not users:
+        return
+    if "define" not in fighter:
+        errors.append(diagnostic(p + ".lua", "fighter Lua is for a define; an attach entry cannot carry it", "melee/pc/platform/geno_lua_registry.inc"))
+        return
+    if data.get("geno", 0) < 9:
+        errors.append(diagnostic(p + ".lua", "lua needs \"geno\": 9", "melee/pc/platform/geno_lua_registry.inc"))
+    if block is None:
+        errors.append(diagnostic(p + ".states", "a state names Lua functions but the entry has no \"lua\" block", "melee/pc/platform/geno_lua_registry.inc"))
+        return
+    if ("script" in block) == ("source" in block):
+        errors.append(diagnostic(p + ".lua", "lua needs exactly one of \"script\" and \"source\"", "melee/pc/platform/geno_lua_registry.inc"))
+        return
+    text = block.get("source")
+    if "script" in block:
+        rel = block["script"]
+        if rel.startswith(("/", "\\")) or ".." in rel or ":" in rel:
+            errors.append(diagnostic(p + ".lua.script", "must be a relative path inside the mod", "melee/pc/platform/geno_lua_registry.inc"))
+            return
+        path = base / rel
+        if not path.is_file():
+            errors.append(diagnostic(p + ".lua.script", f"{rel} is not a file of the mod", "melee/pc/platform/geno_lua_registry.inc"))
+            return
+        text = path.read_text(encoding="utf-8")
+    if not text.strip() or len(text.encode("utf-8")) > 64 * 1024:
+        errors.append(diagnostic(p + ".lua", "the Lua module must be 1..65536 bytes", "melee/pc/platform/geno_lua_registry.inc"))
+    for name in block.get("state", {}):
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,22}", name):
+            errors.append(diagnostic(p + ".lua.state." + name, "a slot name is 1..23 letters, digits and underscores", "melee/pc/platform/geno_lua_registry.inc"))
+    declared = set(re.findall(r"function\s+[A-Za-z_][A-Za-z0-9_]*\s*[.:]\s*([A-Za-z_][A-Za-z0-9_]*)\s*\(", text)) | \
+        set(re.findall(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*=\s*function\b", text)) | \
+        set(re.findall(r"\bfunction\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(", text))
+    for j, state in users:
+        for phase in ("enter", "frame"):
+            fn = state["lua"].get(phase)
+            if fn is not None and fn not in declared:
+                errors.append(diagnostic(p + f".states[{j}].lua.{phase}", f"{fn!r} is not a function of the module (declared: {', '.join(sorted(declared)) or 'none'})",
+                                         "melee/pc/platform/geno_lua_registry.inc"))
+    # the same slot names the module touches through ctx.state: a typo is a fault at run time, so say so here
+    touched = set(re.findall(r"\bstate\s*\.\s*([A-Za-z_][A-Za-z0-9_]*)", text))
+    for name in sorted(touched - set(block.get("state", {}))):
+        errors.append(diagnostic(p + ".lua.state", f"the module uses ctx.state.{name}, which is not declared (a fault at run time)",
+                                 "melee/pc/platform/geno_lua_core.h"))
 
 
 def validate(data, base):
@@ -372,6 +433,7 @@ def validate(data, base):
                     validate_target(ctr["target"], states, p+f".states[{j}].counter.target", errors)
                 if ctr.get("from", 1) > ctr.get("to", 2147483647):
                     errors.append(diagnostic(p+f".states[{j}].counter", "counter from must not exceed to"))
+        lua_checks(data, fighter, p, base, errors)
         for key, v in fighter.get("specials", {}).items():
             for target in v["targets"] if isinstance(v, dict) else [v]:
                 validate_target(target, states, p+".specials."+key, errors)

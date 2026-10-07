@@ -103,6 +103,8 @@ Companions: `HANDOFF-2026-10-05.md` (Envoy, Turbo, CPU controller state and the 
 
 **Geno full fighter (2026-10-05):** slices 2 and 3 are in `docs/superpowers/plans/2026-10-05-geno-full-fighter-slice2.md` (the plan and the road to slice 8). Slice 2 is built: a define with its own move set (`melee/pc/geno/mods/vanilla-striker/`, format 7); the lesson is `docs/learn/geno-fighters/11-defined-fighter.md`, the sweep and ranked gaps are in `10-known-gaps.md` section Z, the engine reference is `melee/docs/geno.md` 22.1.
 
+**Geno slice 5, fighter Lua (2026-10-07, not merged):** game `agent/geno-s5`, workspace `ws/geno-s5`. A define's neutral special as a Lua callback with typed per-fighter state (`melee/pc/geno/mods/vanilla-charger/`, engine `pc/platform/geno_lua_core.h`, `pc/geno/geno_game_lua.inc`; reference `melee/docs/geno.md` section 23; brief `docs/superpowers/plans/2026-10-07-geno-slice5-fighter-lua.md`; lesson stub `docs/learn/geno-fighters/13-fighter-lua.md`). Suite 326 of 326, build and ABI audit 0, headless LAB proof passes (charge, release, savestate, `gd.rewind_test` `diff_compared == 0`). Open for the owner: the API shape and limits, the format number (the keys ride `"geno": 9`; an older engine ignores them), fault policy (state abort vs match fault). The bench SyncTest shows only the known unexplained class (P2 script frame counter), same as a retail Mario control.
+
 **Controller remapping source pass (2026-10-03):** CONTROLS now has a controller-only
 remap editor, device profiles, presets and shim input transforms. Report and
 integrator/owner acceptance steps: `_build/tmp/codex-controls-remap-report.md`.

@@ -275,6 +275,7 @@ python tools/port/check_no_disc_text.py                  # decoded retail text n
 python -m unittest tools/port/test_fe_atlas_data.py tools/port/test_fe_atlas_results.py tools/port/test_sis_probe.py tools/port/test_check_no_disc_text.py
 set -a; . ./.env; set +a; python tools/port/sis_probe.py --melee <game checkout>     # the text gate: counts and a verdict per source, from a disc in memory
 bash tools/port/build.sh --native-test atlas-retailtext   # also atlas-data, atlas-models, atlas-results, atlas-data-host
+bash tools/port/build.sh --native-test geno-lua            # the fighter-Lua sandbox (Geno slice 5): no game, no bridge
 ```
 
 `sis_probe.py` reads one SIS archive out of the disc named by an environment variable (`GW_ISO_VANILLA` by default, never printed), decodes every string with the

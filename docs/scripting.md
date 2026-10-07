@@ -2430,6 +2430,13 @@ New hit-rule percent_damage and launch coefficients accept finite signed -1e9..1
 Envoy LAB depth <n> [loop] controls future drive/opponent rolls, unlocks4/5/6 slots and1/2/3 keys, and preserves physical drive tiers and existing CPU builds. Selected player keys follow the dial. Invalid downshifts refuse atomically. Opponents use scalar strength and shared weighted rolls; optional foe role is normal, boss or finalboss. See Envoy PLAYTEST.md for exact early/late FD commands.
 
 
+### Fighter Lua state (read-only; Geno slice 5, 2026-10-07)
+
+`gd.fighter_lua(port)` returns `nil` unless that player's fighter is a Geno `define` that declares a Lua state layout, else `{profile, faults, last_fault, state = {<slot> = integer | number | boolean, ...}}`.
+It reads the game's own typed state block, so it is exact after a savestate load or a rewind. No `gameplay` flag is needed: it is a read, like the other readouts. The Lua that writes that state is **not** a `gd`
+script: it is part of the fighter's folder (`geno.json` `lua`), runs inside the fighter's state machine with no `gd`, and is offline-only because define fighters are. Reference: game repo `docs/geno.md` section 23;
+lesson `docs/learn/geno-fighters/13-fighter-lua.md`. Headless run (2026-10-07, this build, vanilla disc): `PROOF RESULT: PASS` from `demos/geno-define-charger/scripts/proof.lua`.
+
 ### Typed fighter armour (2026-10-04 source pass)
 
 `gd.fighter_armor(entity)` returns an array in type order; `entity`1-6 primary,

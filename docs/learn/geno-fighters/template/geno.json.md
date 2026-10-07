@@ -23,7 +23,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].common_states[].flags | integer: Motion flags | 0 | minimum=0; maximum=2147483647; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].common_states[].move_id | integer: Stale move id | 0 | minimum=0; maximum=255; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].common_states[].move_tag | string: Declared move tag |  | enum=['jab', 'dash_attack', 'tilt', 'smash', 'aerial', 'grab', 'throw', 'special', 'projectile']; geno.md §22; melee/pc/platform/geno_registry.c |
-| fighters[].common_states[].anim | string: Callback override |  | enum=['like', 'next', 'loop', 'hold', 'glide.start', 'glide', 'tornado', 'drill', 'drill.end', 'glide.after', 'cape']; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].common_states[].anim | string: Callback override |  | enum=['like', 'next', 'loop', 'lua', 'hold', 'glide.start', 'glide', 'tornado', 'drill', 'drill.end', 'glide.after', 'cape']; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].common_states[].iasa | string: Callback override |  | enum=['like', 'interrupt', 'none', 'glide']; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].common_states[].phys | string: Callback override |  | enum=['like', 'cape', 'none', 'air', 'air_nodrift', 'air_drift', 'brake', 'ground', 'auto', 'anim_motion', 'glide.start', 'glide', 'glide.attack', 'glide.end', 'tornado', 'drill', 'drill.end', 'drill.start']; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].common_states[].coll | string: Callback override |  | enum=['like', 'cape', 'cape.after', 'none', 'air', 'air_noledge', 'ground', 'ground_stop', 'both', 'anim_motion', 'glide', 'drill', 'drill.start']; geno.md §7; melee/pc/platform/geno_registry.c |
@@ -119,6 +119,9 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].states[].liftoff | ['boolean', 'number']: Enable when nonzero | 1 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].states[].origin | ['boolean', 'number']: Enable when nonzero | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].states[].move_tag | string: Declared move tag |  | enum=['jab', 'dash_attack', 'tilt', 'smash', 'aerial', 'grab', 'throw', 'special', 'projectile']; geno.md §22; melee/pc/platform/geno_registry.c |
+| fighters[].states[].lua | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].states[].lua.enter | string: Module function run once when the state is entered |  | maxLength=31; geno.md §23; melee/pc/platform/geno_registry.c |
+| fighters[].states[].lua.frame | string: Module function run every logic frame (sets the anim callback to lua) |  | maxLength=31; geno.md §23; melee/pc/platform/geno_registry.c |
 | fighters[].states[].gravity | number: Root-motion gravity multiplier | 0 | ; geno.md §17; melee/pc/platform/geno_registry.c |
 | fighters[].states[].facing | string: Lock root-motion travel to entry facing |  | enum=['entry']; geno.md §17; melee/pc/platform/geno_registry.c |
 | fighters[].states[].counter | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
@@ -126,7 +129,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].states[].counter.to | integer: Last counter action frame | 2147483647 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].states[].counter.target | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].states[].counter.negate | ['boolean', 'number']: Enable when nonzero | 1 | ; geno.md §19; melee/pc/platform/geno_registry.c |
-| fighters[].states[].anim | string: Override anim callback | behavior callback | enum=['like', 'next', 'loop', 'hold', 'glide.start', 'glide', 'tornado', 'drill', 'drill.end', 'glide.after', 'cape']; geno.md §16.2; melee/pc/platform/geno_registry.c |
+| fighters[].states[].anim | string: Override anim callback | behavior callback | enum=['like', 'next', 'loop', 'lua', 'hold', 'glide.start', 'glide', 'tornado', 'drill', 'drill.end', 'glide.after', 'cape']; geno.md §16.2; melee/pc/platform/geno_registry.c |
 | fighters[].states[].iasa | string: Override iasa callback | behavior callback | enum=['like', 'interrupt', 'none', 'glide']; geno.md §16.2; melee/pc/platform/geno_registry.c |
 | fighters[].states[].phys | string: Override phys callback | behavior callback | enum=['like', 'cape', 'none', 'air', 'air_nodrift', 'air_drift', 'brake', 'ground', 'auto', 'anim_motion', 'glide.start', 'glide', 'glide.attack', 'glide.end', 'tornado', 'drill', 'drill.end', 'drill.start']; geno.md §16.2; melee/pc/platform/geno_registry.c |
 | fighters[].states[].coll | string: Override coll callback | behavior callback | enum=['like', 'cape', 'cape.after', 'none', 'air', 'air_noledge', 'ground', 'ground_stop', 'both', 'anim_motion', 'glide', 'drill', 'drill.start']; geno.md §16.2; melee/pc/platform/geno_registry.c |
@@ -242,6 +245,10 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].specials.air_lw.select | string: Integer bank selector |  | pattern=^(la_i\|ra_i):(?:[0-9]\|[1-5][0-9]\|6[0-3])$; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].specials.air_lw.targets | array: Ordered entries | absent | maxItems=4; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].fx_bindings | string: Effect bindings JSON relative path |  | ; geno.md §20; melee/pc/platform/geno_registry.c |
+| fighters[].lua | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].lua.script | string: Lua module file relative to the mod root (returns a table of functions) |  | ; geno.md §23; melee/pc/platform/geno_registry.c |
+| fighters[].lua.source | string: Inline Lua module text (tests; a script file is the normal form) |  | ; geno.md §23; melee/pc/platform/geno_registry.c |
+| fighters[].lua.state | object: Typed per-fighter state: slot name to int / float / bool | no slots | maxProperties=16; geno.md §23; melee/pc/platform/geno_lua_registry.inc |
 | fighters[].sounds | array: Ordered entries | absent | maxItems=16; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].sounds[].name | string: Sound name an article refers to |  | maxLength=31; geno.md §22.2; melee/pc/platform/geno_registry.c |
 | fighters[].sounds[].retail_sfx | integer: Engine sound id (ft_PlaySFX's) | 0 | minimum=1; maximum=999999; geno.md §22.2; melee/pc/platform/geno_registry.c |
@@ -415,9 +422,9 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:379 |
 | GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:380 |
 | GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:479 |
-| JDOC_NODES | 4096 | melee/pc/platform/geno_registry.c:73 |
-| JDOC_ARENA | 65536 | melee/pc/platform/geno_registry.c:74 |
-| GN_MAX_SLOTS | 256 | melee/pc/platform/geno_registry.c:468 |
+| JDOC_NODES | 4096 | melee/pc/platform/geno_registry.c:74 |
+| JDOC_ARENA | 65536 | melee/pc/platform/geno_registry.c:75 |
+| GN_MAX_SLOTS | 256 | melee/pc/platform/geno_registry.c:472 |
 | JSON_DEPTH | 32 | melee/pc/platform/geno_registry.c:jd_value |
 | JSON_FILE_BYTES | 1048576 | melee/pc/platform/geno_registry.c:gn_read_file |
 
