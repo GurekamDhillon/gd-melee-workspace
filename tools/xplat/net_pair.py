@@ -84,7 +84,8 @@ def main():
     shutil.rmtree(out, ignore_errors=True)
     os.makedirs(out)
     gw = ps("(Get-NetIPAddress -InterfaceAlias 'vEthernet (WSL*' -AddressFamily IPv4 | Select-Object -First 1).IPAddress")
-    wsl_ip = wsl("ip -4 addr show eth0 | awk '/inet /{print $2}' | cut -d/ -f1").stdout.strip()
+    m = re.search(r'inet (\d+\.\d+\.\d+\.\d+)', wsl('ip -4 addr show eth0').stdout)
+    wsl_ip = m.group(1) if m else ''
     print('windows gateway seen from WSL:', gw, ' WSL address:', wsl_ip)
     port = a.port or (51600 + 50 + (os.getpid() % 40))
     server = None
