@@ -74,11 +74,13 @@ atlas-registry)
     sources=(pc/tests/atlas_registry_test.c pc/platform/gw_ui_registry.c pc/platform/gw_ui_menus_json.c) ;;
 atlas-policy)
     sources=(pc/tests/atlas_policy_test.c pc/platform/gw_ui_policy.c) ;;
-atlas-binding)
-    sources=(pc/tests/atlas_binding_test.c pc/platform/gw_ui_render.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c pc/platform/gw_ui_registry.c pc/platform/gw_ui_menus_json.c pc/platform/gw_ui_policy.c)
+atlas-binding|atlas-select-adapter)
+    sources=(pc/tests/atlas_binding_test.c pc/platform/gw_ui_css.c pc/platform/gw_ui_css_profile.c pc/platform/gw_ui_sss.c pc/platform/gw_ui_render.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c pc/platform/gw_ui_registry.c pc/platform/gw_ui_menus_json.c pc/platform/gw_ui_policy.c)
     for lua_file in lapi lauxlib lbaselib lcode lcorolib lctype ldblib ldebug ldo ldump lfunc lgc linit liolib llex lmathlib lmem loadlib lobject lopcodes loslib lparser lstate lstring lstrlib ltable ltablib ltm lundump lutf8lib lvm lzio; do
         sources+=("pc/third_party/lua-5.4.7/src/$lua_file.c")
     done
+    # the select screens' host half is tested through the same stand-ins and the same real units (gw_script_ui_sel.inc is included by gw_script_ui.inc)
+    [ "$test_name" = atlas-select-adapter ] && sources[0]=pc/tests/atlas_select_adapter_test.c
     flags=(-std=gnu11 -w -ffunction-sections -I "$GW_MELEE/pc/platform" -I "$GW_MELEE/pc/third_party/lua-5.4.7/src") ;;
 atlas-style)
     sources=(pc/tests/atlas_style_test.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c) ;;
@@ -90,7 +92,7 @@ atlas-select-render)
     sources=(pc/tests/atlas_select_render_test.c pc/platform/gw_ui_render.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c) ;;
 atlas-sss)
     sources=(pc/tests/atlas_sss_test.c pc/platform/gw_ui_sss.c pc/platform/gw_ui_css.c pc/platform/gw_ui_css_profile.c) ;;
-*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-tiles, atlas-registry, atlas-policy, atlas-binding, atlas-style)" ;;
+*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-tiles, atlas-registry, atlas-policy, atlas-binding, atlas-select-adapter, atlas-style)" ;;
 esac
 
 if [ "$uses_enet" = 1 ]; then
