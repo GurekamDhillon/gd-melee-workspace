@@ -202,7 +202,7 @@ def check(path, repo=ROOT):
         if not dirs:
             ok = name in TOP_FILES
         elif top == 'bin':
-            ok = len(dirs) == 1 and name in {'melee', 'melee-pc.msvc.map', 'version.txt', 'melee-graphics-probe'}
+            ok = len(dirs) == 1 and name in {'melee', 'melee-pc.msvc.map', 'version.txt', 'melee-graphics-probe', 'netplay_server.txt'}
         elif top == 'lib':
             ok = len(dirs) == 1 and '.so' in name
         elif top == 'launcher':
