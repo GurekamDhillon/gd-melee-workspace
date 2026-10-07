@@ -21,6 +21,7 @@ live); the discs come from `.env`, and no disc path is ever printed.
 | `--resume results.json` | leave out every run already in an earlier results file and carry its rows into the new results |
 | `--max-games N` | hold each launch while N or more `melee-pc.exe` are running, anyone's (default 3, 0 = no gate) |
 | `--parallel N` | concurrent windows (default 4; the gate still applies) |
+| `--include-unused` | also run `akaneia` (StKind 21) and `icetop` (26) |
 | `--monitor2` | tile the windows on the second monitor (origin -1080,-360) instead of the primary |
 
 ## Turbo
@@ -37,3 +38,15 @@ grace for a stalled heartbeat is 30 s of wall clock.
 
 Windows are muted (`MELEE_VOLUME=0`). Another agent's games count toward `--max-games`. Stop only the PIDs
 you started; never kill `melee-pc.exe` by name.
+
+## The two stages that fail on every disc
+
+`akaneia` (21) and `icetop` (26) are unused retail ids, not stages, so the plan leaves them out
+(`--include-unused` brings them back). Both die the way a retail console would:
+
+- **akaneia**: `stage_id_map[21]` is `Gr_Kind_Unk26`, whose `stage_datas[]` row is NULL. `Ground_801C0754`
+  returns early, `stage_info.param` stays NULL, and `Ground_EnableMatchCamera` (called from
+  `gm_Scene_Vs_OnEnter`) reads `param->x4C_fixed_cam`: ACCESS_VIOLATION reading 0x4C, frame 3.
+- **icetop**: `stage_id_map[26]` is `Gr_Kind_Icemt` (the Icicle Mountain ground) but that ground has 9
+  stage-param rows and none for StKind 26 ("no stage param for grkind=22 stkind=26"), so no BGM is
+  chosen and `HSD_ASSERT(bgm != BGM_Undefined)` panics. Icicle Mountain proper is `icemt` (25) and passes.

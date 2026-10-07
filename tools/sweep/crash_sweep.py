@@ -42,6 +42,13 @@ VANILLA_STAGES = [  # (name, StKind) - gw_sl_stage_names in gw_runtime.c, one na
     ("pokefloats", 23), ("bigblue", 24), ("icemt", 25), ("icetop", 26), ("flatzone", 27),
     ("dreamland64", 28), ("oldyoshi", 29), ("oldkongo", 30), ("battlefield", 31), ("fd", 32),
 ]
+# Retail StKinds 21 (Akaneia) and 26 (Icetop) are not stages: Akaneia maps to Gr_Kind_Unk26, whose
+# stage_datas[] row is NULL, so stage_info.param stays NULL and Ground_EnableMatchCamera reads it
+# (ACCESS_VIOLATION at +0x4C, frame 3); Icetop reuses Icicle Mountain's ground (GrIz) but has no
+# stage-param or BGM row, so the BGM assert (ground.c, bgm != BGM_Undefined) fires. Retail freezes
+# on both too. They fail on every disc and always will, so the plan leaves them out unless asked.
+# Icicle Mountain itself is "icemt" (25) and passes.
+UNUSED_RETAIL_STAGES = ("akaneia", "icetop")
 VANILLA_FIGHTERS = list(range(0, 26))  # CharacterKind 0..25, the playable cast
 MEX_CK0 = 34                            # ChKind_Mex0: added fighters are contiguous from here
 EMPTY_PAD = os.path.join(os.path.dirname(os.path.abspath(__file__)), "empty_pad.lua")
@@ -226,12 +233,13 @@ def probe_counts(out, exe, iso, disc, label, monitor2=False):
     return fighters, externals
 
 
-def plan(disc, fighters, externals, only, secs, items="0"):
+def plan(disc, fighters, externals, only, secs, items="0", include_unused=False):
     # items: the scene grammar's item frequency (0 = the old default here; 4 = very high). A sweep
     # with items records the item models' pipelines, tagged MUST_DRAW, for the pipeline seed.
     runs = []
     if only in ("all", "stages"):
-        stages = [(n, "%s" % n) for n, _ in VANILLA_STAGES] + [("ext%d" % e, "ext:%d" % e) for e in range(MEX_EXT0, externals)]
+        stages = [(n, "%s" % n) for n, _ in VANILLA_STAGES
+                                         if include_unused or n not in UNUSED_RETAIL_STAGES] + [("ext%d" % e, "ext:%d" % e) for e in range(MEX_EXT0, externals)]
         for name, ref in stages:
             runs.append(Run(disc, "stage", "%s-st-%s" % (disc, name),
                             "mode=vs;p1=fox/cpu9;p2=falco/cpu9;stage=%s;time=0;items=%s" % (ref, items), secs, name))
@@ -264,6 +272,8 @@ def main():
     ap.add_argument("--resume", default="", help="an earlier results.json: leave out its runs, keep its rows")
     ap.add_argument("--max-games", type=int, default=3,
                     help="hold each launch while this many melee-pc.exe run (0 = no gate)")
+    ap.add_argument("--include-unused", action="store_true",
+                    help="also run the unused retail ids akaneia (21) and icetop (26), which always fail")
     ap.add_argument("--monitor2", action="store_true", help="tile the windows on the second monitor")
     a = ap.parse_args()
     exe = os.path.abspath(a.exe)
@@ -286,7 +296,7 @@ def main():
         if not a.plan:
             wait_for_slot(a.max_games)
         fighters, externals = (0, 0) if a.plan else probe_counts(out, exe, iso, disc, a.label, a.monitor2)
-        runs = plan(disc, fighters, externals, a.only, a.secs, a.items)
+        runs = plan(disc, fighters, externals, a.only, a.secs, a.items, a.include_unused)
         if a.match:
             runs = [r for r in runs if a.match in r.tag]
         runs = [r for r in runs if r.tag not in skip]
