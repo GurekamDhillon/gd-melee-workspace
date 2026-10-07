@@ -41,6 +41,8 @@ gw_snap.c
 gw_surface.cpp
 gw_test.c
 gw_tests_core.c
+gw_ui_css.c
+gw_ui_css_profile.c
 gw_ui_focus.c
 gw_ui_input.c
 gw_ui_layout.c
@@ -50,6 +52,7 @@ gw_ui_policy.c
 gw_ui_registry.c
 gw_ui_render.c
 gw_ui_screen.c
+gw_ui_sss.c
 gw_ui_stack.c
 gw_ui_val.c
 gw_uigen.c
