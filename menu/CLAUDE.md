@@ -43,5 +43,6 @@ consumer consistent when that work starts. This refresh does not change art.
   are copied there. Compare before copying: a one-word change should move one tile.
 - The kit's style is one shear (0.25), flat colour, hard shadows, cobalt faces, gold for emphasis
   (`kit.py`). New art follows it or it will not sit beside the rest.
+- The trophy scenes (Gallery, Lottery, Collection) are **framed screens** (Atlas step 10): the retail scene runs unchanged and Atlas draws plates and chrome around a window. Nothing under `menu/` is retired by it; the retail 2D pieces stay on the disc, hidden by the mask only for a screen the owner has said go to, and nothing of the disc is copied.
 - The Atlas role set is `ATLAS_TYPE_SCALE` in `pipeline/kit.py`; `pipeline/test_atlas_fonts.py` regenerates the font pages and checks them against the C role table and the loader's limits.
 - The character select, stage select and loading screen are Atlas screens whose tiles carry the disc's own icons and portraits. Those are decoded in memory at run time from the player's disc and are never written to this repo or to disk (`gw_Kit_TexAddHsd`); where decoding is impossible the shipped look is a flat frame with the two letters and the words DISC ART. No test fixture holds disc bytes.

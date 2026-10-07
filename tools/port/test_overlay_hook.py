@@ -86,6 +86,18 @@ class Hook(unittest.TestCase):
         for m in re.finditer(r'OSReport\("([^"]*)"', b):
             self.assertNotIn("%s", m.group(1), "the probe never prints a string (no disc text in a log)")
 
+    def test_the_chrome_stands_down_over_the_trophy_list(self):
+        t = read("src/melee/gm/gmfrontend_atlas_toy.inc")
+        b = body(t, r"static void fat_gallery_submit\(void\)")
+        self.assertLess(b.index("Toy_PcReadback(5)"), b.index("Ui_FrameBegin"), "the list check comes before anything is submitted")
+        self.assertRegex(b, r"Toy_PcReadback\(5\) != 0\) \{[^}]*Ui_Close\(\"toy.gallery\"\);[^}]*return;", "the open frame screen is closed while the list is up")
+
+    def test_the_chrome_stands_down_during_a_lottery_draw(self):
+        t = read("src/melee/gm/gmfrontend_atlas_toy.inc")
+        b = body(t, r"static void fat_lottery_submit\(void\)")
+        self.assertLess(b.index("busy != 0"), b.index("Ui_FrameBegin"), "the draw check comes before anything is submitted")
+        self.assertRegex(b, r"busy != 0\) {[^}]*Ui_Close\(\"toy.lottery\"\);[^}]*return;")
+
     def test_no_window_means_no_chrome_and_no_mask(self):
         t = read("src/melee/gm/gmfrontend_atlas_toy.inc")
         for name in ("FAT_GALLERY_WIN", "FAT_LOTTERY_WIN", "FAT_COLLECTION_WIN"):

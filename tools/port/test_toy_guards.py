@@ -95,8 +95,8 @@ class Guards(unittest.TestCase):
                 self.assertNotIn("_RENDER", m.group(1), "the retail 3D at link %s must not be guarded" % link)
         # the render wrappers call retail's own callback and nothing else
         bodies = function_bodies(t)
-        self.assertRegex(bodies["Toy_RenderPanelGuarded"], r"Ui_RetailHidden\(AT_RE_TOY_PANEL\)\) return;\n\s*HSD_GObj_JObjCallback\(gobj, pass\);")
-        self.assertRegex(bodies["Toy_RenderInfoGuarded"], r"Ui_RetailHidden\(AT_RE_TOY_INFO\)\) return;\n\s*HSD_SObjLib_803A49E0\(gobj, pass\);")
+        self.assertRegex(bodies["Toy_RenderPanelGuarded"], r"!tyList_PcActive\(\) && Ui_RetailHidden\(AT_RE_TOY_PANEL\)\) return;\n\s*HSD_GObj_JObjCallback\(gobj, pass\);")
+        self.assertRegex(bodies["Toy_RenderInfoGuarded"], r"!tyList_PcActive\(\) && Ui_RetailHidden\(AT_RE_TOY_INFO\)\) return;\n\s*HSD_SObjLib_803A49E0\(gobj, pass\);")
 
     def test_gallery_text_hiding_is_only_ever_set_to_one_under_the_mask(self):
         t = read("src/melee/ty/toy.c")
@@ -107,12 +107,49 @@ class Guards(unittest.TestCase):
         window = "\n".join(t.split("\n")[max(0, n - 4):n])
         self.assertIn("Ui_RetailHidden(AT_RE_TOY_TEXT)", window)
 
+    def test_the_list_flag_is_the_ports_own_bookkeeping(self):
+        t = read("src/melee/ty/tylist.c")
+        bodies = function_bodies(t)
+        for fn, val in (("tyList_803147C4", "1"), ("_tyList_803148E4", "0")):
+            b = bodies[fn]
+            self.assertEqual(len(re.findall(r"tyList_pc_active = " + val + ";", b)), 1, fn)
+            n = [i for i, l in enumerate(t.split("\n"), 1) if "tyList_pc_active = " + val + ";" in l and l.strip().endswith(";")]
+            for line in n:
+                self.assertTrue(inside_target_pc(t, line), "tylist.c:%d: the flag is set only on the PC build" % line)
+        # nothing reads the flag but the port's own accessor and guards
+        self.assertEqual(len(re.findall(r"\btyList_pc_active\b", t)), 5, "declaration, accessor read, setter, and the two retail sites")
+
     def test_readbacks_only_read(self):
         for f, fn in (("src/melee/ty/toy.c", "Toy_PcReadback"), ("src/melee/ty/tyfigupon.c", "tyFigupon_PcReadback")):
             t = read(f)
             b = function_bodies(t)[fn]
             stores = [l for l in b.split("\n") if re.search(r"(?:->|\.)\w+\s*(?:[-+|&]?=)[^=]", l) or re.search(r"\]\s*=[^=]", l) or re.search(r"\+\+|--", l)]
             self.assertEqual(stores, [], f + ": " + fn + " must only read (a local declaration is the only `=` allowed)")
+
+
+class SkippedStayRetail(unittest.TestCase):
+    """Movies, Snapshots, Staff Roll and the Language row stay retail behind a hand-off (the owner's word, 2026-10-06; Review Focus 10)."""
+
+    def test_movies_snapshots_and_language_are_still_native_hand_offs(self):
+        m = read("src/melee/gm/gmfrontend_menus.inc")
+        for label, sel in (("SNAPSHOTS", "SEL_DATA_SNAP"), ("MOVIES", "SEL_DATA_ARCHIVES"), ("LANGUAGE", "SEL_SETTINGS_LANG")):
+            row = re.findall(r'\{ "%s",[^}]*\}' % label, m)       # a row may wrap onto a second line
+            self.assertEqual(len(row), 1, label)
+            self.assertIn(sel, row[0])
+            self.assertIn("FA_NATIVE", row[0], label + " is a hand-off to the retail screen, not an Atlas page")
+
+    def test_staff_roll_has_no_menu_entry_and_no_policy_row(self):
+        m = read("src/melee/gm/gmfrontend_menus.inc")
+        self.assertNotRegex(m, r"STAFF|GM_STAFFROLL", "retail has no menu entry for it; adding one is a new launch path and an owner decision")
+        p = read("pc/platform/gw_ui_policy.c")
+        self.assertNotRegex(p, r"0x2B|STAFF", "no policy row names the staff roll")
+        toy = read("src/melee/gm/gmfrontend_atlas_toy.inc")
+        self.assertIn("GS_STAFFROLL == 0x2B", toy, "the numbers atlas_policy_test.c uses for the skipped scenes are pinned against the enum")
+
+    def test_only_the_three_trophy_scenes_have_a_chrome_id_or_a_mask(self):
+        p = read("pc/platform/gw_ui_policy.c")
+        rows = re.findall(r"\{ (\d+), [^}]*\"toy\.(\w+)\" \}", p)
+        self.assertEqual(sorted(rows), sorted([("11", "gallery"), ("12", "lottery"), ("13", "collection")]))
 
 
 if __name__ == "__main__":
