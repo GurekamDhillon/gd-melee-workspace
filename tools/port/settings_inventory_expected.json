@@ -1,4 +1,11 @@
 {
+ "fe_items_erase": {
+  "file": "gmfrontend_settings.inc",
+  "kinds": {
+   "ACTION": 6
+  },
+  "rows": 6
+ },
  "fe_items_howto_online": {
   "file": "gmfrontend_settings.inc",
   "kinds": {
@@ -37,18 +44,20 @@
   "file": "gmfrontend_settings.inc",
   "kinds": {
    "ACTION": 3,
-   "SLIDER": 9
+   "SLIDER": 9,
+   "TOGGLE": 4
   },
-  "rows": 12
+  "rows": 16
  },
  "fe_items_set_gameplay": {
   "file": "gmfrontend_settings.inc",
   "kinds": {
+   "ACTION": 2,
    "CHOICE": 3,
    "SLIDER": 3,
    "TOGGLE": 4
   },
-  "rows": 10
+  "rows": 12
  },
  "fe_items_set_online": {
   "file": "gmfrontend_settings.inc",
