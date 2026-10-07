@@ -74,8 +74,12 @@ atlas-registry)
     sources=(pc/tests/atlas_registry_test.c pc/platform/gw_ui_registry.c pc/platform/gw_ui_menus_json.c) ;;
 atlas-policy)
     sources=(pc/tests/atlas_policy_test.c pc/platform/gw_ui_policy.c) ;;
+atlas-retail)
+    sources=(pc/tests/atlas_retail_test.c pc/platform/gw_ui_retail.c) ;;
+atlas-hud)
+    sources=(pc/tests/atlas_hud_test.c pc/platform/gw_ui_hud.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_stack.c pc/platform/gw_ui_val.c) ;;
 atlas-binding|atlas-select-adapter)
-    sources=(pc/tests/atlas_binding_test.c pc/platform/gw_ui_css.c pc/platform/gw_ui_css_profile.c pc/platform/gw_ui_sss.c pc/platform/gw_ui_render.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c pc/platform/gw_ui_registry.c pc/platform/gw_ui_menus_json.c pc/platform/gw_ui_policy.c)
+    sources=(pc/tests/atlas_binding_test.c pc/platform/gw_ui_css.c pc/platform/gw_ui_css_profile.c pc/platform/gw_ui_sss.c pc/platform/gw_ui_render.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c pc/platform/gw_ui_registry.c pc/platform/gw_ui_menus_json.c pc/platform/gw_ui_policy.c pc/platform/gw_ui_retail.c pc/platform/gw_ui_hud.c)
     for lua_file in lapi lauxlib lbaselib lcode lcorolib lctype ldblib ldebug ldo ldump lfunc lgc linit liolib llex lmathlib lmem loadlib lobject lopcodes loslib lparser lstate lstring lstrlib ltable ltablib ltm lundump lutf8lib lvm lzio; do
         sources+=("pc/third_party/lua-5.4.7/src/$lua_file.c")
     done
@@ -92,7 +96,7 @@ atlas-select-render)
     sources=(pc/tests/atlas_select_render_test.c pc/platform/gw_ui_render.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c) ;;
 atlas-sss)
     sources=(pc/tests/atlas_sss_test.c pc/platform/gw_ui_sss.c pc/platform/gw_ui_css.c pc/platform/gw_ui_css_profile.c) ;;
-*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-tiles, atlas-registry, atlas-policy, atlas-binding, atlas-select-adapter, atlas-style)" ;;
+*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-tiles, atlas-registry, atlas-policy, atlas-retail, atlas-hud, atlas-binding, atlas-style, atlas-profile, atlas-css, atlas-select-render, atlas-sss, atlas-select-adapter)" ;;
 esac
 
 if [ "$uses_enet" = 1 ]; then

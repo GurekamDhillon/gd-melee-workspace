@@ -1,0 +1,938 @@
+# Atlas step 9: the Qt launcher in Atlas style: Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Redraw the launcher (`tools/release/launcher/qt/`, Qt 6 Widgets) in the Atlas style: the one tokens file (`menu/atlas/tokens.json`), Barlow Condensed and Source Sans 3 from the Qt resource file with the OFL text shipped beside them, the parts re-implemented with `QPainter` polygons (chamfered plates, rows, a tab strip, toggles, tags, key chips), and the four tabs (Play, Mods, Diagnostics, About) arranged on Atlas' four places (trail, primary, explainer, keys). The launcher is mouse and keyboard, not pad. **Behaviour does not change**: disc handling, mods, diagnostics, graphics preflight and launch preparation stay in `launcher_core` byte for byte; this step touches drawing, layout, strings' presentation and packaging only.
+
+**Architecture:** (1) `atlas.h/.cpp`: the token loader (colours, sizes, times from the embedded JSON), the font roles, and pure geometry and text-fit helpers (`plate`, `lifted`, `frontEdge`, `fit`, `contrast`) that use only `QtGui` value types, so they are tested with no window. (2) new `kit.h/.cpp`: the Atlas parts as widgets and a delegate (`Button`, `Toggle`, `Tag`, `KeyChip`, `RowDelegate`, `TabRail`, `Pane`, `Explainer`, `Keys`), painted from (1); the old kit moves to `legacy_kit.*` and is deleted in Task 10. (3) `window.cpp` re-laid-out on the four places; the tab bodies keep their controls and signals. (4) A new library `launcher_ui` (window, kit, atlas) so tests can construct the window offscreen. (5) Two new checks: a Python **token agreement** test (CSS to JSON to the C header to the values the launcher loads) and `check_qt_strings.py`, because the Qt window's strings do **not** go through `Lang.cs`.
+
+**Tech Stack:** C++17, Qt 6 (Widgets, Test; `>= 6.5` for the release build, `>= 6.2` as `CMakeLists.txt` requires), CMake and CTest, Python 3 for the string, agreement and icon scripts. Tests run with `QT_QPA_PLATFORM=offscreen` (no window appears; this is allowed while the owner is at the machine).
+
+**Spec:** `docs/superpowers/specs/2026-10-06-menu-reunification-design.md`, section 13.9 (this step), with 4 (style), 10 (text), 16 (the launcher/game drift risk), 17 (credits). The owner's answers: spec section 2 ("the launcher is in"). Form: `docs/superpowers/plans/2026-10-06-atlas-step1-components-and-envoy-bag.md`.
+
+**Status of the plan:** written 2026-10-06 against the launcher as it stands (`qt/kit.h`, `kit.cpp`, `kit.qrc`, `window.h`, `window.cpp`, `main.cpp`, `graphics_tests.cpp`, `tests.cpp`, `CMakeLists.txt`, `check_strings.py`, `Lang.cs`, `GDMeleeLauncher.cs`), `tools/release/build_launcher.ps1` and `.sh`, `check_release.ps1`, `test_release_guard.py`, the Atlas concept `17-launcher` (`c-atlas/screens_b.py:258-290`, read as HTML text; no image was opened) and `menu/atlas/tokens.json`, `menu/pipeline/atlas_tokens.py` (merged with step 1). **Nothing here was compiled, run or seen**: the C++ is unbuilt, the Qt version on the build machine is not known to this plan (unverified), and every "must be seen" item is for the owner.
+
+## Corrections to the spec, found in the code
+
+1. **The Qt window does not use `Lang`.** 13.9 and the root `CLAUDE.md` say strings go through `Lang`/`check_strings.py`. `Lang.cs` and `check_strings.py` belong to the **C# reference launcher** (`GDMeleeLauncher.cs`, WinForms, Segoe UI, retained for reference). `check_strings.py` reads only `*.cs` files. The Qt window carries its strings inline as `t("English", "Spanish")` pairs (`window.cpp`, `main.cpp` sets `launcher::spanish`), nothing checks them, and many pairs are already identical (`t("Copy diagnostics", "Copy diagnostics")`: untranslated). Task 7 adds a checker for the Qt pairs; `check_strings.py` stays as it is for the C# sources.
+2. **`graphics_tests.cpp` does not test the interface.** It tests `parseGraphicsReport`, `graphicsEnvironment`, `graphicsDriverHelp` and `graphicsStartupFailure` (`graphics.h`): the 32-bit Vulkan preflight. It is a **regression guard** here (it must still pass), not a style test. `tests.cpp` likewise covers `launcher_core` (discs, mods, launch environment, diagnostics).
+3. **The launcher is not Windows only.** `CMakeLists.txt` builds it for Linux too (Wayland client, `Q_OS_LINUX` graphics preflight group in `window.cpp`, `test_graphics_wsl.sh`). The offscreen tests below run on both; the 100 percent and 150 percent look is a Windows desktop item.
+4. **The C# launcher has no menu art.** 13.9 retires "the C# reference launcher's art"; `GDMeleeLauncher.cs` draws with WinForms controls and Segoe UI and reads no `menu/out_*` file. Step 9 does not edit it. The art the Qt launcher reads is `kit.qrc`: `_build/ui/kit.json`, `kit_motion.json` and five `*.gxtex` icons (generated by `menu/pipeline`), plus Source Sans files.
+5. **The mockup (`17-launcher`) draws its own title bar** (the mark, `GD'S MELEE . Launcher`, a close glyph, 34 px). A frameless window loses native move, snap, accessibility and Wayland decorations. **Decision for this plan:** keep the operating system's frame and draw the strip's content (mark, name, version) inside the client area. An owner call if he wants the frameless look (Owner decisions).
+6. **The mockup's window is 900 x 600 logical.** The current window is 1160 x 800 with a 1000 x 730 minimum, sized for the Diagnostics tab. The Atlas layout targets 960 x 640 and scrolls the Diagnostics body; whether every tab holds at 900 x 600 and at a 150 percent scale is **(unverified; Task 4 step 5 and Task 10)**.
+7. **No Hasklug in the launcher.** The numerals role (`num*`) uses Hasklug in the game; the launcher uses Source Sans 3 Semibold (tabular digits where the font offers them). Shipping a third font to a settings window buys nothing, and the package stays smaller. If the owner wants the same numerals, `menu/Hasklug` and `Hasklug-OFL-1.1.txt` are already in the repo and release.
+8. **`kit.qrc` makes the launcher build depend on generated art** (`_build/ui/*`). After this step the launcher resources are only files committed under `menu/` (tokens, Barlow, Source Sans). The build no longer needs the art pipeline to have run; Task 10 says so in `tools/release/README.md`.
+
+## Global Constraints
+
+Exact values come from the spec; if a task seems to need a different one, stop and ask the coordinator.
+
+- **Tokens:** every colour, size and time the launcher paints comes from `menu/atlas/tokens.json` through `atlas::colour/px/ms`. **No literal colour or token-sized number in a paint function** (the one exception: the 150 percent scale factor tests). A guard test greps `kit.cpp` and `window.cpp` for `QColor(` with a hex literal and `#rrggbb` strings.
+- **Type:** roles `cap12/14/16/20` (Barlow Condensed SemiBold, tracked +0.10 em), `title 28`, `hero 44` (Barlow Condensed Bold), `body12/14` and `row16` (Source Sans 3 Semibold). Floor 12 px. Fit rule: too wide steps down one role of the same face, then elides with an ellipsis; **never squash or shrink below 12**. Text on a plate is measured with the same metrics that paint it.
+- **Shape and focus:** flat fills only (no shadows, gradients, curves, antialiased arcs). Plate edge 3 px, modal 6; chamfers on the **top-left and bottom-right** corners only: 8 px panes, 5 px rows, buttons and tags, 3 px cells; focus is three cues at once: lift 2 px, ember front edge, a 4 px tick at the left of a row. Pressed drops 1 px and darkens the edge to `ember-d`. Disabled is hatched (`Qt::BDiagPattern`) plus the word, never only dimmed. Colour is never the only signal.
+- **Palette:** ember means focus or the one action (the Play button) and nothing else; jade means information and "on" (Ready tags, the ON half of a toggle). The legacy section tints (Versus blue, Solo brown, ...) do not exist.
+- **Motion:** focus lift 80 ms, tab 120 ms (tokens `m-focus`, `m-tab`). The launcher has no Reduced motion setting of its own and no tween beyond those two; a platform hint to reduce animations (read through `QStyleHints` where Qt offers it) turns both into cuts, and without a hint they run. This is a proposal: the game's Reduced Motion setting is not readable from the launcher.
+- **Input:** mouse and keyboard only. Every control is reachable by Tab; arrows move in lists and the tab rail; Enter plays on the Play tab (the default button); `Ctrl+M` opens Mods (the mockup's key chip and the existing `selectMods`); `Ctrl+1..4` select the tabs; Esc closes a dialog. Focus is visible on every control (the three cues).
+- **Behaviour unchanged.** No edit to `launcher_core.*`, `graphics.*`, `diagnostics.*`. `launcher_tests` and `graphics_tests` pass as before. The launch path (`play`, `startGame`, `finishLaunchReport`, the Linux graphics preflight) keeps its code; only the widgets it touches change type.
+- **No disc-derived data,** here or anywhere. The launcher draws no game art. Disc cells use a two-letter badge drawn from the disc kind string, never a texture. `check_release.ps1` and `check_release_linux.py` keep passing.
+- **Credit outside assets.** Barlow Condensed (Jeremy Tribby, https://github.com/jpt/barlow, SIL OFL 1.1; files from https://github.com/google/fonts/tree/main/ofl/barlowcondensed) now ships in the launcher: the same change adds its licence file to the launcher package and the release guards, and updates the `CREDITS.md` line from "ships in the game" to "ships in the game and the launcher". Source Sans 3 (Adobe) and Qt (The Qt Company, https://www.qt.io) are already credited. Icons are this project's own (`c-atlas/parts.py`, nothing traced from Nintendo or HAL).
+- **Mods work on vanilla.** The Mods tab shows what `installedMods` returns; no behaviour about which mod runs on which disc changes.
+- **English only** in code, docs and new strings. The existing Spanish halves of the `t()` pairs are **left as they are** (neither extended nor removed) pending the owner's decision. New strings are written `t("English", "English")`, the form the file already uses for an untranslated string, so the checker can list them.
+- **Process rules (this machine):** no launcher, game or browser window is opened while the owner is at the machine (a window steals focus); the offscreen platform is the exception that makes the tests possible. Never terminate processes by image name; stop only a process you started, by PID. Build the launcher only through `tools/release/build_launcher.ps1` (Windows) or `.sh` (Linux/WSL), in a private worktree; never raw cmake into the shared `_build`. Two repositories: the launcher, `menu/`, `tools/` and `CREDITS.md` are in the **workspace repo** (this whole step); the game repo is untouched except that its generated `gw_ui_tokens.h` is read by the agreement test.
+
+## Needs from earlier steps (gate checks)
+
+| # | What step 9 needs | From | Check | If missing |
+|---|---|---|---|---|
+| N1 | `menu/atlas/tokens.json` and its generator | step 1 | `python menu/pipeline/test_atlas_tokens.py` passes; `python -c "import json;json.load(open('menu/atlas/tokens.json'))"` | step 1 owns it; stop |
+| N2 | Barlow Condensed files and the OFL text in the repo | step 1 | `ls menu/Barlow` shows `BarlowCondensed-SemiBold.ttf`, `-Bold.ttf`, `OFL.txt`; `tools/release/licenses/BarlowCondensed-OFL-1.1.txt` exists | step 1 owns it; stop |
+| N3 | Source Sans 3 Semibold in the repo | existing | `menu/SourceSans3/SourceSans3-Semibold.otf` | stop |
+| N4 | The mockup's own measurements | concept | `screens_b.py:258-290` (read) | read it |
+| N5 | A Qt 6 SDK and a C++17 toolchain on the build machine | environment | `cmake --version`; `QT_ROOT_DIR` set (Windows) or Qt dev packages (Linux) | **(unverified; Task 0)** a Windows agent must have them to build; the Python tasks need none |
+| N6 | Steps 2 to 8 and 10 | other steps | **none for steps 1 to 10 of this plan** except Task 11 | Task 11 (the global art retirement) starts only when they have merged |
+
+This step depends on step 1 for the tokens and fonts only (spec 13.9). It can start now and run in parallel with 3 to 8; it must not delete any shared `menu/out_*` set before Task 11's gate.
+
+## Review Focus
+
+| # | What goes wrong for a player | Pinned by |
+|---|---|---|
+| 1 | **The launcher no longer starts the game** (a widget changed type and a signal lost its connection: Play, double-click on a disc, Enter, `Ctrl+M`, the Linux graphics check). | Task 5 `play_signals` (every control the old tab had still emits what it did: click Play with a fake process program), `launcher_tests` unchanged, Task 10 step 3 |
+| 2 | **A string that does not fit**: a 40-character disc name, a long path, a Spanish label at 900 px, a diagnostics button row at 150 percent. | Task 2 `fit_*`, Task 4 `layout_*` (offscreen, three window sizes, long strings), Task 7 string lint |
+| 3 | **Focus is invisible or lands on nothing**: a tab switch leaves focus on a hidden control; the disc list empty (first run) has no focusable control but Add disc. | Task 3 `focus_cues`, Task 4 `first_run_focus` (empty settings), Task 5 `tab_focus` |
+| 4 | **The token drifts from the game's**: the launcher shows a different ember than the menus. | Task 9 agreement test (CSS, JSON, header, launcher values) |
+| 5 | **A missing font silently becomes a system font**: Barlow absent from the qrc, the launcher looks like the old one with the new shapes. | Task 1 `fonts_loaded` (the family is registered and a probe string measures differently from the fallback), Task 8 package guard |
+| 6 | **The release package fails its own guard**: the Barlow licence not shipped, or a removed resource still listed. | Task 8 (`check_release.ps1`, `check_release_linux.py`, `test_release_guard.py`), Task 10 grep guard |
+| 7 | **Styling reaches the diagnostics report or the logs**: nothing in `diagnostics.*` or `launcher_core.*` includes the kit. | Task 10 `no_kit_in_core` (a grep) |
+| 8 | **Disabled looks like enabled**: a hatched play button must also say why (no disc added, graphics check running). | Task 3 `disabled_is_hatched`, Task 5 `play_reasons` |
+
+---
+
+## File structure
+
+All in the **workspace repo**.
+
+| File | Create/Modify | Responsibility |
+|---|---|---|
+| `tools/release/launcher/qt/atlas.h`, `atlas.cpp` | Create | tokens, font roles, geometry and fit helpers (QtGui value types only) |
+| `tools/release/launcher/qt/kit.h`, `kit.cpp` | Rewrite | the Atlas parts as widgets and a delegate; legacy parts removed in Task 10 |
+| `tools/release/launcher/qt/atlas_icons.h` | Create (generated) | the nine icon paths as `QPainterPath` builders; never hand-edited |
+| `tools/release/launcher/gen_atlas_icons.py`, `test_gen_atlas_icons.py` | Create | icons from `c-atlas/parts.py` to `atlas_icons.h` |
+| `tools/release/launcher/qt/window.h`, `window.cpp` | Modify | the four places; tab bodies keep their controls |
+| `tools/release/launcher/qt/main.cpp` | Modify | call `atlas::initialize()` (after `kit::initialize()` is replaced) |
+| `tools/release/launcher/qt/kit.qrc` | Modify | `atlas/tokens.json`, the Barlow pair, Source Sans Semibold; no `_build/ui` entries |
+| `tools/release/launcher/qt/CMakeLists.txt` | Modify | `launcher_ui` library, `launcher_atlas` test, offscreen env, the Barlow licence install |
+| `tools/release/launcher/qt/atlas_tests.cpp` | Create | tokens, fonts, geometry, parts, window layout (offscreen) |
+| `tools/release/launcher/check_qt_strings.py`, `test_check_qt_strings.py` | Create | the `t()` pairs checker |
+| `tools/release/launcher/test_atlas_agreement.py` | Create | token agreement |
+| `tools/release/check_release.ps1`, `check_release_linux.py`, `test_release_guard.py`, `test_release_guard_linux.py` | Modify | the Barlow licence is a required launcher file |
+| `tools/release/README.md`, `tools/CLAUDE.md`, `docs/NEXT-SESSION.md`, `menu/CLAUDE.md`, `CREDITS.md` | Modify | the state, the build note, the credit line |
+| `tools/port/art_readers.py` | Create (Task 11) | who still reads each `menu/out_*` set |
+
+## Preflight (once, before Task 0; not a task)
+
+- [ ] **Step 1: Read.** `CLAUDE.md` (root), `tools/CLAUDE.md`, `tools/release/README.md`, `docs/NEXT-SESSION.md`, the spec sections 4, 10, 13.9, `tools/release/launcher/qt/kit.cpp` and `window.cpp` whole, `CMakeLists.txt`, `menu/CLAUDE.md` (the art pipeline), `c-atlas/screens_b.py:258-290`.
+- [ ] **Step 2: A private worktree** (workspace repo only):
+
+```bash
+export MAIN="<the workspace root>"
+git -C "$MAIN" worktree add worktrees/ws-atlas9 -b ws/atlas9
+export WS="$MAIN/worktrees/ws-atlas9"
+```
+
+Every command below runs in `$WS` unless it says otherwise. The launcher builds into `$WS/_build/launcher-qt-atlas9` (never the shared `_build`):
+
+```bash
+export LB="$WS/_build/launcher-qt-atlas9"
+lt() { QT_QPA_PLATFORM=offscreen cmake -S "$WS/tools/release/launcher/qt" -B "$LB" -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DLAUNCHER_DEPLOY_QT=OFF && cmake --build "$LB" -j 8 && QT_QPA_PLATFORM=offscreen ctest --test-dir "$LB" --output-on-failure; }
+```
+
+(On Windows use `tools/release/build_launcher.ps1 -BuildDir <dir>`; it runs the same CTest suite. `LAUNCHER_DEPLOY_QT=OFF` is the system-Qt development build `CMakeLists.txt` documents.)
+- [ ] **Step 3: Baselines** (must still pass at the end):
+
+```bash
+python menu/pipeline/test_atlas_tokens.py
+python tools/release/launcher/check_strings.py | tail -1
+python -m unittest tools/release/test_release_guard.py tools/release/test_release_guard_linux.py
+lt            # launcher_core (tests.cpp) and launcher_graphics (graphics_tests.cpp)
+```
+
+Record each result line. `check_strings.py` today reports the C# table only; note its last line.
+
+---
+
+### Task 0: Inputs and a first look at what the build needs
+
+**Files:** none changed; this task decides if the C++ tasks can run here.
+
+- [ ] **Step 1: The gate commands.** Run N1, N2, N3 of the table. All must pass.
+- [ ] **Step 2: Can this machine build Qt?** `cmake --version`; on Windows `echo $QT_ROOT_DIR` (an MSVC x64 Qt 6.5 or newer); on Linux `pkg-config --modversion Qt6Widgets` or `qmake6 -v`. If there is no Qt: **Tasks 1 to 6 are written and committed unbuilt and the commit messages say so**; only the Python tasks (7, 8's checks, 9) and the generator (Task 3 step 1) run. Say it in the report; do not claim a pass.
+- [ ] **Step 3: The qrc dependency.** `grep -n "_build/ui" tools/release/launcher/qt/kit.qrc`: eight entries today (finding 8). Task 1 removes them; confirm the files `window.cpp` and `kit.cpp` read from them (`:/kit/kit.json`, `:/kit/motion.json`, `:/kit/*.gxtex`) are only read in `kit.cpp`.
+- [ ] **Step 4: The mockup's numbers.** From `screens_b.py:258-290` write down, in the commit message of Task 4: the window 900 x 600; the rail 204 wide (4 rows 44 high, gap 6); the strip 34 high; main padding 18 24 18; the left column 420 wide (Disc library pane, Options pane), the right column fills (Explainer pane, the Play block); list gap 5; rows are `row tall` (46) for discs and 34 for options. These are the layout constants of Task 4; **read them from the file, do not trust this paragraph if the file differs.**
+
+---
+
+### Task 1: Tokens, fonts and the resource file
+
+**Files:**
+- Create: `tools/release/launcher/qt/atlas.h`, `atlas.cpp`, `atlas_tests.cpp`
+- Modify: `tools/release/launcher/qt/kit.qrc`, `CMakeLists.txt`
+
+**Interfaces:**
+Consumes `menu/atlas/tokens.json` (`colours`: name to `0xRRGGBBAA` integer; `px`; `ms`), the three font files. Produces `atlas::initialize()`, `colour`, `px`, `ms`, `Role`, `font(Role)`.
+
+- [ ] **Step 1: Write the failing test** `atlas_tests.cpp` (grows in Tasks 2, 3, 4):
+
+```cpp
+#include "atlas.h"
+#include <QFontDatabase>
+#include <QFontMetricsF>
+#include <QtTest>
+using namespace launcher;
+
+class AtlasTests : public QObject {
+    Q_OBJECT
+private slots:
+    void initTestCase() { atlas::initialize(); }
+
+    void tokens_load() {
+        QCOMPARE(atlas::colour("ember"), QColor(0xff, 0x7a, 0x3d));
+        QCOMPARE(atlas::colour("jade"), QColor(0x4f, 0xd6, 0xaa));
+        QCOMPARE(atlas::colour("plate"), QColor(0x1a, 0x1f, 0x29));
+        QCOMPARE(atlas::colour("scrim").alpha(), 0xb8);              // rgba(5,7,10,.72)
+        QVERIFY(!atlas::colour("no-such-token").isValid());
+        QCOMPARE(atlas::px("t-row"), 16); QCOMPARE(atlas::px("ch"), 8); QCOMPARE(atlas::px("ch-s"), 5); QCOMPARE(atlas::px("ch-xs"), 3);
+        QCOMPARE(atlas::px("s1"), 4); QCOMPARE(atlas::px("s5"), 24);
+        QCOMPARE(atlas::ms("m-focus"), 80); QCOMPARE(atlas::ms("m-tab"), 120);
+        QCOMPARE(atlas::px("no-such-token"), 0);
+    }
+
+    void fonts_loaded() {
+        const auto families = QFontDatabase::families();
+        QVERIFY2(families.contains("Barlow Condensed"), "Barlow Condensed is not registered: the qrc entry is missing or the file is damaged");
+        QVERIFY(families.contains("Source Sans 3"));
+        // the role really is the face: a string measures differently in Barlow Condensed than in a generic family
+        QFontMetricsF caps(atlas::font(atlas::Role::Cap16)), generic(QFont("Arial", -1));
+        QVERIFY(atlas::font(atlas::Role::Cap16).family().startsWith("Barlow Condensed"));
+        QCOMPARE(atlas::font(atlas::Role::Cap16).pixelSize(), 16);
+        QCOMPARE(atlas::font(atlas::Role::Cap12).pixelSize(), 12);
+        QVERIFY(atlas::font(atlas::Role::Cap12).letterSpacing() > 0);   // tracked +0.10 em
+        QVERIFY(atlas::font(atlas::Role::Title).bold());                // Barlow Condensed Bold
+        QVERIFY(atlas::font(atlas::Role::Row16).family().startsWith("Source Sans 3"));
+        (void) caps; (void) generic;
+    }
+    void roles_never_below_floor() {
+        for (auto r : {atlas::Role::Cap12, atlas::Role::Cap14, atlas::Role::Cap16, atlas::Role::Cap20, atlas::Role::Title, atlas::Role::Hero,
+                       atlas::Role::Body12, atlas::Role::Body14, atlas::Role::Row16})
+            QVERIFY(atlas::font(r).pixelSize() >= 12);
+    }
+};
+QTEST_MAIN(AtlasTests)
+#include "atlas_tests.moc"
+```
+
+- [ ] **Step 2: The resource file.** Replace `kit.qrc` with (paths relative to the file, as the existing ones are):
+
+```xml
+<RCC><qresource prefix="/">
+ <file alias="atlas/tokens.json">../../../../menu/atlas/tokens.json</file>
+ <file alias="fonts/barlow-semibold.ttf">../../../../menu/Barlow/BarlowCondensed-SemiBold.ttf</file>
+ <file alias="fonts/barlow-bold.ttf">../../../../menu/Barlow/BarlowCondensed-Bold.ttf</file>
+ <file alias="fonts/sourcesans-semibold.otf">../../../../menu/SourceSans3/SourceSans3-Semibold.otf</file>
+</qresource></RCC>
+```
+
+(The legacy `kit.json`, `motion.json`, the two Source Sans weights the old kit used and the five `.gxtex` icons are **not** removed yet: keep them in a second `<qresource prefix="/kit">` block until Task 10 so the old `kit.cpp` still links through the first tasks.)
+- [ ] **Step 3: The CMake wiring.** Add the library and the test (the resource file is listed in **every executable that reads it**: resources in a static library are dropped by the linker unless initialised):
+
+```cmake
+add_library(launcher_ui STATIC atlas.cpp)           # legacy_kit.cpp, kit.cpp and window.cpp join in Tasks 3 and 4
+target_link_libraries(launcher_ui PUBLIC launcher_core Qt6::Widgets)
+target_include_directories(launcher_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+if(BUILD_TESTING)
+  qt_add_executable(launcher_atlas atlas_tests.cpp kit.qrc)
+  set_target_properties(launcher_atlas PROPERTIES WIN32_EXECUTABLE FALSE)
+  target_link_libraries(launcher_atlas PRIVATE launcher_ui Qt6::Test)
+  add_test(NAME launcher_atlas COMMAND launcher_atlas -o "${CMAKE_CURRENT_BINARY_DIR}/atlas-tests.txt,txt" -o "-,txt")
+  set_tests_properties(launcher_atlas PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+endif()
+```
+
+- [ ] **Step 4: Run to see it fail** (`lt`: `atlas.h` missing).
+- [ ] **Step 5: Implement.** `atlas.h` (the geometry declarations are added in Task 2; declare only these now):
+
+```cpp
+#pragma once
+#include <QColor>
+#include <QFont>
+#include <QString>
+namespace launcher::atlas {
+void initialize();                         // loads :/atlas/tokens.json and the font files; safe to call twice
+QColor colour(const QString &token);       // an unknown token is an invalid QColor
+int px(const QString &token);              // 0 for an unknown token
+int ms(const QString &token);
+enum class Role { Cap12, Cap14, Cap16, Cap20, Title, Hero, Body12, Body14, Row16 };
+QFont font(Role role);
+}
+```
+
+`atlas.cpp`:
+
+```cpp
+#include "atlas.h"
+#include <QFile>
+#include <QFontDatabase>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QDebug>
+
+namespace launcher::atlas {
+static QJsonObject tokens;
+static bool loaded = false;
+static QString barlow = "Barlow Condensed", sans = "Source Sans 3";
+
+static QJsonObject readJson(const char *path) {
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly)) { qWarning() << "atlas: cannot open" << path; return {}; }
+    return QJsonDocument::fromJson(f.readAll()).object();
+}
+void initialize() {
+    if (loaded) return;
+    loaded = true;
+    tokens = readJson(":/atlas/tokens.json");
+    for (const char *p : {":/fonts/barlow-semibold.ttf", ":/fonts/barlow-bold.ttf", ":/fonts/sourcesans-semibold.otf"}) {
+        const int id = QFontDatabase::addApplicationFont(p);
+        if (id < 0) qWarning() << "atlas: font did not load:" << p;
+    }
+}
+QColor colour(const QString &token) {
+    const auto v = tokens["colours"].toObject().value(token);
+    if (!v.isDouble()) return {};
+    const quint32 c = quint32(v.toDouble());                        // 0xRRGGBBAA
+    return QColor(int(c >> 24 & 0xff), int(c >> 16 & 0xff), int(c >> 8 & 0xff), int(c & 0xff));
+}
+int px(const QString &token) { return tokens["px"].toObject().value(token).toInt(0); }
+int ms(const QString &token) { return tokens["ms"].toObject().value(token).toInt(0); }
+
+QFont font(Role role) {
+    const bool cap = role == Role::Cap12 || role == Role::Cap14 || role == Role::Cap16 || role == Role::Cap20;
+    const bool bold = role == Role::Title || role == Role::Hero;
+    QFont f(cap || bold ? barlow : sans);
+    int size = 16;
+    switch (role) {
+    case Role::Cap12: case Role::Body12: size = px("t-cap"); break;
+    case Role::Cap14: case Role::Body14: size = px("t-body"); break;
+    case Role::Cap16: case Role::Row16: size = px("t-row"); break;
+    case Role::Cap20: size = px("t-label"); break;
+    case Role::Title: size = px("t-title"); break;
+    case Role::Hero: size = px("t-hero"); break;
+    }
+    f.setPixelSize(size < 12 ? 12 : size);
+    f.setWeight(bold ? QFont::Bold : QFont::DemiBold);
+    if (cap) f.setLetterSpacing(QFont::PercentageSpacing, 110);     // tracked +0.10 em
+    return f;
+}
+}
+```
+
+(The family names `Barlow Condensed` and `Source Sans 3` are what the font files register: Task 1 step 6 prints the registered families and fixes the two strings if a file registers a different name; `fonts_loaded` pins it. `QFont::PercentageSpacing` with 110 adds 10 percent to every advance, close to +0.10 em; `setLetterSpacing(AbsoluteSpacing, 0.1 * size)` is the exact form and is what `fonts_loaded`'s `letterSpacing() > 0` also accepts: use absolute spacing if Qt reports percentage spacing as 100 for the check.)
+- [ ] **Step 6: Run to pass.** `lt`: `launcher_atlas` passes; `launcher_core` and `launcher_graphics` still pass. Print `QFontDatabase::applicationFontFamilies(id)` once while developing and make the two family strings match.
+- [ ] **Step 7: Commit (workspace repo).** `launcher: Atlas tokens and fonts from the embedded JSON (atlas.h/.cpp, kit.qrc, launcher_atlas test)`.
+
+---
+
+### Task 2: Geometry and the fit rule (no window needed)
+
+**Files:** modify `atlas.h`, `atlas.cpp`, `atlas_tests.cpp`.
+
+**Interfaces:** `plate`, `lifted`, `frontEdge`, `tick`, `brackets`, `fit`, `contrast`.
+
+- [ ] **Step 1: Write the failing tests** (append to `AtlasTests`):
+
+```cpp
+    void chamfer_is_top_left_and_bottom_right() {
+        const QPolygonF p = atlas::plate(QRectF(10, 20, 100, 40), 5);
+        QCOMPARE(p.size(), 6);
+        QVERIFY(!p.containsPoint(QPointF(10.2, 20.2), Qt::OddEvenFill));      // top-left cut
+        QVERIFY(!p.containsPoint(QPointF(109.8, 59.8), Qt::OddEvenFill));     // bottom-right cut
+        QVERIFY(p.containsPoint(QPointF(109.8, 20.2), Qt::OddEvenFill));      // top-right square
+        QVERIFY(p.containsPoint(QPointF(10.2, 59.8), Qt::OddEvenFill));       // bottom-left square
+        QCOMPARE(p.boundingRect(), QRectF(10, 20, 100, 40));
+        QCOMPARE(atlas::plate(QRectF(0, 0, 4, 4), 5).size(), 4);              // a chamfer larger than the plate degrades to a rectangle
+    }
+    void lift_and_front_edge() {
+        QCOMPARE(atlas::lifted(QRectF(0, 10, 50, 30), true), QRectF(0, 8, 50, 30));
+        QCOMPARE(atlas::lifted(QRectF(0, 10, 50, 30), false), QRectF(0, 10, 50, 30));
+        QCOMPARE(atlas::frontEdge(QRectF(0, 10, 50, 30), 3), QRectF(0, 37, 50, 3));
+    }
+    void focus_marks() {
+        const QRectF r(0, 0, 200, 34);
+        QCOMPARE(atlas::tick(r), QRectF(0, 6, 4, 22));                         // 4 px wide, centred, inset 6
+        const auto b = atlas::brackets(QRectF(0, 0, 60, 60), 8, 2);
+        QCOMPARE(b.size(), 8);                                                 // four corners, two strokes each
+        for (const auto &s : b) QVERIFY(QRectF(0, 0, 60, 60).contains(s));
+    }
+    void fit_steps_down_then_elides() {
+        QFontMetricsF fm(atlas::font(atlas::Role::Row16));
+        QCOMPARE(atlas::fit(fm, "Short", 400), QString("Short"));
+        const QString s = atlas::fit(fm, "A very long disc name that cannot possibly fit in a narrow row", 90);
+        QVERIFY(fm.horizontalAdvance(s) <= 90.01);
+        QVERIFY(s.endsWith(QChar(0x2026)));
+        QVERIFY(atlas::fit(fm, "x", 2).isEmpty());                              // under 8 px of room: nothing is drawn
+        QVERIFY(atlas::fit(fm, "", 100).isEmpty());
+    }
+    void contrast_table() {                                                      // spec 4.2: only dim text is under 4.5:1
+        const auto plate = atlas::colour("plate");
+        QVERIFY(atlas::contrast(atlas::colour("ivory"), plate) >= 4.5);
+        QVERIFY(atlas::contrast(atlas::colour("text2"), plate) >= 4.5);
+        QVERIFY(atlas::contrast(atlas::colour("muted"), plate) >= 4.5);
+        QVERIFY(atlas::contrast(atlas::colour("dim"), plate) < 4.5);
+        QVERIFY(atlas::contrast(atlas::colour("ember"), plate) >= 3.0);          // a focus edge is a component, not text
+        QVERIFY(atlas::contrast(atlas::colour("jade"), plate) >= 3.0);
+        QVERIFY(atlas::contrast(atlas::colour("ink"), atlas::colour("ember")) >= 4.5);   // the Play label on the ember button
+        QCOMPARE(atlas::contrast(QColor(0, 0, 0), QColor(255, 255, 255)), 21.0);
+    }
+```
+
+- [ ] **Step 2: Implement** (`atlas.h` additions and `atlas.cpp`):
+
+```cpp
+// geometry: QtGui value types only, so it is tested without a window
+QPolygonF plate(const QRectF &r, qreal chamfer);                 // top-left and bottom-right corners cut; 4 points when the chamfer does not fit
+QRectF lifted(const QRectF &r, bool focus);                      // 2 px up when focused
+QRectF frontEdge(const QRectF &r, qreal edge);                   // the strip along the bottom
+QRectF tick(const QRectF &row);                                  // a row's focus tick: 4 px wide at the left, inset 6
+QVector<QRectF> brackets(const QRectF &cell, qreal arm, qreal stroke);   // four registration brackets as eight thin rectangles
+QString fit(const QFontMetricsF &fm, const QString &text, qreal width);  // the whole text, or elided with an ellipsis; empty under 8 px of room
+double contrast(const QColor &a, const QColor &b);               // WCAG relative contrast
+```
+
+```cpp
+QPolygonF plate(const QRectF &r, qreal c) {
+    if (c * 2 >= r.width() || c * 2 >= r.height() || c <= 0) return QPolygonF{r.topLeft(), r.topRight(), r.bottomRight(), r.bottomLeft()};
+    return QPolygonF{{r.left() + c, r.top()}, {r.right(), r.top()}, {r.right(), r.bottom() - c}, {r.right() - c, r.bottom()}, {r.left(), r.bottom()}, {r.left(), r.top() + c}};
+}
+QRectF lifted(const QRectF &r, bool focus) { return focus ? r.translated(0, -2) : r; }
+QRectF frontEdge(const QRectF &r, qreal e) { return QRectF(r.left(), r.bottom() - e, r.width(), e); }
+QRectF tick(const QRectF &row) { return QRectF(row.left(), row.top() + 6, 4, row.height() - 12); }
+QVector<QRectF> brackets(const QRectF &c, qreal arm, qreal s) {
+    return { {c.left(), c.top(), arm, s}, {c.left(), c.top(), s, arm}, {c.right() - arm, c.top(), arm, s}, {c.right() - s, c.top(), s, arm},
+             {c.left(), c.bottom() - s, arm, s}, {c.left(), c.bottom() - arm, s, arm}, {c.right() - arm, c.bottom() - s, arm, s}, {c.right() - s, c.bottom() - arm, s, arm} };
+}
+QString fit(const QFontMetricsF &fm, const QString &text, qreal width) {
+    if (width < 8 || text.isEmpty()) return {};
+    if (fm.horizontalAdvance(text) <= width) return text;
+    return fm.elidedText(text, Qt::ElideRight, width);
+}
+static double lum(const QColor &c) {
+    auto ch = [](double v) { v /= 255.0; return v <= 0.03928 ? v / 12.92 : std::pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * ch(c.red()) + 0.7152 * ch(c.green()) + 0.0722 * ch(c.blue());
+}
+double contrast(const QColor &a, const QColor &b) {
+    const double la = lum(a), lb = lum(b), hi = std::max(la, lb), lo = std::min(la, lb);
+    return (hi + 0.05) / (lo + 0.05);
+}
+```
+
+(Add `#include <cmath>`, `<algorithm>`, `<QFontMetricsF>`, `<QPolygonF>`, `<QRectF>` and `<QVector>` to `atlas.h`/`atlas.cpp`. The "step down one role of the same face" half of the fit rule belongs to the widgets that own a role pair (Task 3): `atlas::fit` is the final elide.)
+- [ ] **Step 3: Run to pass** (`lt`). `contrast(ink on ember)` and `contrast(jade, plate)` are the two figures not in the spec's table: if either is under its bound, **report it** (the spec's table says only dim is under 4.5:1 for text; ember with ink text is the Play button) rather than weakening the test.
+- [ ] **Step 4: Commit.** `launcher: Atlas geometry, the fit rule and the contrast check (pure helpers, tested offscreen)`.
+
+---
+
+### Task 3: The parts
+
+**Files:** create `kit.h`, `kit.cpp` (the new parts; the old ones move to `legacy_kit.*` in step 5), modify `atlas_tests.cpp`, `CMakeLists.txt`; create `tools/release/launcher/gen_atlas_icons.py`, `test_gen_atlas_icons.py`, `atlas_icons.h` (generated).
+
+**Interfaces:** widgets in `launcher::kit`: `Pane` (E1 plate with a heading and an optional right-hand count), `Button` (primary = ember, secondary = plate2, disabled = hatched with a reason in the tooltip), `Toggle` (ON or OFF in words, lit half jade), `Tag`, `KeyChip`, `TabRail` (vertical rail of 4 rows, arrow keys), `RowDelegate` (disc and mod rows), `Explainer` (kicker, title, what, a two-row facts list, a more line), `Keys` (bottom hints). Plus `QPainterPath kit::icon(const QString &name)`.
+
+- [ ] **Step 1: The icon generator** (the paths come from the concept's own `ICONS`, one source). `gen_atlas_icons.py` reads `menu/concepts/reunification-2026-10-06/c-atlas/parts.py` (it imports; `ICONS` is a plain dict), keeps the names `disc mods data check plus right left up down star x folder`, converts each shape (`path` with `M L H V Z` absolute or relative; `circle`; `rect`) to calls on a `QPainterPath`, and **fails by name on any other command**:
+
+```python
+"""python tools/release/launcher/gen_atlas_icons.py [--check]: atlas_icons.h from the concept's ICONS (the one source)."""
+import importlib.util, os, re, sys
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
+PARTS = os.path.join(ROOT, "menu", "concepts", "reunification-2026-10-06", "c-atlas", "parts.py")
+OUT = os.path.join(HERE, "qt", "atlas_icons.h")
+NAMES = ["disc", "mods", "data", "check", "plus", "right", "left", "up", "down", "star", "x", "folder"]
+TOK = re.compile(r"([A-Za-z])|(-?\d*\.?\d+)")     # every letter is a token, so an unsupported command is seen and refused
+
+def load():
+    spec = importlib.util.spec_from_file_location("atlas_parts", PARTS); m = importlib.util.module_from_spec(spec)
+    sys.path.insert(0, os.path.dirname(PARTS)); spec.loader.exec_module(m); return m.ICONS
+
+def path_calls(d, name):
+    toks = [(a or b) for a, b in TOK.findall(d)]
+    out, i, cmd, cx, cy, sx, sy = [], 0, None, 0.0, 0.0, 0.0, 0.0
+    def num(): nonlocal i; v = float(toks[i]); i += 1; return v
+    while i < len(toks):
+        if toks[i].isalpha(): cmd = toks[i]; i += 1
+        elif cmd is None: raise ValueError("%s: path starts with a number" % name)
+        c = cmd
+        if c in "Zz": out.append("p.closeSubpath();"); cx, cy = sx, sy; continue
+        if c in "Hh": x = num(); cx = x if c == "H" else cx + x
+        elif c in "Vv": y = num(); cy = y if c == "V" else cy + y
+        elif c in "MmLl":
+            x, y = num(), num(); cx, cy = (x, y) if c in "ML" else (cx + x, cy + y)
+        else: raise ValueError("%s: unsupported path command %s" % (name, c))
+        if c in "Mm": out.append("p.moveTo(%g, %g);" % (cx, cy)); sx, sy = cx, cy; cmd = "L" if c == "M" else "l"
+        else: out.append("p.lineTo(%g, %g);" % (cx, cy))
+    return out
+
+def shape_calls(svg, name):
+    out = []
+    for tag, attrs in re.findall(r"<(circle|rect|path)\s+([^>]*?)/>", svg):
+        a = dict(re.findall(r'([\w-]+)="([^"]*)"', attrs))
+        if tag == "circle": out.append("p.addEllipse(QPointF(%s, %s), %s, %s);" % (a["cx"], a["cy"], a["r"], a["r"]))
+        elif tag == "rect": out.append("p.addRect(%s, %s, %s, %s);" % (a["x"], a["y"], a["width"], a["height"]))
+        else: out += path_calls(a["d"], name)
+    if not out: raise ValueError("%s: no shape found" % name)
+    return out
+
+def render():
+    icons = load(); lines = ["// generated by tools/release/launcher/gen_atlas_icons.py from c-atlas/parts.py ICONS: do not edit", "#pragma once", "#include <QPainterPath>", "#include <QString>",
+                             "namespace launcher::kit::icons {", "// 24 x 24 viewBox; stroke icons: the caller strokes them 1.6 px wide in the foreground colour",
+                             "inline QPainterPath path(const QString &name) {", "    QPainterPath p;"]
+    for n in NAMES:
+        lines.append("    if (name == \"%s\") {" % n); lines += ["        " + c for c in shape_calls(icons[n], n)]; lines.append("        return p;\n    }")
+    lines += ["    return p;", "}", "}"]
+    return "\n".join(lines) + "\n"
+
+if __name__ == "__main__":
+    text = render()
+    if "--check" in sys.argv: sys.exit(0 if os.path.exists(OUT) and open(OUT, encoding="utf-8").read() == text else 1)
+    open(OUT, "w", encoding="utf-8", newline="\n").write(text)
+```
+
+`test_gen_atlas_icons.py`: `render()` runs without error; the output names every icon in `NAMES`; `path_calls("M4 12l5 5 11-11", "check")` equals `["p.moveTo(4, 12);", "p.lineTo(9, 17);", "p.lineTo(20, 6);"]`; an arc command raises `ValueError` naming the icon; `--check` fails when the header is edited by hand. Run it and generate `atlas_icons.h`; commit both.
+- [ ] **Step 2: Write the failing part tests** (append to `AtlasTests`; they render to a `QImage`, never to the screen):
+
+```cpp
+    static QImage paint(QWidget &w, QSize size) {
+        w.resize(size); QImage img(size, QImage::Format_ARGB32_Premultiplied); img.fill(Qt::transparent); w.render(&img); return img;
+    }
+    void button_corners_and_focus_cues() {
+        kit::Button b("PLAY"); b.setFixedSize(180, 44);
+        auto idle = paint(b, {180, 44});
+        QCOMPARE(qAlpha(idle.pixel(0, 0)), 0);                     // the chamfered top-left is empty
+        QCOMPARE(qAlpha(idle.pixel(179, 43)), 0);                  // and the bottom-right
+        QVERIFY(qAlpha(idle.pixel(179, 4)) > 0);                   // the top-right corner is square
+        b.setFocus(Qt::TabFocusReason); QApplication::processEvents();
+        auto foc = paint(b, {180, 44});
+        const QRectF face = atlas::lifted(QRectF(0, 0, 180, 44).adjusted(0, 0, 0, -3), true);
+        const QRectF edge = atlas::frontEdge(face.translated(0, 3), atlas::px("ch-xs"));
+        QCOMPARE(QColor(foc.pixel(int(edge.center().x()), int(edge.center().y()))).rgb(), atlas::colour("ember").rgb());   // the ember front edge
+        QVERIFY(foc != idle);                                       // lift moved something
+    }
+    void disabled_is_hatched() {
+        kit::Button b("PLAY"); b.setFixedSize(180, 44); b.setEnabled(false);
+        const auto img = paint(b, {180, 44});
+        int a = 0, c = 0;
+        for (int y = 6; y < 36; ++y) for (int x = 6; x < 170; ++x) { QColor p = QColor(img.pixel(x, y)); if (p == atlas::colour("plate2")) ++a; else ++c; }
+        QVERIFY(a > 0 && c > 0);                                    // two tones in the face: a hatch, not a flat dim fill
+    }
+    void toggle_says_its_state() {
+        kit::Toggle t; t.setChecked(false); QCOMPARE(t.stateText(), QString("OFF"));
+        t.setChecked(true); QCOMPARE(t.stateText(), QString("ON"));
+        QSignalSpy spy(&t, &QAbstractButton::toggled); QTest::keyClick(&t, Qt::Key_Space); QCOMPARE(spy.count(), 1); QVERIFY(!t.isChecked());
+    }
+    void tab_rail_keys_and_signals() {
+        kit::TabRail r({"PLAY", "MODS", "DIAGNOSTICS", "ABOUT"}); r.resize(204, 300); r.show();
+        QSignalSpy spy(&r, &kit::TabRail::currentChanged);
+        QCOMPARE(r.current(), 0);
+        QTest::keyClick(&r, Qt::Key_Down); QCOMPARE(r.current(), 1);
+        QTest::keyClick(&r, Qt::Key_Down); QTest::keyClick(&r, Qt::Key_Down); QCOMPARE(r.current(), 3);
+        QTest::keyClick(&r, Qt::Key_Down); QCOMPARE(r.current(), 0);          // wraps
+        QTest::keyClick(&r, Qt::Key_Up); QCOMPARE(r.current(), 3);
+        QTest::mouseClick(&r, Qt::LeftButton, {}, QPoint(20, 20 + 0)); QCOMPARE(r.current(), 0);   // the first row's hit rectangle
+        QVERIFY(spy.count() >= 5);
+    }
+    void key_chip_and_tag_fit() {
+        kit::Tag t("A tag with far too many words in it", kit::Tag::Jade); t.setMaximumWidth(80);
+        QVERIFY(t.sizeHint().width() <= 80 + 2);                   // never wider than its cap
+        kit::KeyChip k("Ctrl"); QVERIFY(k.sizeHint().height() >= 20);
+    }
+```
+
+- [ ] **Step 3: Run to see them fail** (the widgets do not exist).
+- [ ] **Step 4: Implement the parts.** `kit.h` (the new parts; the old classes live on in `legacy_kit.h` until Task 10):
+
+```cpp
+#pragma once
+#include "atlas.h"
+#include <QAbstractButton>
+#include <QPainterPath>
+#include <QPushButton>
+#include <QStyledItemDelegate>
+#include <QWidget>
+namespace launcher::kit {
+QPainterPath icon(const QString &name);                            // atlas_icons.h; 24 x 24
+void paintPlate(QPainter &p, const QRectF &r, const QColor &face, const QColor &edge, qreal edgePx, qreal chamfer);  // face and the front edge, chamfered
+void paintHatch(QPainter &p, const QPolygonF &area, const QColor &line);
+
+class Pane : public QWidget {                                       // E1: plate, 3 px edge, 8 px chamfer, a heading and a count
+public:
+    explicit Pane(const QString &heading = {}, QWidget *parent = nullptr);
+    void setCount(const QString &text);
+    QWidget *body() const { return body_; }
+protected:
+    void paintEvent(QPaintEvent *) override;
+private:
+    QString heading_, count_; QWidget *body_;
+};
+class Button : public QPushButton {                                 // primary = ember (the one action), else plate2; disabled = hatched
+public:
+    explicit Button(const QString &text, QWidget *parent = nullptr);
+    void setPrimary(bool on) { primary_ = on; update(); }
+    void setIcon(const QString &name) { icon_ = name; update(); }
+    QSize sizeHint() const override;
+protected:
+    void paintEvent(QPaintEvent *) override;
+    void enterEvent(QEnterEvent *) override;
+    void leaveEvent(QEvent *) override;
+private:
+    bool primary_ = false; QString icon_; qreal hover_ = 0;
+};
+class Toggle : public QAbstractButton {                              // the word ON or OFF, the lit half jade
+public:
+    explicit Toggle(QWidget *parent = nullptr);
+    QString stateText() const { return isChecked() ? "ON" : "OFF"; }
+    QSize sizeHint() const override { return {74, 22}; }
+protected:
+    void paintEvent(QPaintEvent *) override;
+};
+class Tag : public QWidget {
+public:
+    enum Tone { Plain, Jade, Ember, Sun, Rose };
+    Tag(const QString &text, Tone tone = Plain, QWidget *parent = nullptr);
+    QSize sizeHint() const override;
+protected:
+    void paintEvent(QPaintEvent *) override;
+private:
+    QString text_; Tone tone_;
+};
+class KeyChip : public QWidget {                                     // "Enter", "Ctrl", "M"
+public:
+    explicit KeyChip(const QString &text, QWidget *parent = nullptr);
+    QSize sizeHint() const override;
+protected:
+    void paintEvent(QPaintEvent *) override;
+private:
+    QString text_;
+};
+class TabRail : public QWidget {                                     // the four tabs as rows on the left
+    Q_OBJECT
+public:
+    explicit TabRail(const QStringList &names, QWidget *parent = nullptr);
+    int current() const { return current_; }
+    void setCurrent(int i);
+    void setIcons(const QStringList &names) { icons_ = names; update(); }
+signals:
+    void currentChanged(int index);
+protected:
+    void paintEvent(QPaintEvent *) override;
+    void keyPressEvent(QKeyEvent *) override;
+    void mousePressEvent(QMouseEvent *) override;
+    QSize sizeHint() const override { return {204, 4 * 50}; }
+private:
+    QRectF rowRect(int i) const;
+    QStringList names_, icons_; int current_ = 0;
+};
+class RowDelegate : public QStyledItemDelegate {                     // a disc or mod row: icon, name, sub line, a tag
+public:
+    using QStyledItemDelegate::QStyledItemDelegate;
+    void paint(QPainter *, const QStyleOptionViewItem &, const QModelIndex &) const override;
+    QSize sizeHint(const QStyleOptionViewItem &, const QModelIndex &) const override { return {320, atlas::px("t-row") * 3 - 2}; }   // 46: the tall row
+};
+}
+```
+
+(`Explainer` and `Keys` are plain composition: a `Pane` holding labels with the role properties of Task 4; they need no painting of their own.) `kit.cpp` paints everything from `atlas::` values: a plate is `paintPlate(p, rect, face, edge, 3, 8)` which fills `atlas::plate(rect.adjusted(0, 0, 0, -3), c)` with `face` and fills the front edge strip, itself cut to the same chamfer, with `edge`; a focused control draws at `atlas::lifted(rect, true)` with `atlas::colour("ember")` as `edge`; a focused row also fills `atlas::tick(row)` in ember; **no antialiasing** (`p.setRenderHint(QPainter::Antialiasing, false)`) so the edges stay hard; a disabled button's face is `plate2` with `paintHatch` lines in `line` colour at 45 degrees, spaced `atlas::px("ch")`; `Button::sizeHint` uses the cap role's metrics plus `s4` padding and is never narrower than 44 px high for the primary; the hover tween is one `QVariantAnimation` of `atlas::ms("m-focus")` ms. The `Toggle` draws two halves, the lit one jade, the word ON or OFF in `Cap12` ink; the `Tag` draws `Cap12` text on a tone fill with a 5 px chamfer and elides to its maximum width through `atlas::fit`; `TabRail::keyPressEvent` handles Up, Down (wrapping), Home, End and emits `currentChanged`; its rows are 44 high with a 6 px gap (the mockup), each with an icon (`kit::icon`, stroked 1.6 px in ivory, jade when current) and a `Cap20` label.
+- [ ] **Step 5: Keep the old kit linking, under another name.** Before writing the new `kit.h`, do one mechanical commit: `git mv qt/kit.h qt/legacy_kit.h`, `git mv qt/kit.cpp qt/legacy_kit.cpp`, rename the namespace `launcher::kit` to `launcher::legacy` in both, change `window.h`, `window.cpp` and `main.cpp` from `kit::` to `legacy::`, and update `CMakeLists.txt`. Then create the new `kit.h` and `kit.cpp` (namespace `launcher::kit`) for the parts below and add them, with `atlas.cpp`, to `launcher_ui`. Tasks 4 to 6 move the window onto the new parts one tab at a time; **Tasks 4 to 6 land together on one branch and nothing is shipped between them** (the global style sheet of `legacy::initialize` still applies to the unconverted tabs). Task 10 deletes `legacy_kit.*`.
+- [ ] **Step 6: Run to pass** (`lt`).
+- [ ] **Step 7: Commit.** `launcher: Atlas parts (pane, button, toggle, tag, key chip, tab rail, row delegate) from tokens; icons generated from the concept's own paths`.
+
+---
+
+### Task 4: The four places
+
+**Files:** modify `window.h`, `window.cpp`, `main.cpp`, `kit.qrc` (no change), `atlas_tests.cpp`, `CMakeLists.txt`.
+
+Layout constants: read from the mockup in Task 0 step 4 and written as `constexpr` in `window.cpp`'s anonymous namespace, **taken from `atlas::px`** where a token exists (`s2` 8, `s3` 12, `s4` 16, `s5` 24), literals only for the three mockup measurements that have no token (rail 204, strip 34, left column 420), each with a comment naming `screens_b.py`.
+
+- [ ] **Step 1: The shell, as code.** In `Window::Window`, replace the `surface_`/header/sidebar/tabs construction with:
+
+```cpp
+    setObjectName("atlasWindow"); setWindowTitle("GD's Melee"); resize(960, 640); setMinimumSize(900, 600);
+    auto *root = new QWidget; root->setObjectName("atlasGround");                         // E0: ground, no edge
+    auto *col = new QVBoxLayout(root); col->setContentsMargins(0, 0, 0, 0); col->setSpacing(0);
+    // trail (top): the mark, the name, the version
+    auto *trail = new QWidget; trail->setObjectName("atlasTrail"); trail->setFixedHeight(34);
+    auto *th = new QHBoxLayout(trail); th->setContentsMargins(atlas::px("s3"), 0, atlas::px("s3"), 0); th->setSpacing(atlas::px("s2"));
+    th->addWidget(markLabel()); th->addWidget(capLabel("GD'S MELEE", atlas::Role::Cap16)); th->addWidget(capLabel(t("LAUNCHER", "LANZADOR"), atlas::Role::Cap16, "muted")); th->addStretch();
+    th->addWidget(capLabel(versionText(), atlas::Role::Body14, "dim"));
+    col->addWidget(trail);
+    auto *body = new QHBoxLayout; body->setContentsMargins(0, 0, 0, 0); body->setSpacing(0); col->addLayout(body, 1);
+    rail_ = new kit::TabRail({t("PLAY", "JUGAR"), t("MODS", "MODS"), t("DIAGNOSTICS", "DIAGNÓSTICO"), t("ABOUT", "ACERCA DE")});
+    rail_->setObjectName("atlasRail"); rail_->setFixedWidth(204); rail_->setIcons({"right", "mods", "data", "star"}); body->addWidget(rail_);
+    auto *main = new QVBoxLayout; main->setContentsMargins(atlas::px("s5"), 18, atlas::px("s5"), 18); main->setSpacing(atlas::px("s3")); body->addLayout(main, 1);
+    pageHeading_ = capLabel(QString(), atlas::Role::Title);  pageSub_ = capLabel(QString(), atlas::Role::Body14, "muted");
+    auto *hd = new QHBoxLayout; hd->addWidget(pageHeading_); hd->addWidget(pageSub_, 1); main->addLayout(hd);
+    tabs_ = new QStackedWidget; main->addWidget(tabs_, 1);                                  // primary and explainer live inside each tab
+    keys_ = new QWidget; keys_->setObjectName("atlasKeys"); keys_->setFixedHeight(26); main->addWidget(keys_);
+    setCentralWidget(root);
+```
+
+`TabRail::currentChanged` connects to `tabs_->setCurrentIndex`, the heading/sub text and the key hints; `Ctrl+1..4` and `Ctrl+M` are `QShortcut`s on the window (`selectMods()` is the existing slot). Each tab widget is built as **primary (left, a `Pane`) and explainer (right, a `Pane` named `atlasExplainer`)**, in a `QHBoxLayout` with 12 px between and the explainer's width from `atlas::px`-derived presets: `normal` 196 at 640 logical becomes a proportion here: the left column is 420 and the right column fills (the mockup), never narrower than 240.
+- [ ] **Step 2: Write the failing layout tests** (offscreen; construct the real `Window` over a temporary directory):
+
+```cpp
+    void layout_four_places_at_three_sizes() {
+        QTemporaryDir dir; auto settings = launcher::Settings::load(dir.path());
+        for (QSize s : {QSize(900, 600), QSize(960, 640), QSize(1160, 800)}) {
+            launcher::Window w(dir.path(), dir.path(), settings); w.resize(s); w.show(); QApplication::processEvents();
+            auto *rail = w.findChild<QWidget *>("atlasRail"), *trail = w.findChild<QWidget *>("atlasTrail"), *keys = w.findChild<QWidget *>("atlasKeys");
+            QVERIFY(rail && trail && keys);
+            QCOMPARE(rail->width(), 204);
+            QVERIFY(trail->geometry().bottom() <= rail->geometry().top() + 1);               // trail above the rail
+            auto *tabs = w.findChild<QStackedWidget *>("atlasTabs"); QVERIFY(tabs);
+            QVERIFY(keys->mapTo(&w, QPoint(0, 0)).y() >= tabs->mapTo(&w, QPoint(0, 0)).y() + tabs->height() - 1);   // keys below the tab bodies
+            for (auto *child : w.findChildren<QWidget *>()) {                                // nothing outside the window
+                if (!child->isVisible() || child->windowFlags() & Qt::Window) continue;
+                const QRect g(child->mapTo(&w, QPoint(0, 0)), child->size());
+                QVERIFY2(QRect(QPoint(0, 0), w.size()).adjusted(-1, -1, 1, 1).intersects(g), qPrintable(child->objectName() + " is off the window"));
+            }
+        }
+    }
+    void first_run_focus() {                                                                 // no disc yet: something real has focus
+        QTemporaryDir dir; launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.show(); QApplication::processEvents();
+        QVERIFY(QApplication::focusWidget() != nullptr);
+        QVERIFY(qobject_cast<QPushButton *>(QApplication::focusWidget()) || qobject_cast<kit::TabRail *>(QApplication::focusWidget()));
+    }
+    void long_strings_fit() {
+        kit::Pane p("A VERY LONG HEADING THAT WILL NOT FIT IN THE PANE WIDTH AT ALL"); p.setFixedWidth(240); p.setCount("123456 discs");
+        QImage img = paint(p, {240, 120}); QVERIFY(!img.isNull());                           // the heading elides, the count is kept
+        QFontMetricsF fm(atlas::font(atlas::Role::Cap14));
+        QVERIFY(p.property("headingShown").toString().endsWith(QChar(0x2026)));
+        QVERIFY(fm.horizontalAdvance(p.property("headingShown").toString()) <= 240 - 16 - fm.horizontalAdvance("123456 discs"));
+    }
+```
+
+(`Pane::paintEvent` stores the string it drew in the dynamic property `headingShown`, a test hook, not a feature.)
+- [ ] **Step 3: Run to see them fail; implement** the shell above plus: `capLabel(text, role, colourToken = "ivory")` (a `QLabel` whose font is `atlas::font(role)` and whose palette colour is `atlas::colour(token)`: the **only** way a label gets a colour), `markLabel()` (a 18 px glyph drawn from `kit::icon("disc")` in ember: the mark is the disc ring, a deliberate stand-in until the owner gives a logo: **(unverified)** what the mockup's `mark(18)` draws: read `kit.css`/`parts.py mark` and copy its shape into the generator if it is a plain path), `versionText()` (reads `appDir_ + "/version.txt"` as the About tab already does; "dev" when absent). Remove `legacy::Surface`, the section tints and `setSection` calls from `window.cpp` (the tab bodies not yet converted keep the legacy widgets until their task).
+- [ ] **Step 3b: The library.** In `CMakeLists.txt` move `window.cpp`, `kit.cpp` and `legacy_kit.cpp` into `launcher_ui` (the executable links `launcher_ui` and keeps `main.cpp` and `kit.qrc`), so `atlas_tests.cpp` can construct `Window`.
+- [ ] **Step 4: `main.cpp`.** `launcher::legacy::initialize();` stays until Task 10 and `launcher::atlas::initialize();` is added before it; `--shots` stays (it renders each tab to PNG for the docs; **no agent uses it as verification**).
+- [ ] **Step 5: Run to pass** (`lt`). The three-size test is the offscreen proxy for the 900 x 600 target (finding 6); the 150 percent scale is Task 10.
+- [ ] **Step 6: Commit.** `launcher: the four places (trail, rail, primary and explainer per tab, keys); OS frame kept; offscreen layout tests`.
+
+---
+
+### Task 5: The Play tab and the launch signals
+
+**Files:** modify `window.cpp` (`playTab`, `refreshDiscs`), `atlas_tests.cpp`.
+
+The Play tab follows the mockup: left column (420): **Disc library** pane (rows: a two-letter badge, the disc name, a `Ready` jade tag; `+ ADD DISC` and `MANAGE...` buttons under the list), **Options** pane (toggles Unlock everything, Skip intro, Close launcher on play; a Volume slider); right column: the **Explainer** (kicker `PLAY WITH`, the disc name as title, the line "The game starts from the selected disc.", two fact rows `Mods  N on` and `Build  <version>`, a `More` line "Mods for this disc" that selects the Mods tab) and the **Play block** (a check icon and "Game files are ready.", the big ember `PLAY` button, the key chips `Enter` to play, `Ctrl` `M` mods).
+
+- [ ] **Step 1: Write the failing tests** (the signals the old tab had, kept):
+
+```cpp
+    void play_signals() {
+        QTemporaryDir dir; auto settings = launcher::Settings::load(dir.path()); launcher::Window w(dir.path(), dir.path(), settings); w.show();
+        auto *play = w.findChild<kit::Button *>("atlasPlay"); QVERIFY(play);
+        QVERIFY(play->isDefault());                                     // Enter plays
+        QCOMPARE(play->text().contains("PLAY"), true);
+        auto *discs = w.findChild<QTableWidget *>("atlasDiscs"); QVERIFY(discs);
+        QCOMPARE(discs->rowCount(), 0);                                 // first run: empty
+        QVERIFY(w.findChild<QPushButton *>("atlasAddDisc")->isEnabled());              // Add disc is always available
+        QVERIFY(w.findChild<kit::Toggle *>("opt_unlock_all") && w.findChild<kit::Toggle *>("opt_skip_intro") && w.findChild<kit::Toggle *>("opt_close_on_play"));
+        QVERIFY(w.findChild<QSlider *>("atlasVolume"));
+    }
+    void play_reasons() {                                               // a hatched button says why
+        QTemporaryDir dir; launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.show();
+        auto *play = w.findChild<kit::Button *>("atlasPlay");
+        // with no disc the button stays enabled and opens the add-disc dialog (the old behaviour: play() calls addDisc() when nothing is selected)
+        QVERIFY(play->isEnabled());
+        QVERIFY(!play->toolTip().isEmpty());                            // "Add a disc first." until a disc exists
+    }
+    void tab_focus() {
+        QTemporaryDir dir; launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.show();
+        auto *rail = w.findChild<kit::TabRail *>("atlasRail");
+        rail->setCurrent(1); QApplication::processEvents();
+        QVERIFY(w.findChild<QStackedWidget *>("atlasTabs")->currentIndex() == 1);
+        QTest::keyClick(&w, Qt::Key_M, Qt::ControlModifier); QCOMPARE(rail->current(), 1);   // Ctrl+M selects Mods from anywhere
+        rail->setCurrent(3); QTest::keyClick(&w, Qt::Key_M, Qt::ControlModifier); QCOMPARE(rail->current(), 1);
+        QTest::keyClick(&w, Qt::Key_1, Qt::ControlModifier); QCOMPARE(rail->current(), 0);
+    }
+```
+
+- [ ] **Step 2: Implement.** Keep **every signal connection and every lambda** of the old `playTab()` (selection, double-click plays, Manage menu actions, option toggles writing `settings_.options`, volume writing `volume`): change only the widget classes (`QCheckBox` becomes `kit::Toggle` with the same `toggled(bool)` signal; `legacy::Button` becomes `kit::Button`), give the controls the object names the tests use, and move `discDetails_` text into the explainer. The disc table keeps `QTableWidget` (selection model, keyboard navigation, accessibility) with `RowDelegate` painting; the badge is the first two letters of `d.kind` upper-cased (`VANILLA` becomes `VA`, `ACE`, `AKANEIA` becomes `AK`), drawn in a hatched frame (the spec's disc-art placeholder). The Play button's tooltip is `t("Add a disc first.", ...)` when none, "Starts the selected disc." otherwise; during the Linux graphics check it is disabled (hatched) with the tooltip "Checking graphics...".
+- [ ] **Step 3: Run to pass** (`lt`), then `launcher_core` and `launcher_graphics` again (they link `launcher_core` only; a pass proves nothing about the window, which is the point of Task 5's tests).
+- [ ] **Step 4: Commit.** `launcher: the Play tab on Atlas parts; every signal kept; object names for the tests`.
+
+---
+
+### Task 6: Mods, Diagnostics and About
+
+**Files:** modify `window.cpp` (`modsTab`, `diagnosticsTab`, `aboutTab`), `atlas_tests.cpp`.
+
+- [ ] **Step 1: Failing tests:**
+
+```cpp
+    void mods_tab_keeps_its_behaviour() {
+        QTemporaryDir dir; QDir(dir.path()).mkpath("mods/demo");
+        QFile f(dir.path() + "/mods/demo/mod.json"); QVERIFY(f.open(QIODevice::WriteOnly)); f.write(R"({"id":"demo","name":"Demo","version":"1.0"})"); f.close();
+        launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.show(); w.selectMods(); QApplication::processEvents();
+        auto *mods = w.findChild<QTableWidget *>("atlasMods"); QVERIFY(mods);
+        QCOMPARE(mods->rowCount(), 1); QCOMPARE(mods->item(0, 0)->text(), QString("demo"));
+        QVERIFY(mods->item(0, 0)->flags() & Qt::ItemIsUserCheckable);                     // the checkbox column is still the toggle
+        QVERIFY(w.findChild<QWidget *>("atlasExplainer"));                                // the explainer shows the selected mod
+    }
+    void diagnostics_scrolls_not_clips() {
+        QTemporaryDir dir; launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.resize(900, 600); w.show();
+        w.findChild<kit::TabRail *>("atlasRail")->setCurrent(2); QApplication::processEvents();
+        auto *scroll = w.findChild<QScrollArea *>("atlasDiagnostics"); QVERIFY(scroll);
+        QVERIFY(scroll->widget()->height() > scroll->viewport()->height() || scroll->widget()->height() > 0);
+        for (auto *b : scroll->widget()->findChildren<QPushButton *>()) QVERIFY2(b->width() > 0 && b->isVisible(), qPrintable(b->text()));
+    }
+    void about_has_language_and_licences() {
+        QTemporaryDir dir; launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.show();
+        QVERIFY(w.findChild<QComboBox *>("atlasLanguage"));                               // kept until the owner decides about Spanish (Owner decisions)
+        QVERIFY(w.findChild<QPushButton *>("atlasLicences"));
+    }
+```
+
+- [ ] **Step 2: Implement.** Mods: the same `QTableWidget` and `RowDelegate`, an ON/OFF `Toggle` per row **driving the checkable item** (the existing `itemChanged` handler keeps writing `setModEnabled`), the explainer shows the selected mod's description, `Requires` and `Conflicts` (the current `modDetails_` text, split into labelled lines), the four buttons as `Button`. Diagnostics: the existing controls inside `QScrollArea` named `atlasDiagnostics`; groups are `Pane`s with a heading; checkboxes become `Toggle`s with the same `toggled` handlers; `QComboBox` and the `Linux graphics` group keep their code (`Q_OS_LINUX`) and their types, styled by the style sheet below. About: labels, the language combo (`atlasLanguage`), `Open user data`, `Open licences`. A small style sheet remains for what Qt draws itself (`QComboBox`, `QLineEdit`, `QScrollBar`, `QToolTip`, `QMessageBox`/`QDialog` buttons): **built from `atlas::colour`** strings in one function `atlasStyleSheet()` (the guard of Task 10 allows hex only there).
+- [ ] **Step 3: Run to pass; commit.** `launcher: Mods, Diagnostics and About on Atlas parts (behaviour and object names kept)`.
+
+---
+
+### Task 7: The strings
+
+**Files:** create `tools/release/launcher/check_qt_strings.py`, `test_check_qt_strings.py`; modify `tools/release/launcher/qt/CMakeLists.txt` (a `check_qt_strings` test), `tools/CLAUDE.md` and the root `CLAUDE.md` row about the launcher's strings (one sentence: the Qt window's pairs are checked by `check_qt_strings.py`; `check_strings.py` is the C# table's).
+
+- [ ] **Step 1: Write the failing test** `test_check_qt_strings.py`:
+
+```python
+import os, sys, tempfile, unittest
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
+import check_qt_strings as C
+
+class Pairs(unittest.TestCase):
+    def run_on(self, src):
+        d = tempfile.mkdtemp(); open(os.path.join(d, "w.cpp"), "w", encoding="utf-8").write(src)
+        return C.scan(d)
+    def test_finds_pairs_and_counts_untranslated(self):
+        r = self.run_on('t("PLAY", "JUGAR"); t("Copy", "Copy"); t("Name", "Nombre");')
+        self.assertEqual(r["pairs"], 3); self.assertEqual(r["untranslated"], ["Copy"]); self.assertEqual(r["problems"], [])
+    def test_same_english_two_translations_is_a_problem(self):
+        r = self.run_on('t("Open", "Abrir"); t("Open", "Abre");')
+        self.assertTrue(any("Open" in p for p in r["problems"]))
+    def test_placeholders_must_agree(self):
+        r = self.run_on('t("Found %1 discs", "Encontrados discos");')
+        self.assertTrue(r["problems"])
+    def test_escapes_and_concatenation(self):
+        r = self.run_on('t("Line one\\nLine two", "Una\\nDos"); t("Mods", "Mods");')
+        self.assertEqual(r["pairs"], 2)
+    def test_the_real_sources_have_no_problem(self):
+        r = C.scan(os.path.join(HERE, "qt")); self.assertEqual(r["problems"], [])
+if __name__ == "__main__":
+    unittest.main()
+```
+
+- [ ] **Step 2: Implement** `check_qt_strings.py` (a lexical scan like `check_strings.py`: it reads `qt/*.cpp` and `*.h`, finds `t("..", "..")` with C string literals (escapes kept as written), and reports): problems (the same English with two Spanish halves; `%N` placeholder sets that differ between the halves; an empty English half), `untranslated` (identical halves, listed as information, never a failure, because new strings are written that way by rule), and the counts. Exit 1 only on problems. Add `add_test(NAME launcher_qt_strings COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/../check_qt_strings.py)` guarded by `find_package(Python3 COMPONENTS Interpreter)`.
+- [ ] **Step 3: Run; record the baseline** (`python tools/release/launcher/check_qt_strings.py`): the number of pairs and of untranslated ones in `docs/NEXT-SESSION.md` (the owner's Spanish decision reads it).
+- [ ] **Step 4: Commit.** `launcher: check_qt_strings.py (the Qt window's t() pairs; check_strings.py stays the C# table's)`.
+
+---
+
+### Task 8: Packaging: the font's licence ships with the launcher
+
+**Files (workspace repo):** `tools/release/launcher/qt/CMakeLists.txt` (install), `tools/release/check_release.ps1`, `check_release_linux.py`, `test_release_guard.py`, `test_release_guard_linux.py`, `tools/release/THIRD-PARTY-NOTICES.txt` (verify only), `CREDITS.md`.
+
+- [ ] **Step 1: Failing guard tests first.** In `test_release_guard.py` and `test_release_guard_linux.py` add `'launcher/licenses/BarlowCondensed-OFL-1.1.txt'` next to `launcher/licenses/SourceSans3-OFL-1.1.txt` in each list of required launcher files, and a case that removing that file makes the guard fail. Run: both fail.
+- [ ] **Step 2: The guards.** `check_release.ps1` lines 57-58: append `"launcher/licenses/BarlowCondensed-OFL-1.1.txt"` to the required list; `check_release_linux.py`: the same list entry for the Linux layout; the `-and $ext -eq '.txt'` allowance on line 197 already covers a `.txt` in `launcher/licenses`.
+- [ ] **Step 3: The install.** In `CMakeLists.txt`, beside the Source Sans line:
+
+```cmake
+install(FILES "../../../../menu/Barlow/OFL.txt" DESTINATION licenses RENAME BarlowCondensed-OFL-1.1.txt)
+```
+
+- [ ] **Step 4: Verify the notices.** `THIRD-PARTY-NOTICES.txt` already lists Barlow Condensed at line 66 (step 1); confirm it names the launcher among the places it ships, and add that if not. `CREDITS.md`: change the Barlow line to "ships in the game and the launcher" (the spec's 17 asks for this change in the same commit as the first shipment).
+- [ ] **Step 5: Run to pass** (`python -m unittest tools/release/test_release_guard.py tools/release/test_release_guard_linux.py`) and, with a Qt build, `build_launcher.ps1 <outdir>` then `check_release.ps1` on the staged folder: the launcher licences include the Barlow file. Not run without a Qt SDK: say so.
+- [ ] **Step 6: Commit.** `release: the launcher ships Barlow Condensed's licence (guards, install, credit)`.
+
+---
+
+### Task 9: Token agreement
+
+**Files:** create `tools/release/launcher/test_atlas_agreement.py`; modify `qt/atlas_tests.cpp` (a `--dump-tokens` mode is **not** added: the C++ test compares the loaded values against the JSON file it was built from).
+
+- [ ] **Step 1: Write the test.**
+
+```python
+"""One source, every consumer: tokens.css -> tokens.json -> gw_ui_tokens.h, and the launcher loads the same JSON.
+python -m unittest tools/release/launcher/test_atlas_agreement.py"""
+import json, os, re, sys, unittest
+HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
+sys.path.insert(0, os.path.join(ROOT, "menu", "pipeline")); import atlas_tokens as T
+
+class Agreement(unittest.TestCase):
+    def test_json_is_the_css(self):
+        css = T.parse(open(T.SRC, encoding="utf-8").read()); on_disk = json.load(open(T.OUT_JSON, encoding="utf-8"))
+        for k in ("colours", "px", "ms"): self.assertEqual(css[k], on_disk[k], "menu/atlas/tokens.json is stale: run menu/pipeline/atlas_tokens.py")
+    def test_header_is_the_json(self):
+        hdr = os.path.join(os.environ.get("GW_MELEE", os.path.join(ROOT, "melee")), "pc", "platform", "gw_ui_tokens.h")
+        if not os.path.exists(hdr): self.skipTest("no game checkout: set GW_MELEE")
+        text = open(hdr, encoding="utf-8").read(); tok = json.load(open(T.OUT_JSON, encoding="utf-8"))
+        for name, v in tok["colours"].items():
+            self.assertRegex(text, r"#define AT_C_%s 0x%08Xu" % (name.upper().replace("-", "_"), v), name)
+        for name, v in tok["px"].items():
+            self.assertRegex(text, r"#define AT_PX_%s %d\b" % (name.upper().replace("-", "_"), v), name)
+    def test_launcher_reads_the_same_file(self):
+        qrc = open(os.path.join(HERE, "qt", "kit.qrc"), encoding="utf-8").read()
+        self.assertIn("menu/atlas/tokens.json", qrc)                                   # the resource is the repo file, not a copy
+        src = open(os.path.join(HERE, "qt", "kit.cpp"), encoding="utf-8").read() + open(os.path.join(HERE, "qt", "window.cpp"), encoding="utf-8").read()
+        self.assertEqual(re.findall(r'QColor\(\s*"?#[0-9a-fA-F]{6}', src), [], "a hex colour in the painting code: use atlas::colour")
+        self.assertEqual(re.findall(r'QColor\(\s*\d+\s*,\s*\d+\s*,\s*\d+', src), [], "a numeric colour in the painting code")
+    def test_launcher_values_match(self):
+        tok = json.load(open(T.OUT_JSON, encoding="utf-8"))
+        self.assertEqual(tok["colours"]["ember"], 0xFF7A3DFF); self.assertEqual(tok["px"]["t-row"], 16)   # the values atlas_tests.cpp's tokens_load pins
+if __name__ == "__main__":
+    unittest.main()
+```
+
+(The C++ `tokens_load` test pins the same constants; the two together are the agreement: change one source and a test names it. The hex-literal guard runs on `kit.cpp` and `window.cpp` only: the style-sheet function in `window.cpp` builds its strings from `atlas::colour(...).name()`.)
+- [ ] **Step 2: Run** (`python -m unittest tools/release/launcher/test_atlas_agreement.py`): the first three pass once Tasks 3 and 4 have removed the literals; until then `test_launcher_reads_the_same_file` fails on the legacy literals, which is correct (Task 10 clears the last).
+- [ ] **Step 3: Commit.** `tests: Atlas token agreement (CSS, JSON, the game header, the launcher's painting code)`.
+
+---
+
+### Task 10: Retire what only the launcher owned, then look
+
+Only after the owner has looked (Step 4) and said the Atlas launcher is accepted; not in the same session as Tasks 3 to 6.
+
+**Files (workspace repo):** `qt/kit.h`, `kit.cpp`, `kit.qrc`, `CMakeLists.txt`, `window.cpp`, `tools/release/README.md`, `docs/NEXT-SESSION.md`.
+
+- [ ] **Step 1: Remove the legacy kit from the launcher:** delete `legacy_kit.h` and `legacy_kit.cpp` (the old `Surface`, `Button`, `DiscDelegate`, `Hero`, `sectionColor`, the legacy palette, the `qApp->setStyleSheet` literal block, `icon(name, tint)` and its GXTX reader, the `motion.json` use) and every `legacy::` reference; remove from `kit.qrc` the `/kit` block (`kit.json`, `motion.json`, `bold.otf`, `black.otf`, the legacy `semibold.otf`, the five `*.gxtex`). The files under `menu/` and `_build/ui/` are **not deleted here** (the game still reads them: Task 11).
+- [ ] **Step 2: Guards.** `no_kit_in_core`: `grep -l "kit.h\|atlas.h" tools/release/launcher/qt/{launcher_core,graphics,diagnostics}.*` prints nothing (Review Focus 7). `grep -rn "_build/ui" tools/release/launcher/qt` prints nothing. `test_atlas_agreement.py` passes in full. Note in `tools/release/README.md` that the launcher no longer needs the art pipeline to have run.
+- [ ] **Step 3: Full test run.** `lt` (or `build_launcher.ps1`): `launcher_core`, `launcher_graphics`, `launcher_atlas`, `launcher_qt_strings` pass; `python tools/release/launcher/check_strings.py | tail -1` is unchanged from the baseline; the release guards pass.
+- [ ] **Step 4: The look (a Windows agent while the owner is away, or the owner).** Build with `tools/release/build_launcher.ps1`, run the deployed launcher once, **on the second monitor, with a disc list of three, an empty list, and a 40-character disc name**: (1) Play, Mods, Diagnostics and About each render with the four places; (2) Tab, Shift+Tab, arrows, Enter, Esc, `Ctrl+M`, `Ctrl+1..4` all work; focus is visible everywhere (lift, ember edge, tick); (3) at **100 percent and 150 percent scaling** (Windows display settings or `QT_SCALE_FACTOR=1.5`): nothing clips, the Diagnostics body scrolls, tags and tabs do not overlap; (4) Add disc, Manage menu, Play (the game starts from the selected disc), the graphics check on Linux (if available), the crash dialog path (`--test-game` or a deliberately bad path); (5) ON and OFF words, hatched disabled states with their reasons; (6) compare Play, Mods and About with the concept's `17-launcher` for structure, not pixels. The owner accepts or lists what to change. **A look is never replaced by a captured image used as proof;** an image may be taken only to diagnose a rendering problem.
+- [ ] **Step 5: Commit** (after acceptance). `launcher: the legacy kit and its resources are gone; the launcher reads only tokens and fonts committed under menu/`.
+
+---
+
+### Task 11 (a follow-up, not part of this plan's first pass): the legacy menu art and kit, everywhere
+
+Starts only when **steps 2 to 8 and 10 have merged and each owner look is done**, because the game reads `menu/out_*` through `gmfrontend*.inc` until its last screen moves. Separate commits, never mixed with Task 10.
+
+**Files:** create `tools/port/art_readers.py`; then the deletions it justifies; `docs/scripting.md`, `melee/pc/platform/gw_script.c` registration tables, `tools/port/envoy_bundle.py` only for the deprecations.
+
+- [ ] **Step 1: The audit.** `art_readers.py` lists, for each of `menu/out`, `out_hub`, `out_hub_bouba`, `out_nav`, `out_lobby`, `out_online`, `out_loading`, `out_kit` (legacy pieces), which files under `melee/src`, `melee/pc`, `tools/release`, `tools/port` and the Lua examples still name a file of that set (the set's directory name, a layout JSON name or an `ico_*`/`btn_*` texture id). A set with no reader is `deletable`.
+- [ ] **Step 2: Delete deletable sets** from `menu/`, the packaging lists (`build_release.ps1`'s `_build/ui` copy, `mod_rules.json` if named, the Linux packager) and the pipeline's build targets; re-run the release guards.
+- [ ] **Step 3: The legacy font roles** (`font_manifest.json` roles `caption`..`display` and `KfRole`/`FfRole` users) once no reader remains; **net texture memory after this** is the spec's "about zero" (measure; **(unverified)**).
+- [ ] **Step 4: `gd.kit.panel`, `gd.kit.button`, `gd.kit.list`** (and the section palettes) are listed in `gd.deprecated` with "use gd.ui" and `gd.api_version` is bumped by one (the rule in `docs/scripting.md` "Versioning and deprecations": the old name stays for one version), **only if** no shipped mod or example still calls them (`grep -rn "kit.panel\|kit.button\|kit.list" melee/pc/scripts melee/pc/geno`); removal is the next version's.
+- [ ] **Step 5: Commit** per item, workspace and game repos separately.
+
+---
+
+## Self-review
+
+**Spec coverage (13.9).**
+
+| 13.9 item | Where |
+|---|---|
+| Reads `menu/atlas/tokens.json` | Task 1 (the resource is the repo file), Task 9 |
+| Parts with QPainter polygons in `kit.cpp` (plates, rows, tabs, toggles, tags, key chips; no model cells) | Tasks 2, 3 |
+| Barlow Condensed from `kit.qrc`, OFL in `licenses/` | Tasks 1, 8 |
+| Four tabs arranged on the four places | Task 4 (the rail, the primary/explainer pairs, the keys line), Tasks 5, 6 |
+| Strings through `Lang`/`check_strings.py` | **Corrected** (finding 1): the Qt window uses `t()` pairs; Task 7 checks them; `check_strings.py` stays the C# table's |
+| Mouse and keyboard, not pad | Global Constraints; Task 3 (rail keys), Task 4 (shortcuts), Task 5 `tab_focus` |
+| Retired: its copy of the legacy palette and `Surface`/`Button`; the C# launcher's art; the legacy menu art; legacy font roles; `gd.kit.panel/button/list` | Task 10 (launcher-owned), **Task 11** (global, gated; the C# launcher has no art: finding 4) |
+| Depends on step 1 for the tokens only; parallel with 3 to 8 | the Needs table (N6) |
+| Verified without the game: `graphics_tests.cpp`/`tests.cpp` plus a token agreement test | Task 1 baseline (they stay as guards, finding 2), Task 9 |
+| Must be seen: a real Windows desktop at 100 percent and 150 percent | Task 10 step 4 |
+
+**Deviations from the spec, named.** (1) Strings: `check_qt_strings.py` instead of `check_strings.py` (finding 1). (2) The OS window frame is kept, not the mockup's drawn title bar (finding 5). (3) No Hasklug (finding 7). (4) The window is 960 x 640 (minimum 900 x 600), the Diagnostics body scrolls (finding 6). (5) The global legacy retirement is a separate, gated Task 11, because the game still reads the sets.
+
+**Unverified items and where each is settled.**
+
+| Item | Settled by |
+|---|---|
+| A Qt 6 SDK is available to the build agent; the SDK version (`>= 6.2` to configure, `>= 6.5` for the release deploy) | Task 0 step 2 |
+| The registered family names of the three font files (`Barlow Condensed`, `Source Sans 3`) | Task 1 step 6 (`fonts_loaded`) |
+| That `letterSpacing` as percentage or absolute gives the tracked +0.10 em look | Task 1 step 5 note, then the owner's look |
+| That every tab holds at 900 x 600 and at 150 percent | Task 4 step 5 (offscreen sizes), Task 10 step 4 (real scaling) |
+| What the mockup's `mark(18)` draws | Task 4 step 3 |
+| Contrast of ink on ember and jade on plate against the spec's bounds | Task 2 step 3 |
+| That `QFont::setLetterSpacing` and hatch painting behave the same on Windows and on Linux/Wayland | Task 10 step 4 (Windows); a Linux look is not in this plan |
+| The net texture memory after the global retirement | Task 11 step 3 |
+| Whether tests that construct `Window` run under `offscreen` in CI without a display | Task 4 step 5 (the first run says) |
+
+**Owner decisions needed.** (1) **Spanish.** The launcher has a Language combo (English, Spanish) and inline `es` halves, many of them identical to the English. "English only" binds docs and release notes; this plan leaves the existing Spanish pairs untouched and writes new strings English-only. Options: keep as is (default), or drop the `es` halves and the combo in a later change. (2) The OS window frame versus the mockup's drawn title bar (default: keep the OS frame). (3) A real logo for the strip's mark (default: the disc ring in ember). (4) Whether the launcher should show Hasklug numerals (default: no).
+
+**Placeholder scan.** No step defers a decision it could make. Where this plan could not read a fact (the mark, the font family names, the Qt version) it says "(unverified)" and names the step. The test files in Tasks 1 to 6 are shown as the additions to one `atlas_tests.cpp`; the implementer adds the includes each new test needs (`kit.h`, `window.h`, `<QTemporaryDir>`, `<QSignalSpy>`, the widget headers).
+
+**Type and name consistency.** `atlas::colour/px/ms/font/Role/plate/lifted/frontEdge/tick/brackets/fit/contrast` (Tasks 1, 2) are used unchanged by the parts (Task 3), the window (Task 4) and the tests; the part classes `Pane`, `Button`, `Toggle`, `Tag`, `KeyChip`, `TabRail`, `RowDelegate` are declared once in `kit.h` and used with the object names `atlasRail`, `atlasTrail`, `atlasKeys`, `atlasTabs`, `atlasExplainer`, `atlasPlay`, `atlasDiscs`, `atlasAddDisc`, `atlasVolume`, `atlasMods`, `atlasDiagnostics`, `atlasLanguage`, `atlasLicences`, `opt_*` by the tests of Tasks 4 to 6.  The old classes sit in `launcher::legacy` (`legacy_kit.*`) until Task 10.
+
+**Execution recommendation.** Tasks 0, 7, 8 and 9 are small and independent: any order. Tasks 1 to 3 are pure and testable: one agent in order. Tasks 4 to 6 share `window.cpp`: one agent, and the coordinator reviews the diff against `window.cpp`'s old `playTab()` for every lost connection before the first build. Task 10 waits for the owner's look; Task 11 waits for the other steps.
