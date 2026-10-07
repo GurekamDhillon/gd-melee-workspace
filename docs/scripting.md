@@ -534,7 +534,7 @@ A mod adds entries to the game's menus with a `menus` array in `mod.json`; there
 | field | meaning |
 |---|---|
 | `id` | the entry's id: your mod id, or your mod id and a dot and a name. Another mod's id, or an id already used, is refused |
-| `parent` | where it goes: `main`, `solo`, `versus`, `online`, `mods`, `settings`, `more` or `settings.<page>`. An unknown parent is ignored with one log line |
+| `parent` | where it goes. The menus that draw entries today are `main`, `solo`, `versus` and `settings` (the Settings list); the names `online`, `mods`, `more` and `settings.<page>` are reserved for later steps. An entry under any other parent is refused with one log line (`ui: registry: ...`) rather than accepted and never shown. Under `MELEE_ATLAS=0` only the `solo` hub lists mod entries |
 | `label` | the tile's text, at most 18 characters |
 | `blurb` | one short line the explainer shows when the tile is focused (160 characters at most) |
 | `after` | an id in the same parent to sit behind; otherwise the entry goes at the end, and entries after the same id are ordered by id |
@@ -544,7 +544,7 @@ A mod adds entries to the game's menus with a `menus` array in `mod.json`; there
 Rules the registry applies: at most 6 entries per mod under one parent and 12 visible under one parent (the rest are not listed); a mod that is switched off or unloaded
 adds nothing; the tile carries a MOD tag; `gd.ui.entry` can hide or badge an entry later, but only for its own mod. A script entry runs `on_entry(id)` as the mod, with the
 mod's own budget, and may return `{ push = "<mod>.<screen>" }` to open one of its screens over the menu; with `opens` the engine pushes the screen itself. `on_entry` runs
-offline only and must answer nothing it does not own (return `nil` for another id). Menus that are not drawn by Atlas (`MELEE_ATLAS=0`) list the `solo` entries in the legacy hub.
+offline only and must answer nothing it does not own (return `nil` for another id). Built-in rows are in the registry too, so `after` can name one (`"after": "training"`) in both arrangements.
 The Mods page says what a mod adds ("adds Solo > Envoy"). The old `gd.tbd_request` main-menu tile is gone: see "Versioning and deprecations".
 
 ### Comms callouts (offline)
