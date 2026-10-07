@@ -49,7 +49,8 @@ TOP_FILES = {'version.txt', 'README.txt', 'IMPLEMENTATION_STATUS.md', 'manifest.
              'launch-melee', 'GD-Melee', 'gd-melee-diagnose.sh', 'netplay_server.txt', 'HOW TO PLAY ONLINE.txt'}
 MOD_TOP_FILES = {'README.txt', 'sources.txt', 'enabled.txt', 'original-assets.json'}
 REQUIRED = ['README.txt', 'version.txt', 'bin/melee', 'bin/version.txt', 'launcher/bin/gd-melee-launcher',
-            'licenses/GPL-2.0.txt', 'licenses/THIRD-PARTY-NOTICES.txt', 'runtime.sha256', 'manifest.json']
+            'licenses/GPL-2.0.txt', 'licenses/THIRD-PARTY-NOTICES.txt', 'runtime.sha256', 'manifest.json',
+            'launcher/licenses/BarlowCondensed-OFL-1.1.txt']
 # files we built ourselves: scanned for personal paths (third-party libraries are not)
 OWN_BINARIES = {'bin/melee', 'bin/melee-graphics-probe', 'bin/melee-pc.msvc.map', 'launcher/bin/gd-melee-launcher',
                 'launcher/bin/melee-graphics-probe'}

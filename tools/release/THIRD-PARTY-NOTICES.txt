@@ -64,6 +64,8 @@ ui\  (menu art, layouts and fonts)
       Source Sans 3 (Adobe) ................. SIL OFL 1.1  SourceSans3-OFL-1.1.txt
       Hasklug Nerd Font (Hasklig) ........... SIL OFL 1.1  Hasklug-OFL-1.1.txt
       Barlow Condensed (Jeremy Tribby) ...... SIL OFL 1.1  BarlowCondensed-OFL-1.1.txt
+  The launcher (GD Melee.exe) is set in Barlow Condensed and Source Sans 3 as well, embedded in
+  the executable; their licence texts are in launcher/licenses/.
 
 initial_pipeline_cache.db / .core
   A cache of GPU pipeline descriptions (render state only, no images or game files) that saves

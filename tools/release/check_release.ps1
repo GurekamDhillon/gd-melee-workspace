@@ -55,7 +55,8 @@ $Required = @("README.txt", "version.txt", "MANIFEST.sha256", "LICENSES/GPL-2.0.
               "launcher/bin/Qt6Gui.dll", "launcher/bin/Qt6Widgets.dll", "launcher/bin/qt.conf",
               "launcher/bin/msvcp140.dll", "launcher/bin/vcruntime140.dll", "launcher/bin/vcruntime140_1.dll",
               "launcher/qt-build.txt", "launcher/licenses/LGPL-3.0-only.txt",
-              "launcher/licenses/Qt-GPL-exception-1.0.txt", "launcher/licenses/SourceSans3-OFL-1.1.txt")
+              "launcher/licenses/Qt-GPL-exception-1.0.txt", "launcher/licenses/SourceSans3-OFL-1.1.txt",
+              "launcher/licenses/BarlowCondensed-OFL-1.1.txt")
 
 $ModRules = Get-Content (Join-Path $PSScriptRoot "mod_rules.json") -Raw | ConvertFrom-Json
 $ModTopFiles = @("README.txt", "sources.txt", "enabled.txt", "original-assets.json")

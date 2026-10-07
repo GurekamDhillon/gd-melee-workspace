@@ -51,6 +51,7 @@ endif()
 install(TARGETS gd-melee-launcher RUNTIME DESTINATION bin)
 install(DIRECTORY licenses/ DESTINATION licenses)
 install(FILES "../../../../menu/SourceSans3/LICENSE.md" DESTINATION licenses RENAME SourceSans3-OFL-1.1.txt)
+install(FILES "../../../../menu/Barlow/OFL.txt" DESTINATION licenses RENAME BarlowCondensed-OFL-1.1.txt)
 # CMAKE_SYSTEM_PROCESSOR is empty under the Visual Studio generator here; the compiler's target is the fact.
 set(LAUNCHER_ARCH "${CMAKE_CXX_COMPILER_ARCHITECTURE_ID}")
 if(NOT LAUNCHER_ARCH)
