@@ -46,6 +46,21 @@ The names in the last column are the spec's names or this plan's assumed ones; T
 | N7 | The one character select with an online (lobby) profile: one local port, blind pick, locked | step 4 | mode profile `online` | Task 8 (soft: `fe_np_pick_char` opens whatever CSS is current) |
 | N8 | The native mouse source (hits and wheel) for game-side screens | step 2 | `fms` replaced by the adapter's events | Tasks 6, 8 |
 
+### Reconciled against steps 2 to 5 as built (2026-10-07, Task 0)
+
+| # | Plan's name | Real name | Consequence |
+|---|---|---|---|
+| N1 | `fa_submit`, `gw_Ui_PollEvent`, `FrontendScreen.atlas`, a "native door" (`gw_ui_native_attach`...) | `fa_submit` and `Ui_PollEvent` (menus, step 2); engine-owned native screens in `gw_script_ui_set.inc` (`gw_Ui_SetOpen`, step 5): own slot, tick, mouse, event ring | The room door is `pc/platform/gw_script_ui_room.inc` (included by `gw_script_ui.inc`, after `_set.inc`), not a `gw_ui_room_native.c`; the plan's door stubs become the host test's stand-ins (`atlas_room_host_test.c`, like `atlas_settings_host_test.c`). No `gw_ui_room_native.c` unit, so no extra link-list entry for it. |
+| N2 | an `at_fade` call | none; native screens cut on scene exit | the room draws its own leave fade from `AtRoomView.fade_out` (a ground quad, host-side) |
+| N3 | `at_registry_entries(parent, ...)` | `at_reg_children(reg, parent, netplay, ...)`; `at_reg_parent_rendered("online")` is not a rendered parent | nothing registers under `online` today; no registry row is drawn (as the plan allowed) |
+| N4 | `fa_submit` item kinds | the table walker `gmfrontend_atlas_table.h` and the settings host (`gw_Ui_Set*`) | ONLINE PLAY becomes one more settings-host kind (`GS_SET_ONLINE`) fed by the same walker |
+| N5 | `at_part_portcard`, `AtPortCard` (port, name, sub, tag) | `at_part_sel_card` over `AtSelCard`; `AtPortCard` is the in-match HUD's, different shape | `room_card` draws the player card itself from `at_port_mark` (numeral, shape, colour) plus name, fighter and a tag, in the one wrapper |
+| N6 | cell flags | `AT_CELL_BANNED`, `AT_CELL_PICKED`, `AT_CELL_P1` | tiles use the cell part; the composite still draws its own words |
+| N7 | mode profile `online` | `AT_MT_LOBBY`, profile `online = 1` | unchanged: `fe_np_pick_char` opens whatever CSS is current |
+| N8 | `fms` replaced by adapter events | `gw_Mouse_ScriptRead` in the host tick | the room tick reads it, as the settings do |
+| - | `at_part_link` (the link meter) | `at_part_link` already exists (a segment quad, step 3) | the meter is `at_part_linkmeter` |
+| - | `AT_PRIMARY_ROOM = 3`, `AT_HIT_ROOM = 4` | `AT_PRIMARY_TILES = 3 .. CARDS = 5`; `AT_HIT_TAB = 4`, `AT_HIT_CARD = 5` | `AT_PRIMARY_ROOM = 6`, `AT_HIT_ROOM = 6` |
+
 ## Review Focus
 
 The failure modes most likely to bite first. Each is pinned by a named test.
