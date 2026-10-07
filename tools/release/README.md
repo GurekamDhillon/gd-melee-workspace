@@ -43,7 +43,7 @@ Before publishing: rebuild the exe (`bash tools/port/build.sh`), push `pc-port` 
 | `mod_rules.json` | which mods a release carries, which files of each, which are on by default, the never-package list |
 | `publish.ps1` | package existing binaries (strict unless Force/DryRun) + check + release notes + `gh release create`; takes `-GameDir/-MeleeDir/-OutDir` for a clean private build root; the protocol number in the body comes from `netplay_protocol.ps1` |
 | `build_launcher.ps1` / `build_launcher.sh` | build, test and deploy the native Qt launcher |
-| `launcher/qt/` | portable launcher; legacy C# sources retained for reference |
+| `launcher/qt/` | portable launcher in the Atlas style; legacy C# sources retained for reference |
 | `README-user.txt` | becomes `README.txt` in the zip |
 | `THIRD-PARTY-NOTICES.txt`, `licenses/` | become `LICENSES/` in the zip |
 
@@ -164,12 +164,17 @@ tampered README.
 
 ## The Qt launcher
 
-The launcher now uses native C++17 and Qt 6 Widgets on Windows and Linux. The UI consumes
-our existing menu kit (`_build/ui/kit.json`, icon masks and Source Sans 3 fonts) through Qt
-resources: cobalt/section backgrounds, gold selection plates, hard shadows and the kit's
-0.25 shear. `launcher/qt/` contains the application and its core tests. No game artwork is
-embedded. The old C# files remain as a reference for deferred online features; the default
-build scripts compile Qt.
+The launcher uses native C++17 and Qt 6 Widgets on Windows and Linux, drawn in the Atlas style
+(Atlas step 9): the tokens (`menu/atlas/tokens.json`), Barlow Condensed and Source Sans 3 are Qt
+resources (`launcher/qt/kit.qrc`), the parts are `QPainter` polygons (`atlas.*` tokens, fonts and
+geometry; `kit.*` plates, rows, tab rail, toggles, tags, key chips), and each tab has the four Atlas
+places: trail, primary, explainer, keys. `launcher/qt/` contains the application and its tests
+(`launcher_core`, `launcher_graphics`, `launcher_atlas` offscreen, `launcher_qt_strings`). No game
+artwork is embedded. The old C# files remain as a reference for deferred online features; the default
+build scripts compile Qt. The old kit (`legacy_kit.*`, and the `/kit` block of `kit.qrc` that reads
+`_build/ui`) is still compiled but unused until the owner has looked at the new launcher; until it
+goes, the launcher build still needs `_build/ui/*` to exist. The Qt window's strings are `t()` pairs
+checked by `launcher/check_qt_strings.py`; `check_strings.py` is the C# table's.
 
 The current scope is **offline Windows parity**:
 
