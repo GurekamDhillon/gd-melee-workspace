@@ -107,5 +107,10 @@ if [ -f "$ADAPTER" ]; then
     n=$(grep -c 'bits |= MenuInput_Confirm' "$ADAPTER")
     [ "$n" = 2 ] || bad "Confirm is set in $n places of the adapter (the accept row and the stage_click branch are the only two)"
 fi
+# 11. Mods are never toggled during a session: the legacy Settings > MODS toggle tests the online state before it calls Mods_SetEnabled (the Atlas
+#     MODS screen has the same rule in gw_ui_mods.c, tested by atlas-mods and atlas-mods-door).
+blk=$(awk '/^static void fsm_toggle/ {f=1} f {print} f && /^}/ {exit}' "$G/src/melee/gm/gmfrontend_settings.inc")
+echo "$blk" | grep -q 'fsm_online()' || bad "fsm_toggle does not test fsm_online() (mods could be toggled during a session)"
+echo "$blk" | awk '/fsm_online\(\)/ {a=NR} /Mods_SetEnabled/ {b=NR} END {exit !(a && b && a < b)}' || bad "fsm_toggle calls Mods_SetEnabled before it tests fsm_online()"
 [ "$fail" = 0 ] && echo "check_atlas_online: ok"
 exit "$fail"

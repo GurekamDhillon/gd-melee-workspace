@@ -1042,6 +1042,7 @@
 ../masstest/shimobj/gw_ui_policy.obj
 ../masstest/shimobj/gw_ui_retail.obj
 ../masstest/shimobj/gw_ui_hud.obj
+../masstest/shimobj/gw_ui_hud_parts.obj
 ../masstest/shimobj/gw_ui_css.obj
 ../masstest/shimobj/gw_ui_css_profile.obj
 ../masstest/shimobj/gw_ui_sss.obj
@@ -1058,5 +1059,7 @@
 "../masstest/shimobj/gw_hang.obj"
 ../masstest/shimobj/gw_fx_motion.obj
 ../masstest/shimobj/gw_ui_item.obj
+../masstest/shimobj/gw_ui_mods.obj
+../masstest/shimobj/gw_ui_mods_native.obj
 ../masstest/shimobj/gw_ui_online_parts.obj
 ../masstest/shimobj/gw_ui_room.obj

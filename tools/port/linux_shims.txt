@@ -45,10 +45,13 @@ gw_ui_css.c
 gw_ui_css_profile.c
 gw_ui_focus.c
 gw_ui_hud.c
+gw_ui_hud_parts.c
 gw_ui_item.c
 gw_ui_input.c
 gw_ui_layout.c
 gw_ui_menus_json.c
+gw_ui_mods.c
+gw_ui_mods_native.c
 gw_ui_online_parts.c
 gw_ui_parts.c
 gw_ui_policy.c
