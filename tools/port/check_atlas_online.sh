@@ -11,6 +11,8 @@
 #   6  no input mask and no mod hook from the Atlas online files
 #   7  the opponent's blind pick never reaches the host view (Netplay_FighterName sits after fl_card_portrait)
 #   8  the room door writes game memory only through gs_ui_put_be32 (the out-parameters are big-endian guest memory)
+#   9  every Ui_Room* call site is in the function expected to make it (the adapter's fa_room_* functions; fl_frame only for the freeze)
+#   10 a click on a stage that is not open cannot reach Confirm (the stage_click branch tests fl_stage_open and fl_my_stage_turn first)
 set -u
 G="${1:-${GW_MELEE:-$(cd "$(dirname "$0")/../.." && pwd)/melee}}"
 fail=0
@@ -42,7 +44,7 @@ fi
 LEGACY="$G/src/melee/gm/gmfrontend_online.inc"
 if [ -f "$ADAPTER" ] && [ -f "$LEGACY" ]; then
     for name in $(grep -o -E 'Netplay_[A-Za-z]+' "$ADAPTER" | sort -u); do
-        grep -q "$name" "$LEGACY" || grep -q "$name" "$G/src/melee/gm/gmfrontend.c" || bad "$name is new: the adapter must not add a netplay call"
+        grep -qw "$name" "$LEGACY" || grep -qw "$name" "$G/src/melee/gm/gmfrontend.c" || bad "$name is new: the adapter must not add a netplay call"
     done
 fi
 
@@ -81,5 +83,29 @@ if [ -f "$DOOR" ]; then
     fi
 fi
 
+
+# 9. Every Ui_Room* call site is in the function that is expected to make it. The adapter's calls are an allow-list of (function, shim) pairs;
+#    the legacy files call none but Ui_RoomFreeze, from fl_frame (everything else goes through the adapter's fa_room_* functions).
+sites() { awk '/^static [^;]*\(/ { fn = $0; sub(/\(.*/, "", fn); n = split(fn, a, " "); fn = a[n]; gsub(/\*/, "", fn) }
+               /^extern/ { next }
+               { line = $0; while (match(line, /Ui_Room[A-Za-z]+\(/)) { print fn ":" substr(line, RSTART, RLENGTH - 1); line = substr(line, RSTART + RLENGTH) } }' "$1"; }
+if [ -f "$ADAPTER" ]; then
+    OK_ADAPTER=" fa_room_on:Ui_RoomOpen fa_room_end:Ui_RoomEnd fa_room_begin:Ui_RoomBegin fa_room_grid:Ui_RoomGridFor fa_room_grid:Ui_RoomGridCell fa_room_players:Ui_RoomPlayerName fa_room_players:Ui_RoomPlayer fa_room_common:Ui_RoomSetStr fa_room_common:Ui_RoomSetInt fa_room_submit:Ui_RoomSetStr fa_room_submit:Ui_RoomSetInt fa_room_submit:Ui_RoomStageCount fa_room_submit:Ui_RoomStage fa_room_submit:Ui_RoomGridFor fa_room_submit:Ui_RoomFrame fa_room_leaving:Ui_RoomFreeze fa_room_leaving:Ui_RoomSetInt fa_room_leaving:Ui_RoomFrame fa_room_bits:Ui_RoomPollName "
+    for site in $(sites "$ADAPTER" | sort -u); do
+        case "$OK_ADAPTER" in *" $site "*) ;; *) bad "$site: a Ui_Room call in an unexpected function of the adapter";; esac
+    done
+    for f in "$LEGACY" "$G/src/melee/gm/gmfrontend.c"; do
+        for site in $(sites "$f" | sort -u); do
+            [ "$site" = "fl_frame:Ui_RoomFreeze" ] || bad "$site: a Ui_Room call outside the adapter ($(basename "$f"))"
+        done
+    done
+    # 10. A click on a stage that is not open cannot reach Confirm: the one place the room sets Confirm for a stage is the stage_click branch, and it
+    #     tests fl_stage_open and fl_my_stage_turn before it does. No other line adds Confirm but the accept row of the table.
+    blk=$(awk '/strcmp\(n, "stage_click"\) == 0/ {f=1} f {print} f && /MenuInput_Confirm/ {exit}' "$ADAPTER")
+    echo "$blk" | grep -q 'fl_stage_open(arg)' || bad "the stage_click branch does not test fl_stage_open before it sets Confirm"
+    echo "$blk" | grep -q 'fl_my_stage_turn()' || bad "the stage_click branch does not test fl_my_stage_turn before it sets Confirm"
+    n=$(grep -c 'bits |= MenuInput_Confirm' "$ADAPTER")
+    [ "$n" = 2 ] || bad "Confirm is set in $n places of the adapter (the accept row and the stage_click branch are the only two)"
+fi
 [ "$fail" = 0 ] && echo "check_atlas_online: ok"
 exit "$fail"
