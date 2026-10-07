@@ -84,6 +84,8 @@ atlas-style)
     sources=(pc/tests/atlas_style_test.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c) ;;
 atlas-profile)
     sources=(pc/tests/atlas_profile_test.c pc/platform/gw_ui_css_profile.c) ;;
+atlas-css)
+    sources=(pc/tests/atlas_css_test.c pc/platform/gw_ui_css.c pc/platform/gw_ui_css_profile.c) ;;
 *) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-tiles, atlas-registry, atlas-policy, atlas-binding, atlas-style)" ;;
 esac
 
