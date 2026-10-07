@@ -1,0 +1,106 @@
+{
+ "fe_items_erase": {
+  "file": "gmfrontend_settings.inc",
+  "kinds": {
+   "ACTION": 6
+  },
+  "rows": 6
+ },
+ "fe_items_howto_online": {
+  "file": "gmfrontend_settings.inc",
+  "kinds": {
+   "SLIDER": 6
+  },
+  "rows": 6
+ },
+ "fe_items_morerules": {
+  "file": "gmfrontend_settings.inc",
+  "kinds": {
+   "SLIDER": 2,
+   "TOGGLE": 3
+  },
+  "rows": 5
+ },
+ "fe_items_online": {
+  "file": "gmfrontend.c",
+  "kinds": {
+   "ACTION": 3,
+   "CHOICE": 3,
+   "SLIDER": 3
+  },
+  "rows": 9
+ },
+ "fe_items_remap": {
+  "file": "gmfrontend_controls.inc",
+  "kinds": {
+   "ACTION": 7,
+   "CHOICE": 7,
+   "SLIDER": 3,
+   "TOGGLE": 3
+  },
+  "rows": 20
+ },
+ "fe_items_rules": {
+  "file": "gmfrontend_settings.inc",
+  "kinds": {
+   "ACTION": 2,
+   "CHOICE": 3,
+   "SLIDER": 3
+  },
+  "rows": 8
+ },
+ "fe_items_set_audio": {
+  "file": "gmfrontend_settings.inc",
+  "kinds": {
+   "CHOICE": 1,
+   "SLIDER": 2
+  },
+  "rows": 3
+ },
+ "fe_items_set_controls": {
+  "file": "gmfrontend_settings.inc",
+  "kinds": {
+   "ACTION": 3,
+   "SLIDER": 9,
+   "TOGGLE": 4
+  },
+  "rows": 16
+ },
+ "fe_items_set_gameplay": {
+  "file": "gmfrontend_settings.inc",
+  "kinds": {
+   "ACTION": 2,
+   "CHOICE": 3,
+   "SLIDER": 3,
+   "TOGGLE": 4
+  },
+  "rows": 12
+ },
+ "fe_items_set_online": {
+  "file": "gmfrontend_settings.inc",
+  "kinds": {
+   "ACTION": 2,
+   "CHOICE": 3,
+   "SLIDER": 1
+  },
+  "rows": 6
+ },
+ "fe_items_set_video": {
+  "file": "gmfrontend_settings.inc",
+  "kinds": {
+   "CHOICE": 3,
+   "TOGGLE": 3
+  },
+  "rows": 6
+ },
+ "fe_items_vs_setup": {
+  "file": "gmfrontend.c",
+  "kinds": {
+   "ACTION": 1,
+   "CHOICE": 4,
+   "SLIDER": 3,
+   "TOGGLE": 2
+  },
+  "rows": 10
+ }
+}
