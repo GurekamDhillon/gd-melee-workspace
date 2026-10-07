@@ -1,5 +1,5 @@
 #include "window.h"
-#include "kit.h"
+#include "legacy_kit.h"
 #include "graphics.h"
 #include <QGuiApplication>
 #include <QDateTime>
@@ -41,7 +41,7 @@ bool spanish = false;
 QString t(const char *en, const char *es) { return QString::fromUtf8(spanish ? es : en); }
 static QLabel *label(const QString &text) { auto *w = new QLabel(text); w->setWordWrap(true); w->setTextFormat(Qt::PlainText); return w; }
 static QPushButton *button(QBoxLayout *layout, const QString &text, const std::function<void()> &action) {
-    auto *w = new kit::Button(text); layout->addWidget(w); QObject::connect(w, &QPushButton::clicked, w, action); return w;
+    auto *w = new legacy::Button(text); layout->addWidget(w); QObject::connect(w, &QPushButton::clicked, w, action); return w;
 }
 static QTableWidget *table(const QStringList &headers) {
     auto *w = new QTableWidget(0, headers.size()); w->setHorizontalHeaderLabels(headers);
@@ -54,7 +54,7 @@ static QTableWidget *table(const QStringList &headers) {
 Window::Window(QString app, QString user, Settings settings)
     : appDir_(std::move(app)), userDir_(std::move(user)), settings_(std::move(settings)) {
     setWindowTitle("GD's Melee"); resize(1160, 800); setMinimumSize(1000, 730);
-    surface_ = new kit::Surface;
+    surface_ = new legacy::Surface;
     auto *layout = new QVBoxLayout(surface_); layout->setContentsMargins(32, 24, 32, 24); layout->setSpacing(18);
     auto *header = new QHBoxLayout; layout->addLayout(header);
     auto *title = label("GD'S MELEE"); title->setProperty("role", "brand"); header->addWidget(title); header->addStretch();
@@ -68,11 +68,11 @@ Window::Window(QString app, QString user, Settings settings)
     const QStringList sections{"versus", "collection", "options", "data"};
     const QStringList headings{t("DISC LIBRARY", "BIBLIOTECA DE DISCOS"), t("YOUR CUSTOM CONTENT", "TU CONTENIDO PERSONALIZADO"), t("DIAGNOSTICS", "DIAGNÓSTICO"), t("GD'S MELEE", "GD'S MELEE")};
     for (int i = 0; i < labels.size(); ++i) {
-        auto *nav = new kit::Button(labels[i]); nav->setFixedWidth(196); nav->setMinimumHeight(64); nav->setCheckable(true); nav->setKitIcon(icons[i]); nav->setSection(sections[i]); sidebar->addWidget(nav); navigation_.append(nav);
+        auto *nav = new legacy::Button(labels[i]); nav->setFixedWidth(196); nav->setMinimumHeight(64); nav->setCheckable(true); nav->setKitIcon(icons[i]); nav->setSection(sections[i]); sidebar->addWidget(nav); navigation_.append(nav);
         connect(nav, &QPushButton::clicked, this, [this, i] { tabs_->setCurrentIndex(i); navigation_[i]->setChecked(true); });
     }
     sidebar->addStretch();
-    auto *note = label(t("YOUR DISCS.\nYOUR RULES.", "TUS DISCOS.\nTUS REGLAS.")); note->setFont(kit::font(21, true, true)); sidebar->addWidget(note);
+    auto *note = label(t("YOUR DISCS.\nYOUR RULES.", "TUS DISCOS.\nTUS REGLAS.")); note->setFont(legacy::font(21, true, true)); sidebar->addWidget(note);
     auto *right = new QVBoxLayout; right->setSpacing(12); body->addLayout(right, 1);
     pageHeading_ = label(headings[0]); pageHeading_->setProperty("role", "heading"); right->addWidget(pageHeading_);
     tabs_->addWidget(playTab()); tabs_->addWidget(modsTab()); tabs_->addWidget(diagnosticsTab()); tabs_->addWidget(aboutTab()); right->addWidget(tabs_, 1);
@@ -190,14 +190,14 @@ QWidget *Window::playTab() {
     auto *page = new QWidget; auto *layout = new QHBoxLayout(page); layout->setContentsMargins(0, 0, 0, 0); layout->setSpacing(18);
     auto *library = new QWidget; library->setObjectName("contentPanel"); auto *left = new QVBoxLayout(library); left->setContentsMargins(16, 18, 16, 16); left->setSpacing(10); layout->addWidget(library, 5);
     auto *owned = label(t("AVAILABLE DISCS", "DISCOS DISPONIBLES")); owned->setProperty("role", "eyebrow"); left->addWidget(owned);
-    discs_ = table({"Disc", "Kind", "Path"}); discs_->setItemDelegate(new kit::DiscDelegate(discs_));
+    discs_ = table({"Disc", "Kind", "Path"}); discs_->setItemDelegate(new legacy::DiscDelegate(discs_));
     discs_->horizontalHeader()->hide(); discs_->setColumnHidden(1, true); discs_->setColumnHidden(2, true);
     discs_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch); discs_->setShowGrid(false); discs_->setAlternatingRowColors(false);
     left->addWidget(discs_, 1);
     discDetails_ = label(t("Each disc has its own saves. Add your vanilla, Akaneia or ACE ISO to get started.", "Cada disco tiene sus propias partidas guardadas. Añade tu ISO de Melee, Akaneia o ACE.")); discDetails_->setProperty("role", "muted"); left->addWidget(discDetails_);
     auto *actions = new QHBoxLayout; left->addLayout(actions);
     button(actions, t("+ ADD DISC", "+ AÑADIR"), [this] { addDisc(); });
-    auto *manage = new kit::Button(t("MANAGE…", "GESTIONAR…")); actions->addWidget(manage);
+    auto *manage = new legacy::Button(t("MANAGE…", "GESTIONAR…")); actions->addWidget(manage);
     auto *menu = new QMenu(manage);
     auto menuAction = [&](const QString &title, const std::function<void()> &fn) { auto *a = menu->addAction(title); connect(a, &QAction::triggered, this, [this, fn] { guarded(fn); }); };
     menuAction(t("Change ISO…", "Cambiar ISO…"), [this] {
@@ -223,10 +223,10 @@ QWidget *Window::playTab() {
     });
     connect(manage, &QPushButton::clicked, this, [manage, menu] { menu->exec(manage->mapToGlobal(QPoint(0, manage->height()))); });
     auto *launch = new QWidget; launch->setObjectName("contentPanel"); auto *right = new QVBoxLayout(launch); right->setContentsMargins(0, 0, 0, 14); right->setSpacing(0); layout->addWidget(launch, 4);
-    hero_ = new kit::Hero; right->addWidget(hero_);
+    hero_ = new legacy::Hero; right->addWidget(hero_);
     auto *details = new QVBoxLayout; details->setContentsMargins(20, 16, 20, 0); details->setSpacing(6); right->addLayout(details);
     auto *ready = label(t("READY WHEN YOU ARE", "LISTO CUANDO QUIERAS")); ready->setProperty("role", "eyebrow"); details->addWidget(ready);
-    discTitle_ = label(t("Choose your disc", "Elige tu disco")); discTitle_->setFont(kit::font(25, true)); details->addWidget(discTitle_);
+    discTitle_ = label(t("Choose your disc", "Elige tu disco")); discTitle_->setFont(legacy::font(25, true)); details->addWidget(discTitle_);
     auto *controller = label(t("Controller connected? Let's play.", "¿Mando conectado? A jugar.")); controller->setProperty("role", "muted"); details->addWidget(controller);
     details->addSpacing(8);
     for (const auto &item : QList<QPair<QString, QString>>{{"unlock_all", t("Unlock everything", "Desbloquear todo")}, {"skip_intro", t("Skip intro", "Saltar introducción")}, {"close_on_play", t("Close launcher on play", "Cerrar lanzador al jugar")}}) {
@@ -238,7 +238,7 @@ QWidget *Window::playTab() {
     auto *volume = new QSlider(Qt::Horizontal); volume->setRange(0, 100); volume->setValue(settings_.option("volume", "50").toInt()); audio->addWidget(volume);
     auto *amount = label(QString::number(volume->value()) + "%"); amount->setFixedWidth(42); audio->addWidget(amount);
     connect(volume, &QSlider::valueChanged, this, [this, amount](int value) { amount->setText(QString::number(value) + "%"); guarded([&] { settings_.options["volume"] = QString::number(value); save(); }); });
-    auto *play = new kit::Button(t("PLAY  →", "JUGAR  →")); play->setPrimary(true); play->setMinimumHeight(66); play->setDefault(true); details->addWidget(play); play_ = play;
+    auto *play = new legacy::Button(t("PLAY  →", "JUGAR  →")); play->setPrimary(true); play->setMinimumHeight(66); play->setDefault(true); details->addWidget(play); play_ = play;
     connect(play_, &QPushButton::clicked, this, [this] { this->play(); });
     connect(discs_, &QTableWidget::itemSelectionChanged, this, [this] {
         int i = selectedDisc(); if (i < 0) return;

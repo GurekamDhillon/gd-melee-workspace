@@ -1,4 +1,4 @@
-#include "kit.h"
+#include "legacy_kit.h"
 #include <QApplication>
 #include <QFile>
 #include <QFontDatabase>
@@ -10,7 +10,7 @@
 #include <QtEndian>
 #include <algorithm>
 
-namespace launcher::kit {
+namespace launcher::legacy {
 static QJsonObject tokens;
 static int duration = 167;
 static QPolygonF plate(QRectF r, qreal slant = -1) {
@@ -25,7 +25,7 @@ void initialize() {
     QFile motion(":/kit/motion.json"); motion.open(QIODevice::ReadOnly); auto m = QJsonDocument::fromJson(motion.readAll()).object();
     duration = m["events"].toObject()["row_select"].toObject()["length_frames"].toInt(10) * 1000 / m["fps"].toInt(60);
     for (const auto &name : {"bold", "black", "semibold"}) QFontDatabase::addApplicationFont(":/kit/" + QString(name) + ".otf");
-    QApplication::setFont(kit::font(16));
+    QApplication::setFont(legacy::font(16));
     QPalette palette;
     palette.setColor(QPalette::Window, color("ink")); palette.setColor(QPalette::WindowText, color("bone"));
     palette.setColor(QPalette::Base, color("ink")); palette.setColor(QPalette::AlternateBase, sectionColor("versus", "bg"));
@@ -94,7 +94,7 @@ void Surface::paintEvent(QPaintEvent *) {
     }
 }
 Button::Button(const QString &text, QWidget *parent) : QPushButton(text, parent) {
-    setCursor(Qt::PointingHandCursor); setMinimumHeight(44); setFont(kit::font(16, true));
+    setCursor(Qt::PointingHandCursor); setMinimumHeight(44); setFont(legacy::font(16, true));
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed); setMouseTracking(true);
     motion_.setDuration(duration); motion_.setEasingCurve(QEasingCurve::OutCubic);
     connect(&motion_, &QVariantAnimation::valueChanged, this, [this](const QVariant &v) { hover_ = v.toReal(); update(); });
@@ -109,9 +109,9 @@ void Button::paintEvent(QPaintEvent *) {
     face.translate(-lift, -lift);
     p.setBrush(!isEnabled() ? sectionColor("options", "face") : active || hover_ > .5 ? color("gold") : sectionColor(section_, "face")); p.drawPolygon(plate(face));
     QColor fg = !isEnabled() ? color("disabled") : active || hover_ > .5 ? color("ink") : color("bone");
-    p.setPen(fg); p.setFont(kit::font(primary_ ? 26 : 17, true, true));
+    p.setPen(fg); p.setFont(legacy::font(primary_ ? 26 : 17, true, true));
     qreal left = face.left() + 18;
-    if (!icon_.isEmpty()) { p.drawImage(QRectF(left, face.center().y() - 13, 26, 26), kit::icon(icon_, fg)); left += 38; }
+    if (!icon_.isEmpty()) { p.drawImage(QRectF(left, face.center().y() - 13, 26, 26), legacy::icon(icon_, fg)); left += 38; }
     const QRectF textRect(left, face.top(), face.right() - left - 14, face.height());
     p.drawText(textRect, (icon_.isEmpty() ? Qt::AlignCenter : Qt::AlignLeft) | Qt::AlignVCenter, p.fontMetrics().elidedText(text(), Qt::ElideRight, int(textRect.width())));
     if (hasFocus()) { p.setPen(QPen(color("bone"), 1, Qt::DashLine)); p.setBrush(Qt::NoBrush); p.drawPolygon(plate(face.adjusted(4, 4, -4, -4))); }
@@ -125,9 +125,9 @@ void DiscDelegate::paint(QPainter *p, const QStyleOptionViewItem &opt, const QMo
     auto fg = selected ? color("ink") : color("bone");
     p->drawImage(QRectF(r.left() + 24, r.center().y() - 20, 40, 40), icon("melee", selected ? color("gold_dk") : sectionColor("versus", "face_hi")));
     qreal x = r.left() + 80, available = r.width() - 103;
-    p->setPen(fg); p->setFont(kit::font(23, true, true));
+    p->setPen(fg); p->setFont(legacy::font(23, true, true));
     p->drawText(QRectF(x, r.top() + 12, available, 31), p->fontMetrics().elidedText(idx.data().toString(), Qt::ElideRight, int(available)));
-    p->setFont(kit::font(14)); p->setPen(selected ? color("ink") : color("muted"));
+    p->setFont(legacy::font(14)); p->setPen(selected ? color("ink") : color("muted"));
     p->drawText(QRectF(x, r.top() + 46, available, 24), p->fontMetrics().elidedText(idx.data(Qt::UserRole).toString(), Qt::ElideRight, int(available)));
     p->restore();
 }
@@ -139,8 +139,8 @@ void Hero::paintEvent(QPaintEvent *) {
     p.drawPolygon(QPolygonF{{w * .62, 0}, {w, 0}, {w, h}, {w * .40, h}});
     p.setOpacity(.42); p.drawImage(QRectF(w - 220, -14, 250, 250), icon("melee", sectionColor(section, "face_hi"))); p.setOpacity(1.);
     const auto badge = kind_.contains("ACE") ? "ACE" : kind_.contains("Akaneia") ? "AKANEIA" : "MELEE";
-    p.setPen(color("bone")); p.setFont(kit::font(48, true, true)); p.drawText(QRectF(24, h - 83, w - 40, 68), Qt::AlignLeft | Qt::AlignVCenter, badge);
-    p.setPen(color("gold")); p.setFont(kit::font(13, true)); p.drawText(26, 30, "GD'S MELEE  /  DISC LIBRARY");
+    p.setPen(color("bone")); p.setFont(legacy::font(48, true, true)); p.drawText(QRectF(24, h - 83, w - 40, 68), Qt::AlignLeft | Qt::AlignVCenter, badge);
+    p.setPen(color("gold")); p.setFont(legacy::font(13, true)); p.drawText(26, 30, "GD'S MELEE  /  DISC LIBRARY");
     p.fillRect(26, h - 20, 48, 4, color("gold"));
 }
 }

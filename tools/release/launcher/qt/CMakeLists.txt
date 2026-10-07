@@ -17,7 +17,7 @@ target_include_directories(launcher_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 add_library(launcher_ui STATIC atlas.cpp)           # legacy_kit.cpp, kit.cpp and window.cpp join in Tasks 3 and 4
 target_link_libraries(launcher_ui PUBLIC launcher_core Qt6::Widgets)
 target_include_directories(launcher_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-qt_add_executable(gd-melee-launcher main.cpp window.cpp kit.cpp kit.qrc)
+qt_add_executable(gd-melee-launcher main.cpp window.cpp legacy_kit.cpp kit.qrc)
 target_link_libraries(gd-melee-launcher PRIVATE launcher_ui launcher_core Qt6::Widgets)
 set_target_properties(gd-melee-launcher PROPERTIES WIN32_EXECUTABLE TRUE)
 if(WIN32)

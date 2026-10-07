@@ -15,7 +15,7 @@ class QPlainTextEdit;
 class QTimer;
 
 namespace launcher {
-namespace kit { class Hero; class Surface; }
+namespace legacy { class Hero; class Surface; }
 extern bool spanish;
 QString t(const char *en, const char *es);
 class Window : public QMainWindow {
@@ -32,8 +32,8 @@ private:
     Settings settings_;
     QProcess process_;
     QStackedWidget *tabs_;
-    kit::Surface *surface_;
-    kit::Hero *hero_;
+    legacy::Surface *surface_;
+    legacy::Hero *hero_;
     QLabel *discTitle_;
     QLabel *pageHeading_;
     QVector<QPushButton *> navigation_;

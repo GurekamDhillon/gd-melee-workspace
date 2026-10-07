@@ -1,6 +1,6 @@
 #include "window.h"
 #include "diagnostics.h"
-#include "kit.h"
+#include "legacy_kit.h"
 #include <QApplication>
 #include <QDateTime>
 #include <QElapsedTimer>
@@ -18,7 +18,7 @@ int main(int argc, char **argv) {
     QApplication app(argc, argv);
     app.setApplicationName("GD Melee"); app.setApplicationVersion("1.0"); app.setOrganizationName("GDMelee");
     app.setQuitOnLastWindowClosed(false);
-    launcher::kit::initialize();
+    launcher::legacy::initialize();
     QCommandLineParser parser; parser.setApplicationDescription("GD's Melee portable offline launcher"); parser.addHelpOption(); parser.addVersionOption();
     parser.addOptions({{"app-dir", "Game installation directory", "path"}, {"data-dir", "User settings and saves directory", "path"},
                        {"lang", "Launcher language: auto, en, es", "language"}, {"add-iso", "Add a disc image", "path"},

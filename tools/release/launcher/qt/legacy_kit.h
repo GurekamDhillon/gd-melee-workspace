@@ -7,7 +7,7 @@
 #include <QStyledItemDelegate>
 #include <QVariantAnimation>
 #include <QWidget>
-namespace launcher::kit {
+namespace launcher::legacy {
 void initialize();
 QColor color(const QString &token);
 QColor sectionColor(const QString &section, const QString &token);
