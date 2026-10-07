@@ -63,6 +63,7 @@ gw_ui_render.c
 gw_ui_screen.c
 gw_ui_sss.c
 gw_ui_stack.c
+gw_ui_toy.c
 gw_ui_val.c
 gw_uigen.c
 main.c
