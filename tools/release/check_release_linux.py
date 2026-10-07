@@ -15,7 +15,7 @@ folder before it writes the tarball.
      container, a memory-card save ("GALE01"... at offset 0), an HSD archive (first word = the file's own
      size), a DOL (text section table at 0x100).
   4. assets/ui must be byte-identical to the art committed as _build/ui in the workspace repo.
-  5. Mods are checked against tools/release/mod_rules.json (the same table the Windows packager copies
+  5. Mods are required (the Linux package carries the same mods as the Windows zip) and checked against tools/release/mod_rules.json (the same table the Windows packager copies
      by): a known mod id, only paths its allow patterns name, never-package ids (envoy_drives_sa2,
      local-assets, ported/private fighters, ACE/Akaneia packs) fail by name. The single `.dat` exception is
      the Courier's own built files: listed in mods/original-assets.json with a matching sha256, a path
@@ -273,14 +273,16 @@ def check(path, repo=ROOT):
         if 'assets/' + key not in seen:
             fail(f'missing required file: assets/{key}')
     for mid, rule in rules['mods'].items():
-        if rule.get('default_on') and any(r.startswith('mods/') for r in seen) and f'mods/{mid}/mod.json' not in seen:
+        if rule.get('default_on') and f'mods/{mid}/mod.json' not in seen:
             fail(f'missing required file: mods/{mid}/mod.json')
     if 'mods/enabled.txt' in seen:
         text = next(b for r, b, _ in entries if r == 'mods/enabled.txt').decode('utf-8', 'replace')
+        listed_on = set()
         for line in text.splitlines():
             eid = line.split('#', 1)[0].strip()
             if not eid:
                 continue
+            listed_on.add(eid)
             er = rules['mods'].get(eid)
             if not er:
                 fail(f"mods/enabled.txt names '{eid}', which is not a mod this release carries")
@@ -288,7 +290,10 @@ def check(path, repo=ROOT):
                 fail(f"mods/enabled.txt turns on '{eid}', which must ship off by default")
             elif f'mods/{eid}/mod.json' not in seen:
                 fail(f"mods/enabled.txt names '{eid}', which is not in the package")
-    elif any(r.startswith('mods/') for r in seen):
+        for mid, rule in rules['mods'].items():
+            if rule.get('default_on') and mid not in listed_on:
+                fail(f"mods/enabled.txt does not turn on '{mid}', which ships on by default")
+    else:
         fail('missing required file: mods/enabled.txt')
 
     by_rel = {r: b for r, b, _ in entries}

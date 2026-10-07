@@ -157,6 +157,44 @@ class LinuxGuardTests(unittest.TestCase):
         finally:
             (self.stage/'README.txt').write_bytes(b'r')
 
+    def test_the_package_must_carry_the_default_on_mods(self):
+        # the Linux package carries the same mods as the Windows zip: a package without them fails
+        for name in ('mods/envoy/mod.json', 'mods/geno-lab/mod.json'):
+            data = (self.stage/name).read_bytes()
+            try:
+                self.undo(name)
+                self.expect_fail('missing required file: '+name)
+            finally:
+                self.put(name, data)
+        f = self.stage/'mods/enabled.txt'
+        before = f.read_bytes()
+        try:
+            f.write_bytes(b'# on\ngeno-lab\nenvoy\n')
+            self.expect_fail("does not turn on 'envoy_drives'")
+            f.write_bytes(b'# on\ngeno-lab\nenvoy\nenvoy_drives\nenvoy_drives_sa2\n')
+            self.expect_fail('not a mod this release carries')
+        finally:
+            f.write_bytes(before)
+        try:
+            self.undo('mods/enabled.txt')
+            self.expect_fail('missing required file: mods/enabled.txt')
+        finally:
+            f.write_bytes(before)
+        self.manifests()
+        self.assertEqual(run(self.stage)[0], 0)
+
+    def test_a_package_with_no_mods_folder_fails(self):
+        keep = {}
+        for p in sorted((self.stage/'mods').rglob('*')):
+            if p.is_file():
+                keep[p.relative_to(self.stage).as_posix()] = p.read_bytes()
+        try:
+            self.undo('mods')
+            self.expect_fail('missing required file: mods/geno-lab/mod.json')
+        finally:
+            for name, data in keep.items():
+                self.put(name, data)
+
     def test_personal_path_in_our_binary_is_rejected(self):
         f = self.stage/'bin/melee'
         before = f.read_bytes()
