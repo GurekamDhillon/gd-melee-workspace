@@ -1,0 +1,114 @@
+diff --git a/lib/gx/shader.cpp b/lib/gx/shader.cpp
+index a98a373f2..f12c5bbf6 100644
+--- a/lib/gx/shader.cpp
++++ b/lib/gx/shader.cpp
+@@ -1,4 +1,6 @@
+ #include <xxhash.h>
++#include <algorithm>
++#include <array>
+ #include <cstdlib>
+ #include "../gfx/hash.hpp"
+ #include "../gfx/types.hpp"
+@@ -1335,8 +1337,41 @@ std::string build_shader_source(const ShaderConfig& config, uint32_t normalAttac
+       vtxXfrAttrs += fmt::format("\n    var tc{} = vec4f({}, 1.0);", i, nbt_slice_local(NbtSlice::B));
+     } else if (tcg.src == GX_TG_TANGENT) {
+       vtxXfrAttrs += fmt::format("\n    var tc{} = vec4f({}, 1.0);", i, nbt_slice_local(NbtSlice::T));
+-    } else
+-      UNLIKELY FATAL("unhandled tcg src {}", underlying(tcg.src));
++    } else {
++      // GX_MAX_TEXGENSRC is what a texgen the game never configured holds (GXSetNumTexGens / GXSetTevOrder
++      // can name a texcoord that no GXSetTexCoordGen filled). On hardware that is undefined, not illegal:
++      // the draw samples whatever the XF row held. Killing the process is strictly worse, so source the
++      // texcoord from (0,0) and say so once, with enough state to find the draw.
++      static std::array<std::array<bool, GX_MAX_TEXGENSRC + 1>, MaxTexCoord> srcWarned{};
++      const auto badSrc = std::min<u32>(static_cast<u32>(underlying(tcg.src)), GX_MAX_TEXGENSRC);
++      if (!srcWarned[i][badSrc]) {
++        srcWarned[i][badSrc] = true;
++        std::string stages;
++        for (u32 t = 0; t < config.tevStageCount; ++t) {
++          const auto& st = config.tevStages[t];
++          stages += fmt::format(" s{}(coord={},map={},chan={},c={}/{}/{}/{},a={}/{}/{}/{},ind={} mtx={} wrap={}/{} add={})", t,
++                                underlying(st.texCoordId), underlying(st.texMapId), underlying(st.channelId),
++                                underlying(st.colorPass.a), underlying(st.colorPass.b), underlying(st.colorPass.c),
++                                underlying(st.colorPass.d), underlying(st.alphaPass.a), underlying(st.alphaPass.b),
++                                underlying(st.alphaPass.c), underlying(st.alphaPass.d), underlying(st.indTexStage),
++                                underlying(st.indTexMtxId), underlying(st.indTexWrapS), underlying(st.indTexWrapT),
++                                st.indTexAddPrev);
++        }
++        std::string tcg_set;
++        for (u32 t = 0; t < MaxTexCoord; ++t) {
++          if (config.tcgs[t].src != GX_MAX_TEXGENSRC) {
++            tcg_set += fmt::format(" tcg{}(src={})", t, underlying(config.tcgs[t].src));
++          }
++        }
++        Log.warn("tcg: texcoord {} is sampled but its texgen source is {} (unset or unsupported) - substituting "
++                 "(0,0). tev:{} ; texgens set:{} ; indStages {} (ind0 coord={} map={}) ; surfaceProgram {} ; lineMode {} ; "
++                 "chans {}",
++                 i, underlying(tcg.src), stages, tcg_set, config.numIndStages, underlying(config.indStages[0].texCoordId),
++                 underlying(config.indStages[0].texMapId), config.surfaceProgram, config.lineMode,
++                 config.colorChannels[0].lightingEnabled);
++      }
++      vtxXfrAttrs += fmt::format("\n    var tc{} = vec4f(0.0, 0.0, 1.0, 1.0);", i);
++    }
+     if (tcg.type == GX_TG_MTX2x4 || tcg.type == GX_TG_MTX3x4) {
+       if (info.indexAttr.test(GX_VA_TEX0MTXIDX + i)) {
+         vtxXfrAttrs += fmt::format("\n    var tc{0}_tmp = tc{0} * ubuf.postex_mtx[in_texmtxidx{0} / 3u];", i);
+diff --git a/lib/gx/texture.cpp b/lib/gx/texture.cpp
+index ff5429216..c43cc9fb0 100644
+--- a/lib/gx/texture.cpp
++++ b/lib/gx/texture.cpp
+@@ -839,6 +839,30 @@ void evict_copy_texture(const void* dest) noexcept {
+   texture::invalidate_bindings();
+ }
+ 
++// The texture formats resolve_static_texture / convert_texture can decode (GC formats and the PC-native ones).
++static bool is_static_texture_format(u32 format) noexcept {
++  switch (format) {
++  case GX_TF_I4:
++  case GX_TF_I8:
++  case GX_TF_IA4:
++  case GX_TF_IA8:
++  case GX_TF_RGB565:
++  case GX_TF_RGB5A3:
++  case GX_TF_RGBA8:
++  case GX_TF_C4:
++  case GX_TF_C8:
++  case GX_TF_C14X2:
++  case GX_TF_CMPR:
++  case GX_TF_R8_PC:
++  case GX_TF_RG8_PC:
++  case GX_TF_RGBA8_PC:
++  case GX_TF_BC1_PC:
++    return true;
++  default:
++    return false;
++  }
++}
++
+ void resolve_sampled_textures(const ShaderInfo& info) noexcept {
+   ZoneScoped;
+   apply_pending_invalidations();
+@@ -873,6 +897,23 @@ void resolve_sampled_textures(const ShaderInfo& info) noexcept {
+       }
+     } else if (copyRef != nullptr) {
+       handle = copyRef->handle;
++    } else if (obj.has_data() && !is_static_texture_format(obj.format())) {
++      // A texmap the draw samples holds a texobj no GXInitTexObj made (stale or never loaded: the format is
++      // not one GX has). Hardware would sample whatever bytes are there; killing the process is strictly worse.
++      // Leave the handle empty (the draw samples the same fallback as a texmap with no data) and say so once.
++      static std::array<bool, MaxTextures> badFormatWarned{};
++      if (!badFormatWarned[i]) {
++        badFormatWarned[i] = true;
++        std::string stages;
++        for (u32 t = 0; t < g_gxState.numTevStages; ++t) {
++          stages += fmt::format(" s{}(coord={},map={})", t, underlying(g_gxState.tevStages[t].texCoordId),
++                                underlying(g_gxState.tevStages[t].texMapId));
++        }
++        Log.warn("texmap {} is sampled but holds a texobj with unknown format {} ({}x{}, data {}); sampling "
++                 "nothing. numTexGens {} ; tev:{}",
++                 i, static_cast<u32>(obj.format()), obj.width(), obj.height(), obj.data, g_gxState.numTexGens,
++                 stages);
++      }
+     } else if (obj.has_data()) {
+       handle = texture::resolve_static_texture(obj);
+     }
