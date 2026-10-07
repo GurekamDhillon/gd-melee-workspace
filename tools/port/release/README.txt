@@ -44,8 +44,9 @@ own the adapter. No root privileges are required to run the game.
 MELEE_SDL_GAMECUBE=1 selects SDL's adapter path instead of the raw USB transport.
 Physical raw-adapter validation is pending; no adapter was available during development.
 
-This release's acceptance scope is offline Windows parity. Networking, remote
-mod downloads and crash uploads are outside the Qt launcher's current scope.
+This release's acceptance scope is offline Windows parity. Networking and remote
+mod downloads are outside the Qt launcher's current scope. Crash report upload is opt-in
+(Diagnostics tab) and only happens on a click.
 
 Debug symbols are distributed separately. Match the ELF build ID and artifact
 checksums before symbolizing a core. Never upload a core without reviewing its

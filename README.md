@@ -178,7 +178,8 @@ is still outstanding. The keyboard remains hotkeys only.
 **Launcher and reports**
 - English and Spanish; the language follows Windows by default.
 - Diagnostics tab, short logs, and local crash reports with your Windows user name removed.
-  The Qt launcher opens logs and copies reports for sharing; it has no crash upload client.
+  The Qt launcher opens logs and copies reports for sharing. Uploading crash reports is optional, off by
+  default, and only happens when you click "Upload last 3 crash logs".
 
 ### Added in 0.1.5
 

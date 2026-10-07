@@ -35,6 +35,7 @@
 #include <QStatusBar>
 #include <QTableWidget>
 #include <QStackedWidget>
+#include <QThread>
 #include <QTimer>
 #include <QUrl>
 #include <QVBoxLayout>
@@ -390,6 +391,61 @@ void Window::copyDiagnostics() { guarded([&] {
     if (!QFile::exists(path)) { statusBar()->showMessage(t("No launch diagnostics yet. Start the game or run diagnostics first.", "No launch diagnostics yet. Start the game or run diagnostics first.")); return; }
     QApplication::clipboard()->setText(readText(path, 4 * 1024 * 1024)); statusBar()->showMessage(t("Launch diagnostics copied.", "Launch diagnostics copied."));
 }); }
+Window::~Window() {
+    if (uploadThread_) { uploadCancel_ = true; uploadThread_->wait(); }
+}
+void Window::uploadCrashes() {
+    // The opt-in is checked here as well as by the button's enabled state: nothing is sent without both it and a click.
+    if (!settings_.flag("crash_upload", false) || uploadThread_) return;
+    const auto runDir = runDir_.isEmpty() ? settings_.option("last_run", userDir_ + "/runs") : runDir_;
+    const QStringList files = uploadableCrashes(runDir); const QString server = crashServer(appDir_);
+    if (files.isEmpty() || server.isEmpty()) {
+        CrashUploadResult none; none.failure = files.isEmpty() ? CrashUploadResult::NoReports : CrashUploadResult::NoServer; none.detail = runDir + "/crashlogs";
+        finishCrashUpload(none); return;
+    }
+    uploadCancel_ = false; crashUpload_->setEnabled(false);
+    statusBar()->showMessage(t("Sending crash reports...", "Enviando informes de fallo..."));
+    const auto version = versionText(appDir_), profile = QDir::homePath(), user = crashUserName();
+    uploadThread_ = QThread::create([this, files, server, version, profile, user] {
+        const auto result = uploadCrashReports(server, files, version, profile, user, 10000, &uploadCancel_);
+        QMetaObject::invokeMethod(this, [this, result] { finishCrashUpload(result); }, Qt::QueuedConnection);
+    });
+    uploadThread_->setParent(this);
+    connect(uploadThread_, &QThread::finished, this, [this] {
+        uploadThread_->deleteLater(); uploadThread_ = nullptr;
+        crashUpload_->setEnabled(settings_.flag("crash_upload", false));
+    });
+    uploadThread_->start();
+}
+void Window::finishCrashUpload(const CrashUploadResult &r) {
+    using R = CrashUploadResult;
+    if (r.failure == R::Cancelled) return;
+    if (r.failure == R::NoServer) {
+        const auto text = t("No matchmaking server is set (netplay_server.txt next to the game), so there is nowhere to send the reports.", "No hay ningún servidor de emparejamiento configurado (netplay_server.txt junto al juego), así que no hay a dónde enviar los informes.");
+        statusBar()->showMessage(text);
+        auto *box = new QMessageBox(QMessageBox::Information, t("Upload last 3 crash logs", "Subir los 3 últimos informes de fallo"), text, QMessageBox::Ok, this);
+        box->setAttribute(Qt::WA_DeleteOnClose); box->open(); return;
+    }
+    QString text;
+    switch (r.failure) {
+    case R::None: text = r.sent == 1 ? t("sent 1 crash report", "se envió 1 informe de fallo") : t("sent %1 crash reports", "se enviaron %1 informes de fallo").arg(r.sent); break;
+    case R::NoReports: text = t("no crash reports to send (in %1)", "no hay informes de fallo que enviar (en %1)").arg(QDir::toNativeSeparators(r.detail)); break;
+    default: {
+        QString why;
+        if (r.failure == R::TooLarge) why = t("the report is over 64 KB", "el informe pasa de 64 KB");
+        else if (r.failure == R::ServerRefused && r.status == 429) why = t("the server answered %1 (upload limit reached, try again later)", "el servidor respondió %1 (límite de envíos alcanzado, inténtalo más tarde)").arg(r.status);
+        else if (r.failure == R::ServerRefused) why = t("the server answered %1", "el servidor respondió %1").arg(r.status);
+        else why = r.detail;
+        text = t("sent %1 of %2, then failed: %3", "se enviaron %1 de %2 y luego falló: %3").arg(r.sent).arg(r.total).arg(why);
+    }
+    }
+    statusBar()->showMessage(t("Crash logs: %1.", "Informes de fallo: %1.").arg(text));
+    const auto cap = text.left(1).toUpper() + text.mid(1);
+    const bool ok = r.ok();
+    auto *box = new QMessageBox(ok ? QMessageBox::Information : QMessageBox::Warning, t("Upload last 3 crash logs", "Subir los 3 últimos informes de fallo"),
+        ok ? t("%1 to %2. Thank you.", "%1 a %2. ¡Gracias!").arg(cap, r.server) : cap + ".", QMessageBox::Ok, this);
+    box->setAttribute(Qt::WA_DeleteOnClose); box->open();
+}
 void Window::guarded(const std::function<void()> &action) {
     try { action(); } catch (const std::exception &e) { QMessageBox::warning(this, t("Could not complete the action", "No se pudo completar la acción"), QString::fromUtf8(e.what())); }
 }
@@ -720,6 +776,15 @@ QWidget *Window::diagnosticsTab() {
             toggleRow(list, entry.second, group.first + "_" + entry.first, settings_.option(group.first).split(',').contains(entry.first), [this, key = group.first, value = entry.first](bool on) {
                 auto items = settings_.option(key).split(',', Qt::SkipEmptyParts); items.removeAll(value); if (on) items << value; settings_.options[key] = items.join(','); save(); });
     }
+    auto *crashes = bodyOf(t("Crash reports", "Informes de fallo"));
+    crashUpload_ = new kit::Button(t("Upload last 3 crash logs", "Subir los 3 últimos informes de fallo")); crashUpload_->setObjectName("diag_upload_crashes");
+    crashUpload_->setEnabled(settings_.flag("crash_upload", false));                  // off by default; the button needs the opt-in
+    toggleRow(crashes, t("Allow uploading crash reports", "Permitir subir informes de fallo"), "diag_crash_upload", settings_.flag("crash_upload", false),
+        [this](bool on) { settings_.options["crash_upload"] = on ? "1" : "0"; save(); crashUpload_->setEnabled(on && !uploadThread_); });
+    crashes->addWidget(paragraph(t("Off by default. Nothing is ever sent on its own: only the button below sends anything.", "Desactivado por defecto. Nunca se envía nada por sí solo: solo el botón de abajo envía algo."), atlas::Role::Body12, "muted"));
+    crashes->addWidget(paragraph(t("What is sent: the short crash reports the game writes to crashlogs (crash-<time>.log, at most 64 KB each) - the game version, the disc's ID and title, the mods you use, your settings, the error with the code it happened in, and the last lines of the log. Your Windows user name is removed from every path and your player name is left out; the full log (-full.log) is never sent.\nWhere: the matchmaking server this game uses for online play (netplay_server.txt).\nWhy: so crashes can be found and fixed without you having to send files by hand.\nNothing is sent automatically. The button sends your three newest reports (not faults that happened while the game was closing), once, when you click it.", "Qué se envía: los informes de fallo breves que el juego escribe en crashlogs (crash-<hora>.log, 64 KB como máximo cada uno): la versión del juego, el ID y el título del disco, los mods que usas, tus ajustes, el error con el código donde ocurrió y las últimas líneas del registro. Tu nombre de usuario de Windows se quita de todas las rutas y tu nombre de jugador no se incluye; el registro completo (-full.log) nunca se envía.\nA dónde: al servidor de emparejamiento que usa este juego para jugar en línea (netplay_server.txt).\nPara qué: para encontrar y corregir los fallos sin que tengas que enviar archivos a mano.\nNada se envía automáticamente. El botón envía tus tres informes más recientes (no los fallos ocurridos mientras el juego se cerraba), una vez, cuando haces clic."), atlas::Role::Body12, "muted"));
+    crashes->addWidget(crashUpload_);
+    connect(crashUpload_, &QPushButton::clicked, this, [this] { guarded([&] { uploadCrashes(); }); });
     auto *reports = bodyOf(t("Reports", "Informes"));
     auto *grid = new QGridLayout; grid->setSpacing(atlas::px("s2")); reports->addLayout(grid); int n = 0;      // one column: these labels are long
     auto lastRun = [this] { return runDir_.isEmpty() ? settings_.option("last_run", userDir_ + "/runs") : runDir_; };

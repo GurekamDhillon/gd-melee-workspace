@@ -187,12 +187,13 @@ The current scope is **offline Windows parity**:
   clears invalid cycles and their dependents so an all-enabled folder can be recovered.
 - Unlock everything, skip intro, volume, close launcher on play; controller and engine
   diagnostic switches; local log/crash inspection.
+- Crash reports can be uploaded, opt-in and only on a click; see "Crash report upload (Qt launcher)" below.
 - English/Spanish controls. Low-level file/probe errors currently remain English.
 - Launch via `QProcess` with separate arguments and isolated working directories. Closing
   the launcher while playing hides it; it remains alive until the game exits, preserving
   process monitoring without terminating the game.
 
-Online matchmaking, remote mod downloads, console sockets and crash uploading are not in
+Online matchmaking, remote mod downloads and console sockets are not in
 this Qt migration. The underlying game networking code has not been removed.
 
 Settings migrate from `launcher.cfg` to an atomic `launcher.json` on first save; the old
@@ -328,7 +329,7 @@ python -m unittest discover -s tools/release -p "test_*.py" -v
 python -m unittest discover -s tools/netplay/server -v
 ```
 
-## Crash reports receiver (legacy clients)
+## Crash reports receiver
 
 `crash_upload_server.py` is plain HTTP on TCP, on the same host:port as the UDP matchmaking server
 (TCP and UDP ports do not collide): `POST /crash`, text body starting with the report header, at
@@ -338,7 +339,30 @@ in memory - addresses are never written), 300 a day overall, 200 MB on disk. Sto
 `python3 crash_upload_server.py --port 51600 --dir /var/lib/gdmelee/crashes`, or from
 `gdmelee_server.py`'s event loop with `await start_crash_upload(bind, port, dir)`. Deploying it
 needs TCP 51600 open on the VPS and a service unit beside `gdmelee.service`.
-The current Qt launcher only inspects/copies local reports; it has no upload client.
+
+### Crash report upload (Qt launcher)
+
+The Diagnostics tab's "Crash reports" section ports the C# launcher's client (commits `c2a556b`, `8bdd16c`);
+the code is `launcher/qt/crash_upload.{h,cpp}`.
+
+- **Opt-in, default off.** "Allow uploading crash reports" is stored as `crash_upload` (`1`/`0`) in
+  `launcher.json`. The consent text (what is sent, where, why) sits under it.
+- **Only a click sends.** "Upload last 3 crash logs" is enabled only with the opt-in on, and the click handler
+  checks the opt-in again. There is no automatic upload, no prompt after a crash and no command-line switch.
+- **Which reports.** The three newest `crashlogs/crash-*.log` of the last run: compact reports only (they start
+  with the report header), never a `-full.log`, never a fault marked `during shutdown: yes`, none over 64 KB.
+  Already-sent reports are included again, as before; the server's 3-an-hour limit then answers 429.
+- **What leaves.** The file as the game wrote it, scrubbed again (profile folder to `%USERPROFILE%`, user name to
+  `<user>`), UTF-8, at most 64 KB after scrubbing. Each accepted report gets a `<file>.sent` note beside it.
+- **Where.** `http://<host:port>/crash`, where `host:port` is the first line of `netplay_server.txt` next to
+  the game, the one address the game's matchmaking uses; with no such line the button says there is nowhere
+  to send. Plain HTTP/1.1 over `QTcpSocket` (Qt6::Network), 10 s per step, off the GUI thread; no proxy support.
+- **Result.** A message box and the status bar say "sent N crash reports to host:port", or what failed and how far
+  it got ("sent 1 of 3, then failed: the server answered 429 (upload limit reached, try again later)").
+- **Tests.** `launcher_crash_upload` (`qt/crash_upload_tests.cpp`) starts `crash_upload_server.py` on 127.0.0.1
+  with a temporary `--dir`, uploads, and checks the stored file, the 429 on the fourth report and the 400, 404
+  and 413 replies; `launcher_atlas` checks the toggle is off by default, a disabled button sends nothing, the
+  opt-in alone sends nothing, and one click sends one request. Never against the public server.
 
 ## Why no GitHub Actions build
 

@@ -1,9 +1,11 @@
 #pragma once
+#include "crash_upload.h"
 #include "diagnostics.h"
 #include "launcher_core.h"
 #include <QMainWindow>
 #include <QElapsedTimer>
 #include <QProcess>
+#include <atomic>
 #include <functional>
 class QTableWidget;
 class QLabel;
@@ -13,6 +15,7 @@ class QCloseEvent;
 class QComboBox;
 class QPlainTextEdit;
 class QTimer;
+class QThread;
 
 namespace launcher {
 namespace kit { class TabRail; }
@@ -22,6 +25,7 @@ void applyTheme();                      // atlas tokens, fonts, palette and the 
 class Window : public QMainWindow {
 public:
     Window(QString appDir, QString userDir, Settings settings);
+    ~Window() override;
     void addDisc(const QString &path = {});
     void play();
     void selectMods();
@@ -65,6 +69,12 @@ private:
     void showLaunchFailure(const DiagResult &report, const QString &extra = {});
     void runDiagnosticsOnly();
     void copyDiagnostics();
+    // "Upload last 3 crash logs": the only way anything leaves the machine, and only with the opt-in on.
+    QPushButton *crashUpload_ = nullptr;
+    QThread *uploadThread_ = nullptr;
+    std::atomic<bool> uploadCancel_{false};
+    void uploadCrashes();
+    void finishCrashUpload(const CrashUploadResult &result);
     void startGame(const LaunchSpec &spec);
     void guarded(const std::function<void()> &action);
     void save();
