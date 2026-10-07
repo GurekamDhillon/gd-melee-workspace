@@ -15,6 +15,7 @@ local cfg = DET or {}
 local N = cfg.frames or 3600
 local seed = cfg.seed or 12345
 local BIAS = cfg.bias or 55
+local NP = cfg.ports or 2
 
 local function rnd(n)
   seed = (seed * 1103515245 + 12345) % 2147483648
@@ -41,23 +42,35 @@ local function sample(me, opp)
 end
 
 gd.run(function()
-  gd.wait_until(function() return gd.match().active and gd.player(1) ~= nil and gd.player(2) ~= nil end, 6000)
+  local function present()
+    if not gd.match().active then return false end
+    for port = 1, NP do if gd.player(port) == nil then return false end end
+    return true
+  end
+  gd.wait_until(present, 6000)
   local start = gd.match().frame
-  local free_at = { 0, 0 }
-  gd.log("DET: start frame " .. start .. " seed " .. seed .. " frames " .. N)
+  local free_at = {}
+  for port = 1, NP do free_at[port] = 0 end
+  gd.log("DET: start frame " .. start .. " seed " .. seed .. " frames " .. N .. " ports " .. NP)
   while gd.match().frame - start < N do
     local f = gd.match().frame - start
-    local p1, p2 = gd.player(1), gd.player(2)
-    for port = 1, 2 do
+    for port = 1, NP do
       if f >= free_at[port] then
-        local spec, n = sample(port == 1 and p1 or p2, port == 1 and p2 or p1)
+        local me, opp = gd.player(port), gd.player(port % NP + 1)
+        local spec, n = sample(me, opp)
         gd.input(port, spec, n)
         free_at[port] = f + n
       end
     end
-    if f % 600 == 0 and p1 ~= nil and p2 ~= nil then
-      gd.log(string.format("DET: f=%d p1 x=%.4f y=%.4f %%=%.1f st=%d act=%d | p2 x=%.4f y=%.4f %%=%.1f st=%d act=%d",
-        f, p1.x, p1.y, p1.percent, p1.stocks, p1.action, p2.x, p2.y, p2.percent, p2.stocks, p2.action))
+    if f % 600 == 0 then
+      local parts = {}
+      for port = 1, NP do
+        local p = gd.player(port)
+        if p ~= nil then
+          parts[#parts + 1] = string.format("p%d x=%.4f y=%.4f %%=%.1f st=%d act=%d", port, p.x, p.y, p.percent, p.stocks, p.action)
+        end
+      end
+      gd.log("DET: f=" .. f .. " " .. table.concat(parts, " | "))
     end
     gd.wait(1)
   end

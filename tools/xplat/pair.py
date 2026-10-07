@@ -29,6 +29,7 @@ def main():
     ap.add_argument('--out', default=os.path.join(ROOT, '_build', 'xplat'))
     ap.add_argument('--linux-dir', default='outD')
     ap.add_argument('--bias', default='55')
+    ap.add_argument('--ports', default='2')
     a = ap.parse_args()
     out = os.path.join(a.out, a.name)
     os.makedirs(out, exist_ok=True)
@@ -38,6 +39,7 @@ def main():
     if a.skip:
         extra.append('MELEE_XHASH_SKIP=' + a.skip)
     extra.append('DET_BIAS=' + a.bias)
+    extra.append('DET_PORTS=' + a.ports)
     procs = {}
 
     def run_win():

@@ -9,15 +9,15 @@ disc="${MELEE_VANILLA_ISO:?set MELEE_VANILLA_ISO}"
 run="$(dirname "$bin")/xp-$name"
 rm -rf "$run"; mkdir -p "$run"
 cp "$bin/melee" "$bin/melee-pc.msvc.map" "$run/"; cp -a "$bin/assets" "$bin/ui" "$run/"
-{ echo "DET = {frames=$frames, seed=$seed, bias=${DET_BIAS:-55}}"; cat "$here/det_input.lua"; } > "$run/det.lua"
+for kv in "$@"; do export "$kv"; done
+{ echo "DET = {frames=$frames, seed=$seed, bias=${DET_BIAS:-55}, ports=${DET_PORTS:-2}}"; cat "$here/det_input.lua"; } > "$run/det.lua"
 mkdir -p "$run/nomods"
 export MELEE_SCENE="$scene" MELEE_PAD_SCRIPT="$run/det.lua" MELEE_XHASH_LOG="$run/xh.csv"
 export MELEE_TURBO="${MELEE_TURBO:-1}" MELEE_TURBO_RENDER="${MELEE_TURBO_RENDER:-0}" MELEE_VOLUME=0 MELEE_TEST_SEED="${MELEE_TEST_SEED:-777}"
-export MELEE_PAD_IGNORE_ADAPTER=1 MELEE_SKIP_INTRO=1 MELEE_MODS_DIR="$run/nomods" MELEE_CACHE_DIR="$run"
+export MELEE_PAD_IGNORE_ADAPTER=1 MELEE_SKIP_INTRO=1 MELEE_MODS_DIR="${MELEE_MODS_DIR:-$run/nomods}" MELEE_CACHE_DIR="$run"
 # the same presentation settings run.sh gives the Windows build (the camera depends on the aspect)
 export MELEE_WINDOW_W="${MELEE_WINDOW_W:-1920}" MELEE_WINDOW_H="${MELEE_WINDOW_H:-1080}" MELEE_RENDER_SCALE="${MELEE_RENDER_SCALE:-3}" MELEE_WIDESCREEN="${MELEE_WIDESCREEN:-1}"
 export SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-dummy}" SDL_AUDIODRIVER=dummy LD_LIBRARY_PATH="${GW_LIBDIR:-}"
-for kv in "$@"; do export "$kv"; done
 cd "$run"
 timeout --kill-after=5 "${XP_TIMEOUT:-1500}" ./melee --iso "$disc" > run.log 2>&1
 rc=$?
