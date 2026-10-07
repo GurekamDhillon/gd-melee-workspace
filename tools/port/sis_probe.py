@@ -5,7 +5,8 @@
 Reads one SIS text archive straight out of a disc image IN MEMORY (the disc path comes from the named environment variable and is never
 printed), walks every string of its SIS table with the same rules as pc/platform/gw_ui_retailtext.c (the opcode operand sizes of
 HSD_SisLib_803A84BC, the font atlas's own SJIS pairs read from src/sysdolphin/baselib/hsd_3A76.c run in reverse) and prints COUNTS ONLY: strings,
-characters, unknown glyphs, stops. Nothing decoded is printed, logged, written or kept: the strings live in a Python variable for one loop.
+characters, unknown glyphs, stops. With --unknown it also lists, per group, the SJIS code (or the glyph number when the font table has no
+code) of each glyph that did not decode and how often: character codes and counts, never decoded text. Nothing decoded is printed, logged, written or kept: the strings live in a Python variable for one loop.
 That is the rule of the step (no disc-derived data in either repo or on disk) and tools/port/check_no_disc_text.py guards the C side.
 
 Verdict per group, by the share of glyphs that did not decode (u / c):
@@ -87,6 +88,9 @@ def decode(stream, lut, unknown_codes=None):
             jumps += 1
             break
         if OPERANDS[op] < 0:
+            bad += 1
+            break
+        if i + 1 + OPERANDS[op] > len(stream):      # its operand bytes are cut: bad, as gw_ui_retailtext.c says
             bad += 1
             break
         if op == 3:

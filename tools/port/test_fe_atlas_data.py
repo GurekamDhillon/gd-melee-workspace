@@ -59,11 +59,39 @@ class Adapter(unittest.TestCase):
 
     def test_screens_write_only_what_is_listed(self):
         writers = set(re.findall(r"\b(gmMainLib_\w*(?:Set|Write|Save)\w*|lbCardGame_SaveChanges|DeleteName|CreateNameAtIndex|WriteCharactersForNameAtIndex|gm_801BEB74|gmMainLib_8015ED68)\s*\(", self.t))
-        self.assertEqual(writers, {"gm_801BEB74"}, "the only save write is the selection an event start stores (as mnEvent_8024D864 does)")
+        self.assertEqual(writers, {"gm_801BEB74", "gmMainLib_8015ED68"},
+                         "the save writes are the selection an event start stores (as mnEvent_8024D864 does) and the heard-track flag Sound Test stores for a track that sets one (mnSoundTest_PlaySampleAnim)")
+        # the heard-track write is only ever made for a track lbAudioAx_80023090 flags, exactly as retail does
+        body = function_body(self.t, "static bool fad_snd_accept(")
+        self.assertRegex(body, r"if \(lbAudioAx_80023090\(.*\) != 0\) \{\s*gmMainLib_8015ED68")
         # Sound Test applies the saved volumes to the live mixer and sets none
-        self.assertNotRegex(self.t, r"gmMainLib_8015ED6[0-9A-F]|SetVolume|Settings_SetInt")
+        self.assertNotRegex(self.t, r"gmMainLib_8015ED6[0-79-F]|SetVolume|Settings_SetInt")
         # the Name Entry list opens retail for edits: it never writes a name itself
         self.assertNotRegex(function_body(self.t, "static bool fad_name_accept("), r"CreateName|WriteCharacters|DeleteName")
+
+    def test_the_wheel_stops_at_the_ends_and_keys_wrap(self):
+        body = function_body(self.t, "static void fad_event(")
+        self.assertRegex(body, r"if \(slot == 1\)", "the host marks the wheel with slot 1")
+        self.assertRegex(body, r"to >= 0 && to < fad\.total", "the wheel does not wrap")
+        host = read("pc/platform/gw_script_ui_set.inc")
+        self.assertIn("gs_set_push(GS_SETEV_MOVE, 1,", host)
+
+    def test_every_text_read_is_bounded(self):
+        self.assertIn("idx >= fad_sis_n", self.t, "the index is bounded by the table's real count, not a constant")
+        self.assertNotIn("0x600", self.t)
+        body = function_body(self.t, "static int fad_sis_text(")
+        self.assertIn("Ui_SisDecode(p, len,", body, "the decoder is told how many bytes it may read")
+        self.assertIn("p >= base + size", function_body(self.t, "static const u8* fad_sis_stream("), "a pointer outside the archive's data is refused")
+
+    def test_a_missing_table_closes_the_archive_and_is_remembered(self):
+        body = function_body(self.t, "static bool fad_sis_open(")
+        self.assertIn("fad_sis_failed", body)
+        self.assertRegex(body, r"HSD_SisLib_803A947C\(fad_sis_arc\);[^}]*fad_sis_failed = true")
+        self.assertRegex(body, r"if \(fad_sis_failed \|\| fad_has\(Ui_EnvData\(\), \"notext\"\)\)")
+
+    def test_notext_alone_means_every_screen(self):
+        body = function_body(self.t, "static void fad_read_env(")
+        self.assertIn("!any ||", body)
 
     def test_native_rows_stay_in_the_table(self):
         m = read("src/melee/gm/gmfrontend_menus.inc")

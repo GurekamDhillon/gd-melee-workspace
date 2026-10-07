@@ -53,6 +53,10 @@ class Probe(unittest.TestCase):
         self.assertEqual(p.decode(bytes([0x20, 0x41, 8, 0, 0, 0, 0]), lut), (1, 0, 0, 1, 0))
         self.assertEqual(p.decode(bytes([0x20, 0x41, 29, 0]), lut), (1, 0, 0, 0, 1))
         self.assertEqual(p.decode(bytes([0x20]), lut)[4], 1)                                              # a cut glyph is bad, never read past
+        self.assertEqual(p.decode(bytes([0x20, 0x41, 5, 0]), lut), (1, 0, 0, 0, 1))                         # a delay opcode with one operand byte: bad, like the C decoder
+        self.assertEqual(p.decode(bytes([12, 255, 0]), lut), (0, 0, 0, 0, 1))                                # a cut colour opcode
+        self.assertEqual(p.decode(bytes([0x20, 0x41]), lut), (1, 0, 0, 0, 1))                                # no terminator
+        self.assertEqual(p.decode(bytes([0x20, 0x41, 0]), lut), (1, 0, 0, 0, 0))
         codes = {}
         p.decode(bytes([0x20, 0x77, 0x40, 0x00, 0]), lut, codes)
         self.assertEqual(codes, {(0x83, 0x41): 1, ("glyph", 0x4000): 1})

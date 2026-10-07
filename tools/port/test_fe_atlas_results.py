@@ -80,6 +80,16 @@ class Results(unittest.TestCase):
         self.assertNotRegex(policy, r"AT_SCENE_RESULTS|\{\s*5\s*,\s*AT_POLICY_REPLACE", "no policy row: results stays retail until the owner has looked")
         self.assertIn("Ui_NetplayActive()", function_body(self.t, "static GameScene* fad_results_standin("))
 
+    def test_the_winner_is_the_retail_one(self):
+        enter = function_body(self.t, "static void far_enter(")
+        self.assertIn("gmResult_PcWinner(", enter, "the announcer, the theme and the rumble follow fn_801771C0's winner (x6)")
+        self.assertNotRegex(enter, r"far_winner < 0 && far_is_winner", "not the first of winners[]")
+        self.assertIn("fn_801771C0", read("src/melee/gm/gmresult.c"))
+
+    def test_the_countdown_starts_after_the_cards_frame_50(self):
+        body = function_body(self.t, "static void far_frame(")
+        self.assertRegex(body, r"far_card_frames\+\+;\s*if \(done >= 0 && far_card_frames > 50\)")
+
     def test_the_exit_is_the_retail_one(self):
         self.assertIn("gm_801A4B60();", function_body(self.t, "static void far_frame("))
 

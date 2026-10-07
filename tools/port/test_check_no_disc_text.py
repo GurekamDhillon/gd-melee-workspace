@@ -5,6 +5,9 @@ import unittest
 
 import check_no_disc_text as g
 
+NL = chr(10)
+BN = chr(92) + 'n'   # a backslash and an n: the C escape for a newline
+
 
 def run(text):
     d = tempfile.mkdtemp()
@@ -26,6 +29,21 @@ class Guard(unittest.TestCase):
     def test_an_authored_screen_id_may_say_so(self):
         self.assertEqual(run('OSReport("frontend: Atlas data screen %s\\n", s->atlas_id); /* OK-NOTEXT */\n'), [])
         self.assertEqual(len(run('OSReport("frontend: Atlas data screen %s\\n", s->atlas_id);\n')), 1)
+
+    def test_a_statement_that_spans_lines_is_one_statement(self):
+        self.assertEqual(len(run(NL.join(['OSReport("event %s' + BN + '",', '         name);', '']))), 1)
+        self.assertEqual(len(run(NL.join(['gw_log(', '    "msg: %s",', '    buf);', '']))), 1)
+
+    def test_a_wrapped_format_is_one_format(self):
+        self.assertEqual(len(run(NL.join(['OSReport("event "', '         "%s done' + BN + '", n);', '']))), 1)
+
+    def test_a_marker_anywhere_in_a_wrapped_statement_counts(self):
+        self.assertEqual(run(NL.join(['OSReport("screen %s' + BN + '",', '         s->atlas_id); /* OK-NOTEXT */', ''])), [])
+
+    def test_the_door_files_are_covered(self):
+        self.assertIn("pc/platform/gw_script_ui_set.inc", g.FILES)
+        self.assertIn("pc/platform/gw_script_ui_data.inc", g.FILES)
+        self.assertIn("src/melee/gm/gmfrontend_atlas_set.inc", g.FILES)
 
     def test_other_lines_are_ignored(self):
         self.assertEqual(run('snprintf(out, cap, "%s", name);\n'), [])

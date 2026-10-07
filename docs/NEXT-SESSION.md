@@ -14,7 +14,7 @@ Companions: `HANDOFF-2026-10-05.md` (Envoy, Turbo, CPU controller state and the 
   tag list, Sound Test (music and effects), Special Messages, Bonus, Misc. and VS. Records are Atlas lists fed by the retail getters, opened from the `FA_NATIVE`
   row that opens the retail screen (`fad_open_for` in `fm_confirm`; no table row changed; B returns to the menu item). `MELEE_ATLAS_DATA=<words>` picks screens
   (`events,name,sound,messages,bonus,misc,vsrec`; `none`; `notext`), `MELEE_ATLAS=0` and netplay keep retail. They ride the settings door (`gw_script_ui_data.inc`):
-  the adapter owns the cursor and a 32-row window. Results is a `REPLACE` stand-in behind `MELEE_ATLAS_SCENES=5:replace` only (never online, no 3D winner, no
+  the adapter owns the cursor and a 32-row window. Results is a `REPLACE` stand-in behind `MELEE_ATLAS_SCENES=5:replace` only (never online, the retail winner via `gmResult_PcWinner` = `fn_801771C0`, the exit countdown after the card's frame 50, no 3D winner, no
   Rematch or Main Menu keys, the owner's call). The title was already an OVERLAY (step 2). Built: link OK, bridge fixpoint OK, ABI audit 0, headless `run.sh --test`
   320 of 320; 12 native test cases (`atlas-retailtext`, `-data`, `-models`, `-results`, `-data-host` are new), three Python guards, `check_no_disc_text.py`.
   **The text gate (Task 1) is settled: PARTIAL, from the disc, not a guess.** `tools/port/sis_probe.py` decodes `SdMenu.usd` in memory (counts only; the vanilla, ACE
@@ -23,7 +23,7 @@ Companions: `HANDOFF-2026-10-05.md` (Envoy, Turbo, CPU controller state and the 
   punctuation; a string with one keeps its authored label ("EVENT 7", "TRACK 12"). `SdRst.usd` and `SdToy.usd` are PARTIAL too (12 of 3058 and 39 of 2705).
   **Corrections the code forced on the plan:** retail's event list reaches display index `mnEvent_8024CE74() + 8`, so later events are LOCKED rows (not "all 51
   open"); special messages sort oldest first; event rows are keyed by display index, not event id; the bonus table is static, so `mninfobonus.c` has one
-  `TARGET_PC` reader; Sound Test has two views (music, effects) and the retail one also stores the last track (not repeated). **Not rebuilt, by risk:** the Name Entry
+  `TARGET_PC` reader; Sound Test has two views (music, effects) and stores the heard-track flag for a flagged track as retail does (`gmMainLib_8015ED68`; with the event start's selection it is one of the two save writes, both allow-listed in `test_fe_atlas_data.py`). **Not rebuilt, by risk:** the Name Entry
   editor (it writes the save through `mnNameNew_CurrentNameText`; unverifiable without a window), so A on the tag list opens the game's own Name Entry. **Not
   done:** Game Over (no-go: a 3D scene with unnamed enter data), the 1P intro, regend and prize scenes (3D, a THP movie), Staff Roll (the owner: stays retail, no Credits
   entry); `tools/port/retail_screens.py` records each. The owner kept the Language row (Snapshots, Movies and Staff Roll stay retail, so it cannot go).
