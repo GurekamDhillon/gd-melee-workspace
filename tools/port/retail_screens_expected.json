@@ -1,0 +1,122 @@
+[
+ {
+  "kind": "MENU_KIND_1P",
+  "sel": "SEL_1P_EVENT",
+  "retail_fn": "mnEvent_8024E838",
+  "atlas": false,
+  "step5": "",
+  "stays": false
+ },
+ {
+  "kind": "MENU_KIND_VS",
+  "sel": "SEL_VS_RULES",
+  "retail_fn": "mn_80231714",
+  "atlas": false,
+  "step5": "step 5: VERSUS > RULES (FA_RULES)",
+  "stays": false
+ },
+ {
+  "kind": "MENU_KIND_VS",
+  "sel": "SEL_VS_NAME",
+  "retail_fn": "mnName_8023AC40",
+  "atlas": false,
+  "step5": "",
+  "stays": false
+ },
+ {
+  "kind": "MENU_KIND_SETTINGS",
+  "sel": "SEL_SETTINGS_RUMBLE",
+  "retail_fn": "mnVibration_Init",
+  "atlas": false,
+  "step5": "step 5: SETTINGS > GAME > Rumble rows",
+  "stays": false
+ },
+ {
+  "kind": "MENU_KIND_SETTINGS",
+  "sel": "SEL_SETTINGS_SOUND",
+  "retail_fn": "mnSound_8024A09C",
+  "atlas": false,
+  "step5": "step 5: SETTINGS > AUDIO",
+  "stays": false
+ },
+ {
+  "kind": "MENU_KIND_SETTINGS",
+  "sel": "SEL_SETTINGS_DISPLAY",
+  "retail_fn": "mnDeflicker_8024A6C4",
+  "atlas": false,
+  "step5": "",
+  "stays": false
+ },
+ {
+  "kind": "MENU_KIND_SETTINGS",
+  "sel": "SEL_SETTINGS_LANG",
+  "retail_fn": "mnLanguage_8024C5C0",
+  "atlas": false,
+  "step5": "",
+  "stays": false
+ },
+ {
+  "kind": "MENU_KIND_SETTINGS",
+  "sel": "SEL_SETTINGS_ERASE",
+  "retail_fn": "mnDataDel_80250170",
+  "atlas": false,
+  "step5": "step 5: the erase screen",
+  "stays": false
+ },
+ {
+  "kind": "MENU_KIND_DATA",
+  "sel": "SEL_DATA_SNAP",
+  "retail_fn": "mnSnap_80257F24",
+  "atlas": false,
+  "step5": "",
+  "stays": true
+ },
+ {
+  "kind": "MENU_KIND_DATA",
+  "sel": "SEL_DATA_ARCHIVES",
+  "retail_fn": "mnGallery_80259868",
+  "atlas": false,
+  "step5": "",
+  "stays": true
+ },
+ {
+  "kind": "MENU_KIND_DATA",
+  "sel": "SEL_DATA_SOUND",
+  "retail_fn": "mnSoundTest_8024BEE0",
+  "atlas": false,
+  "step5": "",
+  "stays": false
+ },
+ {
+  "kind": "MENU_KIND_DATA",
+  "sel": "SEL_DATA_SPECIAL",
+  "retail_fn": "mnInfo_80252758",
+  "atlas": false,
+  "step5": "",
+  "stays": false
+ },
+ {
+  "kind": "MENU_KIND_RECORDS",
+  "sel": "SEL_RECORDS_VS",
+  "retail_fn": "mnDiagram_Init",
+  "atlas": false,
+  "step5": "",
+  "stays": false
+ },
+ {
+  "kind": "MENU_KIND_RECORDS",
+  "sel": "SEL_RECORDS_BONUS",
+  "retail_fn": "mnInfoBonus_80252F8C",
+  "atlas": false,
+  "step5": "",
+  "stays": false
+ },
+ {
+  "kind": "MENU_KIND_RECORDS",
+  "sel": "SEL_RECORDS_MISC",
+  "retail_fn": "mnCount_Create",
+  "atlas": false,
+  "step5": "",
+  "stays": false
+ }
+]

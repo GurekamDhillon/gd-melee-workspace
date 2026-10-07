@@ -33,6 +33,27 @@ G = {
         ("src/melee/gm/gmfrontend_atlas_table.h", r"\bFE_SLIDER\b", "step 5", "N4 sliders with a format"),
     ],
     7: [],  # filled by the step 7 plan, Task 0
+    # Step 8 (retail screens rebuilt from data). Reconciled 2026-10-07 against what steps 2 to 6 built: the adapter's submit is
+    # still fa_submit, the REPLACE hook is gmFrontend_AtlasStandIn, the scene table calls Ui_ScenePolicy. The data screens ride
+    # the native settings door (gw_Ui_SetOpen, step 5) instead of the plan's gw_Ui_Begin list: see gmfrontend_atlas_data.inc.
+    8: [
+        ("src/melee/gm/gmfrontend_atlas.inc", r"\bfa_submit\b", "step 2", "N1 the adapter submits a screen each frame"),
+        ("src/melee/gm/gmfrontend_atlas.inc", r"gmFrontend_AtlasStandIn", "step 2", "N2 the REPLACE hook"),
+        ("src/melee/gm/gm_1A3F.c", r"Ui_ScenePolicy", "step 2", "N2 the scene table hook"),
+        ("pc/platform/gw_ui_policy.c", r"AT_POLICY_REPLACE", "step 2", "N2 the policy table"),
+        ("pc/platform/gw_script_ui_set.inc", r"\bgw_Ui_SetOpen\b", "step 5", "N3 an engine-owned native list screen (rows, tabs, events)"),
+        ("pc/platform/gw_ui_screen.h", r"#define AT_MAX_ITEMS 64", "step 5", "N4 AT_MAX_ITEMS 64"),
+    ],
+}
+
+# Soft needs: printed when missing, never fail the exit. (file, regex, owner, why)
+SOFT = {
+    8: [
+        ("pc/platform/gw_ui_item.h", r"at_item_apply", "step 5", "N3 value rows"),
+        ("pc/platform/gw_ui_screen.h", r"\btabs\b", "steps 4,5", "N5 tabs"),
+        ("pc/platform/gw_kit.h", r"gw_Kit_TexAddHsd", "step 4", "N6 disc-art decode"),
+        ("pc/platform/gw_ui_parts.h", r"at_part_port_card", "step 4", "N7 port card"),
+    ],
 }
 
 
@@ -55,6 +76,11 @@ def main(argv=None):
         if text is None or not re.search(rx, text):
             print("MISSING  %-46s %-8s %s (%s)" % (rel, owner, why, rx))
             missing += 1
+    for rel, rx, owner, why in SOFT.get(a.step, []):
+        path = os.path.join(root, rel)
+        text = open(path, encoding="utf-8", errors="replace").read() if os.path.exists(path) else None
+        if text is None or not re.search(rx, text):
+            print("SOFT   %-46s %-8s %s" % (rel, owner, why))
     print("gate step %d: %d missing" % (a.step, missing))
     return 1 if missing else 0
 
