@@ -1,4 +1,8 @@
 #include "atlas.h"
+#include "kit.h"
+#include <QApplication>
+#include <QImage>
+#include <QSignalSpy>
 #include <QFontDatabase>
 #include <QFontMetricsF>
 #include <QtTest>
@@ -82,6 +86,76 @@ private slots:
         QVERIFY(atlas::contrast(atlas::colour("jade"), plate) >= 3.0);
         QVERIFY(atlas::contrast(atlas::colour("ink"), atlas::colour("ember")) >= 4.5);   // the Play label on the ember button
         QCOMPARE(atlas::contrast(QColor(0, 0, 0), QColor(255, 255, 255)), 21.0);
+    }
+
+    static QImage paint(QWidget &w, QSize size) {
+        w.resize(size); QImage img(size, QImage::Format_ARGB32_Premultiplied); img.fill(Qt::transparent); w.render(&img, QPoint(), QRegion(), QWidget::RenderFlags()); return img;
+    }
+    void button_corners_and_focus_cues() {
+        kit::Button b("PLAY"); b.setFixedSize(180, 44);
+        auto idle = paint(b, {180, 44});
+        QCOMPARE(qAlpha(idle.pixel(0, 0)), 0);                     // the chamfered top-left is empty
+        QCOMPARE(qAlpha(idle.pixel(179, 43)), 0);                  // and the bottom-right
+        QVERIFY(qAlpha(idle.pixel(179, 4)) > 0);                   // the top-right corner is square
+        b.setFocus(Qt::TabFocusReason); QApplication::processEvents();
+        b.show(); QApplication::processEvents();                    // focus needs a shown window to take
+        auto foc = paint(b, {180, 44});
+        const QRectF face = atlas::lifted(QRectF(0, 0, 180, 44).adjusted(0, 0, 0, -3), true);
+        const QRectF edge = atlas::frontEdge(face.translated(0, 3), atlas::px("ch-xs"));
+        QCOMPARE(QColor(foc.pixel(int(edge.center().x()), int(edge.center().y()))).rgb(), atlas::colour("ember").rgb());   // the ember front edge
+        QVERIFY(foc != idle);                                       // lift moved something
+    }
+    void disabled_is_hatched() {
+        kit::Button b("PLAY"); b.setFixedSize(180, 44); b.setEnabled(false);
+        const auto img = paint(b, {180, 44});
+        int a = 0, c = 0;
+        for (int y = 6; y < 36; ++y) for (int x = 6; x < 170; ++x) { QColor p = QColor(img.pixel(x, y)); if (p.rgb() == atlas::colour("plate2").rgb()) ++a; else ++c; }
+        QVERIFY(a > 0 && c > 0);                                    // two tones in the face: a hatch, not a flat dim fill
+        // and the hatch itself, not only the label, is what breaks the flat fill: look at a strip with no text
+        int hatch = 0; for (int x = 6; x < 30; ++x) if (QColor(img.pixel(x, 20)).rgb() != atlas::colour("plate2").rgb()) ++hatch;
+        QVERIFY2(hatch > 0, "no hatch lines in a text-free strip of the disabled face");
+    }
+    void toggle_says_its_state() {
+        kit::Toggle t; t.setChecked(false); QCOMPARE(t.stateText(), QString("OFF"));
+        t.setChecked(true); QCOMPARE(t.stateText(), QString("ON"));
+        QSignalSpy spy(&t, &QAbstractButton::toggled); QTest::keyClick(&t, Qt::Key_Space); QCOMPARE(spy.count(), 1); QVERIFY(!t.isChecked());
+        // the lit half is jade on the ON side only
+        t.setChecked(true); auto on = paint(t, {74, 24});
+        QCOMPARE(QColor(on.pixel(60, 3)).rgb(), atlas::colour("jade").rgb());
+        QVERIFY(QColor(on.pixel(12, 3)).rgb() != atlas::colour("jade").rgb());
+        t.setChecked(false); auto off = paint(t, {74, 24});
+        QVERIFY(QColor(off.pixel(60, 3)).rgb() != atlas::colour("jade").rgb());
+    }
+    void tab_rail_keys_and_signals() {
+        kit::TabRail r({"PLAY", "MODS", "DIAGNOSTICS", "ABOUT"}); r.resize(204, 300); r.show();
+        QSignalSpy spy(&r, &kit::TabRail::currentChanged);
+        QCOMPARE(r.current(), 0);
+        QTest::keyClick(&r, Qt::Key_Down); QCOMPARE(r.current(), 1);
+        QTest::keyClick(&r, Qt::Key_Down); QTest::keyClick(&r, Qt::Key_Down); QCOMPARE(r.current(), 3);
+        QTest::keyClick(&r, Qt::Key_Down); QCOMPARE(r.current(), 0);          // wraps
+        QTest::keyClick(&r, Qt::Key_Up); QCOMPARE(r.current(), 3);
+        QTest::mouseClick(&r, Qt::LeftButton, {}, QPoint(20, 20)); QCOMPARE(r.current(), 0);   // the first row's hit rectangle
+        QVERIFY(spy.count() >= 5);
+        QTest::keyClick(&r, Qt::Key_End); QCOMPARE(r.current(), 3); QTest::keyClick(&r, Qt::Key_Home); QCOMPARE(r.current(), 0);
+    }
+    void key_chip_and_tag_fit() {
+        kit::Tag t("A tag with far too many words in it", kit::Tag::Jade); t.setMaximumWidth(80);
+        QVERIFY(t.sizeHint().width() <= 80 + 2);                   // never wider than its cap
+        kit::KeyChip k("Ctrl"); QVERIFY(k.sizeHint().height() >= 20);
+    }
+    void pane_keeps_count_elides_heading() {
+        kit::Pane p("A VERY LONG HEADING THAT WILL NOT FIT IN THE PANE WIDTH AT ALL"); p.setFixedWidth(240); p.setCount("123456 discs");
+        QImage img = paint(p, {240, 120}); QVERIFY(!img.isNull());
+        QFontMetricsF fm(atlas::font(atlas::Role::Cap14));
+        QVERIFY(p.property("headingShown").toString().endsWith(QChar(0x2026)));
+        QVERIFY(fm.horizontalAdvance(p.property("headingShown").toString()) <= 240 - 16 - QFontMetricsF(atlas::font(atlas::Role::Body12)).horizontalAdvance("123456 discs"));
+    }
+    void icons_exist() {
+        for (auto n : {"disc", "mods", "data", "check", "plus", "right", "left", "up", "down", "star", "x", "folder"}) QVERIFY2(!kit::icon(n).isEmpty(), n);
+        QVERIFY(kit::icon("no-such-icon").isEmpty());
+    }
+    void reduced_motion_is_a_cut() {
+        QVERIFY(atlas::motion("m-focus") == 0 || atlas::motion("m-focus") == atlas::ms("m-focus"));
     }
 };
 QTEST_MAIN(AtlasTests)

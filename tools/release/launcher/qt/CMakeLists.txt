@@ -14,7 +14,7 @@ endif()
 add_library(launcher_core STATIC launcher_core.cpp graphics.cpp diagnostics.cpp)
 target_link_libraries(launcher_core PUBLIC Qt6::Core)
 target_include_directories(launcher_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-add_library(launcher_ui STATIC atlas.cpp)           # legacy_kit.cpp, kit.cpp and window.cpp join in Tasks 3 and 4
+add_library(launcher_ui STATIC atlas.cpp kit.cpp)   # window.cpp and legacy_kit.cpp join in Task 4
 target_link_libraries(launcher_ui PUBLIC launcher_core Qt6::Widgets)
 target_include_directories(launcher_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_executable(gd-melee-launcher main.cpp window.cpp legacy_kit.cpp kit.qrc)

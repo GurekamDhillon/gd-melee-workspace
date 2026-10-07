@@ -13,6 +13,8 @@ void initialize();                         // loads :/atlas/tokens.json and the 
 QColor colour(const QString &token);       // an unknown token is an invalid QColor
 int px(const QString &token);              // 0 for an unknown token
 int ms(const QString &token);
+bool reducedMotion();                      // the platform asks for fewer animations (Windows: client-area animation off)
+int motion(const QString &token);          // ms(token), or 0 when the platform asks for reduced motion: both tweens become cuts
 enum class Role { Cap12, Cap14, Cap16, Cap20, Title, Hero, Body12, Body14, Row16 };
 QFont font(Role role);
 

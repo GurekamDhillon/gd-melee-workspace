@@ -4,6 +4,11 @@
 #include <QFontDatabase>
 #include <QJsonDocument>
 #include <QJsonObject>
+#ifdef Q_OS_WIN
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
 
 namespace launcher::atlas {
 static QJsonObject tokens;
@@ -32,6 +37,14 @@ QColor colour(const QString &token) {
 }
 int px(const QString &token) { return tokens["px"].toObject().value(token).toInt(0); }
 int ms(const QString &token) { return tokens["ms"].toObject().value(token).toInt(0); }
+bool reducedMotion() {
+#ifdef Q_OS_WIN
+    BOOL on = TRUE;
+    if (SystemParametersInfoW(SPI_GETCLIENTAREAANIMATION, 0, &on, 0)) return !on;
+#endif
+    return false;                                                    // no platform hint: the tweens run
+}
+int motion(const QString &token) { return reducedMotion() ? 0 : ms(token); }
 
 QFont font(Role role) {
     const bool cap = role == Role::Cap12 || role == Role::Cap14 || role == Role::Cap16 || role == Role::Cap20;
