@@ -9,7 +9,8 @@ GAME = os.environ.get("GW_MELEE") or os.path.join(ROOT, "melee")
 
 
 def read(*p):
-    return open(os.path.join(GAME, *p), encoding="utf-8", errors="replace").read()
+    with open(os.path.join(GAME, *p), encoding="utf-8", errors="replace") as f:
+        return f.read().replace("\r\n", "\n")
 
 
 def frontend_on_frame():
@@ -42,27 +43,40 @@ class Heartbeat(unittest.TestCase):
         src = read("src", "melee", "gm", "gmfrontend.c")
         self.assertIn("fe.screen == &fe_screen_remap ? fcr_port : -1", src)
 
-    def test_remap_layer_runs_only_after_the_heartbeat(self):
-        """fss_remap_frame is called from exactly one place, the settings branch, after the heartbeat."""
+    def test_the_atlas_branch_comes_after_the_heartbeat(self):
+        """The settings branch (fss_frame) is called once, from gm_Scene_Frontend_OnFrame, after Controls_Menu."""
         body = frontend_on_frame()
         hb = body.index("Controls_Menu(")
-        calls = [m.start() for m in re.finditer(r"fss_remap_frame\(", body)]
-        self.assertLessEqual(len(calls), 1)
-        for c in calls:
-            self.assertGreater(c, hb)
-        others = []
+        calls = [m.start() for m in re.finditer(r"fss_frame" + chr(92) + "(", body)]
+        self.assertEqual(len(calls), 1, "one Atlas settings branch")
+        self.assertGreater(calls[0], hb, "the Atlas branch must come after the Controls_Menu heartbeat")
+
+    def test_remap_layer_runs_only_inside_the_settings_branch(self):
+        """fss_remap_frame (fcr_frame, moved) is called from exactly one place: inside fss_frame, which runs after the heartbeat."""
         gm = os.path.join(GAME, "src", "melee", "gm")
+        found = []
         for name in sorted(os.listdir(gm)):
-            if not name.endswith((".c", ".inc", ".h")) or name == "gmfrontend_atlas_remap.h":
+            if not name.endswith((".c", ".inc", ".h")):
                 continue
             text = read("src", "melee", "gm", name)
-            if name == "gmfrontend.c":
-                text = text.replace(body, "")
-            for m in re.finditer(r"fss_remap_frame\(", text):
-                line = text[text.rfind("\n", 0, m.start()) + 1:text.find("\n", m.start())]
-                if not line.lstrip().startswith(("static", "/*", "*", "//")):
-                    others.append((name, line.strip()))
-        self.assertEqual(others, [], "fss_remap_frame is called only from the settings branch of the frontend frame")
+            for m in re.finditer(r"fss_remap_frame" + chr(92) + "(", text):
+                line = text[text.rfind(chr(10), 0, m.start()) + 1:text.find(chr(10), m.start())]
+                if line.lstrip().startswith(("static", "/*", "*", "//")):
+                    continue                                    # its definition and comments
+                found.append((name, m.start()))
+        self.assertEqual([n for n, _ in found], ["gmfrontend_atlas_set.inc"], "only the Atlas settings file calls it")
+        text = read("src", "melee", "gm", "gmfrontend_atlas_set.inc")
+        start = text.index("static bool fss_frame(void)")
+        self.assertTrue(start < found[0][1] < text.index(chr(10) + "}" + chr(10), start), "and only inside fss_frame")
+        body = frontend_on_frame()
+        self.assertNotIn("fss_remap_frame", body, "gm_Scene_Frontend_OnFrame never calls the remap layer itself")
+        self.assertNotIn("fcr_frame", body.split("fss_frame")[0].split("Controls_Menu(")[1], "no legacy capture frame runs between the heartbeat and the Atlas branch")
+
+    def test_the_legacy_remap_frame_is_unchanged(self):
+        """The legacy path (MELEE_ATLAS=0) still calls fcr_frame for the remap screen, after the Atlas branch."""
+        body = frontend_on_frame()
+        self.assertIn("fe.screen == &fe_screen_remap && fcr_frame()", body)
+        self.assertLess(body.index("fss_frame("), body.index("fcr_frame()"))
 
 
 if __name__ == "__main__":
