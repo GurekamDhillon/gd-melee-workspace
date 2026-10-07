@@ -1042,6 +1042,9 @@
 ../masstest/shimobj/gw_ui_policy.obj
 ../masstest/shimobj/gw_ui_retail.obj
 ../masstest/shimobj/gw_ui_hud.obj
+../masstest/shimobj/gw_ui_css.obj
+../masstest/shimobj/gw_ui_css_profile.obj
+../masstest/shimobj/gw_ui_sss.obj
 ../masstest/out/pc_geno_geno_game.c.obj
 ../masstest/out/pc_geno_geno_tests.c.obj
 ../masstest/out/pc_geno_geno_lab_mode.c.obj
