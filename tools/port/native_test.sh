@@ -108,7 +108,9 @@ atlas-items)
     sources=(pc/tests/atlas_items_test.c pc/platform/gw_ui_item.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_layout.c) ;;
 atlas-lint)
     sources=(pc/tests/atlas_lint_test.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c) ;;
-*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-tiles, atlas-registry, atlas-policy, atlas-retail, atlas-hud, atlas-binding, atlas-style, atlas-profile, atlas-css, atlas-select-render, atlas-sss, atlas-select-adapter, atlas-items, atlas-walker, atlas-settings-host, atlas-settings, atlas-erase, atlas-remap, atlas-lint)" ;;
+atlas-online-parts)
+    sources=(pc/tests/atlas_online_parts_test.c pc/platform/gw_ui_online_parts.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c) ;;
+*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-tiles, atlas-registry, atlas-policy, atlas-retail, atlas-hud, atlas-binding, atlas-style, atlas-profile, atlas-css, atlas-select-render, atlas-sss, atlas-select-adapter, atlas-items, atlas-walker, atlas-settings-host, atlas-settings, atlas-erase, atlas-remap, atlas-lint, atlas-online-parts)" ;;
 esac
 
 if [ "$uses_enet" = 1 ]; then
