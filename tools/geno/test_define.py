@@ -193,6 +193,82 @@ class ArticleDefineTests(unittest.TestCase):
         bad = copy.deepcopy(data); bad["fighters"][0]["sounds"][0]["retail_sfx"] = 0
         self.assertTrue(check.validate(bad, self.CASTER))   # schema: engine sound id 1..999999
 
+    # ---- slice 6: costumes as declared colour sets, and a define's own menu and HUD art ----------------------------------------------
+    COURIER = GAME / "pc/geno/mods/vanilla-courier"
+
+    @staticmethod
+    def gxtex(fmt=5, w=4, h=4):
+        """a .gxtex container: 64-byte big-endian header (magic, version, format, w, h, tlut format, tlut entries, image size, tlut size,
+        image offset, tlut offset), then a 32-byte image"""
+        import struct
+        return b"GXTX" + struct.pack(">I", 1) + struct.pack(">9I", fmt, w, h, 0xFFFFFFFF, 0, 32, 0, 64, 0) + bytes(64 - 44) + bytes(32)
+
+    def test_courier_declares_colours_and_art_and_checks_clean(self):
+        require_game("pc/geno/mods/vanilla-courier/geno.json")
+        data = check.load_json(self.COURIER / "geno.json")
+        f = data["fighters"][0]
+        self.assertEqual([c.get("team") for c in f["fighter"]["costumes"]], [None, "red", "blue", "green"])
+        self.assertTrue(all(c["name"] for c in f["fighter"]["costumes"]))
+        self.assertEqual(set(f["presentation"]), {"icon", "portrait", "stock"})
+        self.assertEqual(check.validate(data, self.COURIER), [])
+
+    def test_presentation_needs_geno_9_and_known_keys_and_plain_gxtex_names(self):
+        require_game("pc/geno/mods/vanilla-courier/geno.json")
+        data = check.load_json(self.COURIER / "geno.json")
+        bad = copy.deepcopy(data); bad["geno"] = 8
+        self.assertTrue(check.validate(bad, self.COURIER))     # base none needs 9 as well: either message is the refusal
+        hero = check.load_json(GAME / "pc/geno/mods/vanilla-hero/geno.json")
+        hero["fighters"][0]["presentation"] = {"icon": "hero_icon.gxtex"}
+        messages = [e["message"] for e in check.validate(hero, GAME / "pc/geno/mods/vanilla-hero")]
+        self.assertTrue(any("needs geno: 9" in m for m in messages), messages)
+        hero["geno"] = 9
+        self.assertEqual(check.validate(hero, GAME / "pc/geno/mods/vanilla-hero"), [])   # a donor-based define may declare art at 9
+        for key, value in (("banner", "a.gxtex"), ("icon", "a.png"), ("icon", "sub/a.gxtex"), ("icon", "..a.gxtex"), ("icon", ["a.gxtex"]),
+                           ("stock", []), ("stock", ["a.gxtex"] * 17)):
+            bad = copy.deepcopy(hero); bad["fighters"][0]["presentation"] = {key: value}
+            self.assertTrue(check.validate(bad, GAME / "pc/geno/mods/vanilla-hero"), (key, value))
+
+    def test_costume_team_and_name_rules(self):
+        require_game("pc/geno/mods/vanilla-courier/geno.json")
+        data = check.load_json(self.COURIER / "geno.json")
+        bad = copy.deepcopy(data); bad["fighters"][0]["fighter"]["costumes"][0]["team"] = "red"
+        messages = [e["message"] for e in check.validate(bad, self.COURIER)]
+        self.assertTrue(any("already declared by costume 0" in m for m in messages), messages)
+        for key, value in (("team", "purple"), ("name", ""), ("name", "x" * 24), ("name", "tab	here")):
+            bad = copy.deepcopy(data); bad["fighters"][0]["fighter"]["costumes"][1][key] = value
+            self.assertTrue(check.validate(bad, self.COURIER), (key, value))
+        bad = copy.deepcopy(data); bad["fighters"][0]["presentation"]["portrait"] = ["a.gxtex"] * 5
+        self.assertTrue(any("5 entries for 4 costumes" in e["message"] for e in check.validate(bad, self.COURIER)))
+
+    def test_art_files_are_checked_when_present_and_missing_is_a_warning(self):
+        require_game("pc/geno/mods/vanilla-hero/geno.json")
+        import shutil
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "hero"
+            shutil.copytree(GAME / "pc/geno/mods/vanilla-hero", root)
+            data = check.load_json(root / "geno.json")
+            data["geno"] = 9
+            data["fighters"][0]["presentation"] = {"icon": "h_icon.gxtex", "stock": "h_stock.gxtex"}
+            self.assertEqual(check.validate(data, root), [])
+            art = [w for w in check.WARNINGS if ".presentation." in w["path"]]
+            self.assertEqual(len(art), 2, check.WARNINGS)                    # not built yet: the game draws the fallback
+            (root / "files").mkdir(exist_ok=True)
+            (root / "files" / "h_icon.gxtex").write_bytes(self.gxtex(5))
+            (root / "files" / "h_stock.gxtex").write_bytes(self.gxtex(5))
+            self.assertEqual(check.validate(data, root), [])
+            self.assertEqual([w for w in check.WARNINGS if ".presentation." in w["path"]], [])
+            (root / "files" / "h_stock.gxtex").write_bytes(self.gxtex(9))     # C8: a stock icon carries no palette
+            messages = [e["message"] for e in check.validate(data, root)]
+            self.assertTrue(any("palette format" in m for m in messages), messages)
+            (root / "files" / "h_stock.gxtex").write_bytes(b"nope")
+            self.assertTrue(any("not a v1 .gxtex" in e["message"] for e in check.validate(data, root)))
+            (root / "files" / "h_stock.gxtex").write_bytes(self.gxtex(5))
+            (root / "geno.json").write_text(json.dumps(data, indent=2))
+            from tools.geno.define import export_package
+            out = Path(tmp) / "export"
+            export_package(root, out)
+            self.assertTrue(any(out.rglob("h_icon.gxtex")))   # the package's own art travels with it
+
 
 if __name__ == "__main__":
     unittest.main()

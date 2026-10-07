@@ -167,7 +167,15 @@ def build_schema():
     fighter["properties"]["fighter"] = obj({"plan": string("The fighter plan (plan.json): joints, parts, rows, ftData joint fields, hurtboxes", section="22.4"),
         "animation": string("The animation file (a .dat of figatrees, the bank)", section="22.4"),
         "costumes": arr(obj({"file": string("Costume model .dat", section="22.4"), "joint": string("Joint-tree symbol", section="22.4"),
-                             "matanim": string("Material-animation symbol", section="22.4")}, ("file", "joint")), 16)}, ("plan", "animation", "costumes"))
+                             "matanim": string("Material-animation symbol", section="22.4"),
+                             "name": string("Costume name the select shows (printable ASCII, 1..23 characters)", section="22.6", minLength=1, maxLength=23, pattern="^[ -~]+$"),
+                             "team": string("The team battle colour this costume is (the first one declared wins; undeclared: red is costume 0, blue 1, green 2)", section="22.6", enum=["red", "blue", "green"])},
+                            ("file", "joint")), 16)}, ("plan", "animation", "costumes"))
+    gxtex = string("A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name", section="22.6", pattern=r"^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][xX][tT][eE][xX]$", maxLength=63)
+    fighter["properties"]["presentation"] = obj({"icon": gxtex, "portrait": {"anyOf": [gxtex, arr(gxtex, 16, minItems=1)]},
+        "stock": {"anyOf": [gxtex, arr(gxtex, 16, minItems=1)]}})
+    fighter["properties"]["presentation"]["description"] = "A define's own character select icon (64x56), portrait (136x188) and stock icon (rgb5a3 or rgba8), one per costume or one for all (geno: 9)"
+
     fighter["allOf"] = [{"if": {"required": ["define"], "properties": {"define": {"properties": {"base": {"const": "mario"}}}}}, "then": {"properties": {
         field: {"items": {"properties": {key: {"maximum": 302}}}}
         for field, key in (("subactions", "index"), ("common_states", "subaction"),

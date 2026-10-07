@@ -233,6 +233,40 @@ def validate_hook(name, arg, articles, path, errors):
             errors.append(diagnostic(path, f"spawn variant {variant} does not exist"))
 
 
+GXTX_FORMATS = {0: "I4", 1: "I8", 2: "IA4", 3: "IA8", 4: "RGB565", 5: "RGB5A3", 6: "RGBA8", 8: "C4", 9: "C8", 10: "C14X2"}
+
+
+def presentation_checks(fighter, p, base, errors):
+    """Slice 6: the files a define names as its own art (icon, portrait, stock). Each is a .gxtex in the package's files/ folder.
+    A file that is not built yet is a warning (the engine falls back and logs once); a file that is there must be a v1 container whose
+    sizes fit, and a stock icon must not need a palette (the HUD path carries none)."""
+    import struct
+    pres = fighter.get("presentation")
+    if not isinstance(pres, dict):
+        return
+    for key in ("icon", "portrait", "stock"):
+        value = pres.get(key)
+        names = [value] if isinstance(value, str) else value if isinstance(value, list) else []
+        for j, name in enumerate(names):
+            where = p + ".presentation." + key + ("" if isinstance(value, str) else "[%d]" % j)
+            if ".." in name or "/" in name or "\\" in name or ":" in name:
+                errors.append(diagnostic(where, "must be a plain file name"))
+                continue
+            path = Path(base) / "files" / name
+            if not path.is_file():
+                WARNINGS.append(diagnostic(where, "files/%s is not there (build it with pc/tools/png2gx.py); the game draws the fallback" % name))
+                continue
+            blob = path.read_bytes()
+            if len(blob) < 64 or blob[:4] != b"GXTX" or struct.unpack(">I", blob[4:8])[0] != 1:
+                errors.append(diagnostic(where, "files/%s is not a v1 .gxtex" % name))
+                continue
+            fmt, w, h, _tf, _tn, isz, tsz, ioff, toff = struct.unpack(">9I", blob[8:44])
+            if fmt not in GXTX_FORMATS or ioff + isz > len(blob) or (tsz and toff + tsz > len(blob)) or not (0 < w <= 1024 and 0 < h <= 1024):
+                errors.append(diagnostic(where, "files/%s: format %d, %dx%d, image %d@%d do not fit" % (name, fmt, w, h, isz, ioff)))
+            elif key == "stock" and fmt >= 8:
+                errors.append(diagnostic(where, "a stock icon cannot use a palette format (%s): encode it as rgb5a3 or rgba8" % GXTX_FORMATS[fmt]))
+
+
 def package_files(base, name):
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", name) or ".." in name:
         return []
@@ -343,6 +377,7 @@ def validate(data, base):
             from .define import validate_definition
             errors.extend(diagnostic(path, message) for path, message in validate_definition(data, fighter, p))
             graph_checks(fighter, p, base, errors)
+            presentation_checks(fighter, p, base, errors)
         elif "common_states" in fighter:
             errors.append(diagnostic(p+".common_states", "common state overrides require define"))
         attach = fighter.get("attach", "mario")
