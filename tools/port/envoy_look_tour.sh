@@ -20,9 +20,13 @@ set -a; . "$MAIN/.env"; set +a
 
 MOD="$GW_MELEE/pc/scripts/examples/envoy"
 MODELS="$MAIN/_build/local-assets/envoy-play/mods/envoy_drives_sa2"
-SCRIPTS="$MOD"
-if [ -d "$MODELS" ]; then SCRIPTS="$MOD;$MODELS"; else echo "note: $MODELS is missing, so drive cells will be flat (no model tilt to look at)"; fi
-export MELEE_SCRIPT="$SCRIPTS"
+# the mod FOLDER goes to MELEE_SCRIPT (Windows-style path); the local-only model mod is mounted the way the earlier look runs did, through a mods dir
+export MELEE_SCRIPT="$MOD"
+if [ -d "$MODELS" ]; then
+  TM="$GW_BUILD_ROOT/tour-mods"; rm -rf "$TM"; mkdir -p "$TM"; cp -r "$MODELS" "$TM/envoy_drives_sa2"; printf 'envoy_drives_sa2
+' > "$TM/enabled.txt"
+  export MELEE_MODS_DIR="$TM"
+else echo "note: $MODELS is missing, so drive cells will be flat (no model tilt to look at)"; fi
 export MELEE_VOLUME="${MELEE_VOLUME:-3}"
 PORT="${ENVOY_TOUR_PORT:-52317}"
 export MELEE_CONSOLE_PORT="$PORT"
