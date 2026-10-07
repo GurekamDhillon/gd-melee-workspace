@@ -33,7 +33,8 @@ class ReleaseGuardTests(unittest.TestCase):
                  'launcher/bin/platforms/qwindows.dll', 'launcher/qt-build.txt',
                  'launcher/licenses/LGPL-3.0-only.txt',
                  'launcher/licenses/Qt-GPL-exception-1.0.txt',
-                 'launcher/licenses/SourceSans3-OFL-1.1.txt']
+                 'launcher/licenses/SourceSans3-OFL-1.1.txt',
+                 'launcher/licenses/BarlowCondensed-OFL-1.1.txt']
         for name in names:
             file = cls.stage/name
             file.parent.mkdir(parents=True, exist_ok=True)
@@ -94,7 +95,8 @@ class ReleaseGuardTests(unittest.TestCase):
     def test_missing_essential_files_are_rejected_even_with_matching_manifest(self):
         for name in ('melee-pc.map', 'SDL3.dll', 'ui/manifest.json',
                      'launcher/bin/Qt6Gui.dll', 'launcher/bin/platforms/qwindows.dll',
-                     'launcher/bin/vcruntime140_1.dll', 'build-provenance.json'):
+                     'launcher/bin/vcruntime140_1.dll', 'build-provenance.json',
+                     'launcher/licenses/BarlowCondensed-OFL-1.1.txt'):
             with self.subTest(name=name):
                 file = self.stage/name
                 data = file.read_bytes()

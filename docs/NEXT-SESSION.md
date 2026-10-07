@@ -9,6 +9,14 @@ Companions: `HANDOFF-2026-10-05.md` (Envoy, Turbo, CPU controller state and the 
 `_build/audit-20261003/windows-release/READINESS.md` (the release order; untracked, local).
 
 **Now true.**
+- **Atlas step 9 (the Qt launcher in Atlas style) is built and committed on `ws/atlas9`, not merged, not looked at.**
+  Plan `docs/superpowers/plans/2026-10-06-atlas-step9-launcher.md` tasks 0 to 9 are done; task 10 (delete the legacy
+  kit and the `/kit` resources, then the owner's look at 100 and 150 percent) and task 11 (retire the legacy menu art
+  globally, after steps 2 to 8 and 10) are not. Built with Qt 6.8.3 (MSVC 2022 x64 SDK) through the Visual Studio
+  generator; `launcher_core`, `launcher_graphics`, `launcher_atlas` (offscreen) and `launcher_qt_strings` pass; the
+  Linux branch of `window.cpp` was only syntax-checked. Qt window strings: 171 `t()` pairs, 49 with identical halves
+  (126 and 12 before the step); the owner kept the Spanish halves and the Language combo, so new strings are
+  English-only pairs. The OS window frame is kept.
 - **Atlas step 1 is merged** (game `agent/atlas1`, workspace `ws/atlas1`; spec and plan in
   `docs/superpowers/`, ledger `.superpowers/sdd/2026-10-06-atlas-step1-components-and-envoy-bag/progress.md`).
   The `gd.ui` interface (screen stack, focus, pad/key/mouse input, parts, renderer budget, a Reduced Motion

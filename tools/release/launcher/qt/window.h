@@ -15,9 +15,10 @@ class QPlainTextEdit;
 class QTimer;
 
 namespace launcher {
-namespace kit { class Hero; class Surface; }
+namespace kit { class TabRail; }
 extern bool spanish;
 QString t(const char *en, const char *es);
+void applyTheme();                      // atlas tokens, fonts, palette and the style sheet for what Qt draws itself
 class Window : public QMainWindow {
 public:
     Window(QString appDir, QString userDir, Settings settings);
@@ -32,14 +33,17 @@ private:
     Settings settings_;
     QProcess process_;
     QStackedWidget *tabs_;
-    kit::Surface *surface_;
-    kit::Hero *hero_;
+    kit::TabRail *rail_;
+    QWidget *keys_;
+    QLabel *pageSub_;
     QLabel *discTitle_;
     QLabel *pageHeading_;
-    QVector<QPushButton *> navigation_;
     QTableWidget *discs_, *mods_;
     QLabel *discDetails_, *modDetails_;
-    QPushButton *play_;
+    QLabel *modTitle_ = nullptr, *modVersion_ = nullptr, *modRequires_ = nullptr, *modConflicts_ = nullptr;
+    QPushButton *play_ = nullptr;
+    QWidget *playNote_ = nullptr;
+    QLabel *modsOnLabel_ = nullptr;
     bool filling_ = false;
     bool quitting_ = false;
 #ifdef Q_OS_LINUX
@@ -66,11 +70,15 @@ private:
     void save();
     void refreshDiscs(const QString &selectId = {});
     void refreshMods();
+    void showSelectedDisc();
+    void showSelectedMod();
+    void updatePlayState();
     int selectedDisc() const;
     QWidget *playTab();
     QWidget *modsTab();
     QWidget *diagnosticsTab();
     QWidget *aboutTab();
     void openPath(const QString &path);
+    void setKeys(int tab);
 };
 }

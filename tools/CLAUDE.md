@@ -35,7 +35,9 @@ the rules that cross them.
 - **The release guard is `check_release.ps1`**: nothing disc-derived ships. `publish.ps1` also
   refuses an exe older than the melee commit, or a commit not on the public remotes.
 - The portable launcher is in `release/launcher/qt/`; keep English/Spanish labels together.
-  It reads the original menu kit as Qt resources. Build scripts run its CTest suite.
+  It is drawn in the Atlas style from `menu/atlas/tokens.json`, Barlow Condensed and Source Sans 3, all
+  Qt resources (`kit.qrc`). Build scripts run its CTest suite. Its `t()` pairs are checked by
+  `release/launcher/check_qt_strings.py`; `check_strings.py` and `Lang.cs` are the C# reference launcher's.
   The old C# UI/string table remains a reference for deferred online features.
 - PowerShell build scripts target Windows. `port/ci_linux.sh` and `check_linux.ps1` cover Linux
   and Windows/WSL checks; actual engine validation needs local discs.

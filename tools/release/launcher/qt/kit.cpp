@@ -1,146 +1,303 @@
 #include "kit.h"
-#include <QApplication>
-#include <QFile>
-#include <QFontDatabase>
-#include <QJsonDocument>
+#include "atlas_icons.h"
+#include <QAbstractItemModel>
+#include <QKeyEvent>
+#include <QMouseEvent>
+#include <QHelpEvent>
 #include <QPainter>
-#include <QPainterPath>
-#include <QPalette>
+#include <QToolTip>
 #include <QStyleOptionViewItem>
-#include <QtEndian>
+#include <QVBoxLayout>
+#include <cmath>
+#include <QTransform>
 #include <algorithm>
 
+// The Atlas parts, painted from the tokens. Flat fills only: no shadows, gradients or antialiasing
+// (the icon strokes are the one exception). Every colour and size is an atlas:: value.
 namespace launcher::kit {
-static QJsonObject tokens;
-static int duration = 167;
-static QPolygonF plate(QRectF r, qreal slant = -1) {
-    const qreal s = slant < 0 ? std::min(r.height() * .25, 22.) : slant;
-    return {{r.left() + s, r.top()}, {r.right(), r.top()}, {r.right() - s, r.bottom()}, {r.left(), r.bottom()}};
+using atlas::colour;
+using atlas::px;
+
+QPainterPath icon(const QString &name) { return icons::path(name); }
+
+static QColor mix(const QColor &a, const QColor &b, qreal t) {
+    return QColor(int(a.red() + (b.red() - a.red()) * t + .5), int(a.green() + (b.green() - a.green()) * t + .5),
+                  int(a.blue() + (b.blue() - a.blue()) * t + .5), int(a.alpha() + (b.alpha() - a.alpha()) * t + .5));
 }
-QColor color(const QString &key) { return QColor(tokens["palette"].toObject()[key].toString()); }
-QColor sectionColor(const QString &section, const QString &key) { return QColor(tokens["sections"].toObject()[section].toObject()[key].toString()); }
-QFont font(int pixels, bool black, bool italic) { QFont f("Source Sans 3"); f.setPixelSize(pixels); f.setWeight(black ? QFont::Black : QFont::DemiBold); f.setItalic(italic); return f; }
-void initialize() {
-    QFile json(":/kit/kit.json"); json.open(QIODevice::ReadOnly); tokens = QJsonDocument::fromJson(json.readAll()).object();
-    QFile motion(":/kit/motion.json"); motion.open(QIODevice::ReadOnly); auto m = QJsonDocument::fromJson(motion.readAll()).object();
-    duration = m["events"].toObject()["row_select"].toObject()["length_frames"].toInt(10) * 1000 / m["fps"].toInt(60);
-    for (const auto &name : {"bold", "black", "semibold"}) QFontDatabase::addApplicationFont(":/kit/" + QString(name) + ".otf");
-    QApplication::setFont(kit::font(16));
-    QPalette palette;
-    palette.setColor(QPalette::Window, color("ink")); palette.setColor(QPalette::WindowText, color("bone"));
-    palette.setColor(QPalette::Base, color("ink")); palette.setColor(QPalette::AlternateBase, sectionColor("versus", "bg"));
-    palette.setColor(QPalette::Text, color("bone")); palette.setColor(QPalette::Button, sectionColor("versus", "face"));
-    palette.setColor(QPalette::ButtonText, color("bone")); palette.setColor(QPalette::Highlight, color("gold")); palette.setColor(QPalette::HighlightedText, color("ink"));
-    palette.setColor(QPalette::Disabled, QPalette::Text, color("disabled")); palette.setColor(QPalette::Disabled, QPalette::ButtonText, color("disabled"));
-    QApplication::setPalette(palette);
-    // Geometry and type come from the menu kit; use Qt for focus, accessibility,
-    // text entry and layout instead of maintaining a second input system.
-    qApp->setStyleSheet(QString(R"(
-      QMainWindow, QTabWidget, QStackedWidget, QScrollArea { background: transparent; border: none; }
-      QLabel { background: transparent; color: %1; }
-      QLabel[role="muted"] { color: %2; font-size: 14px; }
-      QLabel[role="eyebrow"] { color: %3; font-weight: 900; font-size: 14px; }
-      QLabel[role="heading"] { font-size: 30px; font-weight: 900; font-style: italic; }
-      QLabel[role="brand"] { font-size: 38px; font-weight: 900; font-style: italic; }
-      QWidget#contentPanel { background: %4; }
-      QWidget#launchPanel { background: %5; }
-      QTableWidget { background: transparent; border: none; gridline-color: %5; selection-background-color: %3; selection-color: %4; }
-      QTableWidget::item { padding: 10px; border: none; }
-      QHeaderView::section { background: %5; color: %2; border: none; padding: 10px; font-size: 14px; }
-      QGroupBox { border: 1px solid %5; margin-top: 18px; padding: 20px 12px 12px; font-weight: 700; }
-      QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; color: %3; }
-      QCheckBox { spacing: 10px; padding: 7px 0; }
-      QCheckBox::indicator { width: 16px; height: 16px; border: 2px solid %2; background: %4; }
-      QCheckBox::indicator:checked { background: %3; border-color: %3; }
-      QCheckBox::indicator:focus, QCheckBox::indicator:hover { border-color: %3; }
-      QComboBox, QLineEdit { background: %5; border: 1px solid %2; padding: 7px 12px; color: %1; min-height: 24px; }
-      QComboBox:focus, QLineEdit:focus { border-color: %3; }
-      QComboBox QAbstractItemView { background: %4; color: %1; selection-background-color: %3; selection-color: %4; }
-      QSlider::groove:horizontal { height: 5px; background: %4; }
-      QSlider::sub-page:horizontal { background: %3; }
-      QSlider::handle:horizontal { width: 10px; margin: -7px 0; background: %3; border: none; }
-      QScrollBar:vertical { background: %4; width: 7px; margin: 0; }
-      QScrollBar::handle:vertical { background: %5; min-height: 32px; }
-      QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
-      QStatusBar { background: %4; color: %2; padding: 6px 28px; font-size: 14px; }
-      QStatusBar::item { border: none; }
-      QToolTip { background: %4; color: %1; border: 1px solid %3; padding: 8px; }
-      QDialog QPushButton { background: %5; color: %1; border: 1px solid %2; padding: 8px 20px; }
-      QDialog QPushButton:focus, QDialog QPushButton:hover { background: %3; color: %4; }
-    )").arg(color("bone").name(), color("muted").name(), color("gold").name(), color("ink").name(), sectionColor("versus", "face").name()));
+static void flat(QPainter &p) { p.setRenderHint(QPainter::Antialiasing, false); p.setPen(Qt::NoPen); }
+
+void paintIcon(QPainter &p, const QString &name, const QRectF &target, const QColor &c) {
+    const QPainterPath path = icon(name);
+    if (path.isEmpty()) return;
+    p.save();
+    p.setRenderHint(QPainter::Antialiasing, true);
+    const qreal s = target.width() / 24.0;
+    p.translate(target.topLeft()); p.scale(s, s);
+    QPen pen(c, 1.6, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin); p.setPen(pen); p.setBrush(Qt::NoBrush);
+    p.drawPath(path);
+    p.restore();
 }
-QImage icon(const QString &name, const QColor &tint) {
-    static QMap<QString, QImage> masks;
-    if (!masks.contains(name)) {
-        QFile file(":/kit/" + name + ".gxtex"); if (!file.open(QIODevice::ReadOnly)) return {};
-        const auto b = file.readAll(); if (b.size() < 64 || b.left(4) != "GXTX" || qFromBigEndian<quint32>(b.constData() + 8) != 0) return {};
-        int w = qFromBigEndian<quint32>(b.constData() + 12), h = qFromBigEndian<quint32>(b.constData() + 16);
-        if (w <= 0 || h <= 0 || w > 1024 || h > 1024 || w % 8 || h % 8 || b.size() < 64 + w * h / 2) return {};
-        QImage img(w, h, QImage::Format_ARGB32); int offset = 64;
-        for (int by = 0; by < h; by += 8) for (int bx = 0; bx < w; bx += 8)
-            for (int y = 0; y < 8; ++y) for (int x = 0; x < 8; x += 2) {
-                unsigned char v = b[offset++]; img.setPixel(bx + x, by + y, qRgba(255, 255, 255, (v >> 4) * 17)); img.setPixel(bx + x + 1, by + y, qRgba(255, 255, 255, (v & 15) * 17));
-            }
-        masks[name] = img;
-    }
-    auto img = masks[name].copy(); QPainter p(&img); p.setCompositionMode(QPainter::CompositionMode_SourceIn); p.fillRect(img.rect(), tint); return img;
+void paintPlate(QPainter &p, const QRectF &r, const QColor &face, const QColor &edge, qreal edgePx, qreal chamfer) {
+    p.setPen(Qt::NoPen);
+    p.setBrush(edge); p.drawPolygon(atlas::plate(r, chamfer));
+    p.setBrush(face); p.drawPolygon(atlas::plate(r.adjusted(0, 0, 0, -edgePx), chamfer));
 }
-void Surface::paintEvent(QPaintEvent *) {
-    QPainter p(this); p.setRenderHint(QPainter::Antialiasing); p.fillRect(rect(), sectionColor(section_, "bg"));
-    p.setPen(Qt::NoPen); p.setBrush(sectionColor(section_, "band"));
-    const qreal slant = height() * .25;
-    for (const auto &pair : {qMakePair(30., 28.), qMakePair(width() - 92., 52.)}) {
-        p.drawPolygon(QPolygonF{{pair.first + slant, 0}, {pair.first + pair.second + slant, 0}, {pair.first + pair.second, qreal(height())}, {pair.first, qreal(height())}});
-    }
+void paintHatch(QPainter &p, const QPolygonF &area, const QColor &line) {
+    p.save(); p.setPen(Qt::NoPen); p.setBrush(QBrush(line, Qt::BDiagPattern)); p.drawPolygon(area); p.restore();   // 8 px: the token "ch"
 }
+
+// ---------------------------------------------------------------- Pane
+Pane::Pane(const QString &heading, QWidget *parent) : QWidget(parent), heading_(heading) {
+    body_ = new QWidget(this);
+    auto *l = new QVBoxLayout(this);
+    l->setContentsMargins(px("s3"), px("s3") + (heading.isEmpty() ? 0 : 28), px("s3"), px("s3") + px("ch-xs")); l->setSpacing(0);
+    l->addWidget(body_, 1);
+}
+void Pane::setHeading(const QString &text) {
+    heading_ = text; auto *l = layout(); l->setContentsMargins(px("s3"), px("s3") + (text.isEmpty() ? 0 : 28), px("s3"), px("s3") + px("ch-xs")); update();
+}
+void Pane::setCount(const QString &text) { count_ = text; update(); }
+void Pane::paintEvent(QPaintEvent *) {
+    QPainter p(this); flat(p);
+    paintPlate(p, QRectF(rect()), colour("plate"), colour("edge"), px("ch-xs"), px("ch"));
+    if (heading_.isEmpty()) return;
+    const QFont hf = atlas::font(atlas::Role::Cap14), cf = atlas::font(atlas::Role::Body12);
+    QFontMetricsF hm(hf), cm(cf);
+    const qreal left = px("s3"), top = px("s3"), h = 20, right = width() - px("s3");
+    const qreal countW = count_.isEmpty() ? 0 : cm.horizontalAdvance(count_);
+    const qreal room = right - left - (countW ? countW + px("s2") : 0);
+    const QString shown = atlas::fit(hm, heading_.toUpper(), room);
+    setProperty("headingShown", shown);                                  // a test hook, not a feature
+    p.setFont(hf); p.setPen(colour("muted"));
+    p.drawText(QRectF(left, top, room, h), Qt::AlignLeft | Qt::AlignVCenter, shown);
+    const qreal textW = hm.horizontalAdvance(shown);
+    if (countW) { p.setFont(cf); p.setPen(colour("muted")); p.drawText(QRectF(right - countW, top, countW, h), Qt::AlignRight | Qt::AlignVCenter, count_); }
+    const qreal ruleL = left + textW + px("s2"), ruleR = right - (countW ? countW + px("s2") : 0);
+    if (ruleR > ruleL) p.fillRect(QRectF(ruleL, top + h / 2, ruleR - ruleL, 1), colour("line"));
+}
+
+// ---------------------------------------------------------------- Button
 Button::Button(const QString &text, QWidget *parent) : QPushButton(text, parent) {
-    setCursor(Qt::PointingHandCursor); setMinimumHeight(44); setFont(kit::font(16, true));
-    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed); setMouseTracking(true);
-    motion_.setDuration(duration); motion_.setEasingCurve(QEasingCurve::OutCubic);
+    setCursor(Qt::PointingHandCursor); setFocusPolicy(Qt::StrongFocus); setMouseTracking(true);
+    setAutoDefault(true);                                               // Enter presses the focused button (Qt only does this in dialogs by default)
+    setFont(atlas::font(atlas::Role::Cap16));
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    motion_.setEasingCurve(QEasingCurve::OutCubic);
     connect(&motion_, &QVariantAnimation::valueChanged, this, [this](const QVariant &v) { hover_ = v.toReal(); update(); });
 }
-void Button::enterEvent(QEnterEvent *event) { motion_.stop(); motion_.setStartValue(hover_); motion_.setEndValue(1.); motion_.start(); QPushButton::enterEvent(event); }
-void Button::leaveEvent(QEvent *event) { motion_.stop(); motion_.setStartValue(hover_); motion_.setEndValue(0.); motion_.start(); QPushButton::leaveEvent(event); }
-void Button::paintEvent(QPaintEvent *) {
-    QPainter p(this); p.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
-    bool active = isChecked() || primary_; qreal lift = isDown() ? 0 : (active ? 3 : hover_ * 3);
-    QRectF face(4, 4, width() - 9, height() - 10); p.setPen(Qt::NoPen);
-    p.setBrush(active ? color("gold_dk") : color("ink")); p.drawPolygon(plate(face.translated(3, 4)));
-    face.translate(-lift, -lift);
-    p.setBrush(!isEnabled() ? sectionColor("options", "face") : active || hover_ > .5 ? color("gold") : sectionColor(section_, "face")); p.drawPolygon(plate(face));
-    QColor fg = !isEnabled() ? color("disabled") : active || hover_ > .5 ? color("ink") : color("bone");
-    p.setPen(fg); p.setFont(kit::font(primary_ ? 26 : 17, true, true));
-    qreal left = face.left() + 18;
-    if (!icon_.isEmpty()) { p.drawImage(QRectF(left, face.center().y() - 13, 26, 26), kit::icon(icon_, fg)); left += 38; }
-    const QRectF textRect(left, face.top(), face.right() - left - 14, face.height());
-    p.drawText(textRect, (icon_.isEmpty() ? Qt::AlignCenter : Qt::AlignLeft) | Qt::AlignVCenter, p.fontMetrics().elidedText(text(), Qt::ElideRight, int(textRect.width())));
-    if (hasFocus()) { p.setPen(QPen(color("bone"), 1, Qt::DashLine)); p.setBrush(Qt::NoBrush); p.drawPolygon(plate(face.adjusted(4, 4, -4, -4))); }
+static void glide(QVariantAnimation &a, qreal &now, qreal to) {
+    a.stop();
+    const int d = atlas::motion("m-focus");
+    if (d <= 0) { now = to; return; }                                    // reduced motion: a cut
+    a.setDuration(d); a.setStartValue(now); a.setEndValue(to); a.start();
 }
-void DiscDelegate::paint(QPainter *p, const QStyleOptionViewItem &opt, const QModelIndex &idx) const {
-    p->save(); p->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
-    const bool selected = opt.state & QStyle::State_Selected;
-    auto r = QRectF(opt.rect).adjusted(6, 5, -8, -7); p->setPen(Qt::NoPen); p->setBrush(selected ? color("gold_dk") : color("ink")); p->drawPolygon(plate(r.translated(3, 4)));
-    if (selected) r.translate(-3, -3);
-    p->setBrush(selected ? color("gold") : sectionColor("versus", "face")); p->drawPolygon(plate(r));
-    auto fg = selected ? color("ink") : color("bone");
-    p->drawImage(QRectF(r.left() + 24, r.center().y() - 20, 40, 40), icon("melee", selected ? color("gold_dk") : sectionColor("versus", "face_hi")));
-    qreal x = r.left() + 80, available = r.width() - 103;
-    p->setPen(fg); p->setFont(kit::font(23, true, true));
-    p->drawText(QRectF(x, r.top() + 12, available, 31), p->fontMetrics().elidedText(idx.data().toString(), Qt::ElideRight, int(available)));
-    p->setFont(kit::font(14)); p->setPen(selected ? color("ink") : color("muted"));
-    p->drawText(QRectF(x, r.top() + 46, available, 24), p->fontMetrics().elidedText(idx.data(Qt::UserRole).toString(), Qt::ElideRight, int(available)));
+void Button::enterEvent(QEnterEvent *e) { glide(motion_, hover_, 1.); update(); QPushButton::enterEvent(e); }
+void Button::leaveEvent(QEvent *e) { glide(motion_, hover_, 0.); update(); QPushButton::leaveEvent(e); }
+QSize Button::sizeHint() const {
+    QFontMetricsF fm(atlas::font(role()));
+    qreal w = fm.horizontalAdvance(text()) + 2 * px("s4");
+    if (!icon_.isEmpty()) w += 18 + px("s2");
+    return {int(std::ceil(std::max<qreal>(w, primary_ ? 120 : 64))), primary_ ? 46 : 36};   // 44 / 34 plates plus the 2 px lift
+}
+QSize Button::minimumSizeHint() const { return {primary_ ? 120 : 64, sizeHint().height()}; }
+bool Button::event(QEvent *e) {
+    if (e->type() == QEvent::ToolTip && toolTip().isEmpty() && elided_) { QToolTip::showText(static_cast<QHelpEvent *>(e)->globalPos(), text(), this); return true; }
+    return QPushButton::event(e);
+}
+void Button::paintEvent(QPaintEvent *) {
+    QPainter p(this); flat(p);
+    const bool on = isEnabled(), focus = hasFocus() && on, down = isDown() && on;
+    const QRectF base(0, 2, width(), height() - 2);
+    QRectF r = down ? base.translated(0, 1) : atlas::lifted(base, focus);
+    QColor face, edge, fg; qreal edgePx = px("ch-xs");
+    if (!on)           { face = colour("plate2"); edge = colour("edge2"); fg = colour("muted"); }
+    else if (primary_) { face = down ? colour("ember-d") : mix(colour("ember"), colour("ivory"), hover_ * .12); edge = focus ? colour("ivory") : colour("ember-d"); fg = down ? colour("ivory") : colour("ink"); }
+    else               { face = down ? colour("plate") : focus ? colour("lift") : mix(colour("plate2"), colour("lift"), hover_);
+                         edge = focus ? colour("ember") : colour("edge2"); fg = focus || hover_ > .5 ? colour("ivory") : colour("text2"); }
+    if (down) { edge = colour("ember-d"); edgePx = 1; }
+    paintPlate(p, r, face, edge, edgePx, px("ch-s"));
+    if (!on) paintHatch(p, atlas::plate(r.adjusted(0, 0, 0, -edgePx), px("ch-s")), colour("line2"));
+    // the label: the cap role of the button, one role down when it does not fit, then elided
+    const QRectF faceRect = r.adjusted(0, 0, 0, -edgePx);
+    qreal x = faceRect.left() + px("s4"), avail = faceRect.width() - 2 * px("s4");
+    const bool hasIcon = !icon_.isEmpty();
+    if (hasIcon) avail -= 18 + px("s2");
+    atlas::Role role_ = role();
+    if (QFontMetricsF(atlas::font(role_)).horizontalAdvance(text()) > avail) role_ = primary_ ? atlas::Role::Cap16 : atlas::Role::Cap14;
+    const QFont f = atlas::font(role_); QFontMetricsF fm(f);
+    const QString shown = atlas::fit(fm, text(), avail);
+    elided_ = shown != text();
+    const qreal tw = fm.horizontalAdvance(shown), total = tw + (hasIcon ? 18 + px("s2") : 0);
+    x = faceRect.left() + (faceRect.width() - total) / 2;
+    if (hasIcon) { paintIcon(p, icon_, QRectF(x, faceRect.center().y() - 9, 18, 18), fg); x += 18 + px("s2"); }
+    p.setFont(f); p.setPen(fg);
+    p.drawText(QRectF(x, faceRect.top(), tw + 2, faceRect.height()), Qt::AlignLeft | Qt::AlignVCenter, shown);
+}
+
+// ---------------------------------------------------------------- Toggle
+void paintToggle(QPainter &p, const QRectF &box, bool on, bool focus) {
+    p.save(); flat(p);
+    const QRectF r = atlas::lifted(box, focus);                          // box is the resting plate; 2 px of headroom above it
+    const qreal edgePx = focus ? px("ch-xs") : 2;
+    const QRectF face = r.adjusted(0, 0, 0, -edgePx);
+    paintPlate(p, r, colour("ground"), focus ? colour("ember") : colour("edge"), edgePx, px("ch-xs"));
+    const qreal half = face.width() / 2;
+    const QRectF offR(face.left(), face.top(), half, face.height()), onR(face.left() + half, face.top(), face.width() - half, face.height());
+    QPainterPath clip; clip.addPolygon(atlas::plate(face, px("ch-xs"))); p.setClipPath(clip);
+    p.fillRect(on ? onR : offR, on ? colour("jade") : colour("line2"));
+    p.setClipping(false);
+    p.setFont(atlas::font(atlas::Role::Cap12));
+    p.setPen(on ? colour("dim") : colour("ivory")); p.drawText(offR, Qt::AlignCenter, "OFF");
+    p.setPen(on ? colour("ink") : colour("dim")); p.drawText(onR, Qt::AlignCenter, "ON");
+    p.restore();
+}
+Toggle::Toggle(QWidget *parent) : QAbstractButton(parent) {
+    setCheckable(true); setFocusPolicy(Qt::StrongFocus); setCursor(Qt::PointingHandCursor);
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+}
+void Toggle::paintEvent(QPaintEvent *) {
+    QPainter p(this);
+    paintToggle(p, QRectF(0, 2, width(), height() - 2), isChecked(), hasFocus());
+}
+
+// ---------------------------------------------------------------- Tag
+qreal tagWidth(const QString &text) { return QFontMetricsF(atlas::font(atlas::Role::Cap12)).horizontalAdvance(text.toUpper()) + 2 * px("s2"); }
+void paintTag(QPainter &p, const QRectF &r, const QString &text, Tag::Tone tone) {
+    p.save(); flat(p);
+    QColor face = colour("ground"), fg = colour("text2");
+    switch (tone) {
+    case Tag::Plain: break;
+    case Tag::Jade:  face = colour("jade-d"); fg = colour("ivory"); break;
+    case Tag::Ember: face = colour("ember"); fg = colour("ink"); break;
+    case Tag::Sun:   face = colour("sun").darker(250); fg = colour("sun"); break;
+    case Tag::Rose:  face = colour("rose").darker(300); fg = colour("rose").lighter(130); break;
+    }
+    paintPlate(p, r, face, colour("edge"), 2, px("ch-s"));
+    const QFont f = atlas::font(atlas::Role::Cap12); QFontMetricsF fm(f);
+    const QString shown = atlas::fit(fm, text.toUpper(), r.width() - 2 * px("s2"));
+    p.setFont(f); p.setPen(fg);
+    p.drawText(r.adjusted(0, 0, 0, -2), Qt::AlignCenter, shown);
+    p.restore();
+}
+Tag::Tag(const QString &text, Tone tone, QWidget *parent) : QWidget(parent), text_(text), tone_(tone) {
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+}
+QSize Tag::sizeHint() const { return {int(std::min<qreal>(std::ceil(tagWidth(text_)), maximumWidth())), 20}; }
+void Tag::paintEvent(QPaintEvent *) { QPainter p(this); paintTag(p, QRectF(rect()), text_, tone_); }
+
+// ---------------------------------------------------------------- KeyChip
+KeyChip::KeyChip(const QString &text, QWidget *parent) : QWidget(parent), text_(text) { setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed); }
+QSize KeyChip::sizeHint() const {
+    return {int(std::ceil(std::max<qreal>(22, QFontMetricsF(atlas::font(atlas::Role::Cap12)).horizontalAdvance(text_.toUpper()) + 2 * px("s2"))) ), 22};
+}
+void KeyChip::paintEvent(QPaintEvent *) {
+    QPainter p(this); flat(p);
+    paintPlate(p, QRectF(rect()), colour("text2"), colour("muted"), 2, px("ch-xs"));
+    p.setFont(atlas::font(atlas::Role::Cap12)); p.setPen(colour("ink"));
+    p.drawText(QRectF(rect()).adjusted(0, 0, 0, -2), Qt::AlignCenter, text_.toUpper());
+}
+
+// ---------------------------------------------------------------- TabRail
+TabRail::TabRail(const QStringList &names, QWidget *parent) : QWidget(parent), names_(names) {
+    setFocusPolicy(Qt::StrongFocus); setAutoFillBackground(false);
+    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+}
+QRectF TabRail::rowRect(int i) const { return QRectF(px("s3"), 16 + i * 50, width() - 2 * px("s3"), 44); }   // 44 high, 6 apart (the mockup)
+void TabRail::setCurrent(int i) {
+    if (i < 0 || i >= names_.size() || i == current_) return;
+    current_ = i; update(); emit currentChanged(i);
+}
+void TabRail::keyPressEvent(QKeyEvent *e) {
+    const int n = names_.size(); if (!n) return QWidget::keyPressEvent(e);
+    int to = current_;
+    switch (e->key()) {
+    case Qt::Key_Down: to = (current_ + 1) % n; break;
+    case Qt::Key_Up: to = (current_ + n - 1) % n; break;
+    case Qt::Key_Home: to = 0; break;
+    case Qt::Key_End: to = n - 1; break;
+    default: return QWidget::keyPressEvent(e);
+    }
+    setCurrent(to);
+}
+void TabRail::mousePressEvent(QMouseEvent *e) {
+    for (int i = 0; i < names_.size(); ++i) if (rowRect(i).adjusted(0, -3, 0, 3).contains(e->position())) { setFocus(Qt::MouseFocusReason); setCurrent(i); return; }
+    QWidget::mousePressEvent(e);
+}
+void TabRail::paintEvent(QPaintEvent *) {
+    QPainter p(this); flat(p);
+    p.fillRect(rect(), colour("ground2"));
+    for (int i = 0; i < names_.size(); ++i) {
+        const bool cur = i == current_, focus = cur && hasFocus();
+        const QRectF base = rowRect(i), r = atlas::lifted(base, focus);
+        paintPlate(p, r, focus ? colour("lift") : colour("plate2"), focus ? colour("ember") : colour("edge2"), px("ch-xs"), px("ch-s"));
+        if (cur) p.fillRect(QRectF(r.right() - 4, r.top(), 4, r.height() - px("ch-xs") - px("ch-s")), colour("jade"));   // selected: jade bar at the right
+        if (focus) p.fillRect(atlas::tick(r.adjusted(0, 0, 0, -px("ch-xs"))), colour("ember"));                          // focus: the tick at the left
+        const QColor fg = cur ? colour("ivory") : colour("text2");
+        const qreal x = r.left() + px("s3") + 4, cy = r.center().y() - px("ch-xs") / 2.0;
+        if (i < icons_.size()) paintIcon(p, icons_[i], QRectF(x, cy - 10, 20, 20), cur ? colour("jade") : fg);
+        const QFont f = atlas::font(atlas::Role::Cap20); QFontMetricsF fm(f);
+        const qreal tx = x + 20 + px("s3");
+        p.setFont(f); p.setPen(fg);
+        p.drawText(QRectF(tx, r.top(), r.right() - tx - 8, r.height() - px("ch-xs")), Qt::AlignLeft | Qt::AlignVCenter, atlas::fit(fm, names_[i], r.right() - tx - 8));
+    }
+}
+
+// ---------------------------------------------------------------- RowDelegate
+void RowDelegate::paint(QPainter *p, const QStyleOptionViewItem &opt, const QModelIndex &idx) const {
+    p->save(); flat(*p);
+    const bool selected = opt.state & QStyle::State_Selected, focus = (opt.state & QStyle::State_HasFocus) && opt.widget && opt.widget->hasFocus();
+    const bool enabled = opt.state & QStyle::State_Enabled;
+    const QRectF base = QRectF(opt.rect).adjusted(0, 2, 0, -3), r = atlas::lifted(base, focus);   // 46 high; the gap and the headroom are in the cell
+    const qreal edgePx = px("ch-xs");
+    QColor face = selected || focus ? colour("lift") : colour("plate2"), edge = focus ? colour("ember") : colour("edge2");
+    paintPlate(*p, r, face, edge, edgePx, px("ch-s"));
+    if (!enabled) paintHatch(*p, atlas::plate(r.adjusted(0, 0, 0, -edgePx), px("ch-s")), colour("line"));
+    if (selected) p->fillRect(QRectF(r.right() - 4, r.top(), 4, r.height() - edgePx - px("ch-s")), colour("jade"));
+    if (focus) p->fillRect(atlas::tick(r.adjusted(0, 0, 0, -edgePx)), colour("ember"));
+    const QRectF body = r.adjusted(0, 0, 0, -edgePx);
+    qreal x = body.left() + px("s3") + (focus ? 4 : 0), right = body.right() - px("s3") - 4;
+    const QString badge = idx.data(BadgeRole).toString();
+    if (!badge.isEmpty()) {
+        const QRectF b(x, body.center().y() - 16, 32, 32);
+        paintPlate(*p, b, colour("ground2"), colour("edge2"), 2, px("ch-xs"));
+        paintHatch(*p, atlas::plate(b.adjusted(0, 0, 0, -2), px("ch-xs")), colour("line"));
+        p->setFont(atlas::font(atlas::Role::Cap14)); p->setPen(colour("ivory"));
+        p->drawText(b.adjusted(0, 0, 0, -2), Qt::AlignCenter, badge);
+        x += 32 + px("s3");
+    }
+    if (idx.data(Qt::CheckStateRole).isValid()) {
+        const bool on = idx.data(Qt::CheckStateRole).toInt() == Qt::Checked;
+        paintToggle(*p, QRectF(right - 74, body.center().y() - 12, 74, 24), on, false);
+        right -= 74 + px("s2");
+    }
+    const QString tagText = idx.data(TagTextRole).toString();
+    if (!tagText.isEmpty()) {
+        const qreal w = std::min<qreal>(tagWidth(tagText), std::max<qreal>(0, (right - x) / 2));
+        if (w >= 24) { paintTag(*p, QRectF(right - w, body.center().y() - 10, w, 20), tagText, Tag::Tone(idx.data(TagToneRole).isValid() ? idx.data(TagToneRole).toInt() : int(Tag::Jade))); right -= w + px("s2"); }
+    }
+    QString title = idx.data(TitleRole).toString(); if (title.isEmpty()) title = idx.data(Qt::DisplayRole).toString();
+    const QString sub = idx.data(SubRole).toString();
+    const QFont tf = atlas::font(atlas::Role::Row16), sf = atlas::font(atlas::Role::Body12);
+    QFontMetricsF tm(tf), sm(sf);
+    const qreal room = right - x, textH = tm.height() + (sub.isEmpty() ? 0 : sm.height());
+    const qreal top = body.center().y() - textH / 2;
+    p->setFont(tf); p->setPen(selected || focus ? colour("ivory") : colour("text2"));
+    p->drawText(QRectF(x, top, room, tm.height()), Qt::AlignLeft | Qt::AlignVCenter, atlas::fit(tm, title, room));
+    if (!sub.isEmpty()) { p->setFont(sf); p->setPen(colour("muted")); p->drawText(QRectF(x, top + tm.height(), room, sm.height()), Qt::AlignLeft | Qt::AlignVCenter, atlas::fit(sm, sub, room)); }
     p->restore();
 }
-void Hero::paintEvent(QPaintEvent *) {
-    QPainter p(this); p.setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
-    auto section = kind_.contains("ACE") ? "collection" : kind_.contains("Akaneia") ? "data" : "versus";
-    p.fillRect(rect(), sectionColor(section, "face")); p.setPen(Qt::NoPen); p.setBrush(sectionColor(section, "bg"));
-    const qreal w = width(), h = height();
-    p.drawPolygon(QPolygonF{{w * .62, 0}, {w, 0}, {w, h}, {w * .40, h}});
-    p.setOpacity(.42); p.drawImage(QRectF(w - 220, -14, 250, 250), icon("melee", sectionColor(section, "face_hi"))); p.setOpacity(1.);
-    const auto badge = kind_.contains("ACE") ? "ACE" : kind_.contains("Akaneia") ? "AKANEIA" : "MELEE";
-    p.setPen(color("bone")); p.setFont(kit::font(48, true, true)); p.drawText(QRectF(24, h - 83, w - 40, 68), Qt::AlignLeft | Qt::AlignVCenter, badge);
-    p.setPen(color("gold")); p.setFont(kit::font(13, true)); p.drawText(26, 30, "GD'S MELEE  /  DISC LIBRARY");
-    p.fillRect(26, h - 20, 48, 4, color("gold"));
+bool RowDelegate::editorEvent(QEvent *e, QAbstractItemModel *model, const QStyleOptionViewItem &opt, const QModelIndex &idx) {
+    if (!(idx.flags() & Qt::ItemIsUserCheckable) || !(idx.flags() & Qt::ItemIsEnabled)) return QStyledItemDelegate::editorEvent(e, model, opt, idx);
+    if (e->type() == QEvent::MouseButtonRelease || e->type() == QEvent::MouseButtonDblClick) {
+        auto *m = static_cast<QMouseEvent *>(e);
+        const QRectF base = QRectF(opt.rect).adjusted(0, 2, 0, -3), body = base.adjusted(0, 0, 0, -px("ch-xs"));
+        const QRectF hit = QRectF(body.right() - px("s3") - 4 - 74, body.center().y() - 12, 74, 24);
+        if (m->button() == Qt::LeftButton && hit.contains(m->position())) {
+            if (e->type() == QEvent::MouseButtonRelease) model->setData(idx, idx.data(Qt::CheckStateRole).toInt() == Qt::Checked ? Qt::Unchecked : Qt::Checked, Qt::CheckStateRole);
+            return true;
+        }
+        return false;                                                      // a click elsewhere in the row only selects it
+    }
+    return QStyledItemDelegate::editorEvent(e, model, opt, idx);          // Space on the row toggles it (Qt's own handling)
 }
 }

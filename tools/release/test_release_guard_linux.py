@@ -31,6 +31,7 @@ class LinuxGuardTests(unittest.TestCase):
         files = {'README.txt': 'r', 'IMPLEMENTATION_STATUS.md': 's', 'bin/melee': b'\x7fELF\x01synthetic',
                  'bin/melee-pc.msvc.map': 'map', 'launcher/bin/gd-melee-launcher': b'\x7fELF\x02synthetic',
                  'licenses/GPL-2.0.txt': 'gpl', 'licenses/THIRD-PARTY-NOTICES.txt': 'n',
+                 'launcher/licenses/BarlowCondensed-OFL-1.1.txt': 'ofl',
                  'lib/libSDL3.so.0': b'\x7fELF\x01lib', 'udev/51.rules': 'x',
                  'mods/README.txt': 'm', 'mods/enabled.txt': '# on\ngeno-lab\nenvoy\nenvoy_drives\n',
                  'mods/geno-lab/mod.json': '{}', 'mods/envoy/mod.json': '{}', 'mods/envoy/scripts/main.lua': 'x',
@@ -197,6 +198,17 @@ class LinuxGuardTests(unittest.TestCase):
                     self.expect_fail('missing required file: '+name)
                 finally:
                     self.put(name, data)
+        self.manifests()
+        self.assertEqual(run(self.stage)[0], 0)
+
+    def test_the_launcher_must_ship_barlows_licence(self):
+        name = 'launcher/licenses/BarlowCondensed-OFL-1.1.txt'
+        data = (self.stage/name).read_bytes()
+        try:
+            self.undo(name)
+            self.expect_fail('missing required file: '+name)
+        finally:
+            self.put(name, data)
         self.manifests()
         self.assertEqual(run(self.stage)[0], 0)
 
