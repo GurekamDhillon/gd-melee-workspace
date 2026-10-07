@@ -1061,3 +1061,5 @@
 ../masstest/shimobj/gw_ui_item.obj
 ../masstest/shimobj/gw_ui_mods.obj
 ../masstest/shimobj/gw_ui_mods_native.obj
+../masstest/shimobj/gw_ui_online_parts.obj
+../masstest/shimobj/gw_ui_room.obj
