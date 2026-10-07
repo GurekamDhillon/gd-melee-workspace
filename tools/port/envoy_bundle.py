@@ -72,6 +72,7 @@ def bundle():
               'function on_1p_boss_defeated(e) app:retail_event("boss_defeated",e) end',
               'function on_1p_game_over(e) app:retail_event("game_over",e) end',
               'function on_1p_complete(e) app:retail_event("complete",e) end',
+              'function on_entry(id) return app:entry(id) end', # SOLO > ENVOY (mod.json menus): nil unless it is Envoy's entry, offline and with Atlas up
               'function on_unload() mods:unload();app:unload() end',
               'function on_loadstate() if not gd.sim_read or not gd.sim_read() then app:stop("quit") end;mods:loadstate() end',
               'function on_scene() mods:scene() end',
