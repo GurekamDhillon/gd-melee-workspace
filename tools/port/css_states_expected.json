@@ -5,6 +5,8 @@
   "match_types": [
    12
   ],
+  "on_enter": "gm_801B42E8",
+  "on_exit": "gm_801B4350",
   "scene": "GS_CSS"
  },
  {
@@ -13,6 +15,8 @@
   "match_types": [
    13
   ],
+  "on_enter": "gm_801B5F50",
+  "on_exit": "gm_801B5FB4",
   "scene": "GS_CSS"
  },
  {
@@ -21,6 +25,8 @@
   "match_types": [
    1
   ],
+  "on_enter": "gm_801B254C",
+  "on_exit": "gm_801B25D4",
   "scene": "GS_CSS"
  },
  {
@@ -29,6 +35,8 @@
   "match_types": [
    1
   ],
+  "on_enter": "gm_801B26AC",
+  "on_exit": "gm_801B2704",
   "scene": "GS_SSS"
  },
  {
@@ -37,6 +45,8 @@
   "match_types": [
    11
   ],
+  "on_enter": "gmClassic_801B3DD8",
+  "on_exit": "gmClassic_801B3E44",
   "scene": "GS_CSS"
  },
  {
@@ -45,30 +55,40 @@
   "match_types": [
    14
   ],
+  "on_enter": "onEnterCss",
+  "on_exit": "onExitCss",
   "scene": "GS_CSS"
  },
  {
   "data": "gmVsMelee_CssData",
   "file": "gmfixedcamera.c",
   "match_types": [],
+  "on_enter": "gm_801B9F10",
+  "on_exit": "gm_801B9F3C",
   "scene": "GS_CSS"
  },
  {
   "data": "gmVsMelee_SssData",
   "file": "gmfixedcamera.c",
   "match_types": [],
+  "on_enter": "gm_801B9F64",
+  "on_exit": "gm_801B9F8C",
   "scene": "GS_SSS"
  },
  {
   "data": "gmVsMelee_CssData",
   "file": "gmgiant.c",
   "match_types": [],
+  "on_enter": "gm_801B8FB8",
+  "on_exit": "gm_801B8FE4",
   "scene": "GS_CSS"
  },
  {
   "data": "gmVsMelee_SssData",
   "file": "gmgiant.c",
   "match_types": [],
+  "on_enter": "gm_801B900C",
+  "on_exit": "gm_801B9034",
   "scene": "GS_SSS"
  },
  {
@@ -77,12 +97,16 @@
   "match_types": [
    23
   ],
+  "on_enter": "gm_801BED3C",
+  "on_exit": "gm_801BEDA8",
   "scene": "GS_CSS"
  },
  {
   "data": "gm_8049C030",
   "file": "gmhanyusss.c",
   "match_types": [],
+  "on_enter": "gm_801BEE58",
+  "on_exit": "NULL",
   "scene": "GS_SSS"
  },
  {
@@ -91,30 +115,40 @@
   "match_types": [
    16
   ],
+  "on_enter": "gm_801B98E8",
+  "on_exit": "gm_801B999C",
   "scene": "GS_CSS"
  },
  {
   "data": "gmVsMelee_CssData",
   "file": "gminvisible.c",
   "match_types": [],
+  "on_enter": "onEnterCss",
+  "on_exit": "onExitCss",
   "scene": "GS_CSS"
  },
  {
   "data": "gmVsMelee_SssData",
   "file": "gminvisible.c",
   "match_types": [],
+  "on_enter": "onEnterSss",
+  "on_exit": "onExitSss",
   "scene": "GS_SSS"
  },
  {
   "data": "gmVsMelee_CssData",
   "file": "gmlightning.c",
   "match_types": [],
+  "on_enter": "gm_801BA704",
+  "on_exit": "gm_801BA730",
   "scene": "GS_CSS"
  },
  {
   "data": "gmVsMelee_SssData",
   "file": "gmlightning.c",
   "match_types": [],
+  "on_enter": "gm_801BA758",
+  "on_exit": "gm_801BA780",
   "scene": "GS_SSS"
  },
  {
@@ -123,6 +157,8 @@
   "match_types": [
    15
   ],
+  "on_enter": "gm_801B632C",
+  "on_exit": "gm_801B63C4",
   "scene": "GS_CSS"
  },
  {
@@ -131,6 +167,8 @@
   "match_types": [
    15
   ],
+  "on_enter": "gm_801B6AD8",
+  "on_exit": "gm_801B6B70",
   "scene": "GS_CSS"
  },
  {
@@ -139,6 +177,8 @@
   "match_types": [
    15
   ],
+  "on_enter": "gm_801B7044",
+  "on_exit": "gm_801B70DC",
   "scene": "GS_CSS"
  },
  {
@@ -147,6 +187,8 @@
   "match_types": [
    15
   ],
+  "on_enter": "gm_801B75F0",
+  "on_exit": "gm_801B7688",
   "scene": "GS_CSS"
  },
  {
@@ -155,6 +197,8 @@
   "match_types": [
    15
   ],
+  "on_enter": "gm_801B7B74",
+  "on_exit": "gm_801B7C0C",
   "scene": "GS_CSS"
  },
  {
@@ -163,6 +207,8 @@
   "match_types": [
    15
   ],
+  "on_enter": "gm_801B8110",
+  "on_exit": "gm_801B81A8",
   "scene": "GS_CSS"
  },
  {
@@ -171,30 +217,40 @@
   "match_types": [
    15
   ],
+  "on_enter": "gm_801B863C",
+  "on_exit": "gm_801B86D4",
   "scene": "GS_CSS"
  },
  {
   "data": "gmVsMelee_CssData",
   "file": "gmsinglebutton.c",
   "match_types": [],
+  "on_enter": "gm_801BA10C",
+  "on_exit": "gm_801BA138",
   "scene": "GS_CSS"
  },
  {
   "data": "gmVsMelee_SssData",
   "file": "gmsinglebutton.c",
   "match_types": [],
+  "on_enter": "gm_801BA160",
+  "on_exit": "gm_801BA188",
   "scene": "GS_SSS"
  },
  {
   "data": "gmVsMelee_CssData",
   "file": "gmslomo.c",
   "match_types": [],
+  "on_enter": "gm_801BA50C",
+  "on_exit": "gm_801BA538",
   "scene": "GS_CSS"
  },
  {
   "data": "gmVsMelee_SssData",
   "file": "gmslomo.c",
   "match_types": [],
+  "on_enter": "gm_801BA560",
+  "on_exit": "gm_801BA588",
   "scene": "GS_SSS"
  },
  {
@@ -203,6 +259,8 @@
   "match_types": [
    2
   ],
+  "on_enter": "gm_801B91C8",
+  "on_exit": "gm_801B922C",
   "scene": "GS_CSS"
  },
  {
@@ -211,36 +269,48 @@
   "match_types": [
    2
   ],
+  "on_enter": "gm_801B9254",
+  "on_exit": "gm_801B927C",
   "scene": "GS_SSS"
  },
  {
   "data": "gmVsMelee_CssData",
   "file": "gmsupersudden.c",
   "match_types": [],
+  "on_enter": "gm_801B8BB4",
+  "on_exit": "gm_801B8BE0",
   "scene": "GS_CSS"
  },
  {
   "data": "gmVsMelee_SssData",
   "file": "gmsupersudden.c",
   "match_types": [],
+  "on_enter": "gm_801B8C08",
+  "on_exit": "gm_801B8C30",
   "scene": "GS_SSS"
  },
  {
   "data": "gmVsMelee_CssData",
   "file": "gmtiny.c",
   "match_types": [],
+  "on_enter": "gm_801B8DA8",
+  "on_exit": "gm_801B8DD4",
   "scene": "GS_CSS"
  },
  {
   "data": "gmVsMelee_SssData",
   "file": "gmtiny.c",
   "match_types": [],
+  "on_enter": "gm_801B8DFC",
+  "on_exit": "gm_801B8E24",
   "scene": "GS_SSS"
  },
  {
   "data": "gm_8048BD20",
   "file": "gmtoumode.c",
   "match_types": [],
+  "on_enter": "gm_801B174C",
+  "on_exit": "gm_801B1788",
   "scene": "GS_SSS"
  },
  {
@@ -249,6 +319,8 @@
   "match_types": [
    23
   ],
+  "on_enter": "gm_801B1B74",
+  "on_exit": "gm_801B1C24",
   "scene": "GS_CSS"
  },
  {
@@ -257,18 +329,24 @@
   "match_types": [
    23
   ],
+  "on_enter": "gm_801B1EB8",
+  "on_exit": "gm_801B1EEC",
   "scene": "GS_SSS"
  },
  {
   "data": "gmVsMelee_CssData",
   "file": "gmvsmode.c",
   "match_types": [],
+  "on_enter": "onEnterCss",
+  "on_exit": "onExitCss",
   "scene": "GS_CSS"
  },
  {
   "data": "gmVsMelee_SssData",
   "file": "gmvsmode.c",
   "match_types": [],
+  "on_enter": "onEnterSss",
+  "on_exit": "onExitSss",
   "scene": "GS_SSS"
  }
 ]

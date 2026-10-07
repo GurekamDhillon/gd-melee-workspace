@@ -20,7 +20,7 @@ GAME = os.environ.get("GW_MELEE") or os.path.join(ROOT, "melee")
 GM = os.path.join(GAME, "src", "melee", "gm")
 EXPECTED = os.path.join(HERE, "css_states_expected.json")
 
-SCENE = re.compile(r"\{\s*(GS_CSS|GS_SSS)\s*,\s*&?(\w+)\s*,", re.S)
+SCENE = re.compile(r"\{\s*[\w-]+\s*,\s*\w+\s*,\s*\w+\s*,\s*(\w+)\s*,\s*(\w+)\s*,\s*\{\s*(GS_CSS|GS_SSS)\s*,\s*&?(\w+)\s*,", re.S)
 MATCH = re.compile(r"gm_801B06B0\(\s*[^,]+,\s*(0x[0-9A-Fa-f]+|\d+)\s*[,U]")
 ASSIGN = re.compile(r"match_type\s*=\s*(0x[0-9A-Fa-f]+|\d+)\s*;")
 
@@ -31,7 +31,8 @@ def scan():
         if not name.endswith(".c") or name.startswith("gmfrontend"):
             continue
         path = os.path.join(GM, name)
-        text = open(path, encoding="utf-8", errors="replace").read()
+        with open(path, encoding="utf-8", errors="replace") as f:
+            text = f.read()
         if "GS_CSS" not in text and "GS_SSS" not in text:
             continue
         if name in ("gm_1A3F.c", "gmscdata.c"):          # a switch case and the scene table, not mode states
@@ -40,8 +41,8 @@ def scan():
         if not found:
             continue
         mt = [int(m, 0) for m in MATCH.findall(text)] + [int(m, 0) for m in ASSIGN.findall(text)]
-        for kind, sym in found:
-            rows.append(dict(file=name, scene=kind, data=sym, match_types=sorted(set(mt))))
+        for enter, exit_, kind, sym in found:
+            rows.append(dict(file=name, scene=kind, data=sym, on_enter=enter, on_exit=exit_, match_types=sorted(set(mt))))
     return rows
 
 
@@ -54,9 +55,9 @@ def main(argv=None):
     a = ap.parse_args(argv)
     rows = scan()
     if a.table:
-        print("| file | scene | enter data | match_type(s) |\n|---|---|---|---|")
+        print("| file | scene | enter data | on_enter | on_exit | match_type(s) |\n|---|---|---|---|---|---|")
         for r in rows:
-            print("| %s | %s | %s | %s |" % (r["file"], r["scene"], r["data"], ", ".join("0x%X" % m for m in r["match_types"]) or "VS family"))
+            print("| %s | %s | %s | %s | %s | %s |" % (r["file"], r["scene"], r["data"], r["on_enter"], r["on_exit"], ", ".join("0x%X" % m for m in r["match_types"]) or "VS family"))
         return 0
     if a.write:
         with open(EXPECTED, "w", newline="\n") as f:
