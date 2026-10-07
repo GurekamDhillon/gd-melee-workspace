@@ -1,0 +1,274 @@
+[
+ {
+  "data": "gmClassic_80470708",
+  "file": "gmadventure.c",
+  "match_types": [
+   12
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmClassic_80470708",
+  "file": "gmallstar.c",
+  "match_types": [
+   13
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_CssData",
+  "file": "gmcameramode.c",
+  "match_types": [
+   1
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_SssData",
+  "file": "gmcameramode.c",
+  "match_types": [
+   1
+  ],
+  "scene": "GS_SSS"
+ },
+ {
+  "data": "gmClassic_80470708",
+  "file": "gmclassic.c",
+  "match_types": [
+   11
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "css_data",
+  "file": "gmevent.c",
+  "match_types": [
+   14
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_CssData",
+  "file": "gmfixedcamera.c",
+  "match_types": [],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_SssData",
+  "file": "gmfixedcamera.c",
+  "match_types": [],
+  "scene": "GS_SSS"
+ },
+ {
+  "data": "gmVsMelee_CssData",
+  "file": "gmgiant.c",
+  "match_types": [],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_SssData",
+  "file": "gmgiant.c",
+  "match_types": [],
+  "scene": "GS_SSS"
+ },
+ {
+  "data": "gm_8049BEE8",
+  "file": "gmhanyucss.c",
+  "match_types": [
+   23
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gm_8049C030",
+  "file": "gmhanyusss.c",
+  "match_types": [],
+  "scene": "GS_SSS"
+ },
+ {
+  "data": "gmVsMelee_CssData",
+  "file": "gmhomerun.c",
+  "match_types": [
+   16
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_CssData",
+  "file": "gminvisible.c",
+  "match_types": [],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_SssData",
+  "file": "gminvisible.c",
+  "match_types": [],
+  "scene": "GS_SSS"
+ },
+ {
+  "data": "gmVsMelee_CssData",
+  "file": "gmlightning.c",
+  "match_types": [],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_SssData",
+  "file": "gmlightning.c",
+  "match_types": [],
+  "scene": "GS_SSS"
+ },
+ {
+  "data": "gm_80490960",
+  "file": "gmmultiman.c",
+  "match_types": [
+   15
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gm_804950F0",
+  "file": "gmmultiman.c",
+  "match_types": [
+   15
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gm_804950F0",
+  "file": "gmmultiman.c",
+  "match_types": [
+   15
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gm_804950F0",
+  "file": "gmmultiman.c",
+  "match_types": [
+   15
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gm_804950F0",
+  "file": "gmmultiman.c",
+  "match_types": [
+   15
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gm_804950F0",
+  "file": "gmmultiman.c",
+  "match_types": [
+   15
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gm_804950F0",
+  "file": "gmmultiman.c",
+  "match_types": [
+   15
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_CssData",
+  "file": "gmsinglebutton.c",
+  "match_types": [],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_SssData",
+  "file": "gmsinglebutton.c",
+  "match_types": [],
+  "scene": "GS_SSS"
+ },
+ {
+  "data": "gmVsMelee_CssData",
+  "file": "gmslomo.c",
+  "match_types": [],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_SssData",
+  "file": "gmslomo.c",
+  "match_types": [],
+  "scene": "GS_SSS"
+ },
+ {
+  "data": "gmVsMelee_CssData",
+  "file": "gmstamina.c",
+  "match_types": [
+   2
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_SssData",
+  "file": "gmstamina.c",
+  "match_types": [
+   2
+  ],
+  "scene": "GS_SSS"
+ },
+ {
+  "data": "gmVsMelee_CssData",
+  "file": "gmsupersudden.c",
+  "match_types": [],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_SssData",
+  "file": "gmsupersudden.c",
+  "match_types": [],
+  "scene": "GS_SSS"
+ },
+ {
+  "data": "gmVsMelee_CssData",
+  "file": "gmtiny.c",
+  "match_types": [],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_SssData",
+  "file": "gmtiny.c",
+  "match_types": [],
+  "scene": "GS_SSS"
+ },
+ {
+  "data": "gm_8048BD20",
+  "file": "gmtoumode.c",
+  "match_types": [],
+  "scene": "GS_SSS"
+ },
+ {
+  "data": "css_data",
+  "file": "gmtrainingmode.c",
+  "match_types": [
+   23
+  ],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "sss_data",
+  "file": "gmtrainingmode.c",
+  "match_types": [
+   23
+  ],
+  "scene": "GS_SSS"
+ },
+ {
+  "data": "gmVsMelee_CssData",
+  "file": "gmvsmode.c",
+  "match_types": [],
+  "scene": "GS_CSS"
+ },
+ {
+  "data": "gmVsMelee_SssData",
+  "file": "gmvsmode.c",
+  "match_types": [],
+  "scene": "GS_SSS"
+ }
+]
