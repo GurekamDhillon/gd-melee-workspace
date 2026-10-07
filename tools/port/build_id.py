@@ -119,9 +119,9 @@ def main(argv=None):
     old = out.read_text(encoding='utf-8') if out.is_file() else None
     if old != text:
         out.write_text(text, encoding='utf-8', newline='\n')
-        print('build id  %s' % text.splitlines()[2].split()[-1] + ' ' + text.splitlines()[3].split(' ', 2)[2])
+        print('build id  %s %s' % (text.splitlines()[2].split()[-1], text.splitlines()[4].split(' ', 2)[2]))
     else:
-        print('build id  unchanged (%s)' % text.splitlines()[3].split(' ', 2)[2])
+        print('build id  unchanged (%s)' % text.splitlines()[4].split(' ', 2)[2])
     return 0
 
 

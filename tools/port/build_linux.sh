@@ -160,6 +160,10 @@ python3 "$GW_ROOT/tools/mex_port/audit_bridge_abi.py" --map "$GW_BUILD_ROOT/mele
     echo "error: the bridge calls a target that reads its arguments from registers (listed above)" >&2
     exit 1
 }
+python3 "$GW_ROOT/tools/port/check_build_id.py" --melee "$GW_MELEE" --exe "$GW_EXE" || {
+    echo "error: this ELF does not carry the current build id; run: build_linux.sh --shim gw_netplay.c" >&2
+    exit 1
+}
 mkdir -p "$GW_BUILD_ROOT/bridge"
 cp "$bridge_c" "$bridge_h" "$GW_BUILD_ROOT/bridge/"
 sha256sum "$GW_EXE" "$GW_BUILD_ROOT/melee-pc.msvc.map" > "$GW_BUILD_ROOT/validated.sha256"

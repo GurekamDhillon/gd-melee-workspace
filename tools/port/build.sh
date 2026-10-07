@@ -206,6 +206,10 @@ if ! python "$GW_ROOT/tools/mex_port/audit_bridge_abi.py" \
        Rebuild gwtool (melee/pc/tools/gwtool/build.bat) and rebuild the TUs those functions
        live in; if it persists, the pin no longer holds and gwtool needs a look."
 fi
+# The exe must carry the source identity netplay compares (gw_netplay.c np_build_id): an object compiled before
+# the header existed does not depend on it and would silently fall back to the whole-file hash.
+python "$GW_ROOT/tools/port/check_build_id.py" --melee "$GW_MELEE" --exe "$GW_EXE" ||
+    gw_die "this exe does not carry the current build id; run: build.sh --shim gw_netplay.c"
 sha256sum "$bridge_c" "$bridge_h" "$bridge_obj" >"$bridge_stamp.tmp"
 mv -f "$bridge_stamp.tmp" "$bridge_stamp"
 python "$GW_ROOT/tools/port/build_provenance.py" --melee "$GW_MELEE" \
