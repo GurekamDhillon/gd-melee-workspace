@@ -88,6 +88,23 @@ class SelectEnums(unittest.TestCase):
             name = m.group(1)
             self.assertRegex(host, r"\bgw_%s\s*\(" % name, "the adapter declares %s but the host defines no gw_%s" % (name, name))
 
+    def test_the_lobby_and_its_loading_screen_are_gated_until_a_two_client_look(self):
+        with open(ADAPTER, encoding="utf-8", errors="replace") as f:
+            text = strip_comments(f.read())
+        self.assertEqual(len(re.findall(r'Settings_Int\("atlas_lobby", 0\)', text)), 2)    # the lobby's pick and its loading screen
+
+    def test_host_files_keep_out_of_the_netplay_layer_and_input_masks(self):
+        # Review Focus 10: no host Atlas file includes or calls the netplay layer, and the select never masks input (the lobby's rollback stays untouched)
+        for name in sorted(os.listdir(PLAT)):
+            if not (name.startswith("gw_ui_") and name.endswith((".c", ".h"))) and name != "gw_script_ui_sel.inc":
+                continue
+            if name.startswith("gw_ui_registry"):
+                continue            # step 2's entry registry takes a plain int flag named netplay (hide an entry over a session); it includes no netplay header
+            with open(os.path.join(PLAT, name), encoding="utf-8", errors="replace") as f:
+                text = strip_comments(f.read())
+            self.assertIsNone(re.search(r"[Nn]etplay", text), name + " touches the netplay layer")
+            self.assertIsNone(re.search(r"input_mask|input_chord", text), name + " masks input")
+
 
 if __name__ == "__main__":
     unittest.main()
