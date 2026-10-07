@@ -134,6 +134,44 @@ class Hooks(unittest.TestCase):
         self.assertIsNotNone(pb)
         self.assertIn("fs_preload_only", pb)
 
+    def test_a_routed_mode_leaves_nothing_behind_for_training_or_the_next_scene(self):
+        """gmFrontend_AtlasSelect registers a state's data and a mode name; gm_Scene_Frontend_OnEnter uses them up. A stale registration would make a later scene (Training's
+        CSS after a routed mode, VS, the LAB) match the wrong branch and take the wrong rules."""
+        text = read("gmfrontend.c")
+        enter = body(text, "gm_Scene_Frontend_OnEnter")
+        self.assertIsNotNone(enter)
+        # the training branch still exists and sets the training rules: fe_sel_training = true and Training's own data
+        tr = enter[enter.index("fe_train_css || enter_data == fe_train_sss"):]
+        self.assertIn("fe_sel_training = true", tr)
+        self.assertIn("fe_sel_css = (CSSData*) fe_train_css", tr)
+        # every other branch sets fe_sel_training = false (VS, the routed modes)
+        self.assertEqual(enter.count("fe_sel_training = false"), 2)
+        # both registrations are cleared after the whole chain (so a routed VS-data mode, which the first branch catches, is cleared too), before the menus return
+        tail = enter[enter.index("fe_sel_training = true"):]
+        self.assertRegex(tail, r"fe_ats_css = NULL;\s*fe_ats_sss = NULL;")
+        self.assertLess(tail.index("fe_ats_css = NULL;"), tail.index("if (fe.next_menus)"))
+        # the registration is a pointer compare against fe_ats_*: a cleared (NULL) one never matches real enter data
+        self.assertIn("enter_data != NULL && (enter_data == fe_ats_css || enter_data == fe_ats_sss)", enter)
+        # the named mode a ModeSelect queued is not wiped by a mode that has no name
+        at = body(text, "gmFrontend_AtlasSelect")
+        self.assertRegex(at, r"if \(name != NULL\) \{\s*fe_sel_mode_pending = name;")
+
+    def test_the_route_is_decided_before_the_state_is_routed(self):
+        at = body(read("gmfrontend.c"), "gmFrontend_AtlasSelect")
+        self.assertIn("Ui_SelCanOpen() == 0", at)                       # the Atlas screen could not open: the state stays on the retail screen
+        self.assertIn("Frontend_NativeSelect() != 0", at)               # MELEE_NATIVE_CSS=1 keeps the retail screens
+        self.assertLess(at.index("Ui_SelCanOpen() == 0"), at.index("fe_ats_css = css"))
+        self.assertLess(at.index("Frontend_NativeSelect() != 0"), at.index("scene_kind = GS_FRONTEND"))
+
+    def test_the_preload_filter_is_set_only_once_the_screen_is_up(self):
+        a = read("gmfrontend_atlas_select.inc")
+        f = body(a, "fas_open_css")
+        self.assertIsNotNone(f)
+        self.assertNotIn("fs_preload_only = fas.enter", f[:f.index("Ui_SelOpen(")])      # not before the open
+        self.assertIn("fs_preload_only = fas.enter", f[f.index("Ui_SelOpen("):])
+        self.assertRegex(a, r"\} fas = \{ 0, 0, -1, 0, -1, -1 \};")                       # no zeroed handle: a zero is a valid-looking handle
+        self.assertEqual(len(re.findall(r"fas_art_identity\(", a)), 3)                    # defined once, called for fighters and stages
+
     def test_held_groups_are_gated_and_say_why(self):
         text = read("gmfrontend.c")
         b = body(text, "gmFrontend_AtlasSelect")
