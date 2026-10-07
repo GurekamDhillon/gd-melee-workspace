@@ -1,4 +1,11 @@
-<RCC><qresource prefix="/kit">
+<RCC>
+<qresource prefix="/">
+ <file alias="atlas/tokens.json">../../../../menu/atlas/tokens.json</file>
+ <file alias="fonts/barlow-semibold.ttf">../../../../menu/Barlow/BarlowCondensed-SemiBold.ttf</file>
+ <file alias="fonts/barlow-bold.ttf">../../../../menu/Barlow/BarlowCondensed-Bold.ttf</file>
+ <file alias="fonts/sourcesans-semibold.otf">../../../../menu/SourceSans3/SourceSans3-Semibold.otf</file>
+</qresource>
+<qresource prefix="/kit">
  <file alias="kit.json">../../../../_build/ui/kit.json</file>
  <file alias="motion.json">../../../../_build/ui/kit_motion.json</file>
  <file alias="bold.otf">../../../../menu/SourceSans3/SourceSans3-Bold.otf</file>
@@ -9,4 +16,5 @@
  <file alias="options.gxtex">../../../../_build/ui/ico_options.gxtex</file>
  <file alias="data.gxtex">../../../../_build/ui/ico_data.gxtex</file>
  <file alias="lab.gxtex">../../../../_build/ui/ico_lab.gxtex</file>
-</qresource></RCC>
+</qresource>
+</RCC>
