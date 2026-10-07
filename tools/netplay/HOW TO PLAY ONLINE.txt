@@ -53,7 +53,9 @@ IF IT DOESN'T CONNECT
   The line at the bottom of the screen says what is happening.
   - Check the firewall question above (both Private and Public).
   - "different disc image": you are not using the same ISO version.
-    "different melee-pc.exe build": you are not using the same release.
+    "different game build": you are not using the same release (Windows and Linux
+    builds of one release agree; a build with other sources or other floating-point
+    results does not).
   - Both of you on the same server? (SETTINGS > ONLINE > Server.)
 
 Netplay protocol 5 (adds the Envoy setting; 4 added the Turbo setting):

@@ -9,7 +9,7 @@
 # into the zip's netplay_server.txt; change it in the game's SETTINGS > ONLINE > Server). Friends run
 # "GD Melee.exe" and pick their own ISO; "Unlock every character and stage" is on by default and
 # netplay unlocks everything for both players anyway, so no save files ship.
-# BOTH players must run the same package: the handshake refuses a different melee-pc.exe build.
+# BOTH players must run the same package: the handshake refuses a different game build (the source identity, not the exe file: Windows and Linux builds of one commit agree).
 param(
   [string]$Out = "",
   [string]$Server = ""
