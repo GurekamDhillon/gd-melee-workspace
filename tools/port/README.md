@@ -259,3 +259,17 @@ For explicit diagnostic testing only, set `MELEE_WATCHDOG_TEST=1` and use consol
 `watchdog-stall 12` with action `log` to let the game recover, or `exit` to verify
 code 86. Native acceptance remains necessary after integration; source checks do
 not establish that a copied EXE has these features.
+
+## Atlas checks (the menu migration)
+
+```bash
+python tools/port/atlas_gate.py --step 6                 # have the earlier Atlas steps delivered what step 6 needs? (exit 1 lists what is missing and whose it is)
+bash tools/port/check_atlas_online.sh                    # the online room's netplay isolation (below)
+```
+
+`check_atlas_online.sh` is textual on purpose and pins that the online room is DRAWING ONLY: no pure Atlas unit (`pc/platform/gw_ui_*`) includes a
+netplay header or names a netplay function; the game-side adapter (`gmfrontend_atlas_online.inc`) calls only an allow-list of reads, nothing the legacy
+lobby did not already call, and turns each mouse or keyboard intent into the one `MenuInput_` bit the equivalent pad press has (one line per intent);
+the pad term of the lobby's input (`mn_80229624(4)`) stays the legacy read; no Atlas online file touches the input mask; the opponent's blind pick is
+read only after the legacy `fl_card_portrait` test; the room door writes game memory only through `gs_ui_put_be32`. Run it after touching the adapter,
+the room door or `gmfrontend_online.inc`. It takes the game checkout as an argument (default `$GW_MELEE`).
