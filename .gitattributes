@@ -3,4 +3,7 @@
 
 # Windows batch/shims are authoring-side only; keep them as text too.
 *.bat text
-*.sh text
+*.sh text eol=lf
+
+# Read by the Linux build scripts inside the build environment: CRLF breaks them.
+tools/port/linux_*.txt text eol=lf

@@ -18,6 +18,7 @@ ap.add_argument('--output',type=Path,default=root/'_build/linux/packages')
 ap.add_argument('--local',action='store_true')
 ap.add_argument('--version',help='Release version for version.txt (default: tools/release/VERSION)')
 ap.add_argument('--melee',type=Path,default=Path(os.environ['GW_MELEE']) if os.environ.get('GW_MELEE') else root/'melee',help='Game checkout the executable was built from (for version.txt)')
+ap.add_argument('--mods-from',type=Path,help='Melee git checkout to take the mods from (default: --melee). Must be a repository: only tracked files ship')
 ap.add_argument('--launcher',type=Path,help='Deployed Qt prefix containing bin/gd-melee-launcher and its runtime')
 ap.add_argument('--runtime-lib-dir',type=Path,action='append',default=[],help='Additional directory for 32-bit SDL Wayland runtime libraries')
 a=ap.parse_args(); build=a.build.resolve(); a.output.mkdir(parents=True,exist_ok=True)
@@ -71,6 +72,14 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
     if not probe.is_file():raise SystemExit('Rebuild the launcher: its 32-bit graphics helper is missing')
     if probe.read_bytes()[:5]!=b'\x7fELF\x01':raise SystemExit('Graphics helper must be a 32-bit ELF executable')
     shutil.copy2(probe,dest/'bin/melee-graphics-probe')
+    # The mods, from tools/release/mod_rules.json (the table the Windows zip is built by and both guards enforce):
+    # tracked files only, allow-listed paths only, never envoy_drives_sa2 / local-assets / ported fighters.
+    mods_from=a.mods_from or a.melee
+    if not (mods_from/'pc/geno/mods/geno-lab/mod.json').is_file():raise SystemExit(f'no mods in {mods_from}: pass --melee (or --mods-from) a melee git checkout')
+    sys.path.insert(0,str(root/'tools/release'))
+    import mod_package
+    _,_,mod_warnings=mod_package.stage_mods(mods_from,dest,workspace=root)
+    if mod_warnings:raise SystemExit('mods missing from the melee checkout:\n  '+'\n  '.join(mod_warnings))
     shutil.copytree(root/'tools/port/udev',dest/'udev',dirs_exist_ok=True)
     shutil.copytree(root/'tools/release/licenses',dest/'licenses',dirs_exist_ok=True)
     shutil.copy2(root/'tools/release/THIRD-PARTY-NOTICES.txt',dest/'licenses/')

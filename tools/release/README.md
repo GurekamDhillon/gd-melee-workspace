@@ -39,6 +39,7 @@ Before publishing: rebuild the exe (`bash tools/port/build.sh`), push `pc-port` 
 | `build_release.ps1` | stages `_build/release/GDMelee-<v>-win64/`, writes `version.txt` + `MANIFEST.sha256`, checks the folder, zips it (forward-slash entries, one top folder), checks the zip, writes `<zip>.sha256` |
 | `check_release.ps1` | the disc-data guard; runs on a folder or a zip; exit 1 = do not ship |
 | `check_release_linux.py` | the same rules for a Linux folder or tarball; `tools/port/package_linux.py` runs it before it writes the tarball; tests in `test_release_guard_linux.py` |
+| `mod_package.py` | the mod copy the Linux packager uses (reads `mod_rules.json`, tracked files only, same refusals as `build_release.ps1`); tests in `test_mod_package.py` |
 | `mod_rules.json` | which mods a release carries, which files of each, which are on by default, the never-package list |
 | `publish.ps1` | package existing binaries (strict unless Force/DryRun) + check + release notes + `gh release create`; takes `-GameDir/-MeleeDir/-OutDir` for a clean private build root; the protocol number in the body comes from `netplay_protocol.ps1` |
 | `build_launcher.ps1` / `build_launcher.sh` | build, test and deploy the native Qt launcher |
@@ -82,6 +83,15 @@ package's `mods/enabled.txt` lists the ones that are on.
 | `envoy_drives` | yes | `mod.json`, `README.md`, `models/*.gxmesh`, `models/*.gxtex`, `models/*.json` (not `tools/make_drives.py`) |
 | `vanilla-hero`, `vanilla-striker`, `vanilla-caster` | **off** | text only: `mod.json`, `geno.json`, `README.md`, `moves/*.genoasm|words`, `fx/**.json` |
 | `vanilla-courier` | **off, optional** | only with `-IncludeCourier`; see below |
+
+**The Linux package carries the same mods.** `tools/port/package_linux.py` calls `mod_package.stage_mods` (the same
+rules, the same never-package list, tracked files only) and copies `geno-lab`, `envoy`, `envoy_drives` (on) and
+`vanilla-hero`, `vanilla-striker`, `vanilla-caster` (off), plus `mods/README.txt`, `mods/sources.txt`, `mods/enabled.txt`,
+`scripts/README.txt` and `scripts/examples`. Never the Courier (optional, Windows `-IncludeCourier` only), never
+`envoy_drives_sa2`, `_build/local-assets` or any ported fighter. The melee checkout must be a git repository
+(`--melee`, or `--mods-from <repo>` when the executable was built from an exported tree): an untracked file that matches
+an allow pattern stops the packaging. `check_release_linux.py` now requires `mods/enabled.txt` and every default-on
+mod, and fails if `enabled.txt` leaves one out or names one that must ship off.
 
 `scripts/examples` still ships the Lua/JSON examples, minus `envoy` and `envoy_drives` (they are mods now).
 `envoy_drives_sa2`, anything under `_build/local-assets`, ported or private fighters (Meta Knight/Halberd, Ultimate
@@ -213,6 +223,28 @@ entry script opens that same layout. Copy the whole installed folder, not just t
 no discs or private runner needed. Screenshots and build artifacts are workflow artifacts;
 the workflow does not tag, create or publish a GitHub Release. Real game/disc validation
 is separate; see `docs/LINUX_CONTINUOUS_CHECKS.md`.
+
+### Linux compile check (headless, from Windows)
+
+`tools/port/check_compile_linux.ps1` compiles the game's translation units and the native shims for the 32-bit Linux
+build and reports pass or fail. It compiles only: no link, no disc image, no window, no game started, no root, nothing
+installed. It runs through WSL in the rootless Ubuntu 22.04 build environment of 2026-10-05 (`~/lb2` in the `Debian`
+distribution: `enter.sh` is a user namespace plus a chroot; see `_build/audit-20261003/linux-build/PROGRESS.md`).
+
+```powershell
+powershell -File tools\port\check_compile_linux.ps1 -Quick     # 24 TUs spread over the list + every shim
+powershell -File tools\port\check_compile_linux.ps1            # the whole game (993 TUs) + shims
+powershell -File tools\port\check_compile_linux.ps1 -Tu src/melee/ft/ftdata.c
+```
+
+Exit 0 = `LINUX COMPILE CHECK PASSED`; 1 = a unit failed (`CC_FAIL`, `GW_FAIL` or `SHIM_FAIL` lines name them;
+the full log is `~/lb2/check/check-compile.log` in WSL); 2 = the environment is not there. `-Melee <dir>` picks the
+game checkout (default `<workspace>\melee`, or `$env:GW_MELEE`), `-All` recompiles everything; objects persist in
+`~/lb2/check`, so a second run compiles only what changed. `tools/port/check_compile_linux.sh` is the part that runs
+inside the environment and can be run on any Ubuntu 22.04 box with the variables listed in its header. The
+checkouts are bind-mounted at plain paths inside the namespace because `GD's Melee` contains an apostrophe.
+Measured 2026-10-06 on the integration checkout: `-Quick` 27 s (objects already there); the first full run compiled all 993 TUs and 63 of 65 shims in about a quarter of an hour on 10 jobs. A full run without `-Quick` scans every object's headers across the Windows drive first, which takes minutes when nothing changed; use `-Quick` or `-Tu` for a fast answer and the full run before a release. 
+Shell scripts and `linux_*.txt` are LF in the repo (`.gitattributes`); a CRLF checkout breaks them in the environment.
 
 ### Linux: the game will not start
 
