@@ -22,6 +22,8 @@ SCENARIOS = [
     ('turbo-fox-marth', 'mode=vs;at=match;p1=fox/c0/hu/stocks99;p2=marth/c0/hu/stocks99;stage=fd;turbo=on;time=0', 99, 6000, []),
     ('turbo-off-ys',    'mode=vs;at=match;p1=falcon/c0/hu/stocks99;p2=kirby/c0/hu/stocks99;stage=ys;turbo=off;time=0', 100, 4000, []),
     ('brinstar-gw-ness', 'mode=vs;at=match;p1=gamewatch/c0/hu/stocks99;p2=ness/c0/hu/stocks99;stage=brinstar;items=2;time=0', 2024, 6000, []),
+    ('akaneia-sonic-wolf', 'mode=vs;at=match;p1=ck:38/c0/hu/stocks99;p2=ck:34/c0/hu/stocks99;stage=fd;time=0', 77, 5000, ['--disc', 'akaneia']),
+    ('akaneia-tails-dedede-bf', 'mode=vs;at=match;p1=ck:40/c0/hu/stocks99;p2=ck:39/c0/hu/stocks99;p3=ck:36/c0/hu/stocks99;p4=ck:35/c0/hu/stocks99;stage=bf;items=3;time=0', 78, 5000, ['--disc', 'akaneia', '--ports', '4']),
     ('ace-fox-marth',   'mode=vs;at=match;p1=fox/c0/hu/stocks99;p2=marth/c0/hu/stocks99;stage=fd;time=0', 8, 4000, ['--disc', 'ace']),
 ]
 

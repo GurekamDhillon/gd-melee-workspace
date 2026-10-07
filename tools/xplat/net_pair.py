@@ -77,6 +77,7 @@ def main():
     ap.add_argument('--linux-dir', default='outD')
     ap.add_argument('--port', type=int, default=0)
     ap.add_argument('--no-bot', action='store_true')
+    ap.add_argument('--mods', default='', help='envoy: use the Envoy mod folder on both sides')
     ap.add_argument('--scene', default='', help='MELEE_SCENE for the DIRECT mode (the room code path ignores it)')
     a = ap.parse_args()
 
@@ -126,7 +127,7 @@ def main():
         env.update(common)
         env.update(side['win'])
         env.update(MELEE_PAD_IGNORE_ADAPTER='1', MELEE_SKIP_INTRO='1', MELEE_PAD_BOT_EDGE='62', MELEE_WINDOW_W='960', MELEE_WINDOW_H='540', MELEE_WINDOW_X='20', MELEE_WINDOW_Y='20',
-                   MELEE_MODS_DIR=os.path.join(ROOT, '_build', 'nomods'))
+                   MELEE_MODS_DIR=(os.path.join(ROOT, '_build', 'xplat', 'mods') if a.mods else os.path.join(ROOT, '_build', 'nomods')))
         iso = {'vanilla': 'GW_ISO_VANILLA', 'ace': 'GW_ISO_ACE', 'akaneia': 'GW_ISO_AKANEIA'}[a.disc]
         sandbox = os.path.join(os.environ['GW_BUILD_ROOT'], 'runs', wname)
         os.makedirs(sandbox, exist_ok=True)
@@ -141,6 +142,8 @@ def main():
         env_pairs = dict(common)
         env_pairs.update(side['linux'])
         env_pairs.update(MELEE_PAD_BOT_EDGE='62', XP_DISC=a.disc)
+        if a.mods:
+            env_pairs['MELEE_MODS_DIR'] = '/mnt/h/xpmods'
         extra = ' '.join(q('%s=%s' % kv) for kv in env_pairs.items())
         inner = ('cd ~/lb2; export MELEE_VANILLA_ISO=%s MELEE_ACE_ISO=%s MELEE_AKANEIA_ISO=%s; '
                  './enterD.sh env bash /mnt/h/wsD/tools/xplat/run_linux_net.sh /mnt/h/%s/linux %s %d %s'
