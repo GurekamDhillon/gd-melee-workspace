@@ -1030,6 +1030,7 @@
 ../masstest/shimobj/gw_log.obj
 ../masstest/shimobj/gw_kit.obj
 ../masstest/shimobj/gw_ui_focus.obj
+../masstest/shimobj/gw_ui_frame.obj
 ../masstest/shimobj/gw_ui_input.obj
 ../masstest/shimobj/gw_ui_layout.obj
 ../masstest/shimobj/gw_ui_parts.obj

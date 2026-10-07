@@ -44,6 +44,7 @@ gw_tests_core.c
 gw_ui_css.c
 gw_ui_css_profile.c
 gw_ui_focus.c
+gw_ui_frame.c
 gw_ui_hud.c
 gw_ui_hud_parts.c
 gw_ui_item.c
