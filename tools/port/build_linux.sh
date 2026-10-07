@@ -58,6 +58,8 @@ echo "build     $GW_BUILD_ROOT"
 echo "exe       $GW_EXE"
 echo "jobs      $GW_JOBS"
 mkdir -p "$GW_OUT" "$GW_SHIMOBJ" "$GW_BUILD_ROOT"
+# The source identity netplay compares (pc/platform/gw_build_id.h): see tools/port/build_id.py.
+python3 "$GW_ROOT/tools/port/build_id.py" --melee "$GW_MELEE"
 
 [ -f "$TU_LIST" ] || { echo "error: no TU list at $TU_LIST" >&2; exit 1; }
 [ -x "$GW_GWTOOL" ] || { echo "error: no gwtool at $GW_GWTOOL (see tools/port/build_gwtool_linux.sh)" >&2; exit 1; }
@@ -156,6 +158,10 @@ echo "abi"
 python3 "$GW_ROOT/tools/mex_port/audit_bridge_abi.py" --map "$GW_BUILD_ROOT/melee-pc.msvc.map" \
     --exe "$GW_EXE" --bridge "$bridge_c" || {
     echo "error: the bridge calls a target that reads its arguments from registers (listed above)" >&2
+    exit 1
+}
+python3 "$GW_ROOT/tools/port/check_build_id.py" --melee "$GW_MELEE" --exe "$GW_EXE" || {
+    echo "error: this ELF does not carry the current build id; run: build_linux.sh --shim gw_netplay.c" >&2
     exit 1
 }
 mkdir -p "$GW_BUILD_ROOT/bridge"
