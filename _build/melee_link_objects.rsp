@@ -1057,3 +1057,4 @@
 ../masstest/shimobj/gw_profiler_tests.obj
 "../masstest/shimobj/gw_hang.obj"
 ../masstest/shimobj/gw_fx_motion.obj
+../masstest/shimobj/gw_ui_item.obj
