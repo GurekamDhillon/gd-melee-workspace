@@ -77,9 +77,9 @@ atlas-policy)
 atlas-retail)
     sources=(pc/tests/atlas_retail_test.c pc/platform/gw_ui_retail.c) ;;
 atlas-hud)
-    sources=(pc/tests/atlas_hud_test.c pc/platform/gw_ui_hud.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_stack.c pc/platform/gw_ui_val.c) ;;
+    sources=(pc/tests/atlas_hud_test.c pc/platform/gw_ui_hud.c pc/platform/gw_ui_hud_parts.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_stack.c pc/platform/gw_ui_val.c) ;;
 atlas-binding|atlas-select-adapter|atlas-settings-host|atlas-settings|atlas-mods-door)
-    sources=(pc/tests/atlas_binding_test.c pc/platform/gw_ui_css.c pc/platform/gw_ui_css_profile.c pc/platform/gw_ui_sss.c pc/platform/gw_ui_render.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c pc/platform/gw_ui_registry.c pc/platform/gw_ui_menus_json.c pc/platform/gw_ui_policy.c pc/platform/gw_ui_retail.c pc/platform/gw_ui_hud.c pc/platform/gw_ui_item.c pc/platform/gw_ui_mods.c)
+    sources=(pc/tests/atlas_binding_test.c pc/platform/gw_ui_css.c pc/platform/gw_ui_css_profile.c pc/platform/gw_ui_sss.c pc/platform/gw_ui_render.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c pc/platform/gw_ui_registry.c pc/platform/gw_ui_menus_json.c pc/platform/gw_ui_policy.c pc/platform/gw_ui_retail.c pc/platform/gw_ui_hud.c pc/platform/gw_ui_hud_parts.c pc/platform/gw_ui_item.c pc/platform/gw_ui_mods.c)
     for lua_file in lapi lauxlib lbaselib lcode lcorolib lctype ldblib ldebug ldo ldump lfunc lgc linit liolib llex lmathlib lmem loadlib lobject lopcodes loslib lparser lstate lstring lstrlib ltable ltablib ltm lundump lutf8lib lvm lzio; do
         sources+=("pc/third_party/lua-5.4.7/src/$lua_file.c")
     done
