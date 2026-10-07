@@ -1,0 +1,11 @@
+[
+  {
+    "id": "unused_retail_stage",
+    "stages": ["akaneia", "icetop"],
+    "description": "Unused retail stage ids 21 and 26 lack valid stage/BGM data. Applies to the stage identifier, not the Akaneia disc name."
+  },
+  {
+    "id": "load_timeout_progress",
+    "description": "A load-induced HANG may be a harness artifact only when BOTH retrace and presented heartbeats advance and there is no fatal/crash evidence. Progress alone does not rule out a real stall earlier in the run."
+  }
+]

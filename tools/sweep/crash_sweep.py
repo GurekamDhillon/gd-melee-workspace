@@ -254,6 +254,36 @@ def plan(disc, fighters, externals, only, secs, items="0", include_unused=False)
     return runs
 
 
+def write_results(done, out, exe, discs, elapsed, jev_enabled=False, offline=False):
+    """Persist verdicts, with optional advisory Jev triage (no game operations)."""
+    rows = [{"disc": r.disc, "kind": r.kind, "tag": r.tag, "what": r.what,
+             "scene": r.scene, "result": r.result, "detail": r.detail,
+             "sandbox": r.sandbox or os.path.join(out, "runs", r.tag)} for r in done]
+    if jev_enabled:
+        sys.path.insert(0, ROOT)
+        from tools.jev.triage_run import triage_rows
+        annotations = {r["tag"]: r["triage"] for r in triage_rows(rows, out, offline=offline)}
+        for row in rows:
+            if row["tag"] in annotations:
+                row["triage"] = annotations[row["tag"]]
+    with open(os.path.join(out, "results.json"), "w", encoding="utf-8") as f:
+        json.dump(rows, f, indent=1)
+    with open(os.path.join(out, "results.md"), "w", encoding="utf-8") as f:
+        f.write("# Crash sweep - %s\n\nexe `%s`, %d runs in %.0f min\n" %
+                (time.strftime("%Y-%m-%d %H:%M"), exe, len(rows), elapsed / 60))
+        for disc in discs:
+            disc_rows = [r for r in rows if r["disc"] == disc]
+            passed = sum(r["result"] == "PASS" for r in disc_rows)
+            extra = " triage |" if jev_enabled else ""
+            f.write("\n## %s - %d/%d pass\n\n| run | what | result | detail |%s\n|---|---|---|---|%s\n" %
+                    (disc, passed, len(disc_rows), extra, "---|" if jev_enabled else ""))
+            for row in sorted(disc_rows, key=lambda r: (r["result"] == "PASS", r["tag"])):
+                cells = [row[k] for k in ("tag", "what", "result", "detail")]
+                if jev_enabled:
+                    cells.append(row.get("triage", {}).get("choice", ""))
+                f.write("| " + " | ".join(str(c).replace("|", "/").replace("\n", " ") for c in cells) + " |\n")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--exe", default=os.path.join(MAIN, "_build", "melee-pc.exe"))
@@ -275,6 +305,7 @@ def main():
     ap.add_argument("--include-unused", action="store_true",
                     help="also run the unused retail ids akaneia (21) and icetop (26), which always fail")
     ap.add_argument("--monitor2", action="store_true", help="tile the windows on the second monitor")
+    ap.add_argument("--jev", action="store_true", help="append advisory Jev triage after the sweep (off by default)")
     a = ap.parse_args()
     exe = os.path.abspath(a.exe)
     out = os.path.abspath(a.out)
@@ -312,6 +343,7 @@ def main():
     for row in carried:
         c = Run(row["disc"], row["kind"], row["tag"], row["scene"], 0, row["what"])
         c.result, c.detail = row["result"], row["detail"]
+        c.sandbox = row.get("sandbox") or os.path.abspath(os.path.join(os.path.dirname(a.resume), "runs", row["tag"]))
         done.append(c)
     t_start = time.time()
     while queue or active:
@@ -332,19 +364,7 @@ def main():
                 del active[slot]
                 done.append(r)
                 print("[%3d/%3d] %-7s %-28s %s" % (len(done), len(all_runs) + len(carried), r.result, r.tag, r.detail))
-    json.dump([{"disc": r.disc, "kind": r.kind, "tag": r.tag, "what": r.what, "scene": r.scene,
-                "result": r.result, "detail": r.detail} for r in done],
-              open(os.path.join(out, "results.json"), "w"), indent=1)
-    with open(os.path.join(out, "results.md"), "w", encoding="utf-8") as f:
-        f.write("# Crash sweep - %s\n\nexe `%s`, %d runs in %.0f min\n" %
-                (time.strftime("%Y-%m-%d %H:%M"), exe, len(done), (time.time() - t_start) / 60))
-        for disc in a.discs.split(","):
-            rows = [r for r in done if r.disc == disc]
-            bad = [r for r in rows if r.result != "PASS"]
-            f.write("\n## %s - %d/%d pass\n\n| run | what | result | detail |\n|---|---|---|---|\n" %
-                    (disc, len(rows) - len(bad), len(rows)))
-            for r in sorted(rows, key=lambda r: (r.result == "PASS", r.tag)):
-                f.write("| %s | %s | %s | %s |\n" % (r.tag, r.what, r.result, r.detail.replace("|", "/")))
+    write_results(done, out, exe, a.discs.split(","), time.time() - t_start, jev_enabled=a.jev)
     fails = [r for r in done if r.result != "PASS"]
     print("done: %d/%d pass -> %s" % (len(done) - len(fails), len(done), os.path.join(out, "results.md")))
     return 0 if not fails else 1

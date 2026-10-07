@@ -42,7 +42,9 @@ import json
 import logging
 import os
 import secrets
+import sys
 import time
+from pathlib import Path
 
 MAX_BODY = 64 * 1024
 MAX_HEADER = 8 * 1024
@@ -100,7 +102,18 @@ def header_field(body, name):
     return ""
 
 
-def store(root, body):
+def upload_triage(body, offline=False):
+    """Optional external decision, separated from serialized storage/cap checks."""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from tools.jev.triage_run import classify
+        return classify({"result": "CRASH"}, body.decode("utf-8", "replace"), offline=offline)
+    except (ImportError, OSError, ValueError, KeyError, TypeError, IndexError):
+        log.warning("jev: unavailable")
+        return {"choice": "jev: unavailable", "source": "unavailable"}
+
+
+def store(root, body, jev_enabled=False, offline=False, triage=None):
     now = datetime.datetime.now(datetime.timezone.utc)
     digest = hashlib.sha256(body).hexdigest()
     day = os.path.join(root, now.strftime("%Y-%m-%d"))
@@ -118,6 +131,10 @@ def store(root, body):
         "exit_path": header_field(text, "exit path"),
         "reason": header_field(text, "reason"),
     }
+    if jev_enabled:
+        # Deploy tools/jev alongside this script to opt in. A standalone copy
+        # still accepts uploads if the optional classifier is unavailable.
+        meta["triage"] = triage if triage is not None else upload_triage(body, offline)
     with open(stem + ".json", "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=1)
     return digest[:12]
@@ -135,7 +152,7 @@ async def reply(writer, code, text):
         pass
 
 
-async def handle(reader, writer, root, limits):
+async def handle(reader, writer, root, limits, jev_enabled=False, offline=False):
     peer = writer.get_extra_info("peername")
     addr = peer[0] if peer else "?"
     try:
@@ -173,9 +190,12 @@ async def handle(reader, writer, root, limits):
             return await reply(writer, 400, "bad request")
         if not limits.allow(addr):
             return await reply(writer, 429, "slow down")
+        triage = await asyncio.to_thread(upload_triage, body, offline) if jev_enabled else None
+        # Keep cap-check + storage on the event loop with no intervening await.
+        # Only the external decision runs concurrently in a worker thread.
         if dir_size(root) + len(body) > DIR_CAP:
             return await reply(writer, 507, "full")
-        rid = store(root, body)
+        rid = store(root, body, jev_enabled=jev_enabled, triage=triage)
         log.info("crash report %s (%d bytes)", rid, len(body))
         return await reply(writer, 200, "OK " + rid)
     finally:
@@ -185,10 +205,10 @@ async def handle(reader, writer, root, limits):
             pass
 
 
-async def start_crash_upload(bind, port, root):
+async def start_crash_upload(bind, port, root, jev_enabled=False, offline=False):
     os.makedirs(root, exist_ok=True)
     limits = Limits()
-    server = await asyncio.start_server(lambda r, w: handle(r, w, root, limits), bind, port,
+    server = await asyncio.start_server(lambda r, w: handle(r, w, root, limits, jev_enabled, offline), bind, port,
                                         limit=MAX_HEADER + 1024)
     log.info("crash reports on tcp %s:%d -> %s", bind, port, root)
     return server
@@ -199,9 +219,11 @@ async def main():
     ap.add_argument("--bind", default="0.0.0.0")
     ap.add_argument("--port", type=int, default=51600)
     ap.add_argument("--dir", default="crashes")
+    ap.add_argument("--jev", action="store_true", help="opt in to TypeSafe triage metadata (requires tools/jev and TYPESAFE_API_KEY)")
+    ap.add_argument("--jev-offline", action="store_true", help="use the deterministic stub when --jev is enabled")
     args = ap.parse_args()
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
-    server = await start_crash_upload(args.bind, args.port, args.dir)
+    server = await start_crash_upload(args.bind, args.port, args.dir, args.jev, args.jev_offline)
     async with server:
         await server.serve_forever()
 

@@ -5,6 +5,15 @@ requires it, and that includes ideas and findings as well as code. Licences of b
 in `tools/release/THIRD-PARTY-NOTICES.txt`. A project we learn from or start using is added here in
 the same change.
 
+## Jev workspace tools (2026-10-07)
+
+[TypeSafe](https://typesafe.ai), creators of Jev (System One), provides the optional
+typed choice, score, and noul API used by `tools/jev/` for crash triage, reviewer
+finding ranking, and agent-claim checks. The integration follows TypeSafe's
+[API reference](https://docs.typesafe.ai/api) and
+[Python SDK documentation](https://docs.typesafe.ai/sdk/python); this project's
+client and deterministic offline fixtures are original code. No SDK is bundled.
+
 ## Online Envoy (2026-10-05)
 
 The rollback vocabulary used to scope Envoy over the port's own netplay (input delay, prediction, rollback depth,
