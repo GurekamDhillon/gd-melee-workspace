@@ -1,4 +1,5 @@
 #include "window.h"
+#include "kit.h"
 #include "legacy_kit.h"
 #include "graphics.h"
 #include <QGuiApplication>
@@ -20,9 +21,12 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QMenu>
+#include <QPainter>
+#include <QPalette>
 #include <QPushButton>
 #include <QPlainTextEdit>
 #include <QScrollArea>
+#include <QShortcut>
 #include <QSlider>
 #include <QStatusBar>
 #include <QTableWidget>
@@ -51,39 +55,69 @@ static QTableWidget *table(const QStringList &headers) {
     w->horizontalHeader()->setStretchLastSection(true); w->setAlternatingRowColors(true);
     return w;
 }
+
+// Layout constants with no token: the three measurements of the Atlas launcher concept
+// (menu/concepts/reunification-2026-10-06/c-atlas/screens_b.py, s17): rail 204 wide, trail 34 high, main padding 18 top and bottom.
+// The left column (420) is the primary's maximum width, applied where the tabs are built.
+constexpr int kRailWidth = 204, kTrailHeight = 34, kMainPadY = 18, kPrimaryWidth = 420, kExplainerMin = 240;
+
+// The only way a label gets a colour: a token, through the palette.
+static QLabel *capLabel(const QString &text, atlas::Role role, const char *colourToken = "ivory") {
+    auto *w = new QLabel(text); w->setTextFormat(Qt::PlainText); w->setFont(atlas::font(role));
+    QPalette pal = w->palette(); pal.setColor(QPalette::WindowText, atlas::colour(colourToken)); w->setPalette(pal);
+    return w;
+}
+// The strip's mark: the concept's own diamond (parts.py defs: ember, ground, ivory), drawn from tokens.
+class MarkWidget : public QWidget {
+public:
+    explicit MarkWidget(int size = 18) : QWidget(nullptr) { setFixedSize(size, size); }
+protected:
+    void paintEvent(QPaintEvent *) override {
+        QPainter p(this); p.setPen(Qt::NoPen); p.setRenderHint(QPainter::Antialiasing, false);
+        const qreal s = width() / 24.0;
+        auto diamond = [&](qreal r, const QColor &c) { p.setBrush(c); p.drawPolygon(QPolygonF{{12 * s, (12 - r) * s}, {(12 + r) * s, 12 * s}, {12 * s, (12 + r) * s}, {(12 - r) * s, 12 * s}}); };
+        diamond(11, atlas::colour("ember")); diamond(7, atlas::colour("ground")); diamond(4, atlas::colour("ivory"));
+    }
+};
+static QString versionText(const QString &appDir) {
+    try { return readText(appDir + "/version.txt", 16384).section(QChar('\n'), 0, 0).trimmed(); } catch (...) {}
+    return QString("dev");
+}
 Window::Window(QString app, QString user, Settings settings)
     : appDir_(std::move(app)), userDir_(std::move(user)), settings_(std::move(settings)) {
-    setWindowTitle("GD's Melee"); resize(1160, 800); setMinimumSize(1000, 730);
-    surface_ = new legacy::Surface;
-    auto *layout = new QVBoxLayout(surface_); layout->setContentsMargins(32, 24, 32, 24); layout->setSpacing(18);
-    auto *header = new QHBoxLayout; layout->addLayout(header);
-    auto *title = label("GD'S MELEE"); title->setProperty("role", "brand"); header->addWidget(title); header->addStretch();
-    auto *edition = label(t("LAUNCHER", "LANZADOR")); edition->setProperty("role", "eyebrow"); header->addWidget(edition);
-    auto *body = new QHBoxLayout; body->setSpacing(22); layout->addLayout(body, 1);
-    auto *sidebar = new QVBoxLayout; sidebar->setSpacing(10); body->addLayout(sidebar);
-    auto *navLabel = label(t("HOME", "INICIO")); navLabel->setProperty("role", "muted"); sidebar->addWidget(navLabel);
-    tabs_ = new QStackedWidget;
-    const QStringList labels{t("PLAY", "JUGAR"), t("MODS", "MODS"), t("DIAGNOSTICS", "DIAGNÓSTICO"), t("ABOUT", "ACERCA DE")};
-    const QStringList icons{"melee", "collection", "options", "data"};
-    const QStringList sections{"versus", "collection", "options", "data"};
-    const QStringList headings{t("DISC LIBRARY", "BIBLIOTECA DE DISCOS"), t("YOUR CUSTOM CONTENT", "TU CONTENIDO PERSONALIZADO"), t("DIAGNOSTICS", "DIAGNÓSTICO"), t("GD'S MELEE", "GD'S MELEE")};
-    for (int i = 0; i < labels.size(); ++i) {
-        auto *nav = new legacy::Button(labels[i]); nav->setFixedWidth(196); nav->setMinimumHeight(64); nav->setCheckable(true); nav->setKitIcon(icons[i]); nav->setSection(sections[i]); sidebar->addWidget(nav); navigation_.append(nav);
-        connect(nav, &QPushButton::clicked, this, [this, i] { tabs_->setCurrentIndex(i); navigation_[i]->setChecked(true); });
-    }
-    sidebar->addStretch();
-    auto *note = label(t("YOUR DISCS.\nYOUR RULES.", "TUS DISCOS.\nTUS REGLAS.")); note->setFont(legacy::font(21, true, true)); sidebar->addWidget(note);
-    auto *right = new QVBoxLayout; right->setSpacing(12); body->addLayout(right, 1);
-    pageHeading_ = label(headings[0]); pageHeading_->setProperty("role", "heading"); right->addWidget(pageHeading_);
-    tabs_->addWidget(playTab()); tabs_->addWidget(modsTab()); tabs_->addWidget(diagnosticsTab()); tabs_->addWidget(aboutTab()); right->addWidget(tabs_, 1);
-    navigation_[0]->setChecked(true);
-    connect(tabs_, &QStackedWidget::currentChanged, this, [this, headings, sections](int index) {
-        for (int i = 0; i < navigation_.size(); ++i) navigation_[i]->setChecked(i == index);
-        pageHeading_->setText(headings[index]); surface_->setSection(sections[index]);
+    setObjectName("atlasWindow"); setWindowTitle("GD's Melee"); resize(960, 640); setMinimumSize(900, 600);
+    // E0 ground, then the four places: trail (top), the rail and the tab bodies (primary + explainer), keys (bottom).
+    auto *root = new QWidget; root->setObjectName("atlasGround");
+    root->setAutoFillBackground(true); { QPalette pal = root->palette(); pal.setColor(QPalette::Window, atlas::colour("ground")); root->setPalette(pal); }
+    auto *col = new QVBoxLayout(root); col->setContentsMargins(0, 0, 0, 0); col->setSpacing(0);
+    auto *trail = new QWidget; trail->setObjectName("atlasTrail"); trail->setFixedHeight(kTrailHeight);
+    trail->setAutoFillBackground(true); { QPalette pal = trail->palette(); pal.setColor(QPalette::Window, atlas::colour("ground")); trail->setPalette(pal); }
+    auto *th = new QHBoxLayout(trail); th->setContentsMargins(atlas::px("s3"), 0, atlas::px("s3"), 0); th->setSpacing(atlas::px("s2"));
+    th->addWidget(new MarkWidget); th->addWidget(capLabel("GD'S MELEE", atlas::Role::Cap16)); th->addWidget(capLabel(t("LAUNCHER", "LANZADOR"), atlas::Role::Cap16, "muted")); th->addStretch();
+    th->addWidget(capLabel(versionText(appDir_), atlas::Role::Body14, "muted"));
+    col->addWidget(trail);
+    auto *body = new QHBoxLayout; body->setContentsMargins(0, 0, 0, 0); body->setSpacing(0); col->addLayout(body, 1);
+    rail_ = new kit::TabRail({t("PLAY", "JUGAR"), t("MODS", "MODS"), t("DIAGNOSTICS", "DIAGN�STICO"), t("ABOUT", "ACERCA DE")});
+    rail_->setObjectName("atlasRail"); rail_->setFixedWidth(kRailWidth); rail_->setIcons({"right", "mods", "data", "star"}); body->addWidget(rail_);
+    auto *main = new QVBoxLayout; main->setContentsMargins(atlas::px("s5"), kMainPadY, atlas::px("s5"), kMainPadY); main->setSpacing(atlas::px("s3")); body->addLayout(main, 1);
+    pageHeading_ = capLabel(QString(), atlas::Role::Title);  pageSub_ = capLabel(QString(), atlas::Role::Body14, "muted");
+    auto *hd = new QHBoxLayout; hd->setSpacing(atlas::px("s3")); hd->addWidget(pageHeading_); hd->addWidget(pageSub_, 1, Qt::AlignBottom); main->addLayout(hd);
+    tabs_ = new QStackedWidget; tabs_->setObjectName("atlasTabs");
+    tabs_->addWidget(playTab()); tabs_->addWidget(modsTab()); tabs_->addWidget(diagnosticsTab()); tabs_->addWidget(aboutTab()); main->addWidget(tabs_, 1);
+    keys_ = new QWidget; keys_->setObjectName("atlasKeys"); keys_->setFixedHeight(26); main->addWidget(keys_);
+    setCentralWidget(root);
+    const QStringList headings{t("Play", "Jugar"), t("Mods", "Mods"), t("Diagnostics", "Diagn�stico"), t("About", "Acerca de")};
+    const QStringList subs{t("Pick a disc, then play.", "Pick a disc, then play."), t("Custom content, applied at the next launch.", "Custom content, applied at the next launch."),
+                           t("Logs, graphics and reports.", "Logs, graphics and reports."), t("This launcher and what it uses.", "This launcher and what it uses.")};
+    connect(rail_, &kit::TabRail::currentChanged, this, [this, headings, subs](int index) {
+        tabs_->setCurrentIndex(index); pageHeading_->setText(headings[index].toUpper()); pageSub_->setText(subs[index]); setKeys(index);
+        auto *f = QApplication::focusWidget();                       // never leave focus on a control that is now hidden
+        if (!f || !f->isVisible() || (tabs_->isAncestorOf(f) && !tabs_->currentWidget()->isAncestorOf(f))) rail_->setFocus();
     });
-    setCentralWidget(surface_);
+    pageHeading_->setText(headings[0].toUpper()); pageSub_->setText(subs[0]); setKeys(0);
+    for (int i = 0; i < 4; ++i) { auto *s = new QShortcut(QKeySequence(Qt::CTRL | (Qt::Key_1 + i)), this); connect(s, &QShortcut::activated, this, [this, i] { rail_->setCurrent(i); }); }
+    { auto *s = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_M), this); connect(s, &QShortcut::activated, this, [this] { selectMods(); }); }
     refreshDiscs(); guarded([&] { refreshMods(); });
-    statusBar()->showMessage(t("SELECT A DISC  /  Double-click to play", "ELIGE UN DISCO  /  Doble clic para jugar"));
 #ifdef Q_OS_LINUX
     graphicsTimeout_ = new QTimer(this); graphicsTimeout_->setSingleShot(true);
     connect(graphicsTimeout_, &QTimer::timeout, this, [this] { graphicsTimedOut_ = true; graphicsProcess_.kill(); });
@@ -115,6 +149,22 @@ Window::Window(QString app, QString user, Settings settings)
         finishLaunchReport(failed);
         if (!failed) { if (quitting_ || settings_.flag("close_on_play")) QApplication::quit(); else statusBar()->showMessage(t("Game closed.", "Juego cerrado.")); }
     });
+}
+void Window::setKeys(int tab) {
+    delete keys_->layout();
+    qDeleteAll(keys_->findChildren<QWidget *>(QString(), Qt::FindDirectChildrenOnly));
+    auto *l = new QHBoxLayout(keys_); l->setContentsMargins(0, 0, 0, 0); l->setSpacing(atlas::px("s1"));
+    auto hint = [&](const QStringList &chips, const QString &text) {
+        for (const auto &c : chips) l->addWidget(new kit::KeyChip(c));
+        auto *w = capLabel(text, atlas::Role::Body12, "muted"); l->addWidget(w); l->addSpacing(atlas::px("s3"));
+    };
+    switch (tab) {
+    case 0: hint({"Enter"}, t("to play", "to play")); hint({"Ctrl", "M"}, t("mods", "mods")); break;
+    case 1: hint({"Space"}, t("turns a mod on or off", "turns a mod on or off")); hint({"Ctrl", "M"}, t("mods", "mods")); break;
+    case 2: hint({"Tab"}, t("moves between controls", "moves between controls")); break;
+    default: hint({"Tab"}, t("moves between controls", "moves between controls")); break;
+    }
+    hint({"Ctrl", "1-4"}, t("switch tab", "switch tab")); l->addStretch();
 }
 DiagContext Window::diagContext(bool full) const {
     DiagContext c = diag_; c.appDir = appDir_; c.userDir = userDir_; c.runDir = runDir_; c.full = full;
@@ -437,10 +487,10 @@ QWidget *Window::aboutTab() {
     button(row, t("Open licences", "Abrir licencias"), [this] { openPath(QDir(appDir_ + "/LICENSES").exists() ? appDir_ + "/LICENSES" : appDir_ + "/licenses"); });
     layout->addStretch(); return page;
 }
-void Window::selectMods() { tabs_->setCurrentIndex(1); }
+void Window::selectMods() { rail_->setCurrent(1); }
 void Window::screenshots(const QString &dir) {
     QDir().mkpath(dir); show();
-    for (int i = 0; i < tabs_->count(); ++i) { tabs_->setCurrentIndex(i); QApplication::processEvents(); if (!grab().save(dir + "/launcher-" + QString::number(i) + ".png")) throw std::runtime_error("Cannot save screenshot"); }
+    for (int i = 0; i < tabs_->count(); ++i) { rail_->setCurrent(i); QApplication::processEvents(); if (!grab().save(dir + "/launcher-" + QString::number(i) + ".png")) throw std::runtime_error("Cannot save screenshot"); }
 }
 void Window::closeEvent(QCloseEvent *event) {
     if (process_.state() != QProcess::NotRunning) { quitting_ = true; hide(); event->ignore(); }

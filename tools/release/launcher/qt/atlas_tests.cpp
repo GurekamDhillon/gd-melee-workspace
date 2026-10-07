@@ -1,5 +1,9 @@
 #include "atlas.h"
 #include "kit.h"
+#include "legacy_kit.h"
+#include "window.h"
+#include <QStackedWidget>
+#include <QTemporaryDir>
 #include <QApplication>
 #include <QImage>
 #include <QSignalSpy>
@@ -11,7 +15,7 @@ using namespace launcher;
 class AtlasTests : public QObject {
     Q_OBJECT
 private slots:
-    void initTestCase() { atlas::initialize(); }
+    void initTestCase() { atlas::initialize(); launcher::legacy::initialize(); }
 
     void tokens_load() {
         QCOMPARE(atlas::colour("ember"), QColor(0xff, 0x7a, 0x3d));
@@ -156,6 +160,29 @@ private slots:
     }
     void reduced_motion_is_a_cut() {
         QVERIFY(atlas::motion("m-focus") == 0 || atlas::motion("m-focus") == atlas::ms("m-focus"));
+    }
+
+    void layout_four_places_at_three_sizes() {
+        QTemporaryDir dir; auto settings = launcher::Settings::load(dir.path());
+        for (QSize s : {QSize(900, 600), QSize(960, 640), QSize(1160, 800)}) {
+            launcher::Window w(dir.path(), dir.path(), settings); w.resize(s); w.show(); QApplication::processEvents();
+            auto *rail = w.findChild<QWidget *>("atlasRail"), *trail = w.findChild<QWidget *>("atlasTrail"), *keys = w.findChild<QWidget *>("atlasKeys");
+            QVERIFY(rail && trail && keys);
+            QCOMPARE(rail->width(), 204);
+            QVERIFY(trail->geometry().bottom() <= rail->geometry().top() + 1);               // trail above the rail
+            auto *tabs = w.findChild<QStackedWidget *>("atlasTabs"); QVERIFY(tabs);
+            QVERIFY(keys->mapTo(&w, QPoint(0, 0)).y() >= tabs->mapTo(&w, QPoint(0, 0)).y() + tabs->height() - 1);   // keys below the tab bodies
+            for (auto *child : w.findChildren<QWidget *>()) {                                // nothing outside the window
+                if (!child->isVisible() || child->windowFlags() & Qt::Window) continue;
+                const QRect g(child->mapTo(&w, QPoint(0, 0)), child->size());
+                QVERIFY2(QRect(QPoint(0, 0), w.size()).adjusted(-1, -1, 1, 1).intersects(g), qPrintable(child->objectName() + " is off the window"));
+            }
+        }
+    }
+    void first_run_focus() {                                                                 // no disc yet: something real has focus
+        QTemporaryDir dir; launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.show(); QApplication::processEvents();
+        QVERIFY(QApplication::focusWidget() != nullptr);
+        QVERIFY(qobject_cast<QPushButton *>(QApplication::focusWidget()) || qobject_cast<kit::TabRail *>(QApplication::focusWidget()));
     }
 };
 QTEST_MAIN(AtlasTests)

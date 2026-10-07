@@ -15,7 +15,8 @@ class QPlainTextEdit;
 class QTimer;
 
 namespace launcher {
-namespace legacy { class Hero; class Surface; }
+namespace kit { class TabRail; }
+namespace legacy { class Hero; }
 extern bool spanish;
 QString t(const char *en, const char *es);
 class Window : public QMainWindow {
@@ -32,11 +33,12 @@ private:
     Settings settings_;
     QProcess process_;
     QStackedWidget *tabs_;
-    legacy::Surface *surface_;
+    kit::TabRail *rail_;
+    QWidget *keys_;
+    QLabel *pageSub_;
     legacy::Hero *hero_;
     QLabel *discTitle_;
     QLabel *pageHeading_;
-    QVector<QPushButton *> navigation_;
     QTableWidget *discs_, *mods_;
     QLabel *discDetails_, *modDetails_;
     QPushButton *play_;
@@ -72,5 +74,6 @@ private:
     QWidget *diagnosticsTab();
     QWidget *aboutTab();
     void openPath(const QString &path);
+    void setKeys(int tab);
 };
 }
