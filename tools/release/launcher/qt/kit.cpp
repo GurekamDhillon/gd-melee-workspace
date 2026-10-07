@@ -3,7 +3,9 @@
 #include <QAbstractItemModel>
 #include <QKeyEvent>
 #include <QMouseEvent>
+#include <QHelpEvent>
 #include <QPainter>
+#include <QToolTip>
 #include <QStyleOptionViewItem>
 #include <QVBoxLayout>
 #include <cmath>
@@ -97,6 +99,11 @@ QSize Button::sizeHint() const {
     if (!icon_.isEmpty()) w += 18 + px("s2");
     return {int(std::ceil(std::max<qreal>(w, primary_ ? 120 : 64))), primary_ ? 46 : 36};   // 44 / 34 plates plus the 2 px lift
 }
+QSize Button::minimumSizeHint() const { return {primary_ ? 120 : 64, sizeHint().height()}; }
+bool Button::event(QEvent *e) {
+    if (e->type() == QEvent::ToolTip && toolTip().isEmpty() && elided_) { QToolTip::showText(static_cast<QHelpEvent *>(e)->globalPos(), text(), this); return true; }
+    return QPushButton::event(e);
+}
 void Button::paintEvent(QPaintEvent *) {
     QPainter p(this); flat(p);
     const bool on = isEnabled(), focus = hasFocus() && on, down = isDown() && on;
@@ -119,6 +126,7 @@ void Button::paintEvent(QPaintEvent *) {
     if (QFontMetricsF(atlas::font(role_)).horizontalAdvance(text()) > avail) role_ = primary_ ? atlas::Role::Cap16 : atlas::Role::Cap14;
     const QFont f = atlas::font(role_); QFontMetricsF fm(f);
     const QString shown = atlas::fit(fm, text(), avail);
+    elided_ = shown != text();
     const qreal tw = fm.horizontalAdvance(shown), total = tw + (hasIcon ? 18 + px("s2") : 0);
     x = faceRect.left() + (faceRect.width() - total) / 2;
     if (hasIcon) { paintIcon(p, icon_, QRectF(x, faceRect.center().y() - 9, 18, 18), fg); x += 18 + px("s2"); }

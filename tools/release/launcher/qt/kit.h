@@ -36,13 +36,15 @@ public:
     bool primary() const { return primary_; }
     void setKitIcon(const QString &name) { icon_ = name; updateGeometry(); update(); }
     QSize sizeHint() const override;
+    QSize minimumSizeHint() const override;                            // narrow: a long label is elided (and shown whole in a tooltip), it never widens its column
 protected:
+    bool event(QEvent *) override;
     void paintEvent(QPaintEvent *) override;
     void enterEvent(QEnterEvent *) override;
     void leaveEvent(QEvent *) override;
 private:
     atlas::Role role() const { return primary_ ? atlas::Role::Cap20 : atlas::Role::Cap16; }
-    bool primary_ = false; QString icon_; qreal hover_ = 0; QVariantAnimation motion_;
+    bool primary_ = false; QString icon_; qreal hover_ = 0; QVariantAnimation motion_; mutable bool elided_ = false;
 };
 void paintToggle(QPainter &p, const QRectF &r, bool on, bool focus);
 class Toggle : public QAbstractButton {                              // the word ON or OFF, the lit half jade

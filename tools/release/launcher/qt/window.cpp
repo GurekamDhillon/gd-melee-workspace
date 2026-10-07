@@ -128,10 +128,16 @@ private:
 // A settings row: a label on the left, a control on the right; focus (the toggle's or the slider's) lifts the whole row.
 class OptionRow : public QWidget {
 public:
-    OptionRow(const QString &label, QWidget *control, QWidget *focusWidget, bool clickToggles) : QWidget(nullptr), focus_(focusWidget), click_(clickToggles ? qobject_cast<QAbstractButton *>(control) : nullptr) {
-        setFixedHeight(kRowHeight + 2); setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        auto *l = new QHBoxLayout(this); l->setContentsMargins(atlas::px("s3"), 2, atlas::px("s3"), atlas::px("ch-xs")); l->setSpacing(atlas::px("s3"));
-        l->addWidget(new ElidedLabel(label, atlas::Role::Row16, "text2"), 1); l->addWidget(control, 0, Qt::AlignVCenter);
+    // stacked: the label above and the control below, for a control that needs the row's width (a combo box)
+    OptionRow(const QString &label, QWidget *control, QWidget *focusWidget, bool clickToggles, bool stacked = false) : QWidget(nullptr), focus_(focusWidget), click_(clickToggles ? qobject_cast<QAbstractButton *>(control) : nullptr), height_(stacked ? kStackedHeight : kRowHeight) {
+        setFixedHeight(height_ + 2); setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        if (stacked) {
+            auto *l = new QVBoxLayout(this); l->setContentsMargins(atlas::px("s3"), 2 + 4, atlas::px("s3"), atlas::px("ch-xs") + 4); l->setSpacing(2);
+            l->addWidget(new ElidedLabel(label, atlas::Role::Body12, "muted")); l->addWidget(control);
+        } else {
+            auto *l = new QHBoxLayout(this); l->setContentsMargins(atlas::px("s3"), 2, atlas::px("s3"), atlas::px("ch-xs")); l->setSpacing(atlas::px("s3"));
+            l->addWidget(new ElidedLabel(label, atlas::Role::Row16, "text2"), 1); l->addWidget(control, 0, Qt::AlignVCenter);
+        }
         focus_->installEventFilter(this);
     }
 protected:
@@ -140,13 +146,13 @@ protected:
     void paintEvent(QPaintEvent *) override {
         QPainter p(this); p.setRenderHint(QPainter::Antialiasing, false);
         const bool focus = focus_->hasFocus();
-        const QRectF base(0, 2, width(), kRowHeight), r = atlas::lifted(base, focus);
+        const QRectF base(0, 2, width(), height_), r = atlas::lifted(base, focus);
         kit::paintPlate(p, r, focus ? atlas::colour("lift") : atlas::colour("plate2"), focus ? atlas::colour("ember") : atlas::colour("edge2"), atlas::px("ch-xs"), atlas::px("ch-s"));
         if (focus) p.fillRect(atlas::tick(r.adjusted(0, 0, 0, -atlas::px("ch-xs"))), atlas::colour("ember"));
     }
 private:
-    static constexpr int kRowHeight = 34;                                  // the mockup's option row; disc rows are the 46 tall one
-    QWidget *focus_; QAbstractButton *click_;
+    static constexpr int kRowHeight = 34, kStackedHeight = 56;             // the mockup's option row; disc rows are the 46 tall one
+    QWidget *focus_; QAbstractButton *click_; int height_;
 };
 // An icon and a line of text: the "ready" line above the Play button.
 class NoteLine : public QWidget {
@@ -162,6 +168,24 @@ protected:
 private:
     QString icon_, text_;
 };
+// A combo box that draws its own arrow (a flat token-coloured triangle); the style sheet leaves the drop-down empty.
+class Combo : public QComboBox {
+protected:
+    void paintEvent(QPaintEvent *e) override {
+        QComboBox::paintEvent(e);
+        QPainter p(this); p.setRenderHint(QPainter::Antialiasing, false); p.setPen(Qt::NoPen); p.setBrush(atlas::colour(isEnabled() ? "ivory" : "muted"));
+        const qreal cx = width() - 16, cy = (height() - 2) / 2.0;
+        p.drawPolygon(QPolygonF{{cx - 5, cy - 2}, {cx + 5, cy - 2}, {cx, cy + 4}});
+    }
+};
+// A settings row whose control is a combo box: compact (it must fit the 34 px row) and sized by a short minimum length,
+// never by its longest item, so a long GPU name cannot push the pane wider than its column.
+static QComboBox *rowCombo(QBoxLayout *into, const QString &title) {
+    auto *w = new Combo; w->setProperty("inRow", true); w->setAccessibleName(title);
+    w->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon); w->setMinimumContentsLength(8);
+    w->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    into->addWidget(new OptionRow(title, w, w, false, true)); return w;
+}
 // The disc and mod lists: the rows are painted by the delegate; with no disc yet the list says so in a hatched frame.
 class RowTable : public QTableWidget {
 public:
@@ -194,9 +218,10 @@ static QString atlasStyleSheet() {
       QTableWidget { background: transparent; border: none; outline: 0; }
       QTableWidget::item { border: none; padding: 0; }
       QComboBox, QLineEdit { background: @plate2@; color: @ivory@; border: 0; border-bottom: 3px solid @edge2@; padding: 5px 12px; min-height: 22px; selection-background-color: @lift@; selection-color: @ivory@; }
+      QComboBox[inRow="true"] { padding: 1px 10px; min-height: 18px; border-bottom-width: 2px; }
       QComboBox:focus, QLineEdit:focus { background: @lift@; border-bottom-color: @ember@; }
       QComboBox::drop-down { border: 0; width: 24px; }
-      QComboBox::down-arrow { image: none; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 6px solid @ivory@; }
+      QComboBox::down-arrow { image: none; width: 0; height: 0; }
       QComboBox QAbstractItemView { background: @plate@; color: @ivory@; selection-background-color: @lift@; selection-color: @ivory@; border: 0; outline: 0; }
       QPlainTextEdit { background: @ground2@; color: @text2@; border: 0; border-bottom: 3px solid @edge2@; selection-background-color: @lift@; selection-color: @ivory@; }
       QSlider::groove:horizontal { height: 4px; background: @line2@; }
@@ -592,7 +617,7 @@ void Window::refreshMods() {
         mods_->setRowHeight(row, kit::RowDelegate::rowHeight());
     }
     filling_ = false;
-    if (keep >= 0 && entries.size() > 0) mods_->selectRow(std::min<int>(keep, entries.size() - 1));
+    if (entries.size() > 0) mods_->selectRow(keep >= 0 ? std::min<int>(keep, entries.size() - 1) : 0);   // the explainer always has a mod to show
     if (auto *pane = findChild<kit::Pane *>("atlasInstalled")) pane->setCount(QString::number(entries.size()));
     if (modsOnLabel_) { int on = 0; for (const auto &m : entries) on += m.enabled; modsOnLabel_->setText(QString::number(on) + " " + t("on", "on")); }
     showSelectedMod();
@@ -663,11 +688,10 @@ QWidget *Window::diagnosticsTab() {
     };
 #ifdef Q_OS_LINUX
     auto *graphicsLayout = bodyOf(t("Linux graphics", "Gráficos de Linux"));
-    auto *gpuForm = new QFormLayout; graphicsLayout->addLayout(gpuForm); graphicsDevice_ = new QComboBox;
+    graphicsDevice_ = rowCombo(graphicsLayout, t("Game GPU", "GPU del juego"));
     graphicsDevice_->addItem(t("Automatic", "Automático"), "auto");
     auto savedGpu = settings_.option("graphics_device", "auto");
     if (savedGpu != "auto") { graphicsDevice_->addItem(savedGpu + t(" (saved; check graphics)", " (guardada; comprobar gráficos)"), savedGpu); graphicsDevice_->setCurrentIndex(1); }
-    gpuForm->addRow(t("Game GPU", "GPU del juego"), graphicsDevice_);
     connect(graphicsDevice_, qOverload<int>(&QComboBox::currentIndexChanged), this, [this] { guarded([&] { settings_.options["graphics_device"] = graphicsDevice_->currentData().toString(); save(); }); });
     graphicsDetails_ = new QPlainTextEdit; graphicsDetails_->setReadOnly(true); graphicsDetails_->setMinimumHeight(120); graphicsDetails_->setMaximumHeight(180);
     graphicsDetails_->setPlainText(t("Check graphics to list GPUs available to the 32-bit game. Play checks the selected GPU before starting.", "Comprueba los gráficos para ver las GPU disponibles para el juego de 32 bits. Jugar comprueba la GPU seleccionada antes de iniciar.")); graphicsLayout->addWidget(graphicsDetails_);
@@ -681,9 +705,8 @@ QWidget *Window::diagnosticsTab() {
     auto *logging = bodyOf(t("Logging", "Logging"));
     for (const auto &entry : QList<std::tuple<QString, QString, bool>>{{t("Log everything (large logs)", "Registrar todo (registros grandes)"), "log_all", false}, {t("Log scene changes", "Registrar cambios de escena"), "log_scene", true}})
         toggleRow(logging, std::get<0>(entry), "diag_" + std::get<1>(entry), settings_.flag(std::get<1>(entry), std::get<2>(entry)), [this, key = std::get<1>(entry)](bool v) { settings_.options[key] = v ? "1" : "0"; save(); });
-    auto *form = new QFormLayout; logging->addLayout(form);
     auto combo = [&](const QString &title, const QString &key, const QStringList &choices, int offset, int fallback) {
-        auto *w = new QComboBox; w->setObjectName("diag_" + key); w->addItems(choices); w->setCurrentIndex(std::clamp(settings_.option(key, QString::number(fallback)).toInt() - offset, 0, int(choices.size()) - 1)); form->addRow(title, w);
+        auto *w = rowCombo(logging, title); w->setObjectName("diag_" + key); w->addItems(choices); w->setCurrentIndex(std::clamp(settings_.option(key, QString::number(fallback)).toInt() - offset, 0, int(choices.size()) - 1));
         connect(w, qOverload<int>(&QComboBox::currentIndexChanged), this, [this, key, offset](int v) { guarded([&] { settings_.options[key] = QString::number(v + offset); save(); }); });
     };
     combo(t("Render diagnostics", "Diagnóstico gráfico"), "log_render", {t("Off", "Desactivado"), t("Once per scene", "Una vez por escena"), t("Every block", "Cada bloque")}, -1, 0);
@@ -698,9 +721,9 @@ QWidget *Window::diagnosticsTab() {
                 auto items = settings_.option(key).split(',', Qt::SkipEmptyParts); items.removeAll(value); if (on) items << value; settings_.options[key] = items.join(','); save(); });
     }
     auto *reports = bodyOf(t("Reports", "Informes"));
-    auto *grid = new QGridLayout; grid->setSpacing(atlas::px("s2")); reports->addLayout(grid); int n = 0;
+    auto *grid = new QGridLayout; grid->setSpacing(atlas::px("s2")); reports->addLayout(grid); int n = 0;      // one column: these labels are long
     auto lastRun = [this] { return runDir_.isEmpty() ? settings_.option("last_run", userDir_ + "/runs") : runDir_; };
-    auto action = [&](const QString &text, const std::function<void()> &fn) { auto *b = new kit::Button(text); grid->addWidget(b, n / 2, n % 2); ++n; connect(b, &QPushButton::clicked, b, fn); return b; };
+    auto action = [&](const QString &text, const std::function<void()> &fn) { auto *b = new kit::Button(text); grid->addWidget(b, n, 0); ++n; connect(b, &QPushButton::clicked, b, fn); return b; };
     action(t("Open log folder", "Abrir carpeta de registros"), [this, lastRun] { openPath(lastRun()); });
     action(t("Open game log", "Abrir registro del juego"), [this, lastRun] { openPath(lastRun() + "/melee-pc.log"); });
     action(t("Copy launch diagnostics", "Copy launch diagnostics"), [this] { copyDiagnostics(); });
@@ -729,9 +752,9 @@ QWidget *Window::aboutTab() {
     for (const auto &entry : QList<QPair<QString, QString>>{{t("Game folder: ", "Carpeta del juego: "), appDir_}, {t("User data: ", "Datos del usuario: "), userDir_}}) {
         auto *line = new ElidedLabel(entry.first + QDir::toNativeSeparators(entry.second), atlas::Role::Body14, "text2"); line->setToolTip(entry.second); body->addWidget(line);
     }
-    auto *form = new QFormLayout; body->addLayout(form); auto *lang = new QComboBox; lang->setObjectName("atlasLanguage");
+    auto *lang = rowCombo(body, t("Language (next launch)", "Idioma (al reiniciar)")); lang->setObjectName("atlasLanguage");
     lang->addItem(t("System language", "Idioma del sistema"), "auto"); lang->addItem("English", "en"); lang->addItem("Español", "es");
-    lang->setCurrentIndex(std::max(0, lang->findData(settings_.option("language", "auto")))); form->addRow(t("Language (next launch)", "Idioma (al reiniciar)"), lang);
+    lang->setCurrentIndex(std::max(0, lang->findData(settings_.option("language", "auto"))));
     connect(lang, qOverload<int>(&QComboBox::currentIndexChanged), this, [this, lang] { guarded([&] { settings_.options["language"] = lang->currentData().toString(); save(); }); });
     auto *row = new QHBoxLayout; row->setSpacing(atlas::px("s2")); body->addLayout(row);
     button(row, t("Open user data", "Abrir datos del usuario"), [this] { openPath(userDir_); });

@@ -265,6 +265,8 @@ private slots:
         auto *scroll = w.findChild<QScrollArea *>("atlasDiagnostics"); QVERIFY(scroll);
         QVERIFY(scroll->widget()->height() > scroll->viewport()->height());               // longer than the window: it scrolls
         QVERIFY(scroll->verticalScrollBar()->maximum() > 0);
+        QVERIFY2(scroll->widget()->width() <= scroll->viewport()->width(), "the diagnostics content is wider than its viewport: it would be clipped on the right");
+        QVERIFY2(scroll->widget()->minimumSizeHint().width() <= scroll->viewport()->width(), "a row has a minimum width wider than the column");
         for (auto *b : scroll->widget()->findChildren<QPushButton *>()) QVERIFY2(b->width() > 0 && b->isVisible(), qPrintable(b->text()));
         QVERIFY(scroll->widget()->findChild<kit::Toggle *>("diag_log_scene"));
     }
