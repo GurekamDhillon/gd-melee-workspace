@@ -17,6 +17,8 @@ the rules that cross them.
 
 ## Rules
 
+- Optional Jev crash triage, finding ranking, and agent-claim checks: `jev/README.md` (offline stubs available; never launches the game).
+
 - **Scripts, not raw commands.** `build.sh` exists for the bridge fixpoint; `run.sh` for the
   sandbox per run. A raw clang or a bare exe run repeats the mistakes those scripts encode.
 - **Everything is relative to `GW_ROOT`** (`port/portlib.sh`), with the disc images from `.env`.

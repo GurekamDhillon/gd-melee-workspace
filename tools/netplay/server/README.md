@@ -76,6 +76,11 @@ opt-in HTTP crash uploads use TCP in the separate tools/release/crash_upload_ser
 process. Crash uploads remain compatible with old launchers. No deployment is
 part of this change.
 
+The crash-upload service's optional `--jev` setting adds advisory TypeSafe crash
+triage to metadata, off by default. Deploy `tools/jev/` alongside the service and
+set only `TYPESAFE_API_KEY` in its environment. See [Jev tools](../../jev/README.md)
+for privacy limits, offline verification, and manual classification of stored reports.
+
 Local verification from the workspace root (Python 3.8+):
 
 ```powershell
