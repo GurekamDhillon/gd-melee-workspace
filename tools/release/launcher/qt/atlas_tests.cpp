@@ -13,6 +13,8 @@
 #include <QApplication>
 #include <QImage>
 #include <QSignalSpy>
+#include <QTcpServer>
+#include <QTcpSocket>
 #include <QFontDatabase>
 #include <QFile>
 #include <QFontMetricsF>
@@ -227,6 +229,38 @@ private slots:
         auto saved = launcher::Settings::load(dir.path());
         QCOMPARE(saved.option("skip_intro"), QString(before ? "0" : "1"));
         QCOMPARE(saved.option("volume"), QString("33"));
+    }
+    void crash_upload_is_opt_in_and_only_on_a_click() {                  // default OFF; nothing is sent until the toggle is on AND the button is clicked
+        QTemporaryDir dir; QTcpServer server; QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+        int connections = 0; QStringList bodies;
+        QObject::connect(&server, &QTcpServer::newConnection, &server, [&] {
+            auto *socket = server.nextPendingConnection(); ++connections; auto *buffer = new QByteArray;
+            QObject::connect(socket, &QTcpSocket::readyRead, socket, [socket, buffer, &bodies] {
+                *buffer += socket->readAll(); const int split = buffer->indexOf("\r\n\r\n"); if (split < 0) return;
+                const int at = buffer->toLower().indexOf("content-length:"); const int length = buffer->mid(at + 15, buffer->indexOf("\r\n", at) - at - 15).trimmed().toInt();
+                if (buffer->size() < split + 4 + length) return;
+                bodies << QString::fromUtf8(buffer->mid(split + 4)); delete buffer;
+                socket->write("HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 6\r\nConnection: close\r\n\r\nOK abc"); socket->disconnectFromHost();
+            });
+        });
+        QFile servers(dir.path() + "/netplay_server.txt"); QVERIFY(servers.open(QIODevice::WriteOnly)); servers.write("127.0.0.1:" + QByteArray::number(server.serverPort()) + "\n"); servers.close();
+        QDir().mkpath(dir.path() + "/runs/crashlogs");
+        const QString report = dir.path() + "/runs/crashlogs/crash-1.log";
+        QFile r(report); QVERIFY(r.open(QIODevice::WriteOnly)); r.write("==== GD's Melee crash report ====\nversion: test\n"); r.close();
+        auto settings = launcher::Settings::load(dir.path()); settings.options["last_run"] = dir.path() + "/runs";
+        launcher::Window w(dir.path(), dir.path(), settings); w.show(); QApplication::processEvents();
+        auto *allow = w.findChild<kit::Toggle *>("diag_crash_upload"); auto *button = w.findChild<QPushButton *>("diag_upload_crashes"); QVERIFY(allow && button);
+        QVERIFY(!allow->isChecked()); QVERIFY(!button->isEnabled());                                  // off by default
+        button->click(); QTest::qWait(300); QCOMPARE(connections, 0);                                   // a disabled button sends nothing
+        QTest::keyClick(allow, Qt::Key_Space); QVERIFY(allow->isChecked()); QVERIFY(button->isEnabled());
+        QCOMPARE(launcher::Settings::load(dir.path()).option("crash_upload"), QString("1"));           // persisted in launcher.json
+        QTest::qWait(500); QCOMPARE(connections, 0);                                                    // the opt-in alone sends nothing
+        button->click();
+        QTRY_VERIFY_WITH_TIMEOUT(QFile::exists(report + ".sent"), 10000);
+        QCOMPARE(connections, 1); QCOMPARE(bodies.size(), 1); QVERIFY(bodies[0].startsWith("==== GD's Melee crash report ===="));
+        QTRY_VERIFY_WITH_TIMEOUT(button->isEnabled(), 5000);                                           // the button comes back once the upload ends
+        QTest::keyClick(allow, Qt::Key_Space); QVERIFY(!button->isEnabled());
+        QCOMPARE(launcher::Settings::load(dir.path()).option("crash_upload"), QString("0"));
     }
     void play_reasons() {                                               // a hatched button says why
         QTemporaryDir dir; launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.show();
