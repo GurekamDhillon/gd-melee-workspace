@@ -50,14 +50,15 @@ def main():
         r = subprocess.run(cmd, capture_output=True, text=True)
         out = r.stdout + r.stderr
         cols = dict(re.findall(r'^\s+(rb|wide|mem|glob)\s*:\s*(.*)$', out, re.M))
-        res = 'IDENTICAL' if 'RESULT: IDENTICAL' in out else 'DIVERGED/ERROR'
+        res = 'IDENTICAL' if (cols.get('rb', '').startswith('identical') and cols.get('wide', '').startswith('identical')) else 'DIVERGED/ERROR'
         shared = re.search(r'shared (\d+)', out)
         rows.append((name, shared.group(1) if shared else '?', cols, res, time.time() - t0))
         print('%-24s frames %-6s rb:%s wide:%s mem:%s %s (%.0f s)' % (
             name, shared.group(1) if shared else '?', cols.get('rb', '?')[:14], cols.get('wide', '?')[:14],
             cols.get('mem', '?')[:30], res, time.time() - t0), flush=True)
-        if 'rb' not in cols or cols['rb'].startswith(('0 ', '1 ', '2 ')) or 'differing' in cols.get('rb', '') or 'differing' in cols.get('wide', ''):
+        if res != 'IDENTICAL':
             bad += 1
+            print(out[-1500:])
     return 1 if bad else 0
 
 

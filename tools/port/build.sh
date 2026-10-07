@@ -45,6 +45,9 @@ GW_JOBS="${GW_JOBS:-}"
 export GW_ROOT GW_BUILD_ROOT GW_MELEE GW_OUT GW_SHIMOBJ GW_CLANG GW_GWTOOL GW_GWTOOL_FLAGS GW_JOBS
 export GW_SDL_INCLUDE GW_IMGUI_INCLUDE GW_DAWN_INCLUDE GW_DAWN_GEN_INCLUDE
 jobs="$(python "$GW_ROOT/tools/port/build_objects.py" jobs)" || gw_die "invalid GW_JOBS"
+# The source identity netplay compares (pc/platform/gw_build_id.h, git-ignored): the same on any platform that
+# builds the same sources; a changed header rebuilds only gw_netplay.c. See tools/port/build_id.py.
+python "$GW_ROOT/tools/port/build_id.py" --melee "$GW_MELEE" || gw_die "could not stamp the build id"
 source_token="$(python "$GW_ROOT/tools/port/build_provenance.py" --melee "$GW_MELEE" \
     --build "$GW_BUILD_ROOT" --snapshot)" || gw_die "could not snapshot build inputs"
 echo "jobs      $jobs"

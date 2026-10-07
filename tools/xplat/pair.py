@@ -84,9 +84,16 @@ def main():
             continue
         d = os.path.join(out, side)
         os.makedirs(d, exist_ok=True)
-        for fn in os.listdir(src):
-            if fn.startswith('xh') or fn == 'melee-pc.log':
-                shutil.copy2(os.path.join(src, fn), d)
+        for attempt in range(5):
+            try:
+                names = os.listdir(src)
+                for fn in names:
+                    if fn.startswith('xh') or fn == 'melee-pc.log':
+                        shutil.copy2(os.path.join(src, fn), d)
+                break
+            except OSError as e:
+                print('copy retry', side, e)
+                time.sleep(3)
     if a.only == '':
         r = subprocess.run([sys.executable, os.path.join(HERE, 'cmp_xhash.py'),
                             os.path.join(out, 'win', 'xh.csv'), os.path.join(out, 'linux', 'xh.csv')])
