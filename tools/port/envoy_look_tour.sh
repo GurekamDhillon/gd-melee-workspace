@@ -19,11 +19,12 @@ set -a; . "$MAIN/.env"; set +a
 [ -f "$GW_BUILD_ROOT/melee-pc.exe" ] || { echo "no exe at $GW_BUILD_ROOT: run tools/port/build.sh with GW_MELEE and GW_BUILD_ROOT set first" >&2; exit 1; }
 
 MOD="$GW_MELEE/pc/scripts/examples/envoy"
-MODELS="$MAIN/_build/local-assets/envoy-play/mods/envoy_drives_sa2"
-# the mod FOLDER goes to MELEE_SCRIPT (Windows-style path); the local-only model mod is mounted the way the earlier look runs did, through a mods dir
+MODELS="$GW_MELEE/pc/scripts/examples/envoy_drives"
+# the mod FOLDER goes to MELEE_SCRIPT (Windows-style path); the shipped original drive models (envoy_drives) are mounted
+# through a mods dir. The Sonic Adventure 2 models (envoy_drives_sa2) are deprecated (owner, 2026-10-07) and never loaded.
 export MELEE_SCRIPT="$MOD"
 if [ -d "$MODELS" ]; then
-  TM="$GW_BUILD_ROOT/tour-mods"; rm -rf "$TM"; mkdir -p "$TM"; cp -r "$MODELS" "$TM/envoy_drives_sa2"; printf 'envoy_drives_sa2
+  TM="$GW_BUILD_ROOT/tour-mods"; rm -rf "$TM"; mkdir -p "$TM"; cp -r "$MODELS" "$TM/envoy_drives"; printf 'envoy_drives
 ' > "$TM/enabled.txt"
   export MELEE_MODS_DIR="$TM"
 else echo "note: $MODELS is missing, so drive cells will be flat (no model tilt to look at)"; fi
