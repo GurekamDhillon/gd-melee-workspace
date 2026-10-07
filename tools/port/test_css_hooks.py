@@ -172,6 +172,31 @@ class Hooks(unittest.TestCase):
         self.assertRegex(a, r"\} fas = \{ 0, 0, -1, 0, -1, -1 \};")                       # no zeroed handle: a zero is a valid-looking handle
         self.assertEqual(len(re.findall(r"fas_art_identity\(", a)), 3)                    # defined once, called for fighters and stages
 
+    def test_the_select_opened_in_a_scene_init_belongs_to_the_scene_that_begins(self):
+        """D1: the frontend opens the select in the scene's init, before Script_SceneBegin runs Ui_SceneExit for the ending scene. The open is bracketed with
+        Ui_SelNextScene so the host stamps the screen for the scene that is about to begin; without it the screen opened and closed in the same frame."""
+        enter = body(read("gmfrontend.c"), "gm_Scene_Frontend_OnEnter")
+        self.assertIsNotNone(enter)
+        i = enter.index("fl_open(fe.screen->art)")
+        self.assertRegex(enter[:i], r"Ui_SelNextScene\(1\);\s*$")
+        self.assertRegex(enter[i:], r"^fl_open\(fe\.screen->art\);\s*Ui_SelNextScene\(0\);")
+
+    def test_the_legacy_panels_draw_nothing_under_an_atlas_select_or_a_room_screen(self):
+        """D2: with the Atlas select up fl.on is never set (the legacy build is skipped), so fe_draw_panels fell through to the rows loop over a stale n_list and
+        a NULL items table (Giant Melee crashed there) and drew the blue plate and arrows that stayed after leaving."""
+        d = body(read("gmfrontend.c"), "fe_draw_panels")
+        self.assertIsNotNone(d)
+        self.assertRegex(d, r"fe\.screen == NULL \|\| fe\.screen->art != 0 \|\| fas_active\(\)")
+        self.assertLess(d.index("fas_active()"), d.index("hsd_80391A04"))
+
+    def test_the_settings_door_closes_with_its_scene_before_the_select_opens(self):
+        """D3: Match Setup > Continue starts the CSS scene; the settings screen is native too (one at a time) and was closed only by Ui_SceneExit, which runs after the
+        new scene's init, so the select was refused and the legacy kit CSS drew. fss_exit closes the host screen itself, as fss_close does before a room."""
+        e = body(read("gmfrontend_atlas_set.inc"), "fss_exit")
+        self.assertIsNotNone(e)
+        self.assertRegex(e, r"if \(fss\.h >= 0\) \{\s*Ui_SetClose\(fss\.h\);")
+        self.assertLess(e.index("Ui_SetClose(fss.h)"), e.index("fss.h = -1"))
+
     def test_held_groups_are_gated_and_say_why(self):
         text = read("gmfrontend.c")
         b = body(text, "gmFrontend_AtlasSelect")
