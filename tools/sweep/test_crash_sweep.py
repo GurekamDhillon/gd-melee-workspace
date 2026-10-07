@@ -48,5 +48,51 @@ class ProgressTests(unittest.TestCase):
         self.assertEqual(sweep.judge(self.run)[0], 'HANG')
 
 
+class TurboAndGateTests(unittest.TestCase):
+    def setUp(self):
+        self.run = sweep.Run('fixture', 'stage', 'test', 'mode=vs', 24, 'fixture')
+        self.run.t0 = 100.0
+
+    def test_turbo_secs_are_game_seconds(self):
+        self.assertFalse(sweep.run_finished(self.run, True, now=101.0, frames=24 * 60 - 1))
+        self.assertTrue(sweep.run_finished(self.run, True, now=101.0, frames=24 * 60))
+
+    def test_turbo_wall_cap_ends_a_stalled_run(self):
+        self.assertFalse(sweep.run_finished(self.run, True, now=195.0, frames=0))
+        self.assertTrue(sweep.run_finished(self.run, True, now=197.0, frames=0))
+
+    def test_realtime_secs_are_wall_seconds(self):
+        self.assertFalse(sweep.run_finished(self.run, False, now=123.0, frames=99999))
+        self.assertTrue(sweep.run_finished(self.run, False, now=124.0, frames=0))
+
+    def test_gate_waits_until_fewer_than_max_games(self):
+        counts = iter([4, 3, 2])
+        orig_count, orig_sleep = sweep.running_games, sweep.time.sleep
+        sweep.running_games = lambda: next(counts)
+        sweep.time.sleep = lambda s: None
+        try:
+            sweep.wait_for_slot(3)
+            self.assertEqual(next(counts, None), None)  # consumed 4, 3, 2: returned on the third
+        finally:
+            sweep.running_games, sweep.time.sleep = orig_count, orig_sleep
+
+    def test_gate_off_never_polls(self):
+        orig = sweep.running_games
+        sweep.running_games = lambda: 99
+        try:
+            sweep.wait_for_slot(0)
+        finally:
+            sweep.running_games = orig
+
+    def test_second_monitor_tiling_stays_left_of_the_primary(self):
+        for slot in range(4):
+            x, y, w, h = sweep.window_geometry(slot, True)
+            self.assertLess(x + w, 0)
+        self.assertEqual(sweep.window_geometry(0, False)[:2], (0, 30))
+
+    def test_empty_pad_script_exists(self):
+        self.assertTrue(Path(sweep.EMPTY_PAD).is_file())
+
+
 if __name__ == '__main__':
     unittest.main()

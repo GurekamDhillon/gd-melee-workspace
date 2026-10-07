@@ -1,0 +1,2 @@
+-- sweep: empty pad script. It drives no pad channel; its only job is to make the game treat the run as
+-- scripted so MELEE_TURBO=1 is accepted. CPU players are decided by the scene, not by the pad.
