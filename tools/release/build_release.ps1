@@ -194,6 +194,11 @@ foreach ($prop in $rules.mods.PSObject.Properties) {
     }
     $count++
   }
+  foreach ($need in @($mod.required)) {
+    if ($need -and -not (Test-Path (Join-Path $stage "mods\$id\$($need.Replace('/', '\'))") -PathType Leaf)) {
+      throw "refusing to package '$id': required file '$need' was not staged (absent, untracked or not allowed by mod_rules.json)"
+    }
+  }
   Write-Output "  mod $id : $count files$(if ($mod.default_on) { ' (on)' } else { ' (off)' })"
   if ($mod.default_on) { $enabledIds.Add($id) } else { $offIds.Add($id) }
 }

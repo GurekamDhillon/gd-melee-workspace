@@ -275,6 +275,10 @@ def check(path, repo=ROOT):
     for mid, rule in rules['mods'].items():
         if rule.get('default_on') and f'mods/{mid}/mod.json' not in seen:
             fail(f'missing required file: mods/{mid}/mod.json')
+        if rule.get('default_on') or f'mods/{mid}/mod.json' in seen:
+            for need in rule.get('required', []):
+                if f'mods/{mid}/{need}' not in seen:
+                    fail(f'missing required file: mods/{mid}/{need}')
     if 'mods/enabled.txt' in seen:
         text = next(b for r, b, _ in entries if r == 'mods/enabled.txt').decode('utf-8', 'replace')
         listed_on = set()

@@ -11,6 +11,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = ROOT/'_build/audit-20261003/further-release'
+RULES = json.loads((ROOT/'tools/release/mod_rules.json').read_text(encoding='utf-8'))['mods']
 
 
 class ReleaseGuardTests(unittest.TestCase):
@@ -52,6 +53,11 @@ class ReleaseGuardTests(unittest.TestCase):
             file = cls.stage/name
             file.parent.mkdir(parents=True, exist_ok=True)
             file.write_text(text)
+        for mid in ('envoy', 'envoy_drives'):          # every file a mod's 'required' list names
+            for need in RULES[mid]['required']:
+                file = cls.stage/'mods'/mid/need
+                file.parent.mkdir(parents=True, exist_ok=True)
+                file.write_text('{}' if need.endswith('.json') else 'x')
         (cls.stage/'version.txt').write_text('fixture\nmelee      '+40*'a'+'  source\nnetplay_protocol 5\n')
         cls.stamp = dict(format=1, melee_commit=40*'a', netplay_protocol=5,
                          source_sha256=64*'b', source_dirty=False,
@@ -244,6 +250,28 @@ class ReleaseGuardTests(unittest.TestCase):
                     self.assertNotEqual(code, 0, log)
                 finally:
                     self.cleanup(name)
+
+    def test_a_missing_envoy_shader_or_drive_model_fails_the_guard(self):
+        # the allow list lets these ship; the 'required' list is what fails a package that lacks one
+        for mid, need in [(m, n) for m in ('envoy', 'envoy_drives') for n in RULES[m]['required']]:
+            with self.subTest(file=mid+'/'+need):
+                name = 'mods/'+mid+'/'+need
+                data = (self.stage/name).read_bytes()
+                try:
+                    (self.stage/name).unlink()
+                    self.expect_fail('missing required file: '+name)
+                finally:
+                    self.put(name, data)
+        self.manifest()
+        self.assertEqual(self.check()[0], 0, self.check()[1])
+
+    def test_the_required_lists_cover_the_shaders_and_every_drive_model(self):
+        self.assertEqual({n for n in RULES['envoy']['required'] if n.endswith('.wgsl')},
+                         {'shaders/'+x+'.wgsl' for x in ('crit', 'drive-pulse', 'gene-sheen', 'modifiers_chain', 'modifiers_surface')})
+        drives = RULES['envoy_drives']['required']
+        for colour in ('red', 'green', 'yellow', 'blue', 'white', 'purple', 'glass', 'ring_magic', 'ring_rare', 'ring_unique'):
+            self.assertIn('models/drive_'+colour+'.gxmesh', drives)
+        self.assertIn('models/drive_atlas.gxtex', drives)
 
     def test_envoy_is_not_an_example_script(self):
         try:

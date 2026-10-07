@@ -4,6 +4,7 @@
 The Linux packager (tools/port/package_linux.py) uses this; it does what the mods block of
 build_release.ps1 does for the Windows zip, by the same rules:
 
+  * A mod's 'required' files (Envoy's shaders, the drive models) must all be staged, or packaging stops.
   * A file ships only if its path inside the mod matches one of the mod's 'allow' regexes (whole path,
     forward slashes) AND it is tracked in the melee repository (nothing git-ignored or local-only).
   * Any path segment matching 'deny_mod_ids' or named in 'deny_dirs_anywhere' is refused, loudly
@@ -120,6 +121,10 @@ def stage_mods(melee, dest, rules=None, workspace=ROOT, log=print):
                 raise SystemExit(f'refusing {mid}/{in_mod}: matches the allow list but is not tracked in git (a local file?)')
             copy_in(f, dest / 'mods' / mid / in_mod, workspace)
             count += 1
+        missing = [r for r in mod.get('required', []) if not (dest / 'mods' / mid / r).is_file()]
+        if missing:
+            raise SystemExit(f"refusing to package '{mid}': required file(s) not staged (absent, untracked or not allowed): "
+                             + ', '.join(missing))
         log(f"  mod {mid}: {count} files{' (on)' if mod.get('default_on') else ' (off)'}")
         (enabled if mod.get('default_on') else off).append(mid)
     mods = dest / 'mods'

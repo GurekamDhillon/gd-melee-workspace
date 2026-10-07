@@ -46,6 +46,9 @@ class StageModsTests(unittest.TestCase):
             if mod.get('optional'):
                 continue
             put(self.melee, mod['source'] + '/mod.json', '{}')
+        for mid, mod in RULES['mods'].items():                           # the files a mod needs to work
+            for need in mod.get('required', []):
+                put(self.melee, mod['source'] + '/' + need, '{}' if need.endswith('.json') else 'x')
         put(self.melee, 'pc/geno/mods/geno-lab/scripts/lab.lua')
         put(self.melee, 'pc/geno/mods/geno-lab/art/hero.png')            # allowed by no pattern: stays out
         put(self.melee, 'pc/scripts/examples/envoy/scripts/main.lua')    # envoy is a mod, not an example
@@ -83,6 +86,39 @@ class StageModsTests(unittest.TestCase):
         with self.assertRaises(SystemExit) as c:
             mod_package.stage_mods(self.melee, self.dest, workspace=ROOT, log=lambda *_: None)
         self.assertIn('not tracked', str(c.exception))
+
+    def test_envoy_shaders_and_drive_models_are_staged(self):
+        self.stage()
+        files = self.files()
+        for mid in ('envoy', 'envoy_drives'):
+            for need in RULES['mods'][mid]['required']:
+                self.assertIn(f'mods/{mid}/{need}', files)
+        self.assertFalse([f for f in files if 'sa2' in f.lower()])
+
+    def test_a_missing_required_shader_or_model_stops_the_packaging(self):
+        for mid, need in [(m, n) for m in ('envoy', 'envoy_drives') for n in RULES['mods'][m]['required']]:
+            with self.subTest(file=f'{mid}/{need}'):
+                f = self.melee / RULES['mods'][mid]['source'] / need
+                data = f.read_bytes()
+                f.unlink()
+                try:
+                    git(self.melee, 'add', '-A')
+                    with self.assertRaises(SystemExit) as c:
+                        mod_package.stage_mods(self.melee, self.dest, workspace=ROOT, log=lambda *_: None)
+                    self.assertIn(need, str(c.exception))
+                    self.assertIn('required', str(c.exception))
+                finally:
+                    f.write_bytes(data)
+                    shutil.rmtree(self.dest, ignore_errors=True)
+
+    def test_a_required_file_that_no_allow_pattern_names_is_refused(self):
+        rules = json.loads(json.dumps(RULES))
+        rules['mods']['envoy']['required'].append('shaders/not-allowed/deep.wgsl')
+        put(self.melee, rules['mods']['envoy']['source'] + '/shaders/not-allowed/deep.wgsl')
+        git(self.melee, 'add', '-A')
+        with self.assertRaises(SystemExit) as c:
+            mod_package.stage_mods(self.melee, self.dest, rules=rules, workspace=ROOT, log=lambda *_: None)
+        self.assertIn('deep.wgsl', str(c.exception))
 
     def test_never_package_names_are_refused(self):
         # vanilla-hero allows fx/.+\.json, so these paths are allowed by the pattern and refused by name

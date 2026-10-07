@@ -269,6 +269,12 @@ foreach ($r in $Required) { if (-not $hashes.ContainsKey($r)) { Fail "missing re
 # every default-on mod must be there, and enabled.txt must name only mods that are (never an experimental or off one)
 foreach ($prop in $ModRules.mods.PSObject.Properties) {
   if ($prop.Value.default_on -and -not $hashes.ContainsKey("mods/$($prop.Name)/mod.json")) { Fail "missing required file: mods/$($prop.Name)/mod.json" }
+  # a mod's own required files (Envoy's shaders, the drive models): a mod without them loads but does not work
+  if ($prop.Value.default_on -or $hashes.ContainsKey("mods/$($prop.Name)/mod.json")) {
+    foreach ($need in @($prop.Value.required)) {
+      if ($need -and -not $hashes.ContainsKey("mods/$($prop.Name)/$need")) { Fail "missing required file: mods/$($prop.Name)/$need" }
+    }
+  }
 }
 if (-not $hashes.ContainsKey("mods/enabled.txt")) { Fail "missing required file: mods/enabled.txt" }
 else {

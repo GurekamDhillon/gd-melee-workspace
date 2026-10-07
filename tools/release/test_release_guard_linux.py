@@ -11,6 +11,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 GUARD = ROOT/'tools/release/check_release_linux.py'
+RULES = json.loads((ROOT/'tools/release/mod_rules.json').read_text(encoding='utf-8'))['mods']
 
 
 def run(path):
@@ -39,6 +40,9 @@ class LinuxGuardTests(unittest.TestCase):
         version = f'fixture\nmelee      {40*"a"}  src\nnetplay_protocol {number}\n'
         files['version.txt'] = version
         files['bin/version.txt'] = version
+        for mid in ('envoy', 'envoy_drives'):          # every file a mod's 'required' list names
+            for need in RULES[mid]['required']:
+                files[f'mods/{mid}/{need}'] = '{}' if need.endswith('.json') else 'x'
         for name, data in files.items():
             cls.put(name, data)
         for name in subprocess.check_output(['git', '-C', str(ROOT), 'ls-tree', '-r', '--name-only', 'HEAD', '--', '_build/ui'], text=True).splitlines():
@@ -180,6 +184,19 @@ class LinuxGuardTests(unittest.TestCase):
             self.expect_fail('missing required file: mods/enabled.txt')
         finally:
             f.write_bytes(before)
+        self.manifests()
+        self.assertEqual(run(self.stage)[0], 0)
+
+    def test_a_missing_envoy_shader_or_drive_model_fails_the_guard(self):
+        for mid, need in [(m, n) for m in ('envoy', 'envoy_drives') for n in RULES[m]['required']]:
+            with self.subTest(file=f'{mid}/{need}'):
+                name = f'mods/{mid}/{need}'
+                data = (self.stage/name).read_bytes()
+                try:
+                    self.undo(name)
+                    self.expect_fail('missing required file: '+name)
+                finally:
+                    self.put(name, data)
         self.manifests()
         self.assertEqual(run(self.stage)[0], 0)
 

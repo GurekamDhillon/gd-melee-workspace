@@ -1,43 +1,119 @@
 {
-  "_comment": "The single source for which mods a release carries and which files of each. Read by build_release.ps1 (what to copy), check_release.ps1 and check_release_linux.py (what may be in a package). A file ships only if its path inside the mod matches one of the mod's 'allow' regexes (forward slashes, matched against the whole path). Nothing else under mods/ is allowed, so a new kind of file has to be added here on purpose. 'default_on' mods are listed in the package's mods/enabled.txt; the others are installed but off (the launcher's Mods tab turns them on). 'optional' mods are only packaged when build_release.ps1 is asked for them. 'source' is relative to the melee checkout.",
+  "_comment": "The single source for which mods a release carries and which files of each. Read by build_release.ps1 (what to copy), check_release.ps1 and check_release_linux.py (what may be in a package). A file ships only if its path inside the mod matches one of the mod's 'allow' regexes (forward slashes, matched against the whole path). Nothing else under mods/ is allowed, so a new kind of file has to be added here on purpose. 'default_on' mods are listed in the package's mods/enabled.txt; the others are installed but off (the launcher's Mods tab turns them on). 'optional' mods are only packaged when build_release.ps1 is asked for them. 'source' is relative to the melee checkout. 'required' lists files a mod must carry for it to work (Envoy's shaders, the drive models): packaging refuses to stage a mod that lacks one and both guards fail a package that does.",
   "mods": {
     "geno-lab": {
       "source": "pc/geno/mods/geno-lab",
       "default_on": true,
       "why": "The LAB (SOLO > LAB). Lua, its own UI textures and lab_ui.json; art/ and preview sources stay out.",
-      "allow": ["mod\\.json", "scripts/[^/]+\\.lua", "ui/[^/]+\\.gxtex", "ui/lab_ui\\.json"]
+      "allow": [
+        "mod\\.json",
+        "scripts/[^/]+\\.lua",
+        "ui/[^/]+\\.gxtex",
+        "ui/lab_ui\\.json"
+      ]
     },
     "envoy": {
       "source": "pc/scripts/examples/envoy",
       "default_on": true,
       "why": "Envoy mode. Lua (.lua), post-pass and effect shaders (.wgsl), item definitions, effect packages and mission tables (.json, .txt). Internal planning notes (*.md other than README.md) stay out.",
-      "allow": ["mod\\.json", "README\\.md", "scripts/[^/]+\\.lua", "shaders/[^/]+\\.wgsl",
-                "items/[^/]+/item\\.json", "fx/[^/]+/[^/]+\\.(gfx\\.json|wgsl)",
-                "missions/fighters\\.txt", "missions/[^/]+/(level|mission)\\.lua"]
+      "allow": [
+        "mod\\.json",
+        "README\\.md",
+        "scripts/[^/]+\\.lua",
+        "shaders/[^/]+\\.wgsl",
+        "items/[^/]+/item\\.json",
+        "fx/[^/]+/[^/]+\\.(gfx\\.json|wgsl)",
+        "missions/fighters\\.txt",
+        "missions/[^/]+/(level|mission)\\.lua"
+      ],
+      "required": [
+        "shaders/crit.wgsl",
+        "shaders/drive-pulse.wgsl",
+        "shaders/gene-sheen.wgsl",
+        "shaders/modifiers_chain.wgsl",
+        "shaders/modifiers_surface.wgsl"
+      ]
     },
     "envoy_drives": {
       "source": "pc/scripts/examples/envoy_drives",
       "default_on": true,
       "why": "Envoy's original drive models: meshes and textures (.gxmesh, .gxtex) and their material and collision JSON. tools/make_drives.py (the generator) stays out.",
-      "allow": ["mod\\.json", "README\\.md", "models/[^/]+\\.(gxmesh|gxtex)", "models/[^/]+\\.json"]
+      "allow": [
+        "mod\\.json",
+        "README\\.md",
+        "models/[^/]+\\.(gxmesh|gxtex)",
+        "models/[^/]+\\.json"
+      ],
+      "required": [
+        "models/drive_blue.gxmesh",
+        "models/drive_blue.material.json",
+        "models/drive_blue.coll.json",
+        "models/drive_glass.gxmesh",
+        "models/drive_glass.material.json",
+        "models/drive_glass.coll.json",
+        "models/drive_green.gxmesh",
+        "models/drive_green.material.json",
+        "models/drive_green.coll.json",
+        "models/drive_purple.gxmesh",
+        "models/drive_purple.material.json",
+        "models/drive_purple.coll.json",
+        "models/drive_red.gxmesh",
+        "models/drive_red.material.json",
+        "models/drive_red.coll.json",
+        "models/drive_ring_magic.gxmesh",
+        "models/drive_ring_magic.material.json",
+        "models/drive_ring_magic.coll.json",
+        "models/drive_ring_rare.gxmesh",
+        "models/drive_ring_rare.material.json",
+        "models/drive_ring_rare.coll.json",
+        "models/drive_ring_unique.gxmesh",
+        "models/drive_ring_unique.material.json",
+        "models/drive_ring_unique.coll.json",
+        "models/drive_white.gxmesh",
+        "models/drive_white.material.json",
+        "models/drive_white.coll.json",
+        "models/drive_yellow.gxmesh",
+        "models/drive_yellow.material.json",
+        "models/drive_yellow.coll.json",
+        "models/drive_atlas.gxtex",
+        "models/drive_atlas.glow.gxtex"
+      ]
     },
     "vanilla-hero": {
       "source": "pc/geno/mods/vanilla-hero",
       "default_on": false,
       "why": "Geno sample fighter on the retail Mario files from the player's own disc. Text only: define (.json), move scripts (.genoasm, .words). Off: it adds a roster slot and its looks and feel are unreviewed.",
-      "allow": ["mod\\.json", "geno\\.json", "README\\.md", "moves/[^/]+\\.(genoasm|words)", "fx/.+\\.json"]
+      "allow": [
+        "mod\\.json",
+        "geno\\.json",
+        "README\\.md",
+        "moves/[^/]+\\.(genoasm|words)",
+        "fx/.+\\.json"
+      ]
     },
     "vanilla-striker": {
       "source": "pc/geno/mods/vanilla-striker",
       "default_on": false,
       "why": "Geno sample fighter with its own move set. Text only (.json, .genoasm, .words, effect package .json). Off: unreviewed looks and feel.",
-      "allow": ["mod\\.json", "geno\\.json", "README\\.md", "moves/[^/]+\\.(genoasm|words)", "fx/.+\\.json"]
+      "allow": [
+        "mod\\.json",
+        "geno\\.json",
+        "README\\.md",
+        "moves/[^/]+\\.(genoasm|words)",
+        "fx/.+\\.json"
+      ]
     },
     "vanilla-caster": {
       "source": "pc/geno/mods/vanilla-caster",
       "default_on": false,
       "why": "Geno sample fighter with its own article and effect. Text only. Off: a fixture that proves the machinery, not a move set.",
-      "allow": ["mod\\.json", "geno\\.json", "README\\.md", "moves/[^/]+\\.(genoasm|words)", "fx/.+\\.json"]
+      "allow": [
+        "mod\\.json",
+        "geno\\.json",
+        "README\\.md",
+        "moves/[^/]+\\.(genoasm|words)",
+        "fx/.+\\.json"
+      ]
     },
     "vanilla-courier": {
       "source": "pc/geno/mods/vanilla-courier",
@@ -45,13 +121,27 @@
       "optional": true,
       "experimental": true,
       "why": "The Courier: an original fighter on its own model and animation bank. Built files (.dat) are original art made by tools/geno/build_courier.sh and are NOT in git; only packaged with -IncludeCourier, only when every .dat matches the build record, and listed in mods/original-assets.json. Never on by default.",
-      "allow": ["mod\\.json", "geno\\.json", "README\\.md", "retarget\\.json", "moves/[^/]+\\.(genoasm|words)",
-                "files/plan\\.json", "files/Gn[A-Za-z]+(_[a-z0-9]+|AJ)\\.dat"],
+      "allow": [
+        "mod\\.json",
+        "geno\\.json",
+        "README\\.md",
+        "retarget\\.json",
+        "moves/[^/]+\\.(genoasm|words)",
+        "files/plan\\.json",
+        "files/Gn[A-Za-z]+(_[a-z0-9]+|AJ)\\.dat"
+      ],
       "original_dat": "files/Gn[A-Za-z]+(_[a-z0-9]+|AJ)\\.dat",
       "original_dat_symbol_prefix": "Courier"
     }
   },
   "deny_mod_ids": "^(envoy_drives_sa2|local-assets|metaknight.*|halberd.*|.*kirby.*|sora.*|trail|.*ultimate.*|ssbm-geno.*|ace-.*|akaneia-.*|pal-.*|ported.*|ir)$",
-  "deny_dirs_anywhere": ["local-assets", "_local", "envoy_drives_sa2"],
-  "examples_skip": ["envoy", "envoy_drives"]
+  "deny_dirs_anywhere": [
+    "local-assets",
+    "_local",
+    "envoy_drives_sa2"
+  ],
+  "examples_skip": [
+    "envoy",
+    "envoy_drives"
+  ]
 }
