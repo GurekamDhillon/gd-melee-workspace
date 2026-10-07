@@ -507,7 +507,7 @@ a model cell is at most 512 triangles. If fewer than 4,096 quads are left in the
 Offline, `pc/tests/atlas_ui_stub.lua` (load it with `dofile`; `Stub.new{ caller=, owner_mod=, available= }`) is a stand-in. It checks a description by the same rules as the engine (limits read from `gw_ui_screen.h`
 and `gw_ui_val.h`: id lengths, chapter, port, explainer width, entries that are not tables, the size ceiling) and mirrors ownership, held buttons, value rows and `on.page`, `on.start`, `on.change`.
 It is NOT the engine: `feed` only records the intent (it does not run handlers; call `engine_press(id, kind)`, `engine_row` and `engine_focus` to play the engine's part); `dialog` accepts a call without actions and ignores
-button letters; `state()` has only `depth`, `top` and `roles_ok`; `open` of a deeper screen differs; and it has no layout, drawing, quad budget, mouse or keyboard, 8-slot table, or `on.open` / `on.close`.
+button letters; `state()` has only `depth`, `top` and `roles_ok`; its stack has no depth limit of 8 and its `close` removes every entry of the id (the engine removes the first); and it has no layout, drawing, quad budget, mouse or keyboard, 8-slot table, or `on.open` / `on.close`.
 Stub-only helpers: `hold(button)`, `release(button)` and `tick()` model the pad's held buttons.
 Demo: `demos/atlas-screen`. A real use: the Envoy bag (`envoy/scripts/atlas_bag.lua`, console `uxatlas on`).
 
