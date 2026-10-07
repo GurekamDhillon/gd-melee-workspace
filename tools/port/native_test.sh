@@ -23,6 +23,8 @@ slippi-mode)
     sources=(pc/tests/slippi_mode_test.c) ;;
 script-policy)
     sources=(pc/tests/script_policy_test.c) ;;
+script-budget)
+    sources=(pc/tests/script_budget_test.c) ;;
 arena-spawn)
     sources=(pc/tests/arena_spawn_test.c) ;;
 view-canvas)
@@ -72,7 +74,7 @@ atlas-binding)
         sources+=("pc/third_party/lua-5.4.7/src/$lua_file.c")
     done
     flags=(-std=gnu11 -w -ffunction-sections -I "$GW_MELEE/pc/platform" -I "$GW_MELEE/pc/third_party/lua-5.4.7/src") ;;
-*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-binding)" ;;
+*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-binding)" ;;
 esac
 
 if [ "$uses_enet" = 1 ]; then
