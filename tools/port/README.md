@@ -268,6 +268,20 @@ bash tools/port/check_atlas_online.sh                    # the online room's net
 python tools/port/check_atlas_online_text.py             # the ONLINE PLAY rows' strings against the explainer and the row (label 18, help 3 lines)
 ```
 
+```bash
+python tools/port/atlas_gate.py --step 8                 # step 8 (the retail data screens): what steps 2 to 5 must have built
+python tools/port/retail_screens.py                      # which retail screens are still retail (the Language-row question); --json is retail_screens_expected.json
+python tools/port/check_no_disc_text.py                  # decoded retail text never reaches a log (counts only)
+python -m unittest tools/port/test_fe_atlas_data.py tools/port/test_fe_atlas_results.py tools/port/test_sis_probe.py tools/port/test_check_no_disc_text.py
+set -a; . ./.env; set +a; python tools/port/sis_probe.py --melee <game checkout>     # the text gate: counts and a verdict per source, from a disc in memory
+bash tools/port/build.sh --native-test atlas-retailtext   # also atlas-data, atlas-models, atlas-results, atlas-data-host
+```
+
+`sis_probe.py` reads one SIS archive out of the disc named by an environment variable (`GW_ISO_VANILLA` by default, never printed), decodes every string with the
+same rules as `gw_ui_retailtext.c` and prints strings, characters, unknown glyphs and a GO, PARTIAL or NO-GO verdict per source. Nothing decoded is printed or
+kept. The two Atlas data guards (`test_fe_atlas_data.py`, `test_fe_atlas_results.py`) read the adapter's source: the adapter owns the cursor, B returns to the
+item that opened the screen, the allow-list of save writes (the event start's selection, nothing else), the results side-effect table.
+
 `check_atlas_online.sh` is textual on purpose and pins that the online room is DRAWING ONLY: no pure Atlas unit (`pc/platform/gw_ui_*`) includes a
 netplay header or names a netplay function; the game-side adapter (`gmfrontend_atlas_online.inc`) calls only an allow-list of reads, nothing the legacy
 lobby did not already call, and turns each mouse or keyboard intent into the one `MenuInput_` bit the equivalent pad press has (one line per intent);
