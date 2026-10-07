@@ -21,6 +21,18 @@ def read_glob(path):
         out[name] = data[i:i+ln]; i += ln
     return out
 
+def read_regs(path):
+    out = {}
+    if not os.path.exists(path):
+        return out
+    data = open(path, 'rb').read()
+    i = 0
+    while i + 12 <= len(data):
+        tag, ln, va = struct.unpack_from('<III', data, i); i += 12
+        out[tag] = (va, data[i:i+ln]); i += ln
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('a'); ap.add_argument('b'); ap.add_argument('frame', type=int)
@@ -45,6 +57,18 @@ def main():
     for s, e in runs[:a.max]:
         print(f'  0x{0x80000000+s:08X}..0x{0x80000000+e:08X}  A={ma[s:e].hex()}  B={mb[s:e].hex()}' if e - s <= 32 else
               f'  0x{0x80000000+s:08X}..0x{0x80000000+e:08X}  ({e-s} bytes)')
+    ra, rb = read_regs(os.path.join(a.a, f'xh_{a.frame}.regs')), read_regs(os.path.join(a.b, f'xh_{a.frame}.regs'))
+    names = {1: 'fighter', 2: 'fighter gobj', 3: 'fighter joint', 4: 'item', 5: 'item gobj', 6: 'item joint'}
+    nd = 0
+    for tag in sorted(ra.keys() | rb.keys()):
+        x, y = ra.get(tag), rb.get(tag)
+        if x is None or y is None:
+            print(f'  region {tag:06X} only in {"A" if y is None else "B"}'); nd += 1; continue
+        if x[1] != y[1]:
+            nd += 1
+            offs = [j for j in range(0, min(len(x[1]), len(y[1])) - 3, 4) if x[1][j:j+4] != y[1][j:j+4]]
+            print(f'  region {tag:06X} ({names.get(tag >> 16, "?")} #{(tag >> 8) & 0xFF if tag >> 16 in (1, 2, 4, 5) else (tag & 0xFFF)}): {len(offs)} word(s) differ, first at +0x{offs[0]:X}: {x[1][offs[0]:offs[0]+4].hex()} vs {y[1][offs[0]:offs[0]+4].hex()}')
+    print(f'regions: {len(ra)} vs {len(rb)}; {nd} differ')
     ga = read_glob(os.path.join(a.a, f'xh_{a.frame}.glob'))
     gb = read_glob(os.path.join(a.b, f'xh_{a.frame}.glob'))
     print(f'globals: {len(ga)} vs {len(gb)} symbols; only in A: {len(ga.keys()-gb.keys())}, only in B: {len(gb.keys()-ga.keys())}')

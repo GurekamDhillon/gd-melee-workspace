@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Compare two MELEE_XHASH_LOG csvs (frame,rb,mem,glob): the first divergent frame per column.
+"""Compare two MELEE_XHASH_LOG csvs (frame,rb,wide,mem,glob): the first divergent frame per column.
 
-    cmp_xhash.py win.csv linux.csv [--cols rb,mem,glob]
+    cmp_xhash.py win.csv linux.csv [--cols rb,wide,mem,glob]
 
 Exit 0 if every shared frame agrees on the selected columns (default: all) and at least
 --min-frames frames are shared, else 1.
@@ -18,7 +18,7 @@ def load(path):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('a'); ap.add_argument('b')
-    ap.add_argument('--cols', default='rb,mem,glob')
+    ap.add_argument('--cols', default='rb,wide,mem,glob')
     ap.add_argument('--min-frames', type=int, default=1)
     a = ap.parse_args()
     A, B = load(a.a), load(a.b)

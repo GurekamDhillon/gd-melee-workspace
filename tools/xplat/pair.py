@@ -44,7 +44,7 @@ def main():
         env = dict(os.environ)
         env.setdefault('GW_ROOT_ENV', ROOT)
         script = os.path.join(HERE, 'run_win.sh').replace(os.sep, '/')
-        cmd = ['bash', script, 'x_' + a.name, a.frames, a.seed, a.scene] + extra
+        cmd = [os.environ.get('GIT_BASH', 'C:/Program Files/Git/bin/bash.exe'), script, 'x_' + a.name, a.frames, a.seed, a.scene] + extra
         with open(os.path.join(out, 'win.out'), 'w') as fo:
             procs['win'] = subprocess.run(cmd, env=env, stdout=fo, stderr=subprocess.STDOUT, cwd=env['GW_MELEE'])
 
