@@ -14,7 +14,10 @@
 #include <QImage>
 #include <QSignalSpy>
 #include <QFontDatabase>
+#include <QFile>
 #include <QFontMetricsF>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QtTest>
 using namespace launcher;
 
@@ -35,6 +38,20 @@ private slots:
         QCOMPARE(atlas::px("no-such-token"), 0);
     }
 
+    void tokens_match_the_file() {                                      // the loaded values are the repo's tokens.json, every one
+        QFile f(ATLAS_TOKENS_JSON); QVERIFY2(f.open(QIODevice::ReadOnly), ATLAS_TOKENS_JSON);
+        const auto doc = QJsonDocument::fromJson(f.readAll()).object();
+        const auto colours = doc["colours"].toObject();
+        QVERIFY(colours.size() >= 30);
+        for (auto it = colours.begin(); it != colours.end(); ++it) {
+            const quint32 c = quint32(it.value().toDouble());
+            QCOMPARE(atlas::colour(it.key()), QColor(int(c >> 24 & 0xff), int(c >> 16 & 0xff), int(c >> 8 & 0xff), int(c & 0xff)));
+        }
+        for (const char *group : {"px", "ms"}) {
+            const auto o = doc[group].toObject(); QVERIFY(!o.isEmpty());
+            for (auto it = o.begin(); it != o.end(); ++it) QCOMPARE(group[0] == 'p' ? atlas::px(it.key()) : atlas::ms(it.key()), it.value().toInt());
+        }
+    }
     void fonts_loaded() {
         const auto families = QFontDatabase::families();
         QVERIFY2(families.contains("Barlow Condensed"), "Barlow Condensed is not registered: the qrc entry is missing or the file is damaged");
