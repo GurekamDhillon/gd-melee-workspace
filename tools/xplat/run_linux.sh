@@ -20,6 +20,7 @@ export MELEE_PAD_IGNORE_ADAPTER=1 MELEE_SKIP_INTRO=1 MELEE_MODS_DIR="${MELEE_MOD
 # the same presentation settings run.sh gives the Windows build (the camera depends on the aspect)
 export MELEE_WINDOW_W="${MELEE_WINDOW_W:-1920}" MELEE_WINDOW_H="${MELEE_WINDOW_H:-1080}" MELEE_RENDER_SCALE="${MELEE_RENDER_SCALE:-3}" MELEE_WIDESCREEN="${MELEE_WIDESCREEN:-1}"
 export SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-dummy}" SDL_AUDIODRIVER=dummy LD_LIBRARY_PATH="${GW_LIBDIR:-}"
+[ -n "${XP_NOXHASH:-}" ] && unset MELEE_XHASH_LOG
 cd "$run"
 timeout --kill-after=5 "${XP_TIMEOUT:-1500}" ./melee --iso "$disc" > run.log 2>&1
 rc=$?
