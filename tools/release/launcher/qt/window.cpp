@@ -13,7 +13,10 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QFile>
+#include <QAbstractButton>
+#include <QFileInfo>
 #include <QFormLayout>
+#include <QGridLayout>
 #include <QGroupBox>
 #include <QHeaderView>
 #include <QInputDialog>
@@ -21,6 +24,7 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QMenu>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QPalette>
 #include <QPushButton>
@@ -45,7 +49,7 @@ bool spanish = false;
 QString t(const char *en, const char *es) { return QString::fromUtf8(spanish ? es : en); }
 static QLabel *label(const QString &text) { auto *w = new QLabel(text); w->setWordWrap(true); w->setTextFormat(Qt::PlainText); return w; }
 static QPushButton *button(QBoxLayout *layout, const QString &text, const std::function<void()> &action) {
-    auto *w = new legacy::Button(text); layout->addWidget(w); QObject::connect(w, &QPushButton::clicked, w, action); return w;
+    auto *w = new kit::Button(text); layout->addWidget(w); QObject::connect(w, &QPushButton::clicked, w, action); return w;
 }
 static QTableWidget *table(const QStringList &headers) {
     auto *w = new QTableWidget(0, headers.size()); w->setHorizontalHeaderLabels(headers);
@@ -83,6 +87,106 @@ static QString versionText(const QString &appDir) {
     try { return readText(appDir + "/version.txt", 16384).section(QChar('\n'), 0, 0).trimmed(); } catch (...) {}
     return QString("dev");
 }
+// A one-line label that elides with an ellipsis instead of growing the window (a 40-character disc name, a long path).
+class ElidedLabel : public QLabel {
+public:
+    ElidedLabel(const QString &text, atlas::Role role, const char *colourToken = "ivory") : QLabel(text) {
+        setTextFormat(Qt::PlainText); setFont(atlas::font(role));
+        QPalette pal = palette(); pal.setColor(QPalette::WindowText, atlas::colour(colourToken)); setPalette(pal);
+        setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
+    }
+    QSize sizeHint() const override { return {int(fontMetrics().horizontalAdvance(text())), fontMetrics().height()}; }
+    QSize minimumSizeHint() const override { return {8, fontMetrics().height()}; }
+protected:
+    void paintEvent(QPaintEvent *) override {
+        QPainter p(this); p.setFont(font()); p.setPen(palette().color(QPalette::WindowText));
+        p.drawText(rect(), Qt::AlignLeft | Qt::AlignVCenter, atlas::fit(QFontMetricsF(font()), text(), width()));
+    }
+};
+// A wrapped paragraph in a body role.
+static QLabel *paragraph(const QString &text, atlas::Role role = atlas::Role::Body14, const char *colourToken = "ivory") {
+    auto *w = capLabel(text, role, colourToken); w->setWordWrap(true); w->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    w->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Minimum);
+    return w;
+}
+// The explainer (place 3): WHAT, WITH, FROM in this order: a kicker, a title, a sentence, a short facts list, and a bottom line.
+class ExplainerPane : public kit::Pane {
+public:
+    explicit ExplainerPane(const QString &kicker) : kit::Pane() {
+        setObjectName("atlasExplainer");
+        auto *l = new QVBoxLayout(body()); l->setContentsMargins(0, 0, 0, 0); l->setSpacing(9);
+        kicker_ = new ElidedLabel(kicker.toUpper(), atlas::Role::Cap12, "jade"); l->addWidget(kicker_);
+        title_ = new ElidedLabel(QString(), atlas::Role::Title); l->addWidget(title_);
+        what_ = paragraph(QString()); l->addWidget(what_);
+        facts_ = new QGridLayout; facts_->setHorizontalSpacing(atlas::px("s2")); facts_->setVerticalSpacing(3); facts_->setColumnMinimumWidth(0, 64); facts_->setColumnStretch(1, 1); l->addLayout(facts_);
+        l->addStretch(1);
+        more_ = new QVBoxLayout; more_->setSpacing(atlas::px("s2")); l->addLayout(more_);
+    }
+    QLabel *title() const { return title_; }
+    QLabel *what() const { return what_; }
+    QVBoxLayout *more() const { return more_; }
+    QLabel *addFact(const QString &name, const QString &value = {}) {
+        const int row = facts_->rowCount();
+        facts_->addWidget(new ElidedLabel(name.toUpper(), atlas::Role::Cap12, "muted"), row, 0);
+        auto *v = new ElidedLabel(value, atlas::Role::Body14, "text2"); facts_->addWidget(v, row, 1); return v;
+    }
+private:
+    ElidedLabel *kicker_, *title_; QLabel *what_; QGridLayout *facts_; QVBoxLayout *more_;
+};
+// A settings row: a label on the left, a control on the right; focus (the toggle's or the slider's) lifts the whole row.
+class OptionRow : public QWidget {
+public:
+    OptionRow(const QString &label, QWidget *control, QWidget *focusWidget, bool clickToggles) : QWidget(nullptr), focus_(focusWidget), click_(clickToggles ? qobject_cast<QAbstractButton *>(control) : nullptr) {
+        setFixedHeight(kRowHeight + 2); setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        auto *l = new QHBoxLayout(this); l->setContentsMargins(atlas::px("s3"), 2, atlas::px("s3"), atlas::px("ch-xs")); l->setSpacing(atlas::px("s3"));
+        l->addWidget(new ElidedLabel(label, atlas::Role::Row16, "text2"), 1); l->addWidget(control, 0, Qt::AlignVCenter);
+        focus_->installEventFilter(this);
+    }
+protected:
+    bool eventFilter(QObject *o, QEvent *e) override { if (o == focus_ && (e->type() == QEvent::FocusIn || e->type() == QEvent::FocusOut)) update(); return QWidget::eventFilter(o, e); }
+    void mousePressEvent(QMouseEvent *e) override { if (click_ && e->button() == Qt::LeftButton) { click_->setFocus(Qt::MouseFocusReason); click_->click(); } else QWidget::mousePressEvent(e); }
+    void paintEvent(QPaintEvent *) override {
+        QPainter p(this); p.setRenderHint(QPainter::Antialiasing, false);
+        const bool focus = focus_->hasFocus();
+        const QRectF base(0, 2, width(), kRowHeight), r = atlas::lifted(base, focus);
+        kit::paintPlate(p, r, focus ? atlas::colour("lift") : atlas::colour("plate2"), focus ? atlas::colour("ember") : atlas::colour("edge2"), atlas::px("ch-xs"), atlas::px("ch-s"));
+        if (focus) p.fillRect(atlas::tick(r.adjusted(0, 0, 0, -atlas::px("ch-xs"))), atlas::colour("ember"));
+    }
+private:
+    static constexpr int kRowHeight = 34;                                  // the mockup's option row; disc rows are the 46 tall one
+    QWidget *focus_; QAbstractButton *click_;
+};
+// An icon and a line of text: the "ready" line above the Play button.
+class NoteLine : public QWidget {
+public:
+    NoteLine() : QWidget(nullptr) { setFixedHeight(24); setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed); }
+    void set(const QString &icon, const QString &text) { icon_ = icon; text_ = text; setToolTip(text); update(); }
+protected:
+    void paintEvent(QPaintEvent *) override {
+        QPainter p(this); kit::paintIcon(p, icon_, QRectF(0, 3, 18, 18), atlas::colour("jade"));
+        const QFont f = atlas::font(atlas::Role::Body14); p.setFont(f); p.setPen(atlas::colour("text2"));
+        p.drawText(QRectF(26, 0, width() - 26, height()), Qt::AlignLeft | Qt::AlignVCenter, atlas::fit(QFontMetricsF(f), text_, width() - 26));
+    }
+private:
+    QString icon_, text_;
+};
+// The disc list: the rows are painted by the delegate; with no disc yet the list says so in a hatched frame.
+class DiscTable : public QTableWidget {
+public:
+    using QTableWidget::QTableWidget;
+    QString placeholder;
+protected:
+    void paintEvent(QPaintEvent *e) override {
+        QTableWidget::paintEvent(e);
+        if (rowCount() > 0) return;
+        QPainter p(viewport()); p.setRenderHint(QPainter::Antialiasing, false);
+        const QRectF r = QRectF(viewport()->rect()).adjusted(0, 2, 0, -3);
+        kit::paintPlate(p, r, atlas::colour("ground2"), atlas::colour("edge2"), atlas::px("ch-xs"), atlas::px("ch-s"));
+        kit::paintHatch(p, atlas::plate(r.adjusted(0, 0, 0, -atlas::px("ch-xs")), atlas::px("ch-s")), atlas::colour("line"));
+        const QFont f = atlas::font(atlas::Role::Body14); p.setFont(f); p.setPen(atlas::colour("muted"));
+        p.drawText(r.adjusted(atlas::px("s3"), 0, -atlas::px("s3"), -atlas::px("ch-xs")), Qt::AlignCenter | Qt::TextWordWrap, placeholder);
+    }
+};
 Window::Window(QString app, QString user, Settings settings)
     : appDir_(std::move(app)), userDir_(std::move(user)), settings_(std::move(settings)) {
     setObjectName("atlasWindow"); setWindowTitle("GD's Melee"); resize(960, 640); setMinimumSize(900, 600);
@@ -137,10 +241,10 @@ Window::Window(QString app, QString user, Settings settings)
         auto &sp = diag_.spawn; sp.started = false; sp.processError = int(error); sp.errorString = process_.errorString(); sp.finished = false;
         QStringList env; for (const auto &k : diag_.spec.environment.keys()) env << k + "=" + diag_.spec.environment.value(k);
         sp.execProbe = execProbe(sp.program, env);
-        play_->setEnabled(true); finishLaunchReport(true);
+        play_->setEnabled(true); updatePlayState(); finishLaunchReport(true);
     });
     connect(&process_, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), this, [this](int code, QProcess::ExitStatus status) {
-        play_->setEnabled(true);
+        play_->setEnabled(true); updatePlayState();
         auto &sp = diag_.spawn; sp.finished = true; sp.exitCode = code; sp.crashed = status == QProcess::CrashExit; sp.elapsedMs = launchClock_.elapsed();
         // Qt 6 reports the terminating signal number as exitCode() for a CrashExit on Unix (checked on 6.8).
         sp.signal = sp.crashed && code >= 1 && code <= 64 ? signalName(code) : QString();
@@ -227,27 +331,59 @@ void Window::refreshDiscs(const QString &id) {
     int selected = settings_.defaultIndex();
     for (int row = 0; row < settings_.discs.size(); ++row) {
         const auto &d = settings_.discs[row];
-        QStringList values{(d.id == settings_.defaultId ? "★ " : "") + d.name, d.kind, d.path};
+        QStringList values{d.name, d.kind, d.path};
         for (int col = 0; col < values.size(); ++col) { auto *item = new QTableWidgetItem(values[col]); item->setToolTip(values[col]); discs_->setItem(row, col, item); }
-        discs_->item(row, 0)->setData(Qt::UserRole, QFileInfo(d.path).fileName());
-        discs_->setRowHeight(row, 96);
+        auto *item = discs_->item(row, 0); const bool present = QFileInfo::exists(d.path);
+        item->setData(kit::SubRole, (d.id == settings_.defaultId ? t("Default", "Default") + " - " : QString()) + QFileInfo(d.path).fileName());
+        item->setData(kit::TagTextRole, present ? t("Ready", "Ready") : t("Missing", "Missing"));
+        item->setData(kit::TagToneRole, present ? int(kit::Tag::Jade) : int(kit::Tag::Rose));
+        item->setData(kit::BadgeRole, d.kind.left(2).toUpper());
+        discs_->setRowHeight(row, kit::RowDelegate::rowHeight());
         if (d.id == id) selected = row;
     }
     if (selected >= 0) discs_->selectRow(selected);
-    if (settings_.discs.isEmpty()) discDetails_->setText(t("Add your own Melee NTSC-U 1.02 ISO, Akaneia, or ACE disc image. No game data is included.", "Añade tu propia ISO de Melee NTSC-U 1.02, Akaneia o ACE. No se incluyen datos del juego."));
+    if (auto *library = findChild<kit::Pane *>("atlasLibrary")) library->setCount(QString::number(settings_.discs.size()) + " " + (settings_.discs.size() == 1 ? t("disc", "disc") : t("discs", "discs")));
+    showSelectedDisc();
+}
+// The explainer and the Play block follow the selection; the Play button says why it can or cannot act.
+void Window::showSelectedDisc() {
+    const int i = selectedDisc();
+    auto *note = static_cast<NoteLine *>(playNote_);
+    if (i < 0) {
+        discTitle_->setText(t("Choose your disc", "Elige tu disco"));
+        discDetails_->setText(t("Add your own Melee NTSC-U 1.02 ISO, Akaneia, or ACE disc image. No game data is included.", "Añade tu propia ISO de Melee NTSC-U 1.02, Akaneia o ACE. No se incluyen datos del juego."));
+        if (note) note->set("plus", t("Add a disc to begin.", "Add a disc to begin."));
+    } else {
+        const auto &d = settings_.discs[i];
+        discTitle_->setText(d.name.toUpper());
+        discDetails_->setText(t("The game starts from the selected disc.", "The game starts from the selected disc.") + " " + t("Saves stay with this disc, even when you rename it or change its ISO.", "Las partidas guardadas siguen con este disco aunque lo renombres o cambies su ISO."));
+        if (note) note->set("check", t("Ready to play.", "Ready to play."));
+    }
+    updatePlayState();
+}
+void Window::updatePlayState() {
+    if (!play_) return;
+    play_->setToolTip(selectedDisc() < 0 ? t("Add a disc first.", "Add a disc first.") : t("Starts the selected disc.", "Starts the selected disc."));
 }
 QWidget *Window::playTab() {
-    auto *page = new QWidget; auto *layout = new QHBoxLayout(page); layout->setContentsMargins(0, 0, 0, 0); layout->setSpacing(18);
-    auto *library = new QWidget; library->setObjectName("contentPanel"); auto *left = new QVBoxLayout(library); left->setContentsMargins(16, 18, 16, 16); left->setSpacing(10); layout->addWidget(library, 5);
-    auto *owned = label(t("AVAILABLE DISCS", "DISCOS DISPONIBLES")); owned->setProperty("role", "eyebrow"); left->addWidget(owned);
-    discs_ = table({"Disc", "Kind", "Path"}); discs_->setItemDelegate(new legacy::DiscDelegate(discs_));
-    discs_->horizontalHeader()->hide(); discs_->setColumnHidden(1, true); discs_->setColumnHidden(2, true);
+    auto *page = new QWidget; auto *layout = new QHBoxLayout(page); layout->setContentsMargins(0, 0, 0, 0); layout->setSpacing(atlas::px("s3"));
+    // primary (left, at most 420 wide): the Disc library, then the Options
+    auto *leftColumn = new QWidget; auto *left = new QVBoxLayout(leftColumn); left->setContentsMargins(0, 0, 0, 0); left->setSpacing(atlas::px("s3"));
+    leftColumn->setMaximumWidth(kPrimaryWidth); leftColumn->setMinimumWidth(300); layout->addWidget(leftColumn, 1);
+    auto *library = new kit::Pane(t("Disc library", "Biblioteca de discos")); library->setObjectName("atlasLibrary"); left->addWidget(library, 1);
+    auto *libraryBody = new QVBoxLayout(library->body()); libraryBody->setContentsMargins(0, 0, 0, 0); libraryBody->setSpacing(atlas::px("s2"));
+    auto *discTable = new DiscTable(0, 3); discTable->setHorizontalHeaderLabels({"Disc", "Kind", "Path"}); discTable->placeholder = t("No discs yet. Use Add disc to choose your Melee disc image.", "No discs yet. Use Add disc to choose your Melee disc image.");
+    discs_ = discTable; discs_->setObjectName("atlasDiscs");
+    discs_->setSelectionBehavior(QAbstractItemView::SelectRows); discs_->setSelectionMode(QAbstractItemView::SingleSelection);
+    discs_->setEditTriggers(QAbstractItemView::NoEditTriggers); discs_->verticalHeader()->hide(); discs_->horizontalHeader()->hide();
+    discs_->setItemDelegate(new kit::RowDelegate(discs_)); discs_->setColumnHidden(1, true); discs_->setColumnHidden(2, true);
     discs_->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch); discs_->setShowGrid(false); discs_->setAlternatingRowColors(false);
-    left->addWidget(discs_, 1);
-    discDetails_ = label(t("Each disc has its own saves. Add your vanilla, Akaneia or ACE ISO to get started.", "Cada disco tiene sus propias partidas guardadas. Añade tu ISO de Melee, Akaneia o ACE.")); discDetails_->setProperty("role", "muted"); left->addWidget(discDetails_);
-    auto *actions = new QHBoxLayout; left->addLayout(actions);
-    button(actions, t("+ ADD DISC", "+ AÑADIR"), [this] { addDisc(); });
-    auto *manage = new legacy::Button(t("MANAGE…", "GESTIONAR…")); actions->addWidget(manage);
+    discs_->setFrameShape(QFrame::NoFrame); discs_->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel); discs_->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    discs_->setMinimumHeight(kit::RowDelegate::rowHeight() + 4);
+    libraryBody->addWidget(discs_, 1);
+    auto *actions = new QHBoxLayout; actions->setSpacing(atlas::px("s2")); libraryBody->addLayout(actions);
+    auto *add = button(actions, t("+ ADD DISC", "+ AÑADIR"), [this] { addDisc(); }); add->setObjectName("atlasAddDisc");
+    auto *manage = new kit::Button(t("MANAGE…", "GESTIONAR…")); manage->setObjectName("atlasManage"); actions->addWidget(manage); actions->addStretch();
     auto *menu = new QMenu(manage);
     auto menuAction = [&](const QString &title, const std::function<void()> &fn) { auto *a = menu->addAction(title); connect(a, &QAction::triggered, this, [this, fn] { guarded(fn); }); };
     menuAction(t("Change ISO…", "Cambiar ISO…"), [this] {
@@ -272,30 +408,36 @@ QWidget *Window::playTab() {
         settings_.discs.removeAt(i); if (settings_.defaultIndex() >= 0) settings_.defaultId = settings_.discs[settings_.defaultIndex()].id; else settings_.defaultId.clear(); save(); refreshDiscs();
     });
     connect(manage, &QPushButton::clicked, this, [manage, menu] { menu->exec(manage->mapToGlobal(QPoint(0, manage->height()))); });
-    auto *launch = new QWidget; launch->setObjectName("contentPanel"); auto *right = new QVBoxLayout(launch); right->setContentsMargins(0, 0, 0, 14); right->setSpacing(0); layout->addWidget(launch, 4);
-    hero_ = new legacy::Hero; right->addWidget(hero_);
-    auto *details = new QVBoxLayout; details->setContentsMargins(20, 16, 20, 0); details->setSpacing(6); right->addLayout(details);
-    auto *ready = label(t("READY WHEN YOU ARE", "LISTO CUANDO QUIERAS")); ready->setProperty("role", "eyebrow"); details->addWidget(ready);
-    discTitle_ = label(t("Choose your disc", "Elige tu disco")); discTitle_->setFont(legacy::font(25, true)); details->addWidget(discTitle_);
-    auto *controller = label(t("Controller connected? Let's play.", "¿Mando conectado? A jugar.")); controller->setProperty("role", "muted"); details->addWidget(controller);
-    details->addSpacing(8);
+    // Options: the three switches and the volume, each a row
+    auto *options = new kit::Pane(t("Options", "Opciones")); left->addWidget(options);
+    auto *optionList = new QVBoxLayout(options->body()); optionList->setContentsMargins(0, 0, 0, 0); optionList->setSpacing(atlas::px("s1") - 1);
     for (const auto &item : QList<QPair<QString, QString>>{{"unlock_all", t("Unlock everything", "Desbloquear todo")}, {"skip_intro", t("Skip intro", "Saltar introducción")}, {"close_on_play", t("Close launcher on play", "Cerrar lanzador al jugar")}}) {
-        auto *check = new QCheckBox(item.second); check->setChecked(settings_.flag(item.first, item.first != "close_on_play")); details->addWidget(check);
-        connect(check, &QCheckBox::toggled, this, [this, key = item.first](bool on) { guarded([&] { settings_.options[key] = on ? "1" : "0"; save(); }); });
+        auto *check = new kit::Toggle; check->setObjectName("opt_" + item.first); check->setAccessibleName(item.second); check->setChecked(settings_.flag(item.first, item.first != "close_on_play"));
+        optionList->addWidget(new OptionRow(item.second, check, check, true));
+        connect(check, &QAbstractButton::toggled, this, [this, key = item.first](bool on) { guarded([&] { settings_.options[key] = on ? "1" : "0"; save(); }); });
     }
-    details->addStretch();
-    auto *audio = new QHBoxLayout; details->addLayout(audio); auto *volLabel = label(t("VOLUME", "VOLUMEN")); volLabel->setProperty("role", "muted"); audio->addWidget(volLabel);
-    auto *volume = new QSlider(Qt::Horizontal); volume->setRange(0, 100); volume->setValue(settings_.option("volume", "50").toInt()); audio->addWidget(volume);
-    auto *amount = label(QString::number(volume->value()) + "%"); amount->setFixedWidth(42); audio->addWidget(amount);
+    auto *volume = new QSlider(Qt::Horizontal); volume->setObjectName("atlasVolume"); volume->setAccessibleName(t("VOLUME", "VOLUMEN")); volume->setRange(0, 100); volume->setValue(settings_.option("volume", "50").toInt()); volume->setMinimumWidth(120);
+    auto *amount = capLabel(QString::number(volume->value()) + "%", atlas::Role::Body14, "text2"); amount->setFixedWidth(42); amount->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    auto *volumeControl = new QWidget; auto *volumeLayout = new QHBoxLayout(volumeControl); volumeLayout->setContentsMargins(0, 0, 0, 0); volumeLayout->setSpacing(atlas::px("s2")); volumeLayout->addWidget(volume, 1); volumeLayout->addWidget(amount);
+    optionList->addWidget(new OptionRow(t("VOLUME", "VOLUMEN"), volumeControl, volume, false));
     connect(volume, &QSlider::valueChanged, this, [this, amount](int value) { amount->setText(QString::number(value) + "%"); guarded([&] { settings_.options["volume"] = QString::number(value); save(); }); });
-    auto *play = new legacy::Button(t("PLAY  →", "JUGAR  →")); play->setPrimary(true); play->setMinimumHeight(66); play->setDefault(true); details->addWidget(play); play_ = play;
+    // explainer (right, fills, at least 240): what is selected, then the Play block
+    auto *rightColumn = new QWidget; auto *right = new QVBoxLayout(rightColumn); right->setContentsMargins(0, 0, 0, 0); right->setSpacing(atlas::px("s3"));
+    rightColumn->setMinimumWidth(kExplainerMin); layout->addWidget(rightColumn, 1);
+    auto *explainer = new ExplainerPane(t("Play with", "Play with")); right->addWidget(explainer, 1);
+    discTitle_ = explainer->title(); discDetails_ = explainer->what();
+    modsOnLabel_ = explainer->addFact(t("Mods", "Mods"), "-");
+    explainer->addFact(t("Build", "Build"), versionText(appDir_));
+    auto *more = new kit::Button(t("Mods for this disc", "Mods for this disc")); more->setObjectName("atlasMore"); more->setKitIcon("right"); explainer->more()->addWidget(more, 0, Qt::AlignLeft);
+    connect(more, &QPushButton::clicked, this, [this] { selectMods(); });
+    auto *go = new QVBoxLayout; go->setSpacing(atlas::px("s2")); right->addLayout(go);
+    auto *note = new NoteLine; playNote_ = note; go->addWidget(note);
+    auto *play = new kit::Button(t("PLAY", "JUGAR")); play->setObjectName("atlasPlay"); play->setPrimary(true); play->setKitIcon("right"); play->setMinimumHeight(54); play->setDefault(true); go->addWidget(play); play_ = play;
     connect(play_, &QPushButton::clicked, this, [this] { this->play(); });
-    connect(discs_, &QTableWidget::itemSelectionChanged, this, [this] {
-        int i = selectedDisc(); if (i < 0) return;
-        const auto &d = settings_.discs[i]; hero_->setDisc(d.kind); discTitle_->setText(d.name);
-        discDetails_->setText(t("Saves stay with this disc, even when you rename it or change its ISO.", "Las partidas guardadas siguen con este disco aunque lo renombres o cambies su ISO."));
-    });
+    connect(discs_, &QTableWidget::itemSelectionChanged, this, [this] { showSelectedDisc(); });
     connect(discs_, &QTableWidget::cellDoubleClicked, this, [this] { this->play(); });
+    connect(discs_, &QTableWidget::activated, this, [this] { this->play(); });                  // Enter on a row plays, as double-click does
+    setTabOrder(play_, discs_);
     return page;
 }
 void Window::addDisc(const QString &given) { guarded([&] {
@@ -332,7 +474,7 @@ void Window::startGame(const LaunchSpec &spec) {
     settings_.options["last_run"] = runDir_; save();
     process_.setProgram(spec.program); process_.setArguments(spec.arguments); process_.setWorkingDirectory(spec.workingDirectory); process_.setProcessEnvironment(spec.environment);
     launcher::captureRedacted(process_, spec.logFile, launcher::redactorForLaunch(spec.arguments));
-    play_->setEnabled(false); statusBar()->showMessage(t("Game running. Logs: ", "Juego en ejecución. Registros: ") + runDir_);
+    play_->setEnabled(false); play_->setToolTip(t("Game running.", "Game running.")); statusBar()->showMessage(t("Game running. Logs: ", "Juego en ejecución. Registros: ") + runDir_);
     diag_ = {}; diag_.spec = spec; diag_.haveSpec = true; diag_.stamp = QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss");
     auto &sp = diag_.spawn; sp.attempted = true; sp.program = spec.program; sp.arguments = spec.arguments; sp.workingDirectory = spec.workingDirectory; sp.stdoutFile = spec.logFile;
     launchClock_.start();
@@ -348,7 +490,7 @@ void Window::checkGraphics(bool forLaunch) { guarded([&] {
     // A launch environment is already the game's own; otherwise build it the same way prepareLaunch does.
     if (!forLaunch) applyGameLibraryEnvironment(env, appDir_);
     graphicsBusy_ = true; graphicsForLaunch_ = forLaunch; graphicsTimedOut_ = false;
-    graphicsOutput_.clear(); graphicsErrors_.clear(); play_->setEnabled(false); graphicsDevice_->setEnabled(false);
+    graphicsOutput_.clear(); graphicsErrors_.clear(); play_->setEnabled(false); play_->setToolTip(t("Checking graphics...", "Checking graphics...")); graphicsDevice_->setEnabled(false);
     graphicsDetails_->setPlainText(t("Checking 32-bit Vulkan drivers...", "Comprobando los controladores Vulkan de 32 bits..."));
     statusBar()->showMessage(t("Checking graphics...", "Comprobando gráficos..."));
     graphicsProcess_.setProgram(appDir_ + "/bin/melee-graphics-probe");
@@ -357,7 +499,7 @@ void Window::checkGraphics(bool forLaunch) { guarded([&] {
 }); }
 void Window::finishGraphics(int code) {
     if (!graphicsBusy_) return;
-    graphicsTimeout_->stop(); graphicsBusy_ = false; play_->setEnabled(true); graphicsDevice_->setEnabled(true);
+    graphicsTimeout_->stop(); graphicsBusy_ = false; play_->setEnabled(true); updatePlayState(); graphicsDevice_->setEnabled(true);
     guarded([&] {
         auto report = parseGraphicsReport(graphicsOutput_, code);
         if (graphicsTimedOut_) report.error = "The 32-bit graphics check timed out.";
@@ -398,6 +540,7 @@ void Window::refreshMods() {
         mods_->setItem(row, 0, check); mods_->setItem(row, 1, new QTableWidgetItem(m.name)); mods_->setItem(row, 2, new QTableWidgetItem(m.version));
     }
     filling_ = false;
+    if (modsOnLabel_) { int on = 0; for (const auto &m : entries) on += m.enabled; modsOnLabel_->setText(QString::number(on) + " " + t("on", "on")); }
 }
 QWidget *Window::modsTab() {
     auto *page = new QWidget; auto *layout = new QVBoxLayout(page);

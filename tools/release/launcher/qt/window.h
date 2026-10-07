@@ -16,7 +16,6 @@ class QTimer;
 
 namespace launcher {
 namespace kit { class TabRail; }
-namespace legacy { class Hero; }
 extern bool spanish;
 QString t(const char *en, const char *es);
 class Window : public QMainWindow {
@@ -36,12 +35,13 @@ private:
     kit::TabRail *rail_;
     QWidget *keys_;
     QLabel *pageSub_;
-    legacy::Hero *hero_;
     QLabel *discTitle_;
     QLabel *pageHeading_;
     QTableWidget *discs_, *mods_;
     QLabel *discDetails_, *modDetails_;
-    QPushButton *play_;
+    QPushButton *play_ = nullptr;
+    QWidget *playNote_ = nullptr;
+    QLabel *modsOnLabel_ = nullptr;
     bool filling_ = false;
     bool quitting_ = false;
 #ifdef Q_OS_LINUX
@@ -68,6 +68,8 @@ private:
     void save();
     void refreshDiscs(const QString &selectId = {});
     void refreshMods();
+    void showSelectedDisc();
+    void updatePlayState();
     int selectedDisc() const;
     QWidget *playTab();
     QWidget *modsTab();

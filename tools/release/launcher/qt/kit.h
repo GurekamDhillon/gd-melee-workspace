@@ -17,6 +17,7 @@ void paintPlate(QPainter &p, const QRectF &r, const QColor &face, const QColor &
 void paintHatch(QPainter &p, const QPolygonF &area, const QColor &line);
 
 class Pane : public QWidget {                                       // E1: plate, 3 px edge, 8 px chamfer, a heading and a count
+    Q_OBJECT
 public:
     explicit Pane(const QString &heading = {}, QWidget *parent = nullptr);
     void setHeading(const QString &text);
@@ -28,6 +29,7 @@ private:
     QString heading_, count_; QWidget *body_;
 };
 class Button : public QPushButton {                                 // primary = ember (the one action), else plate2; disabled = hatched
+    Q_OBJECT
 public:
     explicit Button(const QString &text, QWidget *parent = nullptr);
     void setPrimary(bool on) { primary_ = on; updateGeometry(); update(); }
@@ -44,6 +46,7 @@ private:
 };
 void paintToggle(QPainter &p, const QRectF &r, bool on, bool focus);
 class Toggle : public QAbstractButton {                              // the word ON or OFF, the lit half jade
+    Q_OBJECT
 public:
     explicit Toggle(QWidget *parent = nullptr);
     QString stateText() const { return isChecked() ? "ON" : "OFF"; }

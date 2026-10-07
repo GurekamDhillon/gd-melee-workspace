@@ -2,7 +2,9 @@
 #include "kit.h"
 #include "legacy_kit.h"
 #include "window.h"
+#include <QSlider>
 #include <QStackedWidget>
+#include <QTableWidget>
 #include <QTemporaryDir>
 #include <QApplication>
 #include <QImage>
@@ -183,6 +185,43 @@ private slots:
         QTemporaryDir dir; launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.show(); QApplication::processEvents();
         QVERIFY(QApplication::focusWidget() != nullptr);
         QVERIFY(qobject_cast<QPushButton *>(QApplication::focusWidget()) || qobject_cast<kit::TabRail *>(QApplication::focusWidget()));
+    }
+
+    void play_signals() {
+        QTemporaryDir dir; auto settings = launcher::Settings::load(dir.path()); launcher::Window w(dir.path(), dir.path(), settings); w.show();
+        auto *play = w.findChild<kit::Button *>("atlasPlay"); QVERIFY(play);
+        QVERIFY(play->isDefault());                                     // Enter plays
+        QCOMPARE(play->text().contains("PLAY"), true);
+        auto *discs = w.findChild<QTableWidget *>("atlasDiscs"); QVERIFY(discs);
+        QCOMPARE(discs->rowCount(), 0);                                 // first run: empty
+        QVERIFY(w.findChild<QPushButton *>("atlasAddDisc")->isEnabled());              // Add disc is always available
+        QVERIFY(w.findChild<kit::Toggle *>("opt_unlock_all") && w.findChild<kit::Toggle *>("opt_skip_intro") && w.findChild<kit::Toggle *>("opt_close_on_play"));
+        QVERIFY(w.findChild<QSlider *>("atlasVolume"));
+    }
+    void play_options_write_settings() {                                // the toggles and the slider still write what the checkboxes wrote
+        QTemporaryDir dir; launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.show();
+        auto *skip = w.findChild<kit::Toggle *>("opt_skip_intro"); const bool before = skip->isChecked();
+        QTest::keyClick(skip, Qt::Key_Space); QCOMPARE(skip->isChecked(), !before);
+        w.findChild<QSlider *>("atlasVolume")->setValue(33);
+        auto saved = launcher::Settings::load(dir.path());
+        QCOMPARE(saved.option("skip_intro"), QString(before ? "0" : "1"));
+        QCOMPARE(saved.option("volume"), QString("33"));
+    }
+    void play_reasons() {                                               // a hatched button says why
+        QTemporaryDir dir; launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.show();
+        auto *play = w.findChild<kit::Button *>("atlasPlay");
+        // with no disc the button stays enabled and opens the add-disc dialog (the old behaviour: play() calls addDisc() when nothing is selected)
+        QVERIFY(play->isEnabled());
+        QVERIFY(!play->toolTip().isEmpty());                            // "Add a disc first." until a disc exists
+    }
+    void tab_focus() {
+        QTemporaryDir dir; launcher::Window w(dir.path(), dir.path(), launcher::Settings::load(dir.path())); w.show();
+        auto *rail = w.findChild<kit::TabRail *>("atlasRail");
+        rail->setCurrent(1); QApplication::processEvents();
+        QVERIFY(w.findChild<QStackedWidget *>("atlasTabs")->currentIndex() == 1);
+        QTest::keyClick(&w, Qt::Key_M, Qt::ControlModifier); QCOMPARE(rail->current(), 1);   // Ctrl+M selects Mods from anywhere
+        rail->setCurrent(3); QTest::keyClick(&w, Qt::Key_M, Qt::ControlModifier); QCOMPARE(rail->current(), 1);
+        QTest::keyClick(&w, Qt::Key_1, Qt::ControlModifier); QCOMPARE(rail->current(), 0);
     }
 };
 QTEST_MAIN(AtlasTests)

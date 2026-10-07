@@ -77,6 +77,7 @@ void Pane::paintEvent(QPaintEvent *) {
 // ---------------------------------------------------------------- Button
 Button::Button(const QString &text, QWidget *parent) : QPushButton(text, parent) {
     setCursor(Qt::PointingHandCursor); setFocusPolicy(Qt::StrongFocus); setMouseTracking(true);
+    setAutoDefault(true);                                               // Enter presses the focused button (Qt only does this in dialogs by default)
     setFont(atlas::font(atlas::Role::Cap16));
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     motion_.setEasingCurve(QEasingCurve::OutCubic);
