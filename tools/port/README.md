@@ -265,6 +265,7 @@ not establish that a copied EXE has these features.
 ```bash
 python tools/port/atlas_gate.py --step 6                 # have the earlier Atlas steps delivered what step 6 needs? (exit 1 lists what is missing and whose it is)
 bash tools/port/check_atlas_online.sh                    # the online room's netplay isolation (below)
+python tools/port/check_atlas_online_text.py             # the ONLINE PLAY rows' strings against the explainer and the row (label 18, help 3 lines)
 ```
 
 `check_atlas_online.sh` is textual on purpose and pins that the online room is DRAWING ONLY: no pure Atlas unit (`pc/platform/gw_ui_*`) includes a

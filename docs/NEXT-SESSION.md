@@ -16,6 +16,14 @@ Companions: `HANDOFF-2026-10-05.md` (Envoy, Turbo, CPU controller state and the 
   Atlas fonts (Barlow Condensed, Source Sans 3 Semibold, Hasklug Medium; 23 roles, pages tracked in `_build/ui`,
   licence and credit recorded). Reference: `docs/scripting.md` (`gd.ui`), `menu/CLAUDE.md`. Every task had review
   rounds; in-exe `script_` 78/0 and `kit_` 8/0 at the last build, no window.
+- **Atlas step 6 (the online room) is built, not yet merged** (game `agent/atlas6`, workspace `ws/atlas6`; plan
+  `docs/superpowers/plans/2026-10-06-atlas-step6-online-room.md`, whose Needs table now carries the real names from steps 2 to 5).
+  JOIN ROOM, the WAITING ROOM (host, guest, Random Opponent) and the LOBBY draw through Atlas, and ONLINE PLAY is the settings door's kind 7.
+  DRAWING ONLY: the state machines stay in `gmfrontend_online.inc`, the pad term of the lobby's input is still `mn_80229624(4)`, and
+  `tools/port/check_atlas_online.sh` pins that (no netplay in the Atlas units, reads only in the adapter, the intent-to-bit table, the blind
+  pick). Two spec corrections: Random Opponent is a working feature and is kept; step 5 is a dependency. The link meter's 50/90/140 ms
+  lines are a proposal, unmeasured. A click on a stage tile off your stage turn no longer readies you (mouse only). **For the owner to look at:**
+  the plan's Task 10 checklist (two clients; nothing of it was run). Not retired: the legacy drawing (Task 11 waits for that look). `MELEE_ATLAS=0` keeps it.
 - **The Envoy bag runs through `gd.ui` behind the `uxatlas` switch, off by default.** The legacy bag stays
   the default and the fallback. Local two-seat co-op shows only the top seat's bag under Atlas (legacy showed
   both): that is why Atlas cannot be the default yet (it needs per-port screen stacks, a spec-level change,
