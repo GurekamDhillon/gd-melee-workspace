@@ -370,3 +370,7 @@ uses earned technique-state ghosts and crit hitbox windows in earned_fx.lua;
 the original continuous Haste/Momentum uses remain superseded by that visual
 language. Current source and standalone parser/history checks do not establish
 GPU execution, costume/part/held-item pixels or the measured120fps target.
+
+FX variety (2026-10-07): per-copy afterimage colour (palette, hue shift) and tracer colour/width variety (gradient, pulse, hue drift/span, swell) are
+computed on the CPU from the logic frame (copy surface params and ribbon vertex colours/widths). No WGSL, shared struct or ABI change; the Aurora
+motion patch is unchanged. See the Fighter afterimages and point tracers section of scripting.md.

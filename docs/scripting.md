@@ -2400,6 +2400,26 @@ the actual hit element. `anchor="active_hitboxes"` is equivalent. Limit 64 handl
 the ribbon; `edge` blends across it. Catmull-Rom smoothing creates intermediate
 geometry without adding simulation samples.
 
+Colour and shape variety (presentation only, all off by default, so existing scripts look as before; any
+value out of range, non-finite, or the wrong shape raises a Lua error like the other options; `{}` clears a list):
+
+| option | for | meaning |
+|---|---|---|
+| `palette={{r,g,b,a},...}` (0..6 colours) | afterimage | copy n takes entry `(n-1) % #palette + 1` as its tint; replaces `tint` (and a bound status colour) while non-empty. Rainbow ghosts, alternating pairs |
+| `hue_shift=-360..360` | afterimage | copy n's tint and tail are hue-rotated by `(n-1) * hue_shift` degrees (copy 1 keeps its colour); applies after `palette` |
+| `scale_falloff=-1..1` | afterimage | copy n is scaled by `1 - falloff*(n-1)/copies` on top of `scale` (positive shrinks older echoes, negative grows them; clamped 0.1..3) |
+| `gradient={{r,g,b,a},...}` (0 or 2..4 colours) | tracer | stops spread evenly head to tail; replaces the `tint`/`tail` blend (and the hitbox element tint; the element still picks the shader) |
+| `pulse={hz, depth}` (0..20, 0..1) | tracer | alpha ripple that runs down the trail, `1 - depth*(0.5+0.5 sin(2 pi (hz*t - 2*age)))` |
+| `hue_drift=-720..720` | tracer | hue rotation in degrees per second (logic-frame clock) |
+| `hue_span=-720..720` | tracer | hue rotation in degrees from head to tail (360 is a full rainbow along the ribbon) |
+| `swell=-1..4` | tracer | width factor `1 + swell*sin(pi*age)` on top of `taper` (a mid-trail bulge, or a pinch when negative; ends unchanged) |
+
+All of these are computed from the logic frame and the retained history, never from wall time or the simulation, so
+they are rewind-safe. `strength`, `frequency`, `core_width` and `motion_rate` (`params`, 0..10) were already live
+through `gd.tracer_set`; the demos now expose all four. Demo keys: `demos/afterimages` P palette, H hue shift,
+E echo scale; `demos/tracers` G gradient, U pulse, H hue motion, B swell, M blend, O draw over the fighter,
+1-4 the four params, R reset.
+
 Declare emitters before `gd.warm{fighters={1,2}, tracers=true}` and poll
 `gd.warm_done`; cold/unsupported historical draws are skipped. New surface/blend,
 costume or material configurations need another warm pass. `gd.motion_intensity(0..1)`
