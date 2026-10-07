@@ -38,6 +38,14 @@ class Adapter(unittest.TestCase):
         self.assertIn("Ui_DataFirst(fad.total", sync, "the window slides over the total")
         self.assertIn("Ui_SetFocus(fad.h", sync, "the host is told the focus by id")
 
+    def test_the_event_table_is_loaded_before_the_event_rows_read_it(self):
+        # gm_801BEB8C reads gm_804D6900 (GmEvent.dat), which only the event mode's OnLoad / gm_801BA8FC load: on a fresh start the Atlas Event Match screen
+        # opened before that and read NULL (ACCESS_VIOLATION in gm_801BEB8C)
+        body = function_body(self.t, "static void fad_ev_open(")
+        self.assertIn("gm_801BA8FC();", body)
+        self.assertLess(body.index("gm_801BA8FC();"), body.index("gm_801BEBA8("))
+        self.assertIn("extern void gm_801BA8FC(void)", self.t)
+
     def test_a_hover_is_a_window_relative_slot(self):
         body = function_body(self.t, "static void fad_event(")
         self.assertRegex(body, r"fad\.first \+ slot", "a hover or a click adds the window's first row")
