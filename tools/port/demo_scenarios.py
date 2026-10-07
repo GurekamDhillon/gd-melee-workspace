@@ -198,3 +198,34 @@ SCENARIOS['demo_echoes']=[
     ('assert','gd.echoes(1)[1].match.move=="nair" and gd.echoes(1)[2].match.move=="nair"'),
     K('E',.3),('assert','#gd.echoes(1)==1'),
 ]
+
+# New catalogue entries: explicit state/readback smoke. These sequences are not
+# evidence of collision, rendering, or timing acceptance until a tour is run.
+SCENARIOS.update({
+    'demo_fighter_air_jumps': [('assert', 'gd.fighter_caps(1).air_jumps==3'), K('J',.3), ('assert', 'gd.fighter_caps(1).air_jumps==8')],
+    'demo_fighter_restrictions': [('assert', 'gd.fighter_caps(1).shield==true'), K('F',.3), ('assert', 'gd.fighter_caps(1).air_dodge==true')],
+    'demo_fighter_armour': [('assert', 'gd.fighter_armour(1).damage==12'), K('A',.3), ('assert', 'gd.fighter_armour(1).knockback==60')],
+    'demo_fighter_give_item': [('probe', r'Initial setup applied')],
+    'demo_fighter_effects': [('assert', 'gd.fighter_effect(1,"intangible").value==1')],
+    'demo_fighter_targeting': [('assert', 'gd.nearest_opponent(1)~=nil'), ('assert', 'type(gd.opponents_in_radius(1,80))=="table"')],
+    'demo_afterimages': [('w',2), ('assert', 'gd.motion_stats().poses>0')],
+    'demo_tracers': [('w',2), ('assert', 'gd.motion_stats().poses>0')],
+    'demo_armor_types': [('assert', '#gd.fighter_armor(1)>0')],
+    # These asset/configuration-dependent entries are excluded by admitted().
+    # Keep their API contracts indexed for the catalogue coverage check.
+    'demo_geno_define': [('assert', 'type(gd.savestate)=="function"')],
+    'demo_geno_define_striker': [('assert', 'type(gd.input)=="function"')],
+    'demo_geno_define_caster': [('assert', 'type(gd.input)=="function"')],
+    'demo_cpu_controller': [('assert', 'type(gd.cpu_script_status(2))=="table"')],
+    'demo_screen_models': [('assert', '#gd.model_instances()>0')],
+    'demo_skill_events': [('assert', '#gd.skill_kinds()>0 and gd.skill_thresholds().lcancel_window_frames>0')],
+    'demo_crit_events': [('assert', 'gd.crit(1)~=nil')],
+    'demo_shock_status': [('c','shock_set 120 3 1.5 0'), ('assert','gd.shock(2)~=nil'), ('c','shock_clear'), ('assert','gd.shock(2)==nil')],
+    'demo_grid_inventory': [('c','gi_layout bag4'), ('c','gi_press right A'), ('c','gi_state'), ('assert','type(gd.pad(1,true))=="table"')],
+    'demo_impact_drill': [('c','impact off'), ('assert','gd.match().active')],
+    'demo_turbo_combo': [('assert','type(gd.cpu_pad)=="function"')],
+    'demo_cpu_assist': [('c','assist 1'), ('assert','gd.cpu_assist(2)~=nil')],
+    'demo_atlas_screen': [K('F7',.3), ('assert','gd.ui.state().top=="demo_atlas_screen.list"'), K('F7',.3), ('assert','gd.ui.state().top==nil')],
+    'demo_atlas_hud': [K('F7',.3), ('assert','gd.ui.available()'), K('F7',.3)],
+    'demo_atlas_pause': [('assert','gd.ui.available()')],
+})

@@ -3,9 +3,11 @@ import importlib.util
 from pathlib import Path
 import tempfile
 import unittest
+from tools.test_support import require_game
 HERE=Path(__file__).resolve().parent
 class PrepareTests(unittest.TestCase):
     def module(self):
+        require_game('pc/scripts/examples/envoy/scripts')
         spec=importlib.util.spec_from_file_location('envoy_prepare',HERE/'envoy_prepare.py')
         m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
     def test_prepared_mod_has_existing_kit_in_all_loader_locations(self):

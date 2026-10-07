@@ -3,6 +3,7 @@ import importlib.util
 from pathlib import Path
 import struct
 import unittest
+from tools.test_support import ROOT, require_path
 
 HERE = Path(__file__).resolve().parent
 
@@ -101,6 +102,8 @@ class RosterTests(unittest.TestCase):
             with self.assertRaises(ValueError):self.m.output_folder(name)
 
     def test_texture_remap_reads_original_keys(self):
+        require_path(ROOT / 'experiment/brawl-kirby/tools/texanim_keys.py',
+                     'requires optional experiment/brawl-kirby texture animation helper')
         # Rotating [A,B,C] into [C,A,B] exposes an in-place cascading-copy bug.
         raw=fixture(self.m);w=self.m.Writer(raw)
         stream=w.append(bytes([1,10,1,1,20,1,1,30]))

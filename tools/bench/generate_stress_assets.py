@@ -1,12 +1,14 @@
 """Generate original, disc-free benchmark geometry and copy this project's sample shaders."""
 from pathlib import Path
+import os
 import json
 import struct
 
 ROOT = Path(__file__).resolve().parents[2]
+MELEE = Path(os.environ.get('GW_MELEE') or ROOT / 'melee').expanduser().resolve()
 
 def generate(destination=None):
-    dest = Path(destination or ROOT / 'melee/pc/scripts/examples/bench')
+    dest = Path(destination or MELEE / 'pc/scripts/examples/bench')
     model = dest / 'models'; model.mkdir(parents=True, exist_ok=True)
     shader = dest / 'shaders'; shader.mkdir(parents=True, exist_ok=True)
     # Six cube faces, with explicit normals, UVs and big-endian GXMS v2 fields.
@@ -31,7 +33,7 @@ def generate(destination=None):
         (model/(name+'.gxmesh')).write_bytes(mesh)
         (model/(name+'.coll.json')).write_text(json.dumps({'version':1,'atlas':'bench_white','alpha':alpha,'lines':[]}))
         (model/(name+'.material.json')).write_text(json.dumps(material))
-    sources = [ROOT/'melee/pc/geno/mods/shader-demo/shaders', ROOT/'melee/pc/scripts/examples/surface-shaders/shaders']
+    sources = [MELEE/'pc/geno/mods/shader-demo/shaders', MELEE/'pc/scripts/examples/surface-shaders/shaders']
     for source in sources:
         for path in source.glob('*.wgsl'): (shader/path.name).write_bytes(path.read_bytes())
     (shader/'clank.wgsl').write_text('return mix(previous_color(in.uv), vec4f(1.0,0.8,0.3,1.0), 0.12);\n')

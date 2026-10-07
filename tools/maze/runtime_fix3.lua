@@ -88,7 +88,7 @@ return function(test,fixture,chunks)
     local c=r.current;local a,b={id='a',rect={left=0,right=40,bottom=0,top=40}},nil
     b={id='b',rect={left=40,right=80,bottom=0,top=40}}
     c.doc.maze={cells={{id='a',enemy_budget=1,enemy_wave=1},{id='b',enemy_budget=1,enemy_wave=1}}}
-    d.maze_encounters=assert(loadfile('pc/scripts/examples/missions/scripts/maze_encounters.lua')or loadfile('melee/pc/scripts/examples/missions/scripts/maze_encounters.lua'))()(d)
+    d.maze_encounters=assert(loadfile('pc/scripts/examples/missions/scripts/maze_encounters.lua')or loadfile((os.getenv('GW_MELEE') or 'melee')..'/pc/scripts/examples/missions/scripts/maze_encounters.lua'))()(d)
     c.stream.loaded={a={},b={}};c.membership={committed=b,room=b,point={x=60,y=10},frame=10}
     c.run.spawn_queue={{type='spawn',index=2,kind='koopa',x=20,y=10,facing=1}}
     c.run.state.pending=1;local before=s.serial;d.glue.step(r.g,c,c.membership.point)

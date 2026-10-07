@@ -27,8 +27,11 @@ from pathlib import Path
 import shutil
 import subprocess
 import unittest
+from tools.test_support import require_legacy_reentry
 
-import prepare
+from tools.test_support import require_game
+require_game('pc/scripts/examples/roguelite')
+from tools.roguelite import prepare
 import test_v2_runtime as v2
 
 RT = v2.RT
@@ -376,7 +379,7 @@ class MainPresentationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls._src = v2._certified_source()
-        cls.wrapped = '(function()\n' + prepare.bundle(source=cls._src) + '\nend)()\n'
+        cls.wrapped = '(function()\n' + prepare.bundle(source=cls._src) + '\nend)()\ncommands.rogue_start()\n'
 
     @classmethod
     def tearDownClass(cls):
@@ -670,7 +673,7 @@ print('PASS reduced motion is honest and UI failures cannot corrupt run or save 
 
 class BundleTests(unittest.TestCase):
     def test_collection_draw_before_first_run_has_no_room_dependency(self):
-        script = '(function()\n' + prepare.bundle() + '\nend)()\n'
+        script = '(function()\n' + prepare.bundle() + '\nend)()\ncommands.rogue_start()\n'
         body = r"""
 files={['config.txt']='generator=legacy'};request=true;tick=0
 ready()
@@ -689,7 +692,7 @@ print('PASS fresh collection renders before any room or run exists')
         self.assertIn('PASS', result.stdout)
 
     def test_production_legacy_onboarding_observes_complete_gameplay_sequence(self):
-        script = '(function()\n' + prepare.bundle() + '\nend)()\n'
+        script = '(function()\n' + prepare.bundle() + '\nend)()\ncommands.rogue_start()\n'
         body = r'''
 files={['config.txt']='generator=legacy'};request=true;tick=0
 ready();click('start');step();step();tick=91;step()
@@ -734,7 +737,8 @@ print('PASS all eight onboarding steps follow real production legacy gameplay ho
         self.assertIn('PASS', result.stdout)
 
     def test_run_inventory_owns_consumables_and_survives_refusal(self):
-        script = '(function()\n' + prepare.bundle() + '\nend)()\n'
+        require_legacy_reentry()
+        script = '(function()\n' + prepare.bundle() + '\nend)()\ncommands.rogue_start()\n'
         body = r'''
 files={['config.txt']='generator=legacy'};request=true;tick=0
 ready();click('start');step();step();tick=91;step()
@@ -805,7 +809,7 @@ print('PASS R3a: the inventory owns the consumable, is failure-safe and durable 
         self.assertIn('R3a: the inventory owns the consumable', result.stdout)
 
     def test_equipment_applies_reverts_and_history_records(self):
-        script = '(function()\n' + prepare.bundle() + '\nend)()\n'
+        script = '(function()\n' + prepare.bundle() + '\nend)()\ncommands.rogue_start()\n'
         body = r'''
 files={['config.txt']='generator=legacy'};request=true;tick=0
 ready();click('start');step();step();tick=91;step()
@@ -870,7 +874,7 @@ print('PASS R3a: equipment applies, reverts, does not leak, and run history reco
         self.assertIn('R3a: equipment applies, reverts', result.stdout)
 
     def test_production_legacy_main_uses_real_loadout_and_preserves_up(self):
-        script = '(function()\n' + prepare.bundle() + '\nend)()\n'
+        script = '(function()\n' + prepare.bundle() + '\nend)()\ncommands.rogue_start()\n'
         body = r'''
 files={['config.txt']='generator=legacy'};request=true;tick=0
 ready();click('start');step();step();tick=91;step()
@@ -966,7 +970,7 @@ print('PASS shipped legacy main uses real placed genes, preserves held Up, refun
     def test_bundled_source_compiles(self):
         directory = v2._certified_source()
         try:
-            script = '(function()\n' + prepare.bundle(source=directory) + '\nend)()\n'
+            script = '(function()\n' + prepare.bundle(source=directory) + '\nend)()\ncommands.rogue_start()\n'
         finally:
             shutil.rmtree(directory, ignore_errors=True)
         with __import__('tempfile').TemporaryDirectory() as folder:

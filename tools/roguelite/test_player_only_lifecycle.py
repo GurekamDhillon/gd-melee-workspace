@@ -4,14 +4,19 @@ from pathlib import Path
 import shutil
 import subprocess
 import unittest
-import prepare
+from tools.test_support import require_legacy_reentry
+from tools.test_support import require_game
+require_game('pc/scripts/examples/roguelite')
+from tools.roguelite import prepare
 
 
 class PlayerOnlyLifecycleTests(unittest.TestCase):
     def test_terminal_entry_single_finish_transaction(self):
+        require_legacy_reentry()
         self.run_lifecycle(terminal=True)
 
     def test_exploration_combat_handover_preserves_run(self):
+        require_legacy_reentry()
         self.run_lifecycle()
 
     def run_lifecycle(self, terminal=False):
@@ -38,6 +43,7 @@ gd.stage_bounds=function(value) if value==false then bounds=baseline elseif valu
 '''
         test = r'''
 local function step(b)
+ if request then request=false;commands.rogue_start() end
  controls=b or 0
  if launched then
   if not ended then on_match_end();ps[2]=nil;ended=true
@@ -149,7 +155,7 @@ assert(attempts==3 and roguelite_state().run.status=='success' and roguelite_sta
 on_unload()
 """
         result = subprocess.run([shutil.which('lua') or shutil.which('lua5.4'), '-'],
-                                input=prelude + strict + '(function()\n' + prepare.bundle() + '\nend)()\n' + test,
+                                input=prelude + strict + '(function()\n' + prepare.bundle() + '\nend)()\ncommands.rogue_start()\n' + test,
                                 text=True, capture_output=True)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 

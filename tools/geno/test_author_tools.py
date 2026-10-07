@@ -7,7 +7,9 @@ import unittest
 import subprocess
 from unittest.mock import patch
 
-from tools.geno import schema, script, check, export
+from tools.test_support import require_game
+require_game('pc/geno/geno.h')
+from tools.geno import schema, script, check, export, source
 
 
 class AuthorToolsTests(unittest.TestCase):
@@ -68,12 +70,26 @@ class AuthorToolsTests(unittest.TestCase):
     def test_export_stub_and_guard(self):
         with tempfile.TemporaryDirectory() as directory:
             dest = Path(directory) / "out"
-            export.write_scripts({"row-0": [0x04000005, 0]}, dest)
+            # Synthetic output is outside the synthetic repositories even when
+            # TEMP is deliberately kept inside the real workspace.
+            with patch.object(schema, "ROOT", Path(directory) / "workspace"), \
+                    patch.object(source, "GAME", Path(directory) / "game"):
+                export.write_scripts({"row-0": [0x04000005, 0]}, dest)
             text = (dest / "row-0.genoasm").read_text()
             self.assertIn("must not be shared", text)
             self.assertEqual(script.assemble(text), [0x04000005, 0])
         with self.assertRaises(ValueError):
             export.safe_output(schema.ROOT / "_build/geno-export")
+
+    def test_export_refuses_separate_game_checkout(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            with patch.object(schema, "ROOT", base / "workspace"), \
+                    patch.object(source, "GAME", base / "game"):
+                for repo in (schema.ROOT, source.GAME):
+                    with self.subTest(repo=repo.name), self.assertRaises(ValueError):
+                        export.safe_output(repo / "_build/export")
+                self.assertEqual(export.safe_output(base / "external"), (base / "external").resolve())
 
     def test_export_reader_stub(self):
         class ArchiveStub:

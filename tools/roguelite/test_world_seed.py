@@ -7,6 +7,8 @@ the unchanged profile seed, so successive runs repeated the dungeon.
 from pathlib import Path
 import shutil
 import subprocess
+from tools.test_support import require_game
+require_game('pc/scripts/examples/roguelite')
 import game_source
 
 ROOT = Path(__file__).resolve().parents[2]

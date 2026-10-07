@@ -17,6 +17,9 @@ import sys
 import tempfile
 import time
 import unittest
+from tools.test_support import require_game
+
+require_game('pc/scripts/examples/roguelite')
 
 ROOT = Path(__file__).resolve().parents[2]
 HERE = Path(__file__).resolve().parent

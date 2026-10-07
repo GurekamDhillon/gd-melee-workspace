@@ -1,5 +1,5 @@
 -- Length-framed files on stdout, keeping Python a call-through rather than a port.
-local base='melee/pc/scripts/examples/missions/scripts/'
+local base=(os.getenv('GW_MELEE') or 'melee')..'/pc/scripts/examples/missions/scripts/'
 local D={}
 for _,name in ipairs({'maze_set','maze_clearance','maze_metrics','maze_topology','maze_check','maze_world_check','maze_route','maze_encounters','maze','maze_world'}) do
   D[name]=assert(loadfile(base..name..'.lua'))()(D)

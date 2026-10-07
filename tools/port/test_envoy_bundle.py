@@ -2,6 +2,7 @@
 import importlib.util
 from pathlib import Path
 import unittest
+from tools.test_support import require_game
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
@@ -9,6 +10,7 @@ ROOT = HERE.parents[1]
 
 class BundleTests(unittest.TestCase):
     def module(self):
+        require_game('pc/scripts/examples/envoy/scripts')
         spec = importlib.util.spec_from_file_location('envoy_bundle', HERE / 'envoy_bundle.py')
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
@@ -22,7 +24,7 @@ class BundleTests(unittest.TestCase):
         self.assertLess(len(text.splitlines()), 400)
         self.assertNotIn('require(', text)
         import json
-        self.assertIn(json.dumps((ROOT / 'melee/pc/scripts/lib/pickup_juice.lua').read_text(encoding='utf-8'), ensure_ascii=False), text)
+        self.assertIn(json.dumps(require_game('pc/scripts/lib/pickup_juice.lua').read_text(encoding='utf-8'), ensure_ascii=False), text)
         self.assertIn('app.retire = function() missions.install.retire(mission) end', text)
         self.assertNotIn('function on_frame_pre()', text)
         self.assertNotIn('mission:pre_frame()', text)
@@ -36,7 +38,11 @@ class BundleTests(unittest.TestCase):
             source = (module.MISSIONS / (name + '.lua')).read_text(encoding='utf-8')
             self.assertIn(json.dumps(source, ensure_ascii=False), text)
         for name in module.ENVOY_MODULES:
-            source = (module.SCRIPTS / (name + '.lua')).read_text(encoding='utf-8')
+            if name == 'grid':
+                source = module.GRID.read_text(encoding='utf-8')
+                source = 'return function(D)\n' + source + '\nend\n'
+            else:
+                source = (module.SCRIPTS / (name + '.lua')).read_text(encoding='utf-8')
             self.assertIn(json.dumps(source, ensure_ascii=False), text)
 
     def test_fixed_native_radius_tracks_the_single_tuning_table(self):

@@ -4,11 +4,13 @@ Run with the game stopped, naming the exact engine script-data destination.
 The Lua schema owns the format/defaults; Python only creates the file exclusively.
 """
 import argparse
+import os
 from pathlib import Path
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPTS = ROOT / 'melee/pc/scripts/examples/envoy/scripts'
+MELEE = Path(os.environ.get('GW_MELEE') or ROOT / 'melee').expanduser().resolve()
+SCRIPTS = MELEE / 'pc/scripts/examples/envoy/scripts'
 
 
 def default_bytes(lua='lua'):

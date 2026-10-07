@@ -179,6 +179,7 @@ class RealMeleeTests(unittest.TestCase):
             version = f'fixture\nmelee      {40 * "a"}  src\nnetplay_protocol {number}\n'
             for name, data in {'README.txt': 'r', 'IMPLEMENTATION_STATUS.md': 's', 'bin/melee': b'\x7fELF\x01x',
                                'bin/melee-pc.msvc.map': 'm', 'launcher/bin/gd-melee-launcher': b'\x7fELF\x02x',
+                               'launcher/licenses/BarlowCondensed-OFL-1.1.txt': 'ofl',
                                'licenses/GPL-2.0.txt': 'g', 'licenses/THIRD-PARTY-NOTICES.txt': 'n',
                                'version.txt': version, 'bin/version.txt': version}.items():
                 put(stage, name, data)

@@ -6,14 +6,14 @@ from pathlib import Path
 import re
 import struct
 import sys
-from . import script, schema
+from . import script, schema, source
 
 HEADER = "# Derived from the user's own disc image; must not be shared or committed.\n"
 
 
 def safe_output(path):
     path = Path(path).resolve()
-    if path.is_relative_to(schema.ROOT.resolve()):
+    if any(path.is_relative_to(repo.resolve()) for repo in (schema.ROOT, source.GAME)):
         raise ValueError("disc-derived output must be outside both repositories, including _build; give an external --out path")
     return path
 

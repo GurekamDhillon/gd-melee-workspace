@@ -2,6 +2,7 @@
 from pathlib import Path
 import importlib.util
 import unittest
+from tools.test_support import require_game
 
 
 class ManifestTests(unittest.TestCase):
@@ -34,7 +35,7 @@ class ManifestTests(unittest.TestCase):
 
     def test_native_catalogue_core_exists(self):
         root=Path(__file__).resolve().parents[2]
-        self.assertTrue((root/'melee/pc/platform/gw_roster_catalog.h').exists(),
+        self.assertTrue(require_game('pc/platform/gw_roster_catalog.h').exists(),
                         'dynamic catalogue core missing')
 
 

@@ -1,5 +1,5 @@
 -- Usage from workspace root: lua tools/maze/check.lua <mod folder> <mission name>
-local base='melee/pc/scripts/examples/missions/scripts/'
+local base=(os.getenv('GW_MELEE') or 'melee')..'/pc/scripts/examples/missions/scripts/'
 local D={maze_clearance=assert(loadfile(base..'maze_clearance.lua'))()()}
 local C=assert(loadfile(base..'maze_check.lua'))()(D);D.maze_check=C
 D.maze_world_check=assert(loadfile(base..'maze_world_check.lua'))()(D)

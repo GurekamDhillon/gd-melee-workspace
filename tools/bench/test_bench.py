@@ -2,6 +2,7 @@ import importlib.util
 import json
 from pathlib import Path
 import unittest
+from tools.test_support import require_game
 import tempfile
 import shutil
 from unittest import mock
@@ -18,7 +19,7 @@ class HarnessTests(unittest.TestCase):
     def test_admission_fallback_uses_fresh_sandbox_without_launch(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp)
-            shutil.copytree(run.ROOT/'melee/pc/scripts/examples/bench',root/'melee/pc/scripts/examples/bench')
+            shutil.copytree(require_game('pc/scripts/examples/bench'),root/'melee/pc/scripts/examples/bench')
             iso=root/'synthetic.iso';iso.write_bytes(b'synthetic runner fixture, not a disc')
             commands=[]
             def execute(command,env,directory,timeout):

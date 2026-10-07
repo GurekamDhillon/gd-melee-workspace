@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from expression import express, TRAITS
 from recipes import build, recipes, asset_catalog, VERSION
-from prepare import CHECKOUT
+from tools.effects_lab.prepare import CHECKOUT
 
 class EffectsLabTests(unittest.TestCase):
     def test_assets_and_supported_packages(self):

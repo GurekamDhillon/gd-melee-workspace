@@ -20,7 +20,7 @@ from pathlib import Path
 from . import check, script
 
 ROOT = Path(__file__).resolve().parents[2]
-MELEE = ROOT / "melee"
+from .source import GAME as MELEE
 # the eight special entries, the Mario motion row each one leads to when unbound (ftMr_MS_*), and the keys
 SPECIAL_ROWS = {"n": 343, "air_n": 344, "s": 345, "air_s": 346, "hi": 347, "air_hi": 348, "lw": 349, "air_lw": 350}
 # the common attack rows slice 2 asks a move-set author to own (the donor's angled-blend rows are not listed)

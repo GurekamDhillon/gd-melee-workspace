@@ -6,11 +6,14 @@
 
 mission.lua stays the source of truth: it loads on its own under plain lua for the tests.
 """
+import os
 import re
 import sys
 from pathlib import Path
 
-DIR = Path(__file__).resolve().parents[2] / 'melee/pc/scripts/examples/map_editor/scripts'
+ROOT = Path(__file__).resolve().parents[2]
+MELEE = Path(os.environ.get('GW_MELEE') or ROOT / 'melee').expanduser().resolve()
+DIR = MELEE / 'pc/scripts/examples/map_editor/scripts'
 BEGIN = '-- BEGIN GENERATED MISSION (scripts/mission.lua; regenerate with tools/port/map_mission_sync.py)\n'
 END = '-- END GENERATED MISSION\n'
 

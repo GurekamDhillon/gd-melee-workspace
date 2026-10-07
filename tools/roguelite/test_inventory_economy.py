@@ -14,6 +14,8 @@ from pathlib import Path
 import shutil
 import subprocess
 import unittest
+from tools.test_support import require_game
+require_game('pc/scripts/examples/roguelite')
 import game_source
 
 SOURCE = game_source.ROGUELITE

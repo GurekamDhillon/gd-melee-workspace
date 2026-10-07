@@ -8,6 +8,7 @@ import unittest
 
 import demo_tour
 import test_demo_mods
+from tools.test_support import require_game
 
 
 class TourTests(unittest.TestCase):
@@ -44,6 +45,7 @@ class TourTests(unittest.TestCase):
                 demo_tour.wait_file(path, timeout=0.01)
 
     def test_protocol_drains_response_and_raises_on_error(self):
+        require_game('pc/scripts/examples/demos/console-socket/client.py')
         Console=demo_tour.load_console_class()
         with socket.socket() as server:
             server.bind(('127.0.0.1',0)); server.listen(1)

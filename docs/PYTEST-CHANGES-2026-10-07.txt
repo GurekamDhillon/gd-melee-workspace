@@ -1,0 +1,594 @@
+Python suite repair inventory - 2026-10-07
+
+Command: GW_MELEE=<absolute ../../melee> python -m pytest -q tools -ra (TEMP/TMP inside worktree).
+Initial unmodified full run: 6 collection errors.
+Baseline after collection repairs: 139 failed, 655 passed, 13 skipped, 2 xfailed, 1071 passing subtests.
+After: 0 failed, 770 passed, 18 skipped, 2 xfailed, 1095 passing subtests.
+Additional verification: missing-game roguelite collection has 52 reasoned skips and no collection errors; native-room certification has 62 passing tests.
+Failing subtests contribute to pytest failure totals; counts are the verbatim pytest summaries.
+
+Inventory includes every test in a changed test module, including tests affected only through its shared import/fixture. Assertions remain intact except exact mesh/stage expectations corrected for documented changes.
+Collection: pytest.ini selects test_*.py; Blender-only blender_exits_test.py is still invoked by the Blender integration test. tools/maze/__init__.py prevents same-name test_maze collision.
+Shared prerequisites: tools/test_support.py raises unittest.SkipTest with an explicit reason. It never opens .env.
+Tool fixes: benchmark assets/runner, Geno source/check/report readers, maze Lua/Python tools, demo tour, Envoy preparation/profile, mission/pickup/map bundlers honor GW_MELEE; roster texture helper imports only when actually used; Geno export guard now rejects both workspace and separate game checkout output.
+New catalogue scenarios are source/readback smoke and have not been run in a game.
+
+Unresolved prerequisites: three legacy director re-entry checks require tbd_request polling removed in script API 2; optional texture experiment absent; standalone native-format fixture lacks cc/clang. Existing skips require Linux graphics, Blender, generated Courier art, or local measurement reports.
+Existing expected failures about repeated physical-room shapes/stair routes are unchanged. No game acceptance is claimed.
+
+TEST INVENTORY
+
+tools/bench/test_bench.py::HarnessTests::test_admission_fallback_uses_fresh_sandbox_without_launch - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::HarnessTests::test_legacy_percentiles - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::HarnessTests::test_event_trace_preservation - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::HarnessTests::test_scripted_physical_and_virtual_scene - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::HarnessTests::test_invalid_roster - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::HarnessTests::test_visible_paced_and_seeded - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::HarnessTests::test_no_env_override_of_pacing - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::HarnessTests::test_inherited_forced_rollback_removed - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::HarnessTests::test_baseline_removes_inherited_workload_and_normalizes_video - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::HarnessTests::test_workload_identity_controls_and_configuration - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::HarnessTests::test_off_profile - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::HarnessTests::test_lua_config_escaping - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::HarnessTests::test_summary_off_missing_metrics - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::HarnessTests::test_scenarios_extensible_and_requests_honest - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::CompareTests::test_identical_failed_runs_rejected - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::CompareTests::test_complete_reports_allowed - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::CompareTests::test_equal_metrics_different_effective_workloads_rejected - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::CompareTests::test_improvement - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::CompareTests::test_regression - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::CompareTests::test_budget_overrun - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::CompareTests::test_missing_budgeted_zone - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::CompareTests::test_small_noise - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::CompareTests::test_incomparable_roster_backend_features - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/bench/test_bench.py::CompareTests::test_incomparable_seed - Resolve benchmark sources through GW_MELEE; all launches remain mocked.
+tools/effects_lab/test_effects_lab.py::EffectsLabTests::test_assets_and_supported_packages - Explicit effects-lab prepare import prevents prepare-module collisions.
+tools/effects_lab/test_effects_lab.py::EffectsLabTests::test_continuous_budget_and_extreme_traits - Explicit effects-lab prepare import prevents prepare-module collisions.
+tools/effects_lab/test_effects_lab.py::EffectsLabTests::test_expression_matches_lua - Explicit effects-lab prepare import prevents prepare-module collisions.
+tools/effects_lab/test_effects_lab.py::EffectsLabTests::test_mouse_workflow - Explicit effects-lab prepare import prevents prepare-module collisions.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_generated_files_current - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_registry_coverage - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_starter - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_hitbox_reuses_encoder - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_every_vanilla_opcode_roundtrip - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_every_escape_roundtrip - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_script_errors - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_validator_bad_examples - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_export_stub_and_guard - Use synthetic repository boundaries so synthetic TEMP output can stay inside this worktree; retain actual workspace rejection assertion.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_export_reader_stub - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_every_symbolic_escape - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_every_condition_value_hook - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_named_vanilla_fields - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_all_schema_rules_have_failing_examples - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_semantic_validation_rules - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_script_validation_rules - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_json_dialect_and_diagnostics - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_dom_and_pool_limits - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_tree_script_roundtrips - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_author_tools.py::AuthorToolsTests::test_nested_typos_utf8_and_effect_bindings - Shared missing-Geno-header collection skip; source and FX contract readers honor GW_MELEE.
+tools/geno/test_define.py::DefineAuthorTests::test_new_is_definition_not_overlay_and_checks - Selected-game package paths/shared missing-source checks; Geno report reader honors GW_MELEE.
+tools/geno/test_define.py::DefineAuthorTests::test_definition_rejects_unsupported_contracts - Selected-game package paths/shared missing-source checks; Geno report reader honors GW_MELEE.
+tools/geno/test_define.py::DefineAuthorTests::test_export_refuses_unlisted_disc_payload - Selected-game package paths/shared missing-source checks; Geno report reader honors GW_MELEE.
+tools/geno/test_define.py::DefineAuthorTests::test_native_script_and_state_row_bounds - Selected-game package paths/shared missing-source checks; Geno report reader honors GW_MELEE.
+tools/geno/test_define.py::MoveSetAuthorTests::test_v6_refuses_v7_keys_and_attributes - Selected-game package paths/shared missing-source checks; Geno report reader honors GW_MELEE.
+tools/geno/test_define.py::MoveSetAuthorTests::test_unreachable_state_and_iasa_callback_and_unbound_special - Selected-game package paths/shared missing-source checks; Geno report reader honors GW_MELEE.
+tools/geno/test_define.py::MoveSetAuthorTests::test_moves_sugar_expands_to_engine_keys - Selected-game package paths/shared missing-source checks; Geno report reader honors GW_MELEE.
+tools/geno/test_define.py::MoveSetAuthorTests::test_report_golden_hero_and_striker - Selected-game package paths/shared missing-source checks; Geno report reader honors GW_MELEE.
+tools/geno/test_define.py::MoveSetAuthorTests::test_striker_package_checks_clean_and_has_text_files_only - Selected-game package paths/shared missing-source checks; Geno report reader honors GW_MELEE.
+tools/geno/test_define.py::ArticleDefineTests::test_caster_checks_clean_and_has_text_files_only - Selected-game package paths/shared missing-source checks; Geno report reader honors GW_MELEE.
+tools/geno/test_define.py::ArticleDefineTests::test_articles_and_sounds_need_geno_8_and_names_must_resolve - Selected-game package paths/shared missing-source checks; Geno report reader honors GW_MELEE.
+tools/geno/test_native_define.py::NativeDefineTests::test_synthetic_native_core - Selected-game standalone synthetic C source, with shared missing-source skip.
+tools/maze/test_maze.py::MazeTests::test_fix3_contracts - Selected-game Lua paths; generated-room-kit prerequisites use shared reasoned skips; maze package avoids pytest name collision.
+tools/maze/test_maze.py::MazeTests::test_fix2_contracts - Selected-game Lua paths; generated-room-kit prerequisites use shared reasoned skips; maze package avoids pytest name collision.
+tools/maze/test_maze.py::MazeTests::test_world_cli_and_region_override - Selected-game Lua paths; generated-room-kit prerequisites use shared reasoned skips; maze package avoids pytest name collision.
+tools/maze/test_maze.py::MazeTests::test_fix1_contracts - Selected-game Lua paths; generated-room-kit prerequisites use shared reasoned skips; maze package avoids pytest name collision.
+tools/maze/test_maze.py::MazeTests::test_custom_library_assets_and_staging_failure - Selected-game Lua paths; generated-room-kit prerequisites use shared reasoned skips; maze package avoids pytest name collision.
+tools/maze/test_maze.py::MazeTests::test_starter_files_current - Selected-game Lua paths; generated-room-kit prerequisites use shared reasoned skips; maze package avoids pytest name collision.
+tools/maze/test_maze.py::MazeTests::test_headless_blender_exit_export - Selected-game Lua paths; generated-room-kit prerequisites use shared reasoned skips; maze package avoids pytest name collision.
+tools/maze/test_maze.py::MazeTests::test_python_materialization - Selected-game Lua paths; generated-room-kit prerequisites use shared reasoned skips; maze package avoids pytest name collision.
+tools/maze/test_maze.py::MazeTests::test_blender_exit_contract - Selected-game Lua paths; generated-room-kit prerequisites use shared reasoned skips; maze package avoids pytest name collision.
+tools/maze/test_maze.py::MazeTests::test_exporter_revalidates_exit_data - Selected-game Lua paths; generated-room-kit prerequisites use shared reasoned skips; maze package avoids pytest name collision.
+tools/maze/test_maze.py::MazeTests::test_lua_contracts - Selected-game Lua paths; generated-room-kit prerequisites use shared reasoned skips; maze package avoids pytest name collision.
+tools/model_parts/test_live_panel.py::LivePanelTests::test_mouse_workflow_asset_binding_and_retired_items - Explicit model-parts prepare import prevents prepare-module collisions.
+tools/port/test_demo_mods.py::TourSafetyTests::test_boot_mount_is_one_demo_without_boot_scripts - Selected-game catalogue/API paths and shared prerequisites; add missing scenario entries while retaining every coverage/API assertion.
+tools/port/test_demo_mods.py::TourSafetyTests::test_png_must_decode_pixels_not_just_verify_chunks - Selected-game catalogue/API paths and shared prerequisites; add missing scenario entries while retaining every coverage/API assertion.
+tools/port/test_demo_mods.py::TourSafetyTests::test_tour_is_silent_and_has_behavior_scenarios_for_every_new_mod - Selected-game catalogue/API paths and shared prerequisites; add missing scenario entries while retaining every coverage/API assertion.
+tools/port/test_demo_mods.py::TourSafetyTests::test_scenario_assertions_and_owner_state_are_required - Selected-game catalogue/API paths and shared prerequisites; add missing scenario entries while retaining every coverage/API assertion.
+tools/port/test_demo_mods.py::TourSafetyTests::test_all_scenario_api_calls_are_registered - Selected-game catalogue/API paths and shared prerequisites; add missing scenario entries while retaining every coverage/API assertion.
+tools/port/test_demo_mods.py::TourSafetyTests::test_weak_demo_defaults_are_deliberately_visible - Selected-game catalogue/API paths and shared prerequisites; add missing scenario entries while retaining every coverage/API assertion.
+tools/port/test_demo_mods.py::TourSafetyTests::test_plan_never_contains_private_disc_in_either_slash_form - Selected-game catalogue/API paths and shared prerequisites; add missing scenario entries while retaining every coverage/API assertion.
+tools/port/test_demo_mods.py::TourSafetyTests::test_window_dimensions_and_unattended - Selected-game catalogue/API paths and shared prerequisites; add missing scenario entries while retaining every coverage/API assertion.
+tools/port/test_demo_mods.py::TourSafetyTests::test_redacted_artifacts_and_stream - Selected-game catalogue/API paths and shared prerequisites; add missing scenario entries while retaining every coverage/API assertion.
+tools/port/test_demo_mods.py::TourSafetyTests::test_budget_guard_and_output_routing - Selected-game catalogue/API paths and shared prerequisites; add missing scenario entries while retaining every coverage/API assertion.
+tools/port/test_demo_mods.py::TourSafetyTests::test_complete_mocked_tour_outputs_are_private_and_local - Selected-game catalogue/API paths and shared prerequisites; add missing scenario entries while retaining every coverage/API assertion.
+tools/port/test_demo_mods.py::TourSafetyTests::test_cpu_guard_runs_after_two_frames_and_reasserts_after_switch - Selected-game catalogue/API paths and shared prerequisites; add missing scenario entries while retaining every coverage/API assertion.
+tools/port/test_demo_mods.py::TourSafetyTests::test_per_demo_requires_launcher_ok_and_cpu_proof - Selected-game catalogue/API paths and shared prerequisites; add missing scenario entries while retaining every coverage/API assertion.
+tools/port/test_demo_mods.py::TourSafetyTests::test_invalid_width_and_nonfinite_budget_fail_without_launch - Selected-game catalogue/API paths and shared prerequisites; add missing scenario entries while retaining every coverage/API assertion.
+tools/port/test_demo_tools.py::TourTests::test_direct_calls_and_pcall_references_are_checked - Selected-game API/console source resolution and shared prerequisite skips.
+tools/port/test_demo_tools.py::TourTests::test_visible_second_monitor - Selected-game API/console source resolution and shared prerequisite skips.
+tools/port/test_demo_tools.py::TourTests::test_script_hook_errors_fail - Selected-game API/console source resolution and shared prerequisite skips.
+tools/port/test_demo_tools.py::TourTests::test_catalogue_filter - Selected-game API/console source resolution and shared prerequisite skips.
+tools/port/test_demo_tools.py::TourTests::test_queued_capture_requires_file - Selected-game API/console source resolution and shared prerequisite skips.
+tools/port/test_demo_tools.py::TourTests::test_protocol_drains_response_and_raises_on_error - Selected-game API/console source resolution and shared prerequisite skips.
+tools/port/test_envoy_bundle.py::BundleTests::test_generated_entry_is_current_and_deterministic - Selected-game pickup source; GRID path and its required factory wrapper checked verbatim for grid.lua.
+tools/port/test_envoy_bundle.py::BundleTests::test_all_runtime_sources_are_embedded_verbatim - Selected-game pickup source; GRID path and its required factory wrapper checked verbatim for grid.lua.
+tools/port/test_envoy_bundle.py::BundleTests::test_fixed_native_radius_tracks_the_single_tuning_table - Selected-game pickup source; GRID path and its required factory wrapper checked verbatim for grid.lua.
+tools/port/test_envoy_polish.py::PolishTests::test_all_original_colour_packages_and_shader_dependencies_shipped - Selected-game assets/shared prerequisites; pin original drive mesh height to 11.0 (game eeab98999), preserving other exact numbers/package checks.
+tools/port/test_envoy_polish.py::PolishTests::test_native_polish_numbers_and_scaled_touch_capsule - Selected-game assets/shared prerequisites; pin original drive mesh height to 11.0 (game eeab98999), preserving other exact numbers/package checks.
+tools/port/test_envoy_prepare.py::PrepareTests::test_prepared_mod_has_existing_kit_in_all_loader_locations - Shared selected-game prerequisite; tool preparation source honors GW_MELEE.
+tools/port/test_envoy_prepare.py::PrepareTests::test_complete_maze_kit_dependencies_stay_in_mission_scope - Shared selected-game prerequisite; tool preparation source honors GW_MELEE.
+tools/port/test_envoy_prepare.py::PrepareTests::test_existing_and_missing_kit_publish_nothing - Shared selected-game prerequisite; tool preparation source honors GW_MELEE.
+tools/port/test_envoy_profile.py::ProfileTests::test_new_profile_comes_from_lua_schema - Shared selected-game prerequisite; Lua profile generator honors GW_MELEE.
+tools/port/test_envoy_profile.py::ProfileTests::test_existing_empty_corrupt_and_valid_files_preserved - Shared selected-game prerequisite; Lua profile generator honors GW_MELEE.
+tools/port/test_envoy_profile.py::ProfileTests::test_destination_directory_refused - Shared selected-game prerequisite; Lua profile generator honors GW_MELEE.
+tools/port/test_envoy_reward_ui.py::RewardUITests::test_reward_drawing_and_controller_menu - Shared selected-game prerequisite; Lua drawing fixture honors GW_MELEE.
+tools/port/test_map_mission.py::MapMissionTests::test_mission_module_and_editor_layer - Selected-game paths/shared prerequisites; embedding checker honors GW_MELEE.
+tools/port/test_map_mission.py::MapMissionTests::test_existing_editor_contract_still_passes - Selected-game paths/shared prerequisites; embedding checker honors GW_MELEE.
+tools/port/test_map_mission.py::MapMissionTests::test_main_embeds_the_current_mission_module - Selected-game paths/shared prerequisites; embedding checker honors GW_MELEE.
+tools/port/test_missions.py::MissionsTests::test_runtime_contracts - Selected-game paths/shared prerequisites; mission bundler honors GW_MELEE.
+tools/port/test_missions.py::MissionsTests::test_validation_refusals - Selected-game paths/shared prerequisites; mission bundler honors GW_MELEE.
+tools/port/test_missions.py::MissionsTests::test_bundle_current_and_single_entry - Selected-game paths/shared prerequisites; mission bundler honors GW_MELEE.
+tools/port/test_pickup_juice_definition.py::DefinitionTests::test_visual_contract_and_final_numbers - Selected-game decoder/shared prerequisites; exact mesh heights stay 11.0 for Envoy and 11.375 for unchanged demo.
+tools/port/test_pickup_juice_definition.py::DefinitionTests::test_demo_embeds_current_shared_factory - Selected-game decoder/shared prerequisites; exact mesh heights stay 11.0 for Envoy and 11.375 for unchanged demo.
+tools/port/test_pipeline_seed.py::SeedTests::test_merge_deduplicates_sources_and_carries_tags_origins - Selected-game warm demo; exact 29 retail/32 custom runs reflect two excluded unused retail stages; explicitly check exclusions.
+tools/port/test_pipeline_seed.py::SeedTests::test_empty_or_incompatible_input_preserves_existing_seed - Selected-game warm demo; exact 29 retail/32 custom runs reflect two excluded unused retail stages; explicitly check exclusions.
+tools/port/test_pipeline_seed.py::SeedTests::test_schema_mismatch_and_legacy_metadata_are_handled - Selected-game warm demo; exact 29 retail/32 custom runs reflect two excluded unused retail stages; explicitly check exclusions.
+tools/port/test_pipeline_seed.py::SeedTests::test_explicit_db_and_recursive_root_discovery - Selected-game warm demo; exact 29 retail/32 custom runs reflect two excluded unused retail stages; explicitly check exclusions.
+tools/port/test_pipeline_seed.py::SweepTests::test_dynamic_stage_roster_and_item_manifest - Selected-game warm demo; exact 29 retail/32 custom runs reflect two excluded unused retail stages; explicitly check exclusions.
+tools/port/test_pipeline_seed.py::SweepTests::test_missing_discovery_never_claims_full_coverage - Selected-game warm demo; exact 29 retail/32 custom runs reflect two excluded unused retail stages; explicitly check exclusions.
+tools/port/test_pipeline_seed.py::SweepTests::test_invalid_item_is_rejected - Selected-game warm demo; exact 29 retail/32 custom runs reflect two excluded unused retail stages; explicitly check exclusions.
+tools/port/test_pipeline_seed.py::SweepTests::test_export_is_only_files_and_driver_spawns_each_kind - Selected-game warm demo; exact 29 retail/32 custom runs reflect two excluded unused retail stages; explicitly check exclusions.
+tools/port/test_pipeline_seed.py::LuaTests::test_demo_waits_then_spawns_once_and_releases - Selected-game warm demo; exact 29 retail/32 custom runs reflect two excluded unused retail stages; explicitly check exclusions.
+tools/port/test_pipeline_seed.py::LuaTests::test_generated_driver_enumerates_after_enemy_warm_and_skips_unsafe_spawn - Selected-game warm demo; exact 29 retail/32 custom runs reflect two excluded unused retail stages; explicitly check exclusions.
+tools/port/test_roster_registry.py::ManifestTests::test_native_manifest_has_100_independent_rows - Selected-game native header; optional texture import no longer blocks independent synthetic manifest checks.
+tools/port/test_roster_registry.py::ManifestTests::test_truncated_and_bad_version_refused - Selected-game native header; optional texture import no longer blocks independent synthetic manifest checks.
+tools/port/test_roster_registry.py::ManifestTests::test_manifest_bounds - Selected-game native header; optional texture import no longer blocks independent synthetic manifest checks.
+tools/port/test_roster_registry.py::ManifestTests::test_native_catalogue_core_exists - Selected-game native header; optional texture import no longer blocks independent synthetic manifest checks.
+tools/port/test_roster_stress.py::RosterTests::test_clones_preserve_bosses_and_relocations - Lazy optional texture-helper import; only texture-remap test skips if the experiment helper is absent.
+tools/port/test_roster_stress.py::RosterTests::test_limit_explains_largest_count - Lazy optional texture-helper import; only texture-remap test skips if the experiment helper is absent.
+tools/port/test_roster_stress.py::RosterTests::test_invalid_count_and_table_are_rejected - Lazy optional texture-helper import; only texture-remap test skips if the experiment helper is absent.
+tools/port/test_roster_stress.py::RosterTests::test_output_cannot_escape_ignored_root - Lazy optional texture-helper import; only texture-remap test skips if the experiment helper is absent.
+tools/port/test_roster_stress.py::RosterTests::test_texture_remap_reads_original_keys - Lazy optional texture-helper import; only texture-remap test skips if the experiment helper is absent.
+tools/port/test_roster_stress.py::RosterTests::test_custom_source_name - Lazy optional texture-helper import; only texture-remap test skips if the experiment helper is absent.
+tools/port/test_stage_switch_link_boundary.py::StageLinkBoundary::test_reader_avoids_unprovided_libc - Selected-game source contracts with shared missing-source checks; libc/accessor assertions preserved.
+tools/port/test_stage_switch_link_boundary.py::StageLinkBoundary::test_slot_uses_ground_accessor - Selected-game source contracts with shared missing-source checks; libc/accessor assertions preserved.
+tools/release/test_mod_package.py::StageModsTests::test_copies_the_rule_table_and_nothing_else - Complete synthetic Linux package with required Barlow font license; release guard unchanged.
+tools/release/test_mod_package.py::StageModsTests::test_untracked_allowed_file_is_refused - Complete synthetic Linux package with required Barlow font license; release guard unchanged.
+tools/release/test_mod_package.py::StageModsTests::test_envoy_shaders_and_drive_models_are_staged - Complete synthetic Linux package with required Barlow font license; release guard unchanged.
+tools/release/test_mod_package.py::StageModsTests::test_a_missing_required_shader_or_model_stops_the_packaging - Complete synthetic Linux package with required Barlow font license; release guard unchanged.
+tools/release/test_mod_package.py::StageModsTests::test_a_required_file_that_no_allow_pattern_names_is_refused - Complete synthetic Linux package with required Barlow font license; release guard unchanged.
+tools/release/test_mod_package.py::StageModsTests::test_never_package_names_are_refused - Complete synthetic Linux package with required Barlow font license; release guard unchanged.
+tools/release/test_mod_package.py::StageModsTests::test_a_rule_table_naming_a_private_mod_is_refused - Complete synthetic Linux package with required Barlow font license; release guard unchanged.
+tools/release/test_mod_package.py::StageModsTests::test_disc_data_extension_and_folders_are_refused - Complete synthetic Linux package with required Barlow font license; release guard unchanged.
+tools/release/test_mod_package.py::StageModsTests::test_missing_mod_source_is_a_warning - Complete synthetic Linux package with required Barlow font license; release guard unchanged.
+tools/release/test_mod_package.py::RealMeleeTests::test_real_mods_pass_the_linux_guard - Complete synthetic Linux package with required Barlow font license; release guard unchanged.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_starter_selection_roundtrips_and_discard_reselects - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_room_storage_error_can_return_home_after_recovery - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_dead_actor_cleanup_does_not_block_recovery - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_snapshot_load_returns_to_durable_collection - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_snapshot_recovery_preserves_durable_finished_exports - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_snapshot_load_keeps_the_loader_error_when_no_slot_is_usable - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_pending_exports_paginate_and_decline_requires_confirmation - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_editor_undo_reconciles_removed_spawns_and_bounds - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling. Editor fixtures resolve through GW_MELEE.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_editor_load_replaces_arena_fields_and_rejects_partial_commit - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling. Editor fixtures resolve through GW_MELEE.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_editor_new_match_reapplies_document_arena - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling. Editor fixtures resolve through GW_MELEE.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_editor_snapshot_does_not_orphan_ghost - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling. Editor fixtures resolve through GW_MELEE.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_refusal_restore_and_lethal_dedup - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_nearest_target_skips_invulnerable_actor - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_checkpoint_corruption_preserves_older_pair - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_reward_save_failure_rolls_back_then_claims_once - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_finish_save_failure_retry_preserves_progress_and_exports_once - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_empty_floor_exact_and_unload_restores_paused_scene - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_empty_stage_refusal_cleans_geometry_preserves_checkpoint - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_entry_asset_work_yields_before_teleport_even_without_game_frames - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_pending_entry_isolation_loss_preserves_checkpoint - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_isolation_loss_fails_closed_before_tick_or_frame_gameplay - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_maze_runtime.py::MazeRuntimeTests::test_real_wall_kinds_four_sockets_and_scene_handover - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_maze_runtime.py::MazeRuntimeTests::test_wall_allocation_refusal_releases_owned_collision - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_maze_runtime.py::MazeRuntimeTests::test_resume_uses_saved_resolved_maze_and_protects_future_generator - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_maze_runtime.py::MazeRuntimeTests::test_seed_mismatch_preserves_checkpoint_and_refuses_regeneration - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_persistence.py::PersistenceTests::test_bundled_save_load_and_recovery - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_every_room_fits_the_native_art_instance_budget - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_seeded_geometry_branches_encounters_and_frozen_versions - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_default_full_campaign_rewards_and_scene_handover - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_missing_monster_blocks_progress_and_retains_checkpoint - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_solo_detour_branch_skips_the_fighter_trial_and_finishes - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_live_monsters_hold_a_doorway_shut - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_saved_generation_five_run_resumes_from_checkpoint_at_every_boundary - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_losing_lives_then_failure_and_retry_at_each_scene_boundary - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_losing_a_life_mid_encounter_keeps_progress_and_the_reward_is_claimed_once - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_native_platforms_and_walls_are_created_without_ledges - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_structural_signatures_are_unique_across_translation_and_mirroring - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_rooms_are_not_the_same_frame_with_a_few_pads_swapped - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_exit_doors_cannot_be_reached_by_ground_walking_but_are_reachable_with_jump_limits - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_the_climb_is_mandatory_every_intermediate_tier_cannot_be_skipped - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_mandatory_routes_do_not_repeat_the_same_staircase_climb - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_every_monster_spawn_stands_on_a_collider_inside_the_room - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_monster_spawns_are_reachable_by_the_player - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_every_reachable_surface_can_return_to_the_exit_door - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_doors_sit_on_supported_surfaces_at_stated_heights_and_platforms_have_no_ledges - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_player_only_lifecycle.py::PlayerOnlyLifecycleTests::test_terminal_entry_single_finish_transaction - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling. Shared capability skip only when legacy director re-entry is absent; original assertions retained.
+tools/roguelite/test_player_only_lifecycle.py::PlayerOnlyLifecycleTests::test_exploration_combat_handover_preserves_run - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling. Shared capability skip only when legacy director re-entry is absent; original assertions retained.
+tools/roguelite/test_presentation_runtime.py::PresentationTests::test_layout_uses_the_documented_canvas_and_the_compact_gate - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::PresentationTests::test_hud_claim_treats_false_as_state_and_throw_as_failure - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::PresentationTests::test_draw_uses_layout_coordinates_and_contains_failures - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::PresentationTests::test_release_retains_claim_when_api_disappears_and_retries - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::PresentationTests::test_layout_and_draw_failure_restore_vanilla_without_losing_claim - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::PresentationTests::test_tutorial_only_advances_on_observed_events - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::PresentationTests::test_loadout_planning_is_honest_and_contained - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_rail_is_drawn_from_the_reviewed_layout - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_hud_ownership_is_returned_on_leave_error_and_unload - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_refused_hud_restore_is_retried_by_real_leave_lifecycle - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_command_tree_is_rebuilt_from_the_installed_loadout - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_placement_rebuilds_the_tree_and_restores_refusals - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_one_cleared_door_press_travels_or_forks_never_both - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_tutorial_advances_only_from_real_gameplay - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_reduced_motion_is_honoured_and_ui_failures_do_not_corrupt_state - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::BundleTests::test_collection_draw_before_first_run_has_no_room_dependency - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::BundleTests::test_production_legacy_onboarding_observes_complete_gameplay_sequence - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::BundleTests::test_run_inventory_owns_consumables_and_survives_refusal - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling. Shared capability skip only when legacy director re-entry is absent; original assertions retained.
+tools/roguelite/test_presentation_runtime.py::BundleTests::test_equipment_applies_reverts_and_history_records - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::BundleTests::test_production_legacy_main_uses_real_loadout_and_preserves_up - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::BundleTests::test_bundle_carries_the_presentation_modules_before_main - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_presentation_runtime.py::BundleTests::test_bundled_source_compiles - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_rooms.py::RoomsTests::test_physical_traversal_slab_projection_and_collision_limits - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_generated_maze_render_collision_copy_and_directed_walls - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_all_plans_preserve_world_projection_with_background_depth - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_double_scale_preserves_assembly_and_background_depth - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_incremental_preload_yields_caches_and_stops_permanent_failure - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_recipe_rooms_place_all_sockets_segment_drops_and_cleanup - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_recipe_slopes_and_opening_match_independent_exporter_sidecars - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_exported_bf_wall_and_door_native_dimensions_and_depth - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_seeded_plans_both_branches_physics_alignment_and_bounds - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_room_changes_cache_cleanup_and_no_leaks - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_partial_allocation_failures_cleanup_real_handles - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_restricted_cleanup_retains_ownership_and_teardown_reset - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_mesh_native_format_normals_bounds_and_empty_collision - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_atlas_rgba8_layout_and_opaque_source_pixels - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_actual_native_gxtx_parser_and_model_mip_validation - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_actual_mesh_bounds_match_lua_plans_and_native_budgets - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_rooms.py::RoomsTests::test_source_only_reproducibility_and_non_owned_files_preserved - Shared reasoned skip if standalone native-parser fixture has no supported cc/clang compiler.
+tools/roguelite/test_runtime.py::test_runtime - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling. Defer execution from collection into a pytest test, preserve standalone entry, and save diagnostics inside _build/tmp.
+tools/roguelite/test_traversal_runtime.py::PhysicalRuntimeTests::test_continuous_room_camera_resume_and_terminal - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_initial_entry_and_travel_transaction - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_travel_save_refusal_keeps_room_fighters_keys_and_visited - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_transition_ownership_retained_until_recovery - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_source_cleanup_refusal_stays_paused_then_flushes - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_persistent_gate_and_opened_consumable_return - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_actual_downward_drop_and_oneway_refusal - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_combat_exit_requires_legitimate_objective - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_encounter_handover_and_noncombat_destination - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_reward_atomicity_and_supported_filtering - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_mixed_enemies_and_partial_resume - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_stale_pending_save_cannot_resurrect - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_stock_protocol_single_ko_and_baseline - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_effect_failures_and_rollback_retry - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_old_owner_teardown_is_bound_to_its_own_run - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_teardown_retains_refused_effect_rollback - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_heal_readback_mismatch_retains_rollback - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_teardown_reports_unflushed_pending_save - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_pending_save_bounded_failure_is_visible - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_teardown_and_reset_only_after_scene - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_new_run_travel_refusal_and_resume - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_v2_restore_keeps_route_run_and_inventory_in_one_checkpoint - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_transition_pauses_gameplay_and_recovers - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_terminal_rollback_retry_never_unpauses_owned_rooms - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_settling_save_recovery_finishes_once - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_settling_save_recovery_offers_safe_reward_once - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_final_stock_finish_refusal_keeps_retry_finish_page - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_failed_new_run_restores_profile_and_retries - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling. Actually reload director after on_unload instead of ticking retired state.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_retries_active_pending_save - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_terminal_pending_save_recovers_via_hook - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_rest_menu_run_rebind_persists_and_restores - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_full_collection_defers_export_until_claimed_after_relaunch - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_promotion_waits_for_refused_old_cleanup - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_old_owner_effect_rollback_survives_leave_and_blocks_replacement - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_promotion_exhaustion_retains_old_owner - Explicit roguelite prepare import; bundled director enters via supported rogue_start command instead of removed tbd_request polling.
+
+tools/geno/test_author_tools.py::AuthorToolsTests::test_export_refuses_separate_game_checkout - New red/green regression: guard rejects both synthetic repositories and permits only a sibling external destination.
+
+Additional prerequisite guards (review): each test below now skips with the shared helper before importing a missing roguelite game layout; test_runtime also skips clearly when Lua is absent.
+tools/roguelite/test_ai.py::TechnicalAiTests::test_native_control_adapter - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_starter_selection_roundtrips_and_discard_reselects - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_room_storage_error_can_return_home_after_recovery - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_dead_actor_cleanup_does_not_block_recovery - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_snapshot_load_returns_to_durable_collection - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_snapshot_recovery_preserves_durable_finished_exports - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_snapshot_load_keeps_the_loader_error_when_no_slot_is_usable - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_pending_exports_paginate_and_decline_requires_confirmation - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_editor_undo_reconciles_removed_spawns_and_bounds - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_editor_load_replaces_arena_fields_and_rejects_partial_commit - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_editor_new_match_reapplies_document_arena - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_audit_repairs.py::AuditRepairs::test_editor_snapshot_does_not_orphan_ghost - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_commands.py::CommandsTests::test_tree_and_interception - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_core.py::CoreTests::test_full_collection_decode_stays_below_callback_work_budget - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_core.py::CoreTests::test_gameplay_and_persistence - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_deferred_export.py::DeferredExportTests::test_deferred_export_contract - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_discard.py::DiscardTests::test_discard_contract - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_encounter_runtime.py::EncounterRuntimeTests::test_plan_scheduling_and_refusal - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_encounter_runtime.py::EncounterRuntimeTests::test_spawn_refusal_rolls_back_actors_and_hosts - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_encounter_runtime.py::EncounterRuntimeTests::test_defeat_evidence_is_stable_and_idempotent - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_encounter_runtime.py::EncounterRuntimeTests::test_vanished_or_escaped_actor_is_not_defeat - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_encounter_runtime.py::EncounterRuntimeTests::test_stock_wave_continuation_and_partial_resume - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_encounter_runtime.py::EncounterRuntimeTests::test_gene_host_buffs_and_cleanup - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_encounter_runtime.py::EncounterRuntimeTests::test_ordinary_fighter_gene_buffs - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_encounter_runtime.py::EncounterRuntimeTests::test_cleanup_retries_pending_and_mixed_hosts - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_catalogue_targets_contract_and_real_contracts - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_observation_boundary_ignores_hidden_input - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_visibility_predicate_requires_exact_true - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_malformed_observations_refuse_safely - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_reaction_delay_vision_monotonic_and_reveal - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_core_legal_ability_requests_only - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_ineligible_aborts_pending_tell - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_tell_retains_target_and_slot - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_simultaneous_tell_arbiter - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_counters_separate_and_confirmed - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_bounded_ownership_generation_and_cleanup - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_room_aware_ledge_and_recovery - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_positioning_anchor_is_combat_movement - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_determinism_same_seed - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_callbacks_fail_closed_and_surface - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_optional_gene_actions_callback - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_module_does_not_mutate_run - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_boss_mechanics_not_schema - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_boss_phase_inputs_are_delayed_and_visible - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_visibility_loss_invalidates_history - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_boss_vulnerability_windows - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_movement_is_not_recovery_vulnerability - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_nil_callback_seams_fail_closed - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_tell_binds_gene_instance - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_tell_binds_owned_run_table - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_tell_binds_reconstructed_run_instance - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_tell_rejects_reused_gene_id - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_tell_state_drift_cancels - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_boss_defeat_lifecycle_and_addon_binding - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_boss_resume_binding_and_phase - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_boss_three_controllers_distinct_mechanics - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_behaviors.py::EnemyBehaviorTests::test_contract_doc_exists - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_enemy_genes.py::EnemyGenesTests::test_shared_rules_and_lifecycle - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_feedback.py::FeedbackTests::test_core_readiness_charge_cooldown_and_identity - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_feedback.py::FeedbackTests::test_queue_priorities_preemption_bounds_and_fifo - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_feedback.py::FeedbackTests::test_coalescing_expiry_including_waiting_and_reset - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_feedback.py::FeedbackTests::test_menu_pause_freezes_lifetime_and_motion - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_feedback.py::FeedbackTests::test_committed_clamped_deltas_and_truthful_finish_notices - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_feedback.py::FeedbackTests::test_draw_bounds_pause_determinism_and_reduced_effects - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_gene_actions.py::GeneActionTests::test_contract_and_transaction - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_gene_actions.py::GeneActionTests::test_sources_exist - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_gene_world.py::GeneWorldTests::test_contract - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_gene_world.py::GeneWorldTests::test_sources_exist - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_refusal_restore_and_lethal_dedup - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_nearest_target_skips_invulnerable_actor - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_checkpoint_corruption_preserves_older_pair - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_reward_save_failure_rolls_back_then_claims_once - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_finish_save_failure_retry_preserves_progress_and_exports_once - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_empty_floor_exact_and_unload_restores_paused_scene - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_empty_stage_refusal_cleans_geometry_preserves_checkpoint - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_entry_asset_work_yields_before_teleport_even_without_game_frames - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_pending_entry_isolation_loss_preserves_checkpoint - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_integration_edges.py::IntegrationEdges::test_isolation_loss_fails_closed_before_tick_or_frame_gameplay - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_inventory_definitions_capacity_and_stacking - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_inventory_use_transaction_rollback_and_reject_before_spend - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_inventory_cooldowns_and_context - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_inventory_legacy_supplies_preserve_meaning - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_equipment_reversible_contributions_no_drift - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_equipment_owned_acquisition_and_release - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_equipment_symmetric_two_handed_and_saved_records - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_equipment_foreign_invalid_record_refusal - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_equipment_transactional_apply_and_stale_mods - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_equipment_apply_revert_return_false_rollback - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_equipment_native_items_refused_and_api_surface - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_inventory_plan_staleness_binding_and_fractional_charge - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_run_history_bounds_codec_and_core_migration - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_collection_breeding_export_fusion_and_discard - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_economy_simulation_bounded_and_honest_support - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_inventory_economy.py::InventoryEconomyTests::test_route_reward_specs_persisted_no_reroll - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_maze.py::MazeTests::test_seeded_topology_geometry_and_refusal - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_maze.py::MazeTests::test_checkpoint_validation_instruction_budget_and_mutation_safety - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_maze_runtime.py::MazeRuntimeTests::test_real_wall_kinds_four_sockets_and_scene_handover - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_maze_runtime.py::MazeRuntimeTests::test_wall_allocation_refusal_releases_owned_collision - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_maze_runtime.py::MazeRuntimeTests::test_resume_uses_saved_resolved_maze_and_protects_future_generator - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_maze_runtime.py::MazeRuntimeTests::test_seed_mismatch_preserves_checkpoint_and_refuses_regeneration - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_menus.py::MenuTests::test_views_actions_and_rendering - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_menu_polish.py::MenuPolishTests::test_command_hierarchy_upmask_taunt_debounce_neutral - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_menu_polish.py::MenuPolishTests::test_command_loadout_tree_open_close_and_assignments - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_menu_polish.py::MenuPolishTests::test_hud_layout_bounds_safe_areas_and_command_expansion - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_menu_polish.py::MenuPolishTests::test_menu_focus_mouse_new_screens_and_map_spoilers - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_menu_polish.py::MenuPolishTests::test_notification_lifetimes_and_tutorial_coalescing - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_menu_polish.py::MenuPolishTests::test_hud_feedback_fallback_and_replace_gate - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_menu_usability.py::MenuUsabilityTests::test_primary_focus_back_and_readable_names - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_menu_usability.py::MenuUsabilityTests::test_reward_preview_budget_and_runtime_identity - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_menu_usability.py::MenuUsabilityTests::test_widescreen_canvas_matches_pointer_controls - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_persistence.py::PersistenceTests::test_bundled_save_load_and_recovery - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_every_room_fits_the_native_art_instance_budget - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_seeded_geometry_branches_encounters_and_frozen_versions - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_default_full_campaign_rewards_and_scene_handover - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_missing_monster_blocks_progress_and_retains_checkpoint - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_solo_detour_branch_skips_the_fighter_trial_and_finishes - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_live_monsters_hold_a_doorway_shut - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_saved_generation_five_run_resumes_from_checkpoint_at_every_boundary - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_losing_lives_then_failure_and_retry_at_each_scene_boundary - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_losing_a_life_mid_encounter_keeps_progress_and_the_reward_is_claimed_once - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalCampaignTests::test_native_platforms_and_walls_are_created_without_ledges - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_structural_signatures_are_unique_across_translation_and_mirroring - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_rooms_are_not_the_same_frame_with_a_few_pads_swapped - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_exit_doors_cannot_be_reached_by_ground_walking_but_are_reachable_with_jump_limits - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_the_climb_is_mandatory_every_intermediate_tier_cannot_be_skipped - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_mandatory_routes_do_not_repeat_the_same_staircase_climb - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_every_monster_spawn_stands_on_a_collider_inside_the_room - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_monster_spawns_are_reachable_by_the_player - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_every_reachable_surface_can_return_to_the_exit_door - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_campaign.py::PhysicalGeometryAudit::test_doors_sit_on_supported_surfaces_at_stated_heights_and_platforms_have_no_ledges - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_runtime.py::PhysicalRuntimeTests::test_resolved_ascent_room_local_graph_during_overlap - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_runtime.py::PhysicalRuntimeTests::test_endpoint_matching_refuses_ambiguity_and_preserves_gaps - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_runtime.py::PhysicalRuntimeTests::test_required_links_fail_closed_with_retryable_rollback - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_runtime.py::PhysicalRuntimeTests::test_translated_collision_slopes_and_incremental_preload - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_runtime.py::PhysicalRuntimeTests::test_per_socket_trigger_arrival_upper_and_return - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_runtime.py::PhysicalRuntimeTests::test_bottom_drop_requires_downward_passage - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_runtime.py::PhysicalRuntimeTests::test_allocation_and_placement_refusal_roll_back_destination - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_runtime.py::PhysicalRuntimeTests::test_partial_cleanup_retry_preserves_ownership - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_runtime.py::PhysicalRuntimeTests::test_isolation_interruption_bounded_dual_residency_and_budget - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_runtime.py::PhysicalRuntimeTests::test_placement_capture_partial_failure_and_save_refusal_rollback - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_runtime.py::PhysicalRuntimeTests::test_begin_rejects_foreign_source_and_forged_exit - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_runtime.py::PhysicalRuntimeTests::test_cleanup_release_reset_lifecycle - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_physical_runtime.py::PhysicalRuntimeTests::test_runtime_consumes_only_admitted_nodes - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_player_only_lifecycle.py::PlayerOnlyLifecycleTests::test_terminal_entry_single_finish_transaction - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_player_only_lifecycle.py::PlayerOnlyLifecycleTests::test_exploration_combat_handover_preserves_run - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::PresentationTests::test_layout_uses_the_documented_canvas_and_the_compact_gate - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::PresentationTests::test_hud_claim_treats_false_as_state_and_throw_as_failure - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::PresentationTests::test_draw_uses_layout_coordinates_and_contains_failures - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::PresentationTests::test_release_retains_claim_when_api_disappears_and_retries - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::PresentationTests::test_layout_and_draw_failure_restore_vanilla_without_losing_claim - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::PresentationTests::test_tutorial_only_advances_on_observed_events - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::PresentationTests::test_loadout_planning_is_honest_and_contained - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_rail_is_drawn_from_the_reviewed_layout - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_hud_ownership_is_returned_on_leave_error_and_unload - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_refused_hud_restore_is_retried_by_real_leave_lifecycle - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_command_tree_is_rebuilt_from_the_installed_loadout - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_placement_rebuilds_the_tree_and_restores_refusals - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_one_cleared_door_press_travels_or_forks_never_both - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_tutorial_advances_only_from_real_gameplay - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::MainPresentationTests::test_reduced_motion_is_honoured_and_ui_failures_do_not_corrupt_state - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::BundleTests::test_collection_draw_before_first_run_has_no_room_dependency - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::BundleTests::test_production_legacy_onboarding_observes_complete_gameplay_sequence - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::BundleTests::test_run_inventory_owns_consumables_and_survives_refusal - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::BundleTests::test_equipment_applies_reverts_and_history_records - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::BundleTests::test_production_legacy_main_uses_real_loadout_and_preserves_up - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::BundleTests::test_bundle_carries_the_presentation_modules_before_main - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_presentation_runtime.py::BundleTests::test_bundled_source_compiles - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_reward_runtime.py::RewardRuntimeTests::test_supported_definitions - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_reward_runtime.py::RewardRuntimeTests::test_upgrade_preview_commit_and_unplaced_target - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_reward_runtime.py::RewardRuntimeTests::test_upgrade_cap_boundaries - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_reward_runtime.py::RewardRuntimeTests::test_tradeoff_all_or_nothing - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_reward_runtime.py::RewardRuntimeTests::test_tradeoff_full_effective_cost - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_reward_runtime.py::RewardRuntimeTests::test_progress_run_ownership - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_reward_runtime.py::RewardRuntimeTests::test_family_and_target_filtering - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_reward_runtime.py::RewardRuntimeTests::test_claims_and_objectives - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_reward_runtime.py::RewardRuntimeTests::test_supplies_and_deferred_effects - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_reward_runtime.py::RewardRuntimeTests::test_snapshot_roundtrip_and_rollback_contract - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_reward_runtime.py::RewardRuntimeTests::test_classify_refusals - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_physical_traversal_slab_projection_and_collision_limits - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_generated_maze_render_collision_copy_and_directed_walls - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_all_plans_preserve_world_projection_with_background_depth - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_double_scale_preserves_assembly_and_background_depth - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_incremental_preload_yields_caches_and_stops_permanent_failure - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_recipe_rooms_place_all_sockets_segment_drops_and_cleanup - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_recipe_slopes_and_opening_match_independent_exporter_sidecars - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_exported_bf_wall_and_door_native_dimensions_and_depth - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_seeded_plans_both_branches_physics_alignment_and_bounds - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_room_changes_cache_cleanup_and_no_leaks - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_partial_allocation_failures_cleanup_real_handles - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_restricted_cleanup_retains_ownership_and_teardown_reset - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_mesh_native_format_normals_bounds_and_empty_collision - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_atlas_rgba8_layout_and_opaque_source_pixels - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_actual_native_gxtx_parser_and_model_mip_validation - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_actual_mesh_bounds_match_lua_plans_and_native_budgets - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_rooms.py::RoomsTests::test_source_only_reproducibility_and_non_owned_files_preserved - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_room_layouts.py::RoomLayoutTests::test_distinct_layout_targets_and_alias_audit - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_room_layouts.py::RoomLayoutTests::test_certification_and_version_discipline - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_room_layouts.py::RoomLayoutTests::test_mesh_sidecars_ground_every_line_and_module - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_room_layouts.py::RoomLayoutTests::test_plans_obey_bf_rules_arrivals_budgets - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_room_layouts.py::RoomLayoutTests::test_directed_mobility_screen_and_readback - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_roster.py::RosterTests::test_lua_picker_binding_and_provenance - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_roster.py::RosterTests::test_generation_is_deterministic_and_conservative - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_roster.py::RosterTests::test_current_measured_production_metadata - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_runtime.py::test_runtime - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_traversal.py::TraversalTests::test_long_physical_routes_budgets_and_legacy_separation - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_traversal.py::TraversalTests::test_reachability_mutation_and_partial_geometry_refusal - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_traversal.py::TraversalTests::test_checkpoint_validation_stays_bounded - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_traversal_runtime.py::PhysicalRuntimeTests::test_continuous_room_camera_resume_and_terminal - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_initial_entry_and_travel_transaction - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_travel_save_refusal_keeps_room_fighters_keys_and_visited - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_transition_ownership_retained_until_recovery - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_source_cleanup_refusal_stays_paused_then_flushes - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_persistent_gate_and_opened_consumable_return - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_actual_downward_drop_and_oneway_refusal - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_combat_exit_requires_legitimate_objective - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_encounter_handover_and_noncombat_destination - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_reward_atomicity_and_supported_filtering - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_mixed_enemies_and_partial_resume - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_stale_pending_save_cannot_resurrect - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_stock_protocol_single_ko_and_baseline - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_effect_failures_and_rollback_retry - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_old_owner_teardown_is_bound_to_its_own_run - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_teardown_retains_refused_effect_rollback - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_heal_readback_mismatch_retains_rollback - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_teardown_reports_unflushed_pending_save - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_pending_save_bounded_failure_is_visible - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::CampaignTests::test_teardown_and_reset_only_after_scene - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_new_run_travel_refusal_and_resume - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_v2_restore_keeps_route_run_and_inventory_in_one_checkpoint - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_transition_pauses_gameplay_and_recovers - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_terminal_rollback_retry_never_unpauses_owned_rooms - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_settling_save_recovery_finishes_once - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_settling_save_recovery_offers_safe_reward_once - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_final_stock_finish_refusal_keeps_retry_finish_page - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_failed_new_run_restores_profile_and_retries - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_retries_active_pending_save - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_terminal_pending_save_recovers_via_hook - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_rest_menu_run_rebind_persists_and_restores - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_full_collection_defers_export_until_claimed_after_relaunch - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_promotion_waits_for_refused_old_cleanup - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_old_owner_effect_rollback_survives_leave_and_blocks_replacement - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_v2_runtime.py::MainIntegrationTests::test_main_promotion_exhaustion_retains_old_owner - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ParserTests::test_rows_parse_typed_values - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ParserTests::test_rows_ignore_ansi_and_other_text - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ParserTests::test_scalar_reads_last_number - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ParserTests::test_no_prefix_match_inside_identifier - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::PlanTests::test_inspection_available_and_uncertified - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::PlanTests::test_plans_cover_required_segments - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::PlanTests::test_plans_reference_declared_sockets - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::PlanTests::test_plan_is_json_and_never_certified - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::PlanTests::test_unknown_template_is_an_error - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::PlanTests::test_inspection_unavailable_is_reported - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ParseRosterTests::test_mobility_profiles_exist_in_roster - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ClassifyTests::test_arrival - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ClassifyTests::test_fall - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ClassifyTests::test_drop_without_fall_fails_even_if_target_reached - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ClassifyTests::test_stuck - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ClassifyTests::test_no_samples - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ClassifyTests::test_one_way_violated_when_climb_back - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ClassifyTests::test_unexpected_fall_on_ascent_is_a_failure - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ClassifyTests::test_drop_needs_actual_downward_motion - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ClassifyTests::test_seam_pop_candidate_flagged_for_manual_review - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ClassifyTests::test_truncated_trace_needs_review - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::VerdictTests::test_never_certifies_even_with_all_arrivals - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::VerdictTests::test_pending_without_native_run - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::VerdictTests::test_failed_and_inconclusive_are_listed - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::VerdictTests::test_no_samples_error_and_fixture_only_never_vanish - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::VerdictTests::test_unexpected_fall_is_not_a_pass - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::VerdictTests::test_every_known_status_is_bucketed - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverRefusalTests::test_missing_api_is_precise - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverRefusalTests::test_normal_speed_refuses_turbo_target - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverRefusalTests::test_normal_speed_refuses_paused - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverRefusalTests::test_normal_speed_refuses_fly - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverRefusalTests::test_normal_speed_refuses_accelerated_rate - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverRefusalTests::test_wrong_port_refused - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverRefusalTests::test_cpu_port_refused - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_scene_waits_for_stable_active_match_with_stale_fighters - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_replay_renders_real_pad_inputs_on_one_port - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_replay_stops_at_the_arrival_region - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_replay_stops_when_it_would_leave_the_room - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_cleanup_releases_pad_and_calls_native_cleanup - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_cleanup_reports_native_errors - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_segment_uses_fixture_about_placement_and_never_certifies - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_arm_window_uses_socket_target_when_present - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_arm_refusal_is_explicit - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_result_without_header_is_an_error_not_a_pass - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_fixture_place_retries_then_succeeds - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_fixture_place_unknown_socket_fails_fast - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_fixture_place_timeout_is_reported - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_capture_confirms_a_fresh_file - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::DriverStateTests::test_capture_failure_is_not_evidence - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::EvidenceTests::test_run_certification_writes_summary_on_console_failure - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::ProbeModuleTests::test_real_lua_commands_and_cleanup_contract - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::InstallTests::test_install_requires_explicit_app_dir - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::InstallTests::test_install_preserves_enabled_saves_and_binary - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::InstallTests::test_restore_puts_back_original_enabled_list - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::InstallTests::test_install_missing_app_dir_is_an_error - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::InstallTests::test_install_refuses_shared_review_dir - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::InstallTests::test_bundle_prepends_reviewed_modules - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::InstallTests::test_bundled_lua_compiles - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::InstallTests::test_certification_lua_compiles_standalone - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::CliTests::test_run_refuses_turbo_environment - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::CliTests::test_run_refuses_uncapped_environment - Guard source-dependent collection with an explicit missing-game reason.
+tools/roguelite/test_certify_rooms.py::CliTests::test_plan_cli_reports_uncertified - Guard source-dependent collection with an explicit missing-game reason.

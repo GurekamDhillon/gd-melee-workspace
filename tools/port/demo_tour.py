@@ -21,7 +21,8 @@ import math
 import threading
 
 ROOT = Path(__file__).resolve().parents[2]
-EXAMPLES = ROOT / 'melee/pc/scripts/examples'
+MELEE = Path(os.environ.get('GW_MELEE') or ROOT / 'melee').expanduser().resolve()
+EXAMPLES = MELEE / 'pc/scripts/examples'
 CATALOGUE = EXAMPLES / 'demos/catalogue.json'
 DEFAULT_SCENE = 'mode=lab;stage=fd;p1=fox/hu;p2=marth/cpu0'
 

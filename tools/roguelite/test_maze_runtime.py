@@ -5,7 +5,9 @@ import shutil
 import subprocess
 import unittest
 import json
-import prepare
+from tools.test_support import require_game
+require_game('pc/scripts/examples/roguelite')
+from tools.roguelite import prepare
 
 TREE=ast.parse(Path(__file__).with_name('test_runtime.py').read_text())
 PRELUDE=next(ast.literal_eval(n.value) for n in TREE.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='PRELUDE' for t in n.targets))
@@ -84,12 +86,12 @@ end
 
 class MazeRuntimeTests(unittest.TestCase):
     def run_lua(self,body,reload_body=''):
-        wrapped=';(function()\n'+prepare.bundle()+'\nend)()\n'
+        wrapped=';(function()\n'+prepare.bundle()+'\nend)()\ncommands.rogue_start()\n'
         code='local SOURCE='+json.dumps(str(prepare.SOURCE))+'\n'+PRELUDE+ENGINE+wrapped+HELPERS+body
         if reload_body:
             main=(prepare.SOURCE/'main.lua').read_text()
             resume_bundle=prepare.bundle().replace(main,"Maze.generate=function() error('resume must not regenerate') end\n"+main,1)
-            resume_wrapped=';(function()\n'+resume_bundle+'\nend)()\n'
+            resume_wrapped=';(function()\n'+resume_bundle+'\nend)()\ncommands.rogue_start()\n'
             code+=resume_wrapped+reload_body.replace("-- RELOAD_BUNDLE",resume_wrapped)
         result=subprocess.run([shutil.which('lua') or shutil.which('lua5.4'),'-'],input=code,text=True,capture_output=True)
         if result.returncode:

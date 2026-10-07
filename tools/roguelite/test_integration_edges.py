@@ -4,12 +4,14 @@ from pathlib import Path
 import shutil
 import subprocess
 import unittest
-import prepare
+from tools.test_support import require_game
+require_game('pc/scripts/examples/roguelite')
+from tools.roguelite import prepare
 
 HERE = Path(__file__).resolve().parent
 TREE = ast.parse((HERE / 'test_runtime.py').read_text())
 PRELUDE = next(ast.literal_eval(n.value) for n in TREE.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'PRELUDE' for t in n.targets))
-WRAPPED = ';(function()\n' + prepare.bundle() + '\nend)()\n'
+WRAPPED = ';(function()\n' + prepare.bundle() + '\nend)()\ncommands.rogue_start()\n'
 SETUP = r'''
 local function step(b)controls=b or 0;fixture_scene_tick();on_tick()end
 local function press(b)step(0);step(b);step(0)end

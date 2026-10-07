@@ -25,7 +25,6 @@ LOCAL = ROOT / '_build/local-assets/roster-stress'
 sys.path.insert(0, str(ROOT / 'tools/mex_port'))
 sys.path.insert(0, str(ROOT / 'experiment/brawl-kirby/tools'))
 import mex_hsd
-import texanim_keys
 from dump_mxdt import FIGHTER_FIELDS
 
 # Explicit index spaces/strides. Spans are checked, never guessed for a write.
@@ -234,6 +233,8 @@ def extend_plco(raw,nk,source,count):
 
 def remap_texanim(w,tex,pairs,end):
     """Rebuild constant texture keys from an immutable snapshot (no cascading copies)."""
+    global texanim_keys
+    import texanim_keys
     aobj=w.u(tex+8);f=w.u(aobj+8)
     while f:
         keys=texanim_keys._decode(w.data,f)

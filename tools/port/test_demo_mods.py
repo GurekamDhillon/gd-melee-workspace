@@ -17,12 +17,14 @@ from types import SimpleNamespace
 import time
 import struct
 import zlib
+from tools.test_support import GAME, require_game
 from contextlib import redirect_stdout
 from unittest.mock import patch
 
 
 class TourSafetyTests(unittest.TestCase):
     def test_boot_mount_is_one_demo_without_boot_scripts(self):
+        require_game('pc/scripts/examples/demos/catalogue.json')
         import demo_tour
         rows=json.loads(CATALOGUE.read_text())
         row=next(r for r in rows if r['id']=='demo_effects')
@@ -53,6 +55,7 @@ class TourSafetyTests(unittest.TestCase):
             with self.assertRaises(TimeoutError): demo_tour.wait_file(path,timeout=.02)
 
     def test_tour_is_silent_and_has_behavior_scenarios_for_every_new_mod(self):
+        require_game('pc/scripts/examples/demos/catalogue.json')
         import demo_tour
         from demo_scenarios import SCENARIOS
         env=demo_tour.tour_environment(Path('out'),Path('mods'),51707)
@@ -101,7 +104,7 @@ class TourSafetyTests(unittest.TestCase):
                         self.assertIn('gd.'+name,names,ident+' '+name)
 
     def test_weak_demo_defaults_are_deliberately_visible(self):
-        base=EXAMPLES/'demos'
+        base=require_game('pc/scripts/examples/demos/post-bloom/scripts/main.lua').parents[2]
         bloom=(base/'post-bloom/scripts/main.lua').read_text()
         outline=(base/'post-outline/scripts/main.lua').read_text()
         self.assertIn('threshold=0.2,intensity=4,radius=4',bloom)
@@ -111,6 +114,7 @@ class TourSafetyTests(unittest.TestCase):
         self.assertIn('0xff10dfff',parts)
         self.assertNotIn('break end',parts.split('for _,part in ipairs(parts) do')[1].split('\n')[0])
     def test_plan_never_contains_private_disc_in_either_slash_form(self):
+        require_game('pc/scripts/examples/demos/catalogue.json')
         import demo_tour
         with tempfile.TemporaryDirectory() as tmp:
             iso = Path(tmp)/'private-disc.iso'
@@ -160,6 +164,7 @@ class TourSafetyTests(unittest.TestCase):
         self.assertEqual(plan['command'][-1], '<disc>')
 
     def test_complete_mocked_tour_outputs_are_private_and_local(self):
+        require_game('pc/scripts/examples/demos/catalogue.json')
         import demo_tour
         with tempfile.TemporaryDirectory() as tmp:
             iso=Path(tmp)/'private.iso'; iso.write_text('test fixture')
@@ -257,13 +262,14 @@ on_frame_pre(); assert(calls==8) -- still reasserts for a respawn/recycled CPU
             launch.assert_not_called()
 
 ROOT = Path(__file__).resolve().parents[2]
-EXAMPLES = ROOT / 'melee/pc/scripts/examples'
+EXAMPLES = GAME / 'pc/scripts/examples'
 CATALOGUE = EXAMPLES / 'demos/catalogue.json'
 
 
 def registered_api():
+    require_game('pc/platform/gw_script.c')
     names = set()
-    for path in (ROOT / 'melee/pc/platform').glob('gw_script*'):
+    for path in (GAME / 'pc/platform').glob('gw_script*'):
         if path.suffix not in ('.c', '.inc'):
             continue
         source = path.read_text(encoding='utf-8')

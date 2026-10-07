@@ -1,9 +1,10 @@
 """Read the local engine contract, never a disc or generated fighter asset."""
 from pathlib import Path
+import os
 import re
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME = ROOT / "melee"
+GAME = Path(os.environ.get('GW_MELEE') or ROOT / 'melee').expanduser().resolve()
 
 
 def read(relative):

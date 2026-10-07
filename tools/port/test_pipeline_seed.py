@@ -7,6 +7,7 @@ import subprocess
 import shutil
 import tempfile
 import unittest
+from tools.test_support import require_game
 import build_pipeline_seed as seed
 import pipeline_seed_sweep as sweep
 
@@ -56,7 +57,9 @@ class SeedTests(unittest.TestCase):
 class SweepTests(unittest.TestCase):
     def test_dynamic_stage_roster_and_item_manifest(self):
         plan=sweep.make_plan('ace','stage tables ready: 100 internal, 291 external', [0,34,237,'pickup'],24)
-        self.assertEqual(len(plan['runs']),34)
+        # The two unused retail stage rows are excluded from the crash sweep.
+        self.assertEqual(len(plan['runs']),32)
+        self.assertFalse(any(r['tag'].endswith(('-akaneia', '-icetop')) for r in plan['runs']))
         self.assertIn('stage=ext:290',plan['runs'][-1]['scene'])
         self.assertEqual(plan['enemies'],['goomba','koopa','redead','like_like','octorok','polar_bear','topi'])
         self.assertEqual(plan['items'],[0,34,237,'pickup'])
@@ -76,14 +79,14 @@ class SweepTests(unittest.TestCase):
             driver=(root/'mods'/'pipeline-sweep'/'scripts'/'main.lua').read_text()
             self.assertIn('gd.spawn_enemy',driver);self.assertIn('gd.item_spawn',driver)
             self.assertIn('gd.warm_done',driver)
-            self.assertEqual(len(json.loads((root/'plan.json').read_text())['runs']),31)
+            self.assertEqual(len(json.loads((root/'plan.json').read_text())['runs']),29)
 
 class LuaTests(unittest.TestCase):
     def lua(self,text,*args):
         lua=shutil.which('lua');self.assertIsNotNone(lua,'Lua required')
         subprocess.run([lua,'-',*map(str,args)],input=text,text=True,check=True,cwd=seed.ROOT)
     def test_demo_waits_then_spawns_once_and_releases(self):
-        path=seed.ROOT/'melee/pc/scripts/examples/demos/warm/scripts/main.lua'
+        path=require_game('pc/scripts/examples/demos/warm/scripts/main.lua')
         self.lua(r"""
 local gd,S=dofile('tools/port/demo_gd_stub.lua')
 local env=setmetatable({gd=gd},{__index=_G})

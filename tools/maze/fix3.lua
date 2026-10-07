@@ -1,4 +1,4 @@
-local base='melee/pc/scripts/examples/missions/scripts/'
+local base=(os.getenv('GW_MELEE') or 'melee')..'/pc/scripts/examples/missions/scripts/'
 local D={mission={RESPAWN_SLOT=4}}
 local loads,unloads=0,0
 D.world={load=function()loads=loads+1;return{}end,unload=function()unloads=unloads+1 end}
