@@ -22,7 +22,7 @@ from np_drive import Console  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 MAIN_ROOT = os.environ.get("GW_ROOT_ENV", "E:/Projects/Melee Workspace")
-HOST_PORT, GUEST_PORT = 51731, 51732
+HOST_PORT, GUEST_PORT = 54831, 54832  # TCP console ports; the lane's UDP range is 54700-54999
 
 
 def ps_hash(d):
@@ -97,14 +97,30 @@ def main():
     if a.mods_guest:
         guest["MELEE_MODS_DIR"] = os.path.abspath(a.mods_guest)
 
-    sport = 51600 + (os.getpid() % 150)
+    import socket
+
+    def free_udp(start):
+        for p in range(start, start + 300):
+            t = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                t.bind(("0.0.0.0", p))
+                t.close()
+                return p
+            except OSError:
+                t.close()
+        return start
+
+    sport = free_udp(54900 + (os.getpid() % 100))
+    hport = free_udp(54700 + (os.getpid() % 40) * 2)
+    host["MELEE_NETPLAY_PORT"] = str(hport)
+    guest["MELEE_NETPLAY_PORT"] = str(hport + 1)
     srv = subprocess.Popen([sys.executable, os.path.join(ROOT, "tools", "netplay", "server", "gdmelee_server.py"),
                             "--bind", "127.0.0.1", "--port", str(sport)], stdout=open(os.path.join(out, "server.log"), "w"),
                            stderr=subprocess.STDOUT)
     time.sleep(1.5)
     pids = []
     try:
-        cmd = ("& '%s' -Menu -RealNetwork -HostDevice gc -GuestDevice keyboard -Disc %s -NetSim '%s' -Label '%s' -Exe '%s' "
+        cmd = ("& '%s' -Menu -HostDevice gc -GuestDevice keyboard -Disc %s -NetSim '%s' -Label '%s' -Exe '%s' "
                "-Server '127.0.0.1:%d' -EnvHost %s -EnvGuest %s" %
                (os.path.join(MAIN_ROOT, "_build", "netplay_local.ps1").replace("'", "''"), a.disc, a.net_sim.replace("'", "''"),
                 a.name, exe.replace("'", "''"), sport, ps_hash(host), ps_hash(guest)))
@@ -170,7 +186,7 @@ def main():
     s["refusals"] = {k: re.findall(r"GENOLOBBY pick refused: [^\n]*", v)[:2] for k, v in res.items()}
     s["lobby_notes"] = {k: re.findall(r"GENOLOBBY \w+: common fighters[^\n]*", v)[:2] for k, v in res.items()}
     s["define_lines"] = {k: re.findall(r"native define kind \d+ loaded[^\n]*|mexid: [^\n]*not in common[^\n]*", v)[:4] for k, v in res.items()}
-    s["coverage"] = {k: re.findall(r"GENOCOV f=d+ pd moves=d+ geno=d+ luafaults=S+ stocks=S+ pct=S+", v)[-2:] for k, v in res.items()}
+    s["coverage"] = {k: re.findall(r"GENOCOV f=\d+ p\d moves=\d+ geno=\d+ luafaults=\S+ stocks=\S+ pct=\S+", v)[-2:] for k, v in res.items()}
     s["crash"] = {k: bool(re.search(r"ASSERT|FATAL|crash", v)) for k, v in res.items()}
     ok = (min(s["games_started"].values()) >= a.games and not any(s["desyncs"].values()) and not bad and len(shared) > 600)
     refused = any(s["refusals"].values())

@@ -77,7 +77,20 @@ def main():
     out = os.path.join(build_root, "net", a.name)
     shutil.rmtree(out, ignore_errors=True)
     os.makedirs(out)
-    port = 51800 + (os.getpid() % 150)
+    import socket
+
+    def free_udp(start):
+        for p in range(start, start + 300):
+            t = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                t.bind(("0.0.0.0", p))
+                t.close()
+                return p
+            except OSError:
+                t.close()
+        return start
+
+    port = free_udp(54700 + (os.getpid() % 100))
 
     common = {"MELEE_NETPLAY_BIND": "127.0.0.1", "MELEE_WINDOW_X": "30000", "MELEE_WINDOW_Y": "30000", "MELEE_VOLUME": "0",
               "MELEE_PAD_IGNORE_ADAPTER": "1", "MELEE_PAD_BOT_EDGE": a.edge, "MELEE_NETPLAY_STAGE": a.stage,
@@ -108,7 +121,7 @@ def main():
             except OSError:
                 pass
     # NEVER the public server: the rooms of this run live on a matchmaking server of our own, bound to loopback
-    sport = 51600 + (os.getpid() % 150)
+    sport = free_udp(54900 + (os.getpid() % 100))
     srv = subprocess.Popen([sys.executable, os.path.join(ROOT, "tools", "netplay", "server", "gdmelee_server.py"),
                             "--bind", "127.0.0.1", "--port", str(sport)], stdout=open(os.path.join(out, "server.log"), "w"),
                            stderr=subprocess.STDOUT)
