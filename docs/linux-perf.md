@@ -91,3 +91,23 @@ before it (`write-watch: uffd backend unavailable (...)`): send that line.
 
 Optional A/B runs (one change each; start the game from a terminal): `MELEE_VSYNC=0`, `MELEE_GPU_LIST=1`,
 `MELEE_WRITEWATCH=off` (to see the old cost again).
+
+## Evidence (this lane, WSL2 Debian + Windows 11, same desktop)
+
+* Baseline, WSL, rollback live test (`MELEE_RB_LIVETEST=1 MELEE_RB_FAKE=2 MELEE_RB_INPUT=live`, Fox vs Marth FD):
+  `snap: SyncTest k=8 (10 slots of 47873981 bytes), full-copy mode`, `rb: tick work ... save 14.45 / 12.88 / 12.37 ms`.
+* The WSL2 kernel is 6.6 (no `PAGEMAP_SCAN`), so the userfaultfd backend was exercised on a 6.12.107 kernel under QEMU
+  (static 32-bit `tools/port/tests/writewatch_probe.c`, 600 frames of random writes, 200 to 2800 pages per frame):
+  `backend = userfaultfd write-protect (PAGEMAP_SCAN)`, exact dirty sets, 0 missed pages, with and without a 64-bit kernel
+  under a 32-bit process (compat ioctl works). The game itself has not run on a 6.7+ kernel yet: the owner's laptop is the first.
+* The dirty-page snapshot path on Linux (driven by the opt-in soft-dirty backend, `MELEE_SNAP_VERIFY=1` on):
+  rollback runs with 1 and 4 rollbacks (depth up to 10): `rbhash.csv` (the confirmed per-frame gameplay hash) is byte-identical
+  to the full-copy run over the common frames (1960 and 1189 frames); no `VERIFY FAIL`. Curated SyncTest (k=8): 0 mismatches
+  for 4000 comparisons, then the same `CURATED MISMATCH` at frame 547 with the same hash values as the full-copy run
+  (a pre-existing property of that scripted bench scene, not of the dirty path).
+* Soft-dirty cost (why it is opt-in): save 14.45 -> 5.3 ms but simulation 72 -> 81 ms in the same run.
+* Windows: `build.sh` OK, ABI audit `ldr ECX/EDX = 0`, `run.sh --test` 329/329. Scripted 6000-frame Fox vs Marth FD match:
+  the 12 `DET:` state lines and the `rb` and `wide` per-frame digests (6001 rows) are identical between the 0.2.1-test1 sources
+  (`ec495eb53`) and this branch. Windows vs Linux (`matrix.py`: fox-marth-fd, peach-puff-ys, four-dl): `rb` and `wide` identical
+  over 6001 frames; `mem`/`glob` differ exactly as in `docs/xplat-netplay.md` (known residual).
+* Linux: build id `068aa03a64d3fe65` equals the Windows exe's; native suite 319/319.
