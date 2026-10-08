@@ -75,3 +75,20 @@ only Lua-side edits are additive (`trigger_program`, a wider `online_safe`, `pro
 Cooperative, CPUs online, drops, Classic/Adventure online, the echo records (they need the echo journal), any protocol bump, any server change.
 Netplay tests use the local matchmaking server on 127.0.0.1 only, `MELEE_NETPLAY_BIND=127.0.0.1` on both clients (firewall prompt otherwise),
 windows at 30000, at most two games at once.
+
+## 6. Proof record (resumed lane, 2026-10-08, game `agent/envoy-s4` after merging `integration/2026-10-01/roguelite-100-game`)
+
+Windows, build root `_build/agents/envoy-s4`, all loopback (local server on 127.0.0.1, `MELEE_NETPLAY_BIND=127.0.0.1`, offscreen windows).
+
+| check | result |
+|---|---|
+| `run.sh --test` (native suites incl. `netbuild`, `netmods`) | `TESTS: pass=332 fail=0`, FATAL 0 |
+| `pc/tests/envoy_*.lua` (run from a root with `melee/`, `tools/`, `docs/`, `_research/`, `_build/tmp`) | 72 suites, 71 print `PASS`, `envoy_power_table` prints a table only; 0 errors; `envoy_stage4.lua`: parity `45 scenarios, 22500 frames compared, 0 mismatches`, not skipped |
+| Same parity fixture on Linux (WSL Debian gcc 14.2, -O0/-O1/-O2/-O2 -ffp-contract=fast) | 0 mismatches each, same as Windows clang |
+| curated SyncTest with a triggered build (`tools/xplat/envoy_synctest.py`) | seed 424242: `14400 compared, 0 mismatching`; seed 777001: `12000 compared, 0 mismatching` |
+| two-client sets under `MELEE_NET_SIM` (`tools/xplat/envoy_set_win.py`) | s4a lag50/jitter20/loss3 2 games, s4b lag90/jitter40/loss6 2 games, sw1..sw6 (seeds 11..66, lag 40..120, loss 2..10%) 1 game each: all PASS, 0 DESYNC lines on both peers; evaluator events per game 141 to 488, variants applied up to 24 |
+| negative control `--mods-poison` (s4c) | desync reported (`CHECKSUM DESYNC` frames 469 and 1069): the evaluator word is in the hash |
+
+Owed: a Windows to Linux online set with a triggered build (the cross-compiler check above covers the evaluator core only; `envoy_set.py` has the WSL guest),
+status variety in the soaks was mostly haste/burn (the bots rarely stack more), nobody has looked at the presentation online.
+Bots stalemate in some games (a game can run to the 8 minute limit with 4 events), so event counts vary by seed.
