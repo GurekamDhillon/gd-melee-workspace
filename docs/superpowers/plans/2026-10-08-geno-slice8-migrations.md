@@ -132,3 +132,15 @@ than expand limits or add unnecessary Lua. Preserve local costume bytes and repo
 instead of claiming expression meshes were removed. User's no-git-write rule supersedes plan commit steps;
 the coordinator owns commits. Final fresh review found the output-boundary and incomplete-log issues above;
 both were fixed with failing-then-passing tests.
+
+## Windowed parity result (2026-10-08, coordinator run of the Codex commands)
+
+Old Sora mod vs Sora as a format-10 base-none define, same exe (agent/geno-s8):
+moves_check_sora 46/46 identical (46 attributes read back equal); locomotion 22/22 identical;
+defense 9/10 identical; rewind (cast) PASS, 0 simulation bytes differ; FATAL 0 in every run.
+
+**The one difference (a base-none engine gap, not Sora-specific):** shielding Fox's forward smash, the old
+mod goes `GuardReflect -> Guard -> GuardSetOff -> Guard` and slides back x = -5.049; the define stays at
+x = 0 and never enters GuardSetOff. A base-none define does not get shield pushback / shield set-off.
+Next: fix in the engine (the guard set-off path for a "none" define, likely a donor table or attribute
+the generic preset does not supply) and re-run defense. Diff: `_build/tmp/geno-slice8/continued/defense-diff.json`.
