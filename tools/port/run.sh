@@ -99,6 +99,10 @@ fi
 # (moved to _build/mods-legacy). To test mods, set MELEE_MODS_DIR (e.g. _build/mods-split/ace).
 export MELEE_MODS_DIR="${MELEE_MODS_DIR:-$GW_ROOT/_build/mods}"
 
+# Learned pipeline snapshots: keep the workspace's runs on the workspace drive, not in
+# %LOCALAPPDATA%/GD Melee (the player default). Shared across runs so they stay warm.
+export MELEE_PIPELINE_COVERAGE_DIR="${MELEE_PIPELINE_COVERAGE_DIR:-$GW_ROOT/_build/pipeline-coverage}"
+
 # The caption drawn on the window (gw_overlay.cpp run_label). With several lanes' windows open at
 # once an unlabelled one is anonymous, so default it to "<lane> / <sandbox>"; callers that know
 # more (the test, the disc, the fighters) set MELEE_RUN_LABEL themselves.
