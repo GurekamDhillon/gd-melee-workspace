@@ -144,3 +144,5 @@ mod goes `GuardReflect -> Guard -> GuardSetOff -> Guard` and slides back x = -5.
 x = 0 and never enters GuardSetOff. A base-none define does not get shield pushback / shield set-off.
 Next: fix in the engine (the guard set-off path for a "none" define, likely a donor table or attribute
 the generic preset does not supply) and re-run defense. Diff: `_build/tmp/geno-slice8/continued/defense-diff.json`.
+
+**Update (same day):** after game commit 9629c02a9 (base-none Guard pose sampled from its own Guard row, so shield contact and GuardSetOff happen), the defense pass re-run gives **10/10 identical**. Sora as a define now matches the old mod on every measured check: moves 46/46, locomotion 22/22, defense 10/10, rewind PASS.
