@@ -59,6 +59,29 @@ nearly every `audio/us/*.ssm`, and (ACE only) six vanilla fighters' effect banks
 fighter file and no vanilla `Gr*` stage file is modified by either pack. Packs are disc-derived and
 never committed (`.gitignore` refuses `/_build/packs/`).
 
+A local **SSBM Nucleus m-ex project** can be used without exporting an ISO first:
+
+```powershell
+python tools/mex_port/make_mod_from_disc.py --vanilla "<retail ISO>" --mod "<Nucleus project directory>" --name nucleus-my-project --out "<local packs directory>"
+```
+
+`--mod` accepts either the project directory containing `files/` or the extracted `files/`
+root itself. Paths match case-insensitively; new files and changed content are copied with the
+same payload layout and adjacent `.gdm_pack.json` manifest as ISO packs. `mod.json` at the pack
+root records `source: "nucleus"`, the project's `project.mexproj` `build.name` (or the pack name
+if unavailable), and **Built with SSBM Nucleus - https://ssbmnucleus.net**. Its kind is `base`
+when the source has `MxDt.dat`, otherwise `misc`; the metadata file is not disc payload.
+
+The tool reports fighter/stage JSON counts from `data/fighters/` and `data/stages/` (project
+records, not playable slot counts), and whether `MxDt.dat` and `PlCo.dat` differ from vanilla.
+It ignores `data/`, `assets/`, `project.mexproj` and `sys/`; if `sys/main.dol` exists, it compares
+it with the vanilla DOL and reports unsupported changes. DOL patches and Gecko codes cannot be
+ported by this conversion; successful packaging does not guarantee that every project feature
+works in GD. Missing vanilla paths cannot be deleted by the overlay. `--exclude`, `--only`,
+`--dry-run` and resume/prune options also apply to folders; reruns detect changed source hashes.
+This operates entirely on the user's local files and never contacts Nucleus servers. The output
+is disc-derived: keep it under git-ignored `_build/packs/` and never redistribute or commit it.
+
 ### 2.3 What `MxDt.dat` carries, and who reads it
 
 `MxDt.dat` is an HSD archive with one public symbol, `mexData`: 14 root pointers
