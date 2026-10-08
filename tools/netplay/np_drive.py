@@ -28,7 +28,8 @@ import sys
 import time
 
 ROOT = os.environ.get("GW_ROOT_MAIN") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))  # GW_ROOT_MAIN: run a lane's copy of this script against the main checkout's _build
-HOST_PORT, GUEST_PORT = 51721, 51722
+HOST_PORT = int(os.environ.get("NP_DRIVE_HOST_CONSOLE", "51721"))  # another lane's pair may hold these: set both to run beside it
+GUEST_PORT = int(os.environ.get("NP_DRIVE_GUEST_CONSOLE", "51722"))
 
 
 class Console:

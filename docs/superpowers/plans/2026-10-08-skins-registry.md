@@ -48,7 +48,7 @@ the simulation and never refuse a netplay match.
 | key | meaning |
 |---|---|
 | `skin.format` | `1`. A higher number is refused with a log line (the mod is skipped, nothing else changes) |
-| `skin.target` | exactly one of `{"retail": "<name or Pl code>"}` (`fox`, `captain`, `PlFx.dat`; the names `geno.json` already accepts), `{"mex": "<Pl file>"}` (`PlWf.dat`: the m-ex fighter's own file, which is its identity in the filtered-base model; an optional `"identity": "<16 hex>"` is checked against the fighter's content identity when the netplay table is first built and logged on a mismatch), `{"geno": "<define key>"}` (a `geno.json` define's `key`) |
+| `skin.target` | exactly one of `{"retail": "<name or Pl code>"}` (`fox`, `captain`, `PlFx.dat`; the names `geno.json` already accepts), `{"mex": "<Pl file>"}` (`PlWf.dat`: the m-ex fighter's own Pl file, which is its identity in the filtered-base model), `{"geno": "<define key>"}` (a `geno.json` define's `key`; a donor-based define wears Mario's costumes, so its skins are installed as Mario's). A content-identity check for m-ex targets (a costume built for another pack's Wolf can crash on load) is NOT in format 1: list the fighter mod in `requires` and keep skins with the pack they were made for |
 | `skin.order` | optional integer, default 0: the sort key before the mod id (section 3) |
 | `costumes[]` | 1..255 entries; each is one costume of the target. A pack of ten recolours is one mod with ten entries |
 | `name` | what the select screen shows (printable ASCII, 1..23 characters). Missing: the mod's name (with the entry number when there are several) |
@@ -108,7 +108,7 @@ in `ftData_800855C8`) is audited and bounded in the build (Results).
 ## 4. Select screen
 
 The Atlas select already steps `n / count Name` with X/Y (skins255). Added here: the **name** of any skin costume (not only a Geno define's) on
-the card and the stepper; **paging**: with `L` or `R` held, X/Y step by 10 instead of 1, so 255 costumes are 26 presses end to end; the
+the card and the stepper; **paging**: on your own card with more than 12 costumes, L/R skip 10 back or forward (X/Y still step one; on the fighter grid L/R keep turning the pages), so 255 costumes are 26 presses end to end; the
 portrait and the HUD stock icon come from the skin's `csp`/`stock` when it has them (through the same kit-texture path Geno's presentation
 uses), else the fighter's default. The original CSS (`MELEE_NATIVE_CSS=1`) still steps by X/Y and shows the default art for any costume past
 the authored ones.
