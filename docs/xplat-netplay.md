@@ -72,7 +72,7 @@ Globals: only pad, render-owned and menu symbols (the classes SyncTest already e
 | `tools/xplat/pair.py NAME FRAMES SEED "SCENE"` | one scripted match on both builds in parallel, digests compared |
 | `tools/xplat/matrix.py` | the scenario list (fighters, stages, items, 4 players, Turbo on/off, ACE, Akaneia m-ex) |
 | `tools/xplat/net_pair.py NAME --mode direct|random --host win|linux` | a real netplay session between the two builds, local matchmaking server for `random` |
-| `tools/xplat/envoy_set.py` | the Envoy set driver (its menu walk predates the Atlas menus: see "owed") |
+| `tools/xplat/envoy_set.py` | the Envoy set driver. Its input scripts `tools/xplat/envoy/en_host.lua` / `en_guest.lua` walk the Atlas menu (main menu > ONLINE, hover 68); the host logs `ROOMCODE <code>`, the guest is launched after that with `MELEE_LAB_ROOM=<code>` and joins that room by code (`gd.lab_env("ROOM")` + `gd.netplay_act("code", ...)`), never random matchmaking. Rules are the lobby's defaults (4 stocks, 8 min): the old Stocks 1 / Time 1 menu presses are gone (no Lua setter yet) |
 | `tools/xplat/build_both.sh` | build the lane's Windows exe and Linux ELF |
 
 Linux build used `~/lb2/{mD,wsD,outD,gwtoolD}` and `~/lb2/enterD.sh` (the rootfs with WSLg and the GPU nodes).

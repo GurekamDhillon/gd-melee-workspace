@@ -118,11 +118,20 @@ def main():
         pids[side] = p.pid; open(out_dir + "/pids.txt", "w").write(json.dumps(pids)); log("launched", side, "launcher pid", p.pid, "run", name)
         return p, name
     hp, hname = launch("h", HERE + "/envoy/en_host.lua", hc, dict(MELEE_PAD_BOT="0,0,%d" % (100 + rnd.randrange(50)), MELEE_WINDOW_X="20", MELEE_WINDOW_Y="20", MELEE_WINDOW_W="960", MELEE_WINDOW_H="540"))
-    time.sleep(6)
-    gx = dict(MELEE_PAD_BOT="1,0,%d" % (200 + rnd.randrange(50)), MELEE_WINDOW_X="20", MELEE_WINDOW_Y="20", MELEE_WINDOW_W="960", MELEE_WINDOW_H="540")
+    # the host walks main menu > ONLINE > Host a Room and logs "ROOMCODE <code>"; the guest is launched AFTER that with MELEE_LAB_ROOM=<code>, and
+    # en_guest.lua joins that room by code (gd.lab_env("ROOM") + gd.netplay_act("code", ...)): never random matchmaking
+    host = Con(hc, "host")
+    code = None; t = time.time()
+    while time.time() - t < 240:
+        c = host.ev("gd.netplay().code")
+        if c and len(c.strip('"')) == 4 and "?" not in c: code = c.strip('"'); break
+        time.sleep(2)
+    if not code: log("no room code"); subprocess.run(["taskkill", "/PID", str(hp.pid), "/T", "/F"], capture_output=True); srv.terminate(); return 1
+    log("room", code)
+    gx = dict(MELEE_LAB_ROOM=code, MELEE_PAD_BOT="1,0,%d" % (200 + rnd.randrange(50)), MELEE_WINDOW_X="20", MELEE_WINDOW_Y="20", MELEE_WINDOW_W="960", MELEE_WINDOW_H="540")
     if a.poison: gx["MELEE_ENVOY_POISON"] = "1"
     gp, gname = launch("g", "/mnt/h/wsD/tools/xplat/envoy/en_guest.lua", gc, gx)
-    host, guest = Con(hc, "host"), Con(gc, "guest", host_addr=WSL_IP)
+    guest = Con(gc, "guest", host_addr=WSL_IP)
     log("consoles connected")
     result = {"tag": a.tag, "games": [], "ok": False}
     def finish(code):
@@ -147,16 +156,7 @@ def main():
         json.dump(result, open(out_dir + "/result.json", "w"), indent=1)
         log("RESULT", "PASS" if result["ok"] else "INCOMPLETE/FAIL", json.dumps({k: v for k, v in result.items() if k != "games"}))
         return code
-    # ---- connect
-    code = None; t = time.time()
-    while time.time() - t < 240:
-        c = host.ev("gd.netplay().code")
-        if c and len(c.strip('"')) == 4 and "?" not in c: code = c.strip('"'); break
-        time.sleep(2)
-    if not code: log("no room code"); return finish(1)
-    log("room", code)
-    while time.time() - t < 400 and guest.ev("gd.menu().screen") != "JOIN ROOM": time.sleep(2)
-    guest.ev('gd.netplay_act("code","%s")' % code)
+    # ---- connect (the room code was taken above; the guest script joined it from MELEE_LAB_ROOM)
     picks = [int(x) for x in a.picks.split(",")]
     host.cmd("envoynet auto %d" % picks[0]); guest.cmd("envoynet auto %d" % picks[1])
     done_games = 0; evidence_for = {}; tampered = False; last_log = 0; t_end = time.time() + a.timeout
