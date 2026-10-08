@@ -39,6 +39,7 @@ import argparse
 import asyncio
 import logging
 import secrets
+import sys
 import time
 
 MAGIC_CTL = b"GDMR"
@@ -339,6 +340,12 @@ async def main():
 
 
 if __name__ == "__main__":
+    if sys.platform == "win32":
+        # A killed guest sends ICMP port-unreachable back to the relay socket.
+        # Python 3.11's Proactor UDP reader stops receiving after that OSError
+        # even though the server process stays alive. The selector reader keeps
+        # servicing REG/JOIN, so the same room can resume after a mid-game loss.
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
