@@ -9,8 +9,11 @@ clang -m32 -O2 -fuse-ld=lld -no-pie "$root/tools/port/tests/abi_host.c" "$build/
 "$build/abi-probe"
 melee="${GW_MELEE:-$root/melee/worktrees/linux}"
 clang -m32 -O2 -ffunction-sections -fdata-sections -I "$melee/pc/platform" -I "${GW_SDL_INCLUDE:-${GW_AURORA_LINUX_BUILD:-$root/_build/linux/ax86m}/_deps/sdl-src/include}" \
-    "$root/tools/port/tests/linux_compat.c" "$melee/pc/platform/gw_compat_linux.c" \
+    "$root/tools/port/tests/linux_compat.c" "$melee/pc/platform/gw_compat_linux.c" "$melee/pc/platform/gw_writewatch_linux.c" \
     -no-pie -fuse-ld=lld -Wl,--gc-sections -lpthread -o "$build/compat-probe"
 "$build/compat-probe"
 clang -m32 -O2 -I "$melee/pc/platform" -I "$melee/extern/aurora/include" "$root/tools/port/tests/gc_report.c" -o "$build/gc-report-probe"
 "$build/gc-report-probe"
+clang -m32 -O2 -I "$melee/pc/platform" "$root/tools/port/tests/writewatch_probe.c" "$melee/pc/platform/gw_compat_linux.c" "$melee/pc/platform/gw_writewatch_linux.c" \
+    -I "${GW_SDL_INCLUDE:-${GW_AURORA_LINUX_BUILD:-$root/_build/linux/ax86m}/_deps/sdl-src/include}" -no-pie -fuse-ld=lld -Wl,--gc-sections -ffunction-sections -fdata-sections -lpthread -o "$build/writewatch-probe"
+"$build/writewatch-probe"
