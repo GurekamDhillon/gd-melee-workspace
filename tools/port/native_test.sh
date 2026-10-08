@@ -13,6 +13,8 @@ uses_enet=0
 # the atlas sources must not carry a printf format with more conversions than arguments (Atlas proof D4 crashed the main menu on one)
 [[ "$test_name" == atlas-* ]] && flags+=(-Wformat -Werror=format)
 case "$test_name" in
+envoy-netrun)
+    sources=(pc/tests/envoy_netrun_test.c) ;;
 roster-registry)
     sources=(pc/tests/roster_registry_test.c) ;;
 slippi-pad)
