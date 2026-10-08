@@ -130,7 +130,9 @@ def main():
     env0 = load_env()
     iso = env0["GW_ISO_VANILLA"]
     rnd = random.Random()
-    sport = 51900 + rnd.randrange(80)
+    sport = 53100 + rnd.randrange(80)  # the Envoy stage 4 lane's ports: 53xxx (the coordinator gave every lane its own range; 51500 is the shared default)
+    hport = 53200 + rnd.randrange(100)
+    gport = 53400 + rnd.randrange(100)
     hc = 53600 + rnd.randrange(20)
     gc = hc + 20
     pids = {}
@@ -173,7 +175,7 @@ def main():
         except Exception:
             kill(srv.pid)
 
-    hx = dict(MELEE_WINDOW_X="30000")
+    hx = dict(MELEE_WINDOW_X="30000", MELEE_NETPLAY_PORT=str(hport))
     if not a.no_bots:
         hx["MELEE_PAD_BOT"] = "0,0,%d" % (100 + rnd.randrange(50))
     if a.seed:
@@ -193,7 +195,7 @@ def main():
         stop_all()
         return 1
     log("room", code)
-    gx = dict(MELEE_LAB_ROOM=code)
+    gx = dict(MELEE_LAB_ROOM=code, MELEE_NETPLAY_PORT=str(gport))
     if not a.no_bots:
         gx["MELEE_PAD_BOT"] = "1,0,%d" % (200 + rnd.randrange(50))
     if a.poison:
