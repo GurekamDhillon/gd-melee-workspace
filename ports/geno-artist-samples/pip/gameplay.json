@@ -1,0 +1,10 @@
+{
+  "lua": {"script": "lua/palm_skip.lua", "state": {"boosted": "bool"}},
+  "state": {
+    "name": "PalmSkip", "behavior": "geno.ground", "subaction": 295,
+    "like": "motion:343", "phys": "auto", "coll": "both", "iasa": "none",
+    "move_tag": "special", "lua": {"enter": "enter", "frame": "frame"}
+  },
+  "subaction": {"index": 295, "file": "moves/palm_skip.words", "move_tag": "special"},
+  "specials": {"n": "geno:PalmSkip", "air_n": "geno:PalmSkip"}
+}

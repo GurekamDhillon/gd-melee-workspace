@@ -4923,14 +4923,14 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "39bd6737142f78f9e7013757a6a7863050124584a0f7307a6e64a63695673a35",
-    "pc/platform/geno_define_registry.inc": "64d2971aa8a315716e7a74faa8d7461f1a0408e74748d4bf0ea110ac78df1a43",
-    "pc/platform/geno_lua_registry.inc": "36f6f3864dbd22e3e2bd4e041736615e37853c79c35aba1d3b4090c9f4d88d9e",
+    "pc/platform/geno_registry.c": "4ff2b68db493c8a4b44c7ad18a125fcbffc4d6762713fc472e657f0617c83e2d",
+    "pc/platform/geno_define_registry.inc": "3dddc814a3abc04cd5c7af8f2e407e5628887edfcffa969568b390cd3b419de2",
+    "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
     "pc/geno/geno.h": "de75f4a8d6366a3a049a8eb9b232ac981b5d69b1cdeab1b21a81a5294ab92938",
-    "pc/geno/geno_game.c": "8c2e84941efaa1a2f9c0a650f5d3193c0bc9aff1d6e18b320e369855f3fd509d",
+    "pc/geno/geno_game.c": "7d707782ce799fd718abbc914175c3a9ea9d3b8a48dd8d28999709ffdb55f132",
     "pc/geno/geno_game_v2.inc": "9c572553dcd7b6a70e9d5a3fa3efcbc618b8de567c287e75e1f1577e572f5fb0",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",
     "pc/geno/geno_profile_storage.h": "a40aec8aafa890622f0ba6cb9f5602176c738f960346b18daf87c8dc8498d04d",
-    "pc/geno/geno_game_articles.inc": "2e6c466480873046013b102f90405b3a173e76d49acca98443f6f64036edccd6"
+    "pc/geno/geno_game_articles.inc": "f150726b13d2d55b288d9abf0ff484c44ba74bf00d2747c58301d71a3bcb4554"
   }
 }

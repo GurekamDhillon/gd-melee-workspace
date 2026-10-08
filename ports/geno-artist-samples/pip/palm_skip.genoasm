@@ -1,0 +1,11 @@
+# @HAND_R@ is resolved from the generated plan's hand.R role by build.py.
+# Times are animation frames at rate 1. Damage changes for beat two are in Lua.
+wait 6
+hitbox slot=0 joint=@HAND_R@ damage=5 size=3.0 x=0 y=0 z=0 angle=65 kbg=35 fkb=0 bkb=20
+wait 3
+clear_hitboxes
+wait 5
+hitbox slot=0 joint=@HAND_R@ damage=8 size=3.5 x=0 y=0 z=0 angle=45 kbg=85 fkb=0 bkb=35
+wait 3
+clear_hitboxes
+wait 23
