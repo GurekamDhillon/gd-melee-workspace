@@ -155,7 +155,7 @@ mods/                         next to melee-pc.exe, or MELEE_MODS_DIR
 ```
 
 - The **folder name is the id** (a different `"id"` is logged and ignored). `kind` is `base`,
-  `fighter`, `stage` or `misc` (unknown -> misc). A `mod.json` at the top of a legacy-layout mod
+  `fighter`, `stage`, `skin`, `script` or `misc` (unknown -> misc). A `mod.json` at the top of a legacy-layout mod
   is never mounted as a disc file.
 - **Resolution at boot** (`gw_mods.c set_resolve`): start from the enabled set; drop a mod whose
   `requires` are not all mounting (`needs X`); drop a mod that conflicts with one already kept -
@@ -205,6 +205,42 @@ Native functions in `pc/platform/gw_mods.h`. Game code declares them **without**
 | `int Mods_Save(void)` | writes `mods/enabled.txt` (write-then-rename); 0 ok, -1 failed |
 | `int Mods_RestartNeeded(void)` | the next-boot set differs from what is mounted |
 | `const char *Mods_Dir(void)` | the folder in use |
+
+## 4b. Skins: costumes as their own mod kind
+
+A **skin** is a mod with `"kind": "skin"` that adds costumes to one fighter: a retail fighter, an m-ex fighter or a Geno define.
+Skins are cosmetic. They are not part of the simulation and never refuse a netplay match. Design and rules:
+`docs/superpowers/plans/2026-10-08-skins-registry.md` (workspace); the Geno half of costumes is `melee/docs/geno.md` 22.6.
+
+```json
+{ "kind": "skin", "name": "Neon Fox", "version": "1.0.0", "authors": "someone",
+  "skin": { "format": 1,
+    "target": { "retail": "fox" },
+    "costumes": [ { "name": "Neon", "file": "skins/fox-neon/PlFxNeon.dat",
+                    "joint": "PlyFox5KBu_Share_joint", "matanim": "PlyFox5KBu_Share_matanim_joint",
+                    "csp": "skins/fox-neon/csp.gxtex", "stock": "skins/fox-neon/stock.gxtex" } ] } }
+```
+
+- `target` is exactly one of `{"retail": "fox"}` (the names `geno.json` accepts, or `PlFx.dat`), `{"mex": "PlWf.dat"}` (the m-ex fighter's Pl file;
+  it must be installed, so list the fighter mod in `requires`) or `{"geno": "<define key>"}`. A donor-based Geno define wears Mario's costumes, so
+  a skin for it is installed as Mario's.
+- Each costume: `file` (a DAT inside the mod's `files/`, mounted as a disc path, so give it a folder of its own), `joint` (required) and `matanim`
+  (the DAT's public symbols), optional `name` (printable ASCII, 1..23), `team` (`red`/`blue`/`green`), `like` (the original costume whose part
+  visibility it copies, default 0), `kirby_hat` (0..5, Kirby skins), `csp` and `stock` (`.gxtex`, see `pc/tools/png2gx.py`; the stock icon is rgb5a3 or
+  rgba8) and `partner` (Popo's skin carries Nana's costume, Zelda's carries Sheik's; absent: the partner keeps its default). Missing art falls back to
+  the fighter's default art.
+- The reader is strict: an unknown key skips the mod (a typo must not silently do nothing). Every refusal is one `skins: <id>: ...` log line.
+- **Order and ids.** A skin costume's index is the fighter's own count plus its position in `(skin.order, mod id, entry)`: the same mods give the
+  same indices on every machine. Adding or removing a skin renumbers the later ones. **Cap: 255 costumes per fighter** (ids 0..254); the rest are
+  refused with `skins: <fighter> is at 255 costumes - refused <id>`.
+- **Memory.** Boot reads each skin's `mod.json` and checks that its files exist; no costume file is read until somebody picks it.
+- **Select screen.** The Atlas stepper shows `n / total Name`; on your own card L/R skip ten costumes (X/Y step one).
+- **Netplay.** Costumes travel as a *wire costume*: a base costume's index, or `0x40000000 | 30 bits of the skin's identity` (mod id, entry, version
+  or `hash`). A peer that lacks the skin shows the fighter's default costume. A replay (`.slp`) stores the recorder's local index: with a different
+  skin set it can show another skin or the default; it never desyncs.
+- **Tools** (`tools/skins/`): `skin_import.py` turns a costume DAT (typed by its content: `Ply<Fighter>5K<Colour>_Share_joint`) into a skin mod folder and lints
+  one; `make_test_skins.py` writes a synthetic pack of hundreds of skins for testing (the models are copies of the player's own retail costumes, read from their
+  disc at run time into a git-ignored folder; never commit it).
 
 ## 5. The split tool
 
