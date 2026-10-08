@@ -151,6 +151,8 @@ def validate_script(words, path, errors, states=(), articles=()):
         return
     boundaries = {o for o, _ in rows} | {len(words)}  # engine appends End at len(words)
     checks = conds = 0
+    registered = {}
+    current_check = None
     loops = 0
     for offset, ws in rows:
         w0, op = ws[0], ws[0] >> 26
@@ -199,14 +201,24 @@ def validate_script(words, path, errors, states=(), articles=()):
             if len(ws) < needed:
                 errors.append(diagnostic(p, f"change condition needs {needed} words"))
             if sub == "CHG":
-                checks += 1
-                conds = 1
+                # geno_register_check re-finds a check by target, ONCE and
+                # its first condition; repeated emissions consume no slot.
+                head = (w0 & 65535) & ~schema.C["GENO_CHG_ONCE"]
+                first = (head, tuple((ws[2:] + [0, 0])[:2]))
+                current_check = (ws[1], bool(w0 & schema.C["GENO_CHG_ONCE"]), first)
+                registered.setdefault(current_check, {first})
+                checks = len(registered)
+                conds = len(registered[current_check])
                 try:
                     validate_target(script.target_text(ws[1]), states, p, errors)
                 except ValueError as e:
                     errors.append(diagnostic(p, str(e)))
             else:
-                conds += 1
+                if current_check is not None:
+                    condition = ((w0 & 65535) & ~schema.C["GENO_CHG_ONCE"],
+                                 tuple((ws[1:] + [0, 0])[:2]))
+                    registered[current_check].add(condition)
+                    conds = len(registered[current_check])
                 if checks == 0:
                     errors.append(diagnostic(p, "CHGAND requires a preceding CHG"))
             if checks > schema.C["GENO_MAX_CHECKS"] or conds > schema.C["GENO_CHECK_CONDS"]:
@@ -218,6 +230,8 @@ def validate_script(words, path, errors, states=(), articles=()):
                     errors.append(diagnostic(p, str(e)))
         if sub == "CHGCLR":
             checks = conds = 0
+            registered.clear()
+            current_check = None
     if loops > 0:
         errors.append(diagnostic(path, "loop without endloop"))
 

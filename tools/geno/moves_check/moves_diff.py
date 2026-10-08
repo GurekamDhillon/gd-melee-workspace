@@ -22,14 +22,23 @@ def load(path):
     recs = {}
     fighter = None
     parts = {}
+    done = None
     with open(path, encoding="utf-8", errors="replace") as fh:
         for line in fh:
+            if "MOVECHK FAIL" in line:
+                raise ValueError(f"{path}: scenario failed: {line.strip()}")
+            completion = re.search(r"MOVECHK DONE (\d+)", line)
+            if completion:
+                if done is not None:
+                    raise ValueError(f"{path}: multiple completion markers")
+                done = int(completion.group(1))
             pm = re.search(r"MOVECHKPART (\S+) (\d+) (\d+) (.*)$", line)
             if pm:
                 parts.setdefault(pm.group(1), {})[int(pm.group(2))] = pm.group(4).rstrip(chr(13) + chr(10))
                 if len(parts[pm.group(1)]) == int(pm.group(3)):
                     r = json.loads("".join(parts[pm.group(1)][i] for i in range(1, int(pm.group(3)) + 1)))
                     recs[r["name"]] = r
+                    del parts[pm.group(1)]
                 continue
             m = re.search(r"MOVECHK (FIGHTER|DONE|FAIL|START)?\s*(\{.*\})?", line)
             if not m or "MOVECHK" not in line:
@@ -39,6 +48,8 @@ def load(path):
             elif m.group(1) is None and m.group(2):
                 r = json.loads(m.group(2))
                 recs[r["name"]] = r
+    if not recs or done != len(recs) or parts:
+        raise ValueError(f"{path}: incomplete run (records={len(recs)}, DONE={done}, unfinished parts={len(parts)})")
     return recs, fighter
 
 
@@ -72,8 +83,12 @@ def main():
     ap.add_argument("--json")
     ap.add_argument("--tol", type=float, default=0.002)
     a = ap.parse_args()
-    old, fo = load(a.old)
-    new, fn = load(a.new)
+    try:
+        old, fo = load(a.old)
+        new, fn = load(a.new)
+    except (ValueError, OSError) as error:
+        print(str(error), file=sys.stderr)
+        return 1
     names = list(old) + [n for n in new if n not in old]
     bad = 0
     report = {}

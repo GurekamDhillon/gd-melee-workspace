@@ -77,3 +77,58 @@ Brawl source, 105 joints, 241 clips, 30 Geno states, its own effect bank (25 mod
 - D2 raising `GPL_MAX_JOINTS` and `GENO_MAX_OVERLAYS` (G2).
 - D3 dropping expressions for a define (G3) versus a ModelVis-for-defines slice.
 - D4 whether a migrated port is to be listed in the mod browser or stays a local build (it is never in a release).
+
+## Result: interrupted-lane continuation, 2026-10-08
+
+This dated result supersedes the planned format numbers and G6/G8 assumptions above.
+The format remains **10**; no format bump or shared engine behavior change was made in this continuation.
+
+- [M] Converted the inherited baseline `_build/agents/geno-s8/mods_old/ultimate-trail-slot`, using
+  `_build/audit-20261003/sora-play4/staged-moveset.json`, its `staged-specials/clips.json`, and `_build/tmp/ir`.
+  Local output: `_build/tmp/geno-slice8/continued/ultimate-sora-define`. It has 175 joints, 200 clips,
+  33 own rows, 63 overlays / 8,645 words, 32 states, 12 articles and 76 common attributes.
+  The nine previously unnamed fields are now in the inherited engine attribute table; none remain uncarried.
+  Article models with effects explicitly use `show_model: true`.
+- [M] `tools.geno.check` passes; `tools.geno.schema --check` exits 0. Build passes, bridge 18,829/18,829
+  resolved, ABI audit 0. Headless suite: `TESTS: pass=332 fail=0 total=332`.
+  Python verification: 51 tests, 4 skipped (art fixtures unavailable), plus one converter output-safety test.
+- [R] Aerial Sweep's repeated change checks are re-found by the engine, rather than consuming a new slot.
+  Corrected the checker's false capacity errors to match `geno_register_check` / `geno_and_check`, without
+  raising budgets or changing the generated move. Specials are expressible in existing data, so no fighter Lua
+  module is needed in this migration. Slice-5 Lua cannot replace ModelVis, arbitrary collision or article commands.
+- [M] The converter restricts writes/deletion to descendants of the ignored `_build/tmp/geno-slice8` namespace
+  and refuses source overlap. Parity diffs now refuse empty, failed and incomplete logs; locomotion's completion
+  count is corrected to 22. These fixes have asset-free regression tests (observed failing, then passing).
+- **Owed:** vanilla define admission/boot with `interpreter attempts 0`, all move/locomotion/defense comparisons,
+  article rendering and rewind (`diff_compared == 0`). No scene or windowed runs were attempted in this continuation.
+  The headless suite does not prove this generated fighter's gameplay. Historical scratch diffs are not acceptance.
+  Exact coordinator commands and quoted evidence: `_build/tmp/codex-geno-s8-report.md`.
+
+### Remaining owner decisions / proposed keys
+
+1. **G3 expressions:** proposed `fighter.visibility` (default mesh groups plus indexed visibility states) and
+   expression events in subactions. The current converter reuses costume bytes unchanged; it does **not** strip
+   alternate expression meshes. Without ModelVis admission the expression presentation is unverified.
+2. **ECB / IK / ledge geometry:** proposed plan `ecb` (joint-local offsets), `ik` (limb lengths), and `ledge`
+   (snap offsets). These still inherit the Mario template; matching attributes and hurtboxes does not reproduce
+   Marth's collision/reach geometry. Treat resulting parity differences as decisions, not automatic acceptance.
+3. **G5 victim clips:** keep installed donor victim clips and their author-kind bits for compatible victim
+   skeletons. A future `fighter.victim_clips` mapping could express recipient skeleton/preset explicitly; cosmetic
+   parity is pending. No change to low six author bits is proposed here.
+4. **G6 common callbacks:** Mario/common remains the host for a none define. Existing `common_states` can select
+   registered callbacks; additional named combo/throw callbacks or data parameters should be added only after a
+   measured mismatch identifies one. No evidence yet justifies a new key or guessing at native Lua physics.
+5. **G7 UI:** existing `presentation` suffices; converter does not extract the old patched CSS/CSP/stock art.
+   A source-BNTX-to-`.gxtex` conversion is a follow-up; letters fallback remains. No new format key needed.
+6. **Audio and source-native FX:** existing named retail sounds and Geno FX cover the present package; own
+   sound banks (`sounds[].file`, with event identity/resimulation rules) remain a separate owner decision,
+   particularly before Meta Knight. No audio was imported here.
+7. **D1/D2:** own rows, row flags/blend, 256 joints and 192 overlays are already inherited additive engine work;
+   this lane keeps format 10. **D4:** generated ports stay local-only; public browser listing remains undecided.
+   Ultimate Kirby and Meta Knight were not attempted: Sora's runtime acceptance is still owed.
+
+Rulings: preserve existing data for specials because the runtime deduplicates checks; correct tooling rather
+than expand limits or add unnecessary Lua. Preserve local costume bytes and report the ModelVis limitation
+instead of claiming expression meshes were removed. User's no-git-write rule supersedes plan commit steps;
+the coordinator owns commits. Final fresh review found the output-boundary and incomplete-log issues above;
+both were fixed with failing-then-passing tests.

@@ -76,7 +76,7 @@ gd.run(function()
     run('loco_jump_in_place_land', {I({buttons = 'X'}, 12), I({}, 90)})
     run('loco_shield_grab', {I({buttons = 'L'}, 10), I({buttons = 'Z'}, 2), I({}, 40)})
     run('loco_ledge_fall', {I({x = 127}, 40), S(60), I({}, 120)})
-    gd.log('MOVECHK DONE 21')
+    gd.log('MOVECHK DONE 22')
   end)
   if not ok then gd.log('MOVECHK FAIL ' .. tostring(why)) end
   gd.quit()

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""trail_define.py - an installed Ultimate port (Sora) -> a Geno `define` package (base "none", geno 9).
+"""trail_define.py - an installed Ultimate port (Sora) -> a Geno `define` package (base "none", geno 10).
 
     python ports/ir/tools/trail_define.py --install <mods>/ultimate-trail-slot --moveset staged-moveset.json \
-        --row-clips staged-specials/clips.json --out _build/geno-slice8/ultimate-sora-define
+        --row-clips staged-specials/clips.json --out _build/tmp/geno-slice8/ultimate-sora
 
 The slice 8 migration step (docs/superpowers/plans/2026-10-08-geno-slice8-migrations.md). It does not rebuild the port: it reads
 what install_ultimate.py wrote (the m-ex slot's fighter data file `PlUs.dat`, the costume models, the clip bank, the Geno
@@ -20,7 +20,7 @@ what install_ultimate.py wrote (the m-ex slot's fighter data file `PlUs.dat`, th
 Nothing here is committed: the output is built from Ultimate data (and the host's thrown-victim clips that the installer
 copies into the bank) and goes under _build/ like every install. The package needs no m-ex slot, no ACE disc and no PowerPC.
 
-What is NOT carried (reported in define_report.json): ModelVis expressions, the host's unnamed ftCo_DatAttrs fields,
+What is NOT carried (reported in define_report.json): ModelVis expressions, any ftCo_DatAttrs fields absent from the engine table,
 ECB and IK floats (the donor template's), the CSS/CSP/stock art of the m-ex slot.
 """
 import argparse
@@ -30,6 +30,7 @@ import re
 import shutil
 import struct
 import sys
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
@@ -50,6 +51,21 @@ COLOR_NAME = {"Nr": "Normal", "Ye": "Yellow", "Bu": "Blue", "Re": "Red", "Gr": "
 
 def game_dir():
     return os.environ.get("GW_MELEE") or os.path.join(ROOT, "melee")
+
+
+def output_destination(output, install, inputs=()):
+    """Resolve before deletion; derived assets must remain below a local _build."""
+    output, install = Path(output).resolve(), Path(install).resolve()
+    roots = [Path(ROOT)]
+    if Path(ROOT).parent.name == "worktrees":
+        roots.append(Path(ROOT).parent.parent)
+    namespaces = [(root / "_build" / "tmp" / "geno-slice8").resolve() for root in roots]
+    if not any(namespace in output.parents for namespace in namespaces):
+        raise ValueError("define output must be below _build/tmp/geno-slice8 in the workspace (local-only assets)")
+    for source in (install, *(Path(p).resolve() for p in inputs)):
+        if output == source or output in source.parents or source in output.parents:
+            raise ValueError("define output must not overlap source inputs")
+    return output
 
 
 def geno_attr_names():
@@ -134,8 +150,13 @@ def main():
     ap.add_argument("--name", default="Ultimate Sora")
     ap.add_argument("--prefix", default="GnSora")
     ap.add_argument("--hide-models", action="store_true", help="keep the old look: an article with an effect package hides its model (default: show_model, so the magic spheres are drawn beside their particles)")
-    ap.add_argument("--out", required=True)
+    ap.add_argument("--out", help="default: _build/tmp/geno-slice8/<key> (git-ignored; the output is built from Ultimate data and never committed)")
     a = ap.parse_args()
+    a.out = a.out or os.path.join(ROOT, "_build", "tmp", "geno-slice8", a.key)
+    try:
+        a.out = str(output_destination(a.out, a.install, (a.moveset, a.row_clips, a.ir_root)))
+    except ValueError as error:
+        ap.error(str(error))
     out, files = a.out, os.path.join(a.out, "files")
     if os.path.exists(out):
         shutil.rmtree(out)
@@ -247,7 +268,8 @@ def main():
     report["attributes"] = {"carried": len(attributes), "table": len(named), "not_in_struct": missing}
     unnamed = sorted(set(attrs) - {n for n, _ in named})
     report["attributes_not_carried"] = unnamed
-    report["not_carried"].append("%d ftCo_DatAttrs fields have no name in Geno's table (the donor's value stays): %s" % (len(unnamed), ", ".join(unnamed[:12]) + (" ..." if len(unnamed) > 12 else "")))
+    if unnamed:
+        report["not_carried"].append("%d ftCo_DatAttrs fields have no name in Geno's table (the donor's value stays): %s" % (len(unnamed), ", ".join(unnamed[:12]) + (" ..." if len(unnamed) > 12 else "")))
 
     # ---- scripts: the translated moveset rows (kept on their common row numbers)
     subs = []
@@ -317,7 +339,7 @@ def main():
             hb.pop("source_id", None)           # a generator note the engine ignores and `check` rejects
     entry["articles"] = arts
     entry["fx_bindings"] = ent["fx_bindings"]
-    json.dump({"geno": 9, "fighters": [entry]}, open(os.path.join(out, "geno.json"), "w"), indent=1)
+    json.dump({"geno": 10, "fighters": [entry]}, open(os.path.join(out, "geno.json"), "w"), indent=1)
 
     mod = {"id": a.key + "-define", "name": a.name + " (define)", "version": oldmod.get("version", "0.1.0"), "kind": "fighter",
            "requires": [], "conflicts": [],
