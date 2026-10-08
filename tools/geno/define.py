@@ -88,6 +88,21 @@ def validate_definition(data, fighter, path):
     keys = [f["define"]["key"] for f in data["fighters"] if "define" in f]
     if len(set(keys)) != len(keys):
         errors.append((path+".define.key", "duplicate definition identity in package"))
+    # Slice 8: a base none define may declare own animation rows past Mario's 303 (fighter.rows, clip names; the first is row 303).
+    rows = fighter.get("fighter", {}).get("rows", [])
+    if rows and not own:
+        errors.append((path+".fighter.rows", "own rows need base none"))
+    if len(set(rows)) != len(rows) and False:
+        pass
+    limit = 303 + (len(rows) if own else 0)
+    if own:
+        for key, items in (("subactions", [r.get("index") for r in fighter.get("subactions", [])]),
+                           ("common_states", [r.get("subaction") for r in fighter.get("common_states", [])]),
+                           ("states", [r.get("subaction") for r in fighter.get("states", [])]),
+                           ("motion_anims", [r.get("subaction") for r in fighter.get("motion_anims", [])])):
+            for v in items:
+                if isinstance(v, int) and v >= limit:
+                    errors.append((path+"."+key, "subaction %d is past row %d (303 donor rows + %d own rows)" % (v, limit - 1, len(rows))))
     # Native Mario preset: ftData_Table_Unk0[0].count == 303, rows 0..302.
     for row in (fighter.get("subactions", []) if not own else []):   # a base none define owns its row table
         if row["index"] >= 303:

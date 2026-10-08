@@ -701,6 +701,69 @@
                 "x-engine-default": "disc value",
                 "x-reference": "geno.md §7",
                 "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "unused_0": {
+                "type": "integer",
+                "description": "Common attribute unused_0",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "xDC": {
+                "type": "number",
+                "description": "Common attribute xDC",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "x12C": {
+                "type": "number",
+                "description": "Common attribute x12C",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "x13C": {
+                "type": "number",
+                "description": "Common attribute x13C",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "x144": {
+                "type": "number",
+                "description": "Common attribute x144",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "x150_damageice_unk": {
+                "type": "number",
+                "description": "Common attribute x150_damageice_unk",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "x154_damageice_unk": {
+                "type": "number",
+                "description": "Common attribute x154_damageice_unk",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "x168": {
+                "type": "number",
+                "description": "Common attribute x168",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "x17C": {
+                "type": "number",
+                "description": "Common attribute x17C",
+                "x-engine-default": "disc value",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
               }
             },
             "additionalProperties": false,
@@ -1382,6 +1445,16 @@
                   "x-reference": "geno.md §20",
                   "x-source": "melee/pc/platform/geno_registry.c"
                 },
+                "show_model": {
+                  "type": [
+                    "boolean",
+                    "number"
+                  ],
+                  "description": "Keep the article's model drawn beside its fx package (v5.7; default: the package is the look and the model is hidden)",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
                 "spawn_sound": {
                   "type": "string",
                   "description": "Name from the fighter's sounds table played at spawn",
@@ -1842,7 +1915,7 @@
                 }
               ]
             },
-            "maxItems": 64
+            "maxItems": 192
           },
           "special_attributes": {
             "type": "array",
@@ -4119,6 +4192,19 @@
                   ]
                 },
                 "maxItems": 16
+              },
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "Clip name of the bank for an own animation row: the first is row 303, the next 304, ... A state, an overlay or a common_states row may name them (base none only)",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §22.7",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minLength": 1,
+                  "maxLength": 31
+                },
+                "maxItems": 128
               }
             },
             "additionalProperties": false,
@@ -4442,6 +4528,31 @@
             "x-source": "melee/pc/platform/geno_registry.c"
           }
         },
+        "row_blend": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "description": "A blend byte of the row (ftData x10)",
+              "x-engine-default": 0,
+              "x-reference": "geno.md §22.7",
+              "x-source": "melee/pc/platform/geno_registry.c"
+            },
+            "maxItems": 2
+          },
+          "section": "22.7"
+        },
+        "row_flags": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "description": "The animation flag bits of an animation row above the low 6 (0x80000000: the clip drives the root); null keeps the donor's",
+            "x-engine-default": 0,
+            "x-reference": "geno.md §22.7",
+            "x-source": "melee/pc/platform/geno_registry.c"
+          }
+        },
         "motion_rows": {
           "type": "array",
           "items": {
@@ -4640,7 +4751,10 @@
     "reflect",
     "resources",
     "retail_sfx",
+    "row_blend",
     "row_clips",
+    "row_flags",
+    "rows",
     "s",
     "scale",
     "script",
@@ -4650,6 +4764,7 @@
     "sfx_severity",
     "shield",
     "shield_damage",
+    "show_model",
     "size",
     "slot",
     "sounds",
@@ -4731,7 +4846,7 @@
       "source": "melee/pc/geno/geno.h:258"
     },
     "GENO_MAX_OVERLAYS": {
-      "value": 64,
+      "value": 192,
       "source": "melee/pc/geno/geno.h:259"
     },
     "GENO_POOL_WORDS": {
@@ -4780,7 +4895,7 @@
     },
     "GENO_SP_SELECT": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:480"
+      "source": "melee/pc/geno/geno.h:482"
     },
     "JDOC_NODES": {
       "value": 4096,
@@ -4792,11 +4907,11 @@
     },
     "GN_MAX_VOICE": {
       "value": 32,
-      "source": "melee/pc/platform/geno_registry.c:401"
+      "source": "melee/pc/platform/geno_registry.c:403"
     },
     "GN_MAX_SLOTS": {
-      "value": 256,
-      "source": "melee/pc/platform/geno_registry.c:505"
+      "value": 512,
+      "source": "melee/pc/platform/geno_registry.c:507"
     },
     "JSON_DEPTH": {
       "value": 32,
@@ -4808,14 +4923,14 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "0cbd53db4e4b03f4b3b689f35d05cc99ba4aa960fc0c067dee94abdca7a0c12a",
-    "pc/platform/geno_define_registry.inc": "646f151431a5c9ee081e49f3cbbbe568a13722c755d435af9233b063eed2bbd8",
+    "pc/platform/geno_registry.c": "39bd6737142f78f9e7013757a6a7863050124584a0f7307a6e64a63695673a35",
+    "pc/platform/geno_define_registry.inc": "64d2971aa8a315716e7a74faa8d7461f1a0408e74748d4bf0ea110ac78df1a43",
     "pc/platform/geno_lua_registry.inc": "36f6f3864dbd22e3e2bd4e041736615e37853c79c35aba1d3b4090c9f4d88d9e",
-    "pc/geno/geno.h": "5d340f3ebe68597fafbd9f33b99a0ba9e67b511757537dff4ddc2287e09375f1",
-    "pc/geno/geno_game.c": "5e42f2f62e6e4cba2c593089ee4e73cbe7fa8630e8a0f4396256f94f406e3ab0",
+    "pc/geno/geno.h": "de75f4a8d6366a3a049a8eb9b232ac981b5d69b1cdeab1b21a81a5294ab92938",
+    "pc/geno/geno_game.c": "8c2e84941efaa1a2f9c0a650f5d3193c0bc9aff1d6e18b320e369855f3fd509d",
     "pc/geno/geno_game_v2.inc": "9c572553dcd7b6a70e9d5a3fa3efcbc618b8de567c287e75e1f1577e572f5fb0",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",
     "pc/geno/geno_profile_storage.h": "a40aec8aafa890622f0ba6cb9f5602176c738f960346b18daf87c8dc8498d04d",
-    "pc/geno/geno_game_articles.inc": "5cfda7d9a4b3dd75b908e2cc08f660cb35de8a70ce09465912ced173999cb041"
+    "pc/geno/geno_game_articles.inc": "2e6c466480873046013b102f90405b3a173e76d49acca98443f6f64036edccd6"
   }
 }

@@ -96,6 +96,15 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].attributes.respawn_platform_scale | number: Common attribute respawn_platform_scale | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].attributes.warp_star_hitbox_scale | number: Common attribute warp_star_hitbox_scale | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].attributes.camera_zoom_target_bone | integer: Common attribute camera_zoom_target_bone | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.unused_0 | integer: Common attribute unused_0 | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.xDC | number: Common attribute xDC | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.x12C | number: Common attribute x12C | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.x13C | number: Common attribute x13C | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.x144 | number: Common attribute x144 | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.x150_damageice_unk | number: Common attribute x150_damageice_unk | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.x154_damageice_unk | number: Common attribute x154_damageice_unk | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.x168 | number: Common attribute x168 | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].attributes.x17C | number: Common attribute x17C | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].jumps | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].jumps.max | integer: Total jumps including ground jump | disc value | minimum=1; maximum=250; geno.md §10; melee/pc/platform/geno_registry.c |
 | fighters[].jumps.air_vy | array: Ordered entries | absent | maxItems=16; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
@@ -159,6 +168,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].articles[].bone | integer: Spawn joint; -1 = position | -1 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].effect | integer: Melee effect id | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].fx | string: Effect package name |  | ; geno.md §20; melee/pc/platform/geno_registry.c |
+| fighters[].articles[].show_model | ['boolean', 'number']: Keep the article's model drawn beside its fx package (v5.7; default: the package is the look and the model is hidden) | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].spawn_sound | string: Name from the fighter's sounds table played at spawn |  | maxLength=31; geno.md §22.2; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].end_sound | string: Name from the fighter's sounds table played when the article goes |  | maxLength=31; geno.md §22.2; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].effects | array: Ordered entries | absent | maxItems=8; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
@@ -201,7 +211,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].articles[].max_speed | number: max speed | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].min_speed | number: min speed | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].angle | number: angle | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
-| fighters[].subactions | array: Ordered entries | absent | maxItems=64; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].subactions | array: Ordered entries | absent | maxItems=192; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].subactions[].index | integer: Subaction row to replace | 0 | minimum=0; maximum=1023; geno.md §15.5; melee/pc/platform/geno_registry.c |
 | fighters[].subactions[].words | array: Ordered entries | absent | maxItems=16383; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].subactions[].file | string: Whitespace word file relative to mod root |  | ; geno.md §15.5; melee/pc/platform/geno_registry.c |
@@ -394,6 +404,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].fighter.costumes[].matanim | string: Material-animation symbol |  | ; geno.md §22.4; melee/pc/platform/geno_registry.c |
 | fighters[].fighter.costumes[].name | string: Costume name the select shows (printable ASCII, 1..23 characters) |  | maxLength=23; pattern=^[ -~]+$; geno.md §22.6; melee/pc/platform/geno_registry.c |
 | fighters[].fighter.costumes[].team | string: The team battle colour this costume is (the first one declared wins; undeclared: red is costume 0, blue 1, green 2) |  | enum=['red', 'blue', 'green']; geno.md §22.6; melee/pc/platform/geno_registry.c |
+| fighters[].fighter.rows | array: Ordered entries | absent | maxItems=128; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].presentation | object: A define's own character select icon (64x56), portrait (136x188), stock icon (rgb5a3 or rgba8, also the results card picture), one per costume or one for all (geno: 9), and its results emblem (no palette; the faint shape behind the rank numeral) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].presentation.icon | string: A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name |  | maxLength=63; pattern=^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][xX][tT][eE][xX]$; geno.md §22.6; melee/pc/platform/geno_registry.c |
 | fighters[].presentation.portrait | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
@@ -425,7 +436,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | GENO_MAX_SPECIAL | 64 | melee/pc/geno/geno.h:256 |
 | GENO_MAX_ONLAND | 16 | melee/pc/geno/geno.h:257 |
 | GENO_MAX_MOTION_ANIM | 8 | melee/pc/geno/geno.h:258 |
-| GENO_MAX_OVERLAYS | 64 | melee/pc/geno/geno.h:259 |
+| GENO_MAX_OVERLAYS | 192 | melee/pc/geno/geno.h:259 |
 | GENO_POOL_WORDS | 16384 | melee/pc/geno/geno.h:260 |
 | GENO_MAX_STATES | 48 | melee/pc/geno/geno.h:271 |
 | GENO_ART_KIND_BASE | 4096 | melee/pc/geno/geno.h:356 |
@@ -437,11 +448,11 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | GENO_ART_HIT_ENTRIES | 8 | melee/pc/geno/geno.h:378 |
 | GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:380 |
 | GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:381 |
-| GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:480 |
+| GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:482 |
 | JDOC_NODES | 4096 | melee/pc/platform/geno_registry.c:74 |
 | JDOC_ARENA | 65536 | melee/pc/platform/geno_registry.c:75 |
-| GN_MAX_VOICE | 32 | melee/pc/platform/geno_registry.c:401 |
-| GN_MAX_SLOTS | 256 | melee/pc/platform/geno_registry.c:505 |
+| GN_MAX_VOICE | 32 | melee/pc/platform/geno_registry.c:403 |
+| GN_MAX_SLOTS | 512 | melee/pc/platform/geno_registry.c:507 |
 | JSON_DEPTH | 32 | melee/pc/platform/geno_registry.c:jd_value |
 | JSON_FILE_BYTES | 1048576 | melee/pc/platform/geno_registry.c:gn_read_file |
 

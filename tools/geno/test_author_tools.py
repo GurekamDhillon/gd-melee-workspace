@@ -55,6 +55,18 @@ class AuthorToolsTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 script.disassemble(words)
 
+    def test_repeated_change_checks_use_engine_deduplication(self):
+        errors = []
+        # Aerial Sweep emits the same guarded check on successive frames.
+        check.validate_script(script.assemble("CHG motion:14 ALWAYS ONCE\n" * 30 + "end"), "repeat", errors)
+        self.assertEqual(errors, [])
+
+    def test_distinct_change_checks_still_exceed_capacity(self):
+        errors = []
+        check.validate_script(script.assemble("\n".join(
+            f"CHG motion:{i} ALWAYS ONCE" for i in range(schema.C["GENO_MAX_CHECKS"] + 1)) + "\nend"), "distinct", errors)
+        self.assertIn("cap exceeded", str(errors))
+
     def test_validator_bad_examples(self):
         valid = {"geno": 5, "fighters": [{"attach": "kirby"}]}
         examples = [({"geno": 5, "fighters": [{"attach": "kirby", "jump": {}}]}, "jumps"),
@@ -232,8 +244,8 @@ class AuthorToolsTests(unittest.TestCase):
         examples = [("IF la_i:0 EQ 1 1\nhitbox joint=2\nend", "boundary"),
                     ("CHGAND AIR", "preceding CHG"),
                     ("CHG geno:1 ALWAYS", "no declared state"),
-                    ("CHG motion:14 ALWAYS\n" * 9, "cap exceeded"),
-                    ("CHG motion:14 ALWAYS\nCHGAND AIR\nCHGAND AIR\nCHGAND AIR", "cap exceeded"),
+                    ("\n".join(f"CHG motion:{i} ALWAYS" for i in range(9)), "cap exceeded"),
+                    ("CHG motion:14 ALWAYS\nCHGAND AIR\nCHGAND GROUND\nCHGAND ANIM_END", "cap exceeded"),
                     ("loop 2", "without endloop"), ("loop_end", "without loop"),
                     ("call 0 0", "cannot resolve"),
                     ("CALL geno.count_frames 64", "0..63"), ("CALL geno.article.spawn 0", "missing article"),

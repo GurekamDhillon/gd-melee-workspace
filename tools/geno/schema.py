@@ -91,6 +91,7 @@ def build_schema():
                    "spins": arr(obj({"joint": integer("Model joint index"), "z": num("Joint spin radians per frame")}), 4),
                    "bone": integer("Spawn joint; -1 = position", -1), "effect": integer("Melee effect id"),
                    "fx": string("Effect package name", section="20"),
+                   "show_model": dict(boolean, description="Keep the article's model drawn beside its fx package (v5.7; default: the package is the look and the model is hidden)", **{"x-engine-default": 0}),
                    "spawn_sound": string("Name from the fighter's sounds table played at spawn", section="22.2", maxLength=31),
                    "end_sound": string("Name from the fighter's sounds table played when the article goes", section="22.2", maxLength=31),
                    "effects": arr({"anyOf": [integer("Melee effect id"), obj({"id": integer("Effect id"),
@@ -179,7 +180,9 @@ def build_schema():
                              "matanim": string("Material-animation symbol", section="22.4"),
                              "name": string("Costume name the select shows (printable ASCII, 1..23 characters)", section="22.6", minLength=1, maxLength=23, pattern="^[ -~]+$"),
                              "team": string("The team battle colour this costume is (the first one declared wins; undeclared: red is costume 0, blue 1, green 2)", section="22.6", enum=["red", "blue", "green"])},
-                            ("file", "joint")), 16)}, ("plan", "animation", "costumes"))
+                            ("file", "joint")), 16),
+        "rows": arr(string("Clip name of the bank for an own animation row: the first is row 303, the next 304, ... A state, an overlay or a common_states row may name them (base none only)", section="22.7", minLength=1, maxLength=31), 128)},
+        ("plan", "animation", "costumes"))
     gxtex = string("A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name", section="22.6", pattern=r"^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][xX][tT][eE][xX]$", maxLength=63)
     fighter["properties"]["presentation"] = obj({"icon": gxtex, "portrait": {"anyOf": [gxtex, arr(gxtex, 16, minItems=1)]},
         "stock": {"anyOf": [gxtex, arr(gxtex, 16, minItems=1)]}, "emblem": gxtex})
@@ -202,6 +205,8 @@ def build_schema():
                   "fighters": arr(fighter, C["GENO_MAX_PROFILES"])}, ("geno", "fighters"))
     result["$defs"] = {"plan": obj({"parts": integer("Parts-table size", section="22.4"), "joint_to_part": arr(integer("Joint to part", section="22.4")), "part_to_joint": arr(integer("Part to joint", section="22.4")),
         "bank": obj({"clips": arr(string("Clip symbol", section="22.4")), "clip": string("One clip", section="22.4")}), "row_clips": arr(string("Row to clip", section="22.4")),
+        "row_blend": arr(arr(integer("A blend byte of the row (ftData x10)", section="22.7"), 2), section="22.7"),
+        "row_flags": arr(integer("The animation flag bits of an animation row above the low 6 (0x80000000: the clip drives the root); null keeps the donor's", section="22.7")),
         "motion_rows": arr(obj({}), 1024), "ftdata": obj({}), "costumes": arr(obj({})),
         "hurtboxes": arr(obj({"a": arr(num("Offset a")), "b": arr(num("Offset b")), "radius": num("Capsule radius"), "height": integer("Height class", section="22.4"),
                               "grabbable": integer("0/1", section="22.4")}))}), }
