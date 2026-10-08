@@ -185,7 +185,7 @@ gd.run(function()
     gd.log(string.format("GENOLOBBY %s: game %d ended (match inactive)", role, g))
     local back = 0
     while gd.netplay().phase ~= "lobby" and back < 60 * 60 * 3 do
-      if gd.scene().name ~= "GS_FRONTEND" then gd.press(1, "A", 4) end
+      if gd.scene().name ~= "GS_FRONTEND" then gd.press(1, ((back // 60) % 2 == 0) and "Start" or "A", 4) end -- the results screens want Start / A
       gd.wait(60)
       back = back + 60
     end
