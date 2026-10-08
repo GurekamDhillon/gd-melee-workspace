@@ -27,7 +27,7 @@ import subprocess
 import sys
 import time
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+ROOT = os.environ.get("GW_ROOT_MAIN") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))  # GW_ROOT_MAIN: run a lane's copy of this script against the main checkout's _build
 HOST_PORT, GUEST_PORT = 51721, 51722
 
 
@@ -99,6 +99,11 @@ def main():
     ap.add_argument("--offscreen", action="store_true", help="MELEE_WINDOW_X/Y=30000 on both windows")
     ap.add_argument("--keep", action="store_true", help="leave the windows open at the end")
     ap.add_argument("--bind", default=None, help="client/local-server bind (default: MELEE_NETPLAY_BIND or 127.0.0.1); WSL-to-Windows runs require a non-loopback override, e.g. 0.0.0.0")
+    ap.add_argument("--host-env", action="append", default=[], help="K=V for the host window only (repeatable), e.g. MELEE_NETPLAY_CPUS=20:1:9")
+    ap.add_argument("--guest-env", action="append", default=[], help="K=V for the guest window only (repeatable)")
+    ap.add_argument("--host-cmd", action="append", default=[], help="a console line run on the host once it has a room code, before the guest joins (repeatable), e.g. '= gd.netplay_act(\"cpus\", \"20:1:9\", true)'")
+    ap.add_argument("--probe", action="store_true", help="at the match, print every player (cpu, team, stocks) and the item count on both sides")
+    ap.add_argument("--stay", type=int, default=0, help="seconds to keep playing once the match is running (rollback soak with the built-in pad scripts)")
     a = ap.parse_args()
     bind_env = client_environment(bind=a.bind)
 
@@ -111,8 +116,14 @@ def main():
         atexit.register(srv.terminate)  # also on the early "no console socket" returns
     off = ";MELEE_WINDOW_X='30000';MELEE_WINDOW_Y='30000'" if a.offscreen else ""
     off += ";MELEE_NETPLAY_BIND='%s'" % bind_env["MELEE_NETPLAY_BIND"].replace("'", "''")
-    env_host = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_host';MELEE_VOLUME='3'%s}" % (HOST_PORT, off)
-    env_guest = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_guest';MELEE_VOLUME='3'%s}" % (GUEST_PORT, off)
+    # every test client binds loopback by default (--bind/MELEE_NETPLAY_BIND override): a fresh exe path on 0.0.0.0
+    # raises a Windows Firewall prompt that stalls the run
+    def extra_env(pairs):
+        return "".join(";%s='%s'" % (k, v.replace("'", "''")) for k, v in (kv.split("=", 1) for kv in pairs))
+    if not any(kv.startswith("MELEE_NETPLAY_PORT=") for kv in a.host_env):
+        a.host_env.append("MELEE_NETPLAY_PORT=%d" % (52000 + os.getpid() % 900))  # another lane's host may hold 51500
+    env_host = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_host';MELEE_VOLUME='3'%s%s}" % (HOST_PORT, off, extra_env(a.host_env))
+    env_guest = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_guest';MELEE_VOLUME='3'%s%s}" % (GUEST_PORT, off, extra_env(a.guest_env))
     cmd = ("& '%s' -Menu -RealNetwork -HostDevice gc -GuestDevice keyboard -Disc %s -Label '%s' -EnvHost %s -EnvGuest %s%s" %
            (os.path.join(ROOT, "_build", "netplay_local.ps1").replace("'", "''"), a.disc, a.label.replace("'", "''"),
             env_host, env_guest,
@@ -138,6 +149,9 @@ def main():
             return 1
         code = code.strip('"')
         print("  room %s" % code)
+        for line in a.host_cmd:
+            out, good = host.run(line)
+            print("  host cmd %-50s -> %s %s" % (line, "ok" if good else "ERROR", " ".join(out)))
         if not wait_for("guest: on the JOIN ROOM screen",
                         lambda: guest.value("gd.menu().screen") == "JOIN ROOM", a.timeout):
             return 1
@@ -156,6 +170,18 @@ def main():
             host.run("shot %s" % os.path.abspath(os.path.join(a.shots, "np_drive_host.png")))
             guest.run("shot %s" % os.path.abspath(os.path.join(a.shots, "np_drive_guest.png")))
             time.sleep(2)
+        if ok and a.probe:
+            time.sleep(8)
+            probe = ('(function() local t={} for _,p in ipairs(gd.players()) do t[#t+1]=string.format('
+                     '"P%d cpu=%s team=%d stocks=%d",p.port,tostring(p.cpu),p.team,p.stocks) end '
+                     'return table.concat(t," | ").." | items="..#gd.items() end)()')
+            for side in (host, guest):
+                print("  %s players: %s" % (side.name, side.value(probe)))
+        if ok and a.stay:
+            time.sleep(a.stay)
+            for side in (host, guest):
+                print("  %s after %d s: %s | rb: %s" % (side.name, a.stay, side.value("gd.netplay().status"),
+                                                      side.value("gd.rollback and gd.rollback() or 'n/a'")))
         for side in (host, guest):
             print("  %s: %s" % (side.name, side.value("gd.netplay().status")))
     finally:
