@@ -144,3 +144,19 @@ In the exe (this lane's build, 2026-10-07, vanilla disc, the window parked off s
 
 Read: the slice 2 plan, `docs/geno.md` 22, the Atlas step 4 plan's constraints, `NEXT-SESSION.md`; the sources cited. Four surveys (announcer and voice, Kirby
 copy, CPU AI and records) were made by reading only; items 5 to 8 of section 1 rest on them, and the claims marked [I] have not been run.
+
+## 9. Second half (2026-10-08, game `agent/geno-s6b`, workspace `ws/geno-s6b`): the elevated items built on the owner's recommended defaults
+
+The decisions D7 to D10 were answered with the recommended defaults (the owner can reverse each; see "Decisions" in the lane report). Reference: `melee/docs/geno.md` 22.7.
+
+| task | state | what it is |
+|---|---|---|
+| S6-10 | **built [B]** | results: the winner card's picture (`presentation.portrait`, second DObj of `jobjs[0]`; it was blank/red), the faint card emblem (`presentation.emblem`, first DObj), the small stock icon beside "P1" (`presentation.stock`, `jobjs[7]`). Found by dumping the DObj chains: m-ex's "emblem" is not the big Smash-logo shape (a 3D model with no texture, the neutral emblem 11, left alone). The Atlas card now draws the fighter's select icon (`fas_card_face`, `at_part_sel_card`) |
+| S6-11 | **built [B]** | `kirby_copy: "none" | "retail:<fighter>"` (geno 10); `none` run: Kirby inhales and swallows a Courier, ends in Wait with no crash; `retail:mario` run: Kirby's B is a fireball (item kind 130) |
+| S6-12 | **built [B]** | `ai: {"like": "<retail fighter>"}` (geno 10), D9 option (a): `FTAI_KIND` in the CPU files and the AI table copy; a CPU Courier plays 26 distinct actions as mario and 24 (with Falco's) as falco, no crash |
+| S6-13 | **built [B]** | a define's own records: `geno_records.json` beside the save, keyed by the define key, written when the results screen is left; the retail rows digest is unchanged for a match of defines alone (`84d9a62a -> 84d9a62a`) and changes for a retail match |
+| S6-14 | **built [B]** | D8 option (a): the converter (`tools/geno/audio.py`, `.gnsnd` v1), the package key (`audio.announcer`, `audio.voice[]`), the engine route (`shim_ax.c` native clips; announcer at the native select, the Atlas select and `gm_80168C5C`; voice at `ft_PlaySFX` and the five ft_0881 variants). No fighter ships audio; silence stays without a block. The proof clips are synthetic tones |
+| team match | **built [B]** | `teams=1;enemy_team_colors=1`: a Courier on the red, blue and green teams wears costume 1, 2 and 3 (never a fifth); P1's team keeps its own costume |
+| S6-15, S6-16 | open | the resident-index census; the full sweep (Classic, intro, credits, six slots) |
+
+Not built, and why: a package **emblem for the big Smash-logo shape** on the results screen (a flat model: it needs geometry, not a texture); a Kirby **ability of the define's own**; the **voice** of actions that play sounds through the stop/loop variants (`ft_8008805C`, items); audio for a define in netplay (a define is offline only).

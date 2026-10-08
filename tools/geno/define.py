@@ -5,6 +5,12 @@ from pathlib import Path
 import shutil
 
 
+# The retail fighters a define may name in "ai.like" and "kirby_copy" (the names and aliases of geno_registry.c's gn_vanilla table; Nana is Popo's partner).
+RETAIL_FIGHTERS = ("mario", "fox", "captain", "falcon", "donkey", "dk", "kirby", "koopa", "bowser", "link", "seak", "sheik", "ness", "peach", "popo", "pikachu",
+                   "samus", "yoshi", "purin", "jigglypuff", "mewtwo", "luigi", "mars", "marth", "zelda", "clink", "younglink", "drmario", "falco", "pichu",
+                   "gamewatch", "gnw", "ganon", "ganondorf", "emblem", "roy")
+
+
 def definition_schema():
     return {"type": "object", "additionalProperties": False, "required": ["key", "name", "base", "common", "resources"],
         "properties": {"key": {"type": "string", "pattern": r"^[a-z0-9][a-z0-9_.-]{0,38}$"},
@@ -51,6 +57,23 @@ def validate_definition(data, fighter, path):
         value = fighter.get("presentation", {}).get(key)
         if isinstance(value, list) and own and len(value) > len(costumes):
             errors.append((path+".presentation."+key, "%d entries for %d costumes" % (len(value), len(costumes))))
+    # Slice 6 (geno 10): the CPU's stand-in fighter, what Kirby copies, the package's own sound clips, the results emblem.
+    for key in ("ai", "kirby_copy"):   # they change what a fighter does; audio and the emblem are presentation and take 9 like the art
+        if key in fighter and data["geno"] < 10:
+            errors.append((path+"."+key, "needs geno: 10"))
+    if "audio" in fighter and data["geno"] < 9:
+        errors.append((path+".audio", "needs geno: 9"))
+    like = fighter.get("ai", {}).get("like") if isinstance(fighter.get("ai"), dict) else None
+    if like is not None and str(like).lower() not in RETAIL_FIGHTERS:
+        errors.append((path+".ai.like", "%r is not a retail fighter (mario, fox, captain, ... emblem)" % (like,)))
+    copy = fighter.get("kirby_copy")
+    if copy is not None and copy != "none":
+        name = copy[len("retail:"):] if isinstance(copy, str) and copy.startswith("retail:") else None
+        if name is None or name.lower() not in RETAIL_FIGHTERS or name.lower() == "kirby":
+            errors.append((path+".kirby_copy", 'must be "none" or "retail:<fighter>" (a retail fighter other than Kirby)'))
+    sfxs = [v.get("sfx") for v in (fighter.get("audio") or {}).get("voice", []) if isinstance(v, dict)]
+    if len(set(sfxs)) != len(sfxs):
+        errors.append((path+".audio.voice", "a sound id is replaced twice"))
     for key in ("fx_bindings", "special_attributes"):
         if key in fighter and data["geno"] < 7:
             errors.append((path+"."+key, "needs geno: 7"))
@@ -135,6 +158,10 @@ def export_package(source, out):
             for name in ([value] if isinstance(value, str) else value):
                 if (source / "files" / name).is_file():
                     files.add("files/" + name)
+        audio = f.get("audio") or {}   # slice 6 (geno 10): the package's own sound clips (.gnsnd, converted from original audio by tools/geno/audio.py)
+        for name in ([audio["announcer"]] if "announcer" in audio else []) + [v["file"] for v in audio.get("voice", []) if isinstance(v, dict) and "file" in v]:
+            if (source / "files" / name).is_file():
+                files.add("files/" + name)
         for row in f.get("subactions", []):
             if isinstance(row.get("file"), str):
                 errors = []

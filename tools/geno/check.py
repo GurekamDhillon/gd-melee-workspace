@@ -244,7 +244,7 @@ def presentation_checks(fighter, p, base, errors):
     pres = fighter.get("presentation")
     if not isinstance(pres, dict):
         return
-    for key in ("icon", "portrait", "stock"):
+    for key in ("icon", "portrait", "stock", "emblem"):
         value = pres.get(key)
         names = [value] if isinstance(value, str) else value if isinstance(value, list) else []
         for j, name in enumerate(names):
@@ -263,8 +263,30 @@ def presentation_checks(fighter, p, base, errors):
             fmt, w, h, _tf, _tn, isz, tsz, ioff, toff = struct.unpack(">9I", blob[8:44])
             if fmt not in GXTX_FORMATS or ioff + isz > len(blob) or (tsz and toff + tsz > len(blob)) or not (0 < w <= 1024 and 0 < h <= 1024):
                 errors.append(diagnostic(where, "files/%s: format %d, %dx%d, image %d@%d do not fit" % (name, fmt, w, h, isz, ioff)))
-            elif key == "stock" and fmt >= 8:
-                errors.append(diagnostic(where, "a stock icon cannot use a palette format (%s): encode it as rgb5a3 or rgba8" % GXTX_FORMATS[fmt]))
+            elif key in ("stock", "emblem") and fmt >= 8:
+                errors.append(diagnostic(where, "a %s cannot use a palette format (%s): encode it without a palette (rgb5a3, rgba8, i4, ia8...)" % ("stock icon" if key == "stock" else "results emblem", GXTX_FORMATS[fmt])))
+
+
+def audio_checks(fighter, p, base, errors):
+    """Slice 6 (geno 10): the sound clips a define names. Each is a .gnsnd of the package's files/ folder (tools/geno/audio.py); one that is not built
+    yet is a warning (the engine stays silent and logs once); one that is there must parse."""
+    from . import audio
+    aud = fighter.get("audio")
+    if not isinstance(aud, dict):
+        return
+    names = ([("announcer", aud["announcer"])] if isinstance(aud.get("announcer"), str) else []) + \
+            [("voice[%d]" % j, v.get("file")) for j, v in enumerate(aud.get("voice", [])) if isinstance(v, dict) and isinstance(v.get("file"), str)]
+    for key, name in names:
+        where = p + ".audio." + key
+        if ".." in name or "/" in name or "\\" in name or ":" in name:
+            errors.append(diagnostic(where, "must be a plain file name"))
+            continue
+        path = Path(base) / "files" / name
+        if not path.is_file():
+            WARNINGS.append(diagnostic(where, "files/%s is not there (build it with python -m tools.geno.audio); the game stays silent" % name))
+            continue
+        for problem in audio.check_file(path):
+            errors.append(diagnostic(where, "files/%s: %s" % (name, problem)))
 
 
 def package_files(base, name):
@@ -438,6 +460,7 @@ def validate(data, base):
             errors.extend(diagnostic(path, message) for path, message in validate_definition(data, fighter, p))
             graph_checks(fighter, p, base, errors)
             presentation_checks(fighter, p, base, errors)
+            audio_checks(fighter, p, base, errors)
         elif "common_states" in fighter:
             errors.append(diagnostic(p+".common_states", "common state overrides require define"))
         attach = fighter.get("attach", "mario")

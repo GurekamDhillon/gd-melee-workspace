@@ -9,6 +9,7 @@ For every costume this writes, as PNG:
     GnCourier_icon.png              64x56    the character select tile (the default costume's head and shoulders)
     GnCourier_csp_<costume>.png     136x188  the portrait, a three-quarter view
     GnCourier_stock_<costume>.png   32x32    the HUD stock icon (the head)
+    GnCourier_emblem.png            128x128  the results emblem (a white ring and a courier's satchel flap on transparent: the results screen tints it)
 
 then the caller turns them into .gxtex with pc/tools/png2gx.py (build_courier.sh does). It is a small z-buffered software renderer
 (numpy): flat lights, nearest texels, 4x4 supersampling. It is placeholder-grade by design: the owner is to choose the real look.
@@ -129,6 +130,22 @@ def fit(view_box, aspect, pad):
     return (cx - ww / 2, cx + ww / 2, cy - hh / 2, cy + hh / 2)
 
 
+def emblem(size=128):
+    """The results emblem, drawn from scratch: white shapes on transparent (the results screen multiplies them by the player's colour)."""
+    from PIL import ImageDraw
+    ss = 4
+    img = Image.new("RGBA", (size * ss, size * ss), (255, 255, 255, 0))
+    d = ImageDraw.Draw(img)
+    s = size * ss
+    white = (255, 255, 255, 255)
+    d.ellipse([s * 0.06, s * 0.06, s * 0.94, s * 0.94], outline=white, width=int(s * 0.07))        # the ring
+    d.polygon([(s * 0.26, s * 0.34), (s * 0.74, s * 0.34), (s * 0.74, s * 0.70), (s * 0.26, s * 0.70)], fill=white)   # the satchel
+    d.polygon([(s * 0.26, s * 0.34), (s * 0.74, s * 0.34), (s * 0.50, s * 0.54)], fill=(0, 0, 0, 0))                    # its flap, cut out
+    d.polygon([(s * 0.26, s * 0.34), (s * 0.74, s * 0.34), (s * 0.50, s * 0.54)], outline=white, width=int(s * 0.03))
+    d.rectangle([s * 0.46, s * 0.52, s * 0.54, s * 0.60], fill=(0, 0, 0, 0))                          # the clasp
+    return img.resize((size, size), Image.LANCZOS)
+
+
 def main(argv):
     if len(argv) != 3:
         print(__doc__)
@@ -160,6 +177,7 @@ def main(argv):
             view = fit(tb, 64.0 / 56.0, 0.06)
             Image.fromarray(render(rgba, tris, -18.0, view, (64, 56))).save(out / "GnCourier_icon.png")
         made.append(costume)
+    emblem().save(out / "GnCourier_emblem.png")
     print("ui_art: costumes %s -> %s" % (", ".join(made), out))
     return 0 if made else 1
 
