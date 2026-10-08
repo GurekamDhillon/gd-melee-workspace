@@ -196,6 +196,7 @@ def build_schema():
                   "fighters": arr(fighter, C["GENO_MAX_PROFILES"])}, ("geno", "fighters"))
     result["$defs"] = {"plan": obj({"parts": integer("Parts-table size", section="22.4"), "joint_to_part": arr(integer("Joint to part", section="22.4")), "part_to_joint": arr(integer("Part to joint", section="22.4")),
         "bank": obj({"clips": arr(string("Clip symbol", section="22.4")), "clip": string("One clip", section="22.4")}), "row_clips": arr(string("Row to clip", section="22.4")),
+        "row_blend": arr(arr(integer("A blend byte of the row (ftData x10)", section="22.7"), 2), section="22.7"),
         "row_flags": arr(integer("The animation flag bits of an animation row above the low 6 (0x80000000: the clip drives the root); null keeps the donor's", section="22.7")),
         "motion_rows": arr(obj({}), 1024), "ftdata": obj({}), "costumes": arr(obj({})),
         "hurtboxes": arr(obj({"a": arr(num("Offset a")), "b": arr(num("Offset b")), "radius": num("Capsule radius"), "height": integer("Height class", section="22.4"),
