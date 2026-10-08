@@ -205,7 +205,7 @@ are hard links to the player's own retail costume DATs read from the ACE image i
 | `run.sh --test`, ACE, no skins | `TESTS: pass=346 fail=0` |
 | `run.sh --test`, ACE, the 138-skin pack | `TESTS: pass=346 fail=0`; `skins: installed tables verified: 8 fighters, 138 skin rows` (table sizes, file strings, menu counts and wire round trip of every row, inside `mex_ftdata_rows`) |
 | `run.sh --test`, vanilla disc, no mods | `TESTS: pass=346 fail=0` |
-| native suite (58 cases, same list as the skins255 report) | 51 pass, 7 fail: `slippi-fixture slippi-rb script-policy arena-spawn profiler-core mex-items-query atlas-mods-door`, all in the 8 that fail on integration (`view-canvas` passed this time); no new failure. `skins-core` (13 groups of checks): all passed |
+| native suite (58 cases, same list as the skins255 report) | 51 pass, 7 fail: `slippi-fixture slippi-rb script-policy arena-spawn profiler-core mex-items-query atlas-mods-door`, all in the 8 that fail on integration (`view-canvas` passed this time); no new failure. `skins-core` (native test of the pure logic: ordering, 255 cap, team/like/Kirby, partner rows, wire round trip): `all checks passed` |
 | boot cost of 138 skins | registry build `9-14 ms` (log: `skins: 138 skin mod(s) read ... 9.0 ms`); persistent pool 15808 -> 20960 bytes (+5152); headless test process peak working set 274.1 MB -> 274.7 MB (`PeakWorkingSet64`, 14 s runs, same wall time). The match scene reached `GS_VS` at 1.73 s against 1.31 s without the 138 mods (other lanes' windows were running; the extra time is mounting 138 mods' files, not the registry) |
 | a match with the highest skins | `p1=mario/c44; p2=fox/c34` (cpu, idle): `skins: kind 0 loads skin costume 44: skins/tsk-mario-038/1.dat`, `kind 1 ... 34: skins/tsk-fox-029/1.dat`; 45 s, no crash; peak working set 931 MB against 1036 MB for the same scene with the skins missing (costumes 44 and 34 do not exist there: the game falls back, no crash) |
 | a skin with art in a match | Fox c35 (`tsk-fox-030`, synthetic stock icon with the number 30): the screenshot `_build/skin-tests/shots/m1.png` shows the HUD stock icon "30" from the skin's `stock` `.gxtex` and the skin's DAT as Fox's model |
@@ -218,7 +218,7 @@ carved), so every registry query builds it first; the headless tests isolate gue
 ### Owed (a person with a monitor)
 
 - The Atlas select: stepper `n / total Name`, `X/Y` one step, `L/R` skip ten on your own card, the card name and portrait for a skin with `csp` and one without (default art, never another
-  fighter's), and the original CSS. A CSS screenshot from the scripted driver came out black (the Atlas select does not capture through the console `shot`), so none of this was seen.
+  fighter's), and the original CSS. (The log of the scripted CSS run does show `skins: portrait from the skin: skins/tsk-fox-030/1_csp.gxtex as kit texture 429`, so the art loads; its placement was not seen.) A CSS screenshot from the scripted driver came out black (the Atlas select does not capture through the console `shot`), so none of this was seen.
 - A Kirby skin (`kirby_hat`), a `team: red/blue/green` skin in a team match, a Popo or Zelda skin with and without `partner` (Nana / Sheik), and the m-ex Wolf and Courier skins in a match: counted and installed
   (tables verified), not played.
 - The MODS screen listing skin mods (kind `skin`), and the results screen with a skin.
