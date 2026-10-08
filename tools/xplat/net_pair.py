@@ -75,6 +75,7 @@ def main():
     ap.add_argument('--stage', default='31'); ap.add_argument('--seed', type=int, default=100)
     ap.add_argument('--disc', default='vanilla'); ap.add_argument('--net-sim', default='')
     ap.add_argument('--linux-dir', default='outD')
+    ap.add_argument('--linux-ws', default='wsD', help='the WSL clone of the workspace that holds tools/xplat (under ~/lb2)')
     ap.add_argument('--port', type=int, default=0)
     ap.add_argument('--no-bot', action='store_true')
     ap.add_argument('--mods', default='', help='envoy: use the Envoy mod folder on both sides')
@@ -146,8 +147,8 @@ def main():
             env_pairs['MELEE_MODS_DIR'] = '/mnt/h/xpmods'
         extra = ' '.join(q('%s=%s' % kv) for kv in env_pairs.items())
         inner = ('cd ~/lb2; export MELEE_VANILLA_ISO=%s MELEE_ACE_ISO=%s MELEE_AKANEIA_ISO=%s; '
-                 './enterD.sh env bash /mnt/h/wsD/tools/xplat/run_linux_net.sh /mnt/h/%s/linux %s %d %s'
-                 % (q(DISCS['vanilla']), q(DISCS['ace']), q(DISCS['akaneia']), a.linux_dir, lname, a.seconds + 60, extra))
+                 './enterD.sh env bash /mnt/h/%s/tools/xplat/run_linux_net.sh /mnt/h/%s/linux %s %d %s'
+                 % (q(DISCS['vanilla']), q(DISCS['ace']), q(DISCS['akaneia']), a.linux_ws, a.linux_dir, lname, a.seconds + 60, extra))
         env = dict(os.environ)
         env['MSYS_NO_PATHCONV'] = '1'
         with open(os.path.join(out, 'linux.out'), 'w') as fo:

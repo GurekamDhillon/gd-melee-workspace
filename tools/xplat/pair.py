@@ -28,6 +28,7 @@ def main():
     ap.add_argument('--only', default='')
     ap.add_argument('--out', default=os.path.join(ROOT, '_build', 'xplat'))
     ap.add_argument('--linux-dir', default='outD')
+    ap.add_argument('--linux-ws', default='wsD', help='the WSL clone of the workspace that holds tools/xplat (under ~/lb2)')
     ap.add_argument('--bias', default='55')
     ap.add_argument('--ports', default='2')
     ap.add_argument('--disc', default='vanilla')
@@ -57,9 +58,9 @@ def main():
     def run_lin():
         inner = ('cd ~/lb2; export MELEE_VANILLA_ISO={v} MELEE_ACE_ISO={ace} MELEE_AKANEIA_ISO={ak}; '
                  './enterD.sh env SDL_VIDEODRIVER={vd} XP_DISC={disc} '
-                 'bash /mnt/h/wsD/tools/xplat/run_linux.sh /mnt/h/{ld}/linux {name} {frames} {seed} {scene} {extra}').format(
+                 'bash /mnt/h/{ws}/tools/xplat/run_linux.sh /mnt/h/{ld}/linux {name} {frames} {seed} {scene} {extra}').format(
             v=q(DISC_WSL), ace=q('/mnt/c/iso/SSBM ACE Build v2.0.0.iso'), ak=q('/mnt/c/iso/Akaneia.iso'), disc=a.disc, vd=os.environ.get("XP_VIDEO", "x11"),
-            ld=a.linux_dir, name='x_' + a.name, frames=a.frames, seed=a.seed, scene=q(a.scene), extra=' '.join(q(e) for e in extra))
+            ld=a.linux_dir, ws=a.linux_ws, name='x_' + a.name, frames=a.frames, seed=a.seed, scene=q(a.scene), extra=' '.join(q(e) for e in extra))
         env = dict(os.environ)
         env['MSYS_NO_PATHCONV'] = '1'
         with open(os.path.join(out, 'linux.out'), 'w') as fo:
