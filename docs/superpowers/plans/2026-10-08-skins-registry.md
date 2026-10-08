@@ -6,7 +6,7 @@ back to the fighter's default; its report is `_build/tmp/codex-skins255-report.m
 `ws/skins-registry` (this repo). Read with `docs/mods-packaging.md` (the mods folder), `melee/docs/geno.md` 22.6 (Geno costumes) and
 `_research/nucleus-mod-format-2026-10-08.md` (costume DATs are typed by content; one DAT is one colour slot).
 
-Status: **brief first, then built**. The "Results" section at the end is filled in by the lane; until then every claim here is a design.
+Status: **built and measured 2026-10-08** (game branch `agent/skins-registry`, exe built from `473c845b9`; section 11 has the results and what is still owed). Sections 1-10 are the design; where the build differs the text above already says so.
 
 ## 1. The idea in one paragraph
 
@@ -193,3 +193,33 @@ Nucleus does: the public symbol `Ply<Fighter>5K<Colour>_Share_joint` names the f
    simple rule; sticky slots only if replays of skin matches become a thing people exchange.
 2. **Kirby hats.** Format 1 maps a Kirby skin onto one of the six authored hat rows; a custom hat is a later format.
 3. **Cap.** 255 is the u8 byte's limit (skins255); the registry does not try to lift it.
+
+## 11. Results (2026-10-08, ACE disc, one machine; the exe is `_build/agents/skins255/melee-pc.exe`, build 473c845b9)
+
+The test pack: `tools/skins/make_test_skins.py` -> 135 skins (mario 40, fox 30, falco 20, marth 20, captain 10, link 10, Wolf 5 via `{"mex": "PlWf.dat"}`)
+plus a Geno fighter (`vanilla-courier`, built art from the main checkout) with 3 skins (`{"geno": ...}`) = **138 skin costumes on 8 fighters**. The model files
+are hard links to the player's own retail costume DATs read from the ACE image into `_build/skin-tests/` (git-ignored by a `*` .gitignore; never committed).
+
+| check | result |
+|---|---|
+| `run.sh --test`, ACE, no skins | `TESTS: pass=346 fail=0` |
+| `run.sh --test`, ACE, the 138-skin pack | `TESTS: pass=346 fail=0`; `skins: installed tables verified: 8 fighters, 138 skin rows` (table sizes, file strings, menu counts and wire round trip of every row, inside `mex_ftdata_rows`) |
+| `run.sh --test`, vanilla disc, no mods | `TESTS: pass=346 fail=0` |
+| native suite (58 cases, same list as the skins255 report) | 51 pass, 7 fail: `slippi-fixture slippi-rb script-policy arena-spawn profiler-core mex-items-query atlas-mods-door`, all in the 8 that fail on integration (`view-canvas` passed this time); no new failure. `skins-core` (13 groups of checks): all passed |
+| boot cost of 138 skins | registry build `9-14 ms` (log: `skins: 138 skin mod(s) read ... 9.0 ms`); persistent pool 15808 -> 20960 bytes (+5152); headless test process peak working set 274.1 MB -> 274.7 MB (`PeakWorkingSet64`, 14 s runs, same wall time). The match scene reached `GS_VS` at 1.73 s against 1.31 s without the 138 mods (other lanes' windows were running; the extra time is mounting 138 mods' files, not the registry) |
+| a match with the highest skins | `p1=mario/c44; p2=fox/c34` (cpu, idle): `skins: kind 0 loads skin costume 44: skins/tsk-mario-038/1.dat`, `kind 1 ... 34: skins/tsk-fox-029/1.dat`; 45 s, no crash; peak working set 931 MB against 1036 MB for the same scene with the skins missing (costumes 44 and 34 do not exist there: the game falls back, no crash) |
+| a skin with art in a match | Fox c35 (`tsk-fox-030`, synthetic stock icon with the number 30): the screenshot `_build/skin-tests/shots/m1.png` shows the HUD stock icon "30" from the skin's `stock` `.gxtex` and the skin's DAT as Fox's model |
+| netplay, one side lacks the skin | `tools/netplay/np_drive.py` through the local server on 127.0.0.1: host has the pack and picks Fox c35, guest has none and picks c1. Scene `p1=id:.../c1864947666/...;p2=id:.../c1`: host log `skins: p1 wire costume 6f28d7d2 -> costume 35 here` (loads `tsk-fox-030`), guest log `... -> costume 0 here (the default: this install lacks that skin)`. 45 s of play (rollback ticks 2700/2700): `desyncs 0` on both, the lobby and the match started (`PASS`) |
+| netplay, both sides have different skins | host pack picks c35, guest `packG` (40 Fox skins) picks c44 = `tsk-fox-039`, which the host lacks: host `p1 -> costume 35`, `p2 wire 776ec0fa -> costume 0 (default)`; guest `p1 -> 35` (loads `tsk-fox-030`), `p2 -> 44` (loads `tsk-fox-039`). `desyncs 0` on both (ticks 2700 and 3000) |
+
+What it took to get there (found by running, not by reading): a skin's rows must exist before the first table install (the headless tests install before the arena is
+carved), so every registry query builds it first; the headless tests isolate guest memory per test, so the installed-table check runs inside the test that builds the tables.
+
+### Owed (a person with a monitor)
+
+- The Atlas select: stepper `n / total Name`, `X/Y` one step, `L/R` skip ten on your own card, the card name and portrait for a skin with `csp` and one without (default art, never another
+  fighter's), and the original CSS. A CSS screenshot from the scripted driver came out black (the Atlas select does not capture through the console `shot`), so none of this was seen.
+- A Kirby skin (`kirby_hat`), a `team: red/blue/green` skin in a team match, a Popo or Zelda skin with and without `partner` (Nana / Sheik), and the m-ex Wolf and Courier skins in a match: counted and installed
+  (tables verified), not played.
+- The MODS screen listing skin mods (kind `skin`), and the results screen with a skin.
+- Netplay through the lobby UI's own CHAR action and with a real peer over the internet (the test path was the menu's host/join with `MELEE_NETPLAY_COLOR`).

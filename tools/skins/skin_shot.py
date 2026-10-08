@@ -48,6 +48,22 @@ class Console:
             out.append(r)
 
 
+def bash_path(p):
+    """A Windows path -> the /e/x form Git Bash takes as a script path."""
+    p = p.replace("\\", "/").rstrip("/")
+    if len(p) > 1 and p[1] == ":":
+        p = "/" + p[0].lower() + p[2:]
+    return p
+
+
+def git_bash():
+    """Git Bash, not the WSL bash.exe that comes first on a Windows PATH."""
+    for c in (os.environ.get("GW_BASH", ""), "C:/Program Files/Git/bin/bash.exe", "C:/Program Files (x86)/Git/bin/bash.exe"):
+        if c and os.path.exists(c):
+            return c
+    return "bash"
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--name", required=True, help="sandbox name (unique per run)")
@@ -77,7 +93,7 @@ def main():
     for kv in a.env:
         k, v = kv.split("=", 1)
         env[k] = v
-    cmd = ["bash", os.path.join(ROOT, "tools", "port", "run.sh"), "--realtime", "--idle-cpus", "--max-seconds", str(a.wait + 20 + 6 * len(a.shot)),
+    cmd = [git_bash(), bash_path(ROOT) + "/tools/port/run.sh", "--realtime", "--idle-cpus", "--max-seconds", str(a.wait + 20 + 6 * len(a.shot)),
            a.name, "--iso", a.iso]
     p = subprocess.Popen(cmd, env=env)
     con = Console(a.port)
