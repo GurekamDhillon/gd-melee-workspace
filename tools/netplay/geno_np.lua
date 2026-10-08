@@ -117,8 +117,8 @@ local function play_lobby()
         if lp == "pick" and np.stages[1] == 0 then
           gd.netplay_act("stage", 1)
         else
-          for i = #np.stages, 2, -1 do
-            if np.stages[i] == 0 then gd.netplay_act("stage", i) break end
+          for i = (lp == "strike") and (#np.stages - 1) or #np.stages, 2, -1 do -- game 1 may not strike the counterpick (the last entry)
+            if np.stages[i] == 0 and gd.netplay_act("stage", i) then break end
           end
         end
       elseif lp == "ready" and not me.ready then
