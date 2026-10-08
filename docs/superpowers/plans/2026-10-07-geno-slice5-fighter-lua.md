@@ -1,6 +1,6 @@
 # Geno slice 5: fighter Lua, build brief and first increment (2026-10-07)
 
-**Status: written before the code, then executed on game `agent/geno-s5` / workspace `ws/geno-s5`; section 8 records what was built and where it differs.** Not merged. It builds on the road in
+**Status: written before the code, then executed on game `agent/geno-s5` / workspace `ws/geno-s5`; section 8 records what was built and where it differs, section 9 the second increment (`agent/geno-s5b`, format 10).** It builds on the road in
 `docs/superpowers/plans/2026-10-05-geno-full-fighter-slice2.md` (slice 5 section; decisions D1, D2, D8 apply unchanged) and on the design's section 4
 (`docs/superpowers/specs/2026-10-04-geno-full-fighter-design.md:128-140`). Where this brief and that road differ, this one wins for slice 5.
 
@@ -134,3 +134,14 @@ Evidence (this build, vanilla disc, headless; nothing watched on screen): build 
 (charge 13 after 15 held frames, release at 25, hitbox damage 9.750 = 6 + 0.15 x 25, savestate at charge 10 / load at 24 gave 11, `gd.rewind_test(120)` `pass=true`, `diff_compared=0`); Hero, Striker and Caster ids identical in the old and new exe;
 bench SyncTest: 27,600 curated checks, mismatches only in P2's script frame counter (curated word 23), the same word that mismatches for a retail Mario P1 under the same input, the Charger's own record never.
 Owed to a person: the feel of the charge and strike (nobody watched it), a real-rollback run (slice 7), play on a controller.
+
+
+## 9. Second increment as built (2026-10-08; game `agent/geno-s5b`, workspace `ws/geno-s5b`)
+
+Decisions taken by the owner (recommended defaults): the format number is **10** (L8 reversed: `GENO_VERSION` 10, `lua` needs `"geno": 10`, the Charger moved to 10, one early commit); the API names, commands and limits stay as built and widen
+when a real move needs it; the fault policy stays abort-to-Wait/Fall until slice 7; Lua on attach entries stays refused.
+
+Built: a second real move of a different kind, `vanilla-riposte` (a counter with a follow-up: the engine's `counter` window, Lua for the stance, the answer scaled by the countered hit, a streak across moves, a turn toward an attacker behind,
+a second phase on A). What it needed: `ctx.self.hit_damage`, `hit_from`, `countered` (io words 12 to 14; values already in `GenoState` and the hash) and the command `ctx.turn()`. No new limits. `ctx.self.action_frame` is the move's clock and skips hitlag
+(documented; the proof converts). Tooling: `tools/geno/lua_check.py` (the module's text against the API read from `geno_lua_core.h`), `new --template lua-counter`, schema regenerated. Lesson 13 completed. Evidence in `melee/docs/geno.md` 23.7.
+Not done: a Lua-opened counter window, `ctx.query`, `phys`/`coll`/`iasa` phases, a LAB faults display (S5-7), a match fault (slice 7).

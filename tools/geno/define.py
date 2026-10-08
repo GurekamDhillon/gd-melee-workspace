@@ -16,8 +16,8 @@ def definition_schema():
 def validate_definition(data, fighter, path):
     errors = []
     own = fighter["define"].get("base") == "none"
-    if data["geno"] not in (6, 7, 8, 9):
-        errors.append((path+".define", "define requires geno: 6, 7, 8 or 9"))
+    if data["geno"] not in (6, 7, 8, 9, 10):
+        errors.append((path+".define", "define requires geno: 6, 7, 8, 9 or 10"))
     if own and data["geno"] < 9:
         errors.append((path+".define.base", "base none needs geno: 9"))
     if own != (fighter["define"].get("resources") == "mod:files"):
@@ -27,7 +27,7 @@ def validate_definition(data, fighter, path):
     if ".." in fighter["define"]["key"]:
         errors.append((path+".define.key", "identity must not contain '..'"))
     # Slice 2 (geno 7) admits special_attributes, fx_bindings and the whole attribute table; articles, own
-    # model/clips, sounds and Lua are later slices.
+    # model/clips, sounds are later slices; fighter Lua (geno 10, slice 5) is checked in check.py lua_checks and lua_check.py.
     # Slice 3 (geno 8) admits articles and the named-sound table (the resolver): every sound an article names must exist.
     for key in ("articles", "sounds"):
         if key in fighter and data["geno"] < 8:
