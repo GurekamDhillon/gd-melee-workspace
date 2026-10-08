@@ -46,8 +46,7 @@ files = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
 rec = {"format": 1, "built_by": "tools/geno/build_courier.sh",
        "art_commit": git("log", "-1", "--format=%H", "--", "ports/vanilla-original"),
        "art_dirty": bool(git("status", "--porcelain", "--", "ports/vanilla-original")), "files": files}
-(out / "original-assets.json").write_text(json.dumps(rec, indent=2) + "
-")
+(out / "original-assets.json").write_text(json.dumps(rec, indent=2) + "\n")
 PY
 if [ $INSTALL = 1 ]; then
   D="${GW_MELEE:-$ROOT/melee}/pc/geno/mods/vanilla-courier/files"; mkdir -p "$D"; cp "$OUT"/GnCourier_*.dat "$OUT"/GnCourierAJ.dat "$OUT"/plan.json "$D"/

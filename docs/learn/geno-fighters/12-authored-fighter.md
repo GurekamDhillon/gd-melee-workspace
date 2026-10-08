@@ -52,3 +52,9 @@ Rules the converter follows: glTF Y-up facing +Z is the engine's model space (no
 - **Independence census.** The log line `geno: census kind N: ftData fields still the donor's pointers: ...` lists what a `none` define still
   borrows from Mario; the aim is an empty list (`geno.md` 22.5).
 
+## Checking a finished fighter (slice 4 close-out)
+
+`tools/geno/moves_check/` plays every move of a define against a standing Mario in the LAB, headless, and compares it with the fighter's own `geno.json`
+(damage, angle, knockback, size, first live frame, throw and pummel damage, landing lag per aerial, the counter inside and outside its window), then runs
+Classic and Versus with the fighter as P1 (`README.md` there). Two things to know about a `none` fighter that borrows the donor's scripts: a hand-pose
+request (an item grip) is ignored, and an effect the donor's script puts on a body part your skeleton has no joint for is skipped; both log once.
