@@ -13,6 +13,7 @@ the rules that cross them.
 | `mex_port/` | reading m-ex's data and patches, the bridge signatures, the ABI audits | `mex_port/README.md` (the attribution rule is there: consult m-ex, never copy it) |
 | `mods_browser/` | the mod index format the launcher reads | `gdmelee-mods.schema.json` |
 | `blender/` | Target Test stage round-trips | `blender/README.md` |
+| `skins/` | making, importing or linting a skin mod (costume packs), a synthetic test pack, a one-window screenshot of a scene | `skins/README.md`; format in `docs/mods-packaging.md` 4b |
 | `gc_extract.py` | assets out of a disc, locally only | |
 
 ## Rules
