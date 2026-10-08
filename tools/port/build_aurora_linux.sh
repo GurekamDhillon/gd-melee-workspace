@@ -22,6 +22,10 @@ GW_MELEE="${GW_MELEE:-$GW_ROOT/melee/worktrees/linux}"
 BUILD="${GW_AURORA_LINUX_BUILD:-$GW_ROOT/_build/linux/ax86m}"
 JOBS="${GW_JOBS:-8}"
 AURORA_SRC="$GW_MELEE/extern/aurora"
+# Plain `clang -m32` is the i386 triple with no SSE: all of Aurora, Dawn and SDL compiled to x87 float math,
+# while the Windows build (MSVC) and the game itself (gwtool, shim_linux.sh) use SSE2. Every x86 CPU that can
+# run this port has SSE2. GW_AURORA_CPUFLAGS="" restores the old flags (an A/B knob).
+CPU_FLAGS="${GW_AURORA_CPUFLAGS--msse2 -mfpmath=sse}"
 
 [ -f "$AURORA_SRC/CMakeLists.txt" ] || {
     echo "error: no Aurora at $AURORA_SRC - set GW_MELEE to the melee checkout" >&2
@@ -46,8 +50,8 @@ cmake -S "$AURORA_SRC" -B "$BUILD" -G Ninja "${source_options[@]}" \
     -DCMAKE_C_COMPILER="${GW_CLANG:-clang}" \
     -DCMAKE_CXX_COMPILER="${GW_CLANGXX:-clang++}" \
     -DAURORA_ENABLE_TESTS=OFF \
-    -DCMAKE_C_FLAGS=-m32 \
-    -DCMAKE_CXX_FLAGS=-m32 \
+    -DCMAKE_C_FLAGS="-m32 $CPU_FLAGS" \
+    -DCMAKE_CXX_FLAGS="-m32 $CPU_FLAGS" \
     -DCMAKE_ASM_FLAGS=-m32 \
     -DCMAKE_EXE_LINKER_FLAGS=-m32 \
     -DCMAKE_SHARED_LINKER_FLAGS=-m32 \
