@@ -97,8 +97,8 @@ Found and fixed on the way: the AI state was not in the hash (added `CPUA`); lob
 `cpu_soak.py` now picks free 57xxx ports (a pid-derived port collided with another lane's host and produced a bogus run).
 
 **Verdict: feasible.** No divergence found, so none to fix: the retail AI, its RNG (`HSD_Randi`, already hashed), its virtual pad and its state
-(`fp->cpu`, in the snapshot because it is in the fighter struct) are identical on both peers through rollbacks, with 1 and 2 CPUs, 10 characters (incl. Ice
-Climbers/Nana and Kirby), 6 stages, delay 0 and 2, up to lag100/jitter40/loss8, 49k-frame matches.
+(`fp->cpu`, in the snapshot because it is in the fighter struct) are identical on both peers through rollbacks, with 1 and 2 CPUs, 6 CPU characters (Falco, Marth, Jigglypuff, Link, Ice
+Climbers/Nana, Kirby), 5 stages, delay 0 and 2, up to lag100/jitter40/loss8, 49k-frame matches.
 
 ## 8. Items and drops (step F, G)
 
