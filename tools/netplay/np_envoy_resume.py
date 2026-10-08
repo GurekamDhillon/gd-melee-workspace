@@ -12,7 +12,7 @@ Every process this starts is stopped by its numeric PID at the end. Evidence: <G
 import json, os, re, shutil, socket, subprocess, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__)).replace("\\", "/")
-ROOT = os.environ.get("GW_ROOT_ENV") or "E:/Projects/Melee Workspace"  # the workspace with .env, _build/SDL3.dll and the server (a lane worktree has none of them)
+ROOT = os.environ.get("GW_ROOT_ENV") or "E:/Projects/Melee Workspace"  # the workspace with .env and _build/SDL3.dll (a lane worktree has none of them)
 BUILD = os.environ["GW_BUILD_ROOT"].replace("\\", "/")
 WT = os.environ["GW_MELEE"].replace("\\", "/")
 BASH = "C:/Program Files/Git/bin/bash.exe"
@@ -212,7 +212,7 @@ class Driver:
         shutil.copytree(WT + "/pc/scripts/examples/envoy", self.mods + "/envoy")
         sport = int(os.environ.get("MELEE_S5_SERVER_PORT", "0")) or free_port()
         self.server = "127.0.0.1:%d" % sport
-        self.srv = subprocess.Popen([sys.executable, ROOT + "/tools/netplay/server/gdmelee_server.py", "--bind", "127.0.0.1", "--port", str(sport)],
+        self.srv = subprocess.Popen([sys.executable, HERE + "/server/gdmelee_server.py", "--bind", "127.0.0.1", "--port", str(sport)],
                                     stdout=open(self.out + "/server.log", "w"), stderr=subprocess.STDOUT)
         self.pids["server"] = self.srv.pid
         self.log("server pid", self.srv.pid, "on", self.server)
