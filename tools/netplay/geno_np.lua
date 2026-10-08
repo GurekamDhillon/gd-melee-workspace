@@ -69,9 +69,15 @@ local function enter_room()
     end
     if not code_ready() then step("no room code") return false end
     step("joining " .. gd.netplay().code)
-    gd.press(1, "A", 4)
-    if not gd.wait_until(function() return gd.netplay().phase == "lobby" end, 3600) then
-      step("could not join: " .. gd.netplay().status) return false
+    -- the A press is repeated: a press that lands before the screen takes input is lost (seen once in a run with a lagged link)
+    local waited = 0
+    while waited < 3600 and gd.netplay().phase ~= "lobby" do
+      if waited % 240 == 0 and gd.netplay().phase == "idle" then gd.press(1, "A", 4) end
+      gd.wait(30)
+      waited = waited + 30
+    end
+    if gd.netplay().phase ~= "lobby" then
+      step("could not join: " .. gd.netplay().status .. " (phase " .. gd.netplay().phase .. ")") return false
     end
   end
   step("lobby")
@@ -107,8 +113,13 @@ local function play_lobby()
          ((lp == "char_winner" or lp == "char_loser") and np.turn == np.me) then
         if not do_pick() then return false end
       elseif (lp == "strike" or lp == "ban" or lp == "pick") and np.turn == np.me then
-        for i, st in ipairs(np.stages) do
-          if st == 0 then gd.netplay_act("stage", i) break end
+        -- Battlefield is entry 1 (the pad bot's default edge, 62, is its half-width): pick it, and strike/ban from the far end of the list
+        if lp == "pick" and np.stages[1] == 0 then
+          gd.netplay_act("stage", 1)
+        else
+          for i = #np.stages, 2, -1 do
+            if np.stages[i] == 0 then gd.netplay_act("stage", i) break end
+          end
         end
       elseif lp == "ready" and not me.ready then
         gd.netplay_act("ready", true)

@@ -62,6 +62,8 @@ def main():
     ap.add_argument("--net-sim", default="off")
     ap.add_argument("--timeout", type=int, default=1500, help="seconds for the whole run")
     ap.add_argument("--seed", type=int, default=100)
+    ap.add_argument("--stocks", default="2")
+    ap.add_argument("--minutes", default="2")
     ap.add_argument("--expect", default="play", choices=("play", "refuse"))
     ap.add_argument("--exe", default="")
     ap.add_argument("--disc", default="vanilla")
@@ -87,7 +89,8 @@ def main():
 
     base = {"MELEE_NETPLAY_BIND": "127.0.0.1", "MELEE_WINDOW_X": "30000", "MELEE_WINDOW_Y": "30000", "MELEE_VOLUME": "0",
             "MELEE_PAD_IGNORE_ADAPTER": "1", "MELEE_RB_LOG": "0", "MELEE_PAD_BOT_MODE": "fuzz", "MELEE_PAD_BOT_EDGE": "62",
-            "MELEE_LAB_GAMES": str(a.games), "MELEE_SCRIPT": script}
+            "MELEE_LAB_GAMES": str(a.games), "MELEE_SCRIPT": script,
+            "MELEE_NETPLAY_STOCKS": a.stocks, "MELEE_NETPLAY_MINUTES": a.minutes}
     host = dict(base, MELEE_CONSOLE_PORT=str(HOST_PORT), MELEE_LAB_ROLE="host", MELEE_LAB_CK=str(a.host_ck),
                 MELEE_PAD_BOT="0,0,%d" % a.seed, MELEE_RB_HASHLOG=os.path.join(sand["host"], "hashes.csv").replace("\\", "/"))
     guest = dict(base, MELEE_CONSOLE_PORT=str(GUEST_PORT), MELEE_LAB_ROLE="guest", MELEE_LAB_CK=str(a.guest_ck),
