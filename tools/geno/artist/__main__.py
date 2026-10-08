@@ -5,6 +5,11 @@ import sys
 from . import pipeline, spec, validate
 
 
+def spec_part(i):
+    from . import convert
+    return convert._pp().COMMON[i] if i != 255 else ""
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="python -m tools.geno.artist")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -25,6 +30,8 @@ def main(argv=None):
     r = sub.add_parser("run-command", help="print the command that opens the fighter in the LAB")
     r.add_argument("config")
     r.add_argument("--out")
+    j = sub.add_parser("joints", help="the joint numbers the LAB shows (INSPECT > J) with bone name, role and Melee part")
+    j.add_argument("config")
     c = sub.add_parser("clips", help="print the clip checklist (tiers, fallbacks)")
     c.add_argument("--tier", default="prototype,recommended,finished")
     c.add_argument("--markdown", action="store_true", help="print the tables used by docs/geno-artist-rows.md")
@@ -41,6 +48,19 @@ def main(argv=None):
         from . import model
         f = model.load(a.config)
         print(pipeline.run_command(f, pipeline.out_dir(f, a.out)))
+        return 0
+    if a.cmd == "joints":
+        from . import model, convert
+        f = model.load(a.config)
+        pl, joints, err, part_of = convert.build_plan(f)
+        role_of = {b.name: b.role for b in f.bones}
+        names = {b.name: b for b in f.bones}
+        j2p = pl["parts"]["joint_to_part"]
+        print("joint  bone                       role             melee part  parent")
+        for i, jt in enumerate(joints):
+            part = pl["parts"]["joint_to_part"][i]
+            print("%5d  %-26s %-16s %-11s %s" % (i, jt["name"], role_of.get(jt["name"]) or ("(synthesized)" if jt["synth"] else ""),
+                                                  spec_part(part), jt["parent"] if jt["parent"] is not None else "-"))
         return 0
     if a.cmd == "clips":
         want = a.tier.split(",")

@@ -123,7 +123,7 @@ Run the printed command (it opens `mode=lab` with your fighter as P1 and Mario a
 
 | to inspect | LAB mode and key |
 |---|---|
-| skeleton, joint numbers (the numbers `hitbox joint=N` and `plan.json` use) | INSPECT (mode 5): `S` skeleton, `J` joint chips |
+| skeleton, joint numbers (the numbers `hitbox joint=N` and `plan.json` use) | INSPECT (mode 5): `S` skeleton, `J` joint chips; `python -m tools.geno.artist joints fighter.json` prints number -> bone -> role -> Melee part |
 | hurtboxes, hitboxes, labels | HITBOXES (mode 2): `B` boxes, `L` labels; `U` hurtbox states, `W` swept hitboxes |
 | ECB (donor numbers today) | HITBOXES `E`, or `gd.debug_stage(gd.stage_draw.ECB)` |
 | animation timing | FRAMES (mode 3): action/frame chip, move timeline, scrub `Q`/`E`, `HOME` replay |

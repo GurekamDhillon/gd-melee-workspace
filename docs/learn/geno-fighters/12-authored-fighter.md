@@ -1,5 +1,7 @@
 # 12. From a glTF to a playable fighter (slice 4)
 
+> **Superseded for new characters (2026-10-08):** use `tools/geno/artist` (`python -m tools.geno.artist build fighter.json`, no hand-kept manifest) and read `docs/geno-artist-spec.md`, the one authoritative artist specification. Corrections to this page: the converter does **not** add `TransN` (your `translation` bone is required; it adds only `TopN`, `XRotN`, `YRotN`); the 2-influence limit is a converter rule, not an engine one; and the engine reads no ECB or socket roles beyond the item socket and grab anchor.
+
 Status: the Courier is a fighter on its own skeleton (`base: "none"`): it stands, walks, jumps and attacks with its own clips, the Striker's moves retargeted by role. The engine half is still being finished (see `melee/docs/geno.md` 22.3 and the list at the end).
 
 You author a fighter in Blender (or anything that writes glTF 2.0) and describe it with three JSON files. The worked example is the
@@ -14,7 +16,7 @@ costumes), `skeleton.json`, `hurtboxes.json` (15 capsules and an ECB), plus `out
 Rules the converter follows: glTF Y-up facing +Z is the engine's model space (no axis change); at most 2 bone influences per vertex
 (the palette path packs a model into few pieces: a model split into hundreds of pieces cost about 5 ms a frame); a retail-style material
 (the texture is the diffuse lightmap); clips are one key per frame, rotations as Euler angles R = Rz Ry Rx; the engine's joint tree has
-`TopN`, `TransN`, `XRotN`, `YRotN` on top, so the converter adds the ones your skeleton lacks.
+`TopN`, `TransN`, `XRotN`, `YRotN` on top, so the converter adds `TopN`, `XRotN` and `YRotN` (your own `translation` bone is `TransN`, and is required).
 
  Credit: Blender, glTF 2.0 (Khronos), HSDLib (Ploaj).
 

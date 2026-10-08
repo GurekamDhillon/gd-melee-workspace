@@ -27,6 +27,7 @@ Blender 4.2+ (tested 5.2.2) only for `new`, for `build` from a `.blend`, and to 
 | `validate fighter.json [-v] [--json]` | blockers/warnings with the object, bone, vertex or action and the fix; exit 1 on a blocker |
 | `build fighter.json [--out DIR] [--export] [--strict]` | [0] export the glb from `art.blend` if stale, [1] validate, [2] plan/mesh/bank, [3] models, [4] moves + `geno.json` (+ `geno check`), [5] install into `<out>/mods` |
 | `run-command fighter.json` | the LAB launch line |
+| `joints fighter.json` | the joint numbers the LAB shows (INSPECT `J`) with bone name, role, Melee part and parent: the key to hitbox `joint=N`, `gd.joints` and sockets |
 | `clips [--tier ...] [--markdown]` | the clip checklist |
 | `python -m tools.geno.artist.proof_report LOG` | summarise a scripted run (`proof.lua`) |
 

@@ -250,6 +250,18 @@ class StarterTests(unittest.TestCase):
         self.assertTrue(os.path.isfile(os.path.join(mods, "sample-pip", "geno.json")))
         self.assertTrue(any("Restart the game" in l for l in logs))
 
+    @unittest.skipUnless(game() and fighterbuild(), "needs the game checkout and fighterbuild")
+    def test_panel_build_button(self):
+        d = os.path.join(self.tmp, "panel")
+        os.makedirs(d)
+        cfg = {"schema": "geno-artist/1", "key": "panel-pip", "name": "Panel Pip", "output": "out", "art": {"glb": "pip.glb"}}
+        json.dump(cfg, open(os.path.join(d, "fighter.json"), "w"))
+        r = subprocess.run([blender(), "-b", os.path.join(self.tmp, "pip.blend"), "--python", os.path.join(ROOT, "tools", "geno", "artist", "blender", "selftest.py"),
+                            "--", "panel", ROOT, os.path.join(d, "fighter.json"), os.path.join(d, "pip.glb")], capture_output=True, text=True)
+        self.assertNotIn("SELFTEST FAIL", r.stdout, r.stdout[-1200:])
+        self.assertIn("SELFTEST PASS panel build ran", r.stdout, r.stdout[-1200:])
+        self.assertTrue(os.path.isfile(os.path.join(d, "out", "mods", "panel-pip", "geno.json")))
+
     def test_blender_selftest(self):
         base = os.path.join(self.tmp, "pip.blend")
         for part in ("checks", "bake"):

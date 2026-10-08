@@ -7,6 +7,7 @@ animations, textures, sounds and menu graphics stay local and gitignored. Never 
 |---|---|
 | `halberd/` | Brawl Meta Knight: Brawl decoders, model/animation/effect/sound conversion and Geno configs |
 | `ir/` | shared character schema and Melee/Ultimate tools; not only a validator |
+| `geno-artist-samples/` | test characters for the artist pipeline (`tools/geno/artist`); parameters only, built files stay in `_build`; not shipped fighters |
 | `ir/tools/install_ultimate.py` | install an Ultimate fighter on its own skeleton; `trail` is Sora, `kirby` is Ultimate Kirby |
 | `ir/tools/trail_*` | Sora magic, physical specials and effect bindings; source-game key is `trail` |
 

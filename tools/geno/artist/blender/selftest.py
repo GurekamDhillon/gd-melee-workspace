@@ -31,7 +31,7 @@ def codes():
 arm = EF.find_armature()
 mesh = [o for o in bpy.data.objects if o.type == "MESH"][0]
 
-PART = "bake" if "bake" in sys.argv else "checks"
+PART = "bake" if "bake" in sys.argv else ("panel" if "panel" in sys.argv else "checks")
 if PART == "checks":
   # 1. a clean starter has no blockers
   EF.preflight()
@@ -96,4 +96,16 @@ if PART == "bake":
       bpy.context.scene.frame_set(4)
       chand = ctrl.pose.bones["hand.L"].head.copy()
       check("baked pose matches the control rig", hand is not None and (hand - chand).length < 0.02, "%s vs %s" % (hand, chand))
+if PART == "panel":
+    # the "Export + Build + Install" button: argv after the part = repo, fighter.json, glb
+    a = sys.argv[sys.argv.index("panel") + 1:]
+    geno_panel.register()
+    sc = bpy.context.scene
+    sc.geno_repo, sc.geno_config, sc.geno_glb = a[0], a[1], a[2]
+    bpy.context.view_layer.objects.active = arm
+    r = bpy.ops.geno.build()
+    txt = bpy.data.texts.get("Geno Build")
+    body = txt.as_string() if txt else ""
+    check("panel build ran", r == {"FINISHED"} and "Restart the game" in body, body[-300:])
+    check("panel export wrote the glb", os.path.isfile(a[2]) and os.path.isfile(a[2] + ".geno.json"))
 sys.exit(1 if fails else 0)
