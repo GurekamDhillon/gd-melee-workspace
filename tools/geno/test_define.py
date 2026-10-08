@@ -305,8 +305,72 @@ class FighterLuaTests(unittest.TestCase):
         self.assertTrue(any("relative path" in m for m in self.messages(bad)), self.messages(bad))
         bad = copy.deepcopy(data); bad["fighters"][0]["states"][1]["name"] = "Elsewhere"
         self.assertTrue(any("never targeted" in m for m in self.messages(bad)), self.messages(bad))   # ctx.go("Release") no longer resolves
-        attach = {"geno": 9, "fighters": [{"attach": "kirby", "lua": {"source": "return {}"}}]}
+        attach = {"geno": 10, "fighters": [{"attach": "kirby", "lua": {"source": "return {}"}}]}
         self.assertTrue(any("is for a define" in m for m in self.messages(attach)), self.messages(attach))
+
+
+    RIPOSTE = GAME / "pc/geno/mods/vanilla-riposte"
+
+    def module_messages(self, body, state=None):
+        """The Charger's entry with its module replaced by `body` (functions charge_enter, charge_frame, release_enter, release_frame)."""
+        data = check.load_json(self.CHARGER / "geno.json")
+        data["fighters"][0]["lua"] = {"source": body, "state": state or {"charge": "int", "charged": "bool"}}
+        return [e["message"] for e in check.validate(data, self.CHARGER)]
+
+    FNS = "function M.charge_enter(ctx) end function M.charge_frame(ctx) end function M.release_enter(ctx) end function M.release_frame(ctx) end "
+
+    def wrap(self, extra):
+        return "local M = {} " + self.FNS.replace("function M.charge_frame(ctx) end", "function M.charge_frame(ctx) ctx.go('Release') " + extra + " end") + "return M"
+
+    def test_riposte_checks_clean_and_has_text_files_only(self):
+        require_game("pc/geno/mods/vanilla-riposte/geno.json")
+        self.assertEqual(check.validate(check.load_json(self.RIPOSTE / "geno.json"), self.RIPOSTE), [])
+        for p in self.RIPOSTE.rglob("*"):
+            if p.is_file():
+                self.assertIn(p.suffix.lower() or p.name, {".json", ".words", ".genoasm", ".md", ".lua", ".gitkeep"}, p)
+
+    def test_module_text_is_checked_against_the_engine_api(self):
+        require_game("pc/geno/mods/vanilla-charger/geno.json")
+        self.assertEqual(self.module_messages(self.wrap("local s = ctx.state s.charge = s.charge + 1")), [])
+        cases = [
+            ("ctx.explode()", "ctx.explode does not exist"),
+            ("local x = ctx.self.hp", "ctx.self.hp does not exist"),
+            ("local i = ctx.input local y = i.special_down", "ctx.input.special_down does not exist"),
+            ("local s = ctx.state s.chargee = 1", "ctx.state.chargee, which is not declared"),
+            ("ctx.state.charged = 1", "bool slot"),
+            ("ctx.state.charge = 1.5", "int slot"),
+            ("ctx.go('Nowhere')", "no state of that name"),
+            ("ctx.hitbox_damage(16, 5)", "mask 16 is outside 1..15"),
+            ("for k, v in pairs(ctx.self) do end", "pairs is not in the sandbox"),
+            ("local t = string.rep('x', 3)", "string is not in the sandbox"),
+            ("local r = math.random(5)", "math.random is not in the sandbox"),
+            ("pcall(error)", "pcall is not in the sandbox"),
+        ]
+        for extra, want in cases:
+            messages = self.module_messages(self.wrap(extra))
+            self.assertTrue(any(want in m for m in messages), (extra, messages))
+        # the same words in a comment or a string are not code
+        self.assertEqual(self.module_messages(self.wrap("-- pairs(ctx) string.rep ctx.explode()\n local s = 'pairs ctx.self.hp'")), [])
+
+    def test_the_api_is_read_from_the_engine(self):
+        require_game("pc/geno/mods/vanilla-charger/geno.json")
+        from . import lua_check
+        a = lua_check.api()
+        self.assertTrue({"go", "velocity", "hitbox_damage", "loop", "turn"} <= a["cmds"], a["cmds"])
+        self.assertTrue({"special_held", "attack_pressed", "stick_fwd"} <= a["input"], a["input"])
+        self.assertTrue({"hit_damage", "hit_from", "countered", "anim_ended", "action_frame"} <= a["self"], a["self"])
+        self.assertEqual(a["math"], {"abs", "min", "max", "floor", "ceil", "sqrt", "tointeger", "huge", "pi"})
+
+    def test_lua_counter_template_checks_clean(self):
+        require_game("pc/geno/mods/vanilla-charger/geno.json")
+        from . import new
+        with tempfile.TemporaryDirectory() as tmp:
+            root = new.create(Path(tmp) / "my-counter", "my-counter", "My Counter", template="lua-counter")
+            data = check.load_json(root / "geno.json")
+            self.assertEqual(data["geno"], 10)
+            self.assertEqual(check.validate(data, root), [])
+            data["fighters"][0]["lua"]["state"] = {}
+            self.assertTrue(any("ctx.state.power, which is not declared" in e["message"] for e in check.validate(data, root)))
 
 
 if __name__ == "__main__":
