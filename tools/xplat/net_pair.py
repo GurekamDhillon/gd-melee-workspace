@@ -164,6 +164,7 @@ def main():
         inner = ('cd ~/lb2; export MELEE_VANILLA_ISO=%s MELEE_ACE_ISO=%s MELEE_AKANEIA_ISO=%s; '
                  './enterD.sh env bash /mnt/h/%s/tools/xplat/run_linux_net.sh /mnt/h/%s/linux %s %d %s'
                  % (q(DISCS['vanilla']), q(DISCS['ace']), q(DISCS['akaneia']), a.linux_ws, a.linux_dir, lname, a.seconds + 60, extra))
+        open(os.path.join(out, 'linux.cmd'), 'w').write(inner)
         env = dict(os.environ)
         env['MSYS_NO_PATHCONV'] = '1'
         with open(os.path.join(out, 'linux.out'), 'w') as fo:

@@ -114,7 +114,13 @@ All runs: two clients on loopback (`MELEE_NETPLAY_BIND=127.0.0.1`, a matchmaking
 
 ### 7.5 Windows against Linux (WSL)
 
-XPLAT_PLACEHOLDER
+One match, Windows host (P1, Vanilla Striker, alias 122) against a Linux guest (WSL Debian rootfs, i686 ELF built from the same game commit, P2, Vanilla Courier, alias 125), `tools/xplat/net_pair.py s7_xp1 --mode direct --bind --offscreen` (new flags: `--win-mods/--lin-mods`, `--bind` binds each client to its own address on the WSL link, 172.21.48.1 and 172.21.63.92, never 0.0.0.0; this is the only run that used a non-loopback address, on the machine's private WSL link), `MELEE_NET_SIM lag=60,jitter=15,loss=5`, 2 stocks / 2 minutes, both sides with the six fixtures from one folder (copied to `~/lb2/s7mods`).
+
+- Both builds print the same build id: `build id 7379f7b7a4bac4cb = sources 8c100b8c47a12269 ... + numerics c5bfbfa7f19e2d9c`. Both log `61 fighter/stage identities; mods: vanilla-caster#6d46,...` and the same `match agreed - "...p1=id:5bf681dbe8ece6d8/c0/hu;p2=id:29adb1cbbbc5b64d/c0/hu..."`. The match ran to its end: 7434 shared confirmed frames, Windows `rollbacks 538 (avg depth 4.70, max 7), desyncs 0`, **0 `netplay: DESYNC` lines on either side**, `netplay: match over` on both.
+- The per-frame hash logs (`MELEE_RB_HASHLOG`, compared by net_pair) differ in 237 of 7434 frames, every one an ISOLATED single frame (no run longer than one). The same run with retail Fox v Marth and no mods (same builds, same sim) differs in 127 of 7433. So the isolated differences are a Windows-vs-Linux property of that log that does not involve a define, and the game's own checksum exchange never flagged one. Windows-vs-Windows runs in 7.1 and 7.2 have 0 differing frames. OWED (not this slice): why the log differs cross-OS (suspect: the log hashes something the detector's checksum leaves out, or the order a rolled-back frame is logged); it is not evidence of a define desync, and it is not evidence of its absence at the hash-log level.
+- The first two attempts connected only after ~150 s: a freshly named Windows sandbox exe (`runs/n_s7_xp1/melee-pc.exe`) had no firewall rule yet for the non-loopback bind and Windows asked; once the rule existed (Allow) the connection was immediate. Reuse the run name.
+
+
 
 ### 7.6 Found and fixed in this slice
 
