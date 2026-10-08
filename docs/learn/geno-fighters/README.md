@@ -16,7 +16,7 @@ Every packet ends with a Sources list so you can check a claim yourself.
 
 ## The short answer to "does Geno replace m-ex?"
 
-Version 6 adds an offline native-definition path for the Geno engine; see [packet 11](11-defined-fighter.md). Packet [13](13-fighter-lua.md) (a stub, 2026-10-07) writes a move as a Lua callback with typed per-fighter state. Its game acceptance is still pending. The earlier attachment course below describes the tested path. m-ex gives a fighter a place in the game: a slot, its files, costumes, an icon on the character
+Version 6 adds an offline native-definition path for the Geno engine; see [packet 11](11-defined-fighter.md). Packet [13](13-fighter-lua.md) (2026-10-08) writes a move as a Lua callback with typed per-fighter state, from two real moves (a charge and a counter); it ran headless, and nobody has played it. The earlier attachment course below describes the tested path. m-ex gives a fighter a place in the game: a slot, its files, costumes, an icon on the character
 select. Geno changes how a fighter plays: new action states, script logic, values, hooks, projectiles
 and effects. Geno sits on top of m-ex and never edits it. Packet 0 gives the full answer, with a
 table.
@@ -48,6 +48,7 @@ You will not see a game window in this course until packet 1. Packet 0 is readin
 | [8](08-packaging-and-sharing.md) | Packaging and sharing | a mod folder you can give to someone | 30 min | outline |
 | [9](09-going-further.md) | Going further | pointers to the Ultimate-to-Melee pipeline and the fidelity rule | 30 min | outline |
 | [10](10-known-gaps.md) | Known gaps | what is unverified, contradictory or missing | 15 min | complete |
+| [13](13-fighter-lua.md) | A move written as Lua | a charge special and a counter with a follow-up as Lua callbacks, checked offline and proven headless | 40 min | complete (run headless, not played) |
 
 "Complete" means every step is taken from the real code and documents and has a Sources list. It
 does not mean the author ran the game: the course was written from the code. On 2026-10-03 a tester
