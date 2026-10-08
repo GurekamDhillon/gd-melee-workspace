@@ -1382,6 +1382,16 @@
                   "x-reference": "geno.md §20",
                   "x-source": "melee/pc/platform/geno_registry.c"
                 },
+                "show_model": {
+                  "type": [
+                    "boolean",
+                    "number"
+                  ],
+                  "description": "Keep the article's model drawn beside its fx package (v5.7; default: the package is the look and the model is hidden)",
+                  "x-engine-default": 0,
+                  "x-reference": "geno.md §19",
+                  "x-source": "melee/pc/platform/geno_registry.c"
+                },
                 "spawn_sound": {
                   "type": "string",
                   "description": "Name from the fighter's sounds table played at spawn",
@@ -1842,7 +1852,7 @@
                 }
               ]
             },
-            "maxItems": 64
+            "maxItems": 192
           },
           "special_attributes": {
             "type": "array",
@@ -4119,6 +4129,19 @@
                   ]
                 },
                 "maxItems": 16
+              },
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "description": "Clip name of the bank for an own animation row: the first is row 303, the next 304, ... A state, an overlay or a common_states row may name them (base none only)",
+                  "x-engine-default": "",
+                  "x-reference": "geno.md §22.7",
+                  "x-source": "melee/pc/platform/geno_registry.c",
+                  "minLength": 1,
+                  "maxLength": 31
+                },
+                "maxItems": 128
               }
             },
             "additionalProperties": false,
@@ -4353,6 +4376,16 @@
             "x-source": "melee/pc/platform/geno_registry.c"
           }
         },
+        "row_flags": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "description": "The animation flag bits of an animation row above the low 6 (0x80000000: the clip drives the root); null keeps the donor's",
+            "x-engine-default": 0,
+            "x-reference": "geno.md §22.7",
+            "x-source": "melee/pc/platform/geno_registry.c"
+          }
+        },
         "motion_rows": {
           "type": "array",
           "items": {
@@ -4548,6 +4581,8 @@
     "resources",
     "retail_sfx",
     "row_clips",
+    "row_flags",
+    "rows",
     "s",
     "scale",
     "script",
@@ -4556,6 +4591,7 @@
     "sfx_severity",
     "shield",
     "shield_damage",
+    "show_model",
     "size",
     "slot",
     "sounds",
@@ -4636,7 +4672,7 @@
       "source": "melee/pc/geno/geno.h:257"
     },
     "GENO_MAX_OVERLAYS": {
-      "value": 64,
+      "value": 192,
       "source": "melee/pc/geno/geno.h:258"
     },
     "GENO_POOL_WORDS": {
@@ -4685,7 +4721,7 @@
     },
     "GENO_SP_SELECT": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:479"
+      "source": "melee/pc/geno/geno.h:481"
     },
     "JDOC_NODES": {
       "value": 4096,
@@ -4696,8 +4732,8 @@
       "source": "melee/pc/platform/geno_registry.c:75"
     },
     "GN_MAX_SLOTS": {
-      "value": 256,
-      "source": "melee/pc/platform/geno_registry.c:485"
+      "value": 512,
+      "source": "melee/pc/platform/geno_registry.c:487"
     },
     "JSON_DEPTH": {
       "value": 32,
@@ -4709,14 +4745,14 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "e5d603cf2146f9091e21489fa86ff91e72a2cc707b69b909e3bd7c0e8f35d0df",
-    "pc/platform/geno_define_registry.inc": "650a149e7f0ad980cc96271b8aa94b22c21786a65be236b02be84ce63ab51ff9",
+    "pc/platform/geno_registry.c": "740bb28b25ee59685a4a0dde7e31ab76e54f39e7215883f830f6aef0dad83fe5",
+    "pc/platform/geno_define_registry.inc": "227c6738e68b8811304d5b9b196f6857e1458725902e413edd2d818502516eb4",
     "pc/platform/geno_lua_registry.inc": "a2495881ad955faf25982645769beda4c3cd74f65428f914964fc09d796ca316",
-    "pc/geno/geno.h": "cfd1627671837069055f1bafb57c1a4606c7a6a67bb221fcd262d2400cf73b53",
-    "pc/geno/geno_game.c": "5e42f2f62e6e4cba2c593089ee4e73cbe7fa8630e8a0f4396256f94f406e3ab0",
+    "pc/geno/geno.h": "120aec8f9b1bc2c74dc49a55b2eaaa0056c273efdaee2c0b62ae91d0401378d8",
+    "pc/geno/geno_game.c": "444df15cf938fdafd634172303d9975081ee2363e6486e18217b02b55c664763",
     "pc/geno/geno_game_v2.inc": "9c572553dcd7b6a70e9d5a3fa3efcbc618b8de567c287e75e1f1577e572f5fb0",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",
     "pc/geno/geno_profile_storage.h": "a40aec8aafa890622f0ba6cb9f5602176c738f960346b18daf87c8dc8498d04d",
-    "pc/geno/geno_game_articles.inc": "5cfda7d9a4b3dd75b908e2cc08f660cb35de8a70ce09465912ced173999cb041"
+    "pc/geno/geno_game_articles.inc": "2e6c466480873046013b102f90405b3a173e76d49acca98443f6f64036edccd6"
   }
 }
