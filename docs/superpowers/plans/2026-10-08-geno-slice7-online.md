@@ -1,6 +1,6 @@
 # Geno slice 7: online identity and rollback certification (brief, 2026-10-08)
 
-**Status: brief written before the build; results are filled in at the bottom as they are proven.** Lane `geno-s7` (game `agent/geno-s7`,
+**Status: built and run 2026-10-08 (resumed lane); results in section 7.** Lane `geno-s7` (game `agent/geno-s7`,
 workspace `ws/geno-s7`), from the 2026-10-07 integration heads (game `47e2c09b2`, workspace `ea760c8`). Road: slice 2 plan
 `2026-10-05-geno-full-fighter-slice2.md` (roadmap, D2, D8, section "Slice 7"), `melee/docs/geno.md` sections 22 and 23.
 Tags: **[R]** read from source, **[I]** inferred, **[U]** unverified.
@@ -33,7 +33,7 @@ handshake is unchanged; `MXD` is an additive lobby message), voice/announcer, Ki
 
 ## 3. Audit of Geno state against snapshots and the hash (S7-1)
 
-Filled in below (section 7) with the method and the findings.
+Done: test `geno_digest_coverage` walks every word of `GenoState` and `GenoLuaBlock` (`melee/docs/geno.md` section 24.2). Findings: `last_check` and `counters` were not hashed (both fixed); everything else is hashed or excluded with a written reason. The Geno blocks are game memory, which the savestate covers whole.
 
 ## 4. Proof plan
 
@@ -56,7 +56,7 @@ same: it is deterministic and cannot itself desync. Recommendation: **keep the s
 players for an author's bug, and nothing is gained in determinism), log it on both sides, and show it in the LAB only. One real hazard
 found while reading: the heap budget counts bytes Lua asks for, and Lua's value size differs between the i686 Windows and i686 Linux ABIs
 (a `double` is 8-aligned in a struct on Windows, 4-aligned on Linux, so a 16-byte value is 12 bytes), so a call that grows the heap to
-within about a quarter of the 64 KB budget could fault on one OS only. Measured numbers for the fixtures are in section 7. Recommendation:
+within about a quarter of the 64 KB budget could fault on one OS only. The flag is built (2026-10-08): `MELEE_GENO_FAULT_ONLINE=hard` ends the match on a CONFIRMED faulting frame; default soft. No fixture faults, so peak heap growth was not measured. Recommendation:
 `tools.geno.check` warns above 32 KB peak growth; owner decides whether to make the accounting ABI-neutral.
 
 ## 6. Owed / not claimable from a headless or offscreen run
@@ -64,6 +64,58 @@ within about a quarter of the 64 KB budget could fault on one OS only. Measured 
 Anything that must be seen on a monitor (the online select's greyed tile and the reason text on screen) is owed to a person; the evidence
 here is logs and state read over the console.
 
-## 7. Results
+## 7. Results (build id `8c100b8c47a12269`, game `agent/geno-s7` 7334bf0c0 plus the workspace tools, 2026-10-08)
 
-(filled in as proven)
+All runs: two clients on loopback (`MELEE_NETPLAY_BIND=127.0.0.1`, a matchmaking server of our own on 127.0.0.1, UDP ports 54700-54999, windows parked at 30000,30000), `MELEE_PAD_BOT` fuzz on both, `MELEE_RB_HASHLOG` on both; "frames" = confirmed-frame checksums both sides logged and that agree (mismatch 0 on every row); desync = `netplay: DESYNC` lines (0 on every row). Sim presets: lag=60 is `lag=60,jitter=15,loss=5`; lag=100 is `lag=100,jitter=40,loss=10,burst=3,dup=2,spike=6000:350`.
+
+### 7.1 Scripted matrix (`tools/netplay/geno_matrix.py`; 110 s each, rollbacks in the hundreds)
+
+| scenario | fighters | sim | frames | desyncs | verdict |
+|---|---|---|---|---|---|
+| mir_striker | v v sim=lag=60 | frames=5508 | 5508 | 0 | play |
+| mir_courier | v v sim=lag=60 | frames=6124 | 6124 | 0 | play |
+| mir_riposte | v v sim=lag=60 | frames=6223 | 6223 | 0 | play |
+| mir_caster | v v sim=lag=60 | frames=6178 | 6178 | 0 | play |
+| striker_v_fox | v v sim=lag=60 | frames=5487 | 5487 | 0 | play |
+| fox_v_courier | v v sim=lag=100 | frames=4802 | 4802 | 0 | play |
+| charger_v_marth | v v sim=lag=60 | frames=6158 | 6158 | 0 | play |
+| marth_v_riposte | v v sim=lag=100 | frames=4017 | 4017 | 0 | play |
+| courier_v_striker | v v sim=lag=60 | frames=5499 | 5499 | 0 | play |
+| charger_v_riposte | v v sim=lag=100 | frames=4364 | 4364 | 0 | play |
+| caster_v_fox | v v sim=lag=60 | frames=6121 | 6121 | 0 | play |
+| alias_striker | v v sim=lag=60 | frames=6224 | 6224 | 0 | play |
+| alias_hero_v_striker | v v sim=lag=100 | frames=4753 | 4753 | 0 | play |
+| lan_striker | v v sim=lan | frames=4879 | 4879 | 0 | play |
+| mir_charger | v v sim=lag=100 | frames=4883 | 4883 | 0 | play |
+| soak_courier_v_charger | v v sim=lag=60 | frames=24088 | 24088 | 0 | play |
+| soak_striker_v_riposte | v v sim=lag=100 | frames=19876 | 19876 | 0 | play |
+
+(The soaks are 600 s each: Courier v Charger 24088 frames, Striker v Riposte 19876 frames.) `alias_*` rows give the guest the "less" install (hero, striker only), so the same fighter has a DIFFERENT resident alias on the two peers: 0 desyncs, which proves the simulation does not depend on the numeric alias (S7-D3). A first run of `mir_charger` was lost to a UDP port collision with another lane's server (`Could not open UDP port 51892`); the tools now pick free ports in this lane's range and it passed on the rerun.
+
+### 7.2 Through the real lobby (`geno_lobby.py`: Atlas menu, room code by `gd.netplay_act("code", ...)`, a pick, strikes, ready, 3 games of a set, results screens)
+
+| run | fighters | sim | games | desyncs | rollbacks |
+|---|---|---|---|---|---|
+| q7 | Striker v Striker | none | 3 of 3 started and ended | 0 | n/a |
+| q8 | Courier (host) v Riposte (guest) | lag=60 | 3 of 3 started and ended | 0 | 1029 (max depth 7) |
+
+### 7.3 Refusals
+
+| run | what differs | result |
+|---|---|---|
+| p4 lobby | the host picks Courier, the guest has no Courier | host: `GENOLOBBY pick refused: Vanilla Courier: your opponent doesn't have it`; log `mexid: define Vanilla Courier is not in common: the peer does not have it`; no match started |
+| p5 lobby | Riposte on both, the guest's Lua has one constant changed (1.5 to 1.6) | both sides: `pick refused: Vanilla Riposte: your opponent has another version`; no match |
+| p1 scripted | the same one-constant difference | the guest refuses the host's scene: `content you don't have: fighter <id>` (no lobby traffic on this path, so no define name) |
+| p2 scripted | host picks Courier, guest has hero+striker only | `content you don't have: fighter <id>` |
+
+### 7.4 Native tests
+
+`run.sh --test`: 338 of 338 pass (includes `mexid_define_online`, `geno_digest_coverage`, `geno_lua_fault_policy`).
+
+### 7.5 Windows against Linux (WSL)
+
+XPLAT_PLACEHOLDER
+
+### 7.6 Found and fixed in this slice
+
+`last_check` and `counters` were not in the rollback hash (section 3 audit); the lobby proof exposed that a script's pad claim keeps pad 1 neutral and silences `MELEE_PAD_BOT` (the proof script releases it for the match); a port collision between lanes (tools now pick free ports).
