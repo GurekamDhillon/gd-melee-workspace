@@ -174,12 +174,13 @@ gd.run(function()
   for g = 1, games do
     if not play_lobby() then gd.wait(120) gd.quit() return end
     gd.log(string.format("GENOLOBBY %s: game %d started", role, g))
+    gd.release(1) -- the script's claim on pad 1 keeps it NEUTRAL; the pad bot (MELEE_PAD_BOT) plays the match
     -- the match runs; the results screen needs a press now and then
     local t = 0
     while t < 60 * 60 * 20 do
       gd.wait(60)
       t = t + 60
-      if not gd.match().active then break end
+      if not gd.match().active or gd.scene().name == "GS_RESULTS" then break end
     end
     gd.log(string.format("GENOLOBBY %s: game %d ended (match inactive)", role, g))
     local back = 0
