@@ -81,3 +81,4 @@ shim_misc.c
 shim_os.c
 shim_pad.c
 shim_vi.c
+gw_writewatch_linux.c
