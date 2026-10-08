@@ -27,7 +27,7 @@ def validate_definition(data, fighter, path):
     if ".." in fighter["define"]["key"]:
         errors.append((path+".define.key", "identity must not contain '..'"))
     # Slice 2 (geno 7) admits special_attributes, fx_bindings and the whole attribute table; articles, own
-    # model/clips, sounds and Lua are later slices.
+    # model/clips, sounds are later slices; fighter Lua (geno 10, slice 5) is checked in check.py lua_checks and lua_check.py.
     # Slice 3 (geno 8) admits articles and the named-sound table (the resolver): every sound an article names must exist.
     for key in ("articles", "sounds"):
         if key in fighter and data["geno"] < 8:

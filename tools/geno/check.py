@@ -391,11 +391,10 @@ def lua_checks(data, fighter, p, base, errors):
             if fn is not None and fn not in declared:
                 errors.append(diagnostic(p + f".states[{j}].lua.{phase}", f"{fn!r} is not a function of the module (declared: {', '.join(sorted(declared)) or 'none'})",
                                          "melee/pc/platform/geno_lua_registry.inc"))
-    # the same slot names the module touches through ctx.state: a typo is a fault at run time, so say so here
-    touched = set(re.findall(r"\bstate\s*\.\s*([A-Za-z_][A-Za-z0-9_]*)", text))
-    for name in sorted(touched - set(block.get("state", {}))):
-        errors.append(diagnostic(p + ".lua.state", f"the module uses ctx.state.{name}, which is not declared (a fault at run time)",
-                                 "melee/pc/platform/geno_lua_core.h"))
+    # the module's text against the engine's API (ctx fields, the sandbox allowlist, slot names and types, ctx.go targets, masks)
+    from . import lua_check
+    errors.extend(lua_check.check(text, block.get("state", {}), [s.get("name") for s in fighter.get("states", [])],
+                                  lambda path, message, source: diagnostic(path, message, source), p + ".lua"))
 
 
 def validate(data, base):
