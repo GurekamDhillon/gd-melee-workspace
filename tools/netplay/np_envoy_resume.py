@@ -53,13 +53,17 @@ class Con:
         for _ in range(tries):
             try:
                 self.s = socket.create_connection(("127.0.0.1", port), timeout=60)
+                self.f = self.s.makefile("r", encoding="utf-8", errors="replace")
+                self.f.readline()  # the banner; a console still starting up can reset the connection here
                 break
-            except OSError:
+            except OSError:  # includes ConnectionResetError (WinError 10054) from a console that is not ready yet
+                try:
+                    self.s.close()
+                except Exception:
+                    pass
                 time.sleep(1)
         else:
             raise SystemExit("no console on %d" % port)
-        self.f = self.s.makefile("r", encoding="utf-8", errors="replace")
-        self.f.readline()
 
     def cmd(self, c):
         self.s.sendall((c + "\n").encode())
@@ -89,6 +93,20 @@ RUN = ('(function() local np=gd.netplay() local e=np.envoy local r=e.run local c
        'return table.concat(w,"|") end)()')
 RUN_KEYS = ["phase", "mode", "status", "pending", "digest", "state", "game", "round", "score", "seed", "pick2", "resumed", "abandoned", "interrupted", "env_seed", "env_round",
             "env_open", "word", "note"]
+# run.record falls back to the saved (including abandoned) record before the
+# next game starts. Probe the lobby separately when checking a fresh set.
+LOBBY = ('(function() local np=gd.netplay() local e=np.envoy '
+         'return table.concat({np.phase,np.game,np.score[1].."-"..np.score[2],e.seed,e.round,tostring(e.open),'
+         'e.picks[1]..","..e.picks[2],tostring(next(e.history)==nil),tostring(e.run.live)},"|") end)()')
+LOBBY_KEYS = ["phase", "game", "score", "env_seed", "env_round", "env_open", "picks", "history", "live"]
+
+
+def fresh_lobby(h, g):
+    return bool(h and g and h == g and h["phase"] == "lobby" and h["game"] == "1" and h["score"] == "0-0"
+                and h["env_round"] == "0" and h["env_open"] == "false" and h["picks"] == "-1,-1"
+                and h["history"] == "true" and h["live"] == "false" and int(h["env_seed"]) > 0)
+
+
 FIRST_FREE = ('(function() local np=gd.netplay() for i,st in ipairs(np.stages) do if st==0 then return gd.netplay_act("stage",i) end end return false end)()')
 
 
@@ -166,6 +184,9 @@ class Side:
 
     def run(self):
         return parse(self.con.ev(RUN), RUN_KEYS) if self.con else None
+
+    def lobby(self):
+        return parse(self.con.ev(LOBBY), LOBBY_KEYS) if self.con else None
 
     def netsim(self, text):
         open(self.sim, "w").write(text)
@@ -257,6 +278,17 @@ class Driver:
             h, g = self.host.run(), self.guest.run()
             return (h, g) if h and g and pred(h, g) else None
         return self.wait(what, f, timeout)
+
+    def rejoin_after_loss(self, code):
+        self.guest.kill()
+        # As in B/C, let the old transport expire before joining again. A fresh
+        # guest accepted by the still-live session restarts lobby sequence 0,
+        # while the host expects the old guest's next sequence. After abandon
+        # there is no live record, so the interrupted-record counter won't rise.
+        if not self.wait("E: host leaves the old lobby", lambda: (lambda s: s and s["phase"] != "lobby")(self.host.state()), 150, 1):
+            return False
+        self.guest.launch(code)
+        return True
 
     def drive_lobby_once(self):
         """one step of what two players do in the lobby (characters, strike/ban/pick, ready) and at the results screens"""
@@ -425,20 +457,24 @@ def scenario_set(d):
         h, g = ab
         sh, sg = d.host.saved(), d.guest.saved()
         d.check("D: abandon leaves both records abandoned with the SAME digest (the run that was live)", sh["state"] == 3 and sg["state"] == 3 and sh["digest"] == sg["digest"] == d2, "%s %s / %s %s" % (sh["digest"], STATE_NAMES[sh["state"]], sg["digest"], STATE_NAMES[sg["state"]]))
-        time.sleep(3)
-        h, g = d.host.run(), d.guest.run()
-        d.check("D: and both start the same new run: game 1, 0-0, one new seed, no picks", same(h, g, "env_seed", "game", "env_round") and h["game"] == "1" and h["env_round"] == "0",
-                "seed %s / %s game %s/%s" % (h["env_seed"], g["env_seed"], h["game"], g["game"]))
-        d.check("D: the new seed is not the abandoned run's", h["env_seed"] != d.evidence["boundary"]["host"]["seed"], "%s vs %s" % (h["env_seed"], d.evidence["boundary"]["host"]["seed"]))
-        d.evidence["D_abandoned"] = {"host": h, "guest": g, "saved_host": sh, "saved_guest": sg}
+        def new_lobby():
+            lh, lg = d.host.lobby(), d.guest.lobby()
+            return (lh, lg) if fresh_lobby(lh, lg) else None
+        fresh = d.wait("D: fresh lobby state reaches both peers", new_lobby, 60)
+        lh, lg = fresh or (d.host.lobby(), d.guest.lobby())
+        d.check("D: and both start the same new run: game 1, 0-0, one new seed, no picks", bool(fresh),
+                "live host %s / guest %s" % (lh, lg))
+        d.check("D: the new seed is not the abandoned run's", bool(lh and lh["env_seed"] != d.evidence["boundary"]["host"]["seed"]), "%s vs %s" % (lh and lh["env_seed"], d.evidence["boundary"]["host"]["seed"]))
+        d.evidence["D_abandoned"] = {"host": d.host.run(), "guest": d.guest.run(), "live_host": lh, "live_guest": lg, "saved_host": sh, "saved_guest": sg}
     else:
         d.check("D: abandoned", False)
         return d.finish(False)
 
     # --- E: an abandoned run is not offered again ---
     d.log("E: kill the guest, start it again")
-    d.guest.kill()
-    d.guest.launch(code)
+    if not d.rejoin_after_loss(code):
+        d.check("E: host closed the old connection", False)
+        return d.finish(False)
     back = d.both(lambda h, g: h["phase"] == "lobby" and g["phase"] == "lobby" and h["status"] != "checking" and g["status"] != "checking" and g["status"] != "abandoned", "E: both in the lobby again", 400)
     if back:
         h, g = back
