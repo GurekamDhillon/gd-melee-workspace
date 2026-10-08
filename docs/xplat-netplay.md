@@ -126,3 +126,25 @@ that reason. The laptop ran the match at aspect 1.6 and Windows at 1.333.
 Linux build used `~/lb2/{mD,wsD,outD,gwtoolD}` and `~/lb2/enterD.sh` (the rootfs with WSLg and the GPU nodes).
 Headless turbo on Linux needs `SDL_VIDEODRIVER=x11`: under Wayland the hidden window never presents and the
 GX fifo grows until a 32-bit allocation fails.
+
+## 0.2.2-rc1 laptop: the multi-match desync and the SIGSEGVs (lane `linux-turbo`)
+
+Written 2026-10-08 (game `agent/linux-turbo`, workspace `ws/linux-turbo`). Evidence: the owner's laptop (Linux, 32-bit game, write-watch ON)
+against Windows, rc1 build `8066b968e8a573cb`, vanilla disc. "Turbo" in that test is the online **Turbo match rule** (hit-cancel windows,
+`gw_matchrules.h`), not the headless `MELEE_TURBO`; it turned out to be a red herring. Three independent bugs were behind the symptoms.
+
+| symptom | cause | fix |
+|---|---|---|
+| matches 3 and 4 in one process: `rb: DESYNC - frame -77 needs a correction but its snapshot is gone`, then `CHECKSUM DESYNC` at frame 3 / -32 | `gw_snap` opens its ring once per process; a second rollback session found the slots still tagged with the previous match's last frames. `sn_slot_for` evicts the LOWEST frame and the new match counts up from -123, so every save evicted the slot the match had just written: one live snapshot, and any rollback deeper than one frame failed. Match 2 survived only because its rollbacks were all depth 1 (RTT 20 ms); match 4 (RTT 150 ms) failed at once. | `gw_Snap_OpenSession` clears every slot's frame at each session open (`snap: session open - N stale slot(s) ... cleared`). Native test `snap_second_session_ring` (fails 336/1 without the fix, passes with it) |
+| `SIGSEGV` in `gw_HSD_ObjAlloc`, `EDI=0x041700ff` (rc1 Linux, three times, also offline) | the decomp spells `efLib_ParamTable` as `efLib_AnimQueue + 0x10` (they are adjacent on the GameCube). The Linux link lays globals out one per aligned slot, so that address was `efLib_AnimCount` and then `efAsync_AllocData`: `efLib_SetParamAlpha/GfxId` (shield alpha) wrote `{gfx_id 0x0417, alpha 0x00FF}` over the free-list head of the effect-queue pool, and the next allocation read `0x041700FF`. (On the Windows link the two arrays happen to be adjacent: `_gw_efLib_AnimQueue 163849e0`, `_gw_efLib_ParamTable 16384a60`.) Measured on the baseline Linux ELF: `AnimQueue+0x80 == efLib_AnimCount (0x11a30840)`, `ParamTable == 0x11a30920`. | `src/melee/ef/eflib.c`: under `TARGET_PC` index `efLib_ParamTable` directly. After the fix the two functions address `efLib_ParamTable` (0x11a30da0..) only |
+| `SIGSEGV` in `gw_it_802BA3BC` (a 4-player scripted match, items on, ~7,700 frames) - found by the probe for the row above, **on Windows too** (`0xC0000005`, the same frame) | `it_802BA3BC` (Samus grapple chain) reads `dir_ptr->x` in the first loop iteration before the line that assigns `dir_ptr`; on the GameCube the register still held `&dir` | `src/melee/it/kinds/itsamusgrapple.c`: assign `dir_ptr = &dir` first (`TARGET_PC`) |
+
+Windows simulation is unchanged by the fixes: the scripted 4-player match (`mode=vs;p1=fox;p2=samus;p3=yoshi;p4=mewtwo;stage=dl;items=3`, seeds 555 and
+556, `det_input.lua`, 4 ports) on the pre-fix and the fixed Windows exe gives identical `rb` and `wide` digests for every frame the pre-fix exe reached before
+it crashed (7,740 and 11,242 frames); the fixed exe plays all 14,000 frames, and its digests equal the fixed Linux build's for all 14,001 frames (`mem`/`glob`
+differ between platforms as before).
+
+Reproducing the third row: `tools/xplat/run_linux.sh` (in the rootfs, through `~/lb2/enterD.sh` with `SDL_VIDEODRIVER=x11 DISPLAY=:0`) or `tools/xplat/run_win.sh`
+with `DET_PORTS=4`, the scene above, 14000 frames. `tools/xplat/envoy_set_win.py` now takes `--port-base` (per-lane port range) and `--turbo`.
+Not reproduced end to end: the multi-match desync needs a rollback of depth 2+ in match 2 or later; the lag-simulated Windows sets never had one in matches 2-3
+(their bots do not change inputs there), so that row is proved by the unit test and the laptop log, not by a netplay pair.

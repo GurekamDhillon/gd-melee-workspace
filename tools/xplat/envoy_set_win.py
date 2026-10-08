@@ -110,6 +110,8 @@ def main():
     ap.add_argument("--poison", action="store_true", help="MELEE_ENVOY_POISON on the guest: the hash must trip")
     ap.add_argument("--mods-poison", action="store_true", help="MELEE_MODS_POISON=1 on the guest: the evaluator word differs on that peer, the hash must trip")
     ap.add_argument("--no-bots", action="store_true")
+    ap.add_argument("--port-base", type=int, default=53000, help="base of this run's UDP/console ports (server +100, host +200, guest +400, consoles +600)")
+    ap.add_argument("--turbo", default="", help="MELEE_NETPLAY_TURBO for the host (on|off|HEX): the online Turbo match rule")
     a = ap.parse_args()
     out_dir = "%s/%s" % (OUT, a.tag)
     shutil.rmtree(out_dir, ignore_errors=True)
@@ -130,10 +132,11 @@ def main():
     env0 = load_env()
     iso = env0["GW_ISO_VANILLA"]
     rnd = random.Random()
-    sport = 53100 + rnd.randrange(80)  # the Envoy stage 4 lane's ports: 53xxx (the coordinator gave every lane its own range; 51500 is the shared default)
-    hport = 53200 + rnd.randrange(100)
-    gport = 53400 + rnd.randrange(100)
-    hc = 53600 + rnd.randrange(20)
+    pb = a.port_base  # each lane has its own range (53xxx envoy-s4, 56xxx linux-turbo); 51500 is the shared default
+    sport = pb + 100 + rnd.randrange(80)
+    hport = pb + 200 + rnd.randrange(100)
+    gport = pb + 400 + rnd.randrange(100)
+    hc = pb + 600 + rnd.randrange(20)
     gc = hc + 20
     pids = {}
     mods = BUILD + "/mods"
@@ -150,6 +153,8 @@ def main():
                   MELEE_RUN_OWNER="envoy-s4", MELEE_SCRIPT_MS="5000")
     if a.netsim != "off":
         common["MELEE_NET_SIM"] = a.netsim
+    if a.turbo:
+        common["MELEE_NETPLAY_TURBO"] = a.turbo
     procs = {}
 
     def launch(side, script, console, extra):
