@@ -111,3 +111,25 @@ Optional A/B runs (one change each; start the game from a terminal): `MELEE_VSYN
   (`ec495eb53`) and this branch. Windows vs Linux (`matrix.py`: fox-marth-fd, peach-puff-ys, four-dl): `rb` and `wide` identical
   over 6001 frames; `mem`/`glob` differ exactly as in `docs/xplat-netplay.md` (known residual).
 * Linux: build id `068aa03a64d3fe65` equals the Windows exe's; native suite 319/319.
+
+## Addendum 2026-10-08 (lane `desync-0221`): the write-watch in the real game on a 6.12 kernel
+
+Not run before this: the real Linux game (the 0.2.2-test1 package, build `e0a6f1a267791af8`) on a kernel with `PAGEMAP_SCAN`,
+in a QEMU/KVM VM (Debian trixie 6.12.107, THP `always`, 32-bit game on the 64-bit kernel, headless Xvfb + lavapipe; harness:
+`tools/xplat/vm/`). Fake-network rollback session (`MELEE_RB_LIVETEST=1 MELEE_RB_FAKE=lat,jitter,loss% MELEE_RB_INPUT=padgen`, the rollbacks
+come from mispredicted generated pad input: shield, smash, specials, jumps), `MELEE_SNAP_VERIFY=1` (live MEM1 compared with the slot after
+every dirty-page save and load):
+
+| scene | frames | rollbacks (max depth 7) | `snap: VERIFY FAIL` |
+|---|---|---|---|
+| Fox v Marth, Final Destination, items=3, fake net 3,4,3 | 14,922 | 359 | 0 |
+| Fox, Samus, Yoshi, Mewtwo, Dream Land, items=3, fake net 4,5,4 | 11,875 | 298 | 0 |
+
+Both logged `snap: write-watch backend: userfaultfd write-protect (PAGEMAP_SCAN)` and `dirty-page mode, verify`; poll 0.15-0.18 ms with
+191-341 dirty pages (the verify memcmp is the rest of the save cost in those runs). The confirmed-frame hash log (`MELEE_RB_HASHLOG`) of the
+first scene is identical, over the 2,824 frames the `MELEE_WRITEWATCH=off` twin run reached, to the full-copy run.
+
+The owner's laptop (kernel 7.2.5, NVIDIA) confirmed the same backend in a real match against Windows: `userfaultfd write-protect (PAGEMAP_SCAN)`,
+dirty-page mode, saves ~2 ms, 60 fps, and a vanilla-disc match of 4,950 frames with 7 rollbacks and 0 desyncs. The 0.2.2-test1 desync at frame
+5212 was a disc mismatch (ACE against vanilla), not the write-watch: see `docs/xplat-netplay.md`, "Different discs".
+
