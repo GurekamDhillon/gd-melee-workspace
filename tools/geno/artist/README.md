@@ -10,6 +10,8 @@ python -m tools.geno.artist build my-fighter/fighter.json                       
 
 `build` prints the command that opens it in the LAB. Rules, limits and who enforces them: [`docs/geno-artist-spec.md`](../../../docs/geno-artist-spec.md).
 What to animate: [`docs/geno-artist-checklist.md`](../../../docs/geno-artist-checklist.md) and the generated [`docs/geno-artist-rows.md`](../../../docs/geno-artist-rows.md).
+Gameplay authoring (attributes, states, hitboxes, fighter Lua, online identity and the built Pip special):
+[`docs/geno-fighter-guide.md`](../../../docs/geno-fighter-guide.md).
 Plan and gap assessment: `docs/superpowers/plans/2026-10-08-geno-artist-pipeline.md`.
 
 ## What you need
