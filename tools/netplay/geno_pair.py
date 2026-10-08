@@ -64,6 +64,7 @@ def main():
     ap.add_argument("--exe", default="")
     ap.add_argument("--disc", default="vanilla")
     ap.add_argument("--no-bot", action="store_true")
+    ap.add_argument("--bot", default="fuzz", choices=("fuzz", "plans"), help="MELEE_PAD_BOT_MODE: fuzz = seeded state-blind inputs (default), plans = the Turbo soak's move chains")
     ap.add_argument("--no-cov", action="store_true", help="do not load the coverage observer (tools/netplay/geno_cov.lua)")
     ap.add_argument("--extra-env", default="", help="KEY=VAL,KEY=VAL for both sides")
     a = ap.parse_args()
@@ -96,6 +97,7 @@ def main():
         host["MELEE_SCRIPT"] = cov
         guest["MELEE_SCRIPT"] = cov
     if not a.no_bot:
+        host["MELEE_PAD_BOT_MODE"] = guest["MELEE_PAD_BOT_MODE"] = a.bot
         host["MELEE_PAD_BOT"] = "0,0,%d" % a.seed
         guest["MELEE_PAD_BOT"] = "1,0,%d" % (a.seed + 1)
     for d in sand.values():
