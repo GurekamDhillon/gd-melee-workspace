@@ -208,3 +208,20 @@ Seams to agree with the other leads **before** they merge (all additive):
 - CPU AI exactness and boss fights under rollback (stage 6 owns the first, nobody owns the second yet).
 - How a 20+ stage run behaves over a real network (NAT mapping lifetime across a long interstitial, rejoin windows, the cost of a server round trip per stage).
 - How anything looks: there is no UI for the run (the spike drives the lobby by script).
+
+## Owner decisions (2026-10-08, the coordinator's recommendations accepted by the owner)
+
+1. **Architecture: R2**, a run director over `GS_VS` stages with the 1P tables as data. R1 is not pursued.
+2. **Retail content online:** a director interstitial between stages replaces the retail cutscenes, continue
+   screen and ending; unlocks, trophies and clear times are written locally after the run (optional, per player).
+3. **Protocol:** an Envoy mode word V2 first (v5 peers refuse it cleanly). The transport re-arm packet only if
+   the ~7 s stage transition is judged too slow or per-stage server load matters.
+4. **Game over and continues:** shared stocks for the pair; a lost stage ends the run for both; one continue
+   token per run, spent by agreement.
+5. **Adventure special stages** (Brinstar escape, F-Zero race, target bonus stages): skipped online for now;
+   redesign for co-op is a later decision.
+6. **Content:** the intersection of both players' unlocks and installed content, as the lobby's stage list does.
+7. **The regenerated bridge** stays committed separately, as in earlier lanes.
+
+Next: 7a (director skeleton + stage-end barrier) and 7b (Classic plan over the 1P tables) can start now;
+7c needs stage 6, 7d needs stage 5.
