@@ -79,6 +79,10 @@ def main():
     ap.add_argument('--port', type=int, default=0)
     ap.add_argument('--no-bot', action='store_true')
     ap.add_argument('--mods', default='', help='envoy: use the Envoy mod folder on both sides')
+    ap.add_argument('--win-mods', default='', help='MELEE_MODS_DIR for the Windows client (a Windows path)')
+    ap.add_argument('--lin-mods', default='', help='MELEE_MODS_DIR for the Linux client (a path inside the rootfs, /mnt/h/... = ~/lb2/...)')
+    ap.add_argument('--bind', action='store_true', help='bind each client to its own address on the WSL link (never 0.0.0.0): the Windows side to the vEthernet address, the Linux side to eth0')
+    ap.add_argument('--offscreen', action='store_true', help='park the Windows window at 30000,30000')
     ap.add_argument('--scene', default='', help='MELEE_SCENE for the DIRECT mode (the room code path ignores it)')
     a = ap.parse_args()
 
@@ -90,6 +94,8 @@ def main():
     wsl_ip = m.group(1) if m else ''
     print('windows gateway seen from WSL:', gw, ' WSL address:', wsl_ip)
     port = a.port or (51600 + 50 + (os.getpid() % 40))
+    if a.bind and not (gw and wsl_ip):
+        sys.exit('--bind needs both the vEthernet address and the WSL address')
     server = None
     if a.mode == 'random':
         server = subprocess.Popen([sys.executable, os.path.join(ROOT, 'tools/netplay/server/gdmelee_server.py'),
@@ -127,13 +133,18 @@ def main():
         env = dict(os.environ)
         env.update(common)
         env.update(side['win'])
-        env.update(MELEE_PAD_IGNORE_ADAPTER='1', MELEE_SKIP_INTRO='1', MELEE_PAD_BOT_EDGE='62', MELEE_WINDOW_W='960', MELEE_WINDOW_H='540', MELEE_WINDOW_X='20', MELEE_WINDOW_Y='20',
+        if a.bind:
+            env['MELEE_NETPLAY_BIND'] = gw
+        env.update(MELEE_PAD_IGNORE_ADAPTER='1', MELEE_SKIP_INTRO='1', MELEE_PAD_BOT_EDGE='62', MELEE_WINDOW_W='960', MELEE_WINDOW_H='540',
+                   MELEE_WINDOW_X='30000' if a.offscreen else '20', MELEE_WINDOW_Y='30000' if a.offscreen else '20',
                    MELEE_MODS_DIR=(os.path.join(ROOT, '_build', 'xplat', 'mods') if a.mods else os.path.join(ROOT, '_build', 'nomods')))
         iso = {'vanilla': 'GW_ISO_VANILLA', 'ace': 'GW_ISO_ACE', 'akaneia': 'GW_ISO_AKANEIA'}[a.disc]
         sandbox = os.path.join(os.environ['GW_BUILD_ROOT'], 'runs', wname)
         os.makedirs(sandbox, exist_ok=True)
         env['MELEE_RB_HASHLOG'] = os.path.join(sandbox, 'hashes.csv').replace('\\', '/')
         env['MELEE_RB_LOG'] = '0'
+        if a.win_mods:
+            env['MELEE_MODS_DIR'] = a.win_mods
         script = ('set -a; . "%s/.env"; set +a; exec bash "%s/tools/port/run.sh" --realtime %s --iso "${%s}"'
                   % (ROOT, ROOT, wname, iso))
         with open(os.path.join(out, 'win.out'), 'w') as fo:
@@ -145,6 +156,10 @@ def main():
         env_pairs.update(MELEE_PAD_BOT_EDGE='62', XP_DISC=a.disc)
         if a.mods:
             env_pairs['MELEE_MODS_DIR'] = '/mnt/h/xpmods'
+        if a.lin_mods:
+            env_pairs['MELEE_MODS_DIR'] = a.lin_mods
+        if a.bind:
+            env_pairs['MELEE_NETPLAY_BIND'] = wsl_ip
         extra = ' '.join(q('%s=%s' % kv) for kv in env_pairs.items())
         inner = ('cd ~/lb2; export MELEE_VANILLA_ISO=%s MELEE_ACE_ISO=%s MELEE_AKANEIA_ISO=%s; '
                  './enterD.sh env bash /mnt/h/%s/tools/xplat/run_linux_net.sh /mnt/h/%s/linux %s %d %s'
