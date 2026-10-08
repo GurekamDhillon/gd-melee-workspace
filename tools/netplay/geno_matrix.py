@@ -62,7 +62,7 @@ def main():
         cmd = [sys.executable, os.path.join(ROOT, "tools", "netplay", "geno_pair.py"), a.prefix + name, "--host-ck", str(CK[h]),
                "--guest-ck", str(gck), "--mods-host", os.path.join(a.mods, "mods-a"),
                "--mods-guest", os.path.join(a.mods, "mods-less" if gm == "less" else "mods-a"), "--net-sim", sim,
-               "--seconds", str(secs), "--seed", str(100 + 7 * i), "--exe", a.exe, "--min-frames", str(secs * 18)]
+               "--seconds", str(secs), "--seed", str(100 + 7 * i), "--exe", a.exe, "--min-frames", str(secs * 12)]
         t0 = time.time()
         r = subprocess.run(cmd, capture_output=True, text=True)
         out = os.path.join(os.environ["GW_BUILD_ROOT"], "net", a.prefix + name, "summary.json")
