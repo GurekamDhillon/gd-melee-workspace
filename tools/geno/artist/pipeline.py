@@ -20,6 +20,59 @@ from . import convert, model as M, spec, validate as V
 from .model import ArtistError
 
 
+def blender_exe():
+    """$BLENDER, else blender on PATH, else the usual install folders."""
+    import shutil as sh
+    for c in (os.environ.get("BLENDER"), sh.which("blender"), sh.which("blender.exe"),
+              "D:/SteamLibrary/steamapps/common/Blender/blender.exe", "C:/Program Files/Blender Foundation/Blender 5.2/blender.exe",
+              "C:/Program Files/Blender Foundation/Blender 4.5/blender.exe", "C:/Program Files/Blender Foundation/Blender 4.2/blender.exe"):
+        if c and os.path.isfile(c):
+            return c
+    raise ArtistError("Blender was not found: set BLENDER to blender.exe (only needed to export from a .blend or to make a starter)")
+
+
+def export_from_blend(cfg_path, log=print, force=False):
+    """If fighter.json names art.blend, export the glb from it with export_fighter.py (headless Blender) when it is stale."""
+    cfg = M.load_json(cfg_path)
+    art = cfg.get("art", {})
+    if not art.get("blend"):
+        return True
+    base = os.path.dirname(os.path.abspath(cfg_path))
+    blend = os.path.normpath(os.path.join(base, art["blend"]))
+    glb = os.path.normpath(os.path.join(base, art.get("glb", os.path.splitext(art["blend"])[0] + ".glb")))
+    if not os.path.isfile(blend):
+        raise ArtistError("art.blend: %s does not exist" % blend)
+    if not force and os.path.isfile(glb) and os.path.getmtime(glb) >= os.path.getmtime(blend):
+        log("[0/5] glb is newer than the .blend: not re-exporting (use --export to force)")
+        return True
+    log("[0/5] export %s -> %s (headless Blender)" % (os.path.basename(blend), glb))
+    script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "blender", "export_fighter.py")
+    r = subprocess.run([blender_exe(), "-b", blend, "--python", script, "--", "--out", glb], capture_output=True, text=True)
+    for line in (r.stdout + r.stderr).splitlines():
+        if line.startswith("GENO "):
+            log("  " + line)
+    if r.returncode:
+        log("STOPPED: the Blender preflight found blockers (above); nothing was exported.")
+        return False
+    return True
+
+
+def new_character(dest, key, name, params=None, log=print):
+    """Scaffold: a starter .blend (headless Blender) + fighter.json in dest."""
+    os.makedirs(dest, exist_ok=True)
+    blend = os.path.join(dest, key + ".blend")
+    cmd = [blender_exe(), "-b", "--python", os.path.join(os.path.dirname(os.path.abspath(__file__)), "blender", "make_starter.py"), "--", "--out", blend, "--name", name]
+    if params:
+        cmd += ["--params", os.path.abspath(params)]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode or not os.path.isfile(blend):
+        raise ArtistError("make_starter failed:\n" + (r.stdout + r.stderr)[-800:])
+    cfg = {"schema": "geno-artist/1", "key": key, "name": name, "art": {"blend": key + ".blend", "glb": "art/%s.glb" % key}}
+    json.dump(cfg, open(os.path.join(dest, "fighter.json"), "w", newline="\n"), indent=1)
+    log("created %s and %s" % (blend, os.path.join(dest, "fighter.json")))
+    log("next: python -m tools.geno.artist build %s" % os.path.join(dest, "fighter.json"))
+
+
 def out_dir(f, override=None):
     if override:
         return os.path.abspath(override)
@@ -38,8 +91,10 @@ def run_command(f, out, scene=None):
             (mods_env(out).replace("\\", "/"), scene, f.key))
 
 
-def build(cfg_path, out=None, install=True, log=print, strict=False):
+def build(cfg_path, out=None, install=True, log=print, strict=False, force_export=False):
     t0 = time.time()
+    if not export_from_blend(cfg_path, log, force_export):
+        return 1, None
     log("[1/5] validate %s" % cfg_path)
     rep, f = V.validate(cfg_path)
     log(V.format_report(rep))

@@ -449,6 +449,18 @@ def _locomotion(f, r):
                 f.ref_speeds[rn] = round(v, 3)
     if f.ref_speeds:
         r.add(I, "LOCO", "locomotion", "measured planted-foot speed at rate 1.0 (units/frame): " + ", ".join("%s %.3f" % kv for kv in f.ref_speeds.items()))
+    import json as _j, os as _o
+    attrs = _j.load(open(_o.path.join(spec.DATA, "default_attributes.json"), encoding="utf-8"))["attributes"]
+    attrs.update(f.cfg.get("attributes", {}))
+    for rn, key in (("WalkMiddle", "walk_max_vel"), ("Run", "dash_max_velocity")):
+        v = f.ref_speeds.get(rn)
+        if v:
+            rate = attrs[key] / v
+            if rate > 3.5:
+                r.add(W, "LOCO_RATE", "action '%s'" % f.served[rn], "at the top %s speed (%.2f units/frame) this clip plays at %.1fx: the legs will blur because the stride is short for the speed" % (rn, attrs[key], rate),
+                      "lengthen the stride / quicken the cycle (measured %.3f units per frame), or lower attributes.%s in fighter.json (e.g. %.2f for ~3x)" % (v, key, v * 3))
+            elif rate < 0.6:
+                r.add(W, "LOCO_RATE", "action '%s'" % f.served[rn], "at the top %s speed this clip plays at %.1fx: slow motion" % (rn, rate), "shorten the stride or raise attributes.%s" % key)
     for rn in ("WalkMiddle", "Run"):
         if rn in f.served and rn not in f.ref_speeds and not f.legacy:
             r.add(W, "LOCO_UNMEASURED", "action '%s'" % f.served[rn], "no stance phase found (feet never plant); the walk/run animation rate will be a guess",

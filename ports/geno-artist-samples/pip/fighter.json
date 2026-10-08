@@ -1,0 +1,13 @@
+{
+ "schema": "geno-artist/1",
+ "key": "sample-pip",
+ "name": "Pip",
+ "note": "Everything else (roles, clips, loops, hit frames, costumes) is read from the glb and its .geno.json sidecar, which the Blender export writes. Short legs: its top walk speed is lowered to 0.95 so the walk clip is not played faster than about 3x.",
+ "art": {
+  "blend": "pip.blend",
+  "glb": "art/pip.glb"
+ },
+ "attributes": {
+  "walk_max_vel": 0.95
+ }
+}

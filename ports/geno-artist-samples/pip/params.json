@@ -1,0 +1,18 @@
+{
+ "note": "Pip: a short, big-headed, long-armed test character. Different proportions and its own bone names from the starter; same pipeline, no converter edits.",
+ "proportions": {
+  "hip_h": 3.5, "ankle_h": 0.9, "torso_h": 2.6, "neck_h": 0.35, "head_h": 3.3, "head_r": 2.2,
+  "shoulder_w": 2.4, "hip_w": 1.3, "upper_arm_len": 2.7, "lower_arm_len": 2.5, "hand_len": 1.1,
+  "foot_len": 3.2, "arm_angle_deg": 30, "thickness": 1.3, "torso_w": 2.2, "torso_d": 1.7
+ },
+ "names": {
+  "root": "Origin", "translation": "Motion", "hips": "Pelvis", "spine": "Belly", "chest": "Ribs", "neck": "Nape", "head": "Skull", "head_top": "Crown",
+  "shoulder.L": "Collar_L", "upper_arm.L": "Arm_L", "lower_arm.L": "Elbow_L", "hand.L": "Paw_L",
+  "shoulder.R": "Collar_R", "upper_arm.R": "Arm_R", "lower_arm.R": "Elbow_R", "hand.R": "Paw_R",
+  "upper_leg.L": "Thigh_L", "lower_leg.L": "Shin_L", "foot.L": "Heel_L", "toe.L": "Toe_L",
+  "upper_leg.R": "Thigh_R", "lower_leg.R": "Shin_R", "foot.R": "Heel_R", "toe.R": "Toe_R",
+  "item_socket.R": "Grip", "grab_anchor": "Clasp", "victim_anchor": "Cradle", "camera_focus": "Lens",
+  "shield_origin": "Aura", "reflect_origin": "Mirror", "absorb_origin": "Sponge"
+ },
+ "colors": { "skin": [0.95, 0.80, 0.30], "cloth": [0.80, 0.25, 0.35], "accent": [0.25, 0.45, 0.85], "boots": [0.30, 0.20, 0.12] }
+}
