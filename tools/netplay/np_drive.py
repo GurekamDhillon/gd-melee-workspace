@@ -2,8 +2,12 @@
 """np_drive.py - a two-window netplay test that waits on game STATE, not frame counts.
 
 Starts a host and a guest window through _build/netplay_local.ps1 (-Menu -RealNetwork: both boot
-to the main menu and meet through ONLINE PLAY and the server), each running a built-in input
-script (np_host / np_guest, pc/scripts/examples) that walks the real menus and plays the lobby.
+to the main menu and meet through ONLINE and the server), each running a built-in input
+script (np_host / np_guest, pc/scripts/examples) that walks the Atlas main menu (ONLINE is a
+main-menu row) and plays the lobby. The guest joins the host's room BY CODE: the host logs
+"ROOMCODE <code>", this driver sends it with gd.netplay_act("code", ...) (a guest launched later
+can take it from MELEE_LAB_ROOM instead). --local-server starts tools/netplay/server on
+127.0.0.1 for the run (never point a test at the public server); --offscreen parks both windows.
 This script watches both over their console sockets (MELEE_CONSOLE_PORT) and checks each stage:
 the host gets a room code, the guest is given that code and joins, both reach the lobby, both
 reach the match - then a screenshot of each side, and both windows are closed.
@@ -16,6 +20,7 @@ Exit status 0 = the match started on both sides. Needs the server address (netpl
 and the disc path in .env, like netplay_local.ps1. Test windows run at MELEE_VOLUME=3.
 """
 import argparse
+import atexit
 import os
 import socket
 import subprocess
@@ -81,11 +86,21 @@ def main():
     ap.add_argument("--label", default="np_drive")
     ap.add_argument("--timeout", type=int, default=300, help="seconds for each stage")
     ap.add_argument("--shots", default="", help="folder for one screenshot per side at the match")
+    ap.add_argument("--local-server", action="store_true", help="run a matchmaking server on 127.0.0.1 for this test (sets --server)")
+    ap.add_argument("--offscreen", action="store_true", help="MELEE_WINDOW_X/Y=30000 on both windows")
     ap.add_argument("--keep", action="store_true", help="leave the windows open at the end")
     a = ap.parse_args()
 
-    env_host = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_host';MELEE_VOLUME='3'}" % HOST_PORT
-    env_guest = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_guest';MELEE_VOLUME='3'}" % GUEST_PORT
+    srv = None
+    if a.local_server:
+        sport = 51600 + (os.getpid() % 300)
+        srv = subprocess.Popen([sys.executable, os.path.join(ROOT, "tools", "netplay", "server", "gdmelee_server.py"),
+                                "--bind", "127.0.0.1", "--port", str(sport)])
+        a.server = "127.0.0.1:%d" % sport
+        atexit.register(srv.terminate)  # also on the early "no console socket" returns
+    off = ";MELEE_WINDOW_X='30000';MELEE_WINDOW_Y='30000'" if a.offscreen else ""
+    env_host = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_host';MELEE_VOLUME='3'%s}" % (HOST_PORT, off)
+    env_guest = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_guest';MELEE_VOLUME='3'%s}" % (GUEST_PORT, off)
     cmd = ("& '%s' -Menu -RealNetwork -HostDevice gc -GuestDevice keyboard -Disc %s -Label '%s' -EnvHost %s -EnvGuest %s%s" %
            (os.path.join(ROOT, "_build", "netplay_local.ps1").replace("'", "''"), a.disc, a.label.replace("'", "''"),
             env_host, env_guest,
@@ -138,6 +153,8 @@ def main():
                     side.run("quit")
                 except (OSError, ConnectionError):
                     pass
+        if srv is not None:
+            srv.terminate()
     print("PASS" if ok else "FAIL")
     return 0 if ok else 1
 
