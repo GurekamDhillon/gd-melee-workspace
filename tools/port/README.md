@@ -91,6 +91,7 @@ it has no GPU and no paced loop, so it cannot time anything or count a real draw
 | Switch | Meaning |
 |---|---|
 | `MELEE_FPS=u` | uncapped interpolated presentation; realtime game logic remains 60 Hz |
+| `MELEE_FULLSCREEN=1` | borderless desktop fullscreen at start (F11 / Alt+Enter toggle in game; video.cfg `fullscreen`) |
 | `MELEE_FPS=120` | cap interpolated presentation at 120; not a faster simulation |
 | `MELEE_TURBO=1`, game `--turbo` | virtual-clock simulation without realtime pacing; requires `MELEE_PAD_SCRIPT` or `MELEE_LAB_BATCH`; refuses netplay, Slippi and fake rollback sessions |
 | game `--realtime` | disables a turbo request; wrapper `--realtime` sets the environment to 0 |

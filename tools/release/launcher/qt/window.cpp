@@ -536,11 +536,11 @@ QWidget *Window::playTab() {
         settings_.discs.removeAt(i); if (settings_.defaultIndex() >= 0) settings_.defaultId = settings_.discs[settings_.defaultIndex()].id; else settings_.defaultId.clear(); save(); refreshDiscs();
     });
     connect(manage, &QPushButton::clicked, this, [manage, menu] { menu->exec(manage->mapToGlobal(QPoint(0, manage->height()))); });
-    // Options: the three switches and the volume, each a row
+    // Options: the four switches and the volume, each a row
     auto *options = new kit::Pane(t("Options", "Opciones")); left->addWidget(options);
     auto *optionList = new QVBoxLayout(options->body()); optionList->setContentsMargins(0, 0, 0, 0); optionList->setSpacing(atlas::px("s1") - 1);
-    for (const auto &item : QList<QPair<QString, QString>>{{"unlock_all", t("Unlock everything", "Desbloquear todo")}, {"skip_intro", t("Skip intro", "Saltar introducción")}, {"close_on_play", t("Close launcher on play", "Cerrar lanzador al jugar")}}) {
-        auto *check = new kit::Toggle; check->setObjectName("opt_" + item.first); check->setAccessibleName(item.second); check->setChecked(settings_.flag(item.first, item.first != "close_on_play"));
+    for (const auto &item : QList<QPair<QString, QString>>{{"unlock_all", t("Unlock everything", "Desbloquear todo")}, {"skip_intro", t("Skip intro", "Saltar introducción")}, {"fullscreen", t("Fullscreen", "Pantalla completa")}, {"close_on_play", t("Close launcher on play", "Cerrar lanzador al jugar")}}) {
+        auto *check = new kit::Toggle; check->setObjectName("opt_" + item.first); check->setAccessibleName(item.second); check->setChecked(settings_.flag(item.first, item.first != "close_on_play" && item.first != "fullscreen"));
         optionList->addWidget(new OptionRow(item.second, check, check, true));
         connect(check, &QAbstractButton::toggled, this, [this, key = item.first](bool on) { guarded([&] { settings_.options[key] = on ? "1" : "0"; save(); }); });
     }

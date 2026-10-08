@@ -218,7 +218,7 @@ private slots:
         auto *discs = w.findChild<QTableWidget *>("atlasDiscs"); QVERIFY(discs);
         QCOMPARE(discs->rowCount(), 0);                                 // first run: empty
         QVERIFY(w.findChild<QPushButton *>("atlasAddDisc")->isEnabled());              // Add disc is always available
-        QVERIFY(w.findChild<kit::Toggle *>("opt_unlock_all") && w.findChild<kit::Toggle *>("opt_skip_intro") && w.findChild<kit::Toggle *>("opt_close_on_play"));
+        QVERIFY(w.findChild<kit::Toggle *>("opt_unlock_all") && w.findChild<kit::Toggle *>("opt_skip_intro") && w.findChild<kit::Toggle *>("opt_close_on_play") && w.findChild<kit::Toggle *>("opt_fullscreen"));
         QVERIFY(w.findChild<QSlider *>("atlasVolume"));
     }
     void play_options_write_settings() {                                // the toggles and the slider still write what the checkboxes wrote
