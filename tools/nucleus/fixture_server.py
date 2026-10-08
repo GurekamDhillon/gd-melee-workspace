@@ -102,8 +102,33 @@ def make_mods(count):
                      "download_count": (i * 37) % 500, "like_count": (i * 11) % 90, "page_url": f"https://ssbmnucleus.net/post/{mid}/synthetic-{i}",
                      "thumbnail_url": None, "screenshots": [], "download_url": f"http://127.0.0.1:{OPTS.port}/api/public/v1/mods/{mid}/download",
                      "zip_url": None, "files": files})
+    # zip-only posts, like the real "Luffy Falco (Animelee + Vanilla)": every file's download_url / file_url is null, the files live in the mod's zip
+    for mid, title, entries, has_zip in ((1990, "Zip Falco (Animelee + Vanilla)", ["Zip Falco/Animelee/PlFcBu.dat", "Zip Falco/Vanilla/PlFcBu.dat"], True),
+                                         (1991, "Zip Gone Falco", ["Zip Gone Falco/PlFcGr.dat"], False)):
+        files = []
+        for k, fn in enumerate(entries):
+            code = fn.rsplit("Pl", 1)[1][2:4]
+            files.append({"id": mid * 10 + k, "filename": fn, "file_type": "character_dat", "character": "Falco", "color": COLOUR[code],
+                          "slippi_safe": None, "csp_url": None, "stock_url": None, "preview_url": None, "download_url": None, "file_url": None})
+        mods.append({"id": mid, "title": title, "description": "Synthetic zip-only post. Not a real post.", "author": "Tester Zip", "type": "costume", "stage": None,
+                     "tags": ["Character Costume", "Falco"], "created_at": "2026-10-01T10:00:00.000000Z", "updated_at": "2026-10-01T12:00:00.000000Z",
+                     "download_count": 5, "like_count": 1, "page_url": f"https://ssbmnucleus.net/post/{mid}/synthetic-zip", "thumbnail_url": None, "screenshots": [],
+                     "download_url": f"http://127.0.0.1:{OPTS.port}/api/public/v1/mods/{mid}/download", "zip_url": None, "files": files})
     mods.sort(key=lambda m: (m["updated_at"], m["id"]), reverse=True)
     return mods
+
+
+def zip_for(mid):
+    import io
+    import zipfile
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        for m in MODS:
+            if m["id"] == mid:
+                for f in m["files"]:
+                    code = next(c for c, n in COLOUR.items() if n == f["color"])
+                    z.writestr(f["filename"], hsd_costume("Falco", code))
+    return buf.getvalue()
 
 
 class H(BaseHTTPRequestHandler):
@@ -163,6 +188,10 @@ class H(BaseHTTPRequestHandler):
         if len(parts) == 3 and parts[0] == "mods" and parts[2] == "download":
             STATE["downloads"] += 1
             fid = q.get("file", [""])[0]
+            if parts[1] == "1990" and not fid:
+                return self.send(200, zip_for(1990), "application/zip")
+            if parts[1] in ("1990", "1991"):
+                return self.err(404, "no such file")     # the real API: a zip-only file has no ?file= download
             return self.send(302, b"", extra=[("Location", f"http://127.0.0.1:{OPTS.port}/media/files/{parts[1]}/{fid or 'all'}.dat")])
         return self.err(404, "not found")
 
