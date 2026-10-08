@@ -20,6 +20,7 @@ Exit status 0 = the match started on both sides. Needs the server address (netpl
 and the disc path in .env, like netplay_local.ps1. Test windows run at MELEE_VOLUME=3.
 """
 import argparse
+import atexit
 import os
 import socket
 import subprocess
@@ -96,6 +97,7 @@ def main():
         srv = subprocess.Popen([sys.executable, os.path.join(ROOT, "tools", "netplay", "server", "gdmelee_server.py"),
                                 "--bind", "127.0.0.1", "--port", str(sport)])
         a.server = "127.0.0.1:%d" % sport
+        atexit.register(srv.terminate)  # also on the early "no console socket" returns
     off = ";MELEE_WINDOW_X='30000';MELEE_WINDOW_Y='30000'" if a.offscreen else ""
     env_host = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_host';MELEE_VOLUME='3'%s}" % (HOST_PORT, off)
     env_guest = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_guest';MELEE_VOLUME='3'%s}" % (GUEST_PORT, off)
