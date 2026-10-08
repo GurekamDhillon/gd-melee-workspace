@@ -311,6 +311,8 @@ LaunchSpec prepareLaunch(const QString &app, const QString &user, const Settings
     for (const auto &pair : {qMakePair("unlock_all", "MELEE_UNLOCK_ALL"), qMakePair("skip_intro", "MELEE_SKIP_INTRO")}) {
         if (s.flag(pair.first, true)) env.insert(pair.second, "1"); else env.remove(pair.second);
     }
+    // Fullscreen is borderless desktop fullscreen. Off leaves the game to its saved setting (video.cfg, F11 in the game).
+    if (s.flag("fullscreen", false)) env.insert("MELEE_FULLSCREEN", "1"); else env.remove("MELEE_FULLSCREEN");
     QStringList log;
     if (s.flag("log_all")) log << "all"; else log = s.option("log_categories").split(',', Qt::SkipEmptyParts);
     int render = s.option("log_render", "0").toInt();
