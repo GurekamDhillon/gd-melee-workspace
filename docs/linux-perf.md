@@ -98,8 +98,8 @@ Optional A/B runs (one change each; start the game from a terminal): `MELEE_VSYN
   `snap: SyncTest k=8 (10 slots of 47873981 bytes), full-copy mode`, `rb: tick work ... save 14.45 / 12.88 / 12.37 ms`.
 * The WSL2 kernel is 6.6 (no `PAGEMAP_SCAN`), so the userfaultfd backend was exercised on a 6.12.107 kernel under QEMU
   (static 32-bit `tools/port/tests/writewatch_probe.c`, 600 frames of random writes, 200 to 2800 pages per frame):
-  `backend = userfaultfd write-protect (PAGEMAP_SCAN)`, exact dirty sets, 0 missed pages, with and without a 64-bit kernel
-  under a 32-bit process (compat ioctl works). The game itself has not run on a 6.7+ kernel yet: the owner's laptop is the first.
+  `backend = userfaultfd write-protect (PAGEMAP_SCAN)`, exact dirty sets, 0 missed pages, in a 32-bit process on the 64-bit
+  kernel (the compat ioctl works). The game itself has not run on a 6.7+ kernel yet: the owner's laptop is the first.
 * The dirty-page snapshot path on Linux (driven by the opt-in soft-dirty backend, `MELEE_SNAP_VERIFY=1` on):
   rollback runs with 1 and 4 rollbacks (depth up to 10): `rbhash.csv` (the confirmed per-frame gameplay hash) is byte-identical
   to the full-copy run over the common frames (1960 and 1189 frames); no `VERIFY FAIL`. Curated SyncTest (k=8): 0 mismatches
