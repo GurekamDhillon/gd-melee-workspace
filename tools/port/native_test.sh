@@ -30,7 +30,9 @@ script-budget)
 arena-spawn)
     sources=(pc/tests/arena_spawn_test.c) ;;
 view-canvas)
-    sources=(pc/tests/view_canvas_test.c) ;;
+    # Shared aspect cases include the PC-only six-player HUD math.
+    sources=(pc/tests/view_canvas_test.c)
+    flags+=(-DTARGET_PC) ;;
 controls-remap)
     sources=(pc/tests/controls_remap_test.c pc/platform/gw_slippi_pad.c) ;;
 profiler-core)
