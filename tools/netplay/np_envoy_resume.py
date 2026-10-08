@@ -408,8 +408,8 @@ def scenario_set(d):
 
     # --- B: kill the guest between games, start it again with the same sandbox, join by code ---
     d.log("B: kill the guest")
+    ih = int(d.host.run()["interrupted"])  # baseline BEFORE the kill: the host can count the drop before a post-kill read
     d.guest.kill()
-    ih = int(d.host.run()["interrupted"])
     d.wait("host notices (interrupted)", lambda: (lambda a: a and int(a["interrupted"]) > ih)(d.host.run()), 150, 1)
     rh = int(d.host.run()["resumed"])
     d.guest.launch(code)
