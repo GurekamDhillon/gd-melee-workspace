@@ -30,7 +30,7 @@ while [ $# -gt 0 ]; do
     --native-test)
         [ $# -eq 2 ] || gw_die "--native-test requires exactly one test name and no other options"
         GW_ROOT="$GW_ROOT" GW_MELEE="$GW_MELEE" GW_BUILD_ROOT="$GW_BUILD_ROOT" \
-            GW_CLANG="$GW_CLANG" bash "$GW_ROOT/tools/port/native_test.sh" "$2"
+            GW_CLANG="$GW_CLANG" bash ./native_test.sh "$2"
         exit $?
         ;;
     -h | --help) sed -n '2,16p' "$0"; exit 0 ;;

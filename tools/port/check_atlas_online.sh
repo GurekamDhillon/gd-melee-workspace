@@ -33,7 +33,7 @@ fi
 # 2. The game-side adapter only READS netplay state: every Netplay_ name in it is in the read allow-list. All writes stay in
 #    gmfrontend_online.inc, where the state machine is.
 ADAPTER="$G/src/melee/gm/gmfrontend_atlas_online.inc"
-READS="LobbyInfo LobbyPlayer LobbyMe LobbyPhase LobbyStage LobbyStageGroup LobbyStageOpen IsHost RoomCode Ping PlayerName FighterName MenuStatus Turbo Envoy StageMode TurboPref EnvoyPref RandomStatus RandomSeconds CodeChar CodeSlot"
+READS="LobbyInfo LobbyPlayer LobbyMe LobbyPhase LobbyStage LobbyStageGroup LobbyStageOpen IsHost RoomCode Ping PlayerName FighterName MenuStatus Turbo Envoy EnvoyBlock StageMode TurboPref EnvoyPref RandomStatus RandomSeconds CodeChar CodeSlot"
 if [ -f "$ADAPTER" ]; then
     for name in $(grep -o -E 'Netplay_[A-Za-z]+' "$ADAPTER" | sort -u | sed 's/^Netplay_//'); do
         case " $READS " in *" $name "*) ;; *) bad "the adapter calls Netplay_$name, which is not a read (writes belong in gmfrontend_online.inc)";; esac

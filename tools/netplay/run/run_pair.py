@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""run_pair.py - stage-7 spike proof: two REAL clients play two consecutive stages of an online STAGE RUN over loopback, each stage a fresh agreed
-rollback session, the run carried between them by the run record (gw_netrun.h, RN1|...|digest). Envoy off (no mods). Loopback only: the local
+"""run_pair.py - stage-7 Classic proof: two REAL clients complete an agreed run of stages of an online STAGE RUN over loopback, each stage a fresh agreed
+rollback session, the run carried between them by the run record (gw_netrun.h, RN2|...|digest). Envoy off (no mods). Loopback only: the local
 matchmaking server on 127.0.0.1, both clients bound to 127.0.0.1 (MELEE_NETPLAY_BIND), windows parked offscreen. Never the public server.
 
   GW_MELEE=<game worktree> GW_BUILD_ROOT=<its build root> python run_pair.py <tag> [--games 2] [--poison] [--netsim lag=40,jitter=10,loss=2]
@@ -66,9 +66,9 @@ class Con:
 
 
 STATE = ('(function() local np=gd.netplay() local r=np.run local m=gd.match() local me=np.players[np.me+1] '
-         'return table.concat({np.phase,np.lobby,np.game,np.turn,np.me,tostring(m.active),m.frame,gd.scene().name,tostring(r.on),r.stage,r.seed,r.record,r.refused,'
+         'return table.concat({np.phase,np.lobby,np.game,np.turn,np.me,tostring(m.active),m.frame,gd.scene().name,tostring(r.on),r.stage,r.seed,r.record,r.refused,r.pool,r.over,r.ends,r.last,'
          'tostring(me.locked),tostring(me.ready),np.status},"~") end)()')
-KEYS = ["phase", "lobby", "game", "turn", "me", "match", "frame", "scene", "run_on", "run_stage", "run_seed", "record", "refused", "locked", "ready"]
+KEYS = ["phase", "lobby", "game", "turn", "me", "match", "frame", "scene", "run_on", "run_stage", "run_seed", "record", "refused", "pool", "over", "ends", "last", "locked", "ready"]
 
 
 def parse_state(s):
@@ -108,11 +108,16 @@ def main():
     ap.add_argument("tag")
     ap.add_argument("--games", type=int, default=2)
     ap.add_argument("--poison", action="store_true")
+    ap.add_argument("--classic", action="store_true")
+    ap.add_argument("--pool", type=int, default=12)
+    ap.add_argument("--continues", type=int, choices=(0, 1), default=1)
+    ap.add_argument("--expect-loss", action="store_true")
+    ap.add_argument("--port", type=int, default=58270, help="host UDP port; server uses port+1, guest port+2")
     ap.add_argument("--netsim", default="off")
     ap.add_argument("--delay", type=int, default=2)
     ap.add_argument("--timeout", type=int, default=1500)
     ap.add_argument("--stocks", default="1")
-    ap.add_argument("--minutes", default="1")
+    ap.add_argument("--minutes", default="0", choices=("0",), help="runs have no timer; sudden death is excluded")
     ap.add_argument("--extra-frames", type=int, default=600, help="frames to play in the last stage before the proof is taken")
     a = ap.parse_args()
     out_dir = "%s/%s" % (OUT, a.tag)
@@ -128,13 +133,17 @@ def main():
         trace.flush()
 
     env0 = load_env()
+    for key in ("MELEE_NET_SIM", "MELEE_NETRUN_POISON", "MELEE_NETRUN_UNLOCK", "MELEE_NETPLAY_RUN_MINUTES"):
+        env0.pop(key, None)
     iso = env0["GW_ISO_VANILLA"]
     rnd = random.Random()
-    sport = 51900 + rnd.randrange(80)
+    if not 58000 <= a.port <= 58997:
+        ap.error("--port must be 58000..58997")
+    sport = a.port + 1
     hc = 53600 + rnd.randrange(20)
     gc = hc + 20
     pids = {}
-    srv = subprocess.Popen([sys.executable, ROOT + "/tools/netplay/server/gdmelee_server.py", "--bind", "127.0.0.1", "--port", str(sport)],
+    srv = subprocess.Popen([sys.executable, HERE + "/../server/gdmelee_server.py", "--bind", "127.0.0.1", "--port", str(sport)],
                            stdout=open(out_dir + "/server.log", "w"), stderr=subprocess.STDOUT)
     pids["server"] = srv.pid
     open(out_dir + "/pids.txt", "w").write(json.dumps(pids))
@@ -161,7 +170,9 @@ def main():
         return p, run_dir
 
     hp, hdir = launch("h", HERE + "/run_host.lua", hc,
-                      dict(MELEE_NETPLAY_RUN="1", MELEE_NETPLAY_RUN_STOCKS=a.stocks, MELEE_NETPLAY_RUN_MINUTES=a.minutes,
+                      dict(MELEE_NETPLAY_RUN="classic" if a.classic else "1", MELEE_NETPLAY_PORT=str(a.port),
+                           MELEE_NETPLAY_RUN_POOL=str(a.pool), MELEE_NETPLAY_RUN_CONT=str(a.continues),
+                           MELEE_NETPLAY_RUN_LEN=str(a.games), MELEE_NETPLAY_RUN_STOCKS=a.stocks, MELEE_NETPLAY_RUN_MINUTES="0",
                            MELEE_PAD_BOT="0,0,%d" % (100 + rnd.randrange(50))))
     host = Con(hc, "host")
     code = None
@@ -172,7 +183,7 @@ def main():
             code = c.strip('"')
             break
         time.sleep(2)
-    result = {"tag": a.tag, "stages": [], "ok": False, "poison": a.poison}
+    result = {"classic": a.classic, "expect_loss": a.expect_loss, "tag": a.tag, "stages": [], "ok": False, "poison": a.poison}
     gp = None
 
     def finish(rc):
@@ -208,7 +219,8 @@ def main():
                 txt = ""
             arr[side] = re.findall(r"netrun: ARRIVED in stage (\d+) of the run - (\S+) \(", txt)
             result["log_" + side] = {"arrived": arr[side], "refused": re.findall(r"netrun: .*REFUSED.*", txt)[:4],
-                                     "desync": len(re.findall(r"CHECKSUM DESYNC|desync", txt, re.I))}
+                                     "desync": len(re.findall(r"CHECKSUM DESYNC|desyncs [1-9][0-9]*", txt, re.I)),
+                                     "ends": re.findall(r"netrun: STAGE END (.*)", txt)}
         hs, gs_ = sessions(out_dir + "/h.hashes.csv"), sessions(out_dir + "/g.hashes.csv")
         cmp_ = []
         for i in range(min(len(hs), len(gs_))):
@@ -217,6 +229,16 @@ def main():
             cmp_.append({"stage": i + 1, "frames_host": len(hs[i]), "frames_guest": len(gs_[i]), "frames_compared": len(common_f),
                          "mismatches": len(bad), "first_mismatch": bad[0] if bad else None})
         result["hash_compare"] = cmp_
+        if not a.poison:
+            result["ok"] = (result["ok"] and len(cmp_) >= (1 if a.expect_loss else a.games)
+                            and all(c["frames_compared"] > 0 and c["mismatches"] == 0 for c in cmp_)
+                            and arr["h"] == arr["g"] and len(arr["h"]) >= (1 if a.expect_loss else a.games)
+                            and result["log_h"]["ends"] == result["log_g"]["ends"]
+                            and len(result["log_h"]["ends"]) >= (1 if a.expect_loss else a.games)
+                            and result["log_h"]["desync"] == result["log_g"]["desync"] == 0)
+        else:
+            result["ok"] = result["ok"] and not arr["h"] and not arr["g"]
+        rc = 0 if result["ok"] else 1
         json.dump(result, open(out_dir + "/result.json", "w"), indent=1)
         log("RESULT", "PASS" if result["ok"] else "INCOMPLETE/FAIL", json.dumps({k: v for k, v in result.items() if k != "stages"}))
         return rc
@@ -227,7 +249,7 @@ def main():
         gdir = None
         return finish(1)
     log("room", code)
-    gx = dict(MELEE_LAB_ROOM=code, MELEE_PAD_BOT="1,0,%d" % (200 + rnd.randrange(50)))
+    gx = dict(MELEE_LAB_ROOM=code, MELEE_NETPLAY_PORT=str(a.port + 2), MELEE_PAD_BOT="1,0,%d" % (200 + rnd.randrange(50)))
     if a.poison:
         gx["MELEE_NETRUN_POISON"] = "1"
     gp, gdir = launch("g", HERE + "/run_guest.lua", gc, gx)
@@ -237,7 +259,6 @@ def main():
     t_end = time.time() + a.timeout
     prev = None
     last_log = 0
-    done = False
     while time.time() < t_end:
         hs_, gs_ = parse_state(host.ev(STATE)), parse_state(guest.ev(STATE))
         if hs_ is None or gs_ is None:
@@ -257,16 +278,22 @@ def main():
                     con.ev('gd.netplay_act("char")')
                 elif lp in ("strike", "ban", "pick") and int(st["turn"]) == me:
                     con.ev(FIRST_FREE)   # (an ordinary set; a run never gets here)
-                elif lp == "ready" and st["ready"] != "true":
+                elif lp == "ready" and st["ready"] != "true" and st["over"] == "":
                     con.ev('gd.netplay_act("ready",true)')
             if st["scene"] == "GS_RESULTS" and int(st["frame"]) > 200:
                 con.cmd("input 1 %s 4" % ("START" if int(time.time()) % 2 else "A"))
+        if not a.poison and hs_["over"] in ("stocks", "cleared") and gs_["over"] == hs_["over"]:
+            result["outcome"] = {"host": hs_, "guest": gs_}
+            result["ok"] = (hs_["record"] == gs_["record"] and hs_["last"] == gs_["last"]
+                            and (hs_["over"] == "stocks" if a.expect_loss else hs_["over"] == "cleared")
+                            and all(stage["records_equal"] for stage in result["stages"]))
+            return finish(0 if result["ok"] else 1)
         if a.poison and (int(hs_["refused"]) > 0 or int(gs_["refused"]) > 0):
             result["poison_result"] = {"host_refused": hs_["refused"], "guest_refused": gs_["refused"], "host_status": hs_["status"],
                                        "guest_status": gs_["status"], "match_started": [hs_["match"], gs_["match"]]}
             log("POISON result", json.dumps(result["poison_result"]))
             time.sleep(4)
-            result["ok"] = (gs_["match"] != "true")
+            result["ok"] = (hs_["match"] != "true" and gs_["match"] != "true")
             return finish(0 if result["ok"] else 1)
         if hs_["match"] == "true" and gs_["match"] == "true" and hs_["run_on"] == "true" and gs_["run_on"] == "true":
             g_no = hs_["game"]
@@ -279,12 +306,8 @@ def main():
                 result["stages"].append(ev)
                 log("EVIDENCE stage", g_no, json.dumps(ev))
                 if int(g_no) >= a.games:
-                    done = True
-                    break
+                    log("last stage reached; waiting for the agreed outcome")
         time.sleep(1.2)
-    if done:
-        result["ok"] = (len(result["stages"]) >= a.games and all(s["records_equal"] for s in result["stages"]))
-        return finish(0 if result["ok"] else 1)
     log("timeout")
     return finish(1)
 
