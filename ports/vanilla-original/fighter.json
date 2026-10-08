@@ -1,0 +1,15 @@
+{
+ "schema": "geno-artist/1",
+ "key": "vanilla-courier",
+ "name": "Vanilla Courier",
+ "token": "Courier",
+ "note": "The Courier through the general importer. roles, hurtboxes and the ECB come from the glb's armature extras; the 351-row clip map and root-motion flags from the legacy manifest.json (a hand-kept file new characters do not need).",
+ "art": { "glb": "out/courier.glb", "scale": 1.0 },
+ "clips": { "legacy_manifest": "manifest.json" },
+ "costumes": [
+  { "name": "default", "texture": "out/tex/costume_default.png" },
+  { "name": "red", "texture": "out/tex/costume_red.png", "team": "red" },
+  { "name": "blue", "texture": "out/tex/costume_blue.png", "team": "blue" },
+  { "name": "green", "texture": "out/tex/costume_green.png", "team": "green" }
+ ]
+}

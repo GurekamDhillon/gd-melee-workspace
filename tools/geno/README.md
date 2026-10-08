@@ -1,5 +1,7 @@
 # Geno author tools
 
+Making an **original character** (Blender model, rig, animation to a playable `base: "none"` fighter)? Start at `artist/README.md` (`python -m tools.geno.artist new|validate|build`); `check_art.py` and `build_courier.sh` below are the Courier-era path, kept working.
+
 The Geno engine's native-definition tools (format 6, widened to 7 in slice 2 and to 8 in slice 3) generate and check a source-only Mario-reference fighter. This path is offline only.
 
 Slice 5, second increment (2026-10-08, format 10): `check` reads a define's Lua module against the engine's own API (`lua_check.py` parses `pc/platform/geno_lua_core.h`, so it cannot drift): unknown `ctx`, `ctx.self` and `ctx.input` names, names the sandbox lacks (`pairs`, `string`, `math.random`, ...), undeclared state slots and wrong-typed literals, `ctx.go` to a missing state, a `hitbox_damage` mask outside 1..15, each with its line; `lua` needs `"geno": 10`. `python -m tools.geno.new KEY --template lua-counter --output DIR` writes a format-10 define with a Lua counter that checks clean. The generated schema is regenerated (`GENO_VERSION` 10). Fixture: `melee/pc/geno/mods/vanilla-riposte`; lesson `docs/learn/geno-fighters/13-fighter-lua.md`.
