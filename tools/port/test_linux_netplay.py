@@ -16,6 +16,7 @@ def main():
     ap.add_argument('disc',type=Path)
     ap.add_argument('--seconds',type=int,default=90)
     ap.add_argument('--conditions',default='off')
+    ap.add_argument("--bind", default=None, help="client bind (default: MELEE_NETPLAY_BIND or 127.0.0.1); WSL-to-Windows requires a non-loopback override")
     a=ap.parse_args()
     build=Path(os.environ.get('GW_BUILD_ROOT',root/'_build/agents/linux'))
     pair=Path(tempfile.mkdtemp(prefix='netplay-',dir=build))
@@ -30,8 +31,10 @@ def main():
                 subprocess.run(['cp','--reflink=auto',str(build/name),str(run/name)],check=True)
             for name in ('assets','ui'):shutil.copytree(build/name,run/name)
             env=os.environ.copy()
+            if a.bind is not None: env["MELEE_NETPLAY_BIND"] = a.bind
+            env.setdefault("MELEE_NETPLAY_BIND", "127.0.0.1")
             env.update(MELEE_NET_SIM=a.conditions,MELEE_NETPLAY=f'host:{port}' if role=='host' else f'join:127.0.0.1:{port}',
-                       MELEE_NETPLAY_BIND='127.0.0.1',MELEE_RB_HASHLOG=str(run/'hashes.csv'),
+                       MELEE_RB_HASHLOG=str(run/'hashes.csv'),
                        MELEE_VOLUME='3',MELEE_WINDOW_W='640',MELEE_WINDOW_H='480',
                        MELEE_CACHE_DIR=str(run))
             log=open(run/'run.log','w')
