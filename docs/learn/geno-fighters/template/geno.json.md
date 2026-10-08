@@ -392,6 +392,12 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].fighter.costumes[].file | string: Costume model .dat |  | ; geno.md §22.4; melee/pc/platform/geno_registry.c |
 | fighters[].fighter.costumes[].joint | string: Joint-tree symbol |  | ; geno.md §22.4; melee/pc/platform/geno_registry.c |
 | fighters[].fighter.costumes[].matanim | string: Material-animation symbol |  | ; geno.md §22.4; melee/pc/platform/geno_registry.c |
+| fighters[].fighter.costumes[].name | string: Costume name the select shows (printable ASCII, 1..23 characters) |  | maxLength=23; pattern=^[ -~]+$; geno.md §22.6; melee/pc/platform/geno_registry.c |
+| fighters[].fighter.costumes[].team | string: The team battle colour this costume is (the first one declared wins; undeclared: red is costume 0, blue 1, green 2) |  | enum=['red', 'blue', 'green']; geno.md §22.6; melee/pc/platform/geno_registry.c |
+| fighters[].presentation | object: A define's own character select icon (64x56), portrait (136x188) and stock icon (rgb5a3 or rgba8), one per costume or one for all (geno: 9) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].presentation.icon | string: A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name |  | maxLength=63; pattern=^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][xX][tT][eE][xX]$; geno.md §22.6; melee/pc/platform/geno_registry.c |
+| fighters[].presentation.portrait | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].presentation.stock | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 
 ## Runtime limits
 
@@ -424,7 +430,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:479 |
 | JDOC_NODES | 4096 | melee/pc/platform/geno_registry.c:74 |
 | JDOC_ARENA | 65536 | melee/pc/platform/geno_registry.c:75 |
-| GN_MAX_SLOTS | 256 | melee/pc/platform/geno_registry.c:472 |
+| GN_MAX_SLOTS | 256 | melee/pc/platform/geno_registry.c:485 |
 | JSON_DEPTH | 32 | melee/pc/platform/geno_registry.c:jd_value |
 | JSON_FILE_BYTES | 1048576 | melee/pc/platform/geno_registry.c:gn_read_file |
 

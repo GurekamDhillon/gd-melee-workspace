@@ -4088,6 +4088,28 @@
                       "x-engine-default": "",
                       "x-reference": "geno.md §22.4",
                       "x-source": "melee/pc/platform/geno_registry.c"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Costume name the select shows (printable ASCII, 1..23 characters)",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §22.6",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "minLength": 1,
+                      "maxLength": 23,
+                      "pattern": "^[ -~]+$"
+                    },
+                    "team": {
+                      "type": "string",
+                      "description": "The team battle colour this costume is (the first one declared wins; undeclared: red is costume 0, blue 1, green 2)",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §22.6",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "enum": [
+                        "red",
+                        "blue",
+                        "green"
+                      ]
                     }
                   },
                   "additionalProperties": false,
@@ -4105,6 +4127,76 @@
               "animation",
               "costumes"
             ]
+          },
+          "presentation": {
+            "type": "object",
+            "properties": {
+              "icon": {
+                "type": "string",
+                "description": "A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name",
+                "x-engine-default": "",
+                "x-reference": "geno.md §22.6",
+                "x-source": "melee/pc/platform/geno_registry.c",
+                "pattern": "^[A-Za-z0-9_.+@#%&=,;'!()-]+\\.[gG][xX][tT][eE][xX]$",
+                "maxLength": 63
+              },
+              "portrait": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name",
+                    "x-engine-default": "",
+                    "x-reference": "geno.md §22.6",
+                    "x-source": "melee/pc/platform/geno_registry.c",
+                    "pattern": "^[A-Za-z0-9_.+@#%&=,;'!()-]+\\.[gG][xX][tT][eE][xX]$",
+                    "maxLength": 63
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "description": "A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §22.6",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "pattern": "^[A-Za-z0-9_.+@#%&=,;'!()-]+\\.[gG][xX][tT][eE][xX]$",
+                      "maxLength": 63
+                    },
+                    "maxItems": 16,
+                    "minItems": 1
+                  }
+                ]
+              },
+              "stock": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "description": "A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name",
+                    "x-engine-default": "",
+                    "x-reference": "geno.md §22.6",
+                    "x-source": "melee/pc/platform/geno_registry.c",
+                    "pattern": "^[A-Za-z0-9_.+@#%&=,;'!()-]+\\.[gG][xX][tT][eE][xX]$",
+                    "maxLength": 63
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "description": "A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §22.6",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "pattern": "^[A-Za-z0-9_.+@#%&=,;'!()-]+\\.[gG][xX][tT][eE][xX]$",
+                      "maxLength": 63
+                    },
+                    "maxItems": 16,
+                    "minItems": 1
+                  }
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "description": "A define's own character select icon (64x56), portrait (136x188) and stock icon (rgb5a3 or rgba8), one per costume or one for all (geno: 9)"
           }
         },
         "additionalProperties": false,
@@ -4449,6 +4541,7 @@
     "part_to_joint",
     "parts",
     "phys",
+    "presentation",
     "radius",
     "range",
     "reflect",
@@ -4483,6 +4576,7 @@
     "symbol",
     "target",
     "targets",
+    "team",
     "to",
     "tornado",
     "turn",
@@ -4603,7 +4697,7 @@
     },
     "GN_MAX_SLOTS": {
       "value": 256,
-      "source": "melee/pc/platform/geno_registry.c:472"
+      "source": "melee/pc/platform/geno_registry.c:485"
     },
     "JSON_DEPTH": {
       "value": 32,
@@ -4615,8 +4709,8 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "103de0745915c080dfa1f30da094c4130a6cf819a614fd7f58039e4a0e94aa13",
-    "pc/platform/geno_define_registry.inc": "9db50d2d6ef429a276daf783db92e0eb3112b478d40f7cc4d1d329c67feabe29",
+    "pc/platform/geno_registry.c": "e5d603cf2146f9091e21489fa86ff91e72a2cc707b69b909e3bd7c0e8f35d0df",
+    "pc/platform/geno_define_registry.inc": "650a149e7f0ad980cc96271b8aa94b22c21786a65be236b02be84ce63ab51ff9",
     "pc/platform/geno_lua_registry.inc": "a2495881ad955faf25982645769beda4c3cd74f65428f914964fc09d796ca316",
     "pc/geno/geno.h": "cfd1627671837069055f1bafb57c1a4606c7a6a67bb221fcd262d2400cf73b53",
     "pc/geno/geno_game.c": "5e42f2f62e6e4cba2c593089ee4e73cbe7fa8630e8a0f4396256f94f406e3ab0",

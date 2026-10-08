@@ -32,6 +32,11 @@ for m in "$OUT"/mesh_*.json; do
   dotnet "$FB/bin/Release/net8.0/fighterbuild.dll" build "$m" - "$OUT/GnCourier_$c.dat" courier_joint courier_matanim "$OUT/rep_$c.json" --pc-palette 64
   dotnet "$FB/bin/Release/net8.0/fighterbuild.dll" verify "$OUT/GnCourier_$c.dat" "$m" | tail -2
 done
+# the menu and HUD art (slice 6): original pixels rendered from the model itself, then GX textures (.gxtex) the engine reads at run time
+python "$ART/ui_art.py" "$OUT" "$OUT/ui"
+for p in "$OUT"/ui/GnCourier_*.png; do
+  python "${GW_MELEE:-$ROOT/melee}/pc/tools/png2gx.py" "$p" "${p%.png}.gxtex" --format rgb5a3 --allow-odd-size
+done
 # the build record: what this run produced, by hash. tools/release/build_release.ps1 -IncludeCourier packages a
 # built file only if it still matches this record (it is how a release tells the Courier's original files from
 # disc files: the record is written here, from these outputs, and nowhere else).
@@ -49,6 +54,6 @@ rec = {"format": 1, "built_by": "tools/geno/build_courier.sh",
 (out / "original-assets.json").write_text(json.dumps(rec, indent=2) + "\n")
 PY
 if [ $INSTALL = 1 ]; then
-  D="${GW_MELEE:-$ROOT/melee}/pc/geno/mods/vanilla-courier/files"; mkdir -p "$D"; cp "$OUT"/GnCourier_*.dat "$OUT"/GnCourierAJ.dat "$OUT"/plan.json "$D"/
+  D="${GW_MELEE:-$ROOT/melee}/pc/geno/mods/vanilla-courier/files"; mkdir -p "$D"; cp "$OUT"/GnCourier_*.dat "$OUT"/GnCourierAJ.dat "$OUT"/plan.json "$OUT"/ui/GnCourier_*.gxtex "$D"/
 fi
 echo "OK $OUT"

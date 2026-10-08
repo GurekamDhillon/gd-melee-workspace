@@ -39,6 +39,18 @@ def validate_definition(data, fighter, path):
         for key in ("spawn_sound", "end_sound"):
             if key in article and article[key] not in names:
                 errors.append((path+".articles[%d].%s" % (j, key), "%r is not a name in sounds (no donor fallback)" % (article[key],)))
+    # Slice 6 (geno 9, no version bump): the package's own menu and HUD art, and a base none define's declared costume colours.
+    if "presentation" in fighter and data["geno"] < 9:
+        errors.append((path+".presentation", "needs geno: 9"))
+    costumes = fighter.get("fighter", {}).get("costumes", [])
+    for team in ("red", "blue", "green"):
+        rows = [i for i, c in enumerate(costumes) if c.get("team") == team]
+        if len(rows) > 1:
+            errors.append((path+".fighter.costumes[%d].team" % rows[1], "team %s is already declared by costume %d" % (team, rows[0])))
+    for key in ("portrait", "stock"):
+        value = fighter.get("presentation", {}).get(key)
+        if isinstance(value, list) and own and len(value) > len(costumes):
+            errors.append((path+".presentation."+key, "%d entries for %d costumes" % (len(value), len(costumes))))
     for key in ("fx_bindings", "special_attributes"):
         if key in fighter and data["geno"] < 7:
             errors.append((path+"."+key, "needs geno: 7"))
@@ -119,6 +131,10 @@ def export_package(source, out):
             path = local_file(source, f["fx_bindings"], "fx_bindings", errors)
             if errors or path is None: raise ValueError("invalid package effect bindings")
             files.add(path.relative_to(source).as_posix())
+        for key, value in (f.get("presentation") or {}).items():   # slice 6: the package's own menu and HUD art (original pixels, .gxtex)
+            for name in ([value] if isinstance(value, str) else value):
+                if (source / "files" / name).is_file():
+                    files.add("files/" + name)
         for row in f.get("subactions", []):
             if isinstance(row.get("file"), str):
                 errors = []
