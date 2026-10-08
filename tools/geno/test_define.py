@@ -209,8 +209,59 @@ class ArticleDefineTests(unittest.TestCase):
         f = data["fighters"][0]
         self.assertEqual([c.get("team") for c in f["fighter"]["costumes"]], [None, "red", "blue", "green"])
         self.assertTrue(all(c["name"] for c in f["fighter"]["costumes"]))
-        self.assertEqual(set(f["presentation"]), {"icon", "portrait", "stock"})
+        self.assertEqual(set(f["presentation"]), {"icon", "portrait", "stock", "emblem"})
+        self.assertEqual(f["ai"], {"like": "mario"})
+        self.assertEqual(f["kirby_copy"], "none")
         self.assertEqual(check.validate(data, self.COURIER), [])
+
+    def test_ai_kirby_copy_audio_rules(self):
+        require_game("pc/geno/mods/vanilla-courier/geno.json")
+        data = check.load_json(self.COURIER / "geno.json")
+        def messages(mutate, geno=10):
+            bad = copy.deepcopy(data); bad["geno"] = geno; mutate(bad["fighters"][0])
+            return [e["message"] for e in check.validate(bad, self.COURIER)]
+        self.assertTrue(any("needs geno: 10" in m for m in messages(lambda f: None, 9)), "ai/kirby_copy at 9")
+        for like in ("nobody", "nana", 3):
+            self.assertTrue(messages(lambda f, like=like: f.__setitem__("ai", {"like": like})), like)
+        self.assertTrue(messages(lambda f: f["ai"].__setitem__("extra", 1)))
+        for copy_ in ("mario", "retail:kirby", "retail:nana", "retail:", True):
+            self.assertTrue(messages(lambda f, c=copy_: f.__setitem__("kirby_copy", c)), copy_)
+        for good in ("none", "retail:mario", "retail:falcon", "retail:marth"):
+            self.assertEqual(messages(lambda f, c=good: f.__setitem__("kirby_copy", c)), [], good)
+        self.assertEqual(messages(lambda f: f.__setitem__("ai", {"like": "fox"})), [])
+        # audio: presentation, geno 9; missing files are warnings; names, ids and duplicates are checked
+        ok = {"announcer": "c.gnsnd", "voice": [{"sfx": 5, "file": "v.gnsnd", "volume": 90}]}
+        self.assertEqual(messages(lambda f: f.__setitem__("audio", ok), 9), [x for x in messages(lambda f: None, 9)])   # only the ai/kirby 10-gate message remains
+        for bad in ({"announcer": "c.wav"}, {"announcer": "d/c.gnsnd"}, {"voice": []}, {"voice": [{"sfx": 0, "file": "v.gnsnd"}]},
+                    {"voice": [{"sfx": 5, "file": "v.gnsnd", "volume": 128}]}, {"voice": [{"sfx": 5, "file": "v.gnsnd"}, {"sfx": 5, "file": "w.gnsnd"}]},
+                    {"voice": [{"sfx": 5}]}, {"hi": 1}):
+            self.assertTrue(messages(lambda f, b=bad: f.__setitem__("audio", b)), bad)
+
+    def test_audio_files_are_checked_when_present(self):
+        require_game("pc/geno/mods/vanilla-hero/geno.json")
+        import shutil
+        from tools.geno import audio
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "hero"
+            shutil.copytree(GAME / "pc/geno/mods/vanilla-hero", root)
+            data = check.load_json(root / "geno.json")
+            data["geno"] = 9
+            data["fighters"][0]["audio"] = {"announcer": "h_call.gnsnd", "voice": [{"sfx": 12, "file": "h_v.gnsnd"}]}
+            self.assertEqual(check.validate(data, root), [])
+            self.assertEqual(len([w for w in check.WARNINGS if ".audio." in w["path"]]), 2, check.WARNINGS)   # not built yet: silent
+            (root / "files").mkdir(exist_ok=True)
+            audio.write_tone(root / "files" / "h_call.gnsnd", 440, 120)
+            audio.write_tone(root / "files" / "h_v.gnsnd", 880, 60)
+            self.assertEqual(check.validate(data, root), [])
+            self.assertEqual([w for w in check.WARNINGS if ".audio." in w["path"]], [])
+            (root / "files" / "h_v.gnsnd").write_bytes(b"GNSDxxxx")
+            self.assertTrue(any("shorter than" in e["message"] for e in check.validate(data, root)))
+            (root / "files" / "h_v.gnsnd").write_bytes((root / "files" / "h_call.gnsnd").read_bytes())
+            (root / "geno.json").write_text(json.dumps(data, indent=2))
+            from tools.geno.define import export_package
+            out = Path(tmp) / "export"
+            export_package(root, out)
+            self.assertTrue(any(out.rglob("h_call.gnsnd")) and any(out.rglob("h_v.gnsnd")))   # the package's own clips travel with it
 
     def test_presentation_needs_geno_9_and_known_keys_and_plain_gxtex_names(self):
         require_game("pc/geno/mods/vanilla-courier/geno.json")
