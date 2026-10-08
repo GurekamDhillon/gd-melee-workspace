@@ -11,7 +11,8 @@ S = symbols()
 
 
 def registry_text():
-    return read("pc/platform/geno_registry.c") + "\n" + read("pc/platform/geno_define_registry.inc")
+    return (read("pc/platform/geno_registry.c") + "\n" + read("pc/platform/geno_define_registry.inc") + "\n" +
+            read("pc/platform/geno_lua_registry.inc"))
 
 
 def registry_keys(text=None):
@@ -112,6 +113,8 @@ def build_schema():
                  "ledge": {"anyOf": [{"enum": ["none", "front", "both"]}, {"type": "integer", "minimum": 0, "maximum": 2}]},
                  "liftoff": dict(boolean, **{"x-engine-default": 1}), "origin": boolean,
                  "move_tag": string("Declared move tag", section="22", enum=MOVE_TAGS),
+                 "lua": obj({"enter": string("Module function run once when the state is entered", section="23", maxLength=31),
+                             "frame": string("Module function run every logic frame (sets the anim callback to lua)", section="23", maxLength=31)}),
                  "gravity": num("Root-motion gravity multiplier", 0, "17"),
                  "facing": string("Lock root-motion travel to entry facing", section="17", enum=["entry"]),
                  "counter": obj({"from": integer("First counter action frame", 1), "to": integer("Last counter action frame", 2147483647),
@@ -157,6 +160,12 @@ def build_schema():
                                             "subaction": integer("Animation row", section="19.12", minimum=0, maximum=1023)}, ("motion", "subaction")), C["GENO_MAX_MOTION_ANIM"]),
                    "specials": obj({key: {"anyOf": [target(), selector]} for key in ("n", "s", "hi", "lw", "air_n", "air_s", "air_hi", "air_lw")}),
                    "fx_bindings": string("Effect bindings JSON relative path", section="20"),
+                   "lua": obj({"script": string("Lua module file relative to the mod root (returns a table of functions)", section="23"),
+                               "source": string("Inline Lua module text (tests; a script file is the normal form)", section="23"),
+                               "state": {"type": "object", "description": "Typed per-fighter state: slot name to int / float / bool", "x-reference": "geno.md §23",
+                                         "x-engine-default": "no slots", "x-source": "melee/pc/platform/geno_lua_registry.inc",
+                                         "maxProperties": C["GENO_LUA_STATE_SLOTS"],
+                                         "patternProperties": {"^.*$": {"enum": ["int", "float", "bool"]}}}}),
                    "sounds": arr(obj({"name": string("Sound name an article refers to", section="22.2", minLength=1, maxLength=31),
                                       "retail_sfx": integer("Engine sound id (ft_PlaySFX's)", section="22.2", minimum=1, maximum=999999),
                                       "volume": integer("Volume 0..127", 127, "22.2", minimum=0, maximum=127)},
@@ -182,7 +191,7 @@ def build_schema():
     result.update({"$schema": "https://json-schema.org/draft/2020-12/schema", "title": "Geno fighter overlays",
                    "x-registry-keys": sorted(registry_keys()), "x-limits": limits()})
     result["x-source-contract"] = {path: hashlib.sha256(read(path).encode()).hexdigest() for path in
-                                     ("pc/platform/geno_registry.c", "pc/platform/geno_define_registry.inc", "pc/geno/geno.h", "pc/geno/geno_game.c", "pc/geno/geno_game_v2.inc", "pc/geno/geno_profiles.inc", "pc/geno/geno_profile_storage.h", "pc/geno/geno_game_articles.inc")}
+                                     ("pc/platform/geno_registry.c", "pc/platform/geno_define_registry.inc", "pc/platform/geno_lua_registry.inc", "pc/geno/geno.h", "pc/geno/geno_game.c", "pc/geno/geno_game_v2.inc", "pc/geno/geno_profiles.inc", "pc/geno/geno_profile_storage.h", "pc/geno/geno_game_articles.inc")}
     return result
 
 

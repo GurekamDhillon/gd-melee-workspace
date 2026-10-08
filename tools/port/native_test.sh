@@ -94,6 +94,13 @@ atlas-binding|atlas-select-adapter|atlas-settings-host|atlas-settings|atlas-room
     [ "$test_name" = atlas-room-host ] && sources[0]=pc/tests/atlas_room_host_test.c
     [ "$test_name" = atlas-data-host ] && sources[0]=pc/tests/atlas_data_host_test.c
     flags=(-std=gnu11 -w -ffunction-sections -I "$GW_MELEE/pc/platform" -I "$GW_MELEE/pc/third_party/lua-5.4.7/src") ;;
+geno-lua)
+    # the fighter-Lua domain (slice 5): geno_lua_core.h is header-only; the Lua 5.4.7 core links in, including its internals the closure scan reads
+    sources=(pc/tests/geno_lua_test.c)
+    for lua_file in lapi lauxlib lbaselib lcode lcorolib lctype ldblib ldebug ldo ldump lfunc lgc linit liolib llex lmathlib lmem loadlib lobject lopcodes loslib lparser lstate lstring lstrlib ltable ltablib ltm lundump lutf8lib lvm lzio; do
+        sources+=("pc/third_party/lua-5.4.7/src/$lua_file.c")
+    done
+    flags=(-std=gnu11 -w -ffunction-sections -I "$GW_MELEE/pc/platform" -I "$GW_MELEE/pc/third_party/lua-5.4.7/src") ;;
 atlas-style)
     sources=(pc/tests/atlas_style_test.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c) ;;
 atlas-profile)
@@ -130,7 +137,7 @@ atlas-models)
     sources=(pc/tests/atlas_models_test.c pc/platform/gw_ui_data_models.c pc/platform/gw_ui_data.c pc/platform/gw_ui_retailtext.c) ;;
 atlas-results)
     sources=(pc/tests/atlas_results_test.c pc/platform/gw_ui_results.c pc/platform/gw_ui_data.c) ;;
-*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-tiles, atlas-registry, atlas-policy, atlas-retail, atlas-hud, atlas-binding, atlas-style, atlas-profile, atlas-css, atlas-select-render, atlas-sss, atlas-select-adapter, atlas-items, atlas-walker, atlas-settings-host, atlas-settings, atlas-erase, atlas-remap, atlas-lint, atlas-online-parts, atlas-room, atlas-room-host, atlas-retailtext, atlas-data, atlas-models, atlas-results, atlas-data-host, atlas-mods, atlas-mods-door, atlas-hud-parts, atlas-retailtext, atlas-data, atlas-models, atlas-results, atlas-data-host)" ;;
+*) gw_die "unknown native test: $test_name (slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, geno-lua, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-tiles, atlas-registry, atlas-policy, atlas-retail, atlas-hud, atlas-binding, atlas-style, atlas-profile, atlas-css, atlas-select-render, atlas-sss, atlas-select-adapter, atlas-items, atlas-walker, atlas-settings-host, atlas-settings, atlas-erase, atlas-remap, atlas-lint, atlas-online-parts, atlas-room, atlas-room-host, atlas-retailtext, atlas-data, atlas-models, atlas-results, atlas-data-host, atlas-mods, atlas-mods-door, atlas-hud-parts, atlas-retailtext, atlas-data, atlas-models, atlas-results, atlas-data-host)" ;;
 esac
 
 if [ "$uses_enet" = 1 ]; then

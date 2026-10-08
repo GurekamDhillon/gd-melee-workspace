@@ -194,5 +194,44 @@ class ArticleDefineTests(unittest.TestCase):
         self.assertTrue(check.validate(bad, self.CASTER))   # schema: engine sound id 1..999999
 
 
+class FighterLuaTests(unittest.TestCase):
+    """Slice 5: a define's "lua" block (docs/geno.md section 23). Text only; the engine's own checks (frozen environment, closure scan,
+    budgets) are native and tested by `build.sh --native-test geno-lua`."""
+
+    CHARGER = GAME / "pc/geno/mods/vanilla-charger"
+
+    def messages(self, data):
+        return [e["message"] for e in check.validate(data, self.CHARGER)]
+
+    def test_charger_checks_clean_and_has_text_files_only(self):
+        require_game("pc/geno/mods/vanilla-charger/geno.json")
+        self.assertEqual(check.validate(check.load_json(self.CHARGER / "geno.json"), self.CHARGER), [])
+        for p in self.CHARGER.rglob("*"):
+            if p.is_file():
+                self.assertIn(p.suffix.lower() or p.name, {".json", ".words", ".genoasm", ".md", ".lua", ".gitkeep"}, p)
+
+    def test_lua_contract_errors(self):
+        require_game("pc/geno/mods/vanilla-charger/geno.json")
+        data = check.load_json(self.CHARGER / "geno.json")
+        bad = copy.deepcopy(data); bad["geno"] = 8
+        self.assertTrue(any("needs" in m and "geno" in m for m in self.messages(bad)), self.messages(bad))
+        bad = copy.deepcopy(data); bad["fighters"][0]["states"][0]["lua"]["frame"] = "no_such_fn"
+        self.assertTrue(any("not a function of the module" in m for m in self.messages(bad)), self.messages(bad))
+        bad = copy.deepcopy(data); del bad["fighters"][0]["lua"]
+        self.assertTrue(any("no \"lua\" block" in m for m in self.messages(bad)), self.messages(bad))
+        bad = copy.deepcopy(data); bad["fighters"][0]["lua"]["state"]["bad name"] = "int"
+        self.assertTrue(self.messages(bad))
+        bad = copy.deepcopy(data); bad["fighters"][0]["lua"]["state"]["x"] = "string"
+        self.assertTrue(self.messages(bad))   # schema: int / float / bool
+        bad = copy.deepcopy(data); bad["fighters"][0]["lua"]["source"] = "return {}"
+        self.assertTrue(any("exactly one" in m for m in self.messages(bad)), self.messages(bad))
+        bad = copy.deepcopy(data); bad["fighters"][0]["lua"]["script"] = "../outside.lua"
+        self.assertTrue(any("relative path" in m for m in self.messages(bad)), self.messages(bad))
+        bad = copy.deepcopy(data); bad["fighters"][0]["states"][1]["name"] = "Elsewhere"
+        self.assertTrue(any("never targeted" in m for m in self.messages(bad)), self.messages(bad))   # ctx.go("Release") no longer resolves
+        attach = {"geno": 9, "fighters": [{"attach": "kirby", "lua": {"source": "return {}"}}]}
+        self.assertTrue(any("is for a define" in m for m in self.messages(attach)), self.messages(attach))
+
+
 if __name__ == "__main__":
     unittest.main()

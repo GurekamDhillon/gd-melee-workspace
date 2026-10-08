@@ -141,6 +141,7 @@
                     "like",
                     "next",
                     "loop",
+                    "lua",
                     "hold",
                     "glide.start",
                     "glide",
@@ -996,6 +997,28 @@
                     "projectile"
                   ]
                 },
+                "lua": {
+                  "type": "object",
+                  "properties": {
+                    "enter": {
+                      "type": "string",
+                      "description": "Module function run once when the state is entered",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §23",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "maxLength": 31
+                    },
+                    "frame": {
+                      "type": "string",
+                      "description": "Module function run every logic frame (sets the anim callback to lua)",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §23",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "maxLength": 31
+                    }
+                  },
+                  "additionalProperties": false
+                },
                 "gravity": {
                   "type": "number",
                   "description": "Root-motion gravity multiplier",
@@ -1074,6 +1097,7 @@
                     "like",
                     "next",
                     "loop",
+                    "lua",
                     "hold",
                     "glide.start",
                     "glide",
@@ -2639,6 +2663,43 @@
             "x-engine-default": "",
             "x-reference": "geno.md §20",
             "x-source": "melee/pc/platform/geno_registry.c"
+          },
+          "lua": {
+            "type": "object",
+            "properties": {
+              "script": {
+                "type": "string",
+                "description": "Lua module file relative to the mod root (returns a table of functions)",
+                "x-engine-default": "",
+                "x-reference": "geno.md §23",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "source": {
+                "type": "string",
+                "description": "Inline Lua module text (tests; a script file is the normal form)",
+                "x-engine-default": "",
+                "x-reference": "geno.md §23",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              "state": {
+                "type": "object",
+                "description": "Typed per-fighter state: slot name to int / float / bool",
+                "x-reference": "geno.md §23",
+                "x-engine-default": "no slots",
+                "x-source": "melee/pc/platform/geno_lua_registry.inc",
+                "maxProperties": 16,
+                "patternProperties": {
+                  "^.*$": {
+                    "enum": [
+                      "int",
+                      "float",
+                      "bool"
+                    ]
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
           },
           "sounds": {
             "type": "array",
@@ -4361,6 +4422,7 @@
     "lifetime",
     "liftoff",
     "like",
+    "lua",
     "lw",
     "max",
     "max_fall",
@@ -4395,6 +4457,7 @@
     "row_clips",
     "s",
     "scale",
+    "script",
     "select",
     "sfx_kind",
     "sfx_severity",
@@ -4403,6 +4466,7 @@
     "size",
     "slot",
     "sounds",
+    "source",
     "spawn",
     "spawns",
     "special_attributes",
@@ -4411,6 +4475,7 @@
     "spins",
     "stage",
     "start",
+    "state",
     "states",
     "stun",
     "subaction",
@@ -4530,15 +4595,15 @@
     },
     "JDOC_NODES": {
       "value": 4096,
-      "source": "melee/pc/platform/geno_registry.c:73"
+      "source": "melee/pc/platform/geno_registry.c:74"
     },
     "JDOC_ARENA": {
       "value": 65536,
-      "source": "melee/pc/platform/geno_registry.c:74"
+      "source": "melee/pc/platform/geno_registry.c:75"
     },
     "GN_MAX_SLOTS": {
       "value": 256,
-      "source": "melee/pc/platform/geno_registry.c:468"
+      "source": "melee/pc/platform/geno_registry.c:472"
     },
     "JSON_DEPTH": {
       "value": 32,
@@ -4550,11 +4615,12 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "c6ca050fffc5f3bc78d8f5e3d3a79bef0470ed699625d78170d0283a1c2cfad0",
+    "pc/platform/geno_registry.c": "103de0745915c080dfa1f30da094c4130a6cf819a614fd7f58039e4a0e94aa13",
     "pc/platform/geno_define_registry.inc": "9db50d2d6ef429a276daf783db92e0eb3112b478d40f7cc4d1d329c67feabe29",
-    "pc/geno/geno.h": "9a1ec4446e0a273db649a66fc3bfd40c5b30f6bd55943119b645cebdea0af7ad",
-    "pc/geno/geno_game.c": "b3383606491acb7699803bcad630b49eddda5d75807d081fe32a21a9ea1d7e3f",
-    "pc/geno/geno_game_v2.inc": "786368bb54159d0d664a533886b2cde911473c7d08a822b06083ec75637031cc",
+    "pc/platform/geno_lua_registry.inc": "a2495881ad955faf25982645769beda4c3cd74f65428f914964fc09d796ca316",
+    "pc/geno/geno.h": "cfd1627671837069055f1bafb57c1a4606c7a6a67bb221fcd262d2400cf73b53",
+    "pc/geno/geno_game.c": "5e42f2f62e6e4cba2c593089ee4e73cbe7fa8630e8a0f4396256f94f406e3ab0",
+    "pc/geno/geno_game_v2.inc": "9c572553dcd7b6a70e9d5a3fa3efcbc618b8de567c287e75e1f1577e572f5fb0",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",
     "pc/geno/geno_profile_storage.h": "a40aec8aafa890622f0ba6cb9f5602176c738f960346b18daf87c8dc8498d04d",
     "pc/geno/geno_game_articles.inc": "5cfda7d9a4b3dd75b908e2cc08f660cb35de8a70ce09465912ced173999cb041"
