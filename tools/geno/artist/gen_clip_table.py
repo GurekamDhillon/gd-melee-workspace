@@ -92,7 +92,9 @@ def main():
             else: entry["tier"] = "optional"
             fb = []
             if m["status"] in ("alias", "placeholder") and clip:
-                fb.append(COURIER_CLIP_ROWS.get(clip, clip))
+                tgt = COURIER_CLIP_ROWS.get(clip, clip)
+                if tgt != n:
+                    fb.append(tgt)
             fb += [c for c in generic_fallback(n) if c not in fb]
             entry["fallback"] = fb
             entry["share"] = "safe" if m["status"] == "alias" else ("own" if m["status"] == "own" else "placeholder")

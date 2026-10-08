@@ -62,8 +62,8 @@ def preflight(arm=None):
         if r not in have:
             guess = [b.name for b in arm.data.bones if spec.guess_role(b.name) == r]
             add("BLOCKER", "ROLE_MISSING", "role '%s'" % r, "no bone has this role", "Geno panel > Roles, or add it to the armature `geno` roles%s" % (" (candidate: %s)" % ", ".join(guess) if guess else ""))
-    if len(arm.data.bones) + 2 > spec.LIMITS["max_joints_engine"]:
-        add("BLOCKER", "BONE_COUNT", "armature '%s'" % arm.name, "%d bones; the engine holds 256 joints (3 are synthesized)" % len(arm.data.bones), "export only the deform skeleton")
+    if len(arm.data.bones) + spec.LIMITS["synthesized_joints"] > spec.LIMITS["max_joints_engine"]:
+        add("BLOCKER", "BONE_COUNT", "armature '%s'" % arm.name, "%d bones; the engine holds 255 joints (3 are synthesized: 252 bones at most)" % len(arm.data.bones), "export only the deform skeleton")
     for ob in (arm,):
         if ob.parent is not None:
             add("BLOCKER", "ARMATURE_PARENT", "object '%s'" % ob.name, "the armature is parented to '%s'" % ob.parent.name, "clear the parent (Alt+P, Clear and Keep Transformation)")

@@ -3952,7 +3952,6 @@
    "retail_subaction": -1,
    "tier": "finished",
    "fallback": [
-    "SpecialN",
     "Attack11"
    ],
    "share": "safe",
@@ -3987,7 +3986,6 @@
    "retail_subaction": -1,
    "tier": "finished",
    "fallback": [
-    "SpecialS",
     "Attack11"
    ],
    "share": "safe",
@@ -4015,7 +4013,6 @@
    "retail_subaction": -1,
    "tier": "finished",
    "fallback": [
-    "SpecialHi",
     "Attack11"
    ],
    "share": "safe",
@@ -4044,7 +4041,6 @@
    "retail_subaction": -1,
    "tier": "finished",
    "fallback": [
-    "SpecialLw",
     "Attack11"
    ],
    "share": "safe",

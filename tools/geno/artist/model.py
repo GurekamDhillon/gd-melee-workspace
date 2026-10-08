@@ -254,6 +254,19 @@ def _extra_list(v):
     return [int(x) for x in v]
 
 
+def _padded(src, name, need):
+    c = Clip(name, None)
+    extra = need - src.frames
+    for k, (tm, v) in src.chan.items():
+        tm2 = np.concatenate([tm, tm[-1] + (1.0 / 60.0) * np.arange(1, extra + 1)])
+        v2 = np.concatenate([v, np.repeat(v[-1:], extra, axis=0)])
+        c.chan[k] = (tm2, v2)
+    c.frames = need
+    c.times = max((t for t, _ in c.chan.values()), key=len)
+    c.root_motion, c.loop, c.hit_frames, c.synthetic = src.root_motion, False, [], True
+    return c
+
+
 def clip_translation(f, clip, role="translation"):
     """(total displacement vector of the role's bone over the clip) or None."""
     b = f.role_bone.get(role)
@@ -317,10 +330,11 @@ def _resolve_rows(f):
     cfg_c = f.cfg.get("clips", {})
     cmap = cfg_c.get("map", {})
     served = {}                              # row name -> authored clip name
+    virtual = {c for r in t["rows"] for c in r.get("fallback", [])}     # clip names that are not rows but that rows fall back to (ItemSwing1, ItemShoot...)
     for cn in f.clip_order:
         for rn in cmap.get(cn, []):
             served.setdefault(rn, cn)
-        if cn in t["by_name"] and t["by_name"][cn]["tier"] != "none":
+        if (cn in t["by_name"] and t["by_name"][cn]["tier"] != "none") or cn in virtual:
             served.setdefault(cn, cn)
     for c in f.clips.values():
         c.rows = [r for r, cn in served.items() if cn == c.name]
@@ -347,6 +361,25 @@ def _resolve_rows(f):
             if hit is None:
                 hit = (wait, "placeholder", "plays Wait") if wait else (None, "UNMAPPED", "no Wait clip")
             rows.append({"motion": r["motion"], "row": n, "clip": hit[0], "status": hit[1], "note": hit[2]})
+    # A move ends when its clip ends. A placeholder clip shorter than the move's script would cut the move off (measured: the smashes,
+    # fair and the counter of a prototype fighter ended in Wait before their hitboxes were live). So a placeholder for a row with a
+    # move script gets a copy of the clip held on its last pose for the script's length: "<Row>_pad".
+    f.padded = []
+    for row, r in zip(rows, t["rows"]):
+        tm = r.get("timing")
+        if not tm or row["status"] not in ("alias", "placeholder") or row["clip"] not in f.clips:
+            continue
+        src = f.clips[row["clip"]]
+        need = tm["script_frames"] + 2
+        if src.frames >= need:
+            continue
+        nm = (row["row"] + "_pad")[:spec.LIMITS["max_clip_name"]]
+        if nm not in f.clips:
+            f.clips[nm] = _padded(src, nm, need)
+            f.clip_order.append(nm)
+        f.padded.append((row["row"], row["clip"], need))
+        row["note"] += "; held to %d frames" % need
+        row["clip"] = nm
     f.rows = rows
 
 

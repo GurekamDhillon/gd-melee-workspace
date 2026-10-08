@@ -103,6 +103,10 @@ def retarget_script(text, jm, move, ov_all, delay, scale, names):
     return re.sub(r"(?m)^PUT ANIM_RATE\s+[0-9.]+", "PUT ANIM_RATE 1.0", text)
 
 
+# ENGINE (geno.md 22.5): a charge smash shows its strike pose one frame after the clip's hit frame, so the box starts one frame later.
+DEFAULT_DELAY = {"fsmash": 1, "fsmash_up": 1, "fsmash_down": 1, "usmash": 1}
+
+
 def assemble(f, build_dir, mod_dir, hitbox_scale, ref_speeds, log=print):
     """Write mod_dir (mod.json, geno.json, moves/, files/) from the files built into build_dir."""
     plan = json.load(open(os.path.join(build_dir, "plan.json"), encoding="utf-8"))
@@ -124,7 +128,7 @@ def assemble(f, build_dir, mod_dir, hitbox_scale, ref_speeds, log=print):
         src = open(os.path.join(striker, "moves", fn), encoding="utf-8").read()
         dst = os.path.join(mod_dir, "moves", fn)
         open(dst, "w", encoding="utf-8", newline="\n").write(
-            retarget_script(src, jm, fn[:-8], mv.get("hitboxes", {}), mv.get("delay", {}), hitbox_scale, names))
+            retarget_script(src, jm, fn[:-8], mv.get("hitboxes", {}), dict(DEFAULT_DELAY, **mv.get("delay", {})), hitbox_scale, names))
         r = subprocess.run([sys.executable, "-m", "tools.geno.asm", dst, "-o", dst[:-8] + ".words", "--words"], cwd=root, capture_output=True, text=True)
         if r.returncode:
             raise ArtistError("move %s does not assemble: %s" % (fn, (r.stdout + r.stderr).strip()[-300:]))

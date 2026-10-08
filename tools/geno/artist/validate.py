@@ -83,8 +83,8 @@ def _skeleton(f, r):
     if len(f.skins) > 1:
         r.add(W, "MULTI_SKIN", "glb", "%d skins; only the first (%s) is used" % (len(f.skins), f.nodes[f.skins[0]["joints"][0]].get("name")),
               "parent every mesh to ONE armature")
-    if len(f.bones) + 2 > spec.LIMITS["max_joints_engine"]:
-        r.add(B, "BONE_COUNT", "armature", "%d bones; the engine holds %d joints including 3 synthesized" % (len(f.bones), spec.LIMITS["max_joints_engine"]),
+    if len(f.bones) + spec.LIMITS["synthesized_joints"] > spec.LIMITS["max_joints_engine"]:
+        r.add(B, "BONE_COUNT", "armature", "%d bones; the engine holds %d joints including 3 synthesized (252 bones at most)" % (len(f.bones), spec.LIMITS["max_joints_engine"]),
               "remove helper/IK/control bones from the exported selection (export only the deform skeleton)")
     names = [b.name for b in f.bones]
     for n in sorted({n for n in names if names.count(n) > 1}):
@@ -302,6 +302,8 @@ def _clips(f, r):
     bone_names = {b.name for b in f.bones}
     for cn in f.clip_order:
         c = f.clips[cn]
+        if getattr(c, "synthetic", False):
+            continue
         where = "action '%s'" % cn
         if len(cn) > spec.LIMITS["max_clip_name"]:
             r.add(B, "CLIP_NAME", where, "name is %d characters; the plan stores 31" % len(cn), "rename the action")
@@ -365,6 +367,8 @@ def _clips(f, r):
             r.add(W, "ROOT_CLIP", "fighter.json clips.root_motion", "'%s' is not an action in the glb" % cn, "fix the name")
     # loop seams and script lengths
     for cn, c in f.clips.items():
+        if getattr(c, "synthetic", False):
+            continue
         for rn in c.rows:
             row = t["by_name"].get(rn, {})
             if row.get("loop") or c.loop:
@@ -412,6 +416,9 @@ def _rows(f, r):
     if unm:
         r.add(B, "ROWS_UNMAPPED", "motion rows", "rows without any clip: %s" % ", ".join(unm[:6]), "author a Wait clip")
     f._placeholders = ph
+    if getattr(f, "padded", None):
+        r.add(I, "PADDED", "placeholders", "%d placeholder clips were held on their last pose so the move script is not cut short: %s" % (
+            len(f.padded), ", ".join("%s (plays %s, %d frames)" % x for x in f.padded[:5]) + (" ..." if len(f.padded) > 5 else "")))
 
 
 def _hurt(f, r):

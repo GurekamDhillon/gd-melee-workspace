@@ -171,3 +171,4 @@ def write_report(f, rep, out, bd, plan, nbytes):
     um = [c for c in f.clips.values() if not c.rows]
     lines.append(", ".join(c.name for c in um) or "none")
     open(os.path.join(bd, "build-report.md"), "w", encoding="utf-8", newline="\n").write("\n".join(lines) + "\n")
+

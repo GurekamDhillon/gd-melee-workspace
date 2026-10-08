@@ -35,12 +35,10 @@ def bake(ctrl, export, bone_map=None, actions=None, step=1):
         act = bpy.data.actions.get(name)
         if act is None:
             continue
-        ctrl.animation_data.action = act
-        try:
-            if len(act.slots):
-                ctrl.animation_data.action_slot = act.slots[0]
-        except (AttributeError, RuntimeError):
-            pass
+        if ctrl.animation_data.action != act:      # re-assigning the same action crashes Blender 5.2
+            ctrl.animation_data.action = act
+        if ctrl.animation_data.action_slot is None and len(act.slots):
+            ctrl.animation_data.action_slot = act.slots[0]
         fs, fe = int(act.frame_range[0]), int(act.frame_range[1])
         export.animation_data.action = None
         bpy.ops.object.select_all(action="DESELECT")
@@ -58,5 +56,5 @@ def bake(ctrl, export, bone_map=None, actions=None, step=1):
     for pb in export.pose.bones:
         for c in [c for c in pb.constraints if c.name.startswith("GENO_BAKE")]:
             pb.constraints.remove(c)
-    ctrl.animation_data.action, export.animation_data.action = prev_ctrl, prev_exp
+    export.animation_data.action = None
     return done

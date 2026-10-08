@@ -14,8 +14,9 @@ DATA = os.path.join(HERE, "data")
 
 # ---- limits --------------------------------------------------------------------------------------------------------
 LIMITS = {
-    # ENGINE: pc/geno/geno_plan.h GPL_MAX_JOINTS (256 including the synthesized TopN, XRotN, YRotN)
-    "max_joints_engine": 256,
+    # ENGINE: pc/geno/geno_plan.h:6 GPL_MAX_JOINTS 256, and plan_parts.py `limits` 255 (MAX_FT_PARTS on PC): 255 joints including the 3
+    # the plan synthesizes (TopN, XRotN, YRotN), so at most 252 exported bones
+    "max_joints_engine": 255, "synthesized_joints": 3,
     # ENGINE: pc/platform/geno_define_registry.inc gn_plan_parse, hurtboxes must hold 1..15 capsules
     "max_hurtboxes": 15,
     # ENGINE: pc/geno/geno_plan.h GPL_MAX_CLIPS; clip names are stored in 32 bytes, symbols in 72

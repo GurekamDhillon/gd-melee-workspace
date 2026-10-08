@@ -27,6 +27,7 @@ def main(argv=None):
     r.add_argument("--out")
     c = sub.add_parser("clips", help="print the clip checklist (tiers, fallbacks)")
     c.add_argument("--tier", default="prototype,recommended,finished")
+    c.add_argument("--markdown", action="store_true", help="print the tables used by docs/geno-artist-rows.md")
     a = ap.parse_args(argv)
     if a.cmd == "validate":
         return validate.main([a.config] + (["--json"] if a.json else []) + (["-v"] if a.verbose else []))
@@ -43,6 +44,10 @@ def main(argv=None):
         return 0
     if a.cmd == "clips":
         want = a.tier.split(",")
+        if a.markdown:
+            from . import rows_doc
+            print(rows_doc.markdown())
+            return 0
         for row in spec.clip_table()["rows"]:
             if row["tier"] in want:
                 print("%-12s %-26s fallback: %s%s" % (row["tier"], row["name"], ", ".join(row.get("fallback", [])) or "-",
