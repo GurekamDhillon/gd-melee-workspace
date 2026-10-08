@@ -358,8 +358,8 @@ def lua_checks(data, fighter, p, base, errors):
     if "define" not in fighter:
         errors.append(diagnostic(p + ".lua", "fighter Lua is for a define; an attach entry cannot carry it", "melee/pc/platform/geno_lua_registry.inc"))
         return
-    if data.get("geno", 0) < 9:
-        errors.append(diagnostic(p + ".lua", "lua needs \"geno\": 9", "melee/pc/platform/geno_lua_registry.inc"))
+    if data.get("geno", 0) < 10:
+        errors.append(diagnostic(p + ".lua", "lua needs \"geno\": 10", "melee/pc/platform/geno_lua_registry.inc"))
     if block is None:
         errors.append(diagnostic(p + ".states", "a state names Lua functions but the entry has no \"lua\" block", "melee/pc/platform/geno_lua_registry.inc"))
         return

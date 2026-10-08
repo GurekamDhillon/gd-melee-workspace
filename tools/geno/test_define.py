@@ -305,7 +305,7 @@ class FighterLuaTests(unittest.TestCase):
         self.assertTrue(any("relative path" in m for m in self.messages(bad)), self.messages(bad))
         bad = copy.deepcopy(data); bad["fighters"][0]["states"][1]["name"] = "Elsewhere"
         self.assertTrue(any("never targeted" in m for m in self.messages(bad)), self.messages(bad))   # ctx.go("Release") no longer resolves
-        attach = {"geno": 9, "fighters": [{"attach": "kirby", "lua": {"source": "return {}"}}]}
+        attach = {"geno": 10, "fighters": [{"attach": "kirby", "lua": {"source": "return {}"}}]}
         self.assertTrue(any("is for a define" in m for m in self.messages(attach)), self.messages(attach))
 
 

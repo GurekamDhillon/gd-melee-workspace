@@ -16,8 +16,8 @@ def definition_schema():
 def validate_definition(data, fighter, path):
     errors = []
     own = fighter["define"].get("base") == "none"
-    if data["geno"] not in (6, 7, 8, 9):
-        errors.append((path+".define", "define requires geno: 6, 7, 8 or 9"))
+    if data["geno"] not in (6, 7, 8, 9, 10):
+        errors.append((path+".define", "define requires geno: 6, 7, 8, 9 or 10"))
     if own and data["geno"] < 9:
         errors.append((path+".define.base", "base none needs geno: 9"))
     if own != (fighter["define"].get("resources") == "mod:files"):
