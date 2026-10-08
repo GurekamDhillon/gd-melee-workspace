@@ -394,10 +394,20 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].fighter.costumes[].matanim | string: Material-animation symbol |  | ; geno.md §22.4; melee/pc/platform/geno_registry.c |
 | fighters[].fighter.costumes[].name | string: Costume name the select shows (printable ASCII, 1..23 characters) |  | maxLength=23; pattern=^[ -~]+$; geno.md §22.6; melee/pc/platform/geno_registry.c |
 | fighters[].fighter.costumes[].team | string: The team battle colour this costume is (the first one declared wins; undeclared: red is costume 0, blue 1, green 2) |  | enum=['red', 'blue', 'green']; geno.md §22.6; melee/pc/platform/geno_registry.c |
-| fighters[].presentation | object: A define's own character select icon (64x56), portrait (136x188) and stock icon (rgb5a3 or rgba8), one per costume or one for all (geno: 9) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].presentation | object: A define's own character select icon (64x56), portrait (136x188), stock icon (rgb5a3 or rgba8, also the results card picture), one per costume or one for all (geno: 9), and its results emblem (no palette; the faint shape behind the rank numeral) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].presentation.icon | string: A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name |  | maxLength=63; pattern=^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][xX][tT][eE][xX]$; geno.md §22.6; melee/pc/platform/geno_registry.c |
 | fighters[].presentation.portrait | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].presentation.stock | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].presentation.emblem | string: A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name |  | maxLength=63; pattern=^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][xX][tT][eE][xX]$; geno.md §22.6; melee/pc/platform/geno_registry.c |
+| fighters[].ai | object: The CPU plays this define as that retail fighter (its recovery, special-move choices and per-kind AI tables) (geno: 10) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].ai.like | string: A retail fighter (mario, fox, captain, donkey, kirby, koopa, link, seak, ness, peach, popo, pikachu, samus, yoshi, purin, mewtwo, luigi, mars, zelda, clink, drmario, falco, pichu, gamewatch, ganon, emblem, or their aliases) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].kirby_copy | string: What Kirby gets from inhaling the define: "none" (the default) or "retail:<fighter>" (that fighter's hat and ability) (geno: 10) | none | pattern=^(none\|retail:[a-z]+)$; geno.md §22.7; melee/pc/platform/geno_registry.c |
+| fighters[].audio | object: The define's own sound clips: its announcer call and replacements for retail voice sounds (geno: 9); silence stays without them | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].audio.announcer | string: A .gnsnd file of the mod's files/ folder (python -m tools.geno.audio in.wav out.gnsnd); a plain file name |  | maxLength=63; pattern=^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][nN][sS][nN][dD]$; geno.md §22.7; melee/pc/platform/geno_registry.c |
+| fighters[].audio.voice | array: Ordered entries | absent | maxItems=32; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].audio.voice[].sfx | integer: The retail sound id this fighter would play | 0 | minimum=1; maximum=999999; geno.md §22.7; melee/pc/platform/geno_registry.c |
+| fighters[].audio.voice[].file | string: A .gnsnd file of the mod's files/ folder (python -m tools.geno.audio in.wav out.gnsnd); a plain file name |  | maxLength=63; pattern=^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][nN][sS][nN][dD]$; geno.md §22.7; melee/pc/platform/geno_registry.c |
+| fighters[].audio.voice[].volume | integer: Volume 0..127 | 127 | minimum=0; maximum=127; geno.md §22.7; melee/pc/platform/geno_registry.c |
 
 ## Runtime limits
 
@@ -430,7 +440,8 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:480 |
 | JDOC_NODES | 4096 | melee/pc/platform/geno_registry.c:74 |
 | JDOC_ARENA | 65536 | melee/pc/platform/geno_registry.c:75 |
-| GN_MAX_SLOTS | 256 | melee/pc/platform/geno_registry.c:485 |
+| GN_MAX_VOICE | 32 | melee/pc/platform/geno_registry.c:401 |
+| GN_MAX_SLOTS | 256 | melee/pc/platform/geno_registry.c:505 |
 | JSON_DEPTH | 32 | melee/pc/platform/geno_registry.c:jd_value |
 | JSON_FILE_BYTES | 1048576 | melee/pc/platform/geno_registry.c:gn_read_file |
 

@@ -182,8 +182,17 @@ def build_schema():
                             ("file", "joint")), 16)}, ("plan", "animation", "costumes"))
     gxtex = string("A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name", section="22.6", pattern=r"^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][xX][tT][eE][xX]$", maxLength=63)
     fighter["properties"]["presentation"] = obj({"icon": gxtex, "portrait": {"anyOf": [gxtex, arr(gxtex, 16, minItems=1)]},
-        "stock": {"anyOf": [gxtex, arr(gxtex, 16, minItems=1)]}})
-    fighter["properties"]["presentation"]["description"] = "A define's own character select icon (64x56), portrait (136x188) and stock icon (rgb5a3 or rgba8), one per costume or one for all (geno: 9)"
+        "stock": {"anyOf": [gxtex, arr(gxtex, 16, minItems=1)]}, "emblem": gxtex})
+    fighter["properties"]["presentation"]["description"] = "A define's own character select icon (64x56), portrait (136x188), stock icon (rgb5a3 or rgba8, also the results card picture), one per costume or one for all (geno: 9), and its results emblem (no palette; the faint shape behind the rank numeral)"
+    retail = {"type": "string", "description": "A retail fighter (mario, fox, captain, donkey, kirby, koopa, link, seak, ness, peach, popo, pikachu, samus, yoshi, purin, mewtwo, luigi, mars, zelda, clink, drmario, falco, pichu, gamewatch, ganon, emblem, or their aliases)"}
+    gnsnd = string("A .gnsnd file of the mod's files/ folder (python -m tools.geno.audio in.wav out.gnsnd); a plain file name", section="22.7", pattern=r"^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][nN][sS][nN][dD]$", maxLength=63)
+    fighter["properties"]["ai"] = obj({"like": retail}, ("like",))
+    fighter["properties"]["ai"]["description"] = "The CPU plays this define as that retail fighter (its recovery, special-move choices and per-kind AI tables) (geno: 10)"
+    fighter["properties"]["kirby_copy"] = {"type": "string", "pattern": r"^(none|retail:[a-z]+)$", "description": 'What Kirby gets from inhaling the define: "none" (the default) or "retail:<fighter>" (that fighter\'s hat and ability) (geno: 10)',
+        "x-reference": "geno.md §22.7", "x-engine-default": "none", "x-source": REGISTRY}
+    fighter["properties"]["audio"] = obj({"announcer": gnsnd, "voice": arr(obj({"sfx": integer("The retail sound id this fighter would play", section="22.7", minimum=1, maximum=999999), "file": gnsnd,
+        "volume": integer("Volume 0..127", 127, "22.7", minimum=0, maximum=127)}, ("sfx", "file")), 32, minItems=1)})
+    fighter["properties"]["audio"]["description"] = "The define's own sound clips: its announcer call and replacements for retail voice sounds (geno: 9); silence stays without them"
 
     fighter["allOf"] = [{"if": {"required": ["define"], "properties": {"define": {"properties": {"base": {"const": "mario"}}}}}, "then": {"properties": {
         field: {"items": {"properties": {key: {"maximum": 302}}}}
