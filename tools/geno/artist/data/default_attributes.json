@@ -1,0 +1,68 @@
+{
+ "note": "A none define's attribute table (geno.md 22.3: a zeroed gravity breaks the fighter). These are the Courier fixture's authored numbers; walk/run reference speeds and model_scaling are replaced from the art at build time.",
+ "attributes": {
+  "aerial_drift_base": 0.02,
+  "aerial_friction": 0.016,
+  "air_drift_max": 0.86,
+  "air_drift_stick_mul": 0.025,
+  "air_jump_h_multiplier": 0.9,
+  "air_jump_v_multiplier": 1,
+  "air_max_horizontal_velocity": 3,
+  "clank_animation_length": 16,
+  "dash_accel_base": 0.02,
+  "dash_accel_mul": 0.06,
+  "dash_initial_velocity": 1.5,
+  "dash_max_velocity": 1.5,
+  "fast_fall_velocity": 2.3,
+  "fast_walk_min": 0.72,
+  "gravity": 0.085,
+  "ground_friction": 0.06,
+  "ground_max_horizontal_velocity": 3,
+  "ground_to_air_jump_momentum_multiplier": 0.8,
+  "hop_v_initial_velocity": 1.4,
+  "initial_shield_size": 10.75,
+  "jab_2_input_window": 24,
+  "jab_3_input_window": 24,
+  "jump_h_initial_velocity": 1,
+  "jump_h_max_velocity": 1.5,
+  "jump_startup_time": 4,
+  "jump_v_initial_velocity": 2.3,
+  "landingairb_lag": 15,
+  "landingairf_lag": 21,
+  "landingairhi_lag": 15,
+  "landingairlw_lag": 23,
+  "landingairn_lag": 16,
+  "max_jumps": 2,
+  "max_run_brake_frames": 30,
+  "mid_walk_point": 0.5,
+  "model_scaling": 1.0,
+  "normal_landing_lag": 4,
+  "rapid_jab_window": 0,
+  "run_animation_scaling": 1.32,
+  "shield_break_initial_velocity": 2.5,
+  "slow_walk_max": 0.29,
+  "standing_turn_frames": 4,
+  "terminal_velocity": 1.7,
+  "walk_accel_base": 0.1,
+  "walk_accel_mul": 0.1,
+  "walk_max_vel": 1.3,
+  "weight": 100
+ },
+ "jumps": {
+  "max": 3
+ },
+ "special_attributes": [
+  {
+   "index": 1,
+   "float": 1.6
+  },
+  {
+   "index": 2,
+   "float": 0.03
+  }
+ ],
+ "ai": {
+  "like": "mario"
+ },
+ "kirby_copy": "none"
+}
