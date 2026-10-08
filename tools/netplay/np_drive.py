@@ -77,6 +77,15 @@ def wait_for(what, check, timeout):
     return None
 
 
+def client_environment(inherited=None, bind=None):
+    """Loopback by default; --bind or the caller's environment can opt into WSL networking."""
+    env = dict(os.environ if inherited is None else inherited)
+    if bind is not None:
+        env["MELEE_NETPLAY_BIND"] = bind
+    env.setdefault("MELEE_NETPLAY_BIND", "127.0.0.1")
+    return env
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--exe", default="", help="melee-pc.exe to run (default: _build's)")
@@ -89,16 +98,19 @@ def main():
     ap.add_argument("--local-server", action="store_true", help="run a matchmaking server on 127.0.0.1 for this test (sets --server)")
     ap.add_argument("--offscreen", action="store_true", help="MELEE_WINDOW_X/Y=30000 on both windows")
     ap.add_argument("--keep", action="store_true", help="leave the windows open at the end")
+    ap.add_argument("--bind", default=None, help="client/local-server bind (default: MELEE_NETPLAY_BIND or 127.0.0.1); WSL-to-Windows runs require a non-loopback override, e.g. 0.0.0.0")
     a = ap.parse_args()
+    bind_env = client_environment(bind=a.bind)
 
     srv = None
     if a.local_server:
         sport = 51600 + (os.getpid() % 300)
         srv = subprocess.Popen([sys.executable, os.path.join(ROOT, "tools", "netplay", "server", "gdmelee_server.py"),
-                                "--bind", "127.0.0.1", "--port", str(sport)])
-        a.server = "127.0.0.1:%d" % sport
+                                "--bind", bind_env["MELEE_NETPLAY_BIND"], "--port", str(sport)])
+        a.server = "%s:%d" % ("127.0.0.1" if bind_env["MELEE_NETPLAY_BIND"] == "0.0.0.0" else bind_env["MELEE_NETPLAY_BIND"], sport)
         atexit.register(srv.terminate)  # also on the early "no console socket" returns
     off = ";MELEE_WINDOW_X='30000';MELEE_WINDOW_Y='30000'" if a.offscreen else ""
+    off += ";MELEE_NETPLAY_BIND='%s'" % bind_env["MELEE_NETPLAY_BIND"].replace("'", "''")
     env_host = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_host';MELEE_VOLUME='3'%s}" % (HOST_PORT, off)
     env_guest = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_guest';MELEE_VOLUME='3'%s}" % (GUEST_PORT, off)
     cmd = ("& '%s' -Menu -RealNetwork -HostDevice gc -GuestDevice keyboard -Disc %s -Label '%s' -EnvHost %s -EnvGuest %s%s" %

@@ -19,6 +19,15 @@ def q(s):
     return "'" + s.replace("'", "'\"'\"'") + "'"
 
 
+def client_environment(inherited=None, bind=None):
+    """Loopback by default; --bind or the caller's environment can opt into WSL networking."""
+    env = dict(os.environ if inherited is None else inherited)
+    if bind is not None:
+        env["MELEE_NETPLAY_BIND"] = bind
+    env.setdefault("MELEE_NETPLAY_BIND", "127.0.0.1")
+    return env
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('name'); ap.add_argument('frames'); ap.add_argument('seed'); ap.add_argument('scene')
@@ -33,10 +42,14 @@ def main():
     ap.add_argument('--ports', default='2')
     ap.add_argument('--disc', default='vanilla')
     ap.add_argument('--mem-every', default='30')
+    ap.add_argument("--bind", default=None, help="client/local-server bind (default: MELEE_NETPLAY_BIND or 127.0.0.1); WSL-to-Windows runs require a non-loopback override, e.g. 0.0.0.0")
     a = ap.parse_args()
+    bind_env = client_environment(bind=a.bind)
     out = os.path.join(a.out, a.name)
     os.makedirs(out, exist_ok=True)
     extra = list(a.env)
+    if not any(e.startswith("MELEE_NETPLAY_BIND=") for e in extra):
+        extra.append("MELEE_NETPLAY_BIND=" + bind_env["MELEE_NETPLAY_BIND"])
     if a.dump:
         extra.append('MELEE_XHASH_DUMP_FRAMES=' + a.dump)
     if a.skip:

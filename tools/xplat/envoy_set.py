@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """run_set.py - two REAL clients over loopback play an online Envoy set through the real menus and lobby (the local matchmaking server on 127.0.0.1
-only: never the public one), driven over each client's console. Loopback only. Everything is recorded in envoy-net/runs/<tag>/.
+only: never the public one), driven over each client's console. Use --bind 0.0.0.0 for WSL-to-Windows networking. Everything is recorded in envoy-net/runs/<tag>/.
 
   python run_set.py <tag> [--games 3] [--envoy on|off] [--netsim lag=40,jitter=10,loss=2] [--poison] [--tamper] [--delay 2]
                     [--old-guest-exe PATH] [--picks 1,2]
@@ -75,29 +75,40 @@ def parse_state(s):
     k = ["phase", "lobby", "game", "turn", "me", "match", "frame", "scene", "env_on", "env_open", "pick1", "pick2", "round", "refused", "word", "peer", "locked", "ready"]
     d = dict(zip(k, p[:18])); d["status"] = "|".join(p[18:]); return d
 
+def client_environment(inherited=None, bind=None):
+    """Loopback by default; --bind or the caller's environment can opt into WSL networking."""
+    env = dict(os.environ if inherited is None else inherited)
+    if bind is not None:
+        env["MELEE_NETPLAY_BIND"] = bind
+    env.setdefault("MELEE_NETPLAY_BIND", "127.0.0.1")
+    return env
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("tag"); ap.add_argument("--games", type=int, default=3); ap.add_argument("--envoy", default="on")
     ap.add_argument("--netsim", default="off"); ap.add_argument("--poison", action="store_true"); ap.add_argument("--tamper", action="store_true")
     ap.add_argument("--delay", type=int, default=2); ap.add_argument("--picks", default="1,2"); ap.add_argument("--timeout", type=int, default=1500)
     ap.add_argument("--old-guest-exe", default="")
+    ap.add_argument("--bind", default=None, help="client/local-server bind (default: MELEE_NETPLAY_BIND or 127.0.0.1); WSL-to-Windows runs require a non-loopback override, e.g. 0.0.0.0")
     a = ap.parse_args()
+    bind_env = client_environment(bind=a.bind)
     out_dir = "%s/%s" % (OUT, a.tag); shutil.rmtree(out_dir, ignore_errors=True); os.makedirs(out_dir, exist_ok=True)
     trace = open(out_dir + "/trace.txt", "w", encoding="utf-8")
     def log(*x):
         line = "[%6.1f] %s" % (time.time() - t0, " ".join(str(i) for i in x)); print(line, flush=True); trace.write(line + "\n"); trace.flush()
     t0 = time.time()
     if free_gb() < 2.5: print("not enough free memory"); return 2
-    env0 = load_env(); iso = env0["GW_ISO_VANILLA"]
+    env0 = client_environment(load_env(), bind_env["MELEE_NETPLAY_BIND"]); iso = env0["GW_ISO_VANILLA"]
     rnd = random.Random(); sport = 51900 + rnd.randrange(80); hc = 53600 + rnd.randrange(20); gc = hc + 20
     pids = {}
     gw_ip = subprocess.run(["powershell", "-NoProfile", "-Command", "(Get-NetIPAddress -InterfaceAlias 'vEthernet (WSL*' -AddressFamily IPv4 | Select-Object -First 1).IPAddress"], capture_output=True, text=True).stdout.strip()
-    srv = subprocess.Popen([sys.executable, ROOT + "/tools/netplay/server/gdmelee_server.py", "--bind", "0.0.0.0", "--port", str(sport)], stdout=open(out_dir + "/server.log", "w"), stderr=subprocess.STDOUT)
+    srv = subprocess.Popen([sys.executable, ROOT + "/tools/netplay/server/gdmelee_server.py", "--bind", bind_env["MELEE_NETPLAY_BIND"], "--port", str(sport)], stdout=open(out_dir + "/server.log", "w"), stderr=subprocess.STDOUT)
     pids["server"] = srv.pid
     open(out_dir + "/pids.txt", "w").write(json.dumps(pids))
     log("server pid", srv.pid, "udp", sport, "consoles", hc, gc)
     common = dict(env0, MELEE_SCENE="mode=menu", MELEE_SKIP_INTRO="1", MELEE_VOLUME="0", MELEE_PAD_IGNORE_ADAPTER="1",
-                  MELEE_NETPLAY_SERVER="%s:%d" % (gw_ip, sport), MELEE_NETPLAY_DELAY=str(a.delay), MELEE_PAD_BOT_EDGE="70", MELEE_RB_LOG="0")
+                  MELEE_NETPLAY_SERVER="%s:%d" % ("127.0.0.1" if bind_env["MELEE_NETPLAY_BIND"] == "127.0.0.1" else gw_ip, sport), MELEE_NETPLAY_DELAY=str(a.delay), MELEE_PAD_BOT_EDGE="70", MELEE_RB_LOG="0")
     win_mods = ROOT + ("/_build/xplat/mods" if a.envoy == "on" else "/_build/nomods")
     lin_mods = "/mnt/h/xpmods" if a.envoy == "on" else "/mnt/h/xpnomods"
     if a.netsim != "off": common["MELEE_NET_SIM"] = a.netsim

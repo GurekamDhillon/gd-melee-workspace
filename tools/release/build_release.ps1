@@ -56,7 +56,19 @@ function Copy-In([string]$src, [string]$rel, [switch]$OriginalDat) {
   if (-not (Test-Path $full -PathType Leaf)) { throw "missing: $full" }
   $dst = Join-Path $stage $rel
   New-Item -ItemType Directory -Force -Path (Split-Path $dst -Parent) | Out-Null
-  Copy-Item $full $dst
+  # Mod text must have the same bytes in Windows and Linux packages. Work on
+  # bytes so encoding, BOMs and all non-newline bytes survive unchanged.
+  if ($rel -match '^mods[\\/]' -and [System.IO.Path]::GetExtension($full) -in @('.lua', '.json', '.md', '.txt', '.wgsl', '.words', '.genoasm')) {
+    $bytes = [System.IO.File]::ReadAllBytes($full)
+    $lf = New-Object 'System.Collections.Generic.List[byte]'
+    for ($i = 0; $i -lt $bytes.Length; $i++) {
+      if ($bytes[$i] -eq 13 -and $i + 1 -lt $bytes.Length -and $bytes[$i + 1] -eq 10) { continue }
+      $lf.Add($bytes[$i])
+    }
+    [System.IO.File]::WriteAllBytes($dst, $lf.ToArray())
+  } else {
+    Copy-Item $full $dst
+  }
 }
 
 # ---- provenance of the game build ---------------------------------------------------------------

@@ -63,6 +63,15 @@ def hashes(path):
     return out
 
 
+def client_environment(inherited=None, bind=None):
+    """Loopback by default; --bind or the caller's environment can opt into WSL networking."""
+    env = dict(os.environ if inherited is None else inherited)
+    if bind is not None:
+        env["MELEE_NETPLAY_BIND"] = bind
+    env.setdefault("MELEE_NETPLAY_BIND", "127.0.0.1")
+    return env
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('name')
@@ -80,7 +89,9 @@ def main():
     ap.add_argument('--no-bot', action='store_true')
     ap.add_argument('--mods', default='', help='envoy: use the Envoy mod folder on both sides')
     ap.add_argument('--scene', default='', help='MELEE_SCENE for the DIRECT mode (the room code path ignores it)')
+    ap.add_argument("--bind", default=None, help="client/local-server bind (default: MELEE_NETPLAY_BIND or 127.0.0.1); WSL-to-Windows runs require a non-loopback override, e.g. 0.0.0.0")
     a = ap.parse_args()
+    bind_env = client_environment(bind=a.bind)
 
     out = os.path.join(ROOT, '_build', 'xplat', 'net_' + a.name)
     shutil.rmtree(out, ignore_errors=True)
@@ -93,13 +104,13 @@ def main():
     server = None
     if a.mode == 'random':
         server = subprocess.Popen([sys.executable, os.path.join(ROOT, 'tools/netplay/server/gdmelee_server.py'),
-                                   '--port', str(port), '--bind', '0.0.0.0'],
+                                   '--port', str(port), '--bind', bind_env['MELEE_NETPLAY_BIND']],
                                   stdout=open(os.path.join(out, 'server.log'), 'w'), stderr=subprocess.STDOUT)
         time.sleep(1.5)
         print('local matchmaking server pid', server.pid, 'on udp', port)
 
     common = {'MELEE_NETPLAY_STOCKS': a.stocks, 'MELEE_NETPLAY_MINUTES': a.minutes, 'MELEE_NETPLAY_DELAY': a.delay,
-              'MELEE_NETPLAY_STAGE': a.stage, 'MELEE_VOLUME': '0'}
+              'MELEE_NETPLAY_BIND': bind_env['MELEE_NETPLAY_BIND'], 'MELEE_NETPLAY_STAGE': a.stage, 'MELEE_VOLUME': '0'}
     if a.turbo:
         common['MELEE_NETPLAY_TURBO'] = a.turbo
     if a.envoy:
@@ -109,8 +120,8 @@ def main():
     if a.scene:
         common['MELEE_SCENE'] = a.scene
     if a.mode == 'random':
-        side = {'win': dict(MELEE_NETPLAY='random', MELEE_NETPLAY_SERVER='%s:%d' % (gw, port)),
-                'linux': dict(MELEE_NETPLAY='random', MELEE_NETPLAY_SERVER='%s:%d' % (gw, port))}
+        side = {'win': dict(MELEE_NETPLAY='random', MELEE_NETPLAY_SERVER='%s:%d' % ('127.0.0.1' if bind_env['MELEE_NETPLAY_BIND'] == '127.0.0.1' else gw, port)),
+                'linux': dict(MELEE_NETPLAY='random', MELEE_NETPLAY_SERVER='%s:%d' % ('127.0.0.1' if bind_env['MELEE_NETPLAY_BIND'] == '127.0.0.1' else gw, port))}
     else:
         hostwin = a.host == 'win'
         side = {'win': dict(MELEE_NETPLAY=('host:%d' % port) if hostwin else ('join:%s:%d' % (wsl_ip, port))),
