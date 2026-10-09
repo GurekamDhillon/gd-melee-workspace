@@ -4,6 +4,7 @@ from pathlib import Path
 import random
 import tempfile
 import unittest
+import shutil
 import subprocess
 from unittest.mock import patch
 
@@ -291,6 +292,8 @@ class AuthorToolsTests(unittest.TestCase):
 
     def test_tree_script_roundtrips(self):
         # Read generated fighters too; emit only counts, never derived word data.
+        if shutil.which("rg") is None:
+            self.skipTest("ripgrep (rg) is not installed")
         result = subprocess.run(["rg", "--files", "--no-ignore", "--hidden", "-g", "geno.json",
                                  "-g", "!.git/**", "-g", "!melee/.git/**", "-g", "!_build/archived-worktrees/**",
                                  "-g", "!_build/archive/**", "-g", "!_build/agents/*/melee/**",

@@ -33,10 +33,10 @@ ROOT = os.path.normpath(os.path.join(HERE, "..", "..", ".."))
 sys.path.insert(0, os.path.join(ROOT, "tools", "mex_port"))
 import mex_hsd  # noqa: E402
 
-SRC = os.path.join(ROOT, "melee", "src", "melee")
+SRC = os.path.join(os.environ.get("GW_MELEE") or os.path.join(ROOT, "melee"), "src", "melee")   # GW_MELEE: the game checkout (a worktree has no melee/ beside it)
 OUT = os.path.join(ROOT, "_build", "tmp", "ir", "%s.melee.ir.json")
 # name -> (internal FighterKind, file code, decomp folder, submotion enum prefix)
-FIGHTERS = {"kirby": (4, "Kb", "ftKirby", "ftKb"), "marth": (18, "Ms", "ftMars", "ftMs")}
+FIGHTERS = {"kirby": (4, "Kb", "ftKirby", "ftKb"), "marth": (18, "Ms", "ftMars", "ftMs"), "captain": (2, "Ca", "ftCaptain", "ftCa")}
 NAME = "kirby"
 KIND, CODE, KDIR, KPRE = FIGHTERS[NAME]
 SKEL = "skel:body"

@@ -20,7 +20,7 @@ cfg="$out/$run.lua"
   cat "$HERE/falcon_parity.lua"
 } > "$cfg"
 export MELEE_LOG=all,-render,-gobj,-heap,-dvd,-mex,-watchdog,-tex,-audio,-snap,-frontend   # all lifts the per-prefix flood limit (400 lines per 10 s) that would drop trace lines
-scene="mode=lab;p1=$tok/hu;p2=mario/hu;stage=fd"
+scene="mode=lab;p1=$tok/hu;p2=mario/hu;stage=fd;items=off;time=0"
 bash "$HERE/../moves_check/run_scene.sh" "$run" "$scene" "$cfg" "${PARITY_TIMEOUT:-1500}" 2>&1 | tail -3
 log="$GW_BUILD_ROOT/runs/$run/melee-pc.log"
 grep -E "script \[pad_script\] (PF|PS) " "$log" | sed -E 's/^\[frame=[0-9]+ ms=[0-9]+\] script \[pad_script\] //' > "$GW_BUILD_ROOT/runs/$run/parity.txt"

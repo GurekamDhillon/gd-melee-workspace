@@ -217,9 +217,9 @@ add('ko_side', {p1 = {260, 20}, p2 = {-100, 0}}, W(330))
 add('ko_top', {p1 = {0, 230}, p2 = {-100, 0}}, W(330))
 
 -- ---- ledge: from below the stage's left edge -----------------------------------------------------------------------------------------
-local LEDGE = {p1 = {-74, -8}, p2 = {100, 0}}
+local LEDGE = {p1 = {-76, -12}, p2 = {100, 0}}
 local function ledge(name, after, pre)
-  add(name, LEDGE, seq(pre or {st(10, {x = 40})}, W(20), after, W(120)))
+  add(name, LEDGE, seq(pre or {st(8, {x = 40})}, W(40), after, W(120)))
 end
 ledge('ledge_hang', {})
 ledge('ledge_getup', {st(3, {y = 127})})
@@ -243,6 +243,83 @@ add('recover_sideb', {p1 = {-90, -10}, p2 = {100, 0}}, seq({st(3, {buttons = 'B'
 add('recover_jump_upb', {p1 = {-100, -25}, p2 = {100, 0}}, seq({st(3, {buttons = 'X', x = 127}), st(8), st(3, {buttons = 'B', y = 127}), st(40, {x = 127})}, W(150)))
 add('recover_falcon_kick', {p1 = {-90, -10}, p2 = {100, 0}}, seq({st(3, {buttons = 'B', y = -127, x = 60}), st(40, {x = 60})}, W(150)))
 add('recover_airdodge_ledge', {p1 = {-80, -12}, p2 = {100, 0}}, seq({st(3, {buttons = 'L', x = 90})}, W(120)))
+
+
+-- ---- more coverage (round 2): hits from the front and by percent, tumble, techs, downs, projectile, edge states ---------------------------------
+local P2TURN = {st(6, N, {x = -50}), st(4)}
+local function hitf(name, p2steps, p1steps, pct, p1pos)   -- Mario turned toward Falcon (a hit from the front)
+  add(name, {p1 = p1pos or {-10, 0}, p2 = {0, 0}, pct1 = pct or 0}, seq(P2TURN, p2steps, p1steps or {}, W(140)))
+end
+local P2FSL = {st(3, N, {cx = -127})}
+for _, pct in ipairs({0, 30, 60, 90, 120, 160}) do
+  hit('hitb_fsmash_p' .. pct, P2FS, nil, pct)
+  hitf('hitf_fsmash_p' .. pct, P2FSL, nil, pct)
+end
+hitf('hitf_jab', {st(3, N, {buttons = 'A'})}, nil, 0)
+hitf('hitf_ftilt', {st(3, N, {buttons = 'A', x = 45})}, nil, 0)
+hitf('hitf_utilt', {st(3, N, {buttons = 'A', y = 35})}, nil, 0, {-4, 0})
+hitf('hitf_dtilt', {st(3, N, {buttons = 'A', y = -35})}, nil, 0)
+hitf('hitf_usmash', {st(3, N, {cy = 127})}, nil, 80, {-4, 0})
+hitf('hitf_dsmash', {st(3, N, {cy = -127})}, nil, 80)
+hitf('hitf_bair_fh', {st(3, N, {cx = -127})}, nil, 20)
+hit('hit_fsmash_p100_tech', P2FS, rep(14, {st(2, {buttons = 'L'}), st(4)}), 100)
+hit('hit_fsmash_p100_tech_f', P2FS, rep(14, {st(2, {buttons = 'L', x = 127}), st(4)}), 100)
+hit('hit_fsmash_p100_tech_b', P2FS, rep(14, {st(2, {buttons = 'L', x = -127}), st(4)}), 100)
+hit('hit_fsmash_p100_notech', P2FS, nil, 100)
+hit('hit_fsmash_p100_down_stand', P2FS, seq(W(70), {st(3, {y = 127})}), 100)
+hit('hit_fsmash_p100_down_attack', P2FS, seq(W(70), {st(3, {buttons = 'A'})}), 100)
+hit('hit_fsmash_p100_down_roll_f', P2FS, seq(W(70), {st(3, {x = 127})}), 100)
+hit('hit_fsmash_p100_down_roll_b', P2FS, seq(W(70), {st(3, {x = -127})}), 100)
+hit('hit_fsmash_p100_down_wait', P2FS, W(200), 100)
+hit('hit_fsmash_p100_di_down', P2FS, {st(60, {y = -127})}, 100)
+hit('hit_fsmash_p100_airdodge', P2FS, seq(W(12), {st(3, {buttons = 'L'})}), 100)
+hit('hit_fsmash_p100_upb', P2FS, seq(W(20), {st(3, {buttons = 'B', y = 127})}), 100)
+hit('hit_fsmash_p100_jump', P2FS, seq(W(20), {st(3, {buttons = 'X'})}), 100)
+hit('hit_dsmash_p60_meteorish', {st(3, N, {cy = -127})}, nil, 60)
+hit('hit_usmash_p100', {st(3, N, {cy = 127})}, nil, 100, {2, 0})
+hit('hit_usmash_p160_top', {st(3, N, {cy = 127})}, nil, 160, {2, 0})
+add('hit_air_usmash', {p1 = {2, 9}, p2 = {0, 0}, pct1 = 30}, seq(W(4), {st(3, N, {cy = 127})}, W(140)))
+add('hit_air_fsmash', {p1 = {10, 9}, p2 = {0, 0}, pct1 = 50}, seq(W(2), {st(3, N, {cx = 127})}, W(140)))
+add('hit_air_nair', {p1 = {6, 12}, p2 = {0, 0}, pct1 = 10}, seq(W(2), {st(3, N, {buttons = 'X'}), st(8), st(3, N, {buttons = 'A'})}, W(140)))
+add('hit_projectile', {p1 = {40, 0}, p2 = {0, 0}, pct1 = 0}, seq({st(3, N, {buttons = 'B'})}, W(120)))
+add('hit_projectile_shield', {p1 = {40, 0}, p2 = {0, 0}, pct1 = 0}, seq({st(60, {buttons = 'L'}, {buttons = 'B'})}, W(80)))
+add('hit_shield_air', {p1 = {10, 0}, p2 = {0, 0}}, seq({st(8, {buttons = 'L'})}, {st(3, {buttons = 'L'}, {buttons = 'A', y = 35})}, {st(30, {buttons = 'L'})}, W(40)))
+-- walls of the world: ledge-edge states
+add('teeter', {p1 = {62, 0}, p2 = {-100, 0}}, seq({st(30, {x = 40})}, W(40)))
+add('run_off_edge', {p1 = {50, 0}, p2 = {-100, 0}}, seq({st(60, {x = 127})}, W(60)))
+add('walk_off_edge_jump', {p1 = {60, 0}, p2 = {-100, 0}}, seq({st(14, {x = 60}), st(3, {buttons = 'X'})}, W(60)))
+add('down_b_off_edge', {p1 = {60, 0}, p2 = {-100, 0}}, seq({st(3, {buttons = 'B', y = -127})}, W(100)))
+add('down_b_off_edge_fwd', {p1 = {56, 0}, p2 = {-100, 0}}, seq({st(3, {buttons = 'B', y = -127, x = 100})}, {st(40, {x = 100})}, W(100)))
+add('side_b_off_edge', {p1 = {56, 0}, p2 = {-100, 0}}, seq({st(3, {buttons = 'B', x = 127})}, W(110)))
+add('up_b_off_edge_catch', {p1 = {56, 0}, p2 = {74, -6}}, seq({st(3, {buttons = 'B', y = 127}), st(30, {x = 127})}, W(130)))
+add('up_b_catch_air_throw', {p1 = {0, 20}, p2 = {6, 20}}, seq({st(3, {buttons = 'B', y = 127})}, W(130)))
+add('up_b_catch_air_d', {p1 = {0, 20}, p2 = {6, 20}}, seq({st(3, {buttons = 'B', y = 127}), st(30, {y = -127})}, W(130)))
+add('ko_left', {p1 = {-260, 20}, p2 = {100, 0}}, W(330))
+add('ko_top_fast', {p1 = {0, 150}, p2 = {100, 0}}, seq({st(60, N)}, W(300)))
+add('dash_grab_20', NEAR(20), seq(DASH, {st(3, {buttons = 'Z'})}, W(80)))
+add('dash_grab_24', NEAR(24), seq(DASH, {st(3, {buttons = 'Z'})}, W(80)))
+add('dash_grab_30', NEAR(30), seq(DASH, {st(3, {buttons = 'Z'})}, W(80)))
+add('taunt_right', FAR, seq({st(3, {buttons = 'DRIGHT'})}, W(120)))
+add('walk_fast_long', FAR, seq({st(60, {x = 127})}, W(10)))
+add('jump_fwd_double_fwd', FAR, seq({st(14, {buttons = 'X', x = 127})}, W(8), {st(3, {buttons = 'X', x = 127})}, W(60)))
+add('fall_after_double', FAR, seq(FULLHOP, W(10), {st(3, {buttons = 'X'})}, W(70), {st(30, {x = -127})}, W(30)))
+add('run_direct', FAR, seq({st(20, {x = 127}), st(30, {x = -127})}, W(30)))
+add('crouch_attack', FAR, seq({st(10, {y = -90}), st(3, {buttons = 'A', y = -90})}, W(40)))
+add('crouch_shield', FAR, seq({st(10, {y = -90}), st(10, {buttons = 'L', y = -90})}, W(30)))
+add('aerial_grab_ledge_hop', LEDGE, seq({st(8, {x = 40})}, W(40), {st(3, {y = -127})}, W(4), {st(3, {buttons = 'X'})}, W(8), {st(3, {cx = 127})}, W(80)))
+
+
+-- tumble, tech and the down states, from the front at 70% (the knockback keeps Falcon on the stage)
+for _, o in ipairs({{'wait', W(200)}, {'stand', seq(W(60), {st(3, {y = 127})})}, {'attack', seq(W(60), {st(3, {buttons = 'A'})})},
+                    {'roll_f', seq(W(60), {st(3, {x = 127})})}, {'roll_b', seq(W(60), {st(3, {x = -127})})},
+                    {'stand_l', seq(W(70), {st(3, {y = 127})})}, {'attack_l', seq(W(70), {st(3, {buttons = 'A'})})},
+                    {'roll_f_l', seq(W(70), {st(3, {x = 127})})}, {'roll_b_l', seq(W(70), {st(3, {x = -127})})},
+                    {'tech', rep(14, {st(2, {buttons = 'L'}), st(4)})}, {'tech_f', rep(14, {st(2, {buttons = 'L', x = 127}), st(4)})},
+                    {'tech_b', rep(14, {st(2, {buttons = 'L', x = -127}), st(4)})}}) do
+  hitf('hitf_fsmash_p70_' .. o[1], P2FSL, o[2], 70)
+end
+hitf('hitf_dsmash_p70_wait', {st(3, N, {cy = -127})}, W(200), 70)
+hitf('hitf_usmash_p110_wait', {st(3, N, {cy = 127})}, W(200), 110, {-4, 0})
 
 -- ---- run -------------------------------------------------------------------------------------------------------------------------------
 local function f9(v) return string.format('%.9g', v or 0) end
