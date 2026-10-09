@@ -59,6 +59,21 @@ G = {
         ("pc/platform/gw_script_ui_set.inc", r"\bgw_Ui_SetOpen\b", "step 5", "N3 an engine-owned native list screen (rows, tabs, events)"),
         ("pc/platform/gw_ui_screen.h", r"#define AT_MAX_ITEMS 64", "step 5", "N4 AT_MAX_ITEMS 64"),
     ],
+    10: [
+        # Reconciled 2026-10-07 against the integration tree (steps 1 to 7 and 9 merged; step 8 is still on agent/atlas8). The plan's names held.
+        ("pc/platform/gw_ui_retail_ids.h", r"\bAT_RE_COUNT\b", "step 3", "N1 the retail element ids"),
+        ("pc/platform/gw_ui_retail.h", r"\bAT_RS_POLICY\b", "step 3", "N1 the scene-policy source of the mask"),
+        ("pc/platform/gw_ui_retail.h", r"\bat_retail_effective\b", "step 3", "N1 effective mask (0 online)"),
+        ("src/melee/if/iftime.c", r"\bUi_RetailHidden\b", "step 3", "N2 the guard pattern"),
+        ("pc/platform/gw_ui_policy.c", r"\bAT_POLICY_OVERLAY\b", "step 2", "N3 OVERLAY"),
+        ("src/melee/gm/gm_1A3F.c", r"\bUi_ScenePolicy\b", "step 2", "N3 the scene hook"),
+        ("pc/platform/gw_ui_screen.h", r"\bAT_PRIMARY_DISPLAY\b", "step 2", "N6 a primary-less screen"),
+        ("pc/platform/gw_ui_screen.h", r"\bAT_PRIMARY_ROOM\b", "step 6", "N6 the next free primary number is 7 (CARDS 5, ROOM 6)"),
+        # SOFT: the text of the screens (step 8) and style lint (step 6). Missing here: the framed screens use authored text.
+        ("src/melee/gm/gmfrontend_atlas_data.inc", r"\bfad_sis_text\b", "step 8", "N5 the text decoder glue", "step 8 merge"),
+        ("pc/platform/gw_ui_retailtext.h", r"\bat_sis_decode\b", "step 8", "N5 the decoder (commit b9e023759 on agent/atlas8)", "step 8 merge"),
+        ("pc/tests/atlas_lint.h", r"\blint_", "step 6", "N8 style lint"),
+    ],
 }
 
 # Soft needs: printed when missing, never fail the exit. (file, regex, owner, why)

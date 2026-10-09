@@ -36,6 +36,40 @@ Companions: `HANDOFF-2026-10-05.md` (Envoy, Turbo, CPU controller state and the 
   frontend scene is untested (`MELEE_ATLAS_DATA=...,notext` skips it); `script-policy` does not build on this branch or on its parent (the literal NULs in
   `gw_script.c`, already in the paused-work notes).
 - **Atlas step 9 (the Qt launcher in Atlas style) is built and committed on `ws/atlas9`, not merged, not looked at.**
+- **Atlas step 10 (2026-10-07; game `agent/atlas10`, workspace `ws/atlas10`; built, not merged): the trophy scenes in Atlas chrome.** The retail Trophy Gallery (scene 11),
+  Lottery (12) and Collection (13) run unchanged; a per-frame wrapper (`gmfrontend_atlas_toy.inc`) submits a **framed screen** after retail's own `on_frame`: opaque plates
+  around a **window**, with the trail, an explainer, a counter and key hints on the plates (`gw_ui_frame.c`, `AT_PRIMARY_FRAME = 7`). No focus, no events, no hit rectangles; nothing
+  online. All three stay RETAIL by default; `MELEE_ATLAS_SCENES=<11|12|13>:overlay` turns one on for development, `MELEE_ATLAS_FRAME_WIN=x,y,w,h` gives it a window and
+  `MELEE_ATLAS_FRAME_OUTLINE=1` draws that window's edge in ember. **No window is measured** (where retail frames its model is camera data on the disc, and no screenshot may be
+  kept: nothing disc-derived goes to disk), so a scene with no window **draws nothing and hides nothing**. The probe (`MELEE_ATLAS_TOYPROBE=1`) ran once per scene on one window
+  (second monitor, volume 0; ACE for the three, vanilla for the Gallery; 1280x720 and 960x720) and logged numbers only; no crash in about 25 s each; the wrapper, the mask line and
+  the screen open line appear. A pad script then walked the Gallery (A, B, B, A, B, B): the screen closed when the list opened, reopened with the viewer, closed again,
+  the scene left with B in the list and the next scene's mask line reset to 0. **Not seen:** any picture (screenshots of the retail scene would be disc-derived files), a Lottery draw, the Collection's controls.
+  **What the plan had wrong, found in the source** (each is a test or a comment in the code): (1) `Script_SceneBegin` runs in `gm_801A4D34`, after `on_enter`, so the policy mask
+  is set by `Ui_ScenePolicyMask` before `on_enter` for every scene; (2) the Gallery is **two** retail screens: the 3D viewer and a full-screen trophy list (`tylist.c`; B in the
+  viewer opens it, B in the list leaves), so the chrome closes and the guards stand down while the list is up (`tyList_PcActive`); (3) the backdrop at link 0x33 is what the
+  trophy stands against and is never guarded; (4) the Collection has **no 2D piece and no cursor** (the room is a camera; chrome is the room's name and a count) and the Lottery's
+  machine, coin digits and panel are 3D (its two text objects are the popup's): their masks are empty, and the `lot.*` ids are not added; (5) the render guards read the mask at
+  draw time like `iftime.c`'s (text objects get `hidden = 1`, never 0); (6) the plates are the ground colour, not the pane colour.
+  The retail text is not decoded (step 8's decoder `b9e023759` is not in this tree and its gate has not run): the retail text objects stay and the explainer says `TROPHY n`
+  and `n / total`. The N9 question is settled from source: scenes 11 to 13 are not "wide" in `gw_view_math.h`, so retail draws a 4:3 band centred in a wider canvas and the window
+  shifts right by half the extra width (`at_frame_hole`).
+
+  | Screen | Text | Window known | Inside-window 2D found | Cost | Agent verdict | Owner: go / hold / drop |
+  |---|---|---|---|---|---|---|
+  | Gallery | NO-GO until step 8's decoder and gate (retail text stays) | no (zero; the list's own rectangle is known from `tylist.c`: 118,78 to 560,412) | the panel (link 0x3C), the info frame (0x38), four text objects; probe links 32:1 33:1 36:1 37:1 38:1 39:2 3C:1 3E:3 3F:1 | M | **hold**: code kept, row off, needs a window and a look | |
+  | Collection | n/a (authored: TROPHY ROOM, n TROPHIES) | no | none (links 34:1 35:1 3C:2: the room and a trophy) | S | **hold**: chrome only; the room fills the screen, so the explainer may be the overlap card, and if the measured window leaves no plate room the answer is probably drop | |
+  | Lottery | n/a (authored: coins, bet) | no | none (3C:3 the panel, background and lever, 3D; 3D:1 and the two texts are the popup's) | S | **hold**: the chrome closes during a draw so nothing covers the popup | |
+  | Tournament | n/a | n/a | n/a | L | not started: owner-gated, skipped | |
+
+  **Needs a window (a Windows agent while the owner is away, or the owner):** measure the three `FAT_*_WIN` rectangles (outline plus `MELEE_ATLAS_FRAME_WIN`, at 640x480, 960x720,
+  1920x1080 and 21:9); the per-bit look (`MELEE_ATLAS_RETAIL=toy.panel`, `toy.info`, `toy.text`: exactly that piece goes, the trophy still turns); the Lottery popup and a draw;
+  B and START leaving each scene and the COLLECTION hub's cursor on the row you came from; 120 fps; `MELEE_ATLAS=0` and `:retail` exactly retail; ACE trophies. Only a go adds a
+  policy row (`ROWS[]` in `gw_ui_policy.c`, one line). **Owner decisions:** go, hold or drop per screen after the look; whether the retail text may stay if it does not decode
+  (ship the frame without the disc's words, or drop the screen); Staff Roll: no entry (default, nothing built); Tournament: skipped; the Language row: kept (below).
+  **The Language row stays** (the owner's default). Retail screens that still draw text in the saved language: Movies, Snapshots and Staff Roll (skipped, hand-offs), the opening
+  movie and memory-card prompt, the Gallery's list and retail text objects (until the decoder), the Lottery's popup text, and Tournament (not re-hosted). While any remains the row cannot
+  go without choosing the language for them; `retail_screens.py` (step 8) is not in this tree, so this list was made by hand.
 - **Atlas step 7 (2026-10-07; game `agent/atlas7`, workspace `ws/atlas7`; merged 2026-10-07): the MODS screen and the LAB.** The main menu's MODS row opens an Atlas screen
   (INSTALLED and CONFLICTS tabs, 256 mods windowed, toggles with cascade notes, X resolves, Y details, locked while online); the Settings MODS tab is unchanged until the owner
   has looked. The LAB's pause menu is an Atlas screen behind **`lab ui on`** (off by default; the legacy menu is the fallback), with its info panel, move timeline, mode strip

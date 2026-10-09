@@ -46,6 +46,7 @@ gw_ui_css_profile.c
 gw_ui_data.c
 gw_ui_data_models.c
 gw_ui_focus.c
+gw_ui_frame.c
 gw_ui_hud.c
 gw_ui_hud_parts.c
 gw_ui_item.c
@@ -66,6 +67,7 @@ gw_ui_render.c
 gw_ui_screen.c
 gw_ui_sss.c
 gw_ui_stack.c
+gw_ui_toy.c
 gw_ui_val.c
 gw_uigen.c
 main.c
