@@ -454,6 +454,12 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].combo.strings[].name | string: String name | required | ; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
 | fighters[].combo.strings[].steps | array: Ordered entries | absent | maxItems=32; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].combo.strings[].intent | string: Design / source intent |  | ; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].meter | object: geno 11: a HUD bar for the combo ki value, drawn in matches (screen space, reads only); needs a combo block with ki | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].meter.name | string: Label drawn above the bar | KI | maxLength=11; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].meter.color | string: Fill colour #RRGGBB | #F2C14E | pattern=^#[0-9A-Fa-f]{6}$; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].meter.position | array: Ordered entries | absent | maxItems=2; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].meter.size | array: Ordered entries | absent | maxItems=2; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].meter.max | number: Value drawn as a full bar (default combo.ki.max) | combo.ki.max | minimum=0; maximum=1000; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
 | fighters[].ai | object: The CPU plays this define as that retail fighter (its recovery, special-move choices and per-kind AI tables) (geno: 10) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].ai.like | string: A retail fighter (mario, fox, captain, donkey, kirby, koopa, link, seak, ness, peach, popo, pikachu, samus, yoshi, purin, mewtwo, luigi, mars, zelda, clink, drmario, falco, pichu, gamewatch, ganon, emblem, or their aliases) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].kirby_copy | string: What Kirby gets from inhaling the define: "none" (the default) or "retail:<fighter>" (that fighter's hat and ability) (geno: 10) | none | pattern=^(none\|retail:[a-z]+)$; geno.md §22.7; melee/pc/platform/geno_registry.c |
@@ -493,8 +499,8 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:381 |
 | GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:382 |
 | GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:483 |
-| JDOC_NODES | 16384 | melee/pc/platform/geno_registry.c:74 |
-| JDOC_ARENA | 262144 | melee/pc/platform/geno_registry.c:75 |
+| JDOC_NODES | 32768 | melee/pc/platform/geno_registry.c:74 |
+| JDOC_ARENA | 524288 | melee/pc/platform/geno_registry.c:75 |
 | GN_MAX_VOICE | 32 | melee/pc/platform/geno_registry.c:403 |
 | GN_MAX_SLOTS | 512 | melee/pc/platform/geno_registry.c:510 |
 | JSON_DEPTH | 32 | melee/pc/platform/geno_registry.c:jd_value |

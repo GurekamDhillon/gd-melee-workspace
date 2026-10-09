@@ -200,6 +200,7 @@ def build_schema():
     retail = {"type": "string", "description": "A retail fighter (mario, fox, captain, donkey, kirby, koopa, link, seak, ness, peach, popo, pikachu, samus, yoshi, purin, mewtwo, luigi, mars, zelda, clink, drmario, falco, pichu, gamewatch, ganon, emblem, or their aliases)"}
     gnsnd = string("A .gnsnd file of the mod's files/ folder (python -m tools.geno.audio in.wav out.gnsnd); a plain file name", section="22.7", pattern=r"^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][nN][sS][nN][dD]$", maxLength=63)
     fighter["properties"]["combo"] = combo_schema()
+    fighter["properties"]["meter"] = meter_schema()
     fighter["properties"]["ai"] = obj({"like": retail}, ("like",))
     fighter["properties"]["ai"]["description"] = "The CPU plays this define as that retail fighter (its recovery, special-move choices and per-kind AI tables) (geno: 10)"
     fighter["properties"]["kirby_copy"] = {"type": "string", "pattern": r"^(none|retail:[a-z]+)$", "description": 'What Kirby gets from inhaling the define: "none" (the default) or "retail:<fighter>" (that fighter\'s hat and ability) (geno: 10)',
@@ -230,7 +231,7 @@ def build_schema():
 
 COMBO_MOVES = ["jab1", "jab2", "jab3", "rapid_jab", "dash_attack", "ftilt", "ftilt_any", "utilt", "dtilt", "fsmash", "fsmash_any",
                "usmash", "dsmash", "nair", "fair", "bair", "uair", "dair", "grab", "dash_grab", "fthrow", "bthrow", "uthrow", "dthrow"]
-COMBO_ACTS = ["special_n", "special_s", "special_hi", "special_lw", "jump", "nair", "fair", "bair", "uair", "dair"]
+COMBO_ACTS = ["special_n", "special_s", "special_hi", "special_lw", "jump", "jump_short", "nair", "fair", "bair", "uair", "dair"]
 
 
 def combo_schema():
@@ -267,6 +268,19 @@ def combo_schema():
                 "strings": arr(obj({"name": f("string", "String name", "required"), "steps": arr({"anyOf": [node]}, 32, minItems=2),
                                     "intent": f("string", "Design / source intent", "")}, ("name", "steps")), 64)},
                ("routes",), description="geno 11: the combo graph (routes: cancel and link windows into next moves); define only")
+
+
+def meter_schema():
+    """geno 11: the HUD meter of the combo ki value (geno.md section 25.7; melee/pc/platform/geno_combo_registry.inc gn_meter_parse)."""
+    src = "melee/pc/platform/geno_combo_registry.inc"
+    def f(type_, desc, default, **kw):
+        return {**field(type_, desc, default, "25", **kw), "x-source": src}
+    return obj({"name": f("string", "Label drawn above the bar", "KI", maxLength=11),
+                "color": f("string", "Fill colour #RRGGBB", "#F2C14E", pattern=r"^#[0-9A-Fa-f]{6}$"),
+                "position": arr(f("number", "x, y on the 640x480 virtual screen", "[60 + 150 x slot, 438]", minimum=0, maximum=640), 2, minItems=2),
+                "size": arr(f("number", "width, height", "[110, 7]", minimum=4, maximum=400), 2, minItems=2),
+                "max": f("number", "Value drawn as a full bar (default combo.ki.max)", "combo.ki.max", minimum=0, maximum=1000)},
+               description="geno 11: a HUD bar for the combo ki value, drawn in matches (screen space, reads only); needs a combo block with ki")
 
 
 def limits():

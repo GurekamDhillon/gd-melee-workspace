@@ -4542,6 +4542,7 @@
                                 "special_hi",
                                 "special_lw",
                                 "jump",
+                                "jump_short",
                                 "nair",
                                 "fair",
                                 "bair",
@@ -4609,6 +4610,7 @@
                                   "special_hi",
                                   "special_lw",
                                   "jump",
+                                  "jump_short",
                                   "nair",
                                   "fair",
                                   "bair",
@@ -4680,6 +4682,7 @@
                             "special_hi",
                             "special_lw",
                             "jump",
+                            "jump_short",
                             "nair",
                             "fair",
                             "bair",
@@ -4942,6 +4945,7 @@
                                   "special_hi",
                                   "special_lw",
                                   "jump",
+                                  "jump_short",
                                   "nair",
                                   "fair",
                                   "bair",
@@ -4978,6 +4982,66 @@
               "routes"
             ],
             "description": "geno 11: the combo graph (routes: cancel and link windows into next moves); define only"
+          },
+          "meter": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Label drawn above the bar",
+                "x-engine-default": "KI",
+                "x-reference": "geno.md §25",
+                "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                "maxLength": 11
+              },
+              "color": {
+                "type": "string",
+                "description": "Fill colour #RRGGBB",
+                "x-engine-default": "#F2C14E",
+                "x-reference": "geno.md §25",
+                "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                "pattern": "^#[0-9A-Fa-f]{6}$"
+              },
+              "position": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "description": "x, y on the 640x480 virtual screen",
+                  "x-engine-default": "[60 + 150 x slot, 438]",
+                  "x-reference": "geno.md §25",
+                  "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                  "minimum": 0,
+                  "maximum": 640
+                },
+                "maxItems": 2,
+                "minItems": 2
+              },
+              "size": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "description": "width, height",
+                  "x-engine-default": "[110, 7]",
+                  "x-reference": "geno.md §25",
+                  "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                  "minimum": 4,
+                  "maximum": 400
+                },
+                "maxItems": 2,
+                "minItems": 2
+              },
+              "max": {
+                "type": "number",
+                "description": "Value drawn as a full bar (default combo.ki.max)",
+                "x-engine-default": "combo.ki.max",
+                "x-reference": "geno.md §25",
+                "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                "minimum": 0,
+                "maximum": 1000
+              }
+            },
+            "additionalProperties": false,
+            "description": "geno 11: a HUD bar for the combo ki value, drawn in matches (screen space, reads only); needs a combo block with ki"
           },
           "ai": {
             "type": "object",
@@ -5348,6 +5412,7 @@
     "clip",
     "clips",
     "coll",
+    "color",
     "combo",
     "common",
     "common_states",
@@ -5413,6 +5478,7 @@
     "max_fall",
     "max_live",
     "max_speed",
+    "meter",
     "min_speed",
     "model",
     "motion",
@@ -5592,11 +5658,11 @@
       "source": "melee/pc/geno/geno.h:483"
     },
     "JDOC_NODES": {
-      "value": 16384,
+      "value": 32768,
       "source": "melee/pc/platform/geno_registry.c:74"
     },
     "JDOC_ARENA": {
-      "value": 262144,
+      "value": 524288,
       "source": "melee/pc/platform/geno_registry.c:75"
     },
     "GN_MAX_VOICE": {
@@ -5617,11 +5683,11 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "6f616e8740cdfb48a3604c23c6f6e45f74d89120dbdfdc24690776c6afe181c6",
+    "pc/platform/geno_registry.c": "b0caba2ce56b3dcafc10027c91ad75ded0b8e39d32629bc972442ccc5c25447e",
     "pc/platform/geno_define_registry.inc": "c7c6753723245a901e4b5373516ab36defef1d5b420f1b71b4ca9df14518c729",
     "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
-    "pc/platform/geno_combo_registry.inc": "846628891c7d757792a2497ba5a788c3a1334421c8f91e337e06c639ea60446c",
-    "pc/geno/geno.h": "c3dd409a441f68d7d0aa9274b2e1b665a1f960ed926a3b14ca0bcb9e3f47eb27",
+    "pc/platform/geno_combo_registry.inc": "ee2771fc193b43719de384e5a39e689c69e11b43bbbb36318cf91c8723694837",
+    "pc/geno/geno.h": "f2a5c7e3c1c1fe4050ed54c31c6db169a2fd5f314414cb16308726f764d031f0",
     "pc/geno/geno_game.c": "aa8fed2af22b09485920266343b00e55c05a9a9eab8c7aa5b050c1f0ae55d8d2",
     "pc/geno/geno_game_v2.inc": "9c572553dcd7b6a70e9d5a3fa3efcbc618b8de567c287e75e1f1577e572f5fb0",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",

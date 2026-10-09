@@ -15,7 +15,7 @@ MOVES = {"jab1": [44], "jab2": [45], "jab3": [46], "rapid_jab": [47, 48, 49], "d
          "ftilt_any": [51, 52, 53, 54, 55], "utilt": [56], "dtilt": [57], "fsmash": [60], "fsmash_any": [58, 59, 60, 61, 62],
          "usmash": [63], "dsmash": [64], "nair": [65], "fair": [66], "bair": [67], "uair": [68], "dair": [69], "grab": [212],
          "dash_grab": [214], "fthrow": [219], "bthrow": [220], "uthrow": [221], "dthrow": [222]}
-ACTS = ["special_n", "special_s", "special_hi", "special_lw", "jump", "nair", "fair", "bair", "uair", "dair"]
+ACTS = ["special_n", "special_s", "special_hi", "special_lw", "jump", "jump_short", "nair", "fair", "bair", "uair", "dair"]
 
 
 def node_keys(value, states):

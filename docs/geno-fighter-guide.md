@@ -774,7 +774,7 @@ the graph and the checks; `tools.geno check` runs the same checks.
 | fighters[].combo.ki | object: max, start, on_hit, on_taken, on_block (0..1000, two decimals) | An optional meter, fighter state: gained per hit landed (hitbox or article), per hit taken, once per move that hits a shield; resets each stock | max 100, the rest 0 | same; `pc/geno/geno_game_combo.inc` |
 | fighters[].combo.routes[] | object (at most 128 after `from` lists expand) | One route | | same |
 | ...routes[].from | string or list: `geno:<state>`, `motion:N`, a Melee move (`jab1 jab2 jab3 rapid_jab dash_attack ftilt ftilt_any utilt dtilt fsmash fsmash_any usmash dsmash nair fair bair uair dair grab dash_grab fthrow bthrow uthrow dthrow`), `*` (any move, only while a string runs) | Source move(s) | REQUIRED | same |
-| ...routes[].to | `geno:<state>`, a Melee move name, `special_n/s/hi/lw` (the bound special; the air one in the air), `jump` (ground: a jump; air: an air jump if one is left), `nair..dair` (in the air), `auto` | Target | REQUIRED | `geno_combo_enter` |
+| ...routes[].to | `geno:<state>`, a Melee move name, `special_n/s/hi/lw` (the bound special; the air one in the air), `jump` (ground: a jump, the short-hop flag cleared; air: an air jump if one is left), `jump_short` (as `jump`, but the ground jump is always a short hop whatever the button does: a launcher jump-cancel), `nair..dair` (in the air), `auto` | Target | REQUIRED | `geno_combo_enter` |
 | ...routes[].input | `light` (A), `heavy` (A with a smash flick, or the C-stick; in the air the C-stick), `special`, `jump`, `grab`, `shield`, `none` | Input class | REQUIRED | `Geno_ComboInput` |
 | ...routes[].dir | `any neutral forward back up down side` | The stick (the C-stick for a C-stick heavy) at the press, relative to the facing | any | same |
 | ...routes[].on | `any hit whiff block contact` | What the source move has done so far | hit | `geno_combo_open` |
@@ -786,6 +786,7 @@ the graph and the checks; `tools.geno check` runs the same checks.
 | ...routes[].depth, .once, .starts | 1..32 / bool / bool | Taken only while links < depth; at most once per string; starts a new string | max_links / false / false | same |
 | ...routes[].when | {slot: a lua.state slot, min} | A Lua gate: the slot's word must be at least min (Lua writes it; the table reads it) | absent | same |
 | ...routes[].source | string | Provenance (XV2 BCM node, BAC window, design note). Not read; in the content id | | |
+| fighters[].meter | object: name (<= 11 chars), color `#RRGGBB`, position [x, y], size [w, h], max | A HUD bar for the combo ki value (needs a combo block with `ki`); screen space, 640x480; reads only | `KI` gold, `[60 + 150 x slot, 438]`, `[110, 7]`, combo.ki.max | `gn_meter_parse`, `pc/platform/gw_script_meter.inc` |
 | fighters[].combo.strings[] | {name, steps[], intent} | Named strings: `check` verifies each step has a route | | `tools/geno/combo.py` |
 
 Rules that matter when you author one:
@@ -797,6 +798,11 @@ Rules that matter when you author one:
 - **A string is only as true as the hitstun.** The engine does not hold the victim. Make each link true with the source hit's
   hitstun (`HBSTUN`), set knockback (`fkb`) for string hits, and the next move's startup; then prove it with the combo tests
   below. `max_links` and each route's `depth` stop loops.
+- **Blocked is not a combo.** Routes default to `on: hit`; leave `block` and `contact` out of string links, enders and special
+  cancels. A shield stops every route: only Melee's own follow-ups (the native jab chain) apply to a blocked move, so
+  mashing a string against a shield is just a series of single moves. Individual blocked moves may be minus, safe or plus
+  (spacing, height, timing as in Melee); what the graph must never allow is a closed loop, so the combo tests carry a
+  SHIELD suite (below).
 - **State and rollback.** `Geno_ComboBlock` (links, the buffer, the meter, the contact record) is a game global in the
   snapshot and in `GenoDefine_StateDigest` for a define with a combo block; a define without one hashes as before.
 - **Lua.** `ctx.self.ki`, `ctx.self.combo_links`, `ctx.ki(delta)`; the `when` gate reads a slot your Lua writes.
@@ -805,6 +811,20 @@ Rules that matter when you author one:
 - **Combo tests.** The Goku package's `combo/tests/` is the worked example: a spec per route (inputs, victims, percents, DI,
   the expected true-combo cells and the routes that must be taken in order), a runner that reads each link the way COMBO mode
   does, and a table per route.
+
+#### Testing a combo define (the Goku suite is the worked example)
+
+All of it is a LAB script mod run on screen (`MELEE_WINDOW_X/Y=40`; turbo by default, `--visible` at 60 Hz), reading the game log; none of it
+is in the headless `run.sh --test` (it needs the fighter's package, which is local).
+
+| suite | what it proves | how to read it |
+|---|---|---|
+| **Route cells** (`run_combo_tests.py`) | per victim x percent x DI: each link TRUE (the next hit lands before the victim's first actionable frame) or escapable by n frames; the routes taken equal the spec's `routes` | a spec lists `expect_true` percents, optionally narrowed with `expect_di` (e.g. `none`) and `expect_vs` (the victims it is tuned for); every other cell is a read with its drop point. A combo that works only in some % ranges or drops with DI is correct: write the expectation only where it is intended |
+| **SHIELD cells** (`--shield`) | the dummy shields (`single` = one press, `hold` = the whole run, then at its first actionable frame after a block: `grab`, `spot` dodge, `roll`, `jump` + aerial) while the attacker mashes the spec's tokens every 6 frames. Asserted: no combo route fires on block; no closed loop (of 3 consecutive blocked moves the defender is actionable at least once between them; best case measured chain = 1); the first 6 blocked moves cost less than half a full shield. Reported per blocked move: the attacker's frame advantage on block (+ = the attacker acts first; blocked moves may be minus, safe or plus), shield HP lost, pushback, the defender's gap, the out-of-shield option and whether it connected | `results/<name>.md` "SHIELD cells" |
+| **Rollback** (`run_combo_sync.py`) | a pad-driven rotation of the define's strings under `MELEE_SYNCTEST_BENCH=1 MELEE_SYNCTEST_CURATED=1 MELEE_SYNCTEST=12` (every frame rolled back 12 and resimulated; the curated hash folds `Geno_ComboBlock`), and `--rewind`: `gd.rewind_test` over 120 frames | 0 mismatching; the driver prints the links taken so a run that never played the string fails |
+| **Meter / Lua gates** (`run_combo_ki.py`) | the define's ki-gated moves through `gd.combo_ki` and pad input | one `KITEST` line per gate |
+
+A `meter` (geno 11) draws the combo ki value as a HUD bar: see `docs/geno.md` 25.7.
 
 ### `sounds`
 
