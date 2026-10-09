@@ -93,9 +93,8 @@ def main():
     ap.add_argument('--bind', action='store_true', help='bind each client to its own address on the WSL link (never 0.0.0.0): the Windows side to the vEthernet address, the Linux side to eth0')
     ap.add_argument('--offscreen', action='store_true', help='park the Windows window at 30000,30000')
     ap.add_argument('--scene', default='', help='MELEE_SCENE for the DIRECT mode (the room code path ignores it)')
-    ap.add_argument("--bind", default=None, help="client/local-server bind (default: MELEE_NETPLAY_BIND or 127.0.0.1); WSL-to-Windows runs require a non-loopback override, e.g. 0.0.0.0")
     a = ap.parse_args()
-    bind_env = client_environment(bind=a.bind)
+    bind_env = client_environment()
 
     out = os.path.join(ROOT, '_build', 'xplat', 'net_' + a.name)
     shutil.rmtree(out, ignore_errors=True)
@@ -107,6 +106,8 @@ def main():
     port = a.port or (51600 + 50 + (os.getpid() % 40))
     if a.bind and not (gw and wsl_ip):
         sys.exit('--bind needs both the vEthernet address and the WSL address')
+    if a.bind:
+        bind_env = client_environment(bind=gw)
     server = None
     if a.mode == 'random':
         server = subprocess.Popen([sys.executable, os.path.join(ROOT, 'tools/netplay/server/gdmelee_server.py'),
@@ -117,6 +118,8 @@ def main():
 
     common = {'MELEE_NETPLAY_STOCKS': a.stocks, 'MELEE_NETPLAY_MINUTES': a.minutes, 'MELEE_NETPLAY_DELAY': a.delay,
               'MELEE_NETPLAY_BIND': bind_env['MELEE_NETPLAY_BIND'], 'MELEE_NETPLAY_STAGE': a.stage, 'MELEE_VOLUME': '0'}
+    if os.environ.get('MELEE_RB_HASH_DETAIL'):
+        common['MELEE_RB_HASH_DETAIL'] = os.environ['MELEE_RB_HASH_DETAIL']
     if a.turbo:
         common['MELEE_NETPLAY_TURBO'] = a.turbo
     if a.envoy:
