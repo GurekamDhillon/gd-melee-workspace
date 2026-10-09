@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
-"""Pack YOUR OWN mod disc into a mods/ folder, so the port runs it off a VANILLA ISO.
+"""Pack YOUR OWN mod ISO or Nucleus project into a mods/ folder, so the port runs it off a VANILLA ISO.
 
     python tools/mex_port/make_mod_from_disc.py \
         --vanilla "${GW_ISO_VANILLA}" \
         --mod     "${GW_ISO_AKANEIA}" \
         --name    akaneia \
         --out     "$GW_ROOT/_build/packs"
+
+For Nucleus, --mod accepts the project directory (with files/) or files/ itself.
+Only the FST tree is packed; data/, assets/, project.mexproj and sys/ are ignored.
+Project JSON counts and unsupported sys/main.dol changes are reported. The pack
+gets mod.json crediting SSBM Nucleus (https://ssbmnucleus.net); no server is contacted.
 
 WE SHIP THE TOOL, NEVER THE PACK. Both discs are supplied by whoever runs this; the tool computes
 the difference on their machine and writes `<out>/<name>/`. Nothing it produces may enter the
@@ -37,6 +42,8 @@ import json
 import os
 import sys
 import time
+import struct
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from mex_hsd import Gcm  # noqa: E402
@@ -93,6 +100,69 @@ def _extract(iso_path, off, size, dst):
     return h.hexdigest()
 
 
+class Folder:
+    """Read only the extracted FST tree, never project bookkeeping."""
+
+    def __init__(self, path):
+        self.path = path
+        supplied = Path(path)
+        self.root = supplied / "files" if (supplied / "files").is_dir() else supplied
+        self.project = supplied if self.root != supplied else supplied.parent
+        self.files = {}
+        seen = set()
+        for file in sorted(self.root.rglob("*")):
+            if file.is_symlink():
+                raise ValueError(f"symlinks are not supported in a disc tree: {file}")
+            if not file.is_file():
+                continue
+            relative = file.relative_to(self.root).as_posix()
+            if relative.split("/")[0].lower() in {"data", "assets", "sys", "project.mexproj", "mod.json"}:
+                continue
+            if relative.lower() in seen:
+                raise ValueError(f"case-insensitive duplicate disc path: {relative}")
+            seen.add(relative.lower())
+            self.files[relative] = (str(file), file.stat().st_size)
+
+
+def _digest(source, off, size):
+    return _file_digest(off) if isinstance(source, Folder) else _iso_digest(source.path, off, size)
+
+
+def _copy(source, off, size, dst):
+    return _extract(off, 0, size, dst) if isinstance(source, Folder) else _extract(source.path, off, size, dst)
+
+
+def nucleus_metadata(mod, vanilla, name, new, modified):
+    project_file = mod.project / "project.mexproj"
+    project_name = name
+    if project_file.is_file():
+        with project_file.open(encoding="utf-8-sig") as fp:
+            project_name = json.load(fp).get("build", {}).get("name") or name
+    counts = {kind: len(list((mod.project / "data" / kind).glob("*.json")))
+              for kind in ("fighters", "stages")}
+    delta = {e[0].lower() for e in new + modified}
+    print(f"  Nucleus project: {project_name}; fighters: {counts['fighters']}; stages: {counts['stages']} (project JSON counts, not runtime slots)")
+    print(f"  MxDt.dat changed/new: {'yes' if 'mxdt.dat' in delta else 'no'}; PlCo.dat changed/new: {'yes' if 'plco.dat' in delta else 'no'}")
+    print("  skipped project bookkeeping: data/, assets/, project.mexproj, sys/ (not disc payload)")
+    dol = mod.project / "sys" / "main.dol"
+    if dol.is_file():
+        with open(vanilla.path, "rb") as fp:
+            fp.seek(vanilla.dol_offset)
+            header = fp.read(0x100)
+        if len(header) != 0x100:
+            raise ValueError("short vanilla DOL header")
+        offsets = struct.unpack_from(">18I", header, 0)
+        sizes = struct.unpack_from(">18I", header, 0x90)
+        length = max([0x100] + [off + size for off, size in zip(offsets, sizes) if size])
+        changed = dol.stat().st_size != length or _file_digest(dol) != _iso_digest(vanilla.path, vanilla.dol_offset, length)
+        print(f"  sys/main.dol: {'changed (unsupported DOL patches; not packed)' if changed else 'unchanged (not packed)'}")
+    else:
+        print("  sys/main.dol: absent; DOL changes cannot be checked (unsupported)")
+    return {"id": name, "name": project_name, "kind": "base" if any(p.lower() == "mxdt.dat" for p in mod.files) else "misc",
+            "source": "nucleus", "description": "Built with SSBM Nucleus - https://ssbmnucleus.net",
+            "project_name": project_name, "fighters": counts["fighters"], "stages": counts["stages"]}
+
+
 def _human(n):
     return f"{n / (1 << 20):,.1f} MB"
 
@@ -100,19 +170,20 @@ def _human(n):
 def classify(vanilla, mod, exclude):
     """-> (new, modified, same, skipped); each a list of (path, offset, size)."""
     new, modified, same, skipped = [], [], [], []
+    base_files = {path.lower(): entry for path, entry in vanilla.files.items()}
     for path in sorted(mod.files):
         off, size = mod.files[path]
         if any(fnmatch.fnmatch(path.lower(), p.lower()) for p in exclude):
             skipped.append((path, off, size))
             continue
-        base = vanilla.files.get(path)
+        base = base_files.get(path.lower())
         if base is None:
             new.append((path, off, size))
             continue
         voff, vsize = base
         if vsize != size:
             modified.append((path, off, size))
-        elif _iso_digest(mod.path, off, size) != _iso_digest(vanilla.path, voff, vsize):
+        elif _digest(mod, off, size) != _iso_digest(vanilla.path, voff, vsize):
             modified.append((path, off, size))
         else:
             same.append((path, off, size))
@@ -124,7 +195,7 @@ def main():
         description=__doc__.splitlines()[0],
         formatter_class=argparse.RawDescriptionHelpFormatter, epilog=__doc__)
     ap.add_argument("--vanilla", required=True, help="your clean retail Melee ISO")
-    ap.add_argument("--mod", required=True, help="your mod disc (Akaneia, ACE, ...)")
+    ap.add_argument("--mod", required=True, help="your mod ISO, Nucleus project directory, or extracted files/ root")
     ap.add_argument("--name", required=True,
                     help="the mod folder's name; mods apply in name order, a later one wins")
     ap.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -142,15 +213,18 @@ def main():
     args = ap.parse_args()
 
     t0 = time.time()
-    vanilla, mod = Gcm(args.vanilla), Gcm(args.mod)
+    vanilla = Gcm(args.vanilla)
+    mod = Folder(args.mod) if os.path.isdir(args.mod) else Gcm(args.mod)
     print(f"vanilla  {args.vanilla}  ({len(vanilla.files)} files)")
     print(f"mod      {args.mod}  ({len(mod.files)} files)")
     print("scanning (every same-size pair is hashed on both discs) ...")
 
     new, modified, same, skipped = classify(vanilla, mod, args.exclude)
+    metadata = nucleus_metadata(mod, vanilla, args.name, new, modified) if isinstance(mod, Folder) else None
     if args.only:
         def keep(e):
             return any(fnmatch.fnmatch(e[0].lower(), p.lower()) for p in args.only)
+        skipped.extend(e for e in new + modified if not keep(e))
         new, modified = [e for e in new if keep(e)], [e for e in modified if keep(e)]
 
     nb = sum(e[2] for e in new)
@@ -160,7 +234,7 @@ def main():
     print(f"  same      {len(same):>5} files  (not packed)")
     if skipped:
         print(f"  excluded  {len(skipped):>5} files")
-    gone = sorted(set(vanilla.files) - set(mod.files))
+    gone = sorted(set(p.lower() for p in vanilla.files) - set(p.lower() for p in mod.files))
     if gone:
         # The overlay adds and overrides but cannot REMOVE, so anything the mod disc dropped still
         # answers from vanilla. Nothing in Melee's data is known to need a deletion; say so anyway.
@@ -193,19 +267,20 @@ def main():
     for path, off, size in new + modified:
         dst = os.path.join(out, *path.split("/"))
         prev = old.get(path)
+        source_hash = _digest(mod, off, size)
         on_disk = os.path.isfile(dst) and os.path.getsize(dst) == size
-        if on_disk and prev and prev.get("size") == size and not args.recheck:
+        if on_disk and prev and prev.get("size") == size and prev.get("sha256") == source_hash and not args.recheck:
             want[path] = prev
             kept += 1
             continue
         if on_disk:
             # No manifest entry, or --recheck: trust the bytes, not the record.
             have = _file_digest(dst)
-            if have == _iso_digest(mod.path, off, size):
+            if have == source_hash:
                 want[path] = {"size": size, "sha256": have}
                 kept += 1
                 continue
-        want[path] = {"size": size, "sha256": _extract(mod.path, off, size, dst)}
+        want[path] = {"size": size, "sha256": _copy(mod, off, size, dst)}
         copied += 1
         copied_bytes += size
         if copied % 50 == 0:
@@ -232,6 +307,10 @@ def main():
                    "mod": os.path.basename(args.mod),
                    "new": len(new), "modified": len(modified),
                    "files": want}, fp, indent=1, sort_keys=True)
+
+    if metadata:
+        with open(os.path.join(out, "mod.json"), "w", encoding="utf-8") as fp:
+            json.dump(metadata, fp, indent=2, ensure_ascii=False)
 
     print(f"{len(want)} files, {_human(sum(v['size'] for v in want.values()))} -> {out}")
     print(f"  copied {copied} ({_human(copied_bytes)}), already present {kept}, pruned {removed}, "

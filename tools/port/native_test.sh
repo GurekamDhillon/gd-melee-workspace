@@ -19,6 +19,8 @@ roster-registry)
     sources=(pc/tests/roster_registry_test.c) ;;
 skins-core)
     sources=(pc/tests/skins_core_test.c) ;;
+nucleus-core)
+    sources=(pc/tests/nucleus_core_test.c) ;;
 slippi-pad)
     sources=(pc/tests/slippi_pad_test.c pc/platform/gw_slippi_pad.c) ;;
 slippi-fixture)
@@ -129,6 +131,8 @@ atlas-hud-parts)
     sources=(pc/tests/atlas_hud_parts_test.c pc/platform/gw_ui_hud_parts.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_val.c) ;;
 atlas-mods)
     sources=(pc/tests/atlas_mods_test.c pc/platform/gw_ui_mods.c pc/platform/gw_ui_render.c pc/platform/gw_ui_room.c pc/platform/gw_ui_online_parts.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c) ;;
+atlas-nucleus)
+    sources=(pc/tests/atlas_nucleus_test.c pc/platform/gw_ui_mods.c pc/platform/gw_ui_render.c pc/platform/gw_ui_room.c pc/platform/gw_ui_online_parts.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c pc/platform/gw_ui_screen.c pc/platform/gw_ui_val.c pc/platform/gw_ui_focus.c pc/platform/gw_ui_input.c pc/platform/gw_ui_stack.c) ;;
 atlas-lint)
     sources=(pc/tests/atlas_lint_test.c pc/platform/gw_ui_parts.c pc/platform/gw_ui_layout.c) ;;
 atlas-online-parts)
@@ -143,7 +147,7 @@ atlas-models)
     sources=(pc/tests/atlas_models_test.c pc/platform/gw_ui_data_models.c pc/platform/gw_ui_data.c pc/platform/gw_ui_retailtext.c) ;;
 atlas-results)
     sources=(pc/tests/atlas_results_test.c pc/platform/gw_ui_results.c pc/platform/gw_ui_data.c) ;;
-*) gw_die "unknown native test: $test_name (skins-core, slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, geno-lua, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-tiles, atlas-registry, atlas-policy, atlas-retail, atlas-hud, atlas-binding, atlas-style, atlas-profile, atlas-css, atlas-select-render, atlas-sss, atlas-select-adapter, atlas-items, atlas-walker, atlas-settings-host, atlas-settings, atlas-erase, atlas-remap, atlas-lint, atlas-online-parts, atlas-room, atlas-room-host, atlas-retailtext, atlas-data, atlas-models, atlas-results, atlas-data-host, atlas-mods, atlas-mods-door, atlas-hud-parts, atlas-retailtext, atlas-data, atlas-models, atlas-results, atlas-data-host)" ;;
+*) gw_die "unknown native test: $test_name (skins-core, nucleus-core, slippi-pad, slippi-fixture, slippi-rb, slippi-mode, slippi-wire, slippi-peer, slippi-match, window-drag, script-policy, script-budget, arena-spawn, view-canvas, profiler-core, pipeline-warm, geno-lua, atlas-tokens, atlas-layout, atlas-focus, atlas-input, atlas-screen, atlas-stack, atlas-parts, atlas-render, atlas-tiles, atlas-registry, atlas-policy, atlas-retail, atlas-hud, atlas-binding, atlas-style, atlas-profile, atlas-css, atlas-select-render, atlas-sss, atlas-select-adapter, atlas-items, atlas-walker, atlas-settings-host, atlas-settings, atlas-erase, atlas-remap, atlas-lint, atlas-online-parts, atlas-room, atlas-room-host, atlas-retailtext, atlas-data, atlas-models, atlas-results, atlas-data-host, atlas-mods, atlas-nucleus, atlas-mods-door, atlas-hud-parts, atlas-retailtext, atlas-data, atlas-models, atlas-results, atlas-data-host)" ;;
 esac
 
 if [ "$uses_enet" = 1 ]; then
@@ -192,6 +196,8 @@ if [ "$test_name" = profiler-core ]; then
 elif [ "$test_name" = engine-data ]; then
     fixture_root="$(mktemp -d "$test_root/engine-data.XXXXXX")"
     "$test_exe" "$fixture_root"
+elif [[ "$test_name" == nucleus-* ]]; then
+    ( cd "$test_root" && "$test_exe" )
 elif [[ "$test_name" == atlas-* ]]; then
     # the atlas tests read files by game-repo-relative path (the Envoy manifest)
     ( cd "$GW_MELEE" && "$test_exe" )
