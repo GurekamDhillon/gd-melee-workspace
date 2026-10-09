@@ -1,0 +1,328 @@
+{
+  "posts": [
+    {
+      "key": "welcome",
+      "title": "WELCOME TO THE WORKSHOP",
+      "text": "The home of **GD's Melee**: native PC Melee, rollback netplay, mod support, Lua scripting and the LAB.\n\n**Play the public build**\nv0.2.2 is the latest published release, for Windows and Linux. Windows and Linux players can play each other online. Start with #rules and #downloads.\n\n**Explore development**\nLinux performance work, the map editor and a roguelite campaign are active development work. They are ahead of the public release; follow #announcements for status.\n\nFind sets in #matchmaking, ask in #help-and-setup, report bugs in #bug-reports, and share work in #clips-and-creations. Choose your interests in Channels & Roles.",
+      "buttons": [
+        {
+          "label": "#rules",
+          "url": "https://discord.com/channels/1552483229649477767/1552904414329704498"
+        },
+        {
+          "label": "#downloads",
+          "url": "https://discord.com/channels/1552483229649477767/1552904418108903465"
+        },
+        {
+          "label": "#introductions",
+          "url": "https://discord.com/channels/1552483229649477767/1552904420549722206"
+        },
+        {
+          "label": "#matchmaking",
+          "url": "https://discord.com/channels/1552483229649477767/1552904424576262246"
+        },
+        {
+          "label": "#clips-and-creations",
+          "url": "https://discord.com/channels/1552483229649477767/1552904422022189159"
+        },
+        {
+          "label": "#help-and-setup",
+          "url": "https://discord.com/channels/1552483229649477767/1552904441030643792"
+        },
+        {
+          "label": "#bug-reports",
+          "url": "https://discord.com/channels/1552483229649477767/1552904442171359266"
+        },
+        {
+          "label": "#training-and-lab",
+          "url": "https://discord.com/channels/1552483229649477767/1552904425750921226"
+        },
+        {
+          "label": "#modding-and-scripting",
+          "url": "https://discord.com/channels/1552483229649477767/1552904427243966524"
+        },
+        {
+          "label": "Development source",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/tree/agent/linux-qt-launcher"
+        },
+        {
+          "label": "Development source",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/tree/master"
+        }
+      ],
+      "channel_name": "welcome",
+      "channel_id": "1552904412626685952",
+      "message_id": "1552904464099442730",
+      "forum": false,
+      "original_digest": "cd3a7d63c8c05839353c543327de4ce3e0c91e1f79570ec0f4e476d38477194c",
+      "panels": [
+        {
+          "file": "welcome-01.png",
+          "width": 1280,
+          "height": 1030,
+          "alt": "WELCOME TO THE WORKSHOP (1/2). The home of GD's Melee: native PC Melee,\nrollback netplay, mod support, Lua scripting and\n the LAB.\n\nPlay the public build\nv0.2.2 is the latest published release, for\nWindows and Linux. Windows and Linux players\ncan play each other online. Start with #rules and\n#downloads.",
+          "page": 1
+        },
+        {
+          "file": "welcome-02.png",
+          "width": 1280,
+          "height": 1098,
+          "alt": "WELCOME TO THE WORKSHOP (2/2). Explore development\nLinux performance work, the map editor and a\nroguelite campaign are active development\nwork. They are ahead of the public release;\nfollow #announcements for status.\n\nFind sets in #matchmaking, ask in\n#help-and-setup, report bugs in #bug-reports,\nand share work in #clips-and-creations. Choose\nyour interests in Channels & Roles.",
+          "page": 2
+        }
+      ]
+    },
+    {
+      "key": "announcements",
+      "title": "PROJECT STATUS | OCTOBER 8, 2026",
+      "text": "**Public release: v0.2.2 for Windows and Linux**\nDownload it in #downloads. Windows and Linux play each other online (netplay protocol 5); every player needs 0.2.2 (0.2.1 and earlier cannot match). Since 0.1.7 the release adds fullscreen (F11 or Alt+Enter), an in-game mod browser for SSBM Nucleus, everything unlocked by default, Envoy (the roguelike mode), Turbo and steadier netplay, a native Qt launcher with a Diagnostics tab, opt-in crash report upload, and afterimages and tracers for technique. New branch work is not included just because it is pushed.\n\n**Next**\nLinux performance: on some Linux laptops the game runs below 60 fps, which also slows an online match with a Windows player. Broader Linux gameplay, audio and controller acceptance continues.\n\n**Roguelite campaign**\nDevelopment now includes branching room generation, save/resume, encounters, rewards, inventory/equipment, gene actions and loadout/HUD integration. Production room recipes remain uncertified; generated-route admission and watched gameplay checks are still pending.\n\n**Editor + scripting**\nThe map editor supports gizmos, multi-select, undo/redo and spawn editing. Lua stage/model tools and fighter effects continue to grow.\n\nSee the development links below. Report the version or branch/commit when testing.",
+      "buttons": [
+        {
+          "label": "#downloads",
+          "url": "https://discord.com/channels/1552483229649477767/1552904418108903465"
+        },
+        {
+          "label": "#help-and-setup",
+          "url": "https://discord.com/channels/1552483229649477767/1552904441030643792"
+        },
+        {
+          "label": "#bug-reports",
+          "url": "https://discord.com/channels/1552483229649477767/1552904442171359266"
+        },
+        {
+          "label": "Linux status",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/blob/agent/linux-qt-launcher/docs/LINUX_PORT_STATUS.md"
+        },
+        {
+          "label": "Campaign acceptance",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/blob/agent/linux-qt-launcher/docs/ROGUELITE-ACCEPTANCE.md"
+        },
+        {
+          "label": "Game development",
+          "url": "https://github.com/GurekamDhillon/melee/tree/agent/linux"
+        },
+        {
+          "label": "Linux status",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/blob/master/docs/LINUX_PORT_STATUS.md"
+        },
+        {
+          "label": "Campaign acceptance",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/blob/master/docs/ROGUELITE-ACCEPTANCE.md"
+        },
+        {
+          "label": "Game development",
+          "url": "https://github.com/GurekamDhillon/melee/tree/pc-port"
+        }
+      ],
+      "channel_name": "announcements",
+      "channel_id": "1552904416305225770",
+      "message_id": "1552904474950111353",
+      "forum": false,
+      "original_digest": "3e4885504883d1da09790352b4a3fb0514ffab201636e558a325a995c91901be",
+      "panels": [
+        {
+          "file": "announcements-01.png",
+          "width": 1280,
+          "height": 1326,
+          "alt": "PROJECT STATUS | OCTOBER 8, 2026 (1/4). Public release: v0.2.2 for Windows and Linux\nDownload it in #downloads. Windows and Linux\nplay each other online (netplay protocol 5);\nevery player needs 0.2.2 (0.2.1 and earlier\ncannot match). Since 0.1.7 the release adds\nfullscreen (F11 or Alt+Enter), an in-game mod\nbrowser for SSBM Nucleus, everything unlocked\nby default, Envoy (the roguelike mode), Turbo\nand steadier netplay, a native Qt launcher with a\nDiagnostics tab, opt-in crash report upload, and\nafterimages and tracers for technique. New\nbranch work is not included just because it is\npushed.",
+          "page": 1
+        },
+        {
+          "file": "announcements-02.png",
+          "width": 1280,
+          "height": 850,
+          "alt": "PROJECT STATUS | OCTOBER 8, 2026 (2/4). Next\nLinux performance: on some Linux laptops the\ngame runs below 60 fps, which also slows an\nonline match with a Windows player. Broader\nLinux gameplay, audio and controller\nacceptance continues.",
+          "page": 2
+        },
+        {
+          "file": "announcements-03.png",
+          "width": 1280,
+          "height": 986,
+          "alt": "PROJECT STATUS | OCTOBER 8, 2026 (3/4). Roguelite campaign\nDevelopment now includes branching room\ngeneration, save/resume, encounters, rewards,\ninventory/equipment, gene actions and\nloadout/HUD integration. Production room\nrecipes remain uncertified; generated-route\nadmission and watched gameplay checks are still\n pending.",
+          "page": 3
+        },
+        {
+          "file": "announcements-04.png",
+          "width": 1280,
+          "height": 894,
+          "alt": "PROJECT STATUS | OCTOBER 8, 2026 (4/4). Editor + scripting\nThe map editor supports gizmos, multi-select,\nundo/redo and spawn editing. Lua stage/model\ntools and fighter effects continue to grow.\n\nSee the development links below. Report the\nversion or branch/commit when testing.",
+          "page": 4
+        }
+      ]
+    },
+    {
+      "key": "downloads",
+      "title": "GET GD'S MELEE",
+      "text": "**Latest public release: v0.2.2 (Windows + Linux)**\nDownload from the official release Assets. Add your own Melee NTSC 1.02 disc image. Game data is not included.\n\n**Windows:** GDMelee-0.2.2-win64.zip. Extract it, run GD Melee.exe, pick your disc image and press PLAY.\n**Linux:** GDMelee-0.2.2-linux-x86_64.tar.xz. Extract it to a new folder and run ./GD-Melee from the melee-linux-i686 folder. If it stops with \"No supported adapters\", try MELEE_BACKEND=opengles ./GD-Melee.\n\n**Online**\nUse VERSUS > ONLINE. Windows and Linux 0.2.2 play each other (netplay protocol 5). Every player needs 0.2.2; 0.2.1 and earlier cannot match it. Match your opponent's disc/mod content.\n\n**Known issues**\nSome Linux laptops run below 60 fps, which also slows online matches with Windows players.\n\nFor help, include version or commit, operating system, GPU, controller and exact error in #help-and-setup.",
+      "buttons": [
+        {
+          "label": "#help-and-setup",
+          "url": "https://discord.com/channels/1552483229649477767/1552904441030643792"
+        },
+        {
+          "label": "Windows v0.1.7",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/releases/tag/v0.1.7"
+        },
+        {
+          "label": "Development source",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/tree/agent/linux-qt-launcher"
+        },
+        {
+          "label": "Release v0.2.2",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/releases/tag/v0.2.2"
+        },
+        {
+          "label": "Development source",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/tree/master"
+        }
+      ],
+      "channel_name": "downloads",
+      "channel_id": "1552904418108903465",
+      "message_id": "1552904482822688860",
+      "forum": false,
+      "original_digest": "857ccb365a21a9e43b10eb73942c6a73c961bfc9bfb4b435c1c5095aef964547",
+      "panels": [
+        {
+          "file": "downloads-01.png",
+          "width": 1280,
+          "height": 1302,
+          "alt": "GET GD'S MELEE (1/2). Latest public release: v0.2.2 (Windows + Linux)\nDownload from the official release Assets. Add\nyour own Melee NTSC 1.02 disc image. Game\ndata is not included.\n\nWindows: GDMelee-0.2.2-win64.zip. Extract it,\nrun GD Melee.exe, pick your disc image and press\n PLAY.\nLinux: GDMelee-0.2.2-linux-x86_64.tar.xz.\nExtract it to a new folder and run ./GD-Melee\nfrom the melee-linux-i686 folder. If it stops with\n\"No supported adapters\", try\nMELEE_BACKEND=opengles ./GD-Melee.",
+          "page": 1
+        },
+        {
+          "file": "downloads-02.png",
+          "width": 1280,
+          "height": 1346,
+          "alt": "GET GD'S MELEE (2/2). Online\nUse VERSUS > ONLINE. Windows and Linux 0.2.2\nplay each other (netplay protocol 5). Every\nplayer needs 0.2.2; 0.2.1 and earlier cannot\nmatch it. Match your opponent's disc/mod\ncontent.\n\nKnown issues\nSome Linux laptops run below 60 fps, which also\nslows online matches with Windows players.\n\nFor help, include version or commit, operating\nsystem, GPU, controller and exact error in\n#help-and-setup.",
+          "page": 2
+        }
+      ]
+    },
+    {
+      "key": "showcase",
+      "title": "MADE IN THE WORKSHOP",
+      "text": "Share clips, combos, original art, mods, scripts, map-editor layouts and campaign experiments.\n\nInclude your build or branch/commit, content and what the clip demonstrates. Label development footage, certification fixtures and prototypes clearly. A development clip does not mean the feature is in the public release.\n\nCredit collaborators and link source when possible. Share original work and patches; game discs and extracted game assets stay off the server.",
+      "buttons": [],
+      "channel_name": "clips-and-creations",
+      "channel_id": "1552904422022189159",
+      "message_id": "1552904491278274642",
+      "forum": false,
+      "original_digest": "e4d3cba4f6383e3aef7e77d90f48f1d1a38d185bbaeb6dfb5377b447b2ca9537",
+      "panels": [
+        {
+          "file": "showcase-01.png",
+          "width": 1280,
+          "height": 1278,
+          "alt": "MADE IN THE WORKSHOP (1/1). Share clips, combos, original art, mods, scripts,\nmap-editor layouts and campaign experiments.\n\nInclude your build or branch/commit, content\nand what the clip demonstrates. Label\ndevelopment footage, certification fixtures and\nprototypes clearly. A development clip does not\nmean the feature is in the public release.\n\nCredit collaborators and link source when\npossible. Share original work and patches; game\ndiscs and extracted game assets stay off the\nserver.",
+          "page": 1
+        }
+      ]
+    },
+    {
+      "key": "modding",
+      "title": "BUILD SOMETHING",
+      "text": "**Lua, kit UI and map editing**\nUse gd.* / gd.kit for gameplay scripts and UI, stage collision/models, camera tools and the LAB. The map editor has gizmos, multi-select, undo/redo, saved layouts and spawn editing.\n\n**Fighters and effects**\nm-ex compatibility and Ultimate fighter conversion/effect tooling continue in development. Installed content and visual fidelity need their own verification.\n\n**Campaign development**\nThe roguelite modules cover routes, persistence, encounters, rewards, inventory, gene actions and presentation. Room certification and gameplay acceptance remain pending; do not treat a planned feature or passing module test as a finished campaign.\n\nThe current development links are below. Include your branch/commit and a small reproduction when sharing code or reporting a problem. Share original work, source and patches with credits; no disc-derived assets.",
+      "buttons": [
+        {
+          "label": "Workspace development",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/tree/agent/linux-qt-launcher"
+        },
+        {
+          "label": "Game development",
+          "url": "https://github.com/GurekamDhillon/melee/tree/agent/linux"
+        },
+        {
+          "label": "Scripting guide",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/blob/master/docs/scripting.md"
+        },
+        {
+          "label": "Workspace development",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/tree/master"
+        },
+        {
+          "label": "Game development",
+          "url": "https://github.com/GurekamDhillon/melee/tree/pc-port"
+        }
+      ],
+      "channel_name": "modding-and-scripting",
+      "channel_id": "1552904427243966524",
+      "message_id": "1552904509552853045",
+      "forum": false,
+      "original_digest": "7357c47dfebe16ed9763da949187c7384645696e4b4f7279fa48477e8cb171c4",
+      "panels": [
+        {
+          "file": "modding-01.png",
+          "width": 1280,
+          "height": 1166,
+          "alt": "BUILD SOMETHING (1/2). Lua, kit UI and map editing\nUse gd.* / gd.kit for gameplay scripts and UI,\nstage collision/models, camera tools and the\nLAB. The map editor has gizmos, multi-select,\nundo/redo, saved layouts and spawn editing.\n\nFighters and effects\nm-ex compatibility and Ultimate fighter\nconversion/effect tooling continue in\ndevelopment. Installed content and visual\nfidelity need their own verification.",
+          "page": 1
+        },
+        {
+          "file": "modding-02.png",
+          "width": 1280,
+          "height": 1302,
+          "alt": "BUILD SOMETHING (2/2). Campaign development\nThe roguelite modules cover routes, persistence,\n encounters, rewards, inventory, gene actions\nand presentation. Room certification and\ngameplay acceptance remain pending; do not\ntreat a planned feature or passing module test as\n a finished campaign.\n\nThe current development links are below.\nInclude your branch/commit and a small\nreproduction when sharing code or reporting a\nproblem. Share original work, source and\npatches with credits; no disc-derived assets.",
+          "page": 2
+        }
+      ]
+    },
+    {
+      "key": "help",
+      "title": "START HERE | HOW TO ASK FOR HELP",
+      "text": "Use one post per question and choose the closest tag.\n\n**Build version or branch + commit:**\n**Windows / Linux distribution:**\n**GPU / graphics driver / controller:**\n**Disc or mod pack:**\n**Launcher: release or development Qt:**\n**What I was trying to do:**\n**Exact error / behavior:**\n**What I already tried:**\n\nv0.2.2 (Windows and Linux) is the public release. Campaign branch testing is development work; include the commit and whether you built from source.\n\nAttach relevant screenshots and sanitized logs. Never attach game discs or credentials. When fixed, add Solved and explain the solution.",
+      "buttons": [],
+      "channel_name": "help-and-setup",
+      "channel_id": "1552904519929700353",
+      "message_id": "1552904519929700353",
+      "forum": true,
+      "original_digest": "07a2469b2397751835c50a1e24abee1707f216b276b7ff84900b2dc552c9449a",
+      "panels": [
+        {
+          "file": "help-01.png",
+          "width": 1280,
+          "height": 1166,
+          "alt": "START HERE | HOW TO ASK FOR HELP (1/2). Use one post per question and choose the closest\n tag.\n\nBuild version or branch + commit:\nWindows / Linux distribution:\nGPU / graphics driver / controller:\nDisc or mod pack:\nLauncher: release or development Qt:\nWhat I was trying to do:\nExact error / behavior:\nWhat I already tried:",
+          "page": 1
+        },
+        {
+          "file": "help-02.png",
+          "width": 1280,
+          "height": 962,
+          "alt": "START HERE | HOW TO ASK FOR HELP (2/2). v0.2.2 (Windows and Linux) is the public release.\nCampaign branch testing is development work;\ninclude the commit and whether you built from\nsource.\n\nAttach relevant screenshots and sanitized logs.\nNever attach game discs or credentials. When\nfixed, add Solved and explain the solution.",
+          "page": 2
+        }
+      ]
+    },
+    {
+      "key": "bugs",
+      "title": "START HERE | BUG REPORT TEMPLATE",
+      "text": "Search existing reports first. One issue per post.\n\n**Build version or branch + commit:**\n**Windows / Linux distribution:**\n**GPU / driver / controller:**\n**Disc / mods / launcher:**\n**Steps to reproduce:**\n1.\n2.\n3.\n\n**Expected result:**\n**Actual result and frequency:**\n**Log / crash report:**\n\nFor campaign bugs, include seed, room, fighter, save/resume state and whether you used a certification fixture or normal play.\n\nSanitize personal paths and secrets. No disc images or extracted game data. Needs info, Confirmed and Fixed track triage; development test results do not establish release compatibility.",
+      "buttons": [],
+      "channel_name": "bug-reports",
+      "channel_id": "1552904526564954143",
+      "message_id": "1552904526564954143",
+      "forum": true,
+      "original_digest": "d3bfc565c3f8c25c21d720bde7b1315dff288d82d8fd67d243b66e4e529f5a51",
+      "panels": [
+        {
+          "file": "bugs-01.png",
+          "width": 1280,
+          "height": 1098,
+          "alt": "START HERE | BUG REPORT TEMPLATE (1/2). Search existing reports first. One issue per post.\n\nBuild version or branch + commit:\nWindows / Linux distribution:\nGPU / driver / controller:\nDisc / mods / launcher:\nSteps to reproduce:\n1.\n2.\n3.",
+          "page": 1
+        },
+        {
+          "file": "bugs-02.png",
+          "width": 1280,
+          "height": 1278,
+          "alt": "START HERE | BUG REPORT TEMPLATE (2/2). Expected result:\nActual result and frequency:\nLog / crash report:\n\nFor campaign bugs, include seed, room, fighter,\nsave/resume state and whether you used a\ncertification fixture or normal play.\n\nSanitize personal paths and secrets. No disc\nimages or extracted game data. Needs info,\nConfirmed and Fixed track triage; development\ntest results do not establish release\ncompatibility.",
+          "page": 2
+        }
+      ]
+    }
+  ],
+  "panel_count": 15,
+  "logical_width": 640,
+  "body_font_size": 26,
+  "scale": 2
+}
