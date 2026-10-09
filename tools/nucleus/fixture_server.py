@@ -11,7 +11,9 @@ render) or the file named by --dat (use a costume you own, kept out of git). It 
     GET /api/public/v1/mods?limit=&cursor=&updated_since=      keyset pages {data, next_cursor, total}; unknown or repeated params -> 400
     GET /api/public/v1/mods/removed?since=&cursor=&limit=      {data:[{id, removed_at}], next_cursor}
     GET /api/public/v1/mods/{id}/download[?file=]              302 to /media/files/..., counted in /stats
-    GET /media/...                                             the generated images and DATs
+    GET /api/public/v1/mods/{id}                               {data: mod}
+    GET /media/...                                             the generated images (portrait, stock icon, screenshots) and DATs; a *.webp thumbnail
+                                                               address is listed but answers 404 (the game decodes no WebP and must never ask: a test reads /stats)
     GET /stats                                                 {requests, downloads, by_path, api} as JSON (what a test asserts on)
 
 --fail-first N answers the first N API requests with 503; --retry-after S answers the 2nd API request with 429 and Retry-After: S.
@@ -100,7 +102,9 @@ def make_mods(count):
                      "author": f"Tester {i % 5}", "type": kind, "stage": None, "tags": ["Character Costume" if kind == "costume" else kind, name],
                      "created_at": f"2026-{month:02d}-{1 + i % 27:02d}T10:00:00.000000Z", "updated_at": f"2026-{month:02d}-{1 + i % 27:02d}T12:{i % 60:02d}:00.000000Z",
                      "download_count": (i * 37) % 500, "like_count": (i * 11) % 90, "page_url": f"https://ssbmnucleus.net/post/{mid}/synthetic-{i}",
-                     "thumbnail_url": None, "screenshots": [], "download_url": f"http://127.0.0.1:{OPTS.port}/api/public/v1/mods/{mid}/download",
+                     "thumbnail_url": None if kind == "costume" else f"http://127.0.0.1:{OPTS.port}/media/posts/{mid}/screenshot_0__thumb.webp",
+                     "screenshots": [] if kind == "costume" or i % 4 == 3 else [f"http://127.0.0.1:{OPTS.port}/media/posts/{mid}/screenshot_{k}.png" for k in range(1 + i % 4)],
+                     "download_url": f"http://127.0.0.1:{OPTS.port}/api/public/v1/mods/{mid}/download",
                      "zip_url": None, "files": files})
     # zip-only posts, like the real "Luffy Falco (Animelee + Vanilla)": every file's download_url / file_url is null, the files live in the mod's zip
     for mid, title, entries, has_zip in ((1990, "Zip Falco (Animelee + Vanilla)", ["Zip Falco/Animelee/PlFcBu.dat", "Zip Falco/Vanilla/PlFcBu.dat"], True),
@@ -185,6 +189,11 @@ class H(BaseHTTPRequestHandler):
         if path == "/mods/removed":
             return self.send(200, {"data": [{"id": r, "removed_at": "2026-09-01T00:00:00Z"} for r in OPTS.removed], "next_cursor": None})
         parts = path.strip("/").split("/")
+        if len(parts) == 2 and parts[0] == "mods" and parts[1].isdigit():
+            for m in MODS:
+                if m["id"] == int(parts[1]):
+                    return self.send(200, {"data": dict(m, archive_files=[])})
+            return self.err(404, "no such mod")
         if len(parts) == 3 and parts[0] == "mods" and parts[2] == "download":
             STATE["downloads"] += 1
             fid = q.get("file", [""])[0]
@@ -219,6 +228,8 @@ class H(BaseHTTPRequestHandler):
             return self.send(200, art(int(name.split("_")[0]), 136, 188), "image/png")
         if name.endswith("_stock.png"):
             return self.send(200, art(int(name.split("_")[0]), 24, 24), "image/png")
+        if name.startswith("screenshot_") and name.endswith(".png"):
+            return self.send(200, art(int(path.split("/")[-2]) + int(name[11:-4]), 640, 360), "image/png")
         if path.startswith("/media/files/"):
             parts = path.split("/")
             mid, fid = int(parts[3]), parts[4][:-4]
