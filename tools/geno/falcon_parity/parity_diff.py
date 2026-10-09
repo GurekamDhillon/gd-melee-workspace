@@ -28,6 +28,9 @@ def parse(path):
 
 def side(text):
     """one fighter's field text -> dict"""
+    rng = None
+    if text.startswith("R"):
+        rng, text = text.split(" ", 1)
     m = re.match(r"(.*?) HB\[(.*?)\] H([0-9a-f]{8})(.*)$", text)
     head, hb, hh, tail = m.groups()
     toks = head.split(" ")
@@ -35,6 +38,8 @@ def side(text):
     d["hitboxes"] = hb
     d["hurt_hash"] = hh
     d["detail"] = tail
+    if rng is not None:
+        d["rng"] = rng[1:]
     return d
 
 

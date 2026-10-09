@@ -19,7 +19,7 @@ cfg="$out/$run.lua"
   printf '}\n'
   cat "$HERE/falcon_parity.lua"
 } > "$cfg"
-export MELEE_LOG=all   # the log guard drops a prefix after 400 lines per 10 s; a trace needs every line
+export MELEE_LOG=all,-render,-gobj,-heap,-dvd,-mex,-watchdog,-tex,-audio,-snap,-frontend   # all lifts the per-prefix flood limit (400 lines per 10 s) that would drop trace lines
 scene="mode=lab;p1=$tok/hu;p2=mario/hu;stage=fd"
 bash "$HERE/../moves_check/run_scene.sh" "$run" "$scene" "$cfg" "${PARITY_TIMEOUT:-1500}" 2>&1 | tail -3
 log="$GW_BUILD_ROOT/runs/$run/melee-pc.log"

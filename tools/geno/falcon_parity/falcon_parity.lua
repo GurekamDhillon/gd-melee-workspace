@@ -3,6 +3,7 @@
 -- the same saved state; tools/geno/falcon_parity/parity_diff.py compares the two logs line by line.
 --
 -- One log line per logic frame per scenario:  PF <scenario> <n> | <P1 fields> | <P2 fields>
+-- The line starts with R<hex>, the game's random seed (gd.rng), so the first frame two runs part ways in RNG draws shows at once.
 -- Fields (floats as %.9g, so a float32 reads back exactly): motion id, action frame, animation frame, x y vx vy ground_vel, facing,
 -- percent, hitlag, hitstun, kb vx vy, shield, jumps used, intangible/invincible, then the live hitboxes of the fighter
 -- (bone damage angle kbg bkb wbk size x y z) and a hash of all hurtbox capsules (pose and body parity).
@@ -295,7 +296,7 @@ gd.run(function()
           for _ = 1, frames do
             gd.wait(1); n = n + 1
             local a, b = gd.player(1), gd.player(2)
-            local line = fields(a, 1) .. ' | ' .. fields(b, 2)
+            local line = string.format('R%08x ', gd.rng()) .. fields(a, 1) .. ' | ' .. fields(b, 2)
             h = fnv(h, line)
             gd.log(string.format('PF %s %d | %s', name, n, line))
             if a.motion_name ~= last then seen[#seen + 1] = a.motion_name; last = a.motion_name end
