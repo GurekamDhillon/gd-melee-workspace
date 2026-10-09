@@ -33,7 +33,7 @@ Navigation: [package anatomy](#what-a-fighter-package-contains), [moves](#a-move
 `define.template` (`"mario"` default, `"captain"`; `base: "none"`, geno 10) makes a retail fighter's native code and tables the layer under a package. The reference is Falcon:
 `python ports/ir/tools/retail_define.py captain --disc-dir <PlCa*.dat, PlCo.dat> --out _build/.../geno-falcon` writes a define that owns his six costume models, the animation bank, `plan.json`
 (318 rows with clip, flags and blend bytes, 63 joints, parts table, 11 hurtboxes, joint fields), all 76 named attributes, the 35 special-attribute words and 313 script overlays, and that
-`tools/geno/falcon_parity` shows identical to retail in 296 scenarios (game `docs/geno.md` 22.10 has the numbers and the list of what is still the template's). Read it as the answer to
+`tools/geno/falcon_parity` shows identical to retail in 310 scenarios (game `docs/geno.md` 22.10 has the numbers and the list of what is still the template's). Read it as the answer to
 "what does a complete fighter look like in this format": every row of the table has a clip, every script row an overlay, and `Subroutine`/`Goto` in an overlay name a word index of the same overlay.
 For a new character the template stays `"mario"`; a template other than Mario or Falcon needs the engine side first (`GN_TMPL_*` in `geno_define_registry.inc`, `GenoDefine_SelfCount`/`NativeSpecific` in `geno_define_data.inc`).
 
