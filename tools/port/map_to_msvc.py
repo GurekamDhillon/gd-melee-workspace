@@ -111,7 +111,8 @@ def emit(map_path, elf_path):
 
     def row(name, typ, addr):
         obj = placed.get((addr, name), object_for(section_ranges, starts, addr))
-        if name.startswith("gw_") and not obj:
+        # a function-local static ("gw_nd_classic_plan.pass_of") has no input section of its own; only real gw_ symbols must map
+        if name.startswith("gw_") and "." not in name and not obj:
             raise ValueError(f"no originating object for {name} at {addr:#x}")
         # "f" marks a function for audit_bridge_abi.py; data has no letter (MAP_RE allows both).
         letter = {"T": "f", "t": "f", "W": "f", "w": "f"}.get(typ, "d" if typ.isupper() else "")
