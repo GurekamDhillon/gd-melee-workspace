@@ -7,7 +7,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 
 | Key | Type / meaning | Engine default | Limits / reference |
 |---|---|---|---|
-| geno | integer: Format version | 10 | minimum=1; maximum=10; geno.md §7; melee/pc/platform/geno_registry.c |
+| geno | integer: Format version | 11 | minimum=1; maximum=11; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters | array: Ordered entries | absent | maxItems=65535; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].attach | string: Vanilla name/alias or existing fighter .dat file |  | maxLength=31; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].define | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
@@ -108,6 +108,16 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].jumps | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].jumps.max | integer: Total jumps including ground jump | disc value | minimum=1; maximum=250; geno.md §10; melee/pc/platform/geno_registry.c |
 | fighters[].jumps.air_vy | array: Ordered entries | absent | maxItems=16; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].toon | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].toon.bands | number: Light bands | 3 | minimum=2; maximum=8; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].toon.shadow | number: Dark band level | 0.58 | minimum=0; maximum=1; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].toon.rim | number: Rim light strength | 0.18 | minimum=0; maximum=1; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].toon.outline | number: Silhouette edge width (view-angle) | 0.28 | minimum=0; maximum=1; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].toon.outline_dark | number: Silhouette edge darkness | 0.75 | minimum=0; maximum=1; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].toon.softness | number: Band edge softness | 0.04 | minimum=0; maximum=0.5; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].toon.unlit | boolean: Draw the model unlit so the toon ramp is its only lighting | true | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].toon.light | array: Ordered entries | absent | maxItems=3; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].toon.shadow_tint | array: Ordered entries | absent | maxItems=3; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].hooks | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].hooks.on_init | array: Ordered entries | absent | maxItems=8; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].hooks.on_frame | array: Ordered entries | absent | maxItems=8; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
@@ -404,12 +414,46 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].fighter.costumes[].matanim | string: Material-animation symbol |  | ; geno.md §22.4; melee/pc/platform/geno_registry.c |
 | fighters[].fighter.costumes[].name | string: Costume name the select shows (printable ASCII, 1..23 characters) |  | maxLength=23; pattern=^[ -~]+$; geno.md §22.6; melee/pc/platform/geno_registry.c |
 | fighters[].fighter.costumes[].team | string: The team battle colour this costume is (the first one declared wins; undeclared: red is costume 0, blue 1, green 2) |  | enum=['red', 'blue', 'green']; geno.md §22.6; melee/pc/platform/geno_registry.c |
-| fighters[].fighter.rows | array: Ordered entries | absent | maxItems=128; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].fighter.rows | array: Ordered entries | absent | maxItems=448; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].presentation | object: A define's own character select icon (64x56), portrait (136x188), stock icon (rgb5a3 or rgba8, also the results card picture), one per costume or one for all (geno: 9), and its results emblem (no palette; the faint shape behind the rank numeral) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].presentation.icon | string: A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name |  | maxLength=63; pattern=^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][xX][tT][eE][xX]$; geno.md §22.6; melee/pc/platform/geno_registry.c |
 | fighters[].presentation.portrait | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].presentation.stock | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].presentation.emblem | string: A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name |  | maxLength=63; pattern=^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][xX][tT][eE][xX]$; geno.md §22.6; melee/pc/platform/geno_registry.c |
+| fighters[].combo | object: geno 11: the combo graph (routes: cancel and link windows into next moves); define only | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].combo.buffer | integer: Default input buffer of every route | 5 | minimum=0; maximum=30; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.max_links | integer: Most links one string may take | 5 | minimum=1; maximum=32; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.ki | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].combo.ki.max | number: Meter maximum | 100 | minimum=0; maximum=1000; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.ki.start | number: Meter at spawn and each respawn | 0 | minimum=0; maximum=1000; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.ki.on_hit | number: Gain per hit landed (hitbox or article) | 0 | minimum=0; maximum=1000; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.ki.on_taken | number: Gain per hit taken | 0 | minimum=0; maximum=1000; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.ki.on_block | number: Gain when a move first hits a shield | 0 | minimum=0; maximum=1000; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes | array: Ordered entries | absent | maxItems=128; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].combo.routes[].name | string: Route name (logs, the LAB, the combo tests) | routeN | maxLength=31; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].from | choice: Source move(s): geno:<state>, motion:N, a Melee move name, or * (any move, only while a string runs) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].combo.routes[].to | choice: Target: geno:<state>, a move name, special_n/s/hi/lw (the bound special, air version in the air), jump, nair..dair, auto | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].combo.routes[].input | string: Input class | required | enum=['light', 'heavy', 'special', 'jump', 'grab', 'shield', 'none']; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].dir | string: Stick direction at the press, relative to the facing (C-stick for a C-stick heavy) | any | enum=['any', 'neutral', 'forward', 'back', 'up', 'down', 'side']; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].on | string: Contact condition of the source move so far | hit | enum=['any', 'hit', 'whiff', 'block', 'contact']; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].where | string: Ground or air | any | enum=['any', 'ground', 'air']; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].window | array: Ordered entries | absent | maxItems=2; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].combo.routes[].buffer | integer: Frames a press stays usable (hitlag frames do not age it) | combo.buffer | minimum=0; maximum=30; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].hold | integer: Frames the button must be held (a charge) | 0 | minimum=0; maximum=600; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].priority | integer: Higher is tested first; equal keeps file order | 0 | minimum=-1000; maximum=1000; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].ki_cost | number: Meter spent | 0 | minimum=0; maximum=1000; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].ki_min | number: Meter needed | 0 | minimum=0; maximum=1000; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].depth | integer: Taken only while the string has fewer links than this | combo.max_links | minimum=1; maximum=32; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].once | boolean: At most once per string | False | ; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].starts | boolean: Starts a new string (links reset first) | False | ; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].when | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].combo.routes[].when.slot | string: A slot of lua.state | required | ; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].when.min | integer: The slot's word must be at least this | 1 | ; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.routes[].source | string: Provenance (XV2 BCM node, BAC cancel window, design note); not read by the engine but in the content id |  | ; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.strings | array: Ordered entries | absent | maxItems=64; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].combo.strings[].name | string: String name | required | ; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
+| fighters[].combo.strings[].steps | array: Ordered entries | absent | maxItems=32; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].combo.strings[].intent | string: Design / source intent |  | ; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
 | fighters[].ai | object: The CPU plays this define as that retail fighter (its recovery, special-move choices and per-kind AI tables) (geno: 10) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].ai.like | string: A retail fighter (mario, fox, captain, donkey, kirby, koopa, link, seak, ness, peach, popo, pikachu, samus, yoshi, purin, mewtwo, luigi, mars, zelda, clink, drmario, falco, pichu, gamewatch, ganon, emblem, or their aliases) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].kirby_copy | string: What Kirby gets from inhaling the define: "none" (the default) or "retail:<fighter>" (that fighter's hat and ability) (geno: 10) | none | pattern=^(none\|retail:[a-z]+)$; geno.md §22.7; melee/pc/platform/geno_registry.c |
@@ -424,35 +468,35 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 
 | Constant | Value | Source |
 |---|---|---|
-| GENO_VARS_PER_BANK | 64 | melee/pc/geno/geno.h:49 |
-| GENO_SPECIAL_WORDS | 265 | melee/pc/geno/geno.h:139 |
-| GENO_MAX_CHECKS | 8 | melee/pc/geno/geno.h:182 |
-| GENO_CHECK_CONDS | 3 | melee/pc/geno/geno.h:183 |
-| GENO_MAX_REHIT | 4 | melee/pc/geno/geno.h:184 |
-| GENO_EV_MAX_HOOKS | 8 | melee/pc/geno/geno.h:249 |
-| GENO_MAX_ATTRS | 128 | melee/pc/geno/geno.h:253 |
-| GENO_MAX_JUMP_VY | 16 | melee/pc/geno/geno.h:254 |
-| GENO_MAX_PROFILES | 65535 | melee/pc/geno/geno.h:255 |
-| GENO_MAX_SPECIAL | 64 | melee/pc/geno/geno.h:256 |
-| GENO_MAX_ONLAND | 16 | melee/pc/geno/geno.h:257 |
-| GENO_MAX_MOTION_ANIM | 8 | melee/pc/geno/geno.h:258 |
-| GENO_MAX_OVERLAYS | 192 | melee/pc/geno/geno.h:259 |
-| GENO_POOL_WORDS | 16384 | melee/pc/geno/geno.h:260 |
-| GENO_MAX_STATES | 48 | melee/pc/geno/geno.h:271 |
-| GENO_ART_KIND_BASE | 4096 | melee/pc/geno/geno.h:356 |
-| GENO_MAX_ARTICLES | 16 | melee/pc/geno/geno.h:356 |
-| GENO_ART_PER_RANGE | 8 | melee/pc/geno/geno.h:363 |
-| GENO_ART_EXTRA_BASE | 131072 | melee/pc/geno/geno.h:368 |
-| GENO_MAX_SOUNDS | 16 | melee/pc/geno/geno.h:376 |
-| GENO_ART_HITBOXES | 4 | melee/pc/geno/geno.h:377 |
-| GENO_ART_HIT_ENTRIES | 8 | melee/pc/geno/geno.h:378 |
-| GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:380 |
-| GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:381 |
-| GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:482 |
-| JDOC_NODES | 4096 | melee/pc/platform/geno_registry.c:74 |
-| JDOC_ARENA | 65536 | melee/pc/platform/geno_registry.c:75 |
+| GENO_VARS_PER_BANK | 64 | melee/pc/geno/geno.h:50 |
+| GENO_SPECIAL_WORDS | 265 | melee/pc/geno/geno.h:140 |
+| GENO_MAX_CHECKS | 8 | melee/pc/geno/geno.h:183 |
+| GENO_CHECK_CONDS | 3 | melee/pc/geno/geno.h:184 |
+| GENO_MAX_REHIT | 4 | melee/pc/geno/geno.h:185 |
+| GENO_EV_MAX_HOOKS | 8 | melee/pc/geno/geno.h:250 |
+| GENO_MAX_ATTRS | 128 | melee/pc/geno/geno.h:254 |
+| GENO_MAX_JUMP_VY | 16 | melee/pc/geno/geno.h:255 |
+| GENO_MAX_PROFILES | 65535 | melee/pc/geno/geno.h:256 |
+| GENO_MAX_SPECIAL | 64 | melee/pc/geno/geno.h:257 |
+| GENO_MAX_ONLAND | 16 | melee/pc/geno/geno.h:258 |
+| GENO_MAX_MOTION_ANIM | 8 | melee/pc/geno/geno.h:259 |
+| GENO_MAX_OVERLAYS | 192 | melee/pc/geno/geno.h:260 |
+| GENO_POOL_WORDS | 16384 | melee/pc/geno/geno.h:261 |
+| GENO_MAX_STATES | 48 | melee/pc/geno/geno.h:272 |
+| GENO_ART_KIND_BASE | 4096 | melee/pc/geno/geno.h:357 |
+| GENO_MAX_ARTICLES | 16 | melee/pc/geno/geno.h:357 |
+| GENO_ART_PER_RANGE | 8 | melee/pc/geno/geno.h:364 |
+| GENO_ART_EXTRA_BASE | 131072 | melee/pc/geno/geno.h:369 |
+| GENO_MAX_SOUNDS | 16 | melee/pc/geno/geno.h:377 |
+| GENO_ART_HITBOXES | 4 | melee/pc/geno/geno.h:378 |
+| GENO_ART_HIT_ENTRIES | 8 | melee/pc/geno/geno.h:379 |
+| GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:381 |
+| GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:382 |
+| GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:483 |
+| JDOC_NODES | 16384 | melee/pc/platform/geno_registry.c:74 |
+| JDOC_ARENA | 262144 | melee/pc/platform/geno_registry.c:75 |
 | GN_MAX_VOICE | 32 | melee/pc/platform/geno_registry.c:403 |
-| GN_MAX_SLOTS | 512 | melee/pc/platform/geno_registry.c:507 |
+| GN_MAX_SLOTS | 512 | melee/pc/platform/geno_registry.c:510 |
 | JSON_DEPTH | 32 | melee/pc/platform/geno_registry.c:jd_value |
 | JSON_FILE_BYTES | 1048576 | melee/pc/platform/geno_registry.c:gn_read_file |
 

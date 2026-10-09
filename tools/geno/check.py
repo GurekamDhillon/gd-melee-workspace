@@ -356,6 +356,9 @@ def graph_checks(fighter, p, base, errors):
     for row in fighter.get("on_land", []):
         ref(row["from"])
         ref(row["to"])
+    from . import combo as combo_mod  # geno 11: a combo route enters a state
+    for name in combo_mod.referenced_states(fighter):
+        ref("geno:" + name)
     lua = fighter.get("lua")
     if isinstance(lua, dict):  # slice 5: ctx.go("State") in the module targets a state
         text = lua.get("source")
@@ -505,6 +508,8 @@ def validate(data, base):
                 if ctr.get("from", 1) > ctr.get("to", 2147483647):
                     errors.append(diagnostic(p+f".states[{j}].counter", "counter from must not exceed to"))
         lua_checks(data, fighter, p, base, errors)
+        from . import combo as combo_mod  # geno 11: the combo graph
+        combo_mod.checks(data, fighter, p, base, errors, WARNINGS, diagnostic)
         for key, v in fighter.get("specials", {}).items():
             for target in v["targets"] if isinstance(v, dict) else [v]:
                 validate_target(target, states, p+".specials."+key, errors)
