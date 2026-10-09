@@ -113,6 +113,22 @@
    "variant": "dark"
   },
   {
+   "file": "feature_envoy_dark.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
+   "file": "feature_modbrowser_dark.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "dark"
+  },
+  {
    "file": "banner_light.png",
    "size": [
     1600,
@@ -218,6 +234,22 @@
   },
   {
    "file": "feature_determinism_light.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "feature_envoy_light.png",
+   "size": [
+    800,
+    400
+   ],
+   "variant": "light"
+  },
+  {
+   "file": "feature_modbrowser_light.png",
    "size": [
     800,
     400

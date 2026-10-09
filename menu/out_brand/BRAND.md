@@ -135,9 +135,9 @@ wordmark in another font, or combine it with any Nintendo mark or character art.
 | `social/youtube_thumb_1280x720_blank.png` | 1280x720 | YouTube thumbnail template, no headline |
 | `badges/rollback.svg` | vector | README badge: NETPLAY ROLLBACK |
 | `badges/rollback@2x.png` | 410x56 | README badge PNG fallback |
-| `badges/windows.svg` | vector | README badge: PLATFORM WINDOWS X64 |
-| `badges/windows@2x.png` | 482x56 | README badge PNG fallback |
-| `badges/version.svg` | vector | README badge: RELEASE V0.1.6 |
+| `badges/windows.svg` | vector | README badge: PLATFORM WINDOWS + LINUX |
+| `badges/windows@2x.png` | 538x56 | README badge PNG fallback |
+| `badges/version.svg` | vector | README badge: RELEASE V0.2.2 |
 | `badges/version@2x.png` | 354x56 | README badge PNG fallback |
 | `badges/mex.svg` | vector | README badge: MODS M-EX COMPATIBLE |
 | `badges/mex@2x.png` | 474x56 | README badge PNG fallback |
@@ -148,6 +148,9 @@ wordmark in another font, or combine it with any Nintendo mark or character art.
 | `badges/download_windows.svg` | vector | Download for Windows button (release page / README) |
 | `badges/download_windows.png` | 640x150 | Download button 640x150 |
 | `badges/download_windows@2x.png` | 1280x300 | Download button 1280x300 |
+| `badges/download_linux.svg` | vector | Download for Linux button (release page / README) |
+| `badges/download_linux.png` | 640x150 | Download button 640x150 |
+| `badges/download_linux@2x.png` | 1280x300 | Download button 1280x300 |
 | `icons/app_icon_1024.png` | 1024x1024 | app icon master (transparent) |
 | `icons/app_icon.svg` | vector | app icon source (full mark) |
 | `icons/app_icon_small.svg` | vector | app icon source for 16-32 px |

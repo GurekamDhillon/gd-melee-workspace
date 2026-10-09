@@ -760,7 +760,7 @@ def badge(b):
     return svg(math.ceil(W), h, body), math.ceil(W), h
 
 
-def download_button():
+def download_button(platform="WINDOWS", arch="x64"):
     W, H = 640, 150
     h = 124
     o = h * T
@@ -771,9 +771,10 @@ def download_button():
     pane = poly([(o, 0), (o + 124, 0), (124, h), (0, h)])
     body += '<path d="%s" fill="%s"/>' % (pane, C["ink"])
     body += glyph("download", C["gold"], o / 2 + 124 / 2 - 34, h / 2 - 34, 68)
-    fs1 = min(44, 420 / tw("DOWNLOAD FOR WINDOWS", 1, track=0.5 / 44))
-    t1, _ = text("DOWNLOAD FOR WINDOWS", fs1, 0, 0, C["ink"], track=0.5)
-    t2, _ = text("%s  ·  x64  ·  free" % TEXT["version"], 26, 0, 0, C["ink"], "bold", track=0.6)
+    label = "DOWNLOAD FOR " + platform
+    fs1 = min(44, 420 / tw(label, 1, track=0.5 / 44))
+    t1, _ = text(label, fs1, 0, 0, C["ink"], track=0.5)
+    t2, _ = text("%s  ·  %s  ·  free" % (TEXT["version"], arch), 26, 0, 0, C["ink"], "bold", track=0.6)
     body += '<g transform="translate(%g %g) skewX(%g)">%s</g>' % (160 + (h - 72) * T * 0 + 16, 72, SKEW, t1)
     body += '<g transform="translate(%g %g) skewX(%g)">%s</g>' % (160 + 4, 108, SKEW, t2)
     return svg(W, H, body)
@@ -952,6 +953,10 @@ def main():
         write("badges/download_windows.svg", s_, "Download for Windows button (release page / README)")
         write("badges/download_windows.png", r.png(s_, 640, 150, 1), "Download button 640x150")
         write("badges/download_windows@2x.png", r.png(s_, 640, 150, 2), "Download button 1280x300")
+        s_ = download_button("LINUX", "x86_64")
+        write("badges/download_linux.svg", s_, "Download for Linux button (release page / README)")
+        write("badges/download_linux.png", r.png(s_, 640, 150, 1), "Download button 640x150")
+        write("badges/download_linux@2x.png", r.png(s_, 640, 150, 2), "Download button 1280x300")
 
         # ---- app icons
         big = r.png(app_icon(1024), 1024, 1024, 1)

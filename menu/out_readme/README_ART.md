@@ -28,6 +28,8 @@ they go elsewhere. Nothing here has been placed in any README.
 | `feature_settings_dark.png` | 800x400 | dark (pair: `feature_settings_light.png`) | feature tile |
 | `feature_ucf_dark.png` | 800x400 | dark (pair: `feature_ucf_light.png`) | feature tile |
 | `feature_determinism_dark.png` | 800x400 | dark (pair: `feature_determinism_light.png`) | feature tile |
+| `feature_envoy_dark.png` | 800x400 | dark (pair: `feature_envoy_light.png`) | feature tile |
+| `feature_modbrowser_dark.png` | 800x400 | dark (pair: `feature_modbrowser_light.png`) | feature tile |
 | `banner_light.png` | 1600x400 | light (pair: `banner_dark.png`) | hero banner, top of the README |
 | `banner_light@2x.png` | 3200x800 | light (pair: `banner_dark@2x.png`) | hero banner, top of the README |
 | `feature_rollback_light.png` | 800x400 | light (pair: `feature_rollback_dark.png`) | feature tile |
@@ -42,6 +44,8 @@ they go elsewhere. Nothing here has been placed in any README.
 | `feature_settings_light.png` | 800x400 | light (pair: `feature_settings_dark.png`) | feature tile |
 | `feature_ucf_light.png` | 800x400 | light (pair: `feature_ucf_dark.png`) | feature tile |
 | `feature_determinism_light.png` | 800x400 | light (pair: `feature_determinism_dark.png`) | feature tile |
+| `feature_envoy_light.png` | 800x400 | light (pair: `feature_envoy_dark.png`) | feature tile |
+| `feature_modbrowser_light.png` | 800x400 | light (pair: `feature_modbrowser_dark.png`) | feature tile |
 | `social_preview.png` | 1280x640 | one file (GitHub shows it on neither theme) | repo Settings > Social preview (upload; not referenced in the README) |
 | `divider.png` | 1600x32 | one file for both themes | section divider (transparent; reads on both themes) |
 
@@ -57,7 +61,7 @@ GitHub picks the source through `prefers-color-scheme`:
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/readme/banner_dark@2x.png">
     <source media="(prefers-color-scheme: light)" srcset="docs/readme/banner_light@2x.png">
-    <img alt="GD's Melee - A native PC port — rollback netplay, HD, m-ex mods, Lua scripting" src="docs/readme/banner_light@2x.png" width="800">
+    <img alt="GD's Melee - A native PC port for Windows and Linux — rollback netplay, m-ex mods, Lua" src="docs/readme/banner_light@2x.png" width="800">
   </picture>
 </p>
 ```
@@ -72,7 +76,7 @@ repeat in `alt` for screen readers:
   <tr>
     <td><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_rollback_dark.png">
-      <img alt="Rollback netplay: Play a friend with a room code, or press Random Opponent. Rollback hides the lag." src="docs/readme/feature_rollback_light.png" width="400">
+      <img alt="Rollback netplay: Room codes or Random Opponent. Windows and Linux play each other." src="docs/readme/feature_rollback_light.png" width="400">
     </picture></td>
     <td><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_lobby_dark.png">
@@ -82,7 +86,7 @@ repeat in `alt` for screen readers:
   <tr>
     <td><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_hd_dark.png">
-      <img alt="HD at any resolution: Native D3D12 rendering at any render scale, with vsync off and ~13 ms input." src="docs/readme/feature_hd_light.png" width="400">
+      <img alt="HD at any resolution: Native D3D12 or Vulkan at any render scale, vsync off, ~13 ms input." src="docs/readme/feature_hd_light.png" width="400">
     </picture></td>
     <td><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_mex_dark.png">
@@ -106,7 +110,7 @@ repeat in `alt` for screen readers:
     </picture></td>
     <td><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_launcher_dark.png">
-      <img alt="Launcher, EN / ES: Mods browser, diagnostics and crash reports. In English and Spanish." src="docs/readme/feature_launcher_light.png" width="400">
+      <img alt="Launcher, EN / ES: Windows and Linux. Mods, diagnostics and crash reports, in English and Spanish." src="docs/readme/feature_launcher_light.png" width="400">
     </picture></td>
   </tr>
   <tr>
@@ -127,6 +131,16 @@ repeat in `alt` for screen readers:
     <td><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_determinism_dark.png">
       <img alt="Deterministic engine: Bit-exact simulation, checked frame by frame with SyncTest." src="docs/readme/feature_determinism_light.png" width="400">
+    </picture></td>
+  </tr>
+  <tr>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_envoy_dark.png">
+      <img alt="Envoy roguelite: A run of stages with loot and keystones. Solo, co-op or an online set." src="docs/readme/feature_envoy_light.png" width="400">
+    </picture></td>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_modbrowser_dark.png">
+      <img alt="In-game mod browser: Browse SSBM Nucleus mods in the game and install them from a queue." src="docs/readme/feature_modbrowser_light.png" width="400">
     </picture></td>
   </tr>
 </table>
