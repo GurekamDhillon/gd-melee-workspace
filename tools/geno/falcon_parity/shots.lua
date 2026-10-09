@@ -15,5 +15,5 @@ gd.run(function()
     for _, st in ipairs(p[2]) do local n = st.n; gd.input(1, st, n); gd.wait(n) end
     for k = 1, 3 do gd.wait(6); shot(p[1] .. k) end
   end
-  gd.wait(20); gd.quit()
+  gd.wait(300); gd.quit()
 end)
