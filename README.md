@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.1.7" src="docs/readme/brand/version.svg" height="28"></a>
-  <img alt="Platform: Windows x64" src="docs/readme/brand/windows.svg" height="28">
+  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.2.2" src="docs/readme/brand/version.svg" height="28"></a>
+  <img alt="Platform: Windows x64 and Linux x86_64" src="docs/readme/brand/windows.svg" height="28">
   <img alt="Netplay: rollback" src="docs/readme/brand/rollback.svg" height="28">
   <img alt="Mods: m-ex compatible" src="docs/readme/brand/mex.svg" height="28">
   <img alt="Replays: Slippi" src="docs/readme/brand/slippi.svg" height="28">
@@ -30,23 +30,59 @@ decompilation** rather than by emulation or by recompiling the retail binary. It
 **rollback netcode** from a competitive lobby, renders natively in HD, runs **m-ex** mod discs and
 loose mods, and can be scripted in **Lua**.
 
-> **Status: public test build (0.1.7).** Expect rough edges and please report bugs: what you did,
-> which disc, and the crash report from the `crashlogs` folder (or `melee-pc.log`).
+> **Status: public test build (0.2.2).** Expect rough edges and please report bugs: what you did,
+> which disc, and the crash report from the `crashlogs` folder (or `melee-pc.log`). Windows and
+> Linux 0.2.2 play each other online; they do not play 0.2.1 or earlier, so both players update.
 
 ## Quick start
 
-<p><a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Download for Windows" src="docs/readme/brand/download_windows.svg" height="60"></a></p>
+<p>
+  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Download for Windows" src="docs/readme/brand/download_windows.svg" height="60"></a>
+  <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Download for Linux" src="docs/readme/brand/download_linux.svg" height="60"></a>
+</p>
 
-1. **Download** the latest `GDMelee-<version>-win64.zip` from
-   [Releases](https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest) and unzip it anywhere.
-2. **Point it at your own disc.** Start `GD Melee.exe`, click *Add disc...* and pick your own
-   legally dumped *Melee* NTSC 1.02 `.iso` (mod discs such as ACE or Akaneia work too). No game data
-   ships with the port.
+1. **Download** the latest release from
+   [Releases](https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest) and unpack it
+   anywhere: `GDMelee-<version>-win64.zip` on Windows, or
+   `GDMelee-<version>-linux-x86_64.tar.xz` on Linux (`tar xf`, then run `./GD-Melee`).
+2. **Point it at your own disc.** Start `GD Melee.exe` (Windows) or `./GD-Melee` (Linux), click
+   *Add disc...* and pick your own legally dumped *Melee* NTSC 1.02 `.iso` (mod discs such as ACE or
+   Akaneia work too). Nothing disc-derived is distributed with the port.
 3. **Play.** Press *PLAY*. For online play: **VERSUS > ONLINE**, then host a room and send the
    code, join one, or press *Random Opponent*.
 
-The launcher is in English and Spanish (it follows Windows by default; English or Spanish can be chosen in the launcher).
-Windows SmartScreen warns on first run because the launcher isn't code-signed.
+The launcher is in English and Spanish (it follows the system language by default; English or Spanish
+can be chosen in the launcher). Windows SmartScreen warns on first run because the launcher isn't
+code-signed. The Linux build is a 32-bit game on a 64-bit host and needs the distribution's 32-bit
+runtime and Vulkan driver; the tarball's `README.txt` lists the packages. Press **F11** or
+**Alt+Enter** for fullscreen.
+
+## What's new in 0.2.x
+
+Details for each release are in [`tools/release/notes/`](tools/release/notes/).
+
+- **Linux, and Windows-vs-Linux play.** A native Linux x86_64 build with the same launcher, mods and
+  online play; Windows and Linux players can match each other. Before a match both games compare a
+  build id, and a mismatched build is refused instead of desyncing (0.2.0, fixed up in 0.2.2).
+- **Online.** Rollback with room codes and a competitive lobby, a stricter disc check, sets that
+  **resume after a disconnect** (or can be abandoned), tied games replayed instead of sudden death, and
+  the Turbo match rule for private rooms. Rollback checks look at far more of the game, so a real
+  desync is caught on the frame it starts.
+- **Mod browser in the game (SSBM Nucleus).** Browse and search mods with thumbnails and filters, queue
+  them (the queue survives a restart) and the game downloads and installs zip mods for you.
+  Mods from SSBM Nucleus - https://ssbmnucleus.net, used with the permission of sc00p.
+- **255 costumes per fighter**, so skins are no longer limited to the original palette slots.
+- **Fullscreen** with F11 or Alt+Enter, and a Video setting.
+- **Everything unlocked by default**: every fighter and stage from the start. Turn it off in
+  Settings > Gameplay.
+- **Envoy**, a roguelite on top of Classic and Adventure: pick a *drive* after each stage, carry four in
+  a bag, take rare *keystones* with a drawback, and face tougher opponents that use technique against
+  you. It ships on by default (SOLO > ENVOY; the launcher's Mods tab turns it off); two players can
+  run it as offline co-op, or play an Envoy set in a private online room.
+- **A new Qt launcher** for Windows and Linux with a Diagnostics tab, and opt-in crash report upload.
+- **Linux fixes:** much faster rollback snapshots, the Turbo crashes fixed, and Envoy drive items,
+  the crit shader and mod surface shaders now work. Elsewhere: a bad shader-cache entry can no longer
+  stop the game from starting, and Data > Snapshots no longer freezes.
 
 ## Features
 
@@ -54,7 +90,7 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
   <tr>
     <td><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_rollback_dark.png">
-      <img alt="Rollback netplay: Play a friend with a room code, or press Random Opponent. Rollback hides the lag." src="docs/readme/feature_rollback_light.png" width="400">
+      <img alt="Rollback netplay: Room codes or Random Opponent. Windows and Linux play each other." src="docs/readme/feature_rollback_light.png" width="400">
     </picture></td>
     <td><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_lobby_dark.png">
@@ -64,7 +100,7 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
   <tr>
     <td><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_hd_dark.png">
-      <img alt="HD at any resolution: Native D3D12 rendering at any render scale, with vsync off and ~13 ms input." src="docs/readme/feature_hd_light.png" width="400">
+      <img alt="HD at any resolution: Native D3D12 or Vulkan at any render scale, vsync off, ~13 ms input." src="docs/readme/feature_hd_light.png" width="400">
     </picture></td>
     <td><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_mex_dark.png">
@@ -88,7 +124,7 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
     </picture></td>
     <td><picture>
       <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_launcher_dark.png">
-      <img alt="Launcher, EN / ES: Local mods, diagnostics and crash reports. In English and Spanish." src="docs/readme/feature_launcher_light.png" width="400">
+      <img alt="Launcher, EN / ES: Windows and Linux. Mods, diagnostics and crash reports, in English and Spanish." src="docs/readme/feature_launcher_light.png" width="400">
     </picture></td>
   </tr>
   <tr>
@@ -111,13 +147,23 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
       <img alt="Deterministic engine: Bit-exact simulation, checked frame by frame with SyncTest." src="docs/readme/feature_determinism_light.png" width="400">
     </picture></td>
   </tr>
+  <tr>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_envoy_dark.png">
+      <img alt="Envoy roguelite: A run of stages with loot and keystones. Solo, co-op or an online set." src="docs/readme/feature_envoy_light.png" width="400">
+    </picture></td>
+    <td><picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/readme/feature_modbrowser_dark.png">
+      <img alt="In-game mod browser: Browse SSBM Nucleus mods in the game and install them from a queue." src="docs/readme/feature_modbrowser_light.png" width="400">
+    </picture></td>
+  </tr>
 </table>
 
-### Features in the current release
+### Features
 
 **Online**
-- Rollback netcode. Play a friend with a short room code, or press **Random Opponent** to be paired
-  with anyone searching.
+- Rollback netcode, between Windows and Linux players too. Play a friend with a short room code, or
+  press **Random Opponent** to be paired with anyone searching.
 - A competitive lobby in the same room: blind character picks, stage strikes and bans, ready-up and
   rematches, with the set score kept.
 - Stages are split into **starters** (Battlefield, Final Destination, Dream Land, Yoshi's Story,
@@ -130,9 +176,9 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
   online match.
 
 **Mods (m-ex)**
-- Mod discs (ACE, Akaneia) and loose mods copied into the `mods` folder. The Qt launcher's Mods
-  tab lists installed mods, enables/disables them, and moves removed mods to a recoverable folder.
-  Remote downloads and updates are not implemented in this launcher.
+- Mod discs (ACE, Akaneia) and loose mods copied into the `mods` folder. The launcher's Mods tab
+  lists installed mods, enables/disables them, and moves removed mods to a recoverable folder. It does
+  not download mods; the in-game browser (above) does,.
 - **94 m-ex fighter slots** (up from 31), so big rosters fit.
 - The results screen shows m-ex fighters' names, emblems and stock icons.
 - m-ex CPUs play from their clone base's CPU tables.
@@ -144,27 +190,13 @@ Windows SmartScreen warns on first run because the launcher isn't code-signed.
   or `select=kit` in the scene grammar).
 - A **Settings** screen: video, audio, controls, online name and server, mods and gameplay options,
   applied right away and saved.
-- Everything unlocked from the start, without a save file (always on online).
+- Everything unlocked from the start by default, without a save file (Settings > Gameplay turns it off).
 
 **Graphics and input**
-- Native D3D12 rendering at any render scale, vsync off, and an experimental uncapped frame rate.
+- Native rendering (D3D12 on Windows, Vulkan on Linux) at any render scale, vsync off, and an experimental uncapped frame rate.
 - About 13 ms from controller to screen, steadily.
+- Fullscreen (F11 or Alt+Enter) and 255 costumes per fighter.
 - GameCube adapter (plug in any time, clones supported) and any gamepad.
-
-**Controller remapping (source implementation; controller acceptance pending)**
-
-Open **SETTINGS > CONTROLS > Remap Controller**. Choose **Game Input**, select
-**Bind Input**, then press and release the button, stick direction or trigger
-you want. **Swap** exchanges conflicting bindings; **Also** keeps duplicates.
-**Pick Controller** selects a pad by an input on it. Original buttons navigate
-this page; **START+B** cancels capture, and holding original **START+B for two
-seconds** in menus restores the current profile's defaults.
-
-Each device has four named profiles and Default, Shoulder Jump and Face Friendly
-presets. Stick deadzones, stick swapping, trigger analog, digital light/full
-shield and rumble are on the same page. The live strip shows the mapped inputs.
-Tap jump remains Melee's original behaviour; an exact, netplay-safe off option
-is still outstanding. The keyboard remains hotkeys only.
 
 **Scripting**
 - Lua scripts and a console (the backtick key). Scripts can read the match, draw, wait on the game,
@@ -181,24 +213,15 @@ is still outstanding. The keyboard remains hotkeys only.
   The Qt launcher opens logs and copies reports for sharing. Uploading crash reports is optional, off by
   default, and only happens when you click "Upload last 3 crash logs".
 
-### Added in 0.1.5
+### Changelog
 
-- **The keyboard is hotkeys only.** It no longer plays: controllers play, and the keyboard keeps
-  F9, F10, the console and mods' own keys (`gd.key`).
-- **"Connect a controller":** a window with no controller shows a notice instead of sitting there
-  unplayable.
-- **The mouse works in the main menu, settings, online lobby and character and stage select:**
-  point, click, right-click to go back and scroll lists. Matches ignore it, and scripts can read
-  it with `gd.mouse()`.
-- **Items no longer hitch** when they first spawn: their GPU pipelines are compiled in parallel and
-  prewarmed at match load.
-- **Crash fixes:** m-ex fighters whose motion tables or model part trees are shorter than the
-  engine assumed, m-ex costume data (`MEX_GetData`), and the stage select's name model outliving
-  its scene.
-- **Bit-exact with the console:** matrix maths now rounds exactly like the GameCube's paired-single
-  instructions, and six real console replays (Slippi `.slp`) play back matching to the bit, frame
-  by frame: action, position, facing, percent, stocks and the RNG.
-- **The Geno engine and the LAB mode** (below).
+Per-release notes: [`tools/release/notes/`](tools/release/notes/). Highlights of the 0.1.x line:
+
+- **0.1.5:** the keyboard is hotkeys only (controllers play), a "Connect a controller" notice, the
+  mouse in menus (`gd.mouse()` for scripts), items no longer hitch on first spawn, m-ex crash fixes,
+  bit-exact matrix maths with six console Slippi replays played back to the bit, and the Geno engine
+  and LAB mode.
+- **0.1.6:** TRAINING with frame advantage, move data and a configurable dummy; COMBO and DRILLS.
 
 ## Screenshots
 
@@ -296,6 +319,10 @@ schema is in [`ports/ir/`](ports/ir/).
 - The uncapped frame rate is experimental: the picture trails the game by one frame.
 - Teams mode on the new character select isn't finished, and 4-player local matches have had little
   testing.
+- Online play has been tested on one PC with two game windows, not yet widely across the internet.
+  Online Envoy has only the passive drives.
+- New skins appear after a restart. Heavy modded fighters can still cost more than a 120 fps game allows.
+- On some Linux laptops the game has run below 60 fps (0.2.1); this is still being worked on.
 - On a 144 Hz monitor, 60 fps looks uneven. Set the display to 120 Hz, or turn on G-Sync/FreeSync.
 
 Each release's notes are in [`tools/release/notes/`](tools/release/notes/).
@@ -312,7 +339,7 @@ retail binary. This project takes a third road — **compiled decompilation**:
   `gw_`, and emits x86 COFF. The result links against a native platform layer.
 - The GameCube SDK surface (GX, OS, PAD, CARD, AX, DVD, AR, …) is replaced by native shims over
   [Aurora](https://github.com/encounter/aurora) (a GC/Wii SDK reimplementation on top of
-  [Dawn](https://dawn.googlesource.com/dawn)), so rendering goes straight to D3D12 with no emulated
+  [Dawn](https://dawn.googlesource.com/dawn)), so rendering goes straight to D3D12 (Windows) or Vulkan (Linux) with no emulated
   GPU. Where the SDK's own decompiled source is worth keeping, it is built as a translation unit
   like any other — the THP video decoder is, with its Gekko paired-single IDCT rewritten in
   portable C.
@@ -328,19 +355,22 @@ where most of the engineering goes (see the devlog).
 | Area | State |
 |---|---|
 | Boot → menus → VS match, Training | working |
-| Rendering (GX → D3D12 via Aurora/Dawn), any render scale | working |
+| Rendering (GX → D3D12 on Windows, Vulkan on Linux, via Aurora/Dawn), any render scale | working |
 | Audio (own AX / DSP-ADPCM mixer over SDL3) | working, incl. both aux buses + AXFX reverb/delay |
 | Cutscenes (THP video, own decoder) | working |
 | Memory-card saves (GCI) | working |
 | GameCube adapter, gamepads (keyboard = hotkeys only), mouse in menus | working |
 | Vanilla parity (console Slippi replays, bit-exact) | working |
-| Geno engine + LAB mode | public test (0.1.6), including LAB training, dummy, combos and drills |
+| Geno engine + LAB mode | public test, including LAB training, dummy, combos and drills |
 | Frame pacing | hard 60 Hz; experimental uncapped frame rate |
 | Rollback netplay + competitive lobby | public test |
 | Slippi replay playback | working |
 | m-ex discs and loose mods (94 fighter slots) | public test |
 | Lua scripting + console | working (API 1) |
-| Launcher, release packaging | public test (0.1.6) |
+| Windows x64 and Linux x86_64 builds, Windows-vs-Linux online play | public test (0.2.2) |
+| Launcher (Qt, English and Spanish), release packaging | public test (0.2.2) |
+| In-game SSBM Nucleus mod browser (zip mods) | public test (0.2.2) |
+| Envoy roguelite (solo, offline co-op, online sets with passive drives) | public test; look and balance still being tuned |
 | Widescreen | Hor+ gameplay; centred wide kit menus and Lua canvas, live VIDEO toggle (menu changes awaiting in-game verification) |
 
 ## Repository layout

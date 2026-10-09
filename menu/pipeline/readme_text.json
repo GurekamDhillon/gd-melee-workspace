@@ -4,14 +4,14 @@
   "tag": "GD's",
   "name": "Melee"
  },
- "tagline": "A native PC port — rollback netplay, HD, m-ex mods, Lua scripting",
- "social_tagline": "A native PC port — rollback netplay, HD, m-ex mods, Lua scripting",
+ "tagline": "A native PC port for Windows and Linux — rollback netplay, m-ex mods, Lua",
+ "social_tagline": "A native PC port for Windows and Linux — rollback netplay, m-ex mods, Lua",
  "features": [
   {
    "id": "rollback",
    "icon": "rollback",
    "title": "Rollback netplay",
-   "text": "Play a friend with a room code, or press Random Opponent. Rollback hides the lag."
+   "text": "Room codes or Random Opponent. Windows and Linux play each other."
   },
   {
    "id": "lobby",
@@ -23,7 +23,7 @@
    "id": "hd",
    "icon": "hd",
    "title": "HD at any resolution",
-   "text": "Native D3D12 rendering at any render scale, with vsync off and ~13 ms input."
+   "text": "Native D3D12 or Vulkan at any render scale, vsync off, ~13 ms input."
   },
   {
    "id": "mex",
@@ -53,7 +53,7 @@
    "id": "launcher",
    "icon": "launcher",
    "title": "Launcher, EN / ES",
-   "text": "Local mods, diagnostics and crash reports. In English and Spanish."
+   "text": "Windows and Linux. Mods, diagnostics and crash reports, in English and Spanish."
   },
   {
    "id": "replays",
@@ -78,6 +78,18 @@
    "icon": "sync",
    "title": "Deterministic engine",
    "text": "Bit-exact simulation, checked frame by frame with SyncTest."
+  },
+  {
+   "id": "envoy",
+   "icon": "ico_classic",
+   "title": "Envoy roguelite",
+   "text": "A run of stages with loot and keystones. Solo, co-op or an online set."
+  },
+  {
+   "id": "modbrowser",
+   "icon": "ico_gallery",
+   "title": "In-game mod browser",
+   "text": "Browse SSBM Nucleus mods in the game and install them from a queue."
   }
  ]
 }
