@@ -371,7 +371,7 @@ def main():
     }
     json.dump({"geno": 10, "fighters": [entry]}, open(os.path.join(out, "geno.json"), "w"), indent=1)
     mod = {"id": (a.key or spec["key"]), "name": a.name or spec["name"], "version": "0.1.0", "kind": "fighter", "requires": [], "conflicts": [],
-           "description": "%s as a standalone Geno define (base none, template %s), built from the user's own disc. Local build, never shipped." % (spec["name"], a.fighter)}
+           "description": "%s: a retail fighter as a standalone Geno define, built from your own disc. Local only." % spec["name"]}
     json.dump(mod, open(os.path.join(out, "mod.json"), "w"), indent=1)
     report["not_carried"] += [
         "the fighter's effect file (EfCa*.dat) and sound bank: scripts name them by id; the engine cannot mount a mod's copy",
