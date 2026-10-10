@@ -7,14 +7,14 @@ function(wb_core_sources)
   set(WB_CORE_SOURCES "${WB_CORE_SOURCES}" PARENT_SCOPE)
 endfunction()
 
-wb_core_sources(json_patch.cpp file_store.cpp history.cpp geno_asm.cpp checks.cpp engine_link.cpp command_registry.cpp session.cpp project.cpp geno_data.cpp mcp_server.cpp workbench_main.cpp commands_save.cpp analysis.cpp commands_view.cpp commands_rows.cpp commands_hitbox.cpp commands_clips.cpp commands_ground.cpp)
+wb_core_sources(blender_launch.cpp json_patch.cpp file_store.cpp history.cpp geno_asm.cpp checks.cpp engine_link.cpp command_registry.cpp session.cpp project.cpp geno_data.cpp mcp_server.cpp workbench_main.cpp commands_save.cpp analysis.cpp commands_view.cpp commands_rows.cpp commands_hitbox.cpp commands_clips.cpp commands_ground.cpp)
 add_library(workbench_core STATIC ${WB_CORE_SOURCES})
 target_link_libraries(workbench_core PUBLIC launcher_core Qt6::Core Qt6::Network)
 target_include_directories(workbench_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # The integrated launcher window consumes Creator, so it belongs at this layer.
 # launcher_ui remains the Atlas/kit library; no circular static-library dependency.
-add_library(workbench_ui STATIC viewport.cpp timeline.cpp palette.cpp panels.cpp workbench_window.cpp ../window.cpp)
+add_library(workbench_ui STATIC hub_panel.cpp timeline.cpp palette.cpp panels.cpp workbench_window.cpp ../window.cpp)
 target_link_libraries(workbench_ui PUBLIC workbench_core launcher_ui Qt6::Widgets Qt6::Concurrent)
 target_include_directories(workbench_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -37,6 +37,7 @@ if(BUILD_TESTING)
   wb_ui_test(ui)
   wb_ui_test(palette)
   wb_ui_test(panels)
+  wb_test(blender_launch)
   wb_test(scaffold)
   wb_test(json_patch)
   wb_test(file_store)

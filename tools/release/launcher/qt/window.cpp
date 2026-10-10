@@ -791,6 +791,22 @@ QWidget *Window::diagnosticsTab() {
     connect(creatorEnabled, &QCheckBox::toggled, this, [this](bool on) { guarded([&] {
         settings_.options["creator_enabled"] = on ? "1" : "0"; save(); syncCreatorTab();
     }); });
+    auto *blenderRow = new QHBoxLayout; creatorSettings->addLayout(blenderRow);
+    auto *blenderLabel = new QLabel(t("Blender path", "Ruta de Blender")); blenderRow->addWidget(blenderLabel);
+    auto *blenderPath = new QLineEdit(settings_.option("blender_exe")); blenderPath->setObjectName("blenderExe");
+    blenderPath->setAccessibleName(t("Blender path", "Ruta de Blender")); blenderLabel->setBuddy(blenderPath);
+    blenderPath->setPlaceholderText(t("Use GW_BLENDER or PATH when empty", "Usar GW_BLENDER o PATH si esta vacio"));
+    blenderRow->addWidget(blenderPath, 1);
+    auto saveBlender = [this, blenderPath] { guarded([&] {
+        settings_.options["blender_exe"] = blenderPath->text().trimmed(); save();
+        if (creator_) creator_->setBlenderSetting(settings_.option("blender_exe"));
+    }); };
+    connect(blenderPath, &QLineEdit::editingFinished, this, saveBlender);
+    auto *blenderBrowse = button(blenderRow, t("Browse for Blender", "Buscar Blender"), [this, blenderPath, saveBlender] {
+        const auto path = QFileDialog::getOpenFileName(this, t("Select Blender executable", "Selecciona el ejecutable de Blender"), blenderPath->text());
+        if (!path.isEmpty()) { blenderPath->setText(path); saveBlender(); }
+    });
+    blenderBrowse->setObjectName("blenderBrowse");
     auto *logging = bodyOf(t("Logging", "Logging"));
     for (const auto &entry : QList<std::tuple<QString, QString, bool>>{{t("Log everything (large logs)", "Registrar todo (registros grandes)"), "log_all", false}, {t("Log scene changes", "Registrar cambios de escena"), "log_scene", true}})
         toggleRow(logging, std::get<0>(entry), "diag_" + std::get<1>(entry), settings_.flag(std::get<1>(entry), std::get<2>(entry)), [this, key = std::get<1>(entry)](bool v) { settings_.options[key] = v ? "1" : "0"; save(); });
@@ -889,7 +905,7 @@ QWidget *Window::creatorTab() {
     engine->addWidget(capLabel(t("Engine", "Motor"), atlas::Role::Cap16));
     auto *start = new kit::Button(t("Start", "Iniciar")); start->setEnabled(false); engine->addWidget(start);
     auto *stop = new kit::Button(t("Stop", "Detener")); stop->setEnabled(false); engine->addWidget(stop); engine->addStretch();
-    content->addWidget(paragraph(t("The viewport uses the game's screenshot. Reload restarts the engine.", "La vista usa la captura del juego. Recargar reinicia el motor."), atlas::Role::Body12, "muted"));
+    content->addWidget(paragraph(t("Blender shows the fighter; this window keeps the problems, review and history panels.", "Blender muestra al luchador; esta ventana conserva los paneles de problemas, revision e historial."), atlas::Role::Body12, "muted"));
     content->addStretch(); return creatorPage_;
 }
 void Window::syncCreatorTab() {
@@ -940,7 +956,7 @@ void Window::openCreatorProject(const QString &folder) {
         auto launch = [app = appDir_, user = userDir_, settings = settings_, disc, hasDisc, projectMods] {
             if (!hasDisc) throw std::runtime_error(t("Select a disc on Play, then reopen the fighter folder.", "Selecciona un disco en Jugar y vuelve a abrir la carpeta del luchador.").toStdString());
             const auto spec = prepareLaunch(app, user, settings, disc);
-            wb::EngineLink::Launch result;
+            wb::EngineLink::Launch result; result.headless = true;
             result.exe = spec.program; result.workDir = spec.workingDirectory; result.extraArgs = spec.arguments;
             result.modsDir = projectMods.isEmpty() ? modsDir(app, user) : projectMods; result.wbDir = spec.workingDirectory + "/workbench";
             result.env = spec.environment; result.env.insert("MELEE_SCENE", "mode=workbench");
@@ -948,6 +964,7 @@ void Window::openCreatorProject(const QString &folder) {
             return result;
         };
         creator_ = new wb::WorkbenchWindow(folder, std::move(launch), creatorPage_);
+        creator_->setBlenderSetting(settings_.option("blender_exe"));
         creator_->setWindowFlags(Qt::Widget); creatorLayout_->addWidget(creator_, 1);
         creatorEmpty_->hide(); creatorPath_->setText(QDir::toNativeSeparators(folder)); creatorPath_->setToolTip(folder);
         creatorOpen_->setEnabled(false);

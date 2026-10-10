@@ -92,6 +92,19 @@ private slots:
         QVERIFY(CommandPalette::filter({command("abc", "xyz")}, "cx").isEmpty());
     }
 
+    void frozenViewCommandsAreMarkedDebug() {
+        QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); Session session(dir.path(), nullptr);
+        session.data().reload(); registerAllCommands(session); CommandPalette palette(session.registry());
+        auto *list = palette.findChild<QListWidget *>(); int found = 0;
+        for (int i = 0; i < list->count(); ++i) {
+            auto *item = list->item(i); const auto name = item->data(Qt::UserRole).toString();
+            if (name == "set_camera" || name == "set_overlays" || name == "render_view") {
+                QVERIFY(item->text().startsWith("Debug")); ++found;
+            }
+        }
+        QCOMPARE(found, 3);
+    }
+
     void paletteListsRegisteredCommandsOffline() {
         QTemporaryDir dir;
         QVERIFY(dir.isValid());

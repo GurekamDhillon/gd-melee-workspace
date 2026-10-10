@@ -13,11 +13,16 @@ public:
     // destruction. A QObject-backed engine must be constructed on the worker;
     // use the owned-project overload for the real EngineLink.
     explicit WorkbenchWindow(Session &s, QWidget *parent = nullptr);
-    // The factory is called on the persistent worker, only when Start is used.
+    // The factory runs on the persistent worker when the engine is first started
+    // or its mode changes. Open in Blender starts a stopped engine before launch.
     using LaunchFactory = std::function<EngineLink::Launch()>;
     WorkbenchWindow(const QString &projectDir, LaunchFactory launch, QWidget *parent = nullptr);
     ~WorkbenchWindow() override;
     void runCommand(const QString &name, const QJsonObject &args);
+    // Starts one human-author localhost listener on this window's Session.
+    // Returns zero while initializing/busy or after shutdown.
+    quint16 serveForBlender();
+    void setBlenderSetting(const QString &path);
     QString statusText() const;
     bool isBusy() const;
     bool shutdownComplete() const;
