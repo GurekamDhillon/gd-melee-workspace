@@ -112,7 +112,7 @@ def read_slot(install, host_rows, pl_name):
 
 
 def clip_key(symbol, taken):
-    m = re.search(r"_ACTION_(.+)_figatree$", symbol or "")
+    m = re.search(r"_ACTION_(.+)_figatree(?:@\d+)?$", symbol or "")
     base = m.group(1) if m else re.sub(r"\W", "_", symbol or "clip")
     if len(base) > 30:
         base = base[:30]
@@ -188,7 +188,8 @@ def main():
         k = (s["symbol"], s["offset"], s["size"])
         if k in keys:
             continue
-        key = clip_key(s["symbol"], {n: b["symbol"] for n, b in bank.items()})
+        # one key per (symbol, offset, size): two clips that share a symbol but not their bytes must not share a key (found by retail_define.py on Falcon's item swings)
+        key = clip_key(s["symbol"] + "@%d" % s["offset"], {n: b["symbol"] + "@%d" % b["offset"] for n, b in bank.items()})
         keys[k] = key
         frames = F.parse_archive(aj[s["offset"]:s["offset"] + s["size"]])[1]["frames"] + 1
         bank[key] = {"symbol": s["symbol"], "offset": s["offset"], "bytes": s["size"], "frames": frames}

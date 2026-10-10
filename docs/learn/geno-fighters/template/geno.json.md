@@ -14,11 +14,12 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].define.key | string: See choice encodings | absent | pattern=^[a-z0-9][a-z0-9_.-]{0,38}$; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].define.name | string: See choice encodings | absent | maxLength=47; pattern=^[ -~]+$; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].define.base | choice: mario: the retail Mario preset is the template; none (geno 9): the package owns its model, bank, parts table and joint fields (docs/geno.md 22.4) | absent | enum=['mario', 'none']; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].define.template | choice: base none, geno 10: the retail fighter whose native code, state table and specials the define runs on (default mario); captain = a complete retail Captain Falcon carried as a package (docs/geno.md 22.10) | absent | enum=['mario', 'captain']; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].define.common | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].define.resources | choice: retail:mario with base mario; mod:files with base none | absent | enum=['retail:mario', 'mod:files']; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].common_states | array: Ordered entries | absent | maxItems=64; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
-| fighters[].common_states[].motion | integer: Native motion row | 0 | minimum=0; maximum=350; geno.md §19; melee/pc/platform/geno_registry.c |
-| fighters[].common_states[].like | integer: Inherited motion row | 0 | minimum=0; maximum=350; geno.md §19; melee/pc/platform/geno_registry.c |
+| fighters[].common_states[].motion | integer: Native motion row | 0 | minimum=0; maximum=363; geno.md §19; melee/pc/platform/geno_registry.c |
+| fighters[].common_states[].like | integer: Inherited motion row | 0 | minimum=0; maximum=363; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].common_states[].subaction | integer: Installed retail animation row | 0 | minimum=0; maximum=1023; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].common_states[].flags | integer: Motion flags | 0 | minimum=0; maximum=2147483647; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].common_states[].move_id | integer: Stale move id | 0 | minimum=0; maximum=255; geno.md §19; melee/pc/platform/geno_registry.c |
@@ -221,7 +222,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].articles[].max_speed | number: max speed | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].min_speed | number: min speed | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].angle | number: angle | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
-| fighters[].subactions | array: Ordered entries | absent | maxItems=192; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].subactions | array: Ordered entries | absent | maxItems=320; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].subactions[].index | integer: Subaction row to replace | 0 | minimum=0; maximum=1023; geno.md §15.5; melee/pc/platform/geno_registry.c |
 | fighters[].subactions[].words | array: Ordered entries | absent | maxItems=16383; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].subactions[].file | string: Whitespace word file relative to mod root |  | ; geno.md §15.5; melee/pc/platform/geno_registry.c |
@@ -487,23 +488,23 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | GENO_MAX_SPECIAL | 64 | melee/pc/geno/geno.h:257 |
 | GENO_MAX_ONLAND | 16 | melee/pc/geno/geno.h:258 |
 | GENO_MAX_MOTION_ANIM | 8 | melee/pc/geno/geno.h:259 |
-| GENO_MAX_OVERLAYS | 192 | melee/pc/geno/geno.h:260 |
-| GENO_POOL_WORDS | 16384 | melee/pc/geno/geno.h:261 |
-| GENO_MAX_STATES | 48 | melee/pc/geno/geno.h:272 |
-| GENO_ART_KIND_BASE | 4096 | melee/pc/geno/geno.h:357 |
-| GENO_MAX_ARTICLES | 16 | melee/pc/geno/geno.h:357 |
-| GENO_ART_PER_RANGE | 8 | melee/pc/geno/geno.h:364 |
-| GENO_ART_EXTRA_BASE | 131072 | melee/pc/geno/geno.h:369 |
-| GENO_MAX_SOUNDS | 16 | melee/pc/geno/geno.h:377 |
-| GENO_ART_HITBOXES | 4 | melee/pc/geno/geno.h:378 |
-| GENO_ART_HIT_ENTRIES | 8 | melee/pc/geno/geno.h:379 |
-| GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:381 |
-| GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:382 |
-| GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:483 |
+| GENO_MAX_OVERLAYS | 320 | melee/pc/geno/geno.h:260 |
+| GENO_POOL_WORDS | 16384 | melee/pc/geno/geno.h:272 |
+| GENO_MAX_STATES | 48 | melee/pc/geno/geno.h:283 |
+| GENO_ART_KIND_BASE | 4096 | melee/pc/geno/geno.h:368 |
+| GENO_MAX_ARTICLES | 16 | melee/pc/geno/geno.h:368 |
+| GENO_ART_PER_RANGE | 8 | melee/pc/geno/geno.h:375 |
+| GENO_ART_EXTRA_BASE | 131072 | melee/pc/geno/geno.h:380 |
+| GENO_MAX_SOUNDS | 16 | melee/pc/geno/geno.h:388 |
+| GENO_ART_HITBOXES | 4 | melee/pc/geno/geno.h:389 |
+| GENO_ART_HIT_ENTRIES | 8 | melee/pc/geno/geno.h:390 |
+| GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:392 |
+| GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:393 |
+| GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:494 |
 | JDOC_NODES | 32768 | melee/pc/platform/geno_registry.c:74 |
 | JDOC_ARENA | 524288 | melee/pc/platform/geno_registry.c:75 |
 | GN_MAX_VOICE | 32 | melee/pc/platform/geno_registry.c:403 |
-| GN_MAX_SLOTS | 512 | melee/pc/platform/geno_registry.c:511 |
+| GN_MAX_SLOTS | 512 | melee/pc/platform/geno_registry.c:512 |
 | JSON_DEPTH | 32 | melee/pc/platform/geno_registry.c:jd_value |
 | JSON_FILE_BYTES | 1048576 | melee/pc/platform/geno_registry.c:gn_read_file |
 
