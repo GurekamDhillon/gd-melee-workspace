@@ -6,11 +6,11 @@ cmd_var idx=0 value=1
 wait_until 4
 sfx behavior=1 sfx_id=164 volume=127 panning=64
 wait_until 6
-hitbox slot=0 joint=@FOOT_L@ damage=14 size=2.80 x=0.00 y=0.00 z=0.00 angle=270 kbg=90 fkb=0 bkb=20
+hitbox slot=0 joint=@FOOT_R@ damage=14 size=2.80 x=0.00 y=0.00 z=0.00 angle=270 kbg=90 fkb=0 bkb=20
 wait 3
 clear_hitboxes
 wait_until 9
-hitbox slot=0 joint=@FOOT_L@ damage=10 size=2.40 x=0.00 y=0.00 z=0.00 angle=361 kbg=90 fkb=0 bkb=15
+hitbox slot=0 joint=@FOOT_R@ damage=10 size=2.40 x=0.00 y=0.00 z=0.00 angle=361 kbg=90 fkb=0 bkb=15
 wait 6
 clear_hitboxes
 wait_until 26
