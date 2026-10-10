@@ -11,13 +11,15 @@ from __future__ import annotations
 import collections
 import html
 import json
+import os
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 PORT = ROOT / 'ports/goku-xv2'
 OUT = ROOT / '_build/goku-xv2/movemap'
-LIB = ROOT / '_build/goku-xv2/author-source/clip-library.json'
-LABDATA = ROOT / '_build/goku-xv2/author-source/package/mods/geno-lab/missions'  # gd.mod_read reads missions/ only
+AUTHOR = ROOT / '_build/goku-xv2' / os.environ.get('GOKU_AUTHOR', 'author-source')   # splice-preview builds keep their own
+LIB = AUTHOR / 'clip-library.json'
+LABDATA = AUTHOR / 'package/mods/geno-lab/missions'  # gd.mod_read reads missions/ only
 CAVEAT = ('Unverified timing: static BAC frames at the LibXenoverse 60 fps export convention; BCM conditions are '
           'decoded, not executed; nothing here is observed in XV2 or in the game. Hitbox and cancel windows are '
           'source reference only, not Melee hitboxes.')
