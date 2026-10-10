@@ -2,39 +2,34 @@
 #include "window.h"
 #define WB_CORE_USE_LAUNCHER_T 1
 #include "commands.h"
+#include "blender_launch.h"
 #include "geno_data.h"
+#include "hub_panel.h"
+#include "mcp_server.h"
 #include "panels.h"
-#if __has_include("palette.h")
 #include "palette.h"
-#endif
 #include "session.h"
 #include "timeline.h"
-#include "viewport.h"
 #include "kit.h"
-#include "window.h"
 #include <QCheckBox>
 #include <QCloseEvent>
 #include <QComboBox>
-#include <QDateTime>
 #include <QDockWidget>
-#include <QElapsedTimer>
 #include <QFileInfo>
-#include <QFutureWatcher>
 #include <QHBoxLayout>
-#include <QImageReader>
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QLabel>
 #include <QQueue>
+#include <QScopedValueRollback>
 #include <QScrollArea>
 #include <QSemaphore>
 #include <QShortcut>
 #include <QSignalBlocker>
 #include <QStatusBar>
-#include <QThreadPool>
+#include <QThread>
 #include <QTimer>
 #include <QVBoxLayout>
-#include <QtConcurrent/QtConcurrentRun>
 #include <algorithm>
 #include <exception>
 #include <optional>
@@ -51,12 +46,13 @@ QString displayError(const QString &error) {
         return t("Engine not running", "Motor detenido");
     return t("Command failed: %1", "Error del comando: %1").arg(error);
 }
-// Created, called and destroyed on the same non-expiring, single-thread pool.
-// Starting remains lazy so a fighter can be inspected without a disc or engine.
+// The session, engine and MCP listener live on one event-loop thread. Start is
+// lazy, so an offline fighter can be inspected without a disc or game process.
 class ProjectEngine final : public EngineBackend {
 public:
     WorkbenchWindow::LaunchFactory factory;
     QString modId;
+    bool headless = true;
     std::unique_ptr<EngineLink> link;
     QJsonObject call(const QString &fn, const QJsonObject &args, QString *err) override {
         if (!link) { if (err) *err = "engine not running"; return {}; }
@@ -65,14 +61,20 @@ public:
     QString status() override { return link ? link->status() : QString("stopped"); }
     bool restart(QString *err) override {
         if (!link) {
-            auto launch = factory(); launch.modId = modId;
+            auto launch = factory(); launch.modId = modId; launch.headless = headless;
             link = std::make_unique<EngineLink>(std::move(launch));
         }
         return link->restart(err);
     }
+    void setHeadless(bool value) {
+        if (headless == value) return;
+        stop(); link.reset(); headless = value;
+    }
     void stop() { if (link) link->stop(); }
 };
 struct Snapshot {
+    bool valid = false, canStop = false, ownedEngine = false, headless = true;
+    QString projectDir, projectName, art, engineStatus, currentRow;
     QVector<RowInfo> rows;
     QVector<ClipInfo> clips;
     QMap<QString, QVector<HitboxRef>> hits;
@@ -81,17 +83,24 @@ struct Snapshot {
     QJsonArray fidelity;
     QString fidelityError;
 };
-struct Reply {
-    QJsonObject envelope;
-    Snapshot snapshot;
-    QDateTime renderStarted;
-};
+struct Reply { QJsonObject envelope; Snapshot snapshot; };
 struct Worker {
     Session *session = nullptr;
     QString projectDir;
     WorkbenchWindow::LaunchFactory factory;
+    QObject *context = nullptr;
     std::unique_ptr<ProjectEngine> engine;
     std::unique_ptr<Session> owned;
+    std::unique_ptr<McpServer> server;
+    std::function<void(const QString &, const QJsonObject &, const Reply &)> onRemote;
+    QQueue<std::function<void()>> pending;
+    bool calling = false, stopped = false;
+    void submit(std::function<void()> task) { pending.enqueue(std::move(task)); drain(); }
+    void drain() {
+        // ConsoleClient pumps events while waiting. A queued UI request must not
+        // enter the Session in the middle of a socket command (or its shutdown).
+        while (!calling && !pending.isEmpty()) { auto task = pending.dequeue(); task(); }
+    }
     void ensureSession() {
         if (session) return;
         engine = std::make_unique<ProjectEngine>(); engine->factory = factory;
@@ -100,8 +109,6 @@ struct Worker {
         if (!err.isEmpty()) { owned.reset(); engine.reset(); throw CommandError{err}; }
         engine->modId = owned->data().project().modId;
         registerAllCommands(*owned);
-        // Lifecycle of the process the UI owns, exposed through the same registry.
-        // This adds a command; it does not replace any Task 9/10 command.
         owned->registry().add({"engine_stop", t("Stop engine", "Detener motor"),
             {{"type", "object"}, {"properties", QJsonObject{}}}, false,
             [this](const QJsonObject &, CommandContext &) {
@@ -109,89 +116,118 @@ struct Worker {
             }});
         session = owned.get();
     }
-    Reply call(const QString &name, const QJsonObject &args) {
+    Snapshot snapshot() {
+        Snapshot value;
+        const auto &project = session->data().project();
+        value.projectDir = session->files().root(); value.projectName = project.id;
+        if (value.projectName.isEmpty()) value.projectName = QFileInfo(value.projectDir).fileName();
+        value.art = project.artBlend.isEmpty() ? project.artGlb : project.artBlend;
+        value.currentRow = session->currentRow;
+        value.engineStatus = session->engine() ? session->engine()->status() : QString("stopped");
+        value.canStop = session->registry().has("engine_stop"); value.ownedEngine = bool(engine);
+        if (engine) value.headless = engine->headless;
+        value.rows = session->data().rows(); value.clips = session->data().clips();
+        for (const auto &row : value.rows) value.hits.insert(row.name, session->data().hitboxes(row.name));
+        for (const auto &entry : session->history().entries()) {
+            auto metadata = entry; metadata.changes.clear(); value.history.append(metadata);
+        }
+        value.commands = session->registry().list();
+        // The GUI gets schemas only. Handlers retain worker-owned state.
+        for (auto &spec : value.commands) spec.run = {};
+        try {
+            const auto path = project.fidelity;
+            if (!path.isEmpty()) {
+                // A display refresh must not acknowledge a hand edit in FileStore.
+                FileStore reader(session->files().root()); QJsonParseError parse;
+                const auto doc = QJsonDocument::fromJson(reader.read(path), &parse);
+                if (parse.error != QJsonParseError::NoError || !doc.isObject() || !doc.object()["rows"].isArray())
+                    value.fidelityError = t("Invalid fidelity ledger", "Registro de fidelidad inválido");
+                else value.fidelity = doc.object()["rows"].toArray();
+            }
+        } catch (const CommandError &e) { value.fidelityError = e.message; }
+          catch (const std::exception &e) { value.fidelityError = QString::fromUtf8(e.what()); }
+        value.valid = true; return value;
+    }
+    Reply call(const QString &name, const QJsonObject &args, CommandContext *remote = nullptr,
+               std::optional<bool> headless = std::nullopt) {
         Reply result;
+        if (stopped || calling) {
+            result.envelope = failure(stopped ? t("Creator is closing", "El Creador se está cerrando") :
+                t("A command is already in progress", "Ya hay un comando en curso"));
+            return result;
+        }
+        QScopedValueRollback<bool> guard(calling, true);
         try {
             ensureSession();
-            CommandContext ctx{*session, "human", args.value("propose").toBool()};
-            if (name == "render_view") result.renderStarted = QDateTime::currentDateTimeUtc();
-            // Owner decision: reload means restart in v1. Do not change the
-            // parallel command lane's reload implementation or its interfaces.
-            result.envelope = session->registry().call(name == "reload" ? QString("engine_restart") : name, args, ctx);
-            if (result.envelope.value("ok").toBool() && (name == "reload" || name == "engine_restart")) {
+            if (headless && engine) engine->setHeadless(*headless);
+            CommandContext local{*session, "human", args.value("propose").toBool()};
+            // Preserve the GUI's restart-on-reload behavior. Blender uses the
+            // registry directly, including its explicit rebuild/reload stale flow.
+            const QString command = !remote && name == "reload" ? QString("engine_restart") : name;
+            result.envelope = session->registry().call(command, args, remote ? *remote : local);
+            if (!remote && result.envelope.value("ok").toBool() && (name == "reload" || name == "engine_restart")) {
                 const auto err = session->data().reload();
                 if (!err.isEmpty()) result.envelope = failure(err);
             }
-            result.snapshot.rows = session->data().rows();
-            result.snapshot.clips = session->data().clips();
-            for (const auto &row : result.snapshot.rows) result.snapshot.hits.insert(row.name, session->data().hitboxes(row.name));
-            for (const auto &entry : session->history().entries()) {
-                auto metadata = entry; metadata.changes.clear(); result.snapshot.history.append(metadata);
-            }
-            result.snapshot.commands = session->registry().list();
-            // The GUI palette lists schemas only. Handlers retain worker-owned state.
-            for (auto &spec : result.snapshot.commands) spec.run = {};
-            try {
-                const auto path = session->data().project().fidelity;
-                if (!path.isEmpty()) {
-                    // A display refresh must never acknowledge a hand edit in the
-                    // session's FileStore and thereby permit a later overwrite.
-                    FileStore reader(session->files().root());
-                    QJsonParseError parse;
-                    const auto doc = QJsonDocument::fromJson(reader.read(path), &parse);
-                    if (parse.error != QJsonParseError::NoError || !doc.isObject() || !doc.object()["rows"].isArray())
-                        result.snapshot.fidelityError = t("Invalid fidelity ledger", "Registro de fidelidad inválido");
-                    else result.snapshot.fidelity = doc.object()["rows"].toArray();
-                }
-            } catch (const CommandError &e) { result.snapshot.fidelityError = e.message; }
-              catch (const std::exception &e) { result.snapshot.fidelityError = QString::fromUtf8(e.what()); }
+            result.snapshot = snapshot();
         } catch (const CommandError &e) { result.envelope = failure(e.message); }
           catch (const std::exception &e) { result.envelope = failure(QString::fromUtf8(e.what())); }
           catch (...) { result.envelope = failure("unexpected command failure"); }
+        // Run deferred UI work after McpServer::handle has unwound its own guard.
+        QTimer::singleShot(0, context, [this] { drain(); });
         return result;
     }
+    quint16 serve(QString *err) {
+        if (stopped) return 0;
+        if (server) return server->localPort();
+        try {
+            ensureSession(); server = std::make_unique<McpServer>(*session); server->setAuthor("human");
+            server->setCommandRunner([this](const QString &name, const QJsonObject &args, CommandContext &ctx) {
+                const auto reply = call(name, args, &ctx);
+                if (onRemote) onRemote(name, args, reply);
+                return reply.envelope;
+            });
+            if (!server->listenLocal(0, err)) { server.reset(); return 0; }
+            return server->localPort();
+        } catch (const CommandError &e) { if (err) *err = e.message; }
+          catch (const std::exception &e) { if (err) *err = QString::fromUtf8(e.what()); }
+        return 0;
+    }
     void dispose() {
-        // Session history flush and all QObject destructors run on their owner thread.
+        QScopedValueRollback<bool> guard(calling, true);
+        stopped = true; server.reset(); onRemote = {};
+        // QObject destruction and the history flush run on their owning thread.
         if (owned) { session = nullptr; owned.reset(); }
         engine.reset();
     }
 };
 struct Request {
     QString name; QJsonObject args;
-    quint64 revision = 0, render = 0, rowIntent = 0, frameIntent = 0;
+    quint64 rowIntent = 0, frameIntent = 0;
     std::optional<int> restoreFrame;
+    std::optional<bool> headless;
 };
-bool changesView(const QString &name) {
-    return name == "set_frame" || name == "set_camera" || name == "set_overlays" ||
-           name == "load_row" || name == "play" || name == "preview_clip" ||
-           name == "reload" || name == "engine_restart" || name == "engine_stop" ||
-           name == "edit_hitbox" || name == "assign_clip" ||
-           name == "accept" || name == "undo" || name == "redo";
-}
 }
 
 struct WorkbenchWindow::Impl {
     WorkbenchWindow *q;
     std::shared_ptr<Worker> worker = std::make_shared<Worker>();
-    QThreadPool pool;
-    QFutureWatcher<Reply> watcher;
+    QThread thread;
+    QObject *workerContext;
     QQueue<Request> queue;
-    std::optional<Request> renderPending;
     Request active;
     bool running = false, closing = false, closeWindow = false, disposing = false, disposed = false;
-    quint64 revision = 0, renderNumber = 0, rowIntent = 0, frameIntent = 0;
-    bool captureTimedOut = false;
-    Viewport *viewport;
+    bool pendingBlenderOpen = false;
+    quint16 listenerPort = 0;
+    quint64 rowIntent = 0, frameIntent = 0;
+    HubPanel *hub;
     Timeline *timeline;
+    FrameInfo frameInfo; // only the timeline's frame readout; Blender owns the view
     QComboBox *rows, *speed;
     QCheckBox *loop;
-    kit::Button *play, *start, *stop;
-    QTimer pngTimer, playTimer;
-    QElapsedTimer pngClock;
-    QString pngPath, row;
-    QDateTime renderStarted;
-    QMap<QString, QPair<QDateTime, qint64>> seenPng;
-    quint64 pngRevision = 0, pngNumber = 0;
+    kit::Button *play;
+    QTimer playTimer;
+    QString row, blenderSetting;
     Snapshot snapshot;
     OutlinerPanel *outliner;
     InspectorPanel *inspector;
@@ -203,19 +239,32 @@ struct WorkbenchWindow::Impl {
     CommandRegistry paletteCommands;
     int selectedOrdinal = -1;
     bool clipPreview = false;
-    QJsonObject camera, overlays{{"hitboxes", true}, {"hurtboxes", false}, {"bones", false}, {"ecb", false}, {"floor", true}};
+    std::optional<int> restoringFrame;
 
     explicit Impl(WorkbenchWindow *window) : q(window) {
-        pool.setMaxThreadCount(1); pool.setExpiryTimeout(-1);
+        workerContext = new QObject;
+        workerContext->moveToThread(&thread); worker->context = workerContext;
+        QObject::connect(&thread, &QThread::finished, workerContext, &QObject::deleteLater);
+        worker->onRemote = [this](const QString &name, const QJsonObject &args, const Reply &reply) {
+            QMetaObject::invokeMethod(q, [this, name, args, reply] { remoteFinished(name, args, reply); }, Qt::QueuedConnection);
+        };
+        thread.start();
         q->setObjectName("workbenchWindow"); q->setWindowTitle(t("Creator", "Creador")); q->resize(1000, 760);
-        auto *body = new QWidget(q); body->setAutoFillBackground(true);
-        auto *layout = new QVBoxLayout(body); layout->setContentsMargins(0, 0, 0, 0); layout->setSpacing(atlas::px("s2"));
-        auto *engineRow = new QHBoxLayout; layout->addLayout(engineRow);
-        engineRow->addWidget(kit::capLabel(t("Engine", "Motor"), atlas::Role::Cap16));
-        start = addButton(engineRow, t("Start", "Iniciar"), [this] { q->runCommand("engine_restart", {}); }); start->setObjectName("wbStart");
-        stop = addButton(engineRow, t("Stop", "Detener"), [this] { setPlaying(false); q->runCommand("engine_stop", {}); }); stop->setObjectName("wbStop");
-        addButton(engineRow, t("Reload", "Recargar"), [this] { q->runCommand("reload", {}); });
-        engineRow->addStretch();
+        hub = new HubPanel(q); auto *layout = hub->bodyLayout();
+        QObject::connect(hub, &HubPanel::startRequested, q, [this] { q->runCommand("engine_restart", {}); });
+        QObject::connect(hub, &HubPanel::restartRequested, q, [this] { setPlaying(false); q->runCommand("engine_restart", {}); });
+        QObject::connect(hub, &HubPanel::stopRequested, q, [this] { setPlaying(false); q->runCommand("engine_stop", {}); });
+        QObject::connect(hub, &HubPanel::headlessChanged, q, [this](bool on) {
+            setPlaying(false); enqueue("engine_restart", {}, on);
+        });
+        QObject::connect(hub, &HubPanel::openInBlenderRequested, q, [this] {
+            setPlaying(false);
+            if (!blenderError().isEmpty()) { status(blenderError()); return; }
+            pendingBlenderOpen = true;
+            // A process can die while the hub is idle. Ask the worker for the
+            // current state before deciding whether Blender needs an engine start.
+            q->runCommand("engine_status", {});
+        });
         auto *rowLine = new QHBoxLayout; layout->addLayout(rowLine);
         rowLine->addWidget(kit::capLabel(t("Move", "Movimiento"), atlas::Role::Cap16));
         rows = new QComboBox; rows->setObjectName("wbRows"); rows->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -223,25 +272,6 @@ struct WorkbenchWindow::Impl {
         QObject::connect(rows, qOverload<int>(&QComboBox::activated), q, [this](int i) {
             selectRow(rows->itemData(i).toString());
         });
-        auto *views = new QHBoxLayout; layout->addLayout(views);
-        for (const auto &preset : QList<QPair<QString, QString>>{
-                 {"side", t("Side", "Lateral")}, {"front", t("Front", "Frontal")},
-                 {"top", t("Top", "Superior")}, {"three_quarter", t("Three quarter", "Tres cuartos")}})
-            addButton(views, preset.second, [this, key = preset.first] { q->runCommand("set_camera", {{"preset", key}}); });
-        views->addStretch();
-        auto *toggles = new QHBoxLayout; layout->addLayout(toggles);
-        for (const auto &overlay : QList<QPair<QString, QString>>{
-                 {"hitboxes", t("Hitboxes", "Cajas de golpe")}, {"hurtboxes", t("Hurtboxes", "Cajas de daño")},
-                 {"bones", t("Bones", "Huesos")}, {"ecb", t("ECB", "ECB")}, {"floor", t("Floor", "Suelo")}}) {
-            auto *toggle = new QCheckBox(overlay.second); toggle->setObjectName("wbOverlay_" + overlay.first);
-            toggle->setChecked(overlays.value(overlay.first).toBool()); toggles->addWidget(toggle);
-            QObject::connect(toggle, &QCheckBox::toggled, q, [this, key = overlay.first](bool on) {
-                overlays.insert(key, on); q->runCommand("set_overlays", overlays);
-            });
-        }
-        toggles->addStretch();
-        viewport = new Viewport; layout->addWidget(viewport, 1);
-        QObject::connect(viewport, &Viewport::cameraChanged, q, [this](const QJsonObject &value) { q->runCommand("set_camera", value); });
         timeline = new Timeline;
         auto *timelineScroll = new QScrollArea; timelineScroll->setWidgetResizable(true); timelineScroll->setFrameShape(QFrame::NoFrame);
         timelineScroll->setWidget(timeline); timelineScroll->setMinimumHeight(110); timelineScroll->setMaximumHeight(190);
@@ -256,10 +286,10 @@ struct WorkbenchWindow::Impl {
         speed->addItem(t("0.5x", "0.5x"), 0.5); speed->addItem(t("1x", "1x"), 1.0); speed->addItem(t("2x", "2x"), 2.0); speed->setCurrentIndex(1);
         transport->addWidget(speed); transport->addStretch();
         transport->addWidget(kit::capLabel(t("J / K / L: step, play, step", "J / K / L: cuadro, reproducir, cuadro"), atlas::Role::Body12, "muted"));
-        // Timeline handles its own keys. These shortcuts cover a focused viewport,
+        // Timeline handles its own keys. These shortcuts cover a focused hub,
         // without consuming letters typed into Task 16's inspector and palette.
         for (const auto &key : {Qt::Key_J, Qt::Key_K, Qt::Key_L, Qt::Key_Home, Qt::Key_End}) {
-            auto *shortcut = new QShortcut(QKeySequence(key), viewport); shortcut->setContext(Qt::WidgetShortcut);
+            auto *shortcut = new QShortcut(QKeySequence(key), hub); shortcut->setContext(Qt::WidgetShortcut);
             QObject::connect(shortcut, &QShortcut::activated, q, [this, key] {
                 if (key == Qt::Key_K) { setPlaying(!playTimer.isActive()); return; }
                 if (!timeline->frameCount()) return;
@@ -268,10 +298,8 @@ struct WorkbenchWindow::Impl {
                 timeline->setFrame(next); q->runCommand("set_frame", {{"frame", timeline->frame()}});
             });
         }
-        q->setCentralWidget(body); q->statusBar()->showMessage(t("Engine not running", "Motor detenido"));
+        q->setCentralWidget(hub); q->statusBar()->showMessage(t("Engine not running", "Motor detenido"));
         createPanels();
-        pngTimer.setInterval(50);
-        QObject::connect(&pngTimer, &QTimer::timeout, q, [this] { pollPng(); });
         playTimer.setInterval(16);
         QObject::connect(&playTimer, &QTimer::timeout, q, [this] {
             if (busy() || !timeline->frameCount()) return;
@@ -283,7 +311,6 @@ struct WorkbenchWindow::Impl {
                 q->runCommand("play", {{"frames", std::min(rate > 1 ? 2 : 1, timeline->frameCount() - 1 - timeline->frame())}, {"step", 1}});
             }
         });
-        QObject::connect(&watcher, &QFutureWatcher<Reply>::finished, q, [this] { finished(); });
     }
     kit::Button *addButton(QBoxLayout *layout, const QString &text, std::function<void()> fn) {
         auto *button = new kit::Button(text); layout->addWidget(button);
@@ -380,8 +407,6 @@ struct WorkbenchWindow::Impl {
         outliner->setSelection(row, selectedOrdinal);
         const auto *hit = selectedHitbox();
         if (hit) inspector->showHitbox(row, *hit); else { selectedOrdinal = -1; inspector->clear(); }
-        if (hit && !clipPreview) viewport->setSelectedHitbox(hit->slot, hit->startFrame, hit->endFrame);
-        else viewport->setSelectedHitbox(-1);
         QString currentClip; QVector<int> motions;
         for (const auto &entry : snapshot.rows) if (entry.name == row) { currentClip = entry.effectiveClip(); motions = entry.motions; break; }
         clips->setClips(snapshot.clips, currentClip); fidelity->setFidelity(snapshot.fidelity, row, motions);
@@ -394,23 +419,47 @@ struct WorkbenchWindow::Impl {
         if (!found || closing) return;
         setPlaying(false); row = name; selectedOrdinal = ordinal; clipPreview = false;
         const QSignalBlocker block(rows); rows->setCurrentIndex(rows->findData(row));
-        viewport->setFrameInfo({}); updateTimeline(); refreshSelection();
+        frameInfo = {}; timeline->setFrame(0); updateTimeline(); refreshSelection();
         const auto *hit = selectedHitbox(); restoringFrame = hit ? hit->startFrame : 0;
         q->runCommand("load_row", {{"row", row}});
     }
-    bool busy() const { return running || !queue.isEmpty() || renderPending.has_value() || pngTimer.isActive(); }
+    bool busy() const { return running || !queue.isEmpty(); }
     void setPlaying(bool on) {
         on = on && timeline->frameCount() > 0 && !closing;
         if (on) playTimer.start(); else playTimer.stop();
         timeline->setPlaying(on); play->setText(on ? t("Pause", "Pausar") : t("Play", "Jugar"));
     }
     void status(const QString &text) { q->statusBar()->showMessage(text); }
-    void notifyBusy() { emit q->busyChanged(busy()); }
-    void enqueue(const QString &name, const QJsonObject &args) {
-        if (closing) return;
-        if (changesView(name)) {
-            ++revision; renderPending.reset();
+    QString blenderError() const {
+        const auto blender = findBlender(blenderSetting, QProcessEnvironment::systemEnvironment());
+        if (blender.isEmpty()) return t("Blender not found: set GW_BLENDER or the Blender path in Settings",
+            "No se encontro Blender: define GW_BLENDER o la ruta de Blender en Ajustes");
+        const auto addon = findAddonDir(snapshot.projectDir);
+        if (addon.isEmpty()) return t("Workbench Blender add-on not found in this project's checkout",
+            "No se encontro el complemento de Blender en el repositorio de este proyecto");
+        if (snapshot.art.isEmpty()) return t("Set art_blend or art_glb in workbench.json to open the fighter",
+            "Define art_blend o art_glb en workbench.json para abrir el luchador");
+        return blenderCommand(blender, addon, snapshot.projectDir, 1, snapshot.art).error;
+    }
+    void notifyBusy() {
+        hub->setControls(busy() || closing, snapshot.canStop, snapshot.ownedEngine, blenderError());
+        emit q->busyChanged(busy());
+    }
+    void openBlender() {
+        const auto error = blenderError();
+        if (!error.isEmpty()) { status(error); return; }
+        const quint16 port = q->serveForBlender(); if (!port) return;
+        const auto command = blenderCommand(findBlender(blenderSetting, QProcessEnvironment::systemEnvironment()),
+            findAddonDir(snapshot.projectDir), snapshot.projectDir, port, snapshot.art);
+        if (!command.error.isEmpty()) { status(command.error); return; }
+        if (!QProcess::startDetached(command.program, command.args)) {
+            status(t("Could not start Blender. Check the Blender path in Settings.",
+                "No se pudo iniciar Blender. Revisa la ruta de Blender en Ajustes.")); return;
         }
+        status(t("Blender opened; workbench port %1", "Blender abierto; puerto del banco de trabajo %1").arg(port));
+    }
+    void enqueue(const QString &name, const QJsonObject &args, std::optional<bool> headless = std::nullopt) {
+        if (closing) return;
         if (name == "edit_hitbox" || name == "assign_clip" || name == "accept" || name == "undo" || name == "redo")
             setPlaying(false);
         if (name == "load_row") {
@@ -420,50 +469,51 @@ struct WorkbenchWindow::Impl {
                 if (row != requested) selectedOrdinal = -1;
                 row = requested; break;
             }
-            viewport->setFrameInfo({}); refreshSelection();
+            frameInfo = {}; refreshSelection();
         }
-        if (name == "preview_clip") { clipPreview = true; viewport->setSelectedHitbox(-1); }
+        if (name == "preview_clip") clipPreview = true;
         if (name == "set_frame" || name == "play" || name == "preview_clip") ++frameIntent;
-        Request request{name, args, revision, 0, rowIntent, frameIntent, std::nullopt};
+        Request request{name, args, rowIntent, frameIntent, std::nullopt, headless};
         if (name == "load_row") request.restoreFrame = std::exchange(restoringFrame, std::nullopt);
-        if (name == "render_view" && captureTimedOut) {
-            status(captureError()); emit q->commandFinished(name, failure(captureError())); return;
-        }
-        if (name == "render_view") {
-            request.render = ++renderNumber; renderPending = request;
-        } else {
-            // Preserve edit order; only consecutive seeks are disposable.
-            if (!queue.isEmpty() && queue.back().name == name && name == "set_frame") queue.back() = request;
-            else queue.enqueue(request);
-        }
+        // Preserve edits and explicit debug commands; only consecutive seeks are disposable.
+        if (!queue.isEmpty() && queue.back().name == name && name == "set_frame") queue.back() = request;
+        else queue.enqueue(request);
         pump(); notifyBusy();
     }
-    QString captureError() const {
-        return t("Screenshot timed out. Restart the engine to capture again.", "La captura agotó el tiempo de espera. Reinicia el motor para capturar de nuevo.");
-    }
-    void requestRender() {
-        if (captureTimedOut) { status(captureError()); return; }
-        if (closing || renderPending) return; // keep the latest explicit dimensions
-        renderPending = Request{"render_view", {{"w", std::max(1, viewport->width())}, {"h", std::max(1, viewport->height())}}, revision, ++renderNumber};
-    }
     void pump() {
-        if (running || pngTimer.isActive()) return;
+        if (running) return;
         if (closing) { dispose(); return; }
-        if (!queue.isEmpty()) active = queue.dequeue();
-        else if (renderPending) { active = *renderPending; renderPending.reset(); }
-        else { notifyBusy(); return; }
-        running = true;
-        if (active.name != "render_view") status(t("Working…", "Procesando…"));
+        if (queue.isEmpty()) {
+            if (pendingBlenderOpen) { pendingBlenderOpen = false; openBlender(); }
+            notifyBusy(); return;
+        }
+        active = queue.dequeue(); running = true;
+        status(t("Working…", "Procesando…"));
+        if (active.name == "engine_restart" || active.name == "reload") hub->setEngineStatus("starting");
         const auto request = active;
-        watcher.setFuture(QtConcurrent::run(&pool, [state = worker, request] { return state->call(request.name, request.args); }));
+        QMetaObject::invokeMethod(workerContext, [this, state = worker, request] {
+            state->submit([this, state, request] {
+                const auto result = state->call(request.name, request.args, nullptr, request.headless);
+                QMetaObject::invokeMethod(q, [this, result] { finished(result); }, Qt::QueuedConnection);
+            });
+        }, Qt::QueuedConnection);
     }
     void dispose() {
         if (disposed || disposing) return;
         disposing = true; running = true;
-        watcher.setFuture(QtConcurrent::run(&pool, [state = worker] { state->dispose(); return Reply{}; }));
+        QMetaObject::invokeMethod(workerContext, [this, state = worker] {
+            state->submit([this, state] {
+                state->dispose();
+                QMetaObject::invokeMethod(q, [this] { finished(Reply{}); }, Qt::QueuedConnection);
+            });
+        }, Qt::QueuedConnection);
     }
     void refresh(const Snapshot &value) {
+        if (!value.valid) return;
         snapshot = value;
+        int hitboxes = 0; for (const auto &hits : snapshot.hits) hitboxes += int(hits.size());
+        hub->setProject(snapshot.projectName, int(snapshot.rows.size()), hitboxes);
+        hub->setEngineStatus(snapshot.engineStatus); hub->setHeadless(snapshot.headless);
         QSignalBlocker block(rows); rows->clear();
         for (const auto &r : snapshot.rows) rows->addItem(r.name, r.name);
         int selected = rows->findData(row); if (selected < 0 && rows->count()) selected = 0;
@@ -489,8 +539,7 @@ struct WorkbenchWindow::Impl {
         timeline->setRange(frames); timeline->setBars(bars);
         timeline->setMinimumHeight(timeline->sizeHint().height());
     }
-    void finished() {
-        const Reply result = watcher.result();
+    void finished(const Reply &result) {
         if (disposing) {
             disposed = true; disposing = false; running = false; notifyBusy(); emit q->shutdownFinished();
             if (closeWindow) q->close();
@@ -503,17 +552,14 @@ struct WorkbenchWindow::Impl {
         const bool ok = reply.value("ok").toBool();
         const auto value = reply.value("result").toObject();
         if (!ok) {
-            setPlaying(false); status(displayError(reply.value("error").toString()));
-        } else if (completed.name == "render_view") {
-            // Even superseded captures must finish before the next render: the
-            // engine writes every screenshot to the same view.png path.
-            pngPath = value.value("path").toString(); renderStarted = result.renderStarted;
-            pngRevision = completed.revision; pngNumber = completed.render;
-            if (pngPath.isEmpty()) status(t("Screenshot path missing", "Falta la ruta de la captura"));
-            else { pngClock.start(); pngTimer.start(); status(t("Waiting for screenshot…", "Esperando captura…")); }
+            pendingBlenderOpen = false; setPlaying(false); status(displayError(reply.value("error").toString()));
         } else {
             const QString warning = value.value("warning").toString();
             status(warning.isEmpty() ? t("Ready", "Ready") : t("Warning: %1", "Aviso: %1").arg(warning));
+            if (completed.name == "engine_status" && pendingBlenderOpen) {
+                const auto state = value.value("status").toString();
+                if (state != "ready" && state != "running") q->runCommand("engine_restart", {});
+            }
             if (completed.name == "load_row" && completed.rowIntent == rowIntent) {
                 row = completed.args.value("row").toString(); refresh(result.snapshot);
                 if (completed.frameIntent == frameIntent)
@@ -531,80 +577,54 @@ struct WorkbenchWindow::Impl {
                     restoringFrame = timeline->frame(); q->runCommand("load_row", {{"row", row}});
                 }
             }
-            if (completed.name == "set_camera") {
-                if (completed.args.contains("preset")) camera = completed.args;
-                else for (auto it = completed.args.begin(); it != completed.args.end(); ++it) camera.insert(it.key(), it.value());
-                viewport->setCamera(camera);
-            }
-            if (completed.name == "set_overlays") {
-                for (auto it = completed.args.begin(); it != completed.args.end(); ++it) {
-                    overlays.insert(it.key(), it.value()); viewport->setOverlay(it.key(), it.value().toBool());
-                }
-            }
             if (value.contains("frame") && completed.rowIntent == rowIntent && completed.frameIntent == frameIntent) {
-                const FrameInfo fi = FrameInfo::fromJson(value); timeline->setFrame(fi.frame); viewport->setFrameInfo(fi);
+                frameInfo = FrameInfo::fromJson(value); timeline->setFrame(frameInfo.frame);
             }
             if ((completed.name == "edit_hitbox" || completed.name == "assign_clip" || completed.name == "accept" ||
                  completed.name == "undo" || completed.name == "redo") && value.value("applied").toBool()) {
                 problems->setProblems({}); q->runCommand("reload", {});
             } else if (completed.name == "reload" || completed.name == "engine_restart") {
-                captureTimedOut = false; seenPng.clear();
                 const int f = timeline->frame();
-                q->runCommand("set_overlays", overlays);
-                if (!camera.isEmpty()) q->runCommand("set_camera", camera);
                 if (!row.isEmpty()) {
                     // load_row's normal follow-up seeks zero. Restore the selection
                     // explicitly via a flag on the UI request, never in command args.
                     restoringFrame = f;
                     q->runCommand("load_row", {{"row", row}});
-                } else requestRender();
+                }
             } else if (completed.name == "engine_stop") {
-                viewport->setImage({}); status(t("Engine not running", "Motor detenido"));
-            } else if (changesView(completed.name) && completed.name != "edit_hitbox" && completed.name != "assign_clip") {
-                requestRender();
+                frameInfo = {}; status(t("Engine not running", "Motor detenido"));
             }
         }
         emit q->commandFinished(completed.name, reply);
         running = false;
         pump(); notifyBusy();
     }
-    std::optional<int> restoringFrame;
-    void pollPng() {
-        if (closing) { pngTimer.stop(); pump(); notifyBusy(); return; }
-        const QFileInfo file(pngPath);
-        const auto stamp = qMakePair(file.lastModified().toUTC(), file.size());
-        const bool fresh = file.isFile() && stamp.first >= renderStarted &&
-                           (!seenPng.contains(pngPath) || seenPng.value(pngPath) != stamp);
-        if (fresh) {
-            QImageReader reader(pngPath, "PNG");
-            const QSize size = reader.size();
-            // Bound memory on corrupt engine output; normal render resolutions fit.
-            if (size.isValid() && qint64(size.width()) * size.height() <= 64 * 1024 * 1024) {
-                const QImage image = reader.read();
-                if (!image.isNull()) {
-                    if (pngRevision == revision && pngNumber == renderNumber) {
-                        viewport->setImage(image);
-                        status(t("Frame %1", "Cuadro %1").arg(timeline->frame()));
-                    }
-                    seenPng.insert(pngPath, stamp); pngTimer.stop(); pump(); notifyBusy(); return;
+    void remoteFinished(const QString &name, const QJsonObject &args, const Reply &reply) {
+        if (closing) return;
+        if (reply.snapshot.valid && !reply.snapshot.currentRow.isEmpty()) row = reply.snapshot.currentRow;
+        refresh(reply.snapshot);
+        const auto value = reply.envelope.value("result").toObject();
+        if (reply.envelope.value("ok").toBool()) {
+            if (value.contains("frame")) { frameInfo = FrameInfo::fromJson(value); timeline->setFrame(frameInfo.frame); }
+            if (value.value("applied").toBool()) problems->setProblems({});
+            if (name == "run_checks") {
+                QVector<Problem> found;
+                for (const auto &item : value.value("problems").toArray()) {
+                    const auto p = item.toObject();
+                    found.append({p["kind"].toString(), p["row"].toString(), p["message"].toString(), p["ordinal"].toInt(-1)});
                 }
+                problems->setProblems(found);
             }
-        }
-        if (pngClock.elapsed() >= 3000) {
-            pngTimer.stop(); setPlaying(false); captureTimedOut = true;
-            // A timed-out write may still arrive. The shared capture path cannot
-            // be attributed again until restart cancels the old game's capture.
-            if (renderPending) {
-                renderPending.reset(); emit q->commandFinished("render_view", failure(captureError()));
-            }
-            status(captureError()); pump(); notifyBusy();
-        }
+        } else status(displayError(reply.envelope.value("error").toString()));
+        // Socket edits stay stale until Blender asks for rebuild/reload. Never
+        // synthesize GUI follow-up commands or restart the engine here.
+        Q_UNUSED(args);
+        emit q->commandFinished(name, reply.envelope); notifyBusy();
     }
 };
 
 WorkbenchWindow::WorkbenchWindow(Session &s, QWidget *parent) : QMainWindow(parent), d_(std::make_unique<Impl>(this)) {
     d_->worker->session = &s;
-    d_->stop->setEnabled(s.registry().has("engine_stop"));
     runCommand("list_rows", {});
 }
 WorkbenchWindow::WorkbenchWindow(const QString &projectDir, LaunchFactory launch, QWidget *parent)
@@ -613,25 +633,35 @@ WorkbenchWindow::WorkbenchWindow(const QString &projectDir, LaunchFactory launch
     runCommand("open_fighter", {{"path", projectDir}});
 }
 WorkbenchWindow::~WorkbenchWindow() {
-    d_->pngTimer.stop(); d_->playTimer.stop();
-    disconnect(&d_->watcher, nullptr, this, nullptr);
-    // Launcher shutdown is asynchronous. This final guard also protects borrowed
-    // stack sessions when a caller destroys a window without closing it first.
-    // Do not waitForDone before disposal: it destroys the pool thread. Do not
-    // wait on a QFuture either: QtConcurrent may steal queued work onto the
-    // waiting (GUI) thread. A semaphore lets the worker run its own destructors.
+    d_->closing = true; d_->playTimer.stop();
+    // The async close path normally disposed already. Also protect borrowed
+    // stack sessions when a caller destroys a window directly. A semaphore lets
+    // a currently pumping socket call finish before its Session is destroyed.
     QSemaphore disposed;
-    (void)QtConcurrent::run(&d_->pool, [state = d_->worker, &disposed] { state->dispose(); disposed.release(); });
-    disposed.acquire();
-    d_->pool.waitForDone();
+    QMetaObject::invokeMethod(d_->workerContext, [state = d_->worker, &disposed] {
+        state->submit([state, &disposed] { state->dispose(); disposed.release(); });
+    }, Qt::QueuedConnection);
+    disposed.acquire(); d_->thread.quit(); d_->thread.wait();
 }
 void WorkbenchWindow::runCommand(const QString &name, const QJsonObject &args) { d_->enqueue(name, args); }
+void WorkbenchWindow::setBlenderSetting(const QString &path) { d_->blenderSetting = path; d_->notifyBusy(); }
+quint16 WorkbenchWindow::serveForBlender() {
+    if (d_->closing) return 0;
+    if (d_->listenerPort) return d_->listenerPort;
+    if (d_->busy()) { d_->status(t("Wait for the current command before opening Blender", "Espera a que termine el comando antes de abrir Blender")); return 0; }
+    QString error; quint16 port = 0;
+    // No engine calls or other UI work are in flight; this only binds loopback.
+    QMetaObject::invokeMethod(d_->workerContext, [&] { port = d_->worker->serve(&error); }, Qt::BlockingQueuedConnection);
+    d_->listenerPort = port;
+    if (!port) d_->status(t("Cannot start the Blender listener: %1", "No se puede iniciar la conexion de Blender: %1").arg(error));
+    return port;
+}
 QString WorkbenchWindow::statusText() const { return statusBar()->currentMessage(); }
 bool WorkbenchWindow::isBusy() const { return d_->busy(); }
 bool WorkbenchWindow::shutdownComplete() const { return d_->disposed; }
 void WorkbenchWindow::shutdown() {
     if (d_->closing) return;
-    d_->closing = true; d_->setPlaying(false); d_->pngTimer.stop(); d_->queue.clear(); d_->renderPending.reset();
+    d_->closing = true; d_->setPlaying(false); d_->queue.clear(); d_->pendingBlenderOpen = false;
     d_->status(t("Stopping Creator…", "Deteniendo Creador…")); d_->pump(); d_->notifyBusy();
 }
 void WorkbenchWindow::closeEvent(QCloseEvent *event) {

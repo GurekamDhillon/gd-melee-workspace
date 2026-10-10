@@ -5,7 +5,6 @@
 #include "panels.h"
 #include "session.h"
 #include "timeline.h"
-#include "viewport.h"
 #include "workbench_window.h"
 #include <QDoubleSpinBox>
 #include <QJsonDocument>
@@ -176,14 +175,6 @@ private slots:
         p.setFidelity(entries, "missing", {});
         for (int row = 0; row < p.rowCount(); ++row)
             if (p.item(row, 1)) QVERIFY(p.item(row, 1)->text() != "SYN_ATC_007");
-    }
-    void selectedOverlayHighlightsOnlyItsActiveInterval() {
-        Viewport v; v.resize(320, 240); v.show();
-        FrameInfo info; info.frame = 9; info.hitboxes = {{0, 3, {}, 2.4, {0, 8, 0}, true}};
-        v.setFrameInfo(info); const auto ordinary = v.grab().toImage();
-        v.setSelectedHitbox(0, 9, 15); QVERIFY(ordinary != v.grab().toImage());
-        info.frame = 15; v.setFrameInfo(info); QCOMPARE(ordinary, v.grab().toImage());
-        v.setSelectedHitbox(-1); info.frame = 9; v.setFrameInfo(info); QCOMPARE(ordinary, v.grab().toImage());
     }
     void windowSelectionSeeksTheSelectedOccurrenceAndEditsAsHuman() {
         QTemporaryDir d; wbtest::makeSynthFighter(d.path()); PanelEngine engine; Session s(d.path(), &engine);

@@ -362,7 +362,30 @@ bool EngineLink::startImpl(QString *err) {
                 if (generation != stopGeneration_) { console_.close(); setError(err, "engine start cancelled"); return false; }
                 if (process_.state() != QProcess::Running) return fail("engine exited while loading the fighter");
                 const auto probe = console_.call("=wb.frame_info()", std::min(3000, remaining(timer, 60000)));
-                if (probe.ok && !probe.text.trimmed().isEmpty()) { state_ = "ready"; setError(err, {}); return true; }
+                if (probe.ok && !probe.text.trimmed().isEmpty()) {
+                    // The fighter exists while the scene's entry still plays unpaused (about a second). A frame
+                    // request made then can stay pending for good, so wait for the workbench's own pause.
+                    QElapsedTimer pauseWait; pauseWait.start();
+                    while (remaining(pauseWait, 15000) && remaining(timer, 60000)) {
+                        if (generation != stopGeneration_) { console_.close(); setError(err, "engine start cancelled"); return false; }
+                        if (process_.state() != QProcess::Running) return fail("engine exited while loading the fighter");
+                        const auto paused = console_.call("=tostring(gd.paused())", std::min(2000, remaining(timer, 60000)));
+                        if (paused.ok && paused.text.trimmed().startsWith("true")) break;
+                        pumpFor(std::min(100, remaining(timer, 60000)));
+                    }
+                    // The scene pauses the fighter in Fall, still above the floor. Run it a few frames so it lands
+                    // in Wait: ground rows start from a standing fighter on the floor (the engine records that
+                    // pose as its home).
+                    console_.call("=wb.step({n=30})", std::min(3000, remaining(timer, 60000)));
+                    QElapsedTimer landing; landing.start();
+                    while (remaining(landing, 5000) && remaining(timer, 60000)) {   // best effort: never block start-up
+                        QString serr;
+                        const auto info = request("frame_info", {}, std::min(3000, remaining(timer, 60000)), &serr);
+                        if (!serr.isEmpty() || info.value("frame").toDouble(-1) >= 1) break;
+                        pumpFor(std::min(50, remaining(timer, 60000)));
+                    }
+                    state_ = "ready"; setError(err, {}); return true;
+                }
                 lastReply = probe.text;
                 pumpFor(std::min(250, remaining(timer, 60000)));
             }
@@ -493,16 +516,52 @@ QJsonObject EngineLink::call(const QString &fn, const QJsonObject &args, QString
         const auto frame = o.value("frame");
         return frame.isDouble() && frame.toDouble() == wanted.toDouble();
     };
-    if (!pending && matches(result)) return result;
+    // The engine answers frame_info with frame -1 while the request is pending. Any other frame is the
+    // finished request: if it is not the wanted one the move ended (or chained into another action) before
+    // that frame, so say so now instead of polling until the timeout.
+    const int motion = args.value("motion").toInt(-1);
+    auto settle = [&](const QJsonObject &o, QString *why) {
+        if (matches(o)) { lastGoodFrame_[motion] = std::max(lastGoodFrame_.value(motion), int(wanted.toDouble())); return true; }
+        const auto frame = o.value("frame");
+        if (!frame.isDouble() || frame.toDouble() < 1) return false; // still pending
+        const int last = lastGoodFrame_.value(motion, 0);
+        *why = QString("frame %1 is past the end of this move (the fighter is at frame %2 of action %3%4)")
+            .arg(int(wanted.toDouble())).arg(int(frame.toDouble())).arg(o.value("motion").toInt(-1))
+            .arg(last > 0 ? QString("; last frame %1").arg(last) : QString());
+        return true;
+    };
+    QString why;
+    if (!pending && settle(result, &why)) {
+        if (why.isEmpty()) return result;
+        setError(err, why); return {};
+    }
+    // A request issued while a freshly started engine is still settling can stay pending for good; a new
+    // wb.frame supersedes it. So if the first window passes without an answer, ask again once.
+    bool resent = false;
+    int window = 2500;
     QElapsedTimer polling; polling.start();
-    while (remaining(polling, 5000) && remaining(timer, timeoutMs_)) {
-        const int left = std::min(remaining(polling, 5000), remaining(timer, timeoutMs_));
-        pumpFor(std::min(50, left));
-        const int callBudget = std::min(remaining(polling, 5000), remaining(timer, timeoutMs_));
-        if (!callBudget) break;
-        result = request("frame_info", {}, callBudget, &error);
+    for (;;) {
+        while (remaining(polling, window) && remaining(timer, timeoutMs_)) {
+            const int left = std::min(remaining(polling, window), remaining(timer, timeoutMs_));
+            pumpFor(std::min(50, left));
+            const int callBudget = std::min(remaining(polling, window), remaining(timer, timeoutMs_));
+            if (callBudget < 200) break; // a console call cut short by its budget would drop the connection
+            result = request("frame_info", {}, callBudget, &error);
+            if (!error.isEmpty()) { setError(err, error); return {}; }
+            if (settle(result, &why)) {
+                if (why.isEmpty()) return result;
+                setError(err, why); return {};
+            }
+        }
+        if (resent || !remaining(timer, timeoutMs_)) break;
+        resent = true; window = 5000; polling.restart();
+        bool again = false;
+        result = request(fn, args, std::min(timeoutMs_, remaining(timer, timeoutMs_)), &error, &again);
         if (!error.isEmpty()) { setError(err, error); return {}; }
-        if (matches(result)) return result;
+        if (!again && settle(result, &why)) {
+            if (why.isEmpty()) return result;
+            setError(err, why); return {};
+        }
     }
     setError(err, "timeout waiting for requested frame");
     return {};

@@ -133,7 +133,7 @@ QJsonObject McpServer::handle(const QJsonObject &request) {
     // Do not trust the caller's propose:false, or a UI change to session policy.
     session_.agentProposals = propose_;
     CommandContext context{session_, author_, propose_};
-    return result(toolResult(session_.registry().call(name, args, context)));
+    return result(toolResult(runner_ ? runner_(name, args, context) : session_.registry().call(name, args, context)));
 }
 
 QByteArray McpServer::handleLine(const QByteArray &line) {

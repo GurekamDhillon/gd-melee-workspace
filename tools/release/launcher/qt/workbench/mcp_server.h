@@ -3,10 +3,13 @@
 #include <QJsonObject>
 #include <QString>
 #include <QTcpServer>
+#include <functional>
+#include <utility>
 
 namespace wb {
 class Session;
 struct CommandSpec;
+struct CommandContext;
 
 // Default author "agent": every call is a proposal and history operations are refused. setAuthor("human")
 // (the Blender add-on / hub socket, --serve) applies edits directly and allows undo/redo/accept/reject.
@@ -23,10 +26,16 @@ public:
     quint16 localPort() const;
     void setAuthor(const QString &author);
     QString author() const { return author_; }
+    // Optional owner-thread runner for a hub sharing its Session with the UI.
+    // Validation, author/proposal policy and the RPC reentrancy guard stay here.
+    // The runner returns the registry envelope and must contain command errors.
+    using CommandRunner = std::function<QJsonObject(const QString &, const QJsonObject &, CommandContext &)>;
+    void setCommandRunner(CommandRunner runner) { runner_ = std::move(runner); }
     static QJsonObject toolSchema(const CommandSpec &spec);
 
 private:
     Session &session_;
+    CommandRunner runner_;
     QTcpServer server_;
     bool calling_ = false;
     QString author_ = "agent";

@@ -58,6 +58,7 @@ _ROLE_JOINT = {
     "HAND_R": 8,
 }
 _CLIPS = {"wait": "Wait", "jab": "Attack11", "dair": "AttackAirLw"}
+ROW_FRAMES = {"wait": 40, "jab": 30, "dair": 39}
 _TOOLS = (
     "engine_status",
     "engine_restart",
@@ -587,6 +588,7 @@ class FakeWorkbench:
                         "clip": clip,
                         "aerial": row == "dair",
                         "hitboxes": len(self._source[row]),
+                        "frames": ROW_FRAMES[row],
                     }
                     for row, clip in _CLIPS.items()
                 ]
@@ -596,7 +598,15 @@ class FakeWorkbench:
             self.frame = 1
             return self._frame_info()
         if tool == "set_frame":
-            self.frame = _integer(args.get("frame"), "frame", 1)
+            wanted = _integer(args.get("frame"), "frame", 1)
+            length = ROW_FRAMES.get(self.current_row)
+            if length is not None and wanted > length:
+                # what the real server says once the move has ended (it used to hang until a timeout)
+                raise ValueError(
+                    f"frame {wanted} is past the end of this move (the fighter is at frame 1 "
+                    f"of action 29; last frame {length})"
+                )
+            self.frame = wanted
             return self._frame_info()
         if tool == "play":
             frames = _integer(args.get("frames", 1), "frames")

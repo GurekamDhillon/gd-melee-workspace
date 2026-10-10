@@ -74,6 +74,8 @@ void CommandPalette::refresh(const QString &query) {
     for (const auto &command : filter(commands_, query)) {
         QString text = command.description.isEmpty()
             ? command.name : t("%1 — %2", "%1 — %2").arg(command.name, command.description);
+        if (command.name == "set_camera" || command.name == "set_overlays" || command.name == "render_view")
+            text = t("Debug — %1", "Depuración — %1").arg(text);
         if (command.mutating) text += t(" [modifies project]", " [modifica el proyecto]");
         auto *item = new QListWidgetItem(text, list_);
         item->setData(Qt::UserRole, command.name);

@@ -144,6 +144,21 @@ def shutdown():
     return success
 
 
+def server_answers(port, timeout=2.0):
+    """True when something on 127.0.0.1:port speaks the workbench protocol (engine_status)."""
+    if not isinstance(port, int) or not 1 <= port <= 65535:
+        return False
+    probe = client.McpClient(host="127.0.0.1", port=port, timeout=timeout)
+    try:
+        probe.connect()
+        probe.call("engine_status")
+        return True
+    except (client.WbError, OSError, ValueError):
+        return False
+    finally:
+        probe.close()
+
+
 def _project_root(project):
     for directory in (project, *project.parents):
         if (directory / ".git").exists():
@@ -187,6 +202,13 @@ class GENO_WB_OT_start_server(bpy.types.Operator):
                 raise client.WbError(STRINGS["server_already_running"])
             if value.connected:
                 raise client.WbError(STRINGS["disconnect_first"])
+            if settings.port and server_answers(int(settings.port)):
+                # A server (e.g. launch_goku's) is already up on this port: use it, do not start a second
+                # launcher that has no engine.
+                success = value.set_status(
+                    STRINGS["server_reused"].format(port=int(settings.port))
+                )
+                return _finish(self, context, success)
             if not settings.project.strip():
                 raise client.WbError(STRINGS["project_required"])
             project = Path(bpy.path.abspath(settings.project)).expanduser().resolve()
@@ -373,6 +395,11 @@ class GENO_WB_OT_play(bpy.types.Operator):
         if _active_player is not None:
             stop_playback()
             return _finish(self, context, value.set_status(STRINGS["play_paused"]))
+        if value.row_frames() == 1 and value.frame >= 1:
+            return _finish(
+                self, context,
+                value.set_status(STRINGS["play_end"].format(frame=value.frame)),
+            )
         if value.pending_frame is not None and not value.flush_pending():
             _cancel_scrub()
             return _finish(self, context, False)
@@ -425,7 +452,19 @@ class GENO_WB_OT_play(bpy.types.Operator):
         if self._settings.frame >= 600 or value.frame >= 600:
             self._stop()
             return _finish(self, context, value.set_status(STRINGS["play_limit"]))
-        if not value.step(1):
+        limit = value.row_frames()
+        if limit and value.frame >= limit:
+            # a one-frame move has nothing to play or loop: stop instead of resending the same frame
+            if limit <= 1 or not self._settings.loop:
+                self._stop()
+                return _finish(
+                    self, context,
+                    value.set_status(STRINGS["play_end"].format(frame=value.frame)),
+                )
+            ok = value.set_frame(1)    # the move ended: start it again
+        else:
+            ok = value.step(1)
+        if not ok:
             self._stop()
             return _finish(self, context, False)
         props.sync_from_session(value, self._settings)
