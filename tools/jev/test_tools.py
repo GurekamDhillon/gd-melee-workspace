@@ -36,7 +36,7 @@ class ToolTests(unittest.TestCase):
         text = "heartbeat retrace=10 presented=10\nheartbeat retrace=20 presented=20\n"
         self.assertEqual(triage_run.classify(row, text, offline=True)["choice"], "harness_artifact")
         self.assertEqual(triage_run.classify(row, text + "FATAL access violation", offline=True)["choice"], "real_bug")
-        self.assertEqual(triage_run.classify(row, text.replace("presented=20", "presented=10"), offline=True)["choice"], "real_bug")
+        self.assertEqual(triage_run.classify(row, text.replace("presented=20", "presented=10"), offline=True)["choice"], "needs_human")
 
     def test_log_payload_is_bounded_and_retains_crash_tail(self):
         (self.root / "melee-pc.log").write_text("x" * 20000)

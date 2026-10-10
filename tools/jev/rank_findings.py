@@ -6,9 +6,10 @@ import re
 import sys
 
 try:
-    from . import jev
+    from . import jev, confidence
 except ImportError:
     import jev
+    import confidence
 
 RUBRIC = ["Cosmetic only", "Wrong gameplay result", "Stuck player or blocked play", "Online desync", "Crash or data loss"]
 
@@ -31,6 +32,7 @@ def rank(text, *, offline=False, timeout=8.0):
                        stub_values={str(i): jev.impact(r["text"]) for i, r in enumerate(rows)})
     for i, row in enumerate(rows):
         row["jev"] = answers[str(i)] if answers else {"score": None, "source": "unavailable"}
+        row["jev"]["band"] = confidence.band({**row["jev"], "type": "score", "confidence": row["jev"].get("confidence", 0.0)})
     return sorted(rows, key=lambda r: -(r["jev"]["score"] or 0)) if answers else rows
 
 
@@ -50,7 +52,7 @@ def main():
         else:
             for row in rows:
                 a = row["jev"]
-                label = f'{a["score"]:.2f}/4 ({a["source"]})' if a["score"] is not None else "jev: unavailable"
+                label = f'{a["score"]:.2f}/4 ({a["source"]}{"; read it" if a["band"] == "human" else ""})' if a["score"] is not None else "jev: unavailable"
                 print(f'[{label}; reviewer {row["severity"]}] {jev.sanitize(row["text"])}')
     except (OSError, ValueError):
         parser.exit(2, "ranking: cannot read input\n")
