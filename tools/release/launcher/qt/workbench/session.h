@@ -2,11 +2,13 @@
 #include "command_registry.h"
 #include "file_store.h"
 #include "history.h"
+#include "geno_data.h"
+#include <memory>
 #include <functional>
 
 namespace wb {
 class EngineBackend;
-class GenoData; // Task 6 adds storage and data(); no complete type is needed here.
+
 
 class Session {
 public:
@@ -19,7 +21,10 @@ public:
     History &history();
     CommandRegistry &registry();
     EngineBackend *engine(); // Borrowed; null for an offline session.
-    bool agentProposals = false;
+    GenoData &data();
+    bool agentProposals = true;
+    QString currentRow;
+    QJsonObject camera, overlays;
     // Task 6 installs data().reload(); called after persisted edits, never for proposals.
     std::function<void()> onApplied = [] {};
 
@@ -34,5 +39,6 @@ private:
     History history_;
     CommandRegistry registry_;
     EngineBackend *engine_;
+    std::unique_ptr<GenoData> data_; // Lazy: registry-only clients need no project model.
 };
 } // namespace wb

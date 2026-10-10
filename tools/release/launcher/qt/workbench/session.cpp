@@ -1,4 +1,5 @@
 #include "session.h"
+#include "commands.h"
 #include <QDir>
 #include <QSet>
 #include <exception>
@@ -42,12 +43,29 @@ QVector<FileChange> checkedChanges(const QVector<FileChange> &changes) {
 }
 
 Session::Session(const QString &projectDir, EngineBackend *engine)
-    : files_(projectDir), history_(History::load(historyPath())), engine_(engine) {}
+    : files_(projectDir), history_(History::load(historyPath())), engine_(engine) {
+    onApplied = [this] {
+        if (!data_) return;
+        const QString error = data_->reload();
+        if (!error.isEmpty()) throw CommandError{error};
+    };
+}
 Session::~Session() = default;
 FileStore &Session::files() { return files_; }
 History &Session::history() { return history_; }
 CommandRegistry &Session::registry() { return registry_; }
 EngineBackend *Session::engine() { return engine_; }
+GenoData &Session::data() {
+    if (!data_) data_ = std::make_unique<GenoData>(files_);
+    return *data_;
+}
+void registerAllCommands(Session &session) {
+    registerViewCommands(session);
+    registerRowCommands(session);
+    registerHitboxCommands(session);
+    registerClipCommands(session);
+    // Task 9 and Task 14 add their registrations when their implementations land.
+}
 QString Session::historyPath() const {
     return QDir(files_.root()).filePath(".workbench/history.json");
 }

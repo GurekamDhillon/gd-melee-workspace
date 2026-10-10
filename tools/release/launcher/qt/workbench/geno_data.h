@@ -29,6 +29,8 @@ public:
     QVector<HitboxRef> hitboxes(const QString &row) const;
     QVector<ClipInfo> clips() const;
     QVector<Joint> joints() const;
+    bool hasPlan() const;
+    QString planPath() const; // Read-only plan as actually resolved by reload().
     int jointForRole(const QString &role) const;
     QVector<FileChange> editHitbox(const QString &row, int ordinal, const HitboxEdit &e, QString *err) const;
     QVector<FileChange> assignClip(const QString &row, const QString &clip,
@@ -44,6 +46,8 @@ private:
     QVector<ClipInfo> clips_;
     QVector<Joint> joints_;
     QJsonObject roles_;
+    bool hasPlan_ = false;
+    QString planPath_;
     QJsonArray fidelityRows_;
     QByteArray gameplayBytes_, fidelityBytes_;
     QString gameplayText_, fidelityText_;

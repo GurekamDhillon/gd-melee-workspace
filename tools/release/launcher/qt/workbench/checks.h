@@ -1,5 +1,6 @@
 #pragma once
 #include <QString>
+#include <QHash>
 #include <QVector>
 
 namespace wb {
@@ -20,6 +21,9 @@ struct RowAnalysis {
     double floorY = 0, rowLowestY = 0;
     QVector<HitboxSample> hitboxes;
     QVector<BoneSample> bones;
+    // Engine sweeps keep limb scores at each hitbox's own active frame.
+    // Pure/static callers can continue to supply the row-wide bones vector.
+    QHash<int, QVector<BoneSample>> bonesByHitbox;
 };
 struct Problem {
     QString kind, row, message;

@@ -106,9 +106,13 @@ const ProjectConfig &GenoData::project() const { return project_; }
 QVector<RowInfo> GenoData::rows() const { return rows_; }
 QVector<ClipInfo> GenoData::clips() const { return clips_; }
 QVector<Joint> GenoData::joints() const { return joints_; }
+bool GenoData::hasPlan() const { return hasPlan_; }
+QString GenoData::planPath() const { return planPath_; }
 
 QString GenoData::reload() {
     project_ = {};
+    hasPlan_ = false;
+    planPath_.clear();
     rows_.clear(); clips_.clear(); joints_.clear(); roles_ = {};
     fidelityRows_ = {}; scripts_.clear();
     gameplayBytes_.clear(); fidelityBytes_.clear();
@@ -199,6 +203,8 @@ QString GenoData::reload() {
         project_ = project;
         rows_ = rows; scripts_ = scripts;
         clips_ = clips; joints_ = joints; roles_ = roles;
+        hasPlan_ = planExists;
+        planPath_ = planName;
         gameplayBytes_ = gameplayBytes; gameplayText_ = gameplayText;
         fidelityBytes_ = fidelityBytes; fidelityText_ = fidelityText; fidelityRows_ = fidelityRows;
         return {};
