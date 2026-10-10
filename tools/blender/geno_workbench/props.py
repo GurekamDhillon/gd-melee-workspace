@@ -113,6 +113,7 @@ STRINGS: dict[str, str] = {
     "source_edited": "hitbox source updated; overlays still show the engine's previous build",
     "proposal_created": "proposal created: accept it in the Creator hub",
     "reloaded": "rebuilt and reloaded",
+    "reloaded_mode": "rebuilt and reloaded ({mode} build {build:.1f} s, total {total:.1f} s)",
     "suggested": "suggested bone: {bone}",
     "no_suggestion": "no bone suggestion available",
     "restarted": "engine restarted: {engine}",
@@ -375,18 +376,18 @@ def sync_editor(value, settings):
     turn an untouched field into an edit during playback.
     """
     index = settings.hitbox_index
-    if not value.row or not 0 <= index < len(value.hitboxes):
+    if not value.source_row or not 0 <= index < len(value.hitboxes):
         settings.edit_row = ""
         settings.edit_ordinal = -1
         settings.edit_source_key = ""
         settings.edit_baseline = ""
         return
     box = value.hitboxes[index]
-    key = json.dumps([value.row, index, box], sort_keys=True)
+    key = json.dumps([value.source_row, index, box], sort_keys=True)
     if settings.edit_source_key == key:
         return
     with suspend_frame_updates():
-        settings.edit_row = value.row
+        settings.edit_row = value.source_row
         settings.edit_ordinal = index
         for field, item in _source_editor_values(box).items():
             setattr(settings, "edit_" + field, item)
@@ -431,7 +432,7 @@ def sync_from_session(value, settings=None):
         if not hasattr(settings, "move"):
             return
         choices = {item[0] for item in row_items()}
-        settings.move = value.row if value.row in choices else NO_ROW
+        settings.move = value.source_row if value.row in choices else NO_ROW
         problems = [
             STRINGS["problem_item"].format(
                 kind=item.get("kind", ""),

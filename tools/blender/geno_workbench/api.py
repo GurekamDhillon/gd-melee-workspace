@@ -7,10 +7,12 @@ bpy or write project files.
 
 from __future__ import annotations
 
+import inspect
 import json
 import math
 import os
 import re
+import time
 from typing import Callable
 
 try:
@@ -40,6 +42,10 @@ _TRANSPORT_FAILURES = (
 _NOT_TRANSPORT = ("requested frame", "past the end")
 
 
+# seconds a tool may run before the add-on gives up on it (the launcher's own rebuild limit is 30 min)
+LONG_CALLS = {"rebuild": 2000.0, "reload": 300.0, "engine_restart": 300.0}
+
+
 class WbSession:
     """One connection and its last successfully received data.
 
@@ -66,6 +72,7 @@ class WbSession:
         self.hitboxes: list[dict] = []
         self.problems: list[dict] = []
         self.stale = False
+        self.last_rebuild: dict | None = None  # {mode, build_seconds, total_seconds} of the last Rebuild + reload
         self.last_error = ""
         self.suggestion: dict | None = None
         self.jointmap = None
@@ -162,7 +169,14 @@ class WbSession:
 
     @staticmethod
     def _raw_call(connection, tool: str, args: dict | None = None) -> dict:
-        result = connection.call(tool, args or {})
+        # The socket client's default 10 s budget is far below a rebuild (gameplay-only ~15 s, full ~5 min)
+        # or an engine reload; those tools get their own, long, budget. Clients that cannot take one (the
+        # one-shot CLI client has its own lifetime, test doubles) are called as before.
+        budget = LONG_CALLS.get(tool)
+        if budget is not None and "timeout" in inspect.signature(connection.call).parameters:
+            result = connection.call(tool, args or {}, timeout=budget)
+        else:
+            result = connection.call(tool, args or {})
         if not isinstance(result, dict):
             raise client.WbError(STRINGS["invalid_reply"].format(tool=tool))
         return result
@@ -228,6 +242,14 @@ class WbSession:
         self.info = info
         self.row = row
         self.frame = frame
+
+    @property
+    def source_row(self) -> str:
+        """The row NAME the server knows (list_rows' name, e.g. "dair"), for every request that takes a row.
+
+        self.row is the engine's label for the loaded move (e.g. the clip "AttackAirLw"), which is for display only.
+        """
+        return self.loaded_row or self.row
 
     def row_frames(self, name: str = "") -> int:
         """Frames in the loaded move: what the server taught us, else list_rows' count; 0 = unknown."""
@@ -477,7 +499,7 @@ class WbSession:
 
     def refresh_hitboxes(self) -> bool:
         def action():
-            row = self._row_name(self.row)
+            row = self._row_name(self.source_row)
             boxes = self._source_hitboxes(row)
             self.hitboxes = boxes
             return STRINGS["hitboxes_loaded"].format(count=len(boxes))
@@ -530,7 +552,7 @@ class WbSession:
         Invalid input and failed queries raise WbError.
         """
         name = self._row_name(row)
-        boxes = self.hitboxes if name == self.row else self._source_hitboxes(name)
+        boxes = self.hitboxes if name == self.source_row else self._source_hitboxes(name)
         return self._first_active_frame(boxes, ordinal)
 
     def goto_problem(self, i) -> bool:
@@ -545,7 +567,7 @@ class WbSession:
             problem = self.problems[index]
             row = self._row_name(problem.get("row"))
             ordinal = self._integer(problem.get("ordinal", 0), "ordinal")
-            self._read_frame(self._request("load_row", {"row": row}), row)
+            self._request("load_row", {"row": row})  # the real server answers {"ok": true}; set_frame carries the pose
             boxes = self._source_hitboxes(row)
             frame = self._first_active_frame(boxes, ordinal)
             parsed = self._read_frame(
@@ -572,7 +594,7 @@ class WbSession:
                         fields=", ".join(sorted(unknown))
                     )
                 )
-            row = self._row_name(fields.get("row", self.row))
+            row = self._row_name(fields.get("row", self.source_row))
             ordinal = self._integer(fields.get("ordinal"), "ordinal")
             args = {"row": row, "ordinal": ordinal}
             for field in EDITABLE:
@@ -599,11 +621,11 @@ class WbSession:
             self.stale = True
             self.cache.reset("hitbox edit")
             self.suggestion = None
-            if row == self.row:
+            if row == self.source_row:
                 # If the source refresh fails, do not label the old list as new.
                 self.hitboxes = []
             boxes = self._source_hitboxes(row)
-            if row == self.row:
+            if row == self.source_row:
                 self.hitboxes = boxes
             return STRINGS["source_edited"]
 
@@ -611,22 +633,21 @@ class WbSession:
 
     def rebuild_reload(self) -> bool:
         """Restore the selection, source list, pose and overlays after reload."""
-        saved_row, saved_frame = self.row, self.frame
+        saved_row, saved_frame = self.source_row, self.frame
         self.pending_frame = None
         self.cache.reset("rebuild")
 
         def action():
             # Every failure from here must leave the stale indication visible.
             self.stale = True
-            self._request("rebuild")
+            started = time.monotonic()
+            built = self._request("rebuild")
             self._request("reload")
             rows = self._items(self._request("list_rows"), "rows")
             parsed = None
             boxes = []
             if saved_row:
-                self._read_frame(
-                    self._request("load_row", {"row": saved_row}), saved_row
-                )
+                self._request("load_row", {"row": saved_row})  # real server: {"ok": true}, no pose
                 parsed = self._read_frame(
                     self._request("set_frame", {"frame": saved_frame}), saved_row
                 )
@@ -645,13 +666,25 @@ class WbSession:
                 self._fire_frame()
                 self.start_prefetch()
             text = STRINGS["reloaded"]
+            mode = built.get("mode") if isinstance(built, dict) else None
+            seconds = built.get("build_seconds") if isinstance(built, dict) else None
+            if isinstance(mode, str) and isinstance(seconds, (int, float)):
+                # Which build ran (gameplay-only vs full) and how long, end to end.
+                self.last_rebuild = {
+                    "mode": mode, "build_seconds": float(seconds),
+                    "total_seconds": time.monotonic() - started,
+                }
+                text = STRINGS["reloaded_mode"].format(
+                    mode=mode, build=float(seconds),
+                    total=self.last_rebuild["total_seconds"],
+                )
             return f"{text}; {self.hook_error}" if self.hook_error else text
 
         return self._run(action)
 
     def suggest_bone(self, ordinal) -> bool:
         def action():
-            row = self._row_name(self.row)
+            row = self._row_name(self.source_row)
             index = self._integer(ordinal, "ordinal")
             result = self._request(
                 "suggest_hitbox_bone", {"row": row, "ordinal": index}

@@ -431,6 +431,9 @@ class FakeWorkbench:
         self.calls: list[tuple[str, dict]] = []
         self.stale = False
         self.fail_next: str | None = None
+        self.build_mode: str = "full"
+        self.label_rows_by_clip = False
+        self.bare_load_row = False
         self.checks_unload = False   # run_checks fails the way the real one did: row dropped, then frame 0 asked for
         self.drop_after: int | None = None
         self.current_row = "wait"
@@ -525,6 +528,9 @@ class FakeWorkbench:
             info["hitboxes"] = _active_hitboxes(
                 matrices, self._loaded[self.current_row], self.frame
             )
+        if self.label_rows_by_clip:
+            # The real engine labels the loaded move with its clip ("AttackAirLw"), not the row name ("dair").
+            info["row"] = info["clip"]
         return info
 
     def _edit_hitbox(self, args: dict) -> dict:
@@ -597,6 +603,8 @@ class FakeWorkbench:
         if tool == "load_row":
             self.current_row = self._row_arg(args)
             self.frame = 1
+            if self.bare_load_row:
+                return {"ok": True}  # what the real server answers
             return self._frame_info()
         if tool == "set_frame":
             if self.current_row is None:
@@ -642,7 +650,7 @@ class FakeWorkbench:
         if tool == "rebuild":
             self._built = copy.deepcopy(self._source)
             self.stale = False
-            return {"rebuilt": True}
+            return {"rebuilt": True, "mode": self.build_mode, "build_seconds": 1.5}
         if tool == "reload":
             self._loaded = copy.deepcopy(self._built)
             self.stale = False

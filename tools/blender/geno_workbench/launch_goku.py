@@ -128,7 +128,7 @@ def main() -> int:
             cmd += ["--enable-event-simulate"]   # lets bootstrap close the splash before it screenshots
         if args.check:
             cmd += ["--background", "--factory-startup"]
-        cmd += ["--python", str(HERE / "bootstrap.py"), "--", "--project", str(project), "--port", str(port),
+        cmd += ["--python", os.environ.get("GW_WB_SCRIPT") or str(HERE / "bootstrap.py"), "--", "--project", str(project), "--port", str(port),
                 "--art", str(art), "--launcher", str(launcher), "--engine", str(engine), "--mods", str(mods)]
         if iso:
             cmd += ["--iso", str(iso)]
@@ -140,8 +140,9 @@ def main() -> int:
             cmd += ["--frame", str(args.frame)]
         if args.exercise:
             cmd += ["--exercise", args.exercise]
-        if args.check:
+        if args.check and not os.environ.get("GW_WB_SCRIPT"):
             cmd += ["--report"]
+        cmd += os.environ.get("GW_WB_EXTRA", "").split()
         print("starting Blender ...")
         blender_log = work / "blender.log"
         if not args.check:

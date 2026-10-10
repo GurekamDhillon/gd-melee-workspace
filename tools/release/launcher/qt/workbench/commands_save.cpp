@@ -8,6 +8,7 @@
 #include <QFileInfo>
 #include <QJsonArray>
 #include <QProcess>
+#include <QRegularExpression>
 #include <QStringDecoder>
 #include <cmath>
 #include <limits>
@@ -131,7 +132,18 @@ QJsonObject rebuild(Session &session) {
         throw CommandError{QString("rebuild failed: exit %1%2: %3").arg(exit).arg(crashed, tail.right(300))};
     }
     // 'tail' is the packet's name; 'output' remains compatible with the Task 9 plan.
-    return {{"exit", exit}, {"tail", tail}, {"output", tail}};
+    QJsonObject result{{"exit", exit}, {"tail", tail}, {"output", tail}, {"elapsed_ms", double(timer.elapsed())}};
+    // A rebuild script may report which build ran: "BUILD_MODE: <mode> <seconds>s" (build.py --auto:
+    // gameplay-only or full). The last such line wins; the Blender add-on shows it in its status line.
+    static const QRegularExpression modeLine(R"(BUILD_MODE:\s*(\S+)\s+([0-9]+(?:\.[0-9]+)?)s)");
+    QRegularExpressionMatchIterator matches = modeLine.globalMatch(tail);
+    QRegularExpressionMatch last;
+    while (matches.hasNext()) last = matches.next();
+    if (last.hasMatch()) {
+        result.insert("mode", last.captured(1));
+        result.insert("build_seconds", last.captured(2).toDouble());
+    }
+    return result;
 }
 } // namespace
 

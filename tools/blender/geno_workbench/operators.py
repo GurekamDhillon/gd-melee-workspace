@@ -97,7 +97,7 @@ def _queue_frame(settings, context):
 def _select_row(settings, context):
     value = api.session()
     name = settings.move
-    if name == props.NO_ROW or name == value.row:
+    if name == props.NO_ROW or name == value.source_row:
         return
     stop_playback()
     _cancel_scrub()
@@ -615,7 +615,7 @@ class GENO_WB_OT_edit_hitbox(bpy.types.Operator):
     def execute(self, context):
         value = api.session()
         settings = context.scene.geno_wb
-        row = self.row or value.row
+        row = self.row or value.source_row
         ordinal = self.ordinal if self.ordinal >= 0 else settings.hitbox_index
         try:
             # Script calls send only explicitly set properties. A panel Apply

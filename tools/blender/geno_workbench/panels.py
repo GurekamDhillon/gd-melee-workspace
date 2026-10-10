@@ -200,7 +200,7 @@ class GENO_WB_PT_hitbox(bpy.types.Panel):
             apply = actions.operator(
                 "geno_wb.edit_hitbox", text=STRINGS["edit_hitbox"]
             )
-            apply.row = value.row
+            apply.row = value.source_row
             apply.ordinal = settings.hitbox_index
         else:
             self.layout.label(text=STRINGS["no_hitboxes"])
