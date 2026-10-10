@@ -27,6 +27,15 @@ def anchor_of(info):
     return _root_pos(info) if isinstance(info, dict) else None
 
 
+def _copy(value):
+    """deepcopy for plain JSON data, without the memo bookkeeping (it was a third of a frame's cost)."""
+    if isinstance(value, dict):
+        return {k: _copy(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_copy(v) for v in value]
+    return value
+
+
 def _shift_point(point, d):
     if isinstance(point, dict):
         for k in ("x", "y", "z"):
@@ -42,7 +51,7 @@ def in_place(info, anchor):
     d = {k: now[k] - anchor[k] for k in ("x", "y", "z")}
     if not any(d.values()):
         return info
-    out = deepcopy(info)
+    out = _copy(info)
     for bone in out.get("bones") or []:
         _shift_point(bone.get("pos"), d)
         mtx = bone.get("mtx")

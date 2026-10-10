@@ -54,9 +54,10 @@ def mat4_from_12(m: Sequence[float]) -> Mat4:
 
 def mul(a: Mat4, b: Mat4) -> Mat4:
     """Return a @ b."""
+    cols = tuple(zip(*b))
     return tuple(
-        tuple(sum(a[i][k] * b[k][j] for k in range(4)) for j in range(4))
-        for i in range(4)
+        tuple(r0 * c0 + r1 * c1 + r2 * c2 + r3 * c3 for c0, c1, c2, c3 in cols)
+        for r0, r1, r2, r3 in a
     )
 
 

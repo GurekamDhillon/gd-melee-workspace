@@ -270,7 +270,7 @@ def _matrix_tuple(matrix):
 
 
 def _finite_matrix(matrix, joint):
-    if not all(math.isfinite(float(value)) for row in matrix for value in row):
+    if not math.isfinite(sum(abs(float(value)) for row in matrix for value in row)):
         raise RuntimeError(_text("fighter_nonfinite_matrix", joint=joint))
 
 

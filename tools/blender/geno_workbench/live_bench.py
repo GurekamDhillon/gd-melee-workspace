@@ -149,6 +149,17 @@ def run():
             entry["step_total"] = _stats(step_ms)
             entry["step_pose"] = _stats(samples["pose"])
             entry["step_overlay"] = _stats(samples["overlay"])
+            if os.environ.get("GW_WB_BENCH_PROFILE"):
+                import cProfile, io, pstats
+                prof = cProfile.Profile()
+                prof.enable()
+                for n in list(range(1, total + 1)) * 6:
+                    session.set_frame(n)
+                prof.disable()
+                text = io.StringIO()
+                pstats.Stats(prof, stream=text).sort_stats("tottime").print_stats(14)
+                for line in text.getvalue().splitlines():
+                    print("GENO_WB_PROF " + line[:170])
             # (3) real playback through the operator
             for key in samples:
                 samples[key] = [] if key != "frames" else 0
@@ -172,6 +183,7 @@ def run():
             elapsed = time.monotonic() - began
             beat["on"] = False
             operators.stop_playback()
+            entry["status_after"] = session.status
             entry["play_seconds"] = round(elapsed, 2)
             entry["frames_shown"] = samples["frames"]
             entry["achieved_fps"] = round(samples["frames"] / elapsed, 1)

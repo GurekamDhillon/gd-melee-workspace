@@ -138,8 +138,10 @@ def _write_geometry(obj, geometry):
     verts = geometry["verts"]
     edges = geometry.get("edges", [])
     faces = geometry.get("faces", [])
-    if (len(mesh.vertices) == len(verts) and len(mesh.edges) == len(edges)
-            and len(mesh.polygons) == len(faces) and len(verts) > 0):
+    # (a mesh built from faces grows its own edges, so compare edges only for an edge-only shape)
+    if (len(mesh.vertices) == len(verts) and len(verts) > 0
+            and len(mesh.polygons) == len(faces)
+            and (faces or len(mesh.edges) == len(edges))):
         # Same topology as last frame (a sphere stays a sphere): move the vertices, keep the mesh.
         flat = [c for v in verts for c in v]
         mesh.vertices.foreach_set("co", flat)

@@ -120,6 +120,7 @@ def _after_load(bpy, api, args):
 
 def _run_driver(path):
     import runpy
+    import bpy
     try:
         window = bpy.context.window_manager.windows[0]
         for x, y in ((600, 500), (200, 200), (250, 220)):   # a mouse move closes the splash popup
