@@ -1,4 +1,5 @@
 #include "session.h"
+#include "commands.h"
 #include "geno_data.h"
 #include <QDir>
 #include <QSet>
@@ -45,7 +46,13 @@ QVector<FileChange> checkedChanges(const QVector<FileChange> &changes) {
 // App entry points call registerAllCommands; tests register individual groups.
 // Registration here would make their selective registration a duplicate (qFatal).
 Session::Session(const QString &projectDir, EngineBackend *engine)
-    : files_(projectDir), history_(History::load(historyPath())), engine_(engine) {}
+    : files_(projectDir), history_(History::load(historyPath())), engine_(engine) {
+    onApplied = [this] {
+        if (!data_) return;
+        const QString error = data_->reload();
+        if (!error.isEmpty()) throw CommandError{error};
+    };
+}
 Session::~Session() = default;
 FileStore &Session::files() { return files_; }
 History &Session::history() { return history_; }

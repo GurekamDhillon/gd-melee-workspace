@@ -218,8 +218,11 @@ void registerSaveCommands(Session &session) {
 }
 
 void registerAllCommands(Session &session) {
+    registerViewCommands(session);
+    registerRowCommands(session);
+    registerHitboxCommands(session);
+    registerClipCommands(session);
     registerSaveCommands(session);
-    // TASK10: registerViewCommands(session), registerRowCommands(session), registerHitboxCommands(session), registerClipCommands(session).
-    // TASK14: registerGroundCommands(session).
+    // Task 14: registerGroundCommands(session).
 }
 } // namespace wb

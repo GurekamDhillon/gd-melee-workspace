@@ -56,7 +56,7 @@ private slots:
         QVERIFY(session.registry().list().isEmpty());
         registerAllCommands(session);
         const QStringList names{"save", "rebuild", "reload", "undo", "redo", "history", "propose", "accept", "reject"};
-        QCOMPARE(session.registry().list().size(), names.size());
+        QVERIFY(session.registry().list().size() >= names.size()); // registerAllCommands also registers the view/row/hitbox/clip commands (Task 10)
         for (const auto &name : names) QVERIFY(session.registry().has(name));
         QVERIFY(!session.agentProposals);
     }

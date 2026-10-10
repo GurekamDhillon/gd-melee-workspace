@@ -19,7 +19,7 @@
 
 namespace wb {
 namespace {
-QString t(const char *en, const char *es) {
+QString lt(const char *en, const char *es) {
     return QString::fromUtf8(QLocale::system().language() == QLocale::Spanish ? es : en);
 }
 enum CliMode { McpMode = 1, CallMode = 2 };
@@ -94,7 +94,7 @@ WorkbenchSession buildSession(const Options &options) {
 #if __has_include("commands.h")
     registerAllCommands(*result.session);
 #else
-    diagnostic(t("Workbench commands are not linked yet.", "Los comandos del editor aun no estan enlazados."));
+    diagnostic(lt("Workbench commands are not linked yet.", "Los comandos del editor aun no estan enlazados."));
 #endif
     return result;
 }
@@ -113,42 +113,42 @@ int runWorkbenchCli(int argc, char **argv) {
     };
     try {
         QCommandLineParser parser;
-        parser.setApplicationDescription(t("Geno Workbench command interface", "Interfaz de comandos de Geno Workbench"));
+        parser.setApplicationDescription(lt("Geno Workbench command interface", "Interfaz de comandos de Geno Workbench"));
         parser.addHelpOption();
         parser.addOptions({
-            {"mcp", t("Serve MCP over standard input/output", "Servir MCP por entrada/salida estandar")},
-            {"wb-call", t("Run one command as a human", "Ejecutar un comando como humano"), "tool"},
-            {"project", t("Fighter source project directory", "Directorio del proyecto fuente del luchador"), "directory"},
-            {"engine-port", t("Attach to an engine on 127.0.0.1", "Conectar a un motor en 127.0.0.1"), "port"},
-            {"engine-exe", t("Start a workbench engine", "Iniciar un motor del editor"), "path"},
-            {"engine-work-dir", t("Engine working directory", "Directorio de trabajo del motor"), "directory"},
-            {"mods-dir", t("Parent directory of built mods", "Directorio padre de mods compilados"), "directory"},
-            {"wb-dir", t("Engine payload directory (MELEE_WB_DIR)", "Directorio de datos del motor (MELEE_WB_DIR)"), "directory"}
+            {"mcp", lt("Serve MCP over standard input/output", "Servir MCP por entrada/salida estandar")},
+            {"wb-call", lt("Run one command as a human", "Ejecutar un comando como humano"), "tool"},
+            {"project", lt("Fighter source project directory", "Directorio del proyecto fuente del luchador"), "directory"},
+            {"engine-port", lt("Attach to an engine on 127.0.0.1", "Conectar a un motor en 127.0.0.1"), "port"},
+            {"engine-exe", lt("Start a workbench engine", "Iniciar un motor del editor"), "path"},
+            {"engine-work-dir", lt("Engine working directory", "Directorio de trabajo del motor"), "directory"},
+            {"mods-dir", lt("Parent directory of built mods", "Directorio padre de mods compilados"), "directory"},
+            {"wb-dir", lt("Engine payload directory (MELEE_WB_DIR)", "Directorio de datos del motor (MELEE_WB_DIR)"), "directory"}
         });
-        parser.addPositionalArgument("json", t("JSON object of command arguments", "Objeto JSON de argumentos del comando"), "[json]");
+        parser.addPositionalArgument("json", lt("JSON object of command arguments", "Objeto JSON de argumentos del comando"), "[json]");
         if (!parser.parse(args)) return fail(parser.errorText());
         if (parser.isSet("help")) { diagnostic(parser.helpText()); return 0; }
         const bool mcp = parser.isSet("mcp");
         callMode = parser.isSet("wb-call");
         if (mcp == callMode)
-            return fail(t("Choose exactly one of --mcp or --wb-call.", "Elige exactamente una opcion: --mcp o --wb-call."));
+            return fail(lt("Choose exactly one of --mcp or --wb-call.", "Elige exactamente una opcion: --mcp o --wb-call."));
         for (const QString &key : {"wb-call", "project", "engine-port", "engine-exe", "engine-work-dir", "mods-dir", "wb-dir"}) {
             if (parser.values(key).size() > 1)
-                return fail(t("Repeated option: --%1", "Opcion repetida: --%1").arg(key));
+                return fail(lt("Repeated option: --%1", "Opcion repetida: --%1").arg(key));
             if (parser.isSet(key) && parser.value(key).isEmpty())
-                return fail(t("Empty value for --%1", "Valor vacio para --%1").arg(key));
+                return fail(lt("Empty value for --%1", "Valor vacio para --%1").arg(key));
         }
         const auto positional = parser.positionalArguments();
         if ((callMode && positional.size() != 1) || (mcp && !positional.isEmpty()))
-            return fail(t("Use --wb-call <tool> '<JSON object>' or --mcp.", "Usa --wb-call <tool> '<objeto JSON>' o --mcp."));
+            return fail(lt("Use --wb-call <tool> '<JSON object>' or --mcp.", "Usa --wb-call <tool> '<objeto JSON>' o --mcp."));
         QJsonObject commandArgs;
         if (callMode) {
             QJsonParseError error;
             const auto document = QJsonDocument::fromJson(positional.first().toUtf8(), &error);
             if (error.error != QJsonParseError::NoError)
-                return fail(t("Invalid command JSON: %1", "JSON de comando invalido: %1").arg(error.errorString()));
+                return fail(lt("Invalid command JSON: %1", "JSON de comando invalido: %1").arg(error.errorString()));
             if (!document.isObject())
-                return fail(t("Command arguments must be a JSON object.", "Los argumentos del comando deben ser un objeto JSON."));
+                return fail(lt("Command arguments must be a JSON object.", "Los argumentos del comando deben ser un objeto JSON."));
             commandArgs = document.object();
         }
         Options options;
@@ -157,12 +157,12 @@ int runWorkbenchCli(int argc, char **argv) {
             bool ok = false;
             const uint port = parser.value("engine-port").toUInt(&ok);
             if (!ok || port == 0 || port > 65535)
-                return fail(t("--engine-port must be an integer from 1 to 65535.", "--engine-port debe ser un entero entre 1 y 65535."));
+                return fail(lt("--engine-port must be an integer from 1 to 65535.", "--engine-port debe ser un entero entre 1 y 65535."));
             options.enginePort = quint16(port);
         }
         if (parser.isSet("engine-exe")) options.engineExe = QFileInfo(parser.value("engine-exe")).absoluteFilePath();
         if (options.enginePort && !options.engineExe.isEmpty())
-            return fail(t("Use --engine-port to attach or --engine-exe to spawn, not both.", "Usa --engine-port para conectar o --engine-exe para iniciar, no ambos."));
+            return fail(lt("Use --engine-port to attach or --engine-exe to spawn, not both.", "Usa --engine-port para conectar o --engine-exe para iniciar, no ambos."));
         if (parser.isSet("engine-work-dir")) options.engineWorkDir = QFileInfo(parser.value("engine-work-dir")).absoluteFilePath();
         options.modsDir = parser.value("mods-dir");
         options.wbDir = parser.value("wb-dir");
@@ -180,7 +180,7 @@ int runWorkbenchCli(int argc, char **argv) {
     } catch (const std::exception &error) {
         return fail(QString::fromUtf8(error.what()));
     } catch (...) {
-        return fail(t("Unexpected workbench error.", "Error inesperado del editor."));
+        return fail(lt("Unexpected workbench error.", "Error inesperado del editor."));
     }
 }
 } // namespace wb

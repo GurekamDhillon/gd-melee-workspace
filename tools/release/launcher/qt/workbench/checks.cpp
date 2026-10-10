@@ -40,23 +40,22 @@ QVector<Problem> runChecks(const QVector<RowAnalysis> &rows) {
     QVector<Problem> problems;
     QHash<QString, QSet<QString>> clipRows;
     for (const auto &row : rows) {
-        const auto *suggested = mostActiveLimb(row.bones);
-        if (suggested) {
-            for (const auto &hitbox : row.hitboxes) {
-                if (hitbox.role == suggested->role) continue;
-                const auto *current = sampleForRole(row.bones, hitbox.role);
-                // An absent sample is unknown, not a measured stationary bone.
-                if (!current) continue;
-                const double suggestedScore = score(*suggested);
-                const double currentScore = score(*current);
-                // The strict comparison prevents 0 >= 1.5 * 0 from accusing a limb.
-                if (suggestedScore > currentScore && suggestedScore >= 1.5 * currentScore) {
-                    problems.append({"wrong_limb", row.row,
-                        t("hitbox #%1 is on %2 but %3 moves most at frame %4",
-                          "hitbox #%1 is on %2 but %3 moves most at frame %4")
-                            .arg(hitbox.ordinal).arg(hitbox.role, suggested->role).arg(hitbox.startFrame),
-                        hitbox.ordinal});
-                }
+        for (const auto &hitbox : row.hitboxes) {
+            const auto samples = row.bonesByHitbox.constFind(hitbox.ordinal);
+            const auto &bones = samples == row.bonesByHitbox.constEnd() ? row.bones : samples.value();
+            const auto *suggested = mostActiveLimb(bones);
+            if (!suggested || hitbox.role == suggested->role) continue;
+            const auto *current = sampleForRole(bones, hitbox.role);
+            // An absent sample is unknown, not a measured stationary bone.
+            if (!current) continue;
+            const double suggestedScore = score(*suggested);
+            const double currentScore = score(*current);
+            if (suggestedScore > currentScore && suggestedScore >= 1.5 * currentScore) {
+                problems.append({"wrong_limb", row.row,
+                    t("hitbox #%1 is on %2 but %3 moves most at frame %4",
+                      "hitbox #%1 is on %2 but %3 moves most at frame %4")
+                        .arg(hitbox.ordinal).arg(hitbox.role, suggested->role).arg(hitbox.startFrame),
+                    hitbox.ordinal});
             }
         }
         if (!row.aerial && row.rowLowestY < row.floorY - 0.5) {

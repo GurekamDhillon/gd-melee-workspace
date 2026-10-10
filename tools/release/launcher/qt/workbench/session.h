@@ -2,12 +2,13 @@
 #include "command_registry.h"
 #include "file_store.h"
 #include "history.h"
-#include <functional>
+#include "geno_data.h"
 #include <memory>
+#include <functional>
 
 namespace wb {
 class EngineBackend;
-class GenoData; // Task 6 adds storage and data(); no complete type is needed here.
+
 
 class Session {
 public:
@@ -21,7 +22,9 @@ public:
     CommandRegistry &registry();
     EngineBackend *engine(); // Borrowed; null for an offline session.
     GenoData &data();        // Lazily built from files(); reloaded after every applied commit.
-    bool agentProposals = false;
+    bool agentProposals = false; // the MCP server sets true: agent edits are proposals until a human accepts
+    QString currentRow;
+    QJsonObject camera, overlays;
     // Task 6 installs data().reload(); called after persisted edits, never for proposals.
     std::function<void()> onApplied = [] {};
 
