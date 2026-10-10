@@ -1,5 +1,5 @@
 # workbench_core: Qt Core/Network only (no Widgets). workbench_ui: Widgets, depends on launcher_ui for the Atlas look.
-set(WB_CORE_SOURCES)  # appended by later tasks via wb_core_sources()
+set(WB_CORE_SOURCES)  # appended by later tasks via wb_core_sources(command_registry.cpp session.cpp)
 function(wb_core_sources)
   foreach(f IN LISTS ARGN)
     list(APPEND WB_CORE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${f}")
@@ -28,4 +28,5 @@ if(BUILD_TESTING)
   wb_test(geno_asm)
   wb_test(checks)
   wb_test(engine_link)
+  wb_test(command_registry)
 endif()

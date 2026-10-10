@@ -1,0 +1,38 @@
+#pragma once
+#include "command_registry.h"
+#include "file_store.h"
+#include "history.h"
+#include <functional>
+
+namespace wb {
+class EngineBackend;
+class GenoData; // Task 6 adds storage and data(); no complete type is needed here.
+
+class Session {
+public:
+    Session(const QString &projectDir, EngineBackend *engine);
+    ~Session();
+    Session(const Session &) = delete;
+    Session &operator=(const Session &) = delete;
+
+    FileStore &files();
+    History &history();
+    CommandRegistry &registry();
+    EngineBackend *engine(); // Borrowed; null for an offline session.
+    bool agentProposals = false;
+    // Task 6 installs data().reload(); called after persisted edits, never for proposals.
+    std::function<void()> onApplied = [] {};
+
+    // The command path for changing source files: snapshot, apply/propose, and persist history.
+    QJsonObject commit(const CommandContext &ctx, const QString &command, const QJsonObject &args,
+                       const QString &summary, const QVector<FileChange> &changes);
+    QString historyPath() const; // <project>/.workbench/history.json
+
+private:
+    void saveHistory(const History &history) const;
+    FileStore files_;
+    History history_;
+    CommandRegistry registry_;
+    EngineBackend *engine_;
+};
+} // namespace wb
