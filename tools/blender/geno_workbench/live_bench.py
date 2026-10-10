@@ -100,6 +100,19 @@ def run():
         region = next(r for r in area.regions if r.type == "WINDOW")
         return bpy.context.temp_override(window=window, area=area, region=region)
 
+    def frame_view():
+        """Frame the fighter in the 3D view so a screenshot shows him (best effort)."""
+        try:
+            with window_context():
+                bpy.ops.object.select_all(action="DESELECT")
+                for obj in bpy.data.objects:
+                    if obj.type in {"MESH", "ARMATURE"} and not obj.name.startswith("GenoWB"):
+                        obj.select_set(True)
+                bpy.ops.view3d.view_selected()
+                bpy.ops.object.select_all(action="DESELECT")
+        except Exception as exc:  # noqa: BLE001
+            print("GENO_WB_BENCH frame_view_warning %s" % exc)
+
     beat = {"last": time.perf_counter(), "max": 0.0, "gaps": [], "on": False}
 
     def heartbeat():
@@ -164,7 +177,8 @@ def run():
             for key in samples:
                 samples[key] = [] if key != "frames" else 0
             session.set_frame(1)
-            yield 0.2
+            frame_view()
+            yield 0.5
             beat.update(last=time.perf_counter(), max=0.0, gaps=[], on=True)
             with window_context():
                 bpy.ops.geno_wb.play()

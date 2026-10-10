@@ -125,6 +125,8 @@ def _run_driver(path):
         window = bpy.context.window_manager.windows[0]
         for x, y in ((600, 500), (200, 200), (250, 220)):   # a mouse move closes the splash popup
             window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=x, y=y)
+        window.event_simulate(type="ESC", value="PRESS", x=250, y=220)
+        window.event_simulate(type="ESC", value="RELEASE", x=250, y=220)
     except Exception as exc:
         print("GENO_WB_REPORT splash_warning %s" % exc)
     try:
