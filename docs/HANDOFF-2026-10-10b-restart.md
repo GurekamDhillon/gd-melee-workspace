@@ -44,3 +44,16 @@ Try: Goku hitbox editing (Rebuild + reload ~15 s), Falcon in Blender, Speed/Run 
 - A lone copied melee-pc.exe crashes: SDL3.dll and webgpu_dawn.dll must sit beside it.
 - Blender PrintWindow returns blank for its GPU window; use Blender's own screenshot.
 - Codex shell still broken; Codex writes, Claude builds.
+
+## Lane handoffs written before the restart (read these first)
+Each lane wrote `.omo/evidence/handoff.md` in its worktree (git-ignored, on disk).
+- wbhitboxux (ws/wb-hitbox-ux e439097): R1/R2 done (role dropdown, add/delete, 126 pytest, 23/23 ctest). Blocker: add/delete/edit sync `gameplay.json` windows but goku build reads local `gameplay.full.json` -> patch both when present (owner decision pending, recommended yes). Slots capped at 4; new-hitbox defaults dmg 6 size 3.0 angle 361 kbg 50 bkb 20, 2 frames.
+- stress6 (agent/stress6 63e50a3ed WIP): suite 368/368, slots 2560, pool 65536, 6x Geno Falcon CPUs ran clean on FD (pool 30714/65536). Only captain has a retail template, so 6 *different* retail fighters need new templates (owner decision; Codex job). Sweep ~130/371 stages: worst vanilla ext 2 7.60 ms, ACE ext 71 5.86, ACE ext 2 5.80 (`_build/stress6/sweep.csv`). Owed: rest of sweep, realtime + 10-min soak, screenshots. Risks: stage heap 139 KB free with 6 Falcons on FD; snapshot globals +205 KB (netplay unmeasured).
+- wbfalconmoves (ws/wb-falcon-moves 059f4ab): 364 rows, hitbox overlays, edit+rebuild 7.5 s, tests pass. Bug: run_checks requests frames past the move end (clamp). Owed: on-screen look.
+- anim-bank-reload (agent/anim-bank-reload 3186a4af1): build OK, suite 374/374. Live test result unknown (`_build/animreload-live/out`); refusal checks unverified. Extra worktree `worktrees/animreload` (agent/animreload) from agent_new.sh, not removed. agent_slim not run.
+- stagebuilder (ws/research-stage-builder e16476e WIP): local note `_research/stage-builder-ultimate-local-2026-10-10.md` (grid/canvas, layers, 15 materials, gimmicks, cliff thresholds in sp_edit.stdat: max_angle_of_cliff 120, _floor 45, min_angle_of_cliff_wall 85, min_interval_of_cliff 5; Box2D evidence). Loop-to-terrain algorithm NOT found; Ghidra project at E:\ghidra-sb-work\sbproj unfinished (re-import or use REA MCP). Codex web note not merged yet.
+
+## Pending owner items at restart
+- Leftover processes from the animreload live test (PIDs 15056 python launch_goku --serve-only, 30692 gd-melee-launcher, 36720 melee-pc from _build/animreload-live): owner to stop.
+- `_build/release/GD Melee.exe` was overwritten at 12:26 by a worker's relative -Out path; rebuild from integration or restore.
+- New launcher builds not yet installed over `_build/wb-win`: hitbox UX `E:\Projects\wbhitboxux-qt-build\gd-melee-launcher.exe`.
