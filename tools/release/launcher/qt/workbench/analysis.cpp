@@ -22,6 +22,8 @@ QJsonObject call(EngineBackend &engine, const QString &fn, const QJsonObject &ar
 }
 FrameInfo pose(EngineBackend &engine, int motion, int frame, bool aerial) {
     // An aerial staged at floor level lands before its active frames, so the engine lifts it (wb.frame lift).
+    // The engine numbers a move's frames from 1; asking for frame 0 is answered "frame 1" and reads as past the end.
+    frame = qMax(1, frame);
     QJsonObject frameArgs{{"motion", motion}, {"frame", frame}};
     if (aerial) frameArgs.insert("lift", 40);
     auto result = call(engine, "frame", frameArgs);

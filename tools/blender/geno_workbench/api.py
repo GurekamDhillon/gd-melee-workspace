@@ -14,10 +14,11 @@ import re
 from typing import Callable
 
 try:
-    from . import client, travel, wbspace
+    from . import client, framecache, travel, wbspace
     from .props import STRINGS
 except ImportError:
     import client
+    import framecache
     import travel
     import wbspace
     from props import STRINGS
@@ -80,6 +81,10 @@ class WbSession:
         self.travel_anchor = None   # root position the in-place view keeps fixed (the row's first frame)
         self.loaded_row = ""   # the name given to load_row (list_rows' name; self.row is the engine's label)
         self.row_lengths: dict[str, int] = {}   # learned from the server when a frame is past a move's end
+        self.cache = framecache.FrameCache()   # every frame of the loaded row (R1); filled off the main thread
+        self.prefetch = False   # the add-on turns this on; plain API users keep one engine call per frame
+        self.cache_hits = 0
+        self.engine_calls = 0   # set_frame requests that went to the engine (cache misses)
 
     def _fire_frame(self) -> None:
         """Report hook failures without raising through an operator."""
@@ -138,6 +143,7 @@ class WbSession:
             previous, self.client = self.client, None
             self.connected = False
             self.pending_frame = None
+            self.cache.reset("transport failure")
             self._quiet_close(previous)
         self.status = self._status_with_stale(
             STRINGS["error_status"].format(error=self.last_error)
@@ -274,6 +280,7 @@ class WbSession:
         self.connected = True
         if previous is not candidate:
             self._quiet_close(previous)
+        self.cache.reset("connect")
         self.rows = []
         self.row = ""
         self.loaded_row = ""
@@ -296,6 +303,7 @@ class WbSession:
         )
 
     def disconnect(self) -> bool:
+        self.cache.reset("disconnect")
         previous, self.client = self.client, None
         self.connected = False
         self.pending_frame = None
@@ -319,6 +327,7 @@ class WbSession:
     def load_row(self, name, *, refresh_hitboxes=False) -> bool:
         """Optionally fetch source boxes before publishing the new frame."""
         self.pending_frame = None
+        self.cache.reset("load_row")
 
         def action():
             row = self._row_name(name)
@@ -334,9 +343,64 @@ class WbSession:
             self.hitboxes = boxes
             self.suggestion = None
             self._fire_frame()
+            self.start_prefetch()
             return self._frame_status()
 
         return self._run(action)
+
+    # ---- row frame cache (R1) ----------------------------------------------
+    def start_prefetch(self) -> bool:
+        """Fill the cache for the loaded row on a background thread (no bpy there).
+
+        Safe to call repeatedly: only frames not cached yet are fetched.
+        """
+        if not (self.prefetch and self.connected and self.client is not None and self.loaded_row):
+            return False
+        last = self.row_frames() or framecache.MAX_FRAMES
+        connection = self.client
+
+        def fetch(frame: int) -> dict:
+            result = self._raw_call(connection, "set_frame", {"frame": frame})
+            if result.get("frame") != frame:
+                raise client.WbError(
+                    f"frame {frame} is past the end of this move (got {result.get('frame')})")
+            return result
+
+        return self.cache.begin(self.loaded_row, 1, last, fetch)
+
+    def pause_prefetch(self) -> None:
+        """Stop the worker before a tool that moves the engine; the cached frames stay valid."""
+        self.cache.cancel(wait=True)
+
+    def invalidate_cache(self, reason: str = "") -> None:
+        self.cache.reset(reason)
+
+    def pump_cache(self):
+        """Main-thread housekeeping: learn a move's length from the worker. Returns (done, total, loading)."""
+        error = self.cache.error
+        if error and not self.cache.loading:
+            if "past the end" in error:
+                last = self._past_end(error, 0)
+                if last is None and self.cache.frames:
+                    last = max(self.cache.frames)
+                if last:
+                    self.row_lengths[self.loaded_row] = last
+                    self.cache.truncate(last)
+            self.cache.error = ""
+        done, total = self.cache.progress()
+        return done, total, self.cache.loading
+
+    def cache_ready(self) -> bool:
+        done, total, loading = self.pump_cache()
+        return not loading and total > 0 and done >= total
+
+    def cache_text(self) -> str:
+        done, total, loading = self.pump_cache()
+        if loading:
+            return STRINGS["cache_loading"].format(done=done, total=total)
+        if total and done >= total:
+            return STRINGS["cache_ready"].format(total=total)
+        return ""
 
     def set_frame(self, n) -> bool:
         self.pending_frame = None
@@ -346,6 +410,13 @@ class WbSession:
             limit = self.row_frames()
             if limit and frame > limit:
                 frame = limit
+            cached = self.cache.get(self.loaded_row, frame) if self.loaded_row else None
+            if cached is not None:
+                self.cache_hits += 1
+                self._store_frame(self._read_frame(dict(cached), self.row))
+                self._fire_frame()
+                return self._frame_status()
+            self.engine_calls += 1
             try:
                 result = self._request("set_frame", {"frame": frame})
             except client.WbError as exc:
@@ -354,13 +425,27 @@ class WbSession:
                     raise
                 # the move is shorter than we thought: remember it and show its last frame instead
                 self.row_lengths[self.loaded_row] = last
+                self.cache.truncate(last)
                 frame = last
                 result = self._request("set_frame", {"frame": frame})
+            self._note_facing(result)
             self._store_frame(self._read_frame(result, self.row))
             self._fire_frame()
             return self._frame_status()
 
         return self._run(action)
+
+    def _note_facing(self, result: dict) -> None:
+        """A live frame whose facing differs from the cached ones means the cache is stale."""
+        facing = result.get("facing")
+        if facing is None:
+            return
+        known = self.cache.facing
+        if known is None:
+            self.cache.facing = facing
+        elif known != facing:
+            self.cache.reset("facing")
+            self.cache.facing = facing
 
     def step(self, n=1) -> bool:
         """Seek relative to the acknowledged frame, including negative steps."""
@@ -397,9 +482,33 @@ class WbSession:
 
         return self._run(action)
 
+    def _restore_engine_row(self) -> None:
+        """Put the engine back on the loaded row and frame (run_checks sweeps every row).
+
+        Failures are swallowed: the session keeps its own row either way, and the
+        next uncached frame request reloads it if the engine really lost it.
+        """
+        if not (self.connected and self.client is not None and self.loaded_row):
+            return
+        try:
+            self._request("load_row", {"row": self.loaded_row})
+            if self.frame > 1:
+                limit = self.row_frames()
+                self._request("set_frame", {"frame": min(self.frame, limit) if limit else self.frame})
+        except (client.WbError, OSError, ValueError, TypeError):
+            pass
+
     def run_checks(self) -> bool:
+        """Run the engine's checks. They sweep rows and frames, so the engine ends up elsewhere:
+        the loaded row is put back whether or not the checks succeed (the session never loses its row)."""
+        self.pause_prefetch()
+
         def action():
-            problems = self._items(self._request("run_checks"), "problems")
+            try:
+                problems = self._items(self._request("run_checks"), "problems")
+            finally:
+                self._restore_engine_row()
+                self.start_prefetch()   # the fill was paused for the sweep; resume it even when the checks failed
             self.problems = problems
             return STRINGS["checks_loaded"].format(count=len(problems))
 
@@ -425,6 +534,7 @@ class WbSession:
     def goto_problem(self, i) -> bool:
         """Publish the problem pose only after all required replies succeed."""
         self.pending_frame = None
+        self.cache.reset("goto_problem")
 
         def action():
             index = self._integer(i, "index")
@@ -445,6 +555,7 @@ class WbSession:
             self.hitboxes = boxes
             self.suggestion = None
             self._fire_frame()
+            self.start_prefetch()
             return self._frame_status()
 
         return self._run(action)
@@ -477,12 +588,14 @@ class WbSession:
             if len(args) == 2:
                 return STRINGS["no_changes"]
 
+            self.pause_prefetch()
             result = self._request("edit_hitbox", args)
             if "proposal" in result:
                 # A proposal must not clear a previous successful source edit.
                 return STRINGS["proposal_created"]
 
             self.stale = True
+            self.cache.reset("hitbox edit")
             self.suggestion = None
             if row == self.row:
                 # If the source refresh fails, do not label the old list as new.
@@ -498,6 +611,7 @@ class WbSession:
         """Restore the selection, source list, pose and overlays after reload."""
         saved_row, saved_frame = self.row, self.frame
         self.pending_frame = None
+        self.cache.reset("rebuild")
 
         def action():
             # Every failure from here must leave the stale indication visible.
@@ -527,6 +641,7 @@ class WbSession:
             self.stale = False
             if parsed is not None:
                 self._fire_frame()
+                self.start_prefetch()
             text = STRINGS["reloaded"]
             return f"{text}; {self.hook_error}" if self.hook_error else text
 
@@ -549,6 +664,7 @@ class WbSession:
 
     def engine_restart(self) -> bool:
         self.pending_frame = None
+        self.cache.reset("engine restart")
 
         def action():
             result = self._request("engine_restart")

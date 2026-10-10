@@ -113,6 +113,28 @@ def _after_load(bpy, api, args):
         _report(bpy, session, names, args)
     else:
         bpy.app.timers.register(lambda: _present(bpy), first_interval=1.0)
+        driver = os.environ.get("GW_WB_DRIVER", "")
+        if driver:   # a measurement/automation script (live_bench.py), run once the window has settled
+            bpy.app.timers.register(lambda: _run_driver(driver), first_interval=6.0)
+
+
+def _run_driver(path):
+    import runpy
+    import bpy
+    try:
+        window = bpy.context.window_manager.windows[0]
+        for x, y in ((600, 500), (200, 200), (250, 220)):   # a mouse move closes the splash popup
+            window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=x, y=y)
+        window.event_simulate(type="ESC", value="PRESS", x=250, y=220)
+        window.event_simulate(type="ESC", value="RELEASE", x=250, y=220)
+    except Exception as exc:
+        print("GENO_WB_REPORT splash_warning %s" % exc)
+    try:
+        runpy.run_path(path)
+    except Exception:
+        import traceback
+        traceback.print_exc()
+    return None
 
 
 def _exercise(bpy, session, rows):
