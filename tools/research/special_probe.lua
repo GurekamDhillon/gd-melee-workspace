@@ -23,8 +23,14 @@ local specials = {
   { "upB", { buttons = "B", y = 127 } },
   { "downB", { buttons = "B", y = -127 } },
   { "grab", "Z" },
+  { "jab", "A" },
+  { "ftilt", { buttons = "A", x = 60 } },
+  { "fsmash", { cx = 127 } },
+  { "usmash", { cy = 127 } },
+  { "dsmash", { cy = -127 } },
 }
 local ranges = { 10, 28, 70 }
+if gd.lab_env and gd.lab_env("QUICK") then ranges = { 12 } end
 
 local function ready()
   local a, b = gd.player(1), gd.player(2)
@@ -36,8 +42,9 @@ local function settle(p)
   gd.set_percent(1, 0)
   gd.set_stocks(1, 99)
   gd.set_stocks(2, 99)
-  gd.teleport(1, 0, 0)
-  gd.teleport(2, p, 0)
+  local ok1, e1 = pcall(gd.teleport, 1, 0, 0)
+  local ok2, e2 = pcall(gd.teleport, 2, p, 0)
+  if not (ok1 and ok2) then put("TELEPORT-REFUSED trial=" .. cur.trial .. " range=" .. cur.range .. " " .. tostring(e1 or e2)) gd.wait(240) end
   gd.wait(5)
   gd.wait_until(ready, 600)
   gd.wait(10)

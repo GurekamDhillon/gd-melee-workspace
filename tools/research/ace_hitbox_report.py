@@ -86,6 +86,56 @@ def codemod(root):
     return res
 
 
+def probe_summary(root, n):
+    """Items owned by P1 (any layer but a stage's own) and connected hits, per trial, from special_probe.lua."""
+    p = os.path.join(root, "acehb_probe", "probe_" + n.replace("ace_", "") + ".txt")
+    if not os.path.exists(p):
+        return None
+    items = collections.defaultdict(set)
+    hits = collections.defaultdict(list)
+    for line in open(p, encoding="utf-8"):
+        kv = dict(x.split("=", 1) for x in line.split()[1:] if "=" in x)
+        if line.startswith("ITEM") and kv.get("owner") == "1" and kv.get("layer") != "vanilla":
+            items[kv["trial"]].add("%s(%s)" % (kv["kind"], kv.get("layer")))
+        elif line.startswith("HIT") and kv.get("atk") == "1":
+            hits[kv["trial"]].append(kv)
+    return items, hits
+
+
+def cards(root):
+    for d in sorted(glob.glob(os.path.join(root, "acehb_lab", "ace_mex*"))):
+        if not os.path.isdir(d):
+            continue
+        n = os.path.basename(d)
+        jf = os.path.join(root, "acehb_dump", n + ".jsonl")
+        if not os.path.exists(jf):
+            continue
+        S = C.fighter_summary(jf)
+        nm = S["head"]["char_name"]
+        sp = []
+        for r in read_csv(os.path.join(d, "moves.csv")):
+            if r["group"] == "input" and r["air"] == "0":
+                sp.append("%s s%s a%s t%s hb%s" % (r["name"], r["startup"] or "-", r["active"] or "-", r["total"], r["hitboxes"]))
+        own = [m for m in S["moves"] if C.is_own(m["name"])]
+        els = collections.Counter(h["element_name"] for m in own for h in m["hits"])
+        tags = collections.Counter(t for m in own for h in m["hits"] for t in C.classify(h) if not t.startswith("elem:"))
+        top = sorted(own, key=lambda m: -len(m["hits"]))[:3]
+        print("#### %s (%s)" % (nm, n))
+        print("- specials (ground, LAB measured): " + "; ".join(sp))
+        print("- elements (own moves): " + ", ".join("%s %d" % kv for kv in els.most_common()))
+        print("- tags: " + ", ".join("%s %d" % kv for kv in tags.most_common(8)))
+        print("- most hitbox creations: " + "; ".join("%s x%d" % (m["name"], len(m["hits"])) for m in top))
+        ps = probe_summary(root, n)
+        if ps:
+            items, hits = ps
+            print("- probe items: " + "; ".join("%s: %s" % (k, ",".join(sorted(v))) for k, v in sorted(items.items())))
+            # item hits only count in a trial where P1 owned a non-vanilla (mex/geno) item; stage items swing too
+            def kind(k, h):
+                return "article" if h.get("item") == "true" and k in items else ("stage-item?" if h.get("item") == "true" else "box")
+            print("- probe hits (first per trial, dealt after staling; n = connects): " + "; ".join(
+                "%s %s %.1f n%d" % (k, kind(k, v[0]), float(v[0].get("dealt", 0)), len(v)) for k, v in sorted(hits.items())))
+
+
 def main():
     root = sys.argv[1]
     secs = sys.argv[2:] or ["types", "codemod"]
@@ -102,6 +152,8 @@ def main():
                 print("- %s (%s): %d measured rows; live values absent from every static script:" % (n, nm, tot))
                 for mo, ks in sorted(miss.items()):
                     print("    %-18s %s" % (mo, sorted(ks)[:4]))
+    if "cards" in secs:
+        cards(root)
     if "diff" in secs:
         os.system("%s %s %s --diff" % (sys.executable, os.path.join(os.path.dirname(__file__), "ace_hitbox_collect.py"),
                                        os.path.join(root, "acehb_dump")))

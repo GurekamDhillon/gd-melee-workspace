@@ -49,6 +49,16 @@ def decode_hit(e):
     return d
 
 
+def decode_throw(e):
+    """op 34 'throw' (set_throw_hitbox_0..2 in lb/types.h): id, damage, angle, kbg, wbk, bkb, element, sfx."""
+    w = e["words"]
+    if len(w) < 3:
+        return None
+    return dict(frame=e["frame"], id=ubits(w[0], 23, 3), damage=ubits(w[0], 0, 23), angle=ubits(w[1], 23, 9),
+                kbg=ubits(w[1], 14, 9), wbk=ubits(w[1], 5, 9), bkb=ubits(w[2], 23, 9),
+                element=ubits(w[2], 19, 4), sfx_severity=ubits(w[2], 16, 3), sfx_kind=ubits(w[2], 12, 4))
+
+
 def load(path):
     head, motions = None, []
     for line in open(path, encoding="utf-8"):
@@ -133,6 +143,11 @@ def analyse_motion(m):
                 h["end"] = e["frame"]
                 wins.append(h)
             live = {}
+        elif op == 34:
+            t = decode_throw(e)
+            if t:
+                out.setdefault("throws", []).append(t)
+            out["other"][e["name"]] += 1
         else:
             out["other"][e["name"]] += 1
             if e["name"] in ("body_state", "hurtbox_state", "hurtboxes_state", "throw", "throw_flag",
