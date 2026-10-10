@@ -8,7 +8,7 @@ class Timeline : public QWidget {
     Q_OBJECT
 public:
     explicit Timeline(QWidget *parent = nullptr);
-    void setRange(int frames);
+    virtual void setRange(int frames);
     void setBars(const QVector<QPair<QString, QPair<int, int>>> &bars);
     void setFrame(int f);
     void setPlaying(bool playing); // feedback only; never echoes playToggled

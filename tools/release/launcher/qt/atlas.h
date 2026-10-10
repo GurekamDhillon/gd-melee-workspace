@@ -17,6 +17,7 @@ bool reducedMotion();                      // the platform asks for fewer animat
 int motion(const QString &token);          // ms(token), or 0 when the platform asks for reduced motion: both tweens become cuts
 enum class Role { Cap12, Cap14, Cap16, Cap20, Title, Hero, Body12, Body14, Row16 };
 QFont font(Role role);
+QFont numberFont(int pixelSize = 14);        // embedded Hasklug: frame counts and editable numeric values
 
 // geometry: QtGui value types only, so it is tested without a window
 QPolygonF plate(const QRectF &r, qreal chamfer);                 // top-left and bottom-right corners cut; 4 points when the chamfer does not fit

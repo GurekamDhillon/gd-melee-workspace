@@ -6,7 +6,7 @@ namespace {
 QJsonObject hitboxJson(const HitboxRef &h) {
     return {{"ordinal", h.ordinal}, {"line", h.line}, {"slot", h.slot}, {"joint", h.joint},
         {"damage", h.damage}, {"size", h.size}, {"x", h.x}, {"y", h.y}, {"z", h.z},
-        {"angle", h.angle}, {"kbg", h.kbg}, {"fkb", h.fkb}, {"bkb", h.bkb},
+        {"angle", h.angle}, {"kbg", h.kbg}, {"fkb", h.fkb}, {"bkb", h.bkb}, {"element", h.element},
         {"start_frame", h.startFrame}, {"end_frame", h.endFrame}};
 }
 HitboxRef needHitbox(Session &s, const QString &row, int ordinal) {
@@ -36,7 +36,7 @@ void registerHitboxCommands(Session &s) {
     auto editProperties = rowOrdinal;
     editProperties["bone"] = argType("string"); editProperties["propose"] = argType("boolean");
     for (const char *key : {"damage", "size", "x", "y", "z"}) editProperties[key] = argType("number");
-    for (const char *key : {"angle", "kbg", "fkb", "bkb", "start_frame", "end_frame"})
+    for (const char *key : {"angle", "kbg", "fkb", "bkb", "start_frame", "end_frame", "element"})
         editProperties[key] = argType("integer");
     s.registry().add({"edit_hitbox", t("Edit a source hitbox", "Edit a source hitbox"),
         commandSchema(editProperties, {"row", "ordinal"}), true,
@@ -63,6 +63,7 @@ void registerHitboxCommands(Session &s) {
             if (args.contains("kbg")) edit.kbg = intArg(args, "kbg");
             if (args.contains("fkb")) edit.fkb = intArg(args, "fkb");
             if (args.contains("bkb")) edit.bkb = intArg(args, "bkb");
+            if (args.contains("element")) edit.element = intArg(args, "element", 0, 31);
             if (args.contains("start_frame")) edit.startFrame = intArg(args, "start_frame");
             if (args.contains("end_frame")) edit.endFrame = intArg(args, "end_frame");
             ctx.propose |= args["propose"].toBool();

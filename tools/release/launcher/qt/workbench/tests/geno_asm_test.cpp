@@ -28,6 +28,19 @@ private slots:
         auto hb = GenoAsm::parse("hitbox slot=0 joint=@A@ damage=1 size=1 x=0 y=0 z=0 angle=0 kbg=0 fkb=0 bkb=0\nclear_hitboxes\n").hitboxes();
         QCOMPARE(hb[0].startFrame, 0); QCOMPARE(hb[0].endFrame, 0);
     }
+
+    void elementPreservesRawCodeAndEditsOnlyItsToken() {
+        const QString source = "hitbox slot=0 element=3 damage=7 # element=31\r\n";
+        const auto script = GenoAsm::parse(source); QCOMPARE(script.hitboxes()[0].element, 3);
+        QString error; HitboxEdit edit; edit.element = 0;
+        QCOMPARE(script.apply(0, edit, &error), QString("hitbox slot=0 element=0 damage=7 # element=31\r\n"));
+        QVERIFY(error.isEmpty());
+        QCOMPARE(GenoAsm::parse("hitbox slot=0\n").hitboxes()[0].element, 0);
+        edit.element = 31;
+        QCOMPARE(GenoAsm::parse("hitbox slot=0 # keep\n").apply(0, edit, &error), QString("hitbox slot=0 element=31 # keep\n"));
+        edit.element = 32; QVERIFY(script.apply(0, edit, &error).isNull());
+        edit.element = -1; QVERIFY(script.apply(0, edit, &error).isNull());
+    }
     void editJointOnlyTouchesThatToken() {
         QString err; HitboxEdit e; e.joint = "HAND_R";
         QString out = GenoAsm::parse(wbtest::kDair).apply(0, e, &err);

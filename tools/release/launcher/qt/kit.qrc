@@ -1,9 +1,12 @@
 <RCC>
 <qresource prefix="/">
  <file alias="atlas/tokens.json">../../../../menu/atlas/tokens.json</file>
+ <file alias="workbench/blender_sync.py">workbench/blender_sync.py</file>
  <file alias="fonts/barlow-semibold.ttf">../../../../menu/Barlow/BarlowCondensed-SemiBold.ttf</file>
  <file alias="fonts/barlow-bold.ttf">../../../../menu/Barlow/BarlowCondensed-Bold.ttf</file>
  <file alias="fonts/sourcesans-semibold.otf">../../../../menu/SourceSans3/SourceSans3-Semibold.otf</file>
+ <file alias="fonts/hasklug-medium.otf">../../../../menu/Hasklug/HasklugNerdFontPropo-Medium.otf</file>
+ <file alias="fonts/hasklug-LICENSE.md">../../../../menu/Hasklug/LICENSE.md</file>
 </qresource>
 <qresource prefix="/kit">
  <file alias="kit.json">../../../../_build/ui/kit.json</file>

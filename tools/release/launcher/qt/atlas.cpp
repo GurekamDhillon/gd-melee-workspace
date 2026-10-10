@@ -13,7 +13,7 @@
 namespace launcher::atlas {
 static QJsonObject tokens;
 static bool loaded = false;
-static QString barlow = "Barlow Condensed", sans = "Source Sans 3";
+static QString barlow = "Barlow Condensed", sans = "Source Sans 3", numbers = "Hasklug Nerd Font Propo";
 
 static QJsonObject readJson(const char *path) {
     QFile f(path);
@@ -24,9 +24,13 @@ void initialize() {
     if (loaded) return;
     loaded = true;
     tokens = readJson(":/atlas/tokens.json");
-    for (const char *p : {":/fonts/barlow-semibold.ttf", ":/fonts/barlow-bold.ttf", ":/fonts/sourcesans-semibold.otf"}) {
+    for (const char *p : {":/fonts/barlow-semibold.ttf", ":/fonts/barlow-bold.ttf", ":/fonts/sourcesans-semibold.otf", ":/fonts/hasklug-medium.otf"}) {
         const int id = QFontDatabase::addApplicationFont(p);
         if (id < 0) qWarning() << "atlas: font did not load:" << p;
+        else if (QString::fromLatin1(p).contains("hasklug")) {
+            const auto families = QFontDatabase::applicationFontFamilies(id);
+            if (!families.isEmpty()) numbers = families.first();
+        }
     }
 }
 QColor colour(const QString &token) {
@@ -63,6 +67,14 @@ QFont font(Role role) {
     f.setPixelSize(size);
     f.setWeight(bold ? QFont::Bold : QFont::DemiBold);
     if (cap) f.setLetterSpacing(QFont::AbsoluteSpacing, 0.1 * size);   // tracked +0.10 em
+    return f;
+}
+
+QFont numberFont(int pixelSize) {
+    initialize();
+    QFont f(numbers);
+    f.setPixelSize(std::max(12, pixelSize));
+    f.setWeight(QFont::Medium);
     return f;
 }
 

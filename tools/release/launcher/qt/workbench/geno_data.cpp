@@ -5,6 +5,7 @@
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QSet>
+#include <QRegularExpression>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -296,6 +297,30 @@ QVector<HitboxRef> GenoData::hitboxes(const QString &name) const {
     const auto *row = findRow(name);
     if (!row || row->script.isEmpty()) return {};
     return GenoAsm::parse(sourceText(scripts_.value(row->script), row->script)).hitboxes();
+}
+QJsonArray GenoData::timelineEvents(const QString &name) const {
+    const auto *row = findRow(name);
+    if (!row || row->script.isEmpty()) return {};
+    QJsonArray events; qint64 frame = 0;
+    static const QRegularExpression whitespace(QStringLiteral("\\s+"));
+    const auto source = sourceText(scripts_.value(row->script), row->script);
+    for (const auto &line : source.split('\n')) {
+        const auto code = line.section('#', 0, 0).trimmed();
+        const auto words = code.split(whitespace, Qt::SkipEmptyParts);
+        if (words.isEmpty()) continue;
+        const auto op = words.first().toLower();
+        // Do not pretend to evaluate script control flow or generate event times.
+        if (op == "loop" || op == "goto" || op == "call" || op == "subroutine" || op == "if" || op == "branch") break;
+        if (op == "wait" || op == "wait_until" || op == "frame") {
+            bool ok = false; const auto number = words.value(1).toLongLong(&ok);
+            if (!ok || number < 0 || number > std::numeric_limits<int>::max()) break;
+            frame = op == "wait" ? frame + number : number;
+            if (frame > std::numeric_limits<int>::max()) break;
+        } else if (op == "sound" || op == "sfx" || op == "effect" || op == "gfx") {
+            events.append(QJsonObject{{"frame", int(frame)}, {"label", code}});
+        }
+    }
+    return events;
 }
 const QVector<RoleInfo> &GenoData::roleVocabulary() {
     // The assembler's role names (ports/*/tools/build.py ROLE) and the plan key each resolves through.
