@@ -270,7 +270,7 @@ QByteArray encoded(const Source &source, const QString &text) {
 }
 void requireUnchanged(Session &session) {
     const auto changes = session.files().externalChanges();
-    if (!changes.isEmpty()) throw CommandError{t("changed externally: %1", "cambio externo: %1").arg(changes.first())};
+    if (!changes.isEmpty()) throw CommandError{t("changed externally: %1", "changed externally: %1").arg(changes.first())};
 }
 } // namespace
 
