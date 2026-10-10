@@ -117,13 +117,18 @@ def _after_load(bpy, api, args):
 
 def _exercise(bpy, session, rows):
     """Live check of the failures seen on Goku: play past a move's end, switch moves, restart the engine."""
+    from geno_workbench import travel
+
     def root(label):
         info = session.info or {}
         bones = info.get("bones") or []
         top = next((b for b in bones if b.get("parent", -1) == -1), None)
         pos = (top or {}).get("pos") or {}
-        print("GENO_WB_REPORT ex %s row=%s frame=%s connected=%s root=(%.2f,%.2f) status=%s" % (
-            label, session.row, session.frame, session.connected, pos.get("x", 0.0), pos.get("y", 0.0), session.status))
+        shown = travel.in_place(info, session.travel_anchor) if info else {}
+        spos = ((shown.get("root") or {}).get("pos")) or {}
+        print("GENO_WB_REPORT ex %s row=%s frame=%s connected=%s root=(%.2f,%.2f) in_place=(%.2f,%.2f) status=%s" % (
+            label, session.row, session.frame, session.connected, pos.get("x", 0.0), pos.get("y", 0.0),
+            spos.get("x", 0.0), spos.get("y", 0.0), session.status))
     for name in rows:
         ok = bpy.ops.geno_wb.load_row(row=name) == {"FINISHED"}
         length = session.row_frames()
@@ -134,9 +139,19 @@ def _exercise(bpy, session, rows):
             if not session.connected:
                 print("GENO_WB_REPORT ex DISCONNECTED at frame %d: %s" % (f, session.last_error))
                 return
-            if f in (1, 2, 8, length, (length or 40) + 3):
+            if f in (1, 2, 8, 20, length, (length or 40) + 3):
                 root("f%d ok=%s" % (f, ok))
         print("GENO_WB_REPORT ex learned_length %s=%s" % (name, session.row_lengths.get(name)))
+        # Play to the end the way the modal does: step until the row's length, stop (never spin on one frame)
+        session.set_frame(1)
+        calls = 0
+        while True:
+            limit = session.row_frames()
+            if not limit or session.frame >= limit or calls > (limit or 60) + 5:
+                break
+            session.step(1)
+            calls += 1
+        print("GENO_WB_REPORT ex play %s end_frame=%s limit=%s step_calls=%d" % (name, session.frame, session.row_frames(), calls))
     # switch back and forth, root should be stable per row start
     for name in rows + rows[::-1]:
         bpy.ops.geno_wb.load_row(row=name)
@@ -189,7 +204,7 @@ def _present(bpy):
                     space.clip_end = 100000.0
                     space.shading.type = "SOLID"
                     space.shading.show_xray = False
-                    space.shading.color_type = "OBJECT"
+                    space.shading.color_type = "TEXTURE"   # textures without Material Preview's cost
                     space.overlay.show_extras = True
                     space.show_region_ui = True  # the Geno panel lives in the N sidebar
                     bpy.ops.object.select_all(action="DESELECT")
@@ -278,6 +293,13 @@ def _report(bpy, session, names, args):
                 b = arm.data.bones[n]
                 print("GENO_WB_REPORT far_bone %s parent=%s dist_head=%.2f dist_tail=%.2f len=%.2f head=(%.2f,%.2f,%.2f)" % (
                     n, b.parent.name if b.parent else None, dist(posed[n][0]), dist(posed[n][1]), blen(n), *posed[n][0]))
+    missing = []
+    for img in bpy.data.images:
+        if img.source in ("FILE", "SEQUENCE", "MOVIE") and not img.packed_file:
+            path = bpy.path.abspath(img.filepath)
+            if not img.has_data and not (path and os.path.isfile(path)):
+                missing.append("%s -> %s" % (img.name, path))
+    print("GENO_WB_REPORT images=%d missing=%d %s" % (len(bpy.data.images), len(missing), missing[:8]))
     print("GENO_WB_REPORT status=%s" % session.status)
     _sys.stdout.flush()
     bpy.ops.wm.quit_blender()

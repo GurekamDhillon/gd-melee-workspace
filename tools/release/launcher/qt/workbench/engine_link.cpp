@@ -372,6 +372,16 @@ bool EngineLink::startImpl(QString *err) {
                         if (paused.ok && paused.text.trimmed().startsWith("true")) break;
                         pumpFor(std::min(100, remaining(timer, 60000)));
                     }
+                    // The scene pauses the fighter in Fall, still above the floor. Run it a few frames so it lands
+                    // in Wait: ground rows start from a standing fighter on the floor (the engine records that
+                    // pose as its home).
+                    console_.call("=wb.step({n=30})", std::min(3000, remaining(timer, 60000)));
+                    while (remaining(timer, 60000)) {
+                        QString serr;
+                        const auto info = request("frame_info", {}, std::min(3000, remaining(timer, 60000)), &serr);
+                        if (!serr.isEmpty() || info.value("frame").toDouble(-1) >= 1) break;
+                        pumpFor(std::min(50, remaining(timer, 60000)));
+                    }
                     state_ = "ready"; setError(err, {}); return true;
                 }
                 lastReply = probe.text;

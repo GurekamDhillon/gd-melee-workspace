@@ -395,6 +395,11 @@ class GENO_WB_OT_play(bpy.types.Operator):
         if _active_player is not None:
             stop_playback()
             return _finish(self, context, value.set_status(STRINGS["play_paused"]))
+        if value.row_frames() == 1 and value.frame >= 1:
+            return _finish(
+                self, context,
+                value.set_status(STRINGS["play_end"].format(frame=value.frame)),
+            )
         if value.pending_frame is not None and not value.flush_pending():
             _cancel_scrub()
             return _finish(self, context, False)
@@ -449,7 +454,8 @@ class GENO_WB_OT_play(bpy.types.Operator):
             return _finish(self, context, value.set_status(STRINGS["play_limit"]))
         limit = value.row_frames()
         if limit and value.frame >= limit:
-            if not self._settings.loop:
+            # a one-frame move has nothing to play or loop: stop instead of resending the same frame
+            if limit <= 1 or not self._settings.loop:
                 self._stop()
                 return _finish(
                     self, context,

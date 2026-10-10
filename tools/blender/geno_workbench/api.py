@@ -14,10 +14,11 @@ import re
 from typing import Callable
 
 try:
-    from . import client, wbspace
+    from . import client, travel, wbspace
     from .props import STRINGS
 except ImportError:
     import client
+    import travel
     import wbspace
     from props import STRINGS
 
@@ -76,6 +77,7 @@ class WbSession:
         self.art_blend = ""
         self.art_glb = ""
         self.bone_aliases: dict[str, str] = {}
+        self.travel_anchor = None   # root position the in-place view keeps fixed (the row's first frame)
         self.loaded_row = ""   # the name given to load_row (list_rows' name; self.row is the engine's label)
         self.row_lengths: dict[str, int] = {}   # learned from the server when a frame is past a move's end
 
@@ -275,6 +277,7 @@ class WbSession:
         self.rows = []
         self.row = ""
         self.loaded_row = ""
+        self.travel_anchor = None
         self.row_lengths = {}
         self.frame = 0
         self.pending_frame = None
@@ -327,6 +330,7 @@ class WbSession:
             boxes = self._source_hitboxes(row) if refresh_hitboxes else []
             self.loaded_row = row
             self._store_frame(parsed)
+            self.travel_anchor = travel.anchor_of(self.info)
             self.hitboxes = boxes
             self.suggestion = None
             self._fire_frame()
@@ -437,6 +441,7 @@ class WbSession:
             )
             self.loaded_row = row
             self._store_frame(parsed)
+            self.travel_anchor = travel.anchor_of(self.info)
             self.hitboxes = boxes
             self.suggestion = None
             self._fire_frame()
@@ -550,6 +555,7 @@ class WbSession:
             self.info = None
             self.row = ""
             self.loaded_row = ""
+            self.travel_anchor = None
             self.frame = 0
             self.hitboxes = []
             self.problems = []

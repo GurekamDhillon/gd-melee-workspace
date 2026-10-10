@@ -112,6 +112,7 @@ class GENO_WB_PT_timeline(bpy.types.Panel):
         length = "  (" + STRINGS["move_length"].format(frames=frames) + ")" if frames else ""
         self.layout.label(text=STRINGS["engine_frame"].format(frame=frame) + length)
         self.layout.prop(settings, "loop")
+        self.layout.prop(settings, "show_travel")
         self.layout.label(
             text=settings.status, icon="ERROR" if value.last_error else "INFO"
         )
