@@ -50,6 +50,15 @@ Directly invoking the generic artist builder is a diagnostic gate: reapply this
 wrapper before running the fighter. Scripts resolve anatomical role tokens to
 the newly generated plan's actual joint indices.
 
+**Gameplay data in git.** The committed `gameplay.json` is the *stripped* file: the same structure and the authored
+Melee design values (damage, angle, KBG/BKB, sizes, offsets, windows, IASA), without the source-game fields
+(candidate windows, picks, pose reviews, BAC ids, clip names, strike frames, clip lengths, timing notes). The full
+file lives locally as `gameplay.full.json` (git-ignored). Every tool reads the full file when it exists and the stripped
+one otherwise, and tolerates the stripped fields being absent; `attacks.py` and `cross_port.py` write the full file and
+regenerate the stripped one. After editing `gameplay.full.json` by hand run `python ports/goku-xv2/tools/strip_gameplay.py`
+(`--check` verifies it; `tests/test_gameplay.py` does too when the full file is present). A fresh clone has only the
+stripped file, so `build.py` there lacks the clip-length check and the source-derived losses text, and needs the local IR anyway.
+
 The source IR covers every captured BAC entry and BCM node, all canonical Move
 keys, the three physical rigs plus animation reference skeletons, costumes,
 models, textures, effects and projectile references. Audio bank contents and XV2

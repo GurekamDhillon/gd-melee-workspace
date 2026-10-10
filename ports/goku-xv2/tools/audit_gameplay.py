@@ -87,7 +87,7 @@ def fit_hurtboxes(mesh,plan):
 def audit(package,art_build,fit=False):
     package,art_build = G.generated(package),G.generated(art_build)
     ir = G.load(G.PORT/'ir/goku.xv2.ir.json')
-    cfg = G.load(G.PORT/'gameplay.json')
+    cfg = G.load(G.SG.path())
     plan_path = package/'files/plan.json'
     plan = G.load(plan_path)
     mesh_path = next(art_build.glob('mesh_*.json'))

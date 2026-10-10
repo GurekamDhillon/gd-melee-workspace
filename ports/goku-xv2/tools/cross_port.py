@@ -21,6 +21,8 @@ import sys
 from pathlib import Path
 
 PORT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import strip_gameplay as SG
 ROOT = PORT.parents[1]
 REGISTRY = PORT / 'tools/cross-port.json'
 OUT = ROOT / '_build/goku-xv2/cross-port'
@@ -82,7 +84,7 @@ def scale_tracks(T, got, res, gain=1.0):
 def generate(row, entry):
     T = tool()
     height = json.loads(ART_REPORT.read_text(encoding='utf-8'))['geometry']['height']
-    cfg = json.loads((PORT / 'gameplay.json').read_text(encoding='utf-8'))
+    cfg = SG.load()
     build_scale = height / cfg['geometry_reference_height']
     res, report, events, got = T.run(entry['fighter'], entry['action'], str(FIGHTER_JSON), str(OUT / row))
     src, dst, ratio = got['rig'], res.dst, report['ratio']
@@ -104,7 +106,7 @@ def generate(row, entry):
     iasa = next(e['frame'] for e in events if e['kind'] == 'iasa')
     windows = [[h['frame'], next(c for c in clears if c > h['frame']) - h['frame']] for h in hbs]
     samples = len(range(int(round(report['source']['frames'])) + 1))
-    gp = json.loads((PORT / 'gameplay.json').read_text(encoding='utf-8'))
+    gp = SG.load()
     m = next(x for x in gp['moves'] if x['name'] == entry['move'])
     first = moved[0]
     roles = [mk[x['src_role']] for x in moved]
@@ -120,7 +122,7 @@ def generate(row, entry):
                       first['before']['damage'], first['before']['angle'], first['before']['kbg'], first['before']['bkb'], '/'.join(roles), ratio))
     m['pick'] = {'status': 'cross-port', 'source': '%s %s' % (entry['fighter'], entry['action']), 'why': entry['reason'], 'ratio': ratio}
     m['pose_review'] = "Cross-port clip: Luigi's kick retargeted by bone role; his thigh stretch (SCAX 1.8x) is carried as a bone-scale track on the same role (clips.scale_bones). Pose review in the LAB owed."
-    (PORT / 'gameplay.json').write_text(json.dumps(gp, indent=2) + '\n', encoding='utf-8')
+    SG.save(gp)  # full file + regenerated stripped gameplay.json
     summary = {'row': row, 'clip': str(clip_path(row)), 'move_script': str(move), 'ratio': ratio, 'build_scale': build_scale,
                'windows': windows, 'iasa': iasa, 'samples': samples, 'hitboxes': moved,
                'worst_end_effector_error': max(v['max'] for v in report['end_effector_error'].values())}

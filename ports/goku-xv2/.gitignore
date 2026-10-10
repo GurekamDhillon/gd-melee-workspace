@@ -14,6 +14,8 @@
 !combo/tests/**/missions/combo-specs/*.txt
 !combo/tests/**/mod.json
 !workbench.json
+# gameplay.json is the STRIPPED file (tools/strip_gameplay.py); gameplay.full.json stays local (section 3)
+!gameplay.json
 !ground_modes.json
 !tools/cross-port.json
 
@@ -45,7 +47,7 @@ ir/
 
 # 3. Authored but embed XV2 BAC/BCM/EAN numbers (clip names, frame windows, emitter dumps)
 #    or Melee disc values: excluded until the owner decides (see the commit message).
-gameplay.json
+gameplay.full.json
 fidelity.json
 ANIM-ROWS.json
 row-lengths.json
@@ -58,8 +60,3 @@ combo/FIDELITY-COMBOS.md
 tools/fx_emitter_template.json
 tools/move-crops.json
 tools/picks-specials.md
-# Luigi/Courier disc hitbox words and capture flags.
-moves/bair.genoasm
-moves/grab.genoasm
-moves/dash_grab.genoasm
-tests/test_gameplay.py

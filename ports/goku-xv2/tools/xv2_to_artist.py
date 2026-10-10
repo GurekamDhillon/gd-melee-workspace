@@ -24,6 +24,7 @@ from scipy.spatial.transform import Rotation, Slerp
 ROOT = Path(__file__).resolve().parents[3]
 PORT = ROOT / 'ports/goku-xv2'
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import strip_gameplay as SG
 sys.path.insert(0, str(ROOT))
 from tools.geno.artist import model, spec, pipeline, validate
 
@@ -461,7 +462,7 @@ def row_specs(source):
     rowmap.apply(out,byname.get,None)
     for row in rowmap.ROWS:
         if row in out:out[row]['library']=True   # CMN clips may scale bones; tolerated as in the library
-    gameplay_path=PORT/'gameplay.json'
+    gameplay_path=SG.path()
     if gameplay_path.exists():
         gameplay=json.loads(gameplay_path.read_text())
         bymotion={r['motion']:r['name'] for r in spec.clip_table()['rows']}
@@ -469,11 +470,11 @@ def row_specs(source):
             for motion in move['motions']:
                 row=bymotion[motion]
                 if row in out:
-                    out[row]['frames']=max(out[row].get('frames') or 0,move['minimum_clip_frames'])
+                    out[row]['frames']=max(out[row].get('frames') or 0,move.get('minimum_clip_frames') or 0)
                     out[row]['active_end']=max([out[row].get('active_end') or 0]+[a+l for a,l in move.get('windows',[])])
         for sp in gameplay.get('special_adaptations',[]):
             row=sp.get('state') or sp.get('name')
-            if row in out:out[row]['frames']=max(out[row].get('frames') or 0,sp['minimum_clip_frames'])
+            if row in out:out[row]['frames']=max(out[row].get('frames') or 0,sp.get('minimum_clip_frames') or 0)
     return out
 
 

@@ -21,6 +21,7 @@ ROOT = PORT.parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(PORT / 'tools'))
 sys.path.insert(0, str(ROOT / 'ports/ir/tools'))
+import strip_gameplay as SG  # noqa: E402
 import build as G  # noqa: E402  the Goku builder's role binding and scale
 from tools.geno import script  # noqa: E402
 
@@ -51,7 +52,7 @@ def main(argv=None):
     f = doc['fighters'][0]
     plan = json.loads((pkg / 'files/plan.json').read_text(encoding='utf-8'))
     height = json.loads((ROOT / '_build/goku-xv2/author-source/art-report.json').read_text(encoding='utf-8'))['geometry']['height']
-    scale = height / json.loads((PORT / 'gameplay.json').read_text(encoding='utf-8'))['geometry_reference_height']
+    scale = height / SG.load()['geometry_reference_height']
     if 'rows' not in f.get('fighter', {}):
         raise SystemExit(f'{pkg}/geno.json has no fighter.rows: the source build did not finish (rebuild with build.py and check its rc); {final} is untouched')
     rows = f['fighter']['rows']

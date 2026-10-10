@@ -17,6 +17,8 @@ import sys
 PORT = Path(__file__).resolve().parents[1]
 ROOT = PORT.parents[1]
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import strip_gameplay as SG  # gameplay.full.json (local) wins over the stripped gameplay.json
 sys.path.insert(0, str(ROOT/'ports/ir/tools'))
 from tools.geno import script, report
 from acmd_loss import write_losses
@@ -228,7 +230,7 @@ def write_presentation(package, fighter):
 
 def apply(package, art_build, ir_path=None):
     package, art_build = generated(package), generated(art_build)
-    cfg = load(PORT/'gameplay.json')
+    cfg = load(SG.path())
     art_report = ROOT/'_build/goku-xv2/author-source/art-report.json'
     height = load(art_report)['geometry']['height']
     reference_height = cfg['geometry_reference_height']
@@ -332,7 +334,7 @@ def apply(package, art_build, ir_path=None):
             if not clip or clip not in plan['bank']['clips']:
                 raise ValueError(f'{name}: animation row {row} has no authored bank clip')
             frames = plan['bank']['clips'][clip]['frames']
-            if frames < spec['minimum_clip_frames']:
+            if spec.get('minimum_clip_frames') and frames < spec['minimum_clip_frames']:  # absent in the stripped gameplay.json
                 raise ValueError(f'{name}: clip {clip} has {frames} frames; needs {spec["minimum_clip_frames"]}')
         audit.append({'move':name,'parity':parity,'source_scripts':[s['id'] for s in sources],
                       'rows':rows,'script_frames':info,'classification':'destination design / static source candidates',

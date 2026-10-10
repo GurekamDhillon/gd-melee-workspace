@@ -11,9 +11,12 @@ rushdown, a common Melee swing sound (166 small / 165 medium / 164 large), IASA 
 flag window (auto-cancel outside it). Every number is a provisional design value; PICKS.md lists each for review.
 """
 import json
+import sys
 from pathlib import Path
 
 PORT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import strip_gameplay as SG
 SCALE = 1.5  # build.py retargets hitbox sizes by the model scale: sizes here are final, written / 1.5
 INV = {c['name']: i for i, c in enumerate(json.loads((PORT / 'ANIM-ROWS.json').read_text(encoding='utf-8'))['body_source_inventory'])}
 
@@ -84,7 +87,7 @@ def script(name, m):
 
 
 def main():
-    gp = json.loads((PORT / 'gameplay.json').read_text(encoding='utf-8'))
+    gp = SG.load()
     crops = json.loads((PORT / 'tools/move-crops.json').read_text(encoding='utf-8'))
     by = {m['name']: m for m in gp['moves']}
     cross = {e['move'] for e in json.loads((PORT / 'tools/cross-port.json').read_text(encoding='utf-8')).values()}
@@ -113,7 +116,7 @@ def main():
         crops[row] = {'clip': INV[clip], 'start': start, 'frames': frames, 'move': name,
                       'note': 'PICK provisional (%s): %s' % (('BAC %d' % bac) if bac is not None else 'library', why)}
         picks.append((name, row, bac, clip, start, frames, wins, iasa, air, why))
-    (PORT / 'gameplay.json').write_text(json.dumps(gp, indent=2) + '\n', encoding='utf-8')
+    SG.save(gp)  # full file + regenerated stripped gameplay.json
     (PORT / 'tools/move-crops.json').write_text(json.dumps(crops, indent=2) + '\n', encoding='utf-8')
     write_picks(picks)
     print('attacks: %d moves' % len(picks))

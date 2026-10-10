@@ -8,9 +8,12 @@ factor is given), CROSS-PORT (a retail Melee action retargeted onto Goku's rig; 
 NONE (Melee plays no animation for it). Evidence names files the owner can open.
 """
 import json
+import sys
 from pathlib import Path
 
 PORT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import strip_gameplay as SG
 ROOT = PORT.parents[1]
 RUNS = '_build/agents/goku-polish/runs/'
 
@@ -77,7 +80,7 @@ def classify(r):
 def main():
     rows = json.loads((PORT / 'ANIM-ROWS.json').read_text(encoding='utf-8'))['rows']
     lens = json.loads((PORT / 'row-lengths.json').read_text(encoding='utf-8')) if (PORT / 'row-lengths.json').exists() else {}
-    game = json.loads((PORT / 'gameplay.json').read_text(encoding='utf-8'))
+    game = SG.load()
     audit = json.loads((ROOT / '_build/goku-xv2/ground-audit.json').read_text(encoding='utf-8')) if (ROOT / '_build/goku-xv2/ground-audit.json').exists() else {}
     out_rows, counts = [], {}
     for r in rows:
