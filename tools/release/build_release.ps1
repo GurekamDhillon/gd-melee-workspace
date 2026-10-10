@@ -125,7 +125,7 @@ foreach ($f in "SDL3.dll", "webgpu_dawn.dll", "initial_pipeline_cache.db", "init
 foreach ($f in "msvcp140.dll", "msvcp140_atomic_wait.dll", "vcruntime140.dll") { Copy-In (Join-Path $crt $f) $f }
 
 # the launcher, freshly compiled
-& (Join-Path $PSScriptRoot "build_launcher.ps1") -Out (Join-Path $stage "GD Melee.exe") | Out-Null
+& (Join-Path $PSScriptRoot "build_launcher.ps1") -Release -Out (Join-Path $stage "GD Melee.exe") | Out-Null
 
 # UI art: exactly the files committed under _build/ui
 foreach ($rel in (git -C $root ls-files -- _build/ui)) {

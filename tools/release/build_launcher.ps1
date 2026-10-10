@@ -4,7 +4,8 @@ param(
   [string]$QtRoot = $env:QT_ROOT_DIR,
   [string]$Generator = "",
   [string]$BuildDir = "",
-  [string]$CMake = "cmake"
+  [string]$CMake = "cmake",
+  [switch]$Release
 )
 $ErrorActionPreference = "Stop"
 function Invoke-NativeTool([string]$Executable, [string[]]$Arguments) {
@@ -17,8 +18,46 @@ function Invoke-NativeTool([string]$Executable, [string[]]$Arguments) {
   & $Executable @Arguments
   $script:NativeToolExit = $global:LASTEXITCODE
 }
+function Get-LauncherBuildPaths([string]$OutputPath, [string]$BuildPath, [string]$RepoRoot, [switch]$Release) {
+  # PowerShell's location can differ from .NET's process current directory.
+  # This also resolves paths that do not exist yet, unlike Resolve-Path.
+  $out = [System.IO.Path]::GetFullPath($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($OutputPath))
+  $build = if ($BuildPath) {
+    [System.IO.Path]::GetFullPath($ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($BuildPath))
+  } else {
+    Join-Path $RepoRoot '_build/launcher-qt-windows'
+  }
+  if (-not $Release) {
+    function Resolve-PhysicalLauncherPath([string]$Path, [int]$Depth = 0) {
+      if ($Depth -gt 64) { throw "Too many path components or links in launcher path: $Path" }
+      $item = Get-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+      if ($item -and $item.Target) {
+        $target = @($item.Target)[0]
+        if (-not [System.IO.Path]::IsPathRooted($target)) { $target = Join-Path (Split-Path $Path -Parent) $target }
+        return Resolve-PhysicalLauncherPath -Path ([System.IO.Path]::GetFullPath($target)) -Depth ($Depth + 1)
+      }
+      $parent = Split-Path $Path -Parent
+      if (-not $parent -or $parent -eq $Path) { return $Path }
+      return Join-Path (Resolve-PhysicalLauncherPath -Path $parent -Depth ($Depth + 1)) (Split-Path $Path -Leaf)
+    }
+    # A worktree's _build can be a junction to the main build. Compare targets
+    # too, so spelling the shared directory directly cannot bypass the guard.
+    $releaseDir = [System.IO.Path]::GetFullPath((Join-Path $RepoRoot '_build/release'))
+    $physicalRelease = (Resolve-PhysicalLauncherPath $releaseDir).TrimEnd('\', '/')
+    $physicalOut = Resolve-PhysicalLauncherPath $out
+    if ($out.Equals($releaseDir, [System.StringComparison]::OrdinalIgnoreCase) -or
+        $out.StartsWith($releaseDir + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase) -or
+        $physicalOut.Equals($physicalRelease, [System.StringComparison]::OrdinalIgnoreCase) -or
+        $physicalOut.StartsWith($physicalRelease + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
+      throw "Refusing launcher output '$out' inside '$releaseDir'. Pass -Release for an intentional release build, or choose -Out outside _build/release."
+    }
+  }
+  return [pscustomobject]@{ Out = $out; BuildDir = $build }
+}
 $root = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
-$build = if ($BuildDir) { [System.IO.Path]::GetFullPath($BuildDir) } else { Join-Path $root "_build/launcher-qt-windows" }
+$paths = Get-LauncherBuildPaths -OutputPath $Out -BuildPath $BuildDir -RepoRoot $root -Release:$Release
+$Out = $paths.Out
+$build = $paths.BuildDir
 $ctest = 'ctest'
 if (Split-Path $CMake -Parent) { $ctest = Join-Path (Split-Path $CMake -Parent) 'ctest.exe' }
 # windeployqt can return success without deploying a CRT when VCINSTALLDIR is unset.
@@ -40,7 +79,6 @@ if (Test-Path $vswhere) {
 if (-not $Generator) { $Generator = 'Visual Studio 17 2022' }
 if (-not $crt) { throw 'No x64 MSVC app-local runtime found; install the Visual Studio C++ workload.' }
 $env:PATH = $crt + ';' + $env:PATH
-$Out = [System.IO.Path]::GetFullPath($Out)
 $outDir = Split-Path $Out -Parent
 $args = @("-S", (Join-Path $PSScriptRoot "launcher/qt"), "-B", $build,
           "-G", $Generator, "-A", "x64", "-DBUILD_TESTING=ON", "-DLAUNCHER_DEPLOY_QT=ON")

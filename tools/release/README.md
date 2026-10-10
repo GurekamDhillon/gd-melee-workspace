@@ -217,8 +217,22 @@ Windows: install Visual Studio 2022 or 2026 C++ tools, CMake and an MSVC x64 Qt 
 
 ```powershell
 $env:QT_ROOT_DIR = 'C:\Qt\6.8.3\msvc2022_64'
-.\tools\release\build_launcher.ps1 -Out '.\_build\release\GD Melee.exe'
+.\tools\release\build_launcher.ps1 -Release -Out '.\_build\release\GD Melee.exe'
 ```
+
+Explicit `-Out` and `-BuildDir` paths are made absolute against the caller's current
+PowerShell location, even when the process current directory differs. They are
+not relative to the repository or the script. The defaults remain the repository's
+`_build/release/GD Melee.exe` and `_build/launcher-qt-windows`.
+
+An output inside the repository's `_build/release` (including nested folders and
+junction/symlink targets) is refused before tool discovery unless `-Release` is
+passed. The default output therefore also requires `-Release`. This matters in
+worktrees: `_build` is often a junction to the main checkout's shared build, so a
+development build can otherwise overwrite its release launcher. For development,
+pass both `-Out` and `-BuildDir` pointing to a directory outside that shared build
+(for example, a directory under `$env:TEMP`). `build_release.ps1` passes `-Release`
+for its intentional release staging.
 
 Compilation supports Qt >=6.2; deployment needs >=6.5 (6.8.3 is pinned in CI).
 For system-Qt development only, pass `GW_LAUNCHER_DEPLOY=OFF` to the Linux script.
@@ -326,6 +340,7 @@ Local release regressions (no game build or public service needed):
 
 ```powershell
 python -m unittest discover -s tools/release -p "test_*.py" -v
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/release/test_launcher_paths.ps1
 python -m unittest discover -s tools/netplay/server -v
 ```
 

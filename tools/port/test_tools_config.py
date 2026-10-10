@@ -153,3 +153,74 @@ def test_modern_blender_discovery_does_not_choose_only_legacy_install(tmp_path):
     paths = C.load_config(tmp_path, env={"PATH": "", "PROGRAMFILES": str(program_files)}, detect=True)
     assert paths["GW_BLENDER"] == ""
     assert paths["GW_BLENDER_351"] == str(legacy)
+
+
+@pytest.fixture
+def steam_libraries(tmp_path):
+    steam = tmp_path / "Program Files (x86)/Steam"
+    libraries = [steam, tmp_path / "SteamLibrary é", tmp_path / "SteamGames"]
+    vdf = steam / "steamapps/libraryfolders.vdf"
+    vdf.parent.mkdir(parents=True)
+    entries = []
+    for index, library in enumerate(libraries):
+        escaped_path = str(library).replace("\\", "\\\\")
+        entries.append(
+            f'    "{index}"\n    {{\n'
+            f'        "path" "{escaped_path}"\n'
+            '        "label" ""\n'
+            '        "contentid" "123456789"\n'
+            '        "totalsize" "0"\n'
+            '        "apps"\n        {\n            "365670" "1024"\n        }\n'
+            '    }\n'
+        )
+    vdf.write_text('"libraryfolders"\n{\n' + "".join(entries) + '}\n', encoding="utf-8")
+    return steam.parent, libraries, vdf
+
+
+@pytest.mark.parametrize("env_key", ["PROGRAMFILES(X86)", "ProgramFiles(x86)"])
+@pytest.mark.parametrize("library_index", [0, 1, 2])
+def test_detect_blender_in_each_steam_library(tmp_path, steam_libraries, env_key, library_index):
+    program_files, libraries, _ = steam_libraries
+    exe = libraries[library_index] / "steamapps/common/Blender/blender.exe"
+    exe.parent.mkdir(parents=True)
+    exe.write_bytes(b"fixture")
+    paths = C.load_config(tmp_path, env={"PATH": "", env_key: str(program_files)})
+    assert paths["GW_BLENDER"] == str(exe.resolve())
+    assert paths["GW_BLENDER_351"] == ""  # Steam Blender is never the pinned exporter.
+
+
+@pytest.mark.parametrize("override", ["custom/blender.exe", ""])
+def test_explicit_blender_override_wins_over_steam_libraries(tmp_path, steam_libraries, override):
+    program_files, libraries, _ = steam_libraries
+    exe = libraries[1] / "steamapps/common/Blender/blender.exe"
+    exe.parent.mkdir(parents=True)
+    exe.write_bytes(b"fixture")
+    paths = C.load_config(tmp_path, env={
+        "PATH": "", "PROGRAMFILES(X86)": str(program_files), "GW_BLENDER": override,
+    })
+    assert paths["GW_BLENDER"] == (str(tmp_path / override) if override else "")
+
+
+@pytest.mark.parametrize("vdf_state", ["missing", "invalid_utf8"])
+def test_steam_vdf_failure_keeps_default_library_fallback(tmp_path, steam_libraries, vdf_state):
+    program_files, libraries, vdf = steam_libraries
+    if vdf_state == "missing":
+        vdf.unlink()
+    else:
+        vdf.write_bytes(b"\xff\xfe\xff")
+    exe = libraries[0] / "steamapps/common/Blender/blender.exe"
+    exe.parent.mkdir(parents=True)
+    exe.write_bytes(b"fixture")
+    paths = C.load_config(tmp_path, env={"PATH": "", "PROGRAMFILES(X86)": str(program_files)})
+    assert paths["GW_BLENDER"] == str(exe.resolve())
+
+
+def test_detect_cli_caches_blender_from_secondary_steam_library(tmp_path, steam_libraries, monkeypatch):
+    program_files, libraries, _ = steam_libraries
+    exe = libraries[1] / "steamapps/common/Blender/blender.exe"
+    exe.parent.mkdir(parents=True)
+    exe.write_bytes(b"fixture")
+    monkeypatch.setattr(C.os, "environ", {"PATH": "", "PROGRAMFILES(X86)": str(program_files)})
+    assert C.main(["--root", str(tmp_path), "--detect"]) == 0
+    paths = json.loads((tmp_path / "_build/tools.json").read_text(encoding="utf-8"))["paths"]
+    assert paths["GW_BLENDER"] == str(exe.resolve())
