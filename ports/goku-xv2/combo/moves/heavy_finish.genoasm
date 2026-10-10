@@ -1,0 +1,22 @@
+# COMBO (geno 11): XV2 heavy finisher after light hit 5. Clip GOK_ATC_013 = BAC GOK_PLAYER 310 (BCM 0/18/3/3/3/3/3, OnAttackHit).
+# BAC hit f10 dur 4. Limb: foot.R +11.34 Z at f10. The XV2 follow-ups (311 teleport rush with homing, 312, 480) are dropped: homing
+# and lock-on are not built (approved: no auto-tracking).
+PUT ANIM_RATE 1.0
+# XV2 BAC Movement event f1 dur 10 (BAC 310 (its second, 10-frame record)); the step is GROUND_VEL x FACING, a design speed (the BAC record's speed is not decoded)
+wait_until 1
+GET ra_f:0 FACING
+MUL ra_f:0 1.1
+PUT GROUND_VEL ra_f:0
+wait_until 6
+GET ra_f:0 FACING
+MUL ra_f:0 1.1
+PUT GROUND_VEL ra_f:0
+wait_until 10
+hitbox slot=0 joint=@FOOT_R@ damage=13 size=4.2 x=0 y=0 z=0 angle=38 kbg=95 fkb=0 bkb=50
+hitbox slot=1 joint=@CHEST@ damage=13 size=3.4 x=0 y=0 z=0 angle=38 kbg=95 fkb=0 bkb=50
+wait_until 11
+PUT GROUND_VEL 0
+wait_until 14
+clear_hitboxes
+wait_until 35
+iasa

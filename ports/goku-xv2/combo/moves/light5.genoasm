@@ -1,0 +1,25 @@
+# COMBO (geno 11): XV2 light string hit 5. Clip GOK_ATC_022 = BAC GOK_PLAYER 304 (BCM 0/18/3/3/3/3). BAC hit f8 dur 4.
+# The step is held through the hit window (XV2's movement record ends at the hit frame; held 4 frames longer).
+# Limb: hand.L, the farthest forward, reaches only +2.52 Z at f8 (a close strike): the sphere sits ahead of the chest.
+PUT ANIM_RATE 1.0
+# XV2 BAC Movement event f4 dur 4 (BAC 304); the step is GROUND_VEL x FACING, a design speed (the BAC record's speed is not decoded)
+wait_until 4
+GET ra_f:0 FACING
+MUL ra_f:0 1.4
+PUT GROUND_VEL ra_f:0
+wait_until 6
+GET ra_f:0 FACING
+MUL ra_f:0 1.4
+PUT GROUND_VEL ra_f:0
+wait_until 8
+hitbox slot=0 joint=@HAND_L@ damage=5 size=5.0 x=0 y=0 z=0 angle=361 kbg=60 fkb=10 bkb=0
+hitbox slot=1 joint=@CHEST@ damage=5 size=5.5 x=0 y=0 z=0 angle=361 kbg=60 fkb=10 bkb=0
+HBSTUN 3 10
+GET ra_f:0 FACING
+MUL ra_f:0 1.4
+PUT GROUND_VEL ra_f:0
+wait_until 12
+PUT GROUND_VEL 0
+clear_hitboxes
+wait_until 31
+iasa

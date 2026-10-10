@@ -1,0 +1,10 @@
+# XV2 light string x5 then the heavy finisher on hit (BCM 0/18: BAC 300>301>302>303>304>310)
+name = light x5 > heavy finisher
+inputs = A, A, A, A, A, C>
+routes = L1>L2, L2>L3, L3>L4, L4>L5, L5>H finish
+percents = 0, 30, 60, 90
+di = none, in, out, survival
+distance = 9
+expect_true = 0, 30
+# true where intended (0% and 30%, no DI); with DI the victim's ground slide changes the spacing: a drop point, correct
+expect_di = none

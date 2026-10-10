@@ -1,0 +1,8 @@
+# Destination throw design; damage/angle/KBG/BKB are not XV2 conversions.
+wait 1
+throw idx=0 damage=6 unk0=90 hit_x24=75 hit_x28=0 hit_x2C=40
+throw idx=1 damage=2 unk0=361 hit_x24=100 hit_x28=0 hit_x2C=30
+wait_until 18
+throw_flag hit_idx=0
+wait_until 28
+iasa

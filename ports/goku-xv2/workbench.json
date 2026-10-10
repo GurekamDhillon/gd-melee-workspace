@@ -1,0 +1,17 @@
+{
+  "schema": "workbench/1",
+  "id": "goku-xv2",
+  "gameplay": "gameplay.json",
+  "moves_dir": "moves",
+  "fidelity": "fidelity.json",
+  "plan_abs": "_build/goku-xv2/author-source/package/mods/goku-xv2/files/plan.json",
+  "mod_id": "goku-xv2",
+  "rebuild": [
+    "python",
+    "ports/goku-xv2/tools/build.py",
+    "--fighter",
+    "_build/goku-xv2/author-source/fighter.json"
+  ],
+  "import_clip": [],
+  "mods_dir": "_build/goku-xv2/author-source/package/mods"
+}

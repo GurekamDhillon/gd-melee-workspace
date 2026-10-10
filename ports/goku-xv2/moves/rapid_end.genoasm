@@ -1,0 +1,5 @@
+# Destination finite barrage end. No indefinite native Attack100Loop continuation.
+PUT ANIM_RATE 1.0
+clear_hitboxes
+wait 8
+CHG auto ALWAYS ONCE

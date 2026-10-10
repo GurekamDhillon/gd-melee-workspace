@@ -1,0 +1,10 @@
+# neutral B cancels a light string on hit: the ki-blast volley (approved design)
+name = light > ki volley
+inputs = A, B
+routes = Lx>Ki Volley
+percents = 0, 30, 60, 90
+di = none, in, out, survival
+distance = 9
+expect_true = 0, 30
+# true where intended (0% and 30%, no DI); with DI the victim's ground slide changes the spacing: a drop point, correct
+expect_di = none

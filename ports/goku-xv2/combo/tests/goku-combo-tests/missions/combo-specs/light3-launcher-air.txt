@@ -1,0 +1,12 @@
+# light x3, heavy up launcher, jump-cancel on hit (always a short hop), then the up aerial meets the launched victim (approved design)
+# True at 0% and 30% with no DI; with DI (in / out / survival) the victim leaves the up aerial's reach: a drop point, which is correct
+name = light x3 > launcher > short hop > uair
+inputs = A, A, A, C^, X>, ~C^
+routes = L1>L2, L2>L3, L3>H up, Launcher>Jump
+min_hits = 5
+percents = 0, 30, 60, 90
+di = none, in, out, survival
+distance = 9
+expect_true = 0, 30
+expect_di = none
+expect_vs = fox, captain, purin, mars

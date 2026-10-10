@@ -1,0 +1,11 @@
+# light x3, heavy up launcher, neutral jump-cancel on hit (a short hop), then the neutral aerial (approved design: launcher -> jump-cancel air strings)
+name = light x3 > launcher > short hop > nair
+inputs = A, A, A, C^, X, ~A
+routes = L1>L2, L2>L3, L3>H up, Launcher>Jump
+min_hits = 5
+percents = 0, 30, 60, 90
+di = none, in, out, survival
+distance = 9
+expect_true = 0, 30
+expect_di = none
+expect_vs = fox

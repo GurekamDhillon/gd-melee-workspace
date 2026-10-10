@@ -1,0 +1,140 @@
+"""Cross-port moves: a retail Melee fighter's action (animation + hitbox script) retargeted onto Goku's rig.
+
+python ports/goku-xv2/tools/cross_port.py            # every entry of tools/cross-port.json (needs GW_ISO_VANILLA; source .env)
+python ports/goku-xv2/tools/cross_port.py AttackAirB # one row
+
+Owner decision (2026-10-09): Goku's back air is Melee Luigi's AttackAirB, animation and hitbox structure, because XV2 has no
+suitable back attack. For each registry entry this
+  1. reads the retail action from the vanilla disc and solves it onto Goku's skeleton by bone role (ports/ir/tools/retarget_melee_anim.py),
+     writing the clip to _build/goku-xv2/cross-port/<row>/clip.npz (+ report.json, script.json) -- disc-derived, git-ignored;
+  2. writes moves/<move>.genoasm: Luigi's script with every hitbox moved to the Goku bone of the same role, offsets rebuilt along/across the
+     bone, size and offsets scaled by the Goku/Luigi size ratio (the script text is in pre-build units: build.py multiplies by its model
+     scale), word 0 as @HITW0:<role>:<base>@ so build.py puts in the destination joint; Luigi's damage, angle, KBG/BKB, element, sound bits,
+     timing, auto-cancel window (cmd_var) and IASA are kept;
+  3. updates gameplay.json for the move (windows, IASA, minimum clip frames, design).
+xv2_to_artist.py then bakes the clip (row_specs reads cross-port.json); fidelity.py reports the row as CROSS-PORT.
+The generated moves/*.genoasm carry Luigi's numbers (disc data): they are git-ignored here like the rest of ports/goku-xv2.
+"""
+import json
+import os
+import sys
+from pathlib import Path
+
+PORT = Path(__file__).resolve().parents[1]
+ROOT = PORT.parents[1]
+REGISTRY = PORT / 'tools/cross-port.json'
+OUT = ROOT / '_build/goku-xv2/cross-port'
+FIGHTER_JSON = ROOT / '_build/goku-xv2/author-source/fighter.json'
+ART_REPORT = ROOT / '_build/goku-xv2/author-source/art-report.json'
+
+
+def registry():
+    return json.loads(REGISTRY.read_text(encoding='utf-8'))
+
+
+def clip_path(row):
+    return OUT / row / 'clip.npz'
+
+
+def tool():
+    """The retarget tool: this checkout's ports/ir/tools, else $GOKU_RETARGET_DIR (the ws/retarget-tool worktree before it is merged)."""
+    for d in (os.environ.get('GOKU_RETARGET_DIR'), str(ROOT / 'ports/ir/tools'), str(ROOT / 'worktrees/ws-retarget-tool/ports/ir/tools')):
+        if d and (Path(d) / 'retarget_melee_anim.py').exists():
+            sys.path.insert(0, d)
+            sys.path.insert(0, str(ROOT))
+            import retarget_melee_anim
+            return retarget_melee_anim
+    raise SystemExit('retarget_melee_anim.py not found: set GOKU_RETARGET_DIR to the folder that holds it')
+
+
+def markers():
+    sys.path.insert(0, str(PORT / 'tools'))
+    sys.path.insert(0, str(ROOT))
+    import build
+    return {role: marker for marker, role in build.ROLE.items()}
+
+
+def scale_tracks(T, got, res, gain=1.0):
+    """Source bone-scale tracks (Luigi's bair thigh stretch: SCAX on both leg joints) mapped to the destination bone of the same role.
+    HSD bones point along local X, so a source X scale is a stretch along the bone; it is carried on the destination bone's own axis when that
+    axis is a coordinate axis. Returns ({dst bone: {axis, values, src_role}}, [notes])."""
+    import numpy as np
+    src, clip, dst = got['rig'], got['clip'], res.dst
+    _, _, s = clip.sample(src, T.sample_frames(clip))
+    out, notes = {}, []
+    for role, sj in src.roles.items():
+        sv = s[:, sj]
+        if role not in dst.roles or np.abs(sv - 1).max() < 0.02:
+            continue
+        if np.abs(sv[:, 1:] - 1).max() > 0.02:
+            notes.append('%s: scale on Y/Z not carried' % role)
+            continue
+        dj = dst.roles[role]
+        d, _ = T.bone_frame(dst, dj)
+        ax = int(np.argmax(np.abs(d)))
+        if abs(d[ax]) < 0.99:
+            notes.append('%s: destination bone axis is not a coordinate axis, not carried' % role)
+            continue
+        out[dst.names[dj]] = {'axis': ax, 'values': [round(1.0 + gain * float(v - 1.0), 5) for v in sv[:, 0]], 'src_role': role, 'gain': gain}
+    return out, notes
+
+
+def generate(row, entry):
+    T = tool()
+    height = json.loads(ART_REPORT.read_text(encoding='utf-8'))['geometry']['height']
+    cfg = json.loads((PORT / 'gameplay.json').read_text(encoding='utf-8'))
+    build_scale = height / cfg['geometry_reference_height']
+    res, report, events, got = T.run(entry['fighter'], entry['action'], str(FIGHTER_JSON), str(OUT / row))
+    src, dst, ratio = got['rig'], res.dst, report['ratio']
+    scales, scale_notes = scale_tracks(T, got, res, entry.get('scale_gain', 1.0))
+    (OUT / row / 'scale.json').write_text(json.dumps({'bones': scales, 'notes': scale_notes}, indent=1) + chr(10), encoding='utf-8')
+    mk = markers()
+    lines, moved = T.script_text(got['words'], src, dst, ratio, scale=1.0 / build_scale,
+                                 joint_ref=lambda role, jd, base: '@HITW0:%s:0x%08X@' % (mk[role], base))
+    text = ['# CROSS-PORT: Melee %s %s (retail data from the vanilla disc), retargeted by bone role; owner choice (2026-10-09): %s.'
+            % (entry['fighter'].capitalize(), entry['action'], entry['reason']),
+            '# Hitbox joint, size and offsets are Luigi\'s moved to Goku\'s bone of the same role and scaled by the size ratio %.4f'
+            ' (script units: build.py multiplies by %.4f). Damage, angle, KBG/BKB, sound bits, timing, auto-cancel and IASA are unchanged.'
+            % (ratio, build_scale), 'PUT ANIM_RATE 1.0'] + lines
+    move = PORT / 'moves' / (entry['move'] + '.genoasm')
+    move.write_text('\n'.join(text) + '\n', encoding='utf-8')
+    # gameplay.json: windows per hitbox (start, frames until the clear), iasa, clip length, design
+    hbs = [e for e in events if e['kind'] == 'hitbox']
+    clears = [e['frame'] for e in events if e['kind'] == 'hitboxes_clear']
+    iasa = next(e['frame'] for e in events if e['kind'] == 'iasa')
+    windows = [[h['frame'], next(c for c in clears if c > h['frame']) - h['frame']] for h in hbs]
+    samples = len(range(int(round(report['source']['frames'])) + 1))
+    gp = json.loads((PORT / 'gameplay.json').read_text(encoding='utf-8'))
+    m = next(x for x in gp['moves'] if x['name'] == entry['move'])
+    first = moved[0]
+    roles = [mk[x['src_role']] for x in moved]
+    m['windows'] = windows
+    m['iasa'] = iasa
+    m['minimum_clip_frames'] = samples
+    m['design'] = dict(m.get('design', {}), damage=first['before']['damage'], angle=first['before']['angle'], kbg=first['before']['kbg'],
+                       bkb=first['before']['bkb'], radius=round(first['after']['size'] * build_scale, 4), role=roles[0], window_roles=roles,
+                       offset=[0, 0, 0])
+    m['timing'] = ('CROSS-PORT from Melee %s %s (%s): hitboxes f%d-%d, IASA f%d, %d clip frames; Luigi\'s numbers (damage %d, angle %d, KBG %d, BKB %d), '
+                   'spheres on %s scaled x%.3f'
+                   % (entry['fighter'].capitalize(), entry['action'], entry['reason'], windows[0][0], windows[0][0] + windows[0][1], iasa, samples,
+                      first['before']['damage'], first['before']['angle'], first['before']['kbg'], first['before']['bkb'], '/'.join(roles), ratio))
+    m['pick'] = {'status': 'cross-port', 'source': '%s %s' % (entry['fighter'], entry['action']), 'why': entry['reason'], 'ratio': ratio}
+    m['pose_review'] = "Cross-port clip: Luigi's kick retargeted by bone role; his thigh stretch (SCAX 1.8x) is carried as a bone-scale track on the same role (clips.scale_bones). Pose review in the LAB owed."
+    (PORT / 'gameplay.json').write_text(json.dumps(gp, indent=2) + '\n', encoding='utf-8')
+    summary = {'row': row, 'clip': str(clip_path(row)), 'move_script': str(move), 'ratio': ratio, 'build_scale': build_scale,
+               'windows': windows, 'iasa': iasa, 'samples': samples, 'hitboxes': moved,
+               'worst_end_effector_error': max(v['max'] for v in report['end_effector_error'].values())}
+    (OUT / row / 'cross-port.json').write_text(json.dumps(summary, indent=1) + '\n', encoding='utf-8')
+    return summary
+
+
+def main(argv):
+    reg = registry()
+    for row in (argv or reg):
+        s = generate(row, reg[row])
+        print('%s: %d frames, windows %s, IASA %d, ratio %.3f, worst end-effector error %.2f; script %s'
+              % (row, s['samples'], s['windows'], s['iasa'], s['ratio'], s['worst_end_effector_error'], s['move_script']))
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])

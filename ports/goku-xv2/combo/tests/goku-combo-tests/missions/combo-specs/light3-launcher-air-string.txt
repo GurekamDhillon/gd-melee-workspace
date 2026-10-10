@@ -1,0 +1,9 @@
+# the whole air string after the launcher: uair, nair, nair, dair spike (approved design). A read: it needs the victim to stay in reach
+# through several air hits, which DI and weight decide; the cells show where it drops
+name = launcher > short hop > uair > nair x2 > dair
+inputs = A, A, A, C^, X>, ~C^, A, Cv
+routes = L1>L2, L2>L3, L3>H up, Launcher>Jump, Uair>Nair, Nair>H down
+min_hits = 5
+percents = 0, 30, 60, 90
+di = none, in, out, survival
+distance = 9
