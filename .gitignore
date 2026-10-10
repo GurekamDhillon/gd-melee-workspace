@@ -163,3 +163,10 @@ __pycache__/
 /_build/tools-ext/
 /_build/geno-falcon-art/
 /_build/wb-falcon/
+
+# Local CSProject UI renders, inventories and synthetic Blender test outputs.
+/_build/csp-render/
+
+# Converted UI assets and in-progress package staging are generated locally.
+/_build/**/GnUi_*.gxtex
+/_build/**/.csp-stage-*/

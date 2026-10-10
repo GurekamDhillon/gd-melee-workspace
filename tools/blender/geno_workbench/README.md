@@ -250,3 +250,13 @@ and used as external programs. The project is `falcon/project/` (rows = Melee ac
 in `pick.clip`; `art.bone_aliases` maps plan joints `jN` to bones `JOBJ_N`; `art.calibration_frame` = 10 because
 retail rows blend in from the previous pose for the first frames, so frame 1 is not the clip's first frame).
 `launch_goku.py` takes `--project/--art/--mods/--work` for any other fighter.
+
+## Render UI art
+
+The separate **Geno > UI Art** panel renders a built package through portable Blender 3.5.1.
+The Workbench stays on Blender 4.x. Prepare the local tools with `python tools/csp/fetch_csproject.py`,
+then inspect the template with `python tools/csp/render_ui.py --inspect-template`. Host Python needs
+Pillow; set `GW_UI_PYTHON` if discovery needs help. Render UI uses Project, Art override and the selected
+move/frame, or its Pose override, without rebuilding gameplay. Progress and errors go to the displayed log.
+Camera/template assumptions and configuration are documented in [the CSP tool README](../../csp/README.md).
+This integration is source-only until the lead runs the supplied tests and sees the result in game.

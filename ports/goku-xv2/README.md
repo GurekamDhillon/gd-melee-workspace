@@ -180,3 +180,11 @@ Launch: `tools/clips.ps1 chara/GOK/GOK_PLAYER.bac:350` opens straight on a move.
 - Select art: `tools/presentation_art.py` (Blender) + `png2gx` in `build.py`.
 - Row lengths: `tools/rowlen_sync.py` refreshes `row-lengths.json` from the built plan (bank frames - 1, equal to the in-game number on every row measured and not re-cropped);
   `lua/measure_rows.lua` hangs on its first preview and is unused.
+
+## Optional CSProject UI render
+
+A full build accepts `--ui` to render select, stock and results art through the shared
+[CSProject UI tool](../../tools/csp/README.md). It is off by default; `--auto --ui` forces a full build,
+and `--gameplay-only --ui` is rejected. Prepare external tools first with
+`python tools/csp/fetch_csproject.py`; no CSProject assets are stored in this repository.
+The rendering and in-game appearance remain unverified until the lead runs them.
