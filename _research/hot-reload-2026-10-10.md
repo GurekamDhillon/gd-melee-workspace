@@ -5,6 +5,32 @@ Evidence labels: **[read]** = a line of code/doc was read; **[agent]** = reporte
 research agent, paths given but not re-opened by me; **[infer]** = reasoning, unconfirmed.
 No timing in this note is measured. The "~72 s" splice preview figure was not found in any doc.
 
+## CORRECTION (read before the rest)
+
+`gw_Geno_Reload` REFUSES native Geno defines: `geno_registry.c:2091-2093` returns -1 "native definitions
+require a process restart; current data kept" when `definitions.catalog.count > 0`, and again at
+`:2115-2118` for any `defined` profile [read]. Goku (xv2) is a native define, so F8 hot reload does
+NOT work on it today. Everything below that says "the engine already hot-reloads hitbox words" holds
+for non-define (LAB/profile) fighters only. The define path needs new engine work: re-run define
+registration and rebuild/refill the define statics (Parts, PartsJ2P/P2J, RowRemap, Costumes,
+ContentIdentity: `geno_define_data.inc:18-60,158`), the identity words, the overlay pool, and extend
+`gn_reload_layout_changed` to cover define fields. Cheapest design [infer]: same-layout overlay-word
+or attribute edits -> reuse `GenoGame_LabReload` plus a pool-generation bump (`geno_game.c:577-655`
+`geno_pool_sync`/`geno_install_overlays`); anything else -> restart. Size M-L (C work, ~2-3 days),
+not S-M. Other facts from the engine agent: hitboxes are subaction words interpreted each frame, not
+cached structs (articles' hitboxes are parsed once, `geno_registry.c:1248-1285`); `ground_modes.json`
+is not read by the engine at all (build-time, `xv2_to_artist.py`); console `reload [id]` re-loads Lua
+scripts from disk (`gw_script.c:10126-10143`); no file watcher, no reload env var; hot_reload needs a
+LAB match (`gw_GenoLab_ModeActive`); the netplay room hash is global data xor gameplay-Lua hash
+(`gw_netplay.c:52-57`), define identity folds geno.json entry + words + resource files
+(`gw_mexid.c:268-286`), so a edited define must match on both peers. Library .gdst states record a
+Geno hash, so a reload that changes a profile id invalidates older saved states (`geno.md:702-708`).
+
+Revised ranking: (1) `build.py --gameplay-only` (S, works today for define fighters); (2) bank
+restart test (S); (3) define-capable hot reload for same-layout overlay words (M-L) which then makes
+the hitbox fast path real; (4) one-row animation swap (L); (5) incremental bake in `bake_export` (M).
+The "Top 5" section below is superseded by this order where they differ.
+
 ## Headline
 
 1. The engine ALREADY has a live data hot reload for hitbox words (and attributes, parameters,
