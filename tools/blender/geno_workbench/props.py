@@ -252,6 +252,20 @@ STRINGS: dict[str, str] = {
     "edit_hitbox_help": "Send only changed fields to the workbench source editor",
     "rebuild_reload": "Rebuild + reload",
     "rebuild_reload_help": "Rebuild source, reload the engine and restore this move and frame",
+    "rebuild_cancel": "Cancel",
+    "rebuild_cancel_help": "Stop the running build. The engine keeps its current build; rebuild again before relying on the package",
+    "rebuild_cancelled": "rebuild cancelled: the package may be partly built, so rebuild again",
+    "rebuild_running": "A rebuild or engine restart is running: wait for it to finish",
+    "rebuild_cancel_idle": "No rebuild is running",
+    "rebuild_why_full": "full build because: {reason}",
+    "rebuild_progress": "{phase}: {percent:.0f}% ({elapsed:.0f} s)",
+    "rebuild_progress_step": "{phase}: {step} {percent:.0f}% ({elapsed:.0f} s)",
+    "rebuild_phase_build": "Building",
+    "rebuild_phase_restart": "Restarting engine",
+    "rebuild_phase_rows": "Reloading rows",
+    "rebuild_phase_restore": "Restoring row and frame",
+    "rebuild_phase_engine": "Restarting engine",
+    "rebuild_started": "rebuild started",
     "rebuild_unavailable": "This project has no build configured (workbench.json rebuild): Rebuild + reload is unavailable",
     "no_roles": "This project has no role map (plan has no roles): checks and bone suggestions are unavailable",
     "stale_banner": "Source edited: rebuild + reload needed",
@@ -270,6 +284,45 @@ STRINGS: dict[str, str] = {
     "fighter_verify_calibration": "Calibrate and apply a frame before verifying the pose",
     "project_aliases_required": "workbench.json: art.bone_aliases must be an object",
 }
+
+def busy_reason() -> str:
+    """Why Workbench actions are disabled right now (a background rebuild/restart), else ''."""
+    try:
+        return STRINGS["rebuild_running"] if _session().busy else ""
+    except Exception:
+        return ""
+
+
+def rebuild_progress_text(job) -> str:
+    """One line for the sidebar and the status bar: phase, step, percent, seconds."""
+    phase = STRINGS["rebuild_phase_" + job.phase]
+    if job.detail:
+        return STRINGS["rebuild_progress_step"].format(phase=phase, step=job.detail, percent=job.percent, elapsed=job.elapsed)
+    return STRINGS["rebuild_progress"].format(phase=phase, percent=job.percent, elapsed=job.elapsed)
+
+
+def _busy_poll(inner):
+    # Blender requires poll(cls, context) with exactly two arguments, so the wrapped function is closed over.
+    def poll(c, context):
+        reason = busy_reason()
+        if reason:
+            c.poll_message_set(reason)
+            return False
+        return inner(c, context)
+    return poll
+
+
+def guard_busy(classes, allow=()):
+    """Disable operators while a background rebuild runs, with the reason in the tooltip."""
+    for cls in classes:
+        if getattr(cls, "bl_idname", "") in allow or getattr(cls, "_busy_guarded", False):
+            continue
+        found = getattr(cls, "poll", None)   # own or inherited; a classmethod arrives bound
+        inner = getattr(found, "__func__", None) or (lambda c, context: True)
+
+        cls.poll = classmethod(_busy_poll(inner))
+        cls._busy_guarded = True
+
 
 def poll_ready(operator, *requirements):
     """Attach the first failed precondition to Blender's disabled-button tooltip."""

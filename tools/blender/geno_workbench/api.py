@@ -80,6 +80,9 @@ class WbSession:
         self.last_attribute_edit: dict = {}
         self.problems: list[dict] = []
         self.stale = False
+        self.job = None   # the running rebuild_job.RebuildJob (set by the operator that started it)
+        self.busy = ""   # why other Workbench actions are disabled while a background rebuild/restart runs
+        self.rebuild_argv: list[str] = []   # workbench.json "rebuild" (the add-on runs it itself to show progress and cancel)
         self.last_rebuild: dict | None = None  # {mode, build_seconds, total_seconds} of the last Rebuild + reload
         self.last_error = ""
         self.suggestion: dict | None = None
@@ -787,6 +790,8 @@ class WbSession:
 
         A failure at any step (no build configured, build failure, timeout, reload error) leaves the
         loaded row, frame and frame cache as they were; only a successful reload re-fetches.
+        This is the blocking form (scripts, benches); the Workbench button runs the same steps through
+        rebuild_job.RebuildJob so Blender stays responsive.
         """
         if not self.can_rebuild:
             return self.blocked(STRINGS["rebuild_unavailable"])
@@ -799,51 +804,8 @@ class WbSession:
             self.stale = True
             started = time.monotonic()
             built = self._request("rebuild")
-            self._request("reload")
-            self.pending_frame = None
-            self.cache.reset("rebuild")   # the engine now runs the new build: old frames are out of date
-            rows = self._items(self._request("list_rows"), "rows")
-            parsed = None
-            boxes = []
-            if saved_row:
-                self._request("load_row", {"row": saved_row})  # real server: {"ok": true}, no pose
-                parsed = self._read_frame(
-                    self._request("set_frame", {"frame": saved_frame}), saved_row
-                )
-                boxes = self._source_hitboxes(saved_row)
-
-            if had_attributes:
-                attributes = attribute_model.normalize_rows(
-                    self._items(self._request("list_attributes"), "attributes")
-                )
-                self.attributes = attributes
-                self.attributes_current = True
-            self.rows = rows
-            if parsed is not None:
-                self._store_frame(parsed)
-            else:
-                self.info = None
-            self.hitboxes = boxes
-            self.problems = []
-            self.suggestion = None
-            self.stale = False
-            if parsed is not None:
-                self._fire_frame()
-                self.start_prefetch()
-            text = STRINGS["reloaded"]
-            mode = built.get("mode") if isinstance(built, dict) else None
-            seconds = built.get("build_seconds") if isinstance(built, dict) else None
-            if isinstance(mode, str) and isinstance(seconds, (int, float)):
-                # Which build ran (gameplay-only vs full) and how long, end to end.
-                self.last_rebuild = {
-                    "mode": mode, "build_seconds": float(seconds),
-                    "total_seconds": time.monotonic() - started,
-                }
-                text = STRINGS["reloaded_mode"].format(
-                    mode=mode, build=float(seconds),
-                    total=self.last_rebuild["total_seconds"],
-                )
-            return f"{text}; {self.hook_error}" if self.hook_error else text
+            data = self._rebuild_fetch(saved_row, saved_frame, had_attributes)
+            return self._rebuild_apply(data, built, started)
 
         try:
             ok = self._run(action)
@@ -851,6 +813,72 @@ class WbSession:
             if self.connected:
                 self.start_prefetch()   # resume the fill the pause stopped (only missing frames are fetched)
         return ok
+
+    def _rebuild_fetch(self, saved_row: str, saved_frame: int, had_attributes: bool, progress=None) -> dict:
+        """The engine half of Rebuild + reload: reload, then re-read rows, the saved row/frame and attributes.
+
+        Only requests and plain data here (no bpy, no hooks), so it may run on a worker thread while the
+        main thread keeps Blender alive; _rebuild_apply then publishes the result on the main thread.
+        """
+        note = progress or (lambda phase: None)
+        note("restart")
+        self._request("reload")
+        self.pending_frame = None
+        self.cache.reset("rebuild")   # the engine now runs the new build: old frames are out of date
+        note("rows")
+        rows = self._items(self._request("list_rows"), "rows")
+        parsed = None
+        boxes = []
+        note("restore")
+        if saved_row:
+            self._request("load_row", {"row": saved_row})  # real server: {"ok": true}, no pose
+            parsed = self._read_frame(
+                self._request("set_frame", {"frame": saved_frame}), saved_row
+            )
+            boxes = self._source_hitboxes(saved_row)
+        attributes = None
+        if had_attributes:
+            attributes = attribute_model.normalize_rows(
+                self._items(self._request("list_attributes"), "attributes")
+            )
+        return {"rows": rows, "parsed": parsed, "boxes": boxes, "attributes": attributes}
+
+    def _rebuild_apply(self, data: dict, built, started: float, reason: str = "") -> str:
+        """Publish a fetched rebuild on the main thread; returns the status text."""
+        if data["attributes"] is not None:
+            self.attributes = data["attributes"]
+            self.attributes_current = True
+        self.rows = data["rows"]
+        parsed = data["parsed"]
+        if parsed is not None:
+            self._store_frame(parsed)
+        else:
+            self.info = None
+        self.hitboxes = data["boxes"]
+        self.problems = []
+        self.suggestion = None
+        self.stale = False
+        if parsed is not None:
+            self._fire_frame()
+            self.start_prefetch()
+        text = STRINGS["reloaded"]
+        mode = built.get("mode") if isinstance(built, dict) else None
+        seconds = built.get("build_seconds") if isinstance(built, dict) else None
+        if isinstance(mode, str) and isinstance(seconds, (int, float)):
+            # Which build ran (gameplay-only vs full), why a full one was needed, and how long, end to end.
+            self.last_rebuild = {
+                "mode": mode, "build_seconds": float(seconds),
+                "total_seconds": time.monotonic() - started,
+            }
+            if reason:
+                self.last_rebuild["reason"] = reason
+            text = STRINGS["reloaded_mode"].format(
+                mode=mode, build=float(seconds),
+                total=self.last_rebuild["total_seconds"],
+            )
+            if reason and mode != "gameplay-only":
+                text = f"{text}; " + STRINGS["rebuild_why_full"].format(reason=reason)
+        return f"{text}; {self.hook_error}" if self.hook_error else text
 
     def suggest_bone(self, ordinal) -> bool:
         if not self.has_roles:
@@ -872,22 +900,20 @@ class WbSession:
     def engine_restart(self) -> bool:
         self.pending_frame = None
         self.cache.reset("engine restart")
+        return self._run(lambda: self._engine_restart_apply(self._request("engine_restart")))
 
-        def action():
-            result = self._request("engine_restart")
-            self.info = None
-            self.row = ""
-            self.loaded_row = ""
-            self.travel_anchor = None
-            self.frame = 0
-            self.hitboxes = []
-            self.problems = []
-            self.suggestion = None
-            return STRINGS["restarted"].format(
-                engine=result.get("status", STRINGS["unknown"])
-            )
-
-        return self._run(action)
+    def _engine_restart_apply(self, result: dict) -> str:
+        self.info = None
+        self.row = ""
+        self.loaded_row = ""
+        self.travel_anchor = None
+        self.frame = 0
+        self.hitboxes = []
+        self.problems = []
+        self.suggestion = None
+        return STRINGS["restarted"].format(
+            engine=result.get("status", STRINGS["unknown"])
+        )
 
     def pose_problem(self) -> str:
         if self.info is None:
@@ -975,6 +1001,8 @@ def set_project(project_dir: str) -> bool:
         sess.calibration_frame = cal_frame
         rebuild = config.get("rebuild")
         sess.can_rebuild = bool(rebuild) if "rebuild" in config else True
+        sess.rebuild_argv = [str(a) for a in rebuild] if isinstance(rebuild, list) and rebuild and all(
+            isinstance(a, str) and a for a in rebuild) else []
         sess.has_roles = _plan_has_roles(sess.plan_path)
     except (OSError, ValueError, TypeError) as exc:
         sess.last_error = str(exc)

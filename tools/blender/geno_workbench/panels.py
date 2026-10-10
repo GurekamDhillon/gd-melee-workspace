@@ -208,6 +208,18 @@ class GENO_WB_PT_hitbox(bpy.types.Panel):
         remove = authoring.row(align=True)
         remove.enabled = value.connected and selected
         remove.operator("geno_wb.delete_hitbox", text=STRINGS["delete_hitbox"], icon="REMOVE")
+        job = value.job
+        if job is not None and not job.completed:
+            box = self.layout.box()
+            text = props.rebuild_progress_text(job)
+            progress = getattr(box, "progress", None)   # Blender 4.0+; older builds get the text row only
+            if progress is not None:
+                progress(factor=max(0.0, min(1.0, job.percent / 100.0)), type="BAR", text=text)
+            else:
+                box.label(text=text, icon="TIME")
+            if job.progress.reason:
+                box.label(text=STRINGS["rebuild_why_full"].format(reason=job.progress.reason), icon="INFO")
+            box.operator("geno_wb.rebuild_cancel", text=STRINGS["rebuild_cancel"], icon="CANCEL")
         self.layout.operator(
             "geno_wb.rebuild_reload",
             text=STRINGS["rebuild_reload"], icon="FILE_REFRESH",

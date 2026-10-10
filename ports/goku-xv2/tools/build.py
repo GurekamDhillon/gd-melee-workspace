@@ -574,17 +574,20 @@ def main(argv=None):
             print('build: --gameplay-only refused: %s. Run a full build (without --gameplay-only).' % reason)
             return 2
         else:
-            print('build: full build needed: %s' % reason)
+            print('build: full build needed: %s' % reason,flush=True)
     if mode == 'gameplay-only':
         key = load(args.fighter)['key']
         package, art_build = args.out/'mods'/key, args.out/'build'
+        print('[1/3] reapply gameplay',flush=True)
         package = apply(package,art_build)
         if not args.no_audit:
+            print('[2/3] audit gameplay',flush=True)
             from audit_gameplay import audit
             problems = audit(package,art_build,fit=True)
             if problems:
                 print('Gameplay audit failed:',problems)
                 return 1
+        print('[3/3] static Geno checks',flush=True)
         code = finish_checks(package,art_build,ground=False)
         if code:
             return code
@@ -601,7 +604,9 @@ def main(argv=None):
         args.art_build = args.out/'build'
     if not args.package or not args.art_build:
         ap.error('Supply --package and --art-build, or --fighter')
+    print('BUILD_PHASE: reapply gameplay',flush=True)
     package = apply(args.package,args.art_build)
+    print('BUILD_PHASE: audit gameplay',flush=True)
     from audit_gameplay import audit
     problems = audit(package,args.art_build,fit=True)
     if problems:
@@ -611,6 +616,7 @@ def main(argv=None):
         code = render_presentation(package,args.fighter)
         if code:
             return code
+    print('BUILD_PHASE: static checks and ground audit',flush=True)
     code = finish_checks(package,args.art_build,ground=True)
     if code:
         return code

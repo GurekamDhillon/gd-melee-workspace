@@ -179,7 +179,7 @@ def test_verify_poll_explains_calibration_then_frame(operators, monkeypatch):
 
 def test_ready_operator_polls_stay_enabled(operators):
     for cls in operators.general.CLASSES:
-        if cls is operators.general.GENO_WB_OT_start_server or not hasattr(cls, "poll"):
+        if cls in (operators.general.GENO_WB_OT_start_server, operators.general.GENO_WB_OT_rebuild_cancel) or not hasattr(cls, "poll"):
             continue
         assert cls.poll(operators.context) is True, cls.__name__
     for cls in operators.fighter._CLASSES:
