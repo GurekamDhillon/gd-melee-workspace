@@ -360,7 +360,7 @@ def _run(out_dir):
                 and hit.get("geno_wb_slot") == 0
                 and hit.get("geno_wb_active") is True,
             )
-            expected_color = (1.0, 0.15, 0.1, 0.55)
+            expected_color = overlays.SLOT_COLORS[0]
             material = hit.data.materials[0]
             check(
                 "overlay_hit_color." + str(facing),
