@@ -244,6 +244,11 @@ def _present(bpy):
                         arm.select_set(True)
     except Exception as exc:  # presentation is best effort
         print("GENO_WB_REPORT present_warning %s" % exc)
+    try:
+        from geno_workbench import geno_workspace
+        geno_workspace.on_session_ready()
+    except Exception as exc:  # the Geno tab is a convenience
+        print("GENO_WB_REPORT geno_workspace_warning %s" % exc)
     shot = os.environ.get("GW_WB_SHOT", "")
     if shot:
         # Blender's own screenshot of its window (no desktop capture); GW_WB_SHOT=path.png, then it quits
