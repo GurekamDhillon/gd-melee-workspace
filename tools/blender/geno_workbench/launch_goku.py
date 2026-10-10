@@ -68,6 +68,10 @@ def main() -> int:
     ap.add_argument("--frame", type=int, default=0)
     ap.add_argument("--exercise", default="", help="comma list of rows to play to the end, switch between and restart the engine on (with --check)")
     ap.add_argument("--serve-only", action="store_true", help="start the server and engine, print the port, wait for Enter")
+    ap.add_argument("--project", default="", help="workbench project directory (default: ports/goku-xv2)")
+    ap.add_argument("--art", default="", help="fighter .blend/.glb (default: the Goku author blend)")
+    ap.add_argument("--mods", default="", help="mods directory the engine loads (default: the Goku package)")
+    ap.add_argument("--work", default="", help="work dir for the engine sandbox and blender.log (default: _build/wb-goku)")
     ap.add_argument("--windowed-engine", action="store_true", help="show the engine window instead of headless")
     args = ap.parse_args()
 
@@ -79,13 +83,13 @@ def main() -> int:
         launcher = launch.find_launcher(root=root) or ""
     qt_bin = os.environ.get("GW_QT_BIN", "E:/Projects/Qt/6.8.3/msvc2022_64/bin")
     engine_src = Path(os.environ.get("GW_ENGINE_EXE") or next(
-        (c for c in (Path(os.environ.get("GW_WB_WORK") or root / "_build/wb-goku") / "engine/melee-pc.exe", root / "_build/agents/geno-workbench/melee-pc.exe")
+        (c for c in (Path(args.work or os.environ.get("GW_WB_WORK") or root / "_build/wb-goku") / "engine/melee-pc.exe", root / "_build/agents/geno-workbench/melee-pc.exe")
          if c.is_file()), root / "_build/agents/geno-workbench/melee-pc.exe"))
-    project = root / "ports/goku-xv2"
-    mods = root / "_build/goku-xv2/author-source/package/mods"
-    art = root / "_build/goku-xv2/author-source/goku.blend"
+    project = Path(args.project) if args.project else root / "ports/goku-xv2"
+    mods = Path(args.mods) if args.mods else root / "_build/goku-xv2/author-source/package/mods"
+    art = Path(args.art) if args.art else root / "_build/goku-xv2/author-source/goku.blend"
     iso = os.environ.get("GW_ISO_VANILLA") or envfile.get("GW_ISO_VANILLA", "")
-    work = Path(os.environ.get("GW_WB_WORK") or root / "_build/wb-goku")   # separate dir = a second session beside the owner's
+    work = Path(args.work or os.environ.get("GW_WB_WORK") or root / "_build/wb-goku")   # separate dir = a second session beside the owner's
 
     for label, path in (("Blender", blender), ("launcher", launcher), ("engine exe", engine_src),
                         ("project", project), ("mods dir", mods), ("art", art), ("disc image", iso)):

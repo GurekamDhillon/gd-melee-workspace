@@ -374,7 +374,8 @@ def _session_success(success, session):
 
 
 def calibrate(arm, session):
-    """Calibrate at engine frame 1 versus action frame 0 without posing early."""
+    """Calibrate at engine frame N versus action frame N-1 (N = session.calibration_frame, default 1)
+    without posing early. Retail rows blend in from the previous pose for a few frames, so a later N is cleaner."""
     global CAL, _CAL_ARMATURE, _LAST_APPLIED, _CALIBRATING
     rig._require_main_thread()
     if _CALIBRATING:
@@ -423,7 +424,8 @@ def calibrate(arm, session):
     try:
         with _suspend_frame_hooks(session):
             _session_success(session.load_row(reference["name"]), session)
-            _session_success(session.set_frame(1), session)
+            cal_frame = max(1, int(getattr(session, "calibration_frame", 1) or 1))
+            _session_success(session.set_frame(cal_frame), session)
             info = session.info
             if not isinstance(info, dict):
                 raise RuntimeError(STRINGS["fighter_reference_failed"])
@@ -449,7 +451,7 @@ def calibrate(arm, session):
             for joint, matrix in engine_rest.items():
                 _finite_matrix(matrix, joint)
             blender_rest = blender_rest_matrices(
-                arm, jm, action_name=action_name, frame=0
+                arm, jm, action_name=action_name, frame=cal_frame - 1
             )
             missing = sorted(set(jm.by_index) - set(blender_rest))
             if missing:

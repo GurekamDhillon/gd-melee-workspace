@@ -158,3 +158,8 @@ __pycache__/
 
 # Captain Falcon as a standalone Geno fighter (worktrees/ws-falcon-geno): everything built from the disc stays local
 /_build/falcon-geno/
+
+# Falcon art-import lane: external tools and disc-derived exports
+/_build/tools-ext/
+/_build/geno-falcon-art/
+/_build/wb-falcon/

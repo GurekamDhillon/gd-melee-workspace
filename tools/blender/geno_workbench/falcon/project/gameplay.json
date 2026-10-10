@@ -1,0 +1,206 @@
+{
+ "version": 1,
+ "note": "Geno Falcon rows for the Workbench. motions = Melee action-state ids (jab1 = 44, as for Goku); pick.clip names the animation clip in the plan bank (Geno Falcon's plan has no motion_rows to derive it). No scripts: this project views and poses, it does not author.",
+ "moves": [
+  {
+   "name": "wait",
+   "motions": [
+    14
+   ],
+   "tag": "idle",
+   "pick": {
+    "clip": "Wait1"
+   }
+  },
+  {
+   "name": "walk",
+   "motions": [
+    16
+   ],
+   "tag": "locomotion",
+   "pick": {
+    "clip": "WalkMiddle"
+   }
+  },
+  {
+   "name": "dash",
+   "motions": [
+    20
+   ],
+   "tag": "locomotion",
+   "pick": {
+    "clip": "Dash"
+   }
+  },
+  {
+   "name": "run",
+   "motions": [
+    21
+   ],
+   "tag": "locomotion",
+   "pick": {
+    "clip": "Run"
+   }
+  },
+  {
+   "name": "jumpf",
+   "motions": [
+    25
+   ],
+   "tag": "air",
+   "pick": {
+    "clip": "JumpF"
+   }
+  },
+  {
+   "name": "jab1",
+   "motions": [
+    44
+   ],
+   "tag": "jab",
+   "pick": {
+    "clip": "Attack11"
+   }
+  },
+  {
+   "name": "jab2",
+   "motions": [
+    45
+   ],
+   "tag": "jab",
+   "pick": {
+    "clip": "Attack12"
+   }
+  },
+  {
+   "name": "jab3",
+   "motions": [
+    46
+   ],
+   "tag": "jab",
+   "pick": {
+    "clip": "Attack13"
+   }
+  },
+  {
+   "name": "ftilt",
+   "motions": [
+    53
+   ],
+   "tag": "tilt",
+   "pick": {
+    "clip": "AttackS3S"
+   }
+  },
+  {
+   "name": "utilt",
+   "motions": [
+    56
+   ],
+   "tag": "tilt",
+   "pick": {
+    "clip": "AttackHi3"
+   }
+  },
+  {
+   "name": "dtilt",
+   "motions": [
+    57
+   ],
+   "tag": "tilt",
+   "pick": {
+    "clip": "AttackLw3"
+   }
+  },
+  {
+   "name": "fsmash",
+   "motions": [
+    60
+   ],
+   "tag": "smash",
+   "pick": {
+    "clip": "AttackS4S"
+   }
+  },
+  {
+   "name": "usmash",
+   "motions": [
+    63
+   ],
+   "tag": "smash",
+   "pick": {
+    "clip": "AttackHi4"
+   }
+  },
+  {
+   "name": "dsmash",
+   "motions": [
+    64
+   ],
+   "tag": "smash",
+   "pick": {
+    "clip": "AttackLw4"
+   }
+  },
+  {
+   "name": "nair",
+   "motions": [
+    65
+   ],
+   "tag": "aerial",
+   "pick": {
+    "clip": "AttackAirN"
+   }
+  },
+  {
+   "name": "fair",
+   "motions": [
+    66
+   ],
+   "tag": "aerial",
+   "pick": {
+    "clip": "AttackAirF"
+   }
+  },
+  {
+   "name": "bair",
+   "motions": [
+    67
+   ],
+   "tag": "aerial",
+   "pick": {
+    "clip": "AttackAirB"
+   }
+  },
+  {
+   "name": "uair",
+   "motions": [
+    68
+   ],
+   "tag": "aerial",
+   "pick": {
+    "clip": "AttackAirHi"
+   }
+  },
+  {
+   "name": "dair",
+   "motions": [
+    69
+   ],
+   "tag": "aerial",
+   "pick": {
+    "clip": "AttackAirLw"
+   }
+  },
+  {
+   "name": "grab",
+   "motions": [
+    212
+   ],
+   "tag": "grab",
+   "pick": {
+    "clip": "Catch"
+   }
+  }
+ ]
+}

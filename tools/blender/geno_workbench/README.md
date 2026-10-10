@@ -232,3 +232,21 @@ the Goku mod with the project's own `mods_dir`), then Blender with `bootstrap.py
 `GW_BLENDER`, `GW_LAUNCHER`, `GW_QT_BIN`, `GW_ENGINE_EXE`, `GW_ISO_VANILLA` (read from `.env`).
 Closing Blender stops the server and the engine. Blender's splash screen may cover the viewport
 until the mouse moves.
+
+## Captain Falcon (Geno Falcon) in Blender
+
+`launch_falcon.py` opens the Workbench on the Geno Falcon fighter (the retail Captain Falcon as a Geno define),
+the same way `launch_goku.py` does for Goku. One command, from your own disc, nothing disc-derived committed:
+
+    python tools/blender/geno_workbench/launch_falcon.py            # interactive Blender
+    python tools/blender/geno_workbench/launch_falcon.py --check    # background report (rows, bones, pose error, overlays)
+
+First run builds `_build/geno-falcon-art/falcon.blend` (about 35 s, needs the dotnet SDK and network once) with
+`falcon/make_falcon_art.py`: HSDRaw (Ploaj/HSDLib, MIT) exports the model (glTF with textures), the skeleton (.smd)
+and the 212 animation clips (.smd) through the small driver in `falcon/HsdExport/`; Blender Source Tools
+(Artfunkel, GPL-2.0+) imports the skeleton and clips (Blender 5.x has no Collada, so .smd); `falcon/build_blend.py`
+skins the meshes to that rig and stores every clip as an Action. Both tools are fetched into `_build/tools-ext/`
+and used as external programs. The project is `falcon/project/` (rows = Melee action-state ids with the clip named
+in `pick.clip`; `art.bone_aliases` maps plan joints `jN` to bones `JOBJ_N`; `art.calibration_frame` = 10 because
+retail rows blend in from the previous pose for the first frames, so frame 1 is not the clip's first frame).
+`launch_goku.py` takes `--project/--art/--mods/--work` for any other fighter.
