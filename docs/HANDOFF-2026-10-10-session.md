@@ -42,7 +42,7 @@ Supersedes nothing; read with `docs/NEXT-SESSION.md`. Workspace branch `integrat
 
 1. Re-picks for Goku: utilt, fair (vs nair), dair, jumps, grabs. They now want to **splice their own** from the XV2 kit, so the splice recipes and Blender NLA work above serve this. The clips viewer (`ports/goku-xv2/tools/clips.ps1`, console 51726) was paused on `xGOK_ATC_004` f8.
 2. Verdicts on the floating idle (STAND_S vs 88/89) and on the walk/run-to-idle snap.
-3. An FD drag-resize confirmation on the fixed main build: `$env:MELEE_SCENE='mode=vs;p1=fox;p2=falco/cpu0;stage=fd;time=0;items=0'; bash tools/port/run.sh fdresize`.
+3. ~~An FD drag-resize confirmation on the fixed main build~~ **Confirmed by the owner 2026-10-10: the FD black-line fix (game `e337ab6`) passes the drag-resize test.**
 4. A netplay match with Goku (owner chose to replace the automated rollback bench with this): two windows on loopback, with lag.
 5. Goku's ledge feels slow to the owner, but the audit measured it as native (act at f7). Get a repro if it recurs.
 

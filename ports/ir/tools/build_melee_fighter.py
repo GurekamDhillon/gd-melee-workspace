@@ -1,26 +1,14 @@
 #!/usr/bin/env python3
-"""build_melee_fighter.py - a Melee fighter's IR from the vanilla disc: _build/tmp/ir/<fighter>.melee.ir.json.
+"""Build retail Melee host metadata from GW_ISO_VANILLA.
 
-    python ports/ir/tools/build_melee_fighter.py marth      (or kirby; see FIGHTERS)
+    python ports/ir/tools/build_melee_fighter.py falcon
+    python ports/ir/tools/build_melee_fighter.py falcon --out path/to/host.melee.ir.json
 
-Generalised from build_kirby_melee.py so any fighter can be a port's host (Sora uses Marth).
-
-The retarget target for ports/kirby-ultimate. Until now nothing described Melee Kirby: the animation
-converter's joint numbers (ports/kirby-ultimate/animations/convert.py BONE_MAP) had no recorded
-target. This reads the game's own tables instead of guessing:
-
-  - PlKbNr.dat  the 46-joint tree: rest SRT, inverse bind, raw flags (JObj desc, sysdolphin jobj.h)
-  - PlCo.dat    ftLoadCommonData[4] parts table and [5] placeholder list for Kirby (internal kind 4):
-                the ftParts walk (ftparts.c ~l.405) gives each JObj a part slot, skipping the
-                placeholder slots, and joint_to_part names the slot's common part
-  - PlKb.dat    the motion table (ftDataKirby+0xC, 0x18-byte rows): figatree, script, flags
-  - PlKbAJ.dat  each figatree's frame count and joint count
-
-    python ports/ir/tools/build_kirby_melee.py
-    python ports/ir/tools/validate.py _build/tmp/ir/kirby.melee.ir.json
-
-Needs GW_ISO_VANILLA (from .env). The output describes disc data; it goes to _build/tmp/ir/ (git-ignored).
+Reads the neutral costume's JObj tree, PlCo part/placeholder tables, fighter motion
+table, animation headers and scalar common attributes. Binary assets stay on the
+local disc; output contains metadata only and defaults to ignored _build/tmp/ir/.
 """
+import argparse
 import hashlib
 import json
 import os
@@ -32,11 +20,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, "..", "..", ".."))
 sys.path.insert(0, os.path.join(ROOT, "tools", "mex_port"))
 import mex_hsd  # noqa: E402
+from attr_apply import attr_layout  # noqa: E402
 
 SRC = os.path.join(os.environ.get("GW_MELEE") or os.path.join(ROOT, "melee"), "src", "melee")   # GW_MELEE: the game checkout (a worktree has no melee/ beside it)
 OUT = os.path.join(ROOT, "_build", "tmp", "ir", "%s.melee.ir.json")
 # name -> (internal FighterKind, file code, decomp folder, submotion enum prefix)
-FIGHTERS = {"kirby": (4, "Kb", "ftKirby", "ftKb"), "marth": (18, "Ms", "ftMars", "ftMs"), "captain": (2, "Ca", "ftCaptain", "ftCa")}
+FIGHTERS = {"kirby": (4, "Kb", "ftKirby", "ftKb"), "marth": (18, "Ms", "ftMars", "ftMs"),
+            "falcon": (2, "Ca", "ftCaptain", "ftCa"), "captain": (2, "Ca", "ftCaptain", "ftCa")}
 NAME = "kirby"
 KIND, CODE, KDIR, KPRE = FIGHTERS[NAME]
 SKEL = "skel:body"
@@ -162,12 +152,59 @@ def read_motions(pl, aj_raw, names):
     return rows
 
 
+def read_common_attributes(pl):
+    """Decode the scalar ftCo_DatAttrs fields using the shared decomp layout."""
+    root = pl.public(next(s for s, _ in pl.publics if s.startswith("ftData")))
+    block = ptr(pl, root)
+    layout = attr_layout()
+    if block is None or block + max(off for off, _ in layout.values()) + 4 > len(pl.data):
+        raise ValueError("missing or truncated ftCo_DatAttrs block")
+    keys = {"gravity": "air.gravity", "weight": "body.weight",
+            "jump_startup_time": "jump.squat_frames", "max_jumps": "jump.max_jumps",
+            "walk_max_vel": "ground.walk.max_speed", "dash_max_velocity": "ground.run.max_speed"}
+    result = []
+    for name, (off, is_int) in layout.items():
+        value = struct.unpack_from(">i" if is_int else ">f", pl.data, block + off)[0]
+        result.append({"key": keys.get(name, "common." + name.lower()),
+                       "engine_name": name, "offset": f"0x{off:03X}",
+                       "type": "s32" if is_int else "f32", "value": value if is_int else rf(value),
+                       "provenance": prov("verified", "ev:disc", "ev:attributes",
+                                          note=f"ftCo_DatAttrs + 0x{off:03X}; archive data offset 0x{block + off:X}")})
+    return result
+
+
+def build_moves(subactions):
+    """Group nonempty retail rows by canonical input, never by animation symbol."""
+    patterns = {
+        "jab": r"Attack1[123]", "rapid_jab": r"Attack100.*", "dash_attack": r"AttackDash",
+        "ftilt": r"AttackS3.*", "utilt": r"AttackHi3", "dtilt": r"AttackLw3",
+        "fsmash": r"AttackS4.*", "usmash": r"AttackHi4", "dsmash": r"AttackLw4",
+        "nair": r"AttackAirN", "fair": r"AttackAirF", "bair": r"AttackAirB",
+        "uair": r"AttackAirHi", "dair": r"AttackAirLw",
+        "grab": r"Catch(?:Dash|Wait|Cut)?", "pummel": r"CatchAttack",
+        "fthrow": r"ThrowF", "bthrow": r"ThrowB", "uthrow": r"ThrowHi", "dthrow": r"ThrowLw",
+        "special_n": r"Special(?:Air)?N.*", "special_s": r"Special(?:Air)?S.*",
+        "special_hi": r"Special(?:Air)?Hi.*", "special_lw": r"Special(?:Air)?Lw.*",
+        "taunt": r"Appeal.*", "ledge_attack": r"CliffAttack.*", "getup_attack": r"DownAttack.*"}
+    result = []
+    for key, pattern in patterns.items():
+        refs = [s["id"] for s in subactions if not s["empty"] and re.fullmatch(pattern, s["name"])]
+        if refs:
+            result.append({"id": f"move:{key}", "input": key, "subactions": refs,
+                           "provenance": prov("inferred", "ev:decomp", "ev:disc",
+                                              note="Canonical grouping of decoded submotion rows; action callbacks and scripts are not decoded.")})
+    return result
+
+
 def main():
     global NAME, KIND, CODE, KDIR, KPRE, OUT
-    if len(sys.argv) > 1:
-        NAME = sys.argv[1]
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("fighter", nargs="?", choices=sorted(FIGHTERS), default="kirby")
+    parser.add_argument("--out", help="Metadata IR destination; defaults to the ignored build directory")
+    args = parser.parse_args()
+    NAME = args.fighter
     KIND, CODE, KDIR, KPRE = FIGHTERS[NAME]
-    OUT = OUT % NAME
+    OUT = os.path.abspath(args.out) if args.out else OUT % NAME
     iso = os.environ.get("GW_ISO_VANILLA")
     if not iso:
         sys.exit("GW_ISO_VANILLA is not set (source .env)")
@@ -197,7 +234,7 @@ def main():
             traits.insert(0, "skeleton_root")
         if j["inverse_bind"]:
             traits.append("has_inverse_bind")
-        joint = {"index": j["index"], "name": None, "parent": j["parent"],
+        joint = {"id": f"joint:body.{j['index']}", "index": j["index"], "name": None, "parent": j["parent"],
                  "rest": {"translation": j["trans"], "rotation_euler_rad": j["rot"],
                           "scale": j["scale"]},
                  "traits": traits, "raw_flags": "0x%08X" % j["flags"]}
@@ -257,31 +294,38 @@ def main():
                       "provenance": prov("verified", "ev:disc")})
 
     unknown = [j["index"] for j in ir_joints if "role_guess" not in j]
+    skeleton_symbol = next(s for s, _ in nr.publics if s.endswith("_Share_joint"))
+    fighter_symbol = next(s for s, _ in pl.publics if s.startswith("ftData"))
+    attributes = read_common_attributes(pl)
+    moves = build_moves(subactions)
+    display = "Captain Falcon" if NAME in ("falcon", "captain") else NAME.capitalize()
     doc = {
         "ir_version": "0.1.0",
         "document_id": f"{NAME}.melee",
-        "subject": {"character": NAME.capitalize(), "game": "ssbm", "engine": "melee.gc",
+        "subject": {"character": display, "game": "ssbm", "engine": "melee.gc",
                     "distribution": {"name": "Super Smash Bros. Melee NTSC 1.02", "kind": "retail",
                                      "media": "GW_ISO_VANILLA"},
-                    "analysed_with": [{"tool": "ports/ir/tools/build_kirby_melee.py"}],
-                    "notes": "Retarget target for ports/kirby-ultimate. Skeleton, part roles and the "
-                             "motion table only; attributes and scripts are in the brawl-kirby dump."},
+                    "analysed_with": [{"tool": "ports/ir/tools/build_melee_fighter.py"}],
+                    "notes": "Retail host metadata: skeleton, part roles, clip/motion index, scalar common "
+                             "attributes and canonical move groups. Animation keys and scripts are not decoded."},
         "evidence": [
             {"id": "ev:disc", "kind": "disc_image", "path": "GW_ISO_VANILLA",
              "note": ", ".join(F.values()) + " read directly"},
             {"id": "ev:plco", "kind": "disc_image", "path": "GW_ISO_VANILLA:PlCo.dat",
-             "note": "ftLoadCommonData[4] parts table and [5] placeholder slots for internal kind 4; "
+             "note": f"ftLoadCommonData[4] parts table and [5] placeholder slots for internal kind {KIND}; "
                      "slot assignment follows ftParts_80074B0C's walk (melee/src/melee/ft/ftparts.c)"},
             {"id": "ev:decomp", "kind": "decomp", "path": f"melee/src/melee/ft/kinds/{KDIR}/forward.h",
-             "note": f"submotion names (ftCo_Submotion + {KPRE}_Submotion)"}],
-        "identity": {"names": {"display": {"en": NAME.capitalize()}, "internal": [NAME, CODE]},
+             "note": f"submotion names (ftCo_Submotion + {KPRE}_Submotion)"},
+            {"id": "ev:attributes", "kind": "decomp", "path": "melee/src/melee/ft/types.h",
+             "symbol": "ftCo_DatAttrs", "note": "Scalar common attribute offsets and float/int types."}],
+        "identity": {"names": {"display": {"en": display}, "internal": [NAME, CODE]},
                      "indices": [{"space": "melee.retail.fighter_kind", "value": KIND, "stability": "stable",
                                   "provenance": prov("verified", "ev:decomp")}],
                      "provenance": prov("verified", "ev:disc")},
         "resources": {"files": files},
         "assets": {
-            "skeletons": [{"id": SKEL, "name": "PlyKirby5K_Share_joint", "file": f"file:pl{CODE.lower()}nr",
-                           "symbol": "PlyKirby5K_Share_joint", "joint_count": len(ir_joints),
+            "skeletons": [{"id": SKEL, "name": skeleton_symbol, "file": f"file:pl{CODE.lower()}nr",
+                           "symbol": skeleton_symbol, "joint_count": len(ir_joints),
                            "order": "depth_first", "joints": ir_joints,
                            "engine": {"melee.gc": {"part_slots": part_slots,
                                                    "placeholder_part_slots": sorted(holes)}},
@@ -291,26 +335,25 @@ def main():
                                "that has the trait. Joints without a common part: %s." % unknown))}],
             "bone_roles": roles,
             "animations": {"container": f"file:pl{CODE.lower()}aj",
-                           "indexing": "ftDataKirby+0xC motion table: (figatree symbol, offset, size) per "
+                           "indexing": f"{fighter_symbol}+0xC motion table: (figatree symbol, offset, size) per "
                                        "subaction row; the low 6 bits of the row flags name the authoring "
                                        "fighter kind",
                            "clips": clips,
                            "stats": {"clips": len(clips), "subaction_rows": len(subactions),
                                      "rows_without_clip": sum(s["empty"] for s in subactions)},
                            "provenance": prov("verified", "ev:disc")}},
-        "behavior": {"subactions": subactions},
+        "behavior": {"subactions": subactions, "attributes": {"common": attributes}, "moves": moves},
         "issues": [
             {"id": "issue:fighter_part_enum", "title": "Decomp Fighter_Part enum is one short of PlCo's common part ids",
              "layer": "ir", "severity": "latent", "status": "open",
-             "description": "PlCo joint_to_part for Kirby uses ids up to 53; ft/forward.h Fighter_Part ends at 52 "
+             "description": "The common part mapping originated with Kirby, whose PlCo ids reach 53; ft/forward.h Fighter_Part ends at 52 "
                             "(TransN2) and has no WaistB. This file names ids from 16 on with WaistB inserted, "
                             "so 52 is ThrowN (Kirby's joint for it hangs off YRotN). Confirm against the "
                             "ftCommon part-name table before relying on ids 16+.",
              "provenance": prov("inferred", "ev:plco", "ev:decomp")},
             {"id": "issue:unnamed_joints", "title": "%d joints have no common part" % len(unknown),
              "layer": "content", "severity": "info", "status": "open",
-             "description": "Joints %s get no role from the parts table (Kirby's body, face and mouth "
-                            "joints and two leg ends). Their roles need a model or animation inspection." % unknown,
+             "description": "Joints %s get no role from the parts table. Their roles need a model or animation inspection." % unknown,
              "provenance": prov("verified", "ev:plco")}],
         "coverage": {
             "identity": {"status": "summary"},
@@ -320,13 +363,14 @@ def main():
                                                               "joint count; keys are not decoded"},
             "behavior.subactions": {"status": "complete", "note": "rows, clips, script offsets and flags"},
             "behavior.actions": {"status": "absent"},
-            "behavior.attributes": {"status": "absent", "note": "see experiment/brawl-kirby/analysis/melee_kirby.json"}},
+            "behavior.attributes": {"status": "summary", "note": f"{len(attributes)} scalar ftCo_DatAttrs fields; nested structs, vectors and special attributes omitted"},
+            "behavior.moves": {"status": "summary", "note": "Canonical groups of nonempty submotion rows; no action or script decoding"}},
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(doc, f, indent=1)
     print(f"{OUT}: {len(ir_joints)} joints, {len(roles)} roles, {len(clips)} clips, "
-          f"{len(subactions)} subactions; joints without a role: {unknown}")
+          f"{len(subactions)} subactions, {len(attributes)} attributes, {len(moves)} moves; joints without a role: {unknown}")
 
 
 if __name__ == "__main__":
