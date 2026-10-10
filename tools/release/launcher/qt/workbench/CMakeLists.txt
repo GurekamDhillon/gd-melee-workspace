@@ -7,7 +7,7 @@ function(wb_core_sources)
   set(WB_CORE_SOURCES "${WB_CORE_SOURCES}" PARENT_SCOPE)
 endfunction()
 
-wb_core_sources()  # tasks add: json_patch.cpp file_store.cpp history.cpp ...
+wb_core_sources(checks.cpp)  # tasks add: json_patch.cpp file_store.cpp history.cpp ...
 if(WB_CORE_SOURCES)
   add_library(workbench_core STATIC ${WB_CORE_SOURCES})
 else()
@@ -26,4 +26,5 @@ if(BUILD_TESTING)
     set_tests_properties(workbench_${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
   endfunction()
   wb_test(scaffold)
+  wb_test(checks)
 endif()
