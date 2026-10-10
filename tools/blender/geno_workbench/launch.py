@@ -122,6 +122,15 @@ def blender_argv(
 def _stop_process(proc: subprocess.Popen) -> None:
     try:
         if proc.poll() is None:
+            # Closing stdin is the server's clean shutdown (it stops the engine it started);
+            # terminate() alone would orphan the engine process on Windows.
+            try:
+                if proc.stdin is not None:
+                    proc.stdin.close()
+                proc.wait(timeout=8.0)
+            except (OSError, subprocess.TimeoutExpired):
+                pass
+        if proc.poll() is None:
             proc.terminate()
         try:
             proc.wait(timeout=1.0)
@@ -147,7 +156,7 @@ def start_serve(
     try:
         proc = subprocess.Popen(
             command,
-            stdin=subprocess.DEVNULL,
+            stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,

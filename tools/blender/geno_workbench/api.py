@@ -281,9 +281,11 @@ class WbSession:
 
         def action():
             row = self._row_name(name)
-            parsed = self._read_frame(
-                self._request("load_row", {"row": row}), row
-            )
+            loaded = self._request("load_row", {"row": row})
+            if "bones" not in loaded:
+                # The real server answers load_row with {"ok": true}; the first frame follows.
+                loaded = self._request("set_frame", {"frame": 1})
+            parsed = self._read_frame(loaded, row)
             boxes = self._source_hitboxes(row) if refresh_hitboxes else []
             self._store_frame(parsed)
             self.hitboxes = boxes

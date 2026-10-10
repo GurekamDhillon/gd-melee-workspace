@@ -152,3 +152,16 @@ Once Task 8 supplies `selftest.py`, run its synthetic end-to-end test:
 
 The Task 8 self-test and owner-observed live visual checks remain owed.
 The pure tests use the synthetic fake workbench and no disc-derived data.
+
+## Open Goku in Blender with one command
+
+    python tools/blender/geno_workbench/launch_goku.py            # interactive Blender
+    python tools/blender/geno_workbench/launch_goku.py --check    # background run, prints GENO_WB_REPORT lines
+    python tools/blender/geno_workbench/launch_goku.py --row dair --frame 8
+
+`launch_goku.py` starts the Qt launcher's `--serve` session (which starts the headless engine on
+the Goku mod with the project's own `mods_dir`), then Blender with `bootstrap.py` (`--art`
+`--row` `--frame` `--report`). Paths default to this machine and are overridable by `GW_ROOT`,
+`GW_BLENDER`, `GW_LAUNCHER`, `GW_QT_BIN`, `GW_ENGINE_EXE`, `GW_ISO_VANILLA` (read from `.env`).
+Closing Blender stops the server and the engine. Blender's splash screen may cover the viewport
+until the mouse moves.
