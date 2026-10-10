@@ -3,6 +3,9 @@
 #include "geno_data.h"
 #include "session.h"
 #include "timeline.h"
+#include "atlas_widgets.h"
+#include "panels.h"
+#include <QProgressBar>
 #include "hub_panel.h"
 #include "blender_launch.h"
 #include "workbench_window.h"
@@ -75,6 +78,87 @@ class UiTest : public QObject {
     Q_OBJECT
 private slots:
     void initTestCase() { launcher::spanish = false; launcher::applyTheme(); }
+    void atlasWindowSmokeAndTimelineEditsUseSourceOrdinal() {
+        QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); SlowEngine engine;
+        Session s(dir.path(), &engine); s.data().reload(); registerAllCommands(s);
+        WorkbenchWindow w(s); w.resize(1440, 900); w.show(); QTRY_VERIFY(!w.isBusy());
+        auto *view = w.findChild<TimelineView *>("wbTimeline"); QVERIFY(view);
+        auto *search = w.findChild<QLineEdit *>("wbMoveSearch"); QVERIFY(search);
+        auto *tabs = w.findChild<InspectorTabs *>("wbInspectorTabs"); QVERIFY(tabs);
+        QCOMPARE(tabs->tabText(0), QString("Hitbox")); QCOMPARE(tabs->tabText(1), QString("Attributes"));
+        QCOMPARE(tabs->tabText(2), QString("Checks")); QCOMPARE(tabs->tabText(3), QString("Render"));
+        auto *outline = w.findChild<OutlinerPanel *>(); QVERIFY(outline);
+        search->setText("dair"); QVERIFY(outline->topLevelItem(0)->isHidden());
+        QVERIFY(!outline->topLevelItem(1)->isHidden()); search->clear();
+        w.runCommand("load_row", {{"row", "dair"}}); QTRY_VERIFY(!w.isBusy());
+        view->editRequested("edit_hitbox", {{"row", "dair"}, {"ordinal", 1}, {"start_frame", 10}, {"end_frame", 16}});
+        QTRY_VERIFY(!w.isBusy());
+        QCOMPARE(s.data().hitboxes("dair")[0].startFrame, 6);
+        QCOMPARE(s.data().hitboxes("dair")[1].startFrame, 10);
+        QCOMPARE(s.data().hitboxes("dair")[1].endFrame, 16);
+        QVERIFY(w.findChild<QWidget *>("wbCentreHost"));
+        QVERIFY(w.findChild<QWidget *>("viewport") == nullptr);
+        QVERIFY(!w.grab().isNull());
+    }
+    void rebuildButtonUsesExistingCommandAndOnlyReloadsAfterSuccess() {
+        QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); SlowEngine engine;
+        Session s(dir.path(), &engine); s.data().reload();
+        registerViewCommands(s); registerRowCommands(s); registerHitboxCommands(s);
+        int builds = 0; bool failBuild = false;
+        s.registry().add({"rebuild", "Synthetic rebuild", commandSchema(), false,
+            [&](const QJsonObject &, CommandContext &) {
+                ++builds; if (failBuild) throw CommandError{"synthetic rebuild failed"};
+                return QJsonObject{{"exit", 0}};
+            }});
+        WorkbenchWindow w(s); QTRY_VERIFY(!w.isBusy());
+        auto *button = w.findChild<QPushButton *>("wbRebuild"); QVERIFY(button); button->click();
+        QTRY_VERIFY(!w.isBusy()); QCOMPARE(builds, 1);
+        int restarts = 0; for (const auto &call : engine.calls) if (call.first == "restart") ++restarts;
+        QCOMPARE(restarts, 1); failBuild = true; button->click(); QTRY_VERIFY(!w.isBusy());
+        QCOMPARE(builds, 2); restarts = 0;
+        for (const auto &call : engine.calls) if (call.first == "restart") ++restarts;
+        QCOMPARE(restarts, 1); QVERIFY(w.statusText().contains("synthetic rebuild failed"));
+        QVERIFY(!w.findChild<StatusProgress *>()->isRunning());
+    }
+    void progressHookIsObservableAndCancelStaysOutOfTheCommandQueue() {
+        QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); Session s(dir.path(), nullptr);
+        s.data().reload(); registerAllCommands(s); WorkbenchWindow w(s); QTRY_VERIFY(!w.isBusy());
+        QSignalSpy progress(&w, &WorkbenchWindow::rebuildProgress);
+        QSignalSpy cancel(&w, &WorkbenchWindow::rebuildCancelRequested);
+        w.reportRebuildProgress("synthetic phase", 60, 9000, true);
+        QCOMPARE(progress.size(), 1);
+        QCOMPARE(w.findChild<QProgressBar *>("wbRebuildProgressBar")->value(), 60);
+        w.findChild<StatusProgress *>()->cancelRequested(); QCOMPARE(cancel.size(), 1);
+        QVERIFY(!w.isBusy());
+    }
+    void attributeEditsAndUndoRefreshTheOpenPanel() {
+        QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); SlowEngine engine;
+        QByteArray source(wbtest::kGameplay); source.replace("\"version\": 1", "\"version\": 1, \"attributes\": {\"weight\": 75}");
+        wbtest::put(dir.path(), "gameplay.json", source);
+        Session s(dir.path(), &engine); s.data().reload(); registerAllCommands(s);
+        WorkbenchWindow w(s); QTRY_VERIFY(!w.isBusy());
+        w.findChild<InspectorTabs *>()->setCurrentIndex(1); QTRY_VERIFY(!w.isBusy());
+        auto *weight = w.findChild<QDoubleSpinBox *>("wbAttribute_weight"); QVERIFY(weight); QCOMPARE(weight->value(), 75.0);
+        weight->setValue(80); weight->editingFinished(); QTRY_VERIFY(!w.isBusy()); QCOMPARE(weight->value(), 80.0);
+        w.runCommand("undo", {}); QTRY_VERIFY(!w.isBusy()); QCOMPARE(weight->value(), 75.0);
+        w.runCommand("redo", {}); QTRY_VERIFY(!w.isBusy()); QCOMPARE(weight->value(), 80.0);
+    }
+    void rejectedAttributeEditReconcilesValueWithoutHidingTheError() {
+        QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); SlowEngine engine;
+        QByteArray source(wbtest::kGameplay); source.replace("\"version\": 1", "\"version\": 1, \"attributes\": {\"weight\": 75}");
+        wbtest::put(dir.path(), "gameplay.json", source);
+        Session s(dir.path(), &engine); s.data().reload(); registerAllCommands(s);
+        WorkbenchWindow w(s); QTRY_VERIFY(!w.isBusy());
+        w.findChild<InspectorTabs *>()->setCurrentIndex(1); QTRY_VERIFY(!w.isBusy());
+        auto *weight = w.findChild<QDoubleSpinBox *>("wbAttribute_weight"); QVERIFY(weight);
+        source.replace("75", "76"); wbtest::put(dir.path(), "gameplay.json", source);
+        weight->setValue(80); weight->editingFinished(); QTRY_VERIFY(!w.isBusy());
+        QCOMPARE(weight->value(), 76.0); QVERIFY(w.statusText().contains("changed externally"));
+        QSignalSpy attempts(&w, &WorkbenchWindow::commandFinished);
+        weight->setValue(80); weight->editingFinished(); QTRY_VERIFY(!w.isBusy());
+        QVERIFY(!attempts.isEmpty()); QCOMPARE(attempts.first()[0].toString(), QString("edit_attribute"));
+        QCOMPARE(weight->value(), 76.0);
+    }
     void playLabUsesCurrentProjectAndRowThroughSharedTool() {
         ScopedEnvironment python("GW_PYTHON", WB_PLAY_HELPER);
         QTemporaryDir dir; wbtest::makeSynthFighter(dir.path());
@@ -180,8 +264,56 @@ private slots:
         QCOMPARE(w.findChild<QLabel *>("wbProjectName")->text(), QString("synth"));
         QVERIFY(w.findChild<QLabel *>("wbProjectCounts")->text().contains("2"));
         QVERIFY(w.findChild<QLabel *>("wbProjectCounts")->text().contains("3"));
-        for (const QString &name : {"wbOutlinerDock", "wbInspectorDock", "wbProblemsDock", "wbClipsDock", "wbFidelityDock", "wbReviewDock"})
-            QVERIFY(w.findChild<QDockWidget *>(name));
+        auto *tabs = w.findChild<InspectorTabs *>("wbInspectorTabs"); QVERIFY(tabs);
+        QCOMPARE(tabs->count(), 4);
+        QVERIFY(w.findChild<OutlinerPanel *>("wbOutliner"));
+        QVERIFY(w.findChild<TimelineView *>("wbTimeline"));
+        QVERIFY(w.findChild<StatusProgress *>("wbStatusProgress"));
+        QVERIFY(w.findChildren<QDockWidget *>().isEmpty());
+    }
+    void pendingDeleteCannotRetargetTheNextSourceOccurrence() {
+        QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); SlowEngine engine;
+        Session s(dir.path(), &engine); s.data().reload(); registerAllCommands(s);
+        WorkbenchWindow w(s); QTRY_VERIFY(!w.isBusy());
+        w.runCommand("load_row", {{"row", "dair"}}); QTRY_VERIFY(!w.isBusy());
+        auto *remove = w.findChild<QPushButton *>("wbDeleteHitbox"); QVERIFY(remove); QVERIFY(remove->isEnabled());
+        remove->click(); QVERIFY(!remove->isEnabled());
+        QVERIFY(!w.findChild<QDoubleSpinBox *>("wbHitbox_damage")->isEnabled());
+        QVERIFY(!w.findChild<TimelineView *>()->isEnabled());
+        remove->click(); QTRY_VERIFY(!w.isBusy());
+        QCOMPARE(s.data().hitboxes("dair").size(), 1); QCOMPARE(s.data().hitboxes("dair").first().damage, 10.0);
+        QVERIFY(w.findChild<TimelineView *>()->isEnabled());
+    }
+    void remoteBootstrapRetiresAnOlderQtViewBeforeBlenderAcknowledgesIt() {
+        QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); SlowEngine engine;
+        Session s(dir.path(), &engine); s.data().reload(); registerAllCommands(s);
+        WorkbenchWindow w(s); QTRY_VERIFY(!w.isBusy());
+        w.setBlenderProcessId(QCoreApplication::applicationPid());
+        w.runCommand("load_row", {{"row", "dair"}}); QTRY_VERIFY(!w.isBusy());
+        w.runCommand("set_frame", {{"frame", 10}}); QTRY_VERIFY(!w.isBusy());
+        const auto oldRevision = s.uiView.value("revision").toInteger(); QVERIFY(oldRevision > 0);
+        QCOMPARE(s.uiView.value("row").toString(), QString("dair")); QVERIFY(s.uiView.value("available").toBool());
+        QTcpSocket socket; socket.connectToHost(QHostAddress::LocalHost, w.serveForBlender());
+        QTRY_COMPARE(socket.state(), QAbstractSocket::ConnectedState);
+        socket.write(toolRequest("load_row", {{"row", "jab1"}})); QTRY_VERIFY(socket.canReadLine());
+        QVERIFY(!QJsonDocument::fromJson(socket.readLine()).object()["result"].toObject()["isError"].toBool());
+        socket.write(toolRequest("set_frame", {{"frame", 3}})); QTRY_VERIFY(socket.canReadLine());
+        QVERIFY(!QJsonDocument::fromJson(socket.readLine()).object()["result"].toObject()["isError"].toBool());
+        QTRY_COMPARE(w.findChild<TimelineView *>()->frame(), 3);
+        socket.write(toolRequest("ui_view_state", {{"revision", oldRevision}, {"pid", QCoreApplication::applicationPid()}}));
+        QTRY_VERIFY(socket.canReadLine());
+        const auto retired = toolPayload(QJsonDocument::fromJson(socket.readLine()).object());
+        QVERIFY(!retired.value("available").toBool()); QVERIFY(retired.value("revision").toInteger() > oldRevision);
+        QTRY_VERIFY(w.findChild<QLabel *>("wbBlenderState")->text().contains("waiting"));
+        w.runCommand("set_frame", {{"frame", 4}}); QTRY_VERIFY(!w.isBusy());
+        const auto newRevision = s.uiView.value("revision").toInteger();
+        QVERIFY(newRevision > retired.value("revision").toInteger()); QCOMPARE(s.uiView.value("row").toString(), QString("jab1"));
+        socket.write(toolRequest("ui_view_state", {{"revision", newRevision}, {"pid", QCoreApplication::applicationPid()}}));
+        QTRY_VERIFY(socket.canReadLine());
+        QVERIFY(toolPayload(QJsonDocument::fromJson(socket.readLine()).object()).value("available").toBool());
+        QTRY_VERIFY(w.findChild<QLabel *>("wbBlenderState")->text().contains("synced"));
+        w.runCommand("preview_clip", {{"clip", "SYN_ATC_002"}}); QTRY_VERIFY(!w.isBusy());
+        QVERIFY(!s.uiView.value("available").toBool()); QVERIFY(s.uiView.value("revision").toInteger() > newRevision);
     }
     void serveForBlenderReusesHumanSessionAndClosesWithHub() {
         QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); Session s(dir.path(), nullptr);
@@ -222,14 +354,14 @@ private slots:
         wbtest::FakeEngine engine; Session s(dir.path(), &engine); s.data().reload(); registerAllCommands(s);
         WorkbenchWindow w(s); QTRY_VERIFY(!w.isBusy());
         auto *open = w.findChild<QPushButton *>("openInBlender"); QVERIFY(open); QVERIFY(open->isEnabled());
-        QVERIFY(w.findChild<QLabel *>("wbEngineStatus")->text().contains("running"));
+        QVERIFY(w.findChild<QLabel *>("wbEngineStatus")->toolTip().contains("running"));
         // Simulate death with no intervening command/snapshot. Refuse the restart
         // so this test never starts Blender, even on a developer's machine.
         engine.state = "stopped"; engine.failWith = "synthetic restart refused";
         open->click(); QTRY_VERIFY(!w.isBusy());
         int restarts = 0; for (const auto &call : engine.calls) if (call.first == "restart") ++restarts;
         QCOMPARE(restarts, 1); QVERIFY(w.statusText().contains("synthetic restart refused"));
-        QVERIFY(w.findChild<QLabel *>("wbEngineStatus")->text().contains("not running"));
+        QVERIFY(w.findChild<QLabel *>("wbEngineStatus")->toolTip().contains("not running"));
     }
     void shutdownWaitsForAnEventPumpingSocketCommand() {
         QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); Session s(dir.path(), nullptr);

@@ -118,6 +118,7 @@ QVector<HitboxRef> GenoAsm::hitboxes() const {
                 else if (key == "kbg") h.kbg = value.toInt();
                 else if (key == "fkb") h.fkb = value.toInt();
                 else if (key == "bkb") h.bkb = value.toInt();
+                else if (key == "element") h.element = value.toInt();
             }
             open.append(h.ordinal);
             out.append(h);
@@ -154,8 +155,10 @@ QString GenoAsm::apply(int ordinal, const HitboxEdit &edit, QString *err) const 
         if (!std::isfinite(value)) return fail(it.key() + QStringLiteral(" must be finite"));
         replacements.insert(it.key(), it.key() == "damage" ? fmtDamage(value) : QString::number(value, 'f', 2));
     }
+    if (edit.element && (*edit.element < 0 || *edit.element > 31))
+        return fail(QStringLiteral("element must be between 0 and 31"));
     const QMap<QString, std::optional<int>> ints = {
-        {"angle", edit.angle}, {"kbg", edit.kbg}, {"fkb", edit.fkb}, {"bkb", edit.bkb}
+        {"angle", edit.angle}, {"kbg", edit.kbg}, {"fkb", edit.fkb}, {"bkb", edit.bkb}, {"element", edit.element}
     };
     for (auto it = ints.cbegin(); it != ints.cend(); ++it)
         if (it.value()) replacements.insert(it.key(), QString::number(*it.value()));

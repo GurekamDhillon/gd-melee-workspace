@@ -17,6 +17,7 @@ struct HitboxRef {
     int startFrame = 0;
     int endFrame = -1; // Exclusive; -1 means never cleared.
     int clearLine = -1; // Zero-based line of the clear_hitboxes that closes it; -1 if never cleared.
+    int element = 0; // Source assembler effect code, 0..31; omitted means normal (0).
 };
 
 // A new hitbox: starts at `frame` and lasts `duration` frames unless it joins an active window.
@@ -31,7 +32,7 @@ constexpr int kHitboxSlots = 4;
 struct HitboxEdit {
     std::optional<QString> joint;
     std::optional<double> damage, size, x, y, z;
-    std::optional<int> angle, kbg, fkb, bkb, startFrame, endFrame;
+    std::optional<int> angle, kbg, fkb, bkb, startFrame, endFrame, element;
 };
 
 class GenoAsm {

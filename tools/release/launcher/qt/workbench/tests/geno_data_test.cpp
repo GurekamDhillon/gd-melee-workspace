@@ -88,6 +88,24 @@ private slots:
         QVERIFY(data.editHitbox("jab1", 0, edit, &err).isEmpty());
         QVERIFY(!err.isEmpty());
     }
+    void timelineEventsUseCachedSourceAndLiteralFrames() {
+        QTemporaryDir d; wbtest::makeSynthFighter(d.path());
+        wbtest::put(d.path(), "moves/jab1.genoasm", "wait_until 3\nsound id=7 # note\nwait 2\nsound id=9\n");
+        FileStore fs(d.path()); GenoData data(fs); QVERIFY(data.reload().isEmpty());
+        auto events = data.timelineEvents("jab1"); QCOMPARE(events.size(), 2);
+        QCOMPARE(events[0].toObject()["frame"].toInt(), 3); QCOMPARE(events[1].toObject()["frame"].toInt(), 5);
+        QCOMPARE(events[0].toObject()["label"].toString(), QString("sound id=7"));
+        wbtest::put(d.path(), "moves/jab1.genoasm", "wait_until 40\nsound id=8\n");
+        QCOMPARE(data.timelineEvents("jab1"), events); // A UI refresh cannot acknowledge a hand edit.
+        QVERIFY(fs.externalChanges().contains("moves/jab1.genoasm"));
+        QVERIFY(data.timelineEvents("unknown").isEmpty());
+    }
+    void timelineEventsStopAtNonlinearControlFlow() {
+        QTemporaryDir d; wbtest::makeSynthFighter(d.path());
+        wbtest::put(d.path(), "moves/jab1.genoasm", "wait_until 3\nsound id=7\nloop 2\nwait 2\nsound id=9\n");
+        FileStore fs(d.path()); GenoData data(fs); QVERIFY(data.reload().isEmpty());
+        QCOMPARE(data.timelineEvents("jab1").size(), 1);
+    }
     void hitboxesForRow() {
         QTemporaryDir d; wbtest::makeSynthFighter(d.path());
         FileStore fs(d.path()); GenoData data(fs); QVERIFY(data.reload().isEmpty());

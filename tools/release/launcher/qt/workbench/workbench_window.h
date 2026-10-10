@@ -24,6 +24,10 @@ public:
     quint16 serveForBlender();
     void setBlenderSetting(const QString &path);
     QString statusText() const;
+    // Async rebuild lane: connect progress here and cancellation to the job,
+    // bypassing the serial command queue. percent < 0 means indeterminate.
+    void reportRebuildProgress(const QString &phase, int percent = -1, qint64 elapsedMs = -1, bool cancellable = false);
+    void setBlenderProcessId(qint64 pid);
     bool isBusy() const;
     bool shutdownComplete() const;
     // Drop queued work and stop the owned engine after the in-flight command.
@@ -33,6 +37,8 @@ signals:
     void commandFinished(const QString &name, const QJsonObject &reply);
     void busyChanged(bool busy);
     void shutdownFinished();
+    void rebuildProgress(const QString &phase, int percent, qint64 elapsedMs, bool cancellable);
+    void rebuildCancelRequested();
 protected:
     void closeEvent(QCloseEvent *event) override;
 private:

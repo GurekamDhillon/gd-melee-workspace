@@ -364,6 +364,21 @@ private slots:
         QVERIFY(QFile::exists(r.s.historyPath()));
     }
 
+
+    void elementEditRoundTripsAndRejectsOutOfRangeWithoutWriting() {
+        Rig r;
+        const auto result = r.call("edit_hitbox", {{"row", "jab1"}, {"ordinal", 0}, {"element", 31}});
+        QVERIFY2(result["ok"].toBool(), qPrintable(result["error"].toString()));
+        QCOMPARE(r.s.data().hitboxes("jab1")[0].element, 31);
+        const auto listed = r.call("list_hitboxes", {{"row", "jab1"}});
+        QCOMPARE(listed["result"].toObject()["hitboxes"].toArray()[0].toObject()["element"].toInt(), 31);
+        const auto before = bytesOnDisk(r.d.path(), "moves/jab1.genoasm");
+        const auto historyCount = r.s.history().entries().size();
+        for (double value : {-1.0, 32.0, 1.5})
+            QVERIFY(!r.call("edit_hitbox", {{"row", "jab1"}, {"ordinal", 0}, {"element", value}})["ok"].toBool());
+        QCOMPARE(bytesOnDisk(r.d.path(), "moves/jab1.genoasm"), before);
+        QCOMPARE(r.s.history().entries().size(), historyCount);
+    }
     void editHitboxChangesAllFieldsAndFrames() {
         Rig r;
         auto res = r.call("edit_hitbox", {{"row", "jab1"}, {"ordinal", 0}, {"bone", "@FOOT_L@"},

@@ -25,6 +25,10 @@ public:
     bool agentProposals = false; // the MCP server sets true: agent edits are proposals until a human accepts
     QString currentRow;
     QJsonObject camera, overlays;
+    // Ephemeral Qt/Blender handoff, accessed only by the Session worker.
+    // Never persisted in source or history. ui_view_state ACKs only this PID.
+    QJsonObject uiView;
+    qint64 blenderPid = 0, blenderAckRevision = 0;
     // Task 6 installs data().reload(); called after persisted edits, never for proposals.
     std::function<void()> onApplied = [] {};
 

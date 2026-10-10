@@ -6,7 +6,9 @@
 #include "session.h"
 #include "timeline.h"
 #include "workbench_window.h"
+#include <QComboBox>
 #include <QDoubleSpinBox>
+#include <QLabel>
 #include <QJsonDocument>
 #include <QLineEdit>
 #include <QPushButton>
@@ -65,6 +67,106 @@ private slots:
         QCOMPARE(o.currentItem(), o.topLevelItem(1)->child(1));
         o.setCurrentItem(o.topLevelItem(0)); QCOMPARE(rows.size(), 1);
         QCOMPARE(rows[0][0].toString(), QString("jab1"));
+    }
+
+    void moveRailFilteringAndBadgesKeepHitboxIdentity() {
+        QTemporaryDir d; wbtest::makeSynthFighter(d.path()); Session s(d.path(), nullptr);
+        QVERIFY(s.data().reload().isEmpty()); OutlinerPanel o; o.setSession(s); o.setGrouped(true); o.refresh();
+        o.setSelection("dair", 1); o.setBadges({"jab1"}, {{"dair", 2}});
+        QSignalSpy hits(&o, &OutlinerPanel::hitboxSelected), rows(&o, &OutlinerPanel::rowSelected);
+        o.setFilter("DAIR");
+        QVERIFY(o.topLevelItem(0)->isHidden()); QVERIFY(!o.topLevelItem(1)->isHidden());
+        QVERIFY(o.topLevelItem(0)->toolTip(0).contains("edited"));
+        QVERIFY(o.topLevelItem(1)->toolTip(0).contains("2 warnings"));
+        o.refresh(); QVERIFY(o.topLevelItem(0)->isHidden());
+        QCOMPARE(o.currentItem(), o.topLevelItem(1)->child(1));
+        QVERIFY(hits.isEmpty()); QVERIFY(rows.isEmpty());
+        o.setFilter("SYN_ATC_002"); QVERIFY(!o.topLevelItem(0)->isHidden()); QVERIFY(o.topLevelItem(1)->isHidden());
+        o.setFilter({}); QCOMPARE(o.currentItem(), o.topLevelItem(1)->child(1));
+        o.setCurrentItem(o.topLevelItem(1)->child(0));
+        QCOMPARE(hits.size(), 1); QCOMPARE(hits[0][0].toString(), QString("dair")); QCOMPARE(hits[0][1].toInt(), 0);
+    }
+    void inspectorRolesPreserveDraftAndDeleteSelectedOccurrence() {
+        InspectorPanel p; HitboxRef h; h.ordinal = 1; h.slot = 0; h.joint = "FOOT_L";
+        p.showHitbox("dair", h); QSignalSpy edits(&p, &InspectorPanel::editRequested);
+        auto *bone = p.findChild<QLineEdit *>("wbHitbox_bone"); QVERIFY(bone); bone->setText("TAIL");
+        p.setRoles({{"HAND_R", "hand.R", "arms"}, {"FOOT_L", "foot.L", "legs"}});
+        QCOMPARE(bone->text(), QString("TAIL")); QVERIFY(edits.isEmpty());
+        auto *joint = p.findChild<QComboBox *>("wbHitboxJoint"); QVERIFY(joint);
+        const int hand = joint->findText("HAND_R"); QVERIFY(hand >= 0);
+        joint->setCurrentIndex(hand); joint->activated(hand);
+        QCOMPARE(edits.size(), 1); QCOMPARE(edits[0][1].toJsonObject()["bone"].toString(), QString("HAND_R"));
+        auto *remove = p.findChild<QPushButton *>("wbDeleteHitbox"); QVERIFY(remove); remove->click();
+        QCOMPARE(edits.size(), 2); QCOMPARE(edits[1][0].toString(), QString("delete_hitbox"));
+        QCOMPARE(edits[1][1].toJsonObject(), (QJsonObject{{"row", "dair"}, {"ordinal", 1}}));
+        p.clear(); remove->click(); QCOMPARE(edits.size(), 2);
+    }
+    void inspectorElementEditsUseSourceCodeAndFeedbackIsSilent() {
+        InspectorPanel p; HitboxRef h; h.joint = "HAND_R"; h.element = 3; p.showHitbox("jab1", h);
+        QSignalSpy edits(&p, &InspectorPanel::editRequested);
+        auto *element = p.findChild<QComboBox *>("wbHitbox_element"); QVERIFY(element);
+        QCOMPARE(element->currentData().toInt(), 3);
+        const int normal = element->findData(0); QVERIFY(normal >= 0);
+        element->setCurrentIndex(normal); element->activated(normal);
+        QCOMPARE(edits.size(), 1);
+        QCOMPARE(edits[0][1].toJsonObject(), (QJsonObject{{"row", "jab1"}, {"ordinal", 0}, {"element", 0}}));
+        p.setField("element", 32); p.setField("element", -1); p.setField("element", 1.5); QCOMPARE(edits.size(), 1);
+        h.element = 31; p.showHitbox("jab1", h); QCOMPARE(element->currentData().toInt(), 31); QCOMPARE(edits.size(), 1);
+    }
+    void inspectorChecksAndExplanationOnlyShowSuppliedEvidence() {
+        InspectorPanel p; HitboxRef h; p.showHitbox("jab1", h);
+        auto *explanation = p.findChild<QLabel *>("wbHitExplanation"); QVERIFY(explanation); QVERIFY(explanation->isHidden());
+        p.setExplanation("Measured against the selected target"); QVERIFY(!explanation->isHidden());
+        QCOMPARE(explanation->text(), QString("Measured against the selected target"));
+        p.setRowChecks({{"bounds", "dair", "Wrong row", 0}, {"bounds", "jab1", "Source window exceeds clip", 0}}, true);
+        auto *checks = p.findChild<QLabel *>("wbHitboxRowChecks"); QVERIFY(checks);
+        QVERIFY(checks->text().contains("Source window exceeds clip")); QVERIFY(!checks->text().contains("Wrong row"));
+        p.showHitbox("dair", h); QVERIFY(explanation->isHidden());
+        p.setRowChecks({}, false); QVERIFY(!checks->text().contains("No issues"));
+    }
+    void attributesRespectSchemaAndEmitOnlyExplicitEdits() {
+        AttributesPanel p;
+        const QJsonArray attributes{
+            QJsonObject{{"name", "weight"}, {"value", 90}, {"type", "number"}, {"group", "misc"}, {"unit", "weight"},
+                {"range", QJsonObject{{"minimum", 1}, {"maximum", 999}}}},
+            QJsonObject{{"name", "jumps.max"}, {"value", QJsonValue(QJsonValue::Null)}, {"type", "integer"}, {"group", "jump"}, {"unit", "count"},
+                {"range", QJsonObject{{"minimum", 1}, {"maximum", 8}}}}};
+        QSignalSpy edits(&p, &AttributesPanel::editRequested); p.setAttributes(attributes); QVERIFY(edits.isEmpty());
+        auto *weight = p.findChild<QDoubleSpinBox *>("wbAttribute_weight"); QVERIFY(weight);
+        QCOMPARE(weight->minimum(), 1.0); QCOMPARE(weight->maximum(), 999.0); QCOMPARE(weight->value(), 90.0);
+        auto *jumps = p.findChild<QDoubleSpinBox *>("wbAttribute_jumps.max"); QVERIFY(jumps); QCOMPARE(jumps->decimals(), 0);
+        QCOMPARE(jumps->cleanText(), QString()); jumps->editingFinished(); QVERIFY(edits.isEmpty());
+        auto *text = jumps->findChild<QLineEdit *>(); QVERIFY(text);
+        p.show(); text->setFocus(); QTest::keyClicks(text, "3"); QTest::keyClick(text, Qt::Key_Return);
+        QCOMPARE(edits.size(), 1); QCOMPARE(edits[0][0].toString(), QString("edit_attribute"));
+        QCOMPARE(edits[0][1].toJsonObject(), (QJsonObject{{"name", "jumps.max"}, {"value", 3}}));
+        p.setAttributes(attributes); QCOMPARE(edits.size(), 1); QCOMPARE(jumps->cleanText(), QString());
+    }
+
+    void attributesUnsetValueCanBeExplicitlySetToZero() {
+        AttributesPanel p;
+        const QJsonObject descriptor{{"name", "landing_lag"}, {"value", QJsonValue(QJsonValue::Null)},
+            {"type", "number"}, {"group", "landing"}, {"unit", "frames"},
+            {"range", QJsonObject{{"minimum", 0}, {"maximum", 100}}}};
+        p.setAttributes({descriptor}); p.show();
+        auto *field = p.findChild<QDoubleSpinBox *>("wbAttribute_landing_lag"); QVERIFY(field);
+        auto *text = field->findChild<QLineEdit *>(); QVERIFY(text);
+        QSignalSpy edits(&p, &AttributesPanel::editRequested); text->setFocus(); QTest::keyClicks(text, "0"); QTest::keyClick(text, Qt::Key_Return);
+        QCOMPARE(edits.size(), 1);
+        QCOMPARE(edits[0][1].toJsonObject(), (QJsonObject{{"name", "landing_lag"}, {"value", 0}}));
+        p.setAttributes({descriptor}); QCOMPARE(field->cleanText(), QString()); QCOMPARE(edits.size(), 1);
+    }
+    void attributesFeedbackPreservesUnsubmittedNumericDraft() {
+        AttributesPanel p;
+        QJsonObject weight{{"name", "weight"}, {"value", 90}, {"type", "number"}, {"group", "misc"}, {"unit", "weight"},
+            {"range", QJsonObject{{"minimum", 1}, {"maximum", 999}}}};
+        p.setAttributes({weight}); p.show();
+        auto *field = p.findChild<QDoubleSpinBox *>("wbAttribute_weight"); QVERIFY(field);
+        auto *text = field->findChild<QLineEdit *>(); QVERIFY(text); text->setFocus(); text->selectAll(); QTest::keyClicks(text, "110");
+        QSignalSpy edits(&p, &AttributesPanel::editRequested); weight["value"] = 100; p.setAttributes({weight});
+        QCOMPARE(text->text(), QString("110")); QVERIFY(edits.isEmpty());
+        QTest::keyClick(text, Qt::Key_Return); QCOMPARE(edits.size(), 1);
+        QCOMPARE(edits[0][1].toJsonObject(), (QJsonObject{{"name", "weight"}, {"value", 110}}));
     }
     void inspectorEmitsOnlyChangedFields() {
         InspectorPanel p; HitboxRef h; h.ordinal = 0; h.joint = "FOOT_L"; h.damage = 14; h.size = 2.8;

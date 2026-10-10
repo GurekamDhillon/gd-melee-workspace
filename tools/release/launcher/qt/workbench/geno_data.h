@@ -31,6 +31,7 @@ public:
     const ProjectConfig &project() const;
     QVector<RowInfo> rows() const;
     QVector<HitboxRef> hitboxes(const QString &row) const;
+    QJsonArray timelineEvents(const QString &row) const; // source-authored sound/effect markers, cached bytes only
     QVector<ClipInfo> clips() const;
     QVector<Joint> joints() const;
     bool hasPlan() const;
