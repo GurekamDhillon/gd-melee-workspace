@@ -565,7 +565,7 @@ class WbSession:
             problem = self.problems[index]
             row = self._row_name(problem.get("row"))
             ordinal = self._integer(problem.get("ordinal", 0), "ordinal")
-            self._read_frame(self._request("load_row", {"row": row}), row)
+            self._request("load_row", {"row": row})  # the real server answers {"ok": true}; set_frame carries the pose
             boxes = self._source_hitboxes(row)
             frame = self._first_active_frame(boxes, ordinal)
             parsed = self._read_frame(
@@ -645,9 +645,7 @@ class WbSession:
             parsed = None
             boxes = []
             if saved_row:
-                self._read_frame(
-                    self._request("load_row", {"row": saved_row}), saved_row
-                )
+                self._request("load_row", {"row": saved_row})  # real server: {"ok": true}, no pose
                 parsed = self._read_frame(
                     self._request("set_frame", {"frame": saved_frame}), saved_row
                 )

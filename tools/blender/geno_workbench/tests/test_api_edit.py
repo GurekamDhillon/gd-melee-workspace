@@ -96,6 +96,7 @@ def test_requests_send_the_row_name_not_the_engine_clip_label():
     fake, s = make()
     try:
         fake.label_rows_by_clip = True
+        fake.bare_load_row = True  # the real server's load_row reply has no pose
         assert s.load_row("dair", refresh_hitboxes=True), s.last_error
         assert s.row == "AttackAirLw" and s.source_row == "dair"
         assert s.refresh_hitboxes(), s.last_error
