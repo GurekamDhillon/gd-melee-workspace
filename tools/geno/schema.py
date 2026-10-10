@@ -12,7 +12,7 @@ S = symbols()
 
 def registry_text():
     return (read("pc/platform/geno_registry.c") + "\n" + read("pc/platform/geno_define_registry.inc") + "\n" +
-            read("pc/platform/geno_lua_registry.inc"))
+            read("pc/platform/geno_lua_registry.inc") + "\n" + read("pc/platform/geno_combo_registry.inc"))
 
 
 def registry_keys(text=None):
@@ -199,6 +199,8 @@ def build_schema():
     fighter["properties"]["presentation"]["description"] = "A define's own character select icon (64x56), portrait (136x188), stock icon (rgb5a3 or rgba8, also the results card picture), one per costume or one for all (geno: 9), and its results emblem (no palette; the faint shape behind the rank numeral)"
     retail = {"type": "string", "description": "A retail fighter (mario, fox, captain, donkey, kirby, koopa, link, seak, ness, peach, popo, pikachu, samus, yoshi, purin, mewtwo, luigi, mars, zelda, clink, drmario, falco, pichu, gamewatch, ganon, emblem, or their aliases)"}
     gnsnd = string("A .gnsnd file of the mod's files/ folder (python -m tools.geno.audio in.wav out.gnsnd); a plain file name", section="22.7", pattern=r"^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][nN][sS][nN][dD]$", maxLength=63)
+    fighter["properties"]["combo"] = combo_schema()
+    fighter["properties"]["meter"] = meter_schema()
     fighter["properties"]["ai"] = obj({"like": retail}, ("like",))
     fighter["properties"]["ai"]["description"] = "The CPU plays this define as that retail fighter (its recovery, special-move choices and per-kind AI tables) (geno: 10)"
     fighter["properties"]["kirby_copy"] = {"type": "string", "pattern": r"^(none|retail:[a-z]+)$", "description": 'What Kirby gets from inhaling the define: "none" (the default) or "retail:<fighter>" (that fighter\'s hat and ability) (geno: 10)',
@@ -225,8 +227,62 @@ def build_schema():
     result.update({"$schema": "https://json-schema.org/draft/2020-12/schema", "title": "Geno fighter overlays",
                    "x-registry-keys": sorted(registry_keys()), "x-limits": limits()})
     result["x-source-contract"] = {path: hashlib.sha256(read(path).encode()).hexdigest() for path in
-                                     ("pc/platform/geno_registry.c", "pc/platform/geno_define_registry.inc", "pc/platform/geno_lua_registry.inc", "pc/geno/geno.h", "pc/geno/geno_game.c", "pc/geno/geno_game_v2.inc", "pc/geno/geno_profiles.inc", "pc/geno/geno_profile_storage.h", "pc/geno/geno_game_articles.inc")}
+                                     ("pc/platform/geno_registry.c", "pc/platform/geno_define_registry.inc", "pc/platform/geno_lua_registry.inc", "pc/platform/geno_combo_registry.inc", "pc/geno/geno.h", "pc/geno/geno_game.c", "pc/geno/geno_game_v2.inc", "pc/geno/geno_profiles.inc", "pc/geno/geno_profile_storage.h", "pc/geno/geno_game_articles.inc")}
     return result
+
+
+COMBO_MOVES = ["jab1", "jab2", "jab3", "rapid_jab", "dash_attack", "ftilt", "ftilt_any", "utilt", "dtilt", "fsmash", "fsmash_any",
+               "usmash", "dsmash", "nair", "fair", "bair", "uair", "dair", "grab", "dash_grab", "fthrow", "bthrow", "uthrow", "dthrow"]
+COMBO_ACTS = ["special_n", "special_s", "special_hi", "special_lw", "jump", "jump_short", "nair", "fair", "bair", "uair", "dair"]
+
+
+def combo_schema():
+    """geno 11: the combo graph (geno.md section 25; melee/pc/platform/geno_combo_registry.inc)."""
+    src = "melee/pc/platform/geno_combo_registry.inc"
+    def f(type_, desc, default, **kw):
+        return {**field(type_, desc, default, "25", **kw), "x-source": src}
+    node = {"anyOf": [target(), {"type": "string", "enum": ["*"] + COMBO_MOVES + COMBO_ACTS}]}
+    route = obj({"name": f("string", "Route name (logs, the LAB, the combo tests)", "routeN", maxLength=C["GENO_COMBO_MAX_NAME"] - 1),
+                 "from": {"anyOf": [node, arr(node, 56, minItems=1)], "description": "Source move(s): geno:<state>, motion:N, a Melee move name, or * (any move, only while a string runs)"},
+                 "to": {**node, "description": "Target: geno:<state>, a move name, special_n/s/hi/lw (the bound special, air version in the air), jump, nair..dair, auto"},
+                 "input": f("string", "Input class", "required", enum=["light", "heavy", "special", "jump", "grab", "shield", "none"]),
+                 "dir": f("string", "Stick direction at the press, relative to the facing (C-stick for a C-stick heavy)", "any", enum=["any", "neutral", "forward", "back", "up", "down", "side"]),
+                 "on": f("string", "Contact condition of the source move so far", "hit", enum=["any", "hit", "whiff", "block", "contact"]),
+                 "where": f("string", "Ground or air", "any", enum=["any", "ground", "air"]),
+                 "window": arr(f("integer", "Action frames [first, last], 1-based, hitlag excluded; last 0 = to the end", "[1, 0]", minimum=0, maximum=9999), 2, minItems=2),
+                 "buffer": f("integer", "Frames a press stays usable (hitlag frames do not age it)", "combo.buffer", minimum=0, maximum=30),
+                 "hold": f("integer", "Frames the button must be held (a charge)", 0, minimum=0, maximum=600),
+                 "priority": f("integer", "Higher is tested first; equal keeps file order", 0, minimum=-1000, maximum=1000),
+                 "ki_cost": f("number", "Meter spent", 0, minimum=0, maximum=1000),
+                 "ki_min": f("number", "Meter needed", 0, minimum=0, maximum=1000),
+                 "depth": f("integer", "Taken only while the string has fewer links than this", "combo.max_links", minimum=1, maximum=32),
+                 "once": f("boolean", "At most once per string", False),
+                 "starts": f("boolean", "Starts a new string (links reset first)", False),
+                 "when": obj({"slot": f("string", "A slot of lua.state", "required"), "min": f("integer", "The slot's word must be at least this", 1)}, ("slot",)),
+                 "source": f("string", "Provenance (XV2 BCM node, BAC cancel window, design note); not read by the engine but in the content id", "")},
+                ("from", "to", "input"))
+    return obj({"buffer": f("integer", "Default input buffer of every route", 5, minimum=0, maximum=30),
+                "max_links": f("integer", "Most links one string may take", 5, minimum=1, maximum=32),
+                "ki": obj({k: f("number", d, v, minimum=0, maximum=1000) for k, d, v in (
+                    ("max", "Meter maximum", 100), ("start", "Meter at spawn and each respawn", 0), ("on_hit", "Gain per hit landed (hitbox or article)", 0),
+                    ("on_taken", "Gain per hit taken", 0), ("on_block", "Gain when a move first hits a shield", 0))}),
+                "routes": arr(route, C["GENO_COMBO_MAX_ROUTES"]),
+                "strings": arr(obj({"name": f("string", "String name", "required"), "steps": arr({"anyOf": [node]}, 32, minItems=2),
+                                    "intent": f("string", "Design / source intent", "")}, ("name", "steps")), 64)},
+               ("routes",), description="geno 11: the combo graph (routes: cancel and link windows into next moves); define only")
+
+
+def meter_schema():
+    """geno 11: the HUD meter of the combo ki value (geno.md section 25.7; melee/pc/platform/geno_combo_registry.inc gn_meter_parse)."""
+    src = "melee/pc/platform/geno_combo_registry.inc"
+    def f(type_, desc, default, **kw):
+        return {**field(type_, desc, default, "25", **kw), "x-source": src}
+    return obj({"name": f("string", "Label drawn above the bar", "KI", maxLength=11),
+                "color": f("string", "Fill colour #RRGGBB", "#F2C14E", pattern=r"^#[0-9A-Fa-f]{6}$"),
+                "position": arr(f("number", "x, y on the 640x480 virtual screen", "[60 + 150 x slot, 438]", minimum=0, maximum=640), 2, minItems=2),
+                "size": arr(f("number", "width, height", "[110, 7]", minimum=4, maximum=400), 2, minItems=2),
+                "max": f("number", "Value drawn as a full bar (default combo.ki.max)", "combo.ki.max", minimum=0, maximum=1000)},
+               description="geno 11: a HUD bar for the combo ki value, drawn in matches (screen space, reads only); needs a combo block with ki")
 
 
 def limits():

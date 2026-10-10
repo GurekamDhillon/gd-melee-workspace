@@ -4,11 +4,11 @@
     "geno": {
       "type": "integer",
       "description": "Format version",
-      "x-engine-default": 10,
+      "x-engine-default": 11,
       "x-reference": "geno.md §7",
       "x-source": "melee/pc/platform/geno_registry.c",
       "minimum": 1,
-      "maximum": 10
+      "maximum": 11
     },
     "fighters": {
       "type": "array",
@@ -4399,6 +4399,650 @@
             "additionalProperties": false,
             "description": "A define's own character select icon (64x56), portrait (136x188), stock icon (rgb5a3 or rgba8, also the results card picture), one per costume or one for all (geno: 9), and its results emblem (no palette; the faint shape behind the rank numeral)"
           },
+          "combo": {
+            "type": "object",
+            "properties": {
+              "buffer": {
+                "type": "integer",
+                "description": "Default input buffer of every route",
+                "x-engine-default": 5,
+                "x-reference": "geno.md §25",
+                "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                "minimum": 0,
+                "maximum": 30
+              },
+              "max_links": {
+                "type": "integer",
+                "description": "Most links one string may take",
+                "x-engine-default": 5,
+                "x-reference": "geno.md §25",
+                "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                "minimum": 1,
+                "maximum": 32
+              },
+              "ki": {
+                "type": "object",
+                "properties": {
+                  "max": {
+                    "type": "number",
+                    "description": "Meter maximum",
+                    "x-engine-default": 100,
+                    "x-reference": "geno.md §25",
+                    "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                    "minimum": 0,
+                    "maximum": 1000
+                  },
+                  "start": {
+                    "type": "number",
+                    "description": "Meter at spawn and each respawn",
+                    "x-engine-default": 0,
+                    "x-reference": "geno.md §25",
+                    "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                    "minimum": 0,
+                    "maximum": 1000
+                  },
+                  "on_hit": {
+                    "type": "number",
+                    "description": "Gain per hit landed (hitbox or article)",
+                    "x-engine-default": 0,
+                    "x-reference": "geno.md §25",
+                    "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                    "minimum": 0,
+                    "maximum": 1000
+                  },
+                  "on_taken": {
+                    "type": "number",
+                    "description": "Gain per hit taken",
+                    "x-engine-default": 0,
+                    "x-reference": "geno.md §25",
+                    "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                    "minimum": 0,
+                    "maximum": 1000
+                  },
+                  "on_block": {
+                    "type": "number",
+                    "description": "Gain when a move first hits a shield",
+                    "x-engine-default": 0,
+                    "x-reference": "geno.md §25",
+                    "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                    "minimum": 0,
+                    "maximum": 1000
+                  }
+                },
+                "additionalProperties": false
+              },
+              "routes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Route name (logs, the LAB, the combo tests)",
+                      "x-engine-default": "routeN",
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                      "maxLength": 31
+                    },
+                    "from": {
+                      "anyOf": [
+                        {
+                          "anyOf": [
+                            {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "description": "Action target",
+                                  "x-engine-default": 0,
+                                  "x-reference": "geno.md §15.3",
+                                  "x-source": "melee/pc/platform/geno_registry.c",
+                                  "minimum": 0,
+                                  "maximum": 65535
+                                },
+                                {
+                                  "type": "string",
+                                  "description": "Action target",
+                                  "x-engine-default": "",
+                                  "x-reference": "geno.md §15.3",
+                                  "x-source": "melee/pc/platform/geno_registry.c",
+                                  "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "*",
+                                "jab1",
+                                "jab2",
+                                "jab3",
+                                "rapid_jab",
+                                "dash_attack",
+                                "ftilt",
+                                "ftilt_any",
+                                "utilt",
+                                "dtilt",
+                                "fsmash",
+                                "fsmash_any",
+                                "usmash",
+                                "dsmash",
+                                "nair",
+                                "fair",
+                                "bair",
+                                "uair",
+                                "dair",
+                                "grab",
+                                "dash_grab",
+                                "fthrow",
+                                "bthrow",
+                                "uthrow",
+                                "dthrow",
+                                "special_n",
+                                "special_s",
+                                "special_hi",
+                                "special_lw",
+                                "jump",
+                                "jump_short",
+                                "nair",
+                                "fair",
+                                "bair",
+                                "uair",
+                                "dair"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "description": "Action target",
+                                    "x-engine-default": 0,
+                                    "x-reference": "geno.md §15.3",
+                                    "x-source": "melee/pc/platform/geno_registry.c",
+                                    "minimum": 0,
+                                    "maximum": 65535
+                                  },
+                                  {
+                                    "type": "string",
+                                    "description": "Action target",
+                                    "x-engine-default": "",
+                                    "x-reference": "geno.md §15.3",
+                                    "x-source": "melee/pc/platform/geno_registry.c",
+                                    "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "*",
+                                  "jab1",
+                                  "jab2",
+                                  "jab3",
+                                  "rapid_jab",
+                                  "dash_attack",
+                                  "ftilt",
+                                  "ftilt_any",
+                                  "utilt",
+                                  "dtilt",
+                                  "fsmash",
+                                  "fsmash_any",
+                                  "usmash",
+                                  "dsmash",
+                                  "nair",
+                                  "fair",
+                                  "bair",
+                                  "uair",
+                                  "dair",
+                                  "grab",
+                                  "dash_grab",
+                                  "fthrow",
+                                  "bthrow",
+                                  "uthrow",
+                                  "dthrow",
+                                  "special_n",
+                                  "special_s",
+                                  "special_hi",
+                                  "special_lw",
+                                  "jump",
+                                  "jump_short",
+                                  "nair",
+                                  "fair",
+                                  "bair",
+                                  "uair",
+                                  "dair"
+                                ]
+                              }
+                            ]
+                          },
+                          "maxItems": 56,
+                          "minItems": 1
+                        }
+                      ],
+                      "description": "Source move(s): geno:<state>, motion:N, a Melee move name, or * (any move, only while a string runs)"
+                    },
+                    "to": {
+                      "anyOf": [
+                        {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "description": "Action target",
+                              "x-engine-default": 0,
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "minimum": 0,
+                              "maximum": 65535
+                            },
+                            {
+                              "type": "string",
+                              "description": "Action target",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §15.3",
+                              "x-source": "melee/pc/platform/geno_registry.c",
+                              "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "*",
+                            "jab1",
+                            "jab2",
+                            "jab3",
+                            "rapid_jab",
+                            "dash_attack",
+                            "ftilt",
+                            "ftilt_any",
+                            "utilt",
+                            "dtilt",
+                            "fsmash",
+                            "fsmash_any",
+                            "usmash",
+                            "dsmash",
+                            "nair",
+                            "fair",
+                            "bair",
+                            "uair",
+                            "dair",
+                            "grab",
+                            "dash_grab",
+                            "fthrow",
+                            "bthrow",
+                            "uthrow",
+                            "dthrow",
+                            "special_n",
+                            "special_s",
+                            "special_hi",
+                            "special_lw",
+                            "jump",
+                            "jump_short",
+                            "nair",
+                            "fair",
+                            "bair",
+                            "uair",
+                            "dair"
+                          ]
+                        }
+                      ],
+                      "description": "Target: geno:<state>, a move name, special_n/s/hi/lw (the bound special, air version in the air), jump, nair..dair, auto"
+                    },
+                    "input": {
+                      "type": "string",
+                      "description": "Input class",
+                      "x-engine-default": "required",
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                      "enum": [
+                        "light",
+                        "heavy",
+                        "special",
+                        "jump",
+                        "grab",
+                        "shield",
+                        "none"
+                      ]
+                    },
+                    "dir": {
+                      "type": "string",
+                      "description": "Stick direction at the press, relative to the facing (C-stick for a C-stick heavy)",
+                      "x-engine-default": "any",
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                      "enum": [
+                        "any",
+                        "neutral",
+                        "forward",
+                        "back",
+                        "up",
+                        "down",
+                        "side"
+                      ]
+                    },
+                    "on": {
+                      "type": "string",
+                      "description": "Contact condition of the source move so far",
+                      "x-engine-default": "hit",
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                      "enum": [
+                        "any",
+                        "hit",
+                        "whiff",
+                        "block",
+                        "contact"
+                      ]
+                    },
+                    "where": {
+                      "type": "string",
+                      "description": "Ground or air",
+                      "x-engine-default": "any",
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                      "enum": [
+                        "any",
+                        "ground",
+                        "air"
+                      ]
+                    },
+                    "window": {
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "description": "Action frames [first, last], 1-based, hitlag excluded; last 0 = to the end",
+                        "x-engine-default": "[1, 0]",
+                        "x-reference": "geno.md §25",
+                        "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                        "minimum": 0,
+                        "maximum": 9999
+                      },
+                      "maxItems": 2,
+                      "minItems": 2
+                    },
+                    "buffer": {
+                      "type": "integer",
+                      "description": "Frames a press stays usable (hitlag frames do not age it)",
+                      "x-engine-default": "combo.buffer",
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                      "minimum": 0,
+                      "maximum": 30
+                    },
+                    "hold": {
+                      "type": "integer",
+                      "description": "Frames the button must be held (a charge)",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                      "minimum": 0,
+                      "maximum": 600
+                    },
+                    "priority": {
+                      "type": "integer",
+                      "description": "Higher is tested first; equal keeps file order",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                      "minimum": -1000,
+                      "maximum": 1000
+                    },
+                    "ki_cost": {
+                      "type": "number",
+                      "description": "Meter spent",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                      "minimum": 0,
+                      "maximum": 1000
+                    },
+                    "ki_min": {
+                      "type": "number",
+                      "description": "Meter needed",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                      "minimum": 0,
+                      "maximum": 1000
+                    },
+                    "depth": {
+                      "type": "integer",
+                      "description": "Taken only while the string has fewer links than this",
+                      "x-engine-default": "combo.max_links",
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                      "minimum": 1,
+                      "maximum": 32
+                    },
+                    "once": {
+                      "type": "boolean",
+                      "description": "At most once per string",
+                      "x-engine-default": false,
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc"
+                    },
+                    "starts": {
+                      "type": "boolean",
+                      "description": "Starts a new string (links reset first)",
+                      "x-engine-default": false,
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc"
+                    },
+                    "when": {
+                      "type": "object",
+                      "properties": {
+                        "slot": {
+                          "type": "string",
+                          "description": "A slot of lua.state",
+                          "x-engine-default": "required",
+                          "x-reference": "geno.md §25",
+                          "x-source": "melee/pc/platform/geno_combo_registry.inc"
+                        },
+                        "min": {
+                          "type": "integer",
+                          "description": "The slot's word must be at least this",
+                          "x-engine-default": 1,
+                          "x-reference": "geno.md §25",
+                          "x-source": "melee/pc/platform/geno_combo_registry.inc"
+                        }
+                      },
+                      "additionalProperties": false,
+                      "required": [
+                        "slot"
+                      ]
+                    },
+                    "source": {
+                      "type": "string",
+                      "description": "Provenance (XV2 BCM node, BAC cancel window, design note); not read by the engine but in the content id",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "from",
+                    "to",
+                    "input"
+                  ]
+                },
+                "maxItems": 128
+              },
+              "strings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "String name",
+                      "x-engine-default": "required",
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc"
+                    },
+                    "steps": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "description": "Action target",
+                                    "x-engine-default": 0,
+                                    "x-reference": "geno.md §15.3",
+                                    "x-source": "melee/pc/platform/geno_registry.c",
+                                    "minimum": 0,
+                                    "maximum": 65535
+                                  },
+                                  {
+                                    "type": "string",
+                                    "description": "Action target",
+                                    "x-engine-default": "",
+                                    "x-reference": "geno.md §15.3",
+                                    "x-source": "melee/pc/platform/geno_registry.c",
+                                    "pattern": "^(auto|helpless|stay|[mM][oO][tT][iI][oO][nN]:.+|[sS][pP][eE][cC][iI][aA][lL]:.+|[gG][eE][nN][oO]:.+)$"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "*",
+                                  "jab1",
+                                  "jab2",
+                                  "jab3",
+                                  "rapid_jab",
+                                  "dash_attack",
+                                  "ftilt",
+                                  "ftilt_any",
+                                  "utilt",
+                                  "dtilt",
+                                  "fsmash",
+                                  "fsmash_any",
+                                  "usmash",
+                                  "dsmash",
+                                  "nair",
+                                  "fair",
+                                  "bair",
+                                  "uair",
+                                  "dair",
+                                  "grab",
+                                  "dash_grab",
+                                  "fthrow",
+                                  "bthrow",
+                                  "uthrow",
+                                  "dthrow",
+                                  "special_n",
+                                  "special_s",
+                                  "special_hi",
+                                  "special_lw",
+                                  "jump",
+                                  "jump_short",
+                                  "nair",
+                                  "fair",
+                                  "bair",
+                                  "uair",
+                                  "dair"
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      },
+                      "maxItems": 32,
+                      "minItems": 2
+                    },
+                    "intent": {
+                      "type": "string",
+                      "description": "Design / source intent",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §25",
+                      "x-source": "melee/pc/platform/geno_combo_registry.inc"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "name",
+                    "steps"
+                  ]
+                },
+                "maxItems": 64
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "routes"
+            ],
+            "description": "geno 11: the combo graph (routes: cancel and link windows into next moves); define only"
+          },
+          "meter": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Label drawn above the bar",
+                "x-engine-default": "KI",
+                "x-reference": "geno.md §25",
+                "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                "maxLength": 11
+              },
+              "color": {
+                "type": "string",
+                "description": "Fill colour #RRGGBB",
+                "x-engine-default": "#F2C14E",
+                "x-reference": "geno.md §25",
+                "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                "pattern": "^#[0-9A-Fa-f]{6}$"
+              },
+              "position": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "description": "x, y on the 640x480 virtual screen",
+                  "x-engine-default": "[60 + 150 x slot, 438]",
+                  "x-reference": "geno.md §25",
+                  "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                  "minimum": 0,
+                  "maximum": 640
+                },
+                "maxItems": 2,
+                "minItems": 2
+              },
+              "size": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "description": "width, height",
+                  "x-engine-default": "[110, 7]",
+                  "x-reference": "geno.md §25",
+                  "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                  "minimum": 4,
+                  "maximum": 400
+                },
+                "maxItems": 2,
+                "minItems": 2
+              },
+              "max": {
+                "type": "number",
+                "description": "Value drawn as a full bar (default combo.ki.max)",
+                "x-engine-default": "combo.ki.max",
+                "x-reference": "geno.md §25",
+                "x-source": "melee/pc/platform/geno_combo_registry.inc",
+                "minimum": 0,
+                "maximum": 1000
+              }
+            },
+            "additionalProperties": false,
+            "description": "geno 11: a HUD bar for the combo ki value, drawn in matches (screen space, reads only); needs a combo block with ki"
+          },
           "ai": {
             "type": "object",
             "properties": {
@@ -4775,6 +5419,8 @@
     "clip",
     "clips",
     "coll",
+    "color",
+    "combo",
     "common",
     "common_states",
     "costumes",
@@ -4817,6 +5463,7 @@
     "iasa",
     "id",
     "index",
+    "input",
     "int",
     "joint",
     "joint_to_part",
@@ -4824,6 +5471,7 @@
     "kbg",
     "keep_frame",
     "key",
+    "ki",
     "kirby_copy",
     "land",
     "landing_lag",
@@ -4837,6 +5485,7 @@
     "max_fall",
     "max_live",
     "max_speed",
+    "meter",
     "min_speed",
     "model",
     "motion",
@@ -4864,6 +5513,7 @@
     "reflect",
     "resources",
     "retail_sfx",
+    "routes",
     "row_blend",
     "row_clips",
     "row_flags",
@@ -4908,6 +5558,8 @@
     "velocity",
     "voice",
     "volume",
+    "when",
+    "window",
     "wkb",
     "words",
     "z"
@@ -4915,103 +5567,103 @@
   "x-limits": {
     "GENO_VARS_PER_BANK": {
       "value": 64,
-      "source": "melee/pc/geno/geno.h:49"
+      "source": "melee/pc/geno/geno.h:50"
     },
     "GENO_SPECIAL_WORDS": {
       "value": 265,
-      "source": "melee/pc/geno/geno.h:139"
+      "source": "melee/pc/geno/geno.h:140"
     },
     "GENO_MAX_CHECKS": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:182"
+      "source": "melee/pc/geno/geno.h:183"
     },
     "GENO_CHECK_CONDS": {
       "value": 3,
-      "source": "melee/pc/geno/geno.h:183"
+      "source": "melee/pc/geno/geno.h:184"
     },
     "GENO_MAX_REHIT": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:184"
+      "source": "melee/pc/geno/geno.h:185"
     },
     "GENO_EV_MAX_HOOKS": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:249"
+      "source": "melee/pc/geno/geno.h:250"
     },
     "GENO_MAX_ATTRS": {
       "value": 128,
-      "source": "melee/pc/geno/geno.h:253"
+      "source": "melee/pc/geno/geno.h:254"
     },
     "GENO_MAX_JUMP_VY": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:254"
+      "source": "melee/pc/geno/geno.h:255"
     },
     "GENO_MAX_PROFILES": {
       "value": 65535,
-      "source": "melee/pc/geno/geno.h:255"
+      "source": "melee/pc/geno/geno.h:256"
     },
     "GENO_MAX_SPECIAL": {
       "value": 64,
-      "source": "melee/pc/geno/geno.h:256"
+      "source": "melee/pc/geno/geno.h:257"
     },
     "GENO_MAX_ONLAND": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:257"
+      "source": "melee/pc/geno/geno.h:258"
     },
     "GENO_MAX_MOTION_ANIM": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:258"
+      "source": "melee/pc/geno/geno.h:259"
     },
     "GENO_MAX_OVERLAYS": {
       "value": 192,
-      "source": "melee/pc/geno/geno.h:259"
+      "source": "melee/pc/geno/geno.h:260"
     },
     "GENO_POOL_WORDS": {
       "value": 16384,
-      "source": "melee/pc/geno/geno.h:260"
+      "source": "melee/pc/geno/geno.h:261"
     },
     "GENO_MAX_STATES": {
       "value": 48,
-      "source": "melee/pc/geno/geno.h:271"
+      "source": "melee/pc/geno/geno.h:272"
     },
     "GENO_ART_KIND_BASE": {
       "value": 4096,
-      "source": "melee/pc/geno/geno.h:356"
+      "source": "melee/pc/geno/geno.h:357"
     },
     "GENO_MAX_ARTICLES": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:356"
+      "source": "melee/pc/geno/geno.h:357"
     },
     "GENO_ART_PER_RANGE": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:363"
+      "source": "melee/pc/geno/geno.h:364"
     },
     "GENO_ART_EXTRA_BASE": {
       "value": 131072,
-      "source": "melee/pc/geno/geno.h:368"
+      "source": "melee/pc/geno/geno.h:369"
     },
     "GENO_MAX_SOUNDS": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:376"
+      "source": "melee/pc/geno/geno.h:377"
     },
     "GENO_ART_HITBOXES": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:377"
+      "source": "melee/pc/geno/geno.h:378"
     },
     "GENO_ART_HIT_ENTRIES": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:378"
+      "source": "melee/pc/geno/geno.h:379"
     },
     "GENO_ART_SPAWNS": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:380"
+      "source": "melee/pc/geno/geno.h:381"
     },
     "GENO_ART_CHILDREN": {
       "value": 2,
-      "source": "melee/pc/geno/geno.h:381"
+      "source": "melee/pc/geno/geno.h:382"
     },
     "GENO_SP_SELECT": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:482"
+      "source": "melee/pc/geno/geno.h:483"
     },
     "JDOC_NODES": {
       "value": 32768,
@@ -5027,7 +5679,7 @@
     },
     "GN_MAX_SLOTS": {
       "value": 512,
-      "source": "melee/pc/platform/geno_registry.c:510"
+      "source": "melee/pc/platform/geno_registry.c:511"
     },
     "JSON_DEPTH": {
       "value": 32,
@@ -5039,14 +5691,15 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "55c8974779c00cb87447ccbd76126612853a72c89d7a03bfff4888c493288930",
-    "pc/platform/geno_define_registry.inc": "eab3650a27184a043b5a5532e63f5ffa5b17e1e16d76d6668f18c7c5dc21023a",
+    "pc/platform/geno_registry.c": "9a82975f0b07953cd7b873d4ed4f781f2b59284e239f8e01e18cf39084c2fb7b",
+    "pc/platform/geno_define_registry.inc": "0c6f9e6783ad83cb72fd5c99fe77357e8f882f9dd3ea422a64b3639280b6c363",
     "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
-    "pc/geno/geno.h": "de75f4a8d6366a3a049a8eb9b232ac981b5d69b1cdeab1b21a81a5294ab92938",
-    "pc/geno/geno_game.c": "7d707782ce799fd718abbc914175c3a9ea9d3b8a48dd8d28999709ffdb55f132",
+    "pc/platform/geno_combo_registry.inc": "ee2771fc193b43719de384e5a39e689c69e11b43bbbb36318cf91c8723694837",
+    "pc/geno/geno.h": "f2a5c7e3c1c1fe4050ed54c31c6db169a2fd5f314414cb16308726f764d031f0",
+    "pc/geno/geno_game.c": "aa8fed2af22b09485920266343b00e55c05a9a9eab8c7aa5b050c1f0ae55d8d2",
     "pc/geno/geno_game_v2.inc": "9c572553dcd7b6a70e9d5a3fa3efcbc618b8de567c287e75e1f1577e572f5fb0",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",
     "pc/geno/geno_profile_storage.h": "a40aec8aafa890622f0ba6cb9f5602176c738f960346b18daf87c8dc8498d04d",
-    "pc/geno/geno_game_articles.inc": "f150726b13d2d55b288d9abf0ff484c44ba74bf00d2747c58301d71a3bcb4554"
+    "pc/geno/geno_game_articles.inc": "1961e7e8893f9b0485021ed26c550db50eb7d9ce739f4fa7d9d22318face832d"
   }
 }
