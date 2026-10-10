@@ -229,3 +229,49 @@ documented way to get new animations today.
   engine; whether lengthening a hitbox script changes overlay slot length; location of the bank
   load in C; fx/tint/camera/stage consumers (R3 rows 6-7).
 - Not examined: toon/shadow tints, camera/stage params (rows 7).
+
+## Measurements (2026-10-10, measurement lane; no code changed)
+
+Setup: game integration checkout built in its own root (`tools/port/agent_new.sh measure`, full build 2m28s); the
+goku-xv2 project was run from a scratch COPY (ports/goku-xv2, ports/ir, tools, author-source; junctions to melee,
+experiment, ports/halberd). Wrapper timings are wall clock. The owner's `ports/goku-xv2`, `_build/goku-xv2` and
+`_build/wb-goku/engine` were not touched. The .glb was newer than the .blend, so the Blender export did NOT run
+(it is extra when the art is stale; not measured).
+
+**R1. `build.py --fighter` end to end, per stage** (two runs, same inputs):
+
+| stage | run 1 | run 2 |
+|---|---|---|
+| A artist pipeline (`pipeline.build`) | 244.2 s | 257.9 s |
+| of which [2/5] plan, mesh, animation bank (725 clips, 23.0 MB) | ~240 s | 248.3 s |
+| B gameplay reapply (`apply`) | 3.7 s | 3.5 s |
+| C `audit_gameplay` | 7.7 s | 9.6 s |
+| C `ground_audit` | 21.8 s | 23.9 s |
+| C `geno.check` + `geno.report` | 0.5 s | 0.5 s |
+| total | 278.0 s | 295.4 s |
+
+No warm-cache benefit (stage A rebuilds everything). So "Rebuild + reload" is about 4.5-5 minutes, ~87% of it the
+bank conversion. A `--gameplay-only` (B alone) would be 3.5 s; B plus the gameplay audit about 13 s; with the ground
+audit about 37 s. The earlier "~72 s" figure is not reproduced.
+
+**R2. Engine restart to "fighter ready"**, headless workbench (MELEE_WB_HEADLESS=1, scene `mode=workbench;p1=geno:goku-xv2/hu`),
+ready = the launcher's own sequence (console up, `wb.frame_info`, paused, `wb.step{n=30}`, frame.json frame >= 1):
+console 1.0 s, ready 1.0-1.3 s (8 launches: 1.3, 1.1, 1.0, 1.0, 1.0, 1.1, 1.0, 1.0). A restart is therefore ~1 s;
+the cost of today's reload is the package build, not the restart.
+
+**R3. A match restart does NOT re-read a changed bank.** Test: bank swapped on disk (same layout, 64 bytes inside the
+Wait clip altered; a bank from another build is not layout-compatible and asserts `ftdata.c:2509`, i.e. a bank and plan
+come as a pair). Fresh start with the altered bank gives a different Wait pose fingerprint (17 of 17 sampled frames
+differ; fresh starts of the unaltered bank are deterministic). In a running engine: after swapping the file and
+`gd.lab_leave("restart")` (lab_mode true afterwards, state reset), the Wait fingerprint equals the ORIGINAL bank's, not
+the altered one's. The bank is loaded only when `ftData_Table_Unk0[kind].data == NULL` (`ftdata.c:2236-2246`,
+`ftData_80085A14` -> `lbFile_800168A0(1, ftData_803C23E4[kind], ...)`; file name from the define,
+`geno_define_data.inc:129`, `geno_define_registry.inc:540`); the cached `.data` survives a match restart. So a one-row
+animation swap needs an engine primitive (drop that cache entry or re-parse one row), not just a restart. Tested in the
+workbench scene (lab mode), not in the in-game CLIPS UI; same load path.
+
+**R4. Numeric hitbox edits stay same-layout.** All 36 goku-xv2 `moves/*.genoasm` assembled (placeholders bound to a
+constant joint); five numeric edits applied to every move (damage +7, size x1.5, angle/kbg/bkb +9, x/y/z +0.5,
+every `wait_until` +2): 0 of 180 edits changed the word count (bair: 25 words before and after). Adding one hitbox
+line adds 5 words (30 vs 25), which is a layout change. So size, damage, angle, knockback, offsets and frame timing
+edits are same-layout; add/remove of a hitbox or event is not.
