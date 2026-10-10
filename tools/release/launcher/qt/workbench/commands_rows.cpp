@@ -1,15 +1,19 @@
 #include "commands.h"
 #include <QElapsedTimer>
+#include <QHash>
 
 namespace wb {
 void registerRowCommands(Session &s) {
     s.registry().add({"list_rows", t("List fighter moves", "List fighter moves"), commandSchema(), false,
         [](const QJsonObject &, CommandContext &ctx) {
             QJsonArray rows;
+            QHash<QString, int> clipFrames;
+            for (const auto &clip : ctx.session.data().clips()) clipFrames.insert(clip.name, clip.frames);
             for (const auto &row : ctx.session.data().rows()) {
                 QJsonArray motions; for (int motion : row.motions) motions.append(motion);
                 rows.append(QJsonObject{{"name", row.name}, {"motions", motions}, {"tag", row.tag},
                     {"clip", row.effectiveClip()}, {"aerial", row.aerial},
+                    {"frames", qMax(0, clipFrames.value(row.effectiveClip(), 0) - row.cropStart - 1)}, // engine frames 1..N-1 of an N-sample clip (dair 40 -> 39, fair 44 -> 43)
                     {"hitboxes", int(ctx.session.data().hitboxes(row.name).size())}});
             }
             return QJsonObject{{"rows", rows}};
@@ -32,7 +36,7 @@ void registerRowCommands(Session &s) {
                 throw CommandError{t("no row loaded; call load_row first", "no row loaded; call load_row first")};
             const auto row = needRow(ctx.session, ctx.session.currentRow);
             QJsonObject frameArgs{{"motion", rowMotion(row)}, {"frame", frame}};
-            if (row.aerial) frameArgs.insert("lift", 40); // aerials stage above the floor or they land first
+            if (row.aerial) frameArgs.insert("lift", 120); // aerials stage high enough to play their whole move before they land (40 landed dair at frame 28 of 39)
             return engineCall(ctx.session, "frame", frameArgs);
         }});
     s.registry().add({"play", t("Step the move forward", "Step the move forward"),

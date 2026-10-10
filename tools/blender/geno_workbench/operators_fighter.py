@@ -16,12 +16,13 @@ import bpy
 from bpy.props import FloatProperty, IntProperty, PointerProperty, StringProperty
 
 try:
-    from . import api, pose, rig, wbspace
+    from . import api, pose, rig, travel, wbspace
     from .props import STRINGS
 except ImportError:
     import api
     import pose
     import rig
+    import travel
     import wbspace
     from props import STRINGS
 
@@ -254,6 +255,12 @@ def _show_frame(session, info):
     _IN_FRAME_UPDATE = True
     try:
         wbspace.check_schema(info)
+        settings = getattr(bpy.context.scene, "geno_wb", None)
+        if not getattr(settings, "show_travel", False):
+            # in place: only the body animates; the engine data stays as it came
+            if getattr(session, "travel_anchor", None) is None:
+                session.travel_anchor = travel.anchor_of(info)
+            info = travel.in_place(info, session.travel_anchor)
         arm = active_armature(bpy.context)
         calibration = pose.calibration_for(arm)
         warning = ""

@@ -114,6 +114,7 @@ STRINGS: dict[str, str] = {
     "suggested": "suggested bone: {bone}",
     "no_suggestion": "no bone suggestion available",
     "restarted": "engine restarted: {engine}",
+    "server_reused": "server already running on 127.0.0.1:{port}; connect to continue",
     "server_started": "server ready on 127.0.0.1:{port}; connect to continue",
     "not_connected": "not connected: connect to a workbench server first",
     "invalid_reply": "invalid reply from {tool}: expected an object",
@@ -162,6 +163,12 @@ STRINGS: dict[str, str] = {
     "play_started": "playing",
     "play_paused": "playback stopped",
     "play_limit": "playback stopped at frame 600",
+    "play_end": "playback stopped at the end of the move (frame {frame})",
+    "show_travel": "Show travel",
+    "show_travel_help": "Show the real world motion (falling, sliding). Off: the fighter stays where the move started and only the body animates",
+    "loop": "Loop",
+    "loop_help": "Play again from frame 1 when the move ends",
+    "move_length": "{frames} frames",
     "play_window_required": "Playback requires a Blender window.",
     "engine_frame": "Engine frame: {frame}",
     "run_checks": "Run checks",
@@ -262,6 +269,20 @@ def on_frame_changed(self, context):
 def on_row_changed(self, context):
     if _frame_sync_depth == 0 and _row_handler is not None:
         _row_handler(self, context)
+
+
+def _redraw_pose(settings):
+    """Show travel changed: pose and overlays again from the frame already held (no engine call)."""
+    try:
+        try:
+            from . import api
+        except ImportError:
+            import api
+        session = api.session()
+        if session.info is not None:
+            session._fire_frame()
+    except Exception:
+        pass
 
 
 def on_problem_changed(self, context):
@@ -463,6 +484,8 @@ def _make_property_group():
         move: EnumProperty(name=STRINGS["row"], description=STRINGS["row_help"], items=row_items, update=on_row_changed, options={"SKIP_SAVE"})
         frame: IntProperty(name=STRINGS["frame"], description=STRINGS["frame_help"], default=0, min=0, max=600, update=on_frame_changed)
         playing: BoolProperty(name=STRINGS["playing"], default=False, options={"SKIP_SAVE"})
+        show_travel: BoolProperty(name=STRINGS["show_travel"], description=STRINGS["show_travel_help"], default=False, update=lambda self, context: _redraw_pose(self))
+        loop: BoolProperty(name=STRINGS["loop"], description=STRINGS["loop_help"], default=True)
         show_hurt: BoolProperty(name=STRINGS["show_hurt"], default=True)
         show_ecb: BoolProperty(name=STRINGS["show_ecb"], default=True)
         show_floor: BoolProperty(name=STRINGS["show_floor"], default=True)
