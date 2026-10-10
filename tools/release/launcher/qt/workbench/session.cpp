@@ -42,6 +42,8 @@ QVector<FileChange> checkedChanges(const QVector<FileChange> &changes) {
 }
 }
 
+// App entry points call registerAllCommands; tests register individual groups.
+// Registration here would make their selective registration a duplicate (qFatal).
 Session::Session(const QString &projectDir, EngineBackend *engine)
     : files_(projectDir), history_(History::load(historyPath())), engine_(engine) {}
 Session::~Session() = default;
