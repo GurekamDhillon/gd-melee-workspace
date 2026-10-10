@@ -154,3 +154,6 @@ __pycache__/
 # Local disc extractions selected by GW_BRAWL_FILES / GW_ULTIMATE_EXTRACT.
 /_local/
 /_build/meleedump/
+
+# Captain Falcon as a standalone Geno fighter (worktrees/ws-falcon-geno): everything built from the disc stays local
+/_build/falcon-geno/

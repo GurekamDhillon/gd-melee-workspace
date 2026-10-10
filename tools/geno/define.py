@@ -16,6 +16,7 @@ def definition_schema():
         "properties": {"key": {"type": "string", "pattern": r"^[a-z0-9][a-z0-9_.-]{0,38}$"},
             "name": {"type": "string", "minLength": 1, "maxLength": 47, "pattern": "^[ -~]+$"},
             "base": {"enum": ["mario", "none"], "description": "mario: the retail Mario preset is the template; none (geno 9): the package owns its model, bank, parts table and joint fields (docs/geno.md 22.4)"},
+            "template": {"enum": ["mario", "captain"], "description": "base none, geno 10: the retail fighter whose native code, state table and specials the define runs on (default mario); captain = a complete retail Captain Falcon carried as a package (docs/geno.md 22.10)"},
             "common": {"const": "melee.common.v1"}, "resources": {"enum": ["retail:mario", "mod:files"], "description": "retail:mario with base mario; mod:files with base none"}}}
 
 
@@ -28,6 +29,9 @@ def validate_definition(data, fighter, path):
         errors.append((path+".define.base", "base none needs geno: 9"))
     if own != (fighter["define"].get("resources") == "mod:files"):
         errors.append((path+".define.resources", "base none takes resources mod:files; base mario takes retail:mario"))
+    template = fighter["define"].get("template", "mario")
+    if "template" in fighter["define"] and not (own and data["geno"] >= 10):
+        errors.append((path+".define.template", "needs base none and geno: 10"))
     if own and "fighter" not in fighter:
         errors.append((path+".fighter", "base none needs a fighter block (plan, animation, costumes)"))
     if ".." in fighter["define"]["key"]:
@@ -100,7 +104,8 @@ def validate_definition(data, fighter, path):
         errors.append((path+".fighter.rows", "own rows need base none"))
     if len(set(rows)) != len(rows) and False:
         pass
-    limit = 303 + (len(rows) if own else 0)
+    template_rows = 318 if template == "captain" else 303
+    limit = template_rows + (len(rows) if own else 0)
     if own:
         for key, items in (("subactions", [r.get("index") for r in fighter.get("subactions", [])]),
                            ("common_states", [r.get("subaction") for r in fighter.get("common_states", [])]),
@@ -108,7 +113,7 @@ def validate_definition(data, fighter, path):
                            ("motion_anims", [r.get("subaction") for r in fighter.get("motion_anims", [])])):
             for v in items:
                 if isinstance(v, int) and v >= limit:
-                    errors.append((path+"."+key, "subaction %d is past row %d (303 donor rows + %d own rows)" % (v, limit - 1, len(rows))))
+                    errors.append((path+"."+key, "subaction %d is past row %d (%d template rows + %d own rows)" % (v, limit - 1, template_rows, len(rows))))
     # Native Mario preset: ftData_Table_Unk0[0].count == 303, rows 0..302.
     for row in (fighter.get("subactions", []) if not own else []):   # a base none define owns its row table
         if row["index"] >= 303:

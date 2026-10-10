@@ -51,6 +51,13 @@
                 ],
                 "description": "mario: the retail Mario preset is the template; none (geno 9): the package owns its model, bank, parts table and joint fields (docs/geno.md 22.4)"
               },
+              "template": {
+                "enum": [
+                  "mario",
+                  "captain"
+                ],
+                "description": "base none, geno 10: the retail fighter whose native code, state table and specials the define runs on (default mario); captain = a complete retail Captain Falcon carried as a package (docs/geno.md 22.10)"
+              },
               "common": {
                 "const": "melee.common.v1"
               },
@@ -75,7 +82,7 @@
                   "x-reference": "geno.md §19",
                   "x-source": "melee/pc/platform/geno_registry.c",
                   "minimum": 0,
-                  "maximum": 350
+                  "maximum": 363
                 },
                 "like": {
                   "type": "integer",
@@ -84,7 +91,7 @@
                   "x-reference": "geno.md §19",
                   "x-source": "melee/pc/platform/geno_registry.c",
                   "minimum": 0,
-                  "maximum": 350
+                  "maximum": 363
                 },
                 "subaction": {
                   "type": "integer",
@@ -2021,7 +2028,7 @@
                 }
               ]
             },
-            "maxItems": 192
+            "maxItems": 320
           },
           "special_attributes": {
             "type": "array",
@@ -2116,7 +2123,7 @@
                     "x-reference": "geno.md §19",
                     "x-source": "melee/pc/platform/geno_registry.c",
                     "minimum": 0,
-                    "maximum": 350
+                    "maximum": 363
                   },
                   "words": {
                     "anyOf": [
@@ -5550,6 +5557,7 @@
     "target",
     "targets",
     "team",
+    "template",
     "thrown_as",
     "to",
     "toon",
@@ -5614,56 +5622,56 @@
       "source": "melee/pc/geno/geno.h:259"
     },
     "GENO_MAX_OVERLAYS": {
-      "value": 192,
+      "value": 320,
       "source": "melee/pc/geno/geno.h:260"
     },
     "GENO_POOL_WORDS": {
       "value": 16384,
-      "source": "melee/pc/geno/geno.h:261"
+      "source": "melee/pc/geno/geno.h:272"
     },
     "GENO_MAX_STATES": {
       "value": 48,
-      "source": "melee/pc/geno/geno.h:272"
+      "source": "melee/pc/geno/geno.h:283"
     },
     "GENO_ART_KIND_BASE": {
       "value": 4096,
-      "source": "melee/pc/geno/geno.h:357"
+      "source": "melee/pc/geno/geno.h:368"
     },
     "GENO_MAX_ARTICLES": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:357"
+      "source": "melee/pc/geno/geno.h:368"
     },
     "GENO_ART_PER_RANGE": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:364"
+      "source": "melee/pc/geno/geno.h:375"
     },
     "GENO_ART_EXTRA_BASE": {
       "value": 131072,
-      "source": "melee/pc/geno/geno.h:369"
+      "source": "melee/pc/geno/geno.h:380"
     },
     "GENO_MAX_SOUNDS": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:377"
+      "source": "melee/pc/geno/geno.h:388"
     },
     "GENO_ART_HITBOXES": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:378"
+      "source": "melee/pc/geno/geno.h:389"
     },
     "GENO_ART_HIT_ENTRIES": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:379"
+      "source": "melee/pc/geno/geno.h:390"
     },
     "GENO_ART_SPAWNS": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:381"
+      "source": "melee/pc/geno/geno.h:392"
     },
     "GENO_ART_CHILDREN": {
       "value": 2,
-      "source": "melee/pc/geno/geno.h:382"
+      "source": "melee/pc/geno/geno.h:393"
     },
     "GENO_SP_SELECT": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:483"
+      "source": "melee/pc/geno/geno.h:494"
     },
     "JDOC_NODES": {
       "value": 32768,
@@ -5679,7 +5687,7 @@
     },
     "GN_MAX_SLOTS": {
       "value": 512,
-      "source": "melee/pc/platform/geno_registry.c:511"
+      "source": "melee/pc/platform/geno_registry.c:512"
     },
     "JSON_DEPTH": {
       "value": 32,
@@ -5691,12 +5699,12 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "9a82975f0b07953cd7b873d4ed4f781f2b59284e239f8e01e18cf39084c2fb7b",
-    "pc/platform/geno_define_registry.inc": "0c6f9e6783ad83cb72fd5c99fe77357e8f882f9dd3ea422a64b3639280b6c363",
+    "pc/platform/geno_registry.c": "167281914a3446155bf36816ea445307d52cd94a91232de2630037a71a6eb6da",
+    "pc/platform/geno_define_registry.inc": "1696c1c4ea77ae2f3334139ae2dc721872af50025d96e8a8b823111dc4f8cabb",
     "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
     "pc/platform/geno_combo_registry.inc": "ee2771fc193b43719de384e5a39e689c69e11b43bbbb36318cf91c8723694837",
-    "pc/geno/geno.h": "f2a5c7e3c1c1fe4050ed54c31c6db169a2fd5f314414cb16308726f764d031f0",
-    "pc/geno/geno_game.c": "aa8fed2af22b09485920266343b00e55c05a9a9eab8c7aa5b050c1f0ae55d8d2",
+    "pc/geno/geno.h": "7ce69554f6717b666a8fb365a726aa0305355ec786d954457b6098299a846df8",
+    "pc/geno/geno_game.c": "2dccbadd58b6dee05965db01c1c42104bb16bb4991d28cc15b125168341673d0",
     "pc/geno/geno_game_v2.inc": "9c572553dcd7b6a70e9d5a3fa3efcbc618b8de567c287e75e1f1577e572f5fb0",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",
     "pc/geno/geno_profile_storage.h": "a40aec8aafa890622f0ba6cb9f5602176c738f960346b18daf87c8dc8498d04d",

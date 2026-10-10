@@ -1,5 +1,7 @@
 # Geno author tools
 
+A **retail fighter** carried as a package (Captain Falcon): `ports/ir/tools/retail_define.py`, proof in `falcon_parity/README.md`, format in game `docs/geno.md` 22.10.
+
 Making an **original character** (Blender model, rig, animation to a playable `base: "none"` fighter)? Start at `artist/README.md` (`python -m tools.geno.artist new|validate|build`); `check_art.py` and `build_courier.sh` below are the Courier-era path, kept working.
 
 The Geno engine's native-definition tools (format 6, widened to 7 in slice 2 and to 8 in slice 3) generate and check a source-only Mario-reference fighter. This path is offline only.

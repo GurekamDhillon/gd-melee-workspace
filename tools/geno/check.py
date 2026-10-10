@@ -142,7 +142,7 @@ def validate_target(value, states, path, errors, *, named=True):
         errors.append(diagnostic(path, str(e)))
 
 
-def validate_script(words, path, errors, states=(), articles=()):
+def validate_script(words, path, errors, states=(), articles=(), relative_branches=False):
     try:
         rows = list(script.commands(words))
         script.disassemble(words)
@@ -166,7 +166,11 @@ def validate_script(words, path, errors, states=(), articles=()):
             if loops < 0:
                 errors.append(diagnostic(p, "endloop without loop"))
         elif op in (5, 7):
-            errors.append(diagnostic(p, "absolute Subroutine/Goto pointer cannot resolve in a portable overlay; export stops on these"))
+            # A define's overlay (geno.md 22.10) names the target of a Subroutine or Goto by its word index inside the overlay.
+            if not relative_branches:
+                errors.append(diagnostic(p, "absolute Subroutine/Goto pointer cannot resolve in a portable overlay; export stops on these"))
+            elif len(ws) < 2 or ws[1] not in boundaries or ws[1] >= len(words):
+                errors.append(diagnostic(p, "a define overlay's Subroutine/Goto operand is the word index of a command inside the overlay"))
         elif op in (11, 12, 13, 15) and (w0 >> 23 & 7) > 3:
             errors.append(diagnostic(p, "hitbox slot must be 0..3", "melee/src/melee/ft/ftaction.c"))
         if op != 59:
@@ -384,7 +388,9 @@ def graph_checks(fighter, p, base, errors):
     specials = fighter.get("specials", {})
     for key in ("n", "s", "hi", "lw", "air_n", "air_s", "air_hi", "air_lw"):
         if specials.get(key) is None and (not key.startswith("air_") or specials.get(key[4:]) is None):
-            WARNINGS.append(diagnostic(p + ".specials." + key, "unbound: this special runs the donor's (Mario's) code"))
+            tmpl = (fighter.get("define") or {}).get("template", "mario")
+            WARNINGS.append(diagnostic(p + ".specials." + key, "unbound: this special runs the donor's (Mario's) code" if tmpl == "mario" else
+                                       f"unbound: this special runs the template's (retail {tmpl}) native code"))
 
 
 def lua_checks(data, fighter, p, base, errors):
@@ -552,7 +558,7 @@ def validate(data, base):
                 if not words:
                     raise ValueError("overlay must not be empty")
                 pool += len(words) + 1
-                validate_script(words, op, errors, states, articles)
+                validate_script(words, op, errors, states, articles, relative_branches="define" in fighter)
             except (ValueError, OSError) as e:
                 errors.append(diagnostic(op, str(e)))
         for j, article in enumerate(articles):
