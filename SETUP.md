@@ -49,7 +49,7 @@ You can also override `GW_CLANG`, `GW_GWTOOL`, `GW_SDL_INCLUDE`, `GW_IMGUI_INCLU
 
 | what | why not | how to get it |
 |---|---|---|
-| clang (`_toolchains/llvm`) | hundreds of MB | any LLVM release that can target `ppc32-none-eabi` **and** `i686-pc-windows-msvc` |
+| clang (`_toolchains/llvm`) | hundreds of MB | LLVM 23.1.1, `clang+llvm-23.1.1-x86_64-pc-windows-msvc.tar.zst` from the llvm-project GitHub release (the version this tree was built with); any release that can target `ppc32-none-eabi` **and** `i686-pc-windows-msvc` should work |
 | `gwtool.exe` | build artefact | build `melee/pc/tools/gwtool` |
 | Aurora/Dawn/SDL3/ImGui libs (`_build/ax86m`) | gigabytes | `_build/build_aurora_melee.bat` |
 | `SDL3.dll`, `webgpu_dawn.dll` | build artefacts | produced by the same Aurora build |
