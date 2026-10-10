@@ -576,3 +576,11 @@ CLASSES = (
     GENO_WB_OT_edit_hitbox,
     GENO_WB_OT_rebuild_reload,
 )
+
+
+# Registered/unregistered with the existing operator class lifecycle.
+try:
+    from .operators_nla import CLASSES as NLA_CLASSES
+except ImportError:
+    from operators_nla import CLASSES as NLA_CLASSES
+CLASSES += NLA_CLASSES

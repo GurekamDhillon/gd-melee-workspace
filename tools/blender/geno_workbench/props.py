@@ -10,6 +10,55 @@ import math
 
 
 STRINGS: dict[str, str] = {
+    "nla_panel": "Splice",
+    "nla_helper_edit": "A hold or blend strip was moved, trimmed or removed independently. Restore the helper or lay out the recipe again; edit source strips to change segment timing.",
+    "nla_clip": "Source clip",
+    "nla_clip_help": "XV2 clip name or melee:<fighter>/<action>",
+    "nla_clip_required": "Enter a source clip name.",
+    "nla_import": "Import clip",
+    "nla_import_help": "Import a local source clip onto the active, matching export armature",
+    "nla_imported": "Imported clip: {name}",
+    "nla_recipe_file": "Recipe file",
+    "nla_recipe_file_help": "Optional override; defaults to splices.json in Project",
+    "nla_recipe": "Recipe",
+    "nla_recipe_help": "Choose a recipe from the selected file",
+    "nla_choose_recipe": "Choose a recipe",
+    "nla_example_suffix": " (EXAMPLE)",
+    "nla_layout": "Lay out recipe",
+    "nla_layout_help": "Create one editable NLA track with inserted blend frames",
+    "nla_laid_out": "NLA recipe ready: {name}",
+    "nla_save": "Save strips as recipe",
+    "nla_save_help": "Append an AUTHORED, unwired recipe to splices.authored.json; retain previous entries",
+    "nla_saved": "Saved {name} to {path}",
+    "nla_bake_export": "Bake & export",
+    "nla_bake_export_help": "Bake the current strips and export an AUTHORED clip through the Geno artist exporter",
+    "nla_exported": "Exported AUTHORED clip {name}: {path}",
+    "nla_export_path": "Export GLB",
+    "nla_export_required": "Choose an output GLB path.",
+    "nla_action_name": "Clip name",
+    "nla_action_help": "Exported action name, at most 31 characters",
+    "nla_height": "Source height",
+    "nla_height_help": "Same height used to build this armature from the XV2 kit",
+    "nla_object_mode": "Switch to Object Mode before editing splice strips.",
+    "nla_tool_missing": "Source tool not found: {path}",
+    "nla_tool_conflict": "A different source-tool checkout is already loaded; restart Blender before using {path}",
+    "nla_context_missing": "The local xv2_to_artist.py needs the splice_context API from the splice lane. Update those source tools, then restart Blender.",
+    "nla_import_failed": "Source GLB did not import exactly one animated armature.",
+    "nla_rig_mismatch": "The active armature does not match the source export skeleton at bone {bone}. Load art built with the same height.",
+    "nla_source_flags": "Mirror, yaw and loop need project source tools; compatible Blender action input only supports crop, speed, hold and blend.",
+    "nla_sources_required": "Choose a recipe name and exactly one source: project or actions.",
+    "nla_track_required": "Select exactly one Splice NLA track on the active armature.",
+    "nla_unsupported_strip": "This strip cannot round-trip: use unmuted clip/hold strips, one repeat, full influence, no modifiers, animated time or overlap blending.",
+    "nla_off_grid": "Strip duration does not match whole logic frames. Snap crops and speed to the recipe sample grid.",
+    "nla_overlap": "Strips overlap; splice recipes insert blend frames between complete segments.",
+    "nla_authored_path": "splices.authored.json must be a separate, regular file beside the project.",
+    "nla_recipe_file_error": "Expected a goku-splices/1 recipe file.",
+    "nla_source_action_missing": "A source action used by this track is missing.",
+    "nla_clip_name": "Use a nonempty export clip name of at most 31 characters.",
+    "nla_glb_required": "The export path must end in .glb.",
+    "nla_edit_hint": "Edit crops, strip scale and spacing in the NLA Editor.",
+    "nla_save_hint": "Saves new entries to splices.authored.json.",
+    "nla_preview_hint": "After structural edits, Bake rebuilds transition poses.",
     "addon_name": "Geno Workbench",
     "tab": "Geno",
     "connect_panel": "Connect",
@@ -377,6 +426,15 @@ def sync_from_session(value, settings=None):
         sync_editor(value, settings)
 
 
+def nla_recipe_items(self, context=None):
+    # Lazy import: the string table and existing pure props tests need no bpy.
+    try:
+        from .operators_nla import recipe_items
+    except ImportError:
+        from operators_nla import recipe_items
+    return recipe_items(self, context)
+
+
 def _make_property_group():
     import bpy
     from bpy.props import (
@@ -403,6 +461,13 @@ def _make_property_group():
         status: StringProperty(name=STRINGS["status_label"], default=STRINGS["disconnected"], options={"SKIP_SAVE"})
         pose_error: FloatProperty(name=STRINGS["pose_error"], description=STRINGS["pose_error_help"], default=0.0, min=0.0, options={"SKIP_SAVE"})
         stale: BoolProperty(name=STRINGS["stale_label"], default=False, options={"SKIP_SAVE"})
+
+        nla_clip: StringProperty(name=STRINGS["nla_clip"], description=STRINGS["nla_clip_help"])
+        nla_recipe_file: StringProperty(name=STRINGS["nla_recipe_file"], description=STRINGS["nla_recipe_file_help"], subtype="FILE_PATH")
+        nla_recipe: EnumProperty(name=STRINGS["nla_recipe"], description=STRINGS["nla_recipe_help"], items=nla_recipe_items, options={"SKIP_SAVE"})
+        nla_height: FloatProperty(name=STRINGS["nla_height"], description=STRINGS["nla_height_help"], default=20.0, min=8.0, max=20.0)
+        nla_export_path: StringProperty(name=STRINGS["nla_export_path"], subtype="FILE_PATH")
+        nla_action_name: StringProperty(name=STRINGS["nla_action_name"], description=STRINGS["nla_action_help"], maxlen=31)
 
         # Base PropertyGroup entries hold display-only ID properties. This
         # requires no additional PropertyGroup registration in __init__.py.

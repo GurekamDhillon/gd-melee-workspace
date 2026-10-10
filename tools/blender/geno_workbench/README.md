@@ -152,3 +152,58 @@ Once Task 8 supplies `selftest.py`, run its synthetic end-to-end test:
 
 The Task 8 self-test and owner-observed live visual checks remain owed.
 The pure tests use the synthetic fake workbench and no disc-derived data.
+
+
+## Splice authoring
+
+The **Geno > Splice** panel works without a workbench server. Select the fighter's
+export armature in Object Mode, set **Project** to its source project directory
+(the one containing workbench.json, splices.json and tools/splice.py), and set
+**Source height** to the height used when building that armature.
+
+- **Import clip** accepts an XV2 clip name or a melee:<fighter>/<action> reference.
+  It calls xv2_to_artist.splice_context and its resolver, including the existing
+  cross-port loader. The source skeleton must match the active armature.
+- **Lay out recipe** reads the selected entry from splices.json. **Recipe file**
+  can also select splices.authored.json. Each recipe gets one NLA track; laying
+  it out again replaces only that recipe's managed track.
+- In the NLA Editor, select that track and edit its source strips' crops, reverse,
+  scale and spacing. Crop action times are segment-local sample indices. A
+  strip's initial scale is the recipe's global retime; stretching it changes
+  its effective source speed. Snap timing to whole logic frames before retime.
+- **Save strips as recipe** appends a new entry to splices.authored.json beside
+  workbench.json, preserving existing entries and adding a numeric suffix on a
+  name collision. Entries are AUTHORED and unwired. splices.json is never changed.
+- **Bake & export** rebuilds transition poses after structural source-strip edits,
+  samples the NLA into one action, then calls the artist exporter's preflight and
+  do_export on temporary copies. The editable track survives. AUTHORED is stored
+  on the action and in the GLB's Geno sidecar; target rows and hit marks follow it.
+  Choose an output GLB in your local generated-assets directory.
+
+A crop with N samples occupies output poses 0 through N-1. Explicit **Hold**
+and **Blend** helper strips share endpoint poses with their adjacent segments.
+A B-frame blend spans B+1 intervals and inserts B smoothstep/slerp samples;
+blend_in/out are zero, so source strikes are never shortened by an overlap.
+The project path delegates mirror, yaw, alignment, bone scales, retime and loop
+poses to splice.bake. Integer output frames are keyed explicitly after retime.
+
+Helpers are maintained from source-strip timing. Do not independently move,
+reverse, mute or remove a helper. Until Bake rebuilds them, helpers may show
+old transitions after moving source strips. Overlaps, repeats, animated time,
+partial influence and off-grid timings are rejected when saving a recipe.
+Free pose/key edits bake visually, but a recipe stores source references and
+splice operations, not arbitrary action keys; structural edits regenerate the
+sampled actions from source. Keep the .blend for free pose edits.
+
+The source-tools checkout must supply xv2_to_artist.splice_context (as used by
+splice.py). Blender's Python needs those tools' NumPy, SciPy and Pillow
+dependencies; source IR and cross-port data stay local. The synthetic headless
+check below requires none of those source dependencies and writes no game data:
+
+    python -m pytest tools/blender/geno_workbench/tests/test_nla_layout.py -q
+    python -m pytest tools/blender/geno_workbench/tests -q
+    blender --background --factory-startup --python-exit-code 1 --python tools/blender/geno_workbench/selftest_nla.py
+
+The Blender check must print GENO_WB_CHECK nla OK. Execution and live source
+import/export validation are owed to the lead; this packet was authored with
+file tools only.
