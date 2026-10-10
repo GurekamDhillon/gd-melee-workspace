@@ -11,7 +11,8 @@
     "python",
     "ports/goku-xv2/tools/build.py",
     "--fighter",
-    "_build/goku-xv2/author-source/fighter.json"
+    "_build/goku-xv2/author-source/fighter.json",
+    "--auto"
   ],
   "import_clip": [],
   "mods_dir": "_build/goku-xv2/author-source/package/mods"

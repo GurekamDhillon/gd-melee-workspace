@@ -7,10 +7,12 @@ bpy or write project files.
 
 from __future__ import annotations
 
+import inspect
 import json
 import math
 import os
 import re
+import time
 from typing import Callable
 
 try:
@@ -40,6 +42,10 @@ _TRANSPORT_FAILURES = (
 _NOT_TRANSPORT = ("requested frame", "past the end")
 
 
+# seconds a tool may run before the add-on gives up on it (the launcher's own rebuild limit is 30 min)
+LONG_CALLS = {"rebuild": 2000.0, "reload": 300.0, "engine_restart": 300.0}
+
+
 class WbSession:
     """One connection and its last successfully received data.
 
@@ -66,6 +72,7 @@ class WbSession:
         self.hitboxes: list[dict] = []
         self.problems: list[dict] = []
         self.stale = False
+        self.last_rebuild: dict | None = None  # {mode, build_seconds, total_seconds} of the last Rebuild + reload
         self.last_error = ""
         self.suggestion: dict | None = None
         self.jointmap = None
@@ -160,7 +167,14 @@ class WbSession:
 
     @staticmethod
     def _raw_call(connection, tool: str, args: dict | None = None) -> dict:
-        result = connection.call(tool, args or {})
+        # The socket client's default 10 s budget is far below a rebuild (gameplay-only ~15 s, full ~5 min)
+        # or an engine reload; those tools get their own, long, budget. Clients that cannot take one (the
+        # one-shot CLI client has its own lifetime, test doubles) are called as before.
+        budget = LONG_CALLS.get(tool)
+        if budget is not None and "timeout" in inspect.signature(connection.call).parameters:
+            result = connection.call(tool, args or {}, timeout=budget)
+        else:
+            result = connection.call(tool, args or {})
         if not isinstance(result, dict):
             raise client.WbError(STRINGS["invalid_reply"].format(tool=tool))
         return result
@@ -616,7 +630,8 @@ class WbSession:
         def action():
             # Every failure from here must leave the stale indication visible.
             self.stale = True
-            self._request("rebuild")
+            started = time.monotonic()
+            built = self._request("rebuild")
             self._request("reload")
             rows = self._items(self._request("list_rows"), "rows")
             parsed = None
@@ -643,6 +658,18 @@ class WbSession:
                 self._fire_frame()
                 self.start_prefetch()
             text = STRINGS["reloaded"]
+            mode = built.get("mode") if isinstance(built, dict) else None
+            seconds = built.get("build_seconds") if isinstance(built, dict) else None
+            if isinstance(mode, str) and isinstance(seconds, (int, float)):
+                # Which build ran (gameplay-only vs full) and how long, end to end.
+                self.last_rebuild = {
+                    "mode": mode, "build_seconds": float(seconds),
+                    "total_seconds": time.monotonic() - started,
+                }
+                text = STRINGS["reloaded_mode"].format(
+                    mode=mode, build=float(seconds),
+                    total=self.last_rebuild["total_seconds"],
+                )
             return f"{text}; {self.hook_error}" if self.hook_error else text
 
         return self._run(action)

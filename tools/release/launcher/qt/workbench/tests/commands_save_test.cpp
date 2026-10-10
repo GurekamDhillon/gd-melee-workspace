@@ -352,6 +352,20 @@ private slots:
         QCOMPARE(result["output"].toString(), result["tail"].toString());
     }
 
+    void rebuildReportsTheBuildModeLine() {
+        QTemporaryDir dir;
+        wbtest::makeSynthFighter(dir.path());
+        setRebuild(dir.path(), {"python", "-c", "print('noise'); print('BUILD_MODE: gameplay-only 12.5s')"});
+        Session session(dir.path(), nullptr);
+        registerSaveCommands(session);
+        const auto reply = callCmd(session, "rebuild");
+        QVERIFY2(reply["ok"].toBool(), qPrintable(reply["error"].toString()));
+        const auto result = reply["result"].toObject();
+        QCOMPARE(result["mode"].toString(), QString("gameplay-only"));
+        QCOMPARE(result["build_seconds"].toDouble(), 12.5);
+        QVERIFY(result.contains("elapsed_ms"));
+    }
+
     void rebuildFailureIsError() {
         QTemporaryDir dir;
         wbtest::makeSynthFighter(dir.path());

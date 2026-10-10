@@ -32,6 +32,18 @@ def test_edit_marks_stale_until_reload():
         fake.stop()
 
 
+def test_status_names_the_build_mode_and_time():
+    fake, s = make()
+    try:
+        s.load_row("jab"); s.refresh_hitboxes(); s.edit_hitbox(row="jab", ordinal=0, size=3.5)
+        fake.build_mode = "gameplay-only"
+        assert s.rebuild_reload()
+        assert "gameplay-only build 1.5 s" in s.status, s.status
+        assert s.last_rebuild["mode"] == "gameplay-only" and s.last_rebuild["total_seconds"] >= 0
+    finally:
+        fake.stop()
+
+
 def test_failed_rebuild_keeps_stale():
     fake, s = make()
     try:
@@ -64,3 +76,16 @@ def test_scrub_is_coalesced():
         assert len(sets) == 1
     finally:
         fake.stop()
+
+
+def test_rebuild_and_reload_get_a_long_call_budget():
+    seen = {}
+
+    class Conn:
+        def call(self, tool, args=None, timeout=None):
+            seen[tool] = timeout
+            return {}
+
+    api.WbSession._raw_call(Conn(), "rebuild", {})
+    api.WbSession._raw_call(Conn(), "list_rows", {})
+    assert seen["rebuild"] >= 1800 and seen["list_rows"] is None

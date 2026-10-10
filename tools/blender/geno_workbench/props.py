@@ -113,6 +113,7 @@ STRINGS: dict[str, str] = {
     "source_edited": "hitbox source updated; overlays still show the engine's previous build",
     "proposal_created": "proposal created: accept it in the Creator hub",
     "reloaded": "rebuilt and reloaded",
+    "reloaded_mode": "rebuilt and reloaded ({mode} build {build:.1f} s, total {total:.1f} s)",
     "suggested": "suggested bone: {bone}",
     "no_suggestion": "no bone suggestion available",
     "restarted": "engine restarted: {engine}",

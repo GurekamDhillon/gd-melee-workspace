@@ -431,6 +431,7 @@ class FakeWorkbench:
         self.calls: list[tuple[str, dict]] = []
         self.stale = False
         self.fail_next: str | None = None
+        self.build_mode: str = "full"
         self.checks_unload = False   # run_checks fails the way the real one did: row dropped, then frame 0 asked for
         self.drop_after: int | None = None
         self.current_row = "wait"
@@ -642,7 +643,7 @@ class FakeWorkbench:
         if tool == "rebuild":
             self._built = copy.deepcopy(self._source)
             self.stale = False
-            return {"rebuilt": True}
+            return {"rebuilt": True, "mode": self.build_mode, "build_seconds": 1.5}
         if tool == "reload":
             self._loaded = copy.deepcopy(self._built)
             self.stale = False
