@@ -26,10 +26,11 @@ realtime=0
 max_seconds="${MELEE_MAX_SECONDS:-}"
 # --test runs turbo by default (MELEE_TURBO=1: virtual clock, no pacing; see PORT_DEV_QUICKREF);
 # --realtime keeps 60 Hz. A plain window run keeps its default (realtime) unless the caller sets it.
-while [ "${1:-}" = "--test" ] || [ "${1:-}" = "--realtime" ] || [ "${1:-}" = "--max-seconds" ] || [ "${1:-}" = "--idle-cpus" ]; do
+while [ "${1:-}" = "--test" ] || [ "${1:-}" = "--realtime" ] || [ "${1:-}" = "--max-seconds" ] || [ "${1:-}" = "--idle-cpus" ] || [ "${1:-}" = "--allow-low-disk" ]; do
     case "$1" in
         --test) test_mode=1 ;;
         --realtime) realtime=1 ;;
+        --allow-low-disk) export GW_ALLOW_LOW_DISK=1 ;; # run even below MELEE_MIN_FREE_GB
         --idle-cpus) export MELEE_CPU_IDLE=1 ;; # every CPU-controlled fighter stands still (agent test runs)
         --max-seconds) [ $# -ge 2 ] || gw_die "--max-seconds needs N"; max_seconds="$2"; shift ;;
     esac
@@ -43,10 +44,11 @@ elif [ "$realtime" = 1 ]; then
     export MELEE_TURBO=0
 fi
 name="${1:-}"
-[ -n "$name" ] || gw_die "usage: run.sh [--test] [--realtime] [--idle-cpus] [--max-seconds N] <sandbox-name> [game args...]"
+[ -n "$name" ] || gw_die "usage: run.sh [--test] [--realtime] [--idle-cpus] [--allow-low-disk] [--max-seconds N] <sandbox-name> [game args...]"
 case "$name" in .|..|*/*|*\\*) gw_die "sandbox name must be one directory name" ;; esac
 shift
 
+gw_disk_guard "$GW_BUILD_ROOT"
 [ -f "$GW_EXE" ] || gw_die "no exe at $GW_EXE - run tools/port/build.sh first"
 
 sandbox="$GW_BUILD_ROOT/runs/$name"
@@ -55,13 +57,14 @@ mkdir "$sandbox/.active-run" 2>/dev/null ||
     gw_die "sandbox is active or retained a launch marker; choose a new sandbox name"
 trap 'rmdir "$sandbox/.active-run" 2>/dev/null || true' EXIT
 # Each sandbox holds its own exe copy, so they add up (1,656 of them once reached 49 GB). Stamp
-# this run, then keep only the GW_RUNS_KEEP (default 50) most recently STARTED sandboxes. The
-# stamp, not the directory mtime, orders them: directory dates drift (a bulk copy once re-dated
-# every sandbox to one day). Unstamped sandboxes (made by other launchers, e.g. netplay_local.ps1,
-# possibly with a game still running in them) are never touched; nor is this run's.
+# this run, then keep only the MELEE_RUNS_KEEP (default 40) newest sandboxes (stamp mtime orders
+# them: directory dates drift) and strip the exe/dll/cache copies from all but the newest
+# MELEE_RUNS_STRIP_AFTER (default 10), keeping logs. A sandbox with a running game or a launch
+# marker is never touched, nor is this run's; unstamped ones (other launchers) only after 3 days.
+# Everything pruned is logged below. See prune_runs.py.
 touch "$sandbox/.last_run"
 python "$GW_ROOT/tools/port/prune_runs.py" --root "$GW_BUILD_ROOT/runs" \
-    --keep "${GW_RUNS_KEEP:-50}" --current "$name" || gw_die "sandbox safety check failed"
+    --keep "${MELEE_RUNS_KEEP:-${GW_RUNS_KEEP:-40}}" --current "$name" || gw_die "sandbox safety check failed"
 cp -f "$GW_EXE" "$sandbox/melee-pc.exe"
 if [ -f "$GW_MAP" ]; then cp -f "$GW_MAP" "$sandbox/melee-pc.map"; fi
 

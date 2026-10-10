@@ -104,7 +104,9 @@ it has no GPU and no paced loop, so it cannot time anything or count a real draw
 | `MELEE_PERF_SUMMARY=0` | switch the always-on perf record off (default on; see "The perf record") |
 | `MELEE_ENV_CACHE=1` / `compare` | opt-in per-frame memo of envelope skinning matrices; `compare` checks every hit against fresh arithmetic and logs `ENVCACHE` lines (default off: gain was only ~0.3-0.5 ms a legacy fighter) |
 | `MELEE_POBJ_DIAG=1` | log what a frame's envelope draws are made of (`POBJDIAG`: pobj draws v distinct, slots, joint terms, distinct envelopes, render passes) |
-| `GW_RUNS_KEEP=N` | retain the N most recently started stamped sandboxes (default 50); unstamped ones are not pruned |
+| `MELEE_RUNS_KEEP=N` | each `run.sh` launch deletes all but the newest N run sandboxes in its build root (default 40; `GW_RUNS_KEEP` is the old name) |
+| `MELEE_RUNS_STRIP_AFTER=K` | sandboxes older than the newest K lose their exe/dll/shader-cache copies, keeping logs, crashlogs, results (default 10) |
+| `MELEE_MIN_FREE_GB=N` | `run.sh`, `build.sh` and `crash_sweep.py` refuse below N GB free on the target drive (default 20); `--allow-low-disk` or `MELEE_ALLOW_LOW_DISK=1` overrides |
 
 Turbo mutes audio. Use realtime runs for controller, sound and presentation checks. Lua
 `gd.input(..., frames)` counts completed logic frames even while stepping; text pad scripts
@@ -131,6 +133,32 @@ virtual controller (`fp->cpu.*`), which `gd.input` cannot reach.
   call that started it. A `gd.run` task started from the console ends when the console client
   disconnects: load a script file (`load <path>`) for anything that must outlive the call.
 - Reference: [scripting.md](../../docs/scripting.md), "The CPU's virtual controller".
+
+## Disk hygiene
+
+Every run keeps a sandbox with its own exe copy, so disks fill (drive E: hit 0 free once, ~116 GB of
+agent roots and runs). Three guards, none of which touches anything outside `<build root>/runs/`:
+
+- **Automatic pruning** (`prune_runs.py`, called by `run.sh` on every launch): by sandbox
+  mtime, keep the newest `MELEE_RUNS_KEEP` (40), delete the rest; strip exe/dll/pipeline-cache copies
+  from those past the newest `MELEE_RUNS_STRIP_AFTER` (10), keeping `melee-pc.log`, `crashlogs/`,
+  results and scripts-data. A sandbox with a running `melee-pc.exe`, a launch marker, or the current
+  name is never touched; an unstamped sandbox (other launcher) only after 3 days; if the process list
+  cannot be read, nothing is pruned. What it removes is printed (`pruned run ...`, `stripped run ...`).
+  Manual: `python tools/port/prune_runs.py --root <build root>/runs --keep 10 --current none`.
+- **Disk guard** (`disk_guard.py`, called by `run.sh`, `build.sh`, `crash_sweep.py`; the sweep also
+  deletes each finished run's exe copies unless `--keep-exes`): below `MELEE_MIN_FREE_GB` it exits with
+  how much is free and the cleanup command. Override: `--allow-low-disk` (all three) or `MELEE_ALLOW_LOW_DISK=1`.
+- **`python tools/port/disk_report.py`** lists the largest `_build` entries, every agent root (size, last
+  activity, run count), junctions (not followed), merged-branch worktrees, and a suggested cleanup list
+  (idle agent roots, roots with many runs, old sweeps and release staging). Hardlinked files are counted
+  once. It deletes nothing; run what you agree with. Takes about a minute on a full `_build`.
+
+**End of a lane:** when the lane's work is merged or abandoned, run
+`python tools/port/agent_slim.py <name>` (dry run) then `--yes` to delete the root's bulk (exe, objects,
+caches, junction links) while keeping logs, results and crashlogs; `tools/port/agent_rm.sh <name>`
+removes the root and clean worktree outright. A merged branch's worktree goes with
+`git -C melee worktree remove <path>`; `disk_report.py` lists the merged ones.
 
 ## Isolation and evidence
 

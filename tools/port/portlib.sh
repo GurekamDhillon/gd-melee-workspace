@@ -75,6 +75,15 @@ gw_die() {
     exit 1
 }
 
+# Disk guard: refuse when the drive holding $1 (default the build root) has less than
+# MELEE_MIN_FREE_GB (default 20) free. Callers pass --allow-low-disk (sets GW_ALLOW_LOW_DISK=1) to
+# override; MELEE_ALLOW_LOW_DISK=1 does the same for a whole shell. See tools/port/disk_guard.py.
+gw_disk_guard() {
+    local args=(--path "${1:-$GW_BUILD_ROOT}")
+    if [ "${GW_ALLOW_LOW_DISK:-0}" = 1 ]; then args+=(--allow-low-disk); fi
+    python "$GW_ROOT/tools/port/disk_guard.py" "${args[@]}" || exit 1
+}
+
 # Native Windows Python creates the suspended child and its kill-on-close job.
 # It watches its actual native bash parent handle (not MSYS's emulated $$).
 gw_run_owned() {

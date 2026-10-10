@@ -20,6 +20,9 @@ so the CPUs still play) lets MELEE_TURBO=1 be accepted, and --secs counts GAME s
 reached far sooner on the wall clock. --realtime runs at 60 fps with the old wall-clock --secs.
 --skip TAG,TAG and --resume results.json leave runs out (resume keeps the earlier rows in the new
 results); --max-games N holds each launch while N or more melee-pc.exe are already running.
+Disk: the sweep refuses to start (and stops launching) below MELEE_MIN_FREE_GB (default 20) free on
+<out>'s drive unless --allow-low-disk; a finished run's exe/dll/cache copies are deleted (log, crash
+log and results stay) unless --keep-exes, so a sweep no longer leaves ~100 MB per run behind.
 Discs come from .env (GW_ISO_VANILLA / GW_ISO_AKANEIA / GW_ISO_ACE).
 """
 import argparse
@@ -98,6 +101,31 @@ def prepare_sandbox(out, exe, tag):
             pass
     shutil.rmtree(os.path.join(sb, "crashlogs"), ignore_errors=True)
     return sb
+
+
+def strip_sandbox(sb):
+    """Delete the exe/dll/cache copies of a finished run (the log and crash logs stay)."""
+    sys.path.insert(0, os.path.join(MAIN, "tools", "port"))
+    from prune_runs import strippable
+    freed = 0
+    try:
+        for f in os.listdir(sb):
+            p = os.path.join(sb, f)
+            if os.path.isfile(p) and strippable(f):
+                freed += os.path.getsize(p)
+                os.remove(p)
+    except OSError:
+        pass
+    return freed
+
+
+def disk_check(out, allow):
+    sys.path.insert(0, os.path.join(MAIN, "tools", "port"))
+    import disk_guard
+    ok, msg = disk_guard.check(out, allow=allow or disk_guard.allowed_by_env())
+    if msg:
+        print(msg, file=sys.stderr)
+    return ok
 
 
 def running_games():
@@ -295,6 +323,8 @@ def main():
     ap.add_argument("--items", default="0", help="item frequency per match (0..4, or off)")
     ap.add_argument("--label", default="crash sweep")
     ap.add_argument("--plan", action="store_true")
+    ap.add_argument("--allow-low-disk", action="store_true", help="run even below MELEE_MIN_FREE_GB free")
+    ap.add_argument("--keep-exes", action="store_true", help="keep each finished run's exe/dll/cache copies")
     ap.add_argument("--match", default="", help="only runs whose tag contains this")
     ap.add_argument("--realtime", action="store_true",
                     help="60 fps, wall-clock --secs (default: turbo, --secs in game seconds)")
@@ -309,6 +339,8 @@ def main():
     a = ap.parse_args()
     exe = os.path.abspath(a.exe)
     out = os.path.abspath(a.out)
+    if not a.plan and not disk_check(out, a.allow_low_disk):
+        return 2
     os.makedirs(out, exist_ok=True)
     isos = env_isos()
     turbo = not a.realtime
@@ -349,6 +381,10 @@ def main():
     while queue or active:
         for slot in range(a.parallel):
             if slot not in active and queue and (a.max_games <= 0 or running_games() < a.max_games):
+                if not disk_check(out, a.allow_low_disk):
+                    print("sweep stopped launching: disk low; %d runs not started" % len(queue), file=sys.stderr)
+                    queue.clear()
+                    break
                 r = queue.pop(0)
                 start(r, out, exe, r.iso, slot, a.label, turbo, a.monitor2)
                 active[slot] = r
@@ -362,6 +398,8 @@ def main():
                     r.proc.kill()
                     r.proc.wait()
                 del active[slot]
+                if not a.keep_exes:
+                    strip_sandbox(r.sandbox)
                 done.append(r)
                 print("[%3d/%3d] %-7s %-28s %s" % (len(done), len(all_runs) + len(carried), r.result, r.tag, r.detail))
     write_results(done, out, exe, a.discs.split(","), time.time() - t_start, jev_enabled=a.jev)
