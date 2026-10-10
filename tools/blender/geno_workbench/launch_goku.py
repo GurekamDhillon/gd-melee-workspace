@@ -16,7 +16,8 @@ Everything is overridable by environment (paths below are this machine's default
                    Qt DLLs it needs beside it or Qt on GW_QT_BIN), else the newest one under _build/.
                    Blender's console is also written to <GW_ROOT>/_build/wb-goku/blender.log.
   GW_QT_BIN        Qt bin directory prepended to PATH for the launcher
-  GW_ENGINE_EXE    melee-pc.exe built from the geno-workbench game branch (schema 2, headless)
+  GW_ENGINE_EXE    melee-pc.exe built from the geno-workbench game branch (schema 2, headless). Default:
+                   <GW_ROOT>/_build/wb-goku/engine/melee-pc.exe, the copy this script runs from.
   GW_ISO_VANILLA   the disc image (from .env; never committed)
 No disc-derived data is written anywhere under git.
 """
@@ -78,7 +79,7 @@ def main() -> int:
         launcher = launch.find_launcher(root=root) or ""
     qt_bin = os.environ.get("GW_QT_BIN", "E:/Projects/Qt/6.8.3/msvc2022_64/bin")
     engine_src = Path(os.environ.get("GW_ENGINE_EXE") or next(
-        (c for c in (root / "_build/agents/geno-workbench/melee-pc.exe", root / "_build/wb-goku/engine/melee-pc.exe")
+        (c for c in (root / "_build/wb-goku/engine/melee-pc.exe", root / "_build/agents/geno-workbench/melee-pc.exe")
          if c.is_file()), root / "_build/agents/geno-workbench/melee-pc.exe"))
     project = root / "ports/goku-xv2"
     mods = root / "_build/goku-xv2/author-source/package/mods"
