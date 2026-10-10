@@ -2,6 +2,7 @@
 #include "commands.h"
 #include <QJsonDocument>
 #include <QSet>
+#include <QRegularExpression>
 #include <QMap>
 #include <cmath>
 #include <exception>
@@ -45,13 +46,34 @@ FrameInfo pose(EngineBackend &engine, int motion, int frame, bool aerial) {
     return FrameInfo::fromJson(result);
 }
 struct SampleFrames { FrameInfo before, current; };
+SampleFrames sampleFramesAt(EngineBackend &engine, int motion, const RowInfo &row, int frame) {
+    auto before = pose(engine, motion, qMax(0, frame - 1), row.aerial);
+    auto current = frame == 0 ? before : pose(engine, motion, frame, row.aerial);
+    return {before, current};
+}
+// A hitbox may start after the engine's playable end of the move (a jab that chains into the next
+// one, a clip longer than the action). Sample the last frame the engine can play instead of failing.
+int lastPlayableFrame(const QString &message, int requested) {
+    if (!message.contains("past the end of this move")) return -1;
+    static const QRegularExpression lastRe("last frame (\\d+)"), atRe("fighter is at frame (\\d+)");
+    auto m = lastRe.match(message);
+    if (!m.hasMatch()) m = atRe.match(message);
+    if (!m.hasMatch()) return -1;
+    const int n = m.captured(1).toInt();
+    return n >= 1 && n < requested ? n : -1;
+}
 SampleFrames sampleFrames(EngineBackend &engine, const RowInfo &row, int frame) {
     if (frame < 0) throw CommandError{t("frame must be nonnegative", "frame must be nonnegative")};
     const int motion = rowMotion(row);
     call(engine, "row", {{"motion", motion}});
-    auto before = pose(engine, motion, qMax(0, frame - 1), row.aerial);
-    auto current = frame == 0 ? before : pose(engine, motion, frame, row.aerial);
-    return {before, current};
+    try {
+        return sampleFramesAt(engine, motion, row, frame);
+    } catch (const CommandError &error) {
+        const int last = lastPlayableFrame(error.message, frame);
+        if (last < 0) throw;
+        call(engine, "row", {{"motion", motion}});
+        return sampleFramesAt(engine, motion, row, last);
+    }
 }
 const BoneLive *boneAt(const FrameInfo &frame, int joint) {
     for (const auto &bone : frame.bones) if (bone.joint == joint) return &bone;
