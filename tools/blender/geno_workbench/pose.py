@@ -258,6 +258,9 @@ def blender_rest_matrices(arm, jointmap, action_name="", frame=0):
 
 
 def _bone_aliases(session):
+    aliases = getattr(session, "bone_aliases", None)
+    if isinstance(aliases, dict):  # filled by api.set_project (or set directly by tests)
+        return dict(aliases)
     # Project paths are resolved by api.set_project. The scene property is the
     # specified Task 6 source when the session has no project-directory member.
     project = (
@@ -559,6 +562,8 @@ def verify_pose(arm, info, jointmap, eps=1e-3):
             continue
         try:
             position = rows[joint]["pos"]
+            if isinstance(position, dict):  # frame_info writes {"x":..,"y":..,"z":..}
+                position = [position["x"], position["y"], position["z"]]
             if len(position) != 3 or not all(
                 math.isfinite(float(value)) for value in position
             ):

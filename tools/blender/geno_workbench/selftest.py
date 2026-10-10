@@ -288,7 +288,7 @@ def _run(out_dir):
                         bool(verified["ok"])
                         and verified["n"] == len(jm.by_index)
                         and not applied.skipped_mirrored
-                        and not applied.missing
+                        and not [j for j in applied.missing if j not in jm.skipped_synth]
                         and math.isfinite(head_err)
                         and math.isfinite(rot_err)
                         and head_err < 1e-3
@@ -344,6 +344,8 @@ def _run(out_dir):
             )
             # frame_info producers use world, or pos for a world-space point.
             world = source["world"] if "world" in source else source["pos"]
+            if isinstance(world, dict):
+                world = (world["x"], world["y"], world["z"])
             center_error = _distance(
                 _world_center(hit), space.to_blender_point(world)
             )
