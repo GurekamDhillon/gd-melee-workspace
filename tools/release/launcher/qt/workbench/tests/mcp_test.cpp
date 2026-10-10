@@ -306,6 +306,30 @@ private slots:
         QVERIFY(r.session.registry().call("accept", {{"id", id}}, human)["ok"].toBool());
         QVERIFY(readFile(r.dir.filePath("moves/dair.genoasm")) != before);
     }
+    void humanServerAllowsUndo() {
+        McpRig r;
+        r.server.setAuthor("human");
+        const auto edited = r.server.handle(call("edit", {{"damage", 21}}));
+        QVERIFY(!edited["result"].toObject()["isError"].toBool());
+        const auto undo = r.server.handle(call("undo"));
+        QVERIFY(!payload(undo)["error"].toString().contains("human author"));
+        QVERIFY(payload(undo)["applied"].toBool());
+    }
+    void agentServerStillRefusesUndo() {
+        McpRig r;
+        QCOMPARE(r.server.author(), QString("agent"));
+        QVERIFY(payload(r.server.handle(call("undo")))["error"].toString().contains("human author"));
+    }
+    void humanServerAppliesEditDirectly() {
+        McpRig r;
+        r.server.setAuthor("human");
+        const auto before = readFile(r.dir.filePath("moves/dair.genoasm"));
+        const auto body = payload(r.server.handle(call("edit", {{"damage", 24}})));
+        QVERIFY(!body["proposed"].toBool());
+        QVERIFY(readFile(r.dir.filePath("moves/dair.genoasm")) != before);
+        QCOMPARE(r.session.history().entries().last().author, QString("human"));
+        QCOMPARE(r.session.history().entries().last().state, QString("applied"));
+    }
     void agentsCannotApplyUndoOrRedo() {
         McpRig r;
         CommandContext human{r.session, "human"};

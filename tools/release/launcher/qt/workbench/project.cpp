@@ -59,6 +59,10 @@ ProjectConfig ProjectConfig::load(FileStore &fs, QString *err) {
         // plan_abs deliberately overrides even an old project-relative plan path.
         if (config.planAbs.isEmpty()) config.plan = sourcePath(config.plan);
         if (config.planAbs.contains(QChar(0))) fail("workbench.json: invalid plan_abs path");
+        config.artBlend = stringField(object, "art_blend");
+        config.artGlb = stringField(object, "art_glb");
+        if (config.artBlend.contains(QChar(0)) || config.artGlb.contains(QChar(0)))
+            fail("workbench.json: invalid art path");
         config.modId = stringField(object, "mod_id");
         config.rebuild = argvField(object, "rebuild");
         config.importClip = argvField(object, "import_clip");

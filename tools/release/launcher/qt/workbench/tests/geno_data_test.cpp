@@ -107,6 +107,28 @@ private slots:
         wbtest::put(built.path(), "plan.json", "{}");
         QVERIFY(fs.externalChanges().isEmpty()); // Built output is never a FileStore source.
     }
+    void artKeysAreReadOptionally() {
+        QTemporaryDir d;
+        wbtest::makeSynthFighter(d.path());
+        {
+            FileStore fs(d.path()); GenoData data(fs);
+            QVERIFY(data.reload().isEmpty());
+            QVERIFY(data.project().artBlend.isEmpty() && data.project().artGlb.isEmpty());
+        }
+        auto config = projectFixture();
+        config["art_blend"] = "_build/synth/rig.blend"; config["art_glb"] = "_build/synth/rig.glb";
+        putProject(d.path(), config);
+        {
+            FileStore fs(d.path()); GenoData data(fs);
+            QVERIFY(data.reload().isEmpty());
+            QCOMPARE(data.project().artBlend, QString("_build/synth/rig.blend"));
+            QCOMPARE(data.project().artGlb, QString("_build/synth/rig.glb"));
+        }
+        config["art_glb"] = QString("a") + QChar(0) + "b";
+        putProject(d.path(), config);
+        FileStore fs(d.path()); GenoData data(fs);
+        QVERIFY(!data.reload().isEmpty());
+    }
     void planAbsResolvesFromWorkspaceAncestor() {
         QTemporaryDir workspace;
         wbtest::put(workspace.path(), ".git", "gitdir: synthetic\n");

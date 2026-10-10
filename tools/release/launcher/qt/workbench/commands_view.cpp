@@ -42,7 +42,7 @@ void registerViewCommands(Session &s) {
         {"preset", QJsonObject{{"type", "string"}, {"enum", QJsonArray{"side", "front", "top", "three_quarter"}}}},
         {"yaw", argType("number")}, {"pitch", argType("number")}, {"distance", argType("number")},
         {"target_joint", argType("integer")}};
-    s.registry().add({"set_camera", t("Set the viewport camera", "Set the viewport camera"),
+    s.registry().add({"set_camera", t("Debug only (frozen; the viewer is Blender): set the viewport camera", "Debug only (frozen; the viewer is Blender): set the viewport camera"),
         commandSchema(cameraProperties), false, [cameraProperties](const QJsonObject &args, CommandContext &ctx) {
             auto camera = ctx.session.camera;
             for (auto it = cameraProperties.constBegin(); it != cameraProperties.constEnd(); ++it) {
@@ -60,13 +60,13 @@ void registerViewCommands(Session &s) {
         }});
     const QJsonObject overlayProperties{{"hitboxes", argType("boolean")}, {"hurtboxes", argType("boolean")},
         {"bones", argType("boolean")}, {"ecb", argType("boolean")}, {"floor", argType("boolean")}};
-    s.registry().add({"set_overlays", t("Set viewport overlays", "Set viewport overlays"),
+    s.registry().add({"set_overlays", t("Debug only (frozen; the viewer is Blender): set viewport overlays", "Debug only (frozen; the viewer is Blender): set viewport overlays"),
         commandSchema(overlayProperties), false, [overlayProperties](const QJsonObject &args, CommandContext &ctx) {
             for (auto it = overlayProperties.constBegin(); it != overlayProperties.constEnd(); ++it)
                 if (args.contains(it.key())) ctx.session.overlays[it.key()] = args[it.key()];
             return QJsonObject{{"overlays", ctx.session.overlays}};
         }});
-    s.registry().add({"render_view", t("Render the current frame", "Render the current frame"),
+    s.registry().add({"render_view", t("Debug only (frozen; the viewer is Blender): render the current frame", "Debug only (frozen; the viewer is Blender): render the current frame"),
         commandSchema({{"w", argType("integer")}, {"h", argType("integer")}}), false,
         [](const QJsonObject &args, CommandContext &ctx) {
             needEngine(ctx.session);

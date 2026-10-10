@@ -67,6 +67,7 @@ public:
         QStringList extraArgs;
         QProcessEnvironment env;
         int port = 0;
+        bool headless = false; // MELEE_WB_HEADLESS=1: Dawn null backend, no window
     };
     explicit EngineLink(Launch l);
     ~EngineLink() override;
@@ -77,6 +78,8 @@ public:
     bool restart(QString *err) override;
     bool attach(quint16 port, QString *err);
     void setTimeoutMs(int timeoutMs);
+    // The environment the engine process gets for a console port (testable without a process).
+    QProcessEnvironment buildEnvironment(int port) const;
 
 private:
     bool startImpl(QString *err);

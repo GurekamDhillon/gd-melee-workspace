@@ -285,6 +285,20 @@ bool EngineLink::attach(quint16 port, QString *err) {
     return true;
 }
 
+QProcessEnvironment EngineLink::buildEnvironment(int port) const {
+    auto env = launch_.env.isEmpty() ? QProcessEnvironment::systemEnvironment() : launch_.env;
+    env.insert("MELEE_CONSOLE_PORT", QString::number(port));
+    env.insert("MELEE_SCENE", "mode=workbench;p1=geno:" + launch_.modId + "/hu;stage=fd");
+    env.insert("MELEE_MODS_DIR", launch_.modsDir);
+    env.insert("MELEE_WB_DIR", launch_.wbDir);
+    env.insert("MELEE_WINDOW_X", "100");
+    env.insert("MELEE_WINDOW_Y", "80");
+    env.remove("MELEE_NETPLAY");
+    env.remove("MELEE_WB_HEADLESS");
+    if (launch_.headless) env.insert("MELEE_WB_HEADLESS", "1");
+    return env;
+}
+
 bool EngineLink::start(QString *err) {
     setError(err, {});
     if (busy_) { setError(err, "engine operation already in progress"); return false; }
@@ -315,15 +329,7 @@ bool EngineLink::startImpl(QString *err) {
     const quint16 port = reservation.serverPort();
     reservation.close();
 
-    auto env = launch_.env.isEmpty() ? QProcessEnvironment::systemEnvironment() : launch_.env;
-    env.insert("MELEE_CONSOLE_PORT", QString::number(port));
-    env.insert("MELEE_SCENE", "mode=workbench;p1=geno:" + launch_.modId + "/hu;stage=fd");
-    env.insert("MELEE_MODS_DIR", launch_.modsDir);
-    env.insert("MELEE_WB_DIR", launch_.wbDir);
-    env.insert("MELEE_WINDOW_X", "100");
-    env.insert("MELEE_WINDOW_Y", "80");
-    env.remove("MELEE_NETPLAY");
-    process_.setProcessEnvironment(env);
+    process_.setProcessEnvironment(buildEnvironment(port));
     process_.setWorkingDirectory(launch_.workDir);
     process_.setProgram(launch_.exe);
     process_.setArguments(launch_.extraArgs);

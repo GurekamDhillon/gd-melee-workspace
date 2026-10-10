@@ -66,6 +66,12 @@ McpServer::McpServer(Session &session) : session_(session) {
     });
 }
 
+void McpServer::setAuthor(const QString &author) {
+    author_ = author == "human" ? "human" : "agent";
+    propose_ = author_ == "agent";
+    session_.agentProposals = propose_;
+}
+
 QJsonObject McpServer::toolSchema(const CommandSpec &spec) {
     auto schema = spec.inputSchema;
     // Registry arguments are always objects, including no-argument commands.
@@ -120,13 +126,13 @@ QJsonObject McpServer::handle(const QJsonObject &request) {
     }
     if (!found) return error(-32602, "Unknown tool: " + name);
     const QString humanOnly = humanOnlyCommand(name, args);
-    if (!humanOnly.isEmpty())
+    if (!humanOnly.isEmpty() && author_ == "agent")
         return result(toolResult({{"ok", false}, {"error", humanOnly + ": requires a human author"}}));
     if (calling_) return error(-32000, "A tool call is already in progress");
     QScopedValueRollback<bool> guard(calling_, true);
     // Do not trust the caller's propose:false, or a UI change to session policy.
-    session_.agentProposals = true;
-    CommandContext context{session_, "agent", true};
+    session_.agentProposals = propose_;
+    CommandContext context{session_, author_, propose_};
     return result(toolResult(session_.registry().call(name, args, context)));
 }
 

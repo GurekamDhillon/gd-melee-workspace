@@ -124,6 +124,23 @@ private slots:
         QCOMPARE(link.status(), QString("error: engine connection lost"));
         QVERIFY(t.elapsed() < 1000);
     }
+    void headlessSetsEnv() {
+        EngineLink::Launch l;
+        l.modId = "synth"; l.modsDir = "mods"; l.wbDir = "wb"; l.headless = true;
+        l.env = QProcessEnvironment::systemEnvironment();
+        EngineLink on(l);
+        QCOMPARE(on.buildEnvironment(5000).value("MELEE_WB_HEADLESS"), QString("1"));
+        l.headless = false;
+        l.env.insert("MELEE_WB_HEADLESS", "1"); // an inherited value must not leak into a windowed engine
+        EngineLink off(l);
+        const auto env = off.buildEnvironment(5000);
+        QVERIFY(!env.contains("MELEE_WB_HEADLESS"));
+        for (const auto &e2 : {env, on.buildEnvironment(5000)}) {
+            QCOMPARE(e2.value("MELEE_CONSOLE_PORT"), QString("5000"));
+            QVERIFY(e2.value("MELEE_SCENE").contains("mode=workbench"));
+            QCOMPARE(e2.value("MELEE_WB_DIR"), QString("wb"));
+        }
+    }
     void engineDiesMidCall() {
         wbtest::FakeConsole fc(nullptr);
         EngineLink link({}); QString err; link.setTimeoutMs(2000);
