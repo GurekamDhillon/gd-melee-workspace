@@ -236,5 +236,6 @@ void registerAllCommands(Session &session) {
     registerClipCommands(session);
     registerSaveCommands(session);
     registerGroundCommands(session);
+    registerAttributeCommands(session);
 }
 } // namespace wb

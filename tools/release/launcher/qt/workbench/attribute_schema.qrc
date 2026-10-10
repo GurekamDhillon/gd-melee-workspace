@@ -1,0 +1,5 @@
+<RCC>
+  <qresource prefix="/workbench">
+    <file alias="geno.schema.json">../../../../geno/geno.schema.json</file>
+  </qresource>
+</RCC>

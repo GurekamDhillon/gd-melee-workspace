@@ -125,7 +125,12 @@ QString GenoData::reload() {
         if (!fs_.exists(project.gameplay)) fail(project.gameplay + ": file not found");
         QString gameplayText;
         const auto gameplay = parseObject(gameplayBytes, project.gameplay, &gameplayText);
-        if (!gameplay.value("moves").isArray()) fail(project.gameplay + ": moves must be an array");
+        // Attribute-only Geno sources have fighter definitions rather than gameplay rows.
+        // Keep their model loadable for commit/history callbacks without inventing moves.
+        const bool attributeOnly = gameplay.value("moves").isUndefined() &&
+            gameplay.value("geno").isDouble() && gameplay.value("fighters").isArray();
+        if (!gameplay.value("moves").isArray() && !attributeOnly)
+            fail(project.gameplay + ": moves must be an array");
         const auto moves = gameplay.value("moves").toArray();
         QVector<RowInfo> rows;
         QSet<QString> names;

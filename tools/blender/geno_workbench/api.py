@@ -17,9 +17,11 @@ from typing import Callable
 
 try:
     from . import client, framecache, travel, wbspace
+    from . import attributes as attribute_model
     from .props import STRINGS
 except ImportError:
     import client
+    import attributes as attribute_model
     import framecache
     import travel
     import wbspace
@@ -70,6 +72,9 @@ class WbSession:
         self.pending_frame: int | None = None
         self.info: dict | None = None
         self.hitboxes: list[dict] = []
+        self.attributes: list[dict] = []
+        self.attributes_current = False
+        self.last_attribute_edit: dict = {}
         self.problems: list[dict] = []
         self.stale = False
         self.last_rebuild: dict | None = None  # {mode, build_seconds, total_seconds} of the last Rebuild + reload
@@ -308,6 +313,9 @@ class WbSession:
         if previous is not candidate:
             self._quiet_close(previous)
         self.cache.reset("connect")
+        self.attributes = []
+        self.attributes_current = False
+        self.last_attribute_edit = {}
         self.rows = []
         self.row = ""
         self.loaded_row = ""
@@ -500,6 +508,62 @@ class WbSession:
         self.pending_frame = None
         return self.set_frame(frame)
 
+    def refresh_attributes(self) -> bool:
+        def action():
+            self.attributes_current = False
+            rows = attribute_model.normalize_rows(
+                self._items(self._request("list_attributes"), "attributes")
+            )
+            self.attributes = rows
+            self.attributes_current = True
+            return STRINGS["attributes_loaded"].format(count=len(rows))
+
+        return self._run(action)
+
+    def edit_attribute(self, name: str, value) -> bool:
+        """Edit one source value through the server; retain the engine pose until reload."""
+        self.last_attribute_edit = {}
+
+        def action():
+            if not isinstance(name, str) or not name:
+                raise client.WbError(STRINGS["attribute_name_required"])
+            if not self.attributes:
+                self.attributes = attribute_model.normalize_rows(
+                    self._items(self._request("list_attributes"), "attributes")
+                )
+                self.attributes_current = True
+            metadata = next((item for item in self.attributes if item["name"] == name), None)
+            if metadata is None:
+                raise client.WbError(STRINGS["attribute_unknown"].format(name=name))
+            number = attribute_model.validate_value(metadata, value)
+            self.pause_prefetch()
+            result = self._request("edit_attribute", {"name": name, "value": number})
+            if result.get("proposed") is True or "proposal" in result:
+                self.last_attribute_edit = {"proposed": True}
+                return STRINGS["proposal_created"]
+            if result.get("applied") is False:
+                self.last_attribute_edit = {"unchanged": True}
+                self.attributes = [dict(item, value=number) if item["name"] == name else dict(item)
+                                   for item in self.attributes]
+                return STRINGS["no_changes"]
+            if result.get("applied") is not True:
+                raise client.WbError(STRINGS["attribute_edit_reply_invalid"])
+            self.last_attribute_edit = {"applied": True}
+            self.stale = True
+            self.cache.reset("attribute edit")
+            # The commit acknowledgement proves this field changed. Keep other last-known
+            # metadata so a failed refresh cannot erase the panel's unsent batch drafts.
+            self.attributes = [dict(item, value=number, source_file=item.get("write_file", ""))
+                               if item["name"] == name else dict(item) for item in self.attributes]
+            self.attributes_current = False
+            self.attributes = attribute_model.normalize_rows(
+                self._items(self._request("list_attributes"), "attributes")
+            )
+            self.attributes_current = True
+            return STRINGS["attribute_source_edited"]
+
+        return self._run(action)
+
     def refresh_hitboxes(self) -> bool:
         def action():
             row = self._row_name(self.source_row)
@@ -650,6 +714,7 @@ class WbSession:
         if not self.can_rebuild:
             return self.blocked(STRINGS["rebuild_unavailable"])
         saved_row, saved_frame = self.source_row, self.frame
+        had_attributes = bool(self.attributes)
         self.pause_prefetch()   # the worker must not race the engine; the cached frames stay
 
         def action():
@@ -670,6 +735,12 @@ class WbSession:
                 )
                 boxes = self._source_hitboxes(saved_row)
 
+            if had_attributes:
+                attributes = attribute_model.normalize_rows(
+                    self._items(self._request("list_attributes"), "attributes")
+                )
+                self.attributes = attributes
+                self.attributes_current = True
             self.rows = rows
             if parsed is not None:
                 self._store_frame(parsed)

@@ -71,6 +71,8 @@ _TOOLS = (
     "run_checks",
     "suggest_hitbox_bone",
     "edit_hitbox",
+    "list_attributes",
+    "edit_attribute",
     "rebuild",
     "reload",
 )
@@ -191,6 +193,25 @@ def _apply(matrix: Mat4, point: dict) -> dict:
         for row in range(3)
     ]
     return _point(*coordinates)
+
+
+def _source_attributes() -> list[dict]:
+    # Invented values; metadata follows the public Geno numeric schema.
+    fields = (
+        ("weight", 73.25, "number", "misc", "weight", "Fighter weight", None, None),
+        ("walk_max_vel", 1.25, "number", "ground", "Melee units/frame", "Maximum walk speed", None, None),
+        ("gravity", 0.125, "number", "air", "Melee units/frame^2", "Gravity", None, None),
+        ("initial_shield_size", 7.5, "number", "shield_ecb", "Melee units", "Initial shield size", None, None),
+        ("normal_landing_lag", 6, "number", "landing", "frames", "Normal landing lag", None, None),
+        ("rapid_jab_window", 4, "integer", "misc", "frames", "Rapid jab input window", None, None),
+        ("jumps.max", 3, "integer", "jump", "count", "Total jumps including ground jump", 1, 250),
+        ("jumps.air_vy.0", None, "number", "jump", "Melee units/frame", "Per-air-jump vertical impulse", None, None),
+    )
+    return [{"name": name, "value": value, "type": kind, "group": group,
+             "unit": unit, "description": description,
+             "range": {"minimum": low, "maximum": high},
+             "source_file": "gameplay.json" if value is not None else "", "write_file": "gameplay.json"}
+            for name, value, kind, group, unit, description, low, high in fields]
 
 
 def _source_hitboxes() -> dict:
@@ -442,6 +463,10 @@ class FakeWorkbench:
         self.facing = 1
         self.root_x = 0.0
 
+        self.attribute_proposals = False
+        self._attributes = _source_attributes()
+        self.built_attributes = {item["name"]: item["value"] for item in self._attributes}
+        self.loaded_attributes = dict(self.built_attributes)
         self._source = _source_hitboxes()
         self._built = copy.deepcopy(self._source)
         self._loaded = copy.deepcopy(self._source)
@@ -579,6 +604,35 @@ class FakeWorkbench:
         self.stale = True
         return {"changed": True}
 
+    def _edit_attribute(self, args: dict) -> dict:
+        name = args.get("name")
+        item = next((row for row in self._attributes if row["name"] == name), None)
+        if item is None:
+            raise ValueError(f"unknown fighter attribute: {name}")
+        value = args.get("value")
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            raise ValueError(f"{name} must be a finite number")
+        if item["type"] == "integer" and int(value) != value:
+            raise ValueError(f"{name} must be an integer")
+        bounds = item["range"]
+        if ((bounds["minimum"] is not None and value < bounds["minimum"])
+                or (bounds["maximum"] is not None and value > bounds["maximum"])):
+            raise ValueError(f"{name} is outside its schema range")
+        if item["value"] == value:
+            return {"applied": False, "note": "no change"}
+        if self.attribute_proposals or args.get("propose"):
+            return {"proposed": True, "entry": 1}
+        was_unset = item["value"] is None
+        item["value"] = value
+        item["source_file"] = "gameplay.json"
+        if was_unset and name.startswith("jumps.air_vy."):
+            index = int(name.rsplit(".", 1)[1])
+            if index < 15:
+                self._attributes.append(dict(item, name=f"jumps.air_vy.{index + 1}",
+                                             value=None, source_file=""))
+        self.stale = True
+        return {"applied": True, "entry": 1}
+
     def _execute(self, tool: str, args: dict) -> dict:
         if tool == "engine_status":
             return {"status": "running"}
@@ -629,6 +683,10 @@ class FakeWorkbench:
             return self._frame_info()
         if tool == "list_hitboxes":
             return {"hitboxes": copy.deepcopy(self._source[self._row_arg(args)])}
+        if tool == "list_attributes":
+            return {"attributes": copy.deepcopy(self._attributes)}
+        if tool == "edit_attribute":
+            return self._edit_attribute(args)
         if tool == "run_checks":
             if self.checks_unload:
                 self.current_row = None
@@ -652,10 +710,12 @@ class FakeWorkbench:
             if self.rebuild_unconfigured:
                 raise ValueError("rebuild not configured")
             self._built = copy.deepcopy(self._source)
+            self.built_attributes = {item["name"]: item["value"] for item in self._attributes}
             self.stale = False
             return {"rebuilt": True, "mode": self.build_mode, "build_seconds": 1.5}
         if tool == "reload":
             self._loaded = copy.deepcopy(self._built)
+            self.loaded_attributes = dict(self.built_attributes)
             self.stale = False
             return {"reloaded": True}
         raise ValueError(f"unknown tool: {tool}")

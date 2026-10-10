@@ -8,6 +8,7 @@ import argparse
 import copy
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -73,6 +74,44 @@ def attributes(ir, host):
                          'basis':'Captain Falcon comparison host; model scale fixed to authored dimensions' if field == 'model_scaling' else 'Captain Falcon comparison host copied as initial design',
                          'parity':parity, 'host_attribute':row['key'], 'source_value':None})
     return result, evidence
+
+def apply_attribute_overrides(attrs, evidence, cfg):
+    """Apply explicit maintained-source values after host design and artist measurements.
+
+    The Geno schema owns names, numeric types and any bounds. No inherited or
+    disc values are serialized into gameplay.json by this helper.
+    """
+    overrides = cfg.get('attributes', {})
+    contract = load(ROOT/'tools/geno/geno.schema.json')['properties']['fighters']['items']['properties']['attributes']
+    if not isinstance(overrides, dict):
+        raise ValueError('attributes must be an object')
+    if len(overrides) > contract['maxProperties']:
+        raise ValueError('attributes exceed the Geno schema limit')
+    rules = contract['properties']
+    result, records = copy.deepcopy(attrs), copy.deepcopy(evidence)
+    for name, value in overrides.items():
+        if name not in rules:
+            raise ValueError('unknown fighter attribute: '+str(name))
+        rule = rules[name]
+        try:
+            finite = not isinstance(value, bool) and isinstance(value, (int, float)) and math.isfinite(value)
+        except OverflowError:
+            finite = False
+        if not finite:
+            raise ValueError(name+' must be a finite number')
+        if rule['type'] == 'integer' and int(value) != value:
+            raise ValueError(name+' must be an integer')
+        if (('minimum' in rule and value < rule['minimum']) or
+                ('maximum' in rule and value > rule['maximum'])):
+            raise ValueError(name+' is outside its schema range')
+        result[name] = int(value) if rule['type'] == 'integer' else value
+        record = next((row for row in records if row['field'] == name), None)
+        if record is None:
+            record = {'field': name}
+            records.append(record)
+        record.update(value=result[name], classification='authored override',
+                      basis='Maintained gameplay source attribute override')
+    return result, records
 
 def plan_clip_names(package):
     """Bank clip names (plan.json bank.clips) of the built package."""
@@ -292,6 +331,7 @@ def apply(package, art_build, ir_path=None):
             attrs[key] = measured
             next(e for e in attr_evidence if e['field']==key).update(value=measured,
                 basis='Artist output reference speed; inspect artist build-report for measurement/fallback status')
+    attrs, attr_evidence = apply_attribute_overrides(attrs, attr_evidence, cfg)
     overlays, audit = {}, []
     motion_rows = report.motion_subactions()
     # Stock ftCo_SM names differ from action names (AttackS3 versus AttackS3S).
