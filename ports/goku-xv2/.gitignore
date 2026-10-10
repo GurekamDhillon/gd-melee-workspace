@@ -61,3 +61,6 @@ combo/FIDELITY-COMBOS.md
 tools/fx_emitter_template.json
 tools/move-crops.json
 tools/picks-specials.md
+
+# Workbench local session state (edit history, snapshots)
+.workbench/
