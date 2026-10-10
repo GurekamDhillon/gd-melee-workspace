@@ -89,3 +89,23 @@ def test_rebuild_and_reload_get_a_long_call_budget():
     api.WbSession._raw_call(Conn(), "rebuild", {})
     api.WbSession._raw_call(Conn(), "list_rows", {})
     assert seen["rebuild"] >= 1800 and seen["list_rows"] is None
+
+
+def test_requests_send_the_row_name_not_the_engine_clip_label():
+    """Owner bug 2026-10-10: edit_hitbox/suggest_hitbox_bone sent 'AttackAirLw' (the clip) and the server said unknown row."""
+    fake, s = make()
+    try:
+        fake.label_rows_by_clip = True
+        assert s.load_row("dair", refresh_hitboxes=True), s.last_error
+        assert s.row == "AttackAirLw" and s.source_row == "dair"
+        assert s.refresh_hitboxes(), s.last_error
+        assert s.suggest_bone(0), s.last_error
+        assert s.edit_hitbox(ordinal=0, bone="FOOT_R"), s.last_error
+        assert s.edit_hitbox(ordinal=0, size=3.5), s.last_error
+        assert s.run_checks(), s.last_error
+        assert s.rebuild_reload(), s.last_error
+        assert s.source_row == "dair" and s.hitboxes
+        if s.problems:
+            assert s.goto_problem(0), s.last_error
+    finally:
+        fake.stop()

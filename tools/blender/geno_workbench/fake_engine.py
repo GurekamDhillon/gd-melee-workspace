@@ -432,6 +432,7 @@ class FakeWorkbench:
         self.stale = False
         self.fail_next: str | None = None
         self.build_mode: str = "full"
+        self.label_rows_by_clip = False
         self.checks_unload = False   # run_checks fails the way the real one did: row dropped, then frame 0 asked for
         self.drop_after: int | None = None
         self.current_row = "wait"
@@ -526,6 +527,9 @@ class FakeWorkbench:
             info["hitboxes"] = _active_hitboxes(
                 matrices, self._loaded[self.current_row], self.frame
             )
+        if self.label_rows_by_clip:
+            # The real engine labels the loaded move with its clip ("AttackAirLw"), not the row name ("dair").
+            info["row"] = info["clip"]
         return info
 
     def _edit_hitbox(self, args: dict) -> dict:

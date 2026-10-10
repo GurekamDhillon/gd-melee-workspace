@@ -241,6 +241,14 @@ class WbSession:
         self.row = row
         self.frame = frame
 
+    @property
+    def source_row(self) -> str:
+        """The row NAME the server knows (list_rows' name, e.g. "dair"), for every request that takes a row.
+
+        self.row is the engine's label for the loaded move (e.g. the clip "AttackAirLw"), which is for display only.
+        """
+        return self.loaded_row or self.row
+
     def row_frames(self, name: str = "") -> int:
         """Frames in the loaded move: what the server taught us, else list_rows' count; 0 = unknown."""
         name = name or self.loaded_row
@@ -489,7 +497,7 @@ class WbSession:
 
     def refresh_hitboxes(self) -> bool:
         def action():
-            row = self._row_name(self.row)
+            row = self._row_name(self.source_row)
             boxes = self._source_hitboxes(row)
             self.hitboxes = boxes
             return STRINGS["hitboxes_loaded"].format(count=len(boxes))
@@ -542,7 +550,7 @@ class WbSession:
         Invalid input and failed queries raise WbError.
         """
         name = self._row_name(row)
-        boxes = self.hitboxes if name == self.row else self._source_hitboxes(name)
+        boxes = self.hitboxes if name == self.source_row else self._source_hitboxes(name)
         return self._first_active_frame(boxes, ordinal)
 
     def goto_problem(self, i) -> bool:
@@ -584,7 +592,7 @@ class WbSession:
                         fields=", ".join(sorted(unknown))
                     )
                 )
-            row = self._row_name(fields.get("row", self.row))
+            row = self._row_name(fields.get("row", self.source_row))
             ordinal = self._integer(fields.get("ordinal"), "ordinal")
             args = {"row": row, "ordinal": ordinal}
             for field in EDITABLE:
@@ -611,11 +619,11 @@ class WbSession:
             self.stale = True
             self.cache.reset("hitbox edit")
             self.suggestion = None
-            if row == self.row:
+            if row == self.source_row:
                 # If the source refresh fails, do not label the old list as new.
                 self.hitboxes = []
             boxes = self._source_hitboxes(row)
-            if row == self.row:
+            if row == self.source_row:
                 self.hitboxes = boxes
             return STRINGS["source_edited"]
 
@@ -623,7 +631,7 @@ class WbSession:
 
     def rebuild_reload(self) -> bool:
         """Restore the selection, source list, pose and overlays after reload."""
-        saved_row, saved_frame = self.row, self.frame
+        saved_row, saved_frame = self.source_row, self.frame
         self.pending_frame = None
         self.cache.reset("rebuild")
 
@@ -676,7 +684,7 @@ class WbSession:
 
     def suggest_bone(self, ordinal) -> bool:
         def action():
-            row = self._row_name(self.row)
+            row = self._row_name(self.source_row)
             index = self._integer(ordinal, "ordinal")
             result = self._request(
                 "suggest_hitbox_bone", {"row": row, "ordinal": index}
