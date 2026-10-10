@@ -365,7 +365,8 @@ bool EngineLink::startImpl(QString *err) {
                 if (probe.ok && !probe.text.trimmed().isEmpty()) {
                     // The fighter exists while the scene's entry still plays unpaused (about a second). A frame
                     // request made then can stay pending for good, so wait for the workbench's own pause.
-                    while (remaining(timer, 60000)) {
+                    QElapsedTimer pauseWait; pauseWait.start();
+                    while (remaining(pauseWait, 15000) && remaining(timer, 60000)) {
                         if (generation != stopGeneration_) { console_.close(); setError(err, "engine start cancelled"); return false; }
                         if (process_.state() != QProcess::Running) return fail("engine exited while loading the fighter");
                         const auto paused = console_.call("=tostring(gd.paused())", std::min(2000, remaining(timer, 60000)));
@@ -376,7 +377,8 @@ bool EngineLink::startImpl(QString *err) {
                     // in Wait: ground rows start from a standing fighter on the floor (the engine records that
                     // pose as its home).
                     console_.call("=wb.step({n=30})", std::min(3000, remaining(timer, 60000)));
-                    while (remaining(timer, 60000)) {
+                    QElapsedTimer landing; landing.start();
+                    while (remaining(landing, 5000) && remaining(timer, 60000)) {   // best effort: never block start-up
                         QString serr;
                         const auto info = request("frame_info", {}, std::min(3000, remaining(timer, 60000)), &serr);
                         if (!serr.isEmpty() || info.value("frame").toDouble(-1) >= 1) break;
@@ -543,7 +545,7 @@ QJsonObject EngineLink::call(const QString &fn, const QJsonObject &args, QString
             const int left = std::min(remaining(polling, window), remaining(timer, timeoutMs_));
             pumpFor(std::min(50, left));
             const int callBudget = std::min(remaining(polling, window), remaining(timer, timeoutMs_));
-            if (!callBudget) break;
+            if (callBudget < 200) break; // a console call cut short by its budget would drop the connection
             result = request("frame_info", {}, callBudget, &error);
             if (!error.isEmpty()) { setError(err, error); return {}; }
             if (settle(result, &why)) {

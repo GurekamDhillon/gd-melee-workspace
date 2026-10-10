@@ -306,7 +306,7 @@ private slots:
             if (line.startsWith("=wb.frame(")) { ++frames; return QString("pending\n>>> ok\n"); }
             return jsonReply({{"frame", frames < 2 ? -1 : 1}, {"motion", 69}});
         });
-        EngineLink link({}); QString err; QVERIFY(link.attach(fc.port(), &err));
+        EngineLink link({}); QString err; link.setTimeoutMs(20000); QVERIFY(link.attach(fc.port(), &err));
         const auto r = link.call("frame", {{"frame", 1}, {"motion", 69}}, &err);
         QVERIFY2(err.isEmpty(), qPrintable(err)); QCOMPARE(r["frame"].toInt(), 1);
         QCOMPARE(frames, 2);
