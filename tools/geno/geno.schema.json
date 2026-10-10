@@ -4318,7 +4318,7 @@
           "thrown_as": {
             "type": "string",
             "description": "A base none define: the retail fighter whose thrown rows a retail victim plays when this define throws it (its CatchWait/pummel rows stay the victim's own). Default captain (Captain Falcon); any retail fighter but Nana (geno: 10)",
-            "x-reference": "geno.md §22.8",
+            "x-reference": "geno.md §22.10",
             "x-engine-default": "captain",
             "x-source": "melee/pc/platform/geno_registry.c"
           },

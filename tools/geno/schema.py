@@ -194,7 +194,7 @@ def build_schema():
     fighter["properties"]["kirby_copy"] = {"type": "string", "pattern": r"^(none|retail:[a-z]+)$", "description": 'What Kirby gets from inhaling the define: "none" (the default) or "retail:<fighter>" (that fighter\'s hat and ability) (geno: 10)',
         "x-reference": "geno.md §22.7", "x-engine-default": "none", "x-source": REGISTRY}
     fighter["properties"]["thrown_as"] = {"type": "string", "description": "A base none define: the retail fighter whose thrown rows a retail victim plays when this define throws it (its CatchWait/pummel rows stay the victim's own). Default captain (Captain Falcon); any retail fighter but Nana (geno: 10)",
-        "x-reference": "geno.md §22.8", "x-engine-default": "captain", "x-source": REGISTRY}
+        "x-reference": "geno.md §22.10", "x-engine-default": "captain", "x-source": REGISTRY}
     fighter["properties"]["audio"] = obj({"announcer": gnsnd, "voice": arr(obj({"sfx": integer("The retail sound id this fighter would play", section="22.7", minimum=1, maximum=999999), "file": gnsnd,
         "volume": integer("Volume 0..127", 127, "22.7", minimum=0, maximum=127)}, ("sfx", "file")), 32, minItems=1)})
     fighter["properties"]["audio"]["description"] = "The define's own sound clips: its announcer call and replacements for retail voice sounds (geno: 9); silence stays without them"
