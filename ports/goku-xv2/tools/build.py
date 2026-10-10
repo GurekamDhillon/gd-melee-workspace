@@ -421,13 +421,112 @@ def apply(package, art_build, ir_path=None):
     write_losses(REPORTS/'conversion_losses.json',*reports)
     return package
 
-def main():
+STAMP_NAME = '.stage_a.json'   # written next to <out>/mods and <out>/build after a successful FULL build
+
+def stage_a_inputs(fighter_path):
+    """Files whose change invalidates Stage A (the artist pipeline: plan, mesh, animation bank): the fighter config and the art next to it,
+    the ground-mode / splice tables and the converter code. Gameplay inputs (moves/*.genoasm, gameplay.json, attributes) are NOT here."""
+    fighter_path = Path(fighter_path).resolve()
+    art = fighter_path.parent
+    files = [fighter_path]
+    for pattern in ('*.glb', '*.blend', '*.png', 'clip-library.json', 'art-report.json'):
+        files.extend(sorted(art.glob(pattern)))
+    files += [PORT/'ground_modes.json', PORT/'splices.json', PORT/'tools/xv2_to_artist.py', PORT/'tools/splice.py']
+    files += sorted((ROOT/'tools/geno/artist').rglob('*.py'))
+    return sorted({f.resolve() for f in files if f.is_file()})
+
+def stage_a_signature(fighter_path):
+    sig = {}
+    for f in stage_a_inputs(fighter_path):
+        st = f.stat()
+        sig[str(f)] = [st.st_size, st.st_mtime_ns]
+    return sig
+
+def stage_a_stale(fighter_path, out):
+    """None when the Stage A outputs are present and current, else the reason (a short string)."""
+    out = Path(out)
+    stamp = out/STAMP_NAME
+    if not stamp.is_file():
+        return 'no full-build stamp at %s (run one full build first)' % stamp
+    try:
+        key = load(fighter_path)['key']
+    except Exception as e:  # noqa: BLE001
+        return 'cannot read fighter config: %s' % e
+    for need in (out/'mods'/key/'geno.json', out/'mods'/key/'files/plan.json', out/'build'):
+        if not need.exists():
+            return 'Stage A output missing: %s' % need
+    old = load(stamp).get('inputs', {})
+    new = stage_a_signature(fighter_path)
+    changed = sorted(k for k in set(old)|set(new) if old.get(k) != new.get(k))
+    if changed:
+        names = ', '.join(Path(k).name for k in changed[:4])
+        return 'Stage A input changed since the last full build: %s%s' % (names, ' (+%d more)' % (len(changed)-4) if len(changed) > 4 else '')
+    return None
+
+def write_stamp(fighter_path, out):
+    write(Path(out)/STAMP_NAME, {'schema': 'goku-stage-a/1', 'inputs': stage_a_signature(fighter_path)})
+
+def finish_checks(package, art_build, ground):
+    """audit_gameplay is run by the caller; this is the ground audit (optional) and the static Geno checks. Returns an exit code."""
+    if ground:
+        ga = subprocess.run([sys.executable,'-B',str(PORT/'tools/ground_audit.py')],cwd=ROOT,capture_output=True,text=True)
+        print('Ground audit:',ga.stdout.strip() or ga.stderr.strip()[-300:])
+        if ga.returncode:
+            print('Ground audit failed: a ground row sinks below the floor (see %s)'%(REPORTS/'ground-audit.json'))
+            return 1
+    for command in ([sys.executable,'-B','-m','tools.geno.check',str(package),'--json'],
+                    [sys.executable,'-B','-m','tools.geno.report',str(package),'--frames','--json']):
+        result = subprocess.run(command,cwd=ROOT,capture_output=True,text=True)
+        name = 'geno-check.json' if 'tools.geno.check' in command else 'geno-report.json'
+        (art_build/name).write_text(result.stdout,encoding='utf-8')
+        if result.returncode:
+            print(result.stdout+result.stderr)
+            return result.returncode
+    return 0
+
+def main(argv=None):
+    import time
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--package',type=Path)
     ap.add_argument('--art-build',type=Path)
     ap.add_argument('--fighter',type=Path)
     ap.add_argument('--out',type=Path,default=AUTHOR/'package')
-    args = ap.parse_args()
+    ap.add_argument('--gameplay-only',action='store_true',
+                    help='run only Stage B (gameplay reapply) + audit_gameplay on the existing package; needs --fighter; refuses when Stage A outputs are missing/stale')
+    ap.add_argument('--auto',action='store_true',
+                    help='the Workbench mode: --gameplay-only when the Stage A outputs are current, else a full build')
+    ap.add_argument('--no-audit',action='store_true',help='with --gameplay-only/--auto: skip audit_gameplay too')
+    args = ap.parse_args(argv)
+    t0 = time.time()
+    if (args.gameplay_only or args.auto) and not args.fighter:
+        ap.error('--gameplay-only/--auto need --fighter (the stale check reads its inputs)')
+    mode = 'full'
+    if args.gameplay_only or args.auto:
+        generated(args.out)
+        reason = stage_a_stale(args.fighter, args.out)
+        if reason is None:
+            mode = 'gameplay-only'
+        elif args.gameplay_only:
+            print('build: --gameplay-only refused: %s. Run a full build (without --gameplay-only).' % reason)
+            return 2
+        else:
+            print('build: full build needed: %s' % reason)
+    if mode == 'gameplay-only':
+        key = load(args.fighter)['key']
+        package, art_build = args.out/'mods'/key, args.out/'build'
+        package = apply(package,art_build)
+        if not args.no_audit:
+            from audit_gameplay import audit
+            problems = audit(package,art_build,fit=True)
+            if problems:
+                print('Gameplay audit failed:',problems)
+                return 1
+        code = finish_checks(package,art_build,ground=False)
+        if code:
+            return code
+        print('BUILD_MODE: gameplay-only %.1fs' % (time.time()-t0))
+        print('Gameplay reapplied%s (Stage A skipped, no ground audit):' % ('' if args.no_audit else ' and audited'),package)
+        return 0
     if args.fighter:
         from tools.geno.artist import pipeline
         generated(args.out)
@@ -444,19 +543,12 @@ def main():
     if problems:
         print('Gameplay audit failed:',problems)
         return 1
-    ga = subprocess.run([sys.executable,'-B',str(PORT/'tools/ground_audit.py')],cwd=ROOT,capture_output=True,text=True)
-    print('Ground audit:',ga.stdout.strip() or ga.stderr.strip()[-300:])
-    if ga.returncode:
-        print('Ground audit failed: a ground row sinks below the floor (see %s)'%(REPORTS/'ground-audit.json'))
-        return 1
-    for command in ([sys.executable,'-B','-m','tools.geno.check',str(package),'--json'],
-                    [sys.executable,'-B','-m','tools.geno.report',str(package),'--frames','--json']):
-        result = subprocess.run(command,cwd=ROOT,capture_output=True,text=True)
-        name = 'geno-check.json' if 'tools.geno.check' in command else 'geno-report.json'
-        (args.art_build/name).write_text(result.stdout,encoding='utf-8')
-        if result.returncode:
-            print(result.stdout+result.stderr)
-            return result.returncode
+    code = finish_checks(package,args.art_build,ground=True)
+    if code:
+        return code
+    if args.fighter:
+        write_stamp(args.fighter,args.out)
+    print('BUILD_MODE: full %.1fs' % (time.time()-t0))
     print('Gameplay reapplied and static Geno checks passed:',package)
     return 0
 
