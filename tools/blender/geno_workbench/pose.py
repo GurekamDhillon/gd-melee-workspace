@@ -157,6 +157,62 @@ class _RigState:
         bpy.context.view_layer.update()
 
 
+_FAST = {}   # armature name -> (bone count, ok): the closed-form posing below needs plain bone inheritance
+
+
+def _fast_ok(arm):
+    """True when matrix_basis can be computed from armature-space targets without the depsgraph."""
+    key = arm.name
+    bones = arm.pose.bones
+    cached = _FAST.get(key)
+    if cached is not None and cached[0] == len(bones) and cached[1] is arm.data:
+        return cached[2]
+    ok = True
+    for pbone in bones:
+        bone = pbone.bone
+        if (pbone.constraints or not bone.use_inherit_rotation
+                or bone.inherit_scale != "FULL" or not bone.use_local_location
+                or pbone.rotation_mode in {"AXIS_ANGLE"}):
+            ok = False
+            break
+    _FAST[key] = (len(bones), arm.data, ok)
+    return ok
+
+
+def _assign_bases(arm, targets):
+    """Set matrix_basis so each bone's armature-space pose equals the target, parent first.
+
+    pose = parent_pose @ (parent_rest^-1 @ rest) @ basis, so basis follows in closed form. A parent
+    that is not a target is resolved from its own basis, so no depsgraph update is needed in between.
+    """
+    wanted = {bone.name: matrix for bone, matrix in targets}
+    memo = {}
+
+    def pose_of(pbone):
+        name = pbone.name
+        if name in wanted:
+            return wanted[name]
+        if name in memo:
+            return memo[name]
+        parent = pbone.parent
+        if parent is None:
+            result = pbone.bone.matrix_local @ pbone.matrix_basis
+        else:
+            offset = parent.bone.matrix_local.inverted_safe() @ pbone.bone.matrix_local
+            result = pose_of(parent) @ offset @ pbone.matrix_basis
+        memo[name] = result
+        return result
+
+    for pbone, target in targets:
+        parent = pbone.parent
+        if parent is None:
+            rest = pbone.bone.matrix_local
+        else:
+            offset = parent.bone.matrix_local.inverted_safe() @ pbone.bone.matrix_local
+            rest = pose_of(parent) @ offset
+        pbone.matrix_basis = rest.inverted_safe() @ target
+
+
 def _detach_animation(arm):
     ad = arm.animation_data
     if ad is not None:
@@ -495,12 +551,17 @@ def apply_frame(arm, info, jointmap, cal):
     previous = _RigState(arm)
     try:
         _detach_animation(arm)
-        for bone, target in targets:
-            bone.matrix = arm_inverse @ target
-            # A child's matrix setter reads its evaluated parent. Updating here
-            # avoids a one-frame dependency lag in a multi-level hierarchy.
-            bpy.context.view_layer.update()
-            report.posed += 1
+        if _fast_ok(arm):
+            # One depsgraph evaluation for the whole pose instead of one per bone (R2).
+            _assign_bases(arm, [(bone, arm_inverse @ target) for bone, target in targets])
+            report.posed += len(targets)
+        else:
+            for bone, target in targets:
+                bone.matrix = arm_inverse @ target
+                # A child's matrix setter reads its evaluated parent. Updating here
+                # avoids a one-frame dependency lag in a multi-level hierarchy.
+                bpy.context.view_layer.update()
+                report.posed += 1
         bpy.context.view_layer.update()
     except Exception as exc:
         previous.restore()

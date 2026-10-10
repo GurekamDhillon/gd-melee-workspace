@@ -26,6 +26,7 @@ ECB_COLOR = (0.2, 0.6, 1.0, 1.0)
 FLOOR_COLOR = (0.6, 0.6, 0.6, 1.0)
 
 _OWNER_KEY = "_geno_wb_overlay_owned"
+_READY_KEY = "_geno_wb_overlay_ready"
 _MAX_HIT = 8
 _MAX_HURT = 24
 
@@ -77,12 +78,16 @@ def _material(name, color):
         material[_OWNER_KEY] = True
     else:
         _require_owned(material)
-    material.diffuse_color = color
+    if tuple(material.diffuse_color) != tuple(color):
+        material.diffuse_color = color
     return material
 
 
 def _object(collection, name, material, color, display_type):
     obj = bpy.data.objects.get(name)
+    if (obj is not None and obj.get(_READY_KEY) == display_type and obj.name in collection.objects
+            and len(obj.data.materials) == 1 and obj.data.materials[0] == material):
+        return obj   # already configured: touching these properties again only dirties the depsgraph
     if obj is None:
         mesh_name = name + ".mesh"
         mesh = bpy.data.meshes.get(mesh_name)
@@ -116,22 +121,32 @@ def _object(collection, name, material, color, display_type):
     if len(materials) != 1 or materials[0] != material:
         materials.clear()
         materials.append(material)
+    obj[_READY_KEY] = display_type
     return obj
 
 
 def _visibility(obj, visible):
-    obj.hide_viewport = not visible
-    obj.hide_render = not visible
+    # Only changes are written: hide flags dirty the depsgraph relations even when unchanged.
+    if obj.hide_viewport == visible:
+        obj.hide_viewport = not visible
+    if obj.hide_render == visible:
+        obj.hide_render = not visible
 
 
 def _write_geometry(obj, geometry):
     mesh = obj.data
+    verts = geometry["verts"]
+    edges = geometry.get("edges", [])
+    faces = geometry.get("faces", [])
+    if (len(mesh.vertices) == len(verts) and len(mesh.edges) == len(edges)
+            and len(mesh.polygons) == len(faces) and len(verts) > 0):
+        # Same topology as last frame (a sphere stays a sphere): move the vertices, keep the mesh.
+        flat = [c for v in verts for c in v]
+        mesh.vertices.foreach_set("co", flat)
+        mesh.update()
+        return
     mesh.clear_geometry()
-    mesh.from_pydata(
-        geometry["verts"],
-        geometry.get("edges", []),
-        geometry.get("faces", []),
-    )
+    mesh.from_pydata(verts, edges, faces)
     mesh.update()
 
 
@@ -188,12 +203,8 @@ def update(info, scene=None, props=None):
 
     collection = ensure_collection(scene)
 
-    # Absent entries retain their mesh storage but cannot remain visible.
-    for obj in collection.objects:
-        if _owned(obj):
-            _visibility(obj, False)
-            if obj.name.startswith("GenoWB.hit."):
-                obj["geno_wb_active"] = False
+    # Entries absent from this frame keep their mesh storage but are hidden (below).
+    touched = set()
 
     visible_hit = 0
     for slot, hit in sorted(hits.items()):
@@ -203,8 +214,11 @@ def update(info, scene=None, props=None):
             collection, "GenoWB.hit." + str(slot), material, color, "SOLID"
         )
         _write_geometry(obj, hit)
-        obj["geno_wb_slot"] = slot
-        obj["geno_wb_active"] = True
+        if obj.get("geno_wb_slot") != slot:
+            obj["geno_wb_slot"] = slot
+        if obj.get("geno_wb_active") is not True:
+            obj["geno_wb_active"] = True
+        touched.add(obj.name)
         visible = show_hit and bool(hit["verts"])
         _visibility(obj, visible)
         visible_hit += int(visible)
@@ -220,6 +234,7 @@ def update(info, scene=None, props=None):
             "WIRE",
         )
         _write_geometry(obj, hurt)
+        touched.add(obj.name)
         visible = show_hurt and bool(hurt["verts"])
         _visibility(obj, visible)
         visible_hurt += int(visible)
@@ -233,7 +248,14 @@ def update(info, scene=None, props=None):
                 collection, name, _material(name, color), color, "WIRE"
             )
             _write_geometry(obj, item)
+            touched.add(obj.name)
             _visibility(obj, enabled)
+
+    for obj in collection.objects:
+        if _owned(obj) and obj.name not in touched:
+            _visibility(obj, False)
+            if obj.name.startswith("GenoWB.hit.") and obj.get("geno_wb_active") is not False:
+                obj["geno_wb_active"] = False
 
     return {"hit": visible_hit, "hurt": visible_hurt}
 
