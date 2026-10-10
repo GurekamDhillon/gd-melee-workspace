@@ -63,7 +63,7 @@ trap 'rmdir "$sandbox/.active-run" 2>/dev/null || true' EXIT
 # marker is never touched, nor is this run's; unstamped ones (other launchers) only after 3 days.
 # Everything pruned is logged below. See prune_runs.py.
 touch "$sandbox/.last_run"
-python "$GW_ROOT/tools/port/prune_runs.py" --root "$GW_BUILD_ROOT/runs" \
+gw_python "$GW_ROOT/tools/port/prune_runs.py" --root "$GW_BUILD_ROOT/runs" \
     --keep "${MELEE_RUNS_KEEP:-${GW_RUNS_KEEP:-40}}" --current "$name" || gw_die "sandbox safety check failed"
 cp -f "$GW_EXE" "$sandbox/melee-pc.exe"
 if [ -f "$GW_MAP" ]; then cp -f "$GW_MAP" "$sandbox/melee-pc.map"; fi
@@ -91,7 +91,7 @@ fi
 # largest cache of this build root whose game is not running (a live one may be mid-write).
 # GW_DAWN_CACHE_SEED=0 keeps the old cold start (e.g. to measure a first launch).
 if [ ! -f "$sandbox/dawn_cache.db" ] && [ "${GW_DAWN_CACHE_SEED:-1}" != 0 ]; then
-    python "$GW_ROOT/tools/port/runs.py" --root "$GW_BUILD_ROOT/runs" seed-cache --sandbox "$sandbox" ||
+    gw_python "$GW_ROOT/tools/port/runs.py" --root "$GW_BUILD_ROOT/runs" seed-cache --sandbox "$sandbox" ||
         echo "cache seed skipped: process inventory or cache copy failed" >&2
 fi
 
@@ -173,7 +173,7 @@ echo "exit      $rc"
 # The perf record (perf.json, written by the engine's always-on summary): one verdict line.
 # PASS/WARN/FAIL/NOISY; a noisy run is never judged. Not for --test (headless: nothing to time).
 if [ "$test_mode" != "1" ] && [ -f "$sandbox/perf.json" ]; then
-    python "$GW_ROOT/tools/port/perfjudge.py" "$sandbox" 2>/dev/null || true
+    gw_python "$GW_ROOT/tools/port/perfjudge.py" "$sandbox" 2>/dev/null || true
 fi
 if [ -f "$sandbox/melee-pc.log" ]; then
     n="$(grep -c FATAL "$sandbox/melee-pc.log" || true)"

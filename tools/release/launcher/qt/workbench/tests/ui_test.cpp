@@ -16,6 +16,7 @@
 #include <QDockWidget>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMessageBox>
 #include <QTcpSocket>
 #include <QSemaphore>
 #include <QSignalSpy>
@@ -74,6 +75,65 @@ class UiTest : public QObject {
     Q_OBJECT
 private slots:
     void initTestCase() { launcher::spanish = false; launcher::applyTheme(); }
+    void playLabUsesCurrentProjectAndRowThroughSharedTool() {
+        ScopedEnvironment python("GW_PYTHON", WB_PLAY_HELPER);
+        QTemporaryDir dir; wbtest::makeSynthFighter(dir.path());
+        wbtest::put(dir.path(), ".git", "gitdir: unused");
+        wbtest::put(dir.path(), "tools/geno/play.py", "# synthetic, helper substitutes only process boundary");
+        Session s(dir.path(), nullptr); s.data().reload(); registerAllCommands(s);
+        WorkbenchWindow w(s); QTRY_VERIFY(!w.isBusy());
+        w.runCommand("load_row", {{"row", "dair"}}); QTRY_VERIFY(!w.isBusy());
+        auto *button = w.findChild<QPushButton *>("wbPlayLab"); QVERIFY(button); QVERIFY(button->isEnabled());
+        button->click(); QTRY_VERIFY(!w.isBusy());
+        QFile request(dir.filePath(".play-requests.json")); QVERIFY(request.open(QIODevice::ReadOnly));
+        const auto calls = QJsonDocument::fromJson(request.readAll()).array(); QCOMPARE(calls.size(), 2);
+        const auto check = calls[0].toArray(), launch = calls[1].toArray();
+        QCOMPARE(check[0].toString(), dir.filePath("tools/geno/play.py"));
+        QCOMPARE(check[2].toString(), dir.path()); QVERIFY(check.contains("--check"));
+        QVERIFY(launch.contains("--lab")); QVERIFY(launch.contains("--clip")); QVERIFY(launch.contains("dair"));
+        QVERIFY(!launch.contains("--check")); QVERIFY(!launch.contains("--rebuild"));
+        QVERIFY(w.statusText().contains("melee-pc.log"));
+    }
+    void playVsCpuDoesNotRequestClips() {
+        ScopedEnvironment python("GW_PYTHON", WB_PLAY_HELPER);
+        QTemporaryDir dir; wbtest::makeSynthFighter(dir.path());
+        wbtest::put(dir.path(), ".git", "gitdir: unused"); wbtest::put(dir.path(), "tools/geno/play.py", "# synthetic");
+        Session s(dir.path(), nullptr); s.data().reload(); registerAllCommands(s);
+        WorkbenchWindow w(s); QTRY_VERIFY(!w.isBusy());
+        auto *button = w.findChild<QPushButton *>("wbPlayCpu"); QVERIFY(button); button->click();
+        QTRY_VERIFY(!w.isBusy()); QFile request(dir.filePath(".play-requests.json")); QVERIFY(request.open(QIODevice::ReadOnly));
+        const auto calls = QJsonDocument::fromJson(request.readAll()).array(); QCOMPARE(calls.size(), 2);
+        const auto args = calls[1].toArray(); QVERIFY(args.contains("--vs")); QVERIFY(args.contains("cpu"));
+        QVERIFY(!args.contains("--clip")); QVERIFY(!args.contains("--lab"));
+    }
+    void stalePlayOffersRebuildAndCanBeCancelled() {
+        ScopedEnvironment python("GW_PYTHON", WB_PLAY_HELPER), stale("WB_PLAY_HELPER_STALE", "1");
+        QTemporaryDir dir; wbtest::makeSynthFighter(dir.path());
+        wbtest::put(dir.path(), ".git", "gitdir: unused"); wbtest::put(dir.path(), "tools/geno/play.py", "# synthetic");
+        Session s(dir.path(), nullptr); s.data().reload(); registerAllCommands(s);
+        WorkbenchWindow w(s); QTRY_VERIFY(!w.isBusy()); w.findChild<QPushButton *>("wbPlayLab")->click();
+        QTRY_VERIFY(w.findChild<QMessageBox *>("wbPlayRebuild") != nullptr);
+        auto *dialog = w.findChild<QMessageBox *>("wbPlayRebuild");
+        QVERIFY(w.isBusy()); QVERIFY(!w.findChild<QPushButton *>("wbPlayLab")->isEnabled());
+        dialog->button(QMessageBox::Cancel)->click(); QTRY_VERIFY(!w.isBusy());
+        QFile request(dir.filePath(".play-requests.json")); QVERIFY(request.open(QIODevice::ReadOnly));
+        QCOMPARE(QJsonDocument::fromJson(request.readAll()).array().size(), 1);
+    }
+    void acceptedRebuildKeepsSelectionAndFailureIsVisible() {
+        ScopedEnvironment python("GW_PYTHON", WB_PLAY_HELPER), stale("WB_PLAY_HELPER_STALE", "1"),
+                          fail("WB_PLAY_HELPER_FAIL", "1");
+        QTemporaryDir dir; wbtest::makeSynthFighter(dir.path());
+        wbtest::put(dir.path(), ".git", "gitdir: unused"); wbtest::put(dir.path(), "tools/geno/play.py", "# synthetic");
+        Session s(dir.path(), nullptr); s.data().reload(); registerAllCommands(s);
+        WorkbenchWindow w(s); QTRY_VERIFY(!w.isBusy());
+        w.findChild<QPushButton *>("wbPlayLab")->click();
+        QTRY_VERIFY(w.findChild<QMessageBox *>("wbPlayRebuild") != nullptr);
+        auto *accept = w.findChild<QPushButton *>("wbPlayRebuildAccept"); QVERIFY(accept); accept->click();
+        QTRY_VERIFY(!w.isBusy()); QVERIFY(w.statusText().contains("synthetic rebuild refused"));
+        QFile request(dir.filePath(".play-requests.json")); QVERIFY(request.open(QIODevice::ReadOnly));
+        const auto calls = QJsonDocument::fromJson(request.readAll()).array(); QCOMPARE(calls.size(), 2);
+        QVERIFY(calls[1].toArray().contains("--rebuild")); QVERIFY(calls[1].toArray().contains("jab1"));
+    }
     void timelineKeysEmitFrames() {
         Timeline t; t.setRange(40); t.setFrame(10); t.show();
         QSignalSpy spy(&t, &Timeline::frameRequested);

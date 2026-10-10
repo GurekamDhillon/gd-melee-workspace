@@ -4,9 +4,8 @@ Geno Workbench requires Blender 4.x. Its pure Python modules use the standard
 library. The add-on communicates with the workbench server at `127.0.0.1`;
 project edits are workbench tool calls.
 
-This Task 6 shell provides connection controls, scene properties, and the
-session API. Rig loading, posing, overlays, timeline controls, and editing
-panels arrive in their respective later tasks.
+The add-on provides connection controls, rig and pose inspection, editing,
+timeline controls, splice authoring and independent playtesting.
 
 ## Install
 
@@ -42,6 +41,16 @@ An externally started launcher or hub remains owned by its original caller.
 TCP calls use a ten-second timeout. Server startup uses a thirty-second
 timeout. Owned-process shutdown uses a one-second terminate wait followed,
 if necessary, by a one-second kill wait.
+
+## Playtest
+
+The **Geno > Playtest** panel provides **Play in LAB** and **Play vs CPU** using the current **Project**. Project can be a workbench directory or an artist `fighter.json`. No workbench server connection is needed to launch.
+
+LAB opens the selected Move/row directly in CLIPS; with no selection it opens regular LAB. VS gives you a live level 9 Mario CPU. Both use a fresh run directory and a real-time window. The status reports the log path after launch, and the game continues independently of the add-on.
+
+If authored source is newer than the package, the dialog offers **Rebuild gameplay first**. Accepting reuses cached art; cancelling starts nothing. Changed art or an artist package built before the gameplay-cache support needs a full build first. The async helper keeps Blender responsive during a gameplay rebuild.
+
+Engine, Mods and Disc image settings in Connect also apply to play. Local `.env` disc settings are used when no override is provided. Install Python and Git Bash or set `GW_PYTHON` / `GW_BASH`. A copied add-on locates `tools/geno/play.py` from the selected project's nearest checkout; for an external project, set `GW_ROOT` to its tools workspace.
 
 ## Bootstrap without installation
 

@@ -70,10 +70,12 @@ def register():
         )
         _owns_scene_property = True
         operators.install_callbacks()
-        from . import operators_fighter, panels_fighter
+        from . import operators_fighter, panels_fighter, operators_play, panels_play
 
         operators_fighter.register()
         panels_fighter.register()
+        operators_play.register()
+        panels_play.register()
         _registered = True
     except Exception:
         try:
@@ -96,7 +98,7 @@ def unregister():
     _registered = False
     errors = []
 
-    for name in ("panels_fighter", "operators_fighter"):
+    for name in ("panels_play", "operators_play", "panels_fighter", "operators_fighter"):
         try:
             module = __import__(f"{__name__}.{name}", fromlist=["unregister"])
             module.unregister()

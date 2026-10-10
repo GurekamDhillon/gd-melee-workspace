@@ -3,6 +3,7 @@
 #define WB_CORE_USE_LAUNCHER_T 1
 #include "commands.h"
 #include "blender_launch.h"
+#include "play_launch.h"
 #include "geno_data.h"
 #include "hub_panel.h"
 #include "mcp_server.h"
@@ -20,6 +21,9 @@
 #include <QJsonDocument>
 #include <QJsonParseError>
 #include <QLabel>
+#include <QMessageBox>
+#include <QPointer>
+#include <QProcess>
 #include <QQueue>
 #include <QScopedValueRollback>
 #include <QScrollArea>
@@ -217,7 +221,10 @@ struct WorkbenchWindow::Impl {
     QQueue<Request> queue;
     Request active;
     bool running = false, closing = false, closeWindow = false, disposing = false, disposed = false;
-    bool pendingBlenderOpen = false;
+    bool pendingBlenderOpen = false, playLaunching = false;
+    PlayCommand pendingPlay;
+    QPointer<QProcess> playProcess;
+    QPointer<QMessageBox> playDialog;
     quint16 listenerPort = 0;
     quint64 rowIntent = 0, frameIntent = 0;
     HubPanel *hub;
@@ -265,6 +272,8 @@ struct WorkbenchWindow::Impl {
             // current state before deciding whether Blender needs an engine start.
             q->runCommand("engine_status", {});
         });
+        QObject::connect(hub, &HubPanel::playInLabRequested, q, [this] { playFighter(false); });
+        QObject::connect(hub, &HubPanel::playVsCpuRequested, q, [this] { playFighter(true); });
         auto *rowLine = new QHBoxLayout; layout->addLayout(rowLine);
         rowLine->addWidget(kit::capLabel(t("Move", "Movimiento"), atlas::Role::Cap16));
         rows = new QComboBox; rows->setObjectName("wbRows"); rows->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -423,7 +432,7 @@ struct WorkbenchWindow::Impl {
         const auto *hit = selectedHitbox(); restoringFrame = hit ? hit->startFrame : 0;
         q->runCommand("load_row", {{"row", row}});
     }
-    bool busy() const { return running || !queue.isEmpty(); }
+    bool busy() const { return running || playLaunching || !queue.isEmpty(); }
     void setPlaying(bool on) {
         on = on && timeline->frameCount() > 0 && !closing;
         if (on) playTimer.start(); else playTimer.stop();
@@ -441,8 +450,89 @@ struct WorkbenchWindow::Impl {
             "Define art_blend o art_glb en workbench.json para abrir el luchador");
         return blenderCommand(blender, addon, snapshot.projectDir, 1, snapshot.art).error;
     }
+    void finishPlay(const QString &message) {
+        playLaunching = false;
+        if (!closing) status(message);
+        pump(); notifyBusy();
+    }
+    void startPlayProcess(bool check, bool rebuild = false) {
+        if (closing) { finishPlay({}); return; }
+        playLaunching = true; notifyBusy();
+        status(check ? t("Checking package…", "Comprobando el paquete…") :
+            rebuild ? t("Rebuilding gameplay before play…", "Reconstruyendo la jugabilidad antes de jugar…") :
+                      t("Opening game…", "Abriendo el juego…"));
+        auto *process = new QProcess(q); playProcess = process;
+        process->setProgram(pendingPlay.program);
+        auto args = pendingPlay.args;
+        if (check) args << "--check";
+        if (rebuild) args << "--rebuild";
+        process->setArguments(args); process->setWorkingDirectory(pendingPlay.workingDir);
+        QObject::connect(process, &QProcess::errorOccurred, q, [this, process](QProcess::ProcessError error) {
+            if (playProcess != process || error != QProcess::FailedToStart) return;
+            const auto message = process->errorString(); playProcess = nullptr; process->deleteLater();
+            finishPlay(t("Could not start the play tool: %1", "No se pudo iniciar la herramienta de juego: %1").arg(message));
+        });
+        QObject::connect(process, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), q,
+            [this, process, check](int code, QProcess::ExitStatus exit) {
+                if (playProcess != process) return;
+                const auto output = process->readAllStandardOutput();
+                const auto stderrText = QString::fromUtf8(process->readAllStandardError()).trimmed();
+                playProcess = nullptr; process->deleteLater();
+                if (closing) { finishPlay({}); return; }
+                QJsonParseError parse;
+                const auto document = QJsonDocument::fromJson(output.trimmed(), &parse);
+                const auto result = document.object();
+                if (exit != QProcess::NormalExit || code != 0 || parse.error != QJsonParseError::NoError ||
+                    !document.isObject() || !result.value("ok").toBool()) {
+                    QString error = result.value("error").toString();
+                    if (error.isEmpty()) error = stderrText;
+                    if (error.isEmpty()) error = t("Play tool returned an invalid result", "La herramienta de juego devolvió un resultado inválido");
+                    finishPlay(t("Play failed: %1", "No se pudo jugar: %1").arg(error)); return;
+                }
+                if (!check) {
+                    finishPlay(t("Game launch started. Log: %1", "Se inició el juego. Registro: %1")
+                        .arg(result.value("log_path").toString())); return;
+                }
+                const auto stale = result.value("stale").toArray();
+                if (stale.isEmpty()) { startPlayProcess(false); return; }
+                if (!result.value("can_rebuild").toBool()) {
+                    finishPlay(t("Package is stale. Configure a gameplay rebuild in workbench.json before playing.",
+                        "El paquete está desactualizado. Configura una reconstrucción de jugabilidad en workbench.json antes de jugar."));
+                    return;
+                }
+                auto *dialog = new QMessageBox(QMessageBox::Warning,
+                    t("Rebuild before play", "Reconstruir antes de jugar"),
+                    t("The package is stale. Rebuild gameplay before opening the game?",
+                      "El paquete está desactualizado. ¿Reconstruir la jugabilidad antes de abrir el juego?"),
+                    QMessageBox::Cancel, q);
+                dialog->setObjectName("wbPlayRebuild"); dialog->setAttribute(Qt::WA_DeleteOnClose);
+                QStringList reasons; for (const auto &reason : stale) reasons << reason.toString();
+                dialog->setDetailedText(reasons.join('\n'));
+                auto *accept = dialog->addButton(t("Rebuild and play", "Reconstruir y jugar"), QMessageBox::AcceptRole);
+                accept->setObjectName("wbPlayRebuildAccept"); dialog->setDefaultButton(accept);
+                playDialog = dialog;
+                QObject::connect(dialog, &QMessageBox::finished, q, [this, dialog, accept](int) {
+                    const bool rebuild = dialog->clickedButton() == accept;
+                    playDialog = nullptr;
+                    if (rebuild && !closing) startPlayProcess(false, true);
+                    else finishPlay(t("Play cancelled", "Juego cancelado"));
+                });
+                dialog->open();
+            });
+        process->start();
+        process->closeWriteChannel();
+    }
+    void playFighter(bool vsCpu) {
+        if (busy() || closing) return;
+        setPlaying(false);
+        pendingPlay = playCommand(snapshot.projectDir, vsCpu, row);
+        if (!pendingPlay.error.isEmpty()) { status(pendingPlay.error); return; }
+        // Freeze project/move arguments across the check and rebuild prompt.
+        startPlayProcess(true);
+    }
     void notifyBusy() {
         hub->setControls(busy() || closing, snapshot.canStop, snapshot.ownedEngine, blenderError());
+        hub->setPlayControls(busy() || closing, playCommand(snapshot.projectDir, false, row).error);
         emit q->busyChanged(busy());
     }
     void openBlender() {
@@ -481,7 +571,7 @@ struct WorkbenchWindow::Impl {
         pump(); notifyBusy();
     }
     void pump() {
-        if (running) return;
+        if (running || playLaunching) return;
         if (closing) { dispose(); return; }
         if (queue.isEmpty()) {
             if (pendingBlenderOpen) { pendingBlenderOpen = false; openBlender(); }
@@ -662,6 +752,7 @@ bool WorkbenchWindow::shutdownComplete() const { return d_->disposed; }
 void WorkbenchWindow::shutdown() {
     if (d_->closing) return;
     d_->closing = true; d_->setPlaying(false); d_->queue.clear(); d_->pendingBlenderOpen = false;
+    if (d_->playDialog) d_->playDialog->reject();
     d_->status(t("Stopping Creator…", "Deteniendo Creador…")); d_->pump(); d_->notifyBusy();
 }
 void WorkbenchWindow::closeEvent(QCloseEvent *event) {

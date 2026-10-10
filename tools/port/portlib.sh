@@ -33,7 +33,9 @@ if [ -z "${GW_ROOT:-}" ]; then
 fi
 # Optional per-machine settings: ISO paths and any toolchain override. Not tracked (see
 # .gitignore); SETUP.md documents it. Sourced before the defaults below so it can set anything.
-if [ -f "$GW_ROOT/.env" ]; then
+# play.py has already resolved literal settings and finalized its interactive launch env.
+# Preserve those choices; ordinary build/run callers still load .env as before.
+if [ "${GW_ENV_RESOLVED:-0}" != 1 ] && [ -f "$GW_ROOT/.env" ]; then
     # shellcheck disable=SC1091
     . "$GW_ROOT/.env"
 fi
@@ -75,13 +77,18 @@ gw_die() {
     exit 1
 }
 
+# Use the same interpreter selected by UI callers; keep python as the existing default.
+gw_python() {
+    "${GW_PYTHON:-python}" "$@"
+}
+
 # Disk guard: refuse when the drive holding $1 (default the build root) has less than
 # MELEE_MIN_FREE_GB (default 20) free. Callers pass --allow-low-disk (sets GW_ALLOW_LOW_DISK=1) to
 # override; MELEE_ALLOW_LOW_DISK=1 does the same for a whole shell. See tools/port/disk_guard.py.
 gw_disk_guard() {
     local args=(--path "${1:-$GW_BUILD_ROOT}")
     if [ "${GW_ALLOW_LOW_DISK:-0}" = 1 ]; then args+=(--allow-low-disk); fi
-    python "$GW_ROOT/tools/port/disk_guard.py" "${args[@]}" || exit 1
+    gw_python "$GW_ROOT/tools/port/disk_guard.py" "${args[@]}" || exit 1
 }
 
 # Native Windows Python creates the suspended child and its kill-on-close job.
@@ -91,7 +98,7 @@ gw_run_owned() {
     local -a unattended=()
     shift 2
     [ "${MELEE_UNATTENDED:-0}" != 1 ] || unattended=(--unattended)
-    python "$GW_ROOT/tools/port/runs.py" launch --sandbox "$(gw_win_path "$sandbox")" \
+    gw_python "$GW_ROOT/tools/port/runs.py" launch --sandbox "$(gw_win_path "$sandbox")" \
         --max-seconds "$seconds" "${unattended[@]}" -- "$@"
 }
 

@@ -20,6 +20,7 @@ def main(argv=None):
     b = sub.add_parser("build", help="validate, convert, build, install into an isolated test mods folder")
     b.add_argument("config")
     b.add_argument("--out")
+    b.add_argument("--gameplay-only", action="store_true", help="reassemble gameplay using current cached art; refuses when a full build is needed")
     b.add_argument("--export", action="store_true", help="re-export the glb from art.blend even if it is newer")
     b.add_argument("--strict", action="store_true", help="warnings stop the build too")
     n = sub.add_parser("new", help="scaffold a starter .blend and fighter.json")
@@ -39,7 +40,12 @@ def main(argv=None):
     if a.cmd == "validate":
         return validate.main([a.config] + (["--json"] if a.json else []) + (["-v"] if a.verbose else []))
     if a.cmd == "build":
-        code, _ = pipeline.build(a.config, a.out, strict=a.strict, force_export=a.export)
+        if a.gameplay_only:
+            if a.export:
+                ap.error("--gameplay-only cannot export art")
+            code, _ = pipeline.build_gameplay(a.config, a.out)
+        else:
+            code, _ = pipeline.build(a.config, a.out, strict=a.strict, force_export=a.export)
         return code
     if a.cmd == "new":
         pipeline.new_character(a.dest, a.key, a.name or a.key.title(), a.params)

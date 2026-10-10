@@ -9,6 +9,7 @@ Outputs under <out> (default <workspace>/_build/artist/<key>/, never committed):
     mods/enabled.txt  what MELEE_MODS_DIR loads
 """
 import json
+import re
 import os
 import shutil
 import subprocess
@@ -142,6 +143,9 @@ def build(cfg_path, out=None, install=True, log=print, strict=False, force_expor
             shutil.copytree(lab_src, lab_dst)
         with open(os.path.join(mods, "enabled.txt"), "w", newline="\n") as fh:
             fh.write("geno-lab\n%s\n" % f.key)
+    from . import gameplay_cache
+    gameplay_cache.write(cfg_path, bd, token=f.token, costumes=f.costumes,
+                         height=height, ref_speeds=getattr(f, "ref_speeds", {}))
     write_report(f, rep, out, bd, plan, nbytes)
     log("OK in %.0f s.  Report: %s" % (time.time() - t0, os.path.join(bd, "build-report.md")))
     log("Preview (LAB):  " + run_command(f, out))
@@ -172,3 +176,63 @@ def write_report(f, rep, out, bd, plan, nbytes):
     lines.append(", ".join(c.name for c in um) or "none")
     open(os.path.join(bd, "build-report.md"), "w", encoding="utf-8", newline="\n").write("\n".join(lines) + "\n")
 
+
+
+def build_gameplay(cfg_path, out=None, log=print):
+    """Reassemble cached art into a checked package without Blender/fighterbuild.
+
+    The first full build records the Stage A contract. Changes outside moves,
+    attributes, jumps and display name require another full build.
+    """
+    from pathlib import Path
+    from types import SimpleNamespace
+    import tempfile
+    from . import gameplay_cache
+
+    cfg_path = os.path.abspath(cfg_path)
+    cfg = M.load_json(cfg_path)
+    key = cfg.get("key", "")
+    if not isinstance(key, str) or not re.fullmatch(r"[a-z0-9][a-z0-9-]*", key):
+        raise ArtistError("fighter.json has an invalid define key")
+    shell = SimpleNamespace(cfg=cfg, base=os.path.dirname(cfg_path), key=key)
+    out = out_dir(shell, out)
+    bd = Path(out) / "build"
+    try:
+        cache = gameplay_cache.read_current(cfg_path, bd)
+    except ValueError as exc:
+        raise ArtistError(str(exc)) from exc
+    f = SimpleNamespace(cfg=cfg, key=key, name=cfg.get("name") or key,
+                        token=cache["token"], costumes=cache["costumes"])
+    required = [bd / "plan.json", bd / ("Gn%sAJ.dat" % f.token)]
+    required += [bd / ("Gn%s_%s.dat" % (f.token, c["name"])) for c in f.costumes]
+    missing = [str(p) for p in required if not p.is_file()]
+    if missing:
+        raise ArtistError("Gameplay-only rebuild needs a full build first; missing: " + ", ".join(missing))
+    height = cache["height"]
+    scale = float(cfg.get("moves", {}).get("hitbox_scale") or max(0.5, min(1.5, height / 11.7)))
+    destination = Path(out) / "mods" / key
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="play-gameplay-", dir=out) as tmp:
+        staged = Path(tmp) / key
+        log("Rebuilding gameplay; using cached plan, models and animation bank")
+        n, notes = A.assemble(f, str(bd), str(staged), scale, cache["ref_speeds"], log)
+        result = subprocess.run([sys.executable, "-m", "tools.geno.check", str(staged)],
+                                cwd=spec.workspace_root(), capture_output=True, text=True,
+                                env=dict(os.environ, GW_MELEE=spec.game_dir()))
+        log((result.stdout + result.stderr).strip())
+        if result.returncode:
+            log("STOPPED: rebuilt gameplay did not check; the installed package was kept.")
+            return result.returncode, None
+        previous = Path(tmp) / "previous"
+        if destination.exists():
+            destination.rename(previous)
+        try:
+            staged.rename(destination)
+        except OSError:
+            if previous.exists():
+                previous.rename(destination)
+            raise
+    log("Gameplay rebuilt: %d move scripts; art and animation bank reused." % n)
+    for note in notes:
+        log("  note: " + note)
+    return 0, f

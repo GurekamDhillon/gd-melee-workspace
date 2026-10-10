@@ -32,6 +32,13 @@ HubPanel::HubPanel(QWidget *parent) : QWidget(parent), layout_(new QVBoxLayout(t
     auto *hint = new QLabel(t("Blender shows the fighter; this window keeps the problems, review and history panels.",
         "Blender muestra al luchador; esta ventana conserva los paneles de problemas, revision e historial."));
     hint->setObjectName("wbBlenderHint"); hint->setWordWrap(true); layout_->addWidget(hint);
+    auto *playButtons = new QHBoxLayout; layout_->addLayout(playButtons);
+    playLab_ = new kit::Button(t("Play in LAB", "Jugar en LAB")); playLab_->setObjectName("wbPlayLab"); playButtons->addWidget(playLab_);
+    playCpu_ = new kit::Button(t("Play vs CPU", "Jugar contra CPU")); playCpu_->setObjectName("wbPlayCpu"); playButtons->addWidget(playCpu_);
+    playNote_ = new QLabel; playNote_->setObjectName("wbPlayNote"); playNote_->setTextFormat(Qt::PlainText);
+    playNote_->setWordWrap(true); layout_->addWidget(playNote_);
+    connect(playLab_, &QPushButton::clicked, this, &HubPanel::playInLabRequested);
+    connect(playCpu_, &QPushButton::clicked, this, &HubPanel::playVsCpuRequested);
     connect(start_, &QPushButton::clicked, this, &HubPanel::startRequested);
     connect(stop_, &QPushButton::clicked, this, &HubPanel::stopRequested);
     connect(restart_, &QPushButton::clicked, this, &HubPanel::restartRequested);
@@ -48,6 +55,11 @@ void HubPanel::setEngineStatus(const QString &status) {
     else engine_->setText(t("Engine: %1", "Motor: %1").arg(status));
 }
 void HubPanel::setHeadless(bool headless) { const QSignalBlocker block(headless_); headless_->setChecked(headless); }
+void HubPanel::setPlayControls(bool busy, const QString &error) {
+    playLab_->setEnabled(!busy && error.isEmpty()); playCpu_->setEnabled(!busy && error.isEmpty());
+    playLab_->setToolTip(error); playCpu_->setToolTip(error);
+    playNote_->setText(error); playNote_->setVisible(!error.isEmpty());
+}
 void HubPanel::setControls(bool busy, bool canStop, bool canChangeMode, const QString &blenderError) {
     start_->setEnabled(!busy); restart_->setEnabled(!busy); stop_->setEnabled(!busy && canStop);
     headless_->setEnabled(!busy && canChangeMode);
