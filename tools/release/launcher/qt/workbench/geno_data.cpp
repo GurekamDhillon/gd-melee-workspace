@@ -337,6 +337,20 @@ QString GenoData::externalError(const QStringList &paths) const {
         if (!path.isEmpty() && changed.contains(path, sensitivity)) return "changed externally: " + path;
     return {};
 }
+// gameplay.json and, when present, the git-ignored gameplay.full.json the builder reads, both declare windows.
+void GenoData::syncGameplay(QVector<FileChange> &out, int moveIndex, const QVector<HitboxRef> &before,
+                            const QVector<HitboxRef> &after, int added, int removed) const {
+    const QString gameplay = syncDeclarations(gameplayText_, project_.gameplay, moveIndex, before, after, added, removed);
+    if (gameplay != gameplayText_) out.append({project_.gameplay, gameplayBytes_, sourceBytes(gameplay, gameplayBytes_)});
+    QString full = project_.gameplay;
+    if (!full.endsWith(".json")) return;
+    full.chop(5); full += ".full.json";
+    if (!fs_.exists(full)) return;
+    const auto fullBytes = fs_.read(full);
+    const QString fullText = sourceText(fullBytes, full);
+    const QString patched = syncDeclarations(fullText, full, moveIndex, before, after, added, removed);
+    if (patched != fullText) out.append({full, fullBytes, sourceBytes(patched, fullBytes)});
+}
 QVector<FileChange> GenoData::editHitbox(const QString &name, int ordinal, const HitboxEdit &edit, QString *err) const {
     if (err) err->clear();
     try {
@@ -350,9 +364,7 @@ QVector<FileChange> GenoData::editHitbox(const QString &name, int ordinal, const
         const auto changed = GenoAsm::parse(sourceText(bytes, row->script)).apply(ordinal, edit, &error);
         if (!error.isEmpty() || changed.isNull()) fail(row->script + ": " + error);
         QVector<FileChange> out{{row->script, bytes, sourceBytes(changed, bytes)}};
-        const QString gameplay = syncDeclarations(gameplayText_, project_.gameplay, row->moveIndex,
-            hitboxes(name), GenoAsm::parse(changed).hitboxes(), -1, -1);
-        if (gameplay != gameplayText_) out.append({project_.gameplay, gameplayBytes_, sourceBytes(gameplay, gameplayBytes_)});
+        syncGameplay(out, row->moveIndex, hitboxes(name), GenoAsm::parse(changed).hitboxes(), -1, -1);
         return out;
     } catch (const std::exception &e) {
         if (err) *err = QString::fromUtf8(e.what());
@@ -372,9 +384,7 @@ QVector<FileChange> GenoData::addHitbox(const QString &name, const HitboxAdd &ad
         const auto changed = GenoAsm::parse(sourceText(bytes, row->script)).addHitbox(add, &error, ordinal);
         if (!error.isEmpty() || changed.isNull()) fail(row->script + ": " + error);
         QVector<FileChange> out{{row->script, bytes, sourceBytes(changed, bytes)}};
-        const QString gameplay = syncDeclarations(gameplayText_, project_.gameplay, row->moveIndex,
-            hitboxes(name), GenoAsm::parse(changed).hitboxes(), ordinal ? *ordinal : -1, -1);
-        if (gameplay != gameplayText_) out.append({project_.gameplay, gameplayBytes_, sourceBytes(gameplay, gameplayBytes_)});
+        syncGameplay(out, row->moveIndex, hitboxes(name), GenoAsm::parse(changed).hitboxes(), ordinal ? *ordinal : -1, -1);
         return out;
     } catch (const std::exception &e) {
         if (err) *err = QString::fromUtf8(e.what());
@@ -394,9 +404,7 @@ QVector<FileChange> GenoData::removeHitbox(const QString &name, int ordinal, QSt
         const auto changed = GenoAsm::parse(sourceText(bytes, row->script)).removeHitbox(ordinal, &error);
         if (!error.isEmpty() || changed.isNull()) fail(row->script + ": " + error);
         QVector<FileChange> out{{row->script, bytes, sourceBytes(changed, bytes)}};
-        const QString gameplay = syncDeclarations(gameplayText_, project_.gameplay, row->moveIndex,
-            hitboxes(name), GenoAsm::parse(changed).hitboxes(), -1, ordinal);
-        if (gameplay != gameplayText_) out.append({project_.gameplay, gameplayBytes_, sourceBytes(gameplay, gameplayBytes_)});
+        syncGameplay(out, row->moveIndex, hitboxes(name), GenoAsm::parse(changed).hitboxes(), -1, ordinal);
         return out;
     } catch (const std::exception &e) {
         if (err) *err = QString::fromUtf8(e.what());

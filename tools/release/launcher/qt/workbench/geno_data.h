@@ -47,6 +47,8 @@ public:
 private:
     const RowInfo *findRow(const QString &name) const;
     QString externalError(const QStringList &paths) const;
+    void syncGameplay(QVector<FileChange> &out, int moveIndex, const QVector<HitboxRef> &before,
+                      const QVector<HitboxRef> &after, int added, int removed) const;
     FileStore &fs_;
     ProjectConfig project_;
     QVector<RowInfo> rows_;
