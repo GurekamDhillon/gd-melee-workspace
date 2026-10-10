@@ -29,7 +29,7 @@ gd.run(function()
     gd.set_percent(1, 0); gd.set_percent(2, 0); gd.set_stocks(1, 99); gd.set_stocks(2, 99)
     pcall(gd.teleport, 1, 0, 0); pcall(gd.teleport, 2, x, 0)
     gd.wait(5); gd.wait_until(ready, 600); gd.wait(10)
-    gd.input(1, { buttons = "A", y = 70 }, 3)
+    gd.input(1, { buttons = "A", y = 40 }, 3)
     local last = -1
     for f = 1, 45 do
       gd.wait(1)
