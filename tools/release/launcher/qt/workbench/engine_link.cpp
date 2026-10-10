@@ -362,7 +362,18 @@ bool EngineLink::startImpl(QString *err) {
                 if (generation != stopGeneration_) { console_.close(); setError(err, "engine start cancelled"); return false; }
                 if (process_.state() != QProcess::Running) return fail("engine exited while loading the fighter");
                 const auto probe = console_.call("=wb.frame_info()", std::min(3000, remaining(timer, 60000)));
-                if (probe.ok && !probe.text.trimmed().isEmpty()) { state_ = "ready"; setError(err, {}); return true; }
+                if (probe.ok && !probe.text.trimmed().isEmpty()) {
+                    // The fighter exists while the scene's entry still plays unpaused (about a second). A frame
+                    // request made then can stay pending for good, so wait for the workbench's own pause.
+                    while (remaining(timer, 60000)) {
+                        if (generation != stopGeneration_) { console_.close(); setError(err, "engine start cancelled"); return false; }
+                        if (process_.state() != QProcess::Running) return fail("engine exited while loading the fighter");
+                        const auto paused = console_.call("=tostring(gd.paused())", std::min(2000, remaining(timer, 60000)));
+                        if (paused.ok && paused.text.trimmed().startsWith("true")) break;
+                        pumpFor(std::min(100, remaining(timer, 60000)));
+                    }
+                    state_ = "ready"; setError(err, {}); return true;
+                }
                 lastReply = probe.text;
                 pumpFor(std::min(250, remaining(timer, 60000)));
             }
