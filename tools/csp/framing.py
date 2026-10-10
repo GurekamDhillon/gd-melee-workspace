@@ -81,6 +81,17 @@ def facing_from_feet(feet, toes):
     return norm((x, y, 0.0))
 
 
+def facing_from_sides(left, right):
+    """Horizontal facing from a character-left/character-right joint pair: left x up.
+
+    Checked on Goku (left = +X, toes toward -Y: facing = (0, -1, 0)).
+    """
+    x, y = left[0] - right[0], left[1] - right[1]
+    if abs(x) + abs(y) < 1e-6:
+        raise ValueError('left and right joints coincide horizontally')
+    return norm((y, -x, 0.0))
+
+
 def camera_basis(facing, yaw_degrees=0.0, pitch_degrees=0.0):
     """Basis of a camera that sees the fighter's front, turned by yaw (about Z) and pitched.
 
@@ -236,4 +247,5 @@ def resolve_role_bones(plan_doc, aliases=None, overrides=None):
 
 # role names used by the crop rules -> keys in the 'joints' dict handed to anchor_points
 ANCHOR_ROLES = {'hips': 'hips', 'spine': 'spine', 'chest': 'chest', 'neck': 'neck', 'head': 'head',
+                'upper_leg.L': 'leg_l', 'upper_leg.R': 'leg_r', 'shoulder.L': 'sh_l', 'shoulder.R': 'sh_r',
                 'foot.L': 'foot_l', 'foot.R': 'foot_r', 'toe.L': 'toe_l', 'toe.R': 'toe_r'}

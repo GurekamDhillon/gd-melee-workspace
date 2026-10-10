@@ -65,9 +65,13 @@ def skeleton_frame_inputs(rig, roles, meshes):
     joints = joint_points(rig, roles)
     points = world_points(meshes)
     anchors = framing.anchor_points(joints, points)
-    feet = [joints[k] for k in ('foot_l', 'foot_r') if k in joints and k.replace('foot', 'toe') in joints]
-    toes = [joints[k.replace('foot', 'toe')] for k in ('foot_l', 'foot_r') if k in joints and k.replace('foot', 'toe') in joints]
-    facing = framing.facing_from_feet(feet, toes) if feet else None
+    facing = None
+    for left, right in (('leg_l', 'leg_r'), ('sh_l', 'sh_r')):
+        if left in joints and right in joints:
+            facing = framing.facing_from_sides(joints[left], joints[right])
+            break
+    if facing is None and all(k in joints for k in ('foot_l', 'toe_l', 'foot_r', 'toe_r')):
+        facing = framing.facing_from_feet([joints['foot_l'], joints['foot_r']], [joints['toe_l'], joints['toe_r']])
     return anchors, points, facing
 
 

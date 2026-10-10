@@ -15,6 +15,8 @@ for _key, _value in {
     'ui_python': 'Host Python', 'ui_costume': 'Costume', 'ui_pose': 'Pose override',
     'ui_pose_help': 'Optional row:frame; empty uses the selected Workbench move and frame',
     'ui_costume_help': 'all or a zero-based costume number',
+    'ui_backend': 'Backend', 'ui_backend_help': 'csproject (default) or own: the renderer written for this project, on current Blender',
+    'ui_blender': 'Blender for own', 'ui_blender_help': 'blender.exe for the own backend; empty uses GW_BLENDER or a known install',
     'ui_started': 'Rendering UI; log: {path}', 'ui_finished': 'UI rendered; log: {path}',
     'ui_failed': 'UI render failed ({code}); log: {path}',
     'ui_busy': 'A UI render is already running', 'ui_cancel': 'Stop UI render',
@@ -35,6 +37,12 @@ class GenoUIProps(bpy.types.PropertyGroup):
     python: bpy.props.StringProperty(name=STRINGS['ui_python'], subtype='FILE_PATH')
     costume: bpy.props.StringProperty(name=STRINGS['ui_costume'], description=STRINGS['ui_costume_help'], default='all')
     pose: bpy.props.StringProperty(name=STRINGS['ui_pose'], description=STRINGS['ui_pose_help'])
+    backend: bpy.props.EnumProperty(
+        name=STRINGS['ui_backend'], description=STRINGS['ui_backend_help'],
+        items=[('csproject', 'CSProject (Blender 3.5.1)', 'Local CSProject template'),
+               ('own', 'Own renderer (this Blender)', 'tools/csp/own_render.py on current Blender')],
+        default='csproject')
+    blender: bpy.props.StringProperty(name=STRINGS['ui_blender'], description=STRINGS['ui_blender_help'], subtype='FILE_PATH')
     status: bpy.props.StringProperty(options={'SKIP_SAVE'})
 
 
@@ -89,6 +97,7 @@ class GENO_WB_OT_render_ui(bpy.types.Operator):
                 frame=props.frame, costume=ui.costume, pose=ui.pose or None,
                 art=bpy.path.abspath(props.blender_art) if props.blender_art else '',
                 python=bpy.path.abspath(ui.python) if ui.python else None, cancel_file=_CANCEL,
+                backend=ui.backend, blender=bpy.path.abspath(ui.blender) if ui.blender else '',
             )
             _LOG = _LOG_PATH.open('w', encoding='utf-8')
             _PROCESS = subprocess.Popen(command, cwd=root, env=dict(os.environ, GW_ROOT=str(root)),
@@ -132,6 +141,9 @@ class GENO_WB_PT_ui(bpy.types.Panel):
         layout.prop(ui, 'python')
         layout.prop(ui, 'costume')
         layout.prop(ui, 'pose')
+        layout.prop(ui, 'backend')
+        if ui.backend == 'own':
+            layout.prop(ui, 'blender')
         row = layout.row()
         row.enabled = _PROCESS is None
         row.operator('geno_wb.render_ui', icon='RENDER_STILL')

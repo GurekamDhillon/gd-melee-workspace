@@ -200,6 +200,10 @@ def pose(rig, actions, name, frame):
     for track in rig.animation_data.nla_tracks:
         track.mute = True
     rig.animation_data.action = action
+    if hasattr(rig.animation_data, 'action_slot') and getattr(action, 'slots', None) and rig.animation_data.action_slot is None:
+        # Blender 4.4+/5.x slotted actions: choose the slot that animates objects.
+        slots = [sl for sl in action.slots if sl.target_id_type in ('OBJECT', 'UNSPECIFIED')] or list(action.slots)
+        rig.animation_data.action_slot = slots[0]
     bpy.context.scene.frame_set(frame)
     bpy.context.view_layer.update()
 

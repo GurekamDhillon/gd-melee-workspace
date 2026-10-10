@@ -41,3 +41,14 @@ def test_workbench_logs_reject_external_directory_link(tmp_path):
     with pytest.raises(ValueError, match='outside'):
         generated_path(tmp_path, 'workbench/render.log')
     assert generated_path(tmp_path, 'local/render.log').is_relative_to(tmp_path / '_build/csp-render')
+
+
+def test_backend_and_blender_flags(tmp_path):
+    (tmp_path / 'workbench.json').write_text('{}')
+    default = render_command(tmp_path, python='python', root=tmp_path)
+    assert default[default.index('--backend') + 1] == 'csproject' and '--blender' not in default
+    own = render_command(tmp_path, python='python', root=tmp_path, backend='own', blender='C:/Blender 5/blender.exe')
+    assert own[own.index('--backend') + 1] == 'own'
+    assert own[own.index('--blender') + 1] == 'C:/Blender 5/blender.exe'
+    with pytest.raises(ValueError):
+        render_command(tmp_path, python='python', root=tmp_path, backend='cycles')

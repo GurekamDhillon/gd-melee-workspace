@@ -52,8 +52,16 @@ def blend_version(path):
     return int(header[9:12])
 
 
-def compatible_art(path, fallback=None):
+def compatible_art(path, fallback=None, any_version=False):
+    """any_version: the own backend runs current Blender, which opens newer .blend files."""
     path = Path(path)
+    if any_version and path.is_file() and path.suffix.lower() == '.blend':
+        # Prefer what the 3.5 path would use (a GLB beside the blend carries the shipped,
+        # smooth-shaded art); only a blend with no GLB is opened directly.
+        try:
+            return compatible_art(path, fallback)
+        except ValueError:
+            return path.resolve()
     if path.is_file() and path.suffix.lower() in ('.glb', '.gltf'):
         return path.resolve()
     if path.is_file() and path.suffix.lower() == '.blend':
@@ -101,13 +109,15 @@ def resolve_pose(value, config, project, plan):
             action = read_json(move).get('pick', {}).get('clip')
         else:
             action = row if row in actions else None
+            if action is None and row == 'Wait' and 'Wait1' in actions:
+                action = 'Wait1'  # retail idle is Wait1 (Wait2/3 are the rare variants)
         if not action or action not in actions:
             raise ValueError('No built animation clip for row: ' + row)
     return action, int(frame)
 
 
 def load_project(project, *, root=None, package=None, fighter=None, art=None,
-                 pose=None, costume='all', retail_scene=None, scene_config=None, emblem=None):
+                 pose=None, costume='all', retail_scene=None, scene_config=None, emblem=None, backend='csproject'):
     root = Path(root or workspace_root()).resolve()
     project = Path(project).expanduser().resolve()
     if project.is_file():
@@ -166,7 +176,7 @@ def load_project(project, *, root=None, package=None, fighter=None, art=None,
     else:
         if not art_value:
             raise ValueError('Project needs art_blend/art_glb or --art')
-        art_path = compatible_art(resolve_path(art_value, root), fallback)
+        art_path = compatible_art(resolve_path(art_value, root), fallback, backend == 'own')
     costumes = enumerate_costumes(entry, source, source_dir, ui.get('costumes'))
     selected = select_costumes(costumes, costume)
     existing = entry.get('presentation', {})
@@ -182,7 +192,7 @@ def load_project(project, *, root=None, package=None, fighter=None, art=None,
             selected.insert(0, costumes[0])
     for c in selected:
         if c.get('art'):
-            c['art'] = str(compatible_retail_scene(c['art']) if retail else compatible_art(c['art']))
+            c['art'] = str(compatible_retail_scene(c['art']) if retail else compatible_art(c['art'], any_version=backend == 'own'))
         if c.get('texture') and not Path(c['texture']).is_file():
             raise ValueError('Missing costume texture: ' + c['texture'])
         if c['index'] > 0 and not any(c.get(k) for k in ('art', 'texture', 'material_colors', 'objects', 'collections')):

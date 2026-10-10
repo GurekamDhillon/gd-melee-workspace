@@ -43,10 +43,10 @@ def test_blender351_appends_template_and_renders_synthetic_fighter(art_type):
         subprocess.run(common + ['--python', str(worker), '--', '--job', str(out / 'job.json')], env=env, check=True)
         result = json.loads((out / 'renders.json').read_text())
         assert set(result['enabled_addons']) == {'loom', 'render_button'}
-        assert len(result['renders']['0']) == 9
-        for path in result['renders']['0'].values():
+        assert len(result['renders']['0']) == 10 and 'Results_SD' in result['renders']['0']  # nine template cameras + the results-card camera
+        for name, path in result['renders']['0'].items():
             with Image.open(path) as image:
-                assert image.size == (64, 64)
+                assert image.size == ((208, 296) if name == 'Results_SD' else (64, 64))
         assert any(Image.open(path).getchannel('A').getbbox() for path in result['renders']['0'].values())
 
 

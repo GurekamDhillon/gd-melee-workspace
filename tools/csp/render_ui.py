@@ -265,7 +265,8 @@ def main(argv=None):
             return 0
         job = load_project(args.project, root=root, package=args.package, fighter=args.fighter,
                            art=args.art, pose=args.pose, costume=args.costume,
-                           retail_scene=args.retail_scene, scene_config=args.scene_config, emblem=args.emblem)
+                           retail_scene=args.retail_scene, scene_config=args.scene_config, emblem=args.emblem,
+                           backend=backend)
         job['template'], job['scripts'] = (str(template) if template else None), tools.get('scripts')
         job['backend'] = backend
         metadata = confined_path(Path(job['package']) / 'geno.json', job['package'])

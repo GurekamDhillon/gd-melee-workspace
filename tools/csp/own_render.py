@@ -35,10 +35,10 @@ CAMERAS = (
 # Light rig defaults, in the 3/4 camera's own terms (degrees); the job's own_render.look can override.
 DEFAULT_LOOK = {
     'yaw': 28.0, 'pitch': 3.0,
-    'key': {'color': (1.0, 0.96, 0.9), 'energy': 3.2, 'azimuth': -40.0, 'elevation': 38.0},
+    'key': {'color': (1.0, 0.96, 0.9), 'energy': 3.8, 'azimuth': -40.0, 'elevation': 38.0},
     'fill': {'color': (0.85, 0.9, 1.0), 'energy': 1.1, 'azimuth': 55.0, 'elevation': 12.0},
     'rim': {'color': (1.0, 1.0, 1.0), 'energy': 2.0, 'azimuth': 150.0, 'elevation': 25.0},
-    'ambient': (0.55, 0.57, 0.62), 'ambient_strength': 0.75, 'specular': 0.15, 'view_transform': 'Standard',
+    'ambient': (0.55, 0.57, 0.62), 'ambient_strength': 0.55, 'specular': 0.4, 'roughness': 0.4, 'view_transform': 'Standard',
 }
 
 
@@ -102,7 +102,7 @@ def soften_specular(look):
                     if key in node.inputs:
                         node.inputs[key].default_value = look['specular']
                 if 'Roughness' in node.inputs:
-                    node.inputs['Roughness'].default_value = max(node.inputs['Roughness'].default_value, 0.55)
+                    node.inputs['Roughness'].default_value = max(node.inputs['Roughness'].default_value, look['roughness'])
                 if 'Metallic' in node.inputs and not node.inputs['Metallic'].links:
                     node.inputs['Metallic'].default_value = 0.0
 
