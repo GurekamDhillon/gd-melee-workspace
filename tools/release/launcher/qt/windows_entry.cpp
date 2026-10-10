@@ -15,7 +15,20 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR args, int) {
     if (!command) return 1;
     StringCchPrintfW(command, length, L"\"%s\" %s", exe, args);
     STARTUPINFOW si{}; si.cb = sizeof(si); PROCESS_INFORMATION pi{};
-    BOOL ok = CreateProcessW(exe, command, nullptr, nullptr, FALSE, 0, nullptr, nullptr, &si, &pi);
+    // Hand our stdin/stdout/stderr (pipes from a tool, a redirect, a console) to the launcher so
+    // `GD Melee.exe --serve ...` talks to its caller; this stub is a GUI-subsystem exe and has no console of its own.
+    HANDLE in = GetStdHandle(STD_INPUT_HANDLE), out = GetStdHandle(STD_OUTPUT_HANDLE), err = GetStdHandle(STD_ERROR_HANDLE);
+    auto usable = [](HANDLE h) { return h && h != INVALID_HANDLE_VALUE; };
+    bool inherit = false;
+    if (usable(in) || usable(out) || usable(err)) {
+        HANDLE all[3] = {in, out, err};
+        for (int i = 0; i < 3; ++i)
+            if (usable(all[i])) SetHandleInformation(all[i], HANDLE_FLAG_INHERIT, HANDLE_FLAG_INHERIT);
+        si.dwFlags |= STARTF_USESTDHANDLES;
+        si.hStdInput = in; si.hStdOutput = out; si.hStdError = err;
+        inherit = true;
+    }
+    BOOL ok = CreateProcessW(exe, command, nullptr, nullptr, inherit ? TRUE : FALSE, 0, nullptr, nullptr, &si, &pi);
     HeapFree(GetProcessHeap(), 0, command);
     if (!ok) { MessageBoxW(nullptr, L"Cannot start launcher/bin/gd-melee-launcher.exe. Extract the complete release folder.", L"GD's Melee", MB_OK | MB_ICONERROR); return 1; }
     CloseHandle(pi.hThread); WaitForSingleObject(pi.hProcess, INFINITE);

@@ -27,7 +27,7 @@ Configure your local environment before starting Blender:
 | `GW_MELEE` | Your game checkout, if it is not the default `melee/` |
 | `BLENDER` | Blender executable for the artist CLI, if it is not on PATH |
 | `GW_BLENDER` | Blender executable for the Workbench launch helper |
-| `GW_LAUNCHER` | Qt launcher executable with Workbench support |
+| `GW_LAUNCHER` | Qt launcher executable (`gd-melee-launcher.exe` or the `GD Melee.exe` stub) with Workbench support |
 | `GW_QT_BIN` | Qt runtime directory for that launcher |
 | `GW_ENGINE_EXE` | Working game executable for the Workbench helper to copy |
 | `GW_ISO_VANILLA` | Your locally configured disc image; keep it private |
