@@ -93,12 +93,15 @@ public:
     qreal framePosition(int boundary) const;
     QRectF hitboxRect(int ordinal) const;
     QRectF rulerRect() const;
+    // Width of the row-label column: fits the longest label when there is room, else a share of the width.
+    qreal labelColumn() const;
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 signals:
     void editRequested(const QString &command, const QJsonObject &args);
     void hitboxSelected(int ordinal);
 protected:
+    bool event(QEvent *) override;
     void paintEvent(QPaintEvent *) override;
     void keyPressEvent(QKeyEvent *) override;
     void mousePressEvent(QMouseEvent *) override;

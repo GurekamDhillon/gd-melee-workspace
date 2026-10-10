@@ -12,6 +12,7 @@ class QLabel;
 class QStackedWidget;
 class QPushButton;
 class QCloseEvent;
+class QResizeEvent;
 class QComboBox;
 class QPlainTextEdit;
 class QTimer;
@@ -34,12 +35,14 @@ public:
     void screenshots(const QString &dir);
 protected:
     void closeEvent(QCloseEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 private:
+    void updateRailMode();
     QString appDir_, userDir_, runDir_;
     Settings settings_;
     QProcess process_;
-    QStackedWidget *tabs_;
-    kit::TabRail *rail_;
+    QStackedWidget *tabs_ = nullptr;
+    kit::TabRail *rail_ = nullptr;
     QWidget *keys_;
     QLabel *pageSub_;
     QLabel *discTitle_;

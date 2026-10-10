@@ -214,6 +214,18 @@ TabRail::TabRail(const QStringList &names, QWidget *parent) : QWidget(parent), n
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
 }
 QRectF TabRail::rowRect(int i) const { return QRectF(px("s3"), 16 + i * 50, width() - 2 * px("s3"), 44); }   // 44 high, 6 apart (the mockup)
+void TabRail::setCollapsed(bool collapsed) {
+    if (collapsed_ == collapsed) return;
+    collapsed_ = collapsed; setFixedWidth(collapsed ? kCollapsedWidth : 204); updateGeometry(); update();
+}
+bool TabRail::event(QEvent *e) {
+    if (e->type() == QEvent::ToolTip && collapsed_) {
+        const auto *help = static_cast<QHelpEvent *>(e);
+        for (int i = 0; i < names_.size(); ++i) if (rowRect(i).contains(help->pos())) { QToolTip::showText(help->globalPos(), names_[i], this); return true; }
+        QToolTip::hideText(); e->ignore(); return true;
+    }
+    return QWidget::event(e);
+}
 void TabRail::setCurrent(int i) {
     if (i < 0 || i >= names_.size() || i == current_) return;
     current_ = i; update(); emit currentChanged(i);
@@ -244,8 +256,10 @@ void TabRail::paintEvent(QPaintEvent *) {
         if (cur) p.fillRect(QRectF(r.right() - 4, r.top(), 4, r.height() - px("ch-xs") - px("ch-s")), colour("jade"));   // selected: jade bar at the right
         if (focus) p.fillRect(atlas::tick(r.adjusted(0, 0, 0, -px("ch-xs"))), colour("ember"));                          // focus: the tick at the left
         const QColor fg = cur ? colour("ivory") : colour("text2");
-        const qreal x = r.left() + px("s3") + 4, cy = r.center().y() - px("ch-xs") / 2.0;
+        const qreal cy = r.center().y() - px("ch-xs") / 2.0;
+        const qreal x = collapsed_ ? r.center().x() - 10 : r.left() + px("s3") + 4;
         if (i < icons_.size()) paintIcon(p, icons_[i], QRectF(x, cy - 10, 20, 20), cur ? colour("jade") : fg);
+        if (collapsed_) continue;
         const QFont f = atlas::font(atlas::Role::Cap20); QFontMetricsF fm(f);
         const qreal tx = x + 20 + px("s3");
         p.setFont(f); p.setPen(fg);

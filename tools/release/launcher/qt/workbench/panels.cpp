@@ -297,12 +297,20 @@ InspectorPanel::InspectorPanel(QWidget *parent) : QWidget(parent) {
     auto *scroll = new QScrollArea; scroll->setWidgetResizable(true); scroll->setFrameShape(QFrame::NoFrame);
     scroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff); outer->addWidget(scroll);
     auto *body = new QWidget; body->setObjectName("wbInspectorBody"); scroll->setWidget(body);
-    auto *layout = new QVBoxLayout(body); layout->setContentsMargins(16, 16, 16, 16); layout->setSpacing(14);
+    auto *shell = new QVBoxLayout(body); shell->setContentsMargins(16, 16, 16, 16); shell->setSpacing(14);
     auto *header = new QHBoxLayout;
     title_ = new QLabel; title_->setObjectName("wbHitboxTitle"); title_->setTextFormat(Qt::PlainText); title_->setWordWrap(true);
     title_->setFont(atlas::font(atlas::Role::Title)); header->addWidget(title_, 1);
     auto *remove = new AtlasButton(t("Delete", "Borrar")); remove->setObjectName("wbDeleteHitbox"); remove->setTone(AtlasButton::Tone::Danger);
-    remove->setAccessibleName(t("Delete selected hitbox", "Borrar el hitbox seleccionado")); header->addWidget(remove); layout->addLayout(header);
+    remove->setAccessibleName(t("Delete selected hitbox", "Borrar el hitbox seleccionado")); header->addWidget(remove); shell->addLayout(header); deleteButton_ = remove;
+    form_ = new QWidget; form_->setObjectName("wbHitboxForm");
+    auto *layout = new QVBoxLayout(form_); layout->setContentsMargins(0, 0, 0, 0); layout->setSpacing(14);
+    shell->addWidget(form_);
+    emptyCard_ = new QFrame; emptyCard_->setObjectName("wbHitboxEmpty");
+    auto *emptyLayout = new QVBoxLayout(emptyCard_); emptyLayout->setContentsMargins(0, 4, 0, 0); emptyLayout->setSpacing(6);
+    emptyTitle_ = caption({}); emptyTitle_->setObjectName("wbHitboxEmptyTitle");
+    emptyBody_ = new QLabel; emptyBody_->setObjectName("wbHitboxEmptyBody"); emptyBody_->setWordWrap(true); emptyBody_->setTextFormat(Qt::PlainText);
+    emptyLayout->addWidget(emptyTitle_); emptyLayout->addWidget(emptyBody_); shell->addWidget(emptyCard_); shell->addStretch();
     connect(remove, &QPushButton::clicked, this, [this] {
         if (!row_.isEmpty() && ordinal_ >= 0) emit editRequested("delete_hitbox", {{"row", row_}, {"ordinal", ordinal_}});
     });
@@ -314,11 +322,18 @@ InspectorPanel::InspectorPanel(QWidget *parent) : QWidget(parent) {
     connect(joint_, &QComboBox::activated, this, [this](int) { setField("bone", joint_->currentText()); });
     auto *grid = new QGridLayout; grid->setHorizontalSpacing(12); grid->setVerticalSpacing(12); grid->setColumnStretch(0, 1); grid->setColumnStretch(1, 1);
     layout->addLayout(grid);
-    const auto number = [this](const QString &key, const QString &label, double minimum) {
+    // Display precision follows the field (damage 1, size 2, offsets 3). A value with more precision than
+    // the box shows is never rewritten just by tabbing through: an unchanged display commits nothing.
+    const auto number = [this](const QString &key, const QString &label, double minimum, int decimals) {
         auto *edit = new NumberField; edit->setObjectName("wbHitbox_" + key); edit->setAccessibleName(label);
-        edit->setDecimals(6); edit->setRange(minimum, 1e9); edit->setSingleStep(0.1); edit->setKeyboardTracking(false);
+        edit->setDecimals(decimals); edit->setRange(minimum, 1e9); edit->setSingleStep(decimals <= 1 ? 0.5 : 0.1); edit->setKeyboardTracking(false);
         editors_.insert(key, edit);
-        connect(edit, &QDoubleSpinBox::editingFinished, this, [this, edit, key] { setField(key, edit->value()); });
+        connect(edit, &QDoubleSpinBox::editingFinished, this, [this, edit, key] {
+            const double stored = values_.value(key).toDouble();
+            auto locale = edit->locale(); locale.setNumberOptions(locale.numberOptions() | QLocale::OmitGroupSeparator);
+            if (edit->cleanText() == locale.toString(stored, 'f', edit->decimals())) return;
+            setField(key, edit->value());
+        });
         return labelled(label, edit);
     };
     const auto integer = [this](const QString &key, const QString &label, int minimum) {
@@ -326,13 +341,15 @@ InspectorPanel::InspectorPanel(QWidget *parent) : QWidget(parent) {
         edit->setFont(atlas::numberFont()); edit->setRange(minimum, std::numeric_limits<int>::max()); edit->setKeyboardTracking(false);
         if (key == "end_frame") edit->setSpecialValueText(t("Not cleared", "Sin limpiar"));
         editors_.insert(key, edit);
-        connect(edit, &QSpinBox::editingFinished, this, [this, edit, key] { setField(key, edit->value()); });
+        connect(edit, &QSpinBox::editingFinished, this, [this, edit, key] {
+            setField(key, key == "end_frame" && edit->value() >= 0 ? edit->value() + 1 : edit->value()); // shown as the last active frame
+        });
         return labelled(label, edit);
     };
     grid->addWidget(integer("start_frame", t("First active frame", "Primer cuadro activo"), 0), 0, 0);
-    grid->addWidget(integer("end_frame", t("End frame (exclusive)", "Cuadro final (exclusivo)"), -1), 0, 1);
-    grid->addWidget(number("damage", t("Damage", "Daño"), 0), 1, 0);
-    grid->addWidget(number("size", t("Size", "Tamaño"), 0), 1, 1);
+    grid->addWidget(integer("end_frame", t("Last active frame", "Último cuadro activo"), -1), 0, 1);
+    grid->addWidget(number("damage", t("Damage", "Daño"), 0, 1), 1, 0);
+    grid->addWidget(number("size", t("Size", "Tamaño"), 0, 2), 1, 1);
     grid->addWidget(integer("angle", t("Angle", "Ángulo"), std::numeric_limits<int>::min()), 2, 0);
     grid->addWidget(integer("kbg", t("Knockback growth", "Crecimiento de impulso"), 0), 2, 1);
     grid->addWidget(integer("bkb", t("Base knockback", "Impulso base"), 0), 3, 0);
@@ -358,9 +375,9 @@ InspectorPanel::InspectorPanel(QWidget *parent) : QWidget(parent) {
     auto *details = new QWidget; details->setObjectName("wbHitboxDetails"); auto *detailGrid = new QGridLayout(details);
     detailGrid->setContentsMargins(0, 0, 0, 0); detailGrid->setHorizontalSpacing(12); detailGrid->setVerticalSpacing(12);
     detailGrid->setColumnStretch(0, 1); detailGrid->setColumnStretch(1, 1);
-    detailGrid->addWidget(number("x", t("Offset X", "Desplazamiento X"), -1e9), 0, 0);
-    detailGrid->addWidget(number("y", t("Offset Y", "Desplazamiento Y"), -1e9), 0, 1);
-    detailGrid->addWidget(number("z", t("Offset Z", "Desplazamiento Z"), -1e9), 1, 0);
+    detailGrid->addWidget(number("x", t("Offset X", "Desplazamiento X"), -1e9, 3), 0, 0);
+    detailGrid->addWidget(number("y", t("Offset Y", "Desplazamiento Y"), -1e9, 3), 0, 1);
+    detailGrid->addWidget(number("z", t("Offset Z", "Desplazamiento Z"), -1e9, 3), 1, 0);
     detailGrid->addWidget(integer("fkb", t("Fixed knockback", "Impulso fijo"), 0), 1, 1);
     layout->addWidget(details); details->hide();
     connect(detailsToggle, &QToolButton::toggled, this, [details, detailsToggle](bool open) { details->setVisible(open); detailsToggle->setArrowType(open ? Qt::DownArrow : Qt::RightArrow); });
@@ -383,11 +400,17 @@ void InspectorPanel::showHitbox(const QString &row, const HitboxRef &h) {
     row_ = row; ordinal_ = h.ordinal; values_ = values;
     title_->setText(t("HB%1", "HB%1").arg(h.ordinal));
     title_->setToolTip(t("%1 · Hitbox %2 (slot %3)", "%1 · Caja de golpe %2 (casilla %3)").arg(row).arg(h.ordinal).arg(h.slot));
-    setEnabled(true); updateEditors(previous); updateRowChecks();
+    setEnabled(true); form_->show(); emptyCard_->hide(); deleteButton_->show(); updateEditors(previous); updateRowChecks();
 }
-void InspectorPanel::clear() {
+void InspectorPanel::clear(bool rowHasHitboxes) {
     row_.clear(); ordinal_ = -1; values_ = {}; rowChecked_ = false; setEnabled(false);
     title_->setText(t("Select a hitbox", "Selecciona una caja de golpe")); title_->setToolTip({});
+    emptyTitle_->setText(rowHasHitboxes ? t("Nothing selected", "Nada seleccionado") : t("No hitboxes on this move", "Este movimiento no tiene hitboxes"));
+    emptyBody_->setText(rowHasHitboxes ? t("Click a hitbox bar on the timeline, or a hitbox under the move in the list.",
+                                           "Pulsa una barra de hitbox en la línea de tiempo o un hitbox bajo el movimiento en la lista.")
+                                       : t("Add one with + Add hitbox under the timeline to edit its damage, size and knockback here.",
+                                           "Añade uno con + Añadir hitbox bajo la línea de tiempo para editar aquí su daño, tamaño e impulso."));
+    form_->hide(); emptyCard_->show(); deleteButton_->hide();
     setExplanation({}); updateEditors(); updateRowChecks();
 }
 void InspectorPanel::setRoles(const QVector<RoleInfo> &roles) {
@@ -427,13 +450,14 @@ void InspectorPanel::updateEditors(const QJsonObject &previous) {
         } else if (auto *integer = qobject_cast<QSpinBox *>(it.value())) {
             bool valid = false; const int draft = integer->locale().toInt(integer->cleanText(), &valid);
             if (integer->text() == integer->specialValueText()) displayed = integer->minimum();
-            else displayed = valid ? QJsonValue(draft) : QJsonValue(QJsonValue::Undefined);
+            else displayed = valid ? QJsonValue(it.key() == "end_frame" ? draft + 1 : draft) : QJsonValue(QJsonValue::Undefined);
         } else if (auto *combo = qobject_cast<QComboBox *>(it.value())) displayed = combo->currentData().toInt();
         if (!before.isUndefined() && displayed != before) continue;
         const QSignalBlocker block(it.value());
         if (auto *line = qobject_cast<QLineEdit *>(it.value())) line->setText(value.toString());
         else if (auto *number = qobject_cast<QDoubleSpinBox *>(it.value())) number->setValue(value.toDouble());
-        else if (auto *integer = qobject_cast<QSpinBox *>(it.value())) integer->setValue(value.toInt());
+        else if (auto *integer = qobject_cast<QSpinBox *>(it.value()))
+            integer->setValue(it.key() == "end_frame" && value.toInt() > 0 ? value.toInt() - 1 : value.toInt());
         else if (auto *combo = qobject_cast<QComboBox *>(it.value())) combo->setCurrentIndex(combo->findData(value.toInt()));
     }
 }

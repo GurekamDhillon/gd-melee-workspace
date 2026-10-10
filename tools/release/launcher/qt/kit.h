@@ -89,16 +89,21 @@ public:
     void setCurrent(int i);
     void setNames(const QStringList &names);
     void setIcons(const QStringList &names) { icons_ = names; update(); }
-    QSize sizeHint() const override { return {204, 16 + int(names_.size()) * 50}; }
+    QSize sizeHint() const override { return {collapsed_ ? kCollapsedWidth : 204, 16 + int(names_.size()) * 50}; }
+    // Icon-only rail (names become tooltips); the owner decides when the window is narrow.
+    void setCollapsed(bool collapsed);
+    bool collapsed() const { return collapsed_; }
+    static constexpr int kCollapsedWidth = 68;
 signals:
     void currentChanged(int index);
 protected:
+    bool event(QEvent *) override;
     void paintEvent(QPaintEvent *) override;
     void keyPressEvent(QKeyEvent *) override;
     void mousePressEvent(QMouseEvent *) override;
 private:
     QRectF rowRect(int i) const;
-    QStringList names_, icons_; int current_ = 0;
+    QStringList names_, icons_; int current_ = 0; bool collapsed_ = false;
 };
 class RowDelegate : public QStyledItemDelegate {                     // a disc or mod row: badge, name, sub line, a tag, an optional toggle
 public:
