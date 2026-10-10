@@ -58,6 +58,9 @@ QVector<Problem> runChecks(const QVector<RowAnalysis> &rows) {
                     hitbox.ordinal});
             }
         }
+        for (const auto &issue : row.timingIssues)
+            problems.append({"hitbox_timing", row.row,
+                t("hitbox timing in %1 is wrong: %2", "hitbox timing in %1 is wrong: %2").arg(row.row, issue)});
         if (!row.aerial && row.rowLowestY < row.floorY - 0.5) {
             problems.append({"below_floor", row.row,
                 t("row %1 falls below the floor by more than 0.5 units",

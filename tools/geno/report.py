@@ -101,19 +101,69 @@ def frames(words):
             else:
                 f = {k: (float(v) if "." in v else int(v)) for k, v in (t.split("=") for t in line.split()[1:])}
             f["start"] = frame
+            f["end"] = None
             live[f["slot"]] = f
+            out["hitboxes"].append(f)  # file (open) order, the order gameplay.json windows use
+        elif head in ("hitbox_remove", "clear_hitbox"):
+            slot = _remove_slot(line)
+            if slot in live:
+                live.pop(slot)["end"] = frame
         elif head in ("hitboxes_clear", "clear_hitboxes"):
             for f in live.values():
                 f["end"] = frame
-                out["hitboxes"].append(f)
             live = {}
         elif head == "iasa":
             out["iasa"] = frame
-    for f in live.values():
-        f["end"] = None
-        out["hitboxes"].append(f)
     out["end"] = frame
     return out
+
+
+def _remove_slot(line):
+    """The slot a hitbox_remove / clear_hitbox line closes (`w0.hit_idx=N`, `hit_idx=N` or a bare N)."""
+    for tok in line.split()[1:]:
+        key, _, val = tok.rpartition("=")
+        if key.split(".")[-1] in ("hit_idx", "") and val.lstrip("-").isdigit():
+            return int(val)
+    return None
+
+
+FLOW = ("loop", "loop_end", "call", "return", "goto", "endloop", "subroutine", "if", "ifv")
+
+
+def timing_problems(words):
+    """Readable reasons the script's real hitbox timing can differ from the windows frames() reports.
+
+    The engine runs wait_until as timer = frame - now (lbcommand.c Command_02): a frame already past
+    gives a non-positive timer, so the script carries straight on at once, and the waits after it
+    count from the rewound frame. A hitbox after such a rewind opens late and may close in the same
+    frame, never live. A second hitbox on a slot that is still live replaces the first. Straight-line
+    scripts only: loops, calls and gotos are not followed (the same limit as frames())."""
+    problems, live, frame = [], {}, 0
+    lines = [l.strip() for l in script.disassemble(words).splitlines() if l.strip()]
+    if any(l.split()[0].lower() in FLOW for l in lines):
+        return problems
+    for line in lines:
+        head = line.split()[0]
+        if head == "wait":
+            frame += int(line.split()[1])
+        elif head == "wait_until":
+            at = int(line.split()[1])
+            if at < frame:
+                problems.append("wait_until %d comes after frame %d: the engine does not wait, so what follows "
+                                "runs late (a hitbox there may never be live). Put the script in start-frame order."
+                                % (at, frame))
+            frame = at
+        elif head == "hitbox":
+            slot = (int(line.split("raw=")[1].split(",")[0], 16) >> 23) & 7 if "raw=" in line else                 int(next((t for t in line.split() if t.startswith("slot=")), "slot=0").split("=")[1])
+            if slot in live:
+                problems.append("hitbox slot %d is opened at frame %d while still live from frame %d: give "
+                                "overlapping hitboxes different slots (0..3)." % (slot, frame, live[slot]))
+            live[slot] = frame
+        elif head in ("hitbox_remove", "clear_hitbox"):
+            live.pop(_remove_slot(line), None)
+        elif head in ("hitboxes_clear", "clear_hitboxes"):
+            live = {}
+    return problems
 
 
 def build(path):

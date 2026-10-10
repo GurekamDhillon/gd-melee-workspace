@@ -360,10 +360,16 @@ def apply(package, art_build, ir_path=None):
         destination = package/'moves'/f'{name}.words'
         destination.write_text(' '.join(f'0x{x:08X}' for x in words)+'\n', encoding='utf-8')
         info = report.frames(words)
+        # The engine does not wait for a frame already past, so a script out of start-frame order, or one that
+        # reuses a live slot, fires differently from the windows declared below: refuse it with the reasons.
+        timing = report.timing_problems(words)
+        if timing:
+            raise ValueError('Hitbox timing in %s would not run as written: %s' % (name, ' '.join(timing)))
         if 'windows' in spec:
             actual = [(b['start'], b['end']-b['start']) for b in info['hitboxes']]
             if actual != [tuple(w) for w in spec['windows']]:
-                raise ValueError('Authored window declaration disagrees with assembly: '+name)
+                raise ValueError('Authored window declaration disagrees with assembly: %s: gameplay.json windows %s but the script gives %s'
+                                 % (name, [list(w) for w in spec['windows']], [list(w) for w in actual]))
         if 'motions' in spec:
             rows = sorted({motion_rows[m][1] for m in spec['motions']})
             for row in rows:

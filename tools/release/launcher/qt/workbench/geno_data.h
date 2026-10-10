@@ -31,6 +31,9 @@ public:
     const ProjectConfig &project() const;
     QVector<RowInfo> rows() const;
     QVector<HitboxRef> hitboxes(const QString &row) const;
+    // Reasons the row's script would not run as gameplay.json declares it: an out-of-order or overlapping-slot
+    // script (GenoAsm::timingProblems) and windows that differ from the script's. Empty when they agree.
+    QStringList timingProblems(const QString &row) const;
     QJsonArray timelineEvents(const QString &row) const; // source-authored sound/effect markers, cached bytes only
     QVector<ClipInfo> clips() const;
     QVector<Joint> joints() const;
