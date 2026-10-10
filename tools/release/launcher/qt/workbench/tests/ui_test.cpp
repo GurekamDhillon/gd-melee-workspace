@@ -85,7 +85,7 @@ private slots:
         QCOMPARE(image.pixelColor(242, 76), launcher::atlas::colour("jade"));
     }
     void viewportOverlayToggleAndCamera() {
-        Viewport v; v.resize(320, 240); v.show();
+        Viewport v; v.resize(320, 360); v.show();
         QSignalSpy spy(&v, &Viewport::cameraChanged);
         v.setOverlay("hitboxes", false);
         QTest::mousePress(&v, Qt::LeftButton, {}, QPoint(100, 100));
@@ -101,10 +101,10 @@ private slots:
         QCOMPARE(spy.last()[0].value<QJsonObject>().value("distance").toDouble(), 36.0);
     }
     void viewportPreservesPngAspectAndFallbackToggles() {
-        Viewport v; v.resize(320, 240); v.show();
+        Viewport v; v.resize(320, 360); v.show();
         QImage png(200, 100, QImage::Format_RGB32); png.fill(Qt::magenta); v.setImage(png);
         const QImage shot = v.grab().toImage();
-        QCOMPARE(shot.pixelColor(160, 120), QColor(Qt::magenta));
+        QCOMPARE(shot.pixelColor(160, 180), QColor(Qt::magenta));
         QVERIFY(shot.pixelColor(160, 10) != QColor(Qt::magenta));
         v.setImage({}); FrameInfo fi; fi.bones = {{0, -1, {0, 0, 0}}, {1, 0, {3, 5, 0}}};
         v.setFrameInfo(fi); v.setOverlay("bones", true);

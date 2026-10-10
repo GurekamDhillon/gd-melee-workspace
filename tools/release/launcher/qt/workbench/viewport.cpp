@@ -13,7 +13,7 @@ using launcher::t;
 namespace atlas = launcher::atlas;
 Viewport::Viewport(QWidget *parent) : QWidget(parent) {
     setObjectName("wbViewport"); setFocusPolicy(Qt::StrongFocus);
-    setMinimumSize(240, 160); setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    setMinimumSize(320, 360); setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setAccessibleName(t("Fighter viewport", "Vista del luchador"));
     setToolTip(t("Drag to orbit. Scroll to zoom.", "Arrastra para orbitar. Desplázate para acercar."));
 }
