@@ -156,6 +156,31 @@ def _flow(check) -> None:
             value.last_error,
         )
 
+        # Bone dropdown, Add hitbox, Delete hitbox through the registered operators.
+        ids = [item[0] for item in props.role_items(settings, None) if item[0]]
+        require(
+            "edit-flow-bone-dropdown",
+            "CHEST" in ids and "HAND_R" in ids
+            and settings.edit_bone == value.hitboxes[settings.hitbox_index]["joint"],
+            f"{ids} {settings.edit_bone}",
+        )
+        count = len(value.hitboxes)
+        result = bpy.ops.geno_wb.add_hitbox(frame=9, bone="CHEST")
+        require(
+            "edit-flow-add",
+            result == {"FINISHED"} and len(value.hitboxes) == count + 1
+            and settings.stale and settings.hitbox_index == value.last_added
+            and settings.edit_bone == "CHEST" and len(settings.hitbox_items) == count + 1,
+            f"{value.last_error} idx={settings.hitbox_index} bone={settings.edit_bone}",
+        )
+        result = bpy.ops.geno_wb.delete_hitbox()
+        require(
+            "edit-flow-delete",
+            result == {"FINISHED"} and len(value.hitboxes) == count,
+            value.last_error,
+        )
+        require("edit-flow-reload-2", bpy.ops.geno_wb.rebuild_reload() == {"FINISHED"}, value.last_error)
+
         # Exercise panel Apply, including preservation of unsaved RNA values
         # through an unrelated frame update.
         settings.edit_size = float(settings.edit_size) + 0.25
@@ -208,7 +233,10 @@ def _flow(check) -> None:
             props.sync_from_session(original_session, settings)
             with props.suspend_frame_updates():
                 for name, item in saved.items():
-                    setattr(settings, name, item)
+                    if name == "edit_bone":
+                        props.set_edit_bone(settings, item)   # a dropdown: "" is no choice
+                    else:
+                        setattr(settings, name, item)
                 settings.playing = False
             if timer_was_registered and original_pending is not None:
                 operators._ensure_scrub_timer()

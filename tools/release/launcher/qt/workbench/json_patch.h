@@ -18,5 +18,10 @@ bool jsonFind(const QString &text, const JsonPath &path, int *start, int *end);
 // contain exactly one JSON value. Insertion refuses an existing key.
 QString jsonReplace(const QString &text, const JsonPath &path, const QString &valueText, QString *err);
 QString jsonInsertKey(const QString &text, const JsonPath &objectPath, const QString &key, const QString &valueText, QString *err);
+// Array elements, laid out like their neighbours (multi-line arrays stay multi-line). Insert puts the
+// value at `index` (== size appends); remove deletes that element with one separator, so an insert
+// followed by a remove of the same index restores the original bytes.
+QString jsonArrayInsert(const QString &text, const JsonPath &arrayPath, int index, const QJsonValue &value, QString *err);
+QString jsonArrayRemove(const QString &text, const JsonPath &arrayPath, int index, QString *err);
 QString jsonScalar(const QJsonValue &v);
 }

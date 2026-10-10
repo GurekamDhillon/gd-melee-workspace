@@ -233,6 +233,20 @@ STRINGS: dict[str, str] = {
     "end_frame": "End frame",
     "ordinal": "Ordinal",
     "suggest_bone": "Suggest limb",
+    "add_hitbox": "Add hitbox",
+    "add_hitbox_help": "Add a hitbox to this move's source at the shown frame (on the suggested limb if you asked, else the floor anchor); Rebuild + reload applies it",
+    "delete_hitbox": "Delete hitbox",
+    "delete_hitbox_help": "Remove the selected hitbox from the move's source; Rebuild + reload applies it",
+    "hitbox_added": "hitbox #{ordinal} added on {bone} at frame {frame}; rebuild + reload to see it in the engine",
+    "hitbox_deleted": "hitbox #{ordinal} deleted; rebuild + reload to apply",
+    "bone_help": "The bone role this hitbox follows (joint=@ROLE@ in the move's source)",
+    "bone_none": "(no bones listed)",
+    "bone_raw": "{bone} (not a role)",
+    "bone_group_body": "Body",
+    "bone_group_arms": "Arms",
+    "bone_group_legs": "Legs",
+    "bone_group_anchors": "Anchors",
+    "bone_group_other": "Other",
     "suggest_bone_help": "Put the suggested limb in the editor; Apply saves the change",
     "edit_hitbox": "Apply",
     "edit_hitbox_help": "Send only changed fields to the workbench source editor",
@@ -267,6 +281,7 @@ def poll_ready(operator, *requirements):
 
 
 NO_ROW = "__GENO_WB_NO_ROW__"
+NO_BONE = "__GENO_WB_NO_BONE__"
 _frame_handler = None
 _row_handler = None
 _problem_handler = None
@@ -355,6 +370,69 @@ def _keep_string(text):
     return _row_strings.setdefault(text, text)
 
 
+_GROUP_ORDER = ("body", "arms", "legs", "anchors")
+_role_signature = None
+_role_items_cache = []
+
+
+def role_choices(roles, current=""):
+    """[(heading, [names])] for the bone dropdown: the project's roles by group, then a stray current value.
+
+    Pure data so it is testable without bpy. A current value that is not a role (a raw joint in an old
+    script) is kept, in its own group, so it still displays and round-trips.
+    """
+    groups = {}
+    for role in roles:
+        name = role.get("name")
+        if isinstance(name, str) and name:
+            group = role.get("group") if role.get("group") in _GROUP_ORDER else "other"
+            if name not in groups.setdefault(group, []):
+                groups[group].append(name)
+    known = {name for names in groups.values() for name in names}
+    out = [(group, groups[group]) for group in (*_GROUP_ORDER, "other") if group in groups]
+    if current and current not in known:
+        out.append(("raw", [current]))
+    return out
+
+
+def role_items(self=None, context=None):
+    """Dynamic enum items for the bone dropdown (body, arms, legs, anchors), current value included."""
+    global _role_signature, _role_items_cache
+    session = _session()
+    current = ""
+    try:
+        index = self.hitbox_index if self is not None else -1
+        if 0 <= index < len(session.hitboxes):
+            box = session.hitboxes[index]
+            current = str(box.get("bone", box.get("joint", "")) or "")
+    except Exception:
+        current = ""
+    choices = role_choices(session.roles, current)
+    signature = tuple((g, tuple(n)) for g, n in choices)
+    if signature != _role_signature:
+        _role_signature = signature
+        items = []
+        for group, names in choices:
+            label = STRINGS.get("bone_group_" + group, group)
+            items.append(("", _keep_string(label), ""))  # a heading inside the dropdown
+            for name in names:
+                shown = STRINGS["bone_raw"].format(bone=name) if group == "raw" else name
+                items.append((_keep_string(name), _keep_string(shown), _keep_string(label)))
+        if not items:   # an enum with no items at all makes Blender warn on every read
+            items = [(NO_BONE, _keep_string(STRINGS["bone_none"]), "")]
+        _role_items_cache = items
+    return _role_items_cache
+
+
+def set_edit_bone(settings, joint):
+    """Select `joint` in the dropdown; a value it cannot show is left as is rather than raising."""
+    try:
+        settings.edit_bone = joint
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
 def row_items(self=None, context=None):
     """Dynamic enum items, with retained strings and a stable empty choice."""
     global _row_signature, _row_items_cache
@@ -432,7 +510,10 @@ def sync_editor(value, settings):
         settings.edit_row = value.source_row
         settings.edit_ordinal = index
         for field, item in _source_editor_values(box).items():
-            setattr(settings, "edit_" + field, item)
+            if field == "bone":
+                set_edit_bone(settings, item)
+            else:
+                setattr(settings, "edit_" + field, item)
         baseline = {
             field: getattr(settings, "edit_" + field)
             for field in value.edit_fields
@@ -572,7 +653,7 @@ def _make_property_group():
         edit_ordinal: IntProperty(name=STRINGS["ordinal"], default=-1, min=-1, options={"SKIP_SAVE"})
         edit_baseline: StringProperty(name=STRINGS["editor_baseline"], options={"HIDDEN", "SKIP_SAVE"})
         edit_source_key: StringProperty(name=STRINGS["editor_source"], options={"HIDDEN", "SKIP_SAVE"})
-        edit_bone: StringProperty(name=STRINGS["bone"], options={"SKIP_SAVE"})
+        edit_bone: EnumProperty(name=STRINGS["bone"], description=STRINGS["bone_help"], items=role_items, options={"SKIP_SAVE"})
         edit_damage: FloatProperty(name=STRINGS["damage"], min=0.0, options={"SKIP_SAVE"})
         edit_size: FloatProperty(name=STRINGS["size"], min=0.0, options={"SKIP_SAVE"})
         edit_x: FloatProperty(name=STRINGS["x"], options={"SKIP_SAVE"})

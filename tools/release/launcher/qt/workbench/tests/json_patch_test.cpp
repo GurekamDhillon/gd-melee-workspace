@@ -208,6 +208,29 @@ private slots:
         QCOMPARE(parsed.array()[0].toDouble(), value);
     }
 
+
+    void arrayInsertAndRemoveRoundTripKeepingLayout() {
+        const QString doc = "{\n  \"w\": [\n    [\n      3,\n      2\n    ],\n    [\n      3,\n      2\n    ]\n  ],\n  \"r\": [\n    \"A\",\n    \"B\"\n  ],\n  \"c\": [1, 2]\n}\n";
+        QString err;
+        for (int index = 0; index <= 2; ++index) {
+            const QString w = jsonArrayInsert(doc, {"w"}, index, QJsonArray{7, 4}, &err);
+            QVERIFY2(!w.isNull(), qPrintable(err));
+            QVERIFY(QJsonDocument::fromJson(w.toUtf8()).object()["w"].toArray().size() == 3);
+            QCOMPARE(jsonArrayRemove(w, {"w"}, index, &err), doc);
+            const QString r = jsonArrayInsert(doc, {"r"}, index, QString("Z"), &err);
+            QVERIFY2(!r.isNull(), qPrintable(err));
+            QCOMPARE(jsonArrayRemove(r, {"r"}, index, &err), doc);
+            const QString c = jsonArrayInsert(doc, {"c"}, qMin(index, 2), 9, &err);
+            QCOMPARE(jsonArrayRemove(c, {"c"}, qMin(index, 2), &err), doc);
+        }
+        const QString w = jsonArrayInsert(doc, {"w"}, 1, QJsonArray{7, 4}, &err);
+        QVERIFY(w.contains("    [\n      7,\n      4\n    ],\n    [\n      3,"));   // laid out like its neighbours
+        QVERIFY(jsonArrayInsert(doc, {"w"}, 5, 1, &err).isNull());
+        QVERIFY(jsonArrayRemove(doc, {"nope"}, 0, &err).isNull());
+        QCOMPARE(jsonArrayRemove("{\"a\": [1]}", {"a"}, 0, &err), QString("{\"a\": []}"));
+        QCOMPARE(jsonArrayInsert("{\"a\": []}", {"a"}, 0, 1, &err), QString("{\"a\": [1]}"));
+    }
+
 };
 QTEST_MAIN(JsonPatchTest)
 #include "json_patch_test.moc"

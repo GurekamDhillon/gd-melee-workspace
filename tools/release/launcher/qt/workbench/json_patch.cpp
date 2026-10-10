@@ -3,6 +3,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSet>
+#include <QPair>
+#include <QVector>
 #include <limits>
 
 namespace wb {
@@ -233,6 +235,71 @@ QString jsonInsertKey(const QString &text, const JsonPath &objectPath, const QSt
         ? "," + lineEnding(text, newline) + leadingIndent(text, newline + 1, lastKey)
         : QStringLiteral(", ");
     return text.left(lastEnd) + separator + added + text.mid(lastEnd);
+}
+
+
+namespace {
+bool arrayElements(const QString &text, const JsonPath &path, int *arrayStart, int *arrayEnd, QVector<QPair<int, int>> *elements) {
+    if (!jsonFind(text, path, arrayStart, arrayEnd) || text[*arrayStart] != '[') return false;
+    for (int i = 0;; ++i) {
+        int s, e;
+        auto child = path;
+        child << '#' + QString::number(i);
+        if (!jsonFind(text, child, &s, &e)) break;
+        elements->append({s, e});
+    }
+    return true;
+}
+QString layoutValue(const QString &text, const QPair<int, int> &neighbour, const QJsonValue &value) {
+    const QString compact = jsonScalar(value);
+    if (!text.mid(neighbour.first, neighbour.second - neighbour.first).contains('\n') || !value.isArray())
+        return compact;
+    // A flat array laid out one item per line, like its neighbour.
+    const int lineStart = static_cast<int>(text.lastIndexOf('\n', neighbour.first - 1)) + 1;
+    const QString indent = leadingIndent(text, lineStart, neighbour.first);
+    const QString unit = indent.contains('\t') ? "\t" : "  ";
+    const QString eol = lineEnding(text, lineStart > 0 ? lineStart - 1 : 0);
+    QStringList items;
+    for (const auto &item : value.toArray()) {
+        if (item.isArray() || item.isObject()) return compact;
+        items << eol + indent + unit + jsonScalar(item);
+    }
+    return items.isEmpty() ? compact : "[" + items.join(",") + eol + indent + "]";
+}
+}  // namespace
+
+QString jsonArrayInsert(const QString &text, const JsonPath &arrayPath, int index, const QJsonValue &value, QString *err) {
+    if (err) err->clear();
+    int s, e;
+    QVector<QPair<int, int>> el;
+    if (!arrayElements(text, arrayPath, &s, &e, &el))
+        return fail(err, "invalid JSON or array not found/ambiguous: " + arrayPath.join('/'));
+    if (index < 0 || index > el.size()) return fail(err, QStringLiteral("array index out of range"));
+    if (el.isEmpty()) return text.left(s + 1) + jsonScalar(value) + text.mid(s + 1);
+    const int ref = qMin(index, int(el.size()) - 1);
+    const QString laid = layoutValue(text, el[ref], value);
+    if (index < el.size()) {
+        // Same separator as the one that follows this element (or precedes it for the last).
+        const QString sep = index + 1 < el.size() ? text.mid(el[index].second, el[index + 1].first - el[index].second)
+                                                  : QStringLiteral(", ");
+        const QString usedSep = index + 1 < el.size() ? sep : (el.size() >= 2 ? text.mid(el[0].second, el[1].first - el[0].second) : sep);
+        return text.left(el[index].first) + laid + usedSep + text.mid(el[index].first);
+    }
+    const QString sep = el.size() >= 2 ? text.mid(el[el.size() - 2].second, el.last().first - el[el.size() - 2].second)
+                                       : QStringLiteral(", ");
+    return text.left(el.last().second) + sep + laid + text.mid(el.last().second);
+}
+
+QString jsonArrayRemove(const QString &text, const JsonPath &arrayPath, int index, QString *err) {
+    if (err) err->clear();
+    int s, e;
+    QVector<QPair<int, int>> el;
+    if (!arrayElements(text, arrayPath, &s, &e, &el))
+        return fail(err, "invalid JSON or array not found/ambiguous: " + arrayPath.join('/'));
+    if (index < 0 || index >= el.size()) return fail(err, QStringLiteral("array index out of range"));
+    if (el.size() == 1) return text.left(el[0].first) + text.mid(el[0].second);
+    if (index + 1 < el.size()) return text.left(el[index].first) + text.mid(el[index + 1].first);
+    return text.left(el[index - 1].second) + text.mid(el[index].second);
 }
 
 QString jsonScalar(const QJsonValue &v) {
