@@ -639,6 +639,43 @@ private slots:
         QVERIFY(r.s.history().entries().isEmpty());
     }
 
+    void extraHitboxFieldsRoundTripThroughScriptListAndGameplay() {
+        Rig r;
+        QJsonObject g = QJsonDocument::fromJson(r.s.files().read("gameplay.json")).object();
+        QJsonArray moves = g["moves"].toArray(); QJsonObject dair = moves[1].toObject();
+        dair["windows"] = QJsonArray{QJsonArray{6, 3}, QJsonArray{9, 6}};
+        dair["design"] = QJsonObject{{"window_roles", QJsonArray{"FOOT_L", "FOOT_L"}}};
+        moves[1] = dair; g["moves"] = moves;
+        wbtest::put(r.d.path(), "gameplay.json", QJsonDocument(g).toJson());
+        QVERIFY(r.s.data().reload().isEmpty());
+        const QByteArray gameplay = r.s.files().read("gameplay.json");
+        const auto res = r.call("edit_hitbox", {{"row", "dair"}, {"ordinal", 1}, {"element", 16}, {"shield", -3},
+                                                {"ground", false}, {"air", true}, {"slot", 2}});
+        QVERIFY2(res["ok"].toBool(), qPrintable(res["error"].toString()));
+        const QString text = QString::fromUtf8(r.s.files().read("moves/dair.genoasm"));
+        QVERIFY2(text.contains("element=16") && text.contains("shield=-3") && text.contains("ground=0") && text.contains("air=1") && text.contains("slot=2"), qPrintable(text));
+        const auto listed = r.call("list_hitboxes", {{"row", "dair"}})["result"].toObject()["hitboxes"].toArray()[1].toObject();
+        QCOMPARE(listed["element"].toInt(), 16); QCOMPARE(listed["shield"].toInt(), -3); QCOMPARE(listed["shield_damage"].toInt(), -3);
+        QCOMPARE(listed["hit_ground"].toBool(), false); QCOMPARE(listed["hit_air"].toBool(), true); QCOMPARE(listed["slot"].toInt(), 2);
+        QCOMPARE(listed["wbk"].toInt(), listed["fkb"].toInt());
+        // none of these touches the declared windows or roles in gameplay.json
+        QCOMPARE(QJsonDocument::fromJson(r.s.files().read("gameplay.json")).object(), QJsonDocument::fromJson(gameplay).object());
+        // 0/1 numbers are accepted as booleans; other types and out-of-range values are refused and write nothing
+        QVERIFY(r.call("edit_hitbox", {{"row", "dair"}, {"ordinal", 1}, {"ground", 1}})["ok"].toBool());
+        const QByteArray before = r.s.files().read("moves/dair.genoasm");
+        const auto entries = r.s.history().entries().size();
+        for (const QJsonObject &bad : {QJsonObject{{"shield", -129}}, QJsonObject{{"shield", 128}}, QJsonObject{{"slot", 4}},
+                                      QJsonObject{{"slot", -1}}, QJsonObject{{"ground", "yes"}}, QJsonObject{{"air", 2}}}) {
+            QJsonObject args = bad; args["row"] = "dair"; args["ordinal"] = 1;
+            QVERIFY2(!r.call("edit_hitbox", args)["ok"].toBool(), qPrintable(QJsonDocument(bad).toJson()));
+        }
+        QCOMPARE(r.s.files().read("moves/dair.genoasm"), before); QCOMPARE(r.s.history().entries().size(), entries);
+        // a slot that clashes with a hitbox live at the same time is refused
+        const auto jab = r.call("add_hitbox", {{"row", "jab1"}, {"frame", 4}, {"bone", "HAND_R"}});
+        QVERIFY(jab["ok"].toBool());
+        const auto clash = r.call("edit_hitbox", {{"row", "jab1"}, {"ordinal", 0}, {"slot", r.s.data().hitboxes("jab1")[1].slot}});
+        QVERIFY(!clash["ok"].toBool()); QVERIFY(clash["error"].toString().contains("already used"));
+    }
 };
 QTEST_GUILESS_MAIN(EditCmdTest)
 #include "commands_edit_test.moc"

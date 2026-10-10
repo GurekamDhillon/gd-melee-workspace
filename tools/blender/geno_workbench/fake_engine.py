@@ -233,6 +233,10 @@ def _source_hitboxes() -> dict:
             "kbg": 100,
             "fkb": 0,
             "bkb": 20,
+            "element": 0,
+            "shield": 0,
+            "ground": True,
+            "air": True,
             "start_frame": 5,
             "end_frame": 8,
         }
@@ -593,6 +597,16 @@ class FakeWorkbench:
             raise ValueError("joint must name a role in the synthetic plan")
         for key in ("slot", "kbg", "fkb", "bkb"):
             updated[key] = _integer(updated[key], key)
+        # the launcher's limits: element 0..31, signed shield -128..127, slot 0..3, true/false toggles
+        if not 0 <= updated["slot"] <= 3:
+            raise ValueError("slot must be between 0 and 3")
+        if isinstance(updated["element"], bool) or not isinstance(updated["element"], int) or not 0 <= updated["element"] <= 31:
+            raise ValueError("element must be between 0 and 31")
+        if isinstance(updated["shield"], bool) or not isinstance(updated["shield"], int) or not -128 <= updated["shield"] <= 127:
+            raise ValueError("shield must be between -128 and 127")
+        for key in ("ground", "air"):
+            if not isinstance(updated[key], bool):
+                raise ValueError(f"{key} must be true or false")
         for key in ("start_frame", "end_frame"):
             updated[key] = _integer(updated[key], key, 1)
         if updated["end_frame"] < updated["start_frame"]:
@@ -668,6 +682,7 @@ class FakeWorkbench:
             "x": float(args.get("x", 0)), "y": float(args.get("y", 0)), "z": float(args.get("z", 0)),
             "angle": _integer(args.get("angle", 361), "angle", 0), "kbg": _integer(args.get("kbg", 50), "kbg", 0),
             "fkb": _integer(args.get("fkb", 0), "fkb", 0), "bkb": _integer(args.get("bkb", 20), "bkb", 0),
+            "element": 0, "shield": 0, "ground": True, "air": True,
             "start_frame": frame, "end_frame": end,
         }
         position = len([r for r in records if r["start_frame"] <= frame])
@@ -736,7 +751,11 @@ class FakeWorkbench:
         if tool == "frame_info":
             return self._frame_info()
         if tool == "list_hitboxes":
-            return {"hitboxes": copy.deepcopy(self._source[self._row_arg(args)])}
+            # like the launcher: the engine's own names (wbk, shield_damage, hit_ground, hit_air) ride along
+            boxes = copy.deepcopy(self._source[self._row_arg(args)])
+            for box in boxes:
+                box.update(wbk=box["fkb"], shield_damage=box["shield"], hit_ground=box["ground"], hit_air=box["air"])
+            return {"hitboxes": boxes}
         if tool == "list_attributes":
             return {"attributes": copy.deepcopy(self._attributes)}
         if tool == "edit_attribute":

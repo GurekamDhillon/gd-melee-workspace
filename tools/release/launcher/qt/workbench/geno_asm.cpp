@@ -312,6 +312,9 @@ QVector<HitboxRef> GenoAsm::hitboxes() const {
                 else if (key == "fkb") h.fkb = value.toInt();
                 else if (key == "bkb") h.bkb = value.toInt();
                 else if (key == "element") h.element = value.toInt();
+                else if (key == "shield") h.shield = value.toInt();
+                else if (key == "ground") h.ground = value.toInt() != 0;
+                else if (key == "air") h.air = value.toInt() != 0;
             }
             open.append(h.ordinal);
             out.append(h);
@@ -350,19 +353,39 @@ QString GenoAsm::apply(int ordinal, const HitboxEdit &edit, QString *err) const 
     }
     if (edit.element && (*edit.element < 0 || *edit.element > 31))
         return fail(QStringLiteral("element must be between 0 and 31"));
+    if (edit.shield && (*edit.shield < -128 || *edit.shield > 127))
+        return fail(QStringLiteral("shield damage must be between -128 and 127"));
+    if (edit.slot && (*edit.slot < 0 || *edit.slot >= kHitboxEditableSlots))
+        return fail(QStringLiteral("slot must be between 0 and %1 (higher slot ids are not supported yet)")
+                        .arg(kHitboxEditableSlots - 1));
     const QMap<QString, std::optional<int>> ints = {
-        {"angle", edit.angle}, {"kbg", edit.kbg}, {"fkb", edit.fkb}, {"bkb", edit.bkb}, {"element", edit.element}
+        {"angle", edit.angle}, {"kbg", edit.kbg}, {"fkb", edit.fkb}, {"bkb", edit.bkb}, {"element", edit.element},
+        {"shield", edit.shield}, {"slot", edit.slot}
     };
     for (auto it = ints.cbegin(); it != ints.cend(); ++it)
         if (it.value()) replacements.insert(it.key(), QString::number(*it.value()));
+    if (edit.ground) replacements.insert(QStringLiteral("ground"), *edit.ground ? "1" : "0");
+    if (edit.air) replacements.insert(QStringLiteral("air"), *edit.air ? "1" : "0");
 
     QStringList lines = lines_;
     for (auto it = replacements.cbegin(); it != replacements.cend(); ++it)
         replaceField(lines[h.line], it.key(), it.value());
+    // sound() silently renumbers a clashing slot; an explicit slot edit must not move anyone else.
+    const auto finish = [&](QString out) -> QString {
+        if (out.isNull() || !edit.slot) return out;
+        QVector<int> want, got;
+        for (const auto &b : boxes) want.append(b.ordinal == ordinal ? *edit.slot : b.slot);
+        for (const auto &b : GenoAsm::parse(out).hitboxes()) got.append(b.slot);
+        std::sort(want.begin(), want.end()); std::sort(got.begin(), got.end());
+        if (want != got)
+            return fail(QStringLiteral("slot %1 is already used by a hitbox that is live at the same time; "
+                                       "pick a free slot (0..%2)").arg(*edit.slot).arg(kHitboxEditableSlots - 1));
+        return out;
+    };
     if (edit.startFrame || edit.endFrame) {
         // A script that closes windows one slot at a time has no fixed wait/clear shape: edit its windows.
         if (const Model model = buildModel(lines_); model.perSlotClear && model.straight)
-            return GenoAsm::parse(lines.join('\n')).viaModel(ordinal, &edit, nullptr, false, err, nullptr);
+            return finish(GenoAsm::parse(lines.join('\n')).viaModel(ordinal, &edit, nullptr, false, err, nullptr));
         const auto shapeError = [&fail](const QString &why) {
             return fail(QStringLiteral("frames not editable for this script shape: ") + why);
         };
@@ -394,7 +417,7 @@ QString GenoAsm::apply(int ordinal, const HitboxEdit &edit, QString *err) const 
         replaceWait(lines[prev], start);
         replaceWait(lines[next1], end - start);
     }
-    return sound(lines.join('\n'), err);
+    return finish(sound(lines.join('\n'), err));
 }
 
 QString GenoAsm::addHitbox(const HitboxAdd &add, QString *err, int *ordinalOut) const {

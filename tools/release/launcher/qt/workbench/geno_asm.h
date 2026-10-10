@@ -18,6 +18,8 @@ struct HitboxRef {
     int endFrame = -1; // Exclusive; -1 means never cleared.
     int clearLine = -1; // Zero-based line of the clear_hitboxes that closes it; -1 if never cleared.
     int element = 0; // Source assembler effect code, 0..31; omitted means normal (0).
+    int shield = 0;  // Shield damage, signed (-128..127); omitted means 0.
+    bool ground = true, air = true; // hit_ground / hit_air: false = cannot hit grounded / airborne targets.
 };
 
 // A new hitbox: starts at `frame` and lasts `duration` frames unless it joins an active window.
@@ -28,11 +30,16 @@ struct HitboxAdd {
     int angle = 361, kbg = 50, fkb = 0, bkb = 20;
 };
 constexpr int kHitboxSlots = 4;
+// The slot ids the Workbench lets a user write. Slot 4+ (Skull Kid's id 4) waits for ws/research-ace-hitbox-slot4:
+// raise this to kHitboxSlots + 1 there once the assembler and engine accept it; a script that already has a
+// higher slot shows it read-only. kHitboxSlots (the sound() solver's pool) moves with it.
+constexpr int kHitboxEditableSlots = kHitboxSlots;
 
 struct HitboxEdit {
     std::optional<QString> joint;
     std::optional<double> damage, size, x, y, z;
-    std::optional<int> angle, kbg, fkb, bkb, startFrame, endFrame, element;
+    std::optional<int> angle, kbg, fkb, bkb, startFrame, endFrame, element, shield, slot;
+    std::optional<bool> ground, air;
 };
 
 class GenoAsm {

@@ -122,7 +122,7 @@ QString syncDeclarations(QString gameplay, const QString &file, int moveIndex, c
     const auto same = [](const HitboxRef &x, const HitboxRef &y) {
         return x.joint == y.joint && x.damage == y.damage && x.size == y.size && x.x == y.x && x.y == y.y &&
                x.z == y.z && x.angle == y.angle && x.kbg == y.kbg && x.fkb == y.fkb && x.bkb == y.bkb &&
-               x.element == y.element;
+               x.element == y.element && x.shield == y.shield && x.ground == y.ground && x.air == y.air;
     };
     QVector<int> src(after.size(), -1);  // the before-ordinal of each after hitbox; -1 for a new one
     QVector<bool> taken(before.size(), false);

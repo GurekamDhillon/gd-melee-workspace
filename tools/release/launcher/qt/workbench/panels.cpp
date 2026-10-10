@@ -4,6 +4,7 @@
 #include "session.h"
 #include "window.h"
 #include <QAction>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QFrame>
@@ -336,9 +337,9 @@ InspectorPanel::InspectorPanel(QWidget *parent) : QWidget(parent) {
         });
         return labelled(label, edit);
     };
-    const auto integer = [this](const QString &key, const QString &label, int minimum) {
+    const auto integer = [this](const QString &key, const QString &label, int minimum, int maximum = std::numeric_limits<int>::max()) {
         auto *edit = new QSpinBox; edit->setObjectName("wbHitbox_" + key); edit->setAccessibleName(label);
-        edit->setFont(atlas::numberFont()); edit->setRange(minimum, std::numeric_limits<int>::max()); edit->setKeyboardTracking(false);
+        edit->setFont(atlas::numberFont()); edit->setRange(minimum, maximum); edit->setKeyboardTracking(false);
         if (key == "end_frame") edit->setSpecialValueText(t("Not cleared", "Sin limpiar"));
         editors_.insert(key, edit);
         connect(edit, &QSpinBox::editingFinished, this, [this, edit, key] {
@@ -354,11 +355,29 @@ InspectorPanel::InspectorPanel(QWidget *parent) : QWidget(parent) {
     grid->addWidget(integer("kbg", t("Knockback growth", "Crecimiento de impulso"), 0), 2, 1);
     grid->addWidget(integer("bkb", t("Base knockback", "Impulso base"), 0), 3, 0);
     auto *element = new QComboBox; element->setObjectName("wbHitbox_element"); element->setAccessibleName(t("Element", "Elemento"));
-    element->addItem(t("Normal", "Normal"), 0);
-    for (int value = 1; value <= 31; ++value) element->addItem(t("Element %1", "Elemento %1").arg(value), value);
-    element->setToolTip(t("Source element code (0–31)", "Código de elemento del script (0–31)")); editors_.insert("element", element);
+    // HitElement (melee/lb/forward.h): the 17 retail ids, then the unused codes the assembler still accepts.
+    const QStringList elementNames = {t("Normal", "Normal"), t("Fire", "Fuego"), t("Electric", "Eléctrico"), t("Slash", "Corte"),
+        t("Coin", "Moneda"), t("Ice", "Hielo"), t("Sleep (short)", "Sueño (corto)"), t("Sleep (long)", "Sueño (largo)"),
+        t("Grab (catch)", "Agarre (catch)"), t("Ground", "Suelo"), t("Cape", "Capa"), t("Inert", "Inerte"), t("Disable", "Desactivar"),
+        t("Darkness", "Oscuridad"), t("Screw Attack", "Ataque tornillo"), t("Lipstick", "Pintalabios"), t("ReDead grab", "Agarre de ReDead")};
+    for (int value = 0; value <= 31; ++value)
+        element->addItem(value < elementNames.size() ? QString("%1 · %2").arg(value).arg(elementNames[value])
+                                                     : t("%1 · unused code", "%1 · código sin uso").arg(value), value);
+    element->setToolTip(t("Source element code (0–31); 0–16 are the retail elements", "Código de elemento del script (0–31); 0–16 son los elementos originales")); editors_.insert("element", element);
     connect(element, &QComboBox::activated, this, [this, element](int) { setField("element", element->currentData()); });
     grid->addWidget(labelled(t("Element", "Elemento"), element), 3, 1);
+    grid->addWidget(integer("shield", t("Shield damage", "Daño al escudo"), -128, 127), 4, 0);
+    grid->addWidget(integer("slot", t("Slot", "Casilla"), 0, kHitboxEditableSlots - 1), 4, 1);
+    const auto toggle = [this](const QString &key, const QString &label, const QString &tip) {
+        auto *box = new QCheckBox(label); box->setObjectName("wbHitbox_" + key); box->setToolTip(tip);
+        box->setFont(atlas::font(atlas::Role::Body14)); editors_.insert(key, box);
+        connect(box, &QCheckBox::clicked, this, [this, key](bool on) { setField(key, on ? 1 : 0); });
+        return box;
+    };
+    grid->addWidget(toggle("ground", t("Hits grounded targets", "Golpea en el suelo"),
+        t("Off = air-only hitbox (hit_ground=0)", "Apagado = solo en el aire (hit_ground=0)")), 5, 0);
+    grid->addWidget(toggle("air", t("Hits airborne targets", "Golpea en el aire"),
+        t("Off = ground-only hitbox (hit_air=0)", "Apagado = solo en el suelo (hit_air=0)")), 5, 1);
     explanationCard_ = new QFrame; explanationCard_->setObjectName("wbHitExplanationCard");
     explanationCard_->setStyleSheet(QString("#wbHitExplanationCard { background: %1; border-left: 3px solid %2; }")
         .arg(atlas::colour("plate2").name(), atlas::colour("jade").name()));
@@ -383,7 +402,7 @@ InspectorPanel::InspectorPanel(QWidget *parent) : QWidget(parent) {
     connect(detailsToggle, &QToolButton::toggled, this, [details, detailsToggle](bool open) { details->setVisible(open); detailsToggle->setArrowType(open ? Qt::DownArrow : Qt::RightArrow); });
     layout->addStretch();
     QWidget *previous = joint_;
-    for (const auto &key : {"start_frame", "end_frame", "damage", "size", "angle", "kbg", "bkb", "element"}) {
+    for (const auto &key : {"start_frame", "end_frame", "damage", "size", "angle", "kbg", "bkb", "element", "shield", "slot", "ground", "air"}) {
         QWidget::setTabOrder(previous, editors_.value(key)); previous = editors_.value(key);
     }
     QWidget::setTabOrder(previous, detailsToggle); clear();
@@ -391,6 +410,7 @@ InspectorPanel::InspectorPanel(QWidget *parent) : QWidget(parent) {
 void InspectorPanel::showHitbox(const QString &row, const HitboxRef &h) {
     const QJsonObject values = {{"bone", h.joint}, {"damage", h.damage}, {"size", h.size}, {"x", h.x}, {"y", h.y}, {"z", h.z},
         {"angle", h.angle}, {"kbg", h.kbg}, {"fkb", h.fkb}, {"bkb", h.bkb}, {"element", h.element},
+        {"shield", h.shield}, {"slot", h.slot}, {"ground", h.ground ? 1 : 0}, {"air", h.air ? 1 : 0},
         {"start_frame", h.startFrame}, {"end_frame", h.endFrame}};
     if (row_ == row && ordinal_ == h.ordinal && values_ == values) return;
     const bool same = row_ == row && ordinal_ == h.ordinal;
@@ -400,6 +420,13 @@ void InspectorPanel::showHitbox(const QString &row, const HitboxRef &h) {
     row_ = row; ordinal_ = h.ordinal; values_ = values;
     title_->setText(t("HB%1", "HB%1").arg(h.ordinal));
     title_->setToolTip(t("%1 · Hitbox %2 (slot %3)", "%1 · Caja de golpe %2 (casilla %3)").arg(row).arg(h.ordinal).arg(h.slot));
+    // A slot id beyond the writable range (a script from a slot-4 build) is shown, never edited.
+    if (auto *slot = qobject_cast<QSpinBox *>(editors_.value("slot"))) {
+        const bool beyond = h.slot >= kHitboxEditableSlots;
+        slot->setRange(0, qMax(h.slot, kHitboxEditableSlots - 1)); slot->setEnabled(!beyond);
+        slot->setToolTip(beyond ? t("Slot %1 is beyond the slots the Workbench can write (0-%2); read-only", "La casilla %1 supera las que el Workbench puede escribir (0-%2); solo lectura").arg(h.slot).arg(kHitboxEditableSlots - 1)
+                                : t("Hit priority: the lowest slot wins when several overlap. Slots must differ while hitboxes are live together.", "Prioridad de golpe: gana la casilla más baja. Deben ser distintas mientras los hitboxes coinciden."));
+    }
     setEnabled(true); form_->show(); emptyCard_->hide(); deleteButton_->show(); updateEditors(previous); updateRowChecks();
 }
 void InspectorPanel::clear(bool rowHasHitboxes) {
@@ -451,13 +478,15 @@ void InspectorPanel::updateEditors(const QJsonObject &previous) {
             bool valid = false; const int draft = integer->locale().toInt(integer->cleanText(), &valid);
             if (integer->text() == integer->specialValueText()) displayed = integer->minimum();
             else displayed = valid ? QJsonValue(it.key() == "end_frame" ? draft + 1 : draft) : QJsonValue(QJsonValue::Undefined);
-        } else if (auto *combo = qobject_cast<QComboBox *>(it.value())) displayed = combo->currentData().toInt();
+        } else if (auto *check = qobject_cast<QCheckBox *>(it.value())) displayed = check->isChecked() ? 1 : 0;
+        else if (auto *combo = qobject_cast<QComboBox *>(it.value())) displayed = combo->currentData().toInt();
         if (!before.isUndefined() && displayed != before) continue;
         const QSignalBlocker block(it.value());
         if (auto *line = qobject_cast<QLineEdit *>(it.value())) line->setText(value.toString());
         else if (auto *number = qobject_cast<QDoubleSpinBox *>(it.value())) number->setValue(value.toDouble());
         else if (auto *integer = qobject_cast<QSpinBox *>(it.value()))
             integer->setValue(it.key() == "end_frame" && value.toInt() > 0 ? value.toInt() - 1 : value.toInt());
+        else if (auto *check = qobject_cast<QCheckBox *>(it.value())) check->setChecked(value.toInt() != 0);
         else if (auto *combo = qobject_cast<QComboBox *>(it.value())) combo->setCurrentIndex(combo->findData(value.toInt()));
     }
 }
@@ -473,12 +502,19 @@ void InspectorPanel::setField(const QString &field, const QVariant &raw) {
     } else {
         bool valid = false; const double number = raw.toDouble(&valid);
         if (!valid || !std::isfinite(number)) { updateEditors(); return; }
-        if (qobject_cast<QSpinBox *>(editors_.value(key)) || key == "element") {
-            const double minimum = key == "angle" ? std::numeric_limits<int>::min() : 0;
-            const double maximum = key == "element" ? 31 : std::numeric_limits<int>::max();
+        if (qobject_cast<QSpinBox *>(editors_.value(key)) || key == "element" || key == "ground" || key == "air") {
+            const double minimum = key == "angle" ? std::numeric_limits<int>::min() : key == "shield" ? -128 : 0;
+            const double maximum = key == "element" ? 31 : key == "shield" ? 127 : key == "slot" ? kHitboxEditableSlots - 1
+                                 : key == "ground" || key == "air" ? 1 : std::numeric_limits<int>::max();
             if (key == "end_frame" && number == -1 && values_[key].toInt() == -1) return;
             if (std::trunc(number) != number || number < minimum || number > maximum) { updateEditors(); return; }
             value = int(number);
+            if (key == "ground" || key == "air") {   // the script and the command take true/false
+                if (values_.value(key) == value) return;
+                const auto previous = values_; values_.insert(key, value); updateEditors(previous);
+                emit editRequested("edit_hitbox", {{"row", row_}, {"ordinal", ordinal_}, {key, value.toInt() != 0}});
+                return;
+            }
         } else {
             if ((key == "damage" || key == "size") && number < 0) { updateEditors(); return; }
             value = number;
