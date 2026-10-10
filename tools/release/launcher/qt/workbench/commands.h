@@ -19,6 +19,7 @@ void registerViewCommands(Session &);
 void registerRowCommands(Session &);
 void registerHitboxCommands(Session &);
 void registerClipCommands(Session &);
+void registerAttributeCommands(Session &);
 void registerGroundCommands(Session &); // Task 14.
 void registerSaveCommands(Session &);   // Task 9.
 void registerAllCommands(Session &);

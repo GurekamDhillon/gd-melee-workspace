@@ -2,6 +2,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSet>
 #include <limits>
 
 namespace wb {
@@ -125,6 +126,30 @@ bool child(const QString &text, int start, int end, const QString &step, int *cs
     return false;
 }
 
+// Reuse the validated source scanners so keys are checked before Qt collapses
+// duplicate object members. This includes nested objects and escaped key spellings.
+bool uniqueKeys(const QString &text, int start, int end) {
+    if (text[start] == '{') {
+        QSet<QString> keys;
+        int cursor = start + 1;
+        Member member;
+        while (nextMember(text, &cursor, end, &member)) {
+            if (keys.contains(member.key)) return false;
+            keys.insert(member.key);
+            if (!uniqueKeys(text, member.valueStart, member.valueEnd)) return false;
+        }
+    } else if (text[start] == '[') {
+        int cursor = skipWs(text, start + 1);
+        while (cursor < end - 1) {
+            const int valueEnd = skipValue(text, cursor);
+            if (valueEnd < 0 || !uniqueKeys(text, cursor, valueEnd)) return false;
+            cursor = skipWs(text, valueEnd);
+            if (cursor < end - 1 && text[cursor] == ',') cursor = skipWs(text, cursor + 1);
+        }
+    }
+    return true;
+}
+
 QString fail(QString *err, const QString &message) {
     if (err) *err = message;
     return QString();
@@ -140,6 +165,13 @@ QString leadingIndent(const QString &text, int lineStart, int limit) {
     return text.mid(lineStart, end - lineStart);
 }
 }  // namespace
+
+bool jsonHasUniqueKeys(const QString &text) {
+    if (!validValue(text)) return false;
+    const int start = skipWs(text, 0);
+    const int end = skipValue(text, start);
+    return end >= 0 && uniqueKeys(text, start, end);
+}
 
 bool jsonFind(const QString &text, const JsonPath &path, int *start, int *end) {
     if (!start || !end || !validValue(text)) return false;

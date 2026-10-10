@@ -57,6 +57,37 @@ operator is registered, the script calls it after connecting.
 The bootstrap does not start a second server. It can be used with the
 persistent server launched by the Creator hub.
 
+## Fighter attributes
+
+After connecting, open **Geno > Attributes** and click **Refresh attributes**.
+Expand Ground, Air, Jump, Landing, Shield / ECB or Misc, or filter by a field's
+name, description or source file. Filtering reveals matches in collapsed groups.
+Each numeric field shows its unit and Geno schema range. Unbounded fields have
+no extra physical limits; integer and bounded values are validated before Apply.
+A field whose effective value is unavailable needs an explicit **Override** first.
+
+Changed fields are highlighted. **Apply attributes** sends only changed fields,
+in edit order, through the workbench server. Each applied field gets its own
+history entry. If a later edit or refresh fails, the remaining drafts stay pending.
+An agent proposal stops the batch at that field: accept it in the Creator hub,
+then Refresh and Apply the remaining drafts against the new source baseline.
+
+**Rebuild + reload** becomes available once there are no pending drafts. It uses
+the existing rebuild command and restores the selected row and frame. Editing
+source alone leaves the loaded engine stale until that sequence succeeds.
+
+The server edits the maintained gameplay source, or the selected fighter in a
+Geno source. A local gameplay.full.json is patched in the same commit because
+Goku's build loads it first. The built package supplies read-only fallback values.
+Editing an explicit inherited air_vy patch array preserves its other impulses;
+absent retail engine defaults are never synthesized. One unset append slot lets
+you author the next air impulse explicitly. Unknown values stay unset.
+For Goku, explicit common-attribute overrides are applied in gameplay Stage B;
+attribute edits do not invalidate the art Stage A signature.
+
+The schema exposes shield size but no numeric ECB fields. The panel explains
+that ECB remains a plan joint binding; it does not add unsupported schema keys.
+
 ## Session API and agent recipes
 
 Send these Python snippets through the Blender MCP's `execute_blender_code`
@@ -90,6 +121,16 @@ For a source edit and subsequent rebuild:
     if s.stale:
         assert s.rebuild_reload(), s.last_error
     print(s.status)
+
+For a fighter-attribute source edit:
+
+    import geno_workbench.api as a
+    s = a.session()
+    assert s.refresh_attributes(), s.last_error
+    print([(item["name"], item["value"], item["source_file"]) for item in s.attributes])
+    assert s.edit_attribute("weight", 81.5), s.last_error
+    if s.stale:
+        assert s.rebuild_reload(), s.last_error
 
 Every session operation returns a success boolean. Failures populate
 `last_error` and `status`. Application errors retain the connection.

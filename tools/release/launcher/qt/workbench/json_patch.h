@@ -6,6 +6,9 @@
 namespace wb {
 using JsonPath = QStringList;  // object keys, or "#N" for array index N
 
+// Validate syntax and reject duplicate keys in every object, including escaped aliases.
+bool jsonHasUniqueKeys(const QString &text);
+
 // Offsets are QString (UTF-16) indices; end is exclusive. An empty path selects
 // the root value. Malformed JSON, missing paths and ambiguous keys fail.
 bool jsonFind(const QString &text, const JsonPath &path, int *start, int *end);
