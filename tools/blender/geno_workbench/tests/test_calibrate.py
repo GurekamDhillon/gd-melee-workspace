@@ -38,3 +38,20 @@ def test_scale_is_reported():
     big = tuple(tuple(v * 2 if i < 3 and j < 3 else v for j, v in enumerate(row)) for i, row in enumerate(rot("z", 0)))
     cal = W.calibrate_offsets({1: big}, {1: L[1]}, root_joint=1)
     assert abs(cal.scale - 2.0) < 1e-9
+
+
+def test_tiny_head_offset_is_snapped_large_is_kept():
+    L = {1: rot("z", 0), 2: rot("y", 20, (0, 0, 5)), 3: rot("x", -35, (1, 0, 8))}
+    W0 = rot("z", 90, (10, -3, 0))
+    engine = {j: W.mul(W0, L[j]) for j in L}
+    off = {
+        1: rot("z", 0),
+        2: rot("z", 0, (0.002, -0.001, 0.001)),
+        3: rot("z", 0, (0.5, 0.0, 0.0)),
+    }
+    blender = {j: W.mul(L[j], off[j]) for j in L}
+    cal = W.calibrate_offsets(engine, blender, root_joint=1)
+    assert all(cal.k[2][i][3] == 0.0 for i in range(3))
+    assert abs(cal.k[3][0][3] - 0.5) < 1e-9
+    kept = W.calibrate_offsets(engine, blender, root_joint=1, head_snap=0.0)
+    assert abs(kept.k[2][0][3] - 0.002) < 1e-9
