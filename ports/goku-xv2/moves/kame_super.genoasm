@@ -1,0 +1,7 @@
+# PICK provisional (2026-10-09): Super Kamehameha (XV2 skill ULT 000_GOK_CKM; full ki + full charge). Clip GOK_ULT_CKM_C from f40,
+# the beam leaves at source f70 = Melee f30. One large beam article (article 4: 4 spheres of 5.2 over 15 units, 32%, kills at about 60-80).
+PUT ANIM_RATE 1.0
+wait 30
+CALL geno.article.spawn 4
+wait_until 62
+iasa

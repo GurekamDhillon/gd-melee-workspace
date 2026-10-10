@@ -1,0 +1,14 @@
+# PICK: provisional (attack-feel pass 2026-10-08). XV2 light 1 (BCM Light root -> BAC 300): left jab; strike f12 put on Melee f3
+# Source: BAC 300 clip GOK_ATC_002, strike f12; crop from f9. Numbers are Melee design values, not XV2 data.
+PUT ANIM_RATE 1.0
+wait_until 1
+sfx behavior=1 sfx_id=166 volume=127 panning=64
+wait_until 3
+hitbox slot=0 joint=@HAND_L@ damage=3 size=2.27 x=0.00 y=0.00 z=0.00 angle=361 kbg=50 fkb=0 bkb=8
+hitbox slot=1 joint=@ARM_L@ damage=2 size=1.73 x=0.00 y=0.00 z=0.00 angle=361 kbg=50 fkb=0 bkb=8
+wait 2
+clear_hitboxes
+jab_combo disabled=0
+jab_rapid state=1
+wait_until 18
+iasa

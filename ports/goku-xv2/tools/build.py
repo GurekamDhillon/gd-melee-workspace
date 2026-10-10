@@ -1,0 +1,459 @@
+"""Rebuild artist output, then reapply maintained Goku gameplay through the parity contract.
+
+python ports/goku-xv2/tools/build.py --package _build/.../mods/goku-xv2 --art-build _build/.../build
+Or supply --fighter PATH --out _build/PATH to run the artist builder first.
+All generated scripts, losses and audit records remain below workspace _build.
+"""
+import argparse
+import copy
+import hashlib
+import json
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+
+PORT = Path(__file__).resolve().parents[1]
+ROOT = PORT.parents[1]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import strip_gameplay as SG  # gameplay.full.json (local) wins over the stripped gameplay.json
+sys.path.insert(0, str(ROOT/'ports/ir/tools'))
+from tools.geno import script, report
+from acmd_loss import write_losses
+
+ROLE = {'HAND_R':'hand.R','HAND_L':'hand.L','FOOT_R':'foot.R','FOOT_L':'foot.L','CHEST':'chest',
+        'ARM_R':'lower_arm.R','ARM_L':'lower_arm.L','LEG_R':'lower_leg.R','LEG_L':'lower_leg.L','HIPS':'hips','FLOOR':'translation',
+        # cross-port hitboxes (tools/cross_port.py) sit on the bone of the source's own role
+        'UPLEG_R':'upper_leg.R','UPLEG_L':'upper_leg.L','UPARM_R':'upper_arm.R','UPARM_L':'upper_arm.L','HEAD':'head','NECK':'neck',
+        'SPINE':'spine','TOE_R':'toe.R','TOE_L':'toe.L'}
+
+def load(path):
+    return json.loads(Path(path).read_text(encoding='utf-8'))
+
+def write(path, value):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value, indent=2)+'\n', encoding='utf-8')
+
+def generated(path):
+    path = Path(path).resolve()
+    if not path.is_relative_to((ROOT/'_build').resolve()):
+        raise ValueError('Generated output must remain under workspace _build: '+str(path))
+    return path
+
+def move_source(ir, name):
+    key = name if name.startswith('move:') else 'move:'+name
+    parity = next((p for p in ir['parity'] if p['here'] == key), None)
+    if parity is None:
+        raise ValueError('Missing parity decision for '+key)
+    move = next(m for m in ir['behavior']['moves'] if m['id'] == key)
+    subs = {s['id']:s for s in ir['behavior']['subactions']}
+    scripts = {s['id']:s for s in ir['behavior']['scripts']}
+    return parity, move, [scripts[subs[s]['scripts']['main']] for s in move['subactions']]
+
+def attributes(ir, host):
+    fields = load(ROOT/'tools/geno/artist/data/default_attributes.json')['attributes']
+    values = {a['engine_name']:a for a in host['behavior']['attributes']['common']}
+    result, evidence = {}, []
+    for field in fields:
+        row = values[field]
+        parity = next((p for p in ir['parity'] if p['here'].startswith('issue:attribute/') and
+                       ('(host field '+field+')') in p['differences']), None)
+        if parity is None:
+            raise ValueError('Missing attribute parity decision for '+field)
+        value = 1.0 if field == 'model_scaling' else row['value']
+        result[field] = value
+        evidence.append({'field':field, 'value':value, 'classification':'destination design',
+                         'basis':'Captain Falcon comparison host; model scale fixed to authored dimensions' if field == 'model_scaling' else 'Captain Falcon comparison host copied as initial design',
+                         'parity':parity, 'host_attribute':row['key'], 'source_value':None})
+    return result, evidence
+
+def plan_clip_names(package):
+    """Bank clip names (plan.json bank.clips) of the built package."""
+    try:
+        plan = load(package / 'files' / 'plan.json')
+        clips = plan['bank']['clips']
+        return set(clips) if isinstance(clips, dict) else {c.get('name') for c in clips}
+    except Exception:  # noqa: BLE001
+        return set()
+
+
+def row_of(fighter, name):
+    """The own row number (303 + index in fighter.rows) of a declared clip name, or None."""
+    rows = fighter.get('fighter', {}).get('rows', [])
+    return 303 + rows.index(name) if name in rows else None
+
+
+def bind(text, plan, scale=1.0):
+    for marker, role in ROLE.items():
+        if '@'+marker+'@' in text:
+            if role not in plan['roles']:
+                raise ValueError('Missing mapped role '+role)
+            text = text.replace('@'+marker+'@', str(plan['roles'][role][0]))
+    if '@GRAB_WORD0@' in text:
+        joint = plan['roles']['translation'][0]
+        text = text.replace('@GRAB_WORD0@', hex(0x2C000000 | (joint << 11)))
+    # raw hitbox word 0 with the joint of a role: @HITW0:<ROLE marker>:<word with joint 0>@ (cross-port hitboxes)
+    def hit_word0(m):
+        role = ROLE[m[1]]
+        if role not in plan['roles']:
+            raise ValueError('Missing mapped role '+role)
+        return '0x%08X' % (int(m[2], 0) | (plan['roles'][role][0] << 11))
+    text = re.sub(r'@HITW0:([A-Z_0-9]+):(0x[0-9A-Fa-f]+)@', hit_word0, text)
+    if re.search(r'@[A-Z_0-9]+@', text):
+        raise ValueError('Unresolved gameplay joint placeholder')
+    lines = []
+    for line in text.splitlines():
+        if line.strip().startswith('hitbox raw='):
+            words = [int(w,0) for w in line.split('raw=',1)[1].split(',')]
+            def resized(value, signed=False):
+                if signed and value >= 32768:
+                    value -= 65536
+                value = round(value * scale)
+                if not (-32768 <= value <= 32767 if signed else 0 <= value <= 65535):
+                    raise ValueError('Scaled grab dimension exceeds native packed range')
+                return value & 65535
+            words[1] = (resized(words[1] >> 16) << 16) | resized(words[1] & 65535,True)
+            words[2] = (resized(words[2] >> 16,True) << 16) | resized(words[2] & 65535,True)
+            line = 'hitbox raw=' + ','.join(f'0x{w:08X}' for w in words)
+        elif line.strip().startswith('hitbox '):
+            line = re.sub(r'\b(size|x|y|z)=(-?\d+(?:\.\d+)?)',
+                          lambda m: f'{m[1]}={float(m[2])*scale:.9g}',line)
+        lines.append(line)
+    return '\n'.join(lines)+'\n'
+
+def scale_articles(articles, scale):
+    result = copy.deepcopy(articles)
+    for article in result:
+        article['spawn'] = [v*scale for v in article['spawn']]
+        for box in article['hitboxes']:
+            box['size'] *= scale
+            box['offset'] = [v*scale for v in box['offset']]
+    return result
+
+def source_losses(ir, config):
+    losses, seen = [{'move':'move:special_n','frame':0,
+                     'what':'Kamehameha beam presentation and continuous charge response',
+                     'why':'Three authored damage tiers launch an original cyan beam proxy with four overlapping spheres. XV2 EEPK presentation, source camera and exact charged behavior were not converted.',
+                     'source':'destination design'},
+                    {'move':'move:rapid_jab','frame':0,'what':'Source mash/controller continuation',
+                     'why':'Authored finite barrage: native rapid-jab entry flag, two-frame start, five BAC candidate pulses, forced end after49frames and automatic recovery. Infinite mash continuation is not reproduced.',
+                     'source':'destination design'}], set()
+    for spec in config['moves']+config['special_adaptations']:
+        parity, move, scripts = move_source(ir, spec['parity'])
+        if spec.get('source_candidate_windows'):
+            losses.append({'move':spec['name'],'frame':spec['windows'][0][0],
+                           'what':'BAC candidate timing adapted to the exported striking pose',
+                           'why':spec['pose_review'],'source':'native bank pose review',
+                           'source_windows':spec['source_candidate_windows'],'destination_windows':spec['windows']})
+        if move['id'] in seen:
+            continue
+        seen.add(move['id'])
+        losses.append({'move':move['id'],'frame':0,'what':'Source damage/reaction, shape and locomotion adapted to platform-fighter gameplay',
+                       'why':'Melee percentage damage, angle, KBG/BKB and anatomical spheres are destination design; BAC static frames do not execute XV2 time-scale or BCM branches.',
+                       'source':'parity adaptation','parity':parity})
+        for src in scripts:
+            for event in src['events']:
+                if event['op'] in ('hitbox.create','engine.animation'):
+                    continue
+                losses.append({'move':move['id'],'frame':event.get('frame',0),
+                               'what':event['op'],
+                               'why':'Not executed as XV2 semantics. Homing/tracking and camera locks are omitted; Melee movement, authored windows and common camera apply. Source FX/audio and controller callbacks are not converted by this gameplay pass.',
+                               'source':src['id'], 'evidence':src.get('provenance',{}).get('evidence',[])})
+    return losses
+
+FX_ARTICLES = {'KameOrb': 'P_TrailGokuOrb', 'KameTap': 'P_TrailGokuBeam', 'KameMid': 'P_TrailGokuBeam',
+               'KameFull': 'P_TrailGokuBeamBig', 'KameSuper': 'P_TrailGokuBeamSuper'}
+# state name -> [(frame, package, role, scale, end_event)]: ki aura while charging, vanish bursts, the rush trail
+FX_STATES = {
+    'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, 'state_exit')],
+    'KiCharge': [(1, 'P_TrailGokuAura', 'hips', 1.3, 'state_exit')],
+    'KameSuper': [(1, 'P_TrailGokuAura', 'hips', 1.6, 'state_exit')],
+    'Recovery': [(5, 'P_TrailGokuVanish', 'chest', 1.0, 'emitter_life')],
+    'ITEnd': [(1, 'P_TrailGokuVanish', 'chest', 1.0, 'emitter_life')],
+    'Counter': [(4, 'P_TrailGokuVanish', 'chest', 0.8, 'emitter_life')],
+    'Riposte': [(1, 'P_TrailGokuVanish', 'chest', 0.8, 'emitter_life')],
+    'Rush': [(2, 'P_TrailGokuDash', 'hips', 1.0, 'state_exit')],
+    'RushCombo': [(1, 'P_TrailGokuDash', 'hips', 1.0, 'state_exit')],
+}
+
+
+def write_fx(package, fighter, plan, cfg):
+    """Copy the original effect packages (tools/fx_build.py) into the package and bind them (geno.md 20.3)."""
+    src = ROOT/'_build/goku-xv2/fx'
+    if not src.exists():
+        print('fx: _build/goku-xv2/fx missing (run tools/fx_build.py); the package has no effects')
+        return
+    dst = package/'fx'
+    if dst.exists():
+        shutil.rmtree(dst)
+    shutil.copytree(src, dst)
+    for a in fighter.get('articles', []):
+        pkg = FX_ARTICLES.get(a['name'])
+        if pkg:
+            a['fx'] = pkg
+            a['show_model'] = True  # the proxy mesh stays under the effect
+    states = {s['name']: s for s in fighter['states']}
+    scripts = {sa['name']: sa['script'] for sa in cfg['special_adaptations']}
+    entries = []
+    for name, calls in FX_STATES.items():
+        st = states.get(name)
+        if not st or not isinstance(st.get('subaction'), int):
+            continue
+        entries.append({'state': name, 'subaction': st['subaction'], 'clock': 'animation', 'script': scripts.get(name, 'moves/rush.genoasm'),
+                        'calls': [{'frame': f, 'macro': 'goku_'+pkg[11:].lower(), 'effect': pkg, 'package': pkg, 'bone': role,
+                                   'joint': plan['roles'][role][0], 'offset': [0, 0, 0], 'rotation': [0, 0, 0], 'scale': sc,
+                                   'follow': True, 'when': [], 'end_event': end} for f, pkg, role, sc, end in calls]})
+    (dst/'fx_bindings.json').write_text(json.dumps({'geno_fx_bindings': 1, 'fighter': 'goku-xv2', 'host': 'mario', 'unit_scale': 1.0,
+                                                    'states': entries}, indent=1), encoding='utf-8')
+    fighter['fx_bindings'] = 'fx/fx_bindings.json'
+
+
+
+def write_presentation(package, fighter):
+    """Select icon, portrait and HUD/results stock icon from his own converted model (tools/presentation_art.py renders the PNGs)."""
+    art = ROOT/'_build/goku-xv2/presentation'
+    if not all((art/n).exists() for n in ('icon.png', 'portrait.png', 'stock.png')):
+        print('presentation: _build/goku-xv2/presentation/*.png missing (run tools/presentation_art.py in Blender); no own select art')
+        return
+    tool = ROOT/'melee/pc/tools/png2gx.py'
+    names = {}
+    for key, png, fmt in (('icon', 'icon.png', 'rgb5a3'), ('portrait', 'portrait.png', 'rgb5a3'), ('stock', 'stock.png', 'rgba8')):
+        name = f'GnGokuXv2_{key}.gxtex'
+        subprocess.run([sys.executable, str(tool), str(art/png), str(package/'files'/name), '--format', fmt, '--allow-odd-size'], check=True, capture_output=True)
+        names[key] = name
+    fighter['presentation'] = {'icon': names['icon'], 'portrait': [names['portrait']], 'stock': [names['stock']]}
+
+
+
+def apply(package, art_build, ir_path=None):
+    package, art_build = generated(package), generated(art_build)
+    cfg = load(SG.path())
+    art_report = ROOT/'_build/goku-xv2/author-source/art-report.json'
+    height = load(art_report)['geometry']['height']
+    reference_height = cfg['geometry_reference_height']
+    scale = height / reference_height
+    if not 8 <= height <= 20 or reference_height <= 0:
+        raise ValueError('Invalid gameplay/art dimension contract')
+    ir = load(ir_path or PORT/cfg['source_ir'])
+    host = load(PORT/cfg['host_ir'])
+    plan_path = package/'files/plan.json'
+    plan = load(plan_path)
+    if plan['joint_count'] > 128:
+        raise ValueError('Native define joint-to-part storage limit requires <=128 joints')
+    # Native definitions allocate the stock 303 animation rows. The artist table has
+    # only stock names, so virtual custom clips need explicit runtime row bindings.
+    plan['row_clips'].extend([None]*max(0,303-len(plan['row_clips'])))
+    # 2026-10-09 (owner #7, landing sinks to the torso). The engine's ECB is the bounding box of the six x44 joints (mpColl_LoadECB_JObj: bottom =
+    # lowest joint - 2, clamped at 0, grounded or not) and the donor layout puts two knees and the hip there. His flight-stance aerials fold the
+    # legs, so those joints sit 5-8 units above the root, the ECB bottom floats with them and he lands that far INTO the floor (measured:
+    # root y -8.3 at touchdown of a late fair). TopN in the hip slot keeps the ECB bottom at the root in every pose; shoulders/head/knees still
+    # shape the width and the crouch height. Plan-level, Goku only: no other fighter's plan or the engine changes.
+    ecb = plan['ftdata']['x44_ecb']
+    hip = next(e for e in ecb if e['role'] in ('HipN', 'TopN'))
+    hip.update(role='TopN', joint=0, name='TopN')
+    for state in cfg['states']:
+        if isinstance(state['subaction'], str):
+            continue  # 'clip:<name>' states bind to a declared clip row later (row_of)
+        clip_name = state.get('clip', state['name'])  # air partners share the ground state's clip
+        if clip_name not in plan['bank']['clips']:
+            raise ValueError('Custom state has no bank clip: '+state['name'])
+        plan['row_clips'][state['subaction']] = clip_name
+        # BuildOwn gives stock motion mappings precedence over row_clips. Mario's
+        # eight special motions343..350 claim animation rows295..302 even though
+        # the authored special-input table makes these donor motions unreachable.
+        for motion in plan['motion_rows']:
+            if motion['motion'] == 343 + state['subaction'] - 295:
+                motion['clip'] = clip_name
+    doc = load(package/'geno.json')
+    fighter = doc['fighters'][0]
+    lib = PORT.parents[1]/'_build/goku-xv2/author-source/clip-library.json'
+    if lib.exists():  # LAB CLIPS library: unbound declared rows 303.. (geno.md fighter.rows)
+        fighter.setdefault('fighter', {})['rows'] = [c['name'] for c in load(lib)['clips']] + \
+            [n for n in ('ITEnd', 'KiCharge', 'KameSuper', 'RushCombo') if n in plan_clip_names(package)]
+    if cfg.get('cape'):
+        fighter['cape'] = cfg['cape']  # Instant Transmission (geno.cape) parameters
+    for st in fighter.get('states', []):  # states that name a declared clip get its own row number
+        if isinstance(st.get('subaction'), str) and st['subaction'].startswith('clip:'):
+            st['subaction'] = row_of(fighter, st['subaction'][5:])
+    if cfg.get('toon'):
+        fighter['toon'] = cfg['toon']  # engine cel shading (2026-10-08, geno.md toon); visual only
+    attrs, attr_evidence = attributes(ir, host)
+    # Reference speeds are geometry/animation measurements; preserve measured artist values.
+    for key in ('slow_walk_max','mid_walk_point','fast_walk_min','run_animation_scaling'):
+        measured = fighter.get('attributes',{}).get(key)
+        if measured is not None:
+            attrs[key] = measured
+            next(e for e in attr_evidence if e['field']==key).update(value=measured,
+                basis='Artist output reference speed; inspect artist build-report for measurement/fallback status')
+    overlays, audit = {}, []
+    motion_rows = report.motion_subactions()
+    # Stock ftCo_SM names differ from action names (AttackS3 versus AttackS3S).
+    # Resolve common authored rows through the native motion map, as BuildOwn does.
+    motion_clips = {m['motion']:m['clip'] for m in plan['motion_rows']}
+    for move in cfg['moves']:
+        for motion in move['motions']:
+            row = motion_rows[motion][1]
+            if motion_clips.get(motion):
+                plan['row_clips'][row] = motion_clips[motion]
+    for spec in cfg['moves']+cfg['special_adaptations']:
+        declared = None
+        parity, move, sources = move_source(ir, spec['parity'])
+        text = bind((PORT/spec['script']).read_text(encoding='utf-8'), plan, scale)
+        words = script.assemble(text, cfg['states'])
+        name = Path(spec['script']).stem
+        (package/'moves').mkdir(exist_ok=True)
+        (package/spec['script']).write_text(text, encoding='utf-8')
+        destination = package/'moves'/f'{name}.words'
+        destination.write_text(' '.join(f'0x{x:08X}' for x in words)+'\n', encoding='utf-8')
+        info = report.frames(words)
+        if 'windows' in spec:
+            actual = [(b['start'], b['end']-b['start']) for b in info['hitboxes']]
+            if actual != [tuple(w) for w in spec['windows']]:
+                raise ValueError('Authored window declaration disagrees with assembly: '+name)
+        if 'motions' in spec:
+            rows = sorted({motion_rows[m][1] for m in spec['motions']})
+            for row in rows:
+                overlays[row] = {'index':row,'file':f'moves/{name}.words','move_tag':spec['tag']}
+        else:
+            state = next(s for s in cfg['states'] if s['name']==spec['name'])
+            sub = state['subaction']
+            declared = None
+            if isinstance(sub, str):  # 'clip:<name>': a declared own row (fighter.rows), 303 on
+                declared = sub[5:]
+                sub = row_of(fighter, declared)
+                if sub is None:
+                    raise ValueError(name+': declared clip row missing: '+declared)
+            rows = [sub]
+            overlays[rows[0]] = {'index':rows[0],'file':f'moves/{name}.words','move_tag':'special'}
+        for row in rows:
+            clips = plan['row_clips']
+            clip = declared if (declared and row == rows[0]) else (clips[row] if row < len(clips) else None)
+            if not clip or clip not in plan['bank']['clips']:
+                raise ValueError(f'{name}: animation row {row} has no authored bank clip')
+            frames = plan['bank']['clips'][clip]['frames']
+            if spec.get('minimum_clip_frames') and frames < spec['minimum_clip_frames']:  # absent in the stripped gameplay.json
+                raise ValueError(f'{name}: clip {clip} has {frames} frames; needs {spec["minimum_clip_frames"]}')
+        audit.append({'move':name,'parity':parity,'source_scripts':[s['id'] for s in sources],
+                      'rows':rows,'script_frames':info,'classification':'destination design / static source candidates',
+                      'pose_review':spec.get('pose_review'),
+                      'words_sha256':hashlib.sha256(destination.read_bytes()).hexdigest()})
+    fighter.update({key:cfg[key] for key in ('lua','states','specials','articles','jumps')})
+    import copy
+    fighter['states'] = copy.deepcopy(cfg['states'])
+    for st in fighter['states']:
+        st.pop('clip', None)
+        st.pop('pick', None)  # provenance note lives in gameplay.json/PICKS.md, not the runtime schema
+        if isinstance(st.get('subaction'), str) and st['subaction'].startswith('clip:'):
+            row = row_of(fighter, st['subaction'][5:])
+            if row is None:
+                raise ValueError('State clip row not declared: '+st['name'])
+            st['subaction'] = row
+    fighter['articles'] = scale_articles(cfg['articles'],scale)
+    fighter['attributes'] = attrs
+    fighter['subactions'] = [overlays[k] for k in sorted(overlays)]
+    fighter['special_attributes'] = []
+    fighter.pop('fx_bindings', None)
+    write_fx(package, fighter, plan, cfg)
+    write_presentation(package, fighter)
+    # Native common callbacks are explicit; moves remain source-owned scripts with common engine flow.
+    fighter['common_states'] = [{'motion':m,'subaction':motion_rows[m][1]} for spec in cfg['moves'] for m in spec['motions']]
+    ki = package/'files/GnGokuKi.dat'
+    from ki_model import build as build_ki
+    build_ki(package,art_build,scale)
+    if ki.exists():
+        for article in fighter['articles']:
+            article['model'] = {'file':ki.name,'symbol':'goku_ki_joint'}
+    else:
+        raise ValueError('Kamehameha article model missing: '+str(ki))
+    (package/'lua').mkdir(exist_ok=True)
+    lua_text = (PORT/'lua/goku.lua').read_text(encoding='utf-8')
+    (package/'lua/goku_ki.lua').write_text(lua_text, encoding='utf-8')  # the combo package (geno 11) installs this one
+    nl = chr(10)
+    (package/'lua/goku.lua').write_text(nl.join(l for l in lua_text.split(nl) if '-- @KI' not in l), encoding='utf-8')
+    doc['geno'] = 10
+    write(package/'geno.json',doc)
+    try:  # the LAB CLIPS MOVES table lives in the package's geno-lab copy, which the artist build re-copies
+        sys.path.insert(0, str(PORT/'tools')); import movemap; movemap.main()
+    except Exception as e:  # noqa: BLE001 - the move map is a LAB aid, never a build blocker
+        print('movemap: skipped:', e)
+    manifest = load(package/'mod.json')
+    manifest['version'] = '0.2.0'
+    write(package/'mod.json',manifest)
+    write(plan_path,plan)
+    write(art_build/'plan.json',plan)
+    write(art_build/'attribute-design.json',attr_evidence)
+    write(art_build/'geometry-scale.json',{
+        'reference_height':reference_height,'art_bind_height':height,'factor':scale,
+        'basis':'art-report.json geometry.height / gameplay.json geometry_reference_height',
+        'art_report_sha256':hashlib.sha256(art_report.read_bytes()).hexdigest(),
+        'scaled':['fighter hitbox radii/local offsets','grab packed radius/local offsets',
+                  'article spawn/radii/local offsets','Ki proxy mesh vertex positions'],
+        'hurtboxes':'refit from current mesh by audit_gameplay',
+        'physics':'Host attributes and authored movement/projectile velocities retained; model_scaling=1',
+        'idempotence':'Always applies to maintained source templates/config, never generated dimensions'})
+    write(art_build/'gameplay-parity.json',{'source_sha256':hashlib.sha256((ir_path or PORT/cfg['source_ir']).read_bytes()).hexdigest(),'moves':audit})
+    write_losses(art_build/'gameplay-losses.json',{'losses':source_losses(ir,cfg)})
+    reports = [load(art_build/'gameplay-losses.json')]
+    for path in (ROOT/'_build/goku-xv2/author-source/conversion_losses.json',
+                 ROOT/'_build/goku-xv2/author-source/art-losses.json'):
+        if path.exists():
+            reports.append(load(path))
+    art_report = ROOT/'_build/goku-xv2/author-source/art-report.json'
+    if art_report.exists():
+        art = load(art_report)
+        art_losses = [{'move':'art','frame':0,'what':limitation,
+                       'why':'Explicit art adaptation limitation; see generated art-report.json for parity and source BlobRefs.',
+                       'source':'art-report.json'} for limitation in art['limitations']]
+        geo = art['geometry']
+        art_losses.append({'move':'art','frame':0,'what':'Source influences reduced to at most two per vertex',
+                           'why':'Artist/native conversion contract; discarded weight is normalized onto retained influences.',
+                           'source':'art-report.json','vertices':geo['source_influences_reduced_vertices'],
+                           'max_discarded_weight':geo['max_discarded_weight'],'mean_discarded_weight':geo['mean_discarded_weight']})
+        reports.append({'losses':art_losses})
+    write_losses(ROOT/'_build/goku-xv2/conversion_losses.json',*reports)
+    return package
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('--package',type=Path)
+    ap.add_argument('--art-build',type=Path)
+    ap.add_argument('--fighter',type=Path)
+    ap.add_argument('--out',type=Path,default=ROOT/'_build/goku-xv2/author-source/package')
+    args = ap.parse_args()
+    if args.fighter:
+        from tools.geno.artist import pipeline
+        generated(args.out)
+        result, fighter = pipeline.build(str(args.fighter),str(args.out))
+        if result:
+            return result
+        args.package = args.out/'mods'/fighter.key
+        args.art_build = args.out/'build'
+    if not args.package or not args.art_build:
+        ap.error('Supply --package and --art-build, or --fighter')
+    package = apply(args.package,args.art_build)
+    from audit_gameplay import audit
+    problems = audit(package,args.art_build,fit=True)
+    if problems:
+        print('Gameplay audit failed:',problems)
+        return 1
+    ga = subprocess.run([sys.executable,'-B',str(PORT/'tools/ground_audit.py')],cwd=ROOT,capture_output=True,text=True)
+    print('Ground audit:',ga.stdout.strip() or ga.stderr.strip()[-300:])
+    if ga.returncode:
+        print('Ground audit failed: a ground row sinks below the floor (see _build/goku-xv2/ground-audit.json)')
+        return 1
+    for command in ([sys.executable,'-B','-m','tools.geno.check',str(package),'--json'],
+                    [sys.executable,'-B','-m','tools.geno.report',str(package),'--frames','--json']):
+        result = subprocess.run(command,cwd=ROOT,capture_output=True,text=True)
+        name = 'geno-check.json' if 'tools.geno.check' in command else 'geno-report.json'
+        (args.art_build/name).write_text(result.stdout,encoding='utf-8')
+        if result.returncode:
+            print(result.stdout+result.stderr)
+            return result.returncode
+    print('Gameplay reapplied and static Geno checks passed:',package)
+    return 0
+
+if __name__ == '__main__':
+    raise SystemExit(main())

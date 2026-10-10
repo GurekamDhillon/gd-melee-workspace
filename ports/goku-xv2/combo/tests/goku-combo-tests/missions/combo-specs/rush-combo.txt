@@ -1,0 +1,8 @@
+# side B (Dragon Rush) on its own: the strike's hit continues into the RushCombo flurry by itself (route Rush>RushCombo, input none)
+name = Dragon Rush > flurry
+inputs = B>
+routes = Rush>RushCombo
+min_hits = 3
+percents = 0, 30, 60, 90
+di = none, in, out, survival
+distance = 14

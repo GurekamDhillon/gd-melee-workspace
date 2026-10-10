@@ -1,0 +1,9 @@
+{
+  "AttackAirB": {
+    "move": "bair",
+    "fighter": "luigi",
+    "action": "AttackAirB",
+    "reason": "owner choice: no suitable XV2 back attack",
+    "scale_gain": 0.33
+  }
+}

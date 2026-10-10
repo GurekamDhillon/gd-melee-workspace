@@ -1,0 +1,9 @@
+# Destination design; parity move:pummel; BAC static frames are candidate timing, not runtime parity.
+# Damage/angle/KBG/BKB and anatomical sphere placement are authored for Melee.
+PUT ANIM_RATE 1.0
+wait_until 5
+hitbox slot=0 joint=@HAND_R@ damage=2 size=3.2 x=0 y=0 z=0 angle=80 kbg=100 fkb=0 bkb=0
+wait 1
+clear_hitboxes
+wait_until 16
+iasa

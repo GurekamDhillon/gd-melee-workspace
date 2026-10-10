@@ -1,0 +1,6 @@
+# Destination projectile release; Lua selected charge tier 1.
+PUT ANIM_RATE 1.0
+wait 6
+CALL geno.article.spawn 1
+wait_until 28
+iasa

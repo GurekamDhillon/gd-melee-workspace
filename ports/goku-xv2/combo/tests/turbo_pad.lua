@@ -1,0 +1,1 @@
+-- an empty pad script: its only job is to satisfy MELEE_TURBO's requirement (a pad script or a LAB batch export)

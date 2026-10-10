@@ -1,0 +1,15 @@
+# PICK provisional (2026-10-09): Dragon Rush (XV2 BAC 419: boost f0-20, step, strike f40; Heavy+Blast). Melee design: the dash
+# is Lua (2.6 forward, braked at f20), the strike is a two-sphere lunge f9-17. On hit the combo graph cancels into RushCombo
+# (route Rush>RushCombo, input none, on hit); the hit sets knockback (fkb 20) and +12 hitstun so the follow-up connects.
+# Whiff: IASA f36. It is also his air recovery (air dash keeps its height).
+PUT ANIM_RATE 1.0
+wait_until 1
+sfx behavior=1 sfx_id=165 volume=127 panning=64
+wait_until 9
+hitbox slot=0 joint=@HAND_R@ damage=5 size=3.8 x=0 y=0 z=0 angle=361 kbg=60 fkb=20 bkb=0
+hitbox slot=1 joint=@ARM_R@ damage=4 size=3.0 x=0 y=0 z=0 angle=361 kbg=60 fkb=20 bkb=0
+HBSTUN 3 12
+wait_until 17
+clear_hitboxes
+wait_until 36
+iasa

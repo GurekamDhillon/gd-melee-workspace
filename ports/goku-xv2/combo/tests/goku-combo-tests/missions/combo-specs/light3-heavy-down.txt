@@ -1,0 +1,10 @@
+# heavy down after the 3rd light (approved design: down = low sweep, dsmash)
+name = light x3 > heavy down
+inputs = A, A, A, Cv
+routes = L1>L2, L2>L3, L3>H down
+percents = 0, 30, 60, 90
+di = none, in, out, survival
+distance = 9
+expect_true = 0, 30
+# true where intended (0% and 30%, no DI); with DI the victim's ground slide changes the spacing: a drop point, correct
+expect_di = none

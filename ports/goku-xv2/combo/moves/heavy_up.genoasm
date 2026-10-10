@@ -1,0 +1,25 @@
+# COMBO (geno 11): heavy up = the launcher (approved design). Clip GOK_ATC_004 = BAC GOK_PLAYER 342, an XV2 light-chain strike
+# (BCM 0/18/2/2/2/2: Light after 341); BAC hit f14 dur 4, Movement record f0 dur 42 (a rising lunge), cancel windows
+# (0,12) (16,8) (24,12) (36,6). Limb: hand.R reaches +7.00 Y, +2.36 Z at f14 (combo/limbs.py). The Goku lane's usmash uses the
+# same clip from f5 as a smash; this is the string ender at XV2 timing. Launch: 85 degrees, high base knockback so the jump-cancel
+# air string has a consistent height.
+PUT ANIM_RATE 1.0
+# XV2 BAC Movement f0 (held to the hit; the step is GROUND_VEL x FACING, a design speed)
+GET ra_f:0 FACING
+MUL ra_f:0 1.2
+PUT GROUND_VEL ra_f:0
+wait_until 7
+GET ra_f:0 FACING
+MUL ra_f:0 1.2
+PUT GROUND_VEL ra_f:0
+wait_until 14
+hitbox slot=0 joint=@HAND_R@ damage=9 size=4.4 x=0 y=0 z=0 angle=88 kbg=20 fkb=0 bkb=100
+hitbox slot=1 joint=@CHEST@ damage=9 size=6.0 x=0 y=0 z=0 angle=88 kbg=20 fkb=0 bkb=100
+GET ra_f:0 FACING
+MUL ra_f:0 0.6
+PUT GROUND_VEL ra_f:0
+wait_until 18
+PUT GROUND_VEL 0
+clear_hitboxes
+wait_until 42
+iasa

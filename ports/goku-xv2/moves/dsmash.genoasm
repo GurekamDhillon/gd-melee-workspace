@@ -1,0 +1,14 @@
+# PICK: provisional (attack-feel pass 2026-10-08). XV2 BAC 341 (light string 2: split sweep): low both sides; peak f10 on f8
+# Source: BAC 341 clip GOK_ATC_012, strike f10; crop from f2. Numbers are Melee design values, not XV2 data.
+PUT ANIM_RATE 1.0
+wait_until 6
+sfx behavior=1 sfx_id=164 volume=127 panning=64
+wait_until 8
+hitbox slot=0 joint=@FOOT_R@ damage=14 size=2.80 x=0.00 y=0.00 z=0.00 angle=30 kbg=95 fkb=0 bkb=25
+hitbox slot=1 joint=@HAND_L@ damage=14 size=2.80 x=0.00 y=0.00 z=0.00 angle=30 kbg=95 fkb=0 bkb=25
+hitbox slot=2 joint=@FLOOR@ damage=11 size=2.27 x=0.00 y=1.60 z=5.33 angle=30 kbg=90 fkb=0 bkb=20
+hitbox slot=3 joint=@FLOOR@ damage=11 size=2.27 x=0.00 y=1.60 z=-5.33 angle=30 kbg=90 fkb=0 bkb=20
+wait 4
+clear_hitboxes
+wait_until 38
+iasa

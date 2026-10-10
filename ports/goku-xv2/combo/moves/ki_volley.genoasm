@@ -1,0 +1,9 @@
+# COMBO (geno 11): ki-blast cancel (approved design: neutral B during a light string on hit = a short volley). XV2: Blast input.
+# Two KiBlast articles (article 3, added by combo_apply.py) at f6 and f14. Clip GOK_ATC_027 (BAC 340, a light strike pose).
+PUT ANIM_RATE 1.0
+wait 6
+CALL geno.article.spawn 3
+wait 8
+CALL geno.article.spawn 3
+wait_until 30
+iasa

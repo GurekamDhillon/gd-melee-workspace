@@ -1,0 +1,8 @@
+# the air string after the launcher with neutral aerials: nair, nair, dair spike (a read; see light3-launcher-air-string)
+name = launcher > short hop > nair x3 > dair
+inputs = A, A, A, C^, X, ~A, A, Cv
+routes = L1>L2, L2>L3, L3>H up, Launcher>Jump, Nair>Nair, Nair>H down
+min_hits = 5
+percents = 0, 30, 60, 90
+di = none, in, out, survival
+distance = 9

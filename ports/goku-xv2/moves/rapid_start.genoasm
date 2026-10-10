@@ -1,0 +1,5 @@
+# Destination finite barrage start; native jab_rapid flag permits ordinary input entry.
+PUT ANIM_RATE 1.0
+clear_hitboxes
+wait 2
+CHG motion:48 ALWAYS ONCE

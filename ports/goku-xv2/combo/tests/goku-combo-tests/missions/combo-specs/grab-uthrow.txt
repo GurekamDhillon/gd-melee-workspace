@@ -1,0 +1,9 @@
+# grab, up throw, then jump and up-heavy aerial (Melee: no combo routes; a read)
+name = grab > up throw > uair
+inputs = Z, ~S^, ~X, ~C^
+routes =
+min_hits = 2
+percents = 0, 30, 60, 90
+di = none, in, out, survival
+distance = 5
+shield = skip

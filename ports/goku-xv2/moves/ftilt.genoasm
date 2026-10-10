@@ -1,0 +1,12 @@
+# PICK: provisional (attack-feel pass 2026-10-08). XV2 BAC 475 (his forward rush kick): forward kick at chest height; strike f12 on f7
+# Source: BAC 475 clip GOK_ATC_008, strike f12; crop from f5. Numbers are Melee design values, not XV2 data.
+PUT ANIM_RATE 1.0
+wait_until 5
+sfx behavior=1 sfx_id=165 volume=127 panning=64
+wait_until 7
+hitbox slot=0 joint=@FOOT_R@ damage=10 size=2.67 x=0.00 y=0.00 z=0.00 angle=361 kbg=100 fkb=0 bkb=10
+hitbox slot=1 joint=@LEG_R@ damage=8 size=2.00 x=0.00 y=0.00 z=0.00 angle=361 kbg=100 fkb=0 bkb=10
+wait 3
+clear_hitboxes
+wait_until 26
+iasa

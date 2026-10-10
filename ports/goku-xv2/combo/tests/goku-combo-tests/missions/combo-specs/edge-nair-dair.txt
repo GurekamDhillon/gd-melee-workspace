@@ -1,0 +1,10 @@
+# edge-guard: near the right edge, nair then the dair spike ender (Nair>H down); a read
+name = edge: nair > dair spike
+inputs = ~X, ~A, Cv
+routes = Nair>H down
+min_hits = 2
+p1x = 62
+percents = 0, 30, 60, 90
+di = none, in, out, survival
+distance = 10
+shield = skip
