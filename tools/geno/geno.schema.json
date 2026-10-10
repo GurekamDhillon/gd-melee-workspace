@@ -1972,7 +1972,7 @@
                       }
                     ]
                   },
-                  "maxItems": 16383,
+                  "maxItems": 65535,
                   "minItems": 1
                 },
                 "file": {
@@ -2149,7 +2149,7 @@
                             }
                           ]
                         },
-                        "maxItems": 16383,
+                        "maxItems": 65535,
                         "minItems": 1
                       }
                     ]
@@ -5664,52 +5664,56 @@
       "source": "melee/pc/geno/geno.h:260"
     },
     "GENO_POOL_WORDS": {
-      "value": 16384,
+      "value": 65536,
       "source": "melee/pc/geno/geno.h:272"
+    },
+    "GENO_MAX_SLOTS": {
+      "value": 2560,
+      "source": "melee/pc/geno/geno.h:273"
     },
     "GENO_MAX_STATES": {
       "value": 48,
-      "source": "melee/pc/geno/geno.h:283"
+      "source": "melee/pc/geno/geno.h:285"
     },
     "GENO_ART_KIND_BASE": {
       "value": 4096,
-      "source": "melee/pc/geno/geno.h:368"
+      "source": "melee/pc/geno/geno.h:370"
     },
     "GENO_MAX_ARTICLES": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:368"
+      "source": "melee/pc/geno/geno.h:370"
     },
     "GENO_ART_PER_RANGE": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:375"
+      "source": "melee/pc/geno/geno.h:377"
     },
     "GENO_ART_EXTRA_BASE": {
       "value": 131072,
-      "source": "melee/pc/geno/geno.h:380"
+      "source": "melee/pc/geno/geno.h:382"
     },
     "GENO_MAX_SOUNDS": {
       "value": 16,
-      "source": "melee/pc/geno/geno.h:388"
+      "source": "melee/pc/geno/geno.h:390"
     },
     "GENO_ART_HITBOXES": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:389"
+      "source": "melee/pc/geno/geno.h:391"
     },
     "GENO_ART_HIT_ENTRIES": {
       "value": 8,
-      "source": "melee/pc/geno/geno.h:390"
+      "source": "melee/pc/geno/geno.h:392"
     },
     "GENO_ART_SPAWNS": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:392"
+      "source": "melee/pc/geno/geno.h:394"
     },
     "GENO_ART_CHILDREN": {
       "value": 2,
-      "source": "melee/pc/geno/geno.h:393"
+      "source": "melee/pc/geno/geno.h:395"
     },
     "GENO_SP_SELECT": {
       "value": 4,
-      "source": "melee/pc/geno/geno.h:494"
+      "source": "melee/pc/geno/geno.h:496"
     },
     "JDOC_NODES": {
       "value": 32768,
@@ -5723,10 +5727,6 @@
       "value": 32,
       "source": "melee/pc/platform/geno_registry.c:404"
     },
-    "GN_MAX_SLOTS": {
-      "value": 512,
-      "source": "melee/pc/platform/geno_registry.c:514"
-    },
     "JSON_DEPTH": {
       "value": 32,
       "source": "melee/pc/platform/geno_registry.c:jd_value"
@@ -5737,12 +5737,12 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "3aec45b21df70b0278b86e3bff177a5827d4e471606357e3217d75c553c71a4e",
+    "pc/platform/geno_registry.c": "ca65ec0fafcbe1e01d6165ddc02ddd3005662527d2a6898d71a61410a9dc0723",
     "pc/platform/geno_define_registry.inc": "188a7692572d2445418f2f086aa6823f500db1bf9c2417f4b2bebee5f69a2738",
     "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
     "pc/platform/geno_combo_registry.inc": "ee2771fc193b43719de384e5a39e689c69e11b43bbbb36318cf91c8723694837",
-    "pc/geno/geno.h": "7ce69554f6717b666a8fb365a726aa0305355ec786d954457b6098299a846df8",
-    "pc/geno/geno_game.c": "2dccbadd58b6dee05965db01c1c42104bb16bb4991d28cc15b125168341673d0",
+    "pc/geno/geno.h": "8e0e10f9974945b70e9a154fe377c666384778a28a6124f523d9131179eb3d26",
+    "pc/geno/geno_game.c": "d28cd1874bdacff365dc4f4615baf5f1da8a355c49b8bf555ff1248385e78200",
     "pc/geno/geno_game_v2.inc": "9c572553dcd7b6a70e9d5a3fa3efcbc618b8de567c287e75e1f1577e572f5fb0",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",
     "pc/geno/geno_profile_storage.h": "a40aec8aafa890622f0ba6cb9f5602176c738f960346b18daf87c8dc8498d04d",

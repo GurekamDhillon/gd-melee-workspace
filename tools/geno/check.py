@@ -629,8 +629,8 @@ def validate(data, base):
                     errors.append(diagnostic(p+".fx_bindings", str(e)))
     if pool > schema.C["GENO_POOL_WORDS"]:
         errors.append(diagnostic("$", f"overlay pool including appended End words {pool} exceeds GENO_POOL_WORDS={schema.C['GENO_POOL_WORDS']} (global across all mounting mods)"))
-    if slots > schema.limits()["GN_MAX_SLOTS"]["value"]:
-        errors.append(diagnostic("$", "overlay slots exceed GN_MAX_SLOTS=256 (global across all mounting mods)"))
+    if slots > schema.limits()["GENO_MAX_SLOTS"]["value"]:
+        errors.append(diagnostic("$", "overlay slots exceed GENO_MAX_SLOTS (global across all mounting mods)"))
     return errors
 
 
