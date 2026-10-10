@@ -7,20 +7,42 @@ background --python script does not yield to Blender's event loop.
 """
 
 import math
+import sys
+from pathlib import Path
 
-try:
-    from . import api, client, operators, props
-    from .fake_engine import FakeWorkbench
-except ImportError:
-    import api
-    import client
-    import operators
-    import props
-    from fake_engine import FakeWorkbench
+
+def _package():
+    """Import the add-on as a package (geno_workbench.*) and register it.
+
+    The flat modules the main self-test uses are different module objects from the
+    ones the registered operators import, so the edit flow must use the package's.
+    Returns (package, registered_here)."""
+    parent = str(Path(__file__).resolve().parent.parent)
+    if parent not in sys.path:
+        sys.path.insert(0, parent)
+    import bpy
+    import geno_workbench
+
+    if hasattr(bpy.types.Scene, "geno_wb"):
+        return geno_workbench, False
+    geno_workbench.register()
+    return geno_workbench, True
 
 
 def run(check) -> None:
+    """Register the add-on if needed, run the edit flow, unregister what we registered."""
+    package, registered_here = _package()
+    try:
+        _flow(check)
+    finally:
+        if registered_here:
+            package.unregister()
+
+
+def _flow(check) -> None:
     import bpy
+    from geno_workbench import api, client, operators, props
+    from geno_workbench.fake_engine import FakeWorkbench
 
     def require(name, condition, detail=""):
         check(name, bool(condition), detail)
@@ -30,10 +52,7 @@ def run(check) -> None:
     scene = bpy.context.scene
     settings = getattr(scene, "geno_wb", None)
     if settings is None:
-        # The headless self-test imports modules flat, so the add-on's Scene property is not
-        # registered. The operator-level edit flow is exercised in a registered Blender (owed).
-        print("GENO_WB_SKIP edit-flow needs the registered add-on (run it inside Blender with the add-on enabled)", flush=True)
-        return
+        raise AssertionError("add-on did not register the Scene property")
     original_scene_frame = scene.frame_current
     original_session = api.session()
     original_pending = original_session.pending_frame
@@ -61,6 +80,7 @@ def run(check) -> None:
                 host="127.0.0.1", port=port, timeout=2.0
             )
         )
+        value.prefetch = False   # counted engine calls must be the scrub's own, not the cache fill's
         api._session = value
         operators.install_callbacks()
         require("edit-flow-connect", value.connect(), value.last_error)
@@ -73,11 +93,11 @@ def run(check) -> None:
 
         before_sets = sum(name == "set_frame" for name, args in fake.calls)
         previous_info = value.info
-        for frame in range(20, 40):
+        for frame in range(10, 31):
             settings.frame = frame
         require(
             "edit-flow-queued",
-            value.pending_frame == 39
+            value.pending_frame == 30
             and value.info is previous_info
             and sum(name == "set_frame" for name, args in fake.calls) == before_sets
             and bpy.app.timers.is_registered(operators._flush_pending_timer),
@@ -90,9 +110,9 @@ def run(check) -> None:
             "edit-flow-scrub",
             interval is None
             and value.pending_frame is None
-            and value.info["frame"] == 39
-            and settings.frame == 39
-            and sum(name == "set_frame" for name, args in fake.calls) == before_sets + 1,
+            and value.info["frame"] == 30
+            and settings.frame == 30
+            and sum(name == "set_frame" and args.get("frame") == 30 for name, args in fake.calls) == 1,   # the 11 queued frames cost one engine call
             value.last_error,
         )
         require("edit-flow-source", bool(value.hitboxes))
@@ -131,8 +151,8 @@ def run(check) -> None:
             "edit-flow-reload",
             result == {"FINISHED"}
             and not settings.stale and not value.stale and not fake.stale
-            and value.row == "jab" and value.info["frame"] == 39
-            and frames == [39],
+            and value.row == "jab" and value.info["frame"] == 30
+            and frames == [30],
             value.last_error,
         )
 
@@ -192,3 +212,14 @@ def run(check) -> None:
                 settings.playing = False
             if timer_was_registered and original_pending is not None:
                 operators._ensure_scrub_timer()
+
+
+if __name__ == "__main__":
+    # Standalone: blender --background --factory-startup --python selftest_edit.py
+    def _check(name, cond, detail=""):
+        print("GENO_WB_CHECK {} {} {}".format(name, "OK" if cond else "FAIL", detail).rstrip(), flush=True)
+        if not cond:
+            raise SystemExit(1)
+
+    run(_check)
+    print("GENO_WB_SELFTEST OK", flush=True)
