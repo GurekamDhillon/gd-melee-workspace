@@ -1,5 +1,5 @@
 # workbench_core: Qt Core/Network only (no Widgets). workbench_ui: Widgets, depends on launcher_ui for the Atlas look.
-set(WB_CORE_SOURCES)  # appended by later tasks via wb_core_sources(command_registry.cpp session.cpp project.cpp geno_data.cpp)
+set(WB_CORE_SOURCES)  # appended via wb_core_sources()
 function(wb_core_sources)
   foreach(f IN LISTS ARGN)
     list(APPEND WB_CORE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${f}")
@@ -7,7 +7,7 @@ function(wb_core_sources)
   set(WB_CORE_SOURCES "${WB_CORE_SOURCES}" PARENT_SCOPE)
 endfunction()
 
-wb_core_sources(json_patch.cpp file_store.cpp history.cpp geno_asm.cpp checks.cpp engine_link.cpp)
+wb_core_sources(json_patch.cpp file_store.cpp history.cpp geno_asm.cpp checks.cpp engine_link.cpp command_registry.cpp session.cpp project.cpp geno_data.cpp)
 add_library(workbench_core STATIC ${WB_CORE_SOURCES})
 target_link_libraries(workbench_core PUBLIC launcher_core Qt6::Core Qt6::Network)
 target_include_directories(workbench_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
