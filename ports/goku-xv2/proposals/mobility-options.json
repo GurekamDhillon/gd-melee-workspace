@@ -1,0 +1,27 @@
+{
+  "schema": "goku-mobility-options/1",
+  "note": "gameplay.json `attributes` blocks (build.py apply_attribute_overrides). Movement only; weight, shield, landing lags, walk thresholds and run_animation_scaling are left alone. Values are the measured gd.attrs of the donor fighter. Goku's built package already equals Falcon's, so a_falcon_pinned_only is the identity (it pins the values) and a_falcon adds a jump-carry stopgap.",
+  "a_falcon": {
+    "aerial_friction": 0.0156
+  },
+  "a_falcon_pinned_only": {
+    "dash_initial_velocity": 2.0, "dash_max_velocity": 2.3, "dash_accel_base": 0.01, "dash_accel_mul": 0.15,
+    "jump_startup_time": 4, "jump_v_initial_velocity": 3.1, "hop_v_initial_velocity": 1.9,
+    "jump_h_initial_velocity": 0.95, "jump_h_max_velocity": 2.1, "gravity": 0.13, "terminal_velocity": 2.9,
+    "fast_fall_velocity": 3.5, "air_drift_max": 1.12, "air_drift_stick_mul": 0.04, "aerial_friction": 0.01
+  },
+  "b_fox": {
+    "dash_initial_velocity": 1.9, "dash_max_velocity": 2.2, "dash_accel_base": 0.02, "dash_accel_mul": 0.1,
+    "jump_startup_time": 3, "jump_v_initial_velocity": 3.68, "hop_v_initial_velocity": 2.1,
+    "jump_h_initial_velocity": 0.72, "jump_h_max_velocity": 1.7, "ground_to_air_jump_momentum_multiplier": 0.83,
+    "air_jump_v_multiplier": 1.2, "gravity": 0.23, "terminal_velocity": 2.8, "fast_fall_velocity": 3.4,
+    "air_drift_max": 0.83, "air_drift_stick_mul": 0.06, "aerial_friction": 0.02
+  },
+  "c_marth": {
+    "dash_initial_velocity": 1.5, "dash_max_velocity": 1.8, "dash_accel_base": 0.0, "dash_accel_mul": 0.06,
+    "jump_startup_time": 4, "jump_v_initial_velocity": 2.4, "hop_v_initial_velocity": 1.5,
+    "jump_h_initial_velocity": 1.0, "jump_h_max_velocity": 1.2, "ground_to_air_jump_momentum_multiplier": 0.8,
+    "air_jump_v_multiplier": 0.88, "air_jump_h_multiplier": 1.0, "gravity": 0.085, "terminal_velocity": 2.2,
+    "fast_fall_velocity": 2.5, "air_drift_max": 0.9, "air_drift_stick_mul": 0.03, "aerial_friction": 0.005
+  }
+}
