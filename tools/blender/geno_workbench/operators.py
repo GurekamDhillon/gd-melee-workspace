@@ -10,12 +10,13 @@ import bpy
 from bpy.props import EnumProperty, FloatProperty, IntProperty, StringProperty
 
 try:
-    from . import api, client, launch, props
+    from . import api, client, launch, props, rebuild_job
 except ImportError:
     import api
     import client
     import launch
     import props
+    import rebuild_job
 
 
 STRINGS = props.STRINGS
@@ -222,6 +223,70 @@ def _finish(operator, context, success):
     return {"FINISHED"}
 
 
+_JOB_TICK = 0.1
+
+
+def _job_command(value):
+    """argv, cwd and env for running the project's rebuild here (so progress and Cancel work); None: ask the server."""
+    argv = rebuild_job.expand_argv(value.rebuild_argv, value.project_dir) if value.rebuild_argv and value.project_dir else []
+    if not argv:
+        return [], None, None
+    env = dict(os.environ, PYTHONUNBUFFERED="1")
+    return argv, rebuild_job.work_dir(value.project_dir), env
+
+
+def _job_ui(value, job, finished=False):
+    wm = bpy.context.window_manager
+    try:
+        if finished:
+            wm.progress_end()
+            for window in wm.windows:
+                window.workspace.status_text_set(None)
+        else:
+            wm.progress_update(max(0.0, min(100.0, job.percent)))
+            text = props.rebuild_progress_text(job)
+            for window in wm.windows:
+                window.workspace.status_text_set(text)
+    except (AttributeError, RuntimeError, ReferenceError):
+        pass
+    _redraw_ui()
+
+
+def _job_timer():
+    value = api.session()
+    job = value.job
+    if job is None:
+        return None
+    if not job.poll():
+        _job_ui(value, job)
+        return _JOB_TICK
+    _job_ui(value, job, finished=True)
+    try:
+        props.sync_from_session(value, bpy.context.scene.geno_wb)
+    except (AttributeError, RuntimeError, ReferenceError):
+        pass
+    value.job = None
+    return None
+
+
+def _start_job(operator, context, kind):
+    value = api.session()
+    if value.busy or value.job is not None:
+        operator.report({"WARNING"}, STRINGS["rebuild_running"])
+        return {"CANCELLED"}
+    if kind == "rebuild" and not value.can_rebuild:
+        return _finish(operator, context, value.blocked(STRINGS["rebuild_unavailable"]))
+    argv, cwd, env = _job_command(value) if kind == "rebuild" else ([], None, None)
+    job = rebuild_job.RebuildJob(value, kind, argv=argv, cwd=cwd, env=env)
+    value.job = job
+    job.start()
+    context.window_manager.progress_begin(0, 100)
+    value.set_status(STRINGS["rebuild_started"] if kind == "rebuild" else STRINGS["rebuild_phase_engine"])
+    props.sync_from_session(value, context.scene.geno_wb)
+    bpy.app.timers.register(_job_timer, first_interval=_JOB_TICK)
+    return {"FINISHED"}
+
+
 class GENO_WB_OT_start_server(bpy.types.Operator):
     bl_idname = "geno_wb.start_server"
     bl_label = STRINGS["start_server"]
@@ -333,6 +398,13 @@ class GENO_WB_OT_engine_restart(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         return props.poll_ready(cls, (api.session().connected, STRINGS["not_connected"]))
+
+    def invoke(self, context, event):
+        # From the button: off the UI thread (an engine restart can take tens of seconds).
+        stop_playback()
+        _cancel_scrub()
+        context.scene.geno_wb.playing = False
+        return _start_job(self, context, "restart")
 
     def execute(self, context):
         stop_playback()
@@ -741,10 +813,34 @@ class GENO_WB_OT_rebuild_reload(bpy.types.Operator):
             (value.connected, STRINGS["not_connected"]),
             (value.can_rebuild, STRINGS["rebuild_unavailable"]))
 
+    def invoke(self, context, event):
+        # From the button: the build runs on a worker thread and a timer polls it; Blender stays live.
+        stop_playback()
+        _cancel_scrub()
+        return _start_job(self, context, "rebuild")
+
     def execute(self, context):
+        # Scripts and benches (bpy.ops.geno_wb.rebuild_reload()) keep the blocking form.
         stop_playback()
         _cancel_scrub()
         return _finish(self, context, api.session().rebuild_reload())
+
+
+class GENO_WB_OT_rebuild_cancel(bpy.types.Operator):
+    bl_idname = "geno_wb.rebuild_cancel"
+    bl_label = STRINGS["rebuild_cancel"]
+    bl_description = STRINGS["rebuild_cancel_help"]
+
+    @classmethod
+    def poll(cls, context):
+        job = getattr(api.session(), "job", None)
+        return props.poll_ready(cls, (job is not None and job.can_cancel, STRINGS["rebuild_cancel_idle"]))
+
+    def execute(self, context):
+        job = api.session().job
+        if job is None or not job.cancel():
+            return {"CANCELLED"}
+        return {"FINISHED"}
 
 
 CLASSES = (
@@ -763,6 +859,7 @@ CLASSES = (
     GENO_WB_OT_add_hitbox,
     GENO_WB_OT_delete_hitbox,
     GENO_WB_OT_rebuild_reload,
+    GENO_WB_OT_rebuild_cancel,
 )
 
 
@@ -772,3 +869,8 @@ try:
 except ImportError:
     from operators_nla import CLASSES as NLA_CLASSES
 CLASSES += NLA_CLASSES
+
+
+# While a rebuild or engine restart runs on its worker thread, every other Workbench action is disabled
+# (the connection is in use and the data is about to be replaced); the tooltip says why.
+props.guard_busy(CLASSES, allow=("geno_wb.rebuild_reload", "geno_wb.rebuild_cancel"))

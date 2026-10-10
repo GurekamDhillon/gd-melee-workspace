@@ -246,6 +246,8 @@ def register():
         rebuild: BoolProperty(name=STRINGS["play_rebuild"], default=False, options={"SKIP_SAVE"})
 
     try:
+        guard = importlib.import_module((__package__ + "." if __package__ else "") + "props").guard_busy
+        guard((GENO_WB_OT_play_lab, GENO_WB_OT_play_cpu))   # not while a rebuild is rewriting the package
         for cls in (GENO_WB_OT_play_lab, GENO_WB_OT_play_cpu):
             bpy.utils.register_class(cls)
             _CLASSES.append(cls)
