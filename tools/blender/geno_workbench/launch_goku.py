@@ -120,13 +120,22 @@ def main() -> int:
         if args.row:
             cmd += ["--row", args.row]
         elif args.check:
-            cmd += ["--row", "Wait"]
+            cmd += ["--row", "jab1"]   # the engine's rows are the project's moves (jab1, utilt, ...), not clip names
         if args.frame:
             cmd += ["--frame", str(args.frame)]
         if args.check:
             cmd += ["--report"]
         print("starting Blender ...")
-        return subprocess.call(cmd)
+        if not args.check:
+            return subprocess.call(cmd)
+        # Blender exits 0 even when the script raised; a check fails on a traceback or a missing report
+        seen = {"trace": False, "report": False}
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace") as bl:
+            for line in bl.stdout:
+                print(line, end="")
+                seen["trace"] |= "Traceback (most recent call last)" in line
+                seen["report"] |= "GENO_WB_REPORT" in line
+        return 1 if bl.returncode or seen["trace"] or not seen["report"] else 0
     finally:
         launch._stop_process(proc)
 
