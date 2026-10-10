@@ -7,7 +7,11 @@
 #include <QVariantAnimation>
 #include <QWidget>
 class QPainter;
+class QLabel;
 namespace launcher::kit {
+// Token-coloured label shared by the launcher and Creator.
+QLabel *capLabel(const QString &text, atlas::Role role, const char *colourToken = "ivory");
+
 // Item roles the RowDelegate reads (Qt::DisplayRole is the name; CheckStateRole, when set, draws an ON/OFF toggle).
 enum RowRole { SubRole = Qt::UserRole, TagTextRole = Qt::UserRole + 1, BadgeRole = Qt::UserRole + 2, TagToneRole = Qt::UserRole + 3, TitleRole = Qt::UserRole + 4 };
 
@@ -83,8 +87,9 @@ public:
     explicit TabRail(const QStringList &names, QWidget *parent = nullptr);
     int current() const { return current_; }
     void setCurrent(int i);
+    void setNames(const QStringList &names);
     void setIcons(const QStringList &names) { icons_ = names; update(); }
-    QSize sizeHint() const override { return {204, 16 + 4 * 50}; }
+    QSize sizeHint() const override { return {204, 16 + int(names_.size()) * 50}; }
 signals:
     void currentChanged(int index);
 protected:
