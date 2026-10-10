@@ -301,6 +301,17 @@ def rebuild_progress_text(job) -> str:
     return STRINGS["rebuild_progress"].format(phase=phase, percent=job.percent, elapsed=job.elapsed)
 
 
+def _busy_poll(inner):
+    # Blender requires poll(cls, context) with exactly two arguments, so the wrapped function is closed over.
+    def poll(c, context):
+        reason = busy_reason()
+        if reason:
+            c.poll_message_set(reason)
+            return False
+        return inner(c, context)
+    return poll
+
+
 def guard_busy(classes, allow=()):
     """Disable operators while a background rebuild runs, with the reason in the tooltip."""
     for cls in classes:
@@ -309,14 +320,7 @@ def guard_busy(classes, allow=()):
         found = getattr(cls, "poll", None)   # own or inherited; a classmethod arrives bound
         inner = getattr(found, "__func__", None) or (lambda c, context: True)
 
-        def poll(c, context, inner=inner):
-            reason = busy_reason()
-            if reason:
-                c.poll_message_set(reason)
-                return False
-            return inner(c, context)
-
-        cls.poll = classmethod(poll)
+        cls.poll = classmethod(_busy_poll(inner))
         cls._busy_guarded = True
 
 
