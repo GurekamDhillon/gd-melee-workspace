@@ -26,6 +26,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
     --tu) tus+=("$2"); shift 2 ;;
     --shim) shims+=("$2"); shift 2 ;;
+    --allow-low-disk) GW_ALLOW_LOW_DISK=1; shift ;;   # build even below MELEE_MIN_FREE_GB
     --no-bridge) bridge=0; shift ;;          # only for a link whose addresses cannot have moved
     --native-test)
         [ $# -eq 2 ] || gw_die "--native-test requires exactly one test name and no other options"
@@ -38,6 +39,7 @@ while [ $# -gt 0 ]; do
     esac
 done
 
+gw_disk_guard "$GW_BUILD_ROOT"
 gw_env_summary
 GW_GWTOOL="${GW_GWTOOL:-$GW_ROOT/_build/gwtool/gwtool.exe}"
 GW_GWTOOL_FLAGS="${GW_GWTOOL_FLAGS:-}"

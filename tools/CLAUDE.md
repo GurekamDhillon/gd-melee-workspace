@@ -32,6 +32,12 @@ the rules that cross them.
 - **Timing:** `run.sh --test` requests turbo; `--realtime` (before the sandbox name) clears it.
   Headless tests have no paced frame loop. `MELEE_FPS=u` uncaps presentation; `MELEE_TURBO=1`
   accelerates scripted/LAB batch logic. `GW_JOBS` sets compile jobs; stale objects are chosen by content hash (tools/port/README.md).
+- **Disk hygiene (E: filled to 0 once).** `run.sh` prunes its build root's `runs/` (newest `MELEE_RUNS_KEEP`=40
+  kept, exe copies stripped past the newest 10, running games never touched); `run.sh`, `build.sh` and
+  `crash_sweep.py` refuse below `MELEE_MIN_FREE_GB`=20 free unless `--allow-low-disk`. At lane end run
+  `python tools/port/agent_slim.py <name> --yes` (or `agent_rm.sh`) and `git worktree remove` merged
+  worktrees. `python tools/port/disk_report.py` shows what is big and what to clean (deletes nothing).
+  Details: `tools/port/README.md` "Disk hygiene".
 - `MELEE_MODS_DIR` is the parent of mod folders; pass Windows paths (`pwd -W`), not `/c/...`.
 - **Read the log, not the harness.** A run's `melee-pc.log` and `crashlogs/` are in its sandbox
   under `_build/runs/<name>/` (or the sweep's `runs/`); the harness's summary has under-reported
