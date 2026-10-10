@@ -287,7 +287,7 @@ class AuthorToolsTests(unittest.TestCase):
             words.write_text("0\n" * 16384)
             data = {"geno": 5, "fighters": [{"attach": "kirby", "subactions": [{"index": 0, "file": "long.txt"}]}]}
             self.assertIn("GENO_POOL_WORDS", str(check.validate(data, base)))
-        data = {"geno": 5, "fighters": [{"attach": "kirby", "subactions": [{"index": 0, "words": [0] * 4100}]}]}
+        data = {"geno": 5, "fighters": [{"attach": "kirby", "subactions": [{"index": i, "words": [0] * 16000} for i in range(schema.limits()["JDOC_NODES"]["value"] // 16000 + 1)]}]}
         self.assertIn("JDOC_NODES", str(check.validate(data, Path.cwd())))
 
     def test_tree_script_roundtrips(self):
