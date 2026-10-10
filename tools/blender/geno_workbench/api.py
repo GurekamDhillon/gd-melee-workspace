@@ -1,13 +1,14 @@
 """Standard-library session API for the Geno Workbench front end.
 
-Network replies are validated before replacing cached frame data. Blender
-integration is supplied through the optional on_change callback. This module
-does not import bpy or write project files.
+Frame replies are validated before replacing cached data. Source edits never
+replace engine frame data or invoke frame hooks. This module does not import
+bpy or write project files.
 """
 
 from __future__ import annotations
 
 import json
+import math
 import os
 from typing import Callable
 
@@ -20,29 +21,27 @@ except ImportError:
     from props import STRINGS
 
 
+EDITABLE = (
+    "bone", "damage", "size", "x", "y", "z", "angle", "kbg", "fkb", "bkb",
+    "start_frame", "end_frame",
+)
+
 _TRANSPORT_FAILURES = (
-    "closed",
-    "refused",
-    "timeout",
-    "timed out",
-    "connection reset",
-    "reset by peer",
-    "broken pipe",
-    "connection aborted",
-    "connection lost",
-    "disconnected",
-    "not connected",
-    "end of file",
-    "eof",
+    "closed", "refused", "timeout", "timed out", "connection reset",
+    "reset by peer", "broken pipe", "connection aborted", "connection lost",
+    "disconnected", "not connected", "end of file", "eof",
 )
 
 
 class WbSession:
-    """One workbench connection and its last successfully received data.
+    """One connection and its last successfully received data.
 
-    on_change receives this session after a completed operation or a recorded
-    error. The Blender shell uses it only to synchronize UI properties.
+    on_change synchronizes UI properties. on_frame updates poses and overlays
+    only after a complete frame operation has succeeded.
     """
+
+    EDITABLE = EDITABLE
+    edit_fields = EDITABLE
 
     def __init__(
         self,
@@ -55,20 +54,18 @@ class WbSession:
         self.rows: list[dict] = []
         self.row = ""
         self.frame = 0
+        self.pending_frame: int | None = None
         self.info: dict | None = None
         self.hitboxes: list[dict] = []
         self.problems: list[dict] = []
         self.stale = False
         self.last_error = ""
-
         self.suggestion: dict | None = None
         self.jointmap = None
         self.calibration = None
         self.on_change: Callable[[WbSession], None] | None = None
-        # Frame hooks (Blender pose/overlay updates) run after load_row/set_frame/step succeed.
         self.on_frame: list[Callable[[WbSession], None]] = []
         self.hook_error = ""
-        # Project paths, filled by set_project() from workbench.json (names/paths only).
         self.project_dir = ""
         self.plan_path = ""
         self.art_blend = ""
@@ -76,12 +73,12 @@ class WbSession:
         self.bone_aliases: dict[str, str] = {}
 
     def _fire_frame(self) -> None:
-        """Run frame hooks; a hook failure is reported in the status, never raised."""
+        """Report hook failures without raising through an operator."""
         self.hook_error = ""
         for hook in list(self.on_frame):
             try:
                 hook(self)
-            except Exception as exc:  # the data call itself succeeded
+            except Exception as exc:
                 self.hook_error = str(exc)
 
     def _status_with_stale(self, message: str) -> str:
@@ -107,7 +104,6 @@ class WbSession:
         return True
 
     def set_status(self, message: str) -> bool:
-        """Publish a successful operation status, including the stale marker."""
         self.last_error = ""
         self.status = self._status_with_stale(message)
         return self._notify()
@@ -122,11 +118,11 @@ class WbSession:
                 pass
 
     def report_error(self, error) -> bool:
-        """Record an operator or transport failure without raising it."""
         self.last_error = str(error) or type(error).__name__
         if any(word in self.last_error.lower() for word in _TRANSPORT_FAILURES):
             previous, self.client = self.client, None
             self.connected = False
+            self.pending_frame = None
             self._quiet_close(previous)
         self.status = self._status_with_stale(
             STRINGS["error_status"].format(error=self.last_error)
@@ -164,9 +160,7 @@ class WbSession:
 
     @staticmethod
     def _integer(value, field: str, minimum: int = 0) -> int:
-        message = STRINGS["invalid_integer"].format(
-            field=field, minimum=minimum
-        )
+        message = STRINGS["invalid_integer"].format(field=field, minimum=minimum)
         if isinstance(value, bool) or not isinstance(value, (int, float)):
             raise client.WbError(message)
         try:
@@ -176,6 +170,19 @@ class WbSession:
         if number < minimum or number != value:
             raise client.WbError(message)
         return number
+
+    @staticmethod
+    def _number(value, field: str):
+        message = STRINGS["invalid_number"].format(field=field)
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise client.WbError(message)
+        try:
+            valid = math.isfinite(value)
+        except OverflowError:
+            valid = False
+        if not valid:
+            raise client.WbError(message)
+        return value
 
     @staticmethod
     def _row_name(value) -> str:
@@ -203,6 +210,11 @@ class WbSession:
         text = STRINGS["frame_loaded"].format(row=self.row, frame=self.frame)
         return f"{text}; {self.hook_error}" if self.hook_error else text
 
+    def _source_hitboxes(self, row: str) -> list[dict]:
+        return self._items(
+            self._request("list_hitboxes", {"row": row}), "hitboxes"
+        )
+
     def connect(self) -> bool:
         candidate = None
         try:
@@ -224,16 +236,18 @@ class WbSession:
         self.connected = True
         if previous is not candidate:
             self._quiet_close(previous)
-
         self.rows = []
         self.row = ""
         self.frame = 0
+        self.pending_frame = None
         self.info = None
         self.hitboxes = []
         self.problems = []
         self.suggestion = None
         self.jointmap = None
         self.calibration = None
+        self.hook_error = ""
+        # Reconnecting is not evidence that an edited source was rebuilt.
         return self.set_status(
             STRINGS["connected"].format(
                 engine=result.get("status", STRINGS["unknown"])
@@ -243,6 +257,7 @@ class WbSession:
     def disconnect(self) -> bool:
         previous, self.client = self.client, None
         self.connected = False
+        self.pending_frame = None
 
         def action():
             close = getattr(previous, "close", None)
@@ -260,13 +275,18 @@ class WbSession:
 
         return self._run(action)
 
-    def load_row(self, name) -> bool:
+    def load_row(self, name, *, refresh_hitboxes=False) -> bool:
+        """Optionally fetch source boxes before publishing the new frame."""
+        self.pending_frame = None
+
         def action():
             row = self._row_name(name)
-            result = self._request("load_row", {"row": row})
-            parsed = self._read_frame(result, row)
+            parsed = self._read_frame(
+                self._request("load_row", {"row": row}), row
+            )
+            boxes = self._source_hitboxes(row) if refresh_hitboxes else []
             self._store_frame(parsed)
-            self.hitboxes = []
+            self.hitboxes = boxes
             self.suggestion = None
             self._fire_frame()
             return self._frame_status()
@@ -274,6 +294,8 @@ class WbSession:
         return self._run(action)
 
     def set_frame(self, n) -> bool:
+        self.pending_frame = None
+
         def action():
             frame = self._integer(n, "frame")
             result = self._request("set_frame", {"frame": frame})
@@ -284,22 +306,36 @@ class WbSession:
         return self._run(action)
 
     def step(self, n=1) -> bool:
-        def action():
-            frames = self._integer(n, "frames", minimum=1)
-            result = self._request("play", {"frames": frames, "step": 1})
-            self._store_frame(self._read_frame(result, self.row))
-            self._fire_frame()
-            return self._frame_status()
+        """Seek relative to the acknowledged frame, including negative steps."""
+        try:
+            offset = self._integer(n, "frames", minimum=-self.frame)
+        except client.WbError as exc:
+            return self.report_error(exc)
+        return self.set_frame(self.frame + offset)
 
-        return self._run(action)
+    def coalesced_set_frame(self, n) -> bool:
+        """Queue a frame without performing I/O or firing callbacks."""
+        try:
+            frame = self._integer(n, "frame")
+        except client.WbError as exc:
+            return self.report_error(exc)
+        self.pending_frame = frame
+        return True
+
+    def flush_pending(self) -> bool:
+        """Send the latest queued frame once; False also means no work."""
+        frame = self.pending_frame
+        if frame is None:
+            return False
+        self.pending_frame = None
+        return self.set_frame(frame)
 
     def refresh_hitboxes(self) -> bool:
         def action():
             row = self._row_name(self.row)
-            result = self._request("list_hitboxes", {"row": row})
-            hitboxes = self._items(result, "hitboxes")
-            self.hitboxes = hitboxes
-            return STRINGS["hitboxes_loaded"].format(count=len(hitboxes))
+            boxes = self._source_hitboxes(row)
+            self.hitboxes = boxes
+            return STRINGS["hitboxes_loaded"].format(count=len(boxes))
 
         return self._run(action)
 
@@ -311,50 +347,128 @@ class WbSession:
 
         return self._run(action)
 
-    def edit_hitbox(self, **fields) -> bool:
-        def action():
-            args = dict(fields)
-            args["row"] = self._row_name(args.get("row", self.row))
-            args["ordinal"] = self._integer(args.get("ordinal"), "ordinal")
-            result = self._request("edit_hitbox", args)
+    @classmethod
+    def _first_active_frame(cls, boxes, ordinal) -> int:
+        index = cls._integer(ordinal, "ordinal")
+        if index >= len(boxes):
+            return 1
+        return cls._integer(boxes[index].get("start_frame", 1), "start_frame")
 
+    def first_active_frame(self, row, ordinal) -> int:
+        """Read the source start frame, defaulting to 1 when absent.
+
+        A different row is queried without changing the selected row or pose.
+        Invalid input and failed queries raise WbError.
+        """
+        name = self._row_name(row)
+        boxes = self.hitboxes if name == self.row else self._source_hitboxes(name)
+        return self._first_active_frame(boxes, ordinal)
+
+    def goto_problem(self, i) -> bool:
+        """Publish the problem pose only after all required replies succeed."""
+        self.pending_frame = None
+
+        def action():
+            index = self._integer(i, "index")
+            if index >= len(self.problems):
+                raise client.WbError(STRINGS["problem_missing"])
+            problem = self.problems[index]
+            row = self._row_name(problem.get("row"))
+            ordinal = self._integer(problem.get("ordinal", 0), "ordinal")
+            self._read_frame(self._request("load_row", {"row": row}), row)
+            boxes = self._source_hitboxes(row)
+            frame = self._first_active_frame(boxes, ordinal)
+            parsed = self._read_frame(
+                self._request("set_frame", {"frame": frame}), row
+            )
+            self._store_frame(parsed)
+            self.hitboxes = boxes
+            self.suggestion = None
+            self._fire_frame()
+            return self._frame_status()
+
+        return self._run(action)
+
+    def edit_hitbox(self, **fields) -> bool:
+        """Apply a sparse source edit; leave engine data and frame hooks alone."""
+        def action():
+            unknown = set(fields) - set(EDITABLE) - {"row", "ordinal"}
+            if unknown:
+                raise client.WbError(
+                    STRINGS["unsupported_fields"].format(
+                        fields=", ".join(sorted(unknown))
+                    )
+                )
+            row = self._row_name(fields.get("row", self.row))
+            ordinal = self._integer(fields.get("ordinal"), "ordinal")
+            args = {"row": row, "ordinal": ordinal}
+            for field in EDITABLE:
+                if field not in fields:
+                    continue
+                value = fields[field]
+                if field == "bone":
+                    if not isinstance(value, str) or not value.strip():
+                        raise client.WbError(STRINGS["bone_required"])
+                elif field in ("start_frame", "end_frame"):
+                    value = self._integer(value, field)
+                else:
+                    value = self._number(value, field)
+                args[field] = value
+            if len(args) == 2:
+                return STRINGS["no_changes"]
+
+            result = self._request("edit_hitbox", args)
             if "proposal" in result:
-                self.stale = False
+                # A proposal must not clear a previous successful source edit.
                 return STRINGS["proposal_created"]
 
             self.stale = True
-            self.hitboxes = []
             self.suggestion = None
+            if row == self.row:
+                # If the source refresh fails, do not label the old list as new.
+                self.hitboxes = []
+            boxes = self._source_hitboxes(row)
+            if row == self.row:
+                self.hitboxes = boxes
             return STRINGS["source_edited"]
 
         return self._run(action)
 
     def rebuild_reload(self) -> bool:
-        """Reload and restore the selection before publishing fresh data."""
+        """Restore the selection, source list, pose and overlays after reload."""
         saved_row, saved_frame = self.row, self.frame
+        self.pending_frame = None
 
         def action():
-            self._request("rebuild")
+            # Every failure from here must leave the stale indication visible.
             self.stale = True
+            self._request("rebuild")
             self._request("reload")
-
             rows = self._items(self._request("list_rows"), "rows")
             parsed = None
+            boxes = []
             if saved_row:
-                self._request("load_row", {"row": saved_row})
-                result = self._request("set_frame", {"frame": saved_frame})
-                parsed = self._read_frame(result, saved_row)
+                self._read_frame(
+                    self._request("load_row", {"row": saved_row}), saved_row
+                )
+                parsed = self._read_frame(
+                    self._request("set_frame", {"frame": saved_frame}), saved_row
+                )
+                boxes = self._source_hitboxes(saved_row)
 
             self.rows = rows
             if parsed is not None:
                 self._store_frame(parsed)
             else:
                 self.info = None
-            self.hitboxes = []
+            self.hitboxes = boxes
             self.problems = []
             self.suggestion = None
             self.stale = False
-            return STRINGS["reloaded"]
+            if parsed is not None:
+                self._fire_frame()
+            text = STRINGS["reloaded"]
+            return f"{text}; {self.hook_error}" if self.hook_error else text
 
         return self._run(action)
 
@@ -374,6 +488,8 @@ class WbSession:
         return self._run(action)
 
     def engine_restart(self) -> bool:
+        self.pending_frame = None
+
         def action():
             result = self._request("engine_restart")
             self.info = None
@@ -389,7 +505,6 @@ class WbSession:
         return self._run(action)
 
     def pose_problem(self) -> str:
-        """Explain why the last reply cannot be posed, without rejecting data."""
         if self.info is None:
             return STRINGS["no_frame"]
         try:
@@ -412,7 +527,7 @@ def session() -> WbSession:
 
 
 def _workspace_root(start: str) -> str:
-    """Nearest ancestor holding .git (the rule the launcher uses), else the project dir."""
+    """Find the nearest .git ancestor, otherwise return the project directory."""
     here = os.path.abspath(start)
     while True:
         if os.path.exists(os.path.join(here, ".git")):
@@ -424,25 +539,31 @@ def _workspace_root(start: str) -> str:
 
 
 def set_project(project_dir: str) -> bool:
-    """Read workbench.json (names/paths only) into the session; False with last_error on failure."""
+    """Read project paths without writing project or package data."""
     sess = session()
     try:
         config_path = os.path.join(project_dir, "workbench.json")
         with open(config_path, "r", encoding="utf-8-sig") as source:
             config = json.load(source)
         if not isinstance(config, dict):
-            raise ValueError("workbench.json: expected an object")
+            raise ValueError(STRINGS["project_object_required"])
         root = _workspace_root(project_dir)
 
         def resolve(value, relative_to):
             if not isinstance(value, str) or not value:
                 return ""
             if "\x00" in value:
-                raise ValueError("workbench.json: invalid path")
+                raise ValueError(STRINGS["project_invalid_path"])
             return os.path.normpath(
                 value if os.path.isabs(value) else os.path.join(relative_to, value)
             )
 
+        art = config.get("art") or {}
+        if not isinstance(art, dict):
+            raise ValueError(STRINGS["project_art_required"])
+        aliases = art.get("bone_aliases") or {}
+        if not isinstance(aliases, dict):
+            raise ValueError(STRINGS["project_aliases_required"])
         sess.project_dir = os.path.abspath(project_dir)
         sess.plan_path = (
             resolve(config.get("plan_abs"), root)
@@ -450,13 +571,11 @@ def set_project(project_dir: str) -> bool:
         )
         sess.art_blend = resolve(config.get("art_blend"), root)
         sess.art_glb = resolve(config.get("art_glb"), root)
-        art = config.get("art") or {}
-        aliases = art.get("bone_aliases") or {}
-        if not isinstance(aliases, dict):
-            raise ValueError("workbench.json: art.bone_aliases must be an object")
         sess.bone_aliases = {str(k): str(v) for k, v in aliases.items()}
     except (OSError, ValueError, TypeError) as exc:
         sess.last_error = str(exc)
-        sess.status = sess._status_with_stale(STRINGS["error_status"].format(error=exc))
+        sess.status = sess._status_with_stale(
+            STRINGS["error_status"].format(error=exc)
+        )
         return False
     return True
