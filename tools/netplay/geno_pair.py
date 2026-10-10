@@ -65,6 +65,7 @@ def main():
     ap.add_argument("--disc", default="vanilla")
     ap.add_argument("--no-bot", action="store_true")
     ap.add_argument("--bot", default="fuzz", choices=("fuzz", "plans"), help="MELEE_PAD_BOT_MODE: fuzz = seeded state-blind inputs (default), plans = the Turbo soak's move chains")
+    ap.add_argument("--pad-host", default="", help="MELEE_PAD_SCRIPT for the HOST only: a fixed-frame text pad file (<frames> <buttons_hex> [x y]); the guest idles")
     ap.add_argument("--no-cov", action="store_true", help="do not load the coverage observer (tools/netplay/geno_cov.lua)")
     ap.add_argument("--extra-env", default="", help="KEY=VAL,KEY=VAL for both sides")
     a = ap.parse_args()
@@ -105,6 +106,8 @@ def main():
         host["MELEE_MODS_DIR"] = os.path.abspath(a.mods_host)
     if a.mods_guest:
         guest["MELEE_MODS_DIR"] = os.path.abspath(a.mods_guest)
+    if a.pad_host:
+        host["MELEE_PAD_SCRIPT"] = os.path.abspath(a.pad_host)
     cov = os.path.join(ROOT, "tools", "netplay", "geno_cov.lua")
     if not a.no_cov:
         host["MELEE_SCRIPT"] = cov
