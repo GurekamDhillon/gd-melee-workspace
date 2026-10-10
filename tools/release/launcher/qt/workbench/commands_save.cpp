@@ -223,6 +223,6 @@ void registerAllCommands(Session &session) {
     registerHitboxCommands(session);
     registerClipCommands(session);
     registerSaveCommands(session);
-    // Task 14: registerGroundCommands(session).
+    registerGroundCommands(session);
 }
 } // namespace wb
