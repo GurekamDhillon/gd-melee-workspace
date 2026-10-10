@@ -459,7 +459,7 @@ private slots:
         auto samples = sampleBones(r.eng, r.s.data(), r.s.data().rows()[1], 0, &error);
         QVERIFY2(error.isEmpty(), qPrintable(error)); QVERIFY(!samples.isEmpty());
         for (const auto &call : r.eng.calls)
-            if (call.first == "frame") QCOMPARE(call.second["frame"].toInt(), 0);
+            if (call.first == "frame") QCOMPARE(call.second["frame"].toInt(), 1);   // the engine numbers frames from 1; frame 0 is clamped up
         wbtest::put(r.d.path(), "package/files/plan.json", wbtest::kPlan);
         QVERIFY(r.s.data().reload().isEmpty());
         QVERIFY(sampleBones(r.eng, r.s.data(), r.s.data().rows()[1], 6, &error).isEmpty());
