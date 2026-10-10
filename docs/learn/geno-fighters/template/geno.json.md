@@ -416,11 +416,12 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].fighter.costumes[].name | string: Costume name the select shows (printable ASCII, 1..23 characters) |  | maxLength=23; pattern=^[ -~]+$; geno.md §22.6; melee/pc/platform/geno_registry.c |
 | fighters[].fighter.costumes[].team | string: The team battle colour this costume is (the first one declared wins; undeclared: red is costume 0, blue 1, green 2) |  | enum=['red', 'blue', 'green']; geno.md §22.6; melee/pc/platform/geno_registry.c |
 | fighters[].fighter.rows | array: Ordered entries | absent | maxItems=448; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
-| fighters[].presentation | object: A define's own character select icon (64x56), portrait (136x188), stock icon (rgb5a3 or rgba8, also the results card picture), one per costume or one for all (geno: 9), and its results emblem (no palette; the faint shape behind the rank numeral) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
-| fighters[].presentation.icon | string: A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name |  | maxLength=63; pattern=^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][xX][tT][eE][xX]$; geno.md §22.6; melee/pc/platform/geno_registry.c |
-| fighters[].presentation.portrait | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
-| fighters[].presentation.stock | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
-| fighters[].presentation.emblem | string: A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name |  | maxLength=63; pattern=^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][xX][tT][eE][xX]$; geno.md §22.6; melee/pc/platform/geno_registry.c |
+| fighters[].presentation | object: Optional fighter-entry presentation (geno >= 9). Package art wins, then a retail base or explicit define.template. Lookup does not change gameplay or online identity. | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].presentation.icon | string: Select tile and card face; 64x56 retail aspect, dimensions 1..1024. | absent | maxLength=63; pattern=^(?!.*\.\.)(?!.*[/\\:])[!-~]+\.[gG][xX][tT][eE][xX]$(?![\s\S]); geno.md §22.12; melee/pc/platform/geno_define_registry.inc:gn_pres_name_ok |
+| fighters[].presentation.portrait | choice: Select CSP; 136x188 retail aspect. One file or 1..255 costume files; an out-of-list costume uses entry zero. | retail base/explicit template disc art, otherwise letters | ; geno.md §22.12; melee/pc/platform/geno_registry.c |
+| fighters[].presentation.stock | choice: HUD and results stock icon; 24x24 retail aspect. Use RGB5A3 or RGBA8; no palette. | retail base/explicit template disc art, otherwise letters | ; geno.md §22.12; melee/pc/platform/geno_registry.c |
+| fighters[].presentation.emblem | string: Results emblem behind rank; one file without a palette. | absent | maxLength=63; pattern=^(?!.*\.\.)(?!.*[/\\:])[!-~]+\.[gG][xX][tT][eE][xX]$(?![\s\S]); geno.md §22.12; melee/pc/platform/geno_define_registry.inc:gn_pres_name_ok |
+| fighters[].presentation.results | choice: Results card picture; 52x74 retail aspect. One file or 1..255 costume files; use RGB5A3 or RGBA8, no palette. Missing/unusable falls back to portrait, then retail, then initials. | portrait, then retail base/explicit template disc art, then letters | ; geno.md §22.12; melee/pc/platform/geno_registry.c |
 | fighters[].combo | object: geno 11: the combo graph (routes: cancel and link windows into next moves); define only | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].combo.buffer | integer: Default input buffer of every route | 5 | minimum=0; maximum=30; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
 | fighters[].combo.max_links | integer: Most links one string may take | 5 | minimum=1; maximum=32; geno.md §25; melee/pc/platform/geno_combo_registry.inc |
@@ -503,8 +504,8 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:494 |
 | JDOC_NODES | 32768 | melee/pc/platform/geno_registry.c:74 |
 | JDOC_ARENA | 524288 | melee/pc/platform/geno_registry.c:75 |
-| GN_MAX_VOICE | 32 | melee/pc/platform/geno_registry.c:403 |
-| GN_MAX_SLOTS | 512 | melee/pc/platform/geno_registry.c:512 |
+| GN_MAX_VOICE | 32 | melee/pc/platform/geno_registry.c:404 |
+| GN_MAX_SLOTS | 512 | melee/pc/platform/geno_registry.c:514 |
 | JSON_DEPTH | 32 | melee/pc/platform/geno_registry.c:jd_value |
 | JSON_FILE_BYTES | 1048576 | melee/pc/platform/geno_registry.c:gn_read_file |
 

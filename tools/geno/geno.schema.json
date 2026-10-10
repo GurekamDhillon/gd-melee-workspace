@@ -4328,83 +4328,121 @@
             ]
           },
           "presentation": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "title": "Geno define presentation",
             "type": "object",
+            "additionalProperties": false,
+            "description": "Optional fighter-entry presentation (geno >= 9). Package art wins, then a retail base or explicit define.template. Lookup does not change gameplay or online identity.",
             "properties": {
               "icon": {
                 "type": "string",
-                "description": "A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name",
-                "x-engine-default": "",
-                "x-reference": "geno.md §22.6",
-                "x-source": "melee/pc/platform/geno_registry.c",
-                "pattern": "^[A-Za-z0-9_.+@#%&=,;'!()-]+\\.[gG][xX][tT][eE][xX]$",
-                "maxLength": 63
+                "minLength": 7,
+                "maxLength": 63,
+                "pattern": "^(?!.*\\.\\.)(?!.*[/\\\\:])[!-~]+\\.[gG][xX][tT][eE][xX]$(?![\\s\\S])",
+                "description": "Select tile and card face; 64x56 retail aspect, dimensions 1..1024.",
+                "x-source": "melee/pc/platform/geno_define_registry.inc:gn_pres_name_ok",
+                "x-reference": "geno.md §22.12"
               },
               "portrait": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name",
-                    "x-engine-default": "",
-                    "x-reference": "geno.md §22.6",
-                    "x-source": "melee/pc/platform/geno_registry.c",
-                    "pattern": "^[A-Za-z0-9_.+@#%&=,;'!()-]+\\.[gG][xX][tT][eE][xX]$",
-                    "maxLength": 63
+                    "minLength": 7,
+                    "maxLength": 63,
+                    "pattern": "^(?!.*\\.\\.)(?!.*[/\\\\:])[!-~]+\\.[gG][xX][tT][eE][xX]$(?![\\s\\S])",
+                    "description": "Plain .gxtex basename in mod files/; no paths, spaces or ..; pc/tools/png2gx.py --allow-odd-size.",
+                    "x-source": "melee/pc/platform/geno_define_registry.inc:gn_pres_name_ok",
+                    "x-reference": "geno.md §22.12"
                   },
                   {
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "description": "A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name",
-                      "x-engine-default": "",
-                      "x-reference": "geno.md §22.6",
-                      "x-source": "melee/pc/platform/geno_registry.c",
-                      "pattern": "^[A-Za-z0-9_.+@#%&=,;'!()-]+\\.[gG][xX][tT][eE][xX]$",
-                      "maxLength": 63
+                      "minLength": 7,
+                      "maxLength": 63,
+                      "pattern": "^(?!.*\\.\\.)(?!.*[/\\\\:])[!-~]+\\.[gG][xX][tT][eE][xX]$(?![\\s\\S])",
+                      "description": "Plain .gxtex basename in mod files/; no paths, spaces or ..; pc/tools/png2gx.py --allow-odd-size.",
+                      "x-source": "melee/pc/platform/geno_define_registry.inc:gn_pres_name_ok",
+                      "x-reference": "geno.md §22.12"
                     },
-                    "maxItems": 16,
-                    "minItems": 1
+                    "minItems": 1,
+                    "maxItems": 255
                   }
-                ]
+                ],
+                "description": "Select CSP; 136x188 retail aspect. One file or 1..255 costume files; an out-of-list costume uses entry zero.",
+                "x-engine-default": "retail base/explicit template disc art, otherwise letters",
+                "x-reference": "geno.md §22.12"
               },
               "stock": {
                 "anyOf": [
                   {
                     "type": "string",
-                    "description": "A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name",
-                    "x-engine-default": "",
-                    "x-reference": "geno.md §22.6",
-                    "x-source": "melee/pc/platform/geno_registry.c",
-                    "pattern": "^[A-Za-z0-9_.+@#%&=,;'!()-]+\\.[gG][xX][tT][eE][xX]$",
-                    "maxLength": 63
+                    "minLength": 7,
+                    "maxLength": 63,
+                    "pattern": "^(?!.*\\.\\.)(?!.*[/\\\\:])[!-~]+\\.[gG][xX][tT][eE][xX]$(?![\\s\\S])",
+                    "description": "Plain .gxtex basename in mod files/; no paths, spaces or ..; pc/tools/png2gx.py --allow-odd-size.",
+                    "x-source": "melee/pc/platform/geno_define_registry.inc:gn_pres_name_ok",
+                    "x-reference": "geno.md §22.12"
                   },
                   {
                     "type": "array",
                     "items": {
                       "type": "string",
-                      "description": "A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name",
-                      "x-engine-default": "",
-                      "x-reference": "geno.md §22.6",
-                      "x-source": "melee/pc/platform/geno_registry.c",
-                      "pattern": "^[A-Za-z0-9_.+@#%&=,;'!()-]+\\.[gG][xX][tT][eE][xX]$",
-                      "maxLength": 63
+                      "minLength": 7,
+                      "maxLength": 63,
+                      "pattern": "^(?!.*\\.\\.)(?!.*[/\\\\:])[!-~]+\\.[gG][xX][tT][eE][xX]$(?![\\s\\S])",
+                      "description": "Plain .gxtex basename in mod files/; no paths, spaces or ..; pc/tools/png2gx.py --allow-odd-size.",
+                      "x-source": "melee/pc/platform/geno_define_registry.inc:gn_pres_name_ok",
+                      "x-reference": "geno.md §22.12"
                     },
-                    "maxItems": 16,
-                    "minItems": 1
+                    "minItems": 1,
+                    "maxItems": 255
                   }
-                ]
+                ],
+                "description": "HUD and results stock icon; 24x24 retail aspect. Use RGB5A3 or RGBA8; no palette.",
+                "x-engine-default": "retail base/explicit template disc art, otherwise letters",
+                "x-reference": "geno.md §22.12"
               },
               "emblem": {
                 "type": "string",
-                "description": "A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name",
-                "x-engine-default": "",
-                "x-reference": "geno.md §22.6",
-                "x-source": "melee/pc/platform/geno_registry.c",
-                "pattern": "^[A-Za-z0-9_.+@#%&=,;'!()-]+\\.[gG][xX][tT][eE][xX]$",
-                "maxLength": 63
+                "minLength": 7,
+                "maxLength": 63,
+                "pattern": "^(?!.*\\.\\.)(?!.*[/\\\\:])[!-~]+\\.[gG][xX][tT][eE][xX]$(?![\\s\\S])",
+                "description": "Results emblem behind rank; one file without a palette.",
+                "x-source": "melee/pc/platform/geno_define_registry.inc:gn_pres_name_ok",
+                "x-reference": "geno.md §22.12"
+              },
+              "results": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 7,
+                    "maxLength": 63,
+                    "pattern": "^(?!.*\\.\\.)(?!.*[/\\\\:])[!-~]+\\.[gG][xX][tT][eE][xX]$(?![\\s\\S])",
+                    "description": "Plain .gxtex basename in mod files/; no paths, spaces or ..; pc/tools/png2gx.py --allow-odd-size.",
+                    "x-source": "melee/pc/platform/geno_define_registry.inc:gn_pres_name_ok",
+                    "x-reference": "geno.md §22.12"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 7,
+                      "maxLength": 63,
+                      "pattern": "^(?!.*\\.\\.)(?!.*[/\\\\:])[!-~]+\\.[gG][xX][tT][eE][xX]$(?![\\s\\S])",
+                      "description": "Plain .gxtex basename in mod files/; no paths, spaces or ..; pc/tools/png2gx.py --allow-odd-size.",
+                      "x-source": "melee/pc/platform/geno_define_registry.inc:gn_pres_name_ok",
+                      "x-reference": "geno.md §22.12"
+                    },
+                    "minItems": 1,
+                    "maxItems": 255
+                  }
+                ],
+                "description": "Results card picture; 52x74 retail aspect. One file or 1..255 costume files; use RGB5A3 or RGBA8, no palette. Missing/unusable falls back to portrait, then retail, then initials.",
+                "x-engine-default": "portrait, then retail base/explicit template disc art, then letters",
+                "x-reference": "geno.md §22.12"
               }
-            },
-            "additionalProperties": false,
-            "description": "A define's own character select icon (64x56), portrait (136x188), stock icon (rgb5a3 or rgba8, also the results card picture), one per costume or one for all (geno: 9), and its results emblem (no palette; the faint shape behind the rank numeral)"
+            }
           },
           "combo": {
             "type": "object",
@@ -5683,11 +5721,11 @@
     },
     "GN_MAX_VOICE": {
       "value": 32,
-      "source": "melee/pc/platform/geno_registry.c:403"
+      "source": "melee/pc/platform/geno_registry.c:404"
     },
     "GN_MAX_SLOTS": {
       "value": 512,
-      "source": "melee/pc/platform/geno_registry.c:512"
+      "source": "melee/pc/platform/geno_registry.c:514"
     },
     "JSON_DEPTH": {
       "value": 32,
@@ -5699,8 +5737,8 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "167281914a3446155bf36816ea445307d52cd94a91232de2630037a71a6eb6da",
-    "pc/platform/geno_define_registry.inc": "1696c1c4ea77ae2f3334139ae2dc721872af50025d96e8a8b823111dc4f8cabb",
+    "pc/platform/geno_registry.c": "ef0190fb8745a959b0587d105e94be0d596d783acca889c503f8c7d499cd453d",
+    "pc/platform/geno_define_registry.inc": "188a7692572d2445418f2f086aa6823f500db1bf9c2417f4b2bebee5f69a2738",
     "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
     "pc/platform/geno_combo_registry.inc": "ee2771fc193b43719de384e5a39e689c69e11b43bbbb36318cf91c8723694837",
     "pc/geno/geno.h": "7ce69554f6717b666a8fb365a726aa0305355ec786d954457b6098299a846df8",
@@ -5708,6 +5746,7 @@
     "pc/geno/geno_game_v2.inc": "9c572553dcd7b6a70e9d5a3fa3efcbc618b8de567c287e75e1f1577e572f5fb0",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",
     "pc/geno/geno_profile_storage.h": "a40aec8aafa890622f0ba6cb9f5602176c738f960346b18daf87c8dc8498d04d",
-    "pc/geno/geno_game_articles.inc": "1961e7e8893f9b0485021ed26c550db50eb7d9ce739f4fa7d9d22318face832d"
+    "pc/geno/geno_game_articles.inc": "1961e7e8893f9b0485021ed26c550db50eb7d9ce739f4fa7d9d22318face832d",
+    "pc/geno/presentation.schema.json": "574501058e9c7566cd0dbb1d2fd32e72c6b28a7f58be4f6f86654374420781b6"
   }
 }

@@ -193,10 +193,8 @@ def build_schema():
                             ("file", "joint")), 16),
         "rows": arr(string("Clip name of the bank for an own animation row: the first is row 303, the next 304, ... A state, an overlay or a common_states row may name them (base none only)", section="22.7", minLength=1, maxLength=31), 448)},
         ("plan", "animation", "costumes"))
-    gxtex = string("A .gxtex file of the mod's files/ folder (pc/tools/png2gx.py); a plain file name", section="22.6", pattern=r"^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][xX][tT][eE][xX]$", maxLength=63)
-    fighter["properties"]["presentation"] = obj({"icon": gxtex, "portrait": {"anyOf": [gxtex, arr(gxtex, 16, minItems=1)]},
-        "stock": {"anyOf": [gxtex, arr(gxtex, 16, minItems=1)]}, "emblem": gxtex})
-    fighter["properties"]["presentation"]["description"] = "A define's own character select icon (64x56), portrait (136x188), stock icon (rgb5a3 or rgba8, also the results card picture), one per costume or one for all (geno: 9), and its results emblem (no palette; the faint shape behind the rank numeral)"
+    # The game owns this contract; keep editor limits aligned with the strict parser.
+    fighter["properties"]["presentation"] = json.loads(read("pc/geno/presentation.schema.json"))
     retail = {"type": "string", "description": "A retail fighter (mario, fox, captain, donkey, kirby, koopa, link, seak, ness, peach, popo, pikachu, samus, yoshi, purin, mewtwo, luigi, mars, zelda, clink, drmario, falco, pichu, gamewatch, ganon, emblem, or their aliases)"}
     gnsnd = string("A .gnsnd file of the mod's files/ folder (python -m tools.geno.audio in.wav out.gnsnd); a plain file name", section="22.7", pattern=r"^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][nN][sS][nN][dD]$", maxLength=63)
     fighter["properties"]["combo"] = combo_schema()
@@ -227,7 +225,7 @@ def build_schema():
     result.update({"$schema": "https://json-schema.org/draft/2020-12/schema", "title": "Geno fighter overlays",
                    "x-registry-keys": sorted(registry_keys()), "x-limits": limits()})
     result["x-source-contract"] = {path: hashlib.sha256(read(path).encode()).hexdigest() for path in
-                                     ("pc/platform/geno_registry.c", "pc/platform/geno_define_registry.inc", "pc/platform/geno_lua_registry.inc", "pc/platform/geno_combo_registry.inc", "pc/geno/geno.h", "pc/geno/geno_game.c", "pc/geno/geno_game_v2.inc", "pc/geno/geno_profiles.inc", "pc/geno/geno_profile_storage.h", "pc/geno/geno_game_articles.inc")}
+                                     ("pc/platform/geno_registry.c", "pc/platform/geno_define_registry.inc", "pc/platform/geno_lua_registry.inc", "pc/platform/geno_combo_registry.inc", "pc/geno/geno.h", "pc/geno/geno_game.c", "pc/geno/geno_game_v2.inc", "pc/geno/geno_profiles.inc", "pc/geno/geno_profile_storage.h", "pc/geno/geno_game_articles.inc", "pc/geno/presentation.schema.json")}
     return result
 
 

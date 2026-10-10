@@ -50,6 +50,8 @@ profiler-core)
 pipeline-warm)
     sources=(pc/tests/pipeline_warm_test.cpp)
     flags=(-std=c++20 -ffunction-sections -I "$GW_MELEE/pc/platform") ;;
+geno-css-art)
+    sources=(pc/tests/geno_css_art_test.c) ;;
 geno-items-registry)
     sources=(pc/tests/geno_items_registry_test.c) ;;
 mex-items-query)
