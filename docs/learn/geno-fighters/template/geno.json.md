@@ -413,6 +413,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].ai | object: The CPU plays this define as that retail fighter (its recovery, special-move choices and per-kind AI tables) (geno: 10) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].ai.like | string: A retail fighter (mario, fox, captain, donkey, kirby, koopa, link, seak, ness, peach, popo, pikachu, samus, yoshi, purin, mewtwo, luigi, mars, zelda, clink, drmario, falco, pichu, gamewatch, ganon, emblem, or their aliases) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].kirby_copy | string: What Kirby gets from inhaling the define: "none" (the default) or "retail:<fighter>" (that fighter's hat and ability) (geno: 10) | none | pattern=^(none\|retail:[a-z]+)$; geno.md §22.7; melee/pc/platform/geno_registry.c |
+| fighters[].thrown_as | string: A base none define: the retail fighter whose thrown rows a retail victim plays when this define throws it (its CatchWait/pummel rows stay the victim's own). Default captain (Captain Falcon); any retail fighter but Nana (geno: 10) | captain | ; geno.md §22.8; melee/pc/platform/geno_registry.c |
 | fighters[].audio | object: The define's own sound clips: its announcer call and replacements for retail voice sounds (geno: 9); silence stays without them | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].audio.announcer | string: A .gnsnd file of the mod's files/ folder (python -m tools.geno.audio in.wav out.gnsnd); a plain file name |  | maxLength=63; pattern=^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][nN][sS][nN][dD]$; geno.md §22.7; melee/pc/platform/geno_registry.c |
 | fighters[].audio.voice | array: Ordered entries | absent | maxItems=32; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
@@ -449,10 +450,10 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:380 |
 | GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:381 |
 | GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:482 |
-| JDOC_NODES | 4096 | melee/pc/platform/geno_registry.c:74 |
-| JDOC_ARENA | 65536 | melee/pc/platform/geno_registry.c:75 |
+| JDOC_NODES | 32768 | melee/pc/platform/geno_registry.c:74 |
+| JDOC_ARENA | 524288 | melee/pc/platform/geno_registry.c:75 |
 | GN_MAX_VOICE | 32 | melee/pc/platform/geno_registry.c:403 |
-| GN_MAX_SLOTS | 512 | melee/pc/platform/geno_registry.c:507 |
+| GN_MAX_SLOTS | 512 | melee/pc/platform/geno_registry.c:510 |
 | JSON_DEPTH | 32 | melee/pc/platform/geno_registry.c:jd_value |
 | JSON_FILE_BYTES | 1048576 | melee/pc/platform/geno_registry.c:gn_read_file |
 

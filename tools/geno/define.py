@@ -58,7 +58,7 @@ def validate_definition(data, fighter, path):
         if isinstance(value, list) and own and len(value) > len(costumes):
             errors.append((path+".presentation."+key, "%d entries for %d costumes" % (len(value), len(costumes))))
     # Slice 6 (geno 10): the CPU's stand-in fighter, what Kirby copies, the package's own sound clips, the results emblem.
-    for key in ("ai", "kirby_copy"):   # they change what a fighter does; audio and the emblem are presentation and take 9 like the art
+    for key in ("ai", "kirby_copy", "thrown_as"):   # they change what a fighter does; audio and the emblem are presentation and take 9 like the art
         if key in fighter and data["geno"] < 10:
             errors.append((path+"."+key, "needs geno: 10"))
     if "audio" in fighter and data["geno"] < 9:
@@ -71,6 +71,12 @@ def validate_definition(data, fighter, path):
         name = copy[len("retail:"):] if isinstance(copy, str) and copy.startswith("retail:") else None
         if name is None or name.lower() not in RETAIL_FIGHTERS or name.lower() == "kirby":
             errors.append((path+".kirby_copy", 'must be "none" or "retail:<fighter>" (a retail fighter other than Kirby)'))
+    thrown = fighter.get("thrown_as")
+    if thrown is not None:
+        if not isinstance(thrown, str) or thrown.lower() not in RETAIL_FIGHTERS:
+            errors.append((path+".thrown_as", "%r is not a retail fighter (mario, fox, captain, ... emblem)" % (thrown,)))
+        elif not own:
+            errors.append((path+".thrown_as", 'is for a base "none" define (a base "mario" define is thrown with Mario rows)'))
     sfxs = [v.get("sfx") for v in (fighter.get("audio") or {}).get("voice", []) if isinstance(v, dict)]
     if len(set(sfxs)) != len(sfxs):
         errors.append((path+".audio.voice", "a sound id is replaced twice"))

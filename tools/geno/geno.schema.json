@@ -4315,6 +4315,13 @@
             "x-engine-default": "none",
             "x-source": "melee/pc/platform/geno_registry.c"
           },
+          "thrown_as": {
+            "type": "string",
+            "description": "A base none define: the retail fighter whose thrown rows a retail victim plays when this define throws it (its CatchWait/pummel rows stay the victim's own). Default captain (Captain Falcon); any retail fighter but Nana (geno: 10)",
+            "x-reference": "geno.md §22.8",
+            "x-engine-default": "captain",
+            "x-source": "melee/pc/platform/geno_registry.c"
+          },
           "audio": {
             "type": "object",
             "properties": {
@@ -4762,6 +4769,7 @@
     "sfx",
     "sfx_kind",
     "sfx_severity",
+    "shadow_tint",
     "shield",
     "shield_damage",
     "show_model",
@@ -4786,7 +4794,9 @@
     "target",
     "targets",
     "team",
+    "thrown_as",
     "to",
+    "toon",
     "tornado",
     "turn",
     "velocity",
@@ -4898,11 +4908,11 @@
       "source": "melee/pc/geno/geno.h:482"
     },
     "JDOC_NODES": {
-      "value": 4096,
+      "value": 32768,
       "source": "melee/pc/platform/geno_registry.c:74"
     },
     "JDOC_ARENA": {
-      "value": 65536,
+      "value": 524288,
       "source": "melee/pc/platform/geno_registry.c:75"
     },
     "GN_MAX_VOICE": {
@@ -4911,7 +4921,7 @@
     },
     "GN_MAX_SLOTS": {
       "value": 512,
-      "source": "melee/pc/platform/geno_registry.c:507"
+      "source": "melee/pc/platform/geno_registry.c:510"
     },
     "JSON_DEPTH": {
       "value": 32,
@@ -4923,8 +4933,8 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "4ff2b68db493c8a4b44c7ad18a125fcbffc4d6762713fc472e657f0617c83e2d",
-    "pc/platform/geno_define_registry.inc": "3dddc814a3abc04cd5c7af8f2e407e5628887edfcffa969568b390cd3b419de2",
+    "pc/platform/geno_registry.c": "55c8974779c00cb87447ccbd76126612853a72c89d7a03bfff4888c493288930",
+    "pc/platform/geno_define_registry.inc": "eab3650a27184a043b5a5532e63f5ffa5b17e1e16d76d6668f18c7c5dc21023a",
     "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
     "pc/geno/geno.h": "de75f4a8d6366a3a049a8eb9b232ac981b5d69b1cdeab1b21a81a5294ab92938",
     "pc/geno/geno_game.c": "7d707782ce799fd718abbc914175c3a9ea9d3b8a48dd8d28999709ffdb55f132",

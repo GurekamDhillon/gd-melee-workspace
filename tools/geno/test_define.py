@@ -237,6 +237,21 @@ class ArticleDefineTests(unittest.TestCase):
                     {"voice": [{"sfx": 5}]}, {"hi": 1}):
             self.assertTrue(messages(lambda f, b=bad: f.__setitem__("audio", b)), bad)
 
+    def test_thrown_as_rules(self):
+        require_game("pc/geno/mods/vanilla-courier/geno.json")
+        data = check.load_json(self.COURIER / "geno.json")
+        def messages(mutate, geno=10):
+            bad = copy.deepcopy(data); bad["geno"] = geno; mutate(bad["fighters"][0])
+            return [e["message"] for e in check.validate(bad, self.COURIER)]
+        self.assertTrue(any("needs geno: 10" in m for m in messages(lambda f: f.__setitem__("thrown_as", "captain"), 9)))
+        for bad in ("nobody", "nana", 3):
+            self.assertTrue(messages(lambda f, b=bad: f.__setitem__("thrown_as", b)), bad)
+        for good in ("captain", "falcon", "marth"):   # the courier is a base none define
+            self.assertEqual(messages(lambda f, g=good: f.__setitem__("thrown_as", g)), [], good)
+        def as_mario(f):
+            f["thrown_as"] = "captain"; f["define"]["base"] = "mario"; f["define"]["resources"] = "retail:mario"
+        self.assertTrue(any("thrown_as" in m or "is for a base" in m for m in messages(as_mario)), "base mario define")
+
     def test_audio_files_are_checked_when_present(self):
         require_game("pc/geno/mods/vanilla-hero/geno.json")
         import shutil
