@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>disable</Nullable>
+    <HsdDir Condition="'$(HsdDir)'==''">..\hsdraw\x</HsdDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="HSDRaw"><HintPath>$(HsdDir)\HSDRaw.dll</HintPath></Reference>
+    <Reference Include="HSDRawViewer"><HintPath>$(HsdDir)\HSDRawViewer.dll</HintPath></Reference>
+    <Reference Include="IONET"><HintPath>$(HsdDir)\IONET.dll</HintPath></Reference>
+  </ItemGroup>
+</Project>

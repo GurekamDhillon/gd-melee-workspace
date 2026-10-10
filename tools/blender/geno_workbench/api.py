@@ -78,6 +78,8 @@ class WbSession:
         self.art_blend = ""
         self.art_glb = ""
         self.bone_aliases: dict[str, str] = {}
+        # engine frame the add-on calibrates at (action frame = this - 1); 1 unless retail blending needs a later one
+        self.calibration_frame = 1
         self.travel_anchor = None   # root position the in-place view keeps fixed (the row's first frame)
         self.loaded_row = ""   # the name given to load_row (list_rows' name; self.row is the engine's label)
         self.row_lengths: dict[str, int] = {}   # learned from the server when a frame is past a move's end
@@ -750,6 +752,10 @@ def set_project(project_dir: str) -> bool:
         sess.art_blend = resolve(config.get("art_blend"), root)
         sess.art_glb = resolve(config.get("art_glb"), root)
         sess.bone_aliases = {str(k): str(v) for k, v in aliases.items()}
+        cal_frame = art.get("calibration_frame", 1)
+        if isinstance(cal_frame, bool) or not isinstance(cal_frame, int) or cal_frame < 1:
+            raise ValueError("art.calibration_frame must be an integer >= 1")
+        sess.calibration_frame = cal_frame
     except (OSError, ValueError, TypeError) as exc:
         sess.last_error = str(exc)
         sess.status = sess._status_with_stale(

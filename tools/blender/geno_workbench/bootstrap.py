@@ -79,6 +79,16 @@ def main(argv=None):
             api.session().last_error or STRINGS["bootstrap_connect_failed"]
         )
 
+    # A fresh engine's first row load can report a pose that is not that row's frame 1 (seen on Geno Falcon;
+    # the second load is right). Load the first row once so calibration below sees the real reference pose.
+    _prime = api.session()
+    _first = next((r.get("name") for r in getattr(_prime, "rows", []) if isinstance(r, dict) and r.get("name")), "")
+    if _first:
+        try:
+            _prime.load_row(_first)
+        except Exception as exc:  # priming is best effort; calibration reports its own failures
+            print("GENO_WB_REPORT prime_warning %s" % exc)
+
     if hasattr(bpy.ops.geno_wb, "load_fighter"):
         load_fighter = bpy.ops.geno_wb.load_fighter
         try:
