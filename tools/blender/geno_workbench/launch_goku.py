@@ -71,7 +71,9 @@ def main() -> int:
         next((p for p in (HERE.parents[2] / "_build/wb-win/gd-melee-launcher.exe",
                           root / "_build/wb-win/gd-melee-launcher.exe") if p.is_file()), ""))
     qt_bin = os.environ.get("GW_QT_BIN", "E:/Projects/Qt/6.8.3/msvc2022_64/bin")
-    engine_src = Path(os.environ.get("GW_ENGINE_EXE", root / "_build/agents/geno-workbench/melee-pc.exe"))
+    engine_src = Path(os.environ.get("GW_ENGINE_EXE") or next(
+        (c for c in (root / "_build/agents/geno-workbench/melee-pc.exe", root / "_build/wb-goku/engine/melee-pc.exe")
+         if c.is_file()), root / "_build/agents/geno-workbench/melee-pc.exe"))
     project = root / "ports/goku-xv2"
     mods = root / "_build/goku-xv2/author-source/package/mods"
     art = root / "_build/goku-xv2/author-source/goku.blend"
@@ -88,11 +90,12 @@ def main() -> int:
     (work / "engine").mkdir(parents=True, exist_ok=True)
     (work / "payloads").mkdir(parents=True, exist_ok=True)
     engine = work / "engine" / "melee-pc.exe"
-    shutil.copy2(engine_src, engine)
+    if engine_src.resolve() != engine.resolve():
+        shutil.copy2(engine_src, engine)
     for dll in ("SDL3.dll", "webgpu_dawn.dll"):
         candidates = [engine_src.parent / dll] + sorted(engine_src.parent.glob("runs/*/" + dll))
         found = next((c for c in candidates if c.is_file()), None)
-        if found and not (engine.parent / dll).exists():
+        if found and not (engine.parent / dll).exists() and found.resolve() != (engine.parent / dll).resolve():
             shutil.copy2(found, engine.parent / dll)
 
     env = dict(os.environ)
