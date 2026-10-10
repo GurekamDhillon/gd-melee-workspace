@@ -124,7 +124,7 @@ def angle_span(angle: int, kb: float) -> tuple[float, float, float | None]:
     return float(angle), float(angle), float(angle)
 
 
-ARROW_MIN, ARROW_MAX, ARROW_PER_KB = 2.0, 30.0, 0.12
+ARROW_MIN, ARROW_MAX, ARROW_PER_KB = 2.0, 16.0, 0.06
 
 
 def arrow_length(kb: float) -> float:
@@ -186,14 +186,22 @@ def label(slot: int, damage) -> str:
 
 
 def match_source(source, slot: int, frame: int):
-    """The source record that owns engine `slot` at `frame` (first by ordinal), or None."""
+    """The source record that owns engine `slot` at `frame`.
+
+    A later hitbox command on the same slot replaces the earlier one (sweet then sour reuse slots, and
+    the earlier record's window still runs to the move's clear), so of the records whose window holds
+    `frame` the one that started last wins; ties go to the higher ordinal.
+    """
+    best, best_key = None, None
     for rec in source or ():
         try:
             if int(rec.get("slot", -1)) == int(slot) and int(rec["start_frame"]) <= frame <= int(rec["end_frame"]):
-                return rec
+                key = (int(rec["start_frame"]), int(rec.get("ordinal", 0)))
+                if best_key is None or key >= best_key:
+                    best, best_key = rec, key
         except (KeyError, TypeError, ValueError):
             continue
-    return None
+    return best
 
 
 def frame_bar(start: int, end: int, length: int, current: int, cells: int = 40) -> str:

@@ -82,6 +82,10 @@ def test_match_source_and_frame_bar():
     assert M.match_source(src, 0, 6)["damage"] == 9
     assert M.match_source(src, 0, 10)["damage"] == 4
     assert M.match_source(src, 1, 6) is None
+    # overlapping windows (sweet 14-31, sour 17-31 on the same slot): the later command wins
+    over = [{"ordinal": 0, "slot": 0, "start_frame": 14, "end_frame": 31, "damage": 18},
+            {"ordinal": 1, "slot": 0, "start_frame": 17, "end_frame": 31, "damage": 6}]
+    assert M.match_source(over, 0, 15)["damage"] == 18 and M.match_source(over, 0, 20)["damage"] == 6
     bar = M.frame_bar(5, 8, 20, 6, cells=20)
     assert len(bar) == 20 and bar[4] == "#" and bar[5] == "|" and bar[0] == "."
 

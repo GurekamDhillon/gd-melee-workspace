@@ -160,6 +160,18 @@ def _draw_view():
     gpu.state.blend_set("NONE")
 
 
+def _fill(x, y, w, h, color):
+    import gpu
+    from gpu_extras.batch import batch_for_shader
+
+    shader = gpu.shader.from_builtin("UNIFORM_COLOR")
+    batch = batch_for_shader(shader, "TRI_FAN", {"pos": ((x, y), (x + w, y), (x + w, y + h), (x, y + h))})
+    gpu.state.blend_set("ALPHA")
+    shader.bind()
+    shader.uniform_float("color", color)
+    batch.draw(shader)
+
+
 def _draw_text():
     import blf
     from bpy_extras.view3d_utils import location_3d_to_region_2d
@@ -175,8 +187,6 @@ def _draw_text():
         return
     font = 0
     blf.size(font, 15.0)
-    blf.enable(font, blf.SHADOW)
-    blf.shadow(font, 3, 0.0, 0.0, 0.0, 0.9)
     for item in _STATE["items"]:
         from mathutils import Vector
 
@@ -187,17 +197,22 @@ def _draw_text():
         rgb = item["rgb"]
         y = point.y + 6
         if labels:
-            blf.color(font, rgb[0], rgb[1], rgb[2], 1.0)
-            blf.position(font, point.x + 8, y, 0)
+            w, h = blf.dimensions(font, item["label"])
+            _fill(point.x + 4, y - 4, w + 10, h + 8, rgb + (0.95,))
+            ink = 0.0 if M.luminance(rgb) > 0.5 else 1.0     # dark text on pale slots, white on dark
+            blf.color(font, ink, ink, ink, 1.0)
+            blf.position(font, point.x + 9, y, 0)
             blf.draw(font, item["label"])
-            y -= 18
+            y -= 22
         if badges and item["badges"]:
-            blf.color(font, 0.95, 0.95, 0.95, 1.0)
             for tag in item["badges"]:
-                blf.position(font, point.x + 8, y, 0)
-                blf.draw(font, "[" + tag + "]")
-                y -= 16
-    blf.disable(font, blf.SHADOW)
+                text = tag
+                w, h = blf.dimensions(font, text)
+                _fill(point.x + 4, y - 4, w + 10, h + 8, (0.1, 0.1, 0.1, 0.85))
+                blf.color(font, 0.97, 0.97, 0.97, 1.0)
+                blf.position(font, point.x + 9, y, 0)
+                blf.draw(font, text)
+                y -= 20
 
 
 _ICONS = {"coll": None}
