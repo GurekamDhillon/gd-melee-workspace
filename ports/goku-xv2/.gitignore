@@ -18,6 +18,7 @@
 !gameplay.json
 !ground_modes.json
 !tools/cross-port.json
+!splices.json
 
 # 2. Never, whatever the kind: caches, builds, binaries, source/disc dumps.
 __pycache__/
