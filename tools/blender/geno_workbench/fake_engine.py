@@ -431,6 +431,7 @@ class FakeWorkbench:
         self.calls: list[tuple[str, dict]] = []
         self.stale = False
         self.fail_next: str | None = None
+        self.checks_unload = False   # run_checks fails the way the real one did: row dropped, then frame 0 asked for
         self.drop_after: int | None = None
         self.current_row = "wait"
         self.frame = 1
@@ -598,6 +599,8 @@ class FakeWorkbench:
             self.frame = 1
             return self._frame_info()
         if tool == "set_frame":
+            if self.current_row is None:
+                raise ValueError("no row loaded; call load_row first")
             wanted = _integer(args.get("frame"), "frame", 1)
             length = ROW_FRAMES.get(self.current_row)
             if length is not None and wanted > length:
@@ -618,6 +621,9 @@ class FakeWorkbench:
         if tool == "list_hitboxes":
             return {"hitboxes": copy.deepcopy(self._source[self._row_arg(args)])}
         if tool == "run_checks":
+            if self.checks_unload:
+                self.current_row = None
+                raise ValueError("frame 0 is past the end of this move (the fighter is at frame 1 of action 219)")
             return {
                 "problems": [
                     {

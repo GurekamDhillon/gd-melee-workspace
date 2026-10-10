@@ -20,10 +20,35 @@ except ImportError:
 STRINGS = props.STRINGS
 _server_process = None
 _active_player = None
+PLAY_STATS = {"shown": 0, "skipped": 0, "max_ms": 0}
+
+
+def _redraw_ui():
+    wm = getattr(bpy.context, "window_manager", None)
+    for window in getattr(wm, "windows", ()):
+        for area in window.screen.areas:
+            if area.type == "VIEW_3D":
+                area.tag_redraw()
+
+
+_CACHE_SHOWN = [""]
+
+
+def _cache_timer():
+    """Main-thread side of the background frame cache: progress text, redraws, length hints."""
+    value = api.session()
+    text = value.cache_text()
+    if text != _CACHE_SHOWN[0]:
+        _CACHE_SHOWN[0] = text
+        _redraw_ui()
+    return 0.25 if value.cache.loading else 0.5
 
 
 def install_callbacks():
     value = api.session()
+    value.prefetch = True
+    if not bpy.app.timers.is_registered(_cache_timer):
+        bpy.app.timers.register(_cache_timer, first_interval=0.25, persistent=True)
     value.on_change = props.sync_from_session
     props.set_frame_handler(_queue_frame)
     props.set_row_handler(_select_row)
@@ -131,7 +156,11 @@ def shutdown():
     """Release timers, callbacks, the connection and the owned server."""
     stop_playback()
     _cancel_scrub()
+    if bpy.app.timers.is_registered(_cache_timer):
+        bpy.app.timers.unregister(_cache_timer)
     value = api.session()
+    value.prefetch = False
+    value.cache.reset("shutdown")
     value.on_change = None
     props.set_frame_handler(None)
     props.set_row_handler(None)
@@ -414,9 +443,16 @@ class GENO_WB_OT_play(bpy.types.Operator):
         self._wm = context.window_manager
         self._settings = context.scene.geno_wb
         self._timer = None
+        render = context.scene.render
+        self._rate = max(1.0, render.fps / (render.fps_base or 1.0))   # logic frames per second = the scene's fps
+        self._origin = max(0, value.frame - 1)
+        self._t0 = self._last_tick = time.monotonic()
+        for key in PLAY_STATS:
+            PLAY_STATS[key] = 0
+        value.start_prefetch()
         try:
             self._timer = self._wm.event_timer_add(
-                1 / 30, window=context.window
+                1 / min(60.0, self._rate), window=context.window
             )
             self._settings.playing = True
             _active_player = self
@@ -442,36 +478,52 @@ class GENO_WB_OT_play(bpy.types.Operator):
             value.set_status(STRINGS["play_paused"])
             return {"CANCELLED"}
         # Event has no .timer in the Python API; any window timer arrives as
-        # TIMER, so pace steps by time instead of trusting each TIMER event.
+        # TIMER, so pace by the wall clock: the frame shown is where the clock says
+        # we are, and frames are skipped (not delayed) when posing is slow.
         if event.type != "TIMER":
             return {"PASS_THROUGH"}
+        began = time.perf_counter()
         now = time.monotonic()
-        if now - getattr(self, "_last_step", 0.0) < 1 / 30 - 0.002:
-            return {"PASS_THROUGH"}
-        self._last_step = now
+        limit = value.row_frames()
         if self._settings.frame >= 600 or value.frame >= 600:
             self._stop()
             return _finish(self, context, value.set_status(STRINGS["play_limit"]))
-        limit = value.row_frames()
-        if limit and value.frame >= limit:
-            # a one-frame move has nothing to play or loop: stop instead of resending the same frame
-            if limit <= 1 or not self._settings.loop:
+        cap = limit or 600
+        position = self._origin + int((now - self._t0) * self._rate)   # 0-based frames since frame 1
+        if position >= cap:
+            if cap <= 1 or not self._settings.loop:
+                if value.frame < cap and not self._show(value, cap):
+                    self._stop()
+                    return _finish(self, context, False)
                 self._stop()
                 return _finish(
                     self, context,
                     value.set_status(STRINGS["play_end"].format(frame=value.frame)),
                 )
-            ok = value.set_frame(1)    # the move ended: start it again
-        else:
-            ok = value.step(1)
-        if not ok:
+            position %= cap
+        target = position + 1
+        if target == value.frame:
+            return {"PASS_THROUGH"}
+        if not value.cache.has(value.loaded_row, target) and value.cache.loading:
+            # still caching this far: hold the picture, and do not let the clock run away
+            self._t0 += now - self._last_tick
+            self._last_tick = now
+            return {"PASS_THROUGH"}
+        self._last_tick = now
+        skipped = max(0, (target - value.frame - 1) if target > value.frame else 0)
+        if not self._show(value, target):
             self._stop()
             return _finish(self, context, False)
-        props.sync_from_session(value, self._settings)
-        if self._settings.frame >= 600:
-            self._stop()
-            return _finish(self, context, value.set_status(STRINGS["play_limit"]))
+        PLAY_STATS["shown"] += 1
+        PLAY_STATS["skipped"] += skipped
+        PLAY_STATS["max_ms"] = max(PLAY_STATS["max_ms"], (time.perf_counter() - began) * 1000)
         return {"RUNNING_MODAL"}
+
+    def _show(self, value, frame):
+        ok = value.set_frame(frame)
+        if ok:
+            props.sync_from_session(value, self._settings)
+        return ok
 
     def cancel(self, context):
         self._stop()
