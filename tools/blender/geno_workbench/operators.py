@@ -3,6 +3,8 @@
 from pathlib import Path
 import subprocess
 
+import time
+
 import bpy
 from bpy.props import EnumProperty, FloatProperty, IntProperty, StringProperty
 
@@ -51,8 +53,13 @@ def _cancel_scrub():
 
 
 def stop_playback():
+    global _active_player
     if _active_player is not None:
-        _active_player._stop()
+        try:
+            _active_player._stop()
+        except ReferenceError:
+            # The operator died (an exception in modal frees its RNA).
+            _active_player = None
 
 
 def _queue_frame(settings, context):
@@ -403,8 +410,14 @@ class GENO_WB_OT_play(bpy.types.Operator):
             self._stop()
             value.set_status(STRINGS["play_paused"])
             return {"CANCELLED"}
-        if event.type != "TIMER" or event.timer != self._timer:
+        # Event has no .timer in the Python API; any window timer arrives as
+        # TIMER, so pace steps by time instead of trusting each TIMER event.
+        if event.type != "TIMER":
             return {"PASS_THROUGH"}
+        now = time.monotonic()
+        if now - getattr(self, "_last_step", 0.0) < 1 / 30 - 0.002:
+            return {"PASS_THROUGH"}
+        self._last_step = now
         if self._settings.frame >= 600 or value.frame >= 600:
             self._stop()
             return _finish(self, context, value.set_status(STRINGS["play_limit"]))
