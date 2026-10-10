@@ -1,0 +1,57 @@
+diff --git a/pc/gameworld/script_game.c b/pc/gameworld/script_game.c
+index 7d7421156..92fc4788f 100644
+--- a/pc/gameworld/script_game.c
++++ b/pc/gameworld/script_game.c
+@@ -2159,6 +2159,9 @@ static HitCapsule* lab_hit(Fighter* fp, int i)
+         return &fp->x914[i];
+     }
+     if (i == 4) {
++        if (1) {
++            return &fp->xDF4[0]; /* DIAG: the real x914[4] alias */
++        }
+         return &fp->x1064_thrownHitbox;
+     }
+     return NULL;
+@@ -2175,7 +2178,7 @@ int ScriptGame_HitI(int slot, int i, int field)
+     case LAB_HI_STATE:
+         /* the thrown hitbox keeps a stale state between throws; it is live only while it has
+            an owner (the thrower) */
+-        if (i == 4 && h->owner == NULL) {
++        if (0 && i == 4 && h->owner == NULL) {
+             return 0;
+         }
+         return (int) h->state;
+diff --git a/src/melee/ft/ftaction.c b/src/melee/ft/ftaction.c
+index 8d3ab1cc4..1a13ebf59 100644
+--- a/src/melee/ft/ftaction.c
++++ b/src/melee/ft/ftaction.c
+@@ -308,6 +308,12 @@ void ftAction_8007121C(Fighter_GObj* gobj, CommandInfo* cmd)
+         ftAction_800715EC(gobj, cmd);
+     } else {
+         hit_group = cmd->u->create_hitbox_0.hit_group;
++#if defined(TARGET_PC)
++        if (cmd->u->create_hitbox_0.id >= 4) {
++            
++            OSReport("DIAG4 fighter create_hitbox id=%d port=%d motion=%d\n", (int) cmd->u->create_hitbox_0.id, (int) fp->player_id, (int) fp->motion_id);
++        }
++#endif
+         if (((hitbox = &fp->x914[cmd->u->create_hitbox_0.id])->state ==
+              HitCapsule_Disabled) ||
+             (hitbox->x4 != hit_group))
+diff --git a/src/melee/it/itanimlist.c b/src/melee/it/itanimlist.c
+index 6eef6b1bc..6f447e155 100644
+--- a/src/melee/it/itanimlist.c
++++ b/src/melee/it/itanimlist.c
+@@ -79,6 +79,12 @@ void it_802790C0(Item_GObj* item_gobj, CommandInfo* cmd)
+     u32 hitbox_idx = u->it_create_hitbox_0.id;
+     u32 x4 = u->it_create_hitbox_0.hit_group;
+     u32 bone_idx;
++#if defined(TARGET_PC)
++    if (hitbox_idx >= 4) {
++        
++        OSReport("DIAG4 item create_hitbox id=%d kind=%d\n", (int) hitbox_idx, (int) item->kind);
++    }
++#endif
+     hb = &item->x5D4_hitboxes[hitbox_idx];
+     hit = &hb->hit;
+ 
