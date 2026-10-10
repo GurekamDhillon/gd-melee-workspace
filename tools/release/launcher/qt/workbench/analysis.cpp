@@ -20,8 +20,11 @@ QJsonObject call(EngineBackend &engine, const QString &fn, const QJsonObject &ar
         throw CommandError{result["error"].toString(t("engine call failed", "engine call failed"))};
     return result;
 }
-FrameInfo pose(EngineBackend &engine, int motion, int frame) {
-    auto result = call(engine, "frame", {{"motion", motion}, {"frame", frame}});
+FrameInfo pose(EngineBackend &engine, int motion, int frame, bool aerial) {
+    // An aerial staged at floor level lands before its active frames, so the engine lifts it (wb.frame lift).
+    QJsonObject frameArgs{{"motion", motion}, {"frame", frame}};
+    if (aerial) frameArgs.insert("lift", 40);
+    auto result = call(engine, "frame", frameArgs);
     // Backends normally return FrameInfo from frame; an acknowledgement-only
     // backend must supply the snapshot through frame_info instead.
     if (!result["bones"].isArray()) result = call(engine, "frame_info", {});
@@ -44,8 +47,8 @@ SampleFrames sampleFrames(EngineBackend &engine, const RowInfo &row, int frame) 
     if (frame < 0) throw CommandError{t("frame must be nonnegative", "frame must be nonnegative")};
     const int motion = rowMotion(row);
     call(engine, "row", {{"motion", motion}});
-    auto before = pose(engine, motion, qMax(0, frame - 1));
-    auto current = frame == 0 ? before : pose(engine, motion, frame);
+    auto before = pose(engine, motion, qMax(0, frame - 1), row.aerial);
+    auto current = frame == 0 ? before : pose(engine, motion, frame, row.aerial);
     return {before, current};
 }
 const BoneLive *boneAt(const FrameInfo &frame, int joint) {

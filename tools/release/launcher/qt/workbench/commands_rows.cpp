@@ -31,7 +31,9 @@ void registerRowCommands(Session &s) {
             if (ctx.session.currentRow.isEmpty())
                 throw CommandError{t("no row loaded; call load_row first", "no row loaded; call load_row first")};
             const auto row = needRow(ctx.session, ctx.session.currentRow);
-            return engineCall(ctx.session, "frame", {{"motion", rowMotion(row)}, {"frame", frame}});
+            QJsonObject frameArgs{{"motion", rowMotion(row)}, {"frame", frame}};
+            if (row.aerial) frameArgs.insert("lift", 40); // aerials stage above the floor or they land first
+            return engineCall(ctx.session, "frame", frameArgs);
         }});
     s.registry().add({"play", t("Step the move forward", "Step the move forward"),
         commandSchema({{"frames", argType("integer")}, {"step", argType("integer")}}, {"frames"}), false,
