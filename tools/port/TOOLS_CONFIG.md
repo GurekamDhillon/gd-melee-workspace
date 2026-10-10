@@ -25,7 +25,7 @@ only the resolved tool keys. `--detect --check` does both operations.
 |---|---|
 | `GW_BLENDER` | Modern Blender executable: artist tools require 4.2+, Workbench requires 4.0+ |
 | `GW_BLENDER_351` | Separate Blender 3.5.1 executable for legacy exporters; never substituted for the modern authoring tool |
-| `GW_LAUNCHER` | Qt `gd-melee-launcher` executable with Workbench `--serve` support |
+| `GW_LAUNCHER` | Qt `gd-melee-launcher.exe` or the release stub `GD Melee.exe` (it forwards arguments and stdio), with Workbench `--serve` support |
 | `GW_ENGINE_EXE` | `melee-pc.exe` with the Workbench protocol; launchers copy it to their own session sandbox |
 | `GW_QT_BIN` | Qt DLL directory, prepended to the launcher's PATH |
 | `GW_ISO_VANILLA` | Local vanilla disc image |

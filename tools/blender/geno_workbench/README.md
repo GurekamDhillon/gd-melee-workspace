@@ -108,7 +108,7 @@ read `.env` itself. Use the pickers when Blender was started without these value
 
 | Variable | Used for |
 |---|---|
-| `GW_LAUNCHER` | Launcher executable discovery |
+| `GW_LAUNCHER` | Launcher executable discovery (`gd-melee-launcher.exe` or `GD Melee.exe`; either works) |
 | `GW_ENGINE_EXE` | Engine executable for Start server |
 | `GW_MODS_DIR` | Mods parent for Start server |
 | `GW_ISO_VANILLA` | Disc image, passed to the engine as `MELEE_ISO` |
