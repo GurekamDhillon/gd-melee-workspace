@@ -98,9 +98,10 @@ def main():
     for r in rows:
         print("  %-4s %-30s %-34s band=%-7s | %s" % ("ok" if r[4] else "MISS", r[0][:30], r[2][:34], r[3], r[1][:70]))
     print("  triage accuracy: %d/%d" % (ok, len(rows)))
+    calib, sweep = [], []
     for title, res, truth in eval_coverage(a.root, build, a.live):
         good = 0
-        print("COVERAGE %s%s" % (title, "" if live else "  [offline keyword stub, NOT Jev: measures plumbing only]"))
+        print("COVERAGE %s%s" % (title, "" if a.live else "  [offline keyword stub, NOT Jev: measures plumbing only]"))
         for r in res["requirements"]:
             n = int(r["id"][1:])
             want = truth[n]
@@ -109,6 +110,30 @@ def main():
             good += hit
             print("  %-4s %-3s want=%-11s got=%-11s%s" % ("ok" if hit else "MISS", r["id"], want, got, " (human)" if r["needs_human_read"] else ""))
         print("  accuracy: %d/%d; flagged for human read: %d" % (good, len(truth), len(res["needs_human_read"])))
+        for r in res["requirements"]:
+            want = truth[int(r["id"][1:])]
+            hit = r["status"] == want or (want == "not_done" and r["status"] != "done")
+            if "p" in r:
+                calib.append((min(abs(2 * v - 1) for v in r["p"].values()), hit, r["needs_human_read"]))
+                sweep.append((r["p"], want))
+    if calib:
+        print("CALIBRATION (coverage, margin = min |2p-1| over the 3 nouls; correct = status matches truth)")
+        for lo, hi in ((0, 0.6), (0.6, 0.8), (0.8, 0.9), (0.9, 1.01)):
+            b = [c for c in calib if lo <= c[0] < hi]
+            if b:
+                print("  margin %.1f-%.1f: n=%d correct=%d  flagged=%d" % (lo, min(hi, 1), len(b), sum(c[1] for c in b), sum(c[2] for c in b)))
+        unflag = [c for c in calib if not c[2]]
+        print("  threshold sweep (noul_yes; noul_no = 1 - yes): correct / flagged / confidently-wrong of %d" % len(sweep))
+        for y in (0.6, 0.7, 0.8, 0.9):
+            c = f = w = 0
+            for pr, want in sweep:
+                st, human, _ = coverage.combine({k: {"noul": v} for k, v in pr.items()}, {"noul_yes": y, "noul_no": 1 - y})
+                ok_ = st == want or (want == "not_done" and st != "done")
+                c += ok_ and not human
+                f += human
+                w += (not ok_) and (not human)
+            print("    yes>=%.1f: correct=%d flagged=%d confidently_wrong=%d" % (y, c, f, w))
+        print("  not flagged: n=%d correct=%d | flagged: n=%d correct=%d" % (len(unflag), sum(c[1] for c in unflag), len(calib) - len(unflag), sum(c[1] for c in calib if c[2])))
 
 
 if __name__ == "__main__":

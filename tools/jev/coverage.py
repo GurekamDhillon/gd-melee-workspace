@@ -70,8 +70,10 @@ def chunks(report, window=1):
 
 
 def retrieve(req_text, report, k=4, limit=1600, ref=None):
-    """Top-k report passages by IDF-weighted token overlap (plus a boost for lines that
-    cite the brief's item number as `#N`), returned in report order."""
+    """Greedy weighted set cover: pick up to k report lines that together cover the most
+    (IDF-weighted) requirement words, so one common word (a fighter name repeated in table
+    rows) cannot crowd out the line that carries the rest. Lines citing the brief's item
+    number as `#N` are taken first. Returned in report order."""
     rq = tokens(req_text)
     parts = chunks(report)
     if not rq or not parts:
@@ -82,28 +84,35 @@ def retrieve(req_text, report, k=4, limit=1600, ref=None):
         for w in t:
             df[w] = df.get(w, 0) + 1
     n = len(parts)
-    scored = []
-    for (i, c), t in zip(parts, toks):
-        shared = rq & t
-        score = sum(1.0 + (n / df[w]) ** 0.5 for w in shared) / (len(rq) ** 0.5)
-        if ref is not None and re.search(r"#\s*(?:\d+\s*,\s*)*%d|items?\s+(?:\d+\s*(?:,|and)\s*)*%d" % (ref, ref), c, re.I):
-            score += 3.0
-            shared = shared or {"#"}
-        if shared:
-            scored.append((score, i, c))
-    if not scored:
+    weight = {w: 1.0 + (n / df[w]) ** 0.5 for w in rq if w in df}
+    refrx = re.compile(r"#\s*(?:\d+\s*,\s*)*%d|items?\s+(?:\d+\s*(?:,|and)\s*)*%d" % (ref, ref), re.I) if ref is not None else None
+    chosen, covered = [], set()
+    if refrx:
+        for (i, c), t in zip(parts, toks):
+            if refrx.search(c) and len(chosen) < k:
+                chosen.append((i, c))
+                covered |= rq & t
+    while len(chosen) < k:
+        best = None
+        for (i, c), t in zip(parts, toks):
+            if any(i == j for j, _ in chosen):
+                continue
+            gain = sum(weight[w] for w in (rq & t) - covered)
+            if gain > 0 and (best is None or gain > best[0]):
+                best = (gain, i, c, t)
+        if not best:
+            break
+        chosen.append((best[1], best[2]))
+        covered |= rq & best[3]
+    if not chosen:
         return [], 0.0
-    top = sorted(scored, reverse=True)[:k]
-    seen, picked, used = set(), [], 0
-    for s, i, c in sorted(top, key=lambda x: x[1]):
-        if c in seen:
-            continue
-        seen.add(c)
+    picked, used = [], 0
+    for i, c in sorted(chosen):
         picked.append(jev.bounded(c, 600))
         used += len(picked[-1])
         if used > limit:
             break
-    return picked, max(s for s, _, _ in scored)
+    return picked, sum(weight[w] for w in covered) / (len(rq) ** 0.5)
 
 
 def questions_for(req):
@@ -112,7 +121,7 @@ def questions_for(req):
     return {
         "completed": {"type": "noul",
                       "instructions": {"requirement": req["text"],
-                                       "question": "The report excerpt states that this requirement was completed."},
+                                       "question": "The report excerpt reports work that finishes this requirement: it says it was fixed, implemented, built, passed or measured."},
                       "criteria": crit("The excerpt says the requirement was done, fixed, built, passed or shipped.",
                                        "The excerpt does not claim completion, or only describes plans or intent.")},
         "evidence": {"type": "noul",

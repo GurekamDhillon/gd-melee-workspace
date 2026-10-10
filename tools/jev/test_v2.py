@@ -229,5 +229,19 @@ class Claims(unittest.TestCase):
             self.assertEqual(check_claims.check("all runs PASS", [ok, bad])[0]["verdict"], "unsupported")
 
 
+class EvalScript(unittest.TestCase):
+    def test_main_runs_offline_when_artifacts_exist(self):
+        import eval_local
+        root = Path("E:/Projects/Melee Workspace")
+        if not (root / "_build/goku-xv2/combo/results/fin-routes.md").exists():
+            self.skipTest("local artifacts absent")
+        import io, contextlib
+        buf = io.StringIO()
+        with patch("sys.argv", ["eval_local.py", "--root", str(root)]), contextlib.redirect_stdout(buf):
+            eval_local.main()
+        self.assertIn("COVERAGE", buf.getvalue())
+        self.assertIn("offline keyword stub", buf.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()
