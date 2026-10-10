@@ -1,5 +1,7 @@
 #include "window.h"
 #include "diagnostics.h"
+#include "workbench/workbench_main.h"
+#include <QCoreApplication>
 #include <QApplication>
 #include <QDateTime>
 #include <QElapsedTimer>
@@ -14,6 +16,11 @@
 #include <QTimer>
 
 int main(int argc, char **argv) {
+    if (wb::isWorkbenchCli(argc, argv)) {
+        QCoreApplication app(argc, argv);
+        app.setApplicationName("GD Melee"); app.setApplicationVersion("1.0"); app.setOrganizationName("GDMelee");
+        return wb::runWorkbenchCli(argc, argv);
+    }
     QApplication app(argc, argv);
     app.setApplicationName("GD Melee"); app.setApplicationVersion("1.0"); app.setOrganizationName("GDMelee");
     app.setQuitOnLastWindowClosed(false);
