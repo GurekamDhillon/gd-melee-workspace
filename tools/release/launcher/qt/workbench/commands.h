@@ -9,7 +9,11 @@
 namespace wb {
 // Core messages use the permitted English/English pairs; language selection is
 // in launcher_ui, which this headless command library does not depend on.
+#ifdef WB_CORE_USE_LAUNCHER_T
+using launcher::t; // the UI build includes window.h first and shares the real bilingual t()
+#else
 inline QString t(const char *english, const char *) { return QString::fromUtf8(english); }
+#endif
 
 void registerViewCommands(Session &);
 void registerRowCommands(Session &);

@@ -1,4 +1,6 @@
 #include "workbench_window.h"
+#include "window.h"
+#define WB_CORE_USE_LAUNCHER_T 1
 #include "commands.h"
 #include "geno_data.h"
 #include "session.h"
