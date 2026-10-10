@@ -194,12 +194,20 @@ def calibrate_offsets(
     engine_rest: dict[int, Mat4],
     blender_rest: dict[int, Mat4],
     root_joint: int,
+    head_snap: float = 0.01,
 ) -> Calibration:
     """Recover fixed bone-frame offsets from a shared reference pose.
 
     Both inputs are already in Blender world space. The engine reference
     root defines model axes. The Blender root's rotation belongs to its
     imported bone frame and must remain in K, including for the root bone.
+
+    A translation offset shorter than ``head_snap`` (engine units) is not a
+    real head displacement: it is the sampling difference between the engine
+    reference frame and the Blender action frame (measured on Goku, 1e-3..3e-3
+    growing down each chain). Kept in K it is rotated by every later pose and
+    shows up as that much head error, so it is zeroed and the bone head sits on
+    the engine joint. Larger offsets are real rig differences and are kept.
 
     Consequently the Blender reference placement removes its root origin
     and uniform scale, but retains its root bone rotation as an offset.
@@ -233,6 +241,13 @@ def calibrate_offsets(
         )
         for joint in common_joints
     }
+    if head_snap > 0.0:
+        for joint, k in list(offsets.items()):
+            if math.sqrt(sum(k[i][3] ** 2 for i in range(3))) < head_snap:
+                offsets[joint] = tuple(
+                    tuple(row[:3]) + (0.0,) if i < 3 else tuple(row)
+                    for i, row in enumerate(k)
+                )
     return Calibration(
         w0=w0,
         k=offsets,
