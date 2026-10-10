@@ -77,7 +77,7 @@ def test_blend_inserts_frames_and_is_continuous():
     out, rep = S.bake("t", rec, resolver(a=a, b=b), rig)
     assert out.n == 4 + 3 + 4 == S.recipe_length(rec)
     seam = rep["seams"][0]
-    assert abs(seam["raw_jump_deg"] - 80) < 1e-4 and seam["blend"] == 3 and not seam["pop"] is None
+    assert abs(seam["raw_jump_deg"] - 80) < 1e-4 and seam["blend"] == 3 and seam["pop"] is True        # an 80 degree jump eased over 3 frames still steps 40 degrees per frame: reported as a pop
     # monotone ease: the spine angle never decreases through the transition, and each step is under the raw jump
     ang = [angle(out.rot["b_C_Spine1"][i], quat("x", 0)) for i in range(3, 8)]
     assert all(x <= y + 1e-9 for x, y in zip(ang, ang[1:])) and abs(ang[-1] - 80) < 1e-4
@@ -182,7 +182,8 @@ def test_hold_and_marks():
     assert out.n == S.recipe_length(rec) == (4 + 2) + 2 + 3
     assert rep["segments"][0]["marks"] == {"hit": 2} and rep["segments"][1]["out_start"] == 6 + 2 and rep["segments"][1]["marks"] == {"hit": 8 + 1}
     assert angle(out.rot["b_C_Spine1"][4], out.rot["b_C_Spine1"][3]) < 1e-9       # hold repeats the last pose
-    assert S.hit_check(rep, [[0, 3]]) == [] or True
+    assert S.hit_check(rep, [[0, 3], [8, 3]]) == []                          # both marks (f2, f9) sit inside a window
+    assert len(S.hit_check(rep, [[0, 3]])) == 1                                 # only the f9 mark misses
     assert S.hit_check({"segments": [{"marks": {"hit": 30}}]}, [[5, 3]])
 
 
@@ -266,3 +267,82 @@ def test_shipped_recipes_are_valid_and_examples_are_not_wired():
             assert not r.get("wired"), name + ": an EXAMPLE must not be wired until the owner picks it"
         assert len(S.library_name(name)) <= 31
         assert S.recipe_length(r) > 0
+
+
+# ---- the XV2 adapter (needs the local source IR, git-ignored; skipped on a fresh clone)
+
+IR = PORT / "ir/goku.xv2.ir.json"
+needs_ir = pytest.mark.skipif(not IR.exists() or not (PORT.parents[1] / "_build/goku-xv2/cross-port/AttackAirB/clip.npz").exists(),
+                              reason="needs the local XV2 IR and the cross-port npz")
+
+
+@pytest.fixture(scope="module")
+def adapter():
+    import xv2_to_artist as X
+    source = X.Source(IR)
+    return X, source, X.build_mesh(source, 20.)
+
+
+def run_rows(X, source, mesh, tmp_path, wired):
+    doc = json.loads((PORT / "splices.json").read_text())
+    for r in doc["recipes"].values():
+        r["wired"] = wired
+    f = tmp_path / "splices.json"
+    f.write_text(json.dumps(doc))
+    old = S.SPLICES
+    S.SPLICES = f
+    try:
+        rows = X.row_specs(source)
+        out, rep = X.animations(source, mesh, rows)
+    finally:
+        S.SPLICES = old
+    return rows, out, rep
+
+
+@needs_ir
+def test_splice_context_resolves_xv2_and_cross_port(adapter):
+    X, source, mesh = adapter
+    ctx = X.splice_context(source, mesh)
+    assert ctx["rig"].names == list(mesh["names"]) and ctx["rig"].parents[0] == -1
+    xv2 = ctx["resolve"]("GOK_ATC_004")
+    c = xv2.sample(np.arange(5.))
+    assert c.n == 5 and c.hips.shape == (5, 3) and "b_R_Arm1" in c.rot
+    cp = ctx["resolve"]("melee:luigi/AttackAirB")
+    assert cp.length == 29 and cp.clip.scl                      # the retargeted clip with its thigh-stretch tracks
+    mm, mr = ctx["move_rows"]
+    assert S.target_rows({"move": "utilt"}, mm, mr) == ["AttackHi3"] and S.target_rows({"row": "AttackAirB"}) == ["AttackAirB"]
+    with pytest.raises(S.SpliceError):
+        ctx["resolve"]("GOK_NO_SUCH_CLIP")
+
+
+@needs_ir
+def test_unwired_recipes_only_add_library_rows(adapter, tmp_path):
+    X, source, mesh = adapter
+    rows, out, rep = run_rows(X, source, mesh, tmp_path, False)
+    base = X.row_specs(source)
+    for target in ("AttackHi3", "AttackAirLw", "AttackAirB"):
+        assert "splice" not in rows[target] and rows[target]["status"] == base[target]["status"]
+    for name in S.load()["recipes"]:
+        lib = S.library_name(name)
+        assert lib in out and rep[lib]["splice"]["wired"] is False and out[lib]["frames"] == S.recipe_length(S.load()["recipes"][name])
+
+
+@needs_ir
+def test_wired_recipes_replace_rows_and_bair_keep_is_the_shipped_row(adapter, tmp_path):
+    X, source, mesh = adapter
+    import copy
+    import fidelity
+    _, base, _ = (None,) + X.animations(source, mesh, copy.deepcopy(X.row_specs(source)))
+    rows, out, rep = run_rows(X, source, mesh, tmp_path, True)
+    # the one-segment cross-port recipe must equal the shipped cross-port row bit for bit (rotations, hips, bone scales)
+    a, b = base["AttackAirB"], out["AttackAirB"]
+    assert a["frames"] == b["frames"] == 30
+    assert all(S.angle_between(a["rotation"][k], b["rotation"][k]).max() < 1e-6 for k in a["rotation"])
+    assert np.allclose(a["hips"], b["hips"]) and all(np.allclose(a["scale"][k], b["scale"][k]) for k in a["scale"])
+    # a real splice replaces utilt, padded to the gameplay minimum, and the ledger calls it SPLICED
+    assert out["AttackHi3"]["frames"] == rows["AttackHi3"]["frames"] >= S.recipe_length(S.load()["recipes"]["utilt_windup_strike"])
+    assert max(float(S.angle_between(base["AttackHi3"]["rotation"][k], out["AttackHi3"]["rotation"][k]).max()) for k in b["rotation"]) > 10
+    status, how = fidelity.classify({"source": rep["AttackHi3"], "status": "own", "clip": "x"})
+    assert status == "SPLICED" and "utilt_windup_strike" in how
+    assert fidelity.classify({"source": rep["AttackAirB"], "status": "own", "clip": "x"})[0] == "SPLICED"
+    assert fidelity.classify({"source": base and {"status": "x", "frames": 3}, "status": "own", "clip": "x"})[0] != "SPLICED"

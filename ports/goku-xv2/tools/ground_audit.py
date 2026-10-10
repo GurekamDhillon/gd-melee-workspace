@@ -12,6 +12,7 @@ Result per row: frames, worst min_y, worst foot height, BELOW / FLOATING frame r
 """
 import argparse
 import json
+import os
 from pathlib import Path
 import sys
 
@@ -27,8 +28,8 @@ import check_hitbox_positions as HP  # noqa: E402
 import figatree  # noqa: E402
 from audit_gameplay import rest_context, mesh_points  # noqa: E402
 
-PKG = ROOT / '_build/goku-xv2/author-source/package/mods/goku-xv2'
-ART = ROOT / '_build/goku-xv2/author-source/package/build'
+PKG = ROOT / '_build/goku-xv2' / os.environ.get('GOKU_AUTHOR', 'author-source') / 'package/mods/goku-xv2'
+ART = ROOT / '_build/goku-xv2' / os.environ.get('GOKU_AUTHOR', 'author-source') / 'package/build'
 OUT = ROOT / '_build/goku-xv2/ground-audit.json'
 BELOW_EPS = 0.35   # model units (1.75% of his height)
 FLOAT_EPS = 1.6    # both feet above the baseline by this = floating (8% of his height)

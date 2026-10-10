@@ -8,6 +8,7 @@ import argparse
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -16,6 +17,7 @@ import sys
 
 PORT = Path(__file__).resolve().parents[1]
 ROOT = PORT.parents[1]
+AUTHOR = ROOT/'_build/goku-xv2'/os.environ.get('GOKU_AUTHOR','author-source')   # GOKU_AUTHOR=splice-preview: the reduced splice-preview build (xv2_to_artist.py --splice-only)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import strip_gameplay as SG  # gameplay.full.json (local) wins over the stripped gameplay.json
@@ -231,7 +233,7 @@ def write_presentation(package, fighter):
 def apply(package, art_build, ir_path=None):
     package, art_build = generated(package), generated(art_build)
     cfg = load(SG.path())
-    art_report = ROOT/'_build/goku-xv2/author-source/art-report.json'
+    art_report = AUTHOR/'art-report.json'
     height = load(art_report)['geometry']['height']
     reference_height = cfg['geometry_reference_height']
     scale = height / reference_height
@@ -269,7 +271,7 @@ def apply(package, art_build, ir_path=None):
                 motion['clip'] = clip_name
     doc = load(package/'geno.json')
     fighter = doc['fighters'][0]
-    lib = PORT.parents[1]/'_build/goku-xv2/author-source/clip-library.json'
+    lib = AUTHOR/'clip-library.json'
     if lib.exists():  # LAB CLIPS library: unbound declared rows 303.. (geno.md fighter.rows)
         fighter.setdefault('fighter', {})['rows'] = [c['name'] for c in load(lib)['clips']] + \
             [n for n in ('ITEnd', 'KiCharge', 'KameSuper', 'RushCombo') if n in plan_clip_names(package)]
@@ -397,11 +399,11 @@ def apply(package, art_build, ir_path=None):
     write(art_build/'gameplay-parity.json',{'source_sha256':hashlib.sha256((ir_path or PORT/cfg['source_ir']).read_bytes()).hexdigest(),'moves':audit})
     write_losses(art_build/'gameplay-losses.json',{'losses':source_losses(ir,cfg)})
     reports = [load(art_build/'gameplay-losses.json')]
-    for path in (ROOT/'_build/goku-xv2/author-source/conversion_losses.json',
-                 ROOT/'_build/goku-xv2/author-source/art-losses.json'):
+    for path in (AUTHOR/'conversion_losses.json',
+                 AUTHOR/'art-losses.json'):
         if path.exists():
             reports.append(load(path))
-    art_report = ROOT/'_build/goku-xv2/author-source/art-report.json'
+    art_report = AUTHOR/'art-report.json'
     if art_report.exists():
         art = load(art_report)
         art_losses = [{'move':'art','frame':0,'what':limitation,
@@ -421,7 +423,7 @@ def main():
     ap.add_argument('--package',type=Path)
     ap.add_argument('--art-build',type=Path)
     ap.add_argument('--fighter',type=Path)
-    ap.add_argument('--out',type=Path,default=ROOT/'_build/goku-xv2/author-source/package')
+    ap.add_argument('--out',type=Path,default=AUTHOR/'package')
     args = ap.parse_args()
     if args.fighter:
         from tools.geno.artist import pipeline

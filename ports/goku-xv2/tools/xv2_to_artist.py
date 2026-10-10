@@ -23,8 +23,10 @@ from scipy.spatial.transform import Rotation, Slerp
 
 ROOT = Path(__file__).resolve().parents[3]
 PORT = ROOT / 'ports/goku-xv2'
+AUTHOR = ROOT / '_build/goku-xv2' / os.environ.get('GOKU_AUTHOR', 'author-source')   # GOKU_AUTHOR=splice-preview: a reduced build that leaves the shipped package alone
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import strip_gameplay as SG
+import splice as SP
 sys.path.insert(0, str(ROOT))
 from tools.geno.artist import model, spec, pipeline, validate
 
@@ -475,7 +477,130 @@ def row_specs(source):
         for sp in gameplay.get('special_adaptations',[]):
             row=sp.get('state') or sp.get('name')
             if row in out:out[row]['frames']=max(out[row].get('frames') or 0,sp.get('minimum_clip_frames') or 0)
+    apply_splices(out,source)
     return out
+
+
+SPLICE_DROP=('events','hold_source','time_factor','cross_port','blend_from','blend_to','blend_frames','yaw','pitch')   # row keys the baked recipe replaces
+
+
+def splice_targets(r):
+    """Engine rows a recipe targets: its `row`, or the rows of its `move` in gameplay.json (stripped or full)."""
+    if r.get('row'):return [r['row']]
+    gp=SG.path()
+    if not gp.exists():return []
+    bymotion={x['motion']:x['name'] for x in spec.clip_table()['rows']}
+    mv=next((m for m in json.loads(gp.read_text(encoding='utf-8-sig'))['moves'] if m['name']==r['move']),None)
+    return [bymotion[m] for m in (mv or {}).get('motions',[]) if m in bymotion]
+
+
+def apply_splices(out,source):
+    """Splice recipes (splices.json, tools/splice.py) become rows. A recipe with "wired": true REPLACES its target row(s) (the gameplay
+    minimum length still pads it); every recipe, wired or not, also gets the CLIPS library row `s<recipe>` so it can be viewed. A preview row
+    takes its target row's ground mode (`ground_as`) so it sits on the floor exactly as the wired row would."""
+    doc=SP.load()
+    byname=clip_by_name(source)
+    for rname,r in doc['recipes'].items():
+        first=next((byname[sg['clip']] for sg in r['segments'] if sg['clip'] in byname),out['Wait']['clip'])
+        targets=[t for t in splice_targets(r) if t in out]
+        n=SP.recipe_length(r)
+        ref=dict(name=rname,summary=' + '.join(SP.segment_summary(sg) for sg in r['segments']),wired=bool(r.get('wired')),example=bool(r.get('example')))
+        if r.get('wired'):
+            if not targets:raise SystemExit('splice recipe %s is wired but its target %s has no row'%(rname,r.get('row') or r.get('move')))
+            for t in targets:
+                for k in SPLICE_DROP:out[t].pop(k,None)
+                out[t].update(clip=first,loop=bool(r.get('loop')),start=0,frames=max(out[t].get('frames') or 0,n),splice=ref,
+                              status='SPLICED: recipe %s (%s)'%(rname,ref['summary']))
+        lib=SP.library_name(rname)
+        out[lib]={'clip':first,'loop':bool(r.get('loop')),'frames':n,'start':0,'library':True,'splice':dict(ref,preview_of=targets),'splice_library':True,
+                  'ground_as':targets[0] if targets else None,'active_end':(out[targets[0]].get('active_end') if targets else None),
+                  'status':'SPLICE %s: %s'%('WIRED' if r.get('wired') else 'preview',ref['summary'])}
+
+
+def clip_by_name(source):
+    byname={}
+    for cid,c in source.clips.items():
+        if c['engine']['xv2.pc'].get('camera') is False and '.fce.' not in cid:byname.setdefault(c['name'],cid)
+    return byname
+
+
+class XV2Clip:
+    """An XV2 clip as a splice source: sampled with the same channel handling as animations() (BASIS conjugation, pelvis/base translation scaled)."""
+    def __init__(self,source,mesh,cid):
+        c=source.clips[cid];self.length=c['frames']-1;self.name=c['name']
+        self.ch={(t['bone'],t['channel']):t['keys'] for t in source.blob(c['keys'])}
+        self.bones=set(mesh['names']);self.factor=mesh['factor']
+        self.rest_hip=mesh['locals'][mesh['names'].index('b_C_Pelvis')][:3,3]
+
+    def sample(self,tm):
+        tm=np.asarray(tm,float);n=len(tm);rot={};hips=np.repeat(self.rest_hip[None],n,axis=0);root=np.zeros((n,3))
+        for (bone,kind),keys in self.ch.items():
+            if kind=='Rotation' and bone in self.bones:
+                r=Rotation.from_quat(sample_track(keys,tm,True)).as_matrix()
+                rot[bone]=Rotation.from_matrix(BASIS[None]@r@BASIS[None]).as_quat()
+            elif kind=='Position' and bone=='b_C_Pelvis':hips=sample_track(keys,tm)@BASIS*self.factor
+            elif kind=='Position' and bone=='b_C_Base':root=sample_track(keys,tm)@BASIS*self.factor
+        return SP.Clip(rot,np.asarray(hips,float),np.asarray(root,float))
+
+
+def cross_npz(ref):
+    """The cross-port clip.npz of `melee:<fighter>/<action>`: the registry row that already holds it, else one solved with the retarget tool
+    (cross_port.tool(), needs the vanilla disc) and cached under _build/goku-xv2/splice-cross."""
+    fighter,_,action=ref[len('melee:'):].partition('/')
+    if not (fighter and action):raise SP.SpliceError('cross-port ref must be melee:<fighter>/<action>: '+ref)
+    for row,c in json.loads((PORT/'tools/cross-port.json').read_text()).items():
+        npz=ROOT/'_build/goku-xv2/cross-port'/row/'clip.npz'
+        if c['fighter']==fighter and c['action']==action and npz.exists():return npz
+    out=ROOT/'_build/goku-xv2/splice-cross'/(fighter+'_'+action)
+    if not (out/'clip.npz').exists():
+        import cross_port
+        if not os.environ.get('GW_ISO_VANILLA'):raise SP.SpliceError('%s needs the vanilla disc: source .env (GW_ISO_VANILLA) first'%ref)
+        cross_port.tool().run(fighter,action,str(cross_port.FIGHTER_JSON),str(out))
+    return out/'clip.npz'
+
+
+def splice_context(source,mesh):
+    """What tools/splice.py needs from the XV2 adapter: {resolve(ref) -> source, rig, move_rows=(move -> motions, motion -> row)}."""
+    rig=SP.Rig(list(mesh['names']),[-1 if p is None else p for p in mesh['parents']],
+               np.array([Rotation.from_matrix(m[:3,:3]).as_quat() for m in mesh['locals']]))
+    byname=clip_by_name(source);cache={}
+    def resolve(ref):
+        if ref not in cache:
+            if ref.startswith('melee:'):cache[ref]=SP.ArraySource(SP.npz_clip(cross_npz(ref)),ref)
+            elif ref in byname:cache[ref]=XV2Clip(source,mesh,byname[ref])
+            else:raise SP.SpliceError('unknown XV2 clip '+ref)
+        return cache[ref]
+    gp=SG.path()
+    mm={m['name']:m['motions'] for m in json.loads(gp.read_text(encoding='utf-8-sig'))['moves']} if gp.exists() else {}
+    return dict(resolve=resolve,rig=rig,move_rows=(mm,{r['motion']:r['name'] for r in spec.clip_table()['rows']}))
+
+
+def splice_bake(source,mesh,rows,only=None):
+    """{recipe: (Clip, report)} for every recipe a row in `rows` uses (or just `only`). A preview-only recipe that cannot be baked (a cross-port
+    clip without the disc) is dropped from `rows` with a warning; a wired one stops the build."""
+    doc=SP.load();ctx=splice_context(source,mesh);baked={}
+    for name,rs in list(rows.items()):
+        ref=rs.get('splice')
+        if not ref or ref['name'] in baked or (only and ref['name']!=only):continue
+        try:baked[ref['name']]=SP.bake(ref['name'],doc['recipes'][ref['name']],ctx['resolve'],ctx['rig'])
+        except (SP.SpliceError,SystemExit,KeyError,OSError) as e:
+            if ref['wired']:raise
+            print('splice %s: preview skipped (%s)'%(ref['name'],e),file=sys.stderr)
+    for name in [n for n,rs in rows.items() if rs.get('splice') and rs['splice']['name'] not in baked]:del rows[name]
+    return baked
+
+
+def splice_preview(recipe,file=None):
+    """Reduced build of one recipe: the shipped rows plus the one library row `s<recipe>` (no XV2 clip library), built into
+    _build/goku-xv2/splice-preview (GOKU_AUTHOR) so the shipped author-source package is not touched; then prints the LAB CLIPS command."""
+    if recipe not in SP.load(file)['recipes']:raise SystemExit('no recipe %s in %s'%(recipe,file or SP.SPLICES))
+    if os.environ.get('GOKU_AUTHOR','author-source')=='author-source':
+        env=dict(os.environ,GOKU_AUTHOR='splice-preview')
+        cmd=[sys.executable,str(Path(__file__).resolve()),'--splice-only',recipe,'--build']+(['--splice-file',str(file)] if file else [])
+        rc=subprocess.run(cmd,cwd=ROOT,env=env).returncode
+        if rc:return rc
+    print("\nView it (PowerShell):  $env:MELEE_MODS_DIR='%s'; ports/goku-xv2/tools/clips.ps1 %s"%(ROOT/'_build/goku-xv2/splice-preview/package/mods',SP.library_name(recipe)))
+    return 0
 
 
 HOVER_Y = 2.0   # model units (his height is 20): the fixed hover of the idle/move rows, one place to tune
@@ -583,12 +708,14 @@ def frame_mins(names, rest, rotations, hip, mesh, count):
 
 
 
-def animations(source,mesh,rows):
+def animations(source,mesh,rows,splices=None):
     names=mesh['names'];rest={n:m for n,m in zip(names,mesh['locals'])};cache={};result={};report={}
     def channels(cid):
         if cid not in cache:cache[cid]={(t['bone'],t['channel']):t['keys'] for t in source.blob(source.clips[cid]['keys'])}
         return cache[cid]
-    for name,rs in rows.items():
+    if splices is None and any(r.get('splice') for r in rows.values()):splices=splice_bake(source,mesh,rows)
+    for name,rs in list(rows.items()):
+        gname=rs.get('ground_as') or name   # a splice preview row sits on the floor like the row it previews
         cid=rs['clip'];clip=source.clips[cid];count=rs['frames'] or clip['frames'];frames=np.arange(count,dtype=float)
         # Select body-animation bindings on the BAC clock. Unimplemented BAC
         # time-scale operations are retained in reports, never silently applied.
@@ -627,6 +754,13 @@ def animations(source,mesh,rows):
             if sj.exists():
                 for bone,sc in json.loads(sj.read_text())['bones'].items():
                     v=np.ones((count,3));v[:,sc['axis']]=pick(np.asarray(sc['values'])[:,None])[:,0];scales[bone]=v
+        splice_rep=None
+        if rs.get('splice'):
+            # Splice recipe (tools/splice.py): the baked clip replaces the sampled channels BEFORE the yaw/blend/ground logic below, padded to the row length
+            baked,splice_rep=splices[rs['splice']['name']];baked=SP.pad_to(baked,count)
+            for n in names:
+                if n in baked.rot:rotations[n]=baked.rot[n][:count].copy()
+            hip=baked.hips[:count].copy();root=baked.root[:count].copy();scales={b:v[:count].copy() for b,v in baked.scl.items()};lostscale=set()
         if lostscale and not rs.get('library'):raise ValueError(name+' uses unsupported animated scale on '+','.join(sorted(lostscale)))
         # Authored locomotion (Turn/TurnRun): XV2 has no turn clips. The engine keeps the root at
         # the OLD facing's yaw for the whole Turn motion (Fighter_ChangeMotionState sets it only on
@@ -651,7 +785,7 @@ def animations(source,mesh,rows):
                         w=k/max(n,1);w=w*w*(3-2*w)
                         pair=Rotation.from_quat([src_r.as_quat(),rotations[bone][k]])
                         rotations[bone][k]=Slerp([0,1],pair)(w).as_quat()
-        if rs.get('blend_to') is None and ground_mode(name)=='anchor' and ground_blend(name)[1] and count>2*BLEND_FRAMES                 and (rs.get('active_end') or 0)+BLEND_FRAMES<count and 'Wait' in rows:
+        if rs.get('blend_to') is None and ground_mode(gname)=='anchor' and ground_blend(gname)[1] and count>2*BLEND_FRAMES                 and (rs.get('active_end') or 0)+BLEND_FRAMES<count and 'Wait' in rows:
             rs=dict(rs,blend_to=rows['Wait']['clip'],blend_frames=BLEND_FRAMES)   # exit pose eases into the idle it returns to (no pop)
         if rs.get('blend_to') is not None:
             # Ease the last frames toward another clip's frame-0 pose so the next row starts seamlessly.
@@ -689,7 +823,7 @@ def animations(source,mesh,rows):
         deformed=np.zeros((len(pos),4))
         for k in range(4):deformed+=np.einsum('nij,nj->ni',sk[np.array(mesh['joints'])[:,k]],pos)*np.array(mesh['weights'])[:,k,None]
         ground=float(deformed[:,1].min());hip[:,1]-=ground
-        mode=ground_mode(name)
+        mode=ground_mode(gname)
         if mode:
             # 2026-10-09 ground pass (owner: HYBRID HOVER STANCE). XV2 combat clips are authored in a flight stance, so a frame-0 anchor lets the
             # pelvis sink (or the legs dangle) later in the clip. Measure the lowest skinned vertex on EVERY frame and shift the row's pelvis
@@ -699,7 +833,7 @@ def animations(source,mesh,rows):
             shift=lift_envelope((HOVER_Y if mode=='hover' else 0.)-mins)
             if mode=='hover' and rs.get('hover_fixed'):shift=np.full(count,HOVER_Y-mins[0])   # one constant lift: the clip's float bob survives, f0 matches the blend targets   # per-frame, smooth, never lowers the pose below its frame-0 anchor
             if mode=='anchor':
-                b_in,b_out=ground_blend(name)
+                b_in,b_out=ground_blend(gname)
                 if (b_in or b_out) and count>2*BLEND_FRAMES:
                     t=np.arange(count);w=np.zeros(count)
                     ramp=lambda x:(lambda u:u*u*(3-2*u))(np.clip(x,0.,1.))
@@ -708,7 +842,7 @@ def animations(source,mesh,rows):
                     # convex mix of two lowest-point targets that are both >= 0, so the row can still never sink
                     shift=(1-w)*shift+w*(HOVER_Y-mins)
             hip[:,1]+=shift;ground-=float(shift.max())
-            ground_report=dict(ground_mode=mode.upper(),ground_blend=list(ground_blend(name)) if mode=='anchor' else None,ground_shift=float(shift.max()),ground_shift_frame0=float(shift[0]),ground_lowest_before=float(mins.min()))
+            ground_report=dict(ground_mode=mode.upper(),ground_blend=list(ground_blend(gname)) if mode=='anchor' else None,ground_shift=float(shift.max()),ground_shift_frame0=float(shift[0]),ground_lowest_before=float(mins.min()))
         else:ground_report={}
         if rs.get('cross_port'):
             cpr=json.loads((ROOT/'_build/goku-xv2/cross-port'/name/'report.json').read_text())
@@ -722,6 +856,10 @@ def animations(source,mesh,rows):
                             discarded_nonhip_translation=sorted(ignored),fps=60,fps_basis='LibXenoverse2 EAN exporter convention, not runtime measurement',
                             root_motion=bool(rs.get('root_motion')), root_displacement=root[-1].tolist(),
                             motion_policy='Base translation retained on translation bone for flagged roll rows; otherwise omitted; hips lateral start removed; jump/recovery vertical flattened')
+        if splice_rep:
+            report[name].update(splice=dict(rs['splice'],frames=splice_rep['frames'],ok=splice_rep['ok'],seams=splice_rep['seams'],segments=splice_rep['segments'],
+                                            max_step_deg=splice_rep['max_step_deg'],notes=splice_rep['notes']),
+                                source_name='Splice '+rs['splice']['name']+': '+rs['splice']['summary'],source_frames=count,start=0)
         if rs.get('cross_port'):
             report[name].update(cross_port=cp_info,source_name='Melee %s %s (retail, retargeted)'%(cp_info['fighter'].capitalize(),cp_info['action']),
                                 source_frames=count,start=0)
@@ -762,10 +900,13 @@ def emit_glb(mesh,anims,path):
 
 def main(argv=None):
     ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--ir',type=Path,default=PORT/'ir/goku.xv2.ir.json')
-    ap.add_argument('--out',type=Path,default=ROOT/'_build/goku-xv2/author-source');ap.add_argument('--height',type=float,default=20.)
-    ap.add_argument('--build',action='store_true');ap.add_argument('--no-library',action='store_true');ap.add_argument('--blend',action='store_true');args=ap.parse_args(argv)
+    ap.add_argument('--out',type=Path,default=AUTHOR);ap.add_argument('--height',type=float,default=20.)
+    ap.add_argument('--build',action='store_true');ap.add_argument('--no-library',action='store_true');ap.add_argument('--blend',action='store_true')
+    ap.add_argument('--splice-only',metavar='RECIPE',help='reduced build: the shipped rows plus this recipe library row only (use with GOKU_AUTHOR=splice-preview)')
+    ap.add_argument('--splice-file',type=Path,help='recipe file (default splices.json)');args=ap.parse_args(argv)
+    if args.splice_file:SP.SPLICES=args.splice_file
     out=args.out.resolve()
-    if not out.is_relative_to(ROOT/'_build/goku-xv2/author-source'):ap.error('All generated assets must stay under _build/goku-xv2/author-source')
+    if not out.is_relative_to(AUTHOR):ap.error('All generated assets must stay under '+str(AUTHOR))
     if not 8<=args.height<=20:ap.error('Height must be within 8..20 Melee units')
     out.mkdir(parents=True,exist_ok=True);source=Source(args.ir);mesh=build_mesh(source,args.height)
     assert mesh['report']['weighted_bones']<=64 and len(mesh['names'])+3<=128
@@ -773,7 +914,11 @@ def main(argv=None):
     # LAB CLIPS library (2026-10-08): every body clip of the source (character, common and skill EANs),
     # unbound to any input. Bank name = 'x' + source name (<= 31 chars); geno.json fighter.rows lists them.
     browse=[]
-    if not args.no_library:
+    if args.splice_only:
+        lib_row=SP.library_name(args.splice_only)
+        if lib_row not in rs:ap.error('no recipe '+args.splice_only)
+        for n in [n for n,r in rs.items() if r.get('splice_library') and n!=lib_row]:del rs[n]
+    if not args.no_library and not args.splice_only:
         seen=set()
         for cid,c in source.clips.items():
             e=c['engine']['xv2.pc']
@@ -783,7 +928,11 @@ def main(argv=None):
             seen.add(name)
             rs[name]={'clip':cid,'loop':False,'frames':min(c['frames'],180),'start':0,'status':'LAB CLIPS library: '+c['file']+' '+c['name'],'library':True}
             browse.append({'name':name,'source':c['name'],'file':c['file'].replace('file:',''),'frames':min(c['frames'],180),'source_frames':c['frames'],'id':cid})
+    # splice library rows (CLIPS: s<recipe>) are listed with the XV2 library so they can be viewed; wired recipes are baked into their rows
+    for n,r in rs.items():
+        if r.get('splice_library'):browse.append({'name':n,'source':'splice '+r['splice']['name'],'file':'splices.json','frames':r['frames'],'source_frames':r['frames'],'id':r['clip']})
     anims,animreport=animations(source,mesh,rs)
+    browse=[b for b in browse if b['name'] in anims]   # a preview recipe that could not be baked is dropped
     emit_glb(mesh,anims,out/'goku.glb');mesh['atlas'].save(out/'atlas.png')
     cmap={name:[name] for name in anims if name in spec.clip_table()['by_name']}
     cmap.update({'KameCharge':['SpecialN'],'KameTap':['SpecialAirN'],'Rush':['SpecialS','SpecialAirS'],
