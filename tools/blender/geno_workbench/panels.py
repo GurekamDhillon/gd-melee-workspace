@@ -120,6 +120,7 @@ class GENO_WB_PT_timeline(bpy.types.Panel):
                 row.label(text=STRINGS["cache_loading"].format(done=done, total=total), icon="TIME")
         elif total:
             self.layout.label(text=STRINGS["cache_ready"].format(total=total), icon="CHECKMARK")
+        self.layout.prop(settings, "play_speed")
         self.layout.prop(settings, "loop")
         self.layout.prop(settings, "show_travel")
         self.layout.label(
