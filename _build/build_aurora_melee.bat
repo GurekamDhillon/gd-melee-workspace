@@ -25,6 +25,6 @@ cmake -S "%GW_ROOT%\melee\extern\aurora" -B "%GW_ROOT%\_build\ax86m" -G Ninja ^
 if errorlevel 1 exit /b 1
 rem The port also links aurora_os/pad/si/card, which the "simple" example does not pull in;
 rem build them explicitly or they go stale across Aurora updates.
-cmake --build "%GW_ROOT%\_build\ax86m" --target simple aurora_os aurora_pad aurora_si aurora_card
+cmake --build "%GW_ROOT%\_build\ax86m" --target simple aurora_os aurora_pad aurora_si aurora_card png_static
 if errorlevel 1 exit /b 1
 echo AURORA_MELEE_BUILD_OK
