@@ -1,11 +1,50 @@
 [
   {
     "id": "unused_retail_stage",
+    "label": "known_issue",
     "stages": ["akaneia", "icetop"],
+    "what": "A crash or fatal while loading retail stage id 21 or 26 (the unused stages named akaneia and icetop), which have no valid stage or BGM data.",
+    "not_for": "The Akaneia disc image; any other stage; faults after the stage loaded and played.",
+    "examples": ["FATAL bgm != BGM_Undefined while loading stage=icetop"],
+    "match": ["BGM_Undefined", "stage=(?:icetop|akaneia)"],
     "description": "Unused retail stage ids 21 and 26 lack valid stage/BGM data. Applies to the stage identifier, not the Akaneia disc name."
   },
   {
+    "id": "geno_define_failure",
+    "label": "mod_content",
+    "what": "An assertion, panic or refusal raised inside the Geno define loader (pc/geno/geno_define*) while reading a mod's geno.json: the mod's data cannot be built by this build.",
+    "not_for": "Faults in gameplay code after the define succeeded; Lua script errors; crashes in rendering or audio.",
+    "examples": ["assertion \"Geno_DefinePlanInt(kind, 0, 0)\" failed in pc/geno/geno_define_data.inc", "PANIC pc/geno/geno_define_data.inc"],
+    "match": ["geno_define", "Geno_Define"]
+  },
+  {
+    "id": "lua_script_error",
+    "label": "script_bug",
+    "what": "A Lua script of a mod or test harness failed to load or raised an error (nil index, missing global, syntax error). The engine itself kept running.",
+    "not_for": "Native C assertions, access violations or fatals; failures with no Lua traceback or script load message.",
+    "examples": ["script [ledge-timing/ledge] load: ledge-timing/ledge:19: attempt to index a nil value (global 'os')"],
+    "match": ["attempt to (?:index|call|perform)", "script \\[[^\\]]+\\] load:", "lua error"]
+  },
+  {
+    "id": "engine_native_fault",
+    "label": "real_bug",
+    "what": "A native crash in the game or engine: access violation, unhandled exception, failed C assertion or panic outside the Geno define loader, with no Lua error and no setup problem.",
+    "not_for": "Aurora/Dawn teardown faults at exit; Lua errors; Geno define failures; unused stage ids 21 and 26.",
+    "examples": ["FATAL access violation reading 0x00000000", "unhandled exception 0xC0000005 in the logic thread"],
+    "match": ["access violation", "unhandled exception", "FATAL", "assertion", "SIGSEGV"]
+  },
+  {
+    "id": "none_of_the_above",
+    "label": "needs_human",
+    "what": "The signature fits none of the other entries, or it is too thin to tell.",
+    "not_for": "Anything an entry above describes.",
+    "examples": [],
+    "match": []
+  },
+  {
     "id": "load_timeout_progress",
+    "label": "harness_artifact",
+    "code_only": true,
     "description": "A load-induced HANG may be a harness artifact only when BOTH retrace and presented heartbeats advance and there is no fatal/crash evidence. Progress alone does not rule out a real stall earlier in the run."
   }
 ]

@@ -19,7 +19,11 @@ the rules that cross them.
 
 ## Rules
 
-- Optional Jev crash triage, finding ranking, and agent-claim checks: `jev/README.md` (offline stubs available; never launches the game).
+- **Jev (TypeSafe System One), v2:** parse run facts in code first, ask the model only narrow questions. `jev/runparse.py RUN_DIR`
+  (PASS/FAIL, timeout, setup/harness signatures, faults; no key, no model), `jev/triage_run.py` (runparse, then a narrow
+  confidence-gated Choice on a crash signature only), `jev/coverage.py BRIEF REPORT` (done/owed/unaddressed per requirement),
+  `jev/check_claims.py`. Always read the `band`: `human` means do not trust it; thresholds in `jev/confidence.py` are uncalibrated
+  defaults. `--offline` stubs are fixtures, not Jev. Details and how lanes call them: `jev/README.md`.
 
 - **Scripts, not raw commands.** `build.sh` exists for the bridge fixpoint; `run.sh` for the
   sandbox per run. A raw clang or a bare exe run repeats the mistakes those scripts encode.
