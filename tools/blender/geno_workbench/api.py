@@ -508,8 +508,8 @@ class WbSession:
                 problems = self._items(self._request("run_checks"), "problems")
             finally:
                 self._restore_engine_row()
+                self.start_prefetch()   # the fill was paused for the sweep; resume it even when the checks failed
             self.problems = problems
-            self.start_prefetch()
             return STRINGS["checks_loaded"].format(count=len(problems))
 
         return self._run(action)

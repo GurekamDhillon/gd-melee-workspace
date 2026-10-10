@@ -141,6 +141,13 @@ def run():
                 entry["error"] = session.last_error
                 continue
             entry["load_row_s"] = round(time.perf_counter() - started, 2)
+            if os.environ.get("GW_WB_BENCH_CHECKS"):
+                session.set_frame(7)
+                ok = session.run_checks()
+                after_ok = session.set_frame(9)
+                entry["run_checks"] = {"ok": ok, "error": session.last_error if not ok else "", "row_kept": session.loaded_row == row,
+                                       "set_frame_9_after": after_ok, "frame_after": session.frame, "problems": len(session.problems),
+                                       "status": session.status}
             if hasattr(session, "cache"):
                 started = time.perf_counter()
                 yield from wait(120, session.cache_ready)

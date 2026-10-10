@@ -132,6 +132,7 @@ def test_run_checks_failure_keeps_row_and_asks_for_no_frame_zero():
         assert s.run_checks() is False and "frame 0" in s.last_error
         assert s.loaded_row == "dair" and s.row == "dair" and s.frame == 7
         assert fake.current_row == "dair"                       # the engine row was put back
+        assert wait_ready(s)                                    # and the paused cache fill resumed
         fake.checks_unload = False
         assert s.set_frame(9) and s.info["frame"] == 9          # no "no row loaded"
         assert 0 not in set_frame_calls(fake)
