@@ -8,16 +8,15 @@ engine (MELEE_WB_HEADLESS=1) on the Goku mod, (2) opens Blender with bootstrap.p
 connects, imports the artist rig and calibrates it, loads a move row and draws the overlays,
 (3) stops the launcher (and with it the engine) when Blender exits.
 
-Everything is overridable by environment (paths below are this machine's defaults):
-  GW_ROOT          the main workspace checkout (has .env, _build/goku-xv2, ports/goku-xv2)
+Tool paths use tools/port/tools_config.py (.env/GW_* and _build/tools.json):
+  GW_ROOT          the workspace containing .env and _build/tools.json (default: this checkout)
   GW_BLENDER       blender.exe
   GW_LAUNCHER      gd-melee-launcher.exe built with --serve (Windows Qt build; needs Qt on PATH).
                    Default: <GW_ROOT>/_build/wb-win/gd-melee-launcher.exe (copy the build there, with the
                    Qt DLLs it needs beside it or Qt on GW_QT_BIN), else the newest one under _build/.
                    Blender's console is also written to <GW_ROOT>/_build/wb-goku/blender.log.
-  GW_QT_BIN        Qt bin directory prepended to PATH for the launcher
-  GW_ENGINE_EXE    melee-pc.exe built from the geno-workbench game branch (schema 2, headless). Default:
-                   <GW_ROOT>/_build/wb-goku/engine/melee-pc.exe, the copy this script runs from.
+  GW_QT_BIN        Qt bin directory prepended to PATH; may be empty when DLLs are beside the launcher
+  GW_ENGINE_EXE    melee-pc.exe with the workbench headless protocol; staged into the session sandbox.
   GW_ISO_VANILLA   the disc image (from .env; never committed)
 No disc-derived data is written anywhere under git.
 """
@@ -37,31 +36,11 @@ import launch  # noqa: E402  (stdlib-only helper next to this file)
 
 
 def _find_root() -> Path:
-    env = os.environ.get("GW_ROOT")
-    if env:
-        return Path(env)
-    for parent in HERE.parents:
-        if (parent / ".env").is_file() and (parent / "_build").is_dir():
-            return parent
-    return Path("E:/Projects/Melee Workspace")
-
-
-def _read_env_file(path: Path) -> dict:
-    out = {}
-    if path.is_file():
-        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
-            line = line.strip()
-            if line.startswith("export "):
-                line = line[7:]
-            if "=" in line and not line.startswith("#"):
-                key, _, value = line.partition("=")
-                out[key.strip()] = value.strip().strip('"').strip("'")
-    return out
+    return launch.tools_config.workspace_root()
 
 
 def main() -> int:
     root = _find_root()
-    envfile = _read_env_file(root / ".env")
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--check", action="store_true", help="run Blender in the background, print a report, exit")
     ap.add_argument("--row", default="", help="move row to load (default: first engine row named like a jab, else none)")
@@ -75,27 +54,39 @@ def main() -> int:
     ap.add_argument("--windowed-engine", action="store_true", help="show the engine window instead of headless")
     args = ap.parse_args()
 
-    blender = os.environ.get("GW_BLENDER", "D:/SteamLibrary/steamapps/common/Blender/blender.exe")
-    launcher = os.environ.get("GW_LAUNCHER") or str(
-        next((p for p in (root / "_build/wb-win/gd-melee-launcher.exe",           # the stable home (README.md)
-                          HERE.parents[2] / "_build/wb-win/gd-melee-launcher.exe") if p.is_file()), ""))
-    if not launcher:
-        launcher = launch.find_launcher(root=root) or ""
-    qt_bin = os.environ.get("GW_QT_BIN", "E:/Projects/Qt/6.8.3/msvc2022_64/bin")
-    engine_src = Path(os.environ.get("GW_ENGINE_EXE") or next(
-        (c for c in (Path(args.work or os.environ.get("GW_WB_WORK") or root / "_build/wb-goku") / "engine/melee-pc.exe", root / "_build/agents/geno-workbench/melee-pc.exe")
-         if c.is_file()), root / "_build/agents/geno-workbench/melee-pc.exe"))
+    try:
+        paths = launch.tool_paths(root=root)
+    except launch.WbError as exc:
+        print("ERROR: %s" % exc)
+        return 2
+    blender = paths["GW_BLENDER"]
+    launcher = paths["GW_LAUNCHER"]
+    engine_src = paths["GW_ENGINE_EXE"]
     project = Path(args.project) if args.project else root / "ports/goku-xv2"
-    mods = Path(args.mods) if args.mods else root / "_build/goku-xv2/author-source/package/mods"
-    art = Path(args.art) if args.art else root / "_build/goku-xv2/author-source/goku.blend"
-    iso = os.environ.get("GW_ISO_VANILLA") or envfile.get("GW_ISO_VANILLA", "")
-    work = Path(args.work or os.environ.get("GW_WB_WORK") or root / "_build/wb-goku")   # separate dir = a second session beside the owner's
+    mods = Path(args.mods or paths.get("GW_MODS_DIR") or root / "_build/goku-xv2/author-source/package/mods")
+    art = Path(args.art or paths.get("GW_ART") or root / "_build/goku-xv2/author-source/goku.blend")
+    iso = paths["GW_ISO_VANILLA"]
+    work = Path(args.work or paths.get("GW_WB_WORK") or root / "_build/wb-goku")
 
-    for label, path in (("Blender", blender), ("launcher", launcher), ("engine exe", engine_src),
-                        ("project", project), ("mods dir", mods), ("art", art), ("disc image", iso)):
-        if not path or not Path(path).exists():
-            print("missing %s: %r (set the matching GW_* variable)" % (label, str(path)))
-            return 2
+    missing = False
+    for label, path, directory, setting in (
+        ("Blender", blender, False, "GW_BLENDER"),
+        ("launcher", launcher, False, "GW_LAUNCHER"),
+        ("engine exe", engine_src, False, "GW_ENGINE_EXE"),
+        ("project", project, True, "--project"),
+        ("mods dir", mods, True, "--mods or GW_MODS_DIR"),
+        ("art", art, False, "--art or GW_ART"),
+        ("disc image", iso, False, "GW_ISO_VANILLA"),
+    ):
+        if not path or not (Path(path).is_dir() if directory else Path(path).is_file()):
+            print("missing %s: %r (set %s; see tools/port/TOOLS_CONFIG.md)" % (label, str(path), setting))
+            missing = True
+    if paths["GW_QT_BIN"] and not Path(paths["GW_QT_BIN"]).is_dir():
+        print("missing Qt bin: %r (set GW_QT_BIN)" % paths["GW_QT_BIN"])
+        missing = True
+    if missing:
+        return 2
+    engine_src = Path(engine_src)
 
     # The engine runs from its own sandbox with its own copy of the exe and DLLs.
     (work / "engine").mkdir(parents=True, exist_ok=True)
@@ -109,10 +100,9 @@ def main() -> int:
         if found and not (engine.parent / dll).exists() and found.resolve() != (engine.parent / dll).resolve():
             shutil.copy2(found, engine.parent / dll)
 
-    os.environ["GW_QT_BIN"] = qt_bin
     argv, env = launch.serve_launch(
         launcher, str(project), engine_exe=str(engine), mods_dir=str(mods), iso=iso,
-        headless=not args.windowed_engine)
+        headless=not args.windowed_engine, env=paths, root=root)
     # keep the payload directory where earlier runs put it
     if "--wb-dir" in argv:
         argv[argv.index("--wb-dir") + 1] = str(work / "payloads")
@@ -127,7 +117,7 @@ def main() -> int:
         if os.environ.get("GW_WB_SHOT") or os.environ.get("GW_WB_DRIVER"):
             cmd += ["--enable-event-simulate"]   # lets bootstrap close the splash before it screenshots
         if args.check:
-            cmd += ["--background", "--factory-startup"]
+            cmd += ["--background", "--factory-startup", "--python-exit-code", "1"]
         cmd += ["--python", os.environ.get("GW_WB_SCRIPT") or str(HERE / "bootstrap.py"), "--", "--project", str(project), "--port", str(port),
                 "--art", str(art), "--launcher", str(launcher), "--engine", str(engine), "--mods", str(mods)]
         if iso:
@@ -149,7 +139,7 @@ def main() -> int:
             # Tee Blender's console to a file: a traceback in the add-on is otherwise lost with the window.
             print("Blender log: %s" % blender_log)
             with open(blender_log, "w", encoding="utf-8", errors="replace") as log,                     subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
-                                     errors="replace") as bl:
+                                     errors="replace", env=paths) as bl:
                 for line in bl.stdout:
                     print(line, end="")
                     log.write(line)
@@ -157,7 +147,7 @@ def main() -> int:
             return bl.returncode
         # Blender exits 0 even when the script raised; a check fails on a traceback or a missing report
         seen = {"trace": False, "report": False}
-        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace") as bl,                 open(blender_log, "w", encoding="utf-8", errors="replace") as log:
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace", env=paths) as bl,                 open(blender_log, "w", encoding="utf-8", errors="replace") as log:
             for line in bl.stdout:
                 print(line, end="")
                 log.write(line)

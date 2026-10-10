@@ -80,7 +80,9 @@ def _perform(operator, context, fn):
 class _SpliceOperator:
     @classmethod
     def poll(cls, context):
-        return context.object is not None and context.object.type == "ARMATURE" and context.mode == "OBJECT"
+        return props.poll_ready(cls,
+            (context.object is not None and context.object.type == "ARMATURE", STRINGS["fighter_not_armature"]),
+            (context.mode == "OBJECT", STRINGS["nla_object_mode"]))
 
 
 class GENO_WB_OT_import_clip(_SpliceOperator, bpy.types.Operator):

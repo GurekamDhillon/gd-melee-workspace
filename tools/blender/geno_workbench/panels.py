@@ -49,7 +49,6 @@ class GENO_WB_PT_connect(bpy.types.Panel):
         box.prop(settings, "mods_dir")
         box.prop(settings, "iso_path")
         start = box.row()
-        start.enabled = not value.connected and not operators.owned_server_running()
         start.operator(
             "geno_wb.start_server", text=STRINGS["start_server"], icon="PLAY"
         )
@@ -78,19 +77,20 @@ class GENO_WB_PT_timeline(bpy.types.Panel):
         settings = context.scene.geno_wb
         value = api.session()
         move = self.layout.row(align=True)
-        move.enabled = value.connected
-        move.prop(settings, "move")
+        choice = move.row(align=True)
+        choice.enabled = value.connected
+        choice.prop(settings, "move")
         move.operator("geno_wb.refresh_rows", text="", icon="FILE_REFRESH")
 
         controls = self.layout.column()
-        controls.enabled = value.connected and value.info is not None
-        controls.prop(settings, "frame", slider=True)
+        slider = controls.row()
+        slider.enabled = value.connected and value.info is not None
+        slider.prop(settings, "frame", slider=True)
         buttons = controls.row(align=True)
         buttons.operator(
             "geno_wb.step", text=STRINGS["first_frame"]
         ).n = -settings.frame
         previous = buttons.row(align=True)
-        previous.enabled = settings.frame > 0
         previous.operator(
             "geno_wb.step", text=STRINGS["previous_frame"]
         ).n = -1
@@ -100,7 +100,6 @@ class GENO_WB_PT_timeline(bpy.types.Panel):
             icon="PAUSE" if settings.playing else "PLAY",
         )
         following = buttons.row(align=True)
-        following.enabled = settings.frame < 600
         following.operator(
             "geno_wb.step", text=STRINGS["next_frame"]
         ).n = 1
@@ -152,9 +151,6 @@ class GENO_WB_PT_problems(bpy.types.Panel):
         if not value.problems:
             self.layout.label(text=STRINGS["no_problems"])
         button = self.layout.row()
-        button.enabled = (
-            value.connected and 0 <= settings.problem_index < len(value.problems)
-        )
         button.operator(
             "geno_wb.goto_problem", text=STRINGS["goto_problem"]
         ).index = settings.problem_index

@@ -25,7 +25,10 @@ class Report:
     def __init__(self):
         self.items = []
 
-    def add(self, sev, code, where, msg, fix=""):
+    def add(self, sev, code, where, msg, fix=None):
+        if sev in (B, W) and (not isinstance(fix, str) or not fix.strip()):
+            raise ValueError("%s %s needs an actionable fix" % (sev, code))
+        fix = fix or "No action needed."
         self.items.append({"severity": sev, "code": code, "where": where, "message": msg, "fix": fix})
 
     def count(self, sev):
@@ -48,10 +51,11 @@ def _quat_angle(a, b):
 
 def validate(cfg_path, measure=True):
     r = Report()
+    cfg_path = M.config_path(cfg_path)
     try:
         f = M.load(cfg_path)
     except ArtistError as e:
-        r.add(B, "LOAD", cfg_path, str(e), "fix the file named, then run again")
+        r.add(B, "LOAD", cfg_path, str(e), e.fix or "correct the named value or file path in fighter.json, then run validate again")
         return r, None
     except Exception as e:  # noqa: BLE001
         r.add(B, "LOAD", cfg_path, "could not read the character: %r" % (e,), "export again as glTF Binary with the options in docs/geno-artist-spec.md section 10")
@@ -245,7 +249,7 @@ def _materials(f, r):
     except (KeyError, IndexError):
         return
     if pm is None:
-        r.add(W, "NO_MATERIAL", "mesh", "the primitive has no material; costume textures will still apply", "")
+        r.add(W, "NO_MATERIAL", "mesh", "the primitive has no material; costume textures will still apply", "assign one material to the mesh in Blender; list replacement textures in fighter.json costumes")
     else:
         mat = mats[pm]
         if mat.get("alphaMode", "OPAQUE") != "OPAQUE":
@@ -258,7 +262,7 @@ def _materials(f, r):
         if base and any(abs(x - 1) > 0.02 for x in base[:3]):
             r.add(W, "FLAT_COLOR", "material '%s'" % mat.get("name"), "a base colour tint %s is set; the converter uses the texture only" % [round(x, 2) for x in base[:3]], "bake the colour into the texture")
     if len(mats) > 1 and not f.cfg.get("costumes"):
-        r.add(W, "MULTI_MATERIAL", "materials", "%d materials in the glb; costumes are textures listed in fighter.json (the first material's image is the default costume)" % len(mats), "")
+        r.add(W, "MULTI_MATERIAL", "materials", "%d materials in the glb; costumes are textures listed in fighter.json (the first material's image is the default costume)" % len(mats), "list costume textures in fighter.json costumes; merge the exported mesh to one material slot")
     from PIL import Image
     for c in f.costumes:
         try:
@@ -413,7 +417,8 @@ def _rows(f, r):
     if miss and not f.legacy:
         r.add(W, "PROTOTYPE_INCOMPLETE", "prototype set", "missing prototype clips: %s (their rows play a placeholder)" % ", ".join(miss), "see docs/geno-artist-checklist.md")
     ph = [row["row"] for row in f.rows if row["status"] == "placeholder"]
-    r.add(W if ph else I, "PLACEHOLDERS", "motion rows", "%d rows play a placeholder clip (listed in the build report; not final art)" % len(ph))
+    r.add(W if ph else I, "PLACEHOLDERS", "motion rows", "%d rows play a placeholder clip (listed in the build report; not final art)" % len(ph),
+          "author clips for the placeholder rows listed in the build report; map them with fighter.json clips.map" if ph else "No action needed.")
     unm = [row["row"] for row in f.rows if row["status"] == "UNMAPPED"]
     if unm:
         r.add(B, "ROWS_UNMAPPED", "motion rows", "rows without any clip: %s" % ", ".join(unm[:6]), "author a Wait clip")
@@ -436,9 +441,9 @@ def _hurt(f, r):
             if h["bone"] not in f.bone_by_name:
                 r.add(B, "HURTBOX_BONE", "hurtbox '%s'" % h["id"], "bone '%s' is not in the skeleton" % h["bone"], "name an exported bone")
             if not h["radius"] > 0:
-                r.add(B, "HURTBOX_RADIUS", "hurtbox '%s'" % h["id"], "radius must be positive", "")
+                r.add(B, "HURTBOX_RADIUS", "hurtbox '%s'" % h["id"], "radius must be positive", "set this hurtbox radius to a number greater than 0 in fighter.json or the Blender Geno metadata")
             if h.get("height", "mid") not in ("high", "mid", "low"):
-                r.add(B, "HURTBOX_HEIGHT", "hurtbox '%s'" % h["id"], "height '%s' is not high/mid/low" % h.get("height"), "")
+                r.add(B, "HURTBOX_HEIGHT", "hurtbox '%s'" % h["id"], "height '%s' is not high/mid/low" % h.get("height"), "set this hurtbox height to high, mid or low in fighter.json or the Blender Geno metadata")
         r.add(I, "HURTBOXES", "hurtboxes", "%d capsules from %s" % (len(hb), f.hurtbox_src))
     else:
         r.add(I, "HURTBOXES", "hurtboxes", "generated from the skeleton and mesh (fighter.json \"hurtboxes\" can override); check them in the LAB")
@@ -485,7 +490,7 @@ def format_report(r, verbose=False):
             items = [i for i in items if i["code"] in ("MESH_STATS", "ROWS", "LOCO", "HURTBOXES", "CLIPS")]
         for i in items:
             lines.append("%-7s %-18s %s: %s" % (sev, i["code"], i["where"], i["message"]))
-            if i["fix"]:
+            if i["fix"] != "No action needed.":
                 lines.append("          fix: %s" % i["fix"])
     lines.append("%d blocker(s), %d warning(s)" % (r.count(B), r.count(W)))
     return "\n".join(lines)

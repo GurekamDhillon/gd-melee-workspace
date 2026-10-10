@@ -23,7 +23,10 @@ from tools.geno.artist import spec  # noqa: E402  (pure python)
 OUT = []
 
 
-def add(sev, code, where, msg, fix=""):
+def add(sev, code, where, msg, fix=None):
+    if sev in ("BLOCKER", "WARNING") and (not isinstance(fix, str) or not fix.strip()):
+        raise ValueError("%s %s needs an actionable fix" % (sev, code))
+    fix = fix or "No action needed."
     OUT.append((sev, code, where, msg, fix))
 
 
@@ -210,7 +213,7 @@ def do_export(arm, glb):
 def report():
     nb = 0
     for sev, code, where, msg, fix in OUT:
-        print("GENO %s %s %s: %s%s" % (sev, code, where, msg, (" | fix: " + fix) if fix else ""))
+        print("GENO %s %s %s: %s%s" % (sev, code, where, msg, (" | fix: " + fix) if fix != "No action needed." else ""))
         nb += sev == "BLOCKER"
     return nb
 

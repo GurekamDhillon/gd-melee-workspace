@@ -22,23 +22,42 @@ from .model import ArtistError
 
 
 def blender_exe():
-    """$BLENDER, else blender on PATH, else the usual install folders."""
-    import shutil as sh
-    for c in (os.environ.get("BLENDER"), sh.which("blender"), sh.which("blender.exe"),
-              "D:/SteamLibrary/steamapps/common/Blender/blender.exe", "C:/Program Files/Blender Foundation/Blender 5.2/blender.exe",
-              "C:/Program Files/Blender Foundation/Blender 4.5/blender.exe", "C:/Program Files/Blender Foundation/Blender 4.2/blender.exe"):
-        if c and os.path.isfile(c):
-            return c
-    raise ArtistError("Blender was not found: set BLENDER to blender.exe (only needed to export from a .blend or to make a starter)")
+    """Shared GW_BLENDER/.env/tools.json lookup (BLENDER remains an alias)."""
+    from tools.port import tools_config
+    try:
+        path = tools_config.load_config()["GW_BLENDER"]
+    except tools_config.ToolsConfigError as exc:
+        raise ArtistError(str(exc)) from exc
+    if path and os.path.isfile(path):
+        return path
+    raise ArtistError("Blender was not found: set GW_BLENDER in .env or run python tools/port/tools_config.py --detect (Blender is needed to export a .blend or make a starter)")
+
+
+def _run_blender(cmd):
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, errors="replace")
+    except OSError as exc:
+        raise ArtistError("cannot start Blender (%s); check GW_BLENDER in .env or _build/tools.json" % exc) from exc
+
+
+def _blender_failure(result):
+    """Keep stderr separate so a verbose stdout cannot bury the traceback."""
+    lines = ["Blender exited with code %d." % result.returncode]
+    for name, output in (("stdout", result.stdout), ("stderr", result.stderr)):
+        tail = "\n".join((output or "").splitlines()[-20:])[-4000:]
+        if tail:
+            lines.append("Blender %s (last 20 lines):\n%s" % (name, tail))
+    return "\n".join(lines)
 
 
 def export_from_blend(cfg_path, log=print, force=False):
-    """If fighter.json names art.blend, export the glb from it with export_fighter.py (headless Blender) when it is stale."""
+    """Export art.blend with export_fighter.py when its glb is missing or stale."""
+    cfg_path = M.config_path(cfg_path)
     cfg = M.load_json(cfg_path)
     art = cfg.get("art", {})
     if not art.get("blend"):
         return True
-    base = os.path.dirname(os.path.abspath(cfg_path))
+    base = os.path.dirname(cfg_path)
     blend = os.path.normpath(os.path.join(base, art["blend"]))
     glb = os.path.normpath(os.path.join(base, art.get("glb", os.path.splitext(art["blend"])[0] + ".glb")))
     if not os.path.isfile(blend):
@@ -48,30 +67,36 @@ def export_from_blend(cfg_path, log=print, force=False):
         return True
     log("[0/5] export %s -> %s (headless Blender)" % (os.path.basename(blend), glb))
     script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "blender", "export_fighter.py")
-    r = subprocess.run([blender_exe(), "-b", blend, "--python", script, "--", "--out", glb], capture_output=True, text=True)
-    for line in (r.stdout + r.stderr).splitlines():
+    r = _run_blender([blender_exe(), "-b", blend, "--python-exit-code", "1", "--python", script, "--", "--out", glb])
+    for line in ((r.stdout or "") + "\n" + (r.stderr or "")).splitlines():
         if line.startswith("GENO "):
             log("  " + line)
-    if r.returncode:
-        log("STOPPED: the Blender preflight found blockers (above); nothing was exported.")
+    if r.returncode or not os.path.isfile(glb):
+        log(_blender_failure(r))
+        if not os.path.isfile(glb):
+            log("Expected export is missing: %s" % glb)
+        log("STOPPED: Blender export failed; fix the preflight finding or traceback above, then run build again.")
         return False
     return True
 
 
 def new_character(dest, key, name, params=None, log=print):
-    """Scaffold: a starter .blend (headless Blender) + fighter.json in dest."""
+    """Scaffold a .blend and fighter.json; build exports the glb on first use."""
     os.makedirs(dest, exist_ok=True)
     blend = os.path.join(dest, key + ".blend")
-    cmd = [blender_exe(), "-b", "--python", os.path.join(os.path.dirname(os.path.abspath(__file__)), "blender", "make_starter.py"), "--", "--out", blend, "--name", name]
+    cmd = [blender_exe(), "-b", "--python-exit-code", "1", "--python", os.path.join(os.path.dirname(os.path.abspath(__file__)), "blender", "make_starter.py"), "--", "--out", blend, "--name", name]
     if params:
         cmd += ["--params", os.path.abspath(params)]
-    r = subprocess.run(cmd, capture_output=True, text=True)
+    r = _run_blender(cmd)
     if r.returncode or not os.path.isfile(blend):
-        raise ArtistError("make_starter failed:\n" + (r.stdout + r.stderr)[-800:])
+        raise ArtistError("make_starter failed (expected %s):\n%s" % (blend, _blender_failure(r)))
     cfg = {"schema": "geno-artist/1", "key": key, "name": name, "art": {"blend": key + ".blend", "glb": "art/%s.glb" % key}}
-    json.dump(cfg, open(os.path.join(dest, "fighter.json"), "w", newline="\n"), indent=1)
-    log("created %s and %s" % (blend, os.path.join(dest, "fighter.json")))
-    log("next: python -m tools.geno.artist build %s" % os.path.join(dest, "fighter.json"))
+    path = os.path.join(dest, "fighter.json")
+    with open(path, "w", encoding="utf-8", newline="\n") as file:
+        json.dump(cfg, file, indent=1)
+    log("created %s and %s" % (blend, path))
+    log("The glb is exported by the first build; validate reports the build command until then.")
+    log(M.build_fix(path))
 
 
 def out_dir(f, override=None):

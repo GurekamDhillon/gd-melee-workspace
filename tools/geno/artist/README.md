@@ -22,14 +22,14 @@ Plan and gap assessment: `docs/superpowers/plans/2026-10-08-geno-artist-pipeline
 Python 3.10+ with `numpy`, `scipy`, `Pillow`; the .NET 8+ SDK and the HSDLib checkout (`experiment/tooling/HSDLib`, see `SETUP.md`) for `fighterbuild`
 (or `GW_FIGHTERBUILD=<fighterbuild.dll>`); the game checkout in `GW_MELEE` (the Striker move set and the `geno-lab` mod are copied from it);
 Blender 4.2+ (tested 5.2.2) only for `new`, for `build` from a `.blend`, and to author. A player needs none of this. No disc is read.
-`BLENDER=<blender.exe>` overrides the lookup.
+Tool paths use [the shared authoring-tool config](../../port/TOOLS_CONFIG.md): `GW_BLENDER` in the environment or `.env`, then the local `_build/tools.json`, then discovery. `BLENDER` remains a compatibility alias.
 
 ## Commands
 
 | command | does |
 |---|---|
 | `new DIR --key K [--name N] [--params params.json]` | headless Blender writes `DIR/K.blend` (parametric starter) and `DIR/fighter.json` |
-| `validate fighter.json [-v] [--json]` | blockers/warnings with the object, bone, vertex or action and the fix; exit 1 on a blocker |
+| `validate fighter.json-or-DIR [-v] [--json]` | blockers/warnings with the object, bone, vertex or action and the fix; exit 1 on a blocker |
 | `build fighter.json [--out DIR] [--export] [--strict]` | [0] export the glb from `art.blend` if stale, [1] validate, [2] plan/mesh/bank, [3] models, [4] moves + `geno.json` (+ `geno check`), [5] install into `<out>/mods` |
 | `run-command fighter.json` | the LAB launch line |
 | `joints fighter.json` | the joint numbers the LAB shows (INSPECT `J`) with bone name, role, Melee part and parent: the key to hitbox `joint=N`, `gd.joints` and sockets |
@@ -41,12 +41,9 @@ Outputs go to `<workspace>/_build/artist/<key>/` (override with `--out` or `figh
 
 ## The starter (`blender/`)
 
-`make_starter.py` builds, from a parameter file, a rigged, textured, animated starter.
-Blender preflight can check it immediately; CLI `validate` reads the GLB, so first
-export it or run `build`, which exports it before validating. A fresh `new` output
-does not yet contain the GLB. Pass the `fighter.json` file, not its directory.
+`new` writes the `.blend` and `fighter.json`; the first `build` exports `art.glb`. Until that export, `validate` reports the exact `run: python -m tools.geno.artist build <fighter.json>` recovery command, including quotes for paths with spaces. It also accepts the containing directory.
 
-The starter supplies:
+`make_starter.py` builds, from a parameter file, a rigged, textured, animated character that passes the Blender checks and validates after export:
 
 - the **export skeleton** (31 bones, named exactly like their roles, `.L/.R`; sockets and anchors are labelled bones: `item_socket.R`, `grab_anchor`, `victim_anchor`,
   `camera_focus`, `shield_origin`, `reflect_origin`, `absorb_origin`, `head_top`), A-pose, Z up facing -Y;
@@ -60,7 +57,7 @@ Everything the importer needs is stored in the file: the armature's `geno` prope
 
 `export_fighter.py` (also run by `build` when `art.blend` is set) first checks the Blender project (unapplied transforms, unapplied modifiers, more than one skinned mesh or material,
 more than 2 weights or no weight on named vertices, missing roles, wrong facing, actions that key bones that do not exist), then exports the glb with the right settings
-(NLA tracks, always-sampled, Y up, extras) and writes `<glb>.geno.json`. `geno_panel.py` is the same as a **Geno** sidebar tab: Validate, Export, Export + Build + Install, set a bone's role,
+(NLA tracks, always-sampled, Y up, extras) and writes `<glb>.geno.json`. Failed exports show separate Blender stderr/stdout tails; a missing output is a failure even if Blender exited 0. Every blocker and warning includes a repair. `geno_panel.py` is the same as a **Geno** sidebar tab: Validate, Export, Export + Build + Install, set a bone's role,
 mark the hit frame. `control_rig.py` bakes your own control rig onto the export skeleton (spec section 8).
 
 ## Build -> preview -> iterate

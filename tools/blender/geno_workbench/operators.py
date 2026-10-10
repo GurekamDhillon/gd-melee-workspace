@@ -1,6 +1,7 @@
 """Workbench operators, coalesced scrubbing and owned-server lifecycle."""
 
 from pathlib import Path
+import os
 import subprocess
 
 import time
@@ -189,6 +190,9 @@ def server_answers(port, timeout=2.0):
 
 
 def _project_root(project):
+    """Project workspace fallback; GW_ROOT selects the shared config first."""
+    if os.environ.get("GW_ROOT"):
+        return None
     for directory in (project, *project.parents):
         if (directory / ".git").exists():
             return directory
@@ -223,6 +227,12 @@ class GENO_WB_OT_start_server(bpy.types.Operator):
     bl_label = STRINGS["start_server"]
     bl_description = STRINGS["start_server_help"]
 
+    @classmethod
+    def poll(cls, context):
+        return props.poll_ready(cls,
+            (not owned_server_running(), STRINGS["server_already_running"]),
+            (not api.session().connected, STRINGS["disconnect_first"]))
+
     def execute(self, context):
         global _server_process
         value = api.session()
@@ -235,9 +245,9 @@ class GENO_WB_OT_start_server(bpy.types.Operator):
             if settings.port and server_answers(int(settings.port)):
                 # A server (e.g. launch_goku's) is already up on this port: use it, do not start a second
                 # launcher that has no engine.
-                success = value.set_status(
-                    STRINGS["server_reused"].format(port=int(settings.port))
-                )
+                message = STRINGS["server_reused"].format(port=int(settings.port))
+                success = value.set_status(message)
+                self.report({"INFO"}, message)
                 return _finish(self, context, success)
             if not settings.project.strip():
                 raise client.WbError(STRINGS["project_required"])
@@ -264,6 +274,7 @@ class GENO_WB_OT_start_server(bpy.types.Operator):
                 engine_exe=bpy.path.abspath(settings.engine_exe) if settings.engine_exe.strip() else "",
                 mods_dir=bpy.path.abspath(settings.mods_dir) if settings.mods_dir.strip() else "",
                 iso=bpy.path.abspath(settings.iso_path) if settings.iso_path.strip() else "",
+                root=_project_root(project),
             )
             process, port = launch.start_serve(argv, timeout=120, env=serve_env)
             _server_process = process
@@ -321,7 +332,7 @@ class GENO_WB_OT_engine_restart(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return api.session().connected
+        return props.poll_ready(cls, (api.session().connected, STRINGS["not_connected"]))
 
     def execute(self, context):
         stop_playback()
@@ -337,7 +348,7 @@ class GENO_WB_OT_refresh_rows(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return api.session().connected
+        return props.poll_ready(cls, (api.session().connected, STRINGS["not_connected"]))
 
     def execute(self, context):
         return _finish(self, context, api.session().refresh_rows())
@@ -353,7 +364,7 @@ class GENO_WB_OT_load_row(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return api.session().connected
+        return props.poll_ready(cls, (api.session().connected, STRINGS["not_connected"]))
 
     def invoke(self, context, event):
         context.window_manager.invoke_search_popup(self)
@@ -380,7 +391,9 @@ class GENO_WB_OT_step(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         value = api.session()
-        return value.connected and value.info is not None
+        return props.poll_ready(cls,
+            (value.connected, STRINGS["not_connected"]),
+            (value.info is not None, STRINGS["no_frame"]))
 
     def execute(self, context):
         target = max(0, min(600, context.scene.geno_wb.frame + self.n))
@@ -397,9 +410,11 @@ class GENO_WB_OT_play(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         value = api.session()
-        return _active_player is not None or (
-            value.connected and value.info is not None
-        )
+        if _active_player is not None:
+            return True
+        return props.poll_ready(cls,
+            (value.connected, STRINGS["not_connected"]),
+            (value.info is not None, STRINGS["no_frame"]))
 
     def _stop(self):
         global _active_player
@@ -542,7 +557,9 @@ class GENO_WB_OT_run_checks(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         value = api.session()
-        return value.connected and value.has_roles
+        return props.poll_ready(cls,
+            (value.connected, STRINGS["not_connected"]),
+            (value.has_roles, STRINGS["no_roles"]))
 
     def execute(self, context):
         return _finish(self, context, api.session().run_checks())
@@ -557,7 +574,11 @@ class GENO_WB_OT_goto_problem(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return api.session().connected
+        value = api.session()
+        settings = getattr(context.scene, "geno_wb", None)
+        return props.poll_ready(cls,
+            (value.connected, STRINGS["not_connected"]),
+            (settings is not None and 0 <= settings.problem_index < len(value.problems), STRINGS["problem_missing"]))
 
     def execute(self, context):
         settings = context.scene.geno_wb
@@ -574,10 +595,10 @@ class GENO_WB_OT_suggest_bone(bpy.types.Operator):
     def poll(cls, context):
         value = api.session()
         settings = getattr(context.scene, "geno_wb", None)
-        return (
-            value.connected and value.has_roles and settings is not None
-            and 0 <= settings.hitbox_index < len(value.hitboxes)
-        )
+        return props.poll_ready(cls,
+            (value.connected, STRINGS["not_connected"]),
+            (value.has_roles, STRINGS["no_roles"]),
+            (settings is not None and 0 <= settings.hitbox_index < len(value.hitboxes), STRINGS["editor_missing"]))
 
     def execute(self, context):
         value = api.session()
@@ -612,7 +633,7 @@ class GENO_WB_OT_edit_hitbox(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return api.session().connected
+        return props.poll_ready(cls, (api.session().connected, STRINGS["not_connected"]))
 
     def execute(self, context):
         value = api.session()
@@ -655,7 +676,9 @@ class GENO_WB_OT_rebuild_reload(bpy.types.Operator):
     @classmethod
     def poll(cls, context):
         value = api.session()
-        return value.connected and value.can_rebuild
+        return props.poll_ready(cls,
+            (value.connected, STRINGS["not_connected"]),
+            (value.can_rebuild, STRINGS["rebuild_unavailable"]))
 
     def execute(self, context):
         stop_playback()

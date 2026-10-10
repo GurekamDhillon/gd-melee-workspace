@@ -17,14 +17,14 @@ from bpy.props import FloatProperty, IntProperty, PointerProperty, StringPropert
 
 try:
     from . import api, pose, rig, travel, wbspace
-    from .props import STRINGS
+    from .props import STRINGS, poll_ready
 except ImportError:
     import api
     import pose
     import rig
     import travel
     import wbspace
-    from props import STRINGS
+    from props import STRINGS, poll_ready
 
 
 for _key, _value in {
@@ -376,6 +376,18 @@ class GENO_WB_OT_load_fighter(bpy.types.Operator):
     bl_description = STRINGS["fighter_load_description"]
     bl_options = {"REGISTER"}
 
+    @classmethod
+    def poll(cls, context):
+        session = api.session()
+        settings = getattr(context.scene, "geno_wb", None)
+        # Project art is resolved by _prepare_project during execution. Do not
+        # require a cached art path before that first project load.
+        art = (getattr(settings, "blender_art", "") or session.art_blend
+               or session.art_glb or getattr(settings, "project", ""))
+        return poll_ready(cls,
+            (session.connected, STRINGS["fighter_not_connected"]),
+            (bool(art), STRINGS["fighter_no_art"]))
+
     def execute(self, context):
         session = api.session()
         try:
@@ -407,6 +419,12 @@ class GENO_WB_OT_calibrate(bpy.types.Operator):
     bl_description = STRINGS["fighter_calibrate_description"]
     bl_options = {"REGISTER"}
 
+    @classmethod
+    def poll(cls, context):
+        if not poll_ready(cls, (api.session().connected, STRINGS["fighter_not_connected"])):
+            return False
+        return poll_ready(cls, (active_armature(context) is not None, STRINGS["fighter_not_armature"]))
+
     def execute(self, context):
         session = api.session()
         try:
@@ -430,6 +448,14 @@ class GENO_WB_OT_verify_pose(bpy.types.Operator):
     bl_label = STRINGS["fighter_verify_label"]
     bl_description = STRINGS["fighter_verify_description"]
     bl_options = {"REGISTER"}
+
+    @classmethod
+    def poll(cls, context):
+        arm = active_armature(context)
+        return poll_ready(cls,
+            (arm is not None, STRINGS["fighter_not_armature"]),
+            (arm is not None and pose.calibration_for(arm) is not None, STRINGS["fighter_verify_calibration"]),
+            (api.session().info is not None, STRINGS["fighter_no_frame"]))
 
     def execute(self, context):
         session = api.session()

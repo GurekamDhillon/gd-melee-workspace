@@ -1,7 +1,7 @@
 """Launcher and Blender discovery, argument construction, and serve startup.
 
-Explicit executable settings are returned as supplied, without existence
-checks. start_serve owns startup failure cleanup and continuously drains the
+Explicit UI executable settings are returned as supplied, without existence
+checks; GW_* and .env/config paths are resolved by tools/port/tools_config.py. start_serve owns startup failure cleanup and continuously drains the
 server's output after returning its process and port.
 """
 
@@ -13,7 +13,6 @@ import os
 from pathlib import Path
 import queue
 import re
-import shutil
 import subprocess
 import threading
 import time
@@ -28,52 +27,33 @@ else:
 _SERVE_LINE = re.compile(r"\s*WB_SERVE\s+port=([0-9]+)\s*")
 
 
-def _on_path(name: str, env: Mapping[str, str]) -> str | None:
-    path = env.get("PATH", "")
-    if not path:
-        return None
-    return shutil.which(name, path=path) or shutil.which(name + ".exe", path=path)
+# Scripts and an installed add-on use the workspace's one resolver. An installed
+# copy needs GW_ROOT to point at the checkout containing tools/port/tools_config.py.
+import sys
+
+_config_root = Path(__file__).resolve().parents[3]
+if not (_config_root / "tools/port/tools_config.py").is_file() and os.environ.get("GW_ROOT"):
+    _config_root = Path(os.environ["GW_ROOT"])
+if (_config_root / "tools/port/tools_config.py").is_file() and str(_config_root) not in sys.path:
+    sys.path.insert(0, str(_config_root))
+from tools.port import tools_config
 
 
-def find_launcher(
-    env: Mapping[str, str] = os.environ,
-    root: str | Path | None = None,
-) -> str | None:
-    override = env.get("GW_LAUNCHER", "").strip()
-    if override:
-        return override
-
-    repo_root = Path(root) if root is not None else Path(__file__).resolve().parents[3]
-    candidates = []
+def tool_paths(root=None, env: Mapping[str, str] | None = None) -> dict[str, str]:
     try:
-        for candidate in (repo_root / "_build").rglob("gd-melee-launcher*"):
-            if candidate.name not in ("gd-melee-launcher", "gd-melee-launcher.exe"):
-                continue
-            try:
-                if candidate.is_file():
-                    candidates.append(
-                        (candidate.stat().st_mtime_ns, str(candidate.resolve()))
-                    )
-            except OSError:
-                continue
-    except OSError:
-        pass
-
-    if candidates:
-        return max(candidates)[1]
-    return _on_path("gd-melee-launcher", env)
+        return tools_config.load_config(root, env)
+    except tools_config.ToolsConfigError as exc:
+        raise WbError(str(exc)) from exc
 
 
-def find_blender(
-    env: Mapping[str, str] = os.environ,
-    settings_value: str = "",
-) -> str | None:
+def find_launcher(env: Mapping[str, str] | None = None, root=None) -> str | None:
+    return tool_paths(root, env)["GW_LAUNCHER"] or None
+
+
+def find_blender(env: Mapping[str, str] | None = None, settings_value: str = "", root=None) -> str | None:
     if settings_value.strip():
         return settings_value
-    override = env.get("GW_BLENDER", "")
-    if override.strip():
-        return override
-    return _on_path("blender", env)
+    return tool_paths(root, env)["GW_BLENDER"] or None
 
 
 def serve_argv(
@@ -100,34 +80,26 @@ def serve_argv(
 
 
 def serve_settings(
-    engine_exe: str = "",
-    mods_dir: str = "",
-    iso: str = "",
-    env: Mapping[str, str] = os.environ,
+    engine_exe: str = "", mods_dir: str = "", iso: str = "",
+    env: Mapping[str, str] | None = None, root=None,
 ) -> dict[str, str]:
-    """Engine exe, mods dir and ISO: explicit values first, then GW_* environment."""
+    """Explicit UI values first, then the shared environment/.env/tools.json paths."""
+    paths = tool_paths(root, env)
     return {
-        "engine_exe": engine_exe.strip() or env.get("GW_ENGINE_EXE", "").strip(),
-        "mods_dir": mods_dir.strip() or env.get("GW_MODS_DIR", "").strip(),
-        "iso": iso.strip() or env.get("GW_ISO_VANILLA", "").strip(),
+        "engine_exe": engine_exe.strip() or paths["GW_ENGINE_EXE"],
+        "mods_dir": mods_dir.strip() or paths.get("GW_MODS_DIR", "").strip(),
+        "iso": iso.strip() or paths["GW_ISO_VANILLA"],
     }
 
 
 def serve_launch(
-    exe: str,
-    project: str,
-    engine_exe: str = "",
-    mods_dir: str = "",
-    iso: str = "",
-    headless: bool = True,
-    env: Mapping[str, str] = os.environ,
+    exe: str, project: str, engine_exe: str = "", mods_dir: str = "",
+    iso: str = "", headless: bool = True,
+    env: Mapping[str, str] | None = None, root=None,
 ) -> tuple[list[str], dict[str, str]]:
-    """(argv, environment) for the server, matching tools/blender/geno_workbench/launch_goku.py.
-
-    The engine runs from its own directory (the exe's parent) with payloads in a sibling
-    ``payloads`` directory; MELEE_ISO carries the disc image and netplay binds loopback.
-    """
-    s = serve_settings(engine_exe, mods_dir, iso, env)
+    """Server argv and environment, shared by launch_goku.py and the add-on."""
+    paths = tool_paths(root, env)
+    s = serve_settings(engine_exe, mods_dir, iso, env=paths, root=paths["GW_ROOT"])
     work = wb = ""
     if s["engine_exe"]:
         parent = Path(s["engine_exe"]).parent
@@ -138,8 +110,8 @@ def serve_launch(
         except OSError:
             wb = ""
     argv = serve_argv(exe, project, s["engine_exe"], headless, s["mods_dir"], work, wb)
-    out = dict(env)
-    qt_bin = env.get("GW_QT_BIN", "").strip()
+    out = dict(paths)
+    qt_bin = paths["GW_QT_BIN"]
     if qt_bin:
         out["PATH"] = qt_bin + os.pathsep + out.get("PATH", "")
     if s["iso"]:

@@ -15,7 +15,10 @@ import subprocess
 import sys
 
 HERE = Path(__file__).resolve().parent
-ROOT = Path(os.environ.get("GW_ROOT", "E:/Projects/Melee Workspace"))
+sys.path.insert(0, str(HERE))
+import launch
+
+ROOT = launch.tools_config.workspace_root()
 
 
 def _inside_blender():
@@ -42,8 +45,15 @@ def _setup():
 
 
 def main():
-    env = dict(os.environ)
-    blender = env.get("GW_BLENDER", "D:/SteamLibrary/steamapps/common/Blender/blender.exe")
+    try:
+        env = launch.tool_paths(root=ROOT)
+    except launch.WbError as exc:
+        print("ERROR: %s" % exc)
+        return 2
+    blender = env["GW_BLENDER"]
+    if not blender or not Path(blender).is_file():
+        print("Blender is missing: set GW_BLENDER in .env or _build/tools.json")
+        return 2
     art = env.get("GW_ART", str(ROOT / "_build/goku-xv2/author-source/goku.blend"))
     project = env.get("GW_PROJECT")
     if not project:
