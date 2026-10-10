@@ -119,6 +119,10 @@ class WbSession:
 
     def report_error(self, error) -> bool:
         self.last_error = str(error) or type(error).__name__
+        client.log.error("session error: %s (connected=%s row=%s frame=%s)",
+                         self.last_error, getattr(self, "connected", None),
+                         getattr(self, "row", None), getattr(self, "frame", None),
+                         exc_info=isinstance(error, BaseException))
         if any(word in self.last_error.lower() for word in _TRANSPORT_FAILURES):
             previous, self.client = self.client, None
             self.connected = False

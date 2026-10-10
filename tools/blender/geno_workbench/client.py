@@ -17,6 +17,21 @@ import threading
 import time
 from typing import Sequence
 
+import logging as _logging
+
+# Every engine call, its time and any error go to GW_WB_LOG (default <tmp>/geno_wb.log).
+LOG_PATH = os.environ.get("GW_WB_LOG") or os.path.join(
+    os.environ.get("TEMP") or os.environ.get("TMPDIR") or "/tmp", "geno_wb.log")
+log = _logging.getLogger("geno_wb")
+if not log.handlers:
+    try:
+        _handler = _logging.FileHandler(LOG_PATH, encoding="utf-8")
+        _handler.setFormatter(_logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
+        log.addHandler(_handler)
+        log.setLevel(_logging.DEBUG)
+    except OSError:
+        pass
+
 
 class WbError(RuntimeError):
     """A workbench transport, protocol, or tool failure."""
@@ -266,6 +281,19 @@ class McpClient:
         if args is not None and not isinstance(args, dict):
             raise WbError("tool arguments must be a dictionary")
 
+        started = time.monotonic()
+        log.debug("call %s %s", tool, json.dumps(args or {})[:300])
+        try:
+            body = self._call_body(tool, args, timeout)
+        except Exception as exc:
+            log.error("call %s failed after %.2fs: %s: %s", tool,
+                      time.monotonic() - started, type(exc).__name__, exc)
+            raise
+        log.debug("call %s ok %.2fs %s", tool, time.monotonic() - started,
+                  json.dumps(body)[:300])
+        return body
+
+    def _call_body(self, tool, args, timeout):
         result = self._request(
             "tools/call",
             {"name": tool, "arguments": args if args is not None else {}},
