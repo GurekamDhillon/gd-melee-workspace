@@ -290,7 +290,7 @@ class ArticleDefineTests(unittest.TestCase):
         hero["geno"] = 9
         self.assertEqual(check.validate(hero, GAME / "pc/geno/mods/vanilla-hero"), [])   # a donor-based define may declare art at 9
         for key, value in (("banner", "a.gxtex"), ("icon", "a.png"), ("icon", "sub/a.gxtex"), ("icon", "..a.gxtex"), ("icon", ["a.gxtex"]),
-                           ("stock", []), ("stock", ["a.gxtex"] * 17)):
+                           ("stock", []), ("stock", ["a.gxtex"] * 256)):
             bad = copy.deepcopy(hero); bad["fighters"][0]["presentation"] = {key: value}
             self.assertTrue(check.validate(bad, GAME / "pc/geno/mods/vanilla-hero"), (key, value))
 

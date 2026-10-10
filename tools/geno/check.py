@@ -262,7 +262,7 @@ def presentation_checks(fighter, p, base, errors):
     pres = fighter.get("presentation")
     if not isinstance(pres, dict):
         return
-    for key in ("icon", "portrait", "stock", "emblem"):
+    for key in ("icon", "portrait", "stock", "emblem", "results"):
         value = pres.get(key)
         names = [value] if isinstance(value, str) else value if isinstance(value, list) else []
         for j, name in enumerate(names):
@@ -281,8 +281,8 @@ def presentation_checks(fighter, p, base, errors):
             fmt, w, h, _tf, _tn, isz, tsz, ioff, toff = struct.unpack(">9I", blob[8:44])
             if fmt not in GXTX_FORMATS or ioff + isz > len(blob) or (tsz and toff + tsz > len(blob)) or not (0 < w <= 1024 and 0 < h <= 1024):
                 errors.append(diagnostic(where, "files/%s: format %d, %dx%d, image %d@%d do not fit" % (name, fmt, w, h, isz, ioff)))
-            elif key in ("stock", "emblem") and fmt >= 8:
-                errors.append(diagnostic(where, "a %s cannot use a palette format (%s): encode it without a palette (rgb5a3, rgba8, i4, ia8...)" % ("stock icon" if key == "stock" else "results emblem", GXTX_FORMATS[fmt])))
+            elif key in ("stock", "emblem", "results") and fmt >= 8:
+                errors.append(diagnostic(where, "a %s cannot use a palette format (%s): encode it without a palette (rgb5a3, rgba8, i4, ia8...)" % ("stock icon" if key == "stock" else "results card" if key == "results" else "results emblem", GXTX_FORMATS[fmt])))
 
 
 def audio_checks(fighter, p, base, errors):
