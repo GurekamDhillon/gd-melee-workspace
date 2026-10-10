@@ -37,6 +37,10 @@ def main(argv=None):
         help=STRINGS["port_argument"],
     )
     parser.add_argument("--art", default="", help="path to the fighter .blend/.glb (sets Blender art)")
+    parser.add_argument("--launcher", default="", help="gd-melee-launcher executable (fills the panel's Launcher field)")
+    parser.add_argument("--engine", default="", help="melee-pc.exe the server runs (fills the Engine field)")
+    parser.add_argument("--mods", default="", help="mods directory (fills the Mods dir field)")
+    parser.add_argument("--iso", default="", help="disc image (fills the Disc field; never stored in the repo)")
     parser.add_argument("--row", default="", help="load this move row after the fighter")
     parser.add_argument("--frame", type=int, default=0, help="go to this engine frame after loading the row")
     parser.add_argument("--report", action="store_true", help="print GENO_WB_REPORT lines and exit Blender")
@@ -55,6 +59,15 @@ def main(argv=None):
     settings.project = str(project)
     settings.host = "127.0.0.1"
     settings.port = args.port
+    # The panel's Start server / Restart engine use these; empty fields once spawned a launcher with no engine.
+    if args.launcher:
+        settings.launcher_exe = str(Path(args.launcher).expanduser())
+    if args.engine:
+        settings.engine_exe = str(Path(args.engine).expanduser())
+    if args.mods:
+        settings.mods_dir = str(Path(args.mods).expanduser())
+    if args.iso:
+        settings.iso_path = str(Path(args.iso).expanduser())
     if args.art:
         settings.blender_art = str(Path(args.art).expanduser().resolve())
 
@@ -99,25 +112,46 @@ def _after_load(bpy, api, args):
 
 
 def _present(bpy):
-    """Interactive only: drop the startup Cube, frame Goku and his overlays, solid shading."""
+    """Interactive only: drop the startup Cube, then a clean first view of Goku.
+
+    The mesh is framed (not the armature, whose stray bones would shrink him), seen from an angled
+    perspective, with the armature behind the mesh instead of drawn over it and the hurtbox wires pale.
+    """
+    import math
     try:
         cube = bpy.data.objects.get("Cube")
         if cube is not None and cube.type == "MESH" and len(cube.data.vertices) == 8:
             bpy.data.objects.remove(cube, do_unlink=True)
         arm = next((o for o in bpy.data.objects if o.type == "ARMATURE"), None)
+        meshes = [o for o in bpy.data.objects if o.type == "MESH" and arm is not None and o.parent == arm]
+        if arm is not None:
+            arm.show_in_front = False       # bones hide behind the mesh instead of striping it
+            arm.data.display_type = "STICK"
         for window in bpy.context.window_manager.windows:
             for area in window.screen.areas:
                 if area.type != "VIEW_3D":
                     continue
                 region = next(r for r in area.regions if r.type == "WINDOW")
+                space = area.spaces.active
                 with bpy.context.temp_override(window=window, area=area, region=region):
+                    bpy.ops.object.select_all(action="DESELECT")
+                    for obj in meshes or ([arm] if arm is not None else []):
+                        obj.select_set(True)
+                    if arm is not None:
+                        bpy.context.view_layer.objects.active = arm
+                    space.region_3d.view_perspective = "PERSP"
+                    space.region_3d.view_rotation = __import__("mathutils").Euler(
+                        (math.radians(78), 0.0, math.radians(-35)), "XYZ").to_quaternion()
+                    bpy.ops.view3d.view_selected()
+                    space.clip_end = 100000.0
+                    space.shading.type = "SOLID"
+                    space.shading.show_xray = False
+                    space.shading.color_type = "OBJECT"
+                    space.overlay.show_extras = True
+                    space.show_region_ui = True  # the Geno panel lives in the N sidebar
                     bpy.ops.object.select_all(action="DESELECT")
                     if arm is not None:
                         arm.select_set(True)
-                        bpy.context.view_layer.objects.active = arm
-                    bpy.ops.view3d.view_selected()
-                    area.spaces.active.clip_end = 100000.0
-                    area.spaces.active.show_region_ui = True  # the Geno panel lives in the N sidebar
     except Exception as exc:  # presentation is best effort
         print("GENO_WB_REPORT present_warning %s" % exc)
     return None
@@ -143,6 +177,20 @@ def _report(bpy, session, names, args):
     print("GENO_WB_REPORT engine bones=%d hitboxes=%d hurtboxes=%d schema=%s" % (
         len(info.get("bones", [])), len(info.get("hitboxes", [])), len(info.get("hurtboxes", [])), info.get("schema")))
     print("GENO_WB_REPORT overlay_objects=%s pose_error=%s" % (kinds, bpy.context.scene.geno_wb.pose_error))
+    if arm is not None:
+        # bones far from the body (a stray one sits apart from Goku): name, parent, head/tail in world space
+        import statistics
+        mw = arm.matrix_world
+        heads = {b.name: mw @ b.head_local for b in arm.data.bones}
+        if heads:
+            med = [statistics.median(v[i] for v in heads.values()) for i in range(3)]
+            def dist(v):
+                return sum((v[i] - med[i]) ** 2 for i in range(3)) ** 0.5
+            far = sorted(heads, key=lambda n: -dist(heads[n]))[:4]
+            for n in far:
+                b = arm.data.bones[n]
+                print("GENO_WB_REPORT far_bone %s parent=%s dist=%.2f head=(%.2f,%.2f,%.2f) length=%.2f" % (
+                    n, b.parent.name if b.parent else None, dist(heads[n]), *heads[n], b.length))
     print("GENO_WB_REPORT status=%s" % session.status)
     _sys.stdout.flush()
     bpy.ops.wm.quit_blender()

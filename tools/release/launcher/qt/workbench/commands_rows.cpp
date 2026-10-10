@@ -1,15 +1,19 @@
 #include "commands.h"
 #include <QElapsedTimer>
+#include <QHash>
 
 namespace wb {
 void registerRowCommands(Session &s) {
     s.registry().add({"list_rows", t("List fighter moves", "List fighter moves"), commandSchema(), false,
         [](const QJsonObject &, CommandContext &ctx) {
             QJsonArray rows;
+            QHash<QString, int> clipFrames;
+            for (const auto &clip : ctx.session.data().clips()) clipFrames.insert(clip.name, clip.frames);
             for (const auto &row : ctx.session.data().rows()) {
                 QJsonArray motions; for (int motion : row.motions) motions.append(motion);
                 rows.append(QJsonObject{{"name", row.name}, {"motions", motions}, {"tag", row.tag},
                     {"clip", row.effectiveClip()}, {"aerial", row.aerial},
+                    {"frames", qMax(0, clipFrames.value(row.effectiveClip(), 0) - row.cropStart)},
                     {"hitboxes", int(ctx.session.data().hitboxes(row.name).size())}});
             }
             return QJsonObject{{"rows", rows}};

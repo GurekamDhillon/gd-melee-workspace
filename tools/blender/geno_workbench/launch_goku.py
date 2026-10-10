@@ -11,7 +11,10 @@ connects, imports the artist rig and calibrates it, loads a move row and draws t
 Everything is overridable by environment (paths below are this machine's defaults):
   GW_ROOT          the main workspace checkout (has .env, _build/goku-xv2, ports/goku-xv2)
   GW_BLENDER       blender.exe
-  GW_LAUNCHER      gd-melee-launcher.exe built with --serve (Windows Qt build; needs Qt on PATH)
+  GW_LAUNCHER      gd-melee-launcher.exe built with --serve (Windows Qt build; needs Qt on PATH).
+                   Default: <GW_ROOT>/_build/wb-win/gd-melee-launcher.exe (copy the build there, with the
+                   Qt DLLs it needs beside it or Qt on GW_QT_BIN), else the newest one under _build/.
+                   Blender's console is also written to <GW_ROOT>/_build/wb-goku/blender.log.
   GW_QT_BIN        Qt bin directory prepended to PATH for the launcher
   GW_ENGINE_EXE    melee-pc.exe built from the geno-workbench game branch (schema 2, headless)
   GW_ISO_VANILLA   the disc image (from .env; never committed)
@@ -68,8 +71,10 @@ def main() -> int:
 
     blender = os.environ.get("GW_BLENDER", "D:/SteamLibrary/steamapps/common/Blender/blender.exe")
     launcher = os.environ.get("GW_LAUNCHER") or str(
-        next((p for p in (HERE.parents[2] / "_build/wb-win/gd-melee-launcher.exe",
-                          root / "_build/wb-win/gd-melee-launcher.exe") if p.is_file()), ""))
+        next((p for p in (root / "_build/wb-win/gd-melee-launcher.exe",           # the stable home (README.md)
+                          HERE.parents[2] / "_build/wb-win/gd-melee-launcher.exe") if p.is_file()), ""))
+    if not launcher:
+        launcher = launch.find_launcher(root=root) or ""
     qt_bin = os.environ.get("GW_QT_BIN", "E:/Projects/Qt/6.8.3/msvc2022_64/bin")
     engine_src = Path(os.environ.get("GW_ENGINE_EXE") or next(
         (c for c in (root / "_build/agents/geno-workbench/melee-pc.exe", root / "_build/wb-goku/engine/melee-pc.exe")
@@ -116,7 +121,9 @@ def main() -> int:
         if args.check:
             cmd += ["--background", "--factory-startup"]
         cmd += ["--python", str(HERE / "bootstrap.py"), "--", "--project", str(project), "--port", str(port),
-                "--art", str(art)]
+                "--art", str(art), "--launcher", str(launcher), "--engine", str(engine), "--mods", str(mods)]
+        if iso:
+            cmd += ["--iso", str(iso)]
         if args.row:
             cmd += ["--row", args.row]
         elif args.check:
@@ -126,13 +133,23 @@ def main() -> int:
         if args.check:
             cmd += ["--report"]
         print("starting Blender ...")
+        blender_log = work / "blender.log"
         if not args.check:
-            return subprocess.call(cmd)
+            # Tee Blender's console to a file: a traceback in the add-on is otherwise lost with the window.
+            print("Blender log: %s" % blender_log)
+            with open(blender_log, "w", encoding="utf-8", errors="replace") as log,                     subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                                     errors="replace") as bl:
+                for line in bl.stdout:
+                    print(line, end="")
+                    log.write(line)
+                    log.flush()
+            return bl.returncode
         # Blender exits 0 even when the script raised; a check fails on a traceback or a missing report
         seen = {"trace": False, "report": False}
-        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace") as bl:
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace") as bl,                 open(blender_log, "w", encoding="utf-8", errors="replace") as log:
             for line in bl.stdout:
                 print(line, end="")
+                log.write(line)
                 seen["trace"] |= "Traceback (most recent call last)" in line
                 seen["report"] |= "GENO_WB_REPORT" in line
         return 1 if bl.returncode or seen["trace"] or not seen["report"] else 0

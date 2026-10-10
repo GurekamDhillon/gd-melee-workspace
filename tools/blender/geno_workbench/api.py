@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 from typing import Callable
 
 try:
@@ -31,6 +32,10 @@ _TRANSPORT_FAILURES = (
     "reset by peer", "broken pipe", "connection aborted", "connection lost",
     "disconnected", "not connected", "end of file", "eof",
 )
+
+
+# A frame that cannot be shown (the move ended before it) is the server answering, not the link failing.
+_NOT_TRANSPORT = ("requested frame", "past the end")
 
 
 class WbSession:
@@ -71,6 +76,8 @@ class WbSession:
         self.art_blend = ""
         self.art_glb = ""
         self.bone_aliases: dict[str, str] = {}
+        self.loaded_row = ""   # the name given to load_row (list_rows' name; self.row is the engine's label)
+        self.row_lengths: dict[str, int] = {}   # learned from the server when a frame is past a move's end
 
     def _fire_frame(self) -> None:
         """Report hook failures without raising through an operator."""
@@ -123,7 +130,9 @@ class WbSession:
                          self.last_error, getattr(self, "connected", None),
                          getattr(self, "row", None), getattr(self, "frame", None),
                          exc_info=isinstance(error, BaseException))
-        if any(word in self.last_error.lower() for word in _TRANSPORT_FAILURES):
+        lowered = self.last_error.lower()
+        if (any(word in lowered for word in _TRANSPORT_FAILURES)
+                and not any(word in lowered for word in _NOT_TRANSPORT)):
             previous, self.client = self.client, None
             self.connected = False
             self.pending_frame = None
@@ -210,6 +219,29 @@ class WbSession:
         self.row = row
         self.frame = frame
 
+    def row_frames(self, name: str = "") -> int:
+        """Frames in the loaded move: what the server taught us, else list_rows' count; 0 = unknown."""
+        name = name or self.loaded_row
+        learned = self.row_lengths.get(name, 0)
+        if learned:
+            return learned
+        for item in self.rows:
+            if item.get("name") == name or item.get("row") == name:
+                count = item.get("frames")
+                if isinstance(count, int) and not isinstance(count, bool) and count > 0:
+                    return count
+        return 0
+
+    @staticmethod
+    def _past_end(error, wanted: int):
+        """The move's last frame when the server says `wanted` is past its end, else None."""
+        text = str(error)
+        if "past the end" not in text:
+            return None
+        found = re.search(r"last frame (\d+)", text)
+        last = int(found.group(1)) if found else wanted - 1
+        return last if last >= 1 else None
+
     def _frame_status(self) -> str:
         text = STRINGS["frame_loaded"].format(row=self.row, frame=self.frame)
         return f"{text}; {self.hook_error}" if self.hook_error else text
@@ -242,6 +274,8 @@ class WbSession:
             self._quiet_close(previous)
         self.rows = []
         self.row = ""
+        self.loaded_row = ""
+        self.row_lengths = {}
         self.frame = 0
         self.pending_frame = None
         self.info = None
@@ -291,6 +325,7 @@ class WbSession:
                 loaded = self._request("set_frame", {"frame": 1})
             parsed = self._read_frame(loaded, row)
             boxes = self._source_hitboxes(row) if refresh_hitboxes else []
+            self.loaded_row = row
             self._store_frame(parsed)
             self.hitboxes = boxes
             self.suggestion = None
@@ -304,7 +339,19 @@ class WbSession:
 
         def action():
             frame = self._integer(n, "frame")
-            result = self._request("set_frame", {"frame": frame})
+            limit = self.row_frames()
+            if limit and frame > limit:
+                frame = limit
+            try:
+                result = self._request("set_frame", {"frame": frame})
+            except client.WbError as exc:
+                last = self._past_end(exc, frame)
+                if last is None:
+                    raise
+                # the move is shorter than we thought: remember it and show its last frame instead
+                self.row_lengths[self.loaded_row] = last
+                frame = last
+                result = self._request("set_frame", {"frame": frame})
             self._store_frame(self._read_frame(result, self.row))
             self._fire_frame()
             return self._frame_status()
@@ -325,7 +372,8 @@ class WbSession:
             frame = self._integer(n, "frame")
         except client.WbError as exc:
             return self.report_error(exc)
-        self.pending_frame = frame
+        limit = self.row_frames()
+        self.pending_frame = min(frame, limit) if limit else frame
         return True
 
     def flush_pending(self) -> bool:
@@ -387,6 +435,7 @@ class WbSession:
             parsed = self._read_frame(
                 self._request("set_frame", {"frame": frame}), row
             )
+            self.loaded_row = row
             self._store_frame(parsed)
             self.hitboxes = boxes
             self.suggestion = None
@@ -500,6 +549,7 @@ class WbSession:
             result = self._request("engine_restart")
             self.info = None
             self.row = ""
+            self.loaded_row = ""
             self.frame = 0
             self.hitboxes = []
             self.problems = []

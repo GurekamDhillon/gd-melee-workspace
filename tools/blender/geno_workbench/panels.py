@@ -108,7 +108,10 @@ class GENO_WB_PT_timeline(bpy.types.Panel):
             "geno_wb.step", text=STRINGS["last_frame"]
         ).n = 600 - settings.frame
         frame = value.info.get("frame", STRINGS["unknown"]) if value.info else STRINGS["unknown"]
-        self.layout.label(text=STRINGS["engine_frame"].format(frame=frame))
+        frames = value.row_frames()
+        length = "  (" + STRINGS["move_length"].format(frames=frames) + ")" if frames else ""
+        self.layout.label(text=STRINGS["engine_frame"].format(frame=frame) + length)
+        self.layout.prop(settings, "loop")
         self.layout.label(
             text=settings.status, icon="ERROR" if value.last_error else "INFO"
         )

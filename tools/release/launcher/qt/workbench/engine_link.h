@@ -1,4 +1,5 @@
 #pragma once
+#include <QHash>
 
 #include <QByteArray>
 #include <QElapsedTimer>
@@ -93,6 +94,7 @@ private:
     int timeoutMs_ = 8000;
     bool busy_ = false;
     bool ownsProcess_ = false;
+    QHash<int, int> lastGoodFrame_; // motion -> highest frame the engine confirmed (a move's known length)
     quint64 stopGeneration_ = 0;
 };
 }

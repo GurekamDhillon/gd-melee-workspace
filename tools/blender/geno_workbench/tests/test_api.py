@@ -60,3 +60,34 @@ def test_old_engine_schema_is_reported():
         assert "schema 2 needed" in s.pose_problem()   # but posing is refused with the explanation
     finally:
         fake.stop()
+
+
+def test_row_length_clamps_and_a_past_end_frame_never_disconnects():
+    fake, s = make()
+    try:
+        s.connect(); s.refresh_rows()
+        assert {r["name"]: r["frames"] for r in s.rows} == {"wait": 40, "jab": 30, "dair": 39}
+        assert s.load_row("dair") and s.row_frames() == 39
+        assert s.set_frame(500) and s.frame == 39          # clamped to the move's last frame
+        assert s.step(5) and s.frame == 39                   # stepping past the end stays on it
+        s.coalesced_set_frame(200)
+        assert s.pending_frame == 39
+        assert s.connected
+    finally:
+        fake.stop()
+
+
+def test_server_past_end_error_is_learned_not_a_transport_failure():
+    fake, s = make()
+    try:
+        s.connect(); s.refresh_rows()
+        s.load_row("jab")
+        s.rows = [dict(r, frames=0) for r in s.rows]       # no length hint: the server has to say
+        assert s.row_frames() == 0
+        assert s.set_frame(31) is True                      # server: past the end, last frame 30
+        assert s.frame == 30 and s.row_frames() == 30 and s.connected
+        fake.fail_next = "timeout waiting for requested frame"
+        assert s.set_frame(3) is False
+        assert s.connected and s.client is not None         # a frame timeout is not a dropped link
+    finally:
+        fake.stop()

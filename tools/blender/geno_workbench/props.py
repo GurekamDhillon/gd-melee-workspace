@@ -114,6 +114,7 @@ STRINGS: dict[str, str] = {
     "suggested": "suggested bone: {bone}",
     "no_suggestion": "no bone suggestion available",
     "restarted": "engine restarted: {engine}",
+    "server_reused": "server already running on 127.0.0.1:{port}; connect to continue",
     "server_started": "server ready on 127.0.0.1:{port}; connect to continue",
     "not_connected": "not connected: connect to a workbench server first",
     "invalid_reply": "invalid reply from {tool}: expected an object",
@@ -162,6 +163,10 @@ STRINGS: dict[str, str] = {
     "play_started": "playing",
     "play_paused": "playback stopped",
     "play_limit": "playback stopped at frame 600",
+    "play_end": "playback stopped at the end of the move (frame {frame})",
+    "loop": "Loop",
+    "loop_help": "Play again from frame 1 when the move ends",
+    "move_length": "{frames} frames",
     "play_window_required": "Playback requires a Blender window.",
     "engine_frame": "Engine frame: {frame}",
     "run_checks": "Run checks",
@@ -463,6 +468,7 @@ def _make_property_group():
         move: EnumProperty(name=STRINGS["row"], description=STRINGS["row_help"], items=row_items, update=on_row_changed, options={"SKIP_SAVE"})
         frame: IntProperty(name=STRINGS["frame"], description=STRINGS["frame_help"], default=0, min=0, max=600, update=on_frame_changed)
         playing: BoolProperty(name=STRINGS["playing"], default=False, options={"SKIP_SAVE"})
+        loop: BoolProperty(name=STRINGS["loop"], description=STRINGS["loop_help"], default=True)
         show_hurt: BoolProperty(name=STRINGS["show_hurt"], default=True)
         show_ecb: BoolProperty(name=STRINGS["show_ecb"], default=True)
         show_floor: BoolProperty(name=STRINGS["show_floor"], default=True)

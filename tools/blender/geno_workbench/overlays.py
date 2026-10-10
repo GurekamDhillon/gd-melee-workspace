@@ -21,7 +21,7 @@ SLOT_COLORS = (
     (1.0, 0.9, 0.1, 0.55),
     (0.9, 0.2, 0.9, 0.55),
 )
-HURT_COLOR = (0.15, 0.8, 0.4, 0.25)
+HURT_COLOR = (0.6, 0.9, 0.72, 0.2)   # pale: the hurtboxes frame the body, they must not dominate it
 ECB_COLOR = (0.2, 0.6, 1.0, 1.0)
 FLOOR_COLOR = (0.6, 0.6, 0.6, 1.0)
 

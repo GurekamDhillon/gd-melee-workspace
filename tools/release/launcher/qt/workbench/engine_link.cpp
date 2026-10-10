@@ -493,7 +493,25 @@ QJsonObject EngineLink::call(const QString &fn, const QJsonObject &args, QString
         const auto frame = o.value("frame");
         return frame.isDouble() && frame.toDouble() == wanted.toDouble();
     };
-    if (!pending && matches(result)) return result;
+    // The engine answers frame_info with frame -1 while the request is pending. Any other frame is the
+    // finished request: if it is not the wanted one the move ended (or chained into another action) before
+    // that frame, so say so now instead of polling until the timeout.
+    const int motion = args.value("motion").toInt(-1);
+    auto settle = [&](const QJsonObject &o, QString *why) {
+        if (matches(o)) { lastGoodFrame_[motion] = std::max(lastGoodFrame_.value(motion), int(wanted.toDouble())); return true; }
+        const auto frame = o.value("frame");
+        if (!frame.isDouble() || frame.toDouble() < 1) return false; // still pending
+        const int last = lastGoodFrame_.value(motion, 0);
+        *why = QString("frame %1 is past the end of this move (the fighter is at frame %2 of action %3%4)")
+            .arg(int(wanted.toDouble())).arg(int(frame.toDouble())).arg(o.value("motion").toInt(-1))
+            .arg(last > 0 ? QString("; last frame %1").arg(last) : QString());
+        return true;
+    };
+    QString why;
+    if (!pending && settle(result, &why)) {
+        if (why.isEmpty()) return result;
+        setError(err, why); return {};
+    }
     QElapsedTimer polling; polling.start();
     while (remaining(polling, 5000) && remaining(timer, timeoutMs_)) {
         const int left = std::min(remaining(polling, 5000), remaining(timer, timeoutMs_));
@@ -502,7 +520,10 @@ QJsonObject EngineLink::call(const QString &fn, const QJsonObject &args, QString
         if (!callBudget) break;
         result = request("frame_info", {}, callBudget, &error);
         if (!error.isEmpty()) { setError(err, error); return {}; }
-        if (matches(result)) return result;
+        if (settle(result, &why)) {
+            if (why.isEmpty()) return result;
+            setError(err, why); return {};
+        }
     }
     setError(err, "timeout waiting for requested frame");
     return {};
