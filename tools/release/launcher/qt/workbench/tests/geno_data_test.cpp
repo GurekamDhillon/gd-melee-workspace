@@ -2,6 +2,7 @@
 #include "geno_data.h"
 #include <QTemporaryDir>
 #include <QtTest>
+#include <functional>
 
 using namespace wb;
 
@@ -182,6 +183,77 @@ private slots:
         FileStore fs(project); GenoData data(fs);
         QVERIFY(data.reload().isEmpty());
         QCOMPARE(data.jointForRole("HAND_R"), 2);
+    }
+    // The owner's dair sequence (2026-10-10): move window 0 from 6 to 12 (length 4), then add FOOT_L at 12
+    // for 3 frames. The script must stay in start-frame order with distinct slots, and gameplay.json's
+    // windows must equal the script's timing.
+    void ownerDairSequenceStaysOrderedAndDeclared() {
+        static const char *dair =
+            "# PICK: provisional\nPUT ANIM_RATE 1.0\nwait_until 4\ncmd_var idx=0 value=1\nwait_until 4\n"
+            "sfx behavior=1 sfx_id=164 volume=127 panning=64\nwait_until 6\n"
+            "hitbox slot=0 joint=@FOOT_R@ damage=14 size=2.80 x=0.00 y=0.00 z=0.00 angle=270 kbg=90 fkb=0 bkb=20\n"
+            "wait 3\nclear_hitboxes\nwait_until 9\n"
+            "hitbox slot=0 joint=@FOOT_R@ damage=10 size=2.40 x=0.00 y=0.00 z=0.00 angle=361 kbg=90 fkb=0 bkb=15\n"
+            "wait 6\nclear_hitboxes\nwait_until 26\ncmd_var idx=0 value=0\nwait_until 36\niasa\n";
+        QTemporaryDir d; wbtest::makeSynthFighter(d.path());
+        QJsonObject gameplay = QJsonDocument::fromJson(wbtest::kGameplay).object();
+        QJsonArray moves = gameplay["moves"].toArray();
+        QJsonObject dairMove = moves[1].toObject();
+        dairMove["windows"] = QJsonArray{QJsonArray{6, 3}, QJsonArray{9, 6}};
+        dairMove["design"] = QJsonObject{{"window_roles", QJsonArray{"FOOT_R", "FOOT_R"}}};
+        moves[1] = dairMove; gameplay["moves"] = moves;
+        wbtest::put(d.path(), "gameplay.json", QJsonDocument(gameplay).toJson());
+        wbtest::put(d.path(), "moves/dair.genoasm", dair);
+        const auto step = [&](const std::function<QVector<FileChange>(GenoData &, QString *)> &op) {
+            FileStore fs(d.path()); GenoData data(fs);
+            const QString reload = data.reload(); QVERIFY2(reload.isEmpty(), qPrintable(reload));
+            QString err; const auto changes = op(data, &err);
+            QVERIFY2(err.isEmpty() && !changes.isEmpty(), qPrintable(err));
+            for (const auto &c : changes) wbtest::put(d.path(), c.path, c.after);
+        };
+        step([](GenoData &data, QString *err) {
+            HitboxEdit e; e.startFrame = 12; e.endFrame = 16; return data.editHitbox("dair", 0, e, err); });
+        step([](GenoData &data, QString *err) {
+            HitboxAdd a; a.joint = "FOOT_L"; a.frame = 12; a.duration = 3; return data.addHitbox("dair", a, nullptr, err); });
+        FileStore fs(d.path()); GenoData data(fs); QVERIFY(data.reload().isEmpty());
+        const QString script = QString::fromUtf8(diskBytes(d.path(), "moves/dair.genoasm"));
+        const auto boxes = data.hitboxes("dair");
+        QVERIFY2(boxes.size() == 3, qPrintable(script));
+        // Start-frame order, and no two windows that overlap share a slot.
+        for (int i = 1; i < boxes.size(); ++i) QVERIFY2(boxes[i - 1].startFrame <= boxes[i].startFrame, qPrintable(script));
+        for (int i = 0; i < boxes.size(); ++i) for (int j = i + 1; j < boxes.size(); ++j) {
+            const bool overlap = boxes[i].startFrame < boxes[j].endFrame && boxes[j].startFrame < boxes[i].endFrame;
+            QVERIFY2(!overlap || boxes[i].slot != boxes[j].slot, qPrintable(script));
+        }
+        QCOMPARE(boxes[0].startFrame, 9);  QCOMPARE(boxes[0].endFrame, 15);
+        QCOMPARE(boxes[1].startFrame, 12); QCOMPARE(boxes[1].endFrame, 16); QCOMPARE(boxes[1].joint, QString("FOOT_R"));
+        QCOMPARE(boxes[2].startFrame, 12); QCOMPARE(boxes[2].endFrame, 15); QCOMPARE(boxes[2].joint, QString("FOOT_L"));
+        // Other commands keep their frames.
+        QVERIFY(GenoAsm::parse(script).timingProblems().isEmpty());
+        QVERIFY2(script.contains("wait_until 4\ncmd_var idx=0 value=1"), qPrintable(script));
+        QVERIFY2(script.contains("wait_until 26\ncmd_var idx=0 value=0\nwait_until 36\niasa"), qPrintable(script));
+        // gameplay.json windows and roles equal the script, and the checks find nothing.
+        const auto json = QJsonDocument::fromJson(diskBytes(d.path(), "gameplay.json")).object();
+        const auto move = json["moves"].toArray()[1].toObject();
+        QCOMPARE(QJsonDocument(move["windows"].toArray()).toJson(QJsonDocument::Compact), QByteArray("[[9,6],[12,4],[12,3]]"));
+        QCOMPARE(QJsonDocument(move["design"].toObject()["window_roles"].toArray()).toJson(QJsonDocument::Compact),
+                 QByteArray("[\"FOOT_R\",\"FOOT_R\",\"FOOT_L\"]"));
+        QVERIFY2(data.timingProblems("dair").isEmpty(), qPrintable(data.timingProblems("dair").join("\n")));
+    }
+    void timingCheckNamesAScriptThatDisagreesWithGameplay() {
+        QTemporaryDir d; wbtest::makeSynthFighter(d.path());
+        QJsonObject gameplay = QJsonDocument::fromJson(wbtest::kGameplay).object();
+        QJsonArray moves = gameplay["moves"].toArray();
+        QJsonObject dairMove = moves[1].toObject();
+        dairMove["windows"] = QJsonArray{QJsonArray{12, 4}, QJsonArray{9, 6}};  // what the buggy write declared
+        moves[1] = dairMove; gameplay["moves"] = moves;
+        wbtest::put(d.path(), "gameplay.json", QJsonDocument(gameplay).toJson());
+        wbtest::put(d.path(), "moves/dair.genoasm",
+            "wait_until 12\nhitbox slot=0 joint=@A@ damage=1\nwait 4\nclear_hitboxes\nwait_until 9\n"
+            "hitbox slot=0 joint=@A@ damage=1\nwait 6\nclear_hitboxes\n");
+        FileStore fs(d.path()); GenoData data(fs); QVERIFY(data.reload().isEmpty());
+        const QString all = data.timingProblems("dair").join("\n");
+        QVERIFY2(all.contains("wait_until 9 comes after frame 16"), qPrintable(all));
     }
     void editHitboxProducesOneFileChange() {
         QTemporaryDir d; wbtest::makeSynthFighter(d.path());

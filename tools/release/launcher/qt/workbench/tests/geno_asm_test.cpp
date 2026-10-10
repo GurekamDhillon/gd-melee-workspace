@@ -323,6 +323,71 @@ private slots:
         QCOMPARE(GenoAsm::parse(text).removeHitbox(0, &err), QString("wait_until 3\nwait 2\njab_rapid state=1\nwait_until 18\niasa\n"));
     }
 
+    void reordersWhenAWindowMovesPastTheNext() {
+        QString err; HitboxEdit e; e.startFrame = 12; e.endFrame = 16;
+        const QString out = GenoAsm::parse(wbtest::kDair).apply(0, e, &err);
+        QVERIFY2(!out.isNull(), qPrintable(err));
+        const auto hb = GenoAsm::parse(out).hitboxes();
+        QCOMPARE(hb.size(), 2);
+        QCOMPARE(hb[0].startFrame, 9);  QCOMPARE(hb[0].endFrame, 15);
+        QCOMPARE(hb[1].startFrame, 12); QCOMPARE(hb[1].endFrame, 16);
+        QVERIFY(hb[0].slot != hb[1].slot);
+        QVERIFY(GenoAsm::parse(out).timingProblems().isEmpty());
+        QVERIFY2(out.contains("clear_hitbox hit_idx=" + QString::number(hb[0].slot)), qPrintable(out));
+        QVERIFY(out.endsWith("wait_until 36\niasa\n"));
+    }
+    void moreThanFourOverlappingWindowsAreRefused() {
+        QString text;
+        for (int i = 0; i < 4; ++i)
+            text += QString("wait_until %1\nhitbox slot=%2 joint=@A@ damage=1\n").arg(2 + i).arg(i);
+        text += "wait_until 20\nclear_hitboxes\n";
+        HitboxAdd a; a.joint = "B"; a.frame = 10; a.duration = 3;
+        QString err;
+        QVERIFY(GenoAsm::parse(text).addHitbox(a, &err).isNull());
+        QVERIFY2(err.contains("no free hitbox slot") || err.contains("more than 4"), qPrintable(err));
+    }
+    void timingProblemsNameARewindAndASlotClash() {
+        const QString text = "wait_until 12\nhitbox slot=0 joint=@A@ damage=1\nwait 4\nclear_hitboxes\nwait_until 9\n"
+                             "hitbox slot=0 joint=@A@ damage=1\nwait 6\nclear_hitboxes\n";
+        const auto problems = GenoAsm::parse(text).timingProblems();
+        QVERIFY(!problems.isEmpty());
+        QVERIFY2(problems.join("\n").contains("wait_until 9 comes after frame 16"), qPrintable(problems.join("\n")));
+        QVERIFY(GenoAsm::parse(wbtest::kDair).timingProblems().isEmpty());
+        const QString clash = "wait_until 2\nhitbox slot=0 joint=@A@\nwait_until 3\nhitbox slot=0 joint=@A@\nwait_until 6\nclear_hitboxes\n";
+        QVERIFY(GenoAsm::parse(clash).timingProblems().join("\n").contains("different slots"));
+    }
+    void existingDistinctSlotsAreNeverRenumbered() {
+        // Slot ids are hit priority: slot 2 opens after slot 1 here on purpose, and the script is out of order.
+        const QString text = "wait_until 12\nhitbox slot=2 joint=@A@ damage=5\nwait 4\nclear_hitboxes\n"
+                             "wait_until 9\nhitbox slot=1 joint=@B@ damage=9\nwait 6\nclear_hitboxes\n";
+        QString err;
+        HitboxEdit frames; frames.startFrame = 12; frames.endFrame = 16;
+        const QString sorted = GenoAsm::parse(text).apply(0, frames, &err);
+        QVERIFY2(!sorted.isNull(), qPrintable(err));
+        const auto hb = GenoAsm::parse(sorted).hitboxes();
+        QCOMPARE(hb.size(), 2);
+        QCOMPARE(hb[0].joint, QString("B")); QCOMPARE(hb[0].slot, 1);
+        QCOMPARE(hb[1].joint, QString("A")); QCOMPARE(hb[1].slot, 2);
+    }
+    void aNewOverlappingHitboxTakesTheNextFreeHigherSlot() {
+        // slot 1 is live over frames 4..10 and slot 0 is free: the new hitbox must not jump the queue to 0.
+        const QString text = "wait_until 4\nhitbox slot=1 joint=@A@ damage=5\nwait 6\nclear_hitboxes\n";
+        HitboxAdd a; a.joint = "B"; a.frame = 6; a.duration = 2;
+        QString err;
+        const QString out = GenoAsm::parse(text).addHitbox(a, &err);
+        QVERIFY2(!out.isNull(), qPrintable(err));
+        const auto hb = GenoAsm::parse(out).hitboxes();
+        QCOMPARE(hb.size(), 2);
+        QCOMPARE(hb[0].slot, 1); QCOMPARE(hb[1].slot, 2);
+        // the same through the one-slot-at-a-time model path (after a clear_hitbox exists)
+        const QString perSlot = "wait_until 4\nhitbox slot=1 joint=@A@ damage=5\nhitbox slot=3 joint=@C@ damage=5\nwait_until 8\n"
+                                "clear_hitbox hit_idx=3\nwait_until 10\nclear_hitboxes\n";
+        const QString out2 = GenoAsm::parse(perSlot).addHitbox(a, &err);
+        QVERIFY2(!out2.isNull(), qPrintable(err));
+        const auto hb2 = GenoAsm::parse(out2).hitboxes();
+        QCOMPARE(hb2.size(), 3);
+        for (const auto &h : hb2) if (h.joint == "B") QCOMPARE(h.slot, 0);  // 1 and 3 are live and nothing is free above them: the lowest free id
+    }
 };
 QTEST_MAIN(GenoAsmTest)
 #include "geno_asm_test.moc"

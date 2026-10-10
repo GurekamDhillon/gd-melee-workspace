@@ -1,5 +1,6 @@
 #pragma once
 #include <QString>
+#include <QStringList>
 #include <QHash>
 #include <QVector>
 
@@ -20,6 +21,7 @@ struct RowAnalysis {
     bool aerial = false, groundedClip = false, hasSwingMotion = false;
     double floorY = 0, rowLowestY = 0;
     QVector<HitboxSample> hitboxes;
+    QStringList timingIssues; // The script would not run as gameplay.json declares (a blocker).
     QVector<BoneSample> bones;
     // Engine sweeps keep limb scores at each hitbox's own active frame.
     // Pure/static callers can continue to supply the row-wide bones vector.

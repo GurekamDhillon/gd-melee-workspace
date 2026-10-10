@@ -45,8 +45,19 @@ public:
     // Remove a hitbox, and its window's clear_hitboxes when it was the last one in that window.
     QString removeHitbox(int ordinal, QString *err) const;
     QString text() const;
+    // Readable reasons the script would not run the way hitboxes() describes it (straight-line scripts):
+    // a wait_until that goes back in time (the engine does not wait, so what follows runs late) and two
+    // overlapping windows on one slot. Empty when the script is sound or has loops/calls/gotos.
+    QStringList timingProblems() const;
 
 private:
+    // Re-emit the hitbox blocks in start-frame order with distinct slots for windows that overlap in time
+    // (other commands stay at their frames). Straight-line scripts only; the text comes back unchanged
+    // when it is already sound. A null string plus *err when it cannot (more than kHitboxSlots at once).
+    static QString sound(const QString &text, QString *err);
+    // The frame edit and the add/remove for scripts that close windows one slot at a time (clear_hitbox).
+    QString viaModel(int ordinal, const HitboxEdit *edit, const HitboxAdd *add, bool remove, QString *err,
+                     int *ordinalOut) const;
     QString text_;
     // Keep each CR and the final empty line, so joining on LF preserves even mixed endings.
     QStringList lines_;

@@ -87,6 +87,13 @@ QJsonObject rebuild(Session &session) {
     QStringList argv = ProjectConfig::load(configFiles, &error).rebuild;
     if (!error.isEmpty()) throw CommandError{error};
     if (argv.isEmpty() || argv.first().isEmpty()) throw CommandError{"rebuild not configured"};
+    // The build audit refuses a script whose real hitbox timing disagrees with gameplay.json; say so before
+    // the long build rather than after it.
+    for (const auto &row : session.data().rows()) {
+        const QStringList problems = session.data().timingProblems(row.name);
+        if (!problems.isEmpty())
+            throw CommandError{"rebuild refused: hitbox timing in " + row.name + ": " + problems.join(" ")};
+    }
     const QString project = session.files().root();
     const QString package = QDir(project).filePath("package");
     for (auto &arg : argv) {

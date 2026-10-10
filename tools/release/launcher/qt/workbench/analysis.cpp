@@ -128,6 +128,7 @@ RowAnalysis analyzeStaticRow(Session &s, const RowInfo &row, QString *err) {
         result.aerial = row.aerial; result.groundedClip = groundedClip(s, row.clip);
         static const QSet<QString> swingTags{"jab", "tilt", "smash", "aerial", "special"};
         result.hasSwingMotion = swingTags.contains(row.tag);
+        result.timingIssues = s.data().timingProblems(row.name);
         for (const auto &hitbox : s.data().hitboxes(row.name))
             result.hitboxes.append({hitbox.ordinal, hitbox.joint, hitbox.startFrame, 0});
         return result;
