@@ -1,6 +1,7 @@
 """Entry point for blender --python bootstrap.py -- --project P --port N."""
 
 import argparse
+import os
 from pathlib import Path
 import sys
 
@@ -163,6 +164,12 @@ def _present(bpy):
         if arm is not None:
             arm.show_in_front = False       # bones hide behind the mesh instead of striping it
             arm.data.display_type = "STICK"
+            # Helper sockets (grab_anchor holds the victim 5 units in front of the chest) are real joints but
+            # draw as a bone as long as the torso standing apart from Goku. Hide them in the viewport only;
+            # they are still posed and still map to the engine.
+            for bone in arm.data.bones:
+                if bone.name == "grab_anchor" or bone.name.startswith("item_socket"):
+                    bone.hide = True
         for window in bpy.context.window_manager.windows:
             for area in window.screen.areas:
                 if area.type != "VIEW_3D":
@@ -190,6 +197,36 @@ def _present(bpy):
                         arm.select_set(True)
     except Exception as exc:  # presentation is best effort
         print("GENO_WB_REPORT present_warning %s" % exc)
+    shot = os.environ.get("GW_WB_SHOT", "")
+    if shot:
+        # Blender's own screenshot of its window (no desktop capture); GW_WB_SHOT=path.png, then it quits
+        def dismiss():
+            try:   # a mouse move closes the splash popup that otherwise sits over the viewport
+                window = bpy.context.window_manager.windows[0]
+                window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=300, y=300)
+            except Exception as exc:
+                print("GENO_WB_REPORT splash_warning %s" % exc)
+            return None
+
+        def take():
+            try:
+                for window in bpy.context.window_manager.windows:
+                    with bpy.context.temp_override(window=window):
+                        bpy.ops.screen.screenshot(filepath=shot)
+                    print("GENO_WB_REPORT screenshot %s" % shot)
+                    area = next((a for a in window.screen.areas if a.type == "VIEW_3D"), None)
+                    if area is not None:   # the viewport alone, without any popup drawn over it
+                        region = next(r for r in area.regions if r.type == "WINDOW")
+                        with bpy.context.temp_override(window=window, area=area, region=region):
+                            bpy.ops.screen.screenshot_area(filepath=shot.replace(".png", "_view.png"))
+                    break
+            except Exception as exc:
+                print("GENO_WB_REPORT screenshot_error %s" % exc)
+            if os.environ.get("GW_WB_SHOT_QUIT"):
+                bpy.ops.wm.quit_blender()
+            return None
+        bpy.app.timers.register(dismiss, first_interval=3.0)
+        bpy.app.timers.register(take, first_interval=5.0)
     return None
 
 
@@ -217,16 +254,28 @@ def _report(bpy, session, names, args):
         # bones far from the body (a stray one sits apart from Goku): name, parent, head/tail in world space
         import statistics
         mw = arm.matrix_world
-        heads = {b.name: mw @ b.head_local for b in arm.data.bones}
-        if heads:
-            med = [statistics.median(v[i] for v in heads.values()) for i in range(3)]
+        posed = {pb.name: (mw @ pb.head, mw @ pb.tail) for pb in arm.pose.bones}
+        if posed:
+            med = [statistics.median(h[i] for h, _t in posed.values()) for i in range(3)]
             def dist(v):
                 return sum((v[i] - med[i]) ** 2 for i in range(3)) ** 0.5
-            far = sorted(heads, key=lambda n: -dist(heads[n]))[:4]
-            for n in far:
+            def blen(n):
+                return (posed[n][1] - posed[n][0]).length
+            meshes = [o for o in bpy.data.objects if o.type == "MESH" and o.parent == arm]
+            if meshes:
+                pts = [meshes[0].matrix_world @ __import__("mathutils").Vector(c) for c in meshes[0].bound_box]
+                lo = [min(p[i] for p in pts) for i in range(3)]
+                hi = [max(p[i] for p in pts) for i in range(3)]
+                print("GENO_WB_REPORT mesh_bbox lo=(%.1f,%.1f,%.1f) hi=(%.1f,%.1f,%.1f)" % (*lo, *hi))
+                for n, (h, t) in posed.items():
+                    out = [i for i in range(3) if max(h[i], t[i]) > hi[i] + 1.0 or min(h[i], t[i]) < lo[i] - 1.0]
+                    if out:
+                        print("GENO_WB_REPORT outside_bone %s parent=%s axes=%s head=(%.1f,%.1f,%.1f) tail=(%.1f,%.1f,%.1f)" % (
+                            n, arm.data.bones[n].parent.name if arm.data.bones[n].parent else None, out, *h, *t))
+            for n in sorted(posed, key=lambda k: -max(dist(posed[k][0]), dist(posed[k][1]), blen(k)))[:4]:
                 b = arm.data.bones[n]
-                print("GENO_WB_REPORT far_bone %s parent=%s dist=%.2f head=(%.2f,%.2f,%.2f) length=%.2f" % (
-                    n, b.parent.name if b.parent else None, dist(heads[n]), *heads[n], b.length))
+                print("GENO_WB_REPORT far_bone %s parent=%s dist_head=%.2f dist_tail=%.2f len=%.2f head=(%.2f,%.2f,%.2f)" % (
+                    n, b.parent.name if b.parent else None, dist(posed[n][0]), dist(posed[n][1]), blen(n), *posed[n][0]))
     print("GENO_WB_REPORT status=%s" % session.status)
     _sys.stdout.flush()
     bpy.ops.wm.quit_blender()

@@ -119,6 +119,8 @@ def main() -> int:
             input("server up; press Enter to stop ")
             return 0
         cmd = [blender]
+        if os.environ.get("GW_WB_SHOT"):
+            cmd += ["--enable-event-simulate"]   # lets bootstrap close the splash before it screenshots
         if args.check:
             cmd += ["--background", "--factory-startup"]
         cmd += ["--python", str(HERE / "bootstrap.py"), "--", "--project", str(project), "--port", str(port),
