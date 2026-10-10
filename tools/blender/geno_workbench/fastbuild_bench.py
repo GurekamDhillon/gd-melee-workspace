@@ -78,7 +78,7 @@ def main():
         session.set_frame(session.frame if hasattr(session, "frame") else 1)
         refetch = time.monotonic() - t2
         print("BENCH %s ok=%s err=%r rebuild_reload=%.1fs refetch=%.2fs total=%.1fs status=%r last=%r" % (
-            label, ok, dt, refetch, dt + refetch, session.status, session.last_rebuild))
+            label, ok, session.last_error, dt, refetch, dt + refetch, session.status, session.last_rebuild))
         return ok
 
     if flag("--full-first"):
@@ -106,7 +106,9 @@ def main():
         print("BENCH %s end_to_end_edit_to_frame=%.1fs" % (label, time.monotonic() - t))
         return ok
 
+    live = session.info.get("frame")
     edit_and_build("hitbox_edit", new)
+    session.set_frame(live)
     after = hit_sizes(session)
     print("BENCH sizes_after=%s (before %s, edited ordinal 0 to source size %.3f)" % (after, before, new))
     if payloads:
