@@ -4,7 +4,7 @@
 
 The Qt window does not use Lang.cs (that is the C# reference launcher, checked by check_strings.py): it carries
 each string inline as t("English", "Spanish"), and main.cpp picks the half. This is a lexical scan of qt/*.cpp
-and qt/*.h, like check_strings.py. Strings are compared as written (escapes and all).
+and qt/*.h plus workbench/*.cpp and workbench/*.h, like check_strings.py. Strings are compared as written (escapes and all).
 
 Problems (exit 1):
   - an empty English half;
@@ -26,14 +26,19 @@ PH = re.compile(r'%(\d+)')
 
 def scan(directory):
     pairs, untranslated, problems, seen = 0, [], [], {}
-    files = sorted(glob.glob(os.path.join(directory, "*.cpp")) + glob.glob(os.path.join(directory, "*.h")))
+    files = sorted(
+        path
+        for folder in (directory, os.path.join(directory, "workbench"))
+        for pattern in ("*.cpp", "*.h")
+        for path in glob.glob(os.path.join(folder, pattern))
+    )
     for path in files:
         with open(path, encoding="utf-8") as f:
             text = f.read()
         for m in PAIR.finditer(text):
             en, es = m.group(1), m.group(2)
             line = text.count("\n", 0, m.start()) + 1
-            where = "%s:%d" % (os.path.basename(path), line)
+            where = "%s:%d" % (os.path.relpath(path, directory).replace(os.sep, "/"), line)
             pairs += 1
             if not en.strip():
                 problems.append('%s: empty English half' % where)

@@ -1,4 +1,5 @@
 #include "kit.h"
+#include <QLabel>
 #include "atlas_icons.h"
 #include <QAbstractItemModel>
 #include <QKeyEvent>
@@ -198,6 +199,16 @@ void KeyChip::paintEvent(QPaintEvent *) {
 }
 
 // ---------------------------------------------------------------- TabRail
+QLabel *capLabel(const QString &text, atlas::Role role, const char *colourToken) {
+    auto *w = new QLabel(text); w->setTextFormat(Qt::PlainText); w->setFont(atlas::font(role));
+    QPalette pal = w->palette(); pal.setColor(QPalette::WindowText, atlas::colour(colourToken)); w->setPalette(pal);
+    return w;
+}
+void TabRail::setNames(const QStringList &names) {
+    names_ = names;
+    if (current_ >= names_.size()) { current_ = 0; emit currentChanged(current_); }
+    updateGeometry(); update();
+}
 TabRail::TabRail(const QStringList &names, QWidget *parent) : QWidget(parent), names_(names) {
     setFocusPolicy(Qt::StrongFocus); setAutoFillBackground(false);
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);

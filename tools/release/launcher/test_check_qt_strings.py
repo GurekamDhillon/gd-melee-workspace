@@ -39,6 +39,27 @@ class Pairs(unittest.TestCase):
         r = self.run_on('x.t("a", "b"); y->t("a", "c"); int t = 1; auto s = QString::fromUtf8(t);')
         self.assertEqual(r["pairs"], 0)
 
+    def test_workbench_cpp_and_headers_are_scanned(self):
+        with tempfile.TemporaryDirectory() as d:
+            os.mkdir(os.path.join(d, "workbench"))
+            for name in ("viewport.cpp", "timeline.h"):
+                with open(os.path.join(d, "workbench", name), "w", encoding="utf-8") as f:
+                    f.write('t("", "x");')
+            r = C.scan(d)
+            self.assertEqual(r["pairs"], 2)
+            self.assertEqual(r["files"], 2)
+            self.assertEqual(len(r["problems"]), 2)
+            self.assertTrue(all("workbench/" in p and "empty English" in p for p in r["problems"]))
+
+    def test_translations_must_agree_across_launcher_and_workbench(self):
+        with tempfile.TemporaryDirectory() as d:
+            os.mkdir(os.path.join(d, "workbench"))
+            for name, src in (("window.cpp", 't("Open", "Abrir");'),
+                              ("workbench/viewport.cpp", 't("Open", "Abre");')):
+                with open(os.path.join(d, name), "w", encoding="utf-8") as f:
+                    f.write(src)
+            self.assertTrue(any("two second halves" in p for p in C.scan(d)["problems"]))
+
     def test_the_real_sources_have_no_problem(self):
         r = C.scan(os.path.join(HERE, "qt"))
         self.assertEqual(r["problems"], []); self.assertGreater(r["pairs"], 50)

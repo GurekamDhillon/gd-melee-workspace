@@ -16,6 +16,8 @@ class QComboBox;
 class QPlainTextEdit;
 class QTimer;
 class QThread;
+class QVBoxLayout;
+namespace wb { class WorkbenchWindow; }
 
 namespace launcher {
 namespace kit { class TabRail; }
@@ -88,6 +90,16 @@ private:
     QWidget *modsTab();
     QWidget *diagnosticsTab();
     QWidget *aboutTab();
+    QWidget *creatorTab();
+    void syncCreatorTab();
+    void openCreatorProject(const QString &folder);
+    QWidget *creatorPage_ = nullptr, *creatorEmpty_ = nullptr;
+    QVBoxLayout *creatorLayout_ = nullptr;
+    QPushButton *creatorOpen_ = nullptr;
+    QLabel *creatorPath_ = nullptr;
+    wb::WorkbenchWindow *creator_ = nullptr;
+    bool closingCreators_ = false;
+    int pendingCreatorStops_ = 0;
     void openPath(const QString &path);
     void setKeys(int tab);
 };

@@ -6,6 +6,7 @@ gw_fx.c
 gw_fx_motion.cpp
 gw_fx_render.cpp
 gw_hang.c
+gw_workbench.c
 gw_kit.c
 gw_log.c
 gw_lua.c

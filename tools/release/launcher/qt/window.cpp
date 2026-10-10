@@ -1,6 +1,7 @@
 #include "window.h"
 #include "kit.h"
 #include "graphics.h"
+#include "workbench/workbench_window.h"
 #include <QGuiApplication>
 #include <QDateTime>
 #include <QApplication>
@@ -12,6 +13,8 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QAbstractButton>
 #include <QFileInfo>
 #include <QFormLayout>
@@ -59,11 +62,7 @@ constexpr int kDetailsRole = Qt::UserRole + 10;        // a mod item: descriptio
 constexpr int kRailWidth = 204, kTrailHeight = 34, kMainPadY = 18, kPrimaryWidth = 420, kExplainerMin = 240;
 
 // The only way a label gets a colour: a token, through the palette.
-static QLabel *capLabel(const QString &text, atlas::Role role, const char *colourToken = "ivory") {
-    auto *w = new QLabel(text); w->setTextFormat(Qt::PlainText); w->setFont(atlas::font(role));
-    QPalette pal = w->palette(); pal.setColor(QPalette::WindowText, atlas::colour(colourToken)); w->setPalette(pal);
-    return w;
-}
+using kit::capLabel;
 // The strip's mark: the concept's own diamond (parts.py defs: ember, ground, ivory), drawn from tokens.
 class MarkWidget : public QWidget {
 public:
@@ -76,6 +75,22 @@ protected:
         diamond(11, atlas::colour("ember")); diamond(7, atlas::colour("ground")); diamond(4, atlas::colour("ivory"));
     }
 };
+// workbench.json may name the directory that holds the project's built mods ("mods_dir", absolute or
+// relative to the nearest ancestor containing .git). The Creator engine must load THAT mod, not only the
+// launcher's own mods.
+static QString projectModsDir(const QString &folder) {
+    QFile f(QDir(folder).filePath("workbench.json"));
+    if (!f.open(QIODevice::ReadOnly)) return {};
+    const auto object = QJsonDocument::fromJson(f.readAll()).object();
+    const QString dir = object.value("mods_dir").toString();
+    if (dir.isEmpty()) return {};
+    if (QDir::isAbsolutePath(dir)) return QDir::cleanPath(dir);
+    for (QDir d(QFileInfo(folder).absoluteFilePath()); ; ) {
+        if (QFileInfo::exists(d.filePath(".git"))) return QDir::cleanPath(d.filePath(dir));
+        if (!d.cdUp()) break;
+    }
+    return QDir::cleanPath(QDir(folder).filePath(dir));
+}
 static QString versionText(const QString &appDir) {
     try { return readText(appDir + "/version.txt", 16384).section(QChar('\n'), 0, 0).trimmed(); } catch (...) {}
     return QString("dev");
@@ -280,19 +295,30 @@ Window::Window(QString app, QString user, Settings settings)
     pageHeading_ = capLabel(QString(), atlas::Role::Title);  pageSub_ = capLabel(QString(), atlas::Role::Body14, "muted");
     auto *hd = new QHBoxLayout; hd->setSpacing(atlas::px("s3")); hd->addWidget(pageHeading_); hd->addWidget(pageSub_, 1, Qt::AlignBottom); main->addLayout(hd);
     tabs_ = new QStackedWidget; tabs_->setObjectName("atlasTabs");
-    tabs_->addWidget(playTab()); tabs_->addWidget(modsTab()); tabs_->addWidget(diagnosticsTab()); tabs_->addWidget(aboutTab()); main->addWidget(tabs_, 1);
+    tabs_->addWidget(playTab()); tabs_->addWidget(modsTab()); tabs_->addWidget(diagnosticsTab()); tabs_->addWidget(aboutTab());
+    if (settings_.flag("creator_enabled")) {
+        tabs_->addWidget(creatorTab());
+        QTimer::singleShot(0, this, [this] { // reopen the last fighter project
+            const QString last = settings_.option("creator_project", "");
+            if (creatorPage_ && !creator_ && !last.isEmpty() && QFileInfo::exists(QDir(last).filePath("workbench.json"))) openCreatorProject(last);
+        });
+        rail_->setNames({t("PLAY", "JUGAR"), t("MODS", "MODS"), t("DIAGNOSTICS", "DIAGNÓSTICO"), t("ABOUT", "ACERCA DE"), t("CREATOR", "CREADOR")});
+        rail_->setIcons({"right", "mods", "data", "star", "mods"});
+    }
+    main->addWidget(tabs_, 1);
     keys_ = new QWidget; keys_->setObjectName("atlasKeys"); keys_->setFixedHeight(26); main->addWidget(keys_);
     setCentralWidget(root);
-    const QStringList headings{t("Play", "Jugar"), t("Mods", "Mods"), t("Diagnostics", "Diagnóstico"), t("About", "Acerca de")};
+    const QStringList headings{t("Play", "Jugar"), t("Mods", "Mods"), t("Diagnostics", "Diagnóstico"), t("About", "Acerca de"), t("Creator", "Creador")};
     const QStringList subs{t("Pick a disc, then play.", "Pick a disc, then play."), t("Custom content, applied at the next launch.", "Custom content, applied at the next launch."),
-                           t("Logs, graphics and reports.", "Logs, graphics and reports."), t("This launcher and what it uses.", "This launcher and what it uses.")};
+                           t("Logs, graphics and reports.", "Logs, graphics and reports."), t("This launcher and what it uses.", "This launcher and what it uses."),
+                           t("Inspect and fix a fighter.", "Inspecciona y corrige un luchador.")};
     connect(rail_, &kit::TabRail::currentChanged, this, [this, headings, subs](int index) {
         tabs_->setCurrentIndex(index); pageHeading_->setText(headings[index].toUpper()); pageSub_->setText(subs[index]); setKeys(index);
         auto *f = QApplication::focusWidget();                       // never leave focus on a control that is now hidden
         if (!f || !f->isVisible() || (tabs_->isAncestorOf(f) && !tabs_->currentWidget()->isAncestorOf(f))) rail_->setFocus();
     });
     pageHeading_->setText(headings[0].toUpper()); pageSub_->setText(subs[0]); setKeys(0);
-    for (int i = 0; i < 4; ++i) { auto *s = new QShortcut(QKeySequence(Qt::CTRL | (Qt::Key_1 + i)), this); connect(s, &QShortcut::activated, this, [this, i] { rail_->setCurrent(i); }); }
+    for (int i = 0; i < 5; ++i) { auto *s = new QShortcut(QKeySequence(Qt::CTRL | (Qt::Key_1 + i)), this); connect(s, &QShortcut::activated, this, [this, i] { rail_->setCurrent(i); }); }
     { auto *s = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_M), this); connect(s, &QShortcut::activated, this, [this] { selectMods(); }); }
     refreshDiscs(); guarded([&] { refreshMods(); });
 #ifdef Q_OS_LINUX
@@ -341,7 +367,7 @@ void Window::setKeys(int tab) {
     case 2: hint({"Tab"}, t("moves between controls", "moves between controls")); break;
     default: hint({"Tab"}, t("moves between controls", "moves between controls")); break;
     }
-    hint({"Ctrl", "1-4"}, t("switch tab", "switch tab")); l->addStretch();
+    hint({"Ctrl", settings_.flag("creator_enabled") ? "1-5" : "1-4"}, t("switch tab", "switch tab")); l->addStretch();
 }
 DiagContext Window::diagContext(bool full) const {
     DiagContext c = diag_; c.appDir = appDir_; c.userDir = userDir_; c.runDir = runDir_; c.full = full;
@@ -758,6 +784,13 @@ QWidget *Window::diagnosticsTab() {
     });
     graphicsRow->addStretch();
 #endif
+    auto *creatorSettings = bodyOf(t("Creator", "Creador"));
+    auto *creatorEnabled = new QCheckBox(t("Enable Creator (experimental)", "Activar Creador (experimental)"));
+    creatorEnabled->setObjectName("creatorEnabled"); creatorEnabled->setChecked(settings_.flag("creator_enabled"));
+    creatorSettings->addWidget(creatorEnabled);
+    connect(creatorEnabled, &QCheckBox::toggled, this, [this](bool on) { guarded([&] {
+        settings_.options["creator_enabled"] = on ? "1" : "0"; save(); syncCreatorTab();
+    }); });
     auto *logging = bodyOf(t("Logging", "Logging"));
     for (const auto &entry : QList<std::tuple<QString, QString, bool>>{{t("Log everything (large logs)", "Registrar todo (registros grandes)"), "log_all", false}, {t("Log scene changes", "Registrar cambios de escena"), "log_scene", true}})
         toggleRow(logging, std::get<0>(entry), "diag_" + std::get<1>(entry), settings_.flag(std::get<1>(entry), std::get<2>(entry)), [this, key = std::get<1>(entry)](bool v) { settings_.options[key] = v ? "1" : "0"; save(); });
@@ -835,11 +868,111 @@ QWidget *Window::aboutTab() {
     return page;
 }
 void Window::selectMods() { rail_->setCurrent(1); }
+
+QWidget *Window::creatorTab() {
+    creatorPage_ = new QWidget; creatorPage_->setObjectName("creatorPage");
+    auto *pageLayout = new QVBoxLayout(creatorPage_); pageLayout->setContentsMargins(0, 0, 0, 0);
+    auto *scroll = new QScrollArea; scroll->setObjectName("creatorScroll"); scroll->setWidgetResizable(true); scroll->setFrameShape(QFrame::NoFrame);
+    auto *contentWidget = new QWidget; scroll->setWidget(contentWidget); pageLayout->addWidget(scroll);
+    creatorLayout_ = new QVBoxLayout(contentWidget); creatorLayout_->setContentsMargins(0, 0, 0, 0); creatorLayout_->setSpacing(atlas::px("s2"));
+    auto *folder = new QHBoxLayout; creatorLayout_->addLayout(folder);
+    creatorOpen_ = button(folder, t("Open fighter folder", "Abrir carpeta del luchador"), [this] {
+        const QString chosen = QFileDialog::getExistingDirectory(this, t("Open fighter folder", "Abrir carpeta del luchador"), settings_.option("creator_project"));
+        if (!chosen.isEmpty()) openCreatorProject(chosen);
+    });
+    creatorOpen_->setObjectName("creatorOpen");
+    creatorPath_ = new ElidedLabel(t("No fighter open", "Ningún luchador abierto"), atlas::Role::Body12, "muted"); folder->addWidget(creatorPath_, 1);
+    auto *empty = new kit::Pane(t("Creator", "Creador")); creatorEmpty_ = empty; creatorLayout_->addWidget(empty, 1);
+    auto *content = new QVBoxLayout(empty->body()); content->setContentsMargins(0, 0, 0, 0);
+    content->addWidget(paragraph(t("Open a fighter source folder containing workbench.json.", "Abre una carpeta de fuentes del luchador que contenga workbench.json.")));
+    auto *engine = new QHBoxLayout; content->addLayout(engine);
+    engine->addWidget(capLabel(t("Engine", "Motor"), atlas::Role::Cap16));
+    auto *start = new kit::Button(t("Start", "Iniciar")); start->setEnabled(false); engine->addWidget(start);
+    auto *stop = new kit::Button(t("Stop", "Detener")); stop->setEnabled(false); engine->addWidget(stop); engine->addStretch();
+    content->addWidget(paragraph(t("The viewport uses the game's screenshot. Reload restarts the engine.", "La vista usa la captura del juego. Recargar reinicia el motor."), atlas::Role::Body12, "muted"));
+    content->addStretch(); return creatorPage_;
+}
+void Window::syncCreatorTab() {
+    const bool enabled = settings_.flag("creator_enabled");
+    if (enabled && !creatorPage_) {
+        tabs_->addWidget(creatorTab());
+        // Reopen the last fighter project so the Creator comes back where it was left.
+        QTimer::singleShot(0, this, [this] {
+            const QString last = settings_.option("creator_project", "");
+            if (creatorPage_ && !creator_ && !last.isEmpty() && QFileInfo::exists(QDir(last).filePath("workbench.json"))) openCreatorProject(last);
+        });
+    }
+    if (!enabled && creatorPage_) {
+        auto *page = creatorPage_; auto *creator = creator_;
+        if (tabs_->currentWidget() == page) rail_->setCurrent(0);
+        tabs_->removeWidget(page); page->hide();
+        creatorPage_ = nullptr; creator_ = nullptr; creatorLayout_ = nullptr;
+        creatorOpen_ = nullptr; creatorPath_ = nullptr; creatorEmpty_ = nullptr;
+        if (creator && !creator->shutdownComplete()) {
+            connect(creator, &wb::WorkbenchWindow::shutdownFinished, page, &QObject::deleteLater);
+            creator->shutdown();
+        } else page->deleteLater();
+    }
+    QStringList names{t("PLAY", "JUGAR"), t("MODS", "MODS"), t("DIAGNOSTICS", "DIAGNÓSTICO"), t("ABOUT", "ACERCA DE")};
+    QStringList icons{"right", "mods", "data", "star"};
+    if (enabled) { names << t("CREATOR", "CREADOR"); icons << "mods"; }
+    rail_->setNames(names); rail_->setIcons(icons); setKeys(rail_->current());
+}
+void Window::openCreatorProject(const QString &folder) {
+    if (!creatorPage_ || closingCreators_) return;
+    if (creator_) {
+        auto *old = creator_; creatorOpen_->setEnabled(false);
+        connect(old, &wb::WorkbenchWindow::shutdownFinished, this, [this, old, folder] {
+            if (creator_ != old) return; // The setting may have been switched off while stopping.
+            creatorLayout_->removeWidget(old); old->deleteLater(); creator_ = nullptr;
+            openCreatorProject(folder);
+        });
+        old->shutdown(); return;
+    }
+    guarded([&] {
+        settings_.options["creator_project"] = folder; save();
+        // Capture launcher inputs on the GUI thread. prepareLaunch (disc probing,
+        // run-dir creation and environment sanitization) runs on the worker at Start.
+        const int discIndex = selectedDisc();
+        const bool hasDisc = discIndex >= 0;
+        const Disc disc = hasDisc ? settings_.discs[discIndex] : Disc{};
+        const QString projectMods = projectModsDir(folder);
+        auto launch = [app = appDir_, user = userDir_, settings = settings_, disc, hasDisc, projectMods] {
+            if (!hasDisc) throw std::runtime_error(t("Select a disc on Play, then reopen the fighter folder.", "Selecciona un disco en Jugar y vuelve a abrir la carpeta del luchador.").toStdString());
+            const auto spec = prepareLaunch(app, user, settings, disc);
+            wb::EngineLink::Launch result;
+            result.exe = spec.program; result.workDir = spec.workingDirectory; result.extraArgs = spec.arguments;
+            result.modsDir = projectMods.isEmpty() ? modsDir(app, user) : projectMods; result.wbDir = spec.workingDirectory + "/workbench";
+            result.env = spec.environment; result.env.insert("MELEE_SCENE", "mode=workbench");
+            result.env.insert("MELEE_WB_VISIBLE", "1"); result.env.insert("MELEE_FULLSCREEN", "0");
+            return result;
+        };
+        creator_ = new wb::WorkbenchWindow(folder, std::move(launch), creatorPage_);
+        creator_->setWindowFlags(Qt::Widget); creatorLayout_->addWidget(creator_, 1);
+        creatorEmpty_->hide(); creatorPath_->setText(QDir::toNativeSeparators(folder)); creatorPath_->setToolTip(folder);
+        creatorOpen_->setEnabled(false);
+        connect(creator_, &wb::WorkbenchWindow::busyChanged, creatorOpen_, [button = creatorOpen_](bool busy) { button->setEnabled(!busy); });
+        creator_->show();
+    });
+}
+
 void Window::screenshots(const QString &dir) {
     QDir().mkpath(dir); show();
     for (int i = 0; i < tabs_->count(); ++i) { rail_->setCurrent(i); QApplication::processEvents(); if (!grab().save(dir + "/launcher-" + QString::number(i) + ".png")) throw std::runtime_error("Cannot save screenshot"); }
 }
 void Window::closeEvent(QCloseEvent *event) {
+    if (!closingCreators_) {
+        closingCreators_ = true;
+        const auto creators = findChildren<wb::WorkbenchWindow *>();
+        for (auto *creator : creators) if (!creator->shutdownComplete()) {
+            ++pendingCreatorStops_;
+            connect(creator, &wb::WorkbenchWindow::shutdownFinished, this, [this] {
+                if (--pendingCreatorStops_ == 0) QTimer::singleShot(0, this, [this] { close(); });
+            });
+            creator->shutdown();
+        }
+    }
+    if (pendingCreatorStops_) { event->ignore(); return; }
     if (process_.state() != QProcess::NotRunning) { quitting_ = true; hide(); event->ignore(); }
     else { event->accept(); QApplication::quit(); }
 }

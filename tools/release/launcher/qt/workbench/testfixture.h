@@ -97,3 +97,93 @@ inline QString makeSynthFighter(const QString &dir) {
     return dir;
 }
 }
+
+
+// Socket-level fake: deliberately uses the same event loop as ConsoleClient.
+#include "engine_link.h"
+#include <QHostAddress>
+#include <QMap>
+#include <QPointer>
+#include <QTcpServer>
+#include <QTcpSocket>
+#include <QTimer>
+#include <functional>
+#include <memory>
+#include <utility>
+
+namespace wbtest {
+class FakeConsole : public QObject {
+public:
+    explicit FakeConsole(std::function<QString(const QString &)> reply, quint16 port = 0)
+        : reply_(std::move(reply)) {
+        if (!server_.listen(QHostAddress::LocalHost, port))
+            qFatal("fixture: cannot listen: %s", qPrintable(server_.errorString()));
+        QObject::connect(&server_, &QTcpServer::newConnection, this, [this] {
+            while (server_.hasPendingConnections()) {
+                QTcpSocket *s = server_.nextPendingConnection();
+                clients_.append(s);
+                auto buf = std::make_shared<QByteArray>();
+                send(s, greeting.toUtf8(), bannerDelayMs);
+                QObject::connect(s, &QTcpSocket::disconnected, s, &QObject::deleteLater);
+                QObject::connect(s, &QTcpSocket::readyRead, this, [this, s, buf] {
+                    *buf += s->readAll();
+                    qsizetype nl;
+                    while ((nl = buf->indexOf('\n')) >= 0) {
+                        QString line = QString::fromUtf8(buf->left(nl));
+                        buf->remove(0, nl + 1);
+                        if (reply_) send(s, reply_(line).toUtf8(), replyDelayMs);
+                    }
+                });
+            }
+        });
+    }
+    quint16 port() const { return server_.serverPort(); }
+    void dropClients() {
+        for (const auto &s : clients_) if (s) s->abort();
+    }
+
+    QString greeting = "GD's Melee console (scripting API 1)\n";
+    int bannerDelayMs = 0;
+    int replyDelayMs = 0;
+    int fragmentBytes = 0;
+
+private:
+    void send(QPointer<QTcpSocket> s, QByteArray bytes, int delay) {
+        QTimer::singleShot(delay, this, [this, s, bytes] {
+            if (!s || s->state() != QAbstractSocket::ConnectedState) return;
+            if (fragmentBytes > 0 && bytes.size() > fragmentBytes) {
+                s->write(bytes.left(fragmentBytes));
+                send(s, bytes.mid(fragmentBytes), 1);
+            } else {
+                s->write(bytes);
+            }
+        });
+    }
+
+    QTcpServer server_;
+    std::function<QString(const QString &)> reply_;
+    QList<QPointer<QTcpSocket>> clients_;
+};
+
+class FakeEngine : public wb::EngineBackend {
+public:
+    QMap<QString, QJsonObject> canned;
+    QVector<QPair<QString, QJsonObject>> calls;
+    QString state = "ready";
+    QString failWith;
+
+    QJsonObject call(const QString &fn, const QJsonObject &args, QString *err) override {
+        calls.append({fn, args});
+        if (err) *err = failWith;
+        return failWith.isEmpty() ? canned.value(fn) : QJsonObject{};
+    }
+    QString status() override { return state; }
+    bool restart(QString *err) override {
+        calls.append(QPair<QString, QJsonObject>{"restart", {}});
+        if (err) *err = failWith;
+        if (!failWith.isEmpty()) return false;
+        state = "ready";
+        return true;
+    }
+};
+}

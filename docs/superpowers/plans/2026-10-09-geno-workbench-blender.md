@@ -152,13 +152,15 @@ reading `j->mtx[r][c]` for r<3, c<4 (zeros for a missing joint). Mirror every pl
 
 ### Task 2: True headless workbench engine  (Game repo, Claude-only)
 
+**Definition (owner decision 2026-10-10; supersedes the "no window" wording below): headless = the Dawn null backend, the window placed offscreen (`MELEE_WINDOW_X/Y=30000`), no GPU device. A no-window path is out of scope (Dawn still wants an HWND surface; `SDL_HideWindow` made the null-backend present loop spin). Where this task says "no window", read "offscreen window, no GPU device"; the process check is therefore not `MainWindowHandle == 0` but the absence of `aurora backend` GPU init lines and no visible window.**
+
 **Files:**
 - Modify: `pc/platform/gw_workbench.h/.c` (`gw_Wb_Headless()`), `pc/platform/main.c` (boot path), `pc/platform/gw_runtime.c` and the GX/texture/model shims found in Step 1, `pc/platform/gw_script.c` (`l_wb_render` error)
 - Create: `pc/tests/workbench_headless_check.lua`
 - Test: `pc/tests/workbench_test.c`
 
 **Interfaces:**
-- Produces: env `MELEE_WB_HEADLESS=1` (honoured only when the scene gate `gw_Wb_Enabled()` is on); `int gw_Wb_Headless(void)`; log line `workbench: headless (no window, no GPU device)`; `wb.render` raises the Lua error `wb.render is unavailable in headless mode (MELEE_WB_HEADLESS=1); use the Blender viewer or run windowed`.
+- Produces: env `MELEE_WB_HEADLESS=1` (honoured only when the scene gate `gw_Wb_Enabled()` is on); `int gw_Wb_Headless(void)`; log line `workbench: headless (no GPU device: Dawn null backend; window offscreen)`; `wb.render` raises the Lua error `wb.render is unavailable in headless mode (MELEE_WB_HEADLESS=1); use the Blender viewer or run windowed`.
 - Consumes: Task 1's `frame_info` schema 2 for the equivalence check.
 
 Context for the implementer: `--test` already runs the engine without a window or GPU (`main.c` ~313-331: `gw_hang_pause(4); gw_apply_fixups(); gw_mem_init();` before `aurora_initialize`), and the draw path has `gw_gx_suppress_draws`. The headless workbench is the same idea but with the scene running: console socket live, `wb.*` data calls working, fighter loaded and animating, hitboxes computed.
@@ -176,10 +178,10 @@ For each hit decide gate / no-op / leave. Known classes to cover: (a) Aurora/Daw
 - [ ] **Step 3: Implement the gate and boot path.** `gw_Wb_Headless()` = `gw_Wb_Enabled() && getenv("MELEE_WB_HEADLESS") == "1"`. The scene gate is published after `main.c` creates the window today (`gw_sl_publish_workbench`, `gw_runtime.c` ~2392), so read the scene string early: in `main.c`, before `aurora_initialize`, call a new `gw_Wb_PreScan(argc, argv)` that sets a static `headless_requested` when `MELEE_WB_HEADLESS=1` and `MELEE_SCENE` contains `mode=workbench` (or `--workbench` is present); `gw_Wb_Headless()` returns that static ANDed with the scene gate once published. When headless: skip `aurora_initialize`, `gw_window_*`, `AuroraSetViewportPolicy`, `gw_pcache_guard_run`, `gw_gx_init_render_modes` if it touches the GPU (Step 1 decides), keep `gw_apply_fixups(); gw_mem_init();`, set `gw_gx_suppress_draws` for the whole run, and drive the same logic loop the windowed path uses without a present. `l_wb_render` returns the error text above when `gw_Wb_Headless()`.
 - [ ] **Step 4: Scripted check `workbench_headless_check.lua`.** Runs under `MELEE_WB_HEADLESS=1`: `wb.load`, `wb.row`, `wb.frame` for `wait`, `jab`, `dair` (dair with `lift=40`), reading `wb.frame_info()` after each, asserting `schema == 2`, bone count > 20, bone span > 5, `pcall(wb.render, {})` fails with the text `unavailable in headless`, prints `HEADLESS_CHECK OK`.
 - [ ] **Step 5: Build, run headless and windowed, compare.** `tools/port/build.sh`; then twice with identical `MELEE_SCENE="mode=workbench;p1=geno:goku-xv2/hu;stage=fd"`, `MELEE_TURBO=1`, a distinct `MELEE_CONSOLE_PORT` and `MELEE_WB_DIR` per run: once with `MELEE_WB_HEADLESS=1`, once windowed (on screen). In each, for rows `wait`, `jab`, `dair` and frames 1, 6, 12, save `frame.json` as `<run>/<row>-<frame>.json`. Compare with `tools/workbench/frame_info_diff.py` from Task 10 (until it lands, a one-off `python - <<EOF` that loads two JSON files and prints the max abs difference over `bones[].pos`, `bones[].mtx`, `hitboxes[].world`; tolerance 1e-3). Evidence required in the report:
-  `grep -c "aurora backend" <headless run log>` -> `0`; `grep "workbench: headless" <log>` -> one line; the process has no window (`powershell -c "(Get-Process melee-pc).MainWindowHandle"` -> `0`); the diff output `max_abs=<value> (tol 1e-3) rows=3 frames=3`.
+  `grep -c "aurora backend" <log>` -> `8` (null backend) headless vs `1` windowed (the GPU-device init line is the one that disappears); `grep "workbench: headless" <log>` -> one line; no GPU device is created (log shows the Dawn null backend) and the window is offscreen, not absent; the diff output `max_abs=<value> (tol 1e-3) rows=3 frames=3`.
 - [ ] **Step 6: Commit** — `git add pc && git commit -m "workbench: MELEE_WB_HEADLESS true headless data engine (no Aurora/GPU); wb.render errors clearly"`.
 
-**Reviewer verifies:** the headless log (`MainWindowHandle` 0, no `aurora backend`), the diff table, and `git diff --stat` touching only the files listed. Timing and visual parity of a *windowed* run are unchanged: owed to a run with a monitor (`MELEE_WB_HEADLESS` unset must be byte-identical behaviour; the native test covers the gate only).
+**Reviewer verifies:** the headless log (Dawn null backend, offscreen window, no GPU device), the diff table, and `git diff --stat` touching only the files listed. Timing and visual parity of a *windowed* run are unchanged: owed to a run with a monitor (`MELEE_WB_HEADLESS` unset must be byte-identical behaviour; the native test covers the gate only).
 
 ---
 
