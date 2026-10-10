@@ -257,6 +257,13 @@ def write_fx(package, fighter, plan, cfg):
 
 def write_presentation(package, fighter):
     """Select icon, portrait and HUD/results stock icon from his own converted model (tools/presentation_art.py renders the PNGs)."""
+    # A gameplay-only reapply retains a completed CSProject presentation.
+    own = fighter.get('presentation', {})
+    values = [n for k in ('icon', 'portrait', 'stock', 'results')
+              for v in [own.get(k)] for n in (v if isinstance(v, list) else [v])]
+    if all(isinstance(n, str) and n.startswith('GnUi_') and
+                      (package/'files'/n).is_file() for n in values):
+        return
     art = ROOT/'_build/goku-xv2/presentation'
     if not all((art/n).exists() for n in ('icon.png', 'portrait.png', 'stock.png')):
         print('presentation: _build/goku-xv2/presentation/*.png missing (run tools/presentation_art.py in Blender); no own select art')
@@ -524,9 +531,24 @@ def finish_checks(package, art_build, ground):
             return result.returncode
     return 0
 
+def render_presentation(package, fighter_path=None):
+    """Optional full-build step, through the shared standalone UI renderer."""
+    from tools.csp.render_ui import main as render_ui
+    args = ['--project', str(PORT), '--package', str(package), '--costume', 'all']
+    source = Path(fighter_path) if fighter_path else AUTHOR/'fighter.json'
+    if source.is_file():
+        args += ['--fighter', str(source)]
+        glb = load(source).get('art', {}).get('glb')
+        if glb:
+            args += ['--art', str((source.parent/glb).resolve())]
+    return render_ui(args)
+
+
 def main(argv=None):
     import time
     ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('--ui',action='store_true',
+                    help='render CSProject UI after a full build (off by default; --auto forces full; incompatible with --gameplay-only)')
     ap.add_argument('--package',type=Path)
     ap.add_argument('--art-build',type=Path)
     ap.add_argument('--fighter',type=Path)
@@ -538,10 +560,12 @@ def main(argv=None):
     ap.add_argument('--no-audit',action='store_true',help='with --gameplay-only/--auto: skip audit_gameplay too')
     args = ap.parse_args(argv)
     t0 = time.time()
+    if args.ui and args.gameplay_only:
+        ap.error('--ui requires a full build; omit --gameplay-only')
     if (args.gameplay_only or args.auto) and not args.fighter:
         ap.error('--gameplay-only/--auto need --fighter (the stale check reads its inputs)')
     mode = 'full'
-    if args.gameplay_only or args.auto:
+    if (args.gameplay_only or args.auto) and not args.ui:
         generated(args.out)
         reason = stage_a_stale(args.fighter, args.out)
         if reason is None:
@@ -583,6 +607,10 @@ def main(argv=None):
     if problems:
         print('Gameplay audit failed:',problems)
         return 1
+    if args.ui:
+        code = render_presentation(package,args.fighter)
+        if code:
+            return code
     code = finish_checks(package,args.art_build,ground=True)
     if code:
         return code
