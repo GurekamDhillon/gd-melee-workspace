@@ -402,6 +402,9 @@ class GENO_WB_OT_play(bpy.types.Operator):
 
     def _stop(self):
         global _active_player
+        import traceback
+        frame = traceback.extract_stack(limit=3)[0]
+        PLAY_STATS["stopped_at"] = "%s:%d" % (frame.name, frame.lineno)   # which branch ended playback (diagnostic)
         timer = getattr(self, "_timer", None)
         self._timer = None
         if timer is not None:
@@ -410,7 +413,8 @@ class GENO_WB_OT_play(bpy.types.Operator):
             except (ReferenceError, RuntimeError):
                 pass
         settings = getattr(self, "_settings", None)
-        if settings is not None:
+        # A superseded modal instance (pause then Play again) must not clear the new player's flag.
+        if settings is not None and (_active_player is self or _active_player is None):
             try:
                 settings.playing = False
             except ReferenceError:

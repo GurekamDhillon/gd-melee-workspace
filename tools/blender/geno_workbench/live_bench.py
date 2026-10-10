@@ -169,6 +169,7 @@ def run():
             with window_context():
                 bpy.ops.geno_wb.play()
             began = time.monotonic()
+            print("GENO_WB_PLAYING %s" % row, flush=True)
             shot = os.environ.get("GW_WB_BENCH_SHOT")
             shot_done = not shot
             while time.monotonic() - began < seconds:
