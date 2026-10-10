@@ -84,6 +84,52 @@ QByteArray readPlan(FileStore &fs, const ProjectConfig &project, QString *name, 
     if (file.error() != QFileDevice::NoError) fail(*name + ": " + file.errorString());
     return bytes;
 }
+
+// gameplay.json declares each move's hitboxes twice more (moves/#N/windows: [start, frames] per hitbox, and
+// design/window_roles) and the project's build refuses a script that disagrees. These keep them in step with
+// a script edit; a move whose declarations do not match its script (or that has none) is left alone.
+struct Declared { QJsonArray windows, roles; bool hasWindows = false, hasRoles = false; };
+Declared declared(const QString &gameplayText, int moveIndex, int hitboxes) {
+    Declared d;
+    const auto moves = QJsonDocument::fromJson(gameplayText.toUtf8()).object().value("moves").toArray();
+    if (moveIndex < 0 || moveIndex >= moves.size()) return d;
+    const auto move = moves[moveIndex].toObject();
+    const auto windows = move.value("windows");
+    if (windows.isArray() && windows.toArray().size() == hitboxes) { d.windows = windows.toArray(); d.hasWindows = true; }
+    const auto roles = move.value("design").toObject().value("window_roles");
+    if (roles.isArray() && roles.toArray().size() == hitboxes) { d.roles = roles.toArray(); d.hasRoles = true; }
+    return d;
+}
+QString syncDeclarations(QString gameplay, const QString &file, int moveIndex, const QVector<HitboxRef> &before,
+                         const QVector<HitboxRef> &after, int added, int removed) {
+    const auto d = declared(gameplay, moveIndex, int(before.size()));
+    const QString move = '#' + QString::number(moveIndex);
+    const auto windowOf = [](const HitboxRef &h) {
+        return QJsonArray{h.startFrame, h.endFrame < 0 ? 0 : h.endFrame - h.startFrame};
+    };
+    QString error;
+    const auto check = [&](const QString &text) { if (text.isNull()) fail(file + ": " + error); return text; };
+    if (added >= 0 && added < after.size()) {
+        if (d.hasWindows) gameplay = check(jsonArrayInsert(gameplay, {"moves", move, "windows"}, added, windowOf(after[added]), &error));
+        if (d.hasRoles) gameplay = check(jsonArrayInsert(gameplay, {"moves", move, "design", "window_roles"}, added, after[added].joint, &error));
+    } else if (removed >= 0 && removed < before.size()) {
+        if (d.hasWindows) gameplay = check(jsonArrayRemove(gameplay, {"moves", move, "windows"}, removed, &error));
+        if (d.hasRoles) gameplay = check(jsonArrayRemove(gameplay, {"moves", move, "design", "window_roles"}, removed, &error));
+    } else if (before.size() == after.size()) {
+        for (int i = 0; i < before.size(); ++i) {
+            const auto was = windowOf(before[i]), now = windowOf(after[i]);
+            if (d.hasWindows && was != now) {
+                for (int k = 0; k < 2; ++k) if (was[k] != now[k])
+                    gameplay = check(jsonReplace(gameplay, {"moves", move, "windows", '#' + QString::number(i), '#' + QString::number(k)},
+                                                 jsonScalar(now[k]), &error));
+            }
+            if (d.hasRoles && before[i].joint != after[i].joint)
+                gameplay = check(jsonReplace(gameplay, {"moves", move, "design", "window_roles", '#' + QString::number(i)},
+                                             jsonScalar(after[i].joint), &error));
+        }
+    }
+    return gameplay;
+}
 QString replaceValue(const QString &text, const JsonPath &path, const QJsonValue &value,
                      const QString &file, bool insertMissing = false) {
     QString error;
@@ -303,7 +349,11 @@ QVector<FileChange> GenoData::editHitbox(const QString &name, int ordinal, const
         QString error;
         const auto changed = GenoAsm::parse(sourceText(bytes, row->script)).apply(ordinal, edit, &error);
         if (!error.isEmpty() || changed.isNull()) fail(row->script + ": " + error);
-        return {{row->script, bytes, sourceBytes(changed, bytes)}};
+        QVector<FileChange> out{{row->script, bytes, sourceBytes(changed, bytes)}};
+        const QString gameplay = syncDeclarations(gameplayText_, project_.gameplay, row->moveIndex,
+            hitboxes(name), GenoAsm::parse(changed).hitboxes(), -1, -1);
+        if (gameplay != gameplayText_) out.append({project_.gameplay, gameplayBytes_, sourceBytes(gameplay, gameplayBytes_)});
+        return out;
     } catch (const std::exception &e) {
         if (err) *err = QString::fromUtf8(e.what());
         return {};
@@ -321,7 +371,11 @@ QVector<FileChange> GenoData::addHitbox(const QString &name, const HitboxAdd &ad
         QString error;
         const auto changed = GenoAsm::parse(sourceText(bytes, row->script)).addHitbox(add, &error, ordinal);
         if (!error.isEmpty() || changed.isNull()) fail(row->script + ": " + error);
-        return {{row->script, bytes, sourceBytes(changed, bytes)}};
+        QVector<FileChange> out{{row->script, bytes, sourceBytes(changed, bytes)}};
+        const QString gameplay = syncDeclarations(gameplayText_, project_.gameplay, row->moveIndex,
+            hitboxes(name), GenoAsm::parse(changed).hitboxes(), ordinal ? *ordinal : -1, -1);
+        if (gameplay != gameplayText_) out.append({project_.gameplay, gameplayBytes_, sourceBytes(gameplay, gameplayBytes_)});
+        return out;
     } catch (const std::exception &e) {
         if (err) *err = QString::fromUtf8(e.what());
         return {};
@@ -339,7 +393,11 @@ QVector<FileChange> GenoData::removeHitbox(const QString &name, int ordinal, QSt
         QString error;
         const auto changed = GenoAsm::parse(sourceText(bytes, row->script)).removeHitbox(ordinal, &error);
         if (!error.isEmpty() || changed.isNull()) fail(row->script + ": " + error);
-        return {{row->script, bytes, sourceBytes(changed, bytes)}};
+        QVector<FileChange> out{{row->script, bytes, sourceBytes(changed, bytes)}};
+        const QString gameplay = syncDeclarations(gameplayText_, project_.gameplay, row->moveIndex,
+            hitboxes(name), GenoAsm::parse(changed).hitboxes(), -1, ordinal);
+        if (gameplay != gameplayText_) out.append({project_.gameplay, gameplayBytes_, sourceBytes(gameplay, gameplayBytes_)});
+        return out;
     } catch (const std::exception &e) {
         if (err) *err = QString::fromUtf8(e.what());
         return {};

@@ -134,6 +134,30 @@ private slots:
         QVERIFY(res["result"].toObject()["proposed"].toBool());
         QCOMPARE(r.s.files().read("moves/dair.genoasm"), old);
     }
+    void addAndDeleteKeepGameplayWindowDeclarationsInStep() {
+        Rig r;
+        // dair declares one [start, frames] and one role per hitbox, like Goku's moves.
+        QJsonObject g = QJsonDocument::fromJson(r.s.files().read("gameplay.json")).object();
+        QJsonArray moves = g["moves"].toArray(); QJsonObject dair = moves[1].toObject();
+        dair["windows"] = QJsonArray{QJsonArray{6, 3}, QJsonArray{9, 6}};
+        dair["design"] = QJsonObject{{"window_roles", QJsonArray{"FOOT_L", "FOOT_L"}}};
+        moves[1] = dair; g["moves"] = moves;
+        wbtest::put(r.d.path(), "gameplay.json", QJsonDocument(g).toJson());
+        QVERIFY(r.s.data().reload().isEmpty());
+        const QByteArray gameplay = r.s.files().read("gameplay.json"), script = r.s.files().read("moves/dair.genoasm");
+        QVERIFY(r.call("add_hitbox", {{"row", "dair"}, {"frame", 7}, {"bone", "HAND_R"}})["ok"].toBool());
+        auto now = QJsonDocument::fromJson(r.s.files().read("gameplay.json")).object()["moves"].toArray()[1].toObject();
+        QCOMPARE(now["windows"].toArray().size(), 3);
+        QCOMPARE(now["windows"].toArray()[1].toArray(), (QJsonArray{7, 2}));
+        QCOMPARE(now["design"].toObject()["window_roles"].toArray()[1].toString(), QString("HAND_R"));
+        QVERIFY(r.call("edit_hitbox", {{"row", "dair"}, {"ordinal", 1}, {"bone", "FOOT_L"}})["ok"].toBool());
+        now = QJsonDocument::fromJson(r.s.files().read("gameplay.json")).object()["moves"].toArray()[1].toObject();
+        QCOMPARE(now["windows"].toArray()[1].toArray(), (QJsonArray{7, 2}));
+        QCOMPARE(now["design"].toObject()["window_roles"].toArray()[1].toString(), QString("FOOT_L"));
+        QVERIFY(r.call("delete_hitbox", {{"row", "dair"}, {"ordinal", 1}})["ok"].toBool());
+        QCOMPARE(r.s.files().read("moves/dair.genoasm"), script);
+        QCOMPARE(QJsonDocument::fromJson(r.s.files().read("gameplay.json")).object(), QJsonDocument::fromJson(gameplay).object());
+    }
     void frameCommandsHitEngine() {
         Rig r; r.eng.canned["frame"] = frameJson(6, 0);
         QVERIFY(r.call("load_row", {{"row", "dair"}})["ok"].toBool());
