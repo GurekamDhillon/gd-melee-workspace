@@ -161,13 +161,19 @@ STRINGS: dict[str, str] = {
     "last_frame": ">|",
     "play": "Play",
     "pause": "Pause",
-    "play_help": "Toggle playback at the scene frame rate (logic frames per second), skipping frames if posing is slow; stops at frame 600",
+    "play_help": "Toggle playback at the Speed setting (default: real game speed, 60 logic frames per second), skipping frames if posing is slow; stops at frame 600",
     "play_started": "playing",
     "play_paused": "playback stopped",
     "play_limit": "playback stopped at frame 600",
     "play_end": "playback stopped at the end of the move (frame {frame})",
     "show_travel": "Show travel",
     "show_travel_help": "Show the real world motion (falling, sliding). Off: the fighter stays where the move started and only the body animates",
+    "play_speed": "Speed",
+    "play_speed_help": "Playback speed: real game speed is 60 logic frames per second; Scene fps follows the Blender scene's frame rate",
+    "speed_1": "1x (60 fps)",
+    "speed_05": "0.5x",
+    "speed_025": "0.25x",
+    "speed_scene": "Scene fps",
     "loop": "Loop",
     "loop_help": "Play again from frame 1 when the move ends",
     "move_length": "{frames} frames",
@@ -487,6 +493,16 @@ def _make_property_group():
         frame: IntProperty(name=STRINGS["frame"], description=STRINGS["frame_help"], default=0, min=0, max=600, update=on_frame_changed)
         playing: BoolProperty(name=STRINGS["playing"], default=False, options={"SKIP_SAVE"})
         show_travel: BoolProperty(name=STRINGS["show_travel"], description=STRINGS["show_travel_help"], default=False, update=lambda self, context: _redraw_pose(self))
+        play_speed: EnumProperty(
+            name=STRINGS["play_speed"], description=STRINGS["play_speed_help"],
+            items=[
+                ("1", STRINGS["speed_1"], ""),
+                ("0.5", STRINGS["speed_05"], ""),
+                ("0.25", STRINGS["speed_025"], ""),
+                ("scene", STRINGS["speed_scene"], ""),
+            ],
+            default="1",
+        )
         loop: BoolProperty(name=STRINGS["loop"], description=STRINGS["loop_help"], default=True)
         show_hurt: BoolProperty(name=STRINGS["show_hurt"], default=True)
         show_ecb: BoolProperty(name=STRINGS["show_ecb"], default=True)

@@ -448,7 +448,7 @@ class GENO_WB_OT_play(bpy.types.Operator):
         self._settings = context.scene.geno_wb
         self._timer = None
         render = context.scene.render
-        self._rate = max(1.0, render.fps / (render.fps_base or 1.0))   # logic frames per second = the scene's fps
+        self._rate = api.playback_rate(self._settings.play_speed, render.fps / (render.fps_base or 1.0))   # logic frames per second: real game speed x Speed setting
         self._origin = max(0, value.frame - 1)
         self._t0 = self._last_tick = time.monotonic()
         for key in PLAY_STATS:

@@ -198,3 +198,12 @@ def test_framecache_error_stops_fill_and_is_reported():
     while time.time() < end and cache.loading:
         time.sleep(0.01)
     assert sorted(cache.frames) == [1, 2] and "last frame 2" in cache.error
+
+
+def test_playback_rate_defaults_to_game_speed_and_follows_setting():
+    assert api.playback_rate("1", 24) == 60.0
+    assert api.playback_rate("0.5", 24) == 30.0
+    assert api.playback_rate("0.25", 24) == 15.0
+    assert api.playback_rate("scene", 24) == 24.0
+    assert api.playback_rate("scene", 23.976) == pytest.approx(23.976)
+    assert api.playback_rate("bogus", 24) == 60.0

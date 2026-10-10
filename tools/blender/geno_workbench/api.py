@@ -757,3 +757,18 @@ def set_project(project_dir: str) -> bool:
         )
         return False
     return True
+
+
+GAME_FPS = 60.0
+PLAY_SPEEDS = ("1", "0.5", "0.25", "scene")
+
+
+def playback_rate(speed, scene_fps):
+    """Logic frames per second for a Speed setting: real game speed (60) times the
+    multiplier, or the scene's own frame rate for "scene"."""
+    if speed == "scene":
+        return max(1.0, float(scene_fps))
+    try:
+        return max(1.0, GAME_FPS * float(speed))
+    except (TypeError, ValueError):
+        return GAME_FPS
