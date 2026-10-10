@@ -13,6 +13,8 @@ struct RowInfo {
     int moveIndex = 0;
     QVector<int> motions;
     QString script, tag, clip;
+    QString planClip; // the plan's motion_rows/row_clips name for the row's first motion (clip stays the gameplay pick)
+    QString effectiveClip() const { return clip.isEmpty() ? planClip : clip; }
     int cropStart = 0;
     int iasa = 0;
     bool aerial = false;

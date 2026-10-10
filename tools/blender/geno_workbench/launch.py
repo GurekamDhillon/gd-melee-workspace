@@ -81,13 +81,71 @@ def serve_argv(
     project: str,
     engine_exe: str = "",
     headless: bool = True,
+    mods_dir: str = "",
+    engine_work_dir: str = "",
+    wb_dir: str = "",
 ) -> list[str]:
     argv = [os.fspath(exe), "--project", os.fspath(project), "--serve"]
     if engine_exe:
         argv.extend(("--engine-exe", os.fspath(engine_exe)))
+    if engine_work_dir:
+        argv.extend(("--engine-work-dir", os.fspath(engine_work_dir)))
+    if mods_dir:
+        argv.extend(("--mods-dir", os.fspath(mods_dir)))
+    if wb_dir:
+        argv.extend(("--wb-dir", os.fspath(wb_dir)))
     if not headless:
         argv.append("--engine-windowed")
     return argv
+
+
+def serve_settings(
+    engine_exe: str = "",
+    mods_dir: str = "",
+    iso: str = "",
+    env: Mapping[str, str] = os.environ,
+) -> dict[str, str]:
+    """Engine exe, mods dir and ISO: explicit values first, then GW_* environment."""
+    return {
+        "engine_exe": engine_exe.strip() or env.get("GW_ENGINE_EXE", "").strip(),
+        "mods_dir": mods_dir.strip() or env.get("GW_MODS_DIR", "").strip(),
+        "iso": iso.strip() or env.get("GW_ISO_VANILLA", "").strip(),
+    }
+
+
+def serve_launch(
+    exe: str,
+    project: str,
+    engine_exe: str = "",
+    mods_dir: str = "",
+    iso: str = "",
+    headless: bool = True,
+    env: Mapping[str, str] = os.environ,
+) -> tuple[list[str], dict[str, str]]:
+    """(argv, environment) for the server, matching tools/blender/geno_workbench/launch_goku.py.
+
+    The engine runs from its own directory (the exe's parent) with payloads in a sibling
+    ``payloads`` directory; MELEE_ISO carries the disc image and netplay binds loopback.
+    """
+    s = serve_settings(engine_exe, mods_dir, iso, env)
+    work = wb = ""
+    if s["engine_exe"]:
+        parent = Path(s["engine_exe"]).parent
+        work = str(parent)
+        wb = str(parent.parent / "payloads")
+        try:
+            Path(wb).mkdir(parents=True, exist_ok=True)
+        except OSError:
+            wb = ""
+    argv = serve_argv(exe, project, s["engine_exe"], headless, s["mods_dir"], work, wb)
+    out = dict(env)
+    qt_bin = env.get("GW_QT_BIN", "").strip()
+    if qt_bin:
+        out["PATH"] = qt_bin + os.pathsep + out.get("PATH", "")
+    if s["iso"]:
+        out["MELEE_ISO"] = s["iso"]
+    out["MELEE_NETPLAY_BIND"] = "127.0.0.1"
+    return argv, out
 
 
 def parse_serve_line(line: str) -> int | None:
@@ -144,6 +202,7 @@ def _stop_process(proc: subprocess.Popen) -> None:
 def start_serve(
     argv: Sequence[str],
     timeout: float = 30.0,
+    env: Mapping[str, str] | None = None,
 ) -> tuple[subprocess.Popen, int]:
     budget = float(timeout)
     if not math.isfinite(budget) or budget <= 0:
@@ -156,6 +215,7 @@ def start_serve(
     try:
         proc = subprocess.Popen(
             command,
+            env=None if env is None else dict(env),
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,

@@ -383,7 +383,7 @@ struct WorkbenchWindow::Impl {
         if (hit && !clipPreview) viewport->setSelectedHitbox(hit->slot, hit->startFrame, hit->endFrame);
         else viewport->setSelectedHitbox(-1);
         QString currentClip; QVector<int> motions;
-        for (const auto &entry : snapshot.rows) if (entry.name == row) { currentClip = entry.clip; motions = entry.motions; break; }
+        for (const auto &entry : snapshot.rows) if (entry.name == row) { currentClip = entry.effectiveClip(); motions = entry.motions; break; }
         clips->setClips(snapshot.clips, currentClip); fidelity->setFidelity(snapshot.fidelity, row, motions);
         fidelityNote->setText(snapshot.fidelityError.isEmpty() ? QString() :
             t("Cannot read fidelity: %1", "No se puede leer la fidelidad: %1").arg(snapshot.fidelityError));

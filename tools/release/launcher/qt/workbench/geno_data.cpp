@@ -184,6 +184,25 @@ QString GenoData::reload() {
             if (!it.value().isObject()) fail(planName + "/bank/clips/" + it.key() + ": expected object");
             clips.append({it.key(), intField(it.value().toObject(), "frames", planName + "/bank/clips/" + it.key())});
         }
+        // Rows without a gameplay pick (Goku) take their clip from the plan: motion_rows, then row_clips[motion].
+        QHash<int, QString> planClipByMotion;
+        const auto motionRows = plan.value("motion_rows");
+        if (!motionRows.isUndefined() && !motionRows.isArray()) fail(planName + "/motion_rows: expected array");
+        for (const auto &value : motionRows.toArray()) {
+            if (!value.isObject()) continue;
+            const auto entry = value.toObject();
+            if (entry.value("clip").isString() && entry.value("motion").isDouble())
+                planClipByMotion.insert(entry.value("motion").toInt(), entry.value("clip").toString());
+        }
+        const auto rowClips = plan.value("row_clips").toArray();
+        for (auto &row : rows) {
+            for (int motion : row.motions) {
+                QString name = planClipByMotion.value(motion);
+                if (name.isEmpty() && motion >= 0 && motion < rowClips.size() && rowClips[motion].isString())
+                    name = rowClips[motion].toString();
+                if (!name.isEmpty()) { row.planClip = name; break; }
+            }
+        }
         QByteArray fidelityBytes;
         QString fidelityText;
         QJsonArray fidelityRows;

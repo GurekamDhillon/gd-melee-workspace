@@ -207,9 +207,13 @@ class GENO_WB_OT_start_server(bpy.types.Operator):
                 exe = launch.find_launcher(root=_project_root(project))
                 if not exe:
                     raise client.WbError(STRINGS["launcher_missing"])
-            process, port = launch.start_serve(
-                launch.serve_argv(exe, str(project)), timeout=30,
+            argv, serve_env = launch.serve_launch(
+                exe, str(project),
+                engine_exe=bpy.path.abspath(settings.engine_exe) if settings.engine_exe.strip() else "",
+                mods_dir=bpy.path.abspath(settings.mods_dir) if settings.mods_dir.strip() else "",
+                iso=bpy.path.abspath(settings.iso_path) if settings.iso_path.strip() else "",
             )
+            process, port = launch.start_serve(argv, timeout=120, env=serve_env)
             _server_process = process
             settings.host = "127.0.0.1"
             settings.port = port

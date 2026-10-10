@@ -98,18 +98,15 @@ def main() -> int:
         if found and not (engine.parent / dll).exists() and found.resolve() != (engine.parent / dll).resolve():
             shutil.copy2(found, engine.parent / dll)
 
-    env = dict(os.environ)
-    env["PATH"] = qt_bin + os.pathsep + env.get("PATH", "")
-    env["MELEE_ISO"] = iso
-    env["MELEE_NETPLAY_BIND"] = "127.0.0.1"
-
-    argv = [launcher, "--project", str(project), "--serve",
-            "--engine-exe", str(engine), "--engine-work-dir", str(engine.parent),
-            "--mods-dir", str(mods), "--wb-dir", str(work / "payloads")]
-    if args.windowed_engine:
-        argv.append("--engine-windowed")
+    os.environ["GW_QT_BIN"] = qt_bin
+    argv, env = launch.serve_launch(
+        launcher, str(project), engine_exe=str(engine), mods_dir=str(mods), iso=iso,
+        headless=not args.windowed_engine)
+    # keep the payload directory where earlier runs put it
+    if "--wb-dir" in argv:
+        argv[argv.index("--wb-dir") + 1] = str(work / "payloads")
     print("starting launcher --serve ...")
-    proc, port = launch.start_serve(argv, timeout=120, env=env) if _accepts_env() else _start_with_env(argv, env)
+    proc, port = launch.start_serve(argv, timeout=120, env=env)
     print("WB_SERVE port=%d" % port)
     try:
         if args.serve_only:
@@ -123,26 +120,24 @@ def main() -> int:
         if args.row:
             cmd += ["--row", args.row]
         elif args.check:
-            cmd += ["--row", "Wait"]
+            cmd += ["--row", "jab1"]   # the engine's rows are the project's moves (jab1, utilt, ...), not clip names
         if args.frame:
             cmd += ["--frame", str(args.frame)]
         if args.check:
             cmd += ["--report"]
         print("starting Blender ...")
-        return subprocess.call(cmd)
+        if not args.check:
+            return subprocess.call(cmd)
+        # Blender exits 0 even when the script raised; a check fails on a traceback or a missing report
+        seen = {"trace": False, "report": False}
+        with subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace") as bl:
+            for line in bl.stdout:
+                print(line, end="")
+                seen["trace"] |= "Traceback (most recent call last)" in line
+                seen["report"] |= "GENO_WB_REPORT" in line
+        return 1 if bl.returncode or seen["trace"] or not seen["report"] else 0
     finally:
         launch._stop_process(proc)
-
-
-def _accepts_env() -> bool:
-    import inspect
-    return "env" in inspect.signature(launch.start_serve).parameters
-
-
-def _start_with_env(argv, env):
-    """launch.start_serve inherits os.environ, so apply the engine environment to this process."""
-    os.environ.update({k: v for k, v in env.items() if k in ("PATH", "MELEE_ISO", "MELEE_NETPLAY_BIND")})
-    return launch.start_serve(argv, timeout=120)
 
 
 if __name__ == "__main__":
