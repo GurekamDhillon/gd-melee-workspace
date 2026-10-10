@@ -13,8 +13,8 @@ python tools/port/tools_config.py --check
 ```
 
 `--detect` saves resolved paths atomically. It preserves configured values and
-fills unset tools from PATH, standard Blender installation directories and build
-outputs. Unresolved discoveries are omitted, so a later `--detect` can find newly
+fills unset tools from PATH, standard Blender installation directories, Steam
+libraries and build outputs. Unresolved discoveries are omitted, so a later `--detect` can find newly
 installed tools; explicitly empty settings are preserved. Set paths that discovery cannot find in `.env` or edit the local JSON.
 `--check` lists **every** missing file/directory and exits 1 if any is missing;
 malformed configuration exits 2 with the file named. It checks existence, not
@@ -64,7 +64,12 @@ The JSON shape is:
 
 These are examples; use your installed tools and your own discs. Other environment
 keys and credentials are never written to the JSON. Modern Blender is detected
-on PATH or in standard 4.0+ installation directories; pinned Blender discovery only considers
+on PATH or in standard 4.0+ installation directories, then in Steam libraries.
+Steam discovery reads `%ProgramFiles(x86)%/Steam/steamapps/libraryfolders.vdf` and
+checks `steamapps/common/Blender/blender.exe` in every listed library, including
+libraries on other drives. The default Steam library is still checked if that file
+is missing or unreadable. `GW_BLENDER` keeps its override precedence (an explicit
+empty value disables discovery). Pinned Blender discovery only considers
 3.5.1-specific locations. Launcher discovery prefers `_build/wb-win`, then the
 newest launcher under `_build`, then PATH. Engine discovery considers the existing
 Workbench sandbox, `_build/agents/geno-workbench`, and `_build/melee-pc.exe`.

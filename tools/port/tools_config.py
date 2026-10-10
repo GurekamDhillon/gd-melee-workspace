@@ -119,6 +119,22 @@ def _on_path(name: str, env: Mapping[str, str]) -> str:
     return (shutil.which(name, path=path) or shutil.which(name + ".exe", path=path) or "") if path else ""
 
 
+def _steam_blender_candidates(steam: Path) -> list[Path]:
+    libraries = [steam]  # Retain the default library even if the VDF is unavailable.
+    try:
+        document = (steam / "steamapps/libraryfolders.vdf").read_text(encoding="utf-8-sig")
+    except (OSError, UnicodeError):
+        pass
+    else:
+        for raw_path in re.findall(r'"path"\s*"((?:\\.|[^"\\])*)"', document):
+            # VDF escapes backslashes; unicode_escape would corrupt paths such
+            # as C:\Users and non-ASCII library names.
+            library = re.sub(r'\\([\\"])', r'\1', raw_path)
+            if library and Path(library).is_absolute():
+                libraries.append(Path(library))
+    return [library / "steamapps/common/Blender/blender.exe" for library in libraries]
+
+
 def _discover(root: Path, values: Mapping[str, str]) -> dict[str, str]:
     found = {}
     if "GW_BLENDER" not in values:
@@ -132,7 +148,7 @@ def _discover(root: Path, values: Mapping[str, str]) -> dict[str, str]:
         candidates.sort(key=lambda p: tuple(int(n) for n in re.findall(r"[0-9]+", p.parent.name)), reverse=True)
         steam = values.get("PROGRAMFILES(X86)") or values.get("ProgramFiles(x86)")
         if steam:
-            candidates.append(Path(steam) / "Steam/steamapps/common/Blender/blender.exe")
+            candidates.extend(_steam_blender_candidates(Path(steam) / "Steam"))
         found["GW_BLENDER"] = _on_path("blender", values) or _first_file(candidates)
     if "GW_BLENDER_351" not in values:
         candidates = [root / "_build/tools/blender-3.5.1-windows-x64/blender.exe"]
