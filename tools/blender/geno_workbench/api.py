@@ -30,8 +30,14 @@ except ImportError:
 
 EDITABLE = (
     "bone", "damage", "size", "x", "y", "z", "angle", "kbg", "fkb", "bkb",
-    "start_frame", "end_frame",
+    "start_frame", "end_frame", "element", "shield", "slot", "ground", "air",
 )
+
+# The limits the launcher's edit_hitbox enforces, checked here first so a bad value never leaves Blender.
+ELEMENT_RANGE = (0, 31)       # source element code; 0..16 are the retail HitElement ids
+SHIELD_RANGE = (-128, 127)    # signed shield damage (Metal Sonic's -3 is legal)
+SLOT_RANGE = (0, 3)           # hitbox slots; slot 4+ waits for ws/research-ace-hitbox-slot4 (not writable yet)
+BOOL_FIELDS = ("ground", "air")   # hit_ground / hit_air: False = cannot hit grounded / airborne targets
 
 # what add_hitbox may set besides the frame and bone; the server fills the rest with defaults
 ADDABLE = frozenset(("damage", "size", "x", "y", "z", "angle", "kbg", "fkb", "bkb", "duration"))
@@ -223,6 +229,20 @@ class WbSession:
         if number < minimum or number != value:
             raise client.WbError(message)
         return number
+
+    @classmethod
+    def _ranged(cls, value, field: str, bounds) -> int:
+        low, high = bounds
+        number = cls._integer(value, field, low)
+        if number > high:
+            raise client.WbError(STRINGS["invalid_range"].format(field=field, minimum=low, maximum=high))
+        return number
+
+    @staticmethod
+    def _flag(value, field: str) -> bool:
+        if not isinstance(value, bool):
+            raise client.WbError(STRINGS["invalid_flag"].format(field=field))
+        return value
 
     @staticmethod
     def _number(value, field: str):
@@ -692,6 +712,14 @@ class WbSession:
                         raise client.WbError(STRINGS["bone_required"])
                 elif field in ("start_frame", "end_frame"):
                     value = self._integer(value, field)
+                elif field == "element":
+                    value = self._ranged(value, field, ELEMENT_RANGE)
+                elif field == "shield":
+                    value = self._ranged(value, field, SHIELD_RANGE)
+                elif field == "slot":
+                    value = self._ranged(value, field, SLOT_RANGE)
+                elif field in BOOL_FIELDS:
+                    value = self._flag(value, field)
                 else:
                     value = self._number(value, field)
                 args[field] = value

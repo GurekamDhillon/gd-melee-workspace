@@ -245,6 +245,19 @@ STRINGS: dict[str, str] = {
     "bkb": "Base knockback",
     "start_frame": "Start frame",
     "end_frame": "End frame",
+    "element": "Element",
+    "element_help": "The hit's element (retail HitElement ids 0-16; the script accepts 0-31)",
+    "shield": "Shield damage",
+    "shield_help": "Extra damage to a shield; negative values are allowed (Metal Sonic uses -3)",
+    "slot": "Slot",
+    "slot_help": "Hitbox slot 0-3: the lowest slot wins when hitboxes overlap, and live hitboxes need different slots",
+    "slot_readonly": "Slot {slot} (read-only: the Workbench writes slots 0-3)",
+    "ground": "Hits grounded targets",
+    "ground_help": "Off = air-only hitbox (hit_ground=0)",
+    "air": "Hits airborne targets",
+    "air_help": "Off = ground-only hitbox (hit_air=0)",
+    "invalid_range": "{field} must be between {minimum} and {maximum}",
+    "invalid_flag": "{field} must be true or false",
     "ordinal": "Ordinal",
     "suggest_bone": "Suggest limb",
     "add_hitbox": "Add hitbox",
@@ -533,6 +546,18 @@ def _sync_labels(collection, labels):
     return True
 
 
+# HitElement (melee/lb/forward.h) 0..16, then the unused codes the assembler still accepts (17..31).
+HIT_ELEMENTS = (
+    "Normal", "Fire", "Electric", "Slash", "Coin", "Ice", "Nap (sleep 103 frames)", "Sleep (412 frames)",
+    "Grab (catch)", "Ground", "Cape", "Inert", "Disable", "Darkness", "Screw Attack", "Lipstick", "ReDead grab",
+)
+ELEMENT_ITEMS = [
+    (str(i), "%d  %s" % (i, HIT_ELEMENTS[i]) if i < len(HIT_ELEMENTS) else "%d  unused code" % i, "")
+    for i in range(32)
+]
+EDIT_FLAGS = {"ground": "hit_ground", "air": "hit_air"}
+
+
 def _display(value):
     return format(value, "g") if isinstance(value, (int, float)) else str(value)
 
@@ -543,6 +568,12 @@ def _source_editor_values(box):
         if field == "bone":
             values[field] = str(box.get("bone", box.get("joint", "")))
             continue
+        if field in EDIT_FLAGS:   # absent = true: an old launcher that lists neither flag changes nothing
+            flag = box.get(EDIT_FLAGS[field], box.get(field, True))
+            values[field] = flag if isinstance(flag, bool) else bool(flag)
+            continue
+        if field == "shield":
+            box = dict(box, shield=box.get("shield_damage", box.get("shield", 0)))
         default = 1 if field in ("start_frame", "end_frame") else 0
         try:
             number = float(box.get(field, default))
@@ -550,9 +581,13 @@ def _source_editor_values(box):
                 number = default
         except (TypeError, ValueError, OverflowError):
             number = default
-        if field in ("angle", "kbg", "fkb", "bkb", "start_frame", "end_frame"):
+        if field in ("angle", "kbg", "fkb", "bkb", "start_frame", "end_frame", "element", "shield", "slot"):
             number = int(number)
+        if field == "slot":
+            number = max(0, min(3, number))   # a slot 4+ script shows read-only in the panel; the editor holds 3
         values[field] = number
+        if field == "element":
+            values[field] = str(max(0, min(31, number)))   # the enum's identifier
     return values
 
 
@@ -594,11 +629,14 @@ def changed_hitbox_fields(settings):
     if not settings.edit_baseline:
         raise ValueError(STRINGS["editor_missing"])
     baseline = json.loads(settings.edit_baseline)
-    return {
+    changed = {
         field: getattr(settings, "edit_" + field)
         for field in _session().edit_fields
         if getattr(settings, "edit_" + field) != baseline.get(field)
     }
+    if "element" in changed:
+        changed["element"] = int(changed["element"])   # the enum holds its id as text
+    return changed
 
 
 def sync_from_session(value, settings=None):
@@ -742,6 +780,11 @@ def _make_property_group():
         edit_bkb: IntProperty(name=STRINGS["bkb"], min=0, options={"SKIP_SAVE"})
         edit_start_frame: IntProperty(name=STRINGS["start_frame"], default=1, min=0, options={"SKIP_SAVE"})
         edit_end_frame: IntProperty(name=STRINGS["end_frame"], default=1, min=0, options={"SKIP_SAVE"})
+        edit_element: EnumProperty(name=STRINGS["element"], description=STRINGS["element_help"], items=ELEMENT_ITEMS, options={"SKIP_SAVE"})
+        edit_shield: IntProperty(name=STRINGS["shield"], description=STRINGS["shield_help"], min=-128, max=127, options={"SKIP_SAVE"})
+        edit_slot: IntProperty(name=STRINGS["slot"], description=STRINGS["slot_help"], min=0, max=3, options={"SKIP_SAVE"})
+        edit_ground: BoolProperty(name=STRINGS["ground"], description=STRINGS["ground_help"], default=True, options={"SKIP_SAVE"})
+        edit_air: BoolProperty(name=STRINGS["air"], description=STRINGS["air_help"], default=True, options={"SKIP_SAVE"})
 
     return GenoWBProps
 

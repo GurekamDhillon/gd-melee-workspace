@@ -44,6 +44,7 @@ bool sameHitboxSource(const QVector<HitboxRef> &before, const QVector<HitboxRef>
         return a.ordinal == b.ordinal && a.line == b.line && a.slot == b.slot && a.joint == b.joint
             && a.damage == b.damage && a.size == b.size && a.x == b.x && a.y == b.y && a.z == b.z
             && a.angle == b.angle && a.kbg == b.kbg && a.fkb == b.fkb && a.bkb == b.bkb && a.element == b.element
+            && a.shield == b.shield && a.ground == b.ground && a.air == b.air
             && a.startFrame == b.startFrame && a.endFrame == b.endFrame && a.clearLine == b.clearLine;
     });
 }

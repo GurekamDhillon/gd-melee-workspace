@@ -32,7 +32,7 @@ def operators(monkeypatch):
     bpy = ModuleType("bpy")
     bpy.types = SimpleNamespace(Operator=Operator, PropertyGroup=type("PropertyGroup", (), {}))
     bpy.props = ModuleType("bpy.props")
-    for name in ("EnumProperty", "FloatProperty", "IntProperty", "StringProperty", "PointerProperty"):
+    for name in ("BoolProperty", "EnumProperty", "FloatProperty", "IntProperty", "StringProperty", "PointerProperty"):
         setattr(bpy.props, name, lambda **kwargs: None)
     bpy.path = SimpleNamespace(abspath=lambda path: path)
     monkeypatch.setitem(sys.modules, "bpy", bpy)

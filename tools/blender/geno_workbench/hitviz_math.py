@@ -54,8 +54,9 @@ SLOT_RGB = (
 METEOR_RGB = (0.00, 0.45, 0.70)    # blue: the one hue the slot ramp never uses
 
 ELEMENT_NAMES = {   # HitElement (melee/lb/forward.h)
-    0: "", 1: "fire", 2: "electric", 3: "slash", 4: "coin", 5: "ice", 6: "sleep (short)", 7: "sleep",
+    0: "", 1: "fire", 2: "electric", 3: "slash", 4: "coin", 5: "ice", 6: "nap", 7: "sleep",
     8: "grab", 9: "ground", 10: "cape", 11: "inert", 12: "disable", 13: "darkness", 14: "screw attack",
+    15: "lipstick", 16: "redead grab",
 }
 
 

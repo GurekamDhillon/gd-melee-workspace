@@ -244,6 +244,16 @@ class GENO_WB_PT_hitbox(bpy.types.Panel):
                 row.prop(settings, "edit_" + field)
             for field in ("angle", "kbg", "fkb", "bkb"):
                 editor.prop(settings, "edit_" + field)
+            editor.prop(settings, "edit_element")
+            editor.prop(settings, "edit_shield")
+            source_slot = value.hitboxes[settings.hitbox_index].get("slot", 0)
+            if isinstance(source_slot, int) and not isinstance(source_slot, bool) and source_slot > 3:
+                editor.label(text=STRINGS["slot_readonly"].format(slot=source_slot))   # slot 4+: shown, never written
+            else:
+                editor.prop(settings, "edit_slot")
+            row = editor.row(align=True)
+            row.prop(settings, "edit_ground")
+            row.prop(settings, "edit_air")
             row = editor.row(align=True)
             row.prop(settings, "edit_start_frame")
             row.prop(settings, "edit_end_frame")

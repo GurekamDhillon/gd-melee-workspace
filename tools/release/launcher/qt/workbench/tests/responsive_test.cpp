@@ -101,6 +101,9 @@ private slots:
         // R4: the timeline panel hugs its rows.
         auto *plate = bench->findChild<QWidget *>("wbTimelinePlate"); QVERIFY(plate);
         QVERIFY2(plate->height() < timeline->sizeHint().height() + 260, qPrintable(QString("plate %1 for timeline %2").arg(plate->height()).arg(timeline->sizeHint().height())));
+        // Select a hitbox so the form (element, shield, slot, ground/air included) is on screen and checked.
+        emit timeline->hitboxSelected(0); QTest::qWait(120);
+        auto *shieldField = bench->findChild<QWidget *>("wbHitbox_shield"); QVERIFY(shieldField); QVERIFY(shieldField->isVisible());
         // No clipped control anywhere in the workbench, on every inspector tab.
         for (int tab = 0; tab < tabs->count(); ++tab) {
             tabs->setCurrentIndex(tab); QTest::qWait(60);

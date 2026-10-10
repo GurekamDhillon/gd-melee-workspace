@@ -7,7 +7,7 @@ import subprocess
 import time
 
 import bpy
-from bpy.props import EnumProperty, FloatProperty, IntProperty, StringProperty
+from bpy.props import BoolProperty, EnumProperty, FloatProperty, IntProperty, StringProperty
 
 try:
     from . import api, client, launch, props, rebuild_job
@@ -702,6 +702,11 @@ class GENO_WB_OT_edit_hitbox(bpy.types.Operator):
     bkb: IntProperty(name=STRINGS["bkb"], min=0)
     start_frame: IntProperty(name=STRINGS["start_frame"], default=1, min=0)
     end_frame: IntProperty(name=STRINGS["end_frame"], default=1, min=0)
+    element: IntProperty(name=STRINGS["element"], default=0, min=0, max=31)
+    shield: IntProperty(name=STRINGS["shield"], default=0, min=-128, max=127)
+    slot: IntProperty(name=STRINGS["slot"], default=0, min=0, max=3)
+    ground: BoolProperty(name=STRINGS["ground"], default=True)
+    air: BoolProperty(name=STRINGS["air"], default=True)
 
     @classmethod
     def poll(cls, context):

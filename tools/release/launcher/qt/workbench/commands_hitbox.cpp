@@ -2,13 +2,16 @@
 #include "analysis.h"
 
 namespace wb {
-namespace {
 QJsonObject hitboxJson(const HitboxRef &h) {
     return {{"ordinal", h.ordinal}, {"line", h.line}, {"slot", h.slot}, {"joint", h.joint},
         {"damage", h.damage}, {"size", h.size}, {"x", h.x}, {"y", h.y}, {"z", h.z},
         {"angle", h.angle}, {"kbg", h.kbg}, {"fkb", h.fkb}, {"bkb", h.bkb}, {"element", h.element},
+        // The names the engine's hitbox records use (gd.hitboxes): the Blender badges read these.
+        {"wbk", h.fkb}, {"shield", h.shield}, {"shield_damage", h.shield}, {"ground", h.ground}, {"air", h.air},
+        {"hit_ground", h.ground}, {"hit_air", h.air},
         {"start_frame", h.startFrame}, {"end_frame", h.endFrame}};
 }
+namespace {
 HitboxRef needHitbox(Session &s, const QString &row, int ordinal) {
     needRow(s, row);
     const auto hitboxes = s.data().hitboxes(row);
@@ -38,6 +41,8 @@ void registerHitboxCommands(Session &s) {
     for (const char *key : {"damage", "size", "x", "y", "z"}) editProperties[key] = argType("number");
     for (const char *key : {"angle", "kbg", "fkb", "bkb", "start_frame", "end_frame", "element"})
         editProperties[key] = argType("integer");
+    editProperties["shield"] = argType("integer"); editProperties["slot"] = argType("integer");
+    editProperties["ground"] = argType("boolean"); editProperties["air"] = argType("boolean");
     s.registry().add({"edit_hitbox", t("Edit a source hitbox", "Edit a source hitbox"),
         commandSchema(editProperties, {"row", "ordinal"}), true,
         [](const QJsonObject &args, CommandContext &ctx) {
@@ -64,6 +69,20 @@ void registerHitboxCommands(Session &s) {
             if (args.contains("fkb")) edit.fkb = intArg(args, "fkb");
             if (args.contains("bkb")) edit.bkb = intArg(args, "bkb");
             if (args.contains("element")) edit.element = intArg(args, "element", 0, 31);
+            if (args.contains("shield")) edit.shield = intArg(args, "shield", -128, 127);
+            if (args.contains("slot")) {
+                const double slot = args["slot"].toDouble(-1);
+                if (!args["slot"].isDouble() || slot != std::floor(slot) || slot < 0 || slot >= kHitboxEditableSlots)
+                    throw CommandError{t("slot must be between 0 and %1 (higher slot ids are not supported yet)",
+                                         "slot must be between 0 and %1 (higher slot ids are not supported yet)").arg(kHitboxEditableSlots - 1)};
+                edit.slot = int(slot);
+            }
+            for (const char *key : {"ground", "air"}) if (args.contains(key)) {
+                const auto v = args[key];
+                if (!v.isBool() && !(v.isDouble() && (v.toDouble() == 0 || v.toDouble() == 1)))
+                    throw CommandError{t("%1 must be true or false", "%1 must be true or false").arg(key)};
+                (QString(key) == "ground" ? edit.ground : edit.air) = v.isBool() ? v.toBool() : v.toDouble() != 0;
+            }
             if (args.contains("start_frame")) edit.startFrame = intArg(args, "start_frame");
             if (args.contains("end_frame")) edit.endFrame = intArg(args, "end_frame");
             ctx.propose |= args["propose"].toBool();

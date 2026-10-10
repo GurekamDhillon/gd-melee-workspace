@@ -234,10 +234,7 @@ struct Worker {
                 if ((name == "set_frame" || name == "play") && value.contains("frame") && !session->currentRow.isEmpty()) {
                     QJsonArray hits;
                     for (const auto &h : session->data().hitboxes(session->currentRow))
-                        hits.append(QJsonObject{{"ordinal", h.ordinal}, {"slot", h.slot}, {"joint", h.joint},
-                            {"damage", h.damage}, {"size", h.size}, {"x", h.x}, {"y", h.y}, {"z", h.z},
-                            {"angle", h.angle}, {"kbg", h.kbg}, {"bkb", h.bkb}, {"fkb", h.fkb}, {"element", h.element},
-                            {"start_frame", h.startFrame}, {"end_frame", h.endFrame}});
+                        hits.append(hitboxJson(h));   // the same record list_hitboxes returns, so Blender's badges see element/shield/ground/air
                     session->uiView = {{"revision", session->uiView.value("revision").toInteger() + 1},
                         {"available", true}, {"row", session->currentRow}, {"info", value}, {"hitboxes", hits}};
                     session->blenderAckRevision = 0;

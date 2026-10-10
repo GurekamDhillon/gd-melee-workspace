@@ -388,6 +388,41 @@ private slots:
         QCOMPARE(hb2.size(), 3);
         for (const auto &h : hb2) if (h.joint == "B") QCOMPARE(h.slot, 0);  // 1 and 3 are live and nothing is free above them: the lowest free id
     }
+    void shieldGroundAirParseAndRoundTrip() {
+        const QString source = "wait_until 3\nhitbox slot=0 joint=@A@ damage=7 shield=-3 ground=0 air=1 # shield=99\nwait 2\nclear_hitboxes\n";
+        const auto script = GenoAsm::parse(source);
+        auto h = script.hitboxes()[0];
+        QCOMPARE(h.shield, -3); QVERIFY(!h.ground); QVERIFY(h.air);
+        const auto plain = GenoAsm::parse("hitbox slot=0\n").hitboxes()[0];   // omitted: 0 / true / true
+        QCOMPARE(plain.shield, 0); QVERIFY(plain.ground); QVERIFY(plain.air);
+        QString err; HitboxEdit e; e.shield = 10; e.ground = true; e.air = false;
+        const QString out = script.apply(0, e, &err); QVERIFY2(!out.isNull(), qPrintable(err));
+        QVERIFY(out.contains("shield=10 ground=1 air=0 # shield=99"));
+        h = GenoAsm::parse(out).hitboxes()[0];
+        QCOMPARE(h.shield, 10); QVERIFY(h.ground); QVERIFY(!h.air);
+        HitboxEdit neg; neg.shield = -128;   // the whole signed byte is allowed
+        const QString low = GenoAsm::parse("hitbox slot=0\n").apply(0, neg, &err); QVERIFY2(!low.isNull(), qPrintable(err));
+        QCOMPARE(GenoAsm::parse(low).hitboxes()[0].shield, -128);
+        for (int bad : {-129, 128}) { HitboxEdit b; b.shield = bad; QVERIFY(script.apply(0, b, &err).isNull()); QVERIFY(err.contains("shield")); }
+    }
+    void slotEditKeepsDistinctSlotsAndRefusesConflictsAndSlotFour() {
+        const QString two = "wait_until 4\nhitbox slot=0 joint=@A@ damage=3\nwait_until 6\nhitbox slot=1 joint=@B@ damage=4\n"
+                            "wait_until 9\nclear_hitboxes\n";
+        const auto script = GenoAsm::parse(two);
+        QString err; HitboxEdit e; e.slot = 3;
+        QString out = script.apply(1, e, &err); QVERIFY2(!out.isNull(), qPrintable(err));
+        auto hb = GenoAsm::parse(out).hitboxes(); QCOMPARE(hb[0].slot, 0); QCOMPARE(hb[1].slot, 3);
+        e.slot = 0;   // live together with box 0 on slot 0: refused, nothing renumbered behind the user's back
+        QVERIFY(script.apply(1, e, &err).isNull()); QVERIFY2(err.contains("slot 0 is already used"), qPrintable(err));
+        e.slot = 4; QVERIFY(script.apply(1, e, &err).isNull()); QVERIFY(err.contains("slot must be between 0 and 3"));
+        e.slot = -1; QVERIFY(script.apply(1, e, &err).isNull());
+        // sequential (not overlapping) hitboxes may share a slot
+        const QString seq = "wait_until 4\nhitbox slot=0 joint=@A@\nwait 2\nclear_hitboxes\nwait_until 8\nhitbox slot=1 joint=@B@\nwait 2\nclear_hitboxes\n";
+        e.slot = 0; out = GenoAsm::parse(seq).apply(1, e, &err); QVERIFY2(!out.isNull(), qPrintable(err));
+        QCOMPARE(GenoAsm::parse(out).hitboxes()[1].slot, 0);
+        // a slot beyond the writable range in an existing script is read back as it is
+        QCOMPARE(GenoAsm::parse("hitbox slot=4 joint=@A@\n").hitboxes()[0].slot, 4);
+    }
 };
 QTEST_MAIN(GenoAsmTest)
 #include "geno_asm_test.moc"

@@ -16,6 +16,7 @@
 #include <atomic>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QCheckBox>
 #include <QtTest>
 using namespace wb;
 
@@ -359,6 +360,30 @@ private slots:
         clips->assignCurrent(); QTRY_VERIFY(!w.isBusy());
         QCOMPARE(s.data().rows()[1].clip, QString("SYN_ATC_009"));
         QCOMPARE(s.data().rows()[0].clip, QString("SYN_ATC_002"));
+    }
+    void inspectorShieldSlotAndGroundAirFields() {
+        InspectorPanel p; HitboxRef h; h.joint = "HAND_R"; h.shield = -3; h.ground = false; h.slot = 1; h.element = 16; p.showHitbox("jab1", h);
+        QSignalSpy edits(&p, &InspectorPanel::editRequested);
+        auto *shield = p.findChild<QSpinBox *>("wbHitbox_shield"); auto *slot = p.findChild<QSpinBox *>("wbHitbox_slot");
+        auto *ground = p.findChild<QCheckBox *>("wbHitbox_ground"); auto *air = p.findChild<QCheckBox *>("wbHitbox_air");
+        auto *element = p.findChild<QComboBox *>("wbHitbox_element");
+        QVERIFY(shield && slot && ground && air && element);
+        QCOMPARE(shield->value(), -3); QCOMPARE(slot->value(), 1); QVERIFY(!ground->isChecked()); QVERIFY(air->isChecked());
+        QVERIFY(element->currentText().contains("ReDead")); QCOMPARE(element->count(), 32);
+        QCOMPARE(shield->minimum(), -128); QCOMPARE(shield->maximum(), 127); QCOMPARE(slot->maximum(), 3);
+        shield->setValue(-128); shield->editingFinished();
+        QCOMPARE(edits.size(), 1); QCOMPARE(edits[0][1].toJsonObject()["shield"].toInt(), -128);
+        ground->click();
+        QCOMPARE(edits.size(), 2); QVERIFY(edits[1][1].toJsonObject()["ground"].isBool()); QVERIFY(edits[1][1].toJsonObject()["ground"].toBool());
+        air->click();
+        QCOMPARE(edits.size(), 3); QVERIFY(!edits[2][1].toJsonObject()["air"].toBool());
+        slot->setValue(3); slot->editingFinished();
+        QCOMPARE(edits.size(), 4); QCOMPARE(edits[3][1].toJsonObject()["slot"].toInt(), 3);
+        p.setField("slot", 4); p.setField("shield", 128); p.setField("shield", -129); QCOMPARE(edits.size(), 4);
+        // a slot id the Workbench cannot write (a later build's slot 4) is shown and locked
+        h.slot = 4; p.showHitbox("jab1", h);
+        QCOMPARE(slot->value(), 4); QVERIFY(!slot->isEnabled());
+        h.slot = 2; h.ordinal = 1; p.showHitbox("jab1", h); QVERIFY(slot->isEnabled()); QCOMPARE(slot->maximum(), 3);
     }
 };
 QTEST_MAIN(PanelsTest)
