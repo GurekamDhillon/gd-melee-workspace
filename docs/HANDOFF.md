@@ -105,6 +105,13 @@ and GD's visual/controller checks. An old 185/185 result cannot validate subsequ
 
 ## 7. Conventions
 
+- Lanes and integration (2026-10-10): every lane (Claude lead or Codex) works and commits only in
+  its own worktree under `worktrees/` on its own branch, with its own build root and run dir
+  (`tools/port/agent_new.sh`, `GW_BUILD_ROOT`, `run.sh`). Lanes never edit the main checkouts and
+  never merge; they report the tip, tests, Jev `check_claims` and "ready to merge: yes/no". The main
+  session is the sole integrator: one lane at a time into the workspace or game `integration/...`
+  branch, then rebuild and rerun the tests on the integration tip. Nothing is pushed without the owner.
+
 - Guard game-source changes with `#if defined(TARGET_PC)` and retain the original path.
 - Game TUs use the PPC frontend/gwtool pipeline. Native `pc/platform` shims do not belong in
   `files.txt`; list their objects in the link response file. Lane sync rewrites the curated
