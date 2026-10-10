@@ -526,7 +526,7 @@ def read_recipe(arm, track=None):
             raise ValueError(STRINGS["nla_unsupported_strip"])
         if (strip.mute or abs(strip.repeat - 1) > 1e-6 or strip.use_animated_time or strip.use_animated_influence
                 or strip.blend_type != "REPLACE" or strip.blend_in or strip.blend_out
-                or abs(strip.influence - 1) > 1e-6 or len(strip.modifiers)):
+                or len(strip.modifiers)):  # influence is inert unless animated (reads 0.0 by default)
             raise ValueError(STRINGS["nla_unsupported_strip"])
         if info["kind"] in {"hold", "bridge"} and strip.use_reverse:
             raise ValueError(STRINGS["nla_unsupported_strip"])
