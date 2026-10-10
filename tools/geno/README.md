@@ -51,6 +51,21 @@ Source fingerprints and registry-key coverage make regeneration and review neces
 the engine changes. Keys and semantic annotations that cannot be extracted reliably are
 reviewed against the registry, rather than guessed from C syntax.
 
+## Playtest
+
+Open a built workbench project or an artist `fighter.json` from the workspace root:
+
+```text
+python tools/geno/play.py --project ports/goku-xv2 --lab --clip jab1
+python tools/geno/play.py --project path/to/fighter.json --vs cpu
+```
+
+LAB is the default. `--clip` accepts a move id, animation row or installed clip name and opens CLIPS at that row. VS uses a live level 9 Mario CPU. Each launch gets a unique `_build/runs/<fighter>-<mode>-<id>/` directory, a window at 60 Hz, and its own log. The command returns after the existing `tools/port/run.sh` wrapper starts; inspect the reported `launch.log` if a game window does not appear.
+
+The resolver uses `workbench.json` package paths or the artist output directory. Set local disc paths in `.env` (`GW_ISO_VANILLA`); `--iso`, `--mods-dir` and `--engine-exe` override them. `GW_BUILD_ROOT`, `GW_BASH` (Git Bash on Windows) and `GW_PYTHON` select local tools. `--check --json` resolves without starting a game.
+
+Newer authored sources or missing package manifests require a rebuild. Repeat with `--rebuild` to run the configured workbench builder with `--gameplay-only`, or the artist cached gameplay builder. Art changes require a full author build first. The Blender Playtest panel and Creator hub offer the same rebuild choice and retain the selected LAB row.
+
 ## Text scripts
 
 One command per line; `#` introduces a comment. Integers may be decimal or `0x` hex.

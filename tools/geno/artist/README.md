@@ -31,6 +31,7 @@ Tool paths use [the shared authoring-tool config](../../port/TOOLS_CONFIG.md): `
 | `new DIR --key K [--name N] [--params params.json]` | headless Blender writes `DIR/K.blend` (parametric starter) and `DIR/fighter.json` |
 | `validate fighter.json-or-DIR [-v] [--json]` | blockers/warnings with the object, bone, vertex or action and the fix; exit 1 on a blocker |
 | `build fighter.json [--out DIR] [--export] [--strict]` | [0] export the glb from `art.blend` if stale, [1] validate, [2] plan/mesh/bank, [3] models, [4] moves + `geno.json` (+ `geno check`), [5] install into `<out>/mods` |
+| `build fighter.json [--out DIR] --gameplay-only` | rebuild gameplay against unchanged cached art; check before replacing the fighter package |
 | `run-command fighter.json` | the LAB launch line |
 | `joints fighter.json` | the joint numbers the LAB shows (INSPECT `J`) with bone name, role, Melee part and parent: the key to hitbox `joint=N`, `gd.joints` and sockets |
 | `clips [--tier ...] [--markdown]` | the clip checklist |
@@ -38,6 +39,11 @@ Tool paths use [the shared authoring-tool config](../../port/TOOLS_CONFIG.md): `
 
 Outputs go to `<workspace>/_build/artist/<key>/` (override with `--out` or `fighter.json` `output`): `build/` (plan, models, bank, `build-report.md`) and
 `mods/` (`geno-lab/`, `<key>/`, `enabled.txt`). Point `MELEE_MODS_DIR` at `mods/` and nothing else is touched: no file in the game checkout is written.
+
+
+`build --gameplay-only` reuses the last full build's plan, models, animation bank and measured speeds. It accepts changes to `attributes`, `jumps`, `moves` and the display `name`; it validates a staged package before replacing the installed fighter and preserves the LAB and `enabled.txt`. It never starts Blender or fighterbuild. A full build writes `build/gameplay-cache.json`; existing outputs without that cache, or changed art/clip configuration, need one full build before this path is available.
+
+Play either mode with `python tools/geno/play.py --project fighter.json --lab [--clip ROW]` or `--vs cpu`. `--rebuild` runs only this cached gameplay path when the package is stale. Use `--mods-dir <out>/mods` for a custom output that is not declared in the config.
 
 ## The starter (`blender/`)
 
@@ -63,7 +69,7 @@ mark the hit frame. `control_rig.py` bakes your own control rig onto the export 
 ## Build -> preview -> iterate
 
 1. `build` (content-dependent; the 2026-10-10 audit recorded 11 s for a small starter). Read the findings: blockers stop; warnings and `build-report.md` list placeholders. Large animation banks take minutes; see the tutorial's measured full Goku build.
-2. Run the printed `run-command` line from the workspace root (the LAB, Mario as P2). INSPECT mode (`S` skeleton, `J` joint numbers), HITBOXES (`B`, `L`), FRAMES (`Q`/`E` scrub).
+2. Run the printed `run-command` line (or `python tools/geno/play.py --project fighter.json --lab`) from the workspace root (the LAB, Mario as P2). INSPECT mode (`S` skeleton, `J` joint numbers), HITBOXES (`B`, `L`), FRAMES (`Q`/`E` scrub).
 3. **Restart the engine process after every rebuild.** F8 / `gd.hot_reload()` refuses native defines; restarting only the match keeps the animation-bank cache. Workbench **Rebuild + reload** performs a build plus a process restart, then restores the selected row/frame.
 4. Scripted check: `proof.lua` covers the default movement/jab/shield/grab/throw set via `tools/geno/moves_check/run_scene.sh`. The existing 40 move scenarios are tuned to the Courier/Striker move set; adapt selectors and expectations for another fighter. They are not acceptance coverage for arbitrary custom moves.
 

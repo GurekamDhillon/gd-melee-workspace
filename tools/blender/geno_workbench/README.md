@@ -7,6 +7,9 @@ Use Blender 4.2+ for the artist workflow (the Workbench add-on metadata declares
 4.0 as its minimum). Its core session modules use the standard library; source
 Splice/NLA imports additionally need NumPy, SciPy and Pillow.
 
+The add-on provides connection controls, rig and pose inspection, editing,
+timeline controls, splice authoring and independent playtesting.
+
 For the whole original-fighter path, start with
 [Author a fighter](../../../docs/learn/author-a-fighter.md).
 An artist starter does not automatically have an editable Workbench project.
@@ -123,6 +126,16 @@ The hub's **Open in Blender** uses its Settings path, then `GW_BLENDER`, then
 PATH. It currently finds the add-on through a repository ancestor, so a release
 directory alone does not supply it. Use the bootstrap or an installed add-on
 for your own configured session.
+
+## Playtest
+
+The **Geno > Playtest** panel provides **Play in LAB** and **Play vs CPU** using the current **Project**. Project can be a workbench directory or an artist `fighter.json`. No workbench server connection is needed to launch.
+
+LAB opens the selected Move/row directly in CLIPS; with no selection it opens regular LAB. VS gives you a live level 9 Mario CPU. Both use a fresh run directory and a real-time window. The status reports the log path after launch, and the game continues independently of the add-on.
+
+If authored source is newer than the package, the dialog offers **Rebuild gameplay first**. Accepting reuses cached art; cancelling starts nothing. Changed art or an artist package built before the gameplay-cache support needs a full build first. The async helper keeps Blender responsive during a gameplay rebuild.
+
+Engine, Mods and Disc image settings in Connect also apply to play. Local `.env` disc settings are used when no override is provided. Install Python and Git Bash or set `GW_PYTHON` / `GW_BASH`. A copied add-on locates `tools/geno/play.py` from the selected project's nearest checkout; for an external project, set `GW_ROOT` to its tools workspace.
 
 ## Bootstrap without installation
 
