@@ -30,7 +30,9 @@ from audit_gameplay import rest_context, mesh_points  # noqa: E402
 
 PKG = ROOT / '_build/goku-xv2' / os.environ.get('GOKU_AUTHOR', 'author-source') / 'package/mods/goku-xv2'
 ART = ROOT / '_build/goku-xv2' / os.environ.get('GOKU_AUTHOR', 'author-source') / 'package/build'
-OUT = ROOT / '_build/goku-xv2/ground-audit.json'
+# a reduced splice-preview build writes its audit inside its own directory (the shipped build's stays in _build/goku-xv2; FIDELITY.md reads that)
+OUT = (ROOT / '_build/goku-xv2/ground-audit.json' if os.environ.get('GOKU_AUTHOR', 'author-source') == 'author-source'
+       else ROOT / '_build/goku-xv2' / os.environ['GOKU_AUTHOR'] / 'reports/ground-audit.json')
 BELOW_EPS = 0.35   # model units (1.75% of his height)
 FLOAT_EPS = 1.6    # both feet above the baseline by this = floating (8% of his height)
 
@@ -124,6 +126,7 @@ def main():
     result['counts'] = {'rows': len(result['rows']), 'hover': sum(1 for r in R if r['mode'] == 'HOVER'), 'anchor': sum(1 for r in R if r['mode'] == 'ANCHOR'),
                         'below_rows': sum(1 for r in R if r['below_frames'] and not r['ledge']), 'hover_off_rows': sum(1 for r in R if r['hover_off_frames']),
                         'ledge_rows_below': sum(1 for r in R if r['below_frames'] and r['ledge'])}
+    args.json.parent.mkdir(parents=True, exist_ok=True)
     args.json.write_text(json.dumps(result, indent=1), encoding='utf-8')
     print(json.dumps(result['counts']))
     return 1 if result['counts']['below_rows'] else 0

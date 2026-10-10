@@ -52,8 +52,9 @@ SPLICES = PORT / 'splices.json'
 SCHEMA = 'goku-splices/1'
 DEFAULT_BLEND = 3
 DEFAULT_LOOP_BLEND = 4
-POP_MIN_DEG = 20.0      # a seam step above this AND above 1.5x the segments' own largest per-frame step is reported as a pop
+POP_MIN_DEG = 20.0      # a seam step above this AND above 1.5x the largest per-frame step within SEAM_REF_FRAMES of the seam is reported as a pop
 LOOP_TOL_DEG = 8.0
+SEAM_REF_FRAMES = 4     # frames either side of a seam that set the local speed a seam step is judged against
 ROOT_BONE = 'b_C_Base'
 HIPS_BONE = 'b_C_Pelvis'
 
@@ -388,7 +389,11 @@ def bake(name, recipe, resolve, rig):
         chain = concat([take(a, [a.n - 1])] + ([tr] if tr is not None else []) + [take(b, [0])])
         step, who = max_step(chain)
         ref = max(max_step(a)[0], max_step(b)[0])
-        s.update(max_step_deg=round(step, 2), max_step_bone=who, segment_step_deg=round(ref, 2), pop=bool(step > max(POP_MIN_DEG, 1.5 * ref)))
+        # Judge the seam against the motion right beside it, not the whole segments: a fast strike elsewhere in a segment
+        # (80 deg/frame) used to raise the bar to 120 and hide a 35-40 deg snap between a slow windup and that strike.
+        local = max(max_step(take(a, range(max(0, a.n - SEAM_REF_FRAMES), a.n)))[0], max_step(take(b, range(min(b.n, SEAM_REF_FRAMES))))[0])
+        s.update(max_step_deg=round(step, 2), max_step_bone=who, segment_step_deg=round(ref, 2), local_step_deg=round(local, 2),
+                 pop=bool(step > max(POP_MIN_DEG, 1.5 * local)))
     out = concat(pieces)
     raw_frames = out.n
     if recipe.get('frames'):
@@ -486,6 +491,16 @@ def hit_check(report, windows):
     return warns
 
 
+def move_windows(recipe, motion_row, moves):
+    """Hitbox windows [[start, length], ...] of the move a recipe targets (its `move`, or the move owning its `row`); [] when unknown."""
+    out = []
+    for m in moves:
+        rows = [motion_row.get(x) for x in m.get('motions', [])]
+        if m.get('name') == recipe.get('move') or (recipe.get('row') and recipe['row'] in rows):
+            out += [list(w) for w in m.get('windows', [])]
+    return out
+
+
 def mirror_sanity(clip, rig):
     """Mirror report: partner pairs found, bones with an L/R name but no partner, and the involution error (degrees) of mirror(mirror(c))."""
     pairs = sorted({tuple(sorted((n, lr_partner(n)))) for n in rig.names if lr_partner(n) != n and lr_partner(n) in rig.index})
@@ -528,12 +543,15 @@ def cmd_check(args):
     source = X.Source(PORT / 'ir/goku.xv2.ir.json')
     mesh = X.build_mesh(source, 20.)
     ctx = X.splice_context(source, mesh)
+    gp = PORT / 'gameplay.json'
+    moves = json.loads(gp.read_text(encoding='utf-8')).get('moves', []) if gp.exists() else []
     out = {}
     bad = 0
     for n in names:
         clip, rep = bake(n, doc['recipes'][n], ctx['resolve'], ctx['rig'])
         rep['mirror_sanity'] = mirror_sanity(clip, ctx['rig']) if any(s.get('mirror') for s in doc['recipes'][n]['segments']) else None
         rep['length'] = [length_check(rep['frames'], r) for r in target_rows(doc['recipes'][n], *ctx['move_rows'])]
+        rep['hit_check'] = hit_check(rep, move_windows(doc['recipes'][n], ctx['move_rows'][1], moves))
         print(json.dumps({k: v for k, v in rep.items() if k != 'segments'}, indent=1, default=str))
         out[n] = rep
         bad += 0 if rep['ok'] else 1

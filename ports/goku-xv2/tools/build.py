@@ -18,6 +18,8 @@ import sys
 PORT = Path(__file__).resolve().parents[1]
 ROOT = PORT.parents[1]
 AUTHOR = ROOT/'_build/goku-xv2'/os.environ.get('GOKU_AUTHOR','author-source')   # GOKU_AUTHOR=splice-preview: the reduced splice-preview build (xv2_to_artist.py --splice-only)
+# a reduced splice-preview build keeps its reports inside its own directory; the shipped build's stay in _build/goku-xv2 (FIDELITY.md reads those)
+REPORTS = ROOT/'_build/goku-xv2' if os.environ.get('GOKU_AUTHOR','author-source')=='author-source' else AUTHOR/'reports'
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import strip_gameplay as SG  # gameplay.full.json (local) wins over the stripped gameplay.json
@@ -415,7 +417,8 @@ def apply(package, art_build, ir_path=None):
                            'source':'art-report.json','vertices':geo['source_influences_reduced_vertices'],
                            'max_discarded_weight':geo['max_discarded_weight'],'mean_discarded_weight':geo['mean_discarded_weight']})
         reports.append({'losses':art_losses})
-    write_losses(ROOT/'_build/goku-xv2/conversion_losses.json',*reports)
+    REPORTS.mkdir(parents=True,exist_ok=True)
+    write_losses(REPORTS/'conversion_losses.json',*reports)
     return package
 
 def main():
@@ -444,7 +447,7 @@ def main():
     ga = subprocess.run([sys.executable,'-B',str(PORT/'tools/ground_audit.py')],cwd=ROOT,capture_output=True,text=True)
     print('Ground audit:',ga.stdout.strip() or ga.stderr.strip()[-300:])
     if ga.returncode:
-        print('Ground audit failed: a ground row sinks below the floor (see _build/goku-xv2/ground-audit.json)')
+        print('Ground audit failed: a ground row sinks below the floor (see %s)'%(REPORTS/'ground-audit.json'))
         return 1
     for command in ([sys.executable,'-B','-m','tools.geno.check',str(package),'--json'],
                     [sys.executable,'-B','-m','tools.geno.report',str(package),'--frames','--json']):

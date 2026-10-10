@@ -346,3 +346,40 @@ def test_wired_recipes_replace_rows_and_bair_keep_is_the_shipped_row(adapter, tm
     assert status == "SPLICED" and "utilt_windup_strike" in how
     assert fidelity.classify({"source": rep["AttackAirB"], "status": "own", "clip": "x"})[0] == "SPLICED"
     assert fidelity.classify({"source": base and {"status": "x", "frames": 3}, "status": "own", "clip": "x"})[0] != "SPLICED"
+
+
+def test_seam_is_judged_against_the_motion_beside_it():
+    # a slow lead-in, a 35 degree snap, then a fast strike elsewhere in the next segment: the strike must not hide the snap
+    rig = mkrig()
+    a = ramp_clip(rig, 6, per=1.0)
+    b = ramp_clip(rig, 12, per=1.0)
+    b.rot["b_C_Spine1"][:] = np.stack([quat("x", 35 + (0 if f < 8 else 80 * (f - 7))) for f in range(12)])
+    rec = {"row": "X", "segments": [{"clip": "a", "from": 0, "to": 5}, {"clip": "b", "from": 0, "to": 11, "blend": 0}]}
+    _, rep = S.bake("t", rec, resolver(a=a, b=b), rig)
+    s = rep["seams"][0]
+    assert s["segment_step_deg"] > 60 and s["local_step_deg"] < 5      # the old whole-segment reference
+    assert s["pop"] and not rep["ok"]                                  # the new local reference flags it
+
+
+def test_move_windows_and_hit_check():
+    moves = [{"name": "utilt", "motions": [51], "windows": [[8, 5], [8, 5]]}, {"name": "dair", "motions": [70], "windows": [[6, 3], [9, 6]]}]
+    assert S.move_windows({"move": "utilt"}, {}, moves) == [[8, 5], [8, 5]]
+    assert S.move_windows({"row": "AttackAirLw"}, {70: "AttackAirLw"}, moves) == [[6, 3], [9, 6]]
+    assert S.move_windows({"move": "nope"}, {}, moves) == []
+    rep = {"segments": [{"marks": {"hit": 10}}]}
+    assert S.hit_check(rep, [[8, 5]]) == []
+    assert "outside the move windows" in S.hit_check({"segments": [{"marks": {"hit": 30}}]}, [[8, 5]])[0]
+    assert S.hit_check({"segments": [{"marks": {"hit": 30}}]}, []) == []
+
+
+def test_preview_reports_stay_in_the_preview_dir():
+    import os
+    import subprocess
+    game = os.environ.get("GW_MELEE") or str(PORT.parents[1] / "melee")
+    if not (Path(game) / "pc/geno/geno.h").exists():
+        pytest.skip("needs a game checkout (GW_MELEE)")
+    code = "import sys;sys.path.insert(0,'tools');import ground_audit as G, build as B;print(G.OUT);print(B.REPORTS)"
+    env = dict(os.environ, GOKU_AUTHOR="splice-preview", GW_MELEE=game)
+    out = subprocess.run([sys.executable, "-c", code], cwd=PORT, env=env, capture_output=True, text=True).stdout.strip().splitlines()
+    assert out[0].replace("\\", "/").endswith("goku-xv2/splice-preview/reports/ground-audit.json")
+    assert out[1].replace("\\", "/").endswith("goku-xv2/splice-preview/reports")
