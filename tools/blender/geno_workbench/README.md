@@ -228,8 +228,11 @@ file tools only.
 
 `launch_goku.py` starts the Qt launcher's `--serve` session (which starts the headless engine on
 the Goku mod with the project's own `mods_dir`), then Blender with `bootstrap.py` (`--art`
-`--row` `--frame` `--report`). Paths default to this machine and are overridable by `GW_ROOT`,
-`GW_BLENDER`, `GW_LAUNCHER`, `GW_QT_BIN`, `GW_ENGINE_EXE`, `GW_ISO_VANILLA` (read from `.env`).
+`--row` `--frame` `--report`). Paths use [the shared authoring-tool config](../../port/TOOLS_CONFIG.md): `.env`/`GW_*`,
+the git-ignored `_build/tools.json`, then discovery. This covers modern Blender, the separate
+Blender 3.5.1 path, launcher, Qt bin, engine and all three disc paths. Run
+`python tools/port/tools_config.py --detect --check` to configure and list missing items.
+The launch scripts and add-on use the same resolver; an installed add-on needs `GW_ROOT`.
 Closing Blender stops the server and the engine. Blender's splash screen may cover the viewport
 until the mouse moves.
 

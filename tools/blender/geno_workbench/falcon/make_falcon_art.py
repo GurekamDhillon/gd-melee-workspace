@@ -23,30 +23,23 @@ import urllib.request
 import zipfile
 
 HERE = Path(__file__).resolve().parent
+_workspace = HERE.parents[3]
+if not (_workspace / "tools/port/tools_config.py").is_file() and os.environ.get("GW_ROOT"):
+    _workspace = Path(os.environ["GW_ROOT"])
+if str(_workspace) not in sys.path:
+    sys.path.insert(0, str(_workspace))
+from tools.port import tools_config
 HSD_URL = "https://github.com/Ploaj/HSDLib/releases/download/LatestCommit/HSDRAW.zip"
 BST_COMMIT = "3d5fd9bf681547d86fa369715a0e8dd6013edcb7"   # BlenderSourceTools 3.4.3, checked on Blender 5.2.2
 BST_URL = "https://github.com/Artfunkel/BlenderSourceTools/archive/%s.zip" % BST_COMMIT
 
 
 def root_dir():
-    if os.environ.get("GW_ROOT"):
-        return Path(os.environ["GW_ROOT"])
-    for p in HERE.parents:
-        if (p / ".env").is_file() and (p / "_build").is_dir():
-            return p
-    return Path("E:/Projects/Melee Workspace")
+    return tools_config.workspace_root()
 
 
 def iso_path(root):
-    if os.environ.get("GW_ISO_VANILLA"):
-        return os.environ["GW_ISO_VANILLA"]
-    env = root / ".env"
-    if env.is_file():
-        for line in env.read_text(errors="replace").splitlines():
-            line = line.strip().removeprefix("export ")
-            if line.startswith("GW_ISO_VANILLA="):
-                return line.split("=", 1)[1].strip().strip("\"'")
-    return ""
+    return tools_config.load_config(root)["GW_ISO_VANILLA"]
 
 
 def run(cmd, **kw):
@@ -59,15 +52,23 @@ def main():
     ap.add_argument("--force", action="store_true", help="redo every step")
     ap.add_argument("--clips", default="all", help="comma list of clip names to import as Actions, or all (default)")
     args = ap.parse_args()
-    root = root_dir()
+    try:
+        paths = tools_config.load_config()
+    except tools_config.ToolsConfigError as exc:
+        print("ERROR: %s" % exc)
+        return 2
+    root = Path(paths["GW_ROOT"])
     out = root / "_build/geno-falcon-art"
     ext = root / "_build/tools-ext"
-    blender = os.environ.get("GW_BLENDER", "D:/SteamLibrary/steamapps/common/Blender/blender.exe")
+    blender = paths["GW_BLENDER"]
     blend = out / "falcon.blend"
     if blend.is_file() and not args.force:
         print("exists:", blend)
         return 0
-    iso = iso_path(root)
+    if not blender or not Path(blender).is_file():
+        print("Blender is missing: set GW_BLENDER in .env or _build/tools.json")
+        return 2
+    iso = paths["GW_ISO_VANILLA"]
     if not iso or not Path(iso).is_file():
         print("GW_ISO_VANILLA is not set or missing: %r" % iso)
         return 2
@@ -95,7 +96,7 @@ def main():
                     dest = scripts / "addons/io_scene_valvesource" / name[len(prefix):]
                     dest.parent.mkdir(parents=True, exist_ok=True)
                     dest.write_bytes(zf.read(name))
-    package = Path(os.environ.get("GW_FALCON_PACKAGE") or root / "_build/falcon-look/geno-falcon")
+    package = Path(paths.get("GW_FALCON_PACKAGE") or root / "_build/falcon-look/geno-falcon")
     plan = package / "files/plan.json"
     if not plan.is_file():
         print("missing the Geno Falcon plan: %s (set GW_FALCON_PACKAGE)" % plan)
@@ -114,8 +115,8 @@ def main():
         run([driver, src / "PlCaNr.dat", smd, "--no-textures"])
     if args.force or not any(anim.glob("*.smd")):
         run([driver, "--anim", src / "PlCaNr.dat", src / "PlCaAJ.dat", plan, anim] + args.clips.split(","))
-    env = dict(os.environ, BLENDER_USER_SCRIPTS=str(scripts))
-    run([blender, "--background", "--python", HERE / "build_blend.py", "--", glb, smd, anim, blend], env=env)
+    env = dict(paths, BLENDER_USER_SCRIPTS=str(scripts))
+    run([blender, "--background", "--python-exit-code", "1", "--python", HERE / "build_blend.py", "--", glb, smd, anim, blend], env=env)
     print("done:", blend)
     return 0
 

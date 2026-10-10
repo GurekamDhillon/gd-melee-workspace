@@ -19,9 +19,9 @@ def test_blender_argv():
 
 
 def test_find_blender_order(tmp_path):
-    assert L.find_blender({"GW_BLENDER": "B"}, settings_value="S") == "S"
-    assert L.find_blender({"GW_BLENDER": "B"}) == "B"
-    assert L.find_blender({"PATH": ""}) is None
+    assert L.find_blender({"GW_BLENDER": "B"}, settings_value="S", root=tmp_path) == "S"
+    assert L.find_blender({"GW_BLENDER": "B"}, root=tmp_path) == str(tmp_path / "B")
+    assert L.find_blender({"PATH": ""}, root=tmp_path) is None
 
 
 def test_start_serve_reads_port(tmp_path):
@@ -36,7 +36,7 @@ def test_start_serve_reads_port(tmp_path):
 
 def test_serve_launch_matches_launch_goku(tmp_path):
     eng = tmp_path / "work" / "engine" / "melee-pc.exe"
-    argv, env = L.serve_launch("gd.exe", "proj", engine_exe=str(eng), mods_dir="M", iso="D.iso", env={"PATH": "p"})
+    argv, env = L.serve_launch("gd.exe", "proj", engine_exe=str(eng), mods_dir="M", iso="D.iso", env={"PATH": "p"}, root=tmp_path)
     assert argv[argv.index("--engine-exe") + 1] == str(eng)
     assert argv[argv.index("--engine-work-dir") + 1] == str(eng.parent)
     assert argv[argv.index("--mods-dir") + 1] == "M"
@@ -44,10 +44,10 @@ def test_serve_launch_matches_launch_goku(tmp_path):
     assert env["MELEE_ISO"] == "D.iso" and env["MELEE_NETPLAY_BIND"] == "127.0.0.1"
 
 
-def test_serve_settings_env_fallback():
+def test_serve_settings_env_fallback(tmp_path):
     e = {"GW_ENGINE_EXE": "E", "GW_MODS_DIR": "M", "GW_ISO_VANILLA": "I"}
-    assert L.serve_settings(env=e) == {"engine_exe": "E", "mods_dir": "M", "iso": "I"}
-    assert L.serve_settings("x", "y", "z", env=e) == {"engine_exe": "x", "mods_dir": "y", "iso": "z"}
-    assert L.serve_settings(env={})["iso"] == ""
-    argv, env = L.serve_launch("gd.exe", "proj", env={"GW_QT_BIN": "Q", "PATH": "p"})
-    assert "--engine-exe" not in argv and env["PATH"].startswith("Q")
+    assert L.serve_settings(env=e, root=tmp_path) == {"engine_exe": str(tmp_path / "E"), "mods_dir": "M", "iso": str(tmp_path / "I")}
+    assert L.serve_settings("x", "y", "z", env=e, root=tmp_path) == {"engine_exe": "x", "mods_dir": "y", "iso": "z"}
+    assert L.serve_settings(env={}, root=tmp_path)["iso"] == ""
+    argv, env = L.serve_launch("gd.exe", "proj", env={"GW_QT_BIN": "Q", "PATH": "p"}, root=tmp_path)
+    assert "--engine-exe" not in argv and env["PATH"].startswith(str(tmp_path / "Q"))

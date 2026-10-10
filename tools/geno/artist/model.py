@@ -23,7 +23,21 @@ import authored_fighter as AF  # noqa: E402  (glb reader, accessors, quaternion/
 
 
 class ArtistError(Exception):
-    pass
+    def __init__(self, message, fix=None):
+        super().__init__(message)
+        self.fix = fix
+
+
+def config_path(path):
+    """Accept a fighter.json or its directory at every artist entry point."""
+    path = os.path.abspath(os.fspath(path))
+    return os.path.join(path, "fighter.json") if os.path.isdir(path) else path
+
+
+def build_fix(path):
+    path = config_path(path).replace("\\", "/")
+    argument = json.dumps(path, ensure_ascii=False) if any(c.isspace() for c in path) else path
+    return "run: python -m tools.geno.artist build " + argument
 
 
 def strip_comments(text):
@@ -34,7 +48,7 @@ def load_json(path):
     try:
         return json.loads(strip_comments(open(path, encoding="utf-8-sig").read()))
     except (OSError, ValueError) as e:
-        raise ArtistError("%s: cannot read (%s)" % (path, e))
+        raise ArtistError("%s: cannot read (%s)" % (path, e), "check the fighter.json path and JSON syntax, then run validate again")
 
 
 def camel(key):
@@ -76,7 +90,7 @@ def _mat_from_node(nd, scale):
 
 
 def load(cfg_path, need_glb=True):
-    cfg_path = os.path.abspath(cfg_path)
+    cfg_path = config_path(cfg_path)
     base = os.path.dirname(cfg_path)
     cfg = load_json(cfg_path)
     f = Fighter()
@@ -95,7 +109,14 @@ def load(cfg_path, need_glb=True):
     if os.path.exists(sc):
         f.sidecar = load_json(sc)
     if not os.path.isfile(f.glb):
-        raise ArtistError("art.glb: %s does not exist" % f.glb)
+        blend = art.get("blend")
+        if blend and os.path.isfile(os.path.join(base, blend)):
+            fix = build_fix(cfg_path)
+        elif blend:
+            fix = "restore art.blend (%s), then %s" % (os.path.join(base, blend), build_fix(cfg_path))
+        else:
+            fix = "export art.glb as glTF Binary (.glb), or set art.blend in fighter.json and run build"
+        raise ArtistError("art.glb: %s does not exist" % f.glb, fix)
     try:
         f.g, f.bin = AF.read_glb(f.glb)
     except Exception as e:  # noqa: BLE001

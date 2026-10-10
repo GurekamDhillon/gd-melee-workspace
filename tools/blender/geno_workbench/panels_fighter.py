@@ -62,7 +62,6 @@ class GENO_WB_PT_fighter(bpy.types.Panel):
             text=STRINGS["fighter_armature_label"],
         )
         row = layout.row(align=True)
-        row.enabled = bool(session.connected)
         row.operator("geno_wb.load_fighter", icon="IMPORT")
         row.operator("geno_wb.calibrate", icon="ARMATURE_DATA")
 
@@ -104,7 +103,6 @@ class GENO_WB_PT_fighter(bpy.types.Panel):
                 ))
 
         row = layout.row()
-        row.enabled = calibration is not None and session.info is not None
         row.operator("geno_wb.verify_pose", icon="CHECKMARK")
         status = getattr(main, "status", "") if main is not None else ""
         status = status or session.status

@@ -117,7 +117,7 @@ STRINGS: dict[str, str] = {
     "suggested": "suggested bone: {bone}",
     "no_suggestion": "no bone suggestion available",
     "restarted": "engine restarted: {engine}",
-    "server_reused": "server already running on 127.0.0.1:{port}; connect to continue",
+    "server_reused": "Reused existing server on 127.0.0.1:{port}; connect to continue",
     "server_started": "server ready on 127.0.0.1:{port}; connect to continue",
     "not_connected": "not connected: connect to a workbench server first",
     "invalid_reply": "invalid reply from {tool}: expected an object",
@@ -223,8 +223,20 @@ STRINGS: dict[str, str] = {
     "project_object_required": "workbench.json: expected an object",
     "project_invalid_path": "workbench.json: invalid path",
     "project_art_required": "workbench.json: art must be an object",
+    "fighter_not_armature": "Select an armature before using the fighter workbench",
+    "fighter_no_art": "Choose a .blend or .glb fighter art file",
+    "fighter_verify_calibration": "Calibrate and apply a frame before verifying the pose",
     "project_aliases_required": "workbench.json: art.bone_aliases must be an object",
 }
+
+def poll_ready(operator, *requirements):
+    """Attach the first failed precondition to Blender's disabled-button tooltip."""
+    for ready, reason in requirements:
+        if not ready:
+            operator.poll_message_set(reason)
+            return False
+    return True
+
 
 NO_ROW = "__GENO_WB_NO_ROW__"
 _frame_handler = None

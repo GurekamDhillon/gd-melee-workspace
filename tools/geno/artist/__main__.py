@@ -10,11 +10,11 @@ def spec_part(i):
     return convert._pp().COMMON[i] if i != 255 else ""
 
 
-def main(argv=None):
+def _main(argv=None):
     ap = argparse.ArgumentParser(prog="python -m tools.geno.artist")
     sub = ap.add_subparsers(dest="cmd", required=True)
     v = sub.add_parser("validate", help="check the character before building")
-    v.add_argument("config")
+    v.add_argument("config", help="fighter.json or its containing directory")
     v.add_argument("--json", action="store_true")
     v.add_argument("-v", "--verbose", action="store_true")
     b = sub.add_parser("build", help="validate, convert, build, install into an isolated test mods folder")
@@ -73,6 +73,15 @@ def main(argv=None):
                 print("%-12s %-26s fallback: %s%s" % (row["tier"], row["name"], ", ".join(row.get("fallback", [])) or "-",
                                                       ("  [%s]" % ("loop" if row.get("loop") else "once")) if "loop" in row else ""))
         return 0
+
+
+def main(argv=None):
+    from .model import ArtistError
+    try:
+        return _main(argv)
+    except ArtistError as exc:
+        print("STOPPED: %s" % exc, file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

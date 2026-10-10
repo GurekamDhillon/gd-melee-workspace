@@ -24,7 +24,12 @@ import make_falcon_art  # noqa: E402
 
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
-    root = make_falcon_art.root_dir()
+    try:
+        paths = make_falcon_art.tools_config.load_config()
+    except make_falcon_art.tools_config.ToolsConfigError as exc:
+        print("ERROR: %s" % exc)
+        return 2
+    root = Path(paths["GW_ROOT"])
     out = root / "_build/geno-falcon-art"
     saved = sys.argv
     sys.argv = ["make_falcon_art.py"]
@@ -34,7 +39,7 @@ def main(argv=None):
         sys.argv = saved
     if rc:
         return rc
-    package = Path(os.environ.get("GW_FALCON_PACKAGE") or root / "_build/falcon-look/geno-falcon")
+    package = Path(paths.get("GW_FALCON_PACKAGE") or root / "_build/falcon-look/geno-falcon")
     if not (package / "files/plan.json").is_file():
         print("missing the Geno Falcon package: %s (set GW_FALCON_PACKAGE)" % package)
         return 2
@@ -56,12 +61,7 @@ def main(argv=None):
     shutil.copy2(template / "gameplay.json", proj / "gameplay.json")
     cmd = [sys.executable, str(HERE / "launch_goku.py"), "--project", str(proj), "--art", cfg["art_blend"],
            "--mods", str(mods), "--work", str(root / "_build/wb-falcon")] + argv
-    env = dict(os.environ, GW_ROOT=str(root))
-    if not env.get("GW_ENGINE_EXE") and not (root / "_build/wb-falcon/engine/melee-pc.exe").is_file():
-        for cand in (root / "_build/wb-goku/engine/melee-pc.exe", root / "_build/agents/geno-workbench/melee-pc.exe"):
-            if cand.is_file():   # the schema-2 headless engine the Goku session uses; launch_goku copies it (read only here)
-                env["GW_ENGINE_EXE"] = str(cand)
-                break
+    env = dict(paths)
     return subprocess.call(cmd, env=env)
 
 
