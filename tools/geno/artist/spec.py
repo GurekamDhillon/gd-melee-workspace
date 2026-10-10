@@ -20,7 +20,7 @@ LIMITS = {
     # ENGINE: pc/platform/geno_define_registry.inc gn_plan_parse, hurtboxes must hold 1..15 capsules
     "max_hurtboxes": 15,
     # ENGINE: pc/geno/geno_plan.h GPL_MAX_CLIPS; clip names are stored in 32 bytes, symbols in 72
-    "max_clips": 256,
+    "max_clips": 1024,
     "max_clip_name": 31,
     # ENGINE: 351 motion rows (GPL_MAX_MOTIONS)
     "motion_rows": 351,

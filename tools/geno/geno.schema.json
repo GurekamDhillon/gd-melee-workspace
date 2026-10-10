@@ -795,6 +795,112 @@
             },
             "additionalProperties": false
           },
+          "toon": {
+            "anyOf": [
+              {
+                "type": "boolean",
+                "description": "Cel shading with default parameters (visual only)",
+                "x-engine-default": "absent: off",
+                "x-reference": "geno.md §7",
+                "x-source": "melee/pc/platform/geno_registry.c"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "bands": {
+                    "type": "number",
+                    "description": "Light bands",
+                    "x-engine-default": 3,
+                    "x-reference": "geno.md §7",
+                    "x-source": "melee/pc/platform/geno_registry.c",
+                    "minimum": 2,
+                    "maximum": 8
+                  },
+                  "shadow": {
+                    "type": "number",
+                    "description": "Dark band level",
+                    "x-engine-default": 0.58,
+                    "x-reference": "geno.md §7",
+                    "x-source": "melee/pc/platform/geno_registry.c",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "rim": {
+                    "type": "number",
+                    "description": "Rim light strength",
+                    "x-engine-default": 0.18,
+                    "x-reference": "geno.md §7",
+                    "x-source": "melee/pc/platform/geno_registry.c",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "outline": {
+                    "type": "number",
+                    "description": "Silhouette edge width (view-angle)",
+                    "x-engine-default": 0.28,
+                    "x-reference": "geno.md §7",
+                    "x-source": "melee/pc/platform/geno_registry.c",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "outline_dark": {
+                    "type": "number",
+                    "description": "Silhouette edge darkness",
+                    "x-engine-default": 0.75,
+                    "x-reference": "geno.md §7",
+                    "x-source": "melee/pc/platform/geno_registry.c",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "softness": {
+                    "type": "number",
+                    "description": "Band edge softness",
+                    "x-engine-default": 0.04,
+                    "x-reference": "geno.md §7",
+                    "x-source": "melee/pc/platform/geno_registry.c",
+                    "minimum": 0,
+                    "maximum": 0.5
+                  },
+                  "unlit": {
+                    "type": "boolean",
+                    "description": "Draw the model unlit so the toon ramp is its only lighting",
+                    "x-engine-default": "true",
+                    "x-reference": "geno.md §7",
+                    "x-source": "melee/pc/platform/geno_registry.c"
+                  },
+                  "light": {
+                    "type": "array",
+                    "items": {
+                      "type": "number",
+                      "description": "Key light direction, eye space",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §7",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "minimum": -1,
+                      "maximum": 1
+                    },
+                    "maxItems": 3,
+                    "minItems": 3
+                  },
+                  "shadow_tint": {
+                    "type": "array",
+                    "items": {
+                      "type": "number",
+                      "description": "Dark band tint",
+                      "x-engine-default": 0,
+                      "x-reference": "geno.md §7",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "maxItems": 3,
+                    "minItems": 3
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
+          },
           "hooks": {
             "type": "object",
             "properties": {
@@ -4204,7 +4310,7 @@
                   "minLength": 1,
                   "maxLength": 31
                 },
-                "maxItems": 128
+                "maxItems": 448
               }
             },
             "additionalProperties": false,
@@ -4762,6 +4868,7 @@
     "sfx",
     "sfx_kind",
     "sfx_severity",
+    "shadow_tint",
     "shield",
     "shield_damage",
     "show_model",
@@ -4787,6 +4894,7 @@
     "targets",
     "team",
     "to",
+    "toon",
     "tornado",
     "turn",
     "velocity",
@@ -4898,11 +5006,11 @@
       "source": "melee/pc/geno/geno.h:482"
     },
     "JDOC_NODES": {
-      "value": 4096,
+      "value": 32768,
       "source": "melee/pc/platform/geno_registry.c:74"
     },
     "JDOC_ARENA": {
-      "value": 65536,
+      "value": 524288,
       "source": "melee/pc/platform/geno_registry.c:75"
     },
     "GN_MAX_VOICE": {
@@ -4911,7 +5019,7 @@
     },
     "GN_MAX_SLOTS": {
       "value": 512,
-      "source": "melee/pc/platform/geno_registry.c:507"
+      "source": "melee/pc/platform/geno_registry.c:509"
     },
     "JSON_DEPTH": {
       "value": 32,
@@ -4923,7 +5031,7 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "4ff2b68db493c8a4b44c7ad18a125fcbffc4d6762713fc472e657f0617c83e2d",
+    "pc/platform/geno_registry.c": "7b0f7bcc897b5dd67c2fd48ce2270a7952e82099cf50d5998f212e2409d33f51",
     "pc/platform/geno_define_registry.inc": "3dddc814a3abc04cd5c7af8f2e407e5628887edfcffa969568b390cd3b419de2",
     "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
     "pc/geno/geno.h": "de75f4a8d6366a3a049a8eb9b232ac981b5d69b1cdeab1b21a81a5294ab92938",

@@ -326,6 +326,8 @@ def _clips(f, r):
                 if bn and not bn.startswith("Armature") and path != "scale":
                     r.add(W, "CLIP_TARGET", where, "animates '%s', which is not a bone of the skin (ignored)" % bn, "if this is a control rig, bake it onto the export skeleton (spec section 8)")
                 continue
+            if path == "scale" and bn in c.scale_bones:
+                continue   # carried on purpose (clips.scale_bones)
             if path == "scale" and len(v) and np.abs(v - 1).max() > 0.01:
                 r.add(W, "CLIP_SCALE", where, "bone '%s' scale is animated (max %.2f); the engine ignores bone scale" % (bn, np.abs(v - 1).max() + 1), "pose with rotation (and translation on hips) only; remove scale keys")
                 break

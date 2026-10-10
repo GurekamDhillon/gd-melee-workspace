@@ -216,7 +216,7 @@ def write_bank(f, out, plan_path=None):
     sym_fmt = "Ply%s_Share_ACTION_%%s_figatree" % f.token
     for cname in f.clip_order:
         c = f.clips[cname]
-        chans = {k: v for k, v in c.chan.items() if k[1] != "scale" and k[0] in name_to_plan}
+        chans = {k: v for k, v in c.chan.items() if (k[1] != "scale" or k[0] in c.scale_bones) and k[0] in name_to_plan}
         nframes = c.frames
         tracks = []
         for j in joints:
@@ -236,6 +236,14 @@ def write_bank(f, out, plan_path=None):
                 if nm == hips and j.get("lift"):
                     v = v.copy(); v[:, 1] -= j["lift"]
                 for k, ty in enumerate((5, 6, 7)):
+                    body, fv, fs = AF._encode_channel(v[:, k], None)
+                    jt.append((ty, body, fv, fs))
+            if not j["synth"] and nm in c.scale_bones and (nm, "scale") in chans:
+                # opt-in per clip and bone (fighter.json clips.scale_bones): a Melee-style stretch such as Luigi's bair thigh; SCAX/SCAY/SCAZ = 8/9/10
+                t, v = chans[(nm, "scale")]
+                if len(t) != nframes:
+                    raise ArtistError("clip '%s': bone '%s' scale has %d keys, the clip has %d" % (cname, nm, len(t), nframes))
+                for k, ty in enumerate((8, 9, 10)):
                     body, fv, fs = AF._encode_channel(v[:, k], None)
                     jt.append((ty, body, fv, fs))
             tracks.append(jt)
