@@ -3,6 +3,10 @@
 #define WB_CORE_USE_LAUNCHER_T 1
 #include "commands.h"
 #include "geno_data.h"
+#include "panels.h"
+#if __has_include("palette.h")
+#include "palette.h"
+#endif
 #include "session.h"
 #include "timeline.h"
 #include "viewport.h"
@@ -12,11 +16,14 @@
 #include <QCloseEvent>
 #include <QComboBox>
 #include <QDateTime>
+#include <QDockWidget>
 #include <QElapsedTimer>
 #include <QFileInfo>
 #include <QFutureWatcher>
 #include <QHBoxLayout>
 #include <QImageReader>
+#include <QJsonDocument>
+#include <QJsonParseError>
 #include <QLabel>
 #include <QQueue>
 #include <QScrollArea>
@@ -69,6 +76,10 @@ struct Snapshot {
     QVector<RowInfo> rows;
     QVector<ClipInfo> clips;
     QMap<QString, QVector<HitboxRef>> hits;
+    QVector<HistoryEntry> history;
+    QVector<CommandSpec> commands;
+    QJsonArray fidelity;
+    QString fidelityError;
 };
 struct Reply {
     QJsonObject envelope;
@@ -114,6 +125,26 @@ struct Worker {
             result.snapshot.rows = session->data().rows();
             result.snapshot.clips = session->data().clips();
             for (const auto &row : result.snapshot.rows) result.snapshot.hits.insert(row.name, session->data().hitboxes(row.name));
+            for (const auto &entry : session->history().entries()) {
+                auto metadata = entry; metadata.changes.clear(); result.snapshot.history.append(metadata);
+            }
+            result.snapshot.commands = session->registry().list();
+            // The GUI palette lists schemas only. Handlers retain worker-owned state.
+            for (auto &spec : result.snapshot.commands) spec.run = {};
+            try {
+                const auto path = session->data().project().fidelity;
+                if (!path.isEmpty()) {
+                    // A display refresh must never acknowledge a hand edit in the
+                    // session's FileStore and thereby permit a later overwrite.
+                    FileStore reader(session->files().root());
+                    QJsonParseError parse;
+                    const auto doc = QJsonDocument::fromJson(reader.read(path), &parse);
+                    if (parse.error != QJsonParseError::NoError || !doc.isObject() || !doc.object()["rows"].isArray())
+                        result.snapshot.fidelityError = t("Invalid fidelity ledger", "Registro de fidelidad inválido");
+                    else result.snapshot.fidelity = doc.object()["rows"].toArray();
+                }
+            } catch (const CommandError &e) { result.snapshot.fidelityError = e.message; }
+              catch (const std::exception &e) { result.snapshot.fidelityError = QString::fromUtf8(e.what()); }
         } catch (const CommandError &e) { result.envelope = failure(e.message); }
           catch (const std::exception &e) { result.envelope = failure(QString::fromUtf8(e.what())); }
           catch (...) { result.envelope = failure("unexpected command failure"); }
@@ -134,7 +165,8 @@ bool changesView(const QString &name) {
     return name == "set_frame" || name == "set_camera" || name == "set_overlays" ||
            name == "load_row" || name == "play" || name == "preview_clip" ||
            name == "reload" || name == "engine_restart" || name == "engine_stop" ||
-           name == "edit_hitbox" || name == "assign_clip";
+           name == "edit_hitbox" || name == "assign_clip" ||
+           name == "accept" || name == "undo" || name == "redo";
 }
 }
 
@@ -161,6 +193,16 @@ struct WorkbenchWindow::Impl {
     QMap<QString, QPair<QDateTime, qint64>> seenPng;
     quint64 pngRevision = 0, pngNumber = 0;
     Snapshot snapshot;
+    OutlinerPanel *outliner;
+    InspectorPanel *inspector;
+    ProblemsPanel *problems;
+    ClipBrowserPanel *clips;
+    FidelityPanel *fidelity;
+    ReviewPanel *review;
+    QLabel *fidelityNote;
+    CommandRegistry paletteCommands;
+    int selectedOrdinal = -1;
+    bool clipPreview = false;
     QJsonObject camera, overlays{{"hitboxes", true}, {"hurtboxes", false}, {"bones", false}, {"ecb", false}, {"floor", true}};
 
     explicit Impl(WorkbenchWindow *window) : q(window) {
@@ -179,8 +221,7 @@ struct WorkbenchWindow::Impl {
         rows = new QComboBox; rows->setObjectName("wbRows"); rows->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
         rows->setAccessibleName(t("Move", "Movimiento")); rowLine->addWidget(rows, 1);
         QObject::connect(rows, qOverload<int>(&QComboBox::activated), q, [this](int i) {
-            row = rows->itemData(i).toString(); setPlaying(false); updateTimeline();
-            q->runCommand("load_row", {{"row", row}});
+            selectRow(rows->itemData(i).toString());
         });
         auto *views = new QHBoxLayout; layout->addLayout(views);
         for (const auto &preset : QList<QPair<QString, QString>>{
@@ -228,6 +269,7 @@ struct WorkbenchWindow::Impl {
             });
         }
         q->setCentralWidget(body); q->statusBar()->showMessage(t("Engine not running", "Motor detenido"));
+        createPanels();
         pngTimer.setInterval(50);
         QObject::connect(&pngTimer, &QTimer::timeout, q, [this] { pollPng(); });
         playTimer.setInterval(16);
@@ -247,6 +289,115 @@ struct WorkbenchWindow::Impl {
         auto *button = new kit::Button(text); layout->addWidget(button);
         QObject::connect(button, &QPushButton::clicked, q, std::move(fn)); return button;
     }
+    QDockWidget *dock(const QString &title, const QString &name, QWidget *content, Qt::DockWidgetArea area) {
+        auto *widget = new QDockWidget(title, q); widget->setObjectName(name); widget->setWidget(content);
+        q->addDockWidget(area, widget); return widget;
+    }
+    void createPanels() {
+        outliner = new OutlinerPanel; inspector = new InspectorPanel;
+        problems = new ProblemsPanel; clips = new ClipBrowserPanel;
+        fidelity = new FidelityPanel; review = new ReviewPanel;
+        auto *outlineDock = dock(t("Outliner", "Explorador"), "wbOutlinerDock", outliner, Qt::LeftDockWidgetArea);
+        auto *inspectorScroll = new QScrollArea; inspectorScroll->setWidgetResizable(true);
+        inspectorScroll->setFrameShape(QFrame::NoFrame); inspectorScroll->setWidget(inspector);
+        auto *inspectorDock = dock(t("Inspector", "Inspector"), "wbInspectorDock", inspectorScroll, Qt::RightDockWidgetArea);
+        auto *clipBody = new QWidget; auto *clipLayout = new QVBoxLayout(clipBody);
+        auto *clipActions = new QHBoxLayout; clipLayout->addLayout(clipActions);
+        addButton(clipActions, t("Preview", "Vista previa"), [this] { clips->previewCurrent(); });
+        addButton(clipActions, t("Assign to move", "Asignar al movimiento"), [this] { clips->assignCurrent(); });
+        clipLayout->addWidget(clips);
+        auto *clipsDock = dock(t("Clips", "Clips"), "wbClipsDock", clipBody, Qt::RightDockWidgetArea);
+        auto *fidelityBody = new QWidget; auto *fidelityLayout = new QVBoxLayout(fidelityBody);
+        fidelityNote = new QLabel; fidelityNote->setTextFormat(Qt::PlainText); fidelityNote->setWordWrap(true);
+        fidelityLayout->addWidget(fidelityNote); fidelityLayout->addWidget(fidelity);
+        auto *fidelityDock = dock(t("Fidelity", "Fidelidad"), "wbFidelityDock", fidelityBody, Qt::RightDockWidgetArea);
+        q->tabifyDockWidget(inspectorDock, clipsDock); q->tabifyDockWidget(clipsDock, fidelityDock); inspectorDock->raise();
+        auto *problemBody = new QWidget; auto *problemLayout = new QVBoxLayout(problemBody);
+        auto *problemActions = new QHBoxLayout; problemLayout->addLayout(problemActions);
+        auto *check = addButton(problemActions, t("Run checks", "Ejecutar comprobaciones"), [this] {
+            setPlaying(false); q->runCommand("run_checks", {});
+        });
+        check->setObjectName("wbRunChecks"); problemActions->addStretch(); problemLayout->addWidget(problems);
+        auto *problemsDock = dock(t("Problems", "Problemas"), "wbProblemsDock", problemBody, Qt::BottomDockWidgetArea);
+        auto *reviewBody = new QWidget; auto *reviewLayout = new QVBoxLayout(reviewBody);
+        auto *reviewActions = new QHBoxLayout; reviewLayout->addLayout(reviewActions);
+        addButton(reviewActions, t("Undo", "Deshacer"), [this] { emit review->undoRequested(); });
+        addButton(reviewActions, t("Redo", "Rehacer"), [this] { emit review->redoRequested(); });
+        reviewActions->addStretch(); reviewLayout->addWidget(review);
+        auto *reviewDock = dock(t("History and review", "Historial y revisión"), "wbReviewDock", reviewBody, Qt::BottomDockWidgetArea);
+        q->tabifyDockWidget(problemsDock, reviewDock); problemsDock->raise();
+        q->resizeDocks({outlineDock, inspectorDock}, {210, 300}, Qt::Horizontal);
+        q->resizeDocks({problemsDock}, {180}, Qt::Vertical);
+        QObject::connect(outliner, &OutlinerPanel::rowSelected, q, [this](const QString &name) { selectRow(name); });
+        QObject::connect(outliner, &OutlinerPanel::hitboxSelected, q, [this](const QString &name, int ordinal) { selectRow(name, ordinal); });
+        QObject::connect(inspector, &InspectorPanel::editRequested, q, [this](const QString &name, const QJsonObject &args) {
+            q->runCommand(name, args);
+        });
+        QObject::connect(problems, &ProblemsPanel::problemActivated, q, [this, inspectorDock](const QString &name, int ordinal) {
+            selectRow(name, ordinal); inspectorDock->raise();
+        });
+        QObject::connect(clips, &ClipBrowserPanel::previewRequested, q, [this](const QString &clip) {
+            setPlaying(false); q->runCommand("preview_clip", {{"clip", clip}});
+        });
+        QObject::connect(clips, &ClipBrowserPanel::assignRequested, q, [this](const QString &clip) {
+            if (row.isEmpty()) { status(t("Select a move first", "Selecciona un movimiento primero")); return; }
+            q->runCommand("assign_clip", {{"row", row}, {"clip", clip}});
+        });
+        QObject::connect(review, &ReviewPanel::acceptRequested, q, [this](int id) { q->runCommand("accept", {{"id", id}}); });
+        QObject::connect(review, &ReviewPanel::rejectRequested, q, [this](int id) { q->runCommand("reject", {{"id", id}}); });
+        QObject::connect(review, &ReviewPanel::undoRequested, q, [this] { q->runCommand("undo", {}); });
+        QObject::connect(review, &ReviewPanel::redoRequested, q, [this] { q->runCommand("redo", {}); });
+#if __has_include("palette.h")
+        auto *paletteShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_P), q);
+        QObject::connect(paletteShortcut, &QShortcut::activated, q, [this] {
+            if (closing) return;
+            if (paletteCommands.list().isEmpty()) { status(t("Commands are loading…", "Cargando comandos…")); return; }
+            auto *palette = new CommandPalette(paletteCommands, q); palette->setAttribute(Qt::WA_DeleteOnClose);
+            QObject::connect(palette, &CommandPalette::commandChosen, q, [this](const QString &name) {
+                for (const auto &spec : paletteCommands.list()) if (spec.name == name) {
+                    if (!spec.inputSchema.value("required").toArray().isEmpty()) {
+                        status(t("%1 needs arguments. Use the panels.", "%1 necesita argumentos. Usa los paneles.").arg(name)); return;
+                    }
+                    QJsonObject args; const auto properties = spec.inputSchema.value("properties").toObject();
+                    for (auto it = properties.begin(); it != properties.end(); ++it) {
+                        const auto property = it.value().toObject();
+                        if (property.contains("default")) args.insert(it.key(), property.value("default"));
+                    }
+                    q->runCommand(name, args); return;
+                }
+            });
+            palette->open();
+        });
+#endif
+    }
+    const HitboxRef *selectedHitbox() const {
+        const auto it = snapshot.hits.constFind(row);
+        if (it == snapshot.hits.cend()) return nullptr;
+        for (const auto &hit : it.value()) if (hit.ordinal == selectedOrdinal) return &hit;
+        return nullptr;
+    }
+    void refreshSelection() {
+        outliner->setSelection(row, selectedOrdinal);
+        const auto *hit = selectedHitbox();
+        if (hit) inspector->showHitbox(row, *hit); else { selectedOrdinal = -1; inspector->clear(); }
+        if (hit && !clipPreview) viewport->setSelectedHitbox(hit->slot, hit->startFrame, hit->endFrame);
+        else viewport->setSelectedHitbox(-1);
+        QString currentClip; QVector<int> motions;
+        for (const auto &entry : snapshot.rows) if (entry.name == row) { currentClip = entry.clip; motions = entry.motions; break; }
+        clips->setClips(snapshot.clips, currentClip); fidelity->setFidelity(snapshot.fidelity, row, motions);
+        fidelityNote->setText(snapshot.fidelityError.isEmpty() ? QString() :
+            t("Cannot read fidelity: %1", "No se puede leer la fidelidad: %1").arg(snapshot.fidelityError));
+        fidelityNote->setVisible(!snapshot.fidelityError.isEmpty());
+    }
+    void selectRow(const QString &name, int ordinal = -1) {
+        bool found = false; for (const auto &entry : snapshot.rows) if (entry.name == name) { found = true; break; }
+        if (!found || closing) return;
+        setPlaying(false); row = name; selectedOrdinal = ordinal; clipPreview = false;
+        const QSignalBlocker block(rows); rows->setCurrentIndex(rows->findData(row));
+        viewport->setFrameInfo({}); updateTimeline(); refreshSelection();
+        const auto *hit = selectedHitbox(); restoringFrame = hit ? hit->startFrame : 0;
+        q->runCommand("load_row", {{"row", row}});
+    }
     bool busy() const { return running || !queue.isEmpty() || renderPending.has_value() || pngTimer.isActive(); }
     void setPlaying(bool on) {
         on = on && timeline->frameCount() > 0 && !closing;
@@ -260,7 +411,18 @@ struct WorkbenchWindow::Impl {
         if (changesView(name)) {
             ++revision; renderPending.reset();
         }
-        if (name == "load_row") ++rowIntent;
+        if (name == "edit_hitbox" || name == "assign_clip" || name == "accept" || name == "undo" || name == "redo")
+            setPlaying(false);
+        if (name == "load_row") {
+            ++rowIntent; clipPreview = false;
+            const QString requested = args.value("row").toString();
+            for (const auto &entry : snapshot.rows) if (entry.name == requested) {
+                if (row != requested) selectedOrdinal = -1;
+                row = requested; break;
+            }
+            viewport->setFrameInfo({}); refreshSelection();
+        }
+        if (name == "preview_clip") { clipPreview = true; viewport->setSelectedHitbox(-1); }
         if (name == "set_frame" || name == "play" || name == "preview_clip") ++frameIntent;
         Request request{name, args, revision, 0, rowIntent, frameIntent, std::nullopt};
         if (name == "load_row") request.restoreFrame = std::exchange(restoringFrame, std::nullopt);
@@ -306,6 +468,10 @@ struct WorkbenchWindow::Impl {
         for (const auto &r : snapshot.rows) rows->addItem(r.name, r.name);
         int selected = rows->findData(row); if (selected < 0 && rows->count()) selected = 0;
         rows->setCurrentIndex(selected); row = rows->currentData().toString(); updateTimeline();
+        outliner->setRows(snapshot.rows, snapshot.hits); refreshSelection();
+        review->setHistory(snapshot.history);
+        paletteCommands = CommandRegistry{};
+        for (const auto &spec : snapshot.commands) paletteCommands.add(spec);
     }
     void updateTimeline() {
         int frames = 0, iasa = 0;
@@ -346,11 +512,24 @@ struct WorkbenchWindow::Impl {
             if (pngPath.isEmpty()) status(t("Screenshot path missing", "Falta la ruta de la captura"));
             else { pngClock.start(); pngTimer.start(); status(t("Waiting for screenshot…", "Esperando captura…")); }
         } else {
-            status(t("Ready", "Ready"));
+            const QString warning = value.value("warning").toString();
+            status(warning.isEmpty() ? t("Ready", "Ready") : t("Warning: %1", "Aviso: %1").arg(warning));
             if (completed.name == "load_row" && completed.rowIntent == rowIntent) {
                 row = completed.args.value("row").toString(); refresh(result.snapshot);
                 if (completed.frameIntent == frameIntent)
                     q->runCommand("set_frame", {{"frame", completed.restoreFrame.value_or(0)}});
+            }
+            if (completed.name == "run_checks") {
+                QVector<Problem> found;
+                for (const auto &item : value.value("problems").toArray()) {
+                    const auto p = item.toObject();
+                    found.append({p["kind"].toString(), p["row"].toString(), p["message"].toString(), p["ordinal"].toInt(-1)});
+                }
+                problems->setProblems(found);
+                // Engine checks sweep motions. Restore the visible move before playback.
+                if (value.value("engine").toBool() && !row.isEmpty()) {
+                    restoringFrame = timeline->frame(); q->runCommand("load_row", {{"row", row}});
+                }
             }
             if (completed.name == "set_camera") {
                 if (completed.args.contains("preset")) camera = completed.args;
@@ -365,8 +544,9 @@ struct WorkbenchWindow::Impl {
             if (value.contains("frame") && completed.rowIntent == rowIntent && completed.frameIntent == frameIntent) {
                 const FrameInfo fi = FrameInfo::fromJson(value); timeline->setFrame(fi.frame); viewport->setFrameInfo(fi);
             }
-            if ((completed.name == "edit_hitbox" || completed.name == "assign_clip") && value.value("applied").toBool()) {
-                q->runCommand("reload", {});
+            if ((completed.name == "edit_hitbox" || completed.name == "assign_clip" || completed.name == "accept" ||
+                 completed.name == "undo" || completed.name == "redo") && value.value("applied").toBool()) {
+                problems->setProblems({}); q->runCommand("reload", {});
             } else if (completed.name == "reload" || completed.name == "engine_restart") {
                 captureTimedOut = false; seenPng.clear();
                 const int f = timeline->frame();

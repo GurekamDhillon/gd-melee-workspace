@@ -14,7 +14,7 @@ target_include_directories(workbench_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # The integrated launcher window consumes Creator, so it belongs at this layer.
 # launcher_ui remains the Atlas/kit library; no circular static-library dependency.
-add_library(workbench_ui STATIC viewport.cpp timeline.cpp palette.cpp workbench_window.cpp ../window.cpp)
+add_library(workbench_ui STATIC viewport.cpp timeline.cpp palette.cpp panels.cpp workbench_window.cpp ../window.cpp)
 target_link_libraries(workbench_ui PUBLIC workbench_core launcher_ui Qt6::Widgets Qt6::Concurrent)
 target_include_directories(workbench_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -36,6 +36,7 @@ if(BUILD_TESTING)
   endfunction()
   wb_ui_test(ui)
   wb_ui_test(palette)
+  wb_ui_test(panels)
   wb_test(scaffold)
   wb_test(json_patch)
   wb_test(file_store)

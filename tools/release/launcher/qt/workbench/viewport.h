@@ -15,6 +15,7 @@ public:
     void setImage(const QImage &img);
     void setFrameInfo(const FrameInfo &fi);
     void setOverlay(const QString &name, bool on);
+    void setSelectedHitbox(int slot, int startFrame = 0, int endFrame = -1);
     void setCamera(const QJsonObject &camera); // feedback; does not emit
 signals:
     void cameraChanged(const QJsonObject &camera);
@@ -31,6 +32,7 @@ private:
     QImage image_;
     FrameInfo info_;
     bool haveInfo_ = false, dragging_ = false;
+    int selectedSlot_ = -1, selectedStart_ = 0, selectedEnd_ = -1;
     QPointF lastMouse_;
     double yaw_ = 0, pitch_ = 0, distance_ = 40;
     QMap<QString, bool> overlays_{{"hitboxes", true}, {"hurtboxes", false},

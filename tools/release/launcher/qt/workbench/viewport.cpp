@@ -23,6 +23,9 @@ void Viewport::setOverlay(const QString &name, bool on) {
     if (!overlays_.contains(name)) return;
     overlays_[name] = on; update();
 }
+void Viewport::setSelectedHitbox(int slot, int startFrame, int endFrame) {
+    selectedSlot_ = slot; selectedStart_ = startFrame; selectedEnd_ = endFrame; update();
+}
 void Viewport::setCamera(const QJsonObject &camera) {
     const QString preset = camera.value("preset").toString();
     if (!preset.isEmpty()) {
@@ -119,8 +122,12 @@ void Viewport::paintGuide(QPainter &p, const QRectF &area) {
         }
     }
     if (overlays_.value("hitboxes")) {
-        p.setPen(QPen(atlas::colour("ember"), 2)); p.setBrush(Qt::NoBrush);
+        p.setBrush(Qt::NoBrush);
         for (const auto &h : info_.hitboxes) if (h.active) {
+            // A source ordinal may reuse a runtime slot later in the move.
+            const bool selected = h.slot == selectedSlot_ && info_.frame >= selectedStart_ &&
+                                  (selectedEnd_ < 0 || info_.frame < selectedEnd_);
+            p.setPen(QPen(atlas::colour(selected ? "sun" : "ember"), selected ? 3 : 2));
             const double r = std::max(0.0, h.radius) * scale; p.drawEllipse(pos(h.world), r, r);
         }
     }
