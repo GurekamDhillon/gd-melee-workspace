@@ -74,7 +74,7 @@ void registerHitboxCommands(Session &s) {
             return session.commit(ctx, "edit_hitbox", args,
                 t("Edit hitbox #%1 in %2", "Edit hitbox #%1 in %2").arg(ordinal).arg(row), changes);
         }});
-    s.registry().add({"list_hitbox_roles", t("List hitbox bone roles", "List hitbox bone roles"),
+    s.registry().add({"list_hitbox_roles", t("List hitbox bone roles", "Listar los roles de hueso del hitbox"),
         commandSchema(), false,
         [](const QJsonObject &, CommandContext &ctx) {
             QJsonArray roles;
@@ -87,7 +87,7 @@ void registerHitboxCommands(Session &s) {
         {"frame", argType("integer")}, {"duration", argType("integer")}, {"propose", argType("boolean")}};
     for (const char *key : {"damage", "size", "x", "y", "z"}) addProperties[key] = argType("number");
     for (const char *key : {"angle", "kbg", "fkb", "bkb"}) addProperties[key] = argType("integer");
-    s.registry().add({"add_hitbox", t("Add a source hitbox", "Add a source hitbox"),
+    s.registry().add({"add_hitbox", t("Add a source hitbox", "Añadir un hitbox al código fuente"),
         commandSchema(addProperties, {"row", "frame"}), true,
         [](const QJsonObject &args, CommandContext &ctx) {
             auto &session = ctx.session;
@@ -126,12 +126,12 @@ void registerHitboxCommands(Session &s) {
             QVector<FileChange> changes;
             for (const auto &change : edits) if (change.before != change.after) changes.append(change);
             auto result = session.commit(ctx, "add_hitbox", args,
-                t("Add hitbox to %1 at frame %2", "Add hitbox to %1 at frame %2").arg(row).arg(add.frame), changes);
+                t("Add hitbox to %1 at frame %2", "Añadir hitbox a %1 en el fotograma %2").arg(row).arg(add.frame), changes);
             result["ordinal"] = ordinal;
             result["bone"] = bone;
             return result;
         }});
-    s.registry().add({"delete_hitbox", t("Delete a source hitbox", "Delete a source hitbox"),
+    s.registry().add({"delete_hitbox", t("Delete a source hitbox", "Borrar un hitbox del código fuente"),
         commandSchema(QJsonObject{{"row", argType("string")}, {"ordinal", argType("integer")},
                                   {"propose", argType("boolean")}}, {"row", "ordinal"}), true,
         [](const QJsonObject &args, CommandContext &ctx) {
@@ -146,7 +146,7 @@ void registerHitboxCommands(Session &s) {
             QVector<FileChange> changes;
             for (const auto &change : edits) if (change.before != change.after) changes.append(change);
             return session.commit(ctx, "delete_hitbox", args,
-                t("Delete hitbox #%1 in %2", "Delete hitbox #%1 in %2").arg(ordinal).arg(row), changes);
+                t("Delete hitbox #%1 in %2", "Borrar hitbox #%1 en %2").arg(ordinal).arg(row), changes);
         }});
     s.registry().add({"suggest_hitbox_bone", t("Suggest the active limb for a hitbox", "Suggest the active limb for a hitbox"),
         commandSchema(rowOrdinal, {"row", "ordinal"}), false,
