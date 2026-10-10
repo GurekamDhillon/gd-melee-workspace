@@ -1,4 +1,5 @@
 #include "session.h"
+#include "geno_data.h"
 #include <QDir>
 #include <QSet>
 #include <exception>
@@ -48,6 +49,13 @@ FileStore &Session::files() { return files_; }
 History &Session::history() { return history_; }
 CommandRegistry &Session::registry() { return registry_; }
 EngineBackend *Session::engine() { return engine_; }
+GenoData &Session::data() {
+    if (!data_) {
+        data_ = std::make_unique<GenoData>(files_);
+        data_->reload();
+    }
+    return *data_;
+}
 QString Session::historyPath() const {
     return QDir(files_.root()).filePath(".workbench/history.json");
 }
@@ -122,6 +130,7 @@ QJsonObject Session::commit(const CommandContext &ctx, const QString &command, c
         // A refresh error must never turn an applied command into an edit with no
         // undo entry. It remains applied and persisted, and the error says so.
         try {
+            if (data_) data_->reload();
             if (onApplied) onApplied();
         } catch (...) {
             throw CommandError{QString("changes applied (entry %1); reload failed: %2")

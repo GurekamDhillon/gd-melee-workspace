@@ -3,6 +3,7 @@
 #include "file_store.h"
 #include "history.h"
 #include <functional>
+#include <memory>
 
 namespace wb {
 class EngineBackend;
@@ -19,6 +20,7 @@ public:
     History &history();
     CommandRegistry &registry();
     EngineBackend *engine(); // Borrowed; null for an offline session.
+    GenoData &data();        // Lazily built from files(); reloaded after every applied commit.
     bool agentProposals = false;
     // Task 6 installs data().reload(); called after persisted edits, never for proposals.
     std::function<void()> onApplied = [] {};
@@ -31,6 +33,7 @@ public:
 private:
     void saveHistory(const History &history) const;
     FileStore files_;
+    std::unique_ptr<GenoData> data_;
     History history_;
     CommandRegistry registry_;
     EngineBackend *engine_;
