@@ -43,6 +43,7 @@ def main(argv=None):
     parser.add_argument("--iso", default="", help="disc image (fills the Disc field; never stored in the repo)")
     parser.add_argument("--row", default="", help="load this move row after the fighter")
     parser.add_argument("--frame", type=int, default=0, help="go to this engine frame after loading the row")
+    parser.add_argument("--exercise", default="", help="comma list of rows: play each to its end (and 3 past), switch between them, restart the engine, load again; print GENO_WB_REPORT lines")
     parser.add_argument("--report", action="store_true", help="print GENO_WB_REPORT lines and exit Blender")
     arguments = _script_arguments(sys.argv) if argv is None else argv
     args = parser.parse_args(arguments)
@@ -105,10 +106,45 @@ def _after_load(bpy, api, args):
             raise RuntimeError(session.last_error or "load_row failed")
         if args.frame:
             bpy.ops.geno_wb.step(n=args.frame - bpy.context.scene.geno_wb.frame)
+    if args.exercise:
+        _exercise(bpy, session, [r for r in args.exercise.split(",") if r])
     if args.report:
         _report(bpy, session, names, args)
     else:
         bpy.app.timers.register(lambda: _present(bpy), first_interval=1.0)
+
+
+def _exercise(bpy, session, rows):
+    """Live check of the failures seen on Goku: play past a move's end, switch moves, restart the engine."""
+    def root(label):
+        info = session.info or {}
+        bones = info.get("bones") or []
+        top = next((b for b in bones if b.get("parent", -1) == -1), None)
+        pos = (top or {}).get("pos") or {}
+        print("GENO_WB_REPORT ex %s row=%s frame=%s connected=%s root=(%.2f,%.2f) status=%s" % (
+            label, session.row, session.frame, session.connected, pos.get("x", 0.0), pos.get("y", 0.0), session.status))
+    for name in rows:
+        ok = bpy.ops.geno_wb.load_row(row=name) == {"FINISHED"}
+        length = session.row_frames()
+        print("GENO_WB_REPORT ex load %s ok=%s length=%s" % (name, ok, length))
+        root("loaded")
+        for f in list(range(1, (length or 40) + 4)):
+            ok = session.set_frame(f)
+            if not session.connected:
+                print("GENO_WB_REPORT ex DISCONNECTED at frame %d: %s" % (f, session.last_error))
+                return
+            if f in (1, 2, 8, length, (length or 40) + 3):
+                root("f%d ok=%s" % (f, ok))
+        print("GENO_WB_REPORT ex learned_length %s=%s" % (name, session.row_lengths.get(name)))
+    # switch back and forth, root should be stable per row start
+    for name in rows + rows[::-1]:
+        bpy.ops.geno_wb.load_row(row=name)
+        session.set_frame(1)
+        root("switch %s f1" % name)
+    ok = session.engine_restart()
+    print("GENO_WB_REPORT ex restart ok=%s status=%s" % (ok, session.status))
+    ok = bpy.ops.geno_wb.load_row(row=rows[0]) == {"FINISHED"}
+    root("after restart load %s ok=%s" % (rows[0], ok))
 
 
 def _present(bpy):

@@ -299,6 +299,18 @@ private slots:
         QVERIFY(!err.contains("timeout"));
         QCOMPARE(link.status(), QString("ready")); // not a transport failure
     }
+    void stuckFrameRequestIsReissuedOnce() {
+        // A fresh engine can leave the first request pending for good; a second wb.frame completes.
+        int frames = 0;
+        wbtest::FakeConsole fc([&](const QString &line) {
+            if (line.startsWith("=wb.frame(")) { ++frames; return QString("pending\n>>> ok\n"); }
+            return jsonReply({{"frame", frames < 2 ? -1 : 1}, {"motion", 69}});
+        });
+        EngineLink link({}); QString err; QVERIFY(link.attach(fc.port(), &err));
+        const auto r = link.call("frame", {{"frame", 1}, {"motion", 69}}, &err);
+        QVERIFY2(err.isEmpty(), qPrintable(err)); QCOMPARE(r["frame"].toInt(), 1);
+        QCOMPARE(frames, 2);
+    }
     void framePollsStalePayloadAndRequiresAFrameField() {
         int polls = 0;
         wbtest::FakeConsole fc([&](const QString &line) {
@@ -313,7 +325,7 @@ private slots:
     void framePollingHasOneDeadline() {
         wbtest::FakeConsole fc([](const QString &line) {
             return line.startsWith("=wb.frame(") ? QString("pending\n>>> ok\n")
-                                                : QString("{\"frame\":1}\n>>> ok\n");
+                                                : QString("{\"frame\":-1}\n>>> ok\n");
         });
         EngineLink link({}); QString err; link.setTimeoutMs(150);
         QVERIFY(link.attach(fc.port(), &err));

@@ -512,15 +512,30 @@ QJsonObject EngineLink::call(const QString &fn, const QJsonObject &args, QString
         if (why.isEmpty()) return result;
         setError(err, why); return {};
     }
+    // A request issued while a freshly started engine is still settling can stay pending for good; a new
+    // wb.frame supersedes it. So if the first window passes without an answer, ask again once.
+    bool resent = false;
+    int window = 2500;
     QElapsedTimer polling; polling.start();
-    while (remaining(polling, 5000) && remaining(timer, timeoutMs_)) {
-        const int left = std::min(remaining(polling, 5000), remaining(timer, timeoutMs_));
-        pumpFor(std::min(50, left));
-        const int callBudget = std::min(remaining(polling, 5000), remaining(timer, timeoutMs_));
-        if (!callBudget) break;
-        result = request("frame_info", {}, callBudget, &error);
+    for (;;) {
+        while (remaining(polling, window) && remaining(timer, timeoutMs_)) {
+            const int left = std::min(remaining(polling, window), remaining(timer, timeoutMs_));
+            pumpFor(std::min(50, left));
+            const int callBudget = std::min(remaining(polling, window), remaining(timer, timeoutMs_));
+            if (!callBudget) break;
+            result = request("frame_info", {}, callBudget, &error);
+            if (!error.isEmpty()) { setError(err, error); return {}; }
+            if (settle(result, &why)) {
+                if (why.isEmpty()) return result;
+                setError(err, why); return {};
+            }
+        }
+        if (resent || !remaining(timer, timeoutMs_)) break;
+        resent = true; window = 5000; polling.restart();
+        bool again = false;
+        result = request(fn, args, std::min(timeoutMs_, remaining(timer, timeoutMs_)), &error, &again);
         if (!error.isEmpty()) { setError(err, error); return {}; }
-        if (settle(result, &why)) {
+        if (!again && settle(result, &why)) {
             if (why.isEmpty()) return result;
             setError(err, why); return {};
         }

@@ -65,6 +65,7 @@ def main() -> int:
     ap.add_argument("--check", action="store_true", help="run Blender in the background, print a report, exit")
     ap.add_argument("--row", default="", help="move row to load (default: first engine row named like a jab, else none)")
     ap.add_argument("--frame", type=int, default=0)
+    ap.add_argument("--exercise", default="", help="comma list of rows to play to the end, switch between and restart the engine on (with --check)")
     ap.add_argument("--serve-only", action="store_true", help="start the server and engine, print the port, wait for Enter")
     ap.add_argument("--windowed-engine", action="store_true", help="show the engine window instead of headless")
     args = ap.parse_args()
@@ -130,6 +131,8 @@ def main() -> int:
             cmd += ["--row", "jab1"]   # the engine's rows are the project's moves (jab1, utilt, ...), not clip names
         if args.frame:
             cmd += ["--frame", str(args.frame)]
+        if args.exercise:
+            cmd += ["--exercise", args.exercise]
         if args.check:
             cmd += ["--report"]
         print("starting Blender ...")
