@@ -42,7 +42,7 @@ def operators(monkeypatch):
     monkeypatch.setitem(sys.modules, "props", props)
     state = SimpleNamespace(connected=True, info={"frame": 1}, has_roles=True, can_rebuild=True,
                             hitboxes=[{}], problems=[{}], last_error="", status="",
-                            art_blend="fighter.blend", art_glb="")
+                            art_blend="fighter.blend", art_glb="", source_row="jab1")
 
     def set_status(message):
         state.status = message
