@@ -1,7 +1,12 @@
 # Packet 9: Going further (outline)
 
-**Status: outline.** Overview and pointers. The pipeline needs source-game data you must own, and
-this course did not run it.
+**Status: unrun outline (notice dated 2026-10-10).** This packet has not been
+executed as a walkthrough; source/document references are not gameplay or GUI
+verification. Start with [Author a fighter](../author-a-fighter.md) for the current
+artist-to-Blender-to-LAB path.
+
+The porting overview below needs source-game data you own; original artist
+fighters use a separate path.
 
 **Goal:** see how a whole move set from another game becomes a Geno fighter, and the rule the project
 uses to judge it.
@@ -60,8 +65,9 @@ per frame. Do not eyeball it.**
 
 ## What this means for you
 
-If your fighter comes from nowhere (it is your own design), none of the pipeline applies. Use
-packets 1 to 8. If you want to port from Ultimate or Brawl, you need your own copies of those games,
+For your own design, use [Author a fighter](../author-a-fighter.md): the artist
+pipeline builds your Blender model and actions into a native define. Packets
+4 to 9 are still outlines, not a substitute for that walkthrough. If you want to port from Ultimate or Brawl, you need your own copies of those games,
 the tools' dependencies (Python packages, a C# build for `fighterbuild`), and patience: Sora's
 completeness "is defined by the generated audits, not by the install succeeding" (`ports/README.md`).
 

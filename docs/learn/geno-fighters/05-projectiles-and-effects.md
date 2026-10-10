@@ -1,8 +1,12 @@
 # Packet 5: Projectiles and effects (outline)
 
-**Status: outline.** The definitions below are the documented formats. This packet has no worked
-example an author can run, because the pieces that need art (an article model, an effect package)
-are produced by tools that need data from other games. Packet 10 says what is missing.
+**Status: unrun outline (notice dated 2026-10-10).** This packet has not been
+executed as a walkthrough; source/document references are not gameplay or GUI
+verification. Start with [Author a fighter](../author-a-fighter.md) for the current
+artist-to-Blender-to-LAB path.
+
+This packet still has no complete beginner article/effect walkthrough. Procedural
+art and sound tools exist; their presence does not verify this example.
 
 **Goal:** define a projectile (an article), spawn it from a move, and know how effects and sound fit.
 
@@ -73,17 +77,24 @@ Two routes (20, 19.11):
    one with `"fx": "<name>"`. A fighter binds packages to its states with `"fx_bindings":
    "fx/fx_bindings.json"` (schema `ports/ir/schema/fx_bindings.schema.json`).
 
-The only importer in the tree reads Ultimate's effect files (`ports/ir/tools/ultimate_vfx_geno.py`),
-which you must own. **There is no hand-authoring guide and no sample package.** A person could write a
-`.gfx.json` by hand from section 20, but nothing in the tree shows a minimal valid one.
+The Ultimate importer (`ports/ir/tools/ultimate_vfx_geno.py`) needs source data you own.
+For procedural examples, read `ports/goku-xv2/tools/fx_build.py`; it constructs
+`.gfx.json` packages and generated textures, and expects a local
+`tools/fx_emitter_template.json` beside it. That template is absent from the
+checkout inspected for this update, so the generator is not a runnable example
+here. There is still no complete beginner effect-authoring/audition walkthrough.
 
 Budget: 64 packages, 2000 particles, 256 emitter instances (20.3).
 
 ## Sound
 
-Geno has no sound system. A move's script plays Melee's sound command (opcode 17, `sfx`; the LAB
-colours it purple on the timeline). Sound banks come from the m-ex tables
-(`docs/mods-packaging.md` 2.3). There is no documented way to add a new sound to a Geno-only mod.
+Move scripts can play Melee sound ids with `sfx` (opcode 17). A profile's `sounds`
+block names retail ids for article sound references. Native defines can also
+carry original `.gnsnd` clips in `files/` through their `audio` block. Convert
+an original PCM WAV with `python -m tools.geno.audio own.wav own.gnsnd`; the
+package checker reads those clips. See [the fighter guide](../../geno-fighter-guide.md)
+and `tools/geno/audio.py`. Sound audition and this packet's worked sound example
+remain unverified.
 
 ## Check yourself (for the full packet)
 
