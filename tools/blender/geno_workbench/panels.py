@@ -196,6 +196,32 @@ class GENO_WB_PT_hitbox(bpy.types.Panel):
         )
 
 
+class GENO_WB_PT_splice(bpy.types.Panel):
+    bl_idname = "GENO_WB_PT_splice"
+    bl_label = STRINGS["nla_panel"]
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = STRINGS["tab"]
+
+    def draw(self, context):
+        settings = context.scene.geno_wb
+        body = self.layout.column()
+        body.prop(settings, "project")
+        body.prop(settings, "nla_height")
+        body.prop(settings, "nla_clip")
+        body.operator("geno_wb.import_clip", icon="IMPORT")
+        body.prop(settings, "nla_recipe_file")
+        body.prop(settings, "nla_recipe")
+        body.operator("geno_wb.layout_recipe", icon="NLA")
+        body.label(text=STRINGS["nla_edit_hint"])
+        body.label(text=STRINGS["nla_preview_hint"])
+        body.operator("geno_wb.save_strips", icon="FILE_TICK")
+        body.label(text=STRINGS["nla_save_hint"])
+        body.prop(settings, "nla_action_name")
+        body.prop(settings, "nla_export_path")
+        body.operator("geno_wb.bake_export", icon="EXPORT")
+
+
 CLASSES = (
     GENO_WB_UL_problems,
     GENO_WB_UL_hitboxes,
@@ -203,4 +229,5 @@ CLASSES = (
     GENO_WB_PT_timeline,
     GENO_WB_PT_problems,
     GENO_WB_PT_hitbox,
+    GENO_WB_PT_splice,
 )

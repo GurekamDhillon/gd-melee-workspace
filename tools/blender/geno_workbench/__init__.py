@@ -12,6 +12,32 @@ _registered_classes = []
 _owns_scene_property = False
 
 
+def add_site_dirs():
+    """Make scipy and Pillow importable inside Blender's Python.
+
+    Directories come from GW_SITE (os.pathsep separated); when it is unset the
+    default is <workspace>/_build/wbnla-site (a `pip install --target` dir)
+    if it exists. Returns the directories added. Safe to call repeatedly.
+    """
+    import os
+    import sys
+    from pathlib import Path
+
+    raw = os.environ.get("GW_SITE", "")
+    dirs = [d for d in raw.split(os.pathsep) if d]
+    if not dirs:
+        default = Path(__file__).resolve().parents[3] / "_build" / "wbnla-site"
+        if default.is_dir():
+            dirs = [str(default)]
+    added = []
+    for d in dirs:
+        if d not in sys.path:
+            sys.path.insert(0, d)
+            added.append(d)
+    return added
+
+
+
 def register():
     global _registered, _owns_scene_property
 
@@ -19,6 +45,8 @@ def register():
         import bpy
     except ImportError:
         return
+
+    add_site_dirs()
 
     if _registered:
         return
