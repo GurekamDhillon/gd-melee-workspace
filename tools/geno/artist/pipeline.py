@@ -1,6 +1,7 @@
 """pipeline.py - validate -> convert -> build models -> moves + geno.json -> install into an isolated test mods folder.
 
-    python -m tools.geno.artist build path/to/fighter.json [--out DIR] [--no-install] [--launch lab] [--smoke]
+    python -m tools.geno.artist build path/to/fighter.json [--out DIR] [--export] [--strict]
+    python -m tools.geno.artist run-command path/to/fighter.json [--out DIR]
 
 Outputs under <out> (default <workspace>/_build/artist/<key>/, never committed):
     build/            plan.json, mesh_*.json, Gn<Token>_<costume>.dat, Gn<Token>AJ.dat, bank.json, build-report.md

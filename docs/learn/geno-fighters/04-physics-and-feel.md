@@ -1,7 +1,11 @@
 # Packet 4: Physics and feel (outline)
 
-**Status: outline.** The facts are verified against the reference and the code. The steps are not
-yet a worked tutorial, and nothing here was run. Where a worked example is missing, this packet says so.
+**Status: unrun outline (notice dated 2026-10-10).** This packet has not been
+executed as a walkthrough; source/document references are not gameplay or GUI
+verification. Start with [Author a fighter](../author-a-fighter.md) for the current
+artist-to-Blender-to-LAB path.
+
+This physics lesson still lacks its own worked hop/landing/cancel example.
 
 **Goal:** know the tools that make a move feel right: engine values, conditions, hooks, and the
 physics and collision callbacks of a Geno state.
@@ -82,8 +86,9 @@ grab for the state; `land` sends a landing to `UpBLand`. The up special is bound
 `"specials": {"hi": "geno:UpB", "air_hi": "geno:UpBAir"}`.
 
 **To write for the complete packet:** rebuild a smaller version of this on your tutorial fighter. It
-needs a clip that has root motion, which Kirby's reused rows may not have. Until a sample
-fighter exists (packet 10), a person cannot follow this part end to end.
+needs a clip that has root motion, which Kirby's reused rows may not have. An original
+starter and the Pip worked special now exist in [the fighter guide](../../geno-fighter-guide.md);
+this packet has not yet walked its physics example end to end.
 
 ## Hooks
 

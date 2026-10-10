@@ -1,10 +1,17 @@
 # Learn to make Geno fighters
 
-A short course for people. It teaches you to change and extend a fighter in GD's Melee with
-**Geno**, the port's own layer for fighter content, and to see every change in the LAB.
+For an original fighter, **start with [Author a fighter](../author-a-fighter.md)**
+(2026-10-10): artist starter, Blender, build, Workbench playback and hitbox workflow,
+checks, process restart, LAB contact and CLIPS. It is source-checked and has not
+been run end to end; new Workbench controls are explicitly marked as intended.
 
-Written 2026-10-03 against the game source as it stands that day. Where this course and
-`melee/docs/geno.md` disagree, the reference wins for facts and this course should be corrected.
+The short course below teaches attachments and extensions with **Geno**, the
+port's layer for fighter content. Packets **04–09 are unrun outlines**.
+
+The original attachment course was written 2026-10-03. The dated 2026-10-10
+authoring tutorial supersedes its stale artist/tool claims. Check current source
+when older reference prose disagrees; native-define reload and CLIPS keys are
+examples corrected in the new guide.
 Every packet ends with a Sources list so you can check a claim yourself.
 
 ## Who this is for
@@ -16,10 +23,11 @@ Every packet ends with a Sources list so you can check a claim yourself.
 
 ## The short answer to "does Geno replace m-ex?"
 
-Version 6 adds an offline native-definition path for the Geno engine; see [packet 11](11-defined-fighter.md). Packet [13](13-fighter-lua.md) (2026-10-08) writes a move as a Lua callback with typed per-fighter state, from two real moves (a charge and a counter); it ran headless, and nobody has played it. The earlier attachment course below describes the tested path. m-ex gives a fighter a place in the game: a slot, its files, costumes, an icon on the character
-select. Geno changes how a fighter plays: new action states, script logic, values, hooks, projectiles
-and effects. Geno sits on top of m-ex and never edits it. Packet 0 gives the full answer, with a
-table.
+Version 6 adds an offline native-definition path for the Geno engine; see [packet 11](11-defined-fighter.md). Packet [13](13-fighter-lua.md) (2026-10-08) writes a move as a Lua callback with typed per-fighter state, from two real moves (a charge and a counter); it ran headless, and nobody has played it. The earlier attachment course below describes the tested path. m-ex table-based fighters and native Geno defines are distinct routes. An
+attachment changes an existing fighter; a native define can supply its own
+model, animation bank, costumes and presentation without an m-ex table package.
+Use the artist tutorial for that route; packet 0 retains the older attachment
+course's context.
 
 ## What you need
 
@@ -35,18 +43,18 @@ You will not see a game window in this course until packet 1. Packet 0 is readin
 
 ## The course
 
-| packet | title | you finish with | time | state |
+| packet | title | you finish with | study-time estimate | state |
 |---|---|---|---|---|
 | [0](00-what-m-ex-and-geno-are.md) | What m-ex and Geno are | the answer to "can Geno do what m-ex does", and a map of what you can and cannot make | 30 min | complete |
 | [1](01-first-success.md) | Run a Geno fighter in the LAB | a Geno mod you wrote yourself, a changed number, seen in the LAB after a hot reload | 45 min | complete |
 | [2](02-anatomy-of-a-fighter.md) | Anatomy of a fighter | a labelled map of one fighter's files, states and animations, read from the LAB | 45 min | complete |
 | [3](03-your-first-new-move.md) | Your first new move | a new move on a button, with your own hitbox, tested frame by frame | 90 min | complete |
-| [4](04-physics-and-feel.md) | Physics and feel | notes and a worked example outline | 60 min | outline |
-| [5](05-projectiles-and-effects.md) | Projectiles and effects | an article definition outline | 60 min | outline |
-| [6](06-attributes-animations-model.md) | Attributes, animations and the model | what is data you can edit, and what needs tools | 45 min | outline |
-| [7](07-testing-and-debugging.md) | Testing and debugging | a checklist for the LAB tools, the frame-data diff and the log | 45 min | outline, with verified log lines |
-| [8](08-packaging-and-sharing.md) | Packaging and sharing | a mod folder you can give to someone | 30 min | outline |
-| [9](09-going-further.md) | Going further | pointers to the Ultimate-to-Melee pipeline and the fidelity rule | 30 min | outline |
+| [4](04-physics-and-feel.md) | Physics and feel | notes and a worked example outline | 60 min | unrun outline |
+| [5](05-projectiles-and-effects.md) | Projectiles and effects | an article definition outline | 60 min | unrun outline |
+| [6](06-attributes-animations-model.md) | Attributes, animations and the model | what is data you can edit, and what needs tools | 45 min | unrun outline |
+| [7](07-testing-and-debugging.md) | Testing and debugging | a checklist for the LAB tools, the frame-data diff and the log | 45 min | unrun outline; source-referenced log lines |
+| [8](08-packaging-and-sharing.md) | Packaging and sharing | a mod folder you can give to someone | 30 min | unrun outline |
+| [9](09-going-further.md) | Going further | pointers to the Ultimate-to-Melee pipeline and the fidelity rule | 30 min | unrun outline |
 | [10](10-known-gaps.md) | Known gaps | what is unverified, contradictory or missing | 15 min | complete |
 | [13](13-fighter-lua.md) | A move written as Lua | a charge special and a counter with a follow-up as Lua callbacks, checked offline and proven headless | 40 min | complete (run headless, not played) |
 
@@ -70,8 +78,9 @@ by editing data tables. This port reads m-ex data and runs it. Its tables live i
 `geno.json`. A fighter with no `geno.json` behaves exactly as before.
 
 **Fighter kind.** The engine's number for a fighter. Retail fighters have fixed kinds. Added m-ex
-fighters take the next free slot, so their number depends on which mods are enabled. Geno finds a
-fighter by its file name (`PlKb.dat`) or a vanilla name (`kirby`), not by number.
+fighters take the next free slot, so their number depends on which mods are enabled. Attachments find an existing
+fighter by file name (`PlKb.dat`) or vanilla name (`kirby`). A native define is
+selected by its stable authored key, for example `geno:tutorial-fighter`.
 
 **Clone base.** The existing fighter an added m-ex fighter copies its code from. A fighter whose
 table row gives no code of its own runs its clone base's moves. Geno then changes what differs.
@@ -107,8 +116,11 @@ sub-command, and `geno.json` can bind a hook to a moment such as "every frame" o
 
 **Profile.** One fighter's entry in `geno.json`.
 
-**Overlay.** A profile that attaches to an existing fighter and changes it. The only kind Geno
-supports today. `define`, a brand-new fighter made by Geno alone, is reserved and skipped.
+**Overlay.** A profile that attaches to an existing fighter and changes it.
+
+**Native define.** A fighter selected by its authored key. A `base: "none"`
+define can carry its own model, animation bank and plan; the artist build
+produces this format. Package changes need an engine process restart.
 
 **LA and RA variables.** Script variables. LA (long-term) survive across action states. RA
 (per-action) are cleared on each action change. Each is an int bank and a float bank.

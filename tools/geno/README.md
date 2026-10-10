@@ -1,10 +1,12 @@
 # Geno author tools
 
-A **retail fighter** carried as a package (Captain Falcon): `ports/ir/tools/retail_define.py`, proof in `falcon_parity/README.md`, format in game `docs/geno.md` 22.10.
+A **retail fighter** carried as a package (Captain Falcon): `ports/ir/tools/retail_define.py`, proof in `falcon_parity/README.md`, format in game `docs/geno.md` 22.11.
 
-Making an **original character** (Blender model, rig, animation to a playable `base: "none"` fighter)? Start at `artist/README.md` (`python -m tools.geno.artist new|validate|build`); `check_art.py` and `build_courier.sh` below are the Courier-era path, kept working.
+Making an **original character** (Blender model, rig, animation to a playable `base: "none"` fighter)? Start with [Author a fighter](../../docs/learn/author-a-fighter.md), then `artist/README.md` (`python -m tools.geno.artist new|validate|build`); `check_art.py` and `build_courier.sh` below are the Courier-era path, kept working.
 
-The Geno engine's native-definition tools (format 6, widened to 7 in slice 2 and to 8 in slice 3) generate and check a source-only Mario-reference fighter. This path is offline only.
+The native-definition tools began with a source-only Mario-reference fighter
+(format 6, then 7/8). Check/export run offline; native definitions also have an
+online content-admission path, described in [the fighter guide](../../docs/geno-fighter-guide.md).
 
 Slice 5, second increment (2026-10-08, format 10): `check` reads a define's Lua module against the engine's own API (`lua_check.py` parses `pc/platform/geno_lua_core.h`, so it cannot drift): unknown `ctx`, `ctx.self` and `ctx.input` names, names the sandbox lacks (`pairs`, `string`, `math.random`, ...), undeclared state slots and wrong-typed literals, `ctx.go` to a missing state, a `hitbox_damage` mask outside 1..15, each with its line; `lua` needs `"geno": 10`. `python -m tools.geno.new KEY --template lua-counter --output DIR` writes a format-10 define with a Lua counter that checks clean. The generated schema is regenerated (`GENO_VERSION` 10). Fixture: `melee/pc/geno/mods/vanilla-riposte`; lesson `docs/learn/geno-fighters/13-fighter-lua.md`.
 
@@ -140,8 +142,8 @@ bits. Decoding is lossless; lossless decoding alone does not prove gameplay vali
 ## Export from your own disc
 
 ```text
-python -m tools.geno.export kirby --row 305 --out D:/private-geno-edits/kirby-b
-python -m tools.geno.export PlKb.dat --row 305 --row 306 --disc akaneia --out D:/private-geno-edits/kirby-pair
+python -m tools.geno.export kirby --row 305 --out ../private-geno-edits/kirby-b
+python -m tools.geno.export PlKb.dat --row 305 --row 306 --disc akaneia --out ../private-geno-edits/kirby-pair
 ```
 
 Use a **fresh directory outside both repositories**, including `_build`. The exporter
@@ -178,8 +180,8 @@ The refusal list catches recognizable whole fighter/stage/menu/table archives, d
 executables, game audio banks and patches. It is a packaging guard, not a provenance proof
 for renamed files or arbitrary custom assets. The starter contains original data only.
 
-## Authored fighters (slice 4, first steps)
+## Original fighters and the earlier Courier tools
 
 - `python -m tools.geno.check_art <art folder>` validates an authored art package (manifest, skeleton, hurtboxes, glTF, costume textures) with file-and-field errors; `test_check_art.py` is its test.
 - `tools/geno/build_courier.sh [--art-rebuild] [--out DIR] [--scale S] [--install]` builds the Courier's model files, animation bank and `plan.json` from `ports/vanilla-original/` into `_build/geno-slice4/courier/` (never committed); `--install` copies them into `melee/pc/geno/mods/vanilla-courier/files/` (git-ignored). Converter: `ports/ir/tools/authored_fighter.py` (test: `test_authored_fighter.py`) and `fighterbuild ... build <mesh> - <out>` (template `-` = authored material, no disc file).
-- `check.py` and `report.py` do not yet understand `base: "none"` (the engine does not accept it yet; `melee/docs/geno.md` 22.3).
+- `check.py` and `report.py` accept native definitions, including `base: "none"`; the artist build checks its generated package. Static validation/reporting does not establish animation, skeleton or contact fidelity in game. The earlier slice-4 limitation is superseded by the artist workflow above.

@@ -1,7 +1,12 @@
 # Packet 8: Packaging and sharing (outline)
 
-**Status: outline.** The folder layout and rules are verified. There is no packer for a Geno mod and
-no mod checker in the tree, so this packet is a checklist, not a tool.
+**Status: unrun outline (notice dated 2026-10-10).** This packet has not been
+executed as a walkthrough; source/document references are not gameplay or GUI
+verification. Start with [Author a fighter](../author-a-fighter.md) for the current
+artist-to-Blender-to-LAB path.
+
+The package checker exists. There is no general packer for an artist-built
+fighter; the source-only define exporter has narrower payload limits.
 
 **Goal:** turn your overlay or fighter into a folder someone else can use, without including anything
 you may not share.
@@ -48,12 +53,19 @@ step: the recipient unzips it into `mods/` (`docs/mods-browser.md`, top).
 
 ### The honest consequence
 
-An **overlay** (`geno.json`, word files, your own art) contains none of this and can be shared. An
-**added fighter** today needs table files and host bytes that come from a disc, so a folder for it
-cannot be shared (`_research/vanilla-single-folder-mods-2026-10-03.md` section 0, point 4: "undistributable").
-Sharing a fighter means sharing the *tools and configs* and letting each person build locally, the
-way `ports/` does. The research note proposes a package that carries only the author's own bytes, and
-that is a design, not code.
+An overlay containing only authored configuration, word files and original art
+can be shared. A table-based added fighter carrying extracted host/table bytes
+from a disc cannot. That older limit does not apply to every native define:
+the artist pipeline builds a `base: "none"` model/bank/plan from original art
+without reading a disc. Share only resources you have the right to distribute.
+
+Run `python -m tools.geno.check path/to/package` on the actual folder you intend
+to share, then test a clean install. A passing checker is not a provenance proof.
+`python -m tools.geno.export --package SOURCE --out DEST` exists for source-only
+defines, but its current archive guard rejects `.dat` files, including original
+artist-built models/banks; it is not a packer for the full artist output.
+Use a reviewed folder/zip for original artist output, or distribute tools/configs
+for locally built source-game ports.
 
 ## Credit
 
@@ -81,7 +93,8 @@ publishes no licence: consult it, do not copy it (`tools/mex_port/README.md`, "A
 
 1. The folder contains no file you copied from a disc. Compare file names with what you wrote.
 2. `mod.json` has a unique `id` equal to the folder name, a version, and honest `requires`.
-3. The log shows no `geno:` warnings for your fighter (packet 7).
+3. The package checker passes, and the log shows no unresolved `geno:` warnings
+   for your fighter (packet 7).
 4. A person with a different, clean install can run it. Test by moving the folder to a fresh mods
    folder (not run by the author).
 5. A credits note names your sources.
