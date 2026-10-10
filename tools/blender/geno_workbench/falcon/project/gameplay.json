@@ -1,6 +1,6 @@
 {
  "version": 1,
- "note": "Geno Falcon rows for the Workbench. motions = Melee action-state ids (jab1 = 44, as for Goku); pick.clip names the animation clip in the plan bank (Geno Falcon's plan has no motion_rows to derive it). No scripts: this project views and poses, it does not author.",
+ "note": "Authored display-name seeds. launch_falcon.py generates every Captain action state, clip binding and editable source under _build/geno-falcon-art/project from the local package and engine state tables; this template contains no extracted scripts.",
  "moves": [
   {
    "name": "wait",

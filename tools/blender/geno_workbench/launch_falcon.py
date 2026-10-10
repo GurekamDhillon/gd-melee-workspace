@@ -1,67 +1,64 @@
-"""One command: open Blender with Captain Falcon (Geno Falcon) driven by the real engine.
+"""Open Geno Falcon's complete editable Workbench project in Blender.
 
-    python tools/blender/geno_workbench/launch_falcon.py            # interactive
-    python tools/blender/geno_workbench/launch_falcon.py --check    # background report
+    python tools/blender/geno_workbench/launch_falcon.py
+    python tools/blender/geno_workbench/launch_falcon.py --check
 
-Builds what is missing (falcon/make_falcon_art.py: the .blend from your disc), stages the Geno Falcon
-package as a mods dir under _build/geno-falcon-art/mods, writes a project with absolute paths under
-_build/geno-falcon-art/project (from falcon/project/), then runs launch_goku.py with those. Other
-arguments pass through to launch_goku.py. Everything generated stays under _build/.
-  GW_FALCON_PACKAGE  the built Geno Falcon mod dir (default <root>/_build/falcon-look/geno-falcon)
+Sources, generated project, staged package and art stay under _build/geno-falcon-art.
+GW_FALCON_PACKAGE selects the seed package. Existing source edits survive relaunches;
+only missing assets trigger copying/extraction. Other arguments reach launch_goku.py.
 """
 import json
 import os
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parents[2]))
 sys.path.insert(0, str(HERE))
-sys.path.insert(0, str(HERE / "falcon"))
-import make_falcon_art  # noqa: E402
+from falcon import build as falcon_build
+from falcon import make_falcon_art
 
 
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
+    root = make_falcon_art.root_dir().resolve()
     try:
-        paths = make_falcon_art.tools_config.load_config()
+        paths = make_falcon_art.tools_config.load_config(root)
     except make_falcon_art.tools_config.ToolsConfigError as exc:
         print("ERROR: %s" % exc)
         return 2
-    root = Path(paths["GW_ROOT"])
     out = root / "_build/geno-falcon-art"
-    saved = sys.argv
+    rc = falcon_build.main(["--prepare", "--root", str(root)])
+    if rc:
+        return rc
+    # Art reads the just-staged/generated package, including first launches without a seed.
+    saved_argv, saved_package = sys.argv, os.environ.get("GW_FALCON_PACKAGE")
     sys.argv = ["make_falcon_art.py"]
+    os.environ["GW_FALCON_PACKAGE"] = str(out / "mods/geno-falcon")
     try:
         rc = make_falcon_art.main()
     finally:
-        sys.argv = saved
+        sys.argv = saved_argv
+        if saved_package is None:
+            os.environ.pop("GW_FALCON_PACKAGE", None)
+        else:
+            os.environ["GW_FALCON_PACKAGE"] = saved_package
     if rc:
         return rc
-    package = Path(paths.get("GW_FALCON_PACKAGE") or root / "_build/falcon-look/geno-falcon")
-    if not (package / "files/plan.json").is_file():
-        print("missing the Geno Falcon package: %s (set GW_FALCON_PACKAGE)" % package)
-        return 2
-    mods = out / "mods"
-    dest = mods / "geno-falcon"
-    if not (dest / "files/plan.json").is_file() or \
-            (package / "files/plan.json").stat().st_mtime > (dest / "files/plan.json").stat().st_mtime:
-        shutil.rmtree(dest, ignore_errors=True)
-        shutil.copytree(package, dest)
-    mods.mkdir(parents=True, exist_ok=True)
-    (mods / "enabled.txt").write_text("geno-falcon\n")
-    template = HERE / "falcon/project"
-    proj = out / "project"
-    proj.mkdir(parents=True, exist_ok=True)
-    cfg = json.loads((template / "workbench.json").read_text(encoding="utf-8"))
-    for key in ("plan_abs", "art_blend", "mods_dir"):
-        cfg[key] = str(root / cfg[key])
-    (proj / "workbench.json").write_text(json.dumps(cfg, indent=1), encoding="utf-8")
-    shutil.copy2(template / "gameplay.json", proj / "gameplay.json")
-    cmd = [sys.executable, str(HERE / "launch_goku.py"), "--project", str(proj), "--art", cfg["art_blend"],
-           "--mods", str(mods), "--work", str(root / "_build/wb-falcon")] + argv
-    env = dict(paths)
+    project = out / "project"
+    cfg = json.loads((project / "workbench.json").read_text(encoding="utf-8"))
+    cmd = [sys.executable, str(HERE / "launch_goku.py"), "--project", str(project), "--art", cfg["art_blend"],
+           "--mods", str(out / "mods"), "--work", str(root / "_build/wb-falcon")] + argv
+    env = dict(os.environ)
+    env.update({k: v for k, v in paths.items() if v})
+    env["GW_ROOT"] = str(root)
+    if not env.get("GW_ENGINE_EXE") and not (root / "_build/wb-falcon/engine/melee-pc.exe").is_file():
+        for candidate in (root / "_build/wb-goku/engine/melee-pc.exe",
+                          root / "_build/agents/geno-workbench/melee-pc.exe"):
+            if candidate.is_file():
+                env["GW_ENGINE_EXE"] = str(candidate)
+                break
     return subprocess.call(cmd, env=env)
 
 

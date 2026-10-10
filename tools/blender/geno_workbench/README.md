@@ -373,8 +373,56 @@ First run builds `_build/geno-falcon-art/falcon.blend` (about 35 s, needs the do
 and the 212 animation clips (.smd) through the small driver in `falcon/HsdExport/`; Blender Source Tools
 (Artfunkel, GPL-2.0+) imports the skeleton and clips (Blender 5.x has no Collada, so .smd); `falcon/build_blend.py`
 skins the meshes to that rig and stores every clip as an Action. Both tools are fetched into `_build/tools-ext/`
-and used as external programs. The project is `falcon/project/` (rows = Melee action-state ids with the clip named
-in `pick.clip`; `art.bone_aliases` maps plan joints `jN` to bones `JOBJ_N`; `art.calibration_frame` = 10 because
-retail rows blend in from the previous pose for the first frames, so frame 1 is not the clip's first frame).
-`launch_goku.py` accepts `--project`, `--art`, `--mods` and `--work` for another
-configured fighter project. Those overrides do not create its source/build adapter.
+and used as external programs. The authored template is `falcon/project/`; the editable project is generated in
+`_build/geno-falcon-art/project/`. It lists every Captain action state (common and special), joined to the
+package's animation rows through the decomp state tables. `motions` contains action-state IDs;
+`subaction` is the animation/script row, and `pick.clip` names its bank clip. States with no fixed
+animation keep an explicit empty clip and an availability note; no idle clip is invented for them.
+The 20 authored names such as `jab1`, `dair` and `grab` remain available.
+
+Every package overlay becomes an editable `moves/NNN.genoasm`, including overlays unused by a fixed
+state-table entry. States sharing a subaction share its source. Generation verifies
+`assemble(disassemble(words)) == words` before saving each source, preserving relative branch indices,
+hitbox flag bits, sound flags and unused header bits. Scripts, word files, the baseline manifest
+(`falcon_sources.json`) and the package remain local under `_build`; none may be committed or shared.
+Relaunching preserves source and gameplay edits. A missing authored source is reported, never replaced
+with the original. To start over, choose a fresh generated project directory rather than deleting edits.
+
+`role_map.json` is an authored semantic table: CHEST resolves from BustN, HEAD from HeadN, and limbs
+from the corresponding common parts. The generator resolves their joint indices from the local plan's
+parts table using `plan_parts.COMMON`, whose PlCo ordering includes WaistB. Missing optional roles
+remain unknown; SPINE has a declared WaistB fallback. The staged plan carries the resulting roles for
+Run checks and Suggest limb. `art.bone_aliases` maps plan names to `JOBJ_N`;
+`art.calibration_frame` stays 10 because retail rows blend from the previous pose at the start.
+
+Prepare or rebuild the gameplay package without Blender:
+
+    python tools/blender/geno_workbench/falcon/build.py --prepare
+    python tools/blender/geno_workbench/falcon/build.py --project _build/geno-falcon-art/project
+
+The generated Workbench configuration calls this builder for **Rebuild + reload**. A normal build
+assembles every edited source, resolves `@HAND_R@` and other role tokens, validates relative branch
+boundaries, then rewrites the overlay words, plan roles and `geno.json`. It leaves models and animation
+assets alone and prints `BUILD_MODE: gameplay-only <seconds>s`. Missing packages are copied from
+`GW_FALCON_PACKAGE`, or regenerated with `retail_define.py captain` from the local disc when necessary
+(`restaged` or `extracted`). `GW_MELEE` selects the game source contract, and `GW_ROOT` selects the
+asset workspace. No disc read is needed on the normal rebuild path. Sources are compiled before any
+package output is published; individual files are replaced atomically.
+
+Clip reassignment uses the existing animation bank. All states sharing a subaction must agree on the
+new clip. Nonzero crop starts require an animation rebuild and are rejected explicitly. Live overlays
+come from the engine. The Workbench source inspector walks scripts linearly: repeated subroutine/loop
+activations and single-slot clears are not modeled as separate timing windows; frame editing supports only its existing
+simple wait/hitbox/wait/clear shape. Checks on context-dependent states still require live validation.
+
+Lead verification (set `GW_MELEE` and optionally `GW_FALCON_PACKAGE` first):
+
+    python -m pytest tools/blender/geno_workbench/tests tools/geno/test_falcon_scripts.py tools/geno/test_author_tools.py -q
+    python tools/blender/geno_workbench/launch_falcon.py --check --row jab1 --frame 5
+
+The package corpus tests skip cleanly when no local package is available. They create any derived
+fixtures only below temporary `_build` directories. The Qt `workbench_geno_data` regression ensures an
+explicit empty clip stays empty while projects without a clip pick can still infer one from the plan.
+This packet was implemented with file tools only: all Python/Qt tests, live checks and timing are unrun.
+
+`launch_goku.py` takes `--project/--art/--mods/--work` for any other fighter.

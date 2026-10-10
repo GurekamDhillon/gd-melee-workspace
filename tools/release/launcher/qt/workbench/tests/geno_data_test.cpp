@@ -63,6 +63,17 @@ private slots:
         QCOMPARE(rows[0].effectiveClip(), QString("SYN_ATC_002"));
         QCOMPARE(rows[1].effectiveClip(), QString("SYN_ATC_007"));
     }
+    void explicitEmptyPickDoesNotBorrowClipFromPlan() {
+        QTemporaryDir d; wbtest::makeSynthFighter(d.path());
+        QByteArray gameplay = wbtest::kGameplay;
+        gameplay.replace("\"clip\": \"SYN_ATC_002\"", "\"clip\": \"\"");
+        wbtest::put(d.path(), "gameplay.json", gameplay);
+        FileStore fs(d.path()); GenoData data(fs);
+        QVERIFY(data.reload().isEmpty());
+        QCOMPARE(data.rows()[0].planClip, QString("SYN_ATC_002"));
+        QVERIFY(data.rows()[0].effectiveClip().isEmpty());
+        QCOMPARE(data.rows()[1].effectiveClip(), QString("SYN_ATC_007"));
+    }
     void aerialComesOnlyFromTagAndScriptIsOptional() {
         QTemporaryDir d; wbtest::makeSynthFighter(d.path());
         QByteArray gameplay = wbtest::kGameplay;
