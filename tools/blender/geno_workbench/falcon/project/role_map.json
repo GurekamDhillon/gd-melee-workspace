@@ -1,0 +1,145 @@
+{
+  "note": "Semantic names only. Resolve joint indices from the local plan parts table using plan_parts.COMMON (PlCo order, including WaistB). SPINE uses WaistB when WaistN is absent. Toes have no common part and are left unknown.",
+  "roles": {
+    "ROOT": {
+      "role": "root",
+      "parts": [
+        "TopN"
+      ]
+    },
+    "FLOOR": {
+      "role": "translation",
+      "parts": [
+        "TransN"
+      ]
+    },
+    "HIPS": {
+      "role": "hips",
+      "parts": [
+        "HipN"
+      ]
+    },
+    "SPINE": {
+      "role": "spine",
+      "parts": [
+        "WaistN",
+        "WaistB"
+      ]
+    },
+    "CHEST": {
+      "role": "chest",
+      "parts": [
+        "BustN"
+      ],
+      "required": true
+    },
+    "NECK": {
+      "role": "neck",
+      "parts": [
+        "NeckN"
+      ]
+    },
+    "HEAD": {
+      "role": "head",
+      "parts": [
+        "HeadN"
+      ]
+    },
+    "SHOULDER_L": {
+      "role": "shoulder.L",
+      "parts": [
+        "LShoulderN"
+      ]
+    },
+    "UPARM_L": {
+      "role": "upper_arm.L",
+      "parts": [
+        "LShoulderJ"
+      ]
+    },
+    "ARM_L": {
+      "role": "lower_arm.L",
+      "parts": [
+        "LArmJ"
+      ]
+    },
+    "HAND_L": {
+      "role": "hand.L",
+      "parts": [
+        "LHandN"
+      ]
+    },
+    "UPLEG_L": {
+      "role": "upper_leg.L",
+      "parts": [
+        "LLegJ"
+      ]
+    },
+    "LEG_L": {
+      "role": "lower_leg.L",
+      "parts": [
+        "LKneeJ"
+      ]
+    },
+    "FOOT_L": {
+      "role": "foot.L",
+      "parts": [
+        "LFootJ"
+      ]
+    },
+    "ITEM_L": {
+      "role": "item_socket.L",
+      "parts": [
+        "LHaveN"
+      ]
+    },
+    "SHOULDER_R": {
+      "role": "shoulder.R",
+      "parts": [
+        "RShoulderN"
+      ]
+    },
+    "UPARM_R": {
+      "role": "upper_arm.R",
+      "parts": [
+        "RShoulderJ"
+      ]
+    },
+    "ARM_R": {
+      "role": "lower_arm.R",
+      "parts": [
+        "RArmJ"
+      ]
+    },
+    "HAND_R": {
+      "role": "hand.R",
+      "parts": [
+        "RHandN"
+      ]
+    },
+    "UPLEG_R": {
+      "role": "upper_leg.R",
+      "parts": [
+        "RLegJ"
+      ]
+    },
+    "LEG_R": {
+      "role": "lower_leg.R",
+      "parts": [
+        "RKneeJ"
+      ]
+    },
+    "FOOT_R": {
+      "role": "foot.R",
+      "parts": [
+        "RFootJ"
+      ]
+    },
+    "ITEM_R": {
+      "role": "item_socket.R",
+      "parts": [
+        "RHaveN"
+      ]
+    }
+  }
+}

@@ -14,10 +14,11 @@ struct RowInfo {
     QVector<int> motions;
     QString script, tag, clip;
     QString planClip; // the plan's motion_rows/row_clips name for the row's first motion (clip stays the gameplay pick)
-    QString effectiveClip() const { return clip.isEmpty() ? planClip : clip; }
+    QString effectiveClip() const { return clip.isEmpty() && !clipSpecified ? planClip : clip; }
     int cropStart = 0;
     int iasa = 0;
     bool aerial = false;
+    bool clipSpecified = false; // An explicit empty pick means this state has no fixed clip.
 };
 struct ClipInfo { QString name; int frames = 0; };
 struct Joint { int index; QString name; int parent; };

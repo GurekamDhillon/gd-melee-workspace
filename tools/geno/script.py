@@ -204,10 +204,10 @@ def assemble_line(tokens, states=()):
         return words
     if lower == "hitbox":
         defaults = dict(slot=0, joint=0, damage=8, size=4, x=0, y=0, z=0, angle=361, kbg=100, fkb=0, bkb=0, element=0, shield=0, ground=1, air=1)
-        # Optional flag bits the plain encoder leaves at their defaults (all 0, sfx kind from the element); given only when set:
+        # Optional fields retain retail flags/sounds and otherwise unnamed header bits.
         # word 3 bits 4..0 = item_hit, ignore_thrown, ignore_scale, clank, rebound; word 4 bits 6..2 = sfx_kind, bits 9..7 = sfx_severity.
         extra = {}
-        extra_limits = dict(item_hit=(0, 1), ignore_thrown=(0, 1), ignore_scale=(0, 1), clank=(0, 1), rebound=(0, 1), sfx_kind=(0, 31), sfx_severity=(0, 7))
+        extra_limits = dict(item_hit=(0, 1), ignore_thrown=(0, 1), ignore_scale=(0, 1), clank=(0, 1), rebound=(0, 1), sfx_kind=(0, 31), sfx_severity=(0, 7), header_bits=(0, 0x00780400))
         for token in args:
             key, value = token.split("=", 1)
             if key in extra_limits:
@@ -228,6 +228,10 @@ def assemble_line(tokens, states=()):
         flags = ("item_hit", "ignore_thrown", "ignore_scale", "clank", "rebound")
         if any(k in extra for k in flags):
             words[3] = (words[3] & ~0x1F) | sum(extra.get(k, 0) << (4 - i) for i, k in enumerate(flags))
+        # Preserve only the otherwise unnamed header bits; editable fields own the rest.
+        if extra.get("header_bits", 0) & ~0x00780400:
+            raise ValueError("hitbox header_bits may only preserve bits 10 and 19..22")
+        words[0] |= extra.get("header_bits", 0)
         if "sfx_kind" in extra:
             words[4] = (words[4] & ~(31 << 2)) | (extra["sfx_kind"] << 2)
         if "sfx_severity" in extra:
@@ -347,7 +351,9 @@ def friendly(ws):
             _, w1, w2, w3, w4 = ws
             signed = lambda n: (n if n < 32768 else n-65536) / 256
             return (f"hitbox slot={w0 >> 23 & 7} joint={w0 >> 11 & 255} damage={w0 & 1023} size={(w1 >> 16)/256} "
-                    f"x={signed(w1 & 65535)} y={signed(w2 >> 16)} z={signed(w2 & 65535)} angle={w3 >> 23} kbg={w3 >> 14 & 511} fkb={w3 >> 5 & 511} bkb={w4 >> 23} element={w4 >> 18 & 31} shield={(w4 >> 10 & 255) if (w4 >> 10 & 255)<128 else (w4 >> 10 & 255)-256} ground={w4 >> 1 & 1} air={w4 & 1}")
+                    f"x={signed(w1 & 65535)} y={signed(w2 >> 16)} z={signed(w2 & 65535)} angle={w3 >> 23} kbg={w3 >> 14 & 511} fkb={w3 >> 5 & 511} bkb={w4 >> 23} element={w4 >> 18 & 31} shield={(w4 >> 10 & 255) if (w4 >> 10 & 255)<128 else (w4 >> 10 & 255)-256} ground={w4 >> 1 & 1} air={w4 & 1} "
+                    f"item_hit={w3 >> 4 & 1} ignore_thrown={w3 >> 3 & 1} ignore_scale={w3 >> 2 & 1} clank={w3 >> 1 & 1} rebound={w3 & 1} "
+                    f"sfx_kind={w4 >> 2 & 31} sfx_severity={w4 >> 7 & 7} header_bits={w0 & 0x00780400}")
         if op in FIELDS and op not in (0, 1, 2, 3):
             args = []
             for key, wi, shift, width, signed in FIELDS[op]:

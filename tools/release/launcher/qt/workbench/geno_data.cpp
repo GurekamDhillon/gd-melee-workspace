@@ -158,6 +158,7 @@ QString GenoData::reload() {
             }
             const auto pick = objectField(move, "pick", where);
             row.clip = stringField(pick, "clip", where + "/pick");
+            row.clipSpecified = pick.contains("clip");
             row.cropStart = intField(pick, "crop_start", where + "/pick");
             rows.append(row);
         }

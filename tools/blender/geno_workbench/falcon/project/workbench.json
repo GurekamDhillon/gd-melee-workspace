@@ -74,6 +74,12 @@
   "calibration_frame": 10
  },
  "mods_dir": "_build/geno-falcon-art/mods",
- "rebuild": [],
- "import_clip": []
+ "rebuild": [
+  "python",
+  "tools/blender/geno_workbench/falcon/build.py",
+  "--project",
+  "{project}"
+ ],
+ "import_clip": [],
+ "moves_dir": "moves"
 }
