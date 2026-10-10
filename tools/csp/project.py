@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import re
 
+from .framing import resolve_role_bones
 from .outputs import enumerate_costumes, select_costumes
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -210,4 +211,7 @@ def load_project(project, *, root=None, package=None, fighter=None, art=None,
         'action': action, 'frame': frame, 'frame_offset': offset,
         'scene_config': settings, 'fields': ui.get('fields', {}),
         'effects': ui.get('effects', {}), 'emblem': emblem_path,
+        # role -> armature bone, from the built plan's role table (+ workbench bone aliases).
+        'roles': resolve_role_bones(plan, (config.get('art') or {}).get('bone_aliases'), ui.get('roles')),
+        'own_render': ui.get('own_render', {}),
     }
