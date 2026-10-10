@@ -7,12 +7,8 @@ function(wb_core_sources)
   set(WB_CORE_SOURCES "${WB_CORE_SOURCES}" PARENT_SCOPE)
 endfunction()
 
-wb_core_sources()  # tasks add: json_patch.cpp file_store.cpp history.cpp ...
-if(WB_CORE_SOURCES)
-  add_library(workbench_core STATIC ${WB_CORE_SOURCES})
-else()
-  add_library(workbench_core STATIC empty.cpp)
-endif()
+wb_core_sources(json_patch.cpp)  # tasks add: file_store.cpp history.cpp ...
+add_library(workbench_core STATIC ${WB_CORE_SOURCES})
 target_link_libraries(workbench_core PUBLIC launcher_core Qt6::Core Qt6::Network)
 target_include_directories(workbench_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -26,4 +22,5 @@ if(BUILD_TESTING)
     set_tests_properties(workbench_${name} PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
   endfunction()
   wb_test(scaffold)
+  wb_test(json_patch)
 endif()
