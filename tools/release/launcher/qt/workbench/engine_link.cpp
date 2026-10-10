@@ -349,7 +349,30 @@ bool EngineLink::startImpl(QString *err) {
             console_.close(); setError(err, "engine start cancelled"); return false;
         }
         if (connected && process_.state() == QProcess::Running) {
-            state_ = "ready"; setError(err, {}); return true;
+            // The console answers before the scene has seeded the fighter. Wait for it, and when it never
+            // appears say why (the game logs the rejected scene) instead of leaving every command to fail.
+            QString lastReply;
+            while (remaining(timer, 60000)) {
+                if (generation != stopGeneration_) { console_.close(); setError(err, "engine start cancelled"); return false; }
+                if (process_.state() != QProcess::Running) return fail("engine exited while loading the fighter");
+                const auto probe = console_.call("=wb.frame_info()", std::min(3000, remaining(timer, 60000)));
+                if (probe.ok && !probe.text.trimmed().isEmpty()) { state_ = "ready"; setError(err, {}); return true; }
+                lastReply = probe.text;
+                pumpFor(std::min(250, remaining(timer, 60000)));
+            }
+            QStringList reasons;
+            QFile log(QDir(launch_.workDir).filePath("melee-pc.log"));
+            if (log.open(QIODevice::ReadOnly)) {
+                static const QRegularExpression interesting("scene|geno:|mods|reject|not found|workbench", QRegularExpression::CaseInsensitiveOption);
+                const auto lines = QString::fromUtf8(log.readAll()).split(QLatin1Char(10));
+                for (const auto &line : lines)
+                    if (line.contains("scene", Qt::CaseInsensitive) && (line.contains("reject", Qt::CaseInsensitive) || line.contains("must name", Qt::CaseInsensitive) || line.contains("not found", Qt::CaseInsensitive) || line.contains("error", Qt::CaseInsensitive)))
+                        reasons << line.trimmed();
+                if (reasons.isEmpty())
+                    for (const auto &line : lines) if (interesting.match(line).hasMatch() && line.contains("error", Qt::CaseInsensitive)) reasons << line.trimmed();
+            }
+            const QString detail = reasons.isEmpty() ? lastReply.trimmed() : reasons.last().left(300);
+            return fail("engine: scene rejected or fighter not loaded: " + (detail.isEmpty() ? QString("no fighter on port 1") : detail));
         }
         const int pause = int(std::max<qint64>(0, 250 - (timer.elapsed() - attempt)));
         pumpFor(std::min(pause, remaining(timer, 60000)));

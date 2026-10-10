@@ -13,6 +13,8 @@
 #include <QDir>
 #include <QFileDialog>
 #include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QAbstractButton>
 #include <QFileInfo>
 #include <QFormLayout>
@@ -73,6 +75,22 @@ protected:
         diamond(11, atlas::colour("ember")); diamond(7, atlas::colour("ground")); diamond(4, atlas::colour("ivory"));
     }
 };
+// workbench.json may name the directory that holds the project's built mods ("mods_dir", absolute or
+// relative to the nearest ancestor containing .git). The Creator engine must load THAT mod, not only the
+// launcher's own mods.
+static QString projectModsDir(const QString &folder) {
+    QFile f(QDir(folder).filePath("workbench.json"));
+    if (!f.open(QIODevice::ReadOnly)) return {};
+    const auto object = QJsonDocument::fromJson(f.readAll()).object();
+    const QString dir = object.value("mods_dir").toString();
+    if (dir.isEmpty()) return {};
+    if (QDir::isAbsolutePath(dir)) return QDir::cleanPath(dir);
+    for (QDir d(QFileInfo(folder).absoluteFilePath()); ; ) {
+        if (QFileInfo::exists(d.filePath(".git"))) return QDir::cleanPath(d.filePath(dir));
+        if (!d.cdUp()) break;
+    }
+    return QDir::cleanPath(QDir(folder).filePath(dir));
+}
 static QString versionText(const QString &appDir) {
     try { return readText(appDir + "/version.txt", 16384).section(QChar('\n'), 0, 0).trimmed(); } catch (...) {}
     return QString("dev");
@@ -280,6 +298,10 @@ Window::Window(QString app, QString user, Settings settings)
     tabs_->addWidget(playTab()); tabs_->addWidget(modsTab()); tabs_->addWidget(diagnosticsTab()); tabs_->addWidget(aboutTab());
     if (settings_.flag("creator_enabled")) {
         tabs_->addWidget(creatorTab());
+        QTimer::singleShot(0, this, [this] { // reopen the last fighter project
+            const QString last = settings_.option("creator_project", "");
+            if (creatorPage_ && !creator_ && !last.isEmpty() && QFileInfo::exists(QDir(last).filePath("workbench.json"))) openCreatorProject(last);
+        });
         rail_->setNames({t("PLAY", "JUGAR"), t("MODS", "MODS"), t("DIAGNOSTICS", "DIAGNÓSTICO"), t("ABOUT", "ACERCA DE"), t("CREATOR", "CREADOR")});
         rail_->setIcons({"right", "mods", "data", "star", "mods"});
     }
@@ -872,7 +894,14 @@ QWidget *Window::creatorTab() {
 }
 void Window::syncCreatorTab() {
     const bool enabled = settings_.flag("creator_enabled");
-    if (enabled && !creatorPage_) tabs_->addWidget(creatorTab());
+    if (enabled && !creatorPage_) {
+        tabs_->addWidget(creatorTab());
+        // Reopen the last fighter project so the Creator comes back where it was left.
+        QTimer::singleShot(0, this, [this] {
+            const QString last = settings_.option("creator_project", "");
+            if (creatorPage_ && !creator_ && !last.isEmpty() && QFileInfo::exists(QDir(last).filePath("workbench.json"))) openCreatorProject(last);
+        });
+    }
     if (!enabled && creatorPage_) {
         auto *page = creatorPage_; auto *creator = creator_;
         if (tabs_->currentWidget() == page) rail_->setCurrent(0);
@@ -907,12 +936,13 @@ void Window::openCreatorProject(const QString &folder) {
         const int discIndex = selectedDisc();
         const bool hasDisc = discIndex >= 0;
         const Disc disc = hasDisc ? settings_.discs[discIndex] : Disc{};
-        auto launch = [app = appDir_, user = userDir_, settings = settings_, disc, hasDisc] {
+        const QString projectMods = projectModsDir(folder);
+        auto launch = [app = appDir_, user = userDir_, settings = settings_, disc, hasDisc, projectMods] {
             if (!hasDisc) throw std::runtime_error(t("Select a disc on Play, then reopen the fighter folder.", "Selecciona un disco en Jugar y vuelve a abrir la carpeta del luchador.").toStdString());
             const auto spec = prepareLaunch(app, user, settings, disc);
             wb::EngineLink::Launch result;
             result.exe = spec.program; result.workDir = spec.workingDirectory; result.extraArgs = spec.arguments;
-            result.modsDir = modsDir(app, user); result.wbDir = spec.workingDirectory + "/workbench";
+            result.modsDir = projectMods.isEmpty() ? modsDir(app, user) : projectMods; result.wbDir = spec.workingDirectory + "/workbench";
             result.env = spec.environment; result.env.insert("MELEE_SCENE", "mode=workbench");
             result.env.insert("MELEE_WB_VISIBLE", "1"); result.env.insert("MELEE_FULLSCREEN", "0");
             return result;
