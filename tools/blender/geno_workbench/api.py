@@ -7,6 +7,8 @@ does not import bpy or write project files.
 
 from __future__ import annotations
 
+import json
+import os
 from typing import Callable
 
 try:
@@ -63,6 +65,24 @@ class WbSession:
         self.jointmap = None
         self.calibration = None
         self.on_change: Callable[[WbSession], None] | None = None
+        # Frame hooks (Blender pose/overlay updates) run after load_row/set_frame/step succeed.
+        self.on_frame: list[Callable[[WbSession], None]] = []
+        self.hook_error = ""
+        # Project paths, filled by set_project() from workbench.json (names/paths only).
+        self.project_dir = ""
+        self.plan_path = ""
+        self.art_blend = ""
+        self.art_glb = ""
+        self.bone_aliases: dict[str, str] = {}
+
+    def _fire_frame(self) -> None:
+        """Run frame hooks; a hook failure is reported in the status, never raised."""
+        self.hook_error = ""
+        for hook in list(self.on_frame):
+            try:
+                hook(self)
+            except Exception as exc:  # the data call itself succeeded
+                self.hook_error = str(exc)
 
     def _status_with_stale(self, message: str) -> str:
         marker = STRINGS["stale_status"]
@@ -180,7 +200,8 @@ class WbSession:
         self.frame = frame
 
     def _frame_status(self) -> str:
-        return STRINGS["frame_loaded"].format(row=self.row, frame=self.frame)
+        text = STRINGS["frame_loaded"].format(row=self.row, frame=self.frame)
+        return f"{text}; {self.hook_error}" if self.hook_error else text
 
     def connect(self) -> bool:
         candidate = None
@@ -247,6 +268,7 @@ class WbSession:
             self._store_frame(parsed)
             self.hitboxes = []
             self.suggestion = None
+            self._fire_frame()
             return self._frame_status()
 
         return self._run(action)
@@ -256,6 +278,7 @@ class WbSession:
             frame = self._integer(n, "frame")
             result = self._request("set_frame", {"frame": frame})
             self._store_frame(self._read_frame(result, self.row))
+            self._fire_frame()
             return self._frame_status()
 
         return self._run(action)
@@ -265,6 +288,7 @@ class WbSession:
             frames = self._integer(n, "frames", minimum=1)
             result = self._request("play", {"frames": frames, "step": 1})
             self._store_frame(self._read_frame(result, self.row))
+            self._fire_frame()
             return self._frame_status()
 
         return self._run(action)
@@ -385,3 +409,54 @@ def session() -> WbSession:
             lambda: client.McpClient(host="127.0.0.1", timeout=10.0)
         )
     return _session
+
+
+def _workspace_root(start: str) -> str:
+    """Nearest ancestor holding .git (the rule the launcher uses), else the project dir."""
+    here = os.path.abspath(start)
+    while True:
+        if os.path.exists(os.path.join(here, ".git")):
+            return here
+        parent = os.path.dirname(here)
+        if parent == here:
+            return os.path.abspath(start)
+        here = parent
+
+
+def set_project(project_dir: str) -> bool:
+    """Read workbench.json (names/paths only) into the session; False with last_error on failure."""
+    sess = session()
+    try:
+        config_path = os.path.join(project_dir, "workbench.json")
+        with open(config_path, "r", encoding="utf-8-sig") as source:
+            config = json.load(source)
+        if not isinstance(config, dict):
+            raise ValueError("workbench.json: expected an object")
+        root = _workspace_root(project_dir)
+
+        def resolve(value, relative_to):
+            if not isinstance(value, str) or not value:
+                return ""
+            if "\x00" in value:
+                raise ValueError("workbench.json: invalid path")
+            return os.path.normpath(
+                value if os.path.isabs(value) else os.path.join(relative_to, value)
+            )
+
+        sess.project_dir = os.path.abspath(project_dir)
+        sess.plan_path = (
+            resolve(config.get("plan_abs"), root)
+            or resolve(config.get("plan"), project_dir)
+        )
+        sess.art_blend = resolve(config.get("art_blend"), root)
+        sess.art_glb = resolve(config.get("art_glb"), root)
+        art = config.get("art") or {}
+        aliases = art.get("bone_aliases") or {}
+        if not isinstance(aliases, dict):
+            raise ValueError("workbench.json: art.bone_aliases must be an object")
+        sess.bone_aliases = {str(k): str(v) for k, v in aliases.items()}
+    except (OSError, ValueError, TypeError) as exc:
+        sess.last_error = str(exc)
+        sess.status = sess._status_with_stale(STRINGS["error_status"].format(error=exc))
+        return False
+    return True
