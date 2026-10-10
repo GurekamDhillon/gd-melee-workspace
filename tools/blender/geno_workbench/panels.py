@@ -3,14 +3,27 @@
 import bpy
 
 try:
-    from . import api, operators, props
+    from . import api, hitviz_math, operators, props
 except ImportError:
     import api
+    import hitviz_math
     import operators
     import props
 
 
 STRINGS = props.STRINGS
+
+
+def _swatch(slot):
+    """The slot-colour swatch icon (hitviz owns the previews); 0 when it cannot be loaded."""
+    try:
+        try:
+            from . import hitviz
+        except ImportError:
+            import hitviz
+        return hitviz.swatch(slot)
+    except Exception:
+        return 0
 
 
 class GENO_WB_UL_problems(bpy.types.UIList):
@@ -119,12 +132,30 @@ class GENO_WB_PT_timeline(bpy.types.Panel):
                 row.label(text=STRINGS["cache_loading"].format(done=done, total=total), icon="TIME")
         elif total:
             self.layout.label(text=STRINGS["cache_ready"].format(total=total), icon="CHECKMARK")
+        self._hitbox_marks(value, frame)
         self.layout.prop(settings, "play_speed")
         self.layout.prop(settings, "loop")
         self.layout.prop(settings, "show_travel")
         self.layout.label(
             text=settings.status, icon="ERROR" if value.last_error else "INFO"
         )
+
+
+    def _hitbox_marks(self, value, frame):
+        """R5: one strip per source hitbox in its slot colour: '#' active frames, '|' the current frame."""
+        boxes = getattr(value, "hitboxes", None) or []
+        if not boxes or not isinstance(frame, int):
+            return
+        length = value.row_frames() or max(int(b.get("end_frame", 0)) for b in boxes)
+        column = self.layout.column(align=True)
+        for box in sorted(boxes, key=lambda b: (b.get("slot", 0), b.get("start_frame", 0))):
+            try:
+                slot, start, end = int(box["slot"]), int(box["start_frame"]), int(box["end_frame"])
+            except (KeyError, TypeError, ValueError):
+                continue
+            row = column.row(align=True)
+            row.label(text="%d  f%d-%d  %s" % (slot, start, end, hitviz_math.frame_bar(start, end, length, frame)),
+                      icon_value=_swatch(slot))
 
 
 class GENO_WB_PT_problems(bpy.types.Panel):
@@ -154,6 +185,31 @@ class GENO_WB_PT_problems(bpy.types.Panel):
         button.operator(
             "geno_wb.goto_problem", text=STRINGS["goto_problem"]
         ).index = settings.problem_index
+
+
+class GENO_WB_PT_hitviz(bpy.types.Panel):
+    bl_idname = "GENO_WB_PT_hitviz"
+    bl_label = STRINGS["hitviz_panel"]
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = STRINGS["tab"]
+
+    def draw(self, context):
+        settings = context.scene.geno_wb
+        col = self.layout.column(align=True)
+        col.prop(settings, "show_hit")
+        col.prop(settings, "show_hurt")
+        col.prop(settings, "show_ecb")
+        col.prop(settings, "show_floor")
+        col = self.layout.column(align=True)
+        for name in ("hv_arrows", "hv_labels", "hv_badges", "hv_sweep"):
+            col.prop(settings, name)
+        self.layout.prop(settings, "hv_percent", expand=True)
+        self.layout.prop(settings, "hv_weight")
+        legend = self.layout.row(align=True)
+        legend.label(text=STRINGS["hv_slot_legend"])
+        for slot in range(4):
+            legend.label(text="", icon_value=_swatch(slot))
 
 
 class GENO_WB_PT_hitbox(bpy.types.Panel):
@@ -260,6 +316,7 @@ CLASSES = (
     GENO_WB_PT_connect,
     GENO_WB_PT_timeline,
     GENO_WB_PT_problems,
+    GENO_WB_PT_hitviz,
     GENO_WB_PT_hitbox,
     GENO_WB_PT_splice,
 )

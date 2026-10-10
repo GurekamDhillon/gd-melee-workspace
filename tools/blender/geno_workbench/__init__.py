@@ -83,6 +83,9 @@ def register():
         from . import geno_workspace
 
         geno_workspace.register()
+        from . import hitviz
+
+        hitviz.register()
         _registered = True
     except Exception:
         try:
@@ -105,7 +108,7 @@ def unregister():
     _registered = False
     errors = []
 
-    for name in ("geno_workspace", "panels_play", "operators_play", "panels_ui", "panels_attributes", "panels_fighter", "operators_fighter"):
+    for name in ("hitviz", "geno_workspace", "panels_play", "operators_play", "panels_ui", "panels_attributes", "panels_fighter", "operators_fighter"):
         try:
             module = __import__(f"{__name__}.{name}", fromlist=["unregister"])
             module.unregister()

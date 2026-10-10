@@ -115,6 +115,20 @@ STRINGS: dict[str, str] = {
     "show_hurt": "Hurtboxes",
     "show_ecb": "ECB",
     "show_floor": "Floor",
+    "hv_arrows": "Launch arrows",
+    "hv_arrows_help": "Launch arrow per hitbox (Sakurai angle as a fan, meteors in blue)",
+    "hv_labels": "Labels",
+    "hv_labels_help": "slot and damage beside each hitbox",
+    "hv_badges": "Badges",
+    "hv_badges_help": "Element, set knockback, windbox, ground/air only, shield damage",
+    "hv_sweep": "Swept capsule",
+    "hv_sweep_help": "Sweep from last frame's position to this frame's",
+    "hv_percent": "Target %",
+    "hv_percent_help": "Victim percent the arrow length is computed at",
+    "hv_weight": "Target weight",
+    "hv_weight_help": "Victim weight for the knockback shown (Melee weight units)",
+    "hitviz_panel": "Hitbox view",
+    "hv_slot_legend": "Slot colours (slot 0 strongest)",
     "status_label": "Status",
     "pose_error": "Pose error",
     "pose_error_help": "Maximum measured position error in Melee units",
@@ -685,6 +699,16 @@ def _make_property_group():
         show_ecb: BoolProperty(name=STRINGS["show_ecb"], default=True)
         show_floor: BoolProperty(name=STRINGS["show_floor"], default=True)
         show_hit: BoolProperty(name=STRINGS["show_hit"], default=True)
+        hv_arrows: BoolProperty(name=STRINGS["hv_arrows"], description=STRINGS["hv_arrows_help"], default=True, update=lambda self, context: _redraw_pose(self))
+        hv_labels: BoolProperty(name=STRINGS["hv_labels"], description=STRINGS["hv_labels_help"], default=True, update=lambda self, context: _redraw_pose(self))
+        hv_badges: BoolProperty(name=STRINGS["hv_badges"], description=STRINGS["hv_badges_help"], default=True, update=lambda self, context: _redraw_pose(self))
+        hv_sweep: BoolProperty(name=STRINGS["hv_sweep"], description=STRINGS["hv_sweep_help"], default=True, update=lambda self, context: _redraw_pose(self))
+        hv_percent: EnumProperty(
+            name=STRINGS["hv_percent"], description=STRINGS["hv_percent_help"],
+            items=[("0", "0%", ""), ("50", "50%", ""), ("100", "100%", "")], default="50",
+            update=lambda self, context: _redraw_pose(self),
+        )
+        hv_weight: FloatProperty(name=STRINGS["hv_weight"], description=STRINGS["hv_weight_help"], default=100.0, min=1.0, max=400.0, update=lambda self, context: _redraw_pose(self))
         status: StringProperty(name=STRINGS["status_label"], default=STRINGS["disconnected"], options={"SKIP_SAVE"})
         pose_error: FloatProperty(name=STRINGS["pose_error"], description=STRINGS["pose_error_help"], default=0.0, min=0.0, options={"SKIP_SAVE"})
         stale: BoolProperty(name=STRINGS["stale_label"], default=False, options={"SKIP_SAVE"})

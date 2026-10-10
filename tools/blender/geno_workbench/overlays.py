@@ -8,19 +8,16 @@ import bpy
 from mathutils import Matrix
 
 try:
-    from . import shapes
+    from . import hitviz_math, shapes
 except ImportError:
+    import hitviz_math
     import shapes
 
 
 COLLECTION = "GenoWB Overlays"
 
-SLOT_COLORS = (
-    (1.0, 0.15, 0.1, 0.55),
-    (1.0, 0.55, 0.1, 0.55),
-    (1.0, 0.9, 0.1, 0.55),
-    (0.9, 0.2, 0.9, 0.55),
-)
+# Slot priority ramp (slot 0 strongest/darkest, then paler), shared with the labels and the timeline.
+SLOT_COLORS = tuple(tuple(rgb) + (0.55,) for rgb in hitviz_math.SLOT_RGB)
 HURT_COLOR = (0.6, 0.9, 0.72, 0.2)   # pale: the hurtboxes frame the body, they must not dominate it
 ECB_COLOR = (0.2, 0.6, 1.0, 1.0)
 FLOOR_COLOR = (0.6, 0.6, 0.6, 1.0)
@@ -252,6 +249,15 @@ def update(info, scene=None, props=None):
             _write_geometry(obj, item)
             touched.add(obj.name)
             _visibility(obj, enabled)
+
+    try:   # launch arrows, labels, badges and the swept capsule (hitviz.py); never blocks the overlays
+        try:
+            from . import hitviz
+        except ImportError:
+            import hitviz
+        touched |= hitviz.update(info, scene, props)
+    except Exception as exc:
+        print("hitviz:", exc)
 
     for obj in collection.objects:
         if _owned(obj) and obj.name not in touched:
