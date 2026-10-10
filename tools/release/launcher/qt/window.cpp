@@ -8,6 +8,7 @@
 #include <QCheckBox>
 #include <QClipboard>
 #include <QCloseEvent>
+#include <QResizeEvent>
 #include <QComboBox>
 #include <QDesktopServices>
 #include <QDir>
@@ -313,7 +314,7 @@ Window::Window(QString app, QString user, Settings settings)
                            t("Logs, graphics and reports.", "Logs, graphics and reports."), t("This launcher and what it uses.", "This launcher and what it uses."),
                            t("Inspect and fix a fighter.", "Inspecciona y corrige un luchador.")};
     connect(rail_, &kit::TabRail::currentChanged, this, [this, headings, subs](int index) {
-        tabs_->setCurrentIndex(index); pageHeading_->setText(headings[index].toUpper()); pageSub_->setText(subs[index]); setKeys(index);
+        tabs_->setCurrentIndex(index); pageHeading_->setText(headings[index].toUpper()); pageSub_->setText(subs[index]); setKeys(index); updateRailMode();
         auto *f = QApplication::focusWidget();                       // never leave focus on a control that is now hidden
         if (!f || !f->isVisible() || (tabs_->isAncestorOf(f) && !tabs_->currentWidget()->isAncestorOf(f))) rail_->setFocus();
     });
@@ -883,6 +884,12 @@ QWidget *Window::aboutTab() {
     explainer->more()->addWidget(paragraph(t("Fonts: Barlow Condensed (Jeremy Tribby) and Source Sans 3 (Adobe), SIL Open Font License. Qt (The Qt Company) is used under its open-source licences.", "Fonts: Barlow Condensed (Jeremy Tribby) and Source Sans 3 (Adobe), SIL Open Font License. Qt (The Qt Company) is used under its open-source licences."), atlas::Role::Body12, "muted"));
     return page;
 }
+// The Creator needs the width: below ~1500 px the left nav becomes an icon rail on that tab only.
+void Window::updateRailMode() {
+    if (!rail_ || !tabs_) return;
+    rail_->setCollapsed(creatorPage_ && tabs_->currentWidget() == creatorPage_ && width() < 1500);
+}
+void Window::resizeEvent(QResizeEvent *event) { QMainWindow::resizeEvent(event); updateRailMode(); }
 void Window::selectMods() { rail_->setCurrent(1); }
 
 QWidget *Window::creatorTab() {

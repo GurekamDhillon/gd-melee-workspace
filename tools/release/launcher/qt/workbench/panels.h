@@ -54,7 +54,8 @@ class InspectorPanel : public QWidget {
 public:
     explicit InspectorPanel(QWidget *parent = nullptr);
     void showHitbox(const QString &row, const HitboxRef &hitbox);
-    void clear();
+    // Empty state: the form hides and says why. rowHasHitboxes picks the wording.
+    void clear(bool rowHasHitboxes = false);
     void setRoles(const QVector<RoleInfo> &roles);
     void setRowChecks(const QVector<Problem> &problems, bool checked = false);
     void setExplanation(const QString &text);
@@ -72,7 +73,8 @@ private:
     QLabel *title_;
     QComboBox *joint_;
     QLabel *checksTitle_, *checks_, *explanation_;
-    QWidget *explanationCard_;
+    QWidget *explanationCard_, *form_, *emptyCard_, *deleteButton_;
+    QLabel *emptyTitle_, *emptyBody_;
     QVector<Problem> rowChecks_;
     bool rowChecked_ = false;
 };

@@ -14,6 +14,8 @@
 #include <QStyle>
 #include <QTabBar>
 #include <QTimer>
+#include <QToolTip>
+#include <QHelpEvent>
 #include <algorithm>
 #include <cmath>
 #include <iterator>
@@ -285,8 +287,31 @@ void TimelineView::setRange(int frames) {
     if (frames != frameCount()) { cancelDrag(); scrubbing_ = false; }
     Timeline::setRange(frames); updateGeometry(); update();
 }
+qreal TimelineView::labelColumn() const {
+    const QFontMetricsF fm(atlas::font(atlas::Role::Cap14));
+    qreal full = 0;
+    for (const auto &text : {t("Phases", "Fases"), t("Cancel window", "Ventana de cancelación"), t("Sounds · effects", "Sonidos · efectos")})
+        full = std::max(full, fm.horizontalAdvance(text.toUpper()));
+    full += 28; // 12 px left pad, 16 px gap before the bars
+    return std::floor(std::min(full, std::max(112.0, width() * 0.3)));
+}
+bool TimelineView::event(QEvent *e) {
+    if (e->type() == QEvent::ToolTip) {
+        const auto *help = static_cast<QHelpEvent *>(e);
+        const int row = int(std::floor((help->pos().y() - kRulerHeight) / double(kRowHeight)));
+        QString text;
+        if (help->pos().x() < labelColumn() && row >= 0) {
+            if (row == 0) text = t("Phases", "Fases");
+            else if (row <= hits_.size()) text = t("HB%1 · %2", "HB%1 · %2").arg(hits_[row - 1].ordinal).arg(hits_[row - 1].joint);
+            else if (row == hits_.size() + 1) text = t("Cancel window", "Ventana de cancelación");
+            else if (row == hits_.size() + 2) text = t("Sounds · effects", "Sonidos · efectos");
+        }
+        if (!text.isEmpty()) { QToolTip::showText(help->globalPos(), text, this); return true; }
+    }
+    return Timeline::event(e);
+}
 QRectF TimelineView::rulerRect() const {
-    const qreal left = width() < 460 ? 112 : 148;
+    const qreal left = labelColumn();
     return {left, 4, std::max(1.0, width() - left - 12), 28};
 }
 qreal TimelineView::framePosition(int boundary) const {

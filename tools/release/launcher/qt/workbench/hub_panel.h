@@ -3,6 +3,7 @@
 class QCheckBox;
 class QLabel;
 class QPushButton;
+class QHBoxLayout;
 class QVBoxLayout;
 
 namespace wb {
@@ -23,6 +24,8 @@ public:
     void setBlenderState(bool hasProcess, bool synced);
     void setPendingChanges(int count);
     void setRebuildAvailable(bool available);
+    // True while the status chips and the secondary buttons sit on a second row.
+    bool wrapped() const { return wrapped_; }
 signals:
     void startRequested();
     void stopRequested();
@@ -34,8 +37,16 @@ signals:
     void playVsCpuRequested();
     void undoRequested();
     void rebuildRequested();
+protected:
+    void resizeEvent(QResizeEvent *) override;
+    QSize minimumSizeHint() const override;
 private:
+    void relayoutBar();
     QVBoxLayout *layout_;
+    QHBoxLayout *first_ = nullptr, *second_ = nullptr;
+    QWidget *secondRow_ = nullptr, *bar_ = nullptr;
+    QWidget *breadcrumb_[5] = {};
+    bool wrapped_ = false, wrapKnown_ = false;
     QWidget *controls_, *blenderCard_;
     QLabel *project_, *counts_, *engine_, *move_, *blenderState_, *pending_;
     QPushButton *start_, *stop_, *restart_, *blender_, *showBlender_, *playLab_, *playCpu_, *undo_, *rebuild_;

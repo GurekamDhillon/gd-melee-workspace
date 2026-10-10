@@ -15,6 +15,7 @@
 #include "kit.h"
 #include <QCheckBox>
 #include <QCloseEvent>
+#include <QResizeEvent>
 #include <QComboBox>
 #include <QElapsedTimer>
 #include <QFormLayout>
@@ -37,6 +38,8 @@
 #include <QQueue>
 #include <QScopedValueRollback>
 #include <QScrollArea>
+#include <QSettings>
+#include <QCoreApplication>
 #include <QSemaphore>
 #include <QShortcut>
 #include <QSignalBlocker>
@@ -315,6 +318,11 @@ struct WorkbenchWindow::Impl {
     QLineEdit *search;
     QLabel *moveTitle, *moveGroupLabel, *moveStats, *frameReadout;
     QVBoxLayout *centreLayout;
+    QGridLayout *headerGrid = nullptr;
+    QScrollArea *timelineScroll = nullptr;
+    QWidget *centreHost = nullptr, *timelinePlate = nullptr;
+    enum class Mode { Unset, Wide, Narrow } layoutMode = Mode::Unset;
+    bool cardBelow = false;
     QWidget *movesRail;
     QSplitter *columns;
     FrameInfo frameInfo; // only the timeline's frame readout; Blender owns the view
@@ -357,7 +365,7 @@ struct WorkbenchWindow::Impl {
         thread.start();
         atlas::initialize();
         q->setObjectName("workbenchWindow"); q->setWindowTitle(t("Geno Workbench", "Geno Workbench")); q->resize(1440, 900);
-        q->setMinimumSize(1100, 700); applyAtlasStyle(q);
+        applyAtlasStyle(q); // no explicit minimum: the layout hints drive the Creator tab scroll area
         hub = new HubPanel(q); auto *layout = hub->bodyLayout();
         QObject::connect(hub, &HubPanel::undoRequested, q, [this] { q->runCommand("undo", {}); });
         QObject::connect(hub, &HubPanel::rebuildRequested, q, [this] { rebuildAndReload(); });
@@ -390,9 +398,9 @@ struct WorkbenchWindow::Impl {
         search = new QLineEdit; search->setObjectName("wbMoveSearch"); search->setClearButtonEnabled(true);
         search->setAccessibleName(t("Search moves", "Buscar movimientos")); movesLayout->addWidget(search);
         columns->addWidget(movesRail);
-        auto *centre = new QWidget; centre->setObjectName("wbCentreHost"); centre->setMinimumWidth(440);
+        auto *centre = new QWidget; centre->setObjectName("wbCentreHost"); centre->setMinimumWidth(440); centreHost = centre;
         centreLayout = new QVBoxLayout(centre); centreLayout->setContentsMargins(24, 20, 24, 20); centreLayout->setSpacing(20);
-        auto *header = new QGridLayout; header->setHorizontalSpacing(20); header->setVerticalSpacing(4);
+        auto *header = new QGridLayout; header->setHorizontalSpacing(20); header->setVerticalSpacing(4); headerGrid = header;
         moveGroupLabel = kit::capLabel({}, atlas::Role::Cap14, "muted"); moveGroupLabel->setTextFormat(Qt::PlainText);
         moveTitle = kit::capLabel({}, atlas::Role::Hero); moveTitle->setObjectName("wbMoveTitle"); moveTitle->setTextFormat(Qt::PlainText);
         moveStats = new QLabel; moveStats->setObjectName("wbMoveStats"); moveStats->setTextFormat(Qt::PlainText); moveStats->setWordWrap(true);
@@ -405,18 +413,19 @@ struct WorkbenchWindow::Impl {
         auto *transport = new QHBoxLayout; timelineLayout->addLayout(transport);
         transport->addWidget(kit::capLabel(t("Timeline", "Línea de tiempo"), atlas::Role::Cap14, "muted")); transport->addStretch();
         auto *previous = addButton(transport, t("‹", "‹"), [this] { stepFrame(-1); });
-        previous->setAccessibleName(t("Previous frame", "Cuadro anterior")); previous->setToolTip(previous->accessibleName()); previous->setFixedWidth(36);
+        previous->setAccessibleName(t("Previous frame", "Cuadro anterior")); previous->setToolTip(previous->accessibleName()); previous->setFixedWidth(40);
         play = addButton(transport, t("Play", "Jugar"), [this] { setPlaying(!playTimer.isActive()); }); play->setObjectName("wbPlay");
         auto *next = addButton(transport, t("›", "›"), [this] { stepFrame(1); });
-        next->setAccessibleName(t("Next frame", "Cuadro siguiente")); next->setToolTip(next->accessibleName()); next->setFixedWidth(36);
+        next->setAccessibleName(t("Next frame", "Cuadro siguiente")); next->setToolTip(next->accessibleName()); next->setFixedWidth(40);
         frameReadout = new QLabel; frameReadout->setObjectName("wbFrameReadout"); frameReadout->setFont(atlas::numberFont(12)); transport->addWidget(frameReadout);
-        auto *options = new QHBoxLayout; timelineLayout->addLayout(options);
-        loop = new QCheckBox(t("Loop", "Repetir")); loop->setChecked(true); options->addWidget(loop);
+        auto *options = transport; // Loop and speed share the transport row, which saves a row of height
+        loop = new QCheckBox(t("Loop", "Repetir")); loop->setChecked(true); options->insertWidget(1, loop);
         speed = new QComboBox; speed->setAccessibleName(t("Playback speed", "Velocidad de reproducción"));
-        speed->addItem(t("0.5x", "0.5x"), 0.5); speed->addItem(t("1x", "1x"), 1.0); speed->addItem(t("2x", "2x"), 2.0); speed->setCurrentIndex(1); options->addWidget(speed); options->addStretch();
+        speed->addItem(t("0.5x", "0.5x"), 0.5); speed->addItem(t("1x", "1x"), 1.0); speed->addItem(t("2x", "2x"), 2.0); speed->setCurrentIndex(1); options->insertWidget(2, speed);
         timeline = new TimelineView;
-        auto *timelineScroll = new QScrollArea; timelineScroll->setWidgetResizable(true); timelineScroll->setFrameShape(QFrame::NoFrame);
-        timelineScroll->setWidget(timeline); timelineLayout->addWidget(timelineScroll, 1);
+        timelineScroll = new QScrollArea; timelineScroll->setObjectName("wbTimelineScroll"); timelineScroll->setWidgetResizable(true); timelineScroll->setFrameShape(QFrame::NoFrame);
+        timelineScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        timelineScroll->setWidget(timeline); timelineLayout->addWidget(timelineScroll);
         QObject::connect(timeline, &Timeline::frameRequested, q, [this](int f) { setPlaying(false); q->runCommand("set_frame", {{"frame", f}}); updateFrameReadout(); });
         QObject::connect(timeline, &Timeline::playToggled, q, [this](bool on) { setPlaying(on); });
         QObject::connect(timeline, &TimelineView::editRequested, q, [this](const QString &name, const QJsonObject &args) { q->runCommand(name, args); });
@@ -426,11 +435,12 @@ struct WorkbenchWindow::Impl {
         auto *addLine = new QHBoxLayout; timelineLayout->addLayout(addLine);
         auto *add = addButton(addLine, t("+ Add hitbox", "+ Añadir hitbox"), [this] {
             if (!row.isEmpty()) q->runCommand("add_hitbox", {{"row", row}, {"frame", timeline->frame()}});
-        }); add->setObjectName("wbAddHitbox"); addLine->addStretch();
+        }); add->setObjectName("wbAddHitbox");
         auto *hint = kit::capLabel(t("Drag the ends to change active frames. Click the ruler to seek Blender.",
             "Arrastra los extremos para cambiar los cuadros activos. Pulsa la regla para mover Blender."), atlas::Role::Body12, "muted");
-        hint->setWordWrap(true); timelineLayout->addWidget(hint);
-        centreLayout->addWidget(plate, 1); columns->addWidget(centre);
+        hint->setWordWrap(true); addLine->addWidget(hint, 1); addLine->setSpacing(16);
+        timelinePlate = plate; plate->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        centreLayout->addWidget(plate); centreLayout->addStretch(1); columns->addWidget(centre);
         q->setCentralWidget(hub);
         progress = new StatusProgress(q); progress->setObjectName("wbStatusProgress");
         q->statusBar()->setSizeGripEnabled(false); q->statusBar()->addPermanentWidget(progress, 1);
@@ -439,7 +449,7 @@ struct WorkbenchWindow::Impl {
         movesLayout->addWidget(outliner, 1); movesLayout->addWidget(hub->projectCounts());
         QObject::connect(search, &QLineEdit::textChanged, outliner, &OutlinerPanel::setFilter);
         columns->setStretchFactor(0, 0); columns->setStretchFactor(1, 1); columns->setStretchFactor(2, 0);
-        columns->setSizes({256, 828, 352});
+        columns->setSizes({256, 828, 352}); applyLayout();
         QWidget::setTabOrder(search, outliner); QWidget::setTabOrder(outliner, previous);
         QWidget::setTabOrder(previous, play); QWidget::setTabOrder(play, next);
         QWidget::setTabOrder(next, timeline); QWidget::setTabOrder(timeline, add); QWidget::setTabOrder(add, tabs);
@@ -470,6 +480,46 @@ struct WorkbenchWindow::Impl {
                 q->runCommand("play", {{"frames", std::min(rate > 1 ? 2 : 1, timeline->frameCount() - 1 - timeline->frame())}, {"step", 1}});
             }
         });
+    }
+    // R1: three columns when wide; moves | centre with the inspector under the timeline when narrow
+    // or tall. The same widgets move, so state (tabs, edits, focus order) is kept.
+    void applyLayout() {
+        if (!tabs || !centreHost) return;
+        const int w = q->width(), h = q->height();
+        const bool portrait = h > w, narrow = w < 1400 || portrait;
+        const Mode mode = narrow ? Mode::Narrow : Mode::Wide;
+        if (mode != layoutMode) {
+            layoutMode = mode;
+            if (narrow) {
+                columns->setUpdatesEnabled(false);
+                tabs->setMinimumWidth(0); tabs->setMinimumHeight(portrait ? 420 : 300);
+                centreLayout->insertWidget(2, tabs, 1); centreLayout->setStretch(3, 0);
+                columns->setSizes({260, std::max(440, w - 260)});
+                columns->setUpdatesEnabled(true);
+            } else {
+                centreLayout->removeWidget(tabs); tabs->setMinimumHeight(0); tabs->setMinimumWidth(310);
+                columns->addWidget(tabs); centreLayout->setStretch(2, 1);
+                columns->setSizes({256, std::max(440, w - 256 - 352), 352});
+            }
+        }
+        // The centre column's blender card drops under the title when the centre is narrow.
+        const int centreWidth = narrow ? w - 260 : w - 256 - 352; // the splitter has not laid out yet
+        const bool below = centreWidth < 780;
+        if (below != cardBelow && headerGrid) {
+            cardBelow = below; auto *card = hub->blenderCard();
+            headerGrid->removeWidget(card);
+            if (below) headerGrid->addWidget(card, 3, 0, 1, 2); else headerGrid->addWidget(card, 0, 1, 2, 1);
+        }
+        fitTimelineHeight();
+    }
+    // R4: the timeline panel is as tall as its rows, capped so the inspector keeps the rest.
+    void fitTimelineHeight() {
+        if (!timelineScroll || !timeline) return;
+        const int natural = timeline->sizeHint().height();
+        const bool narrow = layoutMode == Mode::Narrow, portrait = q->height() > q->width();
+        const int cap = narrow ? std::max(portrait ? 260 : 190, int(q->height() * (portrait ? 0.30 : 0.26)))
+                               : std::max(260, int(q->height() * 0.62));
+        timelineScroll->setFixedHeight(std::min(natural + 2, cap));
     }
     AtlasButton *addButton(QBoxLayout *layout, const QString &text, std::function<void()> fn) {
         auto *button = new AtlasButton(text); layout->addWidget(button);
@@ -587,7 +637,7 @@ struct WorkbenchWindow::Impl {
         timeline->setSelectedHitbox(selectedOrdinal);
         inspector->setRoles(snapshot.roles);
         const auto *hit = selectedHitbox();
-        if (hit) inspector->showHitbox(row, *hit); else { selectedOrdinal = -1; inspector->clear(); }
+        if (hit) inspector->showHitbox(row, *hit); else { selectedOrdinal = -1; inspector->clear(!snapshot.hits.value(row).isEmpty()); }
         inspector->setRowChecks(rowProblems, checksCurrent);
         QString currentClip; QVector<int> motions;
         for (const auto &entry : snapshot.rows) if (entry.name == row) { currentClip = entry.effectiveClip(); motions = entry.motions; break; }
@@ -596,10 +646,18 @@ struct WorkbenchWindow::Impl {
             t("Cannot read fidelity: %1", "No se puede leer la fidelidad: %1").arg(snapshot.fidelityError));
         fidelityNote->setVisible(!snapshot.fidelityError.isEmpty());
     }
+    static QString lastRowFor(const QString &project) {
+        if (QCoreApplication::organizationName().isEmpty() || project.isEmpty()) return {};
+        return QSettings().value("workbench/lastRow/" + project).toString();
+    }
+    void rememberRow(const QString &name) {
+        if (QCoreApplication::organizationName().isEmpty() || snapshot.projectName.isEmpty()) return;
+        QSettings().setValue("workbench/lastRow/" + snapshot.projectName, name);
+    }
     void selectRow(const QString &name, int ordinal = -1) {
         bool found = false; for (const auto &entry : snapshot.rows) if (entry.name == name) { found = true; break; }
         if (!found || closing) return;
-        setPlaying(false); row = name; selectedOrdinal = ordinal; clipPreview = false;
+        setPlaying(false); row = name; selectedOrdinal = ordinal; clipPreview = false; rememberRow(name);
         const QSignalBlocker block(rows); rows->setCurrentIndex(rows->findData(row));
         frameInfo = {}; timeline->setFrame(0); updateTimeline(); refreshSelection();
         const auto *hit = selectedHitbox(); restoringFrame = ordinal >= 0 && hit ? hit->startFrame : 0;
@@ -853,7 +911,14 @@ struct WorkbenchWindow::Impl {
         search->setPlaceholderText(t("Search %1 rows", "Buscar %1 filas").arg(snapshot.rows.size()));
         QSignalBlocker block(rows); rows->clear();
         for (const auto &r : snapshot.rows) rows->addItem(r.name, r.name);
-        int selected = rows->findData(row); if (selected < 0 && rows->count()) selected = 0;
+        int selected = rows->findData(row);
+        if (selected < 0 && rows->count()) {
+            // First open: the last-used move of this project, else the first move that has hitboxes.
+            selected = 0;
+            const QString last = lastRowFor(snapshot.projectName);
+            if (!last.isEmpty() && rows->findData(last) >= 0) selected = rows->findData(last);
+            else for (int i = 0; i < rows->count(); ++i) if (!snapshot.hits.value(rows->itemData(i).toString()).isEmpty()) { selected = i; break; }
+        }
         rows->setCurrentIndex(selected); row = rows->currentData().toString(); updateTimeline();
         outliner->setRows(snapshot.rows, snapshot.hits); refreshSelection(); updateBadges();
         review->setHistory(snapshot.history);
@@ -887,7 +952,7 @@ struct WorkbenchWindow::Impl {
             activeRanges.append(window.second == window.first + 1 ? QString::number(window.first) :
                 t("%1–%2", "%1–%2").arg(window.first).arg(window.second - 1));
         timeline->setMove(row, frames, hits, iasa, snapshot.events.value(row));
-        timeline->setMinimumHeight(timeline->sizeHint().height());
+        timeline->setMinimumHeight(timeline->sizeHint().height()); fitTimelineHeight();
         moveTitle->setText(row.isEmpty() ? t("Choose a move", "Elige un movimiento") : row);
         hub->setMove(row);
         const auto active = activeRanges.isEmpty() ? t("None", "Ninguno") : activeRanges.join(t(", ", ", "));
@@ -1092,6 +1157,10 @@ void WorkbenchWindow::shutdown() {
     d_->closing = true; d_->setPlaying(false); d_->queue.clear(); d_->pendingBlenderOpen = false;
     if (d_->playDialog) d_->playDialog->reject();
     d_->status(t("Stopping Creator…", "Deteniendo Creador…")); d_->pump(); d_->notifyBusy();
+}
+void WorkbenchWindow::resizeEvent(QResizeEvent *event) {
+    QMainWindow::resizeEvent(event);
+    if (d_) d_->applyLayout();
 }
 void WorkbenchWindow::closeEvent(QCloseEvent *event) {
     if (d_->disposed) { event->accept(); return; }
