@@ -31,13 +31,13 @@ QString findAddonDir(const QString &projectDir) {
 }
 BlenderCommand blenderCommand(const QString &blender, const QString &addonDir,
                               const QString &projectDir, quint16 port) {
-    if (blender.trimmed().isEmpty()) return failed(t("Blender executable is not configured", "Blender executable is not configured"));
+    if (blender.trimmed().isEmpty()) return failed(t("Blender executable is not configured", "El ejecutable de Blender no está configurado"));
     const auto bootstrap = QDir(addonDir).filePath("bootstrap.py");
     if (addonDir.isEmpty() || !QFileInfo(bootstrap).isFile())
-        return failed(t("Workbench Blender bootstrap.py was not found", "Workbench Blender bootstrap.py was not found"));
+        return failed(t("Workbench Blender bootstrap.py was not found", "No se encontró bootstrap.py de Blender para el Workbench"));
     if (projectDir.isEmpty() || !QFileInfo(projectDir).isDir())
-        return failed(t("Fighter project directory was not found", "Fighter project directory was not found"));
-    if (!port) return failed(t("Workbench listener has no port", "Workbench listener has no port"));
+        return failed(t("Fighter project directory was not found", "No se encontró el directorio del proyecto del luchador"));
+    if (!port) return failed(t("Workbench listener has no port", "El oyente del Workbench no tiene puerto"));
     return {blender, {"--python", QDir::fromNativeSeparators(bootstrap), "--", "--project", projectDir,
                      "--port", QString::number(port)}, {}};
 }
@@ -48,7 +48,7 @@ BlenderCommand blenderCommand(const QString &blender, const QString &addonDir,
     const auto root = workspaceRoot(projectDir);
     const auto path = QDir::cleanPath(QDir::isAbsolutePath(art) ? art : QDir(root.isEmpty() ? projectDir : root).filePath(art));
     if (!QFileInfo(path).isFile())
-        return failed(t("Fighter art file was not found: %1", "Fighter art file was not found: %1").arg(path));
+        return failed(t("Fighter art file was not found: %1", "No se encontró el archivo de arte del luchador: %1").arg(path));
     command.args << "--art" << QDir::fromNativeSeparators(path);
     return command;
 }
