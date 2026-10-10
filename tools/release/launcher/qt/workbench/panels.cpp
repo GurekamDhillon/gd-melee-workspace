@@ -77,7 +77,7 @@ void OutlinerPanel::setRows(const QVector<RowInfo> &rows, const QMap<QString, QV
     const QSignalBlocker block(this);
     clear();
     for (const auto &row : rows) {
-        auto *item = new QTreeWidgetItem(this, {row.name, row.clip});
+        auto *item = new QTreeWidgetItem(this, {row.name, row.effectiveClip()});
         item->setData(0, RowRole, row.name); item->setData(0, OrdinalRole, -1);
         for (const auto &hit : hits.value(row.name)) {
             auto *child = new QTreeWidgetItem(item, {t("Hitbox %1 · %2", "Caja de golpe %1 · %2").arg(hit.ordinal).arg(hit.joint)});

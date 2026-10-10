@@ -45,6 +45,9 @@ class GENO_WB_PT_connect(bpy.types.Panel):
         box.prop(settings, "port")
         box.prop(settings, "project")
         box.prop(settings, "launcher_exe")
+        box.prop(settings, "engine_exe")
+        box.prop(settings, "mods_dir")
+        box.prop(settings, "iso_path")
         start = box.row()
         start.enabled = not value.connected and not operators.owned_server_running()
         start.operator(

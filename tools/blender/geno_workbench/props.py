@@ -21,6 +21,12 @@ STRINGS: dict[str, str] = {
     "project_help": "Directory containing workbench.json",
     "launcher": "Launcher",
     "launcher_help": "Optional gd-melee-launcher executable override",
+    "engine_exe": "Engine exe",
+    "engine_exe_help": "melee-pc.exe for the server to start (default: GW_ENGINE_EXE)",
+    "mods_dir": "Mods dir",
+    "mods_dir_help": "Directory holding the fighter mod (default: GW_MODS_DIR)",
+    "iso": "Disc image",
+    "iso_help": "Disc image for the engine (default: GW_ISO_VANILLA); never stored in the project",
     "art": "Art override",
     "art_help": "Optional .blend or .glb path for the fighter loader",
     "row": "Move",
@@ -391,6 +397,9 @@ def _make_property_group():
         port: IntProperty(name=STRINGS["port"], description=STRINGS["port_help"], default=0, min=0, max=65535)
         project: StringProperty(name=STRINGS["project"], description=STRINGS["project_help"], subtype="DIR_PATH")
         launcher_exe: StringProperty(name=STRINGS["launcher"], description=STRINGS["launcher_help"], subtype="FILE_PATH")
+        engine_exe: StringProperty(name=STRINGS["engine_exe"], description=STRINGS["engine_exe_help"], subtype="FILE_PATH")
+        mods_dir: StringProperty(name=STRINGS["mods_dir"], description=STRINGS["mods_dir_help"], subtype="DIR_PATH")
+        iso_path: StringProperty(name=STRINGS["iso"], description=STRINGS["iso_help"], subtype="FILE_PATH")
         blender_art: StringProperty(name=STRINGS["art"], description=STRINGS["art_help"], subtype="FILE_PATH")
         row: StringProperty(name=STRINGS["row"], description=STRINGS["row_help"])
         move: EnumProperty(name=STRINGS["row"], description=STRINGS["row_help"], items=row_items, update=on_row_changed, options={"SKIP_SAVE"})

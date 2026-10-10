@@ -9,7 +9,7 @@ void registerRowCommands(Session &s) {
             for (const auto &row : ctx.session.data().rows()) {
                 QJsonArray motions; for (int motion : row.motions) motions.append(motion);
                 rows.append(QJsonObject{{"name", row.name}, {"motions", motions}, {"tag", row.tag},
-                    {"clip", row.clip}, {"aerial", row.aerial},
+                    {"clip", row.effectiveClip()}, {"aerial", row.aerial},
                     {"hitboxes", int(ctx.session.data().hitboxes(row.name).size())}});
             }
             return QJsonObject{{"rows", rows}};

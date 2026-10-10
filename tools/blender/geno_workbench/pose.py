@@ -342,11 +342,8 @@ def calibrate(arm, session):
             armature=arm.name,
         ))
 
-    # Real servers can send rows with an empty clip; fall back to the standard Melee action name.
-    rows = [
-        dict(row, clip=row.get("clip") or _ROW_CLIP_FALLBACK.get(str(row.get("name", "")), ""))
-        for row in session.rows
-    ]
+    # The server fills each row's clip from the plan (list_rows); rows without one are skipped here.
+    rows = list(session.rows)
     matching = [
         row for row in rows
         if row.get("clip") and bpy.data.actions.get(row["clip"]) is not None
@@ -527,14 +524,6 @@ def _verification_calibration(arm, jointmap):
     if current and current[0].by_index == jointmap.by_index:
         return current[1]
     raise RuntimeError(STRINGS["fighter_verify_calibration"])
-
-
-_ROW_CLIP_FALLBACK = {
-    "jab1": "Attack11", "jab2": "Attack12", "jab3": "Attack13", "dash_attack": "AttackDash",
-    "ftilt": "AttackS3S", "utilt": "AttackHi3", "dtilt": "AttackLw3", "fsmash": "AttackS4S",
-    "usmash": "AttackHi4", "dsmash": "AttackLw4", "nair": "AttackAirN", "fair": "AttackAirF",
-    "bair": "AttackAirB", "uair": "AttackAirHi", "dair": "AttackAirLw",
-}
 
 
 def verify_pose(arm, info, jointmap, eps=1e-3):
