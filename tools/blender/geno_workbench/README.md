@@ -154,6 +154,18 @@ The Task 8 self-test and owner-observed live visual checks remain owed.
 The pure tests use the synthetic fake workbench and no disc-derived data.
 
 
+## scipy and Pillow (GW_SITE)
+
+The Splice/NLA features need scipy and Pillow, which Blender's Python lacks.
+Install them into a private directory, never globally:
+
+    <blender python> -m pip install --target _build/wbnla-site scipy Pillow
+
+`register()` (so the installed add-on and every launch script alike) calls
+`geno_workbench.add_site_dirs()`: it prepends each directory in the `GW_SITE`
+environment variable (os.pathsep separated) to `sys.path`; when `GW_SITE` is
+unset it uses `<workspace>/_build/wbnla-site` if that directory exists.
+
 ## Splice authoring
 
 The **Geno > Splice** panel works without a workbench server. Select the fighter's
