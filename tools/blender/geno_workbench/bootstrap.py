@@ -203,7 +203,8 @@ def _present(bpy):
         def dismiss():
             try:   # a mouse move closes the splash popup that otherwise sits over the viewport
                 window = bpy.context.window_manager.windows[0]
-                window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=300, y=300)
+                for x, y in ((600, 500), (200, 200), (250, 220)):
+                    window.event_simulate(type="MOUSEMOVE", value="NOTHING", x=x, y=y)
             except Exception as exc:
                 print("GENO_WB_REPORT splash_warning %s" % exc)
             return None
@@ -226,7 +227,8 @@ def _present(bpy):
                 bpy.ops.wm.quit_blender()
             return None
         bpy.app.timers.register(dismiss, first_interval=3.0)
-        bpy.app.timers.register(take, first_interval=5.0)
+        bpy.app.timers.register(dismiss, first_interval=4.0)
+        bpy.app.timers.register(take, first_interval=7.0)
     return None
 
 
