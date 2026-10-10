@@ -10,6 +10,41 @@ The 2026-10-10 packet was implemented with file tools only. Tests and Blender
 execution have **not** been run. Read the assumptions below before the first
 local render; camera and add-on internals could not be inspected in this lane.
 
+## Backends and framing (2026-10-10)
+
+`--backend csproject` (default) is the template path below. `--backend own` runs
+`own_render.py` on current Blender (tested 5.2.2; `--blender`, `GW_BLENDER`, a known Steam
+install, or PATH): our own cameras, three sun lamps, world and materials, nothing from
+CSProject at runtime. Both write the same camera names (nine template names plus
+`Results_SD`, the 52x74 results card) so conversion and publish are shared. Add
+`--no-publish` to render and write previews (`<run>/final/c000-<field>.png`, with outline
+and shadow applied, at the retail sizes) without touching the package.
+
+Every asset is framed from the fighter's own posed skeleton (`framing.py`), not from the
+donor character's camera positions: stock = neck to top of head, icon = chest up, portrait
+= waist (spine joint) up, results and large render = floor to top. Joints come from the
+built plan's role table (`plan.roles` plus `joints[].name`, with workbench
+`art.bone_aliases`; `ui_render.roles` overrides); the top and the horizontal extent come
+from the skinned mesh, so hair and outstretched arms are inside the frame. A missing joint
+falls back to a fixed body fraction and is listed under `anchors.fallback` in the report.
+The CSProject path keeps each template camera's angle and lens and only moves it. Camera
+to asset (by name and size): `CSS Icon` 64x56 select tile, `CSP` 136x188 portrait, `STC`
+24x24 HUD stock icon, `Render` 1000x1500 large render, `All-Star` 256x230 (use unverified).
+
+Two causes of the old "every camera looks the same, and the pose floats" are fixed in the
+CSProject worker: the template binds cameras to timeline markers, so every render switched
+to the last bound camera whatever `scene.camera` was (markers are now unbound and camera
+animation cleared; the report lists `bound_markers`); and Goku's GLB carries a 2-unit
+`Icosphere` helper at the origin that set the floor three units below his feet (bounds now
+use only the skinned, textured body meshes). `Wait:0` resolves to the plan bank clip
+`Wait` (no `moves/Wait.json`), GLB action `Wait`, sample 0: a real idle stance, near the
+rest pose. A retail base without a `Wait` clip uses `Wait1`.
+
+Retail look reference (local only, never committed): `dump_menu_assets.py --only
+MnSlChr.usd` into `_build/csp-own/ref`; the 136x188 CSPs there are tight chest-up crops
+with a hard offset shadow and white edge light. `contact_sheet.py` lays backends side by
+side.
+
 ## Preparation and paths
 
 From the workspace root, with git and a host Python that has Pillow:

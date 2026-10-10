@@ -11,6 +11,8 @@ import sys
 
 if __package__ in (None, ''):
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from tools.csp import framing
+from tools.csp.blender_common import fighter_meshes, jsonable, skeleton_frame_inputs, world_points
 from tools.csp.project import confined_path, generated_path, workspace_root
 
 import bpy
@@ -198,12 +200,18 @@ def pose(rig, actions, name, frame):
     for track in rig.animation_data.nla_tracks:
         track.mute = True
     rig.animation_data.action = action
+    if hasattr(rig.animation_data, 'action_slot') and getattr(action, 'slots', None) and rig.animation_data.action_slot is None:
+        # Blender 4.4+/5.x slotted actions: choose the slot that animates objects.
+        slots = [sl for sl in action.slots if sl.target_id_type in ('OBJECT', 'UNSPECIFIED')] or list(action.slots)
+        rig.animation_data.action_slot = slots[0]
     bpy.context.scene.frame_set(frame)
     bpy.context.view_layer.update()
 
 
 def align_art(objects, target, settings):
-    low, high = bounds(objects)
+    # Bounds of the body only: a helper mesh (Goku's 2-unit icosphere at the origin) otherwise
+    # sets the floor 3 units below his feet and he renders airborne.
+    low, high = bounds(fighter_meshes(objects))
     target_low, target_high = target
     height = settings.get('fit_height', target_high.z - target_low.z)
     if height <= 0:
@@ -315,6 +323,73 @@ def camera_settings(camera, scene, override):
     return result
 
 
+def frame_cameras(scene, cameras, rig, objects, job, settings, report):
+    """Re-aim every UI camera at its own asset's crop of the posed body (framing.py).
+
+    The template camera keeps its orientation and lens; only its position (and clip range)
+    changes, so the template's authored view angles are retained while the framing no
+    longer depends on the donor character's size or proportions.
+    """
+    body = fighter_meshes(objects)
+    for obj in objects:
+        if obj.type == 'MESH' and obj not in body:
+            obj.hide_render = True
+    if rig is not None:
+        anchors, points, _ = skeleton_frame_inputs(rig, job.get('roles', {}), body)
+    else:
+        points = world_points(body)
+        anchors = framing.anchor_points({}, points)
+    report['framing'] = {'anchors': {k: (list(v) if isinstance(v, tuple) else v) for k, v in anchors.items()},
+                         'body_meshes': [o.name for o in body], 'cameras': {}}
+    pending = []
+    for camera in cameras:
+        data = camera.data
+        matrix = camera.matrix_world.to_3x3()
+        basis = {'right': tuple(matrix.col[0]), 'up': tuple(matrix.col[1]), 'look': tuple(-matrix.col[2])}
+        size = (scene.render.resolution_x, scene.render.resolution_y)
+        rb = camera.get('RBTab_obj_Settings')
+        if rb is not None and rb.get('Custom_CamHRes_prop'):
+            size = (int(rb['Custom_CamHRes_prop']), int(rb['Custom_CamVRes_prop']))
+        override = settings.get('cameras', {}).get(camera.name, {})
+        size = (override.get('width', size[0]), override.get('height', size[1]))
+        asset = framing.asset_for_camera(camera.name)
+        ortho = data.type == 'ORTHO'
+        plan = framing.plan(asset, anchors, points, basis, size=size, lens=None if ortho else data.lens,
+                            sensor=data.sensor_width, fit=data.sensor_fit)
+        # The template may animate or drive cameras; render re-evaluates that and would undo this.
+        report['framing'].setdefault('cleared_animation', {})[camera.name] = bool(camera.animation_data or data.animation_data)
+        camera.animation_data_clear()
+        data.animation_data_clear()
+        camera.location = plan['location']
+        data.shift_x = data.shift_y = 0.0
+        if ortho:
+            data.ortho_scale = plan['ortho_scale']
+        data.clip_end = max(data.clip_end, plan['distance'] * 4)
+        entry = dict(jsonable(plan), asset=asset, size=size, lens=data.lens, sensor=data.sensor_width,
+                     sensor_fit=data.sensor_fit, scale=list(camera.scale), lens_unit=data.lens_unit)
+        report['framing']['cameras'][camera.name] = entry
+        pending.append((camera, entry, anchors))
+    bpy.context.view_layer.update()
+    from bpy_extras.object_utils import world_to_camera_view
+    for camera, entry, anchors in pending:
+        scene.render.resolution_x, scene.render.resolution_y = entry['size']
+        scene.camera = camera
+        entry['projected'] = {name: [round(v, 3) for v in world_to_camera_view(scene, camera, Vector(anchors[name]))[:2]]
+                              for name in ('floor', 'top', 'neck', 'hips')}
+
+
+def add_results_camera(scene, cameras):
+    """The 52x74 results card gets its own camera: a clone of CSP_SD (same angle and lens)."""
+    source = next((c for c in cameras if c.name == 'CSP_SD'), None)
+    if source is None:
+        return None
+    clone = source.copy()
+    clone.data = source.data.copy()
+    clone.name = clone.data.name = 'Results_SD'
+    scene.collection.objects.link(clone)
+    return clone
+
+
 def render_job(job):
     boundary = Path(job['root']).resolve() / '_build/csp-render'
     work = confined_path(job['work'], boundary)
@@ -356,6 +431,19 @@ def render_job(job):
             align_art(objects, target, settings)
             pose(rig, actions, job['action'], job['frame'] + job.get('frame_offset', 0))
         apply_costume(objects, costume, settings.get('keep_objects', []))
+        results_camera = add_results_camera(scene, cameras)
+        if results_camera is not None:
+            cameras.append(results_camera)
+            settings = dict(settings, cameras=dict(settings.get('cameras', {}), Results_SD={'width': 208, 'height': 296}))
+        if settings.get('framing', 'skeleton') == 'skeleton':
+            rig_for_frame = rig if not job['retail'] else (rigs[0] if len(rigs) == 1 else None)
+            frame_cameras(scene, cameras, rig_for_frame, objects, job, settings, report)
+        # ROOT CAUSE of "every camera shows the same framing": the template binds cameras to
+        # timeline markers, and every frame change (render does one) re-selects the camera the
+        # marker at that frame names, whatever scene.camera was set to. Unbind them all.
+        report['bound_markers'] = [(m.name, m.camera.name if m.camera else None) for m in scene.timeline_markers]
+        for marker in list(scene.timeline_markers):
+            marker.camera = None
         scene.render.film_transparent = True
         scene.render.image_settings.file_format = 'PNG'
         scene.render.image_settings.color_mode = 'RGBA'

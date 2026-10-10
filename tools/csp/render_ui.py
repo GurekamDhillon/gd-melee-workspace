@@ -68,7 +68,7 @@ def process_views(views, destination, effects):
             settings = {}
             if 'stock' in family:
                 settings['outline'] = max(1, min(32, round(source.width / 24)))
-            elif 'csp' in family:
+            elif 'csp' in family or 'results' in family:
                 settings['shadow'] = (max(1, round(source.width * 2 / 136)), max(1, round(source.height * 2 / 188)))
             settings.update(effects.get(camera, {}))
             image = postprocess(source, **settings)
@@ -113,8 +113,8 @@ def publish_package(job, renders, *, convert=None):
             return name
         for index, views in renders.items():
             index = int(index)
-            if len(views) != 9:
-                raise ValueError('Expected nine rendered camera outputs for costume ' + str(index))
+            if len(views) < 9:
+                raise ValueError('Expected at least nine rendered camera outputs for costume ' + str(index))
             mapping = camera_outputs(views, job.get('fields'))
             processed = process_views(views, stage / ('c%03d' % index), job.get('effects', {}))
             rendered[index] = {}
@@ -154,10 +154,49 @@ def publish_package(job, renders, *, convert=None):
     return presentation
 
 
-def run_blender(tools, arguments, log, *, cancel_file=None):
+def write_previews(job, renders, work):
+    """Final per-field images (outline/shadow applied, fitted to the retail size) for review sheets."""
+    from PIL import Image
+    out = confined_path(work / 'final', work)
+    out.mkdir(exist_ok=True)
+    for index, views in renders.items():
+        mapping = camera_outputs(views, job.get('fields'))
+        processed = process_views(views, work / ('processed-c%03d' % index), job.get('effects', {}))
+        for field, camera in mapping.items():
+            with Image.open(processed[camera]) as image:
+                fit_rgba(image, OUTPUTS[field].size).save(out / ('c%03d-%s.png' % (index, field)))
+    return out
+
+
+BACKENDS = ('csproject', 'own')
+OWN_BLENDER_DEFAULTS = (r'D:/SteamLibrary/steamapps/common/Blender/blender.exe',)
+
+
+def find_blender(explicit=None, environ=None):
+    """Blender for the own backend: --blender, then GW_BLENDER, then known installs, then PATH."""
+    import shutil
+    environ = os.environ if environ is None else environ
+    for candidate in (explicit, environ.get('GW_BLENDER'), *OWN_BLENDER_DEFAULTS):
+        if candidate and Path(candidate).is_file():
+            return str(Path(candidate))
+    found = shutil.which('blender')
+    if found:
+        return found
+    raise ValueError('Own backend needs Blender: pass --blender or set GW_BLENDER')
+
+
+def select_backend(name):
+    if name not in BACKENDS:
+        raise ValueError('Backend must be one of: ' + ', '.join(BACKENDS))
+    return name
+
+
+def run_blender(tools, arguments, log, *, cancel_file=None, script='blender_render.py'):
     command = [tools['blender'], '--background', '--factory-startup', '--python-exit-code', '1',
-               '--python', str(ROOT / 'tools/csp/blender_render.py'), '--', *map(str, arguments)]
-    env = dict(os.environ, BLENDER_USER_SCRIPTS=tools['scripts'])
+               '--python', str(ROOT / 'tools/csp' / script), '--', *map(str, arguments)]
+    env = dict(os.environ)
+    if tools.get('scripts'):
+        env['BLENDER_USER_SCRIPTS'] = tools['scripts']
     with Path(log).open('w', encoding='utf-8') as output:
         process = subprocess.Popen(command, env=env, stdout=output, stderr=subprocess.STDOUT, text=True)
         try:
@@ -190,6 +229,10 @@ def main(argv=None):
     ap.add_argument('--template', type=Path, help='local template .blend override')
     ap.add_argument('--scene-config', type=Path, help='verified scene/camera/recolor settings JSON')
     ap.add_argument('--emblem', type=Path, help='authored PNG; an omitted emblem declaration is preserved')
+    ap.add_argument('--backend', default='csproject', choices=BACKENDS,
+                    help='csproject: local CSProject template + Blender 3.5.1 (default); own: tools/csp/own_render.py on current Blender')
+    ap.add_argument('--blender', type=Path, help='blender.exe for --backend own (else GW_BLENDER, a known Steam install, PATH)')
+    ap.add_argument('--no-publish', action='store_true', help='render and write previews under _build only; leave the package untouched')
     ap.add_argument('--inspect-template', action='store_true', help='write only scene inventory for the lead')
     ap.add_argument('--cancel-file', type=Path, help=argparse.SUPPRESS)
     args = ap.parse_args(argv)
@@ -200,13 +243,19 @@ def main(argv=None):
         cancel_file = generated_path(args.cancel_file, root) if args.cancel_file else None
         if cancel_file is not None and cancel_file.exists():
             raise RuntimeError('UI render cancelled')
-        tools = load_tools(root)
-        version = subprocess.run([tools['blender'], '--version'], check=True, capture_output=True, text=True).stdout
-        if not version.splitlines() or version.splitlines()[0] != 'Blender 3.5.1':
-            raise ValueError('Configured renderer is not exact Blender 3.5.1')
-        template = (args.retail_scene or args.template or Path(tools['template'])).resolve()
-        if not template.is_file():
-            raise ValueError('Missing local template scene: ' + str(template))
+        backend = select_backend(args.backend)
+        if backend == 'own':
+            if args.inspect_template or args.retail_scene or args.template:
+                raise ValueError('--inspect-template, --retail-scene and --template are CSProject-backend options')
+            tools, template = {'blender': find_blender(args.blender)}, None
+        else:
+            tools = load_tools(root)
+            version = subprocess.run([tools['blender'], '--version'], check=True, capture_output=True, text=True).stdout
+            if not version.splitlines() or version.splitlines()[0] != 'Blender 3.5.1':
+                raise ValueError('Configured renderer is not exact Blender 3.5.1')
+            template = (args.retail_scene or args.template or Path(tools['template'])).resolve()
+            if not template.is_file():
+                raise ValueError('Missing local template scene: ' + str(template))
         base = generated_path(root / '_build/csp-render', root)
         base.mkdir(parents=True, exist_ok=True)
         if args.inspect_template:
@@ -216,8 +265,10 @@ def main(argv=None):
             return 0
         job = load_project(args.project, root=root, package=args.package, fighter=args.fighter,
                            art=args.art, pose=args.pose, costume=args.costume,
-                           retail_scene=args.retail_scene, scene_config=args.scene_config, emblem=args.emblem)
-        job['template'], job['scripts'] = str(template), tools['scripts']
+                           retail_scene=args.retail_scene, scene_config=args.scene_config, emblem=args.emblem,
+                           backend=backend)
+        job['template'], job['scripts'] = (str(template) if template else None), tools.get('scripts')
+        job['backend'] = backend
         metadata = confined_path(Path(job['package']) / 'geno.json', job['package'])
         job['doc_digest'] = hashlib.sha256(metadata.read_bytes()).hexdigest()
         work = confined_path(base / (re.sub(r'[^A-Za-z0-9_-]', '_', job['key'])[:40] or 'fighter') / uuid.uuid4().hex, base)
@@ -231,13 +282,21 @@ def main(argv=None):
             worker_job = dict(job, costumes=[costume], work=str(part))
             request = confined_path(part / 'job.json', part)
             request.write_text(json.dumps(worker_job, indent=2) + '\n', encoding='utf-8')
-            run_blender(tools, ['--job', request], confined_path(part / 'blender.log', part), cancel_file=cancel_file)
+            run_blender(tools, ['--job', request], confined_path(part / 'blender.log', part), cancel_file=cancel_file,
+                        script='own_render.py' if backend == 'own' else 'blender_render.py')
             result = json.loads((part / 'renders.json').read_text(encoding='utf-8'))
             renders.update({int(i): paths for i, paths in result['renders'].items()})
             scene_reports.extend(result['scenes'])
             print('Rendered nine cameras for costume', costume['index'])
         if cancel_file is not None and cancel_file.exists():
             raise RuntimeError('UI render cancelled')
+        previews = write_previews(job, renders, work)
+        print('Previews:', previews)
+        if args.no_publish:
+            report = dict(job, work=str(work), scenes=scene_reports, previews=str(previews))
+            confined_path(work / 'ui-render.json', work).write_text(json.dumps(report, indent=2), encoding='utf-8')
+            print('Render report (package untouched):', work / 'ui-render.json')
+            return 0
         presentation = publish_package(job, renders)
         report = dict(job, work=str(work), scenes=scene_reports, presentation=presentation)
         confined_path(work / 'ui-render.json', work).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

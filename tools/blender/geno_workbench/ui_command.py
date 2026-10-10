@@ -24,7 +24,7 @@ def generated_path(root, relative):
 
 
 def render_command(project, *, row='Wait', frame=0, art='', python=None,
-                   root=None, costume='all', pose=None, cancel_file=None):
+                   root=None, costume='all', pose=None, cancel_file=None, backend='csproject', blender=''):
     project = Path(project).expanduser().resolve()
     if not (project / 'workbench.json').is_file():
         raise ValueError('Choose the directory containing workbench.json')
@@ -36,12 +36,17 @@ def render_command(project, *, row='Wait', frame=0, art='', python=None,
         raise ValueError('Pose must be row:frame')
     if costume != 'all' and not re.fullmatch(r'0|[1-9][0-9]*', costume):
         raise ValueError('Costume must be all or a zero-based integer')
+    if backend not in ('csproject', 'own'):
+        raise ValueError('Backend must be csproject or own')
     python = python or os.environ.get('GW_UI_PYTHON') or shutil.which('python') or shutil.which('python3')
     if not python or 'blender' in Path(python).stem.lower():
         raise ValueError('Set GW_UI_PYTHON to a host Python with Pillow; Blender is a separate renderer')
     root = Path(root).resolve() if root else workspace_for(project)
     command = [str(python), str(root / 'tools/csp/render_ui.py'), '--project', str(project),
                '--costume', costume, '--pose', pose]
+    command += ['--backend', backend]
+    if blender:
+        command += ['--blender', str(blender)]
     if art:
         command += ['--art', str(art)]
     if cancel_file:

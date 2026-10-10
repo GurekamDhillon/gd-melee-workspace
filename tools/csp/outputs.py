@@ -43,7 +43,7 @@ def camera_outputs(names, overrides=None):
         raise ValueError('Missing camera (' + ', '.join(aliases) + '); set ui_render.fields. Found: ' + ', '.join(names))
 
     aliases = {
-        'portrait': ('cspsd',), 'results': ('cspsd',),
+        'portrait': ('cspsd',), 'results': ('resultssd', 'cspsd'),
         'stock': ('stcsd', 'stocksd', 'stockiconsd', 'stock'),
         'icon': ('cssiconsd', 'csssd', 'iconsd', 'stockhd', 'stockiconhd', 'stocksd', 'stockiconsd', 'stock'),
     }
