@@ -528,6 +528,49 @@ def hitbox_words(hb, joint=None, scale=1.0):
     return w
 
 
+def script_text(words, src, dst, ratio, joint_ref=None, scale=1.0, notes=None):
+    """A retail ftcmd script -> Geno text for the destination: every hitbox moves to the destination joint of the same role (offset along
+    and across the bone rebuilt by `retarget_hitbox`) and `scale` is applied on top of `ratio` to size/offset (a build that rescales
+    scripts afterwards passes 1/its scale). `joint_ref(role, dst_joint, w0_base) -> str` writes word 0 of the raw hitbox (default: the
+    numeric word with the destination joint index). Other commands keep the text `script.friendly` gives and `script.assemble` reads
+    back to the same words (checked); the trailing End is dropped (the assembler adds it). Returns (lines, hitboxes) where hitboxes
+    lists what was moved: {slot, frame, src_role, dst_role, before, after}."""
+    from tools.geno import script
+    lines, moved, frame, cur = [], [], 0, 0
+    for off, ws in script.commands(words):
+        op = ws[0] >> 26
+        text = script.friendly(ws)
+        name = text.split(" ", 1)[0]
+        if name in ("wait_until", "frame"):
+            frame = int(text.split("=")[-1]) if "=" in text else int(text.split()[1])
+            continue
+        if name == "wait":
+            frame += int(text.split("=")[-1]) if "=" in text else int(text.split()[1])
+            continue
+        if name == "end":
+            continue
+        if frame > cur:
+            lines.append("wait_until %d" % frame)
+            cur = frame
+        if op == 11:
+            hb = decode_hitbox(ws)
+            role = src.role_of(hb["joint"])
+            if role is None or role not in dst.roles:
+                raise ValueError("hitbox on source joint %d (%s) has no destination bone of the same role" % (hb["joint"], role))
+            jd = dst.roles[role]
+            out = retarget_hitbox(hb, src, dst, hb["joint"], jd, ratio)
+            w = hitbox_words(out, joint=jd, scale=scale)
+            first = ("0x%08X" % w[0]) if joint_ref is None else joint_ref(role, jd, w[0] & ~(255 << 11))
+            lines.append("hitbox raw=%s,%s" % (first, ",".join("0x%08X" % v for v in w[1:])))
+            moved.append({"slot": hb["slot"], "frame": frame, "src_role": role, "dst_role": role, "dst_joint": jd,
+                          "before": {k: hb[k] for k in ("size", "x", "y", "z", "damage", "angle", "kbg", "bkb")},
+                          "after": {k: out[k] * scale for k in ("size", "x", "y", "z")}})
+            continue
+        back = script.assemble(text + chr(10), {})
+        lines.append(text if back == [int(w) for w in ws] else "%s raw=%s" % (name, ",".join("0x%08X" % w for w in ws)))
+    return lines, moved
+
+
 # ------------------------------------------------------------------------------------------------ disc access
 def load_retail(fighter, action, iso=None):
     """Read a retail fighter's action from the vanilla disc -> dict(rig, clip, words, row, symbol). Needs GW_ISO_VANILLA."""

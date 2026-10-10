@@ -218,6 +218,48 @@ class HitboxTests(unittest.TestCase):
         self.assertEqual((hb["damage"], hb["joint"], hb["size"]), (5, 3, 2.0))
 
 
+class ScriptTextTests(unittest.TestCase):
+    def test_hitboxes_move_to_the_destination_bone_and_other_commands_survive(self):
+        try:
+            from tools.geno import script
+        except Exception as e:  # noqa: BLE001
+            self.skipTest("geno script tables unavailable: %s" % e)
+        src, dst = humanoid(1.0), humanoid(2.0)
+        shin = src.roles["lower_leg.R"]
+        hb = HitboxTests.words(joint=shin, x=0.0, y=-1.0, z=0.0, size=1.5, damage=9)
+        words = script.assemble(chr(10).join(["wait_until 4", "cmd_var idx=0 value=1", "hitbox slot=0 joint=0 damage=1", "wait 6",
+                                              "clear_hitboxes", "iasa"]) + chr(10), {})
+        # splice our raw hitbox (word-level) over the placeholder hitbox
+        at = next(o for o, ws in script.commands(words) if ws[0] >> 26 == 11)
+        words[at:at + 5] = hb
+        lines, moved = T.script_text(words, src, dst, 2.0, joint_ref=lambda role, jd, base: "@HIT:%s:0x%08X@" % (role, base), scale=0.5)
+        self.assertEqual(lines[0], "wait_until 4")
+        self.assertTrue(any(l.startswith("cmd_var") for l in lines))
+        box = next(l for l in lines if l.startswith("hitbox raw="))
+        self.assertIn("@HIT:lower_leg.R:0x2C000009@", box)
+        self.assertEqual(moved[0]["dst_joint"], dst.roles["lower_leg.R"])
+        self.assertEqual(moved[0]["frame"], 4)
+        self.assertAlmostEqual(moved[0]["after"]["size"], 1.5 * 2.0 * 0.5)               # ratio, then the build-scale compensation
+        self.assertAlmostEqual(moved[0]["after"]["y"], -1.0 * 2.0 * 0.5 * 1.0, places=2)   # half way along the 2-long shin -> 4-long: -2 * 0.5
+        self.assertIn("wait_until 10", lines)
+        self.assertEqual(lines[-1], "iasa")
+        self.assertNotIn("end", lines)
+        # the text assembles once the joint token is a number
+        txt = chr(10).join(l.replace("@HIT:lower_leg.R:0x2C000009@", "0x%08X" % (0x2C000009 | (dst.roles["lower_leg.R"] << 11))) for l in lines)
+        self.assertTrue(script.assemble(txt + chr(10), {}))
+
+    def test_a_hitbox_on_a_joint_without_a_destination_role_is_an_error(self):
+        try:
+            from tools.geno import script
+        except Exception as e:  # noqa: BLE001
+            self.skipTest("geno script tables unavailable: %s" % e)
+        src, dst = humanoid(1.0), humanoid(1.0)
+        del dst.roles["lower_leg.R"]
+        words = HitboxTests.words(joint=src.roles["lower_leg.R"]) + script.assemble("iasa" + chr(10), {})
+        with self.assertRaises(ValueError):
+            T.script_text(words, src, dst, 1.0)
+
+
 def minimal_glb(rig):
     nodes = [{"name": n, "translation": rig.t[i].tolist(), "rotation": rig.q[i].tolist(), "scale": [1, 1, 1]} for i, n in enumerate(rig.names)]
     for i, p in enumerate(rig.parents):
