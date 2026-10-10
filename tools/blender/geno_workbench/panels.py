@@ -141,6 +141,8 @@ class GENO_WB_PT_problems(bpy.types.Panel):
         self.layout.operator(
             "geno_wb.run_checks", text=STRINGS["run_checks"], icon="CHECKMARK"
         )
+        if not value.has_roles:
+            self.layout.label(text=STRINGS["no_roles"], icon="INFO")
         items = self.layout.column()
         items.enabled = value.connected
         items.template_list(
@@ -208,6 +210,8 @@ class GENO_WB_PT_hitbox(bpy.types.Panel):
             "geno_wb.rebuild_reload",
             text=STRINGS["rebuild_reload"], icon="FILE_REFRESH",
         )
+        if not value.can_rebuild:
+            self.layout.label(text=STRINGS["rebuild_unavailable"], icon="INFO")
 
 
 class GENO_WB_PT_splice(bpy.types.Panel):

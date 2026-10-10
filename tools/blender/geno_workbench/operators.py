@@ -212,7 +212,8 @@ def _finish(operator, context, success):
     value = api.session()
     props.sync_from_session(value, context.scene.geno_wb)
     if not success:
-        operator.report({"ERROR"}, value.last_error or value.status)
+        # a refused action (no build / no roles) has a status but no error: a warning, not a failure
+        operator.report({"ERROR"} if value.last_error else {"WARNING"}, value.last_error or value.status)
         return {"CANCELLED"}
     return {"FINISHED"}
 
@@ -540,7 +541,8 @@ class GENO_WB_OT_run_checks(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return api.session().connected
+        value = api.session()
+        return value.connected and value.has_roles
 
     def execute(self, context):
         return _finish(self, context, api.session().run_checks())
@@ -573,7 +575,7 @@ class GENO_WB_OT_suggest_bone(bpy.types.Operator):
         value = api.session()
         settings = getattr(context.scene, "geno_wb", None)
         return (
-            value.connected and settings is not None
+            value.connected and value.has_roles and settings is not None
             and 0 <= settings.hitbox_index < len(value.hitboxes)
         )
 
@@ -652,7 +654,8 @@ class GENO_WB_OT_rebuild_reload(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return api.session().connected
+        value = api.session()
+        return value.connected and value.can_rebuild
 
     def execute(self, context):
         stop_playback()
