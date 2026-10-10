@@ -41,12 +41,49 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_PACKAGE = ROOT / "_build/goku-xv2/author-source/package"
 
 
-def compare(wb_hits, ref_spheres, tol) -> list[dict]:
+sys.path.insert(0, str(ROOT / "tools/blender/geno_workbench"))
+try:
+    import wbspace
+except ImportError:
+    wbspace = None
+
+
+def _comparison_space(value: str) -> str:
+    """Validate the shared transform dependency during argument parsing."""
+    if value == "model" and wbspace is None:
+        raise argparse.ArgumentTypeError(
+            "--space model requires wbspace from tools/blender/geno_workbench; "
+            "the shared coordinate module could not be imported"
+        )
+    return value
+
+
+def _plan_scale_hint(plan_path) -> str:
+    """Read scale metadata for diagnostics; never apply it to coordinates."""
+    if plan_path is None:
+        return "<plan.json scale>"
+    try:
+        with open(plan_path, "r", encoding="utf-8-sig") as stream:
+            plan = json.load(stream)
+        scale = plan["scale"]
+        if isinstance(scale, bool) or not isinstance(scale, (int, float)):
+            raise ValueError("plan.json scale must be finite numeric data")
+        if not math.isfinite(scale):
+            raise ValueError("plan.json scale must be finite numeric data")
+        return str(scale)
+    except (OSError, ValueError, KeyError, TypeError, OverflowError) as exc:
+        return f"<unavailable from {plan_path}: {exc}>"
+
+
+def compare(wb_hits, ref_spheres, tol, to_model=None) -> list[dict]:
     """Compare active workbench spheres by slot, without modifying either input.
 
     Each result has slot, ok, d and why; d is None when a sphere is missing.
     Inactive workbench slots are absent, so an active reference at that slot is
     reported as missing in wb. Results are ordered by slot.
+
+    When supplied, to_model transforms each matched workbench world position
+    before measuring distance. Reference positions and both radii are unchanged.
     """
     if not math.isfinite(tol) or tol < 0:
         raise ValueError("tol must be finite and nonnegative")
@@ -59,6 +96,8 @@ def compare(wb_hits, ref_spheres, tol) -> list[dict]:
             results.append({"slot": slot, "ok": False, "d": None, "why": why})
             continue
         position = tuple(wb[slot]["world"][axis] for axis in "xyz")
+        if to_model is not None:
+            position = to_model(position)
         distance = math.dist(position, ref[slot]["pos"])
         radius_delta = abs(wb[slot]["radius"] - ref[slot]["radius"])
         why = []
@@ -278,6 +317,11 @@ def main(argv=None) -> int:
     parser.add_argument("--mod-id", default="goku-xv2")
     parser.add_argument("--mesh", type=Path, help="generated mesh JSON for rest transforms")
     parser.add_argument("--timeout", type=float, default=5.0, help="seconds per requested frame")
+    parser.add_argument("--space", choices=("world", "model"), default="model",
+                        type=_comparison_space,
+                        help="compare in world or root-local model space (default: model)")
+    parser.add_argument("--scale-plan", metavar="PATH",
+                        help="plan.json for scale metadata in DIFF hints; never changes coordinates")
     args = parser.parse_args(argv)
     if not 1 <= args.port <= 65535:
         parser.error("--port must be between 1 and 65535")
@@ -300,25 +344,37 @@ def main(argv=None) -> int:
                 f"cannot connect to game console at 127.0.0.1:{args.port}; "
                 f"start workbench mode with MELEE_CONSOLE_PORT={args.port} "
                 f"and keep the window rendering ({error})") from None
+        print(f"space={args.space}")
         different, checked = False, 0
         for frame in args.frames:
             info = _wait_frame(console, args.motion, frame, args.timeout)
+            to_model = None if args.space == "world" else (lambda p, _m=wbspace.root_matrix(info): wbspace.world_to_model(_m, p))
             ref = _reference_spheres(HP, reference, frame)
             wb = {hit["slot"]: hit for hit in info["hitboxes"] if hit["active"]}
             spheres = {sphere["slot"]: sphere for sphere in ref}
-            for result in compare(info["hitboxes"], ref, args.tol):
+            for result in compare(info["hitboxes"], ref, args.tol, to_model=to_model):
                 slot = result["slot"]
                 hit = wb.get(slot)
                 centre = tuple(hit["world"][axis] for axis in "xyz") if hit else None
+                if centre is not None and to_model is not None:
+                    centre = to_model(centre)
                 ref_hit = spheres.get(slot)
                 ref_centre = ref_hit["pos"] if ref_hit else None
+                residual = (
+                    tuple(centre[i] - ref_centre[i] for i in range(3))
+                    if centre is not None and ref_centre is not None else None
+                )
                 distance = f"{result['d']:.2f}" if result["d"] is not None else "n/a"
                 status = "OK" if result["ok"] else "DIFF"
                 why = f" why={result['why']}" if result["why"] else ""
                 print(f"{status} frame={frame} slot={slot} wb={_position(centre)} "
-                      f"ref={_position(ref_centre)} d={distance}{why}")
+                      f"ref={_position(ref_centre)} d={distance}"
+                      f" residual={_position(residual)}{why}")
                 checked += 1
                 different |= not result["ok"]
+        if args.space == "model" and different:
+            print("hint: if the residual is a constant scale, compare with plan scale "
+                  f"{_plan_scale_hint(args.scale_plan)}")
         if not checked:
             raise ValueError("no active hitboxes on either side at the requested frames")
         return 1 if different else 0
