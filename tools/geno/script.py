@@ -204,8 +204,17 @@ def assemble_line(tokens, states=()):
         return words
     if lower == "hitbox":
         defaults = dict(slot=0, joint=0, damage=8, size=4, x=0, y=0, z=0, angle=361, kbg=100, fkb=0, bkb=0, element=0, shield=0, ground=1, air=1)
+        # Optional flag bits the plain encoder leaves at their defaults (all 0, sfx kind from the element); given only when set:
+        # word 3 bits 4..0 = item_hit, ignore_thrown, ignore_scale, clank, rebound; word 4 bits 6..2 = sfx_kind, bits 9..7 = sfx_severity.
+        extra = {}
+        extra_limits = dict(item_hit=(0, 1), ignore_thrown=(0, 1), ignore_scale=(0, 1), clank=(0, 1), rebound=(0, 1), sfx_kind=(0, 31), sfx_severity=(0, 7))
         for token in args:
             key, value = token.split("=", 1)
+            if key in extra_limits:
+                extra[key] = int(value, 0)
+                if not extra_limits[key][0] <= extra[key] <= extra_limits[key][1]:
+                    raise ValueError(f"hitbox {key} outside {extra_limits[key][0]}..{extra_limits[key][1]}")
+                continue
             if key not in defaults:
                 raise ValueError(f"unknown hitbox field {key}")
             defaults[key] = float(value) if key in ("damage", "size", "x", "y", "z") else int(value, 0)
@@ -215,7 +224,15 @@ def assemble_line(tokens, states=()):
             if not math.isfinite(defaults[key]) or not lo <= defaults[key] <= hi:
                 raise ValueError(f"hitbox {key} outside {lo}..{hi}")
         p = defaults
-        return encoder().hitbox_words(p["slot"], p["joint"], p["damage"], p["size"], p["x"], p["y"], p["z"], p["angle"], p["kbg"], p["fkb"], p["bkb"], p["element"], p["shield"], bool(p["ground"]), bool(p["air"]))
+        words = encoder().hitbox_words(p["slot"], p["joint"], p["damage"], p["size"], p["x"], p["y"], p["z"], p["angle"], p["kbg"], p["fkb"], p["bkb"], p["element"], p["shield"], bool(p["ground"]), bool(p["air"]))
+        flags = ("item_hit", "ignore_thrown", "ignore_scale", "clank", "rebound")
+        if any(k in extra for k in flags):
+            words[3] = (words[3] & ~0x1F) | sum(extra.get(k, 0) << (4 - i) for i, k in enumerate(flags))
+        if "sfx_kind" in extra:
+            words[4] = (words[4] & ~(31 << 2)) | (extra["sfx_kind"] << 2)
+        if "sfx_severity" in extra:
+            words[4] = (words[4] & ~(7 << 7)) | (extra["sfx_severity"] << 7)
+        return words
     if lower in OPS and not is_geno:
         op = OPS[lower]
         if args and all("=" in arg for arg in args):

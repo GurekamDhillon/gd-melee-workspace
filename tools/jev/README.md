@@ -22,7 +22,50 @@ Jev decisions. Missing keys or failed calls print `jev: unavailable` to stderr;
 ranking retains the original order, triage records unavailability, and claims
 retain `no evidence` with `source: unavailable`. None changes a sweep verdict.
 
-## Crash and sweep triage
+## How lanes should call these (v2, 2026-10-09)
+
+The design follows TypeSafe's own guidance (docs: *How to build with TypeSafe*, *State*,
+*Choice*, *Noul*, *Confidence*, *Confidence-gated routing*, *Jev 1.13 jaggedness*): code owns
+control flow and every deterministic fact; Jev gets only narrow, typed questions over only the
+relevant text; every answer is gated on confidence in code. Rules of thumb used throughout:
+facts (PASS/FAIL, exit codes, counts, timeouts) are parsed, never asked; one condition per
+Noul; Choice options carry `what`/`not_for`/`examples`; a Choice is asked twice with the
+options reversed because Jev 1.13 leans to the first option; irrelevant text is filtered out
+in code first (distractors hurt); an unsure answer routes to a human.
+
+| you want | run | what comes back |
+|---|---|---|
+| "did this run pass / why not" | `python tools/jev/runparse.py RUN_DIR_OR_LOG [--expect-mod ID]` | typed verdict, no model, no key, no network |
+| the same, plus a judgment on a crash | `python tools/jev/triage_run.py RUN_DIR` | `choice`, `band` (act / confirm / human), `source` (code / rule / jev / stub) |
+| "did the report do what the brief asked" | `python tools/jev/coverage.py BRIEF.md REPORT.md` | per requirement done / owed / unaddressed / unclear, plus a needs-human list |
+| "are the report's test/build/run claims true" | `python tools/jev/check_claims.py REPORT LOG_OR_RUN_DIR... ` | per claim supported / unsupported / no evidence |
+| rank review findings | `python tools/jev/rank_findings.py findings.txt` | by player impact, low-confidence ones marked `read it` |
+
+Add `--offline` for the deterministic stub (never a key, never the network). Without
+`TYPESAFE_API_KEY` the model-backed steps degrade to `jev: unavailable` and everything decided
+in code still works. **Read `band`**: `act` may be used, `confirm` is probable (look once),
+`human` means do not trust it. `source: stub` is a test fixture, not a Jev decision.
+
+## Deterministic run parser (`runparse.py`)
+
+No model. Reads `melee-pc.log`, `exit.json`, `diagnosis.json`, newest `crashlogs/*.log` of a run
+dir, or any log/`*.run.txt`. Output classes:
+
+| class | meaning | decided in code |
+|---|---|---|
+| `pass` | at least one PASS result line (`RESULT PASS`, `*CHECK ... PASS`, `TESTS: pass=N fail=0`), no FAIL, no fault, clean exit | yes |
+| `clean_no_verdict` | clean exit 0, no FAIL, no fault, but the script printed no PASS/FAIL token (e.g. `LANDCHECK RESULT cases=40 sinking=0`). Never a bug by itself; read the numbers | yes |
+| `test_fail` | any FAIL result line or `TESTS: TIMEOUT` | yes |
+| `harness_setup` | a hard setup signature and no PASS verdict: `MELEE_SCENE: rejected`, `define refused` (geno.json newer than the build), expected mod not loaded (`--expect-mod`, or `geno:<id>/` in the scene), disk full (ENOSPC / "No space left"), sandbox failure | yes |
+| `timeout` | launcher `TIMEOUT code=124` with none of the above; `cause` is `load_progress`, `unexplained`, or a soft setup signal such as `turbo_refused` | the fact yes, the cause no |
+| `fault` | assertion, FATAL, access violation, panic, watchdog stall (not on a paused/hidden window), Lua error, or a crash log. Teardown noise ("ignored at exit", Dawn device loss) is excluded. Includes a bounded, redacted `signature` | no: this is the only thing sent on to the model |
+| `unknown` | no verdict, no exit information | no |
+
+`turbo: refused without a pad script or LAB batch export` is a *soft* setup signal: with PASS
+lines it is a note, with a timeout it names the cause. The harness footer lines `exit N` and
+`FATAL 0` of `*.run.txt` are parsed as exit code, not as faults.
+
+## Crash and sweep triage (`triage_run.py`)
 
 ```powershell
 python tools/jev/triage_run.py _build/sweep/results.json --offline
@@ -30,30 +73,66 @@ python tools/jev/triage_run.py _build/sweep/runs/vanilla-st-fountain
 python tools/jev/triage_run.py crash-report.log
 ```
 
-The JSON input is the list emitted by `tools/sweep/crash_sweep.py`. Each non-PASS
-row is classified as `real_bug`, `known_issue`, or `harness_artifact` using its
-`sandbox` field, or `runs/<tag>` beside the JSON for older results. PASS rows are
-skipped. A directory input has no harness verdict; it is classified as an unknown
-failure unless its tail has crash evidence. A compact crash-report file is also
-accepted for uploaded reports.
+1. `runparse` first. A decided class is returned with `source: code` and never leaves the machine.
+2. The unused-stage rule (`known_issues.json`, stages akaneia/icetop) and the load-progress HANG
+   rule stay code rules (`source: rule`).
+3. Only a `fault` reaches Jev: one Choice over the code-extracted crash signature (fault line,
+   locations, last 10 non-noise lines, crash log head; at most about 2 KB, redacted), options from
+   `known_issues.json` (`what`, `not_for`, `examples`, plus `none_of_the_above`). It is asked in
+   forward and reversed option order in one request. Disagreement, or confidence under the floor,
+   gives `needs_human`. Each entry's `label` is what `choice` reports (`mod_content`,
+   `script_bug`, `real_bug`, `known_issue`). `match` regexes in the table drive only the offline stub.
+4. The sweep's `--jev` flag and the crash-upload service call `classify(row, log_text)` and get
+   the same dict (`choice`, `band`, `source`, plus `parse`).
 
-At most 4096 UTF-8 bytes of combined log tails are sent per run: roughly half
-`melee-pc.log`, half the newest text `crashlogs/*.log`. Binary dumps are excluded.
-Absolute paths and credential assignments are redacted before transmission.
-Run metadata fields are also bounded and redacted. Log text is treated as
-untrusted data. Edit `known_issues.json`, or pass `--known-issues TABLE.json`.
-The unused **stage** names `akaneia`/`icetop` are distinct from the Akaneia disc.
-Load-induced timeouts require progressing logic **and** presentation plus no
-fault evidence. A tail cannot establish that an earlier freeze never happened;
-read full logs before accepting any artifact classification.
+Edit `known_issues.json` to add an option: write `what`/`not_for`/`examples` as you would brief a
+colleague; add a `label`.
 
-The sweep's optional `--jev` flag annotates `results.json` and adds a `triage`
-column to `results.md` after all games have finished. It does not change results
-or exit status. Test the writer independently without running the sweep:
+## Requirement coverage (`coverage.py`)
 
 ```powershell
-python -m unittest discover -s tools/jev -p 'test_integrations.py'
+python tools/jev/coverage.py brief.md report.md --offline
 ```
+
+Brief: one requirement per line, or a checklist / numbered / bulleted list. For each requirement code
+retrieves up to four report lines by IDF-weighted token overlap (plus lines citing the item as `#N`);
+then three Noul questions are asked with only those lines as state: *completed*, *concrete
+evidence*, *states it is NOT done / owed*. A requirement that shares no word with the report is
+`unaddressed` without a model call (a paraphrase with no shared word lands there: read those). The
+state also lists requirement words absent from the whole report. Combination is in code
+(`combine`): done = completed + evidence + not owed; owed = owed and not completed; completed with no
+evidence or both completed and owed = `unclear`; any answer between the Noul thresholds is
+`needs_human_read`. Payload per requirement: the requirement plus under 1.6 KB of report text.
+
+## Confidence routing (`confidence.py`)
+
+Shared by all tools. Choice/Score `confidence` bands: below the floor `human`, floor to act `confirm`,
+at/above act `act` (defaults 0.6 / 0.85 for Choice, 0.5 / 0.8 for Score, from the docs' own banking
+example). Noul: yes at p >= 0.8, no at p <= 0.2, otherwise `unsure`. **These defaults are
+conservative and NOT calibrated on this repo's data**: collect labelled runs, plot confidence
+against accuracy, then set them. Override per call (`thresholds=`) or with env `JEV_THRESHOLDS`
+(JSON object or path to a JSON file); an unreadable override is ignored.
+
+## Local evaluation (`eval_local.py`)
+
+`python tools/jev/eval_local.py [--live]` replays the 2026-10-09 artifacts with known truth (needs
+the main checkout's untracked `_build/`). Offline it scores the code layer only; the coverage
+statuses it prints offline come from a keyword stub, not Jev. `--live` needs `TYPESAFE_API_KEY`.
+
+## TypeSafe agent skill (not installed by this repo)
+
+The docs (docs.typesafe.ai/agent-skill) give a local install that needs no account or key (a key is
+only needed if the agent should run test queries). It changes your agent configuration, so run it
+yourself:
+
+```bash
+claude plugin marketplace add typesafe-ai/skills
+claude plugin install typesafe@typesafe-ai      # then /typesafe:typesafe-ai
+# other agents (Codex etc.): npx skills add typesafe-ai/skills --skill typesafe-ai   (-g for global)
+```
+
+Use one method only. Update: `claude plugin marketplace update typesafe-ai` then
+`claude plugin update typesafe@typesafe-ai`.
 
 ## Review finding ranking
 
@@ -70,29 +149,21 @@ the original reviewer severity and finding text. `--json` exposes distributions,
 confidence, and source. Finding input to the API is limited to 4 KB per finding;
 local output preserves its full text with privacy redaction.
 
-## Agent claim checks
+## Agent claim checks (`check_claims.py`)
 
 ```powershell
-python tools/jev/check_claims.py report.txt build.log test.log --offline
-python tools/jev/check_claims.py report.txt build.log --history-dir _build/jev-reports
+python tools/jev/check_claims.py report.txt build.log test.log _build/runs/foo --offline
 ```
 
-Use `-` for the report to read stdin. Extracted claims include `N/N tests pass`,
-`build OK`, `shown in game`, and `no window opened`. The tool scans logs for
-relevant lines and sends only the latest redacted snippets (2 KB per claim).
-Each evidenced claim gets two nouls: explicit support and explicit contradiction.
-Contradiction >= 0.8 means `unsupported`; support >= 0.8 with contradiction <= 0.2
-means `supported`; all other outcomes mean `no evidence`. A claim with no relevant
-lines stays `no evidence` without a request. Missing log files provide no evidence.
-Logs are not authenticated: the caller must supply the correct run's logs.
-An absence of window messages cannot prove no window opened; a heartbeat does not
-prove the game was shown or visually inspected. Recognition is intentionally
-limited to the documented claim forms, not a general agent-report verifier.
-
-With `--history-dir`, exact report content is checked against earlier `.md`/`.txt`
-reports in that folder and a `.jev-report-sha256.json` hash history. The current
-report file is excluded from the comparison. This works independently of Jev;
-only SHA-256 hashes are stored. History access should be serialized by the caller.
+Use `-` for the report to read stdin. Claims recognised: `N/N tests pass`, `build OK`, `all runs PASS`,
+`shown in game`, `no window opened`. Test, build and run claims are decided in code (`source: code`;
+run claims through `runparse` on the given run dirs) and never sent to Jev. Only the semantic claims
+(shown in game, no window) get two Noul questions (support, contradiction) with just their own claim
+and snippets (2 KB, redacted) as state, gated by `confidence.noul_state`; an unsure answer sets
+`needs_human_read`. A claim with no relevant log lines stays `no evidence`. Logs are not
+authenticated: the caller must supply the correct run's logs. Absence of window messages cannot
+prove no window opened. With `--history-dir`, exact repeats of earlier reports are flagged by SHA-256.
+Recognition is limited to these forms; use `coverage.py` for free-text requirements.
 
 ## Crash-upload service
 

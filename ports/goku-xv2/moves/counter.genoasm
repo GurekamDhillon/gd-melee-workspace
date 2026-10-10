@@ -1,0 +1,6 @@
+# PICK provisional (2026-10-09): down B tap = Z-vanish. Clip = XV2 GOK_ESC_KUR_C (the instant-transmission blink) at x0.39 over 46 frames (not under 0.55x of Mario's 80).
+# The state's counter window (f4-22) negates a hit and answers with Riposte; the move costs 10 ki (Lua, combo package). Hold B past f12 = KiCharge.
+PUT ANIM_RATE 1.0
+clear_hitboxes
+wait 44
+iasa

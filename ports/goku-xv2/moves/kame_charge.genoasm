@@ -1,0 +1,34 @@
+# PICK provisional (2026-10-09 specials pass): Kamehameha charge. XV2 skill 000_GOK_KMH BAC 12 cups the hands f0-40 and holds.
+# Lua counts the charge (hold B), shield stores it, release picks the tier. No damaging fighter hitbox; the charge orb is
+# the KameOrb article (article 3, no hitbox, 7-frame life), re-spawned every 5 frames at the cupped hands while the state lasts.
+PUT ANIM_RATE 1.0
+clear_hitboxes
+wait 2
+CALL geno.article.spawn 3
+wait 5
+CALL geno.article.spawn 3
+wait 5
+CALL geno.article.spawn 3
+wait 5
+CALL geno.article.spawn 3
+wait 5
+CALL geno.article.spawn 3
+wait 5
+CALL geno.article.spawn 3
+wait 5
+CALL geno.article.spawn 3
+wait 5
+CALL geno.article.spawn 3
+wait 5
+CALL geno.article.spawn 3
+wait 5
+CALL geno.article.spawn 3
+wait 5
+CALL geno.article.spawn 3
+wait 5
+CALL geno.article.spawn 3
+wait 5
+CALL geno.article.spawn 3
+wait 5
+CALL geno.article.spawn 3
+wait_until 80

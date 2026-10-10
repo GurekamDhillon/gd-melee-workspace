@@ -1,0 +1,8 @@
+# side B cancels a light string on hit: Dragon Rush (approved design)
+name = light x2 > Dragon Rush
+inputs = A, A, B>
+routes = L1>L2, Lx>Dragon Rush
+percents = 0, 30, 60, 90
+di = none, in, out, survival
+distance = 9
+expect_true =

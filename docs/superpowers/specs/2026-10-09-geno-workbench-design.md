@@ -2,6 +2,24 @@
 
 Approved in conversation with GD on 2026-10-09. Supersedes nothing.
 
+## Revision 1 (2026-10-09, late): Blender is the viewer
+
+Owner decision after the first hands-on test. **Rendering the viewport through the game is dropped.**
+
+The in-game render path (`wb.render`, camera presets, HUD hiding, screenshot sizing) fought the game at every step: the camera at floor level, the model missing, the size ignored, the HUD and LAB overlays drawn over the frame. The data path works: `wb.load` / `row` / `frame` / `step` / `frame_info`, with bones, hitboxes, hurtboxes, ECB and floor.
+
+New split:
+
+| Piece | Role |
+|---|---|
+| Game workbench mode | Source of truth for **data only**: posed bone world matrices, hitboxes, hurtboxes, ECB, floor, per frame. `wb.render` is frozen, used for debugging only. |
+| **Blender add-on `geno_workbench`** (new) | **The viewer.** It connects to the engine console and loads the fighter's source rig and mesh, which the artist pipeline already has. Per frame it poses the armature to the engine's bone matrices (exact match, no re-simulation). It draws hitboxes as spheres coloured by slot and active state, plus hurtbox capsules, the ECB and the floor. It has a timeline panel that steps frames through the engine, a move picker and a problems list, and it can jump to a frame. Its edits go back through `workbench_core` (`--wb-call` / MCP), never written directly into package output. |
+| `workbench_core` + MCP server | Unchanged: commands, undo, proposals, Geno data, checks. |
+| Qt Creator tab | **Hub**: open a project, start or stop the engine, open in Blender, problems and review panels, history. There's no 3D viewport (the placeholder is removed). |
+| Agents | Drive **both** the Workbench MCP (data and edits) and the existing Blender MCP (view and screenshots). |
+
+The acceptance test is unchanged: through MCP only, fix three of Goku's wrong-limb hitboxes and re-pick his dair, and the owner sees the result in Blender and then in the game.
+
 ## Goal
 
 A character tool for Geno fighters, first used to finish imported fighters such as Goku XV2. It must:

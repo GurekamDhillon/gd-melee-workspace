@@ -1,0 +1,63 @@
+# goku-xv2: hand-written source only. NO XV2-derived or disc-derived data is ever committed
+# (workspace CLAUDE.md, ports/CLAUDE.md). Allow-list: ignore everything, allow back file kinds
+# we author, then re-exclude the files that embed source-game data.
+
+# 1. Ignore everything, then allow back authored file kinds.
+*
+!*/
+!.gitignore
+!*.md
+!*.py
+!*.ps1
+!*.lua
+!*.genoasm
+!combo/tests/**/missions/combo-specs/*.txt
+!combo/tests/**/mod.json
+!workbench.json
+# gameplay.json is the STRIPPED file (tools/strip_gameplay.py); gameplay.full.json stays local (section 3)
+!gameplay.json
+!ground_modes.json
+!tools/cross-port.json
+!splices.json
+
+# 2. Never, whatever the kind: caches, builds, binaries, source/disc dumps.
+__pycache__/
+*.pyc
+build/
+cache/
+_build/
+ir/
+*.dat
+*.glb
+*.gltf
+*.dds
+*.png
+*.jpg
+*.ean
+*.bac
+*.bcm
+*.bdm
+*.emb
+*.emm
+*.emp
+*.npy
+*.npz
+*.bin
+*.iso
+*.words
+
+# 3. Authored but embed XV2 BAC/BCM/EAN numbers (clip names, frame windows, emitter dumps)
+#    or Melee disc values: excluded until the owner decides (see the commit message).
+gameplay.full.json
+fidelity.json
+ANIM-ROWS.json
+row-lengths.json
+FIDELITY.md
+PICKS.md
+PARITY.md
+combo/combo.json
+combo/fidelity-combos.json
+combo/FIDELITY-COMBOS.md
+tools/fx_emitter_template.json
+tools/move-crops.json
+tools/picks-specials.md

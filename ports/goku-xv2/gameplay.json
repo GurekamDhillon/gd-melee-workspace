@@ -1,0 +1,1539 @@
+{
+  "version": 1,
+  "geometry_reference_height": 14.0,
+  "classification": "destination design; candidate source timing; not source-runtime parity",
+  "source_ir": "ir/goku.xv2.ir.json",
+  "host_ir": "ir/host.melee.ir.json",
+  "lua": {
+    "script": "lua/goku.lua",
+    "state": {
+      "charge": "int",
+      "counter_damage": "float",
+      "stored": "int"
+    }
+  },
+  "jumps": {
+    "max": 2
+  },
+  "moves": [
+    {
+      "name": "jab1",
+      "parity": "move:jab",
+      "motions": [
+        44
+      ],
+      "tag": "jab",
+      "script": "moves/jab1.genoasm",
+      "windows": [
+        [
+          3,
+          2
+        ],
+        [
+          3,
+          2
+        ]
+      ],
+      "iasa": 18,
+      "design": {
+        "damage": 3,
+        "angle": 361,
+        "kbg": 50,
+        "bkb": 8,
+        "radius": 3.4,
+        "role": "HAND_L",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "HAND_L",
+          "ARM_L"
+        ]
+      }
+    },
+    {
+      "name": "jab2",
+      "parity": "move:jab",
+      "motions": [
+        45
+      ],
+      "tag": "jab",
+      "script": "moves/jab2.genoasm",
+      "windows": [
+        [
+          4,
+          2
+        ],
+        [
+          4,
+          2
+        ]
+      ],
+      "iasa": 20,
+      "design": {
+        "damage": 3,
+        "angle": 361,
+        "kbg": 50,
+        "bkb": 8,
+        "radius": 3.4,
+        "role": "HAND_R",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "HAND_R",
+          "ARM_R"
+        ]
+      }
+    },
+    {
+      "name": "jab3",
+      "parity": "move:jab",
+      "motions": [
+        46
+      ],
+      "tag": "jab",
+      "script": "moves/jab3.genoasm",
+      "windows": [
+        [
+          6,
+          3
+        ],
+        [
+          6,
+          3
+        ]
+      ],
+      "iasa": 30,
+      "design": {
+        "damage": 5,
+        "angle": 40,
+        "kbg": 100,
+        "bkb": 30,
+        "radius": 4.0,
+        "role": "FOOT_L",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "FOOT_L",
+          "LEG_L"
+        ]
+      }
+    },
+    {
+      "name": "rapid_jab",
+      "parity": "move:rapid_jab",
+      "motions": [
+        48
+      ],
+      "tag": "jab",
+      "script": "moves/rapid_jab.genoasm",
+      "windows": [
+        [
+          12,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          36,
+          3
+        ]
+      ],
+      "iasa": 49,
+      "design": {
+        "damage": 2,
+        "angle": 70,
+        "kbg": 25,
+        "bkb": 10,
+        "radius": 3.2,
+        "role": "FOOT_R",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "FOOT_R",
+          "FOOT_R",
+          "FOOT_R",
+          "FOOT_R",
+          "FOOT_R"
+        ]
+      }
+    },
+    {
+      "name": "dash_attack",
+      "parity": "move:dash_attack",
+      "motions": [
+        50
+      ],
+      "tag": "dash_attack",
+      "script": "moves/dash_attack.genoasm",
+      "windows": [
+        [
+          8,
+          3
+        ],
+        [
+          8,
+          3
+        ],
+        [
+          11,
+          4
+        ]
+      ],
+      "iasa": 36,
+      "design": {
+        "damage": 11,
+        "angle": 50,
+        "kbg": 80,
+        "bkb": 40,
+        "radius": 4.2,
+        "role": "FOOT_R",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "FOOT_R",
+          "LEG_R",
+          "FOOT_R"
+        ]
+      }
+    },
+    {
+      "name": "ftilt",
+      "parity": "move:ftilt",
+      "motions": [
+        51,
+        52,
+        53,
+        54,
+        55
+      ],
+      "tag": "tilt",
+      "script": "moves/ftilt.genoasm",
+      "windows": [
+        [
+          7,
+          3
+        ],
+        [
+          7,
+          3
+        ]
+      ],
+      "iasa": 26,
+      "design": {
+        "damage": 10,
+        "angle": 361,
+        "kbg": 100,
+        "bkb": 10,
+        "radius": 4.0,
+        "role": "FOOT_R",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "FOOT_R",
+          "LEG_R"
+        ]
+      }
+    },
+    {
+      "name": "utilt",
+      "parity": "move:utilt",
+      "motions": [
+        56
+      ],
+      "tag": "tilt",
+      "script": "moves/utilt.genoasm",
+      "windows": [
+        [
+          8,
+          5
+        ],
+        [
+          8,
+          5
+        ]
+      ],
+      "iasa": 28,
+      "design": {
+        "damage": 9,
+        "angle": 90,
+        "kbg": 120,
+        "bkb": 30,
+        "radius": 4.0,
+        "role": "HAND_R",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "HAND_R",
+          "ARM_R"
+        ]
+      }
+    },
+    {
+      "name": "dtilt",
+      "parity": "move:dtilt",
+      "motions": [
+        57
+      ],
+      "tag": "tilt",
+      "script": "moves/dtilt.genoasm",
+      "windows": [
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          4
+        ]
+      ],
+      "iasa": 22,
+      "design": {
+        "damage": 9,
+        "angle": 75,
+        "kbg": 110,
+        "bkb": 25,
+        "radius": 3.6,
+        "role": "FOOT_R",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "FOOT_R",
+          "LEG_R",
+          "FLOOR:2.4:7.5"
+        ]
+      }
+    },
+    {
+      "name": "fsmash",
+      "parity": "move:fsmash",
+      "motions": [
+        58,
+        59,
+        60,
+        61,
+        62
+      ],
+      "tag": "smash",
+      "script": "moves/fsmash.genoasm",
+      "windows": [
+        [
+          12,
+          4
+        ],
+        [
+          12,
+          4
+        ]
+      ],
+      "iasa": 42,
+      "design": {
+        "damage": 16,
+        "angle": 40,
+        "kbg": 98,
+        "bkb": 30,
+        "radius": 4.4,
+        "role": "HAND_R",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "HAND_R",
+          "ARM_R"
+        ]
+      }
+    },
+    {
+      "name": "usmash",
+      "parity": "move:usmash",
+      "motions": [
+        63
+      ],
+      "tag": "smash",
+      "script": "moves/usmash.genoasm",
+      "windows": [
+        [
+          12,
+          5
+        ],
+        [
+          12,
+          5
+        ]
+      ],
+      "iasa": 40,
+      "design": {
+        "damage": 16,
+        "angle": 85,
+        "kbg": 100,
+        "bkb": 35,
+        "radius": 4.4,
+        "role": "HAND_R",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "HAND_R",
+          "ARM_R"
+        ]
+      }
+    },
+    {
+      "name": "dsmash",
+      "parity": "move:dsmash",
+      "motions": [
+        64
+      ],
+      "tag": "smash",
+      "script": "moves/dsmash.genoasm",
+      "windows": [
+        [
+          8,
+          4
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          8,
+          4
+        ]
+      ],
+      "iasa": 38,
+      "design": {
+        "damage": 14,
+        "angle": 30,
+        "kbg": 95,
+        "bkb": 25,
+        "radius": 4.2,
+        "role": "FOOT_R",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "FOOT_R",
+          "HAND_L",
+          "FLOOR:2.4:8",
+          "FLOOR:2.4:-8"
+        ]
+      }
+    },
+    {
+      "name": "nair",
+      "parity": "move:nair",
+      "motions": [
+        65
+      ],
+      "tag": "aerial",
+      "script": "moves/nair.genoasm",
+      "windows": [
+        [
+          6,
+          4
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          10,
+          14
+        ]
+      ],
+      "iasa": 40,
+      "design": {
+        "damage": 12,
+        "angle": 361,
+        "kbg": 100,
+        "bkb": 20,
+        "radius": 4.0,
+        "role": "FOOT_R",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "FOOT_R",
+          "FOOT_L",
+          "FOOT_R"
+        ]
+      }
+    },
+    {
+      "name": "fair",
+      "parity": "move:fair",
+      "motions": [
+        66
+      ],
+      "tag": "aerial",
+      "script": "moves/fair.genoasm",
+      "windows": [
+        [
+          10,
+          3
+        ],
+        [
+          10,
+          3
+        ]
+      ],
+      "iasa": 40,
+      "design": {
+        "damage": 13,
+        "angle": 50,
+        "kbg": 100,
+        "bkb": 30,
+        "radius": 4.0,
+        "role": "FOOT_R",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "FOOT_R",
+          "LEG_R"
+        ]
+      }
+    },
+    {
+      "name": "bair",
+      "parity": "move:bair",
+      "motions": [
+        67
+      ],
+      "tag": "aerial",
+      "script": "moves/bair.genoasm",
+      "windows": [
+        [
+          6,
+          12
+        ],
+        [
+          6,
+          12
+        ]
+      ],
+      "iasa": 29,
+      "design": {
+        "damage": 11,
+        "angle": 361,
+        "kbg": 100,
+        "bkb": 12,
+        "radius": 6.0524,
+        "role": "LEG_R",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "LEG_R",
+          "UPLEG_R"
+        ]
+      }
+    },
+    {
+      "name": "uair",
+      "parity": "move:uair",
+      "motions": [
+        68
+      ],
+      "tag": "aerial",
+      "script": "moves/uair.genoasm",
+      "windows": [
+        [
+          6,
+          8
+        ],
+        [
+          6,
+          8
+        ]
+      ],
+      "iasa": 30,
+      "design": {
+        "damage": 11,
+        "angle": 80,
+        "kbg": 100,
+        "bkb": 25,
+        "radius": 6.0,
+        "role": "FOOT_L",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "FOOT_L",
+          "LEG_L"
+        ]
+      }
+    },
+    {
+      "name": "dair",
+      "parity": "move:dair",
+      "motions": [
+        69
+      ],
+      "tag": "aerial",
+      "script": "moves/dair.genoasm",
+      "windows": [
+        [
+          6,
+          3
+        ],
+        [
+          9,
+          6
+        ]
+      ],
+      "iasa": 36,
+      "design": {
+        "damage": 14,
+        "angle": 270,
+        "kbg": 90,
+        "bkb": 20,
+        "radius": 4.2,
+        "role": "FOOT_L",
+        "offset": [
+          0,
+          0,
+          0
+        ],
+        "window_roles": [
+          "FOOT_L",
+          "FOOT_L"
+        ]
+      }
+    },
+    {
+      "name": "pummel",
+      "parity": "move:pummel",
+      "motions": [
+        217
+      ],
+      "tag": "grab",
+      "script": "moves/pummel.genoasm",
+      "windows": [
+        [
+          5,
+          1
+        ]
+      ],
+      "iasa": 16,
+      "design": {
+        "damage": 2,
+        "angle": 80,
+        "kbg": 100,
+        "bkb": 0,
+        "radius": 3.2,
+        "role": "HAND_R",
+        "offset": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "name": "grab",
+      "parity": "move:grab",
+      "motions": [
+        212
+      ],
+      "tag": "grab",
+      "script": "moves/grab.genoasm",
+      "windows": [
+        [
+          8,
+          8
+        ]
+      ],
+      "iasa": 28
+    },
+    {
+      "name": "dash_grab",
+      "parity": "move:grab",
+      "motions": [
+        214
+      ],
+      "tag": "grab",
+      "script": "moves/dash_grab.genoasm",
+      "windows": [
+        [
+          8,
+          8
+        ]
+      ],
+      "iasa": 28
+    },
+    {
+      "name": "fthrow",
+      "parity": "move:fthrow",
+      "motions": [
+        219
+      ],
+      "tag": "throw",
+      "script": "moves/fthrow.genoasm",
+      "release": 18,
+      "iasa": 28,
+      "design": {
+        "damage": 7,
+        "angle": 45,
+        "kbg": 75,
+        "bkb": 40
+      }
+    },
+    {
+      "name": "bthrow",
+      "parity": "move:bthrow",
+      "motions": [
+        220
+      ],
+      "tag": "throw",
+      "script": "moves/bthrow.genoasm",
+      "release": 18,
+      "iasa": 28,
+      "design": {
+        "damage": 9,
+        "angle": 135,
+        "kbg": 85,
+        "bkb": 50
+      }
+    },
+    {
+      "name": "uthrow",
+      "parity": "move:uthrow",
+      "motions": [
+        221
+      ],
+      "tag": "throw",
+      "script": "moves/uthrow.genoasm",
+      "release": 18,
+      "iasa": 28,
+      "design": {
+        "damage": 6,
+        "angle": 90,
+        "kbg": 75,
+        "bkb": 40
+      }
+    },
+    {
+      "name": "dthrow",
+      "parity": "move:dthrow",
+      "motions": [
+        222
+      ],
+      "tag": "throw",
+      "script": "moves/dthrow.genoasm",
+      "release": 18,
+      "iasa": 28,
+      "design": {
+        "damage": 5,
+        "angle": 70,
+        "kbg": 65,
+        "bkb": 35
+      }
+    },
+    {
+      "name": "rapid_start",
+      "parity": "move:rapid_jab",
+      "motions": [
+        47
+      ],
+      "tag": "jab",
+      "script": "moves/rapid_start.genoasm",
+      "windows": []
+    },
+    {
+      "name": "rapid_end",
+      "parity": "move:rapid_jab",
+      "motions": [
+        49
+      ],
+      "tag": "jab",
+      "script": "moves/rapid_end.genoasm",
+      "windows": []
+    }
+  ],
+  "states": [
+    {
+      "name": "KameCharge",
+      "behavior": "geno.ground",
+      "subaction": 295,
+      "like": "motion:343",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "none",
+      "move_tag": "special",
+      "lua": {
+        "enter": "charge_enter",
+        "frame": "charge_frame"
+      }
+    },
+    {
+      "name": "KameTap",
+      "behavior": "geno.ground",
+      "subaction": 296,
+      "like": "motion:343",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "interrupt",
+      "move_tag": "special"
+    },
+    {
+      "name": "KameMid",
+      "behavior": "geno.ground",
+      "subaction": 297,
+      "like": "motion:343",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "interrupt",
+      "move_tag": "special"
+    },
+    {
+      "name": "KameFull",
+      "behavior": "geno.ground",
+      "subaction": 298,
+      "like": "motion:343",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "interrupt",
+      "move_tag": "special"
+    },
+    {
+      "name": "Rush",
+      "behavior": "geno.ground",
+      "subaction": 299,
+      "like": "motion:345",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "interrupt",
+      "move_tag": "special",
+      "lua": {
+        "enter": "rush_enter",
+        "frame": "rush_frame"
+      }
+    },
+    {
+      "name": "Recovery",
+      "behavior": "geno.cape",
+      "subaction": 300,
+      "like": "motion:347",
+      "ledge": "both",
+      "iasa": "interrupt",
+      "move_tag": "special"
+    },
+    {
+      "name": "RecoveryAir",
+      "behavior": "geno.cape",
+      "subaction": 300,
+      "like": "motion:348",
+      "ledge": "both",
+      "iasa": "interrupt",
+      "move_tag": "special"
+    },
+    {
+      "name": "Counter",
+      "behavior": "geno.ground",
+      "subaction": 301,
+      "like": "motion:349",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "interrupt",
+      "move_tag": "special",
+      "counter": {
+        "from": 4,
+        "to": 22,
+        "target": "geno:Riposte",
+        "negate": true
+      },
+      "lua": {
+        "frame": "counter_frame"
+      }
+    },
+    {
+      "name": "Riposte",
+      "behavior": "geno.ground",
+      "subaction": 302,
+      "like": "motion:349",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "interrupt",
+      "move_tag": "special",
+      "lua": {
+        "enter": "riposte_enter",
+        "frame": "riposte_frame"
+      }
+    },
+    {
+      "name": "ITEnd",
+      "behavior": "geno.cape.end",
+      "subaction": "clip:ITEnd",
+      "like": "motion:347",
+      "ledge": "both",
+      "move_tag": "special",
+      "iasa": "interrupt"
+    },
+    {
+      "name": "ITEndAir",
+      "behavior": "geno.cape.end",
+      "subaction": "clip:ITEnd",
+      "like": "motion:348",
+      "ledge": "both",
+      "move_tag": "special",
+      "iasa": "interrupt"
+    },
+    {
+      "name": "KiCharge",
+      "behavior": "geno.ground",
+      "subaction": "clip:KiCharge",
+      "like": "motion:349",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "none",
+      "move_tag": "special",
+      "lua": {
+        "frame": "kicharge_frame"
+      }
+    },
+    {
+      "name": "KameSuper",
+      "behavior": "geno.ground",
+      "subaction": "clip:KameSuper",
+      "like": "motion:343",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "interrupt",
+      "move_tag": "special"
+    },
+    {
+      "name": "RushCombo",
+      "behavior": "geno.ground",
+      "subaction": "clip:RushCombo",
+      "like": "motion:345",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "interrupt",
+      "move_tag": "special",
+      "lua": {
+        "enter": "rushcombo_enter",
+        "frame": "rushcombo_frame"
+      }
+    }
+  ],
+  "specials": {
+    "n": "geno:KameCharge",
+    "air_n": "geno:KameCharge",
+    "s": "geno:Rush",
+    "air_s": "geno:Rush",
+    "hi": "geno:Recovery",
+    "air_hi": "geno:RecoveryAir",
+    "lw": "geno:Counter",
+    "air_lw": "geno:Counter"
+  },
+  "subactions": [
+    {
+      "index": 295,
+      "file": "moves/kame_charge.words",
+      "move_tag": "special"
+    },
+    {
+      "index": 296,
+      "file": "moves/kame_tap.words",
+      "move_tag": "special"
+    },
+    {
+      "index": 297,
+      "file": "moves/kame_mid.words",
+      "move_tag": "special"
+    },
+    {
+      "index": 298,
+      "file": "moves/kame_full.words",
+      "move_tag": "special"
+    },
+    {
+      "index": 299,
+      "file": "moves/rush.words",
+      "move_tag": "special"
+    },
+    {
+      "index": 300,
+      "file": "moves/recovery.words",
+      "move_tag": "special"
+    },
+    {
+      "index": 301,
+      "file": "moves/counter.words",
+      "move_tag": "special"
+    },
+    {
+      "index": 302,
+      "file": "moves/riposte.words",
+      "move_tag": "special"
+    }
+  ],
+  "special_adaptations": [
+    {
+      "name": "KameCharge",
+      "parity": "move:special_n",
+      "script": "moves/kame_charge.genoasm"
+    },
+    {
+      "name": "KameTap",
+      "parity": "move:special_n",
+      "script": "moves/kame_tap.genoasm"
+    },
+    {
+      "name": "KameMid",
+      "parity": "move:special_n",
+      "script": "moves/kame_mid.genoasm"
+    },
+    {
+      "name": "KameFull",
+      "parity": "move:special_n",
+      "script": "moves/kame_full.genoasm"
+    },
+    {
+      "name": "Rush",
+      "parity": "move:special_s",
+      "script": "moves/rush.genoasm"
+    },
+    {
+      "name": "Recovery",
+      "parity": "move:special_hi",
+      "script": "moves/recovery.genoasm"
+    },
+    {
+      "name": "Counter",
+      "parity": "move:special_lw",
+      "script": "moves/counter.genoasm"
+    },
+    {
+      "name": "Riposte",
+      "parity": "move:special_lw",
+      "script": "moves/riposte.genoasm"
+    },
+    {
+      "name": "KameSuper",
+      "parity": "move:special_n",
+      "script": "moves/kame_super.genoasm"
+    },
+    {
+      "name": "RushCombo",
+      "parity": "move:special_s",
+      "script": "moves/rushcombo.genoasm"
+    },
+    {
+      "name": "ITEnd",
+      "parity": "move:special_hi",
+      "script": "moves/itend.genoasm"
+    }
+  ],
+  "articles": [
+    {
+      "name": "KameTap",
+      "lifetime": 22,
+      "velocity": [
+        3.0,
+        0
+      ],
+      "spawn": [
+        12,
+        10
+      ],
+      "max_live": 1,
+      "homing": {
+        "turn": 0,
+        "range": 0,
+        "delay": 0
+      },
+      "despawn": {
+        "hit": false,
+        "shield": true,
+        "stage": true,
+        "clank": true
+      },
+      "hitboxes": [
+        {
+          "slot": 0,
+          "damage": 6,
+          "size": 3.0,
+          "offset": [
+            0,
+            0,
+            -0.0
+          ],
+          "angle": 361,
+          "kbg": 60,
+          "wkb": 0,
+          "bkb": 25,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 1
+        },
+        {
+          "slot": 1,
+          "damage": 6,
+          "size": 3.0,
+          "offset": [
+            0,
+            0,
+            -3.0
+          ],
+          "angle": 361,
+          "kbg": 60,
+          "wkb": 0,
+          "bkb": 25,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 1
+        },
+        {
+          "slot": 2,
+          "damage": 6,
+          "size": 3.0,
+          "offset": [
+            0,
+            0,
+            -6.0
+          ],
+          "angle": 361,
+          "kbg": 60,
+          "wkb": 0,
+          "bkb": 25,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 1
+        },
+        {
+          "slot": 3,
+          "damage": 6,
+          "size": 3.0,
+          "offset": [
+            0,
+            0,
+            -9.0
+          ],
+          "angle": 361,
+          "kbg": 60,
+          "wkb": 0,
+          "bkb": 25,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 1
+        }
+      ],
+      "scale": 1.0
+    },
+    {
+      "name": "KameMid",
+      "lifetime": 28,
+      "velocity": [
+        3.5,
+        0
+      ],
+      "spawn": [
+        12,
+        10
+      ],
+      "max_live": 1,
+      "homing": {
+        "turn": 0,
+        "range": 0,
+        "delay": 0
+      },
+      "despawn": {
+        "hit": false,
+        "shield": true,
+        "stage": true,
+        "clank": true
+      },
+      "hitboxes": [
+        {
+          "slot": 0,
+          "damage": 12,
+          "size": 3.2,
+          "offset": [
+            0,
+            0,
+            -0.0
+          ],
+          "angle": 45,
+          "kbg": 80,
+          "wkb": 0,
+          "bkb": 35,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 2
+        },
+        {
+          "slot": 1,
+          "damage": 12,
+          "size": 3.2,
+          "offset": [
+            0,
+            0,
+            -3.2
+          ],
+          "angle": 45,
+          "kbg": 80,
+          "wkb": 0,
+          "bkb": 35,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 2
+        },
+        {
+          "slot": 2,
+          "damage": 12,
+          "size": 3.2,
+          "offset": [
+            0,
+            0,
+            -6.4
+          ],
+          "angle": 45,
+          "kbg": 80,
+          "wkb": 0,
+          "bkb": 35,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 2
+        },
+        {
+          "slot": 3,
+          "damage": 12,
+          "size": 3.2,
+          "offset": [
+            0,
+            0,
+            -9.600000000000001
+          ],
+          "angle": 45,
+          "kbg": 80,
+          "wkb": 0,
+          "bkb": 35,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 2
+        }
+      ],
+      "scale": 1.2
+    },
+    {
+      "name": "KameFull",
+      "lifetime": 34,
+      "velocity": [
+        4.0,
+        0
+      ],
+      "spawn": [
+        12,
+        10
+      ],
+      "max_live": 1,
+      "homing": {
+        "turn": 0,
+        "range": 0,
+        "delay": 0
+      },
+      "despawn": {
+        "hit": false,
+        "shield": true,
+        "stage": true,
+        "clank": true
+      },
+      "hitboxes": [
+        {
+          "slot": 0,
+          "damage": 20,
+          "size": 3.6,
+          "offset": [
+            0,
+            0,
+            -0.0
+          ],
+          "angle": 40,
+          "kbg": 90,
+          "wkb": 0,
+          "bkb": 45,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 2
+        },
+        {
+          "slot": 1,
+          "damage": 20,
+          "size": 3.6,
+          "offset": [
+            0,
+            0,
+            -3.6
+          ],
+          "angle": 40,
+          "kbg": 90,
+          "wkb": 0,
+          "bkb": 45,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 2
+        },
+        {
+          "slot": 2,
+          "damage": 20,
+          "size": 3.6,
+          "offset": [
+            0,
+            0,
+            -7.2
+          ],
+          "angle": 40,
+          "kbg": 90,
+          "wkb": 0,
+          "bkb": 45,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 2
+        },
+        {
+          "slot": 3,
+          "damage": 20,
+          "size": 3.6,
+          "offset": [
+            0,
+            0,
+            -10.8
+          ],
+          "angle": 40,
+          "kbg": 90,
+          "wkb": 0,
+          "bkb": 45,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 2
+        }
+      ],
+      "scale": 1.4
+    },
+    {
+      "name": "KameOrb",
+      "lifetime": 7,
+      "velocity": [
+        0,
+        0
+      ],
+      "spawn": [
+        7,
+        9.5
+      ],
+      "max_live": 3,
+      "homing": {
+        "turn": 0,
+        "range": 0,
+        "delay": 0
+      },
+      "despawn": {
+        "hit": false,
+        "shield": false,
+        "stage": false,
+        "clank": false
+      },
+      "hitboxes": [],
+      "scale": 0.5
+    },
+    {
+      "name": "KameSuper",
+      "lifetime": 44,
+      "velocity": [
+        4.6,
+        0
+      ],
+      "spawn": [
+        12,
+        10
+      ],
+      "max_live": 1,
+      "homing": {
+        "turn": 0,
+        "range": 0,
+        "delay": 0
+      },
+      "despawn": {
+        "hit": false,
+        "shield": true,
+        "stage": true,
+        "clank": true
+      },
+      "hitboxes": [
+        {
+          "slot": 0,
+          "damage": 32,
+          "size": 5.2,
+          "offset": [
+            0,
+            0,
+            -0.0
+          ],
+          "angle": 40,
+          "kbg": 75,
+          "wkb": 0,
+          "bkb": 60,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 2
+        },
+        {
+          "slot": 1,
+          "damage": 32,
+          "size": 5.2,
+          "offset": [
+            0,
+            0,
+            -5.0
+          ],
+          "angle": 40,
+          "kbg": 75,
+          "wkb": 0,
+          "bkb": 60,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 2
+        },
+        {
+          "slot": 2,
+          "damage": 32,
+          "size": 5.2,
+          "offset": [
+            0,
+            0,
+            -10.0
+          ],
+          "angle": 40,
+          "kbg": 75,
+          "wkb": 0,
+          "bkb": 60,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 2
+        },
+        {
+          "slot": 3,
+          "damage": 32,
+          "size": 5.2,
+          "offset": [
+            0,
+            0,
+            -15.0
+          ],
+          "angle": 40,
+          "kbg": 75,
+          "wkb": 0,
+          "bkb": 60,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 2
+        }
+      ],
+      "scale": 1.9
+    }
+  ],
+  "toon": {
+    "bands": 3,
+    "shadow": 0.6,
+    "rim": 0.16,
+    "outline": 0.3,
+    "outline_dark": 0.8,
+    "softness": 0.03,
+    "unlit": true,
+    "light": [
+      0.45,
+      0.65,
+      0.6
+    ],
+    "shadow_tint": [
+      0.62,
+      0.66,
+      0.86
+    ]
+  },
+  "cape": {
+    "w00": 0.0,
+    "w01": 0.0,
+    "w02": 4.0,
+    "w03": 6.5,
+    "w04": 4.0,
+    "w05": 6.5,
+    "steer_frame": 8,
+    "decide_frame": 22,
+    "neutral_x": 0.3,
+    "attack_buttons": 0
+  }
+}

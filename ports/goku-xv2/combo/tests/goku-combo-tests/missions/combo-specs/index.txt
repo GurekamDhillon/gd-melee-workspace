@@ -1,0 +1,13 @@
+light5-finisher
+light2-heavy-fwd
+light4-heavy-fwd
+light3-heavy-down
+light3-launcher-air
+light2-dragon-rush
+light1-ki-volley
+grab-uthrow
+edge-nair-dair
+light3-launcher-nair
+rush-combo
+light3-launcher-air-string
+light3-launcher-nair-string

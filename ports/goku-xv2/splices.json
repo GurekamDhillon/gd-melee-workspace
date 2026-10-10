@@ -1,0 +1,36 @@
+{
+  "schema": "goku-splices/1",
+  "_about": "Animation splice recipes (tools/splice.py; format in its docstring). Clip names and frame numbers only, no animation data. Every recipe is built as a CLIPS library row `s<recipe>` so it can be viewed; only a recipe with \"wired\": true replaces its target row(s). All three below are EXAMPLES from _build/goku-xv2/repick-shortlists.md ideas: not wired, not shipped, until the owner picks one.",
+  "recipes": {
+    "utilt_windup_strike": {
+      "example": true,
+      "wired": false,
+      "move": "utilt",
+      "note": "EXAMPLE (shortlist item 2): ATC_027 rising windup, ATC_004 overhead uppercut strike, then back to the floating idle. hit mark = ATC_004 f12 (the R hand rising) lands on output f10, inside utilt's window f8-12. 29 frames = the row's length.",
+      "blend": 3,
+      "segments": [
+        {"clip": "GOK_ATC_027", "from": 1, "to": 5},
+        {"clip": "GOK_ATC_004", "from": 10, "to": 20, "marks": {"hit": 12}},
+        {"clip": "GOK_BAS_STAND_S", "from": 0, "to": 6}
+      ]
+    },
+    "dair_thrust_hold": {
+      "example": true,
+      "wired": false,
+      "move": "dair",
+      "note": "EXAMPLE (shortlist item 6): ATC_024 f2-14 (knee tuck, then the R foot thrust down, stopping before the turn-around kick) with the extended leg held to the row's 39 frames. hit mark = f8 (foot at -6.5) on output f6, the start of dair's first window.",
+      "segments": [
+        {"clip": "GOK_ATC_024", "from": 2, "to": 14, "hold": 26, "marks": {"hit": 8}}
+      ]
+    },
+    "bair_crossport_keep": {
+      "example": true,
+      "wired": false,
+      "row": "AttackAirB",
+      "note": "EXAMPLE (the shipped bair kept as a cross-port segment): Luigi's AttackAirB retargeted on Goku, f0-29, with its thigh-stretch bone-scale track. Baked alone it must equal the existing cross-port row exactly; add segments around it (an XV2 lead-in, a mirrored copy) to splice onto it.",
+      "segments": [
+        {"clip": "melee:luigi/AttackAirB", "from": 0, "to": 29, "marks": {"hit": 6}}
+      ]
+    }
+  }
+}

@@ -57,6 +57,7 @@ class Clip:
         self.times = None
         self.chan = {}             # (bone name, path) -> (times, values)
         self.root_motion = False
+        self.scale_bones = set()   # bones whose scale track is carried into the bank (fighter.json clips.scale_bones; empty = scale is dropped, as ever)
         self.loop = None
         self.hit_frames = []
         self.rows = []             # engine rows this clip is the authored clip of
@@ -205,6 +206,7 @@ def _read_clips(f):
     cfg_c = f.cfg.get("clips", {})
     side = f.sidecar.get("clips", {})
     root_cfg = set(cfg_c.get("root_motion", []))
+    scale_cfg = cfg_c.get("scale_bones", {})
     loop_cfg = cfg_c.get("loop", {})
     ignore = set(cfg_c.get("ignore", []))
     for an in g.get("animations", []):
@@ -229,6 +231,7 @@ def _read_clips(f):
         loop = loop_cfg.get(name, sc.get("loop", ex.get("geno_loop")))
         c.loop = loop if loop is None else bool(loop)
         c.root_motion = (name in root_cfg) or bool(sc.get("root_motion")) or bool(ex.get("geno_root_motion"))
+        c.scale_bones = set(scale_cfg.get(name, []))
         f.clips[name] = c
         f.clip_order.append(name)
     legacy = cfg_c.get("legacy_manifest")

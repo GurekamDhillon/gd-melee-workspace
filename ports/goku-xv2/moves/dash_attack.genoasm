@@ -1,0 +1,16 @@
+# PICK: provisional (attack-feel pass 2026-10-08). XV2 heavy string (BAC 337): flying side kick; clean f8-10, late f11-14
+# Source: BAC 337 clip GOK_ATC_011, strike f21; crop from f13. Numbers are Melee design values, not XV2 data.
+PUT ANIM_RATE 1.0
+wait_until 6
+sfx behavior=1 sfx_id=165 volume=127 panning=64
+wait_until 8
+hitbox slot=0 joint=@FOOT_R@ damage=11 size=2.80 x=0.00 y=0.00 z=0.00 angle=50 kbg=80 fkb=0 bkb=40
+hitbox slot=1 joint=@LEG_R@ damage=9 size=2.27 x=0.00 y=0.00 z=0.00 angle=50 kbg=80 fkb=0 bkb=40
+wait 3
+clear_hitboxes
+wait_until 11
+hitbox slot=0 joint=@FOOT_R@ damage=7 size=2.40 x=0.00 y=0.00 z=0.00 angle=361 kbg=70 fkb=0 bkb=20
+wait 4
+clear_hitboxes
+wait_until 36
+iasa
