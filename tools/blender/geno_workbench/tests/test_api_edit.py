@@ -110,3 +110,84 @@ def test_requests_send_the_row_name_not_the_engine_clip_label():
             assert s.goto_problem(0), s.last_error
     finally:
         fake.stop()
+
+
+def _snapshot(s):
+    return (s.row, s.loaded_row, s.frame, dict(s.info or {}), sorted(s.cache.frames))
+
+
+def test_unconfigured_rebuild_keeps_row_frame_and_cache():
+    fake, s = make()
+    try:
+        s.prefetch = True
+        s.load_row("jab"); s.set_frame(7)
+        s.start_prefetch()
+        end = __import__("time").time() + 5
+        while not s.cache_ready() and __import__("time").time() < end:
+            __import__("time").sleep(0.01)
+        before = _snapshot(s)
+        assert before[4], "cache should be filled"
+        fake.rebuild_unconfigured = True
+        assert s.rebuild_reload() is False
+        assert "rebuild not configured" in s.last_error
+        assert _snapshot(s) == before and s.connected
+        # and it can be done twice in a row without ever losing the row
+        assert s.rebuild_reload() is False and _snapshot(s) == before
+    finally:
+        fake.stop()
+
+
+def test_failed_build_keeps_row_frame_and_cache():
+    fake, s = make()
+    try:
+        s.load_row("jab"); s.set_frame(7); s.edit_hitbox(row="jab", ordinal=0, size=3.5)
+        before = _snapshot(s)
+        fake.fail_next = "build failed"
+        assert s.rebuild_reload() is False and s.stale
+        assert _snapshot(s) == before
+        assert s.rebuild_reload() and s.row == "jab" and s.frame == 7 and not s.stale
+    finally:
+        fake.stop()
+
+
+def test_failed_reload_keeps_row():
+    fake, s = make()
+    try:
+        s.load_row("jab"); s.set_frame(7)
+        before = _snapshot(s)
+        real = fake._execute
+        def boom(tool, args):
+            if tool == "reload":
+                raise ValueError("reload timed out")
+            return real(tool, args)
+        fake._execute = boom
+        assert s.rebuild_reload() is False
+        assert "reload timed out" in s.last_error and (s.row, s.frame) == ("jab", 7)
+    finally:
+        fake.stop()
+
+
+def test_project_without_build_or_roles_is_refused_with_a_status(tmp_path):
+    import json
+    (tmp_path / "plan.json").write_text(json.dumps({"joints": []}))
+    (tmp_path / "workbench.json").write_text(json.dumps(
+        {"schema": "workbench/1", "plan": "plan.json", "rebuild": []}))
+    fake, s = make()
+    try:
+        s.load_row("jab")
+        assert api.set_project(str(tmp_path))
+        sess = api.session()
+        assert sess.can_rebuild is False and sess.has_roles is False
+        # act on the module session, as the panel does
+        sess.client_factory = s.client_factory
+        sess.connect(); sess.load_row("jab")
+        calls = len(fake.calls)
+        assert sess.rebuild_reload() is False
+        assert "no build configured" in sess.status and sess.last_error == ""
+        assert sess.run_checks() is False and "no role map" in sess.status
+        assert sess.suggest_bone(0) is False and "no role map" in sess.status
+        assert len(fake.calls) == calls, "refused actions must not call the engine"
+        assert sess.row == "jab"
+    finally:
+        api.session().can_rebuild = api.session().has_roles = True
+        fake.stop()

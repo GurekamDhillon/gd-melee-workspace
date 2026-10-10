@@ -210,6 +210,8 @@ STRINGS: dict[str, str] = {
     "edit_hitbox_help": "Send only changed fields to the workbench source editor",
     "rebuild_reload": "Rebuild + reload",
     "rebuild_reload_help": "Rebuild source, reload the engine and restore this move and frame",
+    "rebuild_unavailable": "This project has no build configured (workbench.json rebuild): Rebuild + reload is unavailable",
+    "no_roles": "This project has no role map (plan has no roles): checks and bone suggestions are unavailable",
     "stale_banner": "Source edited: rebuild + reload needed",
     "stale_overlays": "Overlays show the engine's previous build.",
     "no_changes": "no hitbox fields changed",

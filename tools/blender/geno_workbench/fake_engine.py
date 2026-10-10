@@ -432,6 +432,7 @@ class FakeWorkbench:
         self.stale = False
         self.fail_next: str | None = None
         self.build_mode: str = "full"
+        self.rebuild_unconfigured = False   # a project with no build: rebuild answers "rebuild not configured"
         self.label_rows_by_clip = False
         self.bare_load_row = False
         self.checks_unload = False   # run_checks fails the way the real one did: row dropped, then frame 0 asked for
@@ -648,6 +649,8 @@ class FakeWorkbench:
         if tool == "edit_hitbox":
             return self._edit_hitbox(args)
         if tool == "rebuild":
+            if self.rebuild_unconfigured:
+                raise ValueError("rebuild not configured")
             self._built = copy.deepcopy(self._source)
             self.stale = False
             return {"rebuilt": True, "mode": self.build_mode, "build_seconds": 1.5}

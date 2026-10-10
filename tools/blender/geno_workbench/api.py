@@ -84,6 +84,9 @@ class WbSession:
         self.plan_path = ""
         self.art_blend = ""
         self.art_glb = ""
+        # what the project says it can do (workbench.json "rebuild", the plan's "roles"); True when unknown
+        self.can_rebuild = True
+        self.has_roles = True
         self.bone_aliases: dict[str, str] = {}
         # engine frame the add-on calibrates at (action frame = this - 1); 1 unless retail blending needs a later one
         self.calibration_frame = 1
@@ -525,6 +528,8 @@ class WbSession:
     def run_checks(self) -> bool:
         """Run the engine's checks. They sweep rows and frames, so the engine ends up elsewhere:
         the loaded row is put back whether or not the checks succeed (the session never loses its row)."""
+        if not self.has_roles:
+            return self.blocked(STRINGS["no_roles"])
         self.pause_prefetch()
 
         def action():
@@ -631,11 +636,21 @@ class WbSession:
 
         return self._run(action)
 
+    def blocked(self, reason: str) -> bool:
+        """Refuse an action the project cannot do: a plain status message, no error, nothing touched."""
+        self.set_status(reason)
+        return False
+
     def rebuild_reload(self) -> bool:
-        """Restore the selection, source list, pose and overlays after reload."""
+        """Restore the selection, source list, pose and overlays after reload.
+
+        A failure at any step (no build configured, build failure, timeout, reload error) leaves the
+        loaded row, frame and frame cache as they were; only a successful reload re-fetches.
+        """
+        if not self.can_rebuild:
+            return self.blocked(STRINGS["rebuild_unavailable"])
         saved_row, saved_frame = self.source_row, self.frame
-        self.pending_frame = None
-        self.cache.reset("rebuild")
+        self.pause_prefetch()   # the worker must not race the engine; the cached frames stay
 
         def action():
             # Every failure from here must leave the stale indication visible.
@@ -643,6 +658,8 @@ class WbSession:
             started = time.monotonic()
             built = self._request("rebuild")
             self._request("reload")
+            self.pending_frame = None
+            self.cache.reset("rebuild")   # the engine now runs the new build: old frames are out of date
             rows = self._items(self._request("list_rows"), "rows")
             parsed = None
             boxes = []
@@ -680,9 +697,16 @@ class WbSession:
                 )
             return f"{text}; {self.hook_error}" if self.hook_error else text
 
-        return self._run(action)
+        try:
+            ok = self._run(action)
+        finally:
+            if self.connected:
+                self.start_prefetch()   # resume the fill the pause stopped (only missing frames are fetched)
+        return ok
 
     def suggest_bone(self, ordinal) -> bool:
+        if not self.has_roles:
+            return self.blocked(STRINGS["no_roles"])
         def action():
             row = self._row_name(self.source_row)
             index = self._integer(ordinal, "ordinal")
@@ -751,6 +775,18 @@ def _workspace_root(start: str) -> str:
         here = parent
 
 
+def _plan_has_roles(plan_path: str) -> bool:
+    """False only when the plan is readable and carries no role map; unknown counts as yes."""
+    if not plan_path:
+        return True
+    try:
+        with open(plan_path, "r", encoding="utf-8-sig") as source:
+            plan = json.load(source)
+    except (OSError, ValueError):
+        return True
+    return not isinstance(plan, dict) or bool(plan.get("roles"))
+
+
 def set_project(project_dir: str) -> bool:
     """Read project paths without writing project or package data."""
     sess = session()
@@ -789,6 +825,9 @@ def set_project(project_dir: str) -> bool:
         if isinstance(cal_frame, bool) or not isinstance(cal_frame, int) or cal_frame < 1:
             raise ValueError("art.calibration_frame must be an integer >= 1")
         sess.calibration_frame = cal_frame
+        rebuild = config.get("rebuild")
+        sess.can_rebuild = bool(rebuild) if "rebuild" in config else True
+        sess.has_roles = _plan_has_roles(sess.plan_path)
     except (OSError, ValueError, TypeError) as exc:
         sess.last_error = str(exc)
         sess.status = sess._status_with_stale(
