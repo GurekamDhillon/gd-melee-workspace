@@ -74,6 +74,80 @@ void registerHitboxCommands(Session &s) {
             return session.commit(ctx, "edit_hitbox", args,
                 t("Edit hitbox #%1 in %2", "Edit hitbox #%1 in %2").arg(ordinal).arg(row), changes);
         }});
+    s.registry().add({"list_hitbox_roles", t("List hitbox bone roles", "List hitbox bone roles"),
+        commandSchema(), false,
+        [](const QJsonObject &, CommandContext &ctx) {
+            QJsonArray roles;
+            for (const auto &role : ctx.session.data().availableRoles())
+                roles.append(QJsonObject{{"name", role.name}, {"group", role.group},
+                    {"joint", ctx.session.data().jointForRole(role.name)}});
+            return QJsonObject{{"roles", roles}, {"has_plan", ctx.session.data().hasPlan()}};
+        }});
+    auto addProperties = QJsonObject{{"row", argType("string")}, {"bone", argType("string")},
+        {"frame", argType("integer")}, {"duration", argType("integer")}, {"propose", argType("boolean")}};
+    for (const char *key : {"damage", "size", "x", "y", "z"}) addProperties[key] = argType("number");
+    for (const char *key : {"angle", "kbg", "fkb", "bkb"}) addProperties[key] = argType("integer");
+    s.registry().add({"add_hitbox", t("Add a source hitbox", "Add a source hitbox"),
+        commandSchema(addProperties, {"row", "frame"}), true,
+        [](const QJsonObject &args, CommandContext &ctx) {
+            auto &session = ctx.session;
+            const QString row = args["row"].toString();
+            needRow(session, row);
+            HitboxAdd add;
+            add.frame = intArg(args, "frame");
+            if (args.contains("duration")) add.duration = intArg(args, "duration", 1);
+            QString bone;
+            if (args.contains("bone")) bone = roleName(args["bone"].toString());
+            else {
+                // Default: the floor anchor, else the first role the plan resolves.
+                const auto roles = session.data().availableRoles();
+                for (const auto &role : roles) if (role.name == "FLOOR") bone = role.name;
+                if (bone.isEmpty() && !roles.isEmpty()) bone = roles.first().name;
+            }
+            if (bone.isEmpty() || (session.data().hasPlan() && session.data().jointForRole(bone) < 0))
+                throw CommandError{t("unknown bone: %1", "unknown bone: %1").arg(bone)};
+            add.joint = bone;
+            if (args.contains("damage")) add.damage = numberArg(args, "damage");
+            if (args.contains("size")) add.size = numberArg(args, "size");
+            if (add.damage < 0 || add.size < 0)
+                throw CommandError{t("damage and size must be nonnegative", "damage and size must be nonnegative")};
+            if (args.contains("x")) add.x = numberArg(args, "x");
+            if (args.contains("y")) add.y = numberArg(args, "y");
+            if (args.contains("z")) add.z = numberArg(args, "z");
+            if (args.contains("angle")) add.angle = intArg(args, "angle", std::numeric_limits<int>::min());
+            if (args.contains("kbg")) add.kbg = intArg(args, "kbg");
+            if (args.contains("fkb")) add.fkb = intArg(args, "fkb");
+            if (args.contains("bkb")) add.bkb = intArg(args, "bkb");
+            ctx.propose |= args["propose"].toBool();
+            QString error;
+            int ordinal = -1;
+            const auto edits = session.data().addHitbox(row, add, &ordinal, &error);
+            if (!error.isEmpty()) throw CommandError{error};
+            QVector<FileChange> changes;
+            for (const auto &change : edits) if (change.before != change.after) changes.append(change);
+            auto result = session.commit(ctx, "add_hitbox", args,
+                t("Add hitbox to %1 at frame %2", "Add hitbox to %1 at frame %2").arg(row).arg(add.frame), changes);
+            result["ordinal"] = ordinal;
+            result["bone"] = bone;
+            return result;
+        }});
+    s.registry().add({"delete_hitbox", t("Delete a source hitbox", "Delete a source hitbox"),
+        commandSchema(QJsonObject{{"row", argType("string")}, {"ordinal", argType("integer")},
+                                  {"propose", argType("boolean")}}, {"row", "ordinal"}), true,
+        [](const QJsonObject &args, CommandContext &ctx) {
+            auto &session = ctx.session;
+            const QString row = args["row"].toString();
+            const int ordinal = intArg(args, "ordinal");
+            needRow(session, row);
+            ctx.propose |= args["propose"].toBool();
+            QString error;
+            const auto edits = session.data().removeHitbox(row, ordinal, &error);
+            if (!error.isEmpty()) throw CommandError{error};
+            QVector<FileChange> changes;
+            for (const auto &change : edits) if (change.before != change.after) changes.append(change);
+            return session.commit(ctx, "delete_hitbox", args,
+                t("Delete hitbox #%1 in %2", "Delete hitbox #%1 in %2").arg(ordinal).arg(row), changes);
+        }});
     s.registry().add({"suggest_hitbox_bone", t("Suggest the active limb for a hitbox", "Suggest the active limb for a hitbox"),
         commandSchema(rowOrdinal, {"row", "ordinal"}), false,
         [](const QJsonObject &args, CommandContext &ctx) {

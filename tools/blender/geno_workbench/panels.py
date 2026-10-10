@@ -206,6 +206,12 @@ class GENO_WB_PT_hitbox(bpy.types.Panel):
             apply.ordinal = settings.hitbox_index
         else:
             self.layout.label(text=STRINGS["no_hitboxes"])
+        authoring = self.layout.row(align=True)
+        authoring.enabled = value.connected and bool(value.source_row)
+        authoring.operator("geno_wb.add_hitbox", text=STRINGS["add_hitbox"], icon="ADD")
+        remove = authoring.row(align=True)
+        remove.enabled = value.connected and selected
+        remove.operator("geno_wb.delete_hitbox", text=STRINGS["delete_hitbox"], icon="REMOVE")
         self.layout.operator(
             "geno_wb.rebuild_reload",
             text=STRINGS["rebuild_reload"], icon="FILE_REFRESH",

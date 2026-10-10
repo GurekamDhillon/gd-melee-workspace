@@ -31,6 +31,9 @@ EDITABLE = (
     "start_frame", "end_frame",
 )
 
+# what add_hitbox may set besides the frame and bone; the server fills the rest with defaults
+ADDABLE = frozenset(("damage", "size", "x", "y", "z", "angle", "kbg", "fkb", "bkb", "duration"))
+
 _TRANSPORT_FAILURES = (
     "closed", "refused", "timeout", "timed out", "connection reset",
     "reset by peer", "broken pipe", "connection aborted", "connection lost",
@@ -75,6 +78,8 @@ class WbSession:
         self.last_rebuild: dict | None = None  # {mode, build_seconds, total_seconds} of the last Rebuild + reload
         self.last_error = ""
         self.suggestion: dict | None = None
+        self.roles: list[dict] = []   # list_hitbox_roles: [{name, group, joint}] the project's joint=@ROLE@ names (empty: unknown)
+        self.last_added: int | None = None   # ordinal of the hitbox the last add_hitbox created
         self.jointmap = None
         self.calibration = None
         self.on_change: Callable[[WbSession], None] | None = None
@@ -322,12 +327,21 @@ class WbSession:
         self.jointmap = None
         self.calibration = None
         self.hook_error = ""
+        self.roles = self._load_roles()
         # Reconnecting is not evidence that an edited source was rebuilt.
         return self.set_status(
             STRINGS["connected"].format(
                 engine=result.get("status", STRINGS["unknown"])
             )
         )
+
+    def _load_roles(self) -> list[dict]:
+        """The bone names the project's scripts accept; a server without the command leaves the list empty."""
+        try:
+            roles = self._items(self._request("list_hitbox_roles"), "roles")
+        except client.WbError:
+            return []
+        return [r for r in roles if isinstance(r.get("name"), str) and r["name"]]
 
     def disconnect(self) -> bool:
         self.cache.reset("disconnect")
@@ -633,6 +647,69 @@ class WbSession:
             if row == self.source_row:
                 self.hitboxes = boxes
             return STRINGS["source_edited"]
+
+        return self._run(action)
+
+    def _after_source_edit(self, row: str) -> None:
+        self.stale = True
+        self.cache.reset("hitbox edit")
+        self.suggestion = None
+        if row == self.source_row:
+            # If the source refresh fails, do not label the old list as new.
+            self.hitboxes = []
+        boxes = self._source_hitboxes(row)
+        if row == self.source_row:
+            self.hitboxes = boxes
+
+    def add_hitbox(self, frame=None, bone=None, row=None, **fields) -> bool:
+        """Add a hitbox to the loaded move's source at `frame` (default: the shown frame).
+
+        The server picks a free slot, closes the window itself and, without a bone, a default role.
+        Like edit_hitbox it changes the source only; Rebuild + reload applies it.
+        """
+        def action():
+            unknown = set(fields) - ADDABLE
+            if unknown:
+                raise client.WbError(
+                    STRINGS["unsupported_fields"].format(fields=", ".join(sorted(unknown)))
+                )
+            name = self._row_name(row if row is not None else self.source_row)
+            args = {"row": name, "frame": self._integer(self.frame if frame is None else frame, "frame")}
+            if bone:
+                if not isinstance(bone, str) or not bone.strip():
+                    raise client.WbError(STRINGS["bone_required"])
+                args["bone"] = bone
+            for field, value in fields.items():
+                if field in ("angle", "kbg", "fkb", "bkb", "duration"):
+                    value = self._integer(value, field)
+                else:
+                    value = self._number(value, field)
+                args[field] = value
+            self.pause_prefetch()
+            result = self._request("add_hitbox", args)
+            if "proposal" in result or result.get("proposed"):
+                return STRINGS["proposal_created"]
+            self._after_source_edit(name)
+            ordinal = result.get("ordinal")
+            self.last_added = ordinal if isinstance(ordinal, int) and not isinstance(ordinal, bool) else None
+            return STRINGS["hitbox_added"].format(
+                ordinal=self.last_added if self.last_added is not None else "?",
+                bone=result.get("bone", bone or ""), frame=args["frame"],
+            )
+
+        return self._run(action)
+
+    def delete_hitbox(self, ordinal, row=None) -> bool:
+        def action():
+            name = self._row_name(row if row is not None else self.source_row)
+            index = self._integer(ordinal, "ordinal")
+            self.pause_prefetch()
+            result = self._request("delete_hitbox", {"row": name, "ordinal": index})
+            if "proposal" in result or result.get("proposed"):
+                return STRINGS["proposal_created"]
+            self._after_source_edit(name)
+            self.last_added = None
+            return STRINGS["hitbox_deleted"].format(ordinal=index)
 
         return self._run(action)
 

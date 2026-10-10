@@ -91,6 +91,49 @@ private slots:
         QVERIFY(res["result"].toObject()["proposed"].toBool());
         QCOMPARE(r.s.files().read("moves/dair.genoasm"), old);
     }
+    void listHitboxRolesFollowsThePlanInGroupOrder() {
+        Rig r;
+        const auto roles = r.call("list_hitbox_roles")["result"].toObject()["roles"].toArray();
+        QStringList names, groups;
+        for (const auto &v : roles) { names << v.toObject()["name"].toString(); groups << v.toObject()["group"].toString(); }
+        QCOMPARE(names, QStringList({"CHEST", "HAND_R", "FOOT_L"}));
+        QCOMPARE(groups, QStringList({"body", "arms", "legs"}));
+        QVERIFY(r.call("list_hitbox_roles")["result"].toObject()["has_plan"].toBool());
+    }
+    void addHitboxWritesSourceAndDeleteRestoresIt() {
+        Rig r; const QByteArray old = r.s.files().read("moves/dair.genoasm");
+        QJsonObject res = r.call("add_hitbox", {{"row", "dair"}, {"frame", 6}, {"bone", "HAND_R"}});
+        QVERIFY(res["ok"].toBool());
+        QCOMPARE(res["result"].toObject()["ordinal"].toInt(), 1);
+        QCOMPARE(r.s.data().hitboxes("dair").size(), 3);
+        QCOMPARE(r.s.data().hitboxes("dair")[1].joint, QString("HAND_R"));
+        QCOMPARE(r.s.data().hitboxes("dair")[1].slot, 1);
+        res = r.call("delete_hitbox", {{"row", "dair"}, {"ordinal", 1}});
+        QVERIFY(res["ok"].toBool());
+        QCOMPARE(r.s.files().read("moves/dair.genoasm"), old);
+        QCOMPARE(r.s.data().hitboxes("dair").size(), 2);
+    }
+    void addHitboxDefaultsToAResolvableRole() {
+        Rig r;
+        QVERIFY(r.call("add_hitbox", {{"row", "jab1"}, {"frame", 10}})["ok"].toBool());
+        QCOMPARE(r.s.data().hitboxes("jab1").last().joint, QString("CHEST"));  // no FLOOR in this plan: the first role
+    }
+    void addHitboxRejectsUnknownBoneRowAndSlotOverflow() {
+        Rig r; const QByteArray old = r.s.files().read("moves/dair.genoasm");
+        QVERIFY(r.call("add_hitbox", {{"row", "dair"}, {"frame", 6}, {"bone", "TAIL"}})["error"].toString().contains("unknown bone"));
+        QVERIFY(!r.call("add_hitbox", {{"row", "nope"}, {"frame", 6}})["ok"].toBool());
+        QVERIFY(!r.call("add_hitbox", {{"row", "dair"}})["ok"].toBool());
+        QVERIFY(!r.call("delete_hitbox", {{"row", "dair"}, {"ordinal", 9}})["ok"].toBool());
+        QCOMPARE(r.s.files().read("moves/dair.genoasm"), old);
+    }
+    void addAndDeleteHitboxAsAgentAreProposals() {
+        Rig r; const QByteArray old = r.s.files().read("moves/dair.genoasm");
+        auto res = r.call("add_hitbox", {{"row", "dair"}, {"frame", 6}, {"bone", "HAND_R"}}, "agent");
+        QVERIFY(res["result"].toObject()["proposed"].toBool());
+        res = r.call("delete_hitbox", {{"row", "dair"}, {"ordinal", 0}}, "agent");
+        QVERIFY(res["result"].toObject()["proposed"].toBool());
+        QCOMPARE(r.s.files().read("moves/dair.genoasm"), old);
+    }
     void frameCommandsHitEngine() {
         Rig r; r.eng.canned["frame"] = frameJson(6, 0);
         QVERIFY(r.call("load_row", {{"row", "dair"}})["ok"].toBool());
@@ -157,7 +200,8 @@ private slots:
         CommandContext c{s};
         for (const char *name : {"open_fighter", "engine_status", "engine_restart",
                 "set_camera", "set_overlays", "render_view", "list_rows", "load_row",
-                "set_frame", "play", "frame_info", "list_hitboxes", "edit_hitbox",
+                "set_frame", "play", "frame_info", "list_hitboxes", "edit_hitbox", "add_hitbox", "delete_hitbox",
+                "list_hitbox_roles",
                 "suggest_hitbox_bone", "list_clips", "preview_clip", "assign_clip",
                 "import_clip", "run_checks"})
             QVERIFY2(s.registry().has(name), name);

@@ -71,6 +71,9 @@ _TOOLS = (
     "run_checks",
     "suggest_hitbox_bone",
     "edit_hitbox",
+    "list_hitbox_roles",
+    "add_hitbox",
+    "delete_hitbox",
     "rebuild",
     "reload",
 )
@@ -435,6 +438,7 @@ class FakeWorkbench:
         self.rebuild_unconfigured = False   # a project with no build: rebuild answers "rebuild not configured"
         self.label_rows_by_clip = False
         self.bare_load_row = False
+        self.no_role_list = False   # an older server: no list_hitbox_roles
         self.checks_unload = False   # run_checks fails the way the real one did: row dropped, then frame 0 asked for
         self.drop_after: int | None = None
         self.current_row = "wait"
@@ -579,6 +583,56 @@ class FakeWorkbench:
         self.stale = True
         return {"changed": True}
 
+    _ROLE_GROUPS = {
+        "HEAD": "body", "CHEST": "body", "SPINE": "body", "HIP": "body", "ROOT": "anchors", "TOP": "anchors",
+        "ARM_R": "arms", "FOREARM_R": "arms", "HAND_R": "arms",
+    }
+
+    def _renumber(self, row: str) -> None:
+        for ordinal, record in enumerate(self._source[row]):
+            record["ordinal"] = ordinal
+            record["line"] = ordinal + 1
+
+    def _add_hitbox(self, args: dict) -> dict:
+        row = self._row_arg(args)
+        frame = _integer(args.get("frame"), "frame", 0)
+        duration = _integer(args.get("duration", 2), "duration", 1)
+        bone = args.get("bone", "ROOT")
+        if bone not in _ROLE_JOINT:
+            raise ValueError(f"unknown bone: {bone}")
+        records = self._source[row]
+        end = frame + duration
+        used = {
+            r["slot"] for r in records if r["start_frame"] < end and r["end_frame"] > frame
+        }
+        free = [slot for slot in range(4) if slot not in used]
+        if not free:
+            raise ValueError(f"no free hitbox slot at frame {frame} (the game has 4)")
+        record = {
+            "ordinal": 0, "line": 0, "slot": free[0], "joint": bone,
+            "damage": float(args.get("damage", 6)), "size": float(args.get("size", 3)),
+            "x": float(args.get("x", 0)), "y": float(args.get("y", 0)), "z": float(args.get("z", 0)),
+            "angle": _integer(args.get("angle", 361), "angle", 0), "kbg": _integer(args.get("kbg", 50), "kbg", 0),
+            "fkb": _integer(args.get("fkb", 0), "fkb", 0), "bkb": _integer(args.get("bkb", 20), "bkb", 0),
+            "start_frame": frame, "end_frame": end,
+        }
+        position = len([r for r in records if r["start_frame"] <= frame])
+        records.insert(position, record)
+        self._renumber(row)
+        self.stale = True
+        return {"applied": True, "ordinal": position, "bone": bone}
+
+    def _delete_hitbox(self, args: dict) -> dict:
+        row = self._row_arg(args)
+        ordinal = _integer(args.get("ordinal"), "ordinal", 0)
+        records = self._source[row]
+        if ordinal >= len(records):
+            raise ValueError(f"no hitbox #{ordinal}")
+        del records[ordinal]
+        self._renumber(row)
+        self.stale = True
+        return {"applied": True}
+
     def _execute(self, tool: str, args: dict) -> dict:
         if tool == "engine_status":
             return {"status": "running"}
@@ -648,6 +702,20 @@ class FakeWorkbench:
             return {"suggested": "HAND_R", "current": "FOOT_R", "scores": []}
         if tool == "edit_hitbox":
             return self._edit_hitbox(args)
+        if tool == "list_hitbox_roles":
+            if self.no_role_list:
+                raise ValueError("unknown tool: list_hitbox_roles")
+            return {
+                "roles": [
+                    {"name": name, "group": self._ROLE_GROUPS.get(name, "other"), "joint": index}
+                    for name, index in _ROLE_JOINT.items()
+                ],
+                "has_plan": True,
+            }
+        if tool == "add_hitbox":
+            return self._add_hitbox(args)
+        if tool == "delete_hitbox":
+            return self._delete_hitbox(args)
         if tool == "rebuild":
             if self.rebuild_unconfigured:
                 raise ValueError("rebuild not configured")

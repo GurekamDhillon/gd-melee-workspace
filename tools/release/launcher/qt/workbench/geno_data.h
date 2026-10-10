@@ -20,6 +20,7 @@ struct RowInfo {
     bool aerial = false;
 };
 struct ClipInfo { QString name; int frames = 0; };
+struct RoleInfo { QString name, key, group; }; // role as written in joint=@NAME@, its plan key, its panel group
 struct Joint { int index; QString name; int parent; };
 
 class GenoData {
@@ -34,7 +35,11 @@ public:
     bool hasPlan() const;
     QString planPath() const; // Read-only plan as actually resolved by reload().
     int jointForRole(const QString &role) const;
+    static const QVector<RoleInfo> &roleVocabulary(); // every name the assembler accepts, grouped and ordered
+    QVector<RoleInfo> availableRoles() const;         // those this project's plan resolves (all when it has no plan)
     QVector<FileChange> editHitbox(const QString &row, int ordinal, const HitboxEdit &e, QString *err) const;
+    QVector<FileChange> addHitbox(const QString &row, const HitboxAdd &add, int *ordinal, QString *err) const;
+    QVector<FileChange> removeHitbox(const QString &row, int ordinal, QString *err) const;
     QVector<FileChange> assignClip(const QString &row, const QString &clip,
                                    std::optional<int> cropStart, QString *err) const;
     QString rowByMotion(int motion) const;

@@ -62,6 +62,12 @@ void replaceWait(QString &line, int value) {
     line.replace(words[1].offset, words[1].text.size(), QString::number(value));
 }
 
+bool validJoint(QString *name) {
+    name->remove('@');
+    static const QRegularExpression unsafe(QStringLiteral("[\\s#=\\\\\"']"));
+    return !name->isEmpty() && !name->contains(QChar(0)) && !name->contains(unsafe);
+}
+
 } // namespace
 
 GenoAsm GenoAsm::parse(const QString &text) {
@@ -89,7 +95,7 @@ QVector<HitboxRef> GenoAsm::hitboxes() const {
             time = int(qBound(qint64(std::numeric_limits<int>::min()), next,
                               qint64(std::numeric_limits<int>::max())));
         } else if (op == "clear_hitboxes") {
-            for (int ordinal : open) out[ordinal].endFrame = time;
+            for (int ordinal : open) { out[ordinal].endFrame = time; out[ordinal].clearLine = line; }
             open.clear();
         } else if (op == "hitbox") {
             HitboxRef h;
@@ -189,6 +195,176 @@ QString GenoAsm::apply(int ordinal, const HitboxEdit &edit, QString *err) const 
     }
     for (auto it = replacements.cbegin(); it != replacements.cend(); ++it)
         replaceField(lines[h.line], it.key(), it.value());
+    return lines.join('\n');
+}
+
+QString GenoAsm::addHitbox(const HitboxAdd &add, QString *err, int *ordinalOut) const {
+    if (err) err->clear();
+    const auto fail = [err](const QString &reason) -> QString {
+        if (err) *err = reason;
+        return {};
+    };
+    QString joint = add.joint;
+    if (!validJoint(&joint))
+        return fail(QStringLiteral("joint must be a non-empty name without whitespace or script delimiters"));
+    for (double v : {add.damage, add.size, add.x, add.y, add.z})
+        if (!std::isfinite(v)) return fail(QStringLiteral("hitbox numbers must be finite"));
+    if (add.damage < 0 || add.size < 0) return fail(QStringLiteral("damage and size must be nonnegative"));
+    if (add.frame < 0) return fail(QStringLiteral("frame must be non-negative"));
+    if (add.duration < 1) return fail(QStringLiteral("duration must be at least 1 frame"));
+    const int T = add.frame;
+    const auto boxes = hitboxes();
+    constexpr int inf = std::numeric_limits<int>::max();
+    // A frame inside an active window joins it and ends with that window's clear_hitboxes.
+    const HitboxRef *window = nullptr;
+    for (const auto &b : boxes)
+        if (b.startFrame <= T && (b.endFrame < 0 || T < b.endFrame)) { window = &b; break; }
+    int duration = add.duration;
+    int newEnd;
+    if (window) {
+        newEnd = window->endFrame < 0 ? inf : window->endFrame;
+    } else {
+        // A fresh window must close before the next one opens (clear_hitboxes clears them all).
+        for (const auto &b : boxes) if (b.startFrame > T) duration = qMin(duration, b.startFrame - T);
+        newEnd = T + duration;
+    }
+    QVector<bool> used(kHitboxSlots, false);
+    for (const auto &b : boxes) {
+        const int end = b.endFrame < 0 ? inf : b.endFrame;
+        if (b.startFrame < newEnd && end > T && b.slot >= 0 && b.slot < kHitboxSlots) used[b.slot] = true;
+    }
+    int slot = -1;
+    for (int i = 0; i < kHitboxSlots; ++i) if (!used[i]) { slot = i; break; }
+    if (slot < 0)
+        return fail(QStringLiteral("no free hitbox slot at frame %1 (the game has %2)").arg(T).arg(kHitboxSlots));
+
+    const QString hitLine =
+        QStringLiteral("hitbox slot=%1 joint=@%2@ damage=%3 size=%4 x=%5 y=%6 z=%7 angle=%8 kbg=%9 fkb=%10 bkb=%11")
+            .arg(slot).arg(joint).arg(fmtDamage(add.damage)).arg(QString::number(add.size, 'f', 2))
+            .arg(QString::number(add.x, 'f', 2)).arg(QString::number(add.y, 'f', 2))
+            .arg(QString::number(add.z, 'f', 2)).arg(add.angle).arg(add.kbg).arg(add.fkb).arg(add.bkb);
+
+    // First time-advancing line that crosses T; the block goes there so later lines keep their frames.
+    QStringList lines = lines_;
+    int time = 0, k = -1, before = 0, waitN = 0, waitX = 0;
+    for (int i = 0; i < lines.size() && k < 0; ++i) {
+        const auto words = tokens(lines[i]);
+        if (words.size() < 2) continue;
+        const bool abs = words[0].text == "wait_until";
+        if (!abs && words[0].text != "wait") continue;
+        const int v = words[1].text.toInt();
+        const qint64 after = abs ? qint64(v) : qint64(time) + v;
+        if (after > T && after > time) {
+            k = i; before = time;
+            if (abs) waitX = v; else waitN = v;
+        }
+        time = int(qBound(qint64(std::numeric_limits<int>::min()), after, qint64(inf)));
+    }
+    int at = 0, replace = 0, hitIndex = 0;
+    QStringList block;
+    if (k >= 0) {
+        at = k;
+        const bool cr = lines[k].endsWith('\r');
+        const auto eol = [cr](const QString &s) { return cr ? s + '\r' : s; };
+        const bool isAbs = opOf(lines[k]) == "wait_until";
+        if (window) {
+            if (before == T) {
+                block << eol(hitLine);
+            } else if (isAbs) {
+                block << eol(QStringLiteral("wait_until %1").arg(T)) << eol(hitLine);
+                hitIndex = 1;
+            } else {
+                const int lead = T - before;
+                QString first = lines[k];
+                replaceWait(first, lead);
+                block << first << eol(hitLine) << eol(QStringLiteral("wait %1").arg(waitN - lead));
+                hitIndex = 1; replace = 1;
+            }
+        } else if (isAbs) {
+            duration = qMin(duration, waitX - T);
+            block << eol(QStringLiteral("wait_until %1").arg(T)) << eol(hitLine)
+                  << eol(QStringLiteral("wait %1").arg(duration)) << eol(QStringLiteral("clear_hitboxes"));
+            hitIndex = 1;
+        } else {
+            const int lead = T - before;
+            duration = qMin(duration, waitN - lead);
+            block << eol(QStringLiteral("wait_until %1").arg(T)) << eol(hitLine)
+                  << eol(QStringLiteral("wait %1").arg(duration)) << eol(QStringLiteral("clear_hitboxes"));
+            if (waitN - lead - duration > 0) block << eol(QStringLiteral("wait %1").arg(waitN - lead - duration));
+            hitIndex = 1; replace = 1;
+        }
+    } else {
+        // Past the end of the timeline: append after the last real line.
+        at = int(lines.size());
+        while (at > 0 && lines[at - 1].trimmed().isEmpty()) --at;
+        const bool cr = at > 0 && lines[at - 1].endsWith('\r');
+        const auto eol = [cr](const QString &s) { return cr ? s + '\r' : s; };
+        if (T > time) block << eol(QStringLiteral("wait_until %1").arg(T));
+        hitIndex = int(block.size());
+        block << eol(hitLine);
+        if (!window) block << eol(QStringLiteral("wait %1").arg(duration)) << eol(QStringLiteral("clear_hitboxes"));
+    }
+    for (int i = 0; i < replace; ++i) lines.removeAt(at);
+    for (int i = 0; i < block.size(); ++i) lines.insert(at + i, block[i]);
+    const QString result = lines.join('\n');
+    if (ordinalOut) {
+        *ordinalOut = -1;
+        for (const auto &b : GenoAsm::parse(result).hitboxes()) if (b.line == at + hitIndex) *ordinalOut = b.ordinal;
+    }
+    return result;
+}
+
+QString GenoAsm::removeHitbox(int ordinal, QString *err) const {
+    if (err) err->clear();
+    const auto boxes = hitboxes();
+    if (ordinal < 0 || ordinal >= boxes.size()) {
+        if (err) *err = QStringLiteral("no hitbox #%1").arg(ordinal);
+        return {};
+    }
+    const HitboxRef &h = boxes[ordinal];
+    int sharing = 0;
+    for (const auto &b : boxes) if (b.clearLine == h.clearLine) ++sharing;
+    const auto significant = [this](int from, int step) {
+        for (int i = from + step; i >= 0 && i < lines_.size(); i += step)
+            if (!opOf(lines_[i]).isEmpty()) return i;
+        return -1;
+    };
+    QStringList lines = lines_;
+    if (h.clearLine >= 0 && sharing == 1) {
+        // The last hitbox of its window: the window's clear_hitboxes goes too. The whole
+        // wait_until / hitbox / wait / clear block goes when what follows is an absolute wait or the end
+        // (nothing after it depends on this window's length).
+        const int prev = significant(h.line, -1), n1 = significant(h.line, 1);
+        const int n2 = n1 < 0 ? -1 : significant(n1, 1);
+        const int n3 = n2 < 0 ? -1 : significant(n2, 1);
+        const bool canonical = prev >= 0 && n2 == h.clearLine &&
+            (n3 < 0 || isWait(tokens(lines_[n3]), QStringLiteral("wait_until"))) &&
+            isWait(tokens(lines_[prev]), QStringLiteral("wait_until")) &&
+            isWait(tokens(lines_[n1]), QStringLiteral("wait")) &&
+            tokens(lines_[n2]).size() == 1 &&
+            tokens(lines_[prev])[1].text.toInt() == h.startFrame;
+        if (canonical) {
+            for (int i : {n2, n1, h.line, prev}) lines.removeAt(i);
+        } else {
+            const bool bareClear = tokens(lines_[h.clearLine]).size() == 1;
+            if (bareClear) lines.removeAt(h.clearLine);
+            lines.removeAt(h.line);
+        }
+        return lines.join('\n');
+    }
+    // A shared window: drop just this line, then undo any split an add left at this spot.
+    const int prev = significant(h.line, -1), next = significant(h.line, 1);
+    lines.removeAt(h.line);
+    if (prev >= 0 && next >= 0) {
+        const auto pw = tokens(lines_[prev]), nw = tokens(lines_[next]);
+        if (isWait(pw, QStringLiteral("wait")) && isWait(nw, QStringLiteral("wait"))) {
+            replaceWait(lines[prev], pw[1].text.toInt() + nw[1].text.toInt());
+            lines.removeAt(next - 1);
+        } else if (isWait(pw, QStringLiteral("wait_until")) && isWait(nw, QStringLiteral("wait_until")) &&
+                   pw[1].text.toInt() == h.startFrame && nw[1].text.toInt() >= h.startFrame) {
+            lines.removeAt(prev);
+        }
+    }
     return lines.join('\n');
 }
 

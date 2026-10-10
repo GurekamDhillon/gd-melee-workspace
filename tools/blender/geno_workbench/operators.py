@@ -586,7 +586,7 @@ class GENO_WB_OT_suggest_bone(bpy.types.Operator):
         if success:
             suggested = (value.suggestion or {}).get("suggested")
             if suggested is not None and suggested != "":
-                settings.edit_bone = str(suggested)
+                props.set_edit_bone(settings, str(suggested))
         return _finish(self, context, success)
 
 
@@ -647,6 +647,67 @@ class GENO_WB_OT_edit_hitbox(bpy.types.Operator):
         return _finish(self, context, success)
 
 
+class GENO_WB_OT_add_hitbox(bpy.types.Operator):
+    bl_idname = "geno_wb.add_hitbox"
+    bl_label = STRINGS["add_hitbox"]
+    bl_description = STRINGS["add_hitbox_help"]
+
+    row: StringProperty(name=STRINGS["row"])
+    frame: IntProperty(name=STRINGS["start_frame"], default=-1, min=-1)
+    bone: StringProperty(name=STRINGS["bone"])
+
+    @classmethod
+    def poll(cls, context):
+        value = api.session()
+        return value.connected and bool(value.source_row)
+
+    def execute(self, context):
+        value = api.session()
+        settings = context.scene.geno_wb
+        try:
+            # The limb Suggest limb picked, else nothing: the server defaults to the floor anchor.
+            bone = self.bone or str((value.suggestion or {}).get("suggested") or "")
+            frame = self.frame if self.frame >= 0 else value.frame
+            stop_playback()
+            _cancel_scrub()
+            success = value.add_hitbox(
+                frame=frame, bone=bone or None, row=self.row or value.source_row
+            )
+            if success and value.last_added is not None:
+                with props.suspend_frame_updates():
+                    settings.hitbox_index = value.last_added   # _finish syncs the editor onto it
+        except (client.WbError, ValueError, TypeError) as exc:
+            success = value.report_error(exc)
+        return _finish(self, context, success)
+
+
+class GENO_WB_OT_delete_hitbox(bpy.types.Operator):
+    bl_idname = "geno_wb.delete_hitbox"
+    bl_label = STRINGS["delete_hitbox"]
+    bl_description = STRINGS["delete_hitbox_help"]
+
+    row: StringProperty(name=STRINGS["row"])
+    ordinal: IntProperty(name=STRINGS["ordinal"], default=-1, min=-1)
+
+    @classmethod
+    def poll(cls, context):
+        return api.session().connected
+
+    def execute(self, context):
+        value = api.session()
+        settings = context.scene.geno_wb
+        try:
+            ordinal = self.ordinal if self.ordinal >= 0 else settings.hitbox_index
+            if ordinal < 0:
+                raise client.WbError(STRINGS["editor_missing"])
+            stop_playback()
+            _cancel_scrub()
+            success = value.delete_hitbox(ordinal, row=self.row or value.source_row)
+        except (client.WbError, ValueError, TypeError) as exc:
+            success = value.report_error(exc)
+        return _finish(self, context, success)
+
+
 class GENO_WB_OT_rebuild_reload(bpy.types.Operator):
     bl_idname = "geno_wb.rebuild_reload"
     bl_label = STRINGS["rebuild_reload"]
@@ -676,6 +737,8 @@ CLASSES = (
     GENO_WB_OT_goto_problem,
     GENO_WB_OT_suggest_bone,
     GENO_WB_OT_edit_hitbox,
+    GENO_WB_OT_add_hitbox,
+    GENO_WB_OT_delete_hitbox,
     GENO_WB_OT_rebuild_reload,
 )
 

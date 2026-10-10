@@ -460,7 +460,7 @@ struct WorkbenchWindow::Impl {
     }
     void enqueue(const QString &name, const QJsonObject &args, std::optional<bool> headless = std::nullopt) {
         if (closing) return;
-        if (name == "edit_hitbox" || name == "assign_clip" || name == "accept" || name == "undo" || name == "redo")
+        if (name == "edit_hitbox" || name == "add_hitbox" || name == "delete_hitbox" || name == "assign_clip" || name == "accept" || name == "undo" || name == "redo")
             setPlaying(false);
         if (name == "load_row") {
             ++rowIntent; clipPreview = false;
@@ -580,7 +580,7 @@ struct WorkbenchWindow::Impl {
             if (value.contains("frame") && completed.rowIntent == rowIntent && completed.frameIntent == frameIntent) {
                 frameInfo = FrameInfo::fromJson(value); timeline->setFrame(frameInfo.frame);
             }
-            if ((completed.name == "edit_hitbox" || completed.name == "assign_clip" || completed.name == "accept" ||
+            if ((completed.name == "edit_hitbox" || completed.name == "add_hitbox" || completed.name == "delete_hitbox" || completed.name == "assign_clip" || completed.name == "accept" ||
                  completed.name == "undo" || completed.name == "redo") && value.value("applied").toBool()) {
                 problems->setProblems({}); q->runCommand("reload", {});
             } else if (completed.name == "reload" || completed.name == "engine_restart") {
