@@ -159,7 +159,7 @@ def merged_worktrees(wtdir, base='main'):
                 continue
             if br in [m.strip(' *+') for m in merged.splitlines()]:
                 found.append((scan.size(path)[0], path, br, str(repo)))
-    return sorted(found, reverse=True)
+    return sorted({f[1]: f for f in found}.values(), reverse=True)
 
 
 def main(argv=None):
