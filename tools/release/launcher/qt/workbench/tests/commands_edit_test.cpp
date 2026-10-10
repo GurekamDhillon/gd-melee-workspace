@@ -660,8 +660,8 @@ private slots:
         QCOMPARE(listed["wbk"].toInt(), listed["fkb"].toInt());
         // none of these touches the declared windows or roles in gameplay.json
         QCOMPARE(QJsonDocument::fromJson(r.s.files().read("gameplay.json")).object(), QJsonDocument::fromJson(gameplay).object());
-        // 0/1 numbers are accepted as booleans; other types and out-of-range values are refused and write nothing
-        QVERIFY(r.call("edit_hitbox", {{"row", "dair"}, {"ordinal", 1}, {"ground", 1}})["ok"].toBool());
+        // non-boolean toggles and out-of-range values are refused and write nothing
+        QVERIFY(r.call("edit_hitbox", {{"row", "dair"}, {"ordinal", 1}, {"ground", true}})["ok"].toBool());
         const QByteArray before = r.s.files().read("moves/dair.genoasm");
         const auto entries = r.s.history().entries().size();
         for (const QJsonObject &bad : {QJsonObject{{"shield", -129}}, QJsonObject{{"shield", 128}}, QJsonObject{{"slot", 4}},
