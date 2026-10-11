@@ -531,7 +531,7 @@ QJsonObject EngineLink::callEngine(const QString &fn, const QJsonObject &args, Q
     QScopedValueRollback<bool> guard(busy_, true);
     QElapsedTimer timer; timer.start();
     QString error; bool pending = false;
-    auto result = request(fn, args, timeoutMs_, &error, fn == "frame" ? &pending : nullptr);
+    auto result = request(fn, args, timeoutMs_, &error, (fn == "frame" || fn == "step") ? &pending : nullptr);
     if (!error.isEmpty()) {
         if (fn == "reload" && error.contains("reload needs restart")) {
             // Release the public-operation guard only for the synchronous restart;
@@ -540,6 +540,21 @@ QJsonObject EngineLink::callEngine(const QString &fn, const QJsonObject &args, Q
             if (restart(&error)) return {{"ok", true}};
         }
         setError(err, error); return {};
+    }
+    if (fn == "step") {
+        // wb.step answers "pending" while the game runs the frames (gw_script.c: frame/step/clip schedule work): poll
+        // frame_info until its frame is no longer the -1 pending marker. Without this every Workbench PLAY failed with
+        // "unexpected engine reply: pending" (the fake engines in the tests answer a step at once).
+        if (!pending) return result;
+        for (;;) {
+            const int budget = remaining(timer, timeoutMs_);
+            if (budget < 200) { setError(err, "engine step timed out"); return {}; }
+            pumpFor(std::min(4, budget));
+            result = request("frame_info", {}, budget, &error);
+            if (!error.isEmpty()) { setError(err, error); return {}; }
+            const auto frame = result.value("frame");
+            if (frame.isDouble() && frame.toDouble() >= 1) return result;
+        }
     }
     if (fn != "frame") return result;
 

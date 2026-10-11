@@ -315,7 +315,29 @@ void registerComboPlayCommands(Session &s) {
                     sent = sentBefore;
                     try {
                         engineCall(ctx.session, "row", {{"motion", motion}});
-                        for (int f = 1; f <= p.plan[i].cut; ++f) {
+                        const bool realtime = args["realtime"].toBool();
+                        // Realtime: pose frame 1, then let the game run forward on the 60 Hz wall clock ("step" costs a frame, a
+                        // "frame" seek re-simulates the move: one seek per frame ran at a quarter of the speed).
+                        const double segmentStartMs = (p.plan[i].start - 1) * 1000.0 / 60.0;
+                        int at = 0;
+                        for (int f = 1; f <= p.plan[i].cut;) {
+                            if (realtime && at > 0) {
+                                const double dueMs = segmentStartMs + (f - 1) * 1000.0 / 60.0, nowMs = clock.nsecsElapsed() / 1e6;
+                                if (nowMs < dueMs) { QThread::msleep(quint32(std::max(1.0, dueMs - nowMs - 1))); continue; }
+                                const int target = std::min(p.plan[i].cut, 1 + int((nowMs - segmentStartMs) * 0.06));
+                                if (target > at) {
+                                    const auto stepped = engineCall(ctx.session, "step", {{"n", target - at}});
+                                    sent += target - at; at = target; f = at + 1;
+                                    // The game chained into another action while stepping (jab1 runs into jab2 on its own):
+                                    // pose the move's own frame again so the string shows the move it planned.
+                                    if (stepped.contains("motion") && stepped.value("motion").toInt(motion) != motion) {
+                                        QJsonObject back{{"motion", motion}, {"frame", at}};
+                                        if (step.value("aerial").toBool()) back.insert("lift", 120);
+                                        try { engineCall(ctx.session, "frame", back); } catch (const CommandError &) { ++clamped; }
+                                    }
+                                    continue;
+                                }
+                            }
                             QJsonObject frameArgs{{"motion", motion}, {"frame", f}};
                             if (step.value("aerial").toBool()) frameArgs.insert("lift", 120); // as set_frame: an aerial must not land mid-move
                             try {
@@ -329,11 +351,7 @@ void registerComboPlayCommands(Session &s) {
                                 engineCall(ctx.session, "frame", frameArgs);
                                 ++clamped;
                             }
-                            ++sent;
-                            if (args["realtime"].toBool()) { // hold the 60 Hz wall clock, not 16 ms after each engine round trip
-                                const qint64 due = qint64(sent * 1000.0 / 60.0), now = clock.elapsed();
-                                if (due > now) QThread::msleep(quint32(due - now));
-                            }
+                            ++sent; at = f; ++f;
                         }
                         break;
                     } catch (const CommandError &) {
