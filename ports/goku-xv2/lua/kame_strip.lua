@@ -7,6 +7,7 @@ local C = CFG or {}
 local HOLD = tonumber(C.hold or 60)
 local TAG = C.tag or 'kame'
 local AIR = C.air == '1'
+local AIRS = C.air == 's'   -- air=s: charge on the ground, store it (shield), jump, press B in the air (the real air path: a stored charge fires / resumes in the air)
 local LEFT = C.face == 'left'
 local GAP = tonumber(C.gap or 4)
 local HGAP = tonumber(C.hgap or 30)
@@ -25,12 +26,18 @@ gd.run(function()
       local sgn = LEFT and -1 or 1
       local cx = tonumber(C.camx or (20 * sgn))
       local zoom = C.zoom == '1'
-      gd.camera_set{eye = {x = cx, y = tonumber(C.camy or (zoom and 12 or 14)), z = tonumber(C.camz or (zoom and 42 or 95))},
-                    interest = {x = cx, y = AIR and 40 or (zoom and 9 or 10), z = 0}, fov = tonumber(C.fov or 40)}
+      local function setcam(gy)
+        local A = AIR or AIRS
+        gd.camera_set{eye = {x = cx, y = tonumber(C.camy or (A and gy + 4 or (zoom and 12 or 14))), z = tonumber(C.camz or (zoom and 42 or 95))},
+                      interest = {x = cx, y = A and gy + 4 or (zoom and 9 or 10), z = 0}, fov = tonumber(C.fov or 40)}
+      end
+      setcam((AIR or AIRS) and (gd.player(1).y or 40) or 0)
+      CAMFN = setcam
     end
     local n = 0
     local function shot(label)
       n = n + 1
+      if CAMFN and (AIR or AIRS) then CAMFN(gd.player(1).y or 40) end   -- the air charge drifts: keep the camera on Goku
       local _, path = gd.screenshot(string.format('%s_%02d_%s', TAG, n, label))
       gd.log('KAMESHOT ' .. tostring(path))
     end
@@ -42,7 +49,20 @@ gd.run(function()
     while t < total do
       gd.wait(1); t = t + 1
       if t % 10 == 1 then for _, pt in ipairs({1, 2}) do pcall(gd.debug_draw, pt, 0) end end   -- the game re-arms the develop draw
-      if t == HOLD and C.fire ~= '0' then gd.input(1, {buttons = 'B'}, 2); fired = true end
+      if AIRS then
+        if t == HOLD then gd.input(1, {buttons = 'L'}, 2)
+        elseif t == HOLD + 16 then gd.input(1, {buttons = 'X'}, 3)
+        elseif t == HOLD + 28 then gd.input(1, {buttons = 'B'}, 2)
+        elseif t > HOLD + 30 and not fired then
+          local pl = gd.player(1)
+          if tostring(pl.motion_name):find('KameCharge') and (pl.y or 0) > 2 and (pl.action_frame or 0) >= 11 then
+            gd.log('KAME airs t=' .. t .. ' state=' .. tostring(pl.motion_name) .. ' y=' .. tostring(pl.y))
+            gd.input(1, {buttons = 'B'}, 2); fired = true
+          elseif tostring(pl.motion_name):find('KameCharge') and (pl.y or 0) <= 2 then
+            gd.log('KAME airs LANDED before firing t=' .. t); fired = true
+          end
+        end
+      elseif t == HOLD and C.fire ~= '0' then gd.input(1, {buttons = 'B'}, 2); fired = true end
       local gap = (t <= HOLD) and HGAP or GAP
       if t % gap == 0 or t == HOLD then
         local p = gd.player(1)

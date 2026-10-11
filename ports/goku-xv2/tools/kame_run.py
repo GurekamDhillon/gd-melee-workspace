@@ -38,7 +38,7 @@ def main():
     gen.write_text('CFG={' + ','.join('%s=%r' % (k, v) for k, v in kv.items()) + '}' + chr(10) + (PORT / 'lua' / (a.script + '.lua')).read_text(encoding='utf-8'), encoding='utf-8')
     mods = os.environ.get('KAME_MODS') or str(WT / '_build/goku-xv2/author-source/package/mods')
     if a.clean:   # the LAB starts in CLEAN: lab.lua 'mode = 2, hidden' (HITBOXES) -> 'mode = 1, hidden' in a throwaway copy
-        dst = WT / '_build/xv2-kame/mods_clean'
+        dst = WT / ('_build/xv2-kame/mods_clean_' + name)
         if dst.exists():
             shutil.rmtree(dst)
         shutil.copytree(mods, dst)
