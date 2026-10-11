@@ -1,4 +1,4 @@
-# Play the remade Goku in the LAB (combo package: ki meter, Homing, Guard>Vanish, Down B ki charge).
+# Play the remade Goku in the LAB (combo package: ki meter, Homing, Down B ki charge).
 #   & 'E:\Projects\Melee Workspace\worktrees\gokup1\ports\goku-xv2\tools\play_remake.ps1'        # LAB, Goku vs a Mario CPU on FD, window at 40,40
 # Optional: -Picker opens the REMAKE picker instead (the owner's picks show as taken; swap one, then remake_sheet.py --sync-picks and rebuild).
 # Env overrides: GW_MELEE (game checkout with the geno-11 engine + REMAKE mode), GW_BUILD_ROOT (its build root with melee-pc.exe).
