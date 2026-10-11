@@ -91,10 +91,15 @@ def test_switching_checkout_uses_its_own_resolver(tmp_path, monkeypatch):
     assert P._plan(None, "lab") == second
 
 
-def test_external_project_can_use_explicit_workspace(tmp_path):
+def test_external_project_can_use_explicit_workspace(tmp_path, monkeypatch):
     root, _ = checkout(tmp_path, "workspace")
     external = tmp_path / "external fighter"
     external.mkdir()
+    # A --basetemp inside the real checkout must still model an external
+    # project. Hide only enclosing repository markers, not the fixture's own.
+    enclosing_markers = {parent / ".git" for parent in tmp_path.parents}
+    exists = Path.exists
+    monkeypatch.setattr(Path, "exists", lambda path: path not in enclosing_markers and exists(path))
     assert P._play_script(str(external), env={"GW_ROOT": str(root)}) == root / "tools/geno/play.py"
 
 

@@ -587,6 +587,63 @@ requests and replies; if the game repo's `wb.frame` is ever fixed to number from
 lag to 0 there and nothing else changes. Tests: `engine_link_test` (`scriptFramesMapToTheEnginesNumbering`),
 `tests/test_frame_convention.py`.
 
+## Import fighter animations from an AJ bank
+
+Select the fighter's **deform armature** in Object Mode, then use **Geno > Splice > Import fighter animations**.
+Choose the local `Pl*AJ.dat` (or a generated `Gn*AJ.dat`) and set **Joint plan** to its `plan.json` and
+**Costume model** to the matching costume DAT, for example `PlCaNr.dat`. The costume supplies rest SRT and
+the actual joint hierarchy, which the plan does not contain. The project's `workbench.json`
+`art.bone_aliases` goes through the existing `rigmap` matcher. Without a project, the configured session's
+aliases are used. Every non-synthesized plan joint must map; a wrong rig is reported before actions are created.
+
+Each animation becomes a separate Action with a fake user. Existing actions keep their names and data;
+name collisions receive Blender's numeric suffix. Choose an imported action in the Action Editor.
+**Blender frame 1 = figatree time 0**, the first move frame. The importer preserves the current action,
+pose and timeline. It keys rotation, location **and scale** for every bone in every action, including
+rest values for absent tracks and Blender-only bones, so prior actions cannot leave a foot stretched or
+an extra parent posed. Keep the armature object's imported axis rotation and scale when importing;
+its scene translation is ignored.
+
+The pure Python reader handles CON, LIN, SPL0, SPL, SLP and KEY, signed start offsets, packed key counts/waits,
+and float32/signed or unsigned 8/16-bit compression. Continuous Blender curves are adaptively sampled in
+the rig's bind frame and checked at quarter, half and three-quarter intervals against the pose tolerance
+(default `0.0001` in matrix components). Raw rotation angles also bound the sampling step so rapid full
+turns survive matrix aliasing. Held tracks use constant intervals around jumps. Blender's native F-curve
+evaluation can snap to the next key about `0.0001` frame early (and key times use float32); pose tolerance
+does not cover this tiny boundary-time window. Integer move frames retain the correct step values.
+Shorter LIN/SPL tracks retain HSD's end-of-stream extrapolation within the clip. Channels are editable Euler or
+quaternion F-curves according to the rig's existing rotation modes; compressed source key topology is not
+retained. The animation exporter is unchanged. Spline decoding/re-encoding has a byte equality test, and
+the Blender round trip checks curve equality for the exporter's linear channel format.
+
+This reads **type-1 FigaTrees**, the archives in fighter AJ banks; generic AnimJoint trees, path/JOBJ-reference
+channels and quaternion-rest JOBJ models are reported as unsupported. Pose drivers, active constraints,
+nonstandard bone inheritance, animated translations on connected bones and bind frames requiring shear
+also produce a clear error. Disconnect affected bones before importing translations. A failed import
+removes its new actions. Data from your disc stays local; do not commit the imported assets.
+
+Synthetic core and background Blender checks (no disc, game process or extra installs):
+
+```powershell
+$env:PYTHONDONTWRITEBYTECODE = '1'
+$env:TEMP = Join-Path $PWD '.omo/tmp'
+$env:TMP = $env:TEMP
+New-Item -ItemType Directory -Path $env:TEMP -Force | Out-Null
+python -B -m pytest tools/blender/geno_workbench/tests/test_figatree_decode.py tools/blender/geno_workbench/tests/test_figatree_import.py tools/blender/geno_workbench/tests/test_figatree_blender.py -q -o cache_dir=.omo/pytest-cache --basetemp=.omo/tmp/figatree-tests
+```
+
+The Blender test finds `GW_BLENDER`, `blender` on PATH, or
+`D:\SteamLibrary\steamapps\common\Blender\blender.exe`; it redirects Blender config and temporary files
+into the test's work directory. Equivalent direct background command:
+
+```powershell
+$env:BLENDER_USER_RESOURCES = Join-Path $PWD '.omo/blender-user'
+$env:BLENDER_USER_CONFIG = Join-Path $env:BLENDER_USER_RESOURCES 'config'
+$env:BLENDER_USER_SCRIPTS = Join-Path $env:BLENDER_USER_RESOURCES 'scripts'
+$env:BLENDER_USER_DATAFILES = Join-Path $env:BLENDER_USER_RESOURCES 'datafiles'
+& 'D:\SteamLibrary\steamapps\common\Blender\blender.exe' --background --factory-startup --disable-autoexec -noaudio --threads 1 --python-exit-code 1 --python tools/blender/geno_workbench/tests/blender_figatree_check.py -- "$PWD/.omo/tmp"
+```
+
 ## Rows the engine cannot pose ("not previewable")
 
 Rebirth/RebirthWait need the revival platform; grab, throw, carry, hammer, mushroom and item states need a partner or an
