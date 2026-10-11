@@ -84,5 +84,10 @@ Each is `.omo/evidence/handoff.md` in the lane's worktree (git-ignored unless no
   rewrite enabled.txt, relaunch, rejoin; per-mod list only in the log / `gd.modsync()`, not drawn. NO two-client run completed.
   FOUND: `tools/netplay/server/gdmelee_server.py` in the main checkout still speaks protocol 5 while the game is 6: bump it at
   integration (online rooms through that server will refuse until then). Driver: `pc/tests/modsync/np_modsync.py`.
-- **Kamehameha combined build** and **throw-bank rollback check**: no handoff note received when this was written; see the
-  table above and the worktrees' own state.
+- **Throw-bank rollback check** (`worktrees/tbroll`, agent/throw-banks-rollback `249a2a9af` WIP; tests + notes only, no game code
+  change needed): NO bug found; cache bookkeeping is .bss of ftdata and the arenas are MEM1, both inside the snapshot. Rewind across
+  first load / evictions / resident restore: `TBR DONE 4/4`; input-free SyncTest 3000 frames, 5 CPUs: 37200 compared, 0 mismatching,
+  13 evictions. Two-client netplay NOT run (command in its handoff). Falco 406/407 is a harness timing slip (a scripted L press
+  lands a frame late in full runs; unseeded runs disagree with each other): `MELEE_TEST_SEED=777` gives 407/407, 12345 gives
+  406/407; proposed: pin the seed in run_parity.sh, then find the hold slip in gw_script_pad.c.
+- **Kamehameha combined build**: no handoff note received when this was written; see the table above and the worktrees' state.
