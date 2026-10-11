@@ -61,9 +61,13 @@ def patch_gameplay():
     moves = {m['name']: m for m in g['moves']}
     for name, (mv, motion) in base.items():
         if not any(x['name'] == name for x in g['states']):
-            g['states'].append({'name': name, 'behavior': 'geno.air', 'subaction': 'clip:' + name, 'like': 'motion:%d' % motion, 'iasa': 'none', 'move_tag': 'aerial',
+            g['states'].append({'name': name, 'behavior': 'geno.air', 'subaction': 'clip:' + name, 'like': 'motion:%d' % motion, 'iasa': 'interrupt', 'move_tag': 'aerial',
                                 'lua': {'frame': 'flightair_frame'}, 'pick': 'owner 2026-10-11: an aerial out of the flight; a hit keeps air control, a miss ends in the special fall'})
             changed = True
+        for x in g['states']:
+            if x['name'] == name and x.get('iasa') != 'interrupt':
+                x['iasa'] = 'interrupt'   # the aerial scripts carry IASA commands
+                changed = True
         want_ad = {'name': name, 'parity': moves[mv]['parity'], 'script': moves[mv]['script'], 'minimum_clip_frames': moves[mv].get('minimum_clip_frames', 30),
                    'hb': moves[mv].get('hb', 'HB-NONE'), 'windows': moves[mv].get('windows', [])}
         if moves[mv].get('strike'):

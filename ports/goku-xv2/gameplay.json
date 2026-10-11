@@ -1243,8 +1243,13 @@
       "iasa": 30,
       "hb": "HB-NONE",
       "design": {},
-      "strike": [],
-      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+      "strike": [
+        [
+          18,
+          37
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "escape_b",
@@ -1258,8 +1263,13 @@
       "iasa": 30,
       "hb": "HB-NONE",
       "design": {},
-      "strike": [],
-      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+      "strike": [
+        [
+          18,
+          37
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "escape_n",
@@ -1273,8 +1283,13 @@
       "iasa": 30,
       "hb": "HB-NONE",
       "design": {},
-      "strike": [],
-      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+      "strike": [
+        [
+          18,
+          24
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     }
   ],
   "states": [
@@ -1590,7 +1605,7 @@
       "behavior": "geno.air",
       "subaction": "clip:FlightNair",
       "like": "motion:65",
-      "iasa": "none",
+      "iasa": "interrupt",
       "move_tag": "aerial",
       "lua": {
         "frame": "flightair_frame"
@@ -1601,7 +1616,7 @@
       "behavior": "geno.air",
       "subaction": "clip:FlightFair",
       "like": "motion:66",
-      "iasa": "none",
+      "iasa": "interrupt",
       "move_tag": "aerial",
       "lua": {
         "frame": "flightair_frame"
@@ -1612,7 +1627,7 @@
       "behavior": "geno.air",
       "subaction": "clip:FlightBair",
       "like": "motion:67",
-      "iasa": "none",
+      "iasa": "interrupt",
       "move_tag": "aerial",
       "lua": {
         "frame": "flightair_frame"
@@ -1623,7 +1638,7 @@
       "behavior": "geno.air",
       "subaction": "clip:FlightUair",
       "like": "motion:68",
-      "iasa": "none",
+      "iasa": "interrupt",
       "move_tag": "aerial",
       "lua": {
         "frame": "flightair_frame"
@@ -1634,7 +1649,7 @@
       "behavior": "geno.air",
       "subaction": "clip:FlightDair",
       "like": "motion:69",
-      "iasa": "none",
+      "iasa": "interrupt",
       "move_tag": "aerial",
       "lua": {
         "frame": "flightair_frame"
