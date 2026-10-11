@@ -58,6 +58,19 @@ _ROLE_JOINT = {
     "HAND_R": 8,
 }
 _CLIPS = {"wait": "Wait", "jab": "Attack11", "dair": "AttackAirLw"}
+_SYNTH_ARTICLES = [
+    {"name": "Ball", "lifetime": 22, "velocity": [3.0, 0], "spawn": [12, 10], "max_live": 1,
+     "despawn": {"hit": False, "shield": True, "stage": True, "clank": True},
+     "hitboxes": [{"slot": 0, "damage": 6, "size": 3.0, "offset": [0, 0, 0], "angle": 361, "kbg": 60, "bkb": 25, "start": 1, "end": 0},
+                  {"slot": 1, "damage": 6, "size": 3.0, "offset": [0, 0, -3.0], "angle": 361, "kbg": 60, "bkb": 25, "start": 1, "end": 0}],
+     "scale": 1.0},
+    {"name": "Arc", "lifetime": 40, "velocity": [2.0, 3.0], "gravity": 0.25, "max_fall": 4.0, "spawn": [6, 8], "bone": 8,
+     "hitboxes": [{"damage": 4, "size": 2.0, "angle": 45, "start": 3, "end": 30}]},
+]
+_SYNTH_SPAWNS = [
+    {"row": "jab", "ordinal": 0, "line": 3, "frame": 6, "arg": 0},
+    {"row": "jab", "ordinal": 1, "line": 5, "frame": 14, "arg": 1},
+]
 ROW_FRAMES = {"wait": 40, "jab": 30, "dair": 39}
 _TOOLS = (
     "engine_status",
@@ -76,6 +89,14 @@ _TOOLS = (
     "list_hitbox_roles",
     "add_hitbox",
     "delete_hitbox",
+    "list_articles",
+    "edit_article",
+    "add_article",
+    "delete_article",
+    "list_spawns",
+    "edit_spawn",
+    "add_spawn",
+    "delete_spawn",
     "rebuild",
     "reload",
 )
@@ -472,6 +493,9 @@ class FakeWorkbench:
         self.root_x = 0.0
 
         self.attribute_proposals = False
+        # projectiles: the source articles (geno.md 19.2) and spawn calls; the real server edits gameplay.json and the scripts
+        self.articles: list[dict] = copy.deepcopy(_SYNTH_ARTICLES)
+        self.spawn_calls: list[dict] = copy.deepcopy(_SYNTH_SPAWNS)
         self._attributes = _source_attributes()
         self.built_attributes = {item["name"]: item["value"] for item in self._attributes}
         self.loaded_attributes = dict(self.built_attributes)
@@ -702,7 +726,83 @@ class FakeWorkbench:
         self.stale = True
         return {"applied": True}
 
+    def _spawn_record(self, call: dict) -> dict:
+        arg = int(call["arg"]) & 0xFFFFFFFF
+        angle = (arg >> 16) & 0xFFFF
+        return dict(call, arg=arg, article=arg & 0xFF, variant=(arg >> 8) & 0xFF, angle=angle - 0x10000 if angle >= 0x8000 else angle)
+
+    def _renumber_spawns(self) -> None:
+        for row in {c["row"] for c in self.spawn_calls}:
+            mine = sorted((c for c in self.spawn_calls if c["row"] == row), key=lambda c: (c["frame"], c["line"]))
+            for n, c in enumerate(mine):
+                c["ordinal"] = n
+
+    def _projectile(self, tool: str, args: dict) -> dict:
+        from projectiles import apply_ops, encode_spawn_arg
+        if tool == "list_articles":
+            return {"articles": [dict(copy.deepcopy(a), index=i) for i, a in enumerate(self.articles)]}
+        if tool == "edit_article":
+            index = _integer(args.get("index"), "index")
+            if index >= len(self.articles):
+                raise ValueError(f"unknown article: {index}")
+            self.articles[index] = apply_ops(self.articles[index], args.get("ops", []))
+            self.stale = True
+            return {"applied": True}
+        if tool == "add_article":
+            art = args.get("article")
+            if not isinstance(art, dict) or not art.get("name"):
+                raise ValueError("an article needs a name")
+            if any(a.get("name") == art["name"] for a in self.articles):
+                raise ValueError(f"an article named {art['name']} exists")
+            self.articles.append(copy.deepcopy(art))
+            self.stale = True
+            return {"applied": True, "index": len(self.articles) - 1}
+        if tool == "delete_article":
+            index = _integer(args.get("index"), "index")
+            if index != len(self.articles) - 1:
+                raise ValueError("scripts name articles by number: only the last article can be deleted")
+            if any((c["arg"] & 0xFF) == index for c in self.spawn_calls):
+                raise ValueError("a row spawns this article: delete that spawn first")
+            del self.articles[index]
+            self.stale = True
+            return {"applied": True}
+        if tool == "list_spawns":
+            row = args.get("row")
+            return {"spawns": [self._spawn_record(c) for c in self.spawn_calls if not row or c["row"] == row]}
+        row = self._row_arg(args)
+        mine = [c for c in self.spawn_calls if c["row"] == row]
+        self.stale = True
+        if tool == "add_spawn":
+            arg = encode_spawn_arg(_integer(args.get("article"), "article"), _integer(args.get("variant", 0), "variant"),
+                                   int(args.get("angle", 0)))
+            if (arg & 0xFF) >= len(self.articles):
+                raise ValueError(f"article {arg & 0xFF} does not exist")
+            frame = _integer(args.get("frame"), "frame")
+            self.spawn_calls.append({"row": row, "ordinal": 0, "line": 100 + len(self.spawn_calls), "frame": frame, "arg": arg})
+            self._renumber_spawns()
+            ordinal = next(c["ordinal"] for c in self.spawn_calls if c["row"] == row and c["frame"] == frame and c["arg"] == arg)
+            return {"applied": True, "ordinal": ordinal}
+        ordinal = _integer(args.get("ordinal"), "ordinal")
+        hit = next((c for c in mine if c["ordinal"] == ordinal), None)
+        if hit is None:
+            raise ValueError(f"no spawn #{ordinal}")
+        if tool == "delete_spawn":
+            self.spawn_calls.remove(hit)
+            self._renumber_spawns()
+            return {"applied": True}
+        if "frame" in args:
+            hit["frame"] = _integer(args["frame"], "frame")
+        if "article" in args or "variant" in args or "angle" in args:
+            cur = self._spawn_record(hit)
+            hit["arg"] = encode_spawn_arg(int(args.get("article", cur["article"])), int(args.get("variant", cur["variant"])),
+                                          int(args.get("angle", cur["angle"])))
+        self._renumber_spawns()
+        return {"applied": True}
+
     def _execute(self, tool: str, args: dict) -> dict:
+        if tool in ("list_articles", "edit_article", "add_article", "delete_article", "list_spawns", "edit_spawn",
+                    "add_spawn", "delete_spawn"):
+            return self._projectile(tool, args)
         if tool == "engine_status":
             return {"status": "running"}
         if tool == "engine_restart":

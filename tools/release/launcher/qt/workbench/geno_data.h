@@ -48,6 +48,18 @@ public:
     QVector<FileChange> assignClip(const QString &row, const QString &clip,
                                    std::optional<int> cropStart, QString *err) const;
     QString rowByMotion(int motion) const;
+    // Projectiles (articles of gameplay.json, geno.md 19.2) and the spawns that name them. Edits go through the same
+    // FileChange path as hitboxes; gameplay.full.json, when it has the article, gets the same operations.
+    QJsonArray articles() const;
+    // ops: {op:"set",path:"velocity/#0",value}, {op:"insert",path:"hitboxes",at,value}, {op:"remove",path,at}.
+    QVector<FileChange> editArticle(int index, const QJsonArray &ops, QString *err) const;
+    QVector<FileChange> addArticle(const QJsonObject &article, int *index, QString *err) const;
+    QVector<FileChange> removeArticle(int index, QString *err) const; // last article only, and not spawned by a script
+    QJsonArray spawns(const QString &row = {}) const; // {row, ordinal, line, frame, arg, article, variant, angle}
+    QVector<FileChange> editSpawn(const QString &row, int ordinal, std::optional<int> frame,
+                                  std::optional<quint32> arg, QString *err) const;
+    QVector<FileChange> addSpawn(const QString &row, int frame, quint32 arg, int *ordinal, QString *err) const;
+    QVector<FileChange> removeSpawn(const QString &row, int ordinal, QString *err) const;
 
 private:
     const RowInfo *findRow(const QString &name) const;

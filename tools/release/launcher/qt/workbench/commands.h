@@ -23,6 +23,7 @@ QJsonObject hitboxJson(const HitboxRef &);
 void registerClipCommands(Session &);
 void registerAttributeCommands(Session &);
 void registerGroundCommands(Session &); // Task 14.
+void registerProjectileCommands(Session &); // articles and their spawns (geno.md 19)
 void registerSaveCommands(Session &);   // Task 9.
 void registerBaselineCommands(Session &); // list_changes / revert_change / revert_all
 // Mirror the source as it is now (called after a successful rebuild; first open takes it lazily).
