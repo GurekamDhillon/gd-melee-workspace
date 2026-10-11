@@ -54,31 +54,31 @@ def _capsule(x0, y0, x1, y1, w):
             % (x0 - w / 2, y0 - w / 2, ln + w, w, w / 2, a, x0, y0))
 
 
-PALM = '<rect x="18" y="25" width="31" height="25" rx="10"/>'
-KNUCKLES = ('<circle cx="35.5" cy="27" r="6.2"/><circle cx="43" cy="29.5" r="5.6"/>'
-            '<circle cx="47" cy="36" r="4.2"/>')
-CUFF = '<rect x="16" y="46.5" width="34" height="11.5" rx="4.5"/>'
+PALM = '<rect x="16.5" y="24" width="34" height="27" rx="11"/>'
+KNUCKLES = ('<circle cx="36" cy="26.5" r="7"/><circle cx="44" cy="29" r="6.4"/>'
+            '<circle cx="48.5" cy="36" r="4.8"/>')
+CUFF = '<rect x="14.5" y="46.5" width="37" height="12.5" rx="5"/>'
 
 POSES = {
     # index finger straight out, thumb cocked against it
     "point": dict(
-        parts=['<rect x="19.5" y="2.5" width="11.5" height="34" rx="5.75"/>',
-               PALM, KNUCKLES, _capsule(22, 41, 11.5, 31, 10.5)],
+        parts=['<rect x="18.5" y="2.5" width="14" height="34" rx="7"/>',
+               PALM, KNUCKLES, _capsule(21.5, 41.5, 10, 31, 12)],
         creases=['<path d="M39.6 24.5 v6.5"/>', '<path d="M45.8 30 v4.5"/>',
                  '<path d="M21.5 30.5 h8"/>', '<path d="M15.5 34.5 l4 4"/>'],
-        hot=(25.25, 3.2),
+        hot=(25.5, 3.3),
         badge=(36.5, 38.5)),
     # index hooked down onto the thumb: a pinch (a held coin sits at the hotspot)
     "grab": dict(
-        parts=['<rect x="16.5" y="14" width="12.5" height="20" rx="6.25"/>',
-               PALM, KNUCKLES, _capsule(22, 41, 13, 24.5, 10.5)],
+        parts=['<rect x="15.5" y="13" width="14.5" height="21" rx="7.25"/>',
+               PALM, KNUCKLES, _capsule(21.5, 41.5, 12, 24, 12)],
         creases=['<path d="M39.6 24.5 v6.5"/>', '<path d="M45.8 30 v4.5"/>',
                  '<path d="M19 22.5 h8"/>', '<path d="M16.5 32 l3.5 3.5"/>'],
         hot=(15.0, 21.0),
         badge=(36.5, 38.5)),
 }
 # the pose: lean the hand so the finger points up-left, shrink it to leave room for the shadow
-POSE_SCALE, POSE_ROT, POSE_PIVOT, POSE_AT = 0.84, -32.0, (32.0, 36.0), (33.0, 34.0)
+POSE_SCALE, POSE_ROT, POSE_PIVOT, POSE_AT = 0.86, -32.0, (32.0, 36.0), (33.0, 34.0)
 POSE_T = ("translate(%g %g) scale(%g) rotate(%g) translate(%g %g)"
           % (POSE_AT[0], POSE_AT[1], POSE_SCALE, POSE_ROT, -POSE_PIVOT[0], -POSE_PIVOT[1]))
 
@@ -108,7 +108,7 @@ def hand_layers(pose):
     bx, by = posed(*d["badge"])
     return {
         "shadow": defs + '<g filter="url(#soft)"><use href="#sil" fill="#fff"/></g>',
-        "ink": defs + '<use href="#sil" fill="#fff" stroke="#fff" stroke-width="3.4" stroke-linejoin="round"/>',
+        "ink": defs + '<use href="#sil" fill="#fff" stroke="#fff" stroke-width="4.2" stroke-linejoin="round"/>',
         "fill": defs + '<use href="#sil" fill="#fff"/>',
         "shade": defs + '<g mask="url(#shade)"><rect width="64" height="64" fill="#fff"/></g>',
         "hi": defs + '<g filter="url(#feather)"><g mask="url(#hi)"><rect width="64" height="64" fill="#fff"/></g></g>',
