@@ -277,7 +277,7 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xGOK_ATC_005 | 57 | Forward air, Forward smash, Forward throw |  |  |  |  |
 | xGOK_ATC_006 | 58 | Dash attack, Forward smash, Side B Dragon Rush |  |  |  |  |
 | xGOK_ATC_007 | 49 | Down smash, Neutral air |  |  |  |  |
-| xGOK_ATC_008 | 47 | Forward air, Forward tilt, Ledge attack / escape / jump |  |  |  |  |
+| xGOK_ATC_008 | 47 | Forward air, Forward tilt, Ledge attack / escape / jump | jump kick: left leg forward, leans on it, lifts the right leg, pivots off the left and jumps into an air kick, then landing frames |  |  |  |
 | xGOK_ATC_009 | 47 | Jab 3 (L3) |  |  |  |  |
 | xGOK_ATC_010 | 41 | Back air, Back throw |  |  |  |  |
 | xGOK_ATC_011 | 70 | Dash attack, Forward smash, Forward throw, Side B Dragon Rush |  |  |  |  |
@@ -310,7 +310,7 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xGOK_ATC_SHOT_N_LOOP | 14 |  | while floating, firing ki blasts from the hands (like Mega Man's in Ultimate) |  |  |  |
 | xGOK_ATC_SHOT_R | 40 |  |  |  |  |  |
 | xGOK_ATC_SHOT_R_LOOP | 14 |  |  |  |  |  |
-| xGOK_BAS_BOOST_F_00 | 24 | Dash (start), Double jump (air jump), Jump (ground, forward/back), Jump squat, Ledge attack / escape / jump, Ledge climb, Roll / spot dodge / air dodge, Up B Instant Transmission |  |  |  |  |
+| xGOK_BAS_BOOST_F_00 | 24 | Dash (start), Double jump (air jump), Jump (ground, forward/back), Jump squat, Ledge attack / escape / jump, Ledge climb, Roll / spot dodge / air dodge, Up B Instant Transmission | dragon dive / dash: flying chase toward the target |  |  |  |
 | xGOK_BAS_BOOST_F_01 | 180 | Run, Walk (slow/mid/fast) |  |  |  |  |
 | xGOK_BAS_BOOST_F_02 | 19 | Air landings, Landing (ground), Run brake / stop |  |  |  |  |
 | xGOK_BAS_BUKUU_B_S | 40 |  |  |  |  |  |
