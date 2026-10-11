@@ -141,7 +141,8 @@ The CLIPS machinery with a picker on top, to choose Goku's remake animations slo
 One command (needs the game checkout whose `geno-lab` has the REMAKE mode; `GW_MELEE` / `GW_BUILD_ROOT` select it):
 
 ```powershell
-& 'E:\Projects\Melee Workspace\ports\goku-xv2	oolsemake.ps1'          # optional arg: a slot number or name fragment
+& 'E:\Projects\Melee Workspace\ports\goku-xv2\tools\remake.ps1'
+emake.ps1'          # optional arg: a slot number or name fragment
 ```
 
 It writes `missions/remake-goku.txt` (`tools/remake_lab_data.py`: the 55 slots of `remake-candidates.json` in picking order, their
