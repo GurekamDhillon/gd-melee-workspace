@@ -1,0 +1,494 @@
+{
+  "screen": "css_tokens",
+  "note": "Hands and coins of the character select. Units: the 64 grid of each texture (= 1x pixels at the authored size); the engine scales the whole stack.",
+  "hand": {
+    "grid": 64,
+    "hotspot": {
+      "point": [
+        13.59,
+        13.64
+      ],
+      "grab": [
+        14.21,
+        30.88
+      ]
+    },
+    "badge_centre": {
+      "point": [
+        37.32,
+        33.78
+      ],
+      "grab": [
+        37.32,
+        33.78
+      ]
+    },
+    "badge_r": 6.6,
+    "stack": [
+      [
+        "shadow",
+        "ink",
+        0.45
+      ],
+      [
+        "ink",
+        "ink",
+        1.0
+      ],
+      [
+        "fill",
+        "glove",
+        1.0
+      ],
+      [
+        "cuff",
+        "port",
+        1.0
+      ],
+      [
+        "shade",
+        "ink",
+        0.28
+      ],
+      [
+        "hi",
+        "white",
+        0.55
+      ],
+      [
+        "detail",
+        "ink",
+        0.85
+      ],
+      [
+        "badge",
+        "port",
+        1.0
+      ]
+    ],
+    "states": {
+      "rest": "point, shadow (+2,+3)",
+      "hover": "point, lowered: shadow (+1,+1.5), 0.94 scale",
+      "carry": "grab with the coin under the pinch",
+      "drag": "grab on the slider knob"
+    }
+  },
+  "coin": {
+    "grid": 64,
+    "centre": [
+      32,
+      32
+    ],
+    "r_face": 21.0,
+    "r_out": 28.0,
+    "stack": [
+      [
+        "shadow",
+        "ink",
+        0.5
+      ],
+      [
+        "ink",
+        "ink",
+        1.0
+      ],
+      [
+        "rim",
+        "port_dark",
+        1.0
+      ],
+      [
+        "inlay",
+        "bone",
+        1.0
+      ],
+      [
+        "face",
+        "port",
+        1.0
+      ],
+      [
+        "ring",
+        "ink",
+        0.35
+      ],
+      [
+        "shade",
+        "ink",
+        0.25
+      ],
+      [
+        "hi",
+        "white",
+        0.6
+      ]
+    ],
+    "states": {
+      "placed": "scale 1, shadow (+1,+1.5)",
+      "carried": "scale 1.15, shadow (+4,+6)",
+      "drop": "160 ms from carried to placed with a 6% undershoot"
+    }
+  },
+  "textures": [
+    {
+      "name": "css_coin_face",
+      "file_2x": "out_kit/2x/css_coin_face.png",
+      "file_1x": "out_kit/1x/css_coin_face.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_coin_hi",
+      "file_2x": "out_kit/2x/css_coin_hi.png",
+      "file_1x": "out_kit/1x/css_coin_hi.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_coin_ink",
+      "file_2x": "out_kit/2x/css_coin_ink.png",
+      "file_1x": "out_kit/1x/css_coin_ink.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_coin_inlay",
+      "file_2x": "out_kit/2x/css_coin_inlay.png",
+      "file_1x": "out_kit/1x/css_coin_inlay.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_coin_rim",
+      "file_2x": "out_kit/2x/css_coin_rim.png",
+      "file_1x": "out_kit/1x/css_coin_rim.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_coin_ring",
+      "file_2x": "out_kit/2x/css_coin_ring.png",
+      "file_1x": "out_kit/1x/css_coin_ring.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_coin_shade",
+      "file_2x": "out_kit/2x/css_coin_shade.png",
+      "file_1x": "out_kit/1x/css_coin_shade.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_coin_shadow",
+      "file_2x": "out_kit/2x/css_coin_shadow.png",
+      "file_1x": "out_kit/1x/css_coin_shadow.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_grab_badge",
+      "file_2x": "out_kit/2x/css_hand_grab_badge.png",
+      "file_1x": "out_kit/1x/css_hand_grab_badge.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_grab_cuff",
+      "file_2x": "out_kit/2x/css_hand_grab_cuff.png",
+      "file_1x": "out_kit/1x/css_hand_grab_cuff.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_grab_detail",
+      "file_2x": "out_kit/2x/css_hand_grab_detail.png",
+      "file_1x": "out_kit/1x/css_hand_grab_detail.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_grab_fill",
+      "file_2x": "out_kit/2x/css_hand_grab_fill.png",
+      "file_1x": "out_kit/1x/css_hand_grab_fill.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_grab_hi",
+      "file_2x": "out_kit/2x/css_hand_grab_hi.png",
+      "file_1x": "out_kit/1x/css_hand_grab_hi.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_grab_ink",
+      "file_2x": "out_kit/2x/css_hand_grab_ink.png",
+      "file_1x": "out_kit/1x/css_hand_grab_ink.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_grab_shade",
+      "file_2x": "out_kit/2x/css_hand_grab_shade.png",
+      "file_1x": "out_kit/1x/css_hand_grab_shade.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_grab_shadow",
+      "file_2x": "out_kit/2x/css_hand_grab_shadow.png",
+      "file_1x": "out_kit/1x/css_hand_grab_shadow.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_point_badge",
+      "file_2x": "out_kit/2x/css_hand_point_badge.png",
+      "file_1x": "out_kit/1x/css_hand_point_badge.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_point_cuff",
+      "file_2x": "out_kit/2x/css_hand_point_cuff.png",
+      "file_1x": "out_kit/1x/css_hand_point_cuff.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_point_detail",
+      "file_2x": "out_kit/2x/css_hand_point_detail.png",
+      "file_1x": "out_kit/1x/css_hand_point_detail.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_point_fill",
+      "file_2x": "out_kit/2x/css_hand_point_fill.png",
+      "file_1x": "out_kit/1x/css_hand_point_fill.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_point_hi",
+      "file_2x": "out_kit/2x/css_hand_point_hi.png",
+      "file_1x": "out_kit/1x/css_hand_point_hi.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_point_ink",
+      "file_2x": "out_kit/2x/css_hand_point_ink.png",
+      "file_1x": "out_kit/1x/css_hand_point_ink.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_point_shade",
+      "file_2x": "out_kit/2x/css_hand_point_shade.png",
+      "file_1x": "out_kit/1x/css_hand_point_shade.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    },
+    {
+      "name": "css_hand_point_shadow",
+      "file_2x": "out_kit/2x/css_hand_point_shadow.png",
+      "file_1x": "out_kit/1x/css_hand_point_shadow.png",
+      "size_2x": [
+        128,
+        128
+      ],
+      "size_1x": [
+        64,
+        64
+      ],
+      "format": "I4",
+      "why": "white mask, tinted per port by the engine"
+    }
+  ]
+}
