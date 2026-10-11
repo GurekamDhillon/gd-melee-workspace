@@ -5750,7 +5750,7 @@
   },
   "x-source-contract": {
     "pc/platform/geno_registry.c": "54398ba380e74938083bc319d5b5a0038c509abcd9c5ff006d1b8b5f637e2585",
-    "pc/platform/geno_define_registry.inc": "43b856d419351bb8df1239c1acf48f955553118765558dc325423a765ebf3f46",
+    "pc/platform/geno_define_registry.inc": "203c6dcb9d1d08c63514bae95fbbf81ec33ada5c82c9fcdb0a1f42a55afd36fd",
     "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
     "pc/platform/geno_combo_registry.inc": "ee2771fc193b43719de384e5a39e689c69e11b43bbbb36318cf91c8723694837",
     "pc/geno/geno.h": "abb91a63a4cc40c9045bdea46c10876347a1f29b348dfe52ec09ac02c37982e8",
