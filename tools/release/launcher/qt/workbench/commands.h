@@ -24,6 +24,11 @@ void registerClipCommands(Session &);
 void registerAttributeCommands(Session &);
 void registerGroundCommands(Session &); // Task 14.
 void registerSaveCommands(Session &);   // Task 9.
+void registerBaselineCommands(Session &); // list_changes / revert_change / revert_all
+// Mirror the source as it is now (called after a successful rebuild; first open takes it lazily).
+void captureBaseline(Session &);
+Session *baselineSession(Session &);  // engine-less session over the mirror; null when unavailable
+QJsonArray baselineChanges(Session &); // fields that differ from the mirror: {kind,row,ordinal,field|name,was,now}
 void registerAllCommands(Session &);
 // {changes:[{path, bytes_before, bytes_after}]}; no source bytes in a command reply.
 QJsonObject changeToJson(const QVector<FileChange> &);

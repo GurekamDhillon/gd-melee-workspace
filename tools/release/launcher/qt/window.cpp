@@ -2,6 +2,10 @@
 #include "kit.h"
 #include "graphics.h"
 #include "workbench/workbench_window.h"
+#include "workbench/game_exe.h"
+#include "workbench/atlas_widgets.h"
+#include <QMutex>
+#include <QMutexLocker>
 #include <QGuiApplication>
 #include <QDateTime>
 #include <QApplication>
@@ -48,6 +52,7 @@
 #include <algorithm>
 
 namespace launcher {
+struct GameExeSetting { QMutex lock; QString value; };
 #ifdef Q_OS_LINUX
 static QString osRelease() { QFile f("/etc/os-release"); return f.open(QIODevice::ReadOnly) ? QString::fromUtf8(f.read(16384)) : QString(); }
 #endif
@@ -278,6 +283,7 @@ void applyTheme() {
 }
 Window::Window(QString app, QString user, Settings settings)
     : appDir_(std::move(app)), userDir_(std::move(user)), settings_(std::move(settings)) {
+    wb::installWheelGuard();
     setObjectName("atlasWindow"); setWindowTitle("GD's Melee"); resize(960, 640); setMinimumSize(900, 600);
     // E0 ground, then the four places: trail (top), the rail and the tab bodies (primary + explainer), keys (bottom).
     auto *root = new QWidget; root->setObjectName("atlasGround");
@@ -808,6 +814,21 @@ QWidget *Window::diagnosticsTab() {
         if (!path.isEmpty()) { blenderPath->setText(path); saveBlender(); }
     });
     blenderBrowse->setObjectName("blenderBrowse");
+    auto *gameRow = new QHBoxLayout; creatorSettings->addLayout(gameRow);
+    auto *gameLabel = new QLabel(t("Game exe", "Ejecutable del juego")); gameRow->addWidget(gameLabel);
+    auto *gamePath = new QLineEdit(settings_.option("game_exe")); gamePath->setObjectName("gameExe");
+    gamePath->setAccessibleName(t("Game exe", "Ejecutable del juego")); gameLabel->setBuddy(gamePath);
+    gamePath->setPlaceholderText(t("Use GW_ENGINE_EXE, the workspace _build or the launcher folder when empty", "Usar GW_ENGINE_EXE, _build del espacio de trabajo o la carpeta del lanzador si esta vacio"));
+    gameRow->addWidget(gamePath, 1);
+    auto saveGame = [this, gamePath] { guarded([&] {
+        settings_.options["game_exe"] = gamePath->text().trimmed(); save(); refreshGameExe();
+    }); };
+    connect(gamePath, &QLineEdit::editingFinished, this, saveGame);
+    auto *gameBrowse = button(gameRow, t("Browse for game exe", "Buscar ejecutable del juego"), [this, gamePath, saveGame] {
+        const auto path = QFileDialog::getOpenFileName(this, t("Select game executable", "Selecciona el ejecutable del juego"), gamePath->text());
+        if (!path.isEmpty()) { gamePath->setText(path); saveGame(); }
+    });
+    gameBrowse->setObjectName("gameExeBrowse");
     auto *logging = bodyOf(t("Logging", "Logging"));
     for (const auto &entry : QList<std::tuple<QString, QString, bool>>{{t("Log everything (large logs)", "Registrar todo (registros grandes)"), "log_all", false}, {t("Log scene changes", "Registrar cambios de escena"), "log_scene", true}})
         toggleRow(logging, std::get<0>(entry), "diag_" + std::get<1>(entry), settings_.flag(std::get<1>(entry), std::get<2>(entry)), [this, key = std::get<1>(entry)](bool v) { settings_.options[key] = v ? "1" : "0"; save(); });
@@ -941,6 +962,14 @@ void Window::syncCreatorTab() {
     if (enabled) { names << t("CREATOR", "CREADOR"); icons << "mods"; }
     rail_->setNames(names); rail_->setIcons(icons); setKeys(rail_->current());
 }
+void Window::refreshGameExe() {
+    if (!gameExe_) gameExe_ = std::make_shared<GameExeSetting>();
+    const auto setting = settings_.option("game_exe");
+    { QMutexLocker lock(&gameExe_->lock); gameExe_->value = setting; }
+    if (!creator_) return;
+    const auto exe = wb::resolveGameExe(setting, QProcessEnvironment::systemEnvironment(), creatorPath_ ? creatorPath_->toolTip() : QString{}, appDir_);
+    creator_->setGameExeInfo(exe.path.isEmpty() ? exe.error : QDir::toNativeSeparators(exe.path) + "\n(" + exe.source + ")");
+}
 void Window::openCreatorProject(const QString &folder) {
     if (!creatorPage_ || closingCreators_) return;
     if (creator_) {
@@ -960,9 +989,17 @@ void Window::openCreatorProject(const QString &folder) {
         const bool hasDisc = discIndex >= 0;
         const Disc disc = hasDisc ? settings_.discs[discIndex] : Disc{};
         const QString projectMods = projectModsDir(folder);
-        auto launch = [app = appDir_, user = userDir_, settings = settings_, disc, hasDisc, projectMods] {
+        if (!gameExe_) gameExe_ = std::make_shared<GameExeSetting>();
+        { QMutexLocker lock(&gameExe_->lock); gameExe_->value = settings_.option("game_exe"); }
+        auto launch = [app = appDir_, user = userDir_, settings = settings_, disc, hasDisc, projectMods, folder, holder = gameExe_] {
             if (!hasDisc) throw std::runtime_error(t("Select a disc on Play, then reopen the fighter folder.", "Selecciona un disco en Jugar y vuelve a abrir la carpeta del luchador.").toStdString());
-            const auto spec = prepareLaunch(app, user, settings, disc);
+            QString setting; { QMutexLocker lock(&holder->lock); setting = holder->value; }
+            const auto exe = wb::resolveGameExe(setting, QProcessEnvironment::systemEnvironment(), folder, app);
+            if (exe.path.isEmpty()) throw std::runtime_error(exe.error.toStdString());
+            // Assets (ui/, fonts, scripts) come from the folder holding the exe when it has them, else the launcher's.
+            const QFileInfo exeInfo(exe.path);
+            const bool exeHasUi = QFile::exists(exeInfo.absolutePath() + "/ui/manifest.json") || QFile::exists(exeInfo.absolutePath() + "/assets/ui/manifest.json");
+            const auto spec = prepareLaunch(exeHasUi ? exeInfo.absolutePath() : app, user, settings, disc, exe.path);
             wb::EngineLink::Launch result; result.headless = true;
             result.exe = spec.program; result.workDir = spec.workingDirectory; result.extraArgs = spec.arguments;
             result.modsDir = projectMods.isEmpty() ? modsDir(app, user) : projectMods; result.wbDir = spec.workingDirectory + "/workbench";
@@ -972,6 +1009,7 @@ void Window::openCreatorProject(const QString &folder) {
         };
         creator_ = new wb::WorkbenchWindow(folder, std::move(launch), creatorPage_);
         creator_->setBlenderSetting(settings_.option("blender_exe"));
+        refreshGameExe();
         creator_->setWindowFlags(Qt::Widget); creatorLayout_->addWidget(creator_, 1);
         creatorEmpty_->hide(); creatorPath_->setText(QDir::toNativeSeparators(folder)); creatorPath_->setToolTip(folder);
         creatorOpen_->setEnabled(false);

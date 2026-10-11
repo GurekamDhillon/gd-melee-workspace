@@ -21,6 +21,7 @@ class QVBoxLayout;
 namespace wb { class WorkbenchWindow; }
 
 namespace launcher {
+struct GameExeSetting;
 namespace kit { class TabRail; }
 extern bool spanish;
 QString t(const char *en, const char *es);
@@ -101,6 +102,8 @@ private:
     QPushButton *creatorOpen_ = nullptr;
     QLabel *creatorPath_ = nullptr;
     wb::WorkbenchWindow *creator_ = nullptr;
+    std::shared_ptr<GameExeSetting> gameExe_;
+    void refreshGameExe();
     bool closingCreators_ = false;
     int pendingCreatorStops_ = 0;
     void openPath(const QString &path);

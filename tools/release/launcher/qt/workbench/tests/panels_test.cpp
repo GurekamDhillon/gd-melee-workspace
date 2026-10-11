@@ -3,6 +3,8 @@
 #include "commands.h"
 #include "../testfixture.h"
 #include "panels.h"
+#include "hub_panel.h"
+#include <QToolButton>
 #include "session.h"
 #include "timeline.h"
 #include "workbench_window.h"
@@ -17,6 +19,10 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QCheckBox>
+#include <QScrollArea>
+#include <QScrollBar>
+#include <QAbstractSpinBox>
+#include <QWheelEvent>
 #include <QtTest>
 using namespace wb;
 
@@ -86,6 +92,47 @@ private slots:
         o.setFilter({}); QCOMPARE(o.currentItem(), o.topLevelItem(1)->child(1));
         o.setCurrentItem(o.topLevelItem(1)->child(0));
         QCOMPARE(hits.size(), 1); QCOMPARE(hits[0][0].toString(), QString("dair")); QCOMPARE(hits[0][1].toInt(), 0);
+    }
+    void changedFieldsShowAMarkerAndRevertEmitsARequest() {
+        InspectorPanel p; HitboxRef h; h.ordinal = 1; h.damage = 5; h.joint = "FOOT_L";
+        p.showHitbox("dair", h); QSignalSpy reverts(&p, &InspectorPanel::revertRequested);
+        auto *button = p.findChild<QToolButton *>("wbRevert_damage"); QVERIFY(button); QVERIFY(button->isHidden());
+        p.setChanges("dair", QJsonArray{QJsonObject{{"kind", "hitbox"}, {"row", "dair"}, {"ordinal", 1}, {"field", "damage"}, {"was", 3.0}, {"now", 5.0}},
+                                         QJsonObject{{"kind", "hitbox"}, {"row", "dair"}, {"ordinal", 0}, {"field", "size"}, {"was", 1.0}, {"now", 2.0}}});
+        QVERIFY(!button->isHidden()); QVERIFY2(button->toolTip().contains("Changed since last build: was 3"), qPrintable(button->toolTip()));
+        QVERIFY(p.findChild<QWidget *>("wbField_damage")->property("changed").toBool());
+        QVERIFY(p.findChild<QToolButton *>("wbRevert_size")->isHidden()); // another hitbox's change
+        button->click();
+        QCOMPARE(reverts.size(), 1);
+        const auto args = reverts[0][0].toJsonObject();
+        QCOMPARE(args["field"].toString(), QString("damage")); QCOMPARE(args["ordinal"].toInt(), 1); QCOMPARE(args["row"].toString(), QString("dair"));
+        p.setChanges("dair", {}); QVERIFY(button->isHidden()); QVERIFY(!p.findChild<QWidget *>("wbField_damage")->property("changed").toBool());
+    }
+    void hubCountsChangesAndOffersRevertAll() {
+        HubPanel hub; QSignalSpy revert(&hub, &HubPanel::revertAllRequested);
+        auto *label = hub.findChild<QLabel *>("wbUnsaved"); auto *all = hub.findChild<QAbstractButton *>("wbRevertAll"); QVERIFY(label && all);
+        hub.setPendingChanges(3);
+        QCOMPARE(label->text(), QString("3 changes not in game")); QVERIFY(!all->isHidden());
+        all->click(); QCOMPARE(revert.size(), 1);
+        hub.setPendingChanges(0); QVERIFY(all->isHidden()); QCOMPARE(label->text(), QString("In game"));
+    }
+    void wheelOverUnfocusedSpinboxScrollsInspectorInsteadOfChangingValue() {
+        InspectorPanel p; HitboxRef h; h.ordinal = 1; h.slot = 0; h.joint = "FOOT_L"; h.damage = 5;
+        p.showHitbox("dair", h); p.resize(320, 140); p.show(); QVERIFY(QTest::qWaitForWindowExposed(&p));
+        auto *area = p.findChild<QScrollArea *>(); QVERIFY(area);
+        QVERIFY(area->verticalScrollBar()->maximum() > 0);
+        QAbstractSpinBox *spin = nullptr;
+        for (auto *candidate : p.findChildren<QAbstractSpinBox *>()) if (candidate->isVisible() && candidate->isEnabled()) { spin = candidate; break; }
+        QVERIFY(spin);
+        auto *number = qobject_cast<QDoubleSpinBox *>(spin); auto *integer = qobject_cast<QSpinBox *>(spin);
+        const double before = number ? number->value() : integer->value();
+        QVERIFY(!spin->hasFocus());
+        const int scrolled = area->verticalScrollBar()->value();
+        QWheelEvent wheel(QPointF(4, 4), spin->mapToGlobal(QPointF(4, 4)), QPoint(), QPoint(0, -120), Qt::NoButton, Qt::NoModifier, Qt::NoScrollPhase, false);
+        QApplication::sendEvent(spin, &wheel);
+        QCOMPARE(number ? number->value() : double(integer->value()), before);
+        QVERIFY(area->verticalScrollBar()->value() > scrolled);
+        QVERIFY(!spin->hasFocus());
     }
     void inspectorRolesPreserveDraftAndDeleteSelectedOccurrence() {
         InspectorPanel p; HitboxRef h; h.ordinal = 1; h.slot = 0; h.joint = "FOOT_L";

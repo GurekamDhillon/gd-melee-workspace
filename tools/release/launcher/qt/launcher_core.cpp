@@ -279,7 +279,7 @@ void applyGameLibraryEnvironment(QProcessEnvironment &env, const QString &appDir
     if (!preload.isEmpty()) env.insert("LD_PRELOAD", preload);
     env.insert("LD_LIBRARY_PATH", gameLibraryPath(appDir, inherited));
 }
-LaunchSpec prepareLaunch(const QString &app, const QString &user, const Settings &s, const Disc &disc) {
+LaunchSpec prepareLaunch(const QString &app, const QString &user, const Settings &s, const Disc &disc, const QString &exeOverride) {
     if (!safeId(disc.id)) fail("Invalid disc ID");
     auto check = probeDisc(disc.path); if (check.verdict == DiscInfo::Bad) fail(check.message);
     LaunchSpec spec;
@@ -289,6 +289,7 @@ LaunchSpec prepareLaunch(const QString &app, const QString &user, const Settings
     spec.program = app + "/bin/melee";
     if (!QFile::exists(spec.program)) spec.program = app + "/melee";
 #endif
+    if (!exeOverride.isEmpty()) spec.program = exeOverride;
     if (!QFileInfo(spec.program).isExecutable()) fail("Game executable is missing or not executable: " + spec.program);
     auto ui = app + "/assets/ui"; if (!QDir(ui).exists()) ui = app + "/ui";
     if (!QFile::exists(ui + "/manifest.json")) fail("Game UI assets are missing: " + ui);

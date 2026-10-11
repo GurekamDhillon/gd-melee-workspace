@@ -3,6 +3,7 @@
 #define WB_CORE_USE_LAUNCHER_T 1
 #include "commands.h"
 #include "blender_launch.h"
+#include "game_exe.h"
 #include "play_launch.h"
 #include "geno_data.h"
 #include "hub_panel.h"
@@ -108,6 +109,7 @@ struct Snapshot {
     QString fidelityError;
     QVector<RoleInfo> roles;
     bool canRebuild = false;
+    QJsonArray changes; // fields that differ from the last build (baseline.cpp)
     qint64 blenderPid = 0, blenderAck = 0, viewRevision = 0;
 };
 struct Reply { QJsonObject envelope; Snapshot snapshot; QJsonArray attributes; bool hasAttributes = false; };
@@ -179,6 +181,7 @@ struct Worker {
         for (const auto &entry : session->history().entries()) {
             auto metadata = entry; metadata.changes.clear(); value.history.append(metadata);
         }
+        try { value.changes = baselineChanges(*session); } catch (...) {}
         value.commands = session->registry().list();
         // The GUI gets schemas only. Handlers retain worker-owned state.
         for (auto &spec : value.commands) spec.run = {};
@@ -319,7 +322,10 @@ struct WorkbenchWindow::Impl {
     QScrollArea *timelineScroll = nullptr;
     QWidget *centreHost = nullptr, *timelinePlate = nullptr;
     enum class Mode { Unset, Wide, Narrow } layoutMode = Mode::Unset;
-    bool cardBelow = false;
+    bool cardBelow = false, portraitLayout = false, railInTabs = false;
+    QWidget *hitboxTab = nullptr, *attributesTab = nullptr;
+    QPushButton *moveChip = nullptr;
+    QCheckBox *autoHitbox = nullptr;
     QWidget *movesRail;
     QSplitter *columns;
     FrameInfo frameInfo; // only the timeline's frame readout; Blender owns the view
@@ -367,6 +373,7 @@ struct WorkbenchWindow::Impl {
         QObject::connect(hub, &HubPanel::undoRequested, q, [this] { q->runCommand("undo", {}); });
         QObject::connect(hub, &HubPanel::rebuildRequested, q, [this] { rebuildAndReload(); });
         QObject::connect(hub, &HubPanel::showBlenderRequested, q, [this] { showBlender(); });
+        QObject::connect(hub, &HubPanel::revertAllRequested, q, [this] { q->runCommand("revert_all", {}); });
         QObject::connect(hub, &HubPanel::startRequested, q, [this] { q->runCommand("engine_restart", {}); });
         QObject::connect(hub, &HubPanel::restartRequested, q, [this] { setPlaying(false); q->runCommand("engine_restart", {}); });
         QObject::connect(hub, &HubPanel::stopRequested, q, [this] { setPlaying(false); q->runCommand("engine_stop", {}); });
@@ -394,6 +401,8 @@ struct WorkbenchWindow::Impl {
         movesLayout->addWidget(kit::capLabel(t("Moves", "Movimientos"), atlas::Role::Cap14, "muted"));
         search = new QLineEdit; search->setObjectName("wbMoveSearch"); search->setClearButtonEnabled(true);
         search->setAccessibleName(t("Search moves", "Buscar movimientos")); movesLayout->addWidget(search);
+        autoHitbox = new QCheckBox(t("Open Hitbox after picking a move", "Abrir Hitbox al elegir un movimiento")); autoHitbox->setObjectName("wbAutoHitbox");
+        autoHitbox->hide(); movesLayout->addWidget(autoHitbox);
         columns->addWidget(movesRail);
         auto *centre = new QWidget; centre->setObjectName("wbCentreHost"); centre->setMinimumWidth(440); centreHost = centre;
         centreLayout = new QVBoxLayout(centre); centreLayout->setContentsMargins(24, 20, 24, 20); centreLayout->setSpacing(20);
@@ -402,7 +411,13 @@ struct WorkbenchWindow::Impl {
         moveTitle = kit::capLabel({}, atlas::Role::Hero); moveTitle->setObjectName("wbMoveTitle"); moveTitle->setTextFormat(Qt::PlainText);
         moveStats = new QLabel; moveStats->setObjectName("wbMoveStats"); moveStats->setTextFormat(Qt::PlainText); moveStats->setWordWrap(true);
         moveStats->setFont(atlas::numberFont(14));
-        header->addWidget(moveGroupLabel, 0, 0); header->addWidget(moveTitle, 1, 0);
+        auto *groupLine = new QHBoxLayout; groupLine->setContentsMargins(0, 0, 0, 0); groupLine->setSpacing(10);
+        groupLine->addWidget(moveGroupLabel);
+        moveChip = new QPushButton; moveChip->setObjectName("wbMoveChip"); moveChip->setFlat(true); moveChip->hide();
+        moveChip->setToolTip(t("Current move; click to open the Moves list", "Movimiento actual; pulsa para abrir la lista de movimientos"));
+        moveChip->setStyleSheet(QString("QPushButton { color: %1; background: %2; border: 0; border-left: 3px solid %1; padding: 2px 10px; }").arg(atlas::colour("ember").name(), atlas::colour("plate2").name()));
+        groupLine->addWidget(moveChip); groupLine->addStretch(1);
+        header->addLayout(groupLine, 0, 0); header->addWidget(moveTitle, 1, 0);
         header->addWidget(moveStats, 2, 0, 1, 2); header->addWidget(hub->blenderCard(), 0, 1, 2, 1);
         header->setColumnStretch(0, 1); centreLayout->addLayout(header);
         auto *plate = new AtlasPlate; plate->setObjectName("wbTimelinePlate");
@@ -427,7 +442,7 @@ struct WorkbenchWindow::Impl {
         QObject::connect(timeline, &Timeline::playToggled, q, [this](bool on) { setPlaying(on); });
         QObject::connect(timeline, &TimelineView::editRequested, q, [this](const QString &name, const QJsonObject &args) { q->runCommand(name, args); });
         QObject::connect(timeline, &TimelineView::hitboxSelected, q, [this](int ordinal) {
-            selectedOrdinal = ordinal; refreshSelection(); tabs->setCurrentIndex(0);
+            selectedOrdinal = ordinal; refreshSelection(); showHitboxTab();
         });
         auto *addLine = new QHBoxLayout; timelineLayout->addLayout(addLine);
         auto *add = addButton(addLine, t("+ Add hitbox", "+ Añadir hitbox"), [this] {
@@ -484,23 +499,37 @@ struct WorkbenchWindow::Impl {
         if (!tabs || !centreHost) return;
         const int w = q->width(), h = q->height();
         const bool portrait = h > w, narrow = w < 1400 || portrait;
+        // Clearly tall (a second monitor turned upright): the Moves rail joins the lower strip. A bench that is merely a
+        // little taller than wide keeps the two-column narrow layout.
+        const bool tall = h * 4 > w * 5;
         const Mode mode = narrow ? Mode::Narrow : Mode::Wide;
-        if (mode != layoutMode) {
-            layoutMode = mode;
+        if (mode != layoutMode || tall != portraitLayout) {
+            layoutMode = mode; portraitLayout = tall;
+            columns->setUpdatesEnabled(false);
+            QWidget *current = tabs->currentWidget();
+            // Tall window: the Moves rail joins the lower strip as its first tab and the Move view spans the width.
+            if (!tall && railInTabs) {
+                tabs->removeTab(tabs->indexOf(movesRail)); columns->insertWidget(0, movesRail); movesRail->setMinimumWidth(190); movesRail->show();
+                railInTabs = false; autoHitbox->hide(); moveChip->hide();
+            }
             if (narrow) {
-                columns->setUpdatesEnabled(false);
                 tabs->setMinimumWidth(0); tabs->setMinimumHeight(portrait ? 420 : 300);
-                centreLayout->insertWidget(2, tabs, 1); centreLayout->setStretch(3, 0);
-                columns->setSizes({260, std::max(440, w - 260)});
-                columns->setUpdatesEnabled(true);
-            } else {
+                if (centreLayout->indexOf(tabs) < 0) { centreLayout->insertWidget(2, tabs, 1); centreLayout->setStretch(3, 0); }
+                if (tall && !railInTabs) {
+                    movesRail->setMinimumWidth(0); tabs->insertTab(0, movesRail, t("Moves", "Movimientos"));
+                    railInTabs = true; autoHitbox->show(); moveChip->show();
+                    if (current) tabs->setCurrentWidget(current);
+                }
+                columns->setSizes(tall ? QList<int>{w} : QList<int>{260, std::max(440, w - 260)});
+            } else if (centreLayout->indexOf(tabs) >= 0) {
                 centreLayout->removeWidget(tabs); tabs->setMinimumHeight(0); tabs->setMinimumWidth(310);
                 columns->addWidget(tabs); centreLayout->setStretch(2, 1);
                 columns->setSizes({256, std::max(440, w - 256 - 352), 352});
             }
+            columns->setUpdatesEnabled(true);
         }
         // The centre column's blender card drops under the title when the centre is narrow.
-        const int centreWidth = narrow ? w - 260 : w - 256 - 352; // the splitter has not laid out yet
+        const int centreWidth = tall ? w : narrow ? w - 260 : w - 256 - 352; // the splitter has not laid out yet
         const bool below = centreWidth < 780;
         if (below != cardBelow && headerGrid) {
             cardBelow = below; auto *card = hub->blenderCard();
@@ -514,7 +543,8 @@ struct WorkbenchWindow::Impl {
         if (!timelineScroll || !timeline) return;
         const int natural = timeline->sizeHint().height();
         const bool narrow = layoutMode == Mode::Narrow, portrait = q->height() > q->width();
-        const int cap = narrow ? std::max(portrait ? 260 : 190, int(q->height() * (portrait ? 0.30 : 0.26)))
+        const bool tall = q->height() * 4 > q->width() * 5;
+        const int cap = narrow ? std::max(tall ? 360 : portrait ? 260 : 190, int(q->height() * (tall ? 0.40 : portrait ? 0.30 : 0.26)))
                                : std::max(260, int(q->height() * 0.62));
         timelineScroll->setFixedHeight(std::min(natural + 2, cap));
     }
@@ -531,8 +561,9 @@ struct WorkbenchWindow::Impl {
         const auto scroll = [](QWidget *content) {
             auto *area = new QScrollArea; area->setWidgetResizable(true); area->setFrameShape(QFrame::NoFrame); area->setWidget(content); return area;
         };
-        tabs->addTab(scroll(inspector), t("Hitbox", "Hitbox"));
-        tabs->addTab(scroll(attributes), t("Attributes", "Atributos"));
+        hitboxTab = scroll(inspector); attributesTab = scroll(attributes);
+        tabs->addTab(hitboxTab, t("Hitbox", "Hitbox"));
+        tabs->addTab(attributesTab, t("Attributes", "Atributos"));
         auto *checksBody = new QWidget; auto *checksLayout = new QVBoxLayout(checksBody);
         auto *problemActions = new QHBoxLayout; checksLayout->addLayout(problemActions);
         auto *check = addButton(problemActions, t("Run checks", "Ejecutar comprobaciones"), [this] { setPlaying(false); q->runCommand("run_checks", {}); });
@@ -575,18 +606,21 @@ struct WorkbenchWindow::Impl {
         addButton(renderActions, t("Export frame PNG", "Exportar cuadro PNG"), [this] { q->runCommand("render_view", {{"w", 640}, {"h", 480}}); });
         renderLayout->addStretch(); tabs->addTab(scroll(renderBody), t("Render", "Renderizar"));
         columns->addWidget(tabs);
+        QObject::connect(inspector, &InspectorPanel::revertRequested, q, [this](const QJsonObject &args) { q->runCommand("revert_change", args); });
+        QObject::connect(attributes, &AttributesPanel::revertRequested, q, [this](const QJsonObject &args) { q->runCommand("revert_change", args); });
         QObject::connect(attributes, &AttributesPanel::requestRefresh, q, [this] { q->runCommand("list_attributes", {}); });
         QObject::connect(attributes, &AttributesPanel::editRequested, q, [this](const QString &command, const QJsonObject &args) { q->runCommand(command, args); });
         QObject::connect(tabs, &QTabWidget::currentChanged, q, [this](int index) {
-            if (index == 1 && !closing) q->runCommand("list_attributes", {});
+            if (tabs->widget(index) == attributesTab && !closing) q->runCommand("list_attributes", {});
         });
-        QObject::connect(outliner, &OutlinerPanel::rowSelected, q, [this](const QString &name) { selectRow(name); });
-        QObject::connect(outliner, &OutlinerPanel::hitboxSelected, q, [this](const QString &name, int ordinal) { selectRow(name, ordinal); });
+        QObject::connect(outliner, &OutlinerPanel::rowSelected, q, [this](const QString &name) { selectRow(name); if (railInTabs && autoHitbox->isChecked()) showHitboxTab(); });
+        QObject::connect(outliner, &OutlinerPanel::hitboxSelected, q, [this](const QString &name, int ordinal) { selectRow(name, ordinal); if (railInTabs && autoHitbox->isChecked()) showHitboxTab(); });
+        QObject::connect(moveChip, &QPushButton::clicked, q, [this] { if (railInTabs) tabs->setCurrentWidget(movesRail); });
         QObject::connect(inspector, &InspectorPanel::editRequested, q, [this](const QString &name, const QJsonObject &args) {
             q->runCommand(name, args);
         });
         QObject::connect(problems, &ProblemsPanel::problemActivated, q, [this](const QString &name, int ordinal) {
-            selectRow(name, ordinal); tabs->setCurrentIndex(0);
+            selectRow(name, ordinal); showHitboxTab();
         });
         QObject::connect(clips, &ClipBrowserPanel::previewRequested, q, [this](const QString &clip) {
             setPlaying(false); q->runCommand("preview_clip", {{"clip", clip}});
@@ -634,7 +668,7 @@ struct WorkbenchWindow::Impl {
         timeline->setSelectedHitbox(selectedOrdinal);
         inspector->setRoles(snapshot.roles);
         const auto *hit = selectedHitbox();
-        if (hit) inspector->showHitbox(row, *hit); else { selectedOrdinal = -1; inspector->clear(!snapshot.hits.value(row).isEmpty()); }
+        if (hit) { inspector->showHitbox(row, *hit); inspector->setChanges(row, snapshot.changes); } else { selectedOrdinal = -1; inspector->clear(!snapshot.hits.value(row).isEmpty()); }
         inspector->setRowChecks(rowProblems, checksCurrent);
         QString currentClip; QVector<int> motions;
         for (const auto &entry : snapshot.rows) if (entry.name == row) { currentClip = entry.effectiveClip(); motions = entry.motions; break; }
@@ -651,6 +685,7 @@ struct WorkbenchWindow::Impl {
         if (QCoreApplication::organizationName().isEmpty() || snapshot.projectName.isEmpty()) return;
         QSettings().setValue("workbench/lastRow/" + snapshot.projectName, name);
     }
+    void showHitboxTab() { if (hitboxTab) tabs->setCurrentWidget(hitboxTab); }
     void selectRow(const QString &name, int ordinal = -1) {
         bool found = false; for (const auto &entry : snapshot.rows) if (entry.name == name) { found = true; break; }
         if (!found || closing) return;
@@ -689,6 +724,13 @@ struct WorkbenchWindow::Impl {
         outliner->setBadges(editedRows, warnings); hub->setPendingChanges(pendingChanges);
     }
     void showBlender() {
+        if (blenderPid <= 0) {
+            if (!blenderError().isEmpty()) { status(blenderError()); return; }
+            if (QMessageBox::question(q, t("Blender is closed", "Blender está cerrado"),
+                    t("Blender is not running. Start it with this fighter project?", "Blender no está en marcha. ¿Iniciarlo con este proyecto del luchador?"),
+                    QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes) openBlender();
+            return;
+        }
 #ifdef Q_OS_WIN
         struct Search { DWORD pid; HWND window = nullptr; } found{DWORD(blenderPid)};
         if (blenderPid > 0) EnumWindows([](HWND window, LPARAM data) -> BOOL {
@@ -710,8 +752,13 @@ struct WorkbenchWindow::Impl {
         status(t("Use your desktop window switcher to show Blender", "Usa el selector de ventanas para mostrar Blender"));
 #endif
     }
+    QString blenderExe() const {
+        const auto env = QProcessEnvironment::systemEnvironment();
+        auto found = findBlender(blenderSetting, env);
+        return found.isEmpty() ? discoverBlender(snapshot.projectDir, env) : found;
+    }
     QString blenderError() const {
-        const auto blender = findBlender(blenderSetting, QProcessEnvironment::systemEnvironment());
+        const auto blender = blenderExe();
         if (blender.isEmpty()) return t("Blender not found: set GW_BLENDER or the Blender path in Settings",
             "No se encontro Blender: define GW_BLENDER o la ruta de Blender en Ajustes");
         const auto addon = findAddonDir(snapshot.projectDir);
@@ -821,7 +868,7 @@ struct WorkbenchWindow::Impl {
         const auto error = blenderError();
         if (!error.isEmpty()) { status(error); return; }
         const quint16 port = q->serveForBlender(); if (!port) return;
-        const auto command = blenderCommand(findBlender(blenderSetting, QProcessEnvironment::systemEnvironment()),
+        const auto command = blenderCommand(blenderExe(),
             findAddonDir(snapshot.projectDir), snapshot.projectDir, port, snapshot.art);
         if (!command.error.isEmpty()) { status(command.error); return; }
         if (!blenderDriver) {
@@ -849,7 +896,7 @@ struct WorkbenchWindow::Impl {
     }
     void enqueue(const QString &name, const QJsonObject &args, std::optional<bool> headless = std::nullopt) {
         if (closing) return;
-        if (name == "edit_hitbox" || name == "edit_attribute" || name == "add_hitbox" || name == "delete_hitbox" || name == "assign_clip" || name == "accept" || name == "undo" || name == "redo")
+        if (name == "edit_hitbox" || name == "edit_attribute" || name == "add_hitbox" || name == "delete_hitbox" || name == "assign_clip" || name == "accept" || name == "undo" || name == "redo" || name == "revert_change" || name == "revert_all")
             setPlaying(false);
         if (name == "load_row") {
             ++rowIntent; clipPreview = false;
@@ -897,6 +944,15 @@ struct WorkbenchWindow::Impl {
             });
         }, Qt::QueuedConnection);
     }
+    void applyChanges() {
+        editedRows.clear();
+        for (const auto &entry : snapshot.changes) {
+            const QString changedRow = entry.toObject().value("row").toString();
+            if (!changedRow.isEmpty()) editedRows.insert(changedRow);
+        }
+        pendingChanges = int(snapshot.changes.size());
+        attributes->setChanges(snapshot.changes);
+    }
     void refresh(const Snapshot &value) {
         if (!value.valid) return;
         snapshot = value;
@@ -917,7 +973,7 @@ struct WorkbenchWindow::Impl {
             else for (int i = 0; i < rows->count(); ++i) if (!snapshot.hits.value(rows->itemData(i).toString()).isEmpty()) { selected = i; break; }
         }
         rows->setCurrentIndex(selected); row = rows->currentData().toString(); updateTimeline();
-        outliner->setRows(snapshot.rows, snapshot.hits); refreshSelection(); updateBadges();
+        outliner->setRows(snapshot.rows, snapshot.hits); applyChanges(); refreshSelection(); updateBadges();
         review->setHistory(snapshot.history);
         paletteCommands = CommandRegistry{};
         for (const auto &spec : snapshot.commands) paletteCommands.add(spec);
@@ -951,6 +1007,7 @@ struct WorkbenchWindow::Impl {
         timeline->setMove(row, frames, hits, iasa, snapshot.events.value(row));
         timeline->setMinimumHeight(timeline->sizeHint().height()); fitTimelineHeight();
         moveTitle->setText(row.isEmpty() ? t("Choose a move", "Elige un movimiento") : row);
+        moveChip->setText(row.isEmpty() ? t("No move", "Sin movimiento") : row);
         hub->setMove(row);
         const auto active = activeRanges.isEmpty() ? t("None", "Ninguno") : activeRanges.join(t(", ", ", "));
         moveStats->setText(t("Total %1f    Active %2    Cancel %3", "Total %1f    Activo %2    Cancelar %3")
@@ -1018,19 +1075,14 @@ struct WorkbenchWindow::Impl {
             if (value.contains("frame") && completed.rowIntent == rowIntent && completed.frameIntent == frameIntent) {
                 frameInfo = FrameInfo::fromJson(value); timeline->setFrame(frameInfo.frame); updateFrameReadout();
             }
-            if ((completed.name == "edit_hitbox" || completed.name == "edit_attribute" || completed.name == "add_hitbox" || completed.name == "delete_hitbox" || completed.name == "assign_clip" || completed.name == "accept" ||
+            if ((completed.name == "edit_hitbox" || completed.name == "edit_attribute" || completed.name == "add_hitbox" || completed.name == "delete_hitbox" || completed.name == "assign_clip" || completed.name == "accept" || completed.name == "revert_change" || completed.name == "revert_all" ||
                  completed.name == "undo" || completed.name == "redo") && value.value("applied").toBool()) {
                 rowProblems.clear(); checksCurrent = false; problems->setProblems({});
-                ++pendingChanges;
-                const auto changedRow = completed.args.value("row").toString();
-                if (!changedRow.isEmpty()) editedRows.insert(changedRow);
-                if (completed.name == "undo" || completed.name == "redo" || completed.name == "accept")
-                    for (const auto &entry : snapshot.history) if (entry.state == "applied" && entry.args.contains("row")) editedRows.insert(entry.args.value("row").toString());
                 if (completed.name == "add_hitbox") { selectedOrdinal = value.value("ordinal").toInt(-1); refreshSelection(); }
                 updateBadges(); q->runCommand("reload", {});
             } else if (completed.name == "reload" || completed.name == "engine_restart") {
                 if (rebuildReloading) {
-                    rebuildReloading = false; pendingChanges = 0; editedRows.clear(); updateBadges();
+                    rebuildReloading = false; updateBadges();
                     progress->finish(t("Rebuilt and reloaded", "Reconstruido y recargado"));
                 }
                 const int f = timeline->frame();
@@ -1070,8 +1122,7 @@ struct WorkbenchWindow::Impl {
         if (reply.envelope.value("ok").toBool()) {
             if (value.contains("frame")) { frameInfo = FrameInfo::fromJson(value); timeline->setFrame(frameInfo.frame); updateFrameReadout(); }
             if (value.value("applied").toBool()) {
-                rowProblems.clear(); checksCurrent = false; problems->setProblems({}); ++pendingChanges;
-                const auto changed = args.value("row").toString(); if (!changed.isEmpty()) editedRows.insert(changed);
+                rowProblems.clear(); checksCurrent = false; problems->setProblems({});
                 updateBadges();
             }
             if (name == "list_attributes") attributes->setAttributes(value.value("attributes").toArray());
@@ -1096,11 +1147,13 @@ struct WorkbenchWindow::Impl {
 };
 
 WorkbenchWindow::WorkbenchWindow(Session &s, QWidget *parent) : QMainWindow(parent), d_(std::make_unique<Impl>(this)) {
+    installWheelGuard();
     d_->worker->session = &s;
     runCommand("list_rows", {});
 }
 WorkbenchWindow::WorkbenchWindow(const QString &projectDir, LaunchFactory launch, QWidget *parent)
     : QMainWindow(parent), d_(std::make_unique<Impl>(this)) {
+    installWheelGuard();
     d_->worker->projectDir = projectDir; d_->worker->factory = std::move(launch);
     runCommand("open_fighter", {{"path", projectDir}});
 }
@@ -1134,6 +1187,7 @@ void WorkbenchWindow::setBlenderProcessId(qint64 pid) {
         state->submit([state, pid] { state->ensureSession(); state->session->blenderPid = pid; state->session->blenderAckRevision = 0; });
     }, Qt::QueuedConnection);
 }
+void WorkbenchWindow::setGameExeInfo(const QString &text) { d_->hub->setEngineDetail(text); }
 void WorkbenchWindow::setBlenderSetting(const QString &path) { d_->blenderSetting = path; d_->notifyBusy(); }
 quint16 WorkbenchWindow::serveForBlender() {
     if (d_->closing) return 0;

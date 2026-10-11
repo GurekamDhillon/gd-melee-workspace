@@ -17,6 +17,10 @@ namespace wb {
 void applyAtlasStyle(QWidget *root);
 
 // The approved Workbench plates cut the top-right and bottom-left corners.
+// Number fields, combos and sliders only take the mouse wheel while they have keyboard focus;
+// otherwise the wheel scrolls the enclosing scroll area. Idempotent; installs on the application.
+void installWheelGuard();
+
 class AtlasPlate : public QWidget {
     Q_OBJECT
 public:
