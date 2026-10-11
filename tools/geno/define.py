@@ -16,7 +16,7 @@ def definition_schema():
         "properties": {"key": {"type": "string", "pattern": r"^[a-z0-9][a-z0-9_.-]{0,38}$"},
             "name": {"type": "string", "minLength": 1, "maxLength": 47, "pattern": "^[ -~]+$"},
             "base": {"enum": ["mario", "none"], "description": "mario: the retail Mario preset is the template; none (geno 9): the package owns its model, bank, parts table and joint fields (docs/geno.md 22.4)"},
-            "template": {"enum": ["mario", "captain", "fox"], "description": "base none, geno 10: the retail fighter whose native code, state table and specials the define runs on (default mario); captain / fox = a complete retail fighter carried as a package (docs/geno.md 22.10, 22.13)"},
+            "template": {"enum": ["mario", "captain", "fox", "falco", "marth"], "description": "base none, geno 10: the retail fighter whose native code, state table and specials the define runs on (default mario); captain / fox = a complete retail fighter carried as a package (docs/geno.md 22.10, 22.13)"},
             "common": {"const": "melee.common.v1"}, "resources": {"enum": ["retail:mario", "mod:files"], "description": "retail:mario with base mario; mod:files with base none"}}}
 
 
@@ -104,7 +104,7 @@ def validate_definition(data, fighter, path):
         errors.append((path+".fighter.rows", "own rows need base none"))
     if len(set(rows)) != len(rows) and False:
         pass
-    template_rows = {"captain": 318, "fox": 327}.get(template, 303)
+    template_rows = {"captain": 318, "fox": 327, "falco": 327, "marth": 327}.get(template, 303)
     limit = template_rows + (len(rows) if own else 0)
     if own:
         for key, items in (("subactions", [r.get("index") for r in fighter.get("subactions", [])]),
