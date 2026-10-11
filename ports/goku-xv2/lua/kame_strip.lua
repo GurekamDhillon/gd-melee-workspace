@@ -34,6 +34,7 @@ gd.run(function()
       local _, path = gd.screenshot(string.format('%s_%02d_%s', TAG, n, label))
       gd.log('KAMESHOT ' .. tostring(path))
     end
+    if C.ki and gd.combo_ki then gd.combo_ki(1, tonumber(C.ki)) end   -- ki=100: the full charge fires the Super Kamehameha
     gd.input(1, {buttons = 'B'}, 2)
     local fired = false
     local t = 0
