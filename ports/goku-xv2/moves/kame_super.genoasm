@@ -5,23 +5,23 @@ clear_hitboxes
 wait_until 54
 sfx behavior=1 sfx_id=200118 volume=127 panning=64
 PUT ANIM_RATE 0.15
-hitbox slot=0 joint=@HAND_R@ damage=1.6 size=6 x=-4.54 y=-1.22 z=8.81 angle=361 kbg=60 fkb=8 bkb=0 element=2 shield=0
+hitbox slot=0 joint=@HAND_R@ damage=2.2 size=6 x=-4.54 y=-1.22 z=8.81 angle=361 kbg=60 fkb=8 bkb=0 element=2 shield=0
 REHIT 15 5
 HBSTUN 15 6
 HBFLAGS 15 1
 wait 1
-hitbox slot=1 joint=@HAND_R@ damage=1.6 size=6 x=-9.99 y=-2.68 z=19.38 angle=361 kbg=60 fkb=8 bkb=0 element=2 shield=0
+hitbox slot=1 joint=@HAND_R@ damage=2.2 size=6 x=-9.99 y=-2.68 z=19.38 angle=361 kbg=60 fkb=8 bkb=0 element=2 shield=0
 wait 1
-hitbox slot=2 joint=@HAND_R@ damage=1.6 size=6 x=-15.44 y=-4.15 z=29.95 angle=361 kbg=60 fkb=8 bkb=0 element=2 shield=0
+hitbox slot=2 joint=@HAND_R@ damage=2.2 size=6 x=-15.44 y=-4.15 z=29.95 angle=361 kbg=60 fkb=8 bkb=0 element=2 shield=0
 wait 1
-hitbox slot=3 joint=@HAND_R@ damage=1.6 size=6 x=-20.88 y=-5.61 z=40.53 angle=361 kbg=60 fkb=8 bkb=0 element=2 shield=0
+hitbox slot=3 joint=@HAND_R@ damage=2.2 size=6 x=-20.88 y=-5.61 z=40.53 angle=361 kbg=60 fkb=8 bkb=0 element=2 shield=0
 wait_until 63
 HBFLAGS 15 0
 clear_hitboxes
-hitbox slot=0 joint=@HAND_R@ damage=12 size=7 x=-6.81 y=-1.83 z=13.21 angle=40 kbg=80 fkb=0 bkb=60 element=2 shield=0
-hitbox slot=1 joint=@HAND_R@ damage=12 size=7 x=-12.26 y=-3.29 z=23.79 angle=40 kbg=80 fkb=0 bkb=60 element=2 shield=0
-hitbox slot=2 joint=@HAND_R@ damage=12 size=7 x=-17.71 y=-4.76 z=34.36 angle=40 kbg=80 fkb=0 bkb=60 element=2 shield=0
-hitbox slot=3 joint=@HAND_R@ damage=12 size=7 x=-23.15 y=-6.22 z=44.93 angle=40 kbg=80 fkb=0 bkb=60 element=2 shield=0
+hitbox slot=0 joint=@HAND_R@ damage=16 size=7 x=-6.81 y=-1.83 z=13.21 angle=40 kbg=80 fkb=0 bkb=60 element=2 shield=0
+hitbox slot=1 joint=@HAND_R@ damage=16 size=7 x=-12.26 y=-3.29 z=23.79 angle=40 kbg=80 fkb=0 bkb=60 element=2 shield=0
+hitbox slot=2 joint=@HAND_R@ damage=16 size=7 x=-17.71 y=-4.76 z=34.36 angle=40 kbg=80 fkb=0 bkb=60 element=2 shield=0
+hitbox slot=3 joint=@HAND_R@ damage=16 size=7 x=-23.15 y=-6.22 z=44.93 angle=40 kbg=80 fkb=0 bkb=60 element=2 shield=0
 wait 1
 REHIT 15 0
 clear_hitboxes

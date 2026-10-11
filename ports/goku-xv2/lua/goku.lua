@@ -64,7 +64,7 @@ end
 function M.tap_frame(ctx) hover(ctx, 24) beam(ctx, 6, 19, 1.2) end
 function M.mid_frame(ctx) hover(ctx, 44) beam(ctx, 7, 34, 1.0) end
 function M.full_frame(ctx) hover(ctx, 66) beam(ctx, 9, 48, 1.2) end
-function M.super_frame(ctx) hover(ctx, 124) beam(ctx, 55, 114, 1.6) end
+function M.super_frame(ctx) hover(ctx, 124) beam(ctx, 55, 114, 2.2) end
 function M.rush_enter(ctx)
   -- Dragon Rush / Super Dash: the dash is the move; in the air it keeps its height (a recovery)
   if ctx.self.air then ctx.velocity(2.6, 0.3) else ctx.velocity(2.6, 0) end

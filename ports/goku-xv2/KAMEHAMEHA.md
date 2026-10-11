@@ -32,7 +32,7 @@ character `.dat` at run time and the `.dat` is not in the repo, so the table giv
 | visible indicator | held ball scaled by level/max, effects at 25/50/75% and max | orb scaled by level/max, full-charge effect (efSync 0x480/0x481) | ki ball between the cupped hands, grows over the 60 frames (`P_TrailGokuKameCharge`), a white flare + chime at every 15-frame step, sparks drawn in, ki aura (`P_TrailGokuAura`) |
 | charge sounds | `ft_80088510` 4 steps (200121..200130) | 5 steps (`ftSs_Unk3_803CE6B8`) | four own synthesised steps (`tools/kame_audio.py`), played by the script at 15/30/45/60 |
 | release startup | script-driven (`.dat` subaction) | script-driven | Tap 5, Mid 6, Full 8 frames after the state starts (Super 54: the charge pose is in the state) |
-| endlag | `x14 LANDING_LAG` special-fall in the air | `x24` special-fall in the air | Tap 15, Mid 22, Full 30 frames after the final hit; air: falls at the end |
+| endlag | `x14 LANDING_LAG` special-fall in the air | `x24` special-fall in the air | about 15 / 25 / 35 frames after the final hit (Tap / Mid / Full); air: falls at the end |
 | recoil | `gr_vel = -facing * x4 * level`, air `x8 * level` | air only: `self_vel.x = facing * x1C * level` | step back 0.6 / 0.9 / 1.2 / 1.6 on release; in the air the body **hovers** while the beam lasts and then falls |
 
 Where Goku deliberately differs: hold-to-charge and release-to-fire (the owner asked for "hold B"; Samus and Mewtwo charge
@@ -50,19 +50,21 @@ first 3 clip frames, then a **launching final hit** when the beam ends. The pose
 |---|---|---|---|---|
 | charge to pick it | < 15 | 15-44 | 45-60 | 60 + ki 100 |
 | startup (state start to first hitbox) | 5 | 6 | 8 | 54 |
-| beam length (game frames) | 14 | 28 | 46 | 60 |
+| beam length (game frames) | 14 | 28 | 40 | 60 |
 | hit radius (world; model units x1.43) | 3.4 | 4.6 | 6.0 | 8.6 |
-| reach from the hand (world) | 33 | 40 | 52 | 74 |
-| drag hit, damage (x(0.8 + 0.4 x charge/60)) | 1.2 (1.0 at charge 6) | 1.2 | 1.5 (1.65 at 45, 1.8 at 60) | 2.0 (2.4) |
-| drag hit knockback / extra stun | fixed 10 / 5 | fixed 12 / 6 | fixed 14 / 6 | fixed 16 / 6 |
-| final hit | 3%, 50 deg, kbg 60 bkb 25 | 5%, 45 deg, kbg 80 bkb 35 | 10%, 40 deg, kbg 90 bkb 50 | 16%, 40 deg, kbg 80 bkb 60 |
-| total length (state frames) | 37 | 59 | 87 | ~125 |
-| measured, every hit landing on a Mario at 24-30 units, FD (hits / damage, with staling) | 4 / 4.0% | 6 / 10.2% | 11 / 24.6% (50 held), 11 / 25.0% (62 held) | 11+ / 28.8% by frame 116 (measured with ki forced) |
+| reach from the hand (world) | 33 | 40 | 52 | 74 (final hit +7) |
+| drag hit, every 5 frames: base damage x(0.8 + 0.4 x charge/60) | 1.2 (1.0 at charge 6) | 1.0 | 1.2 (1.36 at 50, 1.44 at 60) | 2.2 |
+| drag hit knockback | fixed 8, kbg 60, +5/6 stun frames, no hitlag | same | same | same |
+| final launching hit (5 frames, spheres 5 units further out) | 3%, 50 deg, kbg 60 bkb 25 | 4%, 45 deg, kbg 80 bkb 35 | 7%, 40 deg, kbg 90 bkb 50 | 16%, 40 deg, kbg 80 bkb 60 |
+| total length (state frames, measured) | 41 | 64 | 87 | ~127 |
+| measured on a Mario 24-34 units away, FD, every hit landing (hits / damage, staling included) | 5 / 5.0% | 7 / 11.6% | 11 / 22.9% (50 held); 11 / 22.8% (62 held) | 11 / 31.7% (ki gate forced in a built copy) |
 
-Balance reading: a Full beam that lands every hit does about what a full Samus Charge Shot does (25%) over 87 frames of
-commitment, and only a victim who stays in the beam takes every hit (the drag pushes it forward: hit frames spread over
-about 45 frames). It cannot be shielded through, it is punishable on whiff (30 frames after the beam, 57 in all before
-he can act), and it is a charge: the safe use is the Tap/Mid beam as a zoner, the Full beam as a commit. Super is above both
+The 50-frame and 62-frame Full beams do the same total here because staling (the second beam in a row is staled) cancels the 6%
+higher drag damage; the live drag-hit damage the check reads is 1.36 and 1.44.
+
+Balance reading: a Full beam that lands every hit does 22.9%, a little under a full Samus Charge Shot (25%), over 87 frames of
+commitment, and only a victim who stays in the beam takes every hit (the drag pushes it forward about 2 units a hit and the
+final hit meets it at the end: hit frames spread over about 45 frames). Shield interaction was not tested. It is punishable on whiff (about 35 frames after the Full beam, 87 in all), and it is a charge: the safe use is the Tap/Mid beam as a zoner, the Full beam as a commit. Super is above both
 by design (ki 100 is a full meter).
 
 Beam angle: **straight along the facing** this pass. A stick-angled beam (up/down, like Sora's `geno.aim_stick`) would need the
@@ -97,7 +99,7 @@ python ports/goku-xv2/tools/gen_kame.py        # the five move scripts (numbers 
 python ports/goku-xv2/tools/kame_audio.py      # the sounds -> _build/goku-xv2/audio
 python ports/goku-xv2/tools/fx_build.py        # the effect packages
 python ports/goku-xv2/tools/build.py --gameplay-only --no-audit --fighter _build/goku-xv2/author-source/fighter.json
-python ports/goku-xv2/tools/kame_run.py kame_check KAMECHK --turbo     # the headless gate (needs GW_MELEE / GW_BUILD_ROOT / GW_FIGHTERBUILD)
+python ports/goku-xv2/tools/kame_run.py kame_check KAMECHECK --turbo     # the headless gate (needs GW_MELEE / GW_BUILD_ROOT / GW_FIGHTERBUILD)
 python ports/goku-xv2/tools/kame_run.py kame_shots KAME --cfg hold=62  # frame strips (offscreen); --cfg tag= gap= camx= camz= dist= air=1 tail=
 ```
 

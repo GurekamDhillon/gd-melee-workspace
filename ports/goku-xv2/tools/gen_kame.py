@@ -22,8 +22,8 @@ TIERS = {
                   fin=dict(dmg=4, angle=45, kbg=80, bkb=35, size=3.6)),
     'full':  dict(start=8,  beam=40, rate=0.4,  total=60, size=4.2, ks=(7, 15.5, 24, 32.5),   dmg=1.2, fkb=8, stun=6, rehit=5,
                   fin=dict(dmg=7, angle=40, kbg=90, bkb=50, size=4.8)),
-    'super': dict(start=54, beam=60, rate=0.15,  total=70, size=6.0, ks=(10, 22, 34, 46),      dmg=1.6, fkb=8, stun=6, rehit=5,
-                  fin=dict(dmg=12, angle=40, kbg=80, bkb=60, size=7.0)),
+    'super': dict(start=54, beam=60, rate=0.15,  total=70, size=6.0, ks=(10, 22, 34, 46),      dmg=2.2, fkb=8, stun=6, rehit=5,
+                  fin=dict(dmg=16, angle=40, kbg=80, bkb=60, size=7.0)),
 }
 HEAD = {
     'tap': 'Tap beam (charge < 15 frames)', 'mid': 'Mid beam (charge 15-44)', 'full': 'Full beam (charge 45-60)',

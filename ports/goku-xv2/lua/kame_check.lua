@@ -1,5 +1,5 @@
 -- Kamehameha gates (headless, turbo ok): beam hits several times, damage/duration scale with charge, store/resume/instant-fire rules,
--- the air hover, rewind exactness. Tag: KAMECHK. Run: python ports/goku-xv2/tools/kame_run.py kame_check KAMECHK --turbo
+-- the air hover, rewind exactness. Tag: KAMECHECK. Run: python ports/goku-xv2/tools/kame_run.py kame_check KAMECHECK --turbo
 gd.run(function()
   local ok, why = pcall(function()
     assert(gd.wait_until(function() return gd.match().active and gd.match().frame > 90 end, 6000), 'no LAB match')
@@ -39,7 +39,7 @@ gd.run(function()
       end
       local r = {hits = hits, dmg = dmg, hb = hbframes, seen = seen, rel = rel, span = ymax - ymin, maxhb = maxhb}
       results[name] = r
-      gd.log(string.format('KAMECHK case=%s want=%s seen=%s hits=%d damage=%.2f hit_frames=%s..%s hitbox_frames=%d release_at=%s y_span=%.2f drag_dmg=%.2f',
+      gd.log(string.format('KAMECHECK case=%s want=%s seen=%s hits=%d damage=%.2f hit_frames=%s..%s hitbox_frames=%d release_at=%s y_span=%.2f drag_dmg=%.2f',
         name, want, tostring(seen), hits, dmg, tostring(first), tostring(last), hbframes, tostring(rel), r.span, maxhb))
       assert(seen, 'state not reached: ' .. want)
       return r
@@ -64,13 +64,13 @@ gd.run(function()
     local c0 = lua_state().charge
     gd.input(1, {buttons = 'L'}, 2); gd.wait(4)
     local st = lua_state()
-    gd.log(string.format('KAMECHK store: charge before %d, stored %d, state %s', c0, st.stored, tostring(gd.player(1).motion_name)))
+    gd.log(string.format('KAMECHECK store: charge before %d, stored %d, state %s', c0, st.stored, tostring(gd.player(1).motion_name)))
     assert(st.stored >= 29 and st.stored <= 33, 'store failed')
     assert(gd.player(1).motion_name ~= 'KameCharge', 'still charging after shield')
     gd.wait(45)
     gd.input(1, {buttons = 'B'}, 6); gd.wait(3)
     local resumed = lua_state().charge
-    gd.log('KAMECHK resume: charge on re-entry ' .. resumed)
+    gd.log('KAMECHECK resume: charge on re-entry ' .. resumed)
     assert(resumed >= st.stored, 'stored charge not resumed')
     gd.wait(200)
     -- a stored FULL charge fires on the next B press
@@ -82,7 +82,7 @@ gd.run(function()
     gd.input(1, {buttons = 'B'}, 2)
     local instant = false
     for i = 1, 8 do gd.wait(1); local m = gd.player(1).motion_name; if m == 'KameFull' or m == 'KameSuper' then instant = true; break end end
-    gd.log('KAMECHK instant: stored full fired at once = ' .. tostring(instant))
+    gd.log('KAMECHECK instant: stored full fired at once = ' .. tostring(instant))
     assert(instant, 'stored full charge did not fire on B')
     gd.wait(200)
     -- a hit since storing wipes a partial charge
@@ -92,7 +92,7 @@ gd.run(function()
     gd.set_percent(1, 12); gd.wait(45)
     gd.input(1, {buttons = 'B'}, 3); gd.wait(3)
     local wiped = lua_state().charge
-    gd.log('KAMECHK wipe: charge after a hit = ' .. wiped)
+    gd.log('KAMECHECK wipe: charge after a hit = ' .. wiped)
     assert(wiped < 6, 'partial charge survived a hit')
     gd.wait(100)
 
@@ -106,15 +106,15 @@ gd.run(function()
       gd.wait(1)
       local r = gd.rewind_test_result()
       if r and r.phase == 0 and r.pass ~= nil then
-        gd.log(string.format('KAMECHK rewind pass=%s diff_compared=%s', tostring(r.pass), tostring(r.diff_compared)))
+        gd.log(string.format('KAMECHECK rewind pass=%s diff_compared=%s', tostring(r.pass), tostring(r.diff_compared)))
         assert(r.pass and r.diff_compared == 0, 'rewind differs: ' .. tostring(r.text))
         done = true
         break
       end
     end
     assert(done, 'rewind never finished')
-    gd.log('KAMECHK PASS')
+    gd.log('KAMECHECK PASS')
   end)
-  if not ok then gd.log('KAMECHK FAIL ' .. tostring(why)) end
+  if not ok then gd.log('KAMECHECK FAIL ' .. tostring(why)) end
   gd.quit()
 end)

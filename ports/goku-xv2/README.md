@@ -77,8 +77,8 @@ resampling uses a documented exporter convention.
 
 Gameplay is a Melee design derived through parity: percentage damage, angle,
 KBG/BKB, collider spheres, movement and charge thresholds are authored. Eight
-special inputs are bound. Lua selects three Kamehameha release tiers whose
-assembly spawns native articles; the visible beam is an authored approximation.
+special inputs are bound. Lua selects the Kamehameha release tier; the beam is a
+hitbox beam with authored effect meshes (KAMEHAMEHA.md; the old article projectiles are no longer spawned).
 Tracking, homing, camera locks and untranslated source functions are recorded
 as losses. Falcon supplies the initial attribute design. Host ECB behavior,
 placeholder rows, contact, balance and both-facing visual alignment still need
@@ -168,7 +168,7 @@ Launch: `tools/clips.ps1 chara/GOK/GOK_PLAYER.bac:350` opens straight on a move.
 
 ## 2026-10-09 specials, ground and effects pass
 
-- Specials (PICKS.md, all provisional): Kamehameha with a charge orb, store (shield), three tiers and the Super Kamehameha (needs ki 100); Dragon Rush into RushCombo;
+- Specials (PICKS.md, all provisional): Kamehameha (reworked 2026-10-10, see KAMEHAMEHA.md: a stored charge and a sustained multi-hit hitbox beam with its own effects, four tiers incl. the Super Kamehameha at ki 100); Dragon Rush into RushCombo;
   Instant Transmission with a reappear hitbox; Z-vanish counter (ki) and ki charge. `lua/goku.lua` is the geno 10 text; lines marked `-- @KI` use the combo engine's meter and
   are stripped by `build.py`, the full text ships as `lua/goku_ki.lua` and `combo/combo_apply.py` installs it.
 - Hybrid hover stance (owner): `tools/xv2_to_artist.py` lifts each ground row's pelvis per frame so nothing sinks (HOVER rows keep the lowest point 2.0 units up: `HOVER_Y`;
