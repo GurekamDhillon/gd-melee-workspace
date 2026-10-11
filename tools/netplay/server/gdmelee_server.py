@@ -49,7 +49,7 @@ MAGIC_CTL = b"GDMR"
 MAGIC_DATA = b"GDMD"
 # Only for a standalone deployment without the game checkout. The agreement test
 # checks this against gw_net.h; the release helpers share this same fallback.
-FALLBACK_NETPLAY_PROTOCOL = 6
+FALLBACK_NETPLAY_PROTOCOL = 7
 
 
 def read_netplay_protocol(melee_dir=None):
