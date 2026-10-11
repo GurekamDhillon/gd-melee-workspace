@@ -19,6 +19,7 @@
 #include <QEventLoop>
 #include <QDockWidget>
 #include <QLabel>
+#include <QMouseEvent>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QTcpSocket>
@@ -56,6 +57,19 @@ public:
     }
 };
 
+
+// Counts frames the way the game does: "frame" seeks, "step" advances n; every call costs about 12 ms of latency.
+class ClockEngine : public wbtest::FakeEngine {
+public:
+    std::atomic<int> frame{0};
+    QJsonObject call(const QString &fn, const QJsonObject &args, QString *err) override {
+        FakeEngine::call(fn, args, err);
+        QThread::msleep(12);
+        if (fn == "frame") frame = args.value("frame").toInt();
+        if (fn == "step") frame += args.value("n").toInt(1);
+        FrameInfo fi; fi.frame = frame; fi.motion = 44; return fi.toJson();
+    }
+};
 
 // A frame-stepping engine whose calls pump the worker thread's event loop, as the real EngineLink does while it
 // waits for the game: that is when Blender's poll arrives mid-command.
@@ -491,6 +505,55 @@ private slots:
         s.data().reload(); registerAllCommands(s); WorkbenchWindow w(s); w.show();
         w.runCommand("render_view", {});
         QTRY_VERIFY(w.statusText().contains("Engine not running"));
+    }
+    // Owner bug: PLAY ran one engine step per 16 ms tick, so the speed followed the command latency.
+    void playRunsAtTheWallClockRateWhateverTheLatency() {
+        QTemporaryDir d; wbtest::makeSynthFighter(d.path()); ClockEngine engine;
+        Session s(d.path(), &engine); s.data().reload(); registerAllCommands(s); WorkbenchWindow w(s); w.resize(1600, 900); w.show();
+        QTRY_VERIFY(!w.isBusy());
+        w.runCommand("load_row", {{"row", "dair"}}); QTRY_VERIFY(!w.isBusy());
+        auto *timeline = w.findChild<Timeline *>("wbTimeline"); auto *play = w.findChild<QPushButton *>("wbPlay"); QVERIFY(timeline && play);
+        QVERIFY2(timeline->frameCount() > 30, "the synthetic move is long enough to play for 0.4 s");
+        const int before = engine.frame; QElapsedTimer clock; clock.start();
+        play->click();
+        QTest::qWait(400);
+        play->click(); QTRY_VERIFY(!w.isBusy());
+        const double seconds = clock.elapsed() / 1000.0;
+        const int advanced = engine.frame - before;
+        // 60 fps of wall clock; one step per tick at a 12 ms latency would manage about 17 in 0.4 s
+        QVERIFY2(advanced >= int(seconds * 60 * 0.7) && advanced <= int(seconds * 60 * 1.3) + 2,
+                 qPrintable(QString("%1 frames in %2 s").arg(advanced).arg(seconds)));
+    }
+    // Owner bug: click-drag scrubbing. The drag owns the cursor, requests coalesce, and the last position wins.
+    void dragScrubCoalescesAndTheLastPositionWins() {
+        QTemporaryDir d; wbtest::makeSynthFighter(d.path()); ClockEngine engine;
+        Session s(d.path(), &engine); s.data().reload(); registerAllCommands(s); WorkbenchWindow w(s); w.resize(1600, 900); w.show();
+        QTRY_VERIFY(!w.isBusy());
+        w.runCommand("load_row", {{"row", "dair"}}); QTRY_VERIFY(!w.isBusy()); engine.calls.clear();
+        auto *timeline = w.findChild<TimelineView *>("wbTimeline"); QVERIFY(timeline && timeline->frameCount() > 20);
+        const QRectF ruler = timeline->rulerRect(); const int frames = timeline->frameCount();
+        const auto mouse = [&](QEvent::Type type, int x, Qt::MouseButton button, Qt::MouseButtons buttons) {
+            QMouseEvent e(type, QPointF(x, 20), timeline->mapToGlobal(QPointF(x, 20)), button, buttons, Qt::NoModifier); QApplication::sendEvent(timeline, &e);
+        };
+        const auto frameAt = [&](int x) { return std::min(frames - 1, int(std::floor((x - ruler.left()) / ruler.width() * frames))); };
+        mouse(QEvent::MouseButtonPress, int(ruler.left()) + 1, Qt::LeftButton, Qt::LeftButton);
+        QVERIFY(timeline->scrubbing());
+        int x = 0;
+        for (x = int(ruler.left()) + 1; x <= int(ruler.left() + ruler.width() * 0.75); x += 3) {
+            mouse(QEvent::MouseMove, x, Qt::NoButton, Qt::LeftButton);
+            QCoreApplication::processEvents();
+            // the drag survives every reply that refreshes the move, and the cursor follows the mouse, not the engine's lag
+            QVERIFY2(timeline->scrubbing(), qPrintable(QString("the drag ended at x %1").arg(x)));
+            QCOMPARE(timeline->frame(), frameAt(x));
+        }
+        x -= 3;
+        mouse(QEvent::MouseButtonRelease, x, Qt::LeftButton, Qt::NoButton);
+        QTRY_VERIFY(!w.isBusy());
+        int seeks = 0, lastSeek = -1;
+        for (const auto &c : engine.calls) if (c.first == "frame") { ++seeks; lastSeek = c.second.value("frame").toInt(); }
+        QVERIFY2(seeks < (x - ruler.left()) / 3, qPrintable(QString("%1 engine seeks for a drag").arg(seeks))); // coalesced: fewer than the moves
+        QCOMPARE(lastSeek, frameAt(x));                                                                         // the last position wins
+        QCOMPARE(timeline->frame(), frameAt(x));
     }
     void commandsStayOffGuiThreadAndSeeksCoalesce() {
         QTemporaryDir d; wbtest::makeSynthFighter(d.path()); SlowEngine engine;

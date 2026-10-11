@@ -247,6 +247,31 @@ private slots:
         Session offline(d.path(), nullptr); QVERIFY(offline.data().reload().isEmpty()); registerAllCommands(offline);
         QVERIFY(!result(call(offline, "play_string", {{"index", 0}}))["played"].toBool());
     }
+    // Owner bug: strings with geno: steps (Light3.., HeavyRush) played only jab1/jab2 and stopped, silently.
+    void stringsPoseGenoStatesAndNeverSkipSilently() {
+        QTemporaryDir d; makeProject(d.path(), R"JSON({"states": [{"name": "Light3", "clip": "", "script": ""}],
+            "combo": {"buffer": 5, "routes": [{"name": "r", "from": "jab1", "to": "geno:Light3", "input": "light", "window": [6, 14]}],
+            "strings": [{"name": "with state", "steps": ["jab1", "geno:Light3"]},
+                        {"name": "engine target", "steps": ["jab1", "special_s"]}]}})JSON");
+        QTemporaryDir pkg; wbtest::put(pkg.path(), "geno.json", R"JSON({"fighters": [{"states": [{"name": "Rush"}, {"name": "Light3"}]}]})JSON");
+        wbtest::FakeEngine engine; engine.genoPath = pkg.path() + "/geno.json";
+        Session s(d.path(), &engine); QVERIFY(s.data().reload().isEmpty()); registerAllCommands(s);
+        auto played = result(call(s, "play_string", {{"index", 0}}));
+        QVERIFY2(played["played"].toBool(), qPrintable(QJsonDocument(played).toJson()));
+        QVector<int> rowMotions;
+        for (const auto &c : engine.calls) if (c.first == "row") rowMotions << c.second["motion"].toInt();
+        QCOMPARE(rowMotions.size(), 2);
+        QCOMPARE(rowMotions[1], 0x400 + 1);          // Light3 is state 1 of the running package
+        // a route target the engine drives is reported, not dropped without a word
+        auto target = result(call(s, "play_string", {{"index", 1}}));
+        QVERIFY(target["played"].toBool());
+        QCOMPARE(target["skipped"].toArray().first().toString(), QString("special_s"));
+        // the running package lacks the state (the Creator loaded the package without the combo layer): an error that says so
+        pkg.remove(); engine.genoPath = pkg.path() + "/missing.json";
+        auto bad = call(s, "play_string", {{"index", 0}});
+        QVERIFY(!bad["ok"].toBool());
+        QVERIFY2(bad["error"].toString().contains("combo package") || QJsonDocument(bad).toJson().contains("combo package"), qPrintable(QJsonDocument(bad).toJson()));
+    }
     void labelsAndClasses() {
         QJsonObject r{{"to", "geno:Light3"}, {"input", "light"}, {"on", "hit"}};
         QCOMPARE(comboRouteLabel(r), QString::fromUtf8("Light3 · light · on hit"));

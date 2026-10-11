@@ -12,6 +12,7 @@ public:
     void setBars(const QVector<QPair<QString, QPair<int, int>>> &bars);
     void setFrame(int f);
     void setPlaying(bool playing); // feedback only; never echoes playToggled
+    virtual bool scrubbing() const { return scrubbing_; } // a ruler drag is in progress: it, not the engine's replies, owns the cursor
     int frame() const { return frame_; }
     int frameCount() const { return frames_; }
     QSize sizeHint() const override;

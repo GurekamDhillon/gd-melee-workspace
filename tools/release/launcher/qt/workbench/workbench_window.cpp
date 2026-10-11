@@ -411,6 +411,7 @@ struct WorkbenchWindow::Impl {
     QCheckBox *loop;
     AtlasButton *play;
     QTimer playTimer;
+    QElapsedTimer playClock; double playLastMs = 0, playOwed = 0;
     QString row, blenderSetting;
     Snapshot snapshot;
     OutlinerPanel *outliner;
@@ -576,16 +577,26 @@ struct WorkbenchWindow::Impl {
 #endif
             if (blenderHeartbeat.isValid() && blenderHeartbeat.elapsed() > 2000) hub->setBlenderState(blenderPid > 0, false);
         }); blenderMonitor.start();
-        playTimer.setInterval(16);
+        playTimer.setInterval(8);
         QObject::connect(&playTimer, &QTimer::timeout, q, [this] {
             if (busy() || !timeline->frameCount()) return;
-            if (timeline->frame() >= timeline->frameCount() - 1) {
+            // Wall-clock target: frames owed = elapsed time * 60 fps * rate, so the speed does not depend on how long one
+            // engine round trip takes. A busy tick returns early without touching the clock; the next one catches up
+            // (capped, so a stall does not make the move jump).
+            const double now = playClock.nsecsElapsed() / 1e6;
+            const double rate = std::max(0.05, speed->currentData().toDouble());
+            playOwed = std::min(playOwed + (now - playLastMs) * 0.06 * rate, 6.0); playLastMs = now;
+            const int last = timeline->frameCount() - 1;
+            if (timeline->frame() >= last) {
+                playOwed = 0;
                 if (loop->isChecked()) q->runCommand("set_frame", {{"frame", 0}});
                 else setPlaying(false);
-            } else {
-                const double rate = speed->currentData().toDouble(); playTimer.setInterval(rate < 1 ? 33 : 16);
-                q->runCommand("play", {{"frames", std::min(rate > 1 ? 2 : 1, timeline->frameCount() - 1 - timeline->frame())}, {"step", 1}});
+                return;
             }
+            const int due = std::min(int(playOwed), last - timeline->frame());
+            if (due < 1) return;
+            playOwed -= due;
+            q->runCommand("play", {{"frames", due}, {"step", due}});
         });
     }
     void blenderClosedNotice() {
@@ -974,7 +985,7 @@ struct WorkbenchWindow::Impl {
     bool busy() const { return running || playLaunching || !queue.isEmpty(); }
     void setPlaying(bool on) {
         on = on && timeline->frameCount() > 0 && !closing;
-        if (on) playTimer.start(); else playTimer.stop();
+        if (on) { playClock.start(); playLastMs = 0; playOwed = 0; playTimer.start(); } else playTimer.stop();
         timeline->setPlaying(on); play->setText(on ? t("Pause", "Pausar") : t("Play", "Jugar"));
     }
     QString lastStatus;
@@ -1418,7 +1429,8 @@ struct WorkbenchWindow::Impl {
                 }
             }
             if (value.contains("frame") && completed.rowIntent == rowIntent && completed.frameIntent == frameIntent) {
-                frameInfo = FrameInfo::fromJson(value); timeline->setFrame(frameInfo.frame); updateFrameReadout();
+                frameInfo = FrameInfo::fromJson(value); if (!timeline->scrubbing()) timeline->setFrame(frameInfo.frame); // a drag owns the cursor until release
+                updateFrameReadout();
             }
             if (completed.name == "reload_from_disk" || completed.name == "recovery_resolve") {
                 rowProblems.clear(); checksCurrent = false; problems->setProblems({}); updateBadges();
@@ -1471,7 +1483,7 @@ struct WorkbenchWindow::Impl {
         if (reply.hasAttributes) attributes->setAttributes(reply.attributes);
         const auto value = reply.envelope.value("result").toObject();
         if (reply.envelope.value("ok").toBool()) {
-            if (value.contains("frame")) { frameInfo = FrameInfo::fromJson(value); timeline->setFrame(frameInfo.frame); updateFrameReadout(); }
+            if (value.contains("frame")) { frameInfo = FrameInfo::fromJson(value); if (!timeline->scrubbing()) timeline->setFrame(frameInfo.frame); updateFrameReadout(); }
             if (value.value("applied").toBool()) {
                 rowProblems.clear(); checksCurrent = false; problems->setProblems({});
                 updateBadges();

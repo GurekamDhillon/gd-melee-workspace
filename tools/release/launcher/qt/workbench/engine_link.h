@@ -37,6 +37,8 @@ public:
     virtual QJsonObject call(const QString &fn, const QJsonObject &args, QString *err) = 0;
     virtual QString status() = 0;
     virtual bool restart(QString *err) = 0;
+    // The geno.json of the package the engine runs (empty when unknown): the order of its states fixes their motion ids.
+    virtual QString packageGenoPath() const { return {}; }
 };
 
 struct ConsoleReply { bool ok = false; QString text; };
@@ -80,6 +82,9 @@ public:
     QString status() override;
     bool restart(QString *err) override;
     bool attach(quint16 port, QString *err);
+    QString packageGenoPath() const override {
+        return launch_.modsDir.isEmpty() || launch_.modId.isEmpty() ? QString() : launch_.modsDir + "/" + launch_.modId + "/geno.json";
+    }
     void setTimeoutMs(int timeoutMs);
     // The environment the engine process gets for a console port (testable without a process).
     QProcessEnvironment buildEnvironment(int port) const;

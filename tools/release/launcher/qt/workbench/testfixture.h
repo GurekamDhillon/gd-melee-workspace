@@ -171,6 +171,8 @@ public:
     QVector<QPair<QString, QJsonObject>> calls;
     QString state = "ready";
     QString failWith;
+    QString genoPath; // the geno.json of the package "running" (combo state motions)
+    QString packageGenoPath() const override { return genoPath; }
 
     QJsonObject call(const QString &fn, const QJsonObject &args, QString *err) override {
         calls.append({fn, args});

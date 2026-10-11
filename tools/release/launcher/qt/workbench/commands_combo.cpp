@@ -1,6 +1,11 @@
 #include "combo_model.h"
 #include "commands.h"
 #include "geno_asm.h"
+#include "engine_link.h"
+#include <QElapsedTimer>
+#include <QFile>
+#include <QJsonDocument>
+#include <QRegularExpression>
 #include <QThread>
 
 // The combo graph (geno.md 25): list/edit/add/delete the routes and strings of the project's combo file. Every write is a
@@ -154,6 +159,7 @@ struct StepData {
     ComboStepInfo info;
     QString clip, kind; // kind: "move" (a Moves row), "state" (a state of the combo file) or "unknown"
     int motion = -1, crop = 0;
+    bool aerial = false;
     QJsonArray hits;
 };
 int clipFrames(GenoData &data, const QString &clip) {
@@ -179,17 +185,32 @@ void fillHits(GenoData &data, const QVector<HitboxRef> &boxes, StepData &out, in
 StepData rowStep(GenoData &data, const RowInfo &row) {
     StepData out; out.kind = "move"; out.clip = row.effectiveClip();
     out.motion = row.motions.isEmpty() ? -1 : row.motions.first();
-    out.crop = row.cropStart;
+    out.crop = row.cropStart; out.aerial = row.aerial;
     int frames = out.clip.isEmpty() ? 0 : qMax(0, clipFrames(data, out.clip) - row.cropStart);
     if (row.iasa > 0) frames = qMax(frames, row.iasa + 1);
     fillHits(data, data.hitboxes(row.name), out, frames);
     out.info.length = frames;
     return out;
 }
+// Geno states take the motion ids after the fighter's own: 0x400 + the state's index in the geno.json the engine runs
+// (gw_script.c GS_GENO_MOTION_BASE). The Creator must run the package that holds the combo states (the combo package).
+constexpr int kGenoMotionBase = 0x400;
+int stateMotion(Session &s, const QString &name) {
+    if (!s.engine()) return -1;
+    QFile file(s.engine()->packageGenoPath());
+    if (!file.open(QIODevice::ReadOnly)) return -1;
+    const auto fighters = QJsonDocument::fromJson(file.readAll()).object().value("fighters").toArray();
+    if (fighters.isEmpty()) return -1;
+    const auto states = fighters.first().toObject().value("states").toArray();
+    for (int i = 0; i < states.size(); ++i)
+        if (states[i].toObject().value("name").toString() == name) return kGenoMotionBase + i;
+    return -1;
+}
 StepData stateStep(Session &s, const QString &name) {
     auto &data = s.data();
     StepData out; out.kind = "unknown";
     const QString bare = comboTargetName(name);
+    out.motion = stateMotion(s, bare);
     for (const auto &v : data.comboStates()) {
         const auto state = v.toObject();
         if (state.value("name").toString() != bare) continue;
@@ -239,7 +260,7 @@ Planned planFor(Session &s, const QJsonObject &args) {
         const auto d = stepData(s, step);
         info.insert(step, d.info);
         out.stepJson.append(QJsonObject{{"move", step}, {"kind", d.kind}, {"clip", d.clip}, {"frames", d.info.length},
-                                        {"first_hit", d.info.firstHit}, {"motion", d.motion}, {"crop", d.crop}, {"hits", d.hits}});
+                                        {"first_hit", d.info.firstHit}, {"motion", d.motion}, {"crop", d.crop}, {"aerial", d.aerial}, {"hits", d.hits}});
     }
     const int buffer = data.comboMeta().value("buffer").toInt(5);
     out.plan = planComboString(out.steps, data.routes(), info, buffer, args["add_buffer"].toBool());
@@ -272,17 +293,74 @@ void registerComboPlayCommands(Session &s) {
                 out["note"] = t("The game is not running: the plan is returned, nothing was played", "The game is not running: the plan is returned, nothing was played");
                 return out;
             }
-            int sent = 0;
+            int sent = 0, clamped = 0;
+            QJsonArray skipped;
+            QElapsedTimer clock; clock.start();
             for (int i = 0; i < p.plan.size(); ++i) {
-                const int motion = p.stepJson[i].toObject().value("motion").toInt(-1);
-                if (motion < 0) continue; // a state that is not a Moves row has no motion the engine can pose
-                engineCall(ctx.session, "row", {{"motion", motion}});
-                for (int f = 1; f <= p.plan[i].cut; ++f) {
-                    engineCall(ctx.session, "frame", {{"motion", motion}, {"frame", f}});
-                    ++sent;
-                    if (args["realtime"].toBool()) QThread::msleep(16);
+                const auto step = p.stepJson[i].toObject();
+                const int motion = step.value("motion").toInt(-1);
+                if (step.value("kind").toString() == "unknown") {
+                    // A route target the engine drives (special_s, jump_short): neither a Moves row nor a combo state, so
+                    // there is nothing to pose. Say so; never skip silently.
+                    skipped.append(step.value("move").toString());
+                    continue;
+                }
+                if (motion < 0) // a state or row the running game cannot pose
+                    throw CommandError{t("step \"%1\" is not in the package the game is running (the combo states live in the combo package): rebuild with combos, then reload",
+                                         "step \"%1\" is not in the package the game is running (the combo states live in the combo package): rebuild with combos, then reload")
+                                           .arg(step.value("move").toString())};
+                // The first pose after the game starts can arrive before the move's animation is in: pose the step again once.
+                const int sentBefore = sent;
+                for (int attempt = 0;; ++attempt) {
+                    sent = sentBefore;
+                    try {
+                        engineCall(ctx.session, "row", {{"motion", motion}});
+                        const bool realtime = args["realtime"].toBool();
+                        // Realtime: pose frame 1, then let the game run forward on the 60 Hz wall clock ("step" costs a frame, a
+                        // "frame" seek re-simulates the move: one seek per frame ran at a quarter of the speed).
+                        const double segmentStartMs = (p.plan[i].start - 1) * 1000.0 / 60.0;
+                        int at = 0;
+                        for (int f = 1; f <= p.plan[i].cut;) {
+                            if (realtime && at > 0) {
+                                const double dueMs = segmentStartMs + (f - 1) * 1000.0 / 60.0, nowMs = clock.nsecsElapsed() / 1e6;
+                                if (nowMs < dueMs) { QThread::msleep(quint32(std::max(1.0, dueMs - nowMs - 1))); continue; }
+                                const int target = std::min(p.plan[i].cut, 1 + int((nowMs - segmentStartMs) * 0.06));
+                                if (target > at) {
+                                    const auto stepped = engineCall(ctx.session, "step", {{"n", target - at}});
+                                    sent += target - at; at = target; f = at + 1;
+                                    // The game chained into another action while stepping (jab1 runs into jab2 on its own):
+                                    // pose the move's own frame again so the string shows the move it planned.
+                                    if (stepped.contains("motion") && stepped.value("motion").toInt(motion) != motion) {
+                                        QJsonObject back{{"motion", motion}, {"frame", at}};
+                                        if (step.value("aerial").toBool()) back.insert("lift", 120);
+                                        try { engineCall(ctx.session, "frame", back); } catch (const CommandError &) { ++clamped; }
+                                    }
+                                    continue;
+                                }
+                            }
+                            QJsonObject frameArgs{{"motion", motion}, {"frame", f}};
+                            if (step.value("aerial").toBool()) frameArgs.insert("lift", 120); // as set_frame: an aerial must not land mid-move
+                            try {
+                                engineCall(ctx.session, "frame", frameArgs);
+                            } catch (const CommandError &e) {
+                                // The plan can be a frame or two longer than the move the engine plays (as in set_frame): hold its last frame.
+                                static const QRegularExpression last("past the end.*last frame (\d+)");
+                                const auto m = last.match(e.message);
+                                if (!m.hasMatch() || m.captured(1).toInt() >= f) throw;
+                                frameArgs["frame"] = m.captured(1).toInt();
+                                engineCall(ctx.session, "frame", frameArgs);
+                                ++clamped;
+                            }
+                            ++sent; at = f; ++f;
+                        }
+                        break;
+                    } catch (const CommandError &) {
+                        if (attempt > 0) throw;
+                    }
                 }
             }
+            if (!skipped.isEmpty()) out["skipped"] = skipped;
+            out["clamped"] = clamped;
             out["played"] = true; out["frames_sent"] = sent;
             return out;
         }});

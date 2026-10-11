@@ -267,6 +267,20 @@ private slots:
         QCOMPARE(fi.floorY, -3.0); QCOMPARE(fi.lowestY, -2.5);
         QCOMPARE(fi.toJson(), liveFrame());
     }
+    // The real game answers wb.step "pending" like wb.frame: PLAY failed with "unexpected engine reply: pending".
+    void stepPollsPendingUntilTheFramesRan() {
+        QStringList commands; int polls = 0;
+        wbtest::FakeConsole fc([&](const QString &line) {
+            commands.append(line);
+            if (line.startsWith("=wb.step(")) return QString("pending\n>>> ok\n");
+            ++polls;
+            return jsonReply({{"frame", polls < 3 ? -1 : 9}, {"motion", 70}});
+        });
+        EngineLink link({}); QString err; QVERIFY(link.attach(fc.port(), &err));
+        const auto r = link.call("step", {{"n", 2}}, &err);
+        QVERIFY2(err.isEmpty(), qPrintable(err)); QCOMPARE(r["frame"].toInt(), 8); QCOMPARE(polls, 3);
+        QVERIFY(commands[0].startsWith("=wb.step("));
+    }
     void framePollsPendingUntilRequestedFrame() {
         QStringList commands; int polls = 0;
         wbtest::FakeConsole fc([&](const QString &line) {

@@ -18,6 +18,7 @@
 #include <QScrollArea>
 #include <QStackedWidget>
 #include <QTemporaryDir>
+#include <QTabBar>
 #include <QtTest>
 using namespace wb;
 
@@ -35,7 +36,7 @@ QStringList clippedControls(QWidget *root, QWidget *scope) {
         const bool control = qobject_cast<QAbstractButton *>(w) || qobject_cast<QComboBox *>(w) || qobject_cast<QAbstractSpinBox *>(w);
         if (!control) continue;
         if (qobject_cast<QAbstractSpinBox *>(w->parentWidget()) || qobject_cast<QComboBox *>(w->parentWidget())) continue;
-        if (w->inherits("QTabBar") || w->objectName().startsWith("qt_")) continue;
+        if (w->inherits("QTabBar") || w->objectName().startsWith("qt_") || qobject_cast<QTabBar *>(w->parentWidget())) continue; // the bar's own scroll arrows
         const QString name = w->objectName().isEmpty() ? QString(w->metaObject()->className()) : w->objectName();
         const QRect r(w->mapTo(root, QPoint(0, 0)), w->size());
         if (r.left() < scopeRect.left() || r.right() > scopeRect.right())
@@ -98,6 +99,10 @@ private slots:
         if (narrow) QVERIFY2(tabsAt.y() > timelineAt.y() && tabs->width() > 520, qPrintable(QString("tabs %1,%2 w%3").arg(tabsAt.x()).arg(tabsAt.y()).arg(tabs->width())));
         else QVERIFY2(tabsAt.x() > timelineAt.x() + timeline->width() - 5, "inspector is a third column when wide");
         QVERIFY2(tabs->width() >= 300, "inspector is not squeezed");
+        // Owner bug: tab labels were squeezed to elided stubs. Every tab keeps room for its whole label.
+        for (int i = 0; i < tabs->count(); ++i)
+            QVERIFY2(tabs->tabBar()->tabRect(i).width() >= tabs->tabBar()->fontMetrics().horizontalAdvance(tabs->tabText(i)),
+                     qPrintable(QString("tab '%1' squeezed to %2 px").arg(tabs->tabText(i)).arg(tabs->tabBar()->tabRect(i).width())));
         // Tall window: the Move view spans the full width and Moves is the first tab of the lower strip.
         auto *centreHost = bench->findChild<QWidget *>("wbCentreHost"); auto *movesRail = bench->findChild<QWidget *>("wbMovesRail");
         QVERIFY(centreHost && movesRail);
