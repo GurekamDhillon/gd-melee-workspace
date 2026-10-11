@@ -121,7 +121,7 @@ function M.counter_frame(ctx)
   -- hold = the XV2 Energy Charge (skill 591): usable only while ki < 100 (at full meter the hold stays the vanish blink)
   local full = false
   full = ctx.self.ki >= KI_MAX -- @KI
-  if ctx.self.action_frame == 12 and ctx.input.special_held and not full then ctx.go("KiCharge") return end
+  if ctx.self.action_frame == 12 and ctx.input.special_held and not full and not ctx.self.air then ctx.go("KiCharge") return end   -- no ki charge in the air (phase 4)
 end
 function M.riposte_enter(ctx)
   ctx.turn()  -- Z-vanish: reappear facing the attacker
@@ -139,22 +139,26 @@ function M.kicharge_frame(ctx)
 end
 -- Homing dash strike (XV2 BAC 476, Side B out of the shield, ki cost on the route): it reuses rush_enter/rush_frame (the module is at the engine's 24-function cap);
 -- XV2 homes on the target for 14 frames (engine.homing_movement), which fighter Lua cannot read (no opponent query), so it dashes straight ahead.
--- Up B = flight (owner 2026-10-11; XV2 BUKUU, the fly clips). Takeoff, then free steering with the control stick for FLY_FRAMES, then the special fall (helpless, the usual
--- landing lag, ledge snap): he stays edgeguardable. B or A ends it early. 10 ki; with less ki a weak short flight. Slots: age (frames flown), fly (1 full / 0 weak), pose
--- (0 up, 1 forward, 2 back = which clip state he is in). The motion is plain Lua velocity on a geno.air state, so rewind, savestate and netplay replay it (only slots and the pad).
-local FLY_FRAMES = 60
-local FLY_SPEED = 0.8            -- units per frame at full stick: about 40 units over a full flight, a Marth / Falcon sized recovery
+-- Up B = flight (owner 2026-10-11; XV2 BUKUU, the fly clips). Takeoff, then free steering with the control stick for as long as the ki lasts (phase 4), then the special
+-- fall (helpless, the usual landing lag, ledge snap): he stays edgeguardable. B ends it early; A or an aerial input cancels into the matching aerial (routes in combo.json,
+-- the FlightNair..FlightDair states): a hit that lands keeps normal air control afterwards, a miss ends in the special fall. The drain is FLY_DRAIN ki per frame
+-- (100 ki = 120 frames = 2 seconds); there is no entry cost; with less than FLY_MIN_KI the flight is the weak free 22-frame one so Up B always does something.
+-- No ki comes back during the flight (a gain is taken straight off again). Slots: age (frames flown), fly (1 ki-powered / 0 weak), pose (0 up, 1 forward, 2 back = which
+-- clip state he is in), kil (the ki after last frame's drain). The motion is plain Lua velocity on a geno.air state, so rewind, savestate and netplay replay it.
+local FLY_DRAIN = 0.8333
+local FLY_MIN_KI = 20
+local FLY_SPEED = 0.8            -- units per frame at full stick (up to 96 units over a full 2 seconds: the speed of phase 3, kept)
 local FLY_WEAK_FRAMES = 22
 local FLY_WEAK_SPEED = 0.45
-local FLY_KI = 10
+local FLY_CAP = 240
 function M.flight_enter(ctx)
   local s = ctx.state
   s.age = 0
   s.pose = 0
-  local paid = true
-  paid = ctx.self.ki >= FLY_KI -- @KI
-  if paid then ctx.ki(-FLY_KI) end -- @KI
-  s.fly = paid and 1 or 0
+  local powered = true
+  powered = ctx.self.ki >= FLY_MIN_KI -- @KI
+  s.fly = powered and 1 or 0
+  s.kil = ctx.self.ki -- @KI
 end
 function M.flight_frame(ctx)
   local s = ctx.state
@@ -162,7 +166,14 @@ function M.flight_frame(ctx)
   if ctx.self.anim_ended then ctx.loop() end   -- the fly clip repeats for as long as he flies (the state's own next would end it)
   local full = s.fly == 1
   local sp = full and FLY_SPEED or FLY_WEAK_SPEED
-  if s.age >= (full and FLY_FRAMES or FLY_WEAK_FRAMES) or (s.age > 3 and (ctx.input.special_pressed or ctx.input.attack_pressed)) then ctx.go("helpless") return end
+  if full then
+    local k = ctx.self.ki -- @KI
+    if k > s.kil + 0.005 then ctx.ki(s.kil - k) k = s.kil end -- @KI no ki comes back while flying
+    if k - FLY_DRAIN <= 0 then ctx.ki(-k) ctx.go("helpless") return end -- @KI out of ki: the special fall
+    ctx.ki(-FLY_DRAIN) -- @KI
+    s.kil = k - FLY_DRAIN -- @KI
+  end
+  if s.age >= (full and FLY_CAP or FLY_WEAK_FRAMES) or (s.age > 3 and ctx.input.special_pressed) then ctx.go("helpless") return end
   local fx, fy = ctx.input.stick_fwd, ctx.input.stick_y
   local m = math.sqrt(fx * fx + fy * fy)
   if m < 0.2 then fx, fy = 0, 0.25 elseif m > 1 then fx, fy = fx / m, fy / m end   -- stick at rest: a slow climb
@@ -175,6 +186,12 @@ function M.flight_frame(ctx)
     if want == 1 then ctx.go("FlightF") elseif want == 2 then ctx.go("FlightB") else ctx.go("FlightU") end
   end
 end
+-- an aerial thrown out of the flight (FlightNair..FlightDair share the aerials' rows and scripts): when it ends, a connected hit means normal air control, a miss the special fall
+function M.flightair_frame(ctx)
+  if ctx.self.anim_ended then
+    if ctx.self.connected == 1 then ctx.go("auto") else ctx.go("helpless") end
+  end
+end
 -- Not called: names the cape reappear states so the offline reachability check sees them (the engine picks them by behaviour order).
-function M.it_targets(ctx) ctx.go("ITEnd") ctx.go("ITEndAir") ctx.go("RushCombo") ctx.go("KameSuper") ctx.go("Homing") ctx.go("Recovery") ctx.go("RecoveryAir") end
+function M.it_targets(ctx) ctx.go("ITEnd") ctx.go("ITEndAir") ctx.go("RushCombo") ctx.go("KameSuper") ctx.go("Homing") ctx.go("Recovery") ctx.go("RecoveryAir") ctx.go("FlightNair") ctx.go("FlightFair") ctx.go("FlightBair") ctx.go("FlightUair") ctx.go("FlightDair") end
 return M

@@ -306,15 +306,15 @@
     "why": "owner: \"dodge/dash backward, keeps facing\" (row 43 EscapeB). Roll back."
    }
   ],
-  "recommended": "xGOK_BAS_STEP_F_S",
+  "recommended": "",
   "combo_role": "",
-  "status": "PARTIAL",
+  "status": "KEEP",
   "gap_look": [
    "xGOK_BAS_STEP_R_S",
    "xGOK_GRD_L_L_S",
    "xGOK_GRD_L_R_S"
   ],
-  "note": "Spot dodge and air dodge: GAP. xGOK_BAS_STEP_L_S is \"unclear: tiptoeing sideways\" (rows 41, 44): excluded."
+  "note": "Owner 2026-10-11 (phase 4): rolls and the spot dodge are Instant Transmission teleports, like Mewtwo (XV2 ESC_KUR vanish / reappear, intangible gap); the air dodge is unchanged. Not a clip pick."
  },
  {
   "group": "2 Defence",

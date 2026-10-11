@@ -56,6 +56,33 @@ def patch_gameplay():
         if slot not in g['lua']['state']:
             g['lua']['state'][slot] = 'int'
             changed = True
+    # phase 4: the aerials thrown out of the flight (Geno states sharing the aerials' rows' scripts) and the Instant Transmission rolls
+    base = {'FlightNair': ('nair', 65), 'FlightFair': ('fair', 66), 'FlightBair': ('bair', 67), 'FlightUair': ('uair', 68), 'FlightDair': ('dair', 69)}
+    moves = {m['name']: m for m in g['moves']}
+    for name, (mv, motion) in base.items():
+        if not any(x['name'] == name for x in g['states']):
+            g['states'].append({'name': name, 'behavior': 'geno.air', 'subaction': 'clip:' + name, 'like': 'motion:%d' % motion, 'iasa': 'none', 'move_tag': 'aerial',
+                                'lua': {'frame': 'flightair_frame'}, 'pick': 'owner 2026-10-11: an aerial out of the flight; a hit keeps air control, a miss ends in the special fall'})
+            changed = True
+        want_ad = {'name': name, 'parity': moves[mv]['parity'], 'script': moves[mv]['script'], 'minimum_clip_frames': moves[mv].get('minimum_clip_frames', 30),
+                   'hb': moves[mv].get('hb', 'HB-NONE'), 'windows': moves[mv].get('windows', [])}
+        if moves[mv].get('strike'):
+            want_ad['strike'] = moves[mv]['strike']
+        old = next((x for x in g['special_adaptations'] if x['name'] == name), None)
+        if old is None:
+            g['special_adaptations'].append(want_ad)
+            changed = True
+        elif {k: old.get(k) for k in want_ad} != want_ad:
+            old.update(want_ad)
+            changed = True
+    for name, motion, script_ in (('escape_f', 233, 'moves/escape_f.genoasm'), ('escape_b', 234, 'moves/escape_b.genoasm'), ('escape_n', 235, 'moves/escape_n.genoasm')):
+        if name not in moves:
+            g['moves'].append({'name': name, 'parity': 'move:special_lw', 'motions': [motion], 'tag': 'special', 'script': script_, 'windows': [], 'iasa': 30, 'hb': 'HB-NONE',
+                               'design': {}, 'timing': 'owner 2026-10-11 phase 4: Instant Transmission roll, Mewtwo roll timing'})
+            changed = True
+    if 'kil' not in g['lua']['state']:
+        g['lua']['state']['kil'] = 'float'
+        changed = True
     want_controls = {'layouts': [{'name': 'A', 'buttons': {'A': 'A'}},
                                  {'name': 'B', 'buttons': {'Y': 'Down'}}]}
     if g.get('controls') != want_controls:
@@ -83,6 +110,14 @@ def patch_combo():
     want.append({'name': 'Blast>KiBlast', 'from': ground_idle, 'to': 'geno:KiBlast', 'input': 'blast', 'on': 'any', 'where': 'ground', 'window': [1, 0],
                  'ki_cost': KIBLAST_KI, 'priority': 5,
                  'source': 'XV2 Blast tap (ki blast, free in XV2); here it costs ki; input = layout B (Y -> D-pad Down) or the D-pad itself'})
+    fly_from = ['geno:Flight', 'geno:FlightU', 'geno:FlightF', 'geno:FlightB']
+    for dname, to in (('forward', 'geno:FlightFair'), ('back', 'geno:FlightBair'), ('up', 'geno:FlightUair'), ('down', 'geno:FlightDair')):
+        want.append({'name': 'Fly>A %s' % dname, 'from': fly_from, 'to': to, 'input': 'light', 'dir': dname, 'on': 'any', 'where': 'air', 'window': [4, 0], 'priority': 12,
+                     'source': 'owner 2026-10-11: A out of the flight with the stick direction = that aerial'})
+        want.append({'name': 'Fly>C %s' % dname, 'from': fly_from, 'to': to, 'input': 'heavy', 'dir': dname, 'on': 'any', 'where': 'air', 'window': [4, 0], 'priority': 14,
+                     'source': 'owner 2026-10-11: the C-stick out of the flight = that aerial'})
+    want.append({'name': 'Fly>A nair', 'from': fly_from, 'to': 'geno:FlightNair', 'input': 'light', 'dir': 'any', 'on': 'any', 'where': 'air', 'window': [4, 0], 'priority': 10,
+                 'source': 'owner 2026-10-11: A out of the flight, stick neutral = nair'})
     have = {r['name']: r for r in routes}
     for w in want:
         if have.get(w['name']) != w:

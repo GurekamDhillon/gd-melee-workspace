@@ -2,6 +2,8 @@
 # sized from the mesh; timing, damage and reaction are derived from the XV2 hit entry (tools/remake_samples.py, REMAKE-SAMPLES.md). Edit it in the Workbench.
 # XV2 hit entry 341; limb foot.R
 PUT ANIM_RATE 1.0
+wait_until 5
+smash_charge charge_frames=60 charge_rate=350 color_anim=119
 wait_until 6
 sfx behavior=1 sfx_id=164 volume=127 panning=64
 wait_until 7

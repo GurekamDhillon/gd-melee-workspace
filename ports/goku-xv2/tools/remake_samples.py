@@ -291,7 +291,11 @@ def fmt(v):
 IASA_AT = {'Rush': 62}
 
 
-def build_script(old_text, blocks, header, iasa=None):
+SMASH_CHARGE = {'fsmash', 'usmash', 'dsmash'}   # Melee's smash charge (ftcmd smash_charge: hold A to charge up to 60 frames, damage x1.3671) 2 frames before the first active frame
+CHARGE_LINE = 'smash_charge charge_frames=60 charge_rate=350 color_anim=119'
+
+
+def build_script(old_text, blocks, header, iasa=None, extra=None):
     """Timeline-merge: the old script's non-hitbox commands plus the new hitbox blocks [(frame, [lines], end_frame)]."""
     ev, t = [], 0
     for ln in old_text.splitlines():
@@ -306,6 +310,8 @@ def build_script(old_text, blocks, header, iasa=None):
             t += int(float(w[1]))
         elif op in ('hitbox', 'clear_hitbox', 'clear_hitboxes', 'hitboxes_clear', 'hbstun', 'hbflags', 'hbdmg', 'rehit'):
             continue
+        elif op == 'smash_charge':
+            continue   # re-added below at the right frame
         elif op == 'iasa' and iasa:
             ev.append((iasa, 3, s))
         else:
@@ -314,6 +320,8 @@ def build_script(old_text, blocks, header, iasa=None):
         for k, l in enumerate(lines):
             ev.append((a, 1, l))
         ev.append((b, 2, 'clear_hitboxes'))
+    for a, line in (extra or []):
+        ev.append((a, 0, line))
     ev.sort(key=lambda e: (e[0], e[1]))
     out = header.rstrip('\n').split('\n')
     cur = 0
@@ -531,7 +539,8 @@ def write_all(rig, plans, combo):
         path = PORT / tg['script']
         old = path.read_text(encoding='utf-8')
         header = HB_HEADER + '# ' + tg['note'] + ('; limb %s' % ','.join(sorted({str(w['limb']) for w in tg['wins']}))) + '\n'
-        path.write_text(build_script(old, tg['blocks'], header, IASA_AT.get(tg['name'])), encoding='utf-8', newline='\n')
+        path.write_text(build_script(old, tg['blocks'], header, IASA_AT.get(tg['name']),
+                                                [(max(1, tg['wins'][0]['a'] - 2), CHARGE_LINE)] if tg['name'] in SMASH_CHARGE else None), encoding='utf-8', newline='\n')
         n += 1
         w0 = tg['wins'][0]
         fin = w0.get('final') or {}

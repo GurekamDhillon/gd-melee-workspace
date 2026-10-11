@@ -13,7 +13,8 @@
       "stored": "int",
       "stored_pct": "float",
       "fly": "int",
-      "pose": "int"
+      "pose": "int",
+      "kil": "float"
     }
   },
   "jumps": {
@@ -1229,6 +1230,45 @@
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+    },
+    {
+      "name": "escape_f",
+      "parity": "move:special_lw",
+      "motions": [
+        233
+      ],
+      "tag": "special",
+      "script": "moves/escape_f.genoasm",
+      "windows": [],
+      "iasa": 30,
+      "hb": "HB-NONE",
+      "design": {}
+    },
+    {
+      "name": "escape_b",
+      "parity": "move:special_lw",
+      "motions": [
+        234
+      ],
+      "tag": "special",
+      "script": "moves/escape_b.genoasm",
+      "windows": [],
+      "iasa": 30,
+      "hb": "HB-NONE",
+      "design": {}
+    },
+    {
+      "name": "escape_n",
+      "parity": "move:special_lw",
+      "motions": [
+        235
+      ],
+      "tag": "special",
+      "script": "moves/escape_n.genoasm",
+      "windows": [],
+      "iasa": 30,
+      "hb": "HB-NONE",
+      "design": {}
     }
   ],
   "states": [
@@ -1538,6 +1578,61 @@
       "lua": {
         "frame": "flight_frame"
       }
+    },
+    {
+      "name": "FlightNair",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightNair",
+      "like": "motion:65",
+      "iasa": "none",
+      "move_tag": "aerial",
+      "lua": {
+        "frame": "flightair_frame"
+      }
+    },
+    {
+      "name": "FlightFair",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightFair",
+      "like": "motion:66",
+      "iasa": "none",
+      "move_tag": "aerial",
+      "lua": {
+        "frame": "flightair_frame"
+      }
+    },
+    {
+      "name": "FlightBair",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightBair",
+      "like": "motion:67",
+      "iasa": "none",
+      "move_tag": "aerial",
+      "lua": {
+        "frame": "flightair_frame"
+      }
+    },
+    {
+      "name": "FlightUair",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightUair",
+      "like": "motion:68",
+      "iasa": "none",
+      "move_tag": "aerial",
+      "lua": {
+        "frame": "flightair_frame"
+      }
+    },
+    {
+      "name": "FlightDair",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightDair",
+      "like": "motion:69",
+      "iasa": "none",
+      "move_tag": "aerial",
+      "lua": {
+        "frame": "flightair_frame"
+      }
     }
   ],
   "specials": {
@@ -1817,6 +1912,196 @@
       "windows": [],
       "strike": [],
       "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+    },
+    {
+      "name": "FlightNair",
+      "parity": "move:nair",
+      "script": "moves/nair.genoasm",
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          12,
+          3
+        ],
+        [
+          12,
+          3
+        ],
+        [
+          12,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          36,
+          3
+        ],
+        [
+          36,
+          3
+        ],
+        [
+          36,
+          3
+        ]
+      ],
+      "strike": [
+        [
+          12,
+          15
+        ],
+        [
+          18,
+          21
+        ],
+        [
+          24,
+          27
+        ],
+        [
+          30,
+          33
+        ],
+        [
+          36,
+          39
+        ]
+      ]
+    },
+    {
+      "name": "FlightFair",
+      "parity": "move:fair",
+      "script": "moves/fair.genoasm",
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          15,
+          4
+        ],
+        [
+          15,
+          4
+        ],
+        [
+          15,
+          4
+        ]
+      ],
+      "strike": [
+        [
+          15,
+          19
+        ]
+      ]
+    },
+    {
+      "name": "FlightBair",
+      "parity": "move:bair",
+      "script": "moves/bair.genoasm",
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          6,
+          12
+        ],
+        [
+          6,
+          12
+        ]
+      ],
+      "strike": [
+        [
+          6,
+          18
+        ]
+      ]
+    },
+    {
+      "name": "FlightUair",
+      "parity": "move:uair",
+      "script": "moves/uair.genoasm",
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          12,
+          4
+        ],
+        [
+          12,
+          4
+        ],
+        [
+          12,
+          4
+        ]
+      ],
+      "strike": [
+        [
+          12,
+          16
+        ]
+      ]
+    },
+    {
+      "name": "FlightDair",
+      "parity": "move:dair",
+      "script": "moves/dair.genoasm",
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          4
+        ]
+      ],
+      "strike": [
+        [
+          10,
+          14
+        ]
+      ]
     }
   ],
   "articles": [

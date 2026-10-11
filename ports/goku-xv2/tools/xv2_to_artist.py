@@ -324,6 +324,7 @@ def sample_track(keys, frames, rotation=False):
 WAIT_CLIP = 0   # GOK_BAS_STAND: XV2's ground idle (remake phase 3, owner 2026-10-11: no hover; the floating idle GOK_BAS_STAND_S is clip 1)
 
 
+ROLL_DISTANCE=52.   # world units a roll travels: Mewtwo's own roll measured in this engine (Goku's earlier roll was 27.3, Mario's 33)
 REMAKE_REPORT=[]   # filled by row_specs: what remake_apply did to each row
 
 
@@ -487,6 +488,20 @@ def row_specs(source):
     REMAKE_REPORT[:]=remake_apply.apply(out,source,byname.get,EAN,rowmap.ALIASES)
     # Homing dash strike (XV2 BAC 476, Guard+Heavy): BOOST_F_00 f0-19 then ATC_008 from f20, 66 frames (the BAC's own two bindings, played at speed 1).
     # Entered from the shield by a combo route (combo.json Guard>Homing); a row of its own so the clip chain is the one XV2 plays.
+    # Flight aerials (phase 4): the aerial rows again, as declared rows of their own, for the Geno states FlightNair..FlightDair (their script and row are the aerial's)
+    for new,base in (('FlightNair','AttackAirN'),('FlightFair','AttackAirF'),('FlightBair','AttackAirB'),('FlightUair','AttackAirHi'),('FlightDair','AttackAirLw')):
+        if base in out:out[new]={**out[base],'ground_as':base,'status':'flight aerial: the row of '+base}
+    # Rolls are Instant Transmission teleports (phase 4, owner 2026-10-11, like Mewtwo's): the XV2 vanish pose (ESC_KUR f0-18), a hidden gap, the reappear pose (f70-106).
+    # Melee timing from Mewtwo's own roll measured in this engine (tools/lua roll_probe.lua): 37 frames, intangible f5-22, travel 52; the body moves inside the hidden gap.
+    kur=byname.get('GOK_ESC_KUR_C')
+    if kur:
+        def bk(fr,st,en):return {'frame':fr,'args':{'binding':{'clip':kur,'start_frame':st,'end_frame':en,'speed':1}}}
+        for row,sign in (('EscapeF',1.),('EscapeB',-1.)):
+            out[row]={'clip':kur,'loop':False,'frames':37,'start':0,'events':[bk(0,0,18),bk(5,70,106)],'library':True,'root_motion':True,
+                      'root_path':[[0,0.,0.,0.],[.135,0.,0.,0.],[.42,0.,0.,sign*ROLL_DISTANCE],[1,0.,0.,sign*ROLL_DISTANCE]],
+                      'status':'PICK (owner 2026-10-11, phase 4): Instant Transmission roll: ESC_KUR vanish f0-18, hidden f5-22 (the body travels %d units inside the gap), reappear f70-106; 37 frames like the Mewtwo roll'%ROLL_DISTANCE}
+        out['EscapeN']={'clip':kur,'loop':False,'frames':24,'start':0,'events':[bk(0,0,18),bk(3,70,106)],'library':True,
+                        'status':'PICK (owner 2026-10-11, phase 4): Instant Transmission spot dodge: vanish in place, hidden f3-16, reappear'}
     for row,clipname,frames in (('FlightUp','GOK_BAS_BUKUU_UP',50),('FlightF','GOK_BAS_BUKUU_F_S',40),('FlightB','GOK_BAS_BUKUU_B_S',40)):
         if byname.get(clipname):   # Up B flight (phase 3): the XV2 fly clips, looped; the air has no ground contact
             out[row]={'clip':byname[clipname],'loop':True,'frames':frames,'start':0,'status':'PICK (owner 2026-10-11): Up B flight, XV2 %s looped'%clipname}
