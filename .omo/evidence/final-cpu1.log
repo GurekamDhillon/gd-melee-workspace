@@ -1,0 +1,9 @@
+﻿exit      0
+perf NOISY | GS_VS/GM_VS [steady, 2630 frames] frame work mean 247.33 p95 272.49 p99 312.42 max 464.3 ms | script 0.09 | draws 0 | other melee-pc instances present (start 1, end 2); other CPU load mean 28% max 77%
+FATAL     0
+loads:  26   evictions: 13
+snap: curated hash: 36000 compared, 0 mismatching, resim iteration (logic only) 0.70 ms
+snap: curated hash: 37200 compared, 0 mismatching, resim iteration (logic only) 0.70 ms
+script [pad_script] TBC DONE frames=3000
+throw banks: cpu PASS
+exit 0
