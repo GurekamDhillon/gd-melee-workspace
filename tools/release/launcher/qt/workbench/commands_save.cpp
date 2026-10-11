@@ -1,4 +1,5 @@
 #include "commands.h"
+#include "throw_standin.h"
 #include "engine_link.h"
 #include "geno_data.h"
 #include "project.h"
@@ -256,6 +257,8 @@ void registerAllCommands(Session &session) {
     registerViewCommands(session);
     registerRowCommands(session);
     registerHitboxCommands(session);
+    registerStatementCommands(session);
+    registerThrowStandInCommands(session);
     registerClipCommands(session);
     registerSaveCommands(session);
     registerGroundCommands(session);

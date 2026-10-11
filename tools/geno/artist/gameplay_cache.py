@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 
 NAME = "gameplay-cache.json"
-_GAMEPLAY = {"attributes", "jumps", "moves", "name"}
+_GAMEPLAY = {"attributes", "jumps", "moves", "name", "thrown_as"}
 
 
 def signature(config):

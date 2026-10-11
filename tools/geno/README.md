@@ -86,6 +86,37 @@ Defaults are slot/joint/offset/element/shield/FKB/BKB 0, damage 8, size 4, angle
 KBG 100, ground/air 1. Size and offsets use the existing encoder's 1/256 units; damage
 uses its established integer encoding. Choose skeleton joints in the LAB.
 
+Throw and hurtbox statements use these forms:
+
+```text
+throw slot=0 damage=8 angle=361 kbg=100 fkb=0 bkb=30 element=0 sfx_severity=0 sfx_kind=0
+throw_release
+body_state state=invincible
+hurtboxes_state state=intangible
+hurtbox_state bone=43 state=normal
+```
+
+`throw` defines a throw hitbox (opcode 34); `throw_release` requests release using
+opcode 20's zero payload. The engine stores two throw records, selected by slot 0 or 1.
+Every omitted throw field defaults to zero, including angle and knockback growth.
+These are encoded integers: slot is 3 bits, damage 23 bits, angle/KBG/FKB/BKB 9 bits,
+element and sound kind 4 bits, and sound severity 3 bits. The codec preserves the full
+encoded slot range 0–7 for compatibility; the engine has two throw slots, so author
+slot 0 or 1. `slot`, `angle`, `kbg`, `fkb`, and `bkb` are aliases for `idx`, `unk0`,
+`hit_x24`, `hit_x28`, and `hit_x2C`. All previous qualified/unqualified named fields,
+positional payloads, `raw=` forms and `throw_hitbox` remain accepted. Repeating a field
+through any spelling is an error. `throw_flag hit_idx=0` and `throw_flag hit_idx=1`
+remain available; only zero payload disassembles as `throw_release`.
+
+Hurt states are `normal` (0), `invincible` (1), and `intangible` (2). `body_state`
+changes the fighter's whole-body hit status, `hurtboxes_state` changes all hurt
+capsules, and `hurtbox_state` changes the first capsule matching the bone index.
+`bone` aliases `bone_idx` (0–255). Existing numeric states and qualified names such
+as `w0.state` and `w0.bone_idx` remain accepted at their original encoded widths:
+26 bits for body/all-capsule state, 18 bits for a single-capsule state. Unknown
+numeric states and reserved bits disassemble with `raw=` to preserve the words.
+Skeleton membership and release timing still require engine playtesting.
+
 All vanilla opcodes 0–58 are enumerated in [reference.md](reference.md). Named fields come
 from decompiled command bitfields: `sfx behavior=0 sfx_id=123 volume=127 panning=64`,
 `gfx boneId=2 gfxID=123 offsetY=256`, `cmd_var idx=1 value=1`. Use full `w0.field`
