@@ -38,13 +38,41 @@ each way during a match.
 import argparse
 import asyncio
 import logging
+import os
+from pathlib import Path
+import re
 import secrets
 import sys
 import time
 
 MAGIC_CTL = b"GDMR"
 MAGIC_DATA = b"GDMD"
-NETPLAY_PROTOCOL = 6  # gw_net.h: 3 was 40 MiB MEM1 / expanded heap; 4 adds the match rules word; 5 adds the Envoy mode word (online Envoy); 6 is the six-slot build; not the GDMR text format
+# Only for a standalone deployment without the game checkout. The agreement test
+# checks this against gw_net.h; the release helpers share this same fallback.
+FALLBACK_NETPLAY_PROTOCOL = 6
+
+
+def read_netplay_protocol(melee_dir=None):
+    """Read the game's protocol; a missing default checkout uses the guarded fallback."""
+    selected = melee_dir or os.environ.get('GW_MELEE')
+    melee = Path(selected) if selected else Path(__file__).resolve().parent / '../../../melee'
+    header = melee / 'pc/platform/gw_net.h'
+    try:
+        text = header.read_text(encoding='utf-8')
+    except FileNotFoundError:
+        if selected:
+            raise
+        return FALLBACK_NETPLAY_PROTOCOL
+    text = re.sub(r'/\*.*?\*/|//[^\r\n]*', '', text, flags=re.DOTALL)
+    definitions = re.findall(
+        r'^[ \t]*#[ \t]*define[ \t]+GW_NET_PROTOCOL_VERSION\b([^\r\n]*)', text, re.MULTILINE)
+    value = re.fullmatch(r'[ \t]+(\d+)[uU]?[ \t]*', definitions[0]) if len(definitions) == 1 else None
+    if not value:
+        raise ValueError('cannot read one numeric GW_NET_PROTOCOL_VERSION from ' + str(header))
+    return int(value[1])
+
+
+NETPLAY_PROTOCOL = read_netplay_protocol()
 ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no I, O, 0, 1: easy to read out loud
 CODE_LEN = 4
 ROOM_IDLE = 120.0      # seconds without a packet from the host before a room is dropped

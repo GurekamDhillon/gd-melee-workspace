@@ -1,7 +1,10 @@
 """Exercise the Linux release guard (check_release_linux.py) on a complete and on damaged packages."""
 import hashlib
 import json
+import os
 from pathlib import Path
+import re
+import runpy
 import shutil
 import subprocess
 import sys
@@ -14,8 +17,11 @@ GUARD = ROOT/'tools/release/check_release_linux.py'
 RULES = json.loads((ROOT/'tools/release/mod_rules.json').read_text(encoding='utf-8'))['mods']
 
 
-def run(path):
-    r = subprocess.run([sys.executable, str(GUARD), str(path), '--repo-root', str(ROOT)], text=True, capture_output=True)
+def run(path, melee=None, env=None):
+    args = [sys.executable, str(GUARD), str(path), '--repo-root', str(ROOT)]
+    if melee:
+        args += ['--melee', str(melee)]
+    r = subprocess.run(args, text=True, capture_output=True, env=env)
     return r.returncode, r.stdout+r.stderr
 
 
@@ -25,9 +31,7 @@ class LinuxGuardTests(unittest.TestCase):
         cls.work = Path(tempfile.mkdtemp(prefix='linux-guard-'))
         cls.stage = cls.work/'GDMelee-fixture-linux-x86_64'
         cls.stage.mkdir()
-        proto = (ROOT/'tools/release/netplay_protocol.ps1').read_text()
-        import re
-        number = re.search(r'return (\d+)', proto)[1]
+        number = runpy.run_path(str(ROOT/'tools/netplay/server/gdmelee_server.py'))['NETPLAY_PROTOCOL']
         files = {'README.txt': 'r', 'IMPLEMENTATION_STATUS.md': 's', 'bin/melee': b'\x7fELF\x01synthetic',
                  'bin/melee-pc.msvc.map': 'map', 'launcher/bin/gd-melee-launcher': b'\x7fELF\x02synthetic',
                  'licenses/GPL-2.0.txt': 'gpl', 'licenses/THIRD-PARTY-NOTICES.txt': 'n',
@@ -90,6 +94,30 @@ class LinuxGuardTests(unittest.TestCase):
             t.add(self.stage, arcname=self.stage.name)
         code, log = run(archive)
         self.assertEqual(code, 0, log)
+
+    def test_selected_checkout_protocol_applies_to_folder_and_tarball(self):
+        melee = self.work/'selected-melee'
+        header = melee/'pc/platform/gw_net.h'
+        header.parent.mkdir(parents=True, exist_ok=True)
+        versions = [self.stage/name for name in ('version.txt', 'bin/version.txt')]
+        originals = [file.read_bytes() for file in versions]
+        protocol = int(re.search(rb'netplay_protocol (\d+)', originals[0])[1]) + 1
+        header.write_text(f'#define GW_NET_PROTOCOL_VERSION {protocol}u\n')
+        env = dict(os.environ, GW_MELEE=str(self.work/'missing-env-melee'))
+        try:
+            for file in versions:
+                file.write_text('fixture\nmelee      '+40*'a'+f'  src\nnetplay_protocol {protocol}\n')
+            self.manifests()
+            code, log = run(self.stage, melee, env)
+            self.assertEqual(code, 0, log)
+            archive = self.work/'selected-release.tar.xz'
+            with tarfile.open(archive, 'w:xz') as tar:
+                tar.add(self.stage, arcname=self.stage.name)
+            code, log = run(archive, melee, env)
+            self.assertEqual(code, 0, log)
+        finally:
+            for file, original in zip(versions, originals):
+                file.write_bytes(original)
 
     def test_netplay_server_txt_beside_the_game_and_the_launcher_passes(self):
         # package_linux.py --server writes it in both places, like build_release.ps1 -Server

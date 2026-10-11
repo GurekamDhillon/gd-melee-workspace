@@ -1,16 +1,17 @@
 param([string]$MeleeDir = '')
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'netplay_protocol.ps1')
-Assert-NetplayMetadata "0.1.6`r`nnetplay_protocol 5`r`n"
-foreach ($bad in @('', 'netplay_protocol 4', 'netplay_protocol 6', "netplay_protocol 5`nnetplay_protocol 5")) {
+$protocol = Get-NetplayProtocol -MeleeDir $MeleeDir
+Assert-NetplayMetadata "fixture`r`nnetplay_protocol $protocol`r`n" -MeleeDir $MeleeDir
+foreach ($bad in @('', "netplay_protocol $($protocol - 1)", "netplay_protocol $($protocol + 1)", "netplay_protocol $protocol`nnetplay_protocol $protocol")) {
   $rejected = $false
-  try { Assert-NetplayMetadata $bad } catch { $rejected = $true }
+  try { Assert-NetplayMetadata $bad -MeleeDir $MeleeDir } catch { $rejected = $true }
   if (-not $rejected) { throw "accepted incompatible metadata: $bad" }
 }
 $server = Get-Content (Join-Path $PSScriptRoot '../netplay/server/gdmelee_server.py') -Raw
-$m = [regex]::Match($server, '(?m)^NETPLAY_PROTOCOL = (\d+)')
-if (-not $m.Success -or [int]$m.Groups[1].Value -ne (Get-NetplayProtocol)) {
-  throw 'server and release protocol disagree'
+$m = [regex]::Match($server, '(?m)^FALLBACK_NETPLAY_PROTOCOL = (\d+)')
+if (-not $m.Success -or [int]$m.Groups[1].Value -ne $protocol) {
+  throw 'standalone server fallback and game protocol disagree; update the fallback after changing gw_net.h'
 }
 # publish.ps1's release body must take the number from netplay_protocol.ps1, never spell one out
 $pub = Get-Content (Join-Path $PSScriptRoot 'publish.ps1') -Raw

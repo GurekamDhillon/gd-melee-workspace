@@ -2,6 +2,8 @@
 import hashlib
 import json
 from pathlib import Path
+import re
+import runpy
 import shutil
 import struct
 import subprocess
@@ -60,8 +62,9 @@ class ReleaseGuardTests(unittest.TestCase):
                 file = cls.stage/'mods'/mid/need
                 file.parent.mkdir(parents=True, exist_ok=True)
                 file.write_text('{}' if need.endswith('.json') else 'x')
-        (cls.stage/'version.txt').write_text('fixture\nmelee      '+40*'a'+'  source\nnetplay_protocol 5\n')
-        cls.stamp = dict(format=1, melee_commit=40*'a', netplay_protocol=5,
+        protocol = runpy.run_path(str(ROOT/'tools/netplay/server/gdmelee_server.py'))['NETPLAY_PROTOCOL']
+        (cls.stage/'version.txt').write_text('fixture\nmelee      '+40*'a'+f'  source\nnetplay_protocol {protocol}\n')
+        cls.stamp = dict(format=1, melee_commit=40*'a', netplay_protocol=protocol,
                          source_sha256=64*'b', source_dirty=False,
                          files={name:hashlib.sha256((cls.stage/name).read_bytes()).hexdigest()
                                 for name in ('melee-pc.exe', 'melee-pc.map')})
@@ -76,11 +79,42 @@ class ReleaseGuardTests(unittest.TestCase):
             hashlib.sha256(p.read_bytes()).hexdigest()+'  '+p.relative_to(self.stage).as_posix()+'\n'
             for p in sorted(self.stage.rglob('*')) if p.is_file() and p.name != 'MANIFEST.sha256')+extra)
 
-    def check(self, path=None):
-        result = subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
-                                 str(ROOT/'tools/release/check_release.ps1'), str(path or self.stage),
-                                 '-RepoRoot', str(ROOT)], text=True, capture_output=True)
+    def check(self, path=None, melee=None):
+        args = ['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
+                str(ROOT/'tools/release/check_release.ps1'), str(path or self.stage),
+                '-RepoRoot', str(ROOT)]
+        if melee:
+            args += ['-MeleeDir', str(melee)]
+        result = subprocess.run(args, text=True, capture_output=True)
         return result.returncode, result.stdout+result.stderr
+
+    def test_selected_checkout_protocol_applies_to_folder_and_zip(self):
+        melee = self.work/'selected-melee'
+        header = melee/'pc/platform/gw_net.h'
+        header.parent.mkdir(parents=True, exist_ok=True)
+        version = self.stage/'version.txt'
+        provenance = self.stage/'build-provenance.json'
+        old_version, old_provenance = version.read_bytes(), provenance.read_bytes()
+        protocol = int(re.search(rb'netplay_protocol (\d+)', old_version)[1]) + 1
+        header.write_text(f'#define GW_NET_PROTOCOL_VERSION {protocol}u\n')
+        try:
+            version.write_bytes(re.sub(rb'netplay_protocol \d+', f'netplay_protocol {protocol}'.encode(), old_version))
+            stamp = json.loads(old_provenance)
+            stamp['netplay_protocol'] = protocol
+            provenance.write_text(json.dumps(stamp))
+            self.manifest()
+            code, log = self.check(melee=melee)
+            self.assertEqual(code, 0, log)
+            archive = self.work/'selected-release.zip'
+            with zipfile.ZipFile(archive, 'w') as out:
+                for file in self.stage.rglob('*'):
+                    if file.is_file():
+                        out.write(file, self.stage.name+'/'+file.relative_to(self.stage).as_posix())
+            code, log = self.check(archive, melee=melee)
+            self.assertEqual(code, 0, log)
+        finally:
+            version.write_bytes(old_version)
+            provenance.write_bytes(old_provenance)
 
     def test_complete_folder_and_zip_pass(self):
         self.manifest()

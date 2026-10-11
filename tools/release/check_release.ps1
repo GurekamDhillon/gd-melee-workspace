@@ -1,6 +1,6 @@
 # check_release.ps1 - prove a release folder or zip holds only what we may redistribute.
 #
-#   powershell -File tools\release\check_release.ps1 <folder or .zip> [-RepoRoot <workspace root>]
+#   powershell -File tools\release\check_release.ps1 <folder or .zip> [-RepoRoot <workspace root>] [-MeleeDir <game checkout>]
 #
 # Exit code 0 = clean. Anything else = the release must NOT be published; every problem is listed.
 # build_release.ps1 runs this on the staged folder AND on the finished zip; publish.ps1 runs it once
@@ -31,7 +31,8 @@
 #      files present, and MANIFEST.sha256 matching every file.
 param(
   [Parameter(Mandatory = $true, Position = 0)][string]$Path,
-  [string]$RepoRoot = ""
+  [string]$RepoRoot = "",
+  [string]$MeleeDir = ""
 )
 $ErrorActionPreference = "Stop"
 if (-not $RepoRoot) { $RepoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent }
@@ -296,7 +297,7 @@ if (-not $hashes.ContainsKey('launcher/bin/platforms/qwindows.dll') -and -not $h
 . (Join-Path $PSScriptRoot 'netplay_protocol.ps1')
 $versionEntry = $entries | Where-Object { $_.Rel -eq 'version.txt' } | Select-Object -First 1
 if ($versionEntry) {
-  try { Assert-NetplayMetadata ([System.Text.Encoding]::ASCII.GetString($versionEntry.Bytes)) }
+  try { Assert-NetplayMetadata ([System.Text.Encoding]::ASCII.GetString($versionEntry.Bytes)) -MeleeDir $MeleeDir }
   catch { Fail $_.Exception.Message }
 }
 
@@ -308,7 +309,7 @@ if ($provenanceEntry) {
     $stamp = [System.Text.Encoding]::UTF8.GetString($provenanceEntry.Bytes) | ConvertFrom-Json
     if ($stamp.format -isnot [int] -or $stamp.format -ne 1 -or $stamp.melee_commit -notmatch '^[0-9a-f]{40}$' -or
         $stamp.source_sha256 -notmatch '^[0-9a-f]{64}$' -or $stamp.source_dirty -isnot [bool] -or
-        $stamp.netplay_protocol -isnot [int] -or $stamp.netplay_protocol -ne (Get-NetplayProtocol)) {
+        $stamp.netplay_protocol -isnot [int] -or $stamp.netplay_protocol -ne (Get-NetplayProtocol -MeleeDir $MeleeDir)) {
       throw 'malformed build provenance or incompatible protocol'
     }
     foreach ($artifact in 'melee-pc.exe', 'melee-pc.map') {

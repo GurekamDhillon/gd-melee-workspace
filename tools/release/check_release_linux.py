@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """check_release_linux.py - prove a Linux release folder or tarball holds only what we may redistribute.
 
-    python3 tools/release/check_release_linux.py <folder | .tar.xz | .tar.gz | .zip> [--repo-root <workspace>]
+    python3 tools/release/check_release_linux.py <folder | .tar.xz | .tar.gz | .zip> [--repo-root <workspace>] [--melee <game checkout>]
 
 The Linux counterpart of tools/release/check_release.ps1, with the same content rules. Exit 0 = clean;
 anything else = do not publish, every problem is listed. tools/port/package_linux.py runs it on the
@@ -24,12 +24,13 @@ folder before it writes the tarball.
      are how they are told apart.
   6. No file over 64 MB, no personal path (/home/<name>/, C:\\Users\\<name>\\) in our own binaries, maps and
      text, the licence files present, version.txt declaring the netplay protocol the code uses
-     (tools/release/netplay_protocol.ps1), runtime.sha256 and manifest.json matching every file.
+     (pc/platform/gw_net.h; the server fallback without a checkout), runtime.sha256 and manifest.json matching every file.
 """
 import argparse
 import hashlib
 import io
 import json
+import os
 import re
 import subprocess
 import sys
@@ -39,6 +40,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
+sys.path.insert(0, str(ROOT / 'tools/netplay/server'))
 
 DISC_EXT = {'.iso', '.gcm', '.rvz', '.wia', '.ciso', '.wbfs', '.nkit', '.gcz', '.dol', '.dat', '.usd', '.hps',
             '.thp', '.mth', '.ssm', '.sem', '.gci', '.sav', '.raw', '.tpl', '.bnr', '.rel', '.elf', '.png', '.bmp',
@@ -63,12 +65,21 @@ def be32(b, o):
     return int.from_bytes(b[o:o + 4], 'big') if len(b) >= o + 4 else -1
 
 
-def netplay_protocol():
-    text = (HERE / 'netplay_protocol.ps1').read_text(encoding='utf-8')
-    m = re.search(r'function Get-NetplayProtocol \{ return (\d+) \}', text)
-    if not m:
-        raise SystemExit('cannot read the protocol number from tools/release/netplay_protocol.ps1')
-    return int(m[1])
+def netplay_protocol(melee_dir=None):
+    # Importing the standalone server also initializes its runtime protocol.
+    # Apply an explicit checkout for that initialization, then restore the caller.
+    previous = os.environ.get('GW_MELEE')
+    if melee_dir:
+        os.environ['GW_MELEE'] = str(melee_dir)
+    try:
+        from gdmelee_server import read_netplay_protocol
+        return read_netplay_protocol(melee_dir)
+    finally:
+        if melee_dir:
+            if previous is None:
+                os.environ.pop('GW_MELEE', None)
+            else:
+                os.environ['GW_MELEE'] = previous
 
 
 def load_entries(path):
@@ -119,7 +130,7 @@ def git_blob_sha(b):
     return hashlib.sha1(b'blob %d\0' % len(b) + b).hexdigest()
 
 
-def check(path, repo=ROOT):
+def check(path, repo=ROOT, melee=None):
     rules = json.loads((HERE / 'mod_rules.json').read_text(encoding='utf-8'))
     deny_ids = re.compile(rules['deny_mod_ids'])
     problems = []
@@ -305,8 +316,9 @@ def check(path, repo=ROOT):
     if 'version.txt' in by_rel:
         text = by_rel['version.txt'].decode('utf-8', 'replace')
         found = re.findall(r'(?m)^netplay_protocol\s+(\d+)\s*$', text)
-        if found != [str(netplay_protocol())]:
-            fail(f'version.txt must declare netplay_protocol {netplay_protocol()} exactly once')
+        protocol = netplay_protocol(melee)
+        if found != [str(protocol)]:
+            fail(f'version.txt must declare netplay_protocol {protocol} exactly once')
         if 'bin/version.txt' in by_rel and by_rel['bin/version.txt'] != by_rel['version.txt']:
             fail('bin/version.txt differs from version.txt')
     # manifests: every file listed once with the right hash, nothing listed that is absent
@@ -350,8 +362,9 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('path', type=Path)
     ap.add_argument('--repo-root', type=Path, default=ROOT)
+    ap.add_argument('--melee', type=Path, help='Game checkout; overrides GW_MELEE and the default checkout')
     a = ap.parse_args(argv)
-    problems, count, mb = check(a.path, a.repo_root)
+    problems, count, mb = check(a.path, a.repo_root, a.melee)
     if problems:
         print(f'RELEASE CHECK FAILED: {a.path}')
         for p in problems:

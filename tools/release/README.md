@@ -339,6 +339,8 @@ the original Qt SDK and Microsoft CRT signatures remain unchanged.
 Local release regressions (no game build or public service needed):
 
 ```powershell
+$env:GW_MELEE = 'E:/path/to/melee'
+python -m pytest tools/release/test_netplay_protocol.py -q
 python -m unittest discover -s tools/release -p "test_*.py" -v
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/release/test_launcher_paths.ps1
 python -m unittest discover -s tools/netplay/server -v
@@ -407,22 +409,38 @@ stated plainly in the notices rather than papered over.
 
 ## Netplay protocol compatibility
 
-Packaging now requires GW_NET_PROTOCOL_VERSION 3 in the selected game checkout
-and writes `netplay_protocol 3` to version.txt. The release guard requires this
-entry exactly once in both folder and zip checks. The friends wrapper inherits
+`melee/pc/platform/gw_net.h` (`GW_NET_PROTOCOL_VERSION`) is the source of truth.
+The server and `Get-NetplayProtocol` read it from `GW_MELEE`, or this workspace's
+`melee/` by default. PowerShell's explicit `-MeleeDir` takes precedence; packaging
+passes that selection through the metadata and folder/zip guards. `version.txt`
+must declare the selected protocol exactly once. The friends wrapper inherits
 these checks. Release VERSION stays independent of the network protocol.
+The Linux packager similarly forwards `--melee` to its folder/tarball guard.
+
+For a standalone server host without a game checkout, `FALLBACK_NETPLAY_PROTOCOL`
+in `gdmelee_server.py` is the only fallback constant. The PowerShell helper and
+Linux guard share it when the default checkout is absent. A missing explicitly
+selected header, or an invalid/duplicate definition in a present header, fails.
+Update that fallback in the same change as a game protocol bump.
+
+`test_netplay_protocol.py` runs under pytest and the release unittest discovery
+command above. It compares the header, server runtime, standalone fallback and
+PowerShell result, and exercises checkout selection, metadata and invalid headers.
+The agreement check skips without a checkout; set `GW_MELEE` to enforce it locally.
+The Qt launcher CI checks out the game's `pc-port` header and sets `GW_MELEE`, so
+the agreement check runs there and a missing header fails.
 
 These are source/metadata checks, not proof of the executable's contents. Keep
-the existing provenance checks and verify an actual v3 handshake on a Windows
+the existing provenance checks and verify an actual handshake on a Windows
 lane before release. Never add metadata to a stale EXE to make a check pass.
 
 Run without building:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/release/test_netplay_protocol.ps1 -MeleeDir ../../melee
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/release/test_netplay_protocol.ps1 -MeleeDir $env:GW_MELEE
 python tools/release/launcher/check_strings.py
 ```
 
-The generated release-notes template in publish.ps1 explains the v3 requirement.
+The generated release-notes template in publish.ps1 uses the selected protocol.
 TCP crash upload compatibility is independent and remains unchanged, including
 for older launchers; netplay errors must not prevent diagnostic uploads.
