@@ -35,6 +35,7 @@ gd.run(function()
     gd.cpu_mode(2, 'stand')
     local function clean() for _, pt in ipairs({1, 2}) do pcall(gd.debug_draw, pt, 0) end end
     local function cam()
+      if C.cam == '0' then return end
       local p = gd.player(1)
       local x, y = p.x or 0, p.y or 0
       gd.camera_set{eye = {x = x, y = y + 14, z = 95}, interest = {x = x, y = y + 10, z = 0}, fov = 40}
