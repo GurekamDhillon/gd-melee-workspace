@@ -102,7 +102,7 @@ def main():
         print("missing the Geno Falcon plan: %s (set GW_FALCON_PACKAGE)" % plan)
         return 2
     src = out / "src"
-    for name in ("PlCaNr", "PlCaAJ"):
+    for name in ("PlCa", "PlCaNr", "PlCaAJ"):
         if args.force or not (src / (name + ".dat")).is_file():
             src.mkdir(parents=True, exist_ok=True)
             run([sys.executable, root / "tools/gc_extract.py", iso, src, "--only", name])
@@ -115,8 +115,11 @@ def main():
         run([driver, src / "PlCaNr.dat", smd, "--no-textures"])
     if args.force or not any(anim.glob("*.smd")):
         run([driver, "--anim", src / "PlCaNr.dat", src / "PlCaAJ.dat", plan, anim] + args.clips.split(","))
+    parts = out / "parts.json"
+    if args.force or not parts.is_file():
+        run([driver, "--parts", src / "PlCa.dat", src / "PlCaNr.dat", parts])
     env = dict(paths, BLENDER_USER_SCRIPTS=str(scripts))
-    run([blender, "--background", "--python-exit-code", "1", "--python", HERE / "build_blend.py", "--", glb, smd, anim, blend], env=env)
+    run([blender, "--background", "--python-exit-code", "1", "--python", HERE / "build_blend.py", "--", glb, smd, anim, blend, parts], env=env)
     print("done:", blend)
     return 0
 

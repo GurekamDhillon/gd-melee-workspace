@@ -18,8 +18,9 @@ from mathutils import Matrix, Vector
 def fighter_meshes(objects):
     """The skinned, textured body meshes. Helper meshes (a bone-shape icosphere at the
     origin, say) must not enter bounds: one such 2-unit sphere under Goku's feet made the
-    CSProject path float him a few units off the floor."""
-    meshes = [o for o in objects if o.type == 'MESH' and not o.hide_render]
+    CSProject path float him a few units off the floor. Meshes the art marks `geno_part_hidden` (the model-part
+    tables' hidden LOD set, tools/blender/geno_workbench/falcon/part_visibility.py) are never drawn or measured."""
+    meshes = [o for o in objects if o.type == 'MESH' and not o.hide_render and not o.get('geno_part_hidden')]
     skinned = [o for o in meshes if any(m.type == 'ARMATURE' for m in o.modifiers) or o.parent_type == 'BONE'
                or o.vertex_groups]
     textured = [o for o in skinned if any(m is not None for m in o.data.materials)]

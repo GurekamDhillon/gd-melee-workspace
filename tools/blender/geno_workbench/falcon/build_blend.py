@@ -1,11 +1,12 @@
 """Blender script: HSDRaw exports -> falcon.blend.
 
-    blender -b --python build_blend.py -- GLB SKELETON.smd ANIM_DIR OUT.blend
+    blender -b --python build_blend.py -- GLB SKELETON.smd ANIM_DIR OUT.blend [PARTS.json]
 
 * meshes + materials + textures come from the glTF (every mesh is skinned to vertex groups JOBJ_<n>);
 * the rig is the .smd skeleton imported with Blender Source Tools (external add-on, loaded from the
   BLENDER_USER_SCRIPTS dir make_falcon_art.py prepares): its bone axes are the engine's joint frames, which is
   what the Workbench calibration wants. Bones are JOBJ_<n>, n = the engine joint index, parent-first;
+* PARTS.json (HsdExport --parts) bakes the default model-part visibility: the low-poly LOD set is hidden;
 * every ANIM_DIR/<Clip>.smd becomes an Action named <Clip>, frame 0 = engine frame 1 (the Workbench rule).
 Output stays under _build/ (git-ignored); nothing here ships.
 """
@@ -16,7 +17,9 @@ import time
 
 import bpy
 
-glb, smd, anim_dir, out = sys.argv[sys.argv.index("--") + 1:][:4]
+_args = sys.argv[sys.argv.index("--") + 1:]
+glb, smd, anim_dir, out = _args[:4]
+parts_json = _args[4] if len(_args) > 4 else None
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 import addon_utils  # noqa: E402
@@ -89,6 +92,14 @@ for b in rig.pose.bones:
 for mat in [m for m in bpy.data.materials if m.users == 0]:
     bpy.data.materials.remove(mat)   # the .smd skeleton import brought its own, unused ones
 print("FALCON_CLIPS imported=%d actions=%d in %.1fs" % (len(files), len(bpy.data.actions), time.time() - t0))
+if parts_json:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import part_visibility
+    _hidden, _missing = part_visibility.apply_to_objects(meshes, part_visibility.hidden_names(part_visibility.load(parts_json)))
+    assert not _missing, "parts.json names meshes the glTF lacks: %s" % _missing
+    print("FALCON_PARTS hidden=%d" % len(_hidden))
+    print("FALCON_ALPHA", part_visibility.apply_alpha(meshes, part_visibility.alpha_by_name(part_visibility.load(parts_json))))
+    print("FALCON_CULL", len(part_visibility.apply_cull(meshes, part_visibility.cull_names(part_visibility.load(parts_json)))))
 bpy.ops.file.pack_all()
 bpy.ops.wm.save_as_mainfile(filepath=out)
 print("FALCON_BLEND bones=%d meshes=%d materials=%d images=%d skeleton_diff=%.2g -> %s" % (
