@@ -22,7 +22,7 @@ struct RowInfo {
     // States that need a platform, partner or item cannot be posed in the bare scene; the engine refuses them (they once
     // died on a jobj assert). Keep in step with gs_wb_unpreviewable (engine) and UNPREVIEWABLE_MOTIONS (rigmap.py).
     bool previewable() const {
-        static const int kUnpreviewable[] = {12, 13, 128, 129, 131, 223, 224, 225, 226, 227, 228, 239, 241, 266, 267, 268, 269, 270, 277, 280, 285, 289, 290, 291, 292, 306, 308, 309, 310, 313, 314, 315, 316, 317, 318, 319, 320, 321, 323, 324, 328, 332, 333, 334, 337, 340};
+        static const int kUnpreviewable[] = {12, 13, 128, 129, 131, 223, 224, 225, 226, 227, 228, 239, 240, 241, 266, 267, 268, 269, 270, 277, 280, 285, 289, 290, 291, 292, 306, 308, 309, 310, 313, 314, 315, 316, 317, 318, 319, 320, 321, 323, 324, 328, 332, 333, 334, 337, 340};
         if (motions.isEmpty()) return true;
         for (int m : motions) {
             bool bad = false;
