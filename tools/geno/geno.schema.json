@@ -57,9 +57,17 @@
                   "captain",
                   "fox",
                   "falco",
-                  "marth"
+                  "marth",
+                  "puff",
+                  "sheik",
+                  "zelda"
                 ],
-                "description": "base none, geno 10: the retail fighter whose native code, state table and specials the define runs on (default mario); captain / fox = a complete retail fighter carried as a package (docs/geno.md 22.10, 22.13)"
+                "description": "base none, geno 10: the retail fighter whose native code, state table and specials the define runs on (default mario); captain / fox / falco / marth / puff / sheik / zelda = a complete retail fighter carried as a package (docs/geno.md 22.10, 22.13-22.15)"
+              },
+              "transform_partner": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9_.-]{0,38}$",
+                "description": "template sheik or zelda (required there, refused elsewhere): the define key of the other member of the pair. Down B changes the fighter into that define (never into retail Sheik / Zelda); the two defines name each other and are admitted together (docs/geno.md 22.15)"
               },
               "common": {
                 "const": "melee.common.v1"
@@ -5603,6 +5611,7 @@
     "to",
     "toon",
     "tornado",
+    "transform_partner",
     "turn",
     "velocity",
     "voice",
@@ -5740,8 +5749,8 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "7e9dec61ae98bee9225615c15cad4649b7a8b40de77dcc3618467c5d6e2dd072",
-    "pc/platform/geno_define_registry.inc": "bdef13156723fea09086c97b421e4572246af03d45a46df52cdf9886a1bdc975",
+    "pc/platform/geno_registry.c": "54398ba380e74938083bc319d5b5a0038c509abcd9c5ff006d1b8b5f637e2585",
+    "pc/platform/geno_define_registry.inc": "43b856d419351bb8df1239c1acf48f955553118765558dc325423a765ebf3f46",
     "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
     "pc/platform/geno_combo_registry.inc": "ee2771fc193b43719de384e5a39e689c69e11b43bbbb36318cf91c8723694837",
     "pc/geno/geno.h": "abb91a63a4cc40c9045bdea46c10876347a1f29b348dfe52ec09ac02c37982e8",
