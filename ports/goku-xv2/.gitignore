@@ -19,6 +19,9 @@
 !ground_modes.json
 !tools/cross-port.json
 !splices.json
+# hand-animation deltas (tools/geno/artist/blender/hand_layer.py): the artist's own keyframes only, never a copied source clip
+!anim/hand.json
+!anim/examples/*.json
 
 # 2. Never, whatever the kind: caches, builds, binaries, source/disc dumps.
 __pycache__/

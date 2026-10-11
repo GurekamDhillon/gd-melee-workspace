@@ -86,6 +86,8 @@ def register():
         from . import hitviz
 
         hitviz.register()
+        from . import anim_ui
+        anim_ui.register()
         _registered = True
     except Exception:
         try:
@@ -108,7 +110,7 @@ def unregister():
     _registered = False
     errors = []
 
-    for name in ("hitviz", "geno_workspace", "panels_play", "operators_play", "panels_ui", "panels_attributes", "panels_fighter", "operators_fighter"):
+    for name in ("anim_ui", "hitviz", "geno_workspace", "panels_play", "operators_play", "panels_ui", "panels_attributes", "panels_fighter", "operators_fighter"):
         try:
             module = __import__(f"{__name__}.{name}", fromlist=["unregister"])
             module.unregister()

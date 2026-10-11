@@ -18,6 +18,7 @@ import sys
 
 PORT = Path(__file__).resolve().parents[1]
 ROOT = PORT.parents[1]
+HAND_FILE = Path(os.environ.get('GOKU_HAND', PORT/'anim/hand.json'))   # hand-authored animation deltas (tools/geno/artist/blender/hand_layer.py); a Stage A input
 AUTHOR = ROOT/'_build/goku-xv2'/os.environ.get('GOKU_AUTHOR','author-source')   # GOKU_AUTHOR=splice-preview: the reduced splice-preview build (xv2_to_artist.py --splice-only)
 # a reduced splice-preview build keeps its reports inside its own directory; the shipped build's stay in _build/goku-xv2 (FIDELITY.md reads those)
 REPORTS = ROOT/'_build/goku-xv2' if os.environ.get('GOKU_AUTHOR','author-source')=='author-source' else AUTHOR/'reports'
@@ -501,7 +502,7 @@ def stage_a_inputs(fighter_path):
     files = [fighter_path]
     for pattern in ('*.glb', '*.blend', '*.png', 'clip-library.json', 'art-report.json'):
         files.extend(sorted(art.glob(pattern)))
-    files += [PORT/'ground_modes.json', PORT/'splices.json', PORT/'tools/xv2_to_artist.py', PORT/'tools/splice.py']
+    files += [PORT/'ground_modes.json', PORT/'splices.json', PORT/'tools/xv2_to_artist.py', PORT/'tools/splice.py', HAND_FILE]   # HAND_FILE: hand-authored deltas (anim/hand.json)
     files += sorted((ROOT/'tools/geno/artist').rglob('*.py'))
     return sorted({f.resolve() for f in files if f.is_file()})
 
