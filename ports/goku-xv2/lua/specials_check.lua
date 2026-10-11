@@ -113,7 +113,7 @@ gd.run(function()
 
     -- 7b. the blast input (D-pad Down; layout B maps Y to it) fires the KiBlast state for 5 ki, and nothing without the meter
     reset(50)
-    gd.teleport(2, -70, 0); gd.wait(2)   -- the dummy behind him: a landed blast would earn +4 ki
+    gd.teleport(2, -((gd.player(1).facing or 1) >= 0 and 1 or -1) * 70, 0); gd.wait(2)   -- the dummy behind him: a landed blast would earn +4 ki
     local kb0 = ki()
     gd.input(1, {buttons = 'DOWN'}, 2)
     local s9 = track(40)
