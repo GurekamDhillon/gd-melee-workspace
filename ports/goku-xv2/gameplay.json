@@ -7,9 +7,11 @@
   "lua": {
     "script": "lua/goku.lua",
     "state": {
+      "age": "int",
       "charge": "int",
       "counter_damage": "float",
-      "stored": "int"
+      "stored": "int",
+      "stored_pct": "float"
     }
   },
   "jumps": {
@@ -32,14 +34,7 @@
         "kbg": 50,
         "bkb": 8
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          3,
-          7
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "jab2",
@@ -57,14 +52,7 @@
         "kbg": 50,
         "bkb": 8
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          9,
-          13
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "jab3",
@@ -82,14 +70,7 @@
         "kbg": 100,
         "bkb": 30
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          8,
-          12
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "rapid_jab",
@@ -107,30 +88,7 @@
         "kbg": 25,
         "bkb": 10
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          12,
-          15
-        ],
-        [
-          18,
-          21
-        ],
-        [
-          24,
-          27
-        ],
-        [
-          30,
-          33
-        ],
-        [
-          36,
-          39
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "dash_attack",
@@ -148,14 +106,7 @@
         "kbg": 80,
         "bkb": 40
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          11,
-          15
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "ftilt",
@@ -177,14 +128,7 @@
         "kbg": 100,
         "bkb": 10
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          10,
-          14
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "utilt",
@@ -202,14 +146,7 @@
         "kbg": 120,
         "bkb": 30
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          12,
-          15
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "dtilt",
@@ -227,14 +164,7 @@
         "kbg": 110,
         "bkb": 25
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          0,
-          9
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "fsmash",
@@ -256,14 +186,7 @@
         "kbg": 98,
         "bkb": 30
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          17,
-          21
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "usmash",
@@ -281,14 +204,7 @@
         "kbg": 100,
         "bkb": 35
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          13,
-          17
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "dsmash",
@@ -306,14 +222,7 @@
         "kbg": 95,
         "bkb": 25
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          9,
-          13
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "nair",
@@ -331,30 +240,7 @@
         "kbg": 100,
         "bkb": 20
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          12,
-          15
-        ],
-        [
-          18,
-          21
-        ],
-        [
-          24,
-          27
-        ],
-        [
-          30,
-          33
-        ],
-        [
-          36,
-          39
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "fair",
@@ -372,14 +258,7 @@
         "kbg": 100,
         "bkb": 30
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          19,
-          23
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "bair",
@@ -397,9 +276,7 @@
         "kbg": 100,
         "bkb": 12
       },
-      "hb": "HB-NONE",
-      "strike": [],
-      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+      "hb": "HB-NONE"
     },
     {
       "name": "uair",
@@ -417,14 +294,7 @@
         "kbg": 100,
         "bkb": 25
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          15,
-          19
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "dair",
@@ -442,14 +312,7 @@
         "kbg": 90,
         "bkb": 20
       },
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          12,
-          16
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "pummel",
@@ -467,9 +330,7 @@
         "kbg": 100,
         "bkb": 0
       },
-      "hb": "HB-NONE",
-      "strike": [],
-      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+      "hb": "HB-NONE"
     },
     {
       "name": "grab",
@@ -481,14 +342,7 @@
       "script": "moves/grab.genoasm",
       "windows": [],
       "iasa": 28,
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          8,
-          16
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "dash_grab",
@@ -500,14 +354,7 @@
       "script": "moves/dash_grab.genoasm",
       "windows": [],
       "iasa": 28,
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          8,
-          16
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "fthrow",
@@ -526,9 +373,7 @@
         "bkb": 40
       },
       "hb": "HB-NONE",
-      "windows": [],
-      "strike": [],
-      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+      "windows": []
     },
     {
       "name": "bthrow",
@@ -547,9 +392,7 @@
         "bkb": 50
       },
       "hb": "HB-NONE",
-      "windows": [],
-      "strike": [],
-      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+      "windows": []
     },
     {
       "name": "uthrow",
@@ -568,14 +411,7 @@
         "bkb": 40
       },
       "hb": "HB-NONE",
-      "windows": [],
-      "strike": [
-        [
-          13,
-          17
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "windows": []
     },
     {
       "name": "dthrow",
@@ -594,14 +430,7 @@
         "bkb": 35
       },
       "hb": "HB-NONE",
-      "windows": [],
-      "strike": [
-        [
-          11,
-          15
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "windows": []
     },
     {
       "name": "rapid_start",
@@ -612,30 +441,7 @@
       "tag": "jab",
       "script": "moves/rapid_start.genoasm",
       "windows": [],
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          12,
-          15
-        ],
-        [
-          18,
-          21
-        ],
-        [
-          24,
-          27
-        ],
-        [
-          30,
-          33
-        ],
-        [
-          36,
-          39
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     },
     {
       "name": "rapid_end",
@@ -646,30 +452,7 @@
       "tag": "jab",
       "script": "moves/rapid_end.genoasm",
       "windows": [],
-      "hb": "HB-NONE",
-      "strike": [
-        [
-          12,
-          15
-        ],
-        [
-          18,
-          21
-        ],
-        [
-          24,
-          27
-        ],
-        [
-          30,
-          33
-        ],
-        [
-          36,
-          39
-        ]
-      ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "hb": "HB-NONE"
     }
   ],
   "states": [
@@ -695,7 +478,11 @@
       "phys": "auto",
       "coll": "both",
       "iasa": "interrupt",
-      "move_tag": "special"
+      "move_tag": "special",
+      "lua": {
+        "enter": "tap_enter",
+        "frame": "tap_frame"
+      }
     },
     {
       "name": "KameMid",
@@ -705,7 +492,11 @@
       "phys": "auto",
       "coll": "both",
       "iasa": "interrupt",
-      "move_tag": "special"
+      "move_tag": "special",
+      "lua": {
+        "enter": "mid_enter",
+        "frame": "mid_frame"
+      }
     },
     {
       "name": "KameFull",
@@ -715,7 +506,11 @@
       "phys": "auto",
       "coll": "both",
       "iasa": "interrupt",
-      "move_tag": "special"
+      "move_tag": "special",
+      "lua": {
+        "enter": "full_enter",
+        "frame": "full_frame"
+      }
     },
     {
       "name": "Rush",
@@ -814,6 +609,74 @@
       }
     },
     {
+      "name": "KameThin",
+      "behavior": "geno.ground",
+      "subaction": "clip:KameThin",
+      "like": "motion:343",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "interrupt",
+      "move_tag": "special",
+      "lua": {
+        "enter": "thin_enter",
+        "frame": "thin_frame"
+      }
+    },
+    {
+      "name": "KameMax",
+      "behavior": "geno.ground",
+      "subaction": "clip:KameMax",
+      "like": "motion:343",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "interrupt",
+      "move_tag": "special",
+      "lua": {
+        "enter": "max_enter",
+        "frame": "max_frame"
+      }
+    },
+    {
+      "name": "KameStore1",
+      "behavior": "geno.ground",
+      "subaction": "clip:KameStore1",
+      "like": "motion:345",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "none",
+      "move_tag": "special"
+    },
+    {
+      "name": "KameStore2",
+      "behavior": "geno.ground",
+      "subaction": "clip:KameStore2",
+      "like": "motion:345",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "none",
+      "move_tag": "special"
+    },
+    {
+      "name": "KameStore3",
+      "behavior": "geno.ground",
+      "subaction": "clip:KameStore3",
+      "like": "motion:345",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "none",
+      "move_tag": "special"
+    },
+    {
+      "name": "KameStore4",
+      "behavior": "geno.ground",
+      "subaction": "clip:KameStore4",
+      "like": "motion:345",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "none",
+      "move_tag": "special"
+    },
+    {
       "name": "KameSuper",
       "behavior": "geno.ground",
       "subaction": "clip:KameSuper",
@@ -821,7 +684,11 @@
       "phys": "auto",
       "coll": "both",
       "iasa": "interrupt",
-      "move_tag": "special"
+      "move_tag": "special",
+      "lua": {
+        "enter": "super_enter",
+        "frame": "super_frame"
+      }
     },
     {
       "name": "RushCombo",
@@ -938,23 +805,14 @@
       "parity": "move:special_s",
       "script": "moves/rush.genoasm",
       "hb": "HB-NONE",
-      "windows": [],
-      "strike": [
-        [
-          40,
-          44
-        ]
-      ],
-      "strike_note": "XV2 knockback-attack hit f40-43; NOTE the row is cropped to 40 frames, so the strike is past its end (row to be lengthened when the hitbox is authored)"
+      "windows": []
     },
     {
       "name": "Recovery",
       "parity": "move:special_hi",
       "script": "moves/recovery.genoasm",
       "hb": "HB-NONE",
-      "windows": [],
-      "strike": [],
-      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+      "windows": []
     },
     {
       "name": "Counter",
@@ -982,32 +840,35 @@
       "parity": "move:special_s",
       "script": "moves/rushcombo.genoasm",
       "hb": "HB-NONE",
-      "windows": [],
-      "strike": [],
-      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+      "windows": []
     },
     {
       "name": "ITEnd",
       "parity": "move:special_hi",
       "script": "moves/itend.genoasm",
       "hb": "HB-NONE",
-      "windows": [],
-      "strike": [],
-      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+      "windows": []
+    },
+    {
+      "name": "KameThin",
+      "parity": "move:special_n",
+      "script": "moves/kame_thin.genoasm",
+      "hb": "HB-DESIGN",
+      "why_hb": "Kamehameha beam tier"
+    },
+    {
+      "name": "KameMax",
+      "parity": "move:special_n",
+      "script": "moves/kame_max.genoasm",
+      "hb": "HB-DESIGN",
+      "why_hb": "Kamehameha beam tier"
     },
     {
       "name": "Homing",
       "parity": "move:special_s",
       "script": "moves/homing.genoasm",
       "hb": "HB-NONE",
-      "windows": [],
-      "strike": [
-        [
-          33,
-          39
-        ]
-      ],
-      "strike_note": "XV2 homing-strike hit f33-38"
+      "windows": []
     }
   ],
   "articles": [

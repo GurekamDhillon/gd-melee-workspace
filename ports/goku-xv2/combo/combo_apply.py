@@ -92,7 +92,7 @@ def main(argv=None):
         if spec.get('jab_set_kb'):
             # any knockback the Goku package gave the jab (it retunes them: kbg=40 bkb=10, later kbg=50 bkb=8, ...) becomes the fixed one
             text, nsub = re.subn(r'kbg=\d+ fkb=\d+ bkb=\d+', spec['jab_set_kb'], text)
-            if not nsub and 'hitbox ' not in text:
+            if not nsub and text.lstrip().startswith('# HB-NONE'):
                 continue   # HB-NONE (remake): the jab has no hitbox, so no knockback or hitstun to set; the string still routes on its window
             if not nsub:
                 raise SystemExit(f'{move}: no "kbg= fkb= bkb=" in the jab script to set knockback on (combo.json jab_set_kb)')
