@@ -297,6 +297,19 @@ Refused with a plain message: a retail stage file name (that is a skin), callbac
 above the retail ones (silent stage sounds), music ids above 98 (dropped), line types (the package may carry the GD field `gdLineType`; else the stage falls back to one retail stage's).
 Netplay: the stage's identity is its file's content (same as an m-ex added stage), so both players need the mod. Test package: `tools/nucleus/make_synth_stage.py` (from your own ACE disc, never committed) + `fixture_server.py --custom-zip`.
 
+## 4e. Custom fighters from Nucleus posts (a NEW fighter, vanilla disc)
+
+A MexManager fighter zip (`fighter.json` + `PlXx.dat` + `PlXxAJ.dat` + effect bank + `sound.zip` + a zip per costume; a gameplay post on Nucleus) installs as `mods/nucleus-<post>-fighter/` (`kind: "fighter"`).
+The installer (`gw_nucleus_fighter.h`) gives every file a private name (`PlN<post hex>.dat`, `...AJ.dat`, `...C<n>.dat`): the zip's own names are usually retail names (Giga Bowser's `PlGk.dat` IS the retail boss) and
+writing them would replace a retail fighter. It writes `mexfighter.txt` (name, files, data symbol, costume symbols, callbacks as `cb<slot>=0xADDR`, music/victory ids) and a verdict in `mod.json`
+(`nucleus.verdict`: works / partial / needs-base, plus a note the browser and INSTALLED detail show). Refused with a plain message: callbacks outside the retail dol (built for another clone base: ACE / Akaneia),
+custom items, a missing file, a file that is not a fighter archive. The `functions` keys map to Arch_FighterFunc slots 0..45 (table `nf_cb_keys`).
+The runtime (`gw_mex_modfighter.inc`, game repo) BUILDS the fighter half of mexData from the enabled fighter mods at boot when the disc has no `MxDt.dat`: internal ids 27.., external 26.., the six boss ids close the table;
+`gw_Mex_MexData()` and `gw_Mex_CssIconCount()` stay 0 so sound banks, effect banks, music, menus, items and custom stages behave exactly as on a vanilla disc (the fighter readers use `gw_mex_ft_on()`).
+The clone base is found from the onLoad callback (the retail kind whose `ftData_OnLoad` is the bridge's native for that address). Callbacks that do not resolve through the bridge are logged and the base's callback is kept, never jumped to.
+The Atlas CSS lists the fighter with its clone base's icon (`fs_css_roster`). Limits, said in the verdict note: no own sound bank / `sound.zip`, no announcer call, own effect banks, Kirby copy hat, per-costume CSPs and stock icons. Netplay: identity is the file content (like an m-ex fighter), both players need the mod.
+Test packages: `tools/nucleus/make_synth_fighter.py` (an ACE-added fighter repackaged from your own ACE disc, never committed) and the real Giga Bowser zip of the Nucleus seed folder.
+
 ## 5. The split tool
 
 `tools/mex_port/split_modpack.py --pack _build/packs/ace-set/ace --name ace --version 2.0.0`
