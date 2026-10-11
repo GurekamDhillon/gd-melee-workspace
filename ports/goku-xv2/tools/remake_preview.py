@@ -118,6 +118,7 @@ def render_clip(scene, arm, mesh, cam, action, out_png):
                 lo[k] = min(lo[k], w[k])
                 hi[k] = max(hi[k], w[k])
     span = max(hi[1] - lo[1], hi[2] - lo[2]) * MARGIN
+    lying = (hi[1] - lo[1]) > 1.3 * (hi[2] - lo[2])  # XV2 flight-stance clips lie along forward: stand the image up
     if not span > 0:
         span = 1.0
     cy = (lo[1] + hi[1]) / 2
@@ -142,6 +143,8 @@ def render_clip(scene, arm, mesh, cam, action, out_png):
             bpy.data.images.remove(img)
             os.remove(tmp_png)
             arr = flat.reshape(PX, PX, 4)[::-1]  # Blender rows are bottom-up
+            if lying:
+                arr = np.rot90(arr, 1)  # feet (image left) to the bottom
             rgb = arr[..., :3]
             a = arr[..., 3:4]
             rgb = rgb * a + BG * (1.0 - a)
