@@ -72,9 +72,9 @@ function Copy-In([string]$src, [string]$rel, [switch]$OriginalDat) {
 }
 
 # ---- provenance of the game build ---------------------------------------------------------------
-$melee = if ($MeleeDir) { (Resolve-Path $MeleeDir).Path } else { Join-Path $root "melee" }
+$melee = if ($MeleeDir) { (Resolve-Path $MeleeDir).Path } elseif ($env:GW_MELEE) { (Resolve-Path $env:GW_MELEE).Path } else { Join-Path $root "melee" }
 . (Join-Path $PSScriptRoot 'netplay_protocol.ps1')
-Assert-NetplaySource $melee
+$protocol = Get-NetplayProtocol -MeleeDir $melee
 $verifyArgs = @((Join-Path $root 'tools/port/build_provenance.py'), '--melee', $melee, '--build', $GameDir, '--verify')
 if ($Strict) { $verifyArgs += '--require-clean' }
 & python @verifyArgs
@@ -252,7 +252,7 @@ Set-Content -Path (Join-Path $stage "version.txt") -Encoding ascii -Value @(
   "melee      $meleeRev  https://github.com/GurekamDhillon/melee/tree/$meleeRev",
   "workspace  $wsRev  https://github.com/GurekamDhillon/gd-melee-workspace",
   "built      $date",
-  "netplay_protocol $(Get-NetplayProtocol)"
+  "netplay_protocol $protocol"
 )
 
 # manifest: sha256sum format, '/' separators, sorted
@@ -266,7 +266,7 @@ $lines = foreach ($f in (Get-ChildItem $stage -Recurse -File | Sort-Object FullN
 [System.IO.File]::WriteAllText((Join-Path $stage "MANIFEST.sha256"), (($lines -join "`n") + "`n"), (New-Object System.Text.UTF8Encoding $false))
 
 # ---- check the folder, zip it, check the zip --------------------------------------------------------
-& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "check_release.ps1") $stage -RepoRoot $root
+& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "check_release.ps1") $stage -RepoRoot $root -MeleeDir $melee
 if ($LASTEXITCODE -ne 0) { throw "release check failed on the staged folder; nothing was zipped" }
 # written entry by entry: .NET Framework's CreateFromDirectory stores '' separators under
 # Windows PowerShell, which other unzippers turn into file names with backslashes in them
@@ -280,7 +280,7 @@ try {
     $in.CopyTo($es); $in.Close(); $es.Close()
   }
 } finally { $za.Dispose(); $zs.Close() }
-& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "check_release.ps1") $zipPath -RepoRoot $root
+& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "check_release.ps1") $zipPath -RepoRoot $root -MeleeDir $melee
 if ($LASTEXITCODE -ne 0) { Remove-Item $zipPath -Force; throw "release check failed on the zip; it was deleted" }
 
 $zipHash = (Get-FileHash $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()

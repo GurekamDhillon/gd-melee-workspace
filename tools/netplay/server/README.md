@@ -57,10 +57,16 @@ about 25 KB/s per match. A $5 VPS handles hundreds of relayed matches.
   minutes without the host. A room accepts one guest.
 - Nothing is stored on disk.
 
-## Protocol 3 compatibility (2026-09-27)
+## Netplay protocol compatibility
 
-The game uses protocol 3 (40 MiB MEM1 and the expanded fighter heap). GDMR
-REG/JOIN/RAND still carry no version, including in the v3 game. Do not require a
+The server reads `GW_NET_PROTOCOL_VERSION` from `pc/platform/gw_net.h` in
+`GW_MELEE`, or the workspace's `melee/` by default. A standalone copy on a host
+without the game uses `FALLBACK_NETPLAY_PROTOCOL` in this one file. The release
+agreement test checks that fallback against the game header in CI; update it
+when the game protocol changes. Explicitly selecting a missing checkout or
+finding an invalid header stops startup.
+
+GDMR REG/JOIN/RAND still carry no version. Do not require a
 version argument there. The server checks the little-endian version in relayed
 GN HELLO/ACCEPT packets, sends both peers `ERR protocol version mismatch ...;
 update GD's Melee on both PCs`, and closes an incompatible room. Bounded rejection records repeat that error for

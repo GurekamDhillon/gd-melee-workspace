@@ -41,7 +41,8 @@ $out = if ($OutDir) { [System.IO.Path]::GetFullPath($OutDir) } else { Join-Path 
 if ($ModsFrom -and -not $DryRun) { throw "-ModsFrom is for dry runs only" }
 # The one source for the protocol number (the code uses it too); the body below never spells a number out.
 . (Join-Path $PSScriptRoot 'netplay_protocol.ps1')
-$protocol = Get-NetplayProtocol
+$melee = if ($MeleeDir) { $MeleeDir } elseif ($env:GW_MELEE) { $env:GW_MELEE } else { Join-Path $root 'melee' }
+$protocol = Get-NetplayProtocol -MeleeDir $melee
 $zip = Join-Path $out "$name.zip"
 
 # 1. the tag must be new. (Native commands that may fail run under "Continue": with "Stop",
@@ -67,7 +68,7 @@ if (-not $wsPushed) {
 $buildArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "build_release.ps1"), "-Version", $Version)
 if ($Server) { $buildArgs += @("-Server", $Server) }
 if ($GameDir) { $buildArgs += @("-GameDir", $GameDir) }
-if ($MeleeDir) { $buildArgs += @("-MeleeDir", $MeleeDir) }
+$buildArgs += @("-MeleeDir", $melee)
 $buildArgs += @("-OutDir", $out)
 if ($ModsFrom) { $buildArgs += @("-ModsFrom", $ModsFrom) }
 if ($IncludeCourier) { $buildArgs += "-IncludeCourier" }
@@ -76,7 +77,7 @@ if (-not ($Force -or $DryRun)) { $buildArgs += "-Strict" }
 if ($LASTEXITCODE -ne 0) { throw "build_release.ps1 failed" }
 
 # 4. check the exact file we upload, once more
-& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "check_release.ps1") $zip -RepoRoot $root
+& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "check_release.ps1") $zip -RepoRoot $root -MeleeDir $melee
 if ($LASTEXITCODE -ne 0) { throw "release check failed: NOT publishing" }
 
 # 5. notes

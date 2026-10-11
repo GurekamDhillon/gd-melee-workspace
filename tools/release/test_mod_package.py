@@ -9,7 +9,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import re
 import shutil
 import subprocess
 import sys
@@ -176,7 +175,7 @@ class RealMeleeTests(unittest.TestCase):
                 self.assertTrue((stage / 'mods' / mid / 'mod.json').is_file(), mid)
             self.assertFalse((stage / 'mods/envoy_drives_sa2').exists())
             # complete the package with synthetic non-mod files, then run the guard
-            number = re.search(r'return (\d+)', (HERE / 'netplay_protocol.ps1').read_text())[1]
+            number = check_release_linux.netplay_protocol()
             version = f'fixture\nmelee      {40 * "a"}  src\nnetplay_protocol {number}\n'
             for name, data in {'README.txt': 'r', 'IMPLEMENTATION_STATUS.md': 's', 'bin/melee': b'\x7fELF\x01x',
                                'bin/melee-pc.msvc.map': 'm', 'launcher/bin/gd-melee-launcher': b'\x7fELF\x02x',

@@ -12,6 +12,8 @@ import sys
 import tarfile
 import tempfile
 root=Path(__file__).resolve().parents[2]
+sys.path.insert(0,str(root/'tools/release'))
+from check_release_linux import netplay_protocol
 ap=argparse.ArgumentParser(description=__doc__)
 ap.add_argument('--build',type=Path,default=root/'_build/agents/linux')
 ap.add_argument('--output',type=Path,default=root/'_build/linux/packages')
@@ -38,13 +40,12 @@ def version_text():
     version=(a.version or (root/'tools/release/VERSION').read_text()).strip()
     if not re.fullmatch(r'[0-9A-Za-z][0-9A-Za-z.+-]*',version):raise SystemExit(f'bad release version {version!r}')
     melee=git(a.melee,'rev-parse','HEAD') or 'unknown'; ws=git(root,'rev-parse','--short=9','HEAD') or 'unknown'
-    header=a.melee/'pc/platform/gw_net.h'
-    proto=re.search(r'(?m)^\s*#define\s+GW_NET_PROTOCOL_VERSION\s+(\d+)u?\s*$',header.read_text()) if header.is_file() else None
+    proto=netplay_protocol(a.melee)
     lines=[f'{version} (melee {melee[:9]})' + (' local' if a.local else ''),
            f'melee      {melee}  https://github.com/GurekamDhillon/melee/tree/{melee}',
            f'workspace  {ws}  https://github.com/GurekamDhillon/gd-melee-workspace',
            'built      '+__import__('datetime').date.today().isoformat()]
-    if proto:lines.append('netplay_protocol '+proto[1])
+    lines.append('netplay_protocol '+str(proto))
     return chr(10).join(lines)+chr(10)
 name='melee-linux-i686'+('-local' if a.local else '')
 with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
@@ -144,7 +145,7 @@ with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
     (dest/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     shutil.copy2(dest/'manifest.json',debug/'manifest.json')
     # The content guard (same rules as the Windows release's check_release.ps1): nothing disc-derived or local-only ships.
-    subprocess.run([sys.executable,str(root/'tools/release/check_release_linux.py'),str(dest),'--repo-root',str(root)],check=True)
+    subprocess.run([sys.executable,str(root/'tools/release/check_release_linux.py'),str(dest),'--repo-root',str(root),'--melee',str(a.melee)],check=True)
     for folder in (dest,debug):
         output=a.output/(folder.name+'.tar.xz')
         pending=output.with_suffix(output.suffix+'.pending')
