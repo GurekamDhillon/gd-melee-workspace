@@ -939,8 +939,13 @@
       "script": "moves/rush.genoasm",
       "hb": "HB-NONE",
       "windows": [],
-      "strike": [],
-      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+      "strike": [
+        [
+          40,
+          44
+        ]
+      ],
+      "strike_note": "XV2 knockback-attack hit f40-43; NOTE the row is cropped to 40 frames, so the strike is past its end (row to be lengthened when the hitbox is authored)"
     },
     {
       "name": "Recovery",
@@ -996,8 +1001,13 @@
       "script": "moves/homing.genoasm",
       "hb": "HB-NONE",
       "windows": [],
-      "strike": [],
-      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+      "strike": [
+        [
+          33,
+          39
+        ]
+      ],
+      "strike_note": "XV2 homing-strike hit f33-38"
     }
   ],
   "articles": [

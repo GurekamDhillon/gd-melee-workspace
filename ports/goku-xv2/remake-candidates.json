@@ -853,14 +853,14 @@
   "candidates": [
    {
     "clip": "xCMN_BAS_UKEMI_F",
-    "why": "owner: \"aerial recovery/tumble exit into a dragon dive / flying dash\" (rows 188, 196, 200 DownForward*, PassiveStandF). New find: tumble exit into a dragon dive / flying dash."
+    "why": "SHELVED for Side B (owner 2026-10-11). TUMBLE-EXIT candidate: XV2 hit-recovery / tumble exit; used as the forward getup / tech roll (slot 49). owner: \"aerial recovery/tumble exit into a dragon dive / flying dash\" (rows 188, 196, 200 DownForward*, PassiveStandF). New find: tumble exit into a dragon dive / flying dash."
    },
    {
     "clip": "xGOK_BAS_BOOST_F_00",
     "why": "owner: \"initial dash\" (row 12 Dash). Alternative: dash start."
    }
   ],
-  "recommended": "xCMN_BAS_UKEMI_F",
+  "recommended": "",
   "combo_role": "route: Rush>RushCombo; XV2 BAC 426/427 use ATC_022/023",
   "status": "KEEP",
   "gap_look": [
@@ -868,7 +868,7 @@
    "xGOK_ATC_022",
    "xGOK_ATC_023"
   ],
-  "note": "Owner decision (remake phase 1): Side B is the XV2 knockback attack (Heavy+Blast, BAC 419: BOOST_F_00 > STEP_F_S > ATC_013), i.e. the existing Rush row. The earlier recommendation xCMN_BAS_UKEMI_F (tumble exit into a dragon dive) is NOT applied; swap it in here if wanted. The homing dash strike (BOOST_F_00 > ATC_008, BAC 476) is Side B out of shield: state Homing."
+  "note": "Owner decision (2026-10-11): Side B is the XV2 knockback attack (Heavy+Blast, BAC 419: BOOST_F_00 > STEP_F_S > ATC_013), i.e. the existing Rush row. xCMN_BAS_UKEMI_F is SHELVED for Side B: in XV2 it is a hit-recovery / tumble exit, kept here as a TUMBLE-EXIT candidate (floor getup / tech roll, slot 49) only. The homing dash strike (BOOST_F_00 > ATC_008, BAC 476) is Side B out of the shield: state Homing."
  },
  {
   "group": "6 Specials",
