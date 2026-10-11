@@ -220,3 +220,17 @@ and copy are original and generated from `pipeline/hub_layout.py` and
 `pipeline/hub.py`. What's borrowed is the principles: size hierarchy, a
 single shear angle, flat colour, broad-to-specific buckets. No layout or
 asset is taken from any shipped game.
+
+## Character select hands and coins (`css_tokens.py`)
+
+```
+python pipeline/css_tokens.py      # out_kit/{2x,1x}/css_*.png, out_kit/css_tokens_layout.json, out_kit/preview/css_tokens_2x.png
+python <melee>/pc/tools/png2gx.py --layout out_kit/css_tokens_layout.json --outdir <build>/ui
+```
+
+24 I4 masks (128x128 @2x): a gloved hand in two poses (`point`, `grab`; eight layers each:
+shadow, ink, fill, cuff, shade, hi, detail, badge) and a poker-chip coin (shadow, ink, rim,
+inlay, face, ring, shade, hi). The engine tints each layer (the stack and the hotspots are in the
+layout JSON) so every port, the CPU and teams share them; the port number comes from the font.
+The game looks them up by name (`gw_script_ui.inc` `gs_ui_css_art`) and draws the old flat
+shapes when any is missing. Original shapes typed in by hand; nothing traced.
