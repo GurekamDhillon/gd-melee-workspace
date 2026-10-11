@@ -303,13 +303,14 @@ private slots:
         w.runCommand("load_row", {{"row", "dair"}}); QTRY_VERIFY(!w.isBusy());
         w.runCommand("edit_hitbox", {{"row", "dair"}, {"ordinal", 0}, {"damage", 22}}); QTRY_VERIFY(!w.isBusy());
         auto *hub = w.findChild<HubPanel *>("wbHub"); hub->setFocus(); QVERIFY(QTest::qWaitFor([&] { return hub->hasFocus(); }));
-        QTest::keyClick(hub, Qt::Key_Z, Qt::ControlModifier); QTRY_VERIFY(!w.isBusy());
-        QTRY_COMPARE(b.session.data().hitboxes("dair")[0].damage, 14.0);
-        QTest::keyClick(hub, Qt::Key_Y, Qt::ControlModifier); QTRY_COMPARE(b.session.data().hitboxes("dair")[0].damage, 22.0);
-        QTRY_VERIFY(!w.isBusy());
-        QTest::keyClick(hub, Qt::Key_Z, Qt::ControlModifier); QTRY_COMPARE(b.session.data().hitboxes("dair")[0].damage, 14.0);
-        QTRY_VERIFY(!w.isBusy());
-        QTest::keyClick(hub, Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier); QTRY_COMPARE(b.session.data().hitboxes("dair")[0].damage, 22.0);
+        // The key queues the command at once; read the session's data only when the worker is idle again.
+        const auto press = [&](Qt::Key key, Qt::KeyboardModifiers mods) {
+            QTest::keyClick(hub, key, mods); QVERIFY(w.isBusy()); QTRY_VERIFY(!w.isBusy());
+        };
+        press(Qt::Key_Z, Qt::ControlModifier); QCOMPARE(b.session.data().hitboxes("dair")[0].damage, 14.0);
+        press(Qt::Key_Y, Qt::ControlModifier); QCOMPARE(b.session.data().hitboxes("dair")[0].damage, 22.0);
+        press(Qt::Key_Z, Qt::ControlModifier); QCOMPARE(b.session.data().hitboxes("dair")[0].damage, 14.0);
+        press(Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier); QCOMPARE(b.session.data().hitboxes("dair")[0].damage, 22.0);
     }
     void f5RebuildsAndReloads() {
         Bench b; b.open(); auto &w = b.w();
