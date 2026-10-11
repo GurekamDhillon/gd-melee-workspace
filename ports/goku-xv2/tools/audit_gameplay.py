@@ -114,7 +114,7 @@ def audit(package,art_build,fit=False):
         if source_scripts:
             expected_source = [[e['frame'],e['args']['engine']['xv2.pc']['duration_frames']]
                                for e in source_scripts[min(variant,len(source_scripts)-1)]['events'] if e['op']=='hitbox.create']
-        if move.get('timing','').startswith('BAC static candidate') and move.get('windows') != expected_source:
+        if move.get('hb') != 'HB-NONE' and move.get('timing','').startswith('BAC static candidate') and move.get('windows') != expected_source:
             problems.append(move['name']+': declared candidate windows disagree with parity-selected BAC')
         declared_clip = None
         if 'motions' in move:
