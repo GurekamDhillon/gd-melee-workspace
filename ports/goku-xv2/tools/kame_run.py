@@ -29,18 +29,29 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('script'); ap.add_argument('tag')
     ap.add_argument('--vs', default='mario'); ap.add_argument('--p1', default='geno:goku-xv2/hu'); ap.add_argument('--name')
-    ap.add_argument('--turbo', action='store_true'); ap.add_argument('--visible', action='store_true')
+    ap.add_argument('--turbo', action='store_true'); ap.add_argument('--clean', action='store_true', help='run a copy of the package whose LAB starts in the CLEAN display (no hitbox / hurtbox overlay)'); ap.add_argument('--visible', action='store_true')
     ap.add_argument('--max-seconds', default='300'); ap.add_argument('--cfg', action='append', default=[])
     a = ap.parse_args()
     name = a.name or f'kame-{a.script}'
     kv = dict(c.split('=', 1) for c in a.cfg)
     gen = PORT / 'lua' / ('_gen_' + name + '.lua')   # untracked scratch copy with CFG prepended
     gen.write_text('CFG={' + ','.join('%s=%r' % (k, v) for k, v in kv.items()) + '}' + chr(10) + (PORT / 'lua' / (a.script + '.lua')).read_text(encoding='utf-8'), encoding='utf-8')
+    mods = os.environ.get('KAME_MODS') or str(WT / '_build/goku-xv2/author-source/package/mods')
+    if a.clean:   # the LAB starts in CLEAN: lab.lua 'mode = 2, hidden' (HITBOXES) -> 'mode = 1, hidden' in a throwaway copy
+        dst = WT / '_build/xv2-kame/mods_clean'
+        if dst.exists():
+            shutil.rmtree(dst)
+        shutil.copytree(mods, dst)
+        lab = dst / 'geno-lab/scripts/lab.lua'
+        t = lab.read_text(encoding='utf-8')
+        assert 'mode = 2, hidden' in t or 'mode = 1, hidden' in t, 'lab.lua start mode not found'
+        lab.write_text(t.replace('mode = 2, hidden', 'mode = 1, hidden', 1), encoding='utf-8')
+        mods = str(dst)
     p2 = a.vs if '/' in a.vs else a.vs + '/cpu0'
     off = '100' if a.visible else '30000'
     env = dict(os.environ)
     env.update({'GW_ROOT': str(MAIN), 'GW_MELEE': GAME, 'GW_BUILD_ROOT': BROOT,
-                'MELEE_MODS_DIR': os.environ.get('KAME_MODS') or str(WT / '_build/goku-xv2/author-source/package/mods'),
+                'MELEE_MODS_DIR': mods,
                 'MELEE_SCENE': f'mode=lab;p1={a.p1};p2={p2};stage=fd;items=off;time=0',
                 'MELEE_PAD_SCRIPT': gen.as_posix(), 'MELEE_UNATTENDED': '1',
                 'MELEE_MAX_SECONDS': a.max_seconds, 'MELEE_LAB_UI': '0', 'MELEE_TURBO': '1' if a.turbo else '0',

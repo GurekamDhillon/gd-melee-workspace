@@ -46,6 +46,46 @@ Drag-hit damage is scaled by the charge units as before (x(0.8 + 0.4 x units/60)
 tier 4 fires on the next B and survives a hit, a partial tier is wiped by one. Look parameters for the engine FX lane: `python ports/goku-xv2/tools/xv2_lane_params.py` -> `_build/xv2-kame/fx/lane_params.json`
 (ribbon width/alpha/colour curves and scroll speeds, glare materials, camera events); the per-tier suggestions are in the research note, "Parameters for the FX lane".
 
+## 0c. The 10 second charge and the integrated look (2026-10-10, owner: "like 10 seconds for max charge or something dumb"); supersedes the timings in 0 and 0b
+
+**One tunable**: `CHARGE_FRAMES = 600` in `lua/goku.lua` (a charge unit every `CHARGE_FRAMES / 60 = 10` frames) and the same constant in `tools/gen_kame.py` (voice and hum schedule);
+`tools/xv2_fx.py` `CHANT_AT` / `BALL` hold the effect beats. Input is unchanged (B once starts, B fires the current tier, L/R stores keeping it, a flick rolls, full auto-stores on the ground).
+
+| beat (state frame / seconds) | syllable | tier reached | unit | what steps |
+|---|---|---|---|---|
+| 0-60 (first second) | (hum starts) | 0 Tap: B before "ka" fires a quick blast | 0-4 | ball 0.25 -> 0.45, first gathering ring |
+| 60 / 1 s | "ka" (voice trigger at 55: the clip has 5 frames of silence) | 1 Thin | 5 | ball and aura step, flash, ground ring 1, hum 70 -> 76 |
+| 180 / 3 s | "me" | 2 Mid | 17 | step, ground ring 2, hum rises one pitch step (x1.15) |
+| 360 / 6 s | "ha" | 3 Full | 35 | step, ground ring 3 (wider), hum x1.32 |
+| 540 / 9 s | last "me" | 4 Max | 53 | step, ground ring 4, shake starts building (0.006 then 0.010), tiny flash, hum x1.52, ring period 9 frames |
+| 610 / ~10 s | | full: auto-store on the ground (the Max flash), Super if ki is 100 | 60 | |
+
+Between beats the ball (`P_TrailGokuXKameCharge`, XV2 Kmh_Crg) keeps growing (10 size steps), the gathering rings (engine ring + dissolve) contract faster at each tier, flat
+pressure rings (`P_TrailGokuXKamePressure`, bound to the floor joint) leave the feet at each beat and pulse in between, the motes are soft particles, and the aura is re-attached
+larger at each beat. The charge state's effects run on the state frame clock (`"clock": "game"`); its clip is stretched (ANIM_RATE 0.114 from clip frame 20) so it does not loop and
+restart the script before 17 s. The hum is XV2's charge SE resampled up in three steps (`GnKameHum2..4`, ids 200133/36/39), re-triggered with rising level.
+
+Rebalance (MAX costs 10 s, so it may be dumb; tiers 0-3 are unchanged):
+
+| tier | drag hit (x charge scale) | finisher | knockback growth / base | pushes back |
+|---|---|---|---|---|
+| 0 Tap | 1.0 | 2 | 40 / 20 | 0.3 |
+| 1 Thin | 1.1 | 3 | 50 / 25 | 0.6 |
+| 2 Mid | 1.0 | 4 | 80 / 35 | 0.9 |
+| 3 Full | 1.2 | 7 | 90 / 50 | 1.2 |
+| 4 Max (was 1.3 / 10 / 95 / 60) | 1.7 | 15 | 105 / 70 | 2.0 |
+| Super (was 2.2 / 16 / 80 / 60) | 2.6 | 24 | 90 / 70 | 1.6 |
+
+Look per tier (`tools/xv2_fx.py` `LOOK`): the beam is native ribbon layers bound to the SAME joint (hand.R), emitter rotation and direction D as the hit spheres, from the hand to
+the head dome: Tap core only; Thin glow + core; Mid + streaks and one head ring; Full + cloud, XV2's second ribbon set and two rings; Max the third set (widest/longest), white-hot
+core, three dissolve rings, the stronger muzzle, shake 0.028 x 24 and a 0.15 flash; Super its own packages (CKM ribbons, Bas x2.5) with shake 0.032 x 36 then 0.05 x 70 (the
+camera clip GOK_CAM_CKM_C moves 1.6 / 0.4 / 5.0 m over 225 frames; approximated as two decaying shakes) and a 0.2 flash. The release flash is faint and short everywhere else
+(Mid shake only, Full 0.05 x 2 frames, Tap/Thin none): the muzzle dome is 8 frames at alpha 0.42.
+
+Approximations (see also the research note): XV2's width over segment AGE (comet tail: core 0.69 m -> 0.2 at 11 f -> 0.05 at 18 f) is mapped to a width curve over the strip position
+(`width_keys`, age = (1 - position) x 22 frames) and floored at 42 % of the head width so the beam never pinches off before the hands; XV2's alpha fade over age is not applied at
+the hand end (only the head end eases out); XV2's Kmh_Ring is a custom polygon band (ShapeDraw) approximated by the engine ring; the camera clip is two shakes, not the moving camera.
+
 ## 1. Charge: modelled on Samus Charge Shot and Mewtwo Shadow Ball
 
 Read from the decomp (`src/melee/ft/kinds/ftSamus/ftsamusspecialn.c`, `.../ftMewtwo/ftmewtwospecialn.c`, items

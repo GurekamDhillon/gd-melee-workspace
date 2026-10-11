@@ -15,6 +15,7 @@ gd.run(function()
   local ok, why = pcall(function()
     assert(gd.wait_until(function() return gd.match().active and gd.match().frame > 90 end, 6000), 'no LAB match')
     gd.cpu_mode(2, 'stand')
+    for _, pt in ipairs({1, 2}) do pcall(gd.debug_draw, pt, 0) end   -- CLEAN display: no develop-draw hit/hurt boxes
     gd.teleport(1, 0, AIR and 40 or 0); gd.teleport(2, DIST, 0)
     gd.set_percent(1, 0); gd.set_percent(2, 0); gd.wait(30)
     if LEFT then gd.input(1, {x = -127}, 6); gd.wait(20); gd.teleport(1, 0, AIR and 40 or 0); gd.teleport(2, DIST, 0); gd.wait(10) end
@@ -39,6 +40,7 @@ gd.run(function()
     local total = HOLD + tonumber(C.tail or 80)
     while t < total do
       gd.wait(1); t = t + 1
+      if t % 10 == 1 then for _, pt in ipairs({1, 2}) do pcall(gd.debug_draw, pt, 0) end end   -- the game re-arms the develop draw
       if t == HOLD and C.fire ~= '0' then gd.input(1, {buttons = 'B'}, 2); fired = true end
       local gap = (t <= HOLD) and HGAP or GAP
       if t % gap == 0 or t == HOLD then
