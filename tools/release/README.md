@@ -7,8 +7,8 @@ for the user's own disc image, and nothing of Nintendo's.
 
 ```powershell
 powershell -File tools\release\publish.ps1 -DryRun   # package existing binaries + check + show gh command and notes
-powershell -File tools\release\publish.ps1 -Draft    # publish as a draft release (look it over on GitHub, then Publish)
-powershell -File tools\release\publish.ps1           # publish for real
+powershell -File tools\release\publish.ps1 -Draft -AllowUnsignedUpdate # phase-1 notify metadata, draft first
+powershell -File tools\release\publish.ps1 -AllowUnsignedUpdate        # explicit unsigned signing stub
 ```
 
 `publish.ps1` packages an existing game build; it does not compile the game. Normal publishing
@@ -163,6 +163,15 @@ fake HSD archive named `.gxtex`, a `.dat`, a file in an `ace/` folder, an unlist
 tampered README.
 
 ## The Qt launcher
+
+The launcher checks for stable releases daily in the background, with an About
+toggle (on by default), visible privacy text, Check now and Skip this version.
+A non-modal banner shows bilingual notes and a release-page link, with a warning
+when the protocol changes. Checks stay silent offline and stop during playback.
+`--no-update-check` or `GDMELEE_NO_UPDATE_CHECK=1` suppress all requests.
+`update_url.txt` beside the game overrides the HTTPS endpoint (numeric loopback
+HTTP is allowed for tests). See [UPDATE-MANIFEST.md](UPDATE-MANIFEST.md) for the
+schema, publisher, unsigned phase-1 limit and future signature contract.
 
 The launcher uses native C++17 and Qt 6 Widgets on Windows and Linux, drawn in the Atlas style
 (Atlas step 9): the tokens (`menu/atlas/tokens.json`), Barlow Condensed and Source Sans 3 are Qt
@@ -407,13 +416,13 @@ stated plainly in the notices rather than papered over.
 
 ## Netplay protocol compatibility
 
-Packaging now requires GW_NET_PROTOCOL_VERSION 3 in the selected game checkout
-and writes `netplay_protocol 3` to version.txt. The release guard requires this
+Packaging requires GW_NET_PROTOCOL_VERSION 6 in the selected game checkout
+and writes `netplay_protocol 6` to version.txt. The release guard requires this
 entry exactly once in both folder and zip checks. The friends wrapper inherits
 these checks. Release VERSION stays independent of the network protocol.
 
 These are source/metadata checks, not proof of the executable's contents. Keep
-the existing provenance checks and verify an actual v3 handshake on a Windows
+the existing provenance checks and verify an actual handshake on a Windows
 lane before release. Never add metadata to a stale EXE to make a check pass.
 
 Run without building:
@@ -423,6 +432,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/release/test_netplay_p
 python tools/release/launcher/check_strings.py
 ```
 
-The generated release-notes template in publish.ps1 explains the v3 requirement.
+The release-notes template reads the protocol from netplay_protocol.ps1. Its test
+checks release policy and the server, and also the game header when `-MeleeDir`
+or `GW_MELEE` supplies a checkout.
 TCP crash upload compatibility is independent and remains unchanged, including
 for older launchers; netplay errors must not prevent diagnostic uploads.

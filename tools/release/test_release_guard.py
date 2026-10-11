@@ -11,15 +11,13 @@ import warnings
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-BASE = ROOT/'_build/audit-20261003/further-release'
 RULES = json.loads((ROOT/'tools/release/mod_rules.json').read_text(encoding='utf-8'))['mods']
 
 
 class ReleaseGuardTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        BASE.mkdir(parents=True, exist_ok=True)
-        cls.work = Path(tempfile.mkdtemp(prefix='guard-repairs-', dir=BASE))
+        cls.work = Path(tempfile.mkdtemp(prefix='guard-repairs-'))
         cls.stage = cls.work/'GDMelee-fixture-win64'
         cls.stage.mkdir()
         names = ['README.txt', 'HOW TO PLAY ONLINE.txt', 'LICENSES/GPL-2.0.txt',
@@ -29,6 +27,7 @@ class ReleaseGuardTests(unittest.TestCase):
                  'initial_pipeline_cache.db', 'initial_pipeline_cache.core',
                  'launcher/bin/gd-melee-launcher.exe', 'launcher/bin/Qt6Core.dll',
                  'launcher/bin/Qt6Gui.dll', 'launcher/bin/Qt6Widgets.dll',
+                 'launcher/bin/Qt6Network.dll', 'launcher/plugins/tls/qschannelbackend.dll',
                  'launcher/bin/msvcp140.dll', 'launcher/bin/vcruntime140.dll',
                  'launcher/bin/vcruntime140_1.dll', 'launcher/bin/qt.conf',
                  'launcher/bin/platforms/qwindows.dll', 'launcher/qt-build.txt',
@@ -60,8 +59,8 @@ class ReleaseGuardTests(unittest.TestCase):
                 file = cls.stage/'mods'/mid/need
                 file.parent.mkdir(parents=True, exist_ok=True)
                 file.write_text('{}' if need.endswith('.json') else 'x')
-        (cls.stage/'version.txt').write_text('fixture\nmelee      '+40*'a'+'  source\nnetplay_protocol 5\n')
-        cls.stamp = dict(format=1, melee_commit=40*'a', netplay_protocol=5,
+        (cls.stage/'version.txt').write_text('fixture\nmelee      '+40*'a'+'  source\nnetplay_protocol 6\n')
+        cls.stamp = dict(format=1, melee_commit=40*'a', netplay_protocol=6,
                          source_sha256=64*'b', source_dirty=False,
                          files={name:hashlib.sha256((cls.stage/name).read_bytes()).hexdigest()
                                 for name in ('melee-pc.exe', 'melee-pc.map')})
@@ -96,6 +95,7 @@ class ReleaseGuardTests(unittest.TestCase):
     def test_missing_essential_files_are_rejected_even_with_matching_manifest(self):
         for name in ('melee-pc.map', 'SDL3.dll', 'ui/manifest.json',
                      'launcher/bin/Qt6Gui.dll', 'launcher/bin/platforms/qwindows.dll',
+                     'launcher/bin/Qt6Network.dll', 'launcher/plugins/tls/qschannelbackend.dll',
                      'launcher/bin/vcruntime140_1.dll', 'build-provenance.json',
                      'launcher/licenses/BarlowCondensed-OFL-1.1.txt'):
             with self.subTest(name=name):

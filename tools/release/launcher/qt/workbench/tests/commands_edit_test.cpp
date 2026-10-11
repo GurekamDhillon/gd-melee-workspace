@@ -616,6 +616,7 @@ private slots:
 
     void importProtectsWorkspaceRelativePlan() {
         Rig r;
+        wbtest::put(r.d.path(), ".git", "gitdir: unused\n"); // plan_abs resolves within this fixture
         wbtest::put(r.d.path(), "generated/plan.json", wbtest::kPlan);
         auto project = QJsonDocument::fromJson(wbtest::kProject).object();
         project.remove("plan"); project["plan_abs"] = "generated/plan.json";

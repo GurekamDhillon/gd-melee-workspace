@@ -52,7 +52,8 @@ $Required = @("README.txt", "version.txt", "MANIFEST.sha256", "LICENSES/GPL-2.0.
               "SDL3.dll", "webgpu_dawn.dll", "msvcp140.dll", "msvcp140_atomic_wait.dll", "vcruntime140.dll",
               "initial_pipeline_cache.db", "initial_pipeline_cache.core", "HOW TO PLAY ONLINE.txt",
               "build-provenance.json", "launcher/bin/gd-melee-launcher.exe", "launcher/bin/Qt6Core.dll",
-              "launcher/bin/Qt6Gui.dll", "launcher/bin/Qt6Widgets.dll", "launcher/bin/qt.conf",
+              "launcher/bin/Qt6Gui.dll", "launcher/bin/Qt6Widgets.dll", "launcher/bin/Qt6Network.dll", "launcher/bin/qt.conf",
+              "launcher/plugins/tls/qschannelbackend.dll",
               "launcher/bin/msvcp140.dll", "launcher/bin/vcruntime140.dll", "launcher/bin/vcruntime140_1.dll",
               "launcher/qt-build.txt", "launcher/licenses/LGPL-3.0-only.txt",
               "launcher/licenses/Qt-GPL-exception-1.0.txt", "launcher/licenses/SourceSans3-OFL-1.1.txt",
@@ -185,7 +186,7 @@ foreach ($e in $entries) {
   # 1. allowlist
   $ok = $false
   # Qt's 64-bit runtime is isolated from the 32-bit game and its CRT.
-  $launcherBinary = $rel -match '^launcher/bin/(gd-melee-launcher\.exe|Qt6(Core|Gui|Widgets|Svg|Network)\.dll|msvcp140(_1|_2|_atomic_wait|_codecvt_ids)?\.dll|vcruntime140(_1)?\.dll|concrt140\.dll|d3dcompiler_47\.dll|opengl32sw\.dll|dxcompiler\.dll|dxil\.dll|vc_redist\.x64\.exe)$' -or
+  $launcherBinary = $rel -match '^launcher/bin/(gd-melee-launcher\.exe|Qt6(Core|Gui|Widgets|Svg|Network|Concurrent)\.dll|msvcp140(_1|_2|_atomic_wait|_codecvt_ids)?\.dll|vcruntime140(_1)?\.dll|concrt140\.dll|d3dcompiler_47\.dll|opengl32sw\.dll|dxcompiler\.dll|dxil\.dll|vc_redist\.x64\.exe)$' -or
                     $rel -match '^launcher/(plugins|bin)/(platforms/q(windows|offscreen|minimal)\.dll|styles/q(modernwindows|windowsvista)style\.dll|imageformats/q(gif|ico|jpeg|svg)\.dll|generic/qtuiotouchplugin\.dll|networkinformation/qnetworklistmanager\.dll|tls/q(certonlybackend|schannelbackend)\.dll)$'
   if ($dirs.Count -eq 0) {
     $ok = ($AllowedBinaries -contains $name) -or ($AllowedTopFiles -contains $name)

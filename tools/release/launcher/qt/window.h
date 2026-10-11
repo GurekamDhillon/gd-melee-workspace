@@ -2,6 +2,7 @@
 #include "crash_upload.h"
 #include "diagnostics.h"
 #include "launcher_core.h"
+#include "update_check.h"
 #include <QMainWindow>
 #include <QElapsedTimer>
 #include <QProcess>
@@ -28,7 +29,7 @@ QString t(const char *en, const char *es);
 void applyTheme();                      // atlas tokens, fonts, palette and the style sheet for what Qt draws itself
 class Window : public QMainWindow {
 public:
-    Window(QString appDir, QString userDir, Settings settings);
+    Window(QString appDir, QString userDir, Settings settings, bool noUpdateCheck = false);
     ~Window() override;
     void addDisc(const QString &path = {});
     void play();
@@ -41,6 +42,15 @@ private:
     void updateRailMode();
     QString appDir_, userDir_, runDir_;
     Settings settings_;
+    UpdateChecker *updates_ = nullptr;
+    int updateInstalledProtocol_ = -1;
+    QWidget *updateBanner_ = nullptr;
+    QLabel *updateHeading_ = nullptr, *updateNotes_ = nullptr, *updateWarning_ = nullptr;
+    QLabel *updateStatus_ = nullptr, *updateLastCheck_ = nullptr, *updateProtocolHint_ = nullptr;
+    QPushButton *updatePill_ = nullptr, *updateCheckNow_ = nullptr, *updateRelease_ = nullptr;
+    QWidget *updateBanner();
+    void refreshUpdates();
+    void syncUpdatePlayback();
     QProcess process_;
     QStackedWidget *tabs_ = nullptr;
     kit::TabRail *rail_ = nullptr;
@@ -75,7 +85,7 @@ private:
     void showLaunchFailure(const DiagResult &report, const QString &extra = {});
     void runDiagnosticsOnly();
     void copyDiagnostics();
-    // "Upload last 3 crash logs": the only way anything leaves the machine, and only with the opt-in on.
+    // "Upload last 3 crash logs": reports leave only with the opt-in and a click.
     QPushButton *crashUpload_ = nullptr;
     QThread *uploadThread_ = nullptr;
     std::atomic<bool> uploadCancel_{false};

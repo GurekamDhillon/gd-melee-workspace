@@ -118,6 +118,6 @@ if ($NativeToolExit -ne 0) { throw 'Launcher path sanitization failed.' }
 Add-Content -Encoding ascii -Path (Join-Path $outDir 'launcher/qt-build.txt') -Value 'Deployed Qt diagnostic roots redacted in place; modified Qt copies are explicitly unsigned (vendor Authenticode removed). SDK and Microsoft CRT signatures unchanged.'
 
 # Test the deployed app without any SDK or toolset DLL directories in PATH.
-Invoke-NativeTool 'python' @((Join-Path $PSScriptRoot 'verify_launcher_runtime.py'), $outDir)
+Invoke-NativeTool 'python' @((Join-Path $PSScriptRoot 'verify_launcher_runtime.py'), $outDir, '--tls-probe', (Join-Path $build 'Release/update_tls_probe.exe'))
 if ($NativeToolExit -ne 0) { throw 'Deployed launcher smoke test failed.' }
 Write-Output "launcher: $Out (Qt runtime in launcher/)"

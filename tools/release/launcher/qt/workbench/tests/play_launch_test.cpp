@@ -39,6 +39,7 @@ private slots:
     }
     void missingToolOrPythonHasNoRunnableCommand() {
         QTemporaryDir dir; QProcessEnvironment env; env.insert("GW_PYTHON", "python");
+        wbtest::put(dir.path(), ".git", "gitdir: unused"); // bound fixture even when TEMP is inside a checkout
         auto c = playCommand(dir.path(), false, "jab1", env);
         QVERIFY(!c.error.isEmpty()); QVERIFY(c.program.isEmpty());
         wbtest::put(dir.path(), ".git", "gitdir: unused");

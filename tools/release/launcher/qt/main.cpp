@@ -28,6 +28,7 @@ int main(int argc, char **argv) {
     QCommandLineParser parser; parser.setApplicationDescription("GD's Melee portable offline launcher"); parser.addHelpOption(); parser.addVersionOption();
     parser.addOptions({{"app-dir", "Game installation directory", "path"}, {"data-dir", "User settings and saves directory", "path"},
                        {"lang", "Launcher language: auto, en, es", "language"}, {"add-iso", "Add a disc image", "path"},
+                       {"no-update-check", "Disable all update requests for this session"},
                        {"probe", "Inspect a disc and print JSON, without changing settings", "path"},
                        {"play", "Launch the default or named disc without the window"}, {"forget-all", "Forget discs; keep their saves"},
                        {"mods", "Open the installed mods tab"}, {"list-mods", "List installed mods"},
@@ -133,7 +134,7 @@ int main(int argc, char **argv) {
             });
             process.start(); return app.exec();
         }
-        launcher::Window window(root, user, settings); if (parser.isSet("mods")) window.selectMods(); window.show();
+        launcher::Window window(root, user, settings, parser.isSet("no-update-check") || parser.isSet("shots")); if (parser.isSet("mods")) window.selectMods(); window.show();
         if (parser.isSet("shots")) { window.screenshots(parser.value("shots")); return 0; }
         return app.exec();
     } catch (const std::exception &e) {
