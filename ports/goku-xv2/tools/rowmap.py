@@ -28,7 +28,7 @@ ROWS = {
     'DamageIce': ('CMN_DMG_KANASHIBARI', 0, 2, False, {'hold': 20}), 'DamageIceJump': ('CMN_DMG_KANASHIBARI', 0, 2, False, {'hold': 20}),
     # down (U = face up / AOMUKE, D = face down / UTSUBUSE)
     'DownBoundU': ('CMN_DMG_DOWN_BOUND_AOMUKE', 0, 26, False, {'tf': 2.2}), 'DownBoundD': ('CMN_DMG_DOWN_BOUND_UTSUBUSE', 0, 26, False, {'tf': 2.2}),
-    'DownWaitU': ('CMN_BAS_DOWN_AOMUKE_S', 0, 60, True, {}), 'DownWaitD': ('CMN_BAS_DOWN_UTSUBUSE_S', 0, 60, True, {}),
+    'DownWaitU': ('CMN_BAS_DOWN_AOMUKE', 0, 60, True, {}), 'DownWaitD': ('CMN_BAS_DOWN_UTSUBUSE', 0, 60, True, {}),   # phase 3: the ground variants (no _S sky clips)
     'DownDamageU': ('CMN_DMG_DOWN_BOUND_AOMUKE_H', 0, 20, False, {'tf': 2.5}), 'DownDamageD': ('CMN_DMG_DOWN_BOUND_UTSUBUSE_H', 0, 20, False, {'tf': 2.5}),
     'DownSpotU': ('CMN_DMG_DOWN_BOUND_AOMUKE_H', 0, 20, False, {'tf': 2.5}), 'DownSpotD': ('CMN_DMG_DOWN_BOUND_UTSUBUSE_H', 0, 20, False, {'tf': 2.5}),
     'DownStandU': ('CMN_BAS_DOWN_STAND_AOMUKE', 0, 30, False, {'tf': 1.3}), 'DownStandD': ('CMN_BAS_DOWN_STAND_UTSUBUSE', 0, 30, False, {'tf': 1.3}),
@@ -75,7 +75,7 @@ ROWS = {
     'DeadUpStar': ('CMN_DMG_BLOW_SPIN', 0, 60, True, {}), 'DeadUpFall': ('CMN_DMG_TUMBLE_F', 0, 69, True, {}),
     'DeadUpFallHitCamera': ('CMN_DMG_BLOW_H_F', 0, 36, False, {}), 'DeadUpFallHitCameraFlat': ('CMN_DMG_BLOW_H_F', 0, 36, False, {}),
     'Sleep': ('GOK_BAS_STAND', 0, 100, True, {'note': 'off screen between stocks'}),
-    'Rebirth': ('GOK_BAS_STAND_S', 0, 100, True, {}), 'RebirthWait': ('GOK_BAS_STAND_S', 0, 100, True, {}),
+    'Rebirth': ('GOK_BAS_STAND', 0, 100, True, {}), 'RebirthWait': ('GOK_BAS_STAND', 0, 100, True, {}),
     'AppealSR': ('CMN_BAS_HIRAMEKI', 0, 60, False, {'note': 'AUTHORED choice: XV2 lobby gesture as the taunt'}),
     'AppealSL': ('CMN_BAS_HIRAMEKI', 0, 60, False, {'note': 'AUTHORED choice: XV2 lobby gesture as the taunt'}),
     'GuardSetOff': ('GOK_GRD_L', 0, 16, False, {}),

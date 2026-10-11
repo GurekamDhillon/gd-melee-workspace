@@ -11,7 +11,9 @@
       "charge": "int",
       "counter_damage": "float",
       "stored": "int",
-      "stored_pct": "float"
+      "stored_pct": "float",
+      "fly": "int",
+      "pose": "int"
     }
   },
   "jumps": {
@@ -1491,6 +1493,51 @@
         "enter": "rush_enter",
         "frame": "rush_frame"
       }
+    },
+    {
+      "name": "Flight",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightUp",
+      "like": "motion:347",
+      "iasa": "none",
+      "move_tag": "special",
+      "lua": {
+        "enter": "flight_enter",
+        "frame": "flight_frame"
+      }
+    },
+    {
+      "name": "FlightU",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightUp",
+      "like": "motion:347",
+      "iasa": "none",
+      "move_tag": "special",
+      "lua": {
+        "frame": "flight_frame"
+      }
+    },
+    {
+      "name": "FlightF",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightF",
+      "like": "motion:347",
+      "iasa": "none",
+      "move_tag": "special",
+      "lua": {
+        "frame": "flight_frame"
+      }
+    },
+    {
+      "name": "FlightB",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightB",
+      "like": "motion:347",
+      "iasa": "none",
+      "move_tag": "special",
+      "lua": {
+        "frame": "flight_frame"
+      }
     }
   ],
   "specials": {
@@ -1498,8 +1545,8 @@
     "air_n": "geno:KameCharge",
     "s": "geno:Rush",
     "air_s": "geno:Rush",
-    "hi": "geno:Recovery",
-    "air_hi": "geno:RecoveryAir",
+    "hi": "geno:Flight",
+    "air_hi": "geno:Flight",
     "lw": "geno:Counter",
     "air_lw": "geno:Counter"
   },
@@ -1761,6 +1808,13 @@
           "Knockback2"
         ]
       }
+    },
+    {
+      "name": "Flight",
+      "parity": "move:special_hi",
+      "script": "moves/flight.genoasm",
+      "hb": "HB-NONE",
+      "windows": []
     }
   ],
   "articles": [

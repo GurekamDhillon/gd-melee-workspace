@@ -39,6 +39,23 @@ def patch_gameplay():
         if s['name'] == 'KiCharge' and 'Energy Charge' not in s.get('pick', ''):
             s['pick'] = 'owner decision 2026-10-11: XV2 Energy Charge (skill 591) clip APL_SPA_KTN_C, looped while Down B is held; usable only while ki < 100'
             changed = True
+    flight = [('Flight', 'FlightUp', {'enter': 'flight_enter', 'frame': 'flight_frame'}), ('FlightU', 'FlightUp', {'frame': 'flight_frame'}),
+              ('FlightF', 'FlightF', {'frame': 'flight_frame'}), ('FlightB', 'FlightB', {'frame': 'flight_frame'})]
+    for name, row, lua in flight:
+        if not any(x['name'] == name for x in g['states']):
+            g['states'].append({'name': name, 'behavior': 'geno.air', 'subaction': 'clip:' + row, 'like': 'motion:347', 'iasa': 'none', 'move_tag': 'special',
+                                'lua': lua, 'pick': 'owner 2026-10-11: Up B is XV2-style flight (BUKUU clips), free steering, then the special fall'})
+            changed = True
+    if not any(x['name'] == 'Flight' for x in g['special_adaptations']):
+        g['special_adaptations'].append({'name': 'Flight', 'parity': 'move:special_hi', 'script': 'moves/flight.genoasm', 'minimum_clip_frames': 30})
+        changed = True
+    if g['specials'].get('hi') != 'geno:Flight' or g['specials'].get('air_hi') != 'geno:Flight':
+        g['specials']['hi'] = g['specials']['air_hi'] = 'geno:Flight'
+        changed = True
+    for slot in ('age', 'fly', 'pose'):
+        if slot not in g['lua']['state']:
+            g['lua']['state'][slot] = 'int'
+            changed = True
     want_controls = {'layouts': [{'name': 'A', 'buttons': {'A': 'A'}},
                                  {'name': 'B', 'buttons': {'Y': 'Down'}}]}
     if g.get('controls') != want_controls:

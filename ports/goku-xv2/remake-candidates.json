@@ -3,7 +3,7 @@
   "group": "1 Locomotion (always floating)",
   "slot": "Idle",
   "rows": "Wait, Rebirth, RebirthWait, Sleep",
-  "current": "GOK_BAS_STAND_S (Sleep still ground STAND)",
+  "current": "GOK_BAS_STAND (ground idle, planted; phase 3: no hover)",
   "role": "Resting stance; must loop, tiny bob, readable as hovering",
   "candidates": [
    {
@@ -15,7 +15,7 @@
   "combo_role": "",
   "status": "KEEP",
   "gap_look": [],
-  "note": ""
+  "note": "Owner 2026-10-11: no hover; walking and idle use the grounded XV2 clips with the feet exactly on the floor."
  },
  {
   "group": "1 Locomotion (always floating)",
@@ -64,11 +64,15 @@
   "role": "Dash burst before Run",
   "candidates": [
    {
+    "clip": "xGOK_BAS_RUN",
+    "why": "owner direction 2026-10-11 (phase 3: no hover, grounded clips): the start of the run cycle, feet on the floor. XV2 has no ground dash clip; BOOST_F_00 is a flight clip."
+   },
+   {
     "clip": "xGOK_BAS_BOOST_F_00",
     "why": "owner: \"initial dash\" (row 12 Dash)."
    }
   ],
-  "recommended": "xGOK_BAS_BOOST_F_00",
+  "recommended": "xGOK_BAS_RUN",
   "combo_role": "",
   "status": "OK",
   "gap_look": [],
@@ -99,6 +103,10 @@
   "role": "Turnaround; the earlier note \"XV2 has no turn\" is wrong, CMN has one",
   "candidates": [
    {
+    "clip": "xGOK_BAS_STAND",
+    "why": "owner direction 2026-10-11 (phase 3): the ground idle with an authored 180-degree yaw (XV2 has no turn clip)."
+   },
+   {
     "clip": "xGOK_BAS_STAND_S",
     "why": "owner: \"turn around\" (row 10 Turn). Turn (wait)."
    },
@@ -107,7 +115,7 @@
     "why": "owner: \"turn run\" (row 11 TurnRun). Turn while running (TurnRun only; excluded for RunBrake)."
    }
   ],
-  "recommended": "xGOK_BAS_STAND_S",
+  "recommended": "xGOK_BAS_STAND",
   "combo_role": "",
   "status": "OK",
   "gap_look": [

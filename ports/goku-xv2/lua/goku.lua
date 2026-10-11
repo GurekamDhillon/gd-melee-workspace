@@ -139,6 +139,41 @@ function M.kicharge_frame(ctx)
 end
 -- Homing dash strike (XV2 BAC 476, Side B out of the shield, ki cost on the route): it reuses rush_enter/rush_frame (the module is at the engine's 24-function cap);
 -- XV2 homes on the target for 14 frames (engine.homing_movement), which fighter Lua cannot read (no opponent query), so it dashes straight ahead.
+-- Up B = flight (owner 2026-10-11; XV2 BUKUU, the fly clips). Takeoff, then free steering with the control stick for FLY_FRAMES, then the special fall (helpless, the usual
+-- landing lag, ledge snap): he stays edgeguardable. B or A ends it early. 10 ki; with less ki a weak short flight. Slots: age (frames flown), fly (1 full / 0 weak), pose
+-- (0 up, 1 forward, 2 back = which clip state he is in). The motion is plain Lua velocity on a geno.air state, so rewind, savestate and netplay replay it (only slots and the pad).
+local FLY_FRAMES = 60
+local FLY_SPEED = 0.8            -- units per frame at full stick: about 40 units over a full flight, a Marth / Falcon sized recovery
+local FLY_WEAK_FRAMES = 22
+local FLY_WEAK_SPEED = 0.45
+local FLY_KI = 10
+function M.flight_enter(ctx)
+  local s = ctx.state
+  s.age = 0
+  s.pose = 0
+  local paid = true
+  paid = ctx.self.ki >= FLY_KI -- @KI
+  if paid then ctx.ki(-FLY_KI) end -- @KI
+  s.fly = paid and 1 or 0
+end
+function M.flight_frame(ctx)
+  local s = ctx.state
+  s.age = s.age + 1
+  local full = s.fly == 1
+  local sp = full and FLY_SPEED or FLY_WEAK_SPEED
+  if s.age >= (full and FLY_FRAMES or FLY_WEAK_FRAMES) or (s.age > 3 and (ctx.input.special_pressed or ctx.input.attack_pressed)) then ctx.go("helpless") return end
+  local fx, fy = ctx.input.stick_fwd, ctx.input.stick_y
+  local m = math.sqrt(fx * fx + fy * fy)
+  if m < 0.2 then fx, fy = 0, 0.25 elseif m > 1 then fx, fy = fx / m, fy / m end   -- stick at rest: a slow climb
+  if s.age <= 8 then fy = math.max(fy, 0.9 * (1 - s.age / 10)) end                  -- the takeoff burst
+  ctx.velocity(fx * sp, fy * sp)
+  local want = 0
+  if fx > 0.4 and fy < 0.6 then want = 1 elseif fx < -0.4 and fy < 0.6 then want = 2 end
+  if want ~= s.pose and s.age > 8 then
+    s.pose = want
+    if want == 1 then ctx.go("FlightF") elseif want == 2 then ctx.go("FlightB") else ctx.go("FlightU") end
+  end
+end
 -- Not called: names the cape reappear states so the offline reachability check sees them (the engine picks them by behaviour order).
-function M.it_targets(ctx) ctx.go("ITEnd") ctx.go("ITEndAir") ctx.go("RushCombo") ctx.go("KameSuper") ctx.go("Homing") end
+function M.it_targets(ctx) ctx.go("ITEnd") ctx.go("ITEndAir") ctx.go("RushCombo") ctx.go("KameSuper") ctx.go("Homing") ctx.go("Recovery") end
 return M

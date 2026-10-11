@@ -119,6 +119,43 @@ gd.run(function()
     assert((s10.KiBlast or 0) == 0, 'the ki blast fired without the meter')
     gd.input(1, {}, 1); gd.wait(20)
 
+    -- 7c. Up B = flight (phase 3): takeoff from the ground, steering, 60 frames, then the special fall
+    local function flight(label, k, stick, held, spec)
+      reset(k)
+      local g0 = gd.player(1)
+      gd.input(1, {y = 127, buttons = 'B'}, 2)
+      local x0, y0, flown, fell, seen, lastfly, xe, ye = g0.x, g0.y, 0, nil, {}, nil, g0.x, g0.y
+      local kb = ki()
+      for t = 1, 140 do
+        gd.wait(1); nofault()
+        local n = name()
+        seen[n] = (seen[n] or 0) + 1
+        if n:sub(1, 6) == 'Flight' then flown = flown + 1; lastfly = t end
+        if t == 8 and stick then gd.input(1, stick, 70) end
+        if held and t == held then gd.input(1, {buttons = 'B'}, 2) end
+        local p = gd.player(1)
+        if n:sub(1, 6) == 'Flight' then xe, ye = p.x, p.y end
+        if (n == 'FallSpecial' or n == 'FallSpecialF' or n == 'FallSpecialB') and not fell then fell = t end
+      end
+      gd.log(string.format('SPECHECK flight %s: flight frames %d, dx %.1f dy %.1f, special fall from t%s, ki %.1f -> %.1f, states %s', label, flown, xe - x0, ye - y0, tostring(fell), kb, ki(),
+        (seen.Flight and 'Flight ' or '') .. (seen.FlightU and 'U ' or '') .. (seen.FlightF and 'F ' or '') .. (seen.FlightB and 'B' or '')))
+      return flown, xe - x0, ye - y0, fell, seen
+    end
+    local fl, dx, dy, fell = flight('up', 50)
+    assert(fl >= 56 and fl <= 66, 'flight did not last about 60 frames: ' .. fl)
+    assert(dy > 20, 'flight did not climb: ' .. dy)
+    assert(fell, 'flight did not end in the special fall (helpless)')
+    assert(math.abs((50 - ki()) - 10) < 0.5, 'flight cost is not 10 ki')
+    local _, dxf, _, _, sf = flight('forward', 50, {x = 127, y = 0}, nil)
+    assert(dxf > 12 and (sf.FlightF or 0) > 5, 'forward steering failed: dx ' .. dxf)
+    local _, dxb, _, _, sb = flight('back', 50, {x = -127, y = 0}, nil)
+    assert(dxb < -8 and (sb.FlightB or 0) > 5, 'back steering failed: dx ' .. dxb)
+    local fe, _, _, felle = flight('early end (B)', 50, nil, 25)
+    assert(fe < 40 and felle and felle < 45, 'B did not end the flight early: ' .. fe)
+    local fw, _, dyw = flight('no ki', 0)
+    assert(fw >= 18 and fw <= 28 and dyw < 25, 'the no-ki flight is not the weak short one: ' .. fw)
+    gd.input(1, {}, 1); gd.wait(100)
+
     -- 8. rewind exactness across the homing strike
     reset(50)
     gd.input(1, {buttons = 'L'}, 14); gd.wait(12)
