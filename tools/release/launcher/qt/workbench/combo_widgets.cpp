@@ -92,8 +92,9 @@ QRectF RouteLanes::barRect(int lane) const {
     if (lane < 0 || lane >= lanes_.size() || !timeline_) return {};
     const auto w = shown(lane);
     const int frames = timeline_->frameCount();
-    const int endBoundary = w.second > 0 ? qMin(w.second + 1, qMax(frames, w.second + 1)) : frames;
-    const qreal x0 = xOfBoundary(qMin(w.first, qMax(frames, w.first))), x1 = xOfBoundary(endBoundary);
+    // A window past the end of the move is drawn at the edge (the Problems list says why it never opens).
+    const int endBoundary = w.second > 0 ? qMin(w.second + 1, frames) : frames;
+    const qreal x0 = xOfBoundary(qMin(w.first, frames)), x1 = xOfBoundary(endBoundary);
     return {x0, lane * laneHeight() + 3.0, qMax<qreal>(6, x1 - x0), laneHeight() - 6.0};
 }
 int RouteLanes::laneAt(const QPointF &p) const {

@@ -77,10 +77,11 @@ def register():
         panels_attributes.register()
         operators_play.register()
         panels_play.register()
-        from . import panels_ui, panels_projectiles
+        from . import panels_ui, panels_projectiles, panels_combo
 
         panels_ui.register()
         panels_projectiles.register()
+        panels_combo.register()
         from . import geno_workspace
 
         geno_workspace.register()
@@ -111,7 +112,7 @@ def unregister():
     _registered = False
     errors = []
 
-    for name in ("panels_projectiles", "anim_ui", "hitviz", "geno_workspace", "panels_play", "operators_play", "panels_ui", "panels_attributes", "panels_fighter", "operators_fighter"):
+    for name in ("panels_combo", "panels_projectiles", "anim_ui", "hitviz", "geno_workspace", "panels_play", "operators_play", "panels_ui", "panels_attributes", "panels_fighter", "operators_fighter"):
         try:
             module = __import__(f"{__name__}.{name}", fromlist=["unregister"])
             module.unregister()

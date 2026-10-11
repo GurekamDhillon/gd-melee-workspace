@@ -153,7 +153,7 @@ namespace {
 struct StepData {
     ComboStepInfo info;
     QString clip, kind; // kind: "move" (a Moves row), "state" (a state of the combo file) or "unknown"
-    int motion = -1;
+    int motion = -1, crop = 0;
     QJsonArray hits;
 };
 int clipFrames(GenoData &data, const QString &clip) {
@@ -179,6 +179,7 @@ void fillHits(GenoData &data, const QVector<HitboxRef> &boxes, StepData &out, in
 StepData rowStep(GenoData &data, const RowInfo &row) {
     StepData out; out.kind = "move"; out.clip = row.effectiveClip();
     out.motion = row.motions.isEmpty() ? -1 : row.motions.first();
+    out.crop = row.cropStart;
     int frames = out.clip.isEmpty() ? 0 : qMax(0, clipFrames(data, out.clip) - row.cropStart);
     if (row.iasa > 0) frames = qMax(frames, row.iasa + 1);
     fillHits(data, data.hitboxes(row.name), out, frames);
@@ -238,7 +239,7 @@ Planned planFor(Session &s, const QJsonObject &args) {
         const auto d = stepData(s, step);
         info.insert(step, d.info);
         out.stepJson.append(QJsonObject{{"move", step}, {"kind", d.kind}, {"clip", d.clip}, {"frames", d.info.length},
-                                        {"first_hit", d.info.firstHit}, {"motion", d.motion}, {"hits", d.hits}});
+                                        {"first_hit", d.info.firstHit}, {"motion", d.motion}, {"crop", d.crop}, {"hits", d.hits}});
     }
     const int buffer = data.comboMeta().value("buffer").toInt(5);
     out.plan = planComboString(out.steps, data.routes(), info, buffer, args["add_buffer"].toBool());

@@ -260,6 +260,13 @@ private slots:
             auto *map = panel->stringMap(); map->resize(map->sizeHint());
             QVERIFY(map->grab().save(QDir(out).filePath("real_string_map.png")));
         }
+        // the real string_plan replies, for the Blender shot script
+        for (int i = 0; i < int(s.data().strings().size()) && i < 8; ++i) {
+            CommandContext ctx{s};
+            const auto reply = s.registry().call("string_plan", {{"index", i}}, ctx);
+            QFile f(QDir(out).filePath(QString("string_plan_%1.json").arg(i)));
+            QVERIFY(f.open(QIODevice::WriteOnly)); f.write(QJsonDocument(reply["result"].toObject()).toJson());
+        }
         qInfo() << "lanes" << lanes->laneCount() << "nodes" << panel->stringMap()->nodeCount() << "edges" << panel->stringMap()->edgeCount();
     }
     void layoutHoldsAtTheOwnersWindowSizesAndShotsAreSaved_data() {
