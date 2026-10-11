@@ -90,4 +90,15 @@ Each is `.omo/evidence/handoff.md` in the lane's worktree (git-ignored unless no
   13 evictions. Two-client netplay NOT run (command in its handoff). Falco 406/407 is a harness timing slip (a scripted L press
   lands a frame late in full runs; unseeded runs disagree with each other): `MELEE_TEST_SEED=777` gives 407/407, 12345 gives
   406/407; proposed: pin the seed in run_parity.sh, then find the hold slip in gw_script_pad.c.
-- **Kamehameha combined build**: no handoff note received when this was written; see the table above and the worktrees' state.
+- **Kamehameha combined build** (game `worktrees/kamefx` agent/kame-fx-integration `6ee542efe`; workspace `worktrees/kamexv2`
+  ws/goku-kame-xv2 `14adf04`; handoff in `worktrees/kamexv2/.omo/evidence/handoff.md`; NOT ready to merge): fx-render-features merged
+  in (suite 380/381 before a test-package fix in 6ee542efe; NOT re-run; the exe in `_build/agents/kamefx` predates it). Beam = native
+  ribbon layers on hand.R with the hit spheres' direction, engine `ribbon.span.width` curve, per-tier layers/rings/flash/shake;
+  only the Mid tier has been seen (`.omo/evidence/sheets/mid2.png`); Tap/Thin/Full/Max/Super, both facings and air NOT looked at.
+  Charge: CHARGE_FRAMES=600, chant at 60/180/360/540, rising hum, faint flash (strong on Max/Super), full charge holds like Mewtwo's
+  LoopFull (no auto-store). KAMECHECK PASS incl. a 25 s hold; rewind 0 bytes. Not done: second_match run, strips, perf note,
+  LAB command, docs (KAMEHAMEHA.md 0c still says auto-store at 610), ki-charge aura (no local dump of XV2's common aura).
+  Mewtwo: retail traces + decomp show NO jump cancel and no cliff catch in the charge callbacks; ledge/takeoff traces inconclusive
+  (fighter fell and died). Owner said Mewtwo can jump-cancel / ledge-cancel: get the owner's exact situation or a retail trace first.
+  Owner decisions: Max finisher 10 -> 15 and Super 16 -> 24; the Max hold hum goes silent after ~17 s (a true looping hold needs a new
+  Geno state).
