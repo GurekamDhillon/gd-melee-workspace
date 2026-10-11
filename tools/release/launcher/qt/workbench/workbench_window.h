@@ -26,6 +26,10 @@ public:
     // Shown as the tooltip of the game status chip: which exe the engine starts.
     void setGameExeInfo(const QString &text);
     QString statusText() const;
+    // The two Fix actions that need a file picker the launcher owns (it holds the Settings).
+    // Start the game / Blender the way the buttons do.
+    void startGame();
+    void startBlender();
     // Async rebuild lane: connect progress here and cancellation to the job,
     // bypassing the serial command queue. percent < 0 means indeterminate.
     void reportRebuildProgress(const QString &phase, int percent = -1, qint64 elapsedMs = -1, bool cancellable = false);
@@ -41,6 +45,9 @@ signals:
     void shutdownFinished();
     void rebuildProgress(const QString &phase, int percent, qint64 elapsedMs, bool cancellable);
     void rebuildCancelRequested();
+    // The status bar's Fix button asks the launcher for the picker; the launcher stores the choice.
+    void gameExePickRequested();
+    void blenderPickRequested();
 protected:
     void closeEvent(QCloseEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;

@@ -45,6 +45,8 @@ public:
     QVector<FileChange> editHitbox(const QString &row, int ordinal, const HitboxEdit &e, QString *err) const;
     QVector<FileChange> addHitbox(const QString &row, const HitboxAdd &add, int *ordinal, QString *err) const;
     QVector<FileChange> removeHitbox(const QString &row, int ordinal, QString *err) const;
+    // A copy of one hitbox (same frames, bone, numbers, element, shield and ground/air flags) in the same row.
+    QVector<FileChange> duplicateHitbox(const QString &row, int ordinal, int *newOrdinal, QString *err) const;
     QVector<FileChange> assignClip(const QString &row, const QString &clip,
                                    std::optional<int> cropStart, QString *err) const;
     QString rowByMotion(int motion) const;

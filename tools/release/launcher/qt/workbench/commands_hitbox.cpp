@@ -151,6 +151,26 @@ void registerHitboxCommands(Session &s) {
             result["bone"] = bone;
             return result;
         }});
+    s.registry().add({"duplicate_hitbox", t("Duplicate a source hitbox", "Duplicar un hitbox del código fuente"),
+        commandSchema(QJsonObject{{"row", argType("string")}, {"ordinal", argType("integer")},
+                                  {"propose", argType("boolean")}}, {"row", "ordinal"}), true,
+        [](const QJsonObject &args, CommandContext &ctx) {
+            auto &session = ctx.session;
+            const QString row = args["row"].toString();
+            const int ordinal = intArg(args, "ordinal");
+            needRow(session, row);
+            ctx.propose |= args["propose"].toBool();
+            QString error;
+            int created = -1;
+            const auto edits = session.data().duplicateHitbox(row, ordinal, &created, &error);
+            if (!error.isEmpty()) throw CommandError{error};
+            QVector<FileChange> changes;
+            for (const auto &change : edits) if (change.before != change.after) changes.append(change);
+            auto result = session.commit(ctx, "duplicate_hitbox", args,
+                t("Duplicate hitbox #%1 in %2", "Duplicar hitbox #%1 en %2").arg(ordinal).arg(row), changes);
+            result["ordinal"] = created;
+            return result;
+        }});
     s.registry().add({"delete_hitbox", t("Delete a source hitbox", "Borrar un hitbox del código fuente"),
         commandSchema(QJsonObject{{"row", argType("string")}, {"ordinal", argType("integer")},
                                   {"propose", argType("boolean")}}, {"row", "ordinal"}), true,

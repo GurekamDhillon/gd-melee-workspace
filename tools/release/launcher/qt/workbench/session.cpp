@@ -1,6 +1,7 @@
 #include "session.h"
 #include "commands.h"
 #include "geno_data.h"
+#include "recovery.h"
 #include <QDir>
 #include <QSet>
 #include <exception>
@@ -106,6 +107,8 @@ QJsonObject Session::commit(const CommandContext &ctx, const QString &command, c
         // must leave source files alone. Failed commits also retain the redo branch.
         const int id = next.record(entry);
         const QString snapshot = files_.beginSnapshot(command);
+        // Write-ahead: if the process dies between the file writes and the history save, the next open finds this.
+        writeJournal(files_.root(), entry);
         qsizetype written = 0;
         try {
             for (const auto &change : entry.changes) {
@@ -113,6 +116,7 @@ QJsonObject Session::commit(const CommandContext &ctx, const QString &command, c
                 ++written;
             }
             saveHistory(next);
+            clearJournal(files_.root());
         } catch (...) {
             const QString failure = exceptionMessage(std::current_exception());
             QStringList rollbackErrors;
@@ -133,6 +137,7 @@ QJsonObject Session::commit(const CommandContext &ctx, const QString &command, c
             }
             QString message = failure;
             if (!rollbackErrors.isEmpty()) message += "; rollback failed: " + rollbackErrors.join("; ");
+            else clearJournal(files_.root()); // rolled back cleanly: nothing for a restore to finish
             throw CommandError{message + "; snapshots: " + snapshot};
         }
         history_ = std::move(next);
