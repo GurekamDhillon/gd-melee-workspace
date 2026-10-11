@@ -7,7 +7,7 @@ It READS the zip only (no extraction to disk) and answers the browser's three wo
   works   every callback address is retail code (a clone of a retail fighter) and every file the json names is in the zip
   partial it would load but something is dropped (sound bank above the retail ones, a trophy/ending/demo file missing, Kirby copy data)
   needs-base  callbacks point outside the retail dol: the fighter was built against another clone base (ACE / Akaneia / a custom m-ex ISO)
-Numbers are the checks, not a promise: the runtime LOADER for a fighter without an MxDt.dat is not built yet (see the lane report).
+The installer (pc/platform/gw_nucleus_fighter.h) computes the same verdict; the runtime LOADER is pc/platform/gw_mex_modfighter.inc.
 """
 import json, sys, zipfile
 
@@ -47,7 +47,11 @@ def main():
     if d.get("hasKirbyCostumes") or f.get("kirbyCapFileName"):
         partial.append("Kirby copy hat not supported on a vanilla disc")
     if d.get("items"):
-        partial.append("%d custom item(s) need the item tables" % len(d["items"]))
+        needs.append("%d custom item(s) need the item tables of an m-ex disc" % len(d["items"]))
+    if int(d.get("announcerCall", -1) or -1) > 0:
+        partial.append("announcer call is the clone base's")
+    if "sound.zip" in names and int(d.get("soundBank", 0)) <= 54:
+        partial.append("sound.zip is not installed (retail sound bank used)")
     for c in d.get("costumes", []):
         fn = (c.get("file") or {}).get("fileName", "")
         if fn and fn.lower() not in names and fn.lower().replace(".dat", ".zip") not in names:
