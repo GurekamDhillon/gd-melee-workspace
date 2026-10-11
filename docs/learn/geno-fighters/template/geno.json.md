@@ -473,6 +473,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].audio.voice[].sfx | integer: The retail sound id this fighter would play | 0 | minimum=1; maximum=999999; geno.md §22.7; melee/pc/platform/geno_registry.c |
 | fighters[].audio.voice[].file | string: A .gnsnd file of the mod's files/ folder (python -m tools.geno.audio in.wav out.gnsnd); a plain file name |  | maxLength=63; pattern=^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][nN][sS][nN][dD]$; geno.md §22.7; melee/pc/platform/geno_registry.c |
 | fighters[].audio.voice[].volume | integer: Volume 0..127 | 127 | minimum=0; maximum=127; geno.md §22.7; melee/pc/platform/geno_registry.c |
+| fighters[].audio.voice[].stoppable | boolean: A looping hum retriggered by its script: playing the retail stop id 540001 cuts every playing instance of this clip (geno.md 22.7) | False | ; geno.md §22.7; melee/pc/platform/geno_registry.c |
 
 ## Runtime limits
 
