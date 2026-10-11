@@ -34,7 +34,14 @@
         "kbg": 50,
         "bkb": 8
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          3,
+          7
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "jab2",
@@ -52,7 +59,14 @@
         "kbg": 50,
         "bkb": 8
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          9,
+          13
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "jab3",
@@ -70,7 +84,14 @@
         "kbg": 100,
         "bkb": 30
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          8,
+          12
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "rapid_jab",
@@ -88,7 +109,30 @@
         "kbg": 25,
         "bkb": 10
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          12,
+          15
+        ],
+        [
+          18,
+          21
+        ],
+        [
+          24,
+          27
+        ],
+        [
+          30,
+          33
+        ],
+        [
+          36,
+          39
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "dash_attack",
@@ -106,7 +150,14 @@
         "kbg": 80,
         "bkb": 40
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          11,
+          15
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "ftilt",
@@ -128,7 +179,14 @@
         "kbg": 100,
         "bkb": 10
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          10,
+          14
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "utilt",
@@ -146,7 +204,14 @@
         "kbg": 120,
         "bkb": 30
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          12,
+          15
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "dtilt",
@@ -164,7 +229,14 @@
         "kbg": 110,
         "bkb": 25
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          0,
+          9
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "fsmash",
@@ -186,7 +258,14 @@
         "kbg": 98,
         "bkb": 30
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          17,
+          21
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "usmash",
@@ -204,7 +283,14 @@
         "kbg": 100,
         "bkb": 35
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          13,
+          17
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "dsmash",
@@ -222,7 +308,14 @@
         "kbg": 95,
         "bkb": 25
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          9,
+          13
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "nair",
@@ -240,7 +333,30 @@
         "kbg": 100,
         "bkb": 20
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          12,
+          15
+        ],
+        [
+          18,
+          21
+        ],
+        [
+          24,
+          27
+        ],
+        [
+          30,
+          33
+        ],
+        [
+          36,
+          39
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "fair",
@@ -258,7 +374,14 @@
         "kbg": 100,
         "bkb": 30
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          19,
+          23
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "bair",
@@ -276,7 +399,9 @@
         "kbg": 100,
         "bkb": 12
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "uair",
@@ -294,7 +419,14 @@
         "kbg": 100,
         "bkb": 25
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          15,
+          19
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "dair",
@@ -312,7 +444,14 @@
         "kbg": 90,
         "bkb": 20
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          12,
+          16
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "pummel",
@@ -330,7 +469,9 @@
         "kbg": 100,
         "bkb": 0
       },
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "grab",
@@ -342,7 +483,14 @@
       "script": "moves/grab.genoasm",
       "windows": [],
       "iasa": 28,
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          8,
+          16
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "dash_grab",
@@ -354,7 +502,14 @@
       "script": "moves/dash_grab.genoasm",
       "windows": [],
       "iasa": 28,
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          8,
+          16
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "fthrow",
@@ -373,7 +528,9 @@
         "bkb": 40
       },
       "hb": "HB-NONE",
-      "windows": []
+      "windows": [],
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "bthrow",
@@ -392,7 +549,9 @@
         "bkb": 50
       },
       "hb": "HB-NONE",
-      "windows": []
+      "windows": [],
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "uthrow",
@@ -411,7 +570,14 @@
         "bkb": 40
       },
       "hb": "HB-NONE",
-      "windows": []
+      "windows": [],
+      "strike": [
+        [
+          13,
+          17
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "dthrow",
@@ -430,7 +596,14 @@
         "bkb": 35
       },
       "hb": "HB-NONE",
-      "windows": []
+      "windows": [],
+      "strike": [
+        [
+          11,
+          15
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "rapid_start",
@@ -441,7 +614,30 @@
       "tag": "jab",
       "script": "moves/rapid_start.genoasm",
       "windows": [],
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          12,
+          15
+        ],
+        [
+          18,
+          21
+        ],
+        [
+          24,
+          27
+        ],
+        [
+          30,
+          33
+        ],
+        [
+          36,
+          39
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "rapid_end",
@@ -452,7 +648,30 @@
       "tag": "jab",
       "script": "moves/rapid_end.genoasm",
       "windows": [],
-      "hb": "HB-NONE"
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          12,
+          15
+        ],
+        [
+          18,
+          21
+        ],
+        [
+          24,
+          27
+        ],
+        [
+          30,
+          33
+        ],
+        [
+          36,
+          39
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     }
   ],
   "states": [
@@ -805,14 +1024,23 @@
       "parity": "move:special_s",
       "script": "moves/rush.genoasm",
       "hb": "HB-NONE",
-      "windows": []
+      "windows": [],
+      "strike": [
+        [
+          40,
+          44
+        ]
+      ],
+      "strike_note": "XV2 knockback-attack hit f40-43; NOTE the row is cropped to 40 frames, so the strike is past its end (row to be lengthened when the hitbox is authored)"
     },
     {
       "name": "Recovery",
       "parity": "move:special_hi",
       "script": "moves/recovery.genoasm",
       "hb": "HB-NONE",
-      "windows": []
+      "windows": [],
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "Counter",
@@ -840,14 +1068,18 @@
       "parity": "move:special_s",
       "script": "moves/rushcombo.genoasm",
       "hb": "HB-NONE",
-      "windows": []
+      "windows": [],
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "ITEnd",
       "parity": "move:special_hi",
       "script": "moves/itend.genoasm",
       "hb": "HB-NONE",
-      "windows": []
+      "windows": [],
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "KameThin",
@@ -868,7 +1100,14 @@
       "parity": "move:special_s",
       "script": "moves/homing.genoasm",
       "hb": "HB-NONE",
-      "windows": []
+      "windows": [],
+      "strike": [
+        [
+          33,
+          39
+        ]
+      ],
+      "strike_note": "XV2 homing-strike hit f33-38"
     }
   ],
   "articles": [
