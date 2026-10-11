@@ -71,7 +71,12 @@ budgets, not expected durations.
 | Problems | Run checks, results and Go to problem |
 | Splice | Import clip, Lay out recipe, Save strips as recipe, Bake & export |
 
-Timeline frames are engine logic frames, independent of Blender's scene timeline.
+Timeline frames are move frames in Melee frame-data style, independent of Blender's scene timeline: frame 1 is
+the first frame of the move (frame 0 is the entry pose), and a hitbox shown as "active 3-4" is visible on frames 3
+and 4 here, in the launcher's Move view and in the game. Source hitbox windows are shown as first/last active
+frame (the files store the frame the hitbox is cleared on, one more than the last active frame; the add-on
+converts at the server boundary). The launcher converts the game's own wb.frame numbering, which runs one ahead,
+so the numbers you see never need adjusting. The table is under "Frame numbering" below.
 The UI caps the frame at 600; **>|** goes to that cap, not the move's last frame.
 Playback uses the known row length for stopping/looping. **Speed** includes
 1x (60 logic frames/s), 0.5x, 0.25x and Scene fps. **Show travel** includes the
@@ -449,3 +454,30 @@ Pillow; set `GW_UI_PYTHON` if discovery needs help. Render UI uses Project, Art 
 move/frame, or its Pose override, without rebuilding gameplay. Progress and errors go to the displayed log.
 Camera/template assumptions and configuration are documented in [the CSP tool README](../../csp/README.md).
 This integration is source-only until the lead runs the supplied tests and sees the result in game.
+
+
+## Frame numbering
+
+One convention everywhere a person reads a frame: Melee frame-data style. Frame 1 is the first frame of the move
+(game `action_frame` 0); frame 0 is the entry pose before it. A hitbox written `wait_until 3` ... cleared on 5 is
+**active 3-4**: visible on frames 3 and 4.
+
+| place | number you see / type | stored or wire value |
+|---|---|---|
+| `.genoasm` | `wait_until S` + `hitbox` | S (never rewritten) |
+| `gameplay.json` windows | `[S, E)` | S, E (never rewritten) |
+| Launcher timeline, ruler, readout, bars | frame S ... E-1 | script frames |
+| Launcher inspector | First / Last active frame | S, E-1 (writes E = last+1) |
+| MCP `list_hitboxes` / `edit_hitbox` | `start_frame` S, `end_frame` E (cleared on E) | S, E |
+| MCP `set_frame` / `frame_info` / `ui_view_state` | script frame | script frame |
+| Blender Geno frame field, strips, Hitbox list | frame S ... E-1 (`end_frame` shown = last active) | converted by `api.source_boxes` / `edit_hitbox` |
+| Blender scene timeline | follows the Geno frame (when the rig has no baked action) | |
+| game `gd.player().action_frame` | S-1 | engine |
+| game `wb.frame{frame=F}` (engine) | F = S+1 | engine; converted once, in `EngineLink::call` |
+
+Measured on Goku (engine wb.frame, `jab1` window [3,5), `dair`): the hitbox shows at engine frames 4-5 and the
+dair's first hitbox at S+1; `wb.frame{frame=2}` reads `action_frame` 0. The engine's number is one ahead of the
+script number, so `EngineLink` (`tools/release/launcher/qt/workbench/engine_link.cpp`, `kEngineFrameLag`) shifts
+requests and replies; if the game repo's `wb.frame` is ever fixed to number from the first move frame, set the
+lag to 0 there and nothing else changes. Tests: `engine_link_test` (`scriptFramesMapToTheEnginesNumbering`),
+`tests/test_frame_convention.py`.

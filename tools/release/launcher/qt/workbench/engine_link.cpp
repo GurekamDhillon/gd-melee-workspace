@@ -481,7 +481,44 @@ QJsonObject EngineLink::request(const QString &fn, const QJsonObject &args, int 
     return {};
 }
 
+// The engine's wb.frame numbers a move from 1 at the entry pose: engine frame 1 is the state before the move's
+// first frame, engine frame 2 is the first frame (game action_frame 0), and a hitbox written at script frame S
+// first shows at engine frame S + 1. (Measured on Goku jab1 [3,5) -> engine 4,5, dair -> S + 1, and the
+// in-game hitbox probe: tools/blender/geno_workbench/README.md "Frame numbering".) Everything above this class, the Qt
+// timeline, the MCP tools and Blender, uses the script numbering instead: the frame a hitbox "starts at" is the
+// frame it is visible on, and frame 0 is the entry pose. The conversion lives here and nowhere else.
+static QString shiftFrameText(QString text, int lag) {
+    static const QRegularExpression frameWord("(frame |last frame )(\\d+)");
+    QString out; qsizetype from = 0;
+    auto it = frameWord.globalMatch(text);
+    while (it.hasNext()) {
+        const auto m = it.next();
+        out += text.mid(from, m.capturedStart() - from) + m.captured(1) + QString::number(qMax(0, m.captured(2).toInt() - lag));
+        from = m.capturedEnd();
+    }
+    return out + text.mid(from);
+}
 QJsonObject EngineLink::call(const QString &fn, const QJsonObject &args, QString *err) {
+    const int lag = kEngineFrameLag;
+    QJsonObject sent = args;
+    if (fn == "frame" && args.value("frame").isDouble()) {
+        const double wanted = args.value("frame").toDouble();
+        if (wanted >= 0 && std::floor(wanted) == wanted) sent["frame"] = wanted + lag;
+    }
+    QString error;
+    auto result = callEngine(fn, sent, &error);
+    if (!error.isEmpty()) {
+        setError(err, fn == "frame" && error.contains("past the end") ? shiftFrameText(error, lag) : error);
+        return {};
+    }
+    setError(err, {});
+    if ((fn == "frame" || fn == "frame_info" || fn == "step") && result.value("frame").isDouble()) {
+        const int f = int(result.value("frame").toDouble());
+        if (f >= 1) result["frame"] = f - lag;   // -1 stays the engine's "request still pending"
+    }
+    return result;
+}
+QJsonObject EngineLink::callEngine(const QString &fn, const QJsonObject &args, QString *err) {
     setError(err, {});
     if (busy_) { setError(err, "engine operation already in progress"); return {}; }
     static const QRegularExpression name("^[A-Za-z_][A-Za-z0-9_]*$");

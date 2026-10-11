@@ -1,3 +1,4 @@
+#include <QRegularExpression>
 #include "commands.h"
 #include <QElapsedTimer>
 #include <QHash>
@@ -37,7 +38,17 @@ void registerRowCommands(Session &s) {
             const auto row = needRow(ctx.session, ctx.session.currentRow);
             QJsonObject frameArgs{{"motion", rowMotion(row)}, {"frame", frame}};
             if (row.aerial) frameArgs.insert("lift", 120); // aerials stage high enough to play their whole move before they land (40 landed dair at frame 28 of 39)
-            return engineCall(ctx.session, "frame", frameArgs);
+            try {
+                return engineCall(ctx.session, "frame", frameArgs);
+            } catch (const CommandError &e) {
+                // The ruler can be a frame or two longer than the move the engine plays: seeking there lands on the
+                // move's last frame instead of failing (message numbers are already in script frames).
+                static const QRegularExpression last("past the end.*last frame (\\d+)");
+                const auto m = last.match(e.message);
+                if (!m.hasMatch() || m.captured(1).toInt() >= frame) throw;
+                frameArgs["frame"] = m.captured(1).toInt();
+                return engineCall(ctx.session, "frame", frameArgs);
+            }
         }});
     s.registry().add({"play", t("Step the move forward", "Step the move forward"),
         commandSchema({{"frames", argType("integer")}, {"step", argType("integer")}}, {"frames"}), false,

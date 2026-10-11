@@ -104,7 +104,7 @@ class FrameFollower:
         if not wbspace.bone_matrices(parsed[0]):
             raise ValueError("ui_view_state info contains no bone matrices")
         wbspace.root_matrix(parsed[0])
-        hitboxes = session._items(reply, "hitboxes")
+        hitboxes = session.source_boxes(session._items(reply, "hitboxes"))
         anchor = session.travel_anchor
         if row != session.source_row or anchor is None:
             # A frame-1 snapshot supplies the normal row origin. If Qt first

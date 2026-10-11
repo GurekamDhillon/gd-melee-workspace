@@ -186,13 +186,13 @@ private slots:
     }
     void payloadFileIsReadFromWbDir() {
         QTemporaryDir wbd;
-        wbtest::put(wbd.path(), "frame.json", R"JSON({"frame":7,"row":"dair"})JSON");
+        wbtest::put(wbd.path(), "frame.json", R"JSON({"frame":8,"row":"dair"})JSON");
         QString payload = wbd.filePath("frame.json");
         wbtest::FakeConsole fc([&](const QString &) { return "@" + payload + "\n>>> ok\n"; });
         EngineLink::Launch l; l.wbDir = wbd.path();
         EngineLink link(l); QString err;
         QVERIFY(link.attach(fc.port(), &err));
-        QCOMPARE(link.call("frame", {{"frame", 7}}, &err)["frame"].toInt(), 7);
+        QCOMPARE(link.call("frame", {{"frame", 7}}, &err)["frame"].toInt(), 7); // engine frame 8 = script frame 7
         QVERIFY(err.isEmpty());
         payload = "frame.json";
         QCOMPARE(link.call("frame_info", {}, &err)["row"].toString(), QString("dair"));
@@ -273,13 +273,13 @@ private slots:
             commands.append(line);
             if (line.startsWith("=wb.frame(")) return QString("pending\n>>> ok\n");
             ++polls;
-            return jsonReply({{"frame", polls == 1 ? -1 : 6}, {"motion", 70}}) /* the engine says -1 while pending */;
+            return jsonReply({{"frame", polls == 1 ? -1 : 7}, {"motion", 70}}) /* the engine says -1 while pending */;
         });
         EngineLink link({}); QString err; QVERIFY(link.attach(fc.port(), &err));
         const auto r = link.call("frame", {{"frame", 6}, {"motion", 70}}, &err);
         QVERIFY2(err.isEmpty(), qPrintable(err)); QCOMPARE(r["frame"].toInt(), 6);
         QCOMPARE(polls, 2);
-        QCOMPARE(commands[0], QString("=wb.frame({[\"frame\"]=6,[\"motion\"]=70})"));
+        QCOMPARE(commands[0], QString("=wb.frame({[\"frame\"]=7,[\"motion\"]=70})"));
         QCOMPARE(commands[1], QString("=wb.frame_info({})"));
         QCOMPARE(commands[2], QString("=wb.frame_info({})"));
     }
@@ -291,20 +291,57 @@ private slots:
             return jsonReply({{"frame", past ? 1 : 39}, {"motion", past ? 29 : 69}});
         });
         EngineLink link({}); QString err; QVERIFY(link.attach(fc.port(), &err));
-        QVERIFY(!link.call("frame", {{"frame", 39}, {"motion", 69}}, &err).isEmpty());
+        QVERIFY(!link.call("frame", {{"frame", 38}, {"motion", 69}}, &err).isEmpty());
         QElapsedTimer t; t.start();
-        QVERIFY(link.call("frame", {{"frame", 40}, {"motion", 69}}, &err).isEmpty());
+        QVERIFY(link.call("frame", {{"frame", 39}, {"motion", 69}}, &err).isEmpty());
         QVERIFY(t.elapsed() < 1500);
-        QVERIFY2(err.contains("past the end") && err.contains("last frame 39"), qPrintable(err));
+        QVERIFY2(err.contains("past the end") && err.contains("last frame 38") && err.contains("frame 39 is past"), qPrintable(err));
         QVERIFY(!err.contains("timeout"));
         QCOMPARE(link.status(), QString("ready")); // not a transport failure
+    }
+    void scriptFramesMapToTheEnginesNumbering() {
+        // The real engine (measured on Goku jab1, script window [3,5)): wb.frame F shows a hitbox written at script
+        // frame S from F = S + 1 until the frame it is cleared on (F = E). The Workbench speaks script frames:
+        // UI frame 3 and 4 show it, 2 and 5 do not, and the reply's frame is the UI frame that was asked for.
+        const int start = 3, end = 5;
+        int engineFrame = 0;
+        wbtest::FakeConsole fc([&](const QString &line) {
+            static const QRegularExpression frameArg("\\[\"frame\"\\]=(\\d+)");
+            if (line.startsWith("=wb.frame(")) { engineFrame = frameArg.match(line).captured(1).toInt(); return QString("pending\n>>> ok\n"); }
+            QJsonArray hits;
+            if (engineFrame >= start + 1 && engineFrame <= end) hits.append(QJsonObject{{"slot", 0}});
+            return jsonReply({{"frame", engineFrame}, {"motion", 44}, {"hitboxes", hits}});
+        });
+        EngineLink link({}); QString err; QVERIFY(link.attach(fc.port(), &err));
+        QVector<int> visible;
+        for (int ui = 0; ui <= 6; ++ui) {
+            const auto r = link.call("frame", {{"frame", ui}, {"motion", 44}}, &err);
+            QVERIFY2(err.isEmpty(), qPrintable(err));
+            QCOMPARE(r["frame"].toInt(), ui);
+            if (!r["hitboxes"].toArray().isEmpty()) visible.append(ui);
+        }
+        QCOMPARE(visible, (QVector<int>{3, 4}));
+        QCOMPARE(link.call("frame_info", {}, &err)["frame"].toInt(), 6); // engine frame 7 read back as script frame 6
+    }
+    void frameZeroIsTheEntryPoseNotAnError() {
+        // "frame 0 is past the end of this move (the fighter is at frame 1 ...)": the engine has no frame 0, so
+        // asking it for 0 was answered with 1 and read as past the end. Script frame 0 is engine frame 1.
+        QString asked;
+        wbtest::FakeConsole fc([&](const QString &line) {
+            if (line.startsWith("=wb.frame(")) { asked = line; return QString("pending\n>>> ok\n"); }
+            return jsonReply({{"frame", 1}, {"motion", 44}});
+        });
+        EngineLink link({}); QString err; QVERIFY(link.attach(fc.port(), &err));
+        const auto r = link.call("frame", {{"frame", 0}, {"motion", 44}}, &err);
+        QVERIFY2(err.isEmpty(), qPrintable(err)); QCOMPARE(r["frame"].toInt(-1), 0);
+        QVERIFY2(asked.contains("[\"frame\"]=1"), qPrintable(asked));
     }
     void stuckFrameRequestIsReissuedOnce() {
         // A fresh engine can leave the first request pending for good; a second wb.frame completes.
         int frames = 0;
         wbtest::FakeConsole fc([&](const QString &line) {
             if (line.startsWith("=wb.frame(")) { ++frames; return QString("pending\n>>> ok\n"); }
-            return jsonReply({{"frame", frames < 2 ? -1 : 1}, {"motion", 69}});
+            return jsonReply({{"frame", frames < 2 ? -1 : 2}, {"motion", 69}});
         });
         EngineLink link({}); QString err; link.setTimeoutMs(20000); QVERIFY(link.attach(fc.port(), &err));
         const auto r = link.call("frame", {{"frame", 1}, {"motion", 69}}, &err);
@@ -316,7 +353,7 @@ private slots:
         wbtest::FakeConsole fc([&](const QString &line) {
             if (line.startsWith("=wb.frame(")) return jsonReply({{"row", "dair"}});
             ++polls;
-            return jsonReply({{"frame", 0}});
+            return jsonReply({{"frame", 1}});
         });
         EngineLink link({}); QString err; QVERIFY(link.attach(fc.port(), &err));
         QCOMPARE(link.call("frame", {{"frame", 0}}, &err)["frame"].toInt(-1), 0);
@@ -363,7 +400,7 @@ private slots:
         EngineLink link({}); QString err; QVERIFY(link.attach(fc.port(), &err));
         QString nestedError; QJsonObject nested;
         QTimer::singleShot(10, &fc, [&] { nested = link.call("step", {{"n", 1}}, &nestedError); });
-        QCOMPARE(link.call("frame_info", {}, &err)["frame"].toInt(), 6);
+        QCOMPARE(link.call("frame_info", {}, &err)["frame"].toInt(), 5); // the engine says 6
         QVERIFY(err.isEmpty()); QVERIFY(nested.isEmpty()); QVERIFY(nestedError.contains("progress"));
     }
     void renderReturnsContainedPathBeforePngExists() {
