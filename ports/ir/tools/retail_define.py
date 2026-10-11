@@ -51,7 +51,7 @@ FIGHTERS = {
         "motions": 376, "dir": "ftFox", "attrs_struct": "ftFox_DatAttrs",
         # ftFx_Init_CostumeStrings: Nr, Or, La, Gr (team: red = Or, blue = La, green = Gr)
         "costumes": [("Nr", "Default", None), ("Or", "Orange", "red"), ("La", "Lavender", "blue"), ("Gr", "Green", "green")],
-        "ai": "fox", "kirby": "retail:fox",
+        "ai": "fox", "kirby": "retail:fox", "plan_file": "GnFox_plan.json",   # mod files are one namespace: two packages cannot both ship plan.json (Falcon keeps the old name)
         "thrown_as": "fox",   # the engine default is captain; a victim thrown by a retail-template define plays the template's own thrown rows
     },
 }
@@ -347,7 +347,7 @@ def main():
         "row_flags": [(r["flags"] & ~0x3F) if r["symbol"] is not None else None for r in rows],
         "row_blend": [r["blend"] if r["symbol"] is not None else None for r in rows],
     }
-    json.dump(plan, open(os.path.join(files, "plan.json"), "w"), indent=1)
+    json.dump(plan, open(os.path.join(files, spec.get("plan_file", "plan.json")), "w"), indent=1)
 
     # ---- attributes
     named = geno_attr_names()
@@ -382,7 +382,7 @@ def main():
     entry = {
         "define": {"key": a.key or spec["key"], "name": a.name or spec["name"], "base": "none", "common": "melee.common.v1", "resources": "mod:files",
                    "template": a.fighter},
-        "fighter": {"plan": "plan.json", "animation": prefix + "AJ.dat", "costumes": costumes},
+        "fighter": {"plan": spec.get("plan_file", "plan.json"), "animation": prefix + "AJ.dat", "costumes": costumes},
         "attributes": attributes,
         "special_attributes": special,
         "subactions": subs,
