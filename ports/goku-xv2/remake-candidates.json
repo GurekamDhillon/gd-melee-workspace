@@ -862,13 +862,13 @@
   ],
   "recommended": "xCMN_BAS_UKEMI_F",
   "combo_role": "route: Rush>RushCombo; XV2 BAC 426/427 use ATC_022/023",
-  "status": "OK",
+  "status": "KEEP",
   "gap_look": [
    "xGOK_ATC_021_S",
    "xGOK_ATC_022",
    "xGOK_ATC_023"
   ],
-  "note": ""
+  "note": "Owner decision (remake phase 1): Side B is the XV2 knockback attack (Heavy+Blast, BAC 419: BOOST_F_00 > STEP_F_S > ATC_013), i.e. the existing Rush row. The earlier recommendation xCMN_BAS_UKEMI_F (tumble exit into a dragon dive) is NOT applied; swap it in here if wanted. The homing dash strike (BOOST_F_00 > ATC_008, BAC 476) is Side B out of shield: state Homing."
  },
  {
   "group": "6 Specials",
@@ -892,17 +892,21 @@
   "group": "6 Specials",
   "slot": "Down B counter / ki charge",
   "rows": "SpecialLw, SpecialAirLw, KiCharge",
-  "current": "ESC_KUR_C x0.6 + ATC_008 / BLT_POW_C",
+  "current": "ESC_KUR_C x0.39 (tap: Z-vanish counter) / APL_SPA_KTN_C (hold: ki charge)",
   "role": "Counter and ki charge",
   "candidates": [
+   {
+    "clip": "xAPL_SPA_KTN_C",
+    "why": "owner decision 2026-10-11 (research section 12, faithful to the XV2 data): Down B hold = ki charge on XV2 Energy Charge (skill 591, APL_SPA_KTN_C, 140 frames), usable only while ki < 100. Replaces the CMN_BAS_HIRAMEKI recommendation (that stays the Taunt pick). Floating variant for the picker: xAPL_SPA_KTN_S_C."
+   },
    {
     "clip": "xCMN_BAS_HIRAMEKI",
     "why": "owner: \"charge-up: looks great\" (rows 239, 240 AppealSR/SL). Ki charge. The Counter keeps its designed animation (owner decision)."
    }
   ],
-  "recommended": "xCMN_BAS_HIRAMEKI",
+  "recommended": "xAPL_SPA_KTN_C",
   "combo_role": "",
-  "status": "PARTIAL",
+  "status": "OK",
   "gap_look": [
    "xCMN_BLT_POW_GOK",
    "xCMN_BLT_POW_C"

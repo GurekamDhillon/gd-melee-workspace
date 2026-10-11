@@ -79,21 +79,21 @@ class Gameplay(unittest.TestCase):
         self.assertIn('CHG motion:49 ALWAYS ONCE',(PORT/moves['rapid_jab']['script']).read_text())
         self.assertIn('CHG auto ALWAYS ONCE',(PORT/moves['rapid_end']['script']).read_text())
 
-    def test_authored_hitbox_lines_carry_their_flags(self):
-        module = self.module()
-        from tools.geno import script
-        plan = {'roles': {'lower_leg.R': [6], 'upper_leg.R': [5], 'translation': [2]}}
-        for name, count in (('bair', 2), ('grab', 1), ('dash_grab', 1)):
-            text = (PORT / 'moves' / (name + '.genoasm')).read_text(encoding='utf-8')
-            self.assertNotIn('hitbox raw=', text, name + ' must use parametric hitbox lines')
-            words = script.assemble(module.bind(text, plan, 1), [])
-            hit = [c for _, c in script.commands(words) if c[0] >> 26 == 11]
-            self.assertEqual(len(hit), count, name)
-        words = script.assemble(module.bind((PORT / 'moves/bair.genoasm').read_text(encoding='utf-8'), plan, 1), [])
-        hit = [c for _, c in script.commands(words) if c[0] >> 26 == 11]
-        self.assertEqual([(h[0] >> 11 & 255, h[0] & 1023, h[3] >> 14 & 511, h[4] >> 23) for h in hit],
-                         [(6, 11, 100, 12), (5, 11, 100, 12)])
-        self.assertEqual([h[3] & 31 for h in hit], [0b10011, 0b10011])   # item_hit + clank + rebound
+    def test_remake_moves_carry_no_generated_hitbox(self):
+        """Remake phase 1 (REMAKE-PLAN.md section 1): every move is HB-NONE (no hitbox word) or an owner-accepted HB-DESIGN; never generated."""
+        import remake_hb
+        config = SG.load()
+        for section in ('moves', 'special_adaptations'):
+            for m in config[section]:
+                self.assertIn(m.get('hb'), ('HB-NONE', 'HB-DESIGN', 'HB-AUTHORED'), m['name'])
+                text = (PORT / m['script']).read_text(encoding='utf-8')
+                if m['hb'] == 'HB-NONE':
+                    self.assertFalse(remake_hb.has_hitbox(text), m['name'] + ' is HB-NONE but its script has a hitbox')
+                    self.assertEqual(m.get('windows'), [], m['name'])
+                    for k in ('radius', 'role', 'offset'):
+                        self.assertNotIn(k, m.get('design', {}), m['name'])
+                elif m['hb'] == 'HB-DESIGN':
+                    self.assertIn(Path(m['script']).stem, remake_hb.DESIGN, m['name'])
 
     def test_hitbox_flag_fields_default_to_the_plain_encoding(self):
         self.module()

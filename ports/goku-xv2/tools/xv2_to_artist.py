@@ -324,6 +324,9 @@ def sample_track(keys, frames, rotation=False):
 WAIT_CLIP = 1   # GOK_BAS_STAND_S: XV2's aerial ("_S" = sky) idle, the floating counterpart of GOK_BAS_STAND (0). Alternates: 88 STAND_00_S, 89 STAND_01_S
 
 
+REMAKE_REPORT=[]   # filled by row_specs: what remake_apply did to each row
+
+
 def row_specs(source):
     out={}
     def direct(row,num,loop=False,frames=None,start=0,status='adapted candidate'):
@@ -478,6 +481,17 @@ def row_specs(source):
     rowmap.apply(out,byname.get,None)
     for row in rowmap.ROWS:
         if row in out:out[row]['library']=True   # CMN clips may scale bones; tolerated as in the library
+    # REMAKE phase 1 (2026-10-11): the owner's picks (remake-picks.json, the LAB picker's file) go on the rows remake-rows.json lists; a row whose
+    # clip already is the pick keeps its tuned crop. GAP slots have no pick and change nothing.
+    import remake_apply
+    REMAKE_REPORT[:]=remake_apply.apply(out,source,byname.get,EAN,rowmap.ALIASES)
+    # Homing dash strike (XV2 BAC 476, Guard+Heavy): BOOST_F_00 f0-19 then ATC_008 from f20, 66 frames (the BAC's own two bindings, played at speed 1).
+    # Entered from the shield by a combo route (combo.json Guard>Homing); a row of its own so the clip chain is the one XV2 plays.
+    b0,a8=byname.get('GOK_BAS_BOOST_F_00'),byname.get('GOK_ATC_008')
+    if b0 and a8:
+        bind=lambda c,fr:{'frame':fr,'args':{'binding':{'clip':c,'start_frame':0,'end_frame':source.clips[c]['frames']-1,'speed':1}}}
+        out['Homing']={'clip':b0,'loop':False,'frames':66,'start':0,'events':[bind(b0,0),bind(a8,20)],
+                       'status':'PICK (owner, remake phase 1): XV2 BAC 476 homing dash strike (Guard+Heavy): BOOST_F_00 f0-19, ATC_008 from f20; 66 frames'}
     gameplay_path=SG.path()
     if gameplay_path.exists():
         gameplay=json.loads(gameplay_path.read_text())
@@ -617,10 +631,13 @@ def splice_preview(recipe,file=None):
     return 0
 
 
-HOVER_Y = 2.0   # model units (his height is 20): the fixed hover of the idle/move rows, one place to tune
-HOVER_ROWS = ('Wait', 'Walk', 'Dash', 'Run', 'Turn', 'Guard', 'KneeBend', 'Landing', 'Appeal', 'Rebirth', 'Entry', 'Sleep', 'KiCharge', 'Counter')
-ANCHOR_ROWS = ('Squat', 'Attack', 'Catch', 'Throw', 'Escape', 'Down', 'Passive', 'Ottotto', 'Kame', 'Riposte', 'Rush', 'CliffAttack', 'CliffEscape',
-               'CliffClimb', 'LandingAir', 'LandingFallSpecial', 'Item', 'Hammer', 'Furafura', 'ShieldBreak', 'Bury')
+HOVER_Y = 2.5   # model units (his height is 20): the fixed hover of the idle/move rows, one place to tune (2.0 -> 2.5: owner, 2026-10-11, remake phase 1)
+# 2026-10-11 remake phase 1 (owner: always floating, an ANIMATION rule only; gameplay keeps Melee's ground and air rules): every standing ground row hovers at the one
+# constant HOVER_Y (no ANCHORED/blend machinery for them). Still anchored: aerial attack rows (airborne, ECB at the root), the lying/getup family, the hanging ledge rows,
+# shield-break flight, items (the engine's own poses).
+HOVER_ROWS = ('Wait', 'Walk', 'Dash', 'Run', 'Turn', 'Guard', 'KneeBend', 'Landing', 'Appeal', 'Rebirth', 'Entry', 'Sleep', 'KiCharge', 'Counter',
+              'Squat', 'Attack', 'Catch', 'Throw', 'Escape', 'Ottotto', 'Kame', 'Riposte', 'Rush', 'Homing', 'Furafura')
+ANCHOR_ROWS = ('AttackAir', 'Down', 'Passive', 'ShieldBreak', 'Bury', 'CliffAttack', 'CliffEscape', 'CliffClimb', 'Item', 'Hammer')
 NO_GROUND = ('EscapeAir', 'Thrown', 'Capture', 'CliffWait', 'CliffCatch', 'CliffJump', 'Recovery', 'ITEnd', 'Jump', 'Fall', 'Damage', 'Dead', 'Barrel', 'Warp', 'PassiveWall', 'PassiveCeil', 'Pass')
 
 
@@ -936,6 +953,7 @@ def main(argv=None):
     out.mkdir(parents=True,exist_ok=True);source=Source(args.ir);mesh=build_mesh(source,args.height)
     assert mesh['report']['weighted_bones']<=64 and len(mesh['names'])+3<=128
     rs=row_specs(source)
+    write(PORT/'remake-applied.json',{'schema':'goku-remake-applied/1','rows':REMAKE_REPORT})
     # LAB CLIPS library (2026-10-08): every body clip of the source (character, common and skill EANs),
     # unbound to any input. Bank name = 'x' + source name (<= 31 chars); geno.json fighter.rows lists them.
     browse=[]

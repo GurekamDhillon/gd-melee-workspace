@@ -1,12 +1,11 @@
+# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.
+# The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
 # PICK: provisional (attack-feel pass 2026-10-08). XV2 BAC 342 (light string 3: the uppercut, his launcher): over the head; peak f17 on f12
 # Source: BAC 342 clip GOK_ATC_004, strike f17; crop from f5. Numbers are Melee design values, not XV2 data.
 PUT ANIM_RATE 1.0
 wait_until 10
 sfx behavior=1 sfx_id=164 volume=127 panning=64
 wait_until 12
-hitbox slot=0 joint=@HAND_R@ damage=16 size=2.93 x=0.00 y=0.00 z=0.00 angle=85 kbg=100 fkb=0 bkb=35
-hitbox slot=1 joint=@ARM_R@ damage=13 size=2.27 x=0.00 y=0.00 z=0.00 angle=85 kbg=95 fkb=0 bkb=30
 wait 5
-clear_hitboxes
 wait_until 40
 iasa

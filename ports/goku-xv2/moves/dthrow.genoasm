@@ -1,3 +1,5 @@
+# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.
+# The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
 # Destination throw design; damage/angle/KBG/BKB are not XV2 conversions.
 wait 1
 throw idx=0 damage=5 unk0=70 hit_x24=65 hit_x28=0 hit_x2C=35

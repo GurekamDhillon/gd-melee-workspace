@@ -1,12 +1,11 @@
+# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.
+# The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
 # PICK: provisional (attack-feel pass 2026-10-08). XV2 light 3 (BAC 302): left kick ends the Melee jab; strike f12 on f6
 # Source: BAC 302 clip GOK_ATC_017, strike f12; crop from f6. Numbers are Melee design values, not XV2 data.
 PUT ANIM_RATE 1.0
 wait_until 4
 sfx behavior=1 sfx_id=165 volume=127 panning=64
 wait_until 6
-hitbox slot=0 joint=@FOOT_L@ damage=5 size=2.67 x=0.00 y=0.00 z=0.00 angle=40 kbg=100 fkb=0 bkb=30
-hitbox slot=1 joint=@LEG_L@ damage=4 size=2.13 x=0.00 y=0.00 z=0.00 angle=40 kbg=100 fkb=0 bkb=30
 wait 3
-clear_hitboxes
 wait_until 30
 iasa

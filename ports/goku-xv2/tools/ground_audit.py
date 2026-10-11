@@ -105,7 +105,7 @@ def main():
     if args.rows:
         want = set(args.rows.split(','))
         targets = [t for t in targets if t[0] in want]
-    hover = 2.0
+    hover = 2.5   # xv2_to_artist.HOVER_Y (remake phase 1)
     result = {'below_eps': BELOW_EPS, 'hover_y': hover, 'float_eps': FLOAT_EPS,
               'method': 'FigaTree pose of every frame of the built bank clip, 2-influence skinning of the mesh; heights in model units above the floor (TopN origin), 20 = his height',
               'rows': {}}

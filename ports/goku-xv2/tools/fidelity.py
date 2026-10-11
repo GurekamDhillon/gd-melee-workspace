@@ -116,7 +116,7 @@ def main():
         d = m.get('design', {})
         moves.append({'move': m['name'], 'motions': m['motions'], 'windows': m.get('windows'), 'iasa': m.get('iasa'),
                       'damage': d.get('damage'), 'angle': d.get('angle'), 'bkb': d.get('bkb'), 'kbg': d.get('kbg'),
-                      'roles': d.get('window_roles'), 'timing': m.get('timing', ''), 'pose_review': m.get('pose_review', ''),
+                      'roles': d.get('window_roles'), 'hb': m.get('hb', 'HB-GENERATED'), 'strike': m.get('strike'), 'timing': m.get('timing', ''), 'pose_review': m.get('pose_review', ''),
                       'source_windows': m.get('source_candidate_windows'),
                       'open_items': 'attack pass done (2026-10-08/09): limb spheres, sweet/sour spots, Melee swing sounds; hit sounds/effects are Melee defaults per element and damage; XV2 hit sparks/aura/trails: effects pass pending'})
     doc = {'schema': 'goku-fidelity/1', 'counts': counts, 'rows': out_rows, 'moves': moves}
@@ -132,19 +132,32 @@ def main():
          '**Ground audit** (`tools/ground_audit.py`, every frame of every ground row through the built bank): ' +
          ('%(rows)d rows, HOVER %(hover)d, ANCHORED %(anchor)d; **BELOW the floor: %(below_rows)d rows** (target 0, the build fails otherwise); hover rows off by more than the stride: %(hover_off_rows)d; %(ledge_rows_below)d ledge rows hang below the ledge by design.' % audit['counts'] if audit.get('counts') else 'not run.'),
          'Floating idle (owner #14, 2026-10-09): Wait, Rebirth and RebirthWait use GOK_BAS_STAND_S, the XV2 aerial ("_S" = sky) idle, SOURCE-RETIMED (the ground idle GOK_BAS_STAND is no longer used); Wait keeps the clip own 0.4-unit float bob under one constant lift (frame 0 at HOVER_Y 2.0, loop low 1.58). Turn, RunBrake, SquatRv, the ledge getups and every attack/catch/escape exit ease into that pose; Landing, GuardOff ease into it and GuardOn, Dash, Squat start from it. Walk, Run and crouch are unchanged. Alternates: STAND_00_S (clip 88), STAND_01_S (89), one constant `WAIT_CLIP`. '
-         'Hybrid hover stance (owner, 2026-10-09): HOVER rows (idle, walk, run, dash, turn, shield, landing) keep the lowest point %.1f units above the floor; ANCHORED rows (attacks, grabs, throws, escapes, knockdown, ledge getups) keep the XV2 flight-stance pose with the lowest point on the floor line on their lowest frame; aerial rows are untouched. Punch-list pass (2026-10-09): ANCHORED rows that begin or end standing (ground attacks, catch/throw ends, escapes, ground landings, getups) are BLENDED at those ends: the lowest point starts/ends at the hover height and ramps (smoothstep, 6 frames) to the floor anchor, and exit poses ease into Wait (rows whose hitboxes end before the last 6 frames), so no row snaps between hover and floor; crouch (Squat, SquatWait, SquatRv) is now ANCHORED (grounded) and blends in/out at its ends. ECB (owner #7, landings that sank to the torso): the engine builds the ECB from six joints (head, shoulders, knees, hip) and his folded flight-stance aerials lifted them 5-8 units, so he touched down that far inside the floor (root y -8.3 measured); the hip slot of the ECB joint list is now TopN (plan-level, Goku only), keeping the ECB bottom at the root in every pose. ECB bottom in the air is therefore 0 (was knee height minus 2): he lands a few units earlier than a retail-layout ECB would. Lower hurtboxes (feet, shins) are 1.6 units fatter so low attacks still hit the hovering stance; dtilt and dsmash carry a floor-level sphere.' % audit.get('hover_y', 2.0), '',
+         'Remake phase 1 (2026-10-11): hover is uniform at HOVER_Y %.1f for every standing ground row (attacks, grabs, throws, dodges, crouch included); aerial attack rows, getups/knockdown, ledge getups and items stay anchored. Gameplay keeps Melee ground and air rules (animation only). Older text below describes the earlier hybrid. Hybrid hover stance (owner, 2026-10-09): HOVER rows (idle, walk, run, dash, turn, shield, landing) keep the lowest point %.1f units above the floor; ANCHORED rows (attacks, grabs, throws, escapes, knockdown, ledge getups) keep the XV2 flight-stance pose with the lowest point on the floor line on their lowest frame; aerial rows are untouched. Punch-list pass (2026-10-09): ANCHORED rows that begin or end standing (ground attacks, catch/throw ends, escapes, ground landings, getups) are BLENDED at those ends: the lowest point starts/ends at the hover height and ramps (smoothstep, 6 frames) to the floor anchor, and exit poses ease into Wait (rows whose hitboxes end before the last 6 frames), so no row snaps between hover and floor; crouch (Squat, SquatWait, SquatRv) is now ANCHORED (grounded) and blends in/out at its ends. ECB (owner #7, landings that sank to the torso): the engine builds the ECB from six joints (head, shoulders, knees, hip) and his folded flight-stance aerials lifted them 5-8 units, so he touched down that far inside the floor (root y -8.3 measured); the hip slot of the ECB joint list is now TopN (plan-level, Goku only), keeping the ECB bottom at the root in every pose. ECB bottom in the air is therefore 0 (was knee height minus 2): he lands a few units earlier than a retail-layout ECB would. Lower hurtboxes (feet, shins) are 1.6 units fatter so low attacks still hit the hovering stance; dtilt and dsmash carry a floor-level sphere.' % audit.get('hover_y', 2.0), '',
          '## Animation rows', '', '| row | status | XV2 source | how | frames (Goku / Mario) | deviation | checked |', '|---|---|---|---|---|---|---|']
     for r in out_rows:
         fr = r.get('frames')
         L.append('| %s | %s | %s | %s | %s | %s | %s |' % (r['row'], r['status'], r['source'] or '-', r['how'] or '-',
             ('%d / %d%s' % (fr['goku'], fr['mario'], ' **FLAG**' if r.get('length_flag') else '')) if fr else '-',
             (r['deviation'] or '-').replace('|', '/'), '; '.join(r['checked']) or '-'))
-    L += ['', '## Moves', '', '| move | windows | IASA | damage | angle | BKB/KBG | limbs | source windows | timing / pose | open |',
-          '|---|---|---|---|---|---|---|---|---|---|']
+    hbc = {}
     for m in moves:
-        L.append('| %s | %s | %s | %s | %s | %s/%s | %s | %s | %s | %s |' % (
-            m['move'], m['windows'], m['iasa'], m['damage'], m['angle'], m['bkb'], m['kbg'], m['roles'], m['source_windows'],
-            (m['timing'] + ' ' + m['pose_review']).replace('|', '/'), m['open_items']))
+        hbc[m['hb']] = hbc.get(m['hb'], 0) + 1
+    L += ['', '## Moves', '', '**Hitbox axis (REMAKE-PLAN.md section 1):** ' + ', '.join('%s %d' % kv for kv in sorted(hbc.items())) +
+          '. HB-NONE = animation + timing only, `strike` is the XV2 strike window in Melee frames (timing metadata, not a collider); HB-DESIGN = the owner-accepted Kamehameha / KiBlast / Counter; HB-GENERATED is never allowed (tools/remake_hb.py check fails).', '',
+          '| move | HB | strike (Melee frames) | IASA | damage | angle | BKB/KBG | timing / pose |',
+          '|---|---|---|---|---|---|---|---|']
+    for m in moves:
+        L.append('| %s | %s | %s | %s | %s | %s | %s/%s | %s |' % (
+            m['move'], m['hb'], m['strike'] if m['strike'] is not None else '-', m['iasa'], m['damage'], m['angle'], m['bkb'], m['kbg'],
+            (m['timing'] + ' ' + m['pose_review']).replace('|', '/')))
+    ap = PORT / 'remake-applied.json'
+    if ap.exists():
+        rep = json.loads(ap.read_text(encoding='utf-8'))['rows']
+        L += ['', '## Remake picks applied (remake-picks.json x remake-rows.json)', '',
+              '`keep` = the row already played the picked clip (its tuned crop stays); `remake` = re-specified from the pick at the clip own speed; GAP / KEEP slots have no pick and keep their current clip (see REMAKE-CANDIDATES.md).', '',
+              '| slot | row | clip | action | note |', '|---|---|---|---|---|']
+        for r in rep:
+            L.append('| %s | %s | %s | %s | %s |' % (r['slot'], r['row'], r['clip'] or '-', r['action'], r['why']))
     L += ['', '## Visual gaps (with plan)', '',
           '- Shading: engine toon ramp (bands, cool shadow tint, edge darkening). The XV2 DYT palettes were read (63 DYT textures, 128x128 DXT1; e.g. Bust left/right edge means (0.02,0.08,0.01) / (0.22,0.20,0.07)): they are dark per-material colour tables whose row/column meaning is not decoded, not a lighting tint, so `toon.shadow_tint` stays the designed cool tint. Open: decode the DYT line lookup.',
           '- Eyes/face: XV2 composes eyes from separate textures; the atlas carries a baked default. Open: bake the source eye layer into the atlas.',

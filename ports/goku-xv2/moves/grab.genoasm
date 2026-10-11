@@ -1,8 +1,8 @@
+# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.
+# The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
 # Authored capture hitbox on the translation joint: 3.6 radius, 6.5 up and 6.5 forward, element 8 (capture), clank on, rebound off.
 PUT ANIM_RATE 1.0
 wait 8
-hitbox slot=0 joint=@FLOOR@ damage=0 size=3.6015625 x=0 y=6.5 z=6.5 angle=361 kbg=100 fkb=0 bkb=0 element=8 item_hit=1 clank=1 sfx_kind=2
 wait 8
-clear_hitboxes
 wait 12
 iasa

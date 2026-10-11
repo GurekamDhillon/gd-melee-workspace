@@ -1,26 +1,17 @@
+# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.
+# The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
 # PICK provisional (2026-10-09): Dragon Rush follow-up flurry, entered by the combo route Rush>RushCombo on hit. Clip GOK_ATC_023 (BAC 427,
 # hit f10) from f4. Three strikes: f6 and f13 are string hits (fixed knockback, +hitstun), f21 the launch (45 degrees, kills about 130%).
 PUT ANIM_RATE 1.0
 wait_until 1
 sfx behavior=1 sfx_id=166 volume=127 panning=64
 wait_until 6
-hitbox slot=0 joint=@HAND_L@ damage=3 size=3.4 x=0 y=0 z=0 angle=361 kbg=60 fkb=15 bkb=0
-hitbox slot=1 joint=@ARM_L@ damage=2 size=2.6 x=0 y=0 z=0 angle=361 kbg=60 fkb=15 bkb=0
-HBSTUN 3 10
 wait_until 9
-clear_hitboxes
 wait_until 13
 sfx behavior=1 sfx_id=166 volume=127 panning=64
-hitbox slot=0 joint=@HAND_R@ damage=3 size=3.4 x=0 y=0 z=0 angle=361 kbg=60 fkb=15 bkb=0
-hitbox slot=1 joint=@ARM_R@ damage=2 size=2.6 x=0 y=0 z=0 angle=361 kbg=60 fkb=15 bkb=0
-HBSTUN 3 10
 wait_until 16
-clear_hitboxes
 wait_until 21
 sfx behavior=1 sfx_id=164 volume=127 panning=64
-hitbox slot=0 joint=@FOOT_R@ damage=8 size=4.2 x=0 y=0 z=0 angle=45 kbg=85 fkb=0 bkb=45
-hitbox slot=1 joint=@LEG_R@ damage=6 size=3.2 x=0 y=0 z=0 angle=45 kbg=80 fkb=0 bkb=40
 wait_until 25
-clear_hitboxes
 wait_until 34
 iasa

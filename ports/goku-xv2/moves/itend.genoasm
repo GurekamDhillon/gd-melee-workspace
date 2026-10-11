@@ -1,9 +1,9 @@
+# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.
+# The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
 # PICK provisional (2026-10-09): Instant Transmission reappear (XV2 skill ESC 001_GOK_KUR f70-106, 36 Melee frames).
 # A small reappear hitbox (the burst as he arrives): one sphere on the chest, 4% flinch, frames 1-4, then nothing.
 PUT ANIM_RATE 1.0
 wait_until 1
-hitbox slot=0 joint=@CHEST@ damage=4 size=3.4 x=0 y=0 z=0 angle=361 kbg=40 fkb=0 bkb=20
 wait 4
-clear_hitboxes
 wait_until 28
 iasa

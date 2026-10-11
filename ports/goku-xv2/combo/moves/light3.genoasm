@@ -1,3 +1,5 @@
+# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.
+# The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
 # COMBO (geno 11): XV2 light string hit 3. Clip GOK_ATC_017 = BAC GOK_PLAYER 302 (BCM 0/18/3/3). BAC hit f12 dur 4 -> wait_until 12, 4 frames.
 # The step is held through the hit window (XV2's movement record ends at the hit frame; held 4 frames longer).
 # Limb: foot.L reaches +9.04 Z (chest-relative) at f12 (combo/limbs.py). String hit: set knockback (fkb 10, kbg 60: the same push at every percent, as fighting-game string hits and many Ultimate
@@ -14,14 +16,10 @@ GET ra_f:0 FACING
 MUL ra_f:0 1.2
 PUT GROUND_VEL ra_f:0
 wait_until 12
-hitbox slot=0 joint=@FOOT_L@ damage=4 size=3.6 x=0 y=0 z=0 angle=361 kbg=60 fkb=10 bkb=0
-hitbox slot=1 joint=@CHEST@ damage=4 size=3.0 x=0 y=0 z=0 angle=361 kbg=60 fkb=10 bkb=0
-HBSTUN 3 15
 GET ra_f:0 FACING
 MUL ra_f:0 1.2
 PUT GROUND_VEL ra_f:0
 wait_until 16
 PUT GROUND_VEL 0
-clear_hitboxes
 wait_until 35
 iasa

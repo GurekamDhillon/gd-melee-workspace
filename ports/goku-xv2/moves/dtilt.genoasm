@@ -1,13 +1,11 @@
+# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.
+# The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
 # PICK: provisional (attack-feel pass 2026-10-08). XV2 BAC 370 (low slide kick): low forward; peak f17 on f6, pops up
 # Source: BAC 370 clip GOK_ATC_020_S, strike f17; crop from f11. Numbers are Melee design values, not XV2 data.
 PUT ANIM_RATE 1.0
 wait_until 4
 sfx behavior=1 sfx_id=165 volume=127 panning=64
 wait_until 6
-hitbox slot=0 joint=@FOOT_R@ damage=9 size=2.40 x=0.00 y=0.00 z=0.00 angle=75 kbg=110 fkb=0 bkb=25
-hitbox slot=1 joint=@LEG_R@ damage=7 size=2.00 x=0.00 y=0.00 z=0.00 angle=80 kbg=100 fkb=0 bkb=25
-hitbox slot=2 joint=@FLOOR@ damage=7 size=2.27 x=0.00 y=1.60 z=5.00 angle=80 kbg=100 fkb=0 bkb=25
 wait 4
-clear_hitboxes
 wait_until 22
 iasa

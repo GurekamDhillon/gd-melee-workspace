@@ -5,6 +5,7 @@ local M = {}
 local FULL = 60   -- charge units: 60 = the cap (full), tiered by the chant below
 local SUPER_KI = 100                -- full ki + full charge = Super Kamehameha
 local VANISH_KI = 10                -- a Z-vanish counter costs this
+local KI_MAX = 100                  -- the meter's cap (combo.json meter): Down B hold charges only below it
 -- Charge model (owner, 2026-10-10: it must behave like the natives). Ground = Samus Charge Shot, air = Mewtwo Shadow Ball. Cited from the decomp:
 --  * B once enters the move (ftSs_SpecialN_Enter, 343): a Start phase with no input and no charging (ftSs_SpecialNStart_Anim), then the Hold loop (344)
 --    which charges BY ITSELF, one step every x20+1 frames (ftSs_SpecialNHold_Anim: mv.ss.unk3.x4 > x20 -> u.ss.x2230 += 1). Here: START frames of lag,
@@ -117,7 +118,10 @@ end
 function M.counter_frame(ctx)
   -- down B tap = Z-vanish counter, which costs ki: with too little ki it is only the blink (hold = ki charge)
   if ctx.self.action_frame == 2 and ctx.self.ki and ctx.self.ki < VANISH_KI and not ctx.input.special_held then ctx.go("auto") return end -- @KI
-  if ctx.self.action_frame == 12 and ctx.input.special_held then ctx.go("KiCharge") return end
+  -- hold = the XV2 Energy Charge (skill 591): usable only while ki < 100 (at full meter the hold stays the vanish blink)
+  local full = false
+  full = ctx.self.ki >= KI_MAX -- @KI
+  if ctx.self.action_frame == 12 and ctx.input.special_held and not full then ctx.go("KiCharge") return end
 end
 function M.riposte_enter(ctx)
   ctx.turn()  -- Z-vanish: reappear facing the attacker
@@ -130,8 +134,19 @@ end
 function M.kicharge_frame(ctx)
   if ctx.self.anim_ended then ctx.loop() end -- hold the charge clip until released
   if not ctx.input.special_held then ctx.go("auto") return end
+  if ctx.self.ki >= KI_MAX then ctx.go("auto") return end -- @KI the charge ends at a full meter (XV2: usable only while ki < 100)
   if ctx.ki then ctx.ki(0.8) end -- @KI 0 to 100 in about two seconds of holding
 end
+-- Homing dash strike (XV2 BAC 476, Guard+Heavy; here Side B out of the shield, ki cost on the route): the dash is Lua like the Rush; XV2 homes on the
+-- target for the first 14 frames (engine.homing_movement), which Fighter Lua cannot read (no opponent query), so it dashes straight ahead at the same pace.
+function M.homing_enter(ctx)
+  ctx.velocity(2.8, 0)
+end
+function M.homing_frame(ctx)
+  local f = ctx.self.action_frame
+  if f == 14 then ctx.velocity(0.7, 0) end
+  if f == 33 then ctx.velocity(0.3, 0) end
+end
 -- Not called: names the cape reappear states so the offline reachability check sees them (the engine picks them by behaviour order).
-function M.it_targets(ctx) ctx.go("ITEnd") ctx.go("ITEndAir") ctx.go("RushCombo") ctx.go("KameSuper") end
+function M.it_targets(ctx) ctx.go("ITEnd") ctx.go("ITEndAir") ctx.go("RushCombo") ctx.go("KameSuper") ctx.go("Homing") end
 return M

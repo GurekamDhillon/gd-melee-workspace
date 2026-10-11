@@ -1,0 +1,8 @@
+# HB-NONE (remake phase 1, 2026-10-11): no hitbox on purpose; the owner authors it by hand in the Workbench.
+# PICK (owner, remake phase 1): Homing dash strike = XV2 BAC 476 (Guard+Heavy, 100 stamina): BOOST_F_00 f0-19, then ATC_008 from f20, 66 frames.
+# Side B out of the shield (combo.json route Guard>Homing, ki cost on the route). The XV2 strike lands f33-38 (gameplay.json "strike"); the dash is Lua (homing_enter/frame).
+PUT ANIM_RATE 1.0
+wait_until 1
+sfx behavior=1 sfx_id=165 volume=127 panning=64
+wait_until 60
+iasa

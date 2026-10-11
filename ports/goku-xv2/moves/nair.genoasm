@@ -1,3 +1,5 @@
+# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.
+# The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
 # PICK: provisional (attack-feel pass 2026-10-08). XV2 heavy string 3 (BAC 312, first clip): split kick as a sex kick; clean f6-9, late f10-23
 # Source: BAC 312 clip GOK_ATC_007, strike f15; crop from f9. Numbers are Melee design values, not XV2 data.
 PUT ANIM_RATE 1.0
@@ -6,14 +8,9 @@ cmd_var idx=0 value=1
 wait_until 4
 sfx behavior=1 sfx_id=165 volume=127 panning=64
 wait_until 6
-hitbox slot=0 joint=@FOOT_R@ damage=12 size=2.67 x=0.00 y=0.00 z=0.00 angle=361 kbg=100 fkb=0 bkb=20
-hitbox slot=1 joint=@FOOT_L@ damage=10 size=2.40 x=0.00 y=0.00 z=0.00 angle=361 kbg=100 fkb=0 bkb=20
 wait 4
-clear_hitboxes
 wait_until 10
-hitbox slot=0 joint=@FOOT_R@ damage=8 size=2.27 x=0.00 y=0.00 z=0.00 angle=361 kbg=100 fkb=0 bkb=10
 wait 14
-clear_hitboxes
 wait_until 26
 cmd_var idx=0 value=0
 wait_until 40
