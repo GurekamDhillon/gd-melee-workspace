@@ -33,7 +33,7 @@ fi
 # 2. The game-side adapter only READS netplay state: every Netplay_ name in it is in the read allow-list. All writes stay in
 #    gmfrontend_online.inc, where the state machine is.
 ADAPTER="$G/src/melee/gm/gmfrontend_atlas_online.inc"
-READS="LobbyInfo LobbyPlayer LobbyMe LobbyPhase LobbyStage LobbyStageGroup LobbyStageOpen IsHost RoomCode Ping PlayerName FighterName MenuStatus Turbo Envoy EnvoyBlock StageMode TurboPref EnvoyPref RandomStatus RandomSeconds CodeChar CodeSlot"
+READS="LobbyInfo LobbyPlayer LobbyMe LobbyPhase LobbyStage LobbyStageGroup LobbyStageOpen IsHost RoomCode Ping PlayerName FighterName MenuStatus Turbo Envoy EnvoyBlock StageMode TurboPref EnvoyPref RandomStatus RandomSeconds CodeChar CodeSlot ModsLine ModsRow ModsRowCount"
 if [ -f "$ADAPTER" ]; then
     for name in $(grep -o -E 'Netplay_[A-Za-z]+' "$ADAPTER" | sort -u | sed 's/^Netplay_//'); do
         case " $READS " in *" $name "*) ;; *) bad "the adapter calls Netplay_$name, which is not a read (writes belong in gmfrontend_online.inc)";; esac
@@ -90,7 +90,7 @@ sites() { awk '/^static [^;]*\(/ { fn = $0; sub(/\(.*/, "", fn); n = split(fn, a
                /^extern/ { next }
                { line = $0; while (match(line, /Ui_Room[A-Za-z]+\(/)) { print fn ":" substr(line, RSTART, RLENGTH - 1); line = substr(line, RSTART + RLENGTH) } }' "$1"; }
 if [ -f "$ADAPTER" ]; then
-    OK_ADAPTER=" fa_room_on:Ui_RoomOpen fa_room_end:Ui_RoomEnd fa_room_begin:Ui_RoomBegin fa_room_grid:Ui_RoomGridFor fa_room_grid:Ui_RoomGridCell fa_room_players:Ui_RoomPlayerName fa_room_players:Ui_RoomPlayer fa_room_common:Ui_RoomSetStr fa_room_common:Ui_RoomSetInt fa_room_submit:Ui_RoomSetStr fa_room_submit:Ui_RoomSetInt fa_room_submit:Ui_RoomStageCount fa_room_submit:Ui_RoomStage fa_room_submit:Ui_RoomGridFor fa_room_submit:Ui_RoomFrame fa_room_leaving:Ui_RoomFreeze fa_room_leaving:Ui_RoomSetInt fa_room_leaving:Ui_RoomFrame fa_room_bits:Ui_RoomPollName "
+    OK_ADAPTER=" fa_room_on:Ui_RoomOpen fa_room_end:Ui_RoomEnd fa_room_begin:Ui_RoomBegin fa_room_grid:Ui_RoomGridFor fa_room_grid:Ui_RoomGridCell fa_room_players:Ui_RoomPlayerName fa_room_players:Ui_RoomPlayer fa_room_common:Ui_RoomSetStr fa_room_common:Ui_RoomSetInt fa_room_submit:Ui_RoomSetStr fa_room_submit:Ui_RoomSetInt fa_room_submit:Ui_RoomStageCount fa_room_submit:Ui_RoomStage fa_room_submit:Ui_RoomGridFor fa_room_submit:Ui_RoomFrame fa_room_leaving:Ui_RoomFreeze fa_room_leaving:Ui_RoomSetInt fa_room_leaving:Ui_RoomFrame fa_room_bits:Ui_RoomPollName fa_room_common:Ui_RoomMod fa_room_common:Ui_RoomModCount "
     for site in $(sites "$ADAPTER" | sort -u); do
         case "$OK_ADAPTER" in *" $site "*) ;; *) bad "$site: a Ui_Room call in an unexpected function of the adapter";; esac
     done
