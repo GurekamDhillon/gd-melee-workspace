@@ -19,7 +19,7 @@ fighter's own, not Mario's:
 Everything here is disc-derived: the output goes under _build/ (git-ignored), never into a repository. What is NOT carried is listed in
 define_report.json (the effect file, the sound bank, the results/intro demo clips, the select art).
 
-Wired: `captain`, `fox`, `falco`, `marth` (FIGHTERS below); another retail fighter needs its template in the engine first (geno.md 22.10, 22.13: the checklist).
+Wired: `captain`, `fox`, `falco`, `marth`, `puff`, `sheik`, `zelda` (the last two are a pair: each names the other in define.transform_partner) (FIGHTERS below); another retail fighter needs its template in the engine first (geno.md 22.10, 22.13: the checklist).
 """
 import argparse
 import json
@@ -36,6 +36,22 @@ sys.path.insert(0, ROOT)
 from tools.mex_port import mex_hsd  # noqa: E402
 import figatree as F  # noqa: E402
 import attr_apply  # noqa: E402
+
+# structs embedded in a special-attribute block: [(byte offset inside, is_int)]
+NESTED = {"ReflectDesc": [(0, True), (4, True), (8, False), (12, False), (16, False), (0x14, False), (0x18, False), (0x1C, False), (0x20, True)]}   # lb/types.h, 0x24 bytes
+def _words(size, ints):
+    """every 32-bit word of a special-attribute block of `size` bytes as (offset, is_int); the offsets in `ints` (and any padding or unknown word the
+    caller lists there) are ints, the rest floats. For structs whose decomp header has padding arrays, unions of unknown type or no offset comments."""
+    return [(o, o in ints) for o in range(0, size, 4)]
+
+
+# Jigglypuff (ftPurinAttributes, 0x100): ints at x14, x1C..x38, the three padding words (0x48, 0x60, 0x64, 0xB0, 0xF8, 0xFC), x70, x9C and the two unknown words xE8, xEC
+PURIN_EXT = _words(0x100, {0x14, 0x1C, 0x20, 0x24, 0x28, 0x2C, 0x30, 0x34, 0x38, 0x48, 0x60, 0x64, 0x70, 0x9C, 0xB0, 0xE8, 0xEC, 0xF8, 0xFC})
+# Sheik (ftSeakAttributes, 0x74): ints at x38 and x50
+SEAK_EXT = _words(0x74, {0x38, 0x50})
+# Zelda (ftZelda_DatAttrs, 0xA8): ints at x4, x10..x1C, x28, x30, x48, x60, then the embedded ReflectDesc at 0x84 (0x24 bytes; ints at +0 +4 +0x20)
+ZELDA_EXT = _words(0x84, {0x4, 0x10, 0x14, 0x18, 0x1C, 0x28, 0x30, 0x48, 0x60}) + [(0x84 + o, i) for o, i in NESTED["ReflectDesc"]]
+
 
 # name -> everything that is specific to the fighter
 FIGHTERS = {
@@ -73,6 +89,28 @@ FIGHTERS = {
                        + [(0x64, True), (0x68, False), (0x6C, False), (0x70, False), (0x74, False)]
                        + [(0x78, False), (0x7C, False), (0x80, True), (0x84, True), (0x88, True), (0x8C, True), (0x90, False), (0x94, False)]),
     },
+    "puff": {
+        "kind": 15, "code": "Pr", "data": "ftDataPurin", "rows": 327, "prefix": "GnPuff", "key": "geno-puff", "name": "Geno Jigglypuff",
+        "motions": 373, "dir": "ftPurin", "attrs_struct": "ftPurinAttributes", "ext_fields": PURIN_EXT,
+        # ftPr_Init_CostumeStrings: Nr, Re, Bu, Gr, Ye (team: red = Re, blue = Bu, green = Gr)
+        "costumes": [("Nr", "Default", None), ("Re", "Red", "red"), ("Bu", "Blue", "blue"), ("Gr", "Green", "green"), ("Ye", "Yellow", None)],
+        "ai": "purin", "kirby": "retail:purin", "plan_file": "GnPuff_plan.json", "thrown_as": "purin",
+    },
+    "sheik": {
+        "kind": 7, "code": "Sk", "data": "ftDataSeak", "rows": 317, "prefix": "GnSheik", "key": "geno-sheik", "name": "Geno Sheik",
+        "motions": 365, "dir": "ftSeak", "attrs_struct": "ftSeakAttributes", "ext_fields": SEAK_EXT,
+        # ftSk_Init_CostumeStrings: Nr, Re, Bu, Gr, Wh (team: red = Re, blue = Bu, green = Gr)
+        "costumes": [("Nr", "Default", None), ("Re", "Red", "red"), ("Bu", "Blue", "blue"), ("Gr", "Green", "green"), ("Wh", "White", None)],
+        "ai": "seak", "kirby": "retail:seak", "plan_file": "GnSheik_plan.json", "thrown_as": "seak",
+        "partner": "zelda",   # Down B on Zelda / Sheik changes into the partner define: a pair ships two packages naming each other (docs/geno.md 22.15)
+    },
+    "zelda": {
+        "kind": 19, "code": "Zd", "data": "ftDataZelda", "rows": 311, "prefix": "GnZelda", "key": "geno-zelda", "name": "Geno Zelda",
+        "motions": 359, "dir": "ftZelda", "attrs_struct": "ftZelda_DatAttrs", "ext_fields": ZELDA_EXT,
+        "costumes": [("Nr", "Default", None), ("Re", "Red", "red"), ("Bu", "Blue", "blue"), ("Gr", "Green", "green"), ("Wh", "White", None)],
+        "ai": "zelda", "kirby": "retail:zelda", "plan_file": "GnZelda_plan.json", "thrown_as": "zelda",
+        "partner": "sheik",
+    },
 }
 WAIT_MOTION = 14   # ftCo_MS_Wait
 
@@ -98,8 +136,7 @@ def geno_attr_names():
     return [(n, int(k)) for n, k in re.findall(r"GENO_ATTR\((\w+),\s*(\d)\)", blk)]
 
 
-# structs embedded in a special-attribute block: [(byte offset inside, is_int)]
-NESTED = {"ReflectDesc": [(0, True), (4, True), (8, False), (12, False), (16, False), (0x14, False), (0x18, False), (0x1C, False), (0x20, True)]}   # lb/types.h, 0x24 bytes
+
 
 
 def ext_layout(struct_name, types_h):
@@ -299,6 +336,7 @@ def main():
     ap.add_argument("--out", required=True, help="fresh output folder (under a git-ignored _build/)")
     ap.add_argument("--key", help="define key (default: the fighter's)")
     ap.add_argument("--name", help="display name")
+    ap.add_argument("--partner-key", help="zelda / sheik: the define key of the other member of the pair (default: the partner fighter's key); the two packages must name each other")
     ap.add_argument("--red-file", default="usd", choices=("usd", "dat"), help="the red costume of Captain Falcon exists as PlCaRe.usd (English) and PlCaRe.dat (Japanese)")
     ap.add_argument("--no-scripts", action="store_true", help="do not write script overlays (the template's scripts run)")
     a = ap.parse_args()
@@ -400,7 +438,7 @@ def main():
 
     entry = {
         "define": {"key": a.key or spec["key"], "name": a.name or spec["name"], "base": "none", "common": "melee.common.v1", "resources": "mod:files",
-                   "template": a.fighter},
+                   "template": a.fighter, **({"transform_partner": a.partner_key or FIGHTERS[spec["partner"]]["key"]} if spec.get("partner") else {})},
         "fighter": {"plan": spec.get("plan_file", "plan.json"), "animation": prefix + "AJ.dat", "costumes": costumes},
         "attributes": attributes,
         "special_attributes": special,
