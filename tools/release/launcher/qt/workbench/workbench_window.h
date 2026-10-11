@@ -23,6 +23,8 @@ public:
     // Returns zero while initializing/busy or after shutdown.
     quint16 serveForBlender();
     void setBlenderSetting(const QString &path);
+    // Shown as the tooltip of the game status chip: which exe the engine starts.
+    void setGameExeInfo(const QString &text);
     QString statusText() const;
     // Async rebuild lane: connect progress here and cancellation to the job,
     // bypassing the serial command queue. percent < 0 means indeterminate.

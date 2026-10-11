@@ -89,10 +89,35 @@ QLabel *caption(const QString &text) {
     auto palette = label->palette(); palette.setColor(QPalette::WindowText, atlas::colour("muted")); label->setPalette(palette);
     return label;
 }
+// The small button beside a field that restores it to the value the running game has. Hidden until the
+// field differs from the last build.
+QToolButton *makeRevert() {
+    auto *button = new QToolButton; button->setText(QStringLiteral("↺")); button->setAutoRaise(true); button->hide();
+    button->setFocusPolicy(Qt::TabFocus); button->setCursor(Qt::PointingHandCursor);
+    button->setAccessibleName(t("Revert to last build", "Volver al valor compilado"));
+    button->setStyleSheet(QString("QToolButton { color: %1; border: 0; padding: 0 4px; font-size: 16px; }").arg(atlas::colour("sun").name()));
+    return button;
+}
+QString shownValue(const QString &key, const QJsonValue &value) {
+    if (value.isString()) return value.toString();
+    if (key == "ground" || key == "air") return value.toBool() || value.toInt() ? t("on", "on") : t("off", "off");
+    if (key == "end_frame") return value.toInt() <= 0 ? t("Not cleared", "Sin limpiar") : QString::number(value.toInt() - 1);
+    return QString::number(value.toDouble(), 'g', 6);
+}
+void markField(QWidget *field, QToolButton *button, bool changed, const QJsonValue &was, const QString &key) {
+    if (!field || !button) return;
+    button->setVisible(changed); field->setProperty("changed", changed);
+    button->setToolTip(changed ? t("Changed since last build: was %1", "Cambiado desde la última compilación: era %1").arg(shownValue(key, was)) : QString{});
+    field->setAttribute(Qt::WA_StyledBackground, true);
+    field->setStyleSheet(changed ? QString("#%1 { border-left: 3px solid %2; padding-left: 6px; }").arg(field->objectName(), atlas::colour("sun").name()) : QString{});
+}
 QWidget *labelled(const QString &label, QWidget *editor) {
     auto *field = new QWidget;
     auto *layout = new QVBoxLayout(field); layout->setContentsMargins(0, 0, 0, 0); layout->setSpacing(6);
-    auto *heading = caption(label); heading->setBuddy(editor); layout->addWidget(heading); layout->addWidget(editor);
+    auto *heading = caption(label); heading->setBuddy(editor);
+    auto *head = new QHBoxLayout; head->setContentsMargins(0, 0, 0, 0); head->setSpacing(4);
+    head->addWidget(heading, 1); head->addWidget(makeRevert());
+    layout->addLayout(head); layout->addWidget(editor);
     editor->setMinimumWidth(0); editor->setMinimumHeight(36);
     editor->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed);
     return field;
@@ -293,6 +318,7 @@ void OutlinerPanel::updatePresentation() {
 }
 
 InspectorPanel::InspectorPanel(QWidget *parent) : QWidget(parent) {
+    installWheelGuard();
     setObjectName("wbInspector"); setAccessibleName(t("Inspector", "Inspector"));
     auto *outer = new QVBoxLayout(this); outer->setContentsMargins(0, 0, 0, 0);
     auto *scroll = new QScrollArea; scroll->setWidgetResizable(true); scroll->setFrameShape(QFrame::NoFrame);
@@ -318,7 +344,7 @@ InspectorPanel::InspectorPanel(QWidget *parent) : QWidget(parent) {
     joint_ = new QComboBox; joint_->setObjectName("wbHitboxJoint"); joint_->setEditable(true); joint_->setInsertPolicy(QComboBox::NoInsert);
     auto *bone = joint_->lineEdit(); bone->setObjectName("wbHitbox_bone"); editors_.insert("bone", bone);
     bone->setAccessibleName(t("Bone", "Hueso")); joint_->setAccessibleName(t("Joint", "Articulación"));
-    layout->addWidget(labelled(t("Joint", "Articulación"), joint_));
+    layout->addWidget(track("bone", labelled(t("Joint", "Articulación"), joint_)));
     connect(bone, &QLineEdit::editingFinished, this, [this, bone] { setField("bone", bone->text()); });
     connect(joint_, &QComboBox::activated, this, [this](int) { setField("bone", joint_->currentText()); });
     auto *grid = new QGridLayout; grid->setHorizontalSpacing(12); grid->setVerticalSpacing(12); grid->setColumnStretch(0, 1); grid->setColumnStretch(1, 1);
@@ -335,7 +361,7 @@ InspectorPanel::InspectorPanel(QWidget *parent) : QWidget(parent) {
             if (edit->cleanText() == locale.toString(stored, 'f', edit->decimals())) return;
             setField(key, edit->value());
         });
-        return labelled(label, edit);
+        return track(key, labelled(label, edit));
     };
     const auto integer = [this](const QString &key, const QString &label, int minimum, int maximum = std::numeric_limits<int>::max()) {
         auto *edit = new QSpinBox; edit->setObjectName("wbHitbox_" + key); edit->setAccessibleName(label);
@@ -345,7 +371,7 @@ InspectorPanel::InspectorPanel(QWidget *parent) : QWidget(parent) {
         connect(edit, &QSpinBox::editingFinished, this, [this, edit, key] {
             setField(key, key == "end_frame" && edit->value() >= 0 ? edit->value() + 1 : edit->value()); // shown as the last active frame
         });
-        return labelled(label, edit);
+        return track(key, labelled(label, edit));
     };
     grid->addWidget(integer("start_frame", t("First active frame", "Primer cuadro activo"), 0), 0, 0);
     grid->addWidget(integer("end_frame", t("Last active frame", "Último cuadro activo"), -1), 0, 1);
@@ -365,14 +391,16 @@ InspectorPanel::InspectorPanel(QWidget *parent) : QWidget(parent) {
                                                      : t("%1 · unused code", "%1 · código sin uso").arg(value), value);
     element->setToolTip(t("Source element code (0–31); 0–16 are the retail elements", "Código de elemento del script (0–31); 0–16 son los elementos originales")); editors_.insert("element", element);
     connect(element, &QComboBox::activated, this, [this, element](int) { setField("element", element->currentData()); });
-    grid->addWidget(labelled(t("Element", "Elemento"), element), 3, 1);
+    grid->addWidget(track("element", labelled(t("Element", "Elemento"), element)), 3, 1);
     grid->addWidget(integer("shield", t("Shield damage", "Daño al escudo"), -128, 127), 4, 0);
     grid->addWidget(integer("slot", t("Slot", "Casilla"), 0, kHitboxEditableSlots - 1), 4, 1);
     const auto toggle = [this](const QString &key, const QString &label, const QString &tip) {
         auto *box = new QCheckBox(label); box->setObjectName("wbHitbox_" + key); box->setToolTip(tip);
         box->setFont(atlas::font(atlas::Role::Body14)); editors_.insert(key, box);
         connect(box, &QCheckBox::clicked, this, [this, key](bool on) { setField(key, on ? 1 : 0); });
-        return box;
+        auto *wrap = new QWidget; auto *row = new QHBoxLayout(wrap); row->setContentsMargins(0, 0, 0, 0);
+        row->addWidget(box, 1); row->addWidget(makeRevert());
+        return track(key, wrap);
     };
     grid->addWidget(toggle("ground", t("Hits grounded targets", "Golpea en el suelo"),
         t("Off = air-only hitbox (hit_ground=0)", "Apagado = solo en el aire (hit_ground=0)")), 5, 0);
@@ -406,6 +434,28 @@ InspectorPanel::InspectorPanel(QWidget *parent) : QWidget(parent) {
         QWidget::setTabOrder(previous, editors_.value(key)); previous = editors_.value(key);
     }
     QWidget::setTabOrder(previous, detailsToggle); clear();
+}
+QWidget *InspectorPanel::track(const QString &key, QWidget *field) {
+    field->setObjectName("wbField_" + key);
+    if (auto *button = field->findChild<QToolButton *>()) {
+        button->setObjectName("wbRevert_" + key);
+        reverts_.insert(key, button); fieldRows_.insert(key, field);
+        connect(button, &QToolButton::clicked, this, [this, key] {
+            if (row_.isEmpty() || ordinal_ < 0) return;
+            emit revertRequested({{"kind", "hitbox"}, {"row", row_}, {"ordinal", ordinal_}, {"field", key}});
+        });
+    }
+    return field;
+}
+void InspectorPanel::setChanges(const QString &row, const QJsonArray &changes) {
+    QMap<QString, QJsonValue> was;
+    for (const auto &entry : changes) {
+        const auto change = entry.toObject();
+        if (change.value("kind").toString() == "hitbox" && change.value("row").toString() == row && change.value("ordinal").toInt(-1) == ordinal_ && ordinal_ >= 0)
+            was.insert(change.value("field").toString(), change.value("was"));
+    }
+    for (auto it = reverts_.cbegin(); it != reverts_.cend(); ++it)
+        markField(fieldRows_.value(it.key()), it.value(), was.contains(it.key()), was.value(it.key()), it.key());
 }
 void InspectorPanel::showHitbox(const QString &row, const HitboxRef &h) {
     const QJsonObject values = {{"bone", h.joint}, {"damage", h.damage}, {"size", h.size}, {"x", h.x}, {"y", h.y}, {"z", h.z},
@@ -565,6 +615,11 @@ void AttributesPanel::setAttributes(const QJsonArray &attributes) {
             editors_.insert(name, edit);
             QString label = name; label.replace('_', ' '); if (!label.isEmpty()) label[0] = label.at(0).toUpper();
             auto *field = labelled(label, edit); fields_.insert(name, field);
+            field->setObjectName("wbField_" + name);
+            if (auto *button = field->findChild<QToolButton *>()) {
+                button->setObjectName("wbRevert_" + name); reverts_.insert(name, button);
+                connect(button, &QToolButton::clicked, this, [this, name] { emit revertRequested({{"kind", "attribute"}, {"name", name}}); });
+            }
             auto *unit = caption({}); unit->setObjectName("wbAttributeUnit_" + name); field->layout()->addWidget(unit);
             connect(edit, &QDoubleSpinBox::editingFinished, this, [this, name] { submit(name); });
         }
@@ -593,13 +648,24 @@ void AttributesPanel::setAttributes(const QJsonArray &attributes) {
         fieldsLayout_->addWidget(fields_.value(name));
     }
     for (const auto &name : fields_.keys()) if (!seen.contains(name)) {
-        editors_.remove(name); descriptors_.remove(name); values_.remove(name); delete fields_.take(name);
+        editors_.remove(name); descriptors_.remove(name); values_.remove(name); reverts_.remove(name); delete fields_.take(name);
     }
     if (ordered.isEmpty()) {
         auto *empty = caption(t("No fighter attributes are available", "No hay atributos de luchador disponibles"));
         fieldsLayout_->addWidget(empty); headings_.append(empty);
     }
     feedback_ = false;
+    setChanges(changes_);
+}
+void AttributesPanel::setChanges(const QJsonArray &changes) {
+    changes_ = changes;
+    QMap<QString, QJsonValue> was;
+    for (const auto &entry : changes) {
+        const auto change = entry.toObject();
+        if (change.value("kind").toString() == "attribute") was.insert(change.value("name").toString(), change.value("was"));
+    }
+    for (auto it = reverts_.cbegin(); it != reverts_.cend(); ++it)
+        markField(fields_.value(it.key()), it.value(), was.contains(it.key()), was.value(it.key()), it.key());
 }
 void AttributesPanel::submit(const QString &name) {
     if (feedback_ || !editors_.contains(name)) return;

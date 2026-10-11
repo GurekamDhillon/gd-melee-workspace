@@ -59,17 +59,22 @@ public:
     void setRoles(const QVector<RoleInfo> &roles);
     void setRowChecks(const QVector<Problem> &problems, bool checked = false);
     void setExplanation(const QString &text);
+    // Fields of the shown hitbox that differ from the last build: marker + revert button each.
+    void setChanges(const QString &row, const QJsonArray &changes);
 public slots:
     void setField(const QString &field, const QVariant &value);
 signals:
     void editRequested(const QString &command, const QJsonObject &args);
+    void revertRequested(const QJsonObject &args);
 private:
     void updateEditors(const QJsonObject &previous = {});
+    QWidget *track(const QString &key, QWidget *field);
     void updateRowChecks();
     QString row_;
     int ordinal_ = -1;
     QJsonObject values_;
-    QMap<QString, QWidget *> editors_;
+    QMap<QString, QWidget *> editors_, fieldRows_;
+    QMap<QString, QToolButton *> reverts_;
     QLabel *title_;
     QComboBox *joint_;
     QLabel *checksTitle_, *checks_, *explanation_;
@@ -84,7 +89,9 @@ class AttributesPanel : public QWidget {
 public:
     explicit AttributesPanel(QWidget *parent = nullptr);
     void setAttributes(const QJsonArray &attributes);
+    void setChanges(const QJsonArray &changes);
 signals:
+    void revertRequested(const QJsonObject &args);
     void editRequested(const QString &command, const QJsonObject &args);
     void requestRefresh();
 private:
@@ -94,6 +101,8 @@ private:
     QMap<QString, QDoubleSpinBox *> editors_;
     QMap<QString, QJsonObject> descriptors_;
     QJsonObject values_;
+    QJsonArray changes_;
+    QMap<QString, QToolButton *> reverts_;
     QVector<QWidget *> headings_;
     bool feedback_ = false;
 };

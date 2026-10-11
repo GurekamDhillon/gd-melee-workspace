@@ -5,6 +5,7 @@
 #include "timeline.h"
 #include "atlas_widgets.h"
 #include "panels.h"
+#include <QAbstractButton>
 #include <QProgressBar>
 #include "hub_panel.h"
 #include "blender_launch.h"
@@ -77,7 +78,7 @@ QJsonObject toolPayload(const QJsonObject &reply) {
 class UiTest : public QObject {
     Q_OBJECT
 private slots:
-    void initTestCase() { launcher::spanish = false; launcher::applyTheme(); }
+    void initTestCase() { qputenv("GW_BLENDER_DISCOVERY", "0"); launcher::spanish = false; launcher::applyTheme(); }
     void atlasWindowSmokeAndTimelineEditsUseSourceOrdinal() {
         QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); SlowEngine engine;
         Session s(dir.path(), &engine); s.data().reload(); registerAllCommands(s);
@@ -304,14 +305,14 @@ private slots:
         QTRY_VERIFY(socket.canReadLine());
         const auto retired = toolPayload(QJsonDocument::fromJson(socket.readLine()).object());
         QVERIFY(!retired.value("available").toBool()); QVERIFY(retired.value("revision").toInteger() > oldRevision);
-        QTRY_VERIFY(w.findChild<QLabel *>("wbBlenderState")->text().contains("waiting"));
+        QTRY_VERIFY(w.findChild<QAbstractButton *>("wbBlenderState")->text().contains("waiting"));
         w.runCommand("set_frame", {{"frame", 4}}); QTRY_VERIFY(!w.isBusy());
         const auto newRevision = s.uiView.value("revision").toInteger();
         QVERIFY(newRevision > retired.value("revision").toInteger()); QCOMPARE(s.uiView.value("row").toString(), QString("jab1"));
         socket.write(toolRequest("ui_view_state", {{"revision", newRevision}, {"pid", QCoreApplication::applicationPid()}}));
         QTRY_VERIFY(socket.canReadLine());
         QVERIFY(toolPayload(QJsonDocument::fromJson(socket.readLine()).object()).value("available").toBool());
-        QTRY_VERIFY(w.findChild<QLabel *>("wbBlenderState")->text().contains("synced"));
+        QTRY_VERIFY(w.findChild<QAbstractButton *>("wbBlenderState")->text().contains("linked"));
         w.runCommand("preview_clip", {{"clip", "SYN_ATC_002"}}); QTRY_VERIFY(!w.isBusy());
         QVERIFY(!s.uiView.value("available").toBool()); QVERIFY(s.uiView.value("revision").toInteger() > newRevision);
     }
@@ -354,14 +355,14 @@ private slots:
         wbtest::FakeEngine engine; Session s(dir.path(), &engine); s.data().reload(); registerAllCommands(s);
         WorkbenchWindow w(s); QTRY_VERIFY(!w.isBusy());
         auto *open = w.findChild<QPushButton *>("openInBlender"); QVERIFY(open); QVERIFY(open->isEnabled());
-        QVERIFY(w.findChild<QLabel *>("wbEngineStatus")->toolTip().contains("running"));
+        QVERIFY(w.findChild<QAbstractButton *>("wbEngineStatus")->toolTip().contains("running"));
         // Simulate death with no intervening command/snapshot. Refuse the restart
         // so this test never starts Blender, even on a developer's machine.
         engine.state = "stopped"; engine.failWith = "synthetic restart refused";
         open->click(); QTRY_VERIFY(!w.isBusy());
         int restarts = 0; for (const auto &call : engine.calls) if (call.first == "restart") ++restarts;
         QCOMPARE(restarts, 1); QVERIFY(w.statusText().contains("synthetic restart refused"));
-        QVERIFY(w.findChild<QLabel *>("wbEngineStatus")->toolTip().contains("not running"));
+        QVERIFY(w.findChild<QAbstractButton *>("wbEngineStatus")->toolTip().contains("not running"));
     }
     void shutdownWaitsForAnEventPumpingSocketCommand() {
         QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); Session s(dir.path(), nullptr);

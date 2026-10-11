@@ -171,7 +171,7 @@ void registerSaveCommands(Session &session) {
             return result;
         });
     add(session, "rebuild", "Run the project's configured rebuild argv", schema(),
-        [](const QJsonObject &, CommandContext &ctx) { return rebuild(ctx.session); });
+        [](const QJsonObject &, CommandContext &ctx) { auto result = rebuild(ctx.session); captureBaseline(ctx.session); return result; });
     add(session, "reload", "Restart the engine and reload fighter data", schema(),
         [](const QJsonObject &, CommandContext &ctx) {
             EngineBackend *engine = ctx.session.engine();
@@ -244,5 +244,6 @@ void registerAllCommands(Session &session) {
     registerSaveCommands(session);
     registerGroundCommands(session);
     registerAttributeCommands(session);
+    registerBaselineCommands(session);
 }
 } // namespace wb

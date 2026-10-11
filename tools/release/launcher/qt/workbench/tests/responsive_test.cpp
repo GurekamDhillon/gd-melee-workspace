@@ -98,6 +98,21 @@ private slots:
         if (narrow) QVERIFY2(tabsAt.y() > timelineAt.y() && tabs->width() > 520, qPrintable(QString("tabs %1,%2 w%3").arg(tabsAt.x()).arg(tabsAt.y()).arg(tabs->width())));
         else QVERIFY2(tabsAt.x() > timelineAt.x() + timeline->width() - 5, "inspector is a third column when wide");
         QVERIFY2(tabs->width() >= 300, "inspector is not squeezed");
+        // Tall window: the Move view spans the full width and Moves is the first tab of the lower strip.
+        auto *centreHost = bench->findChild<QWidget *>("wbCentreHost"); auto *movesRail = bench->findChild<QWidget *>("wbMovesRail");
+        QVERIFY(centreHost && movesRail);
+        const bool tall = bench->height() * 4 > bench->width() * 5;
+        if (tall) {
+            QVERIFY2(centreHost->mapTo(bench, QPoint(0, 0)).x() <= 2 && centreHost->width() >= bench->width() - 4,
+                     qPrintable(QString("Move view %1 wide in %2").arg(centreHost->width()).arg(bench->width())));
+            QCOMPARE(tabs->indexOf(movesRail), 0); QCOMPARE(tabs->tabText(0), QString("Moves"));
+            QVERIFY(tabs->tabText(1) == "Hitbox" && tabs->tabText(2) == "Attributes" && tabs->tabText(3) == "Checks" && tabs->tabText(4) == "Render");
+            auto *chip = bench->findChild<QWidget *>("wbMoveChip"); QVERIFY(chip && chip->isVisible() && !chip->property("text").toString().isEmpty());
+            QVERIFY2(timeline->mapTo(bench, QPoint(0, 0)).y() + timeline->height() < tabs->mapTo(bench, QPoint(0, 0)).y() + 1, "Moves/Inspector strip sits under the Move view");
+            QVERIFY2(tabs->width() >= bench->width() - 60, "lower strip is full width");
+        } else {
+            QCOMPARE(tabs->indexOf(movesRail), -1);
+        }
         // R4: the timeline panel hugs its rows.
         auto *plate = bench->findChild<QWidget *>("wbTimelinePlate"); QVERIFY(plate);
         QVERIFY2(plate->height() < timeline->sizeHint().height() + 260, qPrintable(QString("plate %1 for timeline %2").arg(plate->height()).arg(timeline->sizeHint().height())));
@@ -111,6 +126,7 @@ private slots:
             QVERIFY2(bad.isEmpty(), qPrintable(QString("tab %1: ").arg(tab) + bad.join("; ")));
         }
         tabs->setCurrentIndex(0);
+        if (tall) { tabs->setCurrentWidget(movesRail); QTest::qWait(60); const auto bad = clippedControls(bench, bench); QVERIFY2(bad.isEmpty(), qPrintable(bad.join("; "))); }
         const QByteArray dir = qgetenv("WB_RESP_SHOTS");
         if (!dir.isEmpty()) { QDir().mkpath(QString::fromLocal8Bit(dir)); QVERIFY(window.grab().save(QDir(QString::fromLocal8Bit(dir)).filePath(shot + ".png"))); }
     }
@@ -125,6 +141,11 @@ private slots:
         w.resize(1000, 800); QTRY_VERIFY(!beside()); QVERIFY(rebuild->mapTo(&w, QPoint(0, 0)).x() + rebuild->width() <= w.width());
         w.resize(1600, 900); QTRY_VERIFY(beside());
         w.resize(900, 1500); QTRY_VERIFY(!beside());
+        auto *rail = w.findChild<QWidget *>("wbMovesRail"); QVERIFY(rail);
+        QTRY_COMPARE(tabs->indexOf(rail), 0);
+        w.resize(1600, 900); QTRY_VERIFY(beside());
+        QTRY_COMPARE(tabs->indexOf(rail), -1); // landscape: the rail is a column again
+        QVERIFY(rail->mapTo(&w, QPoint(0, 0)).x() < 20);
     }
     void emptyStateAndDefaultRow() {
         QTemporaryDir dir; wbtest::makeSynthFighter(dir.path());

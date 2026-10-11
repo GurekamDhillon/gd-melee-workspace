@@ -22,6 +22,7 @@ public:
     CommandRegistry &registry();
     EngineBackend *engine(); // Borrowed; null for an offline session.
     GenoData &data();        // Lazily built from files(); reloaded after every applied commit.
+    std::unique_ptr<Session> baselineSession; // see baseline.cpp; reset when the baseline is recaptured
     bool agentProposals = false; // the MCP server sets true: agent edits are proposals until a human accepts
     QString currentRow;
     QJsonObject camera, overlays;

@@ -41,7 +41,8 @@ struct LaunchSpec {
     QProcessEnvironment environment;
 };
 LaunchSpec prepareLaunch(const QString &appDir, const QString &userDir,
-                         const Settings &settings, const Disc &disc);
+                         const Settings &settings, const Disc &disc,
+                         const QString &exeOverride = {});
 // The 32-bit game's environment on Linux. The launcher keeps its own Qt hygiene (its x86-64 Qt folder and
 // plugin paths never reach the game; neither does a stray LD_PRELOAD, which is nearly always a 64-bit
 // overlay), but it no longer discards the player's own library path: the game's lib/ comes first, then

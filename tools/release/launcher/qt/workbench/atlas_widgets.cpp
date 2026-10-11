@@ -1,7 +1,13 @@
 #include "atlas_widgets.h"
 #include "atlas.h"
 #include "window.h"
+#include <QAbstractScrollArea>
+#include <QSlider>
+#include <QAbstractSpinBox>
+#include <QApplication>
+#include <QComboBox>
 #include <QFocusEvent>
+#include <QWheelEvent>
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QLabel>
@@ -24,6 +30,30 @@ namespace wb {
 using launcher::t;
 namespace atlas = launcher::atlas;
 namespace {
+class WheelGuard final : public QObject {
+public:
+    using QObject::QObject;
+    bool eventFilter(QObject *object, QEvent *event) override {
+        if (event->type() != QEvent::Wheel) return false;
+        auto *widget = qobject_cast<QWidget *>(object);
+        if (!widget || !(qobject_cast<QAbstractSpinBox *>(widget) || qobject_cast<QComboBox *>(widget) || qobject_cast<QSlider *>(widget))) return false;
+        if (widget->hasFocus()) return false;
+        widget->setFocusPolicy(Qt::StrongFocus);
+        for (QWidget *p = widget->parentWidget(); p; p = p->parentWidget())
+            if (auto *area = qobject_cast<QAbstractScrollArea *>(p)) {
+                // A fresh event for the viewport; the original is consumed here so the field never sees it.
+                auto *wheel = static_cast<QWheelEvent *>(event);
+                const QPointF local = area->viewport()->mapFromGlobal(wheel->globalPosition());
+                QWheelEvent forwarded(local, wheel->globalPosition(), wheel->pixelDelta(), wheel->angleDelta(), wheel->buttons(),
+                                      wheel->modifiers(), wheel->phase(), wheel->inverted(), wheel->source());
+                QCoreApplication::sendEvent(area->viewport(), &forwarded);
+                event->accept();
+                return true;
+            }
+        event->ignore();
+        return true;
+    }
+};
 constexpr int kRulerHeight = 36, kRowHeight = 40, kBarHeight = 28, kLegendHeight = 42;
 QPolygonF chamfer(const QRectF &r, qreal cut) {
     cut = std::min({cut, r.width() / 3, r.height() / 3});
@@ -200,6 +230,7 @@ void AtlasButton::paintEvent(QPaintEvent *) {
 }
 
 NumberField::NumberField(QWidget *parent) : QDoubleSpinBox(parent) {
+    installWheelGuard();
     atlas::initialize(); setProperty("atlasNumber", true); setFont(atlas::numberFont());
     setMinimumHeight(34); setKeyboardTracking(false); setAlignment(Qt::AlignRight);
 }
@@ -576,5 +607,11 @@ void TimelineView::paintEvent(QPaintEvent *) {
         p.setPen(atlas::colour("muted")); p.drawText(QPointF(legendX + 18, legendY + 12), item.first); legendX += entry;
     }
     if (hasFocus()) { p.setBrush(Qt::NoBrush); p.setPen(QPen(atlas::colour("ember"), 1)); p.drawRect(rect().adjusted(0, 0, -1, -1)); }
+}
+void installWheelGuard() {
+    static WheelGuard *guard = nullptr;
+    if (guard || !QCoreApplication::instance()) return;
+    guard = new WheelGuard(QCoreApplication::instance());
+    QCoreApplication::instance()->installEventFilter(guard);
 }
 } // namespace wb
