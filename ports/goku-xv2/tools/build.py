@@ -211,12 +211,14 @@ FX_ARTICLES = {'KameOrb': 'P_TrailGokuOrb', 'KameTap': 'P_TrailGokuBeam', 'KameM
                'KameFull': 'P_TrailGokuBeamBig', 'KameSuper': 'P_TrailGokuBeamSuper'}
 # state name -> [(frame, package, role, scale, end_event)]: ki aura while charging, vanish bursts, the rush trail
 FX_STATES = {
-    'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, 'state_exit'), (1, 'P_TrailGokuKameCharge', 'hand.R', 1.0, 'state_exit')],
-    'KameTap': [(5, 'P_TrailGokuKameTap', 'hand.R', 1.0, 'state_exit')],
-    'KameMid': [(6, 'P_TrailGokuKameMid', 'hand.R', 1.0, 'state_exit')],
-    'KameFull': [(8, 'P_TrailGokuKameFull', 'hand.R', 1.0, 'state_exit')],
+    # Kamehameha presentation: converted from XV2's own effects (tools/xv2_fx.py; KAMEHAMEHA.md section 3)
+    'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, 'state_exit'), (1, 'P_TrailGokuXKameCharge', 'hand.R', 1.0, 'state_exit')],
+    'KameTap': [(5, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.0, 'emitter_life'), (5, 'P_TrailGokuXKameTap', 'hand.R', 1.0, 'state_exit')],
+    'KameMid': [(6, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.0, 'emitter_life'), (6, 'P_TrailGokuXKameMid', 'hand.R', 1.0, 'state_exit')],
+    'KameFull': [(8, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.0, 'emitter_life'), (8, 'P_TrailGokuXKameFull', 'hand.R', 1.0, 'state_exit')],
     'KiCharge': [(1, 'P_TrailGokuAura', 'hips', 1.3, 'state_exit')],
-    'KameSuper': [(1, 'P_TrailGokuAura', 'hips', 1.1, 'state_exit'), (54, 'P_TrailGokuKameSuper', 'hand.R', 1.0, 'state_exit')],
+    'KameSuper': [(1, 'P_TrailGokuAura', 'hips', 1.1, 'state_exit'), (1, 'P_TrailGokuXKameSuperCharge', 'hand.R', 1.0, 'state_exit'),
+                  (54, 'P_TrailGokuXKameSuperMuzzle', 'hand.R', 1.0, 'emitter_life'), (54, 'P_TrailGokuXKameSuper', 'hand.R', 1.0, 'state_exit')],
     'Recovery': [(5, 'P_TrailGokuVanish', 'chest', 1.0, 'emitter_life')],
     'ITEnd': [(1, 'P_TrailGokuVanish', 'chest', 1.0, 'emitter_life')],
     'Counter': [(4, 'P_TrailGokuVanish', 'chest', 0.8, 'emitter_life')],
@@ -260,10 +262,13 @@ def write_fx(package, fighter, plan, cfg):
 
 def write_kame_audio(package, fighter):
     """The Kamehameha's own sounds (tools/kame_audio.py): .gnsnd clips in files/ bound as audio.voice rows on the retail ids the scripts play."""
-    from kame_audio import BINDINGS, OUT as AUDIO
-    if not (AUDIO/'GnKameFire.gnsnd').exists():
-        print('audio: _build/goku-xv2/audio missing (run tools/kame_audio.py); the Kamehameha plays no own sounds')
-        return
+    # XV2's own voice and SFX when converted (tools/xv2_audio.py, Japanese by default; run it with --lang en for the English lines), else the synthesised fallback
+    from xv2_audio import BINDINGS, OUT as AUDIO
+    if not (AUDIO/'GnKameSeShot.gnsnd').exists():
+        from kame_audio import BINDINGS, OUT as AUDIO
+        if not (AUDIO/'GnKameFire.gnsnd').exists():
+            print('audio: _build/goku-xv2/audio missing (run tools/xv2_audio.py); the Kamehameha plays no own sounds')
+            return
     rows = []
     for sid, clip in BINDINGS.items():
         shutil.copy2(AUDIO/(clip+'.gnsnd'), package/'files'/(clip+'.gnsnd'))

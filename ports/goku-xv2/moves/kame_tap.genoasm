@@ -4,6 +4,7 @@ PUT ANIM_RATE 1.0
 clear_hitboxes
 wait_until 5
 sfx behavior=1 sfx_id=200115 volume=127 panning=64
+sfx behavior=1 sfx_id=200118 volume=127 panning=64
 PUT ANIM_RATE 0.5
 hitbox slot=0 joint=@HAND_R@ damage=1.2 size=2.4 x=-1.82 y=-0.49 z=3.52 angle=361 kbg=60 fkb=8 bkb=0 element=2 shield=0
 REHIT 15 5

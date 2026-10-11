@@ -39,7 +39,7 @@ def main():
     off = '100' if a.visible else '30000'
     env = dict(os.environ)
     env.update({'GW_ROOT': str(MAIN), 'GW_MELEE': GAME, 'GW_BUILD_ROOT': BROOT,
-                'MELEE_MODS_DIR': str(WT / '_build/goku-xv2/author-source/package/mods'),
+                'MELEE_MODS_DIR': os.environ.get('KAME_MODS') or str(WT / '_build/goku-xv2/author-source/package/mods'),
                 'MELEE_SCENE': f'mode=lab;p1=geno:goku-xv2/hu;p2={a.vs}/cpu0;stage=fd;items=off;time=0',
                 'MELEE_PAD_SCRIPT': gen.as_posix(), 'MELEE_UNATTENDED': '1',
                 'MELEE_MAX_SECONDS': a.max_seconds, 'MELEE_LAB_UI': '0', 'MELEE_TURBO': '1' if a.turbo else '0',
