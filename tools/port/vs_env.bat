@@ -6,16 +6,14 @@ if not "%GW_VCVARSALL%"=="" goto :have_vcvars
 
 set "GW_VSWHERE="
 for %%P in ("%ProgramFiles(x86)%" "%ProgramFiles%") do (
-  if not defined GW_VSWHERE if exist "%%~P\Microsoft Visual Studio\Installer\vswhere.exe" set "GW_VSWHERE=%%~P\Microsoft Visual Studio\Installer"
+  if not defined GW_VSWHERE if exist "%%~P\Microsoft Visual Studio\Installer\vswhere.exe" set "GW_VSWHERE=%%~P\Microsoft Visual Studio\Installer\vswhere.exe"
 )
 set "GW_VSFOUND="
-rem Run vswhere from its own directory by bare name: a quoted path holding x86 parens breaks both
-rem cmd /c quote stripping and the for /f parentheses.
-if defined GW_VSWHERE (
-  pushd "%GW_VSWHERE%"
-  for /f "usebackq delims=" %%I in (`vswhere.exe -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "GW_VSFOUND=%%I"
-  popd
-)
+rem An absolute path also works when cmd disables current-directory executable lookup.
+rem CALL keeps for /f's cmd /c wrapper from stripping the executable's quotes.
+if not defined GW_VSWHERE goto :vswhere_done
+for /f "usebackq delims=" %%I in (`call "%GW_VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath 2^>nul`) do set "GW_VSFOUND=%%I"
+:vswhere_done
 rem vswhere missing or failing: probe the known layouts, newest first.
 if not defined GW_VSFOUND (
   for %%V in (18 2022 2019) do for %%E in (Community Professional Enterprise BuildTools) do for %%R in ("%ProgramFiles%" "%ProgramFiles(x86)%") do (

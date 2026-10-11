@@ -58,15 +58,26 @@ public:
 };
 
 
-// Counts frames the way the game does: "frame" seeks, "step" advances n; every call costs about 12 ms of latency.
+// Counts frames the way the game does: "frame" seeks, "step" advances n.
 class ClockEngine : public wbtest::FakeEngine {
 public:
     std::atomic<int> frame{0};
+    int latencyMs = 12;
+    std::atomic<int> maxStep{0};
+    QSemaphore stepEntered, stepRelease;
+    std::atomic<bool> holdNextStep{false};
     QJsonObject call(const QString &fn, const QJsonObject &args, QString *err) override {
         FakeEngine::call(fn, args, err);
-        QThread::msleep(12);
+        QThread::msleep(latencyMs);
+        if (fn == "step" && holdNextStep.exchange(false)) {
+            stepEntered.release();
+            stepRelease.tryAcquire(1, 3000); // A failed assertion must not strand the worker.
+        }
         if (fn == "frame") frame = args.value("frame").toInt();
-        if (fn == "step") frame += args.value("n").toInt(1);
+        if (fn == "step") {
+            const int n = args.value("n").toInt(1);
+            frame += n; maxStep = std::max(maxStep.load(), n);
+        }
         FrameInfo fi; fi.frame = frame; fi.motion = 44; return fi.toJson();
     }
 };
@@ -76,9 +87,20 @@ public:
 class PumpEngine : public wbtest::FakeEngine {
 public:
     int frame = 0;
+    std::atomic<bool> holdNextStep{false}, stepWaiting{false};
+    QSemaphore stepEntered, stepRelease;
     QJsonObject call(const QString &fn, const QJsonObject &args, QString *err) override {
         FakeEngine::call(fn, args, err);
         for (int i = 0; i < 3; ++i) { QCoreApplication::processEvents(); QThread::msleep(3); }
+        if (fn == "step" && holdNextStep.exchange(false)) {
+            stepWaiting = true; stepEntered.release();
+            QElapsedTimer timeout; timeout.start();
+            // Keep serving socket events while held, with a bound for failed assertions.
+            while (!stepRelease.tryAcquire() && timeout.elapsed() < 3000) {
+                QCoreApplication::processEvents(); QThread::msleep(3);
+            }
+            stepWaiting = false;
+        }
         if (fn == "frame") frame = args.value("frame").toInt();
         else if (fn == "step") frame += args.value("n").toInt(1);
         FrameInfo fi; fi.frame = frame; fi.motion = 69; return fi.toJson();
@@ -349,28 +371,39 @@ private slots:
         // Play issues engine commands back to back. Blender's follower polls ui_view_state meanwhile; refusing the
         // poll as "a command is already in progress" starved it, so Blender never moved while Qt played.
         QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); PumpEngine engine;
+        double nowMs = 0;
         Session s(dir.path(), &engine); s.data().reload(); registerAllCommands(s);
-        WorkbenchWindow w(s); QTRY_VERIFY(!w.isBusy());
+        WorkbenchWindow w(s, nullptr, [&] { return nowMs; }); QTRY_VERIFY(!w.isBusy());
         const auto pid = QCoreApplication::applicationPid();
         w.setBlenderProcessId(pid);
         w.runCommand("load_row", {{"row", "dair"}}); QTRY_VERIFY(!w.isBusy());
         QTcpSocket socket; socket.connectToHost(QHostAddress::LocalHost, w.serveForBlender());
         QTRY_COMPARE(socket.state(), QAbstractSocket::ConnectedState);
+        auto *timeline = w.findChild<Timeline *>("wbTimeline"); QVERIFY(timeline);
         auto *play = w.findChild<QPushButton *>("wbPlay"); QVERIFY(play); play->click();
-        QSet<int> seen; int errors = 0; QString firstError; QElapsedTimer clock; clock.start();
-        while (clock.elapsed() < 4000 && seen.size() < 6) {
+        QSet<int> seen;
+        for (int i = 0; i < 6; ++i) {
+            const int publishedFrame = timeline->frame();
+            engine.holdNextStep = true; nowMs += 20;
+            QTRY_VERIFY(engine.stepEntered.available() > 0);
+            QVERIFY(engine.stepEntered.tryAcquire());
+            // Poll during every in-flight play step, not in a host-speed sampling window.
             socket.write(toolRequest("ui_view_state", {{"revision", 0}, {"pid", pid}}));
             QTRY_VERIFY_WITH_TIMEOUT(socket.canReadLine(), 3000);
             const auto reply = QJsonDocument::fromJson(socket.readLine()).object();
             const auto payload = toolPayload(reply);
-            if (reply.contains("error") || reply["result"].toObject()["isError"].toBool() || payload.contains("error")) {
-                ++errors; if (firstError.isEmpty()) firstError = QString::fromUtf8(QJsonDocument(reply).toJson(QJsonDocument::Compact));
-            } else if (payload.value("available").toBool()) seen.insert(payload["info"].toObject()["frame"].toInt());
-            QTest::qWait(4);
+            QVERIFY2(!reply.contains("error") && !reply["result"].toObject()["isError"].toBool() && !payload.contains("error"),
+                     QJsonDocument(reply).toJson(QJsonDocument::Compact).constData());
+            QVERIFY(engine.stepWaiting.load()); // The reply arrived before the slow command completed.
+            QVERIFY(payload.value("available").toBool());
+            const int frame = payload["info"].toObject()["frame"].toInt();
+            QCOMPARE(frame, publishedFrame); seen.insert(frame);
+            engine.stepRelease.release();
+            QTRY_VERIFY(!w.isBusy());
+            QVERIFY(timeline->frame() > publishedFrame);
         }
-        play->click();
-        QVERIFY2(errors == 0, qPrintable(firstError));
-        QVERIFY2(seen.size() >= 4, qPrintable(QString("Blender saw only %1 distinct frames while Qt played").arg(seen.size())));
+        play->click(); QTRY_VERIFY(!w.isBusy());
+        QCOMPARE(seen.size(), 6);
     }
     void serveForBlenderReusesHumanSessionAndClosesWithHub() {
         QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); Session s(dir.path(), nullptr);
@@ -508,22 +541,48 @@ private slots:
         QTRY_VERIFY(w.statusText().contains("Engine not running"));
     }
     // Owner bug: PLAY ran one engine step per 16 ms tick, so the speed followed the command latency.
+    void playRunsAtTheWallClockRateWhateverTheLatency_data() {
+        QTest::addColumn<int>("latencyMs");
+        QTest::newRow("12ms-round-trip") << 12;
+        QTest::newRow("30ms-round-trip") << 30;
+    }
     void playRunsAtTheWallClockRateWhateverTheLatency() {
+        QFETCH(int, latencyMs);
         QTemporaryDir d; wbtest::makeSynthFighter(d.path()); ClockEngine engine;
-        Session s(d.path(), &engine); s.data().reload(); registerAllCommands(s); WorkbenchWindow w(s); w.resize(1600, 900); w.show();
+        engine.latencyMs = latencyMs;
+        double nowMs = 1000;
+        Session s(d.path(), &engine); s.data().reload(); registerAllCommands(s);
+        WorkbenchWindow w(s, nullptr, [&] { return nowMs; }); w.resize(1600, 900); w.show();
         QTRY_VERIFY(!w.isBusy());
         w.runCommand("load_row", {{"row", "dair"}}); QTRY_VERIFY(!w.isBusy());
         auto *timeline = w.findChild<Timeline *>("wbTimeline"); auto *play = w.findChild<QPushButton *>("wbPlay"); QVERIFY(timeline && play);
         QVERIFY2(timeline->frameCount() > 30, "the synthetic move is long enough to play for 0.4 s");
-        const int before = engine.frame; QElapsedTimer clock; clock.start();
+        const int before = engine.frame;
+        engine.holdNextStep = true;
         play->click();
-        QTest::qWait(400);
+        nowMs = 1020;
+        // Real timer, worker, commands and UI; only monotonic elapsed time is controlled.
+        // Slow offscreen refreshes/DrvFS reads must not count as simulated playback time.
+        // Irregular ticks exercise fractional debt and multi-frame catch-up at exactly 60 fps.
+        // Sample just past whole-frame boundaries to avoid floating-point rounding at integer debt.
+        QTRY_VERIFY(engine.stepEntered.available() > 0);
+        QVERIFY(engine.stepEntered.tryAcquire());
+        QVERIFY(w.isBusy());
+        nowMs = 1070; QTest::qWait(40); // Timer ticks while a real worker request is in flight.
+        engine.stepRelease.release();
+        const QPair<int, int> samples[] = {{70, 4}, {83, 4}, {123, 7}, {140, 8},
+                                          {201, 12}, {260, 15}, {330, 19}, {401, 24}};
+        for (const auto &sample : samples) {
+            nowMs = 1000 + sample.first;
+            QTRY_COMPARE(engine.frame.load() - before, sample.second);
+            QTRY_VERIFY(!w.isBusy());
+            QCOMPARE(timeline->frame(), before + sample.second);
+        }
         play->click(); QTRY_VERIFY(!w.isBusy());
-        const double seconds = clock.elapsed() / 1000.0;
-        const int advanced = engine.frame - before;
-        // 60 fps of wall clock; one step per tick at a 12 ms latency would manage about 17 in 0.4 s
-        QVERIFY2(advanced >= int(seconds * 60 * 0.7) && advanced <= int(seconds * 60 * 1.3) + 2,
-                 qPrintable(QString("%1 frames in %2 s").arg(advanced).arg(seconds)));
+        QCOMPARE(engine.frame.load() - before, 24);
+        QVERIFY2(engine.maxStep >= 3, "playback must batch frames owed during a slow round trip");
+        nowMs += 200; QTest::qWait(40);
+        QCOMPARE(engine.frame.load() - before, 24); // Pause stops dispatch even when time advances.
     }
     // Owner bug: click-drag scrubbing. The drag owns the cursor, requests coalesce, and the last position wins.
     void dragScrubCoalescesAndTheLastPositionWins() {

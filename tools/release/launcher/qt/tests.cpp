@@ -391,9 +391,16 @@ private slots:
 #ifdef Q_OS_LINUX
     void execProbeReportsErrno() {
         QTemporaryDir d;
+        QVERIFY(d.isValid());
         QVERIFY(execProbe(d.path() + "/missing", {}).startsWith("ENOENT"));
-        writeAtomic(d.path() + "/plain", "not a program"); QFile::setPermissions(d.path() + "/plain", QFile::ReadOwner | QFile::WriteOwner);
-        QVERIFY2(execProbe(d.path() + "/plain", {}).startsWith("EACCES"), qPrintable(execProbe(d.path() + "/plain", {})));
+        // A directory cannot be executed, even on DrvFS without Unix permission metadata.
+        // Keep this fixture in our own temp tree without depending on chmod or host mounts.
+        const auto denied = execProbe(d.path(), {});
+        QVERIFY2(denied.startsWith("EACCES"), qPrintable(denied));
+        writeAtomic(d.path() + "/plain", "not a program");
+        QFile::setPermissions(d.path() + "/plain", QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);
+        const auto malformed = execProbe(d.path() + "/plain", {});
+        QVERIFY2(malformed.startsWith("ENOEXEC"), qPrintable(malformed));
         // The real failure from the report: an existing, executable i386 binary whose loader is not installed.
         auto bytes = elfFixture(32, "/lib/ld-gdmelee-absent.so.2", {"libc.so.6"}); writeAtomic(d.path() + "/melee32", bytes);
         QFile::setPermissions(d.path() + "/melee32", QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner);

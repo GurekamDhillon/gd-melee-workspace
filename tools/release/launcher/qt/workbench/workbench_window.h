@@ -9,14 +9,16 @@ class Session;
 class WorkbenchWindow : public QMainWindow {
     Q_OBJECT
 public:
+    // Monotonic milliseconds, sampled on the UI thread. An empty clock uses QElapsedTimer.
+    using PlaybackClock = std::function<double()>;
     // The caller retains ownership and gives this window exclusive access until
     // destruction. A QObject-backed engine must be constructed on the worker;
     // use the owned-project overload for the real EngineLink.
-    explicit WorkbenchWindow(Session &s, QWidget *parent = nullptr);
+    explicit WorkbenchWindow(Session &s, QWidget *parent = nullptr, PlaybackClock playbackClock = {});
     // The factory runs on the persistent worker when the engine is first started
     // or its mode changes. Open in Blender starts a stopped engine before launch.
     using LaunchFactory = std::function<EngineLink::Launch()>;
-    WorkbenchWindow(const QString &projectDir, LaunchFactory launch, QWidget *parent = nullptr);
+    WorkbenchWindow(const QString &projectDir, LaunchFactory launch, QWidget *parent = nullptr, PlaybackClock playbackClock = {});
     ~WorkbenchWindow() override;
     void runCommand(const QString &name, const QJsonObject &args);
     // Starts one human-author localhost listener on this window's Session.
