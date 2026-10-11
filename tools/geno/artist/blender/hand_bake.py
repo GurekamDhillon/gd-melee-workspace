@@ -307,8 +307,14 @@ def _qangle(q):
     return 2 * np.arctan2(np.linalg.norm(q[..., :3], axis=-1), np.abs(q[..., 3]))
 
 
-def bake_clip(ctrl, action, row, mode="layer", note="", workdir=None, check=True):
-    """Bake `action` (on the control rig) into a hand_layer clip dict. Returns (clip, report); raises ValueError if the bake disagrees with the rig."""
+def bake_clip(ctrl, action, row, mode="layer", note="", workdir=None, check=True, absolute=None):
+    """Bake `action` (on the control rig) into a hand_layer clip dict. Returns (clip, report); raises ValueError if the bake disagrees with the rig.
+
+    absolute: also store the final pose of the moved bones under "abs" (needed by consumers that cannot re-derive the base, e.g. Falcon's
+    retail bank). That data contains base-derived values, so it is only written for retail rigs (R.needs_absolute) and stays local.
+    """
+    if absolute is None:
+        absolute = R.needs_absolute(R.deform_object(ctrl))
     arm = R.deform_object(ctrl)
     n = max(frame_count(action), 2)
     prior = {"frame": bpy.context.scene.frame_current, "ctrl": ctrl.animation_data.action if ctrl.animation_data else None}
@@ -341,6 +347,11 @@ def bake_clip(ctrl, action, row, mode="layer", note="", workdir=None, check=True
         dl = hand[name]["loc"] - seed[name]["loc"]
         auth[name] = {"dq": [[round(v, 6) for v in q] for q in dq], "dl": [[round(float(v), 6) for v in r] for r in dl]}
     clip = {"mode": mode, "frames": n, "bones": bones, "auth": auth}
+    if absolute:
+        clip["abs"] = {name: {"rot": [[round(float(v), 6) for v in r] for r in _canon(ha[name]["rotation"])],
+                              **({"loc": [[round(float(v), 6) for v in r] for r in ha[name]["translation"]]} if "loc" in bones[name] else {})}
+                       for name in bones}
+        clip["abs_note"] = "LOCAL ONLY: absolute pose of the moved bones, derived from the retail base; never commit this file"
     if note:
         clip["note"] = note
     # bake vs rig

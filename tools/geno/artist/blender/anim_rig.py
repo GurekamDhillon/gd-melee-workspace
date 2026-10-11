@@ -45,6 +45,16 @@ ROLE_TABLES = {
 }
 
 
+def needs_absolute(arm):
+    """Retail rigs (Falcon: no role data of its own, JOBJ_n joints) are consumed from absolute poses; see hand_bake.bake_clip."""
+    raw = arm.get("geno", "")
+    try:
+        json.loads(raw)
+        return False
+    except (TypeError, ValueError):
+        return str(raw) in ROLE_TABLES
+
+
 def deform_object(ctrl):
     return bpy.data.objects.get(ctrl.get("geno_deform", ""))
 

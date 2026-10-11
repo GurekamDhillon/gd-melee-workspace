@@ -296,6 +296,11 @@ def rebuild(project):
     mode = ensure_package(package, manifest.get("seed_package"), manifest["workspace"])
     for path, text in outputs.items():
         write(path, text)
+    # Hand-animated clips (<project>/anim/hand.json, geno_workbench/README "Hand-animate with IK and FK"): appended to the bank copy in the package
+    from . import hand_apply
+    hand_report = hand_apply.apply_hand(project, inside(package / "files", falcon_fighter(document)["fighter"]["animation"]), plan)
+    for item in hand_report:
+        print("HAND:", json.dumps(item, sort_keys=True))
     write_json(plan_file(package, document), plan)
     write_json(package / "geno.json", document)
     return mode

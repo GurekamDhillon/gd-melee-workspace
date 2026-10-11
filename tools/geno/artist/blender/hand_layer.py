@@ -15,7 +15,8 @@ writes to it, and rerunning the converter / Stage A never loses it.
           "frames": 24,             # authored length; the row keeps its own length (shorter: last delta held, longer: cropped, both reported)
           "note": "jab1: longer wind-up",
           "bones": {"b_L_Arm1": {"rot": [[x, y, z, w], ...], "loc": [[x, y, z], ...]}},   # rot/loc optional; omitted bones are untouched (layer) or at rest (replace)
-          "auth": {"b_L_Arm1": {"dq": [[w, x, y, z], ...], "dl": [[x, y, z], ...]}}      # Blender-side basis deltas, used only to reload the clip into the rig
+          "auth": {"b_L_Arm1": {"dq": [[w, x, y, z], ...], "dl": [[x, y, z], ...]}},     # Blender-side basis deltas, used only to reload the clip into the rig
+          "abs":  {"JOBJ_45": {"rot": [[x, y, z, w], ...], "loc": [...]}}                # retail rigs only (Falcon): the final pose; LOCAL, never committed
         }
       }
     }
