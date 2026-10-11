@@ -265,6 +265,27 @@ Skins are cosmetic. They are not part of the simulation and never refuse a netpl
   one; `make_test_skins.py` writes a synthetic pack of hundreds of skins for testing (the models are copies of the player's own retail costumes, read from their
   disc at run time into a git-ignored folder; never commit it).
 
+## 4c. Nucleus posts that are plain overrides (stage skins, effects, menus, audio)
+
+The in-game NUCLEUS browser (MODS > NUCLEUS, `docs/` of the game repo: `gw_ui_nucleus.inc`, engine half `gw_nucleus_engine.inc`, installer `gw_nucleus_loose.h`) installs more than
+costumes. Tabs: COSTUMES, STAGES, EFFECTS, MENUS, AUDIO, OTHER, INSTALLED, QUEUE. A post's tab comes from its API type and the categories of its files
+(`gw_nucleus_kinds.h`); a row that cannot be installed says why ("Custom stage: needs conversion", "xdelta patch: not a mod", "Ships a whole fighter file ...").
+
+| post | installed as | rule |
+|---|---|---|
+| stage skin (`stage_dat`, a retail versus stage `GrXx.dat`) | `mods/nucleus-<post>-stage-<gr>/`, `kind: "stage"`, `files/GrXx.dat` | identified by CONTENT: the archive must have `map_head`, `coll_data`, `grGroundParam` and share at least 55% of its symbol names (and every non-texture one) with the game's own copy of that file; a mislabelled file installs as the stage it really is. Prefix-named stages (GrPs, GrCn, GrOt, GrVe) are also written as `.usd` (an American disc reads that). |
+| effect file `Ef*Data.dat` | `nucleus-<post>-fx`, `kind: "misc"` | same structure check against the game's file of that name. A `PlXx.dat` "effect" is a whole fighter file and is refused (it would replace the fighter itself). |
+| menu file `MnSlChr`, `MnSlMap`, `IfAll`, `GmPause` (`.dat`/`.usd`) | `nucleus-<post>-menu` | same structure check; global, so one active per file. |
+| audio `.hps` / `.ssm` | `nucleus-<post>-audio`, `files/audio/<name>` | the name must be one of the game's own audio files; an `.hps` must carry its magic. |
+
+**One active per disc file.** Every install records the disc files it replaces (`nucleus.targets`) and lists the other mods that replace any of them in `conflicts`; the newest install is on
+and the older ones are written out of `enabled.txt` (the screen says "Turned off X"). In the browser's INSTALLED tab the detail has "Use this one" / "Turn it off" (A), which does the same
+for the next boot. Installs are staged in `.staging-<id>` and swapped in whole (`nc_swap_dir`), so a crash leaves the old mod or none.
+
+**Netplay.** A stage's identity hash reads its Gr file's content (section 6), so a skinned stage is a different stage online: it is offered only when both players have the same skin, and the
+stage select says `STAGE - SKIN: <name> (both players need it)`. Effects, menus and audio are not in the identity hash (cosmetic by design); see the lane report's decision on whether they should
+be.
+
 ## 5. The split tool
 
 `tools/mex_port/split_modpack.py --pack _build/packs/ace-set/ace --name ace --version 2.0.0`
