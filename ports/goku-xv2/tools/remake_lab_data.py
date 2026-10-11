@@ -38,6 +38,15 @@ def guess_current(text, names):
     return ''
 
 
+def role_text(s):
+    """The role column, prefixed with the status of a slot that is not plain OK and followed by what to look at for a GAP."""
+    st = s.get('status', '')
+    r = ('[%s] ' % st if st in ('GAP', 'PARTIAL', 'WEAK', 'KEEP') else '') + s['role']
+    if s.get('gap_look'):
+        r += ' | look next (undescribed): ' + ', '.join(g[1:] for g in s['gap_look'])
+    return r
+
+
 def clean(s):
     return re.sub(r'[\t\r\n]+', ' ', str(s)).strip()
 
@@ -63,7 +72,7 @@ def build():
     out = []
     for i, s in enumerate(slots, 1):
         out.append('\t'.join(['S', str(i), clean(s['group']), clean(s['slot']), clean(s['rows']), clean(s['current']),
-                              guess_current(s['current'], names), clean(s['role']), clean(s['recommended']), clean(s.get('combo_role', ''))]))
+                              guess_current(s['current'], names), clean(role_text(s)), clean(s['recommended']), clean(s.get('combo_role', ''))]))
         for c in s['candidates']:
             n = c['clip']
             out.append('\t'.join(['K', clean(n), clean(c['why']), metric_text(metrics.get(n)) if n.startswith('x') else '']))
