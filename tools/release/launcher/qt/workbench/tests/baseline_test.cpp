@@ -1,4 +1,4 @@
-#include "../testfixture.h"
+#include "rebuild_fixture.h"
 #include "commands.h"
 #include "session.h"
 #include <QFile>
@@ -46,10 +46,10 @@ private slots:
         QVERIFY(s.data().reload().isEmpty()); registerAllCommands(s);
         QCOMPARE(callCmd(s, "list_changes")["result"].toObject()["count"].toInt(), 0);
         QVERIFY(callCmd(s, "edit_hitbox", {{"row", "dair"}, {"ordinal", 1}, {"size", 5.5}})["ok"].toBool());
-        setRebuild(d.path(), {"python", "-c", "import sys; sys.exit(3)"});
+        setRebuild(d.path(), wbtest::rebuildHelper("fail"));
         QVERIFY(!callCmd(s, "rebuild")["ok"].toBool());
         QCOMPARE(callCmd(s, "list_changes")["result"].toObject()["count"].toInt(), 1);
-        setRebuild(d.path(), {"python", "-c", "print('rebuilt')"});
+        setRebuild(d.path(), wbtest::rebuildHelper());
         QVERIFY(callCmd(s, "rebuild")["ok"].toBool());
         QCOMPARE(callCmd(s, "list_changes")["result"].toObject()["count"].toInt(), 0);
     }

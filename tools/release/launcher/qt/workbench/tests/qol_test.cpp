@@ -1,4 +1,4 @@
-#include "../testfixture.h"
+#include "rebuild_fixture.h"
 #include "atlas_widgets.h"
 #include "commands.h"
 #include "error_help.h"
@@ -68,7 +68,7 @@ class QolTest : public QObject {
     // A window over a borrowed session with the whole command set, ready and idle.
     struct Bench {
         QTemporaryDir dir; FrameEngine engine; Session session; std::unique_ptr<WorkbenchWindow> window;
-        explicit Bench(bool registerAll = true) : session((wbtest::makeSynthFighter(dir.path()), dir.path()), &engine) {
+        explicit Bench(bool registerAll = true) : session(wbtest::makeRebuildFighter(dir.path()), &engine) {
             session.data().reload();
             if (registerAll) registerAllCommands(session);
         }

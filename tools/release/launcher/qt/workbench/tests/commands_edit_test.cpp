@@ -194,17 +194,14 @@ private slots:
         QCOMPARE(r.s.data().rows()[1].clip, QString("SYN_ATC_009"));
     }
     void importClipRunsConfiguredTool() {
-        Rig r;
+        Rig r; QVERIFY(configureImport(r, importHelper()).isEmpty());
         QJsonObject res = r.call("import_clip", {{"source", "x.anim"}, {"target_name", "SYN_IMPORTED"}});
         QVERIFY2(res["ok"].toBool(), qPrintable(res["error"].toString()));
         QCOMPARE(res["result"].toObject()["clip"].toString(), QString("SYN_IMPORTED"));
     }
     void importClipBadOutputIsError() {
-        QTemporaryDir d; wbtest::makeSynthFighter(d.path());
-        wbtest::put(d.path(), "workbench.json", QString(wbtest::kProject).replace("import sys,json; print(json.dumps({'clip': 'SYN_IMPORTED', 'frames': 20}))", "print('not json')").toUtf8());
-        wbtest::FakeEngine eng; Session s(d.path(), &eng); s.data().reload(); registerClipCommands(s);
-        CommandContext c{s};
-        QJsonObject res = s.registry().call("import_clip", {{"source", "x"}, {"target_name", "y"}}, c);
+        Rig r; QVERIFY(configureImport(r, importHelper("not-json")).isEmpty());
+        QJsonObject res = r.call("import_clip", {{"source", "x"}, {"target_name", "y"}});
         QVERIFY(!res["ok"].toBool()); QVERIFY(res["error"].toString().contains("not JSON"));
     }
     void runChecksStaticWithoutEngine() {
