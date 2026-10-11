@@ -19,10 +19,14 @@ struct RowInfo {
     int iasa = 0;
     bool aerial = false;
     bool clipSpecified = false; // An explicit empty pick means this state has no fixed clip.
+    bool previewDenied = false; // Source classifier metadata, independent of the engine's safety list below.
+    QString previewRefusal;
+    QString previewReason() const;
     // States that need a platform, partner or item cannot be posed in the bare scene; the engine refuses them (they once
     // died on a jobj assert). Keep in step with gs_wb_unpreviewable (engine) and UNPREVIEWABLE_MOTIONS (rigmap.py).
     bool previewable() const {
         static const int kUnpreviewable[] = {12, 13, 128, 129, 131, 223, 224, 225, 226, 227, 228, 239, 240, 241, 242, 243, 266, 267, 268, 269, 270, 271, 272, 273, 274, 277, 280, 285, 289, 290, 291, 292, 306, 308, 309, 310, 313, 314, 315, 316, 317, 318, 319, 320, 321, 323, 324, 328, 332, 333, 334, 337, 340};
+        if (previewDenied || (clipSpecified && clip.isEmpty())) return false;
         if (motions.isEmpty()) return true;
         for (int m : motions) {
             bool bad = false;
@@ -42,6 +46,8 @@ public:
     QString reload();
     const ProjectConfig &project() const;
     QVector<RowInfo> rows() const;
+    void notePreviewFailure(const QString &row, const QString &reason);
+    void clearPreviewFailures(); // Engine/scene observations never rewrite source eligibility.
     QVector<HitboxRef> hitboxes(const QString &row) const;
     // Reasons the row's script would not run as gameplay.json declares it: an out-of-order or overlapping-slot
     // script (GenoAsm::timingProblems) and windows that differ from the script's. Empty when they agree.
@@ -104,6 +110,7 @@ private:
     FileStore &fs_;
     ProjectConfig project_;
     QVector<RowInfo> rows_;
+    QHash<QString, QString> previewFailures_;
     QVector<ClipInfo> clips_;
     QVector<Joint> joints_;
     QJsonObject roles_;

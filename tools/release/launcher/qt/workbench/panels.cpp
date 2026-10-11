@@ -249,7 +249,8 @@ void OutlinerPanel::setRows(const QVector<RowInfo> &rows, const QMap<QString, QV
     if (grouped_) std::stable_sort(ordered.begin(), ordered.end(), [](const RowInfo &a, const RowInfo &b) { return groupIndex(a) < groupIndex(b); });
     const QSignalBlocker block(this); clear();
     for (const auto &row : ordered) {
-        auto *item = new QTreeWidgetItem(this, {row.name, row.effectiveClip()});
+        const QString label = row.previewable() ? row.name : row.name + t("  (not previewable)", "  (sin vista previa)");
+        auto *item = new QTreeWidgetItem(this, {label, row.effectiveClip()});
         item->setData(0, RowRole, row.name); item->setData(0, OrdinalRole, -1); item->setData(0, GroupRole, groupIndex(row));
         for (const auto &hit : hits_.value(row.name)) {
             auto *child = new QTreeWidgetItem(item, {t("Hitbox %1 · %2", "Caja de golpe %1 · %2").arg(hit.ordinal).arg(hit.joint)});
@@ -312,6 +313,7 @@ void OutlinerPanel::updatePresentation() {
         item->setData(0, GroupHeadingRole, grouped_ && !item->isHidden() && group != lastGroup ? groupText(group) : QString{});
         if (!item->isHidden()) lastGroup = group;
         QStringList tooltip{name, found->effectiveClip(), count}; tooltip.append(badges); tooltip.removeAll(QString{});
+        if (!found->previewable()) tooltip.append(found->previewReason());
         item->setToolTip(0, tooltip.join('\n')); item->setToolTip(1, found->effectiveClip());
     }
     doItemsLayout(); viewport()->update();

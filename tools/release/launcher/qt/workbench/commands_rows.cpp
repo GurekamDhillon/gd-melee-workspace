@@ -4,6 +4,13 @@
 #include <QHash>
 
 namespace wb {
+namespace {
+void retirePreview(Session &session) {
+    session.currentRow.clear();
+    session.uiView = {{"revision", session.uiView.value("revision").toInteger() + 1}, {"available", false}};
+    session.blenderAckRevision = 0;
+}
+}
 void registerRowCommands(Session &s) {
     s.registry().add({"list_rows", t("List fighter moves", "List fighter moves"), commandSchema(), false,
         [](const QJsonObject &, CommandContext &ctx) {
@@ -14,6 +21,7 @@ void registerRowCommands(Session &s) {
                 QJsonArray motions; for (int motion : row.motions) motions.append(motion);
                 rows.append(QJsonObject{{"name", row.name}, {"motions", motions}, {"tag", row.tag},
                     {"clip", row.effectiveClip()}, {"aerial", row.aerial}, {"previewable", row.previewable()},
+                    {"preview_reason", row.previewReason()},
                     {"frames", qMax(0, clipFrames.value(row.effectiveClip(), 0) - row.cropStart - 1)}, // engine frames 1..N-1 of an N-sample clip (dair 40 -> 39, fair 44 -> 43)
                     {"hitboxes", int(ctx.session.data().hitboxes(row.name).size())}});
             }
@@ -22,9 +30,24 @@ void registerRowCommands(Session &s) {
     s.registry().add({"load_row", t("Load a move in the engine", "Load a move in the engine"),
         commandSchema({{"row", argType("string")}}, {"row"}), false,
         [](const QJsonObject &args, CommandContext &ctx) {
-            needEngine(ctx.session);
             const auto row = needRow(ctx.session, args["row"].toString());
-            const auto result = engineCall(ctx.session, "row", {{"motion", rowMotion(row)}});
+            if (!row.previewable()) {
+                retirePreview(ctx.session);
+                throw CommandError{t("%1 is not previewable: %2", "%1 is not previewable: %2").arg(row.name, row.previewReason())};
+            }
+            needEngine(ctx.session);
+            QJsonObject result;
+            try {
+                result = engineCall(ctx.session, "row", {{"motion", rowMotion(row)}});
+            } catch (const CommandError &error) {
+                if (error.message.contains("no such motion for this fighter", Qt::CaseInsensitive)) {
+                    retirePreview(ctx.session);
+                    ctx.session.data().notePreviewFailure(row.name,
+                        t("This engine reports no such motion for this fighter. Restart the engine after checking the fighter template and motion table.",
+                          "This engine reports no such motion for this fighter. Restart the engine after checking the fighter template and motion table."));
+                }
+                throw;
+            }
             ctx.session.currentRow = row.name;
             return result;
         }});

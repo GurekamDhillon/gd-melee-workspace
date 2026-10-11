@@ -35,6 +35,7 @@ void registerViewCommands(Session &s) {
             QString error;
             if (!engine.restart(&error))
                 throw CommandError{error.isEmpty() ? t("engine restart failed", "engine restart failed") : error};
+            ctx.session.data().clearPreviewFailures();
             ctx.session.currentRow.clear();
             return QJsonObject{{"status", engine.status()}};
         }});
