@@ -22,6 +22,7 @@ private slots:
         QCOMPARE(QDir::cleanPath(found.path), QDir::cleanPath(ws + "/_build/melee-pc.exe"));
         // GW_ROOT also selects the workspace for a project outside it
         const QString outside = d.filePath("elsewhere/fighter"); QDir().mkpath(outside);
+        wbtest::put(outside, ".env", "# isolated fixture workspace\n");
         QVERIFY(resolveGameExe({}, env, outside, app).path.endsWith("app/melee-pc.exe"));
         env.insert("GW_ROOT", ws);
         QVERIFY(resolveGameExe({}, env, outside, app).path.endsWith("ws/_build/melee-pc.exe"));
@@ -37,6 +38,7 @@ private slots:
     }
     void nothingFoundExplainsWhatWasSearched() {
         QTemporaryDir d; QVERIFY(d.isValid());
+        wbtest::put(d.path(), ".env", "# isolated fixture workspace\n");
         const auto found = resolveGameExe({}, QProcessEnvironment{}, d.path(), d.path() + "/app");
         QVERIFY(found.path.isEmpty());
         QVERIFY(found.error.contains("melee-pc"));

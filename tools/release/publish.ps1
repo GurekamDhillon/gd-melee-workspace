@@ -1,7 +1,7 @@
 # publish.ps1 - build the release zip and publish it as a GitHub release, in one command.
 #
 #   powershell -File tools\release\publish.ps1 -DryRun     # build + check + print what it would do
-#   powershell -File tools\release\publish.ps1             # build + check + gh release create
+#   powershell -File tools\release\publish.ps1 -AllowUnsignedUpdate # build + check + phase-1 metadata + gh release create
 #   ... -Version 0.2.0      (default: tools\release\VERSION)
 #   ... -Repo owner/name    (default: GurekamDhillon/gd-melee-workspace)
 #   ... -Draft              create the release as a draft, to look it over on GitHub first
@@ -13,6 +13,7 @@
 #   ... -OutDir <dir>       where the zip and notes are written (default <root>\_build\release; a dry run from a
 #                           private build root should not use the shared folder)
 #   ... -IncludeCourier     also package the experimental Courier fighter (see build_release.ps1)
+#   ... -AllowUnsignedUpdate explicitly publish notify-only unsigned metadata until signing keys exist
 #   ... -ModsFrom <dir>     dry runs only (refused unless -DryRun): mods from another melee checkout
 #
 # Why local and not CI: the game cannot be built on a GitHub runner today. It needs the clang 23
@@ -30,7 +31,8 @@ param(
   [string]$MeleeDir = "",
   [string]$OutDir = "",
   [string]$ModsFrom = "",
-  [switch]$IncludeCourier
+  [switch]$IncludeCourier,
+  [switch]$AllowUnsignedUpdate
 )
 $ErrorActionPreference = "Stop"
 $root = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
@@ -44,6 +46,9 @@ if ($ModsFrom -and -not $DryRun) { throw "-ModsFrom is for dry runs only" }
 $melee = if ($MeleeDir) { $MeleeDir } elseif ($env:GW_MELEE) { $env:GW_MELEE } else { Join-Path $root 'melee' }
 $protocol = Get-NetplayProtocol -MeleeDir $melee
 $zip = Join-Path $out "$name.zip"
+if (-not ($AllowUnsignedUpdate -or $DryRun)) {
+  throw 'Update signing keys/verifier are not configured. Phase 1 is notify-only; pass -AllowUnsignedUpdate to explicitly publish unsigned update metadata.'
+}
 
 # 1. the tag must be new. (Native commands that may fail run under "Continue": with "Stop",
 # Windows PowerShell turns any stderr line from them into a terminating error.)
@@ -119,8 +124,13 @@ Super Smash Bros. Melee is (c) Nintendo / HAL Laboratory. This project is not af
 "@
 [System.IO.File]::WriteAllText($notes, $body, (New-Object System.Text.UTF8Encoding $false))
 
+# Generate from the checked archive. Phase 1 never emits a fake .sig.
+$updateManifest = Join-Path $out 'update.json'
+& python (Join-Path $PSScriptRoot 'generate_update_manifest.py') --zip $zip --version $Version --protocol $protocol --notes $versionNotesFile --repo $Repo --output $updateManifest --allow-unsigned
+if ($LASTEXITCODE -ne 0) { throw 'update manifest generation failed: NOT publishing' }
+
 # 6. publish
-$ghArgs = @("release", "create", $tag, $zip, "$zip.sha256", "--repo", $Repo, "--target", $wsRev,
+$ghArgs = @("release", "create", $tag, $zip, "$zip.sha256", $updateManifest, "--repo", $Repo, "--target", $wsRev,
             "--title", "GD's Melee $Version", "--notes-file", $notes)
 if ($Draft) { $ghArgs += "--draft" }
 if ($DryRun) {
@@ -128,6 +138,7 @@ if ($DryRun) {
   Write-Output "DRY RUN - would run:"
   Write-Output ("  gh " + (($ghArgs | ForEach-Object { if ($_ -match '\s') { '"' + $_ + '"' } else { $_ } }) -join ' '))
   Write-Output "notes: $notes"
+  Write-Output "UNSIGNED phase-1 update metadata: $updateManifest (no signing key or verifier yet)"
   exit 0
 }
 & gh @ghArgs

@@ -32,7 +32,8 @@ private slots:
         wbtest::put(dir.path(), "tools/blender/geno_workbench/bootstrap.py", "# synthetic\n");
         QVERIFY(QDir().mkpath(dir.filePath("ports/synth/nested")));
         QCOMPARE(wb::findAddonDir(dir.filePath("ports/synth/nested")), dir.filePath("tools/blender/geno_workbench"));
-        QTemporaryDir outside; QVERIFY(wb::findAddonDir(outside.path()).isEmpty());
+        QTemporaryDir outside; wbtest::put(outside.path(), ".git", "gitdir: unused");
+        QVERIFY(wb::findAddonDir(outside.path()).isEmpty());
         QVERIFY(QFile::remove(dir.filePath("tools/blender/geno_workbench/bootstrap.py")));
         QVERIFY(wb::findAddonDir(dir.filePath("ports/synth")).isEmpty());
     }
@@ -69,8 +70,9 @@ private slots:
         const auto absolute = blenderCommand("Blender", addon, project, 1234, dir.filePath("art/fighter with spaces.blend"));
         QCOMPARE(absolute.args, cmd.args);
     }
-    void artOutsideCheckoutIsProjectRelative() {
+    void artAtFixtureRootIsProjectRelative() {
         QTemporaryDir dir;
+        wbtest::put(dir.path(), ".git", "gitdir: unused"); // keep ancestor checkouts out of this fixture
         wbtest::put(dir.path(), "addon/bootstrap.py", "# synthetic\n");
         wbtest::put(dir.path(), "fighter.glb", "synthetic path fixture, never opened");
         const auto cmd = blenderCommand("Blender", dir.filePath("addon"), dir.path(), 1234, "fighter.glb");

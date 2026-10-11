@@ -281,9 +281,12 @@ void applyTheme() {
     QApplication::setPalette(pal);
     qApp->setStyleSheet(atlasStyleSheet());
 }
-Window::Window(QString app, QString user, Settings settings)
+Window::Window(QString app, QString user, Settings settings, bool noUpdateCheck)
     : appDir_(std::move(app)), userDir_(std::move(user)), settings_(std::move(settings)) {
     wb::installWheelGuard();
+    const auto updateOptions = updateConfig(appDir_, noUpdateCheck || updateChecksSuppressed(QCoreApplication::arguments(), QProcessEnvironment::systemEnvironment()));
+    updateInstalledProtocol_ = updateOptions.installedProtocol;
+    updates_ = new UpdateChecker(settings_, userDir_, updateOptions, this);
     setObjectName("atlasWindow"); setWindowTitle("GD's Melee"); resize(960, 640); setMinimumSize(900, 600);
     // E0 ground, then the four places: trail (top), the rail and the tab bodies (primary + explainer), keys (bottom).
     auto *root = new QWidget; root->setObjectName("atlasGround");
@@ -294,6 +297,8 @@ Window::Window(QString app, QString user, Settings settings)
     auto *th = new QHBoxLayout(trail); th->setContentsMargins(atlas::px("s3"), 0, atlas::px("s3"), 0); th->setSpacing(atlas::px("s2"));
     th->addWidget(new MarkWidget); th->addWidget(capLabel("GD'S MELEE", atlas::Role::Cap16)); th->addWidget(capLabel(t("LAUNCHER", "LANZADOR"), atlas::Role::Cap16, "muted")); th->addStretch();
     th->addWidget(capLabel(versionText(appDir_), atlas::Role::Body14, "muted"));
+    updatePill_ = button(th, QString(), [this] { rail_->setCurrent(3); });
+    updatePill_->setObjectName("atlasUpdatePill"); updatePill_->hide();
     col->addWidget(trail);
     auto *body = new QHBoxLayout; body->setContentsMargins(0, 0, 0, 0); body->setSpacing(0); col->addLayout(body, 1);
     rail_ = new kit::TabRail({t("PLAY", "JUGAR"), t("MODS", "MODS"), t("DIAGNOSTICS", "DIAGNÓSTICO"), t("ABOUT", "ACERCA DE")});
@@ -301,6 +306,7 @@ Window::Window(QString app, QString user, Settings settings)
     auto *main = new QVBoxLayout; main->setContentsMargins(atlas::px("s5"), kMainPadY, atlas::px("s5"), kMainPadY); main->setSpacing(atlas::px("s3")); body->addLayout(main, 1);
     pageHeading_ = capLabel(QString(), atlas::Role::Title);  pageSub_ = capLabel(QString(), atlas::Role::Body14, "muted");
     auto *hd = new QHBoxLayout; hd->setSpacing(atlas::px("s3")); hd->addWidget(pageHeading_); hd->addWidget(pageSub_, 1, Qt::AlignBottom); main->addLayout(hd);
+    main->addWidget(updateBanner());
     tabs_ = new QStackedWidget; tabs_->setObjectName("atlasTabs");
     tabs_->addWidget(playTab()); tabs_->addWidget(modsTab()); tabs_->addWidget(diagnosticsTab()); tabs_->addWidget(aboutTab());
     if (settings_.flag("creator_enabled")) {
@@ -342,6 +348,7 @@ Window::Window(QString app, QString user, Settings settings)
     connect(&graphicsProcess_, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) { if (error == QProcess::FailedToStart) { graphicsErrors_ = graphicsProcess_.errorString().toUtf8(); finishGraphics(-1); } });
 #endif
     connect(&process_, &QProcess::started, this, [this] { diag_.spawn.started = true; });
+    connect(&process_, &QProcess::stateChanged, this, [this] { syncUpdatePlayback(); });
     connect(&process_, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
         if (error != QProcess::FailedToStart) return;
         auto &sp = diag_.spawn; sp.started = false; sp.processError = int(error); sp.errorString = process_.errorString(); sp.finished = false;
@@ -359,6 +366,12 @@ Window::Window(QString app, QString user, Settings settings)
         finishLaunchReport(failed);
         if (!failed) { if (quitting_ || settings_.flag("close_on_play")) QApplication::quit(); else statusBar()->showMessage(t("Game closed.", "Juego cerrado.")); }
     });
+    connect(updates_, &UpdateChecker::changed, this, &Window::refreshUpdates);
+    refreshUpdates();
+    auto *updateTimer = new QTimer(this); updateTimer->setInterval(60000);
+    connect(updateTimer, &QTimer::timeout, this, [this] { syncUpdatePlayback(); updates_->check(); });
+    updateTimer->start();
+    QTimer::singleShot(0, this, [this] { syncUpdatePlayback(); updates_->check(); });
 }
 void Window::setKeys(int tab) {
     delete keys_->layout();
@@ -425,6 +438,8 @@ void Window::copyDiagnostics() { guarded([&] {
     QApplication::clipboard()->setText(readText(path, 4 * 1024 * 1024)); statusBar()->showMessage(t("Launch diagnostics copied.", "Launch diagnostics copied."));
 }); }
 Window::~Window() {
+    delete updates_; // the checker borrows settings_, which must still be alive
+    updates_ = nullptr;
     if (uploadThread_) { uploadCancel_ = true; uploadThread_->wait(); }
 }
 void Window::uploadCrashes() {
@@ -882,7 +897,9 @@ QWidget *Window::aboutTab() {
     QString version = t("development build", "versión de desarrollo");
     try { version = readText(appDir_ + "/version.txt", 16384).section('\n', 0, 0); } catch (...) {}
     auto *leftColumn = new QWidget; auto *left = new QVBoxLayout(leftColumn); left->setContentsMargins(0, 0, 0, 0); left->setSpacing(atlas::px("s3"));
-    leftColumn->setMaximumWidth(kPrimaryWidth); leftColumn->setMinimumWidth(300); layout->addWidget(leftColumn, 1);
+    leftColumn->setMinimumWidth(300);
+    auto *scroll = new QScrollArea; scroll->setWidgetResizable(true); scroll->setFrameShape(QFrame::NoFrame);
+    scroll->setMaximumWidth(kPrimaryWidth); scroll->setMinimumWidth(300); scroll->setWidget(leftColumn); layout->addWidget(scroll, 1);
     auto *about = new kit::Pane(t("This launcher", "This launcher")); left->addWidget(about);
     auto *body = new QVBoxLayout(about->body()); body->setContentsMargins(0, 0, 0, 0); body->setSpacing(atlas::px("s2"));
     body->addWidget(paragraph(t("Bring your own disc image. Game data is never bundled with the launcher.", "Usa tu propia imagen de disco. El lanzador no incluye datos del juego.")));
@@ -896,7 +913,20 @@ QWidget *Window::aboutTab() {
     auto *row = new QHBoxLayout; row->setSpacing(atlas::px("s2")); body->addLayout(row);
     button(row, t("Open user data", "Abrir datos del usuario"), [this] { openPath(userDir_); });
     auto *licences = button(row, t("Open licences", "Abrir licencias"), [this] { openPath(QDir(appDir_ + "/LICENSES").exists() ? appDir_ + "/LICENSES" : appDir_ + "/licenses"); }); licences->setObjectName("atlasLicences");
-    row->addStretch(); left->addStretch();
+    row->addStretch();
+    auto *updates = new kit::Pane(t("Updates", "Actualizaciones")); left->insertWidget(0, updates);
+    auto *updateBody = new QVBoxLayout(updates->body()); updateBody->setContentsMargins(0, 0, 0, 0); updateBody->setSpacing(atlas::px("s2"));
+    const auto toggleText = t("Check for updates daily", "Buscar actualizaciones a diario");
+    auto *toggle = new kit::Toggle; toggle->setObjectName("atlasUpdateEnabled"); toggle->setAccessibleName(toggleText); toggle->setChecked(updates_->enabled());
+    updateBody->addWidget(new OptionRow(toggleText, toggle, toggle, true));
+    connect(toggle, &QAbstractButton::toggled, this, [this](bool on) { updates_->setEnabled(on); if (on) { syncUpdatePlayback(); updates_->check(); } });
+    updateBody->addWidget(paragraph(t("Sends the launcher version and your IP address in a request to GitHub (or your update_url.txt host). No IDs, disc paths or game data are sent.", "Envía la versión del lanzador y tu dirección IP en una petición a GitHub (o al servidor de update_url.txt). No envía identificadores, rutas de discos ni datos del juego."), atlas::Role::Body12, "muted"));
+    updateCheckNow_ = button(updateBody, t("Check now", "Buscar ahora"), [this] { syncUpdatePlayback(); updates_->check(true); });
+    updateCheckNow_->setObjectName("atlasUpdateCheckNow");
+    updateStatus_ = paragraph(QString(), atlas::Role::Body12, "muted"); updateStatus_->setObjectName("atlasUpdateStatus"); updateBody->addWidget(updateStatus_);
+    updateLastCheck_ = paragraph(QString(), atlas::Role::Body12, "muted"); updateBody->addWidget(updateLastCheck_);
+    updateProtocolHint_ = paragraph(QString(), atlas::Role::Body12, "muted"); updateProtocolHint_->setObjectName("atlasUpdateProtocolHint"); updateBody->addWidget(updateProtocolHint_);
+    left->addStretch();
     auto *explainer = new ExplainerPane(t("About", "Acerca de")); explainer->setMinimumWidth(kExplainerMin); layout->addWidget(explainer, 1);
     explainer->title()->setText("GD'S MELEE");
     explainer->what()->setText(t("A launcher for the PC port. It starts the game from your own disc and keeps your mods and logs in order.", "A launcher for the PC port. It starts the game from your own disc and keeps your mods and logs in order."));
@@ -905,6 +935,66 @@ QWidget *Window::aboutTab() {
     auto *type = explainer->addFact(t("Type", "Type"), "Barlow Condensed, Source Sans 3"); type->setToolTip(t("Fonts by Jeremy Tribby (Barlow Condensed) and Adobe (Source Sans 3), both under the SIL Open Font License. The licences are in the Licences folder.", "Fonts by Jeremy Tribby (Barlow Condensed) and Adobe (Source Sans 3), both under the SIL Open Font License. The licences are in the Licences folder."));
     explainer->more()->addWidget(paragraph(t("Fonts: Barlow Condensed (Jeremy Tribby) and Source Sans 3 (Adobe), SIL Open Font License. Qt (The Qt Company) is used under its open-source licences.", "Fonts: Barlow Condensed (Jeremy Tribby) and Source Sans 3 (Adobe), SIL Open Font License. Qt (The Qt Company) is used under its open-source licences."), atlas::Role::Body12, "muted"));
     return page;
+}
+QWidget *Window::updateBanner() {
+    auto *pane = new kit::Pane; updateBanner_ = pane; pane->setObjectName("atlasUpdateBanner");
+    auto *body = new QVBoxLayout(pane->body()); body->setContentsMargins(0, 0, 0, 0); body->setSpacing(atlas::px("s1"));
+    updateHeading_ = paragraph(QString(), atlas::Role::Cap16, "jade"); body->addWidget(updateHeading_);
+    updateNotes_ = paragraph(QString()); updateNotes_->setObjectName("atlasUpdateNotes"); updateNotes_->setTextFormat(Qt::PlainText);
+    auto *notesScroll = new QScrollArea; notesScroll->setObjectName("atlasUpdateNotesScroll"); notesScroll->setWidgetResizable(true); notesScroll->setFrameShape(QFrame::NoFrame);
+    notesScroll->setMinimumHeight(28); notesScroll->setMaximumHeight(64); notesScroll->setWidget(updateNotes_); body->addWidget(notesScroll);
+    updateWarning_ = paragraph(QString(), atlas::Role::Body12, "sun"); updateWarning_->setObjectName("atlasUpdateWarning"); body->addWidget(updateWarning_);
+    auto *actions = new QHBoxLayout; body->addLayout(actions);
+    updateRelease_ = button(actions, t("View release", "Ver versión"), [this] {
+        if (updates_->manifest()) QDesktopServices::openUrl(updates_->manifest()->notesUrl);
+    }); updateRelease_->setObjectName("atlasUpdateRelease");
+    auto *skip = button(actions, t("Skip this version", "Omitir esta versión"), [this] { updates_->skipVersion(); }); skip->setObjectName("atlasUpdateSkip"); actions->addStretch();
+    pane->hide(); return pane;
+}
+void Window::syncUpdatePlayback() {
+    if (!updates_) return;
+    // A Creator project can start its engine on a worker. Pause checks for its
+    // entire lifetime so no request can race that launch or attached playback.
+    // Removed tabs remain children until asynchronous engine shutdown finishes.
+    const auto creators = findChildren<wb::WorkbenchWindow *>();
+    const bool creatorActive = std::any_of(creators.cbegin(), creators.cend(), [](auto *creator) { return !creator->shutdownComplete(); });
+    updates_->setGameRunning(closingCreators_ || process_.state() != QProcess::NotRunning || creatorActive);
+}
+void Window::refreshUpdates() {
+    if (!updateStatus_) return;
+    const bool available = updates_->state() == UpdateState::Available && updates_->manifest().has_value();
+    updateBanner_->setVisible(available); updatePill_->setVisible(available);
+    if (available) {
+        const auto &m = *updates_->manifest(); const auto version = m.version.text();
+        updatePill_->setText(t("Update %1", "Actualización %1").arg(version));
+        updateHeading_->setText(t("Version %1 is available", "La versión %1 está disponible").arg(version));
+        updateNotes_->setText(spanish ? m.notesEs : m.notesEn);
+        updateRelease_->setToolTip(m.notesUrl.toString());
+        const bool changed = updateInstalledProtocol_ > 0 && m.protocol != updateInstalledProtocol_;
+        updateWarning_->setVisible(changed);
+        updateWarning_->setText(changed ? t("Online play changes: protocol %1 becomes %2. Update together; players need matching protocols.", "El juego en línea cambia: el protocolo %1 pasa a %2. Actualizad juntos; los jugadores necesitan el mismo protocolo.").arg(updateInstalledProtocol_).arg(m.protocol) : QString());
+    }
+    updateCheckNow_->setEnabled(!updates_->suppressed() && !updates_->gameRunning() && updates_->state() != UpdateState::Checking);
+    QString status;
+    if (updates_->suppressed()) status = t("Update checks are disabled for this session.", "La búsqueda de actualizaciones está desactivada en esta sesión.");
+    else if (updates_->gameRunning()) status = t("Checks pause during play and while Creator is open.", "La búsqueda se pausa al jugar y mientras Creador está abierto.");
+    else switch (updates_->state()) {
+        case UpdateState::Checking: status = t("Checking for updates...", "Buscando actualizaciones..."); break;
+        case UpdateState::UpToDate: status = t("You're up to date.", "Tienes la última versión."); break;
+        case UpdateState::Available: status = t("A new version is available.", "Hay una nueva versión disponible."); break;
+        case UpdateState::Skipped: status = t("This version is skipped.", "Esta versión se ha omitido."); break;
+        case UpdateState::Failed: status = t("Couldn't check for updates (offline?).", "No se pudo buscar actualizaciones (¿sin conexión?)."); break;
+        case UpdateState::Disabled: status = t("Daily update checks are off.", "La búsqueda diaria está desactivada."); break;
+        default: status = t("Updates notify you; installing is always your choice.", "Las actualizaciones te avisan; instalar siempre es tu decisión."); break;
+    }
+    updateStatus_->setText(status);
+    const auto last = QDateTime::fromString(settings_.option("update_last_attempt"), Qt::ISODateWithMs);
+    updateLastCheck_->setVisible(last.isValid());
+    updateLastCheck_->setText(last.isValid() ? t("Last checked: %1", "Última búsqueda: %1").arg(QLocale().toString(last.toLocalTime(), QLocale::ShortFormat)) : QString());
+    const auto installed = Version::parse(versionText(appDir_)); const auto &cached = updates_->cachedManifest();
+    const bool hint = installed && cached && cached->version.compare(*installed) > 0 && updateInstalledProtocol_ > 0 && cached->protocol != updateInstalledProtocol_;
+    updateProtocolHint_->setVisible(hint);
+    updateProtocolHint_->setText(hint ? t("Version %1 uses online protocol %2; yours is %3. Both players need matching protocols.", "La versión %1 usa el protocolo en línea %2; el tuyo es %3. Ambos jugadores necesitan el mismo protocolo.").arg(cached->version.text()).arg(cached->protocol).arg(updateInstalledProtocol_) : QString());
 }
 // The Creator needs the width: below ~1500 px the left nav becomes an icon rail on that tab only.
 void Window::updateRailMode() {
@@ -962,6 +1052,7 @@ void Window::syncCreatorTab() {
     QStringList icons{"right", "mods", "data", "star"};
     if (enabled) { names << t("CREATOR", "CREADOR"); icons << "mods"; }
     rail_->setNames(names); rail_->setIcons(icons); setKeys(rail_->current());
+    syncUpdatePlayback();
 }
 void Window::refreshGameExe() {
     if (!gameExe_) gameExe_ = std::make_shared<GameExeSetting>();
@@ -1009,6 +1100,8 @@ void Window::openCreatorProject(const QString &folder) {
             return result;
         };
         creator_ = new wb::WorkbenchWindow(folder, std::move(launch), creatorPage_);
+        connect(creator_, &wb::WorkbenchWindow::shutdownFinished, this, [this] { syncUpdatePlayback(); });
+        syncUpdatePlayback();
         creator_->setBlenderSetting(settings_.option("blender_exe"));
         // The Workbench's Fix buttons for a missing game or Blender program open the same pickers as Settings.
         connect(creator_, &wb::WorkbenchWindow::gameExePickRequested, this, [this] {
@@ -1041,6 +1134,7 @@ void Window::screenshots(const QString &dir) {
 void Window::closeEvent(QCloseEvent *event) {
     if (!closingCreators_) {
         closingCreators_ = true;
+        syncUpdatePlayback();
         const auto creators = findChildren<wb::WorkbenchWindow *>();
         for (auto *creator : creators) if (!creator->shutdownComplete()) {
             ++pendingCreatorStops_;
