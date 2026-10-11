@@ -160,7 +160,7 @@ def build_joint_map(
 # throws, shoulder carries, items, mushrooms etc. need a partner or an item (found by engine_check/sweep_rows.py;
 # before the engine refused them they died on a jobj assert). Keep in step with gs_wb_unpreviewable in the
 # engine (pc/platform/gw_script.c) and kUnpreviewable in the launcher (commands_rows.cpp).
-UNPREVIEWABLE_MOTIONS = frozenset((12, 13, 128, 129, 131, 223, 224, 225, 226, 227, 228, 239, 240, 241, 242, 243, 266, 267, 268, 269, 270, 277, 280, 285, 289, 290, 291, 292, 306, 308, 309, 310, 313, 314, 315, 316, 317, 318, 319, 320, 321, 323, 324, 328, 332, 333, 334, 337, 340))
+UNPREVIEWABLE_MOTIONS = frozenset((12, 13, 128, 129, 131, 223, 224, 225, 226, 227, 228, 239, 240, 241, 242, 243, 266, 267, 268, 269, 270, 271, 272, 273, 274, 277, 280, 285, 289, 290, 291, 292, 306, 308, 309, 310, 313, 314, 315, 316, 317, 318, 319, 320, 321, 323, 324, 328, 332, 333, 334, 337, 340))
 
 
 def row_previewable(row):
