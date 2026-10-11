@@ -1248,7 +1248,7 @@ and inferred body regions are not universal names for garments or accessories.
 ## What stays native
 
 Rollback, snapshots and netcode; UCF/Slippi gameplay codes (scripts may toggle them one day, not
-run them); the m-ex runtime hooks; render, audio and memory-card IO; hot-path traces (heap, DVD,
+run them; **players**: UCF 0.84 is on in offline play by default, SETTINGS > Game > Controller Fix (UCF), the launcher's Options, or `MELEE_UCF=off|0.84`; online it is always 0.84, and Slippi replays play with the UCF they were recorded with); the m-ex runtime hooks; render, audio and memory-card IO; hot-path traces (heap, DVD,
 PPC bridge, `MELEE_WATCH` guard pages, `MELEE_LOG_MOTION`'s per-transition log). The fixed-frame
 pad script and the scene grammar remain as shorthands over the same paths scripts use.
 

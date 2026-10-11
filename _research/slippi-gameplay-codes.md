@@ -21,7 +21,9 @@ Source snapshot: slippi-ssbm-asm @ 2025-06 (54 `affects-gameplay` .asm files, 40
 | 1 | console / tournament (`console_core` + `mods_tournament`) | a replay whose Game Start says major scene != 8 |
 | 2 | online (`netplay.json`) | a replay whose Game Start major scene == 8; `MELEE_SLIPPI_CODES=online` |
 
-`MELEE_SLIPPI_CODES=tournament|online|off` overrides it for live play. `gw_Slippi_Version()` returns
+`MELEE_SLIPPI_CODES=tournament|online|off` overrides it for live play.
+
+**UCF is separate from the codeset** (updated 2026-10-10). `gw_Replay_UcfVersion/UcfCardinals` decide it: a replay uses its Game Start toggles (0.84 for Slippi 3.x, 0.73 for 1.x), netplay arms 0.84 on every port, and **offline play** (VS, training, LAB, single player) follows the player's setting, `MELEE_UCF=off|0.84` over `settings.cfg` key `ucf` (84/0), default 0.84; in-game row SETTINGS > Game > Controller Fix (UCF), launcher Options toggle. `MELEE_SLIPPI_CODES=online` alone does NOT arm UCF. `gw_Slippi_Version()` returns
 the recording's Slippi version as `major*10000 + minor*100 + build` (999999 when not in playback), for
 the codes whose behaviour changed across releases. `gw_Slippi_FrozenStadium()` reports the Game Start
 Frozen-PS flag (Slippi 2.0+), or `MELEE_SLIPPI_FROZEN_PS=1` outside playback.
@@ -46,15 +48,15 @@ have them.
 | UCF 0.84: dashback (+ 0.73) | 0x800C9A44 | all | `ft/kinds/ftCommon/ftCo_Turn.c` |
 | UCF 0.84: shield drop, extended | 0x800998A4, 0x8009A0B8 | all | `ftCo_Escape.c`, `ftCo_Pass.c` |
 | UCF 0.84: DBOOC SquatRv fix | 0x800D65EC | all | `ftCo_Turn.c` |
+| UCF 0.84: SDI | 0x8008E54C | all | `ftCo_Damage.c` (implemented; was listed as a gap) |
+| UCF 0.84: Shield SDI | 0x80093294 | all | `ftCo_Guard.c` (implemented) |
+| UCF 0.84: Tumble | 0x800908F4 | all | `ftCo_DamageFall.c` (implemented) |
 | NeutralSpawn | 0x8016E510 | all | owned by the `neutralspawn` agent (separate branch) |
 
 ## Not implemented
 
 | code | GC hook | codeset | why |
 | --- | --- | --- | --- |
-| UCF 0.84: SDI | 0x8008E54C | all | **gap worth closing.** Decoded: inside `ftCo_Damage_OnEveryHitlag` (0x8008E4F0 + 0x5C); reads the UCF pad buffer two polls back and re-registers an SDI input when the squared 1-D stick delta exceeds 0x15F9 (75 raw units), so a flick smoothed away by poll timing still counts. The port has the pad buffer (`ftUcf_PadRaw`), so this is a contained follow-up. |
-| UCF 0.84: Shield SDI | 0x80093294 | all | same mechanism, guard variant. Same gap. |
-| UCF 0.84: Tumble | 0x800908F4 | all | same mechanism, tumble variant (threshold 0x15F9 against `fp+0x628`). Same gap. |
 | PreventWobbling | 0x800DB880, 0x800DBBD4, 0x8008F090 | online, `console_gameplay_wobbling` | Semantics understood: the two init hooks sit at the tails of `fn_800DB790` / `fn_800DBAE4` (CaptureWaitHi/Lw enter) and clear a wobble counter (`fp+0x2384`) and last-move id (`fp+0x2386`) on the victim; the check counts alternating-move hits from an IC leader while the victim is in CapturePulledHi..CaptureDamageLw, and on the 4th, in singles, throws grabber and Nana into CatchCut / CaptureJump. Not landed because the check's injection point (0x8008F090, exit 0x8008F0C8) is 0x400 bytes into `ftCo_8008EC90`, a 2.8 KB function, and placing it needs the 1.02 disassembly to identify which branch it interrupts — guessing would silently change every grab. Needs a disassembly pass, not more reading. |
 | FreezeDeadUpFallPhysics | 0x800D4C1C, 0x800D4D68, 0x80080E80 | online | Replaces screen-KO fall physics with its own integrator and moves the model through the camera's inverted view matrix, so Nana's decisions can't depend on screen shake. Needs three coordinated hooks plus repurposing `fp->mv.co` bytes 0x48/0x4C/0x50/0x5C-0x64 as its state. Real work, narrow payoff (screen-KO'd fighters only); deferred deliberately. |
 | PSCameraIndependentMonitor | `PokemonStadium_Main` (0x801D24FC) | online | Replaces the monitor-transition trigger with fixed bounds (±120 x, +80/-20 y) so the zoom is camera-independent. Cosmetic-adjacent but tagged gameplay; deferred with FreezeDeadUpFallPhysics. |
