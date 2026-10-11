@@ -86,6 +86,40 @@ Approximations (see also the research note): XV2's width over segment AGE (comet
 (`width_keys`, age = (1 - position) x 22 frames) and floored at 42 % of the head width so the beam never pinches off before the hands; XV2's alpha fade over age is not applied at
 the hand end (only the head end eases out); XV2's Kmh_Ring is a custom polygon band (ShapeDraw) approximated by the engine ring; the camera clip is two shakes, not the moving camera.
 
+## 0e. Polish pass after the owner's screen review (2026-10-11, `ws/kame-polish2`, game `agent/kame-polish2`)
+
+Owner: "the effects don't sync to Goku's body perfectly. The energy ball isn't between his hands, it floats outside his hands. All the emitted particles drown out Goku's silhouette. The audio clips are getting better, but maybe we need more state machine stuff from XV2."
+
+**Ball between the hands.** XV2 attaches the charge effect to one bone (`g_L_Hand`) and its Kmh_Crg nodes sit at the effect origin (all `Position` keys are 0). Ours had been `hand.R` + a static (0, 0, 4): measured with zero-damage hitbox probes (`gen_kame.py --probe`, `lua/kame_ball.lua`) that point is
+**3.16 world units** below the hands' midpoint while the two hands are only 1.97 apart (the charge pose is static). The effect runtime now has a binding field **`joint2`** (game `pc/platform/gw_fx.c`, `geno.md` 20.3): the effect origin is the midpoint of two joints' world
+positions every frame, with the first joint's axes. Charge, the four stored flashes and the Super charge bind `hand.R` + `hand.L` (`build.py` `FX_STATES`, a sixth tuple element) and their packages carry no offset of their own (`xv2_fx.py` `BALL_OFF`). The check
+(`tools/kame_ball.py`, `tools/kame_ball_all.sh`; probe points in the effect runtime, difference of two probes removes the spawn point) reads **0.001 units** of miss on every frame of the ground charge (both facings), the air charge and the four stored-tier flashes; the Super's 54-frame wind-up (the hands move
+3 units a frame) is 0.03 mean / 0.43 max. A second cause was found on the way: the effect template carried a type-8 **wave** (0.8 / 1.0 units, 7 / 20 frame cycles) that the runtime applies to every particle's POSITION along the attachment's x / y axes whatever `apply` says, so every converted emitter wandered about 1 unit
+(that is what "floats" also looked like). `xv2_fx.base_emitter` and `fx_build.emitter` now zero it. Before/after strips: `.omo/evidence/` (`base_r`, `a1_r`).
+
+**Particles and the silhouette.** Measured by `tools/kame_cover.py` (three silent strips of the same frames: with effects, without, and Goku parked off screen as the background plate; the number is how many of Goku's own pixels the effects change): before, **mean 65.8 grey levels, 50.5 % of his pixels changed by more than 40**;
+after, mean ~9, ~8 %. Causes and fixes: the five aura steps of the charge (scale 1.0 / 1.3 / 1.6 / 2.0 / 2.6, `state_exit`) were all still alive, five stacked additive clouds (a white blob at Max); each step now ends where the next begins (`('off', frame)` in `FX_STATES`) and the scales are 1.0 to 1.7. The aura itself
+(`fx_build.py`, not XV2 data: the common ki-charge aura was never dumped) is a thin shell hugging the outline (z radius 1.0, so particles sit at the sides and top, not in front of the torso), smaller, dimmer, depth-tested and soft; the ball, flashes and motes are depth-tested now (they were drawn without a depth test over the body); the gathering rings top out at 7.5 units (were 13).
+The XV2 draw state of the ball is additive sprites with `Glare`; we keep additive + bloom and the soft depth fade.
+
+## 0f. XV2's sound sequence for the Kamehameha, and what is ported (2026-10-11)
+
+Read from the dumps (`000_GOK_KMH.bac.json`, `.bsa.json`, and the ACBs' UTF tables parsed directly):
+
+| where | what |
+|---|---|
+| BAC entry 0 (ground, lowest) | `Sound` events: **VOX cue 0** at frame 0 ("ka-me-ha-me", BDB_GOK_071), **SE cue 0** `kamehame_Charge` at frame 0, **VOX cue 1** at frame 58 (BDB_GOK_072, the shout). Entries 1 and 2 (the stronger charges) have VOX 0 / VOX 1 only: the SE is not restarted, the charge sound already running goes on. A `Charge Control` event (frame 20, length 20, ChargeTime 72) holds the pose while the button is held. The projectile spawns at frame 56 (entry 0) / 60 (1, 2) |
+| BSA entries 0 / 3 / 6 (the projectiles) | a `Sound` event on spawn: **SE cue 1** `kamehame_shot` |
+| SE ACB `CAR_BTL_S000_KMH_SE` | cue 0 `kamehame_Charge` is an empty Sequence whose **action track** starts cue 2 (`4_charge`, 2.1 s). cue 1 `kamehame_shot` is a Sequence with two action tracks: one **stops cue 2** (opcode 0x1BBD on target cue 2), one starts cue 3 (`4_shot`, 3.4 s). Both waveforms have **LoopFlag 1** |
+| other | entries 12, 17, 42, 47 (variants) play Common SE cue 37 (a swing) at frame 42; the Super (`000_GOK_CKM`) is plain: SE cue 0 at 0, VOX 0 at 34, VOX 1 at 96, projectile at 92, no stop track |
+
+So XV2's machine is: **the voice line once, the charge hum as a loop that runs for as long as the charge is held, and the shot (projectile spawn) cuts the hum and starts the shot sound, the shout 2 frames later.** Ported:
+* **Looping hum with a real stop.** The one-shot hum schedule went silent after 17 s (the script clock stops with the clip). Now the Max hold is a script loop (`gen_kame.py`: `loop` / `wait 1` / `sfx`, the clip crawled at 1 frame per 80 game frames, the hum retriggered each iteration: about 70 s of hold before the clip's 134 frames end and the script restarts), and the **stop** is an engine feature: audio.voice rows may be `stoppable`
+  (`geno.md` 22.7); the release scripts play the retail "stop this voice slot" id **540001**, which cuts every playing instance of those clips (`shim_ax.c` `gw_Audio_StopClips`). It is played at the start of every release (Tap to Max) and of the Super.
+* **Shot first, shout after.** The shot SE plays when the beam starts (XV2: the projectile) and the shout one beam frame later (XV2: +2 frames; the Super +4; the script's granularity is one clip frame).
+* Kept from the earlier passes (the owner's design, not XV2's): the chant syllables spread across the charge that raise the tier, the pitch steps of the hum per tier.
+* Not ported: a stop when the charge ends any other way (a hit, a shield store, a roll): the hum's last clip (at most 1.4 s) rings out, because those states have no script; Common SE 37; the `Charge Control` hold (our native charge model replaces it).
+
 ## 1. Charge: modelled on Samus Charge Shot and Mewtwo Shadow Ball
 
 Read from the decomp (`src/melee/ft/kinds/ftSamus/ftsamusspecialn.c`, `.../ftMewtwo/ftmewtwospecialn.c`, items
