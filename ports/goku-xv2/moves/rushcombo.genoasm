@@ -4,14 +4,14 @@
 PUT ANIM_RATE 1.0
 wait_until 1
 sfx behavior=1 sfx_id=166 volume=127 panning=64
-wait_until 10
+wait_until 2
 hitbox slot=0 joint=@ARM_R@ damage=15 size=1.4 x=-2.802 y=-0.0331 z=0.04988 angle=45 kbg=88 fkb=0 bkb=42
 hitbox slot=1 joint=@ARM_R@ damage=13 size=1.4 x=-1.492 y=-0.05802 z=0.01413 angle=45 kbg=88 fkb=0 bkb=39
 hitbox slot=2 joint=@UPARM_R@ damage=10 size=1.419 x=-1.202 y=-0.08994 z=0.07694 angle=45 kbg=88 fkb=0 bkb=36
+wait_until 10
+clear_hitboxes
 wait_until 13
 sfx behavior=1 sfx_id=166 volume=127 panning=64
-wait_until 18
-clear_hitboxes
 wait_until 21
 sfx behavior=1 sfx_id=164 volume=127 panning=64
 wait_until 34

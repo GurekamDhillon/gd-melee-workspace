@@ -187,6 +187,9 @@ def cmd_strikes():
     return 0
 
 
+STRICT_ROUTES = True   # every `on hit` route needs a source move with an active window
+
+
 def cmd_check():
     problems = []
     g = json.loads(SG.path().read_text(encoding='utf-8'))
@@ -234,6 +237,9 @@ def cmd_check():
     rows = json.loads((PORT / 'ANIM-ROWS.json').read_text(encoding='utf-8'))['rows'] if (PORT / 'ANIM-ROWS.json').exists() else []
     frames_of_motion = {r['motion']: (r.get('source') or {}).get('frames') for r in rows}
     motion_of = {m['name']: m['motions'][0] for m in g['moves']}
+    strike_of = {m['name']: m.get('strike') for m in g['moves']}
+    strike_of.update({s['name']: s.get('strike') for s in c['states']})
+    strike_of.update({m['name']: m.get('strike') for m in g['special_adaptations']})
     n_routes = 0
     for r in c['combo']['routes']:
         n_routes += 1
@@ -242,6 +248,12 @@ def cmd_check():
             nm = s.split(':', 1)[1] if s.startswith('geno:') else s
             if not (s.startswith('motion:') or nm in names or nm == '*'):
                 problems.append('route %s: source %s does not exist' % (r['name'], s))
+            st = strike_of.get(nm)
+            if r.get('on', 'hit') in ('hit', 'contact', 'block') and nm in strike_of:
+                if not st:
+                    problems.append('route %s: on %s from %s, which has no hit window yet (HB-NONE): inert until its hitbox exists' % (r['name'], r.get('on', 'hit'), nm)) if STRICT_ROUTES else None
+                elif r.get('window') and r['window'][1] and r['window'][1] < st[0][0]:
+                    problems.append('route %s: window %s closes before the hit of %s (first active frame %d)' % (r['name'], r['window'], nm, st[0][0]))
             mot = motion_of.get(nm)
             fr = frames_of_motion.get(mot) if mot is not None else None
             if fr and r.get('window') and r['window'][0] >= fr:

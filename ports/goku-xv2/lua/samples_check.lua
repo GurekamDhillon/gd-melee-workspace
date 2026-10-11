@@ -16,6 +16,7 @@ gd.run(function()
     end
     local function nofault() local l = assert(gd.fighter_lua(1)); assert(l.faults == 0, 'Lua fault ' .. tostring(l.last_fault)) end
     local results, miss = {}, {}
+    local lastseen
     local function try(label, setup, input, frames, watch, dists)
       for _, d in ipairs(dists or {7, 11, 15}) do
         reset(d, setup.y, setup.ki)
@@ -25,6 +26,7 @@ gd.run(function()
         for t = 1, watch do
           gd.wait(1); nofault()
           seen[name()] = true
+          lastseen = seen
           if gd.player(2).percent > before + 0.01 then
             local dmg = gd.player(2).percent - before
             local c = gd.combo(1) or {}
@@ -34,7 +36,10 @@ gd.run(function()
           end
         end
       end
-      gd.log('SAMPLECHECK ' .. label .. ' MISS at every distance')
+      local names = {}
+      for k in pairs(lastseen or {}) do names[#names + 1] = k end
+      table.sort(names)
+      gd.log('SAMPLECHECK ' .. label .. ' MISS at every distance; motions seen: ' .. table.concat(names, ','))
       miss[#miss + 1] = label
       return false
     end

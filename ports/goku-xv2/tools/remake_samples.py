@@ -179,6 +179,25 @@ class Rig:
                 best, score = eff, tot
         return best
 
+    def extension(self, clip, eff, f):
+        """Distance of the effector from the chest at frame f (how far the limb is thrown out)."""
+        p = self.pose(clip, f)
+        return float(np.linalg.norm(p[self.roles[eff][0]][:3, 3] - p[self.roles['chest'][0]][:3, 3]))
+
+    def refine(self, clip, eff, a, b, frames, reach=6):
+        """Centre the XV2 window on the frame where the limb is farthest out (BAC event frames run on the BAC's own clock, which can differ from the clip's)."""
+        if not eff or clip not in self.plan['bank']['clips']:
+            return a, b
+        lo, hi = max(1, a - reach), min(frames - 2, b + reach)
+        best, fbest = -1.0, a
+        for f in range(lo, hi + 1):
+            e = self.extension(clip, eff, f)
+            if e > best + 1e-6:
+                best, fbest = e, f
+        width = max(3, b - a)
+        na = max(1, fbest - width // 2)
+        return na, na + width
+
     def spheres(self, eff, n=3):
         """Up to n spheres along the chain, tip first: (token, x, y, z, radius) in script units."""
         out = []
@@ -418,7 +437,10 @@ def plan_targets(rig, source, anim_rows, combo):
             xdmg = h['damage'] if h else 8
             dmg = min(CAP[cls], max(1, int(round(anchor_damage(xdmg))))) if cls != 'grab' else 0
             eff = rig.leading_limb(bank_clip, a, b, CLIP_LIMB.get(clipname)) if bank_clip in rig.plan['bank']['clips'] else None
-            wl.append(dict(a=a, b=b, xdmg=xdmg, bdm=b_, dmg=dmg, limb=eff, rv=rv))
+            a0, b0 = a, b
+            if h is not None and not t['chain'] and len(found[1]) == 1:
+                a, b = rig.refine(bank_clip, eff, a, b, frames)
+            wl.append(dict(a0=a0, b0=b0, a=a, b=b, xdmg=xdmg, bdm=b_, dmg=dmg, limb=eff, rv=rv))
         result.append(dict(t, status='ok', bac=found[0], note=note, cls=cls, string=string, wins=wl, frames=frames, bank_clip=bank_clip))
     return result
 
@@ -518,6 +540,7 @@ def write_all(rig, plans, combo):
                 if s['name'] == tg['name']:
                     s['hb'] = 'HB-SAMPLE'
                     s.pop('why_hb', None)
+                    s['strike'] = [[w['a'], w['b']] for w in tg['wins']]
         else:
             for sec in ('moves', 'special_adaptations'):
                 for m in g[sec]:

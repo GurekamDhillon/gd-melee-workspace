@@ -28,15 +28,15 @@
       "script": "moves/jab1.genoasm",
       "windows": [
         [
-          3,
+          2,
           4
         ],
         [
-          3,
+          2,
           4
         ],
         [
-          3,
+          2,
           4
         ]
       ],
@@ -50,8 +50,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          3,
-          7
+          2,
+          6
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
@@ -66,15 +66,15 @@
       "script": "moves/jab2.genoasm",
       "windows": [
         [
-          9,
+          2,
           4
         ],
         [
-          9,
+          2,
           4
         ],
         [
-          9,
+          2,
           4
         ]
       ],
@@ -88,8 +88,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          9,
-          13
+          2,
+          6
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
@@ -104,15 +104,15 @@
       "script": "moves/jab3.genoasm",
       "windows": [
         [
-          8,
+          4,
           4
         ],
         [
-          8,
+          4,
           4
         ],
         [
-          8,
+          4,
           4
         ]
       ],
@@ -126,8 +126,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          8,
-          12
+          4,
+          8
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
@@ -244,15 +244,15 @@
       "script": "moves/dash_attack.genoasm",
       "windows": [
         [
-          11,
+          5,
           4
         ],
         [
-          11,
+          5,
           4
         ],
         [
-          11,
+          5,
           4
         ]
       ],
@@ -266,8 +266,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          11,
-          15
+          5,
+          9
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
@@ -286,15 +286,15 @@
       "script": "moves/ftilt.genoasm",
       "windows": [
         [
-          10,
+          3,
           4
         ],
         [
-          10,
+          3,
           4
         ],
         [
-          10,
+          3,
           4
         ]
       ],
@@ -308,8 +308,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          10,
-          14
+          3,
+          7
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
@@ -324,15 +324,15 @@
       "script": "moves/utilt.genoasm",
       "windows": [
         [
-          12,
+          5,
           3
         ],
         [
-          12,
+          5,
           3
         ],
         [
-          12,
+          5,
           3
         ]
       ],
@@ -346,8 +346,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          12,
-          15
+          5,
+          8
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
@@ -362,15 +362,15 @@
       "script": "moves/dtilt.genoasm",
       "windows": [
         [
-          1,
+          11,
           8
         ],
         [
-          1,
+          11,
           8
         ],
         [
-          1,
+          11,
           8
         ]
       ],
@@ -384,8 +384,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          1,
-          9
+          11,
+          19
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
@@ -404,15 +404,15 @@
       "script": "moves/fsmash.genoasm",
       "windows": [
         [
-          17,
+          14,
           4
         ],
         [
-          17,
+          14,
           4
         ],
         [
-          17,
+          14,
           4
         ]
       ],
@@ -426,8 +426,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          17,
-          21
+          14,
+          18
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
@@ -442,15 +442,15 @@
       "script": "moves/usmash.genoasm",
       "windows": [
         [
-          13,
+          8,
           4
         ],
         [
-          13,
+          8,
           4
         ],
         [
-          13,
+          8,
           4
         ]
       ],
@@ -464,8 +464,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          13,
-          17
+          8,
+          12
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
@@ -480,15 +480,15 @@
       "script": "moves/dsmash.genoasm",
       "windows": [
         [
-          9,
+          7,
           4
         ],
         [
-          9,
+          7,
           4
         ],
         [
-          9,
+          7,
           4
         ]
       ],
@@ -502,8 +502,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          9,
-          13
+          7,
+          11
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
@@ -620,15 +620,15 @@
       "script": "moves/fair.genoasm",
       "windows": [
         [
-          19,
+          15,
           4
         ],
         [
-          19,
+          15,
           4
         ],
         [
-          19,
+          15,
           4
         ]
       ],
@@ -642,8 +642,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          19,
-          23
+          15,
+          19
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
@@ -692,15 +692,15 @@
       "script": "moves/uair.genoasm",
       "windows": [
         [
-          15,
+          12,
           4
         ],
         [
-          15,
+          12,
           4
         ],
         [
-          15,
+          12,
           4
         ]
       ],
@@ -714,8 +714,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          15,
-          19
+          12,
+          16
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
@@ -730,15 +730,15 @@
       "script": "moves/dair.genoasm",
       "windows": [
         [
-          14,
+          10,
           4
         ],
         [
-          14,
+          10,
           4
         ],
         [
-          14,
+          10,
           4
         ]
       ],
@@ -752,8 +752,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          14,
-          18
+          10,
+          14
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
@@ -788,15 +788,15 @@
       "script": "moves/grab.genoasm",
       "windows": [
         [
-          8,
+          9,
           8
         ],
         [
-          8,
+          9,
           8
         ],
         [
-          8,
+          9,
           8
         ]
       ],
@@ -804,8 +804,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          8,
-          16
+          9,
+          17
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames",
@@ -826,15 +826,15 @@
       "script": "moves/dash_grab.genoasm",
       "windows": [
         [
-          8,
+          9,
           8
         ],
         [
-          8,
+          9,
           8
         ],
         [
-          8,
+          9,
           8
         ]
       ],
@@ -842,8 +842,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          8,
-          16
+          9,
+          17
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames",
@@ -1432,22 +1432,22 @@
       "hb": "HB-SAMPLE",
       "windows": [
         [
-          10,
+          2,
           8
         ],
         [
-          10,
+          2,
           8
         ],
         [
-          10,
+          2,
           8
         ]
       ],
       "strike": [
         [
-          10,
-          18
+          2,
+          10
         ]
       ],
       "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded",

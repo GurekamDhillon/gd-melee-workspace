@@ -4,11 +4,11 @@
 PUT ANIM_RATE 1.0
 wait_until 10
 sfx behavior=1 sfx_id=164 volume=127 panning=64
-wait_until 17
+wait_until 14
 hitbox slot=0 joint=@FOOT_R@ damage=10 size=1.4 x=-0.03949 y=-0.4019 z=0.8439 angle=361 kbg=50 fkb=0 bkb=14
 hitbox slot=1 joint=@LEG_R@ damage=8 size=2.52 x=0.04702 y=-1.652 z=-0.1287 angle=361 kbg=50 fkb=0 bkb=11
 hitbox slot=2 joint=@UPLEG_R@ damage=7 size=2.52 x=-0.1149 y=-1.493 z=-0.08663 angle=361 kbg=50 fkb=0 bkb=8
-wait_until 21
+wait_until 18
 clear_hitboxes
 wait_until 42
 iasa
