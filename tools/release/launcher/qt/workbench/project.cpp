@@ -54,6 +54,7 @@ ProjectConfig ProjectConfig::load(FileStore &fs, QString *err) {
         if (config.gameplay.isEmpty()) fail("workbench.json: gameplay is required");
         config.movesDir = sourcePath(stringField(object, "moves_dir"));
         config.fidelity = sourcePath(stringField(object, "fidelity"));
+        config.combo = sourcePath(stringField(object, "combo"));
         config.planAbs = stringField(object, "plan_abs");
         config.plan = stringField(object, "plan");
         // plan_abs deliberately overrides even an old project-relative plan path.

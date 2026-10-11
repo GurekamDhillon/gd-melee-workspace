@@ -261,6 +261,7 @@ void registerAllCommands(Session &session) {
     registerGroundCommands(session);
     registerAttributeCommands(session);
     registerProjectileCommands(session);
+    registerComboCommands(session);
     registerBaselineCommands(session);
     registerRecoveryCommands(session);
 }

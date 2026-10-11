@@ -21,7 +21,7 @@ QStringList sourcePaths(Session &s) {
     QString error;
     const auto project = ProjectConfig::load(reader, &error);
     if (!error.isEmpty()) return {};
-    for (const auto &path : {project.gameplay, fullSibling(project.gameplay), project.fidelity, project.plan})
+    for (const auto &path : {project.gameplay, fullSibling(project.gameplay), project.fidelity, project.plan, project.combo})
         if (!path.isEmpty()) out.insert(path);
     for (const auto &row : s.data().rows()) if (!row.script.isEmpty()) out.insert(row.script);
     if (!project.movesDir.isEmpty()) {
@@ -101,6 +101,26 @@ QJsonArray baselineChanges(Session &s) {
         if (was.size() != now.size())
             out.append(QJsonObject{{"kind", "hitboxes"}, {"row", row.name}, {"ordinal", -1}, {"field", ""}, {"was", was.size()}, {"now", now.size()}});
     }
+    // Combo routes: matched by name (the file's own key), then field by field.
+    {
+        const auto was = base->data().routes(), now = s.data().routes();
+        QHash<QString, QJsonObject> byName;
+        for (const auto &v : was) byName.insert(v.toObject().value("name").toString(), v.toObject());
+        static const QStringList routeFields{"from", "to", "input", "dir", "on", "where", "window", "buffer", "hold", "priority",
+                                             "ki_cost", "ki_min", "depth", "once", "starts", "source"};
+        for (const auto &v : now) {
+            const auto route = v.toObject();
+            const QString name = route.value("name").toString();
+            if (!byName.contains(name)) continue;
+            const auto old = byName.value(name);
+            for (const auto &field : routeFields)
+                if (!same(old.value(field), route.value(field)))
+                    out.append(QJsonObject{{"kind", "route"}, {"row", name}, {"ordinal", route.value("index").toInt()}, {"field", field},
+                                           {"was", old.value(field)}, {"now", route.value(field)}});
+        }
+        if (was.size() != now.size())
+            out.append(QJsonObject{{"kind", "routes"}, {"row", ""}, {"ordinal", -1}, {"field", ""}, {"was", was.size()}, {"now", now.size()}});
+    }
     try {
         const auto was = attributesByName(*base), now = attributesByName(s);
         for (auto it = now.begin(); it != now.end(); ++it)
@@ -133,6 +153,19 @@ QJsonObject revertChange(Session &s, const QJsonObject &args, CommandContext &ct
         if (!was.contains(name) || !was.value(name).isDouble())
             throw CommandError{t("This attribute was unset in the built game; use Revert all", "Este atributo no estaba definido en el juego; usa Revertir todo")};
         command = "edit_attribute"; call = {{"name", name}, {"value", was.value(name)}};
+    } else if (kind == "route") {
+        const QString name = args.value("row").toString(), field = args.value("field").toString();
+        QJsonObject old;
+        for (const auto &v : base->data().routes()) if (v.toObject().value("name").toString() == name) old = v.toObject();
+        int index = -1;
+        for (const auto &v : s.data().routes()) if (v.toObject().value("name").toString() == name) index = v.toObject().value("index").toInt();
+        if (index < 0 || old.isEmpty() || !old.contains(field))
+            throw CommandError{t("This route field was unset in the built game; use Revert all", "Este campo no estaba definido en el juego; usa Revertir todo")};
+        command = "edit_route"; call = {{"index", index}, {field, old.value(field)}};
+    } else if (kind == "routes") {
+        const int baseCount = base->data().routes().size(), nowCount = s.data().routes().size();
+        if (nowCount <= baseCount) throw CommandError{t("A removed route can only be restored with Revert all", "Una ruta borrada solo se restaura con Revertir todo")};
+        command = "delete_route"; call = {{"index", nowCount - 1}};
     } else if (kind == "hitboxes") {
         // A hitbox was added: delete the extras, newest first. A removed hitbox needs Revert all.
         const QString row = args.value("row").toString();

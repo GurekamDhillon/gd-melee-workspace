@@ -1,4 +1,5 @@
 #pragma once
+#include "checks.h"
 #include "engine_link.h"
 #include "geno_data.h"
 #include "session.h"
@@ -24,6 +25,8 @@ void registerClipCommands(Session &);
 void registerAttributeCommands(Session &);
 void registerGroundCommands(Session &); // Task 14.
 void registerProjectileCommands(Session &); // articles and their spawns (geno.md 19)
+void registerComboCommands(Session &);  // routes and strings of the combo graph (geno.md 25)
+QVector<Problem> comboRouteProblems(Session &); // run_checks: a route window against the move it leaves
 void registerSaveCommands(Session &);   // Task 9.
 void registerBaselineCommands(Session &); // list_changes / revert_change / revert_all
 // Mirror the source as it is now (called after a successful rebuild; first open takes it lazily).

@@ -63,7 +63,26 @@ public:
     QVector<FileChange> addSpawn(const QString &row, int frame, quint32 arg, int *ordinal, QString *err) const;
     QVector<FileChange> removeSpawn(const QString &row, int ordinal, QString *err) const;
 
+    // The combo graph (geno.md 25): routes and strings of the file the project declares as "combo". Edits are
+    // FileChanges like every other edit, so they go through Session::commit (history, undo, propose, baseline).
+    // Route/string objects are the file's own (from may be a string or a list); `index` is the array position.
+    bool hasCombo() const { return !project_.combo.isEmpty() && !comboText_.isEmpty(); }
+    QJsonObject comboMeta() const;       // buffer, max_links, ki
+    QJsonArray routes() const;           // each with "index"
+    QJsonArray strings() const;          // each with "index"
+    QVector<FileChange> editRoute(int index, const QJsonObject &fields, QString *err) const;
+    QVector<FileChange> addRoute(const QJsonObject &route, int *index, QString *err) const;
+    QVector<FileChange> removeRoute(int index, QString *err) const;
+    QVector<FileChange> editString(int index, const QJsonObject &fields, QString *err) const;
+    QVector<FileChange> addString(const QJsonObject &str, int *index, QString *err) const;
+    QVector<FileChange> removeString(int index, QString *err) const;
+
 private:
+    QVector<FileChange> editComboItem(const QString &list, int index, const QJsonObject &fields, QString *err) const;
+    QVector<FileChange> addComboItem(const QString &list, const QJsonObject &item, int *index, QString *err) const;
+    QVector<FileChange> removeComboItem(const QString &list, int index, QString *err) const;
+    QJsonObject comboBlock() const;
+    QStringList comboBase() const;
     const RowInfo *findRow(const QString &name) const;
     QString externalError(const QStringList &paths) const;
     void syncGameplay(QVector<FileChange> &out, int moveIndex, const QVector<HitboxRef> &before,
@@ -79,6 +98,8 @@ private:
     QJsonArray fidelityRows_;
     QByteArray gameplayBytes_, fidelityBytes_;
     QString gameplayText_, fidelityText_;
+    QByteArray comboBytes_;
+    QString comboText_;
     // Only reload reads FileStore: inspecting/editing cannot acknowledge a hand edit.
     QHash<QString, QByteArray> scripts_;
 };

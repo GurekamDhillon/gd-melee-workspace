@@ -198,6 +198,7 @@ QString GenoData::reload() {
     fidelityRows_ = {}; scripts_.clear();
     gameplayBytes_.clear(); fidelityBytes_.clear();
     gameplayText_.clear(); fidelityText_.clear();
+    comboBytes_.clear(); comboText_.clear();
     try {
         QString error;
         const ProjectConfig project = ProjectConfig::load(fs_, &error);
@@ -305,6 +306,13 @@ QString GenoData::reload() {
                 }
             }
         }
+        // The combo graph is optional: a project without one (or without the file yet) simply has no routes.
+        QByteArray comboBytes;
+        QString comboText;
+        if (!project.combo.isEmpty()) {
+            comboBytes = fs_.read(project.combo);
+            if (fs_.exists(project.combo)) parseObject(comboBytes, project.combo, &comboText);
+        }
         // Publish a complete model only; any failure above leaves all views empty.
         project_ = project;
         rows_ = rows; scripts_ = scripts;
@@ -313,6 +321,7 @@ QString GenoData::reload() {
         planPath_ = planName;
         gameplayBytes_ = gameplayBytes; gameplayText_ = gameplayText;
         fidelityBytes_ = fidelityBytes; fidelityText_ = fidelityText; fidelityRows_ = fidelityRows;
+        comboBytes_ = comboBytes; comboText_ = comboText;
         return {};
     } catch (const std::exception &e) {
         return QString::fromUtf8(e.what());
