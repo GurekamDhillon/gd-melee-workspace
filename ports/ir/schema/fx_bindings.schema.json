@@ -119,6 +119,11 @@
           "type": "integer",
           "minimum": 0
         },
+        "joint2": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "optional second joint: the effect origin is the midpoint of joint and joint2 (the axes stay joint's); geno.md 20.3"
+        },
         "offset": {
           "$ref": "#/$defs/Vec3"
         },

@@ -41,6 +41,8 @@ BINDINGS = {200121: 'GnKameVox1', 200124: 'GnKameVox2', 200127: 'GnKameVox3', 20
             200103: 'GnKameSuperSeCharge', 200106: 'GnKameSuperVoxFire', 200109: 'GnKameSuperSeShot'}
 
 
+# XV2's charge cue (SE cue 0 kamehame_Charge) is a looping waveform that its shot cue stops: these rows are 'stoppable' (the scripts play sound id 540001 to stop them, geno.md 22.7)
+STOPPABLE = {200100, 200133, 200136, 200139}
 # the charge hum rises in pitch between the chant beats (owner, 2026-10-10: a 10 s charge): the SE 4_charge played back faster, i.e. resampled up by these ratios
 HUM = {'GnKameHum2': 1.15, 'GnKameHum3': 1.32, 'GnKameHum4': 1.52}
 PEAK = {'Vox': 0.55, 'Se': 0.40}   # peak (fraction of full scale) per clip kind: a voice and an SE start together, their sum must not clip the mix

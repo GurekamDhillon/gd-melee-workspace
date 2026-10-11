@@ -2,6 +2,7 @@
 # Beam = four spheres along the hands, built out over 3 clip frames, re-hitting every 5 frames; the beam effect is fx P_TrailGokuKameSuper.
 PUT ANIM_RATE 1.0
 clear_hitboxes
+sfx behavior=1 sfx_id=540001 volume=0 panning=64
 sfx behavior=1 sfx_id=200103 volume=127 panning=64
 wait_until 4
 sfx behavior=1 sfx_id=200121 volume=127 panning=64
@@ -12,7 +13,7 @@ sfx behavior=1 sfx_id=200127 volume=127 panning=64
 wait_until 44
 sfx behavior=1 sfx_id=200130 volume=127 panning=64
 wait_until 54
-sfx behavior=1 sfx_id=200106 volume=127 panning=64
+sfx behavior=1 sfx_id=540001 volume=0 panning=64
 sfx behavior=1 sfx_id=200109 volume=127 panning=64
 PUT ANIM_RATE 0.15
 hitbox slot=0 joint=@HAND_R@ damage=2.6 size=6 x=-4.54 y=-1.22 z=8.81 angle=361 kbg=60 fkb=8 bkb=0 element=2 shield=0
@@ -20,6 +21,7 @@ REHIT 15 5
 HBSTUN 15 6
 HBFLAGS 15 1
 wait 1
+sfx behavior=1 sfx_id=200106 volume=127 panning=64
 hitbox slot=1 joint=@HAND_R@ damage=2.6 size=6 x=-9.99 y=-2.68 z=19.38 angle=361 kbg=60 fkb=8 bkb=0 element=2 shield=0
 wait 1
 hitbox slot=2 joint=@HAND_R@ damage=2.6 size=6 x=-15.44 y=-4.15 z=29.95 angle=361 kbg=60 fkb=8 bkb=0 element=2 shield=0
