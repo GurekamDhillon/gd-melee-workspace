@@ -27,6 +27,7 @@ Entries without a status qualifier describe existing source concepts, not a clai
 
 | Term | Definition and boundary | Where |
 |---|---|---|
+| `.gdlp` | "GD live playback": the LAB's own recording file, a Slippi-framed container (`.slp` event framing plus GD extension events 0x90-0x97) holding every frame's pads from a start state. A recording is the `.gdlp` plus the `.gdst` state beside it. Playback refuses a different build, disc, mods or Geno data. Not yet a valid `.slp` (v2 adds the standard events and an export). | `melee/docs/geno.md` 14.20 |
 | Bridge | Generated guest-address-to-native-function lookup used by m-ex calls. A successful link does not prove the bridge matches the final map. | `tools/port/build.sh` |
 | LAB | Offline inspection, drill, savestate and rewind environment for the game. It is not the retail run director or proof that a rule works in Classic. | `melee/docs/geno.md` |
 | Provenance | Evidence identifying which source, assets and executable produced a result. Source inspection alone is not executable provenance. | `docs/HANDOFF.md` |
