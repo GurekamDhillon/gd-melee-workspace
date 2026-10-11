@@ -7,9 +7,17 @@ for the user's own disc image, and nothing of Nintendo's.
 
 ```powershell
 powershell -File tools\release\publish.ps1 -DryRun   # package existing binaries + check + show gh command and notes
-powershell -File tools\release\publish.ps1 -Draft    # publish as a draft release (look it over on GitHub, then Publish)
-powershell -File tools\release\publish.ps1           # publish for real
+powershell -File tools\release\publish.ps1 -Draft -AllowUnsignedUpdate # stable release draft with unsigned update metadata
+powershell -File tools\release\publish.ps1 -AllowUnsignedUpdate        # stable release with explicit unsigned metadata
 ```
+
+Only stable numeric versions (`x.y.z[.w]`) generate and upload `update.json` for
+the launcher's stable channel. They require `-AllowUnsignedUpdate` for real
+publication until signing is implemented. Release candidates such as
+`0.3.0-rc3` print a skip note and package/publish without a stable manifest or
+that opt-in; GitHub receives `--prerelease --latest=false`. A manifest left by a
+previous stable build in the output directory is never attached to an RC.
+See [UPDATE-MANIFEST.md](UPDATE-MANIFEST.md) for the format and signing limit.
 
 `publish.ps1` packages an existing game build; it does not compile the game. Normal publishing
 uses `-Strict` and refuses when:

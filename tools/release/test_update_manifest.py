@@ -17,7 +17,7 @@ class ManifestTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        self.version = (HERE / "VERSION").read_text().strip()
+        self.version = "0.3.0"  # Stable fixture, independent of the current release/RC.
         self.protocol = 6
         self.zip = self.root / f"GDMelee-{self.version}-win64.zip"
         self.output = self.root / "update.json"

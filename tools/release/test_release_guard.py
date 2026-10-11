@@ -34,6 +34,7 @@ class ReleaseGuardTests(unittest.TestCase):
                  'initial_pipeline_cache.db', 'initial_pipeline_cache.core',
                  'launcher/bin/gd-melee-launcher.exe', 'launcher/bin/Qt6Core.dll',
                  'launcher/bin/Qt6Gui.dll', 'launcher/bin/Qt6Widgets.dll',
+                 'launcher/bin/Qt6Network.dll', 'launcher/plugins/tls/qschannelbackend.dll',
                  'launcher/bin/msvcp140.dll', 'launcher/bin/vcruntime140.dll',
                  'launcher/bin/vcruntime140_1.dll', 'launcher/bin/qt.conf',
                  'launcher/bin/platforms/qwindows.dll', 'launcher/qt-build.txt',
@@ -126,6 +127,7 @@ class ReleaseGuardTests(unittest.TestCase):
     def test_missing_essential_files_are_rejected_even_with_matching_manifest(self):
         for name in ('melee-pc.map', 'SDL3.dll', 'ui/manifest.json',
                      'launcher/bin/Qt6Gui.dll', 'launcher/bin/platforms/qwindows.dll',
+                     'launcher/bin/Qt6Network.dll', 'launcher/plugins/tls/qschannelbackend.dll',
                      'launcher/bin/vcruntime140_1.dll', 'build-provenance.json',
                      'launcher/licenses/BarlowCondensed-OFL-1.1.txt'):
             with self.subTest(name=name):
