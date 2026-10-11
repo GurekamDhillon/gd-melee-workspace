@@ -55,7 +55,9 @@
                 "enum": [
                   "mario",
                   "captain",
-                  "fox"
+                  "fox",
+                  "falco",
+                  "marth"
                 ],
                 "description": "base none, geno 10: the retail fighter whose native code, state table and specials the define runs on (default mario); captain / fox = a complete retail fighter carried as a package (docs/geno.md 22.10, 22.13)"
               },
@@ -2029,7 +2031,7 @@
                 }
               ]
             },
-            "maxItems": 320
+            "maxItems": 336
           },
           "special_attributes": {
             "type": "array",
@@ -5661,7 +5663,7 @@
       "source": "melee/pc/geno/geno.h:259"
     },
     "GENO_MAX_OVERLAYS": {
-      "value": 320,
+      "value": 336,
       "source": "melee/pc/geno/geno.h:260"
     },
     "GENO_POOL_WORDS": {
@@ -5738,11 +5740,11 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "a6c850dbc348f8f58fcb1c74b716a10ae528785edfdcc7cbc703deca1506f0fc",
-    "pc/platform/geno_define_registry.inc": "0a52627f06b2a87901fc7e521ec6c738eea0bf063bf9ea0db557b9328d5183db",
+    "pc/platform/geno_registry.c": "7e9dec61ae98bee9225615c15cad4649b7a8b40de77dcc3618467c5d6e2dd072",
+    "pc/platform/geno_define_registry.inc": "bdef13156723fea09086c97b421e4572246af03d45a46df52cdf9886a1bdc975",
     "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
     "pc/platform/geno_combo_registry.inc": "ee2771fc193b43719de384e5a39e689c69e11b43bbbb36318cf91c8723694837",
-    "pc/geno/geno.h": "8e0e10f9974945b70e9a154fe377c666384778a28a6124f523d9131179eb3d26",
+    "pc/geno/geno.h": "abb91a63a4cc40c9045bdea46c10876347a1f29b348dfe52ec09ac02c37982e8",
     "pc/geno/geno_game.c": "d28cd1874bdacff365dc4f4615baf5f1da8a355c49b8bf555ff1248385e78200",
     "pc/geno/geno_game_v2.inc": "9c572553dcd7b6a70e9d5a3fa3efcbc618b8de567c287e75e1f1577e572f5fb0",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",

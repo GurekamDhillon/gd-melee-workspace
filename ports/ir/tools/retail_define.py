@@ -19,7 +19,7 @@ fighter's own, not Mario's:
 Everything here is disc-derived: the output goes under _build/ (git-ignored), never into a repository. What is NOT carried is listed in
 define_report.json (the effect file, the sound bank, the results/intro demo clips, the select art).
 
-Wired: `captain`, `fox` (FIGHTERS below); another retail fighter needs its template in the engine first (geno.md 22.10, 22.13: the checklist).
+Wired: `captain`, `fox`, `falco`, `marth` (FIGHTERS below); another retail fighter needs its template in the engine first (geno.md 22.10, 22.13: the checklist).
 """
 import argparse
 import json
@@ -53,6 +53,25 @@ FIGHTERS = {
         "costumes": [("Nr", "Default", None), ("Or", "Orange", "red"), ("La", "Lavender", "blue"), ("Gr", "Green", "green")],
         "ai": "fox", "kirby": "retail:fox", "plan_file": "GnFox_plan.json",   # mod files are one namespace: two packages cannot both ship plan.json (Falcon keeps the old name)
         "thrown_as": "fox",   # the engine default is captain; a victim thrown by a retail-template define plays the template's own thrown rows
+    },
+    "falco": {
+        "kind": 22, "code": "Fc", "data": "ftDataFalco", "rows": 327, "prefix": "GnFalco", "key": "geno-falco", "name": "Geno Falco",
+        "motions": 376, "dir": "ftFox", "attrs_struct": "ftFox_DatAttrs",   # Falco runs on Fox's attribute struct and 35-state table (ftFc_Init_MotionStateTable)
+        # ftFc_Init_CostumeStrings: Nr, Re, Bu, Gr (team: red = Re, blue = Bu, green = Gr)
+        "costumes": [("Nr", "Default", None), ("Re", "Red", "red"), ("Bu", "Blue", "blue"), ("Gr", "Green", "green")],
+        "ai": "falco", "kirby": "retail:falco", "plan_file": "GnFalco_plan.json", "thrown_as": "falco",
+    },
+    "marth": {
+        "kind": 18, "code": "Ms", "data": "ftDataMars", "rows": 327, "prefix": "GnMarth", "key": "geno-marth", "name": "Geno Marth",
+        "motions": 373, "dir": "ftMars", "attrs_struct": "MarsAttributes",
+        # ftMs_Init_CostumeStrings: Nr, Re, Gr, Bk, Wh (team: red = Re, blue = Bk?? no: Marth's teams are Re, Bk-less; see TEAM below)
+        "costumes": [("Nr", "Default", None), ("Re", "Red", "red"), ("Gr", "Green", "green"), ("Bk", "Black", None), ("Wh", "White", None)],
+        "ai": "mars", "kirby": "retail:mars", "plan_file": "GnMarth_plan.json", "thrown_as": "mars",
+        # MarsAttributes in the decomp has anonymous x-fields, an AbsorbDesc (0x64) and a SwordAttrs (0x78, with u8 flag bytes): the byte
+        # flags are carried as the whole 32-bit words that hold them (the padding bytes ride along unchanged)
+        "ext_fields": ([(0, True), (4, True), (8, True)] + [(o, False) for o in range(0xC, 0x64, 4)]
+                       + [(0x64, True), (0x68, False), (0x6C, False), (0x70, False), (0x74, False)]
+                       + [(0x78, False), (0x7C, False), (0x80, True), (0x84, True), (0x88, True), (0x8C, True), (0x90, False), (0x94, False)]),
     },
 }
 WAIT_MOTION = 14   # ftCo_MS_Wait
@@ -150,7 +169,7 @@ def read_ftdata(ar, spec):
     for name, (off, is_int) in layout.items():
         attrs[name] = struct.unpack_from(">i" if is_int else ">f", ar.data, block + off)[0]
     ext = ar.u32(fd + 4)
-    ftypes = ext_layout(spec["attrs_struct"], os.path.join(game_dir(), "src", "melee", "ft", "kinds", spec["dir"], "types.h"))
+    ftypes = spec.get("ext_fields") or ext_layout(spec["attrs_struct"], os.path.join(game_dir(), "src", "melee", "ft", "kinds", spec["dir"], "types.h"))
     special = []
     for off, is_int in ftypes:
         if is_int:

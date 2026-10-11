@@ -1,6 +1,6 @@
 # falcon_parity: retail Captain Falcon against the standalone Geno Falcon
 
-Proof that a `base: "none"`, `template: "captain"` define built from the disc plays like retail (game `docs/geno.md` 22.10). Local only: the package and every trace are disc-derived.
+Proof that a `base: "none"`, `template: "captain"` (or fox, falco, marth: pass the retail token and `geno:<key>`) define built from the disc plays like retail (game `docs/geno.md` 22.10). Local only: the package and every trace are disc-derived.
 
     # 1. the disc files (once)
     python tools/gc_extract.py "$GW_ISO_VANILLA" _build/falcon-geno/disc --only PlCa
