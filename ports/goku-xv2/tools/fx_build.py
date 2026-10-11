@@ -129,7 +129,7 @@ def mesh_emitter(name, mesh, *, follow='srt', life=30, base=(1.0, 1.0, 1.0), key
 from kame_geom import ROT as RISE, along, D  # the beam direction in the hand's frame (kame_geom.py)
 
 
-def beam_package(R, L, life, ramp=4, hot=(1, 1, 1), edge=(0.25, 0.65, 1.0), sparks=2.5):
+def beam_package(R, L, life, ramp=4, hot=(1, 1, 1), edge=(0.25, 0.65, 1.0), sparks=2.5, flash=0):
     """A Kamehameha beam from the right hand: soft outer glow + bright core + white hot core (mesh cylinders that grow out to L in `ramp`
     frames and close at the end), a muzzle flare, a tip/impact flare with a spark burst, and sparks streaming along the beam."""
     c = max(1, life - 6)
@@ -142,11 +142,12 @@ def beam_package(R, L, life, ramp=4, hot=(1, 1, 1), edge=(0.25, 0.65, 1.0), spar
         emitter('muzzle', rate=1.0, duration=1, one_time=True, radius=(0, 0, 0), shape='point', life=life, size=(R * 4.2, R * 2.6), c0=(0.4, 0.8, 1.0), c1=(0.9, 0.98, 1), scale=1.8, translate=along(2.0)),
         emitter('tip', rate=1.0, duration=1, one_time=True, radius=(0, 0, 0), shape='point', life=life - ramp, size=(R * 5.5, R * 3.5), c0=(0.5, 0.85, 1.0), c1=(0.95, 1, 1), scale=2.0, translate=along(L)),
         emitter('burst', rate=sparks * 2, duration=life - ramp, radius=(R * 0.6, R * 0.6, R * 0.6), shape='sphere', life=9, speed=0.9, size=(R * 1.1, 0.2), c0=(0.7, 0.95, 1.0), c1=(1, 1, 1), scale=2.4, translate=along(L)),
+        *([emitter('flash', rate=1.0, duration=1, one_time=True, radius=(0, 0, 0), shape='point', life=flash, size=(R * 11, R * 7), c0=(0.7, 0.95, 1.0), c1=(1, 1, 1), scale=3.0, translate=along(3.0))] if flash else []),
         emitter('sparks', rate=sparks, duration=life, radius=(R * 0.8, R * 0.8, R * 0.8), shape='sphere_fill', life=max(8, int(L / 4.5)), speed=0.0, direction=dv, dscale=4.5, size=(R * 0.9, 0.15), c0=(0.7, 0.95, 1.0), c1=(1, 1, 1), scale=2.4),
     ]
 
 
-def charge_package(R=3.8):
+def charge_package(R=5.5):
     """The ki ball between the cupped hands: grows over the 60-frame charge, flashes at each 15-frame step, then holds at full size with
     sparks drawn in; the ball is a pair of billboards (glow + white core)."""
     # one long-lived particle per layer: grows over the 60 charge frames (t = 0 .. 0.1 of its 600-frame life), then holds; the state's exit ends it
@@ -164,6 +165,8 @@ def charge_package(R=3.8):
         out.append(emitter('draw%d' % i, rate=1.0 + i, duration=0, radius=(R * 2.4, R * 2.4, R * 2.4), shape='sphere', life=12, speed=-0.2 - 0.05 * i, size=(1.6 + i * 0.4, 0.2),
                            c0=(0.7, 0.95, 1.0), c1=(1, 1, 1), scale=2.4, translate=(0, 0, 4)))
         out[-1]['emission']['start'] = start
+    for e in out:
+        e['material']['depth_test'] = False   # the hands are behind his body in the cup pose: draw the ball over it
     return out
 
 
@@ -172,10 +175,10 @@ MESHES = {'cyl': cyl_mesh()}
 PACKAGES = {
     # the Kamehameha rework (KAMEHAMEHA.md): charge ball, four beams
     'P_TrailGokuKameCharge': charge_package(),
-    'P_TrailGokuKameTap': beam_package(1.2, 22, 20, ramp=3),
-    'P_TrailGokuKameMid': beam_package(1.8, 28, 36, ramp=4, sparks=3.0),
-    'P_TrailGokuKameFull': beam_package(2.6, 36, 54, ramp=5, sparks=3.5),
-    'P_TrailGokuKameSuper': beam_package(4.0, 52, 70, ramp=6, hot=(1.0, 0.97, 0.8), edge=(0.45, 0.75, 1.0), sparks=4.5),
+    'P_TrailGokuKameTap': beam_package(1.2, 22, 18, ramp=3),
+    'P_TrailGokuKameMid': beam_package(1.8, 28, 34, ramp=4, sparks=3.0),
+    'P_TrailGokuKameFull': beam_package(2.6, 36, 46, ramp=5, sparks=3.5, flash=5),
+    'P_TrailGokuKameSuper': beam_package(4.0, 52, 64, ramp=6, hot=(1.0, 0.97, 0.8), edge=(0.45, 0.75, 1.0), sparks=4.5, flash=7),
     # continuous ki aura around the body: rising soft sparks, cyan to white
     'P_TrailGokuAura': [emitter('aura', rate=3.0, radius=(3.2, 7.0, 3.2), life=26, dscale=0.45, size=(3.4, 0.4), c0=(0.45, 0.8, 1.0), c1=(1, 1, 1), scale=1.6),
                         emitter('core', rate=0.6, radius=(1.5, 5.0, 1.5), life=12, dscale=0.1, size=(6.0, 3.0), c0=(0.3, 0.6, 1.0), c1=(0.9, 0.97, 1.0), scale=0.9)],

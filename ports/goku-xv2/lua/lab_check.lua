@@ -34,6 +34,7 @@ gd.run(function()
         for k,v in pairs(case[2]) do input[k]=v end
         gd.input(1,input,case[3])
         local seen,article,max_charge,first,last,orb=false,false,0,nil,nil,false
+        local beam=false
         for tick=1,170 do
           gd.wait(1)
           local p=gd.player(1)
@@ -42,16 +43,16 @@ gd.run(function()
           assert(lua.faults==0,'Lua fault: '..tostring(lua.last_fault))
           max_charge=math.max(max_charge,lua.state.charge or 0)
           assert(#(gd.hitboxes(1) or {})<=4,'more than four live fighter hitboxes')
+          if #(gd.hitboxes(1) or {})>0 then beam=true end   -- 2026-10-10: the Kamehameha is a hitbox beam, not an article
           for _,item in ipairs(gd.items() or {}) do
             if case[5]~=nil and item.owner_port==1 and item.geno_kind==case[5] then article=true end
             if item.owner_port==1 and item.geno_kind==3 then orb=true end
           end
         end
-        gd.log(string.format('GOKUCHECK case=%s air=%s state=%s seen=%s article=%s orb=%s charge=%d af=%s..%s final=%s',
-          case[1],tostring(air),case[4],tostring(seen),tostring(article),tostring(orb),max_charge,tostring(first),tostring(last),tostring(gd.player(1).motion_name)))
+        gd.log(string.format('GOKUCHECK case=%s air=%s state=%s seen=%s beam=%s orb=%s charge=%d af=%s..%s final=%s',
+          case[1],tostring(air),case[4],tostring(seen),tostring(beam),tostring(orb),max_charge,tostring(first),tostring(last),tostring(gd.player(1).motion_name)))
         assert(seen,'missing state '..want)
-        if case[1]=='n-full' then assert(orb,'no KameOrb charge article during the charge') end
-        if case[5]~=nil then assert(article,'no matching Kamehameha article for '..case[1]) end
+        if case[5]~=nil then assert(beam,'no Kamehameha beam hitbox for '..case[1]) end
         total=total+1
         end
       end

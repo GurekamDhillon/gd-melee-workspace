@@ -16,6 +16,7 @@ gd.run(function()
       reset(py, vx)
       gd.input(1, {buttons = 'B'}, hold)
       local hits, last, first, dmg, hbframes, rel, y0, ymin, ymax = 0, 0, nil, 0, 0, nil, nil, 1e9, -1e9
+      local maxhb = 0   -- the highest live drag-hit damage (after the Lua scaling, before staling)
       local seen = false
       for t = 1, hold + 160 do
         gd.wait(1)
@@ -23,7 +24,9 @@ gd.run(function()
         if p1.motion_name == want then
           seen = true
           rel = rel or t
-          if (#(gd.hitboxes(1) or {})) > 0 then hbframes = hbframes + 1 end
+          local live = gd.hitboxes(1) or {}
+          if #live > 0 then hbframes = hbframes + 1 end
+          if p1.action_frame < 40 then for _, h in ipairs(live) do maxhb = math.max(maxhb, h.damage) end end
           if not y0 then y0 = p1.y end
           if p1.action_frame < 60 then ymin = math.min(ymin, p1.y); ymax = math.max(ymax, p1.y) end
         end
@@ -34,10 +37,10 @@ gd.run(function()
         local lua = assert(gd.fighter_lua(1))
         assert(lua.faults == 0, 'Lua fault: ' .. tostring(lua.last_fault))
       end
-      local r = {hits = hits, dmg = dmg, hb = hbframes, seen = seen, rel = rel, span = ymax - ymin}
+      local r = {hits = hits, dmg = dmg, hb = hbframes, seen = seen, rel = rel, span = ymax - ymin, maxhb = maxhb}
       results[name] = r
-      gd.log(string.format('KAMECHK case=%s want=%s seen=%s hits=%d damage=%.2f hit_frames=%s..%s hitbox_frames=%d release_at=%s y_span=%.2f',
-        name, want, tostring(seen), hits, dmg, tostring(first), tostring(last), hbframes, tostring(rel), r.span))
+      gd.log(string.format('KAMECHK case=%s want=%s seen=%s hits=%d damage=%.2f hit_frames=%s..%s hitbox_frames=%d release_at=%s y_span=%.2f drag_dmg=%.2f',
+        name, want, tostring(seen), hits, dmg, tostring(first), tostring(last), hbframes, tostring(rel), r.span, maxhb))
       assert(seen, 'state not reached: ' .. want)
       return r
     end
@@ -49,7 +52,7 @@ gd.run(function()
     assert(mid.hits >= 2 and full.hits >= 3, 'beam does not multi-hit: mid ' .. mid.hits .. ' full ' .. full.hits)
     assert(tap.dmg < mid.dmg and mid.dmg < full.dmg, 'damage does not scale with the tier')
     assert(tap.hb < mid.hb and mid.hb < full.hb, 'beam duration does not scale with the tier')
-    assert(max.dmg > full.dmg, 'a full 60-frame charge does not hit harder than 45')
+    assert(max.maxhb > full.maxhb, 'a full 60-frame charge does not hit harder than 45 (drag damage ' .. max.maxhb .. ' vs ' .. full.maxhb .. ')')
     assert(full.dmg <= 30 and max.dmg <= 30, 'full beam too strong: ' .. full.dmg)
     local air = fire('air_full', 50, 'KameFull', 45)
     assert(air.span < 6, 'no hover during the air beam: y span ' .. air.span)

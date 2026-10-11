@@ -1,5 +1,5 @@
 -- Kamehameha frame strips: charge, release, beam, impact. Config keys: hold (frames B is held, default 62), tag (file prefix),
--- air=1 (fire from the air), gap (frames between shots, default 4), dist (victim x). Prints "KAMESHOT <path>" per shot.
+-- tail (frames after the hold, default 120), air=1 (fire from the air), gap (frames between shots, default 4), dist (victim x). Prints "KAMESHOT <path>" per shot.
 local C = CFG or {}   -- the runner (tools/kame_run.py --cfg k=v) prepends CFG={...}; the sandbox has no os.getenv
 local HOLD = tonumber(C.hold or 62)
 local TAG = C.tag or 'kame'
@@ -26,7 +26,7 @@ gd.run(function()
       gd.log('KAMESHOT ' .. tostring(path))
     end
     gd.input(1, {buttons = 'B'}, HOLD)
-    local total = HOLD + 120
+    local total = HOLD + tonumber(C.tail or 120)
     for t = 1, total do
       gd.wait(1)
       if t % GAP == 0 then
@@ -34,9 +34,10 @@ gd.run(function()
         local lua = gd.fighter_lua(1)
         shot(string.format('t%03d_%s_af%d_c%d', t, tostring(p.motion_name), p.action_frame or -1, (lua and lua.state.charge) or -1))
         local hb = gd.hitboxes(1) or {}
-        gd.log(string.format('KAME t=%d state=%s af=%s hitboxes=%d p2pct=%.1f', t, tostring(p.motion_name), tostring(p.action_frame), #hb, gd.player(2).percent or -1))
+        gd.log(string.format('KAME t=%d state=%s af=%s hitboxes=%d p2pct=%.1f p2x=%.1f p2=%s', t, tostring(p.motion_name), tostring(p.action_frame), #hb, gd.player(2).percent or -1, gd.player(2).x or -1, tostring(gd.player(2).motion_name)))
       end
     end
+    gd.wait(12)   -- the last screenshot is written a few frames after the call
     gd.log('KAME DONE')
   end)
   if not ok then gd.log('KAME FAIL ' .. tostring(why)) end
