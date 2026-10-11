@@ -7,7 +7,8 @@
   BLENDER_USER_SCRIPTS dir make_falcon_art.py prepares): its bone axes are the engine's joint frames, which is
   what the Workbench calibration wants. Bones are JOBJ_<n>, n = the engine joint index, parent-first;
 * PARTS.json (HsdExport --parts) bakes the default model-part visibility: the low-poly LOD set is hidden;
-* every ANIM_DIR/<Clip>.smd becomes an Action named <Clip>, frame 0 = engine frame 1 (the Workbench rule).
+* every ANIM_DIR/<Clip>.smd becomes an Action named <Clip>, frame 0 = engine frame 1 (the Workbench rule);
+  the .smd format has no scale, so <Clip>.scale.json (HsdExport --anim) is added as pose-bone scale F-curves.
 Output stays under _build/ (git-ignored); nothing here ships.
 """
 import glob
@@ -71,6 +72,35 @@ for m in meshes:
 bpy.data.objects.remove(gltf_arm, do_unlink=True)
 
 # 5. clips
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import scale_tracks  # noqa: E402
+
+
+def add_scale_curves(act, path):
+    """Pose-bone scale F-curves for every joint: the clip's .scale.json sidecar where it animates scale, else
+    constant 1 (see scale_tracks.py: un-keyed channels would keep the previous clip's scale)."""
+    if path:
+        doc = scale_tracks.load(path)
+    else:
+        doc = {"frames": int(act.frame_range[1]), "joints": {}}
+    chans = scale_tracks.channels(doc) + scale_tracks.rest_channels(doc["joints"], doc["frames"], len(rig.data.bones))
+    if hasattr(act, "slots"):   # Blender 4.4+ slotted actions
+        fcurves = act.layers[0].strips[0].channelbag(act.slots[0], ensure=True).fcurves
+        group_kw = "group_name"
+    else:
+        fcurves = act.fcurves
+        group_kw = "action_group"
+    for data_path, axis, bone, keys in chans:
+        fc = fcurves.new(data_path, index=axis, **{group_kw: bone})
+        fc.keyframe_points.add(len(keys))
+        for kp, (frame, value) in zip(fc.keyframe_points, keys):
+            kp.co = (frame, value)
+            kp.interpolation = "LINEAR"
+        fc.update()
+    return len(chans)
+
+
+scaled = 0
 t0 = time.time()
 files = sorted(glob.glob(os.path.join(anim_dir, "*.smd")))
 for f in files:
@@ -83,15 +113,19 @@ for f in files:
     if act is not None:
         act.name = os.path.splitext(os.path.basename(f))[0]
         act.use_fake_user = True
+        sidecar = os.path.splitext(f)[0] + ".scale.json"
+        add_scale_curves(act, sidecar if os.path.isfile(sidecar) else None)
+        scaled += os.path.isfile(sidecar)
 if rig.animation_data:
     rig.animation_data.action = None
 for b in rig.pose.bones:
     b.location = (0, 0, 0)
     b.rotation_euler = (0, 0, 0)
     b.rotation_quaternion = (1, 0, 0, 0)
+    b.scale = (1, 1, 1)
 for mat in [m for m in bpy.data.materials if m.users == 0]:
     bpy.data.materials.remove(mat)   # the .smd skeleton import brought its own, unused ones
-print("FALCON_CLIPS imported=%d actions=%d in %.1fs" % (len(files), len(bpy.data.actions), time.time() - t0))
+print("FALCON_CLIPS imported=%d actions=%d with_scale=%d in %.1fs" % (len(files), len(bpy.data.actions), scaled, time.time() - t0))
 if parts_json:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import part_visibility

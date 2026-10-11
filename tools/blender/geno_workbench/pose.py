@@ -401,22 +401,9 @@ def calibrate(arm, session):
 
     # The server fills each row's clip from the plan (list_rows); rows without one are skipped here.
     rows = list(session.rows)
-    matching = [
-        row for row in rows
-        if row.get("clip") and bpy.data.actions.get(row["clip"]) is not None
-    ]
-    reference = next(
-        (row for row in matching if row["clip"] == "Wait"),
-        matching[0] if matching else None,
+    reference, action_name = rigmap.pick_reference_row(
+        rows, lambda clip: bpy.data.actions.get(clip) is not None
     )
-    if reference is None:
-        reference = next(
-            (row for row in rows if str(row.get("name", "")).casefold() == "wait"),
-            rows[0] if rows else None,
-        )
-        action_name = ""
-    else:
-        action_name = reference["clip"]
     if reference is None or not reference.get("name"):
         raise RuntimeError(STRINGS["fighter_no_reference_row"])
 
