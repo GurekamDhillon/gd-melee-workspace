@@ -5,6 +5,11 @@ character controller/animations/state machine actually map to this. We need to d
 to find out what we are doing is grounded." Owner correction to the earlier Y/R/D-pad proposal: "always floating"
 is **animation only**; gameplay keeps Melee's grounded/airborne rules (gimpable, no camping under the stage).
 
+**Update, same day (follow-up dump): sections 7-12 at the end supersede sections 0 (the "missing CMN BCM" bullet), 1.3 (LinkFlags
+paragraph), 1.4 (ki charge) and 6 where they disagree.** Short version: there is **no CMN BCM and no system BCM anywhere in the game's archives**
+(all 1159 BCMs in the CPKs are `*_PLAYER.bcm`); the engine-level inputs are stated by the game's own help text, which I read. The true ki charge is
+skill 591 "Energy Charge" (KTN), i.e. what the earlier section already suspected.
+
 Every claim is tagged **SOURCE** (read from the decoded XV2 data in the shallow dump), **WEB** (cited), or
 **INFERENCE** (mine; reasoned, not read). Numbers and ids below are structure, not assets; no XV2 asset data is
 committed here.
@@ -301,3 +306,207 @@ parser comment.
    reaction selection table. Want the exporter re-run with `chara/CMN/*.bcm` and the XV2 `system/` BCM files?
 6. Full default button map of XV2 (PC/pad) was not retrievable from web search (Fandom 402, Twinfinite 403): is
    the owner's in-game controls screen the reference, or should I keep to the parser's Square/Triangle/Circle/X/L1/L2/R2?
+
+---
+
+# Follow-up (2026-10-11, later): the common/system BCM dump and what it settled
+
+Owner approved dumping XV2's common/system BCMs and settling the open items. Tags as above. No data is committed:
+the dumps live in `_build/xv2-cmn-bcm/` (git-ignored); only ids, names, counts and short structural quotes are here.
+
+## 7. What was dumped, and the main finding
+
+* **Pipeline (SOURCE).** `ports/goku-xv2/tools/build_source_ir.py` does not read the game itself: it reads the accepted shallow export
+  `E:/Torrents/Dragon.Ball.Xenoverse.2.Future.Saga.Chapter.4-RUNE/modding/exports/goku-base-shallow-v0.1`, written by
+  `.../exports/goku-base-shallow-v0.1/tools/Program.cs` (Xv2CoreLib/XV2-Tools commit `59242676`, built from `.../modding/src/XV2-Tools`),
+  which opens the installed game (`E:/Games/DB Xenoverse 2`, 1.25.02.0) through `Xv2FileIO` and the CPKs `data*.cpk` / `data_d*_dlc.cpk`.
+  There is no `.env` entry for it: the paths are in the script (`DEFAULT=`) and the modding README. I wrote a second small tool (scratch only; same
+  `Xv2FileIO`, `BCM_File`, `BAC_File`, `MSG_File` loaders) that lists every CPK member (138880) and decodes every `*.bcm`.
+* **There is no CMN BCM and no system BCM (SOURCE).** The CPKs hold 1159 `.bcm` files and every one is `<code>_player.bcm` under `chara/` or `skill/`.
+  `data/chara/cmn/` has `CMN.bac`, `.bdm`, `.bai`, `.ean` and per-character `CMN.<code>.lby.bac` (lobby) but no `.bcm`; `data/system/` has 76 files, none a BCM
+  (it has `special_action_table.sat`, `throw_action_branch.tab`, `aura_setting.aur`, `camera_action_effect.acm`; not decoded here).
+  Across all 1159 BCMs the buttons `SkillMenu`, `Boost`, `LockOn`, `Descend`, `DragonRadar`, `Jump_2` and `Unk8` are **never used** (count 0), and the only guard
+  chords are Guard, Blast+Guard, Heavy+Guard. So walk, run, boost, lock-on, ascend/descend and the skill menu are **engine code**, not data. This corrects
+  section 0: there is no "CMN BCM we do not have".
+* **Corpus (SOURCE).** 1159 BCMs plus their BACs (character `<c>_player.bac`; skills `<id>_<code>.bac`); 33429 unique condition-node signatures after
+  de-duplicating the loop expansion. Statistics below are over this corpus unless a file is named.
+* **The game's own help text (SOURCE).** `data/msg/*_en.msg` (540 English files read) holds the tutorial and quest help strings with placeholders
+  `[BTN_1..4]`, `[L1]`, `[L2]`, `[R1]`, `[R2]`, `[R3]`, `[L3]`, `[LS_N]`. This is the best evidence for the engine-level inputs. Quotes below are single short
+  phrases. The placeholder legend follows from the BCM and every line agrees with the node it describes: `BTN_1` = Jump (X), `BTN_2` = Blast (Circle),
+  `BTN_3` = Light (Square), `BTN_4` = Heavy (Triangle) (Heavy+Blast "knockback attack" = Goku node 0/14; Light+Jump "Aura Burst Dash" = 0/10; L1+BTN_2 "throw" = 0/0;
+  tilt forward + Light/Heavy "Heavy Smash" = 0/8, 0/9; tilt back + Light/Heavy "attack from behind" = 0/15, 0/16).
+
+## 8. The engine-level controls, from the game's help text (SOURCE unless tagged)
+
+| control | XV2 input (the game's wording) | note |
+|---|---|---|
+| move | `[LS_N]` | |
+| Boost Dash | "Hold [L2] and use [LS_N]" | costs stamina ("Stamina is used when Boost Dashing with [L2] or performing a Z-Vanish") |
+| Step | "press [L2] while using [LS_N]" or "use [LS_N] while holding [L2]" | STEP_F/B/L/R, BAC 14/16/18/20 |
+| Jump | "While on the ground, press [BTN_1]" | |
+| Ascend / Descend | "Press and hold [BTN_1] to Ascend", "[L3] to Descend" | BUKUU_UP / BUKUU_DOWN, BAC 21 / 23 |
+| Lock on / change target | `[R1]` / `[RS_N]` | |
+| Ki blast | tap `[BTN_2]` (rapid taps = quick fire); hold, then release = charged blast | the Blast skill (POW), not the character BCM |
+| Dash attack | "While Boost Dashing, press [BTN_3] or [BTN_4]" | Goku 0/37, 0/38 (`Boosting`) |
+| Aura Burst Dash | `[BTN_3]` + `[BTN_1]`; `[BTN_1]` again circles behind (1 stamina) | Goku 0/10 (Light+Jump), BAC 440 |
+| Charged attack | hold `[BTN_4]` (breaks guard) | the `BacEntryCharge` slot (320/330/360) |
+| Heavy Smash | tilt `[LS_N]` forward + `[BTN_3]`/`[BTN_4]` (guard break) | 0/8, 0/9 |
+| Back attack | tilt back + `[BTN_3]`/`[BTN_4]` (chargeable, works while guarding) | 0/15, 0/16; ReceiverLinkID 9 |
+| Knockback attack | `[BTN_4]` + `[BTN_2]` (any time in a combo) | 0/14, BAC 419 |
+| Guard / Just Guard | `[L1]`; guarding right before a hit connects restores 1 ki bar and, vs melee, drains 1 stamina bar | |
+| Throw | `[L1]` + `[BTN_2]` | 0/0 |
+| Z-Vanish | `[BTN_1]` "while attacking or when a foe has been knocked back"; 1 bar of stamina attacking or guarding, **2 bars while staggered** | 0/11-0/13 (100, 100, 200); BAC 410/411/415 |
+| Vanishing Step | `[BTN_1]` **during a Step**; invulnerable; `[BTN_3]`/`[BTN_4]` attacks out of it | Jump + ActivatorState Unk9-12 nodes, section 9.3 |
+| Super Attack | `[R2]` + an assigned button | skill slot |
+| Ultimate Attack | `[R2]` + `[L2]` + `[BTN_3]` or `[BTN_4]` (the GGP variant says `[L2]` alone) | `UltimateMenuPlusSkillInput` |
+| Evasive Skill | `[R2]` + `[L2]` + `[BTN_1]` | |
+| Awoken Skill | hold `[L2]` + `[R2]`, then `[BTN_2]` | |
+| Limit Burst | hold `[R3]` | not a BCM input |
+| Items / search / radar | `[BTN_R]` / `[BTN_L]` / `[R3]` | no combat relevance |
+
+So "R2 + face button = supers" is the real XV2 input (confirmed), but the earlier recommendation stands: do not claim it as Melee fidelity.
+
+## 9. The open items
+
+### 9.1 LinkFlags vs ReceiverLinkID (SOURCE statistics; mapping is INFERENCE)
+
+Parser (SOURCE, `BAC_File.cs` `BcmCallbackFlagsEnum`): LinkFlags are *named categories*, not bit indices: Attacks 0x1, Movement 0x2, DisableKiBlastLink 0x4,
+Counters 0x10, BackHits 0x80, Combos 0x100, Supers 0x200, UltimatesAndEvasives 0x400, ZVanish 0x800, KiBlasts 0x1000, Jump 0x2000, Guard 0x4000,
+FlyingAndStepDash 0x8000. A `BCM Callback` event opens a *window* (start frame + duration) in which the listed categories may be received. The child node's
+`ReceiverLinkID` is its **category class**. Joint distribution over the corpus:
+
+* class 1: Light/Heavy chain nodes (4833 + 4167) and auto-links; class 7: Jump with a stamina cost = **Z-Vanish** (6579 of 7184 nodes); class 9: Light/Heavy with
+  Backwards (751 + 751 of 1547); class 5: Blast (6); class 8: Blast, Blast+Guard, Heavy hand-offs; classes 2/3/4: skill and evasive hand-offs (SkillInput `0x10000`, `0x20000`, Heavy+Guard).
+* Fraction of parent entries (per file, deduplicated) whose windows carry a flag, by child class: class 1 -> **Combos 99%**; class 2 -> **Supers 96%**; class 3 -> UltimatesAndEvasives 94%;
+  class 4 -> **UltimatesAndEvasives 98%**; class 5 -> Combos 100% (6 edges); class 7 -> **ZVanish 89%** (Supers 94%); class 8 -> **KiBlasts 80%**; class 9 -> **no single flag**
+  (Supers 79%, BackHits only 7%); class 11 -> UltimatesAndEvasives 70%. Light and Heavy children are Combos-gated in **100%** of the edges whose parent has any window.
+* Reading: classes 1, 2, 3/4, 7, 8 line up with the consecutive flags 0x100, 0x200, 0x400, 0x800, 0x1000, so the engine almost certainly accepts a child only if a *currently
+  open* window carries the flag of its class. That makes the earlier doc's "windows gate by time" concrete. **Not settled:** classes 9 and 11; the 11% of Z-Vanish edges whose parent has no ZVanish flag
+  (most of these parents have **no windows at all**: 617 Light and 574 Heavy edges, 29 vanish edges); and the statistic uses the *union* of a parent's windows, not the flag at the frame. A time-aligned test needs the engine.
+
+### 9.2 HoldDownConditions (SOURCE counts, INFERENCE reading)
+
+Values: 0 (32515 nodes), `0x4` (382), `0x1` (222), `0x20000` (143), `0x20001` (91), `0x30001` (33), `0x60000` (22), `0x20002` (14), `0x2` (4), `0x3` (2), `0x30000` (1). Non-zero values occur only in skill BCMs.
+
+* **bit 0 (0x1)**: 348 nodes, 210 on Blast, 90 on SkillInput, 221 with `MinimumLoopDuration > 0`: "button must be held; repeat while held" (the POW volley loop; Goku's POW `HoldDown 1`, loops 2 / 30 / 60-90).
+* **bit 17 (0x20000)**: 304 nodes (Blast 114, UltimateSkill1 48, SuperSkill1 24); present on **skill 591 Energy Charge**, whose text is "Hold the button down to charge Ki!": a hold-to-channel requirement.
+* **bit 16 (0x10000)**: 34 nodes, all Blast, always with bit 17 (0x30000/0x30001): a second charge tier of the held blast.
+* **bit 18 (0x40000)**: 22 nodes, 20 with button 0 and a loop duration (auto-continue tier, e.g. 0x60000).
+* **bit 2 (0x4)**: 382 nodes, 316 on SkillInput, 48 on `0x20000`, 16 on Heavy+Guard (0x42); never with a loop or charge slot. INFERENCE only: "held together with a modifier".
+* **bit 1 (0x2)**: 20 nodes; no stable reading.
+
+Settled for the purpose here: hold-to-charge is a BCM property of skill nodes (bits 0/17) and the ki-charge skill uses bit 17. Bits 1, 2, 16, 18 keep INFERENCE labels.
+
+### 9.3 ActivatorState Unk9-12 and the unknown condition bits (SOURCE counts, INFERENCE meaning, high confidence)
+
+* **ActivatorState `0x100 / 0x200 / 0x400 / 0x800` (Unk9-12) appear only on `Jump` nodes**, once each in 148 of the 1159 BCMs (identical content), with BAC entries
+  **700 / 710 / 713 / 716** (common namespace), DirectionalInput 0xC00, class 7, StaminaCost 0. The clips (Goku's EAN) are `BUKUU_F_S + STEP_F_S` (700), `STEP_B_S` (710), `STEP_L_S` (713),
+  `STEP_R_S` (716); children 701-704 are `BOOST_F_02` pairs.
+* The game's text: "Press [BTN_1] during a Step ... to perform a Vanishing Step", invulnerable, "attack from a Vanishing Step with [BTN_3] or [BTN_4]". **Conclusion:** Unk9 / 10 / 11 / 12 =
+  **currently stepping Forward / Back / Left / Right** (the STEP states, BAC 14/16/18/20). Jump in that state = **Vanishing Step**. The earlier "takeoff/step in 4 directions" is corrected.
+  Likewise `Light` with `ActivatorState Idle|Unk9` (0x101) -> BAC 725 (146 nodes): the attack out of a forward step; Goku's far-approach Light is 725 (`BUKUU_F_S + STEP_F_S`).
+* `ActivatorState Unk13 (0x1000)` + Jump -> BAC 501, in 8 characters only: character-specific, unknown.
+* `PrimaryActivatorConditions Unk11 (0x400)` co-occurs with `Idle (0x800)` in **11623 of 11623** nodes: read `0xC00` as one base predicate. `Unk10 (0x200)` occurs only on Blast nodes (112; 102 in skills).
+  `Unk17/18/22/24` are skill-only and rare (50 / 6 / 8 / 4). Meaning unknown.
+
+### 9.4 Which CMN entries the engine picks per reaction (BDM) (data SOURCE; the table is WEB-grade)
+
+* A BDM entry has up to 10 sub-entries chosen by the **victim's state** (the parser's own comment, `BDM_File.cs`): 0 default struck, 1 struck while using a skill, 2 floating hit animation,
+  3 struck in back, 4 rolling hit animation, 5 guarding or just guarding, 6 standard hit animation, 7 unknown, 8 heavy stun animation, 9 lying on ground.
+* Which **animation entry** plays is not in the BDM; it is engine code. The XenoKit author's reimplementation is `XenoKit/Engine/Character/DamageManager.cs` (same author as the parser, with TODOs, so WEB-grade):
+
+| DamageType | CMN BAC entry | notes |
+|---|---|---|
+| Block | 60 stand, 61 air, 62/63 left, 64/65 right | the GRD_L family |
+| GuardBreak | 66 (67 air) | |
+| Standard | stumble base + `dir*2 + air` | dir 0 front, 1 back, 2 left, 3 right from the hit vector; +1 if the victim is airborne |
+| Heavy | heavy base 141 / 149 / 157 (+ same offset; 157 front/back only) | |
+| Knockback | 265 (back 267), fall 266 (268), impact 74 | |
+| Knockback1 | 265 / 267 then 270 / 272 | |
+| Knockback2 | 168 / 169, recovery 91 / 92 | |
+| Knockback3 | 273 / 275, fall 274 / 276, impact 75 / 76 | |
+| Knockback4 | 170, fall 266, impact 80 | |
+| HoldStomach / HoldEyes / Dazed | 175 / 176 (air 177) / 183 | |
+
+  Stumble bases: 93 (head L), 101 (head H), 109 (body L), 117 (body H), 125 (leg L), 133 (leg H), and 226 / 234 / 242 (a second set). The StumbleSet flag chooses three of them: Set1 {109,117,226},
+  Set2 {93,101,226}, Set3 {125,133,242}, **Set4 {93,109,125}** (all "L"), **Set5 {101,117,133}** (all "H"), Set6 {226,234,242}; one is picked at random per hit (`AllStumbleSets` or no flag = any of nine).
+  Goku's light string BDMs (StumbleSet4/5) therefore give the L/H head/body/leg stumbles: the same CMN entries as the clip rows in section 3 (93/109/125 and 101/117/133). The launcher (BDM 100,
+  Knockback4) gives CMN 170, 266, 80 and BDM 74 (Knockback2) gives 168/169, also matching section 3.
+* **Unknown:** hit region (head vs body vs leg) does not enter this table: XenoKit picks at random within the set, so XV2 either randomises or uses engine code that XenoKit did not model.
+  Electric, Freeze, Paralysis, Brainwash, Wildcard and Knockback5-9 are not modelled there either.
+
+### 9.5 The true in-fight ki-charge input (SOURCE, settled)
+
+* There is **no always-available ki-charge button**. "Energy Charge" is a **skill, CUS 591** (`APL_SPA_KTN`, "Where to Get: Advancement Test Quest 1"; description "Hold the button down to charge Ki!").
+  It is equipped in a Super slot and used like a super: **R2 + the slot's button**, then **hold** (BCM HoldDown `0x20000`, on `SuperSkill4` in the file I read).
+* Its BCM: two nodes, Standing (`0x4c01` = Standing + base + KiBelow100) -> BAC 0 and Floating (`0x4c02`) -> BAC 2; ActivatorState Idle|Attacking; StaminaCost 0, KiRequired 0; usable only while ki < 100.
+  BAC callback window f110-139, flags 0xC002 (Movement + Guard + FlyingAndStepDash).
+* A second route exists only in the Ultra-Instinct awoken state: "While guarding, press [BTN_4] to charge Ki".
+* Other ways ki fills (QUE_TUT_221_1): dealing or taking damage from normal attacks, items, charge moves, a successful Just Guard.
+* Consequence: `PICKS.md`'s "Down B hold: ki charge = POW 11" is the charged blast, as section 1.4 said; the faithful clip is KTN's (`xAPL_SPA_KTN_C`, 140 f). By the owner's decision (section 12) the clip stays XV2's.
+
+## 10. Corrections to earlier sections
+
+* 0/10 (Light+Jump) is the **Aura Burst Dash** (game text), not a guessed "Dragon-Dash-style" move.
+* 0/14 (Heavy+Blast, BAC 419) is the **knockback attack**, confirmed.
+* 0/4-0/7 are the **Vanishing Step** nodes (9.3), not takeoff/step.
+* Section 1.3: "how ReceiverLinkID pairs with LinkFlags is not decoded" -> see 9.1.
+* Section 2.1: BAC 60-65 are the block-reaction entries (agrees with XenoKit's `BAC_BLOCK_*`), 66 / 67 the guard-break pair.
+* Walk: `GOK_BAS_WALK` exists as an EAN clip but **no Character-scope BAC entry in `GOK_PLAYER.bac` plays it**; BAC 2 plays `GOK_BAS_RUN`. INFERENCE: walk is driven by engine code or a scope not exported.
+
+## 11. Per-button table, Scheme A (Melee buttons only)
+
+Columns: XV2 input (the game's help text / the BCM), the XV2 action and its BAC entries, the clip(s) (`GOK_` prefix dropped; SOURCE: Goku's BAC and EAN), and the **proposed** Melee input
+(INFERENCE; the owner decides). "Jump button" is the per-player setting (X, Y or both) from section 12. D-pad and new inputs are not used. Ground moves stay on the ground and air moves in the air;
+"floating" stays animation only.
+
+| XV2 button / combination | XV2 action (BAC) | clip(s) | proposed Melee input (Scheme A) |
+|---|---|---|---|
+| Light (BTN_3) | light string 300-304 (hit/block-gated), then the 340 branch | ATC_002, 003, 017, 009, 022 | **A**: jab string, chained on hit like the combo lane's L1-L5 |
+| Light, far from target | 725: approach step, then 300 | BUKUU_F_S + STEP_F_S | **A while running** (dash attack): closest Melee shape |
+| Heavy (BTN_4), tap | strong opener 330 (chargeable), strings 335-338 | ATC_026, 010, 028, 011, 005 | **A + stick** tilts as string starters (PICKS' tilt rows) |
+| Heavy, hold | charge variants 322 / 332 / 362 (Charge Control, ChargeTime 30) | same clips, charge pose | **smash hold** (C-stick / A-smash): the "charged attack" |
+| Light/Heavy + forward (Heavy Smash) | 460 / 461, guard break | ATC_001, ATC_006 | **forward smash** (C-stick forward) |
+| Light/Heavy + back | 360, invulnerable f12-18; works out of guard; charge 362 | ATC_024 | **back-direction A**: grounded turnaround tilt, **bair** in the air (PICKS' bair is 335); keep the invulnerable window |
+| Heavy + Blast (knockback attack) | 419 | BOOST_F_00 > STEP_F_S > ATC_013 | **Side B** (Dragon Rush), already the pick |
+| Light + Jump (Aura Burst Dash) | 440, no hitbox; Jump again circles behind | BOOST_F_00 > 01 x2 > 02 | **not mapped**: Melee run/dash is the equivalent; no A+jump chord in Scheme A. The clips can serve dash-start visuals |
+| Boost (L2) + stick | Boost Dash: start 7, sustain 8, brake 9 | BOOST_F_00 / 01 / 02 | **run / dash** (stick); no sustained flight |
+| Dash + Light/Heavy | dash attacks 375 / 377 (invulnerable f0-10 / 0-14) | ATC_022, ATC_023 | **A while running** (PICKS' dash attack is 337; 375/377 are the data-faithful pair) |
+| Boost tap + stick (Step) | STEP F/B/L/R (14/16/18/20, ~38 f, stamina) | STEP_F_S, _B_S, _L_S, _R_S | **roll / spot dodge** (shield + stick) and **air dodge**, with the step clips |
+| Jump (BTN_1), grounded | jump family 24-38 | JUMP, JUMP_FRONT_00-02, JUMP_BACK_00-02 | **jump button** (per-player X / Y / both) |
+| Jump held in air (Ascend) / L3 (Descend) | BUKUU_UP / BUKUU_DOWN (21 / 23) | BUKUU_UP, BUKUU_DOWN | **no free ascend**; BUKUU_DOWN may be the **fast-fall** pose (animation only) |
+| Jump during attack / on hit (Z-Vanish) | 410 / 411 (invulnerable f2-18), 100 stamina | STEP_B_S + BOOST_F_02 | **jump button inside a hit-confirmed string window; costs meter** (owner decision). Melee cannot jump out of a string anyway, so no conflict |
+| Jump while guarding (close / attacked) | 410 / 415, 100 stamina | same | **Down B tap** (Z-vanish counter, existing PICKS row); not "jump out of shield", which Melee uses for jumping |
+| Jump while hit (out of hitstun) | 415, 200 stamina | same | **not mapped** at launch; if wanted, Down B tap with double meter (design) |
+| Jump during a Step (Vanishing Step) | 700 / 710 / 713 / 716; attack out of it 701-704 | STEP_F/B/L/R_S, BOOST_F_02 | **jump button during the roll/dodge**, meter cost; A afterwards = the 701-704 attack. Only if the meter budget allows |
+| Guard (L1) | guard 50-59, hit reactions 60-65, break 66 / 67 | GRD_KAMAE, GRD_L, GRD_L_L, GRD_L_R, GRD_BREAK | **L / R shield**; Just Guard (L1 right before the hit) = **perfect-shield timing that restores meter** |
+| Guard + Blast (throw) | grab 600; connect 601 (user) / 602 (victim) | NAG_TSUKAMI, GNY_NAG_A, GNY_NAG_D | **Z** (or shield + A) |
+| Guard + Heavy (homing strike, also a guard-cancel) | 476, 100 stamina | BOOST_F_00 > ATC_008 | **unmapped** (shield + A is already grab in Melee); candidate: Side B from shield. Owner choice |
+| Blast (BTN_2), tap | ki blast (POW 0; F/B/L/R 1-4) | ATC_SHOT_N, SHOT_F/B/L/R | **Neutral B tap** (needs a meter or cooldown limit; in XV2 it is free) |
+| Blast, hold | charged blast (POW 11-13 pose, 5-9 loop) | CMN_BLT_POW_C, ATC_SHOT_N_LOOP | **Neutral B hold** turns into the Kamehameha charge (PICKS) |
+| R2 + assigned button (Super 1-4) | skill slots: KMH, KMB, TYK, KTN | SPA_KMH, ... | **B moves**: Neutral B = KMH, the rest per PICKS |
+| R2 + L2 + Light/Heavy (Ultimate) | CKM (225 f, invulnerable) | ULT_CKM_C | **Neutral B at full meter + full charge** (PICKS' Super Kamehameha) |
+| R2 + L2 + Jump (Evasive) | KUR, 299 stamina, invulnerable f0-145 | ESC_KUR_C | **Up B** (Instant Transmission), already the pick |
+| R2 + L2 + Blast (Awoken) | skill-specific | n/a for base Goku | **not mapped** (transformation is a later question) |
+| hold the Super-slot button of Energy Charge (skill 591) | ki charge, only while ki < 100; BAC 0 standing / 2 floating | APL_SPA_KTN_C | **Down B hold**, clip stays KTN's (owner decision) |
+| Lock-on R1 / target change RS_N | engine | none | none: facing/targeting is automatic in Melee |
+| Items / search / radar / Limit Burst | engine | none | none |
+| Reaction side (not an input) | Standard / Heavy / Knockback* via BDM | CMN 93-157, 168-170, 265-276 | pick the CMN clip by DamageType per 9.4 where the reaction row exists |
+
+"Not mapped" rows are deliberate: Scheme A has no free Melee input for them without breaking a Melee rule.
+
+## 12. Owner decisions recorded (2026-10-11)
+
+1. **The jump button is a per-player setting** (X, Y or both) **for every fighter**, not a Goku exception. Goku's jump and jump-based vanish inputs use whichever the player chose.
+2. **Extras (D-pad and similar) are opt-in only**, never a default. Scheme A uses none.
+3. **Vanish out of a string costs meter** (XV2: 1 stamina bar attacking or guarding, 2 while staggered; this is the Melee-side meter equivalent).
+4. **Stay faithful to XV2's data**: no swapping the ki-charge clip by taste. The clip is KTN's (`xAPL_SPA_KTN_C`); `PICKS.md`'s "Down B hold" row (POW 11) is superseded in intent. No repo change is made here.
+
+## 13. What is settled and what is not
+
+**Settled (SOURCE):** no CMN/system BCM exists; the engine-level inputs (section 8) from the game's own text; ki charge = skill 591 "Energy Charge", hold the Super-slot button; Unk9-12 = step-direction
+states and Jump there = Vanishing Step; Light/Heavy, Z-Vanish, Super, Ultimate and ki-blast links are gated by named LinkFlags windows; Z-Vanish costs 1 bar attacking/guarding, 2 staggered; BDM sub-entries are
+victim-state variants; the CMN entry per DamageType and StumbleSet (WEB-grade).
+
+**Not settled:** link classes 9 and 11 and the time-aligned window semantics (needs a run); HoldDown bits 1, 2, 16, 18 beyond 9.2; PrimaryActivatorConditions Unk10/17/18/22/24 and ActivatorState Unk13; the hit-region
+choice in reactions; walk's driver; precedence between simultaneously valid nodes; whether XV2's Just Guard window is the 6-frame Hitbox event on BAC 50/54 (INFERENCE); the physical PC key defaults (the help text is in pad terms).
