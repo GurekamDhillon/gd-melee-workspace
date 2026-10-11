@@ -211,9 +211,12 @@ FX_ARTICLES = {'KameOrb': 'P_TrailGokuOrb', 'KameTap': 'P_TrailGokuBeam', 'KameM
                'KameFull': 'P_TrailGokuBeamBig', 'KameSuper': 'P_TrailGokuBeamSuper'}
 # state name -> [(frame, package, role, scale, end_event)]: ki aura while charging, vanish bursts, the rush trail
 FX_STATES = {
-    'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, 'state_exit')],
+    'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, 'state_exit'), (1, 'P_TrailGokuKameCharge', 'hand.R', 1.0, 'state_exit')],
+    'KameTap': [(5, 'P_TrailGokuKameTap', 'hand.R', 1.0, 'state_exit')],
+    'KameMid': [(6, 'P_TrailGokuKameMid', 'hand.R', 1.0, 'state_exit')],
+    'KameFull': [(8, 'P_TrailGokuKameFull', 'hand.R', 1.0, 'state_exit')],
     'KiCharge': [(1, 'P_TrailGokuAura', 'hips', 1.3, 'state_exit')],
-    'KameSuper': [(1, 'P_TrailGokuAura', 'hips', 1.6, 'state_exit')],
+    'KameSuper': [(1, 'P_TrailGokuAura', 'hips', 1.1, 'state_exit'), (54, 'P_TrailGokuKameSuper', 'hand.R', 1.0, 'state_exit')],
     'Recovery': [(5, 'P_TrailGokuVanish', 'chest', 1.0, 'emitter_life')],
     'ITEnd': [(1, 'P_TrailGokuVanish', 'chest', 1.0, 'emitter_life')],
     'Counter': [(4, 'P_TrailGokuVanish', 'chest', 0.8, 'emitter_life')],
@@ -253,6 +256,19 @@ def write_fx(package, fighter, plan, cfg):
                                                     'states': entries}, indent=1), encoding='utf-8')
     fighter['fx_bindings'] = 'fx/fx_bindings.json'
 
+
+
+def write_kame_audio(package, fighter):
+    """The Kamehameha's own sounds (tools/kame_audio.py): .gnsnd clips in files/ bound as audio.voice rows on the retail ids the scripts play."""
+    from kame_audio import BINDINGS, OUT as AUDIO
+    if not (AUDIO/'GnKameFire.gnsnd').exists():
+        print('audio: _build/goku-xv2/audio missing (run tools/kame_audio.py); the Kamehameha plays no own sounds')
+        return
+    rows = []
+    for sid, clip in BINDINGS.items():
+        shutil.copy2(AUDIO/(clip+'.gnsnd'), package/'files'/(clip+'.gnsnd'))
+        rows.append({'sfx': sid, 'file': clip+'.gnsnd', 'volume': 127})
+    fighter['audio'] = {'voice': rows}
 
 
 def write_presentation(package, fighter):
@@ -414,6 +430,7 @@ def apply(package, art_build, ir_path=None):
     fighter['special_attributes'] = []
     fighter.pop('fx_bindings', None)
     write_fx(package, fighter, plan, cfg)
+    write_kame_audio(package, fighter)
     write_presentation(package, fighter)
     # Native common callbacks are explicit; moves remain source-owned scripts with common engine flow.
     fighter['common_states'] = [{'motion':m,'subaction':motion_rows[m][1]} for spec in cfg['moves'] for m in spec['motions']]
