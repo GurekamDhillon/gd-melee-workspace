@@ -159,12 +159,11 @@ class StageModsTests(unittest.TestCase):
 
 class RealMeleeTests(unittest.TestCase):
     def test_real_mods_pass_the_linux_guard(self):
-        melee = Path(os.environ['GW_MELEE']) if os.environ.get('GW_MELEE') else ROOT / 'melee'
-        if not (melee / 'pc/geno/mods/geno-lab/mod.json').is_file():
-            main = Path(subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', '--git-common-dir'], text=True).strip()).resolve().parent / 'melee'
-            melee = main
-        if not (melee / 'pc/geno/mods/geno-lab/mod.json').is_file():
-            self.skipTest('no melee checkout with mods here')
+        melee = Path(os.environ.get('GW_MELEE') or ROOT / 'melee').resolve()
+        for relative in ('pc/platform/gw_net.h', 'pc/geno/mods/geno-lab/mod.json'):
+            if not (melee / relative).is_file():
+                self.skipTest('requires game checkout via GW_MELEE or <repo>/melee; missing: '
+                              + str(melee / relative))
         work = Path(tempfile.mkdtemp(prefix='modpkg-real-'))
         try:
             stage = work / 'GDMelee-fixture-linux-x86_64'
@@ -175,7 +174,7 @@ class RealMeleeTests(unittest.TestCase):
                 self.assertTrue((stage / 'mods' / mid / 'mod.json').is_file(), mid)
             self.assertFalse((stage / 'mods/envoy_drives_sa2').exists())
             # complete the package with synthetic non-mod files, then run the guard
-            number = check_release_linux.netplay_protocol()
+            number = check_release_linux.netplay_protocol(melee)
             version = f'fixture\nmelee      {40 * "a"}  src\nnetplay_protocol {number}\n'
             for name, data in {'README.txt': 'r', 'IMPLEMENTATION_STATUS.md': 's', 'bin/melee': b'\x7fELF\x01x',
                                'bin/melee-pc.msvc.map': 'm', 'launcher/bin/gd-melee-launcher': b'\x7fELF\x02x',
@@ -191,7 +190,7 @@ class RealMeleeTests(unittest.TestCase):
             (stage / 'runtime.sha256').write_text(''.join(f'{sha(p)}  {rel(p)}\n' for p in rt))
             allf = [p for p in sorted(stage.rglob('*')) if p.is_file()]
             (stage / 'manifest.json').write_text(json.dumps({'files': {rel(p): sha(p) for p in allf}}))
-            problems, count, _ = check_release_linux.check(stage, ROOT)
+            problems, count, _ = check_release_linux.check(stage, ROOT, melee)
             self.assertEqual(problems, [])
             self.assertGreater(count, 50)
         finally:

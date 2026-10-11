@@ -21,8 +21,7 @@ def ps_quote(value):
 
 class NetplayProtocolTests(unittest.TestCase):
     def setUp(self):
-        self.source_melee = Path(os.environ.get('GW_MELEE') or ROOT / 'melee')
-        self.explicit_source = bool(os.environ.get('GW_MELEE'))
+        self.source_melee = Path(os.environ.get('GW_MELEE') or ROOT / 'melee').resolve()
         work = tempfile.TemporaryDirectory(prefix='netplay-protocol-')
         self.addCleanup(work.cleanup)
         self.work = Path(work.name)
@@ -60,9 +59,7 @@ class NetplayProtocolTests(unittest.TestCase):
     def test_checked_in_fallback_agrees_with_game_header(self):
         header = self.source_melee / 'pc/platform/gw_net.h'
         if not header.is_file():
-            if self.explicit_source:
-                self.fail('GW_MELEE must contain pc/platform/gw_net.h: ' + str(header))
-            self.skipTest('set GW_MELEE to check the standalone fallback against gw_net.h (required in CI)')
+            self.skipTest('requires game header via GW_MELEE or <repo>/melee; missing: ' + str(header))
         # Read the authoritative value independently of the production readers.
         definitions = re.findall(
             r'^\s*#\s*define\s+GW_NET_PROTOCOL_VERSION\s+(\d+)[uU]?\b',

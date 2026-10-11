@@ -341,6 +341,7 @@ Local release regressions (no game build or public service needed):
 ```powershell
 $env:GW_MELEE = 'E:/path/to/melee'
 python -m pytest tools/release/test_netplay_protocol.py -q
+python -m pytest -q tools/release tools/netplay
 python -m unittest discover -s tools/release -p "test_*.py" -v
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/release/test_launcher_paths.ps1
 python -m unittest discover -s tools/netplay/server -v
@@ -426,9 +427,13 @@ Update that fallback in the same change as a game protocol bump.
 `test_netplay_protocol.py` runs under pytest and the release unittest discovery
 command above. It compares the header, server runtime, standalone fallback and
 PowerShell result, and exercises checkout selection, metadata and invalid headers.
-The agreement check skips without a checkout; set `GW_MELEE` to enforce it locally.
-The Qt launcher CI checks out the game's `pc-port` header and sets `GW_MELEE`, so
-the agreement check runs there and a missing header fails.
+The agreement and real-mod checks use `GW_MELEE`, or this repo's `melee/` when it
+is unset, and skip with the missing path when that checkout is unavailable.
+Set `GW_MELEE` to a checkout containing `pc/platform/gw_net.h` to run agreement
+locally. Synthetic package tests create their own header and do not require a
+game checkout. The Qt launcher CI checks out the game's `pc-port` header and sets
+`GW_MELEE`. It also runs the PowerShell policy test, which rejects a missing
+explicitly selected header.
 
 These are source/metadata checks, not proof of the executable's contents. Keep
 the existing provenance checks and verify an actual handshake on a Windows

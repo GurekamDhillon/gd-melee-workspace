@@ -2,17 +2,33 @@
 import importlib.util
 import os
 from pathlib import Path
+import runpy
 import subprocess
 import unittest
+from unittest.mock import patch
 
-os.environ.setdefault("GW_MELEE", "unused-game")
-os.environ.setdefault("GW_BUILD_ROOT", "unused-build")
-spec = importlib.util.spec_from_file_location("proof", Path(__file__).with_name("np_envoy_resume.py"))
-proof = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(proof)
+# The driver reads these at import time; offline tests must not leak them into
+# release tests or the real matchmaking subprocess collected in the same run.
+with patch.dict(os.environ, GW_MELEE=Path('unused-game').resolve().as_posix(),
+                GW_BUILD_ROOT=Path('unused-build').resolve().as_posix()):
+    spec = importlib.util.spec_from_file_location("proof", Path(__file__).with_name("np_envoy_resume.py"))
+    proof = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(proof)
 
 
 class ProofTests(unittest.TestCase):
+    def test_import_preserves_game_and_build_environment(self):
+        keys = ('GW_MELEE', 'GW_BUILD_ROOT')
+        selected = {key: Path('selected-' + key.lower()).resolve().as_posix() for key in keys}
+        for inherited in ({}, selected):
+            with self.subTest(inherited=inherited), patch.dict(os.environ):
+                for key in keys:
+                    os.environ.pop(key, None)
+                os.environ.update(inherited)
+                runpy.run_path(__file__)
+                self.assertEqual({key: os.environ.get(key) for key in keys},
+                                 {key: inherited.get(key) for key in keys})
+
     def test_abandon_checks_live_lobby_not_archived_game_two(self):
         # The real Lua probe must read the new lobby while the abandoned record
         # deliberately still holds the old game, score and picks.
