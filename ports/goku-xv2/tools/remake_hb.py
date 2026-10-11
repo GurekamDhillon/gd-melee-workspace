@@ -25,7 +25,7 @@ DESIGN = {   # script stem (or combo state) -> why the owner accepted it
     'kame_charge': 'Kamehameha (charge state; owner-accepted design)', 'kame_tap': 'Kamehameha beam tier', 'kame_thin': 'Kamehameha beam tier',
     'kame_mid': 'Kamehameha beam tier', 'kame_full': 'Kamehameha beam tier', 'kame_max': 'Kamehameha beam tier', 'kame_super': 'Super Kamehameha',
     'counter': 'Counter window (state counter key; no sphere)', 'riposte': 'Counter answer (Z-vanish reappear kick, damage scaled from the hit taken)',
-    'ki_volley': 'KiBlast articles (combo.json articles[0])',
+    'ki_volley': 'KiBlast articles (combo.json articles[0])', 'ki_blast': 'KiBlast article (single shot)',
 }
 HEADER = ('# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.\n'
           '# The owner authors this move\'s hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).\n')
@@ -218,7 +218,7 @@ def cmd_check():
         if s.get('hb') not in ('HB-NONE', 'HB-DESIGN', 'HB-AUTHORED'):
             problems.append('combo state %s: hb is %r' % (s['name'], s.get('hb')))
     # routes: source / target exist, the window opens inside the move's row
-    names = {m['name'] for m in g['moves']} | {s['name'] for s in c['states']}
+    names = {m['name'] for m in g['moves']} | {s['name'] for s in c['states']} | {s['name'] for s in g['states']} | {m['name'] for m in g['special_adaptations']}
     rows = json.loads((PORT / 'ANIM-ROWS.json').read_text(encoding='utf-8'))['rows'] if (PORT / 'ANIM-ROWS.json').exists() else []
     frames_of_motion = {r['motion']: (r.get('source') or {}).get('frames') for r in rows}
     motion_of = {m['name']: m['motions'][0] for m in g['moves']}

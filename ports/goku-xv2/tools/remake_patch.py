@@ -68,6 +68,10 @@ def patch_combo():
         if s['name'] == 'KiVolley' and pk and s['clip'] != pk['clip']:
             s['clip'] = pk['clip']
             changed = True
+    if not any(s['name'] == 'KiBlast' for s in c['states']):
+        c['states'].append({'name': 'KiBlast', 'clip': 'xGOK_ATC_SHOT_N', 'script': 'moves/ki_blast.genoasm', 'like': 'motion:343', 'move_tag': 'special',
+                            'bac': 0, 'bcm': 'design', 'hb': 'HB-DESIGN', 'why_hb': 'KiBlast article (single shot)'})
+        changed = True
     if changed:
         p.write_text(json.dumps(c, indent=2) + '\n', encoding='utf-8')
     return changed
