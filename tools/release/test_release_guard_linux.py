@@ -4,7 +4,6 @@ import json
 import os
 from pathlib import Path
 import re
-import runpy
 import shutil
 import subprocess
 import sys
@@ -17,21 +16,18 @@ GUARD = ROOT/'tools/release/check_release_linux.py'
 RULES = json.loads((ROOT/'tools/release/mod_rules.json').read_text(encoding='utf-8'))['mods']
 
 
-def run(path, melee=None, env=None):
-    args = [sys.executable, str(GUARD), str(path), '--repo-root', str(ROOT)]
-    if melee:
-        args += ['--melee', str(melee)]
-    r = subprocess.run(args, text=True, capture_output=True, env=env)
-    return r.returncode, r.stdout+r.stderr
-
-
 class LinuxGuardTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.work = Path(tempfile.mkdtemp(prefix='linux-guard-'))
+        cls.addClassCleanup(shutil.rmtree, cls.work)
+        cls.melee = cls.work/'fixture-melee'
+        header = cls.melee/'pc/platform/gw_net.h'
+        header.parent.mkdir(parents=True)
+        number = 73  # Synthetic source, independent of the installed game/fallback.
+        header.write_text(f'#define GW_NET_PROTOCOL_VERSION {number}u\n', encoding='utf-8')
         cls.stage = cls.work/'GDMelee-fixture-linux-x86_64'
         cls.stage.mkdir()
-        number = runpy.run_path(str(ROOT/'tools/netplay/server/gdmelee_server.py'))['NETPLAY_PROTOCOL']
         files = {'README.txt': 'r', 'IMPLEMENTATION_STATUS.md': 's', 'bin/melee': b'\x7fELF\x01synthetic',
                  'bin/melee-pc.msvc.map': 'map', 'launcher/bin/gd-melee-launcher': b'\x7fELF\x02synthetic',
                  'licenses/GPL-2.0.txt': 'gpl', 'licenses/THIRD-PARTY-NOTICES.txt': 'n',
@@ -60,9 +56,11 @@ class LinuxGuardTests(unittest.TestCase):
         f.write_bytes(data if isinstance(data, bytes) else data.encode())
         return f
 
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(cls.work)
+    def check(self, path=None, melee=None, env=None):
+        args = [sys.executable, str(GUARD), str(path or self.stage), '--repo-root', str(ROOT),
+                '--melee', str(melee or self.melee)]
+        r = subprocess.run(args, text=True, capture_output=True, env=env)
+        return r.returncode, r.stdout+r.stderr
 
     def manifests(self):
         sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
@@ -73,7 +71,7 @@ class LinuxGuardTests(unittest.TestCase):
 
     def expect_fail(self, text):
         self.manifests()
-        code, log = run(self.stage)
+        code, log = self.check()
         self.assertNotEqual(code, 0, log)
         self.assertIn(text, log)
 
@@ -87,12 +85,12 @@ class LinuxGuardTests(unittest.TestCase):
 
     def test_complete_folder_and_tarball_pass(self):
         self.manifests()
-        code, log = run(self.stage)
+        code, log = self.check()
         self.assertEqual(code, 0, log)
         archive = self.work/'p.tar.xz'
         with tarfile.open(archive, 'w:xz') as t:
             t.add(self.stage, arcname=self.stage.name)
-        code, log = run(archive)
+        code, log = self.check(archive)
         self.assertEqual(code, 0, log)
 
     def test_selected_checkout_protocol_applies_to_folder_and_tarball(self):
@@ -108,12 +106,12 @@ class LinuxGuardTests(unittest.TestCase):
             for file in versions:
                 file.write_text('fixture\nmelee      '+40*'a'+f'  src\nnetplay_protocol {protocol}\n')
             self.manifests()
-            code, log = run(self.stage, melee, env)
+            code, log = self.check(melee=melee, env=env)
             self.assertEqual(code, 0, log)
             archive = self.work/'selected-release.tar.xz'
             with tarfile.open(archive, 'w:xz') as tar:
                 tar.add(self.stage, arcname=self.stage.name)
-            code, log = run(archive, melee, env)
+            code, log = self.check(archive, melee, env)
             self.assertEqual(code, 0, log)
         finally:
             for file, original in zip(versions, originals):
@@ -124,7 +122,7 @@ class LinuxGuardTests(unittest.TestCase):
         added = [self.put(n, 'netplay.example:51600\n') for n in ('netplay_server.txt', 'bin/netplay_server.txt')]
         self.manifests()
         try:
-            code, log = run(self.stage)
+            code, log = self.check()
             self.assertEqual(code, 0, log)
         finally:
             for f in added: f.unlink()
@@ -155,7 +153,7 @@ class LinuxGuardTests(unittest.TestCase):
                 try:
                     self.put(name, b'x'*64)
                     self.manifests()
-                    self.assertNotEqual(run(self.stage)[0], 0)
+                    self.assertNotEqual(self.check()[0], 0)
                 finally:
                     self.undo(name)
 
@@ -169,7 +167,7 @@ class LinuxGuardTests(unittest.TestCase):
             record = lambda d: json.dumps({'files': [{'path': rel, 'sha256': hashlib.sha256(d).hexdigest()}]})
             self.put('mods/original-assets.json', record(data))
             self.manifests()
-            self.assertEqual(run(self.stage)[0], 0, run(self.stage)[1])
+            self.assertEqual(self.check()[0], 0, self.check()[1])
             bad = data+b' PlyMario5K_Share_joint'
             self.put(rel, bad)
             self.put('mods/original-assets.json', record(bad))
@@ -195,7 +193,7 @@ class LinuxGuardTests(unittest.TestCase):
         self.manifests()
         (self.stage/'README.txt').write_bytes(b'changed after the manifest')
         try:
-            code, log = run(self.stage)
+            code, log = self.check()
             self.assertNotEqual(code, 0, log)
             self.assertIn('runtime.sha256', log)
         finally:
@@ -225,7 +223,7 @@ class LinuxGuardTests(unittest.TestCase):
         finally:
             f.write_bytes(before)
         self.manifests()
-        self.assertEqual(run(self.stage)[0], 0)
+        self.assertEqual(self.check()[0], 0)
 
     def test_a_missing_envoy_shader_or_drive_model_fails_the_guard(self):
         for mid, need in [(m, n) for m in ('envoy', 'envoy_drives') for n in RULES[m]['required']]:
@@ -238,7 +236,7 @@ class LinuxGuardTests(unittest.TestCase):
                 finally:
                     self.put(name, data)
         self.manifests()
-        self.assertEqual(run(self.stage)[0], 0)
+        self.assertEqual(self.check()[0], 0)
 
     def test_the_launcher_must_ship_barlows_licence(self):
         name = 'launcher/licenses/BarlowCondensed-OFL-1.1.txt'
@@ -249,7 +247,7 @@ class LinuxGuardTests(unittest.TestCase):
         finally:
             self.put(name, data)
         self.manifests()
-        self.assertEqual(run(self.stage)[0], 0)
+        self.assertEqual(self.check()[0], 0)
 
     def test_a_package_with_no_mods_folder_fails(self):
         keep = {}

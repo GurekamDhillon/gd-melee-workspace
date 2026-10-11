@@ -3,7 +3,6 @@ import hashlib
 import json
 from pathlib import Path
 import re
-import runpy
 import shutil
 import struct
 import subprocess
@@ -13,15 +12,19 @@ import warnings
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
-BASE = ROOT/'_build/audit-20261003/further-release'
 RULES = json.loads((ROOT/'tools/release/mod_rules.json').read_text(encoding='utf-8'))['mods']
 
 
 class ReleaseGuardTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        BASE.mkdir(parents=True, exist_ok=True)
-        cls.work = Path(tempfile.mkdtemp(prefix='guard-repairs-', dir=BASE))
+        cls.work = Path(tempfile.mkdtemp(prefix='guard-repairs-'))
+        cls.addClassCleanup(shutil.rmtree, cls.work)
+        cls.melee = cls.work/'fixture-melee'
+        header = cls.melee/'pc/platform/gw_net.h'
+        header.parent.mkdir(parents=True)
+        protocol = 73  # Synthetic source, independent of the installed game/fallback.
+        header.write_text(f'#define GW_NET_PROTOCOL_VERSION {protocol}u\n', encoding='utf-8')
         cls.stage = cls.work/'GDMelee-fixture-win64'
         cls.stage.mkdir()
         names = ['README.txt', 'HOW TO PLAY ONLINE.txt', 'LICENSES/GPL-2.0.txt',
@@ -62,17 +65,12 @@ class ReleaseGuardTests(unittest.TestCase):
                 file = cls.stage/'mods'/mid/need
                 file.parent.mkdir(parents=True, exist_ok=True)
                 file.write_text('{}' if need.endswith('.json') else 'x')
-        protocol = runpy.run_path(str(ROOT/'tools/netplay/server/gdmelee_server.py'))['NETPLAY_PROTOCOL']
         (cls.stage/'version.txt').write_text('fixture\nmelee      '+40*'a'+f'  source\nnetplay_protocol {protocol}\n')
         cls.stamp = dict(format=1, melee_commit=40*'a', netplay_protocol=protocol,
                          source_sha256=64*'b', source_dirty=False,
                          files={name:hashlib.sha256((cls.stage/name).read_bytes()).hexdigest()
                                 for name in ('melee-pc.exe', 'melee-pc.map')})
         (cls.stage/'build-provenance.json').write_text(json.dumps(cls.stamp))
-
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(cls.work)
 
     def manifest(self, extra=''):
         (self.stage/'MANIFEST.sha256').write_text(''.join(
@@ -82,9 +80,7 @@ class ReleaseGuardTests(unittest.TestCase):
     def check(self, path=None, melee=None):
         args = ['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File',
                 str(ROOT/'tools/release/check_release.ps1'), str(path or self.stage),
-                '-RepoRoot', str(ROOT)]
-        if melee:
-            args += ['-MeleeDir', str(melee)]
+                '-RepoRoot', str(ROOT), '-MeleeDir', str(melee or self.melee)]
         result = subprocess.run(args, text=True, capture_output=True)
         return result.returncode, result.stdout+result.stderr
 
