@@ -35,7 +35,7 @@ def main():
             env.setdefault("MELEE_NETPLAY_BIND", "127.0.0.1")
             env.update(MELEE_NET_SIM=a.conditions,MELEE_NETPLAY=f'host:{port}' if role=='host' else f'join:127.0.0.1:{port}',
                        MELEE_RB_HASHLOG=str(run/'hashes.csv'),
-                       MELEE_VOLUME='3',MELEE_WINDOW_W='640',MELEE_WINDOW_H='480',
+                       MELEE_VOLUME=os.environ.get('MELEE_VOLUME','0'),MELEE_WINDOW_W='640',MELEE_WINDOW_H='480',
                        MELEE_CACHE_DIR=str(run))
             log=open(run/'run.log','w')
             process=subprocess.Popen([str(run/'melee'),'--iso',str(a.disc.resolve())],cwd=run,env=env,stdout=log,stderr=subprocess.STDOUT)
