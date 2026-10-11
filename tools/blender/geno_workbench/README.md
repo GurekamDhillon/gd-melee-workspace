@@ -586,3 +586,18 @@ script number, so `EngineLink` (`tools/release/launcher/qt/workbench/engine_link
 requests and replies; if the game repo's `wb.frame` is ever fixed to number from the first move frame, set the
 lag to 0 there and nothing else changes. Tests: `engine_link_test` (`scriptFramesMapToTheEnginesNumbering`),
 `tests/test_frame_convention.py`.
+
+## Rows the engine cannot pose ("not previewable")
+
+Rebirth/RebirthWait need the revival platform; grab, throw, carry, hammer, mushroom and item states need a partner or an
+item. In the bare Workbench scene they used to die on `assertion "jobj" failed ... jobj.h:481` and take the engine with
+them. The engine (`gs_wb_unpreviewable`, `pc/platform/gw_script.c`) now refuses them with an error; `list_rows` carries
+`previewable: false`; the row list shows "(not previewable)"; they are never the default, the last-used row or the
+calibration reference; a row that fails to load falls back to the wait row. Three copies of the motion list
+(`gw_script.c`, `geno_data.h`, `rigmap.UNPREVIEWABLE_MOTIONS`) are kept in step by a test (the engine one by hand).
+Find new ones with `engine_check/sweep_rows.py` (every row, restarts a dead engine, exits non-zero on any DEAD row).
+A dead engine keeps the server link ("engine connection lost" is not a transport failure), Restart engine works, and the
+next row pick starts the game again. `art.calibration_action_offset` (0 for Falcon, 1 default) is the Blender action
+frame offset used when calibrating.
+`launch_goku.py`/`launch_falcon.py` stage the newer of the configured engine and `<root>/_build/melee-pc.exe` and warn when
+an explicit engine is older than the workspace build or the launcher.

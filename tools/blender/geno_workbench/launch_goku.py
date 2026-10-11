@@ -61,7 +61,11 @@ def main() -> int:
         return 2
     blender = paths["GW_BLENDER"]
     launcher = paths["GW_LAUNCHER"]
-    engine_src = paths["GW_ENGINE_EXE"]
+    engine_src, engine_notes = launch.choose_engine(root, paths["GW_ENGINE_EXE"], explicit=bool(os.environ.get("GW_ENGINE_EXE")),
+                                                    launcher=launcher)
+    for note in engine_notes:
+        print(note)
+    paths["GW_ENGINE_EXE"] = engine_src
     project = Path(args.project) if args.project else root / "ports/goku-xv2"
     mods = Path(args.mods or paths.get("GW_MODS_DIR") or root / "_build/goku-xv2/author-source/package/mods")
     art = Path(args.art or paths.get("GW_ART") or root / "_build/goku-xv2/author-source/goku.blend")

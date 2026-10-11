@@ -16,13 +16,14 @@ import time
 from typing import Callable
 
 try:
-    from . import client, framecache, travel, wbspace
+    from . import client, framecache, rigmap, travel, wbspace
     from . import attributes as attribute_model
     from .props import STRINGS
 except ImportError:
     import client
     import attributes as attribute_model
     import framecache
+    import rigmap
     import travel
     import wbspace
     from props import STRINGS
@@ -52,7 +53,10 @@ _TRANSPORT_FAILURES = (
 
 
 # A frame that cannot be shown (the move ended before it) is the server answering, not the link failing.
-_NOT_TRANSPORT = ("requested frame", "past the end")
+# "engine connection lost" / "engine not running" are the SERVER reporting that the game process died: the link to the
+# server is fine, and dropping it left Restart engine disabled ("not connected") after a PANIC.
+_NOT_TRANSPORT = ("requested frame", "past the end", "engine connection lost", "engine not running",
+                  "engine operation", "engine start")
 
 
 # seconds a tool may run before the add-on gives up on it (the launcher's own rebuild limit is 30 min)
@@ -113,6 +117,7 @@ class WbSession:
         self.bone_aliases: dict[str, str] = {}
         # engine frame the add-on calibrates at (action frame = this - 1); 1 unless retail blending needs a later one
         self.calibration_frame = 1
+        self.calibration_action_offset = 1
         self.travel_anchor = None   # root position the in-place view keeps fixed (the row's first frame)
         self.loaded_row = ""   # the name given to load_row (list_rows' name; self.row is the engine's label)
         self.row_lengths: dict[str, int] = {}   # learned from the server when a frame is past a move's end
@@ -417,13 +422,16 @@ class WbSession:
 
         return self._run(action)
 
-    def load_row(self, name, *, refresh_hitboxes=False) -> bool:
-        """Optionally fetch source boxes before publishing the new frame."""
+    def load_row(self, name, *, refresh_hitboxes=False, fallback=True) -> bool:
+        """Optionally fetch source boxes before publishing the new frame.
+
+        A row the engine refuses (not previewable, or any load error with the engine still up) falls back to the
+        wait row, so the session never ends up with nothing posed."""
         self.pending_frame = None
         self.cache.reset("load_row")
 
-        def action():
-            row = self._row_name(name)
+        def load(row):
+            self._ensure_engine()
             loaded = self._request("load_row", {"row": row})
             if "bones" not in loaded:
                 # The real server answers load_row with {"ok": true}; the first frame follows.
@@ -439,7 +447,30 @@ class WbSession:
             self.start_prefetch()
             return self._frame_status()
 
+        def action():
+            row = self._row_name(name)
+            try:
+                return load(row)
+            except client.WbError as exc:
+                wait = rigmap.wait_row_name(self.rows)
+                if not fallback or not wait or wait == row:
+                    raise
+                client.log.error("load_row %s failed (%s); falling back to %s", row, exc, wait)
+                text = load(wait)
+                return STRINGS["row_fallback"].format(row=row, error=exc, wait=wait) + " " + text
+
         return self._run(action)
+
+    def _ensure_engine(self) -> None:
+        """Start the game again when it has died (or was never up), so the next row pick works by itself."""
+        try:
+            status = self._request("engine_status").get("status", "ready")
+        except client.WbError:
+            return
+        if status in ("ready", "running", "starting"):
+            return
+        self.cache.reset("engine restart")
+        self._engine_restart_apply(self._request("engine_restart"))
 
     # ---- row frame cache (R1) ----------------------------------------------
     def start_prefetch(self) -> bool:
@@ -1146,6 +1177,12 @@ def set_project(project_dir: str) -> bool:
         if isinstance(cal_frame, bool) or not isinstance(cal_frame, int) or cal_frame < 1:
             raise ValueError("art.calibration_frame must be an integer >= 1")
         sess.calibration_frame = cal_frame
+        # Blender action frame for engine frame N is N - offset. Goku's clips are one frame behind (offset 1, the
+        # default); Falcon's line up (offset 0), which takes the calibrated pose error from 0.20 to ~0.0001.
+        cal_offset = art.get("calibration_action_offset", 1)
+        if isinstance(cal_offset, bool) or not isinstance(cal_offset, int) or cal_offset not in (0, 1):
+            raise ValueError("art.calibration_action_offset must be 0 or 1")
+        sess.calibration_action_offset = cal_offset
         rebuild = config.get("rebuild")
         sess.can_rebuild = bool(rebuild) if "rebuild" in config else True
         sess.rebuild_argv = [str(a) for a in rebuild] if isinstance(rebuild, list) and rebuild and all(
