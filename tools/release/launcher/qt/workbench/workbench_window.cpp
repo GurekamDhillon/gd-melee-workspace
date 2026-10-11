@@ -421,6 +421,7 @@ struct WorkbenchWindow::Impl {
     AtlasButton *play;
     QTimer playTimer;
     QElapsedTimer playClock; double playLastMs = 0, playOwed = 0;
+    WorkbenchWindow::PlaybackClock playbackNow;
     QString row, blenderSetting;
     Snapshot snapshot;
     OutlinerPanel *outliner;
@@ -600,7 +601,7 @@ struct WorkbenchWindow::Impl {
             // Wall-clock target: frames owed = elapsed time * 60 fps * rate, so the speed does not depend on how long one
             // engine round trip takes. A busy tick returns early without touching the clock; the next one catches up
             // (capped, so a stall does not make the move jump).
-            const double now = playClock.nsecsElapsed() / 1e6;
+            const double now = playbackNow ? playbackNow() : playClock.nsecsElapsed() / 1e6;
             const double rate = std::max(0.05, speed->currentData().toDouble());
             playOwed = std::min(playOwed + (now - playLastMs) * 0.06 * rate, 6.0); playLastMs = now;
             const int last = timeline->frameCount() - 1;
@@ -1010,7 +1011,10 @@ struct WorkbenchWindow::Impl {
     bool busy() const { return running || playLaunching || !queue.isEmpty(); }
     void setPlaying(bool on) {
         on = on && timeline->frameCount() > 0 && !closing;
-        if (on) { playClock.start(); playLastMs = 0; playOwed = 0; playTimer.start(); } else playTimer.stop();
+        if (on) {
+            playClock.start(); playLastMs = playbackNow ? playbackNow() : 0;
+            playOwed = 0; playTimer.start();
+        } else playTimer.stop();
         timeline->setPlaying(on); play->setText(on ? t("Pause", "Pausar") : t("Play", "Jugar"));
     }
     QString lastStatus;
@@ -1546,14 +1550,17 @@ struct WorkbenchWindow::Impl {
     }
 };
 
-WorkbenchWindow::WorkbenchWindow(Session &s, QWidget *parent) : QMainWindow(parent), d_(std::make_unique<Impl>(this)) {
+WorkbenchWindow::WorkbenchWindow(Session &s, QWidget *parent, PlaybackClock playbackClock)
+    : QMainWindow(parent), d_(std::make_unique<Impl>(this)) {
     installWheelGuard();
+    d_->playbackNow = std::move(playbackClock);
     d_->worker->session = &s;
     runCommand("list_rows", {});
 }
-WorkbenchWindow::WorkbenchWindow(const QString &projectDir, LaunchFactory launch, QWidget *parent)
+WorkbenchWindow::WorkbenchWindow(const QString &projectDir, LaunchFactory launch, QWidget *parent, PlaybackClock playbackClock)
     : QMainWindow(parent), d_(std::make_unique<Impl>(this)) {
     installWheelGuard();
+    d_->playbackNow = std::move(playbackClock);
     d_->worker->projectDir = projectDir; d_->worker->factory = std::move(launch);
     runCommand("open_fighter", {{"path", projectDir}});
 }
