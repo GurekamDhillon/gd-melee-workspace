@@ -249,3 +249,18 @@ and costume switching. Donor armatures remain as camera-driver targets,
 while their meshes are hidden; inspect helpers that might remain visible.
 File Output compositor nodes are redirected into the generated job directory.
 The source contract has been read, but no Blender run or in-game check is claimed.
+
+## Falcon: model-part visibility, visor alpha, culling (2026-10-10)
+
+The glTF/DAT import draws every DObj, so a Melee fighter carries more than the game shows. The fighter's
+own tables decide (`ftParts_8007487C`, `ftParts_800750C8`, `ftParts_80074B6C` in the decomp: the high-poly set
+is shown, the low-poly LOD set and the metal-model parts hidden). `HsdExport --parts PlXx.dat PlXxNr.dat
+parts.json` dumps them with the DObj layout, material alpha and cull flags; `falcon/part_visibility.py` picks the
+hidden set (pure Python, `tests/test_part_visibility.py`); `make_falcon_art.py` bakes it into falcon.blend
+(`geno_part_hidden`, hide_render/hide_viewport, Principled Alpha, backface culling). An existing blend:
+`blender -b falcon.blend --python tools/blender/geno_workbench/falcon/apply_blend_parts.py -- parts.json out.blend`,
+then `render_ui.py --art out.blend`. The own backend and the Workbench both read the baked flags; single-mesh
+art (Goku) carries none and is unchanged (renders byte-identical).
+Falcon: the low-poly set was drawn over the high-poly head/body, and the visor (DObj 22, XLU alpha 0.4)
+came in opaque black, hiding the eyes. Joint 43's two DObjs (77, 78) are in the game's high-poly table;
+the grey shoulder slab is DObj 77 and is NOT a visibility-state bug (see the lane report).
