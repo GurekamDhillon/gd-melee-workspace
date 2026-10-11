@@ -326,7 +326,7 @@ def write_presentation(package, fighter):
     if not all((art/n).exists() for n in ('icon.png', 'portrait.png', 'stock.png')):
         print('presentation: _build/goku-xv2/presentation/*.png missing (run tools/presentation_art.py in Blender); no own select art')
         return
-    tool = ROOT/'melee/pc/tools/png2gx.py'
+    tool = Path(os.environ.get('GW_MELEE') or ROOT/'melee')/'pc/tools/png2gx.py'
     names = {}
     for key, png, fmt in (('icon', 'icon.png', 'rgb5a3'), ('portrait', 'portrait.png', 'rgb5a3'), ('stock', 'stock.png', 'rgba8')):
         name = f'GnGokuXv2_{key}.gxtex'
