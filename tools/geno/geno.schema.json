@@ -5174,10 +5174,24 @@
                     },
                     "stoppable": {
                       "type": "boolean",
-                      "description": "A looping hum retriggered by its script: playing the retail stop id 540001 cuts every playing instance of this clip (geno.md 22.7)",
+                      "description": "Playing the retail stop id 540001 cuts this fighter's playing instances of the clip (geno.md 22.7)",
                       "x-reference": "geno.md §22.7",
                       "x-engine-default": false,
                       "x-source": "melee/pc/platform/geno_registry.c"
+                    },
+                    "while_states": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "description": "Keep this stoppable clip through these Geno states; entering any other state cuts this fighter's instances",
+                        "x-engine-default": "",
+                        "x-reference": "geno.md §22.7",
+                        "x-source": "melee/pc/platform/geno_registry.c",
+                        "minLength": 1
+                      },
+                      "maxItems": 48,
+                      "minItems": 1,
+                      "uniqueItems": true
                     }
                   },
                   "additionalProperties": false,
@@ -5625,6 +5639,7 @@
     "voice",
     "volume",
     "when",
+    "while_states",
     "window",
     "wkb",
     "words",
@@ -5757,12 +5772,12 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "93dcd329e5870cf0be02f789cc5888323809f5c2ffb9aa936314497398426c47",
-    "pc/platform/geno_define_registry.inc": "5df54d92466e93352de63a36bd82f1b51513ccba926e6a6beb22fa5d62ac4465",
+    "pc/platform/geno_registry.c": "2e03ec664dc6d066c324f7bbe512feaa9d1f98a14504bcecf852c606bdb4582b",
+    "pc/platform/geno_define_registry.inc": "1d356826e99a44f865c7602021791f487f91cc86f685b31c3596508ef9e51be5",
     "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
     "pc/platform/geno_combo_registry.inc": "ee2771fc193b43719de384e5a39e689c69e11b43bbbb36318cf91c8723694837",
     "pc/geno/geno.h": "40cdede281a6ed04360108f9c3ff700f30f942b8af2ddf6a6295c272aca10e62",
-    "pc/geno/geno_game.c": "5fb89c14fc968e58058adcd5166be9141338707d89d536fdbd6fe2f6cf9b4844",
+    "pc/geno/geno_game.c": "8a7e0fa956afe6eef66f1c3002da5a9599439df647a61892805032f7efb736ed",
     "pc/geno/geno_game_v2.inc": "9c572553dcd7b6a70e9d5a3fa3efcbc618b8de567c287e75e1f1577e572f5fb0",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",
     "pc/geno/geno_profile_storage.h": "a40aec8aafa890622f0ba6cb9f5602176c738f960346b18daf87c8dc8498d04d",

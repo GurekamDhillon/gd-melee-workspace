@@ -298,7 +298,7 @@ def write_fx(package, fighter, plan, cfg):
 def write_kame_audio(package, fighter):
     """The Kamehameha's own sounds (tools/kame_audio.py): .gnsnd clips in files/ bound as audio.voice rows on the retail ids the scripts play."""
     # XV2's own voice and SFX when converted (tools/xv2_audio.py, Japanese by default; run it with --lang en for the English lines), else the synthesised fallback
-    from xv2_audio import BINDINGS, OUT as AUDIO, STOPPABLE
+    from xv2_audio import BINDINGS, OUT as AUDIO, STOPPABLE, HUM_STATES
     if not (AUDIO/'GnKameSeShot.gnsnd').exists():
         from kame_audio import BINDINGS, OUT as AUDIO
         STOPPABLE = set()
@@ -308,7 +308,8 @@ def write_kame_audio(package, fighter):
     rows = []
     for sid, clip in BINDINGS.items():
         shutil.copy2(AUDIO/(clip+'.gnsnd'), package/'files'/(clip+'.gnsnd'))
-        rows.append(dict({'sfx': sid, 'file': clip+'.gnsnd', 'volume': 127}, **({'stoppable': True} if sid in STOPPABLE else {})))
+        rows.append(dict({'sfx': sid, 'file': clip+'.gnsnd', 'volume': 127},
+                         **({'stoppable': True, 'while_states': list(HUM_STATES)} if sid in STOPPABLE else {})))
     fighter['audio'] = {'voice': rows}
 
 

@@ -252,6 +252,25 @@ class ArticleDefineTests(unittest.TestCase):
             f["thrown_as"] = "captain"; f["define"]["base"] = "mario"; f["define"]["resources"] = "retail:mario"
         self.assertTrue(any("thrown_as" in m or "is for a base" in m for m in messages(as_mario)), "base mario define")
 
+    def test_audio_while_states_requires_stoppable_and_named_states(self):
+        data = check.load_json(GAME / "pc/geno/mods/vanilla-hero/geno.json")
+        data["geno"] = 9
+        f = data["fighters"][0]
+        f["states"] = [{"name": "Charge", "subaction": 57, "next": "geno:Fire"}, {"name": "Fire", "subaction": 58}]
+        f["specials"] = {"n": "geno:Charge"}
+        row = {"sfx": 77, "file": "hum.gnsnd", "stoppable": True, "while_states": ["Charge", "Fire"]}
+        f["audio"] = {"voice": [row]}
+        root = GAME / "pc/geno/mods/vanilla-hero"
+        self.assertEqual(check.validate(data, root), [])
+        for states in ([], ["Missing"], ["Charge", "Charge"], [0], "Charge"):
+            row["while_states"] = states
+            self.assertTrue(check.validate(data, root), states)
+        row["while_states"] = ["Charge"]
+        row["stoppable"] = False
+        self.assertTrue(check.validate(data, root))
+        del row["stoppable"]
+        self.assertTrue(check.validate(data, root))
+
     def test_audio_files_are_checked_when_present(self):
         require_game("pc/geno/mods/vanilla-hero/geno.json")
         import shutil
