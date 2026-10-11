@@ -188,9 +188,9 @@ def source_losses(ir, config):
     for spec in config['moves']+config['special_adaptations']:
         parity, move, scripts = move_source(ir, spec['parity'])
         if spec.get('source_candidate_windows'):
-            losses.append({'move':spec['name'],'frame':spec['windows'][0][0],
+            losses.append({'move':spec['name'],'frame':(spec['windows'] or spec.get('strike') or [[0,0]])[0][0],
                            'what':'BAC candidate timing adapted to the exported striking pose',
-                           'why':spec['pose_review'],'source':'native bank pose review',
+                           'why':spec.get('pose_review','HB-NONE (remake): no hitbox; timing metadata only'),'source':'native bank pose review',
                            'source_windows':spec['source_candidate_windows'],'destination_windows':spec['windows']})
         if move['id'] in seen:
             continue
