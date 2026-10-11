@@ -211,9 +211,12 @@ FX_ARTICLES = {'KameOrb': 'P_TrailGokuOrb', 'KameTap': 'P_TrailGokuBeam', 'KameM
                'KameFull': 'P_TrailGokuBeamBig', 'KameSuper': 'P_TrailGokuBeamSuper'}
 # state name -> [(frame, package, role, scale, end_event)]: ki aura while charging, vanish bursts, the rush trail
 FX_STATES = {
-    'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, 'state_exit')],
+    'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, 'state_exit'), (1, 'P_TrailGokuKameCharge', 'hand.R', 1.0, 'state_exit')],
+    'KameTap': [(5, 'P_TrailGokuKameTap', 'hand.R', 1.0, 'state_exit')],
+    'KameMid': [(6, 'P_TrailGokuKameMid', 'hand.R', 1.0, 'state_exit')],
+    'KameFull': [(8, 'P_TrailGokuKameFull', 'hand.R', 1.0, 'state_exit')],
     'KiCharge': [(1, 'P_TrailGokuAura', 'hips', 1.3, 'state_exit')],
-    'KameSuper': [(1, 'P_TrailGokuAura', 'hips', 1.6, 'state_exit')],
+    'KameSuper': [(1, 'P_TrailGokuAura', 'hips', 1.6, 'state_exit'), (30, 'P_TrailGokuKameSuper', 'hand.R', 1.0, 'state_exit')],
     'Recovery': [(5, 'P_TrailGokuVanish', 'chest', 1.0, 'emitter_life')],
     'ITEnd': [(1, 'P_TrailGokuVanish', 'chest', 1.0, 'emitter_life')],
     'Counter': [(4, 'P_TrailGokuVanish', 'chest', 0.8, 'emitter_life')],

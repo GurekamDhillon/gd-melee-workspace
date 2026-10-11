@@ -7,6 +7,7 @@ the shared fx_bindings schema (ports/ir/schema) requires that prefix.
 """
 import copy
 import json
+import math
 import struct
 import zlib
 from pathlib import Path
@@ -67,7 +68,114 @@ def emitter(name, *, follow='srt', rate=2.0, duration=0, one_time=False, radius=
     return e
 
 
+def cyl_mesh(segs=14, taper=1.0):
+    """Unit cylinder along +Z (z 0..1), radius 1 at z 0 and `taper` at z 1; uv u = round, v = length."""
+    pos, nor, uv, idx = [], [], [], []
+    import math
+    for j in range(2):
+        for i in range(segs + 1):
+            a = 2 * math.pi * i / segs
+            r = 1.0 if j == 0 else taper
+            pos.append([math.cos(a) * r, math.sin(a) * r, float(j)])
+            nor.append([math.cos(a), math.sin(a), 0.0])
+            uv.append([i / segs, float(j)])
+    for i in range(segs):
+        a, b, c, d = i, i + 1, i + segs + 1, i + segs + 2
+        idx += [a, b, c, b, d, c]
+    return {'name': 'cyl', 'position': pos, 'normal': nor, 'uv0': uv, 'color0': None, 'indices': idx}
+
+
+def box_mesh(axis, length=14.0, half=0.5):
+    """A thin box from 0 to `length` along local axis 0/1/2 (the axis test)."""
+    pos, nor, uv, idx = [], [], [], []
+    for sx in (0, 1):
+        for sy in (-1, 1):
+            for sz in (-1, 1):
+                p = [0.0, 0.0, 0.0]
+                others = [k for k in range(3) if k != axis]
+                p[axis] = sx * length
+                p[others[0]] = sy * half
+                p[others[1]] = sz * half
+                pos.append(p); nor.append([0.0, 0.0, 1.0]); uv.append([sx, 0.5])
+    for tri in ([0, 1, 3], [0, 3, 2], [4, 6, 7], [4, 7, 5], [0, 4, 5], [0, 5, 1], [2, 3, 7], [2, 7, 6], [0, 2, 6], [0, 6, 4], [1, 5, 7], [1, 7, 3]):
+        idx += tri
+    return {'name': 'box%d' % axis, 'position': pos, 'normal': nor, 'uv0': uv, 'color0': None, 'indices': idx}
+
+
+def mesh_emitter(name, mesh, *, follow='srt', life=30, base=(1.0, 1.0, 1.0), keys=None, c0=(0.5, 0.85, 1.0), c1=(1, 1, 1), scale=2.0,
+                 translate=(0, 0, 0), rotate=(0, 0, 0), start=0, blend='add', fresnel=None, alpha=1.0, bloom=1.5):
+    """One mesh particle for `life` frames, scaled per axis by base x keys[[x,y,z,t]...] (z is the length for cyl_mesh)."""
+    e = emitter(name, follow=follow, rate=1.0, duration=1, one_time=True, radius=(0.0, 0.0, 0.0), shape='point', life=life, speed=0.0, size=(1.0, 1.0),
+                c0=c0, c1=c1, scale=scale, blend=blend, translate=translate)
+    e['kind'] = 'mesh'; e['mesh'] = mesh
+    e['transform']['rotate'] = list(rotate)
+    e['emission']['start'] = start
+    p = e['particle']
+    p['life_random_pct'] = 0
+    p['scale']['base'] = list(base)
+    p['scale']['random_pct'] = [0.0, 0.0, 0.0]
+    p['scale']['keys'] = keys or [[1, 1, 1, 0.0], [1, 1, 1, 1.0]]
+    p['rotation']['init_random'] = [0.0, 0.0, 0.0]
+    p['velocity']['random_pct'] = 0.0
+    e['color']['alpha0'] = {'kind': 'constant', 'value': alpha}
+    if fresnel:
+        e['material']['shader']['fresnel'] = True
+        e['material']['fresnel_alpha'] = list(fresnel)
+    e['material']['bloom'] = {'threshold': 0.7, 'intensity': bloom}
+    return e
+
+
+
+from kame_geom import ROT as RISE, along, D  # the beam direction in the hand's frame (kame_geom.py)
+
+
+def beam_package(R, L, life, ramp=4, hot=(1, 1, 1), edge=(0.25, 0.65, 1.0), sparks=2.5):
+    """A Kamehameha beam from the right hand: soft outer glow + bright core + white hot core (mesh cylinders that grow out to L in `ramp`
+    frames and close at the end), a muzzle flare, a tip/impact flare with a spark burst, and sparks streaming along the beam."""
+    c = max(1, life - 6)
+    grow = lambda r=1.0: [[r, r, 0.04, 0.0], [r, r, 1.0, ramp / life], [r * 1.06, r * 1.06, 1.0, 0.5], [r, r, 1.0, c / life], [0.25 * r, 0.25 * r, 1.0, 1.0]]
+    dv = D
+    return [
+        mesh_emitter('glow', 'cyl', life=life, base=(R * 1.9, R * 1.9, L), keys=grow(), c0=edge, c1=(0.4, 0.8, 1.0), scale=1.2, alpha=0.28, rotate=RISE, bloom=0.8),
+        mesh_emitter('body', 'cyl', life=life, base=(R * 1.15, R * 1.15, L), keys=grow(), c0=(0.25, 0.65, 1.0), c1=(0.6, 0.9, 1.0), scale=1.8, alpha=0.75, rotate=RISE, bloom=1.0),
+        mesh_emitter('core', 'cyl', life=life, base=(R * 0.42, R * 0.42, L), keys=grow(), c0=hot, c1=hot, scale=2.4, alpha=1.0, rotate=RISE, bloom=1.4),
+        emitter('muzzle', rate=1.0, duration=1, one_time=True, radius=(0, 0, 0), shape='point', life=life, size=(R * 4.2, R * 2.6), c0=(0.4, 0.8, 1.0), c1=(0.9, 0.98, 1), scale=1.8, translate=along(2.0)),
+        emitter('tip', rate=1.0, duration=1, one_time=True, radius=(0, 0, 0), shape='point', life=life - ramp, size=(R * 5.5, R * 3.5), c0=(0.5, 0.85, 1.0), c1=(0.95, 1, 1), scale=2.0, translate=along(L)),
+        emitter('burst', rate=sparks * 2, duration=life - ramp, radius=(R * 0.6, R * 0.6, R * 0.6), shape='sphere', life=9, speed=0.9, size=(R * 1.1, 0.2), c0=(0.7, 0.95, 1.0), c1=(1, 1, 1), scale=2.4, translate=along(L)),
+        emitter('sparks', rate=sparks, duration=life, radius=(R * 0.8, R * 0.8, R * 0.8), shape='sphere_fill', life=max(8, int(L / 4.5)), speed=0.0, direction=dv, dscale=4.5, size=(R * 0.9, 0.15), c0=(0.7, 0.95, 1.0), c1=(1, 1, 1), scale=2.4),
+    ]
+
+
+def charge_package(R=3.8):
+    """The ki ball between the cupped hands: grows over the 60-frame charge, flashes at each 15-frame step, then holds at full size with
+    sparks drawn in; the ball is a pair of billboards (glow + white core)."""
+    # one long-lived particle per layer: grows over the 60 charge frames (t = 0 .. 0.1 of its 600-frame life), then holds; the state's exit ends it
+    big = lambda a, b: [[a, a, a, 0.0], [(a + b) / 2, (a + b) / 2, (a + b) / 2, 0.05], [b, b, b, 0.1], [b * 1.05, b * 1.05, b * 1.05, 0.2], [b, b, b, 0.3], [b * 1.05, b * 1.05, b * 1.05, 0.4], [b, b, b, 1.0]]
+    out = []
+    for name, size, c0, sc, a, b in (('ball', R * 2.0, (0.25, 0.65, 1.0), 1.5, 0.12, 1.0), ('white', R * 1.0, (0.85, 0.97, 1.0), 2.2, 0.12, 1.0)):
+        e = emitter(name, rate=1.0, duration=1, one_time=True, radius=(0, 0, 0), shape='point', life=600, size=(size, size), c0=c0, c1=(1, 1, 1), scale=sc, translate=(0, 0, 4))
+        e['particle']['scale']['keys'] = big(a, b)
+        out.append(e)
+    for i, start in enumerate((15, 30, 45, 60)):
+        fl = emitter('step%d' % (i + 1), rate=1.0, duration=1, one_time=True, radius=(0, 0, 0), shape='point', life=8, size=(R * (3.0 + i * 0.9), R * 0.5), c0=(0.7, 0.95, 1.0), c1=(1, 1, 1), scale=3.2 + i * 0.4, translate=(0, 0, 4))
+        fl['emission']['start'] = start
+        out.append(fl)
+    for i, start in enumerate((0, 20, 40)):
+        out.append(emitter('draw%d' % i, rate=1.0 + i, duration=0, radius=(R * 2.4, R * 2.4, R * 2.4), shape='sphere', life=12, speed=-0.2 - 0.05 * i, size=(1.6 + i * 0.4, 0.2),
+                           c0=(0.7, 0.95, 1.0), c1=(1, 1, 1), scale=2.4, translate=(0, 0, 4)))
+        out[-1]['emission']['start'] = start
+    return out
+
+
+MESHES = {'cyl': cyl_mesh()}
+
 PACKAGES = {
+    # the Kamehameha rework (KAMEHAMEHA.md): charge ball, four beams
+    'P_TrailGokuKameCharge': charge_package(),
+    'P_TrailGokuKameTap': beam_package(1.2, 22, 20, ramp=3),
+    'P_TrailGokuKameMid': beam_package(1.8, 28, 36, ramp=4, sparks=3.0),
+    'P_TrailGokuKameFull': beam_package(2.6, 36, 54, ramp=5, sparks=3.5),
+    'P_TrailGokuKameSuper': beam_package(4.0, 52, 70, ramp=6, hot=(1.0, 0.97, 0.8), edge=(0.45, 0.75, 1.0), sparks=4.5),
     # continuous ki aura around the body: rising soft sparks, cyan to white
     'P_TrailGokuAura': [emitter('aura', rate=3.0, radius=(3.2, 7.0, 3.2), life=26, dscale=0.45, size=(3.4, 0.4), c0=(0.45, 0.8, 1.0), c1=(1, 1, 1), scale=1.6),
                         emitter('core', rate=0.6, radius=(1.5, 5.0, 1.5), life=12, dscale=0.1, size=(6.0, 3.0), c0=(0.3, 0.6, 1.0), c1=(0.9, 0.97, 1.0), scale=0.9)],
@@ -96,6 +204,12 @@ def main():
         doc = {'geno_fx': 1, 'name': name, 'source': {'format': 'original (ports/goku-xv2/tools/fx_build.py)', 'set': name},
                'space': {'forward': [0, 0, 1], 'up': [0, 1, 0]}, 'textures': [{'name': 'ki_soft', 'file': 'tex/ki_soft.png', 'w': 64, 'h': 64, 'source_format': 'rgba8', 'swizzle': 'rgba'}],
                'meshes': [], 'emitters': emitters}
+        for e in emitters:
+            if e.get('kind') == 'mesh' and not any(m['name'] == e['mesh'] for m in doc['meshes']):
+                m = MESHES[e['mesh']]
+                (d / 'mesh').mkdir(exist_ok=True)
+                (d / 'mesh' / (e['mesh'] + '.json')).write_text(json.dumps(m), encoding='utf-8')
+                doc['meshes'].append({'name': e['mesh'], 'file': 'mesh/%s.json' % e['mesh'], 'verts': len(m['position']), 'tris': len(m['indices']) // 3})
         for i, e in enumerate(doc['emitters']):
             e['order'] = i
         (d / f'{name}.gfx.json').write_text(json.dumps(doc, indent=1), encoding='utf-8')

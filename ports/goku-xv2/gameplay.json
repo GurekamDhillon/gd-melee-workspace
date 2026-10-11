@@ -9,7 +9,8 @@
     "state": {
       "charge": "int",
       "counter_damage": "float",
-      "stored": "int"
+      "stored": "int",
+      "stored_pct": "float"
     }
   },
   "jumps": {
@@ -829,7 +830,11 @@
       "phys": "auto",
       "coll": "both",
       "iasa": "interrupt",
-      "move_tag": "special"
+      "move_tag": "special",
+      "lua": {
+        "enter": "tap_enter",
+        "frame": "tap_frame"
+      }
     },
     {
       "name": "KameMid",
@@ -839,7 +844,11 @@
       "phys": "auto",
       "coll": "both",
       "iasa": "interrupt",
-      "move_tag": "special"
+      "move_tag": "special",
+      "lua": {
+        "enter": "mid_enter",
+        "frame": "mid_frame"
+      }
     },
     {
       "name": "KameFull",
@@ -849,7 +858,11 @@
       "phys": "auto",
       "coll": "both",
       "iasa": "interrupt",
-      "move_tag": "special"
+      "move_tag": "special",
+      "lua": {
+        "enter": "full_enter",
+        "frame": "full_frame"
+      }
     },
     {
       "name": "Rush",
@@ -955,7 +968,11 @@
       "phys": "auto",
       "coll": "both",
       "iasa": "interrupt",
-      "move_tag": "special"
+      "move_tag": "special",
+      "lua": {
+        "enter": "super_enter",
+        "frame": "super_frame"
+      }
     },
     {
       "name": "RushCombo",
