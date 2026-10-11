@@ -48,6 +48,12 @@ STOPPABLE = {200100, 200133, 200136, 200139}
 HUM_STATES = ('KameCharge', 'KameTap', 'KameThin', 'KameMid', 'KameFull', 'KameMax')
 # the charge hum rises in pitch between the chant beats (owner, 2026-10-10: a 10 s charge): the SE 4_charge played back faster, i.e. resampled up by these ratios
 HUM = {'GnKameHum2': 1.15, 'GnKameHum3': 1.32, 'GnKameHum4': 1.52}
+# Instant Transmission (skill 001_GOK_KUR, BAC entry 0; REMAKE-P1.md has the whole XV2 sequence): VOX cue 55 of Goku's battle voice ACB at frame 0, the common SE cue 40 (swing) at 3,
+# the skill's own SE cue 0 (BIRD_BTL_E001_KUR_01_Spin, 1.2 s) at 15. Decoded with `Xv2Audio get/acb` under _build/xv2-it/audio/wav/ (sound/VOX/Battle/Chara/CAR_BTL_GOK_VOX.acb,
+# sound/SE/Common CAR_BTL_CMN.acb cue 40, sound/SE/Battle/Skill/CAR_BTL_E001_KUR_SE.acb). Bound on retail ids the roll scripts play.
+WAV_IT = ROOT / '_build/xv2-it/audio/wav'
+IT_CLIPS = {'GnItVox': ('CAR_BTL_GOK_VOX', '55_BDB_GOK_055.wav'), 'GnItSwing': ('CAR_BTL_CMN', '40_swing_40.wav'), 'GnItSe': ('CAR_BTL_E001_KUR_SE', '0_BIRD_BTL_E001_KUR_01_Spin.wav')}
+BINDINGS.update({200142: 'GnItVox', 200145: 'GnItSwing', 200148: 'GnItSe'})
 PEAK = {'Vox': 0.55, 'Se': 0.40}   # peak (fraction of full scale) per clip kind: a voice and an SE start together, their sum must not clip the mix
 
 
@@ -130,8 +136,34 @@ def convert(lang='jp', out=OUT):
     return done
 
 
+def convert_it(out=OUT):
+    """The Instant Transmission clips only (the Kamehameha clips are untouched): peak-normalised, mono 32 kHz .gnsnd."""
+    import numpy as np
+    from tools.geno.audio import convert_wav
+    out.mkdir(parents=True, exist_ok=True)
+    done = {}
+    for name, (folder, f) in IT_CLIPS.items():
+        src = WAV_IT / folder / f
+        if not src.exists():
+            print('missing', src)
+            continue
+        data, rate = read_wav(src)
+        x = resample(data, rate)
+        x = x - x.mean()
+        x[-160:] *= np.linspace(1, 0, 160)
+        x *= PEAK['Vox' if 'Vox' in name else 'Se'] * 32767 / max(1.0, np.abs(x).max())
+        tmp = out / (name + '.wav')
+        with wave.open(str(tmp), 'wb') as w:
+            w.setnchannels(1); w.setsampwidth(2); w.setframerate(32000)
+            w.writeframes(np.round(x).astype('<i2').tobytes())
+        convert_wav(tmp, out / (name + '.gnsnd'))
+        done[name] = round(len(x) / 32000, 2)
+    return done
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--lang', choices=('jp', 'en'), default='jp')
+    ap.add_argument('--it', action='store_true', help='only the Instant Transmission clips')
     a = ap.parse_args()
-    print(a.lang, convert(a.lang))
+    print('it', convert_it()) if a.it else print(a.lang, convert(a.lang))

@@ -257,6 +257,19 @@ FX_EVENTS = {
 }
 
 
+# The Instant Transmission rolls (phase 4). XV2 (skill 001_GOK_KUR, BAC entry 0) plays the common effect 42 at frame 10: three wind-streak ribbons (Act_WindShort.etr) on the
+# left shoulder, left knee and right hand with the offsets below (metres x 11.4). Spot dodge: the same at frame 8 (its hidden gap is shorter).
+def _it_calls(frame):
+    S = 11.4
+    return [dict(frame=frame, package='P_TrailGokuITWind' + sfx, bone=role, offset=[o * S for o in off])
+            for sfx, role, off, w, blend in (('Shoulder', 'shoulder.L', (0.4, 0.0, 0.4), 0.15, 'alpha'), ('Knee', 'lower_leg.L', (0.0, 0.0, -0.3), 0.10, 'add'),
+                                             ('Hand', 'hand.R', (-0.25, 0.0, 0.0), 0.05, 'add'))]
+
+
+ROW_FX = {'EscapeF': (233, 'moves/escape_f.genoasm', _it_calls(10)), 'EscapeB': (234, 'moves/escape_b.genoasm', _it_calls(10)),
+          'EscapeN': (235, 'moves/escape_n.genoasm', _it_calls(8))}
+
+
 def write_fx(package, fighter, plan, cfg):
     """Copy the original effect packages (tools/fx_build.py) into the package and bind them (geno.md 20.3)."""
     src = ROOT/'_build/goku-xv2/fx'
@@ -289,6 +302,15 @@ def write_fx(package, fighter, plan, cfg):
                                    **({'end_frame': c[4][1]} if isinstance(c[4], tuple) else {}),
                                    # a 6th element names a second joint: the effect origin is the MIDPOINT of the two (geno.md 20.3 "joint2"), the axes the first joint's
                                    **({'joint2': plan['roles'][c[5]][0]} if len(c) > 5 else {})) for c in calls]})
+    # rows that are not Geno states (the Instant Transmission rolls): a binding is matched by subaction, so the row's index is enough (geno.md 20.3)
+    from tools.geno import report as _rep
+    msub = _rep.motion_subactions()
+    for name, (motion, script_, calls) in ROW_FX.items():
+        row = msub[motion][1]
+        entries.append({'state': name, 'subaction': row, 'clock': 'animation', 'script': script_,
+                        'calls': [dict({'frame': c['frame'], 'macro': 'goku_' + c['package'][11:].lower(), 'effect': c['package'], 'package': c['package'], 'bone': c['bone'],
+                                        'joint': plan['roles'][c['bone']][0], 'offset': c['offset'], 'rotation': [0, 0, 0], 'scale': 1.0, 'follow': True, 'when': [],
+                                        'end_event': 'emitter_life'}) for c in calls]})
     (dst/'fx_bindings.json').write_text(json.dumps({'geno_fx_bindings': 1, 'fighter': 'goku-xv2', 'host': 'mario', 'unit_scale': 1.0,
                                                     'states': entries}, indent=1), encoding='utf-8')
     fighter['fx_bindings'] = 'fx/fx_bindings.json'
