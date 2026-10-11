@@ -8,6 +8,7 @@ HB-NONE     animation + timing only; the script carries no hitbox word; `strike`
             (timing metadata for the Workbench marker and the route-window check, never a collider).
 HB-DESIGN   a hitbox the owner accepted as designed (Kamehameha beam tiers, KiBlast article, the Counter answer): kept, named in DESIGN below.
 HB-AUTHORED a hitbox the owner placed by hand in the Workbench: needs `authored: {by, date, commit}` on the move.
+HB-SAMPLE   a generated STARTING POINT (tools/remake_samples.py), labelled as such in the script header and the ledger; the owner edits it in the Workbench.
 HB-GENERATED never allowed here: the check fails.
 """
 import json
@@ -73,6 +74,8 @@ def cmd_strip():
     for section in ('moves', 'special_adaptations'):
         for m in g[section]:
             stem = Path(m['script']).stem
+            if m.get('hb') in ('HB-SAMPLE', 'HB-AUTHORED'):
+                continue   # already past HB-NONE: never strip it again
             m['hb'] = hb_of(stem)
             if m['hb'] == 'HB-NONE':
                 p = PORT / m['script']
@@ -90,6 +93,8 @@ def cmd_strip():
     c = json.loads(combo_path().read_text(encoding='utf-8'))
     for s in c['states']:
         stem = Path(s['script']).stem
+        if s.get('hb') in ('HB-SAMPLE', 'HB-AUTHORED'):
+            continue
         s['hb'] = hb_of(stem)
         if s['hb'] == 'HB-NONE':
             p = PORT / 'combo' / s['script']
@@ -201,6 +206,11 @@ def cmd_check():
                 for k in ('radius', 'role', 'offset'):
                     if k in d:
                         problems.append('%s: HB-NONE design still has %s' % (m['name'], k))
+            elif hb == 'HB-SAMPLE':
+                if not has_hitbox(text) or 'HB-SAMPLE' not in text[:200]:
+                    problems.append('%s: HB-SAMPLE needs hitbox words and the HB-SAMPLE header in %s' % (m['name'], m['script']))
+                if not m.get('windows'):
+                    problems.append('%s: HB-SAMPLE without windows' % m['name'])
             elif hb == 'HB-DESIGN':
                 if stem not in DESIGN:
                     problems.append('%s: HB-DESIGN but not in the accepted list' % m['name'])
@@ -215,7 +225,9 @@ def cmd_check():
         text = read(PORT / 'combo' / s['script'])
         if s.get('hb') == 'HB-NONE' and has_hitbox(text):
             problems.append('combo state %s: HB-NONE but %s carries a hitbox word' % (s['name'], s['script']))
-        if s.get('hb') not in ('HB-NONE', 'HB-DESIGN', 'HB-AUTHORED'):
+        if s.get('hb') == 'HB-SAMPLE' and not has_hitbox(text):
+            problems.append('combo state %s: HB-SAMPLE without hitbox words' % s['name'])
+        if s.get('hb') not in ('HB-NONE', 'HB-SAMPLE', 'HB-DESIGN', 'HB-AUTHORED'):
             problems.append('combo state %s: hb is %r' % (s['name'], s.get('hb')))
     # routes: source / target exist, the window opens inside the move's row
     names = {m['name'] for m in g['moves']} | {s['name'] for s in c['states']} | {s['name'] for s in g['states']} | {m['name'] for m in g['special_adaptations']}

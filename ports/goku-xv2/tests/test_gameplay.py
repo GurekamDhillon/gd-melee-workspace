@@ -85,7 +85,7 @@ class Gameplay(unittest.TestCase):
         config = SG.load()
         for section in ('moves', 'special_adaptations'):
             for m in config[section]:
-                self.assertIn(m.get('hb'), ('HB-NONE', 'HB-DESIGN', 'HB-AUTHORED'), m['name'])
+                self.assertIn(m.get('hb'), ('HB-NONE', 'HB-SAMPLE', 'HB-DESIGN', 'HB-AUTHORED'), m['name'])
                 text = (PORT / m['script']).read_text(encoding='utf-8')
                 if m['hb'] == 'HB-NONE':
                     self.assertFalse(remake_hb.has_hitbox(text), m['name'] + ' is HB-NONE but its script has a hitbox')

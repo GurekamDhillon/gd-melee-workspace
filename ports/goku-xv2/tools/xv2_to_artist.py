@@ -429,7 +429,7 @@ def row_specs(source):
     for row,frames,tf in [('KameTap',30,1.4),('KameMid',45,1.0),('KameFull',60,.8)]:
         out[row]={**charge,'frames':frames,'loop':False,'hold_source':None,'start':48,'time_factor':tf,'events':[],
                   'status':'PICK provisional (skill KMH BAC 12): fire from f48 at x%g, %d frames'%(tf,frames)}
-    out['Rush']['frames']=max(40,out['Rush']['frames'])
+    out['Rush']['frames']=max(66,out['Rush']['frames'])   # remake phase 2: the whole XV2 knockback attack (BOOST_F_00 > STEP_F_S > ATC_013, strike at f40-43), so its sample hitbox lands inside the row
     # Instant Transmission (up B, geno.cape): XV2 evasive skill 001_GOK_KUR. Start = the vanish f0-18 over 26 frames
     # (the cape decides at 26); ITEnd = the reappear (f70-106) over 36 frames.
     kur=None
