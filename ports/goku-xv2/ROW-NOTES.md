@@ -154,72 +154,72 @@ Row numbers are the LAB CLIPS list (anim bank rows). `source` is the XV2 clip ea
 | 147 | (engine default) | - |  |  |
 | 148 | (engine default) | - |  |  |
 | 149 | ItemScopeStart | clip:chara/GOK/GOK.ean/40 | 84, 138, 139, 140, 141, 142, 143, 144, 145, 151, 152, 153 … |  |
-| 150 | ItemScopeRapid | clip:chara/GOK/GOK.ean/45 | 154, 158, 162 |  |
+| 150 | ItemScopeRapid | clip:chara/GOK/GOK.ean/45 | 154, 158, 162 | while floating, firing ki blasts from the hands (like Mega Man's in Ultimate) |
 | 151 | ItemScopeFire | clip:chara/GOK/GOK.ean/40 | 84, 138, 139, 140, 141, 142, 143, 144, 145, 149, 152, 153 … |  |
 | 152 | ItemScopeEnd | clip:chara/GOK/GOK.ean/40 | 84, 138, 139, 140, 141, 142, 143, 144, 145, 149, 151, 153 … |  |
 | 153 | ItemScopeAirStart | clip:chara/GOK/GOK.ean/40 | 84, 138, 139, 140, 141, 142, 143, 144, 145, 149, 151, 152 … |  |
-| 154 | ItemScopeAirRapid | clip:chara/GOK/GOK.ean/45 | 150, 158, 162 |  |
+| 154 | ItemScopeAirRapid | clip:chara/GOK/GOK.ean/45 | 150, 158, 162 | while floating, firing ki blasts from the hands (like Mega Man's in Ultimate) |
 | 155 | ItemScopeAirFire | clip:chara/GOK/GOK.ean/40 | 84, 138, 139, 140, 141, 142, 143, 144, 145, 149, 151, 152 … |  |
 | 156 | ItemScopeAirEnd | clip:chara/GOK/GOK.ean/40 | 84, 138, 139, 140, 141, 142, 143, 144, 145, 149, 151, 152 … |  |
 | 157 | ItemScopeStartEmpty | clip:chara/GOK/GOK.ean/40 | 84, 138, 139, 140, 141, 142, 143, 144, 145, 149, 151, 152 … |  |
-| 158 | ItemScopeRapidEmpty | clip:chara/GOK/GOK.ean/45 | 150, 154, 162 |  |
+| 158 | ItemScopeRapidEmpty | clip:chara/GOK/GOK.ean/45 | 150, 154, 162 | while floating, firing ki blasts from the hands (like Mega Man's in Ultimate) |
 | 159 | ItemScopeFireEmpty | clip:chara/GOK/GOK.ean/40 | 84, 138, 139, 140, 141, 142, 143, 144, 145, 149, 151, 152 … |  |
 | 160 | ItemScopeEndEmpty | clip:chara/GOK/GOK.ean/40 | 84, 138, 139, 140, 141, 142, 143, 144, 145, 149, 151, 152 … |  |
 | 161 | ItemScopeAirStartEmpty | clip:chara/GOK/GOK.ean/40 | 84, 138, 139, 140, 141, 142, 143, 144, 145, 149, 151, 152 … |  |
-| 162 | ItemScopeAirRapidEmpty | clip:chara/GOK/GOK.ean/45 | 150, 154, 158 |  |
+| 162 | ItemScopeAirRapidEmpty | clip:chara/GOK/GOK.ean/45 | 150, 154, 158 | while floating, firing ki blasts from the hands (like Mega Man's in Ultimate) |
 | 163 | ItemScopeAirFireEmpty | clip:chara/GOK/GOK.ean/40 | 84, 138, 139, 140, 141, 142, 143, 144, 145, 149, 151, 152 … |  |
 | 164 | ItemScopeAirEndEmpty | clip:chara/GOK/GOK.ean/40 | 84, 138, 139, 140, 141, 142, 143, 144, 145, 149, 151, 152 … |  |
-| 165 | DamageHi1 | clip:chara/CMN/CMN.ean/16 | 251, 252, 254, 255, 278, 281 |  |
-| 166 | DamageHi2 | clip:chara/CMN/CMN.ean/24 | 253, 256 |  |
-| 167 | DamageHi3 | clip:chara/CMN/CMN.ean/76 |  |  |
-| 168 | DamageN1 | clip:chara/CMN/CMN.ean/32 |  |  |
-| 169 | DamageN2 | clip:chara/CMN/CMN.ean/40 |  |  |
-| 170 | DamageN3 | clip:chara/CMN/CMN.ean/84 | 210, 211 |  |
-| 171 | DamageLw1 | clip:chara/CMN/CMN.ean/48 |  |  |
-| 172 | DamageLw2 | clip:chara/CMN/CMN.ean/56 |  |  |
-| 173 | DamageLw3 | clip:chara/CMN/CMN.ean/92 |  |  |
-| 174 | DamageAir1 | clip:chara/CMN/CMN.ean/100 |  |  |
-| 175 | DamageAir2 | clip:chara/CMN/CMN.ean/160 |  |  |
-| 176 | DamageAir3 | clip:chara/CMN/CMN.ean/103 |  |  |
-| 177 | DamageFlyHi | clip:chara/CMN/CMN.ean/74 | 264, 274, 286 |  |
+| 165 | DamageHi1 | clip:chara/CMN/CMN.ean/16 | 251, 252, 254, 255, 278, 281 | standing, takes damage |
+| 166 | DamageHi2 | clip:chara/CMN/CMN.ean/24 | 253, 256 | standing, takes harder damage (head?) |
+| 167 | DamageHi3 | clip:chara/CMN/CMN.ean/76 |  | standing, takes even harder damage (head?) |
+| 168 | DamageN1 | clip:chara/CMN/CMN.ean/32 |  | standing, takes damage (stomach) |
+| 169 | DamageN2 | clip:chara/CMN/CMN.ean/40 |  | standing, takes harder damage (stomach) |
+| 170 | DamageN3 | clip:chara/CMN/CMN.ean/84 | 210, 211 | slightly launched, stumbles back |
+| 171 | DamageLw1 | clip:chara/CMN/CMN.ean/48 |  | unclear |
+| 172 | DamageLw2 | clip:chara/CMN/CMN.ean/56 |  | unclear |
+| 173 | DamageLw3 | clip:chara/CMN/CMN.ean/92 |  | unclear |
+| 174 | DamageAir1 | clip:chara/CMN/CMN.ean/100 |  | hit back while in the air (?) |
+| 175 | DamageAir2 | clip:chara/CMN/CMN.ean/160 |  | hit back in the air, different pose |
+| 176 | DamageAir3 | clip:chara/CMN/CMN.ean/103 |  | head down, feet up: falling/tumbling |
+| 177 | DamageFlyHi | clip:chara/CMN/CMN.ean/74 | 264, 274, 286 | knocked down onto his back |
 | 178 | DamageFlyN | clip:chara/CMN/CMN.ean/205 | 0, 1, 262, 272 |  |
-| 179 | DamageFlyLw | clip:chara/CMN/CMN.ean/201 |  |  |
-| 180 | DamageFlyTop | clip:chara/CMN/CMN.ean/164 |  |  |
-| 181 | DamageFlyRoll | clip:chara/CMN/CMN.ean/73 |  |  |
+| 179 | DamageFlyLw | clip:chara/CMN/CMN.ean/201 |  | maybe same as 14 |
+| 180 | DamageFlyTop | clip:chara/CMN/CMN.ean/164 |  | launched up, about to transition into 14 |
+| 181 | DamageFlyRoll | clip:chara/CMN/CMN.ean/73 |  | similar to 15 |
 | 182 | (engine default) | - |  |  |
-| 183 | DownBoundU | clip:chara/CMN/CMN.ean/64 | 265, 266, 275, 288 |  |
-| 184 | DownWaitU | clip:chara/CMN/CMN.ean/2 |  |  |
-| 185 | DownDamageU | clip:chara/CMN/CMN.ean/105 | 190 |  |
-| 186 | DownStandU | clip:chara/CMN/CMN.ean/4 | 290 |  |
+| 183 | DownBoundU | clip:chara/CMN/CMN.ean/64 | 265, 266, 275, 288 | unclear |
+| 184 | DownWaitU | clip:chara/CMN/CMN.ean/2 |  | unclear |
+| 185 | DownDamageU | clip:chara/CMN/CMN.ean/105 | 190 | unclear |
+| 186 | DownStandU | clip:chara/CMN/CMN.ean/4 | 290 | get-up |
 | 187 | DownAttackU | clip:chara/GOK/GOK.ean/62 | 67, 195, 221, 222, 250 |  |
-| 188 | DownFowardU | clip:chara/CMN/CMN.ean/9 | 196, 200 |  |
-| 189 | DownBackU | clip:chara/CMN/CMN.ean/10 | 197, 201 |  |
-| 190 | DownSpotU | clip:chara/CMN/CMN.ean/105 | 185 |  |
-| 191 | DownBoundD | clip:chara/CMN/CMN.ean/65 | 289 |  |
-| 192 | DownWaitD | clip:chara/CMN/CMN.ean/3 |  |  |
-| 193 | DownDamageD | clip:chara/CMN/CMN.ean/106 | 198 |  |
-| 194 | DownStandD | clip:chara/CMN/CMN.ean/5 | 291 |  |
+| 188 | DownFowardU | clip:chara/CMN/CMN.ean/9 | 196, 200 | aerial recovery/tumble exit into a dragon dive / flying dash |
+| 189 | DownBackU | clip:chara/CMN/CMN.ean/10 | 197, 201 | handspring/cartwheel |
+| 190 | DownSpotU | clip:chara/CMN/CMN.ean/105 | 185 | unclear |
+| 191 | DownBoundD | clip:chara/CMN/CMN.ean/65 | 289 | lying face down (techable?) |
+| 192 | DownWaitD | clip:chara/CMN/CMN.ean/3 |  | unclear |
+| 193 | DownDamageD | clip:chara/CMN/CMN.ean/106 | 198 | unclear |
+| 194 | DownStandD | clip:chara/CMN/CMN.ean/5 | 291 | get-up from a knockdown/missed tech |
 | 195 | DownAttackD | clip:chara/GOK/GOK.ean/62 | 67, 187, 221, 222, 250 |  |
-| 196 | DownFowardD | clip:chara/CMN/CMN.ean/9 | 188, 200 |  |
-| 197 | DownBackD | clip:chara/CMN/CMN.ean/10 | 189, 201 |  |
-| 198 | DownSpotD | clip:chara/CMN/CMN.ean/106 | 193 |  |
-| 199 | Passive | clip:chara/CMN/CMN.ean/8 |  |  |
-| 200 | PassiveStandF | clip:chara/CMN/CMN.ean/9 | 188, 196 |  |
-| 201 | PassiveStandB | clip:chara/CMN/CMN.ean/10 | 189, 197 |  |
-| 202 | PassiveWall | clip:chara/CMN/CMN.ean/67 | 213 |  |
+| 196 | DownFowardD | clip:chara/CMN/CMN.ean/9 | 188, 200 | aerial recovery/tumble exit into a dragon dive / flying dash |
+| 197 | DownBackD | clip:chara/CMN/CMN.ean/10 | 189, 201 | handspring/cartwheel |
+| 198 | DownSpotD | clip:chara/CMN/CMN.ean/106 | 193 | unclear |
+| 199 | Passive | clip:chara/CMN/CMN.ean/8 |  | one-arm push-up into a landing in fighting stance |
+| 200 | PassiveStandF | clip:chara/CMN/CMN.ean/9 | 188, 196 | aerial recovery/tumble exit into a dragon dive / flying dash |
+| 201 | PassiveStandB | clip:chara/CMN/CMN.ean/10 | 189, 197 | handspring/cartwheel |
+| 202 | PassiveWall | clip:chara/CMN/CMN.ean/67 | 213 | unclear |
 | 203 | PassiveWallJump | clip:chara/GOK/GOK.ean/8 | 17, 216, 217, 225, 227 |  |
-| 204 | PassiveCeil | clip:chara/CMN/CMN.ean/13 |  |  |
+| 204 | PassiveCeil | clip:chara/CMN/CMN.ean/13 |  | unclear |
 | 205 | (engine default) | - |  |  |
 | 206 | (engine default) | - |  |  |
 | 207 | (engine default) | - |  |  |
 | 208 | (engine default) | - |  |  |
 | 209 | Pass | clip:chara/GOK/GOK.ean/12 | 20, 21, 22, 23, 24, 25, 26, 27, 28, 134, 135, 136 |  |
-| 210 | Ottotto | clip:chara/CMN/CMN.ean/84 | 170, 211 |  |
-| 211 | OttottoWait | clip:chara/CMN/CMN.ean/84 | 170, 210 |  |
+| 210 | Ottotto | clip:chara/CMN/CMN.ean/84 | 170, 211 | slightly launched, stumbles back |
+| 211 | OttottoWait | clip:chara/CMN/CMN.ean/84 | 170, 210 | slightly launched, stumbles back |
 | 212 | (engine default) | - |  |  |
-| 213 | StopWall | clip:chara/CMN/CMN.ean/67 | 202 |  |
-| 214 | StopCeil | clip:chara/CMN/CMN.ean/68 |  |  |
-| 215 | MissFoot | clip:chara/CMN/CMN.ean/107 |  |  |
+| 213 | StopWall | clip:chara/CMN/CMN.ean/67 | 202 | unclear |
+| 214 | StopCeil | clip:chara/CMN/CMN.ean/68 |  | unclear |
+| 215 | MissFoot | clip:chara/CMN/CMN.ean/107 |  | lying down exhausted (stamina-out candidate) |
 | 216 | CliffCatch | clip:chara/GOK/GOK.ean/8 | 17, 203, 217, 225, 227 |  |
 | 217 | CliffWait | clip:chara/GOK/GOK.ean/8 | 17, 203, 216, 225, 227 |  |
 | 218 | (engine default) | - |  |  |
@@ -242,63 +242,63 @@ Row numbers are the LAB CLIPS list (anim bank rows). `source` is the XV2 clip ea
 | 235 | (engine default) | - |  |  |
 | 236 | (engine default) | - |  |  |
 | 237 | (engine default) | - |  |  |
-| 238 | EntryStart | clip:chara/GOK/GOK.ean/87 |  |  |
-| 239 | AppealSR | clip:chara/CMN/CMN.ean/118 | 240 |  |
-| 240 | AppealSL | clip:chara/CMN/CMN.ean/118 | 239 |  |
+| 238 | EntryStart | clip:chara/GOK/GOK.ean/87 |  | idle/guard, unclear |
+| 239 | AppealSR | clip:chara/CMN/CMN.ean/118 | 240 | charge-up: looks great |
+| 240 | AppealSL | clip:chara/CMN/CMN.ean/118 | 239 | charge-up: looks great |
 | 241 | (engine default) | - |  |  |
-| 242 | Catch | clip:chara/GOK/GOK.ean/81 | 243, 244, 245 |  |
-| 243 | CatchDash | clip:chara/GOK/GOK.ean/81 | 242, 244, 245 |  |
-| 244 | CatchWait | clip:chara/GOK/GOK.ean/81 | 242, 243, 245 |  |
-| 245 | CatchAttack | clip:chara/GOK/GOK.ean/81 | 242, 243, 244 |  |
-| 246 | CatchCut | clip:chara/CMN/CMN.ean/140 | 257 |  |
-| 247 | ThrowF | clip:chara/GOK/GOK.ean/82 | 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279, 280 … |  |
-| 248 | ThrowB | clip:chara/GOK/GOK.ean/82 | 247, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279, 280 … |  |
+| 242 | Catch | clip:chara/GOK/GOK.ean/81 | 243, 244, 245 | from standing, lunges forward to grab |
+| 243 | CatchDash | clip:chara/GOK/GOK.ean/81 | 242, 244, 245 | from standing, lunges forward to grab |
+| 244 | CatchWait | clip:chara/GOK/GOK.ean/81 | 242, 243, 245 | from standing, lunges forward to grab |
+| 245 | CatchAttack | clip:chara/GOK/GOK.ean/81 | 242, 243, 244 | from standing, lunges forward to grab |
+| 246 | CatchCut | clip:chara/CMN/CMN.ean/140 | 257 | unclear |
+| 247 | ThrowF | clip:chara/GOK/GOK.ean/82 | 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279, 280 … | unclear |
+| 248 | ThrowB | clip:chara/GOK/GOK.ean/82 | 247, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279, 280 … | unclear |
 | 249 | ThrowHi | clip:chara/GOK/GOK.ean/54 | 66 |  |
 | 250 | ThrowLw | clip:chara/GOK/GOK.ean/62 | 67, 187, 195, 221, 222 |  |
-| 251 | CapturePulledHi | clip:chara/CMN/CMN.ean/16 | 165, 252, 254, 255, 278, 281 |  |
-| 252 | CaptureWaitHi | clip:chara/CMN/CMN.ean/16 | 165, 251, 254, 255, 278, 281 |  |
-| 253 | CaptureDamageHi | clip:chara/CMN/CMN.ean/24 | 166, 256 |  |
-| 254 | CapturePulledLw | clip:chara/CMN/CMN.ean/16 | 165, 251, 252, 255, 278, 281 |  |
-| 255 | CaptureWaitLw | clip:chara/CMN/CMN.ean/16 | 165, 251, 252, 254, 278, 281 |  |
-| 256 | CaptureDamageLw | clip:chara/CMN/CMN.ean/24 | 166, 253 |  |
-| 257 | CaptureCut | clip:chara/CMN/CMN.ean/140 | 246 |  |
+| 251 | CapturePulledHi | clip:chara/CMN/CMN.ean/16 | 165, 252, 254, 255, 278, 281 | standing, takes damage |
+| 252 | CaptureWaitHi | clip:chara/CMN/CMN.ean/16 | 165, 251, 254, 255, 278, 281 | standing, takes damage |
+| 253 | CaptureDamageHi | clip:chara/CMN/CMN.ean/24 | 166, 256 | standing, takes harder damage (head?) |
+| 254 | CapturePulledLw | clip:chara/CMN/CMN.ean/16 | 165, 251, 252, 255, 278, 281 | standing, takes damage |
+| 255 | CaptureWaitLw | clip:chara/CMN/CMN.ean/16 | 165, 251, 252, 254, 278, 281 | standing, takes damage |
+| 256 | CaptureDamageLw | clip:chara/CMN/CMN.ean/24 | 166, 253 | standing, takes harder damage (head?) |
+| 257 | CaptureCut | clip:chara/CMN/CMN.ean/140 | 246 | unclear |
 | 258 | CaptureJump | clip:chara/GOK/GOK.ean/5 | 16, 226, 228 |  |
-| 259 | CaptureNeck | clip:chara/GOK/GOK.ean/82 | 247, 248, 260, 267, 268, 269, 270, 271, 276, 277, 279, 280 … |  |
-| 260 | CaptureFoot | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 267, 268, 269, 270, 271, 276, 277, 279, 280 … |  |
+| 259 | CaptureNeck | clip:chara/GOK/GOK.ean/82 | 247, 248, 260, 267, 268, 269, 270, 271, 276, 277, 279, 280 … | unclear |
+| 260 | CaptureFoot | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 267, 268, 269, 270, 271, 276, 277, 279, 280 … | unclear |
 | 261 | (engine default) | - |  |  |
 | 262 | ThrownF | clip:chara/CMN/CMN.ean/205 | 0, 1, 178, 272 |  |
-| 263 | ThrownB | clip:chara/CMN/CMN.ean/206 | 273 |  |
-| 264 | ThrownHi | clip:chara/CMN/CMN.ean/74 | 177, 274, 286 |  |
-| 265 | ThrownLw | clip:chara/CMN/CMN.ean/64 | 183, 266, 275, 288 |  |
-| 266 | ThrownlwWomen | clip:chara/CMN/CMN.ean/64 | 183, 265, 275, 288 |  |
-| 267 | ShoulderedWait | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 268, 269, 270, 271, 276, 277, 279, 280 … |  |
-| 268 | ShoulderedWalkSlow | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 269, 270, 271, 276, 277, 279, 280 … |  |
-| 269 | ShoulderedWalkMiddle | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 270, 271, 276, 277, 279, 280 … |  |
-| 270 | ShoulderedWalkFast | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 271, 276, 277, 279, 280 … |  |
-| 271 | ShoulderedTurn | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 276, 277, 279, 280 … |  |
+| 263 | ThrownB | clip:chara/CMN/CMN.ean/206 | 273 | from behind, blasting a character's back (throw candidate) |
+| 264 | ThrownHi | clip:chara/CMN/CMN.ean/74 | 177, 274, 286 | knocked down onto his back |
+| 265 | ThrownLw | clip:chara/CMN/CMN.ean/64 | 183, 266, 275, 288 | unclear |
+| 266 | ThrownlwWomen | clip:chara/CMN/CMN.ean/64 | 183, 265, 275, 288 | unclear |
+| 267 | ShoulderedWait | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 268, 269, 270, 271, 276, 277, 279, 280 … | unclear |
+| 268 | ShoulderedWalkSlow | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 269, 270, 271, 276, 277, 279, 280 … | unclear |
+| 269 | ShoulderedWalkMiddle | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 270, 271, 276, 277, 279, 280 … | unclear |
+| 270 | ShoulderedWalkFast | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 271, 276, 277, 279, 280 … | unclear |
+| 271 | ShoulderedTurn | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 276, 277, 279, 280 … | unclear |
 | 272 | ThrownFF | clip:chara/CMN/CMN.ean/205 | 0, 1, 178, 262 |  |
-| 273 | ThrownFB | clip:chara/CMN/CMN.ean/206 | 263 |  |
-| 274 | ThrownFHi | clip:chara/CMN/CMN.ean/74 | 177, 264, 286 |  |
-| 275 | ThrownFLw | clip:chara/CMN/CMN.ean/64 | 183, 265, 266, 288 |  |
-| 276 | CaptureCaptain | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 277, 279, 280 … |  |
-| 277 | YoshiEgg | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 279, 280 … |  |
-| 278 | CaptureDamageKoopa | clip:chara/CMN/CMN.ean/16 | 165, 251, 252, 254, 255, 281 |  |
-| 279 | ThrownKoopaF | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 280 … |  |
-| 280 | ThrownKoopaB | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … |  |
-| 281 | CaptureDamageKoopaAir | clip:chara/CMN/CMN.ean/16 | 165, 251, 252, 254, 255, 278 |  |
-| 282 | ThrownKoopaAirF | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … |  |
-| 283 | ThrownKoopaAirB | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … |  |
-| 284 | ThrownCopyStar | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … |  |
-| 285 | ThrownKirbyStar | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … |  |
-| 286 | ShieldBreakFly | clip:chara/CMN/CMN.ean/74 | 177, 264, 274 |  |
+| 273 | ThrownFB | clip:chara/CMN/CMN.ean/206 | 263 | from behind, blasting a character's back (throw candidate) |
+| 274 | ThrownFHi | clip:chara/CMN/CMN.ean/74 | 177, 264, 286 | knocked down onto his back |
+| 275 | ThrownFLw | clip:chara/CMN/CMN.ean/64 | 183, 265, 266, 288 | unclear |
+| 276 | CaptureCaptain | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 277, 279, 280 … | unclear |
+| 277 | YoshiEgg | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 279, 280 … | unclear |
+| 278 | CaptureDamageKoopa | clip:chara/CMN/CMN.ean/16 | 165, 251, 252, 254, 255, 281 | standing, takes damage |
+| 279 | ThrownKoopaF | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 280 … | unclear |
+| 280 | ThrownKoopaB | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … | unclear |
+| 281 | CaptureDamageKoopaAir | clip:chara/CMN/CMN.ean/16 | 165, 251, 252, 254, 255, 278 | standing, takes damage |
+| 282 | ThrownKoopaAirF | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … | unclear |
+| 283 | ThrownKoopaAirB | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … | unclear |
+| 284 | ThrownCopyStar | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … | unclear |
+| 285 | ThrownKirbyStar | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … | unclear |
+| 286 | ShieldBreakFly | clip:chara/CMN/CMN.ean/74 | 177, 264, 274 | knocked down onto his back |
 | 287 | ShieldBreakFall | clip:chara/CMN/CMN.ean/170 | 29, 137 |  |
-| 288 | ShieldBreakDownU | clip:chara/CMN/CMN.ean/64 | 183, 265, 266, 275 |  |
-| 289 | ShieldBreakDownD | clip:chara/CMN/CMN.ean/65 | 191 |  |
-| 290 | ShieldBreakStandU | clip:chara/CMN/CMN.ean/4 | 186 |  |
-| 291 | ShieldBreakStandD | clip:chara/CMN/CMN.ean/5 | 194 |  |
-| 292 | ThrownMewtwo | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … |  |
-| 293 | ThrownMewtwoAir | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … |  |
-| 294 | KirbyYoshiEgg | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … |  |
+| 288 | ShieldBreakDownU | clip:chara/CMN/CMN.ean/64 | 183, 265, 266, 275 | unclear |
+| 289 | ShieldBreakDownD | clip:chara/CMN/CMN.ean/65 | 191 | lying face down (techable?) |
+| 290 | ShieldBreakStandU | clip:chara/CMN/CMN.ean/4 | 186 | get-up |
+| 291 | ShieldBreakStandD | clip:chara/CMN/CMN.ean/5 | 194 | get-up from a knockdown/missed tech |
+| 292 | ThrownMewtwo | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … | unclear |
+| 293 | ThrownMewtwoAir | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … | unclear |
+| 294 | KirbyYoshiEgg | clip:chara/GOK/GOK.ean/82 | 247, 248, 259, 260, 267, 268, 269, 270, 271, 276, 277, 279 … | unclear |
 | 295 | KameCharge | - |  |  |
 | 296 | KameTap | - |  |  |
 | 297 | KameMid | - |  |  |

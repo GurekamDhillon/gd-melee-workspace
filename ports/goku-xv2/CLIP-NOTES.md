@@ -19,16 +19,16 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xCMN_BAS_DOKABAKI_00_B | 111 |  |  |  |  |  |
 | xCMN_BAS_DOKABAKI_01 | 50 |  |  |  |  |  |
 | xCMN_BAS_DOWN_AOMUKE | 140 |  |  |  |  |  |
-| xCMN_BAS_DOWN_AOMUKE_S | 100 | Floor getups |  |  |  |  |
-| xCMN_BAS_DOWN_STAND_AOMUKE | 40 |  |  |  |  |  |
+| xCMN_BAS_DOWN_AOMUKE_S | 100 | Floor getups | unclear |  |  |  |
+| xCMN_BAS_DOWN_STAND_AOMUKE | 40 |  | get-up |  |  |  |
 | xCMN_BAS_DOWN_STAND_AOMUKE_S | 40 |  |  |  |  |  |
-| xCMN_BAS_DOWN_STAND_UTSUBUSE | 40 |  |  |  |  |  |
+| xCMN_BAS_DOWN_STAND_UTSUBUSE | 40 |  | get-up from a knockdown/missed tech |  |  |  |
 | xCMN_BAS_DOWN_STAND_UTSUBUSE_S | 40 |  |  |  |  |  |
 | xCMN_BAS_DOWN_UTSUBUSE | 140 |  |  |  |  |  |
-| xCMN_BAS_DOWN_UTSUBUSE_S | 100 |  |  |  |  |  |
+| xCMN_BAS_DOWN_UTSUBUSE_S | 100 |  | unclear |  |  |  |
 | xCMN_BAS_GATE_IN | 110 |  |  |  |  |  |
 | xCMN_BAS_GATE_OUT | 110 |  |  |  |  |  |
-| xCMN_BAS_HAJIKI_B_00 | 38 |  |  |  |  |  |
+| xCMN_BAS_HAJIKI_B_00 | 38 |  | unclear |  |  |  |
 | xCMN_BAS_HAJIKI_B_01 | 31 |  |  |  |  |  |
 | xCMN_BAS_HAJIKI_F_00 | 38 |  |  |  |  |  |
 | xCMN_BAS_HAJIKI_F_01 | 31 |  |  |  |  |  |
@@ -36,7 +36,7 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xCMN_BAS_HAJIKI_L_01 | 31 |  |  |  |  |  |
 | xCMN_BAS_HAJIKI_R_00 | 38 |  |  |  |  |  |
 | xCMN_BAS_HAJIKI_R_01 | 31 |  |  |  |  |  |
-| xCMN_BAS_HIRAMEKI | 90 | Taunt, Victory / results pose |  |  |  |  |
+| xCMN_BAS_HIRAMEKI | 90 | Taunt, Victory / results pose | charge-up: looks great |  |  |  |
 | xCMN_BAS_ITM | 79 |  |  |  |  |  |
 | xCMN_BAS_ITM_F | 79 |  |  |  |  |  |
 | xCMN_BAS_KYORYOKU_C | 140 | Taunt |  |  |  |  |
@@ -49,14 +49,14 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xCMN_BAS_TAM_00 | 38 |  |  |  |  |  |
 | xCMN_BAS_TAM_01 | 43 |  |  |  |  |  |
 | xCMN_BAS_TURN | 27 | Turn (wait / run) |  |  |  |  |
-| xCMN_BAS_UKEMI_B | 80 |  |  |  |  |  |
+| xCMN_BAS_UKEMI_B | 80 |  | handspring/cartwheel |  |  |  |
 | xCMN_BAS_UKEMI_B_MAM | 80 |  |  |  |  |  |
 | xCMN_BAS_UKEMI_B_S | 80 |  |  |  |  |  |
-| xCMN_BAS_UKEMI_F | 61 |  |  |  |  |  |
+| xCMN_BAS_UKEMI_F | 61 |  | aerial recovery/tumble exit into a dragon dive / flying dash |  |  |  |
 | xCMN_BAS_UKEMI_L | 46 |  |  |  |  |  |
-| xCMN_BAS_UKEMI_N | 36 | Floor getups |  |  |  |  |
+| xCMN_BAS_UKEMI_N | 36 | Floor getups | one-arm push-up into a landing in fighting stance |  |  |  |
 | xCMN_BAS_UKEMI_R | 46 |  |  |  |  |  |
-| xCMN_BAS_UKEMI_U | 46 |  |  |  |  |  |
+| xCMN_BAS_UKEMI_U | 46 |  | unclear |  |  |  |
 | xCMN_BLT_POW_C | 101 | Down B counter / ki charge |  |  |  |  |
 | xCMN_BLT_POW_F | 101 |  |  |  |  |  |
 | xCMN_BLT_POW_GOK | 101 | Down B counter / ki charge |  |  |  |  |
@@ -85,24 +85,24 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xCMN_DEM_TETTAI | 180 |  |  |  |  |  |
 | xCMN_DMG_AIR_B_L | 28 |  |  |  |  |  |
 | xCMN_DMG_AIR_B_R | 28 |  |  |  |  |  |
-| xCMN_DMG_AIR_F | 30 | Hit stun (hi / mid / low, ground+air), Thrown / captured by others |  |  |  |  |
-| xCMN_DMG_AIR_F_L | 28 |  |  |  |  |  |
+| xCMN_DMG_AIR_F | 30 | Hit stun (hi / mid / low, ground+air), Thrown / captured by others | hit back while in the air (?) |  |  |  |
+| xCMN_DMG_AIR_F_L | 28 |  | hit back in the air, different pose |  |  |  |
 | xCMN_DMG_AIR_F_R | 28 |  |  |  |  |  |
 | xCMN_DMG_AIR_L | 30 |  |  |  |  |  |
 | xCMN_DMG_AIR_R | 30 |  |  |  |  |  |
-| xCMN_DMG_AIR_SPIN_L | 30 |  |  |  |  |  |
+| xCMN_DMG_AIR_SPIN_L | 30 |  | head down, feet up: falling/tumbling |  |  |  |
 | xCMN_DMG_AIR_SPIN_R | 30 |  |  |  |  |  |
 | xCMN_DMG_BIKKURI | 151 |  |  |  |  |  |
 | xCMN_DMG_BLOW_B | 20 |  |  |  |  |  |
 | xCMN_DMG_BLOW_F | 20 | Fly / tumble, Thrown / captured by others |  |  |  |  |
-| xCMN_DMG_BLOW_H_B | 36 |  |  |  |  |  |
+| xCMN_DMG_BLOW_H_B | 36 |  | from behind, blasting a character's back (throw candidate) |  |  |  |
 | xCMN_DMG_BLOW_H_F | 36 |  |  |  |  |  |
 | xCMN_DMG_BLOW_L_B | 36 |  |  |  |  |  |
 | xCMN_DMG_BLOW_L_F | 36 |  |  |  |  |  |
-| xCMN_DMG_BLOW_SPIN | 136 | Fly / tumble |  |  |  |  |
+| xCMN_DMG_BLOW_SPIN | 136 | Fly / tumble | similar to 15 |  |  |  |
 | xCMN_DMG_BODY_H_B | 34 |  |  |  |  |  |
 | xCMN_DMG_BODY_H_B_S | 34 |  |  |  |  |  |
-| xCMN_DMG_BODY_H_F | 34 |  |  |  |  |  |
+| xCMN_DMG_BODY_H_F | 34 |  | standing, takes harder damage (stomach) |  |  |  |
 | xCMN_DMG_BODY_H_F_S | 34 |  |  |  |  |  |
 | xCMN_DMG_BODY_H_L | 34 |  |  |  |  |  |
 | xCMN_DMG_BODY_H_L_S | 34 |  |  |  |  |  |
@@ -110,7 +110,7 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xCMN_DMG_BODY_H_R_S | 34 |  |  |  |  |  |
 | xCMN_DMG_BODY_L_B | 34 |  |  |  |  |  |
 | xCMN_DMG_BODY_L_B_S | 34 |  |  |  |  |  |
-| xCMN_DMG_BODY_L_F | 34 |  |  |  |  |  |
+| xCMN_DMG_BODY_L_F | 34 |  | standing, takes damage (stomach) |  |  |  |
 | xCMN_DMG_BODY_L_F_S | 34 | Hit stun (hi / mid / low, ground+air), Thrown / captured by others |  |  |  |  |
 | xCMN_DMG_BODY_L_L | 34 |  |  |  |  |  |
 | xCMN_DMG_BODY_L_L_S | 34 |  |  |  |  |  |
@@ -123,7 +123,7 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xCMN_DMG_COR_00 | 95 |  |  |  |  |  |
 | xCMN_DMG_COR_01 | 20 |  |  |  |  |  |
 | xCMN_DMG_DIVE_B | 31 |  |  |  |  |  |
-| xCMN_DMG_DIVE_F | 31 |  |  |  |  |  |
+| xCMN_DMG_DIVE_F | 31 |  | maybe same as 14 |  |  |  |
 | xCMN_DMG_DKA | 159 |  |  |  |  |  |
 | xCMN_DMG_DKA_LL | 159 |  |  |  |  |  |
 | xCMN_DMG_DKA_S | 159 |  |  |  |  |  |
@@ -135,11 +135,11 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xCMN_DMG_DOKKAN_LOOP_F | 35 |  |  |  |  |  |
 | xCMN_DMG_DOKKAN_RECOVERY_B | 39 |  |  |  |  |  |
 | xCMN_DMG_DOKKAN_RECOVERY_F | 39 |  |  |  |  |  |
-| xCMN_DMG_DOWN_BOUND_AOMUKE | 59 |  |  |  |  |  |
-| xCMN_DMG_DOWN_BOUND_AOMUKE_H | 51 |  |  |  |  |  |
+| xCMN_DMG_DOWN_BOUND_AOMUKE | 59 |  | unclear |  |  |  |
+| xCMN_DMG_DOWN_BOUND_AOMUKE_H | 51 |  | unclear |  |  |  |
 | xCMN_DMG_DOWN_BOUND_SPIN | 62 |  |  |  |  |  |
-| xCMN_DMG_DOWN_BOUND_UTSUBUSE | 59 |  |  |  |  |  |
-| xCMN_DMG_DOWN_BOUND_UTSUBUSE_H | 51 |  |  |  |  |  |
+| xCMN_DMG_DOWN_BOUND_UTSUBUSE | 59 |  | lying face down (techable?) |  |  |  |
+| xCMN_DMG_DOWN_BOUND_UTSUBUSE_H | 51 |  | unclear |  |  |  |
 | xCMN_DMG_ELECTRIC | 31 |  |  |  |  |  |
 | xCMN_DMG_FGS | 121 |  |  |  |  |  |
 | xCMN_DMG_FURITOBASHI | 126 |  |  |  |  |  |
@@ -153,7 +153,7 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xCMN_DMG_HAA_S | 161 |  |  |  |  |  |
 | xCMN_DMG_HEAD_H_B | 34 |  |  |  |  |  |
 | xCMN_DMG_HEAD_H_B_S | 34 |  |  |  |  |  |
-| xCMN_DMG_HEAD_H_F | 34 |  |  |  |  |  |
+| xCMN_DMG_HEAD_H_F | 34 |  | standing, takes harder damage (head?) |  |  |  |
 | xCMN_DMG_HEAD_H_F_S | 34 |  |  |  |  |  |
 | xCMN_DMG_HEAD_H_L | 34 |  |  |  |  |  |
 | xCMN_DMG_HEAD_H_L_S | 34 |  |  |  |  |  |
@@ -161,7 +161,7 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xCMN_DMG_HEAD_H_R_S | 34 |  |  |  |  |  |
 | xCMN_DMG_HEAD_L_B | 34 |  |  |  |  |  |
 | xCMN_DMG_HEAD_L_B_S | 34 |  |  |  |  |  |
-| xCMN_DMG_HEAD_L_F | 34 |  |  |  |  |  |
+| xCMN_DMG_HEAD_L_F | 34 |  | standing, takes damage |  |  |  |
 | xCMN_DMG_HEAD_L_F_S | 34 | Hit stun (hi / mid / low, ground+air) |  |  |  |  |
 | xCMN_DMG_HEAD_L_L | 34 |  |  |  |  |  |
 | xCMN_DMG_HEAD_L_L_S | 34 |  |  |  |  |  |
@@ -172,10 +172,10 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xCMN_DMG_HSA_S | 161 |  |  |  |  |  |
 | xCMN_DMG_KANASHIBARI | 180 | Dizzy |  |  |  |  |
 | xCMN_DMG_KANTSU_F | 49 |  |  |  |  |  |
-| xCMN_DMG_KUZURE | 78 |  |  |  |  |  |
+| xCMN_DMG_KUZURE | 78 |  | lying down exhausted (stamina-out candidate) |  |  |  |
 | xCMN_DMG_LEG_H_B | 34 |  |  |  |  |  |
 | xCMN_DMG_LEG_H_B_S | 34 |  |  |  |  |  |
-| xCMN_DMG_LEG_H_F | 34 |  |  |  |  |  |
+| xCMN_DMG_LEG_H_F | 34 |  | unclear |  |  |  |
 | xCMN_DMG_LEG_H_F_S | 34 |  |  |  |  |  |
 | xCMN_DMG_LEG_H_L | 34 |  |  |  |  |  |
 | xCMN_DMG_LEG_H_L_S | 34 |  |  |  |  |  |
@@ -183,7 +183,7 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xCMN_DMG_LEG_H_R_S | 34 |  |  |  |  |  |
 | xCMN_DMG_LEG_L_B | 34 |  |  |  |  |  |
 | xCMN_DMG_LEG_L_B_S | 34 |  |  |  |  |  |
-| xCMN_DMG_LEG_L_F | 34 |  |  |  |  |  |
+| xCMN_DMG_LEG_L_F | 34 |  | unclear |  |  |  |
 | xCMN_DMG_LEG_L_F_S | 34 |  |  |  |  |  |
 | xCMN_DMG_LEG_L_L | 34 |  |  |  |  |  |
 | xCMN_DMG_LEG_L_L_S | 34 |  |  |  |  |  |
@@ -211,19 +211,19 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xCMN_DMG_TUMBLE_F | 69 | Fly / tumble |  |  |  |  |
 | xCMN_DMG_UP_B | 49 |  |  |  |  |  |
 | xCMN_DMG_UP_BODY_B | 69 |  |  |  |  |  |
-| xCMN_DMG_UP_BODY_F | 69 |  |  |  |  |  |
-| xCMN_DMG_UP_F | 49 | Fly / tumble |  |  |  |  |
+| xCMN_DMG_UP_BODY_F | 69 |  | launched up, about to transition into 14 |  |  |  |
+| xCMN_DMG_UP_F | 49 | Fly / tumble | knocked down onto his back |  |  |  |
 | xCMN_DMG_UV1 | 156 |  |  |  |  |  |
 | xCMN_DMG_VGTS_01 | 31 |  |  |  |  |  |
-| xCMN_DMG_WALL_BOUND_B | 46 |  |  |  |  |  |
-| xCMN_DMG_WALL_BOUND_F | 46 | Wall / ceiling / ottotto |  |  |  |  |
+| xCMN_DMG_WALL_BOUND_B | 46 |  | unclear |  |  |  |
+| xCMN_DMG_WALL_BOUND_F | 46 | Wall / ceiling / ottotto | unclear |  |  |  |
 | xCMN_DMG_WALL_DOWN_AOMUKE | 31 |  |  |  |  |  |
 | xCMN_DMG_WALL_DOWN_UTSUBUSE | 31 |  |  |  |  |  |
 | xCMN_DMG_WLD | 180 |  |  |  |  |  |
 | xCMN_DMG_WLD_L | 180 |  |  |  |  |  |
 | xCMN_DMG_YOROKE_BODY_B | 85 |  |  |  |  |  |
 | xCMN_DMG_YOROKE_BODY_B_S | 85 |  |  |  |  |  |
-| xCMN_DMG_YOROKE_BODY_F | 85 |  |  |  |  |  |
+| xCMN_DMG_YOROKE_BODY_F | 85 |  | slightly launched, stumbles back |  |  |  |
 | xCMN_DMG_YOROKE_BODY_F_S | 85 | Wall / ceiling / ottotto |  |  |  |  |
 | xCMN_DMG_YOROKE_BODY_L | 85 |  |  |  |  |  |
 | xCMN_DMG_YOROKE_BODY_L_S | 85 |  |  |  |  |  |
@@ -231,7 +231,7 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xCMN_DMG_YOROKE_BODY_R_S | 85 |  |  |  |  |  |
 | xCMN_DMG_YOROKE_HEAD_B | 43 |  |  |  |  |  |
 | xCMN_DMG_YOROKE_HEAD_B_S | 43 |  |  |  |  |  |
-| xCMN_DMG_YOROKE_HEAD_F | 43 |  |  |  |  |  |
+| xCMN_DMG_YOROKE_HEAD_F | 43 |  | standing, takes even harder damage (head?) |  |  |  |
 | xCMN_DMG_YOROKE_HEAD_F_S | 43 | Wall / ceiling / ottotto |  |  |  |  |
 | xCMN_DMG_YOROKE_HEAD_L | 43 |  |  |  |  |  |
 | xCMN_DMG_YOROKE_HEAD_L_S | 43 |  |  |  |  |  |
@@ -239,7 +239,7 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xCMN_DMG_YOROKE_HEAD_R_S | 43 |  |  |  |  |  |
 | xCMN_DMG_YOROKE_LEG_B | 43 |  |  |  |  |  |
 | xCMN_DMG_YOROKE_LEG_B_S | 43 |  |  |  |  |  |
-| xCMN_DMG_YOROKE_LEG_F | 43 |  |  |  |  |  |
+| xCMN_DMG_YOROKE_LEG_F | 43 |  | unclear |  |  |  |
 | xCMN_DMG_YOROKE_LEG_F_S | 43 |  |  |  |  |  |
 | xCMN_LBY_STAND | 100 | Taunt |  |  |  |  |
 | xCMN_LBY_STAND_HUF | 100 |  |  |  |  |  |
@@ -267,7 +267,7 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xGKS_SPA_KTM_S | 140 |  |  |  |  |  |
 | xGKS_SPA_KTM_S_F | 140 |  |  |  |  |  |
 | xGKS_SPA_KTM_S_MAM | 140 |  |  |  |  |  |
-| xGNY_NAG_A | 180 | Forward throw |  |  |  |  |
+| xGNY_NAG_A | 180 | Forward throw | unclear |  |  |  |
 | xGNY_NAG_D | 169 | Back throw, Down throw |  |  |  |  |
 | xGOK_ATC_000 | 31 | Jab 1 (L1), Rapid jab |  |  |  |  |
 | xGOK_ATC_001 | 35 | Forward tilt, Jab 1 (L1), Jab 2 (L2) |  |  |  |  |
@@ -307,7 +307,7 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xGOK_ATC_SHOT_L | 40 |  |  |  |  |  |
 | xGOK_ATC_SHOT_L_LOOP | 14 |  |  |  |  |  |
 | xGOK_ATC_SHOT_N | 40 | Ki volley |  |  |  |  |
-| xGOK_ATC_SHOT_N_LOOP | 14 |  |  |  |  |  |
+| xGOK_ATC_SHOT_N_LOOP | 14 |  | while floating, firing ki blasts from the hands (like Mega Man's in Ultimate) |  |  |  |
 | xGOK_ATC_SHOT_R | 40 |  |  |  |  |  |
 | xGOK_ATC_SHOT_R_LOOP | 14 |  |  |  |  |  |
 | xGOK_BAS_BOOST_F_00 | 24 | Dash (start), Double jump (air jump), Jump (ground, forward/back), Jump squat, Ledge attack / escape / jump, Ledge climb, Roll / spot dodge / air dodge, Up B Instant Transmission |  |  |  |  |
@@ -344,7 +344,7 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xGOK_BAS_STUN_02 | 73 |  |  |  |  |  |
 | xGOK_BAS_STUN_02_S | 73 | Dizzy, Shield break |  |  |  |  |
 | xGOK_BAS_WALK | 70 |  |  |  |  |  |
-| xGOK_DEM_START | 180 | Entry, Victory / results pose |  |  |  |  |
+| xGOK_DEM_START | 180 | Entry, Victory / results pose | idle/guard, unclear |  |  |  |
 | xGOK_ESC_KUR_C | 146 | Down B counter / ki charge, Up B Instant Transmission |  |  |  |  |
 | xGOK_ESC_KUR_S_C | 146 |  |  |  |  |  |
 | xGOK_GRD_BREAK | 90 | Shield break |  |  |  |  |
@@ -357,7 +357,7 @@ Frames and "candidate for" are from the remake plan. Preview: `_build/goku-xv2/r
 | xGOK_GRD_L_R | 30 |  |  |  |  |  |
 | xGOK_GRD_L_R_S | 30 |  |  |  |  |  |
 | xGOK_GRD_L_S | 30 | Ledge catch / wait, Shield |  |  |  |  |
-| xGOK_NAG_TSUKAMI | 52 | Grab, Grab hold / pummel |  |  |  |  |
+| xGOK_NAG_TSUKAMI | 52 | Grab, Grab hold / pummel | from standing, lunges forward to grab |  |  |  |
 | xGOK_SPA_CSG_A | 112 |  |  |  |  |  |
 | xGOK_SPA_CSG_D | 59 |  |  |  |  |  |
 | xGOK_SPA_CSG_D_71 | 59 |  |  |  |  |  |
