@@ -1,4 +1,4 @@
--- falcon_parity.lua: per-frame state trace of a Captain Falcon (P1) against Mario (P2, a second scripted pad) in the LAB, for
+-- falcon_parity.lua (also used for the Fox template, tools/geno/falcon_parity/README.md): per-frame state trace of a retail template fighter (P1) against Mario (P2, a second scripted pad) in the LAB, for
 -- retail Falcon (p1=captain/hu) and the standalone Geno Falcon (p1=geno:geno-falcon/hu). The two runs get the same inputs from
 -- the same saved state; tools/geno/falcon_parity/parity_diff.py compares the two logs line by line.
 --
@@ -121,6 +121,16 @@ sp('air_neutral_b', {st(3, {buttons = 'B'})}, 16, 0, 110, HOP)
 sp('air_neutral_b_back', {st(3, {buttons = 'B', x = -80})}, -16, 0, 110, HOP)
 sp('air_neutral_b_up', {st(3, {buttons = 'B', y = 100})}, 16, 0, 110, HOP)
 sp('air_neutral_b_down', {st(3, {buttons = 'B', y = -100})}, 16, 4, 110, HOP)
+-- Fox extras (retail Fox against the Geno Fox define; harmless for Falcon): rapid Blaster, a Blaster hold into the lasers, the Reflector against a hit and a Mario fireball, shine into jump, Illusion/Firefox travel
+sp('fox_blaster_rapid', rep(5, {st(2, {buttons = 'B'}), st(5)}), 60, 0, 120)
+sp('fox_air_blaster_rapid', rep(4, {st(2, {buttons = 'B'}), st(5)}), 60, 0, 120, HOP)
+sp('fox_shine_hold', {st(3, {buttons = 'B', y = -127}), st(40, {y = -127})}, 14, 0, 100)
+sp('fox_shine_jc', {st(3, {buttons = 'B', y = -127}), st(8), st(3, {buttons = 'X'})}, 14, 0, 100)
+add('fox_reflect_fireball', NEAR(70), seq({st(2, {buttons = 'B', y = -127}, {buttons = 'B'}), st(50, {y = -127})}, W(60)))
+add('fox_reflect_hit', NEAR(14), seq({st(2, {buttons = 'B', y = -127}), st(30, {y = -127}, {buttons = 'A'})}, W(60)))
+sp('fox_illusion_short', {st(3, {buttons = 'B', x = 127}), st(2)}, 20, 0, 120)
+sp('fox_firefox_up_right', {st(3, {buttons = 'B', y = 127}), st(30, {x = 90, y = 90})}, 4, 6, 140)
+sp('fox_air_firefox_down_left', {st(3, {buttons = 'B', y = 127}), st(30, {x = -90, y = -90})}, 4, 6, 140, HOP)
 sp('side_b', {st(3, {buttons = 'B', x = 127})}, 20, 0, 120)
 sp('side_b_back', {st(3, {buttons = 'B', x = -127})}, -20, 0, 120)
 sp('side_b_up', {st(3, {buttons = 'B', x = 127, y = 60})}, 20, 0, 120)
