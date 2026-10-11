@@ -282,3 +282,29 @@ def start_serve(
         handshake_done.set()
         _stop_process(proc)
         raise
+
+
+def choose_engine(root, configured: str, explicit: bool = False, launcher: str = "") -> tuple[str, list[str]]:
+    """The engine exe to stage into the session sandbox, and the warnings to print.
+
+    A session used to run whatever GW_ENGINE_EXE / the cache pointed at, which was a copy built hours before the
+    launcher and the Blender add-on it talked to (an old engine with a new frame-numbering protocol; Rebirth rows
+    that killed it). The workspace build (<root>/_build/melee-pc.exe) wins when it is newer and the exe was not
+    named explicitly; an explicit exe that is older than the workspace build, or than the launcher, is warned about."""
+    notes: list[str] = []
+    current = Path(root) / "_build" / "melee-pc.exe"
+    chosen = configured
+    cfg = Path(configured) if configured else None
+    if current.is_file() and (cfg is None or not cfg.is_file() or current.stat().st_mtime > cfg.stat().st_mtime):
+        if explicit and cfg is not None and cfg.is_file():
+            notes.append("WARNING: engine %s is older than %s; set GW_ENGINE_EXE to the newer build or rebuild" % (cfg, current))
+        else:
+            if cfg is not None:
+                notes.append("note: staging the newer workspace build %s instead of %s" % (current, cfg))
+            chosen = str(current)
+    if launcher and Path(launcher).is_file() and Path(chosen).is_file():
+        age = Path(launcher).stat().st_mtime - Path(chosen).stat().st_mtime
+        if age > 6 * 3600:
+            notes.append("WARNING: the engine %s is %.1f h older than the launcher %s; the workbench protocol may differ "
+                         "(rebuild the engine with tools/port/build.sh)" % (chosen, age / 3600, launcher))
+    return chosen, notes

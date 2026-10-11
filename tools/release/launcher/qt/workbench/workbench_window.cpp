@@ -1267,14 +1267,20 @@ struct WorkbenchWindow::Impl {
         hub->setBlenderState(blenderPid > 0, blenderHeartbeat.isValid() && blenderHeartbeat.elapsed() < 2000 && snapshot.blenderAck > 0 && snapshot.blenderAck == viewRevision);
         search->setPlaceholderText(t("Search %1 rows", "Buscar %1 filas").arg(snapshot.rows.size()));
         QSignalBlocker block(rows); rows->clear();
-        for (const auto &r : snapshot.rows) rows->addItem(r.name, r.name);
+        for (const auto &r : snapshot.rows)
+            rows->addItem(r.previewable() ? r.name : r.name + t("  (not previewable)", "  (sin vista previa)"), r.name);
+        const auto previewable = [this](int index) {
+            for (const auto &r : snapshot.rows) if (r.name == rows->itemData(index).toString()) return r.previewable();
+            return true;
+        };
         int selected = rows->findData(row);
         if (selected < 0 && rows->count()) {
             // First open: the last-used move of this project, else the first move that has hitboxes.
             selected = 0;
             const QString last = lastRowFor(snapshot.projectName);
-            if (!last.isEmpty() && rows->findData(last) >= 0) selected = rows->findData(last);
-            else for (int i = 0; i < rows->count(); ++i) if (!snapshot.hits.value(rows->itemData(i).toString()).isEmpty()) { selected = i; break; }
+            if (!last.isEmpty() && rows->findData(last) >= 0 && previewable(rows->findData(last))) selected = rows->findData(last);
+            else for (int i = 0; i < rows->count(); ++i) if (previewable(i) && !snapshot.hits.value(rows->itemData(i).toString()).isEmpty()) { selected = i; break; }
+            if (!previewable(selected)) for (int i = 0; i < rows->count(); ++i) if (previewable(i)) { selected = i; break; }
         }
         rows->setCurrentIndex(selected); row = rows->currentData().toString(); updateTimeline();
         outliner->setRows(snapshot.rows, snapshot.hits); applyChanges(); refreshSelection(); updateBadges();

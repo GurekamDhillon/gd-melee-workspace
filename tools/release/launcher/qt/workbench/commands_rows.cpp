@@ -13,7 +13,7 @@ void registerRowCommands(Session &s) {
             for (const auto &row : ctx.session.data().rows()) {
                 QJsonArray motions; for (int motion : row.motions) motions.append(motion);
                 rows.append(QJsonObject{{"name", row.name}, {"motions", motions}, {"tag", row.tag},
-                    {"clip", row.effectiveClip()}, {"aerial", row.aerial},
+                    {"clip", row.effectiveClip()}, {"aerial", row.aerial}, {"previewable", row.previewable()},
                     {"frames", qMax(0, clipFrames.value(row.effectiveClip(), 0) - row.cropStart - 1)}, // engine frames 1..N-1 of an N-sample clip (dair 40 -> 39, fair 44 -> 43)
                     {"hitboxes", int(ctx.session.data().hitboxes(row.name).size())}});
             }

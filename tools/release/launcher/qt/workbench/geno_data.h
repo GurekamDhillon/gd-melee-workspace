@@ -19,6 +19,13 @@ struct RowInfo {
     int iasa = 0;
     bool aerial = false;
     bool clipSpecified = false; // An explicit empty pick means this state has no fixed clip.
+    // Rebirth (12) and RebirthWait (13) need the revival platform; the engine refuses them in the bare scene (it once
+    // died on a jobj assert). Keep in step with gs_wb_unpreviewable (engine) and UNPREVIEWABLE_MOTIONS (rigmap.py).
+    bool previewable() const {
+        if (motions.isEmpty()) return true;
+        for (int m : motions) if (m != 12 && m != 13) return true;
+        return false;
+    }
 };
 struct ClipInfo { QString name; int frames = 0; };
 struct RoleInfo { QString name, key, group; }; // role as written in joint=@NAME@, its plan key, its panel group

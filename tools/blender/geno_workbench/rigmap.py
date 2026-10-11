@@ -156,6 +156,30 @@ def build_joint_map(
     )
 
 
+# Action states the bare Workbench scene cannot pose: Rebirth (12) and RebirthWait (13) need the revival platform
+# (the engine refuses them; before it did, it died on a jobj assert). Keep in step with gs_wb_unpreviewable in the
+# engine (pc/platform/gw_script.c) and kUnpreviewable in the launcher (commands_rows.cpp).
+UNPREVIEWABLE_MOTIONS = frozenset((12, 13))
+
+
+def row_previewable(row):
+    """False for a row the engine cannot pose in the bare scene (list_rows says so; the motions are the fallback)."""
+    if row.get("previewable") is False:
+        return False
+    motions = [m for m in (row.get("motions") or []) if isinstance(m, int) and not isinstance(m, bool)]
+    return not (motions and all(m in UNPREVIEWABLE_MOTIONS for m in motions))
+
+
+def wait_row_name(rows):
+    """The row to fall back to: the previewable row named "wait", else a clip "Wait" row, else the first previewable."""
+    rows = [r for r in rows if row_previewable(r)]
+    for test in (lambda r: str(r.get("name", "")).casefold() == "wait", lambda r: r.get("clip") == "Wait"):
+        found = next((r for r in rows if test(r)), None)
+        if found:
+            return found.get("name", "")
+    return rows[0].get("name", "") if rows else ""
+
+
 def pick_reference_row(rows, action_exists):
     """The row the Workbench calibrates against: (row, action_name), or (None, "").
 
@@ -166,7 +190,7 @@ def pick_reference_row(rows, action_exists):
     action. Falling straight to the first action row picked Falcon's "dead_up_star" (clip DamageFall): the engine
     plays those rows blended with a previous pose, the offsets absorbed the mismatch, and the posed rig's feet and
     arms sat up to 3.4 units off the engine's joints (pose error 3.44 vs 0.20 with the wait reference)."""
-    rows = list(rows)
+    rows = [r for r in rows if row_previewable(r)] or list(rows)
     matching = [r for r in rows if r.get("clip") and action_exists(r["clip"])]
     reference = next((r for r in matching if r["clip"] == "Wait"), None)
     if reference is None:

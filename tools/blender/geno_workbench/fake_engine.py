@@ -484,6 +484,8 @@ class FakeWorkbench:
         self.rebuild_unconfigured = False   # a project with no build: rebuild answers "rebuild not configured"
         self.label_rows_by_clip = False
         self.bare_load_row = False
+        self.dead = False             # the game process died: calls fail like the server's "engine connection lost"
+        self.refused_rows = set()     # rows the engine refuses ("needs the revival platform")
         self.no_role_list = False   # an older server: no list_hitbox_roles
         self.checks_unload = False   # run_checks fails the way the real one did: row dropped, then frame 0 asked for
         self.drop_after: int | None = None
@@ -807,8 +809,13 @@ class FakeWorkbench:
                     "add_spawn", "delete_spawn"):
             return self._projectile(tool, args)
         if tool == "engine_status":
-            return {"status": "running"}
+            return {"status": "error: engine connection lost" if self.dead else "running"}
+        if self.dead and tool != "engine_restart":
+            raise ValueError("engine connection lost")
+        if tool == "load_row" and args.get("row") in self.refused_rows:
+            raise ValueError("motion 12 needs the revival platform and cannot be previewed in the bare scene")
         if tool == "engine_restart":
+            self.dead = False
             self.current_row = "wait"
             self.frame = 1
             return {"status": "running"}

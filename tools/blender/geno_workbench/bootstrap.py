@@ -82,7 +82,9 @@ def main(argv=None):
     # A fresh engine's first row load can report a pose that is not that row's frame 1 (seen on Geno Falcon;
     # the second load is right). Load the first row once so calibration below sees the real reference pose.
     _prime = api.session()
-    _first = next((r.get("name") for r in getattr(_prime, "rows", []) if isinstance(r, dict) and r.get("name")), "")
+    # (the wait row, never a row the engine cannot pose: the first row of Falcon is Rebirth)
+    from geno_workbench import rigmap as _rigmap
+    _first = _rigmap.wait_row_name([r for r in getattr(_prime, "rows", []) if isinstance(r, dict)])
     if _first:
         try:
             _prime.load_row(_first)
