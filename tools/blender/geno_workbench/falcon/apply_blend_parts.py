@@ -20,6 +20,7 @@ _alpha = part_visibility.apply_alpha([o for o in bpy.data.objects if o.type == "
 print("FALCON_ALPHA", _alpha)
 _cull = part_visibility.apply_cull([o for o in bpy.data.objects if o.type == "MESH"], part_visibility.cull_names(doc))
 print("FALCON_CULL", len(_cull))
+print("FALCON_REPLACE", part_visibility.apply_replace_diffuse([o for o in bpy.data.objects if o.type == "MESH"]))
 print("FALCON_PARTS hidden=%d missing=%s" % (len(found), missing))
 assert not missing, "parts.json names meshes this blend lacks: %s" % missing
 bpy.ops.wm.save_as_mainfile(filepath=args[1] if len(args) > 1 else bpy.data.filepath)

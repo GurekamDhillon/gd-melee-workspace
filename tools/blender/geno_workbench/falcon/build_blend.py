@@ -133,6 +133,7 @@ if parts_json:
     assert not _missing, "parts.json names meshes the glTF lacks: %s" % _missing
     print("FALCON_PARTS hidden=%d" % len(_hidden))
     print("FALCON_ALPHA", part_visibility.apply_alpha(meshes, part_visibility.alpha_by_name(part_visibility.load(parts_json))))
+    print("FALCON_REPLACE", part_visibility.apply_replace_diffuse(meshes))
     print("FALCON_CULL", len(part_visibility.apply_cull(meshes, part_visibility.cull_names(part_visibility.load(parts_json)))))
 bpy.ops.file.pack_all()
 bpy.ops.wm.save_as_mainfile(filepath=out)
