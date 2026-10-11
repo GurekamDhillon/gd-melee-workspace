@@ -247,8 +247,7 @@ Hold B (neutral special), release to fire; shield while charging stores it; B ag
 
 * The Super Kamehameha needs the ki meter (combo package); here it was exercised by forcing the full-charge route in a built copy
   of the Lua, so its real gate (ki >= 100) is untested in this lane.
-* The charge ball's placement between the hands is approximate (hand.R origin + a small offset; the pose hides it behind the body,
-  so it is drawn over the body). It needs the owner's eye.
+* The charge ball's placement: SOLVED in 0e (it is anchored at the midpoint of both hands, measured 0.001 off on every frame); the old note read: hand.R origin + a small offset, approximate.
 * Resuming a stored charge replays the ball's growth from small (the effect has no input from the charge slot) and the step
   chimes replay from 15 again.
 * The beam's visual end and the hit spheres' reach agree (52 world for Full) but the glow's soft outer band looks like a slab
