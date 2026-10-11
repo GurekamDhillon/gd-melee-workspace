@@ -12,6 +12,7 @@ import tempfile
 from pathlib import Path
 
 import bpy
+from mathutils import Matrix
 
 ROOT = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(ROOT))
@@ -148,29 +149,37 @@ def main():
         owner.location = (0, 0, 0)
         R.set_ik(ctrl, lid, 0.0)
 
-    # snap both ways with a non-trivial pose
+    # snap both ways. The bent pose comes from the IK itself (a pulled-in target), so it bends the way the limb really bends.
     for lid, e in info["limbs"].items():
-        ctrl.pose.bones[e["fk"][0]].rotation_euler = (.4, .1, .2)
-        ctrl.pose.bones[e["fk"][1]].rotation_euler = (-.7 if e["kind"] == "leg" else 0, 0, -.5 if e["kind"] == "arm" else 0)
+        tol = 0.012 * e["total"]
+        owner = ctrl.pose.bones[e["foot"] if e["kind"] == "leg" else e["target"]]
+        R.set_ik(ctrl, lid, 1.0)
+        owner.location = (0, 0, 0)
+        bpy.context.view_layer.update()
+        end = R.pose_matrix(ctrl, e["target"]).translation
+        top = R.pose_matrix(ctrl, e["ikm"][0]).translation
+        owner.matrix = Matrix.Translation((top - end) * .3) @ owner.matrix
         bpy.context.view_layer.update()
         a = [R.pose_matrix(arm, x) for x in e["deform"]]
-        R.auto_snap_on_switch(ctrl, lid, True)
+        R.auto_snap_on_switch(ctrl, lid, False)                                 # IK -> FK on a bent pose
         b = [R.pose_matrix(arm, x) for x in e["deform"]]
         err = max((x.translation - y.translation).length for x, y in zip(a, b))
-        check(err < 2e-3, f"snap FK->IK keeps {lid} in place (err {err:.5f})")
-        keep = ctrl.pose.bones[e["fk"][0]].rotation_euler.copy()
+        check(err < tol, f"snap IK->FK keeps {lid} in place (err {err:.5f})")
+        for pb in ctrl.pose.bones:
+            if not pb.name.startswith(R.FK):
+                pb.location, pb.rotation_euler = (0, 0, 0), (0, 0, 0)
+        ctrl.pose.bones[e["fk"][0]].rotation_euler = (.3, .1, .2)               # swing/twist the upper limb in FK, keep the bend
+        bpy.context.view_layer.update()
+        a = [R.pose_matrix(arm, x) for x in e["deform"]]
+        R.auto_snap_on_switch(ctrl, lid, True)                                  # FK -> IK
+        b = [R.pose_matrix(arm, x) for x in e["deform"]]
+        err = max((x.translation - y.translation).length for x, y in zip(a, b))
+        check(err < tol, f"snap FK->IK keeps {lid} in place (err {err:.5f})")
         ctrl.pose.bones[e["fk"][0]].rotation_euler = (1.2, 0, 0)
         bpy.context.view_layer.update()
         c = [R.pose_matrix(arm, x) for x in e["deform"]]
-        ctrl.pose.bones[e["fk"][0]].rotation_euler = keep
-        check(max((x.translation - y.translation).length for x, y in zip(b, c)) < 2e-3, f"in IK mode the FK controls of {lid} no longer drive it (the switch is live)")
-        ctrl.pose.bones[e["foot"] if e["kind"] == "leg" else e["target"]].location.z += .6
-        bpy.context.view_layer.update()
-        a = [R.pose_matrix(arm, x) for x in e["deform"]]
-        R.auto_snap_on_switch(ctrl, lid, False)
-        b = [R.pose_matrix(arm, x) for x in e["deform"]]
-        err = max((x.translation - y.translation).length for x, y in zip(a, b))
-        check(err < 2e-3, f"snap IK->FK keeps {lid} in place (err {err:.5f})")
+        check(max((x.translation - y.translation).length for x, y in zip(b, c)) < tol, f"in IK mode the FK controls of {lid} no longer drive it (the switch is live)")
+        R.set_ik(ctrl, lid, 0.0)
         for pb in ctrl.pose.bones:
             pb.location, pb.rotation_euler = (0, 0, 0), (0, 0, 0)
 

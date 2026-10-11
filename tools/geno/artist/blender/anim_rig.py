@@ -27,6 +27,8 @@ from mathutils import Matrix, Vector
 
 CTRL_SUFFIX = "Ctrl"
 FK, IKM, IKO = "FK-", "IKm-", "IKo-"
+PREBEND = 0.003     # a limb that is straight at rest gets its IK mechanism elbow/knee nudged this fraction of the limb length toward the pole:
+                   # Blender's IK cannot solve a perfectly straight chain (it stays straight and never reaches). The deform bones are unaffected.
 SIDES = ("L", "R")
 
 # Falcon's retail skeleton has bones named JOBJ_<joint index> and no role data; indices follow plan_parts.COMMON order
@@ -263,9 +265,13 @@ def generate(arm, name=None):
         # pole direction: the bend of the rest pose; a straight limb bends the way a person's does (knees forward, elbows back)
         mid = hu + (he - hu) * ((hl - hu).dot(he - hu) / max((he - hu).length_squared, 1e-9))
         bend = hl - mid
-        if bend.length < 0.02 * total:
+        straight = bend.length < 0.02 * total          # bind-pose arms/legs are straight to within noise: the bend direction there is meaningless
+        if straight:
             bend = fwd.copy() if lb["kind"] == "leg" else -fwd
         pdir = bend.normalized()
+        if straight:
+            hl = mid + pdir * PREBEND * total          # mechanism elbow only; the deform bones keep their own positions (carriers)
+            total = (hl - hu).length + (he - hl).length
         pole_pos = hl + pdir * total * 0.6
         # mechanism chain: geometry-aligned so the IK solver works even when the deform bones are stubs pointing elsewhere
         for nm, head, tail in ((IKM + u, hu, hl), (IKM + l_, hl, he)):
@@ -389,6 +395,10 @@ def generate(arm, name=None):
         ik.use_tail = True
         ik.use_stretch = False
         entry["pole_angle"] = 0.0
+        lowp = pbs[entry["ikm"][1]]                      # the elbow/knee is a hinge about its local X (align_roll put X across the bend plane)
+        lowp.lock_ik_y = lowp.lock_ik_z = True
+        lowp.use_ik_limit_x = True
+        lowp.ik_min_x, lowp.ik_max_x = -math.pi, 0.0
 
     # ---- deform constraints
     ik_bones = set()
@@ -443,30 +453,72 @@ def _ik_error(ctrl, entry):
     return bad
 
 
-def calibrate_pole(ctrl, arm, entry):
-    """Choose the IK pole angle that leaves the mechanism chain at its rest pose when the targets sit at rest."""
-    pb = ctrl.pose.bones[entry["ikm"][1]]
-    con = next(c for c in pb.constraints if c.type == "IK")
-    best = (1e9, 0.0)
+def _swivel_error(ctrl, entry, shoulder, axis):
+    """Angle (rad) between where the solved elbow/knee bends and where the pole target is, both seen along the shoulder->target axis."""
+    perp = lambda v: v - axis * v.dot(axis)
+    elbow = pose_matrix(ctrl, entry["ikm"][1]).translation
+    pole = pose_matrix(ctrl, entry["pole"]).translation
+    a, b = perp(elbow - shoulder), perp(pole - shoulder)
+    if a.length < 1e-6 or b.length < 1e-6:
+        return math.pi
+    return a.angle(b)
+
+
+def _search_angle(ctrl, entry, con, shoulder, axis):
+    best = (9.0, 0.0)
     for deg in range(-180, 180, 15):
         con.pole_angle = math.radians(deg)
         _update()
-        err = _ik_error(ctrl, entry)
+        err = _swivel_error(ctrl, entry, shoulder, axis)
         if err < best[0]:
             best = (err, math.radians(deg))
     lo = best[1]
-    for step in (7.5, 3.75, 1.875, .9375, .4688):
+    for step in (7.5, 3.75, 1.875, .9375, .4688, .2344):
         for cand in (lo - math.radians(step), lo + math.radians(step)):
             con.pole_angle = cand
             _update()
-            err = _ik_error(ctrl, entry)
+            err = _swivel_error(ctrl, entry, shoulder, axis)
             if err < best[0]:
                 best = (err, cand)
         lo = best[1]
-    con.pole_angle = best[1]
+    return best
+
+
+def calibrate_pole(ctrl, arm, entry):
+    """Choose the elbow/knee hinge direction and the IK pole angle.
+
+    The target is pulled in so the limb must bend; the pole angle is the one that bends it toward the pole target. Both hinge
+    directions are tried and the one that bends toward the pole AND leaves the chain at rest when the targets are at rest wins.
+    (Matching the rest pose alone is ill-conditioned for the nearly straight arms and legs of a fighter's bind pose.)
+    """
+    low = ctrl.pose.bones[entry["ikm"][1]]
+    con = next(c for c in low.constraints if c.type == "IK")
+    owner = ctrl.pose.bones[entry["foot"] if entry["kind"] == "leg" else entry["target"]]
+    rest_owner = owner.matrix.copy()
+    shoulder = pose_matrix(ctrl, entry["ikm"][0]).translation
+    tip = pose_matrix(ctrl, entry["target"]).translation
+    results = []
+    for limits in ((-math.pi, 0.0), (0.0, math.pi)):
+        low.ik_min_x, low.ik_max_x = limits
+        owner.matrix = Matrix.Translation((shoulder - tip) * 0.35) @ rest_owner       # pull the end 35% of the way in
+        _update()
+        axis = (pose_matrix(ctrl, entry["target"]).translation - shoulder).normalized()
+        err, angle = _search_angle(ctrl, entry, con, shoulder, axis)
+        con.pole_angle = angle
+        owner.matrix = rest_owner
+        _update()
+        drift = _ik_error(ctrl, entry)
+        results.append((err + drift, err, drift, angle, limits))
+    results.sort(key=lambda r: r[0])
+    _, err, drift, angle, limits = results[0]
+    low.ik_min_x, low.ik_max_x = limits
+    con.pole_angle = angle
+    owner.matrix = rest_owner
     _update()
-    entry["pole_error"] = best[0]
-    return best[1]
+    entry["pole_swivel_error_deg"] = math.degrees(err)
+    entry["pole_error"] = drift                                   # drift of the chain from its rest pose with the targets at rest
+    entry["hinge_limits"] = list(limits)
+    return angle
 
 
 def calibrate_roll(ctrl, entry):
@@ -488,6 +540,15 @@ def calibrate_roll(ctrl, entry):
 def set_ik(ctrl, limb_id, value):
     entry = limbs_info(ctrl)["limbs"][limb_id]
     ctrl.pose.bones[entry["switch"]]["ik"] = float(value)
+    tag_switch(ctrl)
+
+
+def tag_switch(ctrl):
+    """Setting an ID property from Python does not tell the dependency graph; tag the rig so the "ik" drivers re-evaluate."""
+    ctrl.update_tag()
+    arm = deform_object(ctrl)
+    if arm is not None:
+        arm.update_tag()
     _update()
 
 
