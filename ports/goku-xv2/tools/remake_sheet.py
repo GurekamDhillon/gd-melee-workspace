@@ -10,6 +10,8 @@ Writes ports/goku-xv2/REMAKE-CANDIDATES.md (committed: clip NAMES, frame counts 
 --check fails when a candidate clip is not in the clip library (names starting with '(' or ending '*' are notes).
 """
 import argparse
+import re
+import shutil
 import base64
 import html
 import json
@@ -22,6 +24,49 @@ ROOT = PORT.parents[1]
 MAIN = Path(os.environ.get('GW_MAIN', ROOT))   # the checkout that holds _build and the git-ignored fidelity.json
 PREV = MAIN / '_build/goku-xv2/remake-previews'
 LIB = MAIN / '_build/goku-xv2/author-source/clip-library.json'
+LAB_DATA = MAIN / '_build/goku-xv2/lab-data/geno-lab_lab'   # where the LAB's REMAKE page saves (tools/remake.ps1)
+PICKS = PORT / 'remake-picks.json'
+NOTES = PORT / 'remake-notes.json'
+CLIP_NOTES = PORT / 'CLIP-NOTES.md'
+
+
+def sync_lab():
+    """Copy the LAB's picks and notes files next to the plan (committed: clip names, frame numbers and the owner's own words)."""
+    for name, dst in (('remake-picks.json', PICKS), ('remake-notes.json', NOTES)):
+        src = LAB_DATA / name
+        if src.exists():
+            shutil.copyfile(src, dst)
+            print('synced', src, '->', dst)
+
+
+def read_picks():
+    """{slot number: {clip, in, out, browse}} from remake-picks.json (one object per line, as the LAB writes it)."""
+    out = {}
+    d = load(PICKS, None)
+    for p in (d or {}).get('picks', []):
+        out[p['n']] = p
+    return out
+
+
+def read_notes():
+    d = load(NOTES, None)
+    return {n['clip']: n['note'] for n in (d or {}).get('notes', []) if n.get('note')}
+
+
+def write_clip_notes(notes):
+    """Put the notes in the 'what it is' column of CLIP-NOTES.md (a note replaces that cell; rows without a note are untouched)."""
+    if not CLIP_NOTES.exists() or not notes:
+        return 0
+    n, out = 0, []
+    for ln in CLIP_NOTES.read_text(encoding='utf-8').splitlines():
+        cells = [c.strip() for c in ln.strip().strip('|').split('|')]
+        if len(cells) >= 7 and cells[0] in notes:
+            cells[3] = notes[cells[0]].replace('|', '/')
+            ln = '| ' + ' | '.join(cells) + ' |'
+            n += 1
+        out.append(ln)
+    CLIP_NOTES.write_text(chr(10).join(out) + chr(10), encoding='utf-8')
+    return n
 
 
 def load(p, default=None):
@@ -43,12 +88,18 @@ def metric_text(m):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--check', action='store_true')
+    ap.add_argument('--sync-picks', action='store_true', help="first copy the LAB's remake-picks.json / remake-notes.json here and fold the notes into CLIP-NOTES.md")
     a = ap.parse_args()
+    if a.sync_picks:
+        sync_lab()
+        print('CLIP-NOTES rows updated:', write_clip_notes(read_notes()))
+    picks, notes = read_picks(), read_notes()
     slots = json.loads((PORT / 'remake-candidates.json').read_text(encoding='utf-8'))
     metrics = (load(PREV / 'metrics.json', {}) or {}).get('clips', {})
     lib = {c['name'] for c in (load(LIB, {}) or {}).get('clips', [])}
     bad = []
-    for s in slots:
+    for i, s in enumerate(slots, 1):
+        s['_n'] = i
         for c in s['candidates']:
             n = c['clip']
             if lib and not n.startswith('(') and not n.endswith('*') and n not in lib:
@@ -85,7 +136,7 @@ def main():
             m = metrics.get(key) if key else None
             tag = ' **rec**' if n == s['recommended'] else ''
             tag += ' seen' if n in seen else ''
-            cand_md.append('`%s`%s: %s (%s)' % (n, tag, c['why'], metric_text(m)))
+            cand_md.append('`%s`%s: %s (%s)%s' % (n, tag, c['why'], metric_text(m), (' **owner: ' + notes[n] + '**') if n in notes else ''))
             img = PREV / (n + '.png') if key else None
             if img and img.exists():
                 b = base64.b64encode(img.read_bytes()).decode()
@@ -95,9 +146,18 @@ def main():
             cand_h.append('<div class="%s"><b>%s</b>%s<br>%s<br><small>%s</small>%s</div>' % (
                 'rec' if n == s['recommended'] else '', html.escape(n), tag, html.escape(c['why']), html.escape(metric_text(m)), im))
         role = s['role'] + ('; combo: ' + s['combo_role'] if s['combo_role'] else '')
-        out.append('| %s | %s | %s | %s | %s |  |' % (s['slot'], s['rows'], s['current'], role, '<br>'.join(cand_md)))
-        htm.append('<tr><td>%s<br><small>%s</small></td><td>%s</td><td>%s</td><td class=pick></td></tr>' % (
-            html.escape(s['slot']), html.escape(s['rows']), html.escape(s['current']), ''.join(cand_h)))
+        pk = picks.get(s['_n'])
+        pick_txt = ''
+        if pk:
+            pick_txt = '**%s**' % pk['clip']
+            if pk.get('in') or pk.get('out'):
+                pick_txt += ' f%s..f%s' % (pk.get('in') or 1, pk.get('out') or 'end')
+            if pk.get('browse'):
+                pick_txt += ' (not a candidate)'
+        out.append('| %s | %s | %s | %s | %s | %s |' % (s['slot'], s['rows'], s['current'], role, '<br>'.join(cand_md), pick_txt))
+        htm.append('<tr><td>%s<br><small>%s</small></td><td>%s</td><td>%s</td><td class=pick>%s</td></tr>' % (
+            html.escape(s['slot']), html.escape(s['rows']), html.escape(s['current']), ''.join(cand_h),
+            html.escape(pick_txt.replace('**', ''))))
         n_rows += 1
     htm.append('</table>')
     fid = load(PORT / 'fidelity.json') or load(MAIN / 'ports/goku-xv2/fidelity.json')
@@ -110,6 +170,7 @@ def main():
     (PORT / 'REMAKE-CANDIDATES.md').write_text('\n'.join(out) + '\n', encoding='utf-8')
     if PREV.exists():
         (PREV / 'candidate-sheet.html').write_text(''.join(htm), encoding='utf-8')
+    print('picks', len(picks), 'notes', len(notes), end=' ')
     print('slots', n_rows, 'appendix rows', len(fid['rows']) if fid else 0)
     return 0
 

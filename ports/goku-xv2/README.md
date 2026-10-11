@@ -135,6 +135,51 @@ Console (`MELEE_CONSOLE_PORT` 51726, or the LAB console): `lab clips find kame`,
 `lab clips frame 30`, `lab clips speed 0.25`, `lab clips category specials`, `lab clips stop`.
 Note a clip by its name (`xGOK_ATC_009`) and a frame range when picking moves.
 
+### REMAKE picker (LAB mode REMAKE, temporary tooling, 2026-10-10)
+
+The CLIPS machinery with a picker on top, to choose Goku's remake animations slot by slot in the game instead of in a web page.
+One command (needs the game checkout whose `geno-lab` has the REMAKE mode; `GW_MELEE` / `GW_BUILD_ROOT` select it):
+
+```powershell
+& 'E:\Projects\Melee Workspace\ports\goku-xv2	oolsemake.ps1'          # optional arg: a slot number or name fragment
+```
+
+It writes `missions/remake-goku.txt` (`tools/remake_lab_data.py`: the 55 slots of `remake-candidates.json` in picking order, their
+candidates, and every clip of `CLIP-NOTES.md`), runs two Gokus (left: what you judge, right: the reference for compare) and opens on
+**BROWSE**: all clips in CLIP-NOTES order, clips without a note first. Press K for the current slot's candidates instead
+(the recommended one plays first; the current clip is entry 1).
+
+| key | does |
+|---|---|
+| UP / DOWN | previous / next clip (BROWSE) or slot (candidate view); every clip auto-plays and loops |
+| A / D | previous / next candidate of the slot (or clip, in BROWSE) |
+| N / P | next / previous slot (the slot a pick goes to) |
+| K | switch BROWSE (all clips) / the slot's candidates |
+| Y | pick the shown clip for the slot. Asks first: press Y again within 4 s to confirm. |
+| U | undo the last pick (and again for the one before) |
+| I / J | mark range in / out at the shown frame (press again on the same frame to clear); the range loops and is saved with the pick |
+| T | A/B: back to the clip viewed before this one |
+| W | compare: the second Goku plays the reference (default: the slot's current clip) beside the shown clip; W again to stop |
+| R | make the shown clip the compare reference |
+| Q | slots without a pick only |
+| E | shows how to add a note (the engine has no text entry for the LAB: use the console, below) |
+| SPACE, LEFT / RIGHT, Z / X, L, M, S, B, C | as CLIPS (pause, frame step, speed, loop, model, skeleton, boxes, close-up) |
+
+Console (the in-game backquote console, or `MELEE_CONSOLE_PORT`): `lab n <what it is>` (or `lab clips note <text>`) notes the shown
+clip (`+text` appends, `-` clears); `lab remake` lists the picks; `lab remake slot <n|name>`, `next`, `prev`, `cand <1|-1>`,
+`browse`, `undo`, `status`.
+
+Saved after every change, in `_build/goku-xv2/lab-data/geno-lab_lab/`: `remake-picks.json` (one slot per line: `n`, `slot`, `clip`,
+`in`, `out`, `browse` = not one of the plan's candidates) and `remake-notes.json`. Fold them into the workspace with
+
+```powershell
+python ports/goku-xv2/tools/remake_sheet.py --sync-picks
+```
+
+which copies both next to the plan (`ports/goku-xv2/remake-picks.json`, `remake-notes.json`), writes the notes into the `what it is`
+column of `CLIP-NOTES.md`, and regenerates `REMAKE-CANDIDATES.md` with the owner-pick column filled and the notes beside each candidate.
+Not run in game beyond the checks in `melee/pc/geno/tools/lab_stage_d_check.lua`; see the lane report.
+
 ### XV2 move map and MOVES playback (2026-10-08)
 
 `python ports/goku-xv2/tools/movemap.py` reads the source IR (BCM input/condition tree, BAC entries
