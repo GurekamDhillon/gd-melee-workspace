@@ -846,21 +846,22 @@ def charge_package(name, S=11.4, crg_scale=1.0, motes=True, chant=CHANT_AT, ball
     steps = [(int(f * rate), sc) for f, sc in ball]
     for i, (st, sc) in enumerate(steps):
         nxt = steps[i + 1][0] if i + 1 < len(steps) else 0
-        es = emp_emitters(pkg, px + '_Crg', S, sc * crg_scale, start0=st, loop_end=(nxt - st) if nxt else 0, depth_test=False, offset=BALL_OFF)
+        es = emp_emitters(pkg, px + '_Crg', S, sc * crg_scale, start0=st, loop_end=(nxt - st) if nxt else 0, depth_test=True, offset=BALL_OFF)
         for e in es:
             e['name'] = '%s_s%d' % (e['name'], i)
         pkg.emitters.extend(es)
     if (XV2 / (SK['code'] + '.pbind.emb') / (px + '_CrgON.emp.json')).exists():
         for i, (st, sc) in enumerate(zip(chant, (0.6, 0.85, 1.15, 1.6))):
-            es = emp_emitters(pkg, px + '_CrgON', S, sc * crg_scale, start0=int(st * rate), loop_end=0, depth_test=False, offset=BALL_OFF)
+            es = emp_emitters(pkg, px + '_CrgON', S, sc * crg_scale, start0=int(st * rate), loop_end=0, depth_test=True, offset=BALL_OFF)
             for e in es:
                 e['name'] = '%s_f%d' % (e['name'], i)
             pkg.emitters.extend(es)
     if motes and (XV2 / (SK['code'] + '.pbind.emb') / (px + '_tsubu.emp.json')).exists():
-        pkg.emitters.extend(emp_emitters(pkg, px + '_tsubu', S, 1.0, start0=0, loop_end=0, depth_test=False, offset=BALL_OFF))
+        pkg.emitters.extend(emp_emitters(pkg, px + '_tsubu', S, 1.0, start0=0, loop_end=0, depth_test=True, offset=BALL_OFF))
     # gathering rings: five phases, each starting at a beat and repeating faster, a little bigger
     rr = rate if ring_rate is None else ring_rate
-    phases = [(int(a * rr), max(int(b * rr), int(a * rr) + 2), max(3, int(iv * rr / rate)) if ring_rate else iv, sz) for a, b, iv, sz in ((20, 60, 40, 7.0), (60, 180, 30, 8.0), (180, 360, 22, 9.5), (360, 540, 15, 11.0), (540, 700, 9, 13.0))]
+    # ring sizes: the old 7 to 13 reached over his face at Max (owner 2026-10-11)
+    phases = [(int(a * rr), max(int(b * rr), int(a * rr) + 2), max(3, int(iv * rr / rate)) if ring_rate else iv, sz) for a, b, iv, sz in ((20, 60, 40, 5.5), (60, 180, 30, 6.0), (180, 360, 22, 6.5), (360, 540, 15, 7.0), (540, 700, 9, 7.5))]
     for i, (a, b, iv, sz) in enumerate(phases):
         pkg.emitters.append(ring_emitter(pkg, 'rx_ring_gather%d' % i, sz * crg_scale, (0.45, 0.8, 1.0), 3.0, [0.0, 0.0, 0.0], BALL_OFF,
                                          {'start': a, 'duration': 0 if i == len(phases) - 1 else b - a, 'one_time': False, 'interval': iv}, life=14, sc=(0.2, 1.7), contract=True))   # the last phase never ends: the Max hold
@@ -889,8 +890,8 @@ def store_package(name, tier, S=11.4):
     pkg = Pkg(name)
     px = SK['px']
     sc = (0.45, 0.65, 0.85, 1.1)[tier - 1]
-    pkg.emitters.extend(emp_emitters(pkg, px + '_Crg', S, sc, start0=0, loop_end=9, depth_test=False, offset=BALL_OFF))
-    pkg.emitters.extend(emp_emitters(pkg, px + '_CrgON', S, sc * 1.5, start0=0, loop_end=0, depth_test=False, offset=BALL_OFF))
+    pkg.emitters.extend(emp_emitters(pkg, px + '_Crg', S, sc, start0=0, loop_end=9, depth_test=True, offset=BALL_OFF))
+    pkg.emitters.extend(emp_emitters(pkg, px + '_CrgON', S, sc * 1.5, start0=0, loop_end=0, depth_test=True, offset=BALL_OFF))
     for i in range(tier):
         pkg.emitters.append(ring_emitter(pkg, 'rx_store%d' % i, (7.0 + 3.0 * tier) * (1 + 0.35 * i), (0.5, 0.82, 1.0), 3.0, [0.0, 0.0, 0.0], BALL_OFF,
                                          {'start': 2 * i, 'duration': 1, 'one_time': True}, life=14, sc=(0.3, 1.8)))

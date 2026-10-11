@@ -45,6 +45,7 @@ def emitter(name, *, follow='srt', rate=2.0, duration=0, one_time=False, radius=
     e.update(name=name, order=0, kind='particle', follow=follow)
     e['transform']['translate'] = list(translate)
     e['wave']['apply'] = [0, 0, 0]
+    e['wave'].update(type=0, amplitude=[0.0, 0.0], phase_random=[0.0, 0.0])   # the template's wave moves the particle POSITION whatever 'apply' says (gw_fx.c fx_visual_update)
     em = e['emission']
     em.update(start=0, duration=duration, one_time=one_time, rate=rate, rate_random=0.0, interval=0, interval_random=0.0, position_random=position_random)
     e['shape'].update(type=shape, radius=list(radius))
@@ -179,9 +180,10 @@ PACKAGES = {
     'P_TrailGokuKameMid': beam_package(1.8, 28, 34, ramp=4, sparks=3.0),
     'P_TrailGokuKameFull': beam_package(2.6, 36, 46, ramp=5, sparks=3.5, flash=5),
     'P_TrailGokuKameSuper': beam_package(4.0, 52, 64, ramp=6, hot=(1.0, 0.97, 0.8), edge=(0.45, 0.75, 1.0), sparks=4.5, flash=7),
-    # continuous ki aura around the body: rising soft sparks, cyan to white
-    'P_TrailGokuAura': [emitter('aura', rate=3.0, radius=(3.2, 7.0, 3.2), life=26, dscale=0.45, size=(3.4, 0.4), c0=(0.45, 0.8, 1.0), c1=(1, 1, 1), scale=1.6),
-                        emitter('core', rate=0.6, radius=(1.5, 5.0, 1.5), life=12, dscale=0.1, size=(6.0, 3.0), c0=(0.3, 0.6, 1.0), c1=(0.9, 0.97, 1.0), scale=0.9)],
+    # continuous ki aura around the body (owner 2026-10-11: the particles drowned Goku). A thin shell hugging the SILHOUETTE: flat in depth (z 1.0), so almost every
+    # particle sits at the sides, top and bottom of the outline rather than in front of the torso; small, dim, depth-tested and soft, so his body hides what is behind it
+    'P_TrailGokuAura': [emitter('aura', shape='sphere', rate=1.8, radius=(3.8, 6.2, 1.0), life=26, dscale=0.45, size=(2.6, 0.3), c0=(0.45, 0.8, 1.0), c1=(0.9, 0.97, 1.0), scale=0.7),
+                        emitter('core', shape='sphere', rate=0.3, radius=(3.2, 5.4, 0.8), life=14, dscale=0.1, size=(3.4, 1.8), c0=(0.3, 0.6, 1.0), c1=(0.8, 0.95, 1.0), scale=0.45)],
     # the charge orb (article KameOrb is re-spawned every 5 frames; each glows for its 7 frames)
     'P_TrailGokuOrb': [emitter('glow', rate=1.5, radius=(0.3, 0.3, 0.3), life=8, size=(5.5, 3.5), c0=(0.5, 0.85, 1.0), c1=(1, 1, 1), scale=2.2),
                        emitter('sparks', rate=1.0, radius=(2.0, 2.0, 2.0), shape='sphere', life=10, speed=-0.18, size=(1.8, 0.3), c0=(0.7, 0.95, 1.0), c1=(1, 1, 1), scale=2.0)],
@@ -201,6 +203,10 @@ PACKAGES = {
 
 
 def main():
+    for e, a in zip(PACKAGES['P_TrailGokuAura'], (0.6, 0.35)):   # dim, depth-tested, soft: the body hides what is behind it and nothing glows over the torso
+        e['color']['alpha0'] = {'kind': 'constant', 'value': a}
+        e['material'].update(depth_test=True, depth_write=False)
+        e['material']['soft_particle'] = {'distance': 1.5, 'volume': 1}
     for name, emitters in PACKAGES.items():
         d = OUT / name
         png_soft(d / 'tex/ki_soft.png')

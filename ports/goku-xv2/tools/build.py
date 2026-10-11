@@ -215,8 +215,8 @@ FX_STATES = {
     # Kamehameha presentation: converted from XV2's own effects (tools/xv2_fx.py; KAMEHAMEHA.md section 3). The charge is ~10 s (lua/goku.lua CHARGE_FRAMES): the
     # state's own frame clock ('game', FX_CLOCK) drives it, the ball grows between the chant beats (state frames 60 / 180 / 360 / 540 = the tiers) and the aura is re-attached
     # larger at each; each tier has its own beam package; the stored flash shows the tier. Cosmetic shake / flash calls are FX_EVENTS.
-    'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, 'state_exit'), (60, 'P_TrailGokuAura', 'hips', 1.3, 'state_exit'), (180, 'P_TrailGokuAura', 'hips', 1.6, 'state_exit'),
-                   (360, 'P_TrailGokuAura', 'hips', 2.0, 'state_exit'), (540, 'P_TrailGokuAura', 'hips', 2.6, 'state_exit'),
+    'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, ('off', 60)), (60, 'P_TrailGokuAura', 'hips', 1.15, ('off', 180)), (180, 'P_TrailGokuAura', 'hips', 1.3, ('off', 360)),
+                   (360, 'P_TrailGokuAura', 'hips', 1.5, ('off', 540)), (540, 'P_TrailGokuAura', 'hips', 1.7, 'state_exit'),
                    (1, 'P_TrailGokuXKameCharge', 'hand.R', 1.0, 'state_exit', 'hand.L'), (1, 'P_TrailGokuXKamePressure', 'translation', 1.0, 'state_exit')],
     'KameStore1': [(1, 'P_TrailGokuXKameStore1', 'hand.R', 1.0, 'state_exit', 'hand.L')],
     'KameStore2': [(1, 'P_TrailGokuXKameStore2', 'hand.R', 1.0, 'state_exit', 'hand.L')],
@@ -284,7 +284,9 @@ def write_fx(package, fighter, plan, cfg):
         entries.append({'state': name, 'subaction': st['subaction'], 'clock': FX_CLOCK.get(name, 'animation'), 'script': scripts.get(name, 'moves/rush.genoasm'),
                         'calls': events + [dict({'frame': c[0], 'macro': 'goku_'+c[1][11:].lower(), 'effect': c[1], 'package': c[1], 'bone': c[2],
                                    'joint': plan['roles'][c[2]][0], 'offset': [0, 0, 0], 'rotation': [0, 0, 0], 'scale': c[3],
-                                   'follow': True, 'when': [], 'end_event': c[4]},
+                                   'follow': True, 'when': [], 'end_event': c[4][0] if isinstance(c[4], tuple) else c[4]},
+                                   # an end given as ('off', frame) detaches the call on that clock frame (the aura steps replace each other)
+                                   **({'end_frame': c[4][1]} if isinstance(c[4], tuple) else {}),
                                    # a 6th element names a second joint: the effect origin is the MIDPOINT of the two (geno.md 20.3 "joint2"), the axes the first joint's
                                    **({'joint2': plan['roles'][c[5]][0]} if len(c) > 5 else {})) for c in calls]})
     (dst/'fx_bindings.json').write_text(json.dumps({'geno_fx_bindings': 1, 'fighter': 'goku-xv2', 'host': 'mario', 'unit_scale': 1.0,

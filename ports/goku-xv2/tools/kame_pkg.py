@@ -26,6 +26,7 @@ def main():
         os.environ['KAME_PROBE'] = '1'
     run(T / 'gen_kame.py', *(['--probe'] if a.probe else []))
     if not a.skip_fx:
+        run(T / 'fx_build.py')
         run(T / 'xv2_fx.py', *(['--probe'] if a.probe else []))
     if not a.skip_audio:
         run(T / 'xv2_audio.py')

@@ -19,6 +19,7 @@ gd.run(function()
     for _, pt in ipairs({1, 2}) do pcall(gd.debug_draw, pt, 0) end   -- CLEAN display: no develop-draw hit/hurt boxes
     gd.teleport(1, 0, AIR and 40 or 0); gd.teleport(2, DIST, 0)
     gd.set_percent(1, 0); gd.set_percent(2, 0); gd.wait(30)
+    if C.away == '1' then gd.teleport(1, 62 * (LEFT and -1 or 1), 0) end   -- background plate for tools/kame_cover.py: Goku (and his effects) outside the fixed camera
     if LEFT then gd.input(1, {x = -127}, 6); gd.wait(20); gd.teleport(1, 0, AIR and 40 or 0); gd.teleport(2, DIST, 0); gd.wait(10) end
     local g = gd.player(1)
     gd.log(string.format('KAME goku x=%.1f y=%.1f facing=%s', g.x or -1, g.y or -1, tostring(g.facing)))
