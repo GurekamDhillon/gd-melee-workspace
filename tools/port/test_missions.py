@@ -1,5 +1,6 @@
 """Offline mission runtime acceptance; no engine executable is invoked."""
 import importlib.util
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -13,7 +14,7 @@ class MissionsTests(unittest.TestCase):
     def test_runtime_contracts(self):
         require_game('pc/tests/missions_runtime.lua')
         result = subprocess.run([shutil.which('lua') or 'lua',
-                                 'pc/tests/missions_runtime.lua'], cwd=GAME,
+                                 'pc/tests/missions_runtime.lua'], cwd=GAME, env={**os.environ, 'GW_WORKSPACE': str(ROOT)},
                                 capture_output=True, text=True, timeout=120)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('0 failed', result.stdout)
