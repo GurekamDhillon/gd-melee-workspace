@@ -33,7 +33,7 @@ FIGHTERS = [("Mario", "Mr", "Mario", ["Nr", "Ye", "Bk", "Bu", "Gr"]), ("Fox", "F
             ("Sheik", "Sk", "Seak", ["Nr", "Re", "Bu", "Gr", "Wh"])]
 COLOUR = {"Nr": "Default", "Re": "Red", "Bu": "Blue", "Gr": "Green", "Ye": "Yellow", "Wh": "White", "Bk": "Black", "Or": "Orange", "La": "Lavender", "Gy": "Gray"}
 ADJ = ["Neon", "Ember", "Frost", "Noir", "Sunset", "Jade", "Crimson", "Ivory", "Cobalt", "Amber", "Violet", "Onyx"]
-KINDS = ["costume"] * 9 + ["stage_skin", "effects", "other"]
+KINDS = ["costume"] * 9 + ["stage_skin", "effects", "other", "stage_skin", "custom_stage", "patch", "effects", "other", "other"]
 ALLOWED = {"limit", "cursor", "updated_since", "type", "character", "q", "sort", "order", "author", "tags", "exclude_tags", "stage"}
 
 STATE = {"requests": 0, "downloads": 0, "by_path": {}, "api": 0}
@@ -79,6 +79,20 @@ def hsd_costume(token, colour):
     return bytes(body)
 
 
+def hsd_stage(tag):
+    """A stage-shaped archive (map_head, coll_data, grGroundParam + a texture symbol): the installer must see through it against a real disc (it matches nothing)."""
+    syms = ["map_head", "coll_data", "grGroundParam", f"Grd{tag}Synthetic_CMPR_image"]
+    data = 0x40
+    strings = b""
+    pubs = b""
+    for sname in syms:
+        pubs += struct.pack(">II", 0, len(strings))
+        strings += sname.encode() + b"\0"
+    body = bytearray(0x20 + data) + pubs + strings
+    struct.pack_into(">IIIII", body, 0, len(body), data, 0, len(syms), 0)
+    return bytes(body)
+
+
 def make_mods(count):
     mods = []
     for i in range(count):
@@ -97,9 +111,20 @@ def make_mods(count):
                               "csp_url": f"{base}/{fid}_csp.png", "stock_url": f"{base}/{fid}_stock.png", "preview_url": None,
                               "download_url": f"http://127.0.0.1:{OPTS.port}/api/public/v1/mods/{mid}/download?file={fid}",
                               "file_url": f"{base}/{fid}.dat"})
+        base = f"http://127.0.0.1:{OPTS.port}/media/posts/{mid}"
+        other_files = {"stage_skin": [(f"{title} - {['GrNBa', 'GrOp', 'GrSt', 'GrPs'][i % 4]}.dat", "stage_dat")],
+                       "custom_stage": [("GrCustom.dat", "stage_dat")], "patch": [("mod.xdelta", "other")]}
+        if kind == "effects":
+            other_files[kind] = [("EfFxData.dat", "effects_dat")] if i % 2 == 0 else [("PlMs Streak Colour.dat", "effects_dat")]
+        if kind == "other":
+            other_files[kind] = [[("MnSlChr.usd", "other"), ("IfAll.dat", "other")], [("jungle.hps", "other")], [("doors.png", "other")]][i % 3]
+        for k, (fn, ft) in enumerate(other_files.get(kind, [])):
+            fid = mid * 10 + k
+            files.append({"id": fid, "filename": fn, "file_type": ft, "character": None, "color": None, "slippi_safe": None, "csp_url": None, "stock_url": None,
+                          "preview_url": None, "download_url": f"http://127.0.0.1:{OPTS.port}/api/public/v1/mods/{mid}/download?file={fid}", "file_url": f"{base}/{fid}.dat"})
         month = 1 + i % 9
         mods.append({"id": mid, "title": title, "description": f"Synthetic {kind} number {i} for testing the browser. Not a real post.",
-                     "author": f"Tester {i % 5}", "type": kind, "stage": None, "tags": ["Character Costume" if kind == "costume" else kind, name],
+                     "author": f"Tester {i % 5}", "type": kind, "stage": {"stage_skin": ["Battlefield", "Dreamland", "Yoshi's Story", "Pokemon Stadium"][i % 4]}.get(kind), "tags": ["Character Costume" if kind == "costume" else kind, name],
                      "created_at": f"2026-{month:02d}-{1 + i % 27:02d}T10:00:00.000000Z", "updated_at": f"2026-{month:02d}-{1 + i % 27:02d}T12:{i % 60:02d}:00.000000Z",
                      "download_count": (i * 37) % 500, "like_count": (i * 11) % 90, "page_url": f"https://ssbmnucleus.net/post/{mid}/synthetic-{i}",
                      "thumbnail_url": None if kind == "costume" else f"http://127.0.0.1:{OPTS.port}/media/posts/{mid}/screenshot_0__thumb.webp",
@@ -236,6 +261,15 @@ class H(BaseHTTPRequestHandler):
             for m in MODS:
                 for f in m["files"]:
                     if m["id"] == mid and str(f["id"]) == fid:
+                        if f["file_type"] == "stage_dat":
+                            stem = f["filename"].rsplit("Gr", 1)[1][:-4] if "Gr" in f["filename"] else ""
+                            path = OPTS.stage_dats.get("Gr" + stem)
+                            if path:
+                                with open(path, "rb") as fp:
+                                    return self.send(200, fp.read(), "application/octet-stream")
+                            return self.send(200, hsd_stage(stem), "application/octet-stream")
+                        if f["file_type"] == "effects_dat" or f["filename"].endswith((".usd", ".hps", ".png", ".xdelta")):
+                            return self.send(200, hsd_stage("fx"), "application/octet-stream")
                         if OPTS.dat:
                             with open(OPTS.dat, "rb") as fp:
                                 return self.send(200, fp.read(), "application/octet-stream")
@@ -251,11 +285,13 @@ def main():
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--count", type=int, default=120)
     ap.add_argument("--dat", default="", help="serve this file for every costume download (a real costume of yours; never commit it)")
+    ap.add_argument("--stage-dat", action="append", default=[], metavar="GrNBa=FILE", help="serve FILE for every stage_dat download whose file name carries that Gr code (a skin made from your own disc, kept out of git)")
     ap.add_argument("--page-delay", type=float, default=0.0)
     ap.add_argument("--fail-first", type=int, default=0)
     ap.add_argument("--retry-after", type=int, default=0)
     ap.add_argument("--removed", type=int, nargs="*", default=[])
     OPTS = ap.parse_args()
+    OPTS.stage_dats = dict(a.split("=", 1) for a in OPTS.stage_dat)
     MODS = make_mods(OPTS.count)
     srv = ThreadingHTTPServer(("127.0.0.1", OPTS.port), H)
     print(f"nucleus fixture server on http://127.0.0.1:{OPTS.port}/api/public/v1  ({len(MODS)} synthetic mods)", flush=True)
