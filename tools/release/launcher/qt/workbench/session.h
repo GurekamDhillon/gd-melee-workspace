@@ -29,6 +29,8 @@ public:
     // Ephemeral Qt/Blender handoff, accessed only by the Session worker.
     // Never persisted in source or history. ui_view_state ACKs only this PID.
     QJsonObject uiView;
+    // What the previous run left behind (see recovery.h); empty when nothing needs the user's decision.
+    QJsonObject recovery;
     qint64 blenderPid = 0, blenderAckRevision = 0;
     // Task 6 installs data().reload(); called after persisted edits, never for proposals.
     std::function<void()> onApplied = [] {};

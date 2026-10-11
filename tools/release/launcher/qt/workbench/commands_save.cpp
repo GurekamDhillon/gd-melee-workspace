@@ -2,6 +2,7 @@
 #include "engine_link.h"
 #include "geno_data.h"
 #include "project.h"
+#include "recovery.h"
 #include "session.h"
 #include <QDir>
 #include <QElapsedTimer>
@@ -182,6 +183,21 @@ void registerSaveCommands(Session &session) {
             refresh(ctx.session, "engine restarted");
             return QJsonObject{{"restarted", true}};
         });
+    // The Fix for "changed externally": accept whatever is on disk now, re-read it, and keep history as it is.
+    add(session, "reload_from_disk", "Re-read the source files from disk, accepting edits made outside the Workbench", schema(),
+        [](const QJsonObject &, CommandContext &ctx) {
+            auto &s = ctx.session;
+            const auto external = s.files().externalChanges();
+            QStringList unreadable;
+            for (const auto &path : external) {
+                try { s.files().acknowledge(path); } catch (const std::exception &) { unreadable.append(path); }
+            }
+            if (!unreadable.isEmpty()) throw CommandError{"cannot read: " + unreadable.join(", ")};
+            const QString error = s.data().reload();
+            if (!error.isEmpty()) throw CommandError{"data reload failed: " + error};
+            if (s.onApplied) s.onApplied();
+            return QJsonObject{{"reloaded", true}, {"external", QJsonArray::fromStringList(external)}};
+        });
     add(session, "undo", "Undo the latest applied source edit", schema(),
         [](const QJsonObject &, CommandContext &ctx) { return applyHistory(ctx.session, "undo"); });
     add(session, "redo", "Reapply the next undone source edit", schema(),
@@ -245,5 +261,6 @@ void registerAllCommands(Session &session) {
     registerGroundCommands(session);
     registerAttributeCommands(session);
     registerBaselineCommands(session);
+    registerRecoveryCommands(session);
 }
 } // namespace wb

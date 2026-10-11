@@ -484,6 +484,41 @@ QVector<FileChange> GenoData::addHitbox(const QString &name, const HitboxAdd &ad
         return {};
     }
 }
+QVector<FileChange> GenoData::duplicateHitbox(const QString &name, int ordinal, int *newOrdinal, QString *err) const {
+    if (err) err->clear();
+    try {
+        const auto *row = findRow(name);
+        if (!row) fail("unknown row: " + name);
+        if (row->script.isEmpty()) fail("row has no script: " + name);
+        const QString conflict = externalError({"workbench.json", project_.gameplay, row->script});
+        if (!conflict.isEmpty()) fail(conflict);
+        const auto source = hitboxes(name);
+        if (ordinal < 0 || ordinal >= source.size()) fail("unknown hitbox ordinal: " + QString::number(ordinal));
+        const HitboxRef &from = source[ordinal];
+        HitboxAdd add;
+        add.joint = from.joint; add.frame = from.startFrame;
+        add.duration = from.endFrame > from.startFrame ? from.endFrame - from.startFrame : 2;
+        add.damage = from.damage; add.size = from.size; add.x = from.x; add.y = from.y; add.z = from.z;
+        add.angle = from.angle; add.kbg = from.kbg; add.fkb = from.fkb; add.bkb = from.bkb;
+        const auto bytes = scripts_.value(row->script);
+        QString error;
+        int created = -1;
+        QString changed = GenoAsm::parse(sourceText(bytes, row->script)).addHitbox(add, &error, &created);
+        if (!error.isEmpty() || changed.isNull()) fail(row->script + ": " + error);
+        // Element, shield and the ground/air flags are not part of a plain add: copy them onto the new hitbox.
+        HitboxEdit copy;
+        copy.element = from.element; copy.shield = from.shield; copy.ground = from.ground; copy.air = from.air;
+        changed = GenoAsm::parse(changed).apply(created, copy, &error);
+        if (!error.isEmpty() || changed.isNull()) fail(row->script + ": " + error);
+        if (newOrdinal) *newOrdinal = created;
+        QVector<FileChange> out{{row->script, bytes, sourceBytes(changed, bytes)}};
+        syncGameplay(out, row->moveIndex, source, GenoAsm::parse(changed).hitboxes(), created, -1);
+        return out;
+    } catch (const std::exception &e) {
+        if (err) *err = QString::fromUtf8(e.what());
+        return {};
+    }
+}
 QVector<FileChange> GenoData::removeHitbox(const QString &name, int ordinal, QString *err) const {
     if (err) err->clear();
     try {

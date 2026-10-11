@@ -2,6 +2,8 @@
 #include "window.h"
 #define WB_CORE_USE_LAUNCHER_T 1
 #include "commands.h"
+#include "error_help.h"
+#include "recovery.h"
 #include "blender_launch.h"
 #include "game_exe.h"
 #include "play_launch.h"
@@ -16,6 +18,18 @@
 #include "kit.h"
 #include <QCheckBox>
 #include <QCloseEvent>
+#include <QLocale>
+#include <QDateTime>
+#include <QDialog>
+#include <QKeyEvent>
+#include <QApplication>
+#include <QAbstractItemView>
+#include <QAbstractSpinBox>
+#include <QAbstractSlider>
+#include <QPlainTextEdit>
+#include <QTextEdit>
+#include <QTabBar>
+#include <QToolButton>
 #include <QResizeEvent>
 #include <QComboBox>
 #include <QElapsedTimer>
@@ -65,11 +79,6 @@ namespace atlas = launcher::atlas;
 namespace kit = launcher::kit;
 namespace {
 QJsonObject failure(const QString &error) { return {{"ok", false}, {"error", error}}; }
-QString displayError(const QString &error) {
-    if (error.compare("engine not running", Qt::CaseInsensitive) == 0)
-        return t("Engine not running", "Motor detenido");
-    return t("Command failed: %1", "Error del comando: %1").arg(error);
-}
 // The session, engine and MCP listener live on one event-loop thread. Start is
 // lazy, so an offline fighter can be inspected without a disc or game process.
 class ProjectEngine final : public EngineBackend {
@@ -111,6 +120,7 @@ struct Snapshot {
     bool canRebuild = false;
     QJsonArray changes; // fields that differ from the last build (baseline.cpp)
     qint64 blenderPid = 0, blenderAck = 0, viewRevision = 0;
+    QJsonObject recovery; // what the previous run left behind, until the user decides
 };
 struct Reply { QJsonObject envelope; Snapshot snapshot; QJsonArray attributes; bool hasAttributes = false; };
 struct Worker {
@@ -124,7 +134,8 @@ struct Worker {
     std::function<void(const QString &, const QJsonObject &, const Reply &)> onRemote;
     std::function<void(const QString &)> onRebuildStarted;
     QQueue<std::function<void()>> pending;
-    bool calling = false, stopped = false;
+    bool calling = false, stopped = false, recoveryChecked = false, markedOpen = false;
+    QString markedRoot;
     void submit(std::function<void()> task) { pending.enqueue(std::move(task)); drain(); }
     void drain() {
         // ConsoleClient pumps events while waiting. A queued UI request must not
@@ -159,6 +170,19 @@ struct Worker {
             }});
         session = owned.get(); installUiStateCommand();
     }
+    // First command on a project: note whether the last run closed badly, then mark this run as open.
+    void checkRecovery() {
+        if (recoveryChecked || !session) return;
+        recoveryChecked = true;
+        try {
+            const QString root = session->files().root();
+            const auto prior = readSessionMark(root);
+            markSessionOpen(root, QCoreApplication::applicationPid());
+            markedOpen = true; markedRoot = root;
+            const auto info = detectRecovery(*session, prior);
+            if (info.any()) session->recovery = info.toJson();
+        } catch (...) { /* recovery is a courtesy: never block opening a project */ }
+    }
     Snapshot snapshot() {
         Snapshot value;
         const auto &project = session->data().project();
@@ -172,6 +196,7 @@ struct Worker {
         value.rows = session->data().rows(); value.clips = session->data().clips();
         value.roles = session->data().availableRoles();
         value.canRebuild = !project.rebuild.isEmpty();
+        value.recovery = session->recovery;
         value.blenderPid = session->blenderPid; value.blenderAck = session->blenderAckRevision;
         value.viewRevision = session->uiView.value("revision").toInteger();
         for (const auto &row : value.rows) {
@@ -218,6 +243,7 @@ struct Worker {
         QScopedValueRollback<bool> guard(calling, true);
         try {
             ensureSession();
+            checkRecovery();
             if (headless && engine) engine->setHeadless(*headless);
             CommandContext local{*session, "human", args.value("propose").toBool()};
             // Preserve the GUI's restart-on-reload behavior. Blender uses the
@@ -291,6 +317,7 @@ struct Worker {
     void dispose() {
         QScopedValueRollback<bool> guard(calling, true);
         stopped = true; server.reset(); onRemote = {}; onRebuildStarted = {};
+        if (markedOpen) { markSessionClosed(markedRoot, QCoreApplication::applicationPid()); markedOpen = false; }
         // QObject destruction and the history flush run on their owning thread.
         if (owned) { session = nullptr; owned.reset(); }
         engine.reset();
@@ -301,6 +328,36 @@ struct Request {
     quint64 rowIntent = 0, frameIntent = 0;
     std::optional<int> restoreFrame;
     std::optional<bool> headless;
+    bool duringBuild = false; // an edit made while a rebuild ran: it applies after the build, for the next one
+};
+// An application-wide key filter for the plain keys (Left, Right, Space, Delete), which a QShortcut would
+// take from buttons, lists and text fields. The owner decides per key press whether the focus is "typing".
+class PlainKeyFilter : public QObject {
+public:
+    std::function<bool(QKeyEvent *)> handle;
+    using QObject::QObject;
+    bool eventFilter(QObject *, QEvent *event) override {
+        return event->type() == QEvent::KeyPress && handle && handle(static_cast<QKeyEvent *>(event));
+    }
+};
+bool isEditName(const QString &name) {
+    return name == "edit_hitbox" || name == "edit_attribute" || name == "add_hitbox" || name == "delete_hitbox" ||
+           name == "duplicate_hitbox" || name == "assign_clip";
+}
+bool isStructuralName(const QString &name) {
+    return name == "add_hitbox" || name == "delete_hitbox" || name == "duplicate_hitbox";
+}
+// True when the focused widget takes typed text: shortcuts that would eat a character must stand down.
+bool typingIn(const QWidget *w) {
+    if (!w) return false;
+    if (qobject_cast<const QLineEdit *>(w) || qobject_cast<const QAbstractSpinBox *>(w) ||
+        qobject_cast<const QTextEdit *>(w) || qobject_cast<const QPlainTextEdit *>(w)) return true;
+    if (const auto *combo = qobject_cast<const QComboBox *>(w)) return combo->isEditable();
+    return false;
+}
+struct ShortcutDef {
+    QString id, keys, label;
+    QList<QKeySequence> sequences; // empty for the plain keys the filter handles
 };
 }
 
@@ -362,6 +419,20 @@ struct WorkbenchWindow::Impl {
     QTimer blenderMonitor;
     std::unique_ptr<QTemporaryFile> blenderDriver;
     std::optional<int> restoringFrame;
+    // R1: the one action that can fix the last error
+    AtlasButton *fixButton = nullptr;
+    FixKind currentFix = FixKind::None;
+    // R2: a crashed run's leftovers, offered once
+    QFrame *recoveryBanner = nullptr;
+    QLabel *recoveryText = nullptr;
+    AtlasButton *recoveryRestore = nullptr, *recoveryKeep = nullptr, *recoveryDiscard = nullptr, *recoveryRevert = nullptr;
+    // R3: edits made during a rebuild
+    int queuedDuringBuild = 0, newSinceBuild = 0;
+    QSet<QString> queuedRows;
+    QString stickyNote; // shown as the status after the follow-up reloads, until the next edit
+    // R4: keyboard
+    QVector<ShortcutDef> shortcuts;
+    QDialog *shortcutSheet = nullptr;
 
     explicit Impl(WorkbenchWindow *window) : q(window) {
         workerContext = new QObject;
@@ -388,14 +459,7 @@ struct WorkbenchWindow::Impl {
         QObject::connect(hub, &HubPanel::headlessChanged, q, [this](bool on) {
             setPlaying(false); enqueue("engine_restart", {}, on);
         });
-        QObject::connect(hub, &HubPanel::openInBlenderRequested, q, [this] {
-            setPlaying(false);
-            if (!blenderError().isEmpty()) { status(blenderError()); return; }
-            pendingBlenderOpen = true;
-            // A process can die while the hub is idle. Ask the worker for the
-            // current state before deciding whether Blender needs an engine start.
-            q->runCommand("engine_status", {});
-        });
+        QObject::connect(hub, &HubPanel::openInBlenderRequested, q, [this] { startBlender(); });
         QObject::connect(hub, &HubPanel::playInLabRequested, q, [this] { playFighter(false); });
         QObject::connect(hub, &HubPanel::playVsCpuRequested, q, [this] { playFighter(true); });
         rows = new QComboBox(hub); rows->setObjectName("wbRows"); rows->hide();
@@ -466,6 +530,10 @@ struct WorkbenchWindow::Impl {
         q->setCentralWidget(hub);
         progress = new StatusProgress(q); progress->setObjectName("wbStatusProgress");
         q->statusBar()->setSizeGripEnabled(false); q->statusBar()->addPermanentWidget(progress, 1);
+        fixButton = new AtlasButton(QString(), q); fixButton->setObjectName("wbStatusFix"); fixButton->setTone(AtlasButton::Ember); fixButton->hide();
+        q->statusBar()->addPermanentWidget(fixButton);
+        QObject::connect(fixButton, &QPushButton::clicked, q, [this] { performFix(currentFix); });
+        buildRecoveryBanner(); buildShortcuts();
         QObject::connect(progress, &StatusProgress::cancelRequested, q, &WorkbenchWindow::rebuildCancelRequested);
         status(t("Engine not running", "Motor detenido")); createPanels();
         movesLayout->addWidget(outliner, 1); movesLayout->addWidget(hub->projectCounts());
@@ -483,9 +551,9 @@ struct WorkbenchWindow::Impl {
                 if (process) {
                     const bool exited = WaitForSingleObject(process, 0) == WAIT_OBJECT_0;
                     CloseHandle(process);
-                    if (exited) { q->setBlenderProcessId(0); return; }
+                    if (exited) { q->setBlenderProcessId(0); blenderClosedNotice(); return; }
                 } else if (GetLastError() == ERROR_INVALID_PARAMETER) {
-                    q->setBlenderProcessId(0); return;
+                    q->setBlenderProcessId(0); blenderClosedNotice(); return;
                 }
             }
 #endif
@@ -502,6 +570,174 @@ struct WorkbenchWindow::Impl {
                 q->runCommand("play", {{"frames", std::min(rate > 1 ? 2 : 1, timeline->frameCount() - 1 - timeline->frame())}, {"step", 1}});
             }
         });
+    }
+    void blenderClosedNotice() {
+        statusHelp({t("Blender was closed. Start it again to keep the 3D view in step.", "Blender se cerró. Inícialo de nuevo para mantener la vista 3D al día."),
+                    FixKind::StartBlender, t("Start Blender", "Iniciar Blender")});
+    }
+    // R3: a rebuild is queued, running, or reloading the game after it
+    bool rebuildActive() const {
+        return rebuildReload || rebuildReloading || (running && active.name == "rebuild") ||
+               std::any_of(queue.cbegin(), queue.cend(), [](const Request &r) { return r.name == "rebuild"; });
+    }
+    bool structuralPending() const {
+        return (running && isStructuralName(active.name)) ||
+               std::any_of(queue.cbegin(), queue.cend(), [](const Request &r) { return isStructuralName(r.name); });
+    }
+    // Edits are allowed while a rebuild runs (they queue behind it); anything else busy still blocks them.
+    bool canEdit() const { return !closing && !structuralPending() && (!busy() || rebuildActive()); }
+    void updateRebuildLabel() { hub->setRebuildAgain(rebuildActive() ? 0 : newSinceBuild); hub->setQueued(queuedDuringBuild); }
+    // R2: the notice for what the previous run left behind
+    void buildRecoveryBanner() {
+        recoveryBanner = new QFrame; recoveryBanner->setObjectName("wbRecoveryBanner"); recoveryBanner->hide();
+        recoveryBanner->setStyleSheet(QString("QFrame#wbRecoveryBanner { background: %1; border-left: 3px solid %2; }")
+            .arg(atlas::colour("plate2").name(), atlas::colour("ember").name()));
+        auto *row = new QHBoxLayout(recoveryBanner); row->setContentsMargins(14, 10, 14, 10); row->setSpacing(10);
+        recoveryText = new QLabel; recoveryText->setObjectName("wbRecoveryText"); recoveryText->setWordWrap(true);
+        recoveryText->setTextFormat(Qt::PlainText); recoveryText->setFont(atlas::font(atlas::Role::Body14));
+        row->addWidget(recoveryText, 1);
+        const auto button = [&](const QString &text, const char *name, auto fn) {
+            auto *b = new AtlasButton(text); b->setObjectName(name); row->addWidget(b);
+            QObject::connect(b, &QPushButton::clicked, q, fn); return b;
+        };
+        recoveryRestore = button(t("Restore", "Restaurar"), "wbRecoveryRestore", [this] { resolveRecovery("restore"); });
+        recoveryRestore->setTone(AtlasButton::Ember);
+        recoveryDiscard = button(t("Discard", "Descartar"), "wbRecoveryDiscard", [this] { resolveRecovery("discard"); });
+        recoveryKeep = button(t("Keep", "Conservar"), "wbRecoveryKeep", [this] { resolveRecovery("keep"); });
+        recoveryRevert = button(t("Revert to last build", "Volver al valor compilado"), "wbRecoveryRevert", [this] {
+            resolveRecovery("keep"); q->runCommand("revert_all", {});
+        });
+        hub->bodyLayout()->insertWidget(1, recoveryBanner); // under the top bar, above the three columns
+    }
+    void resolveRecovery(const QString &action) {
+        recoveryBanner->hide();
+        q->runCommand("recovery_resolve", {{"action", action}});
+    }
+    void updateRecovery() {
+        if (!recoveryBanner) return;
+        const auto note = snapshot.recovery;
+        recoveryBanner->setVisible(!note.isEmpty());
+        if (note.isEmpty()) return;
+        const bool restorable = note.value("restorable").toBool();
+        const int count = note.value("count").toInt();
+        const qint64 when = note.value("time").toInteger();
+        const QString time = when > 0 ? QLocale().toString(QDateTime::fromSecsSinceEpoch(when), QLocale::ShortFormat) : t("earlier", "antes");
+        if (restorable)
+            recoveryText->setText(count == 1 ? t("Restore 1 unsaved change from %1?", "¿Restaurar 1 cambio sin guardar de %1?").arg(time)
+                                             : t("Restore %1 unsaved changes from %2?", "¿Restaurar %1 cambios sin guardar de %2?").arg(count).arg(time));
+        else
+            recoveryText->setText(count == 1 ? t("The last session ended unexpectedly. Its 1 change from %1 was saved as you made it.",
+                                                 "La última sesión terminó de forma inesperada. Su cambio de %1 se guardó al hacerlo.").arg(time)
+                                             : t("The last session ended unexpectedly. Its %1 changes (latest %2) were saved as you made them.",
+                                                 "La última sesión terminó de forma inesperada. Sus %1 cambios (el último %2) se guardaron al hacerlos.").arg(count).arg(time));
+        recoveryText->setToolTip(note.value("journal_summary").toString());
+        recoveryRestore->setVisible(restorable); recoveryDiscard->setVisible(note.value("journal_pending").toBool());
+        recoveryKeep->setText(restorable ? t("Keep as is", "Dejar como está") : t("Keep", "Conservar"));
+        recoveryRevert->setVisible(note.value("unsaved_changes").toInt() > 0);
+    }
+    // R4: the keys. Ctrl and function keys are QShortcuts scoped to this widget; the plain keys go through
+    // PlainKeyFilter so a text field, a list or a button keeps them.
+    void buildShortcuts() {
+        shortcuts = {
+            {"undo", "Ctrl+Z", t("Undo the last edit", "Deshacer la última edición"), {QKeySequence(Qt::CTRL | Qt::Key_Z)}},
+            {"redo", "Ctrl+Y, Ctrl+Shift+Z", t("Redo", "Rehacer"), {QKeySequence(Qt::CTRL | Qt::Key_Y), QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Z)}},
+            {"rebuild", "F5", t("Rebuild + reload the game", "Reconstruir y recargar el juego"), {QKeySequence(Qt::Key_F5)}},
+            {"prev_frame", "Left", t("Previous frame", "Cuadro anterior"), {}},
+            {"next_frame", "Right", t("Next frame", "Cuadro siguiente"), {}},
+            {"play_pause", "Space", t("Play or pause", "Reproducir o pausar"), {}},
+            {"duplicate", "Ctrl+D", t("Duplicate the selected hitbox", "Duplicar el hitbox seleccionado"), {QKeySequence(Qt::CTRL | Qt::Key_D)}},
+            {"delete", "Delete", t("Delete the selected hitbox (Ctrl+Z brings it back)", "Borrar el hitbox seleccionado (Ctrl+Z lo recupera)"), {}},
+            {"find", "Ctrl+F", t("Search moves", "Buscar movimientos"), {QKeySequence(Qt::CTRL | Qt::Key_F)}},
+            {"palette", "Ctrl+P", t("Command palette", "Paleta de comandos"), {}},
+            {"help", "F1", t("Show this list", "Mostrar esta lista"), {QKeySequence(Qt::Key_F1)}},
+        };
+        for (const auto &def : shortcuts) for (const auto &sequence : def.sequences) {
+            auto *shortcut = new QShortcut(sequence, q); shortcut->setContext(Qt::WidgetWithChildrenShortcut);
+            shortcut->setObjectName("wbShortcut_" + def.id);
+            QObject::connect(shortcut, &QShortcut::activated, q, [this, id = def.id] { runShortcut(id); });
+        }
+        auto *filter = new PlainKeyFilter(q); filter->setObjectName("wbPlainKeys");
+        filter->handle = [this](QKeyEvent *event) { return plainKey(event); };
+        qApp->installEventFilter(filter);
+    }
+    bool focusIsMine() const {
+        QWidget *focus = QApplication::focusWidget();
+        return focus && (focus == q || q->isAncestorOf(focus));
+    }
+    bool plainKey(QKeyEvent *event) {
+        if (closing || !focusIsMine()) return false;
+        if (event->modifiers() & (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier)) return false;
+        QWidget *focus = QApplication::focusWidget();
+        if (typingIn(focus)) return false;
+        const bool inList = qobject_cast<QAbstractItemView *>(focus) != nullptr;
+        const bool selector = inList || qobject_cast<QComboBox *>(focus) || qobject_cast<QTabBar *>(focus) || qobject_cast<QAbstractSlider *>(focus);
+        const bool timelineFocus = qobject_cast<Timeline *>(focus) != nullptr; // it steps and plays by itself
+        switch (event->key()) {
+        case Qt::Key_Left: case Qt::Key_Right:
+            if (selector || timelineFocus) return false;
+            runShortcut(event->key() == Qt::Key_Left ? "prev_frame" : "next_frame"); return true;
+        case Qt::Key_Space:
+            if (selector || timelineFocus || qobject_cast<QAbstractButton *>(focus)) return false;
+            if (!event->isAutoRepeat()) runShortcut("play_pause");
+            return true;
+        case Qt::Key_Delete:
+            if (inList && focus != outliner && !outliner->isAncestorOf(focus)) return false;
+            runShortcut("delete"); return true;
+        default: return false;
+        }
+    }
+    void runShortcut(const QString &id) {
+        if (closing) return;
+        QWidget *focus = QApplication::focusWidget();
+        const bool typing = typingIn(focus);
+        if (id == "undo") { if (!typing) q->runCommand("undo", {}); }
+        else if (id == "redo") { if (!typing) q->runCommand("redo", {}); }
+        else if (id == "rebuild") rebuildAndReload();
+        else if (id == "prev_frame") stepFrame(-1);
+        else if (id == "next_frame") stepFrame(1);
+        else if (id == "play_pause") setPlaying(!playTimer.isActive());
+        else if (id == "duplicate" || id == "delete") {
+            if (typing) return;
+            const auto *hit = selectedHitbox();
+            if (!hit) { status(t("Select a hitbox first", "Selecciona primero un hitbox")); return; }
+            if (!canEdit()) return;
+            q->runCommand(id == "delete" ? "delete_hitbox" : "duplicate_hitbox", {{"row", row}, {"ordinal", hit->ordinal}});
+        }
+        else if (id == "find") {
+            if (railInTabs) tabs->setCurrentWidget(movesRail);
+            search->setFocus(Qt::ShortcutFocusReason); search->selectAll();
+        }
+        else if (id == "help") toggleShortcutSheet();
+    }
+    void toggleShortcutSheet() {
+        if (shortcutSheet && shortcutSheet->isVisible()) { shortcutSheet->close(); return; }
+        if (!shortcutSheet) {
+            shortcutSheet = new QDialog(q); shortcutSheet->setObjectName("wbShortcutSheet");
+            shortcutSheet->setWindowTitle(t("Keyboard shortcuts", "Atajos de teclado")); shortcutSheet->setModal(false);
+            applyAtlasStyle(shortcutSheet);
+            auto *outer = new QVBoxLayout(shortcutSheet); outer->setContentsMargins(0, 0, 0, 0);
+            auto *plate = new AtlasPlate; auto *body = new QVBoxLayout(plate); body->setContentsMargins(24, 20, 24, 20); body->setSpacing(10);
+            outer->addWidget(plate);
+            body->addWidget(kit::capLabel(t("Keyboard shortcuts", "Atajos de teclado"), atlas::Role::Cap16, "ivory"));
+            auto *grid = new QGridLayout; grid->setHorizontalSpacing(24); grid->setVerticalSpacing(8); body->addLayout(grid);
+            int rowIndex = 0;
+            for (const auto &def : shortcuts) {
+                auto *keys = new QLabel(def.keys); keys->setObjectName("wbShortcutKeys_" + def.id); keys->setTextFormat(Qt::PlainText);
+                keys->setFont(atlas::numberFont(13));
+                QPalette pal = keys->palette(); pal.setColor(QPalette::WindowText, atlas::colour("ember")); keys->setPalette(pal);
+                auto *what = new QLabel(def.label); what->setObjectName("wbShortcutLabel_" + def.id); what->setTextFormat(Qt::PlainText);
+                what->setFont(atlas::font(atlas::Role::Body14)); what->setWordWrap(true);
+                grid->addWidget(keys, rowIndex, 0, Qt::AlignTop); grid->addWidget(what, rowIndex, 1); ++rowIndex;
+            }
+            grid->setColumnStretch(1, 1);
+            body->addWidget(kit::capLabel(t("Plain keys stay with a text field, list or button when it has focus.",
+                "Las teclas simples se quedan con un campo de texto, lista o botón cuando tienen el foco."), atlas::Role::Body12, "muted"));
+            auto *close = new AtlasButton(t("Close", "Cerrar")); close->setObjectName("wbShortcutClose");
+            QObject::connect(close, &QPushButton::clicked, shortcutSheet, &QDialog::close);
+            body->addWidget(close, 0, Qt::AlignRight);
+            shortcutSheet->resize(520, shortcutSheet->sizeHint().height());
+        }
+        shortcutSheet->show(); shortcutSheet->raise();
     }
     // R1: three columns when wide; moves | centre with the inspector under the timeline when narrow
     // or tall. The same widgets move, so state (tabs, edits, focus order) is kept.
@@ -712,7 +948,43 @@ struct WorkbenchWindow::Impl {
         timeline->setPlaying(on); play->setText(on ? t("Pause", "Pausar") : t("Play", "Jugar"));
     }
     QString lastStatus;
-    void status(const QString &text) { lastStatus = text; if (progress && !progress->isRunning()) progress->setMessage(text); }
+    void setFix(FixKind fix, const QString &label) {
+        currentFix = fix;
+        if (!fixButton) return;
+        fixButton->setText(label); fixButton->setAccessibleName(label);
+        fixButton->setProperty("fix", fixName(fix)); fixButton->setVisible(fix != FixKind::None);
+    }
+    // Plain text, no action.
+    void status(const QString &text) {
+        lastStatus = text; setFix(FixKind::None, {});
+        if (progress && !progress->isRunning()) progress->setMessage(text);
+    }
+    // An error that says what to do and, where one action helps, offers it as a button.
+    void statusHelp(const ErrorHelp &help) {
+        lastStatus = help.message; setFix(help.fix, help.fixLabel);
+        if (progress && !progress->isRunning()) progress->setMessage(help.message);
+    }
+    void statusError(const QString &command, const QString &raw) { statusHelp(explainError(command, raw)); }
+    void statusLaunch(const QString &raw) { statusHelp(explainStatus(raw)); }
+    void performFix(FixKind fix) {
+        switch (fix) {
+        case FixKind::ChooseGameExe: emit q->gameExePickRequested(); break;
+        case FixKind::ChooseBlender: emit q->blenderPickRequested(); break;
+        case FixKind::StartGame: setPlaying(false); q->runCommand("engine_restart", {}); break;
+        case FixKind::StartBlender: startBlender(); break;
+        case FixKind::Rebuild: rebuildAndReload(); break;
+        case FixKind::ReloadFromDisk: setPlaying(false); q->runCommand("reload_from_disk", {}); break;
+        case FixKind::None: break;
+        }
+    }
+    void startBlender() {
+        setPlaying(false);
+        if (!blenderError().isEmpty()) { statusLaunch(blenderError()); return; }
+        pendingBlenderOpen = true;
+        // A process can die while the hub is idle. Ask the worker for the
+        // current state before deciding whether Blender needs an engine start.
+        q->runCommand("engine_status", {});
+    }
     void updateFrameReadout() {
         frameReadout->setText(t("Frame %1 / %2", "Cuadro %1 / %2").arg(timeline->frame()).arg(qMax(0, timeline->frameCount() - 1)));
     }
@@ -723,7 +995,7 @@ struct WorkbenchWindow::Impl {
     }
     void rebuildAndReload() {
         if (busy() || closing) return;
-        setPlaying(false); rebuildReload = true;
+        setPlaying(false); rebuildReload = true; newSinceBuild = 0; updateRebuildLabel();
         progress->begin(t("Rebuilding", "Reconstruyendo"), false);
         q->reportRebuildProgress(t("Rebuilding gameplay", "Reconstruyendo jugabilidad"), -1, 0, false);
         q->runCommand("rebuild", {});
@@ -731,11 +1003,11 @@ struct WorkbenchWindow::Impl {
     void updateBadges() {
         QMap<QString, int> warnings;
         for (const auto &problem : rowProblems) ++warnings[problem.row];
-        outliner->setBadges(editedRows, warnings); hub->setPendingChanges(pendingChanges);
+        outliner->setBadges(editedRows + queuedRows, warnings); hub->setPendingChanges(pendingChanges);
     }
     void showBlender() {
         if (blenderPid <= 0) {
-            if (!blenderError().isEmpty()) { status(blenderError()); return; }
+            if (!blenderError().isEmpty()) { statusLaunch(blenderError()); return; }
             if (QMessageBox::question(q, t("Blender is closed", "Blender está cerrado"),
                     t("Blender is not running. Start it with this fighter project?", "Blender no está en marcha. ¿Iniciarlo con este proyecto del luchador?"),
                     QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes) openBlender();
@@ -780,7 +1052,7 @@ struct WorkbenchWindow::Impl {
     }
     void finishPlay(const QString &message) {
         playLaunching = false;
-        if (!closing) status(message);
+        if (!closing) statusLaunch(message);
         pump(); notifyBusy();
     }
     void startPlayProcess(bool check, bool rebuild = false) {
@@ -798,7 +1070,8 @@ struct WorkbenchWindow::Impl {
         QObject::connect(process, &QProcess::errorOccurred, q, [this, process](QProcess::ProcessError error) {
             if (playProcess != process || error != QProcess::FailedToStart) return;
             const auto message = process->errorString(); playProcess = nullptr; process->deleteLater();
-            finishPlay(t("Could not start the play tool: %1", "No se pudo iniciar la herramienta de juego: %1").arg(message));
+            finishPlay(t("Could not start the play tool: %1. Check that Python is installed (or set GW_PYTHON), then try again.",
+                    "No se pudo iniciar la herramienta de juego: %1. Comprueba que Python esté instalado (o define GW_PYTHON) y vuelve a intentarlo.").arg(message));
         });
         QObject::connect(process, qOverload<int, QProcess::ExitStatus>(&QProcess::finished), q,
             [this, process, check](int code, QProcess::ExitStatus exit) {
@@ -854,7 +1127,7 @@ struct WorkbenchWindow::Impl {
         if (busy() || closing) return;
         setPlaying(false);
         pendingPlay = playCommand(snapshot.projectDir, vsCpu, row);
-        if (!pendingPlay.error.isEmpty()) { status(pendingPlay.error); return; }
+        if (!pendingPlay.error.isEmpty()) { statusLaunch(pendingPlay.error); return; }
         // Freeze project/move arguments across the check and rebuild prompt.
         startPlayProcess(true);
     }
@@ -862,25 +1135,25 @@ struct WorkbenchWindow::Impl {
         hub->setControls(busy() || closing, snapshot.canStop, snapshot.ownedEngine, blenderError());
         hub->setPlayControls(busy() || closing, playCommand(snapshot.projectDir, false, row).error);
         hub->setRebuildAvailable(snapshot.canRebuild);
-        const auto structural = [](const Request &request) { return request.name == "add_hitbox" || request.name == "delete_hitbox"; };
-        const bool structuralPending = (running && structural(active)) || std::any_of(queue.cbegin(), queue.cend(), structural);
+        const bool structuralPending = this->structuralPending();
         inspector->setEnabled(!structuralPending && !closing && selectedHitbox());
         timeline->setEnabled(!structuralPending && !closing);
         // Structural edits renumber source ordinals: never enqueue a second
         // add/delete against the still-visible pre-edit occurrence.
         if (auto *remove = inspector->findChild<QPushButton *>("wbDeleteHitbox"))
-            remove->setEnabled(!busy() && !closing && selectedHitbox());
+            remove->setEnabled(canEdit() && selectedHitbox());
         if (auto *add = q->findChild<QPushButton *>("wbAddHitbox"))
-            add->setEnabled(!busy() && !closing && !row.isEmpty());
+            add->setEnabled(canEdit() && !row.isEmpty());
+        updateRebuildLabel();
         emit q->busyChanged(busy());
     }
     void openBlender() {
         const auto error = blenderError();
-        if (!error.isEmpty()) { status(error); return; }
+        if (!error.isEmpty()) { statusLaunch(error); return; }
         const quint16 port = q->serveForBlender(); if (!port) return;
         const auto command = blenderCommand(blenderExe(),
             findAddonDir(snapshot.projectDir), snapshot.projectDir, port, snapshot.art);
-        if (!command.error.isEmpty()) { status(command.error); return; }
+        if (!command.error.isEmpty()) { statusLaunch(command.error); return; }
         if (!blenderDriver) {
             QFile source(":/workbench/blender_sync.py");
             auto driver = std::make_unique<QTemporaryFile>();
@@ -898,7 +1171,7 @@ struct WorkbenchWindow::Impl {
         environment.insert("GW_WB_DRIVER", blenderDriver->fileName()); process.setProcessEnvironment(environment);
         qint64 pid = 0;
         if (!process.startDetached(&pid)) {
-            status(t("Could not start Blender. Check the Blender path in Settings.",
+            statusLaunch(t("Could not start Blender. Check the Blender path in Settings.",
                 "No se pudo iniciar Blender. Revisa la ruta de Blender en Ajustes.")); return;
         }
         q->setBlenderProcessId(pid);
@@ -906,8 +1179,9 @@ struct WorkbenchWindow::Impl {
     }
     void enqueue(const QString &name, const QJsonObject &args, std::optional<bool> headless = std::nullopt) {
         if (closing) return;
-        if (name == "edit_hitbox" || name == "edit_attribute" || name == "add_hitbox" || name == "delete_hitbox" || name == "assign_clip" || name == "accept" || name == "undo" || name == "redo" || name == "revert_change" || name == "revert_all")
-            setPlaying(false);
+        if (isEditName(name) || name == "accept" || name == "undo" || name == "redo" || name == "revert_change" || name == "revert_all") {
+            setPlaying(false); stickyNote.clear();
+        }
         if (name == "load_row") {
             ++rowIntent; clipPreview = false;
             const QString requested = args.value("row").toString();
@@ -921,6 +1195,13 @@ struct WorkbenchWindow::Impl {
         if (name == "set_frame" || name == "play" || name == "preview_clip") ++frameIntent;
         Request request{name, args, rowIntent, frameIntent, std::nullopt, headless};
         if (name == "load_row") request.restoreFrame = std::exchange(restoringFrame, std::nullopt);
+        if (isEditName(name) && rebuildActive()) {
+            // Allowed and queued behind the build; it applies afterwards and belongs to the next rebuild.
+            request.duringBuild = true; ++queuedDuringBuild;
+            const QString editedRow = args.value("row").toString();
+            if (!editedRow.isEmpty()) queuedRows.insert(editedRow);
+            updateBadges();
+        }
         // Preserve edits and explicit debug commands; only consecutive seeks are disposable.
         if (!queue.isEmpty() && queue.back().name == name && name == "set_frame") queue.back() = request;
         else queue.enqueue(request);
@@ -985,6 +1266,7 @@ struct WorkbenchWindow::Impl {
         rows->setCurrentIndex(selected); row = rows->currentData().toString(); updateTimeline();
         outliner->setRows(snapshot.rows, snapshot.hits); applyChanges(); refreshSelection(); updateBadges();
         review->setHistory(snapshot.history);
+        updateRecovery();
         paletteCommands = CommandRegistry{};
         for (const auto &spec : snapshot.commands) paletteCommands.add(spec);
     }
@@ -1033,9 +1315,15 @@ struct WorkbenchWindow::Impl {
         }
         if (closing) { running = false; dispose(); return; }
         const Request completed = active;
-        if ((completed.name == "add_hitbox" || completed.name == "delete_hitbox") &&
+        if (isStructuralName(completed.name) &&
             result.envelope.value("ok").toBool() && result.envelope.value("result").toObject().value("applied").toBool()) {
             inspector->clear(); selectedOrdinal = -1;
+        }
+        if (completed.duringBuild) {
+            queuedDuringBuild = std::max(0, queuedDuringBuild - 1);
+            if (queuedDuringBuild == 0) queuedRows.clear();
+            if (result.envelope.value("ok").toBool() && result.envelope.value("result").toObject().value("applied").toBool())
+                ++newSinceBuild;
         }
         refresh(result.snapshot);
         if (result.hasAttributes) attributes->setAttributes(result.attributes);
@@ -1043,16 +1331,19 @@ struct WorkbenchWindow::Impl {
         const bool ok = reply.value("ok").toBool();
         const auto value = reply.value("result").toObject();
         if (!ok) {
-            pendingBlenderOpen = false; setPlaying(false); status(displayError(reply.value("error").toString()));
+            pendingBlenderOpen = false; setPlaying(false); statusError(completed.name, reply.value("error").toString());
             if (rebuildReload || rebuildReloading || completed.name == "rebuild") {
                 rebuildReload = rebuildReloading = false; progress->finish(lastStatus, false);
             }
         } else {
             if (completed.name == "list_attributes") attributes->setAttributes(value.value("attributes").toArray());
+            if (completed.name == "delete_hitbox" && value.value("applied").toBool())
+                stickyNote = t("Hitbox deleted. Press Ctrl+Z to bring it back.", "Hitbox borrado. Pulsa Ctrl+Z para recuperarlo.");
             if (completed.name == "render_view" && value.contains("path"))
                 status(t("Frame exported: %1", "Cuadro exportado: %1").arg(value.value("path").toString()));
             const QString warning = value.value("warning").toString();
-            if (completed.name != "render_view") status(warning.isEmpty() ? t("Ready", "Ready") : t("Warning: %1", "Aviso: %1").arg(warning));
+            if (completed.name != "render_view")
+                status(warning.isEmpty() ? (stickyNote.isEmpty() ? t("Ready", "Ready") : stickyNote) : t("Warning: %1", "Aviso: %1").arg(warning));
             if (completed.name == "rebuild") {
                 if (rebuildReload) {
                     rebuildReload = false; rebuildReloading = true;
@@ -1085,10 +1376,16 @@ struct WorkbenchWindow::Impl {
             if (value.contains("frame") && completed.rowIntent == rowIntent && completed.frameIntent == frameIntent) {
                 frameInfo = FrameInfo::fromJson(value); timeline->setFrame(frameInfo.frame); updateFrameReadout();
             }
-            if ((completed.name == "edit_hitbox" || completed.name == "edit_attribute" || completed.name == "add_hitbox" || completed.name == "delete_hitbox" || completed.name == "assign_clip" || completed.name == "accept" || completed.name == "revert_change" || completed.name == "revert_all" ||
+            if (completed.name == "reload_from_disk" || completed.name == "recovery_resolve") {
+                rowProblems.clear(); checksCurrent = false; problems->setProblems({}); updateBadges();
+                if (snapshot.engineStatus == "ready" || snapshot.engineStatus == "running") q->runCommand("reload", {});
+                status(completed.name == "reload_from_disk" ? t("Reloaded from disk", "Recargado desde el disco")
+                                                            : t("Recovery done", "Recuperación hecha"));
+            }
+            if ((isEditName(completed.name) || completed.name == "accept" || completed.name == "revert_change" || completed.name == "revert_all" ||
                  completed.name == "undo" || completed.name == "redo") && value.value("applied").toBool()) {
                 rowProblems.clear(); checksCurrent = false; problems->setProblems({});
-                if (completed.name == "add_hitbox") { selectedOrdinal = value.value("ordinal").toInt(-1); refreshSelection(); }
+                if (completed.name == "add_hitbox" || completed.name == "duplicate_hitbox") { selectedOrdinal = value.value("ordinal").toInt(-1); refreshSelection(); }
                 updateBadges(); q->runCommand("reload", {});
             } else if (completed.name == "reload" || completed.name == "engine_restart") {
                 if (rebuildReloading) {
@@ -1121,7 +1418,7 @@ struct WorkbenchWindow::Impl {
             }
             return;
         }
-        if ((name == "add_hitbox" || name == "delete_hitbox") && reply.envelope.value("ok").toBool() &&
+        if (isStructuralName(name) && reply.envelope.value("ok").toBool() &&
             reply.envelope.value("result").toObject().value("applied").toBool()) {
             inspector->clear(); selectedOrdinal = -1;
         }
@@ -1147,7 +1444,7 @@ struct WorkbenchWindow::Impl {
             }
             if (name == "rebuild") progress->finish(t("Rebuild complete", "Reconstrucción completa"));
         } else {
-            status(displayError(reply.envelope.value("error").toString()));
+            statusError(name, reply.envelope.value("error").toString());
             if (name == "rebuild") progress->finish(lastStatus, false);
         }
         // Socket edits stay stale until Blender asks for rebuild/reload. Never
@@ -1197,6 +1494,8 @@ void WorkbenchWindow::setBlenderProcessId(qint64 pid) {
         state->submit([state, pid] { state->ensureSession(); state->session->blenderPid = pid; state->session->blenderAckRevision = 0; });
     }, Qt::QueuedConnection);
 }
+void WorkbenchWindow::startGame() { d_->setPlaying(false); runCommand("engine_restart", {}); }
+void WorkbenchWindow::startBlender() { d_->startBlender(); }
 void WorkbenchWindow::setGameExeInfo(const QString &text) { d_->hub->setEngineDetail(text); }
 void WorkbenchWindow::setBlenderSetting(const QString &path) { d_->blenderSetting = path; d_->notifyBusy(); }
 quint16 WorkbenchWindow::serveForBlender() {

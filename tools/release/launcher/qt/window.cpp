@@ -1009,6 +1009,21 @@ void Window::openCreatorProject(const QString &folder) {
         };
         creator_ = new wb::WorkbenchWindow(folder, std::move(launch), creatorPage_);
         creator_->setBlenderSetting(settings_.option("blender_exe"));
+        // The Workbench's Fix buttons for a missing game or Blender program open the same pickers as Settings.
+        connect(creator_, &wb::WorkbenchWindow::gameExePickRequested, this, [this] {
+            const auto path = QFileDialog::getOpenFileName(this, t("Select game executable", "Selecciona el ejecutable del juego"), settings_.option("game_exe"));
+            if (path.isEmpty() || !creator_) return;
+            guarded([&] { settings_.options["game_exe"] = path; save(); refreshGameExe(); });
+            if (auto *edit = findChild<QLineEdit *>("gameExe")) edit->setText(path);
+            creator_->startGame();
+        });
+        connect(creator_, &wb::WorkbenchWindow::blenderPickRequested, this, [this] {
+            const auto path = QFileDialog::getOpenFileName(this, t("Select Blender executable", "Selecciona el ejecutable de Blender"), settings_.option("blender_exe"));
+            if (path.isEmpty() || !creator_) return;
+            guarded([&] { settings_.options["blender_exe"] = path; save(); creator_->setBlenderSetting(path); });
+            if (auto *edit = findChild<QLineEdit *>("blenderExe")) edit->setText(path);
+            creator_->startBlender();
+        });
         refreshGameExe();
         creator_->setWindowFlags(Qt::Widget); creatorLayout_->addWidget(creator_, 1);
         creatorEmpty_->hide(); creatorPath_->setText(QDir::toNativeSeparators(folder)); creatorPath_->setToolTip(folder);

@@ -65,6 +65,7 @@ HubPanel::HubPanel(QWidget *parent) : QWidget(parent), layout_(new QVBoxLayout(t
     move_ = move; move_->setTextFormat(Qt::PlainText); move_->setMaximumWidth(150);
     engine_ = chip("wbEngineStatus"); blenderState_ = chip("wbBlenderState");
     pending_ = label({}, atlas::Role::Cap14, "sun"); pending_->setObjectName("wbUnsaved");
+    queued_ = label({}, atlas::Role::Cap14, "ember"); queued_->setObjectName("wbQueued"); queued_->hide();
     undo_ = new AtlasButton(t("Undo", "Deshacer")); undo_->setObjectName("wbUndo");
     revertAll_ = new AtlasButton(t("Revert all", "Revertir todo")); revertAll_->setObjectName("wbRevertAll"); revertAll_->hide();
     revertAll_->setToolTip(t("Restore every changed field to the value in the built game", "Restaurar todos los campos cambiados al valor del juego compilado"));
@@ -122,7 +123,7 @@ QSize HubPanel::minimumSizeHint() const { return {680, QWidget::minimumSizeHint(
 void HubPanel::resizeEvent(QResizeEvent *e) { QWidget::resizeEvent(e); relayoutBar(); }
 void HubPanel::relayoutBar() {
     if (!bar_) return;
-    const QWidget *chips[] = {engine_, blenderState_, pending_, revertAll_, undo_, playLab_, playCpu_};
+    const QWidget *chips[] = {engine_, blenderState_, pending_, queued_, revertAll_, undo_, playLab_, playCpu_};
     const int spacing = 12;
     int need = 32 + int(std::size(breadcrumb_) + std::size(chips) + 1 - 1) * spacing;
     for (auto *w : breadcrumb_) need += w->maximumWidth() < 100000 ? std::min(w->sizeHint().width(), w->maximumWidth()) : w->sizeHint().width();
@@ -135,7 +136,7 @@ void HubPanel::relayoutBar() {
     for (auto *w : breadcrumb_) first_->addWidget(w);
     first_->addStretch();
     if (wrap) {
-        for (QWidget *w : {static_cast<QWidget *>(engine_), static_cast<QWidget *>(blenderState_), static_cast<QWidget *>(pending_), static_cast<QWidget *>(revertAll_)}) second_->addWidget(w);
+        for (QWidget *w : {static_cast<QWidget *>(engine_), static_cast<QWidget *>(blenderState_), static_cast<QWidget *>(pending_), static_cast<QWidget *>(queued_), static_cast<QWidget *>(revertAll_)}) second_->addWidget(w);
         second_->addStretch();
         for (QWidget *w : {static_cast<QWidget *>(undo_), static_cast<QWidget *>(playLab_), static_cast<QWidget *>(playCpu_)}) second_->addWidget(w);
     } else {
@@ -197,4 +198,21 @@ void HubPanel::setPendingChanges(int count) {
     revertAll_->setVisible(count > 0); wrapKnown_ = false; relayoutBar();
 }
 void HubPanel::setRebuildAvailable(bool available) { rebuildAvailable_ = available; rebuild_->setEnabled(!busy_ && available); }
+void HubPanel::setQueued(int count) {
+    queued_->setVisible(count > 0);
+    queued_->setText(count == 1 ? t("1 edit queued: in next rebuild", "1 edición en cola: en la próxima reconstrucción")
+                                : t("%1 edits queued: in next rebuild", "%1 ediciones en cola: en la próxima reconstrucción").arg(count));
+    queued_->setToolTip(t("These edits wait for the running rebuild to finish, then apply and count as changes for the next rebuild.",
+        "Estas ediciones esperan a que termine la reconstrucción en curso y cuentan como cambios para la siguiente."));
+    wrapKnown_ = false; relayoutBar();
+}
+void HubPanel::setRebuildAgain(int newChanges) {
+    rebuildAgain_ = newChanges;
+    rebuild_->setText(newChanges <= 0 ? t("Rebuild + reload", "Reconstruir + recargar")
+        : newChanges == 1 ? t("Rebuild again (1 new change)", "Reconstruir de nuevo (1 cambio nuevo)")
+                          : t("Rebuild again (%1 new changes)", "Reconstruir de nuevo (%1 cambios nuevos)").arg(newChanges));
+    rebuild_->setToolTip(newChanges <= 0 ? QString() : t("Edits made while the last rebuild was running are not in the game yet.",
+        "Las ediciones hechas durante la última reconstrucción aún no están en el juego."));
+    wrapKnown_ = false; relayoutBar();
+}
 }

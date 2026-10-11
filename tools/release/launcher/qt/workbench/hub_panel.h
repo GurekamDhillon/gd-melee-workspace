@@ -25,6 +25,10 @@ public:
     void setBlenderState(bool hasProcess, bool synced);
     void setPendingChanges(int count);
     void setRebuildAvailable(bool available);
+    // Edits made while a rebuild runs: queued, and marked as belonging to the next rebuild.
+    void setQueued(int count);
+    // After a build: the Rebuild button offers "Rebuild again (N new changes)" when edits came in meanwhile.
+    void setRebuildAgain(int newChanges);
     // True while the status chips and the secondary buttons sit on a second row.
     bool wrapped() const { return wrapped_; }
 signals:
@@ -51,11 +55,12 @@ private:
     bool wrapped_ = false, wrapKnown_ = false;
     QWidget *controls_, *blenderCard_;
     QString engineDetail_, engineBase_;
-    QLabel *project_, *counts_, *move_, *pending_;
+    QLabel *project_, *counts_, *move_, *pending_, *queued_;
     QPushButton *engine_, *blenderState_; // status chips that are also the start/stop controls
     bool engineRunning_ = false, engineStarting_ = false, blenderRunning_ = false;
     QPushButton *revertAll_, *start_, *stop_, *restart_, *blender_, *showBlender_, *playLab_, *playCpu_, *undo_, *rebuild_;
     QCheckBox *headless_;
     bool busy_ = false, rebuildAvailable_ = false;
+    int rebuildAgain_ = 0;
 };
 }
