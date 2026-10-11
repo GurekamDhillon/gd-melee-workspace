@@ -35,7 +35,7 @@ XV2-derived and never committed. Preview any clip in the LAB (REMAKE or CLIPS mo
 |---|---|---|---|---|---|
 | **OK** Shield | GuardOn, Guard, GuardOff, GuardSetOff, GuardReflect | GRD_KAMAE (ground) / GRD_L | Hold shield, release, hit-in-shield | `xGOK_GRD_KAMAE` **rec**: owner: "start guard / hold guard" (rows 37, 38 GuardOn, Guard). GuardOn/Guard. (130f; reach 5.8 L_Foot f52; high 4.3; fastest R_Hand f2)<br>`xGOK_GRD_L`: owner: "release guard" (row 39 GuardOff). GuardOff only. (30f; reach 6.2 L_Foot f4; high 4.7; fastest L_Hand f4) | **xGOK_GRD_KAMAE** |
 | **OK** Shield break | ShieldBreakFly/Fall/DownU/D/StandU/D | CMN dizzy / stun rows | Shield broken | `xCMN_DMG_UP_F` **rec**: owner: "knocked down onto his back" (row 177 DamageFlyHi; 264, 274, 286). ShieldBreakFly. (49f; reach 7.7 L_Foot f16; high 7.6; fastest L_Hand f6)<br>`xCMN_DMG_TUMBLE_F`: owner: "launched: rapid 360 spin along head-to-toe axis (tumble candidate)" (row 29 DamageFall). ShieldBreakFall (row 287 uses it). (69f; reach 8.1 L_Hand f68; high 5.4; fastest R_Foot f40)<br>`xCMN_BAS_DOWN_STAND_AOMUKE`: owner: "get-up" (row 186 DownStandU). ShieldBreakStandU. (40f; reach 7.8 R_Foot f0; high 2.1; fastest R_Hand f26)<br>`xCMN_BAS_DOWN_STAND_UTSUBUSE`: owner: "get-up from a knockdown/missed tech" (row 194 DownStandD). ShieldBreakStandD. (40f; reach 8.4 R_Hand f0; high 3.1; fastest L_Foot f14)<br>`xCMN_DMG_DOWN_BOUND_UTSUBUSE`: owner: "lying face down (techable?)" (row 191 DownBoundD). ShieldBreakDownD. (59f; reach 9.5 L_Hand f2; high 5.1; fastest L_Hand f8)<br>note: ShieldBreakDownU (xCMN_DMG_DOWN_BOUND_AOMUKE) is "unclear": excluded. | **xCMN_DMG_UP_F** |
-| **PARTIAL** Roll / spot dodge / air dodge | EscapeF, EscapeB, EscapeN, EscapeAir | STEP_F_S, STEP_B_S, STEP_L_S x1.85/1.5 | Dodges: intangible frames are Melee rules | `xGOK_BAS_STEP_F_S` **rec**: owner: "dodge/dash forward, keeps facing" (row 42 EscapeF). Roll forward. (45f; reach 9.2 L_Hand f12; high 6.7; fastest L_Hand f4)<br>`xGOK_BAS_STEP_B_S`: owner: "dodge/dash backward, keeps facing" (row 43 EscapeB). Roll back. (45f; reach 6.2 R_Foot f18; high 4.9; fastest L_Hand f6)<br>**look next** (undescribed): `xGOK_BAS_STEP_R_S`, `xGOK_GRD_L_L_S`, `xGOK_GRD_L_R_S`<br>note: Spot dodge and air dodge: GAP. xGOK_BAS_STEP_L_S is "unclear: tiptoeing sideways" (rows 41, 44): excluded. | **xGOK_BAS_STEP_F_S** |
+| **KEEP** Roll / spot dodge / air dodge | EscapeF, EscapeB, EscapeN, EscapeAir | STEP_F_S, STEP_B_S, STEP_L_S x1.85/1.5 | Dodges: intangible frames are Melee rules | `xGOK_BAS_STEP_F_S`: owner: "dodge/dash forward, keeps facing" (row 42 EscapeF). Roll forward. (45f; reach 9.2 L_Hand f12; high 6.7; fastest L_Hand f4)<br>`xGOK_BAS_STEP_B_S`: owner: "dodge/dash backward, keeps facing" (row 43 EscapeB). Roll back. (45f; reach 6.2 R_Foot f18; high 4.9; fastest L_Hand f6)<br>**look next** (undescribed): `xGOK_BAS_STEP_R_S`, `xGOK_GRD_L_L_S`, `xGOK_GRD_L_R_S`<br>note: Owner 2026-10-11 (phase 4): rolls and the spot dodge are Instant Transmission teleports, like Mewtwo (XV2 ESC_KUR vanish / reappear, intangible gap); the air dodge is unchanged. Not a clip pick. |  |
 | **GAP** Dizzy | Furafura | GOK_BAS_STUN_02 | Stun | **look next** (undescribed): `xGOK_BAS_STUN_00`, `xGOK_BAS_STUN_01`, `xGOK_BAS_STUN_02`, `xCMN_BAS_STUN_01_S`, `xCMN_BAS_STUN_02_S`<br>note: No dizzy clip was described. |  |
 
 ## 3 Normals (ground)
@@ -125,7 +125,6 @@ XV2-derived and never committed. Preview any clip in the LAB (REMAKE or CLIPS mo
 |---|---|---|---|
 | 5 Run brake / stop | GAP | `xCMN_BAS_BRAKE_S`, `xCMN_BAS_BRAKE_B_S`, `xGOK_BAS_BUKUU_B_S` | The only clip used (xGOK_BAS_BOOST_F_02) was described as "meant to be runbrake/skid stop, but looks wrong" (row 14): excluded. |
 | 9 Jump (ground, forward/back) | GAP | `xGOK_BAS_BUKUU_UP`, `xGOK_BAS_JUMP_BACK_02`, `xGOK_BAS_BOOST_F_01` | xGOK_BAS_JUMP_FRONT_00 and xGOK_BAS_JUMP_BACK_00 are "terrible jump forward/backward" (rows 16, 17): excluded. |
-| 15 Roll / spot dodge / air dodge | PARTIAL | `xGOK_BAS_STEP_R_S`, `xGOK_GRD_L_L_S`, `xGOK_GRD_L_R_S` | Spot dodge and air dodge: GAP. xGOK_BAS_STEP_L_S is "unclear: tiptoeing sideways" (rows 41, 44): excluded. |
 | 16 Dizzy | GAP | `xGOK_BAS_STUN_00`, `xGOK_BAS_STUN_01`, `xGOK_BAS_STUN_02`, `xCMN_BAS_STUN_01_S`, `xCMN_BAS_STUN_02_S` | No dizzy clip was described. |
 | 18 Jab 2 (L2) | GAP | `xGOK_ATC_000`, `xGOK_ATC_001`, `xGOK_ATC_009`, `xGOK_ATC_010` | No described clip is a second jab. |
 | 19 Jab 3 (L3) | GAP | `xGOK_ATC_009`, `xGOK_ATC_014`, `xGOK_ATC_015`, `xGOK_ATC_016` | The only described kick, xGOK_ATC_017, is a spike candidate (Down air). |
@@ -409,9 +408,9 @@ XV2-derived and never committed. Preview any clip in the LAB (REMAKE or CLIPS mo
 | 230 | CaptureJump | SOURCE-RETIMED | x0.38 speed, 50 frames |  |
 | 231 | CaptureNeck | SOURCE-RETIMED | held at f8, 30 frames |  |
 | 232 | CaptureFoot | SOURCE-RETIMED | held at f8, 30 frames |  |
-| 233 | EscapeF | SOURCE-RETIMED | 45 frames |  |
-| 234 | EscapeB | SOURCE-RETIMED | 45 frames |  |
-| 235 | EscapeN | SOURCE-RETIMED | x1.85 speed, 24 frames |  |
+| 233 | EscapeF | SOURCE-RETIMED | 37 frames |  |
+| 234 | EscapeB | SOURCE-RETIMED | 37 frames |  |
+| 235 | EscapeN | SOURCE-RETIMED | 24 frames |  |
 | 236 | EscapeAir | SOURCE-RETIMED | x1.5 speed, 30 frames |  |
 | 237 | ReboundStop | SOURCE-RETIMED | 31 frames |  |
 | 238 | Rebound | SOURCE-RETIMED | 38 frames |  |
