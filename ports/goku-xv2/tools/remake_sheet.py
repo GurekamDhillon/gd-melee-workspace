@@ -97,7 +97,15 @@ def main():
     slots = json.loads((PORT / 'remake-candidates.json').read_text(encoding='utf-8'))
     metrics = (load(PREV / 'metrics.json', {}) or {}).get('clips', {})
     lib = {c['name'] for c in (load(LIB, {}) or {}).get('clips', [])}
+    excl = load(PORT / 'remake-unclear.json', []) or []
     bad = []
+    for s in slots:
+        for g in s.get('gap_look', []):
+            if lib and g not in lib:
+                bad.append((s['slot'], g))
+    for e in excl:
+        if lib and e['clip'] not in lib:
+            bad.append(('excluded', e['clip']))
     for i, s in enumerate(slots, 1):
         s['_n'] = i
         for c in s['candidates']:
@@ -109,20 +117,21 @@ def main():
         if a.check:
             return 1
     out = ['# Goku remake: candidate animation sheet', '',
-           'One row per Melee slot. **Pick by animation merit only** (pose silhouette, feel, timing, direction, combo role); hitbox fit is not a',
-           'criterion (hitboxes are authored by hand afterwards, see REMAKE-PLAN.md section 1). `rec` marks the recommended pick; write yours in',
-           '`owner pick`. Clip names are XV2 library actions (`x` + source name), all present in `goku.blend`. "metrics" are measured by',
-           '`tools/remake_preview.py` (frames; peak forward reach of a hand or foot from the pelvis, in model units; peak height above the pelvis;',
-           'the fastest limb and its frame = the likely strike frame). Montage PNGs (6 frames, first to last, character faces right) are in',
-           '`_build/goku-xv2/remake-previews/<clip>.png` and embedded in `candidate-sheet.html` (local only: XV2-derived).', '',
-           'Preview any clip: LAB `& "ports\\goku-xv2\\tools\\clips.ps1" <clip>`; Blender: `tools/blender/geno_workbench/launch_goku.py`, assign the',
-           'action; or the montage PNG. The recommendations below come from XV2 usage (which BAC/input plays the clip), clip length and the',
-           'measured motion; **only a sample of montages was looked at by the planner (marked `seen`); the rest are for the owner to review.**', '']
+           'Rebuilt 2026-10-11 from the OWNER own descriptions: `ROW-NOTES.md` (all 303 LAB rows) and `CLIP-NOTES.md` (the library clips covered so far).',
+           'The earlier planner candidates were found unreliable and are gone. **Only clips the owner described are listed**; every candidate quotes the',
+           'owner words and the LAB row it was described in. A clip marked "unclear", "terrible" or "looks wrong" is excluded (list at the end).',
+           'A slot with no good described clip is a **GAP**, with the undescribed library clips most worth looking at next ("look next").',
+           '',
+           'Status: OK = a described clip fits; KEEP = engine default / designed animation stays; PARTIAL = part of the slot has a pick, part is a GAP;',
+           'WEAK = only a fallback the owner rated poorly; GAP = nothing described fits. `rec` marks the recommended pick; write yours in `owner pick`.',
+           'Animations only: hitboxes are authored by hand afterwards (REMAKE-PLAN.md section 1). Always floating is visual only (standing clips are',
+           'acceptable). Clip names are XV2 library actions (`x` + source name). Metrics come from `tools/remake_preview.py` (local); montage PNGs are',
+           'XV2-derived and never committed. Preview any clip in the LAB (REMAKE or CLIPS mode) or with `tools/clips.ps1 <clip>`.', '']
     htm = ['<!doctype html><meta charset="utf-8"><title>Goku remake candidates</title><style>body{font:14px system-ui;margin:16px;background:#fff;color:#111}'
            'table{border-collapse:collapse;width:100%}td,th{border:1px solid #bbb;padding:4px;vertical-align:top}img{max-width:420px;display:block}'
            '.rec{background:#eaffea}h2{margin-top:28px}.pick{min-width:110px}</style><h1>Goku remake: candidate animations</h1>']
     group = None
-    seen = {'xGOK_BAS_STAND_S', 'xGOK_BAS_BUKUU_F_S', 'xGOK_ATC_000', 'xGOK_ATC_001', 'xGOK_ATC_005', 'xGOK_ATC_007'}
+    seen = set()
     n_rows = 0
     for s in slots:
         if s['group'] != group:
@@ -136,7 +145,7 @@ def main():
             m = metrics.get(key) if key else None
             tag = ' **rec**' if n == s['recommended'] else ''
             tag += ' seen' if n in seen else ''
-            cand_md.append('`%s`%s: %s (%s)%s' % (n, tag, c['why'], metric_text(m), (' **owner: ' + notes[n] + '**') if n in notes else ''))
+            cand_md.append('`%s`%s: %s%s%s' % (n, tag, c['why'], (' (' + metric_text(m) + ')') if m else '', (' **owner: ' + notes[n] + '**') if n in notes else ''))
             img = PREV / (n + '.png') if key else None
             if img and img.exists():
                 b = base64.b64encode(img.read_bytes()).decode()
@@ -154,12 +163,24 @@ def main():
                 pick_txt += ' f%s..f%s' % (pk.get('in') or 1, pk.get('out') or 'end')
             if pk.get('browse'):
                 pick_txt += ' (not a candidate)'
-        out.append('| %s | %s | %s | %s | %s | %s |' % (s['slot'], s['rows'], s['current'], role, '<br>'.join(cand_md), pick_txt))
+        st = s.get('status', '')
+        if s.get('gap_look'):
+            cand_md.append('**look next** (undescribed): ' + ', '.join('`%s`' % g for g in s['gap_look']))
+        if s.get('note'):
+            cand_md.append('note: ' + s['note'])
+        out.append('| %s | %s | %s | %s | %s | %s |' % (('**%s** ' % st if st else '') + s['slot'], s['rows'], s['current'], role, '<br>'.join(cand_md) or '(none)', pick_txt))
         htm.append('<tr><td>%s<br><small>%s</small></td><td>%s</td><td>%s</td><td class=pick>%s</td></tr>' % (
             html.escape(s['slot']), html.escape(s['rows']), html.escape(s['current']), ''.join(cand_h),
             html.escape(pick_txt.replace('**', ''))))
         n_rows += 1
     htm.append('</table>')
+    out += ['', '## GAP and partial slots (nothing good described yet)', '', '| slot | status | look next (undescribed library clips) | why |', '|---|---|---|---|']
+    for s in slots:
+        if s.get('status') in ('GAP', 'PARTIAL', 'WEAK'):
+            out.append('| %d %s | %s | %s | %s |' % (s['_n'], s['slot'], s['status'], ', '.join('`%s`' % g for g in s.get('gap_look', [])), s.get('note', '')))
+    out += ['', '## Excluded: the owner called these unclear, terrible or wrong (second look wanted)', '', '| clip | owner | where |', '|---|---|---|']
+    for e in excl:
+        out.append('| `%s` | %s | %s |' % (e['clip'], e['owner'], e['rows']))
     fid = load(PORT / 'fidelity.json') or load(MAIN / 'ports/goku-xv2/fidelity.json')
     if fid:
         out += ['', '## Appendix: every Melee row and its current source clip (no row is silent)', '',

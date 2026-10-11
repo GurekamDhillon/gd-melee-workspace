@@ -18,6 +18,7 @@
 !gameplay.json
 !ground_modes.json
 !remake-candidates.json
+!remake-unclear.json
 !tools/cross-port.json
 !splices.json
 # hand-animation deltas (tools/geno/artist/blender/hand_layer.py): the artist's own keyframes only, never a copied source clip

@@ -1,0 +1,112 @@
+[
+ {
+  "clip": "xGOK_BAS_BOOST_F_02",
+  "owner": "meant to be runbrake/skid stop, but looks wrong",
+  "rows": "row 14 RunBrake"
+ },
+ {
+  "clip": "xGOK_BAS_JUMP_FRONT_00",
+  "owner": "terrible jump forward",
+  "rows": "row 16 JumpF"
+ },
+ {
+  "clip": "xGOK_BAS_JUMP_BACK_00",
+  "owner": "terrible jump backward",
+  "rows": "row 17 JumpB"
+ },
+ {
+  "clip": "xGOK_BAS_STEP_L_S",
+  "owner": "unclear: tiptoeing sideways",
+  "rows": "row 41 EscapeN, row 44 EscapeAir"
+ },
+ {
+  "clip": "xGOK_BAS_STAND",
+  "owner": "Luigi back air?",
+  "rows": "row 70 AttackAirB"
+ },
+ {
+  "clip": "xCMN_BAS_ITM",
+  "owner": "similar to 77",
+  "rows": "row 78 LightGet"
+ },
+ {
+  "clip": "xCMN_DMG_LEG_L_F",
+  "owner": "unclear",
+  "rows": "row 171 DamageLw1"
+ },
+ {
+  "clip": "xCMN_DMG_LEG_H_F",
+  "owner": "unclear",
+  "rows": "row 172 DamageLw2"
+ },
+ {
+  "clip": "xCMN_DMG_YOROKE_LEG_F",
+  "owner": "unclear",
+  "rows": "row 173 DamageLw3"
+ },
+ {
+  "clip": "xCMN_DMG_DIVE_F",
+  "owner": "maybe same as 14",
+  "rows": "row 179 DamageFlyLw"
+ },
+ {
+  "clip": "xCMN_DMG_BLOW_SPIN",
+  "owner": "similar to 15",
+  "rows": "row 181 DamageFlyRoll"
+ },
+ {
+  "clip": "xCMN_DMG_DOWN_BOUND_AOMUKE",
+  "owner": "unclear",
+  "rows": "row 183 DownBoundU, row 265 ThrownLw, row 266 ThrownlwWomen, row 275 ThrownFLw, row 288 ShieldBreakDownU"
+ },
+ {
+  "clip": "xCMN_BAS_DOWN_AOMUKE_S",
+  "owner": "unclear",
+  "rows": "row 184 DownWaitU"
+ },
+ {
+  "clip": "xCMN_DMG_DOWN_BOUND_AOMUKE_H",
+  "owner": "unclear",
+  "rows": "row 185 DownDamageU, row 190 DownSpotU"
+ },
+ {
+  "clip": "xCMN_BAS_DOWN_UTSUBUSE_S",
+  "owner": "unclear",
+  "rows": "row 192 DownWaitD"
+ },
+ {
+  "clip": "xCMN_DMG_DOWN_BOUND_UTSUBUSE_H",
+  "owner": "unclear",
+  "rows": "row 193 DownDamageD, row 198 DownSpotD"
+ },
+ {
+  "clip": "xCMN_DMG_WALL_BOUND_F",
+  "owner": "unclear",
+  "rows": "row 202 PassiveWall, row 213 StopWall"
+ },
+ {
+  "clip": "xCMN_BAS_UKEMI_U",
+  "owner": "unclear",
+  "rows": "row 204 PassiveCeil"
+ },
+ {
+  "clip": "xCMN_DMG_WALL_BOUND_B",
+  "owner": "unclear",
+  "rows": "row 214 StopCeil"
+ },
+ {
+  "clip": "xGOK_DEM_START",
+  "owner": "idle/guard, unclear",
+  "rows": "row 238 EntryStart"
+ },
+ {
+  "clip": "xCMN_BAS_HAJIKI_B_00",
+  "owner": "unclear",
+  "rows": "row 246 CatchCut, row 257 CaptureCut"
+ },
+ {
+  "clip": "xGNY_NAG_A",
+  "owner": "unclear",
+  "rows": "row 247 ThrowF, row 248 ThrowB, row 259 CaptureNeck, row 260 CaptureFoot, row 267 ShoulderedWait, row 268 ShoulderedWalkSlow, row 269 Should"
+ }
+]
