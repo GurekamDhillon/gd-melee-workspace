@@ -95,3 +95,25 @@ Charge steps (15 a step, 60 full), shield-store, B resume, full stored charge fi
 - A side-by-side with an XV2 reference capture: XV2 was not run (no patcher installed; no way to launch a skill in a captured scene without it). The converted look is judged against XV2's data, not against its screen.
 - On-screen review by the owner of: beam proportions, the ribbon taper, the charge ball placement and size, the muzzle (rings dropped), the Super head size.
 - English lines were converted but not listened to in game.
+
+## Audio quality pass (2026-10-10, owner: "sounds like shit")
+Measured per stage (source WAV -> `.gnsnd` decode -> engine mix):
+- **Resampling was the cause.** `tools/geno/audio.py` converts to 32 kHz by linear interpolation with no low-pass. Against a band-limited resample the error was only **16.1 dB** below the signal for the charge SE (44.1 kHz), 30.9 dB for the shot, 26.3 dB for the 24 kHz voice: audible aliasing/imaging distortion. `xv2_audio.py` now resamples with a Kaiser polyphase filter (scipy `resample_poly`, beta 8.6) and hands the converter a 32 kHz file, so it stores it untouched.
+- **Level / clipping.** The old clips were peak-normalised to 0.89 and a voice and an SE start in the same frame (`GnKameVoxCharge` + `GnKameSeCharge`): their sum clipped the 16-bit mix (29094 + 28639 peak). Now voices peak at 0.55 and SEs at 0.40 of full scale, DC removed, 5 ms fade-out so clips never end on a click.
+- Stereo fold: the source cues are mono, nothing folded. Bit depth: the source is the HCA decode to 16-bit; `.gnsnd` is 16-bit PCM (no ADPCM). Truncation/loop: clips are whole (0.59 to 3.72 s, below the 10 s cap), played once. Pitch: the row plays at the clip rate.
+- **Engine cap (not changed):** the AX mixer and `gw_Audio_PlayClip` run at a fixed 32 kHz ("the audio rate is the clip rate: no resampling", `shim_ax.c`), and `.gnsnd` v1 is fixed 32 kHz, so everything above 16 kHz is lost (the 44.1/48 kHz SEs keep little there: 0.003 % of energy above 15 kHz, so this is audible mainly as a slightly dull top, not as distortion). The 24 kHz voices are band-limited at 12 kHz in the source anyway. Proposed engine change if the owner wants more: `.gnsnd` v2 with a stored rate (44.1 / 48 kHz) and a resampling mixer for clips (about half a day: header field, polyphase or cubic interpolation per clip in `gw_ax_mix_clips`, tests).
+- A/B files: `_build/xv2-kame/audio/ab/<clip>_1_source.wav` (the XV2 decode), `_2_old_linear.wav` (what the game played before), `_3_game_new.wav` (the 32 kHz data the mixer now outputs at row volume 127; the mixer applies `gain/127` and adds to the main bus, so this is what leaves it). A capture of the live output device was not made.
+
+## Charge traces (retail Samus | retail Mewtwo | Goku; frame t from the first B; motion names)
+See `ports/goku-xv2/KAMEHAMEHA.md` section 0 for the model. Findings from the traces (`tools/kame_traces.py`): Start lasts 13 frames (Samus) and 17 (Mewtwo) before the loop; a shield press at t=33 gives Cancel at t=33 and Wait at t=41 in both natives (an 8-frame Cancel); a flick gives EscapeF at t=33 in both; X (jump) is ignored by both (they stay charging); with no input Samus auto-stores at t=133 (Cancel, Wait 141) while Mewtwo enters LoopFull at t=137 and waits; B after a stored partial charge re-enters Start then Hold (13 frames), and Samus's resumed charge reaches full at 228.
+
+## Rendering features that would close the gap to XV2 (not built; estimates)
+Existing: the effect runtime already has an effect-only bloom (half-resolution, threshold + intensity), a frame-copy distortion shader, additive/alpha blend and UV scroll/sprite sheets. Missing, by visual weight:
+1. **XV2's glare / bloom colour** (`Glare` + `GlareCol*` per material: the bright core blooms in a tinted colour, wider than ours). Per-material bloom tint and a wider blur: ~1 day (render + importer fields).
+2. **Camera-oriented ribbon extrusion** for ETR trails (taper by segment age, 73-segment strips). Ours are two crossed quads. A real strip mesh emitter with per-frame path history: ~2 to 3 days (the format notes "stripes' history" as not in v1).
+3. **Dissolve/parallax material** (`T1_VFX_MTN_DIS_ALPHA`, `PRLX`: a second scrolling texture masks the first). A two-sampler `dissolve` shader type: ~1 day.
+4. **Soft particles** (depth-fade where a sprite meets geometry; the IR already carries `soft_particle`, the renderer does not read it). Depth snapshot already exists for the bloom: ~0.5 day.
+5. **ShapeDraw ring bands** (the shock rings): a ring/band mesh emitter with the sprite-sheet texture: ~1 day.
+6. **Dynamic lights** (`*.light.ema`: colour/intensity over time on the fighter/stage): lighting hook on the Melee side: ~2 days, invasive.
+7. **Screen shake / zoom on release** (BAC `Camera`, EAN `g_x_LND`): a fighter-script camera command: ~1 day.
+8. **Refraction ribbon** (`T1_VFX_TRC_RI`): reuses the distortion pass on a ribbon: ~0.5 day after 2.

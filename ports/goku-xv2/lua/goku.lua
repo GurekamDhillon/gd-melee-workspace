@@ -5,13 +5,21 @@ local M = {}
 local STEP, TAP, MID, FULL = 15, 15, 45, 60   -- charge frames: 15 a step; tap < 15 <= mid < 45 <= full; 60 is the cap (4 steps)
 local SUPER_KI = 100                -- full ki + full charge = Super Kamehameha
 local VANISH_KI = 10                -- a Z-vanish counter costs this
--- Charge model: Samus Charge Shot (ftsamusspecialn.c) and Mewtwo Shadow Ball (ftmewtwospecialn.c).
---  * the level is kept on the fighter when the move is put away (shield = Samus Hold_IASA L/R -> Cancel, Mewtwo Loop L/R -> Cancel);
---  * a full stored charge fires at once on the next B (Samus Start_Anim / Mewtwo Start_Anim skip the loop at max); a partial one resumes;
---  * the air charges like Mewtwo's (air Loop states), entry halves the vertical speed (MT:455);
---  * a hit wipes a partial charge but a full one survives (ftMt_SpecialN_OnDeath: zero "only if not at max"), here read as: percent rose since
---    the charge was put away. KO resets the whole Lua block (Geno_FighterReset), like ftMt_Init_OnDeath zeroing the charge.
---  * no auto-fire at full: he stays in the loop with the ball at full size (Mewtwo LoopFull waits for a button; Samus drops to Cancel).
+-- Charge model (owner, 2026-10-10: it must behave like the natives). Ground = Samus Charge Shot, air = Mewtwo Shadow Ball. Cited from the decomp:
+--  * B once enters the move (ftSs_SpecialN_Enter, 343): a Start phase with no input and no charging (ftSs_SpecialNStart_Anim), then the Hold loop (344)
+--    which charges BY ITSELF, one step every x20+1 frames (ftSs_SpecialNHold_Anim: mv.ss.unk3.x4 > x20 -> u.ss.x2230 += 1). Here: START frames of lag,
+--    then +1 charge every 2nd frame (traced: retail Samus reaches full 133 frames after B, Mewtwo 137), 15 a step, 60 = full (4 steps).
+--  * Hold IASA (ftSs_SpecialNHold_IASA), in this order: roll cancel (ftCo_8009917C, a stick/C-stick flick, enters Escape F/B, the level kept), B pressed
+--    = fire at the current level (state 346), L/R pressed = Cancel (345, level kept). There is NO jump, spot-dodge or A branch in either native.
+--  * At full the ground move AUTO-STORES: ftSs_SpecialNHold_Anim sets x2230 = max and goes to Cancel (345) holding it. Here: state KameStore (the flash).
+--  * B with a stored charge (ftSs_SpecialNStart_Anim: x2230 == x18 -> state 346 at once; a partial level re-enters Hold and resumes from it).
+--  * In the air Samus's B fires at once (ftSs_SpecialAirNStart_Anim, x0 = 1 -> 348); Mewtwo's air move charges (ftMt_SpecialAirNLoop_Anim) with IASA B/A = fire
+--    once releaseLag <= 0, L/R = Cancel, NO roll (ftMt_SpecialAirNLoop_IASA), and at full it stays in LoopFull waiting for an input (no auto-store). Goku's air
+--    move is Mewtwo's: it is a beam you aim, and the charge is the point of it.
+--  * A hit: a partial charge is wiped, a full one survives (owner's rule, Mewtwo ftMt_SpecialN_OnDeath: zero only if not at max). Here the level is kept
+--    in `stored` every frame while charging and wiped on the next entry if the percent rose since.
+--  * KO resets the whole Lua block (Geno_FighterReset), like ftSs/ftMt Init_OnDeath zeroing the charge.
+local START = 10   -- frames of Start before the loop takes input and charges (Samus Start anim / Mewtwo releaseLag)
 local function release(ctx)
   local s = ctx.state
   local c = s.charge
@@ -25,25 +33,25 @@ function M.charge_enter(ctx)
   local s = ctx.state
   if s.stored > 0 and s.stored < FULL and ctx.self.percent > s.stored_pct then s.stored = 0 end  -- hit since: a partial charge is gone
   s.charge = s.stored
+  s.age = 0
   if ctx.self.air then ctx.velocity(ctx.self.vel_x * ctx.self.facing, ctx.self.vel_y * 0.5) end
   if s.charge >= FULL then release(ctx) end   -- a full stored charge fires on the B press
 end
 function M.charge_frame(ctx)
   local s = ctx.state
-  if ctx.input.shield_pressed then
-    -- put the charge away (L/R), kept at any level; B again resumes it
+  s.age = s.age + 1
+  s.stored = s.charge                  -- whatever way the state ends (cancel, roll, a hit), the level is kept; a hit wipes a partial one on the next entry
+  s.stored_pct = ctx.self.percent
+  if ctx.self.anim_ended then ctx.loop() end
+  if s.age <= START then return end
+  if ctx.input.shield_pressed then ctx.go("KameStore") return end            -- L/R: Cancel, level kept
+  if ctx.input.special_pressed then release(ctx) return end                  -- B: fire at the current level
+  if not ctx.self.air then ctx.go("roll") end                                -- ground roll cancel (ftCo_8009917C); a no-op unless the stick was flicked
+  if s.charge < FULL and s.age % 2 == 0 then   -- half a charge unit a frame: full 120 frames after Start, like Samus (133) and Mewtwo (137) in the traces
+    s.charge = s.charge + 1
     s.stored = s.charge
-    s.stored_pct = ctx.self.percent
-    ctx.go("auto")
-    return
+    if s.charge >= FULL and not ctx.self.air then ctx.go("KameStore") end    -- full on the ground: auto-store (Samus x2230 >= x18 -> Cancel)
   end
-  if ctx.input.attack_pressed then release(ctx) return end   -- Mewtwo fires on A as well as B
-  if ctx.input.special_held then
-    if s.charge < FULL then s.charge = s.charge + 1 end
-    if ctx.self.anim_ended then ctx.loop() end
-    return
-  end
-  release(ctx)
 end
 -- the beam releases: a short step back on the ground (Mewtwo recoil: gr_vel = -facing * x4 * level); in the air the body hovers while the
 -- beam lasts (vertical speed 0, the horizontal drifts off) and then falls

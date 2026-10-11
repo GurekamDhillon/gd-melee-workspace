@@ -28,7 +28,7 @@ def iso():
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('script'); ap.add_argument('tag')
-    ap.add_argument('--vs', default='mario'); ap.add_argument('--name')
+    ap.add_argument('--vs', default='mario'); ap.add_argument('--p1', default='geno:goku-xv2/hu'); ap.add_argument('--name')
     ap.add_argument('--turbo', action='store_true'); ap.add_argument('--visible', action='store_true')
     ap.add_argument('--max-seconds', default='300'); ap.add_argument('--cfg', action='append', default=[])
     a = ap.parse_args()
@@ -40,7 +40,7 @@ def main():
     env = dict(os.environ)
     env.update({'GW_ROOT': str(MAIN), 'GW_MELEE': GAME, 'GW_BUILD_ROOT': BROOT,
                 'MELEE_MODS_DIR': os.environ.get('KAME_MODS') or str(WT / '_build/goku-xv2/author-source/package/mods'),
-                'MELEE_SCENE': f'mode=lab;p1=geno:goku-xv2/hu;p2={a.vs}/cpu0;stage=fd;items=off;time=0',
+                'MELEE_SCENE': f'mode=lab;p1={a.p1};p2={a.vs}/cpu0;stage=fd;items=off;time=0',
                 'MELEE_PAD_SCRIPT': gen.as_posix(), 'MELEE_UNATTENDED': '1',
                 'MELEE_MAX_SECONDS': a.max_seconds, 'MELEE_LAB_UI': '0', 'MELEE_TURBO': '1' if a.turbo else '0',
                 'MELEE_WINDOW_X': off, 'MELEE_WINDOW_Y': off, 'MELEE_WINDOW_W': '1280', 'MELEE_WINDOW_H': '720',

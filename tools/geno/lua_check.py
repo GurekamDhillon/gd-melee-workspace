@@ -101,7 +101,7 @@ def check(text, state_decl, state_names, diagnostic, path):
             errors.append(diagnostic(path + ".state", f"line {line(m.start())}: ctx.state.{m.group(1)} is an int slot; {value} does not fit (a fault at run time)", SOURCE))
         elif kind == "float" and value in ("true", "false"):
             errors.append(diagnostic(path + ".state", f"line {line(m.start())}: ctx.state.{m.group(1)} is a float slot; a boolean is a fault at run time", SOURCE))
-    targets = set(state_names) | {"auto", "helpless"}
+    targets = set(state_names) | {"auto", "helpless", "roll"}
     for m in re.finditer(r"\b" + ctx + r"\s*\.\s*go\s*\(\s*([\"'])(.*?)\1", text):   # on the raw text: the name is inside the string
         if m.group(2) not in targets:
             errors.append(diagnostic(path, f"ctx.go({m.group(2)!r}): no state of that name (states: {', '.join(sorted(targets))}); a fault at run time", SOURCE))

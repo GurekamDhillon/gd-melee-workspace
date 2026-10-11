@@ -12,13 +12,15 @@ gd.run(function()
       gd.teleport(1, 0, py or 0); gd.teleport(2, vx, 0); gd.set_percent(2, 0); gd.wait(3)
     end
     local results = {}
+    -- native model: B once enters the self-running charge; B again fires at the current level. `hold` = frames from the enter press to the fire press
     local function fire(name, hold, want, py, vx)
       reset(py, vx)
-      gd.input(1, {buttons = 'B'}, hold)
+      gd.input(1, {buttons = 'B'}, 2); gd.wait(hold)
+      gd.input(1, {buttons = 'B'}, 2)
       local hits, last, first, dmg, hbframes, rel, y0, ymin, ymax = 0, 0, nil, 0, 0, nil, nil, 1e9, -1e9
       local maxhb = 0   -- the highest live drag-hit damage (after the Lua scaling, before staling)
       local seen = false
-      for t = 1, hold + 160 do
+      for t = 1, 170 do
         gd.wait(1)
         local p1, p2 = gd.player(1), gd.player(2)
         if p1.motion_name == want then
@@ -44,40 +46,50 @@ gd.run(function()
       assert(seen, 'state not reached: ' .. want)
       return r
     end
-    local tap = fire('tap', 6, 'KameTap', 0, 24)
-    local mid = fire('mid', 30, 'KameMid')
-    local full = fire('full', 50, 'KameFull')
-    local max = fire('max', 64, 'KameFull')
+    local tap = fire('tap', 16, 'KameTap', 0, 24)      -- 16 frames: past the 10-frame Start, a few charge frames
+    local mid = fire('mid', 50, 'KameMid')
+    local full = fire('full', 105, 'KameFull')         -- about 47 charge units
+    local max = fire('max', 160, 'KameFull')           -- full on the ground auto-stores at ~130 frames (the 9-frame store ends ~140), B fires it from the store
     assert(tap.hits >= 1, 'tap never hit')
     assert(mid.hits >= 2 and full.hits >= 3, 'beam does not multi-hit: mid ' .. mid.hits .. ' full ' .. full.hits)
     assert(tap.dmg < mid.dmg and mid.dmg < full.dmg, 'damage does not scale with the tier')
     assert(tap.hb < mid.hb and mid.hb < full.hb, 'beam duration does not scale with the tier')
     assert(max.maxhb > full.maxhb, 'a full 60-frame charge does not hit harder than 45 (drag damage ' .. max.maxhb .. ' vs ' .. full.maxhb .. ')')
     assert(full.dmg <= 30 and max.dmg <= 30, 'full beam too strong: ' .. full.dmg)
-    local air = fire('air_full', 50, 'KameFull', 45)
+    local air = fire('air_full', 105, 'KameFull', 45)
     assert(air.span < 6, 'no hover during the air beam: y span ' .. air.span)
 
-    -- store with shield, resume, instant fire, hit wipe
+    -- shield cancel at 30 charge frames stores and leaves; B resumes; auto-store at full; roll cancel keeps the level; a hit wipes a partial charge
     local function lua_state() return assert(gd.fighter_lua(1)).state end
+    -- end a case with nothing stored: B enters (a stored full charge fires at once, a partial one resumes), B again fires the level
+    local function clean()
+      gd.input(1, {buttons = 'B'}, 2); gd.wait(14)
+      if lua_state().stored > 0 then gd.input(1, {buttons = 'B'}, 2) end
+      gd.wait(220)
+      assert(lua_state().stored == 0, 'clean() left a stored charge: ' .. lua_state().stored)
+    end
     reset()
-    gd.input(1, {buttons = 'B'}, 32); gd.wait(31)
+    gd.input(1, {buttons = 'B'}, 2); gd.wait(70)
     local c0 = lua_state().charge
     gd.input(1, {buttons = 'L'}, 2); gd.wait(4)
     local st = lua_state()
     gd.log(string.format('KAMECHECK store: charge before %d, stored %d, state %s', c0, st.stored, tostring(gd.player(1).motion_name)))
-    assert(st.stored >= 29 and st.stored <= 33, 'store failed')
-    assert(gd.player(1).motion_name ~= 'KameCharge', 'still charging after shield')
-    gd.wait(45)
-    gd.input(1, {buttons = 'B'}, 6); gd.wait(3)
+    assert(st.stored >= 25 and st.stored <= 36, 'store failed')
+    assert(gd.player(1).motion_name == 'KameStore', 'shield did not enter KameStore: ' .. tostring(gd.player(1).motion_name))
+    gd.wait(30)
+    assert(gd.player(1).motion_name ~= 'KameStore', 'KameStore did not end')
+    gd.input(1, {buttons = 'B'}, 2); gd.wait(3)
     local resumed = lua_state().charge
     gd.log('KAMECHECK resume: charge on re-entry ' .. resumed)
     assert(resumed >= st.stored, 'stored charge not resumed')
-    gd.wait(200)
-    -- a stored FULL charge fires on the next B press
+    gd.wait(14); gd.input(1, {buttons = 'B'}, 2); gd.wait(220)
+    -- the charge runs by itself: no button held; at full on the ground it auto-stores and exits, B fires it at once
     reset()
-    gd.input(1, {buttons = 'B'}, 66); gd.wait(65)
-    gd.input(1, {buttons = 'L'}, 2); gd.wait(4)
-    assert(lua_state().stored >= 60, 'full charge not stored')
+    gd.input(1, {buttons = 'B'}, 2); gd.wait(150)
+    local ss = lua_state()
+    gd.log(string.format('KAMECHECK autostore: stored %d state %s', ss.stored, tostring(gd.player(1).motion_name)))
+    assert(ss.stored >= 60, 'full charge did not store by itself')
+    assert(gd.player(1).motion_name ~= 'KameCharge', 'still in the charge loop at full on the ground')
     gd.wait(45)
     gd.input(1, {buttons = 'B'}, 2)
     local instant = false
@@ -85,21 +97,43 @@ gd.run(function()
     gd.log('KAMECHECK instant: stored full fired at once = ' .. tostring(instant))
     assert(instant, 'stored full charge did not fire on B')
     gd.wait(200)
+    -- roll cancel (stick flick during the loop, the natives' ftCo_8009917C): leaves the charge into a roll with the level kept
+    reset()
+    gd.input(1, {buttons = 'B'}, 2); gd.wait(50)
+    local cr = lua_state().charge
+    gd.input(1, {x = 0}, 1); gd.wait(1); gd.input(1, {x = 127}, 3)
+    local rolled = false
+    for i = 1, 6 do gd.wait(1); local m = tostring(gd.player(1).motion_name); if m:find('Escape') or m:find('Roll') then rolled = true end end
+    gd.log(string.format('KAMECHECK roll: charge %d stored %d rolled=%s state %s', cr, lua_state().stored, tostring(rolled), tostring(gd.player(1).motion_name)))
+    assert(rolled, 'roll cancel did not leave the charge into a roll')
+    assert(lua_state().stored >= cr - 2, 'roll cancel lost the level')
+    gd.wait(60); clean()
     -- a hit since storing wipes a partial charge
     reset()
-    gd.input(1, {buttons = 'B'}, 32); gd.wait(31)
+    gd.input(1, {buttons = 'B'}, 2); gd.wait(40)
     gd.input(1, {buttons = 'L'}, 2); gd.wait(4)
     gd.set_percent(1, 12); gd.wait(45)
     gd.input(1, {buttons = 'B'}, 3); gd.wait(3)
     local wiped = lua_state().charge
     gd.log('KAMECHECK wipe: charge after a hit = ' .. wiped)
     assert(wiped < 6, 'partial charge survived a hit')
-    gd.wait(100)
+    gd.wait(14); gd.input(1, {buttons = 'B'}, 2); gd.wait(220)
+    -- a stored FULL charge survives a hit
+    reset()
+    gd.input(1, {buttons = 'B'}, 2); gd.wait(150)
+    gd.set_percent(1, 12); gd.wait(45)
+    gd.input(1, {buttons = 'B'}, 3); gd.wait(3)
+    local kept = lua_state().charge
+    local mk = tostring(gd.player(1).motion_name)
+    gd.log('KAMECHECK fullkeep: after a hit, charge/state ' .. kept .. ' ' .. mk)
+    assert(kept >= 60 or mk == 'KameFull' or mk == 'KameSuper', 'a full stored charge did not survive a hit')
+    gd.wait(200)
 
     -- rewind exactness across charge + release + beam
     reset()
-    gd.input(1, {buttons = 'B'}, 40)
-    gd.wait(20)
+    gd.input(1, {buttons = 'B'}, 2); gd.wait(40)
+    gd.input(1, {buttons = 'B'}, 2)
+    gd.wait(10)
     assert(gd.rewind_test(120, true), 'rewind refused')
     local done = false
     for i = 1, 400 do

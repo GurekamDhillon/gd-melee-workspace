@@ -449,6 +449,8 @@ def row_specs(source):
     if ckm:
         out['KameSuper']={'clip':ckm,'loop':False,'frames':70,'start':40,'library':True,
                           'status':'PICK provisional (skill ULT 000_GOK_CKM): Super Kamehameha, fire from source f70 (Melee f30)'}
+    # KameStore: the charge put away (shield cancel, or the full-charge auto-store): the cupped-hands pose held at clip frame 40 for 36 frames, with a flash
+    out['KameStore']={**charge,'frames':9,'loop':False,'hold_source':40,'start':40,'library':True,'status':'PICK provisional (skill KMH BAC 12 f40): the charge stored, held pose + flash'}
     if atc23:
         out['RushCombo']={'clip':atc23,'loop':False,'frames':36,'start':4,'library':True,
                           'status':'PICK provisional (BAC 427 clip GOK_ATC_023, hit f10): Dragon Rush follow-up flurry'}

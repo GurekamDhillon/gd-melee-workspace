@@ -7,6 +7,7 @@
   "lua": {
     "script": "lua/goku.lua",
     "state": {
+      "age": "int",
       "charge": "int",
       "counter_damage": "float",
       "stored": "int",
@@ -959,6 +960,16 @@
       "lua": {
         "frame": "kicharge_frame"
       }
+    },
+    {
+      "name": "KameStore",
+      "behavior": "geno.ground",
+      "subaction": "clip:KameStore",
+      "like": "motion:345",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "none",
+      "move_tag": "special"
     },
     {
       "name": "KameSuper",

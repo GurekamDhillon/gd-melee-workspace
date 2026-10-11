@@ -213,6 +213,7 @@ FX_ARTICLES = {'KameOrb': 'P_TrailGokuOrb', 'KameTap': 'P_TrailGokuBeam', 'KameM
 FX_STATES = {
     # Kamehameha presentation: converted from XV2's own effects (tools/xv2_fx.py; KAMEHAMEHA.md section 3)
     'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, 'state_exit'), (1, 'P_TrailGokuXKameCharge', 'hand.R', 1.0, 'state_exit')],
+    'KameStore': [(1, 'P_TrailGokuXKameStore', 'hand.R', 1.0, 'state_exit')],   # the stored-charge flash (Samus's Cancel state, ftSs_SpecialNCancel_Anim)
     'KameTap': [(5, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.0, 'emitter_life'), (5, 'P_TrailGokuXKameTap', 'hand.R', 1.0, 'state_exit')],
     'KameMid': [(6, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.0, 'emitter_life'), (6, 'P_TrailGokuXKameMid', 'hand.R', 1.0, 'state_exit')],
     'KameFull': [(8, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.0, 'emitter_life'), (8, 'P_TrailGokuXKameFull', 'hand.R', 1.0, 'state_exit')],
@@ -343,7 +344,7 @@ def apply(package, art_build, ir_path=None):
     lib = AUTHOR/'clip-library.json'
     if lib.exists():  # LAB CLIPS library: unbound declared rows 303.. (geno.md fighter.rows)
         fighter.setdefault('fighter', {})['rows'] = [c['name'] for c in load(lib)['clips']] + \
-            [n for n in ('ITEnd', 'KiCharge', 'KameSuper', 'RushCombo') if n in plan_clip_names(package)]
+            [n for n in ('ITEnd', 'KiCharge', 'KameStore', 'KameSuper', 'RushCombo') if n in plan_clip_names(package)]
     if cfg.get('cape'):
         fighter['cape'] = cfg['cape']  # Instant Transmission (geno.cape) parameters
     for st in fighter.get('states', []):  # states that name a declared clip get its own row number

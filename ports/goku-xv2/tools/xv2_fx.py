@@ -664,6 +664,15 @@ def charge_package(name, S=11.4, crg_scale=1.0, motes=True):
     return pkg
 
 
+def store_package(name, S=11.4):
+    """The stored-charge flash: the ball stack at full size, one CrgON flash, for the 9 frames of the KameStore state (the natives' Cancel states last 8: traced)."""
+    pkg = Pkg(name)
+    px = SK['px']
+    pkg.emitters.extend(emp_emitters(pkg, px + '_Crg', S, 1.0, start0=0, loop_end=9, depth_test=False, offset=(0, 0, 4.0)))
+    pkg.emitters.extend(emp_emitters(pkg, px + '_CrgON', S, 1.4, start0=0, loop_end=0, depth_test=False, offset=(0, 0, 4.0)))
+    return pkg
+
+
 def muzzle_package(name, S, fire_scale=1.0):
     px = SK['px']
     pkg = Pkg(name)
@@ -692,6 +701,7 @@ def main():
         pk.append(beam_package('P_TrailGokuXKame%s' % t, S, L, life, ramp, bas_scale=1.6, hand_scale=0.45, particles=KMH_PARTICLES))
     pk.append(charge_package('P_TrailGokuXKameCharge'))
     pk.append(muzzle_package('P_TrailGokuXKameMuzzle', 3.0))
+    pk.append(store_package('P_TrailGokuXKameStore'))
     # Super Kamehameha (ULT 000_GOK_CKM): effect 0 (charge at the hand, Ckm_Crg x2) and effect 1 (the beam: Bas x2.5, Hand x0.9, the particle files); S 3.2 keeps the
     # head a little wider than the Super hit spheres (8.6 world) without swallowing the screen
     use_skill('CKM')

@@ -14,6 +14,17 @@ what replaced the invented look; the full inventory (BAC entries, BSA, EEPK, tex
 Branches: workspace `ws/goku-kamehameha`, game `agent/goku-kamehameha` (no engine change was needed; the game lane only has the
 untouched build used to run it).
 
+## 0. Charge, native model (2026-10-10, owner: "doesn't behave like Mewtwo or Samus charges at all"); supersedes the hold-to-charge rules below
+
+Press B **once**: the move starts (10 frames of Start, no input), then the loop charges **by itself**, half a unit a frame (60 units = full, about 130 frames after B;
+traced: retail Samus reaches full 133 frames after B, Mewtwo 137). In the loop, in the natives' order (`ftSs_SpecialNHold_IASA`, `ftMt_SpecialNLoop_IASA`): a stick/C-stick flick
+rolls (`ftCo_8009917C`, new Lua target `ctx.go("roll")`), B fires at the current level, L/R stores and leaves (state `KameStore`, 9 frames with a flash; natives' Cancel is 8). **Jump and
+spot dodge do not cancel in either native** (no branch in either IASA; traced: Samus and Mewtwo keep charging when X is pressed), so Goku does not either. On the ground, **full auto-stores**
+(Samus `ftSs_SpecialNHold_Anim`: x2230 >= x18 -> Cancel holding the level). B with a stored charge: full fires at once, partial resumes from the level. **Air** follows Mewtwo
+(`ftMt_SpecialAirNLoop_*`): it charges, B / L/R work, no roll, and at full it waits (no auto-store). Samus's air B fires at once instead; Mewtwo is closer because the Kamehameha is aimed
+and charging it is the point. A hit wipes a partial stored charge, a stored full one survives (owner). The level is kept in `stored` every frame, so a roll, a cancel or a hit never loses it.
+Traces (retail Samus | retail Mewtwo | Goku, tap, shield at 30, roll, jump, full, fire from stored): `tools/kame_traces.py` -> `_build/xv2-kame/traces/*.txt`; summary in the research note.
+
 ## 1. Charge: modelled on Samus Charge Shot and Mewtwo Shadow Ball
 
 Read from the decomp (`src/melee/ft/kinds/ftSamus/ftsamusspecialn.c`, `.../ftMewtwo/ftmewtwospecialn.c`, items
