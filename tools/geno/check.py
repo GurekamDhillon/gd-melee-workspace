@@ -292,6 +292,17 @@ def audio_checks(fighter, p, base, errors):
     aud = fighter.get("audio")
     if not isinstance(aud, dict):
         return
+    states = {s.get("name") for s in fighter.get("states", []) if isinstance(s, dict)}
+    for j, row in enumerate(aud.get("voice", [])):
+        if not isinstance(row, dict) or "while_states" not in row:
+            continue
+        where = p + ".audio.voice[%d].while_states" % j
+        if row.get("stoppable") is not True:
+            errors.append(diagnostic(where, "requires stoppable: true"))
+        if isinstance(row["while_states"], list):
+            for name in row["while_states"]:
+                if isinstance(name, str) and name not in states:
+                    errors.append(diagnostic(where, "unknown Geno state %r" % name))
     names = ([("announcer", aud["announcer"])] if isinstance(aud.get("announcer"), str) else []) + \
             [("voice[%d]" % j, v.get("file")) for j, v in enumerate(aud.get("voice", [])) if isinstance(v, dict) and isinstance(v.get("file"), str)]
     for key, name in names:

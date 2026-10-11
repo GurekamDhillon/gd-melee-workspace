@@ -62,8 +62,8 @@ def main():
         env['MELEE_AUDIO_DUMP'] = os.environ['KAME_AUDIO_DUMP']
     out = WT / '.omo/evidence'; out.mkdir(parents=True, exist_ok=True)
     with open(out / f'{name}.run.txt', 'w', encoding='utf-8') as fh:
-        subprocess.run([GIT_BASH, (MAIN / 'tools/port/run.sh').as_posix(), '--max-seconds', a.max_seconds, name, '--iso', iso()],
-                       cwd=GAME, env=env, stdout=fh, stderr=subprocess.STDOUT)
+        result = subprocess.run([GIT_BASH, (MAIN / 'tools/port/run.sh').as_posix(), '--max-seconds', a.max_seconds, name, '--iso', iso()],
+                                cwd=GAME, env=env, stdout=fh, stderr=subprocess.STDOUT)
     run = Path(BROOT) / 'runs' / name
     log = run / 'melee-pc.log'
     text = log.read_text(encoding='utf-8', errors='replace') if log.exists() else ''
@@ -77,6 +77,8 @@ def main():
             shutil.copy2(s, dst / s.name)
         print(f'{len(shots)} screenshots -> {dst}')
     print('log:', log)
+    if result.returncode or not log.exists() or re.search(re.escape(a.tag) + r' FAIL\b', text):
+        raise SystemExit(result.returncode or 1)
 
 
 if __name__ == '__main__':

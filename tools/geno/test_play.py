@@ -14,6 +14,8 @@ class PlayTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.put('.git', 'gitdir: unused')
+        # Tests may keep TEMP inside a worktree; stop parent .env discovery at this fixture.
+        self.put('.env', '')
         self.put('tools/port/run.sh', '# synthetic wrapper, never run')
         self.project = self.root / 'ports/second fighter'
         self.config = {'schema': 'workbench/1', 'id': 'second', 'mod_id': 'second',
