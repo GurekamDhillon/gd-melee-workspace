@@ -35,6 +35,16 @@ constexpr int kHitboxSlots = 4;
 // higher slot shows it read-only. kHitboxSlots (the sound() solver's pool) moves with it.
 constexpr int kHitboxEditableSlots = kHitboxSlots;
 
+// One `CALL geno.article.spawn ARG` in a straight-line script (geno.md 19.8: ARG [7:0] article, [15:8] spawn
+// variant, [31:16] signed extra angle in degrees).
+struct SpawnRef {
+    int ordinal = 0; // Order in the file, zero-based.
+    int line = 0;    // Zero-based line index of the CALL.
+    int frame = 0;   // The move frame (the script's time) it runs at.
+    quint32 arg = 0;
+    int article = 0, variant = 0, angle = 0;
+};
+
 struct HitboxEdit {
     std::optional<QString> joint;
     std::optional<double> damage, size, x, y, z;
@@ -52,6 +62,14 @@ public:
     // Remove a hitbox, and its window's clear_hitboxes when it was the last one in that window.
     QString removeHitbox(int ordinal, QString *err) const;
     QString text() const;
+    // Article spawns (`CALL geno.article.spawn N`). Reading stops at loops, gotos and other calls, as the
+    // timeline markers do. The edits return a null string and set *err when the script cannot honour them;
+    // every other command keeps its frame, and so does every other spawn.
+    QVector<SpawnRef> spawns() const;
+    QString moveSpawn(int ordinal, int frame, QString *err) const;
+    QString setSpawnArg(int ordinal, quint32 arg, QString *err) const;
+    QString addSpawn(int frame, quint32 arg, QString *err, int *ordinalOut = nullptr) const;
+    QString removeSpawn(int ordinal, QString *err) const;
     // Readable reasons the script would not run the way hitboxes() describes it (straight-line scripts):
     // a wait_until that goes back in time (the engine does not wait, so what follows runs late) and two
     // overlapping windows on one slot. Empty when the script is sound or has loops/calls/gotos.

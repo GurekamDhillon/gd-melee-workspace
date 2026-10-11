@@ -1,4 +1,5 @@
 #include "workbench_window.h"
+#include "projectile_widgets.h"
 #include "window.h"
 #define WB_CORE_USE_LAUNCHER_T 1
 #include "commands.h"
@@ -112,6 +113,7 @@ struct Snapshot {
     QVector<ClipInfo> clips;
     QMap<QString, QVector<HitboxRef>> hits;
     QMap<QString, QJsonArray> events;
+    QJsonArray articles, spawns; // projectiles (geno.md 19) and the spawn calls of the move scripts
     QVector<HistoryEntry> history;
     QVector<CommandSpec> commands;
     QJsonArray fidelity;
@@ -199,6 +201,7 @@ struct Worker {
         value.recovery = session->recovery;
         value.blenderPid = session->blenderPid; value.blenderAck = session->blenderAckRevision;
         value.viewRevision = session->uiView.value("revision").toInteger();
+        value.articles = session->data().articles(); value.spawns = session->data().spawns();
         for (const auto &row : value.rows) {
             value.hits.insert(row.name, session->data().hitboxes(row.name));
             value.events.insert(row.name, session->data().timelineEvents(row.name));
@@ -380,6 +383,8 @@ struct WorkbenchWindow::Impl {
     InspectorTabs *tabs;
     StatusProgress *progress = nullptr;
     AttributesPanel *attributes;
+    ProjectilesPanel *projectiles = nullptr;
+    SpawnLane *spawnLane = nullptr;
     QLineEdit *search;
     QLabel *moveTitle, *moveGroupLabel, *moveStats, *frameReadout;
     QVBoxLayout *centreLayout;
@@ -512,6 +517,8 @@ struct WorkbenchWindow::Impl {
         timelineScroll = new QScrollArea; timelineScroll->setObjectName("wbTimelineScroll"); timelineScroll->setWidgetResizable(true); timelineScroll->setFrameShape(QFrame::NoFrame);
         timelineScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         timelineScroll->setWidget(timeline); timelineLayout->addWidget(timelineScroll);
+        spawnLane = new SpawnLane; spawnLane->setTimeline(timeline); timelineLayout->addWidget(spawnLane);
+        QObject::connect(spawnLane, &SpawnLane::editRequested, q, [this](const QString &name, const QJsonObject &args) { q->runCommand(name, args); });
         QObject::connect(timeline, &Timeline::frameRequested, q, [this](int f) { setPlaying(false); q->runCommand("set_frame", {{"frame", f}}); updateFrameReadout(); });
         QObject::connect(timeline, &Timeline::playToggled, q, [this](bool on) { setPlaying(on); });
         QObject::connect(timeline, &TimelineView::editRequested, q, [this](const QString &name, const QJsonObject &args) { q->runCommand(name, args); });
@@ -810,6 +817,11 @@ struct WorkbenchWindow::Impl {
         hitboxTab = scroll(inspector); attributesTab = scroll(attributes);
         tabs->addTab(hitboxTab, t("Hitbox", "Hitbox"));
         tabs->addTab(attributesTab, t("Attributes", "Atributos"));
+        projectiles = new ProjectilesPanel;
+        QObject::connect(projectiles, &ProjectilesPanel::editRequested, q, [this](const QString &name, const QJsonObject &args) { q->runCommand(name, args); });
+        QObject::connect(projectiles, &ProjectilesPanel::addSpawnRequested, q, [this](int article) {
+            if (!row.isEmpty()) q->runCommand("add_spawn", {{"row", row}, {"frame", timeline->frame()}, {"article", article}});
+        });
         auto *checksBody = new QWidget; auto *checksLayout = new QVBoxLayout(checksBody);
         auto *problemActions = new QHBoxLayout; checksLayout->addLayout(problemActions);
         auto *check = addButton(problemActions, t("Run checks", "Ejecutar comprobaciones"), [this] { setPlaying(false); q->runCommand("run_checks", {}); });
@@ -851,6 +863,7 @@ struct WorkbenchWindow::Impl {
         auto *renderActions = new QHBoxLayout; renderLayout->addLayout(renderActions);
         addButton(renderActions, t("Export frame PNG", "Exportar cuadro PNG"), [this] { q->runCommand("render_view", {{"w", 640}, {"h", 480}}); });
         renderLayout->addStretch(); tabs->addTab(scroll(renderBody), t("Render", "Renderizar"));
+        tabs->addTab(projectiles, t("Projectiles", "Proyectiles")); // last: the tabs before it keep their positions
         columns->addWidget(tabs);
         QObject::connect(inspector, &InspectorPanel::revertRequested, q, [this](const QJsonObject &args) { q->runCommand("revert_change", args); });
         QObject::connect(attributes, &AttributesPanel::revertRequested, q, [this](const QJsonObject &args) { q->runCommand("revert_change", args); });
@@ -1297,6 +1310,8 @@ struct WorkbenchWindow::Impl {
             activeRanges.append(window.second == window.first + 1 ? QString::number(window.first) :
                 t("%1–%2", "%1–%2").arg(window.first).arg(window.second - 1));
         timeline->setMove(row, frames, hits, iasa, snapshot.events.value(row));
+        if (projectiles) projectiles->setData(snapshot.articles, snapshot.spawns, row);
+        if (spawnLane) { spawnLane->setSpawns(row, snapshot.spawns, projectiles->articleNames()); spawnLane->update(); }
         timeline->setMinimumHeight(timeline->sizeHint().height()); fitTimelineHeight();
         moveTitle->setText(row.isEmpty() ? t("Choose a move", "Elige un movimiento") : row);
         moveChip->setText(row.isEmpty() ? t("No move", "Sin movimiento") : row);

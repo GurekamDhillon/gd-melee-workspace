@@ -260,6 +260,7 @@ void registerAllCommands(Session &session) {
     registerSaveCommands(session);
     registerGroundCommands(session);
     registerAttributeCommands(session);
+    registerProjectileCommands(session);
     registerBaselineCommands(session);
     registerRecoveryCommands(session);
 }

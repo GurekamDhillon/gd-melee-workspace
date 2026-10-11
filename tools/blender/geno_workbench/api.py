@@ -96,6 +96,8 @@ class WbSession:
         self.suggestion: dict | None = None
         self.roles: list[dict] = []   # list_hitbox_roles: [{name, group, joint}] the project's joint=@ROLE@ names (empty: unknown)
         self.last_added: int | None = None   # ordinal of the hitbox the last add_hitbox created
+        self.articles: list[dict] = []   # list_articles: the fighter's projectiles (geno.md 19), each with its "index"
+        self.spawns: list[dict] = []     # list_spawns: {row, ordinal, line, frame, arg, article, variant, angle}
         self.jointmap = None
         self.calibration = None
         self.on_change: Callable[[WbSession], None] | None = None
@@ -827,6 +829,101 @@ class WbSession:
             self._after_source_edit(name)
             self.last_added = None
             return STRINGS["hitbox_deleted"].format(ordinal=index)
+
+        return self._run(action)
+
+    # --- projectiles (articles and their spawn calls): see projectiles.py; the same write path as hitboxes ---
+    def refresh_projectiles(self) -> bool:
+        def action():
+            self.articles = self._items(self._request("list_articles"), "articles")
+            self.spawns = self._items(self._request("list_spawns"), "spawns")
+            return "projectiles: %d articles, %d spawns" % (len(self.articles), len(self.spawns))
+
+        return self._run(action)
+
+    def _after_projectile_edit(self) -> None:
+        self.stale = True
+        self.cache.reset("projectile edit")
+        self.articles = self._items(self._request("list_articles"), "articles")
+        self.spawns = self._items(self._request("list_spawns"), "spawns")
+
+    def edit_article(self, index, ops) -> bool:
+        """Apply path operations (projectiles.diff_ops) to article `index` in the source."""
+        def action():
+            if not isinstance(ops, list):
+                raise client.WbError("ops must be a list")
+            if not ops:
+                return STRINGS["no_changes"]
+            self.pause_prefetch()
+            result = self._request("edit_article", {"index": self._integer(index, "index"), "ops": ops})
+            if "proposal" in result or result.get("proposed"):
+                return STRINGS["proposal_created"]
+            self._after_projectile_edit()
+            return "projectile source updated; rebuild + reload to apply"
+
+        return self._run(action)
+
+    def add_article(self, article) -> bool:
+        def action():
+            self.pause_prefetch()
+            result = self._request("add_article", {"article": article})
+            if "proposal" in result or result.get("proposed"):
+                return STRINGS["proposal_created"]
+            self._after_projectile_edit()
+            return "projectile %s added; rebuild + reload to apply" % article.get("name", "")
+
+        return self._run(action)
+
+    def delete_article(self, index) -> bool:
+        def action():
+            self.pause_prefetch()
+            result = self._request("delete_article", {"index": self._integer(index, "index")})
+            if "proposal" in result or result.get("proposed"):
+                return STRINGS["proposal_created"]
+            self._after_projectile_edit()
+            return "projectile deleted; rebuild + reload to apply"
+
+        return self._run(action)
+
+    def edit_spawn(self, row, ordinal, frame=None, article=None, variant=None, angle=None) -> bool:
+        def action():
+            args = {"row": self._row_name(row), "ordinal": self._integer(ordinal, "ordinal")}
+            for key, value in (("frame", frame), ("article", article), ("variant", variant), ("angle", angle)):
+                if value is not None:
+                    args[key] = self._integer(value, key, -32768 if key == "angle" else 0)
+            if len(args) == 2:
+                return STRINGS["no_changes"]
+            self.pause_prefetch()
+            result = self._request("edit_spawn", args)
+            if "proposal" in result or result.get("proposed"):
+                return STRINGS["proposal_created"]
+            self._after_projectile_edit()
+            return "spawn updated; rebuild + reload to apply"
+
+        return self._run(action)
+
+    def add_spawn(self, row, frame, article, variant=0, angle=0) -> bool:
+        def action():
+            args = {"row": self._row_name(row), "frame": self._integer(frame, "frame"),
+                    "article": self._integer(article, "article"), "variant": self._integer(variant, "variant"),
+                    "angle": self._integer(angle, "angle", -32768)}
+            self.pause_prefetch()
+            result = self._request("add_spawn", args)
+            if "proposal" in result or result.get("proposed"):
+                return STRINGS["proposal_created"]
+            self._after_projectile_edit()
+            return "spawn added at frame %d; rebuild + reload to apply" % args["frame"]
+
+        return self._run(action)
+
+    def delete_spawn(self, row, ordinal) -> bool:
+        def action():
+            self.pause_prefetch()
+            result = self._request("delete_spawn", {"row": self._row_name(row), "ordinal": self._integer(ordinal, "ordinal")})
+            if "proposal" in result or result.get("proposed"):
+                return STRINGS["proposal_created"]
+            self._after_projectile_edit()
+            return "spawn deleted; rebuild + reload to apply"
 
         return self._run(action)
 

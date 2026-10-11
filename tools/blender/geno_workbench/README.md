@@ -108,6 +108,39 @@ The large-bank full build was measured at 278–295 s; its gameplay-only loop wa
 reported at about 15 s, not remeasured here. Evidence and limits:
 [hot-reload measurements](../../../_research/hot-reload-2026-10-10.md#measurements-2026-10-10-measurement-lane-no-code-changed).
 
+## Projectiles
+
+Geno articles (projectiles, `geno.md` section 19) are parts of the fighter. **Geno > Projectiles**:
+
+1. **Load projectiles** reads the source's articles and the `CALL geno.article.spawn` calls of the move scripts
+   (server commands `list_articles`, `list_spawns`) and builds a **Projectiles** collection beside the armature:
+   one proxy object per article (`Proj.<name>`; its location is the `spawn` offset, X forward, Z up; replace the
+   proxy mesh with the projectile's look) and one sphere per hitbox (`Proj.<name>.hb<k>`; location = the hitbox
+   `offset`, scale = its `size`, coloured by slot). Everything else is a custom property in the N panel
+   (`gp_*` on the object, `gh_*` on a hitbox): speed, angle, gravity, max fall, acceleration and speed cap, homing,
+   lifetime, max live, bone, despawn on hit / shield / stage / clank, effect, sounds, and per hitbox damage,
+   angle, knockback, element, hit window `start`/`end`, who it hits (`hits/*`: ground, air, reflect, absorb, counter).
+2. The article as the source has it is kept on the object (`geno_article`), so keys the add-on does not show
+   survive, and **Apply to source** writes only the leaves you changed (`edit_article`, path operations): loading and
+   applying without an edit changes nothing (checked on Goku's five articles). **New projectile** adds an object that
+   Apply sends as `add_article`.
+3. **Spawn markers.** Each spawn of the loaded move is a timeline marker `SPAWN <article> #n` at the move frame it
+   fires on (the Workbench frame; the script's `wait` count). Drag it and press Apply: the script's waits are rebalanced
+   (`edit_spawn`) so nothing else in the move changes frame. **Spawn at this frame** adds a call for the selected
+   projectile.
+4. **Ghost path.** Scrubbing the move draws every spawn's flight (yellow line), the projectile at its current life frame
+   and the hitboxes live then. It is `projectiles.trajectory`, a port of the engine's `GenoGame_ArticleStep`
+   (`melee/pc/geno/geno_game_articles.inc`): velocity from `velocity` turned by `angle` and the spawn argument's angle,
+   then each frame brake/accelerate, home, gravity, fall cap, speed cap, then position += velocity. Stage contact and
+   despawn on hit are not simulated.
+5. Edits are source edits; **Rebuild + reload** applies them to the engine. The Qt Workbench has the same list and
+   fields in its **Projectiles** tab and the spawn markers as a lane under the timeline (drag, arrows, Delete).
+
+Checks: `tests/test_projectiles.py` (data model and flight), `selftest_projectiles.py` and
+`selftest_projectiles_session.py` (background Blender; run by `tests/test_projectiles_blender.py`),
+`engine_check/` (the in-game check: `projectile_probe` logs the live article, `compare_probe.py` compares it with the
+ghost path) and `engine_check/shot_projectiles.py` (the screenshot).
+
 ## Environment settings
 
 These settings are local; executable and disc paths do not belong in public docs
