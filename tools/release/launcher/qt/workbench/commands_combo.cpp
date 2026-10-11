@@ -1,5 +1,7 @@
 #include "combo_model.h"
 #include "commands.h"
+#include "geno_asm.h"
+#include <QThread>
 
 // The combo graph (geno.md 25): list/edit/add/delete the routes and strings of the project's combo file. Every write is a
 // Session::commit, so it lands in the history, can be proposed, undone and reverted like a hitbox edit. The Workbench's
@@ -38,7 +40,9 @@ QJsonObject schemaWithKeys(const QStringList &keys, const QJsonArray &required) 
 }
 } // namespace
 
+void registerComboPlayCommands(Session &);
 void registerComboCommands(Session &s) {
+    registerComboPlayCommands(s);
     s.registry().add({"list_routes", t("List the combo routes", "List the combo routes"),
         commandSchema({{"from", argType("string")}}), false,
         [](const QJsonObject &args, CommandContext &ctx) {
@@ -145,23 +149,152 @@ void registerComboCommands(Session &s) {
         }});
 }
 
-// The check behind run_checks: route windows against the moves they leave (declared in commands.h).
+namespace {
+struct StepData {
+    ComboStepInfo info;
+    QString clip, kind; // kind: "move" (a Moves row), "state" (a state of the combo file) or "unknown"
+    int motion = -1;
+    QJsonArray hits;
+};
+int clipFrames(GenoData &data, const QString &clip) {
+    for (const auto &c : data.clips()) if (c.name == clip) return c.frames;
+    return 0;
+}
+QJsonObject hitJson(GenoData &data, const HitboxRef &h) {
+    QString bone;
+    const int joint = data.jointForRole(h.joint);
+    for (const auto &j : data.joints()) if (j.index == joint) bone = j.name;
+    return {{"slot", h.slot}, {"role", h.joint}, {"bone", bone}, {"x", h.x}, {"y", h.y}, {"z", h.z}, {"size", h.size},
+            {"start_frame", h.startFrame}, {"end_frame", h.endFrame}, {"damage", h.damage}};
+}
+void fillHits(GenoData &data, const QVector<HitboxRef> &boxes, StepData &out, int &frames) {
+    int first = 0;
+    for (const auto &hit : boxes) {
+        if (hit.startFrame > 0 && (first == 0 || hit.startFrame < first)) first = hit.startFrame;
+        frames = qMax(frames, hit.endFrame > 0 ? hit.endFrame - 1 : hit.startFrame);
+        out.hits.append(hitJson(data, hit));
+    }
+    out.info.firstHit = first;
+}
+StepData rowStep(GenoData &data, const RowInfo &row) {
+    StepData out; out.kind = "move"; out.clip = row.effectiveClip();
+    out.motion = row.motions.isEmpty() ? -1 : row.motions.first();
+    int frames = out.clip.isEmpty() ? 0 : qMax(0, clipFrames(data, out.clip) - row.cropStart);
+    if (row.iasa > 0) frames = qMax(frames, row.iasa + 1);
+    fillHits(data, data.hitboxes(row.name), out, frames);
+    out.info.length = frames;
+    return out;
+}
+StepData stateStep(Session &s, const QString &name) {
+    auto &data = s.data();
+    StepData out; out.kind = "unknown";
+    const QString bare = comboTargetName(name);
+    for (const auto &v : data.comboStates()) {
+        const auto state = v.toObject();
+        if (state.value("name").toString() != bare) continue;
+        out.kind = "state"; out.clip = state.value("clip").toString();
+        int frames = clipFrames(data, out.clip);
+        const QString script = state.value("script").toString();
+        if (!script.isEmpty()) {
+            const QString dir = data.comboDir();
+            QString error;
+            const QString rel = FileStore::safeRel(dir.isEmpty() ? script : dir + "/" + script, &error);
+            if (error.isEmpty() && s.files().exists(rel)) {
+                const auto bytes = s.files().read(rel);
+                fillHits(data, GenoAsm::parse(QString::fromUtf8(bytes)).hitboxes(), out, frames);
+            }
+        }
+        out.info.length = frames;
+        break;
+    }
+    return out;
+}
+StepData stepData(Session &s, const QString &name) {
+    for (const auto &row : s.data().rows()) if (row.name == name) return rowStep(s.data(), row);
+    return stateStep(s, name);
+}
+QJsonObject segmentJson(const ComboSegment &seg) {
+    return {{"move", seg.move}, {"start", seg.start}, {"cut", seg.cut}, {"length", seg.length}, {"linked", seg.linked},
+            {"route", seg.route}, {"input", seg.input}, {"lo", seg.lo}, {"hi", seg.hi}, {"buffer", seg.buffer},
+            {"cancel_frame", seg.cancelFrame()}};
+}
+struct Planned { QStringList steps; QString name; QVector<ComboSegment> plan; QJsonArray stepJson; };
+Planned planFor(Session &s, const QJsonObject &args) {
+    auto &data = s.data();
+    Planned out;
+    if (args.contains("steps")) {
+        for (const auto &v : args["steps"].toArray()) out.steps << v.toString();
+        out.name = args["name"].toString();
+    } else {
+        const int index = intArg(args, "index", 0, std::numeric_limits<int>::max(), -1);
+        const auto strings = data.strings();
+        if (index < 0 || index >= strings.size()) throw CommandError{t("unknown string: %1", "unknown string: %1").arg(index)};
+        out.name = strings[index].toObject().value("name").toString();
+        for (const auto &v : strings[index].toObject().value("steps").toArray()) out.steps << v.toString();
+    }
+    if (out.steps.isEmpty()) throw CommandError{t("a string needs at least one step", "a string needs at least one step")};
+    QHash<QString, ComboStepInfo> info;
+    for (const auto &step : out.steps) {
+        const auto d = stepData(s, step);
+        info.insert(step, d.info);
+        out.stepJson.append(QJsonObject{{"move", step}, {"kind", d.kind}, {"clip", d.clip}, {"frames", d.info.length},
+                                        {"first_hit", d.info.firstHit}, {"motion", d.motion}, {"hits", d.hits}});
+    }
+    const int buffer = data.comboMeta().value("buffer").toInt(5);
+    out.plan = planComboString(out.steps, data.routes(), info, buffer, args["add_buffer"].toBool());
+    return out;
+}
+} // namespace
+
+void registerComboPlayCommands(Session &s) {
+    s.registry().add({"string_plan", t("The moves, clips, hitboxes and cut frames of a combo string", "The moves, clips, hitboxes and cut frames of a combo string"),
+        commandSchema({{"index", argType("integer")}, {"steps", argType("array")}, {"name", argType("string")}, {"add_buffer", argType("boolean")}}), false,
+        [](const QJsonObject &args, CommandContext &ctx) {
+            needCombo(ctx.session);
+            const auto p = planFor(ctx.session, args);
+            QJsonArray segments;
+            for (const auto &seg : p.plan) segments.append(segmentJson(seg));
+            return QJsonObject{{"name", p.name}, {"steps", p.stepJson}, {"segments", segments}, {"frames", comboStringFrames(p.plan)},
+                               {"routes", ctx.session.data().routes()}, {"buffer", ctx.session.data().comboMeta().value("buffer").toInt(5)}};
+        }});
+    // Sends the same sequence to the engine: each move is posed on its frames, then the next one, cutting where the plan cuts.
+    s.registry().add({"play_string", t("Play a combo string in the game", "Play a combo string in the game"),
+        commandSchema({{"index", argType("integer")}, {"steps", argType("array")}, {"add_buffer", argType("boolean")}, {"realtime", argType("boolean")}}), false,
+        [](const QJsonObject &args, CommandContext &ctx) {
+            needCombo(ctx.session);
+            const auto p = planFor(ctx.session, args);
+            QJsonArray segments;
+            for (const auto &seg : p.plan) segments.append(segmentJson(seg));
+            QJsonObject out{{"name", p.name}, {"segments", segments}, {"frames", comboStringFrames(p.plan)}};
+            if (!ctx.session.engine()) {
+                out["played"] = false;
+                out["note"] = t("The game is not running: the plan is returned, nothing was played", "The game is not running: the plan is returned, nothing was played");
+                return out;
+            }
+            int sent = 0;
+            for (int i = 0; i < p.plan.size(); ++i) {
+                const int motion = p.stepJson[i].toObject().value("motion").toInt(-1);
+                if (motion < 0) continue; // a state that is not a Moves row has no motion the engine can pose
+                engineCall(ctx.session, "row", {{"motion", motion}});
+                for (int f = 1; f <= p.plan[i].cut; ++f) {
+                    engineCall(ctx.session, "frame", {{"motion", motion}, {"frame", f}});
+                    ++sent;
+                    if (args["realtime"].toBool()) QThread::msleep(16);
+                }
+            }
+            out["played"] = true; out["frames_sent"] = sent;
+            return out;
+        }});
+}
+
+// The timing the checks and the string plan need for one Moves row.
 QVector<Problem> comboRouteProblems(Session &s) {
     auto &data = s.data();
     if (!data.hasCombo()) return {};
     QHash<QString, ComboRowTiming> timing;
     for (const auto &row : data.rows()) {
-        ComboRowTiming tm;
-        tm.row = row.name;
-        int frames = 0;
-        for (const auto &clip : data.clips()) if (clip.name == row.effectiveClip()) frames = qMax(0, clip.frames - row.cropStart);
-        frames = qMax(frames, row.iasa + 1 > 1 ? row.iasa + 1 : 0);
-        int first = 0;
-        for (const auto &hit : data.hitboxes(row.name)) {
-            if (hit.startFrame > 0 && (first == 0 || hit.startFrame < first)) first = hit.startFrame;
-            frames = qMax(frames, hit.endFrame > 0 ? hit.endFrame - 1 : hit.startFrame);
-        }
-        tm.length = frames; tm.firstHit = first;
+        const auto step = rowStep(data, row);
+        ComboRowTiming tm; tm.row = row.name; tm.length = step.info.length; tm.firstHit = step.info.firstHit;
         timing.insert(row.name, tm);
         for (int motion : row.motions) timing.insert(QString("motion:%1").arg(motion), tm);
     }

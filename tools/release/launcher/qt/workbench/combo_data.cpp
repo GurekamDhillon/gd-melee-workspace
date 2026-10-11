@@ -62,6 +62,13 @@ static QJsonArray indexed(const QJsonArray &list) {
     return out;
 }
 QJsonArray GenoData::routes() const { return indexed(comboBlock().value("routes").toArray()); }
+QJsonArray GenoData::comboStates() const {
+    return QJsonDocument::fromJson(comboText_.toUtf8()).object().value("states").toArray();
+}
+QString GenoData::comboDir() const {
+    const int slash = project_.combo.lastIndexOf('/');
+    return slash < 0 ? QString() : project_.combo.left(slash);
+}
 QJsonArray GenoData::strings() const { return indexed(comboBlock().value("strings").toArray()); }
 
 QVector<FileChange> GenoData::editComboItem(const QString &list, int index, const QJsonObject &fields, QString *err) const {

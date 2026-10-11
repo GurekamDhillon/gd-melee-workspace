@@ -1,6 +1,7 @@
 #include "combo_model.h"
 #include "commands.h"
 #include <cmath>
+#include <functional>
 
 namespace wb {
 namespace {
@@ -105,5 +106,115 @@ QVector<Problem> comboWindowProblems(const QJsonArray &routes, const QHash<QStri
         }
     }
     return out;
+}
+
+int ComboGraph::node(const QString &name) const {
+    for (int i = 0; i < nodes.size(); ++i) if (nodes[i].name == name) return i;
+    return -1;
+}
+ComboGraph buildComboGraph(const QJsonArray &routes, const QJsonArray &strings) {
+    ComboGraph g;
+    const auto add = [&](const QString &name) {
+        if (name.isEmpty() || name == "*") return -1;
+        int i = g.node(name);
+        if (i < 0) { g.nodes.append({name, 0, 0}); i = int(g.nodes.size()) - 1; }
+        return i;
+    };
+    for (const auto &s : strings) for (const auto &step : s.toObject().value("steps").toArray()) add(step.toString());
+    for (const auto &v : routes) {
+        const auto r = v.toObject();
+        for (const auto &from : comboRouteSources(r)) add(from);
+        add(r.value("to").toString());
+    }
+    for (int i = 0; i < routes.size(); ++i) {
+        const auto r = routes[i].toObject();
+        const int to = g.node(r.value("to").toString());
+        for (const auto &from : comboRouteSources(r)) {
+            const int f = g.node(from);
+            if (f >= 0 && to >= 0 && f != to) g.edges.append({f, to, i, comboInputClass(r)});
+        }
+    }
+    // Depth-first from the nodes in order marks back edges (an edge to a node still on the stack); the rest is a DAG.
+    const int n = int(g.nodes.size());
+    QVector<int> state(n, 0);
+    QVector<bool> back(g.edges.size(), false);
+    QVector<int> order;
+    std::function<void(int)> visit = [&](int u) {
+        state[u] = 1;
+        for (int e = 0; e < g.edges.size(); ++e) {
+            if (g.edges[e].from != u) continue;
+            const int v = g.edges[e].to;
+            if (state[v] == 1) back[e] = true;
+            else if (state[v] == 0) visit(v);
+        }
+        state[u] = 2; order.prepend(u);
+    };
+    for (int u = 0; u < n; ++u) if (state[u] == 0) visit(u);
+    // The strings pin their steps to the left (step i sits in column >= i), then longest path along the forward edges.
+    QVector<int> col(n, 0);
+    for (const auto &s : strings) {
+        const auto steps = s.toObject().value("steps").toArray();
+        for (int i = 0; i < steps.size(); ++i) { const int k = g.node(steps[i].toString()); if (k >= 0) col[k] = qMax(col[k], i); }
+    }
+    for (int u : order)
+        for (int e = 0; e < g.edges.size(); ++e)
+            if (g.edges[e].from == u && !back[e]) col[g.edges[e].to] = qMax(col[g.edges[e].to], col[u] + 1);
+    QVector<int> perCol;
+    for (int i = 0; i < n; ++i) {
+        g.nodes[i].col = col[i];
+        while (perCol.size() <= col[i]) perCol.append(0);
+        g.nodes[i].row = perCol[col[i]]++;
+        g.cols = qMax(g.cols, col[i] + 1);
+        g.rows = qMax(g.rows, g.nodes[i].row + 1);
+    }
+    return g;
+}
+
+QVector<ComboSegment> planComboString(const QStringList &steps, const QJsonArray &routes,
+                                      const QHash<QString, ComboStepInfo> &info, int defaultBuffer, bool addBuffer) {
+    QVector<ComboSegment> plan;
+    int start = 1;
+    for (int i = 0; i < steps.size(); ++i) {
+        ComboSegment seg;
+        seg.move = steps[i];
+        seg.start = start;
+        const auto step = info.value(steps[i]);
+        seg.length = step.length;
+        const int playedOut = step.length > 0 ? step.length : 30;
+        seg.cut = playedOut;
+        if (i + 1 < steps.size()) {
+            // The route to the next step: an exact source beats "*", then priority, then file order.
+            int best = -1, bestScore = -1, bestPriority = 0;
+            for (int r = 0; r < routes.size(); ++r) {
+                const auto route = routes[r].toObject();
+                if (route.value("to").toString() != steps[i + 1] || !validateComboRoute(route).isEmpty()) continue;
+                const auto sources = comboRouteSources(route);
+                const int score = sources.contains(steps[i]) ? 2 : sources.contains("*") ? 1 : 0;
+                if (score == 0) continue;
+                const int priority = route.value("priority").toInt();
+                if (best < 0 || score > bestScore || (score == bestScore && priority > bestPriority)) { best = r; bestScore = score; bestPriority = priority; }
+            }
+            if (best >= 0) {
+                const auto route = routes[best].toObject();
+                const auto window = comboRouteWindow(route);
+                const QString on = route.contains("on") ? route.value("on").toString() : QStringLiteral("hit");
+                int cut = window.first;
+                if ((on == "hit" || on == "block" || on == "contact") && step.firstHit > 0) cut = qMax(cut, step.firstHit);
+                const int buffer = route.contains("buffer") ? route.value("buffer").toInt() : defaultBuffer;
+                if (addBuffer) cut += buffer;
+                if (window.second > 0) cut = qMin(cut, window.second);
+                if (step.length > 0) cut = qMin(cut, step.length);
+                seg.cut = qMax(1, cut);
+                seg.linked = true; seg.route = route.value("name").toString(); seg.input = comboInputClass(route);
+                seg.lo = window.first; seg.hi = window.second; seg.buffer = buffer;
+            }
+        }
+        plan.append(seg);
+        start += seg.cut;
+    }
+    return plan;
+}
+int comboStringFrames(const QVector<ComboSegment> &plan) {
+    return plan.isEmpty() ? 0 : plan.last().start + plan.last().cut - 1;
 }
 } // namespace wb

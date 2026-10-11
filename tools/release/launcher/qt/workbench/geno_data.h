@@ -70,6 +70,8 @@ public:
     QJsonObject comboMeta() const;       // buffer, max_links, ki
     QJsonArray routes() const;           // each with "index"
     QJsonArray strings() const;          // each with "index"
+    QJsonArray comboStates() const;      // the combo file's own "states" (name, clip, script): geno states that are not Moves rows
+    QString comboDir() const;            // project-relative folder of the combo file, "" at the root
     QVector<FileChange> editRoute(int index, const QJsonObject &fields, QString *err) const;
     QVector<FileChange> addRoute(const QJsonObject &route, int *index, QString *err) const;
     QVector<FileChange> removeRoute(int index, QString *err) const;
