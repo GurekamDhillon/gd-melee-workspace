@@ -263,4 +263,4 @@ then `render_ui.py --art out.blend`. The own backend and the Workbench both read
 art (Goku) carries none and is unchanged (renders byte-identical).
 Falcon: the low-poly set was drawn over the high-poly head/body, and the visor (DObj 22, XLU alpha 0.4)
 came in opaque black, hiding the eyes. Joint 43's two DObjs (77, 78) are in the game's high-poly table;
-the grey shoulder slab is DObj 77 and is NOT a visibility-state bug (see the lane report).
+the shoulder slab (DObj 77/78, Image_32/33) is real white shoulder armour that the game draws (checked in a LAB screenshot, 2026-10-11); it only looked grey because the importer multiplied every texture by the MObj diffuse (0.70) although the engine's tex0 is COLORMAP_REPLACE. `apply_replace_diffuse` whitens that Mix factor (falcon.blend, apply_blend_parts.py, build_blend.py). Not matched yet: the vent grille on the armour's top and the white eye triangle's contrast through the 0.4 visor.
