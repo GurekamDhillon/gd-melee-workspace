@@ -217,18 +217,18 @@ FX_STATES = {
     # larger at each; each tier has its own beam package; the stored flash shows the tier. Cosmetic shake / flash calls are FX_EVENTS.
     'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, 'state_exit'), (60, 'P_TrailGokuAura', 'hips', 1.3, 'state_exit'), (180, 'P_TrailGokuAura', 'hips', 1.6, 'state_exit'),
                    (360, 'P_TrailGokuAura', 'hips', 2.0, 'state_exit'), (540, 'P_TrailGokuAura', 'hips', 2.6, 'state_exit'),
-                   (1, 'P_TrailGokuXKameCharge', 'hand.R', 1.0, 'state_exit'), (1, 'P_TrailGokuXKamePressure', 'translation', 1.0, 'state_exit')],
-    'KameStore1': [(1, 'P_TrailGokuXKameStore1', 'hand.R', 1.0, 'state_exit')],
-    'KameStore2': [(1, 'P_TrailGokuXKameStore2', 'hand.R', 1.0, 'state_exit')],
-    'KameStore3': [(1, 'P_TrailGokuXKameStore3', 'hand.R', 1.0, 'state_exit')],
-    'KameStore4': [(1, 'P_TrailGokuAura', 'hips', 1.6, 'state_exit'), (1, 'P_TrailGokuXKameStore4', 'hand.R', 1.0, 'state_exit')],
+                   (1, 'P_TrailGokuXKameCharge', 'hand.R', 1.0, 'state_exit', 'hand.L'), (1, 'P_TrailGokuXKamePressure', 'translation', 1.0, 'state_exit')],
+    'KameStore1': [(1, 'P_TrailGokuXKameStore1', 'hand.R', 1.0, 'state_exit', 'hand.L')],
+    'KameStore2': [(1, 'P_TrailGokuXKameStore2', 'hand.R', 1.0, 'state_exit', 'hand.L')],
+    'KameStore3': [(1, 'P_TrailGokuXKameStore3', 'hand.R', 1.0, 'state_exit', 'hand.L')],
+    'KameStore4': [(1, 'P_TrailGokuAura', 'hips', 1.6, 'state_exit'), (1, 'P_TrailGokuXKameStore4', 'hand.R', 1.0, 'state_exit', 'hand.L')],
     'KameTap': [(5, 'P_TrailGokuXKameTap', 'hand.R', 1.0, 'state_exit')],
     'KameThin': [(6, 'P_TrailGokuXKameThin', 'hand.R', 1.0, 'state_exit')],
     'KameMid': [(6, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.0, 'emitter_life'), (6, 'P_TrailGokuXKameMid', 'hand.R', 1.0, 'state_exit')],
     'KameFull': [(8, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.0, 'emitter_life'), (8, 'P_TrailGokuXKameFull', 'hand.R', 1.0, 'state_exit')],
     'KameMax': [(10, 'P_TrailGokuXKameMuzzleMax', 'hand.R', 1.0, 'emitter_life'), (10, 'P_TrailGokuXKameMax', 'hand.R', 1.0, 'state_exit')],
     'KiCharge': [(1, 'P_TrailGokuAura', 'hips', 1.3, 'state_exit')],
-    'KameSuper': [(1, 'P_TrailGokuAura', 'hips', 1.1, 'state_exit'), (1, 'P_TrailGokuXKameSuperCharge', 'hand.R', 1.0, 'state_exit'),
+    'KameSuper': [(1, 'P_TrailGokuAura', 'hips', 1.1, 'state_exit'), (1, 'P_TrailGokuXKameSuperCharge', 'hand.R', 1.0, 'state_exit', 'hand.L'),
                   (54, 'P_TrailGokuXKameSuperMuzzle', 'hand.R', 1.0, 'emitter_life'), (54, 'P_TrailGokuXKameSuper', 'hand.R', 1.0, 'state_exit')],
     'Recovery': [(5, 'P_TrailGokuVanish', 'chest', 1.0, 'emitter_life')],
     'ITEnd': [(1, 'P_TrailGokuVanish', 'chest', 1.0, 'emitter_life')],
@@ -239,6 +239,9 @@ FX_STATES = {
 }
 
 
+if os.environ.get('KAME_PROBE'):   # measurement build (tools/kame_ball.py): two probe points on the charge, never ship
+    for _st in ('KameCharge', 'KameStore1', 'KameStore2', 'KameStore3', 'KameStore4', 'KameSuper'):
+        FX_STATES[_st] += [(1, 'P_TrailGokuXKameBallProbe0', 'hand.R', 1.0, 'state_exit'), (1, 'P_TrailGokuXKameBallProbeM', 'hand.R', 1.0, 'state_exit', 'hand.L')]
 FX_CLOCK = {'KameCharge': 'game'}   # states whose call frames are state (game) frames, not animation frames: the charge's clip is stretched, its script clock is not game time
 # cosmetic camera events (render-only, no package): state -> [(frame, shake (amp NDC, frames, seed) or None, flash (rgb, alpha, frames) or None)]. The release flash is short
 # and faint on every tier but Max and Super (the owner saw a pale haze); the charge shakes only as it nears Max. Super's numbers follow the camera clip GOK_CAM_CKM_C
@@ -279,9 +282,11 @@ def write_fx(package, fighter, plan, cfg):
         events = [dict({'frame': f}, **({'shake': {'amp': sk[0], 'frames': sk[1], 'seed': sk[2]}} if sk else {}),
                        **({'flash': {'color': fl[0], 'alpha': fl[1], 'frames': fl[2]}} if fl else {})) for f, sk, fl in FX_EVENTS.get(name, [])]
         entries.append({'state': name, 'subaction': st['subaction'], 'clock': FX_CLOCK.get(name, 'animation'), 'script': scripts.get(name, 'moves/rush.genoasm'),
-                        'calls': events + [{'frame': f, 'macro': 'goku_'+pkg[11:].lower(), 'effect': pkg, 'package': pkg, 'bone': role,
-                                   'joint': plan['roles'][role][0], 'offset': [0, 0, 0], 'rotation': [0, 0, 0], 'scale': sc,
-                                   'follow': True, 'when': [], 'end_event': end} for f, pkg, role, sc, end in calls]})
+                        'calls': events + [dict({'frame': c[0], 'macro': 'goku_'+c[1][11:].lower(), 'effect': c[1], 'package': c[1], 'bone': c[2],
+                                   'joint': plan['roles'][c[2]][0], 'offset': [0, 0, 0], 'rotation': [0, 0, 0], 'scale': c[3],
+                                   'follow': True, 'when': [], 'end_event': c[4]},
+                                   # a 6th element names a second joint: the effect origin is the MIDPOINT of the two (geno.md 20.3 "joint2"), the axes the first joint's
+                                   **({'joint2': plan['roles'][c[5]][0]} if len(c) > 5 else {})) for c in calls]})
     (dst/'fx_bindings.json').write_text(json.dumps({'geno_fx_bindings': 1, 'fighter': 'goku-xv2', 'host': 'mario', 'unit_scale': 1.0,
                                                     'states': entries}, indent=1), encoding='utf-8')
     fighter['fx_bindings'] = 'fx/fx_bindings.json'

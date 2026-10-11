@@ -12,8 +12,8 @@ from pathlib import Path
 PORT = Path(__file__).resolve().parents[1]
 WT = PORT.parents[1]                       # the workspace worktree
 MAIN = Path(os.environ.get('GW_ROOT') or 'E:/Projects/Melee Workspace')
-GAME = os.environ.get('GW_MELEE') or str(MAIN / 'worktrees/kame-game')
-BROOT = os.environ.get('GW_BUILD_ROOT') or str(MAIN / '_build/agents/goku-kamehameha')
+GAME = os.environ.get('GW_MELEE') or str(MAIN / 'worktrees/kamepol-game')
+BROOT = os.environ.get('GW_BUILD_ROOT') or str(MAIN / '_build/agents/kamepol')
 GIT_BASH = os.environ.get('GW_GIT_BASH', 'C:/Program Files/Git/bin/bash.exe')
 
 
@@ -56,7 +56,10 @@ def main():
                 'MELEE_PAD_SCRIPT': gen.as_posix(), 'MELEE_UNATTENDED': '1',
                 'MELEE_MAX_SECONDS': a.max_seconds, 'MELEE_LAB_UI': '0', 'MELEE_TURBO': '1' if a.turbo else '0',
                 'MELEE_WINDOW_X': off, 'MELEE_WINDOW_Y': off, 'MELEE_WINDOW_W': '1280', 'MELEE_WINDOW_H': '720',
-                'MELEE_BIND_DUMMY': '1', 'MELEE_RUN_LABEL': f'Kamehameha {a.script}'})
+                'MELEE_BIND_DUMMY': '1', 'MELEE_VOLUME': '0',   # silent: the owner may be listening; audio work captures MELEE_AUDIO_DUMP (full scale)
+                'MELEE_RUN_LABEL': f'Kamehameha {a.script}'})
+    if os.environ.get('KAME_AUDIO_DUMP'):
+        env['MELEE_AUDIO_DUMP'] = os.environ['KAME_AUDIO_DUMP']
     out = WT / '.omo/evidence'; out.mkdir(parents=True, exist_ok=True)
     with open(out / f'{name}.run.txt', 'w', encoding='utf-8') as fh:
         subprocess.run([GIT_BASH, (MAIN / 'tools/port/run.sh').as_posix(), '--max-seconds', a.max_seconds, name, '--iso', iso()],

@@ -102,6 +102,9 @@ def g2c(g):
     return g if g <= SLOW_FROM else int(round(SLOW_FROM + (g - SLOW_FROM) * SLOW))
 
 
+PROBE = False   # python gen_kame.py --probe: zero-damage hitboxes on hand.R (origin + x/y/z at 10) so a run can read the hand frame (tools/kame_ball.py); never ship
+
+
 def charge_script():
     ev = []
     for f, sid, ln, vol in HUM:
@@ -115,6 +118,9 @@ def charge_script():
          '# four steps) loops under it, louder and higher between the beats. The "HA!" (cue 1) plays on release (the beam scripts). The script clock is CLIP frames: the pose',
          '# is reached by frame %d and the clip is then stretched (ANIM_RATE %g) so it does not end and restart the script. No damaging hitbox.' % (SLOW_FROM, SLOW),
          'PUT ANIM_RATE 1.0', 'clear_hitboxes']
+    if PROBE:
+        for slot, (x, y, z) in enumerate(((0, 0, 0), (10, 0, 0), (0, 10, 0), (0, 0, 10))):
+            L.append('hitbox slot=%d joint=@HAND_R@ damage=1 size=1 x=%d y=%d z=%d angle=361 kbg=0 fkb=0 bkb=0 element=2 shield=0' % (slot, x, y, z))
     cur, slowed = 0, False
     for f, cmd in ev:
         if f > SLOW_FROM and not slowed:
@@ -130,6 +136,8 @@ def charge_script():
 
 
 if __name__ == '__main__':
+    import sys
+    PROBE = '--probe' in sys.argv
     for n in TIERS:
         (MOVES / ('kame_%s.genoasm' % n)).write_text(tier(n), encoding='utf-8', newline='\n')
     (MOVES / 'kame_charge.genoasm').write_text(charge_script(), encoding='utf-8', newline='\n')
