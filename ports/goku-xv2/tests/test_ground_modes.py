@@ -7,7 +7,7 @@ sys.path.insert(0, str(PORT / "tools"))
 sys.path.insert(0, str(PORT.parents[1]))
 import xv2_to_artist as X  # noqa: E402
 
-ROWS = list(X.HOVER_ROWS) + list(X.ANCHOR_ROWS) + list(X.NO_GROUND) + ["AttackAirLw", "Attack11", "Squat", "SquatRv", "Catch", "ThrowF", "Nonexistent"]
+ROWS = list(X.PLANT_ROWS) + list(X.ANCHOR_ROWS) + list(X.NO_GROUND) + ["AttackAirLw", "Attack11", "Squat", "SquatRv", "Catch", "ThrowF", "Nonexistent"]
 
 
 def test_empty_file_matches_legacy(tmp_path, monkeypatch):

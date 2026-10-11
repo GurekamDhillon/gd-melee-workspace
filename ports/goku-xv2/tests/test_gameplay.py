@@ -54,7 +54,7 @@ class Gameplay(unittest.TestCase):
         self.assertEqual({a['name'] for a in config['articles']}, {'KameTap','KameMid','KameFull','KameOrb','KameSuper'})
         self.assertEqual(config['lua']['state']['charge'], 'int')
         for state in config['states']:
-            if state['name'] not in ('KameCharge', 'KiCharge') and not state['name'].startswith('KameStore'):  # both hold while the button is down (KiCharge added 2026-10-09)
+            if state['name'] not in ('KameCharge', 'KiCharge') and not state['name'].startswith(('KameStore', 'Flight')):  # both hold while the button is down (KiCharge added 2026-10-09)
                 self.assertEqual(state['iasa'], 'interrupt')
         self.assertEqual(config['jumps']['max'], 2)
 

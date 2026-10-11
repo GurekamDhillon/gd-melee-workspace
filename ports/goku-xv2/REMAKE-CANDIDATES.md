@@ -16,12 +16,12 @@ XV2-derived and never committed. Preview any clip in the LAB (REMAKE or CLIPS mo
 
 | slot | Melee rows | current source | role (combo role) | candidates (rec = recommended; metrics) | owner pick |
 |---|---|---|---|---|---|
-| **KEEP** Idle | Wait, Rebirth, RebirthWait, Sleep | GOK_BAS_STAND_S (Sleep still ground STAND) | Resting stance; must loop, tiny bob, readable as hovering | `(engine default floating idle)` **rec**: owner: "idle, floating" (rows 2-6, 32, 33, 65 are the engine default and the owner is happy with them). No XV2 clip is needed. |  |
+| **KEEP** Idle | Wait, Rebirth, RebirthWait, Sleep | GOK_BAS_STAND (ground idle, planted; phase 3: no hover) | Resting stance; must loop, tiny bob, readable as hovering | `(engine default floating idle)` **rec**: owner: "idle, floating" (rows 2-6, 32, 33, 65 are the engine default and the owner is happy with them). No XV2 clip is needed.<br>note: Owner 2026-10-11: no hover; walking and idle use the grounded XV2 clips with the feet exactly on the floor. |  |
 | **OK** Walk (slow/mid/fast) | WalkSlow, WalkMiddle, WalkFast | GOK_BAS_WALK (ground walk, 70f) x one clip | No walking: a slow drift whose rate scales with stick | `xGOK_BAS_WALK` **rec**: owner: "slow walk forward" (row 7 WalkSlow; 8, 9 "identical"). Ground walk shown while floating (visual only); the owner described no flying drift clip. (70f; reach 2.7 R_Foot f0; high 0.5; fastest L_Foot f24)<br>**look next** (undescribed): `xGOK_BAS_BUKUU_F_S`, `xGOK_BAS_BUKUU_B_S` | **xGOK_BAS_WALK** |
 | **OK** Run | Run, RunDirect | GOK_BAS_RUN (ground run, 30f) | Full-speed travel, loop | `xGOK_BAS_RUN` **rec**: owner: "run cycle, loops perfectly" (row 13 Run). (30f; reach 7.8 R_Hand f12; high 5.7; fastest L_Hand f24) | **xGOK_BAS_RUN** |
-| **OK** Dash (start) | Dash | BOOST_F_00 x0.55, eased into Run | Dash burst before Run | `xGOK_BAS_BOOST_F_00` **rec**: owner: "initial dash" (row 12 Dash). (24f; reach 5.4 L_Hand f0; high 4.3; fastest R_Foot f22) | **xGOK_BAS_BOOST_F_00** |
+| **OK** Dash (start) | Dash | BOOST_F_00 x0.55, eased into Run | Dash burst before Run | `xGOK_BAS_RUN` **rec**: owner direction 2026-10-11 (phase 3: no hover, grounded clips): the start of the run cycle, feet on the floor. XV2 has no ground dash clip; BOOST_F_00 is a flight clip. (30f; reach 7.8 R_Hand f12; high 5.7; fastest L_Hand f24)<br>`xGOK_BAS_BOOST_F_00`: owner: "initial dash" (row 12 Dash). (24f; reach 5.4 L_Hand f0; high 4.3; fastest R_Foot f22) | **xGOK_BAS_RUN** |
 | **GAP** Run brake / stop | RunBrake | BOOST_F_02 from f6 x0.75 | Stopping out of Run | **look next** (undescribed): `xCMN_BAS_BRAKE_S`, `xCMN_BAS_BRAKE_B_S`, `xGOK_BAS_BUKUU_B_S`<br>note: The only clip used (xGOK_BAS_BOOST_F_02) was described as "meant to be runbrake/skid stop, but looks wrong" (row 14): excluded. |  |
-| **OK** Turn (wait / run) | Turn, TurnRun | authored 180 yaw on Wait / BOOST_F_02 + yaw | Turnaround; the earlier note "XV2 has no turn" is wrong, CMN has one | `xGOK_BAS_STAND_S` **rec**: owner: "turn around" (row 10 Turn). Turn (wait). (100f; reach 5.4 L_Hand f0; high 4.5; fastest R_Foot f90)<br>`xGOK_BAS_BOOST_F_02`: owner: "turn run" (row 11 TurnRun). Turn while running (TurnRun only; excluded for RunBrake). (19f; reach 5.4 L_Hand f18; high 4.3; fastest R_Foot f10)<br>**look next** (undescribed): `xCMN_BAS_TURN` | **xGOK_BAS_STAND_S** |
+| **OK** Turn (wait / run) | Turn, TurnRun | authored 180 yaw on Wait / BOOST_F_02 + yaw | Turnaround; the earlier note "XV2 has no turn" is wrong, CMN has one | `xGOK_BAS_STAND` **rec**: owner direction 2026-10-11 (phase 3): the ground idle with an authored 180-degree yaw (XV2 has no turn clip). (100f; reach 5.4 L_Hand f0; high 4.5; fastest L_Hand f34)<br>`xGOK_BAS_STAND_S`: owner: "turn around" (row 10 Turn). Turn (wait). (100f; reach 5.4 L_Hand f0; high 4.5; fastest R_Foot f90)<br>`xGOK_BAS_BOOST_F_02`: owner: "turn run" (row 11 TurnRun). Turn while running (TurnRun only; excluded for RunBrake). (19f; reach 5.4 L_Hand f18; high 4.3; fastest R_Foot f10)<br>**look next** (undescribed): `xCMN_BAS_TURN` | **xGOK_BAS_STAND** |
 | **OK** Crouch | Squat, SquatWait, SquatRv | GOK_BAS_JUMP landing-crouch crop (grounded) | A floating crouch: sink and tuck, never touching the floor | `xGOK_BAS_JUMP` **rec**: owner: "crouch start (fast, short) / crouch hold / unsquat" (rows 30, 31, 34 Squat*). (70f; reach 6.2 L_Hand f4; high 9.6; fastest R_Hand f2) | **xGOK_BAS_JUMP** |
 | **KEEP** Jump squat | KneeBend | JUMP crop | 4-frame squat before the jump (Melee: jump_startup_time) | `(engine default jump squat)` **rec**: owner: "jump squat" (row 15, engine default); no complaint. |  |
 | **GAP** Jump (ground, forward/back) | JumpF, JumpB | JUMP_FRONT_00 / JUMP_BACK_00 x0.33 (55f; owner: poor, punch list 9; queue 4: <= 40f) | Rise out of a jump; Melee row length = rise | **look next** (undescribed): `xGOK_BAS_BUKUU_UP`, `xGOK_BAS_JUMP_BACK_02`, `xGOK_BAS_BOOST_F_01`<br>note: xGOK_BAS_JUMP_FRONT_00 and xGOK_BAS_JUMP_BACK_00 are "terrible jump forward/backward" (rows 16, 17): excluded. |  |
@@ -195,11 +195,11 @@ XV2-derived and never committed. Preview any clip in the LAB (REMAKE or CLIPS mo
 | 16 | WalkMiddle | SOURCE-RETIMED | 70 frames |  |
 | 17 | WalkFast | SOURCE-RETIMED | 70 frames |  |
 | 18 | Turn | AUTHORED | authored: Wait pose, 180-degree yaw ramp |  |
-| 19 | TurnRun | AUTHORED | authored: boost-stop skid crop + 180-degree yaw, eased into Run |  |
-| 20 | Dash | SOURCE-RETIMED | x0.55 speed, 14 frames |  |
+| 19 | TurnRun | AUTHORED | authored: GOK_BAS_RUN crop + 180-degree yaw (grounded; phase 3) |  |
+| 20 | Dash | SOURCE-RETIMED | 14 frames |  |
 | 21 | Run | SOURCE-RETIMED | 30 frames |  |
 | 22 | RunDirect | SOURCE-RETIMED | 30 frames |  |
-| 23 | RunBrake | SOURCE-RETIMED | from f6, x0.75 speed, 16 frames |  |
+| 23 | RunBrake | SOURCE-RETIMED | 16 frames |  |
 | 24 | KneeBend | SOURCE-RETIMED | 8 frames |  |
 | 25 | JumpF | SOURCE-RETIMED | x0.5 speed, 36 frames |  |
 | 26 | JumpB | SOURCE-RETIMED | x0.5 speed, 36 frames |  |
