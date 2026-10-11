@@ -1814,7 +1814,9 @@
       "parity": "move:special_hi",
       "script": "moves/flight.genoasm",
       "hb": "HB-NONE",
-      "windows": []
+      "windows": [],
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     }
   ],
   "articles": [

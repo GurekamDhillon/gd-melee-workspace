@@ -175,5 +175,5 @@ function M.flight_frame(ctx)
   end
 end
 -- Not called: names the cape reappear states so the offline reachability check sees them (the engine picks them by behaviour order).
-function M.it_targets(ctx) ctx.go("ITEnd") ctx.go("ITEndAir") ctx.go("RushCombo") ctx.go("KameSuper") ctx.go("Homing") ctx.go("Recovery") end
+function M.it_targets(ctx) ctx.go("ITEnd") ctx.go("ITEndAir") ctx.go("RushCombo") ctx.go("KameSuper") ctx.go("Homing") ctx.go("Recovery") ctx.go("RecoveryAir") end
 return M
