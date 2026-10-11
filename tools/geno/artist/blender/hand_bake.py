@@ -417,3 +417,53 @@ def _focus(arm, ctrl, act):
     R.set_bound(arm, True)
     _bind(ctrl, act)
     _frame(0)
+
+
+# ---------------------------------------------------------------- FK <-> IK baking over the whole clip
+
+def _limb_channels(ctrl, entry, ik):
+    """[(pose bone name, data path)] that make up one limb's IK controls (ik=True) or FK controls (False)."""
+    if ik:
+        names = [entry["foot"] if entry["kind"] == "leg" else entry["target"], entry["pole"]]
+        if entry["kind"] == "leg":
+            names.append(entry["roll"])
+        out = [(n, "location") for n in names] + [(n, "rotation_euler") for n in names[:1]]
+        return out + ([(entry["roll"], "rotation_euler")] if entry["kind"] == "leg" else [])
+    names = list(entry["fk"])
+    if entry["kind"] == "leg" and len(entry["ik_deform"]) > 3:
+        names.append(R.FK + entry["ik_deform"][3])
+    return [(n, "rotation_euler") for n in names] + [(n, "location") for n in names[:1]]
+
+
+def limb_switch(ctrl, limb_id, to_ik, frames=None):
+    """Bake a limb from FK to IK (or back) on every frame of the playing hand action, so the animator can then edit the other mode.
+
+    Pass 1 reads each frame's pose in the current mode and snaps the other mode's controls onto it; pass 2 keys those controls and
+    the limb's "ik" switch (1 = IK, 0 = FK) on every frame.
+    """
+    entry = R.limbs_info(ctrl)["limbs"][limb_id]
+    act = ctrl.animation_data.action
+    n = frames or frame_count(act)
+    switch = ctrl.pose.bones[entry["switch"]]
+    R.set_ik(ctrl, limb_id, 0.0 if to_ik else 1.0)
+    keep = bpy.context.scene.frame_current
+    channels = _limb_channels(ctrl, entry, to_ik)
+    names = sorted({c[0] for c in channels})
+    poses = []
+    for f in range(n):
+        _frame(f)
+        R.set_ik(ctrl, limb_id, 0.0 if to_ik else 1.0)
+        (R.snap_ik_to_fk if to_ik else R.snap_fk_to_ik)(ctrl, limb_id)
+        poses.append({nm: (ctrl.pose.bones[nm].location.copy(), ctrl.pose.bones[nm].rotation_euler.copy()) for nm in names})
+    for f in range(n):
+        _frame(f)
+        for nm in names:
+            pb = ctrl.pose.bones[nm]
+            pb.location, pb.rotation_euler = poses[f][nm]
+        for nm, path in channels:
+            ctrl.pose.bones[nm].keyframe_insert(path, frame=f, group=nm)
+        switch["ik"] = 1.0 if to_ik else 0.0
+        switch.keyframe_insert('["ik"]', frame=f, group=entry["switch"])
+    R.tag_switch(ctrl)
+    _frame(keep)
+    return n
