@@ -92,8 +92,9 @@ SLOW_FROM = 20                        # state frame where the pose is reached an
 CLIP_FRAMES = 134
 SLOW = round((CLIP_FRAMES - SLOW_FROM) / 1000.0, 4)   # 1000 more game frames of pose before the clip would end and restart the script
 # the hum (the SE 4_charge, 2.1 s, resampled up in four steps by xv2_audio.py HUM) rises in pitch and level between the beats: (from state frame, sfx id, loop length, volume)
-HUM = ((1, 200100, 124, 70), (125, 200100, 124, 76), (181, 200133, 108, 84), (289, 200133, 108, 92), (361, 200136, 94, 100), (455, 200136, 94, 108),
-       (541, 200139, 80, 118), (621, 200139, 80, 127), (701, 200139, 80, 127))
+HUM = ((1, 200100, 124, 70), (125, 200100, 124, 76), (181, 200133, 108, 84), (289, 200133, 108, 92), (361, 200136, 94, 100), (455, 200136, 94, 108)) + tuple((f, 200139, 80, 127 if f > 620 else 118) for f in range(541, 960, 80))   # the last step is the sustained Max hold hum (Mewtwo's LoopFull: no auto-store)
+HOLD_RATE = 0.001   # from clip frame HOLD_FROM the clip nearly freezes: the Max hold lasts ~100 s before the clip ends and restarts the script
+HOLD_FROM = 128
 
 
 def g2c(g):
@@ -124,7 +125,7 @@ def charge_script():
             L.append('wait_until %d' % c)
             cur = c
         L.append(cmd)
-    L += ['wait_until %d' % CLIP_FRAMES]
+    L += ['wait_until %d' % HOLD_FROM, 'PUT ANIM_RATE %g' % HOLD_RATE, 'wait_until %d' % CLIP_FRAMES]
     return chr(10).join(L) + chr(10)
 
 

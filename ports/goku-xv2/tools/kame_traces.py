@@ -16,15 +16,19 @@ def main():
     ap.add_argument('--who', default='samus,mewtwo,goku')
     a = ap.parse_args()
     out = WT / '_build/xv2-kame/traces'; out.mkdir(parents=True, exist_ok=True)
-    for sc in a.scen.split(','):
+    for sc_full in a.scen.split(','):
+        sc, _, rest = sc_full.partition('@')
+        at, _, key = rest.partition(':')
+        extra = (['--cfg', 'at=' + at] if at else []) + (['--cfg', 'key=' + key] if key else [])
+        sc_file = sc_full.replace('@', '_at').replace(':', '_')
         rows = {}
         for w in a.who.split(','):
-            r = subprocess.run([sys.executable, str(PORT / 'tools/kame_run.py'), 'kame_trace', 'KTRACE', '--turbo', '--p1', WHO[w], '--name', f'ktrace-{w}-{sc}',
-                                '--cfg', f'who={w}', '--cfg', f'scen={sc}'], capture_output=True, text=True)
-            rows[w] = [l.split('KTRACE ', 1)[1] for l in (r.stdout + r.stderr).splitlines() if 'KTRACE ' in l and ' t=' in l]
+            r = subprocess.run([sys.executable, str(PORT / 'tools/kame_run.py'), 'kame_trace', 'KTRACE', '--turbo', '--p1', WHO[w], '--name', f'ktrace-{w}-{sc_file}',
+                                '--cfg', f'who={w}', '--cfg', f'scen={sc}'] + extra, capture_output=True, text=True)
+            rows[w] = [l.split('KTRACE ', 1)[1] for l in (r.stdout + r.stderr).splitlines() if 'KTRACE ' in l and (' t=' in l or ' end:' in l or ' edge ' in l)]
         n = max(len(v) for v in rows.values())
-        lines = ['== ' + sc] + ['%-44s | %-44s | %s' % tuple((rows[w][i].split(' ', 2)[2] if i < len(rows[w]) else '') for w in ('samus', 'mewtwo', 'goku')) for i in range(n)]
-        (out / (sc + '.txt')).write_text('\n'.join(lines), encoding='utf-8')
+        lines = ['== ' + sc_full] + ['%-44s | %-44s | %s' % tuple((rows.get(w, [''] * n)[i].split(' ', 2)[2] if i < len(rows.get(w, [])) else '') for w in ('samus', 'mewtwo', 'goku')) for i in range(n)]
+        (out / (sc_file + '.txt')).write_text('\n'.join(lines), encoding='utf-8')
         print('\n'.join(lines))
 
 

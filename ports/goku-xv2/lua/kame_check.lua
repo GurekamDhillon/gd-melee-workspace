@@ -61,7 +61,7 @@ gd.run(function()
     local mid = fire('mid', 240, 'KameMid')               -- after "me" (3 s)
     local full = fire('full', 440, 'KameFull')             -- after "ha" (6 s)
     local mx = fire('max', 580, 'KameMax')                -- after the last "me" (9 s): the full chant
-    local smx = fire('stored_max', 660, 'KameMax')        -- auto-stored at the end of the chant, fired from the store
+    local smx = fire('hold_max', 900, 'KameMax')           -- held at full for ~5 s (no auto-store), then fired
     assert(tap.hits >= 1, 'tap never hit')
     assert(thin.hits >= 2 and mid.hits >= 2 and full.hits >= 3 and mx.hits >= 4, 'beams do not multi-hit: thin ' .. thin.hits .. ' mid ' .. mid.hits .. ' full ' .. full.hits .. ' max ' .. mx.hits)
     assert(tap.dmg < thin.dmg and thin.dmg < mid.dmg and mid.dmg < full.dmg and full.dmg < mx.dmg, 'damage does not rise with the tier')
@@ -94,18 +94,34 @@ gd.run(function()
     gd.log('KAMECHECK resume: charge on re-entry ' .. resumed)
     assert(resumed >= st.stored, 'stored charge not resumed')
     gd.wait(14); gd.input(1, {buttons = 'B'}, 2); gd.wait(220)
-    -- the charge runs by itself: no button held; at full on the ground it auto-stores and exits, B fires it at once
+    -- the charge runs by itself: no button held. At full (610 frames) it does NOT auto-store: like Mewtwo's LoopFull it holds in the loop indefinitely
+    -- (ground and air), keeps its level, and B fires the Max beam at once; shield stores it (KameStore4) and B fires the stored charge at once.
     reset()
     gd.input(1, {buttons = 'B'}, 2); gd.wait(640)
     local ss = lua_state()
-    gd.log(string.format('KAMECHECK autostore: stored %d state %s', ss.stored, tostring(gd.player(1).motion_name)))
-    assert(ss.stored >= 60, 'full charge did not store by itself')
-    assert(gd.player(1).motion_name ~= 'KameCharge', 'still in the charge loop at full on the ground')
-    gd.wait(45)
+    gd.log(string.format('KAMECHECK hold: at full charge %d stored %d state %s', ss.charge, ss.stored, tostring(gd.player(1).motion_name)))
+    assert(ss.charge >= 60, 'charge did not reach full')
+    assert(gd.player(1).motion_name == 'KameCharge', 'left the charge loop at full: ' .. tostring(gd.player(1).motion_name))
+    gd.wait(1500)   -- 25 more seconds
+    ss = lua_state()
+    gd.log(string.format('KAMECHECK hold25: charge %d state %s faults=%s', ss.charge, tostring(gd.player(1).motion_name), tostring(assert(gd.fighter_lua(1)).faults)))
+    assert(gd.player(1).motion_name == 'KameCharge' and ss.charge >= 60, 'the full charge did not hold for 25 s')
     gd.input(1, {buttons = 'B'}, 2)
     local instant = false
+    for i = 1, 14 do gd.wait(1); local m = gd.player(1).motion_name; if m == 'KameMax' or m == 'KameSuper' then instant = true; break end end
+    gd.log('KAMECHECK hold fire: Max fired from the held full charge = ' .. tostring(instant))
+    assert(instant, 'the held full charge did not fire on B')
+    gd.wait(200)
+    -- shield stores the full charge at the Max flash; B fires it at once
+    reset()
+    gd.input(1, {buttons = 'B'}, 2); gd.wait(640)
+    gd.input(1, {buttons = 'L'}, 2); gd.wait(4)
+    gd.log('KAMECHECK store4: state ' .. tostring(gd.player(1).motion_name) .. ' stored ' .. lua_state().stored)
+    assert(gd.player(1).motion_name == 'KameStore4' and lua_state().stored >= 60, 'shield did not store the full charge at tier 4')
+    gd.wait(45)
+    gd.input(1, {buttons = 'B'}, 2)
+    instant = false
     for i = 1, 8 do gd.wait(1); local m = gd.player(1).motion_name; if m == 'KameMax' or m == 'KameSuper' then instant = true; break end end
-    gd.log('KAMECHECK instant: stored full fired at once = ' .. tostring(instant))
     assert(instant, 'stored full charge did not fire on B')
     gd.wait(200)
     -- roll cancel (stick flick during the loop, the natives' ftCo_8009917C): leaves the charge into a roll with the level kept
@@ -132,6 +148,7 @@ gd.run(function()
     -- a stored FULL charge survives a hit
     reset()
     gd.input(1, {buttons = 'B'}, 2); gd.wait(640)
+    gd.input(1, {buttons = 'L'}, 2); gd.wait(4)
     gd.set_percent(1, 12); gd.wait(45)
     gd.input(1, {buttons = 'B'}, 3); gd.wait(3)
     local kept = lua_state().charge

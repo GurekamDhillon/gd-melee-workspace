@@ -859,7 +859,7 @@ def charge_package(name, S=11.4, crg_scale=1.0, motes=True, chant=CHANT_AT, ball
     phases = [(int(a * rr), max(int(b * rr), int(a * rr) + 2), max(3, int(iv * rr / rate)) if ring_rate else iv, sz) for a, b, iv, sz in ((20, 60, 40, 7.0), (60, 180, 30, 8.0), (180, 360, 22, 9.5), (360, 540, 15, 11.0), (540, 700, 9, 13.0))]
     for i, (a, b, iv, sz) in enumerate(phases):
         pkg.emitters.append(ring_emitter(pkg, 'rx_ring_gather%d' % i, sz * crg_scale, (0.45, 0.8, 1.0), 3.0, [0.0, 0.0, 0.0], (0.0, 0.0, 4.0),
-                                         {'start': a, 'duration': b - a, 'one_time': False, 'interval': iv}, life=14, sc=(0.2, 1.7), contract=True))
+                                         {'start': a, 'duration': 0 if i == len(phases) - 1 else b - a, 'one_time': False, 'interval': iv}, life=14, sc=(0.2, 1.7), contract=True))   # the last phase never ends: the Max hold
     finish_package(pkg)
     return pkg
 
@@ -874,7 +874,7 @@ def pressure_package(name, rate=1.0):
     # a faint continuous pulse underneath, quickening
     for i, (a, b, iv, sz) in enumerate(((20, 180, 34, 12.0), (180, 360, 24, 16.0), (360, 700, 14, 22.0))):
         pkg.emitters.append(ring_emitter(pkg, 'rx_pulse%d' % i, sz, (0.4, 0.7, 1.0), 1.4, flat, (0.0, 0.5, 0.0),
-                                         {'start': int(a * rate), 'duration': int((b - a) * rate), 'one_time': False, 'interval': iv}, life=22, sc=(0.3, 1.2), dissolve=False))
+                                         {'start': int(a * rate), 'duration': 0 if i == 2 else int((b - a) * rate), 'one_time': False, 'interval': iv}, life=22, sc=(0.3, 1.2), dissolve=False))   # the last pulse never ends (the Max hold)
     finish_package(pkg)
     return pkg
 

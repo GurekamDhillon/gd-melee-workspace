@@ -244,7 +244,7 @@ FX_CLOCK = {'KameCharge': 'game'}   # states whose call frames are state (game) 
 # (Position range 1.6 / 0.4 / 5.0 m over 225 frames: a long heavy shake once the beam is out, approximated as two decaying shakes).
 BLUE = [0.55, 0.8, 1.0]
 FX_EVENTS = {
-    'KameCharge': [(420, (0.0025, 120, 3), None), (540, (0.006, 70, 4), (BLUE, 0.07, 3)), (590, (0.010, 40, 5), None)],
+    'KameCharge': [(420, (0.0025, 120, 3), None), (540, (0.006, 70, 4), (BLUE, 0.07, 3)), (590, (0.010, 40, 5), None)] + [(f, (0.004, 45, 7 + f % 5), None) for f in range(640, 1300, 45)],   # the Max hold: a low sustained tremor
     'KameStore4': [(1, None, (BLUE, 0.05, 3))],
     'KameMid': [(6, (0.007, 8, 5), None)],
     'KameFull': [(8, (0.013, 12, 5), (BLUE, 0.05, 2))],

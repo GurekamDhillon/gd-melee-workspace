@@ -67,7 +67,8 @@ function M.charge_frame(ctx)
   if s.charge < FULL and s.age % UNIT == 0 then   -- one charge unit every UNIT frames: full CHARGE_FRAMES after Start (the natives take ~133 / 137; the owner wants ~10 s)
     s.charge = s.charge + 1
     s.stored = s.charge
-    if s.charge >= FULL and not ctx.self.air then go_store(ctx, 4) end   -- full on the ground: auto-store (Samus x2230 >= x18 -> Cancel)
+    -- at FULL it stays in the loop on the ground AND in the air, like Mewtwo's LoopFull (ftMt_SpecialNLoopFull_Anim never changes state; owner: it can be held forever): it
+    -- leaves only by B (fire), L/R (store), a roll flick, or a hit; Samus's auto-store (ftSs_SpecialNHold_Anim) is not used
   end
 end
 -- the beam releases: a short step back on the ground (Mewtwo recoil: gr_vel = -facing * x4 * level); in the air the body hovers while the

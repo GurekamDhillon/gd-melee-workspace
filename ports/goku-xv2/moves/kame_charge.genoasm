@@ -30,4 +30,12 @@ wait_until 89
 sfx behavior=1 sfx_id=200139 volume=127 panning=64
 wait_until 98
 sfx behavior=1 sfx_id=200139 volume=127 panning=64
+wait_until 107
+sfx behavior=1 sfx_id=200139 volume=127 panning=64
+wait_until 116
+sfx behavior=1 sfx_id=200139 volume=127 panning=64
+wait_until 125
+sfx behavior=1 sfx_id=200139 volume=127 panning=64
+wait_until 128
+PUT ANIM_RATE 0.001
 wait_until 134
