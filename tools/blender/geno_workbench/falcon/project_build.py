@@ -183,7 +183,7 @@ def prepare(project, package, states, template, *, root, game=None, seed=None):
                   rebuild=[sys.executable, str(Path(__file__).with_name("build.py")), "--project", "{project}"])
     art = Path(config["art_blend"])
     config["art_blend"] = str(art if art.is_absolute() else root / art)
-    config.setdefault("art", {})["calibration_action_offset"] = 0   # Falcon: Blender action frame N == engine frame N (Goku: N-1)
+    config.setdefault("art", {})["calibration_action_offset"] = 0   # Blender action frame N == engine frame N (the default since the frame-numbering change; kept explicit)
     config["art"]["bone_aliases"] = {j["name"]: f"JOBJ_{j['index']}" for j in plan["joints"]}
     manifest = {"version": 1, "package": str(package), "workspace": str(root),
                 "game": str(Path(game or os.environ.get("GW_MELEE") or root / "melee").resolve()),

@@ -78,10 +78,12 @@ def test_choose_engine(tmp_path):
 
 def test_project_action_offset(tmp_path):
     import json
-    (tmp_path / "workbench.json").write_text(json.dumps({"schema": "workbench/1", "art": {"calibration_action_offset": 0}}))
-    assert api.set_project(str(tmp_path)) and api.session().calibration_action_offset == 0
-    (tmp_path / "workbench.json").write_text(json.dumps({"schema": "workbench/1", "art": {}}))
+    (tmp_path / "workbench.json").write_text(json.dumps({"schema": "workbench/1", "art": {"calibration_action_offset": 1}}))
     assert api.set_project(str(tmp_path)) and api.session().calibration_action_offset == 1
+    # The default is 0: since the frame-numbering change Blender action frame N is engine frame N for every fighter
+    # (Goku calibrated 5.0 units off on jab1 with the old default 1).
+    (tmp_path / "workbench.json").write_text(json.dumps({"schema": "workbench/1", "art": {}}))
+    assert api.set_project(str(tmp_path)) and api.session().calibration_action_offset == 0
 
 
 def test_unpreviewable_list_matches_the_launcher_header():

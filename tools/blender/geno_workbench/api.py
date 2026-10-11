@@ -117,7 +117,7 @@ class WbSession:
         self.bone_aliases: dict[str, str] = {}
         # engine frame the add-on calibrates at (action frame = this - 1); 1 unless retail blending needs a later one
         self.calibration_frame = 1
-        self.calibration_action_offset = 1
+        self.calibration_action_offset = 0
         self.travel_anchor = None   # root position the in-place view keeps fixed (the row's first frame)
         self.loaded_row = ""   # the name given to load_row (list_rows' name; self.row is the engine's label)
         self.row_lengths: dict[str, int] = {}   # learned from the server when a frame is past a move's end
@@ -1179,7 +1179,7 @@ def set_project(project_dir: str) -> bool:
         sess.calibration_frame = cal_frame
         # Blender action frame for engine frame N is N - offset. Goku's clips are one frame behind (offset 1, the
         # default); Falcon's line up (offset 0), which takes the calibrated pose error from 0.20 to ~0.0001.
-        cal_offset = art.get("calibration_action_offset", 1)
+        cal_offset = art.get("calibration_action_offset", 0)
         if isinstance(cal_offset, bool) or not isinstance(cal_offset, int) or cal_offset not in (0, 1):
             raise ValueError("art.calibration_action_offset must be 0 or 1")
         sess.calibration_action_offset = cal_offset

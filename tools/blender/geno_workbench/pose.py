@@ -439,7 +439,7 @@ def calibrate(arm, session):
                 _finite_matrix(matrix, joint)
             blender_rest = blender_rest_matrices(
                 arm, jm, action_name=action_name,
-                frame=cal_frame - int(getattr(session, "calibration_action_offset", 1))
+                frame=cal_frame - int(getattr(session, "calibration_action_offset", 0))
             )
             missing = sorted(set(jm.by_index) - set(blender_rest))
             if missing:
