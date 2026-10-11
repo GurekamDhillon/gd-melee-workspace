@@ -19,7 +19,7 @@ gd.run(function()
     end
     local function press(spec, n) gd.input(1, spec, n or 2) end
     press({buttons = 'B'}, 2)
-    if SCEN == 'tap' then step(2); press({buttons = 'B'}, 2); step(120)
+    if SCEN == 'tap' then step(15); press({buttons = 'B'}, 2); step(120)
     elseif SCEN == 'shield30' then step(32); press({buttons = 'L'}, 2); step(80)
     elseif SCEN == 'roll' then step(32); gd.input(1, {x = 0}, 1); gd.wait(1); gd.input(1, {x = 127}, 3); step(90)
     elseif SCEN == 'jump' then step(32); press({buttons = 'X'}, 2); step(80)

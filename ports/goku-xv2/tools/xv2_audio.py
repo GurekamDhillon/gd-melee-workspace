@@ -26,7 +26,6 @@ sys.path.insert(0, str(ROOT))
 
 # clip name -> (folder, file) ; {v} = '' (Japanese) or '_en'
 CLIPS = {
-    'GnKameVoxCharge':      ('CAR_BTL_S000_KMH_GOK_VOX{v}', '0_BDB_GOK_071.wav'),
     'GnKameSeCharge':       ('CAR_BTL_S000_KMH_SE', '2_4_charge.wav'),
     'GnKameVoxFire':        ('CAR_BTL_S000_KMH_GOK_VOX{v}', '1_BDB_GOK_072.wav'),
     'GnKameSeShot':         ('CAR_BTL_S000_KMH_SE', '3_4_shot.wav'),
@@ -35,8 +34,11 @@ CLIPS = {
     'GnKameSuperSeShot':    ('CAR_BTL_U000_CKM_SE', '1_Superkamehame_shot.wav'),
 }
 # retail sound id -> clip (the scripts in moves/kame_*.genoasm play these ids)
-BINDINGS = {200121: 'GnKameVoxCharge', 200124: 'GnKameSeCharge', 200115: 'GnKameVoxFire', 200118: 'GnKameSeShot',
-            200127: 'GnKameSuperSeCharge', 200130: 'GnKameSuperVoxFire', 200112: 'GnKameSuperSeShot'}
+# The chant (VOX cue 0, BDB_GOK_071, 0.90 s "ka-me-ha-me") is cut into its four syllables at the energy minima so the charge can say "ka... me... ha... me..." across its
+# length (SYLLABLES: seconds in the source clip); XV2 plays it in one go while it holds the pose. Cue 1 (BDB_GOK_072) is the "HA!" on release.
+SYLLABLES = {'GnKameVox1': (0.0, 0.205), 'GnKameVox2': (0.205, 0.325), 'GnKameVox3': (0.325, 0.51), 'GnKameVox4': (0.51, 0.905)}
+BINDINGS = {200121: 'GnKameVox1', 200124: 'GnKameVox2', 200127: 'GnKameVox3', 200130: 'GnKameVox4', 200115: 'GnKameVoxFire', 200118: 'GnKameSeShot', 200100: 'GnKameSeCharge',
+            200103: 'GnKameSuperSeCharge', 200106: 'GnKameSuperVoxFire', 200109: 'GnKameSuperSeShot'}
 
 
 PEAK = {'Vox': 0.55, 'Se': 0.40}   # peak (fraction of full scale) per clip kind: a voice and an SE start together, their sum must not clip the mix
@@ -87,6 +89,21 @@ def convert(lang='jp', out=OUT):
             w.writeframes(np.round(x).astype('<i2').tobytes())
         convert_wav(tmp, out / (name + '.gnsnd'))   # already 32 kHz: stored as is, no second resample
         done[name] = round(n / 32000, 2)
+    src = WAV / 'CAR_BTL_S000_KMH_GOK_VOX{v}'.format(v='_en' if lang == 'en' else '') / '0_BDB_GOK_071.wav'
+    data, rate = read_wav(src)
+    x = resample(data, rate)
+    x = x - x.mean()
+    x *= PEAK['Vox'] * 32767 / max(1.0, np.abs(x).max())     # one gain for all four, so the syllables keep their relative levels
+    for name, (a, b) in SYLLABLES.items():
+        seg = x[int(a * 32000):int(b * 32000)].copy()
+        k = 256   # 8 ms fades at both cuts: no click
+        seg[:k] *= np.linspace(0, 1, k); seg[-k:] *= np.linspace(1, 0, k)
+        tmp = out / (name + '.wav')
+        with wave.open(str(tmp), 'wb') as w:
+            w.setnchannels(1); w.setsampwidth(2); w.setframerate(32000)
+            w.writeframes(np.round(seg).astype('<i2').tobytes())
+        convert_wav(tmp, out / (name + '.gnsnd'))
+        done[name] = round(len(seg) / 32000, 3)
     return done
 
 

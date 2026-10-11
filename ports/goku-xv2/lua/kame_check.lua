@@ -4,12 +4,21 @@ gd.run(function()
   local ok, why = pcall(function()
     assert(gd.wait_until(function() return gd.match().active and gd.match().frame > 90 end, 6000), 'no LAB match')
     gd.cpu_mode(2, 'stand')
+    -- a Max beam can KO the dummy (it respawns for a while): wait for a fighter that can be moved
+    local function tp(port, x, y)
+      for i = 1, 40 do
+        local ok = pcall(gd.teleport, port, x, y)
+        if ok then return end
+        gd.wait(30)
+      end
+      error('could not teleport port ' .. port)
+    end
     local function reset(py, vx)
       vx = vx or 30
       gd.input(1, {}, 1); gd.wait(2)
-      gd.teleport(1, 0, py or 0); gd.teleport(2, vx, 0)
+      tp(1, 0, py or 0); tp(2, vx, 0)
       gd.set_percent(1, 0); gd.set_percent(2, 0); gd.wait(70)
-      gd.teleport(1, 0, py or 0); gd.teleport(2, vx, 0); gd.set_percent(2, 0); gd.wait(3)
+      tp(1, 0, py or 0); tp(2, vx, 0); gd.set_percent(2, 0); gd.wait(3)
     end
     local results = {}
     -- native model: B once enters the self-running charge; B again fires at the current level. `hold` = frames from the enter press to the fire press
@@ -46,17 +55,19 @@ gd.run(function()
       assert(seen, 'state not reached: ' .. want)
       return r
     end
-    local tap = fire('tap', 16, 'KameTap', 0, 24)      -- 16 frames: past the 10-frame Start, a few charge frames
-    local mid = fire('mid', 50, 'KameMid')
-    local full = fire('full', 105, 'KameFull')         -- about 47 charge units
-    local max = fire('max', 160, 'KameFull')           -- full on the ground auto-stores at ~130 frames (the 9-frame store ends ~140), B fires it from the store
+    -- the chant tiers (lua/goku.lua T1..T4 = units 5 / 17 / 35 / 52; a unit every 2nd frame after the 10-frame Start; "ka" at age 12, "me" 44, "ha" 80, "me" 114)
+    local tap = fire('tap', 14, 'KameTap', 0, 24)        -- B before "ka" is finished (ages 11 to 19): tier 0, the quick blast
+    local thin = fire('thin', 28, 'KameThin', 0, 28)      -- after "ka"
+    local mid = fire('mid', 60, 'KameMid')                -- after "me"
+    local full = fire('full', 95, 'KameFull')             -- after "ha"
+    local mx = fire('max', 120, 'KameMax')                -- after the last "me": the full chant
+    local smx = fire('stored_max', 165, 'KameMax')        -- auto-stored at the end of the chant, fired from the store
     assert(tap.hits >= 1, 'tap never hit')
-    assert(mid.hits >= 2 and full.hits >= 3, 'beam does not multi-hit: mid ' .. mid.hits .. ' full ' .. full.hits)
-    assert(tap.dmg < mid.dmg and mid.dmg < full.dmg, 'damage does not scale with the tier')
-    assert(tap.hb < mid.hb and mid.hb < full.hb, 'beam duration does not scale with the tier')
-    assert(max.maxhb > full.maxhb, 'a full 60-frame charge does not hit harder than 45 (drag damage ' .. max.maxhb .. ' vs ' .. full.maxhb .. ')')
-    assert(full.dmg <= 30 and max.dmg <= 30, 'full beam too strong: ' .. full.dmg)
-    local air = fire('air_full', 105, 'KameFull', 45)
+    assert(thin.hits >= 2 and mid.hits >= 2 and full.hits >= 3 and mx.hits >= 4, 'beams do not multi-hit: thin ' .. thin.hits .. ' mid ' .. mid.hits .. ' full ' .. full.hits .. ' max ' .. mx.hits)
+    assert(tap.dmg < thin.dmg and thin.dmg < mid.dmg and mid.dmg < full.dmg and full.dmg < mx.dmg, 'damage does not rise with the tier')
+    assert(tap.hb < thin.hb and thin.hb < mid.hb and mid.hb < full.hb and full.hb < mx.hb, 'beam duration does not rise with the tier')
+    assert(mx.dmg <= 32 and smx.dmg <= 32, 'max beam too strong: ' .. mx.dmg)
+    local air = fire('air_max', 120, 'KameMax', 45)
     assert(air.span < 6, 'no hover during the air beam: y span ' .. air.span)
 
     -- shield cancel at 30 charge frames stores and leaves; B resumes; auto-store at full; roll cancel keeps the level; a hit wipes a partial charge
@@ -75,9 +86,9 @@ gd.run(function()
     local st = lua_state()
     gd.log(string.format('KAMECHECK store: charge before %d, stored %d, state %s', c0, st.stored, tostring(gd.player(1).motion_name)))
     assert(st.stored >= 25 and st.stored <= 36, 'store failed')
-    assert(gd.player(1).motion_name == 'KameStore', 'shield did not enter KameStore: ' .. tostring(gd.player(1).motion_name))
+    assert(gd.player(1).motion_name == 'KameStore2', 'shield did not enter the tier-2 flash state KameStore2: ' .. tostring(gd.player(1).motion_name))
     gd.wait(30)
-    assert(gd.player(1).motion_name ~= 'KameStore', 'KameStore did not end')
+    assert(tostring(gd.player(1).motion_name):sub(1, 9) ~= 'KameStore', 'KameStore did not end')
     gd.input(1, {buttons = 'B'}, 2); gd.wait(3)
     local resumed = lua_state().charge
     gd.log('KAMECHECK resume: charge on re-entry ' .. resumed)
@@ -93,7 +104,7 @@ gd.run(function()
     gd.wait(45)
     gd.input(1, {buttons = 'B'}, 2)
     local instant = false
-    for i = 1, 8 do gd.wait(1); local m = gd.player(1).motion_name; if m == 'KameFull' or m == 'KameSuper' then instant = true; break end end
+    for i = 1, 8 do gd.wait(1); local m = gd.player(1).motion_name; if m == 'KameMax' or m == 'KameSuper' then instant = true; break end end
     gd.log('KAMECHECK instant: stored full fired at once = ' .. tostring(instant))
     assert(instant, 'stored full charge did not fire on B')
     gd.wait(200)
@@ -126,7 +137,7 @@ gd.run(function()
     local kept = lua_state().charge
     local mk = tostring(gd.player(1).motion_name)
     gd.log('KAMECHECK fullkeep: after a hit, charge/state ' .. kept .. ' ' .. mk)
-    assert(kept >= 60 or mk == 'KameFull' or mk == 'KameSuper', 'a full stored charge did not survive a hit')
+    assert(kept >= 60 or mk == 'KameMax' or mk == 'KameSuper', 'a full stored charge did not survive a hit')
     gd.wait(200)
 
     -- rewind exactness across charge + release + beam

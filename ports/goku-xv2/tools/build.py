@@ -211,12 +211,19 @@ FX_ARTICLES = {'KameOrb': 'P_TrailGokuOrb', 'KameTap': 'P_TrailGokuBeam', 'KameM
                'KameFull': 'P_TrailGokuBeamBig', 'KameSuper': 'P_TrailGokuBeamSuper'}
 # state name -> [(frame, package, role, scale, end_event)]: ki aura while charging, vanish bursts, the rush trail
 FX_STATES = {
-    # Kamehameha presentation: converted from XV2's own effects (tools/xv2_fx.py; KAMEHAMEHA.md section 3)
-    'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, 'state_exit'), (1, 'P_TrailGokuXKameCharge', 'hand.R', 1.0, 'state_exit')],
-    'KameStore': [(1, 'P_TrailGokuXKameStore', 'hand.R', 1.0, 'state_exit')],   # the stored-charge flash (Samus's Cancel state, ftSs_SpecialNCancel_Anim)
-    'KameTap': [(5, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.0, 'emitter_life'), (5, 'P_TrailGokuXKameTap', 'hand.R', 1.0, 'state_exit')],
+    # Kamehameha presentation: converted from XV2's own effects (tools/xv2_fx.py; KAMEHAMEHA.md section 3). The charge ball and aura step up at each chant
+    # syllable (animation frames 20 / 44 / 80 / 114 = the tiers); each tier has its own beam package; the stored flash shows the tier.
+    'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, 'state_exit'), (44, 'P_TrailGokuAura', 'hips', 1.3, 'state_exit'), (80, 'P_TrailGokuAura', 'hips', 1.6, 'state_exit'),
+                   (114, 'P_TrailGokuAura', 'hips', 2.0, 'state_exit'), (1, 'P_TrailGokuXKameCharge', 'hand.R', 1.0, 'state_exit')],
+    'KameStore1': [(1, 'P_TrailGokuXKameStore1', 'hand.R', 1.0, 'state_exit')],
+    'KameStore2': [(1, 'P_TrailGokuXKameStore2', 'hand.R', 1.0, 'state_exit')],
+    'KameStore3': [(1, 'P_TrailGokuXKameStore3', 'hand.R', 1.0, 'state_exit')],
+    'KameStore4': [(1, 'P_TrailGokuAura', 'hips', 1.6, 'state_exit'), (1, 'P_TrailGokuXKameStore4', 'hand.R', 1.0, 'state_exit')],
+    'KameTap': [(5, 'P_TrailGokuXKameTap', 'hand.R', 1.0, 'state_exit')],
+    'KameThin': [(6, 'P_TrailGokuXKameThin', 'hand.R', 1.0, 'state_exit')],
     'KameMid': [(6, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.0, 'emitter_life'), (6, 'P_TrailGokuXKameMid', 'hand.R', 1.0, 'state_exit')],
     'KameFull': [(8, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.0, 'emitter_life'), (8, 'P_TrailGokuXKameFull', 'hand.R', 1.0, 'state_exit')],
+    'KameMax': [(10, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.6, 'emitter_life'), (10, 'P_TrailGokuXKameMax', 'hand.R', 1.0, 'state_exit')],
     'KiCharge': [(1, 'P_TrailGokuAura', 'hips', 1.3, 'state_exit')],
     'KameSuper': [(1, 'P_TrailGokuAura', 'hips', 1.1, 'state_exit'), (1, 'P_TrailGokuXKameSuperCharge', 'hand.R', 1.0, 'state_exit'),
                   (54, 'P_TrailGokuXKameSuperMuzzle', 'hand.R', 1.0, 'emitter_life'), (54, 'P_TrailGokuXKameSuper', 'hand.R', 1.0, 'state_exit')],
@@ -344,7 +351,7 @@ def apply(package, art_build, ir_path=None):
     lib = AUTHOR/'clip-library.json'
     if lib.exists():  # LAB CLIPS library: unbound declared rows 303.. (geno.md fighter.rows)
         fighter.setdefault('fighter', {})['rows'] = [c['name'] for c in load(lib)['clips']] + \
-            [n for n in ('ITEnd', 'KiCharge', 'KameStore', 'KameSuper', 'RushCombo') if n in plan_clip_names(package)]
+            [n for n in ('ITEnd', 'KiCharge', 'KameStore1', 'KameStore2', 'KameStore3', 'KameStore4', 'KameThin', 'KameMax', 'KameSuper', 'RushCombo') if n in plan_clip_names(package)]
     if cfg.get('cape'):
         fighter['cape'] = cfg['cape']  # Instant Transmission (geno.cape) parameters
     for st in fighter.get('states', []):  # states that name a declared clip get its own row number

@@ -117,3 +117,22 @@ Existing: the effect runtime already has an effect-only bloom (half-resolution, 
 6. **Dynamic lights** (`*.light.ema`: colour/intensity over time on the fighter/stage): lighting hook on the Melee side: ~2 days, invasive.
 7. **Screen shake / zoom on release** (BAC `Camera`, EAN `g_x_LND`): a fighter-script camera command: ~1 day.
 8. **Refraction ribbon** (`T1_VFX_TRC_RI`): reuses the distortion pass on a ribbon: ~0.5 day after 2.
+
+## Parameters for the FX lane (data in `_build/xv2-kame/fx/lane_params.json`, written by `ports/goku-xv2/tools/xv2_lane_params.py`)
+**The finding that matters most: XV2's beam body is a tapering *trail*, not a constant-width tube.** Each ETR ribbon's `Scale` (width, metres) is a curve over the age of a segment:
+a segment is born at the projectile head at full width and narrows with age, so the body is a comet tail behind a fast head (BSA speed field 10 per frame). Our two crossed constant-width quads cannot look like it.
+Kamehameha (`Kmh_Beam.etr`, Beam = tier of BAC entry 0, Beam2 = entry 1/20, Beam3 = entry 2/30; frames are 60 fps; width curve keys `age:width_m`; alpha keys `age:alpha`):
+
+| ribbon | texture | blend | width (m) by age | alpha by age | scroll (uv/frame) | extrude / hold / seg |
+|---|---|---|---|---|---|---|
+| Beam: core | beam00 | alpha | 0:0.69, 11:0.2, 18:0.05 | 0:1, 14:1, 18:0 | v -0.05 | 60 / 18 / 73 |
+| Beam: streaks | ring_beamCor | alpha | 0:0.65, 12:0.175, 20:0.1 | 0:0, 1:1, 16:1, 18:0.25, 20:0 | v +0.10 | 58 / 20 / 69 |
+| Beam: cloud | T2_UV01 | alpha | 0:0.45, 12:-0.025, 20:-0.1 | 0:0, 1:1, 18:1, 20:0 | u 0.01 v 0.04 | 58 / 20 / 73 |
+| Beam2 (core / streaks / cloud) | same | alpha | 0.79 to 0.04 (11) to 0.005 (18); 0.75 to 0.05 (13) to 0.005 (22); 0.55 to 0.06 (13) to 0.005 (22) | same shape, hold 18 / 22 / 22 | v -0.08 / 0.10 / 0.07 | 80 |
+| Beam3 | same | alpha | 0.94 to 0.05 (12) to 0.005 (20); 0.8 to 0.1 (14) to 0.005 (24); 0.8 to 0.1 (13) | hold 20 / 24 / 22 | v -0.05 / 0.10 / 0.07 | 100 / 100 / 80 |
+Flags `AutoOrientation, NoDegrade, DoublePointOfMiddleSection, DisplayMiddleSection` (camera-facing strip, a doubled middle point, 73 segments); colour 1,1,1 all three (the blue is in the textures); `UV repeat Wrap/Wrap`.
+Super (`Ckm_Beam.etr`, 4 ribbons, widths 2.15 (refraction, skipped) / 1.68 / 1.35 / 1.25 m, hold 32 / 20 / 20 / 30; ring_beamCor tinted 0,0.3,1; `beam00` is additive, `T2_UV01` and ring alpha).
+Per-tier suggestion for the lane (our hit-sphere radius in model units / the XV2 metre scale `S` used by `xv2_fx.py`): width multiplier 2.0 / 2.6 / 3.5 / 4.6 / 5.8 for tiers 0..4 and 3.2 for Super at the curves above (a ribbon of 0.69 m x 4.6 is 3.2 model units half width, matching the Full sphere radius 4.2/1.43), segment life 12 / 24 / 34 / 46 / 62 frames (= `life` in `xv2_fx.TIERS`).
+**Bloom-worthy emissive layers** (materials with `Glare`): `Kmh_Bas` core `Cor` (GlareCol 0,1,1, additive, TexScrl u 3.7/s, MatCol1 G 1.84 = hot), `Kmh_Hand` `cor` (1,1.1,1.2) and `hand` (0,1,1), particle materials `add_G`, `nml_G*` (0.5-1.3 colour; the `.ptcl.emm` GlareCol floats are 1.1,1.2,1.3 for `add_G`), Super: `Ckm_Hand` glare 1,1.1,5 / 1,1.7,5 (a strong blue), `Ckm_Fire` 1.66,1.66,2.0. Per-material glare tint plus a wider blur is what the lane needs; the colour is above 1.0 so it is an HDR multiplier.
+**Camera / shake.** The BAC `Camera` events (EAN index 0 on bone `g_x_LND`): KMH entry 0 frames 54-64, entry 1 frames 58-73, entry 2 frames 58-79 (10 / 15 / 21 frames long, starting 2 frames before the projectile). The KMH skill ships **no** `.cam.ean` in the export (EanType 1 / 2 refer to the character / common camera banks: `GOK.cam.ean` clip 0 is the 210-frame intro, `CMN.cam.ean` has 34 clips, none a Kamehameha shake), so the shake amplitude is not recoverable from the data we have; use 10 / 15 / 21 frames as the duration and a small amplitude as a design choice. The Super has its own: `000_GOK_CKM.cam.ean` clip `GOK_CAM_CKM_C` (225 frames, BAC camera event frames 0-240): Node Position range (x 1.56, y 0.39, z 4.99) and Rotation range (0.77, 0.47, 1.9) degrees over the clip, 221 / 223 keys.
+Time scales (BAC, game frames): entry 0 x1.75 (0-42), x1.5 (42-60), x0.3 (84-88) and x0.7 (88-105): the slow-motion beat at the end of the beam is part of XV2's presentation.

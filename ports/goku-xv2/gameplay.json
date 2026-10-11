@@ -962,9 +962,67 @@
       }
     },
     {
-      "name": "KameStore",
+      "name": "KameThin",
       "behavior": "geno.ground",
-      "subaction": "clip:KameStore",
+      "subaction": "clip:KameThin",
+      "like": "motion:343",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "interrupt",
+      "move_tag": "special",
+      "lua": {
+        "enter": "thin_enter",
+        "frame": "thin_frame"
+      }
+    },
+    {
+      "name": "KameMax",
+      "behavior": "geno.ground",
+      "subaction": "clip:KameMax",
+      "like": "motion:343",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "interrupt",
+      "move_tag": "special",
+      "lua": {
+        "enter": "max_enter",
+        "frame": "max_frame"
+      }
+    },
+    {
+      "name": "KameStore1",
+      "behavior": "geno.ground",
+      "subaction": "clip:KameStore1",
+      "like": "motion:345",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "none",
+      "move_tag": "special"
+    },
+    {
+      "name": "KameStore2",
+      "behavior": "geno.ground",
+      "subaction": "clip:KameStore2",
+      "like": "motion:345",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "none",
+      "move_tag": "special"
+    },
+    {
+      "name": "KameStore3",
+      "behavior": "geno.ground",
+      "subaction": "clip:KameStore3",
+      "like": "motion:345",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "none",
+      "move_tag": "special"
+    },
+    {
+      "name": "KameStore4",
+      "behavior": "geno.ground",
+      "subaction": "clip:KameStore4",
       "like": "motion:345",
       "phys": "auto",
       "coll": "both",
@@ -1107,6 +1165,16 @@
       "name": "ITEnd",
       "parity": "move:special_hi",
       "script": "moves/itend.genoasm"
+    },
+    {
+      "name": "KameThin",
+      "parity": "move:special_n",
+      "script": "moves/kame_thin.genoasm"
+    },
+    {
+      "name": "KameMax",
+      "parity": "move:special_n",
+      "script": "moves/kame_max.genoasm"
     }
   ],
   "articles": [

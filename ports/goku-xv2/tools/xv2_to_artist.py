@@ -449,8 +449,15 @@ def row_specs(source):
     if ckm:
         out['KameSuper']={'clip':ckm,'loop':False,'frames':70,'start':40,'library':True,
                           'status':'PICK provisional (skill ULT 000_GOK_CKM): Super Kamehameha, fire from source f70 (Melee f30)'}
-    # KameStore: the charge put away (shield cancel, or the full-charge auto-store): the cupped-hands pose held at clip frame 40 for 36 frames, with a flash
-    out['KameStore']={**charge,'frames':9,'loop':False,'hold_source':40,'start':40,'library':True,'status':'PICK provisional (skill KMH BAC 12 f40): the charge stored, held pose + flash'}
+    # KameStore1..4: the charge put away (shield cancel, or the full-chant auto-store), one state per tier so each flash can differ: the cupped-hands pose
+    # held at clip frame 40 for 9 frames (the natives' Cancel states last 8)
+    for i in range(1,5):
+        out['KameStore%d'%i]={**charge,'frames':9,'loop':False,'hold_source':40,'start':40,'library':True,'status':'PICK provisional (skill KMH BAC 12 f40): the charge stored, tier %d flash'%i}
+    # the two extra release tiers (thin = tier 1, max = tier 4) use the same fire clip as Tap/Mid/Full, from clip frame 48
+    out['KameThin']={**charge,'frames':36,'loop':False,'hold_source':None,'start':48,'time_factor':1.2,'events':[],'library':True,
+                     'status':'PICK provisional (skill KMH BAC 12): fire from f48 at x1.2, 36 frames (tier 1)'}
+    out['KameMax']={**charge,'frames':75,'loop':False,'hold_source':None,'start':48,'time_factor':0.7,'events':[],'library':True,
+                    'status':'PICK provisional (skill KMH BAC 12): fire from f48 at x0.7, 75 frames (tier 4)'}
     if atc23:
         out['RushCombo']={'clip':atc23,'loop':False,'frames':36,'start':4,'library':True,
                           'status':'PICK provisional (BAC 427 clip GOK_ATC_023, hit f10): Dragon Rush follow-up flurry'}

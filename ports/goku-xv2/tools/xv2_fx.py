@@ -641,12 +641,15 @@ def beam_package(name, S, L, life, ramp, *, bas_scale, hand_scale, particles, ri
     return pkg
 
 
-def charge_package(name, S=11.4, crg_scale=1.0, motes=True):
-    """Effect 0 of the EEPK: <px>_Crg (the ball's sprite stack; XV2 repeats it at x0.4, x0.6, x1.0 as the charge goes on), <px>_CrgON (a flash at each step)
-    and Kmh_tsubu (motes). Our charge is Lua-counted (15 frames a step, 60 = full): the stack steps up at 0 / 20 / 40 and the flash fires at 15 / 30 / 45 / 60."""
+CHANT_AT = (20, 44, 80, 114)   # animation frames of the four tier steps: "ka" said, then the onsets of "me" / "ha" / "me" (lua/goku.lua T1..T4)
+
+
+def charge_package(name, S=11.4, crg_scale=1.0, motes=True, chant=CHANT_AT):
+    """Effect 0 of the EEPK: <px>_Crg (the ball's sprite stack), <px>_CrgON (a flash) and Kmh_tsubu (motes), stepped with the chant: the stack grows at each
+    syllable onset (x0.3 at the start, then x0.45 / 0.65 / 0.85 / 1.1 for tiers 1..4) and a flash fires on each onset, bigger every time."""
     px = SK['px']
     pkg = Pkg(name)
-    steps = ((0, 0.4), (20, 0.6), (40, 1.0))
+    steps = ((0, 0.3),) + tuple(zip(chant, (0.45, 0.65, 0.85, 1.1)))
     for i, (st, sc) in enumerate(steps):
         nxt = steps[i + 1][0] if i + 1 < len(steps) else 0
         es = emp_emitters(pkg, px + '_Crg', S, sc * crg_scale, start0=st, loop_end=(nxt - st) if nxt else 0, depth_test=False, offset=(0, 0, 4.0))
@@ -654,7 +657,7 @@ def charge_package(name, S=11.4, crg_scale=1.0, motes=True):
             e['name'] = '%s_s%d' % (e['name'], i)
         pkg.emitters.extend(es)
     if (XV2 / (SK['code'] + '.pbind.emb') / (px + '_CrgON.emp.json')).exists():
-        for i, (st, sc) in enumerate(((15, 0.6), (30, 0.8), (45, 1.0), (60, 1.2))):
+        for i, (st, sc) in enumerate(zip(chant, (0.6, 0.85, 1.15, 1.6))):
             es = emp_emitters(pkg, px + '_CrgON', S, sc * crg_scale, start0=st, loop_end=0, depth_test=False, offset=(0, 0, 4.0))
             for e in es:
                 e['name'] = '%s_f%d' % (e['name'], i)
@@ -664,12 +667,14 @@ def charge_package(name, S=11.4, crg_scale=1.0, motes=True):
     return pkg
 
 
-def store_package(name, S=11.4):
-    """The stored-charge flash: the ball stack at full size, one CrgON flash, for the 9 frames of the KameStore state (the natives' Cancel states last 8: traced)."""
+def store_package(name, tier, S=11.4):
+    """The stored-charge flash for the 9 frames of a KameStore<tier> state (the natives' Cancel states last 8: traced): the ball stack and a CrgON flash at the
+    tier's chant size (x0.45 / 0.65 / 0.85 / 1.1) so the player reads the stored tier."""
     pkg = Pkg(name)
     px = SK['px']
-    pkg.emitters.extend(emp_emitters(pkg, px + '_Crg', S, 1.0, start0=0, loop_end=9, depth_test=False, offset=(0, 0, 4.0)))
-    pkg.emitters.extend(emp_emitters(pkg, px + '_CrgON', S, 1.4, start0=0, loop_end=0, depth_test=False, offset=(0, 0, 4.0)))
+    sc = (0.45, 0.65, 0.85, 1.1)[tier - 1]
+    pkg.emitters.extend(emp_emitters(pkg, px + '_Crg', S, sc, start0=0, loop_end=9, depth_test=False, offset=(0, 0, 4.0)))
+    pkg.emitters.extend(emp_emitters(pkg, px + '_CrgON', S, sc * 1.5, start0=0, loop_end=0, depth_test=False, offset=(0, 0, 4.0)))
     return pkg
 
 
@@ -685,10 +690,12 @@ def muzzle_package(name, S, fire_scale=1.0):
     return pkg
 
 
-TIERS = {   # name: (model units per XV2 metre, beam length, life, ramp)  -- length/life/ramp are KAMEHAMEHA.md section 2 (gameplay); S makes the head as wide as the hit sphere
-    'Tap': (2.6, 22, 18, 3),
+TIERS = {   # name: (model units per XV2 metre, beam length, life, ramp)  -- length/life/ramp follow tools/gen_kame.py (gameplay); S makes the head as wide as the hit sphere
+    'Tap': (2.0, 18, 12, 3),
+    'Thin': (2.6, 24, 24, 3),
     'Mid': (3.5, 28, 34, 4),
     'Full': (4.6, 36, 46, 5),
+    'Max': (5.8, 48, 62, 6),
 }
 KMH_PARTICLES = (('Fireptcl', 1.6), ('4ptcl', 1.6), ('LineAll', 1.6), ('Wav', 1.8))
 CKM_PARTICLES = (('Tail', 2.0), ('Wav', 2.0), ('Last', 1.0), ('FireLine', 2.8), ('4ptcl', 1.5), ('LineAll', 3.0))
@@ -701,12 +708,13 @@ def main():
         pk.append(beam_package('P_TrailGokuXKame%s' % t, S, L, life, ramp, bas_scale=1.6, hand_scale=0.45, particles=KMH_PARTICLES))
     pk.append(charge_package('P_TrailGokuXKameCharge'))
     pk.append(muzzle_package('P_TrailGokuXKameMuzzle', 3.0))
-    pk.append(store_package('P_TrailGokuXKameStore'))
+    for t in range(1, 5):
+        pk.append(store_package('P_TrailGokuXKameStore%d' % t, t))
     # Super Kamehameha (ULT 000_GOK_CKM): effect 0 (charge at the hand, Ckm_Crg x2) and effect 1 (the beam: Bas x2.5, Hand x0.9, the particle files); S 3.2 keeps the
     # head a little wider than the Super hit spheres (8.6 world) without swallowing the screen
     use_skill('CKM')
     pk.append(beam_package('P_TrailGokuXKameSuper', 3.2, 52, 64, 6, bas_scale=2.5, hand_scale=0.9, particles=CKM_PARTICLES, ribbon_width=0.8))
-    pk.append(charge_package('P_TrailGokuXKameSuperCharge', crg_scale=2.0, motes=False))
+    pk.append(charge_package('P_TrailGokuXKameSuperCharge', crg_scale=2.0, motes=False, chant=(8, 22, 36, 48)))   # the Super's chant is compressed into its 54 frames
     pk.append(muzzle_package('P_TrailGokuXKameSuperMuzzle', 4.5, fire_scale=2.0))
     summ = {}
     for p in pk:

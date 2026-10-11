@@ -36,11 +36,12 @@ def main():
     kv = dict(c.split('=', 1) for c in a.cfg)
     gen = PORT / 'lua' / ('_gen_' + name + '.lua')   # untracked scratch copy with CFG prepended
     gen.write_text('CFG={' + ','.join('%s=%r' % (k, v) for k, v in kv.items()) + '}' + chr(10) + (PORT / 'lua' / (a.script + '.lua')).read_text(encoding='utf-8'), encoding='utf-8')
+    p2 = a.vs if '/' in a.vs else a.vs + '/cpu0'
     off = '100' if a.visible else '30000'
     env = dict(os.environ)
     env.update({'GW_ROOT': str(MAIN), 'GW_MELEE': GAME, 'GW_BUILD_ROOT': BROOT,
                 'MELEE_MODS_DIR': os.environ.get('KAME_MODS') or str(WT / '_build/goku-xv2/author-source/package/mods'),
-                'MELEE_SCENE': f'mode=lab;p1={a.p1};p2={a.vs}/cpu0;stage=fd;items=off;time=0',
+                'MELEE_SCENE': f'mode=lab;p1={a.p1};p2={p2};stage=fd;items=off;time=0',
                 'MELEE_PAD_SCRIPT': gen.as_posix(), 'MELEE_UNATTENDED': '1',
                 'MELEE_MAX_SECONDS': a.max_seconds, 'MELEE_LAB_UI': '0', 'MELEE_TURBO': '1' if a.turbo else '0',
                 'MELEE_WINDOW_X': off, 'MELEE_WINDOW_Y': off, 'MELEE_WINDOW_W': '1280', 'MELEE_WINDOW_H': '720',

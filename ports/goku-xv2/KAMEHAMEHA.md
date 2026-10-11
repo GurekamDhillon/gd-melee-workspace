@@ -25,6 +25,27 @@ spot dodge do not cancel in either native** (no branch in either IASA; traced: S
 and charging it is the point. A hit wipes a partial stored charge, a stored full one survives (owner). The level is kept in `stored` every frame, so a roll, a cancel or a hit never loses it.
 Traces (retail Samus | retail Mewtwo | Goku, tap, shield at 30, roll, jump, full, fire from stored): `tools/kame_traces.py` -> `_build/xv2-kame/traces/*.txt`; summary in the research note.
 
+## 0b. The chant tiers (2026-10-10, owner: each syllable raises the tier, each tier looks and behaves differently); supersedes the Tap/Mid/Full table in section 2
+
+XV2's chant "ka-me-ha-me" (VOX cue 0, BDB_GOK_071, 0.905 s) is cut at its energy minima into four syllables (`tools/xv2_audio.py`, `SYLLABLES`: 0-0.205, 0.205-0.325, 0.325-0.51, 0.51-0.905 s)
+and spread across the charge; the release plays the "HA!" (cue 1). A syllable's onset raises the tier. Frames are counted from the B press (state start); the charge runs 1 unit per 2 frames after
+10 frames of Start (60 units = 130 frames = auto-store on the ground).
+
+| tier | reached at | voice trigger / heard | charge units | release state | startup (frames after B fires) | beam (game frames) | spheres (radius / reach, model units) | drag hit | finisher | pushes Goku back | look (XV2 package) |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 0 | B at ages 11 to 19 | before "ka" is finished | 0-4 | `KameTap` | 5 | 8 | 2.0 / 16 | 1.0% fixed kb 8, 4 stun | 2%, 55 deg, kbg 40 bkb 20 | 0.3 | `P_TrailGokuXKameTap`: small head, no muzzle |
+| 1 | "ka" said, age 20 | 7 / ~12 to 19 | 5 | `KameThin` | 6 | 20 | 2.4 / 21 | 1.1%, kb 7 | 3%, 55 deg, kbg 50 bkb 25 | 0.6 | `...Thin` head x2.6 |
+| 2 | "me" age 44 | 44 / 44 | 17 | `KameMid` | 6 | 28, 6 hits | 3.2 / 25 | 1.0%, kb 8, 6 stun | 4%, 45 deg, kbg 80 bkb 35 | 0.9 | `...Mid` x3.5 + muzzle |
+| 3 | "ha" age 80 | 80 / 80 | 35 | `KameFull` | 8 | 40, 8 hits | 4.2 / 32.5 | 1.2%, kb 8, 6 stun | 7%, 40 deg, kbg 90 bkb 50 | 1.2 | `...Full` x4.6 + muzzle |
+| 4 | last "me" age 114 | 114 / 114 | 52 | `KameMax` | 10 | 50, 10 hits | 5.4 / 42 | 1.3%, kb 8, 6 stun | 10%, 38 deg, kbg 95 bkb 60 | 2.0 | `...Max` x5.8 + muzzle x1.6 |
+| Super | tier 4 + full 60 units + ki 100 | its own 4 syllables compressed into 54 frames | 60 | `KameSuper` | 54 | 60 | 6.0 / 46 | 2.2% | 16%, 40 deg, kbg 80 bkb 60 | 1.6 | `P_TrailGokuXKameSuper*` |
+
+Drag-hit damage is scaled by the charge units as before (x(0.8 + 0.4 x units/60)). Numbers live in `tools/gen_kame.py` (`TIERS`), `lua/goku.lua` (thresholds `T1..T4`, recoil) and `tools/xv2_fx.py` (`TIERS`). The charge visuals step with the chant:
+`P_TrailGokuXKameCharge` grows its ball at animation frames 20 / 44 / 80 / 114 (x0.45 / 0.65 / 0.85 / 1.1 of full) with a bigger CrgON flash each time, and the aura (`P_TrailGokuAura`) is re-attached larger at
+44 / 80 / 114 (x1.3 / 1.6 / 2.0). Storing (shield, or the auto-store) enters `KameStore1..4` for the tier reached, each a 9-frame flash at that tier's ball size (`P_TrailGokuXKameStore1..4`); a stored
+tier 4 fires on the next B and survives a hit, a partial tier is wiped by one. Look parameters for the engine FX lane: `python ports/goku-xv2/tools/xv2_lane_params.py` -> `_build/xv2-kame/fx/lane_params.json`
+(ribbon width/alpha/colour curves and scroll speeds, glare materials, camera events); the per-tier suggestions are in the research note, "Parameters for the FX lane".
+
 ## 1. Charge: modelled on Samus Charge Shot and Mewtwo Shadow Ball
 
 Read from the decomp (`src/melee/ft/kinds/ftSamus/ftsamusspecialn.c`, `.../ftMewtwo/ftmewtwospecialn.c`, items
