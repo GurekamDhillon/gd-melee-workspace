@@ -64,6 +64,34 @@ def ensure(source, stamp, outputs, config, builder):
     return True
 
 
+def drop_foreign_cache(build):
+    """Remove a CMake cache that was configured for another build directory.
+
+    Dawn stores its dependency paths (DAWN_ABSEIL_DIR, ...) as cache entries. A cache
+    copied or inherited from another root (an old C:/gdm alias, or _build/ax86) pins
+    those paths there, and configuring then fails (add_subdirectory outside the tree).
+    Only the cache/CMakeFiles go; fetched dependency sources and builds are kept.
+    """
+    cache = build / "CMakeCache.txt"
+    if not cache.is_file():
+        return
+    home = None
+    for line in cache.read_text(errors="replace").splitlines():
+        if line.startswith("CMAKE_CACHEFILE_DIR:"):
+            home = line.split("=", 1)[1].strip()
+            break
+    if home is not None and os.path.normcase(os.path.realpath(home)) == os.path.normcase(os.path.realpath(build)):
+        text = cache.read_text(errors="replace").replace("\\", "/")
+        prefix = build.resolve().as_posix().lower()
+        foreign = [l for l in text.splitlines() if l.startswith("DAWN_") and "_DIR:" in l
+                   and "/_deps/dawn-src" in l and not l.split("=", 1)[1].lower().startswith(prefix)]
+        if not foreign:
+            return
+    print(f"aurora    dropping CMake cache configured for another directory ({build})", flush=True)
+    cache.unlink()
+    shutil.rmtree(build / "CMakeFiles", ignore_errors=True)
+
+
 def seed_dependencies(build, caches):
     """Copy source caches, never configure/build/patch inside another lane."""
     options = []
@@ -188,6 +216,7 @@ def main():
         if args.platform == "windows":
             cache = Path(os.environ.get("GW_DEPS_SOURCE_CACHE", str(root / "_build/ax86m/_deps")))
             seed_dependencies(build, [cache, cache.parent.parent / "ax86/_deps"])
+            drop_foreign_cache(build)
             subprocess.run(["cmd.exe", "/d", "/c", str(recipe)], env=env, check=True)
         else:
             caches = [Path(os.environ["GW_DEPS_SOURCE_CACHE"])] if os.environ.get("GW_DEPS_SOURCE_CACHE") else []
