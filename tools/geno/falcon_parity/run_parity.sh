@@ -19,9 +19,8 @@ cfg="$out/$run.lua"
   printf '}\n'
   cat "$HERE/falcon_parity.lua"
 } > "$cfg"
-# Reproducible runs: MELEE_DETERMINISTIC=1 runs one logic frame per render, so a scripted gd.input hold is read on every logic frame it covers (unset, a retrace
-# read can land one frame early and an input set after it reaches the game a frame late: Falco hit_fsmash_p100_tech_b 406/407). The seed pins the RNG.
-export MELEE_DETERMINISTIC="${MELEE_DETERMINISTIC:-1}"
+# Reproducible runs: the seed pins the RNG. Even so, a run can differ at a knife-edge scenario when the 60 Hz pad alarm fires twice in one logic frame
+# (the sample for the next frame is taken before the Lua step that sets its input; the game logs "pad: P1 hold frame saw 2 PADReads"). Seed 777 gives 407/407 for Falco.
 export MELEE_TEST_SEED="${MELEE_TEST_SEED:-777}"
 export MELEE_LOG=all,-render,-gobj,-heap,-dvd,-mex,-watchdog,-tex,-audio,-snap,-frontend   # all lifts the per-prefix flood limit (400 lines per 10 s) that would drop trace lines
 scene="mode=lab;p1=$tok/hu;p2=mario/hu;stage=fd;items=off;time=0"
