@@ -310,6 +310,12 @@ The clone base is found from the onLoad callback (the retail kind whose `ftData_
 The Atlas CSS lists the fighter with its clone base's icon (`fs_css_roster`). Limits, said in the verdict note: no own sound bank / `sound.zip`, no announcer call, own effect banks, Kirby copy hat, per-costume CSPs and stock icons. Netplay: identity is the file content (like an m-ex fighter), both players need the mod.
 Test packages: `tools/nucleus/make_synth_fighter.py` (an ACE-added fighter repackaged from your own ACE disc, never committed) and the real Giga Bowser zip of the Nucleus seed folder.
 
+**Proven (2026-10-10, vanilla disc, FD vs a CPU, `_build/agents/nucfighters`):** ACE's own B. Falcon repackaged by `make_synth_fighter.py`, installed by the real installer (`NF_INSTALL_ZIP=... build.sh --native-test nucleus-core`), loads as FighterKind 33 / CK 34 with its own file `PlN1195.dat`
+(log: `modfighter: fighter 27 (ext 26) "B. Falcon"`, `gw: 1 m-ex fighter kinds from MxDt.dat`), and the same Lua move list on ACE and on the vanilla disc gives frame-identical (action, animation frame, live hitboxes, damage) for idle, jab, f-tilt, d-tilt, u-tilt and Raptor Boost (side-B).
+Not identical or not compared yet: N-B, down-B and up-B (the ACE log dropped rows, so the alignment is not trustworthy). The real Giga Bowser zip installs ("Works, partial") but PANICS at `ftparts.c:453` (fighter parts num not match): its skeleton (76 bones) is not Bowser's, and a vanilla `PlCo.dat` has no parts row for it.
+**A mod fighter reads its CLONE BASE's `PlCo.dat` rows** (`ftCommonData_ExtendKindTable` under `Mex_FtSynth()`), so only fighters whose skeleton equals the base's work today. Building a `FighterPartsTable` row from `boneDefinitions` is the missing piece.
+Netplay (content-hash identity through the existing slot table), the 31-slot cap messages and the rewind test are NOT yet exercised for a mod fighter.
+
 ## 5. The split tool
 
 `tools/mex_port/split_modpack.py --pack _build/packs/ace-set/ace --name ace --version 2.0.0`
