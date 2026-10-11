@@ -12,7 +12,6 @@ $isoLine = Get-Content -LiteralPath (Join-Path $mainRoot '.env') | Where-Object 
 if (-not $isoLine) { throw 'GW_ISO_VANILLA is missing from workspace .env' }
 $gokuIso = ($isoLine -replace '^\s*(?:export\s+)?GW_ISO_VANILLA\s*=\s*','').Trim().Trim('"').Trim("'")
 if (-not $env:GW_MELEE) { $env:GW_MELEE = Join-Path $mainRoot 'melee' }   # the integrated game (has the REMAKE mode)
-}
 $labSrc = if ($env:GW_LAB_SRC) { $env:GW_LAB_SRC } else { Join-Path $env:GW_MELEE 'pc/geno/mods/geno-lab' }
 $pkgMods = Join-Path $mainRoot '_build/goku-xv2/author-source/package/mods'
 $mods = Join-Path $mainRoot '_build/goku-xv2/remake-mods'
