@@ -2,6 +2,7 @@
 # The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
 # Instant Transmission roll forward (phase 4, owner 2026-10-11: "like Mewtwo"). Timing and intangibility from Mewtwo's own roll measured in this engine: 37 frames,
 # intangible f5-22. The XV2 clip chain (ESC_KUR vanish, reappear) is the row; the body is hidden and intangible for the gap, and the row's root path carries it forward.
+# A forward roll turns him round as he reappears (Melee: Mario and Mewtwo both end a forward roll facing the other way; back roll and spot dodge keep the facing).
 # No ki cost; no hitbox.
 PUT ANIM_RATE 1.0
 wait_until 5
@@ -10,6 +11,7 @@ PUT HIDDEN 1
 sfx behavior=1 sfx_id=165 volume=90 panning=64
 wait_until 23
 PUT HIDDEN 0
+PUT FACING 0
 body_state state=0
 sfx behavior=1 sfx_id=165 volume=70 panning=64
 wait_until 34

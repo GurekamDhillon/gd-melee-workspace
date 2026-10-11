@@ -8,13 +8,20 @@ gd.run(function()
     gd.cpu_mode(2, 'stand')
     local function name() return tostring(gd.player(1).motion_name) end
     local function ki() local c = gd.combo(1); return c and c.ki or -1 end
+    local function tp(p, x, y)
+      for i = 1, 80 do
+        if pcall(gd.teleport, p, x, y) then return end
+        gd.wait(30)
+      end
+      error('could not teleport port ' .. p)
+    end
     local function reset(k)
       gd.input(1, {}, 1); gd.wait(3)
-      gd.teleport(1, 0, 0); gd.teleport(2, 60, 0)
+      tp(1, 0, 0); tp(2, 60, 0)
       gd.set_percent(1, 0); gd.set_percent(2, 0)
       gd.combo_ki(1, k or 0)
       gd.wait(40)
-      gd.teleport(1, 0, 0); gd.teleport(2, 60, 0)
+      tp(1, 0, 0); tp(2, 60, 0)
       gd.combo_ki(1, k or 0); gd.wait(2)
     end
     local function nofault()
@@ -158,23 +165,23 @@ gd.run(function()
         (xe - x0) * face, ye - y0, tostring(fell), kb, ki(), tostring(regen), table.concat(l, ' ')))
       return {frames = flown, dx = (xe - x0) * face, dy = ye - y0, fell = fell, seen = seen, regen = regen, kend = ki(), kstart = kb, trace = trace}
     end
-    local f100 = flight('ki 100', 100, {y = 127, x = 0})
+    local f100 = flight('ki 100 (diagonal, so the top blast zone stays out of it)', 100, {y = 90, x = 90})
     chk(f100.frames >= 112 and f100.frames <= 126, 'ki 100 did not fly about 120 frames (2 s): ' .. f100.frames)
-    chk(f100.dy > 60, 'ki 100 flight did not climb far: ' .. f100.dy)
+    chk(f100.dy > 100 and f100.dx > 100, 'ki 100 flight did not cover about 135 units each way: ' .. f100.dx .. ' ' .. f100.dy)
     chk(f100.fell, 'ki 100 flight did not end in the special fall')
     chk(f100.kend < 1.5, 'the flight did not run the ki down to 0: ' .. f100.kend)
     chk(not f100.regen, 'ki came back during the flight')
     local f50 = flight('ki 50', 50, {y = 127, x = 0})
-    chk(f50.frames >= 54 and f50.frames <= 66, 'ki 50 did not fly about 60 frames: ' .. f50.frames)
+    chk(f50.frames >= 54 and f50.frames <= 66 and f50.dy > 75, 'ki 50 did not fly about 60 frames and ~96 units: ' .. f50.frames .. ' ' .. f50.dy)
     chk(f50.fell and f50.kend < 1.5, 'ki 50 flight did not end at 0 ki in the special fall')
     local f20 = flight('ki 20 (the minimum)', 20, {y = 127, x = 0})
-    chk(f20.frames >= 20 and f20.frames <= 28 and f20.kend < 1.5, 'ki 20 is not a 24-frame powered flight: ' .. f20.frames)
+    chk(f20.frames >= 20 and f20.frames <= 28 and f20.kend < 1.5 and f20.dy > 30, 'ki 20 is not a 24-frame powered flight: ' .. f20.frames)
     local f10 = flight('ki 10 (below the minimum: weak)', 10, {y = 127, x = 0})
     chk(f10.frames >= 18 and f10.frames <= 26 and math.abs(f10.kend - 10) < 0.5, 'ki 10 is not the weak free flight: ' .. f10.frames)
     local ff = flight('forward (air start)', 30, {x = 127, y = 0, n = 34}, nil, 50)
-    chk(ff.dx > 10 and (ff.seen.FlightF or 0) > 5, 'forward steering failed: dx ' .. ff.dx)
+    chk(ff.dx > 25 and (ff.seen.FlightF or 0) > 5, 'forward steering failed: dx ' .. ff.dx)
     local fb = flight('back (air start)', 30, {x = -127, y = 0, n = 34}, nil, 50)
-    chk(fb.dx < -6 and (fb.seen.FlightB or 0) > 5, 'back steering failed: dx ' .. fb.dx)
+    chk(fb.dx < -25 and (fb.seen.FlightB or 0) > 5, 'back steering failed: dx ' .. fb.dx)
     local fe = flight('early end (B)', 100, nil, 25)
     chk(fe.frames < 40 and fe.fell and fe.fell < 45 and fe.kend > 100 - 40 * 0.84, 'B did not end the flight early: ' .. fe.frames)
     -- flight -> fair that hits: normal air control afterwards (no special fall)
@@ -258,8 +265,9 @@ gd.run(function()
         end
       end
       local p = gd.player(1)
-      gd.log(string.format('SPECHECK roll %s: escape frames %d, intangible %d, hidden %d, dx %.1f, actionable at t%s, airborne=%s', label, esc, intang, hid, (p.x - x0) * face, tostring(actionable), tostring(p.airborne)))
-      return {esc = esc, intang = intang, hid = hid, dx = (p.x - x0) * face, actionable = actionable, air = p.airborne}
+      local face_end = (p.facing or 1) >= 0 and 1 or -1
+      gd.log(string.format('SPECHECK roll %s: escape frames %d, intangible %d, hidden %d, dx %.1f, actionable at t%s, airborne=%s, facing %d -> %d', label, esc, intang, hid, (p.x - x0) * face, tostring(actionable), tostring(p.airborne), face, face_end))
+      return {esc = esc, intang = intang, hid = hid, dx = (p.x - x0) * face, actionable = actionable, air = p.airborne, flipped = face_end ~= face}
     end
     local rf = roll('forward', 1)
     chk(rf.esc >= 34 and rf.esc <= 40, 'roll is not the 37-frame Mewtwo timing: ' .. rf.esc)
@@ -267,10 +275,13 @@ gd.run(function()
     chk(rf.hid >= 15 and rf.hid <= 20, 'roll is not invisible for the intangible gap: ' .. rf.hid)
     chk(math.abs(rf.dx - 27.3) < 3, 'roll distance is not 27.3 units: ' .. rf.dx)
     chk(rf.actionable and rf.actionable <= 45 and not rf.air, 'the roll does not end grounded and actionable at the Melee timing')
+    chk(rf.flipped, 'a forward roll must end facing the other way (Melee: Mario and Mewtwo flip)')
     local rb = roll('back', -1)
+    chk(not rb.flipped, 'a back roll must keep the facing')
     chk(math.abs(rb.dx + 27.3) < 3 and rb.hid >= 15, 'back roll is not a 27.3-unit teleport back: ' .. rb.dx)
     local rs = roll('spot dodge', 1, true)
     chk(rs.hid >= 10 and rs.intang >= 10 and math.abs(rs.dx) < 2, 'spot dodge is not an in-place vanish: hidden ' .. rs.hid .. ' dx ' .. rs.dx)
+    chk(not rs.flipped, 'the spot dodge must keep the facing')
     assert(#bads == 0, 'roll checks failed: ' .. table.concat(bads, '; '))
 
     -- 8. rewind exactness across the homing strike

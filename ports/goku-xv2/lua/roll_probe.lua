@@ -23,7 +23,7 @@ gd.run(function()
       log[#log + 1] = string.format('%d:%s:i%d:x%.1f%s', t, m, int, (p.x or 0) - x0, (p.hidden and ':H' or '') .. ':' .. tostring(p.body_state))
     end
   end
-  gd.log('ROLLPROBE ' .. tostring(C.name) .. ' facing ' .. face .. ' escape frames ' .. #log .. ' intangible frames ' .. int_n .. ' x travel ' .. string.format('%.1f', (gd.player(1).x or 0) - x0))
+  gd.log('ROLLPROBE ' .. tostring(C.name) .. ' facing ' .. face .. ' -> ' .. (((gd.player(1).facing or 1) >= 0) and 1 or -1) .. ' escape frames ' .. #log .. ' intangible frames ' .. int_n .. ' x travel ' .. string.format('%.1f', (gd.player(1).x or 0) - x0))
   gd.log('ROLLPROBE trace ' .. table.concat(log, ' '))
   gd.quit()
 end)

@@ -147,9 +147,9 @@ end
 -- clip state he is in), kil (the ki after last frame's drain). The motion is plain Lua velocity on a geno.air state, so rewind, savestate and netplay replay it.
 local FLY_DRAIN = 0.8333
 local FLY_MIN_KI = 20
-local FLY_SPEED = 0.8            -- units per frame at full stick (up to 96 units over a full 2 seconds: the speed of phase 3, kept)
+local FLY_SPEED = 1.6            -- units per frame at full stick (owner 2026-10-11: twice the phase 3 speed; up to 192 units over a full 2 seconds)
 local FLY_WEAK_FRAMES = 22
-local FLY_WEAK_SPEED = 0.45
+local FLY_WEAK_SPEED = 0.9
 local FLY_CAP = 240
 function M.flight_enter(ctx)
   local s = ctx.state
