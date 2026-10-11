@@ -12,29 +12,35 @@ private slots:
     void resolutionOrder() {
         QTemporaryDir d; QVERIFY(d.isValid());
         const QString ws = d.filePath("ws"), project = ws + "/ports/fighter", app = d.filePath("app");
+#ifdef Q_OS_WIN
+        const QString gameName = "melee-pc.exe";
+#else
+        const QString gameName = "melee-pc";
+#endif
         wbtest::put(ws, ".env", "GW_X=1\n");
-        wbtest::put(ws, "_build/melee-pc.exe", "x");
-        wbtest::put(app, "melee-pc.exe", "x");
+        wbtest::put(ws, "_build/" + gameName, "x");
+        wbtest::put(app, gameName, "x");
         wbtest::put(project, "workbench.json", "{\"schema\":\"workbench/1\",\"gameplay\":\"g.json\"}");
         QProcessEnvironment env;
         // beside-the-launcher is last; the workspace _build wins over it, found by walking up to .env
         auto found = resolveGameExe({}, env, project, app);
-        QCOMPARE(QDir::cleanPath(found.path), QDir::cleanPath(ws + "/_build/melee-pc.exe"));
+        QCOMPARE(QDir::cleanPath(found.path), QDir::cleanPath(ws + "/_build/" + gameName));
         // GW_ROOT also selects the workspace for a project outside it
         const QString outside = d.filePath("elsewhere/fighter"); QDir().mkpath(outside);
         wbtest::put(outside, ".env", "# isolated fixture workspace\n");
-        QVERIFY(resolveGameExe({}, env, outside, app).path.endsWith("app/melee-pc.exe"));
+        QCOMPARE(resolveGameExe({}, env, outside, app).path, app + "/" + gameName);
         env.insert("GW_ROOT", ws);
-        QVERIFY(resolveGameExe({}, env, outside, app).path.endsWith("ws/_build/melee-pc.exe"));
+        QCOMPARE(resolveGameExe({}, env, outside, app).path, ws + "/_build/" + gameName);
         // workbench.json engine field beats the workspace default
         wbtest::put(ws, "custom/engine.exe", "x");
         wbtest::put(project, "workbench.json", "{\"schema\":\"workbench/1\",\"gameplay\":\"g.json\",\"engine\":\"custom/engine.exe\"}");
         QVERIFY(resolveGameExe({}, env, project, app).path.endsWith("custom/engine.exe"));
         // GW_ENGINE_EXE beats that; the explicit setting beats everything
-        env.insert("GW_ENGINE_EXE", "C:/env/engine.exe");
-        QCOMPARE(resolveGameExe({}, env, project, app).path, QString("C:/env/engine.exe"));
-        QCOMPARE(resolveGameExe("D:/set/engine.exe", env, project, app).path, QString("D:/set/engine.exe"));
-        QCOMPARE(resolveGameExe("D:/set/engine.exe", env, project, app).source.isEmpty(), false);
+        const QString envEngine = d.filePath("env/engine"), settingEngine = d.filePath("set/engine");
+        env.insert("GW_ENGINE_EXE", envEngine);
+        QCOMPARE(resolveGameExe({}, env, project, app).path, envEngine);
+        QCOMPARE(resolveGameExe(settingEngine, env, project, app).path, settingEngine);
+        QCOMPARE(resolveGameExe(settingEngine, env, project, app).source.isEmpty(), false);
     }
     void nothingFoundExplainsWhatWasSearched() {
         QTemporaryDir d; QVERIFY(d.isValid());

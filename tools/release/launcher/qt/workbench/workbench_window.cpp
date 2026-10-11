@@ -587,6 +587,10 @@ struct WorkbenchWindow::Impl {
                     q->setBlenderProcessId(0); blenderClosedNotice(); return;
                 }
             }
+#else
+            if (blenderPid > 0 && !processAlive(blenderPid)) {
+                q->setBlenderProcessId(0); blenderClosedNotice(); return;
+            }
 #endif
             if (blenderHeartbeat.isValid() && blenderHeartbeat.elapsed() > 2000) hub->setBlenderState(blenderPid > 0, false);
         }); blenderMonitor.start();

@@ -1,4 +1,4 @@
-#include "../testfixture.h"
+#include "rebuild_fixture.h"
 #include "commands.h"
 #include "geno_data.h"
 #include "session.h"
@@ -341,7 +341,7 @@ private slots:
 
     void rebuildRunsConfiguredCommand() {
         QTemporaryDir dir;
-        wbtest::makeSynthFighter(dir.path());
+        wbtest::makeRebuildFighter(dir.path());
         Session session(dir.path(), nullptr);
         registerSaveCommands(session);
         const auto reply = callCmd(session, "rebuild");
@@ -355,7 +355,7 @@ private slots:
     void rebuildReportsTheBuildModeLine() {
         QTemporaryDir dir;
         wbtest::makeSynthFighter(dir.path());
-        setRebuild(dir.path(), {"python", "-c", "print('noise'); print('BUILD_MODE: gameplay-only 12.5s')"});
+        setRebuild(dir.path(), wbtest::rebuildHelper("build-mode"));
         Session session(dir.path(), nullptr);
         registerSaveCommands(session);
         const auto reply = callCmd(session, "rebuild");
@@ -369,7 +369,7 @@ private slots:
     void rebuildFailureIsError() {
         QTemporaryDir dir;
         wbtest::makeSynthFighter(dir.path());
-        setRebuild(dir.path(), {"python", "-c", "import sys; print('before failure'); sys.stderr.write('stderr failure'); raise SystemExit(3)"});
+        setRebuild(dir.path(), wbtest::rebuildHelper("fail"));
         Session session(dir.path(), nullptr);
         registerSaveCommands(session);
         const auto reply = callCmd(session, "rebuild");
@@ -384,8 +384,7 @@ private slots:
         wbtest::makeSynthFighter(project);
         wbtest::put(dir.path(), ".git", "synthetic workspace marker\n");
         const QString literal = "literal ; $(echo wb) with spaces and quotes ' \"";
-        setRebuild(project, {"python", "-c", "import json,os,sys; print(json.dumps({'cwd':os.getcwd(),'args':sys.argv[1:]}))",
-            "{project}", "{package}", literal});
+        setRebuild(project, wbtest::rebuildHelper("argv", {"{project}", "{package}", literal}));
         Session session(project, nullptr);
         registerSaveCommands(session);
         const auto reply = callCmd(session, "rebuild");
@@ -402,7 +401,7 @@ private slots:
     void rebuildKeepsOnlyTheTailOfBothStreams() {
         QTemporaryDir dir;
         wbtest::makeSynthFighter(dir.path());
-        setRebuild(dir.path(), {"python", "-c", "import sys; sys.stdout.write('O'*5000); sys.stderr.write('stderr-tail')"});
+        setRebuild(dir.path(), wbtest::rebuildHelper("tail"));
         Session session(dir.path(), nullptr);
         registerSaveCommands(session);
         const auto reply = callCmd(session, "rebuild");

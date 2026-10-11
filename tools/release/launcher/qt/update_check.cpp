@@ -95,8 +95,8 @@ UpdateCheckConfig updateConfig(const QString &appDir, bool suppressed) {
     } catch (...) {}
     if (QFileInfo::exists(appDir + "/update_url.txt")) {
         try { c.url = QUrl(readText(appDir + "/update_url.txt", 4096).trimmed(), QUrl::StrictMode); }
-        catch (...) { c.url = {}; }
-        if (!updateUrl(c.url)) c.url = {};
+        catch (...) { c.url = QUrl{}; }
+        if (!updateUrl(c.url)) c.url = QUrl{};
     }
     return c;
 }
