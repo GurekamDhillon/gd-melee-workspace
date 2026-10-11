@@ -194,6 +194,59 @@ private slots:
         // the row filter only reports that row; routes from a Melee name that is no row are skipped
         QCOMPARE(result(call(s, "run_checks", {{"row", "dair"}}))["problems"].toArray().size() >= 0, true);
     }
+    void stringPlanCutsAtTheWindowStartAndTheFirstHit() {
+        const auto routes = QJsonDocument::fromJson(QByteArray(kCombo)).object()["combo"].toObject()["routes"].toArray();
+        QHash<QString, ComboStepInfo> info{{"jab1", {21, 3}}, {"geno:Light2", {20, 4}}, {"dair", {40, 6}}};
+        auto plan = planComboString({"jab1", "geno:Light2"}, routes, info, 5, false);
+        QCOMPARE(plan.size(), 2);
+        QCOMPARE(plan[0].cut, 10); QVERIFY(plan[0].linked); QCOMPARE(plan[0].route, QString("L1>L2")); QCOMPARE(plan[0].input, QString("light"));
+        QCOMPARE(plan[0].start, 1); QCOMPARE(plan[0].cancelFrame(), 10);
+        QCOMPARE(plan[1].start, 11);                         // the next move's frame 1 follows the cancel frame
+        QCOMPARE(plan[1].cut, 20); QVERIFY(!plan[1].linked); // the last step plays out
+        QCOMPARE(comboStringFrames(plan), 30);
+        // + the route's buffer, kept inside the window (hi 18) and the move
+        plan = planComboString({"jab1", "geno:Light2"}, routes, info, 5, true);
+        QCOMPARE(plan[0].cut, 15); QCOMPARE(plan[1].start, 16);
+        // a window that opens before the first hit waits for the hit; one that closes earlier clamps to it
+        QJsonArray early{QJsonObject{{"name", "e"}, {"from", "jab1"}, {"to", "dair"}, {"input", "light"}, {"window", QJsonArray{1, 0}}}};
+        QCOMPARE(planComboString({"jab1", "dair"}, early, info, 5, false)[0].cut, 3);
+        early[0] = QJsonObject{{"name", "e"}, {"from", "jab1"}, {"to", "dair"}, {"input", "light"}, {"on", "whiff"}, {"window", QJsonArray{1, 0}}};
+        QCOMPARE(planComboString({"jab1", "dair"}, early, info, 5, false)[0].cut, 1);     // a whiff route needs no hit
+        QCOMPARE(planComboString({"jab1", "geno:Light2"}, routes, info, 30, true)[0].cut, 18);
+        // no route: the move plays out and is marked unlinked; "*" sources and priority are honoured
+        plan = planComboString({"dair", "jab1"}, routes, info, 5, false);
+        QVERIFY(!plan[0].linked); QCOMPARE(plan[0].cut, 40);
+        QJsonArray star{QJsonObject{{"name", "any"}, {"from", "*"}, {"to", "jab1"}, {"input", "light"}, {"window", QJsonArray{9, 0}}, {"on", "any"}},
+                        QJsonObject{{"name", "exact"}, {"from", "dair"}, {"to", "jab1"}, {"input", "light"}, {"window", QJsonArray{12, 0}}, {"on", "any"}}};
+        QCOMPARE(planComboString({"dair", "jab1"}, star, info, 5, false)[0].route, QString("exact"));
+        QCOMPARE(planComboString({"jab1", "jab1"}, star, info, 5, false)[0].route, QString("any"));
+    }
+    void stringPlanCommandAndEnginePlayback() {
+        QTemporaryDir d; makeProject(d.path(), R"JSON({"combo": {"buffer": 5, "routes": [
+            {"name": "L1>H", "from": "jab1", "to": "dair", "input": "heavy", "window": [6, 14]}],
+            "strings": [{"name": "jab then dair", "steps": ["jab1", "dair"]}]}})JSON");
+        wbtest::FakeEngine engine;
+        Session s(d.path(), &engine); QVERIFY(s.data().reload().isEmpty()); registerAllCommands(s);
+        auto plan = result(call(s, "string_plan", {{"index", 0}}));
+        QCOMPARE(plan["segments"].toArray().size(), 2);
+        const auto first = plan["segments"].toArray()[0].toObject();
+        QCOMPARE(first["cut"].toInt(), 6); QCOMPARE(first["route"].toString(), QString("L1>H"));
+        QCOMPARE(plan["steps"].toArray()[0].toObject()["first_hit"].toInt(), 3);
+        QCOMPARE(plan["steps"].toArray()[0].toObject()["hits"].toArray().size(), 1);
+        QCOMPARE(plan["steps"].toArray()[0].toObject()["hits"].toArray()[0].toObject()["bone"].toString(), QString("hand_r"));
+        QCOMPARE(plan["frames"].toInt(), 6 + 38);              // dair plays out: its 40-frame clip less the 2 cropped
+        QVERIFY(!call(s, "string_plan", {{"index", 5}})["ok"].toBool());
+        // the same sequence to the engine: each move's row, then its frames up to the cut
+        auto played = result(call(s, "play_string", {{"index", 0}}));
+        QVERIFY2(played["played"].toBool(), qPrintable(QJsonDocument(played).toJson()));
+        QCOMPARE(played["frames_sent"].toInt(), 6 + 38);
+        int rows = 0, frames = 0;
+        for (const auto &c : engine.calls) { if (c.first == "row") ++rows; if (c.first == "frame") ++frames; }
+        QCOMPARE(rows, 2); QCOMPARE(frames, 44);
+        // without the game the plan comes back and nothing is played
+        Session offline(d.path(), nullptr); QVERIFY(offline.data().reload().isEmpty()); registerAllCommands(offline);
+        QVERIFY(!result(call(offline, "play_string", {{"index", 0}}))["played"].toBool());
+    }
     void labelsAndClasses() {
         QJsonObject r{{"to", "geno:Light3"}, {"input", "light"}, {"on", "hit"}};
         QCOMPARE(comboRouteLabel(r), QString::fromUtf8("Light3 · light · on hit"));
