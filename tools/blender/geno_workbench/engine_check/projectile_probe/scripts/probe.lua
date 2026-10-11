@@ -1,6 +1,6 @@
 -- @name: Projectile probe
 -- @gameplay: true
--- Goku (P1) charges neutral B in the LAB; logs every live Goku article each frame:
+-- Goku (P1) jabs once in the LAB (the driver put a CALL geno.article.spawn in the jab through the Workbench); logs every live Goku article each frame:
 --   PROJPROBE f=<tick> kind=<geno_kind> id=<n> x= y= vx= vy= alive= facing=
 -- plus the fighter's position at the first sight of each article id (PROJPROBE spawn ...).  The driver
 -- (run_projectile_check.py) compares those rows with the path the Blender add-on predicts.
@@ -27,9 +27,14 @@ function on_frame()
     if t == 30 then phase, t = "run", 0; log("start") end
     return
   end
-  if t >= 1 and t <= 24 then gd.input(1, { buttons = "B" }, 1) end
+  if t == 2 then gd.input(1, { buttons = "A" }, 1) end
+  if t % 6 == 0 then
+    local p = gd.player(1)
+    log("state t=%d motion=%s af=%s items=%d lua=%s", t, tostring(p and p.motion_name), tostring(p and p.action_frame), #(gd.items() or {}), tostring(gd.fighter_lua(1) ~= nil))
+  end
   for _, it in ipairs(gd.items() or {}) do
-    if it.owner_port == 1 and it.geno_kind ~= nil then
+    if it.owner_port == 1 then
+      it.geno_kind = it.geno_kind or -1
       if not seen[it.id] then
         seen[it.id] = true
         local p = gd.player(1)

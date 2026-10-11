@@ -125,7 +125,6 @@ QPushButton:disabled { color: @dim@; background: @ground2@; }
 QTabWidget::pane { background: @plate@; border: 0; border-top: 1px solid @line@; }
 QTabBar::tab { background: @ground2@; color: @muted@; border: 0; border-bottom: 2px solid @edge@;
     min-height: 28px; padding: 6px 10px; font-family: "@caps@"; font-size: 15px; }
-QTabBar QToolButton { width: 32px; }
 QTabBar::tab:selected { background: @plate@; color: @ivory@; border-bottom-color: @ember@; }
 QTabBar::tab:hover { background: @plate2@; color: @ivory@; }
 QTabBar::tab:focus { border: 1px solid @ember@; border-bottom-width: 2px; }
@@ -237,7 +236,7 @@ NumberField::NumberField(QWidget *parent) : QDoubleSpinBox(parent) {
 }
 InspectorTabs::InspectorTabs(QWidget *parent) : QTabWidget(parent) {
     atlas::initialize(); setObjectName("wbInspectorTabs"); setFont(atlas::font(atlas::Role::Cap14));
-    setDocumentMode(true); setUsesScrollButtons(true); tabBar()->setExpanding(true);
+    setDocumentMode(true); setUsesScrollButtons(false); tabBar()->setExpanding(true); tabBar()->setElideMode(Qt::ElideRight); // six tabs: shrink and elide rather than scroll
     setAccessibleName(t("Inspector", "Inspector"));
 }
 

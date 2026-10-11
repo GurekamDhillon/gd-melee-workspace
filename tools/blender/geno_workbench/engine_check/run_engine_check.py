@@ -29,6 +29,9 @@ WT = HERE.parents[3]                                  # this worktree
 MAIN = Path(os.environ.get("GW_MAIN_ROOT", WT.parents[1]))   # the workspace root (shared _build, .env, tools/port)
 PORT = WT / "ports/goku-xv2"
 BASH = os.environ.get("GW_GIT_BASH", "C:/Program Files/Git/bin/bash.exe")
+_FB = MAIN / "ports/ir/tools/fighterbuild/bin/Release/net8.0/fighterbuild.dll"   # builds the article model .dat (ki_model.py)
+if _FB.is_file():
+    os.environ.setdefault("GW_FIGHTERBUILD", str(_FB))
 BLENDER = os.environ.get("GW_BLENDER") or "D:/SteamLibrary/steamapps/common/Blender/blender.exe"
 
 
@@ -49,6 +52,10 @@ def build_package(author, out, log):
     if out.exists():
         shutil.rmtree(out)
     shutil.copytree(author / "package", out)
+    # The stamp keys Stage A's inputs by absolute path, so a package built in another checkout reads as stale.  Its art
+    # stage is from the same sources (only gameplay differs), so restamp the copy for this checkout and rebuild Stage B.
+    run([sys.executable, "-c", "import sys; sys.path.insert(0, sys.argv[1]); import build; build.write_stamp(sys.argv[2], sys.argv[3])",
+         PORT / "tools", author / "fighter.json", out], cwd=WT, check=True)
     with open(log, "w", encoding="utf-8") as fh:
         r = run([sys.executable, PORT / "tools/build.py", "--fighter", author / "fighter.json", "--gameplay-only", "--out", out],
                 cwd=WT, stdout=fh, stderr=subprocess.STDOUT)
@@ -87,23 +94,26 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--engine-root", type=Path, required=True)
     ap.add_argument("--author", type=Path, default=MAIN / "_build/goku-xv2/author-source")
-    ap.add_argument("--work", type=Path, default=MAIN / "_build/projectiles-check")
-    ap.add_argument("--article", default="KameOrb")
+    ap.add_argument("--work", type=Path, default=WT / "_build/projectiles-check")
+    ap.add_argument("--article", default="KameTap")
+    ap.add_argument("--spawn-row", default="jab1")
+    ap.add_argument("--spawn-frame", type=int, default=4)
     ap.add_argument("--velocity", type=float, nargs=2)
     ap.add_argument("--lifetime", type=int)
     ap.add_argument("--gravity", type=float)
-    ap.add_argument("--launcher", default=os.environ.get("GW_LAUNCHER") or str(MAIN / "_build/projectiles-qt/GD Melee.exe"))
-    ap.add_argument("--skip-baseline", action="store_true")
+    ap.add_argument("--launcher", default=os.environ.get("GW_LAUNCHER") or str(MAIN / "_build/projectiles-qt/gd-melee-launcher.exe"))
     args = ap.parse_args(argv)
     work = args.work
     work.mkdir(parents=True, exist_ok=True)
     gameplay = PORT / "gameplay.json"
     original = gameplay.read_bytes()
+    full = PORT / "gameplay.full.json"   # git-ignored; the build reads it first, so the server mirrors edits into it
+    full_original = full.read_bytes() if full.exists() else None
+    scripts_original = {f: f.read_bytes() for f in (PORT / "moves").glob("*.genoasm")}   # the spawn lands in a move script
     try:
-        if not args.skip_baseline:
-            build_package(args.author, work / "pkgA", work / "buildA.log")
-        # --- edit through the real server and the add-on
-        server = subprocess.Popen([args.launcher, "--project", str(PORT), "--serve"], stdin=subprocess.PIPE,
+        qt = os.environ.get("GW_QT_BIN") or "E:/Projects/Qt/6.8.3/msvc2022_64/bin"
+        senv = dict(os.environ, PATH=qt + os.pathsep + os.environ.get("PATH", ""), QT_QPA_PLATFORM="offscreen")
+        server = subprocess.Popen([args.launcher, "--project", str(PORT), "--serve"], stdin=subprocess.PIPE, env=senv,
                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         port = None
         t0 = time.time()
@@ -114,35 +124,48 @@ def main(argv=None):
             port = launch.parse_serve_line(line.strip())
         if port is None:
             raise SystemExit("workbench server did not report a port")
-        cmd = [BLENDER, "-b", "--factory-startup", "--python", HERE / "edit_projectile.py", "--", "--port", port,
-               "--article", args.article]
+
+        def blender(extra):
+            cmd = [BLENDER, "-b", "--factory-startup", "--python", HERE / "edit_projectile.py", "--", "--port", port,
+                   "--article", args.article] + extra
+            r = run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
+            print(chr(10).join(l for l in r.stdout.splitlines() if l.startswith("EDIT")))
+            if r.returncode != 0:
+                raise SystemExit("Blender edit failed")
+
+        current = full if full_original is not None else gameplay
+        # 1. a spawn of the article in the jab, written through the server (edit_spawn's sibling add_spawn)
+        blender(["--add-spawn", args.spawn_row, str(args.spawn_frame)])
+        base_json = work / "gameplay.base.json"
+        shutil.copy(current, base_json)
+        build_package(args.author, work / "pkgA", work / "buildA.log")
+        # 2. the Blender edit of the projectile, through the add-on's Apply path and the same server
+        edit = []
         for flag, val in (("--velocity", args.velocity), ("--lifetime", args.lifetime), ("--gravity", args.gravity)):
             if val is not None:
-                cmd += [flag] + ([str(v) for v in val] if isinstance(val, list) else [str(val)])
-        r = run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
-        print("\n".join(l for l in r.stdout.splitlines() if l.startswith("EDIT")))
+                edit += [flag] + ([str(v) for v in val] if isinstance(val, list) else [str(val)])
+        blender(edit)
+        edited_json = work / "gameplay.edited.json"
+        shutil.copy(current, edited_json)
+        build_package(args.author, work / "pkgB", work / "buildB.log")
         try:
             server.stdin.close()
             server.wait(timeout=20)
         except Exception:
             server.kill()
-        if r.returncode != 0:
-            raise SystemExit("Blender edit failed")
-        edited_json = work / "gameplay.edited.json"
-        shutil.copy(gameplay, edited_json)
-        build_package(args.author, work / "pkgB", work / "buildB.log")
-        logs = {}
-        if not args.skip_baseline:
-            logs["A"] = play(args.engine_root, work / "pkgA/mods", "projcheck-base", work / "results")
-        logs["B"] = play(args.engine_root, work / "pkgB/mods", "projcheck-edit", work / "results")
+        logs = {"A": play(args.engine_root, work / "pkgA/mods", "projcheck-base", work / "results"),
+                "B": play(args.engine_root, work / "pkgB/mods", "projcheck-edit", work / "results")}
     finally:
         gameplay.write_bytes(original)   # the committed source is never left edited
+        if full_original is not None:
+            full.write_bytes(full_original)
+        for f, data in scripts_original.items():
+            f.write_bytes(data)
     rc = 0
     import json
-    base_json = work / "gameplay.base.json"
-    base_json.write_bytes(original)
-    kind = next(i for i, a in enumerate(json.loads(original)["articles"]) if a["name"] == args.article)
-    for tag, src in (("A", base_json), ("B", edited_json)):
+    kind = next(i for i, a in enumerate(json.loads(base_json.read_text(encoding="utf-8"))["articles"]) if a["name"] == args.article)
+    # the built package, not the source: the build scales spawn offsets and sizes to the model (build.py scale_articles)
+    for tag, src in (("A", work / "pkgA/mods/goku-xv2/geno.json"), ("B", work / "pkgB/mods/goku-xv2/geno.json")):
         if tag not in logs:
             continue
         print("== %s (%s)" % (tag, "baseline" if tag == "A" else "edited in Blender"))
