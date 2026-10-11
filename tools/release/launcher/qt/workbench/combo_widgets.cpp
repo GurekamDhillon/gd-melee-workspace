@@ -347,7 +347,7 @@ ComboPanel::ComboPanel(QWidget *parent) : QWidget(parent) {
     form->addRow(t("Priority", "Prioridad"), priority_);
     kiCost_ = new QSpinBox; kiCost_->setObjectName("wbComboKi"); kiCost_->setRange(0, 100); kiCost_->setKeyboardTracking(false);
     form->addRow(t("Ki cost", "Coste de ki"), kiCost_);
-    layout->addWidget(new QLabel(t("Source (where this route comes from in the source game)", "Origen (de dónde viene esta ruta en el juego de origen)")));
+    layout->addWidget(new QLabel(t("Source (where this route comes from)", "Origen (de dónde viene esta ruta)")));
     source_ = new QPlainTextEdit; source_->setObjectName("wbComboSource"); source_->setReadOnly(true); source_->setMaximumHeight(96);
     source_->setAccessibleName(t("Route source", "Origen de la ruta")); layout->addWidget(source_);
     moveNote_ = new QLabel; moveNote_->setWordWrap(true); moveNote_->setObjectName("wbComboMoveNote"); layout->addWidget(moveNote_);
