@@ -325,7 +325,7 @@ def sample_track(keys, frames, rotation=False):
 WAIT_CLIP = 0   # GOK_BAS_STAND: XV2's ground idle (remake phase 3, owner 2026-10-11: no hover; the floating idle GOK_BAS_STAND_S is clip 1)
 
 
-ROLL_DISTANCE=52.   # world units a roll travels: Mewtwo's own roll measured in this engine (Goku's earlier roll was 27.3, Mario's 33)
+ROLL_DISTANCE=27.3   # world units a roll travels: Goku's own earlier roll (owner 2026-10-11: 52, Mewtwo's measured reach, was too long); Mario's is 33
 REMAKE_REPORT=[]   # filled by row_specs: what remake_apply did to each row
 
 
