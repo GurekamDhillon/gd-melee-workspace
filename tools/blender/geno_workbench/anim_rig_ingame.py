@@ -19,7 +19,7 @@ import sys
 from pathlib import Path
 
 GIT_BASH = os.environ.get("GW_GIT_BASH", "C:/Program Files/Git/bin/bash.exe")
-FIGHTERS = {"goku": ("goku-xv2", "b_R_Hand"), "falcon": ("geno-falcon", "j47")}
+FIGHTERS = {"goku": ("goku-xv2", "b_L_Hand"), "falcon": ("geno-falcon", "j25")}   # the jab hand of each (Attack11 is a left jab for both)
 
 LUA = """local JOINT = %(joint)d
 local TAG = '%(tag)s'

@@ -335,6 +335,14 @@ Workflow (a COPY of the fighter's .blend while someone else has the original ope
 5. **Rebuild + reload** (Connect panel, or `python ports/goku-xv2/tools/build.py --fighter ... --auto`): Stage A sees the changed hand file.
 6. Re-edit later with **Load saved clip** (the action is rebuilt from the hand file; IK work returns as FK keys). **Remove saved clip** drops a row.
 
+Falcon (retail skeleton): same panel, same steps. The hand file is `<Project>/anim/hand.json` in the generated project under `_build`
+(local; for retail rigs it also stores the final pose of the moved joints under `abs`, which is retail-derived, so it is never committed).
+Its Rebuild (`falcon/build.py --project ...`, the Workbench Rebuild button) re-encodes only the joints you moved as figatree tracks
+(`falcon/hand_apply.py`), keeps every other track of the retail clip byte for byte, appends the clip to the package's bank copy and points
+the plan at it; a rebuild without a hand file restores the pristine bank. The clip name is the retail one (`Attack11`).
+In-game check on a COPY of the package: `anim_rig_ingame.py --fighter goku|falcon --mods COPY_OF_MODS --tag NAME` plays the jab in the LAB and
+logs the jab hand's world position per frame (compare against the stock package).
+
 Needs NumPy in Blender (bundled); the converter side needs NumPy and SciPy as before. Screenshots of the rig: `anim_rig_screenshot.py`
 (Blender's own `screen.screenshot_area`; keep screenshots of retail/XV2 art local). Checks:
 
