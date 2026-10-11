@@ -28,11 +28,12 @@ the rules that cross them.
 - **Scripts, not raw commands.** `build.sh` exists for the bridge fixpoint; `run.sh` for the
   sandbox per run. A raw clang or a bare exe run repeats the mistakes those scripts encode.
 - **Everything is relative to `GW_ROOT`** (`port/portlib.sh`), with the disc images from `.env`.
-  Aurora uses the explicit `GW_AURORA_ROOT` junction; see `move_workspace.md`.
+  `build.sh` builds Aurora inside `GW_BUILD_ROOT`; the old bootstrap batch uses
+  the explicit `GW_AURORA_ROOT` junction (see `move_workspace.md`).
 - **Two agents, two build roots** (`GW_BUILD_ROOT`). Test runs (`--test`) parallelise; gameplay
   runs share audio and the screen. Baseline game objects are hardlinked by `agent_new.sh`;
-  check the local output writer before treating build roots as isolated. Shared Aurora is
-  outside that isolation.
+  check the local output writer before treating build roots as isolated. Aurora outputs
+  and copied dependency sources are private to the build root.
 - **Timing:** `run.sh --test` requests turbo; `--realtime` (before the sandbox name) clears it.
   Headless tests have no paced frame loop. `MELEE_FPS=u` uncaps presentation; `MELEE_TURBO=1`
   accelerates scripted/LAB batch logic. `GW_JOBS` sets compile jobs; stale objects are chosen by content hash (tools/port/README.md).

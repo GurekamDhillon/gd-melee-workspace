@@ -15,11 +15,7 @@ def response_text(workspace, build):
         if not entry.startswith('../masstest/'):
             raise ValueError(f'Unexpected baseline response entry: {entry}')
         obj = build / entry.removeprefix('../')
-        try:
-            relative = os.path.relpath(obj, workspace / '_build/ax86m')
-        except ValueError:  # explicit build root on another drive
-            relative = str(obj.resolve())
-        entries.append('"' + relative.replace('\\', '/') + '"')
+        entries.append('"' + obj.resolve().as_posix() + '"')
     return '\n'.join(entries) + '\n'
 
 

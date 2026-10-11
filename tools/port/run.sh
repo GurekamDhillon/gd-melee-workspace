@@ -72,9 +72,11 @@ if [ -f "$GW_MAP" ]; then cp -f "$GW_MAP" "$sandbox/melee-pc.map"; fi
 # Without them Windows fails the load before main() and the shell reports a bare 127 with no log
 # at all, which looks exactly like a missing exe.
 for dll in SDL3.dll webgpu_dawn.dll; do
-    [ -f "$GW_ROOT/_build/$dll" ] || gw_die "missing $GW_ROOT/_build/$dll"
-    if [ "$GW_ROOT/_build/$dll" -nt "$sandbox/$dll" ]; then
-        cp -f "$GW_ROOT/_build/$dll" "$sandbox/$dll"
+    dll_source="$GW_BUILD_ROOT/$dll"
+    [ -f "$dll_source" ] || dll_source="$GW_ROOT/_build/$dll"  # legacy builds
+    [ -f "$dll_source" ] || gw_die "missing $dll_source"
+    if ! cmp -s "$dll_source" "$sandbox/$dll"; then
+        cp -f "$dll_source" "$sandbox/$dll"
     fi
 done
 # The pipeline seed (tools/port/build_pipeline_seed.py), optional, also next to the exe.

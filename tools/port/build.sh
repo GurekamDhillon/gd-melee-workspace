@@ -19,6 +19,12 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 . ./portlib.sh
 
+# Native Python environment variables and link.exe response-file contents do not
+# get MSYS argv conversion. Normalize once, before exporting or deriving keys.
+for variable in GW_ROOT GW_MELEE GW_BUILD_ROOT GW_OUT GW_SHIMOBJ GW_EXE GW_MAP GW_LINK_OBJECTS GW_CLANG GW_AURORA_BUILD GW_SDL_INCLUDE GW_IMGUI_INCLUDE GW_DAWN_INCLUDE GW_DAWN_GEN_INCLUDE; do
+    printf -v "$variable" '%s' "$(cygpath -m "${!variable}")"
+done
+
 tus=()
 shims=()
 bridge=1
@@ -46,14 +52,22 @@ GW_GWTOOL_FLAGS="${GW_GWTOOL_FLAGS:-}"
 GW_JOBS="${GW_JOBS:-}"
 export GW_ROOT GW_BUILD_ROOT GW_MELEE GW_OUT GW_SHIMOBJ GW_CLANG GW_GWTOOL GW_GWTOOL_FLAGS GW_JOBS
 export GW_SDL_INCLUDE GW_IMGUI_INCLUDE GW_DAWN_INCLUDE GW_DAWN_GEN_INCLUDE
+export GW_AURORA_BUILD
+export GIT_OPTIONAL_LOCKS=0
 jobs="$(python "$GW_ROOT/tools/port/build_objects.py" jobs)" || gw_die "invalid GW_JOBS"
+export GW_JOBS="$jobs"
+export GW_GENERATED_DIR="$GW_BUILD_ROOT/generated"
+python "$GW_ROOT/tools/port/generated_shims.py" --melee "$GW_MELEE" --output "$GW_GENERATED_DIR"
 # The source identity netplay compares (pc/platform/gw_build_id.h, git-ignored): the same on any platform that
 # builds the same sources; a changed header rebuilds only gw_netplay.c. See tools/port/build_id.py.
-python "$GW_ROOT/tools/port/build_id.py" --melee "$GW_MELEE" || gw_die "could not stamp the build id"
+python "$GW_ROOT/tools/port/build_id.py" --melee "$GW_MELEE" --output "$GW_GENERATED_DIR/gw_build_id.h" || gw_die "could not stamp the build id"
 source_token="$(python "$GW_ROOT/tools/port/build_provenance.py" --melee "$GW_MELEE" \
     --build "$GW_BUILD_ROOT" --snapshot)" || gw_die "could not snapshot build inputs"
 echo "jobs      $jobs"
 echo
+
+python "$GW_ROOT/tools/port/aurora_build.py" --platform windows || gw_die "Aurora build failed"
+export GW_LINK_LIBS="$GW_BUILD_ROOT/.aurora_link_libs.rsp"
 
 if [ ${#tus[@]} -gt 0 ]; then
     tu_args=()
@@ -101,6 +115,10 @@ python "$GW_ROOT/tools/port/build_objects.py" shim --jobs "$jobs" ||
 # Optional Slippi native sources and their ENet dependency. The derived response
 # file includes only sources present in this checkout, so switching a lane back
 # to an older branch cannot silently link a stale experimental object.
+# Refresh before deriving Slippi's list: gw_link sees the derived filename later.
+if [ "$GW_LINK_OBJECTS" = "$GW_BUILD_ROOT/melee_link_objects.rsp" ]; then
+    python "$GW_ROOT/tools/port/link_response.py" --root "$GW_ROOT" --build-root "$GW_BUILD_ROOT"
+fi
 . "$GW_ROOT/tools/port/slippi_build.sh"
 
 # A running game holds melee-pc.exe open and the link fails with LNK1104. Say so plainly rather
@@ -111,8 +129,8 @@ if [ -f "$GW_EXE" ] && ! ( : >>"$GW_EXE" ) 2>/dev/null; then
        tools/port/run.sh, which runs a copy so a run can never block a link."
 fi
 
-bridge_c="$GW_MELEE/pc/platform/gw_mex_bridge.c"
-bridge_h="$GW_MELEE/pc/platform/gw_mex_bridge.h"
+bridge_c="$GW_GENERATED_DIR/gw_mex_bridge.c"
+bridge_h="$GW_GENERATED_DIR/gw_mex_bridge.h"
 bridge_obj="$GW_SHIMOBJ/gw_mex_bridge.obj"
 bridge_stamp="$GW_BUILD_ROOT/.gw_mex_bridge_linked.sha256"
 bridge_trusted=0
@@ -203,14 +221,14 @@ done
 # Not through a pipe: `$?` after a pipe is the pipe's status, which has already fooled someone.
 echo "abi"
 if ! python "$GW_ROOT/tools/mex_port/audit_bridge_abi.py" \
-    --map "$GW_MAP" --exe "$GW_EXE" --bridge "$GW_MELEE/pc/platform/gw_mex_bridge.c"; then
+    --map "$GW_MAP" --exe "$GW_EXE" --bridge "$bridge_c"; then
     gw_die "the bridge calls a target that reads its arguments from registers (listed above).
        Rebuild gwtool (melee/pc/tools/gwtool/build.bat) and rebuild the TUs those functions
        live in; if it persists, the pin no longer holds and gwtool needs a look."
 fi
 # The exe must carry the source identity netplay compares (gw_netplay.c np_build_id): an object compiled before
 # the header existed does not depend on it and would silently fall back to the whole-file hash.
-python "$GW_ROOT/tools/port/check_build_id.py" --melee "$GW_MELEE" --exe "$GW_EXE" ||
+python "$GW_ROOT/tools/port/check_build_id.py" --melee "$GW_MELEE" --exe "$GW_EXE" --header "$GW_GENERATED_DIR/gw_build_id.h" ||
     gw_die "this exe does not carry the current build id; run: build.sh --shim gw_netplay.c"
 sha256sum "$bridge_c" "$bridge_h" "$bridge_obj" >"$bridge_stamp.tmp"
 mv -f "$bridge_stamp.tmp" "$bridge_stamp"

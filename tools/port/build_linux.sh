@@ -48,7 +48,7 @@ done
 
 export GW_BUILD_ROOT GW_EXE GW_MAP
 export GW_ROOT GW_MELEE GW_OUT GW_SHIMOBJ GW_CLANG GW_GWTOOL GW_JOBS
-export GW_AURORA_LINUX_BUILD="${GW_AURORA_LINUX_BUILD:-$GW_ROOT/_build/linux/ax86m}"
+export GW_AURORA_LINUX_BUILD="${GW_AURORA_LINUX_BUILD:-$GW_BUILD_ROOT/ax86m}"
 
 export GW_LINUX_FINGERPRINT_TU="$(python3 "$GW_ROOT/tools/port/stale_linux.py" --fingerprint tu)"
 export GW_LINUX_FINGERPRINT_SHIM="$(python3 "$GW_ROOT/tools/port/stale_linux.py" --fingerprint shim)"
@@ -58,6 +58,9 @@ echo "build     $GW_BUILD_ROOT"
 echo "exe       $GW_EXE"
 echo "jobs      $GW_JOBS"
 mkdir -p "$GW_OUT" "$GW_SHIMOBJ" "$GW_BUILD_ROOT"
+if [ "$stage" = build ] || [ "$stage" = link ]; then
+    bash "$GW_ROOT/tools/port/build_aurora_linux.sh"
+fi
 # The source identity netplay compares (pc/platform/gw_build_id.h): see tools/port/build_id.py.
 python3 "$GW_ROOT/tools/port/build_id.py" --melee "$GW_MELEE"
 

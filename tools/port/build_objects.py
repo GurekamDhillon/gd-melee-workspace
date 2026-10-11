@@ -65,7 +65,7 @@ def config(kind, root, source=None, cache=None):
         script = root / "tools/port/portlib.sh"
         tools = [clang]
         variables = ("GW_SDL_INCLUDE", "GW_IMGUI_INCLUDE", "GW_DAWN_INCLUDE",
-                     "GW_DAWN_GEN_INCLUDE", "GW_PROF_TRACY", "GW_RELEASE_BUILD")
+                     "GW_DAWN_GEN_INCLUDE", "GW_PROF_TRACY", "GW_RELEASE_BUILD", "GW_GENERATED_DIR")
     digest = hashlib.sha256()
     digest.update(b"gw-compile-v2\0" + kind.encode() + b"\0")
     if source is not None:
@@ -135,10 +135,17 @@ def run_jobs(jobs, workers, on_success=None, cwd=None, env=None):
         raise RuntimeError(failure)
 
 
+def shim_source(melee, name):
+    generated = os.environ.get("GW_GENERATED_DIR")
+    if generated and (Path(generated) / name).is_file():
+        return Path(generated) / name
+    return melee / "pc/platform" / name
+
+
 def shim_sources(melee):
     platform = melee / "pc/platform"
     # Linux compatibility units are built by build_linux.sh, not the Windows shim compiler.
-    return sorted(p for p in [*platform.glob("*.c"), *platform.glob("*.cpp")]
+    return sorted(shim_source(melee, p.name) for p in [*platform.glob("*.c"), *platform.glob("*.cpp")]
                   if not p.stem.endswith("_linux"))
 
 
@@ -207,7 +214,7 @@ def main():
             return shim_configs[mode]
         if args.action == "record-shims":
             for name in names:
-                source = melee / "pc/platform" / name
+                source = shim_source(melee, name)
                 record(args.shimobj / (source.stem + ".obj"), source, melee, shim_config(source), cache)
             cache.save()
             return 0
@@ -216,11 +223,11 @@ def main():
                         '. "$GW_ROOT/tools/port/portlib.sh"; gw_build_shim "$1"', "shim", name])
                 for name in names]
         def on_success(name):
-            source = melee / "pc/platform" / name
+            source = shim_source(melee, name)
             record(args.shimobj / (source.stem + ".obj"), source, melee,
                    shim_config(source), record_cache)
     for name, source, obj in (sources if args.action == "game" else
-                              [(n, melee / "pc/platform" / n, args.shimobj / (Path(n).stem + ".obj")) for n in names]):
+                              [(n, shim_source(melee, n), args.shimobj / (Path(n).stem + ".obj")) for n in names]):
         if not source.is_file():
             raise RuntimeError(f"missing source: {source}")
         preserve_object(obj)

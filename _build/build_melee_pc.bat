@@ -19,6 +19,7 @@ if "%GW_ROOT%"=="" for %%I in ("%~dp0..") do set "GW_ROOT=%%~fI"
 if "%GW_BUILD_ROOT%"=="" set "GW_BUILD_ROOT=%GW_ROOT%\_build"
 if "%GW_LINK_OBJECTS%"=="" set "GW_LINK_OBJECTS=%GW_BUILD_ROOT%\melee_link_objects.rsp"
 if "%GW_LINK_LIBS%"=="" set "GW_LINK_LIBS=%GW_ROOT%\_build\melee_link_libs.rsp"
+if "%GW_AURORA_BUILD%"=="" set "GW_AURORA_BUILD=%GW_ROOT%\_build\ax86m"
 
 rem Find MSVC rather than hardcoding one install. vswhere ships with every VS 2017+ installer and
 rem lives at a fixed location; -latest -products * finds BuildTools as well as full VS. Set
@@ -45,11 +46,11 @@ if not exist "%GW_VCVARSALL%" (
 call "%GW_VCVARSALL%" amd64_x86 >nul
 if errorlevel 1 exit /b 1
 
-rem The link runs here because melee_link_libs.rsp names the Aurora/Dawn/SDL3 libraries RELATIVE
-rem to this directory; only the outputs follow GW_BUILD_ROOT.
-cd /d "%GW_ROOT%\_build\ax86m"
+rem build.sh supplies private Aurora outputs and absolute response-file paths.
+rem Keep the legacy directory default for direct bootstrap batch callers.
+cd /d "%GW_AURORA_BUILD%"
 if errorlevel 1 (
-  echo error: no Aurora library directory at "%GW_ROOT%\_build\ax86m" - run tools/port/bootstrap.sh 1>&2
+  echo error: no Aurora library directory at "%GW_AURORA_BUILD%" - run tools/port/build.sh 1>&2
   exit /b 1
 )
 
