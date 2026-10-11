@@ -933,8 +933,8 @@
       "iasa": "interrupt",
       "move_tag": "special",
       "lua": {
-        "enter": "homing_enter",
-        "frame": "homing_frame"
+        "enter": "rush_enter",
+        "frame": "rush_frame"
       }
     }
   ],

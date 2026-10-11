@@ -29,7 +29,7 @@ def patch_gameplay():
     changed = False
     if not any(s['name'] == 'Homing' for s in g['states']):
         g['states'].append({'name': 'Homing', 'behavior': 'geno.ground', 'subaction': 'clip:Homing', 'like': 'motion:345', 'phys': 'auto', 'coll': 'both',
-                            'iasa': 'interrupt', 'move_tag': 'special', 'lua': {'enter': 'homing_enter', 'frame': 'homing_frame'},
+                            'iasa': 'interrupt', 'move_tag': 'special', 'lua': {'enter': 'rush_enter', 'frame': 'rush_frame'},
                             'pick': 'owner, remake phase 1: XV2 homing dash strike (BAC 476, Guard+Heavy), Side B out of the shield'})
         changed = True
     if not any(s['name'] == 'Homing' for s in g['special_adaptations']):

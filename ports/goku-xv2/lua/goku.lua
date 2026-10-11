@@ -137,16 +137,8 @@ function M.kicharge_frame(ctx)
   if ctx.self.ki >= KI_MAX then ctx.go("auto") return end -- @KI the charge ends at a full meter (XV2: usable only while ki < 100)
   if ctx.ki then ctx.ki(0.8) end -- @KI 0 to 100 in about two seconds of holding
 end
--- Homing dash strike (XV2 BAC 476, Guard+Heavy; here Side B out of the shield, ki cost on the route): the dash is Lua like the Rush; XV2 homes on the
--- target for the first 14 frames (engine.homing_movement), which Fighter Lua cannot read (no opponent query), so it dashes straight ahead at the same pace.
-function M.homing_enter(ctx)
-  ctx.velocity(2.8, 0)
-end
-function M.homing_frame(ctx)
-  local f = ctx.self.action_frame
-  if f == 14 then ctx.velocity(0.7, 0) end
-  if f == 33 then ctx.velocity(0.3, 0) end
-end
+-- Homing dash strike (XV2 BAC 476, Side B out of the shield, ki cost on the route): it reuses rush_enter/rush_frame (the module is at the engine's 24-function cap);
+-- XV2 homes on the target for 14 frames (engine.homing_movement), which fighter Lua cannot read (no opponent query), so it dashes straight ahead.
 -- Not called: names the cape reappear states so the offline reachability check sees them (the engine picks them by behaviour order).
 function M.it_targets(ctx) ctx.go("ITEnd") ctx.go("ITEndAir") ctx.go("RushCombo") ctx.go("KameSuper") ctx.go("Homing") end
 return M
