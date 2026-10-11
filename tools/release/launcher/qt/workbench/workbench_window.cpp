@@ -421,6 +421,7 @@ struct WorkbenchWindow::Impl {
     // R3: edits made during a rebuild
     int queuedDuringBuild = 0, newSinceBuild = 0;
     QSet<QString> queuedRows;
+    QString stickyNote; // shown as the status after the follow-up reloads, until the next edit
     // R4: keyboard
     QVector<ShortcutDef> shortcuts;
     QDialog *shortcutSheet = nullptr;
@@ -593,10 +594,10 @@ struct WorkbenchWindow::Impl {
         recoveryRestore->setTone(AtlasButton::Ember);
         recoveryDiscard = button(t("Discard", "Descartar"), "wbRecoveryDiscard", [this] { resolveRecovery("discard"); });
         recoveryKeep = button(t("Keep", "Conservar"), "wbRecoveryKeep", [this] { resolveRecovery("keep"); });
-        recoveryRevert = button(t("Revert to last build", "Volver a la última compilación"), "wbRecoveryRevert", [this] {
+        recoveryRevert = button(t("Revert to last build", "Volver al valor compilado"), "wbRecoveryRevert", [this] {
             resolveRecovery("keep"); q->runCommand("revert_all", {});
         });
-        centreLayout->insertWidget(0, recoveryBanner);
+        hub->bodyLayout()->insertWidget(1, recoveryBanner); // under the top bar, above the three columns
     }
     void resolveRecovery(const QString &action) {
         recoveryBanner->hide();
@@ -1168,8 +1169,9 @@ struct WorkbenchWindow::Impl {
     }
     void enqueue(const QString &name, const QJsonObject &args, std::optional<bool> headless = std::nullopt) {
         if (closing) return;
-        if (isEditName(name) || name == "accept" || name == "undo" || name == "redo" || name == "revert_change" || name == "revert_all")
-            setPlaying(false);
+        if (isEditName(name) || name == "accept" || name == "undo" || name == "redo" || name == "revert_change" || name == "revert_all") {
+            setPlaying(false); stickyNote.clear();
+        }
         if (name == "load_row") {
             ++rowIntent; clipPreview = false;
             const QString requested = args.value("row").toString();
@@ -1326,15 +1328,12 @@ struct WorkbenchWindow::Impl {
         } else {
             if (completed.name == "list_attributes") attributes->setAttributes(value.value("attributes").toArray());
             if (completed.name == "delete_hitbox" && value.value("applied").toBool())
-                status(t("Hitbox deleted. Press Ctrl+Z to bring it back.", "Hitbox borrado. Pulsa Ctrl+Z para recuperarlo."));
+                stickyNote = t("Hitbox deleted. Press Ctrl+Z to bring it back.", "Hitbox borrado. Pulsa Ctrl+Z para recuperarlo.");
             if (completed.name == "render_view" && value.contains("path"))
                 status(t("Frame exported: %1", "Cuadro exportado: %1").arg(value.value("path").toString()));
             const QString warning = value.value("warning").toString();
-            if (completed.name != "render_view" && completed.name != "delete_hitbox")
-                status(warning.isEmpty() ? t("Ready", "Ready") : t("Warning: %1", "Aviso: %1").arg(warning));
-            if (completed.duringBuild && !rebuildActive() && queuedDuringBuild == 0 && newSinceBuild > 0)
-                status(newSinceBuild == 1 ? t("1 edit made during the rebuild is in the next rebuild", "1 edición hecha durante la reconstrucción irá en la próxima")
-                                          : t("%1 edits made during the rebuild are in the next rebuild", "%1 ediciones hechas durante la reconstrucción irán en la próxima").arg(newSinceBuild));
+            if (completed.name != "render_view")
+                status(warning.isEmpty() ? (stickyNote.isEmpty() ? t("Ready", "Ready") : stickyNote) : t("Warning: %1", "Aviso: %1").arg(warning));
             if (completed.name == "rebuild") {
                 if (rebuildReload) {
                     rebuildReload = false; rebuildReloading = true;
