@@ -75,11 +75,19 @@ es: Un resumen breve de esta versión en texto plano.
 -->
 ```
 
-After the ordinary release guard succeeds, `publish.ps1` generates metadata from
+For a stable numeric version, after the ordinary release guard succeeds,
+`publish.ps1` generates metadata from
 the exact guarded zip and includes `update.json` in `gh release create` alongside
 the zip and checksum. `-DryRun` generates/prints unsigned metadata too. Real phase-1
 publication requires `-AllowUnsignedUpdate`. Phase 2 must replace this signing
 stub with offline signing, upload the real `.sig` and forbid unsigned downloads.
+
+Non-stable versions such as `0.3.0-rc3` skip manifest generation with a clear note,
+including under `-DryRun`. They need no `-AllowUnsignedUpdate` flag and no bilingual
+summary block. The publisher marks them `--prerelease --latest=false` and uploads
+only the zip and checksum. Existing `update.json`/`.sig` files in a reused output
+directory are left alone and never attached. The standalone generator continues
+to reject prereleases so they cannot become stable-channel metadata.
 
 Standalone generation (no publishing):
 

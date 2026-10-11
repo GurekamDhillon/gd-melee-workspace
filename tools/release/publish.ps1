@@ -13,7 +13,7 @@
 #   ... -OutDir <dir>       where the zip and notes are written (default <root>\_build\release; a dry run from a
 #                           private build root should not use the shared folder)
 #   ... -IncludeCourier     also package the experimental Courier fighter (see build_release.ps1)
-#   ... -AllowUnsignedUpdate explicitly publish notify-only unsigned metadata until signing keys exist
+#   ... -AllowUnsignedUpdate stable releases only: explicitly publish unsigned metadata until signing keys exist
 #   ... -ModsFrom <dir>     dry runs only (refused unless -DryRun): mods from another melee checkout
 #
 # Why local and not CI: the game cannot be built on a GitHub runner today. It needs the clang 23
@@ -37,6 +37,7 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 if (-not $Version) { $Version = (Get-Content (Join-Path $PSScriptRoot "VERSION") -Raw).Trim() }
+$stableUpdate = $Version -match '^[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?$'
 $tag = "v$Version"
 $name = "GDMelee-$Version-win64"
 $out = if ($OutDir) { [System.IO.Path]::GetFullPath($OutDir) } else { Join-Path $root "_build\release" }
@@ -46,8 +47,11 @@ if ($ModsFrom -and -not $DryRun) { throw "-ModsFrom is for dry runs only" }
 $melee = if ($MeleeDir) { $MeleeDir } elseif ($env:GW_MELEE) { $env:GW_MELEE } else { Join-Path $root 'melee' }
 $protocol = Get-NetplayProtocol -MeleeDir $melee
 $zip = Join-Path $out "$name.zip"
-if (-not ($AllowUnsignedUpdate -or $DryRun)) {
+if ($stableUpdate -and -not ($AllowUnsignedUpdate -or $DryRun)) {
   throw 'Update signing keys/verifier are not configured. Phase 1 is notify-only; pass -AllowUnsignedUpdate to explicitly publish unsigned update metadata.'
+}
+if (-not $stableUpdate) {
+  Write-Output "Skipping stable update.json for non-stable version $Version; publishing as a prerelease, not Latest."
 }
 
 # 1. the tag must be new. (Native commands that may fail run under "Continue": with "Stop",
@@ -124,21 +128,27 @@ Super Smash Bros. Melee is (c) Nintendo / HAL Laboratory. This project is not af
 "@
 [System.IO.File]::WriteAllText($notes, $body, (New-Object System.Text.UTF8Encoding $false))
 
-# Generate from the checked archive. Phase 1 never emits a fake .sig.
-$updateManifest = Join-Path $out 'update.json'
-& python (Join-Path $PSScriptRoot 'generate_update_manifest.py') --zip $zip --version $Version --protocol $protocol --notes $versionNotesFile --repo $Repo --output $updateManifest --allow-unsigned
-if ($LASTEXITCODE -ne 0) { throw 'update manifest generation failed: NOT publishing' }
+# Only stable releases carry metadata for the launcher's stable channel. Build
+# the asset list explicitly so an RC cannot attach an old update.json in $out.
+$releaseAssets = @($zip, "$zip.sha256")
+if ($stableUpdate) {
+  $updateManifest = Join-Path $out 'update.json'
+  & python (Join-Path $PSScriptRoot 'generate_update_manifest.py') --zip $zip --version $Version --protocol $protocol --notes $versionNotesFile --repo $Repo --output $updateManifest --allow-unsigned
+  if ($LASTEXITCODE -ne 0) { throw 'update manifest generation failed: NOT publishing' }
+  $releaseAssets += $updateManifest
+}
 
 # 6. publish
-$ghArgs = @("release", "create", $tag, $zip, "$zip.sha256", $updateManifest, "--repo", $Repo, "--target", $wsRev,
+$ghArgs = @("release", "create", $tag) + $releaseAssets + @("--repo", $Repo, "--target", $wsRev,
             "--title", "GD's Melee $Version", "--notes-file", $notes)
+if (-not $stableUpdate) { $ghArgs += @("--prerelease", "--latest=false") }
 if ($Draft) { $ghArgs += "--draft" }
 if ($DryRun) {
   Write-Output ""
   Write-Output "DRY RUN - would run:"
   Write-Output ("  gh " + (($ghArgs | ForEach-Object { if ($_ -match '\s') { '"' + $_ + '"' } else { $_ } }) -join ' '))
   Write-Output "notes: $notes"
-  Write-Output "UNSIGNED phase-1 update metadata: $updateManifest (no signing key or verifier yet)"
+  if ($stableUpdate) { Write-Output "UNSIGNED phase-1 update metadata: $updateManifest (no signing key or verifier yet)" }
   exit 0
 }
 & gh @ghArgs
