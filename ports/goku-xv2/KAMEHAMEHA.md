@@ -1,9 +1,15 @@
 # Goku's Kamehameha (neutral B), rework of 2026-10-10
 
 Owner brief: the old one was a ball projectile with a trail ("really lame"). This is a charge you can store, then a **sustained
-multi-hit beam** from the hands with an authored bright core and glow. Everything here is our own design and our own effects;
-no XV2 or Nintendo data is in it. Numbers are Melee-scaled design values, all re-tunable in `tools/gen_kame.py` (hit and beam
-numbers), `lua/goku.lua` (charge rules, damage scaling, recoil) and `tools/fx_build.py` (the look).
+multi-hit beam** from the hands. The gameplay (sections 1, 2, 5, 6) is our own design with Melee-scaled numbers, re-tunable in
+`tools/gen_kame.py` (hit and beam numbers) and `lua/goku.lua` (charge rules, damage scaling, recoil).
+
+**2026-10-10, second pass (`ws/goku-kame-xv2`): the presentation is now XV2's own.** The owner saw the first rework and asked for a direct
+port of Goku's Xenoverse 2 Kamehameha: its effects (charge ball, beam, impact particles) and its voice and sound effects. Section 3 describes
+what replaced the invented look; the full inventory (BAC entries, BSA, EEPK, textures, ACB cues) and every approximation are in
+`_research/xv2-kamehameha-2026-10-10.md`. **XV2 data is never committed**: the converters (`tools/xv2_fx.py`, `tools/xv2_audio.py`, and the extractors
+`tools/xv2x/`) read the local game install and write git-ignored `_build/` outputs, exactly like the Goku model. The invented effects
+(`tools/fx_build.py`'s `P_TrailGokuKame*`) and synthesised sounds (`tools/kame_audio.py`) stay in the tree as the fallback when the local conversion is absent.
 
 Branches: workspace `ws/goku-kamehameha`, game `agent/goku-kamehameha` (no engine change was needed; the game lane only has the
 untouched build used to run it).
@@ -70,24 +76,27 @@ by design (ki 100 is a full meter).
 Beam angle: **straight along the facing** this pass. A stick-angled beam (up/down, like Sora's `geno.aim_stick`) would need the
 body to turn with it, which hitbox offsets in the hand frame cannot do; it is an owner decision (section 6).
 
-## 3. Visuals (our own, cosmetic, rollback-safe)
+## 3. Visuals and sound (XV2's own, converted locally; cosmetic, rollback-safe)
 
-`tools/fx_build.py` writes the effect packages (Geno effect IR, `docs`: `melee/docs/geno.md` section 20). They only read the
-fighter's joint matrix and the state clock, never write gameplay state, and the effect runtime re-simulates on rollback.
+The effect packages are Geno effect IR (`melee/docs/geno.md` section 20) written by `tools/xv2_fx.py` from the local XV2 dumps. They only read the
+fighter's joint matrix and the state clock, never write gameplay state, and the effect runtime re-simulates on rollback. Bound in `tools/build.py` (`FX_STATES`).
 
-* **Charge ball** `P_TrailGokuKameCharge`, bound to `KameCharge` on `hand.R`: one long-lived glow + white core that grows over the
-  60 charge frames and then holds, four step flares at 15/30/45/60 growing in size, sparks drawn inward. Drawn without depth
-  test because the cupped hands sit behind the body in the pose.
-* **Beam** `P_TrailGokuKameTap|Mid|Full|Super`, bound to the release states on `hand.R` at the frame the hands thrust: three mesh
-  cylinders (outer glow, body, white hot core) that grow out to the beam length in 3-6 frames and close at the end, a muzzle
-  flare, a tip flare (the impact flare; it sits at the beam's end, it does not move with a hit), a spark burst at the tip, and
-  sparks streaming down the beam. Full and Super add a muzzle flash at release.
-* **Direction** is measured, not guessed: `tools/kame_geom.py` records the hand frame's world axes (a hitbox probe) and the
-  beam direction in it; the hit spheres and the effect meshes use the same vector.
-* **Audio**: `tools/kame_audio.py` synthesises the sounds (nothing sampled) and `build.py` ships them as `audio.voice` rows on
-  Mewtwo's Shadow Ball sound ids, which Goku never plays otherwise (log: `Goku: plays its own voice line (GnKameStep1.gnsnd)`).
-* **Not done**: screen shake and full-screen flash on the full release (fighter scripts have no camera command; `gd.camera_shake`
-  is a gameplay-script API), the impact flare following the victim, angled beams, a dedicated "HA!" voice.
+* **Charge** `P_TrailGokuXKameCharge` (`KameCharge`, `hand.R`): XV2 effect 0: `Kmh_Crg` (the ball's sprite stack; stepped up x0.4 / 0.6 / 1.0 at charge frames
+  0 / 20 / 40 like XV2's x0.4 / 0.6 / 1.0 repeats), `Kmh_CrgON` (the flash at each 15-frame step), `Kmh_tsubu` (motes); drawn without depth test.
+* **Muzzle** `P_TrailGokuXKameMuzzle` (release): `Kmh_Fire.emo`, the flare dome.
+* **Beam** `P_TrailGokuXKameTap|Mid|Full` (release): the XV2 beam is a projectile head with trail ribbons, and so is this: three scrolling ribbons from the hand
+  to the head (`Kmh_Beam.etr`: beam00 white core, ring_beamCor blue streaks, T2_UV01 cloud), the head (`Kmh_Bas.emo` dome and shells with the UV-scroll and colours of
+  their material rows, `Kmh_Hand.emo` ball, both with their `obj.ema` pose) and the head particles (`Fireptcl`, `4ptcl`, `LineAll`, `Wav`). One scale per tier makes the
+  head as wide as the hit sphere (Tap 2.6, Mid 3.5, Full 4.6 model units per XV2 metre).
+* **Super** (`KameSuper`): `P_TrailGokuXKameSuperCharge`, `...SuperMuzzle`, `...Super` from skill `ULT/000_GOK_CKM` (Bas x2.5, Hand x0.9, ribbons from `Ckm_Beam.etr`, particles
+  Tail / Wav / Last / FireLine / 4ptcl / LineAll), scale 3.2.
+* **Direction** is measured, not guessed: `tools/kame_geom.py` records the hand frame's world axes (a hitbox probe) and the beam direction in it; the hit spheres and
+  the effects use the same vector.
+* **Voice and SFX**: `tools/xv2_audio.py` converts Goku's own lines and the skill SEs from the game's ACBs (Japanese default, `--lang en` for English) to `.gnsnd`;
+  `build.py` ships them as `audio.voice` rows on Mewtwo's Shadow Ball ids (Goku never plays them). The charge starts the "ka-me-ha-me" line and the charge SE (BAC frame 0),
+  the release plays the shout and the shot SE (BAC frame 58, two frames after the projectile). The old 15-frame chimes are gone. Log: `Goku: plays its own voice line (GnKameVoxCharge.gnsnd)`.
+* **Not done / approximated**: the shock-ring bands (`ShapeDraw`) are dropped, dynamic lights, camera shake and the refraction ribbon are not converted, `Vortex` and
+  position-curve modifiers are not mapped, the BasB length pulse is not played; see the research note's list. Screen shake / flash still need an engine hook.
 
 The old article projectiles (`KameTap/Mid/Full/Super`, `KameOrb`) stay declared in `gameplay.json` (article indices are shared with
 `combo_apply.py` and the engine tables) but nothing spawns them any more.
@@ -96,11 +105,18 @@ The old article projectiles (`KameTap/Mid/Full/Super`, `KameOrb`) stay declared 
 
 ```
 python ports/goku-xv2/tools/gen_kame.py        # the five move scripts (numbers in the table at its top)
-python ports/goku-xv2/tools/kame_audio.py      # the sounds -> _build/goku-xv2/audio
-python ports/goku-xv2/tools/fx_build.py        # the effect packages
+# the XV2 conversion (local data only; needs the game install, see the research note):
+dotnet build tools/xv2x/audio/Xv2Audio.csproj -c Release -o _build/xv2-kame/audio/tool   # then Xv2Audio list|get|acb fills _build/xv2-kame/audio/wav
+dotnet build tools/xv2x/fx/Xv2Fx.csproj -c Release                                       # Xv2Fx emb|emo|emp|etr|ema|emm, then python -I tools/xv2x/fx/dds2png.py
+python ports/goku-xv2/tools/xv2_audio.py [--lang en]   # the voice and SFX -> _build/goku-xv2/audio (.gnsnd)
+python ports/goku-xv2/tools/xv2_fx.py                  # the effect packages -> _build/goku-xv2/fx/P_TrailGokuXKame*
+python ports/goku-xv2/tools/kame_audio.py      # (fallback) synthesised sounds
+python ports/goku-xv2/tools/fx_build.py        # (fallback) the invented effect packages
 python ports/goku-xv2/tools/build.py --gameplay-only --no-audit --fighter _build/goku-xv2/author-source/fighter.json
 python ports/goku-xv2/tools/kame_run.py kame_check KAMECHECK --turbo     # the headless gate (needs GW_MELEE / GW_BUILD_ROOT / GW_FIGHTERBUILD)
 python ports/goku-xv2/tools/kame_run.py kame_shots KAME --cfg hold=62  # frame strips (offscreen); --cfg tag= gap= camx= camz= dist= air=1 tail=
+python ports/goku-xv2/tools/kame_try.py --tag NAME --every 3 [--super]   # regenerate the XV2 effects, copy them into the built package, shoot, tile a contact sheet
+                                                                         # (_build/xv2-kame/sheets/NAME.png); --super runs a package copy whose full charge fires the Super
 ```
 
 `kame_check.lua` asserts: the beam multi-hits (Mid >= 2, Full >= 3), damage and beam length rise with the tier, a 60-frame
@@ -111,11 +127,13 @@ differing bytes.
 To try it in the LAB (visible, the owner's machine, after merging or from this worktree's package):
 
 ```powershell
-$env:MELEE_MODS_DIR = 'E:\Projects\Melee Workspace\worktrees\kame\_build\goku-xv2\author-source\package\mods'
+$env:MELEE_MODS_DIR = 'E:\Projects\Melee Workspace\worktrees\kamexv2\_build\goku-xv2\author-source\package\mods'
 $env:MELEE_SCENE = 'mode=lab;p1=geno:goku-xv2/hu;p2=mario/cpu0;stage=fd;items=off;time=0'
-$env:GW_MELEE = 'E:\Projects\Melee Workspace\worktrees\kame-game'; $env:GW_BUILD_ROOT = 'E:\Projects\Melee Workspace\_build\agents\goku-kamehameha'
+$env:GW_MELEE = 'E:\Projects\Melee Workspace\worktrees\kamexv2-game'; $env:GW_BUILD_ROOT = 'E:\Projects\Melee Workspace\_build\agents\kamexv2'
 & 'C:\Program Files\Git\bin\bash.exe' 'E:\Projects\Melee Workspace\tools\port\run.sh' --realtime kame-try --iso $env:GW_ISO_VANILLA
 ```
+
+XV2's own body clip, held in place in the LAB's CLIPS page: `& 'E:\Projects\Melee Workspace\worktrees\kamexv2\ports\goku-xv2\tools\clips.ps1' xGOK_SPA_KMH` (the script points at the main workspace's package unless `MELEE_MODS_DIR` is set first).
 
 Hold B (neutral special), release to fire; shield while charging stores it; B again resumes or fires a full one.
 

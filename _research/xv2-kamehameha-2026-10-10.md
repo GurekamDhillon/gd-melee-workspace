@@ -1,0 +1,97 @@
+# Xenoverse 2 Kamehameha, inventory and port notes (2026-10-10)
+
+Lane: workspace `ws/goku-kame-xv2`, game `agent/goku-kame-xv2` (no game-repo change was needed). Owner brief: the reworked Kamehameha looked wrong, so port Goku's
+Kamehameha from XV2 as directly as the engine allows (animation, effects, voice and SFX). Gameplay (charge steps, store rule, multi-hit, damage table) is unchanged
+(`ports/goku-xv2/KAMEHAMEHA.md`); only the presentation is replaced.
+
+**Asset policy, followed exactly as for the Goku model.** XV2 bytes (models, textures, effects, audio, the CPK contents, every dump and PNG/WAV/.gnsnd derived from them)
+exist only under git-ignored `_build/` (`_build/xv2-kame/`, `_build/goku-xv2/fx|audio/`) and `.omo/`. What is committed: our extractors (`tools/xv2x/`), our converters
+(`ports/goku-xv2/tools/xv2_fx.py`, `xv2_audio.py`, `emp_view.py`), the glue (`build.py`, `kame_try.py`) and gameplay numbers. The game install is
+`E:\Games\DB Xenoverse 2` (version 1.25.02.0); the effect files are the shallow export `...\modding\exports\goku-base-shallow-v0.1\raw\skill\` (README of the port).
+
+## R1. Inventory (skill folders, BAC entries, BSA, effects, audio)
+
+| item | where | what it is |
+|---|---|---|
+| Kamehameha | `skill/SPA/000_GOK_KMH/` | BAC (54 entries, 36 non-empty), BAS, BSA (9 entries), EAN (body clip 0, 127 frames; `_F`, `_MAM` copies), EEPK + `pbind/tbind/ptcl/trc` EMB + EMM, `Kmh_Bas/Fire/Hand.emo` (+ `.emb .emm .mat.ema .obj.ema .light.ema`) |
+| Super Kamehameha | `skill/ULT/000_GOK_CKM/` | same shape: `Ckm_Bas/Fire/Hand/HandPrx.emo`, 10 EMPs (`Crg, Fireptcl, LineAll, Wav, FireLine, Tail, Last, 4ptcl, CrgLOD, HitFin`), `Ckm_Beam.etr` (4 ribbons), BAC 6 entries, cam EAN |
+| Gogeta's Kamehameha (not ported) | `skill/SPA/040_GKG_KMB/` | `Kmb_*` |
+| audio | CPK `data.cpk sound/SE/Battle/Skill/CAR_BTL_S000_KMH_SE.acb` (+ `U000_CKM_SE`), `data0.cpk sound/VOX/Battle/Skill/CAR_BTL_S000_KMH_GOK_VOX.acb` and `.../en/` (+ `U000_CKM_GOK_VOX`) | see R4 |
+
+**BAC (`000_GOK_KMH.bac`), the regular Kamehameha.** Entries 0, 1, 2 are the three charge tiers on the ground; 5-7, 10-12, 15-17, 20, 30-32, 35-37, 40-42, 45-47, 50 are the
+air / variant / assist copies. Frame numbers are 60 fps game frames. All three play the skill clip 0 (`GOK_SPA_KMH`, 127 frames) with BAC `Time Scale` events:
+
+| entry | Time Scale (start, length, scale) | Charge Control | projectile (BSA entry, frame) | effects (EEPK ids, SuperSkill) | sounds |
+|---|---|---|---|---|---|
+| 0 (lowest) | (0,42,x1.75) (42,18,x1.5) (84,4,x0.3) (88,17,x0.7) | frame 20, length 20, ChargeTime 72 | BSA 0 at 56 | 0 at 10 (charge), 1 at 54 (muzzle), 0 off at 59, 1 off at 80 | SE cue 0 and VOX cue 0 at 0, VOX cue 1 at 58 |
+| 1 (mid) | (0,42,x1.6) (42,18,x1.25) (84,4,x0.25) (88,15,x0.45) (103,17,x0.9) | none | BSA 20 at 60 | 0 at 10, 1 at 56, 0 off 60, 1 off 85 | VOX 0 at 0, VOX 1 at 58 |
+| 2 (full) | (0,45,x1.5) (45,15,x1.25) (84,4,x0.2) (88,16,x0.3) (104,16,x0.8) | none | BSA 30 at 60 | 0 at 10, 1 at 56, 0 off 59, 1 off 92 | VOX 0 at 0, VOX 1 at 58 |
+
+Also per entry: `Camera` (EAN `g_x_LND`, frames 54-64 / 58-73 / 58-79), `Function` 33 at 52 (length 53), 4 at 56-60 (param 100) and 38 at 93 (not translated), face animations,
+`Tracking`, `Bone Modification`. Stage background effects (`StageBG` ids 220 / 240) and a common effect 45 at 61 are not ported. The Super (`000_GOK_CKM.bac`, entry 0):
+SE cue 0 at 0, VOX cue 0 at 34, VOX cue 1 at 96, projectile BSA 0 at 92, camera 0-240, effects at 0/1/10/20/88/90/94/110/160/170/192/200.
+
+**BSA (`000_GOK_KMH.bsa`).** Entries 0, 20, 30 are the beam projectiles the BAC spawns (their `Type0` lists point at entries 5 / 25 / 35, whose `Type1` rows carry F_04 = 10, probably the motion/speed field; unverified), with `Expires` 1 / 21 / 31 and hit effects
+`StageBG 600` and `Common 101`. We keep the gameplay's hit-sphere beam; the BSA speed/lifetime are not used.
+
+**EEPK (`000_GOK_KMH.eepk`).** Containers: PBIND (8 EMPs: `Kmh_Crg, CrgON, LineAll, Wav, Fireptcl, 4ptcl, Ring, tsubu`, textures `ptcl.emb` 13 DDS, materials `ptcl.emm`
+18 rows), EMO (`Kmh_Fire, Kmh_Bas, Kmh_Hand`), TBIND (`Kmh_Beam, Beam2, Beam3.etr`; textures `trc.emb` beam00 / ring_beamCor / T2_UV01; materials `trc.emm`), LIGHT (`Kmh_Crg/Fire/Bas.light.ema`).
+Effects: 0 = charge at `g_L_Hand` (Crg x0.4, CrgON x0.8 at 42 and x1.2 at 78, Crg again x0.6 at 42 and x1.0 at 78, tsubu) ; 1 = muzzle (Fire.emo + Ring.emp, x0.8) ; 3 / 4 / 5 = beam for the
+three BSA entries (Bas.emo x1.6, Hand.emo x0.45 at z -0.3, Fireptcl/4ptcl x1.6, Wav x1.8, LineAll, and the ETR ribbon) ; 10, 15, 16 = charge/beam variants for other BAC entries.
+
+**The beam in XV2 is a projectile head with trail ribbons**: `Kmh_Bas.emo` (core spike `Cor` r 0.28 m x 3.3 m, shells `BasB`, `BasB1`, `BasB_kushi` r 0.5 m x 1 m, materials
+`T1_VFX_MTN_DIS_ALPHA`, `TexScrl` 3.7 / 4.9 per second, additive core + alpha shells), `Kmh_Hand.emo` (head ball), the particle files at the head, and `Kmh_Beam.etr`: three ribbons
+(scale 0.69 / 0.65 / 0.45 m, textures beam00 / ring_beamCor / T2_UV01, scroll V -0.05 / 0.10 / 0.04 per frame) that form the long body. `obj.ema` poses the parts (TRS `Rotation X -90`, TRS scale
+0.8 / 0.6 / 0.8, Cor Y 0.3 -> 0.8 in 3 frames, BasB Y pulsing 1.27 <-> 1.97 every 4 frames), `mat.ema` animates colour and `TexScrl` over an 80-frame loop.
+
+### Formats, readers, licences
+- LazyBone152's XV2-Tools (`Xv2CoreLib`, MIT, `modding/src/XV2-Tools/LICENSE`) is the community reference for BAC/BSA/EEPK/EMP/EMO/EMB/EMM/EMA/ETR/ACB/AFS2/CPK, VGAudio (LB_Common, MIT) for HCA. We call the built DLL from
+  our own console tools (`tools/xv2x/audio`, `tools/xv2x/fx`, new code, no third-party code copied; the library is loaded from the install of the tool bundle, not vendored).
+- Our readers/converters: `xv2_fx.py` (EMP node trees and EMO + EMA bone poses -> Geno effect packages), `xv2_audio.py` (ACB WAVs -> `.gnsnd`), `emp_view.py` (a compact EMP dump for reading).
+- Sources of the format knowledge: the Xv2CoreLib source (field names, enums), XenoKit/EEPK Organiser conventions (ScaleBase x ScaleXY = half-quad, SpriteSheet keys = sub-rects), the shallow export's own decoded JSON.
+
+## R2. Animation
+The body animation is XV2's own clip: `000_GOK_KMH.ean` clip 0 (`xGOK_SPA_KMH` in the bank; LAB: `ports/goku-xv2/tools/clips.ps1 xGOK_SPA_KMH`). The Melee states already used it (rows `KameCharge` = clip frames 0-40 held at 40, `KameTap/Mid/Full` fire from clip frame 48; BAC entry 12 as the pick).
+XV2 plays the cup phase at x1.75 (42 game frames = 73 clip frames) and then holds for the charge (Charge Control); ours plays the same cup frames at x1.0 (40 frames), the held pose is the clip's frame 40. The
+thrust that XV2 reaches at clip frame ~95 (BAC projectile at 56 with the x1.75/x1.5 scales) is our release-row crop from clip frame 48 (the same thrust pose, reached 8 frames after the state starts, the beam held by `ANIM_RATE`).
+Not changed this lane: the clip rows themselves (an owner-visible check that the poses match is in the report; there is no XV2 capture to compare, see Owed).
+
+## R3. Effects: what is converted and what is not
+Packages (all `_build/goku-xv2/fx/P_TrailGokuXKame*`, bound in `build.py` `FX_STATES`): `XKameCharge`, `XKameMuzzle`, `XKameTap/Mid/Full`, `XKameSuperCharge`, `XKameSuperMuzzle`, `XKameSuper`.
+- Beam: 3 trail ribbons from the hand to the head (two crossing quads, XV2's ETR textures, widths from the ETR, blend from the trail material, scroll from the ETR), the head (`Bas` parts and `Hand` parts with their `obj.ema` pose baked into the vertices, additive core + alpha shells, `TexScrl` and `MatCol` from the material table), and the particle files at the head. One uniform scale per tier (model units per XV2 metre: Tap 2.6, Mid 3.5, Full 4.6, Super 3.2) makes the head as wide as the hit sphere.
+- Charge: the `Kmh_Crg` sprite stack stepping up (x0.4 / 0.6 / 1.0 at charge frames 0 / 20 / 40), the `CrgON` flash at each 15-frame step, `tsubu` motes.
+- Muzzle: `Kmh_Fire.emo` (flare dome) at release.
+
+Approximations (each is a place to look if the owner's eye disagrees):
+1. XV2's projectile frame is -Z forward (the TRS bone turns the mesh -90 degrees about X). The dome is the head and the tube trails behind it; the particle files keep +Z forward (their -4 m offsets sit behind the head, their emitters spray back from it). Sign choices are unverified without an XV2 capture.
+2. `ShapeDraw` emissions (the shock-ring polygon bands) are **dropped**: a flat plate looked wrong. This removes `Kmh_Ring` (the muzzle ring) entirely and the rings of Crg/4ptcl/Fireptcl/LineAll.
+3. `ConeExtrude` (ribbon stripes) is a velocity-stretched streak; the ETR ribbons are two crossing quads (XV2's are camera-oriented extrusions), uniform width instead of the ETR's taper over segment age.
+4. Animated emitter positions (`Position` key curves) use their first key; `Vortex`, `Translation`, `Acceleration` modifiers are not mapped (`Drag` is). Child emitters are flattened (the runtime has no child-emitter links).
+5. `obj.ema` / `mat.ema` poses use their sustained mean (frames 10-59); the BasB length pulse (every 4 frames) and the colour animations are not played. The beam's growth (grow in 3-6 frames, hold, shrink) is ours.
+6. Light EMAs (`Kmh_*.light.ema`, dynamic lights), the refraction ribbon (`T1_VFX_TRC_RI`), the screen-space camera shake (BAC `Camera` events) and the stage-background effects are not converted.
+7. Units: ScaleBase x ScaleXY x 2 = quad width in XV2 metres; velocity per second -> per frame /60; texture scroll per second -> /60. The charge ball sits at `hand.R` + (0,0,4), as before: XV2 attaches it to `g_L_Hand`.
+8. Material blend comes from `AlphaBlendType` (1 = additive) or the `add*` name; everything else is alpha blend. Colour = Color1 over life; Color2 and `Glare` colours are not used (a bloom pass stands in).
+
+## R4. Audio
+`tools/xv2x/audio` (`Xv2Audio list|get|acb`) pulls the ACBs out of the CPKs and decodes the HCA waveforms; `xv2_audio.py` converts to mono 32 kHz `.gnsnd` (peak -1 dBFS).
+| XV2 cue | file | length | Melee use (retail id played by the script, bound as an `audio.voice` row) |
+|---|---|---|---|
+| KMH VOX 0 "ka-me-ha-me" (BDB_GOK_071) | jp 0.90 s, en 0.92 s | `GnKameVoxCharge` | id 200121, at the start of `KameCharge` (BAC: frame 0) |
+| KMH SE 0 `kamehame_Charge` = waveform `4_charge` | 2.10 s | `GnKameSeCharge` | id 200124, with the voice |
+| KMH VOX 1 (BDB_GOK_072) the release shout | jp 0.59 s, en 0.71 s | `GnKameVoxFire` | id 200115, at the beam start of Tap/Mid/Full (BAC: frame 58, 2 frames after the projectile) |
+| KMH SE 1 `kamehame_shot` = waveform `4_shot` | 3.41 s | `GnKameSeShot` | id 200118, with the shout |
+| CKM SE 0 `Superkamehame_charge` | 2.80 s | `GnKameSuperSeCharge` | id 200127, at the start of `KameSuper` |
+| CKM VOX 0 (same line as KMH) | | `GnKameVoxCharge` | id 200121 at state frame 19 (BAC: 34 of 96 to the shot) |
+| CKM VOX 1 `L1_GOK_M1_088` the Super shout | jp 0.94 s, en 0.97 s | `GnKameSuperVoxFire` | id 200130 at the beam start |
+| CKM SE 1 `Superkamehame_shot` | 3.72 s | `GnKameSuperSeShot` | id 200112 |
+The two KMH SE *sequence* cues (0, 1) have no waveform of their own in the ACB (the library's sequence resolver returns none); they are named for the two waveforms (cue 2 `4_charge`, cue 3 `4_shot`), which is how they are used here.
+Japanese is the default; `python ports/goku-xv2/tools/xv2_audio.py --lang en` then `build.py` gives the English lines. The retail ids are Mewtwo Shadow Ball ids (Goku never plays them). The old synthesised chimes at the 15-frame steps are gone (XV2 has none).
+The charge script restarts when the held charge clip wraps (`ctx.loop()`); the row is now 135 frames long so the voice repeats only after 2.2 s of holding.
+
+## R5. Gameplay kept
+Charge steps (15 a step, 60 full), shield-store, B resume, full stored charge fires at once, **a hit wipes a partial stored charge and keeps a full one** (owner decision, as built), beam hits and damage table, startup 5 / 6 / 8 / 54 are unchanged. XV2 timing did not force a change.
+
+## Owed
+- A side-by-side with an XV2 reference capture: XV2 was not run (no patcher installed; no way to launch a skill in a captured scene without it). The converted look is judged against XV2's data, not against its screen.
+- On-screen review by the owner of: beam proportions, the ribbon taper, the charge ball placement and size, the muzzle (rings dropped), the Super head size.
+- English lines were converted but not listened to in game.
