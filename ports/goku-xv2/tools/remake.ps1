@@ -21,7 +21,7 @@ $mods = Join-Path $mainRoot '_build/goku-xv2/remake-mods'
 New-Item -ItemType Directory -Force (Join-Path $mods 'geno-lab/missions') | Out-Null
 Copy-Item -Force (Join-Path $pkgMods 'geno-lab/missions/*') (Join-Path $mods 'geno-lab/missions')
 $env:GW_MAIN = $mainRoot
-& python (Join-Path $portRoot 'tools/remake_lab_data.py') --out (Join-Path $mods 'geno-lab/missions/remake-goku.txt')
+& python (Join-Path $portRoot 'tools/remake_lab_data.py') --out (Join-Path $mods 'geno-lab/missions/remake-slots.txt')
 $env:MELEE_MODS_DIR = $mods
 $data = Join-Path $mainRoot '_build/goku-xv2/lab-data'
 New-Item -ItemType Directory -Force $data | Out-Null
