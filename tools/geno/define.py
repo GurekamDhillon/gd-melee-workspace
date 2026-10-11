@@ -16,7 +16,8 @@ def definition_schema():
         "properties": {"key": {"type": "string", "pattern": r"^[a-z0-9][a-z0-9_.-]{0,38}$"},
             "name": {"type": "string", "minLength": 1, "maxLength": 47, "pattern": "^[ -~]+$"},
             "base": {"enum": ["mario", "none"], "description": "mario: the retail Mario preset is the template; none (geno 9): the package owns its model, bank, parts table and joint fields (docs/geno.md 22.4)"},
-            "template": {"enum": ["mario", "captain", "fox", "falco", "marth"], "description": "base none, geno 10: the retail fighter whose native code, state table and specials the define runs on (default mario); captain / fox = a complete retail fighter carried as a package (docs/geno.md 22.10, 22.13)"},
+            "template": {"enum": ["mario", "captain", "fox", "falco", "marth", "puff", "sheik", "zelda"], "description": "base none, geno 10: the retail fighter whose native code, state table and specials the define runs on (default mario); captain / fox / falco / marth / puff / sheik / zelda = a complete retail fighter carried as a package (docs/geno.md 22.10, 22.13-22.15)"},
+            "transform_partner": {"type": "string", "pattern": r"^[a-z0-9][a-z0-9_.-]{0,38}$", "description": "template sheik or zelda (required there, refused elsewhere): the define key of the other member of the pair. Down B changes the fighter into that define (never into retail Sheik / Zelda); the two defines name each other and are admitted together (docs/geno.md 22.15)"},
             "common": {"const": "melee.common.v1"}, "resources": {"enum": ["retail:mario", "mod:files"], "description": "retail:mario with base mario; mod:files with base none"}}}
 
 
@@ -32,6 +33,13 @@ def validate_definition(data, fighter, path):
     template = fighter["define"].get("template", "mario")
     if "template" in fighter["define"] and not (own and data["geno"] >= 10):
         errors.append((path+".define.template", "needs base none and geno: 10"))
+    partner = fighter["define"].get("transform_partner")
+    if template in ("sheik", "zelda") and own and partner is None:
+        errors.append((path+".define.transform_partner", "template %s needs transform_partner: the define key of the other member of the pair (Down B changes into it)" % template))
+    if partner is not None and template not in ("sheik", "zelda"):
+        errors.append((path+".define.transform_partner", "only the templates sheik and zelda take a transform partner"))
+    if partner is not None and partner == fighter["define"]["key"]:
+        errors.append((path+".define.transform_partner", "a define cannot be its own partner"))
     if own and "fighter" not in fighter:
         errors.append((path+".fighter", "base none needs a fighter block (plan, animation, costumes)"))
     if ".." in fighter["define"]["key"]:
@@ -104,7 +112,7 @@ def validate_definition(data, fighter, path):
         errors.append((path+".fighter.rows", "own rows need base none"))
     if len(set(rows)) != len(rows) and False:
         pass
-    template_rows = {"captain": 318, "fox": 327, "falco": 327, "marth": 327}.get(template, 303)
+    template_rows = {"captain": 318, "fox": 327, "falco": 327, "marth": 327, "puff": 327, "sheik": 317, "zelda": 311}.get(template, 303)
     limit = template_rows + (len(rows) if own else 0)
     if own:
         for key, items in (("subactions", [r.get("index") for r in fighter.get("subactions", [])]),
