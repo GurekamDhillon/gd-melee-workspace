@@ -182,12 +182,12 @@ private slots:
         QVERIFY(QFile::copy(QCoreApplication::applicationFilePath(), exe));
         writeAtomic(app + "/ui/manifest.json", "{}");
         auto iso = fixture(d.path(), {"MxDt.dat"}, "Akaneia");
-        Settings settings; settings.options["volume"] = "77"; settings.options["unlock_all"] = "0"; settings.options["traces"] = "card,fps";
+        Settings settings; settings.options["volume"] = "77"; settings.options["unlock_all"] = "0"; settings.options["ucf"] = "0"; settings.options["traces"] = "card,fps";
         Disc disc{"my-disc", "Test", "Akaneia", iso};
         qputenv("MELEE_NETPLAY", "host"); qputenv("MELEE_SCENE", "unwanted"); qputenv("MELEE_INPUT", "keyboard");
         auto spec = prepareLaunch(app, user, settings, disc);
         QCOMPARE(spec.arguments.size(), 2); QCOMPARE(spec.arguments[0], "--iso");
-        QCOMPARE(spec.environment.value("MELEE_VOLUME"), "77"); QVERIFY(!spec.environment.contains("MELEE_UNLOCK_ALL")); QVERIFY(!spec.environment.contains("MELEE_FULLSCREEN"));
+        QCOMPARE(spec.environment.value("MELEE_VOLUME"), "77"); QVERIFY(!spec.environment.contains("MELEE_UNLOCK_ALL")); QVERIFY(!spec.environment.contains("MELEE_FULLSCREEN")); QCOMPARE(spec.environment.value("MELEE_UCF"), "off");
         QVERIFY(!spec.environment.contains("MELEE_NETPLAY")); QVERIFY(!spec.environment.contains("MELEE_SCENE")); QVERIFY(!spec.environment.contains("MELEE_INPUT"));
         QCOMPARE(spec.environment.value("MELEE_CARD_DIAG"), "1"); QCOMPARE(spec.environment.value("MELEE_SHOW_FPS"), "1");
         QVERIFY(QDir(user + "/saves/my-disc").exists());

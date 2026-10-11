@@ -312,6 +312,9 @@ LaunchSpec prepareLaunch(const QString &app, const QString &user, const Settings
     for (const auto &pair : {qMakePair("unlock_all", "MELEE_UNLOCK_ALL"), qMakePair("skip_intro", "MELEE_SKIP_INTRO")}) {
         if (s.flag(pair.first, true)) env.insert(pair.second, "1"); else env.remove(pair.second);
     }
+    // Controller fix (UCF 0.84), on by default. Off is passed as MELEE_UCF=off (which beats the game's own setting);
+    // on passes nothing, so the game's SETTINGS > Controller Fix (UCF) row stays in charge. Online play is always UCF 0.84.
+    if (s.flag("ucf", true)) env.remove("MELEE_UCF"); else env.insert("MELEE_UCF", "off");
     // Fullscreen is borderless desktop fullscreen. Off leaves the game to its saved setting (video.cfg, F11 in the game).
     if (s.flag("fullscreen", false)) env.insert("MELEE_FULLSCREEN", "1"); else env.remove("MELEE_FULLSCREEN");
     QStringList log;

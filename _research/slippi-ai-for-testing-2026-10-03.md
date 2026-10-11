@@ -217,11 +217,12 @@ and stubs everything else** (VERIFIED, run here). Findings:
 - `MELEE_PAD_SCRIPT` (txt or Lua) and `MELEE_PAD_LIVE` (a file re-read each PADRead) exist
   (`gw_script_pad.c:1-30`) but are weaker than `gd.input`.
 - **Slippi codes**: the port applies the same gameplay codes as Slippi (UCF 0.84 pad buffer,
-  dashback, shield drop, etc.), chosen with `MELEE_SLIPPI_CODES=online|tournament|off`; default for
-  live play is vanilla (`gw_replay.c:1362-1370`, `_research/slippi-gameplay-codes.md:20-57`; a
-  few SDI/tumble variants are listed there as gaps). **This matters**: the agent learned on Slippi
-  online replays that ran with UCF; set `MELEE_SLIPPI_CODES=online` for agent tests. VERIFIED that the
-  switch exists; INFERRED that it makes the ruleset match what the agent saw.
+  dashback, shield drop, SDI, tumble, etc.). **Corrected 2026-10-10:** UCF is NOT armed by
+  `MELEE_SLIPPI_CODES=online` (that picks the codeset only). UCF 0.84 is its own setting: on by default
+  in offline play now (`MELEE_UCF=off|0.84`, `settings.cfg` key `ucf`), always on in netplay, and
+  from the Game Start toggles in `.slp` playback (`_research/slippi-gameplay-codes.md`, Activation). So
+  agent tests get the UCF the agent saw by default; add `MELEE_SLIPPI_CODES=online` for the rest of the
+  online codeset.
 - **Slippi work already in the tree** (`gw_replay.c`, `gw_slippi_*.c`, `tools/replay/slp.py`,
   `tools/slippi/*`, `docs/HANDOFF-2026-09-24-SLIPPI.md`): the port **reads** `.slp` files
   (`MELEE_SLP`), compares its state trace to them, and speaks the Slippi **netplay peer** packets

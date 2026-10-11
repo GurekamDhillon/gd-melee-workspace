@@ -572,8 +572,9 @@ QWidget *Window::playTab() {
     // Options: the four switches and the volume, each a row
     auto *options = new kit::Pane(t("Options", "Opciones")); left->addWidget(options);
     auto *optionList = new QVBoxLayout(options->body()); optionList->setContentsMargins(0, 0, 0, 0); optionList->setSpacing(atlas::px("s1") - 1);
-    for (const auto &item : QList<QPair<QString, QString>>{{"unlock_all", t("Unlock everything", "Desbloquear todo")}, {"skip_intro", t("Skip intro", "Saltar introducción")}, {"fullscreen", t("Fullscreen", "Pantalla completa")}, {"close_on_play", t("Close launcher on play", "Cerrar lanzador al jugar")}}) {
+    for (const auto &item : QList<QPair<QString, QString>>{{"unlock_all", t("Unlock everything", "Desbloquear todo")}, {"ucf", t("Controller fix (UCF)", "Corrección de mando (UCF)")}, {"skip_intro", t("Skip intro", "Saltar introducción")}, {"fullscreen", t("Fullscreen", "Pantalla completa")}, {"close_on_play", t("Close launcher on play", "Cerrar lanzador al jugar")}}) {
         auto *check = new kit::Toggle; check->setObjectName("opt_" + item.first); check->setAccessibleName(item.second); check->setChecked(settings_.flag(item.first, item.first != "close_on_play" && item.first != "fullscreen"));
+        if (item.first == "ucf") check->setToolTip(t("UCF 0.84: dashback, shield drop and cardinal fixes, as in Slippi. Online play always uses it.", "UCF 0.84: correcciones de dashback, soltar escudo y cardinales, como en Slippi. El juego en línea siempre lo usa."));
         optionList->addWidget(new OptionRow(item.second, check, check, true));
         connect(check, &QAbstractButton::toggled, this, [this, key = item.first](bool on) { guarded([&] { settings_.options[key] = on ? "1" : "0"; save(); }); });
     }
