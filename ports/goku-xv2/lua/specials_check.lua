@@ -188,6 +188,45 @@ gd.run(function()
     assert(caught, 'the special fall after flight did not catch the ledge from any start')
     gd.input(1, {}, 1); gd.wait(60)
 
+    -- 7e. rolls are Instant Transmission (phase 4): the Mewtwo roll timing (37 frames, intangible f5-22, 52 units), a hidden gap, ends grounded and actionable
+    local function roll(label, dir, spot)
+      reset(0)
+      local g0 = gd.player(1)
+      local face = (g0.facing or 1) >= 0 and 1 or -1
+      local x0 = g0.x
+      local inp = {buttons = 'L'}
+      if spot then inp.y = -127 else inp.x = 127 * dir * face end
+      gd.input(1, inp, 4)
+      local esc, intang, hid, first, actionable = 0, 0, 0, nil, nil
+      for t = 1, 70 do
+        gd.wait(1); nofault()
+        local p = gd.player(1)
+        local n = tostring(p.motion_name)
+        if n:find('Escape') then
+          esc = esc + 1
+          first = first or t
+          if (p.intangible or 0) > 0 or tostring(p.body_state) ~= 'normal' then intang = intang + 1 end
+          if p.hidden then hid = hid + 1 end
+        elseif first and not actionable and (n == 'Wait' or n:find('Walk') or n == 'Turn' or n == 'Guard' or n == 'GuardOn') then
+          actionable = t
+        end
+      end
+      local p = gd.player(1)
+      gd.log(string.format('SPECHECK roll %s: escape frames %d, intangible %d, hidden %d, dx %.1f, actionable at t%s, airborne=%s', label, esc, intang, hid, (p.x - x0) * face, tostring(actionable), tostring(p.airborne)))
+      return {esc = esc, intang = intang, hid = hid, dx = (p.x - x0) * face, actionable = actionable, air = p.airborne}
+    end
+    local rf = roll('forward', 1)
+    chk(rf.esc >= 34 and rf.esc <= 40, 'roll is not the 37-frame Mewtwo timing: ' .. rf.esc)
+    chk(rf.intang >= 15 and rf.intang <= 20, 'roll intangible frames are not the Mewtwo 16-18: ' .. rf.intang)
+    chk(rf.hid >= 15 and rf.hid <= 20, 'roll is not invisible for the intangible gap: ' .. rf.hid)
+    chk(math.abs(rf.dx - 52) < 6, 'roll distance is not the Mewtwo 52 units: ' .. rf.dx)
+    chk(rf.actionable and rf.actionable <= 45 and not rf.air, 'the roll does not end grounded and actionable at the Melee timing')
+    local rb = roll('back', -1)
+    chk(math.abs(rb.dx + 52) < 6 and rb.hid >= 15, 'back roll is not a 52-unit teleport back: ' .. rb.dx)
+    local rs = roll('spot dodge', 1, true)
+    chk(rs.hid >= 10 and rs.intang >= 10 and math.abs(rs.dx) < 2, 'spot dodge is not an in-place vanish: hidden ' .. rs.hid .. ' dx ' .. rs.dx)
+    assert(#bads == 0, 'roll checks failed: ' .. table.concat(bads, '; '))
+
     -- 8. rewind exactness across the homing strike
     reset(50)
     gd.input(1, {buttons = 'L'}, 14); gd.wait(12)

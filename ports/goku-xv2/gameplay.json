@@ -1242,7 +1242,9 @@
       "windows": [],
       "iasa": 30,
       "hb": "HB-NONE",
-      "design": {}
+      "design": {},
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "escape_b",
@@ -1255,7 +1257,9 @@
       "windows": [],
       "iasa": 30,
       "hb": "HB-NONE",
-      "design": {}
+      "design": {},
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "escape_n",
@@ -1268,7 +1272,9 @@
       "windows": [],
       "iasa": 30,
       "hb": "HB-NONE",
-      "design": {}
+      "design": {},
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     }
   ],
   "states": [

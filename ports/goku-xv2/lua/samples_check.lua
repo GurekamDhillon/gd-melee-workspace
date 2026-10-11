@@ -62,6 +62,40 @@ gd.run(function()
     try('fair', {y = 40, my = 40, pin = 4}, {cx = 127}, 2, 60, {5, 8, 11})
     try('uair', {y = 40, my = 50, pin = 11}, {cy = 127}, 2, 60, {0, 3, 6})
     try('dair', {y = 40, my = 36, pin = -4}, {cy = -127}, 2, 60, {0, 3, 6})
+    -- smash charge (Melee's: hold A through the wind-up, up to 60 frames, damage x1.3671): a tapped smash against the same smash held 70 frames
+    local function smash(label, spec, dists)
+      local out = {}
+      for _, hold in ipairs({2, 70}) do
+        local got
+        for _, d in ipairs(dists) do
+          reset(d, 0, 0)
+          local g0 = gd.player(1)
+          local face = (g0.facing or 1) >= 0 and 1 or -1
+          local before = gd.player(2).percent
+          local inp = {buttons = 'A', x = spec.x and spec.x * face or nil, y = spec.y}
+          gd.input(1, inp, hold)
+          local frozen, last_af = 0, nil
+          for t = 1, 150 do
+            gd.wait(1); nofault()
+            local p = gd.player(1)
+            if hold > 2 and t > 25 and t < 60 and tostring(p.motion_name):find('Attack') then
+              if last_af and math.abs((p.anim_frame or 0) - last_af) < 0.01 then frozen = frozen + 1 end
+              last_af = p.anim_frame
+            end
+            if gd.player(2).percent > before + 0.01 then got = gd.player(2).percent - before break end
+          end
+          if got then out.frozen = (out.frozen or 0) + frozen break end
+        end
+        out[hold] = got
+      end
+      gd.log(string.format('SAMPLECHECK smash charge %s: tap %s%%, charged %s%%, anim held %s frames', label, tostring(out[2]), tostring(out[70]), tostring(out.frozen)))
+      if not (out[2] and out[70]) then error(label .. ' smash did not connect tapped or charged') end
+      if out[70] < out[2] * 1.25 then error(label .. ' smash damage does not scale with the charge: ' .. out[2] .. ' -> ' .. out[70]) end
+      if (out.frozen or 0) < 15 then error(label .. ' smash animation did not hold while charging') end
+    end
+    smash('fsmash', {x = 127}, {7, 9, 11})
+    smash('usmash', {y = 127}, {2, 4, 6})
+    smash('dsmash', {y = -127}, {7, 9, 11})
     -- the jab string: A pressed at the XV2 rhythm, on hit the routes link
     reset(8, 0, 0)
     local links = 0
