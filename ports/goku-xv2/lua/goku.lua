@@ -8,7 +8,7 @@ local VANISH_KI = 10                -- a Z-vanish counter costs this
 -- Charge model (owner, 2026-10-10: it must behave like the natives). Ground = Samus Charge Shot, air = Mewtwo Shadow Ball. Cited from the decomp:
 --  * B once enters the move (ftSs_SpecialN_Enter, 343): a Start phase with no input and no charging (ftSs_SpecialNStart_Anim), then the Hold loop (344)
 --    which charges BY ITSELF, one step every x20+1 frames (ftSs_SpecialNHold_Anim: mv.ss.unk3.x4 > x20 -> u.ss.x2230 += 1). Here: START frames of lag,
---    then +1 charge every 2nd frame (traced: retail Samus reaches full 133 frames after B, Mewtwo 137), 15 a step, 60 = full (4 steps).
+--    then +1 charge unit every UNIT frames (retail Samus reaches full 133 frames after B, Mewtwo 137; the owner's Goku takes CHARGE_FRAMES, see below), 60 = full.
 --  * Hold IASA (ftSs_SpecialNHold_IASA), in this order: roll cancel (ftCo_8009917C, a stick/C-stick flick, enters Escape F/B, the level kept), B pressed
 --    = fire at the current level (state 346), L/R pressed = Cancel (345, level kept). There is NO jump, spot-dodge or A branch in either native.
 --  * At full the ground move AUTO-STORES: ftSs_SpecialNHold_Anim sets x2230 = max and goes to Cancel (345) holding it. Here: state KameStore (the flash).
@@ -20,11 +20,14 @@ local VANISH_KI = 10                -- a Z-vanish counter costs this
 --    in `stored` every frame while charging and wiped on the next entry if the percent rose since.
 --  * KO resets the whole Lua block (Geno_FighterReset), like ftSs/ftMt Init_OnDeath zeroing the charge.
 local START = 10   -- frames of Start before the loop takes input and charges (Samus Start anim / Mewtwo releaseLag)
--- The chant tiers the charge (owner, 2026-10-10): XV2's "ka-me-ha-me" is cut into four syllables (tools/xv2_audio.py) and each syllable's onset raises the tier.
--- Charge units run 0..60 at one per two frames from age START, so a syllable at age A is unit (A - START) / 2. Onsets (voice triggers 7 / 44 / 80 / 114 in
--- moves/kame_charge.genoasm; "ka" has 5 frames of silence before its sound, so it is heard at ~12 to ~19): tier 1 when "ka" has been said, age 20 (unit 5), tier 2 "me" at 44
--- (unit 17), tier 3 "ha" at 80 (unit 35), tier 4 "me" at 114 (unit 52); tier 0 = released before "ka" is finished (ages 11 to 19). 60 units (age 130) auto-stores on the ground.
-local T1, T2, T3, T4 = 5, 17, 35, 52
+-- THE CHARGE TIME (owner, 2026-10-10: "like 10 seconds for max charge or something dumb"): CHARGE_FRAMES game frames from the end of Start to a full charge, one
+-- charge unit every CHARGE_FRAMES / FULL = 10 frames. tools/gen_kame.py has the same constant (the voice and hum schedule) and tools/xv2_fx.py the same beats (the effects).
+local CHARGE_FRAMES = 600
+local UNIT = CHARGE_FRAMES // FULL
+-- The chant tiers the charge: XV2's "ka-me-ha-me" is cut into four syllables (tools/xv2_audio.py) spread over it as beats: "ka" 1 s, "me" 3 s, "ha" 6 s, the last "me" 9 s (state
+-- frames 60 / 180 / 360 / 540), and each beat raises the tier. A syllable at state frame B is unit (B - START) / UNIT. Tier 0 = released before "ka" (the first second);
+-- Max = the last "me" at 9 s; 60 units (frame 610, ~10 s) auto-stores on the ground.
+local T1, T2, T3, T4 = 5, 17, 35, 53
 local function tier_of(c)
   if c >= T4 then return 4 elseif c >= T3 then return 3 elseif c >= T2 then return 2 elseif c >= T1 then return 1 end
   return 0
@@ -61,7 +64,7 @@ function M.charge_frame(ctx)
   if ctx.input.shield_pressed then go_store(ctx, tier_of(s.charge)) return end   -- L/R: Cancel, level kept; the flash shows the tier
   if ctx.input.special_pressed then release(ctx) return end                  -- B: fire at the current level
   if not ctx.self.air then ctx.go("roll") end                                -- ground roll cancel (ftCo_8009917C); a no-op unless the stick was flicked
-  if s.charge < FULL and s.age % 2 == 0 then   -- half a charge unit a frame: full 120 frames after Start, like Samus (133) and Mewtwo (137) in the traces
+  if s.charge < FULL and s.age % UNIT == 0 then   -- one charge unit every UNIT frames: full CHARGE_FRAMES after Start (the natives take ~133 / 137; the owner wants ~10 s)
     s.charge = s.charge + 1
     s.stored = s.charge
     if s.charge >= FULL and not ctx.self.air then go_store(ctx, 4) end   -- full on the ground: auto-store (Samus x2230 >= x18 -> Cancel)
@@ -89,8 +92,8 @@ function M.tap_frame(ctx) hover(ctx, 18) beam(ctx, 6, 13, 1.2) end
 function M.thin_frame(ctx) hover(ctx, 30) beam(ctx, 7, 26, 1.0) end
 function M.mid_frame(ctx) hover(ctx, 44) beam(ctx, 7, 34, 1.0) end
 function M.full_frame(ctx) hover(ctx, 66) beam(ctx, 9, 48, 1.2) end
-function M.max_frame(ctx) hover(ctx, 84) beam(ctx, 11, 60, 1.3) end
-function M.super_frame(ctx) hover(ctx, 124) beam(ctx, 55, 114, 2.2) end
+function M.max_frame(ctx) hover(ctx, 84) beam(ctx, 11, 60, 1.7) end
+function M.super_frame(ctx) hover(ctx, 124) beam(ctx, 55, 114, 2.6) end
 function M.rush_enter(ctx)
   -- Dragon Rush / Super Dash: the dash is the move; in the air it keeps its height (a recovery)
   if ctx.self.air then ctx.velocity(2.6, 0.3) else ctx.velocity(2.6, 0) end

@@ -575,6 +575,156 @@ def pop_keys(life, ramp, tail_frames=6):
     return [[0.05, 0.05, 0.05, 0.0], [1, 1, 1, ramp / life], [1.04, 1.04, 1.04, 0.5], [1, 1, 1, max(1, life - tail_frames) / life], [0.25, 0.25, 0.25, 1.0]]
 
 
+# ---------------------------------------------------------------- engine FX features (ribbon span + width curve, rings, dissolve, glare, soft particles)
+GLARE = ((0.55, 0.8, 1.0), 2.5)        # bloom tint / radius of every additive emitter with bloom (R1)
+SOFT = {'distance': 1.5, 'volume': 1}   # soft particles on alpha-blended billboards (R3)
+EMIT_FADE = {'on_stop': True, 'alpha_frames': 0, 'fade_in_frames': 0, 'alpha_fade_in': False, 'scale_fade_in': False}
+TAIL_FRAMES = 22      # XV2 ribbon width/alpha are curves over segment AGE (frames); the beam maps age = (1 - position) x this, the head being the newest segment
+HAND_FLOOR = 0.42     # ...but the beam must start AT the hands: the width never falls below this fraction of the head's (XV2's own tail fades to a point; approximation)
+
+
+def synth_png(name, w, h, px):
+    """A small generated mask/ring texture (not XV2 data): px(x, y) -> (r, g, b, a) 0..255. Written once under _build/xv2-kame/fx/synth."""
+    from PIL import Image
+    p = WT / '_build/xv2-kame/fx/synth' / (name + '.png')
+    if not p.exists():
+        p.parent.mkdir(parents=True, exist_ok=True)
+        im = Image.new('RGBA', (w, h))
+        im.putdata([tuple(px(x, y)) for y in range(h) for x in range(w)])
+        im.save(p)
+    return p
+
+
+def ring_png():
+    def px(x, y):   # u around the band, v inner -> outer: a soft peak with faint ticks
+        u, v = x / 128.0, y / 128.0
+        a = math.exp(-((v - 0.55) * 4.2) ** 2) * (0.85 + 0.15 * math.sin(u * 6.2832 * 24))
+        return (255, 255, 255, int(max(0.0, min(1.0, a)) * 255))
+    return synth_png('rx_ring', 128, 128, px)
+
+
+def noise_png():
+    import random
+    rnd = random.Random(7)
+    g = [[rnd.random() for _ in range(8)] for _ in range(8)]
+
+    def px(x, y):   # tileable value noise (dissolve mask, red channel)
+        fx, fy = x / 128.0 * 8, y / 128.0 * 8
+        x0, y0 = int(fx) % 8, int(fy) % 8
+        x1, y1 = (x0 + 1) % 8, (y0 + 1) % 8
+        tx, ty = fx - int(fx), fy - int(fy)
+        sx, sy = tx * tx * (3 - 2 * tx), ty * ty * (3 - 2 * ty)
+        n = (g[y0][x0] * (1 - sx) + g[y0][x1] * sx) * (1 - sy) + (g[y1][x0] * (1 - sx) + g[y1][x1] * sx) * sy
+        return (int(n * 255), int(n * 255), int(n * 255), 255)
+    return synth_png('rx_noise', 128, 128, px)
+
+
+def fx_sampler(slot, tex, scroll_add=(0.0, 0.0), wrap='Repeat', rotate=0.0):
+    return {'slot': slot, 'texture': tex, 'wrap': [wrap, wrap], 'filter': 'linear', 'sphere_map': False, 'uv_channel': 0,
+            'pattern': {'mode': 'none', 'count': 0.0, 'frequency': 1.0, 'count_random': 0.0, 'table': [0], 'loop_random_start': False},
+            'uv': {'scroll': [0.0, 0.0], 'scroll_add': list(scroll_add), 'scroll_random': [0.0, 0.0], 'scale': [1.0, 1.0], 'scale_add': [0.0, 0.0],
+                   'scale_random': [0.0, 0.0], 'divide': [1, 1], 'rotate': rotate, 'rotate_add': 0.0, 'rotate_random': 0.0,
+                   'enable': {'scroll': 1, 'scale': 1, 'rotate': 1}}}
+
+
+def fx_particle(name, life, size, rgb, hdr, rot, translate, emission, samplers, *, alpha_keys, scale_keys=None, param=None, shader=None, bloom=None,
+                ribbon=None, ring=None, blend='add'):
+    """One engine-feature emitter built on the template: a ribbon strip (beam layer) or a ring band. size = particle size (the strip's width / ring diameter)."""
+    e = base_emitter()
+    e.update(name=name, kind='particle', follow='srt')
+    e['transform'] = {'translate': list(translate), 'translate_random': [0.0, 0.0, 0.0], 'rotate': list(rot), 'rotate_random': [0.0, 0.0, 0.0], 'scale': [1.0, 1.0, 1.0]}
+    em = {'start': 0, 'duration': 1, 'one_time': True, 'rate': 1.0, 'rate_random': 0.0, 'interval': 0, 'interval_random': 0.0, 'position_random': 0.0,
+          'by_distance': False, 'fade': dict(EMIT_FADE)}
+    em.update(emission)
+    e['emission'] = em
+    p = e['particle']
+    p.update(life=life, life_random_pct=0, shape='billboard')
+    p['velocity'] = {'all_direction': 0.0, 'direction': [0, 1, 0], 'direction_scale': 0.0, 'diffusion_angle': 0.0, 'xz_diffusion': 0.0, 'diffusion': [0.0, 0.0, 0.0],
+                     'random_pct': 0.0, 'inherit': 0.0, 'momentum_random': 0.0}
+    p['forces'].update(gravity=0.0, air_resistance=1.0)
+    p['rotation'] = {'axes': [False, False, 1], 'init': [0, 0, 0], 'init_random': [0, 0, 0], 'add': [0, 0, 0], 'add_random': [0, 0, 0], 'regist': 1.0,
+                     'reverse_random': [False, False, False]}
+    p['scale'] = {'base': [size] * 3, 'random_pct': [0.0, 0.0, 0.0], 'keys': scale_keys or [[1, 1, 1, 0.0], [1, 1, 1, 1.0]], 'loop': False, 'loop_rate': 1,
+                  'add_velocity': 0.0, 'limit_distance': [200.0, 200.0]}
+    p['param_keys'] = param or [[0.0, 0.0, 0.0, 0.0]]
+    c = e['color']
+    c['scale'] = hdr
+    c['color0'] = {'kind': 'constant', 'value': list(rgb)}
+    c['color1'] = {'kind': 'constant', 'value': list(rgb)}
+    c['alpha0'] = {'kind': 'keys', 'value': alpha_keys[0][0], 'keys': alpha_keys}
+    c['alpha1'] = {'kind': 'constant', 'value': 1.0}
+    e['samplers'] = samplers
+    m = e['material']
+    m.update(blend=blend, depth_test=True, depth_write=False)
+    m['shader'] = shader or {'type': 'sprite', 'color': 'modulate'}
+    m['bloom'] = bloom or {'threshold': 0.5, 'intensity': 1.0, 'tint': list(GLARE[0]), 'radius': GLARE[1]}
+    m.pop('alpha_test', None)
+    if ribbon:
+        e['ribbon'] = ribbon
+    if ring:
+        e['ring'] = ring
+    return e
+
+
+def xv2_age_curves(skill, set_idx):
+    """{texture stem: [(age frames, width m)]} of the skill's ETR ribbon set number set_idx (3 ribbons a set; the refraction ribbon is skipped)."""
+    from xv2_lane_params import params
+    rib = [r for r in params(skill)['ribbons'] if r['shader'] != 'T1_VFX_TRC_RI' and r['material'] != 'Ref']
+    sets = [rib[i:i + 3] for i in range(0, len(rib), 3)]
+    sets = [x for x in sets if x]
+    out = {}
+    for r in sets[min(set_idx, len(sets) - 1)]:
+        w = r['width_m']
+        out[Path(r['texture']).stem] = [(k[0], k[1]) for k in w['keys']] or [(0, w['const']), (TAIL_FRAMES, w['const'])]
+    return out
+
+
+def width_keys(age_keys, floor=HAND_FLOOR, tail=TAIL_FRAMES):
+    """XV2 width over segment age -> the engine's width multiplier over the strip position (0 = hand/origin, 1 = head): age = (1 - t) x tail, normalised to the
+    head's width, never below `floor` (the beam stays attached to the hands)."""
+    ks = sorted(age_keys)
+
+    def w(a):
+        if a <= ks[0][0]:
+            return ks[0][1]
+        for (a0, v0), (a1, v1) in zip(ks, ks[1:]):
+            if a <= a1:
+                return v0 + (v1 - v0) * (a - a0) / (a1 - a0)
+        return ks[-1][1]
+    w0 = max(w(0.0), 1e-6)
+    ts = (0.0, 0.3, 0.5, 0.65, 0.78, 0.88, 0.95, 1.0)
+    return [[t, round(floor + (1.0 - floor) * max(0.0, min(1.0, w((1.0 - t) * tail) / w0)), 4)] for t in ts]
+
+
+def ring_emitter(pkg, name, size, rgb, hdr, rot, translate, emission, *, life=18, sc=(0.25, 1.7), dissolve=True, contract=False):
+    """A ring band (engine ring mesh; XV2's Kmh_Ring is a custom polygon band, ShapeDraw, which has no converter: approximated). contract = gathers instead of leaving."""
+    pkg.texture('rx_ring', ring_png())
+    pkg.texture('rx_noise', noise_png())
+    shader = {'type': 'dissolve', 'mask': 1, 'edge': 0.25, 'edge_color': [0.7, 0.95, 1.0]} if dissolve else None
+    sm = [fx_sampler(0, 'rx_ring')] + ([fx_sampler(1, 'rx_noise', (0.015, -0.02))] if dissolve else [])
+    a, b = (sc[1], sc[0]) if contract else (sc[0], sc[1])
+    return fx_particle(name, life, size, rgb, hdr, rot, translate, emission, sm,
+                       scale_keys=[[a, a, a, 0.0], [(a + b) / 2, (a + b) / 2, (a + b) / 2, 0.45], [b, b, b, 1.0]],
+                       alpha_keys=[[0.0, 0, 0, 0.0], [1.0, 0, 0, 0.15], [0.8, 0, 0, 0.6], [0.0, 0, 0, 1.0]], shader=shader,
+                       param=[[0.05, 0, 0, 0.0], [0.9, 0, 0, 1.0]], ring={'inner': 0.62, 'segments': 56})
+
+
+def finish_package(pkg):
+    """Glare tint / radius on every additive emitter with bloom (R1) and soft depth fade on alpha-blended billboards (R3), set once at the end."""
+    for e in pkg.emitters:
+        m = e.setdefault('material', {})
+        b = m.get('bloom') or {}
+        if m.get('blend') == 'add' and b.get('intensity', 0) > 0:
+            b.setdefault('tint', list(GLARE[0]))
+            b.setdefault('radius', GLARE[1])
+            if e['kind'] == 'mesh':
+                b['threshold'] = min(b.get('threshold', 0.7), 0.35)
+                b['intensity'] = max(b['intensity'], 0.9)
+            m['bloom'] = b
+        elif m.get('blend') != 'add' and e['kind'] == 'particle' and e['particle'].get('shape') == 'billboard' and 'soft_particle' not in m:
+            m['soft_particle'] = dict(SOFT)
+
+
 # ---------------------------------------------------------------- the packages
 def part_style(name, mat):
     """tint / blend / scroll of one EMO part from its XV2 material row (T1_VFX_MTN_DIS_ALPHA: MatCol, AlphaBlendType, TexScrl)."""
@@ -608,23 +758,56 @@ def etr_ribbons():
     return out
 
 
-def beam_package(name, S, L, life, ramp, *, bas_scale, hand_scale, particles, ribbon_width=1.0, white_core=0.6):
-    """XV2's beam: the head (<px>_Bas.emo dome + shells and <px>_Hand.emo ball, baked with their obj.ema poses) at the beam's end, the trail ribbons
-    (the ETR textures) from the hand to the head, and the head particles. S = model units per XV2 metre; L = beam length (model units)."""
+LOOK = {   # per-tier look: name -> head size S (model units per XV2 metre), beam length L, life, ramp (frames), XV2 ribbon set, layers, tint, glow, rings, muzzle package
+    # S, L, life, ramp follow tools/gen_kame.py (the gameplay: hit spheres are the same hand anchor and direction); widths scale with S
+    'Tap':   dict(S=2.0, L=18, life=12, ramp=3, set=0, layers=('core',), glow=(0.25, 0.55, 1.0), core=(0.8, 0.95, 1.0), hdr=1.3, rings=(), fire=None),
+    'Thin':  dict(S=2.6, L=24, life=24, ramp=3, set=0, layers=('glow', 'core'), glow=(0.2, 0.5, 1.0), core=(0.85, 0.96, 1.0), hdr=1.5, rings=(), fire=None),
+    'Mid':   dict(S=3.5, L=28, life=34, ramp=4, set=0, layers=('glow', 'streaks', 'core'), glow=(0.12, 0.45, 1.0), core=(0.9, 0.97, 1.0), hdr=1.6, rings=((14, 1.0),), fire='Muzzle'),
+    'Full':  dict(S=4.6, L=36, life=46, ramp=5, set=1, layers=('glow', 'streaks', 'cloud', 'core'), glow=(0.1, 0.55, 1.0), core=(0.92, 0.98, 1.0), hdr=1.8,
+                  rings=((10, 1.0), (14, 1.35)), fire='Muzzle'),
+    'Max':   dict(S=5.8, L=48, life=62, ramp=6, set=2, layers=('glow', 'streaks', 'cloud', 'core'), glow=(0.3, 0.65, 1.0), core=(1.0, 1.0, 1.0), hdr=2.3,
+                  rings=((7, 1.0), (9, 1.4), (12, 1.9)), fire='MuzzleMax'),
+}
+# a layer: (xv2 texture stem, relative width, tint source, hdr factor, alpha, rotate texture 90 degrees, scroll per frame (u along, v across), uv tiles per unit, ends, bloom intensity)
+LAYERS = {
+    'glow':    ('beam00',       2.6, 'glow', 1.0, 0.9, True,  (0.0, -0.02), 0.06, (0.02, 0.10), 1.0),
+    'streaks': ('ring_beamCor', 1.9, 'glow', 1.1, 0.8, True,  (0.0, 0.10),  0.07, (0.02, 0.08), 0.6),
+    'cloud':   ('T2_UV01',      1.5, 'glow', 1.0, 0.7, False, (0.04, 0.02), 0.05, (0.02, 0.08), 0.5),
+    'core':    ('beam00',       0.6, 'core', 1.2, 1.0, True,  (0.0, -0.05), 0.09, (0.0, 0.05), 0.8),
+}
+
+
+def beam_layers(pkg, skill_key, look, rot, S, L, life, ramp, *, width=1.0):
+    """The beam body as camera-facing ribbon-span emitters on the SAME anchor as the hit spheres (the hand joint, emitter rotation RISE, so +Z is the beam direction
+    D): each runs from the hand (strip position 0) to the head (1). XV2's widths over segment age become a width curve over position (wide at the head, tapering
+    toward the hand, never below HAND_FLOOR), the scroll speeds are XV2's, the ends ease in/out, alpha fades in and out over the life."""
+    use = skill_key
+    curves = xv2_age_curves(use, look['set'])
+    trc = SK['code'] + '.trc.emb'
+    ix = json.loads((XV2 / trc / 'index.json').read_text(encoding='utf-8'))
+    idx = {Path(x['name']).stem: i for i, x in enumerate(ix)}
+    grow = [[0.0, 0, 0, 0.0], [1.0, 0, 0, ramp / life], [1.0, 0, 0, 1.0]]
+    fade = [[0.0, 0, 0, 0.0], [1.0, 0, 0, 0.06], [1.0, 0, 0, 0.82], [0.0, 0, 0, 1.0]]
+    order = [n for n in ('glow', 'streaks', 'cloud', 'core') if n in look['layers']]
+    for n in order:
+        stem, k, tsrc, hf, al, r90, scroll, upu, ends, bi = LAYERS[n]
+        pkg.texture('trc_' + stem, emb_png(trc, idx[stem]))
+        wk = width_keys(curves.get(stem) or curves.get('beam00') or [(0, 1), (TAIL_FRAMES, 1)])
+        fa = [[a[0] * al, 0, 0, a[3]] for a in fade]
+        sm = [fx_sampler(0, 'trc_' + stem, scroll, rotate=math.pi / 2 if r90 else 0.0)]
+        pkg.emitters.append(fx_particle(
+            'ribbon_' + n, life, k * S * width, look[tsrc], look['hdr'] * hf, rot, (0.0, 0.0, 0.0), {}, sm, alpha_keys=fa, param=grow,
+            bloom={'threshold': 0.5, 'intensity': bi, 'tint': list(look[tsrc]) if n == 'core' else list(GLARE[0]), 'radius': GLARE[1]},
+            ribbon={'taper': 1.0, 'uv_per_unit': upu, 'span': {'length': L, 'segments': 32, 'width': wk}, 'ends': list(ends)}))
+
+
+def beam_package(name, S, L, life, ramp, *, bas_scale, hand_scale, particles, look, skill_key='KMH', rings_rgb=(0.45, 0.8, 1.0)):
+    """XV2's beam: the head (<px>_Bas.emo dome + shells and <px>_Hand.emo ball, baked with their obj.ema poses) at the beam's end, the body as ribbon layers
+    (beam_layers) from the hand to the head, shock rings leaving the head, and the head particles. S = model units per XV2 metre; L = beam length (model units)."""
     px = SK['px']
     pkg = Pkg(name)
     rot = list(RISE)
-    rb = ribbon_mesh()
-    trc = SK['code'] + '.trc.emb'
-    rbs = etr_ribbons()
-    for stem, idx, hw, scroll_v, blend, alpha, tint in sorted(rbs, key=lambda r: -r[2]):   # widest first so the narrow white core draws on top
-        samp = {'EmbIndex': idx, 'AddressModeU': {'name': 'Clamp'}, 'AddressModeV': {'name': 'Wrap'}}
-        core = stem == 'beam00'
-        W = hw * S * ribbon_width * (white_core if core else 1.0)
-        tiles = max(1.0, L / (4.0 * W))
-        pkg.emitters.append(mesh_emitter(pkg, 'ribbon_' + stem, rb, samp, trc, life=life, base=(W, W, L), keys=grow_keys(life, ramp), tint=tint,
-                                         alpha=alpha, blend=blend, scale=0.9, bloom=0.3, rotate=rot, translate=(0, 0, 0), scroll=(0.0, scroll_v),
-                                         stem='trc_' + stem, uv_scale=[1.0, tiles]))
+    beam_layers(pkg, skill_key, look, rot, S, L, life, ramp)
     for pname, m, mat, samp in emo_meshes(pkg, px + '_Bas', EXPORT / (px + '_Bas.emm.json'), bas_scale):
         tint, add, scroll = part_style(pname, mat)
         a0 = mat_param(mat, 'MatCol0A', 1.0) if mat else 1.0
@@ -638,18 +821,25 @@ def beam_package(name, S, L, life, ramp, *, bas_scale, hand_scale, particles, ri
     head = along(L)
     for emp, sc in particles:
         pkg.emitters.extend(emp_emitters(pkg, px + '_' + emp, S, sc, start0=0, loop_end=life, rot=EMP_ROT, offset=head))
+    for i, (every, mul) in enumerate(look['rings']):
+        pkg.emitters.append(ring_emitter(pkg, 'rx_ring_head%d' % i, 2.4 * S * mul, rings_rgb, 3.0, rot, (0.0, 0.0, L),
+                                         {'start': 4 + 2 * i, 'duration': life, 'one_time': False, 'interval': every}))
+    finish_package(pkg)
     return pkg
 
 
-CHANT_AT = (20, 44, 80, 114)   # animation frames of the four tier steps: "ka" said, then the onsets of "me" / "ha" / "me" (lua/goku.lua T1..T4)
+# the chant beats (game frames of the charge state, lua/goku.lua CHARGE: "ka" 1 s, "me" 3 s, "ha" 6 s, the last "me" 9 s, max 10 s) and the ball size at each
+CHANT_AT = (60, 180, 360, 540)
+BALL = ((0, 0.25), (30, 0.30), (60, 0.45), (120, 0.52), (180, 0.65), (270, 0.75), (360, 0.85), (450, 0.95), (540, 1.1), (590, 1.25))   # (frame, size): grows between the beats, steps at them
 
 
-def charge_package(name, S=11.4, crg_scale=1.0, motes=True, chant=CHANT_AT):
-    """Effect 0 of the EEPK: <px>_Crg (the ball's sprite stack), <px>_CrgON (a flash) and Kmh_tsubu (motes), stepped with the chant: the stack grows at each
-    syllable onset (x0.3 at the start, then x0.45 / 0.65 / 0.85 / 1.1 for tiers 1..4) and a flash fires on each onset, bigger every time."""
+def charge_package(name, S=11.4, crg_scale=1.0, motes=True, chant=CHANT_AT, ball=BALL, rate=1.0, ring_rate=None):
+    """Effect 0 of the EEPK: <px>_Crg (the ball's sprite stack), <px>_CrgON (a flash) and Kmh_tsubu (motes), stepped with the chant: the stack grows continuously
+    and jumps at each syllable beat, a flash fires on each beat (bigger every time), a gathering ring contracts into the ball faster at each tier, and the
+    motes are soft particles. `rate` stretches the time axis (the Super's chant is compressed)."""
     px = SK['px']
     pkg = Pkg(name)
-    steps = ((0, 0.3),) + tuple(zip(chant, (0.45, 0.65, 0.85, 1.1)))
+    steps = [(int(f * rate), sc) for f, sc in ball]
     for i, (st, sc) in enumerate(steps):
         nxt = steps[i + 1][0] if i + 1 < len(steps) else 0
         es = emp_emitters(pkg, px + '_Crg', S, sc * crg_scale, start0=st, loop_end=(nxt - st) if nxt else 0, depth_test=False, offset=(0, 0, 4.0))
@@ -658,64 +848,93 @@ def charge_package(name, S=11.4, crg_scale=1.0, motes=True, chant=CHANT_AT):
         pkg.emitters.extend(es)
     if (XV2 / (SK['code'] + '.pbind.emb') / (px + '_CrgON.emp.json')).exists():
         for i, (st, sc) in enumerate(zip(chant, (0.6, 0.85, 1.15, 1.6))):
-            es = emp_emitters(pkg, px + '_CrgON', S, sc * crg_scale, start0=st, loop_end=0, depth_test=False, offset=(0, 0, 4.0))
+            es = emp_emitters(pkg, px + '_CrgON', S, sc * crg_scale, start0=int(st * rate), loop_end=0, depth_test=False, offset=(0, 0, 4.0))
             for e in es:
                 e['name'] = '%s_f%d' % (e['name'], i)
             pkg.emitters.extend(es)
     if motes and (XV2 / (SK['code'] + '.pbind.emb') / (px + '_tsubu.emp.json')).exists():
         pkg.emitters.extend(emp_emitters(pkg, px + '_tsubu', S, 1.0, start0=0, loop_end=0, depth_test=False, offset=(0, 0, 4.0)))
+    # gathering rings: five phases, each starting at a beat and repeating faster, a little bigger
+    rr = rate if ring_rate is None else ring_rate
+    phases = [(int(a * rr), max(int(b * rr), int(a * rr) + 2), max(3, int(iv * rr / rate)) if ring_rate else iv, sz) for a, b, iv, sz in ((20, 60, 40, 7.0), (60, 180, 30, 8.0), (180, 360, 22, 9.5), (360, 540, 15, 11.0), (540, 700, 9, 13.0))]
+    for i, (a, b, iv, sz) in enumerate(phases):
+        pkg.emitters.append(ring_emitter(pkg, 'rx_ring_gather%d' % i, sz * crg_scale, (0.45, 0.8, 1.0), 3.0, [0.0, 0.0, 0.0], (0.0, 0.0, 4.0),
+                                         {'start': a, 'duration': b - a, 'one_time': False, 'interval': iv}, life=14, sc=(0.2, 1.7), contract=True))
+    finish_package(pkg)
+    return pkg
+
+
+def pressure_package(name, rate=1.0):
+    """Ground pressure: flat rings spreading from the feet at each beat, bigger every time (bound to the floor joint)."""
+    pkg = Pkg(name)
+    flat = [math.pi / 2, 0.0, 0.0]
+    for i, (st, sz, iv) in enumerate(((CHANT_AT[0], 14.0, 0), (CHANT_AT[1], 20.0, 0), (CHANT_AT[2], 28.0, 0), (CHANT_AT[3], 40.0, 0))):
+        pkg.emitters.append(ring_emitter(pkg, 'rx_pressure%d' % i, sz, (0.55, 0.8, 1.0), 2.2, flat, (0.0, 0.5, 0.0),
+                                         {'start': int(st * rate), 'duration': 1, 'one_time': True}, life=26, sc=(0.3, 1.5), dissolve=True))
+    # a faint continuous pulse underneath, quickening
+    for i, (a, b, iv, sz) in enumerate(((20, 180, 34, 12.0), (180, 360, 24, 16.0), (360, 700, 14, 22.0))):
+        pkg.emitters.append(ring_emitter(pkg, 'rx_pulse%d' % i, sz, (0.4, 0.7, 1.0), 1.4, flat, (0.0, 0.5, 0.0),
+                                         {'start': int(a * rate), 'duration': int((b - a) * rate), 'one_time': False, 'interval': iv}, life=22, sc=(0.3, 1.2), dissolve=False))
+    finish_package(pkg)
     return pkg
 
 
 def store_package(name, tier, S=11.4):
-    """The stored-charge flash for the 9 frames of a KameStore<tier> state (the natives' Cancel states last 8: traced): the ball stack and a CrgON flash at the
+    """The stored-charge flash for the 9 frames of a KameStore<tier> state (the natives' Cancel states last 8: traced): the ball stack, a CrgON flash and a ring at the
     tier's chant size (x0.45 / 0.65 / 0.85 / 1.1) so the player reads the stored tier."""
     pkg = Pkg(name)
     px = SK['px']
     sc = (0.45, 0.65, 0.85, 1.1)[tier - 1]
     pkg.emitters.extend(emp_emitters(pkg, px + '_Crg', S, sc, start0=0, loop_end=9, depth_test=False, offset=(0, 0, 4.0)))
     pkg.emitters.extend(emp_emitters(pkg, px + '_CrgON', S, sc * 1.5, start0=0, loop_end=0, depth_test=False, offset=(0, 0, 4.0)))
+    for i in range(tier):
+        pkg.emitters.append(ring_emitter(pkg, 'rx_store%d' % i, (7.0 + 3.0 * tier) * (1 + 0.35 * i), (0.5, 0.82, 1.0), 3.0, [0.0, 0.0, 0.0], (0.0, 0.0, 4.0),
+                                         {'start': 2 * i, 'duration': 1, 'one_time': True}, life=14, sc=(0.3, 1.8)))
+    finish_package(pkg)
     return pkg
 
 
-def muzzle_package(name, S, fire_scale=1.0):
+def muzzle_package(name, S, fire_scale=1.0, alpha=0.5, life=9, rings=1):
+    """The flare at release: kept SHORT and subtle (the owner saw a pale haze): a dome of `alpha` for `life` frames and `rings` shock rings along the beam."""
     px = SK['px']
     pkg = Pkg(name)
     rot = list(RISE)
     for pname, m, mat, samp in emo_meshes(pkg, px + '_Fire', EXPORT / (px + '_Fire.emm.json'), fire_scale):
         tint, add, scroll = part_style(pname, mat)
-        pkg.emitters.append(mesh_emitter(pkg, 'fire_' + pname, m, samp, px + '_Fire.emb', life=12, base=(S, S, S),
-                                         keys=[[0.2, 0.2, 0.2, 0.0], [1.0, 1.0, 1.0, 0.35], [1.15, 1.15, 1.15, 1.0]], tint=tint, alpha=0.9, blend='add', scale=2.0,
+        pkg.emitters.append(mesh_emitter(pkg, 'fire_' + pname, m, samp, px + '_Fire.emb', life=life, base=(S, S, S),
+                                         keys=[[0.2, 0.2, 0.2, 0.0], [1.0, 1.0, 1.0, 0.35], [1.1, 1.1, 1.1, 1.0]], tint=tint, alpha=alpha, blend='add', scale=1.6,
                                          rotate=rot, translate=(0, 0, 2.0), scroll=scroll))
+    for i in range(rings):
+        pkg.emitters.append(ring_emitter(pkg, 'rx_muzzle%d' % i, (1.1 + 0.5 * i) * S * 1.6, (0.7, 0.9, 1.0), 2.6, rot, (0.0, 0.0, 2.0 + 3 * i),
+                                         {'start': 2 * i, 'duration': 1, 'one_time': True}, life=14, sc=(0.2, 1.8)))
+    finish_package(pkg)
     return pkg
 
 
-TIERS = {   # name: (model units per XV2 metre, beam length, life, ramp)  -- length/life/ramp follow tools/gen_kame.py (gameplay); S makes the head as wide as the hit sphere
-    'Tap': (2.0, 18, 12, 3),
-    'Thin': (2.6, 24, 24, 3),
-    'Mid': (3.5, 28, 34, 4),
-    'Full': (4.6, 36, 46, 5),
-    'Max': (5.8, 48, 62, 6),
-}
 KMH_PARTICLES = (('Fireptcl', 1.6), ('4ptcl', 1.6), ('LineAll', 1.6), ('Wav', 1.8))
 CKM_PARTICLES = (('Tail', 2.0), ('Wav', 2.0), ('Last', 1.0), ('FireLine', 2.8), ('4ptcl', 1.5), ('LineAll', 3.0))
+SUPER_LOOK = dict(S=3.2, L=52, life=64, ramp=6, set=0, layers=('glow', 'streaks', 'cloud', 'core'), glow=(0.35, 0.65, 1.0), core=(1.0, 1.0, 1.0), hdr=2.4,
+                  rings=((7, 1.0), (9, 1.5), (12, 2.0)), fire='MuzzleSuper')
 
 
 def main():
     pk = []
     use_skill('KMH')
-    for t, (S, L, life, ramp) in TIERS.items():
-        pk.append(beam_package('P_TrailGokuXKame%s' % t, S, L, life, ramp, bas_scale=1.6, hand_scale=0.45, particles=KMH_PARTICLES))
+    for t, lk in LOOK.items():
+        pk.append(beam_package('P_TrailGokuXKame%s' % t, lk['S'], lk['L'], lk['life'], lk['ramp'], bas_scale=1.6, hand_scale=0.45, particles=KMH_PARTICLES, look=lk))
     pk.append(charge_package('P_TrailGokuXKameCharge'))
-    pk.append(muzzle_package('P_TrailGokuXKameMuzzle', 3.0))
+    pk.append(pressure_package('P_TrailGokuXKamePressure'))
+    pk.append(muzzle_package('P_TrailGokuXKameMuzzle', 3.0, alpha=0.42, life=8, rings=1))
+    pk.append(muzzle_package('P_TrailGokuXKameMuzzleMax', 3.6, alpha=0.7, life=12, rings=2))
     for t in range(1, 5):
         pk.append(store_package('P_TrailGokuXKameStore%d' % t, t))
     # Super Kamehameha (ULT 000_GOK_CKM): effect 0 (charge at the hand, Ckm_Crg x2) and effect 1 (the beam: Bas x2.5, Hand x0.9, the particle files); S 3.2 keeps the
     # head a little wider than the Super hit spheres (8.6 world) without swallowing the screen
     use_skill('CKM')
-    pk.append(beam_package('P_TrailGokuXKameSuper', 3.2, 52, 64, 6, bas_scale=2.5, hand_scale=0.9, particles=CKM_PARTICLES, ribbon_width=0.8))
-    pk.append(charge_package('P_TrailGokuXKameSuperCharge', crg_scale=2.0, motes=False, chant=(8, 22, 36, 48)))   # the Super's chant is compressed into its 54 frames
-    pk.append(muzzle_package('P_TrailGokuXKameSuperMuzzle', 4.5, fire_scale=2.0))
+    pk.append(beam_package('P_TrailGokuXKameSuper', 3.2, 52, 64, 6, bas_scale=2.5, hand_scale=0.9, particles=CKM_PARTICLES, look=SUPER_LOOK, skill_key='CKM'))
+    pk.append(charge_package('P_TrailGokuXKameSuperCharge', crg_scale=2.0, motes=False, chant=(8, 22, 36, 48),
+                                   ball=((0, 0.3), (22, 0.65), (48, 1.1)), ring_rate=0.09))   # the Super's chant is compressed into its 54 frames
+    pk.append(muzzle_package('P_TrailGokuXKameSuperMuzzle', 4.5, fire_scale=2.0, alpha=0.8, life=14, rings=3))
     summ = {}
     for p in pk:
         p.write()
