@@ -249,6 +249,7 @@ def _export_arrays(arm, basis, n, workdir, tag):
     fps = scene.render.fps, scene.render.fps_base
     start, end = scene.frame_start, scene.frame_end
     glb = Path(workdir) / f"{tag}.glb"
+    selected, active = list(bpy.context.selected_objects), bpy.context.view_layer.objects.active
     try:
         scene.frame_start, scene.frame_end = 0, n - 1
         for o in list(bpy.context.selected_objects):
@@ -274,6 +275,12 @@ def _export_arrays(arm, basis, n, workdir, tag):
         data = clone.data
         bpy.data.objects.remove(clone, do_unlink=True)
         bpy.data.actions.remove(act)
+        for o in list(bpy.context.selected_objects):
+            o.select_set(False)
+        for o in selected:
+            if o.name in bpy.data.objects:
+                o.select_set(True)
+        bpy.context.view_layer.objects.active = active if active and active.name in bpy.data.objects else None
     return arrays, clone_mats
 
 
