@@ -125,7 +125,7 @@ def render_clip(scene, arm, mesh, cam, action, out_png):
     loc = Vector((lo[0] - 2 * span, cy, cz))
     target = Vector((lo[0], cy, cz))
     cam.location = loc
-    cam.rotation_euler = (target - loc).to_track_quat('-Z', 'Z').to_euler()
+    cam.rotation_euler = (target - loc).to_track_quat('-Z', 'Y').to_euler()  # camera up is its local +Y
     cam.data.ortho_scale = span
 
     tmp_dir = tempfile.mkdtemp(prefix='remake_preview_')
