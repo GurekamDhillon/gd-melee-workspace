@@ -1584,5 +1584,21 @@
     "air_drift_max": 0.9,
     "air_drift_stick_mul": 0.03,
     "aerial_friction": 0.005
+  },
+  "controls": {
+    "layouts": [
+      {
+        "name": "A",
+        "buttons": {
+          "A": "A"
+        }
+      },
+      {
+        "name": "B",
+        "buttons": {
+          "Y": "Down"
+        }
+      }
+    ]
   }
 }

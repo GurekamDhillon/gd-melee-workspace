@@ -101,6 +101,39 @@ def reaction_to_melee(bdm, dmg, cls, string_hit):
     return angle, kbg, 0, bkb
 
 
+def limb_clouds(plan, points, weights, worlds):
+    """role -> {joint, a (proximal), b (distal), radius}: the mesh cloud of every limb bone in its joint-local frame (PCA axis, 3-97 percentile extent, 92nd percentile thickness)."""
+    roles = plan['roles']
+    parents = {j['index']: j['parent'] for j in plan['joints']}
+    segs = {}
+    for role in sum(CHAINS.values(), []):
+        segs[roles[role][0]] = role
+    owners = []
+    for w in weights:
+        joint = max(w, key=lambda x: x[1])[0]
+        while joint not in segs and parents.get(joint) is not None:
+            joint = parents[joint]
+        owners.append(joint if joint in segs else -1)
+    owners = np.array(owners)
+    out = {}
+    for joint, role in segs.items():
+        sel = points[owners == joint]
+        if len(sel) < 8:
+            continue
+        inv = np.linalg.inv(worlds[joint])
+        local = (inv[:3, :3] @ sel.T).T + inv[:3, 3]
+        centre = local.mean(0)
+        axis = np.linalg.svd(local - centre, full_matrices=False)[2][0]
+        proj = (local - centre) @ axis
+        low, high = np.percentile(proj, [3, 97])
+        a, b = centre + axis * low, centre + axis * high
+        if np.linalg.norm(a) > np.linalg.norm(b):
+            a, b = b, a
+        radius = float(np.percentile(seg_dist(local, a, b), 92))
+        out[role] = {'joint': joint, 'a': a, 'b': b, 'radius': max(radius, 0.15)}
+    return out
+
+
 class Rig:
     """The built pose bank + mesh of the package (what audit_gameplay reads)."""
 
@@ -117,34 +150,7 @@ class Rig:
         self._trees = {}
 
     def _clouds(self):
-        parents = {j['index']: j['parent'] for j in self.plan['joints']}
-        segs = {}
-        for role in sum(CHAINS.values(), []):
-            segs[self.roles[role][0]] = role
-        owners = []
-        for w in self.weights:
-            joint = max(w, key=lambda x: x[1])[0]
-            while joint not in segs and parents.get(joint) is not None:
-                joint = parents[joint]
-            owners.append(joint if joint in segs else -1)
-        owners = np.array(owners)
-        out = {}
-        for joint, role in segs.items():
-            sel = self.points[owners == joint]
-            if len(sel) < 8:
-                continue
-            inv = np.linalg.inv(self.worlds[joint])
-            local = (inv[:3, :3] @ sel.T).T + inv[:3, 3]
-            centre = local.mean(0)
-            axis = np.linalg.svd(local - centre, full_matrices=False)[2][0]
-            proj = (local - centre) @ axis
-            low, high = np.percentile(proj, [3, 97])
-            a, b = centre + axis * low, centre + axis * high
-            if np.linalg.norm(a) > np.linalg.norm(b):
-                a, b = b, a                       # a = proximal (near the joint origin), b = distal
-            radius = float(np.percentile(seg_dist(local, a, b), 92))
-            out[role] = {'joint': joint, 'a': a, 'b': b, 'radius': max(radius, 0.15)}
-        return out
+        return limb_clouds(self.plan, self.points, self.weights, self.worlds)
 
     def tree(self, clip):
         if clip not in self._trees:

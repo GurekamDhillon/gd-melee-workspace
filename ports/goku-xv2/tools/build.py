@@ -457,6 +457,8 @@ def apply(package, art_build, ir_path=None):
                       'pose_review':spec.get('pose_review'),
                       'words_sha256':hashlib.sha256(destination.read_bytes()).hexdigest()})
     fighter.update({key:cfg[key] for key in ('lua','states','specials','articles','jumps')})
+    if cfg.get('controls'):
+        fighter['controls'] = cfg['controls']   # per-fighter CSS layouts/extras (docs/geno.md section 26): Goku's layout B (Y -> D-pad Down = the blast input)
     import copy
     fighter['states'] = copy.deepcopy(cfg['states'])
     for st in fighter['states']:

@@ -107,6 +107,8 @@ def audit(package,art_build,fit=False):
     frames, positions, problems, posed_hurt, limb_review = [],[],[],[],[]
     points,weights = mesh_points(mesh)
     bind_inv = [np.linalg.inv(w) for w in worlds]
+    import remake_samples as RS   # lazy: remake_samples imports this module
+    clouds_by_joint = {c['joint']:c for c in RS.limb_clouds(plan,points,weights,worlds).values()}
     for move in cfg['moves']+cfg['special_adaptations']:
         parity,source,source_scripts = G.move_source(ir,move['parity'])
         expected_source = []
@@ -157,6 +159,13 @@ def audit(package,art_build,fit=False):
                     joint = (words_box[0]>>11)&255
                     if not np.isfinite(centre).all() or not radius>0:
                         problems.append(move['name']+': nonfinite or empty sphere')
+                    if move.get('hb') == 'HB-SAMPLE' and joint in clouds_by_joint:
+                        # remake phase 2: a sample sphere must sit ON its limb: centre within its radius of the limb bone segment in every active frame
+                        cl = clouds_by_joint[joint]
+                        pa,pb = (pose[joint]@np.append(cl['a'],1))[:3],(pose[joint]@np.append(cl['b'],1))[:3]
+                        d = float(seg_dist(np.array([centre]),pa,pb)[0])
+                        if d > radius:
+                            problems.append('%s: f%d sphere on %s is %.2f from its limb bone segment, radius %.2f (floats off the limb)'%(move['name'],frame,plan['joints'][joint]['name'],d,radius))
                     positions.append({'move':move['name'],'row':row,'clip':clip,'frame':frame,
                                       'joint':joint,'joint_name':plan['joints'][joint]['name'],
                                       'native_bank_world_centre':centre.tolist(),'radius':radius,

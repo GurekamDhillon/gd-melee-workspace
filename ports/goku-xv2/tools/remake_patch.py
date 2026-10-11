@@ -20,6 +20,7 @@ import strip_gameplay as SG  # noqa: E402
 import remake_apply  # noqa: E402
 
 GUARD_ON, GUARD = 178, 179     # motion numbers of GuardOn / Guard (ANIM-ROWS.json)
+KIBLAST_KI = 5                 # meter cost of one ki blast (XV2's is free; a spam-able projectile needs a cost, the owner asked for one)
 HOMING_KI = 20                 # meter cost of the homing strike (XV2: 100 stamina = 1 bar; Melee meter 0-100, Counter 10, Rush 15, Super 100): owner may retune
 
 
@@ -38,6 +39,11 @@ def patch_gameplay():
         if s['name'] == 'KiCharge' and 'Energy Charge' not in s.get('pick', ''):
             s['pick'] = 'owner decision 2026-10-11: XV2 Energy Charge (skill 591) clip APL_SPA_KTN_C, looped while Down B is held; usable only while ki < 100'
             changed = True
+    want_controls = {'layouts': [{'name': 'A', 'buttons': {'A': 'A'}},
+                                 {'name': 'B', 'buttons': {'Y': 'Down'}}]}
+    if g.get('controls') != want_controls:
+        g['controls'] = want_controls   # layout A = Melee buttons (Scheme A); layout B = X-only jump, Y = the blast input (D-pad Down) = KiBlast
+        changed = True
     if changed:
         SG.save(g)
     return changed
@@ -56,6 +62,10 @@ def patch_combo():
     if any(r['name'] == 'Guard>Vanish' for r in routes):   # owner 2026-10-11: shield + Down B was too hard to input; vanish is the Down B tap only
         routes[:] = [r for r in routes if r['name'] != 'Guard>Vanish']
         changed = True
+    ground_idle = ['motion:%d' % m for m in (14, 15, 16, 17, 18, 20, 21, 23, 24, 39, 40, 41, 42)]   # Wait, Walk x3, Turn, Dash, Run, RunBrake, KneeBend, Squat x3, Landing
+    want.append({'name': 'Blast>KiBlast', 'from': ground_idle, 'to': 'geno:KiBlast', 'input': 'blast', 'on': 'any', 'where': 'ground', 'window': [1, 0],
+                 'ki_cost': KIBLAST_KI, 'priority': 5,
+                 'source': 'XV2 Blast tap (ki blast, free in XV2); here it costs ki; input = layout B (Y -> D-pad Down) or the D-pad itself'})
     have = {r['name']: r for r in routes}
     for w in want:
         if have.get(w['name']) != w:
