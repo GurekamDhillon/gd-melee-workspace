@@ -549,6 +549,8 @@ def write_all(rig, plans, combo):
                         m.pop('why_hb', None)
                         d = m.setdefault('design', {})
                         d.update(damage=w0['dmg'], angle=fin.get('angle'), kbg=fin.get('kbg'), bkb=fin.get('bkb'))
+                        m['sample'] = {'limb': sorted({str(w['limb']) for w in tg['wins']}), 'from': tg['note'], 'xv2_damage': [w['xdmg'] for w in tg['wins']],
+                                       'reaction': sorted({w['bdm']['type'] for w in tg['wins']})}
                         m['strike'] = [[w['a'], w['b']] for w in tg['wins']]
                         m['windows'] = windows_of(rig, (PORT / tg['script']).read_text(encoding='utf-8'))
     SG.save(g)

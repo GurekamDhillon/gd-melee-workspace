@@ -6,27 +6,29 @@ gd.run(function()
     gd.cpu_mode(2, 'stand')
     local function name() return tostring(gd.player(1).motion_name) end
     local function tp(p, x, y) for i = 1, 40 do if pcall(gd.teleport, p, x, y) then return end gd.wait(20) end error('teleport') end
-    local function reset(dist, y, ki)
+    local function reset(dist, y, ki, my)
       gd.input(1, {}, 1); gd.wait(3)
-      tp(1, 0, y or 0); tp(2, dist, 0)
+      tp(1, 0, y or 0); tp(2, dist, my or 0)
       gd.set_percent(1, 0); gd.set_percent(2, 0)
       gd.combo_ki(1, ki or 0)
       gd.wait(45)
-      tp(1, 0, y or 0); tp(2, dist, 0); gd.set_percent(2, 0); gd.wait(3)
+      tp(1, 0, y or 0); tp(2, dist, my or 0); gd.set_percent(2, 0); gd.wait(3)
     end
     local function nofault() local l = assert(gd.fighter_lua(1)); assert(l.faults == 0, 'Lua fault ' .. tostring(l.last_fault)) end
     local results, miss = {}, {}
     local lastseen
     local function try(label, setup, input, frames, watch, dists)
       for _, d in ipairs(dists or {7, 11, 15}) do
-        reset(d, setup.y, setup.ki)
+        reset(d, setup.y, setup.ki, setup.my)
         if setup.pre then setup.pre() end
         gd.input(1, input, frames)
         local before, seen, links0 = gd.player(2).percent, {}, (gd.combo(1) or {}).taken or 0
         for t = 1, watch do
           gd.wait(1); nofault()
+          if setup.pin then local g = gd.player(1); pcall(gd.teleport, 2, g.x + (setup.facing or 1) * d, g.y + setup.pin) end
           seen[name()] = true
           lastseen = seen
+          if setup.grab and name() == 'CatchWait' then gd.log('SAMPLECHECK ' .. label .. ' grabbed at dist ' .. d) results[label] = 1 return true end
           if gd.player(2).percent > before + 0.01 then
             local dmg = gd.player(2).percent - before
             local c = gd.combo(1) or {}
@@ -46,21 +48,20 @@ gd.run(function()
     local ground = {}
     try('jab1', ground, {buttons = 'A'}, 2, 40)
     try('ftilt', ground, {x = 60, buttons = 'A'}, 2, 50)
-    try('utilt', ground, {y = 60, buttons = 'A'}, 2, 50)
+    try('utilt', ground, {y = 60, buttons = 'A'}, 2, 50, {2, 4, 7})
     try('dtilt', ground, {y = -60, buttons = 'A'}, 2, 50)
     try('dashattack', ground, {x = 127, buttons = 'A'}, 20, 70, {14, 20, 26})
     try('fsmash', ground, {cx = 127}, 2, 80)
-    try('usmash', ground, {cy = 127}, 2, 80)
+    try('usmash', ground, {cy = 127}, 2, 80, {2, 4, 7})
     try('dsmash', ground, {cy = -127}, 2, 80)
-    try('grab', ground, {buttons = 'Z'}, 2, 40)
+    try('grab', {grab = true}, {buttons = 'Z'}, 2, 40, {5, 8, 11})
     try('rush', ground, {x = 127, buttons = 'B'}, 2, 90, {10, 20, 30})
     try('homing', {ki = 60, pre = function() gd.input(1, {buttons = 'L'}, 14); gd.wait(12) end}, {buttons = 'L+B'}, 2, 90, {10, 20, 30})
-    local air = {y = 7}
-    local function ja(btn) return function() gd.input(1, {buttons = 'X'}, 3); gd.wait(6) end end
-    try('nair', {y = 0, pre = ja()}, {buttons = 'A'}, 2, 70)
-    try('fair', {y = 0, pre = ja()}, {cx = 127}, 2, 60)
-    try('uair', {y = 0, pre = ja()}, {cy = 127}, 2, 60)
-    try('dair', {y = 0, pre = ja()}, {cy = -127}, 2, 60, {3, 6, 9})
+    -- aerials: Goku hangs high in the air (he falls slowly), the dummy is held at an offset from him every frame (pin = height offset, distance tried below)
+    try('nair', {y = 40, my = 40, pin = 3}, {buttons = 'A'}, 2, 70, {3, 6, 9})
+    try('fair', {y = 40, my = 40, pin = 4}, {cx = 127}, 2, 60, {5, 8, 11})
+    try('uair', {y = 40, my = 50, pin = 11}, {cy = 127}, 2, 60, {0, 3, 6})
+    try('dair', {y = 40, my = 36, pin = -4}, {cy = -127}, 2, 60, {0, 3, 6})
     -- the jab string: A pressed at the XV2 rhythm, on hit the routes link
     reset(8, 0, 0)
     local links = 0

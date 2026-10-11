@@ -104,6 +104,21 @@ gd.run(function()
     assert((s8.Homing or 0) == 0 and (s8.EscapeF or 0) > 5, 'shield + stick must roll, not Homing')
     gd.input(1, {}, 1); gd.wait(30)
 
+    -- 7b. the blast input (D-pad Down; layout B maps Y to it) fires the KiBlast state for 5 ki, and nothing without the meter
+    reset(50)
+    local kb0 = ki()
+    gd.input(1, {buttons = 'DOWN'}, 2)
+    local s9 = track(40)
+    gd.log(string.format('SPECHECK kiblast: KiBlast %s ki %.1f -> %.1f', tostring(s9.KiBlast), kb0, ki()))
+    assert((s9.KiBlast or 0) >= 15, 'the blast input did not enter KiBlast')
+    assert(math.abs((kb0 - ki()) - 5) < 0.5, 'the ki blast cost is not 5: ' .. (kb0 - ki()))
+    gd.input(1, {}, 1); gd.wait(30)
+    reset(2)
+    gd.input(1, {buttons = 'DOWN'}, 2)
+    local s10 = track(30)
+    assert((s10.KiBlast or 0) == 0, 'the ki blast fired without the meter')
+    gd.input(1, {}, 1); gd.wait(20)
+
     -- 8. rewind exactness across the homing strike
     reset(50)
     gd.input(1, {buttons = 'L'}, 14); gd.wait(12)
