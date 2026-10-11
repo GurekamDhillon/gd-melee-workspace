@@ -23,12 +23,14 @@ from scipy.spatial.transform import Rotation, Slerp
 
 ROOT = Path(__file__).resolve().parents[3]
 PORT = ROOT / 'ports/goku-xv2'
+HAND_FILE = Path(os.environ.get('GOKU_HAND', PORT / 'anim/hand.json'))   # hand-authored deltas; NEVER written by this converter
 AUTHOR = ROOT / '_build/goku-xv2' / os.environ.get('GOKU_AUTHOR', 'author-source')   # GOKU_AUTHOR=splice-preview: a reduced build that leaves the shipped package alone
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import strip_gameplay as SG
 import splice as SP
 sys.path.insert(0, str(ROOT))
 from tools.geno.artist import model, spec, pipeline, validate
+from tools.geno.artist.blender import hand_layer as HL   # the hand-animation file (ports/goku-xv2/anim/hand.json), applied last
 
 BODY = 'chara/GOK/GOK_000.esk'
 EAN = 'chara/GOK/GOK.ean'
@@ -717,6 +719,9 @@ def animations(source,mesh,rows,splices=None):
         if cid not in cache:cache[cid]={(t['bone'],t['channel']):t['keys'] for t in source.blob(source.clips[cid]['keys'])}
         return cache[cid]
     if splices is None and any(r.get('splice') for r in rows.values()):splices=splice_bake(source,mesh,rows)
+    hand=HL.load(HAND_FILE) if HAND_FILE.is_file() else None
+    hand_clips=dict(hand['clips']) if hand else {}
+    for missing in sorted(set(hand_clips)-set(rows)):print('hand file: no row named %s (clip ignored)'%missing,file=sys.stderr)
     for name,rs in list(rows.items()):
         gname=rs.get('ground_as') or name   # a splice preview row sits on the floor like the row it previews
         cid=rs['clip'];clip=source.clips[cid];count=rs['frames'] or clip['frames'];frames=np.arange(count,dtype=float)
@@ -851,7 +856,14 @@ def animations(source,mesh,rows,splices=None):
             cpr=json.loads((ROOT/'_build/goku-xv2/cross-port'/name/'report.json').read_text())
             cp_info=dict(rs['cross_port'],ratio=cpr['ratio'],end_effector_error_max={k:round(v['max'],2) for k,v in cpr['end_effector_error'].items()},
                          not_carried=cpr['not_carried'],unmatched_dst_roles=cpr['solver']['unmatched_dst_roles'])
-        result[name]={'rotation':rotations,'hips':hip,'root':root if rs.get('root_motion') else None,'frames':count,'loop':rs['loop'],'scale':scales}
+        hand_rep=None;hand_root=False
+        if name in hand_clips:
+            # hand-authored delta (tools/geno/artist/blender/hand_layer.py): the LAST step, so what was authored in Blender is what the game plays
+            rest_q={n:Rotation.from_matrix(rest[n][:3,:3]).as_quat() for n in names}
+            hip,root_h,hand_rep=HL.apply_clip(hand_clips[name],count=count,rotations=rotations,rest_q=rest_q,hips=hip,root=root if rs.get('root_motion') else None,
+                                              hips_bone='b_C_Pelvis',root_bone='b_C_Base',rest_hips=rest['b_C_Pelvis'][:3,3])
+            if root_h is not None:root=root_h;hand_root=True
+        result[name]={'rotation':rotations,'hips':hip,'root':root if (rs.get('root_motion') or hand_root) else None,'frames':count,'loop':rs['loop'],'scale':scales}
         report[name]={k:v for k,v in rs.items() if k!='events'}
         report[name].update(ground_report)
         report[name].update(frames=count,source_name=clip['name'],ground_offset=-ground,
@@ -859,6 +871,7 @@ def animations(source,mesh,rows,splices=None):
                             discarded_nonhip_translation=sorted(ignored),fps=60,fps_basis='LibXenoverse2 EAN exporter convention, not runtime measurement',
                             root_motion=bool(rs.get('root_motion')), root_displacement=root[-1].tolist(),
                             motion_policy='Base translation retained on translation bone for flagged roll rows; otherwise omitted; hips lateral start removed; jump/recovery vertical flattened')
+        if hand_rep:report[name]['hand']=hand_rep
         if splice_rep:
             report[name].update(splice=dict(rs['splice'],frames=splice_rep['frames'],ok=splice_rep['ok'],seams=splice_rep['seams'],segments=splice_rep['segments'],
                                             max_step_deg=splice_rep['max_step_deg'],notes=splice_rep['notes']),

@@ -109,7 +109,7 @@ def sparse_bones(rot, loc, tol_rot=EPS_ROT, tol_loc=EPS_LOC):
         r = rot.get(bone)
         if r is not None:
             r = np.asarray(r, float)
-            ang = 2 * np.arccos(np.clip(np.abs(r[:, 3]), 0, 1))
+            ang = 2 * np.arctan2(np.linalg.norm(r[:, :3], axis=1), np.abs(r[:, 3]))   # not arccos(w): ill-conditioned near identity
             if ang.max() > tol_rot:
                 entry["rot"] = [[round(float(v), 6) for v in row] for row in r]
         l = loc.get(bone)
