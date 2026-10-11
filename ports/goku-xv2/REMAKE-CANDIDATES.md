@@ -521,8 +521,8 @@ XV2-derived and never committed. Preview any clip in the LAB (REMAKE or CLIPS mo
 | 342 | AppealSL | AUTHORED | AUTHORED choice: XV2 lobby gesture as the taunt |  |
 | 343 | SpecialN | SOURCE-RETIMED | held at f40, 135 frames |  |
 | 344 | SpecialAirN | SOURCE-RETIMED | from f48, x1.4 speed, 32 frames |  |
-| 345 | SpecialS | SOURCE-RETIMED | 40 frames |  |
-| 346 | SpecialAirS | SOURCE-RETIMED | 40 frames |  |
+| 345 | SpecialS | SOURCE-RETIMED | 66 frames |  |
+| 346 | SpecialAirS | SOURCE-RETIMED | 66 frames |  |
 | 347 | SpecialHi | SOURCE-RETIMED | x0.7 speed, 26 frames |  |
 | 348 | SpecialAirHi | SOURCE-RETIMED | x0.7 speed, 26 frames |  |
 | 349 | SpecialLw | SOURCE-RETIMED | x0.39 speed, 46 frames |  |
