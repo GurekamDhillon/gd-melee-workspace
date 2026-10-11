@@ -236,7 +236,7 @@ NumberField::NumberField(QWidget *parent) : QDoubleSpinBox(parent) {
 }
 InspectorTabs::InspectorTabs(QWidget *parent) : QTabWidget(parent) {
     atlas::initialize(); setObjectName("wbInspectorTabs"); setFont(atlas::font(atlas::Role::Cap14));
-    setDocumentMode(true); setUsesScrollButtons(false); tabBar()->setExpanding(true); tabBar()->setElideMode(Qt::ElideRight); // six tabs: shrink and elide rather than scroll
+    setDocumentMode(true); setUsesScrollButtons(true); tabBar()->setExpanding(true); tabBar()->setElideMode(Qt::ElideNone); // seven tabs: every label stays whole; the bar scrolls when they do not fit
     setAccessibleName(t("Inspector", "Inspector"));
 }
 

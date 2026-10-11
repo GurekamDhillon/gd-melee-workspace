@@ -98,6 +98,10 @@ private slots:
         if (narrow) QVERIFY2(tabsAt.y() > timelineAt.y() && tabs->width() > 520, qPrintable(QString("tabs %1,%2 w%3").arg(tabsAt.x()).arg(tabsAt.y()).arg(tabs->width())));
         else QVERIFY2(tabsAt.x() > timelineAt.x() + timeline->width() - 5, "inspector is a third column when wide");
         QVERIFY2(tabs->width() >= 300, "inspector is not squeezed");
+        // Owner bug: tab labels were squeezed to elided stubs. Every tab keeps room for its whole label.
+        for (int i = 0; i < tabs->count(); ++i)
+            QVERIFY2(tabs->tabBar()->tabRect(i).width() >= tabs->tabBar()->fontMetrics().horizontalAdvance(tabs->tabText(i)),
+                     qPrintable(QString("tab '%1' squeezed to %2 px").arg(tabs->tabText(i)).arg(tabs->tabBar()->tabRect(i).width())));
         // Tall window: the Move view spans the full width and Moves is the first tab of the lower strip.
         auto *centreHost = bench->findChild<QWidget *>("wbCentreHost"); auto *movesRail = bench->findChild<QWidget *>("wbMovesRail");
         QVERIFY(centreHost && movesRail);
