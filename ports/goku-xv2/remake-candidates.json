@@ -1,0 +1,1327 @@
+[
+ {
+  "group": "1 Locomotion (always floating)",
+  "slot": "Idle",
+  "rows": "Wait, Rebirth, RebirthWait, Sleep",
+  "current": "GOK_BAS_STAND_S (Sleep still ground STAND)",
+  "role": "Resting stance; must loop, tiny bob, readable as hovering",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_STAND_S",
+    "why": "XV2 sky idle, already the idle; prone flight stance, 100f loop"
+   },
+   {
+    "clip": "xGOK_BAS_STAND_00_S",
+    "why": "alternate sky idle"
+   },
+   {
+    "clip": "xGOK_BAS_STAND_01_S",
+    "why": "alternate sky idle"
+   },
+   {
+    "clip": "xGOK_BAS_STAND_SS3_S",
+    "why": "211f power-stance idle (hair-up / aura mood); long, loop point must be checked"
+   }
+  ],
+  "recommended": "xGOK_BAS_STAND_S",
+  "combo_role": ""
+ },
+ {
+  "group": "1 Locomotion (always floating)",
+  "slot": "Walk (slow/mid/fast)",
+  "rows": "WalkSlow, WalkMiddle, WalkFast",
+  "current": "GOK_BAS_WALK (ground walk, 70f) x one clip",
+  "role": "No walking: a slow drift whose rate scales with stick",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_BUKUU_F_S",
+    "why": "XV2 fly-forward (floating travel); 40f loop, head-first dive posture, reads as gliding"
+   },
+   {
+    "clip": "xGOK_BAS_STEP_F_S",
+    "why": "45f air step forward; reads as a lunge, may look jittery looped"
+   },
+   {
+    "clip": "xGOK_BAS_BOOST_F_01",
+    "why": "sustained boost; strongest \"flying\" read but too fast for a walk even at low rate"
+   }
+  ],
+  "recommended": "xGOK_BAS_BUKUU_F_S",
+  "combo_role": ""
+ },
+ {
+  "group": "1 Locomotion (always floating)",
+  "slot": "Run",
+  "rows": "Run, RunDirect",
+  "current": "GOK_BAS_RUN (ground run, 30f)",
+  "role": "Full-speed travel, loop",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_BOOST_F_01",
+    "why": "XV2 sustained boost (257f, loop a stable 30-40f crop); the obvious fast-flight clip"
+   },
+   {
+    "clip": "xGOK_BAS_BUKUU_F_S",
+    "why": "same as walk at a higher rate (one clip for both = consistent, less distinct)"
+   },
+   {
+    "clip": "xGOK_BAS_STEP_F_S",
+    "why": "repeated steps; weaker"
+   }
+  ],
+  "recommended": "xGOK_BAS_BOOST_F_01",
+  "combo_role": ""
+ },
+ {
+  "group": "1 Locomotion (always floating)",
+  "slot": "Dash (start)",
+  "rows": "Dash",
+  "current": "BOOST_F_00 x0.55, eased into Run",
+  "role": "Dash burst before Run",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_BOOST_F_00",
+    "why": "XV2 boost launch (24f), already used"
+   },
+   {
+    "clip": "xGOK_BAS_STEP_F_S",
+    "why": "45f step; slower burst"
+   },
+   {
+    "clip": "xGOK_BAS_BUKUU_F_S",
+    "why": "just the glide; no burst"
+   }
+  ],
+  "recommended": "xGOK_BAS_BOOST_F_00",
+  "combo_role": ""
+ },
+ {
+  "group": "1 Locomotion (always floating)",
+  "slot": "Run brake / stop",
+  "rows": "RunBrake",
+  "current": "BOOST_F_02 from f6 x0.75",
+  "role": "Stopping out of Run",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_BOOST_F_02",
+    "why": "XV2 boost stop (19f), already used"
+   },
+   {
+    "clip": "xCMN_BAS_BRAKE_S",
+    "why": "55f sky brake (CMN), longer and softer"
+   },
+   {
+    "clip": "xGOK_BAS_STAND_S",
+    "why": "plain ease into idle, no skid"
+   }
+  ],
+  "recommended": "xGOK_BAS_BOOST_F_02",
+  "combo_role": ""
+ },
+ {
+  "group": "1 Locomotion (always floating)",
+  "slot": "Turn (wait / run)",
+  "rows": "Turn, TurnRun",
+  "current": "authored 180 yaw on Wait / BOOST_F_02 + yaw",
+  "role": "Turnaround; the earlier note \"XV2 has no turn\" is wrong, CMN has one",
+  "candidates": [
+   {
+    "clip": "xCMN_BAS_TURN",
+    "why": "CMN has a 27f turn clip (not yet used; check that it is a floating pose)"
+   },
+   {
+    "clip": "xCMN_BAS_BRAKE_B_S",
+    "why": "55f backward brake as a run-turn"
+   },
+   {
+    "clip": "xGOK_BAS_STEP_B_S",
+    "why": "45f back step as a run-turn"
+   },
+   {
+    "clip": "xGOK_BAS_STAND_S",
+    "why": "keep authored yaw ramp (current)"
+   }
+  ],
+  "recommended": "xGOK_BAS_STAND_S",
+  "combo_role": ""
+ },
+ {
+  "group": "1 Locomotion (always floating)",
+  "slot": "Crouch",
+  "rows": "Squat, SquatWait, SquatRv",
+  "current": "GOK_BAS_JUMP landing-crouch crop (grounded)",
+  "role": "A floating crouch: sink and tuck, never touching the floor",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_BUKUU_DOWN",
+    "why": "XV2 descend hover, hold a low frame; floating by definition"
+   },
+   {
+    "clip": "xGOK_GRD_KAMAE_S",
+    "why": "sky guard stance: low, coiled"
+   },
+   {
+    "clip": "xGOK_BAS_STEP_B_S",
+    "why": "45f back step, use the settle frames"
+   }
+  ],
+  "recommended": "xGOK_BAS_BUKUU_DOWN",
+  "combo_role": ""
+ },
+ {
+  "group": "1 Locomotion (always floating)",
+  "slot": "Jump squat",
+  "rows": "KneeBend",
+  "current": "JUMP crop",
+  "role": "4-frame squat before the jump (Melee: jump_startup_time)",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_BUKUU_UP",
+    "why": "first frames of the ascend hover"
+   },
+   {
+    "clip": "xGOK_BAS_BOOST_F_00",
+    "why": "first frames of the boost launch"
+   },
+   {
+    "clip": "xGOK_BAS_JUMP_FRONT_00",
+    "why": "first 7f of XV2 jump start (current family)"
+   }
+  ],
+  "recommended": "xGOK_BAS_BUKUU_UP",
+  "combo_role": ""
+ },
+ {
+  "group": "1 Locomotion (always floating)",
+  "slot": "Jump (ground, forward/back)",
+  "rows": "JumpF, JumpB",
+  "current": "JUMP_FRONT_00 / JUMP_BACK_00 x0.33 (55f; owner: poor, punch list 9; queue 4: <= 40f)",
+  "role": "Rise out of a jump; Melee row length = rise",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_BUKUU_UP",
+    "why": "50f ascend hover; floating rise, the natural fit"
+   },
+   {
+    "clip": "xGOK_BAS_JUMP_FRONT_01",
+    "why": "XV2 jump arc body (60f) cropped to 40"
+   },
+   {
+    "clip": "xGOK_BAS_STEP_F_S",
+    "why": "air step as a hop"
+   },
+   {
+    "clip": "xGOK_BAS_BOOST_F_00",
+    "why": "boost-up launch"
+   }
+  ],
+  "recommended": "xGOK_BAS_BUKUU_UP",
+  "combo_role": ""
+ },
+ {
+  "group": "1 Locomotion (always floating)",
+  "slot": "Double jump (air jump)",
+  "rows": "JumpAerialF, JumpAerialB",
+  "current": "JUMP_FRONT_01 / BACK_01 x0.27 (60f)",
+  "role": "Second jump in the air; reads as a burst",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_STEP_F_S",
+    "why": "forward air step burst (F); STEP_B_S for B"
+   },
+   {
+    "clip": "xGOK_BAS_BUKUU_UP",
+    "why": "ascend hover again"
+   },
+   {
+    "clip": "xGOK_BAS_JUMP_BACK_01",
+    "why": "XV2 back jump arc (B)"
+   },
+   {
+    "clip": "xGOK_BAS_BOOST_F_00",
+    "why": "boost burst, distinct from the first jump"
+   }
+  ],
+  "recommended": "xGOK_BAS_STEP_F_S",
+  "combo_role": ""
+ },
+ {
+  "group": "1 Locomotion (always floating)",
+  "slot": "Fall",
+  "rows": "Fall, FallF/B, FallAerial*, FallSpecial*, Pass",
+  "current": "GOK_BAS_BUKUU_DOWN (adapted)",
+  "role": "Falling and helpless fall",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_BUKUU_DOWN",
+    "why": "XV2 descend; already used"
+   },
+   {
+    "clip": "xGOK_BAS_JUMP_FRONT_02",
+    "why": "17f falling pose from the jump body"
+   },
+   {
+    "clip": "xGOK_BAS_STUN_00_S",
+    "why": "31f dazed sky pose for FallSpecial (helpless)"
+   }
+  ],
+  "recommended": "xGOK_BAS_BUKUU_DOWN",
+  "combo_role": ""
+ },
+ {
+  "group": "1 Locomotion (always floating)",
+  "slot": "Landing (ground)",
+  "rows": "Landing, LandingFallSpecial, LandingAir*",
+  "current": "JUMP_FRONT_02 from f10 (aliased to all 5 air landings)",
+  "role": "Touch-down settle; Melee lag frames stay",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_BOOST_F_02",
+    "why": "boost stop tail, a braking settle"
+   },
+   {
+    "clip": "xGOK_BAS_STEP_F_S",
+    "why": "end of the air step, easing to rest"
+   },
+   {
+    "clip": "xGOK_BAS_BUKUU_UP",
+    "why": "last frames: a soft rise into idle"
+   },
+   {
+    "clip": "xGOK_BAS_JUMP_FRONT_02",
+    "why": "current"
+   }
+  ],
+  "recommended": "xGOK_BAS_BOOST_F_02",
+  "combo_role": ""
+ },
+ {
+  "group": "2 Defence",
+  "slot": "Shield",
+  "rows": "GuardOn, Guard, GuardOff, GuardSetOff, GuardReflect",
+  "current": "GRD_KAMAE (ground) / GRD_L",
+  "role": "Hold shield, release, hit-in-shield",
+  "candidates": [
+   {
+    "clip": "xGOK_GRD_KAMAE_S",
+    "why": "sky guard (130f): the floating shield stance"
+   },
+   {
+    "clip": "xGOK_GRD_L_S",
+    "why": "30f guard-hit flinch (sky), for GuardSetOff"
+   },
+   {
+    "clip": "xGOK_GRD_L_L_S",
+    "why": "left shield hit variant; _R_S right"
+   },
+   {
+    "clip": "xGOK_GRD_KAMAE",
+    "why": "ground guard, current"
+   }
+  ],
+  "recommended": "xGOK_GRD_KAMAE_S",
+  "combo_role": ""
+ },
+ {
+  "group": "2 Defence",
+  "slot": "Shield break",
+  "rows": "ShieldBreakFly/Fall/DownU/D/StandU/D",
+  "current": "CMN dizzy / stun rows",
+  "role": "Shield broken",
+  "candidates": [
+   {
+    "clip": "xGOK_GRD_BREAK_S",
+    "why": "90f sky guard-break, the XV2 clip made for this"
+   },
+   {
+    "clip": "xGOK_GRD_BREAK",
+    "why": "ground guard-break"
+   },
+   {
+    "clip": "xGOK_BAS_STUN_02_S",
+    "why": "73f dizzy (also Furafura)"
+   }
+  ],
+  "recommended": "xGOK_GRD_BREAK_S",
+  "combo_role": ""
+ },
+ {
+  "group": "2 Defence",
+  "slot": "Roll / spot dodge / air dodge",
+  "rows": "EscapeF, EscapeB, EscapeN, EscapeAir",
+  "current": "STEP_F_S, STEP_B_S, STEP_L_S x1.85/1.5",
+  "role": "Dodges: intangible frames are Melee rules",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_STEP_F_S",
+    "why": "forward roll as a sidestep-dash"
+   },
+   {
+    "clip": "xGOK_BAS_STEP_B_S",
+    "why": "back roll"
+   },
+   {
+    "clip": "xGOK_BAS_STEP_L_S",
+    "why": "spot dodge (L; R_S mirrored variant); also air dodge"
+   },
+   {
+    "clip": "xGOK_BAS_BOOST_F_00",
+    "why": "air dodge as a boost burst"
+   }
+  ],
+  "recommended": "xGOK_BAS_STEP_F_S",
+  "combo_role": ""
+ },
+ {
+  "group": "2 Defence",
+  "slot": "Dizzy",
+  "rows": "Furafura",
+  "current": "GOK_BAS_STUN_02",
+  "role": "Stun",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_STUN_02_S",
+    "why": "73f sky dizzy"
+   },
+   {
+    "clip": "xGOK_BAS_STUN_01_S",
+    "why": "40f"
+   },
+   {
+    "clip": "xCMN_DMG_KANASHIBARI",
+    "why": "220f frozen/paralysed"
+   }
+  ],
+  "recommended": "xGOK_BAS_STUN_02_S",
+  "combo_role": ""
+ },
+ {
+  "group": "3 Normals (ground)",
+  "slot": "Jab 1 (L1)",
+  "rows": "Attack11",
+  "current": "ATC_002 from f9 (BAC 300)",
+  "role": "Opener, fast, safe; string link 1",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_002",
+    "why": "XV2 light 1 (BAC 300): left jab"
+   },
+   {
+    "clip": "xGOK_ATC_001",
+    "why": "XV2 forward light (BAC 460, single activation): kick-flip"
+   },
+   {
+    "clip": "xGOK_ATC_000",
+    "why": "XV2 base attack pose, short"
+   },
+   {
+    "clip": "xGOK_ATC_027",
+    "why": "XV2 light (BAC 340) used by the ki-volley string"
+   }
+  ],
+  "recommended": "xGOK_ATC_002",
+  "combo_role": "starter; links to jab2"
+ },
+ {
+  "group": "3 Normals (ground)",
+  "slot": "Jab 2 (L2)",
+  "rows": "Attack12",
+  "current": "ATC_003 (BAC 301)",
+  "role": "Second string hit",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_003",
+    "why": "XV2 light 2: right straight"
+   },
+   {
+    "clip": "xGOK_ATC_029",
+    "why": "55f light (BAC 351)"
+   },
+   {
+    "clip": "xGOK_ATC_001",
+    "why": "forward light"
+   }
+  ],
+  "recommended": "xGOK_ATC_003",
+  "combo_role": "link 2"
+ },
+ {
+  "group": "3 Normals (ground)",
+  "slot": "Jab 3 (L3)",
+  "rows": "Attack13, Light3 state",
+  "current": "ATC_017 (BAC 302)",
+  "role": "Third hit, ends jab / continues string",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_017",
+    "why": "XV2 light 3: left kick"
+   },
+   {
+    "clip": "xGOK_ATC_009",
+    "why": "XV2 light 4 clip (BAC 303)"
+   },
+   {
+    "clip": "xGOK_ATC_022",
+    "why": "XV2 light 5 / air light (BAC 304, 375)"
+   }
+  ],
+  "recommended": "xGOK_ATC_017",
+  "combo_role": "link 3; Light4 = ATC_009, Light5 = ATC_022 in the combo package"
+ },
+ {
+  "group": "3 Normals (ground)",
+  "slot": "Rapid jab",
+  "rows": "Attack100Start/Loop/End",
+  "current": "ATC_028 (5-hit flurry)",
+  "role": "Held-A flurry",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_028",
+    "why": "XV2 5-hit flurry (BAC 336/350): the only multi-hit clip"
+   },
+   {
+    "clip": "xGOK_ATC_000",
+    "why": "pose loop"
+   },
+   {
+    "clip": "xGOK_ATC_029",
+    "why": "55f"
+   }
+  ],
+  "recommended": "xGOK_ATC_028",
+  "combo_role": ""
+ },
+ {
+  "group": "3 Normals (ground)",
+  "slot": "Forward tilt",
+  "rows": "AttackS3S, S3Hi, S3HiS, S3LwS, S3Lw",
+  "current": "ATC_008 (BAC 475) for all five rows",
+  "role": "Spacing poke; Hi/Lw rows are angled variants (currently the same clip)",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_008",
+    "why": "XV2 rush kick (47f), forward kick"
+   },
+   {
+    "clip": "xGOK_ATC_016",
+    "why": "38f heavy (BAC 325)"
+   },
+   {
+    "clip": "xGOK_ATC_015",
+    "why": "30f heavy (BAC 480)"
+   },
+   {
+    "clip": "xGOK_ATC_001",
+    "why": "forward light"
+   }
+  ],
+  "recommended": "xGOK_ATC_008",
+  "combo_role": "starter; spacing"
+ },
+ {
+  "group": "3 Normals (ground)",
+  "slot": "Up tilt",
+  "rows": "AttackHi3",
+  "current": "ATC_013 from f20 (owner: dumb, punch list 2)",
+  "role": "Anti-air",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_013",
+    "why": "XV2 heavy 1 (BAC 310) rising arm swing, current"
+   },
+   {
+    "clip": "xGOK_ATC_004",
+    "why": "43f uppercut (BAC 342)"
+   },
+   {
+    "clip": "xGOK_ATC_025",
+    "why": "61f somersault kick (BAC 365)"
+   },
+   {
+    "clip": "xGOK_ATC_018_S",
+    "why": "26f sky attack, unreviewed"
+   }
+  ],
+  "recommended": "xGOK_ATC_025",
+  "combo_role": "starter; anti-air"
+ },
+ {
+  "group": "3 Normals (ground)",
+  "slot": "Down tilt",
+  "rows": "AttackLw3",
+  "current": "ATC_020_S from f11 (low slide kick)",
+  "role": "Low poke",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_020_S",
+    "why": "51f low kick (BAC 370)"
+   },
+   {
+    "clip": "xGOK_ATC_012",
+    "why": "40f split sweep (BAC 341)"
+   },
+   {
+    "clip": "xGOK_ATC_024",
+    "why": "70f spinning low (BAC 360)"
+   }
+  ],
+  "recommended": "xGOK_ATC_020_S",
+  "combo_role": "starter; low"
+ },
+ {
+  "group": "3 Normals (ground)",
+  "slot": "Dash attack",
+  "rows": "AttackDash",
+  "current": "ATC_011 from f13 (flying side kick)",
+  "role": "Run-in",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_011",
+    "why": "70f flying side kick (BAC 337)"
+   },
+   {
+    "clip": "xGOK_ATC_021_S",
+    "why": "40f sky boost strike (BAC 465)"
+   },
+   {
+    "clip": "xGOK_ATC_006",
+    "why": "58f boost lunge (BAC 343)"
+   },
+   {
+    "clip": "xGOK_ATC_030",
+    "why": "145f late heavy (BAC 352)"
+   }
+  ],
+  "recommended": "xGOK_ATC_011",
+  "combo_role": "starter"
+ },
+ {
+  "group": "3 Normals (ground)",
+  "slot": "Forward smash",
+  "rows": "AttackS4S, S4Hi, S4HiS, S4LwS, S4Lw",
+  "current": "ATC_006 from f5 (BAC 343) for all five rows",
+  "role": "Charge-able finisher",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_006",
+    "why": "58f lunging strike"
+   },
+   {
+    "clip": "xGOK_ATC_005",
+    "why": "57f heavy (BAC 338)"
+   },
+   {
+    "clip": "xGOK_ATC_030",
+    "why": "145f late smash; very slow"
+   },
+   {
+    "clip": "xGOK_ATC_011",
+    "why": "flying kick"
+   }
+  ],
+  "recommended": "xGOK_ATC_006",
+  "combo_role": ""
+ },
+ {
+  "group": "3 Normals (ground)",
+  "slot": "Up smash",
+  "rows": "AttackHi4",
+  "current": "ATC_004 from f5 (BAC 342 uppercut)",
+  "role": "Launcher / anti-air finisher",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_004",
+    "why": "43f uppercut, current, his launcher (HeavyUp uses it)"
+   },
+   {
+    "clip": "xGOK_ATC_025",
+    "why": "somersault kick"
+   },
+   {
+    "clip": "xGOK_ATC_013",
+    "why": "rising arm swing"
+   }
+  ],
+  "recommended": "xGOK_ATC_004",
+  "combo_role": "launcher (route target HeavyUp)"
+ },
+ {
+  "group": "3 Normals (ground)",
+  "slot": "Down smash",
+  "rows": "AttackLw4",
+  "current": "ATC_012 from f2 (split sweep, BAC 341)",
+  "role": "Low two-sided sweep",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_012",
+    "why": "40f split sweep"
+   },
+   {
+    "clip": "xGOK_ATC_024",
+    "why": "70f spinning, two hits (BAC 360)"
+   },
+   {
+    "clip": "xGOK_ATC_007",
+    "why": "49f split kick"
+   }
+  ],
+  "recommended": "xGOK_ATC_012",
+  "combo_role": "route target dsmash"
+ },
+ {
+  "group": "4 Aerials",
+  "slot": "Neutral air",
+  "rows": "AttackAirN",
+  "current": "ATC_007 from f9 (split kick, 18 active frames)",
+  "role": "Multi-hit sex-kick; Nair>Nair chain",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_007",
+    "why": "49f split kick (BAC 312/320)"
+   },
+   {
+    "clip": "xGOK_ATC_022",
+    "why": "33f air light (BAC 375)"
+   },
+   {
+    "clip": "xGOK_ATC_024",
+    "why": "70f spin, 2 hits (BAC 360)"
+   },
+   {
+    "clip": "xGOK_ATC_029",
+    "why": "55f"
+   }
+  ],
+  "recommended": "xGOK_ATC_022",
+  "combo_role": "link; chains to itself"
+ },
+ {
+  "group": "4 Aerials",
+  "slot": "Forward air",
+  "rows": "AttackAirF",
+  "current": "ATC_007 from f5 (same clip as nair; punch list 4)",
+  "role": "Forward ender",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_023",
+    "why": "34f air heavy (BAC 377), the XV2 heavy aerial"
+   },
+   {
+    "clip": "xGOK_ATC_016",
+    "why": "38f heavy"
+   },
+   {
+    "clip": "xGOK_ATC_008",
+    "why": "47f rush kick"
+   },
+   {
+    "clip": "xGOK_ATC_005",
+    "why": "57f heavy"
+   }
+  ],
+  "recommended": "xGOK_ATC_023",
+  "combo_role": "ender"
+ },
+ {
+  "group": "4 Aerials",
+  "slot": "Back air",
+  "rows": "AttackAirB",
+  "current": "CROSS-PORT Melee Luigi AttackAirB (owner: looks and works as intended)",
+  "role": "Back attack",
+  "candidates": [
+   {
+    "clip": "(Luigi AttackAirB)",
+    "why": "keep: the owner choice; needs the disc; not an XV2 clip"
+   },
+   {
+    "clip": "xGOK_ATC_024",
+    "why": "70f XV2 own back attack (BAC 360, input Heavy+Backwards): not yet considered as an aerial"
+   },
+   {
+    "clip": "xGOK_ATC_010",
+    "why": "41f backhand (BAC 335)"
+   }
+  ],
+  "recommended": "(Luigi AttackAirB)",
+  "combo_role": ""
+ },
+ {
+  "group": "4 Aerials",
+  "slot": "Up air",
+  "rows": "AttackAirHi",
+  "current": "ATC_025 from f6 (somersault kick; owner: looks good, keep)",
+  "role": "Juggle / launcher follow-up",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_025",
+    "why": "61f somersault kick, keep"
+   },
+   {
+    "clip": "xGOK_ATC_004",
+    "why": "uppercut"
+   },
+   {
+    "clip": "xGOK_ATC_013",
+    "why": "rising arm swing"
+   }
+  ],
+  "recommended": "xGOK_ATC_025",
+  "combo_role": "route: Uair>Nair"
+ },
+ {
+  "group": "4 Aerials",
+  "slot": "Down air",
+  "rows": "AttackAirLw",
+  "current": "ATC_007 f2 (leg down at f8; grounded; punch list 6)",
+  "role": "Spike / stomp",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_020_S",
+    "why": "51f sky low kick (BAC 370): a downward foot"
+   },
+   {
+    "clip": "xGOK_ATC_022",
+    "why": "33f air light"
+   },
+   {
+    "clip": "xGOK_ATC_026",
+    "why": "51f heavy (BAC 330/496)"
+   },
+   {
+    "clip": "xGOK_ATC_018_S",
+    "why": "26f sky attack"
+   }
+  ],
+  "recommended": "xGOK_ATC_020_S",
+  "combo_role": "ender (spike)"
+ },
+ {
+  "group": "4 Aerials",
+  "slot": "Air landings",
+  "rows": "LandingAirN/F/B/Hi/Lw",
+  "current": "alias of Landing",
+  "role": "Landing lag poses (Melee lag stays)",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_BOOST_F_02",
+    "why": "settle tail (as Landing)"
+   },
+   {
+    "clip": "xGOK_BAS_STEP_F_S",
+    "why": "step tail"
+   },
+   {
+    "clip": "xGOK_BAS_BUKUU_DOWN",
+    "why": "end of a descend"
+   }
+  ],
+  "recommended": "xGOK_BAS_BOOST_F_02",
+  "combo_role": ""
+ },
+ {
+  "group": "5 Grabs and throws",
+  "slot": "Grab",
+  "rows": "Catch, CatchDash(Pull), CatchPull",
+  "current": "NAG_TSUKAMI (BAC 600)",
+  "role": "Standing / dash / pivot grab",
+  "candidates": [
+   {
+    "clip": "xGOK_NAG_TSUKAMI",
+    "why": "52f XV2 grab (BAC 600), used"
+   },
+   {
+    "clip": "xGOK_ATC_003",
+    "why": "right straight reach"
+   },
+   {
+    "clip": "xGOK_ATC_015",
+    "why": "30f short heavy"
+   }
+  ],
+  "recommended": "xGOK_NAG_TSUKAMI",
+  "combo_role": ""
+ },
+ {
+  "group": "5 Grabs and throws",
+  "slot": "Grab hold / pummel",
+  "rows": "CatchWait, CatchAttack, CatchCut",
+  "current": "TSUKAMI held f22+ ; CMN_BAS_HAJIKI_B_00",
+  "role": "Hold, pummel, release",
+  "candidates": [
+   {
+    "clip": "xGOK_NAG_TSUKAMI",
+    "why": "hold pose f22-45; pummel crop"
+   },
+   {
+    "clip": "xGOK_ATC_002",
+    "why": "jab as pummel"
+   },
+   {
+    "clip": "xGOK_ATC_029",
+    "why": "55f light as pummel"
+   }
+  ],
+  "recommended": "xGOK_NAG_TSUKAMI",
+  "combo_role": ""
+ },
+ {
+  "group": "5 Grabs and throws",
+  "slot": "Forward throw",
+  "rows": "ThrowF",
+  "current": "GNY_NAG_A f16-45 (BAC 601)",
+  "role": "Toss",
+  "candidates": [
+   {
+    "clip": "xGNY_NAG_A",
+    "why": "201f XV2 throw (borrowed GNY clip)"
+   },
+   {
+    "clip": "xGOK_ATC_005",
+    "why": "heavy, as a punch throw"
+   },
+   {
+    "clip": "xGOK_ATC_011",
+    "why": "flying kick"
+   }
+  ],
+  "recommended": "xGNY_NAG_A",
+  "combo_role": ""
+ },
+ {
+  "group": "5 Grabs and throws",
+  "slot": "Back throw",
+  "rows": "ThrowB",
+  "current": "GNY_NAG_A turned 180 (authored)",
+  "role": "Throw behind",
+  "candidates": [
+   {
+    "clip": "xGNY_NAG_D",
+    "why": "157f XV2 slam (BAC 602/603)"
+   },
+   {
+    "clip": "xGOK_ATC_010",
+    "why": "41f backhand"
+   },
+   {
+    "clip": "xGOK_ATC_024",
+    "why": "70f spin (Backwards heavy)"
+   }
+  ],
+  "recommended": "xGOK_ATC_024",
+  "combo_role": ""
+ },
+ {
+  "group": "5 Grabs and throws",
+  "slot": "Up throw",
+  "rows": "ThrowHi",
+  "current": "ATC_004 uppercut (authored choice)",
+  "role": "Throw up",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_004",
+    "why": "uppercut"
+   },
+   {
+    "clip": "xGOK_ATC_025",
+    "why": "somersault kick"
+   },
+   {
+    "clip": "xGOK_ATC_013",
+    "why": "rising swing"
+   }
+  ],
+  "recommended": "xGOK_ATC_004",
+  "combo_role": ""
+ },
+ {
+  "group": "5 Grabs and throws",
+  "slot": "Down throw",
+  "rows": "ThrowLw",
+  "current": "ATC_012 sweep (authored choice)",
+  "role": "Throw down",
+  "candidates": [
+   {
+    "clip": "xGNY_NAG_D",
+    "why": "157f slam into ground"
+   },
+   {
+    "clip": "xGOK_ATC_012",
+    "why": "split sweep"
+   },
+   {
+    "clip": "xGOK_ATC_020_S",
+    "why": "low kick"
+   }
+  ],
+  "recommended": "xGNY_NAG_D",
+  "combo_role": ""
+ },
+ {
+  "group": "5 Grabs and throws",
+  "slot": "Thrown / captured by others",
+  "rows": "Thrown*, Capture*, ShoulderedWait...",
+  "current": "CMN_DMG clips / Falcon stand-ins",
+  "role": "Victim poses (many rows)",
+  "candidates": [
+   {
+    "clip": "xCMN_DMG_BODY_L_F_S",
+    "why": "34f sky hit-stun"
+   },
+   {
+    "clip": "xCMN_DMG_AIR_F",
+    "why": "30f air hit"
+   },
+   {
+    "clip": "xCMN_DMG_BLOW_F",
+    "why": "20f blown"
+   }
+  ],
+  "recommended": "xCMN_DMG_BODY_L_F_S",
+  "combo_role": ""
+ },
+ {
+  "group": "6 Specials",
+  "slot": "Neutral B Kamehameha",
+  "rows": "SpecialN, SpecialAirN, Kame*",
+  "current": "xGOK_SPA_KMH",
+  "role": "Accepted design (owner)",
+  "candidates": [
+   {
+    "clip": "xGOK_SPA_KMH_*",
+    "why": "not up for choice; unchanged"
+   }
+  ],
+  "recommended": "xGOK_SPA_KMH_*",
+  "combo_role": ""
+ },
+ {
+  "group": "6 Specials",
+  "slot": "Side B Dragon Rush",
+  "rows": "SpecialS, SpecialAirS (+Rush, RushCombo)",
+  "current": "BOOST_F_00 + STEP_F_S + ATC_013",
+  "role": "Dash strike and recovery",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_021_S",
+    "why": "40f sky boost strike (BAC 465)"
+   },
+   {
+    "clip": "xGOK_ATC_011",
+    "why": "flying side kick"
+   },
+   {
+    "clip": "xGOK_ATC_013",
+    "why": "rising swing (current)"
+   },
+   {
+    "clip": "xGOK_ATC_006",
+    "why": "lunge"
+   }
+  ],
+  "recommended": "xGOK_ATC_021_S",
+  "combo_role": "route: Rush>RushCombo; XV2 BAC 426/427 use ATC_022/023"
+ },
+ {
+  "group": "6 Specials",
+  "slot": "Up B Instant Transmission",
+  "rows": "SpecialHi, SpecialAirHi",
+  "current": "xGOK_ESC_KUR_C",
+  "role": "Teleport recovery",
+  "candidates": [
+   {
+    "clip": "xGOK_ESC_KUR_C",
+    "why": "accepted"
+   },
+   {
+    "clip": "xGOK_BAS_BOOST_F_00",
+    "why": "alt vanish"
+   }
+  ],
+  "recommended": "xGOK_ESC_KUR_C",
+  "combo_role": ""
+ },
+ {
+  "group": "6 Specials",
+  "slot": "Down B counter / ki charge",
+  "rows": "SpecialLw, SpecialAirLw, KiCharge",
+  "current": "ESC_KUR_C x0.6 + ATC_008 / BLT_POW_C",
+  "role": "Counter and ki charge",
+  "candidates": [
+   {
+    "clip": "xGOK_ESC_KUR_C",
+    "why": "blink (counter), current"
+   },
+   {
+    "clip": "xCMN_BLT_POW_GOK",
+    "why": "101f Goku-specific ki charge pose"
+   },
+   {
+    "clip": "xCMN_BLT_POW_C",
+    "why": "current ki charge"
+   }
+  ],
+  "recommended": "xCMN_BLT_POW_GOK",
+  "combo_role": ""
+ },
+ {
+  "group": "6 Specials",
+  "slot": "Ki volley",
+  "rows": "KiVolley (combo)",
+  "current": "ATC_SHOT_N",
+  "role": "Neutral-B cancel",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_SHOT_N",
+    "why": "40f; _F / _B / _L / _R directional"
+   },
+   {
+    "clip": "xGOK_ATC_SHOT_F",
+    "why": "40f forward blast"
+   }
+  ],
+  "recommended": "xGOK_ATC_SHOT_N",
+  "combo_role": ""
+ },
+ {
+  "group": "7 Ledge and getups",
+  "slot": "Ledge catch / wait",
+  "rows": "CliffCatch, CliffWait",
+  "current": "JUMP_BACK_00 f12 authored lean",
+  "role": "Hang",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_BUKUU_UP",
+    "why": "arms-down hover as a one-hand hang"
+   },
+   {
+    "clip": "xGOK_BAS_JUMP_BACK_00",
+    "why": "arms overhead (current)"
+   },
+   {
+    "clip": "xGOK_GRD_L_S",
+    "why": "guard-hit pose, braced"
+   }
+  ],
+  "recommended": "xGOK_BAS_JUMP_BACK_00",
+  "combo_role": ""
+ },
+ {
+  "group": "7 Ledge and getups",
+  "slot": "Ledge climb",
+  "rows": "CliffClimbSlow/Quick",
+  "current": "JUMP crouch crop, TransN path",
+  "role": "Get up",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_BUKUU_UP",
+    "why": "float up and over"
+   },
+   {
+    "clip": "xGOK_BAS_STEP_F_S",
+    "why": "step over"
+   },
+   {
+    "clip": "xGOK_BAS_BOOST_F_00",
+    "why": "boost over"
+   }
+  ],
+  "recommended": "xGOK_BAS_BUKUU_UP",
+  "combo_role": ""
+ },
+ {
+  "group": "7 Ledge and getups",
+  "slot": "Ledge attack / escape / jump",
+  "rows": "CliffAttack*, CliffEscape*, CliffJump*",
+  "current": "ATC_012 / STEP_F_S",
+  "role": "Getup attack, roll, jump",
+  "candidates": [
+   {
+    "clip": "xGOK_ATC_012",
+    "why": "low sweep (current)"
+   },
+   {
+    "clip": "xGOK_ATC_008",
+    "why": "rush kick"
+   },
+   {
+    "clip": "xGOK_BAS_STEP_F_S",
+    "why": "roll"
+   },
+   {
+    "clip": "xGOK_BAS_BOOST_F_00",
+    "why": "jump"
+   }
+  ],
+  "recommended": "xGOK_ATC_012",
+  "combo_role": ""
+ },
+ {
+  "group": "7 Ledge and getups",
+  "slot": "Floor getups",
+  "rows": "DownBound*, DownWait*, DownStand*, DownAttack*, DownForward/Back/Spot*, Passive*",
+  "current": "CMN_BAS_DOWN_*_S, UKEMI",
+  "role": "Knockdown and tech",
+  "candidates": [
+   {
+    "clip": "xCMN_BAS_DOWN_AOMUKE_S",
+    "why": "sky knockdown (supine) 100f; UTSUBUSE_S prone"
+   },
+   {
+    "clip": "xCMN_BAS_UKEMI_N",
+    "why": "tech in place; UKEMI_F/B/L/R/U rolls"
+   },
+   {
+    "clip": "xGOK_ATC_012",
+    "why": "getup attack (current)"
+   }
+  ],
+  "recommended": "xCMN_BAS_DOWN_AOMUKE_S",
+  "combo_role": ""
+ },
+ {
+  "group": "8 Damage",
+  "slot": "Hit stun (hi / mid / low, ground+air)",
+  "rows": "DamageHi1-3, N1-3, Lw1-3, Air1-3",
+  "current": "CMN_DMG_HEAD/BODY/LEG_L_F, AIR_F",
+  "role": "Flinch",
+  "candidates": [
+   {
+    "clip": "xCMN_DMG_BODY_L_F_S",
+    "why": "34f sky flinch; HEAD_/LEG_ _S exist"
+   },
+   {
+    "clip": "xCMN_DMG_HEAD_L_F_S",
+    "why": "head flinch sky"
+   },
+   {
+    "clip": "xCMN_DMG_AIR_F",
+    "why": "30f air"
+   }
+  ],
+  "recommended": "xCMN_DMG_BODY_L_F_S",
+  "combo_role": ""
+ },
+ {
+  "group": "8 Damage",
+  "slot": "Fly / tumble",
+  "rows": "DamageFly*, DamageFall, DeadUp*",
+  "current": "CMN_DMG_BLOW/UP/DIVE/TUMBLE",
+  "role": "Launched states",
+  "candidates": [
+   {
+    "clip": "xCMN_DMG_BLOW_F",
+    "why": "20f blown"
+   },
+   {
+    "clip": "xCMN_DMG_TUMBLE_F",
+    "why": "69f tumble"
+   },
+   {
+    "clip": "xCMN_DMG_BLOW_SPIN",
+    "why": "136f spin"
+   },
+   {
+    "clip": "xCMN_DMG_UP_F",
+    "why": "49f up-blown"
+   }
+  ],
+  "recommended": "xCMN_DMG_TUMBLE_F",
+  "combo_role": ""
+ },
+ {
+  "group": "8 Damage",
+  "slot": "Wall / ceiling / ottotto",
+  "rows": "StopWall, StopCeil, Ottotto*",
+  "current": "CMN_DMG_WALL_BOUND, YOROKE",
+  "role": "Impacts and edge wobble",
+  "candidates": [
+   {
+    "clip": "xCMN_DMG_WALL_BOUND_F",
+    "why": "46f wall bound"
+   },
+   {
+    "clip": "xCMN_DMG_YOROKE_BODY_F_S",
+    "why": "85f stagger sky"
+   },
+   {
+    "clip": "xCMN_DMG_YOROKE_HEAD_F_S",
+    "why": "43f"
+   }
+  ],
+  "recommended": "xCMN_DMG_WALL_BOUND_F",
+  "combo_role": ""
+ },
+ {
+  "group": "9 Showpieces",
+  "slot": "Taunt",
+  "rows": "AppealSL, AppealSR (both)",
+  "current": "CMN lobby gesture (118)",
+  "role": "Taunt",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_STAND_SS3_S",
+    "why": "211f power-up stance"
+   },
+   {
+    "clip": "xCMN_BAS_HIRAMEKI",
+    "why": "90f \"idea\" gesture"
+   },
+   {
+    "clip": "xCMN_BAS_KYORYOKU_C",
+    "why": "140f power gesture"
+   },
+   {
+    "clip": "xCMN_LBY_STAND",
+    "why": "100f lobby (current family)"
+   }
+  ],
+  "recommended": "xGOK_BAS_STAND_SS3_S",
+  "combo_role": ""
+ },
+ {
+  "group": "9 Showpieces",
+  "slot": "Entry",
+  "rows": "Entry, EntryStart, EntryEnd",
+  "current": "GOK_DEM_START 210f",
+  "role": "Spawn-in",
+  "candidates": [
+   {
+    "clip": "xGOK_DEM_START",
+    "why": "210f XV2 intro; crop to 90"
+   },
+   {
+    "clip": "xXBG_DEM_KokuhukuHenshin_00",
+    "why": "371f transformation"
+   },
+   {
+    "clip": "xGOK_BAS_STAND_SS3_S",
+    "why": "power stance"
+   }
+  ],
+  "recommended": "xGOK_DEM_START",
+  "combo_role": ""
+ },
+ {
+  "group": "9 Showpieces",
+  "slot": "Victory / results pose",
+  "rows": "(results screen, not a fighter row)",
+  "current": "n/a",
+  "role": "Win poses are outside the 351 rows; chosen with the results-screen pass",
+  "candidates": [
+   {
+    "clip": "xGOK_BAS_STAND_SS3",
+    "why": "211f"
+   },
+   {
+    "clip": "xGOK_DEM_START",
+    "why": "210f"
+   },
+   {
+    "clip": "xCMN_BAS_HIRAMEKI",
+    "why": "90f"
+   }
+  ],
+  "recommended": "xGOK_BAS_STAND_SS3",
+  "combo_role": ""
+ }
+]
