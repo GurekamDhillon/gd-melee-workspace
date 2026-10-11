@@ -49,3 +49,24 @@ def test_order_through_missing_and_synth_parents():
     assert m.order() == [9, 2]
     assert m.missing_bones == [8] and m.skipped_synth == [0]
     assert abs(m.coverage() - 2 / 3) < 1e-9
+
+
+def test_reference_row_prefers_the_wait_row_over_the_first_action_row():
+    rows = [
+        {"name": "dead_up_star", "clip": "DamageFall"},
+        {"name": "rebirth", "clip": "Wait1"},
+        {"name": "wait", "clip": "Wait1"},
+        {"name": "jab1", "clip": "Attack11"},
+    ]
+    have = {"DamageFall", "Wait1", "Attack11"}
+    row, action = R.pick_reference_row(rows, have.__contains__)
+    assert (row["name"], action) == ("wait", "Wait1")
+
+
+def test_reference_row_keeps_the_clip_wait_rule_and_the_fallbacks():
+    rows = [{"name": "x", "clip": "DamageFall"}, {"name": "stand", "clip": "Wait"}, {"name": "wait", "clip": "Wait1"}]
+    assert R.pick_reference_row(rows, {"DamageFall", "Wait", "Wait1"}.__contains__)[0]["name"] == "stand"
+    assert R.pick_reference_row(rows, {"DamageFall"}.__contains__) == (rows[0], "DamageFall")
+    assert R.pick_reference_row(rows, lambda clip: False) == (rows[2], "")          # a "wait" row without an action
+    assert R.pick_reference_row([{"name": "a"}], lambda clip: False) == ({"name": "a"}, "")
+    assert R.pick_reference_row([], lambda clip: False) == (None, "")

@@ -1,7 +1,7 @@
 // Headless driver for HSDRaw + HSDRawViewer's exporters (no GUI).
 //   hsdexport <model.dat> <out.glb|.smd|.dae> [--no-textures]
 //   hsdexport --parts <fighterdata.dat> <model.dat> <out.json>   (model-part visibility tables + DObj layout)
-//   hsdexport --anim <model.dat> <anims.dat> <plan.json> <out_dir> <ClipName|all>...   (one SMD per clip)
+//   hsdexport --anim <model.dat> <anims.dat> <plan.json> <out_dir> <ClipName|all>...   (one SMD per clip, plus <Clip>.scale.json when the clip animates scale)
 using System;
 using System.IO;
 using System.Text.Json;
@@ -43,7 +43,14 @@ static class P {
         if (node == null) { Console.Error.WriteLine("no figatree in " + name); bad++; continue; }
         var mgr = new JointAnimManager((HSD_FigaTree)node.Data);
         SMDConv.ExportAnimationToSMD(Path.Combine(a[4], name + ".smd"), root, new JointMap(), mgr);
-        Console.WriteLine("anim " + name + " frames=" + mgr.FrameCount);
+        // The SMD format has no scale channel, so SMDConv drops every HSD_A_J_SCA* track: Falcon's clips squash and
+        // stretch their leg/arm joints (and the game applies it), so the Blender rig would play them unscaled and the
+        // skinned meshes deform differently from the game. Sidecar: per joint, the scale at every frame 0..FrameCount
+        // (the same sampling the SMD uses), an untracked axis keeping the joint's rest scale.
+        string scaleJson = ScaleSidecar(root, mgr);
+        string scalePath = Path.Combine(a[4], name + ".scale.json");
+        if (scaleJson != null) File.WriteAllText(scalePath, scaleJson); else if (File.Exists(scalePath)) File.Delete(scalePath);
+        Console.WriteLine("anim " + name + " frames=" + mgr.FrameCount + (scaleJson != null ? " scale=yes" : ""));
       }
       return bad == 0 ? 0 : 4;
     }
@@ -54,6 +61,29 @@ static class P {
     ModelExporter.ExportFile(a[1], jobj, s, new JointMap());
     Console.WriteLine("exported " + a[1]);
     return 0;
+  }
+
+  static string ScaleSidecar(HSD_JOBJ root, JointAnimManager mgr) {
+    var jl = root.TreeList;
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+    var sb = new StringBuilder("{\"frames\":" + mgr.FrameCount + ",\"joints\":{");
+    bool first = true;
+    for (int i = 0; i < mgr.NodeCount && i < jl.Count; i++) {
+      var tr = mgr.Nodes[i].Tracks;
+      var sx = tr.FirstOrDefault(t => t.JointTrackType == JointTrackType.HSD_A_J_SCAX);
+      var sy = tr.FirstOrDefault(t => t.JointTrackType == JointTrackType.HSD_A_J_SCAY);
+      var sz = tr.FirstOrDefault(t => t.JointTrackType == JointTrackType.HSD_A_J_SCAZ);
+      if (sx == null && sy == null && sz == null) continue;
+      sb.Append((first ? "" : ",") + "\"" + i + "\":[");
+      for (int f = 0; f <= mgr.FrameCount; f++) {
+        float x = sx != null ? sx.GetValue(f) : jl[i].SX, y = sy != null ? sy.GetValue(f) : jl[i].SY, z = sz != null ? sz.GetValue(f) : jl[i].SZ;
+        sb.Append((f == 0 ? "[" : ",[") + x.ToString("0.#######", inv) + "," + y.ToString("0.#######", inv) + "," + z.ToString("0.#######", inv) + "]");
+      }
+      sb.Append("]");
+      first = false;
+    }
+    sb.Append("}}");
+    return first ? null : sb.ToString();
   }
 
   // The fighter's model-part visibility tables (ftData.x8, read by ftParts_8007487C): per costume row, per LOD

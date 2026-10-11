@@ -154,3 +154,26 @@ def build_joint_map(
         unmapped_bones=[name for name in names if name not in used],
         _parents=parents,
     )
+
+
+def pick_reference_row(rows, action_exists):
+    """The row the Workbench calibrates against: (row, action_name), or (None, "").
+
+    Calibration records, per bone, the fixed offset between the engine's joint frame and the Blender bone frame,
+    from one pose both sides agree on, so the reference must be a row whose engine pose equals its clip's pose at
+    the calibration frame. The standing "wait" row is that. Order: a row whose clip is exactly "Wait" (Goku), the
+    row named "wait" with an existing action (Falcon's clip is "Wait1"), then the first row with an existing
+    action. Falling straight to the first action row picked Falcon's "dead_up_star" (clip DamageFall): the engine
+    plays those rows blended with a previous pose, the offsets absorbed the mismatch, and the posed rig's feet and
+    arms sat up to 3.4 units off the engine's joints (pose error 3.44 vs 0.20 with the wait reference)."""
+    rows = list(rows)
+    matching = [r for r in rows if r.get("clip") and action_exists(r["clip"])]
+    reference = next((r for r in matching if r["clip"] == "Wait"), None)
+    if reference is None:
+        reference = next((r for r in matching if str(r.get("name", "")).casefold() == "wait"), None)
+    if reference is None and matching:
+        reference = matching[0]
+    if reference is not None:
+        return reference, reference["clip"]
+    reference = next((r for r in rows if str(r.get("name", "")).casefold() == "wait"), rows[0] if rows else None)
+    return reference, ""
