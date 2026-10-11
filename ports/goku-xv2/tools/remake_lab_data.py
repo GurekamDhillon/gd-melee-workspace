@@ -1,6 +1,6 @@
-"""Write the LAB's REMAKE picker data: missions/remake-goku.txt (read by the LAB CLIPS page, category REMAKE).
+"""Write the LAB's REMAKE picker data: missions/remake-slots.txt (read by the LAB CLIPS page, category REMAKE).
 
-python ports/goku-xv2/tools/remake_lab_data.py [--out DIR/missions/remake-goku.txt]
+python ports/goku-xv2/tools/remake_lab_data.py [--out DIR/missions/remake-slots.txt]
 
 Reads ports/goku-xv2/remake-candidates.json (+ local metrics and clip library when present) and writes one tab-separated file:
   S <n> <group> <slot> <melee rows> <current text> <current clip guess> <role> <recommended> <combo role>
@@ -21,7 +21,7 @@ MAIN = Path(os.environ.get('GW_MAIN', ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from remake_sheet import LIB, PREV, load, metric_text  # noqa: E402
 
-DEFAULT_OUT = MAIN / '_build/goku-xv2/author-source/package/mods/geno-lab/missions/remake-goku.txt'
+DEFAULT_OUT = MAIN / '_build/goku-xv2/author-source/package/mods/geno-lab/missions/remake-slots.txt'
 
 
 def guess_current(text, names):

@@ -145,7 +145,7 @@ One command (needs the game checkout whose `geno-lab` has the REMAKE mode; `GW_M
 emake.ps1'          # optional arg: a slot number or name fragment
 ```
 
-It writes `missions/remake-goku.txt` (`tools/remake_lab_data.py`: the 55 slots of `remake-candidates.json` in picking order, their
+It writes `missions/remake-slots.txt` (`tools/remake_lab_data.py`: the 55 slots of `remake-candidates.json` in picking order, their
 candidates, and every clip of `CLIP-NOTES.md`), runs two Gokus (left: what you judge, right: the reference for compare) and opens on
 **BROWSE**: all clips in CLIP-NOTES order, clips without a note first. Press K for the current slot's candidates instead
 (the recommended one plays first; the current clip is entry 1).

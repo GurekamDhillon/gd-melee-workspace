@@ -60,8 +60,8 @@ class ReleaseGuardTests(unittest.TestCase):
                 file = cls.stage/'mods'/mid/need
                 file.parent.mkdir(parents=True, exist_ok=True)
                 file.write_text('{}' if need.endswith('.json') else 'x')
-        (cls.stage/'version.txt').write_text('fixture\nmelee      '+40*'a'+'  source\nnetplay_protocol 5\n')
-        cls.stamp = dict(format=1, melee_commit=40*'a', netplay_protocol=5,
+        (cls.stage/'version.txt').write_text('fixture\nmelee      '+40*'a'+'  source\nnetplay_protocol 6\n')
+        cls.stamp = dict(format=1, melee_commit=40*'a', netplay_protocol=6,
                          source_sha256=64*'b', source_dirty=False,
                          files={name:hashlib.sha256((cls.stage/name).read_bytes()).hexdigest()
                                 for name in ('melee-pc.exe', 'melee-pc.map')})
