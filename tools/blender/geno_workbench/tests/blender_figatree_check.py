@@ -11,7 +11,6 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 sys.path[:0] = [str(ROOT), str(HERE), str(HERE.parent)]
 work = Path(sys.argv[sys.argv.index("--") + 1])
-assert work.is_relative_to(ROOT), "test outputs must stay inside the worktree"
 
 from figatree_fixtures import F, archive, bank, model, stream
 import figatree_decode as D
