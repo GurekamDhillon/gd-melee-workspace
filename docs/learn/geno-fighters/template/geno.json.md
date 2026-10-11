@@ -14,7 +14,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].define.key | string: See choice encodings | absent | pattern=^[a-z0-9][a-z0-9_.-]{0,38}$; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].define.name | string: See choice encodings | absent | maxLength=47; pattern=^[ -~]+$; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].define.base | choice: mario: the retail Mario preset is the template; none (geno 9): the package owns its model, bank, parts table and joint fields (docs/geno.md 22.4) | absent | enum=['mario', 'none']; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
-| fighters[].define.template | choice: base none, geno 10: the retail fighter whose native code, state table and specials the define runs on (default mario); captain / fox = a complete retail fighter carried as a package (docs/geno.md 22.10, 22.13) | absent | enum=['mario', 'captain', 'fox']; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].define.template | choice: base none, geno 10: the retail fighter whose native code, state table and specials the define runs on (default mario); captain / fox = a complete retail fighter carried as a package (docs/geno.md 22.10, 22.13) | absent | enum=['mario', 'captain', 'fox', 'falco', 'marth']; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].define.common | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].define.resources | choice: retail:mario with base mario; mod:files with base none | absent | enum=['retail:mario', 'mod:files']; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].common_states | array: Ordered entries | absent | maxItems=64; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
@@ -222,7 +222,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].articles[].max_speed | number: max speed | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].min_speed | number: min speed | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
 | fighters[].articles[].angle | number: angle | 0 | ; geno.md §19; melee/pc/platform/geno_registry.c |
-| fighters[].subactions | array: Ordered entries | absent | maxItems=320; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].subactions | array: Ordered entries | absent | maxItems=336; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].subactions[].index | integer: Subaction row to replace | 0 | minimum=0; maximum=1023; geno.md §15.5; melee/pc/platform/geno_registry.c |
 | fighters[].subactions[].words | array: Ordered entries | absent | maxItems=65535; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].subactions[].file | string: Whitespace word file relative to mod root |  | ; geno.md §15.5; melee/pc/platform/geno_registry.c |
@@ -489,7 +489,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | GENO_MAX_SPECIAL | 64 | melee/pc/geno/geno.h:257 |
 | GENO_MAX_ONLAND | 16 | melee/pc/geno/geno.h:258 |
 | GENO_MAX_MOTION_ANIM | 8 | melee/pc/geno/geno.h:259 |
-| GENO_MAX_OVERLAYS | 320 | melee/pc/geno/geno.h:260 |
+| GENO_MAX_OVERLAYS | 336 | melee/pc/geno/geno.h:260 |
 | GENO_POOL_WORDS | 65536 | melee/pc/geno/geno.h:272 |
 | GENO_MAX_SLOTS | 2560 | melee/pc/geno/geno.h:273 |
 | GENO_MAX_STATES | 48 | melee/pc/geno/geno.h:285 |
