@@ -141,6 +141,32 @@ Checks: `tests/test_projectiles.py` (data model and flight), `selftest_projectil
 `engine_check/` (the in-game check: `projectile_probe` logs the live article, `compare_probe.py` compares it with the
 ghost path) and `engine_check/shot_projectiles.py` (the screenshot).
 
+## Combo strings (Play string)
+
+The combo graph (`geno.md` section 25: routes with windows, inputs and conditions; named strings) is edited in the Qt
+Workbench (Combo tab, route lanes under the timeline, string map; server commands `list_routes`, `edit_route`,
+`add_route`, `delete_route`, `list_strings`, `edit_string`, `add_string`, `delete_string`). **Geno > Combo** previews a
+string in Blender with no game running:
+
+1. **Refresh strings** reads them (`list_strings`); pick one and **Play string** asks the server for `string_plan`
+   (each step's clip, length, first hit frame, hitboxes, plus the routes) and lays the moves on the armature as one solo NLA
+   track, back to back. A move runs until the route to the next one opens (the window start, or the first hit when the
+   route needs a contact; **Cut at window start + buffer** adds the route's buffer, kept inside the window), then the next
+   move starts on the following frame. Move frame n of a clip with crop c is action frame c + n. The maths is
+   `combo_play.py` (pure; `tests/test_combo_play.py`), mirrored by the Workbench's `planComboString`.
+2. Markers: timeline markers `CANCEL <route> -> <next>` at each cancel frame and `ROUTE <input> <name> [lo-hi]` at each
+   route window start (markers have no colour in Blender, so the same is drawn as a **Combo String** ribbon above the
+   fighter: grey moves, route windows in the input colours (light green, heavy orange, special blue, jump yellow, grab
+   purple, shield cyan), white cancel ticks, a red playhead).
+3. **Hitbox markers**: translucent spheres on the hitbox bones, visible only on the frames the source says they are
+   active. Offsets are not applied (the sphere sits on the joint); the engine overlay is the exact view.
+4. **Also send to the game** runs the same sequence on the engine (`play_string`, which poses each move up to its cut).
+   **Clear string** removes the track, markers, ribbon and spheres and gives the armature its own action back.
+
+A step with no clip in the blend (a `special_s` target, a state that has no animation) is listed and skipped.
+Checks: `selftest_combo.py` (background Blender; run by `tests/test_combo_blender.py`) and `combo_shot.py` (renders one
+frame of a string from a saved `string_plan` reply).
+
 ## Environment settings
 
 These settings are local; executable and disc paths do not belong in public docs

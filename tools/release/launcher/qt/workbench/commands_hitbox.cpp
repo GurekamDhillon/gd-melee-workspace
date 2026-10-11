@@ -224,6 +224,10 @@ void registerHitboxCommands(Session &s) {
                 if (!filter.isEmpty() && p.row != filter) continue;
                 problems.append(QJsonObject{{"kind", p.kind}, {"row", p.row}, {"message", p.message}, {"ordinal", p.ordinal}});
             }
+            for (const auto &p : comboRouteProblems(session)) {
+                if (!filter.isEmpty() && p.row != filter) continue;
+                problems.append(QJsonObject{{"kind", p.kind}, {"row", p.row}, {"message", p.message}, {"ordinal", p.ordinal}});
+            }
             return QJsonObject{{"problems", problems}, {"engine", session.engine() != nullptr}};
         }});
 }

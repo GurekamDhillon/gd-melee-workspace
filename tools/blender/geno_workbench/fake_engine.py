@@ -97,6 +97,10 @@ _TOOLS = (
     "edit_spawn",
     "add_spawn",
     "delete_spawn",
+    "list_routes",
+    "list_strings",
+    "string_plan",
+    "play_string",
     "rebuild",
     "reload",
 )
@@ -454,6 +458,21 @@ class _Server(socketserver.ThreadingTCPServer):
         super().__init__(address, _Handler)
 
 
+_SYNTH_ROUTES = [
+    {"name": "A>B", "from": "alpha", "to": "beta", "input": "light", "on": "hit", "window": [6, 14]},
+    {"name": "A>C", "from": "alpha", "to": "gamma", "input": "heavy", "dir": "forward", "window": [4, 0]},
+    {"name": "B>C", "from": ["beta", "alpha"], "to": "gamma", "input": "special", "window": [3, 12], "priority": 5},
+]
+_SYNTH_STRINGS = [{"name": "alpha beta gamma", "steps": ["alpha", "beta", "gamma"]}, {"name": "alpha gamma", "steps": ["alpha", "gamma"]}]
+_SYNTH_STEPS = [
+    {"move": "alpha", "kind": "move", "clip": "SynAlpha", "frames": 20, "first_hit": 3, "motion": 1, "crop": 0,
+     "hits": [{"slot": 0, "bone": "hand", "role": "HAND_R", "x": 0, "y": 0, "z": 0, "size": 3.0, "start_frame": 3, "end_frame": 6}]},
+    {"move": "beta", "kind": "move", "clip": "SynBeta", "frames": 16, "first_hit": 4, "motion": 2, "crop": 2,
+     "hits": [{"slot": 0, "bone": "hand", "role": "HAND_R", "x": 0, "y": 0, "z": 0, "size": 3.0, "start_frame": 4, "end_frame": 8}]},
+    {"move": "gamma", "kind": "move", "clip": "SynGamma", "frames": 12, "first_hit": 2, "motion": 3, "crop": 0, "hits": []},
+]
+
+
 class FakeWorkbench:
     """Persistent synthetic session shared by its connected MCP clients.
 
@@ -802,10 +821,39 @@ class FakeWorkbench:
         self._renumber_spawns()
         return {"applied": True}
 
+    def _combo(self, tool: str, args: dict) -> dict:
+        """The combo graph tools: routes/strings as the server lists them, string_plan with synthetic clips and hits."""
+        try:
+            from . import combo_play
+        except ImportError:
+            import combo_play
+        routes = copy.deepcopy(getattr(self, "combo_routes", _SYNTH_ROUTES))
+        strings = copy.deepcopy(getattr(self, "combo_strings", _SYNTH_STRINGS))
+        if tool == "list_routes":
+            return {"routes": [dict(r, index=i) for i, r in enumerate(routes)], "count": len(routes)}
+        if tool == "list_strings":
+            return {"strings": [dict(s, index=i) for i, s in enumerate(strings)], "count": len(strings)}
+        index = _integer(args.get("index", 0), "index")
+        if index >= len(strings):
+            raise ValueError(f"unknown string: {index}")
+        steps = [dict(s) for s in getattr(self, "combo_steps", _SYNTH_STEPS)]
+        by_move = {s["move"]: s for s in steps}
+        names = strings[index]["steps"]
+        chosen = [by_move[n] for n in names]
+        info = {s["move"]: {"length": s["frames"], "first_hit": s["first_hit"]} for s in chosen}
+        plan = combo_play.plan_string(names, routes, info, 5, bool(args.get("add_buffer")))
+        if tool == "play_string":
+            self.played_strings = getattr(self, "played_strings", []) + [index]
+            return {"played": True, "segments": plan, "frames": combo_play.total_frames(plan)}
+        return {"name": strings[index]["name"], "steps": chosen, "segments": plan, "frames": combo_play.total_frames(plan),
+                "routes": routes, "buffer": 5}
+
     def _execute(self, tool: str, args: dict) -> dict:
         if tool in ("list_articles", "edit_article", "add_article", "delete_article", "list_spawns", "edit_spawn",
                     "add_spawn", "delete_spawn"):
             return self._projectile(tool, args)
+        if tool in ("list_routes", "list_strings", "string_plan", "play_string"):
+            return self._combo(tool, args)
         if tool == "engine_status":
             return {"status": "running"}
         if tool == "engine_restart":

@@ -1,4 +1,5 @@
 #include "workbench_window.h"
+#include "combo_widgets.h"
 #include "projectile_widgets.h"
 #include "window.h"
 #define WB_CORE_USE_LAUNCHER_T 1
@@ -114,6 +115,9 @@ struct Snapshot {
     QMap<QString, QVector<HitboxRef>> hits;
     QMap<QString, QJsonArray> events;
     QJsonArray articles, spawns; // projectiles (geno.md 19) and the spawn calls of the move scripts
+    QJsonArray routes, strings; // the combo graph (geno.md 25)
+    QJsonObject comboMeta;
+    bool hasCombo = false;
     QVector<HistoryEntry> history;
     QVector<CommandSpec> commands;
     QJsonArray fidelity;
@@ -202,6 +206,8 @@ struct Worker {
         value.blenderPid = session->blenderPid; value.blenderAck = session->blenderAckRevision;
         value.viewRevision = session->uiView.value("revision").toInteger();
         value.articles = session->data().articles(); value.spawns = session->data().spawns();
+        value.routes = session->data().routes(); value.strings = session->data().strings();
+        value.comboMeta = session->data().comboMeta(); value.hasCombo = session->data().hasCombo();
         for (const auto &row : value.rows) {
             value.hits.insert(row.name, session->data().hitboxes(row.name));
             value.events.insert(row.name, session->data().timelineEvents(row.name));
@@ -385,6 +391,8 @@ struct WorkbenchWindow::Impl {
     AttributesPanel *attributes;
     ProjectilesPanel *projectiles = nullptr;
     SpawnLane *spawnLane = nullptr;
+    RouteLanes *routeLanes = nullptr;
+    ComboPanel *combo = nullptr;
     QLineEdit *search;
     QLabel *moveTitle, *moveGroupLabel, *moveStats, *frameReadout;
     QVBoxLayout *centreLayout;
@@ -519,6 +527,8 @@ struct WorkbenchWindow::Impl {
         timelineScroll->setWidget(timeline); timelineLayout->addWidget(timelineScroll);
         spawnLane = new SpawnLane; spawnLane->setTimeline(timeline); timelineLayout->addWidget(spawnLane);
         QObject::connect(spawnLane, &SpawnLane::editRequested, q, [this](const QString &name, const QJsonObject &args) { q->runCommand(name, args); });
+        routeLanes = new RouteLanes; routeLanes->setTimeline(timeline); timelineLayout->addWidget(routeLanes);
+        QObject::connect(routeLanes, &RouteLanes::editRequested, q, [this](const QString &name, const QJsonObject &args) { q->runCommand(name, args); });
         QObject::connect(timeline, &Timeline::frameRequested, q, [this](int f) { setPlaying(false); q->runCommand("set_frame", {{"frame", f}}); updateFrameReadout(); });
         QObject::connect(timeline, &Timeline::playToggled, q, [this](bool on) { setPlaying(on); });
         QObject::connect(timeline, &TimelineView::editRequested, q, [this](const QString &name, const QJsonObject &args) { q->runCommand(name, args); });
@@ -864,6 +874,13 @@ struct WorkbenchWindow::Impl {
         addButton(renderActions, t("Export frame PNG", "Exportar cuadro PNG"), [this] { q->runCommand("render_view", {{"w", 640}, {"h", 480}}); });
         renderLayout->addStretch(); tabs->addTab(scroll(renderBody), t("Render", "Renderizar"));
         tabs->addTab(projectiles, t("Projectiles", "Proyectiles")); // last: the tabs before it keep their positions
+        combo = new ComboPanel;
+        QObject::connect(combo, &ComboPanel::editRequested, q, [this](const QString &name, const QJsonObject &args) { q->runCommand(name, args); });
+        QObject::connect(combo, &ComboPanel::moveRequested, q, [this](const QString &name) { selectRow(name); });
+        QObject::connect(combo, &ComboPanel::routeSelected, q, [this](int index) { if (routeLanes) routeLanes->selectRoute(index); });
+        QObject::connect(routeLanes, &RouteLanes::routeSelected, q, [this](int index) { if (combo) { combo->selectRoute(index); tabs->setCurrentWidget(combo); } });
+        QObject::connect(combo, &ComboPanel::playStringRequested, q, [this](int index) { q->runCommand("play_string", {{"index", index}, {"realtime", true}}); });
+        tabs->addTab(combo, t("Combo", "Combo"));
         columns->addWidget(tabs);
         QObject::connect(inspector, &InspectorPanel::revertRequested, q, [this](const QJsonObject &args) { q->runCommand("revert_change", args); });
         QObject::connect(attributes, &AttributesPanel::revertRequested, q, [this](const QJsonObject &args) { q->runCommand("revert_change", args); });
@@ -1312,6 +1329,12 @@ struct WorkbenchWindow::Impl {
         timeline->setMove(row, frames, hits, iasa, snapshot.events.value(row));
         if (projectiles) projectiles->setData(snapshot.articles, snapshot.spawns, row);
         if (spawnLane) { spawnLane->setSpawns(row, snapshot.spawns, projectiles->articleNames()); spawnLane->update(); }
+        if (routeLanes && combo) {
+            QStringList tokens{row}, moveNames;
+            for (const auto &entry : snapshot.rows) { moveNames << entry.name; if (entry.name == row) for (int m : entry.motions) tokens << QString("motion:%1").arg(m); }
+            routeLanes->setRoutes(row, tokens, snapshot.routes);
+            combo->setData(snapshot.routes, snapshot.strings, snapshot.comboMeta, moveNames, row, tokens, snapshot.hasCombo);
+        }
         timeline->setMinimumHeight(timeline->sizeHint().height()); fitTimelineHeight();
         moveTitle->setText(row.isEmpty() ? t("Choose a move", "Elige un movimiento") : row);
         moveChip->setText(row.isEmpty() ? t("No move", "Sin movimiento") : row);
