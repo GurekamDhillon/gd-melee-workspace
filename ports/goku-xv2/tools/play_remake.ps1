@@ -3,7 +3,7 @@
 # Optional: -Picker opens the REMAKE picker instead (the owner's picks show as taken; swap one, then remake_sheet.py --sync-picks and rebuild).
 # Env overrides: GW_MELEE (game checkout with the geno-11 engine + REMAKE mode), GW_BUILD_ROOT (its build root with melee-pc.exe).
 # Controls (Scheme A, Melee buttons only): B = Kamehameha (hold to charge); Down B tap = vanish counter, Down B hold = ki charge (only below 100);
-# shield + Side B = homing dash strike (20 ki); shield + Down B = vanish (needs 10 ki); Side B = Dragon Rush. Every ground move is HB-NONE (no hitbox yet).
+# shield + B (stick neutral) = homing dash strike (20 ki); Side B = knockback attack (Rush). Every ground move is HB-NONE (no hitbox yet).
 param([switch]$Picker)
 $ErrorActionPreference = 'Continue'
 $portRoot = Split-Path -Parent $PSScriptRoot

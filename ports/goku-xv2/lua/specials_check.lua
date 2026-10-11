@@ -67,12 +67,12 @@ gd.run(function()
     gd.log(string.format('SPECHECK vanish_tap: Counter %s KiCharge %s', tostring(s4.Counter), tostring(s4.KiCharge)))
     assert((s4.Counter or 0) > 10 and (s4.KiCharge or 0) == 0, 'Down B tap is not the Counter blink')
 
-    -- 5. Side B out of the shield with 50 ki: Homing, the route spends 20
+    -- 5. shield + B (stick neutral) with 50 ki: Homing, the route spends 20
     reset(50)
     gd.input(1, {buttons = 'L'}, 14); gd.wait(12)
     assert(name() == 'Guard' or name() == 'GuardOn', 'no shield: ' .. name())
     local k0 = ki()
-    gd.input(1, {buttons = 'L+B', x = 127}, 2)
+    gd.input(1, {buttons = 'L+B'}, 2)
     local s5 = track(80)
     local k5 = ki()
     gd.log(string.format('SPECHECK homing: Homing %s ki %.1f -> %.1f', tostring(s5.Homing), k0, k5))
@@ -83,31 +83,31 @@ gd.run(function()
     -- 6. the same input with too little ki does nothing
     reset(5)
     gd.input(1, {buttons = 'L'}, 14); gd.wait(12)
-    gd.input(1, {buttons = 'L+B', x = 127}, 2)
+    gd.input(1, {buttons = 'L+B'}, 2)
     local s6 = track(40)
     gd.log(string.format('SPECHECK homing_broke: Homing %s ki %.1f', tostring(s6.Homing), ki()))
     assert((s6.Homing or 0) == 0 and math.abs(ki() - 5) < 0.5, 'Homing fired without the meter')
     gd.input(1, {}, 1); gd.wait(30)
 
-    -- 7. Down B out of the shield (the vanish) with 50 ki: Counter; with 5 ki: nothing
+    -- 7. shield + Down B is NOT a vanish any more (owner: too hard to input); shield + a stick direction alone stays a roll / spot dodge, never Homing
     reset(50)
     gd.input(1, {buttons = 'L'}, 14); gd.wait(12)
     gd.input(1, {buttons = 'L+B', y = -127}, 2)
     local s7 = track(40)
-    gd.log(string.format('SPECHECK guard_vanish: Counter %s', tostring(s7.Counter)))
-    assert((s7.Counter or 0) > 10, 'Down B out of the shield did not vanish')
+    assert((s7.Counter or 0) == 0 and (s7.Homing or 0) == 0, 'shield + Down B still fires something: Counter ' .. tostring(s7.Counter))
     gd.input(1, {}, 1); gd.wait(60)
-    reset(5)
+    reset(50)
     gd.input(1, {buttons = 'L'}, 14); gd.wait(12)
-    gd.input(1, {buttons = 'L+B', y = -127}, 2)
+    gd.input(1, {buttons = 'L', x = 127}, 3)
     local s8 = track(40)
-    assert((s8.Counter or 0) == 0, 'the vanish fired with ki 5')
+    gd.log(string.format('SPECHECK roll: Homing %s EscapeF %s', tostring(s8.Homing), tostring(s8.EscapeF)))
+    assert((s8.Homing or 0) == 0 and (s8.EscapeF or 0) > 5, 'shield + stick must roll, not Homing')
     gd.input(1, {}, 1); gd.wait(30)
 
     -- 8. rewind exactness across the homing strike
     reset(50)
     gd.input(1, {buttons = 'L'}, 14); gd.wait(12)
-    gd.input(1, {buttons = 'L+B', x = 127}, 2); gd.wait(12)
+    gd.input(1, {buttons = 'L+B'}, 2); gd.wait(12)
     assert(gd.rewind_test(120, true), 'rewind refused')
     local done = false
     for i = 1, 400 do

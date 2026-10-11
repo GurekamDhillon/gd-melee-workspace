@@ -5,7 +5,7 @@ gameplay.full.json / combo/combo.json predate them:
 
 1. gameplay.full.json: the Homing state and move (Side B out of the shield), KiCharge's provenance note, then remake_hb.py strip (HB-NONE / HB-DESIGN),
    which also regenerates the committed gameplay.json.
-2. combo/combo.json (git-ignored): hb marks, the shield routes (Guard>Homing, Guard>Vanish), the KiVolley clip from the picker's pick.
+2. combo/combo.json (git-ignored): hb marks, the shield route (Guard>Homing, stick neutral; the old Guard>Vanish is removed), the KiVolley clip from the picker's pick.
 Both files are written only when something changed.
 """
 import json
@@ -21,7 +21,6 @@ import remake_apply  # noqa: E402
 
 GUARD_ON, GUARD = 178, 179     # motion numbers of GuardOn / Guard (ANIM-ROWS.json)
 HOMING_KI = 20                 # meter cost of the homing strike (XV2: 100 stamina = 1 bar; Melee meter 0-100, Counter 10, Rush 15, Super 100): owner may retune
-VANISH_MIN_KI = 10             # the Z-vanish counter from the shield needs this much (it is spent by the Riposte, Lua VANISH_KI)
 
 
 def patch_gameplay():
@@ -50,13 +49,13 @@ def patch_combo():
     routes = c['combo']['routes']
     changed = False
     want = [
-        {'name': 'Guard>Homing', 'from': ['motion:%d' % GUARD_ON, 'motion:%d' % GUARD], 'to': 'geno:Homing', 'input': 'special', 'dir': 'side', 'on': 'any',
+        {'name': 'Guard>Homing', 'from': ['motion:%d' % GUARD_ON, 'motion:%d' % GUARD], 'to': 'geno:Homing', 'input': 'special', 'dir': 'neutral', 'on': 'any',
          'where': 'ground', 'window': [1, 0], 'ki_cost': HOMING_KI, 'priority': 20,
-         'source': 'XV2 BAC 476 (Guard+Heavy, 100 stamina); owner 2026-10-11: Side B out of the shield, meter-costed'},
-        {'name': 'Guard>Vanish', 'from': ['motion:%d' % GUARD_ON, 'motion:%d' % GUARD], 'to': 'special_lw', 'input': 'special', 'dir': 'down', 'on': 'any',
-         'where': 'ground', 'window': [1, 0], 'ki_min': VANISH_MIN_KI, 'priority': 20,
-         'source': 'XV2 Z-vanish out of guard (BAC 410/415, 1 bar); owner 2026-10-11: Down B tap from the shield; the Riposte spends the ki (Lua VANISH_KI)'},
+         'source': 'XV2 BAC 476 (Guard+Heavy, 100 stamina); owner 2026-10-11: shield + B with the stick neutral (so it never competes with roll / spot dodge), meter-costed'},
     ]
+    if any(r['name'] == 'Guard>Vanish' for r in routes):   # owner 2026-10-11: shield + Down B was too hard to input; vanish is the Down B tap only
+        routes[:] = [r for r in routes if r['name'] != 'Guard>Vanish']
+        changed = True
     have = {r['name']: r for r in routes}
     for w in want:
         if have.get(w['name']) != w:

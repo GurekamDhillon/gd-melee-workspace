@@ -91,13 +91,13 @@ Reproduce on a checkout whose git-ignored `gameplay.full.json` / `combo/combo.js
 
 - Neutral B: Kamehameha tiers, unchanged. XV2 puts the ki blast on Blast tap; here it stays off Neutral B (the Kamehameha tap tier is the quick beam). The ki blast is the KiBlast state (combo package), fireable from the LAB moves list; the combo cancel Lx>Ki Volley still shoots it.
 - Side B: the XV2 knockback attack (Heavy+Blast, BAC 419), the existing Rush row. `xCMN_BAS_UKEMI_F` is shelved as a tumble-exit candidate.
-- Shield + Side B: Homing dash strike (XV2 BAC 476: BOOST_F_00 then ATC_008, 66 frames), combo route `Guard>Homing`, 20 ki. XV2 homes on the target; fighter Lua has no opponent query, so it dashes straight (recorded loss). Reuses the Rush Lua (the module is at the 24-function cap).
-- Shield + Down B: vanish (the Counter state), route `Guard>Vanish`, needs 10 ki (the Riposte spends it).
+- Shield + B (stick neutral, inside the dead zone): Homing dash strike (XV2 BAC 476: BOOST_F_00 then ATC_008, 66 frames), combo route `Guard>Homing`, 20 ki. Owner 2026-10-11: shield + direction + B was too hard to input without rolling or spot dodging, so the route reads the stick as neutral and never competes with roll / spot dodge (jump out of shield is untouched). XV2 homes on the target; fighter Lua has no opponent query, so it dashes straight (recorded loss). Reuses the Rush Lua (the module is at the 24-function cap).
+- Shield + Down B: nothing (the route `Guard>Vanish` was removed). Vanish is the Down B tap counter only.
 - Down B tap: the vanish counter (Z-vanish). Down B hold: ki charge on `APL_SPA_KTN_C` (XV2 Energy Charge), only while ki < 100, ends at 100.
 - Layout B (X-only jump, Y = ki blast) is owner-approved but waits for the `fighters[].controls` define format of `agent/css-controls` (docs/geno.md section 26) and a route input class for it.
 
 ## Evidence
 
 Offline: `remake_hb.py check` ok (HB-NONE 30, HB-DESIGN 9 moves; combo states HB-NONE 6, HB-DESIGN 2; 30 routes); pytest `ports/goku-xv2/tests` 79 passed, 2 environment failures (test_host reads a `melee/` dir the worktree lacks). Ground audit: 144 rows, hover 78, anchored 66, BELOW the floor 0.
-In game (muted, off-screen, combo package): `lua/specials_check.lua` SPECHECK PASS; `kame_check` KAMECHECK PASS on the geno-10 package (on the combo package its hold-max case fires the Super at 100 ki by design); `second_match` PASS; `landing_check` 40 cases, 0 sinking; `pad_check` no leak; rewind over 120 frames across the homing strike: 0 bytes differ; native suite 397 of 397.
+In game (muted, off-screen, combo package): `lua/specials_check.lua` SPECHECK PASS (homing, no homing at 5 ki, shield + direction rolls, shield + Down B does nothing); `kame_check` KAMECHECK PASS on the geno-10 package (on the combo package its hold-max case fires the Super at 100 ki by design); `second_match` PASS; `landing_check` 40 cases, 0 sinking; `pad_check` no leak; rewind over 120 frames across the homing strike: 0 bytes differ; native suite 397 of 397.
 Owed: frame strips (the headless screenshot camera shows the stage, not the fighters; `lua/remake_strip.lua` + `tools/remake_strips.py` are in place for a run with a working camera), and every look-and-feel claim, for a human at a monitor.
