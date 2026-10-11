@@ -40,6 +40,8 @@ SLOT_RANGE = (0, 3)           # hitbox slots; slot 4+ waits for ws/research-ace-
 BOOL_FIELDS = ("ground", "air")   # hit_ground / hit_air: False = cannot hit grounded / airborne targets
 
 # what add_hitbox may set besides the frame and bone; the server fills the rest with defaults
+# A hitbox that is never cleared runs to the playback cap (props/operators stop at engine frame 600).
+OPEN_END_FRAME = 600
 ADDABLE = frozenset(("damage", "size", "x", "y", "z", "angle", "kbg", "fkb", "bkb", "duration"))
 
 _TRANSPORT_FAILURES = (
@@ -314,10 +316,27 @@ class WbSession:
         text = STRINGS["frame_loaded"].format(row=self.row, frame=self.frame)
         return f"{text}; {self.hook_error}" if self.hook_error else text
 
+    @staticmethod
+    def source_boxes(items) -> list[dict]:
+        """Source hitbox records the way the Blender UI shows them: end_frame is the LAST ACTIVE frame.
+
+        The server (and the .genoasm) store end_frame as the frame the hitbox is cleared on, so a window
+        written start=3 / end=5 is active on frames 3 and 4 and the UI says "3-4". A hitbox that is never
+        cleared (end_frame -1) is shown running to the playback cap. edit_hitbox converts back (+1).
+        """
+        out = []
+        for item in items:
+            box = dict(item)
+            end = box.get("end_frame")
+            if isinstance(end, int) and not isinstance(end, bool):
+                box["end_frame"] = end - 1 if end >= 0 else OPEN_END_FRAME
+            out.append(box)
+        return out
+
     def _source_hitboxes(self, row: str) -> list[dict]:
-        return self._items(
+        return self.source_boxes(self._items(
             self._request("list_hitboxes", {"row": row}), "hitboxes"
-        )
+        ))
 
     def connect(self) -> bool:
         candidate = None
@@ -712,6 +731,9 @@ class WbSession:
                         raise client.WbError(STRINGS["bone_required"])
                 elif field in ("start_frame", "end_frame"):
                     value = self._integer(value, field)
+                    if field == "end_frame":
+                        # the UI's last active frame -> the frame the script clears the hitbox on
+                        value = -1 if value >= OPEN_END_FRAME else value + 1
                 elif field == "element":
                     value = self._ranged(value, field, ELEMENT_RANGE)
                 elif field == "shield":

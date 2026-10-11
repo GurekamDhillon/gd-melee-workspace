@@ -128,7 +128,8 @@ QJsonObject McpServer::handle(const QJsonObject &request) {
     const QString humanOnly = humanOnlyCommand(name, args);
     if (!humanOnly.isEmpty() && author_ == "agent")
         return result(toolResult({{"ok", false}, {"error", humanOnly + ": requires a human author"}}));
-    if (calling_) return error(-32000, "A tool call is already in progress");
+    // ui_view_state is a read of already-published state (Blender polls it while Qt plays); it never waits.
+    if (calling_ && name != "ui_view_state") return error(-32000, "A tool call is already in progress");
     QScopedValueRollback<bool> guard(calling_, true);
     // Do not trust the caller's propose:false, or a UI change to session policy.
     session_.agentProposals = propose_;

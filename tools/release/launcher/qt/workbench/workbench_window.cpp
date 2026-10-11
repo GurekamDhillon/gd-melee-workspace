@@ -202,6 +202,14 @@ struct Worker {
     Reply call(const QString &name, const QJsonObject &args, CommandContext *remote = nullptr,
                std::optional<bool> headless = std::nullopt) {
         Reply result;
+        // Blender's follower polls ui_view_state ~10x a second. It only reads the view Qt already published, so it
+        // is answered even while a slow engine command is in flight (Play issues one back to back); refusing it as
+        // "a command is already in progress" starved Blender of every frame while Qt played.
+        if (name == "ui_view_state" && calling && !stopped && session) {
+            CommandContext poll{*session, "human", false};
+            result.envelope = session->registry().call(name, args, poll);
+            return result;
+        }
         if (stopped || calling) {
             result.envelope = failure(stopped ? t("Creator is closing", "El Creador se está cerrando") :
                 t("A command is already in progress", "Ya hay un comando en curso"));
@@ -429,7 +437,9 @@ struct WorkbenchWindow::Impl {
         play = addButton(transport, t("Play", "Jugar"), [this] { setPlaying(!playTimer.isActive()); }); play->setObjectName("wbPlay");
         auto *next = addButton(transport, t("›", "›"), [this] { stepFrame(1); });
         next->setAccessibleName(t("Next frame", "Cuadro siguiente")); next->setToolTip(next->accessibleName()); next->setFixedWidth(40);
-        frameReadout = new QLabel; frameReadout->setObjectName("wbFrameReadout"); frameReadout->setFont(atlas::numberFont(12)); transport->addWidget(frameReadout);
+        frameReadout = new QLabel; frameReadout->setObjectName("wbFrameReadout"); frameReadout->setFont(atlas::numberFont(12));
+        frameReadout->setToolTip(t("Frame 0 is the entry pose; frame 1 is the move's first frame. A hitbox listed as active 3–4 is visible on frames 3 and 4, in Blender too.",
+                                   "El cuadro 0 es la pose de entrada; el cuadro 1 es el primer cuadro del movimiento. Un hitbox activo 3–4 se ve en los cuadros 3 y 4, también en Blender.")); transport->addWidget(frameReadout);
         auto *options = transport; // Loop and speed share the transport row, which saves a row of height
         loop = new QCheckBox(t("Loop", "Repetir")); loop->setChecked(true); options->insertWidget(1, loop);
         speed = new QComboBox; speed->setAccessibleName(t("Playback speed", "Velocidad de reproducción"));

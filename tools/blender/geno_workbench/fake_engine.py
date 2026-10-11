@@ -251,7 +251,7 @@ def _active_hitboxes(
 ) -> list[dict]:
     hits = []
     for record in records:
-        if not record["start_frame"] <= frame <= record["end_frame"]:
+        if not record["start_frame"] <= frame < record["end_frame"]:
             continue
         joint = _ROLE_JOINT[record["joint"]]
         offset = _point(record["x"], record["y"], record["z"])

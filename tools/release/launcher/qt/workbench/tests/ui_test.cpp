@@ -57,6 +57,20 @@ public:
 };
 
 
+// A frame-stepping engine whose calls pump the worker thread's event loop, as the real EngineLink does while it
+// waits for the game: that is when Blender's poll arrives mid-command.
+class PumpEngine : public wbtest::FakeEngine {
+public:
+    int frame = 0;
+    QJsonObject call(const QString &fn, const QJsonObject &args, QString *err) override {
+        FakeEngine::call(fn, args, err);
+        for (int i = 0; i < 3; ++i) { QCoreApplication::processEvents(); QThread::msleep(3); }
+        if (fn == "frame") frame = args.value("frame").toInt();
+        else if (fn == "step") frame += args.value("n").toInt(1);
+        FrameInfo fi; fi.frame = frame; fi.motion = 69; return fi.toJson();
+    }
+};
+
 namespace {
 class ScopedEnvironment {
     QByteArray name_, value_; bool existed_;
@@ -315,6 +329,33 @@ private slots:
         QTRY_VERIFY(w.findChild<QAbstractButton *>("wbBlenderState")->text().contains("linked"));
         w.runCommand("preview_clip", {{"clip", "SYN_ATC_002"}}); QTRY_VERIFY(!w.isBusy());
         QVERIFY(!s.uiView.value("available").toBool()); QVERIFY(s.uiView.value("revision").toInteger() > newRevision);
+    }
+    void blenderIsFedFramesWhileQtPlaysEvenThoughEveryPlayStepIsASlowCommand() {
+        // Play issues engine commands back to back. Blender's follower polls ui_view_state meanwhile; refusing the
+        // poll as "a command is already in progress" starved it, so Blender never moved while Qt played.
+        QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); PumpEngine engine;
+        Session s(dir.path(), &engine); s.data().reload(); registerAllCommands(s);
+        WorkbenchWindow w(s); QTRY_VERIFY(!w.isBusy());
+        const auto pid = QCoreApplication::applicationPid();
+        w.setBlenderProcessId(pid);
+        w.runCommand("load_row", {{"row", "dair"}}); QTRY_VERIFY(!w.isBusy());
+        QTcpSocket socket; socket.connectToHost(QHostAddress::LocalHost, w.serveForBlender());
+        QTRY_COMPARE(socket.state(), QAbstractSocket::ConnectedState);
+        auto *play = w.findChild<QPushButton *>("wbPlay"); QVERIFY(play); play->click();
+        QSet<int> seen; int errors = 0; QString firstError; QElapsedTimer clock; clock.start();
+        while (clock.elapsed() < 4000 && seen.size() < 6) {
+            socket.write(toolRequest("ui_view_state", {{"revision", 0}, {"pid", pid}}));
+            QTRY_VERIFY_WITH_TIMEOUT(socket.canReadLine(), 3000);
+            const auto reply = QJsonDocument::fromJson(socket.readLine()).object();
+            const auto payload = toolPayload(reply);
+            if (reply.contains("error") || reply["result"].toObject()["isError"].toBool() || payload.contains("error")) {
+                ++errors; if (firstError.isEmpty()) firstError = QString::fromUtf8(QJsonDocument(reply).toJson(QJsonDocument::Compact));
+            } else if (payload.value("available").toBool()) seen.insert(payload["info"].toObject()["frame"].toInt());
+            QTest::qWait(4);
+        }
+        play->click();
+        QVERIFY2(errors == 0, qPrintable(firstError));
+        QVERIFY2(seen.size() >= 4, qPrintable(QString("Blender saw only %1 distinct frames while Qt played").arg(seen.size())));
     }
     void serveForBlenderReusesHumanSessionAndClosesWithHub() {
         QTemporaryDir dir; wbtest::makeSynthFighter(dir.path()); Session s(dir.path(), nullptr);

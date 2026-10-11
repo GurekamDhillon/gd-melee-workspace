@@ -75,6 +75,8 @@ public:
     bool start(QString *err);
     void stop();
     QJsonObject call(const QString &fn, const QJsonObject &args, QString *err) override;
+    // Engine wb.frame numbering is one ahead of the script numbering the rest of the Workbench uses.
+    static constexpr int kEngineFrameLag = 1;
     QString status() override;
     bool restart(QString *err) override;
     bool attach(quint16 port, QString *err);
@@ -94,6 +96,7 @@ private:
     int timeoutMs_ = 8000;
     bool busy_ = false;
     bool ownsProcess_ = false;
+    QJsonObject callEngine(const QString &fn, const QJsonObject &args, QString *err);
     QHash<int, int> lastGoodFrame_; // motion -> highest frame the engine confirmed (a move's known length)
     quint64 stopGeneration_ = 0;
 };
