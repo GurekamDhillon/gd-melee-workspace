@@ -113,7 +113,7 @@ def make_mods(count):
                               "file_url": f"{base}/{fid}.dat"})
         base = f"http://127.0.0.1:{OPTS.port}/media/posts/{mid}"
         other_files = {"stage_skin": [(f"{title} - {['GrNBa', 'GrOp', 'GrSt', 'GrPs'][i % 4]}.dat", "stage_dat")],
-                       "custom_stage": [("GrCustom.dat", "stage_dat")], "patch": [("mod.xdelta", "other")]}
+                       "custom_stage": [("synth-stage.zip", "other")], "patch": [("mod.xdelta", "other")]}
         if kind == "effects":
             other_files[kind] = [("EfFxData.dat", "effects_dat")] if i % 2 == 0 else [("PlMs Streak Colour.dat", "effects_dat")]
         if kind == "other":
@@ -261,6 +261,9 @@ class H(BaseHTTPRequestHandler):
             for m in MODS:
                 for f in m["files"]:
                     if m["id"] == mid and str(f["id"]) == fid:
+                        if f["filename"].endswith(".zip") and OPTS.custom_zip:   # a custom-stage / fighter package made from your own disc, kept out of git
+                            with open(OPTS.custom_zip, "rb") as fp:
+                                return self.send(200, fp.read(), "application/zip")
                         if f["file_type"] == "stage_dat":
                             stem = f["filename"].rsplit("Gr", 1)[1][:-4] if "Gr" in f["filename"] else ""
                             path = OPTS.stage_dats.get("Gr" + stem)
@@ -286,6 +289,7 @@ def main():
     ap.add_argument("--count", type=int, default=120)
     ap.add_argument("--dat", default="", help="serve this file for every costume download (a real costume of yours; never commit it)")
     ap.add_argument("--stage-dat", action="append", default=[], metavar="GrNBa=FILE", help="serve FILE for every stage_dat download whose file name carries that Gr code (a skin made from your own disc, kept out of git)")
+    ap.add_argument("--custom-zip", default="", help="serve this zip for every custom_stage package download (tools/nucleus/make_synth_stage.py makes one from your ACE disc; never commit it)")
     ap.add_argument("--page-delay", type=float, default=0.0)
     ap.add_argument("--fail-first", type=int, default=0)
     ap.add_argument("--retry-after", type=int, default=0)

@@ -286,6 +286,17 @@ for the next boot. Installs are staged in `.staging-<id>` and swapped in whole (
 stage select says `STAGE - SKIN: <name> (both players need it)`. Effects, menus and audio are not in the identity hash (cosmetic by design); see the lane report's decision on whether they should
 be.
 
+## 4d. Custom stages from Nucleus posts (a NEW stage, vanilla disc)
+
+A `custom_stage` post that is a MexManager stage package (a `.zip` with `stage.json` + `GrXx.dat` [+ icon]) installs as `mods/nucleus-<post>-cstage/` (`kind: "stage"`, `files/GrXx.dat`, `mexstage.txt`, `icon.gxtex`,
+`mod.json` with the post link and a "Works / Works, partial" note the INSTALLED tab shows). The runtime builds the few m-ex stage tables from the enabled stage mods at boot
+(`gw_mex_modstage.inc` in the game repo): internal ids 71.., external 288.., read by the same code that serves ACE's added stages (rows, grFunction blob, audio row, playlist). Only the stage
+readers see them (`gw_Mex_MexData()` stays 0), so everything else behaves as on a vanilla disc. A disc that already has an `MxDt.dat` never uses them (no merging into ACE's tables).
+`stage.json` fields -> StageData words: `mapDescPointer` 1, `onStageInit` 3, `onGo` 4, `onStageLoad` 5, `onStageGo` 6, `onUnknown2` 7, `onTouchLine` 8, `onUnknown4` 9, `unknownValue` 10 (verified against ACE's rows).
+Refused with a plain message: a retail stage file name (that is a skin), callbacks outside the retail dol (built for another clone base), a file that is not a stage, custom items. Kept but said so: a sound bank
+above the retail ones (silent stage sounds), music ids above 98 (dropped), line types (the package may carry the GD field `gdLineType`; else the stage falls back to one retail stage's).
+Netplay: the stage's identity is its file's content (same as an m-ex added stage), so both players need the mod. Test package: `tools/nucleus/make_synth_stage.py` (from your own ACE disc, never committed) + `fixture_server.py --custom-zip`.
+
 ## 5. The split tool
 
 `tools/mex_port/split_modpack.py --pack _build/packs/ace-set/ace --name ace --version 2.0.0`
