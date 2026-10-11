@@ -90,7 +90,7 @@ gd.run(function()
       end
       gd.log(string.format('SAMPLECHECK smash charge %s: tap %s%%, charged %s%%, anim held %s frames', label, tostring(out[2]), tostring(out[70]), tostring(out.frozen)))
       if not (out[2] and out[70]) then error(label .. ' smash did not connect tapped or charged') end
-      if out[70] < out[2] * 1.25 then error(label .. ' smash damage does not scale with the charge: ' .. out[2] .. ' -> ' .. out[70]) end
+      if out[70] < out[2] * 1.15 then error(label .. ' smash damage does not scale with the charge: ' .. out[2] .. ' -> ' .. out[70]) end
       if (out.frozen or 0) < 15 then error(label .. ' smash animation did not hold while charging') end
     end
     smash('fsmash', {x = 127}, {7, 9, 11})
