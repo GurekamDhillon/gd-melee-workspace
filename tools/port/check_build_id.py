@@ -14,8 +14,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--melee', type=Path, required=True)
     ap.add_argument('--exe', type=Path, required=True)
+    ap.add_argument('--header', type=Path, help='build-local generated header')
     a = ap.parse_args()
-    header = a.melee / 'pc/platform/gw_build_id.h'
+    header = a.header or a.melee / 'pc/platform/gw_build_id.h'
     if not header.is_file():
         sys.exit('check_build_id: no %s (run tools/port/build_id.py)' % header)
     m = re.search(r'GW_BUILD_SOURCE_HEX "([0-9a-f]{16})"', header.read_text())

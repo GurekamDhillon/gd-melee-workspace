@@ -8,10 +8,7 @@
 # $GW_ROOT/_build/agents/<name> instead, and from then on two agents never write the same file.
 #
 # What stays shared on purpose:
-#   - $GW_ROOT/_build/ax86m     the Aurora/Dawn/SDL3 import libraries. melee_link_libs.rsp names
-#                               them relative to that directory, so the link always runs there;
-#                               only its OUTPUTS move per agent. They are read-only here and cost
-#                               gigabytes to duplicate.
+#   - dependency source caches (copied into each Aurora build before configuring).
 #   - the ISOs ($GW_ISO_*)      read-only.
 #   - melee/config/GALE01/symbols.txt via the worktree, which each agent has its own copy of.
 #
@@ -65,12 +62,13 @@ GW_ISO_ACE="${GW_ISO_ACE:-}"
 GW_ISO="${GW_ISO:-$GW_ISO_VANILLA}"
 
 GW_CLANG="${GW_CLANG:-$GW_ROOT/_toolchains/llvm/bin/clang.exe}"
-GW_SDL_INCLUDE="${GW_SDL_INCLUDE:-$GW_ROOT/_build/ax86/_deps/sdl3_prebuilt-src/include}"
-GW_IMGUI_INCLUDE="${GW_IMGUI_INCLUDE:-$GW_ROOT/_build/ax86m/_deps/imgui-src}"  # C++ shims only
+GW_AURORA_BUILD="${GW_AURORA_BUILD:-$GW_BUILD_ROOT/ax86m}"
+GW_SDL_INCLUDE="${GW_SDL_INCLUDE:-$GW_AURORA_BUILD/_deps/sdl3_prebuilt-src/include}"
+GW_IMGUI_INCLUDE="${GW_IMGUI_INCLUDE:-$GW_AURORA_BUILD/_deps/imgui-src}"  # C++ shims only
 # Dawn's C++ WebGPU headers, for C++ shims that use Aurora's public draw API (aurora/gfx.hpp: gw_fx_render.cpp).
 # The source tree's include/ plus the build's generated one - the same pair Aurora itself compiles with.
-GW_DAWN_INCLUDE="${GW_DAWN_INCLUDE:-$(sed -n 's/^Dawn_SOURCE_DIR:STATIC=//p' "$GW_ROOT/_build/ax86m/CMakeCache.txt" 2>/dev/null)/include}"
-GW_DAWN_GEN_INCLUDE="${GW_DAWN_GEN_INCLUDE:-$GW_ROOT/_build/ax86m/_deps/dawn-build/gen/include}"
+GW_DAWN_INCLUDE="${GW_DAWN_INCLUDE:-$GW_AURORA_BUILD/_deps/dawn-src/include}"
+GW_DAWN_GEN_INCLUDE="${GW_DAWN_GEN_INCLUDE:-$GW_AURORA_BUILD/_deps/dawn-build/gen/include}"
 
 gw_die() {
     echo "error: $*" >&2
@@ -113,7 +111,7 @@ gw_env_summary() {
 # A shim .c under pc/platform -> its object. Shim sources are native x86, NOT gwtool input, and
 # they need the SDL3 headers: main.c, shim_ax.c and shim_vi.c reach them through aurora/event.h.
 gw_build_shim() {
-    local src="$1" name obj_tmp dep_tmp cc_err suffix
+    local src="$1" name obj_tmp dep_tmp cc_err suffix source_file
     local -a extra=()
     case "$src" in
     *.cpp)
@@ -148,6 +146,11 @@ gw_build_shim() {
         ;;
     esac
     [ -f "$GW_MELEE/pc/platform/$src" ] || gw_die "no such shim: pc/platform/$src"
+    source_file="$GW_MELEE/pc/platform/$src"
+    if [ -n "${GW_GENERATED_DIR:-}" ]; then
+        extra+=(-I "$GW_GENERATED_DIR")
+        if [ -f "$GW_GENERATED_DIR/$src" ]; then source_file="$GW_GENERATED_DIR/$src"; fi
+    fi
     mkdir -p "$GW_SHIMOBJ"
     # Never write through a hardlinked lane object. Failed compiles must not leave the old object
     # or key looking valid to a later invocation.
@@ -161,7 +164,7 @@ gw_build_shim() {
         -I "$GW_MELEE/extern/aurora/include" -I "$GW_MELEE/pc/platform" -I "$GW_SDL_INCLUDE" \
         -I "$GW_MELEE/extern/enet/include" \
         -MD -MF "$dep_tmp" -MT object \
-        "$GW_MELEE/pc/platform/$src" -o "$obj_tmp" >"$cc_err" 2>&1 || {
+        "$source_file" -o "$obj_tmp" >"$cc_err" 2>&1 || {
             cat "$cc_err" >&2
             rm -f "$obj_tmp" "$dep_tmp" "$cc_err"
             gw_die "shim $src did not compile"
@@ -180,7 +183,7 @@ gw_build_tu() {
         gw_die "TU failed: $f"
 }
 
-# Link. Always runs in _build/ax86m (see the note above); only the outputs follow GW_BUILD_ROOT.
+# Link. build.sh supplies absolute object/library lists and private Aurora output.
 # The batch file's own exit code is not trustworthy through cmd.exe here, so key off the
 # MELEE_PC_LINK_OK line it prints on success - otherwise a link error scrolls past and the next
 # step happily runs against a stale exe.
@@ -192,11 +195,13 @@ gw_link() {
             gw_die "cannot regenerate lane link list"
     fi
     mkdir -p "$GW_BUILD_ROOT"
-    out="$( cd "$GW_ROOT/_build/ax86m" &&
+    out="$(
         GW_ROOT="$(cygpath -w "$GW_ROOT" 2>/dev/null || echo "$GW_ROOT")" \
         GW_BUILD_ROOT="$(cygpath -w "$GW_BUILD_ROOT" 2>/dev/null || echo "$GW_BUILD_ROOT")" \
         GW_LINK_OBJECTS="$(cygpath -w "$GW_LINK_OBJECTS" 2>/dev/null || echo "$GW_LINK_OBJECTS")" \
+        GW_LINK_LIBS="$(cygpath -w "${GW_LINK_LIBS:-$GW_ROOT/_build/melee_link_libs.rsp}" 2>/dev/null || echo "${GW_LINK_LIBS:-$GW_ROOT/_build/melee_link_libs.rsp}")" \
             cmd.exe //c "$(cygpath -w "$GW_ROOT/_build/build_melee_pc.bat")" 2>&1 )" || true
+    printf '%s\n' "$out" > "$GW_BUILD_ROOT/link-last.log"
     if ! grep -q MELEE_PC_LINK_OK <<<"$out"; then
         grep -v "vswhere" <<<"$out" | tail -15 >&2
         gw_die "link failed"

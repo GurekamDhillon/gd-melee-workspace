@@ -1,5 +1,12 @@
 # Sourced by build.sh after native shims have compiled. Shares that script's
 # fail-fast behavior and per-lane GW_* paths; never changes the curated template.
+# MSYS translates argv for native tools, but never the contents of response files.
+# Keep this normalization here as well as in build.sh for standalone callers.
+if command -v cygpath >/dev/null 2>&1; then
+    GW_MELEE="$(cygpath -m "$GW_MELEE")"
+    GW_BUILD_ROOT="$(cygpath -m "$GW_BUILD_ROOT")"
+    GW_SHIMOBJ="$(cygpath -m "$GW_SHIMOBJ")"
+fi
 slippi_link="$GW_BUILD_ROOT/.slippi_link_objects.rsp"
 slippi_names=(gw_slippi_pad gw_slippi_wire gw_slippi_peer gw_slippi_match_json gw_slippi_match gw_slippi_mode)
 slippi_parts=(callbacks compress host list packet peer protocol win32)

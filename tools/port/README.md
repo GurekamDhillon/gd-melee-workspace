@@ -33,7 +33,7 @@ Wrapper flags `--test` and `--realtime` go **before the sandbox name**. `--test`
 so its turbo request is informational, not an accelerated simulation. Normal windowed runs
 remain realtime unless explicitly requested otherwise.
 
-`build.sh` scans stale game TUs with `scan_stale_tus.py` (timestamps, including Geno headers),
+`build.sh` scans stale game TUs with `build_objects.py` (content hashes, including Geno headers),
 rebuilds stale native shims, links, regenerates the bridge from that map, and rebuilds/relinks it
 as needed until stable (at most four regeneration checks). It audits the final EXE's bridge ABI.
 An unchanged trusted bridge avoids the extra link. Do not use raw clang for game TUs or bypass
@@ -41,6 +41,30 @@ the fixpoint. `GW_JOBS` sets the compile jobs for game TUs and shims (default: p
 Staleness is by content: each object records a hash of its source, its depfile's headers, the
 compile script and the tools, so a touched-but-unchanged file rebuilds nothing, a header rebuilds
 only its consumers, a flag change rebuilds everything, and a revert restores the previous object.
+
+Aurora is also built automatically from `GW_MELEE/extern/aurora`, into
+`GW_BUILD_ROOT/ax86m`. Its source-tree hash and build recipe select rebuilds, so
+backdated files and branch switches cannot silently reuse another checkout's
+renderer. A rebuild invalidates Aurora objects before invoking Ninja, so its
+timestamp checks cannot retain a backdated object. Missing libraries or a failed build force another build; unchanged
+inputs log `aurora up to date` and skip CMake. Windows retains the MSVC x86
+RelWithDebInfo toolchain and feature flags from `build_aurora_melee.bat`.
+`GW_DEPS_SOURCE_CACHE` can name an existing `_deps` source cache; sources are
+copied into the private output before CMake or Dawn touches them. The default
+Windows cache is `GW_ROOT/_build/ax86m/_deps` (plus its sibling `ax86/_deps`).
+The first build in a new lane builds the dependencies too and takes longer.
+Matching Dawn/SDL DLLs are staged beside the EXE; `run.sh` prefers those when
+creating a run sandbox.
+
+Both `E:/...` and Git Bash `/e/...` forms work for `GW_MELEE` and `GW_BUILD_ROOT`.
+Generated Windows bridge/build-id files live under `GW_BUILD_ROOT/generated`,
+so building does not edit the game checkout. The few shims that include these
+headers are compiled from synchronized build-local copies.
+Linux's `build_linux.sh`, `ci_linux.sh` and `build_aurora_linux.sh` use the same
+freshness check and private default. `GW_AURORA_BUILD` (Windows) and
+`GW_AURORA_LINUX_BUILD` overrides must remain inside `GW_BUILD_ROOT`.
+Linux compile-only modes can still read headers from an existing external Aurora
+cache; they do not invoke the Aurora builder.
 
 ## The perf record, and how a lane reads the verdict
 
@@ -170,8 +194,8 @@ names for concurrent runs. A live copy is not updated by a later build.
 
 `agent_new.sh <name>` creates a game worktree and build root; `agent_rm.sh <name>` removes it
 only when clean and retains the branch. Baseline objects are hardlinked: the local game-TU
-writer must replace outputs rather than truncate shared files. Shared Aurora/Dawn/SDL libraries
-are outside lane isolation. Read [HANDOFF.md section 6](../../docs/HANDOFF.md#6-traps) before parallel builds.
+writer must replace outputs rather than truncate shared files. Aurora/Dawn/SDL build outputs
+are private to each build root. Read [HANDOFF.md section 6](../../docs/HANDOFF.md#6-traps) before parallel builds.
 
 Read the run's log and crash logs as well as the test summary. Record EXE/game revision, disc,
 mods, run directory and switches with any result. A successful older run is not a HEAD check.

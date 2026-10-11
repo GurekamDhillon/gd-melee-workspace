@@ -106,6 +106,7 @@ def render(melee):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--melee', type=Path, required=True)
+    ap.add_argument('--output', type=Path, help='build-local header (default: game checkout)')
     ap.add_argument('--print', action='store_true', help='print the digest and write nothing')
     args = ap.parse_args(argv)
     melee = args.melee.resolve()
@@ -116,7 +117,8 @@ def main(argv=None):
         print(digest)
         print(text, end='')
         return 0
-    out = melee / HEADER
+    out = args.output or melee / HEADER
+    out.parent.mkdir(parents=True, exist_ok=True)
     old = out.read_text(encoding='utf-8') if out.is_file() else None
     if old != text:
         out.write_text(text, encoding='utf-8', newline='\n')

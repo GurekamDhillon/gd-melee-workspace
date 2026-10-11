@@ -19,7 +19,13 @@
 set -euo pipefail
 GW_ROOT="${GW_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 GW_MELEE="${GW_MELEE:-$GW_ROOT/melee/worktrees/linux}"
-BUILD="${GW_AURORA_LINUX_BUILD:-$GW_ROOT/_build/linux/ax86m}"
+GW_BUILD_ROOT="${GW_BUILD_ROOT:-$GW_ROOT/_build/agents/linux}"
+BUILD="${GW_AURORA_LINUX_BUILD:-$GW_BUILD_ROOT/ax86m}"
+export GW_ROOT GW_MELEE GW_BUILD_ROOT
+export GW_AURORA_LINUX_BUILD="$BUILD"
+if [ "${1:-}" != --build ]; then
+    exec python3 "$GW_ROOT/tools/port/aurora_build.py" --platform linux
+fi
 JOBS="${GW_JOBS:-8}"
 AURORA_SRC="$GW_MELEE/extern/aurora"
 # Plain `clang -m32` is the i386 triple with no SSE: all of Aurora, Dawn and SDL compiled to x87 float math,
@@ -35,16 +41,7 @@ echo "aurora    $AURORA_SRC"
 echo "build     $BUILD"
 echo "jobs      $JOBS"
 
-source_options=()
-if [ -n "${GW_DEPS_SOURCE_CACHE:-}" ]; then
-    # Reuse only source trees; every library is rebuilt for this toolchain/sysroot.
-    for source in "$GW_DEPS_SOURCE_CACHE"/*-src; do
-        [ -d "$source" ] || continue
-        dependency="$(basename "$source" -src)"
-        source_options+=("-DFETCHCONTENT_SOURCE_DIR_${dependency^^}=$source")
-    done
-fi
-cmake -S "$AURORA_SRC" -B "$BUILD" -G Ninja "${source_options[@]}" \
+cmake -S "$AURORA_SRC" -B "$BUILD" -G Ninja -C "$BUILD/source-cache.cmake" \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_MAKE_PROGRAM="$(command -v ninja)" \
     -DCMAKE_C_COMPILER="${GW_CLANG:-clang}" \
@@ -81,7 +78,7 @@ PY
 # populates _deps/dawn-src, so this has to run after it and before the build; the grep makes it
 # idempotent (a second run finds the source already fixed and does nothing).
 DAWN_PATCH="$GW_ROOT/tools/port/patches/dawn-32bit-vk-null-handle.patch"
-DAWN_SOURCE="${GW_DEPS_SOURCE_CACHE:-$BUILD/_deps}/dawn-src"
+DAWN_SOURCE="$BUILD/_deps/dawn-src"
 DAWN_VK_ALLOC="$DAWN_SOURCE/src/dawn/native/vulkan/ResourceMemoryAllocatorVk.cpp"
 if [ -f "$DAWN_VK_ALLOC" ] && grep -q 'dedicatedInfo.buffer = VK_NULL_HANDLE;' "$DAWN_VK_ALLOC"; then
     echo "dawn patch: applying $(basename "$DAWN_PATCH")"

@@ -75,10 +75,8 @@ link_dir "$GW_ROOT/_build/masstest/shimobj" "$root/masstest/shimobj" 0
 #    are produced by pc/tools/extract_assets.py into build/GALE01/include/. Without them a real
 #    full rebuild fails on those two TUs, long after setup, with an error that says nothing about
 #    worktrees. Copy them across.
-# 3. AURORA MUST BE BUILT THROUGH the Aurora junction. _build/ax86m is configured against that junction, which
-#    avoids the apostrophe in "GD's Melee". Building it through the real path poisons the cmake
-#    cache and the next regenerate fails deep inside Dawn's third-party tree - a failure that
-#    looks like a broken dependency, not a path problem. Noted in the ready-message below.
+# 3. AURORA IS PRIVATE. build.sh builds this checkout's Aurora under the lane root;
+#    never copy a CMake cache from the shared build, whose source paths differ.
 inc_src="$GW_ROOT/melee/build/GALE01/include"
 if [ -d "$inc_src" ]; then
     inc_dst="$worktree/build/GALE01/include"
@@ -148,10 +146,8 @@ Ready. In that agent's shell:
   bash "$GW_ROOT/tools/port/build.sh" --tu src/melee/ft/ftdata.c
   bash "$GW_ROOT/tools/port/run.sh" --test t --iso "\$GW_ISO_VANILLA"
 
-If you need to rebuild vendored aurora, do it THROUGH THE JUNCTION or you will poison the
-cmake cache and the next regenerate will fail inside Dawn's third-party tree:
-
-  GW_AURORA_ROOT="\$GW_AURORA_ROOT" cmd //c "$GW_ROOT/_build/build_aurora_melee.bat"
+build.sh rebuilds this checkout's Aurora automatically in \$GW_BUILD_ROOT/ax86m.
+Its first build also compiles private dependencies; later unchanged builds skip Aurora.
 
 Remove it with: tools/port/agent_rm.sh $name
 EOF
