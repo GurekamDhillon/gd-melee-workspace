@@ -45,7 +45,7 @@ class ProtocolTests(unittest.TestCase):
             self.assertEqual(self.transport.sent.pop(), (packet, target))
 
     def test_incompatible_handshake_reports_version_to_both_peers(self):
-        for version in [1, 2, 3, 4, 5, 7, 256]:
+        for version in [1, 2, 3, 4, 5, 6, 256]:
             for kind in [1, 2]:
                 with self.subTest(version=version, kind=kind):
                     self.setUp()
