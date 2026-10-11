@@ -25,7 +25,13 @@ NAMES = command_names()
 FIELDS = command_fields()
 OPS = {name.lower(): i for i, name in enumerate(NAMES)}
 OPS.update(frame=2, endloop=4, subroutine=5, clear_hitbox=15,
-           clear_hitboxes=16, sound=17, throw_hitbox=34)
+           clear_hitboxes=16, sound=17, throw_hitbox=34, throw_release=20)
+STATEMENT_FIELDS = {
+    34: {"slot": "w0.idx", "angle": "w1.unk0", "kbg": "w1.hit_x24",
+         "fkb": "w1.hit_x28", "bkb": "w2.hit_x2C"},
+    28: {"bone": "w0.bone_idx"},
+}
+HURT_STATES = ("normal", "invincible", "intangible")
 
 
 def encoder():
@@ -202,6 +208,10 @@ def assemble_line(tokens, states=()):
         if len(list(commands(words))) != 1:
             raise ValueError("raw form must contain exactly one command")
         return words
+    if lower == "throw_release":
+        if args:
+            raise ValueError("throw_release takes no arguments")
+        return [20 << 26]
     if lower == "hitbox":
         defaults = dict(slot=0, joint=0, damage=8, size=4, x=0, y=0, z=0, angle=361, kbg=100, fkb=0, bkb=0, element=0, shield=0, ground=1, air=1)
         # Optional fields retain retail flags/sounds and otherwise unnamed header bits.
@@ -245,6 +255,7 @@ def assemble_line(tokens, states=()):
             for key in fields:
                 short = key.split(".")[1]
                 aliases[short] = key if short not in aliases else None
+            aliases.update(STATEMENT_FIELDS.get(op, {}))
             if not fields:
                 raise ValueError("no named fields for this command; use positional payload or raw form")
             words = [op << 26] + [0] * (LENGTHS[op]-1)
@@ -256,12 +267,14 @@ def assemble_line(tokens, states=()):
                     raise ValueError(f"unknown, ambiguous, or repeated field {token.split('=')[0]}")
                 seen.add(key)
                 wi, shift, width, signed = fields[key]
+                if op in (26, 27, 28) and key == "w0.state" and v.lower() in HURT_STATES:
+                    v = HURT_STATES.index(v.lower())
                 n = integer(v, -(1 << (width-1)) if signed else 0, (1 << (width-1))-1 if signed else (1 << width)-1)
                 words[wi] |= (n & ((1 << width)-1)) << shift
             return words
         if len(args) != LENGTHS[op]:
-            if not args and LENGTHS[op] == 1:
-                args = ["0"]
+            if not args and (LENGTHS[op] == 1 or op == 34):
+                args = ["0"] * LENGTHS[op]
             else:
                 raise ValueError(f"{name} needs {LENGTHS[op]} arguments: low26 payload, then {LENGTHS[op]-1} words")
         return [(op << 26) | integer(args[0], 0, (1 << 26)-1), *[word(a) for a in args[1:]]]
@@ -347,6 +360,14 @@ def friendly(ws):
     w0 = ws[0]
     op = w0 >> 26
     if op != 59:
+        if op == 20 and w0 & 0x3FFFFFF == 0:
+            return "throw_release"
+        if op in (26, 27, 28):
+            state = w0 & (0x3FFFF if op == 28 else 0x3FFFFFF)
+            if state >= len(HURT_STATES):
+                raise ValueError("unknown hurt capsule state")
+            bone = f"bone={w0 >> 18 & 255} " if op == 28 else ""
+            return f"{NAMES[op]} {bone}state={HURT_STATES[state]}"
         if op == 11:
             _, w1, w2, w3, w4 = ws
             signed = lambda n: (n if n < 32768 else n-65536) / 256
@@ -356,11 +377,13 @@ def friendly(ws):
                     f"sfx_kind={w4 >> 2 & 31} sfx_severity={w4 >> 7 & 7} header_bits={w0 & 0x00780400}")
         if op in FIELDS and op not in (0, 1, 2, 3):
             args = []
+            statement_names = {value: key for key, value in STATEMENT_FIELDS.get(op, {}).items()}
             for key, wi, shift, width, signed in FIELDS[op]:
                 n = ws[wi] >> shift & ((1 << width)-1)
                 if signed and n >= 1 << (width-1):
                     n -= 1 << width
-                args.append(f"{key}={n}")
+                friendly_key = statement_names.get(key, key.split(".")[1]) if op == 34 else key
+                args.append(f"{friendly_key}={n}")
             return NAMES[op] + " " + " ".join(args)
         return NAMES[op] + (" " + " ".join([str(w0 & 0x3FFFFFF), *[f"0x{w:08X}" for w in ws[1:]]]) if w0 & 0x3FFFFFF or len(ws) > 1 or op in (1, 2, 3) else "")
     name = next((k for k, v in SUBS.items() if v == (w0 >> 20 & 63)), None)

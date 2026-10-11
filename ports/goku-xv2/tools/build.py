@@ -26,7 +26,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import strip_gameplay as SG  # gameplay.full.json (local) wins over the stripped gameplay.json
 sys.path.insert(0, str(ROOT/'ports/ir/tools'))
-from tools.geno import script, report
+from tools.geno import script, report, throw_standin
 from acmd_loss import write_losses
 
 ROLE = {'HAND_R':'hand.R','HAND_L':'hand.L','FOOT_R':'foot.R','FOOT_L':'foot.L','CHEST':'chest',
@@ -36,7 +36,7 @@ ROLE = {'HAND_R':'hand.R','HAND_L':'hand.L','FOOT_R':'foot.R','FOOT_L':'foot.L',
         'SPINE':'spine','TOE_R':'toe.R','TOE_L':'toe.L'}
 
 def load(path):
-    return json.loads(Path(path).read_text(encoding='utf-8'))
+    return json.loads(Path(path).read_text(encoding='utf-8-sig'))
 
 def write(path, value):
     path = Path(path)
@@ -368,6 +368,7 @@ def apply(package, art_build, ir_path=None):
                 motion['clip'] = clip_name
     doc = load(package/'geno.json')
     fighter = doc['fighters'][0]
+    throw_standin.apply(fighter, cfg)
     lib = AUTHOR/'clip-library.json'
     if lib.exists():  # LAB CLIPS library: unbound declared rows 303.. (geno.md fighter.rows)
         fighter.setdefault('fighter', {})['rows'] = [c['name'] for c in load(lib)['clips']] + \

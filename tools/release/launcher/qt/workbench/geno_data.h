@@ -74,6 +74,14 @@ public:
                                   std::optional<quint32> arg, QString *err) const;
     QVector<FileChange> addSpawn(const QString &row, int frame, quint32 arg, int *ordinal, QString *err) const;
     QVector<FileChange> removeSpawn(const QString &row, int ordinal, QString *err) const;
+    QJsonArray statements(const QString &row) const;
+    QJsonArray hurtWindows(const QString &row) const;
+    QVector<FileChange> editStatement(const QString &row, int ordinal, const QJsonObject &fields, QString *err) const;
+    QVector<FileChange> editStatement(const QString &row, int ordinal, const QJsonObject &fields,
+                                      int *newOrdinal, QString *err) const;
+    QVector<FileChange> addStatement(const QString &row, const QString &kind, int frame,
+                                     const QJsonObject &fields, int *ordinal, QString *err) const;
+    QVector<FileChange> removeStatement(const QString &row, int ordinal, QString *err) const;
 
     // The combo graph (geno.md 25): routes and strings of the file the project declares as "combo". Edits are
     // FileChanges like every other edit, so they go through Session::commit (history, undo, propose, baseline).

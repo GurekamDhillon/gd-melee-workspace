@@ -15,6 +15,7 @@ import sys
 
 from . import spec
 from .model import ArtistError
+from tools.geno import throw_standin
 
 FALLBACK = {"fingers.L": ["hand.L", "lower_arm.L"], "fingers.R": ["hand.R", "lower_arm.R"], "thumb.L": ["hand.L", "lower_arm.L"],
             "thumb.R": ["hand.R", "lower_arm.R"], "hand.L": ["lower_arm.L"], "hand.R": ["lower_arm.R"], "toe.L": ["foot.L"],
@@ -109,6 +110,11 @@ DEFAULT_DELAY = {"fsmash": 1, "fsmash_up": 1, "fsmash_down": 1, "usmash": 1}
 
 def assemble(f, build_dir, mod_dir, hitbox_scale, ref_speeds, log=print):
     """Write mod_dir (mod.json, geno.json, moves/, files/) from the files built into build_dir."""
+    if "thrown_as" in f.cfg:
+        try:
+            throw_standin.validate(f.cfg["thrown_as"])
+        except ValueError as exc:
+            raise ArtistError(str(exc)) from exc
     plan = json.load(open(os.path.join(build_dir, "plan.json"), encoding="utf-8"))
     striker = os.path.join(spec.game_dir(), "pc", "geno", "mods", "vanilla-striker")
     if not os.path.isdir(os.path.join(striker, "moves")):
@@ -157,6 +163,7 @@ def assemble(f, build_dir, mod_dir, hitbox_scale, ref_speeds, log=print):
                "fighter": {"plan": "plan.json", "animation": "Gn%sAJ.dat" % f.token, "costumes": costumes},
                "ai": dflt["ai"], "kirby_copy": dflt["kirby_copy"], "attributes": attrs, "jumps": dflt["jumps"],
                "special_attributes": dflt["special_attributes"]}
+    throw_standin.apply(fighter, f.cfg)
     for k in ("states", "specials", "subactions"):
         fighter[k] = sj[k]
     if f.cfg.get("jumps"):

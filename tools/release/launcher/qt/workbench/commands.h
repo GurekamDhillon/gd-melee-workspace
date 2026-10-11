@@ -19,6 +19,7 @@ inline QString t(const char *english, const char *) { return QString::fromUtf8(e
 void registerViewCommands(Session &);
 void registerRowCommands(Session &);
 void registerHitboxCommands(Session &);
+void registerStatementCommands(Session &);
 // One source hitbox as the commands report it (list_hitboxes, and ui_view_state for Blender).
 QJsonObject hitboxJson(const HitboxRef &);
 void registerClipCommands(Session &);

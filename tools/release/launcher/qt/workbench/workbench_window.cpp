@@ -1,6 +1,8 @@
 #include "workbench_window.h"
 #include "combo_widgets.h"
 #include "projectile_widgets.h"
+#include "statement_widgets.h"
+#include "throw_standin.h"
 #include "window.h"
 #define WB_CORE_USE_LAUNCHER_T 1
 #include "commands.h"
@@ -114,6 +116,8 @@ struct Snapshot {
     QVector<ClipInfo> clips;
     QMap<QString, QVector<HitboxRef>> hits;
     QMap<QString, QJsonArray> events;
+    QMap<QString, QJsonArray> statements, hurtWindows;
+    QJsonObject standIn;
     QJsonArray articles, spawns; // projectiles (geno.md 19) and the spawn calls of the move scripts
     QJsonArray routes, strings; // the combo graph (geno.md 25)
     QJsonObject comboMeta;
@@ -206,11 +210,14 @@ struct Worker {
         value.blenderPid = session->blenderPid; value.blenderAck = session->blenderAckRevision;
         value.viewRevision = session->uiView.value("revision").toInteger();
         value.articles = session->data().articles(); value.spawns = session->data().spawns();
+        value.standIn = throwStandIn(*session);
         value.routes = session->data().routes(); value.strings = session->data().strings();
         value.comboMeta = session->data().comboMeta(); value.hasCombo = session->data().hasCombo();
         for (const auto &row : value.rows) {
             value.hits.insert(row.name, session->data().hitboxes(row.name));
             value.events.insert(row.name, session->data().timelineEvents(row.name));
+            value.statements.insert(row.name, session->data().statements(row.name));
+            value.hurtWindows.insert(row.name, session->data().hurtWindows(row.name));
         }
         for (const auto &entry : session->history().entries()) {
             auto metadata = entry; metadata.changes.clear(); value.history.append(metadata);
@@ -351,10 +358,12 @@ public:
 };
 bool isEditName(const QString &name) {
     return name == "edit_hitbox" || name == "edit_attribute" || name == "add_hitbox" || name == "delete_hitbox" ||
-           name == "duplicate_hitbox" || name == "assign_clip";
+           name == "duplicate_hitbox" || name == "assign_clip" || name == "edit_statement" ||
+           name == "add_statement" || name == "delete_statement" || name == "edit_throw_standin";
 }
 bool isStructuralName(const QString &name) {
-    return name == "add_hitbox" || name == "delete_hitbox" || name == "duplicate_hitbox";
+    return name == "add_hitbox" || name == "delete_hitbox" || name == "duplicate_hitbox" ||
+           name == "add_statement" || name == "delete_statement" || name == "edit_statement";
 }
 // True when the focused widget takes typed text: shortcuts that would eat a character must stand down.
 bool typingIn(const QWidget *w) {
@@ -416,6 +425,9 @@ struct WorkbenchWindow::Impl {
     Snapshot snapshot;
     OutlinerPanel *outliner;
     InspectorPanel *inspector;
+    StatementsPanel *statements = nullptr;
+    HurtStateLanes *hurtLanes = nullptr;
+    QWidget *statementsTab = nullptr;
     ProblemsPanel *problems;
     ClipBrowserPanel *clips;
     FidelityPanel *fidelity;
@@ -527,6 +539,7 @@ struct WorkbenchWindow::Impl {
         timelineScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
         timelineScroll->setWidget(timeline); timelineLayout->addWidget(timelineScroll);
         spawnLane = new SpawnLane; spawnLane->setTimeline(timeline); timelineLayout->addWidget(spawnLane);
+        hurtLanes = new HurtStateLanes; hurtLanes->setTimeline(timeline); timelineLayout->addWidget(hurtLanes);
         QObject::connect(spawnLane, &SpawnLane::editRequested, q, [this](const QString &name, const QJsonObject &args) { q->runCommand(name, args); });
         routeLanes = new RouteLanes; routeLanes->setTimeline(timeline); timelineLayout->addWidget(routeLanes);
         QObject::connect(routeLanes, &RouteLanes::editRequested, q, [this](const QString &name, const QJsonObject &args) { q->runCommand(name, args); });
@@ -892,6 +905,14 @@ struct WorkbenchWindow::Impl {
         QObject::connect(routeLanes, &RouteLanes::routeSelected, q, [this](int index) { if (combo) { combo->selectRoute(index); tabs->setCurrentWidget(combo); } });
         QObject::connect(combo, &ComboPanel::playStringRequested, q, [this](int index) { q->runCommand("play_string", {{"index", index}, {"realtime", true}}); });
         tabs->addTab(combo, t("Combo", "Combo"));
+        statements = new StatementsPanel; statementsTab = scroll(statements);
+        tabs->addTab(statementsTab, t("Throws / hurtboxes", "Lanzamientos / cajas de daño"));
+        QObject::connect(statements, &StatementsPanel::editRequested, q, [this](const QString &name, const QJsonObject &args) { q->runCommand(name, args); });
+        QObject::connect(statements, &StatementsPanel::addRequested, q, [this](const QString &kind, const QJsonObject &fields) {
+            if (!row.isEmpty()) q->runCommand("add_statement", {{"row", row}, {"kind", kind}, {"frame", timeline->frame()}, {"fields", fields}});
+        });
+        QObject::connect(statements, &StatementsPanel::statementSelected, q, [this](int ordinal) { hurtLanes->selectStatement(ordinal); });
+        QObject::connect(hurtLanes, &HurtStateLanes::statementSelected, q, [this](int ordinal) { statements->selectStatement(ordinal); tabs->setCurrentWidget(statementsTab); });
         columns->addWidget(tabs);
         QObject::connect(inspector, &InspectorPanel::revertRequested, q, [this](const QJsonObject &args) { q->runCommand("revert_change", args); });
         QObject::connect(attributes, &AttributesPanel::revertRequested, q, [this](const QJsonObject &args) { q->runCommand("revert_change", args); });
@@ -1178,6 +1199,8 @@ struct WorkbenchWindow::Impl {
         hub->setRebuildAvailable(snapshot.canRebuild);
         const bool structuralPending = this->structuralPending();
         inspector->setEnabled(!structuralPending && !closing && selectedHitbox());
+        if (statements) statements->setEnabled(!busy() && !closing);
+        if (hurtLanes) hurtLanes->setEnabled(!structuralPending && !closing);
         timeline->setEnabled(!structuralPending && !closing);
         // Structural edits renumber source ordinals: never enqueue a second
         // add/delete against the still-visible pre-edit occurrence.
@@ -1326,6 +1349,11 @@ struct WorkbenchWindow::Impl {
             frames = std::max(frames, bounded(qint64(r.iasa) + 1));
         }
         const auto hits = snapshot.hits.value(row);
+        for (const auto &v : snapshot.statements.value(row)) {
+            const auto s = v.toObject();
+            if (s["frame"].toInt(-1) >= 0) frames = std::max(frames, bounded(qint64(s["frame"].toInt()) + 1));
+            if (s["end_frame"].toInt(-1) >= 0) frames = std::max(frames, s["end_frame"].toInt());
+        }
         for (const auto &hit : hits)
             frames = std::max(frames, std::max(bounded(qint64(hit.startFrame) + 1), hit.endFrame));
         QVector<QPair<int, int>> windows;
@@ -1344,6 +1372,8 @@ struct WorkbenchWindow::Impl {
             activeRanges.append(window.second == window.first + 1 ? QString::number(window.first) :
                 t("%1–%2", "%1–%2").arg(window.first).arg(window.second - 1));
         timeline->setMove(row, frames, hits, iasa, snapshot.events.value(row));
+        if (statements) statements->setData(row, snapshot.statements.value(row), snapshot.standIn, snapshot.roles);
+        if (hurtLanes) hurtLanes->setWindows(snapshot.hurtWindows.value(row));
         if (projectiles) projectiles->setData(snapshot.articles, snapshot.spawns, row);
         if (spawnLane) { spawnLane->setSpawns(row, snapshot.spawns, projectiles->articleNames()); spawnLane->update(); }
         if (routeLanes && combo) {
@@ -1392,6 +1422,9 @@ struct WorkbenchWindow::Impl {
             }
         } else {
             if (completed.name == "list_attributes") attributes->setAttributes(value.value("attributes").toArray());
+            if ((completed.name == "edit_statement" || completed.name == "add_statement") && value.value("applied").toBool() &&
+                completed.args.value("row").toString() == row && value.contains("ordinal"))
+                statements->selectStatement(value.value("ordinal").toInt(-1));
             if (completed.name == "delete_hitbox" && value.value("applied").toBool())
                 stickyNote = t("Hitbox deleted. Press Ctrl+Z to bring it back.", "Hitbox borrado. Pulsa Ctrl+Z para recuperarlo.");
             if (completed.name == "render_view" && value.contains("path"))
