@@ -68,3 +68,21 @@ statements in the Workbench; 151 Falcon rows "past the end of this move" marked 
   deformed. Run `launch_goku.py --check` and `launch_falcon.py --check` after any Workbench frame/pose change.
 - The Creator loads the normal Goku package; combo-only geno states live in `_build/goku-xv2/combo-package`.
 - Nucleus posts can be external-link stubs (a text file pointing at Google Drive): not installable; never follow the link.
+
+## Lane handoffs written by the leads (added after the stop notice)
+Each is `.omo/evidence/handoff.md` in the lane's worktree (git-ignored unless noted).
+- **Custom fighters** (`worktrees/nucfighters`, agent/nucleus-fighters `e90fc70be` WIP): FighterPartsTable row from `boneDefinitions.lookup`
+  by bone NAME for foreign skeletons (Giga Bowser panic `ftparts.c:453`): written, NOT built or run. Nothing else of round 2 started.
+- **Combo strings / timeline** (`worktrees/combolive`, ws/wb-combo-live `246e54c`, notes only, no code): `play_string` in
+  `commands_combo.cpp` does `if (motion < 0) continue;` so `geno:` steps are skipped silently (strings 0, 1, 2, 4 stop after
+  jab2; 3, 5, 6 should play); the Creator loads `author-source/package/mods` (14 states), combo states 14..20 exist only in
+  `_build/goku-xv2/combo-package/mods`. Suspected: drag scrub sends one blocking `set_frame` per mouse move (no coalescing);
+  PLAY runs one engine `play` per 16 ms tick and skips while busy, so speed follows latency (needs a wall-clock frame target).
+  Its launcher build in `E:\Projects\combolive-qt-build` was killed mid-way: rerun.
+- **Netplay mod sync** (`worktrees/modsync`, agent/netplay-mod-sync `d2105121e` WIP): manifest (MSM chunks on the lobby channel,
+  protocol stays 6), journal in `<mods>/.modsync/`, start gate: native tests 386/386 (6 new). Sync = Nucleus download by post id,
+  rewrite enabled.txt, relaunch, rejoin; per-mod list only in the log / `gd.modsync()`, not drawn. NO two-client run completed.
+  FOUND: `tools/netplay/server/gdmelee_server.py` in the main checkout still speaks protocol 5 while the game is 6: bump it at
+  integration (online rooms through that server will refuse until then). Driver: `pc/tests/modsync/np_modsync.py`.
+- **Kamehameha combined build** and **throw-bank rollback check**: no handoff note received when this was written; see the
+  table above and the worktrees' own state.
