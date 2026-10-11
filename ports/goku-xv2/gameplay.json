@@ -26,15 +26,28 @@
       ],
       "tag": "jab",
       "script": "moves/jab1.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          3,
+          4
+        ]
+      ],
       "iasa": 18,
       "design": {
         "damage": 3,
         "angle": 361,
-        "kbg": 50,
-        "bkb": 8
+        "kbg": 60,
+        "bkb": 0
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           3,
@@ -51,15 +64,28 @@
       ],
       "tag": "jab",
       "script": "moves/jab2.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          9,
+          4
+        ],
+        [
+          9,
+          4
+        ],
+        [
+          9,
+          4
+        ]
+      ],
       "iasa": 20,
       "design": {
         "damage": 3,
         "angle": 361,
-        "kbg": 50,
-        "bkb": 8
+        "kbg": 60,
+        "bkb": 0
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           9,
@@ -76,15 +102,28 @@
       ],
       "tag": "jab",
       "script": "moves/jab3.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          8,
+          4
+        ],
+        [
+          8,
+          4
+        ],
+        [
+          8,
+          4
+        ]
+      ],
       "iasa": 30,
       "design": {
-        "damage": 5,
-        "angle": 40,
-        "kbg": 100,
-        "bkb": 30
+        "damage": 7,
+        "angle": 361,
+        "kbg": 50,
+        "bkb": 12
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           8,
@@ -101,15 +140,76 @@
       ],
       "tag": "jab",
       "script": "moves/rapid_jab.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          12,
+          3
+        ],
+        [
+          12,
+          3
+        ],
+        [
+          12,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          36,
+          3
+        ],
+        [
+          36,
+          3
+        ],
+        [
+          36,
+          3
+        ]
+      ],
       "iasa": 49,
       "design": {
         "damage": 2,
-        "angle": 70,
-        "kbg": 25,
+        "angle": 361,
+        "kbg": 30,
         "bkb": 10
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           12,
@@ -142,15 +242,28 @@
       ],
       "tag": "dash_attack",
       "script": "moves/dash_attack.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          11,
+          4
+        ],
+        [
+          11,
+          4
+        ],
+        [
+          11,
+          4
+        ]
+      ],
       "iasa": 36,
       "design": {
-        "damage": 11,
-        "angle": 50,
-        "kbg": 80,
-        "bkb": 40
+        "damage": 12,
+        "angle": 361,
+        "kbg": 50,
+        "bkb": 16
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           11,
@@ -171,15 +284,28 @@
       ],
       "tag": "tilt",
       "script": "moves/ftilt.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          4
+        ]
+      ],
       "iasa": 26,
       "design": {
-        "damage": 10,
+        "damage": 3,
         "angle": 361,
-        "kbg": 100,
-        "bkb": 10
+        "kbg": 50,
+        "bkb": 8
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           10,
@@ -196,15 +322,28 @@
       ],
       "tag": "tilt",
       "script": "moves/utilt.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          12,
+          3
+        ],
+        [
+          12,
+          3
+        ],
+        [
+          12,
+          3
+        ]
+      ],
       "iasa": 28,
       "design": {
-        "damage": 9,
-        "angle": 90,
-        "kbg": 120,
-        "bkb": 30
+        "damage": 10,
+        "angle": 80,
+        "kbg": 83,
+        "bkb": 35
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           12,
@@ -221,18 +360,31 @@
       ],
       "tag": "tilt",
       "script": "moves/dtilt.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          1,
+          8
+        ],
+        [
+          1,
+          8
+        ],
+        [
+          1,
+          8
+        ]
+      ],
       "iasa": 22,
       "design": {
-        "damage": 9,
-        "angle": 75,
-        "kbg": 110,
-        "bkb": 25
+        "damage": 12,
+        "angle": 361,
+        "kbg": 50,
+        "bkb": 16
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
-          0,
+          1,
           9
         ]
       ],
@@ -250,15 +402,28 @@
       ],
       "tag": "smash",
       "script": "moves/fsmash.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          17,
+          4
+        ],
+        [
+          17,
+          4
+        ],
+        [
+          17,
+          4
+        ]
+      ],
       "iasa": 42,
       "design": {
-        "damage": 16,
-        "angle": 40,
-        "kbg": 98,
-        "bkb": 30
+        "damage": 10,
+        "angle": 361,
+        "kbg": 50,
+        "bkb": 14
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           17,
@@ -275,15 +440,28 @@
       ],
       "tag": "smash",
       "script": "moves/usmash.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          13,
+          4
+        ],
+        [
+          13,
+          4
+        ],
+        [
+          13,
+          4
+        ]
+      ],
       "iasa": 40,
       "design": {
-        "damage": 16,
-        "angle": 85,
-        "kbg": 100,
+        "damage": 10,
+        "angle": 80,
+        "kbg": 83,
         "bkb": 35
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           13,
@@ -300,15 +478,28 @@
       ],
       "tag": "smash",
       "script": "moves/dsmash.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          9,
+          4
+        ],
+        [
+          9,
+          4
+        ],
+        [
+          9,
+          4
+        ]
+      ],
       "iasa": 38,
       "design": {
-        "damage": 14,
-        "angle": 30,
-        "kbg": 95,
-        "bkb": 25
+        "damage": 8,
+        "angle": 80,
+        "kbg": 66,
+        "bkb": 32
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           9,
@@ -325,15 +516,76 @@
       ],
       "tag": "aerial",
       "script": "moves/nair.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          12,
+          3
+        ],
+        [
+          12,
+          3
+        ],
+        [
+          12,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          36,
+          3
+        ],
+        [
+          36,
+          3
+        ],
+        [
+          36,
+          3
+        ]
+      ],
       "iasa": 40,
       "design": {
-        "damage": 12,
+        "damage": 2,
         "angle": 361,
-        "kbg": 100,
-        "bkb": 20
+        "kbg": 30,
+        "bkb": 10
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           12,
@@ -366,15 +618,28 @@
       ],
       "tag": "aerial",
       "script": "moves/fair.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          19,
+          4
+        ],
+        [
+          19,
+          4
+        ],
+        [
+          19,
+          4
+        ]
+      ],
       "iasa": 40,
       "design": {
-        "damage": 13,
-        "angle": 50,
-        "kbg": 100,
-        "bkb": 30
+        "damage": 14,
+        "angle": 270,
+        "kbg": 83,
+        "bkb": 41
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           19,
@@ -391,7 +656,16 @@
       ],
       "tag": "aerial",
       "script": "moves/bair.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          6,
+          12
+        ],
+        [
+          6,
+          12
+        ]
+      ],
       "iasa": 29,
       "design": {
         "damage": 11,
@@ -399,8 +673,13 @@
         "kbg": 100,
         "bkb": 12
       },
-      "hb": "HB-NONE",
-      "strike": [],
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          6,
+          18
+        ]
+      ],
       "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
@@ -411,15 +690,28 @@
       ],
       "tag": "aerial",
       "script": "moves/uair.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          15,
+          4
+        ],
+        [
+          15,
+          4
+        ],
+        [
+          15,
+          4
+        ]
+      ],
       "iasa": 30,
       "design": {
-        "damage": 11,
+        "damage": 14,
         "angle": 80,
-        "kbg": 100,
-        "bkb": 25
+        "kbg": 60,
+        "bkb": 41
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           15,
@@ -436,19 +728,32 @@
       ],
       "tag": "aerial",
       "script": "moves/dair.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          14,
+          4
+        ],
+        [
+          14,
+          4
+        ],
+        [
+          14,
+          4
+        ]
+      ],
       "iasa": 36,
       "design": {
-        "damage": 14,
+        "damage": 8,
         "angle": 270,
-        "kbg": 90,
-        "bkb": 20
+        "kbg": 80,
+        "bkb": 36
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
-          12,
-          16
+          14,
+          18
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames"
@@ -481,16 +786,35 @@
       ],
       "tag": "grab",
       "script": "moves/grab.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          8,
+          8
+        ],
+        [
+          8,
+          8
+        ],
+        [
+          8,
+          8
+        ]
+      ],
       "iasa": 28,
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           8,
           16
         ]
       ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "design": {
+        "damage": 0,
+        "angle": 361,
+        "kbg": 100,
+        "bkb": 0
+      }
     },
     {
       "name": "dash_grab",
@@ -500,16 +824,35 @@
       ],
       "tag": "grab",
       "script": "moves/dash_grab.genoasm",
-      "windows": [],
+      "windows": [
+        [
+          8,
+          8
+        ],
+        [
+          8,
+          8
+        ],
+        [
+          8,
+          8
+        ]
+      ],
       "iasa": 28,
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [
         [
           8,
           16
         ]
       ],
-      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "design": {
+        "damage": 0,
+        "angle": 361,
+        "kbg": 100,
+        "bkb": 0
+      }
     },
     {
       "name": "fthrow",
@@ -1023,15 +1366,34 @@
       "name": "Rush",
       "parity": "move:special_s",
       "script": "moves/rush.genoasm",
-      "hb": "HB-NONE",
-      "windows": [],
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          40,
+          4
+        ],
+        [
+          40,
+          4
+        ],
+        [
+          40,
+          4
+        ]
+      ],
       "strike": [
         [
           40,
           44
         ]
       ],
-      "strike_note": "XV2 knockback-attack hit f40-43; NOTE the row is cropped to 40 frames, so the strike is past its end (row to be lengthened when the hitbox is authored)"
+      "strike_note": "XV2 knockback-attack hit f40-43; NOTE the row is cropped to 40 frames, so the strike is past its end (row to be lengthened when the hitbox is authored)",
+      "design": {
+        "damage": 8,
+        "angle": 361,
+        "kbg": 60,
+        "bkb": 0
+      }
     },
     {
       "name": "Recovery",
@@ -1067,10 +1429,34 @@
       "name": "RushCombo",
       "parity": "move:special_s",
       "script": "moves/rushcombo.genoasm",
-      "hb": "HB-NONE",
-      "windows": [],
-      "strike": [],
-      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          10,
+          8
+        ],
+        [
+          10,
+          8
+        ],
+        [
+          10,
+          8
+        ]
+      ],
+      "strike": [
+        [
+          10,
+          18
+        ]
+      ],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded",
+      "design": {
+        "damage": 15,
+        "angle": 45,
+        "kbg": 88,
+        "bkb": 42
+      }
     },
     {
       "name": "ITEnd",
@@ -1099,15 +1485,34 @@
       "name": "Homing",
       "parity": "move:special_s",
       "script": "moves/homing.genoasm",
-      "hb": "HB-NONE",
-      "windows": [],
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          33,
+          6
+        ],
+        [
+          33,
+          6
+        ],
+        [
+          33,
+          6
+        ]
+      ],
       "strike": [
         [
           33,
           39
         ]
       ],
-      "strike_note": "XV2 homing-strike hit f33-38"
+      "strike_note": "XV2 homing-strike hit f33-38",
+      "design": {
+        "damage": 8,
+        "angle": 45,
+        "kbg": 95,
+        "bkb": 32
+      }
     }
   ],
   "articles": [

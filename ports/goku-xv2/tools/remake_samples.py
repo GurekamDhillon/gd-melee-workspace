@@ -39,8 +39,9 @@ PKG = AUTHOR / 'package/mods/goku-xv2'
 ART = AUTHOR / 'package/build'
 BDM_DIR = Path('E:/Torrents/Dragon.Ball.Xenoverse.2.Future.Saga.Chapter.4-RUNE/modding/exports/goku-base-shallow-v0.1/decoded/chara')
 
-LIMB_FAT = 1.5        # hitbox radius = mesh limb thickness x this (Melee spheres are fatter than the limb they ride on)
-MIN_RADIUS = 1.2
+LIMB_FAT = 2.4        # hitbox radius = mesh limb thickness x this (Melee spheres are fatter than the limb they ride on)
+MIN_RADIUS = 2.0
+MAX_RADIUS = 3.6
 # XV2 damage -> Melee damage (anchors from Marth: jab 3, tilts 8, fair 10, smashes 15-22); linear between anchors
 ANCHORS = [(0, 0), (3, 2), (5, 3), (10, 8), (15, 10), (20, 12), (30, 15), (40, 20)]
 CAP = {'jab': 7, 'tilt': 12, 'smash': 22, 'aerial': 14, 'special': 16, 'grab': 0}
@@ -191,13 +192,13 @@ class Rig:
             if bone.startswith('lower_arm') and len(CHAINS[eff]) == 2 and n >= 3:
                 pass
             ctr = c['a'] + (c['b'] - c['a']) * t
-            r = max(MIN_RADIUS, c['radius'] * LIMB_FAT)
+            r = min(MAX_RADIUS, max(MIN_RADIUS, c['radius'] * LIMB_FAT))
             out.append((TOKEN[bone], *(ctr / self.scale).tolist(), r / self.scale))
         if eff.startswith('hand') and len(out) == 2:       # arms: add a mid-forearm sphere between the hand end and the upper arm
             c = self.clouds.get(CHAINS[eff][0])
             if c:
                 ctr = c['a'] + (c['b'] - c['a']) * 0.4
-                out.insert(1, (TOKEN[CHAINS[eff][0]], *(ctr / self.scale).tolist(), max(MIN_RADIUS, c['radius'] * LIMB_FAT) / self.scale))
+                out.insert(1, (TOKEN[CHAINS[eff][0]], *(ctr / self.scale).tolist(), min(MAX_RADIUS, max(MIN_RADIUS, c['radius'] * LIMB_FAT)) / self.scale))
         return out[:n]
 
 
@@ -483,6 +484,11 @@ HB_HEADER = ('# HB-SAMPLE (remake phase 2, 2026-10-11): a generated STARTING POI
              '# sized from the mesh; timing, damage and reaction are derived from the XV2 hit entry (tools/remake_samples.py, REMAKE-SAMPLES.md). Edit it in the Workbench.\n')
 
 
+def windows_of(rig, text):
+    words = script.assemble(G.bind(text, rig.plan, rig.scale), rig.cfg['states'])
+    return [[b['start'], b['end'] - b['start']] for b in report.frames(words)['hitboxes']]
+
+
 def write_all(rig, plans, combo):
     g = json.loads(SG.FULL.read_text(encoding='utf-8'))
     n = 0
@@ -496,6 +502,7 @@ def write_all(rig, plans, combo):
                         m['hb'] = 'HB-SAMPLE'
                         m.pop('why_hb', None)
                         m['strike'] = [[6, 18]]
+                        m['windows'] = windows_of(rig, old)
             continue
         if tg['status'] != 'ok' or not tg.get('blocks'):
             continue
@@ -520,6 +527,7 @@ def write_all(rig, plans, combo):
                         d = m.setdefault('design', {})
                         d.update(damage=w0['dmg'], angle=fin.get('angle'), kbg=fin.get('kbg'), bkb=fin.get('bkb'))
                         m['strike'] = [[w['a'], w['b']] for w in tg['wins']]
+                        m['windows'] = windows_of(rig, (PORT / tg['script']).read_text(encoding='utf-8'))
     SG.save(g)
     (PORT / 'combo/combo.json').write_text(json.dumps(combo, indent=2) + '\n', encoding='utf-8')
     print('wrote', n, 'scripts')

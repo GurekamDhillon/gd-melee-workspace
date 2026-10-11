@@ -1,11 +1,14 @@
-# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.
-# The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
-# PICK: provisional (attack-feel pass 2026-10-08). XV2 BAC 342 (light string 3: the uppercut, his launcher): over the head; peak f17 on f12
-# Source: BAC 342 clip GOK_ATC_004, strike f17; crop from f5. Numbers are Melee design values, not XV2 data.
+# HB-SAMPLE (remake phase 2, 2026-10-11): a generated STARTING POINT, not an authored hitbox. Spheres ride the leading limb chain (tip, middle, inner),
+# sized from the mesh; timing, damage and reaction are derived from the XV2 hit entry (tools/remake_samples.py, REMAKE-SAMPLES.md). Edit it in the Workbench.
+# XV2 hit entry 342; limb hand.R
 PUT ANIM_RATE 1.0
 wait_until 10
 sfx behavior=1 sfx_id=164 volume=127 panning=64
-wait_until 12
-wait 5
+wait_until 13
+hitbox slot=0 joint=@ARM_R@ damage=10 size=1.4 x=-2.802 y=-0.0331 z=0.04988 angle=80 kbg=83 fkb=0 bkb=35
+hitbox slot=1 joint=@ARM_R@ damage=8 size=1.4 x=-1.492 y=-0.05802 z=0.01413 angle=80 kbg=83 fkb=0 bkb=32
+hitbox slot=2 joint=@UPARM_R@ damage=7 size=1.419 x=-1.202 y=-0.08994 z=0.07694 angle=80 kbg=83 fkb=0 bkb=29
+wait_until 17
+clear_hitboxes
 wait_until 40
 iasa
