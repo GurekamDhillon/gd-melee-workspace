@@ -419,7 +419,7 @@ def row_specs(source):
                   'status':'CROSS-PORT: Melee %s %s (%s)'%(c['fighter'].capitalize(),c['action'],c['reason']),'cross_port':dict(c,npz=str(npz))}
     # Custom move art deliberately has separate charge/release stages. These are
     # local design crops, not claims about source BAC state-machine equivalence.
-    charge=out['KameCharge'];charge.update(frames=45,loop=True,hold_source=40)
+    charge=out['KameCharge'];charge.update(frames=135,loop=True,hold_source=40)   # 135: the XV2 charge SE (2.1 s) plays once per loop; the script restarts when the clip wraps
     # Kamehameha (2026-10-08 specials pass): XV2's own charge entry (skill 000_GOK_KMH.bac 12) cups the hands f0-40,
     # holds at f47 and fires f48-120. Charge = f0-40 then hold f40; the three releases fire from f48, longer per tier.
     charge.update(status='PICK provisional (skill KMH BAC 12): cup hands f0-40, held at f40 while charging')
@@ -451,6 +451,15 @@ def row_specs(source):
     if ckm:
         out['KameSuper']={'clip':ckm,'loop':False,'frames':70,'start':40,'library':True,
                           'status':'PICK provisional (skill ULT 000_GOK_CKM): Super Kamehameha, fire from source f70 (Melee f30)'}
+    # KameStore1..4: the charge put away (shield cancel, or the full-chant auto-store), one state per tier so each flash can differ: the cupped-hands pose
+    # held at clip frame 40 for 9 frames (the natives' Cancel states last 8)
+    for i in range(1,5):
+        out['KameStore%d'%i]={**charge,'frames':9,'loop':False,'hold_source':40,'start':40,'library':True,'status':'PICK provisional (skill KMH BAC 12 f40): the charge stored, tier %d flash'%i}
+    # the two extra release tiers (thin = tier 1, max = tier 4) use the same fire clip as Tap/Mid/Full, from clip frame 48
+    out['KameThin']={**charge,'frames':36,'loop':False,'hold_source':None,'start':48,'time_factor':1.2,'events':[],'library':True,
+                     'status':'PICK provisional (skill KMH BAC 12): fire from f48 at x1.2, 36 frames (tier 1)'}
+    out['KameMax']={**charge,'frames':75,'loop':False,'hold_source':None,'start':48,'time_factor':0.7,'events':[],'library':True,
+                    'status':'PICK provisional (skill KMH BAC 12): fire from f48 at x0.7, 75 frames (tier 4)'}
     if atc23:
         out['RushCombo']={'clip':atc23,'loop':False,'frames':36,'start':4,'library':True,
                           'status':'PICK provisional (BAC 427 clip GOK_ATC_023, hit f10): Dragon Rush follow-up flurry'}

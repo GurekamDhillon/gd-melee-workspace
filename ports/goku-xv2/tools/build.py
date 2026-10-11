@@ -212,18 +212,45 @@ FX_ARTICLES = {'KameOrb': 'P_TrailGokuOrb', 'KameTap': 'P_TrailGokuBeam', 'KameM
                'KameFull': 'P_TrailGokuBeamBig', 'KameSuper': 'P_TrailGokuBeamSuper'}
 # state name -> [(frame, package, role, scale, end_event)]: ki aura while charging, vanish bursts, the rush trail
 FX_STATES = {
-    'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, 'state_exit'), (1, 'P_TrailGokuKameCharge', 'hand.R', 1.0, 'state_exit')],
-    'KameTap': [(5, 'P_TrailGokuKameTap', 'hand.R', 1.0, 'state_exit')],
-    'KameMid': [(6, 'P_TrailGokuKameMid', 'hand.R', 1.0, 'state_exit')],
-    'KameFull': [(8, 'P_TrailGokuKameFull', 'hand.R', 1.0, 'state_exit')],
+    # Kamehameha presentation: converted from XV2's own effects (tools/xv2_fx.py; KAMEHAMEHA.md section 3). The charge is ~10 s (lua/goku.lua CHARGE_FRAMES): the
+    # state's own frame clock ('game', FX_CLOCK) drives it, the ball grows between the chant beats (state frames 60 / 180 / 360 / 540 = the tiers) and the aura is re-attached
+    # larger at each; each tier has its own beam package; the stored flash shows the tier. Cosmetic shake / flash calls are FX_EVENTS.
+    'KameCharge': [(1, 'P_TrailGokuAura', 'hips', 1.0, 'state_exit'), (60, 'P_TrailGokuAura', 'hips', 1.3, 'state_exit'), (180, 'P_TrailGokuAura', 'hips', 1.6, 'state_exit'),
+                   (360, 'P_TrailGokuAura', 'hips', 2.0, 'state_exit'), (540, 'P_TrailGokuAura', 'hips', 2.6, 'state_exit'),
+                   (1, 'P_TrailGokuXKameCharge', 'hand.R', 1.0, 'state_exit'), (1, 'P_TrailGokuXKamePressure', 'translation', 1.0, 'state_exit')],
+    'KameStore1': [(1, 'P_TrailGokuXKameStore1', 'hand.R', 1.0, 'state_exit')],
+    'KameStore2': [(1, 'P_TrailGokuXKameStore2', 'hand.R', 1.0, 'state_exit')],
+    'KameStore3': [(1, 'P_TrailGokuXKameStore3', 'hand.R', 1.0, 'state_exit')],
+    'KameStore4': [(1, 'P_TrailGokuAura', 'hips', 1.6, 'state_exit'), (1, 'P_TrailGokuXKameStore4', 'hand.R', 1.0, 'state_exit')],
+    'KameTap': [(5, 'P_TrailGokuXKameTap', 'hand.R', 1.0, 'state_exit')],
+    'KameThin': [(6, 'P_TrailGokuXKameThin', 'hand.R', 1.0, 'state_exit')],
+    'KameMid': [(6, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.0, 'emitter_life'), (6, 'P_TrailGokuXKameMid', 'hand.R', 1.0, 'state_exit')],
+    'KameFull': [(8, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.0, 'emitter_life'), (8, 'P_TrailGokuXKameFull', 'hand.R', 1.0, 'state_exit')],
+    'KameMax': [(10, 'P_TrailGokuXKameMuzzleMax', 'hand.R', 1.0, 'emitter_life'), (10, 'P_TrailGokuXKameMax', 'hand.R', 1.0, 'state_exit')],
     'KiCharge': [(1, 'P_TrailGokuAura', 'hips', 1.3, 'state_exit')],
-    'KameSuper': [(1, 'P_TrailGokuAura', 'hips', 1.1, 'state_exit'), (54, 'P_TrailGokuKameSuper', 'hand.R', 1.0, 'state_exit')],
+    'KameSuper': [(1, 'P_TrailGokuAura', 'hips', 1.1, 'state_exit'), (1, 'P_TrailGokuXKameSuperCharge', 'hand.R', 1.0, 'state_exit'),
+                  (54, 'P_TrailGokuXKameSuperMuzzle', 'hand.R', 1.0, 'emitter_life'), (54, 'P_TrailGokuXKameSuper', 'hand.R', 1.0, 'state_exit')],
     'Recovery': [(5, 'P_TrailGokuVanish', 'chest', 1.0, 'emitter_life')],
     'ITEnd': [(1, 'P_TrailGokuVanish', 'chest', 1.0, 'emitter_life')],
     'Counter': [(4, 'P_TrailGokuVanish', 'chest', 0.8, 'emitter_life')],
     'Riposte': [(1, 'P_TrailGokuVanish', 'chest', 0.8, 'emitter_life')],
     'Rush': [(2, 'P_TrailGokuDash', 'hips', 1.0, 'state_exit')],
     'RushCombo': [(1, 'P_TrailGokuDash', 'hips', 1.0, 'state_exit')],
+}
+
+
+FX_CLOCK = {'KameCharge': 'game'}   # states whose call frames are state (game) frames, not animation frames: the charge's clip is stretched, its script clock is not game time
+# cosmetic camera events (render-only, no package): state -> [(frame, shake (amp NDC, frames, seed) or None, flash (rgb, alpha, frames) or None)]. The release flash is short
+# and faint on every tier but Max and Super (the owner saw a pale haze); the charge shakes only as it nears Max. Super's numbers follow the camera clip GOK_CAM_CKM_C
+# (Position range 1.6 / 0.4 / 5.0 m over 225 frames: a long heavy shake once the beam is out, approximated as two decaying shakes).
+BLUE = [0.55, 0.8, 1.0]
+FX_EVENTS = {
+    'KameCharge': [(420, (0.0025, 120, 3), None), (540, (0.006, 70, 4), (BLUE, 0.07, 3)), (590, (0.010, 40, 5), None)] + [(f, (0.004, 45, 7 + f % 5), None) for f in range(640, 1300, 45)],   # the Max hold: a low sustained tremor
+    'KameStore4': [(1, None, (BLUE, 0.05, 3))],
+    'KameMid': [(6, (0.007, 8, 5), None)],
+    'KameFull': [(8, (0.013, 12, 5), (BLUE, 0.05, 2))],
+    'KameMax': [(10, (0.028, 24, 5), (BLUE, 0.15, 5))],
+    'KameSuper': [(54, (0.032, 36, 5), (BLUE, 0.2, 6)), (80, (0.05, 70, 6), None)],
 }
 
 
@@ -249,8 +276,10 @@ def write_fx(package, fighter, plan, cfg):
         st = states.get(name)
         if not st or not isinstance(st.get('subaction'), int):
             continue
-        entries.append({'state': name, 'subaction': st['subaction'], 'clock': 'animation', 'script': scripts.get(name, 'moves/rush.genoasm'),
-                        'calls': [{'frame': f, 'macro': 'goku_'+pkg[11:].lower(), 'effect': pkg, 'package': pkg, 'bone': role,
+        events = [dict({'frame': f}, **({'shake': {'amp': sk[0], 'frames': sk[1], 'seed': sk[2]}} if sk else {}),
+                       **({'flash': {'color': fl[0], 'alpha': fl[1], 'frames': fl[2]}} if fl else {})) for f, sk, fl in FX_EVENTS.get(name, [])]
+        entries.append({'state': name, 'subaction': st['subaction'], 'clock': FX_CLOCK.get(name, 'animation'), 'script': scripts.get(name, 'moves/rush.genoasm'),
+                        'calls': events + [{'frame': f, 'macro': 'goku_'+pkg[11:].lower(), 'effect': pkg, 'package': pkg, 'bone': role,
                                    'joint': plan['roles'][role][0], 'offset': [0, 0, 0], 'rotation': [0, 0, 0], 'scale': sc,
                                    'follow': True, 'when': [], 'end_event': end} for f, pkg, role, sc, end in calls]})
     (dst/'fx_bindings.json').write_text(json.dumps({'geno_fx_bindings': 1, 'fighter': 'goku-xv2', 'host': 'mario', 'unit_scale': 1.0,
@@ -261,10 +290,13 @@ def write_fx(package, fighter, plan, cfg):
 
 def write_kame_audio(package, fighter):
     """The Kamehameha's own sounds (tools/kame_audio.py): .gnsnd clips in files/ bound as audio.voice rows on the retail ids the scripts play."""
-    from kame_audio import BINDINGS, OUT as AUDIO
-    if not (AUDIO/'GnKameFire.gnsnd').exists():
-        print('audio: _build/goku-xv2/audio missing (run tools/kame_audio.py); the Kamehameha plays no own sounds')
-        return
+    # XV2's own voice and SFX when converted (tools/xv2_audio.py, Japanese by default; run it with --lang en for the English lines), else the synthesised fallback
+    from xv2_audio import BINDINGS, OUT as AUDIO
+    if not (AUDIO/'GnKameSeShot.gnsnd').exists():
+        from kame_audio import BINDINGS, OUT as AUDIO
+        if not (AUDIO/'GnKameFire.gnsnd').exists():
+            print('audio: _build/goku-xv2/audio missing (run tools/xv2_audio.py); the Kamehameha plays no own sounds')
+            return
     rows = []
     for sid, clip in BINDINGS.items():
         shutil.copy2(AUDIO/(clip+'.gnsnd'), package/'files'/(clip+'.gnsnd'))
@@ -339,7 +371,7 @@ def apply(package, art_build, ir_path=None):
     lib = AUTHOR/'clip-library.json'
     if lib.exists():  # LAB CLIPS library: unbound declared rows 303.. (geno.md fighter.rows)
         fighter.setdefault('fighter', {})['rows'] = [c['name'] for c in load(lib)['clips']] + \
-            [n for n in ('ITEnd', 'KiCharge', 'KameSuper', 'RushCombo') if n in plan_clip_names(package)]
+            [n for n in ('ITEnd', 'KiCharge', 'KameStore1', 'KameStore2', 'KameStore3', 'KameStore4', 'KameThin', 'KameMax', 'KameSuper', 'RushCombo') if n in plan_clip_names(package)]
     if cfg.get('cape'):
         fighter['cape'] = cfg['cape']  # Instant Transmission (geno.cape) parameters
     for st in fighter.get('states', []):  # states that name a declared clip get its own row number

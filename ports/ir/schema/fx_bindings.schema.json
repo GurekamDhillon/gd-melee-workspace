@@ -4,58 +4,253 @@
   "title": "Geno fighter effect bindings",
   "type": "object",
   "additionalProperties": false,
-  "required": ["geno_fx_bindings", "fighter", "host", "unit_scale", "states"],
+  "required": [
+    "geno_fx_bindings",
+    "fighter",
+    "host",
+    "unit_scale",
+    "states"
+  ],
   "properties": {
-    "geno_fx_bindings": {"const": 1},
-    "fighter": {"type": "string"},
-    "host": {"type": "string"},
-    "unit_scale": {"type": "number", "exclusiveMinimum": 0},
+    "geno_fx_bindings": {
+      "const": 1
+    },
+    "fighter": {
+      "type": "string"
+    },
+    "host": {
+      "type": "string"
+    },
+    "unit_scale": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
     "states": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["state", "subaction", "clock", "script", "calls"],
+        "required": [
+          "state",
+          "subaction",
+          "clock",
+          "script",
+          "calls"
+        ],
         "properties": {
-          "state": {"type": "string"},
-          "subaction": {"type": "integer", "minimum": 0},
-          "clock": {"enum": ["animation", "game"]},
-          "script": {"type": "string"},
-          "calls": {"type": "array", "items": {"$ref": "#/$defs/Call"}}
+          "state": {
+            "type": "string"
+          },
+          "subaction": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "clock": {
+            "enum": [
+              "animation",
+              "game"
+            ]
+          },
+          "script": {
+            "type": "string"
+          },
+          "calls": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/Call"
+                },
+                {
+                  "$ref": "#/$defs/CosmeticCall"
+                }
+              ]
+            }
+          }
         }
       }
     }
   },
   "$defs": {
     "Vec3": {
-      "type": "array", "items": {"type": "number"},
-      "minItems": 3, "maxItems": 3
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 3,
+      "maxItems": 3
     },
     "Call": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["frame", "macro", "effect", "package", "bone", "joint", "offset",
-                   "rotation", "scale", "follow", "when", "end_event"],
+      "required": [
+        "frame",
+        "macro",
+        "effect",
+        "package",
+        "bone",
+        "joint",
+        "offset",
+        "rotation",
+        "scale",
+        "follow",
+        "when",
+        "end_event"
+      ],
       "properties": {
-        "frame": {"type": "number", "minimum": 0},
-        "macro": {"type": "string"},
-        "effect": {"type": "string"},
-        "package": {"type": "string", "pattern": "^P_Trail"},
-        "bone": {"type": "string"},
-        "joint": {"type": "integer", "minimum": 0},
-        "offset": {"$ref": "#/$defs/Vec3"},
-        "rotation": {"$ref": "#/$defs/Vec3"},
-        "scale": {"type": "number"},
-        "follow": {"type": "boolean"},
-        "situation": {"enum": ["ground", "air"], "description": "optional situation for a state shared by ground and air"},
-        "when": {"type": "array", "items": {
-          "type": "object", "required": ["test", "holds"],
-          "properties": {"test": {"type": "string"}, "holds": {"type": "boolean"}}
-        }},
-        "end_frame": {"type": "number", "minimum": 0},
-        "end_event": {"enum": ["state_exit", "owner_destroy", "emitter_life", "off", "detach"]},
-        "source": {"type": "array", "prefixItems": [{"type": "string"}, {"type": "integer", "minimum": 0}],
-                   "minItems": 2, "maxItems": 2}
+        "frame": {
+          "type": "number",
+          "minimum": 0
+        },
+        "macro": {
+          "type": "string"
+        },
+        "effect": {
+          "type": "string"
+        },
+        "package": {
+          "type": "string",
+          "pattern": "^P_Trail"
+        },
+        "bone": {
+          "type": "string"
+        },
+        "joint": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "offset": {
+          "$ref": "#/$defs/Vec3"
+        },
+        "rotation": {
+          "$ref": "#/$defs/Vec3"
+        },
+        "scale": {
+          "type": "number"
+        },
+        "follow": {
+          "type": "boolean"
+        },
+        "situation": {
+          "enum": [
+            "ground",
+            "air"
+          ],
+          "description": "optional situation for a state shared by ground and air"
+        },
+        "when": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "test",
+              "holds"
+            ],
+            "properties": {
+              "test": {
+                "type": "string"
+              },
+              "holds": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "end_frame": {
+          "type": "number",
+          "minimum": 0
+        },
+        "end_event": {
+          "enum": [
+            "state_exit",
+            "owner_destroy",
+            "emitter_life",
+            "off",
+            "detach"
+          ]
+        },
+        "source": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer",
+              "minimum": 0
+            }
+          ],
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "CosmeticCall": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "shake"
+          ]
+        },
+        {
+          "required": [
+            "flash"
+          ]
+        }
+      ],
+      "description": "a render-only camera event with no package (engine R6: gd.fx_shake / gd.fx_flash at that frame)",
+      "properties": {
+        "frame": {
+          "type": "number",
+          "minimum": 0
+        },
+        "shake": {
+          "type": "object",
+          "required": [
+            "amp",
+            "frames"
+          ],
+          "properties": {
+            "amp": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 0.2
+            },
+            "frames": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "seed": {
+              "type": "integer"
+            }
+          }
+        },
+        "flash": {
+          "type": "object",
+          "required": [
+            "alpha",
+            "frames"
+          ],
+          "properties": {
+            "color": {
+              "$ref": "#/$defs/Vec3"
+            },
+            "alpha": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "frames": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        }
       }
     }
   }

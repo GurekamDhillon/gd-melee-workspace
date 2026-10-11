@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>Xv2Audio</AssemblyName>
+    <RootNamespace>Xv2Audio</RootNamespace>
+    <SelfContained>false</SelfContained>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <XV2_LIB_DIR Condition="'$(XV2_LIB_DIR)' == ''">E:\Torrents\Dragon.Ball.Xenoverse.2.Future.Saga.Chapter.4-RUNE\modding\src\XV2-Tools\Xv2CoreLib\bin\Release\net10.0-windows\</XV2_LIB_DIR>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Xv2CoreLib">
+      <HintPath>$(XV2_LIB_DIR)Xv2CoreLib.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="LB_Common">
+      <HintPath>$(XV2_LIB_DIR)LB_Common.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="YAXLib">
+      <HintPath>$(XV2_LIB_DIR)YAXLib.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="CSharpImageLibrary">
+      <HintPath>$(XV2_LIB_DIR)CSharpImageLibrary.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="FastCloner" Version="3.5.6" />
+    <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" Version="1.2.2" />
+  </ItemGroup>
+
+</Project>
