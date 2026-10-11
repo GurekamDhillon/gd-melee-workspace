@@ -49,7 +49,7 @@ tier 4 fires on the next B and survives a hit, a partial tier is wiped by one. L
 ## 0c. The 10 second charge and the integrated look (2026-10-10, owner: "like 10 seconds for max charge or something dumb"); supersedes the timings in 0 and 0b
 
 **One tunable**: `CHARGE_FRAMES = 600` in `lua/goku.lua` (a charge unit every `CHARGE_FRAMES / 60 = 10` frames) and the same constant in `tools/gen_kame.py` (voice and hum schedule);
-`tools/xv2_fx.py` `CHANT_AT` / `BALL` hold the effect beats. Input is unchanged (B once starts, B fires the current tier, L/R stores keeping it, a flick rolls, full auto-stores on the ground).
+`tools/xv2_fx.py` `CHANT_AT` / `BALL` hold the effect beats. Input is unchanged (B once starts, B fires the current tier, L/R stores keeping it, a flick rolls). **Full charge holds forever, on the ground and in the air, like Mewtwo's `LoopFull`: there is no auto-store** (supersedes the auto-store in sections 0 and 0b; KAMECHECK holds a full charge for 25 s and still fires it).
 
 | beat (state frame / seconds) | syllable | tier reached | unit | what steps |
 |---|---|---|---|---|
@@ -58,14 +58,14 @@ tier 4 fires on the next B and survives a hit, a partial tier is wiped by one. L
 | 180 / 3 s | "me" | 2 Mid | 17 | step, ground ring 2, hum rises one pitch step (x1.15) |
 | 360 / 6 s | "ha" | 3 Full | 35 | step, ground ring 3 (wider), hum x1.32 |
 | 540 / 9 s | last "me" | 4 Max | 53 | step, ground ring 4, shake starts building (0.006 then 0.010), tiny flash, hum x1.52, ring period 9 frames |
-| 610 / ~10 s | | full: auto-store on the ground (the Max flash), Super if ki is 100 | 60 | |
+| 600 / 10 s | | full (60 units): the charge holds here indefinitely (no auto-store); B fires Max, or Super if ki is 100 | 60 | |
 
 Between beats the ball (`P_TrailGokuXKameCharge`, XV2 Kmh_Crg) keeps growing (10 size steps), the gathering rings (engine ring + dissolve) contract faster at each tier, flat
 pressure rings (`P_TrailGokuXKamePressure`, bound to the floor joint) leave the feet at each beat and pulse in between, the motes are soft particles, and the aura is re-attached
 larger at each beat. The charge state's effects run on the state frame clock (`"clock": "game"`); its clip is stretched (ANIM_RATE 0.114 from clip frame 20) so it does not loop and
 restart the script before 17 s. The hum is XV2's charge SE resampled up in three steps (`GnKameHum2..4`, ids 200133/36/39), re-triggered with rising level.
 
-Rebalance (MAX costs 10 s, so it may be dumb; tiers 0-3 are unchanged):
+Rebalance (owner-approved 2026-10-10: Max finisher 15, Super 24; tiers 0-3 are unchanged; the 10 / 16 in 0b are superseded):
 
 | tier | drag hit (x charge scale) | finisher | knockback growth / base | pushes back |
 |---|---|---|---|---|
@@ -231,3 +231,9 @@ Hold B (neutral special), release to fire; shield while charging stores it; B ag
 4. **Screen shake / flash on full release**: needs a small engine hook (a script-driven `camera_shake` for fighter scripts).
 5. **Roll-cancel** while charging (both natives have it on the ground): needs `ctx.go` to reach the common roll states.
 6. Whether a **hit should wipe a stored full charge** (Samus does; Mewtwo keeps a full one; this build keeps it).
+
+### 0d. Retail check and open notes (2026-10-10)
+
+- Retail Mewtwo (decomp plus engine traces): no jump cancel at any charge frame (X, Y, up at 10/25/40/80/140 stay in `SpecialNLoop`/`LoopFull`); an air charge that lands becomes the ground loop keeping the charge; no cliff catch in the Mewtwo SpecialN Coll callbacks. Goku matches: no jump cancel, no ledge grab out of the charge. Ledge/takeoff traces were inconclusive; the owner's report of a jump or ledge cancel is unconfirmed (owner question pending).
+- The Max hold hum goes silent after about 17 s (the script clip freezes at a very low rate); a true looping hold hum needs a new Geno state and is not built.
+- The XV2 ki-charge aura (common EEPK) is not ported: no dump of it exists locally.
