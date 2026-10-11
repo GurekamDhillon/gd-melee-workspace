@@ -19,7 +19,7 @@ fighter's own, not Mario's:
 Everything here is disc-derived: the output goes under _build/ (git-ignored), never into a repository. What is NOT carried is listed in
 define_report.json (the effect file, the sound bank, the results/intro demo clips, the select art).
 
-Only `captain` is wired (FIGHTERS below); another retail fighter needs its template in the engine first (geno.md 22.10).
+Wired: `captain`, `fox` (FIGHTERS below); another retail fighter needs its template in the engine first (geno.md 22.10, 22.13: the checklist).
 """
 import argparse
 import json
@@ -46,6 +46,14 @@ FIGHTERS = {
         "costumes": [("Nr", "Navy", None), ("Gy", "Gray", None), ("Re", "Red", "red"), ("Wh", "White", None), ("Gr", "Green", "green"), ("Bu", "Blue", "blue")],
         "ai": "captain", "kirby": "retail:captain",
     },
+    "fox": {
+        "kind": 1, "code": "Fx", "data": "ftDataFox", "rows": 327, "prefix": "GnFox", "key": "geno-fox", "name": "Geno Fox",
+        "motions": 376, "dir": "ftFox", "attrs_struct": "ftFox_DatAttrs",
+        # ftFx_Init_CostumeStrings: Nr, Or, La, Gr (team: red = Or, blue = La, green = Gr)
+        "costumes": [("Nr", "Default", None), ("Or", "Orange", "red"), ("La", "Lavender", "blue"), ("Gr", "Green", "green")],
+        "ai": "fox", "kirby": "retail:fox", "plan_file": "GnFox_plan.json",   # mod files are one namespace: two packages cannot both ship plan.json (Falcon keeps the old name)
+        "thrown_as": "fox",   # the engine default is captain; a victim thrown by a retail-template define plays the template's own thrown rows
+    },
 }
 WAIT_MOTION = 14   # ftCo_MS_Wait
 
@@ -71,14 +79,26 @@ def geno_attr_names():
     return [(n, int(k)) for n, k in re.findall(r"GENO_ATTR\((\w+),\s*(\d)\)", blk)]
 
 
+# structs embedded in a special-attribute block: [(byte offset inside, is_int)]
+NESTED = {"ReflectDesc": [(0, True), (4, True), (8, False), (12, False), (16, False), (0x14, False), (0x18, False), (0x1C, False), (0x20, True)]}   # lb/types.h, 0x24 bytes
+
+
 def ext_layout(struct_name, types_h):
-    """[(byte offset, is_int)] of a fighter's special-attribute struct, from the decomp header (every 32-bit field in order)."""
+    """[(byte offset, is_int)] of a fighter's special-attribute struct, from the decomp header (every 32-bit field in order). Two comment styles
+    exist: `/* +OFF */ type name;` (Captain) and `type xOFF_NAME;` (Fox); an embedded struct listed in NESTED is expanded."""
     src = open(types_h, encoding="utf-8").read()
     i = src.index("struct %s {" % struct_name)
     blk = src[i:src.index("\n};", i)]
     out = []
-    for off, ty in re.findall(r"/\*\s*\+([0-9A-Fa-f]+)\s*\*/\s*(float|f32|s32|u32|int)\s+\w+", blk):
-        out.append((int(off, 16), ty not in ("float", "f32")))
+    pat = re.compile(r"(?:/\*\s*\+(?P<o1>[0-9A-Fa-f]+)\s*\*/\s*(?P<t1>\w+)\s+\w+|\b(?P<t2>[A-Za-z_]\w*)\s+x(?P<o2>[0-9A-F]+)_\w+)\s*;")
+    for m in pat.finditer(blk):
+        off, ty = (int(m.group("o1"), 16), m.group("t1")) if m.group("o1") else (int(m.group("o2"), 16), m.group("t2"))
+        if ty in NESTED:
+            out += [(off + o, is_int) for o, is_int in NESTED[ty]]
+        elif ty in ("float", "f32"):
+            out.append((off, False))
+        elif ty in ("s32", "u32", "int", "ItemKind"):
+            out.append((off, True))
     return out
 
 
@@ -327,7 +347,7 @@ def main():
         "row_flags": [(r["flags"] & ~0x3F) if r["symbol"] is not None else None for r in rows],
         "row_blend": [r["blend"] if r["symbol"] is not None else None for r in rows],
     }
-    json.dump(plan, open(os.path.join(files, "plan.json"), "w"), indent=1)
+    json.dump(plan, open(os.path.join(files, spec.get("plan_file", "plan.json")), "w"), indent=1)
 
     # ---- attributes
     named = geno_attr_names()
@@ -362,13 +382,15 @@ def main():
     entry = {
         "define": {"key": a.key or spec["key"], "name": a.name or spec["name"], "base": "none", "common": "melee.common.v1", "resources": "mod:files",
                    "template": a.fighter},
-        "fighter": {"plan": "plan.json", "animation": prefix + "AJ.dat", "costumes": costumes},
+        "fighter": {"plan": spec.get("plan_file", "plan.json"), "animation": prefix + "AJ.dat", "costumes": costumes},
         "attributes": attributes,
         "special_attributes": special,
         "subactions": subs,
         "ai": {"like": spec["ai"]},
         "kirby_copy": spec["kirby"],
     }
+    if spec.get("thrown_as"):
+        entry["thrown_as"] = spec["thrown_as"]
     json.dump({"geno": 10, "fighters": [entry]}, open(os.path.join(out, "geno.json"), "w"), indent=1)
     mod = {"id": (a.key or spec["key"]), "name": a.name or spec["name"], "version": "0.1.0", "kind": "fighter", "requires": [], "conflicts": [],
            "description": "%s: a retail fighter as a standalone Geno define, built from your own disc. Local only." % spec["name"]}
