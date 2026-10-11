@@ -266,7 +266,7 @@ private slots:
         QVERIFY(w.findChild<QLabel *>("wbProjectCounts")->text().contains("2"));
         QVERIFY(w.findChild<QLabel *>("wbProjectCounts")->text().contains("3"));
         auto *tabs = w.findChild<InspectorTabs *>("wbInspectorTabs"); QVERIFY(tabs);
-        QCOMPARE(tabs->count(), 4);
+        QCOMPARE(tabs->count(), 5);
         QVERIFY(w.findChild<OutlinerPanel *>("wbOutliner"));
         QVERIFY(w.findChild<TimelineView *>("wbTimeline"));
         QVERIFY(w.findChild<StatusProgress *>("wbStatusProgress"));

@@ -738,7 +738,10 @@ class FakeWorkbench:
                 c["ordinal"] = n
 
     def _projectile(self, tool: str, args: dict) -> dict:
-        from projectiles import apply_ops, encode_spawn_arg
+        try:
+            from .projectiles import apply_ops, encode_spawn_arg
+        except ImportError:
+            from projectiles import apply_ops, encode_spawn_arg
         if tool == "list_articles":
             return {"articles": [dict(copy.deepcopy(a), index=i) for i, a in enumerate(self.articles)]}
         if tool == "edit_article":

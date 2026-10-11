@@ -1,0 +1,10 @@
+{
+  "id": "projectile-probe",
+  "name": "Projectile probe (Blender projectiles engine check)",
+  "version": "0.1.0",
+  "kind": "script",
+  "api_version": 1,
+  "gameplay": true,
+  "rollback_safe": false,
+  "entry": "scripts/probe.lua"
+}

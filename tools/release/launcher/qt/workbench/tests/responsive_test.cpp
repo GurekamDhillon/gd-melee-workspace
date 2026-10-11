@@ -106,7 +106,7 @@ private slots:
             QVERIFY2(centreHost->mapTo(bench, QPoint(0, 0)).x() <= 2 && centreHost->width() >= bench->width() - 4,
                      qPrintable(QString("Move view %1 wide in %2").arg(centreHost->width()).arg(bench->width())));
             QCOMPARE(tabs->indexOf(movesRail), 0); QCOMPARE(tabs->tabText(0), QString("Moves"));
-            QVERIFY(tabs->tabText(1) == "Hitbox" && tabs->tabText(2) == "Attributes" && tabs->tabText(3) == "Checks" && tabs->tabText(4) == "Render");
+            QVERIFY(tabs->tabText(1) == "Hitbox" && tabs->tabText(2) == "Attributes" && tabs->tabText(3) == "Checks" && tabs->tabText(4) == "Render" && tabs->tabText(5) == "Projectiles");
             auto *chip = bench->findChild<QWidget *>("wbMoveChip"); QVERIFY(chip && chip->isVisible() && !chip->property("text").toString().isEmpty());
             QVERIFY2(timeline->mapTo(bench, QPoint(0, 0)).y() + timeline->height() < tabs->mapTo(bench, QPoint(0, 0)).y() + 1, "Moves/Inspector strip sits under the Move view");
             QVERIFY2(tabs->width() >= bench->width() - 60, "lower strip is full width");

@@ -14,7 +14,7 @@ target_include_directories(workbench_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # The integrated launcher window consumes Creator, so it belongs at this layer.
 # launcher_ui remains the Atlas/kit library; no circular static-library dependency.
-add_library(workbench_ui STATIC atlas_widgets.cpp hub_panel.cpp timeline.cpp palette.cpp panels.cpp workbench_window.cpp ../window.cpp)
+add_library(workbench_ui STATIC atlas_widgets.cpp hub_panel.cpp timeline.cpp projectile_widgets.cpp palette.cpp panels.cpp workbench_window.cpp ../window.cpp)
 target_link_libraries(workbench_ui PUBLIC workbench_core launcher_ui Qt6::Widgets Qt6::Concurrent)
 target_include_directories(workbench_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(WIN32)
@@ -48,6 +48,7 @@ if(BUILD_TESTING)
   wb_ui_test(palette)
   wb_ui_test(panels)
   wb_ui_test(responsive)
+  wb_ui_test(projectile_widgets)
   find_package(Python3 COMPONENTS Interpreter)
   if(Python3_Interpreter_FOUND)
     add_test(NAME workbench_blender_sync COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/blender_sync_test.py)
