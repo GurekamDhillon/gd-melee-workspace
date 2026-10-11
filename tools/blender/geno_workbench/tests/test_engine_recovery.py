@@ -82,3 +82,11 @@ def test_project_action_offset(tmp_path):
     assert api.set_project(str(tmp_path)) and api.session().calibration_action_offset == 0
     (tmp_path / "workbench.json").write_text(json.dumps({"schema": "workbench/1", "art": {}}))
     assert api.set_project(str(tmp_path)) and api.session().calibration_action_offset == 1
+
+
+def test_unpreviewable_list_matches_the_launcher_header():
+    import re
+    from pathlib import Path
+    header = (Path(__file__).resolve().parents[3] / "release/launcher/qt/workbench/geno_data.h").read_text(encoding="utf-8")
+    listed = re.search(r"kUnpreviewable\[\] = \{([^}]*)\}", header).group(1)
+    assert {int(x) for x in listed.split(",")} == set(rigmap.UNPREVIEWABLE_MOTIONS)

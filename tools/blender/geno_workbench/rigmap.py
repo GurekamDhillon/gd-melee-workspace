@@ -156,10 +156,11 @@ def build_joint_map(
     )
 
 
-# Action states the bare Workbench scene cannot pose: Rebirth (12) and RebirthWait (13) need the revival platform
-# (the engine refuses them; before it did, it died on a jobj assert). Keep in step with gs_wb_unpreviewable in the
+# Action states the bare Workbench scene cannot pose: Rebirth/RebirthWait (12, 13) need the revival platform; grabs,
+# throws, shoulder carries, items, mushrooms etc. need a partner or an item (found by engine_check/sweep_rows.py;
+# before the engine refused them they died on a jobj assert). Keep in step with gs_wb_unpreviewable in the
 # engine (pc/platform/gw_script.c) and kUnpreviewable in the launcher (commands_rows.cpp).
-UNPREVIEWABLE_MOTIONS = frozenset((12, 13))
+UNPREVIEWABLE_MOTIONS = frozenset((12, 13, 223, 224, 225, 226, 227, 228, 241, 266, 267, 268, 269, 270, 277, 280, 285, 289, 290, 291, 292, 306, 308, 309, 313, 314, 315, 316, 317, 318, 319, 320, 321, 323, 328, 332, 333, 334, 337, 340))
 
 
 def row_previewable(row):

@@ -33,7 +33,7 @@ def main(argv=None):
     ap.add_argument("--wait-row", default="wait")
     args = ap.parse_args(argv)
     import shutil
-    root = Path(__file__).resolve().parents[4]
+    root = launch.tools_config.workspace_root()
     paths = launch.tool_paths(root=root)
     work = Path(args.work)
     (work / "engine").mkdir(parents=True, exist_ok=True)
@@ -57,7 +57,9 @@ def main(argv=None):
     try:
         c = client.McpClient(port=port, timeout=60.0)
         c.connect()
-        rows = [r["name"] for r in c.call("list_rows")["rows"]]
+        listed = c.call("list_rows")["rows"]
+        rows = [r["name"] for r in listed]
+        motions = {r["name"]: r.get("motions") for r in listed}
         wanted = [r for r in args.rows.split(",") if r] or rows
         frames = [int(f) for f in args.frames.split(",") if f]
         expect = {r for r in args.expect_refused.split(",") if r}
@@ -87,7 +89,7 @@ def main(argv=None):
                     outcome += "; RECOVERY FAILED: %s" % exc
                     failed.append(row)
             results[row] = outcome
-            print("%-28s %s" % (row, outcome[:160]), flush=True)
+            print("%-28s %s %s" % (row, motions.get(row), outcome[:160]), flush=True)
         dead = [r for r, o in results.items() if o.startswith("DEAD")]
         failed += [r for r in dead if r not in failed]
         for row in expect:
@@ -105,6 +107,7 @@ def main(argv=None):
             c.call("load_row", {"row": args.wait_row})
             c.call("set_frame", {"frame": 5})
             print("recover: %s loads after %s: OK" % (args.wait_row, bad))
+        print("DEAD_MOTIONS", sorted({m for r in dead for m in (motions.get(r) or [])}))
         print("SWEEP rows=%d refused=%d dead=%d failed=%s" % (
             len(results), sum(o.startswith("refused") for o in results.values()), len(dead), sorted(set(failed))))
     finally:
