@@ -150,12 +150,17 @@ def _splice(tracks, types, new):
 def apply_hand(project, bank_path, plan):
     """Rewrite the bank file and plan["bank"] from <project>/anim/hand.json. With no hand file the bank is restored to its pristine length."""
     bank_path = Path(bank_path)
+    hand_file = Path(project) / HAND_FILE
+    if "bytes" not in plan.get("bank", {}) or not bank_path.is_file():
+        if hand_file.is_file():
+            raise ValueError("hand clips need the retail animation bank: this package has none (plan.bank / bank file missing)")
+        return []                                   # a package without a bank (a test fixture) has nothing to restore
     pristine = int(plan["bank"]["bytes"])
     data = bank_path.read_bytes()
     if len(data) < pristine:
         raise ValueError(f"bank {bank_path.name} is shorter ({len(data)}) than the plan says ({pristine})")
     data = data[:pristine]
-    hand = HL.load(Path(project) / HAND_FILE)
+    hand = HL.load(hand_file)
     out, report = bytearray(data), []
     if hand:
         for row, clip in sorted(hand["clips"].items()):
