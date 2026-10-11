@@ -16,6 +16,7 @@ class QAction;
 class QComboBox;
 class QDoubleSpinBox;
 class QLabel;
+class QToolButton;
 class QVBoxLayout;
 
 namespace wb {

@@ -142,7 +142,8 @@ class SkippedStayRetail(unittest.TestCase):
         m = read("src/melee/gm/gmfrontend_menus.inc")
         self.assertNotRegex(m, r"STAFF|GM_STAFFROLL", "retail has no menu entry for it; adding one is a new launch path and an owner decision")
         p = read("pc/platform/gw_ui_policy.c")
-        self.assertNotRegex(p, r"0x2B|STAFF", "no policy row names the staff roll")
+        rows = re.search(r"ROWS\[\]\s*=\s*\{(.*?)\};", p, re.S).group(1)  # the policy rows only; at_policy_ends_run legitimately lists 0x2B
+        self.assertNotRegex(rows, r"0x2B|\b43\b|STAFF", "no policy row names the staff roll")
         toy = read("src/melee/gm/gmfrontend_atlas_toy.inc")
         self.assertIn("GS_STAFFROLL == 0x2B", toy, "the numbers atlas_policy_test.c uses for the skipped scenes are pinned against the enum")
 

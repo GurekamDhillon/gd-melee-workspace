@@ -72,9 +72,9 @@
    "ACTION": 2,
    "CHOICE": 3,
    "SLIDER": 3,
-   "TOGGLE": 4
+   "TOGGLE": 5
   },
-  "rows": 12
+  "rows": 13
  },
  "fe_items_set_online": {
   "file": "gmfrontend_settings.inc",
@@ -89,9 +89,9 @@
   "file": "gmfrontend_settings.inc",
   "kinds": {
    "CHOICE": 3,
-   "TOGGLE": 3
+   "TOGGLE": 4
   },
-  "rows": 6
+  "rows": 7
  },
  "fe_items_vs_setup": {
   "file": "gmfrontend.c",

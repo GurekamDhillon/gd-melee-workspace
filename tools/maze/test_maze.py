@@ -75,7 +75,7 @@ class MazeTests(unittest.TestCase):
     def test_starter_files_current(self):
         from tools.maze.generate import starters
         for path, data in starters().items():
-            self.assertEqual((GAME / 'pc/scripts/examples/missions' / path).read_bytes(), data)
+            self.assertEqual((GAME / 'pc/scripts/examples/missions' / path).read_bytes().replace(b'\r\n', b'\n'), data)  # CRLF checkouts
 
     def test_headless_blender_exit_export(self):
         blender = ROOT / 'experiment/tooling/ultimate/apps/Blender/blender-5.1.2-windows-x64/blender.exe'
