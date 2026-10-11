@@ -131,7 +131,7 @@ def audit(package,art_build,fit=False):
             static = report.frames(words)
             frames.append({'move':move['name'],'row':row,'source_windows':expected_source,'target':static,
                            'parity_relation':parity['relation'],'clock':'static script frames; not native action_frame'})
-            events = HP.hitbox_events(words+[0])
+            events = HP.hitbox_events(words+[0]) if static['hitboxes'] else []   # HB-NONE (remake): no hitbox to place; scripts with flow ops (Kamehameha charge loop) need no position check
             clip = declared_clip or plan['row_clips'][row]
             record = plan['bank']['clips'][clip]
             _,tree = figatree.parse_archive(bank[record['offset']:record['offset']+record['bytes']])
