@@ -308,6 +308,7 @@ class GENO_WB_PT_splice(bpy.types.Panel):
         body.prop(settings, "nla_height")
         body.prop(settings, "nla_clip")
         body.operator("geno_wb.import_clip", icon="IMPORT")
+        body.operator("geno_wb.import_figatree", icon="ACTION")
         body.prop(settings, "nla_recipe_file")
         body.prop(settings, "nla_recipe")
         body.operator("geno_wb.layout_recipe", icon="NLA")

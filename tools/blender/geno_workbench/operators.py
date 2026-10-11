@@ -875,6 +875,12 @@ except ImportError:
     from operators_nla import CLASSES as NLA_CLASSES
 CLASSES += NLA_CLASSES
 
+try:
+    from .operators_figatree import CLASSES as FIGATREE_CLASSES
+except ImportError:
+    from operators_figatree import CLASSES as FIGATREE_CLASSES
+CLASSES += FIGATREE_CLASSES
+
 
 # While a rebuild or engine restart runs on its worker thread, every other Workbench action is disabled
 # (the connection is in use and the data is about to be replaced); the tooltip says why.
