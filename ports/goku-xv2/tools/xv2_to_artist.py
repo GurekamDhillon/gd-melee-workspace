@@ -336,8 +336,11 @@ def row_specs(source):
     out['GuardOn'].update(frames=8,status='source crop: GOK_GRD_KAMAE f0-7 (Melee GuardOn length)')
     out['GuardOff'].update(frames=16,time_factor=1.8,status='source crop: GOK_GRD_L at x1.8 (Melee GuardOff length)')
     # 2026-10-08 length pass (row-lengths.json: Goku vs Mario measured in game). The jump pose must last the rise.
-    out['JumpF'].update(frames=55,time_factor=.33,status='source: GOK_BAS_JUMP_FRONT_00 at x0.33 (Melee JumpF lasts the rise, 55 frames)')
-    out['JumpB'].update(frames=55,time_factor=.33,status='source: GOK_BAS_JUMP_BACK_00 at x0.33 (55 frames)')
+    # 2026-10-10 (ws/goku-jumpf, owner-approved): 55 frames outlasted Goku's 48-frame hop, so he never reached Fall and
+    # carried ground momentum through the air (run-jump too long). Same source span (18 source frames), played at x0.5
+    # in 36 frames (Falcon's JumpF ends ~35): the whole pose is sped up, nothing is cut.
+    out['JumpF'].update(frames=36,time_factor=.5,status='source: GOK_BAS_JUMP_FRONT_00 at x0.5 (36 frames, ends before a hop lands so the fighter enters Fall like Falcon)')
+    out['JumpB'].update(frames=36,time_factor=.5,status='source: GOK_BAS_JUMP_BACK_00 at x0.5 (36 frames)')
     out['JumpAerialF'].update(frames=60,time_factor=.27,status='source: GOK_BAS_JUMP_FRONT_01 at x0.27 (60 frames)')
     out['EscapeN'].update(frames=24,time_factor=1.85,status='source: GOK_BAS_STEP_L_S at x1.85: spot dodge at Melee length (Mario 23)')
     out['Furafura']['hold_source']=30
