@@ -52,6 +52,7 @@ FIGHTERS = {
         # ftFx_Init_CostumeStrings: Nr, Or, La, Gr (team: red = Or, blue = La, green = Gr)
         "costumes": [("Nr", "Default", None), ("Or", "Orange", "red"), ("La", "Lavender", "blue"), ("Gr", "Green", "green")],
         "ai": "fox", "kirby": "retail:fox",
+        "thrown_as": "fox",   # the engine default is captain; a victim thrown by a retail-template define plays the template's own thrown rows
     },
 }
 WAIT_MOTION = 14   # ftCo_MS_Wait
@@ -388,6 +389,8 @@ def main():
         "ai": {"like": spec["ai"]},
         "kirby_copy": spec["kirby"],
     }
+    if spec.get("thrown_as"):
+        entry["thrown_as"] = spec["thrown_as"]
     json.dump({"geno": 10, "fighters": [entry]}, open(os.path.join(out, "geno.json"), "w"), indent=1)
     mod = {"id": (a.key or spec["key"]), "name": a.name or spec["name"], "version": "0.1.0", "kind": "fighter", "requires": [], "conflicts": [],
            "description": "%s: a retail fighter as a standalone Geno define, built from your own disc. Local only." % spec["name"]}
