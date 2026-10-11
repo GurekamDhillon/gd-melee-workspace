@@ -1483,7 +1483,7 @@ struct WorkbenchWindow::Impl {
         if (reply.hasAttributes) attributes->setAttributes(reply.attributes);
         const auto value = reply.envelope.value("result").toObject();
         if (reply.envelope.value("ok").toBool()) {
-            if (value.contains("frame")) { frameInfo = FrameInfo::fromJson(value); timeline->setFrame(frameInfo.frame); updateFrameReadout(); }
+            if (value.contains("frame")) { frameInfo = FrameInfo::fromJson(value); if (!timeline->scrubbing()) timeline->setFrame(frameInfo.frame); updateFrameReadout(); }
             if (value.value("applied").toBool()) {
                 rowProblems.clear(); checksCurrent = false; problems->setProblems({});
                 updateBadges();

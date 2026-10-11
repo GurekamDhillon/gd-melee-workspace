@@ -307,7 +307,9 @@ void TimelineView::setMove(const QString &row, int frames, const QVector<HitboxR
         iasa_ = iasa; events_ = events; update(); return;
     }
     const bool changedRow = row != row_;
-    cancelDrag(); scrubbing_ = false; row_ = row; hits_ = hits; iasa_ = iasa; events_ = events;
+    // Every command's reply refreshes the move: that must not end a ruler drag on the same move (the drag stopped after one seek).
+    const bool keepScrub = scrubbing_ && !changedRow && std::max(0, frames) == frameCount();
+    cancelDrag(); if (!keepScrub) scrubbing_ = false; row_ = row; hits_ = hits; iasa_ = iasa; events_ = events;
     Timeline::setRange(frames);
     if (changedRow || hitboxIndex(selected_) < 0) selected_ = -1;
     updateGeometry(); update();

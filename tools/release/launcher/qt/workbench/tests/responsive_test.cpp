@@ -18,6 +18,7 @@
 #include <QScrollArea>
 #include <QStackedWidget>
 #include <QTemporaryDir>
+#include <QTabBar>
 #include <QtTest>
 using namespace wb;
 
@@ -35,7 +36,7 @@ QStringList clippedControls(QWidget *root, QWidget *scope) {
         const bool control = qobject_cast<QAbstractButton *>(w) || qobject_cast<QComboBox *>(w) || qobject_cast<QAbstractSpinBox *>(w);
         if (!control) continue;
         if (qobject_cast<QAbstractSpinBox *>(w->parentWidget()) || qobject_cast<QComboBox *>(w->parentWidget())) continue;
-        if (w->inherits("QTabBar") || w->objectName().startsWith("qt_")) continue;
+        if (w->inherits("QTabBar") || w->objectName().startsWith("qt_") || qobject_cast<QTabBar *>(w->parentWidget())) continue; // the bar's own scroll arrows
         const QString name = w->objectName().isEmpty() ? QString(w->metaObject()->className()) : w->objectName();
         const QRect r(w->mapTo(root, QPoint(0, 0)), w->size());
         if (r.left() < scopeRect.left() || r.right() > scopeRect.right())

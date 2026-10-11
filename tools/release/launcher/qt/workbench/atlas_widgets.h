@@ -93,6 +93,7 @@ public:
                  const QJsonArray &events = {});
     void setSelectedHitbox(int ordinal);
     void setRange(int frames) override;
+    bool scrubbing() const override { return scrubbing_; }
     // Shared painting/hit-testing geometry, also useful to overlays and accessibility tools.
     qreal framePosition(int boundary) const;
     QRectF hitboxRect(int ordinal) const;
