@@ -149,7 +149,7 @@ STRINGS: dict[str, str] = {
     "rows_loaded": "rows loaded: {count}",
     "row_fallback": "{row} could not be shown ({error}); showing {wait} instead.",
     "not_previewable": "not previewable",
-    "row_not_previewable_help": "The engine cannot pose this move in the bare scene (it needs the revival platform)",
+    "row_not_previewable_help": "The engine cannot pose this move in the bare scene; it needs gameplay context.",
     "frame_loaded": "row {row}, frame {frame}",
     "hitboxes_loaded": "source hitboxes loaded: {count}",
     "checks_loaded": "checks: {count} problem(s)",
@@ -530,13 +530,15 @@ def row_items(self=None, context=None):
     names = []
     seen = {NO_ROW}
     flags = {}
+    descriptions = {}
     for row in _session().rows:
         name = row.get("name")
         if isinstance(name, str) and name and name not in seen:
             seen.add(name)
             names.append(name)
             flags[name] = not _rigmap().row_previewable(row)
-    signature = tuple((n, flags[n]) for n in names)
+            descriptions[name] = str(row.get("preview_reason") or STRINGS["row_not_previewable_help"]) if flags[name] else STRINGS["row_help"]
+    signature = tuple((n, flags[n], descriptions[n]) for n in names)
     if signature != _row_signature:
         _row_signature = signature
         _row_items_cache = [
@@ -546,7 +548,7 @@ def row_items(self=None, context=None):
             bad = flags[name]
             label = "%s  (%s)" % (name, STRINGS["not_previewable"]) if bad else name
             _row_items_cache.append((_keep_string(name), _keep_string(label),
-                                     STRINGS["row_not_previewable_help" if bad else "row_help"], index))
+                                     _keep_string(descriptions[name]), index))
     return _row_items_cache
 
 

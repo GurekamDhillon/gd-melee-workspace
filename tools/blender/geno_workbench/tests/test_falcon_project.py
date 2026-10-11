@@ -74,6 +74,21 @@ def test_rows_use_subactions_not_motion_ids_and_keep_clipless_states(synthetic_p
     assert len({r["name"] for r in rows}) == len(rows)
 
 
+def test_generated_rows_explain_clipless_and_context_dependent_states(synthetic_plan):
+    states = [{"motion": 14, "state": "Wait", "subaction": 0},
+              {"motion": 15, "state": "WalkSlow", "subaction": 0},
+              {"motion": 11, "state": "Sleep", "subaction": -1},
+              {"motion": 59, "state": "AttackS4HiS", "subaction": 3}]
+    by = {r["motions"][0]: r for r in metadata.make_rows(synthetic_plan, states, {})}
+    assert by[14].get("previewable") is True
+    assert by[14]["preview_end_frame"] == 29
+    for motion, category in [(15, "requires-gameplay-context"),
+                             (11, "no-fixed-animation"), (59, "missing-clip")]:
+        assert by[motion].get("previewable") is False
+        assert by[motion]["preview_class"] == category
+        assert by[motion]["preview_reason"]
+
+
 def test_roles_use_retail_parts_order_and_omit_missing_parts(synthetic_plan):
     table = read_json(TEMPLATE / "role_map.json")
     roles, tokens = metadata.resolve_roles(synthetic_plan, table)
@@ -129,6 +144,41 @@ def prepared(tmp_path, synthetic_plan, codec):
               {"motion": 347, "state": "SpecialN", "subaction": 2}]
     project_build.prepare(project, package, states, TEMPLATE, root=ROOT)
     return project, package, document
+
+
+def test_preparation_refreshes_stale_annotations_without_reseeding(prepared):
+    project, package, _ = prepared
+    gameplay = read_json(project / "gameplay.json")
+    gameplay["moves"][0].update(previewable=False, preview_class="missing-clip",
+                                preview_reason="stale reason")
+    write_json(project / "gameplay.json", gameplay)
+    sources = {p: p.read_bytes() for p in (project / "moves").glob("*.genoasm")}
+    manifest = (project / project_build.MANIFEST).read_bytes()
+    project_build.prepare(project, package, [], TEMPLATE, root=ROOT)
+    updated = read_json(project / "gameplay.json")["moves"][0]
+    assert updated["previewable"] is True
+    assert updated["preview_reason"] == ""
+    assert updated["pick"] == gameplay["moves"][0]["pick"]
+    assert {p: p.read_bytes() for p in sources} == sources
+    assert (project / project_build.MANIFEST).read_bytes() == manifest
+
+
+def test_rebuild_refreshes_annotations_after_shared_clip_assignment(prepared):
+    project, _, _ = prepared
+    gameplay = read_json(project / "gameplay.json")
+    for move in gameplay["moves"]:
+        if move["subaction"] == 1:
+            move["pick"]["clip"] = "Kick"
+            move.update(previewable=False, preview_class="missing-clip", preview_reason="stale")
+    write_json(project / "gameplay.json", gameplay)
+    project_build.rebuild(project)
+    updated = read_json(project / "gameplay.json")
+    for move in updated["moves"]:
+        if move["subaction"] == 1:
+            assert move["previewable"] is True
+            assert move["preview_reason"] == ""
+            assert move["preview_end_frame"] == 18
+            assert move["pick"]["clip"] == "Kick"
 
 
 def test_rebuild_changes_words_preserves_assets_and_does_not_extract(prepared, monkeypatch, codec):

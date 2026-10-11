@@ -13,7 +13,7 @@ import subprocess
 import sys
 import tempfile
 
-from . import metadata
+from . import metadata, previewability
 
 MANIFEST = "falcon_sources.json"
 
@@ -154,6 +154,13 @@ def prepare(project, package, states, template, *, root, game=None, seed=None):
             inside(project, entry["source"]).read_text(encoding="utf-8-sig")
         for name in ("gameplay.json", "workbench.json", "role_map.json"):
             load(project / name)
+        # Old local projects gain eligibility/reasons without reseeding a single
+        # authored source or pick. The package plan contains current clip picks.
+        plan = load(plan_file(package, load(package / "geno.json")))
+        gameplay = load(project / "gameplay.json")
+        annotated = previewability.annotate_gameplay(gameplay, plan)
+        if annotated != gameplay:
+            write_json(project / "gameplay.json", annotated)
         return project
     document = load(package / "geno.json")
     fighter = falcon_fighter(document)
@@ -265,7 +272,8 @@ def rebuild(project):
     selected = {}
     states = {s["motion"]: s for s in manifest["states"]}
     seen = set()
-    for row in load(project / "gameplay.json")["moves"]:
+    gameplay = load(project / "gameplay.json")
+    for row in gameplay["moves"]:
         for motion in row["motions"]:
             if motion not in states or motion in seen:
                 raise ValueError(f"unknown or duplicate motion {motion}")
@@ -304,4 +312,7 @@ def rebuild(project):
         print("HAND:", json.dumps(item, sort_keys=True))
     write_json(plan_file(package, document), plan)
     write_json(package / "geno.json", document)
+    annotated = previewability.annotate_gameplay(gameplay, plan)
+    if annotated != gameplay:
+        write_json(project / "gameplay.json", annotated)
     return mode

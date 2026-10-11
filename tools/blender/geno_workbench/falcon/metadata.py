@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 
 from ports.ir.tools.plan_parts import COMMON
+from . import previewability
 
 
 def enum_values(text, name, known=None):
@@ -112,7 +113,7 @@ def make_rows(plan, states, scripts, seeds=()):
         if sub in scripts:
             seed["script"] = scripts[sub]
         rows.append(seed)
-    return rows
+    return previewability.annotate_gameplay({"moves": rows}, plan)["moves"]
 
 
 def resolve_roles(plan, table):

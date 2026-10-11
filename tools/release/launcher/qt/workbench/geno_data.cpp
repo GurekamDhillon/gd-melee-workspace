@@ -1,16 +1,27 @@
 #include "geno_data.h"
 #include "json_patch.h"
+#include "commands.h"
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
 #include <QSet>
 #include <QRegularExpression>
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
 
 namespace wb {
+QString RowInfo::previewReason() const {
+    if (previewable()) return {};
+    if (!previewRefusal.isEmpty()) return previewRefusal;
+    if (clipSpecified && clip.isEmpty())
+        return t("This row has no fixed clip in the animation bank.", "This row has no fixed clip in the animation bank.");
+    if (!motions.isEmpty() && std::all_of(motions.cbegin(), motions.cend(), [](int m) { return m == 12 || m == 13; }))
+        return t("Needs the revival platform; this action cannot be previewed in the bare scene.", "Needs the revival platform; this action cannot be previewed in the bare scene.");
+    return t("Needs a partner, item or initialized game state; this action cannot be previewed in the bare scene.", "Needs a partner, item or initialized game state; this action cannot be previewed in the bare scene.");
+}
 namespace {
 [[noreturn]] void fail(const QString &message) {
     throw std::runtime_error(message.toUtf8().constData());
@@ -184,13 +195,24 @@ QString replaceValue(const QString &text, const JsonPath &path, const QJsonValue
 
 GenoData::GenoData(FileStore &fs) : fs_(fs) {}
 const ProjectConfig &GenoData::project() const { return project_; }
-QVector<RowInfo> GenoData::rows() const { return rows_; }
+QVector<RowInfo> GenoData::rows() const {
+    auto rows = rows_;
+    for (auto &row : rows) {
+        const auto failure = previewFailures_.constFind(row.name);
+        if (failure == previewFailures_.constEnd()) continue;
+        row.previewDenied = true; row.previewRefusal = failure.value();
+    }
+    return rows;
+}
+void GenoData::notePreviewFailure(const QString &row, const QString &reason) { previewFailures_.insert(row, reason); }
+void GenoData::clearPreviewFailures() { previewFailures_.clear(); }
 QVector<ClipInfo> GenoData::clips() const { return clips_; }
 QVector<Joint> GenoData::joints() const { return joints_; }
 bool GenoData::hasPlan() const { return hasPlan_; }
 QString GenoData::planPath() const { return planPath_; }
 
 QString GenoData::reload() {
+    clearPreviewFailures();
     project_ = {};
     hasPlan_ = false;
     planPath_.clear();
@@ -247,6 +269,10 @@ QString GenoData::reload() {
             row.clip = stringField(pick, "clip", where + "/pick");
             row.clipSpecified = pick.contains("clip");
             row.cropStart = intField(pick, "crop_start", where + "/pick");
+            const auto previewable = move.value("previewable");
+            if (!previewable.isUndefined() && !previewable.isBool()) fail(where + "/previewable: expected boolean");
+            row.previewDenied = previewable.isBool() && !previewable.toBool();
+            row.previewRefusal = stringField(move, "preview_reason", where);
             rows.append(row);
         }
         QString planName;
