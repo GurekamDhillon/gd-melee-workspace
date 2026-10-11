@@ -90,4 +90,11 @@ if(BUILD_TESTING)
   target_compile_definitions(workbench_commands_edit PRIVATE WB_IMPORT_HELPER="$<TARGET_FILE:workbench_import_clip_helper>")
   add_dependencies(workbench_commands_edit workbench_import_clip_helper)
   set_tests_properties(workbench_commands_edit PROPERTIES TIMEOUT 180)
+  if(NOT WIN32)
+    # These five spawn Windows stand-ins (cmd.exe / .exe helpers) for the game build and the clip importer, so
+    # they cannot pass on Linux (rc4 Linux build: 11 FAIL lines, all execve/.exe lookups). The Workbench drives
+    # a Windows game build; porting the fixtures is owed. Everything else here still runs on Linux.
+    set_tests_properties(workbench_game_exe workbench_baseline workbench_commands_save workbench_commands_edit
+                         workbench_qol_test PROPERTIES DISABLED TRUE)
+  endif()
 endif()
