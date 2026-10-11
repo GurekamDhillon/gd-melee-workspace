@@ -3,6 +3,7 @@
 # Optional: -Picker opens the REMAKE picker instead (the owner's picks show as taken; swap one, then remake_sheet.py --sync-picks and rebuild).
 # Env overrides: GW_MELEE (game checkout with the geno-11 engine + REMAKE mode), GW_BUILD_ROOT (its build root with melee-pc.exe).
 # Controls (Scheme A, Melee buttons only): B = Kamehameha (hold to charge); Down B tap = vanish counter, Down B hold = ki charge (only below 100);
+# Up B = flight (10 ki; steer with the stick, B or A ends it, then the special fall). Feet on the floor: no hover.
 # shield + B (stick neutral) = homing dash strike (20 ki); Side B = knockback attack (Rush); D-pad Down (or Y under CSS layout B) = ki blast (5 ki).
 # Every move that has XV2 hit data carries a labelled HB-SAMPLE hitbox (REMAKE-SAMPLES.md): starting points, not final.
 param([switch]$Picker)

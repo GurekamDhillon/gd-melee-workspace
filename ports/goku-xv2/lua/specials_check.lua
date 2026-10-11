@@ -120,41 +120,73 @@ gd.run(function()
     gd.input(1, {}, 1); gd.wait(20)
 
     -- 7c. Up B = flight (phase 3): takeoff from the ground, steering, 60 frames, then the special fall
-    local function flight(label, k, stick, held, spec)
+    local function flight(label, k, stick, held, hi)
       reset(k)
+      if hi then gd.teleport(1, 0, hi); gd.wait(3) end
       local g0 = gd.player(1)
+      local face = (g0.facing or 1) >= 0 and 1 or -1
       gd.input(1, {y = 127, buttons = 'B'}, 2)
       local x0, y0, flown, fell, seen, lastfly, xe, ye = g0.x, g0.y, 0, nil, {}, nil, g0.x, g0.y
       local kb = ki()
+      local trace, lastn = {}, nil
       for t = 1, 140 do
         gd.wait(1); nofault()
         local n = name()
         seen[n] = (seen[n] or 0) + 1
+        if n ~= lastn then local st = gd.fighter_lua(1).state; trace[#trace + 1] = n .. '@' .. t .. '(age ' .. tostring(st.age) .. ' fly ' .. tostring(st.fly) .. ')'; lastn = n end
         if n:sub(1, 6) == 'Flight' then flown = flown + 1; lastfly = t end
-        if t == 8 and stick then gd.input(1, stick, 70) end
+        if t == 8 and stick then gd.input(1, {x = (stick.x or 0) * face, y = stick.y}, 70) end
         if held and t == held then gd.input(1, {buttons = 'B'}, 2) end
         local p = gd.player(1)
         if n:sub(1, 6) == 'Flight' then xe, ye = p.x, p.y end
         if (n == 'FallSpecial' or n == 'FallSpecialF' or n == 'FallSpecialB') and not fell then fell = t end
       end
-      gd.log(string.format('SPECHECK flight %s: flight frames %d, dx %.1f dy %.1f, special fall from t%s, ki %.1f -> %.1f, states %s', label, flown, xe - x0, ye - y0, tostring(fell), kb, ki(),
-        (seen.Flight and 'Flight ' or '') .. (seen.FlightU and 'U ' or '') .. (seen.FlightF and 'F ' or '') .. (seen.FlightB and 'B' or '')))
-      return flown, xe - x0, ye - y0, fell, seen
+      gd.log('SPECHECK trace ' .. table.concat(trace, ' '))
+      gd.log(string.format('SPECHECK flight %s (facing %d): flight frames %d, dx %.1f dy %.1f, special fall from t%s, ki %.1f -> %.1f, states %s', label, face, flown, (xe - x0) * face, ye - y0, tostring(fell), kb, ki(),
+        (function() local l = {} for k, v in pairs(seen) do l[#l + 1] = k .. ':' .. v end table.sort(l) return table.concat(l, ' ') end)()))
+      return flown, (xe - x0) * face, ye - y0, fell, seen
     end
-    local fl, dx, dy, fell = flight('up', 50)
-    assert(fl >= 56 and fl <= 66, 'flight did not last about 60 frames: ' .. fl)
-    assert(dy > 20, 'flight did not climb: ' .. dy)
-    assert(fell, 'flight did not end in the special fall (helpless)')
-    assert(math.abs((50 - ki()) - 10) < 0.5, 'flight cost is not 10 ki')
-    local _, dxf, _, _, sf = flight('forward', 50, {x = 127, y = 0}, nil)
-    assert(dxf > 12 and (sf.FlightF or 0) > 5, 'forward steering failed: dx ' .. dxf)
-    local _, dxb, _, _, sb = flight('back', 50, {x = -127, y = 0}, nil)
-    assert(dxb < -8 and (sb.FlightB or 0) > 5, 'back steering failed: dx ' .. dxb)
+    local bads = {}
+    local function chk(c, m) if not c then bads[#bads + 1] = m; gd.log('SPECHECK flightcheck FAIL ' .. m) end end
+    local fl, dx, dy, fell = flight('up', 50, {y = 127, x = 0})
+    chk(fl >= 56 and fl <= 66, 'flight did not last about 60 frames: ' .. fl)
+    chk(dy > 20, 'flight did not climb: ' .. dy)
+    chk(fell, 'flight did not end in the special fall (helpless)')
+    chk(math.abs((50 - ki()) - 10) < 0.5, 'flight cost is not 10 ki')
+    local _, dxf, _, _, sf = flight('forward (air start)', 50, {x = 127, y = 0}, nil, 50)
+    chk(dxf > 12 and (sf.FlightF or 0) > 5, 'forward steering failed: dx ' .. dxf)
+    local _, dxb, _, _, sb = flight('back (air start)', 50, {x = -127, y = 0}, nil, 50)
+    chk(dxb < -8 and (sb.FlightB or 0) > 5, 'back steering failed: dx ' .. dxb)
     local fe, _, _, felle = flight('early end (B)', 50, nil, 25)
-    assert(fe < 40 and felle and felle < 45, 'B did not end the flight early: ' .. fe)
+    chk(fe < 40 and felle and felle < 45, 'B did not end the flight early: ' .. fe)
     local fw, _, dyw = flight('no ki', 0)
-    assert(fw >= 18 and fw <= 28 and dyw < 25, 'the no-ki flight is not the weak short one: ' .. fw)
+    chk(fw >= 18 and fw <= 28 and dyw < 25, 'the no-ki flight is not the weak short one: ' .. fw)
     gd.input(1, {}, 1); gd.wait(100)
+
+    assert(#bads == 0, 'flight checks failed: ' .. table.concat(bads, '; '))
+    -- 7d. the flight ends in the special fall beside a ledge and Goku catches it (retail's ledge snap on a special fall)
+    local caught = false
+    for _, pos in ipairs({{90, -8}, {92, -14}, {89, -4}}) do      -- the right ledge (x 85.6): Goku faces left, toward the stage, as retail's ledge snap wants
+      if not caught then
+        reset(50)
+        gd.teleport(1, pos[1], pos[2]); gd.wait(2)
+        gd.input(1, {y = 127, buttons = 'B'}, 2)
+        local seen7 = {}
+        for t = 1, 150 do
+          gd.wait(1); nofault()
+          seen7[name()] = true
+          if t == 6 then gd.input(1, {x = -127, y = 0}, 4) end       -- drift toward the stage, then end the flight early with B
+          if t == 14 then gd.input(1, {buttons = 'B'}, 2) end
+          if name() == 'CliffCatch' or name() == 'CliffWait' then caught = true break end
+        end
+        local l7 = {}
+        for k in pairs(seen7) do l7[#l7 + 1] = k end
+        table.sort(l7)
+        gd.log(string.format('SPECHECK ledge from (%d,%d): caught=%s states %s', pos[1], pos[2], tostring(caught), table.concat(l7, ',')))
+      end
+    end
+    assert(caught, 'the special fall after flight did not catch the ledge from any start')
+    gd.input(1, {}, 1); gd.wait(60)
 
     -- 8. rewind exactness across the homing strike
     reset(50)

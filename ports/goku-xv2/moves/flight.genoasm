@@ -4,4 +4,5 @@
 # No hitbox: flight is movement. The end is the special fall (helpless), so the script has no IASA.
 PUT ANIM_RATE 1.0
 PUT AIR 1
+PUT VEL_Y 0.9
 sfx behavior=1 sfx_id=165 volume=90 panning=64

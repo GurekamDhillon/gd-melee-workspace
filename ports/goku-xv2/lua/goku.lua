@@ -159,6 +159,7 @@ end
 function M.flight_frame(ctx)
   local s = ctx.state
   s.age = s.age + 1
+  if ctx.self.anim_ended then ctx.loop() end   -- the fly clip repeats for as long as he flies (the state's own next would end it)
   local full = s.fly == 1
   local sp = full and FLY_SPEED or FLY_WEAK_SPEED
   if s.age >= (full and FLY_FRAMES or FLY_WEAK_FRAMES) or (s.age > 3 and (ctx.input.special_pressed or ctx.input.attack_pressed)) then ctx.go("helpless") return end
