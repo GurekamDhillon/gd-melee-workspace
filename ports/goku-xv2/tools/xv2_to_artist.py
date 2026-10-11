@@ -10,6 +10,7 @@ import hashlib
 import io
 import os
 import json
+import shutil
 import math
 from pathlib import Path
 import re
@@ -491,6 +492,9 @@ def row_specs(source):
     # Flight aerials (phase 4): the aerial rows again, as declared rows of their own, for the Geno states FlightNair..FlightDair (their script and row are the aerial's)
     for new,base in (('FlightNair','AttackAirN'),('FlightFair','AttackAirF'),('FlightBair','AttackAirB'),('FlightUair','AttackAirHi'),('FlightDair','AttackAirLw')):
         if base in out:out[new]={**out[base],'ground_as':base,'status':'flight aerial: the row of '+base}
+        if base in out and out[new].get('cross_port'):   # the cross-port report is looked up by row name: give the copy its own folder (the solved clip stays the original's)
+            src=ROOT/'_build/goku-xv2/cross-port'/base;dst=ROOT/'_build/goku-xv2/cross-port'/new;dst.mkdir(parents=True,exist_ok=True)
+            for f in src.glob('*.json'):shutil.copyfile(f,dst/f.name)
     # Rolls are Instant Transmission teleports (phase 4, owner 2026-10-11, like Mewtwo's): the XV2 vanish pose (ESC_KUR f0-18), a hidden gap, the reappear pose (f70-106).
     # Melee timing from Mewtwo's own roll measured in this engine (tools/lua roll_probe.lua): 37 frames, intangible f5-22, travel 52; the body moves inside the hidden gap.
     kur=byname.get('GOK_ESC_KUR_C')
