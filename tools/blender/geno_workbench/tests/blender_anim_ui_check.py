@@ -78,16 +78,17 @@ def main():
     info = R.limbs_info(ctrl)
     lid = next(iter(info["limbs"]))
     e = info["limbs"][lid]
+    other = e["spaces"][-1]
     before = R.pose_matrix(ctrl, e["space_ctl"][0])
-    check(bpy.ops.geno_anim.space(limb=lid, space="chest") == {"FINISHED"} and e["spaces"][R.get_space(ctrl, e)] == "chest",
-          "Switch space operator moves the limb to the chest")
+    check(bpy.ops.geno_anim.space(limb=lid, space=other) == {"FINISHED"} and e["spaces"][R.get_space(ctrl, e)] == other,
+          f"Switch space operator moves the limb to {other}")
     check(rc.mdiff(before, R.pose_matrix(ctrl, e["space_ctl"][0])) < 1e-3, "...and the control did not move in the world")
     try:                       # a script sees an operator's ERROR report as RuntimeError
         bpy.ops.geno_anim.space(limb=lid, space="nowhere")
         refused = False
     except RuntimeError as exc:
         refused = "no space" in str(exc)
-    check(refused and e["spaces"][R.get_space(ctrl, e)] == "chest", "an unknown space is refused with a message and changes nothing")
+    check(refused and e["spaces"][R.get_space(ctrl, e)] == other, "an unknown space is refused with a message and changes nothing")
     check(bpy.ops.geno_anim.snap(limb=lid, to_ik=True) == {"FINISHED"}, "to IK operator")
     check(bpy.ops.geno_anim.snap(limb=lid, to_ik=False) == {"FINISHED"}, "to FK operator")
     print(f"ANIMUI OK {label} {CHECKS}")
