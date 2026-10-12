@@ -1,0 +1,193 @@
+{
+ "CliffAttackQuick": {
+  "script": "moves/ledge_cliff_attack_quick.genoasm",
+  "source": "mario CliffAttackQuick",
+  "windows": [
+   [
+    24,
+    13
+   ],
+   [
+    24,
+    13
+   ],
+   [
+    24,
+    13
+   ]
+  ],
+  "hitboxes": [
+   {
+    "role": "FOOT_R",
+    "before": {
+     "size": 4.6875,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "damage": 8,
+     "angle": 361,
+     "kbg": 100,
+     "bkb": 0
+    },
+    "after": {
+     "size": 5.648890064714884,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    }
+   },
+   {
+    "role": "FOOT_L",
+    "before": {
+     "size": 4.6875,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "damage": 8,
+     "angle": 361,
+     "kbg": 100,
+     "bkb": 0
+    },
+    "after": {
+     "size": 5.648890064714884,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    }
+   },
+   {
+    "role": "HEAD",
+    "before": {
+     "size": 4.6875,
+     "x": 0.0,
+     "y": -2.34375,
+     "z": 0.0,
+     "damage": 6,
+     "angle": 361,
+     "kbg": 100,
+     "bkb": 0
+    },
+    "after": {
+     "size": 5.648890064714884,
+     "x": -2.3637283788887423e-06,
+     "y": -0.4149354985094223,
+     "z": 0.3984689387841985
+    }
+   }
+  ]
+ },
+ "CliffAttackSlow": {
+  "script": "moves/ledge_cliff_attack_slow.genoasm",
+  "source": "mario CliffAttackSlow",
+  "windows": [
+   [
+    40,
+    5
+   ],
+   [
+    40,
+    5
+   ]
+  ],
+  "hitboxes": [
+   {
+    "role": "LEG_R",
+    "before": {
+     "size": 4.6875,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "damage": 10,
+     "angle": 361,
+     "kbg": 100,
+     "bkb": 0
+    },
+    "after": {
+     "size": 5.648890064714884,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    }
+   },
+   {
+    "role": "FOOT_R",
+    "before": {
+     "size": 7.03125,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0,
+     "damage": 10,
+     "angle": 361,
+     "kbg": 100,
+     "bkb": 0
+    },
+    "after": {
+     "size": 8.473335097072326,
+     "x": 0.0,
+     "y": 0.0,
+     "z": 0.0
+    }
+   }
+  ]
+ },
+ "CliffCatch": {
+  "script": "moves/ledge_cliff_catch.genoasm",
+  "source": "mars CliffCatch",
+  "windows": [],
+  "hitboxes": []
+ },
+ "CliffClimbQuick": {
+  "script": "moves/ledge_cliff_climb_quick.genoasm",
+  "source": "mars CliffClimbQuick",
+  "windows": [],
+  "hitboxes": []
+ },
+ "CliffClimbSlow": {
+  "script": "moves/ledge_cliff_climb_slow.genoasm",
+  "source": "mars CliffClimbSlow",
+  "windows": [],
+  "hitboxes": []
+ },
+ "CliffEscapeQuick": {
+  "script": "moves/ledge_cliff_escape_quick.genoasm",
+  "source": "mars CliffEscapeQuick",
+  "windows": [],
+  "hitboxes": []
+ },
+ "CliffEscapeSlow": {
+  "script": "moves/ledge_cliff_escape_slow.genoasm",
+  "source": "mars CliffEscapeSlow",
+  "windows": [],
+  "hitboxes": []
+ },
+ "CliffJumpQuick1": {
+  "script": "moves/ledge_cliff_jump_quick1.genoasm",
+  "source": "mars CliffJumpQuick1",
+  "windows": [],
+  "hitboxes": []
+ },
+ "CliffJumpQuick2": {
+  "script": "moves/ledge_cliff_jump_quick2.genoasm",
+  "source": "mars CliffJumpQuick2",
+  "windows": [],
+  "hitboxes": []
+ },
+ "CliffJumpSlow1": {
+  "script": "moves/ledge_cliff_jump_slow1.genoasm",
+  "source": "mars CliffJumpSlow1",
+  "windows": [],
+  "hitboxes": []
+ },
+ "CliffJumpSlow2": {
+  "script": "moves/ledge_cliff_jump_slow2.genoasm",
+  "source": "mars CliffJumpSlow2",
+  "windows": [],
+  "hitboxes": []
+ },
+ "CliffWait": {
+  "script": "moves/ledge_cliff_wait.genoasm",
+  "source": "mars CliffWait",
+  "windows": [],
+  "hitboxes": []
+ }
+}

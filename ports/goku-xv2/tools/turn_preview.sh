@@ -21,7 +21,7 @@ mkdir -p "$OUT"
 bake() {   # $1 = set name or "current"
   local s=$1
   rm -rf _build/goku-xv2/cross-port/{Turn,TurnRun,RunBrake}
-  if [ "$s" = current ]; then unset GOKU_LOCO_SET; else
+  if [ "$s" = current ]; then export GOKU_LOCO_SET=none; else
     export GOKU_LOCO_SET=$s; python ports/goku-xv2/tools/cross_port.py --set "$s" > "$OUT/solve-$s.log"
   fi
   GOKU_AUTHOR=turn-preview/$s python ports/goku-xv2/tools/xv2_to_artist.py --no-library --blend > "$OUT/bake-$s.log" 2>&1

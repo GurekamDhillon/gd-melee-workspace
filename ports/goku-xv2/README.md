@@ -235,14 +235,15 @@ and `--gameplay-only --ui` is rejected. Prepare external tools first with
 `python tools/csp/fetch_csproject.py`; no CSProject assets are stored in this repository.
 The rendering and in-game appearance remain unverified until the lead runs them.
 
-## Locomotion sets (Turn, TurnRun, RunBrake): option, not default
+## Locomotion sets (Turn, TurnRun, RunBrake): Falcon's by default
 
-Owner 2026-10-11: Goku's tilt turn and run brake read badly. Retail alternatives are wired behind an option; the default build is unchanged
-(Goku's own authored / XV2-cropped rows).
+Owner 2026-10-11: Goku's tilt turn and run brake read badly. Retail alternatives are wired behind an option; the DEFAULT build is now Captain Falcon's set
+(owner decision, staged on ws/goku-stage), keeping Goku's 12 / 18 / 16 frame lengths. `GOKU_LOCO_SET=none` is Goku's own authored / XV2-cropped rows.
 
 | option | selects |
 |---|---|
-| (unset) | default: Goku's current rows |
+| (unset) | default: `falcon` |
+| `GOKU_LOCO_SET=none` | Goku's previous own rows, no overlay |
 | `GOKU_LOCO_SET=falcon` | Captain Falcon's Turn, TurnRun, RunBrake on Goku's bones (`tools/cross-port-loco-falcon.json`) |
 | `GOKU_LOCO_SET=marth` / `fox` | the same rows from Marth / Fox (`cross-port-loco-marth.json`, `-fox.json`) |
 | `GOKU_LOCO_LEN=retail` | with a set: the source's own row length instead of Goku's current 12 / 18 / 16 frames |

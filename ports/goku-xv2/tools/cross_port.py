@@ -25,6 +25,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import strip_gameplay as SG
 ROOT = PORT.parents[1]
 REGISTRY = PORT / 'tools/cross-port.json'
+LEDGE_REGISTRY = PORT / 'tools/cross-port-ledge.json'   # the ledge set (owner 2026-10-11): Marth's ledge rows, Mario's ledge attacks, always applied
+ROW_SCRIPTS = PORT / 'row_scripts.json'                 # row -> generated script (moves/<name>.genoasm) for rows that are not a gameplay.json move; build.py overlays them
 OUT = ROOT / '_build/goku-xv2/cross-port'
 FIGHTER_JSON = ROOT / '_build/goku-xv2/author-source/fighter.json'
 ART_REPORT = ROOT / '_build/goku-xv2/author-source/art-report.json'
@@ -32,10 +34,12 @@ ART_REPORT = ROOT / '_build/goku-xv2/author-source/art-report.json'
 
 def registry(loco=None):
     """tools/cross-port.json plus, when a locomotion set is selected, tools/cross-port-loco-<set>.json (Turn, TurnRun, RunBrake from another fighter).
-    The set is GOKU_LOCO_SET (falcon | marth | fox ...); unset is the default build: Goku's own locomotion rows, no overlay."""
+    The set is GOKU_LOCO_SET (falcon | marth | fox ...); unset is the default build = falcon (owner 2026-10-11: Captain Falcon's Turn / TurnRun / RunBrake);
+    GOKU_LOCO_SET=none (or empty) is no overlay: Goku's own authored rows."""
     reg = json.loads(REGISTRY.read_text(encoding='utf-8'))
-    loco = os.environ.get('GOKU_LOCO_SET', '') if loco is None else loco
-    if loco:
+    reg.update(json.loads(LEDGE_REGISTRY.read_text(encoding='utf-8')))
+    loco = os.environ.get('GOKU_LOCO_SET', 'falcon') if loco is None else loco
+    if loco and loco != 'none':
         f = REGISTRY.with_name('cross-port-loco-%s.json' % loco)
         if not f.exists():
             raise SystemExit('GOKU_LOCO_SET=%s: %s does not exist' % (loco, f.name))
@@ -178,6 +182,15 @@ def generate(row, entry, out=None):
         m['pose_review'] = ("Cross-port clip: %s's %s retargeted by bone role (a bone-scale track is carried when the source has one: clips.scale_bones). "
                             "Pose review in the LAB owed." % (who, entry['action']))
         SG.save(gp)  # full file + regenerated stripped gameplay.json
+    elif entry.get('row_script'):
+        # a row that is not a gameplay.json move (the ledge set): its script (intangibility, hitboxes) is the source row's, with gfx / sfx left behind (they name the
+        # source fighter's effect and sound banks). build.py overlays it on the row (row_scripts.json).
+        move = PORT / 'moves' / (entry['row_script'] + '.genoasm')
+        move.write_text(chr(10).join(text) + chr(10), encoding='utf-8')
+        rs = json.loads(ROW_SCRIPTS.read_text(encoding='utf-8')) if ROW_SCRIPTS.exists() else {}
+        rs[row] = {'script': 'moves/%s.genoasm' % entry['row_script'], 'source': '%s %s' % (entry['fighter'], entry['action']), 'windows': windows,
+                   'hitboxes': [{'role': mk.get(x['src_role'], x['src_role']), 'before': x['before'], 'after': x['after']} for x in moved]}
+        ROW_SCRIPTS.write_text(json.dumps(dict(sorted(rs.items())), indent=1) + chr(10), encoding='utf-8')
     summary = {'row': row, 'clip': str(OUT_ / row / 'clip.npz'), 'move_script': str(move), 'ratio': ratio, 'build_scale': build_scale,
                'windows': windows, 'iasa': iasa, 'release': release, 'samples': samples, 'hitboxes': moved,
                'worst_end_effector_error': max(v['max'] for v in report['end_effector_error'].values())}

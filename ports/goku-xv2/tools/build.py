@@ -482,6 +482,23 @@ def apply(package, art_build, ir_path=None):
                       'rows':rows,'script_frames':info,'classification':'destination design / static source candidates',
                       'pose_review':spec.get('pose_review'),
                       'words_sha256':hashlib.sha256(destination.read_bytes()).hexdigest()})
+    # Row scripts (row_scripts.json, written by cross_port.py): the ledge set's retail scripts (intangibility, hitboxes) overlaid on their rows; not gameplay.json moves
+    rs_file = PORT/'row_scripts.json'
+    if rs_file.exists():
+        row_by_name = {v[0]: v[1] for v in motion_rows.values()}
+        for rname, rs in json.loads(rs_file.read_text(encoding='utf-8')).items():
+            text = bind((PORT/rs['script']).read_text(encoding='utf-8'), plan, scale)
+            words = script.assemble(text, cfg['states'])
+            timing = report.timing_problems(words)
+            if timing:
+                raise ValueError('Hitbox timing in %s would not run as written: %s' % (rs['script'], ' '.join(timing)))
+            sname = Path(rs['script']).stem
+            (package/'moves').mkdir(exist_ok=True)
+            (package/rs['script']).write_text(text, encoding='utf-8')
+            (package/'moves'/f'{sname}.words').write_text(' '.join(f'0x{x:08X}' for x in words)+chr(10), encoding='utf-8')
+            overlays[row_by_name[rname]] = {'index':row_by_name[rname],'file':f'moves/{sname}.words'}
+            audit.append({'move':sname,'parity':None,'source_scripts':[rs['source']],'rows':[row_by_name[rname]],'script_frames':report.frames(words),
+                          'classification':'cross-port row script (retail source row)','words_sha256':hashlib.sha256(' '.join(f'0x{x:08X}' for x in words).encode()).hexdigest()})
     fighter.update({key:cfg[key] for key in ('lua','states','specials','articles','jumps')})
     if cfg.get('controls'):
         fighter['controls'] = cfg['controls']   # per-fighter CSS layouts/extras (docs/geno.md section 26): Goku's layout B (Y -> D-pad Down = the blast input)
