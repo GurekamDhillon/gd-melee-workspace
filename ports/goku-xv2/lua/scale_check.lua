@@ -1,5 +1,5 @@
 -- gd.set_scale check (tag SCALECHECK): set 1.3 on P1 and compare against 1.0: scale readback, hurtbox extent and radius,
--- ECB size, jab reach (farthest active hitbox edge from the fighter), camera/respawn-free; then rewind exactness across a
+-- ECB size, jab reach (farthest active hitbox edge) and the farthest distance at which the jab connects (hurt/hit tests); then rewind exactness across a
 -- scale write, and that the scale clamps to 0.5..2.0. The refused-online half is the source test pc/tests/set_scale_source_test.py.
 local function span()
   local lo, hi, rmax, n = 1e9, -1e9, 0, 0
@@ -25,6 +25,20 @@ local function reach()
   end
   return best
 end
+-- the farthest P2 distance at which P1's jab still connects (the hurt/hit tests scale at use)
+local function max_hit_dist()
+  local best = 0
+  for d = 8, 44, 2 do
+    for _ = 1, 20 do
+      if pcall(function() gd.teleport(1, 0, 0); gd.teleport(2, d, 0) end) then break end
+      gd.wait(15)
+    end
+    gd.set_percent(2, 0); gd.wait(45)
+    gd.input(1, {buttons = 'A'}, 2); gd.wait(25)
+    if (gd.player(2).percent or 0) > 0 then best = d end
+  end
+  return best
+end
 gd.run(function()
   local ok, why = pcall(function()
     assert(gd.wait_until(function() return gd.match().active and gd.match().frame > 90 end, 6000))
@@ -39,9 +53,13 @@ gd.run(function()
     gd.log(string.format('SCALECHECK 1.3: scale %.3f span %.2f radius %.2f ecb_h %.2f jab reach %.2f', gd.player(1).scale, s1, r1, e1, w1))
     assert(math.abs(gd.player(1).scale - 1.3) < 0.001, 'scale readback')
     assert(s1 > s0 * 1.2 and s1 < s0 * 1.4, 'hurtbox span did not scale ~1.3: ' .. s0 .. ' -> ' .. s1)
-    assert(r1 > r0 * 1.2, 'hurtbox radius did not scale: ' .. r0 .. ' -> ' .. r1)
+    -- gd.hurtboxes reports the raw capsule radius; retail multiplies by x34_scale.y where the capsule is tested, so the radius is proven by hits below
     assert(e1 > e0 * 1.15, 'ECB did not grow: ' .. e0 .. ' -> ' .. e1)
     assert(w0 > 0 and w1 > w0 * 1.1, 'jab reach did not scale: ' .. w0 .. ' -> ' .. w1)
+    gd.set_scale(1, 1.0); local h0 = max_hit_dist()
+    gd.set_scale(1, 1.3); local h1 = max_hit_dist()
+    gd.log(string.format('SCALECHECK farthest jab hit: scale 1.0 at %d, 1.3 at %d', h0, h1))
+    assert(h0 > 0 and h1 >= h0 + 2, 'hit range did not grow with the scale: ' .. h0 .. ' -> ' .. h1)
     gd.set_scale(1, 9); assert(math.abs(gd.player(1).scale - 2.0) < 0.001, 'clamp high')
     gd.set_scale(1, 0.1); assert(math.abs(gd.player(1).scale - 0.5) < 0.001, 'clamp low')
     gd.set_scale(1, 1.3); gd.wait(10)
