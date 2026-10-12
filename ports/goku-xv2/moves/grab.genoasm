@@ -1,12 +1,10 @@
-# HB-SAMPLE (remake phase 2, 2026-10-11): a generated STARTING POINT, not an authored hitbox. Spheres ride the leading limb chain (tip, middle, inner),
-# sized from the mesh; timing, damage and reaction are derived from the XV2 hit entry (tools/remake_samples.py, REMAKE-SAMPLES.md). Edit it in the Workbench.
-# XV2 hit entry 600; limb hand.R
+# HB-SAMPLE (CROSS-PORT): Melee Captain Catch (retail data from the vanilla disc), retargeted by bone role; owner choice: owner 2026-10-11: the grab family is Captain Falcon's (his animation, grab boxes and throw data on Goku's bones); the retarget was approved by eye in Blender (lane ws/goku-falcon-grabs).
+# Hitbox joint, size and offsets are Captain's moved to Goku's bone of the same role (a sphere on the root joint is scaled about it) and scaled by the size ratio 0.7570 (script units: build.py multiplies by 1.4286; the engine then applies Goku's built size 1.2 to the fighter, model and hitboxes alike). Damage, angle, KBG/BKB, timing, auto-cancel and IASA are unchanged; left behind: gfx, sfx.
 PUT ANIM_RATE 1.0
-wait_until 9
-hitbox slot=0 joint=@ARM_R@ damage=0 size=1.4 x=-2.802 y=-0.0331 z=0.04988 angle=361 kbg=100 fkb=0 bkb=0 element=8 item_hit=1 clank=1 sfx_kind=2
-hitbox slot=1 joint=@ARM_R@ damage=0 size=1.4 x=-1.492 y=-0.05802 z=0.01413 angle=361 kbg=100 fkb=0 bkb=0 element=8 item_hit=1 clank=1 sfx_kind=2
-hitbox slot=2 joint=@UPARM_R@ damage=0 size=1.419 x=-1.202 y=-0.08994 z=0.07694 angle=361 kbg=100 fkb=0 bkb=0 element=8 item_hit=1 clank=1 sfx_kind=2
-wait_until 17
-clear_hitboxes
-wait_until 28
-iasa
+wait_until 6
+hitbox raw=0x2C000000,0x02120000,0x056203BA,0xB4990012,0x0020008B
+hitbox raw=0x2C800000,0x02120000,0x0562013E,0xB4990012,0x0020008B
+throw slot=1 damage=2 angle=0 kbg=50 fkb=0 bkb=70 element=0 sfx_severity=0 sfx_kind=2
+wait_until 8
+hitboxes_clear
+throw_release

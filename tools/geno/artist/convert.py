@@ -230,11 +230,11 @@ def write_bank(f, out, plan_path=None):
                 for k, ty in enumerate((1, 2, 3)):
                     body, fv, fs = AF._encode_channel(eul[:, k], AF.FRAC_ROT)
                     jt.append((ty, body, fv, fs))
-            if not j["synth"] and (nm, "translation") in chans and (nm == hips or (nm == trans and c.root_motion)):
+            if not j["synth"] and (nm, "translation") in chans and (nm == hips or (nm == trans and c.root_motion) or nm in c.translate_bones):
                 t, v = chans[(nm, "translation")]
                 v = v * f.scale
-                if nm == hips and j.get("lift"):
-                    v = v.copy(); v[:, 1] -= j["lift"]
+                if (nm == hips or (nm in c.translate_bones and j["parent"] == name_to_plan.get("YRotN"))) and j.get("lift"):
+                    v = v.copy(); v[:, 1] -= j["lift"]   # children of YRotN are planned lift lower (XRotN carries the hips height)
                 for k, ty in enumerate((5, 6, 7)):
                     body, fv, fs = AF._encode_channel(v[:, k], None)
                     jt.append((ty, body, fv, fs))

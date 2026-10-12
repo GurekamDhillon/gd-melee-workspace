@@ -144,3 +144,23 @@ Effect, Sound, Targeting Assistance, Eye Movement; entries 1 and 6 carry one und
 no dissolve shader was added. Stand-ins, named: the body is hidden with `PUT HIDDEN` for the gap (XV2 hides it through the clip); the wind ribbons are world-fixed live
 particles (`follow none`) because the engine trail has no bone-sampled ribbon; the FX is bound by the retail Escape animation row (233/234/235), since the rolls are not Geno states.
 Owed: seeing it on screen (the headless camera shows the stage, not the fighters).
+
+## Phase 5 (2026-10-11): built size 1.2, bigger sample hitboxes, Down B is the ki charge, air blast, the Falcon / Mewtwo / Marth grab family
+
+- **Built size 1.2** (owner: "Goku should be at 1.2 scale for his default size"). The define has `"scale": 1.2` (`SIZE` in `tools/build.py`): the engine multiplies it into
+  `x34_scale.x` when the fighter loads, the field Giant / Tiny Melee set, so the model, the hurt and hit capsules (scaled where tested), ECB, ledge snap, camera box and the scaled
+  attributes behave as after the LAB's `lab scale 1.2`. Articles and Lua numbers are world units and are not covered by it: the Kamehameha beam, the ki blast and the ki model get
+  the same factor in `build.py` / `combo_apply.py`. The roll was authored at 22.75 so it still travels 27.3 in game (owner: "roll distance 27").
+- **Sample hitboxes x2, except back air** (owner): `remake_samples.py` `HB_GROW = 2.0` on every sphere radius (centres stay on the limb bones), `GROW_EXCLUDE = ('bair',)`.
+  The Kamehameha, KiBlast and Counter designs are untouched.
+- **Down B is only the ki charge** (owner): ground `KiCharge` (XV2 `APL_SPA_KTN_C`), air `KiChargeAir` (`APL_SPA_KTN_S_C`, the skill's "Floating" entry, BAC 2: no Movement event, so the
+  fall is slowed to a 0.12 / frame sink by Lua on `phys: none`; Melee's air physics keeps a fast-fall flag from the Down B press). Hold to charge, only while ki < 100, a tap is a short
+  charge. The Counter and Riposte states stay defined but unbound. No ki comes back during a flight or its special fall.
+- **Air ki blast**: `Blast>KiBlastAir` from the jump / fall states, 5 ki, XV2's own blast (the POW BAC 0 `ATC_SHOT_N` fires from Floating as well), no fall change, normal landing, actionable after.
+  A flight cancel was left out: a shot has no hit to key the "hit keeps control, miss = special fall" rule on.
+- **ThrowF is Mewtwo's** (owner): release 5% at script frame 19 (angle 78, fixed knockback 38), then five small projectiles from frame 33 at 7-frame spacing, speed 6.0, 45 frames, about
+  0.9% each (retail Mewtwo measured with `lua/throw_probe.lua`: 9.5% total). The projectiles are Goku's ki blasts (article `KiThrow`); the aim is homing, not Mewtwo's arm pose.
+  The clip is the ki blast pose `ATC_SHOT_F` retimed to Mewtwo's 75 frames.
+- **Grab family cross-ports** (`tools/cross-port.json`, `tools/cross_port.py`, like Luigi's bair): Catch, CatchDash, CatchWait, CatchAttack (pummel), ThrowB, ThrowLw from Captain Falcon;
+  ThrowHi from Marth (tentative, to compare). Animation, grab boxes (two or three spheres on the root joint, scaled by the size ratio) and throw data are the source's; Falcon's grab effect and
+  sound stay behind. The thrown victim plays the source thrower's row: `thrown_as: {default: captain, f: mewtwo, hi: mars}` (new in the define, geno.md 22.10).

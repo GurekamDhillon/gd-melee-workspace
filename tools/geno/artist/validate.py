@@ -339,8 +339,8 @@ def _clips(f, r):
         for (bn, path), (tm, v) in c.chan.items():
             if path == "translation" and bn in bone_names:
                 b = f.bone_by_name[bn]
-                if b.role in ("hips", "translation"):
-                    continue
+                if b.role in ("hips", "translation") or bn in c.translate_bones:
+                    continue   # translate_bones: carried on purpose (a throw's grab anchor)
                 rest = np.array(f.nodes[b.node].get("translation", [0, 0, 0]))
                 if len(v) and np.abs(v - rest).max() > 0.02:
                     r.add(W, "CLIP_TRANSLATE", where, "bone '%s' is translated (up to %.2f units); the engine honours translation only on the hips and translation bone (measured: limbs collapse)" % (bn, np.abs(v - rest).max()),

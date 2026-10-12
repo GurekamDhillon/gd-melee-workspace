@@ -325,7 +325,7 @@ def sample_track(keys, frames, rotation=False):
 WAIT_CLIP = 0   # GOK_BAS_STAND: XV2's ground idle (remake phase 3, owner 2026-10-11: no hover; the floating idle GOK_BAS_STAND_S is clip 1)
 
 
-ROLL_DISTANCE=27.3   # world units a roll travels: Goku's own earlier roll (owner 2026-10-11: 52, Mewtwo's measured reach, was too long); Mario's is 33
+ROLL_DISTANCE=22.75   # world units a roll travels: Goku's own earlier roll (owner 2026-10-11: 52, Mewtwo's measured reach, was too long); Mario's is 33  # authored 22.75 = 27.3 / SIZE 1.2: the in-game roll travels 27.3 at the built size (owner 2026-10-11)
 REMAKE_REPORT=[]   # filled by row_specs: what remake_apply did to each row
 
 
@@ -417,11 +417,14 @@ def row_specs(source):
                   'status':'move review re-crop: '+c['note'],'move':c['move']}
     # Cross-port rows (tools/cross-port.json, tools/cross_port.py): a retail Melee action retargeted onto this rig; the clip is the solved
     # npz, the XV2 clip below is only a placeholder for the lookups (its channels are replaced in animations()).
-    for row,c in json.loads((PORT/'tools/cross-port.json').read_text()).items():
-        npz=ROOT/'_build/goku-xv2/cross-port'/row/'clip.npz'
-        if not npz.exists():raise SystemExit('cross-port clip missing: run python ports/goku-xv2/tools/cross_port.py (needs GW_ISO_VANILLA)')
-        out[row]={'clip':'clip:'+EAN+'/0','loop':False,'frames':int(np.load(npz)['frames']),'start':0,'move':c['move'],
-                  'status':'CROSS-PORT: Melee %s %s (%s)'%(c['fighter'].capitalize(),c['action'],c['reason']),'cross_port':dict(c,npz=str(npz))}
+    def put_cross_ports():
+        # applied here and again after the remake / rowmap passes below: those rewrite rows by name (the grab and throw slots), a cross-port row must be the last word
+        for row,c in json.loads((PORT/'tools/cross-port.json').read_text()).items():
+            npz=ROOT/'_build/goku-xv2/cross-port'/row/'clip.npz'
+            if not npz.exists():raise SystemExit('cross-port clip missing: run python ports/goku-xv2/tools/cross_port.py (needs GW_ISO_VANILLA)')
+            out[row]={'clip':'clip:'+EAN+'/0','loop':bool(c.get('loop')),'frames':int(np.load(npz)['frames']),'start':0,'move':c['move'],
+                      'status':'CROSS-PORT: Melee %s %s (%s)'%(c['fighter'].capitalize(),c['action'],c['reason']),'cross_port':dict(c,npz=str(npz))}
+    put_cross_ports()
     # Custom move art deliberately has separate charge/release stages. These are
     # local design crops, not claims about source BAC state-machine equivalence.
     charge=out['KameCharge'];charge.update(frames=135,loop=True,hold_source=40)   # 135: the XV2 charge SE (2.1 s) plays once per loop; the script restarts when the clip wraps
@@ -470,11 +473,15 @@ def row_specs(source):
                           'status':'PICK provisional (BAC 427 clip GOK_ATC_023, hit f10): Dragon Rush follow-up flurry'}
     direct('Riposte',58,False,46,1,'PICK provisional (BAC 475 clip GOK_ATC_008, from f1, 46 frames so the air counter is not shorter than 0.55x Melee): Z-vanish reappear kick')
     out['ThrowF'].update(frames=32,time_factor=5.,events=[],status='authored 5x primary-clip crop: source release 90 -> target18; victim choreography omitted')
+    CROSS=set(json.loads((PORT/'tools/cross-port.json').read_text()))   # rows whose clip is a cross-port (a retail Melee action retargeted): no placeholder or alias over them
     for row in ['ThrowB','ThrowHi','ThrowLw','CatchAttack']:
+        if row in CROSS:continue
         direct(row,81,False,32,24,'authored-needed placeholder: held catch pose');out[row]['hold_source']=24
     for base,aliases in [('AttackS3S',['AttackS3Hi','AttackS3HiS','AttackS3LwS','AttackS3Lw']),
                           ('AttackS4S',['AttackS4Hi','AttackS4HiS','AttackS4LwS','AttackS4Lw']),('Catch',['CatchDash'])]:
-        for row in aliases:out[row]={**out[base],'status':'explicit prototype reuse of '+base+'; directional pose authored-needed'}
+        for row in aliases:
+            if row in CROSS:continue
+            out[row]={**out[base],'status':'explicit prototype reuse of '+base+'; directional pose authored-needed'}
     # 2026-10-08 damage / down / tech / capture / thrown / grab-throw / item rows (tools/rowmap.py; FIDELITY.md)
     import rowmap
     byname={}
@@ -487,6 +494,9 @@ def row_specs(source):
     # clip already is the pick keeps its tuned crop. GAP slots have no pick and change nothing.
     import remake_apply
     REMAKE_REPORT[:]=remake_apply.apply(out,source,byname.get,EAN,rowmap.ALIASES)
+    put_cross_ports()
+    for r in REMAKE_REPORT:
+        if r.get('row') in CROSS:r.update(action='superseded',why='the row is a cross-port (tools/cross-port.json)')
     # Homing dash strike (XV2 BAC 476, Guard+Heavy): BOOST_F_00 f0-19 then ATC_008 from f20, 66 frames (the BAC's own two bindings, played at speed 1).
     # Entered from the shield by a combo route (combo.json Guard>Homing); a row of its own so the clip chain is the one XV2 plays.
     # Flight aerials (phase 4): the aerial rows again, as declared rows of their own, for the Geno states FlightNair..FlightDair (their script and row are the aerial's)
@@ -799,13 +809,15 @@ def animations(source,mesh,rows,splices=None):
                 elif kind=='Position' and bone=='b_C_Base':root[ix]=sample_track(keys,tm)@BASIS*mesh['factor']
                 elif kind=='Position' and bone!='b_C_Base':ignored.add(bone)
                 elif kind=='Scale' and np.max(np.abs(sample_track(keys,tm)-1.))>1e-5:lostscale.add(bone)
-        cp=rs.get('cross_port');scales={}
+        cp=rs.get('cross_port');scales={};trans={}
         if cp:
             z=np.load(cp['npz']);have=int(z['frames']);zn=list(z['names'])
             pick=lambda a:np.concatenate([a,np.repeat(a[-1:],count-have,axis=0)]) if count>have else a[:count]
             for n in names:
                 if n in zn:rotations[n]=pick(z['q'][:,zn.index(n)])
             hip=pick(z['hips_t']).copy();root=np.zeros((count,3));lostscale=set()
+            if 'anchor_t' in z.files and 'grab_anchor' in names and rs['cross_port'].get('anchor',True):   # the source's own grab-anchor motion (a throw carries the victim): translation + rotation of the anchor bone
+                rotations['grab_anchor']=pick(z['anchor_q']);trans['grab_anchor']=pick(z['anchor_t'])
             # 2026-10-09 (owner #11): the source's bone-scale tracks (Luigi's thigh stretch) ride on the destination bone of the same role
             sj=Path(cp['npz']).with_name('scale.json')
             if sj.exists():
@@ -903,7 +915,7 @@ def animations(source,mesh,rows,splices=None):
             hip,root_h,hand_rep=HL.apply_clip(hand_clips[name],count=count,rotations=rotations,rest_q=rest_q,hips=hip,root=root if rs.get('root_motion') else None,
                                               hips_bone='b_C_Pelvis',root_bone='b_C_Base',rest_hips=rest['b_C_Pelvis'][:3,3])
             if root_h is not None:root=root_h;hand_root=True
-        result[name]={'rotation':rotations,'hips':hip,'root':root if (rs.get('root_motion') or hand_root) else None,'frames':count,'loop':rs['loop'],'scale':scales}
+        result[name]={'rotation':rotations,'hips':hip,'root':root if (rs.get('root_motion') or hand_root) else None,'frames':count,'loop':rs['loop'],'scale':scales,'trans':trans}
         report[name]={k:v for k,v in rs.items() if k!='events'}
         report[name].update(ground_report)
         report[name].update(frames=count,source_name=clip['name'],ground_offset=-ground,
@@ -950,6 +962,7 @@ def emit_glb(mesh,anims,path):
         channel('b_C_Pelvis','translation',a['hips'],'VEC3')
         if a['root'] is not None:channel('b_C_Base','translation',a['root'],'VEC3')
         for bone,v in a.get('scale',{}).items():channel(bone,'scale',v,'VEC3')
+        for bone,v in a.get('trans',{}).items():channel(bone,'translation',v,'VEC3')
         g['animations'].append(an)
     b.save(path)
 
@@ -1000,7 +1013,8 @@ def main(argv=None):
     cfg={'schema':'geno-artist/1','key':'goku-xv2','name':'Goku','art':{'glb':'goku.glb','scale':1,'reduce_influences':False},
          'roles':ROLES,'costumes':[{'name':'default','texture':'atlas.png'}],
          'clips':{'map':cmap,'loop':{n:a['loop'] for n,a in anims.items()},'root_motion':[n for n,a in anims.items() if a['root'] is not None],
-                  'scale_bones':{n:sorted(a['scale']) for n,a in anims.items() if a.get('scale')}},'hurtboxes':'auto','output':str(out/'package')}
+                  'scale_bones':{n:sorted(a['scale']) for n,a in anims.items() if a.get('scale')},
+                  'translate_bones':{n:sorted(a['trans']) for n,a in anims.items() if a.get('trans')}},'hurtboxes':'auto','output':str(out/'package')}
     write(out/'fighter.json',cfg)
     write(out/'clip-library.json',{'schema':'goku-clip-library/1','clips':browse})
     write(out/'goku.glb.geno.json',{'schema':'geno-fighter-sidecar/1','roles':ROLES,'clips':{n:{'loop':a['loop'],'frames':a['frames'],'root_motion':a['root'] is not None} for n,a in anims.items()}})

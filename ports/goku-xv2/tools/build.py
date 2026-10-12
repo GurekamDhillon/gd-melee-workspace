@@ -231,6 +231,7 @@ FX_STATES = {
     'KameFull': [(8, 'P_TrailGokuXKameMuzzle', 'hand.R', 1.0, 'emitter_life'), (8, 'P_TrailGokuXKameFull', 'hand.R', 1.0, 'state_exit')],
     'KameMax': [(10, 'P_TrailGokuXKameMuzzleMax', 'hand.R', 1.0, 'emitter_life'), (10, 'P_TrailGokuXKameMax', 'hand.R', 1.0, 'state_exit')],
     'KiCharge': [(1, 'P_TrailGokuAura', 'hips', 1.3, 'state_exit')],
+    'KiChargeAir': [(1, 'P_TrailGokuAura', 'hips', 1.3, 'state_exit')],
     'KameSuper': [(1, 'P_TrailGokuAura', 'hips', 1.1, 'state_exit'), (1, 'P_TrailGokuXKameSuperCharge', 'hand.R', 1.0, 'state_exit', 'hand.L'),
                   (54, 'P_TrailGokuXKameSuperMuzzle', 'hand.R', 1.0, 'emitter_life'), (54, 'P_TrailGokuXKameSuper', 'hand.R', 1.0, 'state_exit')],
     'Recovery': [(5, 'P_TrailGokuVanish', 'chest', 1.0, 'emitter_life')],
@@ -406,7 +407,7 @@ def apply(package, art_build, ir_path=None):
     lib = AUTHOR/'clip-library.json'
     if lib.exists():  # LAB CLIPS library: unbound declared rows 303.. (geno.md fighter.rows)
         fighter.setdefault('fighter', {})['rows'] = [c['name'] for c in load(lib)['clips']] + \
-            [n for n in ('ITEnd', 'KiCharge', 'KameStore1', 'KameStore2', 'KameStore3', 'KameStore4', 'KameThin', 'KameMax', 'KameSuper', 'RushCombo', 'Homing', 'FlightUp', 'FlightF', 'FlightB', 'FlightNair', 'FlightFair', 'FlightBair', 'FlightUair', 'FlightDair') if n in plan_clip_names(package)]
+            [n for n in ('ITEnd', 'KiCharge', 'KiChargeAir', 'KameStore1', 'KameStore2', 'KameStore3', 'KameStore4', 'KameThin', 'KameMax', 'KameSuper', 'RushCombo', 'Homing', 'FlightUp', 'FlightF', 'FlightB', 'FlightNair', 'FlightFair', 'FlightBair', 'FlightUair', 'FlightDair') if n in plan_clip_names(package)]
     if cfg.get('cape'):
         fighter['cape'] = cfg['cape']  # Instant Transmission (geno.cape) parameters
     for st in fighter.get('states', []):  # states that name a declared clip get its own row number

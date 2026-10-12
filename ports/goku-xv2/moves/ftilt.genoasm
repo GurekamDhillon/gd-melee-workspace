@@ -3,9 +3,9 @@
 # XV2 hit entry 301; limb hand.R
 PUT ANIM_RATE 1.0
 wait_until 3
-hitbox slot=0 joint=@ARM_R@ damage=3 size=1.4 x=-2.802 y=-0.0331 z=0.04988 angle=361 kbg=50 fkb=0 bkb=8
-hitbox slot=1 joint=@ARM_R@ damage=3 size=1.4 x=-1.492 y=-0.05802 z=0.01413 angle=361 kbg=50 fkb=0 bkb=5
-hitbox slot=2 joint=@UPARM_R@ damage=2 size=1.419 x=-1.202 y=-0.08994 z=0.07694 angle=361 kbg=50 fkb=0 bkb=2
+hitbox slot=0 joint=@ARM_R@ damage=3 size=2.8 x=-2.802 y=-0.0331 z=0.04988 angle=361 kbg=50 fkb=0 bkb=8
+hitbox slot=1 joint=@ARM_R@ damage=3 size=2.8 x=-1.492 y=-0.05802 z=0.01413 angle=361 kbg=50 fkb=0 bkb=5
+hitbox slot=2 joint=@UPARM_R@ damage=2 size=2.839 x=-1.202 y=-0.08994 z=0.07694 angle=361 kbg=50 fkb=0 bkb=2
 wait_until 5
 sfx behavior=1 sfx_id=165 volume=127 panning=64
 wait_until 7

@@ -210,9 +210,11 @@ def cmd_check():
                     if k in d:
                         problems.append('%s: HB-NONE design still has %s' % (m['name'], k))
             elif hb == 'HB-SAMPLE':
-                if not has_hitbox(text) or 'HB-SAMPLE' not in text[:200]:
-                    problems.append('%s: HB-SAMPLE needs hitbox words and the HB-SAMPLE header in %s' % (m['name'], m['script']))
-                if not m.get('windows'):
+                # a cross-port throw (tag throw) has no hitbox word: its damage is the script's throw / article words (windows are what the build derives from hitbox words: none)
+                throw_hit = m.get('tag') == 'throw' and any(w in ('throw', 'call') for w in words_of(text))
+                if not (has_hitbox(text) or throw_hit) or 'HB-SAMPLE' not in text[:200]:
+                    problems.append('%s: HB-SAMPLE needs hitbox words (or throw words on a throw) and the HB-SAMPLE header in %s' % (m['name'], m['script']))
+                if not m.get('windows') and not throw_hit:
                     problems.append('%s: HB-SAMPLE without windows' % m['name'])
             elif hb == 'HB-DESIGN':
                 if stem not in DESIGN:

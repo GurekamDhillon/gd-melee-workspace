@@ -65,11 +65,19 @@ def main(argv=None):
         if st['clip'] not in rows:
             raise SystemExit(f"clip {st['clip']} is not a library row")
         row = 303 + rows.index(st['clip'])
-        f['states'].append({'name': st['name'], 'behavior': 'geno.ground', 'subaction': row, 'like': st['like'], 'phys': 'auto',
-                            'coll': 'both', 'iasa': 'interrupt', 'move_tag': st['move_tag']})
+        if st.get('behavior') == 'geno.air':   # an air twin of a ground state (KiBlastAir): the same row, clip and script; landing is the engine's normal Landing
+            f['states'].append({'name': st['name'], 'behavior': 'geno.air', 'subaction': row, 'like': st['like'], 'phys': 'auto', 'coll': 'air',
+                                'iasa': 'interrupt', 'next': 'auto', 'move_tag': st['move_tag']})
+        else:
+            f['states'].append({'name': st['name'], 'behavior': 'geno.ground', 'subaction': row, 'like': st['like'], 'phys': 'auto',
+                                'coll': 'both', 'iasa': 'interrupt', 'move_tag': st['move_tag']})
         names.append(st['name'])
+    made = set()
     for st in spec['states']:
         row = 303 + rows.index(st['clip'])
+        if row in made:   # the air twin shares the ground state's overlay (same clip, same script)
+            continue
+        made.add(row)
         text = G.bind((HERE / st['script']).read_text(encoding='utf-8'), plan, scale)
         # KiBlast is appended after the package's own articles; the script says 3 (the count before the specials pass added more)
         text = text.replace('geno.article.spawn 3', f"geno.article.spawn {len(f['articles'])}")
@@ -111,9 +119,9 @@ def main(argv=None):
     model = f['articles'][0].get('model') if f.get('articles') else None
     for a in spec['articles']:
         a = json.loads(json.dumps(a))
-        a['spawn'] = [v * scale for v in a['spawn']]
+        a['spawn'] = [v * scale * G.SIZE for v in a['spawn']]   # world units, so the built size (G.SIZE, Goku's define "scale") applies like the package's own articles
         for h in a['hitboxes']:
-            h['size'] = round(h['size'] * scale, 4)
+            h['size'] = round(h['size'] * scale * G.SIZE, 4)
         if model:
             a['model'] = model
         f['articles'].append(a)

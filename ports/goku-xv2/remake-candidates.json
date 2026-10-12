@@ -898,9 +898,9 @@
  },
  {
   "group": "6 Specials",
-  "slot": "Down B counter / ki charge",
+  "slot": "Down B ki charge (ground and air)",
   "rows": "SpecialLw, SpecialAirLw, KiCharge",
-  "current": "ESC_KUR_C x0.39 (tap: Z-vanish counter) / APL_SPA_KTN_C (hold: ki charge)",
+  "current": "APL_SPA_KTN_C on the ground, APL_SPA_KTN_S_C in the air (hold: ki charge; the tap counter is unbound)",
   "role": "Counter and ki charge",
   "candidates": [
    {

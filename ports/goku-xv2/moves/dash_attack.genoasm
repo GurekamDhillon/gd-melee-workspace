@@ -3,9 +3,9 @@
 # XV2 hit entry 337; limb foot.R
 PUT ANIM_RATE 1.0
 wait_until 5
-hitbox slot=0 joint=@FOOT_R@ damage=12 size=1.4 x=-0.03949 y=-0.4019 z=0.8439 angle=361 kbg=50 fkb=0 bkb=16
-hitbox slot=1 joint=@LEG_R@ damage=10 size=2.52 x=0.04702 y=-1.652 z=-0.1287 angle=361 kbg=50 fkb=0 bkb=13
-hitbox slot=2 joint=@UPLEG_R@ damage=8 size=2.52 x=-0.1149 y=-1.493 z=-0.08663 angle=361 kbg=50 fkb=0 bkb=10
+hitbox slot=0 joint=@FOOT_R@ damage=12 size=2.8 x=-0.03949 y=-0.4019 z=0.8439 angle=361 kbg=50 fkb=0 bkb=16
+hitbox slot=1 joint=@LEG_R@ damage=10 size=5.04 x=0.04702 y=-1.652 z=-0.1287 angle=361 kbg=50 fkb=0 bkb=13
+hitbox slot=2 joint=@UPLEG_R@ damage=8 size=5.04 x=-0.1149 y=-1.493 z=-0.08663 angle=361 kbg=50 fkb=0 bkb=10
 wait_until 6
 sfx behavior=1 sfx_id=165 volume=127 panning=64
 wait_until 9

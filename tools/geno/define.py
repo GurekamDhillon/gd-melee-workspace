@@ -85,7 +85,10 @@ def validate_definition(data, fighter, path):
             errors.append((path+".kirby_copy", 'must be "none" or "retail:<fighter>" (a retail fighter other than Kirby)'))
     thrown = fighter.get("thrown_as")
     if thrown is not None:
-        if not isinstance(thrown, str) or thrown.lower() not in RETAIL_FIGHTERS:
+        names = list(thrown.values()) if isinstance(thrown, dict) else [thrown]
+        if isinstance(thrown, dict) and (not thrown or set(thrown) - {"default", "f", "b", "hi", "lw"}):
+            errors.append((path+".thrown_as", "an object takes only default, f, b, hi, lw"))
+        elif not all(isinstance(n, str) and n.lower() in RETAIL_FIGHTERS for n in names):
             errors.append((path+".thrown_as", "%r is not a retail fighter (mario, fox, captain, ... emblem)" % (thrown,)))
         elif not own:
             errors.append((path+".thrown_as", 'is for a base "none" define (a base "mario" define is thrown with Mario rows)'))
