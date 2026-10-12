@@ -14,12 +14,17 @@
 !combo/tests/**/missions/combo-specs/*.txt
 !combo/tests/**/mod.json
 !workbench.json
+!costumes.json
 # gameplay.json is the STRIPPED file (tools/strip_gameplay.py); gameplay.full.json stays local (section 3)
 !gameplay.json
 !ground_modes.json
 !remake-candidates.json
 !remake-unclear.json
 !tools/cross-port.json
+!tools/cross-port-loco-*.json
+!tools/cross-port-ledge.json
+!row_scripts.json
+!tools/turn_preview.sh
 !splices.json
 # hand-animation deltas (tools/geno/artist/blender/hand_layer.py): the artist's own keyframes only, never a copied source clip
 !anim/hand.json

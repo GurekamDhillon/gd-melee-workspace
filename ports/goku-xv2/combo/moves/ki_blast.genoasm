@@ -1,8 +1,8 @@
-# KiBlast state (remake phase 1, 2026-10-11): one ki blast, the XV2 Blast tap (ATC_SHOT_N clip). Reachable today from the LAB (moves / launch list: KiBlast).
-# Intended trigger: control layout B, Y = ki blast (css-controls layouts, docs/geno.md section 26), which needs a route input class for it: see REMAKE-PLAN-P1.md.
-# HB-DESIGN: the KiBlast article (combo.json articles[0]) is the owner-accepted designed projectile; this state has no hitbox of its own.
+# KiBlast state (start of the held ki volley, owner 2026-10-11): XV2 ATC_SHOT_R (right hand). The blast leaves the RIGHT hand bone at f12 (XV2 BAC 0 fires at f14).
+# Holding the blast input past f22 chains into KiBlastL / KiBlastR (SHOT_L_LOOP / SHOT_R_LOOP, alternating hands, 5 ki each; goku.lua kiblast_frame); release = this clip's tail, free at f26.
+# HB-DESIGN: the KiBlast article (combo.json articles[0], bone = hand.R part) is the owner-accepted designed projectile; this state has no hitbox of its own.
 PUT ANIM_RATE 1.0
-wait 6
+wait 12
 CALL geno.article.spawn 3
-wait_until 24
+wait_until 26
 iasa

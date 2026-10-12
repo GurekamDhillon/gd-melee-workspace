@@ -11,6 +11,8 @@ namespace wb {
 struct RowInfo {
     QString name;
     int moveIndex = 0;
+    QString section = "moves"; // gameplay.json array moveIndex indexes: "moves", or "special_adaptations" for a special state
+    QString stateClip;         // a special state's own clip (its subaction clip:NAME, else the state name)
     QVector<int> motions;
     QString script, tag, clip;
     QString planClip; // the plan's motion_rows/row_clips name for the row's first motion (clip stays the gameplay pick)
@@ -113,7 +115,7 @@ private:
     QStringList comboBase() const;
     const RowInfo *findRow(const QString &name) const;
     QString externalError(const QStringList &paths) const;
-    void syncGameplay(QVector<FileChange> &out, int moveIndex, const QVector<HitboxRef> &before,
+    void syncGameplay(QVector<FileChange> &out, const QString &section, int moveIndex, const QVector<HitboxRef> &before,
                       const QVector<HitboxRef> &after, int added, int removed) const;
     FileStore &fs_;
     ProjectConfig project_;

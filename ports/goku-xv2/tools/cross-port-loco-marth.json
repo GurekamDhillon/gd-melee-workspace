@@ -1,0 +1,55 @@
+{
+ "Turn": {
+  "move": null,
+  "fighter": "mars",
+  "action": "Turn",
+  "anim_only": true,
+  "reason": "locomotion candidate (owner 2026-10-11: Goku's Turn/RunBrake/RunTurn read badly; Marth's on Goku's bones, option GOKU_LOCO_SET=marth)",
+  "fit_frames": 12,
+  "ease_from": [
+   "Wait",
+   3
+  ],
+  "ease_to": [
+   "Wait",
+   4
+  ],
+  "drop_root_travel": true,
+  "turn": true
+ },
+ "TurnRun": {
+  "move": null,
+  "fighter": "mars",
+  "action": "TurnRun",
+  "anim_only": true,
+  "reason": "locomotion candidate (owner 2026-10-11: Goku's Turn/RunBrake/RunTurn read badly; Marth's on Goku's bones, option GOKU_LOCO_SET=marth)",
+  "fit_frames": 18,
+  "ease_from": [
+   "Run",
+   3
+  ],
+  "ease_to": [
+   "Run",
+   4
+  ],
+  "drop_root_travel": true,
+  "turn": true
+ },
+ "RunBrake": {
+  "move": null,
+  "fighter": "mars",
+  "action": "RunBrake",
+  "anim_only": true,
+  "reason": "locomotion candidate (owner 2026-10-11: Goku's Turn/RunBrake/RunTurn read badly; Marth's on Goku's bones, option GOKU_LOCO_SET=marth)",
+  "fit_frames": 16,
+  "ease_from": [
+   "Run",
+   3
+  ],
+  "ease_to": [
+   "Wait",
+   5
+  ],
+  "drop_root_travel": true
+ }
+}

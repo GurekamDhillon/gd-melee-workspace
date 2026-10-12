@@ -168,7 +168,7 @@ def bind(text, plan, scale=1.0):
         lines.append(line)
     return '\n'.join(lines)+'\n'
 
-SIZE = 1.2   # the built size of Goku (define "scale"); change here only
+SIZE = 1.1   # the built size of Goku (define "scale"); change here only
 
 
 def scale_articles(articles, scale):
@@ -349,16 +349,34 @@ def write_presentation(package, fighter):
                       (package/'files'/n).is_file() for n in values):
         return
     art = ROOT/'_build/goku-xv2/presentation'
-    if not all((art/n).exists() for n in ('icon.png', 'portrait.png', 'stock.png')):
-        print('presentation: _build/goku-xv2/presentation/*.png missing (run tools/presentation_art.py in Blender); no own select art')
+    # Per-costume art (tools/presentation_render.py writes presentation/<costume>/*.png); the flat icon/portrait/stock.png still works for one costume.
+    cnames = [c['file'][len('GnGokuXv2_'):-len('.dat')] for c in fighter['fighter']['costumes']]
+    def src(cname, png):
+        for p in (art/cname/png, art/png):
+            if p.exists():
+                return p
+    if not all(src(c, n) for c in cnames[:1] for n in ('icon.png', 'portrait.png', 'stock.png')):
+        print('presentation: _build/goku-xv2/presentation/<costume>/*.png missing (run tools/presentation_render.py); no own select art')
         return
     tool = Path(os.environ.get('GW_MELEE') or ROOT/'melee')/'pc/tools/png2gx.py'
-    names = {}
-    for key, png, fmt in (('icon', 'icon.png', 'rgb5a3'), ('portrait', 'portrait.png', 'rgb5a3'), ('stock', 'stock.png', 'rgba8')):
-        name = f'GnGokuXv2_{key}.gxtex'
-        subprocess.run([sys.executable, str(tool), str(art/png), str(package/'files'/name), '--format', fmt, '--allow-odd-size'], check=True, capture_output=True)
-        names[key] = name
-    fighter['presentation'] = {'icon': names['icon'], 'portrait': [names['portrait']], 'stock': [names['stock']]}
+    def conv(png, name, fmt):
+        from PIL import Image   # png2gx tiles 4x4 and fails on 52x74: pad to a multiple of 4 with transparent pixels (bottom/right)
+        im = Image.open(png).convert('RGBA')
+        if im.width % 4 or im.height % 4:
+            pad = Image.new('RGBA', ((im.width + 3) // 4 * 4, (im.height + 3) // 4 * 4), (0, 0, 0, 0))
+            pad.paste(im, (0, 0))
+            png = Path(str(png) + '.pad.png')
+            pad.save(png)
+        subprocess.run([sys.executable, str(tool), str(png), str(package/'files'/name), '--format', fmt, '--allow-odd-size'], check=True, capture_output=True)
+        return name
+    icon = conv(src(cnames[0], 'icon.png'), 'GnGokuXv2_icon.gxtex', 'rgb5a3')   # the select tile is one file (costume zero)
+    portrait, stock = [], []
+    for c in cnames:
+        portrait.append(conv(src(c, 'portrait.png') or src(cnames[0], 'portrait.png'), 'GnGokuXv2_portrait_%s.gxtex' % c, 'rgb5a3'))
+        stock.append(conv(src(c, 'stock.png') or src(cnames[0], 'stock.png'), 'GnGokuXv2_stock_%s.gxtex' % c, 'rgba8'))
+    fighter['presentation'] = {'icon': icon, 'portrait': portrait, 'stock': stock}
+    if all(src(c, 'results.png') for c in cnames):   # the 52x74 results card, one per costume (rgb5a3)
+        fighter['presentation']['results'] = [conv(src(c, 'results.png'), 'GnGokuXv2_results_%s.gxtex' % c, 'rgb5a3') for c in cnames]
 
 
 
@@ -388,6 +406,12 @@ def apply(package, art_build, ir_path=None):
     ecb = plan['ftdata']['x44_ecb']
     hip = next(e for e in ecb if e['role'] in ('HipN', 'TopN'))
     hip.update(role='TopN', joint=0, name='TopN')
+    # 2026-10-11 (owner: the shield bubble was centred at his forearms). x8_part_bytes slot 1 is the SHIELD part (plan_parts: item, shield, head, feet) and it was ThrowN = the grab
+    # anchor, which hangs off the root 8 units in front of the chest for the held victim. A first fix pointed it at YRotN, and the guard code scales that joint by the shield size
+    # (ftCo_Guard.c:216,338,806,880), which grew the whole body. Retail's ThrowN is a LEAF under YRotN with an identity local; the shield slot now has the same: shield_anchor, a weightless
+    # leaf off the root at the pelvis height (xv2_to_artist.py), so the bubble is body-centred and its scaling moves nothing else. The grab anchor stays the throw / hold attach point.
+    shield = next(j['index'] for j in plan['joints'] if j['name'] == 'shield_anchor')
+    plan['ftdata']['x8_part_bytes'][1] = {'role': 'ThrowN', 'joint': shield, 'name': 'shield_anchor'}
     for state in cfg['states']:
         if isinstance(state['subaction'], str):
             continue  # 'clip:<name>' states bind to a declared clip row later (row_of)
@@ -434,6 +458,15 @@ def apply(package, art_build, ir_path=None):
             row = motion_rows[motion][1]
             if motion_clips.get(motion):
                 plan['row_clips'][row] = motion_clips[motion]
+    # goku-stage 2026-10-11 (owner: dash grab and dash attack stop dead): a row whose flags carry 0x80000000 (fp->x594_b0) is animation-driven, so ft_80085030 pulls the
+    # ground speed to the clip's TransN speed on the first frame, and these clips have none (measured: gr_vel 1.8 -> 0.0 on frame 1; retail Falcon's CatchDash slides on friction).
+    # Plain flags (0) for the two dash attacks: the dash speed is kept and ground friction slows it, like retail.
+    rflags = plan.get('row_flags') or [None] * len(plan['row_clips'])
+    for move in cfg['moves']:
+        if move['name'] in ('dash_attack', 'dash_grab'):
+            for motion in move['motions']:
+                rflags[motion_rows[motion][1]] = 0
+    plan['row_flags'] = rflags
     for spec in cfg['moves']+cfg['special_adaptations']:
         declared = None
         parity, move, sources = move_source(ir, spec['parity'])
@@ -482,6 +515,23 @@ def apply(package, art_build, ir_path=None):
                       'rows':rows,'script_frames':info,'classification':'destination design / static source candidates',
                       'pose_review':spec.get('pose_review'),
                       'words_sha256':hashlib.sha256(destination.read_bytes()).hexdigest()})
+    # Row scripts (row_scripts.json, written by cross_port.py): the ledge set's retail scripts (intangibility, hitboxes) overlaid on their rows; not gameplay.json moves
+    rs_file = PORT/'row_scripts.json'
+    if rs_file.exists():
+        row_by_name = {v[0]: v[1] for v in motion_rows.values()}
+        for rname, rs in json.loads(rs_file.read_text(encoding='utf-8')).items():
+            text = bind((PORT/rs['script']).read_text(encoding='utf-8'), plan, scale)
+            words = script.assemble(text, cfg['states'])
+            timing = report.timing_problems(words)
+            if timing:
+                raise ValueError('Hitbox timing in %s would not run as written: %s' % (rs['script'], ' '.join(timing)))
+            sname = Path(rs['script']).stem
+            (package/'moves').mkdir(exist_ok=True)
+            (package/rs['script']).write_text(text, encoding='utf-8')
+            (package/'moves'/f'{sname}.words').write_text(' '.join(f'0x{x:08X}' for x in words)+chr(10), encoding='utf-8')
+            overlays[row_by_name[rname]] = {'index':row_by_name[rname],'file':f'moves/{sname}.words'}
+            audit.append({'move':sname,'parity':None,'source_scripts':[rs['source']],'rows':[row_by_name[rname]],'script_frames':report.frames(words),
+                          'classification':'cross-port row script (retail source row)','words_sha256':hashlib.sha256(' '.join(f'0x{x:08X}' for x in words).encode()).hexdigest()})
     fighter.update({key:cfg[key] for key in ('lua','states','specials','articles','jumps')})
     if cfg.get('controls'):
         fighter['controls'] = cfg['controls']   # per-fighter CSS layouts/extras (docs/geno.md section 26): Goku's layout B (Y -> D-pad Down = the blast input)
@@ -695,6 +745,8 @@ def main(argv=None):
         return 0
     if args.fighter:
         from tools.geno.artist import pipeline
+        import costumes as goku_costumes   # recolour atlases + fighter.json costume list (ports/goku-xv2/costumes.json)
+        goku_costumes.apply(Path(args.fighter).parent)
         generated(args.out)
         result, fighter = pipeline.build(str(args.fighter),str(args.out))
         if result:

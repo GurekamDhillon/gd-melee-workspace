@@ -1,0 +1,13 @@
+# HB-SAMPLE (CROSS-PORT): Melee Mario CliffAttackQuick (retail data from the vanilla disc), retargeted by bone role; owner choice: owner 2026-10-11: ledge attacks are Mario's (animation, intangibility and hitbox numbers on Goku's limbs; ledge rows stay anchored).
+# Hitbox joint, size and offsets are Mario's moved to Goku's bone of the same role (a sphere on the root joint is scaled about it) and scaled by the size ratio 1.7216 (script units: build.py multiplies by 1.4286; the engine then applies Goku's built size 1.2 to the fighter, model and hitboxes alike). Damage, angle, KBG/BKB, timing, auto-cancel and IASA are unchanged; left behind: gfx, sfx.
+PUT ANIM_RATE 1.0
+body_state state=intangible
+wait_until 16
+wait_until 21
+body_state state=normal
+wait_until 24
+hitbox raw=@HITW0:FOOT_R:0x2C000008@,0x05A60000,0x00000000,0xB4990B52,0x0000048B
+hitbox raw=@HITW0:FOOT_L:0x2C800008@,0x05A60000,0x00000000,0xB4990B52,0x0000048B
+hitbox raw=@HITW0:HEAD:0x2D000006@,0x05A60000,0xFF960066,0xB4990B52,0x0000048B
+wait_until 37
+hitboxes_clear

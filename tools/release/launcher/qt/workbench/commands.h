@@ -72,6 +72,8 @@ inline double numberArg(const QJsonObject &args, const QString &key) {
 }
 inline RowInfo needRow(Session &s, const QString &name) {
     for (const auto &row : s.data().rows()) if (row.name == name) return row;
+    // a special's row is "side_b (Rush)": the input alone ("side_b") names it too
+    for (const auto &row : s.data().rows()) if (row.name.startsWith(name + " (")) return row;
     throw CommandError{t("unknown row: %1", "unknown row: %1").arg(name)};
 }
 inline int rowMotion(const RowInfo &row) {

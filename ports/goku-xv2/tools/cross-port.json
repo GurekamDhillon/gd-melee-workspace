@@ -14,7 +14,11 @@
   "drop": [
    "gfx",
    "sfx"
-  ]
+  ],
+  "root_reach": {
+   "z": 1.4,
+   "size": 1.3
+  }
  },
  "CatchDash": {
   "move": "dash_grab",
@@ -24,7 +28,11 @@
   "drop": [
    "gfx",
    "sfx"
-  ]
+  ],
+  "root_reach": {
+   "z": 1.4,
+   "size": 1.3
+  }
  },
  "CatchWait": {
   "move": null,
@@ -68,6 +76,16 @@
   "fighter": "mars",
   "action": "ThrowHi",
   "reason": "owner 2026-10-11 (tentative, to compare): Marth's up throw on Goku's bones",
+  "drop": [
+   "gfx",
+   "sfx"
+  ]
+ },
+ "ThrowF": {
+  "move": "fthrow",
+  "fighter": "captain",
+  "action": "ThrowF",
+  "reason": "owner 2026-10-11: the grab family is Captain Falcon's (his animation, grab boxes and throw data on Goku's bones); the retarget was approved by eye in Blender (lane ws/goku-falcon-grabs)",
   "drop": [
    "gfx",
    "sfx"

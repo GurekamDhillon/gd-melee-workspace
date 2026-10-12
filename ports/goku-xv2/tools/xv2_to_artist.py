@@ -24,6 +24,11 @@ from scipy.spatial.transform import Rotation, Slerp
 
 ROOT = Path(__file__).resolve().parents[3]
 PORT = ROOT / 'ports/goku-xv2'
+def cross_registry():
+    """tools/cross-port.json (+ the locomotion overlay GOKU_LOCO_SET=falcon|marth|fox: tools/cross-port-loco-<set>.json; unset = Goku's own Turn/TurnRun/RunBrake)."""
+    sys.path.insert(0,str(Path(__file__).resolve().parent))
+    import cross_port
+    return cross_port.registry()
 HAND_FILE = Path(os.environ.get('GOKU_HAND', PORT / 'anim/hand.json'))   # hand-authored deltas; NEVER written by this converter
 AUTHOR = ROOT / '_build/goku-xv2' / os.environ.get('GOKU_AUTHOR', 'author-source')   # GOKU_AUTHOR=splice-preview: a reduced build that leaves the shipped package alone
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -289,13 +294,19 @@ def build_mesh(source, height):
         globals_.append(w)
         pn=main[j['parent']]['name'] if j['parent']>=0 else None
         parents.append(names.index(pn) if pn in names else None)
-    for name,parent,offset in [('item_socket.R','b_R_Hand',[0,0,.04]),('grab_anchor','b_C_Chest',[0,0,.27])]:
+    for name,parent,offset in [('item_socket.R','b_R_Hand',[0,0,.04]),('grab_anchor','b_C_Chest',[0,0,.27]),('shield_anchor','b_C_Base',[0,0,0])]:
         names.append(name);parents.append(names.index(parent));w=globals_[parents[-1]].copy();w[:3,3]+=np.array(offset)*factor
         if name=='grab_anchor':
             # 2026-10-08: the held victim sat inside him at (2.33, 0) (Mario holds at (7.64, -1.56)), and under the chest the
             # anchor turned with the grab pose's twist. ThrowN hangs off the root instead, unrotated, 5.3 in front of the
             # chest and 1.5 below it, so the hold point stays in front of him whatever the pose.
             parents[-1]=names.index('b_C_Base');w=np.eye(4);w[:3,3]=globals_[names.index('b_C_Chest')][:3,3]+np.array(offset)*factor+np.array([0.,-1.5,5.3])
+        if name=='shield_anchor':
+            # 2026-10-11 (owner: the shield bubble sat at his forearms; then, pointed at YRotN, the whole body grew when he shielded). The guard code scales the SHIELD part's joint by the
+            # shield size (ftCo_Guard.c:216,338,806,880 HSD_JObjSetScale(parts[x8->x11].joint)), so the part must be a LEAF with no weights. Retail's ThrowN is one: a leaf under YRotN with an
+            # identity local. This is the same: hung off the root like grab_anchor, unrotated, at the pelvis height on the body line (the plan puts YRotN at the hip height and gives
+            # children of the root a local of identity there), so the bubble is centred on his body and scaling it moves nothing else.
+            w=np.eye(4);w[1,3]=globals_[names.index('b_C_Pelvis')][1,3]
         globals_.append(w)
     locals_=[np.linalg.inv(globals_[par])@w if par is not None else w for par,w in zip(parents,globals_)]
     jts=[];wts=[]
@@ -325,7 +336,7 @@ def sample_track(keys, frames, rotation=False):
 WAIT_CLIP = 0   # GOK_BAS_STAND: XV2's ground idle (remake phase 3, owner 2026-10-11: no hover; the floating idle GOK_BAS_STAND_S is clip 1)
 
 
-ROLL_DISTANCE=22.75   # world units a roll travels: Goku's own earlier roll (owner 2026-10-11: 52, Mewtwo's measured reach, was too long); Mario's is 33  # authored 22.75 = 27.3 / SIZE 1.2: the in-game roll travels 27.3 at the built size (owner 2026-10-11)
+ROLL_DISTANCE=24.82   # world units a roll travels: Goku's own earlier roll (owner 2026-10-11: 52, Mewtwo's measured reach, was too long); Mario's is 33  # authored 24.82 = 27.3 / SIZE 1.1 (was 22.75 at 1.2): the in-game roll travels 27.3 at the built size (owner 2026-10-11)
 REMAKE_REPORT=[]   # filled by row_specs: what remake_apply did to each row
 
 
@@ -417,13 +428,23 @@ def row_specs(source):
                   'status':'move review re-crop: '+c['note'],'move':c['move']}
     # Cross-port rows (tools/cross-port.json, tools/cross_port.py): a retail Melee action retargeted onto this rig; the clip is the solved
     # npz, the XV2 clip below is only a placeholder for the lookups (its channels are replaced in animations()).
+    ean_=lambda n:'clip:'+EAN+'/'+str(n)
     def put_cross_ports():
         # applied here and again after the remake / rowmap passes below: those rewrite rows by name (the grab and throw slots), a cross-port row must be the last word
-        for row,c in json.loads((PORT/'tools/cross-port.json').read_text()).items():
+        for row,c in cross_registry().items():
             npz=ROOT/'_build/goku-xv2/cross-port'/row/'clip.npz'
             if not npz.exists():raise SystemExit('cross-port clip missing: run python ports/goku-xv2/tools/cross_port.py (needs GW_ISO_VANILLA)')
-            out[row]={'clip':'clip:'+EAN+'/0','loop':bool(c.get('loop')),'frames':int(np.load(npz)['frames']),'start':0,'move':c['move'],
+            nat=int(np.load(npz)['frames'])
+            fit=c.get('fit_frames') if os.environ.get('GOKU_LOCO_LEN','row')!='retail' else None   # locomotion sets: the row keeps Goku's current length unless GOKU_LOCO_LEN=retail
+            out[row]={'clip':'clip:'+EAN+'/0','loop':bool(c.get('loop')),'frames':int(fit or nat),'start':0,'move':c['move'],
                       'status':'CROSS-PORT: Melee %s %s (%s)'%(c['fighter'].capitalize(),c['action'],c['reason']),'cross_port':dict(c,npz=str(npz))}
+            # locomotion sets (cross-port-loco-<set>.json): a retail Turn / RunBrake starts and ends in that fighter's own stance, not Goku's, so the row
+            # eases from the row he comes from and into the row he returns to (the shipped rows do the same: Landing, GuardOff, SquatRv ...)
+            clipof={'Wait':WAIT_CLIP,'Run':3}
+            if c.get('root_t'):out[row]['root_motion']=True   # ledge rows: the source's TransN path is the row's root motion (the engine places the fighter at ledge + TransN)
+            if c.get('ease_from'):out[row]['blend_from']=dict(clip=ean_(clipof[c['ease_from'][0]]),frame=0,frames=int(c['ease_from'][1]))
+            if c.get('ease_to'):out[row].update(blend_to=ean_(clipof[c['ease_to'][0]]),blend_frames=int(c['ease_to'][1]))
+            if c.get('turn'):out[row]['turn_align']=True   # a 180-degree turn: the pelvis is lined up with the row it comes from and ends on that row's pose TURNED 180 (see turn_align below)
     put_cross_ports()
     # Custom move art deliberately has separate charge/release stages. These are
     # local design crops, not claims about source BAC state-machine equivalence.
@@ -473,7 +494,7 @@ def row_specs(source):
                           'status':'PICK provisional (BAC 427 clip GOK_ATC_023, hit f10): Dragon Rush follow-up flurry'}
     direct('Riposte',58,False,46,1,'PICK provisional (BAC 475 clip GOK_ATC_008, from f1, 46 frames so the air counter is not shorter than 0.55x Melee): Z-vanish reappear kick')
     out['ThrowF'].update(frames=32,time_factor=5.,events=[],status='authored 5x primary-clip crop: source release 90 -> target18; victim choreography omitted')
-    CROSS=set(json.loads((PORT/'tools/cross-port.json').read_text()))   # rows whose clip is a cross-port (a retail Melee action retargeted): no placeholder or alias over them
+    CROSS=set(cross_registry())   # rows whose clip is a cross-port (a retail Melee action retargeted): no placeholder or alias over them
     for row in ['ThrowB','ThrowHi','ThrowLw','CatchAttack']:
         if row in CROSS:continue
         direct(row,81,False,32,24,'authored-needed placeholder: held catch pose');out[row]['hold_source']=24
@@ -608,7 +629,7 @@ def cross_npz(ref):
     (cross_port.tool(), needs the vanilla disc) and cached under _build/goku-xv2/splice-cross."""
     fighter,_,action=ref[len('melee:'):].partition('/')
     if not (fighter and action):raise SP.SpliceError('cross-port ref must be melee:<fighter>/<action>: '+ref)
-    for row,c in json.loads((PORT/'tools/cross-port.json').read_text()).items():
+    for row,c in cross_registry().items():
         npz=ROOT/'_build/goku-xv2/cross-port'/row/'clip.npz'
         if c['fighter']==fighter and c['action']==action and npz.exists():return npz
     out=ROOT/'_build/goku-xv2/splice-cross'/(fighter+'_'+action)
@@ -809,13 +830,29 @@ def animations(source,mesh,rows,splices=None):
                 elif kind=='Position' and bone=='b_C_Base':root[ix]=sample_track(keys,tm)@BASIS*mesh['factor']
                 elif kind=='Position' and bone!='b_C_Base':ignored.add(bone)
                 elif kind=='Scale' and np.max(np.abs(sample_track(keys,tm)-1.))>1e-5:lostscale.add(bone)
-        cp=rs.get('cross_port');scales={};trans={}
+        cp=rs.get('cross_port');scales={};trans={};ledge_root=False
         if cp:
             z=np.load(cp['npz']);have=int(z['frames']);zn=list(z['names'])
             pick=lambda a:np.concatenate([a,np.repeat(a[-1:],count-have,axis=0)]) if count>have else a[:count]
+            if cp.get('fit_frames') and count!=have:   # a locomotion set retimed to the row's length: sample the solved clip at count points over its span (slerp for rotations, lerp otherwise)
+                def pick(a,_n=count,_h=have):
+                    x=np.linspace(0.,_h-1.,_n);i0=np.minimum(x.astype(int),_h-2);w=(x-i0).reshape((-1,)+(1,)*(a.ndim-1))
+                    if a.ndim==2 and a.shape[1]==4:
+                        out_=np.empty((_n,4))
+                        for k in range(_n):out_[k]=Slerp([0,1],Rotation.from_quat([a[i0[k]],a[i0[k]+1]]))(float(w[k,0])).as_quat()
+                        return out_
+                    return a[i0]*(1-w)+a[i0+1]*w
             for n in names:
                 if n in zn:rotations[n]=pick(z['q'][:,zn.index(n)])
             hip=pick(z['hips_t']).copy();root=np.zeros((count,3));lostscale=set()
+            if cp.get('drop_root_travel') and 'root_t' in z.files:
+                # goku-stage 2026-10-11 (TurnRun pelvis drift, 9.9 units of TransN z folded into the hips): the locomotion rows are played in place (the engine moves the fighter), so the
+                # source's TransN travel is taken out of the pelvis and the body stays on its collision; the pelvis keeps its own sway.
+                rt_=pick(z['root_t']);hip[:,0]-=rt_[:,0];hip[:,2]-=rt_[:,2]
+            if cp.get('root_t') and 'root_t' in z.files:
+                # goku-stage 2026-10-11 (ledge hang too high): the source's TransN displacement is the row's TransN track, the pelvis keeps only its motion relative to it. The ledge
+                # state puts the fighter at ledge + TransN, so the hands land on the ledge point like retail's; no recentring and no ground plant below (the feet dangle).
+                rt=pick(z['root_t']).copy();hip=hip-rt;root=rt;ledge_root=True
             if 'anchor_t' in z.files and 'grab_anchor' in names and rs['cross_port'].get('anchor',True):   # the source's own grab-anchor motion (a throw carries the victim): translation + rotation of the anchor bone
                 rotations['grab_anchor']=pick(z['anchor_q']);trans['grab_anchor']=pick(z['anchor_t'])
             # 2026-10-09 (owner #11): the source's bone-scale tracks (Luigi's thigh stretch) ride on the destination bone of the same role
@@ -842,6 +879,20 @@ def animations(source,mesh,rows,splices=None):
             # authored lean (ledge hang): a constant rotation about X on the translation bone
             rp=Rotation.from_euler('x',np.radians(rs['pitch']))
             rotations['b_C_Base']=(rp*Rotation.from_quat(rotations['b_C_Base'])).as_quat()
+        turn_yaw=None
+        if rs.get('turn_align') and rs.get('blend_to') is not None:
+            # goku-stage 2026-10-11 (owner: the Turn spins past the new facing, then pops back): the retail Turn twists the hips ~180 degrees and the engine ends the row by switching to
+            # Wait/Run at the NEW facing, so the row must END on that pose TURNED 180 about the vertical. Easing the end toward the plain Wait pose (what every other row does) made the
+            # twist a full 360 (past the new facing, back to the old one) and the next row snapped 180. The pelvis is first lined up with the pose the row starts from (a retail stance
+            # differs from Goku's by tens of degrees), so the whole twist is monotonic, then the end eases to that pose turned by the twist's sign * 180.
+            bone_='b_C_Pelvis';ok_=channels(rs['blend_to']).get((bone_,'Rotation'))
+            if ok_ is not None and bone_ in rotations:
+                q_=sample_track(ok_,np.zeros(1),True);wt_=Rotation.from_matrix(BASIS@Rotation.from_quat(q_[0]).as_matrix()@BASIS)
+                D_=wt_*Rotation.from_quat(rotations[bone_][0]).inv()
+                rotations[bone_]=(D_*Rotation.from_quat(rotations[bone_])).as_quat()
+                e_=np.unwrap(Rotation.from_quat(rotations[bone_]).as_euler('YXZ')[:,0])
+                turn_yaw=180. if e_[-1]>e_[0] else -180.
+                rs=dict(rs);rs.pop('blend_from',None)   # lined up already: no ease-in
         if rs.get('blend_from') is not None:
             # Ease the first frames in from another clip's held pose (with its own pitch) so a row starts seamlessly.
             bf=rs['blend_from'];other=channels(bf['clip']);n=min(bf.get('frames',6),count)
@@ -863,13 +914,15 @@ def animations(source,mesh,rows,splices=None):
             for (bone,kind),keys in other.items():
                 if kind=='Rotation' and bone in rotations:
                     q=sample_track(keys,np.zeros(1),True);tgt=Rotation.from_matrix(BASIS@Rotation.from_quat(q[0]).as_matrix()@BASIS)
+                    if turn_yaw is not None and bone=='b_C_Pelvis':tgt=Rotation.from_euler('y',np.radians(turn_yaw))*tgt
                     for k in range(n):
                         i=count-n+k;w=(k+1)/n;w=w*w*(3-2*w)
                         pair=Rotation.from_quat([rotations[bone][i],tgt.as_quat()])
                         rotations[bone][i]=Slerp([0,1],pair)(w).as_quat()
         # Keep character centred. Root motion/arena flight is intentionally removed.
-        hip[:,0]-=hip[0,0];hip[:,2]-=hip[0,2]
-        root-=root[0]
+        if not ledge_root:
+            hip[:,0]-=hip[0,0];hip[:,2]-=hip[0,2]
+            root-=root[0]
         if rs.get('root_path'):
             # authored TransN (ledge rows): keyframes (t 0..1, x, y, z), smoothstep between them. The cliff states
             # place the fighter at ledge + TransN (ftCo_CliffCatch_Phys), so this is the hang/climb path.
@@ -891,8 +944,8 @@ def animations(source,mesh,rows,splices=None):
         pos=np.c_[mesh['positions'],np.ones(len(mesh['positions']))]
         deformed=np.zeros((len(pos),4))
         for k in range(4):deformed+=np.einsum('nij,nj->ni',sk[np.array(mesh['joints'])[:,k]],pos)*np.array(mesh['weights'])[:,k,None]
-        ground=float(deformed[:,1].min());hip[:,1]-=ground
-        mode=ground_mode(gname)
+        ground=0. if ledge_root else float(deformed[:,1].min());hip[:,1]-=ground
+        mode=None if ledge_root else ground_mode(gname)
         if mode:
             # 2026-10-09 ground pass (owner: HYBRID HOVER STANCE). XV2 combat clips are authored in a flight stance, so a frame-0 anchor lets the
             # pelvis sink (or the legs dangle) later in the clip. Measure the lowest skinned vertex on EVERY frame and shift the row's pelvis

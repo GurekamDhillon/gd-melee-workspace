@@ -170,7 +170,6 @@ private slots:
         QTest::newRow("missing-start") << QString("hitbox slot=0\nwait 2\nclear_hitboxes\n") << 0;
         QTest::newRow("missing-clear") << QString("wait_until 3\nhitbox slot=0\nwait 2\n") << 0;
         QTest::newRow("extra-op") << QString("wait_until 3\nhitbox slot=0\niasa\nwait 2\nclear_hitboxes\n") << 0;
-        QTest::newRow("second-hitbox") << QString("wait_until 3\nhitbox slot=0\nhitbox slot=1\nwait 2\nclear_hitboxes\n") << 0;
         QTest::newRow("earlier-active") << QString("wait_until 2\nhitbox slot=1\nwait_until 3\nhitbox slot=0\nwait 2\nclear_hitboxes\n") << 1;
         QTest::newRow("reused-slot") << QString("wait_until 2\nhitbox slot=0\nwait_until 3\nhitbox slot=0\nwait 2\nclear_hitboxes\n") << 1;
         QTest::newRow("invalid-start") << QString("wait_until nope\nhitbox slot=0\nwait 2\nclear_hitboxes\n") << 0;
@@ -178,6 +177,54 @@ private slots:
         QTest::newRow("invalid-wait") << QString("wait_until 3\nhitbox slot=0\nwait nope\nclear_hitboxes\n") << 0;
         QTest::newRow("extra-wait-arg") << QString("wait_until 3\nhitbox slot=0\nwait 2 extra\nclear_hitboxes\n") << 0;
         QTest::newRow("extra-clear-arg") << QString("wait_until 3\nhitbox slot=0\nwait 2\nclear_hitboxes extra\n") << 0;
+    }
+    // ports/goku-xv2/moves/rush.genoasm: three hitboxes on one frame, HBSTUN after them, wait_until (not wait) to the clear.
+    static QString rushScript() {
+        return QString("PUT ANIM_RATE 1.0\nwait_until 1\nsfx behavior=1 sfx_id=165 volume=127 panning=64\nwait_until 11\n"
+            "hitbox slot=0 joint=@FOOT_R@ damage=8 size=2.8 x=0.0391 y=-0.406 z=0.8485 angle=361 kbg=60 fkb=10 bkb=0\n"
+            "hitbox slot=1 joint=@LEG_R@ damage=7 size=4.91 x=0.07586 y=-1.697 z=-0.04726 angle=361 kbg=60 fkb=10 bkb=0\n"
+            "hitbox slot=2 joint=@UPLEG_R@ damage=6 size=5.04 x=0.1067 y=-1.503 z=-0.002655 angle=361 kbg=60 fkb=10 bkb=0\n"
+            "HBSTUN 7 12\nwait_until 15\nclear_hitboxes\nwait_until 62\niasa\n");
+    }
+    void rushShapeFramesAreEditableAndKeepHbstun() {
+        const QString src = rushScript();
+        QString err;
+        for (int ordinal = 0; ordinal < 3; ++ordinal) {
+            HitboxEdit e; e.startFrame = 12; e.endFrame = 18;
+            const QString out = GenoAsm::parse(src).apply(ordinal, e, &err);
+            QVERIFY2(!out.isNull(), qPrintable(err));
+            const auto boxes = GenoAsm::parse(out).hitboxes();
+            QCOMPARE(boxes.size(), 3);
+            // The moved window reorders by start frame, so find each box by its joint.
+            const QStringList joints{"FOOT_R", "LEG_R", "UPLEG_R"};
+            for (int j = 0; j < 3; ++j) {
+                int found = -1;
+                for (int i = 0; i < boxes.size(); ++i) if (boxes[i].joint == joints[j]) found = i;
+                QVERIFY(found >= 0);
+                QCOMPARE(boxes[found].startFrame, j == ordinal ? 12 : 11);
+                QCOMPARE(boxes[found].endFrame, j == ordinal ? 18 : 15);
+            }
+            QCOMPARE(out.count("HBSTUN 7 12"), 1);   // kept, once
+            QVERIFY(out.contains("sfx behavior=1 sfx_id=165 volume=127 panning=64\n"));
+            QVERIFY(out.contains("wait_until 62\niasa"));
+        }
+        // An edit that changes nothing in the frames leaves the file byte for byte.
+        HitboxEdit same; same.startFrame = 11; same.endFrame = 15;
+        QCOMPARE(GenoAsm::parse(src).apply(1, same, &err), src);
+        // Field edits keep the order (hitboxes, then HBSTUN, then the wait).
+        HitboxEdit d; d.damage = 9;
+        const QString dmg = GenoAsm::parse(src).apply(2, d, &err);
+        QVERIFY2(!dmg.isNull(), qPrintable(err));
+        QVERIFY(dmg.indexOf("damage=9 ") < dmg.indexOf("HBSTUN 7 12"));
+    }
+    void companionOpBeforeTheHitboxIsEditableToo() {
+        const QString src = "wait_until 3\nHBSTUN 7 12\nhitbox slot=0 joint=@A@\nwait 2\nclear_hitboxes\n";
+        QString err; HitboxEdit e; e.startFrame = 4; e.endFrame = 8;
+        const QString out = GenoAsm::parse(src).apply(0, e, &err);
+        QVERIFY2(!out.isNull(), qPrintable(err));
+        QCOMPARE(GenoAsm::parse(out).hitboxes()[0].startFrame, 4);
+        QCOMPARE(GenoAsm::parse(out).hitboxes()[0].endFrame, 8);
+        QCOMPARE(out.count("HBSTUN 7 12"), 1);
     }
     void unsafeFrameShapes() {
         QFETCH(QString, source); QFETCH(int, ordinal);

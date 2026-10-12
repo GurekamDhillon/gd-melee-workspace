@@ -1,0 +1,147 @@
+{
+ "CliffCatch": {
+  "move": null,
+  "row_script": "ledge_cliff_catch",
+  "fighter": "mars",
+  "action": "CliffCatch",
+  "drop": [
+   "gfx",
+   "sfx"
+  ],
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
+ },
+ "CliffWait": {
+  "move": null,
+  "row_script": "ledge_cliff_wait",
+  "fighter": "mars",
+  "action": "CliffWait",
+  "drop": [
+   "gfx",
+   "sfx"
+  ],
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "loop": true,
+  "root_t": true
+ },
+ "CliffClimbQuick": {
+  "move": null,
+  "row_script": "ledge_cliff_climb_quick",
+  "fighter": "mars",
+  "action": "CliffClimbQuick",
+  "drop": [
+   "gfx",
+   "sfx"
+  ],
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
+ },
+ "CliffClimbSlow": {
+  "move": null,
+  "row_script": "ledge_cliff_climb_slow",
+  "fighter": "mars",
+  "action": "CliffClimbSlow",
+  "drop": [
+   "gfx",
+   "sfx"
+  ],
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
+ },
+ "CliffEscapeQuick": {
+  "move": null,
+  "row_script": "ledge_cliff_escape_quick",
+  "fighter": "mars",
+  "action": "CliffEscapeQuick",
+  "drop": [
+   "gfx",
+   "sfx"
+  ],
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
+ },
+ "CliffEscapeSlow": {
+  "move": null,
+  "row_script": "ledge_cliff_escape_slow",
+  "fighter": "mars",
+  "action": "CliffEscapeSlow",
+  "drop": [
+   "gfx",
+   "sfx"
+  ],
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
+ },
+ "CliffJumpQuick1": {
+  "move": null,
+  "row_script": "ledge_cliff_jump_quick1",
+  "fighter": "mars",
+  "action": "CliffJumpQuick1",
+  "drop": [
+   "gfx",
+   "sfx"
+  ],
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
+ },
+ "CliffJumpQuick2": {
+  "move": null,
+  "row_script": "ledge_cliff_jump_quick2",
+  "fighter": "mars",
+  "action": "CliffJumpQuick2",
+  "drop": [
+   "gfx",
+   "sfx"
+  ],
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
+ },
+ "CliffJumpSlow1": {
+  "move": null,
+  "row_script": "ledge_cliff_jump_slow1",
+  "fighter": "mars",
+  "action": "CliffJumpSlow1",
+  "drop": [
+   "gfx",
+   "sfx"
+  ],
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
+ },
+ "CliffJumpSlow2": {
+  "move": null,
+  "row_script": "ledge_cliff_jump_slow2",
+  "fighter": "mars",
+  "action": "CliffJumpSlow2",
+  "drop": [
+   "gfx",
+   "sfx"
+  ],
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
+ },
+ "CliffAttackQuick": {
+  "move": null,
+  "row_script": "ledge_cliff_attack_quick",
+  "fighter": "mario",
+  "action": "CliffAttackQuick",
+  "drop": [
+   "gfx",
+   "sfx"
+  ],
+  "reason": "owner 2026-10-11: ledge attacks are Mario's (animation, intangibility and hitbox numbers on Goku's limbs; ledge rows stay anchored)",
+  "root_t": true
+ },
+ "CliffAttackSlow": {
+  "move": null,
+  "row_script": "ledge_cliff_attack_slow",
+  "fighter": "mario",
+  "action": "CliffAttackSlow",
+  "drop": [
+   "gfx",
+   "sfx"
+  ],
+  "reason": "owner 2026-10-11: ledge attacks are Mario's (animation, intangibility and hitbox numbers on Goku's limbs; ledge rows stay anchored)",
+  "root_t": true
+ }
+}

@@ -121,7 +121,7 @@ gd.run(function()
     gd.log(string.format('SPECHECK air_charge: KiChargeAir %s Counter %s ki %.1f fell %.1f in 40 frames', tostring(sa.KiChargeAir), tostring(sa.Counter), ki(), dya))
     assert((sa.KiChargeAir or 0) > 25 and (sa.Counter or 0) == 0, 'air Down B hold did not enter KiChargeAir')
     assert(ki() > 15, 'the meter did not rise in the air charge: ' .. ki())
-    assert(dya < 14, 'the air charge did not slow the fall: ' .. dya)
+    assert(dya > 20 and dya < 36, 'the air charge is not a slow sink (0.7 a frame, about 28 in 40): ' .. dya)
     gd.input(1, {}, 1); gd.wait(20)
     assert(name() ~= 'KiChargeAir', 'KiChargeAir did not end on release: ' .. name())
     reset(0)
@@ -130,6 +130,98 @@ gd.run(function()
     local sat = track(50)
     gd.log(string.format('SPECHECK air_tap: KiChargeAir %s Counter %s Riposte %s', tostring(sat.KiChargeAir), tostring(sat.Counter), tostring(sat.Riposte)))
     assert((sat.KiChargeAir or 0) >= 1 and (sat.KiChargeAir or 0) <= 12 and (sat.Counter or 0) == 0 and (sat.Riposte or 0) == 0, 'air Down B tap is not a short charge')
+    -- air Down B at FULL ki: a charged hold (the meter stays 100) while B is held, a slow sink and a little drift from the stick, never upward; release ends it and he can act
+    reset(100)
+    tp(1, 0, 150); gd.wait(2)
+    local face_a = (gd.player(1).facing or 1) >= 0 and 1 or -1
+    local ya0, xa0 = gd.player(1).y, gd.player(1).x
+    gd.input(1, {y = -127, buttons = 'B'}, 3)
+    gd.wait(3)
+    gd.input(1, {x = 127 * face_a, buttons = 'B'}, 60)
+    local top, held_n = ya0, 0
+    for t = 1, 40 do
+      gd.wait(1); nofault()
+      if name() == 'KiChargeAir' then held_n = held_n + 1 end
+      top = math.max(top, gd.player(1).y)
+    end
+    local drop_f, dx_f = ya0 - gd.player(1).y, (gd.player(1).x - xa0) * face_a
+    gd.log(string.format('SPECHECK air_full: KiChargeAir %d frames, ki %.1f, sank %.1f, drifted %.1f forward, highest %.1f above the start', held_n, ki(), drop_f, dx_f, top - ya0))
+    assert(held_n >= 40 and ki() >= 99.9, 'the full-ki air hold did not stay in the charge with the meter at 100')
+    assert(drop_f > 22 and drop_f < 42, 'full-ki air sink is not slow (0.7 a frame): ' .. drop_f)
+    assert(dx_f > 6 and dx_f < 24, 'the stick does not drift him a little: ' .. dx_f)
+    assert(top - ya0 < 0.5, 'the air charge gained height: ' .. (top - ya0))
+    gd.input(1, {}, 1); gd.wait(4)
+    assert(name() ~= 'KiChargeAir' and name() ~= 'FallSpecial', 'releasing B did not end the air charge into normal air control: ' .. name())
+    gd.input(1, {buttons = 'X'}, 3)
+    local jumped = false
+    for _ = 1, 20 do gd.wait(1) if name():find('JumpAerial') then jumped = true end end
+    assert(jumped, 'he could not act (double jump) after the air charge')
+    -- a rewind across the hold
+    reset(100)
+    tp(1, 0, 150); gd.wait(2)
+    gd.input(1, {y = -127, buttons = 'B'}, 3); gd.wait(3)
+    gd.input(1, {buttons = 'B'}, 80); gd.wait(15)
+    assert(gd.rewind_test(60, true), 'rewind refused in the air charge')
+    local done_a = false
+    for _ = 1, 400 do
+      gd.wait(1)
+      local r = gd.rewind_test_result()
+      if r and r.phase == 0 and r.pass ~= nil then
+        gd.log(string.format('SPECHECK rewind air charge pass=%s diff_compared=%s', tostring(r.pass), tostring(r.diff_compared)))
+        assert(r.pass and r.diff_compared == 0, 'rewind differs in the air charge: ' .. tostring(r.text))
+        done_a = true
+        break
+      end
+    end
+    assert(done_a, 'air charge rewind never finished')
+    gd.input(1, {}, 1); gd.wait(40)
+    -- Side B (Rush): less distance, and in the air he stalls then sinks slowly (before: ground 23.3 forward, air 66 forward and 100 down in 65 frames, 61 down at frame 40)
+    for _, air in ipairs({false, true}) do
+      reset(50)
+      tp(2, -150, 0)
+      gd.input(1, {x = 60}, 3); gd.wait(25)
+      tp(1, 0, air and 100 or 0); gd.wait(2)
+      local fcs = (gd.player(1).facing or 1) >= 0 and 1 or -1
+      local g0 = gd.player(1)
+      gd.input(1, {x = 127 * fcs, buttons = 'B'}, 2)
+      local dy40, dxe, seen_rush = nil, 0, false
+      for t = 1, 70 do
+        gd.wait(1); nofault()
+        local p = gd.player(1)
+        if tostring(p.motion_name) == 'Rush' then seen_rush = true dxe = (p.x - g0.x) * fcs end
+        if t == 40 then dy40 = p.y - g0.y end
+      end
+      gd.log(string.format('SPECHECK sideb %s: Rush %s, forward travel %.1f, vertical change at frame 40 %.1f', air and 'air' or 'ground', tostring(seen_rush), dxe, dy40 or 0))
+      assert(seen_rush, 'Side B did not run')
+      if air then
+        assert(dxe > 36 and dxe < 52, 'air Side B travel is not about 65% of the old 66: ' .. dxe)
+        assert(dy40 > -45 and dy40 < -8, 'air Side B did not stall then sink slowly (old: -61 at frame 40): ' .. tostring(dy40))
+      else
+        assert(dxe > 11 and dxe < 17, 'ground Side B travel is not about 60% of the old 23.3: ' .. dxe)
+      end
+      gd.input(1, {}, 1); gd.wait(60)
+    end
+
+    -- the shield bubble is centred on his body (retail Falcon: dx 0.2, dy 10.1 from the origin; before: dx 9.8, dy 13.4, at the forearms)
+    reset(50)
+    local function body_span()   -- head to pelvis distance and pelvis to the root bone: the body does not scale when the shield bubble does (guard code scales the shield part's joint)
+      local js = gd.joints(1, true)
+      local h, pv = js[72], js[5]   -- joint 71 b_C_Head, joint 4 b_C_Pelvis (list index = joint index + 1)
+      return math.sqrt((h.x - pv.x) ^ 2 + (h.y - pv.y) ^ 2 + (h.z - pv.z) ^ 2)
+    end
+    local span_wait = body_span()
+    gd.input(1, {buttons = 'L'}, 40)
+    gd.wait(25)
+    local span_guard = body_span()
+    gd.log(string.format('SPECHECK shield body span: Wait %.2f, Guard %.2f', span_wait, span_guard))
+    assert(math.abs(span_guard - span_wait) < 0.03 * span_wait, 'the body grew or shrank in Guard (the shield slot must be a leaf joint): ' .. span_wait .. ' -> ' .. span_guard)
+    local gp = gd.player(1)
+    local fsh = (gp.facing or 1) >= 0 and 1 or -1
+    local sdx, sdy = ((gp.shield_x or 0) - gp.x) * fsh, (gp.shield_y or 0) - gp.y
+    gd.log(string.format('SPECHECK shield: %s on=%s dx %.1f dy %.1f (Falcon dx 0.2 dy 10.1)', name(), tostring(gp.shield_on), sdx, sdy))
+    assert(gp.shield_on and math.abs(sdx) < 2.5 and sdy > 7 and sdy < 14, 'the shield bubble is not centred on his body: dx ' .. sdx .. ' dy ' .. sdy)
+    gd.input(1, {}, 1); gd.wait(40)
+
     reset(50)
     tp(1, 0, 150); tp(2, -((gd.player(1).facing or 1) >= 0 and 1 or -1) * 70, 0); gd.wait(2)   -- the dummy behind him
     local kab0 = ki()

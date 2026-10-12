@@ -111,6 +111,13 @@ def main(argv=None):
 def _after_load(bpy, api, args):
     session = api.session()
     names = [r.get("name") or r.get("row") for r in session.rows if isinstance(r, dict)]
+
+    from geno_workbench import rigmap as _rigmap
+    resolve = lambda name: _rigmap.resolve_row_name(names, name)
+
+    args.row = resolve(args.row) if args.row else args.row
+    if args.exercise:
+        args.exercise = ",".join(resolve(r) for r in args.exercise.split(",") if r)
     if args.row:
         if args.row not in names:
             raise RuntimeError("row %r not in engine rows %r" % (args.row, names[:20]))

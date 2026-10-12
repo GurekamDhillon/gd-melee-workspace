@@ -15,6 +15,7 @@ import sys
 
 HERE = Path(__file__).resolve().parent
 PORT = HERE.parent
+ROOT = PORT.parents[1]
 sys.path.insert(0, str(HERE))
 import strip_gameplay as SG  # noqa: E402
 import remake_apply  # noqa: E402
@@ -59,30 +60,13 @@ def patch_gameplay():
         g['specials']['lw'] = 'geno:KiCharge'
         g['specials']['air_lw'] = 'geno:KiChargeAir'
         changed = True
-    # owner 2026-10-11: ThrowF is Mewtwo's forward throw (a 5% release, then five small projectiles), the projectiles are Goku's ki blasts. Numbers measured from retail
-    # Mewtwo with lua/throw_probe.lua (shadow ball: speed 6.0, 45 frames alive, spawns 7 frames apart from script frame 33, 0.9% a hit); the aim is homing, not his arm pose.
-    if not any(x['name'] == 'KiThrow' for x in g['articles']):
-        g['articles'].append({'name': 'KiThrow', 'lifetime': 45, 'velocity': [6.0, 0], 'spawn': [8, 12], 'max_live': 5, 'homing': {'turn': 35, 'range': 0, 'delay': 0},
-                              'despawn': {'hit': True, 'shield': True, 'stage': True, 'clank': True},
-                              'hitboxes': [{'slot': 0, 'damage': 1, 'size': 2.2, 'offset': [0, 0, 0], 'angle': 361, 'kbg': 20, 'wkb': 0, 'bkb': 8, 'start': 1, 'end': 0,
-                                            'element': 2, 'sfx_severity': 1}]})
+    # owner 2026-10-11 (later): the forward throw is Captain Falcon's ThrowF like the rest of the grab family (cross-port.json ThrowF); the Mewtwo ki-blast throw is gone,
+    # so its article (KiThrow, last in the list) goes with it. Idempotent.
+    if any(x['name'] == 'KiThrow' for x in g['articles']):
+        g['articles'] = [x for x in g['articles'] if x['name'] != 'KiThrow']
         changed = True
-    assert [x['name'] for x in g['articles']].index('KiThrow') == 5, 'moves/fthrow.genoasm spawns article 5'
-    for x in g['articles']:
-        if x['name'] == 'KiThrow' and (x['hitboxes'][0]['damage'] != 1 or 'stun' in x['hitboxes'][0]):
-            x['hitboxes'][0]['damage'] = 1
-            x['hitboxes'][0].pop('stun', None)
-            changed = True
-    for m in g['moves']:
-        if m['name'] == 'fthrow':
-            want = {'hb': 'HB-SAMPLE', 'windows': [], 'release': 19, 'iasa': 74, 'strike': [[19, 19]],
-                    'design': {'damage': 1, 'angle': 78, 'kbg': 100, 'bkb': 0},
-                    'strike_note': 'CROSS-PORT: Mewtwo ThrowF (release at script frame 19, five ki blasts from frame 33)'}
-            if any(m.get(k) != v for k, v in want.items()):
-                m.update(want)
-                changed = True
-    # the victim plays the thrown row of the thrower each throw was ported from (owner 2026-10-11): Falcon's back and down throws, Mewtwo's forward throw, Marth's up throw
-    want_thrown = {'default': 'captain', 'f': 'mewtwo', 'hi': 'mars'}
+    # the victim plays the thrown row of the thrower each throw was ported from (owner 2026-10-11): Falcon's forward, back and down throws, Marth's up throw
+    want_thrown = {'default': 'captain', 'hi': 'mars'}
     if g.get('thrown_as') != want_thrown:
         g['thrown_as'] = want_thrown
         changed = True
