@@ -78,3 +78,13 @@ def test_fresh_script_import_finds_its_resolver_when_gw_root_is_other_checkout(t
                             capture_output=True, text=True, encoding="utf-8")
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == str(shared / "tools/blender.exe")
+
+
+def test_special_rows_resolve_by_input_name():
+    import rigmap
+    names = ["jab1", "dair", "side_b (Rush)", "up_b (Flight)", "RushCombo (special)"]
+    assert rigmap.resolve_row_name(names, "side_b") == "side_b (Rush)"
+    assert rigmap.resolve_row_name(names, "side_b (Rush)") == "side_b (Rush)"
+    assert rigmap.resolve_row_name(names, "dair") == "dair"
+    assert rigmap.resolve_row_name(names, "RushCombo") == "RushCombo (special)"
+    assert rigmap.resolve_row_name(names, "nope") == "nope"

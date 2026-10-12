@@ -112,12 +112,8 @@ def _after_load(bpy, api, args):
     session = api.session()
     names = [r.get("name") or r.get("row") for r in session.rows if isinstance(r, dict)]
 
-    def resolve(name):
-        # a special's row is "side_b (Rush)"; "side_b" alone names it
-        if name in names:
-            return name
-        hits = [n for n in names if isinstance(n, str) and n.startswith(name + " (")]
-        return hits[0] if hits else name
+    from geno_workbench import rigmap as _rigmap
+    resolve = lambda name: _rigmap.resolve_row_name(names, name)
 
     args.row = resolve(args.row) if args.row else args.row
     if args.exercise:
