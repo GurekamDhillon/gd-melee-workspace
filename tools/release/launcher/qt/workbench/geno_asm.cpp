@@ -77,6 +77,12 @@ bool isFlow(const QString &op) {
 }
 bool isClearAll(const QString &op) { return op == "clear_hitboxes" || op == "hitboxes_clear"; }
 bool isClearOne(const QString &op) { return op == "clear_hitbox" || op == "hitbox_remove"; }
+// Ops that ride along with a hitbox and are kept for the rest of the action (HBSTUN, REHIT, LINK ...) or only play a sound: they
+// may sit between a hitbox group and its clear without changing when anything is live, so the frame editor keeps them where they are.
+bool isHitboxCompanion(const QString &op) {
+    static const QSet<QString> ops{"hbstun", "hbdmg", "hbflags", "hbmask", "rehit", "link", "sfx", "smash_sfx"};
+    return ops.contains(op.toLower());
+}
 // `clear_hitbox hit_idx=N`, `clear_hitbox N` or the disassembler's `hitbox_remove w0.hit_idx=N`.
 int clearSlot(const QVector<Tok> &words) {
     for (qsizetype i = 1; i < words.size(); ++i) {
@@ -114,6 +120,7 @@ struct Win {
 struct Other {
     int time = 0, seq = 0;
     QStringList lines;
+    int after = -1;   // ordinal of the last hitbox opened at this same frame before this op, or -1: it is written right after that hitbox
 };
 struct Model {
     QVector<Win> wins;
@@ -153,7 +160,9 @@ Model buildModel(const QStringList &lines) {
             if (found >= 0) { m.wins[open[found]].end = time; open.removeAt(found); }
             if (!pending.isEmpty()) { m.others.append({time, seq++, pending}); pending.clear(); }
         } else {
-            m.others.append({time, seq++, pending + QStringList{line}});
+            Other o{time, seq++, pending + QStringList{line}, -1};
+            if (!m.wins.isEmpty() && m.wins.last().start == time && pending.isEmpty() && isHitboxCompanion(op)) o.after = m.wins.last().ordinal;
+            m.others.append(o);
             pending.clear();
         }
     }
@@ -213,10 +222,14 @@ QString emitModel(Model m, QString *err) {
     struct Ev { int time, prio, seq; QStringList lines; };
     QVector<Ev> events;
     const auto eol = [&](const QString &line) { return m.cr ? line + '\r' : line; };
-    for (const auto &o : m.others) events.append({o.time, 1, o.seq, o.lines});
+    // A companion op that followed a hitbox on its frame stays after it (sequence 2k+1 against the hitbox's 2k); a window removed or moved away leaves it at its frame.
+    for (const auto &o : m.others) {
+        const bool follows = o.after >= 0 && o.after < m.wins.size() && m.wins[o.after].start == o.time;
+        events.append({o.time, follows ? 2 : 1, follows ? 2 * o.after + 1 : o.seq, o.lines});
+    }
     for (int idx : order) {
         const auto &w = m.wins[idx];
-        events.append({w.start, 2, w.ordinal, w.lead + QStringList{w.line}});
+        events.append({w.start, 2, 2 * w.ordinal, w.lead + QStringList{w.line}});
     }
     // Closes: windows ending at one frame share a clear_hitboxes when nothing else stays live.
     QMap<int, QVector<int>> closes;
@@ -397,14 +410,37 @@ QString GenoAsm::apply(int ordinal, const HitboxEdit &edit, QString *err) const 
         const int prev = significant(h.line, -1);
         const int next1 = significant(h.line, 1);
         const int next2 = next1 < 0 ? -1 : significant(next1, 1);
-        if (prev < 0 || next1 < 0 || next2 < 0 ||
-            !isWait(tokens(lines_[prev]), QStringLiteral("wait_until")) ||
-            !isWait(tokens(lines_[next1]), QStringLiteral("wait")) ||
-            tokens(lines_[next2]).size() != 1 || opOf(lines_[next2]) != "clear_hitboxes") {
-            return shapeError(QStringLiteral("expected wait_until / hitbox / wait / clear_hitboxes"));
+        const bool simple = prev >= 0 && next1 >= 0 && next2 >= 0 &&
+            isWait(tokens(lines_[prev]), QStringLiteral("wait_until")) &&
+            isWait(tokens(lines_[next1]), QStringLiteral("wait")) &&
+            tokens(lines_[next2]).size() == 1 && opOf(lines_[next2]) == "clear_hitboxes";
+        // Several hitboxes opened on one frame, with their companion ops (HBSTUN, REHIT, sfx ...) between them, closed by one wait / wait_until
+        // and one clear_hitboxes: the edit moves only this hitbox and leaves the others and the ops where they are.
+        int groupStart = h.line;
+        if (!simple) {
+            const auto inGroup = [this](int i) { const QString op = opOf(lines_[i]); return op == "hitbox" || isHitboxCompanion(op); };
+            int first = prev, last = next1;
+            while (first >= 0 && inGroup(first)) first = significant(first, -1);
+            while (last >= 0 && inGroup(last)) last = significant(last, 1);
+            const int clear = last < 0 ? -1 : significant(last, 1);
+            const bool grouped = first >= 0 && last >= 0 && clear >= 0 &&
+                isWait(tokens(lines_[first]), QStringLiteral("wait_until")) &&
+                (isWait(tokens(lines_[last]), QStringLiteral("wait")) || isWait(tokens(lines_[last]), QStringLiteral("wait_until"))) &&
+                tokens(lines_[clear]).size() == 1 && opOf(lines_[clear]) == "clear_hitboxes";
+            if (!grouped) return shapeError(QStringLiteral("expected wait_until / hitbox / wait / clear_hitboxes"));
+            groupStart = first;
         }
         // Adjacency alone misses a hitbox opened before the preceding wait_until.
         // Do not collapse refs by slot: two source hitboxes on one slot are ambiguous too.
+        for (int i = groupStart - 1; i >= 0; --i) {
+            const QString op = opOf(lines_[i]);
+            if (op == "clear_hitboxes") break;
+            if (op == "hitbox") return shapeError(QStringLiteral("another hitbox is active before this hitbox"));
+        }
+        if (!simple) {
+            if (!buildModel(lines_).straight) return shapeError(QStringLiteral("script has loops or calls"));
+            return finish(GenoAsm::parse(lines.join('\n')).viaModel(ordinal, &edit, nullptr, false, err, nullptr));
+        }
         for (int i = h.line - 1; i >= 0; --i) {
             const QString op = opOf(lines_[i]);
             if (op == "clear_hitboxes") break;
