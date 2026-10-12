@@ -47,6 +47,7 @@ CSS = """
 .cell .in{margin:12px 0 8px;font-size:27px;min-height:48px}
 .cell p{flex:none;font-size:22px;line-height:1.3;color:var(--text2);font-weight:600}
 .cell.ki{border-top-color:var(--sun)}
+.cs{position:absolute;left:96px;right:96px;top:190px}.cs .st{width:100%;display:block;border-top:4px solid var(--ember);image-rendering:auto}.crow{display:flex;gap:20px;margin-top:34px}.cc{flex:1;background:var(--plate);padding:18px 10px 14px;text-align:center;border-bottom:4px solid var(--ember)}.pp{height:376px;image-rendering:pixelated;display:block;margin:0 auto}.cn{margin-top:12px;font-family:BC;font-weight:700;text-transform:uppercase;font-size:44px;color:var(--ivory);display:flex;align-items:center;justify-content:center;gap:12px}.sk{width:48px;height:48px;image-rendering:pixelated}
 .steps{position:absolute;left:120px;top:250px;width:1100px}
 .steps li{list-style:none;display:flex;gap:26px;align-items:flex-start;margin-bottom:26px}
 .steps .n{flex:none;width:68px;height:68px;border-radius:50%;background:var(--ember);color:var(--ink);font-family:BC;font-weight:700;font-size:44px;display:flex;align-items:center;justify-content:center;padding-top:4px}
@@ -78,6 +79,22 @@ def title_card(date, hero, build):
         'some animations are rough, and bug reports are the whole point.</div></div></div>' % (img, date), CSS)
 
 
+def costumes_card(strip, names, date, pres=None):
+    """The character-select strip on top; below it each costume's portrait and stock icon (art lead's presentation previews)."""
+    import base64
+    b64 = lambda p: base64.b64encode(Path(p).read_bytes()).decode()
+    dirs = ['default', 'red', 'blue', 'green', 'navy']
+    cells = ''
+    for i, n in enumerate(names):
+        d = Path(pres) / dirs[i] if pres and i < len(dirs) else None
+        pic = '<img class="pp" src="data:image/png;base64,%s">' % b64(d / 'portrait.png') if d and (d / 'portrait.png').exists() else ''
+        stk = '<img class="sk" src="data:image/png;base64,%s">' % b64(d / 'stock.png') if d and (d / 'stock.png').exists() else ''
+        cells += '<div class="cc">%s<div class="cn">%s%s</div></div>' % (pic, stk, n)
+    return html_page(
+        '<div class="card"></div><div class="hd"><h1 class="bc">Costumes</h1><span class="alpha">ALPHA</span><span class="sub">Goku &middot; %s</span></div>'
+        '<div class="cs"><img class="st" src="data:image/png;base64,%s"><div class="crow">%s</div></div>' % (date, b64(strip), cells), CSS)
+
+
 def controls_card(cells, build):
     cs = ''.join('<div class="cell%s"><h2 class="bc fit">%s</h2><div class="in">%s</div><p class="fit">%s</p></div>' % (
         ' ki' if c.get('ki') else '', c['name'], glyphs(c['input']), c['text']) for c in cells)
@@ -99,7 +116,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--shots', default=str(HERE / 'shots.json'))
     ap.add_argument('--out', default=str(MEDIA / 'overlays'))
-    ap.add_argument('--date', default=None); ap.add_argument('--hero'); ap.add_argument('--build', default='Alpha test build')
+    ap.add_argument('--date', default=None); ap.add_argument('--hero'); ap.add_argument('--build', default='Alpha test build'); ap.add_argument('--costumes', help='the character-select strip (art lead css-goku-p1-panels.png)'); ap.add_argument('--presentation', help='art lead presentation/ dir with <costume>/portrait.png, stock.png')
     a = ap.parse_args()
     spec = json.loads(Path(a.shots).read_text(encoding='utf-8'))
     date = a.date or spec.get('date', '')
@@ -112,6 +129,8 @@ def main():
     cards = [(title_card(date, a.hero or spec.get('hero'), a.build), out / 'card_title.png'),
              (controls_card(spec['controls'], a.build), out / 'card_controls.png'),
              (end_card([tuple(x) for x in spec['install']], spec['report'], date), out / 'card_end.png')]
+    if a.costumes and Path(a.costumes).exists():
+        cards.append((costumes_card(a.costumes, spec.get('costume_names', []), date, a.presentation), out / 'card_costumes.png'))
     errs += render(cards)
     print('wrote %d overlays to %s' % (len(pages) + len(cards), out))
     if errs:

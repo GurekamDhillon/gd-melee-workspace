@@ -181,6 +181,24 @@ def clips(only):
         print('%s: %.1f s %.1f MB' % (s['id'], dur, probe_mb(out / (s['id'] + '.mp4'))))
 
 
+def stills():
+    """In-game screenshots at 1920x1080 (4:3 captures on a blurred backdrop) with the corner mark: shots.json 'stills' = [{name, clip, at}], at = 0..1 of the clip."""
+    spec = json.loads((HERE / 'shots.json').read_text(encoding='utf-8'))
+    idx = clip_index()
+    out = MEDIA / 'stills'
+    out.mkdir(exist_ok=True)
+    for s in spec.get('stills', []):
+        c = idx.get(s['clip'])
+        if not c or 'dir' not in c:
+            print('skip still %s: no capture' % s['name']); continue
+        f = max(1, min(c['frames'], int(c['frames'] * s['at'])))
+        src = c['dir'] / ('c%02d_f%05d.png' % (c['n'], f))
+        fc = ('[0:v]split[s1][s2];[s1]scale=1920:-2,crop=1920:1080,boxblur=28:4,eq=brightness=-0.32:saturation=0.8[bg];'
+              '[s2]scale=1440:1080:flags=lanczos[fg];[bg][fg]overlay=240:0[b];[b][1:v]overlay=0:0')
+        run([FFMPEG, '-v', 'error', '-y', '-i', str(src), '-i', str(MEDIA / 'overlays/corner.png'), '-filter_complex', fc, '-frames:v', '1', str(out / (s['name'] + '.png'))])
+        print('still %s <- %s frame %d' % (s['name'], s['clip'], f))
+
+
 def gifs():
     out = MEDIA / 'gifs'
     out.mkdir(exist_ok=True)
@@ -210,6 +228,8 @@ def reel():
         p = MEDIA / 'clips' / (i + '.mp4')
         if p.exists():
             parts.append(p)
+    if (ov / 'card_costumes.png').exists():
+        parts.append(card_part(ov / 'card_costumes.png', 3.5, 'p_costumes'))
     parts.append(card_part(ov / 'card_end.png', 4.5, 'p_end'))
     lst = out / 'list.txt'
     lst.write_text(''.join("file '%s'\n" % str(p).replace('\\', '/') for p in parts), encoding='utf-8')
@@ -224,7 +244,7 @@ def reel():
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('step', choices=['capture', 'verify', 'clips', 'gifs', 'reel', 'all'])
+    ap.add_argument('step', choices=['capture', 'verify', 'clips', 'stills', 'gifs', 'reel', 'all'])
     ap.add_argument('--only', default='')
     ap.add_argument('--exe'); ap.add_argument('--mods')
     a = ap.parse_args()
@@ -236,6 +256,8 @@ def main():
         verify()
     if a.step in ('clips', 'all'):
         clips(only)
+    if a.step in ('stills', 'all'):
+        stills()
     if a.step in ('gifs', 'all'):
         gifs()
     if a.step in ('reel', 'all'):

@@ -10,6 +10,8 @@ end
 -- CFG.pace presented frames. Each CAP.wait then resumes after exactly one step and shoots it, so no frame is skipped or doubled
 -- whatever the machine load (realtime catch-up ticks and turbo both lose or corrupt frames), and the PNG writer gets time.
 CAP.stepmode = CFG and CFG.step == '1'
+CAP.lead = tonumber(CFG and CFG.lead) or 24
+CAP.tail = tonumber(CFG and CFG.tail) or 36
 CAP.pace = tonumber(CFG and CFG.pace) or 3
 local tickn = 0
 function on_tick()
@@ -23,6 +25,7 @@ function CAP.rec(on)
   if CAP.stepmode then
     if on then gd.pause(); CAP.stepping = true else CAP.stepping = false; gd.resume() end
   end
+  if on and CAP.lead > 0 then CAP.wait(CAP.lead) end     -- a beat of idle before the move so the lower-third lands first
 end
 CAP.noshot = CFG and CFG.noshot == '1'      -- audio pass: same script, no screenshots, realtime
 local lastmot = {}
@@ -51,7 +54,7 @@ function CAP.wait(k)
   end
 end
 function CAP.endclip()
-  gd.wait(10)                         -- the last screenshot lands a few frames later
+  CAP.wait(CAP.tail)                  -- a beat after the move
   CAP.log(string.format('ENDCLIP %02d frames=%d match_frame=%d', CAP.nclip, CAP.n, gd.match().frame))
   CAP.on = false
 end

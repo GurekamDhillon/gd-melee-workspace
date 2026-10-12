@@ -208,18 +208,56 @@
       "clip": "grab"
     },
     {
-      "id": "ledge",
-      "title": "Ledge options",
+      "id": "grab_back",
+      "title": "Back throw",
       "input": [
-        "stick:up",
-        "or",
-        "A",
-        "or",
+        "Z",
+        ">",
+        "stick:back"
+      ],
+      "note": "Grab, then throw behind you",
+      "script": "lua/clips_ground.lua",
+      "clip": "grab_b"
+    },
+    {
+      "id": "ledge_getup",
+      "title": "Ledge getup",
+      "input": [
+        "stick:fwd"
+      ],
+      "note": "Toward the stage from the ledge",
+      "script": "lua/clips_flight.lua",
+      "clip": "ledge_getup"
+    },
+    {
+      "id": "ledge_attack",
+      "title": "Ledge attack",
+      "input": [
+        "A"
+      ],
+      "note": "From the ledge",
+      "script": "lua/clips_flight.lua",
+      "clip": "ledge_attack"
+    },
+    {
+      "id": "ledge_roll",
+      "title": "Ledge roll",
+      "input": [
         "R"
       ],
-      "note": "Getup, attack, roll and jump from the ledge",
+      "note": "Shield from the ledge",
       "script": "lua/clips_flight.lua",
-      "clip": "ledge"
+      "clip": "ledge_roll"
+    },
+    {
+      "id": "ledge_jump",
+      "title": "Ledge jump",
+      "input": [
+        "X"
+      ],
+      "note": "Jump from the ledge",
+      "script": "lua/clips_flight.lua",
+      "clip": "ledge_jump"
     }
   ],
   "controls": [
@@ -353,5 +391,58 @@
       "Play offline, in the LAB, or against a friend on the same alpha build."
     ]
   ],
-  "report": "This is an alpha: hitboxes are still hand-authored, balance is unfinished and some animations are rough. Tell us what breaks in the bugs channel, with what you pressed and the stage."
+  "report": "This is an alpha: hitboxes are still hand-authored, balance is unfinished and some animations are rough. Tell us what breaks in the bugs channel, with what you pressed and the stage.",
+  "costume_names": [
+    "Orange",
+    "Red",
+    "Blue",
+    "Green",
+    "Navy Gi"
+  ],
+  "stills": [
+    {
+      "name": "still_kame_max",
+      "clip": "kame_max",
+      "at": 0.78
+    },
+    {
+      "name": "still_rush",
+      "clip": "rush",
+      "at": 0.33
+    },
+    {
+      "name": "still_light_finisher",
+      "clip": "light_heavy",
+      "at": 0.62
+    },
+    {
+      "name": "still_fsmash",
+      "clip": "fsmash",
+      "at": 0.4
+    },
+    {
+      "name": "still_flight",
+      "clip": "flight_aerial",
+      "at": 0.45
+    },
+    {
+      "name": "still_ki_charge",
+      "clip": "ki_charge",
+      "at": 0.5
+    }
+  ],
+  "reel": [
+    "kame_charged",
+    "rush",
+    "light_heavy",
+    "launcher_air",
+    "fair_spike",
+    "flight_aerial",
+    "flight_ledge",
+    "dash_kick",
+    "ki_blast",
+    "it_roll",
+    "fsmash",
+    "kame_max"
+  ]
 }
