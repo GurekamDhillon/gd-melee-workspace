@@ -138,6 +138,7 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].controls.extras[].buttons.Down | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].controls.extras[].buttons.Left | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].controls.extras[].buttons.Right | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].scale | number: Built size of the fighter: x34_scale.x, the model, hurt and hitboxes, ECB, ledge snap, camera box and attributes (as gd.set_scale); 1.0 is retail size | 1.0 | minimum=0.5; maximum=2.0; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].jumps | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].jumps.max | integer: Total jumps including ground jump | disc value | minimum=1; maximum=250; geno.md §10; melee/pc/platform/geno_registry.c |
 | fighters[].jumps.air_vy | array: Ordered entries | absent | maxItems=16; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
@@ -537,9 +538,9 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | GENO_ART_SPAWNS | 4 | melee/pc/geno/geno.h:395 |
 | GENO_ART_CHILDREN | 2 | melee/pc/geno/geno.h:396 |
 | GENO_SP_SELECT | 4 | melee/pc/geno/geno.h:497 |
-| JDOC_NODES | 32768 | melee/pc/platform/geno_registry.c:75 |
-| JDOC_ARENA | 524288 | melee/pc/platform/geno_registry.c:76 |
-| GN_MAX_VOICE | 32 | melee/pc/platform/geno_registry.c:407 |
+| JDOC_NODES | 32768 | melee/pc/platform/geno_registry.c:76 |
+| JDOC_ARENA | 524288 | melee/pc/platform/geno_registry.c:77 |
+| GN_MAX_VOICE | 32 | melee/pc/platform/geno_registry.c:408 |
 | JSON_DEPTH | 32 | melee/pc/platform/geno_registry.c:jd_value |
 | JSON_FILE_BYTES | 1048576 | melee/pc/platform/geno_registry.c:gn_read_file |
 
