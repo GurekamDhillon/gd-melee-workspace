@@ -417,11 +417,14 @@ def row_specs(source):
                   'status':'move review re-crop: '+c['note'],'move':c['move']}
     # Cross-port rows (tools/cross-port.json, tools/cross_port.py): a retail Melee action retargeted onto this rig; the clip is the solved
     # npz, the XV2 clip below is only a placeholder for the lookups (its channels are replaced in animations()).
-    for row,c in json.loads((PORT/'tools/cross-port.json').read_text()).items():
-        npz=ROOT/'_build/goku-xv2/cross-port'/row/'clip.npz'
-        if not npz.exists():raise SystemExit('cross-port clip missing: run python ports/goku-xv2/tools/cross_port.py (needs GW_ISO_VANILLA)')
-        out[row]={'clip':'clip:'+EAN+'/0','loop':bool(c.get('loop')),'frames':int(np.load(npz)['frames']),'start':0,'move':c['move'],
-                  'status':'CROSS-PORT: Melee %s %s (%s)'%(c['fighter'].capitalize(),c['action'],c['reason']),'cross_port':dict(c,npz=str(npz))}
+    def put_cross_ports():
+        # applied here and again after the remake / rowmap passes below: those rewrite rows by name (the grab and throw slots), a cross-port row must be the last word
+        for row,c in json.loads((PORT/'tools/cross-port.json').read_text()).items():
+            npz=ROOT/'_build/goku-xv2/cross-port'/row/'clip.npz'
+            if not npz.exists():raise SystemExit('cross-port clip missing: run python ports/goku-xv2/tools/cross_port.py (needs GW_ISO_VANILLA)')
+            out[row]={'clip':'clip:'+EAN+'/0','loop':bool(c.get('loop')),'frames':int(np.load(npz)['frames']),'start':0,'move':c['move'],
+                      'status':'CROSS-PORT: Melee %s %s (%s)'%(c['fighter'].capitalize(),c['action'],c['reason']),'cross_port':dict(c,npz=str(npz))}
+    put_cross_ports()
     # Custom move art deliberately has separate charge/release stages. These are
     # local design crops, not claims about source BAC state-machine equivalence.
     charge=out['KameCharge'];charge.update(frames=135,loop=True,hold_source=40)   # 135: the XV2 charge SE (2.1 s) plays once per loop; the script restarts when the clip wraps
@@ -491,6 +494,9 @@ def row_specs(source):
     # clip already is the pick keeps its tuned crop. GAP slots have no pick and change nothing.
     import remake_apply
     REMAKE_REPORT[:]=remake_apply.apply(out,source,byname.get,EAN,rowmap.ALIASES)
+    put_cross_ports()
+    for r in REMAKE_REPORT:
+        if r.get('row') in CROSS:r.update(action='superseded',why='the row is a cross-port (tools/cross-port.json)')
     # Homing dash strike (XV2 BAC 476, Guard+Heavy): BOOST_F_00 f0-19 then ATC_008 from f20, 66 frames (the BAC's own two bindings, played at speed 1).
     # Entered from the shield by a combo route (combo.json Guard>Homing); a row of its own so the clip chain is the one XV2 plays.
     # Flight aerials (phase 4): the aerial rows again, as declared rows of their own, for the Geno states FlightNair..FlightDair (their script and row are the aerial's)
