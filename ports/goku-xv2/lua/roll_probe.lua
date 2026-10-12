@@ -17,6 +17,7 @@ gd.run(function()
     local p = gd.player(1)
     local m = tostring(p.motion_name)
     if m:find('Escape') then
+      if not first_t then gd.log('ROLLPROBE first escape frame match=' .. tostring(gd.match().frame)) end
       first_t = first_t or t
       local int = ((p.intangible or 0) > 0 or tostring(p.body_state) ~= 'normal') and 1 or 0
       int_n = int_n + int

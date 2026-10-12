@@ -124,3 +124,23 @@ Owner after playing phase 2: Up B is "whack"; Goku "still floats noticeably abov
 - **Flight is ki-limited.** No entry cost. It drains 0.8333 ki per frame: **100 ki = 120 frames = 2 seconds** (the speed is unchanged, 0.8 per frame, so up to 96 units); it ends when the ki reaches 0 (the special fall), or with B. With less than 20 ki Up B is the weak free 22-frame flight, so it always does something. No ki comes back during the flight (a gain is taken straight off again), and Down B hold cannot start the ki charge in the air; a hit that Goku lands during a flight aerial still earns its normal +4 (that is the aerial, not the flight).
 - **Flight aerials.** A (stick direction = nair / fair / bair / uair / dair) or the C-stick cancels the flight into the matching aerial: combo routes `Fly>A ...` / `Fly>C ...` into the Geno states FlightNair .. FlightDair, which share the aerials' rows and scripts (and their sample hitboxes). When the aerial ends: **a hit that connected = normal air control (Fall; the double jump is still there); a miss = the special fall.** The new Lua field `ctx.self.connected` (engine: script value ATTACK_CONNECTED, set when a hitbox wins a hit on a fighter) decides. **A hit on a shield does not count as a connect** (the engine sets the flag only when the hit wins on a fighter), so a shielded aerial is a miss and ends in the special fall; recommend keeping it, since it is the edgeguard counter-play. Landing uses the generic Geno landing, not the aerial's autocancel window.
 - **Smash charge is back.** The remade smash scripts had no `smash_charge` command, so there was nothing to hold. `fsmash`, `usmash` and `dsmash` now carry Melee's own command (`smash_charge charge_frames=60 charge_rate=350 color_anim=119`: hold A through the wind-up for up to 60 frames, damage x1.3671 on release, the engine's flash and shake) two frames before the first active frame of the sample hitbox (`tools/remake_samples.py` places it; it is part of the script, so it stays when the hitbox is edited). C-stick smashes do not charge in Melee either.
+
+## The XV2 Instant Transmission sequence (SOURCE: skill 001_GOK_KUR, BAC entry 0; phase 5)
+
+SOURCE events, read from the decoded BAC (`skill/ESC/001_GOK_KUR`) and the ACB/EEPK it names:
+
+| frame | XV2 event | what it is | what the remake does |
+|---|---|---|---|
+| 0 | Sound, Character_VOX cue 55 | Goku's voice line (`BDB_GOK_055`) | `GnItVox` (sfx 200142), frame 0 of the roll |
+| 0 | Invulnerability 145 frames | the whole teleport | retail roll intangibility (Mewtwo timing) |
+| 3 | Sound, Common_SE cue 40 | swing whoosh | `GnItSwing` (200145), frame 3 |
+| 10 | Effect, common EEPK id 42 on `b_C_Base` | one TBIND asset: `Act_WindShort.etr`, three thin wind ribbons (L shoulder, L knee, R hand), `Wind.dds`, extrude 20 / hold 12 frames, alpha 0 -> 1 -> 0 | converted by `xv2_fx.py --it` to `P_TrailGokuITWind{Shoulder,Knee,Hand}`, bound to the roll rows at frame 10 (spot dodge 8) |
+| 15 | Sound, Skill_SE cue 0 | `BIRD_BTL_E001_KUR_01_Spin`, 1.23 s | `GnItSe` (200148), frame 15 (spot dodge 12) |
+| 18-70 | Movement, Z -0.125 per frame | the travel | retail roll travel scaled to 27.3 units |
+| 0-18 / 70-106 | clip vanish / reappear | the body leaves through the clip | clip chain `ESC_KUR_C` plus the hidden gap |
+
+NOT in XV2's data: the BAC has no Transparency, afterimage, ScreenEffect or Camera event (its kinds are Animation, Hitbox, Movement, Invulnerability, BCM Callback,
+Effect, Sound, Targeting Assistance, Eye Movement; entries 1 and 6 carry one undecoded Function 7 for frames 0-70). So the vanish is the clip plus the effect above;
+no dissolve shader was added. Stand-ins, named: the body is hidden with `PUT HIDDEN` for the gap (XV2 hides it through the clip); the wind ribbons are world-fixed live
+particles (`follow none`) because the engine trail has no bone-sampled ribbon; the FX is bound by the retail Escape animation row (233/234/235), since the rolls are not Geno states.
+Owed: seeing it on screen (the headless camera shows the stage, not the fighters).
