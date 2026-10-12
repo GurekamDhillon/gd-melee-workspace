@@ -368,6 +368,8 @@ def write_presentation(package, fighter):
         portrait.append(conv(src(c, 'portrait.png') or src(cnames[0], 'portrait.png'), 'GnGokuXv2_portrait_%s.gxtex' % c, 'rgb5a3'))
         stock.append(conv(src(c, 'stock.png') or src(cnames[0], 'stock.png'), 'GnGokuXv2_stock_%s.gxtex' % c, 'rgba8'))
     fighter['presentation'] = {'icon': icon, 'portrait': portrait, 'stock': stock}
+    if all(src(c, 'results.png') for c in cnames):   # the 52x74 results card, one per costume (rgb5a3)
+        fighter['presentation']['results'] = [conv(src(c, 'results.png'), 'GnGokuXv2_results_%s.gxtex' % c, 'rgb5a3') for c in cnames]
 
 
 
