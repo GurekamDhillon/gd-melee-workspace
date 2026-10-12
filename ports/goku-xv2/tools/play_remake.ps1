@@ -24,7 +24,8 @@ $mods = Join-Path $wsRoot '_build/goku-xv2/combo-package/mods'
 (Get-Content (Join-Path $mods 'enabled.txt')) | Where-Object { $_ -ne 'goku-combo-tests' } | Set-Content -Encoding ascii (Join-Path $mods 'enabled.txt')
 $env:MELEE_MODS_DIR = $mods
 $p2 = if ($env:PLAY_P2) { $env:PLAY_P2 } else { 'mario/cpu0' }
-$env:MELEE_SCENE = "mode=lab;p1=geno:goku-xv2/hu;p2=$p2;stage=fd;items=off;time=0"
+$stage = if ($env:PLAY_STAGE) { $env:PLAY_STAGE } else { 'fd' }
+$env:MELEE_SCENE = "mode=lab;p1=geno:goku-xv2/hu;p2=$p2;stage=$stage;items=off;time=0"
 $env:MELEE_WINDOW_X = '40'; $env:MELEE_WINDOW_Y = '40'; $env:MELEE_WINDOW_W = '1600'; $env:MELEE_WINDOW_H = '900'
 $env:MELEE_UNATTENDED = '0'; $env:MELEE_MAX_SECONDS = '0'
 $env:MELEE_RUN_LABEL = 'Goku XV2 - remake phase 1 LAB'
