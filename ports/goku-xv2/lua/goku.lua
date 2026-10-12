@@ -156,6 +156,7 @@ local FLY_SPEED = 1.6            -- units per frame at full stick (owner 2026-10
 local FLY_WEAK_FRAMES = 22
 local FLY_WEAK_SPEED = 0.9
 local FLY_CAP = 240
+local FLY_LEDGE = 5             -- the last frames of the flight (cap, weak cap, or ki running out) that catch a ledge in either facing, like Fox's Fire Fox end (owner 2026-10-11)
 function M.flight_enter(ctx)
   local s = ctx.state
   s.age = 0
@@ -183,6 +184,15 @@ function M.flight_frame(ctx)
   local m = math.sqrt(fx * fx + fy * fy)
   if m < 0.2 then fx, fy = 0, 0.25 elseif m > 1 then fx, fy = fx / m, fy / m end   -- stick at rest: a slow climb
   if s.age <= 8 then fy = math.max(fy, 0.9 * (1 - s.age / 10)) end                  -- the takeoff burst
+  local cap = full and FLY_CAP or FLY_WEAK_FRAMES
+  local left = cap - s.age
+  if full then local lk = math.floor((ctx.self.ki - FLY_DRAIN) / FLY_DRAIN) + 1 if lk < left then left = lk end end -- @KI frames of ki left after this one
+  if left <= FLY_LEDGE then
+    -- the ledge window: both ledges are tested and he turns to the one he catches (ftCliffCommon). The engine only catches a ledge while moving down, so a
+    -- stick that is not pushing up settles to a slight descent for these frames (an upward flight keeps its climb).
+    ctx.ledge(2)
+    if fy < 0.5 then fy = math.min(fy, -0.06) end
+  end
   ctx.velocity(fx * sp, fy * sp)
   local want = 0
   if fx > 0.4 and fy < 0.6 then want = 1 elseif fx < -0.4 and fy < 0.6 then want = 2 end
