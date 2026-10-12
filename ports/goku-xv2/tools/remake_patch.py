@@ -15,6 +15,7 @@ import sys
 
 HERE = Path(__file__).resolve().parent
 PORT = HERE.parent
+ROOT = PORT.parents[1]
 sys.path.insert(0, str(HERE))
 import strip_gameplay as SG  # noqa: E402
 import remake_apply  # noqa: E402
@@ -73,6 +74,13 @@ def patch_gameplay():
             x['hitboxes'][0]['damage'] = 1
             x['hitboxes'][0].pop('stun', None)
             changed = True
+    spawn_file = ROOT / '_build/goku-xv2/cross-port/ThrowF/spawn.json'
+    if spawn_file.exists():   # the ki blasts leave from where Mewtwo's launch bone (the right shoulder) sits in the retargeted pose on the spawn frames
+        want_spawn = [round(v, 2) for v in json.loads(spawn_file.read_text(encoding='utf-8'))['mean_forward_up_script_units']]
+        for x in g['articles']:
+            if x['name'] == 'KiThrow' and x['spawn'] != want_spawn:
+                x['spawn'] = want_spawn
+                changed = True
     for m in g['moves']:
         if m['name'] == 'fthrow':
             want = {'hb': 'HB-SAMPLE', 'windows': [], 'release': 19, 'iasa': 74, 'strike': [[19, 19]],

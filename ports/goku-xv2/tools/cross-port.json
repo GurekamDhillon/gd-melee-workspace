@@ -72,5 +72,22 @@
    "gfx",
    "sfx"
   ]
+ },
+ "ThrowF": {
+  "move": "fthrow",
+  "fighter": "mewtwo",
+  "action": "ThrowF",
+  "anim_only": true,
+  "reason": "owner 2026-10-11: Mewtwo's forward throw animation on Goku's bones (the script, damage and ki blasts stay Goku's own)",
+  "spawn_from": {
+   "role": "shoulder.R",
+   "frames": [
+    33,
+    40,
+    47,
+    54,
+    61
+   ]
+  }
  }
 }

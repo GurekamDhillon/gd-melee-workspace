@@ -90,6 +90,28 @@ def generate(row, entry):
     src, dst, ratio = got['rig'], res.dst, report['ratio']
     scales, scale_notes = scale_tracks(T, got, res, entry.get('scale_gain', 1.0))
     (OUT / row / 'scale.json').write_text(json.dumps({'bones': scales, 'notes': scale_notes}, indent=1) + chr(10), encoding='utf-8')
+    if entry.get('anim_only'):
+        # the animation (and the grab anchor's choreography) only: the move's own script stays (ThrowF keeps its ki-blast spawns and damage). 'spawn_from' records where
+        # a role sits in the solved pose on the given script frames, for placing an article there (remake_patch.py reads spawn.json).
+        import numpy as np
+        from scipy.spatial.transform import Rotation as _R
+        sp = entry.get('spawn_from')
+        if sp:
+            wd = T.solved_world(res)
+            jd = dst.roles[sp['role']]
+            pts = np.array([wd[min(int(f), wd.shape[0] - 1), jd, :3, 3] for f in sp['frames']])
+            (OUT / row / 'spawn.json').write_text(json.dumps({'role': sp['role'], 'frames': sp['frames'], 'art_units': pts.tolist(), 'build_scale': build_scale,
+                                                              'mean_forward_up_script_units': [float(pts[:, 2].mean() / build_scale), float(pts[:, 1].mean() / build_scale)]}, indent=1) + chr(10), encoding='utf-8')
+        samples = len(range(int(round(report['source']['frames'])) + 1))
+        if entry.get('move'):
+            gp = SG.load()
+            m = next(x for x in gp['moves'] if x['name'] == entry['move'])
+            m['minimum_clip_frames'] = samples
+            SG.save(gp)
+        summary = {'row': row, 'clip': str(clip_path(row)), 'move_script': None, 'ratio': ratio, 'build_scale': build_scale, 'windows': [], 'iasa': samples, 'samples': samples,
+                   'hitboxes': [], 'worst_end_effector_error': max(v['max'] for v in report['end_effector_error'].values())}
+        (OUT / row / 'cross-port.json').write_text(json.dumps(summary, indent=1) + chr(10), encoding='utf-8')
+        return summary
     mk = markers()
     lines, moved = T.script_text(got['words'], src, dst, ratio, scale=1.0 / build_scale,
                                  joint_ref=lambda role, jd, base: '@HITW0:%s:0x%08X@' % (mk[role], base))
