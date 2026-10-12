@@ -175,7 +175,6 @@ local FLY_SPEED = 1.6            -- units per frame at full stick (owner 2026-10
 local FLY_WEAK_FRAMES = 22
 local FLY_WEAK_SPEED = 0.9
 local FLY_CAP = 240
-local FLY_LEDGE = 5             -- the last frames of the flight (cap, weak cap, or ki running out) that catch a ledge in either facing, like Fox's Fire Fox end (owner 2026-10-11)
 function M.flight_enter(ctx)
   local s = ctx.state
   s.age = 0
@@ -206,12 +205,11 @@ function M.flight_frame(ctx)
   local cap = full and FLY_CAP or FLY_WEAK_FRAMES
   local left = cap - s.age
   if full then local lk = math.floor((ctx.self.ki - FLY_DRAIN) / FLY_DRAIN) + 1 if lk < left then left = lk end end -- @KI frames of ki left after this one
-  if left <= FLY_LEDGE then
-    -- the ledge window: both ledges are tested and he turns to the one he catches (ftCliffCommon). The engine only catches a ledge while moving down, so a
-    -- stick that is not pushing up settles to a slight descent for these frames (an upward flight keeps its climb).
-    ctx.ledge(2)
-    if fy < 0.5 then fy = math.min(fy, -0.06) end
-  end
+  -- the ledge: caught in EITHER facing for the whole flight and the special fall after it (ctx.ledge(3): engine value 2 here, and FallSpecial gets the either-facing catch,
+  -- Geno_FallSpecialColl). The engine needs a level or descending approach (mpColl_LedgeLevelOK for ctx.ledge(3) moves), so a stick that is not pushing up flies level
+  -- (never climbs) and a descent onto a ledge from above catches it. (owner 2026-10-11: the reverse catch never worked in play)
+  ctx.ledge(3)
+  if s.age > 8 and fy < 0.5 then fy = math.min(fy, 0) end
   ctx.velocity(fx * sp, fy * sp)
   local want = 0
   if fx > 0.4 and fy < 0.6 then want = 1 elseif fx < -0.4 and fy < 0.6 then want = 2 end
@@ -226,6 +224,19 @@ function M.flightair_frame(ctx)
     if ctx.self.connected == 1 then ctx.go("auto") else ctx.go("helpless") end
   end
 end
+-- Held ki volley (owner 2026-10-11; XV2 ATC_SHOT_R start, SHOT_L_LOOP / SHOT_R_LOOP): the D-pad Down blast (ground KiBlast, air KiBlastAir) fires the right hand, and while the blast input stays
+-- held and 5 ki are left it chains into the OTHER hand's loop state when the shot's pose ends; release lets the clip's tail play out (the End). Each shot leaves the firing hand's bone (articles 3/4).
+local BLAST_KI = 5
+local function blast_chain(ctx, at, ground, air)
+  if ctx.self.action_frame >= at and ctx.input.blast_held then
+    local k = ctx.self.ki -- @KI
+    if k >= BLAST_KI then ctx.ki(-BLAST_KI) ctx.go(ctx.self.air and air or ground) end -- @KI
+  end
+end
+function M.kiblast_frame(ctx) blast_chain(ctx, 22, "KiBlastL", "KiBlastAirL") end
+function M.kiblastl_frame(ctx) blast_chain(ctx, 13, "KiBlastR", "KiBlastAirR") end
+function M.kiblastr_frame(ctx) blast_chain(ctx, 13, "KiBlastL", "KiBlastAirL") end
 -- Not called: names the cape reappear states so the offline reachability check sees them (the engine picks them by behaviour order).
 function M.it_targets(ctx) ctx.go("ITEnd") ctx.go("ITEndAir") ctx.go("RushCombo") ctx.go("KameSuper") ctx.go("Homing") ctx.go("Recovery") ctx.go("RecoveryAir") ctx.go("FlightNair") ctx.go("FlightFair") ctx.go("FlightBair") ctx.go("FlightUair") ctx.go("FlightDair") ctx.go("Counter") ctx.go("Riposte") end
+function M.it_targets2(ctx) ctx.go("KiBlastL") ctx.go("KiBlastR") ctx.go("KiBlastAirL") ctx.go("KiBlastAirR") end -- @KI (the volley states exist only in the combo package)
 return M

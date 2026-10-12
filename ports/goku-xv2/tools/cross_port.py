@@ -161,7 +161,7 @@ def generate(row, entry, out=None):
     text = ['# HB-SAMPLE (CROSS-PORT): Melee %s %s (retail data from the vanilla disc), retargeted by bone role; owner choice: %s.'
             % (who, entry['action'], entry['reason']),
             "# Hitbox joint, size and offsets are %s's moved to Goku's bone of the same role (a sphere on the root joint is scaled about it) and scaled by the size ratio %.4f"
-            " (script units: build.py multiplies by %.4f; the engine then applies Goku's built size 1.2 to the fighter, model and hitboxes alike). Damage, angle, KBG/BKB, timing,"
+            " (script units: build.py multiplies by %.4f; the engine then applies Goku's built size (build.py SIZE) to the fighter, model and hitboxes alike). Damage, angle, KBG/BKB, timing,"
             " auto-cancel and IASA are unchanged%s." % (who, ratio, build_scale, ('; left behind: ' + ', '.join(drop)) if drop else ''), 'PUT ANIM_RATE 1.0'] + lines
     hbs = [e for e in events if e['kind'] == 'hitbox']
     clears = [e['frame'] for e in events if e['kind'] == 'hitboxes_clear']

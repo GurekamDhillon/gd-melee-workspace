@@ -168,7 +168,7 @@ def bind(text, plan, scale=1.0):
         lines.append(line)
     return '\n'.join(lines)+'\n'
 
-SIZE = 1.2   # the built size of Goku (define "scale"); change here only
+SIZE = 1.1   # the built size of Goku (define "scale"); change here only
 
 
 def scale_articles(articles, scale):

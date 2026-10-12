@@ -1,0 +1,8 @@
+# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.
+# The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
+# KiBlastR (volley loop, owner 2026-10-11): XV2 ATC_SHOT_R_LOOP, the right hand leads at f2; the blast leaves the RIGHT hand bone (article 3, bone hand.R).
+PUT ANIM_RATE 1.0
+wait 2
+CALL geno.article.spawn 3
+wait_until 11
+iasa
