@@ -148,7 +148,7 @@ gd.run(function()
         gd.wait(30)
       end
       local cases = {
-        {'fthrow', 'ThrowF', function(f) return {x = 127 * f} end, 9.5, 2.0, 5},
+        {'fthrow', 'ThrowF', function(f) return {x = 127 * f} end, 9.5, 2.0, 5},   -- release lowered to 1 (a Geno article hit adds 1: 1.8 a ball, not 0.9): 1.2 + 5 x 1.8
         {'bthrow', 'ThrowB', function(f) return {x = -127 * f} end, 9.0, 2.0, 0},
         {'dthrow', 'ThrowLw', function(f) return {y = -127} end, 7.0, 2.0, 0},
         {'uthrow', 'ThrowHi', function(f) return {y = 127} end, 4.0, 2.0, 0},
@@ -176,7 +176,7 @@ gd.run(function()
           label, motion, tostring(seen_throw), steps, spawns, total, ref, tostring(f_at), tostring(v.motion_name), (v.x - g.x) * face))
         assert(seen_throw, label .. ': the throw state never ran')
         assert(math.abs(total - ref) <= tol, label .. ' total damage is not close to the source thrower: ' .. total .. ' vs ' .. ref)
-        if want_balls > 0 then assert(spawns >= want_balls and steps >= want_balls, label .. ' did not release ' .. want_balls .. ' ki blasts that hit') end
+        if want_balls > 0 then assert(steps >= want_balls + 1, label .. ' did not release ' .. want_balls .. ' ki blasts that hit (' .. steps .. ' damage steps)') end
         assert(f_at and f_at <= 110, label .. ': Goku did not get actionable after the throw: ' .. tostring(f_at))
         gd.wait(45)
         local n2 = tostring(gd.player(2).motion_name)

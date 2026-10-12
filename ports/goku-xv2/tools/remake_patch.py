@@ -65,13 +65,18 @@ def patch_gameplay():
         g['articles'].append({'name': 'KiThrow', 'lifetime': 45, 'velocity': [6.0, 0], 'spawn': [8, 12], 'max_live': 5, 'homing': {'turn': 35, 'range': 0, 'delay': 0},
                               'despawn': {'hit': True, 'shield': True, 'stage': True, 'clank': True},
                               'hitboxes': [{'slot': 0, 'damage': 1, 'size': 2.2, 'offset': [0, 0, 0], 'angle': 361, 'kbg': 20, 'wkb': 0, 'bkb': 8, 'start': 1, 'end': 0,
-                                            'element': 2, 'sfx_severity': 1, 'stun': 10}]})
+                                            'element': 2, 'sfx_severity': 1}]})
         changed = True
     assert [x['name'] for x in g['articles']].index('KiThrow') == 5, 'moves/fthrow.genoasm spawns article 5'
+    for x in g['articles']:
+        if x['name'] == 'KiThrow' and (x['hitboxes'][0]['damage'] != 1 or 'stun' in x['hitboxes'][0]):
+            x['hitboxes'][0]['damage'] = 1
+            x['hitboxes'][0].pop('stun', None)
+            changed = True
     for m in g['moves']:
         if m['name'] == 'fthrow':
             want = {'hb': 'HB-SAMPLE', 'windows': [], 'release': 19, 'iasa': 74, 'strike': [[19, 19]],
-                    'design': {'damage': 5, 'angle': 78, 'kbg': 100, 'bkb': 0},
+                    'design': {'damage': 1, 'angle': 78, 'kbg': 100, 'bkb': 0},
                     'strike_note': 'CROSS-PORT: Mewtwo ThrowF (release at script frame 19, five ki blasts from frame 33)'}
             if any(m.get(k) != v for k, v in want.items()):
                 m.update(want)

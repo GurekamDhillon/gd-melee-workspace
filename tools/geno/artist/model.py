@@ -71,6 +71,7 @@ class Clip:
         self.times = None
         self.chan = {}             # (bone name, path) -> (times, values)
         self.root_motion = False
+        self.translate_bones = set()   # see _read_clips
         self.scale_bones = set()   # bones whose scale track is carried into the bank (fighter.json clips.scale_bones; empty = scale is dropped, as ever)
         self.loop = None
         self.hit_frames = []
@@ -228,6 +229,7 @@ def _read_clips(f):
     side = f.sidecar.get("clips", {})
     root_cfg = set(cfg_c.get("root_motion", []))
     scale_cfg = cfg_c.get("scale_bones", {})
+    trans_cfg = cfg_c.get("translate_bones", {})
     loop_cfg = cfg_c.get("loop", {})
     ignore = set(cfg_c.get("ignore", []))
     for an in g.get("animations", []):
@@ -253,6 +255,7 @@ def _read_clips(f):
         c.loop = loop if loop is None else bool(loop)
         c.root_motion = (name in root_cfg) or bool(sc.get("root_motion")) or bool(ex.get("geno_root_motion"))
         c.scale_bones = set(scale_cfg.get(name, []))
+        c.translate_bones = set(trans_cfg.get(name, []))   # bones whose translation track is carried into the bank besides the hips (clips.translate_bones: the grab anchor of a throw)
         f.clips[name] = c
         f.clip_order.append(name)
     legacy = cfg_c.get("legacy_manifest")

@@ -62,6 +62,21 @@ gd.run(function()
           b.vel_x or 0, b.vel_y or 0, tostring(b.motion_name))
         lastp = b.percent
       end
+      if C.hb and t >= 8 and t <= 26 and t % 3 == 0 then
+        local okh, hb = pcall(gd.hitboxes, 1)
+        if okh and type(hb) == 'table' then
+          for _, h in ipairs(hb) do
+            local ks = {}
+            for k, v in pairs(h) do if type(v) == 'number' then ks[#ks + 1] = string.format('%s=%.1f', k, v) end end
+            table.sort(ks)
+            log('t=%d hitbox %s | victim %.1f,%.1f', t, table.concat(ks, ' '), b.x, b.y)
+          end
+        end
+        local okv, hz = pcall(gd.hurtboxes, 2)
+        if okv and type(hz) == 'table' and t == 12 then
+          for _, h in ipairs(hz) do log('t=%d hurt %s state %s a(%.1f,%.1f) b(%.1f,%.1f) r=%.1f', t, tostring(h.bone), tostring(h.state), h.ax, h.ay, h.bx, h.by, h.radius) end
+        end
+      end
       local items = gd.items() or {}
       if #items ~= lasti then
         lasti = #items

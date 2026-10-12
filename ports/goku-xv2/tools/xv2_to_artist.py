@@ -803,13 +803,15 @@ def animations(source,mesh,rows,splices=None):
                 elif kind=='Position' and bone=='b_C_Base':root[ix]=sample_track(keys,tm)@BASIS*mesh['factor']
                 elif kind=='Position' and bone!='b_C_Base':ignored.add(bone)
                 elif kind=='Scale' and np.max(np.abs(sample_track(keys,tm)-1.))>1e-5:lostscale.add(bone)
-        cp=rs.get('cross_port');scales={}
+        cp=rs.get('cross_port');scales={};trans={}
         if cp:
             z=np.load(cp['npz']);have=int(z['frames']);zn=list(z['names'])
             pick=lambda a:np.concatenate([a,np.repeat(a[-1:],count-have,axis=0)]) if count>have else a[:count]
             for n in names:
                 if n in zn:rotations[n]=pick(z['q'][:,zn.index(n)])
             hip=pick(z['hips_t']).copy();root=np.zeros((count,3));lostscale=set()
+            if 'anchor_t' in z.files and 'grab_anchor' in names and rs['cross_port'].get('anchor',True):   # the source's own grab-anchor motion (a throw carries the victim): translation + rotation of the anchor bone
+                rotations['grab_anchor']=pick(z['anchor_q']);trans['grab_anchor']=pick(z['anchor_t'])
             # 2026-10-09 (owner #11): the source's bone-scale tracks (Luigi's thigh stretch) ride on the destination bone of the same role
             sj=Path(cp['npz']).with_name('scale.json')
             if sj.exists():
@@ -907,7 +909,7 @@ def animations(source,mesh,rows,splices=None):
             hip,root_h,hand_rep=HL.apply_clip(hand_clips[name],count=count,rotations=rotations,rest_q=rest_q,hips=hip,root=root if rs.get('root_motion') else None,
                                               hips_bone='b_C_Pelvis',root_bone='b_C_Base',rest_hips=rest['b_C_Pelvis'][:3,3])
             if root_h is not None:root=root_h;hand_root=True
-        result[name]={'rotation':rotations,'hips':hip,'root':root if (rs.get('root_motion') or hand_root) else None,'frames':count,'loop':rs['loop'],'scale':scales}
+        result[name]={'rotation':rotations,'hips':hip,'root':root if (rs.get('root_motion') or hand_root) else None,'frames':count,'loop':rs['loop'],'scale':scales,'trans':trans}
         report[name]={k:v for k,v in rs.items() if k!='events'}
         report[name].update(ground_report)
         report[name].update(frames=count,source_name=clip['name'],ground_offset=-ground,
@@ -954,6 +956,7 @@ def emit_glb(mesh,anims,path):
         channel('b_C_Pelvis','translation',a['hips'],'VEC3')
         if a['root'] is not None:channel('b_C_Base','translation',a['root'],'VEC3')
         for bone,v in a.get('scale',{}).items():channel(bone,'scale',v,'VEC3')
+        for bone,v in a.get('trans',{}).items():channel(bone,'translation',v,'VEC3')
         g['animations'].append(an)
     b.save(path)
 
@@ -1004,7 +1007,8 @@ def main(argv=None):
     cfg={'schema':'geno-artist/1','key':'goku-xv2','name':'Goku','art':{'glb':'goku.glb','scale':1,'reduce_influences':False},
          'roles':ROLES,'costumes':[{'name':'default','texture':'atlas.png'}],
          'clips':{'map':cmap,'loop':{n:a['loop'] for n,a in anims.items()},'root_motion':[n for n,a in anims.items() if a['root'] is not None],
-                  'scale_bones':{n:sorted(a['scale']) for n,a in anims.items() if a.get('scale')}},'hurtboxes':'auto','output':str(out/'package')}
+                  'scale_bones':{n:sorted(a['scale']) for n,a in anims.items() if a.get('scale')},
+                  'translate_bones':{n:sorted(a['trans']) for n,a in anims.items() if a.get('trans')}},'hurtboxes':'auto','output':str(out/'package')}
     write(out/'fighter.json',cfg)
     write(out/'clip-library.json',{'schema':'goku-clip-library/1','clips':browse})
     write(out/'goku.glb.geno.json',{'schema':'geno-fighter-sidecar/1','roles':ROLES,'clips':{n:{'loop':a['loop'],'frames':a['frames'],'root_motion':a['root'] is not None} for n,a in anims.items()}})

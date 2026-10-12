@@ -1116,7 +1116,7 @@
       "release": 19,
       "iasa": 74,
       "design": {
-        "damage": 5,
+        "damage": 1,
         "angle": 78,
         "kbg": 100,
         "bkb": 0
@@ -2667,8 +2667,7 @@
           "start": 1,
           "end": 0,
           "element": 2,
-          "sfx_severity": 1,
-          "stun": 10
+          "sfx_severity": 1
         }
       ]
     }

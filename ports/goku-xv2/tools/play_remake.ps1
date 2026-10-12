@@ -2,7 +2,7 @@
 #   & 'E:\Projects\Melee Workspace\worktrees\gokup1\ports\goku-xv2\tools\play_remake.ps1'        # LAB, Goku vs a Mario CPU on FD, window at 40,40
 # Optional: -Picker opens the REMAKE picker instead (the owner's picks show as taken; swap one, then remake_sheet.py --sync-picks and rebuild).
 # Env overrides: GW_MELEE (game checkout with the geno-11 engine + REMAKE mode), GW_BUILD_ROOT (its build root with melee-pc.exe).
-# Controls (Scheme A, Melee buttons only): B = Kamehameha (hold to charge); Down B tap = vanish counter, Down B hold = ki charge (only below 100);
+# Controls (Scheme A, Melee buttons only): B = Kamehameha (hold to charge); Down B = the ki charge, hold it (ground and air, only below 100; the vanish counter is unbound); D-pad Down = ki blast (air too);
 # Up B = flight while the ki lasts (2 s at 100 ki; steer with the stick; B ends it, A / C-stick = an aerial: a hit keeps air control, a miss = the special fall).
 # Rolls and the spot dodge are Instant Transmission teleports. Feet on the floor: no hover. Smashes charge (hold A).
 # shield + B (stick neutral) = homing dash strike (20 ki); Side B = knockback attack (Rush); D-pad Down (or Y under CSS layout B) = ki blast (5 ki).
