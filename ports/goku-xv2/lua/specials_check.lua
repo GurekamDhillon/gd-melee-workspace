@@ -204,8 +204,17 @@ gd.run(function()
 
     -- the shield bubble is centred on his body (retail Falcon: dx 0.2, dy 10.1 from the origin; before: dx 9.8, dy 13.4, at the forearms)
     reset(50)
+    local function body_span()   -- head to pelvis distance and pelvis to the root bone: the body does not scale when the shield bubble does (guard code scales the shield part's joint)
+      local js = gd.joints(1, true)
+      local h, pv = js[72], js[5]   -- joint 71 b_C_Head, joint 4 b_C_Pelvis (list index = joint index + 1)
+      return math.sqrt((h.x - pv.x) ^ 2 + (h.y - pv.y) ^ 2 + (h.z - pv.z) ^ 2)
+    end
+    local span_wait = body_span()
     gd.input(1, {buttons = 'L'}, 40)
     gd.wait(25)
+    local span_guard = body_span()
+    gd.log(string.format('SPECHECK shield body span: Wait %.2f, Guard %.2f', span_wait, span_guard))
+    assert(math.abs(span_guard - span_wait) < 0.03 * span_wait, 'the body grew or shrank in Guard (the shield slot must be a leaf joint): ' .. span_wait .. ' -> ' .. span_guard)
     local gp = gd.player(1)
     local fsh = (gp.facing or 1) >= 0 and 1 or -1
     local sdx, sdy = ((gp.shield_x or 0) - gp.x) * fsh, (gp.shield_y or 0) - gp.y

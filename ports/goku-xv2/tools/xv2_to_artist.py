@@ -289,13 +289,19 @@ def build_mesh(source, height):
         globals_.append(w)
         pn=main[j['parent']]['name'] if j['parent']>=0 else None
         parents.append(names.index(pn) if pn in names else None)
-    for name,parent,offset in [('item_socket.R','b_R_Hand',[0,0,.04]),('grab_anchor','b_C_Chest',[0,0,.27])]:
+    for name,parent,offset in [('item_socket.R','b_R_Hand',[0,0,.04]),('grab_anchor','b_C_Chest',[0,0,.27]),('shield_anchor','b_C_Base',[0,0,0])]:
         names.append(name);parents.append(names.index(parent));w=globals_[parents[-1]].copy();w[:3,3]+=np.array(offset)*factor
         if name=='grab_anchor':
             # 2026-10-08: the held victim sat inside him at (2.33, 0) (Mario holds at (7.64, -1.56)), and under the chest the
             # anchor turned with the grab pose's twist. ThrowN hangs off the root instead, unrotated, 5.3 in front of the
             # chest and 1.5 below it, so the hold point stays in front of him whatever the pose.
             parents[-1]=names.index('b_C_Base');w=np.eye(4);w[:3,3]=globals_[names.index('b_C_Chest')][:3,3]+np.array(offset)*factor+np.array([0.,-1.5,5.3])
+        if name=='shield_anchor':
+            # 2026-10-11 (owner: the shield bubble sat at his forearms; then, pointed at YRotN, the whole body grew when he shielded). The guard code scales the SHIELD part's joint by the
+            # shield size (ftCo_Guard.c:216,338,806,880 HSD_JObjSetScale(parts[x8->x11].joint)), so the part must be a LEAF with no weights. Retail's ThrowN is one: a leaf under YRotN with an
+            # identity local. This is the same: hung off the root like grab_anchor, unrotated, at the pelvis height on the body line (the plan puts YRotN at the hip height and gives
+            # children of the root a local of identity there), so the bubble is centred on his body and scaling it moves nothing else.
+            w=np.eye(4);w[1,3]=globals_[names.index('b_C_Pelvis')][1,3]
         globals_.append(w)
     locals_=[np.linalg.inv(globals_[par])@w if par is not None else w for par,w in zip(parents,globals_)]
     jts=[];wts=[]

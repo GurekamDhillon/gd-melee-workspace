@@ -98,6 +98,7 @@ gd.run(function()
         if tap and chg and (not best or chg / tap > best[2] / best[1]) then best = {tap, chg, tap_far, chg_far} end
       end
       gd.log(string.format('SAMPLECHECK smash charge %s: tap %s%%, charged %s%%, anim held %s frames, dummy sent %.1f (tap) vs %.1f (charged) units in 26 frames', label, tostring(best and best[1]), tostring(best and best[2]), tostring(held), best and best[3] or 0, best and best[4] or 0))
+      if best and best[3] < 5 then error(label .. ' smash is a PHANTOM hit on the dummy: ' .. string.format('%.1f%% damage but the dummy was sent only %.1f units (a hitbox that only grazes the hurtbox does damage and no knockback)', best[1], best[3])) end
       if best and best[4] < best[3] * 1.1 then error(label .. ' charged smash does not send the dummy further: ' .. best[3] .. ' -> ' .. best[4]) end
       if not best then error(label .. ' smash did not connect tapped and charged at the same distance') end
       if best[2] < best[1] * 1.15 then error(label .. ' smash damage does not scale with the charge: ' .. best[1] .. ' -> ' .. best[2]) end

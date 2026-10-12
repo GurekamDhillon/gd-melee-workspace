@@ -61,7 +61,7 @@ CLIP_LIMB = {'GOK_ATC_002': 'hand', 'GOK_ATC_003': 'hand', 'GOK_ATC_004': 'hand'
              'GOK_ATC_011': 'foot', 'GOK_ATC_012': 'foot', 'GOK_ATC_017': 'foot', 'GOK_ATC_020_S': 'foot', 'GOK_ATC_025': 'foot', 'GOK_ATC_028': 'foot',
              'GOK_NAG_TSUKAMI': 'hand'}
 # moves whose limb the reach rule (leading_limb, 2026-10-11) would flip but the owner has not been asked about: they keep the limb they had. dtilt is deliberately NOT here (the fix).
-# Reported flips: dash_attack foot.R -> foot.L, utilt hand.L -> hand.R, RushCombo hand.R -> foot.L, Light5 hand.L -> foot.R.
+# Reported flips: dash_attack foot.R -> foot.L, utilt hand.L -> hand.R, RushCombo hand.R -> foot.L, Light5 hand.L -> foot.R. owner 2026-10-11: current limbs confirmed in game.
 LIMB_LOCK = {'dash_attack': 'foot.R', 'utilt': 'hand.L', 'RushCombo': 'hand.R', 'Light5': 'hand.L'}
 SKIP_SAMPLE = {'pummel', 'fthrow', 'bthrow', 'uthrow', 'dthrow', 'rapid_start', 'rapid_end', 'ITEnd', 'Recovery', 'KameCharge'}
 
@@ -348,6 +348,7 @@ SMASH_KB = {'fsmash': (361, 100, 28), 'usmash': (88, 105, 32), 'dsmash': (361, 1
 # stage centre on Mario (weight 100, no DI, tip slot, KB = ((p/10 + p*d/20) * 200/(w+100) * 1.4 + 18) * KBG/100 + BKB, launch speed 0.03 KB, 0.051 decay, blast zone 224 out / 188 up):
 #   fsmash Marth tip 42, Falcon 52, Fox 90, Mewtwo tip 89;  usmash Marth 46, Falcon 69, Fox 44, Mewtwo 76;  dsmash Marth tip 41, Falcon 62, Fox 151, Mewtwo 84  (percent before the hit, uncharged)
 #   Goku with 15/100/28: fsmash 81, usmash (14/105/32) 67, dsmash (13/100/28) about 95; fully charged (x1.4 damage) 50 / 41 / about 60.
+BODY_SPHERE = {'usmash': ('HIPS', 3.2, 13, 29)}   # token, script-unit radius (5.5 in game), damage, BKB
 SMASH_DMG = {'fsmash': 15, 'usmash': 14, 'dsmash': 13}
 # owner 2026-10-11: the forward and down air spikes are small sweetspots on the fist / foot tip for a few frames; everywhere else the move is a sourspot at a normal angle.
 # Marth's dair tipper is the size reference (sphere 3.5, active 4 frames, 290, KBG 70, BKB 40; his other spheres 361 / 80 with BKB 20-40); Mario's fair is a 5-frame 280 meteor (KBG 70, BKB 30).
@@ -538,6 +539,11 @@ def render(rig, tg):
                 angle, kbg, fkb, kb = 361, 100, 0, 0
             lines.append('hitbox slot=%d joint=@%s@ damage=%d size=%s x=%s y=%s z=%s angle=%d kbg=%d fkb=%d bkb=%d%s' % (
                 k, tok, d, fmt(r), fmt(x), fmt(y), fmt(z), angle, kbg, fkb, kb, extra))
+        if tg['name'] in BODY_SPHERE and tg['cls'] != 'grab':
+            # owner 2026-10-11 (usmash phantom hits): the arm spheres of an uppercut sit above Goku's head, higher than a Mario-sized fighter beside him, so the hit only grazed the top
+            # of the hurtbox (damage, no knockback: a phantom hit). Falcon's usmash puts its hits on the body line (joint 4 = HipN, size 5.5); the same here: a sphere centred on the hips.
+            tok, r, dmg_k, bkb_k = BODY_SPHERE[tg['name']]
+            lines.append('hitbox slot=%d joint=@%s@ damage=%d size=%s x=0 y=0 z=0 angle=%d kbg=%d fkb=0 bkb=%d' % (len(sph), tok, dmg_k, fmt(r), angle, kbg, bkb_k))
         if stun and tg['string'] and i == 0:
             lines.append('HBSTUN %d %d' % ((1 << len(sph)) - 1, stun))
         blocks.append((w['a'], lines, w['b']))
