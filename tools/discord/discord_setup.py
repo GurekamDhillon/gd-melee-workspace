@@ -4,6 +4,7 @@ import argparse
 import base64
 import hashlib
 import json
+import mimetypes
 from pathlib import Path
 import re
 import sys
