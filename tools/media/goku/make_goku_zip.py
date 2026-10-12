@@ -63,7 +63,7 @@ def sha(p):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--exe', default=str(MAIN / '_build/agents/gokustage/melee-pc.exe'))
-    ap.add_argument('--mods', default=str(MAIN / 'worktrees/gokustage/_build/goku-xv2/combo-package/mods'))
+    ap.add_argument('--mods', default=str(MAIN / '_build/goku-media/final/mods'))   # tools/media/goku/assemble_package.py
     ap.add_argument('--out', default=str(MAIN / '_build/goku-media/package/GokuAlpha-test.zip'))
     ap.add_argument('--label', default='alpha 2026-10-12')
     a = ap.parse_args()

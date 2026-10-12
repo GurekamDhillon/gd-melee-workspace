@@ -46,7 +46,7 @@ def main():
     ap.add_argument('--vs', default='mario'); ap.add_argument('--stage', default='fd'); ap.add_argument('--p1', default='geno:goku-xv2/hu')
     ap.add_argument('--res', default='1280x720'); ap.add_argument('--max-seconds', default='600')
     ap.add_argument('--exe', default=str(MAIN / '_build/agents/gokustage/melee-pc.exe'))
-    ap.add_argument('--mods', default=str(STAGE_WT / '_build/goku-xv2/combo-package/mods'))
+    ap.add_argument('--mods', default=str(OUT / 'final/mods'))   # tools/media/goku/assemble_package.py
     ap.add_argument('--cfg', action='append', default=[])
     ap.add_argument('--visible', action='store_true')
     ap.add_argument('--pass', dest='kind', choices=['video', 'audio'], default='video', help="video (default): the logic is paused and stepped one frame per few presented frames while recording (lua/cap.lua), every frame shot exactly once; audio: realtime 60 Hz, no shots, MELEE_AUDIO_DUMP, input timing replayed from the video pass")
