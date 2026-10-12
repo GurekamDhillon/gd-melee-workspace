@@ -9,6 +9,15 @@ SECOND armature object (the control rig, "<Name>Ctrl") and drives the deform bon
   switch         custom property "ik" (0 = FK, 1 = IK) on IK-hand.X / IK-foot.X; drivers blend the deform constraints.
   root / COG     FK-<translation bone> is the root control, FK-<hips bone> the centre of gravity (COG).
 
+Rig v2 adds, from the same role table (every piece degrades to "skipped, with the reason" when a chain is missing):
+  spaces         IK-hand.X / IK-foot.X (and their poles) have a "space" property (world / root / cog / chest / head) as Child Of
+                 constraints with driven influences; set_space() switches it with a pose match, so nothing jumps; keyable.
+  spine          IK-chest handle (child of the COG): its rotation is shared equally by the spine bones between hips and chest, ADDED on
+                 the FK-spine controls (so FK keeps working); "spine" slider 0..1 on the handle.
+  look-at        LK-target in front of the head: head (and neck, half as much) aim at it, added on the FK-neck/head; "look" slider.
+  shoulders      the clavicle follows the IK hand (added on FK-shoulder, only while that arm is in IK); "shoulder" slider on IK-hand.X.
+generate() prints a report of what each fighter got and stores it on the control object as "geno_report".
+
 Every deform bone gets a "GENO_FK" constraint (copy FK-<bone> in LOCAL space). The IK limb bones also get a "GENO_IK" constraint
 (copy the IKo carrier in WORLD space) whose influence is the limb's "ik" property. Both are authoring-only: Workbench export and
 hand_bake strip them on a throwaway copy, so the deform armature that is exported keeps zero constraints.
@@ -30,6 +39,13 @@ FK, IKM, IKO = "FK-", "IKm-", "IKo-"
 PREBEND = 0.003     # a limb that is straight at rest gets its IK mechanism elbow/knee nudged this fraction of the limb length toward the pole:
                    # Blender's IK cannot solve a perfectly straight chain (it stays straight and never reaches). The deform bones are unaffected.
 SIDES = ("L", "R")
+SPACE_ORDER = ("world", "root", "cog", "chest", "head")     # head only offered to hands
+SPACE_PROP, SHOULDER_PROP, SPINE_PROP, LOOK_PROP = "space", "shoulder", "spine", "look"
+SHOULDER_DEFAULT = 0.35        # how much of the clavicle's aim at the IK hand is applied
+LOOK_NECK_SHARE = 0.5          # the neck turns this fraction of what the head does
+AXIS_MIN_DOT = 0.8             # an aim bone's nearest local axis must point at least this much along the wanted direction
+TRACK = {(0, 1): "TRACK_X", (0, -1): "TRACK_NEGATIVE_X", (1, 1): "TRACK_Y", (1, -1): "TRACK_NEGATIVE_Y",
+         (2, 1): "TRACK_Z", (2, -1): "TRACK_NEGATIVE_Z"}
 
 # Falcon's retail skeleton has bones named JOBJ_<joint index> and no role data; indices follow plan_parts.COMMON order
 # (…LLegJA LLegJ LKneeJ LFootJA LFootJ…, LShoulderN LShoulderJA LShoulderJ LArmJ LHandN) checked against the rest positions.
@@ -118,6 +134,72 @@ def pose_matrix(obj, name):
     return evaluated(obj).pose.bones[name].matrix.copy()
 
 
+def _set_mode(obj, mode):
+    """Put `obj` in `mode` from any context (a panel button runs the operator from the UI, a script from none).
+
+    Makes the object visible and active, runs the mode switch with an explicit override (the operator's own context can name another
+    object, or none), and raises a readable error if Blender still refuses.
+    """
+    if obj.mode == mode:
+        return
+    try:
+        obj.hide_set(False)
+    except RuntimeError:
+        pass                                         # not in the view layer; the switch below reports it
+    obj.hide_viewport = False
+    obj.hide_select = False
+    view_layer = bpy.context.view_layer
+    for other in list(bpy.context.selected_objects):
+        if other is not obj:
+            other.select_set(False)
+    obj.select_set(True)
+    view_layer.objects.active = obj
+    with bpy.context.temp_override(active_object=obj, object=obj, selected_objects=[obj], selected_editable_objects=[obj]):
+        bpy.ops.object.mode_set(mode=mode)
+    if obj.mode != mode:
+        raise RuntimeError(f"cannot put {obj.name} in {mode} mode (object mode is {obj.mode}); is it in a hidden or excluded collection?")
+
+
+def _nearest_axis(matrix, direction):
+    """(axis index, sign, dot): which local axis of a bone (matrix_local) points most along `direction`."""
+    best = (0, 1, -2.0)
+    m3 = matrix.to_3x3()
+    for i in range(3):
+        d = m3.col[i].normalized().dot(direction)
+        for sign in (1, -1):
+            if sign * d > best[2]:
+                best = (i, sign, sign * d)
+    return best
+
+
+def _prop(pb, name, value, lo, hi, text):
+    pb[name] = value
+    pb.id_properties_ui(name).update(min=lo, max=hi, soft_min=lo, soft_max=hi, description=text)
+
+
+def _drive(ctrl, struct, path, expr, **variables):
+    """Drive struct.path (a constraint's influence) by `expr` of custom properties: name=(control bone, property)."""
+    drv = struct.driver_add(path).driver
+    drv.type = "SCRIPTED"
+    drv.expression = expr
+    for name, (bone, prop) in variables.items():
+        v = drv.variables.new()
+        v.name = name
+        v.type = "SINGLE_PROP"
+        v.targets[0].id = ctrl
+        v.targets[0].data_path = f'pose.bones["{bone}"]["{prop}"]'
+    return drv
+
+
+def _chain_between(bones, top, bottom):
+    """Bone names below `top` down to `bottom` inclusive (top excluded); None when `bottom` is not below `top`."""
+    out, b = [], bones.get(bottom)
+    while b is not None and b.name != top:
+        out.append(b.name)
+        b = b.parent
+    return list(reversed(out)) if b is not None and out else None
+
+
 def _widget(name, kind):
     coll = bpy.data.collections.get("GENO_RIG_WIDGETS")
     if coll is None:
@@ -201,14 +283,107 @@ def remove_rig(arm):
             del arm[key]
 
 
+# ---------------------------------------------------------------- v2 plan: spaces, spine, look-at, shoulders
+
+def space_list(roles, root_fk, kind):
+    """[(space name, control bone or None)] a limb's IK controls can follow; duplicates (two roles on one bone) are dropped."""
+    out, seen = [("world", None)], set()
+    for name in SPACE_ORDER[1:]:
+        if name == "head" and kind != "arm":
+            continue
+        bone = {"root": root_fk[len(FK):] if root_fk else None, "cog": roles.get("hips"), "chest": roles.get("chest"),
+                "head": roles.get("head")}[name]
+        if bone and bone not in seen:
+            seen.add(bone)
+            out.append((name, FK + bone))
+    return out
+
+
+def plan_extras(arm, roles, limbs, mats, fwd):
+    """What a fighter gets beyond the limbs. Returns (plan, skipped) where skipped maps a feature to the reason it was left out."""
+    bones = arm.data.bones
+    plan, skipped = {"spine": None, "look": None, "shoulders": {}}, {}
+    hips, chest = roles.get("hips"), roles.get("chest")
+    chain = _chain_between(bones, hips, chest) if hips and chest else None
+    if chain:
+        plan["spine"] = {"bones": chain, "handle": "IK-chest", "origin": list(bones[chest].head_local)}
+    else:
+        skipped["spine"] = "no hips-to-chest bone chain in the role map" if hips and chest else "no hips/chest role"
+    head, neck = roles.get("head"), roles.get("neck")
+    if not head:
+        skipped["look"] = "no head role"
+    else:
+        height = max(bones[head].head_local.z, 1.0)
+        dist = 0.7 * height
+        items = []
+        for role, bn, share in (("neck", neck, LOOK_NECK_SHARE), ("head", head, 1.0)):
+            if not bn or (role == "neck" and bn == head):
+                continue
+            axis, sign, dot = _nearest_axis(mats[bn], fwd)
+            if dot < AXIS_MIN_DOT:
+                if role == "head":
+                    items = []
+                    skipped["look"] = f"head bone {bn} has no local axis along the facing (best {dot:.2f})"
+                    break
+                continue
+            point = bones[bn].head_local + (mats[bn].to_3x3().col[axis].normalized() * sign) * dist
+            parent = bones[bn].parent
+            items.append({"role": role, "bone": bn, "share": share, "track": TRACK[(axis, sign)], "point": list(point),
+                          "mech": f"LKm-{bn}", "helper": f"LKt-{bn}", "parent_fk": (FK + parent.name) if parent else None})
+        if items and items[-1]["role"] == "head":
+            plan["look"] = {"target": "LK-target", "items": items, "point": items[-1]["point"]}
+        elif "look" not in skipped:
+            skipped["look"] = "head bone not usable"
+    for lb in limbs:
+        if lb["kind"] != "arm":
+            continue
+        side = lb["side"]
+        sb = roles.get(f"shoulder.{side}")
+        up, hand = lb["chain"][0], lb["chain"][2]
+        if not sb or sb == up or not _is_below(bones, up, sb):
+            skipped[f"shoulder.{side}"] = "no shoulder/clavicle bone above the upper arm"
+            continue
+        direction = bones[up].head_local - bones[sb].head_local
+        if direction.length < 1e-4:
+            skipped[f"shoulder.{side}"] = "shoulder and upper arm start at the same point"
+            continue
+        axis, sign, dot = _nearest_axis(mats[sb], direction.normalized())
+        if dot < AXIS_MIN_DOT:
+            skipped[f"shoulder.{side}"] = f"clavicle {sb} has no local axis along it (best {dot:.2f})"
+            continue
+        reach = (bones[hand].head_local - bones[sb].head_local).length
+        point = bones[sb].head_local + (mats[sb].to_3x3().col[axis].normalized() * sign) * reach
+        parent = bones[sb].parent
+        plan["shoulders"][lb["id"]] = {"bone": sb, "fk": FK + sb, "track": TRACK[(axis, sign)], "point": list(point),
+                                       "mech": f"SHm-{side}", "helper": f"SHt-{side}", "parent_fk": (FK + parent.name) if parent else None}
+    return plan, skipped
+
+
 # ---------------------------------------------------------------- generate
 
 def generate(arm, name=None):
-    """Build the control rig for deform armature `arm`; returns the control object."""
+    """Build the control rig for deform armature `arm`; returns the control object.
+
+    Works as a script and as a panel operator (see _set_mode); a failure leaves nothing in edit mode.
+    """
     if arm is None or arm.type != "ARMATURE":
         raise ValueError("select the deform armature")
-    if bpy.context.mode != "OBJECT":
-        bpy.ops.object.mode_set(mode="OBJECT")
+    try:
+        return _generate(arm, name)
+    except Exception:
+        ctrl = ctrl_object(arm)
+        if ctrl is not None and ctrl.mode != "OBJECT":
+            try:
+                _set_mode(ctrl, "OBJECT")
+            except Exception:  # noqa: BLE001 - keep the original error
+                pass
+        raise
+
+
+def _generate(arm, name=None):
+    active = bpy.context.view_layer.objects.active
+    if bpy.context.mode != "OBJECT" and active is not None:
+        _set_mode(active, "OBJECT")
     limbs = limbs_of(arm)
     if not limbs:
         raise ValueError("no complete arm/leg found in the role map")
@@ -239,12 +414,9 @@ def generate(arm, name=None):
     up = Vector((0, 0, 1))
     lat = up.cross(fwd).normalized()
     info = {"facing": list(fwd), "limbs": {}, "root": root_role, "cog": hips_role}
+    plan, skipped = plan_extras(arm, roles, limbs, mats, fwd)
 
-    bpy.context.view_layer.objects.active = ctrl
-    for o in bpy.context.selected_objects:
-        o.select_set(False)
-    ctrl.select_set(True)
-    bpy.ops.object.mode_set(mode="EDIT")
+    _set_mode(ctrl, "EDIT")
     eds = data.edit_bones
     col_fk = data.collections.new("FK")
     col_ik = data.collections.new("IK")
@@ -295,7 +467,7 @@ def generate(arm, name=None):
         eds[IKM + u].parent = eds[FK + par.name] if par else None
         entry = {"fk": [FK + x for x in lb["chain"]], "ikm": [IKM + u, IKM + l_], "deform": list(lb["chain"]),
                  "pdir": list(pdir), "kind": lb["kind"], "side": side, "total": total}
-        tgt_parent = root_fk
+        tgt_parent = None          # IK targets and poles are parentless: their space is a Child Of switch (SPACE_ORDER)
         if lb["kind"] == "arm":
             tgt = f"IK-hand.{side}"
             add(tgt, _basis_matrix(he), max(total * .12, .3), tgt_parent, col_ik)
@@ -329,8 +501,11 @@ def generate(arm, name=None):
             carriers = [(u, IKM + u), (l_, IKM + l_), (e, ank_n)]
             toe_carrier = (toe, heel_n) if toe else None
         pole = f"IK-pole-{'knee' if lb['kind'] == 'leg' else 'elbow'}.{side}"
-        add(pole, _basis_matrix(pole_pos), max(total * .06, .2), root_fk, col_ik)
+        add(pole, _basis_matrix(pole_pos), max(total * .06, .2), None, col_ik)
         entry["pole"] = pole
+        sp = space_list(roles, root_fk, lb["kind"])
+        entry.update(space_ctl=[entry["target"] if lb["kind"] == "arm" else entry["foot"], pole], spaces=[n for n, _ in sp],
+                     space_bones=[b for _, b in sp], space_default=1 if len(sp) > 1 and sp[1][0] == "root" else 0)
         for dn, owner in carriers + ([toe_carrier] if toe_carrier else []):
             eb = eds.new(IKO + dn)
             eb.head, eb.tail = (0, 0, 0), (0, 0, 1)
@@ -341,7 +516,21 @@ def generate(arm, name=None):
         entry["ik_deform"] = [dn for dn, _ in carriers + ([toe_carrier] if toe_carrier else [])]
         chain_info[lid] = (lb, entry, end_ctl)
         info["limbs"][lid] = entry
-    bpy.ops.object.mode_set(mode="POSE")
+
+    # ---- v2 control bones: chest handle, look-at target, aim mechanisms
+    if plan["spine"]:
+        sp = plan["spine"]
+        add(sp["handle"], _basis_matrix(Vector(sp["origin"])), max(_display_len(bones[roles["chest"]]), .8), FK + hips_role, col_ik)
+    if plan["look"]:
+        lk = plan["look"]
+        add(lk["target"], _basis_matrix(Vector(lk["point"])), 1.0, root_fk, col_ik)
+        for it in lk["items"]:
+            add(it["mech"], mats[it["bone"]], _display_len(bones[it["bone"]]), it["parent_fk"], col_mech)
+            add(it["helper"], _basis_matrix(Vector(it["point"])), .3, lk["target"], col_mech)
+    for lid, sh in plan["shoulders"].items():
+        add(sh["mech"], mats[sh["bone"]], _display_len(bones[sh["bone"]]), sh["parent_fk"], col_mech)
+        add(sh["helper"], _basis_matrix(Vector(sh["point"])), .3, info["limbs"][lid]["target"], col_mech)
+    _set_mode(ctrl, "OBJECT")                  # pose bones are editable in object mode; no pose-mode switch (it can fail from a panel operator)
 
     # ---- pose-bone setup: shapes, colours, rotation mode, constraints
     pbs = ctrl.pose.bones
@@ -436,8 +625,13 @@ def generate(arm, name=None):
             v.type = "SINGLE_PROP"
             v.targets[0].id = ctrl
             v.targets[0].data_path = f'pose.bones["{entry["switch"]}"]["ik"]'
+    _build_spaces(ctrl, chain_info)
+    _build_extras_pose(ctrl, arm, plan, info, chain_info)
+    info["report"] = report_lines(ctrl, info, plan, skipped)
+    ctrl["geno_report"] = "\n".join(info["report"])
+    for line in info["report"]:
+        print("GENO RIG", line)
     ctrl["geno_limbs"] = json.dumps(info)
-    bpy.ops.object.mode_set(mode="OBJECT")
     _update()
     for lid in chain_info:
         info["limbs"][lid]["pole_angle"] = calibrate_pole(ctrl, arm, info["limbs"][lid])
@@ -446,6 +640,105 @@ def generate(arm, name=None):
             calibrate_roll(ctrl, entry)
     ctrl["geno_limbs"] = json.dumps(info)
     return ctrl
+
+
+def _build_spaces(ctrl, chain_info):
+    """The "space" property and its Child Of constraints on every IK target and pole (world = no constraint)."""
+    for lid, (lb, entry, end_ctl) in chain_info.items():
+        sw = ctrl.pose.bones[entry["switch"]]
+        names = entry["spaces"]
+        _prop(sw, SPACE_PROP, entry["space_default"], 0, len(names) - 1,
+              "Space the IK control follows: " + ", ".join(f"{i} {n}" for i, n in enumerate(names)) + ". Use the panel buttons: they keep the pose")
+        for ctl in entry["space_ctl"]:
+            pb = ctrl.pose.bones[ctl]
+            for i, (sname, sbone) in enumerate(zip(names, entry["space_bones"])):
+                if sbone is None:
+                    continue
+                c = pb.constraints.new("CHILD_OF")
+                c.name = f"GENO_SPACE_{sname}"
+                c.target, c.subtarget = ctrl, sbone
+                c.inverse_matrix = (ctrl.matrix_world @ ctrl.data.bones[sbone].matrix_local).inverted()     # rest pose: no offset
+                _drive(ctrl, c, "influence", f"1.0 if sp == {i} else 0.0", sp=(entry["switch"], SPACE_PROP))
+
+
+def _style(pb, shape, size, palette):
+    pb.custom_shape = _widget("GENO_" + shape, shape)
+    pb.use_custom_shape_bone_size = False
+    pb.custom_shape_scale_xyz = (size, size, size)
+    pb.color.palette = palette
+    pb.rotation_mode = "XYZ"
+
+
+def _add_rotation(ctrl, pb, name, mech, expr, mix, target_space, owner_space, **variables):
+    c = pb.constraints.new("COPY_ROTATION")
+    c.name = name
+    c.target, c.subtarget = ctrl, mech
+    c.mix_mode = mix
+    c.target_space, c.owner_space = target_space, owner_space
+    c.euler_order = "XYZ"
+    _drive(ctrl, c, "influence", expr, **variables)
+    return c
+
+
+def _build_extras_pose(ctrl, arm, plan, info, chain_info):
+    """Spine handle, look-at and shoulder-follow constraints. All are ADDED on top of the FK controls and are zero at rest."""
+    pbs = ctrl.pose.bones
+    sp = plan["spine"]
+    if sp:
+        h = pbs[sp["handle"]]
+        _style(h, "circle", 1.3, "THEME01")
+        h.lock_location = h.lock_scale = (True, True, True)
+        _prop(h, SPINE_PROP, 1.0, 0.0, 1.0, "How much of the chest handle's rotation the spine takes (0 = FK only)")
+        n = len(sp["bones"])
+        for bn in sp["bones"]:
+            _add_rotation(ctrl, pbs[FK + bn], "GENO_SPINE", sp["handle"], f"sp / {n}", "AFTER", "LOCAL", "POSE", sp=(sp["handle"], SPINE_PROP))
+        info["spine"] = {"bones": list(sp["bones"]), "handle": sp["handle"], "prop": SPINE_PROP}
+    lk = plan["look"]
+    if lk:
+        t = pbs[lk["target"]]
+        _style(t, "sphere", .7, "THEME01")
+        t.lock_rotation = t.lock_scale = (True, True, True)
+        _prop(t, LOOK_PROP, 0.0, 0.0, 1.0, "Look-at influence: how much the head (and half as much the neck) turns toward LK-target")
+        for it in lk["items"]:
+            aim = pbs[it["mech"]].constraints.new("DAMPED_TRACK")
+            aim.name = "GENO_AIM"
+            aim.target, aim.subtarget = ctrl, it["helper"]
+            aim.track_axis = it["track"]
+            _add_rotation(ctrl, pbs[FK + it["bone"]], "GENO_LOOK", it["mech"], f"lk * {it['share']}", "ADD", "LOCAL", "LOCAL", lk=(lk["target"], LOOK_PROP))
+        info["look"] = {"target": lk["target"], "bones": [it["bone"] for it in lk["items"]], "prop": LOOK_PROP}
+    for lid, sh in plan["shoulders"].items():
+        e = info["limbs"][lid]
+        sw = pbs[e["switch"]]
+        _prop(sw, SHOULDER_PROP, SHOULDER_DEFAULT, 0.0, 1.0, "How much the clavicle follows this IK hand (raises it when the hand goes overhead); only while the arm is in IK")
+        aim = pbs[sh["mech"]].constraints.new("DAMPED_TRACK")
+        aim.name = "GENO_AIM"
+        aim.target, aim.subtarget = ctrl, sh["helper"]
+        aim.track_axis = sh["track"]
+        _add_rotation(ctrl, pbs[sh["fk"]], "GENO_SHOULDER", sh["mech"], "sh * ik", "ADD", "LOCAL", "LOCAL",
+                      sh=(e["switch"], SHOULDER_PROP), ik=(e["switch"], "ik"))
+        e["shoulder"] = {"fk": sh["fk"], "deform": sh["bone"], "prop": SHOULDER_PROP}
+
+
+def report_lines(ctrl, info, plan, skipped):
+    """What this fighter's rig got, one line per feature (also printed by generate and kept in ctrl["geno_report"])."""
+    out = [f"{ctrl.name}: " + (", ".join(info["limbs"]) or "no limbs") + " (IK + FK with pole" + ", foot roll on legs)"]
+    missing = [i for i in ("arm.L", "arm.R", "leg.L", "leg.R") if i not in info["limbs"]]
+    if missing:
+        out.append("  limbs skipped: " + ", ".join(missing) + " (incomplete chain in the role map)")
+    for lid, e in info["limbs"].items():
+        names = e["spaces"]
+        out.append(f"  {lid}: spaces {'/'.join(names)} (default {names[e['space_default']]})"
+                   + (f"; clavicle {e['shoulder']['deform']} follows the hand" if "shoulder" in e else
+                      "; no clavicle follow (" + skipped.get("shoulder." + e["side"], "leg") + ")" if e["kind"] == "arm" else ""))
+    if plan["spine"]:
+        out.append(f"  spine: handle {plan['spine']['handle']} over {len(plan['spine']['bones'])} bone(s) ({' > '.join(plan['spine']['bones'])}); COG = {FK}{info['cog']}")
+    else:
+        out.append("  spine: skipped (" + skipped.get("spine", "?") + "); FK controls only")
+    if plan["look"]:
+        out.append(f"  look-at: {plan['look']['target']} -> " + " + ".join(f"{it['role']} {it['bone']}" for it in plan["look"]["items"]))
+    else:
+        out.append("  look-at: skipped (" + skipped.get("look", "?") + ")")
+    return out
 
 
 def limbs_info(ctrl):
@@ -504,27 +797,24 @@ def calibrate_pole(ctrl, arm, entry):
     low = ctrl.pose.bones[entry["ikm"][1]]
     con = next(c for c in low.constraints if c.type == "IK")
     owner = ctrl.pose.bones[entry["foot"] if entry["kind"] == "leg" else entry["target"]]
-    rest_owner = owner.matrix.copy()
+    rest_owner = pose_matrix(ctrl, owner.name)
     shoulder = pose_matrix(ctrl, entry["ikm"][0]).translation
     tip = pose_matrix(ctrl, entry["target"]).translation
     results = []
     for limits in ((-math.pi, 0.0), (0.0, math.pi)):
         low.ik_min_x, low.ik_max_x = limits
-        owner.matrix = Matrix.Translation((shoulder - tip) * 0.35) @ rest_owner       # pull the end 35% of the way in
-        _update()
+        set_world(ctrl, entry, owner.name, Matrix.Translation((shoulder - tip) * 0.35) @ rest_owner)       # pull the end 35% of the way in
         axis = (pose_matrix(ctrl, entry["target"]).translation - shoulder).normalized()
         err, angle = _search_angle(ctrl, entry, con, shoulder, axis)
         con.pole_angle = angle
-        owner.matrix = rest_owner
-        _update()
+        set_world(ctrl, entry, owner.name, rest_owner)
         drift = _ik_error(ctrl, entry)
         results.append((err + drift, err, drift, angle, limits))
     results.sort(key=lambda r: r[0])
     _, err, drift, angle, limits = results[0]
     low.ik_min_x, low.ik_max_x = limits
     con.pole_angle = angle
-    owner.matrix = rest_owner
-    _update()
+    set_world(ctrl, entry, owner.name, rest_owner)
     entry["pole_swivel_error_deg"] = math.degrees(err)
     entry["pole_error"] = drift                                   # drift of the chain from its rest pose with the targets at rest
     entry["hinge_limits"] = list(limits)
@@ -572,10 +862,126 @@ def _set_matrix(ctrl, name, matrix):
     _update()
 
 
+# ---------------------------------------------------------------- spaces
+
+def get_space(ctrl, limb_or_entry):
+    entry = limb_or_entry if isinstance(limb_or_entry, dict) else limbs_info(ctrl)["limbs"][limb_or_entry]
+    return int(ctrl.pose.bones[entry["switch"]][SPACE_PROP])
+
+
+def _space_delta(ctrl, entry, index):
+    """Armature-space motion of the space bone since rest (identity for world): what the Child Of constraint adds to the control."""
+    bone = entry["space_bones"][index]
+    if bone is None:
+        return Matrix.Identity(4)
+    return pose_matrix(ctrl, bone) @ ctrl.data.bones[bone].matrix_local.inverted()
+
+
+def set_world(ctrl, entry, name, matrix, index=None):
+    """Pose control `name` so that it ends up at armature-space `matrix` while following space `index` (default: the current one).
+
+    IK targets and poles are parentless with a Child Of per space, which pb.matrix = ... cannot see; this solves the local basis.
+    Controls that are not space controls fall through to the plain setter.
+    """
+    if name not in entry.get("space_ctl", ()):
+        _set_matrix(ctrl, name, matrix)
+        return
+    _update()
+    index = get_space(ctrl, entry) if index is None else index
+    rest = ctrl.data.bones[name].matrix_local
+    ctrl.pose.bones[name].matrix_basis = rest.inverted() @ _space_delta(ctrl, entry, index).inverted() @ matrix
+    _update()
+
+
+def space_index(entry, space):
+    names = entry["spaces"]
+    if isinstance(space, str):
+        if space not in names:
+            raise ValueError(f"limb has no space '{space}' (has {', '.join(names)})")
+        return names.index(space)
+    return int(space)
+
+
+def set_space(ctrl, limb_id, space, key=False):
+    """Switch a limb's IK target + pole to another space without moving them in the world (so the pose does not jump).
+
+    `space` is a name ("world", "root", "cog", "chest", "head") or an index into the limb's `spaces`. key=True keys the controls and
+    the (stepped) "space" value at the current frame; key the frame before switching to hold the old behaviour up to it.
+    """
+    entry = limbs_info(ctrl)["limbs"][limb_id]
+    idx = space_index(entry, space)
+    if idx == get_space(ctrl, entry):
+        return idx
+    _update()
+    worlds = {n: pose_matrix(ctrl, n) for n in entry["space_ctl"]}
+    ctrl.pose.bones[entry["switch"]][SPACE_PROP] = idx
+    tag_switch(ctrl)
+    for n in entry["space_ctl"]:
+        set_world(ctrl, entry, n, worlds[n], idx)
+    tag_switch(ctrl)
+    if key:
+        key_space(ctrl, entry)
+    return idx
+
+
+def _fcurves(action):
+    """All F-curves of an action (Blender 5 keeps them in slot channelbags, older versions on the action)."""
+    out = []
+    for layer in getattr(action, "layers", ()):
+        for strip in layer.strips:
+            for bag in getattr(strip, "channelbags", ()):
+                out.extend(bag.fcurves)
+    return out or list(getattr(action, "fcurves", ()))
+
+
+def key_space(ctrl, entry, frame=None):
+    """Key the limb's space-controlled bones and its "space" value (constant interpolation) at `frame` (default: current)."""
+    frame = bpy.context.scene.frame_current if frame is None else frame
+    for n in entry["space_ctl"]:
+        pb = ctrl.pose.bones[n]
+        pb.keyframe_insert("location", frame=frame, group=n)
+        pb.keyframe_insert("rotation_euler", frame=frame, group=n)
+    sw = ctrl.pose.bones[entry["switch"]]
+    sw.keyframe_insert(f'["{SPACE_PROP}"]', frame=frame, group=entry["switch"])
+    act = ctrl.animation_data.action if ctrl.animation_data else None
+    path = f'pose.bones["{entry["switch"]}"]["{SPACE_PROP}"]'
+    for fc in (_fcurves(act) if act is not None else ()):
+        if fc.data_path == path:
+            for kp in fc.keyframe_points:
+                kp.interpolation = "CONSTANT"
+
+
+# ---------------------------------------------------------------- clavicle hold (no shoulder jump when a limb switches FK <-> IK)
+
+def shoulder_hold(ctrl, entry):
+    """Remember where the deform clavicle is now; pair with shoulder_restore() after switching the limb's mode."""
+    sh = entry.get("shoulder")
+    if not sh:
+        return None
+    _update()
+    return pose_matrix(deform_object(ctrl), sh["deform"])
+
+
+def shoulder_restore(ctrl, entry, held, iters=8):
+    """Adjust the FK clavicle control so the deform clavicle is where shoulder_hold() saw it (the follow is added on top of FK)."""
+    sh = entry.get("shoulder")
+    if not sh or held is None:
+        return
+    arm = deform_object(ctrl)
+    guess = held.copy()                  # what we assign to the FK control; the follow constraint then adds its part on top
+    for _ in range(iters):
+        _set_matrix(ctrl, sh["fk"], guess)
+        cur = pose_matrix(arm, sh["deform"])
+        if max(abs(a - b) for r1, r2 in zip(cur, held) for a, b in zip(r1, r2)) < 1e-6:
+            return
+        guess = held @ cur.inverted() @ guess
+
+
 def snap_fk_to_ik(ctrl, limb_id):
     """Pose the FK controls of a limb where the IK pose currently puts the deform bones (so switching to FK does not jump)."""
     arm = deform_object(ctrl)
     entry = limbs_info(ctrl)["limbs"][limb_id]
+    _update()
     targets = {dn: pose_matrix(arm, dn) for dn in entry["ik_deform"]}
     for fk, dn in zip(entry["fk"], entry["deform"]):
         _set_matrix(ctrl, fk, targets[dn])
@@ -598,7 +1004,7 @@ def snap_ik_to_fk(ctrl, limb_id):
     else:
         owner = entry["target"]
     rel = bones[owner].matrix_local.inverted() @ bones[carrier].matrix_local     # carrier rest relative to the controlled bone
-    _set_matrix(ctrl, owner, fk_end @ rel.inverted())
+    set_world(ctrl, entry, owner, fk_end @ rel.inverted())
     # pole: where the FK knee/elbow bends toward
     fk_u, fk_l, fk_e = (pose_matrix(ctrl, n).translation for n in entry["fk"])
     mid = fk_u + (fk_e - fk_u) * ((fk_l - fk_u).dot(fk_e - fk_u) / max((fk_e - fk_u).length_squared, 1e-9))
@@ -607,17 +1013,20 @@ def snap_ik_to_fk(ctrl, limb_id):
     if bend.length >= 0.02 * total:
         pos = fk_l + bend.normalized() * total * .6
         m = Matrix.Translation(pos)
-        _set_matrix(ctrl, entry["pole"], m)
+        set_world(ctrl, entry, entry["pole"], m)
 
 
 def auto_snap_on_switch(ctrl, limb_id, to_ik):
-    """Switch a limb to IK (or FK) matching the current pose."""
+    """Switch a limb to IK (or FK) matching the current pose (the clavicle included: it only follows the hand in IK)."""
+    entry = limbs_info(ctrl)["limbs"][limb_id]
+    held = shoulder_hold(ctrl, entry)
     if to_ik:
         snap_ik_to_fk(ctrl, limb_id)
         set_ik(ctrl, limb_id, 1.0)
     else:
         snap_fk_to_ik(ctrl, limb_id)
         set_ik(ctrl, limb_id, 0.0)
+    shoulder_restore(ctrl, entry, held)
 
 
 # ---------------------------------------------------------------- bind / mute
