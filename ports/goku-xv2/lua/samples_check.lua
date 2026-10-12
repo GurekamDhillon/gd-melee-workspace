@@ -182,6 +182,27 @@ gd.run(function()
         local n2 = tostring(gd.player(2).motion_name)
         assert(not n2:find('Thrown') and not n2:find('Catch') and not n2:find('Capture'), label .. ': the victim is still held (' .. n2 .. ')')
       end
+      -- rewind across a throw (the victim rides the ported grab anchor; the ki blasts are articles): the replay must match to the byte
+      for _, rc in ipairs({{'fthrow', function(f) return {x = 127 * f} end}, {'bthrow', function(f) return {x = -127 * f} end}}) do
+        local face = face_dummy()
+        grab_dummy(face)
+        gd.input(1, rc[2](face), 3)
+        gd.wait(22)
+        assert(gd.rewind_test(100, true), rc[1] .. ': rewind refused')
+        local done = false
+        for _ = 1, 400 do
+          gd.wait(1)
+          local r = gd.rewind_test_result()
+          if r and r.phase == 0 and r.pass ~= nil then
+            gd.log(string.format('SAMPLECHECK rewind %s pass=%s diff_compared=%s', rc[1], tostring(r.pass), tostring(r.diff_compared)))
+            assert(r.pass and r.diff_compared == 0, rc[1] .. ': rewind differs: ' .. tostring(r.text))
+            done = true
+            break
+          end
+        end
+        assert(done, rc[1] .. ': rewind never finished')
+        gd.wait(80)
+      end
       -- dash grab: a run into Z connects
       do
         tp(1, 0, 0); tp(2, 40, 0); gd.set_percent(2, 0); gd.wait(40)
