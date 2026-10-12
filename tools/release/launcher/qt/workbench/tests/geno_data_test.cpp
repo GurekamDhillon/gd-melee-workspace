@@ -11,6 +11,12 @@ QByteArray diskBytes(const QString &dir, const QString &rel) {
     QFile file(QDir(dir).filePath(rel));
     return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
 }
+const RowInfo *findIn(const GenoData &data, const QString &name) {
+    static QVector<RowInfo> keep;
+    keep = data.rows();
+    for (const auto &row : keep) if (row.name == name) return &row;
+    return nullptr;
+}
 void putProject(const QString &dir, const QJsonObject &project) {
     wbtest::put(dir, "workbench.json", QJsonDocument(project).toJson());
 }
@@ -77,15 +83,15 @@ private slots:
         QStringList names; for (const auto &row : data.rows()) names << row.name;
         // moves first, then the specials that have a script on disk; the aerial state and the missing script are left out
         QCOMPARE(names, QStringList({"jab1", "dair", "side_b (Rush)", "up_b (Flight)", "RushCombo (special)"}));
-        const auto *rush = data.findRow("side_b (Rush)");
+        const auto *rush = findIn(data, "side_b (Rush)");
         QVERIFY(rush);
         QCOMPARE(rush->motions, QVector<int>({0x401}));
         QCOMPARE(rush->script, QString("moves/rush.genoasm"));
         QCOMPARE(rush->section, QString("special_adaptations"));
         QVERIFY(rush->previewable());
-        QVERIFY(data.findRow("up_b (Flight)")->aerial);
-        QCOMPARE(data.findRow("up_b (Flight)")->stateClip, QString("SYN_ATC_009"));
-        QCOMPARE(data.findRow("up_b (Flight)")->effectiveClip(), QString("SYN_ATC_009"));
+        QVERIFY(findIn(data, "up_b (Flight)")->aerial);
+        QCOMPARE(findIn(data, "up_b (Flight)")->stateClip, QString("SYN_ATC_009"));
+        QCOMPARE(findIn(data, "up_b (Flight)")->effectiveClip(), QString("SYN_ATC_009"));
         QCOMPARE(rush->stateClip, QString("Rush")); // no such clip in the bank: no fixed clip, still playable
         QCOMPARE(data.hitboxes("side_b (Rush)").size(), 1);
         QString err; HitboxEdit edit; edit.startFrame = 5; edit.endFrame = 9; edit.damage = 11;
