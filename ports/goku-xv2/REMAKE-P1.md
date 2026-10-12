@@ -131,7 +131,7 @@ SOURCE events, read from the decoded BAC (`skill/ESC/001_GOK_KUR`) and the ACB/E
 
 | frame | XV2 event | what it is | what the remake does |
 |---|---|---|---|
-| 0 | Sound, Character_VOX cue 55 | Goku's voice line (`BDB_GOK_055`) | `GnItVox` (sfx 200142), frame 0 of the roll |
+| 0 | Sound, Character_VOX cue 55 | Goku's voice line (`BDB_GOK_055`) | NOT played: deliberate deviation (owner). XV2 uses IT occasionally as a skill; on a roll the line is spam. `GnItVox` stays converted but unbound |
 | 0 | Invulnerability 145 frames | the whole teleport | retail roll intangibility (Mewtwo timing) |
 | 3 | Sound, Common_SE cue 40 | swing whoosh | `GnItSwing` (200145), frame 3 |
 | 10 | Effect, common EEPK id 42 on `b_C_Base` | one TBIND asset: `Act_WindShort.etr`, three thin wind ribbons (L shoulder, L knee, R hand), `Wind.dds`, extrude 20 / hold 12 frames, alpha 0 -> 1 -> 0 | converted by `xv2_fx.py --it` to `P_TrailGokuITWind{Shoulder,Knee,Hand}`, bound to the roll rows at frame 10 (spot dodge 8) |

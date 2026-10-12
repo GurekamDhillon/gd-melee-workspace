@@ -2,11 +2,10 @@
 # The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
 # Instant Transmission spot dodge (phase 4, owner 2026-10-11: "like Mewtwo"; the XV2 sequence of skill 001_GOK_KUR, REMAKE-P1.md "The XV2 Instant Transmission sequence").
 # Timing and intangibility from Mewtwo's own roll measured in this engine: 24 frames, intangible f5-22. The clip chain (ESC_KUR vanish, reappear) is the row; the body is
-# hidden and intangible for the gap, and the row's root path carries it nowhere (in place). Sounds at XV2's BAC frames: Goku's voice (VOX cue 55) at 0, the common swing (CMN cue 40) at 3,
+# hidden and intangible for the gap, and the row's root path carries it nowhere (in place). Sounds at XV2's BAC frames: (no voice line: XV2 plays VOX cue 55 here, deliberately dropped on a roll), the common swing (CMN cue 40) at 3,
 # the skill's own SE (KUR cue 0) at 12. The wind-streak effect (common effect 42, frame 8) is bound by animation row in fx_bindings (tools/build.py ROW_FX).
 # No ki cost; no hitbox.
 PUT ANIM_RATE 1.0
-sfx behavior=1 sfx_id=200142 volume=127 panning=64
 wait_until 3
 sfx behavior=1 sfx_id=200145 volume=100 panning=64
 wait_until 4
