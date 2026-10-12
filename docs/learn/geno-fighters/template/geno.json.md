@@ -498,13 +498,6 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].ai.like | string: A retail fighter (mario, fox, captain, donkey, kirby, koopa, link, seak, ness, peach, popo, pikachu, samus, yoshi, purin, mewtwo, luigi, mars, zelda, clink, drmario, falco, pichu, gamewatch, ganon, emblem, or their aliases) | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].kirby_copy | string: What Kirby gets from inhaling the define: "none" (the default) or "retail:<fighter>" (that fighter's hat and ability) (geno: 10) | none | pattern=^(none\|retail:[a-z]+)$; geno.md §22.7; melee/pc/platform/geno_registry.c |
 | fighters[].thrown_as | string: A base none define: the retail fighter whose thrown rows a retail victim plays when this define throws it (its CatchWait/pummel rows stay the victim's own). Default captain (Captain Falcon); any retail fighter but Nana (geno: 10) | captain | ; geno.md §22.10; melee/pc/platform/geno_registry.c |
-| fighters[].controls | object: Per-fighter CSS controls: named button layouts (the first is the default) and opt-in extras, as GC input mappings (docs/geno.md section 26; a define only) | absent | ; geno.md §26; melee/pc/platform/geno_registry.c |
-| fighters[].controls.layouts | array: Ordered entries | absent | maxItems=16; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
-| fighters[].controls.layouts[].name | string: See choice encodings | absent | maxLength=31; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
-| fighters[].controls.layouts[].buttons | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
-| fighters[].controls.extras | array: Ordered entries | absent | maxItems=8; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
-| fighters[].controls.extras[].name | string: See choice encodings | absent | maxLength=31; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
-| fighters[].controls.extras[].buttons | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].audio | object: The define's own sound clips: its announcer call and replacements for retail voice sounds (geno: 9); silence stays without them | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].audio.announcer | string: A .gnsnd file of the mod's files/ folder (python -m tools.geno.audio in.wav out.gnsnd); a plain file name |  | maxLength=63; pattern=^[A-Za-z0-9_.+@#%&=,;'!()-]+\.[gG][nN][sS][nN][dD]$; geno.md §22.7; melee/pc/platform/geno_registry.c |
 | fighters[].audio.voice | array: Ordered entries | absent | maxItems=32; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
