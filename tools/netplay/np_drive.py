@@ -17,7 +17,7 @@ reach the match - then a screenshot of each side, and both windows are closed.
     python tools/netplay/np_drive.py --shots _build/agents/beta/shots --timeout 240
 
 Exit status 0 = the match started on both sides. Needs the server address (netplay_server.txt)
-and the disc path in .env, like netplay_local.ps1. Test windows run at MELEE_VOLUME=3.
+and the disc path in .env, like netplay_local.ps1. Test windows run at MELEE_VOLUME=3 (set MELEE_VOLUME=0 to mute; NP_DRIVE_SERVER_PORT and NP_DRIVE_NETPLAY_PORT pick other ports).
 """
 import argparse
 import atexit
@@ -30,6 +30,7 @@ import time
 ROOT = os.environ.get("GW_ROOT_MAIN") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))  # GW_ROOT_MAIN: run a lane's copy of this script against the main checkout's _build
 HOST_PORT = int(os.environ.get("NP_DRIVE_HOST_CONSOLE", "51721"))  # another lane's pair may hold these: set both to run beside it
 GUEST_PORT = int(os.environ.get("NP_DRIVE_GUEST_CONSOLE", "51722"))
+VOLUME = os.environ.get("MELEE_VOLUME", "3")  # test windows default to 3; MELEE_VOLUME=0 mutes them
 
 
 class Console:
@@ -110,7 +111,7 @@ def main():
 
     srv = None
     if a.local_server:
-        sport = 51600 + (os.getpid() % 300)
+        sport = int(os.environ.get("NP_DRIVE_SERVER_PORT") or 0) or (51600 + (os.getpid() % 300))  # NP_DRIVE_SERVER_PORT: Hyper-V reserves UDP 51620-52319 and 50000-50059 on some machines
         srv = subprocess.Popen([sys.executable, os.path.join(ROOT, "tools", "netplay", "server", "gdmelee_server.py"),
                                 "--bind", bind_env["MELEE_NETPLAY_BIND"], "--port", str(sport)])
         a.server = "%s:%d" % ("127.0.0.1" if bind_env["MELEE_NETPLAY_BIND"] == "0.0.0.0" else bind_env["MELEE_NETPLAY_BIND"], sport)
@@ -122,9 +123,9 @@ def main():
     def extra_env(pairs):
         return "".join(";%s='%s'" % (k, v.replace("'", "''")) for k, v in (kv.split("=", 1) for kv in pairs))
     if not any(kv.startswith("MELEE_NETPLAY_PORT=") for kv in a.host_env):
-        a.host_env.append("MELEE_NETPLAY_PORT=%d" % (52000 + os.getpid() % 900))  # another lane's host may hold 51500
-    env_host = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_host';MELEE_VOLUME='3'%s%s}" % (HOST_PORT, off, extra_env(a.host_env))
-    env_guest = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_guest';MELEE_VOLUME='3'%s%s}" % (GUEST_PORT, off, extra_env(a.guest_env))
+        a.host_env.append("MELEE_NETPLAY_PORT=%d" % (int(os.environ.get("NP_DRIVE_NETPLAY_PORT") or 0) or (52000 + os.getpid() % 900)))  # another lane's host may hold 51500
+    env_host = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_host';MELEE_VOLUME='%s'%s%s}" % (HOST_PORT, VOLUME, off, extra_env(a.host_env))
+    env_guest = "@{MELEE_CONSOLE_PORT='%d';MELEE_SCRIPT='builtin:np_guest';MELEE_VOLUME='%s'%s%s}" % (GUEST_PORT, VOLUME, off, extra_env(a.guest_env))
     cmd = ("& '%s' -Menu -RealNetwork -HostDevice gc -GuestDevice keyboard -Disc %s -Label '%s' -EnvHost %s -EnvGuest %s%s" %
            (os.path.join(ROOT, "_build", "netplay_local.ps1").replace("'", "''"), a.disc, a.label.replace("'", "''"),
             env_host, env_guest,
