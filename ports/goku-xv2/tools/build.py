@@ -388,6 +388,12 @@ def apply(package, art_build, ir_path=None):
     ecb = plan['ftdata']['x44_ecb']
     hip = next(e for e in ecb if e['role'] in ('HipN', 'TopN'))
     hip.update(role='TopN', joint=0, name='TopN')
+    # 2026-10-11 (owner: the shield bubble was centred at his forearms). x8_part_bytes slot 1 is the SHIELD part (plan_parts: item, shield, head, feet) and it was ThrowN = the grab
+    # anchor, which hangs off the root 8 units in front of the chest for the held victim. A first fix pointed it at YRotN, and the guard code scales that joint by the shield size
+    # (ftCo_Guard.c:216,338,806,880), which grew the whole body. Retail's ThrowN is a LEAF under YRotN with an identity local; the shield slot now has the same: shield_anchor, a weightless
+    # leaf off the root at the pelvis height (xv2_to_artist.py), so the bubble is body-centred and its scaling moves nothing else. The grab anchor stays the throw / hold attach point.
+    shield = next(j['index'] for j in plan['joints'] if j['name'] == 'shield_anchor')
+    plan['ftdata']['x8_part_bytes'][1] = {'role': 'ThrowN', 'joint': shield, 'name': 'shield_anchor'}
     for state in cfg['states']:
         if isinstance(state['subaction'], str):
             continue  # 'clip:<name>' states bind to a declared clip row later (row_of)
