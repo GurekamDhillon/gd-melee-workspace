@@ -25,13 +25,13 @@ def iso():
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--mods', default=str(WT / '_build/goku-xv2/pkg-mods')); ap.add_argument('--stage', default='bf')
-    ap.add_argument('--name', default='goku-ledge-check'); ap.add_argument('--max-seconds', default='900')
+    ap.add_argument('--name', default='goku-ledge-check'); ap.add_argument('--script', default='ledge_check'); ap.add_argument('--max-seconds', default='900')
     a = ap.parse_args()
     game, broot = os.environ['GW_MELEE'], os.environ['GW_BUILD_ROOT']
     env = dict(os.environ)
     env.update({'GW_ROOT': str(MAIN), 'MELEE_MODS_DIR': a.mods,
                 'MELEE_SCENE': f'mode=lab;p1=geno:goku-xv2/hu;p2=mario/cpu0;stage={a.stage};items=off;time=0',
-                'MELEE_PAD_SCRIPT': (PORT / 'lua/ledge_check.lua').as_posix(), 'MELEE_UNATTENDED': '1',
+                'MELEE_PAD_SCRIPT': (PORT / 'lua' / (a.script + '.lua')).as_posix(), 'MELEE_UNATTENDED': '1',
                 'MELEE_MAX_SECONDS': a.max_seconds, 'MELEE_LAB_UI': '0', 'MELEE_TURBO': '1',
                 'MELEE_WINDOW_X': '30000', 'MELEE_WINDOW_Y': '30000', 'MELEE_WINDOW_W': '1280', 'MELEE_WINDOW_H': '720',
                 'MELEE_BIND_DUMMY': '1', 'MELEE_VOLUME': '0', 'MELEE_NETPLAY_BIND': '127.0.0.1', 'MELEE_RUN_LABEL': 'Goku ledge check'})

@@ -3,7 +3,7 @@
 -- A weak flight (ki 0: 22 frames, speed 0.9) is flown into the right ledge of the stage from below and beside it, a grid of start positions, with
 --   AWAY  = facing away from the ledge (the owner's case: the ledge is behind him), stick toward the ledge, and
 --   TOWARD = facing the ledge, same stick direction.
--- The ledge window is the last 5 flight frames (goku.lua FLY_LEDGE): AWAY must only ever catch in them (flight frame 18..22), TOWARD must still catch,
+-- The ledge window is the last 5 flight frames (goku.lua FLY_LEDGE): AWAY must only ever catch in them (flight frames 17..21 (22 - 5 .. 22 - 1)), TOWARD must still catch,
 -- and catch before the window (so the engine's own front grab is untouched). Results per trial: LEDGECHK trial <kind> dx dy -> catch at flight frame F, facing a -> b.
 gd.run(function()
   local ok, why = pcall(function()
@@ -72,12 +72,12 @@ gd.run(function()
               chk(r.face == 1, 'AWAY trial did not start facing away')
               if r.cat then
                 away_catch = away_catch + 1
-                if r.cat >= r.flown - 0 and r.cat >= 18 then away_in = away_in + 1 else away_early = away_early + 1; chk(false, 'AWAY caught before the window at flight frame ' .. r.cat .. ' (dx ' .. dx .. ' dy ' .. dy .. ')') end
+                if r.cat >= 17 and r.cat <= 21 then away_in = away_in + 1 else away_early = away_early + 1; chk(false, 'AWAY caught before the window at flight frame ' .. r.cat .. ' (dx ' .. dx .. ' dy ' .. dy .. ')') end
                 chk(r.facing_after == -1, 'AWAY catch did not turn him to the ledge')
               end
             else
               chk(r.face == -1, 'TOWARD trial did not start facing the ledge')
-              if r.cat then toward_n = toward_n + 1; if r.cat < 18 then toward_catch_early = toward_catch_early + 1 end end
+              if r.cat then toward_n = toward_n + 1; if r.cat < 17 then toward_catch_early = toward_catch_early + 1 end end
             end
           end
         end
