@@ -71,6 +71,8 @@ def main(argv=None):
         else:
             f['states'].append({'name': st['name'], 'behavior': 'geno.ground', 'subaction': row, 'like': st['like'], 'phys': 'auto',
                                 'coll': 'both', 'iasa': 'interrupt', 'move_tag': st['move_tag']})
+        if st.get('lua'):
+            f['states'][-1]['lua'] = st['lua']   # the state's Lua hooks (the held ki volley)
         names.append(st['name'])
     made = set()
     for st in spec['states']:
@@ -80,7 +82,7 @@ def main(argv=None):
         made.add(row)
         text = G.bind((HERE / st['script']).read_text(encoding='utf-8'), plan, scale)
         # KiBlast is appended after the package's own articles; the script says 3 (the count before the specials pass added more)
-        text = text.replace('geno.article.spawn 3', f"geno.article.spawn {len(f['articles'])}")
+        text = re.sub(r'geno\.article\.spawn ([34])', lambda m: f"geno.article.spawn {len(f['articles']) + int(m[1]) - 3}", text)   # 3 = KiBlast (right hand), 4 = KiBlastL (left hand)
         words = script.assemble(text, names)
         name = Path(st['script']).stem
         (pkg / 'moves').mkdir(exist_ok=True)

@@ -1,0 +1,11 @@
+{
+ "schema": "goku-costumes/1",
+ "note": "Palette recolours of the converted atlas (colour classes: orange = gi, navy = undershirt/belt/wrists/boots). Colours only; no art. Super Saiyan hair is NOT a costume (separate mesh and palette): flagged for the owner.",
+ "costumes": [
+  {"name": "default", "label": "Orange Gi"},
+  {"name": "red", "label": "Red Gi", "team": "red", "ops": {"orange": {"hue": 358, "sat": 1.0}}},
+  {"name": "blue", "label": "Blue Gi", "team": "blue", "ops": {"orange": {"hue": 214, "sat": 0.95, "val": 1.0}}},
+  {"name": "green", "label": "Green Gi", "team": "green", "ops": {"orange": {"hue": 128, "sat": 0.9, "val": 0.85}}},
+  {"name": "navy", "label": "Navy Gi", "ops": {"orange": {"tint": [30, 48, 120]}, "navy": {"tint": [240, 105, 22]}}}
+ ]
+}
