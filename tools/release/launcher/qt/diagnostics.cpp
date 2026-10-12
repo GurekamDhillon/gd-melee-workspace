@@ -227,20 +227,49 @@ QString packageHint(const QString &osr, const QString &library, const QSet<quint
     if (fedora) return "Fedora family: install glibc.i686 vulkan-loader.i686 mesa-vulkan-drivers.i686 (NVIDIA: the matching i686 driver libraries). A guess from the distribution family.";
     return "Install your distribution's 32-bit glibc, Vulkan loader and GPU Vulkan driver (Mesa for AMD/Intel, the matching NVIDIA 32-bit libraries for NVIDIA). A generic guess; the distribution is not recognised.";
 }
+QString PeInfo::machineName() const {
+    switch (machine) { case 0x014c: return "i386"; case 0x8664: return "x86-64"; case 0xaa64: return "ARM64"; default: return "0x" + QString::number(machine, 16); }
+}
+PeInfo readPe(QIODevice &d) {
+    PeInfo p;
+    const auto dos = d.read(0x40);
+    if (dos.size() < 2 || dos[0] != 'M' || dos[1] != 'Z') { p.error = dos.size() < 2 ? "file is too short to be a Windows program" : "not a Windows program (no MZ header)"; return p; }
+    if (dos.size() < 0x40) { p.error = "truncated DOS header"; return p; }
+    const auto u = reinterpret_cast<const uchar *>(dos.constData());
+    const quint32 pe = u[0x3C] | (u[0x3D] << 8) | (u[0x3E] << 16) | (quint32(u[0x3F]) << 24);
+    if (pe < 0x40 || pe > 0x10000000 || !d.seek(pe)) { p.error = "bad PE header offset"; return p; }
+    const auto sig = d.read(6);
+    if (sig.size() < 6 || memcmp(sig.constData(), "PE\0\0", 4) != 0) { p.error = "no PE signature (damaged or truncated file)"; return p; }
+    p.machine = quint16(uchar(sig[4]) | (uchar(sig[5]) << 8)); p.isPe = true;
+    return p;
+}
+PeInfo readPe(const QString &path) {
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly)) { PeInfo p; p.error = "cannot open: " + f.errorString(); return p; }
+    return readPe(f);
+}
 Verdict deriveVerdict(const VerdictInput &in) {
     Verdict v; QStringList checked;
     auto done = [&](const QString &code, const QString &detail, const QString &message) { v.code = code; v.detail = detail; v.message = message; v.checked = checked.join(", "); return v; };
     checked << "binary present";
     if (!in.binaryExists) return done("BINARY_MISSING", {}, "The game program file is missing. The download may be incomplete or extracted somewhere the launcher cannot see.");
+    if (in.windowsHost) {
+        checked << "PE header";
+        if (!in.peValid) return done("BAD_BINARY", {}, "The game program file is not a readable Windows program (damaged or truncated download, or blocked or replaced by antivirus?).");
+        if (in.peMachine != 0x014c) return done("WRONG_ARCHITECTURE", "machine 0x" + QString::number(in.peMachine, 16), "The game program is not a 32-bit x86 executable, which this release requires.");
+    } else {
     checked << "ELF header";
     if (!in.elfValid && in.elfBits == 0) return done("BAD_BINARY", {}, "The game program file is not a readable Linux executable (damaged or truncated download?).");
     if (in.elfBits != 0 && (in.elfBits != 32 || in.machine != 3)) return done("WRONG_ARCHITECTURE", QString::number(in.elfBits) + "-bit machine " + QString::number(in.machine), "The game program is not a 32-bit x86 executable, which this release requires.");
+    }
+    if (!in.windowsHost) {
     checked << "execute permission";
     if (!in.executable) return done("NOT_EXECUTABLE", {}, "The game program has no execute permission for your user. Unzipping on some file systems drops it; run `chmod +x` on the game's bin/melee file or extract the archive with tar.");
     checked << "mount options";
     if (in.noexecMount) return done("NOEXEC_MOUNT", {}, "The game folder is on a file system mounted noexec, so programs there cannot run. Move the game to your home folder or another executable location.");
     checked << "32-bit loader";
     if (!in.interpreter.isEmpty() && !in.interpreterExists) return done("NO_32BIT_LOADER", in.interpreter, "This computer has no 32-bit program loader (" + in.interpreter + "), so the 32-bit game cannot even begin. The 32-bit glibc package is missing.");
+    }
     // The launcher refuses a missing or non-executable game itself; the binary checks above name the cause, so they win.
     if (!in.prepareError.isEmpty()) return done("LAUNCHER_FAILED", {}, "The launcher stopped before starting the game: " + in.prepareError);
     const bool ranFine = in.launched && in.finished && !in.crashed && in.exitCode == 0;
@@ -477,6 +506,9 @@ DiagResult buildDiagnostics(const DiagContext &c) {
     // ---- Game binary
     line(QString(QChar(10)) + section("Game binary").trimmed() + "\n"); o.chop(1);
     QFileInfo bin(program); vin.binaryExists = bin.exists();
+#ifdef Q_OS_WIN
+    vin.windowsHost = true;
+#endif
     line("Path: " + QDir::cleanPath(bin.absoluteFilePath()) + (bin.isSymLink() ? "  (symlink to " + bin.symLinkTarget() + ")" : ""));
     line(QString("Exists: ") + (bin.exists() ? "yes" : "NO") + (bin.isDir() ? " (it is a directory)" : ""));
     ElfInfo elf; QStringList lddMissing; QString lddText; QVector<LibraryHit> libs; QStringList ldPath;
@@ -490,6 +522,11 @@ DiagResult buildDiagnostics(const DiagContext &c) {
         auto mount = mountFor(bin.canonicalFilePath(), readHead("/proc/self/mountinfo", 1 << 20));
         line(QString("File system: ") + (mount.found ? mount.fsType + " mounted at " + mount.mountPoint + ", options " + mount.options : "(mount table unreadable)") + "; noexec: " + (vin.noexecMount ? "YES" : "no"));
 #endif
+#ifdef Q_OS_WIN
+        vin.windowsHost = true;
+        { const auto pe = readPe(bin.absoluteFilePath()); vin.peValid = pe.isPe; vin.peMachine = pe.machine;
+          line(pe.isPe ? "PE: Windows program, machine " + pe.machineName() : "PE: " + pe.error); }
+#else
         elf = readElf(bin.absoluteFilePath());
         vin.elfValid = elf.valid; vin.elfBits = elf.bits; vin.machine = elf.machine;
         if (!elf.isElf) line("ELF: " + elf.error);
@@ -502,6 +539,7 @@ DiagResult buildDiagnostics(const DiagContext &c) {
             }
             if (!elf.runpath.isEmpty() || !elf.rpath.isEmpty()) line("RPATH/RUNPATH: " + (elf.rpath + elf.runpath).join(":"));
         }
+#endif
     }
     // ---- Shared libraries
     line(QString(QChar(10)) + section("Shared libraries").trimmed() + "\n"); o.chop(1);
@@ -515,7 +553,12 @@ DiagResult buildDiagnostics(const DiagContext &c) {
             if (!l.found) vin.missingLibs << l.name;
         }
         if (libs.isEmpty()) line("  (no DT_NEEDED entries)");
-    } else line(elf.valid ? "  Static executable: no shared libraries." : "  Not available: the binary could not be parsed.");
+    } else
+#ifdef Q_OS_WIN
+        line("  Not applicable: the Windows game carries its libraries in its own folder.");
+#else
+        line(elf.valid ? "  Static executable: no shared libraries." : "  Not available: the binary could not be parsed.");
+#endif
 #ifdef Q_OS_UNIX
     if (elf.valid && elf.dynamic) {
         if (!QStandardPaths::findExecutable("ldd").isEmpty()) {
