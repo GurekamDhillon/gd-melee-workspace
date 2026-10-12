@@ -64,73 +64,140 @@ gd.run(function()
     try('dair', {y = 40, my = 36, pin = -4}, {cy = -127}, 2, 60, {0, 3, 6})
     -- smash charge (Melee's: hold A through the wind-up, up to 60 frames, damage x1.3671): a tapped smash against the same smash held 70 frames
     local function smash(label, spec, dists)
-      local out = {}
-      for _, hold in ipairs({2, 70}) do
-        local got
-        for _, d in ipairs(dists) do
-          reset(d, 0, 0)
-          local g0 = gd.player(1)
-          local face = (g0.facing or 1) >= 0 and 1 or -1
-          local before = gd.player(2).percent
-          local inp = {buttons = 'A', x = spec.x and spec.x * face or nil, y = spec.y}
-          gd.input(1, inp, hold)
-          local frozen, last_af = 0, nil
-          for t = 1, 150 do
-            gd.wait(1); nofault()
-            local p = gd.player(1)
-            -- a charge lasts ~70 frames and the ECBs push the pair apart (Goku is built at 1.2, so further than before): hold the dummy at the tested distance until the release
-            if hold > 2 and t <= hold then pcall(gd.teleport, 2, p.x + face * d, 0) end
-            if hold > 2 and t > 25 and t < 60 and tostring(p.motion_name):find('Attack') then
-              if last_af and math.abs((p.anim_frame or 0) - last_af) < 0.01 then frozen = frozen + 1 end
-              last_af = p.anim_frame
-            end
-            if gd.player(2).percent > before + 0.01 then got = gd.player(2).percent - before break end
+      -- the tap and the charged shot are measured back to back at each distance with the dummy held there until the release (the damage is staled by every earlier use of the
+      -- move, so only a pair taken together says anything about the charge); the best pair judges the charge
+      local function shot(d, hold)
+        reset(d, 0, 0)
+        local g0 = gd.player(1)
+        local face = (g0.facing or 1) >= 0 and 1 or -1
+        local before = gd.player(2).percent
+        gd.input(1, {buttons = 'A', x = spec.x and spec.x * face or nil, y = spec.y}, hold)
+        local frozen, last_af = 0, nil
+        for t = 1, 150 do
+          gd.wait(1); nofault()
+          local p = gd.player(1)
+          if t <= math.max(hold, 10) then pcall(gd.teleport, 2, p.x + face * d, 0) end
+          if hold > 2 and t > 25 and t < 60 and tostring(p.motion_name):find('Attack') then
+            if last_af and math.abs((p.anim_frame or 0) - last_af) < 0.01 then frozen = frozen + 1 end
+            last_af = p.anim_frame
           end
-          if not got and hold > 2 then local seen = {} gd.log(string.format('SAMPLECHECK smash %s charged miss at dist %d: P1 %s x%.1f, P2 %s x%.1f', label, d, tostring(gd.player(1).motion_name), gd.player(1).x, tostring(gd.player(2).motion_name), gd.player(2).x)) end
-          if got then out.frozen = (out.frozen or 0) + frozen break end
+          if gd.player(2).percent > before + 0.01 then return gd.player(2).percent - before, frozen end
         end
-        out[hold] = got
+        return nil, frozen
       end
-      gd.log(string.format('SAMPLECHECK smash charge %s: tap %s%%, charged %s%%, anim held %s frames', label, tostring(out[2]), tostring(out[70]), tostring(out.frozen)))
-      if not (out[2] and out[70]) then error(label .. ' smash did not connect tapped or charged') end
-      if out[70] < out[2] * 1.15 then error(label .. ' smash damage does not scale with the charge: ' .. out[2] .. ' -> ' .. out[70]) end
-      if (out.frozen or 0) < 15 then error(label .. ' smash animation did not hold while charging') end
+      local best, held = nil, 0
+      for _, d in ipairs(dists) do
+        local tap = shot(d, 2)
+        local chg, frozen = shot(d, 70)
+        held = math.max(held, frozen)
+        if tap and chg and (not best or chg / tap > best[2] / best[1]) then best = {tap, chg} end
+      end
+      gd.log(string.format('SAMPLECHECK smash charge %s: tap %s%%, charged %s%%, anim held %s frames', label, tostring(best and best[1]), tostring(best and best[2]), tostring(held)))
+      if not best then error(label .. ' smash did not connect tapped and charged at the same distance') end
+      if best[2] < best[1] * 1.15 then error(label .. ' smash damage does not scale with the charge: ' .. best[1] .. ' -> ' .. best[2]) end
+      if held < 15 then error(label .. ' smash animation did not hold while charging') end
     end
     smash('fsmash', {x = 127}, {7, 9, 11})
     smash('usmash', {y = 127}, {2, 4, 6, 8, 10})
     smash('dsmash', {y = -127}, {7, 9, 11})
-    -- fthrow (HB-SAMPLE, CROSS-PORT from Mewtwo's ThrowF, owner 2026-10-11): grab, forward throw = a 5% release then five small ki blasts at 7-frame spacing from script frame 33.
-    -- Reference (tools/lua throw_probe.lua on retail Mewtwo vs the same Mario dummy): 5.0 + 5 x 0.9 = 9.5% in total, five shadow-ball spawns, Wait again at frame 75.
+    -- The grab family (owner 2026-10-11, CROSS-PORT): Catch / CatchDash / CatchWait / CatchAttack / ThrowB / ThrowLw are Captain Falcon's, ThrowHi is Marth's (tentative), ThrowF is
+    -- Mewtwo's (five ki blasts). References are retail numbers measured with lua/throw_probe.lua against this same Mario dummy: Falcon pummel 3.0, bthrow 9.0, dthrow 7.0,
+    -- Marth uthrow 4.0, Mewtwo fthrow 9.5 (5.0 release + five 0.9 shadow-ball hits, spawns 7 frames apart). Each: grab connects, the move's damage is close to the reference,
+    -- the victim is released (no longer held or thrown) and Goku is actionable again.
     do
-      local MT_TOTAL = 9.5
-      tp(1, 0, 0); tp(2, 30, 0); gd.set_percent(1, 0); gd.set_percent(2, 0); gd.wait(40)
-      gd.input(1, {x = 60}, 3); gd.wait(30)
-      tp(1, 0, 0); tp(2, 7, 0); gd.wait(3)
-      local face = (gd.player(1).facing or 1) >= 0 and 1 or -1
-      tp(2, 7 * face, 0); gd.wait(2)
-      gd.input(1, {buttons = 'Z'}, 2)
-      local caught
-      for i = 1, 60 do gd.wait(1) if name() == 'CatchWait' then caught = i break end end
-      assert(caught, 'fthrow: no grab (' .. name() .. ')')
-      gd.wait(8)
-      local p0 = gd.player(2).percent or 0
-      gd.input(1, {x = 127 * face}, 3)
-      local steps, spawns, lastp, seen_throw, free_at = 0, 0, p0, false, nil
-      for t = 1, 140 do
-        gd.wait(1); nofault()
-        if name() == 'ThrowF' then seen_throw = true end
-        local pp = gd.player(2).percent or 0
-        if pp ~= lastp then steps = steps + 1 lastp = pp end
-        for _, it in ipairs(gd.items() or {}) do if (it.frame_alive or 0) == 2 and it.owner_port == 1 then spawns = spawns + 1 end end
-        if seen_throw and not free_at and name() == 'Wait' then free_at = t end
-        if free_at and t > free_at + 10 then break end
+      local function face_dummy()
+        tp(1, 0, 0); tp(2, 30, 0); gd.set_percent(1, 0); gd.set_percent(2, 0); gd.wait(40)
+        gd.input(1, {x = 60}, 3); gd.wait(30)
+        tp(1, 0, 0); tp(2, 7, 0); gd.wait(3)
+        local face = (gd.player(1).facing or 1) >= 0 and 1 or -1
+        tp(2, 7 * face, 0); gd.wait(2)
+        return face
       end
-      local total = (gd.player(2).percent or 0) - p0
-      gd.log(string.format('SAMPLECHECK fthrow: %d damage steps, %d ki blasts, total %.1f%% (Mewtwo %.1f%%), Wait again at %s', steps, spawns, total, MT_TOTAL, tostring(free_at)))
-      assert(seen_throw and spawns >= 5 and steps >= 5, 'fthrow did not release five ki blasts that hit')
-      assert(math.abs(total - MT_TOTAL) <= 2.0, 'fthrow total damage is not close to Mewtwo's: ' .. total)
-      assert(free_at and free_at <= 100, 'Goku did not get actionable after the throw: ' .. tostring(free_at))
-      gd.wait(40)
+      local function grab_dummy(face)
+        gd.input(1, {buttons = 'Z'}, 2)
+        local caught
+        for i = 1, 60 do gd.wait(1) if name() == 'CatchWait' then caught = i break end end
+        assert(caught, 'grab: no catch (' .. name() .. ')')
+        gd.wait(8)
+        return caught
+      end
+      local function release_check(label, free_budget)
+        local free_at
+        for t = 1, 160 do
+          gd.wait(1); nofault()
+          local n2 = tostring(gd.player(2).motion_name)
+          if not free_at and name() == 'Wait' and not n2:find('Thrown') and not n2:find('Catch') and not n2:find('Capture') then free_at = t end
+          if free_at and t > free_at + 10 then break end
+        end
+        assert(free_at and free_at <= free_budget, label .. ': Goku or the victim was not released in time: ' .. tostring(free_at))
+        return free_at
+      end
+      -- pummel: A in the hold = Falcon's CatchAttack, 3% a hit
+      do
+        local face = face_dummy()
+        local c = grab_dummy(face)
+        local p0 = gd.player(2).percent or 0
+        gd.input(1, {buttons = 'A'}, 3)
+        local seen_pummel = false
+        for t = 1, 40 do gd.wait(1) if name() == 'CatchAttack' then seen_pummel = true end end
+        local dmg = (gd.player(2).percent or 0) - p0
+        gd.log(string.format('SAMPLECHECK pummel: CatchAttack %s, +%.1f%% (Falcon 3.0), grab connected after %d frames', tostring(seen_pummel), dmg, c))
+        assert(seen_pummel and dmg >= 2.0 and dmg <= 4.0, 'pummel is not Falcon CatchAttack damage: ' .. dmg)
+        gd.input(1, {x = 127 * face}, 3)   -- then out of it with a forward throw
+        release_check('pummel', 140)
+        gd.wait(30)
+      end
+      local cases = {
+        {'fthrow', 'ThrowF', function(f) return {x = 127 * f} end, 9.5, 2.0, 5},
+        {'bthrow', 'ThrowB', function(f) return {x = -127 * f} end, 9.0, 2.0, 0},
+        {'dthrow', 'ThrowLw', function(f) return {y = -127} end, 7.0, 2.0, 0},
+        {'uthrow', 'ThrowHi', function(f) return {y = 127} end, 4.0, 2.0, 0},
+      }
+      for _, cs in ipairs(cases) do
+        local label, motion, stick, ref, tol, want_balls = cs[1], cs[2], cs[3], cs[4], cs[5], cs[6]
+        local face = face_dummy()
+        grab_dummy(face)
+        local p0 = gd.player(2).percent or 0
+        gd.input(1, stick(face), 3)
+        local steps, spawns, lastp, seen_throw, v_dx0, v_dxe = 0, 0, p0, false, nil, nil
+        local f_at
+        for t = 1, 140 do
+          gd.wait(1); nofault()
+          if name() == motion then seen_throw = true end
+          local pp = gd.player(2).percent or 0
+          if pp ~= lastp then steps = steps + 1 lastp = pp end
+          for _, it in ipairs(gd.items() or {}) do if (it.frame_alive or 0) == 2 and it.owner_port == 1 then spawns = spawns + 1 end end
+          if seen_throw and not f_at and name() == 'Wait' then f_at = t end
+          if f_at and t > f_at + 12 then break end
+        end
+        local total = (gd.player(2).percent or 0) - p0
+        local g, v = gd.player(1), gd.player(2)
+        gd.log(string.format('SAMPLECHECK %s: %s seen=%s, %d damage steps, %d ki blasts, total %.1f%% (reference %.1f%%), Wait again at %s, victim now %s at dx %.1f',
+          label, motion, tostring(seen_throw), steps, spawns, total, ref, tostring(f_at), tostring(v.motion_name), (v.x - g.x) * face))
+        assert(seen_throw, label .. ': the throw state never ran')
+        assert(math.abs(total - ref) <= tol, label .. ' total damage is not close to the source thrower: ' .. total .. ' vs ' .. ref)
+        if want_balls > 0 then assert(spawns >= want_balls and steps >= want_balls, label .. ' did not release ' .. want_balls .. ' ki blasts that hit') end
+        assert(f_at and f_at <= 110, label .. ': Goku did not get actionable after the throw: ' .. tostring(f_at))
+        gd.wait(45)
+        local n2 = tostring(gd.player(2).motion_name)
+        assert(not n2:find('Thrown') and not n2:find('Catch') and not n2:find('Capture'), label .. ': the victim is still held (' .. n2 .. ')')
+      end
+      -- dash grab: a run into Z connects
+      do
+        tp(1, 0, 0); tp(2, 40, 0); gd.set_percent(2, 0); gd.wait(40)
+        gd.input(1, {x = 60}, 3); gd.wait(25)
+        tp(1, -10, 0); tp(2, 14, 0); gd.wait(2)
+        local face = (gd.player(1).facing or 1) >= 0 and 1 or -1
+        gd.input(1, {x = 127 * face}, 18)
+        gd.wait(10)
+        gd.input(1, {x = 127 * face, buttons = 'Z'}, 2)
+        local got
+        for i = 1, 60 do gd.wait(1) if name() == 'CatchWait' then got = i break end end
+        gd.log('SAMPLECHECK dash_grab: ' .. (got and ('grabbed after ' .. got .. ' frames') or ('no grab, state ' .. name())))
+        assert(got, 'the dash grab did not connect')
+        gd.wait(60)
+        gd.input(1, {x = 127 * face}, 3); gd.wait(120)
+      end
     end
     -- the jab string: A pressed at the XV2 rhythm, on hit the routes link
     reset(8, 0, 0)

@@ -76,6 +76,11 @@ def patch_gameplay():
             if any(m.get(k) != v for k, v in want.items()):
                 m.update(want)
                 changed = True
+    # the victim plays the thrown row of the thrower each throw was ported from (owner 2026-10-11): Falcon's back and down throws, Mewtwo's forward throw, Marth's up throw
+    want_thrown = {'default': 'captain', 'f': 'mewtwo', 'hi': 'mars'}
+    if g.get('thrown_as') != want_thrown:
+        g['thrown_as'] = want_thrown
+        changed = True
     flight = [('Flight', 'FlightUp', {'enter': 'flight_enter', 'frame': 'flight_frame'}), ('FlightU', 'FlightUp', {'frame': 'flight_frame'}),
               ('FlightF', 'FlightF', {'frame': 'flight_frame'}), ('FlightB', 'FlightB', {'frame': 'flight_frame'})]
     for name, row, lua in flight:

@@ -43,7 +43,8 @@ LIMB_FAT = 2.4        # hitbox radius = mesh limb thickness x this (Melee sphere
 MIN_RADIUS = 2.0
 MAX_RADIUS = 3.6
 HB_GROW = 2.0          # owner 2026-10-11: "all hitboxes 2x the size, except back air": every sample sphere's radius x this (centres stay on the limb bones)
-GROW_EXCLUDE = ('bair',)   # moves kept at the unscaled size (bair is also 'carry': its script is not regenerated)
+GROW_EXCLUDE = ('bair',)
+CARRY = ('bair', 'grab', 'dash_grab')   # scripts not regenerated: bair (Luigi) and the grabs (Falcon) are cross-ports (tools/cross_port.py)   # moves kept at the unscaled size (bair is also 'carry': its script is not regenerated)
 # XV2 damage -> Melee damage (anchors from Marth: jab 3, tilts 8, fair 10, smashes 15-22); linear between anchors
 ANCHORS = [(0, 0), (3, 2), (5, 3), (10, 8), (15, 10), (20, 12), (30, 15), (40, 20)]
 CAP = {'jab': 7, 'tilt': 12, 'smash': 22, 'aerial': 14, 'special': 16, 'grab': 0}
@@ -408,7 +409,7 @@ def plan_targets(rig, source, anim_rows, combo):
     result = []
     for t in targets(rig.cfg, combo):
         name = t['name']
-        if name == 'bair':
+        if name in CARRY:
             result.append(dict(t, status='carry'))
             continue
         if t['kind'] == 'combo':

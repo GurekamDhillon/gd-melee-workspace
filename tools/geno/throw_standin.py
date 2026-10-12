@@ -15,7 +15,10 @@ ALIASES = {"falcon": "captain", "dk": "donkey", "bowser": "koopa",
 
 def validate(value):
     """Validate an engine token, preserving authored spelling and known aliases."""
-    if not isinstance(value, str) or (value.lower() not in CHOICES and value.lower() not in ALIASES):
+    names = list(value.values()) if isinstance(value, dict) else [value]
+    if isinstance(value, dict) and (not value or set(value) - {"default", "f", "b", "hi", "lw"}):
+        raise ValueError("thrown_as as an object takes only default, f, b, hi, lw")
+    if not all(isinstance(n, str) and (n.lower() in CHOICES or n.lower() in ALIASES) for n in names):
         raise ValueError("thrown_as must name a retail fighter other than Nana")
     return value
 

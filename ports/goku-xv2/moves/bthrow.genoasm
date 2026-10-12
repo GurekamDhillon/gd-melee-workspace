@@ -1,10 +1,13 @@
-# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.
-# The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
-# Destination throw design; damage/angle/KBG/BKB are not XV2 conversions.
-wait 1
-throw idx=0 damage=9 unk0=135 hit_x24=85 hit_x28=0 hit_x2C=50
-throw idx=1 damage=2 unk0=361 hit_x24=100 hit_x28=0 hit_x2C=30
-wait_until 18
-throw_flag hit_idx=0
-wait_until 28
-iasa
+# HB-SAMPLE (CROSS-PORT): Melee Captain ThrowB (retail data from the vanilla disc), retargeted by bone role; owner choice: owner 2026-10-11: the grab family is Captain Falcon's (his animation, grab boxes and throw data on Goku's bones); the retarget was approved by eye in Blender (lane ws/goku-falcon-grabs).
+# Hitbox joint, size and offsets are Captain's moved to Goku's bone of the same role (a sphere on the root joint is scaled about it) and scaled by the size ratio 0.7570 (script units: build.py multiplies by 1.4286; the engine then applies Goku's built size 1.2 to the fighter, model and hitboxes alike). Damage, angle, KBG/BKB, timing, auto-cancel and IASA are unchanged; left behind: gfx, sfx.
+PUT ANIM_RATE 1.0
+smash_sfx
+throw slot=0 damage=4 angle=135 kbg=130 fkb=0 bkb=30 element=0 sfx_severity=2 sfx_kind=2
+throw slot=1 damage=3 angle=361 kbg=100 fkb=0 bkb=60 element=0 sfx_severity=0 sfx_kind=2
+wait_until 12
+hitbox raw=@HITW0:LEG_R:0x2C000005@,0x0212FFFA,0xFCBD0004,0x23190011,0x2300010B
+hitbox raw=@HITW0:UPLEG_R:0x2C800005@,0x01DD0000,0xFE660000,0x23190011,0x2300010B
+hitbox raw=@HITW0:HIPS:0x2D000005@,0x01730000,0x00000000,0x23190011,0x2300010B
+wait_until 20
+throw_release
+hitboxes_clear

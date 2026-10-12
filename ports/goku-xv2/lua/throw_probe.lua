@@ -1,5 +1,5 @@
 -- Measure a forward (or other) throw: motion/anim frames, the victim's percent steps, items/articles spawned (position, speed, owner, lifetime), hitboxes.
--- Tag THROWPROBE. CFG: dir=f|b|u|d (default f), name=<label>. Scene: p1 = the thrower (mewtwo, geno:goku-xv2/hu), p2 = mario dummy.
+-- Tag THROWPROBE. CFG: dir=f|b|u|d (default f; p = a pummel: A once), name=<label>. Scene: p1 = the thrower (mewtwo, geno:goku-xv2/hu), p2 = mario dummy.
 -- Usage: python ports/goku-xv2/tools/kame_run.py throw_probe THROWPROBE --p1 mewtwo --cfg name=mewtwo --cfg dir=f --turbo
 local C = CFG or {}
 local function log(fmt, ...) gd.log('THROWPROBE ' .. string.format(fmt, ...)) end
@@ -25,7 +25,7 @@ gd.run(function()
     gd.wait(8)
     local g, v = gd.player(1), gd.player(2)
     log('%s grabbed after %d frames; victim offset dx %.2f dy %.2f', tostring(C.name), caught, (v.x - g.x) * side, v.y - g.y)
-    local spec = {f = {x = 127 * side}, b = {x = -127 * side}, u = {y = 127}, d = {y = -127}}
+    local spec = {f = {x = 127 * side}, b = {x = -127 * side}, u = {y = 127}, d = {y = -127}, p = {buttons = 'A'}}
     gd.input(1, spec[dir] or spec.f, 3)
     local p0 = gd.player(2).percent or 0
     gd.wait(1)

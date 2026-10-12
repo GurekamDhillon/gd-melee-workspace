@@ -1,9 +1,76 @@
 {
-  "AttackAirB": {
-    "move": "bair",
-    "fighter": "luigi",
-    "action": "AttackAirB",
-    "reason": "owner choice: no suitable XV2 back attack",
-    "scale_gain": 0.33
-  }
+ "AttackAirB": {
+  "move": "bair",
+  "fighter": "luigi",
+  "action": "AttackAirB",
+  "reason": "owner choice: no suitable XV2 back attack",
+  "scale_gain": 0.33
+ },
+ "Catch": {
+  "move": "grab",
+  "fighter": "captain",
+  "action": "Catch",
+  "reason": "owner 2026-10-11: the grab family is Captain Falcon's (his animation, grab boxes and throw data on Goku's bones); the retarget was approved by eye in Blender (lane ws/goku-falcon-grabs)",
+  "drop": [
+   "gfx",
+   "sfx"
+  ]
+ },
+ "CatchDash": {
+  "move": "dash_grab",
+  "fighter": "captain",
+  "action": "CatchDash",
+  "reason": "owner 2026-10-11: the grab family is Captain Falcon's (his animation, grab boxes and throw data on Goku's bones); the retarget was approved by eye in Blender (lane ws/goku-falcon-grabs)",
+  "drop": [
+   "gfx",
+   "sfx"
+  ]
+ },
+ "CatchWait": {
+  "move": null,
+  "fighter": "captain",
+  "action": "CatchWait",
+  "reason": "owner 2026-10-11: the grab family is Captain Falcon's (his animation, grab boxes and throw data on Goku's bones); the retarget was approved by eye in Blender (lane ws/goku-falcon-grabs)",
+  "loop": true
+ },
+ "CatchAttack": {
+  "move": "pummel",
+  "fighter": "captain",
+  "action": "CatchAttack",
+  "reason": "owner 2026-10-11: the grab family is Captain Falcon's (his animation, grab boxes and throw data on Goku's bones); the retarget was approved by eye in Blender (lane ws/goku-falcon-grabs)",
+  "drop": [
+   "gfx",
+   "sfx"
+  ]
+ },
+ "ThrowB": {
+  "move": "bthrow",
+  "fighter": "captain",
+  "action": "ThrowB",
+  "reason": "owner 2026-10-11: the grab family is Captain Falcon's (his animation, grab boxes and throw data on Goku's bones); the retarget was approved by eye in Blender (lane ws/goku-falcon-grabs)",
+  "drop": [
+   "gfx",
+   "sfx"
+  ]
+ },
+ "ThrowLw": {
+  "move": "dthrow",
+  "fighter": "captain",
+  "action": "ThrowLw",
+  "reason": "owner 2026-10-11: the grab family is Captain Falcon's (his animation, grab boxes and throw data on Goku's bones); the retarget was approved by eye in Blender (lane ws/goku-falcon-grabs)",
+  "drop": [
+   "gfx",
+   "sfx"
+  ]
+ },
+ "ThrowHi": {
+  "move": "uthrow",
+  "fighter": "mars",
+  "action": "ThrowHi",
+  "reason": "owner 2026-10-11 (tentative, to compare): Marth's up throw on Goku's bones",
+  "drop": [
+   "gfx",
+   "sfx"
+  ]
+ }
 }

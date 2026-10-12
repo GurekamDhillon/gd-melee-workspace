@@ -957,15 +957,30 @@
       ],
       "tag": "grab",
       "script": "moves/pummel.genoasm",
-      "windows": [],
-      "iasa": 16,
+      "windows": [
+        [
+          4,
+          1
+        ]
+      ],
+      "iasa": 25,
       "design": {
-        "damage": 2,
+        "damage": 3,
         "angle": 80,
         "kbg": 100,
-        "bkb": 0
+        "bkb": 0,
+        "radius": 3.8439,
+        "role": "root",
+        "window_roles": [
+          "root"
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ]
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "strike": [],
       "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
@@ -979,19 +994,15 @@
       "script": "moves/grab.genoasm",
       "windows": [
         [
-          9,
-          8
+          6,
+          2
         ],
         [
-          9,
-          8
-        ],
-        [
-          9,
-          8
+          6,
+          2
         ]
       ],
-      "iasa": 28,
+      "iasa": 31,
       "hb": "HB-SAMPLE",
       "strike": [
         [
@@ -1004,7 +1015,18 @@
         "damage": 0,
         "angle": 361,
         "kbg": 100,
-        "bkb": 0
+        "bkb": 0,
+        "radius": 2.9568,
+        "role": "root",
+        "window_roles": [
+          "root",
+          "root"
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ]
       },
       "sample": {
         "limb": [
@@ -1017,7 +1039,8 @@
         "reaction": [
           "Grab"
         ]
-      }
+      },
+      "release": 8
     },
     {
       "name": "dash_grab",
@@ -1029,19 +1052,19 @@
       "script": "moves/dash_grab.genoasm",
       "windows": [
         [
-          9,
-          8
+          10,
+          2
         ],
         [
-          9,
-          8
+          10,
+          2
         ],
         [
-          9,
-          8
+          10,
+          2
         ]
       ],
-      "iasa": 28,
+      "iasa": 41,
       "hb": "HB-SAMPLE",
       "strike": [
         [
@@ -1054,7 +1077,19 @@
         "damage": 0,
         "angle": 361,
         "kbg": 100,
-        "bkb": 0
+        "bkb": 0,
+        "radius": 2.9568,
+        "role": "root",
+        "window_roles": [
+          "root",
+          "root",
+          "root"
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ]
       },
       "sample": {
         "limb": [
@@ -1067,7 +1102,8 @@
         "reaction": [
           "Grab"
         ]
-      }
+      },
+      "release": 12
     },
     {
       "name": "fthrow",
@@ -1103,16 +1139,41 @@
       ],
       "tag": "throw",
       "script": "moves/bthrow.genoasm",
-      "release": 18,
-      "iasa": 28,
+      "release": 20,
+      "iasa": 51,
       "design": {
-        "damage": 9,
-        "angle": 135,
-        "kbg": 85,
-        "bkb": 50
+        "damage": 5,
+        "angle": 70,
+        "kbg": 100,
+        "bkb": 70,
+        "radius": 2.9568,
+        "role": "LEG_R",
+        "window_roles": [
+          "LEG_R",
+          "UPLEG_R",
+          "HIPS"
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ]
       },
-      "hb": "HB-NONE",
-      "windows": [],
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          12,
+          8
+        ],
+        [
+          12,
+          8
+        ],
+        [
+          12,
+          8
+        ]
+      ],
       "strike": [],
       "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
@@ -1124,15 +1185,15 @@
       ],
       "tag": "throw",
       "script": "moves/uthrow.genoasm",
-      "release": 18,
-      "iasa": 28,
+      "release": 12,
+      "iasa": 46,
       "design": {
-        "damage": 6,
-        "angle": 90,
-        "kbg": 75,
-        "bkb": 40
+        "damage": 4,
+        "angle": 93,
+        "kbg": 130,
+        "bkb": 60
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "windows": [],
       "strike": [
         [
@@ -1150,15 +1211,15 @@
       ],
       "tag": "throw",
       "script": "moves/dthrow.genoasm",
-      "release": 18,
-      "iasa": 28,
+      "release": 20,
+      "iasa": 41,
       "design": {
-        "damage": 5,
-        "angle": 70,
-        "kbg": 65,
-        "bkb": 35
+        "damage": 7,
+        "angle": 65,
+        "kbg": 34,
+        "bkb": 75
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "windows": [],
       "strike": [
         [
@@ -2678,5 +2739,10 @@
         }
       }
     ]
+  },
+  "thrown_as": {
+    "default": "captain",
+    "f": "mewtwo",
+    "hi": "mars"
   }
 }

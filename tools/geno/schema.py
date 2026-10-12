@@ -212,7 +212,12 @@ def build_schema():
     fighter["properties"]["ai"]["description"] = "The CPU plays this define as that retail fighter (its recovery, special-move choices and per-kind AI tables) (geno: 10)"
     fighter["properties"]["kirby_copy"] = {"type": "string", "pattern": r"^(none|retail:[a-z]+)$", "description": 'What Kirby gets from inhaling the define: "none" (the default) or "retail:<fighter>" (that fighter\'s hat and ability) (geno: 10)',
         "x-reference": "geno.md §22.7", "x-engine-default": "none", "x-source": REGISTRY}
-    fighter["properties"]["thrown_as"] = {"type": "string", "description": "A base none define: the retail fighter whose thrown rows a retail victim plays when this define throws it (its CatchWait/pummel rows stay the victim's own). Default captain (Captain Falcon); any retail fighter but Nana (geno: 10)",
+    thrown_row = lambda what: {"type": "string", "description": what}
+    fighter["properties"]["thrown_as"] = {"anyOf": [{"type": "string"}, {"type": "object", "additionalProperties": False, "properties": {
+            "default": thrown_row("The retail fighter for every throw not named below (default captain)"),
+            "f": thrown_row("The retail fighter whose ThrownF a victim plays"), "b": thrown_row("... whose ThrownB"),
+            "hi": thrown_row("... whose ThrownHi"), "lw": thrown_row("... whose ThrownLw")}}],
+        "description": "A base none define: the retail fighter whose thrown rows a retail victim plays when this define throws it (its CatchWait/pummel rows stay the victim's own). Default captain (Captain Falcon); any retail fighter but Nana. A string covers all four throws; an object {default, f, b, hi, lw} gives each throw its own thrower (a Mewtwo forward throw, a Marth up throw) (geno: 10)",
         "x-reference": "geno.md §22.10", "x-engine-default": "captain", "x-source": REGISTRY}
     fighter["properties"]["audio"] = obj({"announcer": gnsnd, "voice": arr(obj({"sfx": integer("The retail sound id this fighter would play", section="22.7", minimum=1, maximum=999999), "file": gnsnd,
         "volume": integer("Volume 0..127", 127, "22.7", minimum=0, maximum=127),

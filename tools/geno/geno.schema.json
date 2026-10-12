@@ -5721,8 +5721,38 @@
             "x-source": "melee/pc/platform/geno_registry.c"
           },
           "thrown_as": {
-            "type": "string",
-            "description": "A base none define: the retail fighter whose thrown rows a retail victim plays when this define throws it (its CatchWait/pummel rows stay the victim's own). Default captain (Captain Falcon); any retail fighter but Nana (geno: 10)",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "default": {
+                    "type": "string",
+                    "description": "The retail fighter for every throw not named below (default captain)"
+                  },
+                  "f": {
+                    "type": "string",
+                    "description": "The retail fighter whose ThrownF a victim plays"
+                  },
+                  "b": {
+                    "type": "string",
+                    "description": "... whose ThrownB"
+                  },
+                  "hi": {
+                    "type": "string",
+                    "description": "... whose ThrownHi"
+                  },
+                  "lw": {
+                    "type": "string",
+                    "description": "... whose ThrownLw"
+                  }
+                }
+              }
+            ],
+            "description": "A base none define: the retail fighter whose thrown rows a retail victim plays when this define throws it (its CatchWait/pummel rows stay the victim's own). Default captain (Captain Falcon); any retail fighter but Nana. A string covers all four throws; an object {default, f, b, hi, lw} gives each throw its own thrower (a Mewtwo forward throw, a Marth up throw) (geno: 10)",
             "x-reference": "geno.md §22.10",
             "x-engine-default": "captain",
             "x-source": "melee/pc/platform/geno_registry.c"
@@ -6104,6 +6134,7 @@
     "count",
     "counter",
     "damage",
+    "default",
     "define",
     "delay",
     "despawn",
@@ -6372,8 +6403,8 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "f0c51cf5ef9ded106d52bb9c7c3e323efd9fb9f142a35324f1723d2c3d45f41d",
-    "pc/platform/geno_define_registry.inc": "1d356826e99a44f865c7602021791f487f91cc86f685b31c3596508ef9e51be5",
+    "pc/platform/geno_registry.c": "39f396048d5c53e74c087ac1ab82662bf7e74a5d2bae25770156b95d72da3ac8",
+    "pc/platform/geno_define_registry.inc": "1be55a3a97d61e0769518100d416f4497e4515b7111575daa9ba65718aae30d3",
     "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
     "pc/platform/geno_combo_registry.inc": "1a0ba9207037ada301abaef37643c092f19736e174cc78364b2ac94962e04a04",
     "pc/geno/geno.h": "75546c5eb990ad0602b39c5486ec86a17087af615ade0979b0f4d71bb4996868",

@@ -420,7 +420,7 @@ def row_specs(source):
     for row,c in json.loads((PORT/'tools/cross-port.json').read_text()).items():
         npz=ROOT/'_build/goku-xv2/cross-port'/row/'clip.npz'
         if not npz.exists():raise SystemExit('cross-port clip missing: run python ports/goku-xv2/tools/cross_port.py (needs GW_ISO_VANILLA)')
-        out[row]={'clip':'clip:'+EAN+'/0','loop':False,'frames':int(np.load(npz)['frames']),'start':0,'move':c['move'],
+        out[row]={'clip':'clip:'+EAN+'/0','loop':bool(c.get('loop')),'frames':int(np.load(npz)['frames']),'start':0,'move':c['move'],
                   'status':'CROSS-PORT: Melee %s %s (%s)'%(c['fighter'].capitalize(),c['action'],c['reason']),'cross_port':dict(c,npz=str(npz))}
     # Custom move art deliberately has separate charge/release stages. These are
     # local design crops, not claims about source BAC state-machine equivalence.
@@ -470,11 +470,15 @@ def row_specs(source):
                           'status':'PICK provisional (BAC 427 clip GOK_ATC_023, hit f10): Dragon Rush follow-up flurry'}
     direct('Riposte',58,False,46,1,'PICK provisional (BAC 475 clip GOK_ATC_008, from f1, 46 frames so the air counter is not shorter than 0.55x Melee): Z-vanish reappear kick')
     out['ThrowF'].update(frames=32,time_factor=5.,events=[],status='authored 5x primary-clip crop: source release 90 -> target18; victim choreography omitted')
+    CROSS=set(json.loads((PORT/'tools/cross-port.json').read_text()))   # rows whose clip is a cross-port (a retail Melee action retargeted): no placeholder or alias over them
     for row in ['ThrowB','ThrowHi','ThrowLw','CatchAttack']:
+        if row in CROSS:continue
         direct(row,81,False,32,24,'authored-needed placeholder: held catch pose');out[row]['hold_source']=24
     for base,aliases in [('AttackS3S',['AttackS3Hi','AttackS3HiS','AttackS3LwS','AttackS3Lw']),
                           ('AttackS4S',['AttackS4Hi','AttackS4HiS','AttackS4LwS','AttackS4Lw']),('Catch',['CatchDash'])]:
-        for row in aliases:out[row]={**out[base],'status':'explicit prototype reuse of '+base+'; directional pose authored-needed'}
+        for row in aliases:
+            if row in CROSS:continue
+            out[row]={**out[base],'status':'explicit prototype reuse of '+base+'; directional pose authored-needed'}
     # 2026-10-08 damage / down / tech / capture / thrown / grab-throw / item rows (tools/rowmap.py; FIDELITY.md)
     import rowmap
     byname={}

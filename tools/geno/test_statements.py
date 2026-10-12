@@ -95,7 +95,8 @@ class ExistingMoveTests(unittest.TestCase):
     def test_every_ports_genoasm_source_roundtrips(self):
         paths = sorted((script.ROOT / "ports").rglob("*.genoasm"))
         self.assertTrue(paths, "no authored move sources found")
-        texts = {path: path.read_text(encoding="utf-8-sig") for path in paths}
+        # a cross-port hitbox word 0 is written @HITW0:<ROLE>:0x<base>@ (build.py puts in the joint): for this test the base word stands for it
+        texts = {path: re.sub(r"@HITW0:[A-Z_0-9]+:(0x[0-9A-Fa-f]+)@", r"\1", path.read_text(encoding="utf-8-sig")) for path in paths}
         roles = sorted({role for text in texts.values() for role in re.findall(r"@([A-Z][A-Z_0-9]*)@", text)})
         self.assertLessEqual(len(roles), 256, "role substitution exceeds encoded joint range")
         joints = {role: str(i) for i, role in enumerate(roles)}
