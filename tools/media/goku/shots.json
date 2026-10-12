@@ -1,0 +1,357 @@
+{
+  "date": "2026-10-12",
+  "hero": "",
+  "comment": "Single source for lower-thirds, controls card, end card and the Discord post. 'input' tokens: A B X Y Z L R C C:up|down|fwd|back stick:up|down|fwd|back dpad:down + > and keyword chips. Verify every input against the clip script's motion trace before shipping.",
+  "shots": [
+    {
+      "id": "kame_tap",
+      "title": "Kamehameha",
+      "input": [
+        "B",
+        ">",
+        "B"
+      ],
+      "note": "Press B to start the charge, B again fires at once",
+      "script": "lua/clips_kame.lua",
+      "clip": "kame_tap"
+    },
+    {
+      "id": "kame_charged",
+      "title": "Kamehameha: charged",
+      "input": [
+        "B",
+        ">",
+        "wait",
+        ">",
+        "B"
+      ],
+      "note": "Let the charge build, then B fires the level you reached",
+      "script": "lua/clips_kame.lua",
+      "clip": "kame_charged"
+    },
+    {
+      "id": "kame_max",
+      "title": "Super Kamehameha",
+      "input": [
+        "full ki",
+        "+",
+        "B",
+        ">",
+        "wait",
+        ">",
+        "B"
+      ],
+      "note": "Needs a full ki bar and a full charge",
+      "script": "lua/clips_kame.lua",
+      "clip": "kame_max"
+    },
+    {
+      "id": "flight",
+      "title": "Flight",
+      "input": [
+        "stick:up",
+        "+",
+        "B"
+      ],
+      "note": "Up B: steer in 8 directions, A or C-stick for a flight aerial",
+      "script": "lua/clips_flight.lua",
+      "clip": "flight_aerial"
+    },
+    {
+      "id": "flight_ledge",
+      "title": "Reverse ledge grab",
+      "input": [
+        "stick:up",
+        "+",
+        "B",
+        ">",
+        "stick:back"
+      ],
+      "note": "Fly past the ledge, turn, grab it",
+      "script": "lua/clips_flight.lua",
+      "clip": "flight_ledge"
+    },
+    {
+      "id": "it_roll",
+      "title": "Instant Transmission roll",
+      "input": [
+        "R",
+        "+",
+        "stick:fwd"
+      ],
+      "note": "Shield + left or right: he vanishes and reappears",
+      "script": "lua/clips_ground.lua",
+      "clip": "it_roll"
+    },
+    {
+      "id": "rush",
+      "title": "Dragon Rush",
+      "input": [
+        "stick:fwd",
+        "+",
+        "B"
+      ],
+      "note": "Side B: on hit it flows into the Rush Combo",
+      "script": "lua/clips_ground.lua",
+      "clip": "rush"
+    },
+    {
+      "id": "light_heavy",
+      "title": "Light string to heavy finisher",
+      "input": [
+        "A",
+        ">",
+        "A",
+        ">",
+        "A",
+        ">",
+        "A",
+        ">",
+        "A",
+        ">",
+        "C:fwd"
+      ],
+      "note": "Each hit must connect to chain",
+      "script": "lua/clips_ground.lua",
+      "clip": "light_heavy"
+    },
+    {
+      "id": "launcher_air",
+      "title": "Launcher to air string",
+      "input": [
+        "A",
+        ">",
+        "C:up",
+        ">",
+        "X",
+        ">",
+        "A",
+        "A",
+        "A",
+        ">",
+        "C:down"
+      ],
+      "note": "Up heavy launches, jump after it, three neutral airs, down heavy spikes",
+      "script": "lua/clips_ground.lua",
+      "clip": "launcher_air"
+    },
+    {
+      "id": "fair_spike",
+      "title": "Forward air spike",
+      "input": [
+        "A",
+        "+",
+        "stick:fwd"
+      ],
+      "note": "In the air",
+      "script": "lua/clips_ground.lua",
+      "clip": "fair_spike"
+    },
+    {
+      "id": "fsmash",
+      "title": "Charged forward smash",
+      "input": [
+        "hold",
+        "C:fwd"
+      ],
+      "note": "A KO move",
+      "script": "lua/clips_ground.lua",
+      "clip": "fsmash"
+    },
+    {
+      "id": "ki_charge",
+      "title": "Ki charge",
+      "input": [
+        "hold",
+        "stick:down",
+        "+",
+        "B"
+      ],
+      "note": "Down B fills the ki bar; do it in the air to float down while charging",
+      "script": "lua/clips_ki.lua",
+      "clip": "ki_charge"
+    },
+    {
+      "id": "dash_kick",
+      "title": "Homing dash kick",
+      "input": [
+        "R",
+        ">",
+        "B"
+      ],
+      "note": "Shield, then B (costs ki)",
+      "script": "lua/clips_ki.lua",
+      "clip": "dash_kick"
+    },
+    {
+      "id": "ki_blast",
+      "title": "Ki blast barrage",
+      "input": [
+        "dpad:down",
+        "dpad:down",
+        "dpad:down"
+      ],
+      "note": "Tap the D-pad down: he fires with alternating hands",
+      "script": "lua/clips_ki.lua",
+      "clip": "ki_blast"
+    },
+    {
+      "id": "grab",
+      "title": "Grab and throws",
+      "input": [
+        "Z",
+        ">",
+        "stick:fwd"
+      ],
+      "note": "Captain Falcon style grab and throws",
+      "script": "lua/clips_ground.lua",
+      "clip": "grab"
+    },
+    {
+      "id": "ledge",
+      "title": "Ledge options",
+      "input": [
+        "stick:up",
+        "or",
+        "A",
+        "or",
+        "R"
+      ],
+      "note": "Getup, attack, roll and jump from the ledge",
+      "script": "lua/clips_flight.lua",
+      "clip": "ledge"
+    }
+  ],
+  "controls": [
+    {
+      "name": "Light string",
+      "input": [
+        "A",
+        ">",
+        "A",
+        ">",
+        "A"
+      ],
+      "text": "Five hits chain on hit. Every hit builds ki."
+    },
+    {
+      "name": "Heavy",
+      "input": [
+        "C:fwd",
+        "C:up",
+        "C:down"
+      ],
+      "text": "C-stick (or an A smash flick) off any light hit: finisher, launcher or down smash."
+    },
+    {
+      "name": "Kamehameha",
+      "input": [
+        "B",
+        ">",
+        "B"
+      ],
+      "text": "B starts the charge, B again fires the level reached. Shield stores it. Full ki and full charge makes it Super."
+    },
+    {
+      "name": "Dragon Rush",
+      "input": [
+        "stick:fwd",
+        "+",
+        "B"
+      ],
+      "text": "Side B dash. Connects into the Rush Combo. Also a recovery."
+    },
+    {
+      "name": "Flight",
+      "input": [
+        "stick:up",
+        "+",
+        "B"
+      ],
+      "text": "Up B. Steer, then A or C-stick for a flight aerial."
+    },
+    {
+      "name": "Ki charge",
+      "input": [
+        "hold",
+        "stick:down",
+        "+",
+        "B"
+      ],
+      "text": "Down B fills the ki bar. Works in the air too.",
+      "ki": true
+    },
+    {
+      "name": "Ki blast",
+      "input": [
+        "dpad:down"
+      ],
+      "text": "D-pad down, ground or air. Costs a little ki.",
+      "ki": true
+    },
+    {
+      "name": "Dash kick",
+      "input": [
+        "R",
+        ">",
+        "B"
+      ],
+      "text": "Shield then B. Homing kick, costs ki.",
+      "ki": true
+    },
+    {
+      "name": "Transmission",
+      "input": [
+        "R",
+        "+",
+        "stick:fwd"
+      ],
+      "text": "Shield + left or right is an Instant Transmission roll."
+    },
+    {
+      "name": "Launcher air",
+      "input": [
+        "C:up",
+        ">",
+        "X",
+        ">",
+        "A",
+        "A",
+        "A"
+      ],
+      "text": "Launch, jump, three neutral airs, then fair, uair or dair."
+    },
+    {
+      "name": "Grab",
+      "input": [
+        "Z"
+      ],
+      "text": "Captain Falcon style grab and throws."
+    },
+    {
+      "name": "Ki meter",
+      "input": [
+        "hits",
+        "+",
+        "charge"
+      ],
+      "text": "The yellow ki bar. Hits and charging fill it, specials spend it.",
+      "ki": true
+    }
+  ],
+  "install": [
+    [
+      "Unzip the Goku alpha into your GD's Melee folder",
+      "Over a 0.3.0-rc5 install, say yes to replace. It adds mods/goku-xv2 and updates melee-pc.exe."
+    ],
+    [
+      "Open GD Melee and make sure Goku is enabled in Mods",
+      "The package turns him on in mods/enabled.txt."
+    ],
+    [
+      "Pick Goku on the character select",
+      "Play offline, in the LAB, or against a friend on the same alpha build."
+    ]
+  ],
+  "report": "This is an alpha: hitboxes are still hand-authored, balance is unfinished and some animations are rough. Tell us what breaks in the bugs channel, with what you pressed and the stage."
+}
