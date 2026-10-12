@@ -1827,25 +1827,25 @@
       "hb": "HB-SAMPLE",
       "windows": [
         [
-          40,
+          11,
           4
         ],
         [
-          40,
+          11,
           4
         ],
         [
-          40,
+          11,
           4
         ]
       ],
       "strike": [
         [
-          40,
-          44
+          11,
+          15
         ]
       ],
-      "strike_note": "XV2 knockback-attack hit f40-43; NOTE the row is cropped to 40 frames, so the strike is past its end (row to be lengthened when the hitbox is authored)",
+      "strike_note": "owner 2026-10-11: active f11-14 on the right leg (Workbench)",
       "design": {
         "damage": 8,
         "angle": 361,
@@ -1854,7 +1854,7 @@
       },
       "sample": {
         "limb": [
-          "foot.L"
+          "foot.R"
         ],
         "from": "XV2 hit entry 419",
         "xv2_damage": [

@@ -171,6 +171,15 @@ def row_previewable(row):
     return not (motions and all(m in UNPREVIEWABLE_MOTIONS for m in motions))
 
 
+def resolve_row_name(names, name):
+    """The engine row a --row / --exercise argument names. A special move's row is "side_b (Rush)" (the input, then
+    the Geno state), so "side_b" alone selects it; an exact name always wins."""
+    if name in names:
+        return name
+    hits = [n for n in names if isinstance(n, str) and n.startswith(name + " (")]
+    return hits[0] if hits else name
+
+
 def wait_row_name(rows):
     """The row to fall back to: the previewable row named "wait", else a clip "Wait" row, else the first previewable."""
     rows = [r for r in rows if row_previewable(r)]

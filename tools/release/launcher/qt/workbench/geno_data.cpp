@@ -101,9 +101,9 @@ QByteArray readPlan(FileStore &fs, const ProjectConfig &project, QString *name, 
 // design/window_roles) and the project's build refuses a script that disagrees. These keep them in step with
 // a script edit; a move whose declarations do not match its script (or that has none) is left alone.
 struct Declared { QJsonArray windows, roles; bool hasWindows = false, hasRoles = false; };
-Declared declared(const QString &gameplayText, int moveIndex, int hitboxes) {
+Declared declared(const QString &gameplayText, const QString &section, int moveIndex, int hitboxes) {
     Declared d;
-    const auto moves = QJsonDocument::fromJson(gameplayText.toUtf8()).object().value("moves").toArray();
+    const auto moves = QJsonDocument::fromJson(gameplayText.toUtf8()).object().value(section).toArray();
     if (moveIndex < 0 || moveIndex >= moves.size()) return d;
     const auto move = moves[moveIndex].toObject();
     const auto windows = move.value("windows");
@@ -112,9 +112,9 @@ Declared declared(const QString &gameplayText, int moveIndex, int hitboxes) {
     if (roles.isArray() && roles.toArray().size() == hitboxes) { d.roles = roles.toArray(); d.hasRoles = true; }
     return d;
 }
-QString syncDeclarations(QString gameplay, const QString &file, int moveIndex, const QVector<HitboxRef> &before,
+QString syncDeclarations(QString gameplay, const QString &file, const QString &section, int moveIndex, const QVector<HitboxRef> &before,
                          const QVector<HitboxRef> &after, int added, int removed) {
-    const auto d = declared(gameplay, moveIndex, int(before.size()));
+    const auto d = declared(gameplay, section, moveIndex, int(before.size()));
     const QString move = '#' + QString::number(moveIndex);
     const auto windowOf = [](const HitboxRef &h) {
         return QJsonArray{h.startFrame, h.endFrame < 0 ? 0 : h.endFrame - h.startFrame};
@@ -122,11 +122,11 @@ QString syncDeclarations(QString gameplay, const QString &file, int moveIndex, c
     QString error;
     const auto check = [&](const QString &text) { if (text.isNull()) fail(file + ": " + error); return text; };
     if (added >= 0 && added < after.size()) {
-        if (d.hasWindows) gameplay = check(jsonArrayInsert(gameplay, {"moves", move, "windows"}, added, windowOf(after[added]), &error));
-        if (d.hasRoles) gameplay = check(jsonArrayInsert(gameplay, {"moves", move, "design", "window_roles"}, added, after[added].joint, &error));
+        if (d.hasWindows) gameplay = check(jsonArrayInsert(gameplay, {section, move, "windows"}, added, windowOf(after[added]), &error));
+        if (d.hasRoles) gameplay = check(jsonArrayInsert(gameplay, {section, move, "design", "window_roles"}, added, after[added].joint, &error));
     } else if (removed >= 0 && removed < before.size()) {
-        if (d.hasWindows) gameplay = check(jsonArrayRemove(gameplay, {"moves", move, "windows"}, removed, &error));
-        if (d.hasRoles) gameplay = check(jsonArrayRemove(gameplay, {"moves", move, "design", "window_roles"}, removed, &error));
+        if (d.hasWindows) gameplay = check(jsonArrayRemove(gameplay, {section, move, "windows"}, removed, &error));
+        if (d.hasRoles) gameplay = check(jsonArrayRemove(gameplay, {section, move, "design", "window_roles"}, removed, &error));
     }
     // A write can reorder the hitboxes (they are kept in start-frame order), so after any insert/remove bring
     // each declared window to what the script says at that ordinal, and move each role with its hitbox.
@@ -153,13 +153,13 @@ QString syncDeclarations(QString gameplay, const QString &file, int moveIndex, c
         if (added >= 0 && added < after.size()) roles.insert(added, after[added].joint);
         else if (removed >= 0 && removed < before.size()) roles.removeAt(removed);
     }
-    const auto now = declared(gameplay, moveIndex, int(after.size()));
+    const auto now = declared(gameplay, section, moveIndex, int(after.size()));
     for (int i = 0; i < after.size(); ++i) {
         const auto wanted = windowOf(after[i]);
         if (now.hasWindows) {
             const auto have = now.windows[i].toArray();
             for (int k = 0; k < 2; ++k) if (have.size() != 2 || have[k] != wanted[k])
-                gameplay = check(jsonReplace(gameplay, {"moves", move, "windows", '#' + QString::number(i), '#' + QString::number(k)},
+                gameplay = check(jsonReplace(gameplay, {section, move, "windows", '#' + QString::number(i), '#' + QString::number(k)},
                                              jsonScalar(wanted[k]), &error));
         }
         if (now.hasRoles && i < roles.size()) {
@@ -170,7 +170,7 @@ QString syncDeclarations(QString gameplay, const QString &file, int moveIndex, c
                 role = src[i] >= 0 && before[src[i]].joint != after[i].joint ? after[i].joint : original;
             }
             if (now.roles[i].toString() != role)
-                gameplay = check(jsonReplace(gameplay, {"moves", move, "design", "window_roles", '#' + QString::number(i)},
+                gameplay = check(jsonReplace(gameplay, {section, move, "design", "window_roles", '#' + QString::number(i)},
                                              jsonScalar(role), &error));
         }
     }
@@ -275,6 +275,54 @@ QString GenoData::reload() {
             row.previewRefusal = stringField(move, "preview_reason", where);
             rows.append(row);
         }
+        // Special moves are Geno states, not "moves" rows: one row per state that has a script in special_adaptations
+        // (Rush, RushCombo, Homing, Flight, KiCharge*, Kame*). The engine enters them by motion 0x400 + the state's
+        // index in "states" (Geno_LabEnterState); the clip is the state's own; edits write the state's genoasm and
+        // keep special_adaptations/<i>/windows in step.
+        {
+            const auto states = gameplay.value("states").toArray();
+            const auto adaptations = gameplay.value("special_adaptations").toArray();
+            const auto bound = gameplay.value("specials").toObject();
+            static const struct { const char *key, *label; } kInputs[] = {
+                {"s", "side_b"}, {"air_s", "side_b_air"}, {"hi", "up_b"}, {"air_hi", "up_b_air"},
+                {"n", "neutral_b"}, {"air_n", "neutral_b_air"}, {"lw", "down_b"}, {"air_lw", "down_b_air"}};
+            for (int a = 0; a < adaptations.size(); ++a) {
+                const auto adaptation = adaptations[a].toObject();
+                const QString stateName = adaptation.value("name").toString();
+                const QString script = adaptation.value("script").toString();
+                if (stateName.isEmpty() || script.isEmpty()) continue;
+                int stateIndex = -1;
+                for (int k = 0; k < states.size(); ++k)
+                    if (states[k].toObject().value("name").toString() == stateName) { stateIndex = k; break; }
+                if (stateIndex < 0) continue;
+                const auto state = states[stateIndex].toObject();
+                if (state.value("move_tag").toString() == "aerial") continue; // FlightNair... reuse the aerial rows' scripts
+                RowInfo row;
+                row.section = "special_adaptations";
+                row.moveIndex = a;
+                row.motions.append(0x400 + stateIndex);
+                row.tag = "special";
+                row.aerial = state.value("behavior").toString() == "geno.air";
+                QString input;
+                for (const auto &entry : kInputs)
+                    if (bound.value(entry.key).toString() == "geno:" + stateName) { input = entry.label; break; }
+                // "side_b (Rush)": the input first so the owner can say --row side_b; an unbound state is "(Name)" alone.
+                row.name = input.isEmpty() ? stateName + " (special)" : input + " (" + stateName + ")";
+                if (names.contains(row.name)) continue;
+                QString safe = FileStore::safeRel(script, &error);
+                if (!error.isEmpty() || !fs_.exists(safe)) { error.clear(); continue; }
+                row.script = safe;
+                if (!scripts.contains(row.script)) {
+                    const auto bytes = fs_.read(row.script);
+                    sourceText(bytes, row.script);
+                    scripts.insert(row.script, bytes);
+                }
+                const QString sub = state.value("subaction").toString();
+                row.stateClip = sub.startsWith("clip:") ? sub.mid(5) : stateName;
+                names.insert(row.name);
+                rows.append(row);
+            }
+        }
         QString planName;
         bool planExists = false;
         const auto planBytes = readPlan(fs_, project, &planName, &planExists);
@@ -316,6 +364,11 @@ QString GenoData::reload() {
                     name = rowClips[motion].toString();
                 if (!name.isEmpty()) { row.planClip = name; break; }
             }
+        }
+        for (auto &row : rows) {
+            if (row.stateClip.isEmpty()) continue;
+            for (const auto &clipInfo : clips)
+                if (clipInfo.name == row.stateClip) { row.planClip = row.stateClip; break; }
         }
         QByteArray fidelityBytes;
         QString fidelityText;
@@ -367,7 +420,7 @@ QStringList GenoData::timingProblems(const QString &name) const {
     if (!row || row->script.isEmpty()) return {};
     const auto script = GenoAsm::parse(sourceText(scripts_.value(row->script), row->script));
     QStringList out = script.timingProblems();
-    const auto moves = QJsonDocument::fromJson(gameplayText_.toUtf8()).object().value("moves").toArray();
+    const auto moves = QJsonDocument::fromJson(gameplayText_.toUtf8()).object().value(row->section).toArray();
     if (row->moveIndex < 0 || row->moveIndex >= moves.size()) return out;
     const auto windows = moves[row->moveIndex].toObject().value("windows");
     if (!windows.isArray()) return out;
@@ -464,9 +517,9 @@ QString GenoData::externalError(const QStringList &paths) const {
     return {};
 }
 // gameplay.json and, when present, the git-ignored gameplay.full.json the builder reads, both declare windows.
-void GenoData::syncGameplay(QVector<FileChange> &out, int moveIndex, const QVector<HitboxRef> &before,
+void GenoData::syncGameplay(QVector<FileChange> &out, const QString &section, int moveIndex, const QVector<HitboxRef> &before,
                             const QVector<HitboxRef> &after, int added, int removed) const {
-    const QString gameplay = syncDeclarations(gameplayText_, project_.gameplay, moveIndex, before, after, added, removed);
+    const QString gameplay = syncDeclarations(gameplayText_, project_.gameplay, section, moveIndex, before, after, added, removed);
     if (gameplay != gameplayText_) out.append({project_.gameplay, gameplayBytes_, sourceBytes(gameplay, gameplayBytes_)});
     QString full = project_.gameplay;
     if (!full.endsWith(".json")) return;
@@ -474,7 +527,7 @@ void GenoData::syncGameplay(QVector<FileChange> &out, int moveIndex, const QVect
     if (!fs_.exists(full)) return;
     const auto fullBytes = fs_.read(full);
     const QString fullText = sourceText(fullBytes, full);
-    const QString patched = syncDeclarations(fullText, full, moveIndex, before, after, added, removed);
+    const QString patched = syncDeclarations(fullText, full, section, moveIndex, before, after, added, removed);
     if (patched != fullText) out.append({full, fullBytes, sourceBytes(patched, fullBytes)});
 }
 QVector<FileChange> GenoData::editHitbox(const QString &name, int ordinal, const HitboxEdit &edit, QString *err) const {
@@ -490,7 +543,7 @@ QVector<FileChange> GenoData::editHitbox(const QString &name, int ordinal, const
         const auto changed = GenoAsm::parse(sourceText(bytes, row->script)).apply(ordinal, edit, &error);
         if (!error.isEmpty() || changed.isNull()) fail(row->script + ": " + error);
         QVector<FileChange> out{{row->script, bytes, sourceBytes(changed, bytes)}};
-        syncGameplay(out, row->moveIndex, hitboxes(name), GenoAsm::parse(changed).hitboxes(), -1, -1);
+        syncGameplay(out, row->section, row->moveIndex, hitboxes(name), GenoAsm::parse(changed).hitboxes(), -1, -1);
         return out;
     } catch (const std::exception &e) {
         if (err) *err = QString::fromUtf8(e.what());
@@ -512,7 +565,7 @@ QVector<FileChange> GenoData::addHitbox(const QString &name, const HitboxAdd &ad
         const auto changed = GenoAsm::parse(sourceText(bytes, row->script)).addHitbox(add, &error, ordinal);
         if (!error.isEmpty() || changed.isNull()) fail(row->script + ": " + error);
         QVector<FileChange> out{{row->script, bytes, sourceBytes(changed, bytes)}};
-        syncGameplay(out, row->moveIndex, hitboxes(name), GenoAsm::parse(changed).hitboxes(), *ordinal, -1);
+        syncGameplay(out, row->section, row->moveIndex, hitboxes(name), GenoAsm::parse(changed).hitboxes(), *ordinal, -1);
         return out;
     } catch (const std::exception &e) {
         if (err) *err = QString::fromUtf8(e.what());
@@ -547,7 +600,7 @@ QVector<FileChange> GenoData::duplicateHitbox(const QString &name, int ordinal, 
         if (!error.isEmpty() || changed.isNull()) fail(row->script + ": " + error);
         if (newOrdinal) *newOrdinal = created;
         QVector<FileChange> out{{row->script, bytes, sourceBytes(changed, bytes)}};
-        syncGameplay(out, row->moveIndex, source, GenoAsm::parse(changed).hitboxes(), created, -1);
+        syncGameplay(out, row->section, row->moveIndex, source, GenoAsm::parse(changed).hitboxes(), created, -1);
         return out;
     } catch (const std::exception &e) {
         if (err) *err = QString::fromUtf8(e.what());
@@ -567,7 +620,7 @@ QVector<FileChange> GenoData::removeHitbox(const QString &name, int ordinal, QSt
         const auto changed = GenoAsm::parse(sourceText(bytes, row->script)).removeHitbox(ordinal, &error);
         if (!error.isEmpty() || changed.isNull()) fail(row->script + ": " + error);
         QVector<FileChange> out{{row->script, bytes, sourceBytes(changed, bytes)}};
-        syncGameplay(out, row->moveIndex, hitboxes(name), GenoAsm::parse(changed).hitboxes(), -1, ordinal);
+        syncGameplay(out, row->section, row->moveIndex, hitboxes(name), GenoAsm::parse(changed).hitboxes(), -1, ordinal);
         return out;
     } catch (const std::exception &e) {
         if (err) *err = QString::fromUtf8(e.what());
@@ -585,6 +638,7 @@ QVector<FileChange> GenoData::assignClip(const QString &name, const QString &cli
         if (!knownClip) fail("unknown clip: " + clip);
         const QString conflict = externalError({"workbench.json", project_.gameplay, project_.fidelity});
         if (!conflict.isEmpty()) fail(conflict);
+        if (row->section != "moves") fail(name + ": a special state's clip is its state's subaction, not a row pick");
         const QString move = '#' + QString::number(row->moveIndex);
         QString gameplay = replaceValue(gameplayText_, {"moves", move, "pick", "clip"}, clip, project_.gameplay);
         if (cropStart)
