@@ -11,5 +11,5 @@ hitbox slot=2 joint=@UPLEG_R@ damage=6 size=5.04 x=0.1067 y=-1.503 z=-0.002655 a
 HBSTUN 7 12
 wait_until 15
 clear_hitboxes
-wait_until 62
+wait_until 40
 iasa

@@ -1,14 +1,87 @@
 # HB-SAMPLE (remake phase 2, 2026-10-11): a generated STARTING POINT, not an authored hitbox. Spheres ride the leading limb chain (tip, middle, inner),
 # sized from the mesh; timing, damage and reaction are derived from the XV2 hit entry (tools/remake_samples.py, REMAKE-SAMPLES.md). Edit it in the Workbench.
 # XV2 hit entry 337; limb foot.R
+# DASH TRAVEL (goku-stage 2026-10-11, owner: the dash attack slid too far on friction): retail Falcon's dash attack on Goku's rig (cross_port AttackDash) moves 1.03/frame for 26 frames, then
+# 0.27/frame (30.6 units over 41). The row keeps plain flags (dash momentum, not a clip TransN), so the ground speed is re-set every other frame to that x the built size 1.1
+# (1.133, then 0.30 world units per frame); friction fills the frames between. About 32 world units over the row's 38 frames.
 PUT ANIM_RATE 1.0
+wait_until 1
+GET ra_f:0 FACING
+MUL ra_f:0 1.133
+PUT GROUND_VEL ra_f:0
+wait_until 3
+GET ra_f:0 FACING
+MUL ra_f:0 1.133
+PUT GROUND_VEL ra_f:0
 wait_until 5
+GET ra_f:0 FACING
+MUL ra_f:0 1.133
+PUT GROUND_VEL ra_f:0
 hitbox slot=0 joint=@FOOT_R@ damage=12 size=2.8 x=-0.03949 y=-0.4019 z=0.8439 angle=361 kbg=50 fkb=0 bkb=16
 hitbox slot=1 joint=@LEG_R@ damage=10 size=5.04 x=0.04702 y=-1.652 z=-0.1287 angle=361 kbg=50 fkb=0 bkb=13
 hitbox slot=2 joint=@UPLEG_R@ damage=8 size=5.04 x=-0.1149 y=-1.493 z=-0.08663 angle=361 kbg=50 fkb=0 bkb=10
 wait_until 6
 sfx behavior=1 sfx_id=165 volume=127 panning=64
+wait_until 7
+GET ra_f:0 FACING
+MUL ra_f:0 1.133
+PUT GROUND_VEL ra_f:0
 wait_until 9
+GET ra_f:0 FACING
+MUL ra_f:0 1.133
+PUT GROUND_VEL ra_f:0
 clear_hitboxes
+wait_until 11
+GET ra_f:0 FACING
+MUL ra_f:0 1.133
+PUT GROUND_VEL ra_f:0
+wait_until 13
+GET ra_f:0 FACING
+MUL ra_f:0 1.133
+PUT GROUND_VEL ra_f:0
+wait_until 15
+GET ra_f:0 FACING
+MUL ra_f:0 1.133
+PUT GROUND_VEL ra_f:0
+wait_until 17
+GET ra_f:0 FACING
+MUL ra_f:0 1.133
+PUT GROUND_VEL ra_f:0
+wait_until 19
+GET ra_f:0 FACING
+MUL ra_f:0 1.133
+PUT GROUND_VEL ra_f:0
+wait_until 21
+GET ra_f:0 FACING
+MUL ra_f:0 1.133
+PUT GROUND_VEL ra_f:0
+wait_until 23
+GET ra_f:0 FACING
+MUL ra_f:0 1.133
+PUT GROUND_VEL ra_f:0
+wait_until 25
+GET ra_f:0 FACING
+MUL ra_f:0 1.133
+PUT GROUND_VEL ra_f:0
+wait_until 27
+GET ra_f:0 FACING
+MUL ra_f:0 0.30
+PUT GROUND_VEL ra_f:0
+wait_until 29
+GET ra_f:0 FACING
+MUL ra_f:0 0.30
+PUT GROUND_VEL ra_f:0
+wait_until 31
+GET ra_f:0 FACING
+MUL ra_f:0 0.30
+PUT GROUND_VEL ra_f:0
+wait_until 33
+GET ra_f:0 FACING
+MUL ra_f:0 0.30
+PUT GROUND_VEL ra_f:0
+wait_until 35
+GET ra_f:0 FACING
+MUL ra_f:0 0.30
+PUT GROUND_VEL ra_f:0
 wait_until 36
 iasa

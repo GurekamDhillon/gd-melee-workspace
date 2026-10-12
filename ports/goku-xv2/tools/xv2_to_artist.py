@@ -336,7 +336,7 @@ def sample_track(keys, frames, rotation=False):
 WAIT_CLIP = 0   # GOK_BAS_STAND: XV2's ground idle (remake phase 3, owner 2026-10-11: no hover; the floating idle GOK_BAS_STAND_S is clip 1)
 
 
-ROLL_DISTANCE=22.75   # world units a roll travels: Goku's own earlier roll (owner 2026-10-11: 52, Mewtwo's measured reach, was too long); Mario's is 33  # authored 22.75 = 27.3 / SIZE 1.2: the in-game roll travels 27.3 at the built size (owner 2026-10-11)
+ROLL_DISTANCE=24.82   # world units a roll travels: Goku's own earlier roll (owner 2026-10-11: 52, Mewtwo's measured reach, was too long); Mario's is 33  # authored 24.82 = 27.3 / SIZE 1.1 (was 22.75 at 1.2): the in-game roll travels 27.3 at the built size (owner 2026-10-11)
 REMAKE_REPORT=[]   # filled by row_specs: what remake_apply did to each row
 
 
@@ -444,6 +444,7 @@ def row_specs(source):
             if c.get('root_t'):out[row]['root_motion']=True   # ledge rows: the source's TransN path is the row's root motion (the engine places the fighter at ledge + TransN)
             if c.get('ease_from'):out[row]['blend_from']=dict(clip=ean_(clipof[c['ease_from'][0]]),frame=0,frames=int(c['ease_from'][1]))
             if c.get('ease_to'):out[row].update(blend_to=ean_(clipof[c['ease_to'][0]]),blend_frames=int(c['ease_to'][1]))
+            if c.get('turn'):out[row]['turn_align']=True   # a 180-degree turn: the pelvis is lined up with the row it comes from and ends on that row's pose TURNED 180 (see turn_align below)
     put_cross_ports()
     # Custom move art deliberately has separate charge/release stages. These are
     # local design crops, not claims about source BAC state-machine equivalence.
@@ -878,6 +879,20 @@ def animations(source,mesh,rows,splices=None):
             # authored lean (ledge hang): a constant rotation about X on the translation bone
             rp=Rotation.from_euler('x',np.radians(rs['pitch']))
             rotations['b_C_Base']=(rp*Rotation.from_quat(rotations['b_C_Base'])).as_quat()
+        turn_yaw=None
+        if rs.get('turn_align') and rs.get('blend_to') is not None:
+            # goku-stage 2026-10-11 (owner: the Turn spins past the new facing, then pops back): the retail Turn twists the hips ~180 degrees and the engine ends the row by switching to
+            # Wait/Run at the NEW facing, so the row must END on that pose TURNED 180 about the vertical. Easing the end toward the plain Wait pose (what every other row does) made the
+            # twist a full 360 (past the new facing, back to the old one) and the next row snapped 180. The pelvis is first lined up with the pose the row starts from (a retail stance
+            # differs from Goku's by tens of degrees), so the whole twist is monotonic, then the end eases to that pose turned by the twist's sign * 180.
+            bone_='b_C_Pelvis';ok_=channels(rs['blend_to']).get((bone_,'Rotation'))
+            if ok_ is not None and bone_ in rotations:
+                q_=sample_track(ok_,np.zeros(1),True);wt_=Rotation.from_matrix(BASIS@Rotation.from_quat(q_[0]).as_matrix()@BASIS)
+                D_=wt_*Rotation.from_quat(rotations[bone_][0]).inv()
+                rotations[bone_]=(D_*Rotation.from_quat(rotations[bone_])).as_quat()
+                e_=np.unwrap(Rotation.from_quat(rotations[bone_]).as_euler('YXZ')[:,0])
+                turn_yaw=180. if e_[-1]>e_[0] else -180.
+                rs=dict(rs);rs.pop('blend_from',None)   # lined up already: no ease-in
         if rs.get('blend_from') is not None:
             # Ease the first frames in from another clip's held pose (with its own pitch) so a row starts seamlessly.
             bf=rs['blend_from'];other=channels(bf['clip']);n=min(bf.get('frames',6),count)
@@ -899,6 +914,7 @@ def animations(source,mesh,rows,splices=None):
             for (bone,kind),keys in other.items():
                 if kind=='Rotation' and bone in rotations:
                     q=sample_track(keys,np.zeros(1),True);tgt=Rotation.from_matrix(BASIS@Rotation.from_quat(q[0]).as_matrix()@BASIS)
+                    if turn_yaw is not None and bone=='b_C_Pelvis':tgt=Rotation.from_euler('y',np.radians(turn_yaw))*tgt
                     for k in range(n):
                         i=count-n+k;w=(k+1)/n;w=w*w*(3-2*w)
                         pair=Rotation.from_quat([rotations[bone][i],tgt.as_quat()])

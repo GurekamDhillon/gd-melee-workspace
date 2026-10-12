@@ -14,7 +14,8 @@
    "Wait",
    4
   ],
-  "drop_root_travel": true
+  "drop_root_travel": true,
+  "turn": true
  },
  "TurnRun": {
   "move": null,
@@ -31,7 +32,8 @@
    "Run",
    4
   ],
-  "drop_root_travel": true
+  "drop_root_travel": true,
+  "turn": true
  },
  "RunBrake": {
   "move": null,

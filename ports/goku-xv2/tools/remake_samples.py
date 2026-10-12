@@ -64,7 +64,8 @@ CLIP_LIMB = {'GOK_ATC_002': 'hand', 'GOK_ATC_003': 'hand', 'GOK_ATC_004': 'hand'
 # moves whose limb the reach rule (leading_limb, 2026-10-11) would flip but the owner has not been asked about: they keep the limb they had. dtilt is deliberately NOT here (the fix).
 # Reported flips: dash_attack foot.R -> foot.L, utilt hand.L -> hand.R, RushCombo hand.R -> foot.L, Light5 hand.L -> foot.R. owner 2026-10-11: current limbs confirmed in game.
 # owner 2026-10-11 (goku-stage playtest): utilt's hand.L lock is lifted (the hitboxes were on the wrong hand; the reach rule picks the striking hand, as for dtilt).
-LIMB_LOCK = {'dash_attack': 'foot.R', 'RushCombo': 'hand.R', 'Light5': 'hand.L'}
+# owner 2026-10-11: RushCombo is the left-leg kick (reverses the earlier hand.R lock).
+LIMB_LOCK = {'dash_attack': 'foot.R', 'RushCombo': 'foot.L', 'Light5': 'hand.L'}
 # owner 2026-10-11 playtest: first active frame. utilt starts at 8 (the second punch, hand.R, is out from frame 9); ftilt at 5 (hand.R extension peaks at frame 5, 7.2 vs 6.7 at frame 4).
 # (a, b) in row frames; the XV2-derived window is replaced, the limb and everything else still come from the plan.
 WINDOW_OVERRIDE = {'utilt': (8, 12), 'ftilt': (5, 9)}
@@ -295,7 +296,7 @@ def fmt(v):
     return ('%.4g' % v)
 
 
-IASA_AT = {'Rush': 62}
+IASA_AT = {'Rush': 40}
 
 
 SMASH_CHARGE = {'fsmash', 'usmash', 'dsmash'}   # Melee's smash charge (ftcmd smash_charge: hold A to charge up to 60 frames, damage x1.3671) 2 frames before the first active frame
