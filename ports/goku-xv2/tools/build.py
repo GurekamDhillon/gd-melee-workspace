@@ -349,16 +349,25 @@ def write_presentation(package, fighter):
                       (package/'files'/n).is_file() for n in values):
         return
     art = ROOT/'_build/goku-xv2/presentation'
-    if not all((art/n).exists() for n in ('icon.png', 'portrait.png', 'stock.png')):
-        print('presentation: _build/goku-xv2/presentation/*.png missing (run tools/presentation_art.py in Blender); no own select art')
+    # Per-costume art (tools/presentation_render.py writes presentation/<costume>/*.png); the flat icon/portrait/stock.png still works for one costume.
+    cnames = [c['file'][len('GnGokuXv2_'):-len('.dat')] for c in fighter['fighter']['costumes']]
+    def src(cname, png):
+        for p in (art/cname/png, art/png):
+            if p.exists():
+                return p
+    if not all(src(c, n) for c in cnames[:1] for n in ('icon.png', 'portrait.png', 'stock.png')):
+        print('presentation: _build/goku-xv2/presentation/<costume>/*.png missing (run tools/presentation_render.py); no own select art')
         return
     tool = Path(os.environ.get('GW_MELEE') or ROOT/'melee')/'pc/tools/png2gx.py'
-    names = {}
-    for key, png, fmt in (('icon', 'icon.png', 'rgb5a3'), ('portrait', 'portrait.png', 'rgb5a3'), ('stock', 'stock.png', 'rgba8')):
-        name = f'GnGokuXv2_{key}.gxtex'
-        subprocess.run([sys.executable, str(tool), str(art/png), str(package/'files'/name), '--format', fmt, '--allow-odd-size'], check=True, capture_output=True)
-        names[key] = name
-    fighter['presentation'] = {'icon': names['icon'], 'portrait': [names['portrait']], 'stock': [names['stock']]}
+    def conv(png, name, fmt):
+        subprocess.run([sys.executable, str(tool), str(png), str(package/'files'/name), '--format', fmt, '--allow-odd-size'], check=True, capture_output=True)
+        return name
+    icon = conv(src(cnames[0], 'icon.png'), 'GnGokuXv2_icon.gxtex', 'rgb5a3')   # the select tile is one file (costume zero)
+    portrait, stock = [], []
+    for c in cnames:
+        portrait.append(conv(src(c, 'portrait.png') or src(cnames[0], 'portrait.png'), 'GnGokuXv2_portrait_%s.gxtex' % c, 'rgb5a3'))
+        stock.append(conv(src(c, 'stock.png') or src(cnames[0], 'stock.png'), 'GnGokuXv2_stock_%s.gxtex' % c, 'rgba8'))
+    fighter['presentation'] = {'icon': icon, 'portrait': portrait, 'stock': stock}
 
 
 
@@ -727,6 +736,8 @@ def main(argv=None):
         return 0
     if args.fighter:
         from tools.geno.artist import pipeline
+        import costumes as goku_costumes   # recolour atlases + fighter.json costume list (ports/goku-xv2/costumes.json)
+        goku_costumes.apply(Path(args.fighter).parent)
         generated(args.out)
         result, fighter = pipeline.build(str(args.fighter),str(args.out))
         if result:

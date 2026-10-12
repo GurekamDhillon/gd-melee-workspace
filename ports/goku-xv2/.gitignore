@@ -14,6 +14,7 @@
 !combo/tests/**/missions/combo-specs/*.txt
 !combo/tests/**/mod.json
 !workbench.json
+!costumes.json
 # gameplay.json is the STRIPPED file (tools/strip_gameplay.py); gameplay.full.json stays local (section 3)
 !gameplay.json
 !ground_modes.json
