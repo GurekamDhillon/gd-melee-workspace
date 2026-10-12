@@ -152,6 +152,7 @@ def build_schema():
                                                         "buttons": CONTROL_BUTTONS}, ("name", "buttons")), 16),
                                     "extras": arr(obj({"name": string("Opt-in extra name", maxLength=31),
                                                        "buttons": CONTROL_BUTTONS}, ("name", "buttons")), 8)}),
+                   "scale": num("Built size of the fighter: x34_scale.x, the model, hurt and hitboxes, ECB, ledge snap, camera box and attributes (as gd.set_scale); 1.0 is retail size", 1.0, "7", minimum=0.5, maximum=2.0),
                    "jumps": obj({"max": integer("Total jumps including ground jump", "disc value", "10", minimum=1, maximum=250),
                                  "air_vy": arr(num("Per-air-jump vertical impulse", "disc value", "10"), C["GENO_MAX_JUMP_VY"])}),
                    "toon": {"anyOf": [field("boolean", "Cel shading with default parameters (visual only)", "absent: off", "7"),

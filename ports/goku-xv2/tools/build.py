@@ -168,6 +168,9 @@ def bind(text, plan, scale=1.0):
         lines.append(line)
     return '\n'.join(lines)+'\n'
 
+SIZE = 1.2   # the built size of Goku (define "scale"); change here only
+
+
 def scale_articles(articles, scale):
     result = copy.deepcopy(articles)
     for article in result:
@@ -491,7 +494,12 @@ def apply(package, art_build, ir_path=None):
             if row is None:
                 raise ValueError('State clip row not declared: '+st['name'])
             st['subaction'] = row
-    fighter['articles'] = scale_articles(cfg['articles'],scale)
+    # Built size (owner 2026-10-11: "Goku should be at 1.2 scale for his default size"). The engine's per-fighter scale (define "scale", x34_scale.x, the
+    # mechanism Giant / Tiny Melee use) scales the model, fighter hurt/hitboxes (applied where they are tested), ECB, ledge snap, camera box and the
+    # attributes, exactly as the LAB's gd.set_scale does. Articles (the Kamehameha beam, the ki blast) are authored in world units and are not owned by
+    # that scale, so they get the same factor here: spawn offsets, hit boxes and the ki model.
+    fighter['scale'] = SIZE
+    fighter['articles'] = scale_articles(cfg['articles'],scale*SIZE)
     fighter['attributes'] = attrs
     fighter['subactions'] = [overlays[k] for k in sorted(overlays)]
     fighter['special_attributes'] = []
@@ -503,7 +511,7 @@ def apply(package, art_build, ir_path=None):
     fighter['common_states'] = [{'motion':m,'subaction':motion_rows[m][1]} for spec in cfg['moves'] for m in spec['motions']]
     ki = package/'files/GnGokuKi.dat'
     from ki_model import build as build_ki
-    build_ki(package,art_build,scale)
+    build_ki(package,art_build,scale*SIZE)
     if ki.exists():
         for article in fighter['articles']:
             article['model'] = {'file':ki.name,'symbol':'goku_ki_joint'}
