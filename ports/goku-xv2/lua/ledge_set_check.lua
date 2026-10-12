@@ -105,9 +105,9 @@ gd.run(function()
       local pct = speed == 'Quick' and 0 or 130
       local sfx = speed
       local s
-      s = run_option(speed, pct, 'getup', {y = 127}); chk(has(s, 'CliffClimb' .. sfx), speed .. ' getup did not play CliffClimb' .. sfx)
+      s = run_option(speed, pct, 'getup', {x = -127}); chk(has(s, 'CliffClimb' .. sfx), speed .. ' getup did not play CliffClimb' .. sfx)
       s = run_option(speed, pct, 'attack', {}, 'A');  chk(has(s, 'CliffAttack' .. sfx), speed .. ' attack did not play CliffAttack' .. sfx)
-      s = run_option(speed, pct, 'roll', {x = -127}); chk(has(s, 'CliffEscape' .. sfx), speed .. ' roll did not play CliffEscape' .. sfx)
+      s = run_option(speed, pct, 'roll', {}, 'R'); chk(has(s, 'CliffEscape' .. sfx), speed .. ' roll did not play CliffEscape' .. sfx)
       s = run_option(speed, pct, 'jump', {}, 'X');    chk(has(s, 'CliffJump' .. sfx .. '1') and has(s, 'CliffJump' .. sfx .. '2'), speed .. ' jump did not play CliffJump' .. sfx .. '1/2')
     end
     assert(#bads == 0, table.concat(bads, '; '))
