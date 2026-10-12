@@ -49,7 +49,7 @@ def main():
     ap.add_argument('--mods', default=str(STAGE_WT / '_build/goku-xv2/combo-package/mods'))
     ap.add_argument('--cfg', action='append', default=[])
     ap.add_argument('--visible', action='store_true')
-    ap.add_argument('--pass', dest='kind', choices=['video', 'audio'], default='video', help="video (default): MELEE_TURBO=1, one logic tick per presented frame, every frame shot once, burners slow it so the PNG writer keeps up; audio: realtime 60 Hz, no shots, MELEE_AUDIO_DUMP (same script, same logic frames)")
+    ap.add_argument('--pass', dest='kind', choices=['video', 'audio'], default='video', help="video (default): the logic is paused and stepped one frame per few presented frames while recording (lua/cap.lua), every frame shot exactly once; audio: realtime 60 Hz, no shots, MELEE_AUDIO_DUMP, input timing replayed from the video pass")
     ap.add_argument('--hitboxes', action='store_true', help='keep the LAB hitbox/hurtbox overlay (default: the CLEAN display)')
     a = ap.parse_args()
     sync_exe(a.exe)
@@ -66,8 +66,12 @@ def main():
     kv = dict(c.split('=', 1) for c in a.cfg)
     if a.kind == 'audio':
         kv['noshot'] = '1'; kv.pop('burn', None)
-    elif 'burn' not in kv:
-        kv['burn'] = '8'
+        vm = OUT / a.name / 'marks.txt'      # replay the video pass's input timing: the audio pass must not decide anything by itself
+        if vm.exists():
+            wt = re.findall(r'WT (\d+) (-?\d+)', vm.read_text(encoding='utf-8'))
+            kv['when'] = ','.join('%s:%s' % w for w in wt)
+    else:
+        kv.setdefault('step', '1')
     w, h = a.res.split('x')
     gen = HERE / 'lua' / ('_gen_' + a.name + '.lua')
     src = Path(a.script) if Path(a.script).is_absolute() else HERE / a.script
@@ -83,12 +87,12 @@ def main():
     env.update({'GW_ROOT': str(MAIN), 'GW_MELEE': GAME, 'GW_BUILD_ROOT': str(BROOT), 'MELEE_MODS_DIR': a.mods,
                 'MELEE_SCENE': f'mode=lab;p1={a.p1};p2={p2};stage={a.stage};items=off;time=0',
                 'MELEE_PAD_SCRIPT': gen.as_posix(), 'MELEE_UNATTENDED': '1', 'MELEE_MAX_SECONDS': a.max_seconds,
-                'MELEE_LAB_UI': '0', 'MELEE_TURBO': '1' if a.kind == 'video' else '0', 'MELEE_WINDOW_X': off, 'MELEE_WINDOW_Y': off,
+                'MELEE_LAB_UI': '0', 'MELEE_TURBO': '0', 'MELEE_WINDOW_X': off, 'MELEE_WINDOW_Y': off,
                 'MELEE_WINDOW_W': w, 'MELEE_WINDOW_H': h, 'MELEE_BIND_DUMMY': '1', 'MELEE_VOLUME': '0',
                 'MELEE_RUN_LABEL': 'Goku media ' + a.name, 'MELEE_RUNS_KEEP': '1000'})   # parallel captures must not prune each other's sandboxes
     runname = 'm-' + a.name + '-' + time.strftime('%H%M%S')
     run = BROOT / 'runs' / runname
-    if a.kind == 'audio':
+    if True:   # turbo video passes dump too: the virtual clock mixes audio per frame, so it stays frame-locked to the shots
         env['MELEE_AUDIO_DUMP'] = (run / 'audio.wav').as_posix()
     with open(dest / 'run.txt', 'w', encoding='utf-8') as fh:
         r = subprocess.run([GIT_BASH, (MAIN / 'tools/port/run.sh').as_posix(), '--max-seconds', a.max_seconds, runname, '--iso', iso()],

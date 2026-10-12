@@ -46,7 +46,8 @@ def capture(only, extra):
         def staggered(i_n):
             time.sleep(6 * i_n[0])      # run.sh prunes and stamps sandboxes at start; stagger the launches
             return go(i_n[1], kind)
-        with ThreadPoolExecutor(max_workers=4) as ex:
+        # video passes shoot every frame through a PNG writer thread that overflows (crash / hang) when too many games share the CPU
+        with ThreadPoolExecutor(max_workers=3 if kind == 'video' else 4) as ex:
             list(ex.map(staggered, list(enumerate(names))))
 
 
@@ -133,9 +134,16 @@ def clips(only):
         lt_in, lt_out = s.get('lt', [0.3, dur - 0.4])
         inputs = ['-framerate', '60', '-start_number', str(f0), '-i', str(c['dir'] / ('c%02d_f%%05d.png' % c['n'])),
                   '-loop', '1', '-i', str(ov / 'corner.png'), '-loop', '1', '-i', str(ltf)]
-        fc = ('[0:v]trim=end_frame=%d,scale=1920:1080:flags=lanczos,setsar=1,fade=t=in:st=0:d=0.15,fade=t=out:st=%.3f:d=0.25[b];'
+        fw, fh = [int(x) for x in run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0',
+                                       str(c['dir'] / ('c%02d_f%05d.png' % (c['n'], f0)))]).stdout.strip().split(',')]
+        if fw / fh > 1.7:        # 16:9 capture
+            base = '[0:v]trim=end_frame=%d,scale=1920:1080:flags=lanczos,setsar=1[b0];' % n
+        else:                    # 4:3 capture: centred 1440x1080 over a darkened, blurred copy of itself
+            base = ('[0:v]trim=end_frame=%d,setsar=1,split[s1][s2];[s1]scale=1920:-2,crop=1920:1080,boxblur=28:4,eq=brightness=-0.32:saturation=0.8[bg];'
+                    '[s2]scale=1440:1080:flags=lanczos[fg];[bg][fg]overlay=240:0[b0];') % n
+        fc = (base + '[b0]fade=t=in:st=0:d=0.15,fade=t=out:st=%.3f:d=0.25[b];'
               '[1:v]format=rgba[c];[2:v]format=rgba,fade=t=in:st=%.2f:d=%.2f:alpha=1,fade=t=out:st=%.2f:d=%.2f:alpha=1[l];'
-              '[b][c]overlay=0:0:shortest=1[x];[x][l]overlay=0:0:shortest=1,format=yuv420p[v]') % (n, dur - 0.25, lt_in, fi, lt_out, fi)
+              '[b][c]overlay=0:0:shortest=1[x];[x][l]overlay=0:0:shortest=1,format=yuv420p[v]') % (dur - 0.25, lt_in, fi, lt_out, fi)
         amap = []
         if 'wav' in c:
             t0 = (c['ms0'] - AUDIO_START_MS) / 1000 + (f0 - 1) / 60

@@ -6,7 +6,24 @@ function CAP.clip(label)            -- start a new clip; frame numbers restart
   CAP.nclip = CAP.nclip + 1; CAP.n = 0; CAP.clip_label = label
   CAP.log(string.format('CLIP %02d %s match_frame=%d', CAP.nclip, label, gd.match().frame))
 end
-function CAP.rec(on) CAP.on = on end
+-- Video pass: the logic is paused while recording and on_tick (which keeps running while paused) steps ONE logic frame per
+-- CFG.pace presented frames. Each CAP.wait then resumes after exactly one step and shoots it, so no frame is skipped or doubled
+-- whatever the machine load (realtime catch-up ticks and turbo both lose or corrupt frames), and the PNG writer gets time.
+CAP.stepmode = CFG and CFG.step == '1'
+CAP.pace = tonumber(CFG and CFG.pace) or 3
+local tickn = 0
+function on_tick()
+  if CAP.stepping then
+    tickn = tickn + 1
+    if tickn % CAP.pace == 0 then gd.step(1) end
+  end
+end
+function CAP.rec(on)
+  CAP.on = on
+  if CAP.stepmode then
+    if on then gd.pause(); CAP.stepping = true else CAP.stepping = false; gd.resume() end
+  end
+end
 CAP.noshot = CFG and CFG.noshot == '1'      -- audio pass: same script, no screenshots, realtime
 local lastmot = {}
 local function trace()
@@ -83,13 +100,25 @@ local function in_list(m, list) for _, v in ipairs(list) do if m == v then retur
 -- wait (recording) until P1 is in one of `states` at action frame >= af, then tap `spec` for n frames. Returns false on timeout.
 function CAP.when(states, af, spec, n, timeout)
   if type(states) == 'string' then states = {states} end
+  CAP.wseq = (CAP.wseq or 0) + 1
+  local seq = CAP.wseq
+  if CAP.sched == nil then               -- audio pass: the tap frames come from the video pass (CFG.when = "seq:match_frame,...")
+    CAP.sched = {}
+    for q, f in tostring(CFG and CFG.when or ''):gmatch('(%d+):(-?%d+)') do CAP.sched[tonumber(q)] = tonumber(f) end
+  end
+  local replay = CFG and CFG.when ~= nil
   for _ = 1, timeout or 90 do
     local p = gd.player(1)
-    if in_list(tostring(p.motion_name), states) and (p.action_frame or 0) >= af then
+    local hit
+    if replay then hit = CAP.sched[seq] and CAP.sched[seq] >= 0 and gd.match().frame >= CAP.sched[seq]
+    else hit = in_list(tostring(p.motion_name), states) and (p.action_frame or 0) >= af end
+    if hit then
+      CAP.log(string.format('WT %d %d', seq, gd.match().frame))
       gd.input(1, spec, n or 2); return true
     end
     CAP.wait(1)
   end
+  CAP.log(string.format('WT %d -1', seq))
   CAP.log('WHEN timeout ' .. table.concat(states, ','))
   return false
 end
