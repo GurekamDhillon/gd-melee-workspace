@@ -1377,6 +1377,15 @@
             },
             "additionalProperties": false
           },
+          "scale": {
+            "type": "number",
+            "description": "Built size of the fighter: x34_scale.x, the model, hurt and hitboxes, ECB, ledge snap, camera box and attributes (as gd.set_scale); 1.0 is retail size",
+            "x-engine-default": 1.0,
+            "x-reference": "geno.md §7",
+            "x-source": "melee/pc/platform/geno_registry.c",
+            "minimum": 0.5,
+            "maximum": 2.0
+          },
           "jumps": {
             "type": "object",
             "properties": {
@@ -6343,15 +6352,15 @@
     },
     "JDOC_NODES": {
       "value": 32768,
-      "source": "melee/pc/platform/geno_registry.c:75"
+      "source": "melee/pc/platform/geno_registry.c:76"
     },
     "JDOC_ARENA": {
       "value": 524288,
-      "source": "melee/pc/platform/geno_registry.c:76"
+      "source": "melee/pc/platform/geno_registry.c:77"
     },
     "GN_MAX_VOICE": {
       "value": 32,
-      "source": "melee/pc/platform/geno_registry.c:407"
+      "source": "melee/pc/platform/geno_registry.c:408"
     },
     "JSON_DEPTH": {
       "value": 32,
@@ -6363,12 +6372,12 @@
     }
   },
   "x-source-contract": {
-    "pc/platform/geno_registry.c": "cc6e58fe97b615748075eb49e2f63a4cee191704b330f38c1d096add58f518e8",
+    "pc/platform/geno_registry.c": "f0c51cf5ef9ded106d52bb9c7c3e323efd9fb9f142a35324f1723d2c3d45f41d",
     "pc/platform/geno_define_registry.inc": "1d356826e99a44f865c7602021791f487f91cc86f685b31c3596508ef9e51be5",
     "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
     "pc/platform/geno_combo_registry.inc": "1a0ba9207037ada301abaef37643c092f19736e174cc78364b2ac94962e04a04",
     "pc/geno/geno.h": "75546c5eb990ad0602b39c5486ec86a17087af615ade0979b0f4d71bb4996868",
-    "pc/geno/geno_game.c": "8a7e0fa956afe6eef66f1c3002da5a9599439df647a61892805032f7efb736ed",
+    "pc/geno/geno_game.c": "a67a215713cd7e32183ce5c0cf204dee304f5b5953fe6de7a1ac8c74406380d2",
     "pc/geno/geno_game_v2.inc": "9c572553dcd7b6a70e9d5a3fa3efcbc618b8de567c287e75e1f1577e572f5fb0",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",
     "pc/geno/geno_profile_storage.h": "a40aec8aafa890622f0ba6cb9f5602176c738f960346b18daf87c8dc8498d04d",
