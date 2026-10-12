@@ -58,7 +58,7 @@ TEXT_2 = """**Controls** (cards attached: controls, then the four combo cards)
 **Report bugs** in <#{BUGS}>: say what you pressed, the stage and what you expected. Screenshots and clips help."""
 
 TEXT_3 = "**Screenshots**: the character select with Goku (five costumes) and in-game moments."
-TEXT_4 = "**Move previews**: Kamehameha, the light string, Dragon Rush, the ki blast barrage and a reverse ledge grab from flight."
+TEXT_4 = "**Move previews**: Kamehameha, the light string, Dragon Rush and the ki blast barrage."
 
 INSTALL_ZIP = ("1. Download the Goku alpha zip: {LINK}\n"
                "2. Unzip it over your GD's Melee 0.3.0-rc5 folder (say yes to replace melee-pc.exe) or into a fresh folder\n"
@@ -69,7 +69,7 @@ def plan_files():
     reel = MEDIA / "reel/goku_alpha_reel_720p30.mp4"
     cards = [MEDIA / "overlays/card_controls.png"] + sorted((MEDIA / "cards").glob("card_[1-4]_*.png")) + [MEDIA / "overlays/card_costumes.png"]
     stills = sorted((MEDIA / "stills").glob("*.png"))
-    gifs = [MEDIA / "gifs" / (n + ".gif") for n in ("kame_charged", "light_heavy", "rush", "ki_blast", "flight_ledge")]
+    gifs = [MEDIA / "gifs" / (n + ".gif") for n in ("kame_charged", "light_heavy", "rush", "ki_blast")]
     return [("reel", [reel], TEXT_1), ("cards", cards, TEXT_2), ("stills", stills, TEXT_3), ("gifs", gifs, TEXT_4)]
 
 

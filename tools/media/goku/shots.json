@@ -441,11 +441,6 @@
       "at": 0.62
     },
     {
-      "name": "still_fsmash",
-      "clip": "fsmash",
-      "at": 0.4
-    },
-    {
       "name": "still_flight",
       "clip": "flight_power",
       "at": 0.5
