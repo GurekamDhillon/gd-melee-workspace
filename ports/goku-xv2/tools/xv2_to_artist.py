@@ -24,6 +24,11 @@ from scipy.spatial.transform import Rotation, Slerp
 
 ROOT = Path(__file__).resolve().parents[3]
 PORT = ROOT / 'ports/goku-xv2'
+def cross_registry():
+    """tools/cross-port.json (+ the locomotion overlay GOKU_LOCO_SET=falcon|marth|fox: tools/cross-port-loco-<set>.json; unset = Goku's own Turn/TurnRun/RunBrake)."""
+    sys.path.insert(0,str(Path(__file__).resolve().parent))
+    import cross_port
+    return cross_port.registry()
 HAND_FILE = Path(os.environ.get('GOKU_HAND', PORT / 'anim/hand.json'))   # hand-authored deltas; NEVER written by this converter
 AUTHOR = ROOT / '_build/goku-xv2' / os.environ.get('GOKU_AUTHOR', 'author-source')   # GOKU_AUTHOR=splice-preview: a reduced build that leaves the shipped package alone
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -417,13 +422,21 @@ def row_specs(source):
                   'status':'move review re-crop: '+c['note'],'move':c['move']}
     # Cross-port rows (tools/cross-port.json, tools/cross_port.py): a retail Melee action retargeted onto this rig; the clip is the solved
     # npz, the XV2 clip below is only a placeholder for the lookups (its channels are replaced in animations()).
+    ean_=lambda n:'clip:'+EAN+'/'+str(n)
     def put_cross_ports():
         # applied here and again after the remake / rowmap passes below: those rewrite rows by name (the grab and throw slots), a cross-port row must be the last word
-        for row,c in json.loads((PORT/'tools/cross-port.json').read_text()).items():
+        for row,c in cross_registry().items():
             npz=ROOT/'_build/goku-xv2/cross-port'/row/'clip.npz'
             if not npz.exists():raise SystemExit('cross-port clip missing: run python ports/goku-xv2/tools/cross_port.py (needs GW_ISO_VANILLA)')
-            out[row]={'clip':'clip:'+EAN+'/0','loop':bool(c.get('loop')),'frames':int(np.load(npz)['frames']),'start':0,'move':c['move'],
+            nat=int(np.load(npz)['frames'])
+            fit=c.get('fit_frames') if os.environ.get('GOKU_LOCO_LEN','row')!='retail' else None   # locomotion sets: the row keeps Goku's current length unless GOKU_LOCO_LEN=retail
+            out[row]={'clip':'clip:'+EAN+'/0','loop':bool(c.get('loop')),'frames':int(fit or nat),'start':0,'move':c['move'],
                       'status':'CROSS-PORT: Melee %s %s (%s)'%(c['fighter'].capitalize(),c['action'],c['reason']),'cross_port':dict(c,npz=str(npz))}
+            # locomotion sets (cross-port-loco-<set>.json): a retail Turn / RunBrake starts and ends in that fighter's own stance, not Goku's, so the row
+            # eases from the row he comes from and into the row he returns to (the shipped rows do the same: Landing, GuardOff, SquatRv ...)
+            clipof={'Wait':WAIT_CLIP,'Run':3}
+            if c.get('ease_from'):out[row]['blend_from']=dict(clip=ean_(clipof[c['ease_from'][0]]),frame=0,frames=int(c['ease_from'][1]))
+            if c.get('ease_to'):out[row].update(blend_to=ean_(clipof[c['ease_to'][0]]),blend_frames=int(c['ease_to'][1]))
     put_cross_ports()
     # Custom move art deliberately has separate charge/release stages. These are
     # local design crops, not claims about source BAC state-machine equivalence.
@@ -473,7 +486,7 @@ def row_specs(source):
                           'status':'PICK provisional (BAC 427 clip GOK_ATC_023, hit f10): Dragon Rush follow-up flurry'}
     direct('Riposte',58,False,46,1,'PICK provisional (BAC 475 clip GOK_ATC_008, from f1, 46 frames so the air counter is not shorter than 0.55x Melee): Z-vanish reappear kick')
     out['ThrowF'].update(frames=32,time_factor=5.,events=[],status='authored 5x primary-clip crop: source release 90 -> target18; victim choreography omitted')
-    CROSS=set(json.loads((PORT/'tools/cross-port.json').read_text()))   # rows whose clip is a cross-port (a retail Melee action retargeted): no placeholder or alias over them
+    CROSS=set(cross_registry())   # rows whose clip is a cross-port (a retail Melee action retargeted): no placeholder or alias over them
     for row in ['ThrowB','ThrowHi','ThrowLw','CatchAttack']:
         if row in CROSS:continue
         direct(row,81,False,32,24,'authored-needed placeholder: held catch pose');out[row]['hold_source']=24
@@ -608,7 +621,7 @@ def cross_npz(ref):
     (cross_port.tool(), needs the vanilla disc) and cached under _build/goku-xv2/splice-cross."""
     fighter,_,action=ref[len('melee:'):].partition('/')
     if not (fighter and action):raise SP.SpliceError('cross-port ref must be melee:<fighter>/<action>: '+ref)
-    for row,c in json.loads((PORT/'tools/cross-port.json').read_text()).items():
+    for row,c in cross_registry().items():
         npz=ROOT/'_build/goku-xv2/cross-port'/row/'clip.npz'
         if c['fighter']==fighter and c['action']==action and npz.exists():return npz
     out=ROOT/'_build/goku-xv2/splice-cross'/(fighter+'_'+action)
@@ -813,6 +826,14 @@ def animations(source,mesh,rows,splices=None):
         if cp:
             z=np.load(cp['npz']);have=int(z['frames']);zn=list(z['names'])
             pick=lambda a:np.concatenate([a,np.repeat(a[-1:],count-have,axis=0)]) if count>have else a[:count]
+            if cp.get('fit_frames') and count!=have:   # a locomotion set retimed to the row's length: sample the solved clip at count points over its span (slerp for rotations, lerp otherwise)
+                def pick(a,_n=count,_h=have):
+                    x=np.linspace(0.,_h-1.,_n);i0=np.minimum(x.astype(int),_h-2);w=(x-i0).reshape((-1,)+(1,)*(a.ndim-1))
+                    if a.ndim==2 and a.shape[1]==4:
+                        out_=np.empty((_n,4))
+                        for k in range(_n):out_[k]=Slerp([0,1],Rotation.from_quat([a[i0[k]],a[i0[k]+1]]))(float(w[k,0])).as_quat()
+                        return out_
+                    return a[i0]*(1-w)+a[i0+1]*w
             for n in names:
                 if n in zn:rotations[n]=pick(z['q'][:,zn.index(n)])
             hip=pick(z['hips_t']).copy();root=np.zeros((count,3));lostscale=set()

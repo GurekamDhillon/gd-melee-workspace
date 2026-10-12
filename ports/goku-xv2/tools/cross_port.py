@@ -30,8 +30,17 @@ FIGHTER_JSON = ROOT / '_build/goku-xv2/author-source/fighter.json'
 ART_REPORT = ROOT / '_build/goku-xv2/author-source/art-report.json'
 
 
-def registry():
-    return json.loads(REGISTRY.read_text(encoding='utf-8'))
+def registry(loco=None):
+    """tools/cross-port.json plus, when a locomotion set is selected, tools/cross-port-loco-<set>.json (Turn, TurnRun, RunBrake from another fighter).
+    The set is GOKU_LOCO_SET (falcon | marth | fox ...); unset is the default build: Goku's own locomotion rows, no overlay."""
+    reg = json.loads(REGISTRY.read_text(encoding='utf-8'))
+    loco = os.environ.get('GOKU_LOCO_SET', '') if loco is None else loco
+    if loco:
+        f = REGISTRY.with_name('cross-port-loco-%s.json' % loco)
+        if not f.exists():
+            raise SystemExit('GOKU_LOCO_SET=%s: %s does not exist' % (loco, f.name))
+        reg.update(json.loads(f.read_text(encoding='utf-8')))
+    return reg
 
 
 def clip_path(row):
@@ -81,15 +90,17 @@ def scale_tracks(T, got, res, gain=1.0):
     return out, notes
 
 
-def generate(row, entry):
+def generate(row, entry, out=None):
+    """`out` (default _build/goku-xv2/cross-port) is the folder that gets <row>/clip.npz; the previews solve several sets side by side."""
+    OUT_ = Path(out) if out else OUT
     T = tool()
     height = json.loads(ART_REPORT.read_text(encoding='utf-8'))['geometry']['height']
     cfg = SG.load()
     build_scale = height / cfg['geometry_reference_height']
-    res, report, events, got = T.run(entry['fighter'], entry['action'], str(FIGHTER_JSON), str(OUT / row))
+    res, report, events, got = T.run(entry['fighter'], entry['action'], str(FIGHTER_JSON), str(OUT_ / row))
     src, dst, ratio = got['rig'], res.dst, report['ratio']
     scales, scale_notes = scale_tracks(T, got, res, entry.get('scale_gain', 1.0))
-    (OUT / row / 'scale.json').write_text(json.dumps({'bones': scales, 'notes': scale_notes}, indent=1) + chr(10), encoding='utf-8')
+    (OUT_ / row / 'scale.json').write_text(json.dumps({'bones': scales, 'notes': scale_notes}, indent=1) + chr(10), encoding='utf-8')
     if entry.get('anim_only'):
         # the animation (and the grab anchor's choreography) only: the move's own script stays (ThrowF keeps its ki-blast spawns and damage). 'spawn_from' records where
         # a role sits in the solved pose on the given script frames, for placing an article there (remake_patch.py reads spawn.json).
@@ -100,7 +111,7 @@ def generate(row, entry):
             wd = T.solved_world(res)
             jd = dst.roles[sp['role']]
             pts = np.array([wd[min(int(f), wd.shape[0] - 1), jd, :3, 3] for f in sp['frames']])
-            (OUT / row / 'spawn.json').write_text(json.dumps({'role': sp['role'], 'frames': sp['frames'], 'art_units': pts.tolist(), 'build_scale': build_scale,
+            (OUT_ / row / 'spawn.json').write_text(json.dumps({'role': sp['role'], 'frames': sp['frames'], 'art_units': pts.tolist(), 'build_scale': build_scale,
                                                               'mean_forward_up_script_units': [float(pts[:, 2].mean() / build_scale), float(pts[:, 1].mean() / build_scale)]}, indent=1) + chr(10), encoding='utf-8')
         samples = len(range(int(round(report['source']['frames'])) + 1))
         if entry.get('move'):
@@ -108,9 +119,9 @@ def generate(row, entry):
             m = next(x for x in gp['moves'] if x['name'] == entry['move'])
             m['minimum_clip_frames'] = samples
             SG.save(gp)
-        summary = {'row': row, 'clip': str(clip_path(row)), 'move_script': None, 'ratio': ratio, 'build_scale': build_scale, 'windows': [], 'iasa': samples, 'samples': samples,
+        summary = {'row': row, 'clip': str(OUT_ / row / 'clip.npz'), 'move_script': None, 'ratio': ratio, 'build_scale': build_scale, 'windows': [], 'iasa': samples, 'samples': samples,
                    'hitboxes': [], 'worst_end_effector_error': max(v['max'] for v in report['end_effector_error'].values())}
-        (OUT / row / 'cross-port.json').write_text(json.dumps(summary, indent=1) + chr(10), encoding='utf-8')
+        (OUT_ / row / 'cross-port.json').write_text(json.dumps(summary, indent=1) + chr(10), encoding='utf-8')
         return summary
     mk = markers()
     lines, moved = T.script_text(got['words'], src, dst, ratio, scale=1.0 / build_scale,
@@ -167,17 +178,33 @@ def generate(row, entry):
         m['pose_review'] = ("Cross-port clip: %s's %s retargeted by bone role (a bone-scale track is carried when the source has one: clips.scale_bones). "
                             "Pose review in the LAB owed." % (who, entry['action']))
         SG.save(gp)  # full file + regenerated stripped gameplay.json
-    summary = {'row': row, 'clip': str(clip_path(row)), 'move_script': str(move), 'ratio': ratio, 'build_scale': build_scale,
+    summary = {'row': row, 'clip': str(OUT_ / row / 'clip.npz'), 'move_script': str(move), 'ratio': ratio, 'build_scale': build_scale,
                'windows': windows, 'iasa': iasa, 'release': release, 'samples': samples, 'hitboxes': moved,
                'worst_end_effector_error': max(v['max'] for v in report['end_effector_error'].values())}
-    (OUT / row / 'cross-port.json').write_text(json.dumps(summary, indent=1) + '\n', encoding='utf-8')
+    (OUT_ / row / 'cross-port.json').write_text(json.dumps(summary, indent=1) + '\n', encoding='utf-8')
     return summary
 
 
 def main(argv):
-    reg = registry()
+    """cross_port.py [--set falcon] [--out DIR] [--rows A,B] [ROW ...]: --set selects the locomotion overlay (default: GOKU_LOCO_SET), --out solves into DIR
+    instead of _build/goku-xv2/cross-port, and with --rows only those rows (an overlay set's rows, when --set is given and no ROW is named)."""
+    out = None
+    loco = None
+    argv = list(argv)
+    for flag in ('--set', '--out'):
+        if flag in argv:
+            i = argv.index(flag)
+            val = argv[i + 1]
+            del argv[i:i + 2]
+            if flag == '--set':
+                loco = val
+            else:
+                out = val
+    reg = registry(loco)
+    if loco and not argv:
+        argv = [r for r in json.loads(REGISTRY.with_name('cross-port-loco-%s.json' % loco).read_text(encoding='utf-8'))]
     for row in (argv or reg):
-        s = generate(row, reg[row])
+        s = generate(row, reg[row], out)
         print('%s: %d frames, windows %s, IASA %d, ratio %.3f, worst end-effector error %.2f; script %s'
               % (row, s['samples'], s['windows'], s['iasa'], s['ratio'], s['worst_end_effector_error'], s['move_script']))
 

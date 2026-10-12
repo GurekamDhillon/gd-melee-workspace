@@ -8,7 +8,8 @@ import bpy
 from mathutils import Vector
 
 out=Path(sys.argv[sys.argv.index('--')+1]).resolve()
-if not out.as_posix().lower().endswith('/_build/goku-xv2/author-source'):
+_o=out.as_posix().lower()
+if not (_o.endswith('/_build/goku-xv2/author-source') or '/_build/goku-xv2/turn-preview/' in _o):   # turn-preview: the locomotion-set previews (GOKU_AUTHOR=turn-preview/<set>)
     raise ValueError('Expected dedicated generated art directory')
 for old in list(bpy.data.objects):
     bpy.data.objects.remove(old,do_unlink=True)  # includes hidden startup objects

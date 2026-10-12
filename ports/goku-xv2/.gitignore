@@ -20,6 +20,8 @@
 !remake-candidates.json
 !remake-unclear.json
 !tools/cross-port.json
+!tools/cross-port-loco-*.json
+!tools/turn_preview.sh
 !splices.json
 # hand-animation deltas (tools/geno/artist/blender/hand_layer.py): the artist's own keyframes only, never a copied source clip
 !anim/hand.json
