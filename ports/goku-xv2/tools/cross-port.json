@@ -83,19 +83,12 @@
  },
  "ThrowF": {
   "move": "fthrow",
-  "fighter": "mewtwo",
+  "fighter": "captain",
   "action": "ThrowF",
-  "anim_only": true,
-  "reason": "owner 2026-10-11: Mewtwo's forward throw animation on Goku's bones (the script, damage and ki blasts stay Goku's own)",
-  "spawn_from": {
-   "role": "shoulder.R",
-   "frames": [
-    33,
-    40,
-    47,
-    54,
-    61
-   ]
-  }
+  "reason": "owner 2026-10-11: the grab family is Captain Falcon's (his animation, grab boxes and throw data on Goku's bones); the retarget was approved by eye in Blender (lane ws/goku-falcon-grabs)",
+  "drop": [
+   "gfx",
+   "sfx"
+  ]
  }
 }

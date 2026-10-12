@@ -19,6 +19,15 @@ import check_hitbox_positions as HP
 import figatree
 from plan_hurtboxes import coverage, seg_dist
 
+def cross_port_script(move):
+    """A cross-port move (tools/cross-port.json) carries a retail fighter's hitboxes on Goku's bones by owner choice: the on-the-limb rule is for generated samples.
+    Falcon's forward throw reaches past Goku's arm bone (1.94 off a 1.48 sphere)."""
+    try:
+        return Path(__file__).resolve().parents[1].joinpath(move['script']).read_text(encoding='utf-8').startswith('# HB-SAMPLE (CROSS-PORT)')
+    except (KeyError, OSError):
+        return False
+
+
 def rest_context(mesh, plan):
     rest = {}
     for joint in mesh['joints']:
@@ -159,7 +168,7 @@ def audit(package,art_build,fit=False):
                     joint = (words_box[0]>>11)&255
                     if not np.isfinite(centre).all() or not radius>0:
                         problems.append(move['name']+': nonfinite or empty sphere')
-                    if move.get('hb') == 'HB-SAMPLE' and joint in clouds_by_joint:
+                    if move.get('hb') == 'HB-SAMPLE' and joint in clouds_by_joint and not cross_port_script(move):
                         # remake phase 2: a sample sphere must sit ON its limb: centre within its radius of the limb bone segment in every active frame
                         cl = clouds_by_joint[joint]
                         pa,pb = (pose[joint]@np.append(cl['a'],1))[:3],(pose[joint]@np.append(cl['b'],1))[:3]

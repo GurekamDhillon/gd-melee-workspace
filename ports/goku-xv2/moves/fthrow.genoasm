@@ -1,25 +1,13 @@
-# HB-SAMPLE (CROSS-PORT, owner 2026-10-11): Goku's forward throw is Mewtwo's ThrowF, numbers read from retail Mewtwo in this engine (tools/lua throw_probe.lua).
-# Mewtwo holds the victim in front, releases a 5% hit at script frame 19, then fires five small shadow balls (script frames 33 40 47 54 61, 7 apart, speed 6.0, 45 frames
-# alive, about 0.9% each); his throw ends at frame 75. Here the balls are Goku's ki blasts (article KiThrow, index 5; homing instead of Mewtwo's arm-pose aim).
-# Throw slot 0 = Mewtwo's angle 78, KBG 100, fixed knockback 38, base 0, but DAMAGE 1 (his is 5): a Geno article hit adds 1 to its damage (a ki blast of damage 1 lands 1.8% where
-# his shadow ball lands 0.9%), so the release is lowered to keep the throw at his 9.5% in total (1.2 + five x 1.8). Slot 1 = his second slot: damage 3, angle 361, KBG 100, base 40.
-# Not XV2 data: the clip is the ki blast pose ATC_SHOT_F retimed to Mewtwo's 75 frames. Ledger: HB-SAMPLE, a starting point the owner edits in the Workbench.
+# HB-SAMPLE (CROSS-PORT): Melee Captain ThrowF (retail data from the vanilla disc), retargeted by bone role; owner choice: owner 2026-10-11: the grab family is Captain Falcon's (his animation, grab boxes and throw data on Goku's bones); the retarget was approved by eye in Blender (lane ws/goku-falcon-grabs).
+# Hitbox joint, size and offsets are Captain's moved to Goku's bone of the same role (a sphere on the root joint is scaled about it) and scaled by the size ratio 0.7570 (script units: build.py multiplies by 1.4286; the engine then applies Goku's built size 1.2 to the fighter, model and hitboxes alike). Damage, angle, KBG/BKB, timing, auto-cancel and IASA are unchanged; left behind: gfx, sfx.
 PUT ANIM_RATE 1.0
-wait 1
-throw idx=0 damage=1 unk0=78 hit_x24=100 hit_x28=38 hit_x2C=0
-throw idx=1 damage=3 unk0=361 hit_x24=100 hit_x28=0 hit_x2C=40
-wait_until 19
-throw_flag hit_idx=0
-clear_hitboxes
-wait_until 33
-CALL geno.article.spawn 5
-wait_until 40
-CALL geno.article.spawn 5
-wait_until 47
-CALL geno.article.spawn 5
-wait_until 54
-CALL geno.article.spawn 5
-wait_until 61
-CALL geno.article.spawn 5
-wait_until 74
-iasa
+smash_sfx
+throw slot=0 damage=4 angle=45 kbg=105 fkb=0 bkb=45 element=0 sfx_severity=2 sfx_kind=2
+throw slot=1 damage=3 angle=361 kbg=100 fkb=0 bkb=60 element=0 sfx_severity=0 sfx_kind=2
+wait_until 11
+hitbox raw=@HITW0:ARM_L:0x2C000005@,0x02120271,0xFFFE0009,0x28190011,0x23000107
+hitbox raw=@HITW0:UPARM_L:0x2C800005@,0x01090107,0x00000000,0x28190011,0x23000107
+hitbox raw=@HITW0:UPARM_L:0x2D000005@,0x0109FF97,0x00000000,0x28190011,0x23000107
+wait_until 18
+throw_release
+hitboxes_clear

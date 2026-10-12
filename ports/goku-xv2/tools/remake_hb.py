@@ -150,7 +150,7 @@ def strike_frames(rowinfo, bac_hint, moves):
 
 STRIKE_OVERRIDE = {   # rows that chain several clips (events): the BAC's own hit frames, which are the row's frames 1:1
     'Homing': ([[33, 39]], 'XV2 homing-strike hit f33-38'),
-    'Rush': ([[40, 44]], 'XV2 knockback-attack hit f40-43; NOTE the row is cropped to 40 frames, so the strike is past its end (row to be lengthened when the hitbox is authored)'),
+    'Rush': ([[11, 15]], 'owner 2026-10-11: active f11-14 on the right leg (Workbench)'),
 }
 
 

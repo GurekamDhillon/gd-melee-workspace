@@ -1117,16 +1117,41 @@
       ],
       "tag": "throw",
       "script": "moves/fthrow.genoasm",
-      "release": 19,
-      "iasa": 74,
+      "release": 18,
+      "iasa": 41,
       "design": {
-        "damage": 1,
-        "angle": 78,
+        "damage": 5,
+        "angle": 80,
         "kbg": 100,
-        "bkb": 0
+        "bkb": 70,
+        "radius": 2.9568,
+        "role": "ARM_L",
+        "window_roles": [
+          "ARM_L",
+          "UPARM_L",
+          "UPARM_L"
+        ],
+        "offset": [
+          0,
+          0,
+          0
+        ]
       },
       "hb": "HB-SAMPLE",
-      "windows": [],
+      "windows": [
+        [
+          11,
+          7
+        ],
+        [
+          11,
+          7
+        ],
+        [
+          11,
+          7
+        ]
+      ],
       "strike": [
         [
           19,
@@ -2630,50 +2655,6 @@
         }
       ],
       "scale": 1.9
-    },
-    {
-      "name": "KiThrow",
-      "lifetime": 45,
-      "velocity": [
-        6.0,
-        0
-      ],
-      "spawn": [
-        2.79,
-        7.33
-      ],
-      "max_live": 5,
-      "homing": {
-        "turn": 35,
-        "range": 0,
-        "delay": 0
-      },
-      "despawn": {
-        "hit": true,
-        "shield": true,
-        "stage": true,
-        "clank": true
-      },
-      "hitboxes": [
-        {
-          "slot": 0,
-          "damage": 1,
-          "size": 2.2,
-          "offset": [
-            0,
-            0,
-            0
-          ],
-          "angle": 361,
-          "kbg": 20,
-          "wkb": 0,
-          "bkb": 8,
-          "start": 1,
-          "end": 0,
-          "element": 2,
-          "sfx_severity": 1
-        }
-      ]
     }
   ],
   "toon": {
@@ -2745,7 +2726,6 @@
   },
   "thrown_as": {
     "default": "captain",
-    "f": "mewtwo",
     "hi": "mars"
   }
 }
