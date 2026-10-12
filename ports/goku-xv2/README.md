@@ -234,3 +234,25 @@ A full build accepts `--ui` to render select, stock and results art through the 
 and `--gameplay-only --ui` is rejected. Prepare external tools first with
 `python tools/csp/fetch_csproject.py`; no CSProject assets are stored in this repository.
 The rendering and in-game appearance remain unverified until the lead runs them.
+
+## Locomotion sets (Turn, TurnRun, RunBrake): option, not default
+
+Owner 2026-10-11: Goku's tilt turn and run brake read badly. Retail alternatives are wired behind an option; the default build is unchanged
+(Goku's own authored / XV2-cropped rows).
+
+| option | selects |
+|---|---|
+| (unset) | default: Goku's current rows |
+| `GOKU_LOCO_SET=falcon` | Captain Falcon's Turn, TurnRun, RunBrake on Goku's bones (`tools/cross-port-loco-falcon.json`) |
+| `GOKU_LOCO_SET=marth` / `fox` | the same rows from Marth / Fox (`cross-port-loco-marth.json`, `-fox.json`) |
+| `GOKU_LOCO_LEN=retail` | with a set: the source's own row length instead of Goku's current 12 / 18 / 16 frames |
+
+```
+GOKU_LOCO_SET=falcon python ports/goku-xv2/tools/cross_port.py --set falcon     # solve the three rows (needs GW_ISO_VANILLA, GW_MELEE)
+GOKU_LOCO_SET=falcon python ports/goku-xv2/tools/xv2_to_artist.py --build        # bake with them (same env for the rest of the build)
+ports/goku-xv2/tools/turn_preview.sh                                              # side-by-side Blender preview -> _build/goku-xv2/turn-preview/
+```
+
+A set's rows are anim-only cross-ports (`anim_only`: no script, no gameplay change); by default they are retimed to Goku's current row lengths
+(`fit_frames`, so Turn/RunBrake duration and IASA are unchanged) and ease from/into the row Goku comes from and returns to (`ease_from`, `ease_to`),
+because a retail Turn/RunBrake starts and ends in that fighter's own stance. The ground-row stance rules (`ground_modes.json`) apply as to every row.
