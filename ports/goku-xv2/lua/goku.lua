@@ -116,12 +116,8 @@ function M.recovery_enter(ctx)
   if ctx.self.air then ctx.velocity(0.4, 3.6) end
 end
 function M.counter_frame(ctx)
-  -- down B tap = Z-vanish counter, which costs ki: with too little ki it is only the blink (hold = ki charge)
+  -- UNBOUND since 2026-10-11 (owner: Down B is only the ki charge). Kept so the Counter state can come back: the tap vanish counter costs ki, with too little it is only the blink.
   if ctx.self.action_frame == 2 and ctx.self.ki and ctx.self.ki < VANISH_KI and not ctx.input.special_held then ctx.go("auto") return end -- @KI
-  -- hold = the XV2 Energy Charge (skill 591): usable only while ki < 100 (at full meter the hold stays the vanish blink)
-  local full = false
-  full = ctx.self.ki >= KI_MAX -- @KI
-  if ctx.self.action_frame == 12 and ctx.input.special_held and not full and not ctx.self.air then ctx.go("KiCharge") return end   -- no ki charge in the air (phase 4)
 end
 function M.riposte_enter(ctx)
   ctx.turn()  -- Z-vanish: reappear facing the attacker
@@ -131,10 +127,15 @@ end
 function M.riposte_frame(ctx)
   ctx.hitbox_damage(1, ctx.state.counter_damage)
 end
+-- Down B = the ki charge, on the ground (KiCharge, APL_SPA_KTN_C) and in the air (KiChargeAir, APL_SPA_KTN_S_C, XV2's "Floating" entry): hold to charge, let go to stop; it
+-- only runs while ki < 100 and a tap is just a short charge. In the air the fall is slowed to a drift (XV2's floating idle has no gravity and its BAC carries no Movement event,
+-- so the stand-in is Mewtwo's charge: a slow sink, sideways speed bled off). A normal landing ends it. No ki comes back during a flight or its special fall: those
+-- states are not this one (a gain there is taken off by flight_frame, and the special fall has no Down B).
 function M.kicharge_frame(ctx)
   if ctx.self.anim_ended then ctx.loop() end -- hold the charge clip until released
   if not ctx.input.special_held then ctx.go("auto") return end
   if ctx.self.ki >= KI_MAX then ctx.go("auto") return end -- @KI the charge ends at a full meter (XV2: usable only while ki < 100)
+  if ctx.self.air then ctx.velocity(ctx.self.vel_x * ctx.self.facing * 0.9, -0.12) end
   if ctx.ki then ctx.ki(0.8) end -- @KI 0 to 100 in about two seconds of holding
 end
 -- Homing dash strike (XV2 BAC 476, Side B out of the shield, ki cost on the route): it reuses rush_enter/rush_frame (the module is at the engine's 24-function cap);
@@ -193,5 +194,5 @@ function M.flightair_frame(ctx)
   end
 end
 -- Not called: names the cape reappear states so the offline reachability check sees them (the engine picks them by behaviour order).
-function M.it_targets(ctx) ctx.go("ITEnd") ctx.go("ITEndAir") ctx.go("RushCombo") ctx.go("KameSuper") ctx.go("Homing") ctx.go("Recovery") ctx.go("RecoveryAir") ctx.go("FlightNair") ctx.go("FlightFair") ctx.go("FlightBair") ctx.go("FlightUair") ctx.go("FlightDair") end
+function M.it_targets(ctx) ctx.go("ITEnd") ctx.go("ITEndAir") ctx.go("RushCombo") ctx.go("KameSuper") ctx.go("Homing") ctx.go("Recovery") ctx.go("RecoveryAir") ctx.go("FlightNair") ctx.go("FlightFair") ctx.go("FlightBair") ctx.go("FlightUair") ctx.go("FlightDair") ctx.go("Counter") ctx.go("Riposte") end
 return M

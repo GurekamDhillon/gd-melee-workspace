@@ -11,9 +11,9 @@ GET ra_f:0 FACING
 MUL ra_f:0 1.1
 PUT GROUND_VEL ra_f:0
 wait_until 8
-hitbox slot=0 joint=@FOOT_R@ damage=8 size=1.4 x=-0.03949 y=-0.4019 z=0.8439 angle=45 kbg=88 fkb=0 bkb=32
-hitbox slot=1 joint=@LEG_R@ damage=7 size=2.52 x=0.04702 y=-1.652 z=-0.1287 angle=45 kbg=88 fkb=0 bkb=29
-hitbox slot=2 joint=@UPLEG_R@ damage=6 size=2.52 x=-0.1149 y=-1.493 z=-0.08663 angle=45 kbg=88 fkb=0 bkb=26
+hitbox slot=0 joint=@FOOT_R@ damage=8 size=2.8 x=-0.03949 y=-0.4019 z=0.8439 angle=45 kbg=88 fkb=0 bkb=32
+hitbox slot=1 joint=@LEG_R@ damage=7 size=5.04 x=0.04702 y=-1.652 z=-0.1287 angle=45 kbg=88 fkb=0 bkb=29
+hitbox slot=2 joint=@UPLEG_R@ damage=6 size=5.04 x=-0.1149 y=-1.493 z=-0.08663 angle=45 kbg=88 fkb=0 bkb=26
 wait_until 11
 PUT GROUND_VEL 0
 wait_until 12

@@ -41,7 +41,7 @@ FLOAT_EPS = 1.6    # both feet above the baseline by this = floating (8% of his 
 GROUND_PREFIX = ('Wait', 'Walk', 'Dash', 'Run', 'Turn', 'Squat', 'Attack11', 'Attack12', 'Attack13', 'Attack100', 'AttackS3', 'AttackHi3',
                  'AttackLw3', 'AttackS4', 'AttackHi4', 'AttackLw4', 'AttackDash', 'Catch', 'Throw', 'Guard', 'Escape', 'Landing',
                  'Cliff', 'Down', 'Passive', 'Appeal', 'Kame', 'Rush', 'Counter', 'Riposte', 'KiCharge', 'Entry', 'Ottotto', 'Rebirth')
-SKIP_EXACT = {'EscapeAir', 'LandingFallSpecial', 'CliffJumpQuick2', 'CliffJumpSlow2'}
+SKIP_EXACT = {'KiChargeAir', 'EscapeAir', 'LandingFallSpecial', 'CliffJumpQuick2', 'CliffJumpSlow2'}
 
 
 def ground_rows(rows):

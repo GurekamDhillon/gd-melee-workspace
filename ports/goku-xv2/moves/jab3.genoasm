@@ -4,9 +4,9 @@
 PUT ANIM_RATE 1.0
 wait_until 4
 sfx behavior=1 sfx_id=165 volume=127 panning=64
-hitbox slot=0 joint=@FOOT_L@ damage=7 size=1.4 x=0.0391 y=-0.406 z=0.8485 angle=361 kbg=50 fkb=0 bkb=12
-hitbox slot=1 joint=@LEG_L@ damage=6 size=2.455 x=0.07586 y=-1.697 z=-0.04726 angle=361 kbg=50 fkb=0 bkb=9
-hitbox slot=2 joint=@UPLEG_L@ damage=5 size=2.52 x=0.1067 y=-1.503 z=-0.002655 angle=361 kbg=50 fkb=0 bkb=6
+hitbox slot=0 joint=@FOOT_L@ damage=7 size=2.8 x=0.0391 y=-0.406 z=0.8485 angle=361 kbg=50 fkb=0 bkb=12
+hitbox slot=1 joint=@LEG_L@ damage=6 size=4.91 x=0.07586 y=-1.697 z=-0.04726 angle=361 kbg=50 fkb=0 bkb=9
+hitbox slot=2 joint=@UPLEG_L@ damage=5 size=5.04 x=0.1067 y=-1.503 z=-0.002655 angle=361 kbg=50 fkb=0 bkb=6
 wait_until 8
 clear_hitboxes
 wait_until 30

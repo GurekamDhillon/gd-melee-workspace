@@ -1,5 +1,5 @@
 -- Remake phase 1 special-input gates (headless, turbo ok; combo package, geno 11). Tag: SPECHECK.
--- Down B hold = ki charge (only while ki < 100), Down B tap = the vanish counter, Side B out of the shield = the homing dash strike (meter-costed),
+-- Down B = ONLY the ki charge, ground and air (owner 2026-10-11; only while ki < 100, a tap is a short charge, the counter is unbound), Side B out of the shield = the homing dash strike (meter-costed),
 -- Down B out of the shield = the vanish (needs ki), rewind exactness across the homing strike, no Lua faults.
 -- Run: python ports/goku-xv2/tools/kame_run.py specials_check SPECHECK --turbo   (KAME_MODS = the combo package's mods)
 gd.run(function()
@@ -39,23 +39,23 @@ gd.run(function()
       return seen
     end
 
-    -- 1. Down B hold below 100 ki: Counter, then KiCharge from f12, the meter rises
+    -- 1. Down B hold below 100 ki: KiCharge at once (no Counter), the meter rises
     reset(0)
     gd.input(1, {y = -127, buttons = 'B'}, 90)
     local s1 = track(80)
     local k1 = ki()
     gd.log(string.format('SPECHECK kicharge: Counter %s KiCharge %s ki %.1f', tostring(s1.Counter), tostring(s1.KiCharge), k1))
-    assert((s1.KiCharge or 0) > 30, 'Down B hold did not reach KiCharge')
+    assert((s1.KiCharge or 0) > 60 and (s1.Counter or 0) == 0, 'Down B hold did not go straight to KiCharge')
     assert(k1 > 20, 'the meter did not rise while charging')
     gd.input(1, {}, 1); gd.wait(30)
     assert(name() ~= 'KiCharge', 'KiCharge did not end on release: ' .. name())
 
-    -- 2. Down B hold at a full meter: the hold stays the vanish (no charge state)
+    -- 2. Down B hold at a full meter: nothing to charge (at most a one-frame entry)
     reset(100)
     gd.input(1, {y = -127, buttons = 'B'}, 60)
     local s2 = track(50)
     gd.log(string.format('SPECHECK kicharge_full: KiCharge %s Counter %s ki %.1f', tostring(s2.KiCharge), tostring(s2.Counter), ki()))
-    assert((s2.KiCharge or 0) == 0, 'KiCharge entered at ki 100')
+    assert((s2.KiCharge or 0) <= 3 and (s2.Counter or 0) == 0 and ki() >= 99.9, 'KiCharge stayed at ki 100 or a counter appeared')
     gd.input(1, {}, 1); gd.wait(40)
 
     -- 3. charging stops by itself at 100 (start at 90, hold)
@@ -67,12 +67,12 @@ gd.run(function()
     assert(name() ~= 'KiCharge', 'still charging at a full meter')
     gd.input(1, {}, 1); gd.wait(20)
 
-    -- 4. Down B tap: the vanish counter blink, not the charge
+    -- 4. Down B tap: nothing special, just a short charge (the counter / vanish is unbound)
     reset(50)
     gd.input(1, {y = -127, buttons = 'B'}, 3)
     local s4 = track(60)
-    gd.log(string.format('SPECHECK vanish_tap: Counter %s KiCharge %s', tostring(s4.Counter), tostring(s4.KiCharge)))
-    assert((s4.Counter or 0) > 10 and (s4.KiCharge or 0) == 0, 'Down B tap is not the Counter blink')
+    gd.log(string.format('SPECHECK tap: Counter %s Riposte %s KiCharge %s', tostring(s4.Counter), tostring(s4.Riposte), tostring(s4.KiCharge)))
+    assert((s4.Counter or 0) == 0 and (s4.Riposte or 0) == 0 and (s4.KiCharge or 0) >= 1 and (s4.KiCharge or 0) <= 12, 'Down B tap is not a short charge')
 
     -- 5. shield + B (stick neutral) with 50 ki: Homing, the route spends 20
     reset(50)
@@ -110,6 +110,64 @@ gd.run(function()
     gd.log(string.format('SPECHECK roll: Homing %s EscapeF %s', tostring(s8.Homing), tostring(s8.EscapeF)))
     assert((s8.Homing or 0) == 0 and (s8.EscapeF or 0) > 5, 'shield + stick must roll, not Homing')
     gd.input(1, {}, 1); gd.wait(30)
+
+    -- 7a. Down B in the air: the same charge (KiChargeAir), a drifting fall, a tap is short; the blast input fires in the air for 5 ki and he can act after; no charge after a flight
+    reset(0)
+    tp(1, 0, 90); gd.wait(2)
+    local ya = gd.player(1).y
+    gd.input(1, {y = -127, buttons = 'B'}, 60)
+    local sa = track(40)
+    local dya = ya - gd.player(1).y
+    gd.log(string.format('SPECHECK air_charge: KiChargeAir %s Counter %s ki %.1f fell %.1f in 40 frames', tostring(sa.KiChargeAir), tostring(sa.Counter), ki(), dya))
+    assert((sa.KiChargeAir or 0) > 25 and (sa.Counter or 0) == 0, 'air Down B hold did not enter KiChargeAir')
+    assert(ki() > 15, 'the meter did not rise in the air charge: ' .. ki())
+    assert(dya < 14, 'the air charge did not slow the fall: ' .. dya)
+    gd.input(1, {}, 1); gd.wait(20)
+    assert(name() ~= 'KiChargeAir', 'KiChargeAir did not end on release: ' .. name())
+    reset(0)
+    tp(1, 0, 90); gd.wait(2)
+    gd.input(1, {y = -127, buttons = 'B'}, 3)
+    local sat = track(50)
+    gd.log(string.format('SPECHECK air_tap: KiChargeAir %s Counter %s Riposte %s', tostring(sat.KiChargeAir), tostring(sat.Counter), tostring(sat.Riposte)))
+    assert((sat.KiChargeAir or 0) >= 1 and (sat.KiChargeAir or 0) <= 12 and (sat.Counter or 0) == 0 and (sat.Riposte or 0) == 0, 'air Down B tap is not a short charge')
+    reset(50)
+    tp(1, 0, 150); tp(2, -((gd.player(1).facing or 1) >= 0 and 1 or -1) * 70, 0); gd.wait(2)   -- the dummy behind him
+    local kab0 = ki()
+    gd.input(1, {buttons = 'DOWN'}, 2)
+    local sab = track(26)
+    gd.log(string.format('SPECHECK air_blast: KiBlastAir %s ki %.1f -> %.1f state now %s', tostring(sab.KiBlastAir), kab0, ki(), name()))
+    assert((sab.KiBlastAir or 0) >= 10, 'the blast input in the air did not enter KiBlastAir')
+    assert(math.abs((kab0 - ki()) - 5) < 0.5, 'the air ki blast cost is not 5: ' .. (kab0 - ki()))
+    assert(name() ~= 'FallSpecial', 'the air blast ended in the special fall')
+    gd.input(1, {buttons = 'A'}, 2)
+    local sac = track(20)
+    local aerial = false
+    for kx in pairs(sac) do if kx:find('AttackAir') then aerial = true end end
+    gd.log('SPECHECK air_blast_then: ' .. tostring(aerial and 'an aerial came out (actionable after the shot)' or 'no aerial'))
+    assert(aerial, 'Goku could not act (aerial) after the air blast')
+    gd.input(1, {}, 1); gd.wait(30)
+    reset(2)
+    tp(1, 0, 150); gd.wait(2)
+    gd.input(1, {buttons = 'DOWN'}, 2)
+    local sab2 = track(30)
+    assert((sab2.KiBlastAir or 0) == 0, 'the air blast fired without the meter')
+    gd.input(1, {}, 1); gd.wait(20)
+    -- no ki charge in the special fall after a flight (and no regen)
+    reset(25)
+    tp(1, 0, 150); gd.wait(2)
+    gd.input(1, {y = 127, buttons = 'B'}, 2)
+    local fall_t
+    for t = 1, 120 do
+      gd.wait(1); nofault()
+      if name() == 'FallSpecial' then fall_t = t break end
+    end
+    assert(fall_t, 'the 25-ki flight never ended in the special fall')
+    local kfall = ki()
+    gd.input(1, {y = -127, buttons = 'B'}, 30)
+    local sfs = track(30)
+    gd.log(string.format('SPECHECK fall_no_charge: KiChargeAir %s KiCharge %s ki %.1f -> %.1f', tostring(sfs.KiChargeAir), tostring(sfs.KiCharge), kfall, ki()))
+    assert((sfs.KiChargeAir or 0) == 0 and (sfs.KiCharge or 0) == 0 and ki() <= kfall + 0.05, 'Down B charged ki in the post-flight special fall')
+    gd.input(1, {}, 1); gd.wait(60)
 
     -- 7b. the blast input (D-pad Down; layout B maps Y to it) fires the KiBlast state for 5 ki, and nothing without the meter
     reset(50)
@@ -275,13 +333,12 @@ gd.run(function()
     chk(rf.hid >= 15 and rf.hid <= 20, 'roll is not invisible for the intangible gap: ' .. rf.hid)
     chk(math.abs((gd.player(1).scale or 0) - 1.2) < 0.001, "built size is not 1.2: " .. tostring(gd.player(1).scale))
     gd.log("SPECHECK built scale " .. tostring(gd.player(1).scale))
-    -- the roll is 27.3 units at built size 1.0; Goku is built at 1.2 (define scale), so 27.3 x 1.2 = 32.76
-    chk(math.abs(rf.dx - 32.76) < 3.5, 'roll distance is not 32.76 units: ' .. rf.dx)
+    chk(math.abs(rf.dx - 27.3) < 3, 'roll distance is not 27.3 units: ' .. rf.dx)
     chk(rf.actionable and rf.actionable <= 45 and not rf.air, 'the roll does not end grounded and actionable at the Melee timing')
     chk(rf.flipped, 'a forward roll must end facing the other way (Melee: Mario and Mewtwo flip)')
     local rb = roll('back', -1)
     chk(not rb.flipped, 'a back roll must keep the facing')
-    chk(math.abs(rb.dx + 32.76) < 3.5 and rb.hid >= 15, 'back roll is not a 32.76-unit teleport back: ' .. rb.dx)
+    chk(math.abs(rb.dx + 27.3) < 3 and rb.hid >= 15, 'back roll is not a 27.3-unit teleport back: ' .. rb.dx)
     local rs = roll('spot dodge', 1, true)
     chk(rs.hid >= 10 and rs.intang >= 10 and math.abs(rs.dx) < 2, 'spot dodge is not an in-place vanish: hidden ' .. rs.hid .. ' dx ' .. rs.dx)
     chk(not rs.flipped, 'the spot dodge must keep the facing')

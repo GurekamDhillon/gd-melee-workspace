@@ -39,6 +39,17 @@ def patch_gameplay():
         if s['name'] == 'KiCharge' and 'Energy Charge' not in s.get('pick', ''):
             s['pick'] = 'owner decision 2026-10-11: XV2 Energy Charge (skill 591) clip APL_SPA_KTN_C, looped while Down B is held; usable only while ki < 100'
             changed = True
+    # owner 2026-10-11: Down B is ONLY the ki charge, ground (KTN_C) and air (KTN_S_C, XV2 BAC 2 "Floating"); the tap counter / vanish is unbound (the Counter and Riposte
+    # states stay defined for a later return). The air state slows the fall (XV2's floating idle has no gravity; the BAC carries no Movement event) in Lua.
+    if not any(s['name'] == 'KiChargeAir' for s in g['states']):
+        g['states'].append({'name': 'KiChargeAir', 'behavior': 'geno.air', 'subaction': 'clip:KiChargeAir', 'like': 'motion:29', 'iasa': 'none', 'move_tag': 'special',
+                            'next': 'auto', 'lua': {'frame': 'kicharge_frame'},
+                            'pick': 'owner 2026-10-11: XV2 Energy Charge, floating variant (skill 591 BAC 2, APL_SPA_KTN_S_C), air Down B hold; only while ki < 100, none after a flight'})
+        changed = True
+    if g['specials'].get('lw') != 'geno:KiCharge' or g['specials'].get('air_lw') != 'geno:KiChargeAir':
+        g['specials']['lw'] = 'geno:KiCharge'
+        g['specials']['air_lw'] = 'geno:KiChargeAir'
+        changed = True
     flight = [('Flight', 'FlightUp', {'enter': 'flight_enter', 'frame': 'flight_frame'}), ('FlightU', 'FlightUp', {'frame': 'flight_frame'}),
               ('FlightF', 'FlightF', {'frame': 'flight_frame'}), ('FlightB', 'FlightB', {'frame': 'flight_frame'})]
     for name, row, lua in flight:
@@ -114,6 +125,10 @@ def patch_combo():
     want.append({'name': 'Blast>KiBlast', 'from': ground_idle, 'to': 'geno:KiBlast', 'input': 'blast', 'on': 'any', 'where': 'ground', 'window': [1, 0],
                  'ki_cost': KIBLAST_KI, 'priority': 5,
                  'source': 'XV2 Blast tap (ki blast, free in XV2); here it costs ki; input = layout B (Y -> D-pad Down) or the D-pad itself'})
+    air_idle = ['motion:%d' % m for m in (25, 26, 27, 28, 29, 30, 31, 32, 33, 34)]   # JumpF/B, JumpAerialF/B, Fall, FallF/B, FallAerial, FallAerialF/B
+    want.append({'name': 'Blast>KiBlastAir', 'from': air_idle, 'to': 'geno:KiBlastAir', 'input': 'blast', 'on': 'any', 'where': 'air', 'window': [1, 0],
+                 'ki_cost': KIBLAST_KI, 'priority': 5,
+                 'source': 'owner 2026-10-11: the ki blast in the air too; XV2 fires its Blast from Floating as well (POW BAC 0, ATC_SHOT_N), no fall change; 5 ki like the ground blast'})
     fly_from = ['geno:Flight', 'geno:FlightU', 'geno:FlightF', 'geno:FlightB']
     for dname, to in (('forward', 'geno:FlightFair'), ('back', 'geno:FlightBair'), ('up', 'geno:FlightUair'), ('down', 'geno:FlightDair')):
         want.append({'name': 'Fly>A %s' % dname, 'from': fly_from, 'to': to, 'input': 'light', 'dir': dname, 'on': 'any', 'where': 'air', 'window': [4, 0], 'priority': 12,
@@ -136,6 +151,10 @@ def patch_combo():
     if not any(s['name'] == 'KiBlast' for s in c['states']):
         c['states'].append({'name': 'KiBlast', 'clip': 'xGOK_ATC_SHOT_N', 'script': 'moves/ki_blast.genoasm', 'like': 'motion:343', 'move_tag': 'special',
                             'bac': 0, 'bcm': 'design', 'hb': 'HB-DESIGN', 'why_hb': 'KiBlast article (single shot)'})
+        changed = True
+    if not any(s['name'] == 'KiBlastAir' for s in c['states']):
+        c['states'].append({'name': 'KiBlastAir', 'clip': 'xGOK_ATC_SHOT_N', 'script': 'moves/ki_blast.genoasm', 'like': 'motion:29', 'move_tag': 'special', 'behavior': 'geno.air',
+                            'bac': 0, 'bcm': 'design', 'hb': 'HB-DESIGN', 'why_hb': 'KiBlast article (single shot), air variant: same clip, script and article'})
         changed = True
     if changed:
         p.write_text(json.dumps(c, indent=2) + '\n', encoding='utf-8')

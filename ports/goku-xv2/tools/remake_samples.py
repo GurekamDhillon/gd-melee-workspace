@@ -42,6 +42,8 @@ BDM_DIR = Path('E:/Torrents/Dragon.Ball.Xenoverse.2.Future.Saga.Chapter.4-RUNE/m
 LIMB_FAT = 2.4        # hitbox radius = mesh limb thickness x this (Melee spheres are fatter than the limb they ride on)
 MIN_RADIUS = 2.0
 MAX_RADIUS = 3.6
+HB_GROW = 2.0          # owner 2026-10-11: "all hitboxes 2x the size, except back air": every sample sphere's radius x this (centres stay on the limb bones)
+GROW_EXCLUDE = ('bair',)   # moves kept at the unscaled size (bair is also 'carry': its script is not regenerated)
 # XV2 damage -> Melee damage (anchors from Marth: jab 3, tilts 8, fair 10, smashes 15-22); linear between anchors
 ANCHORS = [(0, 0), (3, 2), (5, 3), (10, 8), (15, 10), (20, 12), (30, 15), (40, 20)]
 CAP = {'jab': 7, 'tilt': 12, 'smash': 22, 'aerial': 14, 'special': 16, 'grab': 0}
@@ -198,7 +200,7 @@ class Rig:
         na = max(1, fbest - width // 2)
         return na, na + width
 
-    def spheres(self, eff, n=3):
+    def spheres(self, eff, n=3, grow=1.0):
         """Up to n spheres along the chain, tip first: (token, x, y, z, radius) in script units."""
         out = []
         for i, bone in enumerate(CHAINS[eff][:n]):
@@ -212,12 +214,12 @@ class Rig:
                 pass
             ctr = c['a'] + (c['b'] - c['a']) * t
             r = min(MAX_RADIUS, max(MIN_RADIUS, c['radius'] * LIMB_FAT))
-            out.append((TOKEN[bone], *(ctr / self.scale).tolist(), r / self.scale))
+            out.append((TOKEN[bone], *(ctr / self.scale).tolist(), r * grow / self.scale))
         if eff.startswith('hand') and len(out) == 2:       # arms: add a mid-forearm sphere between the hand end and the upper arm
             c = self.clouds.get(CHAINS[eff][0])
             if c:
                 ctr = c['a'] + (c['b'] - c['a']) * 0.4
-                out.insert(1, (TOKEN[CHAINS[eff][0]], *(ctr / self.scale).tolist(), min(MAX_RADIUS, max(MIN_RADIUS, c['radius'] * LIMB_FAT)) / self.scale))
+                out.insert(1, (TOKEN[CHAINS[eff][0]], *(ctr / self.scale).tolist(), min(MAX_RADIUS, max(MIN_RADIUS, c['radius'] * LIMB_FAT)) * grow / self.scale))
         return out[:n]
 
 
@@ -460,7 +462,7 @@ def render(rig, tg):
     stun = old_hbstun(old_script(tg['script']))
     last = len(tg['wins']) - 1
     for i, w in enumerate(tg['wins']):
-        sph = rig.spheres(w['limb'], 3) if w['limb'] else []
+        sph = rig.spheres(w['limb'], 3, 1.0 if tg['name'] in GROW_EXCLUDE else HB_GROW) if w['limb'] else []
         if not sph:
             continue
         is_string = (tg['string'] and w['bdm']['type'] == 'Standard') or tg['name'] == 'Rush'

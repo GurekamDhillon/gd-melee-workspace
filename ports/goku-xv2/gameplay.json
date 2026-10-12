@@ -1654,6 +1654,18 @@
       "lua": {
         "frame": "flightair_frame"
       }
+    },
+    {
+      "name": "KiChargeAir",
+      "behavior": "geno.air",
+      "subaction": "clip:KiChargeAir",
+      "like": "motion:29",
+      "iasa": "none",
+      "move_tag": "special",
+      "next": "auto",
+      "lua": {
+        "frame": "kicharge_frame"
+      }
     }
   ],
   "specials": {
@@ -1663,8 +1675,8 @@
     "air_s": "geno:Rush",
     "hi": "geno:Flight",
     "air_hi": "geno:Flight",
-    "lw": "geno:Counter",
-    "air_lw": "geno:Counter"
+    "lw": "geno:KiCharge",
+    "air_lw": "geno:KiChargeAir"
   },
   "subactions": [
     {
