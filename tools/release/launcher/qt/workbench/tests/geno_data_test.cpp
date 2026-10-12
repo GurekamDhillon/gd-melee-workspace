@@ -70,12 +70,8 @@ private slots:
             QJsonObject{{"name", "KameCharge"}, {"script", "moves/missing.genoasm"}}};
         wbtest::put(d.path(), "gameplay.json", QJsonDocument(gameplay).toJson());
         wbtest::put(d.path(), "moves/rush.genoasm", wbtest::kJab);
-        wbtest::put(d.path(), "moves/flight.genoasm", "# flight
-wait 2
-");
-        wbtest::put(d.path(), "moves/rushcombo.genoasm", "# combo
-wait 2
-");
+        wbtest::put(d.path(), "moves/flight.genoasm", "# flight\nwait 2\n");
+        wbtest::put(d.path(), "moves/rushcombo.genoasm", "# combo\nwait 2\n");
         FileStore fs(d.path()); GenoData data(fs);
         const QString reload = data.reload(); QVERIFY2(reload.isEmpty(), qPrintable(reload));
         QStringList names; for (const auto &row : data.rows()) names << row.name;
