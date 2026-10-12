@@ -1,0 +1,11 @@
+-- Match load gate: the LAB match starts and runs 120 frames with no Lua fault. Pair with MELEE_HEAP_TRACE=1 and read the lbHeap lines (heap 0 free) from the log. Tag LOADCHK.
+gd.run(function()
+  local ok, why = pcall(function()
+    assert(gd.wait_until(function() return gd.match().active and gd.match().frame > 90 end, 6000), 'no LAB match')
+    gd.wait(120)
+    local lua = assert(gd.fighter_lua(1))
+    assert(lua.faults == 0, 'Lua fault: ' .. tostring(lua.last_fault))
+  end)
+  gd.log(ok and 'LOADCHK PASS' or ('LOADCHK FAIL ' .. tostring(why)))
+  gd.quit()
+end)
