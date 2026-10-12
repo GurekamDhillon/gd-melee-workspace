@@ -29,7 +29,8 @@ INSTALL (over GD's Melee 0.3.0-rc5)
      (or add a line "goku-xv2" to mods/enabled.txt).
   3. Pick Goku on the character select. You need your own Melee disc image as always; none is included.
 
-Online: both players need this same build. TODO-CONFIRM online status of this build.
+Online: both players need this same build and the same Goku package: by design a mismatch is refused with a message.
+Online play with this build has not been tested yet.
 
 CONTROLS
   Light string      A, A, A, A, A (each hit must connect)
@@ -45,8 +46,11 @@ CONTROLS
 
 KNOWN ISSUES
   - Alpha balance and hitboxes: numbers will change
-  - Some animations are rough
-  - TODO-CONFIRM known issues from the owner's playtest
+  - The down air may show a hitbox on the landing frame (not confirmed)
+  - The costume arrows on the character select show "n / 5" instead of the costume name
+  - No announcer call and no series emblem yet
+  - Placeholder sounds except Kamehameha and Instant Transmission
+  - Hitboxes are samples that are still being hand-authored
 
 Report bugs in the Discord bugs channel: what you pressed, the stage, what you expected.
 """

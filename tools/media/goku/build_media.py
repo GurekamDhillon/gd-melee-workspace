@@ -256,6 +256,15 @@ def stills():
         print('still %s <- %s frame %d' % (s['name'], s['clip'], f))
 
 
+def css_still():
+    """The art lead's character-select screenshot (Goku, costume 5/5) as a 1920x1080 still: _build/goku-art/css-shots/css-goku-final-c4.png."""
+    src = MEDIA.parent / 'goku-art/css-shots/css-goku-final-c4.png'
+    if src.exists():
+        (MEDIA / 'stills').mkdir(exist_ok=True)
+        run([FFMPEG, '-v', 'error', '-y', '-i', str(src), '-vf', 'scale=1920:1080:flags=lanczos', '-frames:v', '1', str(MEDIA / 'stills/css_character_select.png')])
+        print('still css_character_select <-', src.name)
+
+
 def gifs():
     out = MEDIA / 'gifs'
     out.mkdir(exist_ok=True)
@@ -286,8 +295,8 @@ def reel():
         if p.exists():
             parts.append(p)
     if (ov / 'card_costumes.png').exists():
-        parts.append(card_part(ov / 'card_costumes.png', 3.5, 'p_costumes'))
-    parts.append(card_part(ov / 'card_end.png', 4.5, 'p_end'))
+        parts.append(card_part(ov / 'card_costumes.png', 3.0, 'p_costumes'))
+    parts.append(card_part(ov / 'card_end.png', 4.0, 'p_end'))
     lst = out / 'list.txt'
     lst.write_text(''.join("file '%s'\n" % str(p).replace('\\', '/') for p in parts), encoding='utf-8')
     hq = out / 'goku_alpha_reel_1080p60.mp4'
@@ -315,6 +324,7 @@ def main():
         clips(only)
     if a.step in ('stills', 'all'):
         stills()
+        css_still()
     if a.step in ('gifs', 'all'):
         gifs()
     if a.step in ('reel', 'all'):

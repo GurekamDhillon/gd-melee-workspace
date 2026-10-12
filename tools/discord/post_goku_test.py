@@ -34,7 +34,7 @@ An early, playable Goku for GD's Melee, built by hand from Xenoverse 2 move data
 - A light string with heavy finishers, launcher into air strings, spiking aerials, charged smashes
 - Ki charge (down B, ground and air), shield + B homing dash kick, D-pad ki blast barrage
 - Instant Transmission roll, Falcon-style grab and throws, ledge options
-The reel is above. The controls and combo cards are in the next message."""
+The reel is attached. The controls and combo cards are in the next message."""
 
 TEXT_2 = """**Controls** (cards attached: controls, then the four combo cards)
 - Light string: A, A, A, A, A (each hit must connect). Heavy: C-stick off a light hit (up launches, forward finishes, down is the down smash)
@@ -48,10 +48,17 @@ TEXT_2 = """**Controls** (cards attached: controls, then the four combo cards)
 
 **Known issues**
 - Alpha balance and hitboxes: expect numbers to change
-- Some animations are rough or placeholder-timed
-- TODO-CONFIRM known issues from the owner's playtest
+- The down air may show a hitbox on the landing frame (not confirmed)
+- The costume arrows on the character select show "n / 5" instead of the costume name
+- No announcer call and no series emblem yet
+- Placeholder sounds except Kamehameha and Instant Transmission
+- Hitboxes are samples that are still being hand-authored
+- Online: by design Goku plays only against someone with the exact same Goku package (a mismatch is refused with a message); not yet tested online with this build
 
 **Report bugs** in <#{BUGS}>: say what you pressed, the stage and what you expected. Screenshots and clips help."""
+
+TEXT_3 = "**Screenshots**: the character select with Goku (five costumes) and in-game moments."
+TEXT_4 = "**Move previews**: Kamehameha, the light string, Dragon Rush, the ki blast barrage and a reverse ledge grab from flight."
 
 INSTALL_ZIP = ("1. Download the Goku alpha zip: {LINK}\n"
                "2. Unzip it over your GD's Melee 0.3.0-rc5 folder (say yes to replace melee-pc.exe) or into a fresh folder\n"
@@ -60,8 +67,10 @@ INSTALL_ZIP = ("1. Download the Goku alpha zip: {LINK}\n"
 
 def plan_files():
     reel = MEDIA / "reel/goku_alpha_reel_720p30.mp4"
-    cards = [MEDIA / "overlays/card_controls.png"] + sorted((MEDIA / "cards").glob("card_[1-4]_*.png"))
-    return [("reel", [reel]), ("cards", cards)]
+    cards = [MEDIA / "overlays/card_controls.png"] + sorted((MEDIA / "cards").glob("card_[1-4]_*.png")) + [MEDIA / "overlays/card_costumes.png"]
+    stills = sorted((MEDIA / "stills").glob("*.png"))
+    gifs = [MEDIA / "gifs" / (n + ".gif") for n in ("kame_charged", "light_heavy", "rush", "ki_blast", "flight_ledge")]
+    return [("reel", [reel], TEXT_1), ("cards", cards, TEXT_2), ("stills", stills, TEXT_3), ("gifs", gifs, TEXT_4)]
 
 
 def group(files):
@@ -115,10 +124,11 @@ def main():
     link = a.zip_link or "{ZIP LINK: host the zip, then pass --zip-link}"
     text1 = TEXT_1
     text2 = TEXT_2.replace("{INSTALL}", INSTALL_ZIP.replace("{LINK}", link)).replace("{BUGS}", BUGS)
-    for t in (text1, text2):
+    for t in (text1, text2, TEXT_3, TEXT_4):
         assert len(t) <= 2000, "Discord message limit: %d" % len(t)
     msgs = []
-    for (name, files), text in zip(plan_files(), (text1, text2)):
+    texts = {TEXT_1: text1, TEXT_2: text2, TEXT_3: TEXT_3, TEXT_4: TEXT_4}
+    for name, files, text in [(n, f, texts[t]) for n, f, t in plan_files()]:
         missing = [f for f in files if not f.exists()]
         if missing:
             print("MISSING media:", ", ".join(str(m) for m in missing))

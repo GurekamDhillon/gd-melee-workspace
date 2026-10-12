@@ -23,7 +23,7 @@ gd.run(function()
     end)
 
     -- fly in from off stage with his back to the ledge: the ledge is caught going the other way
-    clip('flight_ledge', {x1 = R + 14, y1 = top - 18, x2 = R - 60, camx = R - 4, camz = 60, camy = -6, camiy = -10, settle = 3}, function()
+    clip('flight_ledge', {x1 = R + 14, y1 = top - 18, x2 = R - 60, camx = R + 2, camz = 62, camy = -8, camiy = -15, settle = 3}, function()
       CAP.tap({buttons = 'B', y = 127}, 3); CAP.wait(3)
       for t = 1, 40 do
         CAP.tap({x = -90, y = 90}, 1); CAP.wait(1)
@@ -49,7 +49,7 @@ gd.run(function()
     end
     local function ledge_opt(label, inp, btn, pct)
       if only and not (',' .. only .. ','):find(',' .. label .. ',', 1, true) then return end
-      CAP.reset{x2 = -60, camx = R - 10, camz = 60, camy = -8, camiy = -14, settle = 5}
+      CAP.reset{x2 = -60, camx = R - 1, camz = 52, camy = -12, camiy = -19, settle = 5}
       gd.set_percent(1, pct or 0)
       if not grab_ledge() then CAP.log('FAIL ' .. label .. ' no ledge'); return end
       CAP.clip(label); CAP.rec(true)

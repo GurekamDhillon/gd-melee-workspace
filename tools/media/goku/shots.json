@@ -187,11 +187,10 @@
       "id": "ki_blast",
       "title": "Ki blast barrage",
       "input": [
-        "dpad:down",
-        "dpad:down",
+        "hold",
         "dpad:down"
       ],
-      "note": "Tap the D-pad down: he fires with alternating hands",
+      "note": "Hold D-pad down: a barrage that alternates hands, 5 ki a shot",
       "script": "lua/clips_ki.lua",
       "clip": "ki_blast"
     },
@@ -324,7 +323,7 @@
       "input": [
         "dpad:down"
       ],
-      "text": "D-pad down, ground or air. Costs a little ki.",
+      "text": "D-pad down, ground or air, 5 ki. Hold it for a barrage that alternates hands.",
       "ki": true
     },
     {
@@ -436,12 +435,9 @@
     "rush",
     "light_heavy",
     "launcher_air",
-    "fair_spike",
-    "flight_aerial",
+    "flight",
     "flight_ledge",
     "dash_kick",
-    "ki_blast",
-    "it_roll",
     "fsmash",
     "kame_max"
   ]
