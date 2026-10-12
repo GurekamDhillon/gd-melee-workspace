@@ -25,7 +25,8 @@ function CAP.rec(on)
   if CAP.stepmode then
     if on then gd.pause(); CAP.stepping = true else CAP.stepping = false; gd.resume() end
   end
-  if on and CAP.lead > 0 then CAP.wait(CAP.lead) end     -- a beat of idle before the move so the lower-third lands first
+  local lead = CAP.lead_o or CAP.lead
+  if on and lead > 0 then CAP.wait(lead) end     -- a beat of idle before the move so the lower-third lands first
 end
 CAP.noshot = CFG and CFG.noshot == '1'      -- audio pass: same script, no screenshots, realtime
 local lastmot = {}
@@ -51,9 +52,22 @@ local function kisample()
   kibuf[#kibuf + 1] = string.format('%d', math.floor(((ok2 and cb and cb.ki) or 0) + 0.5))
   if #kibuf >= 60 then kiflush() end
 end
+-- follow camera: keep P1 framed by moving the camera with him (CAP.follow{dx, dy, z, iy, fov}; CAP.follow(nil) turns it off)
+function CAP.follow(o) CAP.fol = o end
+local function follow_tick()
+  local o = CAP.fol
+  if not o then return end
+  local p = gd.player(1)
+  if not p then return end
+  local cx = p.x + (o.dx or 0)
+  CAP.fx = CAP.fx and (CAP.fx + (cx - CAP.fx) * 0.25) or cx          -- a little smoothing
+  CAP.fy = CAP.fy and (CAP.fy + (p.y - CAP.fy) * 0.25) or p.y
+  gd.camera_set{eye = {x = CAP.fx, y = CAP.fy + (o.dy or 4), z = o.z or 55}, interest = {x = CAP.fx - (o.dx or 0) * 0.6, y = CAP.fy + (o.iy or 2), z = 0}, fov = o.fov or 40}
+end
 function CAP.wait(k)
   for _ = 1, k do
     gd.wait(1)
+    follow_tick()
     trace()
     if CAP.on and CAP.noshot then CAP.n = CAP.n + 1; kisample() end
     if CAP.on and not CAP.noshot then
@@ -94,6 +108,7 @@ end
 -- start the next clip from a clean state: fighters placed, percent 0, ki set, camera framed
 function CAP.reset(o)
   o = o or {}
+  CAP.lead_o = o.lead
   gd.input(1, {}, 1); gd.wait(2)
   CAP.tp(1, o.x1 or 0, o.y1 or 0); CAP.tp(2, o.x2 or 38, o.y2 or 0)
   gd.set_percent(1, 0); gd.set_percent(2, o.pct or 0)

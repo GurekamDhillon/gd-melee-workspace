@@ -16,8 +16,8 @@ gd.run(function()
 
     clip('it_roll', {x2 = 40, camx = 18, camz = 60, camy = 9, camiy = 6}, function()
       CAP.wait(20)
-      CAP.tap({buttons = 'R'}, 40); CAP.wait(7)
-      CAP.tap({buttons = 'R', x = 127}, 8)
+      CAP.tap({buttons = 'R'}, 60)
+      CAP.when({'Guard'}, 3, {buttons = 'R', x = 127}, 8, 40)    -- flick once the shield is up
       CAP.wait(60)
     end)
 
@@ -58,14 +58,14 @@ gd.run(function()
       CAP.wait(90)
     end)
 
-    clip('grab', {x2 = 9, camx = 8, camz = 50, camy = 9, camiy = 6}, function()
+    clip('grab', {x2 = 9, camx = 8, camz = 50, camy = 9, camiy = 6, settle = 200}, function()
       CAP.wait(12)
       CAP.tap({buttons = 'Z'}, 2)
       CAP.when({'CatchWait'}, 14, {x = 127}, 2, 60)
       CAP.wait(70)
     end)
 
-    clip('grab_b', {x2 = 9, camx = 8, camz = 50, camy = 9, camiy = 6}, function()
+    clip('grab_b', {x2 = 9, camx = 8, camz = 50, camy = 9, camiy = 6, settle = 200}, function()
       CAP.wait(12)
       CAP.tap({buttons = 'Z'}, 2)
       CAP.when({'CatchWait'}, 14, {x = -127}, 2, 60)

@@ -17,13 +17,13 @@ gd.run(function()
     clip('flight_aerial', {x1 = 0, x2 = 26, y2 = 0, camx = 14, camz = 70, camy = 14, camiy = 10}, function()
       CAP.wait(10)
       CAP.tap({buttons = 'B', y = 127}, 3); CAP.wait(3)
-      for t = 1, 8 do CAP.tap({x = 90, y = 90}, 1); CAP.wait(1) end
-      CAP.when({'Flight', 'FlightU', 'FlightF', 'FlightB'}, 8, {buttons = 'A', x = 127}, 3, 20)
+      CAP.tap({x = 90, y = 90}, 60)                     -- steer up and forward for the rest of the flight
+      CAP.when({'Flight', 'FlightU', 'FlightF', 'FlightB'}, 10, {buttons = 'A', x = 90, y = 90}, 4, 20)
       CAP.wait(80)
     end)
 
     -- fly in from off stage with his back to the ledge: the ledge is caught going the other way
-    clip('flight_ledge', {x1 = R + 14, y1 = top - 18, x2 = R - 60, camx = R + 2, camz = 62, camy = -8, camiy = -15, settle = 3}, function()
+    clip('flight_ledge', {x1 = R + 14, y1 = top - 18, x2 = R - 60, camx = R + 2, camz = 62, camy = -5, camiy = -10, settle = 3, lead = 0}, function()
       CAP.tap({buttons = 'B', y = 127}, 3); CAP.wait(3)
       for t = 1, 40 do
         CAP.tap({x = -90, y = 90}, 1); CAP.wait(1)
@@ -49,9 +49,11 @@ gd.run(function()
     end
     local function ledge_opt(label, inp, btn, pct)
       if only and not (',' .. only .. ','):find(',' .. label .. ',', 1, true) then return end
-      CAP.reset{x2 = -60, camx = R - 1, camz = 52, camy = -12, camiy = -19, settle = 5}
+      CAP.reset{x2 = -60, camx = R - 4, camz = 52, camy = -4, camiy = -7, settle = 5}
       gd.set_percent(1, pct or 0)
+      CAP.follow(nil); CAP.fx, CAP.fy = nil, nil
       if not grab_ledge() then CAP.log('FAIL ' .. label .. ' no ledge'); return end
+      CAP.follow{dx = -8, dy = 11, z = 48, iy = 9}
       CAP.clip(label); CAP.rec(true)
       CAP.wait(36)                       -- hang
       local spec = {x = inp.x or 0, y = inp.y or 0, buttons = btn}
@@ -63,6 +65,7 @@ gd.run(function()
     ledge_opt('ledge_attack', {}, 'A')
     ledge_opt('ledge_roll', {}, 'R')
     ledge_opt('ledge_jump', {}, 'X')
+    CAP.follow(nil)
 
     CAP.log('DONE')
   end)
