@@ -5,6 +5,7 @@ local M = {}
 local FULL = 60   -- charge units: 60 = the cap (full), tiered by the chant below
 local SUPER_KI = 100                -- full ki + full charge = Super Kamehameha
 local VANISH_KI = 10                -- a Z-vanish counter costs this
+local KI_MAX = 100                  -- the meter's cap (combo.json meter): Down B hold charges only below it
 -- Charge model (owner, 2026-10-10: it must behave like the natives). Ground = Samus Charge Shot, air = Mewtwo Shadow Ball. Cited from the decomp:
 --  * B once enters the move (ftSs_SpecialN_Enter, 343): a Start phase with no input and no charging (ftSs_SpecialNStart_Anim), then the Hold loop (344)
 --    which charges BY ITSELF, one step every x20+1 frames (ftSs_SpecialNHold_Anim: mv.ss.unk3.x4 > x20 -> u.ss.x2230 += 1). Here: START frames of lag,
@@ -117,7 +118,10 @@ end
 function M.counter_frame(ctx)
   -- down B tap = Z-vanish counter, which costs ki: with too little ki it is only the blink (hold = ki charge)
   if ctx.self.action_frame == 2 and ctx.self.ki and ctx.self.ki < VANISH_KI and not ctx.input.special_held then ctx.go("auto") return end -- @KI
-  if ctx.self.action_frame == 12 and ctx.input.special_held then ctx.go("KiCharge") return end
+  -- hold = the XV2 Energy Charge (skill 591): usable only while ki < 100 (at full meter the hold stays the vanish blink)
+  local full = false
+  full = ctx.self.ki >= KI_MAX -- @KI
+  if ctx.self.action_frame == 12 and ctx.input.special_held and not full and not ctx.self.air then ctx.go("KiCharge") return end   -- no ki charge in the air (phase 4)
 end
 function M.riposte_enter(ctx)
   ctx.turn()  -- Z-vanish: reappear facing the attacker
@@ -130,8 +134,64 @@ end
 function M.kicharge_frame(ctx)
   if ctx.self.anim_ended then ctx.loop() end -- hold the charge clip until released
   if not ctx.input.special_held then ctx.go("auto") return end
+  if ctx.self.ki >= KI_MAX then ctx.go("auto") return end -- @KI the charge ends at a full meter (XV2: usable only while ki < 100)
   if ctx.ki then ctx.ki(0.8) end -- @KI 0 to 100 in about two seconds of holding
 end
+-- Homing dash strike (XV2 BAC 476, Side B out of the shield, ki cost on the route): it reuses rush_enter/rush_frame (the module is at the engine's 24-function cap);
+-- XV2 homes on the target for 14 frames (engine.homing_movement), which fighter Lua cannot read (no opponent query), so it dashes straight ahead.
+-- Up B = flight (owner 2026-10-11; XV2 BUKUU, the fly clips). Takeoff, then free steering with the control stick for as long as the ki lasts (phase 4), then the special
+-- fall (helpless, the usual landing lag, ledge snap): he stays edgeguardable. B ends it early; A or an aerial input cancels into the matching aerial (routes in combo.json,
+-- the FlightNair..FlightDair states): a hit that lands keeps normal air control afterwards, a miss ends in the special fall. The drain is FLY_DRAIN ki per frame
+-- (100 ki = 120 frames = 2 seconds); there is no entry cost; with less than FLY_MIN_KI the flight is the weak free 22-frame one so Up B always does something.
+-- No ki comes back during the flight (a gain is taken straight off again). Slots: age (frames flown), fly (1 ki-powered / 0 weak), pose (0 up, 1 forward, 2 back = which
+-- clip state he is in), kil (the ki after last frame's drain). The motion is plain Lua velocity on a geno.air state, so rewind, savestate and netplay replay it.
+local FLY_DRAIN = 0.8333
+local FLY_MIN_KI = 20
+local FLY_SPEED = 1.6            -- units per frame at full stick (owner 2026-10-11: twice the phase 3 speed; up to 192 units over a full 2 seconds)
+local FLY_WEAK_FRAMES = 22
+local FLY_WEAK_SPEED = 0.9
+local FLY_CAP = 240
+function M.flight_enter(ctx)
+  local s = ctx.state
+  s.age = 0
+  s.pose = 0
+  local powered = true
+  powered = ctx.self.ki >= FLY_MIN_KI -- @KI
+  s.fly = powered and 1 or 0
+  s.kil = ctx.self.ki -- @KI
+end
+function M.flight_frame(ctx)
+  local s = ctx.state
+  s.age = s.age + 1
+  if ctx.self.anim_ended then ctx.loop() end   -- the fly clip repeats for as long as he flies (the state's own next would end it)
+  local full = s.fly == 1
+  local sp = full and FLY_SPEED or FLY_WEAK_SPEED
+  if full then
+    local k = ctx.self.ki -- @KI
+    if k > s.kil + 0.005 then ctx.ki(s.kil - k) k = s.kil end -- @KI no ki comes back while flying
+    if k - FLY_DRAIN <= 0 then ctx.ki(-k) ctx.go("helpless") return end -- @KI out of ki: the special fall
+    ctx.ki(-FLY_DRAIN) -- @KI
+    s.kil = k - FLY_DRAIN -- @KI
+  end
+  if s.age >= (full and FLY_CAP or FLY_WEAK_FRAMES) or (s.age > 3 and ctx.input.special_pressed) then ctx.go("helpless") return end
+  local fx, fy = ctx.input.stick_fwd, ctx.input.stick_y
+  local m = math.sqrt(fx * fx + fy * fy)
+  if m < 0.2 then fx, fy = 0, 0.25 elseif m > 1 then fx, fy = fx / m, fy / m end   -- stick at rest: a slow climb
+  if s.age <= 8 then fy = math.max(fy, 0.9 * (1 - s.age / 10)) end                  -- the takeoff burst
+  ctx.velocity(fx * sp, fy * sp)
+  local want = 0
+  if fx > 0.4 and fy < 0.6 then want = 1 elseif fx < -0.4 and fy < 0.6 then want = 2 end
+  if want ~= s.pose and s.age > 8 then
+    s.pose = want
+    if want == 1 then ctx.go("FlightF") elseif want == 2 then ctx.go("FlightB") else ctx.go("FlightU") end
+  end
+end
+-- an aerial thrown out of the flight (FlightNair..FlightDair share the aerials' rows and scripts): when it ends, a connected hit means normal air control, a miss the special fall
+function M.flightair_frame(ctx)
+  if ctx.self.anim_ended then
+    if ctx.self.connected == 1 then ctx.go("auto") else ctx.go("helpless") end
+  end
+end
 -- Not called: names the cape reappear states so the offline reachability check sees them (the engine picks them by behaviour order).
-function M.it_targets(ctx) ctx.go("ITEnd") ctx.go("ITEndAir") ctx.go("RushCombo") ctx.go("KameSuper") end
+function M.it_targets(ctx) ctx.go("ITEnd") ctx.go("ITEndAir") ctx.go("RushCombo") ctx.go("KameSuper") ctx.go("Homing") ctx.go("Recovery") ctx.go("RecoveryAir") ctx.go("FlightNair") ctx.go("FlightFair") ctx.go("FlightBair") ctx.go("FlightUair") ctx.go("FlightDair") end
 return M

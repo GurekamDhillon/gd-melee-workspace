@@ -933,6 +933,50 @@ def probe_package(name, translate):
     return pkg
 
 
+
+# ---------------------------------------------------------------- Instant Transmission (skill 001_GOK_KUR)
+# XV2: the skill's BAC (entry 0) plays ONE effect, the common EEPK (vfx/cmn/BTL_CMN.eepk) effect 42 at frame 10 on b_C_Base. Effect 42 is a single TBIND asset: the ETR
+# trail file Act_WindShort.etr (BTL_CMN.tbind.emb entry 9, materials/textures BTL_CMN.trc.emm / .emb), three thin wind-streak ribbons:
+#   node 0  attached to b_L_Shoulder  offset (0.4, 0, 0.4) m   width 0.15 m  material 0 (nml_LR2_BF, alpha blend)
+#   node 1  attached to b_L_Knee      offset (0, 0, -0.3) m    width 0.10 m  material 1 (add_LR2_BF, additive)
+#   node 2  attached to b_R_Hand      offset (-0.25, 0, 0) m   width 0.05 m  material 1 (additive)
+# all: texture Wind.dds, ExtrudeDuration 20 frames (the trail grows while the bone moves), HoldDuration 12 (it persists and fades), Color1_Transparency keys 0 -> 1 (at 1) -> 0 (at 12).
+# The BAC has NO body-transparency, afterimage or screen event (checked: its kinds are Animation, Hitbox, Movement, Invulnerability, BCM Callback, Effect, Sound, Targeting Assistance,
+# Eye Movement and, in entries 1/6, one Function 7 for frames 0-70 that is not decoded): the body leaves through the clip itself.
+ITX = WT / '_build/xv2-it/fx'
+IT_NODES = (   # (package suffix, role the trail rides, offset in metres, width in metres, blend)
+    ('Shoulder', 'shoulder.L', (0.4, 0.0, 0.4), 0.15, 'alpha'),
+    ('Knee', 'lower_leg.L', (0.0, 0.0, -0.3), 0.10, 'add'),
+    ('Hand', 'hand.R', (-0.25, 0.0, 0.0), 0.05, 'add'),
+)
+IT_S = 11.4   # model units per XV2 metre (the Kamehameha's value)
+
+
+def it_wind_package(suffix, offset, width, blend):
+    """One ETR node as a live-particle trail: a particle per frame for the extrude time, left where it is born (follow none), each living the 12 hold frames on XV2's alpha keys."""
+    pkg = Pkg('P_TrailGokuITWind' + suffix)
+    pkg.texture('trc_Wind', ITX / 'BTL_CMN.trc.emb/Wind.png')
+    life = 12
+    alpha = [[0.0, 0, 0, 0.0], [1.0, 0, 0, 1.0 / life], [0.0, 0, 0, 1.0]]   # Color1_Transparency: 0 at 0, 1 at frame 1, 0 at frame 12
+    e = fx_particle('wind_' + suffix.lower(), life, width * IT_S, (1.0, 1.0, 1.0), 1.0, [0.0, 0.0, 0.0], [0.0, 0.0, 0.0],
+                    {'start': 0, 'duration': 20, 'one_time': False, 'rate': 1.0}, [fx_sampler(0, 'trc_Wind', (0.0, 0.0))], alpha_keys=alpha,
+                    blend=blend, ribbon={'taper': 1.0, 'uv_per_unit': 0.12, 'ends': [0.0, 0.15]})
+    e['follow'] = 'none'
+    pkg.emitters.append(e)
+    finish_package(pkg)
+    return pkg
+
+
+def it_main():
+    out = []
+    for suffix, role, off, w, blend in IT_NODES:
+        p = it_wind_package(suffix, off, w, blend)
+        p.write()
+        out.append(p.name)
+        print('%-28s %3d emitters %2d textures' % (p.name, len(p.emitters), len(p.textures)))
+    return out
+
+
 def main():
     pk = []
     if '--probe' in sys.argv:
@@ -963,4 +1007,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    if '--it' in sys.argv:
+        it_main()
+    else:
+        main()

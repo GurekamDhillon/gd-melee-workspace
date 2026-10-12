@@ -44,7 +44,7 @@ class Adapter(unittest.TestCase):
         source=adapter.Source(ROOT/'ports/goku-xv2/ir/goku.xv2.ir.json')
         rs=adapter.row_specs(source)['ThrowF']
         # 2026-10-08 hurt/throw pass (tools/rowmap.py) replaced the 5x crop of BAC 601 with a 1x crop of the lift-and-toss f16-45
-        self.assertEqual((rs['start'],rs['frames']),(16,30))
+        self.assertEqual((rs['start'],rs['frames']),(0,40))   # remake phase 1: ThrowF is the picked ki-blast clip at its own speed (slot 36)
         self.assertNotIn('time_factor',rs)
         self.assertEqual(rs.get('events',[]),[],'BAC events must not override the authored crop')
         chest=[p for p in source.parity_rows if p['here'].endswith('/b_C_Chest')]

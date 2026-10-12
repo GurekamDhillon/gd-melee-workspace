@@ -3,7 +3,7 @@
   "group": "1 Locomotion (always floating)",
   "slot": "Idle",
   "rows": "Wait, Rebirth, RebirthWait, Sleep",
-  "current": "GOK_BAS_STAND_S (Sleep still ground STAND)",
+  "current": "GOK_BAS_STAND (ground idle, planted; phase 3: no hover)",
   "role": "Resting stance; must loop, tiny bob, readable as hovering",
   "candidates": [
    {
@@ -15,7 +15,7 @@
   "combo_role": "",
   "status": "KEEP",
   "gap_look": [],
-  "note": ""
+  "note": "Owner 2026-10-11: no hover; walking and idle use the grounded XV2 clips with the feet exactly on the floor."
  },
  {
   "group": "1 Locomotion (always floating)",
@@ -64,11 +64,15 @@
   "role": "Dash burst before Run",
   "candidates": [
    {
+    "clip": "xGOK_BAS_RUN",
+    "why": "owner direction 2026-10-11 (phase 3: no hover, grounded clips): the start of the run cycle, feet on the floor. XV2 has no ground dash clip; BOOST_F_00 is a flight clip."
+   },
+   {
     "clip": "xGOK_BAS_BOOST_F_00",
     "why": "owner: \"initial dash\" (row 12 Dash)."
    }
   ],
-  "recommended": "xGOK_BAS_BOOST_F_00",
+  "recommended": "xGOK_BAS_RUN",
   "combo_role": "",
   "status": "OK",
   "gap_look": [],
@@ -99,6 +103,10 @@
   "role": "Turnaround; the earlier note \"XV2 has no turn\" is wrong, CMN has one",
   "candidates": [
    {
+    "clip": "xGOK_BAS_STAND",
+    "why": "owner direction 2026-10-11 (phase 3): the ground idle with an authored 180-degree yaw (XV2 has no turn clip)."
+   },
+   {
     "clip": "xGOK_BAS_STAND_S",
     "why": "owner: \"turn around\" (row 10 Turn). Turn (wait)."
    },
@@ -107,7 +115,7 @@
     "why": "owner: \"turn run\" (row 11 TurnRun). Turn while running (TurnRun only; excluded for RunBrake)."
    }
   ],
-  "recommended": "xGOK_BAS_STAND_S",
+  "recommended": "xGOK_BAS_STAND",
   "combo_role": "",
   "status": "OK",
   "gap_look": [
@@ -298,15 +306,15 @@
     "why": "owner: \"dodge/dash backward, keeps facing\" (row 43 EscapeB). Roll back."
    }
   ],
-  "recommended": "xGOK_BAS_STEP_F_S",
+  "recommended": "",
   "combo_role": "",
-  "status": "PARTIAL",
+  "status": "KEEP",
   "gap_look": [
    "xGOK_BAS_STEP_R_S",
    "xGOK_GRD_L_L_S",
    "xGOK_GRD_L_R_S"
   ],
-  "note": "Spot dodge and air dodge: GAP. xGOK_BAS_STEP_L_S is \"unclear: tiptoeing sideways\" (rows 41, 44): excluded."
+  "note": "Owner 2026-10-11 (phase 4): rolls and the spot dodge are Instant Transmission teleports, like Mewtwo (XV2 ESC_KUR vanish / reappear, intangible gap); the air dodge is unchanged. Not a clip pick."
  },
  {
   "group": "2 Defence",
@@ -853,22 +861,22 @@
   "candidates": [
    {
     "clip": "xCMN_BAS_UKEMI_F",
-    "why": "owner: \"aerial recovery/tumble exit into a dragon dive / flying dash\" (rows 188, 196, 200 DownForward*, PassiveStandF). New find: tumble exit into a dragon dive / flying dash."
+    "why": "SHELVED for Side B (owner 2026-10-11). TUMBLE-EXIT candidate: XV2 hit-recovery / tumble exit; used as the forward getup / tech roll (slot 49). owner: \"aerial recovery/tumble exit into a dragon dive / flying dash\" (rows 188, 196, 200 DownForward*, PassiveStandF). New find: tumble exit into a dragon dive / flying dash."
    },
    {
     "clip": "xGOK_BAS_BOOST_F_00",
     "why": "owner: \"initial dash\" (row 12 Dash). Alternative: dash start."
    }
   ],
-  "recommended": "xCMN_BAS_UKEMI_F",
+  "recommended": "",
   "combo_role": "route: Rush>RushCombo; XV2 BAC 426/427 use ATC_022/023",
-  "status": "OK",
+  "status": "KEEP",
   "gap_look": [
    "xGOK_ATC_021_S",
    "xGOK_ATC_022",
    "xGOK_ATC_023"
   ],
-  "note": ""
+  "note": "Owner decision (2026-10-11): Side B is the XV2 knockback attack (Heavy+Blast, BAC 419: BOOST_F_00 > STEP_F_S > ATC_013), i.e. the existing Rush row. xCMN_BAS_UKEMI_F is SHELVED for Side B: in XV2 it is a hit-recovery / tumble exit, kept here as a TUMBLE-EXIT candidate (floor getup / tech roll, slot 49) only. The homing dash strike (BOOST_F_00 > ATC_008, BAC 476) is Side B out of the shield: state Homing."
  },
  {
   "group": "6 Specials",
@@ -892,17 +900,21 @@
   "group": "6 Specials",
   "slot": "Down B counter / ki charge",
   "rows": "SpecialLw, SpecialAirLw, KiCharge",
-  "current": "ESC_KUR_C x0.6 + ATC_008 / BLT_POW_C",
+  "current": "ESC_KUR_C x0.39 (tap: Z-vanish counter) / APL_SPA_KTN_C (hold: ki charge)",
   "role": "Counter and ki charge",
   "candidates": [
+   {
+    "clip": "xAPL_SPA_KTN_C",
+    "why": "owner decision 2026-10-11 (research section 12, faithful to the XV2 data): Down B hold = ki charge on XV2 Energy Charge (skill 591, APL_SPA_KTN_C, 140 frames), usable only while ki < 100. Replaces the CMN_BAS_HIRAMEKI recommendation (that stays the Taunt pick). Floating variant for the picker: xAPL_SPA_KTN_S_C."
+   },
    {
     "clip": "xCMN_BAS_HIRAMEKI",
     "why": "owner: \"charge-up: looks great\" (rows 239, 240 AppealSR/SL). Ki charge. The Counter keeps its designed animation (owner decision)."
    }
   ],
-  "recommended": "xCMN_BAS_HIRAMEKI",
+  "recommended": "xAPL_SPA_KTN_C",
   "combo_role": "",
-  "status": "PARTIAL",
+  "status": "OK",
   "gap_look": [
    "xCMN_BLT_POW_GOK",
    "xCMN_BLT_POW_C"

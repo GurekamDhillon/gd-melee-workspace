@@ -1,8 +1,7 @@
-# COMBO (geno 11): XV2 light string hit 4. Clip GOK_ATC_009 = BAC GOK_PLAYER 303 (BCM 0/18/3/3/3). BAC hit f12 dur 4.
-# The step is held through the hit window (XV2's movement record ends at the hit frame; held 4 frames longer).
-# Limb: foot.R reaches +10.47 Z, +3.47 Y at f12 (combo/limbs.py). String hit, as Light3.
+# HB-SAMPLE (remake phase 2, 2026-10-11): a generated STARTING POINT, not an authored hitbox. Spheres ride the leading limb chain (tip, middle, inner),
+# sized from the mesh; timing, damage and reaction are derived from the XV2 hit entry (tools/remake_samples.py, REMAKE-SAMPLES.md). Edit it in the Workbench.
+# XV2 hit entry 303; limb foot.R
 PUT ANIM_RATE 1.0
-# XV2 BAC Movement event f6 dur 6 (BAC 303); the step is GROUND_VEL x FACING, a design speed (the BAC record's speed is not decoded)
 wait_until 6
 GET ra_f:0 FACING
 MUL ra_f:0 1.2
@@ -12,14 +11,17 @@ GET ra_f:0 FACING
 MUL ra_f:0 1.2
 PUT GROUND_VEL ra_f:0
 wait_until 12
-hitbox slot=0 joint=@FOOT_R@ damage=4 size=3.6 x=0 y=0 z=0 angle=361 kbg=60 fkb=10 bkb=0
-hitbox slot=1 joint=@CHEST@ damage=4 size=3.0 x=0 y=0 z=0 angle=361 kbg=60 fkb=10 bkb=0
-HBSTUN 3 15
 GET ra_f:0 FACING
 MUL ra_f:0 1.2
 PUT GROUND_VEL ra_f:0
+wait_until 15
+hitbox slot=0 joint=@FOOT_R@ damage=7 size=1.4 x=-0.03949 y=-0.4019 z=0.8439 angle=361 kbg=60 fkb=10 bkb=0
+hitbox slot=1 joint=@LEG_R@ damage=6 size=2.52 x=0.04702 y=-1.652 z=-0.1287 angle=361 kbg=60 fkb=10 bkb=0
+hitbox slot=2 joint=@UPLEG_R@ damage=5 size=2.52 x=-0.1149 y=-1.493 z=-0.08663 angle=361 kbg=60 fkb=10 bkb=0
+HBSTUN 7 15
 wait_until 16
 PUT GROUND_VEL 0
+wait_until 19
 clear_hitboxes
 wait_until 39
 iasa

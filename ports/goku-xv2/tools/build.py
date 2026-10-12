@@ -188,9 +188,9 @@ def source_losses(ir, config):
     for spec in config['moves']+config['special_adaptations']:
         parity, move, scripts = move_source(ir, spec['parity'])
         if spec.get('source_candidate_windows'):
-            losses.append({'move':spec['name'],'frame':spec['windows'][0][0],
+            losses.append({'move':spec['name'],'frame':(spec['windows'] or spec.get('strike') or [[0,0]])[0][0],
                            'what':'BAC candidate timing adapted to the exported striking pose',
-                           'why':spec['pose_review'],'source':'native bank pose review',
+                           'why':spec.get('pose_review','HB-NONE (remake): no hitbox; timing metadata only'),'source':'native bank pose review',
                            'source_windows':spec['source_candidate_windows'],'destination_windows':spec['windows']})
         if move['id'] in seen:
             continue
@@ -257,6 +257,19 @@ FX_EVENTS = {
 }
 
 
+# The Instant Transmission rolls (phase 4). XV2 (skill 001_GOK_KUR, BAC entry 0) plays the common effect 42 at frame 10: three wind-streak ribbons (Act_WindShort.etr) on the
+# left shoulder, left knee and right hand with the offsets below (metres x 11.4). Spot dodge: the same at frame 8 (its hidden gap is shorter).
+def _it_calls(frame):
+    S = 11.4
+    return [dict(frame=frame, package='P_TrailGokuITWind' + sfx, bone=role, offset=[o * S for o in off])
+            for sfx, role, off, w, blend in (('Shoulder', 'shoulder.L', (0.4, 0.0, 0.4), 0.15, 'alpha'), ('Knee', 'lower_leg.L', (0.0, 0.0, -0.3), 0.10, 'add'),
+                                             ('Hand', 'hand.R', (-0.25, 0.0, 0.0), 0.05, 'add'))]
+
+
+ROW_FX = {'EscapeF': (233, 'moves/escape_f.genoasm', _it_calls(10)), 'EscapeB': (234, 'moves/escape_b.genoasm', _it_calls(10)),
+          'EscapeN': (235, 'moves/escape_n.genoasm', _it_calls(8))}
+
+
 def write_fx(package, fighter, plan, cfg):
     """Copy the original effect packages (tools/fx_build.py) into the package and bind them (geno.md 20.3)."""
     src = ROOT/'_build/goku-xv2/fx'
@@ -289,6 +302,15 @@ def write_fx(package, fighter, plan, cfg):
                                    **({'end_frame': c[4][1]} if isinstance(c[4], tuple) else {}),
                                    # a 6th element names a second joint: the effect origin is the MIDPOINT of the two (geno.md 20.3 "joint2"), the axes the first joint's
                                    **({'joint2': plan['roles'][c[5]][0]} if len(c) > 5 else {})) for c in calls]})
+    # rows that are not Geno states (the Instant Transmission rolls): a binding is matched by subaction, so the row's index is enough (geno.md 20.3)
+    from tools.geno import report as _rep
+    msub = _rep.motion_subactions()
+    for name, (motion, script_, calls) in ROW_FX.items():
+        row = msub[motion][1]
+        entries.append({'state': name, 'subaction': row, 'clock': 'animation', 'script': script_,
+                        'calls': [dict({'frame': c['frame'], 'macro': 'goku_' + c['package'][11:].lower(), 'effect': c['package'], 'package': c['package'], 'bone': c['bone'],
+                                        'joint': plan['roles'][c['bone']][0], 'offset': c['offset'], 'rotation': [0, 0, 0], 'scale': 1.0, 'follow': True, 'when': [],
+                                        'end_event': 'emitter_life'}) for c in calls]})
     (dst/'fx_bindings.json').write_text(json.dumps({'geno_fx_bindings': 1, 'fighter': 'goku-xv2', 'host': 'mario', 'unit_scale': 1.0,
                                                     'states': entries}, indent=1), encoding='utf-8')
     fighter['fx_bindings'] = 'fx/fx_bindings.json'
@@ -326,7 +348,7 @@ def write_presentation(package, fighter):
     if not all((art/n).exists() for n in ('icon.png', 'portrait.png', 'stock.png')):
         print('presentation: _build/goku-xv2/presentation/*.png missing (run tools/presentation_art.py in Blender); no own select art')
         return
-    tool = ROOT/'melee/pc/tools/png2gx.py'
+    tool = Path(os.environ.get('GW_MELEE') or ROOT/'melee')/'pc/tools/png2gx.py'
     names = {}
     for key, png, fmt in (('icon', 'icon.png', 'rgb5a3'), ('portrait', 'portrait.png', 'rgb5a3'), ('stock', 'stock.png', 'rgba8')):
         name = f'GnGokuXv2_{key}.gxtex'
@@ -381,7 +403,7 @@ def apply(package, art_build, ir_path=None):
     lib = AUTHOR/'clip-library.json'
     if lib.exists():  # LAB CLIPS library: unbound declared rows 303.. (geno.md fighter.rows)
         fighter.setdefault('fighter', {})['rows'] = [c['name'] for c in load(lib)['clips']] + \
-            [n for n in ('ITEnd', 'KiCharge', 'KameStore1', 'KameStore2', 'KameStore3', 'KameStore4', 'KameThin', 'KameMax', 'KameSuper', 'RushCombo') if n in plan_clip_names(package)]
+            [n for n in ('ITEnd', 'KiCharge', 'KameStore1', 'KameStore2', 'KameStore3', 'KameStore4', 'KameThin', 'KameMax', 'KameSuper', 'RushCombo', 'Homing', 'FlightUp', 'FlightF', 'FlightB', 'FlightNair', 'FlightFair', 'FlightBair', 'FlightUair', 'FlightDair') if n in plan_clip_names(package)]
     if cfg.get('cape'):
         fighter['cape'] = cfg['cape']  # Instant Transmission (geno.cape) parameters
     for st in fighter.get('states', []):  # states that name a declared clip get its own row number
@@ -457,6 +479,8 @@ def apply(package, art_build, ir_path=None):
                       'pose_review':spec.get('pose_review'),
                       'words_sha256':hashlib.sha256(destination.read_bytes()).hexdigest()})
     fighter.update({key:cfg[key] for key in ('lua','states','specials','articles','jumps')})
+    if cfg.get('controls'):
+        fighter['controls'] = cfg['controls']   # per-fighter CSS layouts/extras (docs/geno.md section 26): Goku's layout B (Y -> D-pad Down = the blast input)
     import copy
     fighter['states'] = copy.deepcopy(cfg['states'])
     for st in fighter['states']:

@@ -10,6 +10,7 @@ import hashlib
 import io
 import os
 import json
+import shutil
 import math
 from pathlib import Path
 import re
@@ -321,7 +322,11 @@ def sample_track(keys, frames, rotation=False):
     return np.stack([np.interp(frames,times,values[:,i]) for i in range(3)],axis=1)
 
 
-WAIT_CLIP = 1   # GOK_BAS_STAND_S: XV2's aerial ("_S" = sky) idle, the floating counterpart of GOK_BAS_STAND (0). Alternates: 88 STAND_00_S, 89 STAND_01_S
+WAIT_CLIP = 0   # GOK_BAS_STAND: XV2's ground idle (remake phase 3, owner 2026-10-11: no hover; the floating idle GOK_BAS_STAND_S is clip 1)
+
+
+ROLL_DISTANCE=27.3   # world units a roll travels: Goku's own earlier roll (owner 2026-10-11: 52, Mewtwo's measured reach, was too long); Mario's is 33
+REMAKE_REPORT=[]   # filled by row_specs: what remake_apply did to each row
 
 
 def row_specs(source):
@@ -351,12 +356,12 @@ def row_specs(source):
     # Locomotion pass 2026-10-08 (owner: "no dashback/turn around animation"). XV2 has no turn,
     # crouch or ground-dash clips; these are source crops plus authored yaw/blends (PARITY.md).
     W,RUN,JUMP,BOOST0,BOOST2=WAIT_CLIP,3,4,17,19
-    out['Wait']['hover_fixed']=True;out['Wait']['status']='source: GOK_BAS_STAND_S (XV2 aerial/floating idle), looped; one constant hover lift keeps its float bob (frame 0 at 2.0 up, loop low 1.58)'   # keep the clip's own 0.4-unit float bob: one constant lift, frame 0 at HOVER_Y
+    out['Wait']['status']='source: GOK_BAS_STAND (XV2 ground idle), looped; feet planted on the floor (remake phase 3)'
     def ean(n):return 'clip:'+EAN+'/'+str(n)
     direct('Turn',W,False,12,0,'authored: Wait pose, 180-degree yaw ramp');out['Turn'].update(hold_source=0,yaw=-180)
-    direct('TurnRun',BOOST2,False,18,8,'authored: boost-stop skid crop + 180-degree yaw, eased into Run');out['TurnRun'].update(time_factor=.6,yaw=-180,blend_to=ean(RUN),blend_frames=5)
-    direct('Dash',BOOST0,False,14,0,'source crop: GOK_BAS_BOOST_F_00 launch (f0-7) eased into Run');out['Dash'].update(time_factor=.55,blend_to=ean(RUN),blend_frames=5)
-    direct('RunBrake',BOOST2,False,16,6,'source crop: GOK_BAS_BOOST_F_02 stop, eased into Wait');out['RunBrake'].update(time_factor=.75,blend_to=ean(W),blend_frames=5)
+    direct('TurnRun',RUN,False,18,0,'authored: GOK_BAS_RUN crop + 180-degree yaw (grounded; phase 3)');out['TurnRun'].update(yaw=-180)
+    direct('Dash',RUN,False,14,0,'source crop: GOK_BAS_RUN f0-13, the start of the run (XV2 has no ground dash; the boost launch is a flight clip; phase 3)')
+    direct('RunBrake',W,False,16,0,'source crop: GOK_BAS_STAND (XV2 has no ground skid; the boost brake is a flight clip; phase 3)')
     direct('Squat',JUMP,False,7,50,'source crop: GOK_BAS_JUMP landing crouch f50-56')
     direct('SquatWait',JUMP,True,30,56,'authored hold of the crouch (GOK_BAS_JUMP f56)');out['SquatWait']['hold_source']=56
     direct('SquatRv',JUMP,False,10,56,'source crop: GOK_BAS_JUMP f56-65 rise, eased into Wait');out['SquatRv'].update(blend_to=ean(W),blend_frames=5)
@@ -426,7 +431,7 @@ def row_specs(source):
     for row,frames,tf in [('KameTap',30,1.4),('KameMid',45,1.0),('KameFull',60,.8)]:
         out[row]={**charge,'frames':frames,'loop':False,'hold_source':None,'start':48,'time_factor':tf,'events':[],
                   'status':'PICK provisional (skill KMH BAC 12): fire from f48 at x%g, %d frames'%(tf,frames)}
-    out['Rush']['frames']=max(40,out['Rush']['frames'])
+    out['Rush']['frames']=max(66,out['Rush']['frames'])   # remake phase 2: the whole XV2 knockback attack (BOOST_F_00 > STEP_F_S > ATC_013, strike at f40-43), so its sample hitbox lands inside the row
     # Instant Transmission (up B, geno.cape): XV2 evasive skill 001_GOK_KUR. Start = the vanish f0-18 over 26 frames
     # (the cape decides at 26); ITEnd = the reappear (f70-106) over 36 frames.
     kur=None
@@ -478,6 +483,37 @@ def row_specs(source):
     rowmap.apply(out,byname.get,None)
     for row in rowmap.ROWS:
         if row in out:out[row]['library']=True   # CMN clips may scale bones; tolerated as in the library
+    # REMAKE phase 1 (2026-10-11): the owner's picks (remake-picks.json, the LAB picker's file) go on the rows remake-rows.json lists; a row whose
+    # clip already is the pick keeps its tuned crop. GAP slots have no pick and change nothing.
+    import remake_apply
+    REMAKE_REPORT[:]=remake_apply.apply(out,source,byname.get,EAN,rowmap.ALIASES)
+    # Homing dash strike (XV2 BAC 476, Guard+Heavy): BOOST_F_00 f0-19 then ATC_008 from f20, 66 frames (the BAC's own two bindings, played at speed 1).
+    # Entered from the shield by a combo route (combo.json Guard>Homing); a row of its own so the clip chain is the one XV2 plays.
+    # Flight aerials (phase 4): the aerial rows again, as declared rows of their own, for the Geno states FlightNair..FlightDair (their script and row are the aerial's)
+    for new,base in (('FlightNair','AttackAirN'),('FlightFair','AttackAirF'),('FlightBair','AttackAirB'),('FlightUair','AttackAirHi'),('FlightDair','AttackAirLw')):
+        if base in out:out[new]={**out[base],'ground_as':base,'status':'flight aerial: the row of '+base}
+        if base in out and out[new].get('cross_port'):   # the cross-port report is looked up by row name: give the copy its own folder (the solved clip stays the original's)
+            src=ROOT/'_build/goku-xv2/cross-port'/base;dst=ROOT/'_build/goku-xv2/cross-port'/new;dst.mkdir(parents=True,exist_ok=True)
+            for f in src.glob('*.json'):shutil.copyfile(f,dst/f.name)
+    # Rolls are Instant Transmission teleports (phase 4, owner 2026-10-11, like Mewtwo's): the XV2 vanish pose (ESC_KUR f0-18), a hidden gap, the reappear pose (f70-106).
+    # Melee timing from Mewtwo's own roll measured in this engine (tools/lua roll_probe.lua): 37 frames, intangible f5-22, travel 52; the body moves inside the hidden gap.
+    kur=byname.get('GOK_ESC_KUR_C')
+    if kur:
+        def bk(fr,st,en):return {'frame':fr,'args':{'binding':{'clip':kur,'start_frame':st,'end_frame':en,'speed':1}}}
+        for row,sign in (('EscapeF',1.),('EscapeB',-1.)):
+            out[row]={'clip':kur,'loop':False,'frames':37,'start':0,'events':[bk(0,0,18),bk(5,70,106)],'library':True,'root_motion':True,
+                      'root_path':[[0,0.,0.,0.],[.135,0.,0.,0.],[.42,0.,0.,sign*ROLL_DISTANCE],[1,0.,0.,sign*ROLL_DISTANCE]],
+                      'status':'PICK (owner 2026-10-11, phase 4): Instant Transmission roll: ESC_KUR vanish f0-18, hidden f5-22 (the body travels %d units inside the gap), reappear f70-106; 37 frames like the Mewtwo roll'%ROLL_DISTANCE}
+        out['EscapeN']={'clip':kur,'loop':False,'frames':24,'start':0,'events':[bk(0,0,18),bk(3,70,106)],'library':True,
+                        'status':'PICK (owner 2026-10-11, phase 4): Instant Transmission spot dodge: vanish in place, hidden f3-16, reappear'}
+    for row,clipname,frames in (('FlightUp','GOK_BAS_BUKUU_UP',50),('FlightF','GOK_BAS_BUKUU_F_S',40),('FlightB','GOK_BAS_BUKUU_B_S',40)):
+        if byname.get(clipname):   # Up B flight (phase 3): the XV2 fly clips, looped; the air has no ground contact
+            out[row]={'clip':byname[clipname],'loop':True,'frames':frames,'start':0,'status':'PICK (owner 2026-10-11): Up B flight, XV2 %s looped'%clipname}
+    b0,a8=byname.get('GOK_BAS_BOOST_F_00'),byname.get('GOK_ATC_008')
+    if b0 and a8:
+        bind=lambda c,fr:{'frame':fr,'args':{'binding':{'clip':c,'start_frame':0,'end_frame':source.clips[c]['frames']-1,'speed':1}}}
+        out['Homing']={'clip':b0,'loop':False,'frames':66,'start':0,'events':[bind(b0,0),bind(a8,20)],
+                       'status':'PICK (owner, remake phase 1): XV2 BAC 476 homing dash strike (Guard+Heavy): BOOST_F_00 f0-19, ATC_008 from f20; 66 frames'}
     gameplay_path=SG.path()
     if gameplay_path.exists():
         gameplay=json.loads(gameplay_path.read_text())
@@ -617,15 +653,18 @@ def splice_preview(recipe,file=None):
     return 0
 
 
-HOVER_Y = 2.0   # model units (his height is 20): the fixed hover of the idle/move rows, one place to tune
-HOVER_ROWS = ('Wait', 'Walk', 'Dash', 'Run', 'Turn', 'Guard', 'KneeBend', 'Landing', 'Appeal', 'Rebirth', 'Entry', 'Sleep', 'KiCharge', 'Counter')
-ANCHOR_ROWS = ('Squat', 'Attack', 'Catch', 'Throw', 'Escape', 'Down', 'Passive', 'Ottotto', 'Kame', 'Riposte', 'Rush', 'CliffAttack', 'CliffEscape',
-               'CliffClimb', 'LandingAir', 'LandingFallSpecial', 'Item', 'Hammer', 'Furafura', 'ShieldBreak', 'Bury')
+# 2026-10-11 remake phase 3 (owner: no hover; grounded clips, feet on the floor exactly): every standing ground row is PLANTED: on every frame its pelvis track is shifted so the
+# lowest skinned vertex sits exactly on the floor (never above, never below). Still anchored (frame-0 anchor, lifted only on frames that would sink): aerial attack rows,
+# shield-break flight, the hanging/climbing ledge rows, items and the bury rows. HOVER_Y is gone.
+PLANT_ROWS = ('Wait', 'Walk', 'Dash', 'Run', 'Turn', 'Guard', 'KneeBend', 'Landing', 'Appeal', 'Rebirth', 'Entry', 'Sleep', 'KiCharge', 'Counter',
+              'Squat', 'Attack', 'Catch', 'Throw', 'Escape', 'Ottotto', 'Kame', 'Riposte', 'Rush', 'Homing', 'Furafura', 'Down', 'Passive',
+              'ShieldBreakDown', 'ShieldBreakStand')
+ANCHOR_ROWS = ('AttackAir', 'ShieldBreak', 'Bury', 'CliffAttack', 'CliffEscape', 'CliffClimb', 'Item', 'Hammer')
 NO_GROUND = ('EscapeAir', 'Thrown', 'Capture', 'CliffWait', 'CliffCatch', 'CliffJump', 'Recovery', 'ITEnd', 'Jump', 'Fall', 'Damage', 'Dead', 'Barrel', 'Warp', 'PassiveWall', 'PassiveCeil', 'Pass')
 
 
 GROUND_MODES_PATH = Path(__file__).resolve().parent.parent / 'ground_modes.json'   # per-row overrides written by the Geno Workbench (schema ground-modes/1)
-GROUND_MODE_NAMES = {'hover': 'hover', 'anchored': 'anchor', 'anchor': 'anchor', 'none': None}
+GROUND_MODE_NAMES = {'plant': 'plant', 'hover': 'plant', 'anchored': 'anchor', 'anchor': 'anchor', 'none': None}
 
 
 def ground_overrides():
@@ -636,12 +675,12 @@ def ground_overrides():
     rows = json.loads(p.read_text(encoding='utf-8-sig')).get('rows', {})
     for row, spec in rows.items():
         if spec.get('mode') not in GROUND_MODE_NAMES:
-            raise ValueError("ground_modes.json: row %s has unknown mode %r (use hover, anchored or none)" % (row, spec.get('mode')))
+            raise ValueError("ground_modes.json: row %s has unknown mode %r (use plant, anchored or none)" % (row, spec.get('mode')))
     return rows
 
 
 def ground_mode(name):
-    """'hover' | 'anchor' | None. An exact-name entry in ground_modes.json wins; otherwise the legacy prefix tables decide."""
+    """'plant' | 'anchor' | None. An exact-name entry in ground_modes.json wins; otherwise the legacy prefix tables decide."""
     spec = ground_overrides().get(name)
     if spec is not None and os.environ.get('GOKU_GROUND') != '0':
         return GROUND_MODE_NAMES[spec['mode']]
@@ -649,15 +688,15 @@ def ground_mode(name):
 
 
 def _legacy_ground_mode(name):
-    """'hover' | 'anchor' | None (aerial, hanging, attached or flying rows keep the frame-0 anchor)."""
+    """'plant' | 'anchor' | None (aerial, hanging, attached or flying rows keep the frame-0 anchor)."""
     if os.environ.get('GOKU_GROUND') == '0':  # evidence builds only: the pre-fix frame-0 anchor
         return None
     if name.startswith(NO_GROUND):
         return None
     if name.startswith(ANCHOR_ROWS):
         return 'anchor'
-    if name.startswith(HOVER_ROWS):
-        return 'hover'
+    if name.startswith(PLANT_ROWS):
+        return 'plant'
     return None
 
 
@@ -676,6 +715,7 @@ def _legacy_ground_blend(name):
     the idle it came from and goes to hovers HOVER_Y up, so every grounded move snapped at its ends. A blended end keeps the lowest point at HOVER_Y on the
     row's first/last frame and ramps (smoothstep, BLEND_FRAMES) to the floor anchor, so the strike frames stay on the floor. Rows that start or end lying,
     hanging, held or in the air (knockdown, ledge, items, aerials, the held-catch loop) keep that end as it was."""
+    return (False, False)   # remake phase 3: no hover stance to blend from or to
     if name.startswith(('AttackAir', 'Attack100')):return (False, False)
     if name.startswith('Attack'):return (True, True)
     if name in ('Catch', 'CatchDash'):return (True, False)
@@ -847,17 +887,8 @@ def animations(source,mesh,rows,splices=None):
             # track by a smooth per-frame lift (never a drop): HOVER rows (idle, walk, run, turn, crouch, shield) keep the lowest point HOVER_Y above the floor so the flight
             # stance never sinks; ANCHOR rows (attacks, grabs, throws, escapes, knockdown, ledge) keep the frame-0 anchor and are lifted only on frames that would sink.
             mins=frame_mins(names,rest,rotations,hip,mesh,count)
-            shift=lift_envelope((HOVER_Y if mode=='hover' else 0.)-mins)
-            if mode=='hover' and rs.get('hover_fixed'):shift=np.full(count,HOVER_Y-mins[0])   # one constant lift: the clip's float bob survives, f0 matches the blend targets   # per-frame, smooth, never lowers the pose below its frame-0 anchor
-            if mode=='anchor':
-                b_in,b_out=ground_blend(gname)
-                if (b_in or b_out) and count>2*BLEND_FRAMES:
-                    t=np.arange(count);w=np.zeros(count)
-                    ramp=lambda x:(lambda u:u*u*(3-2*u))(np.clip(x,0.,1.))
-                    if b_in:w=np.maximum(w,1-ramp(t/BLEND_FRAMES))
-                    if b_out:w=np.maximum(w,1-ramp((count-1-t)/BLEND_FRAMES))
-                    # convex mix of two lowest-point targets that are both >= 0, so the row can still never sink
-                    shift=(1-w)*shift+w*(HOVER_Y-mins)
+            if mode=='plant':shift=-mins                      # remake phase 3: the lowest vertex exactly on the floor, every frame
+            else:shift=lift_envelope(0.-mins)                 # anchor: never below the floor, lifted only where it would sink
             hip[:,1]+=shift;ground-=float(shift.max())
             ground_report=dict(ground_mode=mode.upper(),ground_blend=list(ground_blend(gname)) if mode=='anchor' else None,ground_shift=float(shift.max()),ground_shift_frame0=float(shift[0]),ground_lowest_before=float(mins.min()))
         else:ground_report={}
@@ -936,6 +967,7 @@ def main(argv=None):
     out.mkdir(parents=True,exist_ok=True);source=Source(args.ir);mesh=build_mesh(source,args.height)
     assert mesh['report']['weighted_bones']<=64 and len(mesh['names'])+3<=128
     rs=row_specs(source)
+    write(PORT/'remake-applied.json',{'schema':'goku-remake-applied/1','rows':REMAKE_REPORT})
     # LAB CLIPS library (2026-10-08): every body clip of the source (character, common and skill EANs),
     # unbound to any input. Bank name = 'x' + source name (<= 31 chars); geno.json fighter.rows lists them.
     browse=[]

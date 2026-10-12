@@ -1,3 +1,4 @@
+# HB-SAMPLE (remake phase 2): carried unchanged from the earlier hand-authored cross-port bair spheres (owner: looks and works as intended).
 # bair: cross-port back aerial, owner choice (2026-10-09): no suitable XV2 back attack. Hand-authored parametric hitboxes on the lower and upper leg.
 # Sizes and offsets are in script units (build.py multiplies by the model scale). Damage 11, angle 361, KBG 100, BKB 12, hitboxes f6-18, IASA f29.
 PUT ANIM_RATE 1.0

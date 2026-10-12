@@ -33,6 +33,7 @@ ART = ROOT / '_build/goku-xv2' / os.environ.get('GOKU_AUTHOR', 'author-source') 
 # a reduced splice-preview build writes its audit inside its own directory (the shipped build's stays in _build/goku-xv2; FIDELITY.md reads that)
 OUT = (ROOT / '_build/goku-xv2/ground-audit.json' if os.environ.get('GOKU_AUTHOR', 'author-source') == 'author-source'
        else ROOT / '_build/goku-xv2' / os.environ['GOKU_AUTHOR'] / 'reports/ground-audit.json')
+PLANT_EPS = 0.6    # a PLANT row's lowest point must be within this of the floor on every frame (remake phase 3: feet on the floor, no hover)
 BELOW_EPS = 0.35   # model units (1.75% of his height)
 FLOAT_EPS = 1.6    # both feet above the baseline by this = floating (8% of his height)
 
@@ -105,8 +106,7 @@ def main():
     if args.rows:
         want = set(args.rows.split(','))
         targets = [t for t in targets if t[0] in want]
-    hover = 2.0
-    result = {'below_eps': BELOW_EPS, 'hover_y': hover, 'float_eps': FLOAT_EPS,
+    result = {'below_eps': BELOW_EPS, 'plant_eps': PLANT_EPS, 'float_eps': FLOAT_EPS,
               'method': 'FigaTree pose of every frame of the built bank clip, 2-influence skinning of the mesh; heights in model units above the floor (TopN origin), 20 = his height',
               'rows': {}}
     seen = {}
@@ -115,21 +115,21 @@ def main():
             seen[clip] = sample_clip(clip)
         s_ = seen[clip]
         below = [i for i, (mn, fl, fh) in enumerate(s_) if mn < -BELOW_EPS]
-        # HOVER rows: the lowest point must stay within hover +- eps; ANCHOR rows are only measured (flight-stance legs may hang above the floor)
-        off = [i for i, (mn, fl, fh) in enumerate(s_) if mode == 'HOVER' and mn > hover + 6.0]
+        # PLANT rows: the lowest point must be on the floor (within PLANT_EPS) on every frame, neither floating nor sinking; ANCHOR rows are only measured
+        off = [i for i, (mn, fl, fh) in enumerate(s_) if mode == 'PLANT' and abs(mn) > PLANT_EPS]
         feet_up = [i for i, (mn, fl, fh) in enumerate(s_) if fl > FLOAT_EPS]
         ledge = name.startswith('Cliff')
         result['rows'][name] = {'clip': clip, 'mode': mode, 'frames': len(s_), 'min_y': min(x[0] for x in s_), 'max_lowest': max(x[0] for x in s_),
-                                'below': _ranges(below), 'hover_off': _ranges(off), 'feet_up': _ranges(feet_up),
-                                'below_frames': len(below), 'hover_off_frames': len(off), 'feet_up_frames': len(feet_up), 'ledge': ledge}
+                                'below': _ranges(below), 'plant_off': _ranges(off), 'feet_up': _ranges(feet_up),
+                                'below_frames': len(below), 'plant_off_frames': len(off), 'feet_up_frames': len(feet_up), 'ledge': ledge}
     R = result['rows'].values()
-    result['counts'] = {'rows': len(result['rows']), 'hover': sum(1 for r in R if r['mode'] == 'HOVER'), 'anchor': sum(1 for r in R if r['mode'] == 'ANCHOR'),
-                        'below_rows': sum(1 for r in R if r['below_frames'] and not r['ledge']), 'hover_off_rows': sum(1 for r in R if r['hover_off_frames']),
+    result['counts'] = {'rows': len(result['rows']), 'plant': sum(1 for r in R if r['mode'] == 'PLANT'), 'anchor': sum(1 for r in R if r['mode'] == 'ANCHOR'),
+                        'below_rows': sum(1 for r in R if r['below_frames'] and not r['ledge']), 'plant_off_rows': sum(1 for r in R if r['plant_off_frames'] and not r['ledge']),
                         'ledge_rows_below': sum(1 for r in R if r['below_frames'] and r['ledge'])}
     args.json.parent.mkdir(parents=True, exist_ok=True)
     args.json.write_text(json.dumps(result, indent=1), encoding='utf-8')
     print(json.dumps(result['counts']))
-    return 1 if result['counts']['below_rows'] else 0
+    return 1 if (result['counts']['below_rows'] or result['counts']['plant_off_rows']) else 0
 
 
 def _ranges(idx):

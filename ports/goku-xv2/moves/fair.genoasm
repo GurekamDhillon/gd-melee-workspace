@@ -1,14 +1,16 @@
-# PICK: provisional (attack-feel pass 2026-10-08). XV2 heavy finisher after LLLL (BAC 320): forward kick; peak f15 on f10 (a 44-frame row: not under 0.55x of Mario fair)
-# Source: BAC 320 clip GOK_ATC_007, strike f15; crop from f5. Numbers are Melee design values, not XV2 data.
+# HB-SAMPLE (remake phase 2, 2026-10-11): a generated STARTING POINT, not an authored hitbox. Spheres ride the leading limb chain (tip, middle, inner),
+# sized from the mesh; timing, damage and reaction are derived from the XV2 hit entry (tools/remake_samples.py, REMAKE-SAMPLES.md). Edit it in the Workbench.
+# XV2 hit entry 343; limb hand.R
 PUT ANIM_RATE 1.0
 wait_until 7
 cmd_var idx=0 value=1
 wait_until 8
 sfx behavior=1 sfx_id=165 volume=127 panning=64
-wait_until 10
-hitbox slot=0 joint=@FOOT_R@ damage=13 size=2.67 x=0.00 y=0.00 z=0.00 angle=50 kbg=100 fkb=0 bkb=30
-hitbox slot=1 joint=@LEG_R@ damage=10 size=2.00 x=0.00 y=0.00 z=0.00 angle=50 kbg=95 fkb=0 bkb=25
-wait 3
+wait_until 15
+hitbox slot=0 joint=@ARM_R@ damage=14 size=1.4 x=-2.802 y=-0.0331 z=0.04988 angle=270 kbg=83 fkb=0 bkb=41
+hitbox slot=1 joint=@ARM_R@ damage=12 size=1.4 x=-1.492 y=-0.05802 z=0.01413 angle=270 kbg=83 fkb=0 bkb=38
+hitbox slot=2 joint=@UPARM_R@ damage=10 size=1.419 x=-1.202 y=-0.08994 z=0.07694 angle=270 kbg=83 fkb=0 bkb=35
+wait_until 19
 clear_hitboxes
 wait_until 26
 cmd_var idx=0 value=0

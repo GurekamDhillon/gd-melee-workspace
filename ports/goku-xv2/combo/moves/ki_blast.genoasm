@@ -1,0 +1,8 @@
+# KiBlast state (remake phase 1, 2026-10-11): one ki blast, the XV2 Blast tap (ATC_SHOT_N clip). Reachable today from the LAB (moves / launch list: KiBlast).
+# Intended trigger: control layout B, Y = ki blast (css-controls layouts, docs/geno.md section 26), which needs a route input class for it: see REMAKE-PLAN-P1.md.
+# HB-DESIGN: the KiBlast article (combo.json articles[0]) is the owner-accepted designed projectile; this state has no hitbox of its own.
+PUT ANIM_RATE 1.0
+wait 6
+CALL geno.article.spawn 3
+wait_until 24
+iasa

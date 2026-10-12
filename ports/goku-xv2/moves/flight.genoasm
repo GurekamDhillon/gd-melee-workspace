@@ -1,0 +1,8 @@
+# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.
+# The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
+# Up B = flight (owner 2026-10-11; XV2 BUKUU fly clips). PUT AIR 1 takes a grounded Up B off the floor; the rise and the steering are Lua (goku.lua flight_*).
+# No hitbox: flight is movement. The end is the special fall (helpless), so the script has no IASA.
+PUT ANIM_RATE 1.0
+PUT AIR 1
+PUT VEL_Y 0.9
+sfx behavior=1 sfx_id=165 volume=90 panning=64

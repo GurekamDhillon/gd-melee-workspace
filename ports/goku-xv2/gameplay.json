@@ -11,7 +11,10 @@
       "charge": "int",
       "counter_damage": "float",
       "stored": "int",
-      "stored_pct": "float"
+      "stored_pct": "float",
+      "fly": "int",
+      "pose": "int",
+      "kil": "float"
     }
   },
   "jumps": {
@@ -28,30 +31,43 @@
       "script": "moves/jab1.genoasm",
       "windows": [
         [
-          3,
-          2
+          2,
+          4
         ],
         [
-          3,
-          2
+          2,
+          4
+        ],
+        [
+          2,
+          4
         ]
       ],
       "iasa": 18,
       "design": {
         "damage": 3,
         "angle": 361,
-        "kbg": 50,
-        "bkb": 8,
-        "radius": 3.4,
-        "role": "HAND_L",
-        "offset": [
-          0,
-          0,
-          0
+        "kbg": 60,
+        "bkb": 0
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          2,
+          6
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "hand.L"
         ],
-        "window_roles": [
-          "HAND_L",
-          "ARM_L"
+        "from": "XV2 hit entry 300",
+        "xv2_damage": [
+          5
+        ],
+        "reaction": [
+          "Standard"
         ]
       }
     },
@@ -65,30 +81,43 @@
       "script": "moves/jab2.genoasm",
       "windows": [
         [
-          4,
-          2
+          2,
+          4
         ],
         [
-          4,
-          2
+          2,
+          4
+        ],
+        [
+          2,
+          4
         ]
       ],
       "iasa": 20,
       "design": {
         "damage": 3,
         "angle": 361,
-        "kbg": 50,
-        "bkb": 8,
-        "radius": 3.4,
-        "role": "HAND_R",
-        "offset": [
-          0,
-          0,
-          0
+        "kbg": 60,
+        "bkb": 0
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          2,
+          6
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "hand.R"
         ],
-        "window_roles": [
-          "HAND_R",
-          "ARM_R"
+        "from": "XV2 hit entry 301",
+        "xv2_damage": [
+          5
+        ],
+        "reaction": [
+          "Standard"
         ]
       }
     },
@@ -102,30 +131,43 @@
       "script": "moves/jab3.genoasm",
       "windows": [
         [
-          6,
-          3
+          4,
+          4
         ],
         [
-          6,
-          3
+          4,
+          4
+        ],
+        [
+          4,
+          4
         ]
       ],
       "iasa": 30,
       "design": {
-        "damage": 5,
-        "angle": 40,
-        "kbg": 100,
-        "bkb": 30,
-        "radius": 4.0,
-        "role": "FOOT_L",
-        "offset": [
-          0,
-          0,
-          0
+        "damage": 7,
+        "angle": 361,
+        "kbg": 50,
+        "bkb": 12
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          4,
+          8
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "foot.L"
         ],
-        "window_roles": [
-          "FOOT_L",
-          "LEG_L"
+        "from": "XV2 hit entry 302",
+        "xv2_damage": [
+          10
+        ],
+        "reaction": [
+          "Standard"
         ]
       }
     },
@@ -143,7 +185,31 @@
           3
         ],
         [
+          12,
+          3
+        ],
+        [
+          12,
+          3
+        ],
+        [
           18,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          24,
           3
         ],
         [
@@ -155,6 +221,22 @@
           3
         ],
         [
+          30,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          36,
+          3
+        ],
+        [
+          36,
+          3
+        ],
+        [
           36,
           3
         ]
@@ -162,22 +244,48 @@
       "iasa": 49,
       "design": {
         "damage": 2,
-        "angle": 70,
-        "kbg": 25,
-        "bkb": 10,
-        "radius": 3.2,
-        "role": "FOOT_R",
-        "offset": [
-          0,
-          0,
-          0
+        "angle": 361,
+        "kbg": 30,
+        "bkb": 10
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          12,
+          15
         ],
-        "window_roles": [
-          "FOOT_R",
-          "FOOT_R",
-          "FOOT_R",
-          "FOOT_R",
-          "FOOT_R"
+        [
+          18,
+          21
+        ],
+        [
+          24,
+          27
+        ],
+        [
+          30,
+          33
+        ],
+        [
+          36,
+          39
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "foot.R"
+        ],
+        "from": "XV2 hit entry 336",
+        "xv2_damage": [
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        "reaction": [
+          "Standard"
         ]
       }
     },
@@ -191,35 +299,43 @@
       "script": "moves/dash_attack.genoasm",
       "windows": [
         [
-          8,
-          3
+          5,
+          4
         ],
         [
-          8,
-          3
+          5,
+          4
         ],
         [
-          11,
+          5,
           4
         ]
       ],
       "iasa": 36,
       "design": {
-        "damage": 11,
-        "angle": 50,
-        "kbg": 80,
-        "bkb": 40,
-        "radius": 4.2,
-        "role": "FOOT_R",
-        "offset": [
-          0,
-          0,
-          0
+        "damage": 12,
+        "angle": 361,
+        "kbg": 50,
+        "bkb": 16
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          5,
+          9
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "foot.R"
         ],
-        "window_roles": [
-          "FOOT_R",
-          "LEG_R",
-          "FOOT_R"
+        "from": "XV2 hit entry 337",
+        "xv2_damage": [
+          30
+        ],
+        "reaction": [
+          "Standard"
         ]
       }
     },
@@ -237,30 +353,43 @@
       "script": "moves/ftilt.genoasm",
       "windows": [
         [
-          7,
-          3
+          3,
+          4
         ],
         [
-          7,
-          3
+          3,
+          4
+        ],
+        [
+          3,
+          4
         ]
       ],
       "iasa": 26,
       "design": {
-        "damage": 10,
+        "damage": 3,
         "angle": 361,
-        "kbg": 100,
-        "bkb": 10,
-        "radius": 4.0,
-        "role": "FOOT_R",
-        "offset": [
-          0,
-          0,
-          0
+        "kbg": 50,
+        "bkb": 8
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          3,
+          7
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "hand.R"
         ],
-        "window_roles": [
-          "FOOT_R",
-          "LEG_R"
+        "from": "XV2 hit entry 301",
+        "xv2_damage": [
+          5
+        ],
+        "reaction": [
+          "Standard"
         ]
       }
     },
@@ -274,30 +403,43 @@
       "script": "moves/utilt.genoasm",
       "windows": [
         [
-          8,
-          5
+          5,
+          3
         ],
         [
-          8,
-          5
+          5,
+          3
+        ],
+        [
+          5,
+          3
         ]
       ],
       "iasa": 28,
       "design": {
-        "damage": 9,
-        "angle": 90,
-        "kbg": 120,
-        "bkb": 30,
-        "radius": 4.0,
-        "role": "HAND_R",
-        "offset": [
-          0,
-          0,
-          0
+        "damage": 10,
+        "angle": 80,
+        "kbg": 83,
+        "bkb": 35
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          5,
+          8
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "hand.L"
         ],
-        "window_roles": [
-          "HAND_R",
-          "ARM_R"
+        "from": "XV2 hit entry 342",
+        "xv2_damage": [
+          15
+        ],
+        "reaction": [
+          "Knockback4"
         ]
       }
     },
@@ -311,35 +453,43 @@
       "script": "moves/dtilt.genoasm",
       "windows": [
         [
-          6,
-          4
+          11,
+          8
         ],
         [
-          6,
-          4
+          11,
+          8
         ],
         [
-          6,
-          4
+          11,
+          8
         ]
       ],
       "iasa": 22,
       "design": {
-        "damage": 9,
-        "angle": 75,
-        "kbg": 110,
-        "bkb": 25,
-        "radius": 3.6,
-        "role": "FOOT_R",
-        "offset": [
-          0,
-          0,
-          0
+        "damage": 12,
+        "angle": 361,
+        "kbg": 50,
+        "bkb": 16
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          11,
+          19
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "foot.L"
         ],
-        "window_roles": [
-          "FOOT_R",
-          "LEG_R",
-          "FLOOR:2.4:7.5"
+        "from": "XV2 hit entry 370",
+        "xv2_damage": [
+          20
+        ],
+        "reaction": [
+          "Standard"
         ]
       }
     },
@@ -357,30 +507,43 @@
       "script": "moves/fsmash.genoasm",
       "windows": [
         [
-          12,
+          14,
           4
         ],
         [
-          12,
+          14,
+          4
+        ],
+        [
+          14,
           4
         ]
       ],
       "iasa": 42,
       "design": {
-        "damage": 16,
-        "angle": 40,
-        "kbg": 98,
-        "bkb": 30,
-        "radius": 4.4,
-        "role": "HAND_R",
-        "offset": [
-          0,
-          0,
-          0
+        "damage": 10,
+        "angle": 361,
+        "kbg": 50,
+        "bkb": 14
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          14,
+          18
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "foot.R"
         ],
-        "window_roles": [
-          "HAND_R",
-          "ARM_R"
+        "from": "XV2 hit entry 312",
+        "xv2_damage": [
+          15
+        ],
+        "reaction": [
+          "Standard"
         ]
       }
     },
@@ -394,30 +557,43 @@
       "script": "moves/usmash.genoasm",
       "windows": [
         [
-          12,
-          5
+          8,
+          4
         ],
         [
-          12,
-          5
+          8,
+          4
+        ],
+        [
+          8,
+          4
         ]
       ],
       "iasa": 40,
       "design": {
-        "damage": 16,
-        "angle": 85,
-        "kbg": 100,
-        "bkb": 35,
-        "radius": 4.4,
-        "role": "HAND_R",
-        "offset": [
-          0,
-          0,
-          0
+        "damage": 10,
+        "angle": 80,
+        "kbg": 83,
+        "bkb": 35
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          8,
+          12
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "hand.R"
         ],
-        "window_roles": [
-          "HAND_R",
-          "ARM_R"
+        "from": "XV2 hit entry 342",
+        "xv2_damage": [
+          15
+        ],
+        "reaction": [
+          "Knockback4"
         ]
       }
     },
@@ -431,40 +607,43 @@
       "script": "moves/dsmash.genoasm",
       "windows": [
         [
-          8,
+          7,
           4
         ],
         [
-          8,
+          7,
           4
         ],
         [
-          8,
-          4
-        ],
-        [
-          8,
+          7,
           4
         ]
       ],
       "iasa": 38,
       "design": {
-        "damage": 14,
-        "angle": 30,
-        "kbg": 95,
-        "bkb": 25,
-        "radius": 4.2,
-        "role": "FOOT_R",
-        "offset": [
-          0,
-          0,
-          0
+        "damage": 8,
+        "angle": 80,
+        "kbg": 66,
+        "bkb": 32
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          7,
+          11
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "foot.R"
         ],
-        "window_roles": [
-          "FOOT_R",
-          "HAND_L",
-          "FLOOR:2.4:8",
-          "FLOOR:2.4:-8"
+        "from": "XV2 hit entry 341",
+        "xv2_damage": [
+          10
+        ],
+        "reaction": [
+          "Knockback3"
         ]
       }
     },
@@ -478,35 +657,111 @@
       "script": "moves/nair.genoasm",
       "windows": [
         [
-          6,
-          4
+          12,
+          3
         ],
         [
-          6,
-          4
+          12,
+          3
         ],
         [
-          10,
-          14
+          12,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          36,
+          3
+        ],
+        [
+          36,
+          3
+        ],
+        [
+          36,
+          3
         ]
       ],
       "iasa": 40,
       "design": {
-        "damage": 12,
+        "damage": 2,
         "angle": 361,
-        "kbg": 100,
-        "bkb": 20,
-        "radius": 4.0,
-        "role": "FOOT_R",
-        "offset": [
-          0,
-          0,
-          0
+        "kbg": 30,
+        "bkb": 10
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          12,
+          15
         ],
-        "window_roles": [
-          "FOOT_R",
-          "FOOT_L",
-          "FOOT_R"
+        [
+          18,
+          21
+        ],
+        [
+          24,
+          27
+        ],
+        [
+          30,
+          33
+        ],
+        [
+          36,
+          39
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "foot.R"
+        ],
+        "from": "XV2 hit entry 336",
+        "xv2_damage": [
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        "reaction": [
+          "Standard"
         ]
       }
     },
@@ -520,30 +775,43 @@
       "script": "moves/fair.genoasm",
       "windows": [
         [
-          10,
-          3
+          15,
+          4
         ],
         [
-          10,
-          3
+          15,
+          4
+        ],
+        [
+          15,
+          4
         ]
       ],
       "iasa": 40,
       "design": {
-        "damage": 13,
-        "angle": 50,
-        "kbg": 100,
-        "bkb": 30,
-        "radius": 4.0,
-        "role": "FOOT_R",
-        "offset": [
-          0,
-          0,
-          0
+        "damage": 14,
+        "angle": 270,
+        "kbg": 83,
+        "bkb": 41
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          15,
+          19
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "hand.R"
         ],
-        "window_roles": [
-          "FOOT_R",
-          "LEG_R"
+        "from": "XV2 hit entry 343",
+        "xv2_damage": [
+          40
+        ],
+        "reaction": [
+          "Knockback8"
         ]
       }
     },
@@ -570,19 +838,16 @@
         "damage": 11,
         "angle": 361,
         "kbg": 100,
-        "bkb": 12,
-        "radius": 6.0524,
-        "role": "LEG_R",
-        "offset": [
-          0,
-          0,
-          0
-        ],
-        "window_roles": [
-          "LEG_R",
-          "UPLEG_R"
+        "bkb": 12
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          6,
+          18
         ]
-      }
+      ],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "uair",
@@ -594,30 +859,43 @@
       "script": "moves/uair.genoasm",
       "windows": [
         [
-          6,
-          8
+          12,
+          4
         ],
         [
-          6,
-          8
+          12,
+          4
+        ],
+        [
+          12,
+          4
         ]
       ],
       "iasa": 30,
       "design": {
-        "damage": 11,
+        "damage": 14,
         "angle": 80,
-        "kbg": 100,
-        "bkb": 25,
-        "radius": 6.0,
-        "role": "FOOT_L",
-        "offset": [
-          0,
-          0,
-          0
+        "kbg": 60,
+        "bkb": 41
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          12,
+          16
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "foot.R"
         ],
-        "window_roles": [
-          "FOOT_L",
-          "LEG_L"
+        "from": "XV2 hit entry 365",
+        "xv2_damage": [
+          30
+        ],
+        "reaction": [
+          "Heavy"
         ]
       }
     },
@@ -631,30 +909,43 @@
       "script": "moves/dair.genoasm",
       "windows": [
         [
-          6,
-          3
+          10,
+          4
         ],
         [
-          9,
-          6
+          10,
+          4
+        ],
+        [
+          10,
+          4
         ]
       ],
       "iasa": 36,
       "design": {
-        "damage": 14,
+        "damage": 8,
         "angle": 270,
-        "kbg": 90,
-        "bkb": 20,
-        "radius": 4.2,
-        "role": "FOOT_L",
-        "offset": [
-          0,
-          0,
-          0
+        "kbg": 80,
+        "bkb": 36
+      },
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          10,
+          14
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "sample": {
+        "limb": [
+          "foot.L"
         ],
-        "window_roles": [
-          "FOOT_L",
-          "FOOT_L"
+        "from": "XV2 hit entry 302",
+        "xv2_damage": [
+          10
+        ],
+        "reaction": [
+          "Standard"
         ]
       }
     },
@@ -666,26 +957,17 @@
       ],
       "tag": "grab",
       "script": "moves/pummel.genoasm",
-      "windows": [
-        [
-          5,
-          1
-        ]
-      ],
+      "windows": [],
       "iasa": 16,
       "design": {
         "damage": 2,
         "angle": 80,
         "kbg": 100,
-        "bkb": 0,
-        "radius": 3.2,
-        "role": "HAND_R",
-        "offset": [
-          0,
-          0,
-          0
-        ]
-      }
+        "bkb": 0
+      },
+      "hb": "HB-NONE",
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "grab",
@@ -697,11 +979,45 @@
       "script": "moves/grab.genoasm",
       "windows": [
         [
-          8,
+          9,
+          8
+        ],
+        [
+          9,
+          8
+        ],
+        [
+          9,
           8
         ]
       ],
-      "iasa": 28
+      "iasa": 28,
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          9,
+          17
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "design": {
+        "damage": 0,
+        "angle": 361,
+        "kbg": 100,
+        "bkb": 0
+      },
+      "sample": {
+        "limb": [
+          "hand.R"
+        ],
+        "from": "XV2 hit entry 600",
+        "xv2_damage": [
+          0
+        ],
+        "reaction": [
+          "Grab"
+        ]
+      }
     },
     {
       "name": "dash_grab",
@@ -713,11 +1029,45 @@
       "script": "moves/dash_grab.genoasm",
       "windows": [
         [
-          8,
+          9,
+          8
+        ],
+        [
+          9,
+          8
+        ],
+        [
+          9,
           8
         ]
       ],
-      "iasa": 28
+      "iasa": 28,
+      "hb": "HB-SAMPLE",
+      "strike": [
+        [
+          9,
+          17
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames",
+      "design": {
+        "damage": 0,
+        "angle": 361,
+        "kbg": 100,
+        "bkb": 0
+      },
+      "sample": {
+        "limb": [
+          "hand.R"
+        ],
+        "from": "XV2 hit entry 600",
+        "xv2_damage": [
+          0
+        ],
+        "reaction": [
+          "Grab"
+        ]
+      }
     },
     {
       "name": "fthrow",
@@ -734,7 +1084,11 @@
         "angle": 45,
         "kbg": 75,
         "bkb": 40
-      }
+      },
+      "hb": "HB-NONE",
+      "windows": [],
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "bthrow",
@@ -751,7 +1105,11 @@
         "angle": 135,
         "kbg": 85,
         "bkb": 50
-      }
+      },
+      "hb": "HB-NONE",
+      "windows": [],
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "uthrow",
@@ -768,7 +1126,16 @@
         "angle": 90,
         "kbg": 75,
         "bkb": 40
-      }
+      },
+      "hb": "HB-NONE",
+      "windows": [],
+      "strike": [
+        [
+          13,
+          17
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "dthrow",
@@ -785,7 +1152,16 @@
         "angle": 70,
         "kbg": 65,
         "bkb": 35
-      }
+      },
+      "hb": "HB-NONE",
+      "windows": [],
+      "strike": [
+        [
+          11,
+          15
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "rapid_start",
@@ -795,7 +1171,31 @@
       ],
       "tag": "jab",
       "script": "moves/rapid_start.genoasm",
-      "windows": []
+      "windows": [],
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          12,
+          15
+        ],
+        [
+          18,
+          21
+        ],
+        [
+          24,
+          27
+        ],
+        [
+          30,
+          33
+        ],
+        [
+          36,
+          39
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     },
     {
       "name": "rapid_end",
@@ -805,7 +1205,91 @@
       ],
       "tag": "jab",
       "script": "moves/rapid_end.genoasm",
-      "windows": []
+      "windows": [],
+      "hb": "HB-NONE",
+      "strike": [
+        [
+          12,
+          15
+        ],
+        [
+          18,
+          21
+        ],
+        [
+          24,
+          27
+        ],
+        [
+          30,
+          33
+        ],
+        [
+          36,
+          39
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+    },
+    {
+      "name": "escape_f",
+      "parity": "move:special_lw",
+      "motions": [
+        233
+      ],
+      "tag": "special",
+      "script": "moves/escape_f.genoasm",
+      "windows": [],
+      "iasa": 30,
+      "hb": "HB-NONE",
+      "design": {},
+      "strike": [
+        [
+          18,
+          37
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+    },
+    {
+      "name": "escape_b",
+      "parity": "move:special_lw",
+      "motions": [
+        234
+      ],
+      "tag": "special",
+      "script": "moves/escape_b.genoasm",
+      "windows": [],
+      "iasa": 30,
+      "hb": "HB-NONE",
+      "design": {},
+      "strike": [
+        [
+          18,
+          37
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
+    },
+    {
+      "name": "escape_n",
+      "parity": "move:special_lw",
+      "motions": [
+        235
+      ],
+      "tag": "special",
+      "script": "moves/escape_n.genoasm",
+      "windows": [],
+      "iasa": 30,
+      "hb": "HB-NONE",
+      "design": {},
+      "strike": [
+        [
+          18,
+          24
+        ]
+      ],
+      "strike_note": "XV2 strike frames mapped to this row's Melee frames"
     }
   ],
   "states": [
@@ -1056,6 +1540,120 @@
         "enter": "rushcombo_enter",
         "frame": "rushcombo_frame"
       }
+    },
+    {
+      "name": "Homing",
+      "behavior": "geno.ground",
+      "subaction": "clip:Homing",
+      "like": "motion:345",
+      "phys": "auto",
+      "coll": "both",
+      "iasa": "interrupt",
+      "move_tag": "special",
+      "lua": {
+        "enter": "rush_enter",
+        "frame": "rush_frame"
+      }
+    },
+    {
+      "name": "Flight",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightUp",
+      "like": "motion:347",
+      "iasa": "none",
+      "move_tag": "special",
+      "lua": {
+        "enter": "flight_enter",
+        "frame": "flight_frame"
+      }
+    },
+    {
+      "name": "FlightU",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightUp",
+      "like": "motion:347",
+      "iasa": "none",
+      "move_tag": "special",
+      "lua": {
+        "frame": "flight_frame"
+      }
+    },
+    {
+      "name": "FlightF",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightF",
+      "like": "motion:347",
+      "iasa": "none",
+      "move_tag": "special",
+      "lua": {
+        "frame": "flight_frame"
+      }
+    },
+    {
+      "name": "FlightB",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightB",
+      "like": "motion:347",
+      "iasa": "none",
+      "move_tag": "special",
+      "lua": {
+        "frame": "flight_frame"
+      }
+    },
+    {
+      "name": "FlightNair",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightNair",
+      "like": "motion:65",
+      "iasa": "interrupt",
+      "move_tag": "aerial",
+      "lua": {
+        "frame": "flightair_frame"
+      }
+    },
+    {
+      "name": "FlightFair",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightFair",
+      "like": "motion:66",
+      "iasa": "interrupt",
+      "move_tag": "aerial",
+      "lua": {
+        "frame": "flightair_frame"
+      }
+    },
+    {
+      "name": "FlightBair",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightBair",
+      "like": "motion:67",
+      "iasa": "interrupt",
+      "move_tag": "aerial",
+      "lua": {
+        "frame": "flightair_frame"
+      }
+    },
+    {
+      "name": "FlightUair",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightUair",
+      "like": "motion:68",
+      "iasa": "interrupt",
+      "move_tag": "aerial",
+      "lua": {
+        "frame": "flightair_frame"
+      }
+    },
+    {
+      "name": "FlightDair",
+      "behavior": "geno.air",
+      "subaction": "clip:FlightDair",
+      "like": "motion:69",
+      "iasa": "interrupt",
+      "move_tag": "aerial",
+      "lua": {
+        "frame": "flightair_frame"
+      }
     }
   ],
   "specials": {
@@ -1063,8 +1661,8 @@
     "air_n": "geno:KameCharge",
     "s": "geno:Rush",
     "air_s": "geno:Rush",
-    "hi": "geno:Recovery",
-    "air_hi": "geno:RecoveryAir",
+    "hi": "geno:Flight",
+    "air_hi": "geno:Flight",
     "lw": "geno:Counter",
     "air_lw": "geno:Counter"
   },
@@ -1114,67 +1712,417 @@
     {
       "name": "KameCharge",
       "parity": "move:special_n",
-      "script": "moves/kame_charge.genoasm"
+      "script": "moves/kame_charge.genoasm",
+      "hb": "HB-DESIGN",
+      "why_hb": "Kamehameha (charge state; owner-accepted design)"
     },
     {
       "name": "KameTap",
       "parity": "move:special_n",
-      "script": "moves/kame_tap.genoasm"
+      "script": "moves/kame_tap.genoasm",
+      "hb": "HB-DESIGN",
+      "why_hb": "Kamehameha beam tier"
     },
     {
       "name": "KameMid",
       "parity": "move:special_n",
-      "script": "moves/kame_mid.genoasm"
+      "script": "moves/kame_mid.genoasm",
+      "hb": "HB-DESIGN",
+      "why_hb": "Kamehameha beam tier"
     },
     {
       "name": "KameFull",
       "parity": "move:special_n",
-      "script": "moves/kame_full.genoasm"
+      "script": "moves/kame_full.genoasm",
+      "hb": "HB-DESIGN",
+      "why_hb": "Kamehameha beam tier"
     },
     {
       "name": "Rush",
       "parity": "move:special_s",
-      "script": "moves/rush.genoasm"
+      "script": "moves/rush.genoasm",
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          40,
+          4
+        ],
+        [
+          40,
+          4
+        ],
+        [
+          40,
+          4
+        ]
+      ],
+      "strike": [
+        [
+          40,
+          44
+        ]
+      ],
+      "strike_note": "XV2 knockback-attack hit f40-43; NOTE the row is cropped to 40 frames, so the strike is past its end (row to be lengthened when the hitbox is authored)",
+      "design": {
+        "damage": 8,
+        "angle": 361,
+        "kbg": 60,
+        "bkb": 0
+      },
+      "sample": {
+        "limb": [
+          "foot.L"
+        ],
+        "from": "XV2 hit entry 419",
+        "xv2_damage": [
+          10
+        ],
+        "reaction": [
+          "Knockback2"
+        ]
+      }
     },
     {
       "name": "Recovery",
       "parity": "move:special_hi",
-      "script": "moves/recovery.genoasm"
+      "script": "moves/recovery.genoasm",
+      "hb": "HB-NONE",
+      "windows": [],
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "Counter",
       "parity": "move:special_lw",
-      "script": "moves/counter.genoasm"
+      "script": "moves/counter.genoasm",
+      "hb": "HB-DESIGN",
+      "why_hb": "Counter window (state counter key; no sphere)"
     },
     {
       "name": "Riposte",
       "parity": "move:special_lw",
-      "script": "moves/riposte.genoasm"
+      "script": "moves/riposte.genoasm",
+      "hb": "HB-DESIGN",
+      "why_hb": "Counter answer (Z-vanish reappear kick, damage scaled from the hit taken)"
     },
     {
       "name": "KameSuper",
       "parity": "move:special_n",
-      "script": "moves/kame_super.genoasm"
+      "script": "moves/kame_super.genoasm",
+      "hb": "HB-DESIGN",
+      "why_hb": "Super Kamehameha"
     },
     {
       "name": "RushCombo",
       "parity": "move:special_s",
-      "script": "moves/rushcombo.genoasm"
+      "script": "moves/rushcombo.genoasm",
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          2,
+          8
+        ],
+        [
+          2,
+          8
+        ],
+        [
+          2,
+          8
+        ]
+      ],
+      "strike": [
+        [
+          2,
+          10
+        ]
+      ],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded",
+      "design": {
+        "damage": 15,
+        "angle": 45,
+        "kbg": 88,
+        "bkb": 42
+      },
+      "sample": {
+        "limb": [
+          "hand.R"
+        ],
+        "from": "XV2 hit entry 427",
+        "xv2_damage": [
+          30
+        ],
+        "reaction": [
+          "Knockback2"
+        ]
+      }
     },
     {
       "name": "ITEnd",
       "parity": "move:special_hi",
-      "script": "moves/itend.genoasm"
+      "script": "moves/itend.genoasm",
+      "hb": "HB-NONE",
+      "windows": [],
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
     },
     {
       "name": "KameThin",
       "parity": "move:special_n",
-      "script": "moves/kame_thin.genoasm"
+      "script": "moves/kame_thin.genoasm",
+      "hb": "HB-DESIGN",
+      "why_hb": "Kamehameha beam tier"
     },
     {
       "name": "KameMax",
       "parity": "move:special_n",
-      "script": "moves/kame_max.genoasm"
+      "script": "moves/kame_max.genoasm",
+      "hb": "HB-DESIGN",
+      "why_hb": "Kamehameha beam tier"
+    },
+    {
+      "name": "Homing",
+      "parity": "move:special_s",
+      "script": "moves/homing.genoasm",
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          33,
+          6
+        ],
+        [
+          33,
+          6
+        ],
+        [
+          33,
+          6
+        ]
+      ],
+      "strike": [
+        [
+          33,
+          39
+        ]
+      ],
+      "strike_note": "XV2 homing-strike hit f33-38",
+      "design": {
+        "damage": 8,
+        "angle": 45,
+        "kbg": 95,
+        "bkb": 32
+      },
+      "sample": {
+        "limb": [
+          "foot.R"
+        ],
+        "from": "XV2 hit entry 476",
+        "xv2_damage": [
+          10
+        ],
+        "reaction": [
+          "Knockback2"
+        ]
+      }
+    },
+    {
+      "name": "Flight",
+      "parity": "move:special_hi",
+      "script": "moves/flight.genoasm",
+      "hb": "HB-NONE",
+      "windows": [],
+      "strike": [],
+      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+    },
+    {
+      "name": "FlightNair",
+      "parity": "move:nair",
+      "script": "moves/nair.genoasm",
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          12,
+          3
+        ],
+        [
+          12,
+          3
+        ],
+        [
+          12,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          18,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          24,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          30,
+          3
+        ],
+        [
+          36,
+          3
+        ],
+        [
+          36,
+          3
+        ],
+        [
+          36,
+          3
+        ]
+      ],
+      "strike": [
+        [
+          12,
+          15
+        ],
+        [
+          18,
+          21
+        ],
+        [
+          24,
+          27
+        ],
+        [
+          30,
+          33
+        ],
+        [
+          36,
+          39
+        ]
+      ]
+    },
+    {
+      "name": "FlightFair",
+      "parity": "move:fair",
+      "script": "moves/fair.genoasm",
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          15,
+          4
+        ],
+        [
+          15,
+          4
+        ],
+        [
+          15,
+          4
+        ]
+      ],
+      "strike": [
+        [
+          15,
+          19
+        ]
+      ]
+    },
+    {
+      "name": "FlightBair",
+      "parity": "move:bair",
+      "script": "moves/bair.genoasm",
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          6,
+          12
+        ],
+        [
+          6,
+          12
+        ]
+      ],
+      "strike": [
+        [
+          6,
+          18
+        ]
+      ]
+    },
+    {
+      "name": "FlightUair",
+      "parity": "move:uair",
+      "script": "moves/uair.genoasm",
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          12,
+          4
+        ],
+        [
+          12,
+          4
+        ],
+        [
+          12,
+          4
+        ]
+      ],
+      "strike": [
+        [
+          12,
+          16
+        ]
+      ]
+    },
+    {
+      "name": "FlightDair",
+      "parity": "move:dair",
+      "script": "moves/dair.genoasm",
+      "hb": "HB-SAMPLE",
+      "windows": [
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          10,
+          4
+        ]
+      ],
+      "strike": [
+        [
+          10,
+          14
+        ]
+      ]
     }
   ],
   "articles": [
@@ -1631,5 +2579,41 @@
     "decide_frame": 22,
     "neutral_x": 0.3,
     "attack_buttons": 0
+  },
+  "attributes": {
+    "dash_initial_velocity": 1.5,
+    "dash_max_velocity": 1.8,
+    "dash_accel_base": 0.0,
+    "dash_accel_mul": 0.06,
+    "jump_startup_time": 4,
+    "jump_v_initial_velocity": 2.4,
+    "hop_v_initial_velocity": 1.5,
+    "jump_h_initial_velocity": 1.0,
+    "jump_h_max_velocity": 1.2,
+    "ground_to_air_jump_momentum_multiplier": 0.8,
+    "air_jump_v_multiplier": 0.88,
+    "air_jump_h_multiplier": 1.0,
+    "gravity": 0.085,
+    "terminal_velocity": 2.2,
+    "fast_fall_velocity": 2.5,
+    "air_drift_max": 0.9,
+    "air_drift_stick_mul": 0.03,
+    "aerial_friction": 0.005
+  },
+  "controls": {
+    "layouts": [
+      {
+        "name": "A",
+        "buttons": {
+          "A": "A"
+        }
+      },
+      {
+        "name": "B",
+        "buttons": {
+          "Y": "Down"
+        }
+      }
+    ]
   }
 }

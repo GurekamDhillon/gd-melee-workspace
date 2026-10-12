@@ -1,3 +1,5 @@
+# HB-NONE (remake phase 1, 2026-10-11): the generated hitboxes were removed on purpose; animation, sound, movement and timing stay.
+# The owner authors this move's hitbox by hand in the Workbench; its strike window is gameplay.json "strike" (timing metadata only).
 # PICK provisional (2026-10-08): Instant Transmission (XV2 evasive skill 001_GOK_KUR). geno.cape steers and hides him;
 # this script makes the blink intangible from the vanish to the decision frame (no hitbox: IT is a movement).
 PUT ANIM_RATE 1.0

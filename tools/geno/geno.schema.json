@@ -5718,6 +5718,151 @@
             "x-engine-default": "captain",
             "x-source": "melee/pc/platform/geno_registry.c"
           },
+          "controls": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "layouts": {
+                "type": "array",
+                "maxItems": 16,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "name",
+                    "buttons"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 31
+                    },
+                    "buttons": {
+                      "type": "object",
+                      "minProperties": 1,
+                      "additionalProperties": {
+                        "oneOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "A",
+                              "B",
+                              "X",
+                              "Y",
+                              "Z",
+                              "START",
+                              "L",
+                              "R",
+                              "Up",
+                              "Down",
+                              "Left",
+                              "Right",
+                              "none"
+                            ]
+                          },
+                          {
+                            "type": "array",
+                            "minItems": 1,
+                            "uniqueItems": true,
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "A",
+                                "B",
+                                "X",
+                                "Y",
+                                "Z",
+                                "START",
+                                "L",
+                                "R",
+                                "Up",
+                                "Down",
+                                "Left",
+                                "Right",
+                                "none"
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "extras": {
+                "type": "array",
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "name",
+                    "buttons"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 31
+                    },
+                    "buttons": {
+                      "type": "object",
+                      "minProperties": 1,
+                      "additionalProperties": {
+                        "oneOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "A",
+                              "B",
+                              "X",
+                              "Y",
+                              "Z",
+                              "START",
+                              "L",
+                              "R",
+                              "Up",
+                              "Down",
+                              "Left",
+                              "Right",
+                              "none"
+                            ]
+                          },
+                          {
+                            "type": "array",
+                            "minItems": 1,
+                            "uniqueItems": true,
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "A",
+                                "B",
+                                "X",
+                                "Y",
+                                "Z",
+                                "START",
+                                "L",
+                                "R",
+                                "Up",
+                                "Down",
+                                "Left",
+                                "Right",
+                                "none"
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Per-fighter CSS controls: named button layouts (the first is the default) and opt-in extras, as GC input mappings (docs/geno.md section 26; a define only)",
+            "x-reference": "geno.md §26",
+            "x-source": "melee/pc/platform/geno_registry.c"
+          },
           "audio": {
             "type": "object",
             "properties": {
@@ -6366,8 +6511,8 @@
     "pc/platform/geno_registry.c": "cc6e58fe97b615748075eb49e2f63a4cee191704b330f38c1d096add58f518e8",
     "pc/platform/geno_define_registry.inc": "1d356826e99a44f865c7602021791f487f91cc86f685b31c3596508ef9e51be5",
     "pc/platform/geno_lua_registry.inc": "8a4e586217d55cbeaa8829cb339b07afe25179cecb87a31bec6fda497fb5e1e9",
-    "pc/platform/geno_combo_registry.inc": "ee2771fc193b43719de384e5a39e689c69e11b43bbbb36318cf91c8723694837",
-    "pc/geno/geno.h": "40cdede281a6ed04360108f9c3ff700f30f942b8af2ddf6a6295c272aca10e62",
+    "pc/platform/geno_combo_registry.inc": "ac4d5499f79fb40ef90b500471d28ca81a5035b32e981e991d0869432793ecd1",
+    "pc/geno/geno.h": "1290678aed43a87857d943d4ad2e26b48960dd2c42ab55b8c0c4deb3f24af961",
     "pc/geno/geno_game.c": "8a7e0fa956afe6eef66f1c3002da5a9599439df647a61892805032f7efb736ed",
     "pc/geno/geno_game_v2.inc": "9c572553dcd7b6a70e9d5a3fa3efcbc618b8de567c287e75e1f1577e572f5fb0",
     "pc/geno/geno_profiles.inc": "fa5626fe3b47bc22452a3fb5b09fa0a2ed5c0befa76a679465cd58c5cc7914cf",
