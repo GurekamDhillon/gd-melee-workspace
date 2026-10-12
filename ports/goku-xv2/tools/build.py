@@ -388,6 +388,11 @@ def apply(package, art_build, ir_path=None):
     ecb = plan['ftdata']['x44_ecb']
     hip = next(e for e in ecb if e['role'] in ('HipN', 'TopN'))
     hip.update(role='TopN', joint=0, name='TopN')
+    # 2026-10-11 (owner: the shield bubble was centred at his forearms). x8_part_bytes slot 1 is the SHIELD part (plan_parts: item, shield, head, feet) and it was ThrowN = the grab
+    # anchor, which hangs off the root 8 units in front of the chest for the held victim. Retail's ThrowN hangs off YRotN with an identity local, so the retail shield sits at YRotN
+    # (measured on the vanilla disc: Falcon's bubble centre is dx 0.2, dy 10.1 from his origin). Point the slot at YRotN; the grab anchor stays the throw / hold attach point.
+    yrot = next(j['index'] for j in plan['joints'] if j['name'] == 'YRotN')
+    plan['ftdata']['x8_part_bytes'][1] = {'role': 'ThrowN', 'joint': yrot, 'name': 'YRotN'}
     for state in cfg['states']:
         if isinstance(state['subaction'], str):
             continue  # 'clip:<name>' states bind to a declared clip row later (row_of)

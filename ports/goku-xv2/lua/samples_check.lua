@@ -81,18 +81,24 @@ gd.run(function()
             if last_af and math.abs((p.anim_frame or 0) - last_af) < 0.01 then frozen = frozen + 1 end
             last_af = p.anim_frame
           end
-          if gd.player(2).percent > before + 0.01 then return gd.player(2).percent - before, frozen end
+          if gd.player(2).percent > before + 0.01 then
+            local dmg_hit, x_hit, y_hit = gd.player(2).percent - before, gd.player(2).x, gd.player(2).y
+            gd.wait(26)   -- hitlag and the first frames of the launch: how far the dummy has been sent is the knockback (charged damage feeds the knockback formula)
+            local q = gd.player(2)
+            return dmg_hit, frozen, math.sqrt((q.x - x_hit) ^ 2 + (q.y - y_hit) ^ 2)
+          end
         end
         return nil, frozen
       end
       local best, held = nil, 0
       for _, d in ipairs(dists) do
-        local tap = shot(d, 2)
-        local chg, frozen = shot(d, 70)
+        local tap, _, tap_far = shot(d, 2)
+        local chg, frozen, chg_far = shot(d, 70)
         held = math.max(held, frozen)
-        if tap and chg and (not best or chg / tap > best[2] / best[1]) then best = {tap, chg} end
+        if tap and chg and (not best or chg / tap > best[2] / best[1]) then best = {tap, chg, tap_far, chg_far} end
       end
-      gd.log(string.format('SAMPLECHECK smash charge %s: tap %s%%, charged %s%%, anim held %s frames', label, tostring(best and best[1]), tostring(best and best[2]), tostring(held)))
+      gd.log(string.format('SAMPLECHECK smash charge %s: tap %s%%, charged %s%%, anim held %s frames, dummy sent %.1f (tap) vs %.1f (charged) units in 26 frames', label, tostring(best and best[1]), tostring(best and best[2]), tostring(held), best and best[3] or 0, best and best[4] or 0))
+      if best and best[4] < best[3] * 1.1 then error(label .. ' charged smash does not send the dummy further: ' .. best[3] .. ' -> ' .. best[4]) end
       if not best then error(label .. ' smash did not connect tapped and charged at the same distance') end
       if best[2] < best[1] * 1.15 then error(label .. ' smash damage does not scale with the charge: ' .. best[1] .. ' -> ' .. best[2]) end
       if held < 15 then error(label .. ' smash animation did not hold while charging') end
@@ -100,6 +106,54 @@ gd.run(function()
     smash('fsmash', {x = 127}, {7, 9, 11})
     smash('usmash', {y = 127}, {2, 4, 6, 8, 10})
     smash('dsmash', {y = -127}, {7, 9, 11})
+    -- Spikes (owner 2026-10-11). fair = Mario's AttackAirF structure (two spheres, five frames, both 280); dair = a small tip spike for three frames, sourspot (angle 40, low knockback)
+    -- on the legs and on the tip afterwards. Each probe pins the dummy's centre on a chosen hitbox of the move (read from gd.hitboxes) while the move runs, then measures where the
+    -- dummy goes over the next 24 frames (hitlag included): a spike goes down, a sourspot forward and up.
+    do
+      local function aerial_probe(label, spec, hb_id, only_when_id0_off)
+        reset(70, 90, 0, 0)
+        tp(2, -200, 0)
+        local g0 = gd.player(1)
+        local face = (g0.facing or 1) >= 0 and 1 or -1
+        gd.input(1, spec, 2)
+        local before = gd.player(2).percent
+        local hit_at, y0, x0 = nil, nil, nil
+        for t = 1, 60 do
+          gd.wait(1); nofault()
+          if not hit_at then
+            local okh, hbs = pcall(gd.hitboxes, 1)
+            local want, spike = nil, false
+            if okh and type(hbs) == 'table' then
+              for _, h in ipairs(hbs) do
+                if h.id == 0 then spike = true end
+                if h.id == hb_id then want = h end
+              end
+              if only_when_id0_off and spike then want = nil end
+            end
+            if want then pcall(gd.teleport, 2, want.x, want.y - 8) end
+          end
+          if not hit_at and gd.player(2).percent > before + 0.01 then
+            hit_at, y0, x0 = t, gd.player(2).y, gd.player(2).x
+          end
+          if hit_at and t >= hit_at + 24 then break end
+        end
+        if not hit_at then gd.log('SAMPLECHECK ' .. label .. ': no hit') return nil end
+        local dy, dx = gd.player(2).y - y0, (gd.player(2).x - x0) * face
+        gd.log(string.format('SAMPLECHECK %s: hit at frame %d, then dy %.1f dx %.1f (%s)', label, hit_at, dy, dx, dy < -1.5 and 'spike' or 'sideways / up'))
+        return dy, dx
+      end
+      local dy
+      dy = aerial_probe('fair fist (slot 0)', {buttons = 'A', x = 127}, 0, false)
+      assert(dy and dy < -1.5, 'a fair hit on the fist spikes (angle 280)')
+      dy = aerial_probe('fair forearm (slot 1)', {buttons = 'A', x = 127}, 1, false)
+      assert(dy and dy < -1.5, 'a fair hit on the forearm also spikes: Marios fair has no sourspot')
+      dy = aerial_probe('dair tip, spike frames (slot 0)', {buttons = 'A', y = -127}, 0, false)
+      assert(dy and dy < -1.5, 'a dair hit on the foot tip at the spike frames spikes (angle 290)')
+      dy = aerial_probe('dair upper leg, spike frames (slot 2)', {buttons = 'A', y = -127}, 2, false)
+      assert(dy and dy > -1.5, 'a dair hit on the upper leg (sourspot) must not spike: dy ' .. tostring(dy))
+      dy = aerial_probe('dair tip, after the spike frames (slot 3)', {buttons = 'A', y = -127}, 3, true)
+      assert(dy and dy > -1.5, 'a late dair hit on the tip (sourspot) must not spike: dy ' .. tostring(dy))
+    end
     -- The grab family (owner 2026-10-11, CROSS-PORT): Catch / CatchDash / CatchWait / CatchAttack / ThrowB / ThrowLw are Captain Falcon's, ThrowHi is Marth's (tentative), ThrowF is
     -- Mewtwo's (five ki blasts). References are retail numbers measured with lua/throw_probe.lua against this same Mario dummy: Falcon pummel 3.0, bthrow 9.0, dthrow 7.0,
     -- Marth uthrow 4.0, Mewtwo fthrow 9.5 (5.0 release + five 0.9 shadow-ball hits, spawns 7 frames apart). Each: grab connects, the move's damage is close to the reference,

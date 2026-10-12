@@ -1,14 +1,14 @@
 # HB-SAMPLE (remake phase 2, 2026-10-11): a generated STARTING POINT, not an authored hitbox. Spheres ride the leading limb chain (tip, middle, inner),
 # sized from the mesh; timing, damage and reaction are derived from the XV2 hit entry (tools/remake_samples.py, REMAKE-SAMPLES.md). Edit it in the Workbench.
-# XV2 hit entry 370; limb foot.L
+# XV2 hit entry 370; limb foot.R
 PUT ANIM_RATE 1.0
 wait_until 4
 sfx behavior=1 sfx_id=165 volume=127 panning=64
-wait_until 11
-hitbox slot=0 joint=@FOOT_L@ damage=12 size=2.8 x=0.0391 y=-0.406 z=0.8485 angle=361 kbg=50 fkb=0 bkb=16
-hitbox slot=1 joint=@LEG_L@ damage=10 size=4.91 x=0.07586 y=-1.697 z=-0.04726 angle=361 kbg=50 fkb=0 bkb=13
-hitbox slot=2 joint=@UPLEG_L@ damage=8 size=5.04 x=0.1067 y=-1.503 z=-0.002655 angle=361 kbg=50 fkb=0 bkb=10
-wait_until 19
+wait_until 7
+hitbox slot=0 joint=@FOOT_R@ damage=12 size=2.8 x=-0.03949 y=-0.4019 z=0.8439 angle=361 kbg=50 fkb=0 bkb=16
+hitbox slot=1 joint=@LEG_R@ damage=10 size=5.04 x=0.04702 y=-1.652 z=-0.1287 angle=361 kbg=50 fkb=0 bkb=13
+hitbox slot=2 joint=@UPLEG_R@ damage=8 size=5.04 x=-0.1149 y=-1.493 z=-0.08663 angle=361 kbg=50 fkb=0 bkb=10
+wait_until 15
 clear_hitboxes
 wait_until 22
 iasa

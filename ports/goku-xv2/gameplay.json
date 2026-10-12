@@ -453,15 +453,15 @@
       "script": "moves/dtilt.genoasm",
       "windows": [
         [
-          11,
+          7,
           8
         ],
         [
-          11,
+          7,
           8
         ],
         [
-          11,
+          7,
           8
         ]
       ],
@@ -475,14 +475,14 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          11,
-          19
+          7,
+          15
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames",
       "sample": {
         "limb": [
-          "foot.L"
+          "foot.R"
         ],
         "from": "XV2 hit entry 370",
         "xv2_damage": [
@@ -521,10 +521,10 @@
       ],
       "iasa": 42,
       "design": {
-        "damage": 10,
+        "damage": 15,
         "angle": 361,
-        "kbg": 50,
-        "bkb": 14
+        "kbg": 100,
+        "bkb": 28
       },
       "hb": "HB-SAMPLE",
       "strike": [
@@ -571,10 +571,10 @@
       ],
       "iasa": 40,
       "design": {
-        "damage": 10,
-        "angle": 80,
-        "kbg": 83,
-        "bkb": 35
+        "damage": 14,
+        "angle": 88,
+        "kbg": 105,
+        "bkb": 32
       },
       "hb": "HB-SAMPLE",
       "strike": [
@@ -621,10 +621,10 @@
       ],
       "iasa": 38,
       "design": {
-        "damage": 8,
-        "angle": 80,
-        "kbg": 66,
-        "bkb": 32
+        "damage": 13,
+        "angle": 361,
+        "kbg": 100,
+        "bkb": 28
       },
       "hb": "HB-SAMPLE",
       "strike": [
@@ -776,23 +776,19 @@
       "windows": [
         [
           15,
-          4
+          5
         ],
         [
           15,
-          4
-        ],
-        [
-          15,
-          4
+          5
         ]
       ],
       "iasa": 40,
       "design": {
         "damage": 14,
-        "angle": 270,
-        "kbg": 83,
-        "bkb": 41
+        "angle": 280,
+        "kbg": 70,
+        "bkb": 30
       },
       "hb": "HB-SAMPLE",
       "strike": [
@@ -910,23 +906,27 @@
       "windows": [
         [
           10,
-          4
+          7
         ],
         [
           10,
-          4
+          7
         ],
         [
-          10,
-          4
+          11,
+          3
+        ],
+        [
+          14,
+          3
         ]
       ],
       "iasa": 36,
       "design": {
         "damage": 8,
-        "angle": 270,
-        "kbg": 80,
-        "bkb": 36
+        "angle": 290,
+        "kbg": 70,
+        "bkb": 40
       },
       "hb": "HB-SAMPLE",
       "strike": [
@@ -2111,15 +2111,11 @@
       "windows": [
         [
           15,
-          4
+          5
         ],
         [
           15,
-          4
-        ],
-        [
-          15,
-          4
+          5
         ]
       ],
       "strike": [
@@ -2185,15 +2181,19 @@
       "windows": [
         [
           10,
-          4
+          7
         ],
         [
           10,
-          4
+          7
         ],
         [
-          10,
-          4
+          11,
+          3
+        ],
+        [
+          14,
+          3
         ]
       ],
       "strike": [

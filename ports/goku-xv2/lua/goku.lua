@@ -96,12 +96,21 @@ function M.mid_frame(ctx) hover(ctx, 44) beam(ctx, 7, 34, 1.0) end
 function M.full_frame(ctx) hover(ctx, 66) beam(ctx, 9, 48, 1.2) end
 function M.max_frame(ctx) hover(ctx, 84) beam(ctx, 11, 60, 1.7) end
 function M.super_frame(ctx) hover(ctx, 124) beam(ctx, 55, 114, 2.6) end
+-- Dragon Rush / Super Dash (Side B, and the homing strike on the ground). Owner 2026-10-11: less distance (ground speed 2.6 -> 2.1: ground friction makes the travel go with the square,
+-- 23.3 -> about 15 units; air speed 2.6 -> 1.7: the air dash 66 -> about 42) and in the air he resists gravity: a stall for the first RUSH_STALL frames (vertical speed 0), then a slow sink capped at RUSH_SINK per frame (about 40% of a
+-- normal fall's 2.4) instead of the free fall. Plain Lua velocity on the state, so rewind, savestate and netplay replay it.
+local RUSH_GROUND, RUSH_AIR, RUSH_TAIL, RUSH_STALL, RUSH_SINK = 2.1, 1.7, 0.3, 10, 1.0
 function M.rush_enter(ctx)
-  -- Dragon Rush / Super Dash: the dash is the move; in the air it keeps its height (a recovery)
-  if ctx.self.air then ctx.velocity(2.6, 0.3) else ctx.velocity(2.6, 0) end
+  ctx.velocity(ctx.self.air and RUSH_AIR or RUSH_GROUND, 0)
 end
 function M.rush_frame(ctx)
-  if ctx.self.action_frame == 20 then ctx.velocity(0.5, ctx.self.vel_y) end
+  local f = ctx.self.action_frame
+  if ctx.self.air then
+    local vy = f <= RUSH_STALL and 0 or math.max(ctx.self.vel_y, -RUSH_SINK)
+    if f < 20 then ctx.velocity(RUSH_AIR, vy)
+    elseif f == 20 then ctx.velocity(RUSH_TAIL, vy)
+    else ctx.velocity(ctx.self.vel_x * ctx.self.facing, vy) end
+  elseif f == 20 then ctx.velocity(RUSH_TAIL, ctx.self.vel_y) end
 end
 function M.rushcombo_enter(ctx)
   ctx.velocity(1.4, 0)
@@ -139,8 +148,18 @@ local function charge_tick(ctx)
   return true
 end
 function M.kicharge_frame(ctx) charge_tick(ctx) end
+-- The air charge (owner 2026-10-11): a charged hold for as long as B is held, at any ki: below 100 the meter rises, at 100 it stays (the pose and aura carry on). He sinks
+-- slowly (AIR_SINK 0.7 per frame, about 30% of a normal fall's 2.4; never upward, so no height is gained) and drifts a little with the stick (at most AIR_DRIFT 0.5 forward
+-- speed, moving 0.06 a frame toward it: about 45% of his normal air drift). Releasing B, landing or a hit ends it and he is actionable (the state ends in Fall, normal landing).
+local AIR_SINK, AIR_DRIFT, AIR_DRIFT_STEP = 0.7, 0.5, 0.06
 function M.kichargeair_frame(ctx)
-  if charge_tick(ctx) then ctx.velocity(ctx.self.vel_x * ctx.self.facing * 0.9, -0.12) end
+  if ctx.self.anim_ended then ctx.loop() end
+  if not ctx.input.special_held then ctx.go("auto") return end
+  if ctx.ki and ctx.self.ki < KI_MAX then ctx.ki(math.min(0.8, KI_MAX - ctx.self.ki)) end -- @KI
+  local fwd = ctx.self.vel_x * ctx.self.facing
+  local want = ctx.input.stick_fwd * AIR_DRIFT
+  fwd = fwd + math.max(-AIR_DRIFT_STEP, math.min(AIR_DRIFT_STEP, want - fwd))
+  ctx.velocity(fwd, -AIR_SINK)
 end
 -- Homing dash strike (XV2 BAC 476, Side B out of the shield, ki cost on the route): it reuses rush_enter/rush_frame (the module is at the engine's 24-function cap);
 -- XV2 homes on the target for 14 frames (engine.homing_movement), which fighter Lua cannot read (no opponent query), so it dashes straight ahead.

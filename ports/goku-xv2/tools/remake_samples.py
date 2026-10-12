@@ -60,6 +60,9 @@ TOKEN = {'lower_arm.R': 'ARM_R', 'upper_arm.R': 'UPARM_R', 'lower_arm.L': 'ARM_L
 CLIP_LIMB = {'GOK_ATC_002': 'hand', 'GOK_ATC_003': 'hand', 'GOK_ATC_004': 'hand', 'GOK_ATC_006': 'hand', 'GOK_ATC_007': 'foot', 'GOK_ATC_008': 'foot',
              'GOK_ATC_011': 'foot', 'GOK_ATC_012': 'foot', 'GOK_ATC_017': 'foot', 'GOK_ATC_020_S': 'foot', 'GOK_ATC_025': 'foot', 'GOK_ATC_028': 'foot',
              'GOK_NAG_TSUKAMI': 'hand'}
+# moves whose limb the reach rule (leading_limb, 2026-10-11) would flip but the owner has not been asked about: they keep the limb they had. dtilt is deliberately NOT here (the fix).
+# Reported flips: dash_attack foot.R -> foot.L, utilt hand.L -> hand.R, RushCombo hand.R -> foot.L, Light5 hand.L -> foot.R.
+LIMB_LOCK = {'dash_attack': 'foot.R', 'utilt': 'hand.L', 'RushCombo': 'hand.R', 'Light5': 'hand.L'}
 SKIP_SAMPLE = {'pummel', 'fthrow', 'bthrow', 'uthrow', 'dthrow', 'rapid_start', 'rapid_end', 'ITEnd', 'Recovery', 'KameCharge'}
 
 
@@ -167,17 +170,13 @@ class Rig:
         return HP.pose_matrices(tree, self.native, self.rest, min(frame, tree['frames']))
 
     def leading_limb(self, clip, f0, f1, kind=None):
-        """The effector that travels farthest from its pose a few frames before the window to its pose inside it (the striking limb)."""
+        """The effector thrown farthest from the chest inside the window (the striking limb). Owner 2026-10-11 (dtilt): the old score was raw displacement from five frames before,
+        which picked the planted foot of a kick whose other foot swung out; reach from the chest picks the limb that is actually out there."""
         best, score = None, -1.0
-        base = max(0, f0 - 5)
-        p0 = self.pose(clip, base)
         for eff in CHAINS:
             if kind and not eff.startswith(kind):
                 continue
-            j = self.roles[eff][0]
-            tot = 0.0
-            for f in range(max(f0 - 2, 0), f1 + 1):
-                tot = max(tot, float(np.linalg.norm(self.pose(clip, f)[j][:3, 3] - p0[j][:3, 3])))
+            tot = max(self.extension(clip, eff, f) for f in range(max(f0 - 2, 0), f1 + 1))
             if tot > score:
                 best, score = eff, tot
         return best
@@ -339,8 +338,28 @@ def build_script(old_text, blocks, header, iasa=None, extra=None):
 
 OLD_REV = '93231f5'   # the last commit with the earlier generated scripts (timing fallbacks, HBSTUN carry-over)
 OVERRIDES = {   # move -> forced fields; design intent from the owner brief, recorded in REMAKE-SAMPLES.md
-    'dair': {'angle': 270, 'why': 'owner brief: dair is the spike (XV2 reaction for this clip is a plain Standard hit)'},
 }
+# owner 2026-10-11: smash knockback is Melee's. (angle, KBG, BKB) of the tip slot, the inner slots follow INNER_BKB. Retail reference (hit data read from the vanilla disc, damage / angle / KBG / BKB):
+#   fsmash Marth 14-20 / 361 / 70 / 60-80, Fox 15 / 361 / 105 / 10, Mewtwo 12-20 / 361 / 75-80 / 21-30, Falcon (S4Hi) 21 / 361 / 100 / 24
+#   usmash Marth 15-18 / 90 / 80 / 30-60, Falcon 13-14 / 90 / 105-128 / 30, Fox 18 / 80 / 112 / 30, Mewtwo 10 / 90 / 118 / 40
+#   dsmash Marth 11-16 / 70-75 / 72-100 / 70, Falcon 16-18 / 361 / 100 / 20-30, Fox 12-15 / 361-25 / 65-100 / 2-20, Mewtwo 15 / 361 / 103 / 20
+SMASH_KB = {'fsmash': (361, 100, 28), 'usmash': (88, 105, 32), 'dsmash': (361, 100, 28)}
+# and the tip damage: XV2's 15 / 15 / 10 mapped through the anchor table gave 10 / 10 / 8, far under retail's 14-21, which no growth value makes up for. Knockback-formula KO estimate at the
+# stage centre on Mario (weight 100, no DI, tip slot, KB = ((p/10 + p*d/20) * 200/(w+100) * 1.4 + 18) * KBG/100 + BKB, launch speed 0.03 KB, 0.051 decay, blast zone 224 out / 188 up):
+#   fsmash Marth tip 42, Falcon 52, Fox 90, Mewtwo tip 89;  usmash Marth 46, Falcon 69, Fox 44, Mewtwo 76;  dsmash Marth tip 41, Falcon 62, Fox 151, Mewtwo 84  (percent before the hit, uncharged)
+#   Goku with 15/100/28: fsmash 81, usmash (14/105/32) 67, dsmash (13/100/28) about 95; fully charged (x1.4 damage) 50 / 41 / about 60.
+SMASH_DMG = {'fsmash': 15, 'usmash': 14, 'dsmash': 13}
+# owner 2026-10-11: the forward and down air spikes are small sweetspots on the fist / foot tip for a few frames; everywhere else the move is a sourspot at a normal angle.
+# Marth's dair tipper is the size reference (sphere 3.5, active 4 frames, 290, KBG 70, BKB 40; his other spheres 361 / 80 with BKB 20-40); Mario's fair is a 5-frame 280 meteor (KBG 70, BKB 30).
+# radius is in script units (the build multiplies by 1.4286 and the engine by 1.2: 2.3 -> 3.9, 2.1 -> 3.6 in game, no HB_GROW); frames = the spike's active frames, centred in the XV2 window.
+SPIKES = {'dair': {'radius': 2.1, 'frames': 3, 'angle': 290, 'kbg': 70, 'bkb': 40}}
+# owner 2026-10-11: Goku's fair is built on retail Mario's AttackAirF (read from the vanilla disc, numbers only): hitbox 0 (hand, size 3.125) and hitbox 1 (forearm, size 3.906, 3.125 along it)
+# both created at script frame 18, damage 15, angle 280 (meteor), KBG 70, fixed 0, BKB 30, cleared 5 frames later; IASA 60. The retail script has NO sourspot: both spheres spike for the whole
+# window. Here: the same two-sphere, 5-frame window centred on the clip's peak extension, on the arm chain (tip + forearm), the owner's 2x sizes.
+MARIO_FAIR = {'spheres': 2, 'frames': 5, 'damage': 15, 'angle': 280, 'kbg': 70, 'bkb': 30}
+SOURCE_NOTE = {'fair': 'Mario AttackAirF (retail): 2 spheres, 5 frames, damage 15, angle 280, KBG 70, BKB 30, no sourspot',
+               'dair': 'spike sweetspot 2.1 script units (3.6 in game) for 3 frames, sourspot elsewhere; Marth dair tipper 3.5 / 4 frames / 290 / KBG 70 / BKB 40 is the reference'}
+SOUR = {'angle': 40, 'kbg': 70, 'bkb': 20, 'dmg_scale': 0.7, 'late_frames': 3}   # the sourspot: diagonal forward, low knockback, 70% damage, held 3 frames past the window
 
 
 def old_script(rel):
@@ -447,7 +466,7 @@ def plan_targets(rig, source, anim_rows, combo):
             b_ = bdm(sc, rv) if h else {'type': 'Standard', 'up': 0.1, 'fwd': 0.04, 'dur': 30}
             xdmg = h['damage'] if h else 8
             dmg = min(CAP[cls], max(1, int(round(anchor_damage(xdmg))))) if cls != 'grab' else 0
-            eff = rig.leading_limb(bank_clip, a, b, CLIP_LIMB.get(clipname)) if bank_clip in rig.plan['bank']['clips'] else None
+            eff = LIMB_LOCK.get(name) or (rig.leading_limb(bank_clip, a, b, CLIP_LIMB.get(clipname)) if bank_clip in rig.plan['bank']['clips'] else None)
             a0, b0 = a, b
             if h is not None and not t['chain'] and len(found[1]) == 1:
                 a, b = rig.refine(bank_clip, eff, a, b, frames)
@@ -474,8 +493,42 @@ def render(rig, tg):
             angle, kbg, fkb, bkb = ov['angle'], 80, 0, 20 + 2 * w['dmg']
         if tg['cls'] == 'grab':
             angle, kbg, fkb, bkb = 361, 100, 0, 0
+        if tg['name'] in SMASH_KB:
+            w['dmg'] = SMASH_DMG[tg['name']]
+            a0, kbg, bkb = SMASH_KB[tg['name']]
+            angle, fkb = a0, 0
         w['final'] = dict(angle=angle, kbg=kbg, fkb=fkb, bkb=bkb)
         lines = []
+        if tg['name'] == 'fair' and i == 0 and len(sph) >= 2:
+            m = MARIO_FAIR
+            c = (w['a'] + w['b']) // 2
+            a_ = max(1, c - m['frames'] // 2)
+            lines = []
+            for k in range(m['spheres']):
+                tok, x, y, z, r = sph[k]
+                lines.append('hitbox slot=%d joint=@%s@ damage=%d size=%s x=%s y=%s z=%s angle=%d kbg=%d fkb=0 bkb=%d' % (k, tok, m['damage'], fmt(r), fmt(x), fmt(y), fmt(z), m['angle'], m['kbg'], m['bkb']))
+            w['final'] = dict(angle=m['angle'], kbg=m['kbg'], fkb=0, bkb=m['bkb'], window=[a_, a_ + m['frames']])
+            blocks.append((a_, lines, a_ + m['frames']))
+            continue
+        if tg['name'] in SPIKES and i == 0 and len(sph) >= 3:
+            sp = SPIKES[tg['name']]
+            a_, b_ = w['a'], w['b']
+            p = a_ + max(0, (b_ - a_ - sp['frames'] + 1) // 2)
+            tip, mid, inner = sph[0], sph[1], sph[2]
+            tip_dmg = max(1, int(round(w['dmg'])))
+            sour_dmg = max(1, int(round(w['dmg'] * SOUR['dmg_scale'])))
+            def hb(slot, tok_xyzr, dmg, ang, kg, bk, size=None):
+                tok, x, y, z, r = tok_xyzr
+                return 'hitbox slot=%d joint=@%s@ damage=%d size=%s x=%s y=%s z=%s angle=%d kbg=%d fkb=0 bkb=%d' % (slot, tok, dmg, fmt(size if size else r), fmt(x), fmt(y), fmt(z), ang, kg, bk)
+            lines = [hb(1, mid, sour_dmg, SOUR['angle'], SOUR['kbg'], SOUR['bkb']), hb(2, inner, sour_dmg, SOUR['angle'], SOUR['kbg'], SOUR['bkb']),
+                     'wait_until %d' % p,
+                     hb(0, tip, tip_dmg, sp['angle'], sp['kbg'], sp['bkb'], size=sp['radius']),
+                     'wait_until %d' % (p + sp['frames']),
+                     'clear_hitbox hit_idx=0',
+                     hb(3, tip, sour_dmg, SOUR['angle'], SOUR['kbg'], SOUR['bkb'])]
+            w['final'] = dict(angle=sp['angle'], kbg=sp['kbg'], fkb=0, bkb=sp['bkb'], spike_frames=[p, p + sp['frames']], spike_radius=sp['radius'])
+            blocks.append((a_, lines, b_ + SOUR['late_frames']))
+            continue
         for k, (tok, x, y, z, r) in enumerate(sph):
             d = max(1, int(round(w['dmg'] * INNER_SCALE[k]))) if tg['cls'] != 'grab' else 0
             kb = max(0, bkb + INNER_BKB[k]) if bkb else 0
@@ -526,6 +579,8 @@ def write_all(rig, plans, combo):
     g = json.loads(SG.FULL.read_text(encoding='utf-8'))
     n = 0
     for tg in plans:
+        if tg['status'] == 'carry' and tg['name'] != 'bair':
+            continue   # the grabs are Falcon cross-ports (tools/cross_port.py): their scripts are never regenerated or restored here
         if tg['status'] == 'carry':   # bair: the cross-port back air; its spheres were hand-authored earlier (owner: looks and works as intended)
             old = old_script(tg['script'])
             if old and 'hitbox' in old:
@@ -541,7 +596,7 @@ def write_all(rig, plans, combo):
             continue
         path = PORT / tg['script']
         old = path.read_text(encoding='utf-8')
-        header = HB_HEADER + '# ' + tg['note'] + ('; limb %s' % ','.join(sorted({str(w['limb']) for w in tg['wins']}))) + '\n'
+        header = HB_HEADER + '# ' + tg['note'] + ('; limb %s' % ','.join(sorted({str(w['limb']) for w in tg['wins']}))) + '\n' + ('# SOURCE: ' + SOURCE_NOTE[tg['name']] + '\n' if tg['name'] in SOURCE_NOTE else '')
         path.write_text(build_script(old, tg['blocks'], header, IASA_AT.get(tg['name']),
                                                 [(max(1, tg['wins'][0]['a'] - 2), CHARGE_LINE)] if tg['name'] in SMASH_CHARGE else None), encoding='utf-8', newline='\n')
         n += 1
