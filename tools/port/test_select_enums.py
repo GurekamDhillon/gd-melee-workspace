@@ -91,7 +91,10 @@ class SelectEnums(unittest.TestCase):
     def test_the_lobby_and_its_loading_screen_are_gated_until_a_two_client_look(self):
         with open(ADAPTER, encoding="utf-8", errors="replace") as f:
             text = strip_comments(f.read())
-        self.assertEqual(len(re.findall(r'Settings_Int\("atlas_lobby", 0\)', text)), 2)    # the lobby's pick and its loading screen
+        # The online picker is on by default since the per-player Controls panel lives on it (agent/css-controls):
+        # explicit atlas_lobby=0 keeps the legacy picker. The loading screen stays opt-in.
+        self.assertEqual(len(re.findall(r'Settings_Int\("atlas_lobby", 1\)', text)), 1)    # the lobby's pick
+        self.assertEqual(len(re.findall(r'Settings_Int\("atlas_lobby", 0\)', text)), 1)    # its loading screen
 
     def test_host_files_keep_out_of_the_netplay_layer_and_input_masks(self):
         # Review Focus 10: no host Atlas file includes or calls the netplay layer, and the select never masks input (the lobby's rollback stays untouched)

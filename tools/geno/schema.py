@@ -66,6 +66,10 @@ def word():
 MOVE_TAGS = ["jab", "dash_attack", "tilt", "smash", "aerial", "grab", "throw", "special", "projectile"]
 
 
+CONTROL_BUTTON_NAMES = ["A", "B", "X", "Y", "Z", "START", "L", "R", "Up", "Down", "Left", "Right"]
+CONTROL_BUTTONS = obj({b: {"anyOf": [string("Destination button or none"), arr(string("Destination button"), 12)]} for b in CONTROL_BUTTON_NAMES})
+
+
 def build_schema():
     from .define import definition_schema
     boolean = field(["boolean", "number"], "Enable when nonzero", 0, "19")
@@ -144,6 +148,10 @@ def build_schema():
                         **{slot: string("Callback override", enum=names) for slot, names in S["callbacks"].items()}}, ("motion",)), 64),
                    "name": string("Log display name", "target Pl file", maxLength=63),
                    "attributes": obj({key: (integer if is_int else num)("Common attribute " + key, "disc value", "7") for key, is_int in S["attrs"].items()}, maxProperties=C["GENO_MAX_ATTRS"]),
+                   "controls": obj({"layouts": arr(obj({"name": string("Layout name", maxLength=31),
+                                                        "buttons": CONTROL_BUTTONS}, ("name", "buttons")), 16),
+                                    "extras": arr(obj({"name": string("Opt-in extra name", maxLength=31),
+                                                       "buttons": CONTROL_BUTTONS}, ("name", "buttons")), 8)}),
                    "jumps": obj({"max": integer("Total jumps including ground jump", "disc value", "10", minimum=1, maximum=250),
                                  "air_vy": arr(num("Per-air-jump vertical impulse", "disc value", "10"), C["GENO_MAX_JUMP_VY"])}),
                    "toon": {"anyOf": [field("boolean", "Cel shading with default parameters (visual only)", "absent: off", "7"),

@@ -65,3 +65,19 @@ def test_apply_to_objects_reports_missing_names():
     assert found == ["a"] and missing == ["zz"]
     assert objs[0].hide_render and objs[0].hide_viewport and objs[0]._p == {"geno_part_hidden": 1}
     assert not objs[1].hide_render
+
+
+def test_replace_diffuse_whitens_the_multiply_factor():
+    class Sock(SimpleNamespace):
+        pass
+    def mix(b, linked=False):
+        socks = [Sock(links=[], default_value=(0, 0, 0, 1)) for _ in range(10)]
+        socks[7] = Sock(links=[1] if linked else [], default_value=b)
+        return SimpleNamespace(type='MIX', data_type='RGBA', blend_type='MULTIPLY', inputs=socks)
+    a, linked = mix((0.7, 0.7, 0.7, 1)), mix((0.7, 0.7, 0.7, 1), True)
+    mat = SimpleNamespace(use_nodes=True, node_tree=SimpleNamespace(nodes=[a, linked]))
+    obj = SimpleNamespace(data=SimpleNamespace(materials=[mat, None]))
+    assert pv.apply_replace_diffuse([obj]) == 1
+    assert tuple(a.inputs[7].default_value) == (1.0, 1.0, 1.0, 1.0)
+    assert tuple(linked.inputs[7].default_value) == (0.7, 0.7, 0.7, 1)
+    assert pv.apply_replace_diffuse([obj]) == 0

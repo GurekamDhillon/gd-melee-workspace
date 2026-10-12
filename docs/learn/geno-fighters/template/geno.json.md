@@ -107,6 +107,37 @@ Every nested key is listed below. Defaults describe absence; inherited data need
 | fighters[].attributes.x154_damageice_unk | number: Common attribute x154_damageice_unk | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].attributes.x168 | number: Common attribute x168 | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
 | fighters[].attributes.x17C | number: Common attribute x17C | disc value | ; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].controls | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts | array: Ordered entries | absent | maxItems=16; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts[].name | string: Layout name |  | maxLength=31; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts[].buttons | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts[].buttons.A | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts[].buttons.B | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts[].buttons.X | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts[].buttons.Y | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts[].buttons.Z | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts[].buttons.START | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts[].buttons.L | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts[].buttons.R | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts[].buttons.Up | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts[].buttons.Down | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts[].buttons.Left | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.layouts[].buttons.Right | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras | array: Ordered entries | absent | maxItems=8; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras[].name | string: Opt-in extra name |  | maxLength=31; geno.md §7; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras[].buttons | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras[].buttons.A | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras[].buttons.B | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras[].buttons.X | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras[].buttons.Y | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras[].buttons.Z | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras[].buttons.START | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras[].buttons.L | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras[].buttons.R | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras[].buttons.Up | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras[].buttons.Down | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras[].buttons.Left | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
+| fighters[].controls.extras[].buttons.Right | choice: See choice encodings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].jumps | object: Named settings | absent | ; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |
 | fighters[].jumps.max | integer: Total jumps including ground jump | disc value | minimum=1; maximum=250; geno.md §10; melee/pc/platform/geno_registry.c |
 | fighters[].jumps.air_vy | array: Ordered entries | absent | maxItems=16; geno.md §§7,15–20; melee/pc/platform/geno_registry.c |

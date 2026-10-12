@@ -787,6 +787,596 @@
             "additionalProperties": false,
             "maxProperties": 128
           },
+          "controls": {
+            "type": "object",
+            "properties": {
+              "layouts": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Layout name",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §7",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "maxLength": 31
+                    },
+                    "buttons": {
+                      "type": "object",
+                      "properties": {
+                        "A": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "B": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "X": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "Y": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "Z": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "START": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "L": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "R": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "Up": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "Down": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "Left": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "Right": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "name",
+                    "buttons"
+                  ]
+                },
+                "maxItems": 16
+              },
+              "extras": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Opt-in extra name",
+                      "x-engine-default": "",
+                      "x-reference": "geno.md §7",
+                      "x-source": "melee/pc/platform/geno_registry.c",
+                      "maxLength": 31
+                    },
+                    "buttons": {
+                      "type": "object",
+                      "properties": {
+                        "A": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "B": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "X": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "Y": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "Z": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "START": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "L": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "R": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "Up": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "Down": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "Left": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        },
+                        "Right": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "description": "Destination button or none",
+                              "x-engine-default": "",
+                              "x-reference": "geno.md §7",
+                              "x-source": "melee/pc/platform/geno_registry.c"
+                            },
+                            {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "description": "Destination button",
+                                "x-engine-default": "",
+                                "x-reference": "geno.md §7",
+                                "x-source": "melee/pc/platform/geno_registry.c"
+                              },
+                              "maxItems": 12
+                            }
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "name",
+                    "buttons"
+                  ]
+                },
+                "maxItems": 8
+              }
+            },
+            "additionalProperties": false
+          },
           "jumps": {
             "type": "object",
             "properties": {

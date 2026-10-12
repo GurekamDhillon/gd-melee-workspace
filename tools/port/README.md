@@ -177,6 +177,15 @@ agent roots and runs). Three guards, none of which touches anything outside `<bu
   activity, run count), junctions (not followed), merged-branch worktrees, and a suggested cleanup list
   (idle agent roots, roots with many runs, old sweeps and release staging). Hardlinked files are counted
   once. It deletes nothing; run what you agree with. Takes about a minute on a full `_build`.
+- **`python tools/port/housekeeping_report.py --build <build root> --days 7`** reports old run
+  directories and agent build roots, including the agents' runs. Age uses the newest file or
+  directory activity. Each row shows logical bytes and its worktree's current branch: CMake source
+  paths establish ownership when available; directory-name matches and the main game checkout
+  convention are explicitly inferred. Unknown or ambiguous ownership stays visible. `--workspace`
+  selects the workspace Git registry when the build root is elsewhere; `--json` emits structured
+  output. Junctions, symlinks and other reparse points (including ancestors and nested links) are
+  flagged and their targets are never scanned. No deletion or cleanup commands are issued. Root
+  sizes include their runs and count hardlinks, so rows overlap and do not estimate space freed.
 
 **End of a lane:** when the lane's work is merged or abandoned, run
 `python tools/port/agent_slim.py <name>` (dry run) then `--yes` to delete the root's bulk (exe, objects,

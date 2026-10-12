@@ -109,3 +109,25 @@ def apply_cull(objects, names):
                     mat.use_backface_culling = True
             changed.append(obj.name)
     return sorted(changed)
+
+
+def apply_replace_diffuse(objects):
+    """Inside Blender: drop the material-diffuse multiply from textured materials (texture COLORMAP_REPLACE).
+
+    HsdExport's glTF carries the MObj diffuse colour (Falcon: 179/255 = 0.70) as the baseColorFactor, and the importer
+    multiplies the texture by it. The engine's tex0 is COLORMAP_REPLACE (every Falcon DObj but the two env-map ones),
+    so the texture is the colour and the game's lighting brightens it; the 0.70 factor made the whole model, and most
+    visibly the white shoulder armour (DObj 77/78, Image_32/33), render grey. The Mix node's B input goes to white.
+    Returns the number of Mix nodes changed."""
+    changed = 0
+    for obj in objects:
+        for mat in getattr(obj.data, 'materials', []):
+            if mat is None or not mat.use_nodes:
+                continue
+            for node in mat.node_tree.nodes:
+                if node.type == 'MIX' and node.data_type == 'RGBA' and node.blend_type == 'MULTIPLY':
+                    sock = node.inputs[7]
+                    if not sock.links and tuple(sock.default_value)[:3] != (1.0, 1.0, 1.0):
+                        sock.default_value = (1.0, 1.0, 1.0, 1.0)
+                        changed += 1
+    return changed
