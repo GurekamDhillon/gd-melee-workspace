@@ -47,7 +47,11 @@ def version_text():
            'built      '+__import__('datetime').date.today().isoformat()]
     lines.append('netplay_protocol '+str(proto))
     return chr(10).join(lines)+chr(10)
-name='melee-linux-i686'+('-local' if a.local else '')
+# The inner folder carries the release file's own name (GDMelee-<version>-linux-x86_64): unpacking the tarball
+# gives a folder that says which build it is. (The launcher and game are found relative to it, never by name.)
+_version=(a.version or (root/'tools/release/VERSION').read_text()).strip()
+if not re.fullmatch(r'[0-9A-Za-z][0-9A-Za-z.+-]*',_version):raise SystemExit(f'bad release version {_version!r}')
+name=f'GDMelee-{_version}-linux-x86_64'+('-local' if a.local else '')
 with tempfile.TemporaryDirectory(prefix='package-',dir=a.output) as temp:
     temp=Path(temp); dest=temp/name; debug=temp/(name+'-debug')
     for d in (dest/'bin',dest/'lib',dest/'assets',dest/'licenses',dest/'udev',debug):d.mkdir(parents=True,exist_ok=True)
