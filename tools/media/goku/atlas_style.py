@@ -111,6 +111,8 @@ def render(pages, w=1920, h=1080, transparent=False, full_page=False):
                 .filter(e => e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 10)
                 .map(e => e.textContent.trim().slice(0, 40))""")
             errs += ['overflow in %s: %s' % (Path(out).name, b) for b in bad]
+            if not full_page and pg.evaluate('document.documentElement.scrollHeight') > h + 2:
+                errs.append('page taller than %d: %s' % (h, Path(out).name))
             Path(out).parent.mkdir(parents=True, exist_ok=True)
             pg.screenshot(path=str(out), omit_background=transparent, full_page=full_page)
             pg.close()

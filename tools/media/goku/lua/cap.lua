@@ -61,10 +61,40 @@ end
 function CAP.reset(o)
   o = o or {}
   gd.input(1, {}, 1); gd.wait(2)
-  gd.teleport(1, o.x1 or 0, o.y1 or 0); gd.teleport(2, o.x2 or 38, o.y2 or 0)
+  CAP.tp(1, o.x1 or 0, o.y1 or 0); CAP.tp(2, o.x2 or 38, o.y2 or 0)
   gd.set_percent(1, 0); gd.set_percent(2, o.pct or 0)
   if o.ki then gd.combo_ki(1, o.ki) end
   gd.wait(o.settle or 40)
   local cx = o.camx or 20
-  gd.camera_set{eye = {x = cx, y = o.camy or 14, z = o.camz or 95}, interest = {x = cx, y = (o.camy or 14) - 4, z = 0}, fov = o.fov or 40}
+  gd.camera_set{eye = {x = cx, y = o.camy or 14, z = o.camz or 95}, interest = {x = cx, y = o.camiy or ((o.camy or 14) - 4), z = 0}, fov = o.fov or 40}
+end
+-- teleport that waits out a respawning or held fighter
+function CAP.tp(port, x, y)
+  for _ = 1, 120 do
+    if pcall(gd.teleport, port, x, y) then return end
+    gd.wait(15)
+  end
+  error('could not teleport port ' .. port)
+end
+
+-- Pad helpers. gd.input holds count logic frames; sticks -127..127 (x forward = +127 for a fighter facing right), triggers 0..255.
+function CAP.tap(spec, n) gd.input(1, spec, n or 2) end
+local function in_list(m, list) for _, v in ipairs(list) do if m == v then return true end end return false end
+-- wait (recording) until P1 is in one of `states` at action frame >= af, then tap `spec` for n frames. Returns false on timeout.
+function CAP.when(states, af, spec, n, timeout)
+  if type(states) == 'string' then states = {states} end
+  for _ = 1, timeout or 90 do
+    local p = gd.player(1)
+    if in_list(tostring(p.motion_name), states) and (p.action_frame or 0) >= af then
+      gd.input(1, spec, n or 2); return true
+    end
+    CAP.wait(1)
+  end
+  CAP.log('WHEN timeout ' .. table.concat(states, ','))
+  return false
+end
+-- stage edge: right ledge x and floor top, for off-stage KO framing
+function CAP.edge()
+  local sb = gd.stage_bounds()
+  return sb.main_floor.right, sb.main_floor.top
 end

@@ -47,13 +47,14 @@ def main():
     ap.add_argument('--res', default='1280x720'); ap.add_argument('--max-seconds', default='600')
     ap.add_argument('--exe', default=str(MAIN / '_build/agents/gokustage/melee-pc.exe'))
     ap.add_argument('--mods', default=str(STAGE_WT / '_build/goku-xv2/combo-package/mods'))
-    ap.add_argument('--cfg', action='append', default=[]); ap.add_argument('--no-audio', action='store_true')
+    ap.add_argument('--cfg', action='append', default=[])
     ap.add_argument('--visible', action='store_true')
+    ap.add_argument('--pass', dest='kind', choices=['video', 'audio'], default='video', help="video (default): MELEE_TURBO=1, one logic tick per presented frame, every frame shot once, burners slow it so the PNG writer keeps up; audio: realtime 60 Hz, no shots, MELEE_AUDIO_DUMP (same script, same logic frames)")
     ap.add_argument('--hitboxes', action='store_true', help='keep the LAB hitbox/hurtbox overlay (default: the CLEAN display)')
     a = ap.parse_args()
     sync_exe(a.exe)
     if not a.hitboxes:   # the LAB starts in the hitbox display; a throwaway copy of the package starts it CLEAN (as ports/goku-xv2/tools/kame_run.py --clean)
-        dst = OUT / '_mods_clean'
+        dst = OUT / ('_mods_clean_' + a.name)
         if dst.exists():
             shutil.rmtree(dst)
         shutil.copytree(a.mods, dst)
@@ -63,12 +64,16 @@ def main():
         lab.write_text(t.replace('mode = 2, hidden', 'mode = 1, hidden', 1), encoding='utf-8')
         a.mods = str(dst)
     kv = dict(c.split('=', 1) for c in a.cfg)
+    if a.kind == 'audio':
+        kv['noshot'] = '1'; kv.pop('burn', None)
+    elif 'burn' not in kv:
+        kv['burn'] = '8'
     w, h = a.res.split('x')
     gen = HERE / 'lua' / ('_gen_' + a.name + '.lua')
     src = Path(a.script) if Path(a.script).is_absolute() else HERE / a.script
     gen.write_text('CFG={' + ','.join('%s=%r' % (k, v) for k, v in kv.items()) + '}\n' + (HERE / 'lua/cap.lua').read_text(encoding='utf-8')
                    + '\n' + src.read_text(encoding='utf-8'), encoding='utf-8')
-    dest = OUT / a.name
+    dest = OUT / (a.name if a.kind == 'video' else a.name + '_audio')
     if dest.exists():
         shutil.rmtree(dest)
     (dest / 'frames').mkdir(parents=True)
@@ -78,12 +83,12 @@ def main():
     env.update({'GW_ROOT': str(MAIN), 'GW_MELEE': GAME, 'GW_BUILD_ROOT': str(BROOT), 'MELEE_MODS_DIR': a.mods,
                 'MELEE_SCENE': f'mode=lab;p1={a.p1};p2={p2};stage={a.stage};items=off;time=0',
                 'MELEE_PAD_SCRIPT': gen.as_posix(), 'MELEE_UNATTENDED': '1', 'MELEE_MAX_SECONDS': a.max_seconds,
-                'MELEE_LAB_UI': '0', 'MELEE_TURBO': '0', 'MELEE_WINDOW_X': off, 'MELEE_WINDOW_Y': off,
+                'MELEE_LAB_UI': '0', 'MELEE_TURBO': '1' if a.kind == 'video' else '0', 'MELEE_WINDOW_X': off, 'MELEE_WINDOW_Y': off,
                 'MELEE_WINDOW_W': w, 'MELEE_WINDOW_H': h, 'MELEE_BIND_DUMMY': '1', 'MELEE_VOLUME': '0',
-                'MELEE_RUN_LABEL': 'Goku media ' + a.name})
+                'MELEE_RUN_LABEL': 'Goku media ' + a.name, 'MELEE_RUNS_KEEP': '1000'})   # parallel captures must not prune each other's sandboxes
     runname = 'm-' + a.name + '-' + time.strftime('%H%M%S')
     run = BROOT / 'runs' / runname
-    if not a.no_audio:
+    if a.kind == 'audio':
         env['MELEE_AUDIO_DUMP'] = (run / 'audio.wav').as_posix()
     with open(dest / 'run.txt', 'w', encoding='utf-8') as fh:
         r = subprocess.run([GIT_BASH, (MAIN / 'tools/port/run.sh').as_posix(), '--max-seconds', a.max_seconds, runname, '--iso', iso()],
@@ -97,8 +102,9 @@ def main():
         shutil.move(str(p), dest / 'frames' / p.name); n += 1
     if (run / 'audio.wav').exists():
         shutil.move(str(run / 'audio.wav'), dest / 'audio.wav')
-    marks = re.findall(r'CAP (.*)', text)
+    marks = ['ms=%s %s' % (m[0], m[1]) for m in re.findall(r'\[frame=\d+ ms=(\d+)\][^\n]*?CAP ([^\n]*)', text)]
     (dest / 'marks.txt').write_text('\n'.join(marks), encoding='utf-8')
+    shutil.rmtree(run, ignore_errors=True)   # the exe + dll copies are 45 MB a run; the log is kept in the output folder
     print(f'run={run}\nframes={n} marks={len(marks)} audio={(dest / "audio.wav").exists()} exit={r.returncode}\nout={dest}')
     print('\n'.join(l for l in marks if 'FAIL' in l or 'DONE' in l))
 
