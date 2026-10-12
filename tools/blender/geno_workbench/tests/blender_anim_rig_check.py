@@ -29,7 +29,7 @@ def check(cond, label):
     print("ok  ", label)
 
 
-def build_synthetic(stub):
+def build_synthetic(stub, bare=False):
     bpy.ops.wm.read_factory_settings(use_empty=True)
     data = bpy.data.armatures.new("Syn")
     arm = bpy.data.objects.new("SynExport", data)
@@ -68,6 +68,8 @@ def build_synthetic(stub):
         bone(f"Foot{s}", (sx * 1, 0, 1.2), (sx * 1, -1.5, .5), f"Leg2{s}", f"foot.{s}")
         bone(f"Toe{s}", (sx * 1, -1.5, .5), (sx * 1, -2.2, .3), f"Foot{s}", f"toe.{s}")
     bpy.ops.object.mode_set(mode="OBJECT")
+    if bare:       # a fighter whose role map has legs, arms and hips only: no spine, neck, head or clavicles
+        roles = {b: r for b, r in roles.items() if r.split(".")[0] not in ("spine", "chest", "neck", "head", "shoulder")}
     arm["geno"] = json.dumps({"fighter": "Syn", "roles": roles})
     for pb in arm.pose.bones:
         pb.rotation_mode = "XYZ" if stub else "QUATERNION"
@@ -314,7 +316,7 @@ def main():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     variant = argv[argv.index("--synthetic") + 1] if "--synthetic" in argv else None
     if variant:
-        arm = build_synthetic(variant == "stub")
+        arm = build_synthetic(variant == "stub", bare=variant == "bare")
         label, row = variant, "Jab"
     else:
         bpy.ops.wm.open_mainfile(filepath=argv[argv.index("--blend") + 1])
@@ -410,6 +412,26 @@ def main():
     act = HB.new_clip(ctrl, row, mode)
     n = HB.frame_count(act)
     check(n >= 2, f"hand action seeded ({mode}, {n} frames)")
+    # FK -> IK -> FK over the whole clip with the clavicle follow and the spaces in play: the arm must not move
+    sw = info["limbs"]["arm.L"]
+    chain = ([sw["shoulder"]["deform"]] if "shoulder" in sw else []) + sw["deform"]
+
+    def arm_track():
+        out = []
+        for f in range(n):
+            bpy.context.scene.frame_set(f)
+            out.append([R.pose_matrix(arm, d).translation.copy() for d in chain])
+        return out
+    base = arm_track()
+    for to_ik in (True, False):
+        HB.limb_switch(ctrl, "arm.L", to_ik)
+        now = arm_track()
+        err = max((a - b).length for x, y in zip(base, now) for a, b in zip(x[-3:], y[-3:]))
+        check(err < 0.02 * sw["total"], f"limb_switch {'FK->IK' if to_ik else 'IK->FK'} over {n} frames keeps the arm where it was "
+              f"(worst {err:.4f}, {100 * err / sw['total']:.1f}% of the limb)")
+        if "shoulder" in sw:
+            cerr = max((x[0] - y[0]).length for x, y in zip(base, now))
+            check(cerr < 1e-3, f"...and the clavicle exactly where it was ({cerr:.2e})")
     e = info["limbs"]["arm.R"]
     up = ctrl.pose.bones[e["fk"][0]]
     for f, v in ((0, 0.0), (n // 2, .6), (n - 1, 0.0)):
@@ -435,9 +457,10 @@ def main():
     print(f"ANIMRIG OK {label} {CHECKS}")
 
 
-try:
-    main()
-except Exception:
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)

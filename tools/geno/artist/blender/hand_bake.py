@@ -434,16 +434,17 @@ def _focus(arm, ctrl, act):
 
 def _limb_channels(ctrl, entry, ik):
     """[(pose bone name, data path)] that make up one limb's IK controls (ik=True) or FK controls (False)."""
+    shoulder = [(entry["shoulder"]["fk"], "rotation_euler")] if entry.get("shoulder") else []     # the clavicle is held across the switch
     if ik:
         names = [entry["foot"] if entry["kind"] == "leg" else entry["target"], entry["pole"]]
         if entry["kind"] == "leg":
             names.append(entry["roll"])
         out = [(n, "location") for n in names] + [(n, "rotation_euler") for n in names[:1]]
-        return out + ([(entry["roll"], "rotation_euler")] if entry["kind"] == "leg" else [])
+        return out + ([(entry["roll"], "rotation_euler")] if entry["kind"] == "leg" else []) + shoulder
     names = list(entry["fk"])
     if entry["kind"] == "leg" and len(entry["ik_deform"]) > 3:
         names.append(R.FK + entry["ik_deform"][3])
-    return [(n, "rotation_euler") for n in names] + [(n, "location") for n in names[:1]]
+    return [(n, "rotation_euler") for n in names] + [(n, "location") for n in names[:1]] + shoulder
 
 
 def limb_switch(ctrl, limb_id, to_ik, frames=None):
@@ -464,7 +465,10 @@ def limb_switch(ctrl, limb_id, to_ik, frames=None):
     for f in range(n):
         _frame(f)
         R.set_ik(ctrl, limb_id, 0.0 if to_ik else 1.0)
+        held = R.shoulder_hold(ctrl, entry)
         (R.snap_ik_to_fk if to_ik else R.snap_fk_to_ik)(ctrl, limb_id)
+        R.set_ik(ctrl, limb_id, 1.0 if to_ik else 0.0)
+        R.shoulder_restore(ctrl, entry, held)                      # the clavicle only follows the hand in IK: keep it where it was
         poses.append({nm: (ctrl.pose.bones[nm].location.copy(), ctrl.pose.bones[nm].rotation_euler.copy()) for nm in names})
     for f in range(n):
         _frame(f)

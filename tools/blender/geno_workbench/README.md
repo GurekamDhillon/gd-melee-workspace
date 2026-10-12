@@ -385,6 +385,17 @@ target (`IK-hand.X`, `IK-foot.X`) and the panel's **to IK** / **to FK** buttons 
 bend only in the bind pose's bend direction (a hinge); hyperextend in FK. Falcon's retail skeleton has no role data: `ROLE_TABLES` in
 `anim_rig.py` names its JOBJ joints (checked against `plan_parts.COMMON` and the rest positions).
 
+Rig v2 (same panel; each piece is built from the fighter's role table and is skipped, with the reason printed, when its bones are missing):
+
+| control | what it does | how to use it |
+|---|---|---|
+| **follows** buttons (World / Root / Cog / Chest / Head) under each limb | the IK hand/foot and its pole ride on that body part (hands: also Head; feet: not) | click a button: the control stays where it is in the world, then moves with the new parent. Default is Root. With Auto Keying on, the click also keys the stepped `space` value; otherwise key the pose and `space` yourself, and key the frame before the switch so the old behaviour holds up to it |
+| `IK-chest` (child of the COG) | lean / twist the whole torso; the rotation is shared equally by every spine bone between hips and chest (Goku 3, Falcon 2) | rotate it. It is added on top of the FK spine controls, so FK keeps working; the **Chest handle** slider (0..1) turns it down |
+| `LK-target` (in front of the head) | the head, and half as much the neck, turn to face it | move it; the **Look at** slider (0 off, default) blends the turn in |
+| **clavicle follow** slider on each arm | while the arm is in IK, the clavicle rises as the hand goes overhead (and swings with a forward reach), so the arm reaches further | default 0.35; 0 turns it off. Only active in IK: **to FK** holds the clavicle where it was, **to IK** too |
+
+Everything above is added on top of the FK controls and is zero at rest, so a fresh rig reproduces the rest pose and existing hand files bake the same way (the hand file still stores per-deform-bone deltas; none of the v2 controls is stored). **Generate rig** prints what the fighter got (also shown in the panel under "What this rig has" and kept on the control object as `geno_report`).
+
 Workflow (a COPY of the fighter's .blend while someone else has the original open; headless the same steps are `anim_rig_demo.py`):
 
 1. Open the fighter's `.blend`, enable Geno Workbench, select the deform armature (`GokuExport`), **Geno > Animate > Generate rig**.
@@ -410,7 +421,8 @@ logs the jab hand's world position per frame (compare against the stock package)
 Needs NumPy in Blender (bundled); the converter side needs NumPy and SciPy as before. Screenshots of the rig: `anim_rig_screenshot.py`
 (Blender's own `screen.screenshot_area`; keep screenshots of retail/XV2 art local). Checks:
 
-    python -m pytest tools/blender/geno_workbench/tests/test_hand_layer.py tools/blender/geno_workbench/tests/test_anim_rig_blender.py -q
+    python -m pytest tools/blender/geno_workbench/tests/test_hand_layer.py tools/blender/geno_workbench/tests/test_anim_rig_blender.py -q   # also runs the checks on copies of the local Falcon and Goku .blend files when built
+    blender -b --factory-startup --python tools/blender/geno_workbench/tests/blender_anim_ui_check.py -- --blend COPY_OF.blend      # the panel's operators
     blender -b --factory-startup --python tools/blender/geno_workbench/tests/blender_anim_rig_check.py -- --blend COPY_OF.blend   # a real fighter
 
 ## Splice authoring

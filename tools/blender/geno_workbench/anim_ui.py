@@ -94,11 +94,15 @@ class GENO_ANIM_OT_generate(bpy.types.Operator):
     def execute(self, context):
         def go():
             rig, _, _ = _lib()
-            ctrl = rig.generate(_deform(context))
-            bpy.ops.object.select_all(action="DESELECT")
+            arm = _deform(context)
+            ctrl = rig.generate(arm)            # handles its own mode switches (explicit override, no pose-mode switch)
+            for ob in list(context.view_layer.objects):
+                ob.select_set(False)
             ctrl.select_set(True)
             context.view_layer.objects.active = ctrl
-            return f"Control rig {ctrl.name}: {len(rig.limbs_info(ctrl)['limbs'])} IK limbs"
+            info = rig.limbs_info(ctrl)
+            extras = [n for n in ("spine", "look") if n in info] + (["shoulders"] if any("shoulder" in e for e in info["limbs"].values()) else [])
+            return f"Control rig {ctrl.name}: {len(info['limbs'])} IK limbs, " + (", ".join(extras) if extras else "no spine/look-at/shoulder extras")
         return _run(self, context, go)
 
 
@@ -183,6 +187,22 @@ class GENO_ANIM_OT_snap(bpy.types.Operator):
         return _run(self, context, go)
 
 
+class GENO_ANIM_OT_space(bpy.types.Operator):
+    bl_idname = "geno_anim.space"
+    bl_label = "Switch space"
+    bl_description = "Make the IK hand/foot (and its pole) follow world, root, COG, chest or head, keeping the pose; keys the switch when Auto Keying is on"
+    limb: StringProperty()
+    space: StringProperty()
+
+    def execute(self, context):
+        def go():
+            rig, _, _ = _lib()
+            ctrl = _ctrl(context)
+            rig.set_space(ctrl, self.limb, self.space, key=bool(context.scene.tool_settings.use_keyframe_insert_auto))
+            return f"{self.limb} follows {self.space}"
+        return _run(self, context, go)
+
+
 class GENO_ANIM_OT_view_converted(bpy.types.Operator):
     bl_idname = "geno_anim.view_converted"
     bl_label = "Rig on / off"
@@ -232,12 +252,34 @@ class GENO_ANIM_PT_panel(bpy.types.Panel):
                 a.limb, a.to_ik = lid, True
                 b = row.operator("geno_anim.snap", text="to FK")
                 b.limb, b.to_ik = lid, False
+                if "spaces" in e:
+                    srow = box.row(align=True)
+                    srow.label(text="follows")
+                    current = int(ob.pose.bones[e["switch"]].get("space", 0))
+                    for i, sname in enumerate(e["spaces"]):
+                        op = srow.operator("geno_anim.space", text=sname.title(), depress=(i == current))
+                        op.limb, op.space = lid, sname
+                if "shoulder" in e:
+                    box.prop(ob.pose.bones[e["switch"]], '["shoulder"]', text=f"{lid} clavicle follow", slider=True)
+            full = json.loads(ob["geno_limbs"])
+            if "spine" in full or "look" in full:
+                box2 = self.layout.box()
+                box2.label(text="Torso and head")
+                if "spine" in full:
+                    box2.prop(ob.pose.bones[full["spine"]["handle"]], '["spine"]', text="Chest handle (IK-chest)", slider=True)
+                if "look" in full:
+                    box2.prop(ob.pose.bones[full["look"]["target"]], '["look"]', text="Look at (LK-target)", slider=True)
+            if ob.get("geno_report"):
+                box3 = self.layout.box()
+                box3.label(text="What this rig has")
+                for line in ob["geno_report"].splitlines()[1:]:
+                    box3.label(text=line.strip()[:70])
         if s.status:
             self.layout.label(text=s.status[:120], icon="INFO")
 
 
 CLASSES = (GenoAnimProps, GENO_ANIM_OT_generate, GENO_ANIM_OT_new_clip, GENO_ANIM_OT_load_clip, GENO_ANIM_OT_bake_save,
-           GENO_ANIM_OT_delete_clip, GENO_ANIM_OT_snap, GENO_ANIM_OT_view_converted, GENO_ANIM_PT_panel)
+           GENO_ANIM_OT_delete_clip, GENO_ANIM_OT_snap, GENO_ANIM_OT_space, GENO_ANIM_OT_view_converted, GENO_ANIM_PT_panel)
 
 
 def register():
