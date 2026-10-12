@@ -213,15 +213,6 @@ def build_schema():
         "x-reference": "geno.md §22.7", "x-engine-default": "none", "x-source": REGISTRY}
     fighter["properties"]["thrown_as"] = {"type": "string", "description": "A base none define: the retail fighter whose thrown rows a retail victim plays when this define throws it (its CatchWait/pummel rows stay the victim's own). Default captain (Captain Falcon); any retail fighter but Nana (geno: 10)",
         "x-reference": "geno.md §22.10", "x-engine-default": "captain", "x-source": REGISTRY}
-    btn = {"type": "string", "enum": ["A", "B", "X", "Y", "Z", "START", "L", "R", "Up", "Down", "Left", "Right", "none"]}
-    dest = {"oneOf": [btn, {"type": "array", "minItems": 1, "uniqueItems": True, "items": btn}]}
-    crow = {"type": "object", "additionalProperties": False, "required": ["name", "buttons"],
-            "properties": {"name": {"type": "string", "minLength": 1, "maxLength": 31},
-                           "buttons": {"type": "object", "minProperties": 1, "additionalProperties": dest}}}
-    fighter["properties"]["controls"] = {"type": "object", "additionalProperties": False,
-        "properties": {"layouts": {"type": "array", "maxItems": 16, "items": crow}, "extras": {"type": "array", "maxItems": 8, "items": crow}},
-        "description": "Per-fighter CSS controls: named button layouts (the first is the default) and opt-in extras, as GC input mappings (docs/geno.md section 26; a define only)",
-        "x-reference": "geno.md §26", "x-source": REGISTRY}
     fighter["properties"]["audio"] = obj({"announcer": gnsnd, "voice": arr(obj({"sfx": integer("The retail sound id this fighter would play", section="22.7", minimum=1, maximum=999999), "file": gnsnd,
         "volume": integer("Volume 0..127", 127, "22.7", minimum=0, maximum=127),
         "stoppable": {"type": "boolean", "description": "Playing the retail stop id 540001 cuts this fighter's playing instances of the clip (geno.md 22.7)", "x-reference": "geno.md §22.7", "x-engine-default": False, "x-source": REGISTRY},
