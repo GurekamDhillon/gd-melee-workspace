@@ -76,7 +76,7 @@ gd.run(function()
         for t = 1, 150 do
           gd.wait(1); nofault()
           local p = gd.player(1)
-          if t <= math.max(hold, 10) then pcall(gd.teleport, 2, p.x + face * d, 0) end
+          if gd.player(2).percent <= before + 0.01 and t <= math.max(hold, 10) then pcall(gd.teleport, 2, p.x + face * d, 0) end   -- never re-pin on the hit frame: a teleport cancels the knockback
           if hold > 2 and t > 25 and t < 60 and tostring(p.motion_name):find('Attack') then
             if last_af and math.abs((p.anim_frame or 0) - last_af) < 0.01 then frozen = frozen + 1 end
             last_af = p.anim_frame
@@ -95,7 +95,7 @@ gd.run(function()
         local tap, _, tap_far = shot(d, 2)
         local chg, frozen, chg_far = shot(d, 70)
         held = math.max(held, frozen)
-        if tap and chg and (not best or chg / tap > best[2] / best[1]) then best = {tap, chg, tap_far, chg_far} end
+        if tap and chg and (not best or tap > best[1]) then best = {tap, chg, tap_far, chg_far} end   -- the distance with the full hit (most damage): that is the one that must launch
       end
       gd.log(string.format('SAMPLECHECK smash charge %s: tap %s%%, charged %s%%, anim held %s frames, dummy sent %.1f (tap) vs %.1f (charged) units in 26 frames', label, tostring(best and best[1]), tostring(best and best[2]), tostring(held), best and best[3] or 0, best and best[4] or 0))
       if best and best[3] < 5 then error(label .. ' smash is a PHANTOM hit on the dummy: ' .. string.format('%.1f%% damage but the dummy was sent only %.1f units (a hitbox that only grazes the hurtbox does damage and no knockback)', best[1], best[3])) end
@@ -111,37 +111,45 @@ gd.run(function()
     -- on the legs and on the tip afterwards. Each probe pins the dummy's centre on a chosen hitbox of the move (read from gd.hitboxes) while the move runs, then measures where the
     -- dummy goes over the next 24 frames (hitlag included): a spike goes down, a sourspot forward and up.
     do
-      local function aerial_probe(label, spec, hb_id, only_when_id0_off)
+      local function aerial_probe(label, spec, hb_id, only_when_id0_off, away_from)
         reset(70, 90, 0, 0)
         tp(2, -200, 0)
         local g0 = gd.player(1)
         local face = (g0.facing or 1) >= 0 and 1 or -1
         gd.input(1, spec, 2)
         local before = gd.player(2).percent
-        local hit_at, y0, x0 = nil, nil, nil
+        local hit_at, y0, x0, peak, ytrace = nil, nil, nil, 0, {}
         for t = 1, 60 do
           gd.wait(1); nofault()
+          if not hit_at and gd.player(2).percent > before + 0.01 then hit_at, y0, x0 = t, gd.player(2).y, gd.player(2).x end   -- see the hit BEFORE re-pinning: a teleport cancels the knockback
           if not hit_at then
             local okh, hbs = pcall(gd.hitboxes, 1)
-            local want, spike = nil, false
+            local want, spike, ref = nil, false, nil
             if okh and type(hbs) == 'table' then
               for _, h in ipairs(hbs) do
                 if h.id == 0 then spike = true end
                 if h.id == hb_id then want = h end
+                
               end
               if only_when_id0_off and spike then want = nil end
             end
-            if want then pcall(gd.teleport, 2, want.x, want.y - 8) end
+            if want then
+              local px, py = want.x, want.y
+              if away_from then py = py + away_from end   -- stand this far above the sphere's centre: clear of the spike sphere at the foot tip
+              pcall(gd.teleport, 2, px, py - 8)
+            end
           end
           if not hit_at and gd.player(2).percent > before + 0.01 then
             hit_at, y0, x0 = t, gd.player(2).y, gd.player(2).x
           end
+          if hit_at then peak = math.max(peak, gd.player(2).y - y0) if (t - hit_at) % 3 == 0 then ytrace[#ytrace + 1] = string.format('%.1f/%.1f', gd.player(2).y - y0, (gd.player(2).x - x0) * face) end end
           if hit_at and t >= hit_at + 24 then break end
         end
         if not hit_at then gd.log('SAMPLECHECK ' .. label .. ': no hit') return nil end
         local dy, dx = gd.player(2).y - y0, (gd.player(2).x - x0) * face
-        gd.log(string.format('SAMPLECHECK %s: hit at frame %d, then dy %.1f dx %.1f (%s)', label, hit_at, dy, dx, dy < -1.5 and 'spike' or 'sideways / up'))
-        return dy, dx
+        local spiked = peak < 0.5 and dy < -1.5   -- a meteor never rises; a sourspot (angle 40) climbs before it falls
+        gd.log(string.format('SAMPLECHECK %s: hit at frame %d, then dy %.1f dx %.1f, rose at most %.1f (%s) [dy/dx every 3 frames: %s]', label, hit_at, dy, dx, peak, spiked and 'spike' or 'sideways / up', table.concat(ytrace, ' ')))
+        return spiked and -10 or 10, dx
       end
       local dy
       dy = aerial_probe('fair fist (slot 0)', {buttons = 'A', x = 127}, 0, false)
@@ -150,7 +158,7 @@ gd.run(function()
       assert(dy and dy < -1.5, 'a fair hit on the forearm also spikes: Marios fair has no sourspot')
       dy = aerial_probe('dair tip, spike frames (slot 0)', {buttons = 'A', y = -127}, 0, false)
       assert(dy and dy < -1.5, 'a dair hit on the foot tip at the spike frames spikes (angle 290)')
-      dy = aerial_probe('dair upper leg, spike frames (slot 2)', {buttons = 'A', y = -127}, 2, false)
+      dy = aerial_probe('dair upper leg, spike frames (slot 2, clear of the tip)', {buttons = 'A', y = -127}, 2, false, 9)
       assert(dy and dy > -1.5, 'a dair hit on the upper leg (sourspot) must not spike: dy ' .. tostring(dy))
       dy = aerial_probe('dair tip, after the spike frames (slot 3)', {buttons = 'A', y = -127}, 3, true)
       assert(dy and dy > -1.5, 'a late dair hit on the tip (sourspot) must not spike: dy ' .. tostring(dy))

@@ -348,7 +348,7 @@ SMASH_KB = {'fsmash': (361, 100, 28), 'usmash': (88, 105, 32), 'dsmash': (361, 1
 # stage centre on Mario (weight 100, no DI, tip slot, KB = ((p/10 + p*d/20) * 200/(w+100) * 1.4 + 18) * KBG/100 + BKB, launch speed 0.03 KB, 0.051 decay, blast zone 224 out / 188 up):
 #   fsmash Marth tip 42, Falcon 52, Fox 90, Mewtwo tip 89;  usmash Marth 46, Falcon 69, Fox 44, Mewtwo 76;  dsmash Marth tip 41, Falcon 62, Fox 151, Mewtwo 84  (percent before the hit, uncharged)
 #   Goku with 15/100/28: fsmash 81, usmash (14/105/32) 67, dsmash (13/100/28) about 95; fully charged (x1.4 damage) 50 / 41 / about 60.
-BODY_SPHERE = {'usmash': ('HIPS', 3.2, 13, 29)}   # token, script-unit radius (5.5 in game), damage, BKB
+BODY_SPHERE = {'usmash': ('HIPS', 3.2)}   # token, script-unit radius (5.5 in game)
 SMASH_DMG = {'fsmash': 15, 'usmash': 14, 'dsmash': 13}
 # owner 2026-10-11: the forward and down air spikes are small sweetspots on the fist / foot tip for a few frames; everywhere else the move is a sourspot at a normal angle.
 # Marth's dair tipper is the size reference (sphere 3.5, active 4 frames, 290, KBG 70, BKB 40; his other spheres 361 / 80 with BKB 20-40); Mario's fair is a 5-frame 280 meteor (KBG 70, BKB 30).
@@ -530,6 +530,14 @@ def render(rig, tg):
             w['final'] = dict(angle=sp['angle'], kbg=sp['kbg'], fkb=0, bkb=sp['bkb'], spike_frames=[p, p + sp['frames']], spike_radius=sp['radius'])
             blocks.append((a_, lines, b_ + SOUR['late_frames']))
             continue
+        slot0 = 0
+        if tg['name'] in BODY_SPHERE and tg['cls'] != 'grab':
+            # owner 2026-10-11 (usmash phantom hits): the arm spheres of an uppercut sit above Goku's head, higher than a Mario-sized fighter beside him, so the hit only grazed the top of
+            # the hurtbox (damage, no knockback: a phantom hit). Falcon's usmash puts its hits on the body line (joint 4 = HipN, size 5.5); the same here: a sphere centred on the hips. It is
+            # SLOT 0 with the full damage and knockback: when several of a move's hitboxes touch a victim the lowest slot is the one that counts, so a grazing arm sphere must not come first.
+            tok_b, r_b = BODY_SPHERE[tg['name']]
+            lines.append('hitbox slot=0 joint=@%s@ damage=%d size=%s x=0 y=0 z=0 angle=%d kbg=%d fkb=0 bkb=%d' % (tok_b, w['dmg'], fmt(r_b), angle, kbg, bkb))
+            slot0 = 1
         for k, (tok, x, y, z, r) in enumerate(sph):
             d = max(1, int(round(w['dmg'] * INNER_SCALE[k]))) if tg['cls'] != 'grab' else 0
             kb = max(0, bkb + INNER_BKB[k]) if bkb else 0
@@ -538,12 +546,7 @@ def render(rig, tg):
                 extra = ' element=8 item_hit=1 clank=1 sfx_kind=2'
                 angle, kbg, fkb, kb = 361, 100, 0, 0
             lines.append('hitbox slot=%d joint=@%s@ damage=%d size=%s x=%s y=%s z=%s angle=%d kbg=%d fkb=%d bkb=%d%s' % (
-                k, tok, d, fmt(r), fmt(x), fmt(y), fmt(z), angle, kbg, fkb, kb, extra))
-        if tg['name'] in BODY_SPHERE and tg['cls'] != 'grab':
-            # owner 2026-10-11 (usmash phantom hits): the arm spheres of an uppercut sit above Goku's head, higher than a Mario-sized fighter beside him, so the hit only grazed the top
-            # of the hurtbox (damage, no knockback: a phantom hit). Falcon's usmash puts its hits on the body line (joint 4 = HipN, size 5.5); the same here: a sphere centred on the hips.
-            tok, r, dmg_k, bkb_k = BODY_SPHERE[tg['name']]
-            lines.append('hitbox slot=%d joint=@%s@ damage=%d size=%s x=0 y=0 z=0 angle=%d kbg=%d fkb=0 bkb=%d' % (len(sph), tok, dmg_k, fmt(r), angle, kbg, bkb_k))
+                k + slot0, tok, d, fmt(r), fmt(x), fmt(y), fmt(z), angle, kbg, fkb, kb, extra))
         if stun and tg['string'] and i == 0:
             lines.append('HBSTUN %d %d' % ((1 << len(sph)) - 1, stun))
         blocks.append((w['a'], lines, w['b']))

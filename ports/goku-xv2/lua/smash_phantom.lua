@@ -21,8 +21,8 @@ gd.run(function()
         local dmg, far
         for t = 1, 120 do
           gd.wait(1)
-          if t <= math.max(hold, 10) then pcall(gd.teleport, 2, gd.player(1).x + face * d, 0) end
           local q = gd.player(2)
+          if q.percent <= before + 0.01 and t <= math.max(hold, 10) then pcall(gd.teleport, 2, gd.player(1).x + face * d, 0) end   -- never re-pin on the hit frame: a teleport cancels the knockback
           if q.percent > before + 0.01 then
             local x0, y0 = q.x, q.y
             dmg = q.percent - before
