@@ -92,7 +92,7 @@ def main():
                 'MELEE_RUN_LABEL': 'Goku media ' + a.name, 'MELEE_RUNS_KEEP': '1000'})   # parallel captures must not prune each other's sandboxes
     runname = 'm-' + a.name + '-' + time.strftime('%H%M%S')
     run = BROOT / 'runs' / runname
-    if True:   # turbo video passes dump too: the virtual clock mixes audio per frame, so it stays frame-locked to the shots
+    if a.kind == 'audio':
         env['MELEE_AUDIO_DUMP'] = (run / 'audio.wav').as_posix()
     with open(dest / 'run.txt', 'w', encoding='utf-8') as fh:
         r = subprocess.run([GIT_BASH, (MAIN / 'tools/port/run.sh').as_posix(), '--max-seconds', a.max_seconds, runname, '--iso', iso()],

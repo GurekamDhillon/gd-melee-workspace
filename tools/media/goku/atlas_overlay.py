@@ -29,8 +29,8 @@ CSS = """
 .card{position:absolute;inset:0;background:radial-gradient(ellipse at 20% 0%,var(--ground2),var(--ground) 70%)}
 .card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:14px;background:var(--ember)}
 .slash{position:absolute;right:-120px;top:-100px;width:900px;height:1400px;background:linear-gradient(100deg,transparent 0 40%,rgba(255,122,61,.10) 40% 60%,transparent 60%);transform:skewX(-14deg)}
-.hero{position:absolute;right:0;top:0;height:1080px;width:1000px;object-fit:cover;object-position:center top;
- -webkit-mask-image:linear-gradient(90deg,transparent,#000 35%);mask-image:linear-gradient(90deg,transparent,#000 35%)}
+.glow{position:absolute;right:60px;top:60px;width:900px;height:1000px;background:radial-gradient(ellipse at 50% 55%,rgba(255,122,61,.38),rgba(255,122,61,.10) 45%,transparent 70%)}
+.hero{position:absolute;right:-70px;top:-70px;height:1250px;filter:drop-shadow(0 0 40px rgba(255,122,61,.35))}
 .title{position:absolute;left:120px;top:250px}
 .title .big{font-size:300px;line-height:.82;letter-spacing:.01em}
 .title .row{margin-top:30px;display:flex;align-items:center;gap:26px}
@@ -69,9 +69,10 @@ def lower_third(i, n, s):
 
 
 def title_card(date, hero, build):
-    img = '<img class="hero" src="%s">' % Path(hero).as_uri() if hero and Path(hero).exists() else ''
+    import base64
+    img = '<img class="hero" src="data:image/png;base64,%s">' % base64.b64encode(Path(hero).read_bytes()).decode() if hero and Path(hero).exists() else ''
     return html_page(
-        '<div class="card"><div class="slash"></div>%s<div class="title"><div class="big bc">Goku</div>'
+        '<div class="card"><div class="slash"></div><div class="glow"></div>%s<div class="title"><div class="big bc">Goku</div>'
         '<div class="row"><span class="alpha">ALPHA</span><span class="date">TEST BUILD &middot; %s</span></div>'
         '<div class="tag">A hand-built Dragon Ball fighter for GD\'s Melee. Early and unbalanced: hitboxes are still being hand-authored, '
         'some animations are rough, and bug reports are the whole point.</div></div></div>' % (img, date), CSS)

@@ -38,16 +38,20 @@ def capture(only, extra):
     names = [n for n in SCRIPTS if not only or n in only]
     def go(n, kind):
         cmd = [sys.executable, str(HERE / 'capture_run.py'), SCRIPTS[n], '--name', n, '--vs', VS, '--pass', kind] + extra
-        r = subprocess.run(cmd, capture_output=True, text=True)
-        print('[%s %s] %s' % (n, kind, ' '.join(r.stdout.strip().splitlines()[-3:])))
+        for attempt in range(3):          # the game can still die under load (screenshot readback): rerun the whole script
+            r = subprocess.run(cmd, capture_output=True, text=True)
+            ok = 'exit=0' in r.stdout
+            print('[%s %s try %d] %s' % (n, kind, attempt + 1, ' '.join(r.stdout.strip().splitlines()[-3:])), flush=True)
+            if ok:
+                break
         return r.returncode
     for kind in ('video', 'audio'):
         import time
         def staggered(i_n):
             time.sleep(6 * i_n[0])      # run.sh prunes and stamps sandboxes at start; stagger the launches
             return go(i_n[1], kind)
-        # video passes shoot every frame through a PNG writer thread that overflows (crash / hang) when too many games share the CPU
-        with ThreadPoolExecutor(max_workers=3 if kind == 'video' else 4) as ex:
+        # video passes shoot every frame through a PNG writer thread: two games at once can overflow it (crash), so one at a time
+        with ThreadPoolExecutor(max_workers=1 if kind == 'video' else 4) as ex:
             list(ex.map(staggered, list(enumerate(names))))
 
 
@@ -77,19 +81,39 @@ def clip_index():
     return idx
 
 
+def motions(path):
+    """clip number -> [(frame, port, name)] from a marks file."""
+    out = {}
+    for l in Path(path).read_text(encoding='utf-8').splitlines():
+        m = re.match(r'ms=\d+ MOT c(\d+) f(\d+) P(\d) (\w+)', l)
+        if m:
+            out.setdefault(m.group(1), []).append((int(m.group(2)), int(m.group(3)), m.group(4)))
+    return out
+
+
+def audio_shift(vm, am):
+    """Frames by which the audio pass reaches P1's first non-Wait motion before (negative) / after the video pass does.
+    The stepped video pass sees an input one or two logic frames later than the realtime audio pass; the sound is shifted to match."""
+    fv = next((f for f, p, n in vm if p == 1 and n != 'Wait'), None)
+    fa = next((f for f, p, n in am if p == 1 and n != 'Wait'), None)
+    return 0 if fv is None or fa is None else fa - fv
+
+
 def verify():
-    """The audio pass must replay the video pass exactly: compare every P1/P2 motion line (clip, frame, name, position)."""
+    """The audio pass replays the video pass's input timing; the state sequence of every clip must match (frames may be 1-2 off)."""
     bad = 0
     for n in SCRIPTS:
         v, a = MEDIA / n / 'marks.txt', MEDIA / (n + '_audio') / 'marks.txt'
         if not (v.exists() and a.exists()):
             print('verify %s: missing pass' % n); bad += 1; continue
-        f = lambda p: [re.sub(r'^ms=\d+ ', '', l) for l in p.read_text(encoding='utf-8').splitlines() if ' MOT ' in l or l.startswith('ms=') and 'FAIL' in l]
-        fv, fa = f(v), f(a)
-        ok = fv == fa
-        print('verify %s: %d motion lines, passes %s%s' % (n, len(fv), 'IDENTICAL' if ok else 'DIFFER',
-              '' if ok else ' (first diff: %s | %s)' % next(((x, y) for x, y in zip(fv, fa) if x != y), ('len', 'len'))))
-        bad += not ok
+        mv, ma = motions(v), motions(a)
+        seq = lambda m: {c: [(p, nm) for _, p, nm in l] for c, l in m.items()}
+        same = seq(mv) == seq(ma)
+        worst = max([abs(x[0] - y[0]) for c in mv for x, y in zip(mv[c], ma.get(c, [])) if x[1:] == y[1:]] or [0])
+        shifts = {c: audio_shift(mv[c], ma.get(c, [])) for c in mv}
+        print('verify %s: %d clips, state sequences %s, worst frame offset %d, audio shifts %s' % (
+            n, len(mv), 'IDENTICAL' if same else 'DIFFER', worst, shifts))
+        bad += not same
     return bad
 
 
@@ -146,7 +170,9 @@ def clips(only):
               '[b][c]overlay=0:0:shortest=1[x];[x][l]overlay=0:0:shortest=1,format=yuv420p[v]') % (dur - 0.25, lt_in, fi, lt_out, fi)
         amap = []
         if 'wav' in c:
-            t0 = (c['ms0'] - AUDIO_START_MS) / 1000 + (f0 - 1) / 60
+            sh = audio_shift(motions(MEDIA / c['script'] / 'marks.txt').get('%02d' % c['n'], []),
+                             motions(MEDIA / (c['script'] + '_audio') / 'marks.txt').get('%02d' % c['n'], []))
+            t0 = (c['ms0'] - AUDIO_START_MS) / 1000 + (f0 - 1 + sh) / 60
             inputs += ['-ss', '%.3f' % t0, '-t', '%.3f' % dur, '-i', str(c['wav'])]
             fc += ';[3:a]aresample=44100,afade=t=in:st=0:d=0.1,afade=t=out:st=%.3f:d=0.25[a]' % (dur - 0.25)
             amap = ['-map', '[a]']

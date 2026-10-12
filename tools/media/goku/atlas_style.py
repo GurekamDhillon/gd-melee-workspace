@@ -33,7 +33,7 @@ BASE_CSS = """
 --muted:%(muted)s;--sun:%(sun)s;--ember:%(ember)s;--emberd:%(ember-d)s;--jade:%(jade)s;--rose:%(rose)s;--line:%(line)s;--line2:%(line2)s;
 --pa:%(pad-a)s;--pb:%(pad-b)s;--px:%(pad-x)s;--pz:%(pad-z)s;--p2:%(p2)s}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{background:transparent}
+html,body{background:transparent;overflow:hidden}
 body{font-family:SS,sans-serif;color:var(--ivory);width:1920px;height:1080px;position:relative;overflow:hidden;-webkit-font-smoothing:antialiased}
 .bc{font-family:BC,sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
 .solid{background:var(--ground)}
