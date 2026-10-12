@@ -20,7 +20,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 from atlas_style import MEDIA  # noqa: E402
 
-SCRIPTS = {'kame': 'lua/clips_kame.lua', 'ground': 'lua/clips_ground.lua', 'flight': 'lua/clips_flight.lua', 'ki': 'lua/clips_ki.lua'}
+SCRIPTS = {'fix': 'lua/clips_fix.lua', 'kame': 'lua/clips_kame.lua', 'ground': 'lua/clips_ground.lua', 'flight': 'lua/clips_flight.lua', 'ki': 'lua/clips_ki.lua'}
 VS = 'captain'
 TARGET_MB = 9.3
 AUDIO_START_MS = 2000      # wav t=0 is game clock ms 2000 (measured)
@@ -165,13 +165,13 @@ def ki_bar_png(v, path):
     im.save(path)
 
 
-def ki_overlay_list(script, clip_n, f0, f1, out):
+def ki_overlay_list(script, clip_n, frames, out):
     """A concat list of bar PNGs, one run per ki value, one 60th of a second per frame."""
     vals = ki_values(script, clip_n)
     d = out / 'kibars'
     d.mkdir(parents=True, exist_ok=True)
     runs, last = [], None
-    for f in range(f0, f1 + 1):
+    for f in frames:
         v = vals.get(f, last if last is not None else 0)
         if runs and runs[-1][0] == v:
             runs[-1][1] += 1
@@ -185,7 +185,7 @@ def ki_overlay_list(script, clip_n, f0, f1, out):
             ki_bar_png(v, p)
         lines.append("file '%s'\nduration %.5f\n" % (str(p).replace(chr(92), '/'), n / 60))
     lines.append("file '%s'\n" % str(d / ('k%03d.png' % runs[-1][0])).replace(chr(92), '/'))
-    lst = out / ('ki_%s_%02d_%d.txt' % (script, clip_n, f0))
+    lst = out / ('ki_%s_%02d_%d.txt' % (script, clip_n, frames[0]))
     lst.write_text(''.join(lines), encoding='utf-8')
     return lst
 
@@ -203,22 +203,29 @@ def clips(only):
         c = idx.get(lab)
         if not c or 'dir' not in c:
             print('skip %s: no capture for clip %s' % (s['id'], lab)); continue
-        f0, f1 = s.get('trim', [1, c.get('frames', 0)])
-        n = f1 - f0 + 1
+        segs = s.get('segments')       # [[first, last], ...] clip frames kept, cut together (a long charge shortened)
+        if segs:
+            f0, f1 = 1, c.get('frames', 0)
+            frames = [f for a, z in segs for f in range(a, z + 1)]
+        else:
+            f0, f1 = s.get('trim', [1, c.get('frames', 0)])
+            frames = list(range(f0, f1 + 1))
+        n = len(frames)
         dur = n / 60
         ltf = ov / ('lt_%s.png' % s['id'])
         fi = 0.35
         lt_in, lt_out = s.get('lt', [0.3, dur - 0.4])
-        kil = ki_overlay_list(c['script'], c['n'], f0, f1, out)
+        kil = ki_overlay_list(c['script'], c['n'], frames, out)
         inputs = ['-framerate', '60', '-start_number', str(f0), '-i', str(c['dir'] / ('c%02d_f%%05d.png' % c['n'])),
                   '-loop', '1', '-i', str(ov / 'corner.png'), '-loop', '1', '-i', str(ltf)]
         fw, fh = [int(x) for x in run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0',
                                        str(c['dir'] / ('c%02d_f%05d.png' % (c['n'], f0)))]).stdout.strip().split(',')]
+        vsel = ("select='%s',setpts=N/(60*TB)" % '+'.join('between(n,%d,%d)' % (a - 1, z - 1) for a, z in segs)) if segs else 'trim=end_frame=%d' % n
         if fw / fh > 1.7:        # 16:9 capture
-            base = '[0:v]trim=end_frame=%d,scale=1920:1080:flags=lanczos,setsar=1[b0];' % n
+            base = '[0:v]%s,scale=1920:1080:flags=lanczos,setsar=1[b0];' % vsel
         else:                    # 4:3 capture: centred 1440x1080 over a darkened, blurred copy of itself
-            base = ('[0:v]trim=end_frame=%d,setsar=1,split[s1][s2];[s1]scale=1920:-2,crop=1920:1080,boxblur=28:4,eq=brightness=-0.32:saturation=0.8[bg];'
-                    '[s2]scale=1440:1080:flags=lanczos[fg];[bg][fg]overlay=240:0[b0];') % n
+            base = ('[0:v]%s,setsar=1,split[s1][s2];[s1]scale=1920:-2,crop=1920:1080,boxblur=28:4,eq=brightness=-0.32:saturation=0.8[bg];'
+                    '[s2]scale=1440:1080:flags=lanczos[fg];[bg][fg]overlay=240:0[b0];') % vsel
         fc = (base + '[b0]fade=t=in:st=0:d=0.15,fade=t=out:st=%.3f:d=0.25[b];'
               '[1:v]format=rgba[c];[2:v]format=rgba,fade=t=in:st=%.2f:d=%.2f:alpha=1,fade=t=out:st=%.2f:d=%.2f:alpha=1[l];'
               '[b][c]overlay=0:0:shortest=1[x];[x][l]overlay=0:0:shortest=1,format=yuv420p[v]') % (dur - 0.25, lt_in, fi, lt_out, fi)
@@ -227,8 +234,13 @@ def clips(only):
             sh = audio_shift(motions(MEDIA / c['script'] / 'marks.txt').get('%02d' % c['n'], []),
                              motions(MEDIA / (c['script'] + '_audio') / 'marks.txt').get('%02d' % c['n'], []))
             t0 = (c['ms0'] - AUDIO_START_MS) / 1000 + (f0 - 1 + sh) / 60
-            inputs += ['-ss', '%.3f' % t0, '-t', '%.3f' % dur, '-i', str(c['wav'])]
-            fc += ';[3:a]aresample=44100,afade=t=in:st=0:d=0.1,afade=t=out:st=%.3f:d=0.25[a]' % (dur - 0.25)
+            if segs:
+                inputs += ['-ss', '%.3f' % t0, '-i', str(c['wav'])]
+                parts = ''.join('[3:a]atrim=start=%.4f:end=%.4f,asetpts=PTS-STARTPTS[s%d];' % ((a - 1) / 60, z / 60, k) for k, (a, z) in enumerate(segs))
+                fc += ';' + parts + ''.join('[s%d]' % k for k in range(len(segs))) + 'concat=n=%d:v=0:a=1,aresample=44100,afade=t=in:st=0:d=0.1,afade=t=out:st=%.3f:d=0.25[a]' % (len(segs), dur - 0.25)
+            else:
+                inputs += ['-ss', '%.3f' % t0, '-t', '%.3f' % dur, '-i', str(c['wav'])]
+                fc += ';[3:a]aresample=44100,afade=t=in:st=0:d=0.1,afade=t=out:st=%.3f:d=0.25[a]' % (dur - 0.25)
             amap = ['-map', '[a]']
         kidx = sum(1 for x in inputs if x == '-i')
         inputs += ['-f', 'concat', '-safe', '0', '-i', str(kil)]
@@ -289,14 +301,14 @@ def reel():
              '-i', 'anullsrc=r=44100:cl=stereo', '-vf', 'scale=1920:1080,fade=t=in:st=0:d=0.3,fade=t=out:st=%.2f:d=0.3,format=yuv420p' % (secs - 0.3),
              '-c:v', 'libx264', '-crf', '20', '-r', '60', '-c:a', 'aac', '-b:a', '128k', '-shortest', str(p)])
         return p
-    parts.append(card_part(ov / 'card_title.png', 3.5, 'p_title'))
+    parts.append(card_part(ov / 'card_title.png', 3.0, 'p_title'))
     for i in ids:
         p = MEDIA / 'clips' / (i + '.mp4')
         if p.exists():
             parts.append(p)
     if (ov / 'card_costumes.png').exists():
-        parts.append(card_part(ov / 'card_costumes.png', 3.0, 'p_costumes'))
-    parts.append(card_part(ov / 'card_end.png', 4.0, 'p_end'))
+        parts.append(card_part(ov / 'card_costumes.png', 2.5, 'p_costumes'))
+    parts.append(card_part(ov / 'card_end.png', 3.5, 'p_end'))
     lst = out / 'list.txt'
     lst.write_text(''.join("file '%s'\n" % str(p).replace('\\', '/') for p in parts), encoding='utf-8')
     hq = out / 'goku_alpha_reel_1080p60.mp4'

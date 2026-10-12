@@ -37,25 +37,37 @@
         "+",
         "B",
         ">",
-        "wait",
+        "hold 10 s",
         ">",
         "B"
       ],
-      "note": "Needs a full ki bar and a full charge",
+      "note": "Needs a full ki bar and the full 10 second charge",
       "script": "lua/clips_kame.lua",
-      "clip": "kame_max"
+      "clip": "kame_super",
+      "segments": [
+        [
+          1,
+          150
+        ],
+        [
+          560,
+          840
+        ]
+      ]
     },
     {
       "id": "flight",
-      "title": "Flight",
+      "title": "Flight (full ki)",
       "input": [
+        "full ki",
+        "+",
         "stick:up",
         "+",
         "B"
       ],
-      "note": "Up B: steer in 8 directions, A or C-stick for a flight aerial",
+      "note": "Full ki gives a long powered flight: steer anywhere, finish with a flight aerial",
       "script": "lua/clips_flight.lua",
-      "clip": "flight_aerial"
+      "clip": "flight_power"
     },
     {
       "id": "flight_ledge",
@@ -91,9 +103,9 @@
         "+",
         "B"
       ],
-      "note": "Side B: on hit it flows into the Rush Combo",
+      "note": "Side B: on hit it flows into the full Rush Combo",
       "script": "lua/clips_ground.lua",
-      "clip": "rush"
+      "clip": "rush_hit"
     },
     {
       "id": "light_heavy",
@@ -172,14 +184,28 @@
       "clip": "ki_charge"
     },
     {
+      "id": "ki_charge_air",
+      "title": "Air ki charge",
+      "input": [
+        "hold",
+        "stick:down",
+        "+",
+        "B"
+      ],
+      "note": "In the air Goku floats down while charging",
+      "script": "lua/clips_ki.lua",
+      "clip": "ki_charge_air"
+    },
+    {
       "id": "dash_kick",
       "title": "Homing dash kick",
       "input": [
-        "R",
-        ">",
-        "B"
+        "shield",
+        "+",
+        "B",
+        "stick neutral"
       ],
-      "note": "Shield, then B (costs ki)",
+      "note": "Shield, then B with the stick neutral (costs 20 ki)",
       "script": "lua/clips_ki.lua",
       "clip": "dash_kick"
     },
@@ -287,7 +313,7 @@
         ">",
         "B"
       ],
-      "text": "B starts the charge, B again fires the level reached. Shield stores it. Full ki and full charge makes it Super."
+      "text": "B starts the charge, B again fires the level reached. Shield stores it. Full ki and the full 10 second charge makes it Super."
     },
     {
       "name": "Dragon Rush",
@@ -329,11 +355,11 @@
     {
       "name": "Dash kick",
       "input": [
-        "R",
-        ">",
+        "shield",
+        "+",
         "B"
       ],
-      "text": "Shield then B. Homing kick, costs ki.",
+      "text": "Shield then B with the stick neutral. Homing kick, costs 20 ki.",
       "ki": true
     },
     {
@@ -401,12 +427,12 @@
   "stills": [
     {
       "name": "still_kame_max",
-      "clip": "kame_max",
-      "at": 0.78
+      "clip": "kame_super",
+      "at": 0.9
     },
     {
       "name": "still_rush",
-      "clip": "rush",
+      "clip": "rush_hit",
       "at": 0.33
     },
     {
@@ -421,8 +447,8 @@
     },
     {
       "name": "still_flight",
-      "clip": "flight_aerial",
-      "at": 0.45
+      "clip": "flight_power",
+      "at": 0.5
     },
     {
       "name": "still_ki_charge",
@@ -436,9 +462,9 @@
     "light_heavy",
     "launcher_air",
     "flight",
-    "flight_ledge",
     "dash_kick",
-    "fsmash",
+    "ki_blast",
+    "ki_charge_air",
     "kame_max"
   ]
 }

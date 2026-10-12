@@ -154,6 +154,43 @@ function CAP.when(states, af, spec, n, timeout)
   CAP.log('WHEN timeout ' .. table.concat(states, ','))
   return false
 end
+-- when_fn: like CAP.when but the condition is a Lua function (video pass); the audio pass replays the logged frame
+function CAP.when_fn(fn, spec, n, timeout)
+  CAP.wseq = (CAP.wseq or 0) + 1
+  local seq = CAP.wseq
+  if CAP.sched == nil then
+    CAP.sched = {}
+    for q, f in tostring(CFG and CFG.when or ''):gmatch('(%d+):(-?%d+)') do CAP.sched[tonumber(q)] = tonumber(f) end
+  end
+  local replay = CFG and CFG.when ~= nil
+  for _ = 1, timeout or 90 do
+    local hit
+    if replay then hit = CAP.sched[seq] and CAP.sched[seq] >= 0 and gd.match().frame >= CAP.sched[seq] else hit = fn() end
+    if hit then CAP.log(string.format('WT %d %d', seq, gd.match().frame)); gd.input(1, spec, n or 2); return true end
+    CAP.wait(1)
+  end
+  CAP.log(string.format('WT %d -1', seq))
+  return false
+end
+-- stick: one frame of a computed stick (closed-loop steering). Video pass: applies and logs "ST frame x y"; audio pass: replays the logged value
+function CAP.stick(x, y, buttons)
+  if CAP.st == nil then
+    CAP.st = {}
+    for f, sx, sy in tostring(CFG and CFG.st or ''):gmatch('(%d+):(-?%d+):(-?%d+)') do CAP.st[tonumber(f)] = {tonumber(sx), tonumber(sy)} end
+  end
+  local mf = gd.match().frame
+  if CFG and CFG.st ~= nil then
+    local v = CAP.st[mf]
+    if v then x, y = v[1], v[2] end
+  else
+    x, y = math.floor(x), math.floor(y)
+    CAP.stlog = (CAP.stlog or '') .. string.format('%d:%d:%d,', mf, x, y)
+    if #CAP.stlog > 900 then CAP.log('STL ' .. CAP.stlog); CAP.stlog = '' end
+  end
+  gd.input(1, {x = x, y = y, buttons = buttons}, 1)
+end
+function CAP.stick_flush() if CAP.stlog and #CAP.stlog > 0 then CAP.log('STL ' .. CAP.stlog); CAP.stlog = '' end end
+
 -- stage edge: right ledge x and floor top, for off-stage KO framing
 function CAP.edge()
   local sb = gd.stage_bounds()

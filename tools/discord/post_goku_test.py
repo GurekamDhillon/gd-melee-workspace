@@ -40,7 +40,7 @@ TEXT_2 = """**Controls** (cards attached: controls, then the four combo cards)
 - Light string: A, A, A, A, A (each hit must connect). Heavy: C-stick off a light hit (up launches, forward finishes, down is the down smash)
 - Kamehameha: B starts the charge, B again fires. Shield stores it
 - Dragon Rush: forward + B. Flight: up + B, then A or C-stick
-- Ki charge: hold down + B. Ki blast: D-pad down (hold for a barrage). Dash kick: shield, then B
+- Ki charge: hold down + B. Ki blast: D-pad down (hold for a barrage). Dash kick: shield + B with the stick neutral
 - Instant Transmission roll: shield + left or right
 
 **Install**
@@ -53,7 +53,7 @@ TEXT_2 = """**Controls** (cards attached: controls, then the four combo cards)
 - No announcer call and no series emblem yet
 - Placeholder sounds except Kamehameha and Instant Transmission
 - Hitboxes are samples that are still being hand-authored
-- Online: by design Goku plays only against someone with the exact same Goku package (a mismatch is refused with a message); not yet tested online with this build
+- Online: both sides need the exe in this zip (netplay protocol 9; it won't connect to rc5) and the same Goku package (a mismatch is refused with a message); not yet tested online with this build
 
 **Report bugs** in <#{BUGS}>: say what you pressed, the stage and what you expected. Screenshots and clips help."""
 

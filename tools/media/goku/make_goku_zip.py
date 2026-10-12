@@ -29,18 +29,18 @@ INSTALL (over GD's Melee 0.3.0-rc5)
      (or add a line "goku-xv2" to mods/enabled.txt).
   3. Pick Goku on the character select. You need your own Melee disc image as always; none is included.
 
-Online: both players need this same build and the same Goku package: by design a mismatch is refused with a message.
-Online play with this build has not been tested yet.
+Online: both players need the exe in this zip (netplay protocol 9: it will not connect to rc5) and the same Goku package; a mismatch
+is refused with a message. Online play with this build has not been tested yet.
 
 CONTROLS
   Light string      A, A, A, A, A (each hit must connect)
   Heavy             C-stick off a light hit: up = launcher, forward = finisher, down = down smash
-  Kamehameha        B starts the charge, B again fires. Shield stores it.
+  Kamehameha        B starts the charge, B again fires. Shield stores it. Full ki and the full 10 s charge is Super.
   Dragon Rush       forward + B (then the Rush Combo if it hits)
   Flight            up + B, then A or the C-stick for a flight aerial
   Ki charge         hold down + B (ground or air)
   Ki blast          D-pad down (hold for a barrage)
-  Dash kick         shield, then B (costs ki)
+  Dash kick         shield + B with the stick neutral (costs 20 ki)
   Instant Transmission roll   shield + left or right
   The yellow ki bar fills with hits and charging and is spent by specials.
 

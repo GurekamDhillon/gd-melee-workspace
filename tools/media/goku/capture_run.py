@@ -70,6 +70,9 @@ def main():
         if vm.exists():
             wt = re.findall(r'WT (\d+) (-?\d+)', vm.read_text(encoding='utf-8'))
             kv['when'] = ','.join('%s:%s' % w for w in wt)
+            stl = re.findall(r'STL ([\d:,-]+)', vm.read_text(encoding='utf-8'))
+            if stl:
+                kv['st'] = ','.join(s.strip(',') for s in stl)
     else:
         kv.setdefault('step', '1')
     w, h = a.res.split('x')
