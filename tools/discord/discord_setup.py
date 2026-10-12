@@ -4,6 +4,7 @@ import argparse
 import base64
 import hashlib
 import json
+import mimetypes
 from pathlib import Path
 import re
 import sys
@@ -163,7 +164,7 @@ class API:
                 for index, (filename, binary) in enumerate(files):
                     if not re.fullmatch(r"[A-Za-z0-9_.-]+", filename):
                         raise ScopeError("Invalid attachment filename")
-                    parts += [f"\r\n--{boundary}\r\nContent-Disposition: form-data; name=\"files[{index}]\"; filename=\"{filename}\"\r\nContent-Type: image/png\r\n\r\n".encode(), binary]
+                    parts += [f"\r\n--{boundary}\r\nContent-Disposition: form-data; name=\"files[{index}]\"; filename=\"{filename}\"\r\nContent-Type: {mimetypes.guess_type(filename)[0] or 'application/octet-stream'}\r\n\r\n".encode(), binary]
                 parts.append(f"\r\n--{boundary}--\r\n".encode())
                 data = b"".join(parts)
                 headers["Content-Type"] = "multipart/form-data; boundary=" + boundary
