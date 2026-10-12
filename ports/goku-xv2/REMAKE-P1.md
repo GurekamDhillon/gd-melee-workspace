@@ -164,3 +164,21 @@ Owed: seeing it on screen (the headless camera shows the stage, not the fighters
 - **Grab family cross-ports** (`tools/cross-port.json`, `tools/cross_port.py`, like Luigi's bair): Catch, CatchDash, CatchWait, CatchAttack (pummel), ThrowB, ThrowLw from Captain Falcon;
   ThrowHi from Marth (tentative, to compare). Animation, grab boxes (two or three spheres on the root joint, scaled by the size ratio) and throw data are the source's; Falcon's grab effect and
   sound stay behind. The thrown victim plays the source thrower's row: `thrown_as: {default: captain, f: mewtwo, hi: mars}` (new in the define, geno.md 22.10).
+
+## Phase 5, later 2026-10-11: smash knockback, fair / dair, Side B, air charge, shield, throw banks
+
+- **Smash knockback** (owner: wrong growth): tip damage 15 / 14 / 13 (f / u / d, was 10 / 10 / 8), KBG 100 / 105 / 100, BKB 28 / 32 / 28, inner slots weaker. Retail reference read from the vanilla disc
+  (damage / KBG / BKB): fsmash Marth tip 20 / 70 / 80, Fox 15 / 105 / 10, Mewtwo 20 / 75 / 21, Falcon 21 / 100 / 24; usmash Marth 18 / 80 / 60, Falcon 14 / 105 / 30, Fox 18 / 112 / 30, Mewtwo 10 / 118 / 40;
+  dsmash Marth 16 / 100 / 70, Falcon 18 / 100 / 30, Fox 15 / 65 / 20, Mewtwo 15 / 103 / 20. KO-percent by the knockback formula (centre stage, Mario, no DI, uncharged, tip slot; NOT measured in game, the
+  in-game sweep never produced a KO): fsmash Marth tip 42, Falcon 52, Fox 90, Mewtwo 89, Goku 81; usmash Marth 46, Falcon 69, Fox 44, Mewtwo 76, Goku 67; dsmash Marth 41, Falcon 62, Fox 151, Mewtwo 84, Goku about 95;
+  fully charged Goku about 50 / 41 / 60. Charged damage feeds the knockback: SAMPLECHECK sends the dummy 17.0 (tap) vs 24.7 (charged) units for fsmash, 10.6 vs 18.5 usmash, 15.7 vs 18.3 dsmash.
+  The owner will decide the damage by feel.
+- **usmash** has a body-line sphere on the hips in slot 0 (Falcon's usmash hits on joint 4, HipN): the arm spheres of an uppercut sit above a Mario-sized head and only grazed it.
+- **fair** is retail Mario's AttackAirF (two spheres, 5 frames at script frames 15-20, damage 15, angle 280, KBG 70, BKB 30, no sourspot) on ARM_R. **dair**: spike sphere 2.1 script units (3.6 in game) on the foot tip for
+  3 frames (11-14), 290, KBG 70, BKB 40 (Marth's dair tipper is 3.5 / 4 frames / 290 / 70 / 40); the legs and the tip afterwards are a sourspot (angle 40, KBG 70, BKB 20, 70% damage).
+- **dtilt** now rides FOOT_R / LEG_R / UPLEG_R (the reach rule picks the limb thrown farthest from the chest); dash_attack, utilt, RushCombo and Light5 keep their limbs (owner: confirmed in game).
+- **Side B**: ground speed 2.1 (travel 15.3, was 23.3), air speed 1.7 (travel 42, was 66), a 10-frame stall then a sink capped at 1.0 a frame (28 down at frame 40, was 61).
+- **Air Down B**: a charged hold while B is held, at any ki; sink 0.7 a frame, drift up to 0.5 forward speed; never upward.
+- **Shield**: slot 1 of x8_part_bytes is a weightless leaf `shield_anchor` off the root at the pelvis height. The guard code scales that joint by the shield size (ftCo_Guard.c:216, 338, 806, 880), so it must be a leaf;
+  the first fix, YRotN, grew the whole body.
+- **Throw banks**: two resident arenas for a define that names several stand-ins (three exhausted heap 0 against Fox / Jigglypuff).
