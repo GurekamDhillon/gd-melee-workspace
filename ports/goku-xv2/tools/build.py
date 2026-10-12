@@ -360,6 +360,13 @@ def write_presentation(package, fighter):
         return
     tool = Path(os.environ.get('GW_MELEE') or ROOT/'melee')/'pc/tools/png2gx.py'
     def conv(png, name, fmt):
+        from PIL import Image   # png2gx tiles 4x4 and fails on 52x74: pad to a multiple of 4 with transparent pixels (bottom/right)
+        im = Image.open(png).convert('RGBA')
+        if im.width % 4 or im.height % 4:
+            pad = Image.new('RGBA', ((im.width + 3) // 4 * 4, (im.height + 3) // 4 * 4), (0, 0, 0, 0))
+            pad.paste(im, (0, 0))
+            png = Path(str(png) + '.pad.png')
+            pad.save(png)
         subprocess.run([sys.executable, str(tool), str(png), str(package/'files'/name), '--format', fmt, '--allow-odd-size'], check=True, capture_output=True)
         return name
     icon = conv(src(cnames[0], 'icon.png'), 'GnGokuXv2_icon.gxtex', 'rgb5a3')   # the select tile is one file (costume zero)
