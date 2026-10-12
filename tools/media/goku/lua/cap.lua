@@ -39,22 +39,36 @@ local function trace()
     end
   end
 end
+-- The game's own ki bar is a host overlay (not in gd.screenshot), so the per-frame ki value is logged for the compositor to redraw it.
+local kibuf, kistart = {}, 1
+local function kiflush()
+  if #kibuf > 0 then CAP.log(string.format('KIS %02d %d %s', CAP.nclip, kistart, table.concat(kibuf, ','))) end
+  kibuf = {}
+end
+local function kisample()
+  local ok2, cb = pcall(gd.combo, 1)
+  if #kibuf == 0 then kistart = CAP.n end
+  kibuf[#kibuf + 1] = string.format('%d', math.floor(((ok2 and cb and cb.ki) or 0) + 0.5))
+  if #kibuf >= 60 then kiflush() end
+end
 function CAP.wait(k)
   for _ = 1, k do
     gd.wait(1)
     trace()
-    if CAP.on and CAP.noshot then CAP.n = CAP.n + 1 end
+    if CAP.on and CAP.noshot then CAP.n = CAP.n + 1; kisample() end
     if CAP.on and not CAP.noshot then
       CAP.tick = (CAP.tick or 0) + 1
       if CAP.tick % (tonumber(CFG and CFG.every) or 1) == 0 then
         CAP.n = CAP.n + 1
         gd.screenshot(string.format('c%02d_f%05d', CAP.nclip, CAP.n))
+        kisample()
       end
     end
   end
 end
 function CAP.endclip()
   CAP.wait(CAP.tail)                  -- a beat after the move
+  kiflush()
   CAP.log(string.format('ENDCLIP %02d frames=%d match_frame=%d', CAP.nclip, CAP.n, gd.match().frame))
   CAP.on = false
 end

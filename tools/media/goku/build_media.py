@@ -137,6 +137,59 @@ def encode(cmd_in, out, dur, w, h, fps, target_mb):
     print('WARNING: %s is %.1f MB (> %.1f)' % (Path(out).name, probe_mb(out), target_mb))
 
 
+def ki_values(script, clip_n):
+    """Per-frame ki (1-based list) of a clip from the KIS lines of the video pass."""
+    vals = {}
+    for l in (MEDIA / script / 'marks.txt').read_text(encoding='utf-8').splitlines():
+        m = re.match(r'ms=\d+ KIS (\d+) (\d+) ([\d,]+)', l)
+        if m and int(m.group(1)) == clip_n:
+            for i, v in enumerate(m.group(3).split(',')):
+                vals[int(m.group(2)) + i] = int(v)
+    return vals
+
+
+def ki_bar_png(v, path):
+    """The ki bar for the compositor (the game's own bar is a host overlay and is not in the screenshots): Atlas plate, sun fill,
+    white frame when full."""
+    from PIL import Image, ImageDraw, ImageFont
+    f = ImageFont.truetype(str(HERE.parents[2] / 'menu/Barlow/BarlowCondensed-Bold.ttf'), 30)
+    im = Image.new('RGBA', (1920, 1080), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    x, y, w, h = 72, 1000, 400, 24
+    d.rectangle([x - 14, y - 44, x + w + 14, y + h + 12], fill=(13, 16, 21, 190))
+    d.text((x, y - 40), 'KI', font=f, fill=(241, 235, 220, 255))
+    d.text((x + w, y - 40), str(v), font=f, fill=(242, 193, 78, 255), anchor='ra')
+    d.rectangle([x, y, x + w, y + h], fill=(26, 31, 41, 255))
+    d.rectangle([x, y, x + int(w * v / 100), y + h], fill=(242, 193, 78, 255))
+    d.rectangle([x, y, x + w, y + h], outline=(241, 235, 220, 255) if v >= 100 else (74, 85, 112, 255), width=3)
+    im.save(path)
+
+
+def ki_overlay_list(script, clip_n, f0, f1, out):
+    """A concat list of bar PNGs, one run per ki value, one 60th of a second per frame."""
+    vals = ki_values(script, clip_n)
+    d = out / 'kibars'
+    d.mkdir(parents=True, exist_ok=True)
+    runs, last = [], None
+    for f in range(f0, f1 + 1):
+        v = vals.get(f, last if last is not None else 0)
+        if runs and runs[-1][0] == v:
+            runs[-1][1] += 1
+        else:
+            runs.append([v, 1])
+        last = v
+    lines = []
+    for v, n in runs:
+        p = d / ('k%03d.png' % v)
+        if not p.exists():
+            ki_bar_png(v, p)
+        lines.append("file '%s'\nduration %.5f\n" % (str(p).replace(chr(92), '/'), n / 60))
+    lines.append("file '%s'\n" % str(d / ('k%03d.png' % runs[-1][0])).replace(chr(92), '/'))
+    lst = out / ('ki_%s_%02d_%d.txt' % (script, clip_n, f0))
+    lst.write_text(''.join(lines), encoding='utf-8')
+    return lst
+
+
 def clips(only):
     spec = json.loads((HERE / 'shots.json').read_text(encoding='utf-8'))
     idx = clip_index()
@@ -156,6 +209,7 @@ def clips(only):
         ltf = ov / ('lt_%s.png' % s['id'])
         fi = 0.35
         lt_in, lt_out = s.get('lt', [0.3, dur - 0.4])
+        kil = ki_overlay_list(c['script'], c['n'], f0, f1, out)
         inputs = ['-framerate', '60', '-start_number', str(f0), '-i', str(c['dir'] / ('c%02d_f%%05d.png' % c['n'])),
                   '-loop', '1', '-i', str(ov / 'corner.png'), '-loop', '1', '-i', str(ltf)]
         fw, fh = [int(x) for x in run(['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0',
@@ -176,6 +230,9 @@ def clips(only):
             inputs += ['-ss', '%.3f' % t0, '-t', '%.3f' % dur, '-i', str(c['wav'])]
             fc += ';[3:a]aresample=44100,afade=t=in:st=0:d=0.1,afade=t=out:st=%.3f:d=0.25[a]' % (dur - 0.25)
             amap = ['-map', '[a]']
+        kidx = sum(1 for x in inputs if x == '-i')
+        inputs += ['-f', 'concat', '-safe', '0', '-i', str(kil)]
+        fc = fc.replace('[x][l]overlay=0:0:shortest=1,format=yuv420p[v]', '[x][l]overlay=0:0:shortest=1[y];[%d:v]fps=60,format=rgba[ki];[y][ki]overlay=0:0:shortest=1,format=yuv420p[v]' % kidx)
         enc_in = inputs + ['-filter_complex', fc, '-map', '[v]'] + amap + ['-t', '%.3f' % dur]
         encode(enc_in, out / (s['id'] + '.mp4'), dur, 1920, 1080, 60, TARGET_MB)
         print('%s: %.1f s %.1f MB' % (s['id'], dur, probe_mb(out / (s['id'] + '.mp4'))))

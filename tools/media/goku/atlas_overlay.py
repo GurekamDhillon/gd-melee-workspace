@@ -18,10 +18,10 @@ CSS = """
 .corner{position:absolute;right:56px;top:40px;display:flex;align-items:center;gap:14px;background:rgba(13,16,21,.78);padding:10px 18px 6px;border-left:4px solid var(--ember)}
 .corner .t{font-size:30px;line-height:1}
 .corner .alpha{font-size:22px}
-.lt{position:absolute;left:72px;bottom:96px;display:flex;align-items:stretch;max-width:1500px}
+.lt{position:absolute;right:72px;bottom:64px;display:flex;align-items:stretch;max-width:1000px}
 .lt .bar{width:10px;background:var(--ember)}
 .lt .box{background:rgba(26,31,41,.92);padding:16px 30px 14px 24px}
-.lt .name{font-size:68px;line-height:1.12}
+.lt .name{font-size:60px;line-height:1.12}
 .lt .sub{margin-top:8px;font-size:26px;color:var(--text2);font-weight:600}
 .lt .in{margin-top:12px;font-size:34px}
 .lt .note{margin-top:8px;font-size:22px;color:var(--muted)}
