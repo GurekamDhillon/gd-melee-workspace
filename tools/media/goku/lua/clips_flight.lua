@@ -57,7 +57,7 @@ gd.run(function()
       CAP.clip(label); CAP.rec(true)
       CAP.wait(36)                       -- hang
       local spec = {x = inp.x or 0, y = inp.y or 0, buttons = btn}
-      gd.input(1, spec, 3)
+      gd.input(1, spec, 6)
       CAP.wait(75)
       CAP.endclip()
     end
