@@ -99,6 +99,39 @@ gd.run(function()
     smash('fsmash', {x = 127}, {7, 9, 11})
     smash('usmash', {y = 127}, {2, 4, 6, 8, 10})
     smash('dsmash', {y = -127}, {7, 9, 11})
+    -- fthrow (HB-SAMPLE, CROSS-PORT from Mewtwo's ThrowF, owner 2026-10-11): grab, forward throw = a 5% release then five small ki blasts at 7-frame spacing from script frame 33.
+    -- Reference (tools/lua throw_probe.lua on retail Mewtwo vs the same Mario dummy): 5.0 + 5 x 0.9 = 9.5% in total, five shadow-ball spawns, Wait again at frame 75.
+    do
+      local MT_TOTAL = 9.5
+      tp(1, 0, 0); tp(2, 30, 0); gd.set_percent(1, 0); gd.set_percent(2, 0); gd.wait(40)
+      gd.input(1, {x = 60}, 3); gd.wait(30)
+      tp(1, 0, 0); tp(2, 7, 0); gd.wait(3)
+      local face = (gd.player(1).facing or 1) >= 0 and 1 or -1
+      tp(2, 7 * face, 0); gd.wait(2)
+      gd.input(1, {buttons = 'Z'}, 2)
+      local caught
+      for i = 1, 60 do gd.wait(1) if name() == 'CatchWait' then caught = i break end end
+      assert(caught, 'fthrow: no grab (' .. name() .. ')')
+      gd.wait(8)
+      local p0 = gd.player(2).percent or 0
+      gd.input(1, {x = 127 * face}, 3)
+      local steps, spawns, lastp, seen_throw, free_at = 0, 0, p0, false, nil
+      for t = 1, 140 do
+        gd.wait(1); nofault()
+        if name() == 'ThrowF' then seen_throw = true end
+        local pp = gd.player(2).percent or 0
+        if pp ~= lastp then steps = steps + 1 lastp = pp end
+        for _, it in ipairs(gd.items() or {}) do if (it.frame_alive or 0) == 2 and it.owner_port == 1 then spawns = spawns + 1 end end
+        if seen_throw and not free_at and name() == 'Wait' then free_at = t end
+        if free_at and t > free_at + 10 then break end
+      end
+      local total = (gd.player(2).percent or 0) - p0
+      gd.log(string.format('SAMPLECHECK fthrow: %d damage steps, %d ki blasts, total %.1f%% (Mewtwo %.1f%%), Wait again at %s', steps, spawns, total, MT_TOTAL, tostring(free_at)))
+      assert(seen_throw and spawns >= 5 and steps >= 5, 'fthrow did not release five ki blasts that hit')
+      assert(math.abs(total - MT_TOTAL) <= 2.0, 'fthrow total damage is not close to Mewtwo's: ' .. total)
+      assert(free_at and free_at <= 100, 'Goku did not get actionable after the throw: ' .. tostring(free_at))
+      gd.wait(40)
+    end
     -- the jab string: A pressed at the XV2 rhythm, on hit the routes link
     reset(8, 0, 0)
     local links = 0

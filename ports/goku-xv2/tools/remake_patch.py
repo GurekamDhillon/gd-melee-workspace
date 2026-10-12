@@ -42,14 +42,40 @@ def patch_gameplay():
     # owner 2026-10-11: Down B is ONLY the ki charge, ground (KTN_C) and air (KTN_S_C, XV2 BAC 2 "Floating"); the tap counter / vanish is unbound (the Counter and Riposte
     # states stay defined for a later return). The air state slows the fall (XV2's floating idle has no gravity; the BAC carries no Movement event) in Lua.
     if not any(s['name'] == 'KiChargeAir' for s in g['states']):
-        g['states'].append({'name': 'KiChargeAir', 'behavior': 'geno.air', 'subaction': 'clip:KiChargeAir', 'like': 'motion:29', 'iasa': 'none', 'move_tag': 'special',
-                            'next': 'auto', 'lua': {'frame': 'kicharge_frame'},
+        # like motion 347 (the Flight states' physics): no Fall physics, so a stick-down hold cannot fast-fall and the Lua owns the descent
+        g['states'].append({'name': 'KiChargeAir', 'behavior': 'geno.air', 'subaction': 'clip:KiChargeAir', 'like': 'motion:347', 'iasa': 'none', 'move_tag': 'special',
+                            'phys': 'none', 'next': 'auto', 'lua': {'frame': 'kichargeair_frame'},
                             'pick': 'owner 2026-10-11: XV2 Energy Charge, floating variant (skill 591 BAC 2, APL_SPA_KTN_S_C), air Down B hold; only while ki < 100, none after a flight'})
         changed = True
+    for s_ in g['states']:
+        if s_['name'] == 'KiChargeAir' and (s_.get('like') != 'motion:347' or s_.get('lua', {}).get('frame') != 'kichargeair_frame'):
+            s_['like'] = 'motion:347'
+            s_['lua'] = {'frame': 'kichargeair_frame'}
+            changed = True
+        if s_['name'] == 'KiChargeAir' and s_.get('phys') != 'none':
+            s_['phys'] = 'none'   # Melee's air physics keeps a fast-fall flag from the Down B press (stick down while falling) and pins the speed: the Lua owns the descent
+            changed = True
     if g['specials'].get('lw') != 'geno:KiCharge' or g['specials'].get('air_lw') != 'geno:KiChargeAir':
         g['specials']['lw'] = 'geno:KiCharge'
         g['specials']['air_lw'] = 'geno:KiChargeAir'
         changed = True
+    # owner 2026-10-11: ThrowF is Mewtwo's forward throw (a 5% release, then five small projectiles), the projectiles are Goku's ki blasts. Numbers measured from retail
+    # Mewtwo with lua/throw_probe.lua (shadow ball: speed 6.0, 45 frames alive, spawns 7 frames apart from script frame 33, 0.9% a hit); the aim is homing, not his arm pose.
+    if not any(x['name'] == 'KiThrow' for x in g['articles']):
+        g['articles'].append({'name': 'KiThrow', 'lifetime': 45, 'velocity': [6.0, 0], 'spawn': [8, 12], 'max_live': 5, 'homing': {'turn': 35, 'range': 0, 'delay': 0},
+                              'despawn': {'hit': True, 'shield': True, 'stage': True, 'clank': True},
+                              'hitboxes': [{'slot': 0, 'damage': 1, 'size': 2.2, 'offset': [0, 0, 0], 'angle': 361, 'kbg': 20, 'wkb': 0, 'bkb': 8, 'start': 1, 'end': 0,
+                                            'element': 2, 'sfx_severity': 1, 'stun': 10}]})
+        changed = True
+    assert [x['name'] for x in g['articles']].index('KiThrow') == 5, 'moves/fthrow.genoasm spawns article 5'
+    for m in g['moves']:
+        if m['name'] == 'fthrow':
+            want = {'hb': 'HB-SAMPLE', 'windows': [], 'release': 19, 'iasa': 74, 'strike': [[19, 19]],
+                    'design': {'damage': 5, 'angle': 78, 'kbg': 100, 'bkb': 0},
+                    'strike_note': 'CROSS-PORT: Mewtwo ThrowF (release at script frame 19, five ki blasts from frame 33)'}
+            if any(m.get(k) != v for k, v in want.items()):
+                m.update(want)
+                changed = True
     flight = [('Flight', 'FlightUp', {'enter': 'flight_enter', 'frame': 'flight_frame'}), ('FlightU', 'FlightUp', {'frame': 'flight_frame'}),
               ('FlightF', 'FlightF', {'frame': 'flight_frame'}), ('FlightB', 'FlightB', {'frame': 'flight_frame'})]
     for name, row, lua in flight:

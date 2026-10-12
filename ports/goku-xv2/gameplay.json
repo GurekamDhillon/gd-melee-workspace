@@ -1077,18 +1077,23 @@
       ],
       "tag": "throw",
       "script": "moves/fthrow.genoasm",
-      "release": 18,
-      "iasa": 28,
+      "release": 19,
+      "iasa": 74,
       "design": {
-        "damage": 7,
-        "angle": 45,
-        "kbg": 75,
-        "bkb": 40
+        "damage": 5,
+        "angle": 78,
+        "kbg": 100,
+        "bkb": 0
       },
-      "hb": "HB-NONE",
+      "hb": "HB-SAMPLE",
       "windows": [],
-      "strike": [],
-      "strike_note": "no XV2 strike lands in this crop (or the row holds a pose): none recorded"
+      "strike": [
+        [
+          19,
+          19
+        ]
+      ],
+      "strike_note": "CROSS-PORT: Mewtwo ThrowF (release at script frame 19, five ki blasts from frame 33)"
     },
     {
       "name": "bthrow",
@@ -1659,13 +1664,14 @@
       "name": "KiChargeAir",
       "behavior": "geno.air",
       "subaction": "clip:KiChargeAir",
-      "like": "motion:29",
+      "like": "motion:347",
       "iasa": "none",
       "move_tag": "special",
       "next": "auto",
       "lua": {
-        "frame": "kicharge_frame"
-      }
+        "frame": "kichargeair_frame"
+      },
+      "phys": "none"
     }
   ],
   "specials": {
@@ -2559,6 +2565,51 @@
         }
       ],
       "scale": 1.9
+    },
+    {
+      "name": "KiThrow",
+      "lifetime": 45,
+      "velocity": [
+        6.0,
+        0
+      ],
+      "spawn": [
+        8,
+        12
+      ],
+      "max_live": 5,
+      "homing": {
+        "turn": 35,
+        "range": 0,
+        "delay": 0
+      },
+      "despawn": {
+        "hit": true,
+        "shield": true,
+        "stage": true,
+        "clank": true
+      },
+      "hitboxes": [
+        {
+          "slot": 0,
+          "damage": 1,
+          "size": 2.2,
+          "offset": [
+            0,
+            0,
+            0
+          ],
+          "angle": 361,
+          "kbg": 20,
+          "wkb": 0,
+          "bkb": 8,
+          "start": 1,
+          "end": 0,
+          "element": 2,
+          "sfx_severity": 1,
+          "stun": 10
+        }
+      ]
     }
   ],
   "toon": {

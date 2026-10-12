@@ -93,35 +93,41 @@ def generate(row, entry):
     mk = markers()
     lines, moved = T.script_text(got['words'], src, dst, ratio, scale=1.0 / build_scale,
                                  joint_ref=lambda role, jd, base: '@HITW0:%s:0x%08X@' % (mk[role], base))
-    text = ['# CROSS-PORT: Melee %s %s (retail data from the vanilla disc), retargeted by bone role; owner choice (2026-10-09): %s.'
-            % (entry['fighter'].capitalize(), entry['action'], entry['reason']),
-            '# Hitbox joint, size and offsets are Luigi\'s moved to Goku\'s bone of the same role and scaled by the size ratio %.4f'
-            ' (script units: build.py multiplies by %.4f). Damage, angle, KBG/BKB, sound bits, timing, auto-cancel and IASA are unchanged.'
-            % (ratio, build_scale), 'PUT ANIM_RATE 1.0'] + lines
+    drop = tuple(entry.get('drop', ()))   # commands of the source script that stay behind (Falcon's grab effect and sound)
+    if drop:
+        lines = [ln for ln in lines if ln.split(None, 1)[0] not in drop]
+    who = entry['fighter'].capitalize()
+    text = ['# HB-SAMPLE (CROSS-PORT): Melee %s %s (retail data from the vanilla disc), retargeted by bone role; owner choice: %s.'
+            % (who, entry['action'], entry['reason']),
+            "# Hitbox joint, size and offsets are %s's moved to Goku's bone of the same role (a sphere on the root joint is scaled about it) and scaled by the size ratio %.4f"
+            " (script units: build.py multiplies by %.4f; the engine then applies Goku's built size 1.2 to the fighter, model and hitboxes alike). Damage, angle, KBG/BKB, timing,"
+            " auto-cancel and IASA are unchanged%s." % (who, ratio, build_scale, ('; left behind: ' + ', '.join(drop)) if drop else ''), 'PUT ANIM_RATE 1.0'] + lines
     move = PORT / 'moves' / (entry['move'] + '.genoasm')
     move.write_text('\n'.join(text) + '\n', encoding='utf-8')
     # gameplay.json: windows per hitbox (start, frames until the clear), iasa, clip length, design
     hbs = [e for e in events if e['kind'] == 'hitbox']
     clears = [e['frame'] for e in events if e['kind'] == 'hitboxes_clear']
-    iasa = next(e['frame'] for e in events if e['kind'] == 'iasa')
+    iasa = next((e['frame'] for e in events if e['kind'] == 'iasa'), None)   # a source action with no IASA (Catch) plays to the end of its animation
     windows = [[h['frame'], next(c for c in clears if c > h['frame']) - h['frame']] for h in hbs]
     samples = len(range(int(round(report['source']['frames'])) + 1))
+    if iasa is None:
+        iasa = samples
     gp = SG.load()
     m = next(x for x in gp['moves'] if x['name'] == entry['move'])
     first = moved[0]
-    roles = [mk[x['src_role']] for x in moved]
+    roles = [mk.get(x['src_role'], x['src_role']) for x in moved]
     m['windows'] = windows
     m['iasa'] = iasa
     m['minimum_clip_frames'] = samples
     m['design'] = dict(m.get('design', {}), damage=first['before']['damage'], angle=first['before']['angle'], kbg=first['before']['kbg'],
                        bkb=first['before']['bkb'], radius=round(first['after']['size'] * build_scale, 4), role=roles[0], window_roles=roles,
                        offset=[0, 0, 0])
-    m['timing'] = ('CROSS-PORT from Melee %s %s (%s): hitboxes f%d-%d, IASA f%d, %d clip frames; Luigi\'s numbers (damage %d, angle %d, KBG %d, BKB %d), '
+    m['timing'] = ('CROSS-PORT from Melee %s %s (%s): hitboxes f%d-%d, IASA f%d, %d clip frames; %s numbers (damage %d, angle %d, KBG %d, BKB %d), '
                    'spheres on %s scaled x%.3f'
-                   % (entry['fighter'].capitalize(), entry['action'], entry['reason'], windows[0][0], windows[0][0] + windows[0][1], iasa, samples,
+                   % (entry['fighter'].capitalize(), entry['action'], entry['reason'], windows[0][0], windows[0][0] + windows[0][1], iasa, samples, who,
                       first['before']['damage'], first['before']['angle'], first['before']['kbg'], first['before']['bkb'], '/'.join(roles), ratio))
     m['pick'] = {'status': 'cross-port', 'source': '%s %s' % (entry['fighter'], entry['action']), 'why': entry['reason'], 'ratio': ratio}
-    m['pose_review'] = "Cross-port clip: Luigi's kick retargeted by bone role; his thigh stretch (SCAX 1.8x) is carried as a bone-scale track on the same role (clips.scale_bones). Pose review in the LAB owed."
+    m['pose_review'] = "Cross-port clip: %s's %s retargeted by bone role (a bone-scale track is carried when the source has one: clips.scale_bones). Pose review in the LAB owed." % (who, entry['action'])
     SG.save(gp)  # full file + regenerated stripped gameplay.json
     summary = {'row': row, 'clip': str(clip_path(row)), 'move_script': str(move), 'ratio': ratio, 'build_scale': build_scale,
                'windows': windows, 'iasa': iasa, 'samples': samples, 'hitboxes': moved,

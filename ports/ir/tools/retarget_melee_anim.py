@@ -555,6 +555,16 @@ def script_text(words, src, dst, ratio, joint_ref=None, scale=1.0, notes=None):
         if op == 11:
             hb = decode_hitbox(ws)
             role = src.role_of(hb["joint"])
+            if role is None and hb["joint"] == 0:
+                # the root joint (TopN): no bone to ride, the sphere is scaled about the origin (Falcon's grab boxes: Catch is two spheres on joint 0)
+                out = dict(hb)
+                out.update(x=hb["x"] * ratio, y=hb["y"] * ratio, z=hb["z"] * ratio, size=hb["size"] * ratio, joint=0)
+                w = hitbox_words(out, joint=0, scale=scale)
+                lines.append("hitbox raw=%s" % ",".join("0x%08X" % v for v in w))
+                moved.append({"slot": hb["slot"], "frame": frame, "src_role": "root", "dst_role": "root", "dst_joint": 0,
+                              "before": {k: hb[k] for k in ("size", "x", "y", "z", "damage", "angle", "kbg", "bkb")},
+                              "after": {k: out[k] * scale for k in ("size", "x", "y", "z")}})
+                continue
             if role is None or role not in dst.roles:
                 raise ValueError("hitbox on source joint %d (%s) has no destination bone of the same role" % (hb["joint"], role))
             jd = dst.roles[role]

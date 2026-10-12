@@ -131,12 +131,16 @@ end
 -- only runs while ki < 100 and a tap is just a short charge. In the air the fall is slowed to a drift (XV2's floating idle has no gravity and its BAC carries no Movement event,
 -- so the stand-in is Mewtwo's charge: a slow sink, sideways speed bled off). A normal landing ends it. No ki comes back during a flight or its special fall: those
 -- states are not this one (a gain there is taken off by flight_frame, and the special fall has no Down B).
-function M.kicharge_frame(ctx)
+local function charge_tick(ctx)
   if ctx.self.anim_ended then ctx.loop() end -- hold the charge clip until released
-  if not ctx.input.special_held then ctx.go("auto") return end
-  if ctx.self.ki >= KI_MAX then ctx.go("auto") return end -- @KI the charge ends at a full meter (XV2: usable only while ki < 100)
-  if ctx.self.air then ctx.velocity(ctx.self.vel_x * ctx.self.facing * 0.9, -0.12) end
+  if not ctx.input.special_held then ctx.go("auto") return false end
+  if ctx.self.ki >= KI_MAX then ctx.go("auto") return false end -- @KI the charge ends at a full meter (XV2: usable only while ki < 100)
   if ctx.ki then ctx.ki(0.8) end -- @KI 0 to 100 in about two seconds of holding
+  return true
+end
+function M.kicharge_frame(ctx) charge_tick(ctx) end
+function M.kichargeair_frame(ctx)
+  if charge_tick(ctx) then ctx.velocity(ctx.self.vel_x * ctx.self.facing * 0.9, -0.12) end
 end
 -- Homing dash strike (XV2 BAC 476, Side B out of the shield, ki cost on the route): it reuses rush_enter/rush_frame (the module is at the engine's 24-function cap);
 -- XV2 homes on the target for 14 frames (engine.homing_movement), which fighter Lua cannot read (no opponent query), so it dashes straight ahead.
