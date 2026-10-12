@@ -1,0 +1,4 @@
+# CROSS-PORT row script: Melee Captain TurnRun flow-control commands (cmd_var, continuation) retimed x0.773 to the 18-frame row; effects, sounds and textures left behind.
+PUT ANIM_RATE 1.0
+wait_until 7
+cmd_var w0.idx=1 w0.value=1

@@ -2,8 +2,8 @@
 # Hitbox joint, size and offsets are Captain's moved to Goku's bone of the same role (a sphere on the root joint is scaled about it) and scaled by the size ratio 0.7570 (script units: build.py multiplies by 1.4286; the engine then applies Goku's built size 1.2 to the fighter, model and hitboxes alike). Damage, angle, KBG/BKB, timing, auto-cancel and IASA are unchanged; left behind: gfx, sfx.
 PUT ANIM_RATE 1.0
 wait_until 6
-hitbox raw=0x2C000000,0x02120000,0x056203BA,0xB4990012,0x0020008B
-hitbox raw=0x2C800000,0x02120000,0x0562013E,0xB4990012,0x0020008B
+hitbox raw=0x2C000000,0x02B10000,0x05620537,0xB4990012,0x0020008B
+hitbox raw=0x2C800000,0x02B10000,0x056201BD,0xB4990012,0x0020008B
 throw slot=1 damage=2 angle=0 kbg=50 fkb=0 bkb=70 element=0 sfx_severity=0 sfx_kind=2
 wait_until 8
 hitboxes_clear

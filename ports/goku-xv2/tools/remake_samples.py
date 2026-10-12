@@ -18,6 +18,7 @@ import re
 import sys
 from pathlib import Path
 
+import os
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
@@ -62,7 +63,11 @@ CLIP_LIMB = {'GOK_ATC_002': 'hand', 'GOK_ATC_003': 'hand', 'GOK_ATC_004': 'hand'
              'GOK_NAG_TSUKAMI': 'hand'}
 # moves whose limb the reach rule (leading_limb, 2026-10-11) would flip but the owner has not been asked about: they keep the limb they had. dtilt is deliberately NOT here (the fix).
 # Reported flips: dash_attack foot.R -> foot.L, utilt hand.L -> hand.R, RushCombo hand.R -> foot.L, Light5 hand.L -> foot.R. owner 2026-10-11: current limbs confirmed in game.
-LIMB_LOCK = {'dash_attack': 'foot.R', 'utilt': 'hand.L', 'RushCombo': 'hand.R', 'Light5': 'hand.L'}
+# owner 2026-10-11 (goku-stage playtest): utilt's hand.L lock is lifted (the hitboxes were on the wrong hand; the reach rule picks the striking hand, as for dtilt).
+LIMB_LOCK = {'dash_attack': 'foot.R', 'RushCombo': 'hand.R', 'Light5': 'hand.L'}
+# owner 2026-10-11 playtest: first active frame. utilt starts at 8 (the second punch, hand.R, is out from frame 9); ftilt at 5 (hand.R extension peaks at frame 5, 7.2 vs 6.7 at frame 4).
+# (a, b) in row frames; the XV2-derived window is replaced, the limb and everything else still come from the plan.
+WINDOW_OVERRIDE = {'utilt': (8, 12), 'ftilt': (5, 9)}
 SKIP_SAMPLE = {'pummel', 'fthrow', 'bthrow', 'uthrow', 'dthrow', 'rapid_start', 'rapid_end', 'ITEnd', 'Recovery', 'KameCharge'}
 
 
@@ -471,6 +476,8 @@ def plan_targets(rig, source, anim_rows, combo):
             a0, b0 = a, b
             if h is not None and not t['chain'] and len(found[1]) == 1:
                 a, b = rig.refine(bank_clip, eff, a, b, frames)
+            if name in WINDOW_OVERRIDE and len(found[1]) == 1:
+                a, b = WINDOW_OVERRIDE[name]
             wl.append(dict(a0=a0, b0=b0, a=a, b=b, xdmg=xdmg, bdm=b_, dmg=dmg, limb=eff, rv=rv))
         result.append(dict(t, status='ok', bac=found[0], note=note, cls=cls, string=string, wins=wl, frames=frames, bank_clip=bank_clip))
     return result
@@ -561,6 +568,9 @@ def main(argv):
     anim_rows = json.loads((PORT / 'ANIM-ROWS.json').read_text(encoding='utf-8'))['rows']
     combo = json.loads((PORT / 'combo/combo.json').read_text(encoding='utf-8'))
     plans = plan_targets(rig, source, anim_rows, combo)
+    only = [x for x in os.environ.get('SAMPLES_ONLY', '').split(',') if x]   # write/plan only these moves (keeps hand-edited scripts such as Rush untouched)
+    if only:
+        plans = [p for p in plans if p['name'] in only]
     for tg in plans:
         if tg['status'] != 'ok':
             print('%-12s %s' % (tg['name'], tg['status']))

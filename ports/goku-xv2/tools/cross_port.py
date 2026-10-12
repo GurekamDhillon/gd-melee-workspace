@@ -118,6 +118,30 @@ def generate(row, entry, out=None):
             (OUT_ / row / 'spawn.json').write_text(json.dumps({'role': sp['role'], 'frames': sp['frames'], 'art_units': pts.tolist(), 'build_scale': build_scale,
                                                               'mean_forward_up_script_units': [float(pts[:, 2].mean() / build_scale), float(pts[:, 1].mean() / build_scale)]}, indent=1) + chr(10), encoding='utf-8')
         samples = len(range(int(round(report['source']['frames'])) + 1))
+        if entry.get('row_script'):
+            # goku-stage 2026-10-11: the source row's flow-control commands (TurnRun's facing-flip variable at its turn frame, RunBrake's cmd_var window) are what the engine's state
+            # code reads; the donor row of a base-none fighter has none, so TurnRun never flipped and Goku turned twice (TurnRun, then Turn). Only the keep list is carried,
+            # retimed to the row's length; effects, sounds and face-texture commands stay behind.
+            keep = tuple(entry.get('keep', ('cmd_var', 'continuation')))
+            rows_len = int(entry.get('fit_frames') or samples)
+            k = (rows_len - 1) / max(samples - 1, 1)
+            src_lines, _ = T.script_text(got['words'], src, dst, ratio, scale=1.0 / build_scale)
+            out_lines, wait = [], 0
+            for ln in src_lines:
+                w = ln.split(None, 1)[0]
+                if w == 'wait_until':
+                    wait = int(round(int(ln.split()[1]) * k))
+                elif w in keep:
+                    out_lines.append('wait_until %d' % wait)
+                    out_lines.append(ln)
+            who_ = entry['fighter'].capitalize()
+            text_ = ['# CROSS-PORT row script: Melee %s %s flow-control commands (%s) retimed x%.3f to the %d-frame row; effects, sounds and textures left behind.' % (who_, entry['action'], ', '.join(keep), k, rows_len),
+                     'PUT ANIM_RATE 1.0'] + out_lines
+            mv = PORT / 'moves' / (entry['row_script'] + '.genoasm')
+            mv.write_text(chr(10).join(text_) + chr(10), encoding='utf-8')
+            rs_ = json.loads(ROW_SCRIPTS.read_text(encoding='utf-8')) if ROW_SCRIPTS.exists() else {}
+            rs_[row] = {'script': 'moves/%s.genoasm' % entry['row_script'], 'source': '%s %s' % (entry['fighter'], entry['action']), 'windows': [], 'hitboxes': []}
+            ROW_SCRIPTS.write_text(json.dumps(dict(sorted(rs_.items())), indent=1) + chr(10), encoding='utf-8')
         if entry.get('move'):
             gp = SG.load()
             m = next(x for x in gp['moves'] if x['name'] == entry['move'])
@@ -129,7 +153,7 @@ def generate(row, entry, out=None):
         return summary
     mk = markers()
     lines, moved = T.script_text(got['words'], src, dst, ratio, scale=1.0 / build_scale,
-                                 joint_ref=lambda role, jd, base: '@HITW0:%s:0x%08X@' % (mk[role], base))
+                                 joint_ref=lambda role, jd, base: '@HITW0:%s:0x%08X@' % (mk[role], base), root_reach=entry.get('root_reach'))
     drop = tuple(entry.get('drop', ()))   # commands of the source script that stay behind (Falcon's grab effect and sound)
     if drop:
         lines = [ln for ln in lines if ln.split(None, 1)[0] not in drop]

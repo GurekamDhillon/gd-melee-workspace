@@ -189,5 +189,17 @@
   "source": "mars CliffWait",
   "windows": [],
   "hitboxes": []
+ },
+ "RunBrake": {
+  "script": "moves/row_runbrake.genoasm",
+  "source": "captain RunBrake",
+  "windows": [],
+  "hitboxes": []
+ },
+ "TurnRun": {
+  "script": "moves/row_turnrun.genoasm",
+  "source": "captain TurnRun",
+  "windows": [],
+  "hitboxes": []
  }
 }

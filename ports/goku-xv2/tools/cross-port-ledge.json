@@ -8,7 +8,8 @@
    "gfx",
    "sfx"
   ],
-  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)"
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
  },
  "CliffWait": {
   "move": null,
@@ -20,7 +21,8 @@
    "sfx"
   ],
   "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
-  "loop": true
+  "loop": true,
+  "root_t": true
  },
  "CliffClimbQuick": {
   "move": null,
@@ -31,7 +33,8 @@
    "gfx",
    "sfx"
   ],
-  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)"
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
  },
  "CliffClimbSlow": {
   "move": null,
@@ -42,7 +45,8 @@
    "gfx",
    "sfx"
   ],
-  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)"
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
  },
  "CliffEscapeQuick": {
   "move": null,
@@ -53,7 +57,8 @@
    "gfx",
    "sfx"
   ],
-  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)"
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
  },
  "CliffEscapeSlow": {
   "move": null,
@@ -64,7 +69,8 @@
    "gfx",
    "sfx"
   ],
-  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)"
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
  },
  "CliffJumpQuick1": {
   "move": null,
@@ -75,7 +81,8 @@
    "gfx",
    "sfx"
   ],
-  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)"
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
  },
  "CliffJumpQuick2": {
   "move": null,
@@ -86,7 +93,8 @@
    "gfx",
    "sfx"
   ],
-  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)"
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
  },
  "CliffJumpSlow1": {
   "move": null,
@@ -97,7 +105,8 @@
    "gfx",
    "sfx"
   ],
-  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)"
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
  },
  "CliffJumpSlow2": {
   "move": null,
@@ -108,7 +117,8 @@
    "gfx",
    "sfx"
   ],
-  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)"
+  "reason": "owner 2026-10-11: ledge rows are Marth's (animation, intangibility and timing of his row scripts on Goku's bones; ledge rows stay anchored)",
+  "root_t": true
  },
  "CliffAttackQuick": {
   "move": null,
@@ -119,7 +129,8 @@
    "gfx",
    "sfx"
   ],
-  "reason": "owner 2026-10-11: ledge attacks are Mario's (animation, intangibility and hitbox numbers on Goku's limbs; ledge rows stay anchored)"
+  "reason": "owner 2026-10-11: ledge attacks are Mario's (animation, intangibility and hitbox numbers on Goku's limbs; ledge rows stay anchored)",
+  "root_t": true
  },
  "CliffAttackSlow": {
   "move": null,
@@ -130,6 +141,7 @@
    "gfx",
    "sfx"
   ],
-  "reason": "owner 2026-10-11: ledge attacks are Mario's (animation, intangibility and hitbox numbers on Goku's limbs; ledge rows stay anchored)"
+  "reason": "owner 2026-10-11: ledge attacks are Mario's (animation, intangibility and hitbox numbers on Goku's limbs; ledge rows stay anchored)",
+  "root_t": true
  }
 }

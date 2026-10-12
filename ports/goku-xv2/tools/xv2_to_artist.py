@@ -441,6 +441,7 @@ def row_specs(source):
             # locomotion sets (cross-port-loco-<set>.json): a retail Turn / RunBrake starts and ends in that fighter's own stance, not Goku's, so the row
             # eases from the row he comes from and into the row he returns to (the shipped rows do the same: Landing, GuardOff, SquatRv ...)
             clipof={'Wait':WAIT_CLIP,'Run':3}
+            if c.get('root_t'):out[row]['root_motion']=True   # ledge rows: the source's TransN path is the row's root motion (the engine places the fighter at ledge + TransN)
             if c.get('ease_from'):out[row]['blend_from']=dict(clip=ean_(clipof[c['ease_from'][0]]),frame=0,frames=int(c['ease_from'][1]))
             if c.get('ease_to'):out[row].update(blend_to=ean_(clipof[c['ease_to'][0]]),blend_frames=int(c['ease_to'][1]))
     put_cross_ports()
@@ -828,7 +829,7 @@ def animations(source,mesh,rows,splices=None):
                 elif kind=='Position' and bone=='b_C_Base':root[ix]=sample_track(keys,tm)@BASIS*mesh['factor']
                 elif kind=='Position' and bone!='b_C_Base':ignored.add(bone)
                 elif kind=='Scale' and np.max(np.abs(sample_track(keys,tm)-1.))>1e-5:lostscale.add(bone)
-        cp=rs.get('cross_port');scales={};trans={}
+        cp=rs.get('cross_port');scales={};trans={};ledge_root=False
         if cp:
             z=np.load(cp['npz']);have=int(z['frames']);zn=list(z['names'])
             pick=lambda a:np.concatenate([a,np.repeat(a[-1:],count-have,axis=0)]) if count>have else a[:count]
@@ -843,6 +844,14 @@ def animations(source,mesh,rows,splices=None):
             for n in names:
                 if n in zn:rotations[n]=pick(z['q'][:,zn.index(n)])
             hip=pick(z['hips_t']).copy();root=np.zeros((count,3));lostscale=set()
+            if cp.get('drop_root_travel') and 'root_t' in z.files:
+                # goku-stage 2026-10-11 (TurnRun pelvis drift, 9.9 units of TransN z folded into the hips): the locomotion rows are played in place (the engine moves the fighter), so the
+                # source's TransN travel is taken out of the pelvis and the body stays on its collision; the pelvis keeps its own sway.
+                rt_=pick(z['root_t']);hip[:,0]-=rt_[:,0];hip[:,2]-=rt_[:,2]
+            if cp.get('root_t') and 'root_t' in z.files:
+                # goku-stage 2026-10-11 (ledge hang too high): the source's TransN displacement is the row's TransN track, the pelvis keeps only its motion relative to it. The ledge
+                # state puts the fighter at ledge + TransN, so the hands land on the ledge point like retail's; no recentring and no ground plant below (the feet dangle).
+                rt=pick(z['root_t']).copy();hip=hip-rt;root=rt;ledge_root=True
             if 'anchor_t' in z.files and 'grab_anchor' in names and rs['cross_port'].get('anchor',True):   # the source's own grab-anchor motion (a throw carries the victim): translation + rotation of the anchor bone
                 rotations['grab_anchor']=pick(z['anchor_q']);trans['grab_anchor']=pick(z['anchor_t'])
             # 2026-10-09 (owner #11): the source's bone-scale tracks (Luigi's thigh stretch) ride on the destination bone of the same role
@@ -895,8 +904,9 @@ def animations(source,mesh,rows,splices=None):
                         pair=Rotation.from_quat([rotations[bone][i],tgt.as_quat()])
                         rotations[bone][i]=Slerp([0,1],pair)(w).as_quat()
         # Keep character centred. Root motion/arena flight is intentionally removed.
-        hip[:,0]-=hip[0,0];hip[:,2]-=hip[0,2]
-        root-=root[0]
+        if not ledge_root:
+            hip[:,0]-=hip[0,0];hip[:,2]-=hip[0,2]
+            root-=root[0]
         if rs.get('root_path'):
             # authored TransN (ledge rows): keyframes (t 0..1, x, y, z), smoothstep between them. The cliff states
             # place the fighter at ledge + TransN (ftCo_CliffCatch_Phys), so this is the hang/climb path.
@@ -918,8 +928,8 @@ def animations(source,mesh,rows,splices=None):
         pos=np.c_[mesh['positions'],np.ones(len(mesh['positions']))]
         deformed=np.zeros((len(pos),4))
         for k in range(4):deformed+=np.einsum('nij,nj->ni',sk[np.array(mesh['joints'])[:,k]],pos)*np.array(mesh['weights'])[:,k,None]
-        ground=float(deformed[:,1].min());hip[:,1]-=ground
-        mode=ground_mode(gname)
+        ground=0. if ledge_root else float(deformed[:,1].min());hip[:,1]-=ground
+        mode=None if ledge_root else ground_mode(gname)
         if mode:
             # 2026-10-09 ground pass (owner: HYBRID HOVER STANCE). XV2 combat clips are authored in a flight stance, so a frame-0 anchor lets the
             # pelvis sink (or the legs dangle) later in the clip. Measure the lowest skinned vertex on EVERY frame and shift the row's pelvis

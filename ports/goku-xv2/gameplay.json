@@ -353,15 +353,15 @@
       "script": "moves/ftilt.genoasm",
       "windows": [
         [
-          3,
+          5,
           4
         ],
         [
-          3,
+          5,
           4
         ],
         [
-          3,
+          5,
           4
         ]
       ],
@@ -375,8 +375,8 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          3,
-          7
+          5,
+          9
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames",
@@ -403,16 +403,16 @@
       "script": "moves/utilt.genoasm",
       "windows": [
         [
-          5,
-          3
+          8,
+          4
         ],
         [
-          5,
-          3
+          8,
+          4
         ],
         [
-          5,
-          3
+          8,
+          4
         ]
       ],
       "iasa": 28,
@@ -425,14 +425,14 @@
       "hb": "HB-SAMPLE",
       "strike": [
         [
-          5,
-          8
+          8,
+          12
         ]
       ],
       "strike_note": "XV2 strike frames mapped to this row's Melee frames",
       "sample": {
         "limb": [
-          "hand.L"
+          "hand.R"
         ],
         "from": "XV2 hit entry 342",
         "xv2_damage": [
@@ -1020,7 +1020,7 @@
         "angle": 361,
         "kbg": 100,
         "bkb": 0,
-        "radius": 2.9568,
+        "radius": 3.8439,
         "role": "root",
         "window_roles": [
           "root",
@@ -1082,7 +1082,7 @@
         "angle": 361,
         "kbg": 100,
         "bkb": 0,
-        "radius": 2.9568,
+        "radius": 3.8439,
         "role": "root",
         "window_roles": [
           "root",

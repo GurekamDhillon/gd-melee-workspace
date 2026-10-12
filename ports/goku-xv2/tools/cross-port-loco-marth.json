@@ -13,7 +13,8 @@
   "ease_to": [
    "Wait",
    4
-  ]
+  ],
+  "drop_root_travel": true
  },
  "TurnRun": {
   "move": null,
@@ -29,7 +30,8 @@
   "ease_to": [
    "Run",
    4
-  ]
+  ],
+  "drop_root_travel": true
  },
  "RunBrake": {
   "move": null,
@@ -45,6 +47,7 @@
   "ease_to": [
    "Wait",
    5
-  ]
+  ],
+  "drop_root_travel": true
  }
 }

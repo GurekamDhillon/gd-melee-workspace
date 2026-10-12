@@ -14,7 +14,11 @@
   "drop": [
    "gfx",
    "sfx"
-  ]
+  ],
+  "root_reach": {
+   "z": 1.4,
+   "size": 1.3
+  }
  },
  "CatchDash": {
   "move": "dash_grab",
@@ -24,7 +28,11 @@
   "drop": [
    "gfx",
    "sfx"
-  ]
+  ],
+  "root_reach": {
+   "z": 1.4,
+   "size": 1.3
+  }
  },
  "CatchWait": {
   "move": null,

@@ -1,0 +1,6 @@
+# CROSS-PORT row script: Melee Captain RunBrake flow-control commands (cmd_var, continuation) retimed x0.536 to the 16-frame row; effects, sounds and textures left behind.
+PUT ANIM_RATE 1.0
+wait_until 0
+cmd_var w0.idx=0 w0.value=1
+wait_until 8
+cmd_var w0.idx=0 w0.value=0

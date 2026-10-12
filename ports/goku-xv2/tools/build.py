@@ -440,6 +440,15 @@ def apply(package, art_build, ir_path=None):
             row = motion_rows[motion][1]
             if motion_clips.get(motion):
                 plan['row_clips'][row] = motion_clips[motion]
+    # goku-stage 2026-10-11 (owner: dash grab and dash attack stop dead): a row whose flags carry 0x80000000 (fp->x594_b0) is animation-driven, so ft_80085030 pulls the
+    # ground speed to the clip's TransN speed on the first frame, and these clips have none (measured: gr_vel 1.8 -> 0.0 on frame 1; retail Falcon's CatchDash slides on friction).
+    # Plain flags (0) for the two dash attacks: the dash speed is kept and ground friction slows it, like retail.
+    rflags = plan.get('row_flags') or [None] * len(plan['row_clips'])
+    for move in cfg['moves']:
+        if move['name'] in ('dash_attack', 'dash_grab'):
+            for motion in move['motions']:
+                rflags[motion_rows[motion][1]] = 0
+    plan['row_flags'] = rflags
     for spec in cfg['moves']+cfg['special_adaptations']:
         declared = None
         parity, move, sources = move_source(ir, spec['parity'])

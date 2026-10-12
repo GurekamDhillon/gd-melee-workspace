@@ -332,11 +332,14 @@ class Retargeted:
 
     anchor_t = None   # (F,3) / (F,4): the grab anchor's local translation and rotation under its parent, when the source animates its own (a throw carries the victim with it)
     anchor_q = None
+    root_t = None     # (F,3): the source's TransN (translation joint) world displacement x the leg ratio, in the destination's frame; the ledge rows carry it as the root motion (the engine places the fighter at ledge + TransN)
 
     def save(self, path):
         extra = {}
+        if self.root_t is not None:
+            extra["root_t"] = self.root_t
         if self.anchor_t is not None:
-            extra = dict(anchor_t=self.anchor_t, anchor_q=self.anchor_q, anchor_joint=self.dst.roles["grab_anchor"])
+            extra.update(anchor_t=self.anchor_t, anchor_q=self.anchor_q, anchor_joint=self.dst.roles["grab_anchor"])
         np.savez_compressed(path, names=np.array(self.dst.names), q=self.q, hips_t=self.hips_t, frames=self.frames, **extra)
 
     @staticmethod
@@ -425,6 +428,8 @@ def retarget(src, src_t, src_q, src_s, dst, ratio=None, leg_ratio=None, fixed_ro
         disp = wsp[:, src.roles["hips"], :3, 3] - src_pos0[src.roles["hips"]]
         hips = hips + leg_ratio * disp
     res = Retargeted(dst, nf, q, hips, report)
+    if "translation" in src.roles:
+        res.root_t = leg_ratio * (wsp[:, src.roles["translation"], :3, 3] - src_pos0[src.roles["translation"]])
     ja_s, ja_d = src.roles.get("grab_anchor"), dst.roles.get("grab_anchor")
     if ja_s is not None and ja_d is not None and "hips" in src.roles and "hips" in dst.roles and dst.parents[ja_d] >= 0:
         # the victim rides the grab anchor (TransN2 / ThrowN): carry the source anchor's motion. Its world position is the destination hips plus the source's anchor-to-hips
@@ -549,7 +554,7 @@ def hitbox_words(hb, joint=None, scale=1.0):
     return w
 
 
-def script_text(words, src, dst, ratio, joint_ref=None, scale=1.0, notes=None):
+def script_text(words, src, dst, ratio, joint_ref=None, scale=1.0, notes=None, root_reach=None):
     """A retail ftcmd script -> Geno text for the destination: every hitbox moves to the destination joint of the same role (offset along
     and across the bone rebuilt by `retarget_hitbox`) and `scale` is applied on top of `ratio` to size/offset (a build that rescales
     scripts afterwards passes 1/its scale). `joint_ref(role, dst_joint, w0_base) -> str` writes word 0 of the raw hitbox (default: the
@@ -579,7 +584,8 @@ def script_text(words, src, dst, ratio, joint_ref=None, scale=1.0, notes=None):
             if role is None and hb["joint"] == 0:
                 # the root joint (TopN): no bone to ride, the sphere is scaled about the origin (Falcon's grab boxes: Catch is two spheres on joint 0)
                 out = dict(hb)
-                out.update(x=hb["x"] * ratio, y=hb["y"] * ratio, z=hb["z"] * ratio, size=hb["size"] * ratio, joint=0)
+                rz, rs_ = (root_reach or {}).get("z", 1.0), (root_reach or {}).get("size", 1.0)   # goku-stage: a grab reaching less far than the source's, scaled up (offset forward, radius)
+                out.update(x=hb["x"] * ratio, y=hb["y"] * ratio, z=hb["z"] * ratio * rz, size=hb["size"] * ratio * rs_, joint=0)
                 w = hitbox_words(out, joint=0, scale=scale)
                 lines.append("hitbox raw=%s" % ",".join("0x%08X" % v for v in w))
                 moved.append({"slot": hb["slot"], "frame": frame, "src_role": "root", "dst_role": "root", "dst_joint": 0,
