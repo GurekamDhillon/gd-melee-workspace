@@ -272,6 +272,26 @@ private slots:
         QVERIFY(graphicsFailureInOutput("Failed to create adapter: No supported adapters")); QVERIFY(!graphicsFailureInOutput("hello"));
         QCOMPARE(signalName(11), QString("SIGSEGV")); QCOMPARE(signalName(6), QString("SIGABRT")); QCOMPARE(signalName(99), QString("signal 99"));
     }
+    void peReaderAndWindowsVerdict() {
+        auto pe = [](quint16 machine) {
+            QByteArray b(0x100, '\0'); b[0] = 'M'; b[1] = 'Z'; b[0x3C] = char(0x80);
+            memcpy(b.data() + 0x80, "PE\0\0", 4); b[0x84] = char(machine & 0xff); b[0x85] = char(machine >> 8);
+            return b;
+        };
+        auto parse = [](const QByteArray &b) { QBuffer buf; buf.setData(b); buf.open(QIODevice::ReadOnly); return readPe(buf); };
+        auto ok = parse(pe(0x014c)); QVERIFY(ok.isPe); QCOMPARE(ok.machine, quint16(0x014c)); QCOMPARE(ok.machineName(), QString("i386"));
+        QCOMPARE(parse(pe(0x8664)).machineName(), QString("x86-64"));
+        auto elfBytes = parse(elfFixture(32, {}, {})); QVERIFY(!elfBytes.isPe); QVERIFY(elfBytes.error.contains("MZ"));
+        auto cut = pe(0x014c); cut[0x80] = 'X'; QVERIFY(!parse(cut).isPe);
+        QVERIFY(!parse(QByteArray("M")).isPe);
+        // the verdict: a Windows host never says "Linux executable", and never asks for ELF facts
+        auto codeOf = [](const std::function<void(VerdictInput &)> &mutate) { VerdictInput in; in.windowsHost = true; mutate(in); return deriveVerdict(in); };
+        QCOMPARE(codeOf([](VerdictInput &i) { i.elfValid = false; i.elfBits = 0; i.executable = false; }).code, QString("UNKNOWN"));   // ELF facts ignored on Windows
+        auto bad = codeOf([](VerdictInput &i) { i.peValid = false; });
+        QCOMPARE(bad.code, QString("BAD_BINARY")); QVERIFY(!bad.message.contains("Linux")); QVERIFY(bad.message.contains("Windows")); QVERIFY(bad.checked.contains("PE header"));
+        QCOMPARE(codeOf([](VerdictInput &i) { i.peMachine = 0x8664; }).code, QString("WRONG_ARCHITECTURE"));
+        QCOMPARE(codeOf([](VerdictInput &i) { i.launched = true; i.finished = true; }).code, QString("STARTED_OK"));
+    }
     void verdictForEachCause() {
         auto codeOf = [](const std::function<void(VerdictInput &)> &mutate) { VerdictInput in; mutate(in); return deriveVerdict(in); };
         QCOMPARE(codeOf([](VerdictInput &) {}).code, QString("UNKNOWN"));

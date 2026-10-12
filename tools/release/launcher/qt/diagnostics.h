@@ -20,6 +20,16 @@ struct ElfInfo {
 ElfInfo readElf(QIODevice &device, bool headerOnly = false);
 ElfInfo readElf(const QString &path, bool headerOnly = false);
 
+// A Windows game program: "MZ", then e_lfanew (offset 0x3C) pointing at "PE\0\0" and the COFF machine field.
+struct PeInfo {
+    bool isPe = false;       // MZ and PE signatures seen
+    quint16 machine = 0;     // 0x014c = i386, 0x8664 = x86-64
+    QString error;
+    QString machineName() const;
+};
+PeInfo readPe(QIODevice &device);
+PeInfo readPe(const QString &path);
+
 struct LibraryHit { QString name, path, note; bool found = false; };
 // Resolves DT_NEEDED the way ld.so orders its search (RPATH, LD_LIBRARY_PATH, RUNPATH, defaults),
 // but only accepts a file of the same ELF class and machine: Arch keeps its 64-bit libraries in
@@ -38,6 +48,8 @@ struct VerdictInput {
     QString prepareError;
     bool binaryExists = true, executable = true, noexecMount = false;
     bool elfValid = true; int elfBits = 32; quint16 machine = 3; bool hostX86_64 = true;
+    // On Windows the game is a PE program, not an ELF one; the ELF, execute-bit, noexec and loader checks do not apply.
+    bool windowsHost = false; bool peValid = true; quint16 peMachine = 0x014c;
     QString interpreter; bool interpreterExists = true;
     QStringList missingLibs, lddMissing;
     bool vulkanKnown = false, vulkan32Present = true;
