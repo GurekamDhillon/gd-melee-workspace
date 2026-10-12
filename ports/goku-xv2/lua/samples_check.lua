@@ -78,12 +78,15 @@ gd.run(function()
           for t = 1, 150 do
             gd.wait(1); nofault()
             local p = gd.player(1)
+            -- a charge lasts ~70 frames and the ECBs push the pair apart (Goku is built at 1.2, so further than before): hold the dummy at the tested distance until the release
+            if hold > 2 and t <= hold then pcall(gd.teleport, 2, p.x + face * d, 0) end
             if hold > 2 and t > 25 and t < 60 and tostring(p.motion_name):find('Attack') then
               if last_af and math.abs((p.anim_frame or 0) - last_af) < 0.01 then frozen = frozen + 1 end
               last_af = p.anim_frame
             end
             if gd.player(2).percent > before + 0.01 then got = gd.player(2).percent - before break end
           end
+          if not got and hold > 2 then local seen = {} gd.log(string.format('SAMPLECHECK smash %s charged miss at dist %d: P1 %s x%.1f, P2 %s x%.1f', label, d, tostring(gd.player(1).motion_name), gd.player(1).x, tostring(gd.player(2).motion_name), gd.player(2).x)) end
           if got then out.frozen = (out.frozen or 0) + frozen break end
         end
         out[hold] = got
@@ -94,7 +97,7 @@ gd.run(function()
       if (out.frozen or 0) < 15 then error(label .. ' smash animation did not hold while charging') end
     end
     smash('fsmash', {x = 127}, {7, 9, 11})
-    smash('usmash', {y = 127}, {2, 4, 6})
+    smash('usmash', {y = 127}, {2, 4, 6, 8, 10})
     smash('dsmash', {y = -127}, {7, 9, 11})
     -- the jab string: A pressed at the XV2 rhythm, on hit the routes link
     reset(8, 0, 0)
