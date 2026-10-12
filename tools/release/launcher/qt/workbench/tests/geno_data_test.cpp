@@ -52,6 +52,63 @@ private slots:
         QCOMPARE(data.rowByMotion(70), QString("dair"));
         QVERIFY(data.rowByMotion(999).isEmpty());
     }
+    void specialStatesAreRowsAndEditTheirOwnScript() {
+        QTemporaryDir d; wbtest::makeSynthFighter(d.path());
+        QJsonObject gameplay = QJsonDocument::fromJson(wbtest::kGameplay).object();
+        gameplay["states"] = QJsonArray{
+            QJsonObject{{"name", "KameCharge"}, {"behavior", "geno.ground"}, {"subaction", 295}},
+            QJsonObject{{"name", "Rush"}, {"behavior", "geno.ground"}, {"subaction", 299}},
+            QJsonObject{{"name", "Flight"}, {"behavior", "geno.air"}, {"subaction", "clip:SYN_ATC_009"}},
+            QJsonObject{{"name", "RushCombo"}, {"behavior", "geno.ground"}, {"subaction", "clip:SYN_ATC_007"}},
+            QJsonObject{{"name", "FlightNair"}, {"behavior", "geno.air"}, {"subaction", "clip:SYN_ATC_009"}, {"move_tag", "aerial"}}};
+        gameplay["specials"] = QJsonObject{{"s", "geno:Rush"}, {"air_s", "geno:Rush"}, {"hi", "geno:Flight"}};
+        gameplay["special_adaptations"] = QJsonArray{
+            QJsonObject{{"name", "Rush"}, {"script", "moves/rush.genoasm"}, {"windows", QJsonArray{QJsonArray{3, 2}}}},
+            QJsonObject{{"name", "Flight"}, {"script", "moves/flight.genoasm"}},
+            QJsonObject{{"name", "RushCombo"}, {"script", "moves/rushcombo.genoasm"}},
+            QJsonObject{{"name", "FlightNair"}, {"script", "moves/nair.genoasm"}},
+            QJsonObject{{"name", "KameCharge"}, {"script", "moves/missing.genoasm"}}};
+        wbtest::put(d.path(), "gameplay.json", QJsonDocument(gameplay).toJson());
+        wbtest::put(d.path(), "moves/rush.genoasm", wbtest::kJab);
+        wbtest::put(d.path(), "moves/flight.genoasm", "# flight
+wait 2
+");
+        wbtest::put(d.path(), "moves/rushcombo.genoasm", "# combo
+wait 2
+");
+        FileStore fs(d.path()); GenoData data(fs);
+        const QString reload = data.reload(); QVERIFY2(reload.isEmpty(), qPrintable(reload));
+        QStringList names; for (const auto &row : data.rows()) names << row.name;
+        // moves first, then the specials that have a script on disk; the aerial state and the missing script are left out
+        QCOMPARE(names, QStringList({"jab1", "dair", "side_b (Rush)", "up_b (Flight)", "RushCombo (special)"}));
+        const auto *rush = data.findRow("side_b (Rush)");
+        QVERIFY(rush);
+        QCOMPARE(rush->motions, QVector<int>({0x401}));
+        QCOMPARE(rush->script, QString("moves/rush.genoasm"));
+        QCOMPARE(rush->section, QString("special_adaptations"));
+        QVERIFY(rush->previewable());
+        QVERIFY(data.findRow("up_b (Flight)")->aerial);
+        QCOMPARE(data.findRow("up_b (Flight)")->stateClip, QString("SYN_ATC_009"));
+        QCOMPARE(data.findRow("up_b (Flight)")->effectiveClip(), QString("SYN_ATC_009"));
+        QCOMPARE(rush->stateClip, QString("Rush")); // no such clip in the bank: no fixed clip, still playable
+        QCOMPARE(data.hitboxes("side_b (Rush)").size(), 1);
+        QString err; HitboxEdit edit; edit.startFrame = 5; edit.endFrame = 9; edit.damage = 11;
+        const auto changes = data.editHitbox("side_b (Rush)", 0, edit, &err);
+        QVERIFY2(err.isEmpty() && !changes.isEmpty(), qPrintable(err));
+        QStringList paths; for (const auto &c : changes) paths << c.path;
+        QVERIFY(paths.contains("moves/rush.genoasm"));
+        QVERIFY(!paths.contains("moves/jab1.genoasm"));
+        for (const auto &c : changes) {
+            if (c.path == "moves/rush.genoasm") QVERIFY(QString::fromUtf8(c.after).contains("damage=11"));
+            if (c.path == "gameplay.json") {
+                const auto adapted = QJsonDocument::fromJson(c.after).object()["special_adaptations"].toArray()[0].toObject();
+                QCOMPARE(QJsonDocument(adapted["windows"].toArray()).toJson(QJsonDocument::Compact), QByteArray("[[5,5]]"));
+            }
+        }
+        QVERIFY(paths.contains("gameplay.json"));
+        QVERIFY(data.assignClip("side_b (Rush)", "SYN_ATC_009", {}, &err).isEmpty());
+        QVERIFY(err.contains("special"));
+    }
     void emptyPickTakesClipFromPlan() {
         QTemporaryDir d; wbtest::makeSynthFighter(d.path());
         QString gameplay = QString::fromUtf8(wbtest::kGameplay);
