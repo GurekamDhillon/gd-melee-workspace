@@ -69,7 +69,7 @@ private slots:
             QJsonObject{{"name", "FlightNair"}, {"behavior", "geno.air"}, {"subaction", "clip:SYN_ATC_009"}, {"move_tag", "aerial"}}};
         gameplay["specials"] = QJsonObject{{"s", "geno:Rush"}, {"air_s", "geno:Rush"}, {"hi", "geno:Flight"}};
         gameplay["special_adaptations"] = QJsonArray{
-            QJsonObject{{"name", "Rush"}, {"script", "moves/rush.genoasm"}, {"windows", QJsonArray{QJsonArray{3, 2}}}},
+            QJsonObject{{"name", "Rush"}, {"script", "moves/rush.genoasm"}, {"windows", QJsonArray{QJsonValue(QJsonArray{3, 2})}}},
             QJsonObject{{"name", "Flight"}, {"script", "moves/flight.genoasm"}},
             QJsonObject{{"name", "RushCombo"}, {"script", "moves/rushcombo.genoasm"}},
             QJsonObject{{"name", "FlightNair"}, {"script", "moves/nair.genoasm"}},
@@ -104,7 +104,7 @@ private slots:
             if (c.path == "moves/rush.genoasm") QVERIFY(QString::fromUtf8(c.after).contains("damage=11"));
             if (c.path == "gameplay.json") {
                 const auto adapted = QJsonDocument::fromJson(c.after).object()["special_adaptations"].toArray()[0].toObject();
-                QCOMPARE(QJsonDocument(adapted["windows"].toArray()).toJson(QJsonDocument::Compact), QByteArray("[[5,5]]"));
+                QCOMPARE(QJsonDocument(adapted["windows"].toArray()).toJson(QJsonDocument::Compact), QByteArray("[[5,4]]"));
             }
         }
         QVERIFY(paths.contains("gameplay.json"));
