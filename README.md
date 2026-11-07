@@ -9,6 +9,12 @@
 </p>
 
 <p align="center">
+  <a href="https://0rwx.com"><img alt="0rwx: AI-X, made with AI" src="docs/readme/brand/0rwx-AI-X.png" width="120"></a><br>
+  <b>AI level: <a href="https://0rwx.com">X (execute)</a>.</b> AI agents write most of this code, and no one reviews it line by line.<br>
+  It is checked by machine instead: against the real console through a Dolphin memory oracle, frame by frame on Slippi replays, and against an independent engine.
+</p>
+
+<p align="center">
   <a href="https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"><img alt="Release v0.2.2" src="docs/readme/brand/version.svg" height="28"></a>
   <img alt="Platform: Windows x64 and Linux x86_64" src="docs/readme/brand/windows.svg" height="28">
   <img alt="Netplay: rollback" src="docs/readme/brand/rollback.svg" height="28">
