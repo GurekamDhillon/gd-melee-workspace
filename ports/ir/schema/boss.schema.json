@@ -476,6 +476,7 @@
         "id": {"$ref": "common.schema.json#/$defs/Id"},
         "part": {"$ref": "common.schema.json#/$defs/Ref"},
         "joint": {"type": "string"},
+        "point_joints": {"description": "Joints whose animated positions are the surface vertices, in order (a polyline that moves with the animation). Use instead of static points.", "type": "array", "items": {"type": "string"}},
         "kind": {"enum": ["pass_through", "solid", "wall", "ceiling"]},
         "points": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Vec2"}},
         "active_in": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Ref"}},
