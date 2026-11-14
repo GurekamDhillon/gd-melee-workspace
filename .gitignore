@@ -173,3 +173,4 @@ __pycache__/
 # Converted UI assets and in-progress package staging are generated locally.
 /_build/**/GnUi_*.gxtex
 /_build/**/.csp-stage-*/
+/_build/boss-ir/
