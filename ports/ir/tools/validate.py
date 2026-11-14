@@ -37,6 +37,9 @@ REF_KEYS = {
     "subactions", "action", "actions", "move", "article", "articles", "code_unit", "function",
     "functions", "callee", "affects", "container", "clip", "bank", "effect_bank", "sound_bank",
     "enters", "exits", "next", "parent_move", "provider", "hitbox_set", "copy_of", "set", "costumes",
+    # boss layer
+    "to_part", "hp_pool", "part", "leads_to", "transition_state", "rules_enabled", "applies_in", "active_in",
+    "intangible_in", "spawned_by", "grab", "spawns", "sends",
 }
 # Collections whose items' ids must use a given namespace.
 NAMESPACES = {
@@ -61,6 +64,23 @@ NAMESPACES = {
     ("behavior", "articles"): "article",
     ("code", "units"): "code",
     ("issues",): "issue",
+    ("boss", "parts"): "part",
+    ("boss", "hp_pools"): "hp",
+    ("boss", "variables"): "var",
+    ("boss", "parameters"): "param",
+    ("boss", "movement_kinds"): "kin",
+    ("boss", "statuses"): "status",
+    ("boss", "rules"): "rule",
+    ("boss", "selection_tables"): "table",
+    ("boss", "attacks"): "attack",
+    ("boss", "timelines"): "timeline",
+    ("boss", "phases"): "phase",
+    ("boss", "defeat"): "defeat",
+    ("boss", "messages"): "msg",
+    ("boss", "grabs"): "grab",
+    ("boss", "spawns"): "spawn",
+    ("boss", "platforms"): "platform",
+    ("boss", "stage_events"): "stageev",
 }
 
 

@@ -14,6 +14,8 @@ schema/                   JSON Schema (draft 2020-12), one file per layer
   behavior.schema.json    attributes, body, actions, subactions, scripts (+ languages), moves, variables, articles
   code.schema.json        relocatable code units, overrides, hidden imports, intrinsics, escapes, functions
   integration.schema.json frameworks (registration, hook slots, id rules, API, patches) and hosts
+  boss.schema.json        optional boss layer: parts with own HP, phases, rules, selection tables, level L,
+                          camera, arena, grabs, spawns, platforms
   engines/melee.md        index spaces and engine extension blocks for melee.gc / melee.mex / melee.gdport
   engines/ultimate.md     index spaces and engine extension blocks for ssbu.switch
 tools/

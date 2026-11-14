@@ -124,6 +124,10 @@
     "integration": {
       "$ref": "integration.schema.json#/$defs/Integration"
     },
+    "boss": {
+      "description": "Optional layer for bosses and AI-driven enemies (parts with own HP, phases, rules, selection tables, camera, arena, grabs, spawns, platforms).",
+      "$ref": "boss.schema.json#/$defs/Boss"
+    },
     "issues": {
       "type": "array",
       "items": {
@@ -158,6 +162,19 @@
           "behavior.copy_abilities",
           "code",
           "integration",
+          "boss",
+          "boss.parts",
+          "boss.statuses",
+          "boss.rules",
+          "boss.selection_tables",
+          "boss.attacks",
+          "boss.timelines",
+          "boss.phases",
+          "boss.camera",
+          "boss.arena",
+          "boss.grabs",
+          "boss.spawns",
+          "boss.platforms",
           "issues"
         ]
       },

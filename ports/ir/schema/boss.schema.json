@@ -1,0 +1,541 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gd-melee.local/character-ir/boss.schema.json",
+  "title": "Character IR: boss layer",
+  "description": "Optional layer for non-fighter actors driven by their own AI: bosses and large enemies. It adds what fighters do not have: several parts with their own HP and hurtboxes, phases and break / defeat conditions, a status machine with prioritised transition rules, weighted attack-selection tables, values scaled by a difficulty level L, boss camera and arena rules, grabs of players, spawned helpers and projectiles, and collision the players stand on. Engine-neutral; engine detail goes in 'engine' blocks. Every object can carry provenance (evidence + confidence).",
+  "$defs": {
+    "Boss": {
+      "type": "object",
+      "properties": {
+        "kind": {"enum": ["boss", "miniboss", "enemy", "stage_hazard"]},
+        "level": {"$ref": "#/$defs/Level"},
+        "parts": {"type": "array", "items": {"$ref": "#/$defs/Part"}},
+        "hp_pools": {"type": "array", "items": {"$ref": "#/$defs/HpPool"}},
+        "damage_routing": {"type": "array", "items": {"$ref": "#/$defs/DamageRoute"}},
+        "variables": {"type": "array", "items": {"$ref": "#/$defs/BossVariable"}},
+        "parameters": {"type": "array", "items": {"$ref": "#/$defs/BossParameter"}},
+        "movement_kinds": {"type": "array", "items": {"$ref": "#/$defs/MovementKind"}},
+        "statuses": {"type": "array", "items": {"$ref": "#/$defs/Status"}},
+        "rules": {"type": "array", "items": {"$ref": "#/$defs/Rule"}},
+        "rule_engine": {"$ref": "#/$defs/RuleEngine"},
+        "selection_tables": {"type": "array", "items": {"$ref": "#/$defs/SelectionTable"}},
+        "target_selection": {"$ref": "#/$defs/TargetSelection"},
+        "attacks": {"type": "array", "items": {"$ref": "#/$defs/BossAttack"}},
+        "timelines": {"type": "array", "items": {"$ref": "#/$defs/Timeline"}},
+        "phases": {"type": "array", "items": {"$ref": "#/$defs/Phase"}},
+        "defeat": {"type": "array", "items": {"$ref": "#/$defs/DefeatCondition"}},
+        "messages": {"type": "array", "items": {"$ref": "#/$defs/Message"}},
+        "grabs": {"type": "array", "items": {"$ref": "#/$defs/Grab"}},
+        "spawns": {"type": "array", "items": {"$ref": "#/$defs/Spawn"}},
+        "platforms": {"type": "array", "items": {"$ref": "#/$defs/Platform"}},
+        "camera": {"$ref": "#/$defs/Camera"},
+        "arena": {"$ref": "#/$defs/Arena"},
+        "stage_events": {"type": "array", "items": {"$ref": "#/$defs/StageEvent"}},
+        "rng": {"$ref": "#/$defs/RngUse"},
+        "frame_order": {"type": "array", "items": {"type": "string"}, "description": "What runs in which order inside one frame."},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"},
+        "engine": {"$ref": "common.schema.json#/$defs/EngineExtensions"}
+      },
+      "additionalProperties": false
+    },
+    "Scaled": {
+      "description": "A value that may depend on the difficulty level L: value = base + per_level * L (then 'rounding'). A plain number is a constant.",
+      "oneOf": [
+        {"type": "number"},
+        {
+          "type": "object",
+          "required": ["base"],
+          "properties": {
+            "base": {"type": "number"},
+            "per_level": {"type": "number"},
+            "level": {"type": "string", "description": "Which level variable (default 'L'; e.g. a part's own truncated L)."},
+            "rounding": {"enum": ["none", "trunc", "floor", "round"]},
+            "min": {"type": "number"},
+            "max": {"type": "number"},
+            "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "ScaledRange": {
+      "description": "A uniform random value in [lo, hi]; if hi < lo then hi = lo.",
+      "type": "object",
+      "required": ["lo", "hi"],
+      "properties": {
+        "lo": {"$ref": "#/$defs/Scaled"},
+        "hi": {"$ref": "#/$defs/Scaled"},
+        "unit": {"type": "string"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "Level": {
+      "description": "The difficulty scalar L and how it is computed.",
+      "type": "object",
+      "properties": {
+        "formula": {"type": "string"},
+        "inputs": {"type": "array", "items": {"type": "object", "required": ["name"], "properties": {"name": {"type": "string"}, "range": {"type": "string"}, "source": {"type": "string"}, "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}}, "additionalProperties": false}},
+        "tables": {"type": "array", "items": {
+          "type": "object",
+          "required": ["id", "rows"],
+          "properties": {
+            "id": {"$ref": "common.schema.json#/$defs/Id"},
+            "selected_when": {"type": "string"},
+            "row_key": {"type": "string"},
+            "column_key": {"type": "string"},
+            "rows": {"type": "array", "items": {"type": "array", "items": {"type": "number"}}},
+            "out_of_range": {"type": "number"},
+            "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+          },
+          "additionalProperties": false
+        }},
+        "initial": {"type": "object", "additionalProperties": {"type": ["number", "string"]}},
+        "reference_values": {"type": "array", "items": {"type": "object", "properties": {"setting": {"type": "string"}, "L": {"type": "number"}, "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}}, "additionalProperties": false}},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "Hurtbox": {
+      "type": "object",
+      "properties": {
+        "joint": {"type": "integer"},
+        "joint_name": {"type": "string"},
+        "shape": {"enum": ["sphere", "capsule", "box"]},
+        "offset": {"$ref": "common.schema.json#/$defs/Vec3"},
+        "offset_end": {"$ref": "common.schema.json#/$defs/Vec3"},
+        "radius": {"type": "number"},
+        "intangible_in": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Ref"}},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "Part": {
+      "description": "One body or detachable part with its own model, hurtboxes and (optionally) HP. Parts can be attached to a joint of another part.",
+      "type": "object",
+      "required": ["id", "role"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "name": {"type": "string"},
+        "role": {"enum": ["core", "limb", "weak_point", "shield", "carrier", "vehicle", "clone", "other"]},
+        "model": {"type": "string"},
+        "skeleton": {"type": "string"},
+        "attach": {"type": "object", "properties": {"to_part": {"$ref": "common.schema.json#/$defs/Ref"}, "joint": {"type": "string"}, "mode": {"enum": ["rigid", "follow", "physics", "none"]}}, "additionalProperties": false},
+        "hp_pool": {"$ref": "common.schema.json#/$defs/Ref"},
+        "hurtboxes": {"type": "array", "items": {"$ref": "#/$defs/Hurtbox"}},
+        "facing": {"type": "string"},
+        "own_level": {"type": "string", "description": "How this part's L differs from the boss's (e.g. truncated copy)."},
+        "carries": {"type": "string", "description": "Something held by the part (a captive, an item)."},
+        "procs": {"type": "array", "items": {"$ref": "#/$defs/Proc"}},
+        "animation_sync": {"type": "string"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"},
+        "engine": {"$ref": "common.schema.json#/$defs/EngineExtensions"}
+      },
+      "additionalProperties": false
+    },
+    "Proc": {
+      "description": "A small native per-frame state of a part (enter / monitor / broken ...).",
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "index": {"type": "integer"},
+        "name": {"type": "string"},
+        "behaviour": {"type": "string"},
+        "sends": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Ref"}},
+        "next": {"type": "string"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "HpPool": {
+      "type": "object",
+      "required": ["id", "max"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "max": {"$ref": "#/$defs/Scaled"},
+        "effective_max_note": {"type": "string"},
+        "shared_by": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Ref"}},
+        "percent_formula": {"type": "string"},
+        "on_zero": {"type": "string"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "DamageRoute": {
+      "description": "Where damage taken by one part goes.",
+      "type": "object",
+      "required": ["from", "to"],
+      "properties": {
+        "from": {"$ref": "common.schema.json#/$defs/Ref"},
+        "to": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Ref"}},
+        "factor": {"type": "number"},
+        "when": {"type": "string"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "BossVariable": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "type": {"enum": ["int", "float", "flag", "target", "vec"]},
+        "initial": {"type": ["number", "boolean", "string", "null"]},
+        "meaning": {"type": "string"},
+        "engine_maintained": {"type": "boolean"},
+        "raw_id": {"type": ["integer", "string"]},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "BossParameter": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "raw_id": {"type": ["integer", "string"]},
+        "location": {"type": "string"},
+        "value": {},
+        "meaning": {"type": "string"},
+        "used": {"type": "boolean"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "MovementKind": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "raw_kind": {"type": "integer"},
+        "mode": {"enum": ["grounded", "animation_root", "accelerate_along_angle", "decay", "fly", "fixed_velocity", "other"]},
+        "start_speed": {"$ref": "#/$defs/Scaled"},
+        "acceleration": {"$ref": "#/$defs/Scaled"},
+        "max_speed": {"$ref": "#/$defs/Scaled"},
+        "decay": {"$ref": "#/$defs/Scaled"},
+        "gravity": {"type": "boolean"},
+        "raw": {"type": "array"},
+        "note": {"type": "string"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "Op": {
+      "description": "One step of a boss script in engine-neutral words.",
+      "type": "object",
+      "required": ["op"],
+      "properties": {
+        "op": {"enum": ["set_motion", "pick_motion", "set_movement", "stop_movement", "set_timer", "set_var", "add_var", "enable_rules", "reset_rules", "disable_rules", "reset_target", "lock_target", "set_goal_x", "intangible", "send", "stage_event", "change_status", "pick", "spawn", "despawn", "grab", "release", "camera", "sound", "effect", "shake", "hitbox", "clear_hitboxes", "if", "other"]},
+        "args": {"type": "object"},
+        "then": {"type": "array", "items": {"$ref": "#/$defs/Op"}},
+        "else": {"type": "array", "items": {"$ref": "#/$defs/Op"}},
+        "text": {"type": "string"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "Status": {
+      "description": "A node of the boss's state machine.",
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "index": {"type": "integer"},
+        "name": {"type": "string"},
+        "motion": {"type": "string"},
+        "on_enter": {"type": "array", "items": {"$ref": "#/$defs/Op"}},
+        "per_frame": {"type": "array", "items": {"$ref": "#/$defs/Op"}},
+        "on_exit": {"type": "array", "items": {"$ref": "#/$defs/Op"}},
+        "rules_enabled": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Ref"}},
+        "exits": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Ref"}},
+        "intangible": {"type": "boolean"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "Rule": {
+      "description": "A prioritised transition: when enabled and its condition holds, run the action then go to the target status.",
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "index": {"type": "integer"},
+        "priority": {"type": "integer"},
+        "default_enabled": {"type": "boolean"},
+        "per_target": {"type": "boolean", "description": "Evaluated once per candidate player."},
+        "locks_target": {"type": "boolean"},
+        "condition": {"type": "string"},
+        "action": {"type": "array", "items": {"$ref": "#/$defs/Op"}},
+        "state": {"$ref": "common.schema.json#/$defs/Ref", "description": "Target status, absent = none."},
+        "used": {"type": "boolean"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "RuleEngine": {
+      "type": "object",
+      "properties": {
+        "evaluation": {"type": "string"},
+        "priority_order": {"enum": ["lowest_first", "highest_first"]},
+        "default_window": {"type": "array", "items": {"type": "integer"}, "minItems": 2, "maxItems": 2},
+        "tie_break": {"type": "string"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "SelectionTable": {
+      "description": "A weighted random choice (attack menu, side, idle animation...).",
+      "type": "object",
+      "required": ["id", "entries"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "name": {"type": "string"},
+        "used_by": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Ref"}},
+        "entries": {"type": "array", "items": {
+          "type": "object",
+          "required": ["weight"],
+          "properties": {
+            "label": {"type": "string"},
+            "weight": {"$ref": "#/$defs/Scaled"},
+            "condition": {"type": "string"},
+            "leads_to": {"$ref": "common.schema.json#/$defs/Ref"},
+            "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+          },
+          "additionalProperties": false
+        }},
+        "repeat_factor": {"type": "number", "description": "Weight multiplier for the entry picked last time."},
+        "draw": {"type": "string"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "TargetSelection": {
+      "type": "object",
+      "properties": {
+        "slot_weights": {"type": "array", "items": {"type": "number"}},
+        "repeat_factor": {"type": "number"},
+        "eligible": {"type": "string"},
+        "lock": {"type": "string"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "ScaledHitbox": {
+      "type": "object",
+      "properties": {
+        "slot": {"type": "integer"},
+        "group": {"type": "integer"},
+        "part": {"$ref": "common.schema.json#/$defs/Ref"},
+        "joint": {"type": "integer"},
+        "joint_name": {"type": "string"},
+        "frames": {"type": "array", "items": {"type": "integer"}, "minItems": 2, "maxItems": 2},
+        "damage": {"$ref": "#/$defs/Scaled"},
+        "angle": {"type": "number"},
+        "angle_frame": {"type": "string"},
+        "knockback_growth": {"$ref": "#/$defs/Scaled"},
+        "set_knockback": {"$ref": "#/$defs/Scaled"},
+        "base_knockback": {"$ref": "#/$defs/Scaled"},
+        "size": {"$ref": "#/$defs/Scaled"},
+        "offset": {"$ref": "common.schema.json#/$defs/Vec3"},
+        "element": {"type": "string"},
+        "hitlag": {"type": "number"},
+        "sdi": {"type": "number"},
+        "shield_damage": {"type": "number"},
+        "rehit_frames": {"type": "integer"},
+        "hit_sfx": {"type": "integer"},
+        "raw_flags": {"type": "array"},
+        "note": {"type": "string"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "BossAttack": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "name": {"type": "string"},
+        "states": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Ref"}},
+        "total_frames": {"type": "integer"},
+        "hitboxes": {"type": "array", "items": {"$ref": "#/$defs/ScaledHitbox"}},
+        "movement": {"type": "string"},
+        "grab": {"$ref": "common.schema.json#/$defs/Ref"},
+        "spawns": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Ref"}},
+        "note": {"type": "string"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "Timeline": {
+      "description": "Frame-keyed events of one motion (per part / thread).",
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "motion": {"type": "string"},
+        "frames": {"type": "integer"},
+        "loops": {"type": "boolean"},
+        "events": {"type": "array", "items": {
+          "type": "object",
+          "properties": {
+            "frame": {"type": "integer"},
+            "repeat": {"type": "object", "properties": {"count": {"type": "integer"}, "every": {"type": "integer"}}, "additionalProperties": false},
+            "part": {"$ref": "common.schema.json#/$defs/Ref"},
+            "op": {"$ref": "#/$defs/Op"}
+          },
+          "additionalProperties": false
+        }},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "Phase": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "index": {"type": "integer"},
+        "enter_when": {"type": "string"},
+        "applies_in": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Ref"}},
+        "effects": {"type": "array", "items": {"$ref": "#/$defs/Op"}},
+        "transition_state": {"$ref": "common.schema.json#/$defs/Ref"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "DefeatCondition": {
+      "type": "object",
+      "required": ["id", "when"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "kind": {"enum": ["hp_zero", "threshold_then_hit", "part_break", "ring_out", "scripted", "other"]},
+        "when": {"type": "string"},
+        "result": {"type": "array", "items": {"$ref": "#/$defs/Op"}},
+        "state": {"$ref": "common.schema.json#/$defs/Ref"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "Message": {
+      "description": "A message parts / boss / stage send each other.",
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "raw_id": {"type": ["integer", "string"]},
+        "from": {"type": "string"},
+        "to": {"type": "string"},
+        "args": {"type": "string"},
+        "handling": {"type": "array", "items": {"$ref": "#/$defs/Op"}},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "Grab": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "catch_box": {"$ref": "#/$defs/ScaledHitbox"},
+        "hold_joint": {"type": "string"},
+        "hold_frames": {"$ref": "#/$defs/Scaled"},
+        "escape": {"type": "string"},
+        "damage_over_time": {"$ref": "#/$defs/Scaled"},
+        "release": {"type": "string"},
+        "throw": {"$ref": "#/$defs/ScaledHitbox"},
+        "max_victims": {"type": "integer"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "Spawn": {
+      "description": "A helper, minion or projectile the boss creates.",
+      "type": "object",
+      "required": ["id", "kind"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "kind": {"enum": ["projectile", "helper", "minion", "hazard", "part", "effect_only"]},
+        "name": {"type": "string"},
+        "spawned_by": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Ref"}},
+        "at": {"type": "string"},
+        "count": {"$ref": "#/$defs/Scaled"},
+        "speed": {"$ref": "#/$defs/Scaled"},
+        "lifetime": {"$ref": "#/$defs/Scaled"},
+        "hp": {"$ref": "#/$defs/Scaled"},
+        "hitboxes": {"type": "array", "items": {"$ref": "#/$defs/ScaledHitbox"}},
+        "behaviour": {"type": "string"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "Platform": {
+      "description": "Collision on the boss (or carried by it) that players stand on.",
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "part": {"$ref": "common.schema.json#/$defs/Ref"},
+        "joint": {"type": "string"},
+        "kind": {"enum": ["pass_through", "solid", "wall", "ceiling"]},
+        "points": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Vec2"}},
+        "active_in": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/Ref"}},
+        "carries_riders": {"type": "boolean"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "Camera": {
+      "type": "object",
+      "properties": {
+        "mode": {"enum": ["follow_players", "frame_boss_and_players", "fixed", "scripted", "autoscroll"]},
+        "framing_box": {"type": "object", "properties": {"top": {"type": "number"}, "bottom": {"type": "number"}, "front": {"type": "number"}, "back": {"type": "number"}, "used": {"type": "boolean"}}, "additionalProperties": false},
+        "clip_sphere": {"type": "object", "properties": {"joint": {"type": "string"}, "offset": {"$ref": "common.schema.json#/$defs/Vec3"}, "radius": {"type": "number"}}, "additionalProperties": false},
+        "distance": {"type": "number"},
+        "ease": {"type": "number"},
+        "tilt_degrees": {"type": "number"},
+        "fov_degrees": {"type": "number"},
+        "limits": {"type": "object", "properties": {"left": {"type": "number"}, "right": {"type": "number"}, "bottom": {"type": "number"}, "top": {"type": "number"}}, "additionalProperties": false},
+        "shakes": {"type": "string"},
+        "scripted_shots": {"type": "array", "items": {"type": "string"}},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "Arena": {
+      "type": "object",
+      "properties": {
+        "stage": {"type": "string"},
+        "boss_spawn": {"$ref": "common.schema.json#/$defs/Vec3"},
+        "ground_y": {"type": "number"},
+        "boss_bounds_x": {"type": "array", "items": {"type": "number"}},
+        "blast_zones": {"type": "object", "properties": {"left": {"type": "number"}, "right": {"type": "number"}, "bottom": {"type": "number"}, "top": {"type": "number"}}, "additionalProperties": false},
+        "goal_points": {"type": "array", "items": {"type": "object", "properties": {"x": {"type": "number"}, "y": {"type": "number"}, "meaning": {"type": "string"}}, "additionalProperties": false}},
+        "rules": {"type": "array", "items": {"type": "string"}},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "StageEvent": {
+      "description": "A notification the boss sends to the stage (cutscene, release of a captive, music...).",
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": {"$ref": "common.schema.json#/$defs/Id"},
+        "raw_id": {"type": ["integer", "string"]},
+        "sent_when": {"type": "string"},
+        "meaning": {"type": "string"},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    },
+    "RngUse": {
+      "type": "object",
+      "properties": {
+        "source": {"type": "string"},
+        "draw_order": {"type": "array", "items": {"type": "string"}},
+        "provenance": {"$ref": "common.schema.json#/$defs/Provenance"}
+      },
+      "additionalProperties": false
+    }
+  }
+}
