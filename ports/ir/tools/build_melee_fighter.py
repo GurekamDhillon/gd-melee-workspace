@@ -25,8 +25,18 @@ from attr_apply import attr_layout  # noqa: E402
 SRC = os.path.join(os.environ.get("GW_MELEE") or os.path.join(ROOT, "melee"), "src", "melee")   # GW_MELEE: the game checkout (a worktree has no melee/ beside it)
 OUT = os.path.join(ROOT, "_build", "tmp", "ir", "%s.melee.ir.json")
 # name -> (internal FighterKind, file code, decomp folder, submotion enum prefix)
-FIGHTERS = {"kirby": (4, "Kb", "ftKirby", "ftKb"), "marth": (18, "Ms", "ftMars", "ftMs"),
-            "falcon": (2, "Ca", "ftCaptain", "ftCa"), "captain": (2, "Ca", "ftCaptain", "ftCa")}
+# Clones without their own submotion enum (Dr. Mario, Falco, Ganondorf, Young Link, Pichu, Roy, Nana) list their base
+# fighter's prefix; costume tools (ports/skin) use only the kind and file code.
+FIGHTERS = {"mario": (0, "Mr", "ftMario", "ftMr"), "fox": (1, "Fx", "ftFox", "ftFx"),
+            "falcon": (2, "Ca", "ftCaptain", "ftCa"), "captain": (2, "Ca", "ftCaptain", "ftCa"),
+            "dk": (3, "Dk", "ftDonkey", "ftDk"), "kirby": (4, "Kb", "ftKirby", "ftKb"), "bowser": (5, "Kp", "ftKoopa", "ftKp"),
+            "link": (6, "Lk", "ftLink", "ftLk"), "sheik": (7, "Sk", "ftSeak", "ftSk"), "ness": (8, "Ns", "ftNess", "ftNs"),
+            "peach": (9, "Pe", "ftPeach", "ftPe"), "popo": (10, "Pp", "ftPopo", "ftPp"), "nana": (11, "Nn", "ftNana", "ftPp"),
+            "pikachu": (12, "Pk", "ftPikachu", "ftPk"), "samus": (13, "Ss", "ftSamus", "ftSs"), "yoshi": (14, "Ys", "ftYoshi", "ftYs"),
+            "jigglypuff": (15, "Pr", "ftPurin", "ftPr"), "mewtwo": (16, "Mt", "ftMewtwo", "ftMt"), "luigi": (17, "Lg", "ftLuigi", "ftLg"),
+            "marth": (18, "Ms", "ftMars", "ftMs"), "zelda": (19, "Zd", "ftZelda", "ftZd"), "younglink": (20, "Cl", "ftCLink", "ftLk"),
+            "drmario": (21, "Dr", "ftDrMario", "ftMr"), "falco": (22, "Fc", "ftFalco", "ftFx"), "pichu": (23, "Pc", "ftPichu", "ftPk"),
+            "gameandwatch": (24, "Gw", "ftGameWatch", "ftGw"), "ganondorf": (25, "Gn", "ftGanon", "ftCa"), "roy": (26, "Fe", "ftEmblem", "ftMs")}
 NAME = "kirby"
 KIND, CODE, KDIR, KPRE = FIGHTERS[NAME]
 SKEL = "skel:body"
