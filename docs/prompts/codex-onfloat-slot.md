@@ -1,0 +1,7 @@
+# Packet: wire the m-ex onFloat slot (2026-10-10)
+Rules: docs/prompts/codex-parallel-rules.md. Worktree (your cwd): worktrees/onfloat (game repo, branch agent/onfloat-slot). Edit only there. No commits (sandbox cannot write .git); the integrator commits.
+Read: melee/CLAUDE.md, pc/docs/PORT_DEV_QUICKREF.md, pc/platform/CLAUDE.md, the m-ex fighter function table code (grep onFloat, gw_mex_ftfunction*, MEX fighter function slots) and workspace _research/mex-*.md.
+Why: m-ex fighters Daisy and Skull Kid (ACE disc) define an onFloat callback; the port's m-ex interpreter does not call that slot, so their float behaviour is missing.
+Scope: find where retail/m-ex invokes onFloat (Peach's float path, ftCo float code / m-ex hooks), wire the slot through the interpreter exactly like the neighbouring slots already wired (cite the m-ex asm/decomp function you mirror), add a gw_log line when the slot fires, add a native/headless test if the harness allows one without a disc (else write the exact run.sh --test command for the integrator).
+Build: you may run tools/port/build.sh with GW_BUILD_ROOT inside your worktree (worktrees/onfloat/.omo/build) if the sandbox allows; if it fails, say so — do not fake it.
+Report: worktrees/onfloat/.omo/evidence/codex-report.md — files changed, the decomp/asm citation, what was built/run, exact commands for the integrator (Daisy and Skull Kid float on screen, rewind 0 bytes).

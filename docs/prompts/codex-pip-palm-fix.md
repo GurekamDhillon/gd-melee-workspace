@@ -1,0 +1,6 @@
+# Codex packet: Pip Palm Skip held bonus does not reach the target (2026-10-08)
+Worktree (exists; edit ONLY here; no git writes): `E:\Projects\Melee Workspace\worktrees\ws-pip-palm-fix` (ws/pip-palm-fix).
+Game `melee/` read-only. You may run python/lua tools, `geno check`, build with `GW_BUILD_ROOT=E:/Projects/Melee Workspace/_build/agents/pip-fix`, headless suite.
+Coordinator's LAB run of `ports/geno-artist-samples/pip/moves_check.lua` (log quoted):
+  held=true n=2 damage=11.000 readout=13   (tap: n=2 damage=8.000 readout=13)
+The held second pulse's hitbox reports 11 but Mario's percent ends at 13 (5+8), not 16. Find why (e.g. the boost writes the hitbox after the hit is already resolved this frame, writes a copy, or the readout is sampled early), fix the move (palm_skip.lua / .genoasm / gameplay.json) or the check, and make moves_check assert the VICTIM's actual percent delta per pulse (5/8 tap, 5/11 held), not the hitbox field. Update docs/geno-fighter-guide.md's worked example if the pattern was wrong (the guide must teach the working pattern). Report `_build/tmp/codex-pip-palm-fix-report.md` in that worktree: cause with evidence, changes, the exact LAB command for the coordinator.

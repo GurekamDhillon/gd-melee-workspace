@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Haki Impact V3 — Kiki</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #020104;
+  }
+  body { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    cursor: crosshair;
+  }
+  #hud {
+    position: fixed;
+    left: 16px;
+    top: 16px;
+    padding: 11px 13px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(4,2,7,.66);
+    backdrop-filter: blur(8px);
+    color: #eeeaf3;
+    font: 12px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
+    clip-path: polygon(0 0, 96% 0, 100% 18%, 100% 100%, 4% 100%, 0 82%);
+    user-select: none;
+    pointer-events: none;
+  }
+  #hud b {
+    display: block;
+    margin-bottom: 3px;
+    color: white;
+    font-size: 14px;
+    letter-spacing: .08em;
+  }
+  #mark {
+    position: fixed;
+    right: 18px;
+    bottom: 16px;
+    text-align: right;
+    pointer-events: none;
+    user-select: none;
+    color: rgba(255,255,255,.9);
+    font-weight: 950;
+    letter-spacing: -.04em;
+    line-height: .8;
+    font-size: clamp(38px, 7vw, 104px);
+    transform: skew(-8deg);
+    text-shadow: 3px 3px 0 rgba(125,0,30,.65);
+  }
+  #mark small {
+    display: block;
+    margin-top: 11px;
+    font: 700 11px/1 ui-monospace, monospace;
+    letter-spacing: .42em;
+    color: rgba(255,255,255,.58);
+  }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="hud">
+  <b>HAKI IMPACT / V3 / KIKI</b>
+  move mouse → impact origin<br>
+  click → fire impact
+</div>
+<div id="mark">覇<br>気<small>CONQUEROR</small></div>
+
+<script>
+const canvas = document.getElementById('gl');
+const gl = canvas.getContext('webgl', {
+  alpha: false,
+  antialias: false,
+  depth: false,
+  stencil: false,
+  preserveDrawingBuffer: false
+});
+if (!gl) throw new Error('WebGL unavailable');
+
+const VS = `
+attribute vec2 a_position;
+varying vec2 v_uv;
+void main() {
+  v_uv = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}
+`;
+
+const FS = `
+precision highp float;
+
+varying vec2 v_uv;
+uniform vec2 u_resolution;
+uniform vec2 u_center;
+uniform float u_time;
+uniform float u_progress;
+
+#define PI 3.141592653589793
+#define TAU 6.283185307179586
+
+float sat(float x) { return clamp(x, 0.0, 1.0); }
+
+float hash11(float p) {
+  return fract(sin(p * 127.1) * 43758.5453123);
+}
+float hash21(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453123);
+}
+float hash31(vec3 p) {
+  return fract(sin(dot(p, vec3(127.1,311.7,74.7))) * 43758.5453123);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f*f*(3.0-2.0*f);
+  float a = hash21(i);
+  float b = hash21(i+vec2(1,0));
+  float c = hash21(i+vec2(0,1));
+  float d = hash21(i+vec2(1,1));
+  return mix(mix(a,b,f.x), mix(c,d,f.x), f.y);
+}
+
+float sdSegment(vec2 p, vec2 a, vec2 b) {
+  vec2 pa = p-a;
+  vec2 ba = b-a;
+  float h = sat(dot(pa,ba)/max(dot(ba,ba), 1e-5));
+  return length(pa-ba*h);
+}
+
+// hard triangular spike
+float spike(vec2 p, float ang, float len, float halfWidth) {
+  vec2 q = mat2(cos(ang), -sin(ang), sin(ang), cos(ang)) * p;
+  float x = q.x;
+  float y = abs(q.y);
+  float side = halfWidth * max(0.0, 1.0 - x/len);
+  float inside = step(0.0, x) * step(x, len) * step(y, side);
+  return inside;
+}
+
+// deterministic jagged polyline, intentionally angular
+float bolt(vec2 uv, float id, float thickness, float phase) {
+  vec2 p = uv - u_center;
+  float baseAng = hash11(id*11.37) * TAU;
+  baseAng += sin(u_time*4.0 + id*7.0) * 0.015;
+
+  float total = 0.0;
+  vec2 a = vec2(0.0);
+  float ang = baseAng;
+  float travelled = 0.0;
+
+  for (int i=0; i<9; i++) {
+    float fi = float(i);
+    float rndA = hash31(vec3(id, fi, 2.17));
+    float rndB = hash31(vec3(id, fi, 7.91));
+
+    float segLen = 0.055 + 0.025*rndB + fi*0.0035;
+    float zig = (rndA - 0.5) * (0.78 + fi*0.045);
+    ang += zig;
+
+    vec2 b = a + vec2(cos(ang), sin(ang)) * segLen;
+    float d = sdSegment(p, a, b);
+
+    // narrow white core + slightly wider colored sheath
+    float core = 1.0 - smoothstep(thickness*0.22, thickness*0.46, d);
+    float body = 1.0 - smoothstep(thickness*0.55, thickness, d);
+
+    // intermittent "cut" pattern gives manga-like broken energy
+    float cut = step(0.15, hash31(vec3(id*2.7, fi, floor(u_time*15.0 + phase))));
+    total = max(total, max(core*1.6, body*cut));
+
+    // small fork on selected segments
+    if (i == 2 || i == 5 || i == 7) {
+      float forkGate = step(0.42, hash31(vec3(id, fi, 91.0)));
+      float fAng = ang + (hash31(vec3(id,fi,31.0))-.5)*1.8;
+      vec2 fb = a + vec2(cos(fAng),sin(fAng)) * segLen * (0.8 + rndB);
+      float fd = sdSegment(p, a, fb);
+      float fork = 1.0 - smoothstep(thickness*0.38, thickness*0.8, fd);
+      total = max(total, fork * forkGate);
+    }
+
+    a = b;
+    travelled += segLen;
+  }
+
+  float radial = length(p);
+  float startGate = smoothstep(0.018, 0.055, radial);
+  float endGate = 1.0 - smoothstep(0.72, 0.95, radial);
+  return total * startGate * endGate;
+}
+
+// radial razor cracks in the pressure field
+float crackField(vec2 uv, float id) {
+  vec2 p = uv-u_center;
+  float r = length(p);
+  float a = atan(p.y,p.x);
+  float target = hash11(id*9.73)*TAU;
+  float da = abs(atan(sin(a-target),cos(a-target)));
+
+  float teeth = abs(fract(r*28.0 + id*.37) - .5);
+  float angular = 1.0 - smoothstep(.006, .019, da + teeth*.016);
+  float radialGate = smoothstep(.13,.18,r) * (1.0-smoothstep(.82,.96,r));
+  return angular * radialGate;
+}
+
+vec3 scene(vec2 uv) {
+  vec2 p = uv-.5;
+  p.x *= u_resolution.x/u_resolution.y;
+
+  // deliberately graphic sky: no soft cloud soup
+  float split = abs(p.y + .08*sin(p.x*5.0) - .025*sign(p.x));
+  vec3 c = mix(vec3(.018,.016,.023), vec3(.12,.11,.135), smoothstep(.08,.95,uv.y));
+  c -= (1.0-smoothstep(.015,.12,split)) * .09;
+
+  // angular cloud plates
+  float n = noise(vec2(p.x*3.4, p.y*7.0));
+  float plate = step(.61, n + .12*sin(p.x*8.0));
+  c += plate * vec3(.055,.05,.066);
+
+  // hard horizon
+  float horizon = .28;
+  c *= 1.0 - .18*step(uv.y,horizon);
+
+  // skyline silhouettes
+  for (int i=0;i<28;i++) {
+    float fi=float(i);
+    float x=(fi+.5)/28.0;
+    float w=.012 + hash11(fi*2.3)*.035;
+    float h=.08 + hash11(fi*5.8)*.22;
+    float tower = step(abs(uv.x-x),w)*step(horizon,uv.y)*step(uv.y,horizon+h);
+    c=mix(c,vec3(.008,.007,.011),tower);
+  }
+
+  // hard speed-line perspective
+  vec2 g = uv-u_center;
+  float a = atan(g.y,g.x);
+  float rays = step(.985, fract(a*18.0/TAU + hash11(floor(a*18.0/TAU))*0.1));
+  c += rays * .025 * smoothstep(.15,.8,length(g));
+
+  return c;
+}
+
+void main() {
+  vec2 uv = v_uv;
+  vec2 p = uv-u_center;
+  float r = length(p);
+  float a = atan(p.y,p.x);
+
+  // impact timing
+  float hit = 1.0-u_progress;
+  float early = 1.0-smoothstep(.0,.18,u_progress);
+  float radius = .035 + .76*(1.0-pow(1.0-u_progress,2.4));
+
+  // pressure displacement: narrow, violent, not soft
+  float ringDist = abs(r-radius);
+  float ring = 1.0-smoothstep(.006,.025,ringDist);
+  vec2 dir = normalize(p + 1e-6);
+  vec2 tangent = vec2(-dir.y,dir.x);
+  vec2 duv = uv - dir*ring*.035*hit + tangent*ring*sin(a*13.0)*.007*hit;
+
+  // RGB split is short-lived and hard
+  float rgbSplit = .002 + early*.009 + ring*.004;
+  vec3 base;
+  base.r = scene(duv + dir*rgbSplit).r;
+  base.g = scene(duv).g;
+  base.b = scene(duv - dir*rgbSplit).b;
+
+  // brutal manga/poster thresholding
+  float lum = dot(base,vec3(.299,.587,.114));
+  vec3 poster;
+  if (lum < .075) poster = vec3(.0);
+  else if (lum < .18) poster = base*.32;
+  else if (lum < .42) poster = base*.72;
+  else poster = min(base*1.32,1.0);
+
+  // central black void with jagged perimeter
+  float edgeNoise = noise(vec2(a*13.0, r*34.0 + floor(u_time*14.0)*.23));
+  float voidR = .055 + .075*hit;
+  float jag = voidR + (edgeNoise-.5)*.055;
+  float voidMask = 1.0-smoothstep(jag-.004,jag+.008,r);
+
+  // blade-like radial explosion shards
+  float shards = 0.0;
+  for(int i=0;i<18;i++) {
+    float fi=float(i);
+    float ang=hash11(fi*17.13)*TAU;
+    float len=.13 + hash11(fi*7.7)*.34;
+    float wid=.003 + hash11(fi*4.1)*.012;
+    shards=max(shards, spike(p,ang,len,wid));
+  }
+  shards *= hit * smoothstep(.01,.10,r);
+
+  // layered lightning network
+  float l = 0.0;
+  for(int i=0;i<12;i++) {
+    float fi=float(i);
+    float flicker = .62 + .38*step(.45,hash31(vec3(fi,floor(u_time*22.0),3.0)));
+    l = max(l, bolt(uv,fi+.31,.0065,fi)*flicker);
+  }
+
+  float cracks=0.0;
+  for(int i=0;i<14;i++) cracks=max(cracks,crackField(uv,float(i)+.6));
+  cracks *= ring*hit;
+
+  // razor shockwave: broken concentric wedges rather than smooth halo
+  float sector = floor((a+PI)/TAU*30.0);
+  float sectorRand = hash11(sector*8.1);
+  float brokenRing = ring * step(.22,sectorRand);
+  float ring2 = (1.0-smoothstep(.003,.013,abs(r-(radius-.035)))) * step(.53,sectorRand);
+
+  // thin black "haki fissures" around white/red energy
+  float darkSheath = smoothstep(.0,.028,l) * (1.0-smoothstep(.08,.2,l));
+
+  // color
+  vec3 col = poster;
+  col = mix(col,vec3(.004,.0,.008),voidMask);
+  col -= darkSheath*vec3(.20,.02,.035);
+
+  // saturated red-violet, but with white knife-edge cores
+  float lightningBody = sat(l);
+  float lightningCore = smoothstep(.88,1.55,l);
+  vec3 red = vec3(1.0,.015,.055);
+  vec3 magenta = vec3(.78,.02,.92);
+  vec3 boltColor = mix(red,magenta, hash11(floor(a*9.0)+5.0));
+  col += boltColor * lightningBody * 2.2 * hit;
+  col += vec3(1.45,1.22,1.38) * lightningCore * 2.1 * hit;
+
+  col += vec3(.95,.0,.08) * brokenRing * 1.65 * hit;
+  col += vec3(.55,.02,.88) * ring2 * 1.35 * hit;
+  col += vec3(.9,.01,.05) * cracks * 1.5;
+  col += vec3(.8,.02,.12) * shards * 1.2;
+
+  // initial white "frame tear" at impact
+  float flash = early * (1.0-smoothstep(.0,.24,r));
+  float star = 0.0;
+  for(int i=0;i<8;i++) {
+    float fi=float(i);
+    star=max(star,spike(p,fi*TAU/8.0,.22,.014));
+  }
+  col += vec3(1.25) * star * flash * 1.6;
+
+  // inverted wedge cuts during first few frames
+  float invWedge = step(.82, fract((a+PI)/TAU*12.0 + floor(u_time*10.0)*.07));
+  invWedge *= early * (1.0-smoothstep(.08,.42,r));
+  col = mix(col,1.0-col,invWedge*.72);
+
+  // hard vignette + scan-grain
+  vec2 q=uv*(1.0-uv.yx);
+  float vig=pow(sat(q.x*q.y*23.0),.28);
+  col*=vig;
+  float grain=hash21(gl_FragCoord.xy+floor(u_time*45.0))-0.5;
+  col+=grain*.022;
+
+  // crush black one final time for graphic separation
+  col = max(col,0.0);
+  col *= mix(.82,1.12,step(.11,dot(col,vec3(.333))));
+  gl_FragColor=vec4(col,1.0);
+}
+`;
+
+function compile(type, source) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, source);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    const err = gl.getShaderInfoLog(s);
+    console.error(err);
+    throw new Error(err);
+  }
+  return s;
+}
+
+const program = gl.createProgram();
+gl.attachShader(program, compile(gl.VERTEX_SHADER, VS));
+gl.attachShader(program, compile(gl.FRAGMENT_SHADER, FS));
+gl.linkProgram(program);
+if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+  throw new Error(gl.getProgramInfoLog(program));
+}
+gl.useProgram(program);
+
+const buffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+  -1,-1,  1,-1, -1, 1,
+  -1, 1,  1,-1,  1, 1
+]), gl.STATIC_DRAW);
+
+const loc = gl.getAttribLocation(program, 'a_position');
+gl.enableVertexAttribArray(loc);
+gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+
+const U = name => gl.getUniformLocation(program,name);
+const uResolution=U('u_resolution');
+const uCenter=U('u_center');
+const uTime=U('u_time');
+const uProgress=U('u_progress');
+
+let centerX=.5;
+let centerY=.52;
+let start=performance.now();
+
+function resize() {
+  const dpr=Math.min(devicePixelRatio||1,2);
+  canvas.width=Math.floor(innerWidth*dpr);
+  canvas.height=Math.floor(innerHeight*dpr);
+  gl.viewport(0,0,canvas.width,canvas.height);
+}
+addEventListener('resize',resize);
+resize();
+
+addEventListener('mousemove', e => {
+  centerX=e.clientX/innerWidth;
+  centerY=1-e.clientY/innerHeight;
+});
+addEventListener('mousedown', () => start=performance.now());
+
+function frame(now) {
+  const t=(now-start)/1000;
+  let progress=Math.min(t/1.18,1.0);
+
+  // auto-refire after a short dead-black pause
+  if(t>2.05) {
+    start=now;
+    progress=0.0;
+  }
+
+  gl.uniform2f(uResolution,canvas.width,canvas.height);
+  gl.uniform2f(uCenter,centerX,centerY);
+  gl.uniform1f(uTime,now/1000);
+  gl.uniform1f(uProgress,progress);
+  gl.drawArrays(gl.TRIANGLES,0,6);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

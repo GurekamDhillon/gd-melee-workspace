@@ -330,6 +330,14 @@ before resuming it; do not reuse the old alpha/echo/beta assignments as current 
   for presentation timing and controller checks.
 - No disc-derived assets in either repo. No push, publish or merge to shared branches without
   GD's go. `.github/README.md` takes precedence over the root README on GitHub.
+- **`MELEE_WINDOW_HIDDEN=1` (Rust port, 2026-11-13, `port/hiddenwin`): agents' game runs are invisible.**
+  `melee play` and every windowed scenario then create an invisible, never-focused window with no
+  taskbar entry and no audio device (headless mix; `MELEE_VOLUME` does not matter). It still renders
+  at 60 Hz, so `--shots`, GIF capture and frame-time logs work (shots are pixel-identical to a
+  visible run). It is the default in `tools/rust-port/**` test scripts and in `scratch/runlight.sh`;
+  set `MELEE_WINDOW_HIDDEN=0` only when a visible window is the point of the run. Still set
+  `MELEE_WINDOW_TITLE` and a hard timeout. Any exe built before the branch ignores the variable and
+  shows its window: merge `port/hiddenwin` first.
 - **No game windows while the owner is at the machine.** A lane launches none (focus theft); game-driving
   proofs wait until he is away, then run on the second monitor at `MELEE_VOLUME=0`, at most 8 instances.
 - **Never kill games by image name.** A `taskkill /IM` ended the owner's play session. Stop only a PID you

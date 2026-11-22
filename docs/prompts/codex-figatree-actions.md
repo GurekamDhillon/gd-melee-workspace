@@ -1,0 +1,7 @@
+# Packet: figatree -> Blender actions importer (2026-10-10)
+Rules: docs/prompts/codex-parallel-rules.md. Worktree (your cwd): worktrees/figatree (workspace repo, branch ws/figatree-actions). Edit only there; no commits. Never commit disc-derived data (tests use synthetic figatrees you build in code).
+Read: CLAUDE.md, tools/CLAUDE.md, the existing Blender add-on and fighter build pipeline (grep figatree, fighterbuild, build_blend.py, pose.py, rigmap.py, HsdExport), the recent Falcon scale-track fix (dropped HSD scale tracks were the "stretched foot"), _research notes on figatree/AnimJoint.
+Why: we can export Blender actions to the game, but cannot import an existing fighter's figatree animations (Pl*AJ.dat) back into Blender as editable actions on the rig. Owner offered this as a queued tool.
+Scope: a Python importer (headless-testable core + thin bpy operator in the add-on): decode figatree tracks (rotation/translation/scale, all interpolation types incl. HSD key compression), map joints to the Blender rig via the existing rigmap, create one action per animation, frame 1 = first move frame (project convention). Round-trip test: synthetic figatree -> import -> export -> byte/curve-equal within tolerance. Do not change the exporter's behaviour.
+Test: pytest for the core; a Blender background run (Blender at D:\SteamLibrary\steamapps\common\Blender) only if the sandbox allows — otherwise write the exact command.
+Report: worktrees/figatree/.omo/evidence/codex-report.md.

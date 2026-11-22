@@ -1,0 +1,3 @@
+# Packet: mod-sync list in the legacy (non-Atlas) lobby (2026-10-11)
+Worktree: worktrees/lobbymods (game repo, agent/legacy-lobby-mods). Read melee/CLAUDE.md, src/melee/gm/CLAUDE.md, the mod-sync merge (e619e8181: gw_Netplay_ModsRow, Ui_RoomMod, Ui_RoomModCount, the Atlas "MODS DIFFER" panel, gmfrontend_online.inc).
+Why: the Atlas lobby draws the per-mod difference list; the legacy lobby still shows only a one-line status. Draw the same list (up to 5 rows + "+N more", the sync action) in the legacy lobby with the same data accessors; match the legacy lobby's look. Add a test like atlas_room_host_test.c. Headless suite green. Report: worktrees/lobbymods/.omo/evidence/codex-report.md with screenshot commands.

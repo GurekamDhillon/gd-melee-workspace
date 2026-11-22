@@ -1,0 +1,6 @@
+# Packet: build/test hygiene (2026-10-11)
+Worktree: worktrees/hygiene (workspace repo, ws/hygiene-1011).
+1. tools/port/vs_env.bat: the vswhere lookup (pushd/for /f block) prints "'vswhere.exe' is not recognized" on this machine and silently falls back to probing; find vswhere at its standard location (%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe) robustly, keep the fallback, no noise.
+2. Linux launcher ctest: launcher_core fails on mount permissions and workbench_ui_test on playback timing (found by ws/wb-linux-fixtures, see its report worktrees/wblinux/.omo/evidence/codex-report.md, read-only). Make launcher_core not depend on mount permissions of the host (use a temp dir it owns), and make workbench_ui_test's playback timing assertion robust (wall-clock tolerance or a fake clock) without weakening what it checks. Verify on Windows ctest (all green) and Linux if the WSL toolchain is available.
+3. _build/runs and _build/agents housekeeping script (report only, no deletion): list run dirs and agent build roots older than N days with their size, and which worktree/branch they belong to, so the owner can prune; check for junctions/reparse points and flag them (a worktree removal once followed a junction and wiped _build/ax86m).
+Report: worktrees/hygiene/.omo/evidence/codex-report.md.
