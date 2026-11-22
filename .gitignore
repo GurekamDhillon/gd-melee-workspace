@@ -173,3 +173,18 @@ __pycache__/
 # Converted UI assets and in-progress package staging are generated locally.
 /_build/**/GnUi_*.gxtex
 /_build/**/.csp-stage-*/
+
+# Agent scratch areas, per-agent build roots, run output and local junk (never real work).
+/scratch/
+/scratchpad/
+/_scratch/
+/wt/
+/build/
+/tools/port/_build/
+/Projectsinteg-qt-buildb/
+/Melee Workspace/
+/ports/skin/costumebuild/bin/
+/ports/skin/costumebuild/obj/
+/fx-*.out
+/NUL
+*.sav
