@@ -1,0 +1,427 @@
+{
+  "posts": [
+    {
+      "key": "welcome",
+      "title": "WELCOME TO THE WORKSHOP",
+      "text": "The home of **GD's Melee**: a native PC port with rollback netplay, mod support, Lua scripting, and the LAB.\n\n**Start playing**\nRead #rules, then grab the build in #downloads.\n\n**Find your people**\nIntroduce yourself in #introductions, find a set in #matchmaking, and share your best work in #clips-and-creations.\n\n**Get help or get involved**\nSetup questions → #help-and-setup\nReproducible problems → #bug-reports\nPractice and experiments → #training-and-lab\nMods and scripts → #modding-and-scripting\n\nUse **Channels & Roles** to choose Player, Modder, or Playtester. You can pick more than one.\n\n**New here?** Your main, a broad region, and what you want to try are a good first introduction.",
+      "buttons": [
+        {
+          "label": "#rules",
+          "url": "https://discord.com/channels/1552483229649477767/1552904414329704498"
+        },
+        {
+          "label": "#downloads",
+          "url": "https://discord.com/channels/1552483229649477767/1552904418108903465"
+        },
+        {
+          "label": "#introductions",
+          "url": "https://discord.com/channels/1552483229649477767/1552904420549722206"
+        },
+        {
+          "label": "#matchmaking",
+          "url": "https://discord.com/channels/1552483229649477767/1552904424576262246"
+        },
+        {
+          "label": "#clips-and-creations",
+          "url": "https://discord.com/channels/1552483229649477767/1552904422022189159"
+        },
+        {
+          "label": "#help-and-setup",
+          "url": "https://discord.com/channels/1552483229649477767/1552904441030643792"
+        },
+        {
+          "label": "#bug-reports",
+          "url": "https://discord.com/channels/1552483229649477767/1552904442171359266"
+        },
+        {
+          "label": "#training-and-lab",
+          "url": "https://discord.com/channels/1552483229649477767/1552904425750921226"
+        },
+        {
+          "label": "#modding-and-scripting",
+          "url": "https://discord.com/channels/1552483229649477767/1552904427243966524"
+        }
+      ],
+      "channel_name": "welcome",
+      "channel_id": "1552904412626685952",
+      "message_id": "1552904464099442730",
+      "forum": false,
+      "original_digest": "cd3a7d63c8c05839353c543327de4ce3e0c91e1f79570ec0f4e476d38477194c",
+      "panels": [
+        {
+          "file": "welcome-01.png",
+          "width": 1280,
+          "height": 1142,
+          "alt": "WELCOME TO THE WORKSHOP (1/2). The home of GD's Melee: a native PC port with\nrollback netplay, mod support, Lua scripting,\nand the LAB.\n\nStart playing\nRead #rules, then grab the build in #downloads.\n\nFind your people\nIntroduce yourself in #introductions, find a set in\n #matchmaking, and share your best work in\n#clips-and-creations.",
+          "page": 1
+        },
+        {
+          "file": "welcome-02.png",
+          "width": 1280,
+          "height": 1142,
+          "alt": "WELCOME TO THE WORKSHOP (2/2). Get help or get involved\nSetup questions → #help-and-setup\nReproducible problems → #bug-reports\nPractice and experiments → #training-and-lab\nMods and scripts → #modding-and-scripting\n\nUse Channels & Roles to choose Player, Modder,\nor Playtester. You can pick more than one.\n\nNew here? Your main, a broad region, and what\nyou want to try are a good first introduction.",
+          "page": 2
+        }
+      ]
+    },
+    {
+      "key": "rules",
+      "title": "WORKSHOP RULES",
+      "text": "**1 · Treat people well.** No harassment, hate speech, threats, doxxing, or targeted dogpiling. Respect boundaries in chat, voice, and DMs.\n\n**2 · Keep it safe to open.** No sexually explicit content, graphic violence, scams, malware, or deceptive downloads.\n\n**3 · Share your work responsibly.** No game ISOs, ROMs, extracted game assets, or links to obtain them. Share original work, source, and patches with appropriate credits and permissions.\n\n**4 · Keep channels useful.** No spam, unsolicited advertising, mass mentions, or repeated bumps. Put help requests in #help-and-setup and reproducible bugs in #bug-reports.\n\n**5 · Play fair.** Agree on the build, rules, and mods before a set. No cheating, griefing, or deliberate disruption.\n\n**6 · Protect private information.** Remove personal paths, addresses, tokens, and other secrets from logs before sharing. Never ask someone for their password or token.\n\n**Need a moderator?** Use Discord's message reporting tools for platform violations, or contact the owner / a Moderator with the message link. Avoid public callouts. Moderators may remove content, time out, or remove members when needed.",
+      "buttons": [
+        {
+          "label": "#help-and-setup",
+          "url": "https://discord.com/channels/1552483229649477767/1552904441030643792"
+        },
+        {
+          "label": "#bug-reports",
+          "url": "https://discord.com/channels/1552483229649477767/1552904442171359266"
+        }
+      ],
+      "channel_name": "rules",
+      "channel_id": "1552904414329704498",
+      "message_id": "1552904470323531867",
+      "forum": false,
+      "original_digest": "5c847cac8d59867701afabff79e6a169849ac00d826e750cb290b252faabd881",
+      "panels": [
+        {
+          "file": "rules-01.png",
+          "width": 1280,
+          "height": 1210,
+          "alt": "WORKSHOP RULES (1/3). 1 · Treat people well. No harassment, hate\nspeech, threats, doxxing, or targeted dogpiling.\nRespect boundaries in chat, voice, and DMs.\n\n2 · Keep it safe to open. No sexually explicit\ncontent, graphic violence, scams, malware, or\ndeceptive downloads.\n\n3 · Share your work responsibly. No game ISOs,\nROMs, extracted game assets, or links to obtain\nthem. Share original work, source, and patches\nwith appropriate credits and permissions.",
+          "page": 1
+        },
+        {
+          "file": "rules-02.png",
+          "width": 1280,
+          "height": 962,
+          "alt": "WORKSHOP RULES (2/3). 4 · Keep channels useful. No spam, unsolicited\nadvertising, mass mentions, or repeated bumps.\nPut help requests in #help-and-setup and\nreproducible bugs in #bug-reports.\n\n5 · Play fair. Agree on the build, rules, and mods\nbefore a set. No cheating, griefing, or deliberate\ndisruption.",
+          "page": 2
+        },
+        {
+          "file": "rules-03.png",
+          "width": 1280,
+          "height": 1166,
+          "alt": "WORKSHOP RULES (3/3). 6 · Protect private information. Remove\npersonal paths, addresses, tokens, and other\nsecrets from logs before sharing. Never ask\nsomeone for their password or token.\n\nNeed a moderator? Use Discord's message\nreporting tools for platform violations, or\ncontact the owner / a Moderator with the\nmessage link. Avoid public callouts. Moderators\nmay remove content, time out, or remove\nmembers when needed.",
+          "page": 3
+        }
+      ]
+    },
+    {
+      "key": "announcements",
+      "title": "PROJECT UPDATES",
+      "text": "This channel is for official builds, release notes, and important Workshop updates.\n\n**Latest build and setup:** #downloads\n**Questions:** #help-and-setup\n**Bug reports:** #bug-reports\n\nGD's Melee is a public test project. Include your build version when discussing behavior; fixes and compatibility can change between builds.\n\nServer notifications default to mentions only. Follow this channel if you want release updates.",
+      "buttons": [
+        {
+          "label": "#downloads",
+          "url": "https://discord.com/channels/1552483229649477767/1552904418108903465"
+        },
+        {
+          "label": "#help-and-setup",
+          "url": "https://discord.com/channels/1552483229649477767/1552904441030643792"
+        },
+        {
+          "label": "#bug-reports",
+          "url": "https://discord.com/channels/1552483229649477767/1552904442171359266"
+        }
+      ],
+      "channel_name": "announcements",
+      "channel_id": "1552904416305225770",
+      "message_id": "1552904474950111353",
+      "forum": false,
+      "original_digest": "3e4885504883d1da09790352b4a3fb0514ffab201636e558a325a995c91901be",
+      "panels": [
+        {
+          "file": "announcements-01.png",
+          "width": 1280,
+          "height": 1254,
+          "alt": "PROJECT UPDATES (1/1). This channel is for official builds, release notes,\nand important Workshop updates.\n\nLatest build and setup: #downloads\nQuestions: #help-and-setup\nBug reports: #bug-reports\n\nGD's Melee is a public test project. Include your\nbuild version when discussing behavior; fixes\nand compatibility can change between builds.\n\nServer notifications default to mentions only.\nFollow this channel if you want release updates.",
+          "page": 1
+        }
+      ]
+    },
+    {
+      "key": "downloads",
+      "title": "GET GD'S MELEE",
+      "text": "**Official downloads**\n[Latest Windows release](https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest) · [Source and README](https://github.com/GurekamDhillon/gd-melee-workspace)\n\n**First launch**\n1. Download the Windows ZIP from the release's **Assets** section and extract it.\n2. Run **GD Melee.exe**. Choose **Add disc...** and select your own Melee NTSC 1.02 disc image. Compatible mod discs can be selected too.\n3. Press **PLAY**. The release includes the port, not game data.\n\n**Online play**\nOpen **VERSUS → ONLINE**. Host a room and share its code, join a friend's room, or use **Random Opponent**. Match the build and disc/mod content with your opponent.\n\n**Need a hand?** Open a post in #help-and-setup. Include your build, Windows version, GPU, controller, and the exact error. Never upload a disc image.",
+      "buttons": [
+        {
+          "label": "Latest Windows release",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/releases/latest"
+        },
+        {
+          "label": "Source and README",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace"
+        },
+        {
+          "label": "#help-and-setup",
+          "url": "https://discord.com/channels/1552483229649477767/1552904441030643792"
+        }
+      ],
+      "channel_name": "downloads",
+      "channel_id": "1552904418108903465",
+      "message_id": "1552904482822688860",
+      "forum": false,
+      "original_digest": "857ccb365a21a9e43b10eb73942c6a73c961bfc9bfb4b435c1c5095aef964547",
+      "panels": [
+        {
+          "file": "downloads-01.png",
+          "width": 1280,
+          "height": 1166,
+          "alt": "GET GD'S MELEE (1/2). Official downloads\nLatest Windows release · Source and README\n\nFirst launch\n1. Download the Windows ZIP from the release's\nAssets section and extract it.\n2. Run GD Melee.exe. Choose Add disc... and\nselect your own Melee NTSC 1.02 disc image.\nCompatible mod discs can be selected too.\n3. Press PLAY. The release includes the port, not\ngame data.",
+          "page": 1
+        },
+        {
+          "file": "downloads-02.png",
+          "width": 1280,
+          "height": 1098,
+          "alt": "GET GD'S MELEE (2/2). Online play\nOpen VERSUS → ONLINE. Host a room and share\nits code, join a friend's room, or use Random\nOpponent. Match the build and disc/mod content\n with your opponent.\n\nNeed a hand? Open a post in #help-and-setup.\nInclude your build, Windows version, GPU,\ncontroller, and the exact error. Never upload a\ndisc image.",
+          "page": 2
+        }
+      ]
+    },
+    {
+      "key": "introductions",
+      "title": "INTRODUCTIONS",
+      "text": "Tell us a little about your Melee life:\n• Your main(s)\n• Your broad region / time zone, if you want to share it\n• Whether you're here to play, mod, test, or learn\n\nChoose your interests in **Channels & Roles**, then find a set in #matchmaking. New players and experienced players are both welcome.",
+      "buttons": [
+        {
+          "label": "#matchmaking",
+          "url": "https://discord.com/channels/1552483229649477767/1552904424576262246"
+        }
+      ],
+      "channel_name": "introductions",
+      "channel_id": "1552904420549722206",
+      "message_id": "1552904486882639884",
+      "forum": false,
+      "original_digest": "add0889c890b291ebe1ad720e9efb2f42f0839ea9cea5df095ca12b2f0e02ff9",
+      "panels": [
+        {
+          "file": "introductions-01.png",
+          "width": 1280,
+          "height": 1030,
+          "alt": "INTRODUCTIONS (1/1). Tell us a little about your Melee life:\n• Your main(s)\n• Your broad region / time zone, if you want to\nshare it\n• Whether you're here to play, mod, test, or learn\n\nChoose your interests in Channels & Roles, then\nfind a set in #matchmaking. New players and\nexperienced players are both welcome.",
+          "page": 1
+        }
+      ]
+    },
+    {
+      "key": "showcase",
+      "title": "CLIPS & CREATIONS",
+      "text": "Post a clip, combo, original creation, mod, or script. A little context helps: what build/content you used and what you are showing.\n\nCredit collaborators and link the source or project page when you can. Share your original work and patches; game discs and extracted game assets do not belong here.",
+      "buttons": [],
+      "channel_name": "clips-and-creations",
+      "channel_id": "1552904422022189159",
+      "message_id": "1552904491278274642",
+      "forum": false,
+      "original_digest": "e4d3cba4f6383e3aef7e77d90f48f1d1a38d185bbaeb6dfb5377b447b2ca9537",
+      "panels": [
+        {
+          "file": "showcase-01.png",
+          "width": 1280,
+          "height": 962,
+          "alt": "CLIPS & CREATIONS (1/1). Post a clip, combo, original creation, mod, or\nscript. A little context helps: what build/content\nyou used and what you are showing.\n\nCredit collaborators and link the source or\nproject page when you can. Share your original\nwork and patches; game discs and extracted\ngame assets do not belong here.",
+          "page": 1
+        }
+      ]
+    },
+    {
+      "key": "suggestions",
+      "title": "SUGGESTIONS",
+      "text": "Use this format for suggestions:\n**Problem:** What gets in your way?\n**Idea:** What would make it better?\n**Example:** When would you use it?\n\nKeep one idea per message and discuss it in a thread. Reactions show interest; they do not promise an implementation date. Bugs go in #bug-reports.",
+      "buttons": [
+        {
+          "label": "#bug-reports",
+          "url": "https://discord.com/channels/1552483229649477767/1552904442171359266"
+        }
+      ],
+      "channel_name": "suggestions",
+      "channel_id": "1552904423506972713",
+      "message_id": "1552904495032303697",
+      "forum": false,
+      "original_digest": "81c9769ef5320e4a75a9a1b9d10b06379ca591dcebd9a183fbc27782800bc2fb",
+      "panels": [
+        {
+          "file": "suggestions-01.png",
+          "width": 1280,
+          "height": 1030,
+          "alt": "SUGGESTIONS (1/1). Use this format for suggestions:\nProblem: What gets in your way?\nIdea: What would make it better?\nExample: When would you use it?\n\nKeep one idea per message and discuss it in a\nthread. Reactions show interest; they do not\npromise an implementation date. Bugs go in\n#bug-reports.",
+          "page": 1
+        }
+      ]
+    },
+    {
+      "key": "matchmaking",
+      "title": "FIND YOUR NEXT SET",
+      "text": "Post a short lobby listing:\n**Region / connection:** broad region; wired or Wi-Fi\n**Build + content:** version and vanilla / mod pack\n**Room code:** your in-game room\n**Looking for:** friendlies, practice, or a longer set\n\nBoth players should use matching builds and content. Agree on any mods or rules before starting. Use **Friendlies 1** or **Friendlies 2** for voice and edit your post when the room closes.\n\nConnection trouble? Open a **Netplay** post in #help-and-setup.",
+      "buttons": [
+        {
+          "label": "#help-and-setup",
+          "url": "https://discord.com/channels/1552483229649477767/1552904441030643792"
+        }
+      ],
+      "channel_name": "matchmaking",
+      "channel_id": "1552904424576262246",
+      "message_id": "1552904501793529899",
+      "forum": false,
+      "original_digest": "7878e14242a81dc48f882bc1c26e386dcde5f8f713b85fb2176de1ca6039c840",
+      "panels": [
+        {
+          "file": "matchmaking-01.png",
+          "width": 1280,
+          "height": 1346,
+          "alt": "FIND YOUR NEXT SET (1/1). Post a short lobby listing:\nRegion / connection: broad region; wired or\nWi-Fi\nBuild + content: version and vanilla / mod pack\nRoom code: your in-game room\nLooking for: friendlies, practice, or a longer set\n\nBoth players should use matching builds and\ncontent. Agree on any mods or rules before\nstarting. Use Friendlies 1 or Friendlies 2 for\nvoice and edit your post when the room closes.\n\nConnection trouble? Open a Netplay post in\n#help-and-setup.",
+          "page": 1
+        }
+      ]
+    },
+    {
+      "key": "training",
+      "title": "TRAINING & LAB",
+      "text": "Share practice routines, dummy setups, matchup questions, and reproducible experiments.\n\nFor LAB discussions, include your build, fighters, stage, starting situation, and the setting or drill you used. Label measured results and theories clearly.\n\nUse **SOLO → LAB** for the port's practice tools. If something behaves incorrectly, open a reproducible report in #bug-reports.",
+      "buttons": [
+        {
+          "label": "#bug-reports",
+          "url": "https://discord.com/channels/1552483229649477767/1552904442171359266"
+        }
+      ],
+      "channel_name": "training-and-lab",
+      "channel_id": "1552904425750921226",
+      "message_id": "1552904505727918152",
+      "forum": false,
+      "original_digest": "5b6e5b7a535b1206a70d6c5f52d5ff19ca36e6e72e762a7fb05ba1e905298c02",
+      "panels": [
+        {
+          "file": "training-01.png",
+          "width": 1280,
+          "height": 1210,
+          "alt": "TRAINING & LAB (1/1). Share practice routines, dummy setups,\nmatchup questions, and reproducible\nexperiments.\n\nFor LAB discussions, include your build, fighters,\nstage, starting situation, and the setting or drill\nyou used. Label measured results and theories\nclearly.\n\nUse SOLO → LAB for the port's practice tools. If\nsomething behaves incorrectly, open a\nreproducible report in #bug-reports.",
+          "page": 1
+        }
+      ]
+    },
+    {
+      "key": "modding",
+      "title": "MODS & SCRIPTS",
+      "text": "Talk m-ex compatibility, Lua scripts, kit UI, and original additions for GD's Melee.\n\n[Scripting guide](https://github.com/GurekamDhillon/gd-melee-workspace/blob/master/docs/scripting.md) · [Workspace source](https://github.com/GurekamDhillon/gd-melee-workspace)\n\nWhen asking for help, include the build, mod pack, relevant code, error, and the smallest steps that reproduce it. Use code blocks and thread longer investigations.\n\nShare source and patches, credit collaborators, and check permissions before redistributing someone else's work. Game discs and extracted assets stay off the server.",
+      "buttons": [
+        {
+          "label": "Scripting guide",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace/blob/master/docs/scripting.md"
+        },
+        {
+          "label": "Workspace source",
+          "url": "https://github.com/GurekamDhillon/gd-melee-workspace"
+        }
+      ],
+      "channel_name": "modding-and-scripting",
+      "channel_id": "1552904427243966524",
+      "message_id": "1552904509552853045",
+      "forum": false,
+      "original_digest": "7357c47dfebe16ed9763da949187c7384645696e4b4f7279fa48477e8cb171c4",
+      "panels": [
+        {
+          "file": "modding-01.png",
+          "width": 1280,
+          "height": 1322,
+          "alt": "MODS & SCRIPTS (1/1). Talk m-ex compatibility, Lua scripts, kit UI, and\noriginal additions for GD's Melee.\n\nScripting guide · Workspace source\n\nWhen asking for help, include the build, mod\npack, relevant code, error, and the smallest\nsteps that reproduce it. Use code blocks and\nthread longer investigations.\n\nShare source and patches, credit collaborators,\nand check permissions before redistributing\nsomeone else's work. Game discs and extracted\nassets stay off the server.",
+          "page": 1
+        }
+      ]
+    },
+    {
+      "key": "staff_chat",
+      "title": "STAFF DESK",
+      "text": "This category is visible to the owner, the setup bot, and Moderator roles only. Contributor, Player, Modder, and Playtester do not grant staff access.\n\n**Roles:** assign Moderator only to trusted staff. Contributor is recognition; the three interest roles are self-selectable in Channels & Roles.\n\n**Moderation:** AutoMod reports to #mod-alerts; Discord notices go to #discord-updates. Review context, keep a message link, and explain actions briefly.\n\nThe setup bot uses Discord's API and may appear offline. Native AutoMod and onboarding continue without a running bot service. No reaction-role or ticket bot is required.",
+      "buttons": [
+        {
+          "label": "#mod-alerts",
+          "url": "https://discord.com/channels/1552483229649477767/1552904433463984139"
+        },
+        {
+          "label": "#discord-updates",
+          "url": "https://discord.com/channels/1552483229649477767/1552904434357510147"
+        }
+      ],
+      "channel_name": "staff-chat",
+      "channel_id": "1552904432084193365",
+      "message_id": "1552904513181057077",
+      "forum": false,
+      "original_digest": "6d107e947882098ec8c22c688dc49c672cdc3bf3eef37773d81297c651e1d41e",
+      "panels": [
+        {
+          "file": "staff_chat-01.png",
+          "width": 1280,
+          "height": 962,
+          "alt": "STAFF DESK (1/2). This category is visible to the owner, the setup\nbot, and Moderator roles only. Contributor,\nPlayer, Modder, and Playtester do not grant staff\n access.\n\nRoles: assign Moderator only to trusted staff.\nContributor is recognition; the three interest\nroles are self-selectable in Channels & Roles.",
+          "page": 1
+        },
+        {
+          "file": "staff_chat-02.png",
+          "width": 1280,
+          "height": 1030,
+          "alt": "STAFF DESK (2/2). Moderation: AutoMod reports to #mod-alerts;\nDiscord notices go to #discord-updates. Review\ncontext, keep a message link, and explain\nactions briefly.\n\nThe setup bot uses Discord's API and may appear\noffline. Native AutoMod and onboarding\ncontinue without a running bot service. No\nreaction-role or ticket bot is required.",
+          "page": 2
+        }
+      ]
+    },
+    {
+      "key": "help",
+      "title": "SETUP & SUPPORT",
+      "text": "Use one post per question and pick the closest tag.\n\n**Build version:**\n**Windows / GPU / controller:**\n**Disc or mod pack:**\n**What I was trying to do:**\n**Exact error / behavior:**\n**What I already tried:**\n\nAttach a relevant screenshot or a sanitized log if it helps. Remove private information first; do not attach game discs or credentials.\n\nOnce fixed, add **Solved** and reply with the solution so the next player can find it.",
+      "buttons": [],
+      "channel_name": "help-and-setup",
+      "channel_id": "1552904519929700353",
+      "message_id": "1552904519929700353",
+      "forum": true,
+      "original_digest": "07a2469b2397751835c50a1e24abee1707f216b276b7ff84900b2dc552c9449a",
+      "panels": [
+        {
+          "file": "help-01.png",
+          "width": 1280,
+          "height": 1030,
+          "alt": "SETUP & SUPPORT (1/2). Use one post per question and pick the closest\ntag.\n\nBuild version:\nWindows / GPU / controller:\nDisc or mod pack:\nWhat I was trying to do:\nExact error / behavior:\nWhat I already tried:",
+          "page": 1
+        },
+        {
+          "file": "help-02.png",
+          "width": 1280,
+          "height": 826,
+          "alt": "SETUP & SUPPORT (2/2). Attach a relevant screenshot or a sanitized log if\nit helps. Remove private information first; do not\n attach game discs or credentials.\n\nOnce fixed, add Solved and reply with the\nsolution so the next player can find it.",
+          "page": 2
+        }
+      ]
+    },
+    {
+      "key": "bugs",
+      "title": "REPORT A BUG",
+      "text": "Search existing reports before creating a new post. Use a descriptive title and one issue per report.\n\n**Build version:**\n**Disc / mod pack:**\n**Windows / GPU / controller:**\n**Steps to reproduce:**\n1.\n2.\n3.\n**Expected result:**\n**Actual result:**\n**How often it happens:**\n**Log / crash report:**\n\nFor a crash, attach the relevant report from the crashlogs folder or melee-pc.log after checking it for private information. Do not attach disc images or extracted game data.\n\nThe staff tags **Needs info**, **Confirmed**, and **Fixed** track triage. A report is evidence to investigate, not a promise that a fix is ready.",
+      "buttons": [],
+      "channel_name": "bug-reports",
+      "channel_id": "1552904526564954143",
+      "message_id": "1552904526564954143",
+      "forum": true,
+      "original_digest": "d3bfc565c3f8c25c21d720bde7b1315dff288d82d8fd67d243b66e4e529f5a51",
+      "panels": [
+        {
+          "file": "bugs-01.png",
+          "width": 1280,
+          "height": 1166,
+          "alt": "REPORT A BUG (1/2). Search existing reports before creating a new\npost. Use a descriptive title and one issue per\nreport.\n\nBuild version:\nDisc / mod pack:\nWindows / GPU / controller:\nSteps to reproduce:\n1.\n2.\n3.",
+          "page": 1
+        },
+        {
+          "file": "bugs-02.png",
+          "width": 1280,
+          "height": 1278,
+          "alt": "REPORT A BUG (2/2). Expected result:\nActual result:\nHow often it happens:\nLog / crash report:\n\nFor a crash, attach the relevant report from the\ncrashlogs folder or melee-pc.log after checking it\n for private information. Do not attach disc\nimages or extracted game data.\n\nThe staff tags Needs info, Confirmed, and Fixed\ntrack triage. A report is evidence to investigate,\nnot a promise that a fix is ready.",
+          "page": 2
+        }
+      ]
+    }
+  ],
+  "panel_count": 20,
+  "logical_width": 640,
+  "body_font_size": 26,
+  "scale": 2
+}
