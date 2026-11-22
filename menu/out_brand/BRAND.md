@@ -133,6 +133,10 @@ wordmark in another font, or combine it with any Nintendo mark or character art.
 | `social/post_portrait_1080x1350_blank.png` | 1080x1350 | post template, empty headline slot (type over it) |
 | `social/youtube_thumb_1280x720.png` | 1280x720 | YouTube thumbnail template with placeholder headline |
 | `social/youtube_thumb_1280x720_blank.png` | 1280x720 | YouTube thumbnail template, no headline |
+| `youtube/channel_banner_2560x1440.png` | 2560x1440 | YouTube channel banner (upload; words inside the 1546x423 centre safe box) |
+| `preview/youtube_banner_safe_zones.png` | 2560x1440 | check sheet: banner with desktop band (blue) and all-device safe box (gold) |
+| `youtube/profile_picture_800x800.png` | 800x800 | YouTube profile picture (upload; YouTube crops to a circle) |
+| `youtube/video_watermark_150x150.png` | 150x150 | YouTube video watermark / branding (transparent) |
 | `badges/rollback.svg` | vector | README badge: NETPLAY ROLLBACK |
 | `badges/rollback@2x.png` | 410x56 | README badge PNG fallback |
 | `badges/windows.svg` | vector | README badge: PLATFORM WINDOWS + LINUX |

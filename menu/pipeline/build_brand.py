@@ -689,6 +689,42 @@ def twitter_header():
     return svg(W, H, body, bg=C["night"])
 
 
+# YouTube channel art: the full 2560x1440 shows only on TVs; desktop sees the middle 423 px band,
+# phones the centre 1546x423. Every word stays in that centre box; motifs live outside it.
+YT_SAFE = (507, 508, 1546, 423)
+
+
+def youtube_banner():
+    W, H = 2560, 1440
+    sx, sy, sw, sh = YT_SAFE
+    s = 1.0
+    body = scene(W, H, s, (W * 0.91, H * 0.50, 280), seed=37, n_lines=130,
+                 frame_at=(W * 0.12, H * 0.42, 280),
+                 link_at=((W * 0.80, H * 0.12), (W * 0.92, H * 0.78)),
+                 tl=(W * 0.22, W * 0.78, H * 0.80), corner=True,
+                 band_xs=[(80, 60), (1700, 420), (2440, 50)])
+    wm, ww, wh = place(wordmark(LOGO_VARIANTS["dark"]), 0, 0, w=760)
+    body += G(wm, "translate(%g %g)" % (sx + 40, sy + (sh - wh) / 2 - 50))
+    strip, stw = fit_strip(sx + 30, sy + (sh + wh) / 2 - 10, 46, TEXT["tagline"])
+    body += strip
+    row, _ = chips_row(sx + 820, sy + 75, 38, TEXT["features"][:3])
+    body += row
+    row, _ = chips_row(sx + 820, sy + 135, 38, TEXT["features"][3:6])
+    body += row
+    return svg(W, H, body, bg=C["night"])
+
+
+def youtube_safe_preview(png):
+    """Banner with YouTube's crop boxes drawn over it (check sheet, not for upload)."""
+    from PIL import ImageDraw
+    im = png.convert("RGBA").copy()
+    d = ImageDraw.Draw(im)
+    d.rectangle((0, 508, 2559, 931), outline=(80, 200, 255, 255), width=6)
+    x, y, w, h = YT_SAFE
+    d.rectangle((x, y, x + w, y + h), outline=(255, 210, 60, 255), width=6)
+    return im
+
+
 def headline_block(x, y, lines, size, col=C["bone"]):
     out = []
     for i, ln in enumerate(lines):
@@ -943,6 +979,16 @@ def main():
               "YouTube thumbnail template with placeholder headline")
         write("social/youtube_thumb_1280x720_blank.png", r.png(youtube(False), 1280, 720, 1, False),
               "YouTube thumbnail template, no headline")
+        ytb = r.png(youtube_banner(), 2560, 1440, 1, False)
+        write("youtube/channel_banner_2560x1440.png", ytb.convert("RGB"),
+              "YouTube channel banner (upload; words inside the 1546x423 centre safe box)")
+        write("preview/youtube_banner_safe_zones.png", youtube_safe_preview(ytb),
+              "check sheet: banner with desktop band (blue) and all-device safe box (gold)")
+        write("youtube/profile_picture_800x800.png",
+              r.png(discord_icon(), 512, 512, 800 / 512, False).convert("RGB"),
+              "YouTube profile picture (upload; YouTube crops to a circle)")
+        write("youtube/video_watermark_150x150.png", r.png(app_icon(150), 150, 150, 1),
+              "YouTube video watermark / branding (transparent)")
 
         # ---- badges
         for b in TEXT["badges"]:
